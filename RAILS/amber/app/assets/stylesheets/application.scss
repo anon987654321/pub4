@@ -867,6 +867,21 @@ main#main-content header > nav form {
 [dir="rtl"] .form .field--check {
   flex-direction: row-reverse;
 }
+
+/* Settings and compose fills: the privacy-settings page shell and the
+   compose row's label in the sidebar nav. Both are structure the markup asked
+   for, stated in the tokens the layout already carries. */
+.form-page {
+  max-inline-size: var(--measure);
+  margin-inline: auto;
+  padding-block: var(--space-4);
+}
+
+.compose-label {
+  margin-inline-start: var(--space-2);
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+}
 // ============================================================ /module: amber_layout
 // ============================================================ components: wardrobe items
 // ============================================================ module: amber_wardrobe
@@ -1230,6 +1245,16 @@ main#main-content header > nav form {
 
 .luxury-actions .btn {
   padding: var(--space-2) 1.25rem;
+}
+
+/* Wardrobe quiet-copy fills: the create hint under the form and the index
+   tagline. Both are one-line helper text the views already ship; they take
+   the app's own secondary-ink treatment and nothing else. */
+.hint,
+.tagline {
+  margin-block: var(--space-2) 0;
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
 }
 // ============================================================ /module: amber_wardrobe
 // ============================================================ components: item forms

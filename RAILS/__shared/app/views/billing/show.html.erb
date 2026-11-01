@@ -8,7 +8,7 @@
 </div>
 
 <% if params[:started].present? %>
-  <p class="flash-notice" role="status"><%= t("billing.started") %></p>
+  <p role="status"><%= t("billing.started") %></p>
 <% end %>
 
 <% current = @subscriptions.select(&:entitling?) %>
@@ -44,7 +44,7 @@
         <%= button_to t("billing.subscribe"), billing_path, params: { plan: plan.key }, class: "btn btn-primary",
                                                            data: { turbo: false } %>
       <% else %>
-        <p class="muted"><%= t("billing.not_yet") %></p>
+        <p><%= t("billing.not_yet") %></p>
       <% end %>
     </article>
   <% end %>

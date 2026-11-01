@@ -134,3 +134,34 @@
   width: 100%;
   border: 0;
 }
+
+// Changelog — shared/changelog.html.erb. The page shell, its intro line and
+// the entry rhythm: measure-bounded column, dated entries separated by the
+// same border language the legal pages use. What an entry says is prose; the
+// fill only gives it a place to be prose in.
+.page {
+  max-inline-size: var(--measure);
+  margin-inline: auto;
+  padding-inline: var(--space-4);
+}
+
+.page-intro {
+  margin-block: 0 var(--space-5);
+  color: var(--text-secondary);
+}
+
+.changelog-entry {
+  padding-block: var(--space-4);
+  border-top: 1px solid var(--border);
+}
+
+// The "MASTER is already in this thread" chip the messenger invite renders
+// once the invite has been accepted. A quiet status, not a control.
+.messenger-master-present {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--tap-min);
+  padding-inline: var(--space-2);
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+}

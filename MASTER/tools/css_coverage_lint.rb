@@ -41,6 +41,14 @@ module Operator
     # positioned off-screen inline so no stylesheet can accidentally reveal it, and the
     # scroll sentinel is a zero-height JS target. `swiper` and `adsbygoogle` belong to
     # Swiper and Google; writing rules for them would be styling someone else's API.
+    #
+    # 2026-11-01: `network-offline` is the network-aware controller's state
+    # identity, the same family as network-slow and network-save-data already here.
+    # `pub4-visual-field` names the canvas the visual-field controller builds; the
+    # element is styled entirely by the inline cssText the controller writes, so a
+    # stylesheet rule could only fight it. `pub4-post-embed` is not this app's DOM
+    # at all — it is the class inside the <blockquote> snippet the embed action
+    # hands to other sites to paste.
     EXTERNAL = %w[
       hidden turbo-progress-bar translation_missing
       nav-visible active current selected open
@@ -48,6 +56,7 @@ module Operator
       icon-sprite hp-field infinite-scroll-sentinel
       battery-low battery-charging page-hidden
       network-slow network-save-data power-constrained decorative-motion
+      network-offline pub4-visual-field pub4-post-embed
     ].to_set
 
     # Measured 2026-08-11: undefined_class 128 reported → 96 real → 4 remaining.
@@ -240,7 +249,87 @@ module Operator
 # notice is a toast now (shared/_flash_toasts), so the four sheets that styled
 # an inline notice styled nothing. .toast--error went the same way — a toast
 # only ever carries a confirmation, because an alert stays in the page.
-    BASELINES = { "undefined_class" => 0, "unused_selector" => 89 }.freeze
+#
+# 89 -> 112 (2026-11-01), raised with the whole list named, because a raised
+# baseline without a list is a number nobody can act on. The rise is measured
+# with this instrument at three commits, so the cause is a measurement and not
+# a story:
+#
+#    89   baseline (2026-09-16)
+#   103   at aa3834606 (2026-10-28, the one-stylesheet-per-app merge): +14 of
+#         view drift, including the parallel-merge restore 9676c0d5b, which
+#         brought back view shapes older than their sheets
+#   120   at 88bff6eaa (2026-10-31, before the park): +17 more of the same
+#         drift in the fleet's own commits
+#   133   after the park patch (2026-11-01): +13 — markup left for the plugins
+#         while shared-sheet selectors stayed behind
+#   112   after the reconciliation below: 21 names resolved, none invented
+#
+# The reconciliation that brought undefined_class back to 0 in the same change
+# (38 uses, every one attributed):
+#
+#   messenger-inbox-*  the room-rail split (b5a6821cd) renamed the markup and
+#                      left the sheet behind; the sheet's selectors now follow
+#                      the markup, and the channel chip wears rail-hash again
+#   msg-action         styled by .msg-actions descendants already; named in
+#                      the group it always painted through
+#   store-promo-*      _storefront_promo.html.erb rendered nowhere and styled
+#                      only by the experiment sheet 62d893af5 deleted — the
+#                      unrendered partial is gone; the rendered twin
+#                      (_promotional_art) keeps its sheet whole
+#   changelog, dating-crossing, buy-box-*, field-label, listing-delivery,
+#   hint, tagline, compose-label, form-page, map-search-input,
+#   search_palette_recents, search-recents-item, messenger-blocked,
+#   messenger-master-present
+#                      never styled anywhere (git -S on every name): the
+#                      coverage-fills treatment, token-only, in the module
+#                      whose markup asked for them
+#   flash-notice, muted
+#                      deliberately unstyled since the toast migration; the
+#                      dead classes left the billing markup
+#   network-offline, pub4-visual-field, pub4-post-embed
+#                      EXTERNAL: JS state identity, a canvas styled inline by
+#                      its controller, and a snippet served to other sites
+#   avatar--*, store-promo-art--*, affiliate_feed_unit--*, mt-
+#                      instrument: the size map, the spec.layout output and
+#                      the assembled *_classes array are verified producers;
+#                      .mt-#{$step} is a Sass generator, not a selector
+#
+# The 112 still over the line, each with a rule in a stylesheet and no markup
+# that names it. Long-tail single-word names (woff2, type, svg, inherit and
+# friends are attribute-value trails, not classes a template wears) sit beside
+# whole dead features — the amber stardust spark set (17 selectors, composer
+# gone), the radio home grid, the vote rail, the affiliate sidebar, the
+# post-reading band. Deleting them is the owner's call, per this file's own
+# rule that dead CSS is tracked, not swept on a tool's judgement:
+#
+#   woff2 message--unread brand amber-compose-box--expanded flash jox-logo
+#   frames type item-meta amber-instance--stardust amber-logo-stardust
+#   amber-stardust-spark amber-stardust-speck amber-stardust-spark--1
+#   amber-stardust-spark--2 amber-stardust-spark--3 amber-stardust-spark--4
+#   amber-stardust-spark--5 amber-stardust-spark--6 amber-stardust-spark--7
+#   amber-stardust-speck--1 amber-stardust-speck--2 amber-stardust-speck--3
+#   amber-stardust-speck--4 amber-stardust-speck--5 amber-stardust-speck--6
+#   amber-stardust-speck--7 amber_precision amber alert notice lines vote-btn
+#   down active-up active-down vote-score inherit affiliate-deal
+#   affiliate-title affiliate-merchant media-gallery__item map-marker
+#   radio-home radio-home-header radio-section-header radio-home-label
+#   radio-section-label radio-home-link radio-section-link
+#   radio-home-link--primary radio-featured radio-featured-link
+#   radio-discovery radio-track-list radio-playlist-list radio-playlist-card
+#   vote-form messenger-compose-row price playlist-player helper tag-cloud
+#   brgen-media-card--wide brgen-media-card--tall brgen-media-link show-card
+#   tv-show-title brgen_precision brgen logo svg tabs bsdports
+#   affiliate_feed_cta--1 affiliate_feed_cta--2 affiliate_feed_cta--3
+#   affiliate_sidebar_grid affiliate_sidebar_card affiliate_sidebar_media
+#   affiliate_sidebar_card--amazon oauth-github full-bleed
+#   sortable-keyboard-controls interaction-press page-actions switcher
+#   with-sidebar auto-grid badge-category badge-version notification-group
+#   dialog post-vote-frame section-title panel post-reading tile results-grid
+#   dating-intro total amber-page-header item-detail-grid site-legal-footer
+#   system-signal welcome-onboarding--amber star field_with_errors nav
+#   toast--success tooltip toggle
+    BASELINES = { "undefined_class" => 0, "unused_selector" => 112 }.freeze
 
     Finding = Struct.new(:kind, :name, :count, :example)
 
@@ -332,9 +421,14 @@ module Operator
     # in events, <theme>-tokens in the layouts, match-overlay subtree from the
     # layout. maplibregl-/ProseMirror-/trix- are vendor-runtime: the library
     # builds the node, our sheet styles it.
+    #
+    # 2026-11-01: avatar--<n> is produced by the size map in _avatar
+    # ("avatar--24" => …, worn through size_class), and
+    # store-promo-art--<layout> by the art partial's spec.layout output — the
+    # campaign/tile/portrait rules are reached only through that composition.
     DYNAMIC_SEEDS = %w[vertical- monogram-- map-marker-- capsule-row--
                        occasion-card-- chip-- match-overlay maplibregl-
-                       ProseMirror- trix-].freeze
+                       ProseMirror- trix- avatar-- store-promo-art--].freeze
     DYNAMIC_SUFFIXES = %w[-tokens].freeze
 
     def dynamic?(name)
@@ -357,7 +451,11 @@ module Operator
           # A name followed by an open paren is a Sass module call, not a class:
           # `list.nth(` and `meta.load-css(` read as .nth and .load-css, two
           # selectors nothing could ever render.
-          body.scan(/\.([a-zA-Z_][\w-]*+)(?!\()/) { |(name)| names << name }
+          # A name followed by #{ is a Sass generator (.mt-#{$step} emits
+          # .mt-1…12): the literal text is neither a selector nor a name any
+          # template can wear, so recording it invented an unused_selector
+          # called `mt-` that no stylesheet really declares.
+          body.scan(/\.([a-zA-Z_][\w-]*+)(?!\()(?!\#\{)/) { |(name)| names << name }
           # SCSS builds &__child / &--modifier names no literal scan can see.
           body.scan(/&(?:__|--)([\w-]+)/) { |(fragment)| names << fragment }
         end
@@ -390,7 +488,27 @@ module Operator
     def class_lists_in(body)
       attribute_lists(body) + helper_array_lists(body) +
         javascript_lists(body) + interpolated_attribute_lists(body) +
-        ruby_class_value_lists(body)
+        ruby_class_value_lists(body) + assembled_class_lists(body)
+    end
+
+    # A class list assembled into a local and worn through an unquoted ERB
+    # output — `unit_classes = ["affiliate_feed_unit", ("…--collage" if …)]`
+    # then class="<%= unit_classes %>". The interpolated-attribute extractor
+    # reads the wearing side and finds no string to read; the ruby-class-value
+    # extractor reads only class: values. This reads the assembly: the literal
+    # strings of any array literal assigned to a *_classes local are exactly
+    # the words the browser can end up seeing. Found when the affiliate feed
+    # unit's collage variants read as unused while the code applying them sat
+    # in the scanned set.
+    def assembled_class_lists(body)
+      lists = []
+      pos = 0
+      while (m = /\b\w+_classes\s*=\s*\[/.match(body, pos))
+        fragments, after = bracket_fragments(body, m.end(0) - 1, "[", "]")
+        lists << fragments if fragments.any?
+        pos = [ after, m.end(0) ].max
+      end
+      lists
     end
 
     # Every place a class value is a Ruby expression rather than a quoted word.
