@@ -172,7 +172,7 @@ module Master
       end
 
       def auto_approved(prompt, choices)
-        terminal_puts(@refs.renderer.render("ask0: approved, #{prompt}", mode: :dmesg))
+        terminal_puts(@refs.renderer.render("ask0: auto-approved, #{prompt}", mode: :dmesg))
         return "yes" if choices.empty?
 
         (choices.find { |choice| choice.fetch(:value) == "approve" } || choices.first).fetch(:value).to_s
