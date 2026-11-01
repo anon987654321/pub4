@@ -1,0 +1,234 @@
+{
+  "engine": { "name": "dilla", "version": "4.1.0", "ppqn": 96, "sample_rate": 44100 },
+  "progressions": [
+    {
+      "id": "blue_hour",
+      "title": "Blue Hour — Dilla Minor Dub Cut",
+      "key": "Fm", "bpm": 86, "loop_bars": 4, "bars": 16,
+      "chords": ["Fm9", "Ab13", "Dbmaj9#11", "C7b9"],
+      "roman": ["i9", "bIII13", "VImaj9#11", "V7b9"],
+      "feel": { "bass": "dub", "melody": "dorian_moan", "swing": 55.0, "grit": 0.75 }
+    },
+    {
+      "id": "royal_garden",
+      "title": "Royal Garden",
+      "key": "Eb", "bpm": 88, "loop_bars": 4, "bars": 12,
+      "chords": ["Ebmaj7#11", "D7alt", "Gm9", "C13"],
+      "roman": ["Imaj7#11", "VII7alt", "iii9", "VI13"],
+      "feel": { "bass": "walk", "melody": "sweet_soul", "swing": 54.0, "grit": 0.6 }
+    },
+    {
+      "id": "velvet_satie",
+      "title": "Velvet Satie",
+      "key": "Gm", "bpm": 84, "loop_bars": 4, "bars": 12,
+      "chords": ["Gm6", "D7b9", "Gm9", "Cm9", "F13", "Bbmaj9", "EbMaj9", "D7#5"],
+      "roman": ["i6", "V7b9", "i9", "iv9", "bVII13", "bIIImaj9", "bVImaj9", "V7#5"],
+      "bars_per_chord": 0.5,
+      "sample_provenance": "Gymnopédie harmony flipped — Dilla sampled Satie through The Music of Eric Satie – Velvet Gentleman",
+      "feel": { "bass": "dub", "melody": "music_box", "swing": 56.0, "grit": 0.7 }
+    },
+    {
+      "id": "coltrane_soup",
+      "title": "Coltrane Soup",
+      "key": "B", "bpm": 92, "loop_bars": 4, "bars": 16,
+      "chords": ["Bmaj9", "D13", "Gmaj9", "Bb13", "Ebmaj9", "A13", "Dmaj9", "F#13"],
+      "roman": ["Imaj9", "bIII13", "bVImaj9", "bVII13", "bIIImaj9", "bVI13", "IImaj9", "V13"],
+      "bars_per_chord": 0.5,
+      "feel": { "bass": "walk", "melody": "horn_stabs", "swing": 53.0, "grit": 0.6 }
+    },
+    {
+      "id": "dusty_paradise",
+      "title": "Dusty Paradise",
+      "key": "F", "bpm": 90, "loop_bars": 6, "bars": 12,
+      "chords": ["Fmaj9", "Em7", "A7#5", "Dm9", "Gm9", "C13"],
+      "roman": ["Imaj9", "vii7", "III7#5", "vi9", "ii9", "V13"],
+      "feel": { "bass": "thumb", "melody": "sweet_soul", "swing": 55.5, "grit": 0.7 }
+    },
+    {
+      "id": "rain_on_glass",
+      "title": "Rain on Glass",
+      "key": "Db", "bpm": 82, "loop_bars": 4, "bars": 8,
+      "chords": ["Dbmaj9", "C7b9", "Fm9", "Bb7b5"],
+      "roman": ["Imaj9", "VII7b9", "iv9", "bVII7b5"],
+      "feel": { "bass": "dub", "melody": "music_box", "swing": 56.0, "grit": 0.8 }
+    },
+    {
+      "id": "tape_hiss_love",
+      "title": "Tape Hiss Love",
+      "key": "Am", "bpm": 87, "loop_bars": 4, "bars": 12,
+      "chords": ["Am9", "Em7", "Fmaj9", "G6", "Dm9", "E7#9"],
+      "roman": ["i9", "v7", "VImaj9", "bVII6", "iv9", "V7#9"],
+      "bars_per_chord": 0.6667,
+      "feel": { "bass": "dub", "melody": "dorian_moan", "swing": 54.5, "grit": 0.85 }
+    },
+    {
+      "id": "boom_bap_bach",
+      "title": "Boom Bap Bach",
+      "key": "Dm", "bpm": 95, "loop_bars": 4, "bars": 16,
+      "chords": ["Dm9", "Gm7", "A7b13", "Dm11", "Bbmaj9", "A7b9", "Dm9", "A7sus4"],
+      "roman": ["i9", "iv7", "V7b13", "i11", "bVImaj9", "V7b9", "i9", "V7sus"],
+      "bars_per_chord": 0.5,
+      "sample_provenance": "Dilla sampled Bach's Toccata and Fugue in D minor through Mike Hankinson's synthesizer LP",
+      "feel": { "bass": "walk", "melody": "horn_stabs", "swing": 53.5, "grit": 0.65 }
+    }
+  ],
+  "drum_patterns": {
+    "comment": "16 steps per bar, step 0 = downbeat. [step, velocity, optional lane]. Ghost notes ride low. Busts and fills are generated from bust_bars.",
+    "boom_bap": {
+      "kick": [[0, 1.0], [10, 0.92]],
+      "snare": [[4, 1.0], [12, 0.96]],
+      "ghost": [[11, 0.18]],
+      "hats": [[0, 0.85], [2, 0.4], [4, 0.7], [6, 0.4], [8, 0.8], [10, 0.42], [12, 0.66], [14, 0.44]],
+      "ride": [],
+      "perc": [],
+      "bust_bars": 4,
+      "open_hat": [[14, 0.5]]
+    },
+    "dilla_shadow": {
+      "kick": [[0, 1.0], [6, 0.8], [10, 0.88]],
+      "snare": [[4, 0.98], [12, 1.0]],
+      "ghost": [[9, 0.2], [15, 0.16]],
+      "hats": [[0, 0.8], [1, 0.28], [2, 0.45], [3, 0.3], [4, 0.62], [5, 0.26], [6, 0.48], [7, 0.34], [8, 0.75], [9, 0.3], [10, 0.46], [11, 0.28], [12, 0.6], [13, 0.3], [14, 0.44], [15, 0.38]],
+      "ride": [],
+      "perc": [],
+      "bust_bars": 4,
+      "open_hat": [[7, 0.4]]
+    },
+    "dilla_shadow_full": {
+      "kick": [[0, 1.0], [6, 0.82], [10, 0.9], [13, 0.4]],
+      "snare": [[4, 0.98], [12, 1.0]],
+      "ghost": [[7, 0.22], [9, 0.2], [15, 0.18]],
+      "hats": [[0, 0.8], [1, 0.28], [2, 0.45], [3, 0.3], [4, 0.62], [5, 0.26], [6, 0.48], [7, 0.34], [8, 0.75], [9, 0.3], [10, 0.46], [11, 0.28], [12, 0.6], [13, 0.3], [14, 0.44], [15, 0.38]],
+      "ride": [[2, 0.3], [10, 0.32]],
+      "perc": [[4, 0.2], [12, 0.22]],
+      "bust_bars": 4,
+      "open_hat": [[7, 0.42], [14, 0.3]]
+    },
+    "dilla_broken": {
+      "kick": [[0, 0.95], [6, 0.78], [11, 0.85]],
+      "snare": [[4, 0.95], [12, 1.0]],
+      "ghost": [[7, 0.2], [15, 0.22]],
+      "hats": [[0, 0.72], [2, 0.4], [3, 0.34], [4, 0.6], [6, 0.44], [7, 0.36], [8, 0.7], [10, 0.42], [11, 0.3], [12, 0.58], [14, 0.46], [15, 0.36]],
+      "ride": [],
+      "perc": [],
+      "bust_bars": 4,
+      "open_hat": [[6, 0.36]]
+    },
+    "dilla_broken_full": {
+      "kick": [[0, 0.95], [6, 0.78], [11, 0.85], [14, 0.42]],
+      "snare": [[4, 0.95], [12, 1.0]],
+      "ghost": [[7, 0.24], [9, 0.18], [15, 0.24]],
+      "hats": [[0, 0.72], [2, 0.4], [3, 0.34], [4, 0.6], [6, 0.44], [7, 0.36], [8, 0.7], [10, 0.42], [11, 0.3], [12, 0.58], [14, 0.46], [15, 0.36]],
+      "ride": [[1, 0.26], [9, 0.28]],
+      "perc": [[2, 0.2], [8, 0.18], [13, 0.2]],
+      "bust_bars": 4,
+      "open_hat": [[6, 0.36], [11, 0.3]]
+    },
+    "dusty_laid_back": {
+      "kick": [[0, 0.9], [10, 0.8]],
+      "snare": [[4, 0.9], [12, 0.92]],
+      "ghost": [[9, 0.14]],
+      "hats": [[0, 0.65], [6, 0.38], [8, 0.6], [14, 0.4]],
+      "ride": [],
+      "perc": [],
+      "bust_bars": 8,
+      "open_hat": [[12, 0.3]]
+    }
+  },
+  "groove_profiles": {
+    "comment": "spread_ms = per-hit timing jitter sigma; nudge = fixed offsets ms; drag = whole-loop lateness; velocity wobble is performer-owned.",
+    "dilla_shadow": { "spread_ms": 9.0, "nudge": { "kick": 16.0, "snare": -11.0, "hat": -5.0, "ghost": 8.0 }, "drag_ms": 6.0, "anticipation": 95.0 },
+    "behind_the_beat": { "spread_ms": 12.0, "nudge": { "kick": 22.0, "snare": 4.0, "hat": 10.0, "ghost": 12.0 }, "drag_ms": 14.0, "anticipation": 60.0 },
+    "late_snare": { "spread_ms": 8.0, "nudge": { "kick": 14.0, "snare": 9.0, "hat": -6.0, "ghost": 10.0 }, "drag_ms": 8.0, "anticipation": 80.0 },
+    "on_grid": { "spread_ms": 2.0, "nudge": { "kick": 0.0, "snare": 0.0, "hat": 0.0, "ghost": 0.0 }, "drag_ms": 0.0, "anticipation": 0.0 }
+  },
+  "kits": {
+    "comment": "Per-drum synth controls: tune (semitones), decay (s), tone 0-1 (brightness), crush (bits), level, pan (-1..1).",
+    "kit_dust": {
+      "name": "Dust — SP-12 floor, MPC crack",
+      "kick": { "tune": 0, "decay": 0.42, "tone": 0.42, "crush": 12, "level": 1.0, "pan": 0.0 },
+      "sub": { "decay": 0.30, "level": 0.55, "tune": -12 },
+      "snare": { "tune": 0, "decay": 0.24, "tone": 0.55, "crush": 12, "level": 0.95, "pan": -0.04 },
+      "hat": { "tune": 0, "decay": 0.055, "tone": 0.62, "crush": 12, "level": 0.5, "pan": 0.16 },
+      "openhat": { "decay": 0.33, "level": 0.42, "pan": 0.18 },
+      "ride": { "decay": 0.5, "level": 0.3, "pan": 0.24 },
+      "perc": { "decay": 0.12, "level": 0.35, "pan": -0.2 }
+    },
+    "kit_break": {
+      "name": "Break — 45 crate, harder edge",
+      "kick": { "tune": 2, "decay": 0.3, "tone": 0.5, "crush": 13, "level": 0.95, "pan": 0.0 },
+      "sub": { "decay": 0.24, "level": 0.45, "tune": -12 },
+      "snare": { "tune": 1, "decay": 0.19, "tone": 0.66, "crush": 13, "level": 1.0, "pan": 0.05 },
+      "hat": { "tune": 1, "decay": 0.045, "tone": 0.7, "crush": 13, "level": 0.45, "pan": -0.14 },
+      "openhat": { "decay": 0.26, "level": 0.38, "pan": -0.16 },
+      "ride": { "decay": 0.55, "level": 0.34, "pan": -0.22 },
+      "perc": { "decay": 0.1, "level": 0.3, "pan": 0.2 }
+    },
+    "kit_basement": {
+      "name": "Basement — soft, deep, tape-heavy",
+      "kick": { "tune": -2, "decay": 0.5, "tone": 0.34, "crush": 12, "level": 1.0, "pan": 0.0 },
+      "sub": { "decay": 0.36, "level": 0.6, "tune": -12 },
+      "snare": { "tune": -1, "decay": 0.3, "tone": 0.45, "crush": 12, "level": 0.85, "pan": -0.06 },
+      "hat": { "tune": -1, "decay": 0.07, "tone": 0.55, "crush": 12, "level": 0.42, "pan": 0.12 },
+      "openhat": { "decay": 0.4, "level": 0.36, "pan": 0.14 },
+      "ride": { "decay": 0.6, "level": 0.26, "pan": 0.2 },
+      "perc": { "decay": 0.14, "level": 0.3, "pan": -0.18 }
+    }
+  },
+  "voices": {
+    "rhodes_mark1": { "type": "rhodes", "decay": 2.6, "brightness": 0.55, "tremolo": 0.12, "pan": -0.1, "level": 0.9 },
+    "rhodes_dusty": { "type": "rhodes", "decay": 2.2, "brightness": 0.38, "tremolo": 0.2, "pan": 0.12, "level": 0.9 },
+    "tape_strings": { "type": "pad", "attack": 0.6, "decay": 8.0, "brightness": 0.4, "pan": 0.05, "level": 0.5 },
+    "music_box": { "type": "musicbox", "decay": 1.4, "brightness": 0.7, "pan": -0.18, "level": 0.62 },
+    "glass_pad": { "type": "pad", "attack": 1.2, "decay": 10.0, "brightness": 0.3, "pan": 0.0, "level": 0.42 },
+    "church_organ": { "type": "organ", "decay": 4.0, "brightness": 0.5, "pan": 0.08, "level": 0.5 }
+  },
+  "rigs": {
+    "dilla_night": {
+      "name": "Dilla Night — vinyl bed, dub throws, plate",
+      "vinyl": { "level": 0.1, "crackle": 0.5 },
+      "delay": { "time_div": 0.375, "feedback": 0.34, "lowpass": 3200, "throw_chords": 0.1, "throw_melody": 0.3 },
+      "reverb": { "size": 0.42, "level_drums": 0.12, "level_chords": 0.16, "level_melody": 0.22 },
+      "wobble": { "rate_hz": 0.7, "depth_ms": 0.9 },
+      "sidechain": { "amount": 0.14, "release_ms": 120 }
+    },
+    "basement": {
+      "name": "Basement — drier, closer",
+      "vinyl": { "level": 0.05, "crackle": 0.3 },
+      "delay": { "time_div": 0.5, "feedback": 0.18, "lowpass": 2600, "throw_chords": 0.04, "throw_melody": 0.12 },
+      "reverb": { "size": 0.3, "level_drums": 0.07, "level_chords": 0.1, "level_melody": 0.14 },
+      "wobble": { "rate_hz": 0.5, "depth_ms": 0.5 },
+      "sidechain": { "amount": 0.1, "release_ms": 90 }
+    },
+    "dub_stairs": {
+      "name": "Dub Stairs — big echoes",
+      "vinyl": { "level": 0.12, "crackle": 0.6 },
+      "delay": { "time_div": 0.75, "feedback": 0.48, "lowpass": 2200, "throw_chords": 0.18, "throw_melody": 0.42 },
+      "reverb": { "size": 0.55, "level_drums": 0.14, "level_chords": 0.2, "level_melody": 0.28 },
+      "wobble": { "rate_hz": 0.9, "depth_ms": 1.2 },
+      "sidechain": { "amount": 0.18, "release_ms": 150 }
+    }
+  },
+  "sonitex": {
+    "comment": "Final wear chain. instances compounding the pass; levels in dB.",
+    "subtle": { "lowpass": 12000, "highpass": 38, "drive": 1.12, "bits": 16, "wow": 0.35, "crackle": 0.25, "hiss": 0.2, "dropout": 0.0 },
+    "boom_bap": { "lowpass": 9000, "highpass": 48, "drive": 1.28, "bits": 12, "wow": 0.6, "crackle": 0.45, "hiss": 0.3, "dropout": 0.02 },
+    "aggressive_lofi": { "lowpass": 5800, "highpass": 60, "drive": 1.45, "bits": 10, "wow": 1.0, "crackle": 0.6, "hiss": 0.4, "dropout": 0.05 },
+    "phone_wear": { "lowpass": 3400, "highpass": 320, "drive": 1.6, "bits": 8, "wow": 0.8, "crackle": 0.5, "hiss": 0.5, "dropout": 0.08 }
+  },
+  "performers": [
+    { "id": "jaydee", "name": "JayDee pocket", "swing_bias": 0.0, "hat_level": 0.0, "kick_bias": 0.0, "ghost_bias": 0.0 },
+    { "id": "dusty_44", "name": "Dusty 44", "swing_bias": -1.0, "hat_level": -0.06, "kick_bias": 0.03, "ghost_bias": 0.1 },
+    { "id": "vinyl_tap", "name": "Vinyl Tap", "swing_bias": 1.2, "hat_level": 0.08, "kick_bias": -0.02, "ghost_bias": -0.05 },
+    { "id": "break_biscuit", "name": "Break Biscuit", "swing_bias": -0.5, "hat_level": 0.04, "kick_bias": 0.05, "ghost_bias": 0.15 }
+  ],
+  "busts": {
+    "comment": "Drum busts: 16th runs and double kicks into the loop restart.",
+    "fill_patterns": [
+      { "snare": [[8, 0.8], [10, 0.7], [12, 0.9], [13, 0.6], [14, 0.95], [15, 0.7]] },
+      { "kick": [[10, 0.9], [11, 0.8]], "snare": [[12, 0.9], [14, 0.95]] },
+      { "snare": [[10, 0.75], [11, 0.7], [12, 0.85], [13, 0.8], [14, 0.9], [15, 0.85]] }
+    ]
+  },
+  "defaults": { "bars": 12, "style": "dilla", "sample_vol": 0.42, "sample_weight": 0.6, "sample_slices": 8 }
+}

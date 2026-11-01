@@ -1,0 +1,20 @@
+{
+  "comment": "The curated showcase. `ruby dilla.rb` and `/play` both render this; the id points into dilla.json progressions, everything else is the arrangement the name promises.",
+  "id": "blue_hour_showcase",
+  "progression": "blue_hour",
+  "title": "Blue Hour — Dilla Minor Dub Cut",
+  "arrangement": [
+    { "section": "intro", "bars": 4, "layers": ["drums", "vinyl"], "notes": "drums half-muted, hats only on the backbeats" },
+    { "section": "head", "bars": 8, "layers": ["drums", "chords", "bass", "vinyl"] },
+    { "section": "lift", "bars": 8, "layers": ["drums", "chords", "bass", "melody", "vinyl"], "notes": "melody enters on the and-of-one, dub throws open" },
+    { "section": "outro", "bars": 4, "layers": ["chords", "melody", "vinyl"], "notes": "drums drop out; delay tail carries" }
+  ],
+  "kit": "kit_dust",
+  "voice": "rhodes_mark1",
+  "rig": "dilla_night",
+  "sonitex": "subtle",
+  "sonitex_instances": 2,
+  "vcs": 0.54,
+  "bpm": 86,
+  "swing": 55.0
+}

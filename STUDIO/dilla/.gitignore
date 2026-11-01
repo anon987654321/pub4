@@ -1,0 +1,23 @@
+# The engine renders beside dilla.rb unless DILLA_OUTPUT_DIR says otherwise.
+# Audio is reproducible from a seed and the repo is not where takes belong;
+# provenance, quality and session sidecars ARE the record worth keeping.
+out/
+samples/
+crate/
+scratch/
+.cache/
+analysis/
+*.wav
+*.mp3
+*.pre.raw
+demo*
+!demo_manifest.tsv
+RELEASE*
+liveset_yt_*
+check_*
+dilla_beat_live*
+r[0-9]_*.mp3
+.harmony_*
+.live_tmp.wav
+.dilla_*
+all_tracks_demo/

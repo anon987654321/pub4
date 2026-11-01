@@ -1,0 +1,106 @@
+{
+  "comment": "Harmony vocabulary for the Dilla engine. Pitch classes are 0=C. Voicing rules are read by dilla.rb; the chord parser accepts root/quality/extensions/slash-bass on these interval tables.",
+  "keys": {
+    "C": 0, "C#": 1, "Db": 1, "D": 2, "D#": 3, "Eb": 3, "E": 4, "F": 5,
+    "F#": 6, "Gb": 6, "G": 7, "G#": 8, "Ab": 8, "A": 9, "A#": 10, "Bb": 10, "B": 11
+  },
+  "pc_names_sharp": ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"],
+  "pc_names_flat": ["C", "Db", "D", "Eb", "E", "F", "Gb", "G", "Ab", "A", "Bb", "B"],
+  "qualities": {
+    "maj": [0, 4, 7],
+    "m": [0, 3, 7],
+    "min": [0, 3, 7],
+    "dim": [0, 3, 6],
+    "aug": [0, 4, 8],
+    "maj7": [0, 4, 7, 11],
+    "m7": [0, 3, 7, 10],
+    "min7": [0, 3, 7, 10],
+    "7": [0, 4, 7, 10],
+    "6": [0, 4, 7, 9],
+    "m6": [0, 3, 7, 9],
+    "maj9": [0, 4, 7, 11, 14],
+    "m9": [0, 3, 7, 10, 14],
+    "9": [0, 4, 7, 10, 14],
+    "m11": [0, 3, 7, 10, 14, 17],
+    "11": [0, 4, 7, 10, 14, 17],
+    "13": [0, 4, 10, 14, 21],
+    "m13": [0, 3, 10, 14, 21],
+    "7sus4": [0, 5, 7, 10],
+    "sus4": [0, 5, 7],
+    "sus2": [0, 2, 7],
+    "add9": [0, 4, 7, 14],
+    "madd9": [0, 3, 7, 14],
+    "6/9": [0, 4, 7, 9, 14],
+    "maj7#11": [0, 4, 7, 11, 18],
+    "maj9#11": [0, 4, 11, 14, 18],
+    "7b9": [0, 4, 10, 13],
+    "7#9": [0, 4, 10, 15],
+    "7alt": [0, 4, 10, 15, 19],
+    "7#5": [0, 4, 10, 18],
+    "7b5": [0, 4, 10, 6],
+    "7b13": [0, 4, 10, 20],
+    "m7b5": [0, 3, 6, 10],
+    "dim7": [0, 3, 6, 9],
+    "maj13": [0, 4, 7, 11, 14, 21],
+    "mMaj7": [0, 3, 7, 11],
+    "mMaj9": [0, 3, 7, 11, 14]
+  },
+  "extension_tension": {
+    "comment": "Which extensions are tasteful per chord function; the voicer only adds these beyond the parsed symbol when the progression asks for spice.",
+    "minor_7": [14, 17],
+    "minor_9": [17],
+    "dominant_7": [14, 18, 21],
+    "major_7": [14, 18],
+    "half_diminished": [14]
+  },
+  "scales": {
+    "minor_pentatonic": [0, 3, 5, 7, 10],
+    "major_pentatonic": [0, 2, 4, 7, 9],
+    "dorian": [0, 2, 3, 5, 7, 9, 10],
+    "aeolian": [0, 2, 3, 5, 7, 8, 10],
+    "mixolydian": [0, 2, 4, 5, 7, 9, 10],
+    "ionian": [0, 2, 4, 5, 7, 9, 11],
+    "lydian": [0, 2, 4, 6, 7, 9, 11],
+    "aeolian_b5": [0, 2, 3, 5, 6, 8, 10],
+    "blues": [0, 3, 5, 6, 7, 10],
+    "chromatic": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
+    "whole_tone": [0, 2, 4, 6, 8, 10],
+    "altered": [0, 1, 3, 4, 6, 8, 10]
+  },
+  "scale_for_chord": {
+    "m7": "dorian", "m9": "dorian", "m11": "dorian", "m13": "dorian", "m6": "dorian", "madd9": "dorian",
+    "maj7": "ionian", "maj9": "ionian", "maj13": "ionian", "6": "ionian", "add9": "ionian", "6/9": "ionian",
+    "maj7#11": "lydian", "maj9#11": "lydian",
+    "7": "mixolydian", "9": "mixolydian", "13": "mixolydian", "7sus4": "mixolydian", "sus4": "mixolydian", "sus2": "mixolydian",
+    "7b9": "altered", "7#9": "altered", "7alt": "altered", "7#5": "whole_tone", "7b5": "whole_tone",
+    "m7b5": "aeolian_b5", "dim7": "chromatic",
+    "m": "aeolian", "min": "aeolian"
+  },
+  "krumhansl_major": [6.35, 2.23, 3.48, 2.33, 4.38, 4.09, 2.52, 5.19, 2.39, 3.66, 2.29, 2.88],
+  "krumhansl_minor": [6.33, 2.68, 3.52, 5.38, 2.60, 3.53, 2.54, 4.75, 3.98, 2.69, 3.34, 3.17],
+  "voice_leading": {
+    "comment": "Keep each inner voice within a fourth of where it was; resolve tendency tones; never double the 7th.",
+    "max_inner_move_semitones": 5,
+    "avoid_doubling": [11, 10],
+    "range_midi": [48, 79],
+    "top_voice_range_midi": [67, 84],
+    "spacing": "closed_left_open_right"
+  },
+  "coltrane": {
+    "comment": "Coltrane changes: major thirds cycle with V7 pivots. Dilla sampled Bach and Satie; this is the engine's nod to the harmony-hungry side of the catalogue.",
+    "cycle": [["C", "maj7"], ["Eb7", "7"], ["Ab", "maj7"], ["B7", "7"], ["Eb", "maj7"], ["G7", "7"], ["C", "maj7"], ["A7", "7"], ["D", "maj7"], ["F7", "7"], ["Bb", "maj7"], ["Db7", "7"], ["Cb", "maj7"]],
+    "soup_id": "coltrane_soup"
+  },
+  "bass_styles": {
+    "dub": "long notes, anticipation ahead of the kick, occasional octave-up doubling at phrase starts",
+    "walk": "quarter walk with chromatic approach into each chord root",
+    "pedal": "hold one low pedal tone under the whole loop",
+    "thumb": "syncopated 16th placements answering the kick, octave pops at phrase ends"
+  },
+  "melody_styles": {
+    "dorian_moan": "sparse pentatonic phrases with blue notes, repeated per bar with identical deviations",
+    "sweet_soul": "diatonic steps answering the chords, held suspensions resolving down",
+    "music_box": "high register single line, two-note grace figures, lots of rest",
+    "horn_stabs": "short chord-tone bursts on the offbeats, doubled an octave up at phrase starts"
+  }
+}

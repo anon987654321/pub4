@@ -1,0 +1,125 @@
+{
+  "comment": "Recovered chord transcriptions. Sources are the same measured references MASTER's production_dna carries (fantastic vol 2 / vol 1, Donuts, The Shining). These play as first-class progressions; no second copy of the data lives anywhere else.",
+  "provenance": {
+    "transcription_sources": [
+      "https://jdillabasslines.wordpress.com/fantastic-vol-2/",
+      "https://www.ethanhein.com/wp/2022/get-dis-money/",
+      "https://www.ethanhein.com/wp/2022/patrice-rushens-memory-songs/",
+      "https://scholarworks.sfasu.edu/etds/197/",
+      "The Guardian, J Dilla: the Mozart of hip-hop (2011)",
+      "21st Century Funk: A Microtiming Analysis of the Beats of J Dilla (academia.edu 29812748)"
+    ],
+    "note": "Recovered 2026-11 from the surviving production_dna tables after the STUDIO/dilla tree was found untracked. Chord symbols keep the transcribers' spellings."
+  },
+  "progressions": [
+    {
+      "id": "fall_in_love",
+      "title": "Fall in Love (recovered)",
+      "key": "Fm", "bpm": 91, "loop_bars": 4,
+      "chords": ["Bbm9", "Abmaj9", "Fm7", "Fm9"],
+      "roman": ["iv", "bIII", "i7", "i"],
+      "sample": "Gap Mangione, Diana in the Autumn Wind (1968)",
+      "feel": { "bass": "dub", "melody": "sweet_soul", "swing": 55.0, "grit": 0.7 }
+    },
+    {
+      "id": "get_dis_money",
+      "title": "Get Dis Money (recovered)",
+      "key": "C#m", "bpm": 90, "loop_bars": 7,
+      "chords": ["C#m7", "G#m7", "A#7", "C#m9"],
+      "roman": ["i", "v", "VI7", "i"],
+      "pedal": "E",
+      "bars_per_chord": 2,
+      "sample": "Herbie Hancock, Come Running to Me (1978), slowed 4 semitones, bass tuned 50 cents sharp",
+      "feel": { "bass": "pedal", "melody": "dorian_moan", "swing": 56.0, "grit": 0.8 }
+    },
+    {
+      "id": "players",
+      "title": "Players (recovered)",
+      "key": "Ebm", "bpm": 93, "loop_bars": 4,
+      "chords": ["Ebm9", "Abm7", "Fm9", "Bbm7"],
+      "roman": ["i7", "iv7", "ii7", "v7"],
+      "sample": "The Singers Unlimited, Clair (1974)",
+      "feel": { "bass": "walk", "melody": "horn_stabs", "swing": 54.0, "grit": 0.6 }
+    },
+    {
+      "id": "clair_moon",
+      "title": "Clair de Lune soup (recovered climax)",
+      "key": "E", "bpm": 96, "loop_bars": 4,
+      "chords": ["Emaj9", "G#m7", "G#m9", "G#maj7"],
+      "roman": ["Imaj7", "iii7", "iii7", "IIImaj7"],
+      "sample": "Isao Tomita, Clair de Lune; Steve Miller Band, Space Intro",
+      "feel": { "bass": "dub", "melody": "sweet_soul", "swing": 53.0, "grit": 0.5 }
+    },
+    {
+      "id": "time_donut",
+      "title": "Time: The Donut of the Heart (recovered)",
+      "key": "Ab/Fm", "bpm": 94, "loop_bars": 4,
+      "chords": ["Dbmaj9", "Cm7", "Fm9", "Bbm7"],
+      "roman": ["IVmaj7", "iii7", "vi7", "ii7"],
+      "sample": "The Jackson 5, All I Do Is Think of You (1975); Sweet Charles, Yes It's You",
+      "feel": { "bass": "thumb", "melody": "music_box", "swing": 55.5, "grit": 0.75 }
+    },
+    {
+      "id": "selfish_g",
+      "title": "Selfish (recovered)",
+      "key": "G", "bpm": 90, "loop_bars": 4,
+      "chords": ["Cmaj9", "Bm7", "Am9", "D13"],
+      "roman": ["IVmaj7", "iii7", "ii7", "V7"],
+      "sample": "Slum Village, Selfish",
+      "feel": { "bass": "walk", "melody": "sweet_soul", "swing": 54.0, "grit": 0.55 }
+    },
+    {
+      "id": "two_way_d",
+      "title": "5 Ela dual-tonal (recovered)",
+      "key": "Dm/A", "bpm": 92, "loop_bars": 3,
+      "chords": ["Dm9", "Em7", "C#m7"],
+      "roman": ["i9", "ii7", "#vii7"],
+      "sample": "The Gap Band, Yearning for Your Love; Patrice Rushen, Remind Me",
+      "feel": { "bass": "dub", "melody": "dorian_moan", "swing": 56.0, "grit": 0.8 }
+    },
+    {
+      "id": "so_far_to_go",
+      "title": "So Far to Go (recovered)",
+      "key": "Bb", "bpm": 88, "loop_bars": 4,
+      "chords": ["Dm9", "Cm9", "F13", "Gm9"],
+      "roman": ["iii7", "ii7", "V7", "vi7"],
+      "sample": "The Isley Brothers, Don't Say Goodnight (1980)",
+      "feel": { "bass": "dub", "melody": "sweet_soul", "swing": 55.0, "grit": 0.65 }
+    },
+    {
+      "id": "look_of_love",
+      "title": "Look of Love (recovered voicing)",
+      "key": "G", "bpm": 89, "loop_bars": 4,
+      "chords": ["Bm7", "Bm7", "Cmaj9", "Em9"],
+      "roman": ["iii7", "iii7", "IVmaj7", "vi7"],
+      "sample": "Minnie Riperton, Inside My Love (1975), repitched",
+      "feel": { "bass": "dub", "melody": "dorian_moan", "swing": 54.5, "grit": 0.7 }
+    },
+    {
+      "id": "accordion_dm",
+      "title": "Accordion skeleton (recovered)",
+      "key": "Dm", "bpm": 96, "loop_bars": 4,
+      "chords": ["Dm9", "Gm9", "Am7", "Dm11"],
+      "roman": ["i", "iv", "v", "i"],
+      "sample": "Madlib, Accordion (Madvillainy)",
+      "feel": { "bass": "dub", "melody": "music_box", "swing": 52.5, "grit": 0.85 }
+    },
+    {
+      "id": "untitled_a",
+      "title": "Untitled / Herbie flip (recovered)",
+      "key": "A", "bpm": 90, "loop_bars": 4,
+      "chords": ["Amaj9", "Dm11", "E7#9", "D9"],
+      "roman": ["I", "iv", "V7", "IV7"],
+      "sample": "Herbie Hancock, You'll Know When You Get There (1971)",
+      "feel": { "bass": "walk", "melody": "horn_stabs", "swing": 54.0, "grit": 0.7 }
+    },
+    {
+      "id": "thelonious_eb",
+      "title": "Thelonious two-chord (recovered)",
+      "key": "Ebm", "bpm": 92, "loop_bars": 4,
+      "chords": ["Ebm9", "Bbm7", "Ebm9", "Abm9"],
+      "roman": ["i", "v", "i", "iv"],
+      "feel": { "bass": "dub", "melody": "dorian_moan", "swing": 56.0, "grit": 0.8 }
+    }
+  ]
+}

@@ -1,0 +1,45 @@
+# frozen_string_literal: true
+
+# STUDIO's rake surface: `rake check` proves the tree loads and the contracts
+# answer, `rake test` runs the full studio suite. Keep both quiet and fast.
+require "rbconfig"
+require "open3"
+
+STUDIO_ROOT = __dir__
+RUBY = RbConfig.ruby
+
+desc "Load every STUDIO entrypoint and prove the contracts answer"
+task :check do
+  require_relative "output_paths"
+  raise "output_paths: render_directory is not absolute" unless Studio::OutputPaths.render_directory.start_with?(File::SEPARATOR)
+  raise "output_paths: reference_root collides with the checkout" if Studio::OutputPaths.inside_repository?(Studio::OutputPaths.reference_root)
+
+  dilla = File.join(STUDIO_ROOT, "dilla", "dilla.rb")
+  raise "dilla/dilla.rb is missing" unless File.file?(dilla)
+
+  out, status = Open3.capture2e(RUBY, dilla, "--list", chdir: STUDIO_ROOT)
+  raise "dilla --list failed:\n#{out}" unless status.success?
+
+  %w[photograph.rb photograph/idea_picture.rb replicate/client.rb subprocess.rb].each do |entry|
+    path = File.join(STUDIO_ROOT, entry)
+    raise "#{entry} is missing" unless File.file?(path)
+
+    out, status = Open3.capture2e(RUBY, "-c", path)
+    raise "#{entry} does not parse:\n#{out}" unless status.success?
+  end
+  puts "check0: studio contracts answer"
+end
+
+desc "Run the STUDIO test suite"
+task :test do
+  tests = Dir[File.join(STUDIO_ROOT, "test", "*_test.rb")].sort
+  abort "no studio tests found" if tests.empty?
+
+  ok = tests.all? do |path|
+    system(RUBY, path, chdir: STUDIO_ROOT, out: $stdout, err: :err)
+  end
+  abort "test0: studio suite failed" unless ok
+  puts "test0: studio suite passed"
+end
+
+task default: %i[check test]
