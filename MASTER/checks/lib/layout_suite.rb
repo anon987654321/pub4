@@ -25,7 +25,6 @@ require_relative "source/frontend_auditor"
 require_relative "research/baymard_ux"
 require_relative "source/stimulus_wiring"
 require_relative "source/typography_contract"
-require_relative "research/baymard_law"
 require_relative "rendered_suite"
 
 module Deploy
@@ -54,7 +53,6 @@ module Deploy
       FrontendAuditorCheck,
       BaymardUxCheck,
       StimulusWiringCheck,
-      BaymardUXCheck,
       RenderedSuiteCheck,
     ].freeze
 
