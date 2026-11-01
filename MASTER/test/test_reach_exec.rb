@@ -52,6 +52,7 @@ class TestReachExec < Minitest::Test
 
     assert status.success?
     assert_equal "false:false:kept", out
+    refute keys.any? { |key| ENV.key?(key) }, "the spawn boundary must scrub the parent too"
   ensure
     keys&.each do |key|
       previous[key].nil? ? ENV.delete(key) : ENV[key] = previous[key]
