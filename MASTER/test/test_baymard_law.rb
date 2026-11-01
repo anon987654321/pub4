@@ -368,6 +368,60 @@ class TestBaymardLaw < Minitest::Test
     end
   end
 
+  def test_aria_labelledby_references_are_verified_or_left_inconclusive
+    with_fixture do |dir, rails, profile|
+      write_good_surface(rails)
+      page = File.join(rails, "app", "views", "demo", "index.html.erb")
+      File.write(page, <<~HTML)
+        <input type="email" aria-labelledby="missing-email-label">
+        <button aria-labelledby="missing-button-label"></button>
+      HTML
+
+      report = Master::Review::BaymardLaw.new(root: dir, apps: ["demo"], profile:).call
+      outcomes = report.assessments.to_h { |item| [item.check_id, item.status] }
+
+      assert_equal "inconclusive", outcomes.fetch("form_control_names")
+      assert_equal "inconclusive", outcomes.fetch("interactive_names")
+    end
+  end
+
+  def test_aria_labelledby_with_present_text_is_a_valid_source_name
+    with_fixture do |dir, rails, profile|
+      write_good_surface(rails)
+      page = File.join(rails, "app", "views", "demo", "index.html.erb")
+      File.write(page, <<~HTML)
+        <span id="email-label">Email address</span>
+        <input type="email" aria-labelledby="email-label">
+        <span id="continue-label">Continue</span>
+        <button aria-labelledby="continue-label"></button>
+      HTML
+
+      report = Master::Review::BaymardLaw.new(root: dir, apps: ["demo"], profile:).call
+      outcomes = report.assessments.to_h { |item| [item.check_id, item.status] }
+
+      assert_equal "pass", outcomes.fetch("form_control_names")
+      assert_equal "pass", outcomes.fetch("interactive_names")
+    end
+  end
+
+  def test_whitespace_image_alt_and_closed_unrelated_labels_are_not_accepted
+    with_fixture do |dir, rails, profile|
+      write_good_surface(rails)
+      page = File.join(rails, "app", "views", "demo", "index.html.erb")
+      File.write(page, <<~HTML)
+        <label for="other">Other field</label>
+        <input id="email" type="email">
+        <img src="/product.jpg" alt="   ">
+      HTML
+
+      report = Master::Review::BaymardLaw.new(root: dir, apps: ["demo"], profile:).call
+      outcomes = report.assessments.to_h { |item| [item.check_id, item.status] }
+
+      assert_equal "fail", outcomes.fetch("form_control_names")
+      assert_equal "fail", outcomes.fetch("image_alternatives")
+    end
+  end
+
   def test_the_live_profile_is_accepted_by_configuration_guard
     path = Master.data_path("baymard_ux.yml")
     content = File.read(path, encoding: "UTF-8")
