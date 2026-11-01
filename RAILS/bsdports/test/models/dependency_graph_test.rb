@@ -21,4 +21,19 @@ class DependencyGraphTest < ActiveSupport::TestCase
     assert_equal [ 0, 1, 2 ], graph[:nodes].map { |node| node[:depth] }
     assert_equal false, graph[:truncated]
   end
+  test "graph_for stops at its depth limit" do
+    platform = platforms(:openbsd)
+    category = Category.create!(platform:, name: "graph-depth", slug: "graph-depth")
+    chain = Array.new(8) do |index|
+      Port.create!(platform:, category:, name: "node#{index}", pkgpath: "graph-depth/node#{index}", version: "1")
+    end
+    chain.each_cons(2) { |left, right| Dependency.create!(port: left, depends_on: right, dep_type: "run") }
+
+    graph = Dependency.graph_for(chain.first)
+
+    assert_equal 7, graph[:nodes].size
+    assert_equal 6, graph[:nodes].map { |node| node[:depth] }.max
+    assert graph[:truncated]
+  end
+
 end
