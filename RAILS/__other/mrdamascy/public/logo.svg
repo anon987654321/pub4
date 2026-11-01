@@ -1,22 +1,26 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 980 280" role="img" aria-label="Mr. Damascy — shawarma & kebab">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 980 280" role="img" aria-label="Mr. Damascy — shawarma &amp; kebab">
   <rect width="980" height="280" fill="#FFFFFF"/>
-  <g transform="translate(24,20) scale(0.47)">
+  <g transform="translate(18,16) scale(0.47)">
     <rect width="512" height="512" rx="116" fill="#F3FBF7"/>
-    <circle cx="256" cy="288" r="194" fill="#E4F6EE" stroke="#A6E1CB" stroke-width="6"/>
-    <ellipse cx="256" cy="650" rx="200" ry="180" fill="#4FB894"/>
-    <circle cx="256" cy="300" r="92" fill="#3C3D3F"/>
-    <ellipse cx="256" cy="400" rx="88" ry="78" fill="#FDC72E"/>
-    <ellipse cx="222" cy="332" rx="24" ry="11" fill="#E8A81C"/>
-    <ellipse cx="290" cy="332" rx="24" ry="11" fill="#E8A81C"/>
-    <path d="M224 364 Q256 390 288 364" fill="none" stroke="#FFFFFF" stroke-width="9" stroke-linecap="round"/>
-    <circle cx="224" cy="258" r="16" fill="#FFFFFF"/><circle cx="288" cy="258" r="16" fill="#FFFFFF"/>
-    <circle cx="224" cy="258" r="7" fill="#3C3D3F"/><circle cx="288" cy="258" r="7" fill="#3C3D3F"/>
-    <ellipse cx="214" cy="150" rx="38" ry="38" fill="#FFFFFF" stroke="#3C3D3F" stroke-width="7"/>
-    <ellipse cx="256" cy="130" rx="34" ry="38" fill="#FFFFFF" stroke="#3C3D3F" stroke-width="7"/>
-    <ellipse cx="299" cy="150" rx="37" ry="38" fill="#FFFFFF" stroke="#3C3D3F" stroke-width="7"/>
-    <rect x="180" y="158" width="152" height="48" rx="24" fill="#FFFFFF" stroke="#3C3D3F" stroke-width="7"/>
+    <circle cx="256" cy="300" r="196" fill="#E4F6EE" stroke="#A6E1CB" stroke-width="5"/>
+    <polygon points="78.0,80.0 82.1,96.4 96.6,87.7 87.9,102.2 104.3,106.3 87.9,110.4 96.6,124.9 82.1,116.2 78.0,132.6 73.9,116.2 59.4,124.9 68.1,110.4 51.7,106.3 68.1,102.2 59.4,87.7 73.9,96.4" fill="#FDC72E"/>
+    <polygon points="438.0,100.0 441.0,111.8 452.1,105.3 445.6,116.4 457.4,119.4 445.6,122.4 452.1,133.5 441.0,127.0 438.0,138.8 435.0,127.0 423.9,133.5 430.4,122.4 418.6,119.4 430.4,116.4 423.9,105.3 435.0,111.8" fill="#A6E1CB"/>
+    <polygon points="404.0,398.0 406.4,407.5 415.3,402.3 410.1,411.2 419.6,413.6 410.1,416.0 415.3,424.9 406.4,419.7 404.0,429.2 401.6,419.7 392.7,424.9 397.9,416.0 388.4,413.6 397.9,411.2 392.7,402.3 401.6,407.5" fill="#FDC72E"/>
+    <ellipse cx="256" cy="664" rx="210" ry="188" fill="#4FB894"/>
+    <circle cx="256" cy="312" r="126" fill="#3C3D3F"/>
+    <circle cx="214" cy="146" r="42" fill="#FFFFFF" stroke="#3C3D3F" stroke-width="8"/>
+    <circle cx="298" cy="146" r="42" fill="#FFFFFF" stroke="#3C3D3F" stroke-width="8"/>
+    <circle cx="256" cy="126" r="48" fill="#FFFFFF" stroke="#3C3D3F" stroke-width="8"/>
+    <rect x="180" y="168" width="152" height="46" rx="23" fill="#FFFFFF" stroke="#3C3D3F" stroke-width="8"/>
+    <circle cx="216" cy="300" r="18" fill="#FFFFFF"/>
+    <circle cx="296" cy="300" r="18" fill="#FFFFFF"/>
+    <circle cx="219" cy="303" r="8" fill="#3C3D3F"/>
+    <circle cx="293" cy="303" r="8" fill="#3C3D3F"/>
+    <ellipse cx="210" cy="390" rx="54" ry="28" fill="#FDC72E" transform="rotate(-16 210 390)"/>
+    <ellipse cx="302" cy="390" rx="54" ry="28" fill="#FDC72E" transform="rotate(16 302 390)"/>
+    <path d="M230 424 Q256 440 282 424" fill="none" stroke="#FFFFFF" stroke-width="9" stroke-linecap="round"/>
   </g>
-  <text x="290" y="128" font-family="DejaVu Sans, system-ui, -apple-system, Segoe UI, sans-serif" font-size="96" font-weight="bold" fill="#2E3033">Mr. Damascy</text>
-  <text x="294" y="186" font-family="DejaVu Sans, system-ui, -apple-system, Segoe UI, sans-serif" font-size="30" font-weight="bold" letter-spacing="8" fill="#3A9A7B">SHAWARMA · KEBAB · BERGEN</text>
-  <text x="294" y="234" font-family="DejaVu Sans, system-ui, -apple-system, Segoe UI, sans-serif" font-size="26" fill="#6C7076">Fra Damaskus med kjærlighet — صحتين / Sahtein!</text>
+  <text x="292" y="128" font-family="DejaVu Sans, system-ui, -apple-system, Segoe UI, sans-serif" font-size="82" font-weight="bold" fill="#2E3033">Mr. Damascy</text>
+  <text x="294" y="180" font-family="DejaVu Sans, system-ui, -apple-system, Segoe UI, sans-serif" font-size="27" font-weight="bold" letter-spacing="6" fill="#3A9A7B">SHAWARMA · KEBAB · BERGEN</text>
+  <text x="294" y="228" font-family="DejaVu Sans, system-ui, -apple-system, Segoe UI, sans-serif" font-size="24" fill="#6C7076">Fra Damaskus med kjærlighet — صحتين / Sahtein!</text>
 </svg>
