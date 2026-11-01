@@ -9,6 +9,18 @@ module Master
     module ProcessSpawn
       module_function
 
+      # libmalloc's stack-logging diagnostic is inherited by every child even
+      # though MASTER does not use malloc stack logging. Remove the whole named
+      # family at the spawn boundary, including values supplied by an explicit
+      # child environment hash. A nil value tells Process.spawn to unset a key.
+      def environment(overrides = {})
+        env = overrides.dup
+        (env.keys + ENV.keys).each do |key|
+          env[key] = nil if key.to_s.start_with?("MallocStackLogging")
+        end
+        env
+      end
+
       def options(options = {})
         result = options.dup
         result[:close_others] = true unless result.key?(:close_others)
