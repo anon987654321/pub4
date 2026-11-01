@@ -1,12 +1,12 @@
 # soul.yml — machine-enforced constitutional schema
-# Human-readable narrative lives in SOUL.md.
+# Human-readable identity lives in SOUL.md; concise runtime guidance lives in IDENTITY.md.
 # All configuration is versioned source. Syntax, invariants, catalogue reconciliation and tests
 # guard its correctness. absolute.sacred_paths guards its authorship: no automated writer (the Fold,
 # /fix and its autofix, a tool write, a runtime commit) may change a sacred path, and every runtime
 # commit refuses one. A person changes them with an ordinary git commit.
 
 schema: 1
-version: "2.10.0"
+version: "2.11.0"
 persona: anchor
 voice: en-US-ChristopherNeural
 language:
@@ -103,4 +103,3 @@ hooks:
     action: publish
     params:
       event: hooks:convergence
-
