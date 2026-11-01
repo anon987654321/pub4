@@ -193,16 +193,16 @@ module Master
       end
 
       def add_constitution(sections, soul)
-        sections["master_constitution_absolute"] = absolute_constitution(soul)
+        sections["master_constitution_absolute"] = absolute_constitution
         kernel = kernel_constitution
         philosophy = philosophy_line
         sections["master_constitution_kernel"] = [kernel, philosophy].compact.join("\n")
       end
 
-      def absolute_constitution(soul)
+      def absolute_constitution
         constitution = @laws.constitution
         strunk = @laws.strunk
-        anti_simulation = soul.dig("absolute", "anti_simulation", "forbidden") || []
+        anti_simulation = Array(constitution.dig("anti_simulation", "forbidden"))
         [
           "<master_constitution tier=\"absolute\">",
           "golden_law: #{constitution["golden_law"]}",
