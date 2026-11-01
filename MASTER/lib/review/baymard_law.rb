@@ -149,6 +149,24 @@ module Master
         end
         raise InvalidProfile, "unknown Law reference(s): #{missing.join(', ')}" unless missing.empty?
 
+        policy = profile.fetch("evidence_policy") do
+          raise InvalidProfile, "evidence_policy is required"
+        end
+        raise InvalidProfile, "evidence_policy must be a mapping" unless policy.is_a?(Hash)
+        required = policy.fetch("required")
+        raise InvalidProfile, "evidence_policy.required must declare source and task evidence" unless required.is_a?(Hash)
+        {
+          "source" => %w[source_files source_inventory_sha256 finding_path line source_sha256],
+          "task" => %w[method participants summary artifacts sha256],
+        }.each do |mode_name, expected|
+          declared = Array(required[mode_name]).map(&:to_s)
+          absent = expected - declared
+          raise InvalidProfile, "evidence_policy.required.#{mode_name} is missing: #{absent.join(', ')}" unless absent.empty?
+        end
+        raise InvalidProfile, "evidence_policy.task_privacy is required" if policy["task_privacy"].to_s.strip.empty?
+        verdicts = Array(policy["verdicts"]).map(&:to_s)
+        raise InvalidProfile, "evidence_policy.verdicts must declare #{STATUSES.join(', ')}" unless verdicts.sort == STATUSES.sort
+
         true
       rescue Psych::Exception, SystemCallError => e
         raise InvalidProfile, "cannot validate canonical Law references: #{e.class}: #{e.message}"
