@@ -273,6 +273,17 @@ class TestBaymardLaw < Minitest::Test
       assert_equal "inconclusive", row.status
       assert_match(/artifact/, row.summary)
 
+      File.write(artifact_path, "participant: Jane Doe\\n")
+      evidence["apps"]["demo"]["navigation_findability"]["artifacts"][0]["sha256"] =
+        Digest::SHA256.file(artifact_path).hexdigest
+      File.write(evidence_path, YAML.dump(evidence))
+      report = Master::Review::BaymardLaw.new(
+        root: dir, apps: ["demo"], evidence_path: "baymard-evidence.yml", profile:
+      ).call
+      row = report.assessments.find { |item| item.check_id == "navigation_findability" }
+      assert_equal "inconclusive", row.status
+      assert_match(/artifact/, row.summary)
+
       screenshot_path = File.join(dir, "screen.png")
       File.binwrite(screenshot_path, "\x89PNG\r\n\x1a\n".b + "redacted fixture bytes".b)
       evidence["apps"]["demo"]["navigation_findability"]["artifacts"] = [{
