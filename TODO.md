@@ -8,21 +8,68 @@ the commit that carries its evidence; nothing here records finished work.
 
 ## Open from the 2026-11-01 session — repository flattening
 
-Baseline: recursive Git tree at `496cfb32497bcedb4de6a98bc452d030e82d886b`
-contained 5,597 files and 719 directories: MASTER 2,210/125, RAILS
-3,088/556, OPENBSD 281/29, STUDIO 4/3. RAILS had 379 files at depth
-7 or greater and 102 at depth 8 or greater. These are structural measurements,
-not proof that a directory or namespace is unnecessary. Refresh them at the
-start and end of each batch; do not compare different revisions as if they
-were one baseline.
+Baseline: recursive Git tree at `9a5c884de24857effebe44f9686da6592453bf29`
+contained 5,596 files and 718 directories: MASTER 2,210/125, RAILS
+3,088/556, OPENBSD 281/29, STUDIO 3/2. RAILS had 379 files at depth
+7 or greater and 102 at depth 8 or greater. The STUDIO batch below removed
+one duplicate implementation and its now-empty directory. Measurements are
+structural signals, not proof that a directory or namespace is unnecessary.
+Refresh them at the start and end of each batch; compare pinned revisions only.
 
-- [ ] Complete the semantic flattening census before moving code. For every
-  candidate record current path, owning application/engine, Ruby constant or
-  asset/view identity, all callers/references, autoload/eager-load behavior,
-  routes, migrations, serialization/public API effects, test coverage,
-  compatibility requirements, proposed destination and rollback plan. Classify
-  each as MERGE, MOVE, RENAME, INLINE, DELETE, RETAIN or INVESTIGATE.
-  Never infer redundancy from path depth or repeated words alone.
+### Decisions landed
+
+- [x] RAILS shared namespaces — **RETAIN**. The repeated `shared` segment
+  expresses the `Shared` Ruby namespace and Rails view lookup contract across
+  controllers/concerns, models/concerns, helpers, services, channels, reflexes
+  and views. The shared engine README describes these as one engine-owned
+  surface; flattening the segment would change constants or partial names, not
+  remove accidental structure. Keep true service subdomains such as
+  `discovery/` and `link_embed/`.
+
+- [x] RAILS service namespaces — **RETAIN**. `Marketplace::Payments`,
+  `Fediverse`, `Marketplace` and `Dating` are real constant and ownership
+  boundaries. Payment providers, federation delivery, marketplace services and
+  dating matchmaking do not become clearer or safer by moving their files to
+  a generic `services/` root or across engine boundaries.
+
+- [x] Takeaway boundary — **RETAIN as a nested isolated engine**. It has
+  `Takeaway::Engine`, `isolate_namespace Takeaway`, its own routes,
+  controllers, models, views and locale files, and an explicit
+  `takeaway_` table contract. Brgen mounts the same engine at Marketplace
+  `/food` and on the legacy Takeaway host. The nested location reflects that
+  ownership; moving it to a sibling app would contradict the product topology
+  and compatibility mount.
+
+- [x] RAILS cross-app implementation duplication — keep the existing
+  extraction boundary. `RAILS/test/app_duplication_test.rb` compares shared
+  relative paths across Amber, Brgen and BSDPorts and fails when identical
+  implementation exceeds its 12-line compatibility budget. Bare-name
+  controller/Reflex host constants remain thin adapters; shared behavior lives
+  in `__shared`. The shared-engine historical migrations are deliberately
+  inert: `Shared::Engine` does not add a migration path, and
+  `engine_migration_convention_test.rb` freezes the three historical files
+  while requiring live migrations in each app. Do not flatten app-specific
+  schemas or migration histories.
+
+- [x] STUDIO duplicate IdeaPicture implementation — **DELETE** landed.
+  Removed unused `STUDIO/generators/idea_picture.rb`; the only entrypoint,
+  `STUDIO/photograph.rb`, and `STUDIO/test/idea_picture_test.rb` load
+  `STUDIO/photograph/idea_picture.rb`. The removed file had the exact same
+  Git blob and no tracked caller was found. The `generators/` directory
+  disappeared with it. A regression test now asserts that the photograph
+  implementation exists and the duplicate generator path stays absent.
+  Commit: `2fe2701ec268ed94b04c2f1602853a3657872db1` (delete) followed by
+  `9a5c884de24857effebe44f9686da6592453bf29` (test).
+
+### Remaining work
+
+- [ ] Complete the semantic flattening census before moving more code. For
+  every candidate record current path, owning application/engine, Ruby
+  constant or asset/view identity, all callers/references, autoload/eager-load
+  behavior, routes, migrations, serialization/public API effects, test
+  coverage, compatibility requirements, proposed destination and rollback
+  plan. Classify each as MERGE, MOVE, RENAME, INLINE, DELETE, RETAIN or
+  INVESTIGATE. Never infer redundancy from path depth or repeated words alone.
 
 - [ ] MASTER /fix: map every production caller and state owner across
   `MASTER/lib/fix/fix_loop/`, `MASTER/lib/fix/fix_loop/pass_runner/`,
@@ -32,9 +79,10 @@ were one baseline.
   background runner, convergence configuration, repo scope, council round,
   stream cursor, file collector, and repair policies. Consolidate only
   demonstrably duplicate orchestration; retain distinct transaction,
-  verification, recovery, budget, evidence and terminal-outcome responsibilities.
-  Compatibility constants remain until caller and receipt-parity tests prove
-  they can be retired. Run focused interruption/recovery tests before and after.
+  verification, recovery, budget, evidence and terminal-outcome
+  responsibilities. Compatibility constants remain until caller and
+  receipt-parity tests prove they can be retired. Run focused
+  interruption/recovery tests before and after.
 
 - [ ] MASTER Law metadata: migrate the live per-Law metadata in
   `MASTER/data/law_runtime.yml#law_catalogue.entries` into the authoritative
@@ -58,59 +106,33 @@ were one baseline.
   `MASTER/lib/cli/pipeline/proof/`,
   `MASTER/lib/cli/routing/model_router/`,
   `MASTER/lib/fix/scan/ast_fixer/` and
-  `MASTER/lib/review/council/critique/`. Establish whether each nesting level
-  represents a stable public namespace or only file grouping. Preserve the
-  single face renderer, model-routing authority, AST transformation coverage,
-  proof semantics and council behavior. No blind directory moves.
-
-- [ ] RAILS shared namespaces: evaluate the repeated `shared` segment under
-  `RAILS/__shared/app/controllers/concerns/shared/`,
-  `app/models/concerns/shared/`, `app/helpers/shared/`,
-  `app/services/shared/` and `app/views/shared/`. The shared engine already
-  establishes a boundary, but the Ruby module names, Rails autoload paths,
-  partial lookup names, helper inclusion and public call sites may depend on
-  these nested namespaces. Remove only redundant path segments after proving
-  constant, view and helper compatibility. Keep domain subfolders such as
-  `services/shared/discovery/` or `services/shared/link_embed/` when they
-  encode real subdomains.
-
-- [ ] RAILS service namespaces: inspect
-  `RAILS/brgen/app/services/marketplace/payments/`,
-  `RAILS/brgen/app/services/fediverse/`,
-  `RAILS/brgen_marketplace/app/services/marketplace/` and
-  `RAILS/brgen_dating/app/services/dating/`. Distinguish repeated engine
-  names from real Ruby namespace contracts. Payment-provider classes, webhook
-  adapters, tenant boundaries and app-specific domain ownership must remain
-  explicit. Avoid moving a class across an engine boundary merely to reduce
-  path depth.
-
-- [ ] Takeaway boundary decision: review
-  `RAILS/brgen_marketplace/engines/takeaway/` as a separately mountable Rails
-  engine versus a feature namespace within Marketplace. Inventory engine
-  isolation, routes/mount points, migrations, model tables, locale loading,
-  autoloading, tests, dependency direction and future reuse. Record an explicit
-  RETAIN or MIGRATE decision with evidence. Do not flatten it merely because
-  its path is deep.
+  `MASTER/lib/review/council/critique/`. Establish whether each nesting
+  level represents a stable public namespace or only file grouping. Preserve
+  the single face renderer, model-routing authority, AST transformation
+  coverage, proof semantics and council behavior. No blind directory moves.
 
 - [ ] RAILS view/asset/test organization: inspect mailer templates currently
   under `RAILS/__shared/app/views/shared/passwordless_mailer/` and
   `verification_mailer/`, shared icon partials under
   `app/views/shared/icons/`, repeated product asset/token imports, and
   duplicate test support under `RAILS/__shared/test/`, `RAILS/test/` and
-  app-local test trees. Preserve Rails lookup contracts, per-product visual
-  identity, Amber's identity, Brgen's blue visual language and BSDPorts'
-  minimal white interface. Share foundations, not product compositions.
+  app-local test trees. In particular, `_messages.html.erb` and
+  `_reply.html.erb` currently contain the same SVG path; determine whether
+  that is intentional reuse or an incorrect icon only after rendered review.
+  Preserve Rails lookup contracts and each product's visual identity. Share
+  foundations, not product compositions.
 
-- [ ] OPENBSD: inspect `OPENBSD/bin/`, `OPENBSD/lib/`, `OPENBSD/checks/`
-  and source-layout mirrors `OPENBSD/etc/`, `home/`, `usr/`, `var/`,
-  `dev/`. Distinguish repository source organization from the target host
-  filesystem contract. Consolidate duplicate deployment/backup/verification
-  wrappers only after host-path, privilege, rollback and evidence behavior is
-  proven. Never flatten required target filesystem paths.
+- [ ] OPENBSD: inspect `OPENBSD/bin/`, `OPENBSD/lib/`,
+  `OPENBSD/checks/` and source-layout mirrors `OPENBSD/etc/`, `home/`,
+  `usr/`, `var/`, `dev/`. Distinguish repository source organization
+  from the target host filesystem contract. Consolidate duplicate
+  deployment/backup/verification wrappers only after host-path, privilege,
+  rollback and evidence behavior is proven. Never flatten required target
+  filesystem paths.
 
-- [ ] STUDIO: preserve its already-small tree. Keep one Dilla generation
-  entrypoint and one audio processing pipeline; do not introduce a second
-  visualizer, audio engine or generator. Reassess only after the
+- [ ] STUDIO audio pipeline: preserve its already-small tree. Keep one Dilla
+  generation entrypoint and one audio processing pipeline; do not introduce a
+  second visualizer, audio engine or generator. Reassess only after the
   `radio_brgen_tunnel.js` audio/visual split has a tested ownership boundary.
 
 - [ ] Root governance and agent instructions: retain one canonical generated
@@ -129,9 +151,9 @@ were one baseline.
 - [ ] Cross-tree duplication graph: detect repeated decision logic,
   configuration defaults, status/error vocabularies, adapters, serializers,
   wrappers, registries, generated artifacts, test fixtures and documentation.
-  For each duplicate distinguish identical behavior from superficially similar
-  behavior with different security, transaction, tenant, product or runtime
-  contracts. Consolidate the authority, not merely the syntax.
+  For each duplicate distinguish identical behavior from superficially
+  similar behavior with different security, transaction, tenant, product or
+  runtime contracts. Consolidate the authority, not merely the syntax.
 
 - [ ] Add or extend structural ratchets for file count, directory count,
   maximum path depth, single-child directories, repeated namespace segments,
@@ -142,10 +164,10 @@ were one baseline.
 - [ ] Execute verification after each bounded batch: focused tests, relevant
   app/engine tests, autoload/eager-load checks, route/view rendering, asset
   builds, law/check parity and full suites where available. Capture exact
-  commands, revision, output, exit status and evidence paths. Run before/after
-  structural metrics and compare behavior. Keep unrun checks NOT_RUN and
-  unknown behavior INCONCLUSIVE; do not claim a code flattening is complete
-  from a tree-only audit.
+  commands, revision, output, exit status and evidence paths. Run
+  before/after structural metrics and compare behavior. Keep unrun checks
+  NOT_RUN and unknown behavior INCONCLUSIVE; do not claim a code flattening
+  is complete from a tree-only audit.
 
 - [ ] Respect the existing root TODO and MASTER complete-read prerequisites:
   do not edit MASTER implementation or documentation until the required
