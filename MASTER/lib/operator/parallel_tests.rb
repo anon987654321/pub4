@@ -2,6 +2,7 @@
 
 require "fileutils"
 require "json"
+require_relative "../io/process_spawn"
 
 module Operator
   # The MASTER suite across several processes. Workers are polled rather than
@@ -110,7 +111,7 @@ module Operator
     def start(bucket, log:, command:)
       marker_setting = ENV.fetch("MASTER_TEST_START_MARKERS", "1")
       env = { "MASTER_TEST_START_MARKERS" => marker_setting }
-      pid = Process.spawn(env, *command.call(bucket), out: log, err: %i[child out], in: File::NULL, pgroup: true)
+      pid = Process.spawn(Master::Io::ProcessSpawn.environment(env), *command.call(bucket), out: log, err: %i[child out], in: File::NULL, pgroup: true)
       {
         pid:, log:, offset: 0, started_at: Process.clock_gettime(Process::CLOCK_MONOTONIC),
         status: nil, timed_out: false, start_markers: marker_setting == "1"
