@@ -58,7 +58,17 @@ module Shared
 
     def self.upsert_from_api!(voucher)
       record = find_or_initialize_by(source: "tradedoubler", external_id: voucher.external_id.to_s)
-      record.assign_attributes(
+      record.assign_attributes(api_attributes(voucher))
+      record.save!
+      record
+    end
+
+    def self.api_attributes(voucher)
+      descriptive_attributes(voucher).merge(offer_attributes(voucher), timing_attributes(voucher))
+    end
+
+    def self.descriptive_attributes(voucher)
+      {
         program_id: voucher.program_id,
         program_name: voucher.program_name,
         code: voucher.code,
@@ -68,18 +78,26 @@ module Shared
         voucher_type_id: voucher.voucher_type_id.positive? ? voucher.voucher_type_id : 1,
         track_url: voucher.track_url.presence || voucher.landing_url.presence || "https://brgen.no",
         landing_url: voucher.landing_url,
+      }
+    end
+
+    def self.offer_attributes(voucher)
+      {
         discount_amount: voucher.discount_amount,
         percentage: voucher.percentage,
         site_specific: voucher.site_specific,
         exclusive: voucher.exclusive,
         currency: voucher.currency,
         market: Tradedoubler.market,
+      }
+    end
+
+    def self.timing_attributes(voucher)
+      {
         starts_at: voucher.starts_at,
         ends_at: voucher.ends_at,
         last_seen_at: Time.current,
-      )
-      record.save!
-      record
+      }
     end
   end
 end

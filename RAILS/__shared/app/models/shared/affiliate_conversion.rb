@@ -13,6 +13,29 @@ module Shared
     self.table_name = "affiliate_conversions"
 
     SOURCES = %w[tradedoubler].freeze
+    PARAMETER_KEYS = {
+      legacy_transaction_id: %i[legacyTransactionId],
+      order_number: %i[orderNumber order_number],
+      message_type_id: %i[messageTypeId message_type_id],
+      event_type_id: %i[eventTypeId event_type_id],
+      program_id: %i[programId program_id],
+      site_id: %i[siteId site_id],
+      site_name: %i[siteName site_name],
+      order_value: %i[orderValue order_value],
+      publisher_commission: %i[publisherCommission publisher_commission],
+      currency: %i[currencyId currency],
+      product_id: %i[productId product_id],
+      product_name: %i[productName product_name],
+      epi: %i[epi],
+      epi2: %i[epi2],
+      visitor_id: %i[visitorId visitor_id],
+      sequence_number: %i[sequenceNumber sequence_number],
+      time_of_event: %i[timeOfEvent time_of_event],
+      time_of_visit: %i[timeOfVisit time_of_visit],
+    }.freeze
+    INTEGER_FIELDS = %i[event_type_id program_id site_id].freeze
+    TIME_FIELDS = %i[time_of_event time_of_visit].freeze
+
     MESSAGE_TYPES = {
       1 => "tracked",
       2 => "invalid",
@@ -82,27 +105,22 @@ module Shared
 
     def self.normalize_params(params)
       p = payload_hash(params).with_indifferent_access
-      {
-        transaction_id: p[:transactionId].presence || p[:transaction_id],
-        legacy_transaction_id: p[:legacyTransactionId],
-        order_number: p[:orderNumber] || p[:order_number],
-        message_type_id: (p[:messageTypeId] || p[:message_type_id]).to_i.nonzero?,
-        event_type_id: (p[:eventTypeId] || p[:event_type_id]).presence&.to_i,
-        program_id: (p[:programId] || p[:program_id]).presence&.to_i,
-        site_id: (p[:siteId] || p[:site_id]).presence&.to_i,
-        site_name: p[:siteName] || p[:site_name],
-        order_value: p[:orderValue] || p[:order_value],
-        publisher_commission: p[:publisherCommission] || p[:publisher_commission],
-        currency: p[:currencyId] || p[:currency],
-        product_id: p[:productId] || p[:product_id],
-        product_name: p[:productName] || p[:product_name],
-        epi: p[:epi],
-        epi2: p[:epi2],
-        visitor_id: p[:visitorId] || p[:visitor_id],
-        sequence_number: p[:sequenceNumber] || p[:sequence_number],
-        time_of_event: parse_time(p[:timeOfEvent] || p[:time_of_event]),
-        time_of_visit: parse_time(p[:timeOfVisit] || p[:time_of_visit]),
-      }
+      values = PARAMETER_KEYS.to_h { |field, keys| [ field, fetch_any(p, *keys) ] }
+      values[:transaction_id] = fetch_any(p, :transactionId).presence || fetch_any(p, :transaction_id)
+      values[:message_type_id] = values[:message_type_id].to_i.nonzero?
+      INTEGER_FIELDS.each { |field| values[field] = values[field].presence&.to_i }
+      TIME_FIELDS.each { |field| values[field] = parse_time(values[field]) }
+      values
+    end
+
+    # Read the first truthy alias just as the original lookup expressions did.
+    # Kept inside the model so postbacks and other callers share one lookup rule.
+    def self.fetch_any(params, *keys)
+      keys.each do |key|
+        value = params[key]
+        return value if value
+      end
+      nil
     end
 
     def self.parse_time(value)
