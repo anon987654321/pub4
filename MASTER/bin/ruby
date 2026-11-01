@@ -2,6 +2,15 @@
 # Select the best installed Ruby supported by the project's Gemfile.
 set -eu
 
+# Clear macOS libmalloc diagnostics before probing candidate Rubies. These
+# variables are read before Ruby executes this script, so clearing them in
+# bin/master is too late for the interpreter probes below.
+for name in ${(k)parameters}; do
+  case "$name" in
+    MallocStackLogging*) unset "$name" ;;
+  esac
+done
+
 MIN_MAJOR=3
 MIN_MINOR=3
 MAX_MAJOR=4
