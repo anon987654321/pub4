@@ -2,19 +2,22 @@
 
 require "digest"
 require "json"
+require "yaml"
 
 module Master
-  # The canonical identity and constitutional precedence graph.
+  # The canonical identity implementation.
   #
-  # soul.rb owns canonical identity, values and constitutional precedence.
-  # data/soul.yml attests that body and owns the separate, validated delivery
-  # temperament plus transitional runtime settings. laws.yml owns law records;
-  # this class owns the graph that resolves their constitutional precedence.
+  # laws.yml owns every Law, including ordered constitutional nodes and
+  # protected paths. This class reads those declarations and implements Soul;
+  # neither Ruby constants nor soul.yml may establish a parallel constitution.
+  # data/soul.yml attests the identity body and supplies subordinate delivery
+  # temperament and runtime settings.
   class Soul
     class IntegrityError < StandardError; end
     class ProtectedWrite < StandardError; end
 
     VERSION = "3.0.0"
+    ROOT = File.expand_path("..", __dir__).freeze
 
     IDENTITY = "MASTER is not a mascot, oracle, or corporate assistant. MASTER is a system designed to preserve a coherent working identity across sessions without depending on one human session. It studies the system as it is, improves what it can justify, and keeps uncertainty visible.".freeze
 
@@ -55,30 +58,22 @@ module Master
       "No single session owns continuity. Files, code, tests, decisions and Git history carry durable state; every session re-establishes facts from those sources."
     ].freeze
 
-    # An edge means the source invariant takes precedence over the destination.
-    # This is a graph rather than a second priority field in laws.yml.
-    PRECEDENCE_GRAPH = {
-      "truthful_status" => %w[robustness],
-      "robustness" => %w[singularity],
-      "singularity" => %w[linearity],
-      "linearity" => %w[proximity],
-      "proximity" => %w[abstraction],
-      "abstraction" => %w[density],
-      "density" => %w[operator_rendered],
-      "operator_rendered" => %w[inter_model_contract],
-      "inter_model_contract" => []
-    }.transform_values(&:freeze).freeze
+    # Compatibility projection for the identity digest. The graph is derived
+    # from laws.yml in document order; no edge is authored in Ruby.
+    PRECEDENCE_GRAPH = begin
+      document = YAML.safe_load_file(File.join(ROOT, "data", "laws.yml"), aliases: true)
+      nodes = document.filter_map do |_id, row|
+        row["node"].to_s if row.is_a?(Hash) && row["node"]
+      end
+      unless nodes.size == 9 && nodes.uniq == nodes
+        raise IntegrityError, "laws.yml must declare exactly nine unique constitutional nodes"
+      end
 
-    # Operator-authored paths. The YAML manifest mirrors this list for legacy
-    # configuration readers; ConfigurationGuard rejects any divergence.
-    SACRED_PATHS = %w[
-      data/laws.yml
-      data/soul.yml
-      data/project_context.yml
-      lib/soul.rb
-      lib/ground/pledge.rb
-      bin/master
-    ].freeze
+      nodes.each_with_index.to_h do |node, index|
+        successor = nodes[index + 1]
+        [node, successor ? [successor].freeze : [].freeze]
+      end.freeze
+    end
 
     CANONICAL_BODY = JSON.generate(
       "identity" => IDENTITY,
@@ -90,17 +85,16 @@ module Master
     ).freeze
 
     BODY_SHA256 = Digest::SHA256.hexdigest(CANONICAL_BODY).freeze
-    ROOT = File.expand_path("..", __dir__).freeze
 
     class << self
       # Canonical machine-readable representation. The YAML manifest records
       # body_sha256; this output is the only place that computes it.
-      def print
+      def print(root: ROOT)
         {
           "version" => VERSION,
           "body" => CANONICAL_BODY,
           "body_sha256" => BODY_SHA256,
-          "precedence" => invariant_order
+          "precedence" => invariant_order(root:)
         }.freeze
       end
 
@@ -125,65 +119,64 @@ module Master
           section("Judgment", JUDGMENT),
           section("Boundaries", BOUNDARIES),
           temperament_section(manifest.fetch("temperament")),
-          "Constitutional precedence: #{invariant_order.join(" > ")}.",
+          "Constitutional precedence: #{invariant_order(root:).join(" > ")}.",
           "Interaction: state the real problem plainly. Ask for the best-supported answer. Say whether you want pushback or execution."
         ].join("\n\n")
       end
 
-      def invariant_order
-        graph = PRECEDENCE_GRAPH
-        indegree = graph.keys.to_h { |node| [node, 0] }
-        graph.each_value do |targets|
-          targets.each { |target| indegree[target] += 1 }
+      def invariant_order(root: ROOT)
+        master_root = resolve_master_root(root)
+        path = File.join(master_root, "data", "laws.yml")
+        document = YAML.safe_load_file(path, aliases: true)
+        raise IntegrityError, "laws.yml must be a mapping" unless document.is_a?(Hash)
+
+        nodes = document.filter_map do |_id, row|
+          row["node"].to_s if row.is_a?(Hash) && row["node"]
+        end
+        unless nodes.size == 9 && nodes.uniq == nodes &&
+               nodes.all? { |node| node.match?(/\\A[a-z][a-z0-9_]*\\z/) }
+          raise IntegrityError, "laws.yml must declare exactly nine unique, ordered constitutional nodes"
         end
 
-        ready = graph.keys.select { |node| indegree.fetch(node).zero? }
-        ordered = []
-        until ready.empty?
-          node = ready.shift
-          ordered << node
-          graph.fetch(node).each do |target|
-            indegree[target] -= 1
-            ready << target if indegree[target].zero?
-          end
-        end
-
-        raise IntegrityError, "constitutional precedence graph contains a cycle" unless ordered.size == graph.size
-
-        ordered.freeze
+        nodes.freeze
+      rescue IntegrityError
+        raise
+      rescue StandardError => e
+        raise IntegrityError, "constitutional order could not be read from laws.yml: #{e.class}: #{e.message}"
       end
 
-      def dominates?(higher, lower)
-        source = higher.to_s
-        target = lower.to_s
-        return false unless PRECEDENCE_GRAPH.key?(source) && PRECEDENCE_GRAPH.key?(target)
-        return true if source == target
+      def dominates?(higher, lower, root: ROOT)
+        order = invariant_order(root:)
+        left = order.index(higher.to_s)
+        right = order.index(lower.to_s)
+        return false unless left && right
 
-        visited = {}
-        pending = [source]
-        until pending.empty?
-          node = pending.shift
-          next if visited[node]
-
-          visited[node] = true
-          successors = PRECEDENCE_GRAPH.fetch(node)
-          return true if successors.include?(target)
-
-          pending.concat(successors)
-        end
-        false
+        left <= right
       end
 
-      def winner(left, right)
-        return left if dominates?(left, right)
-        return right if dominates?(right, left)
+      def winner(left, right, root: ROOT)
+        return left if dominates?(left, right, root:)
+        return right if dominates?(right, left, root:)
 
         nil
       end
 
       def sacred_paths(root: ROOT)
-        resolve_master_root(root)
-        SACRED_PATHS.dup.freeze
+        master_root = resolve_master_root(root)
+        path = File.join(master_root, "data", "laws.yml")
+        document = YAML.safe_load_file(path, aliases: true)
+        paths = document.fetch("SACRED_AUTHORSHIP").fetch("protected_paths")
+        unless paths.is_a?(Array) && !paths.empty? &&
+               paths.all? { |entry| entry.is_a?(String) && !entry.strip.empty? } &&
+               paths.uniq == paths
+          raise IntegrityError, "SACRED_AUTHORSHIP.protected_paths must be a unique non-empty list"
+        end
+
+        paths.map(&:dup).freeze
+      rescue IntegrityError
+        raise
+      rescue StandardError => e
+        raise IntegrityError, "protected paths could not be read from laws.yml: #{e.class}: #{e.message}"
       end
 
       def sacred?(path, root: ROOT)
@@ -194,7 +187,7 @@ module Master
         return false unless inside?(target, master_root)
 
         relative = target.delete_prefix("#{master_root}/")
-        SACRED_PATHS.any? do |entry|
+        sacred_paths(root:).any? do |entry|
           protected = entry.delete_suffix("/")
           relative == protected || relative.start_with?("#{protected}/")
         end
@@ -207,7 +200,7 @@ module Master
         return unless sacred?(path, root:)
 
         raise ProtectedWrite,
-              "#{path} is sacred: no automated writer may change it (MASTER::Soul::SACRED_PATHS)"
+              "#{path} is sacred: no automated writer may change it (laws.yml#SACRED_AUTHORSHIP.protected_paths)"
       end
 
       private
