@@ -1,0 +1,5 @@
+nb:
+  ports:
+    graph_heading: "Avhengighetsgraf"
+    graph_description: "Valgfri oversikt over registrerte avhengighetsstier."
+    graph_truncated: "Begrenset til %{nodes} pakker og %{depth} nivåer; hele avhengighetstreet er fortsatt tilgjengelig ovenfor."
