@@ -41,7 +41,7 @@ class HomeControllerTest < ActionDispatch::IntegrationTest
     refute_includes response.body, "look-zone"
     # A garment name reaches the page whether or not a demo wardrobe is seeded.
     assert_includes response.body, "Gold hoop earrings"
-    # No hero, no rails, no feed.
+    # The landing page stays quiet when the public post index has no entries.
     assert_select ".sidebar, .widgets, .amber-compose-box, .btn", 0
     assert_not_includes response.body, 'class="master-embed-frame"'
   end
@@ -54,6 +54,20 @@ class HomeControllerTest < ActionDispatch::IntegrationTest
     hrefs.uniq.each do |href|
       get href
       assert_includes [ 200, 302 ], response.status, "#{href} answered #{response.status}"
+    end
+  end
+
+  def test_guest_frontpage_lists_recent_public_posts
+    author = User.strict_loading(false).create!(email_address: "frontpage-post@example.com", password: "password")
+    post = author.posts.create!(body: "<p>A thoughtful outfit note from the community.</p>")
+
+    get root_url
+
+    assert_response :success
+    assert_select ".amber-home-posts" do
+      assert_select "h2", text: I18n.t("pages.community")
+      assert_select "article#post_#{post.id}", 1
+      assert_select "a[href=?]", posts_path
     end
   end
 
