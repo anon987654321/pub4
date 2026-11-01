@@ -31,8 +31,10 @@ module Operator
         # Keys are folded for lookup; the row names the Law as its source spells it.
         [id, {
           id: (rule&.id || row["id"] || scan&.id || id).to_s,
-          name: row["name"],
-          tier: row["tier"],
+          statement: row["statement"],
+          node: row["node"],
+          root: row["root"],
+          parent: row["parent"],
           severity: (rule&.severity || row["severity"])&.to_s,
           mode: rule&.mode&.to_s,
           languages: Array(rule&.languages).map(&:to_s),
@@ -116,16 +118,18 @@ module Operator
     def render(id:, deep: false, json: false)
       row = (deep ? health(id) : one(id)) if id
       return JSON.pretty_generate(row) if json
-      return "rule: #{id}: not found" unless row
+      return "law: #{id}: not found" unless row
 
       lines = []
-      lines << "rule: #{row[:id]}"
-      lines << "  name: #{row[:name]}" if row[:name]
+      lines << "law: #{row[:id]}"
+      lines << "  statement: #{row[:statement]}" if row[:statement]
+      lines << "  node: #{row[:node]}" if row[:node]
+      lines << "  root: #{row[:root]}" if row[:root]
+      lines << "  parent: #{row[:parent]}" if row[:parent]
       lines << "  severity: #{row[:severity]}" if row[:severity]
       lines << "  mode: #{row[:mode]}" if row[:mode]
       lines << "  enforcement: #{row[:enforcement]}" if row[:enforcement]
       lines << "  languages: #{row[:languages].join(", ")}" unless row[:languages].empty?
-      lines << "  scope: #{row[:scope]}" if row[:scope]
       lines << "  source: #{row[:source]}" if row[:source]
       lines << "  scanner: #{row[:scanner]}"
       lines << "  semantic: #{row[:semantic]}"
@@ -186,42 +190,19 @@ module Operator
       scanner.laws.to_h { |rule| [rule.id.to_s.downcase, rule] }
     end
 
-    # The operator's `laws ID` command needs the entire declared catalogue,
-    # not only the priority-ranked entries returned by Master.law_entries.
-    # Keep that recursive interpretation here and load through MASTER's sole
-    # YAML reader; declarations may live under laws, beauty, anti_patterns,
-    # or another nested catalogue section.
+    # The operator's `laws ID` command resolves directly from the flat
+    # normative catalogue. Runtime policy is not another Law declaration source.
     def catalogue_declaration(id, root: MASTER)
       require "master"
-      data = Master.load_laws(root:)
-      raise "data/laws.yml must be a non-empty mapping" unless data.is_a?(Hash) && !data.empty?
-
-      catalogue_declarations_in(data).find { |row| row["id"].to_s.casecmp?(id.to_s) }
-    end
-
-    def catalogue_declarations_in(node, found = [])
-      case node
-      when Hash
-        found << node if node["id"].is_a?(String)
-        node.each do |key, value|
-          if key.to_s.match?(/\A[A-Z][A-Z0-9_]*\z/) && value.is_a?(Hash) && !value.key?("id")
-            found << value.merge("id" => key.to_s)
-          end
-          catalogue_declarations_in(value, found)
-        end
-      when Array
-        node.each { |value| catalogue_declarations_in(value, found) }
-      end
-      found
+      path = File.join(Master.master_root(root:), "data", "laws.yml")
+      data = Master.load_yaml(path)
+      Master::FlatLawCatalogue.entries(data).find { |row| row["id"].to_s.casecmp?(id.to_s) }
     end
 
     def catalogue_rows
       require "master"
-      entries = Master.law_entries(root: MASTER)
-      entries.each_with_object({}) do |entry, rows|
-        next unless entry.is_a?(Hash) && entry["id"]
-
-        rows[entry["id"].to_s.downcase] = entry
+      Master.law_entries(root: MASTER).each_with_object({}) do |entry, rows|
+        rows[entry.fetch("id").to_s.downcase] = entry
       end
     rescue StandardError
       {}
