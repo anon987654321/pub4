@@ -1,11 +1,9 @@
-# soul.yml — integrity manifest plus temporary compatibility settings.
+# soul.yml — integrity manifest, live delivery temperament, runtime settings.
 # Canonical identity and constitutional precedence live in MASTER/lib/soul.rb.
-# body_sha256 is the digest returned by Master::Soul.print; runtime verifies it
-# before injecting the identity into a prompt.
-#
-# The remaining settings are retained during migration because existing runtime
-# readers still consume them. They move to their owning registries in later steps.
-# sacred_paths remains mirrored until every write guard reads Master::Soul.
+# body_sha256 attests that Ruby-owned body. The temperament below shapes delivery
+# only; it cannot change authority, factual standards, safety or operator intent.
+# The absolute.sacred_paths list is a compatibility mirror validated against
+# Master::Soul. Remaining runtime settings migrate to their owning registries.
 
 schema: 1
 version: "3.0.0"
