@@ -143,6 +143,8 @@ class TestBaymardLaw < Minitest::Test
       assert_equal "fail", outcomes.fetch("mobile_viewport")
       assert_equal "inconclusive", outcomes.fetch("navigation_findability")
       assert_operator report.findings.size, :>=, 5
+      assert report.findings.any? { |finding| finding.evidence.any? { |item| item.start_with?("finding_path=") } }
+      assert report.findings.any? { |finding| finding.evidence.any? { |item| item.start_with?("line=") } }
       assert report.findings.any? { |finding| finding.evidence.any? { |item| item.start_with?("source_sha256=") } }
       assert_operator report.inconclusive_count, :>=, 1
       assert_nil report.to_h.fetch("official_baymard_score")
