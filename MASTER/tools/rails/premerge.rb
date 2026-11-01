@@ -17,8 +17,9 @@
 #   bin/operator premerge --pwa       # executable PWA runtime tests only
 #   bin/operator premerge --contracts  # isolated root contract suite only
 #   bin/operator premerge --coverage   # full Rails coverage only
-#   bin/operator premerge --checks      # layout_suite + inventory only
-#   bin/operator premerge --list       # what would run, and skip nothing
+#   bin/operator premerge --checks       # layout_suite + inventory only
+#   bin/operator premerge --interactions # all 400 exact interaction cases
+#   bin/operator premerge --list         # what would run, and skip nothing
 
 require "yaml"
 
@@ -95,6 +96,28 @@ def coverage_step
   })
 end
 
+# The campaign is a separate proof from the app suites: passing a nearby test
+# never stands in for an exact action/fault pairing. Exit 3 is the runner's
+# deliberate INCOMPLETE state while adapters are unmapped or prerequisites fail.
+def interaction_step
+  Step.new(name: "400-case interaction campaign", group: :interactions, run: lambda {
+    runner = File.join(ROOT, "test", "run_interaction_campaign.rb")
+    next [BLOCKED, "RAILS/test/run_interaction_campaign.rb is missing"] unless File.file?(runner)
+
+    ok = system(*RUBY, runner, "--all", chdir: ROOT)
+    next [PASSED, nil] if ok
+
+    exit_status = $?.exitstatus
+    if exit_status == 3
+      [BLOCKED, "campaign is incomplete (BLOCKED/SKIPPED cases remain); inspect .master/interaction_campaign_runs"]
+    elsif exit_status.nil?
+      [BLOCKED, "campaign process ended without an exit status"]
+    else
+      [FAILED, "campaign runner exited with status #{exit_status}"]
+    end
+  })
+end
+
 def check_steps
   [
     Step.new(name: "layout_suite (source + fixture checks)", group: :checks, run: lambda {
@@ -128,7 +151,8 @@ def check_steps
 end
 
 def steps_for(groups)
-  (app_steps + pwa_steps + [contracts_step, coverage_step] + check_steps).select { |s| groups.include?(s.group) }
+  (app_steps + pwa_steps + [contracts_step, coverage_step] + check_steps + [interaction_step])
+    .select { |step| groups.include?(step.group) }
 end
 
 groups = if ARGV.include?("--apps") then [:apps]
@@ -136,7 +160,8 @@ groups = if ARGV.include?("--apps") then [:apps]
          elsif ARGV.include?("--contracts") then [:contracts]
          elsif ARGV.include?("--coverage") then [:coverage]
          elsif ARGV.include?("--checks") then [:checks]
-         else %i[apps pwa contracts coverage checks]
+         elsif ARGV.include?("--interactions") then [:interactions]
+         else %i[apps pwa contracts coverage checks interactions]
          end
 
 steps = steps_for(groups)
