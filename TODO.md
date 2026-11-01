@@ -141,6 +141,18 @@ each batch; compare pinned revisions only.
   Preserve Rails lookup contracts and each product's visual identity. Share
   foundations, not product compositions.
 
+- [ ] Residual exact-blob audit: a post-dedup scan still finds 46 duplicate
+  content groups across the repository. This is an investigation set, not a
+  deletion list. It includes per-app Ruby/version pins, boot/config files,
+  migration and test files that must remain at app-local paths, framework
+  entrypoint/constant shims, and repeated assets/licence text. The Amber and
+  Brgen `DraftsController` pair is already a thin adapter over
+  `Shared::DraftsActions`; `Session` and `Current` are similarly tiny
+  host-level class declarations, not worth adding another shared abstraction
+  for. Keep the `_messages` / `_reply` icon SVG collision open until a
+  rendered visual review establishes whether the same glyph is intentional.
+  Do not perform hash-only deletion.
+
 - [ ] OPENBSD: inspect `OPENBSD/bin/`, `OPENBSD/lib/`,
   `OPENBSD/checks/` and source-layout mirrors `OPENBSD/etc/`, `home/`,
   `usr/`, `var/`, `dev/`. Distinguish repository source organization
