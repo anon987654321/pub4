@@ -720,3 +720,173 @@ source and tests they could not run; this pass is what measures them.
 - [ ] Enforce mechanically that the only tracked directories directly under the repository root are `MASTER/`, `RAILS/`, `OPENBSD/`, and `STUDIO/`. Keep root metadata and instruction files as files; don't add root-level tooling or documentation directories.
 - [ ] After the required complete read of MASTER, reconcile `rake docs:agent_contracts` with the four-directory root contract so it does not recreate `.github/`. The Copilot instructions and Claude hooks are preserved under `STUDIO/agent-guidance/`, but that relocated configuration is no longer auto-loaded by those tools.
 - [ ] Following the same complete-MASTER-read prerequisite, decide how the root `.claude/settings.json` hook behavior can be provided through supported user-level or in-tree configuration without violating the root directory contract. Do not edit MASTER until every file under MASTER has been read in full.
+
+## Open from the 2026-11-01 session — WebGL / WebGPU ecosystem research
+
+Research scope: popular and active open-source GitHub projects for browser graphics,
+GPU computation, spatial interfaces, generative art, geospatial visualization and
+interactive graphs. Popularity is a discovery signal, not proof of fit, maintenance,
+license compatibility or production readiness. Recheck upstream activity, license,
+browser support and bundle/runtime cost before adopting a dependency.
+
+### Reference repositories and transferable ideas
+
+- [ ] **3D rendering and scene composition**
+  - mrdoob/three.js — https://github.com/mrdoob/three.js — scene graph, cameras,
+    instancing, loaders, post-processing and custom shaders. Evaluate for MASTER's
+    face/observatory, Amber product previews and STUDIO visual scenes.
+  - BabylonJS/Babylon.js — https://github.com/BabylonJS/Babylon.js — complete engine,
+    material/node systems, physics and WebXR. Compare its integrated feature set
+    with Three.js before choosing an engine per use case.
+  - playcanvas/engine — https://github.com/playcanvas/engine — WebGL/WebGPU engine,
+    editor workflows and asset pipeline. Study runtime lifecycle and scene loading.
+  - pmndrs/react-three-fiber — https://github.com/pmndrs/react-three-fiber — declarative
+    React renderer for Three.js. Only for React-owned surfaces; do not add React to
+    Rails-rendered pages merely to use it.
+  - pmndrs/drei — https://github.com/pmndrs/drei — reusable camera, control,
+    environment, loader and staging helpers; mine patterns before importing broadly.
+  - pmndrs/postprocessing — https://github.com/pmndrs/postprocessing — composable
+    post-processing; prefer restrained effects with measured performance.
+
+- [ ] **2D GPU interfaces, shaders and creative coding**
+  - pixijs/pixijs — https://github.com/pixijs/pixijs — fast 2D renderer with
+    WebGL/WebGPU backends, filters, sprites and batching. Evaluate for particles,
+    face effects and dense interactive 2D scenes.
+  - regl-project/regl — https://github.com/regl-project/regl — functional explicit
+    WebGL resource/state model for small custom GPU experiments.
+  - PavelDoGreat/WebGL-Fluid-Simulation —
+    https://github.com/PavelDoGreat/WebGL-Fluid-Simulation — real-time fluid
+    simulation; prototype as optional Amber/Dilla effect and measure mobile GPU load.
+  - terkelg/awesome-creative-coding —
+    https://github.com/terkelg/awesome-creative-coding — discovery index for
+    generative art, interaction design and graphics.
+  - owenob1/awesome-web-shaders —
+    https://github.com/owenob1/awesome-web-shaders — GLSL/WGSL learning and shader
+    references; research index, not a runtime dependency.
+  - theatre-js/theatre — https://github.com/theatre-js/theatre — authored animation
+    timelines and scene direction; not a replacement for audio-clock synchronization.
+  - pixijs/filters — https://github.com/pixijs/filters — composable visual filters;
+    inspect individual techniques and accessibility/performance costs.
+
+- [ ] **Spatial data, maps and large-scale visualization**
+  - visgl/deck.gl — https://github.com/visgl/deck.gl — GPU-accelerated layers for
+    large geospatial/tabular datasets; evaluate Brgen heatmaps, activity density,
+    routes and city-scale overlays.
+  - maplibre/maplibre-gl-js — https://github.com/maplibre/maplibre-gl-js — open
+    vector-map renderer; prefer for practical 2D Brgen maps, adding 3D only when useful.
+  - CesiumGS/cesium — https://github.com/CesiumGS/cesium — globe, terrain, 3D Tiles
+    and geospatial digital twins; likely excessive for ordinary local discovery.
+  - visgl/luma.gl — https://github.com/visgl/luma.gl — lower-level GPU toolkit;
+    study for GPU data pipelines and custom layers before bespoke WebGPU code.
+  - keplergl/kepler.gl — https://github.com/keplergl/kepler.gl — exploratory
+    geospatial analytics and layered datasets; borrow analysis patterns.
+  - potree/potree — https://github.com/potree/potree — massive point-cloud rendering;
+    defer until a licensed terrain/urban dataset and real use case exist.
+  - maptalks/maptalks.js — https://github.com/maptalks/maptalks.js — pluggable
+    2D/3D map layers; compare where layered maps or 3D city objects are needed.
+
+- [ ] **Graphs, systems and knowledge exploration**
+  - jacomyal/sigma.js — https://github.com/jacomyal/sigma.js — WebGL graph rendering
+    for large networks; prototype MASTER dependency, Law-enforcement and memory maps.
+  - vasturiano/3d-force-graph — https://github.com/vasturiano/3d-force-graph —
+    interactive 3D force-directed graphs; compare with Sigma.js and require a
+    comprehension benefit before using spatial depth.
+  - antvis/G6 — https://github.com/antvis/G6 — graph analysis and interaction;
+    study layouts, grouping, collapse/expand, edge routing and accessibility.
+  - koala73/worldmonitor — https://github.com/koala73/worldmonitor — real-time
+    dashboard aggregating public data feeds; study provenance, freshness,
+    map/dashboard composition and uncertainty display.
+  - bilawalsidhu/gods-eye-view —
+    https://github.com/bilawalsidhu/gods-eye-view — 3D globe with live public
+    geospatial feeds and voice interaction; inspect source attribution, stale-data
+    behavior and privacy boundaries before adapting patterns.
+
+- [ ] **GPU compute, scientific and interactive simulation**
+  - tensorflow/tfjs — https://github.com/tensorflow/tfjs — browser GPU machine
+    learning; evaluate only for a measured client-side inference task.
+  - google/filament — https://github.com/google/filament — physically based renderer
+    with web support; compare for high-fidelity product materials if needed.
+  - OmarShehata/webgpu-compute-rasterizer —
+    https://github.com/OmarShehata/webgpu-compute-rasterizer — educational compute
+    shader rasterizer; use to learn GPU pipelines, not as production infrastructure.
+  - webgpu/webgpu-samples — https://github.com/webgpu/webgpu-samples — practical
+    WebGPU patterns for capabilities, compute, buffers, textures and rendering.
+  - processing/p5.js — https://github.com/processing/p5.js — approachable
+    creative-coding sketches; useful for rapid prototypes and learning.
+
+### Product-specific experiments to scope
+
+- [ ] **MASTER — execution and architecture observatory:** represent real processes,
+  jobs, model routes, tool calls, Law/detector/evidence links and /fix phases as a
+  filtered graph/timeline. Use Sigma.js for large 2D graphs; compare 3d-force-graph
+  only for a bounded optional spatial view. Visual states must come from actual
+  receipts/events, never decorative fake data.
+- [ ] **MASTER — code and memory navigation:** searchable graph of files, symbols,
+  dependencies, memories and provenance, with path tracing, time playback, source
+  links, access controls and deletion/retention semantics. Never expose private
+  conversation content in a public/shared visualization.
+- [ ] **MASTER — face renderer experiments:** compare PixiJS particles, Three.js
+  instancing and custom GLSL for stipple/expression, visemes and transitions.
+  Keep the existing face renderer and lip-sync clock authoritative; prototype
+  behind an opt-in flag with a no-GPU fallback.
+- [ ] **MASTER — system observatory:** render real CPU/memory/process/queue telemetry
+  with freshness and sampling labels. Keep monitoring separate from audit receipts;
+  GPU visualization must never become a required control plane.
+- [ ] **RAILS / Brgen — geographic discovery:** compare MapLibre, deck.gl and
+  vector-tile formats for local businesses, events, routes and density layers.
+  Preserve accessible list/search alternatives; map interaction is never mandatory.
+- [ ] **RAILS / Brgen — city data layers:** investigate open geodata, vector tiles,
+  terrain and 3D buildings. Require source licensing, attribution, update cadence,
+  caching and useful mobile fallback before implementation.
+- [ ] **RAILS / Amber — product studio:** prototype orbit/inspection, material
+  swatches, garment configuration and optional 3D previews. Retain the original
+  large Amber identity and pastel/white visual language; no generic dark showroom.
+- [ ] **RAILS / Amber — garment visualization:** research GLTF/GLB assets, texture
+  compression and fit-data provenance. Do not imply accurate fit/body measurements
+  from decorative avatars.
+- [ ] **RAILS / BSDPorts — dependency explorer:** visualize package dependency paths,
+  reverse dependencies, build state and security advisories. Preserve its
+  ultraminimal white search-first interface; graph is an optional drill-down.
+- [ ] **STUDIO / Dilla — audio-reactive renderer:** derive animation from the actual
+  audio clock, onset/transient detection and frequency bands. Prototype fluid
+  fields, particles, waveform geometry and section-specific motifs. Keep audio
+  rendering deterministic and separate from the visual frame loop.
+- [ ] **STUDIO — generative artwork pipeline:** export reproducible stills, loops
+  and video from a song's section/tempo/seed manifest. Capture renderer version,
+  seed, dimensions and audio alignment for repeatability.
+- [ ] **Cross-tree — interactive technical illustrations:** study isometric/
+  diagram generation patterns, including wheresryan22/anatomy
+  (https://github.com/wheresryan22/anatomy), for architecture docs, deployment
+  maps and hardware explainers. Prefer SVG for crisp accessible diagrams; use
+  WebGL only for genuine interactive depth or large scenes.
+
+### Architecture and acceptance gates before adopting any renderer
+
+- [ ] Inventory existing rendering code, generated assets, browser/CDP tools,
+  asset pipelines and visual contracts in MASTER, RAILS and STUDIO. Reuse existing
+  engines and the radio audio/visual ownership boundary; do not create a parallel
+  face, audio engine, browser harness or design system.
+- [ ] Build a comparison matrix per use case: Canvas/SVG/DOM, PixiJS, Three.js,
+  MapLibre/deck.gl and WebGPU. Record task benefit, API fit, maintenance/activity,
+  license, bundle delta, startup cost, GPU memory, frame time, mobile thermals,
+  accessibility and fallback behavior.
+- [ ] Establish progressive enhancement: HTML/CSS/SVG remains usable baseline;
+  feature-detect WebGL2/WebGPU; handle context/device loss, shader compile failure,
+  memory pressure, tab suspension and unsupported browsers. No WebGPU-only critical
+  workflow.
+- [ ] Add reduced-motion and low-power modes, keyboard-operable controls,
+  accessible textual equivalents and deterministic loading/error states. Never
+  encode essential state only through color, depth, motion or spatial position.
+- [ ] Measure representative devices/workloads before setting budgets: initial
+  JS/GPU payload, time to first useful content, sustained frame time, memory,
+  battery/thermal behavior, resize/context restoration and mobile interaction
+  latency. Capture before/after browser evidence and exact revision.
+- [ ] Review licenses and transitive dependency footprint before copying code or
+  adopting packages. Prefer learning upstream patterns over importing entire
+  engines; pin versions and document the reason for each dependency.
+- [ ] Keep product identities distinct. Extract shared technical capability only
+  after two real consumers prove identical lifecycle/API needs; do not impose one
+  visual language across MASTER, Amber, Brgen, BSDPorts and STUDIO.
+- [ ] Deliver a small opt-in proof of concept for the highest-value use case,
+  with real data, testable behavior, browser evidence and a removal path. This
+  research backlog does not claim implementation or production rollout.
