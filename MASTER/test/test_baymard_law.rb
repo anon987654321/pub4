@@ -37,7 +37,7 @@ class TestBaymardLaw < Minitest::Test
         "methodology_url" => "https://baymard.com/research/methodology",
         "benchmark_url" => "https://baymard.com/ux-benchmark",
         "reviewed_on" => "2026-11-01",
-        "boundary" => "Independent test profile; not an official benchmark.",
+        "boundary" => "Independent test profile; not an official Baymard audit.",
       },
       "checks" => {
         "form_control_names" => source_rule("forms", "REACH_form_label"),
@@ -47,6 +47,14 @@ class TestBaymardLaw < Minitest::Test
         "focus_visibility" => source_rule("accessibility", "REACH_focus_visible"),
         "mobile_viewport" => source_rule("mobile", "REACH_touch_target_min"),
         "navigation_findability" => task_rule("navigation", "POLA_intuitive_navigation"),
+      },
+      "evidence_policy" => {
+        "required" => {
+          "source" => %w[source_files source_inventory_sha256 finding_path line source_sha256],
+          "task" => %w[method participants summary artifacts sha256],
+        },
+        "task_privacy" => "Use anonymised aggregate observations only.",
+        "verdicts" => %w[pass fail inconclusive not_applicable],
       },
     }
   end
