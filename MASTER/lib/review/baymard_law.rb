@@ -28,7 +28,10 @@ module Master
       STATUSES = %w[pass fail inconclusive not_applicable].freeze
       TASK_EVIDENCE_FIELDS = %w[status method participants summary artifacts].freeze
       SAFE_ARTIFACT_EXTENSIONS = %w[.md .txt .json .yml .yaml .png .jpg .jpeg .webp].freeze
+      TEXT_ARTIFACT_EXTENSIONS = %w[.md .txt .json .yml .yaml].freeze
+      IMAGE_ARTIFACT_EXTENSIONS = %w[.png .jpg .jpeg .webp].freeze
       MAX_SOURCE_BYTES = 1_000_000
+      MAX_EVIDENCE_ARTIFACT_BYTES = 2_000_000
       SOURCE_EXTENSIONS = %w[.erb .html .htm .haml .slim .jsx .tsx .vue .css .scss .sass].freeze
       MARKUP_EXTENSIONS = %w[.erb .html .htm .haml .slim .jsx .tsx .vue].freeze
       STYLE_EXTENSIONS = %w[.css .scss .sass].freeze
@@ -180,7 +183,11 @@ module Master
         task_declared = Array(required["task"]).map(&:to_s)
         task_missing = task_required - task_declared
         raise InvalidProfile, "evidence_policy.required.task is missing: #{task_missing.join(', ')}" unless task_missing.empty?
-        raise InvalidProfile, "evidence_policy.task_privacy is required" if policy["task_privacy"].to_s.strip.empty?
+        privacy = policy["task_privacy"].to_s
+        raise InvalidProfile, "evidence_policy.task_privacy is required" if privacy.strip.empty?
+        unless privacy.match?(/anonymi[sz]ed aggregate/i) && privacy.match?(/image/i) && privacy.match?(/redact/i)
+          raise InvalidProfile, "evidence_policy.task_privacy must require anonymised aggregates and redacted image artifacts"
+        end
         verdicts = Array(policy["verdicts"]).map(&:to_s)
         raise InvalidProfile, "evidence_policy.verdicts must declare #{STATUSES.join(', ')}" unless verdicts.sort == STATUSES.sort
 
@@ -342,10 +349,13 @@ module Master
         unless EVIDENCE_METHODS.include?(row["method"].to_s) &&
                row["participants"].is_a?(Integer) && row["participants"].positive? &&
                valid_artifacts?(row["artifacts"])
-          return [assessment(app, id, spec, "inconclusive", "task evidence is incomplete or its artifact hash is invalid", 0, []), nil]
+          return [assessment(app, id, spec, "inconclusive", "task evidence is incomplete or its artifact hash, size, content or redaction declaration is invalid", 0, []), nil]
         end
 
-        refs = Array(row["artifacts"]).map { |artifact| artifact["path"] }
+        refs = Array(row["artifacts"]).map do |artifact|
+          redaction = IMAGE_ARTIFACT_EXTENSIONS.include?(File.extname(artifact["path"].to_s).downcase) ? " redacted=true" : ""
+          "#{artifact["path"]} sha256=#{artifact["sha256"]}#{redaction}"
+        end
 
         if status == "pass"
           [assessment(app, id, spec, "pass", row["summary"], 1, [], evidence: refs), nil]
@@ -380,21 +390,49 @@ module Master
 
         artifacts.all? do |artifact|
           next false unless artifact.is_a?(Hash)
-          next false unless (artifact.keys.map(&:to_s) - %w[path sha256]).empty?
+          next false unless (artifact.keys.map(&:to_s) - %w[path sha256 redacted]).empty?
 
           relative = artifact["path"].to_s
           digest = artifact["sha256"].to_s
+          extension = File.extname(relative).downcase
           next false if relative.empty? || relative.start_with?("/") || relative.split("/").include?("..")
           next false unless digest.match?(/\A[0-9a-f]{64}\z/)
-          next false unless SAFE_ARTIFACT_EXTENSIONS.include?(File.extname(relative).downcase)
+          next false unless SAFE_ARTIFACT_EXTENSIONS.include?(extension)
+          next false if IMAGE_ARTIFACT_EXTENSIONS.include?(extension) && artifact["redacted"] != true
 
           path = File.expand_path(relative, @repo_root)
           next false unless inside?(path, @repo_root) && File.file?(path)
 
           real = File.realpath(path)
-          inside?(real, File.realpath(@repo_root)) &&
-            Digest::SHA256.file(real).hexdigest == digest
+          next false unless inside?(real, File.realpath(@repo_root))
+          bytes = File.binread(real, MAX_EVIDENCE_ARTIFACT_BYTES + 1)
+          next false if bytes.bytesize > MAX_EVIDENCE_ARTIFACT_BYTES
+          next false unless Digest::SHA256.hexdigest(bytes) == digest
+
+          if TEXT_ARTIFACT_EXTENSIONS.include?(extension)
+            content = bytes.dup.force_encoding(Encoding::UTF_8)
+            next false unless content.valid_encoding?
+            next false if contact_detail_in?(content)
+          elsif IMAGE_ARTIFACT_EXTENSIONS.include?(extension)
+            next false unless valid_image_signature?(extension, bytes)
+          else
+            next false
+          end
+          true
         rescue SystemCallError
+          false
+        end
+      end
+
+      def valid_image_signature?(extension, bytes)
+        case extension
+        when ".png"
+          bytes.start_with?("\x89PNG\r\n\x1a\n".b)
+        when ".jpg", ".jpeg"
+          bytes.start_with?("\xff\xd8\xff".b)
+        when ".webp"
+          bytes.byteslice(0, 4) == "RIFF" && bytes.byteslice(8, 4) == "WEBP"
+        else
           false
         end
       end
