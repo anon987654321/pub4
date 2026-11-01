@@ -5,7 +5,9 @@ require "set"
 module Master
   module Review
     module Scan
-      # Audits executable law population vs Ruby scanner registry.
+      # Audits the transitional law_runtime.yml execution metadata population against
+      # Ruby definitions and scanner registry. It is not the normative flat
+      # constitution audit; that is FlatLawCatalogue.
       class LawRegistryAudit
         Report = Data.define(
           :yaml_laws, :registry_ids, :kernel_ids, :lexical_wired, :lexical_unwired,
@@ -251,17 +253,18 @@ module Master
           raise "law registry law census failed: #{e.class}: #{e.message}"
         end
 
-        # The audit's YAML population comes from the authored catalogue,
-        # never from the Ruby populations it is supposed to reconcile.
+        # Transitional audit input: Law::Definition still takes per-Law severity,
+        # lifecycle, autofix and reach metadata from law_runtime.yml. This
+        # population is execution metadata, not the normative laws.yml catalogue.
         def load_yaml_laws
           data = Master.load_laws(root: @root)
           catalogue = data.fetch("law_catalogue") do
-            raise "data/laws.yml has no law_catalogue; refusing a synthetic Law population"
+            raise "data/law_runtime.yml has no law_catalogue; refusing a synthetic Law population"
           end
           entries = catalogue.fetch("entries") do
-            raise "data/laws.yml law_catalogue has no entries"
+            raise "data/law_runtime.yml law_catalogue has no entries"
           end
-          raise "data/laws.yml law_catalogue entries must be a non-empty mapping" unless entries.is_a?(Hash) && !entries.empty?
+          raise "data/law_runtime.yml law_catalogue entries must be a non-empty mapping" unless entries.is_a?(Hash) && !entries.empty?
 
           entries.map do |id, entry|
             raise "law_catalogue entry #{id} must be a mapping" unless entry.is_a?(Hash)
