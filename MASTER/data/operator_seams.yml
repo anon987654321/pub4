@@ -301,6 +301,35 @@ seams:
     evidence: >-
       The operator names one external messaging channel (not Telegram) and the account it speaks as; the
       channel is then built through the shared session with identity isolation and delivery receipts.
+  - id: session_browser_post_policy
+    tree: MASTER
+    needs: rights
+    evidence: >-
+      The operator edits plugins.session_browser in laws.yml to allow POST to an approved host
+      (allowed_network_methods [GET, HEAD, POST], post_scope approved_host_only, host_approval
+      once_per_site_per_task, visible_login_post_submission allowed), as decided 2026-11-01.
+  - id: radio_whyp_tracks_imported
+    tree: RAILS
+    needs: console
+    evidence: >-
+      On vm23, with yt-dlp 2026.08.19 or later and ffmpeg: RAILS_ENV=production bin/rails
+      radio:import_whyp_tracks, and its output showing 12 tracks seeded into Radio.
+  - id: paid_plans_live
+    tree: RAILS
+    needs: credential
+    evidence: >-
+      Stripe Prices and STRIPE_PRICE_* set for brgen, amber and the master law API, a webhook endpoint per
+      app with STRIPE_WEBHOOK_SECRET, and started_on set for each bet in __shared/config/portfolio.yml.
+  - id: checkout_steps_design
+    tree: RAILS
+    needs: material
+    evidence: The operator's recovered checkout-steps design, committed beside the marketplace cart.
+  - id: search_focus_shadow
+    tree: RAILS
+    needs: rights
+    evidence: >-
+      The operator says whether the yep search shell keeps the pen's focus shadow, a named exception to the
+      flat rule in __shared/README.md and design_contract_test.
   - id: advice_quality_human_review
     tree: MASTER
     needs: ears

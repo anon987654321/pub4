@@ -6,6 +6,28 @@ vm23 is a seam in `MASTER/data/operator_seams.yml`. Refusals live under
 "Refused, and why" in `MASTER/AGENTS.md`. An item closes by being deleted in
 the commit that carries its evidence; nothing here records finished work.
 
+## Open from the 2026-10-31 session
+
+- MASTER browser: submit forms for an operator-approved host. The operator chose
+  "approve per site, then free" (2026-11-01); `Io::WebBrowse` forwards only GET/HEAD,
+  so add same-host POST with the session cookies, once-per-site-per-task approval,
+  and a test against a real login form. Blocked on the session_browser_post_policy seam.
+- whyp.it slug links (`/tracks/radio-bergen-1-…`) carry no numeric id, so
+  `Playlist::Track#whyp_embed_url` returns nil for them; resolve the id.
+- Run under Ruby 4.0.5 the app tests written but NOT_RUN: billing core
+  (`stripe_billing_test`), law API (`api_key_test`, `api_lint_controller_test`),
+  dating identity gate and splash, `radio_bergen_manifest_test`, `track_import_test`.
+- `test_core_bridge` `test_lifecycle_events_persist_without_a_host_bus` fails at
+  HEAD (expected "reversible", got nil).
+- `MASTER/bin/operator measure` did not finish in 500s here; re-read the ratchets
+  (law trace debt after SPONSORED_LINK_REL).
+- Remaining FULL.yml adopts (see `MASTER/data/recovery/full_yml_assessment.yml`), then
+  delete FULL.yml.
+- Marketplace: active-filter chips with clear on the results; trim tile badges to one
+  delivery line. Takeaway menu categories and restaurant cover photos need a schema
+  column each.
+- `radio_brgen_tunnel.js` is 1,234 lines; split the audio engine from the visual engine.
+
 ## Session note 2026-10-28 (bounded provider-health history)
 
 - Provider-health scoring already uses a 15-minute event window and recovery bonus.
