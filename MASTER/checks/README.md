@@ -141,7 +141,7 @@ The task lane describes participant or expert tasks for first-screen comprehensi
 Run the audit by itself or as part of the layout suite:
 
 ```zsh
-rake ux:baymard
+rake -f MASTER/Rakefile ux:baymard
 ruby MASTER/checks/runner.rb baymard_ux
 BAYMARD_EVIDENCE=MASTER/.master/baymard/evidence.yml ruby MASTER/checks/runner.rb baymard_ux
 BAYMARD_STRICT=1 BAYMARD_EVIDENCE=MASTER/.master/baymard/evidence.yml ruby MASTER/checks/runner.rb baymard_ux
