@@ -402,6 +402,13 @@ keyboard_flow:
   pass: "ok: keyboard tab order is sound"
   covered_by: rendered_suite
 
+accessibility_tree:
+  needs: [browser]
+  require: lib/rendered/accessibility_tree
+  class: Deploy::AccessibilityTreeCheck
+  pass: "ok: rendered accessibility tree exposes names for interactive controls and informative images"
+  covered_by: rendered_suite
+
 # Phone viewport journey floor (Fitts 44px, overflow, landmarks, verticals).
 mobile_flow:
   needs: [browser]
