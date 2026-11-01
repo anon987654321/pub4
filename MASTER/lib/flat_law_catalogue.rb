@@ -137,7 +137,7 @@ module Master
             raise Invalid, "#{id} must declare a numeric or scalar value" unless row.key?("value")
           elsif id.start_with?("LINT_")
             raise Invalid, "#{id} must declare an enforcement surface" if row["enforcement"].to_s.strip.empty?
-          elsif id.start_with?("KIND_") && row["expiry"].to_s.strip.empty?
+          elsif id.start_with?("KIND_") && row.key?("default_resolution") && row["expiry"].to_s.strip.empty?
             raise Invalid, "#{id} must declare expiry"
           end
         end
