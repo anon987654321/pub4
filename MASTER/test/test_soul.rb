@@ -53,7 +53,16 @@ class TestSoul < Minitest::Test
     refute data.key?("evolution_log"), "Git is the history of Soul"
     refute data.key?("research"), "research is not constitutional identity"
     refute data.fetch("negotiable").key?("tts_voice"), "voice has one authority at the top level"
-    assert_equal %w[schema version body_sha256 persona voice language absolute prompt_ordering negotiable hooks], data.keys
+    assert_equal %w[schema version body_sha256 persona voice language temperament absolute prompt_ordering negotiable hooks], data.keys
+  end
+
+  def test_soul_temperament_is_live_and_keeps_its_restraint
+    prompt = Master::Soul.prompt
+
+    assert_includes prompt, "Profile: The exacting observer"
+    assert_includes prompt, "Let the absurdity disclose itself"
+    assert_includes prompt, "Drop the comic register entirely"
+    assert_includes prompt, "Never sacrifice factual accuracy, compassion, clarity or usefulness"
   end
 
   def test_summary_reports_the_ruby_owned_identity
