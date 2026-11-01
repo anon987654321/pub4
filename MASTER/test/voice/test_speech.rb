@@ -674,8 +674,11 @@ class TestSpeech < Minitest::Test
       File.binwrite(audio_path, "edge-audio")
       audio_path
     end
-    failed_socket = lambda do |**|
-      speech.instance_variable_set(:@last_error, "edge socket produced empty audio")
+    failed_socket = lambda do |failure:, **|
+      failure[:message] = "edge socket produced empty audio"
+      # Another utterance may update the process-wide /status slot while this
+      # request is unwinding. The local failure must still trigger recovery.
+      speech.clear_last_error!
       nil
     end
 
@@ -751,6 +754,31 @@ class TestSpeech < Minitest::Test
 
     # warn_tts keeps every failure in last_error even when the terminal is quiet.
     assert_includes Master::Voice::Speech.instance_variable_get(:@last_error), "edge worker failed: worker failed #{Process.pid}"
+  end
+
+  def test_synthesize_edge_reports_one_shot_failure_when_stderr_is_empty
+    speech = Master::Voice::Speech
+    original_error = speech.last_error
+    status = Struct.new(:success?, :exitstatus, :termsig).new(false, 1, nil)
+
+    speech.stub(:fast_tts_mode?, false) do
+      speech.stub(:synthesize_edge_socket, nil) do
+        Master::Io::Exec.stub(:capture3, ["", "", status]) do
+          capture_io do
+            assert_nil speech.synthesize_edge(
+              "Read these words exactly.",
+              voice: :christopher,
+              style_config: { rate: "+0%", pitch: "+0Hz" },
+              shape: false,
+            )
+          end
+        end
+      end
+    end
+
+    assert_match(/edge worker failed: exit status 1; stderr empty/, speech.last_error)
+  ensure
+    speech.instance_variable_set(:@last_error, original_error) if speech
   end
 
   def test_resolve_voice_accepts_neural_name_and_alias

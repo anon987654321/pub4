@@ -35,6 +35,17 @@ class TestSpeechEmptyWorker < Minitest::Test
     end
   end
 
+  def test_failed_subprocess_stream_does_not_send_a_clean_end_frame
+    source = File.read(File.join(Master::ROOT, "bin", "tts-worker"), encoding: "UTF-8")
+    method = source[/^def stream_from_subprocess\b.*?^end$/m]
+
+    refute_nil method, "the worker must keep its single subprocess-stream implementation"
+    assert_match(/return false unless ok/, method)
+    assert_match(/return false if data\.empty\?/, method)
+    assert_operator method.index("return false unless ok"), :<, method.index("client.write(ZERO_FRAME)"),
+                    "the clean end frame may be written only after a successful non-empty audio body"
+  end
+
   def test_a_stream_with_no_audio_is_a_failure_and_retires_the_worker
     retired = []
     with_empty_worker do |path|

@@ -117,6 +117,37 @@ class TtsWorkerContractTest < Minitest::Test
     assert_equal ["edge socket unavailable after worker retry"], warnings
   end
 
+  def test_terminal_socket_failure_is_returned_to_the_current_synthesis
+    failure = {}
+    @speech.define_singleton_method(:resolve_socket_path) { nil }
+
+    @speech.synthesize_edge_socket(
+      text: "hello",
+      voice_name: "en-US-ChristopherNeural",
+      style_config: { rate: "+0%", pitch: "+0Hz" },
+      audio_path: "/tmp/unused-empty-socket-failure-test.mp3",
+      retried: true,
+      failure:,
+    )
+
+    assert_equal "edge socket unavailable after worker retry", failure.fetch(:message)
+  end
+
+  def test_initial_missing_socket_does_not_trigger_a_cold_start_failure
+    failure = {}
+    @speech.define_singleton_method(:resolve_socket_path) { nil }
+
+    @speech.synthesize_edge_socket(
+      text: "hello",
+      voice_name: "en-US-ChristopherNeural",
+      style_config: { rate: "+0%", pitch: "+0Hz" },
+      audio_path: "/tmp/unused-first-socket-test.mp3",
+      failure:,
+    )
+
+    assert_empty failure
+  end
+
   def test_build_socket_request_produces_valid_json
     req = @speech.build_socket_request("en-US-AriaNeural", {rate: "1.2", pitch: "0.8"}, "hello")
     parsed = JSON.parse(req)

@@ -210,7 +210,11 @@ def synth_streamed(request, client)
   # stream end without its end frame, drops it as truncated, and asks for the whole file.
   return false unless status&.exitstatus == NO_AUDIO
 
-  stream_from_subprocess(request, client)
+  result = stream_from_subprocess(request, client)
+  unless result
+    Master::Trace::Dmesg.status("tts0", "stream fallback produced no audio; connection will close as a failure", io: $stderr)
+  end
+  result
 rescue NotImplementedError, StandardError => e
   Master::Trace::Dmesg.status("tts0", "stream fork unavailable, using subprocess, #{e.class}: #{e.message}", io: $stderr)
   out = "/tmp/m_tts_#{SecureRandom.hex(8)}.mp3"
@@ -247,13 +251,15 @@ end
 def stream_from_subprocess(request, client)
   out = "/tmp/m_tts_#{SecureRandom.hex(8)}.mp3"
   ok = synth_subprocess(request, out)
-  if ok
-    data = File.binread(out)
-    client.write([data.bytesize].pack("Q>"))
-    client.write(data)
-  end
+  return false unless ok
+
+  data = File.binread(out)
+  return false if data.empty?
+
+  client.write([data.bytesize].pack("Q>"))
+  client.write(data)
   client.write(ZERO_FRAME)
-  ok
+  true
 rescue Errno::ENOTCONN, Errno::EPIPE, Errno::ECONNRESET
   false
 ensure
@@ -504,7 +510,11 @@ require_eventmachine_ssl!
 
 begin
   ok = synth_forked(SynthRequest.new(voice:, rate:, pitch:, text:), out_path, retry_in_subprocess: false)
-  exit(ok ? 0 : 1)
+  unless ok
+    Master::Trace::Dmesg.status("tts0", "one-shot synthesis produced no audio", io: $stderr)
+    exit 1
+  end
+  exit 0
 rescue StandardError => e
   Master::Trace::Dmesg.status("tts0", "#{e.class}: #{e.message}", io: $stderr)
   exit 1

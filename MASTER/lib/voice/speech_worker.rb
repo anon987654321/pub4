@@ -16,8 +16,19 @@ module Master
       def synthesize_edge_oneshot(text:, voice_name:, style_config:, audio_path:, timeout: nil)
         timeout ||= worker_timeout(text.to_s.length)
         err, status = run_edge_worker(text, voice_name, style_config, audio_path, timeout)
-        unless status.success?
-          warn_tts("edge worker failed: #{err.to_s.strip}") unless err.to_s.strip.empty?
+        unless status&.success?
+          exit_status = status.exitstatus if status&.respond_to?(:exitstatus)
+          signal = status.termsig if status&.respond_to?(:termsig)
+          outcome = if exit_status
+                      "exit status #{exit_status}"
+                    elsif signal
+                      "signal #{signal}"
+                    else
+                      "unknown process status"
+                    end
+          detail = err.to_s.strip
+          message = detail.empty? ? "edge worker failed: #{outcome}; stderr empty" : "edge worker failed: #{detail} (#{outcome})"
+          warn_tts(message)
           return cleanup_failed_audio(audio_path)
         end
 
@@ -55,10 +66,10 @@ module Master
         [err, status]
       end
 
-      def synthesize_edge_socket(text:, voice_name:, style_config:, audio_path:, on_chunk: nil, retried: false)
+      def synthesize_edge_socket(text:, voice_name:, style_config:, audio_path:, on_chunk: nil, retried: false, failure: nil)
         sock_path = resolve_socket_path
         unless sock_path
-          warn_tts("edge socket unavailable after worker retry") if retried
+          record_socket_failure(failure, "edge socket unavailable after worker retry") if retried
           return
         end
 
@@ -68,7 +79,7 @@ module Master
         return audio_path if File.exist?(audio_path) && File.size(audio_path) > 0
 
         # Say so only when the retry on the next worker has failed too; the first miss is handled.
-        warn_tts("edge socket produced empty audio") if retried
+        record_socket_failure(failure, "edge socket produced empty audio") if retried
         cleanup_failed_audio(audio_path)
         # A worker can answer its health ping and still synthesise nothing; it then wins
         # every other round-robin turn, and each of its turns fell through to the older
@@ -76,15 +87,22 @@ module Master
         TtsSupervisor.retire_socket(sock_path)
         return if retried
 
-        synthesize_edge_socket(text:, voice_name:, style_config:, audio_path:, on_chunk:, retried: true)
+        synthesize_edge_socket(text:, voice_name:, style_config:, audio_path:, on_chunk:, retried: true, failure:)
       rescue Timeout::Error
-        warn_tts("edge socket timed out after #{timeout}s")
+        record_socket_failure(failure, "edge socket timed out after #{timeout}s")
         cleanup_failed_audio(audio_path)
         TtsSupervisor.retire_socket(sock_path) if sock_path
       rescue StandardError => e
-        warn_tts("edge socket failed: #{e.class}: #{e.message}")
+        record_socket_failure(failure, "edge socket failed: #{e.class}: #{e.message}")
         cleanup_failed_audio(audio_path)
         TtsSupervisor.retire_socket(sock_path) if sock_path
+      end
+
+      # The public /status error is shared across requests. Keep the retry decision
+      # on this invocation's own state so another sentence cannot clear its failure.
+      def record_socket_failure(failure, message)
+        failure[:message] = message if failure
+        warn_tts(message)
       end
 
       def build_socket_request(voice_name, style_config, text)
