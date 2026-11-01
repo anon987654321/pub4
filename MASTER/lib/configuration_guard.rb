@@ -182,23 +182,31 @@ module Master
       raise ArgumentError, "soul schema must be 1" unless data["schema"] == 1
       raise ArgumentError, "soul version must match MASTER::Soul::VERSION" unless data["version"] == Master::Soul::VERSION
 
-      expected_digest = Master::Soul.print.fetch("body_sha256")
+      expected_digest = Master::Soul.print(root: File.dirname(File.dirname(path))).fetch("body_sha256")
       unless data["body_sha256"].to_s == expected_digest
         raise ArgumentError, "soul body_sha256 must match MASTER/lib/soul.rb (#{expected_digest})"
       end
 
-      # Compatibility fields remain until their readers have migrated. Their
-      # sacred-path mirror must exactly match the Ruby source, never define it.
-      absolute = data.fetch("absolute") { raise KeyError, "absolute compatibility section is required" }
+      raise ArgumentError, "soul constitution must be MASTER/data/laws.yml" unless
+        data["constitution"] == "MASTER/data/laws.yml"
+
+      absolute = data.fetch("absolute") { raise KeyError, "absolute.golden_law reference is required" }
       raise ArgumentError, "absolute section must be a mapping" unless absolute.is_a?(Hash)
-      unless absolute["golden_law"] == "PRESERVE_THEN_IMPROVE_NEVER_BREAK"
-        raise ArgumentError, "golden_law must remain PRESERVE_THEN_IMPROVE_NEVER_BREAK"
+      raise ArgumentError, "absolute may only reference a Law; it cannot define constitutional values" unless
+        absolute.keys.map(&:to_s) == ["golden_law"]
+
+      master_root = File.dirname(File.dirname(path))
+      laws = YAML.safe_load_file(File.join(master_root, "data", "laws.yml"), aliases: true)
+      golden_id = absolute["golden_law"].to_s
+      golden = laws[golden_id]
+      unless golden.is_a?(Hash) && golden["statement"].to_s.match?(/preserve/i)
+        raise ArgumentError, "absolute.golden_law must resolve to an existing preservation Law in laws.yml"
       end
 
-      declared = Array(absolute["sacred_paths"]).map { |entry| normalize_path(entry) }
-      canonical = Master::Soul.sacred_paths(root: File.dirname(File.dirname(path))).map { |entry| normalize_path(entry) }
-      raise ArgumentError, "sacred_paths must match MASTER/lib/soul.rb" unless declared == canonical
-      validate_sacred_paths(declared, path)
+      forbidden = %w[precedence precedence_graph priority severity_rank severity_vocabulary
+                     roots_vocabulary sacred_paths protected_paths enforcement law_catalogue]
+      shadowed = forbidden.select { |key| data.key?(key) }
+      raise ArgumentError, "soul.yml cannot shadow law-owned field(s): #{shadowed.join(', ')}" unless shadowed.empty?
 
       temperament = data.fetch("temperament") { raise KeyError, "temperament profile is required" }
       raise ArgumentError, "temperament.profile must be non-empty text" unless temperament.is_a?(Hash) && temperament["profile"].is_a?(String) && !temperament["profile"].strip.empty?
@@ -212,18 +220,6 @@ module Master
         value = temperament[key]
         raise ArgumentError, "temperament.#{key} must be a non-empty mapping" unless value.is_a?(Hash) && !value.empty?
       end
-    end
-
-    def validate_sacred_paths(paths, path)
-      raise ArgumentError, "sacred_paths must not be empty" if paths.empty?
-
-      broad = paths.select { |entry| TOO_BROAD_SACRED_PATHS.include?(entry) }
-      unless broad.empty?
-        raise ArgumentError, "runtime-written data and retired scanner paths cannot be sacred: #{broad.join(', ')}"
-      end
-
-      missing = Master::Soul.sacred_paths(root: File.dirname(File.dirname(path))) - paths
-      raise ArgumentError, "critical path protections missing: #{missing.join(', ')}" unless missing.empty?
     end
 
     def validate_laws(data, path:, text:)
