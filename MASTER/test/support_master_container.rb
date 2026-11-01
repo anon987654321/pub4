@@ -16,15 +16,12 @@ module Master
     module Container
       DEFAULT_FIXTURES = {
         "soul.yml" => <<~YML,
+          schema: 1
           version: "test"
+          constitution: MASTER/data/laws.yml
+          references:
+            golden_law: PRESERVE_FIRST
           persona: anchor
-          absolute:
-            golden_law: PRESERVE_THEN_IMPROVE_NEVER_BREAK
-            rules:
-              FAIL_VISIBLY: never swallow an error silently.
-              SIMPLEST_WORKS: refuse god classes.
-              PRESERVE_FIRST: read first. preserve behavior. larger changes allowed if safe.
-              BE_CONCISE: minimal response.
           negotiable:
             style: openbsd_dmesg
             default_model: openrouter/auto
@@ -49,12 +46,23 @@ module Master
               endings: []
         YML
         "laws.yml" => <<~YML,
-          rules: {}
-          voice:
-            strunk: { preambles: [], endings: [] }
-            banned_output: []
-          thresholds:
-            class: { max_lines: 200, max_methods: 6 }
+          SACRED_AUTHORSHIP:
+            root: least_authority
+            statement: protect constitutional files
+            protected_paths: [data/laws.yml, data/soul.yml]
+          PRESERVE_FIRST:
+            parent: STEWARDSHIP
+            statement: preserve existing behaviour before improvement
+          STEWARDSHIP:
+            root: stewardship
+            statement: preserve what works
+        YML
+        "law_runtime.yml" => <<~YML,
+          veto_patterns:
+            secrets:
+              detect: "(?i)(?:api[_-]?key|secret|token)"
+            unsafe_calls:
+              detect: "(?i)(?:curl.*\\|.*sh|rm\\s+-rf)"
         YML
         "console.yml" => "{}\n",
         "scan.yml" => "{}\n",
