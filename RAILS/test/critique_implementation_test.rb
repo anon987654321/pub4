@@ -512,14 +512,16 @@ class CritiqueImplementationTest < Minitest::Test
     amber_index = read("amber/app/views/posts/index.html.erb")
     amber_home = read("amber/app/views/home/_frontpage_posts.html.erb")
     amber_styles = read("amber/app/assets/stylesheets/application.scss")
+    feed_list_css = read("__shared/app/assets/stylesheets/_feed_list.scss")
 
-    assert_includes brgen_results, '<ul class="post-feed feed_list" id="posts-feed">'
+    assert_includes brgen_results, '<ul class="post-feed feed_list post-card-list" id="posts-feed" role="list">'
     assert_match(/<li>\s*<div data-controller="offline-feed"/m, brgen_results)
     assert_match(/<\/li>\s*<% end %>\s*<\/ul>/m, brgen_results)
-    assert_includes amber_index, '<ul class="feed_list" id="amber-posts-list">'
+    assert_includes amber_index, '<ul class="feed_list post-card-list" id="amber-posts-list" role="list">'
     assert_match(/@posts\.each do \|post\|\s*<li><%= render post %><\/li>\s*<% end %>/m, amber_index)
-    assert_includes amber_home, '<ul class="feed_list" id="amber-home-posts-list">'
+    assert_includes amber_home, '<ul class="feed_list post-card-list" id="amber-home-posts-list" role="list">'
     assert_includes amber_styles, '@include meta.load-css("feed_list");'
+    assert_includes feed_list_css, ".feed_list.post-card-list > li {\n  display: block;"
     assert_match(/posts\.each do \|post\|\s*<li><%= render "posts\/post", post: post %><\/li>/m, amber_home)
   end
   def test_amber_enum_selectors_localize_labels_and_keep_enum_values

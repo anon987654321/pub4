@@ -5,7 +5,7 @@
       <%= tag.h2 t("pages.community"), id: "amber-home-posts-title" %>
       <%= link_to t("nav.feed"), posts_path %>
     </div>
-    <ul class="feed_list" id="amber-home-posts-list">
+    <ul class="feed_list post-card-list" id="amber-home-posts-list" role="list">
       <% posts.each do |post| %>
         <li><%= render "posts/post", post: post %></li>
       <% end %>

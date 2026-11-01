@@ -3,7 +3,7 @@
 <% end %>
 
 <% if @posts.any? %>
-  <ul class="post-feed feed_list" id="posts-feed">
+  <ul class="post-feed feed_list post-card-list" id="posts-feed" role="list">
     <% @posts.each do |post| %>
       <li>
         <div data-controller="offline-feed"

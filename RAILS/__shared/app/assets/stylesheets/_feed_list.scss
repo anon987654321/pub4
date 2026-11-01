@@ -21,3 +21,10 @@
 .feed_list > li {
   display: contents;
 }
+
+/* Post feeds are linear collections, not grid slots. Keep a real li box so
+   its native listitem semantics survive across browser accessibility trees. */
+.feed_list.post-card-list > li {
+  display: block;
+  min-inline-size: 0;
+}
