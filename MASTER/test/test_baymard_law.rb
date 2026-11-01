@@ -164,7 +164,7 @@ class TestBaymardLaw < Minitest::Test
         "status" => "pass",
         "method" => "moderated_user_test",
         "participants" => 2,
-        "summary" => "Two participants found the destination without prompting.",
+        "summary" => "Observed 2026-11-01: two participants found the destination without prompting.",
         "artifacts" => [{ "path" => "navigation-observation.md", "sha256" => digest }],
       }
       evidence = {
