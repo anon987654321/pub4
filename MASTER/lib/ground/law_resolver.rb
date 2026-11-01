@@ -30,6 +30,8 @@ module Master
       def winner(law_a, law_b, laws_index: nil)
         node_a = node_for(law_for(law_a, laws_index:) || law_a)
         node_b = node_for(law_for(law_b, laws_index:) || law_b)
+        return law_b unless node_a && !node_b
+        return law_a unless node_b && !node_a
         return law_a unless node_a && node_b
 
         result = Master::Soul.winner(node_a, node_b, root: @root)
