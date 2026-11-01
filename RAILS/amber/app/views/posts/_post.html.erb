@@ -24,7 +24,7 @@
   <% embed = post.link_embed_record %>
   <%= render "shared/post_card",
         post: post,
-        variant: :prose,
+        variant: :card,
         name: post.author_name,
         url: post_path(post),
         author_url: (post.anonymous? || post.user&.guest? ? nil : user_path(post.user)),
