@@ -136,12 +136,6 @@ module Master
 
             next [] unless rel&.start_with?("data/") && rel.end_with?(".md")
 
-            allowed = %w[
-              data/SOUL.md
-              data/IDENTITY.md
-            ].freeze
-            next [] if allowed.include?(rel)
-
             # data/principles/*.md is a runtime-read location by construction:
             # Ground::Constitution globs exactly that pattern and parses each file
             # into an operator-declared principle. This rule told the operator to
