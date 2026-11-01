@@ -13,7 +13,7 @@ purpose: >
   renders. The chain is one direction: ledger -> ideation record
   (data/ideations/) -> pick -> convergence.yml workstream -> law-gated
   implementation. This file routes appetite; it grants no authority of its
-  own — laws remain in soul.yml and laws.yml, and the budget ratchet still
+  own — normative Law authority lives in laws.yml; soul.yml is subordinate identity/delivery data, and the budget ratchet still
   only ever goes down.
 authorization: >
   Operator request of 2026-10-27 (chat e2c7ceca): ideate over the planned
