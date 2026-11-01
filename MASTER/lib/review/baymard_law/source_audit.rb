@@ -30,9 +30,7 @@ module Master
               attrs = attributes(tag)
               type = attrs["type"].to_s.downcase
               next if type == "hidden"
-              if %w[submit reset button image].include?(type)
-                next if !attrs["value"].to_s.strip.empty? || named?(attrs)
-              end
+              next if %w[submit reset button].include?(type)
 
               controls << [record, tag, match.begin(0), attrs]
             end
@@ -103,6 +101,7 @@ module Master
 
         def probe_native_click_targets(records)
           targets = []
+          unknown = []
           records.each do |record|
             record.content.to_enum(:scan, /<(div|span)\b[^>]*(?:onclick\s*=)[^>]*>/im).each do
               match = Regexp.last_match
