@@ -15,7 +15,7 @@ class TestSoul < Minitest::Test
   # soul carried absolute.rules and absolute.aesthetic_rules. The second reached
   # nothing but fix/repair_loop, so NO_ASCII_DECORATION, FLAT_UI and DEEP_SCAN_ONLY
   # governed the fixer's rewrites while the model writing the code was never told
-  # them. Then both moved to law/, once the `conduct` kind let a rule about how
+  # them. Then both moved to law/, once the conduct kind let a rule about how
   # to work be a Law like any other — a rule the author cannot see is a rule the
   # fixer spends its turn undoing, and a rule in two files is one a reader cannot
   # resolve.
@@ -36,7 +36,7 @@ class TestSoul < Minitest::Test
   # The counterweight to the assertion above, and the reason it was needed. That
   # test holds soul.yml empty of rules; nothing held their readers to the move.
   # tools/agent_context.rb — the file every harness contract sends an agent to —
-  # went on digging for `absolute.rules`, got nil, and printed its heading over
+  # went on digging for absolute.rules, got nil, and printed its heading over
   # an empty list. Assert what the section says, not that the key is gone.
   def test_the_conduct_rules_reach_the_agent_context
     conduct = Operator::AgentContext.conduct
@@ -55,10 +55,6 @@ class TestSoul < Minitest::Test
     The golden rule is preserve then improve.
     The anti-simulation rule requires evidence.
     Voice character remains terse, direct, dark.
-
-    ## Changelog
-    | Version | Date | Change | Approval |
-    | 1.0.0 | 2025-01-01 | Initial | Initial |
   SOUL
 
   def setup
@@ -86,7 +82,7 @@ class TestSoul < Minitest::Test
     refute File.exist?(File.join(@root, ".master", "soul_proposal.md"))
   end
 
-  # A proposal edited on disk after `propose` accepted it must not carry an
+  # A proposal edited on disk after propose accepted it must not carry an
   # absolute section out of SOUL.md at approval.
   def test_approve_refuses_a_proposal_that_drops_an_absolute_section
     soul = Master::Voice::Soul.new(root: @root)
@@ -104,7 +100,9 @@ class TestSoul < Minitest::Test
 
     assert_includes prompt, "MASTER is not a mascot, oracle, or corporate assistant."
     assert_includes prompt, "Challenge an instruction when the proposed action conflicts with stronger authority"
-    assert_includes prompt, "Do not invent capabilities, measurements, completion, or provenance."
+    assert_includes prompt, "Do not invent capabilities, measurements, completion or provenance."
+    assert_includes prompt, "No single session owns continuity."
+    assert_includes prompt, "Prefer accurate models over comforting ones."
   end
 
   def test_soul_yaml_contains_only_live_kernel_sections
@@ -116,15 +114,14 @@ class TestSoul < Minitest::Test
     assert_equal %w[schema version persona voice language absolute prompt_ordering negotiable hooks], data.keys
   end
 
-  # /soul printed "SOUL.md v1.0.0 | persona:" while the boot said rev 2.8.0.
+  # /soul prints the revision that booted, then SOUL.md's opening sentence.
   def test_summary_names_the_booted_revision_and_persona
     summary = Master::Voice::Soul.new.summary
     law = Master.load_yaml(Master.data_path("soul.yml"))
 
     assert summary.start_with?("soul0: rev #{law['version']}, persona #{law['persona']}\n"), summary
     assert_match(/\A# SOUL\z/, File.readlines(File.join(Master::ROOT, "data", "SOUL.md"), encoding: "UTF-8").first&.chomp)
-    assert_includes File.read(File.join(Master::ROOT, "data", "SOUL.md"), encoding: "UTF-8"), "Be the assistant you'd actually want to talk to at 2am"
-
+    assert_includes File.read(File.join(Master::ROOT, "data", "SOUL.md"), encoding: "UTF-8"), "I am MASTER: a system designed to preserve a coherent working identity across sessions"
   end
 
   # SOUL.md carries no Version line, so approval must not invent one: the
@@ -147,8 +144,8 @@ class TestSoul < Minitest::Test
     end
   end
 
-  # The index is shared with every session in the checkout: approval commits SOUL.md
-  # and leaves what someone else staged staged and uncommitted.
+  # The index is shared with every session in the checkout: approval commits
+  # SOUL.md and leaves what someone else staged staged and uncommitted.
   def test_approve_commits_only_soul_md
     with_git_identity do
       git("init", "-q")
