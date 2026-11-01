@@ -69,6 +69,7 @@ class FoldBlockLimitTest < Minitest::Test
     assert_match(/stopped after 3 constitutional blocks by same_law/, result.summary)
     assert_equal 3, memory.records.length
     assert_equal 3, emitted.length
+  end
 
   def test_capability_refusal_says_what_was_unavailable_and_that_nothing_ran
     effect = Master::Core::Effect.exec(["telegram-cli", "login"])
