@@ -131,8 +131,8 @@ class TestAxioms < Minitest::Test
 
       File.write(soul, "references:\n  golden_law: SECOND_PRESERVE\n")
 
-      assert_equal "second", laws.soul_data.fetch("absolute").fetch("golden_law")
-      assert_equal "second", laws.constitution.fetch("golden_law")
+      assert_equal "SECOND_PRESERVE", laws.soul_data.fetch("references").fetch("golden_law")
+      assert_equal "SECOND_PRESERVE: second preservation contract", laws.constitution.fetch("golden_law")
     end
   end
 
