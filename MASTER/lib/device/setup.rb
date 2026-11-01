@@ -165,7 +165,7 @@ module Master
       # nothing can stop to ask a question.
       def spawn_logged(argv)
         FileUtils.mkdir_p(File.dirname(LOG))
-        pid = Process.spawn({ "DEBIAN_FRONTEND" => "noninteractive" }, *argv,
+        pid = Process.spawn(Master::Io::ProcessSpawn.environment("DEBIAN_FRONTEND" => "noninteractive"), *argv,
                              **Master::Io::ProcessSpawn.options(in: File::NULL, out: [LOG, "a"], err: [:child, :out]))
         Process.wait2(pid).last.success?
       rescue SystemCallError
