@@ -130,6 +130,27 @@ unique for each run, and they read confirmation and reset mail from the app's
 Checks that can repair what they find do so by default and measure again.
 `--scan-only`, `--no-autofix` or `CHECK_AUTOFIX=0` makes a run read-only.
 
+## Baymard-informed UX review
+
+The `baymard_ux` check is an original, independently worded assessment profile informed by public Baymard research. It is not an official Baymard audit, score, certification or affiliation. The research is ecommerce-heavy; commerce-specific journeys are applied only where the app inventory indicates that the feature exists. The audit does not impose one visual identity on Brgen, Amber, BSDPorts or their verticals.
+
+The source lane measures a bounded set of inspectable markup and stylesheet contracts: form-control names, image alternatives, interactive names, non-native click targets, focus-outline suppression and viewport declarations. Framework-generated controls and ambiguous cases remain inconclusive until the rendered browser can inspect them. Existing rendered checks still own geometry, contrast, keyboard execution, touch targets, overflow and visual snapshots.
+
+The task lane describes participant or expert tasks for first-screen comprehension, navigation findability, search recovery, offer evaluation, cart editing and cost comprehension, checkout recovery, mobile completion, and keyboard/screen-reader operation. Source text cannot prove that a person understood a page or completed a journey. Without task evidence, these assessments remain `INCONCLUSIVE`; they are never silently counted as passes.
+
+Run the audit by itself or as part of the layout suite:
+
+```zsh
+rake ux:baymard
+ruby MASTER/checks/runner.rb baymard_ux
+BAYMARD_EVIDENCE=MASTER/.master/baymard/evidence.yml ruby MASTER/checks/runner.rb baymard_ux
+BAYMARD_STRICT=1 BAYMARD_EVIDENCE=MASTER/.master/baymard/evidence.yml ruby MASTER/checks/runner.rb baymard_ux
+```
+
+The evidence file is repository-local YAML with `schema: 1` and an `apps` mapping. Each task row names `status: pass`, `status: fail` or `status: inconclusive`; a non-inconclusive verdict also requires a method (`moderated_user_test`, `expert_walkthrough`, `browser_task` or `screen_reader_review`), a positive participant count, a concise observation summary and one or more artifacts. Every artifact names a repository-relative path and its SHA-256 digest. The audit rejects missing, changed, escaped or symlinked evidence. `BAYMARD_STRICT=1` makes unresolved task evidence blocking.
+
+The report separates measured pass/fail counts from inconclusive and not-applicable assessments, includes source paths and line numbers, and explicitly reports no official Baymard score. A clean source scan is not a usability certification: task observations and rendered browser evidence remain separate proof.
+
 ## Three rules the checks have paid for
 
 A check that demands one of several correct outcomes reports the environment as
