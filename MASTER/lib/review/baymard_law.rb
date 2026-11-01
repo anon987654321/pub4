@@ -106,6 +106,7 @@ module Master
 
         laws_path = File.join(root, "data", "laws.yml")
         laws = YAML.safe_load_file(laws_path, aliases: true)
+        raise InvalidProfile, "data/laws.yml must be a mapping" unless laws.is_a?(Hash)
         missing = []
         checks.each do |id, row|
           raise InvalidProfile, "#{id} must be a mapping" unless row.is_a?(Hash)
@@ -178,7 +179,6 @@ module Master
               findings << issue if issue
             end
           end
-          read_errors.concat(app.records.filter_map { |record| record.error })
         end
 
         Report.new(
