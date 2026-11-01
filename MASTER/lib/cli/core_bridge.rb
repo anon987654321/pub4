@@ -20,7 +20,7 @@ module Master
 
       def report_turn(entry)
         text = entry.to_s
-        if (match = text.match(/\\A(\\d+): read\\(path\\) -> ok: (.*)\\z/m))
+        if (match = text.match(/\A(\d+): read\(path\) -> ok: (.*)\z/m))
           output = match[2]
           return "#{match[1]}: read(path) -> ok: #{output.bytesize}B, #{output.lines.size} lines"
         end
