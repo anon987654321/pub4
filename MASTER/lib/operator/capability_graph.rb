@@ -19,7 +19,7 @@ module Operator
       payload = {
         "updated_at" => Time.now.utc.iso8601,
         "nodes" => {
-          "constitution" => file_state(%w[MASTER/data/soul.yml MASTER/data/laws.yml]),
+          "constitution" => file_state(%w[MASTER/data/laws.yml MASTER/data/soul.yml]),
           "model" => model_state(model),
           "voice" => ENV["MASTER_TTS_DEGRADED"] == "1" ? "degraded" : "available",
           "web" => file_state(%w[RAILS/master/public/face.css]),
