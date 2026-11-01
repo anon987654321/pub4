@@ -75,7 +75,14 @@ module Master
         def build_app(name, path)
           records = collect_source_files(path)
           routes_path = File.join(path, "config", "routes.rb")
-          routes = File.file?(routes_path) ? File.read(routes_path) : ""
+          routes = ""
+          if File.file?(routes_path)
+            app_real = File.realpath(path)
+            routes_real = File.realpath(routes_path)
+            raise BaymardLaw::InvalidProfile, "route source escapes #{name}" unless inside?(routes_real, app_real)
+
+            routes = File.read(routes_real)
+          end
           app_prefix = "#{path.sub(%r{/$}, "")}/"
           relative_paths = records.map(&:path).map do |source_path|
             source_path.delete_prefix(app_prefix).downcase
