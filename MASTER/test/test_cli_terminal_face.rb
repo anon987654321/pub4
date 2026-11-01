@@ -264,8 +264,34 @@ class TestCliTerminalFace < Minitest::Test
 
     transcript = rows_of(face.screen(24, 80, 1.0)).values.join("\n")
     assert_includes transcript, "The actual answer remains visible."
-    assert_includes transcript, "reply shown as text"
+    assert_includes transcript, "audio unavailable"
+    assert_includes transcript, "reply remains visible as text"
     assert_includes transcript, "synthesiser returned no audio"
+  end
+
+  def test_voice_failure_diagnostic_is_bounded_on_the_face
+    diagnostic = "worker refused audio " * 40
+    mouth = Object.new
+    mouth.define_singleton_method(:missing) { nil }
+    mouth.define_singleton_method(:available?) { true }
+    mouth.define_singleton_method(:say) { |*_args, **_kwargs| false }
+    mouth.define_singleton_method(:last_error) { diagnostic }
+    face = Master::CLI::Face::Window.new(
+      turn: ->(_) { Master::Result.ok("The reply is still here.") },
+      ear: Quiet.new(false),
+      mouth:,
+      input: StringIO.new,
+      output: StringIO.new,
+      size: -> { [24, 80] },
+    )
+
+    face.send(:answer, "Explain the fallback.")
+    transcript = rows_of(face.screen(24, 80, 1.0)).values.join("\\n")
+
+    assert_includes transcript, "audio unavailable"
+    assert_includes transcript, "…"
+    refute_includes transcript, diagnostic
+    assert_includes transcript, "The reply is still here."
   end
 
   def test_motion_has_a_camera_dolly
