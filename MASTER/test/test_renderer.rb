@@ -39,6 +39,22 @@ class TestRenderer < Minitest::Test
     end
   end
 
+  def test_compact_splash_calls_a_capability_probe_available_not_ready
+    old_degraded = ENV["MASTER_TTS_DEGRADED"]
+    ENV.delete("MASTER_TTS_DEGRADED")
+    renderer = FakeRenderer.new(config: {})
+
+    Master::Voice::Speech.stub(:last_error, nil) do
+      Master::Voice::Playback.stub(:last_error, nil) do
+        text = renderer.splash("model")
+        assert_includes strip_ansi(text), "voice0 at mainbus0: available"
+        refute_includes strip_ansi(text), "voice0 at mainbus0: ready"
+      end
+    end
+  ensure
+    old_degraded.nil? ? ENV.delete("MASTER_TTS_DEGRADED") : ENV["MASTER_TTS_DEGRADED"] = old_degraded
+  end
+
   def test_compact_splash_reports_degraded_voice_when_synthesis_failed
     old = ENV["MASTER_TTS_DEGRADED"]
     ENV.delete("MASTER_TTS_DEGRADED")
