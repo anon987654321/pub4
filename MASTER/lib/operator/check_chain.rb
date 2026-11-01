@@ -815,7 +815,7 @@ module Operator
         stop_lock = Mutex.new
         started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
         watchdog = nil
-        Open3.popen2e(ENV.to_h.merge(stage_child_env(env)), *cmd, chdir:, pgroup: true) do |stdin, stream, wait|
+        Open3.popen2e(Master::Io::ProcessSpawn.environment(ENV.to_h.merge(stage_child_env(env))), *cmd, chdir:, pgroup: true) do |stdin, stream, wait|
           stdin.close
           last_heartbeat = 0.0
           watchdog = Thread.new do
