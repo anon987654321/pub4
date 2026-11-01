@@ -8329,8 +8329,7 @@ def run(argv)
   end.parse!(argv)
   options[:live] = true if live_argument
   if options[:play] && (options[:sample_loop] || !ENV.fetch("SAMPLE_LOOP", "").strip.empty?)
-    warn "dilla0: sample flips require a finite render; remove --play and use --showcase or --live"
-    return 2
+    abort "dilla0: sample flips require a finite render; remove --play and use --showcase or --live"
   end
 
   data = JSON.parse(File.read(File.join(__dir__, "data", "dilla.json")))
@@ -8404,8 +8403,7 @@ def run(argv)
     begin
       options[:sample_flip] = Dilla::SampleFlip.load(options)
     rescue ArgumentError => error
-      warn "dilla0: sample flip: #{error.message}"
-      return 2
+      abort "dilla0: sample flip: #{error.message}"
     end
   end
 
