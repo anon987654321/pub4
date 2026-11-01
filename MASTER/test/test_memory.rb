@@ -158,16 +158,17 @@ class TestMemory < Minitest::Test
     assert_equal "conversation:2", conflicts.first.fetch("incoming_provenance").fetch("source")
   end
 
-  # data/ is the constitution, so the runtime imports what the operator wrote
-  # there and never plants a file of its own.
-  def test_brain_files_are_imported_and_never_created
+  # Identity is loaded from Master::Soul at runtime, not duplicated in memory.
+  def test_markdown_identity_documents_are_not_a_memory_source
     fresh = Dir.mktmpdir("master-mem-brain-")
-    Master::Ground::Memory.new(root: fresh)
-    refute File.exist?(File.join(fresh, "data", "IDENTITY.md"))
-
     FileUtils.mkdir_p(File.join(fresh, "data"))
-    File.write(File.join(fresh, "data", "IDENTITY.md"), "# IDENTITY\n\nActive persona.\n")
-    assert Master::Ground::Memory.new(root: fresh).recall("brain/identity").include?("persona")
+    File.write(File.join(fresh, "data", "IDENTITY.md"), "# IDENTITY\n\nStale identity.\n")
+    File.write(File.join(fresh, "data", "SOUL.md"), "# SOUL\n\nStale soul.\n")
+
+    memory = Master::Ground::Memory.new(root: fresh)
+
+    assert_nil memory.recall("brain/identity")
+    assert_nil memory.recall("brain/soul")
   ensure
     FileUtils.rm_rf(fresh)
   end
