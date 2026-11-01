@@ -58,6 +58,8 @@ The current exact adapters are RI-001 (valid signup), RI-003 (malformed email), 
 
 The checked-in manifest remains the authored inventory and is not rewritten by a local run. Its rows stay `NOT_RUN` until observed evidence is deliberately promoted; the run ledger reports the outcome for that specific execution. The `--all` command deliberately exits as incomplete while unmapped cases remain, even if every mapped adapter passes.
 
+The full `MASTER/tools/rails/premerge.rb` run now invokes this `--all` campaign after the app, contract, coverage and layout checks. Consequently `/fix RAILS` cannot report a fully verified PASS while any campaign case is BLOCKED or SKIPPED. Use `MASTER/tools/rails/premerge.rb --interactions` to run this proof independently.
+
 ## Run order
 
 Use the repository's canonical runners, which select the app-specific Ruby and Bundler context:
@@ -68,7 +70,10 @@ ruby MASTER/tools/rails/premerge.rb --apps
 ruby MASTER/tools/rails/premerge.rb --pwa
 ruby MASTER/tools/rails/premerge.rb --coverage
 ruby MASTER/tools/rails/premerge.rb --checks
+ruby MASTER/tools/rails/premerge.rb --interactions
 ```
+
+The default full premerge command includes all groups, including the interaction campaign. `--interactions` runs the campaign alone.
 
 After the contract suite is green, execute the applicable Rails system/request tests with isolated databases, deterministic seed data and provider stubs. Use the existing MASTER browser and smoke runners for the face and transport. Persist a per-case runtime evidence record before changing any status. Run concurrency and load tests separately: 400 scenarios run sequentially are not a 400-user load test.
 
