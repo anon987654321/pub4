@@ -5,27 +5,27 @@ require "fileutils"
 require_relative "test_helper"
 
 class TestFaceLawField < Minitest::Test
-  def test_glyphs_come_from_ranked_constitutional_laws
+  def test_glyphs_come_from_ordered_constitutional_law_nodes
     laws = Master::Face::LawField.laws
 
-    assert_equal 8, laws.size
+    assert_equal 9, laws.size
     assert_equal %w[
-      CAPABILITY_STATUS_MUST_BE_TRUTHFUL ROBUSTNESS SINGULARITY LINEARITY
-      PROXIMITY ABSTRACTION DENSITY RENDERED_VALUES
+      TRUTHFUL_STATUS ROBUSTNESS SINGULARITY LINEARITY PROXIMITY
+      ABSTRACTION DENSITY OPERATOR_RENDERED INTER_MODEL_CONTRACT
     ], laws.map { |row| row.fetch("id") }
     assert_equal Master::Face::LawField.config.fetch("law_glyphs"), laws.map { |row| row.fetch("glyph") }
-    assert laws.all? { |row| row.fetch("priority").is_a?(Numeric) && !row.fetch("statement").empty? }
+    assert laws.all? { |row| row.fetch("precedence").is_a?(Numeric) && !row.fetch("statement").empty? }
   end
 
   def test_catalog_uses_the_canonical_law_loader
     Dir.mktmpdir("face-law-field") do |dir|
       data = File.join(dir, "data")
       FileUtils.mkdir_p(data)
-      File.write(File.join(data, "laws.yml"), "FIXTURE: {}\n")
-      expected = { "FIXTURE" => { "priority" => 1, "statement" => "loader fixture" } }
+      File.write(File.join(data, "laws.yml"), "FIXTURE:\n  node: fixture\n  statement: loader fixture\n")
+      expected = { "FIXTURE" => { "node" => "fixture", "statement" => "loader fixture" } }
 
-      Master.stub(:load_laws, ->(root:) {
-        assert_equal File.expand_path(dir), root
+      Master.stub(:load_yaml, ->(path, **_options) {
+        assert_equal File.join(data, "laws.yml"), path
         expected
       }) do
         assert_same expected, Master::Face::LawField.catalog(root: dir)
@@ -37,7 +37,7 @@ class TestFaceLawField < Minitest::Test
     payload = Master::Face::LawField.browser_payload
 
     assert_equal 1, payload.fetch(:schema)
-    assert_equal 8, payload.fetch(:laws).size
+    assert_equal 9, payload.fetch(:laws).size
     assert_match(/\A[0-9a-f]{64}\z/, payload.fetch(:digest))
     assert_equal "l", payload.fetch(:toggle_key)
     assert_equal "v", payload.fetch(:overlay_toggle_key)
