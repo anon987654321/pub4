@@ -40,8 +40,8 @@ test("radio mode stepping wraps in both directions and validates its inputs", as
   assert.equal(modeAfterStep(7, MODES.length), 7)
   assert.equal(modeAfterStep(7, -MODES.length), 7)
   assert.equal(modeAfterStep(0, -23), MODES.length - 1)
-  assert.throws(() => modeAfterStep(0.5, 1), RangeError)
-  assert.throws(() => modeAfterStep(0, 1, 0), RangeError)
+  assert.throws(() => modeAfterStep(0.5, 1), { name: "RangeError" })
+  assert.throws(() => modeAfterStep(0, 1, 0), { name: "RangeError" })
 })
 
 test("all 22 mode indices have an ordered GLSL branch and the classic mode is neutral", async () => {
