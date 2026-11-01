@@ -22,6 +22,7 @@ require_relative "research/visual_quality"
 
 require_relative "research/calibration"
 require_relative "source/frontend_auditor"
+require_relative "research/baymard_ux"
 require_relative "source/stimulus_wiring"
 require_relative "source/typography_contract"
 require_relative "rendered_suite"
@@ -50,6 +51,7 @@ module Deploy
       VisualQualityCheck,
       CalibrationCheck,
       FrontendAuditorCheck,
+      BaymardUxCheck,
       StimulusWiringCheck,
       RenderedSuiteCheck,
     ].freeze
