@@ -23,13 +23,15 @@ class TestBootReceipt < Minitest::Test
     assert_operator constitution[:sacred_paths], :>, 0
   end
 
-  # The three rule populations are allowed to differ — 78 declared rules resolve
-  # through a fold and carry no detector. What the receipt must not do is print
-  # one of them as the total, which is the misreport it exists to prevent.
+  # The normative flat catalogue and legacy executable metadata are distinct
+  # populations during migration. The receipt must label both, not merge them.
   def test_the_receipt_counts_all_three_rule_populations
     law = Receipt.law
 
+    assert_operator law[:normative], :>, 100
     assert_operator law[:declared], :>, 200
+    assert_equal law[:declared], law[:legacy_execution_metadata]
+    assert_equal Master::law_entries(root: Master::ROOT).size, law[:normative]
     assert_equal Master::Review::Scan::LawTree.ids.size, law[:registry]
     assert_includes Receipt.lines.join("\n"), "#{law[:declared]} declared"
   end
