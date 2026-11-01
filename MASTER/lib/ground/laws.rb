@@ -30,14 +30,21 @@ module Master
         def soul_data = Master.soul_config(root: @root)
 
         def constitution
-          absolute = soul_data["absolute"] || {}
+          manifest = soul_data
+          references = manifest["references"] || {}
+          catalogue = Master.load_yaml(File.join(Master.master_root(root: @root), "data", "laws.yml"))
+          golden_id = references["golden_law"].to_s
+          golden = catalogue[golden_id] || {}
+          truthful = catalogue["TRUTHFUL_STATUS"] || {}
+          authorship = catalogue["SACRED_AUTHORSHIP"] || {}
           {
-            "golden_law" => absolute["golden_law"] || laws_data["golden_law"],
-            "protection" => absolute["protection_tiers"] || laws_data["protection"],
+            "golden_law" => [golden_id, golden["statement"]].compact.join(": "),
+            "protection" => {
+              "principle" => authorship["statement"],
+              "protected_paths" => Array(authorship["protected_paths"]),
+            }.freeze,
             "banned_output" => voice["banned_output"],
-            # soul is the one source; the voice.yml shadow copy is deleted, so
-            # a fallback arm here would read a key that no longer exists.
-            "anti_simulation" => absolute["anti_simulation"],
+            "anti_simulation" => truthful["anti_simulation"],
             "communication_style" => voice["style"],
           }.freeze
         end
@@ -69,7 +76,7 @@ module Master
           items = philosophy(limit:)
           return if items.empty?
 
-          top = items.map { |a| "  #{a["id"]}: #{a["name"]}" }.join("\n")
+          top = items.map { |law| "  #{law["id"]}: #{law["statement"]}" }.join("\n")
           "## Laws (top #{items.size})\n#{top}"
         end
       end
@@ -117,32 +124,29 @@ module Master
         payload
       end
 
-      # The kernel is the set of Laws that came from soul.yml's absolute rules;
-      # laws.yml carries no `kernel` tier, so the source field is the marker.
-      KERNEL_SOURCE = /soul\.yml absolute/
-
+      # The kernel is projected from the ordered invariant nodes plus the
+      # preservation Law referenced by Soul. No tier or source string defines it.
       def kernel
         @kernel ||= begin
-          laws
-          ::Law.definitions.values
-               .select { |law| law.source.to_s.match?(KERNEL_SOURCE) }
-               .to_h { |law| [law.id.to_s, (law.fix || law.practice).to_s.gsub(/\s+/, " ").strip] }
-               .freeze
+          law_text = laws
+          rows = Master.law_entries(root: @root)
+          selected = rows.select { |row| row["node"] || row["id"] == "PRESERVE_FIRST" }
+          selected.to_h do |row|
+            id = row.fetch("id")
+            text = law_text[id] || row.fetch("statement")
+            [id, text.to_s.gsub(/\s+/, " ").strip]
+          end.freeze
         end
       end
 
       def philosophy(limit: nil)
-        all_laws = Master.law_entries(root: @root)
-        items = all_laws
-          .reject { |law| law["tier"] == "kernel" }
-          .map { |law| law.transform_keys(&:to_s) }
-          .freeze
+        items = Master.law_entries(root: @root).map { |law| law.transform_keys(&:to_s) }.freeze
         limit ? items.first(limit) : items
       end
 
       def lookup(id)
         id_str = id.to_s
-        kernel[id_str] || philosophy.find { |a| a["id"] == id_str }&.dig("name")
+        kernel[id_str] || philosophy.find { |law| law["id"] == id_str }&.dig("statement")
       end
 
       def empty? = laws_data.empty?
