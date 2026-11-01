@@ -219,8 +219,31 @@ module Master
                 "soul manifest mismatch: #{path}; expected #{BODY_SHA256}, found #{actual}"
         end
 
+        validate_references!(manifest, master_root:)
         validate_temperament!(manifest["temperament"])
         manifest
+      end
+
+      def validate_references!(manifest, master_root:)
+        raise IntegrityError, "soul constitution must be MASTER/data/laws.yml" unless
+          manifest["constitution"] == "MASTER/data/laws.yml"
+
+        references = manifest["references"]
+        unless references.is_a?(Hash) && references.keys.map(&:to_s) == ["golden_law"]
+          raise IntegrityError, "soul references may identify a Law but cannot define one"
+        end
+
+        laws_path = File.join(master_root, "data", "laws.yml")
+        laws = YAML.safe_load_file(laws_path, aliases: true)
+        id = references["golden_law"].to_s
+        row = laws[id]
+        unless row.is_a?(Hash) && row["statement"].to_s.match?(/preserve/i)
+          raise IntegrityError, "soul golden_law reference does not resolve to a preservation Law in laws.yml"
+        end
+      rescue IntegrityError
+        raise
+      rescue StandardError => e
+        raise IntegrityError, "soul law reference could not be verified: #{e.class}: #{e.message}"
       end
 
       def validate_temperament!(temperament)
