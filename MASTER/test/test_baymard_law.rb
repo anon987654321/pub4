@@ -236,7 +236,8 @@ class TestBaymardLaw < Minitest::Test
       navigation = report.assessments.find { |item| item.check_id == "navigation_findability" }
 
       assert_equal "pass", navigation.status
-      assert_includes navigation.evidence, "navigation-observation.md"
+      assert navigation.evidence.any? { |item| item.start_with?("navigation-observation.md sha256=") }
+      assert_includes navigation.evidence.first, Digest::SHA256.hexdigest(File.read(artifact_path))
     end
   end
 
