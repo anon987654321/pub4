@@ -121,11 +121,16 @@ module Master
     # genuine path bug.
     def load_laws(root: ROOT)
       root = Master.master_root(root:)
-      rules_path = File.join(root, "data", "laws.yml")
+      runtime_path = File.join(root, "data", "law_runtime.yml")
+      canonical_path = File.join(root, "data", "laws.yml")
+      # Existing scanner, veto, provider and /fix readers consume the old
+      # execution/configuration registry. The flat laws.yml is normative law
+      # data and has its own reader: Master.law_entries.
+      selected = File.file?(runtime_path) ? runtime_path : canonical_path
       # Skip the read entirely rather than let load_yaml warn — see above.
-      return {} unless root == ROOT || File.exist?(rules_path)
+      return {} unless root == ROOT || File.exist?(selected)
 
-      load_yaml(rules_path)
+      load_yaml(selected)
     end
 
     # The directories MASTER's self-directed checks scan, from
