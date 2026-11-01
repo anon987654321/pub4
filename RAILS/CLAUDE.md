@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with
 code in this repository.
 
 Scope: `RAILS/`. The repo-wide entrypoint is `../CLAUDE.md`; MASTER is primary configuration. Authority order is
-`MASTER/data/soul.yml` > `MASTER/data/laws.yml` >
+`MASTER/data/laws.yml` > subordinate `MASTER/data/soul.yml` >
 the executable Law tree `MASTER/law/` >
 this file.
 
