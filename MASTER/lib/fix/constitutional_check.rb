@@ -2,11 +2,8 @@
 
 module Master
   module Fix
-    # Blocks a clean/"done" outcome when an error finding violates any
-    # constitutional invariant. All nine nodes are governing law; none is
-    # silently dropped by a numeric cutoff.
-    #
-    # PassRunner calls admit_clean? before promoting consecutive_clean toward done.
+    # A clean outcome is blocked by any unresolved error in the constitutional
+    # invariant set. No numerical cutoff can make a governing Law disappear.
     module ConstitutionalCheck
       module_function
 
@@ -29,7 +26,7 @@ module Master
       end
 
       def residual_errors(findings)
-        Array(findings).select { |f| constitutional_error?(f) }
+        Array(findings).select { |finding| constitutional_error?(finding) }
       end
 
       def admit_clean?(findings)
@@ -41,10 +38,8 @@ module Master
 
         @constitutional_law_ids = begin
           entries = Master.law_entries(root: Master::ROOT)
-          ids = entries.filter_map do |entry|
-            entry["id"].to_s if entry["node"]
-          end
-          raise "constitutional law catalogue has no ordered invariant nodes" unless ids.size == 9
+          ids = entries.filter_map { |entry| entry["id"].to_s if entry["node"] }
+          raise "laws.yml must declare nine ordered invariant nodes" unless ids.size == 9
 
           ids.freeze
         rescue StandardError => e
@@ -53,16 +48,6 @@ module Master
         end
         @constitutional_law_ids_loaded = true
         @constitutional_law_ids
-      end
-          raise "priority constitutional law catalogue is empty" if ids.empty?
-
-          ids.freeze
-        rescue StandardError => e
-          warn("law0: priority constitutional catalogue unavailable; clean completion blocked (#{e.class})")
-          nil
-        end
-        @priority_constitutional_ids_loaded = true
-        @priority_constitutional_ids
       end
     end
   end
