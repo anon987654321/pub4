@@ -47,9 +47,14 @@ The `MASTER/bin/operator laws <ID>` view resolves the flat normative catalogue
 through `Operator::LawInventory.catalogue_declaration`. `Master.law_entries`
 returns its statement-bearing rows in document order. Constitutional precedence
 comes from the nine ordered nodes in `laws.yml`, never a numeric priority.
-The legacy `law_catalogue` and `law_map` inside `law_runtime.yml` remain
-consumed by compatibility audits; those readers are still migration debt and
-must not be treated as a competing constitutional authority.
+Important limitation: `law_runtime.yml#law_catalogue` is still a LIVE second
+metadata source. `Law::Definition` consumes its per-executable-Law severity,
+mode, lifecycle, autofix and reach fields; `LawCataloguePreflight` and
+`LawRegistryAudit` reconcile that population with `Law.define`. That metadata
+can still influence which files an executable Law reaches. The flat catalogue
+is the normative constitution, but the strict single-source migration is NOT
+YET COMPLETE. Do not remove the legacy section until the DSL, preflight, audit,
+boot receipt and their fixtures have been migrated together.
 
 The kernel also forbids simulation. MASTER may not claim it read a file without
 showing the content and its hash, claim a change without the diff, or claim
