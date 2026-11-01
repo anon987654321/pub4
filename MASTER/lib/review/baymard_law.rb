@@ -232,18 +232,30 @@ module Master
         issues = probe.issues
         measured = probe.measured
         unknown = probe.unknown
+        evidence = source_inventory_evidence(scope)
         if issues.any?
           rows = issues.map { |issue| finding(app, id, spec, issue) }
           detail = "#{issues.size} source defect(s) in #{measured} measured element(s)"
           detail += "; #{unknown.size} ambiguous generated element(s)" if unknown.any?
-          [assessment(app, id, spec, "fail", detail, measured, rows), rows]
+          [assessment(app, id, spec, "fail", detail, measured, rows, evidence:), rows]
         elsif unknown.any?
-          [assessment(app, id, spec, "inconclusive", "#{unknown.size} framework-generated or ambiguous element(s) need rendered inspection", measured, []), []]
+          [assessment(app, id, spec, "inconclusive", "#{unknown.size} framework-generated or ambiguous element(s) need rendered inspection", measured, [], evidence:), []]
         elsif measured.zero?
-          [assessment(app, id, spec, "not_applicable", "no matching source element in this application", 0, []), []]
+          [assessment(app, id, spec, "not_applicable", "no matching source element in this application", 0, [], evidence:), []]
         else
-          [assessment(app, id, spec, "pass", "#{measured} source element(s) inspected", measured, []), []]
+          [assessment(app, id, spec, "pass", "#{measured} source element(s) inspected", measured, [], evidence:), []]
         end
+      end
+
+      # The digest covers each path and each file digest in stable order. A
+      # source pass can therefore be tied to the exact inventory that was read
+      # without dumping every file or confusing a later rerun with this one.
+      def source_inventory_evidence(records)
+        inventory = records.sort_by(&:relative).map do |record|
+          "#{record.relative}\0#{Digest::SHA256.hexdigest(record.content.b)}"
+        end
+        digest = Digest::SHA256.hexdigest(inventory.join("\n"))
+        ["source_files=#{records.size}", "source_inventory_sha256=#{digest}"]
       end
 
       def task_assessment(app, id, spec, evidence)
@@ -327,6 +339,7 @@ module Master
 
       def finding(app, id, spec, issue)
         record = issue.fetch(:record)
+        line = record.content[0...issue.fetch(:offset)].count("\n") + 1
         Finding.new(
           app: app.name,
           check_id: id,
@@ -334,10 +347,13 @@ module Master
           severity: spec["severity"].to_s,
           law_ids: Array(spec["law_ids"]).map(&:to_s),
           path: record.relative,
-          line: record.content[0...issue.fetch(:offset)].count("\n") + 1,
+          line:,
           message: issue.fetch(:message),
           recommendation: spec["verification"].to_s,
-          evidence: ["#{record.relative}:#{record.content[0...issue.fetch(:offset)].count("\n") + 1}"],
+          evidence: [
+            "#{record.relative}:#{line}",
+            "source_sha256=#{Digest::SHA256.hexdigest(record.content.b)}",
+          ],
         )
       end
 
