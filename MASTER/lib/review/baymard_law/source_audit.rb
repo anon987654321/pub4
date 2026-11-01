@@ -178,11 +178,7 @@ module Master
                       else
                         "Viewport meta element does not declare width=device-width."
                       end
-            offset = if tags.empty?
-                       0
-                     else
-                       record.content.index(/<meta\b[^>]*>/im) || 0
-                     end
+            offset = tags.empty? ? 0 : (record.content.index(tags.first.first) || 0)
             issues << issue(record, offset, message)
           end
           [issues, measured, unknown.uniq]
