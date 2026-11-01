@@ -150,10 +150,13 @@ module Master
       def call
         profile = load_profile
         evidence = load_evidence
-        applications = discover_apps
+        inventory = SourceInventory.new(
+          repo_root: @repo_root, rails_root: @rails_root, requested_apps: @requested_apps
+        ).call
+        applications = inventory.apps
         assessments = []
         findings = []
-        read_errors = []
+        read_errors = inventory.read_errors.dup
         source_files = 0
 
         applications.each do |app|
@@ -210,80 +213,6 @@ module Master
         data["apps"]
       rescue Psych::Exception, SystemCallError => e
         raise InvalidEvidence, "evidence file unreadable: #{e.class}: #{e.message}"
-      end
-
-      def discover_apps
-        manifest_path = File.join(@rails_root, "apps.yml")
-        manifest = File.file?(manifest_path) ? Master.load_yaml(manifest_path) : {}
-        declared = manifest.fetch("apps", {})
-        raise InvalidProfile, "RAILS/apps.yml apps must be a mapping" unless declared.is_a?(Hash)
-
-        names = @requested_apps || declared.keys.map(&:to_s)
-        paths = names.filter_map do |name|
-          path = File.join(@rails_root, name)
-          path if valid_app_root?(path)
-        end
-
-        unless @requested_apps
-          paths.concat(Dir.glob(File.join(@rails_root, "brgen_*")).select { |path| valid_app_root?(path) })
-          shared = File.join(@rails_root, "__shared")
-          paths << shared if valid_app_root?(shared)
-        end
-
-        paths.uniq.sort.map { |path| build_app(File.basename(path), path) }
-      end
-
-      def valid_app_root?(path)
-        File.directory?(path) &&
-          (File.file?(File.join(path, "config", "routes.rb")) ||
-           File.directory?(File.join(path, "app", "views")))
-      end
-
-      def build_app(name, path)
-        records = collect_source_files(path)
-        content = records.map(&:content).join("\n")
-        routes = File.join(path, "config", "routes.rb")
-        content << "\n#{File.read(routes)}" if File.file?(routes)
-
-        features = {
-          search: content.match?(/(?:search_path|searches_path|type\s*=\s*["']search|resources\s+:search|\/search\b)/i),
-          product: content.match?(/(?:products?|listings?|marketplace|takeaway)/i),
-          cart: content.match?(/(?:shopping[_ -]?cart|cart_path|carts_path|\/cart\b|basket)/i),
-          checkout: content.match?(/(?:checkout|payment_step|\/orders?\b)/i),
-        }.freeze
-
-        App.new(name:, root: path, records: records.freeze, features:)
-      rescue SystemCallError => e
-        App.new(name:, root: path, records: [].freeze, features: {}.freeze)
-      end
-
-      def collect_source_files(root)
-        Dir.glob(File.join(root, "**", "*"), File::FNM_DOTMATCH).sort.filter_map do |path|
-          next unless File.file?(path)
-          next if SKIP_PATH.match?(path.delete_prefix("#{root}/"))
-          next unless SOURCE_EXTENSIONS.include?(File.extname(path).downcase)
-          next unless File.realpath(path).start_with?("#{File.realpath(root)}#{File::SEPARATOR}")
-
-          bytes = File.binread(path, MAX_SOURCE_BYTES + 1)
-          error = if bytes.bytesize > MAX_SOURCE_BYTES
-                    "source exceeds #{MAX_SOURCE_BYTES} byte audit limit"
-                  elsif bytes.include?("\x00")
-                    "binary content is not a markup or stylesheet measurement"
-                  else
-                    nil
-                  end
-          content = error ? "" : bytes.force_encoding(Encoding::UTF_8)
-          error ||= "source is not valid UTF-8" unless error || content.valid_encoding?
-
-          FileRecord.new(
-            path:,
-            relative: path.delete_prefix("#{@repo_root}/"),
-            content: error ? "" : content.freeze,
-            error:,
-          )
-        rescue SystemCallError, EncodingError => e
-          FileRecord.new(path:, relative: path.delete_prefix("#{@repo_root}/"), content: "", error: "#{path}: #{e.class}: #{e.message}")
-        end
       end
 
       def applicable?(spec, features)
@@ -404,42 +333,6 @@ module Master
           recommendation: spec["verification"].to_s,
           evidence: ["#{record.relative}:#{record.content[0...issue.fetch(:offset)].count("\n") + 1}"],
         )
-      end
-
-      def named_control?(attrs, content, offset)
-        return true if named?(attrs)
-
-        id = attrs["id"].to_s
-        return false if id.empty?
-
-        escaped = Regexp.escape(id)
-        linked = content.match?(%r{<label\b[^>]*\bfor\s*=\s*["']#{escaped}["'][^>]*>}i)
-        return true if linked
-
-        before = content[0...offset]
-        open_label = before.rindex(/<label\b[^>]*>/i)
-        close_label = content.index("</label>", offset)
-        open_label && close_label && open_label < offset
-      end
-
-      def named?(attrs)
-        %w[aria-label aria-labelledby title].any? { |key| !attrs[key].to_s.strip.empty? }
-      end
-
-      def text_name?(inner)
-        visible = inner.gsub(/<%.*?%>/m, " ").gsub(/<[^>]*>/m, " ").gsub(/&nbsp;|&#160;/i, " ").strip
-        !visible.empty?
-      end
-
-      def image_name?(inner)
-        inner.match?(/<img\b[^>]*\balt\s*=\s*["'][^"']+["']/im) ||
-          inner.match?(/<svg\b[^>]*(?:aria-label|role\s*=\s*["']img["'])/im)
-      end
-
-      def attributes(tag)
-        tag.scan(/([a-zA-Z_:][\w:.-]*)\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]+))/).each_with_object({}) do |match, out|
-          out[match[0].downcase] = (match[1] || match[2] || match[3]).to_s
-        end
       end
 
       def inside?(path, root)
