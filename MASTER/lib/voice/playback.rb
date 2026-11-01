@@ -808,7 +808,7 @@ def decode_job(job)
           break unless generation_active?(generation)
 
           @lock.synchronize { @last_player_attempted = true }
-          pid = Process.spawn(name, *args, path, **Master::Io::ProcessSpawn.options(out: File::NULL, err: File::NULL))
+          pid = Process.spawn(Master::Io::ProcessSpawn.environment, name, *args, path, **Master::Io::ProcessSpawn.options(out: File::NULL, err: File::NULL))
           # Compare the generation while holding the lock, without calling
           # generation_active? (which takes the same non-reentrant mutex).
           @lock.synchronize { @playing_pid = pid if generation == @generation }
