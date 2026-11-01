@@ -64,8 +64,8 @@ checks:
     applies_when: all
     severity: warning
     law_ids: [REACH_touch_target_min, POLA_intuitive_navigation]
-    statement: "The application must preserve a usable narrow-screen layout without clipping, obstruction or horizontal page scrolling."
-    verification: "Render at 320, 360, 390 and 430 CSS pixels; measure reflow, clipping, occlusion and target geometry."
+    statement: "Full-page layouts declare a device-width viewport so the browser can size the page to the device."
+    verification: "Inspect the rendered page head and confirm width=device-width and a usable initial scale. Reflow, clipping, touch geometry and occlusion are measured by the existing rendered layout checks."
 
   first_screen_purpose:
     area: homepage
