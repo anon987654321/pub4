@@ -324,7 +324,11 @@ module Master
           bus&.publish("core:turn", turn:, effect: effect.to_s, verb: effect.verb, subject: effect_subject(effect),
                                     ok: observation.ok?, detail: public_effect_detail(observation),
                                     **public_output_metrics(effect, observation))
-          on_turn&.call(line)
+          # The fold keeps the full observation in memory for reasoning, but a
+          # terminal/dashboard turn line is a status update, not a file viewer.
+          # Reuse the bounded report shape so reading a long file never floods
+          # the prompt or hides the following refusal/status.
+          on_turn&.call(report_turn(line))
         end
       end
 
