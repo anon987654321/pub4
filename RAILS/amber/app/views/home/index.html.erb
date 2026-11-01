@@ -15,6 +15,7 @@
     attribute has no CSS or controller behind it. %>
 <h1 class="visually-hidden" data-visitor-orientation><%= t("home.looks.title") %></h1>
 <%= render "looks", looks: @looks %>
+<%= render "frontpage_posts", posts: @frontpage_posts %>
 
 <% if authenticated? %>
   <% if @weather %>
