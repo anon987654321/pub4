@@ -38,6 +38,26 @@ class TestReachExec < Minitest::Test
     assert status.success?
   end
 
+  def test_exec_removes_malloc_stack_logging_from_parent_and_explicit_child_env
+    keys = %w[MallocStackLogging MallocStackLoggingNoCompact]
+    previous = keys.to_h { |key| [key, ENV[key]] }
+    keys.each { |key| ENV[key] = "1" }
+
+    out, status = E.capture2(
+      keys.to_h { |key| [key, "1"] }.merge("PUB4_MALLOC_PROBE" => "kept"),
+      RbConfig.ruby,
+      "-e",
+      'print [ENV.key?("MallocStackLogging"), ENV.key?("MallocStackLoggingNoCompact"), ENV["PUB4_MALLOC_PROBE"]].join(":")',
+    )
+
+    assert status.success?
+    assert_equal "false:false:kept", out
+  ensure
+    keys&.each do |key|
+      previous[key].nil? ? ENV.delete(key) : ENV[key] = previous[key]
+    end
+  end
+
   def test_capture3_splits_streams
     out, err, status = E.capture3("sh", "-c", "printf O; printf E 1>&2")
     assert_equal "O", out
