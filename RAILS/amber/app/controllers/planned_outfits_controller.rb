@@ -26,7 +26,7 @@ class PlannedOutfitsController < ApplicationController
     @plan.record_activity!("AmberPlannedOutfitRemoved", source_vertical: "amber")
     @plan.destroy!
     respond_to do |format|
-      format.turbo_stream { load_planner }
+      format.turbo_stream { load_planner; render :create }
       format.html { redirect_to planned_outfits_path }
     end
   end
