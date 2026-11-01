@@ -545,6 +545,20 @@ class TestBaymardLaw < Minitest::Test
     end
   end
 
+  def test_wrapping_label_with_text_names_a_control_without_an_id
+    with_fixture do |dir, rails, profile|
+      write_good_surface(rails)
+      page = File.join(rails, "app", "views", "demo", "index.html.erb")
+      File.write(page, '<label>Email address <input type="email"></label>')
+
+      report = Master::Review::BaymardLaw.new(root: dir, apps: ["demo"], profile:).call
+      form = report.assessments.find { |item| item.check_id == "form_control_names" }
+
+      assert_equal "pass", form.status
+      assert_empty report.findings.select { |finding| finding.check_id == "form_control_names" }
+    end
+  end
+
   def test_empty_associated_and_wrapping_labels_do_not_name_controls
     with_fixture do |dir, rails, profile|
       write_good_surface(rails)
