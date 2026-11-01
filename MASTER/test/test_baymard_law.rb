@@ -130,6 +130,7 @@ class TestBaymardLaw < Minitest::Test
       assert_equal "fail", outcomes.fetch("mobile_viewport")
       assert_equal "inconclusive", outcomes.fetch("navigation_findability")
       assert_operator report.findings.size, :>=, 5
+      assert report.findings.any? { |finding| finding.evidence.any? { |item| item.start_with?("source_sha256=") } }
       assert_operator report.inconclusive_count, :>=, 1
       assert_nil report.to_h.fetch("official_baymard_score")
     end
@@ -146,6 +147,8 @@ class TestBaymardLaw < Minitest::Test
       assert_equal "pass", outcomes.fetch("image_alternatives")
       assert_equal "pass", outcomes.fetch("mobile_viewport")
       assert_equal "inconclusive", outcomes.fetch("navigation_findability")
+      form = report.assessments.find { |item| item.check_id == "form_control_names" }
+      assert form.evidence.any? { |item| item.start_with?("source_inventory_sha256=") }
       assert_empty report.findings
     end
   end
