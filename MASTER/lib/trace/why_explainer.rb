@@ -137,6 +137,8 @@ module Master
           ("  mechanical: #{hit["mechanical"]}" if hit["mechanical"]),
           ("  semantic: #{hit["semantic"]}" if hit["semantic"]),
           ("  lineage: #{hit["lineage"]}" if hit["lineage"]),
+          ("  rule_of_three: #{hit["rule_of_three"]}" if hit["rule_of_three"]),
+          ("  proof: #{hit["proof"]}" if hit["proof"]),
         ].compact.join("\\n")
       end
 
