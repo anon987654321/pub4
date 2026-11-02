@@ -57,6 +57,7 @@ module Deploy
       "CLAUDE.md" => "prose: the shed-vs-outage triage note, trap 3",
       "RAILS/CLAUDE.md" => "prose: the shed-vs-outage triage note",
       "OPENBSD/CLAUDE.md" => "prose: same triage note",
+      "TREE_CONTRACTS.md" => "checked: check_readmes reads its RAILS/master section; the rest is tree-contract prose",
       "OPENBSD/RUNBOOK.md" => "prose: operator reference",
       "MASTER/checks/PAGE_SIM.md" => "generated report",
       "MASTER/test/test_ai_orientation.rb" => "fixture: a two-app apps.yml and the deploy inventory it generates",
@@ -392,15 +393,14 @@ module Deploy
       result.fail("RAILS/README.md app count must mirror apps.yml (#{count_word} Rails apps)") unless root_readme.match?(/\b#{count_word} Rails apps\b/)
 
       apps.each do |app|
-        # master's human entry is its CLAUDE.md; RAILS/master has no README.
-        readme_path = %w[README.md CLAUDE.md].map { |name| File.join(ROOT, app.deploy_root, name) }
-                                             .find { |path| File.file?(path) }
-        unless readme_path
+        # RAILS/master has no README: its human entry is its TREE_CONTRACTS.md section.
+        readme_path = File.join(ROOT, app.deploy_root, "README.md")
+        readme = File.file?(readme_path) ? File.read(readme_path) : Inventory.new(root: ROOT).tree_contract(app.deploy_root)
+        unless readme
           result.fail("#{app.name}: missing README.md")
           next
         end
 
-        readme = File.read(readme_path)
         result.fail("#{app.name}: README must point humans to apps.yml feature matrix") unless readme.include?("apps.yml")
         result.fail("#{app.name}: README deploy command must mirror apps.yml") unless readme.include?(File.basename(app.deploy_script))
         result.fail("#{app.name}: README health check must mirror apps.yml port") unless readme.include?("127.0.0.1:#{app.port}")

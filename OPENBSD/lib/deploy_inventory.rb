@@ -28,6 +28,16 @@ module Deploy
       data.fetch("apps").map { |entry| app_from_json(entry) }
     end
 
+    # One tree's `## <tree>` section of the root TREE_CONTRACTS.md, or nil.
+    # RAILS/master has no README: this section is its human entry, and replaced
+    # RAILS/master/CLAUDE.md when the tree contracts were folded (2b168b77f2).
+    def tree_contract(tree)
+      path = File.join(root, "TREE_CONTRACTS.md")
+      return unless File.file?(path)
+
+      File.read(path, encoding: "UTF-8")[/^## #{Regexp.escape(tree)}\n.*?(?=^## |\z)/m]
+    end
+
     private
 
     REQUIRED_APP_KEYS = %w[domain port deploy_script deploy_root].freeze unless defined?(REQUIRED_APP_KEYS)
