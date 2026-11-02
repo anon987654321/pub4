@@ -157,11 +157,22 @@ module Master
         "#{stream}\n#{final}"
       end
 
-      def cancel_face_turn
-        @turn_cancellation&.cancel!(reason: "face interrupted")
-        @refs.bus&.publish("user:interrupt", reason: "face", source: "cli", children: @turn_children)
+      # A cooperative Fold cancellation must finish its bounded transaction
+      # and receipt; killing this worker here would break the shared Session
+      # cancellation contract. Non-Fold work retains the immediate stop path.
+      def cancel_face_turn(worker, children)
+        token = @turn_cancellation
+        cooperative = token&.active?
+        token&.cancel!(reason: "face interrupted")
+        @refs.bus&.publish("user:interrupt", reason: "face", source: "cli", children:)
+        unless cooperative
+          worker.kill if worker&.alive?
+          children&.kill_all
+        end
+        !!cooperative
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "cli.face.cancel", event_bus: @refs.bus)
+        false
       end
 
       private

@@ -488,21 +488,29 @@ module Master
         end
 
         def cancel_worker(worker, children)
+          cooperative = false
           if @cancel_turn
             begin
-              @cancel_turn.call
+              cooperative = @cancel_turn.call(worker, children) == true
             rescue StandardError => e
               Master::Ground::Swallow.log(e, context: "face.cancel_turn", event_bus: @event_bus)
             end
           end
-          worker.kill
-          children.kill_all
-          unless @cancel_turn
-            @event_bus&.publish(
-              "user:interrupt", reason: "face", source: "face", children:
-            )
+          if cooperative
+            # The active Fold owns an admitted bounded transaction. Let its
+            # cancellation checkpoint close that transaction before returning.
+            set(:thinking, ["cancellation requested — finishing safe step"])
+            worker.join
+          else
+            worker.kill if worker.alive?
+            children.kill_all
+            unless @cancel_turn
+              @event_bus&.publish(
+                "user:interrupt", reason: "face", source: "face", children:
+              )
+            end
+            worker.join(1)
           end
-          worker.join(1)
           if @closing
             Master::Result.err("face0: turn cancelled — leaving face", category: :timeout)
           else

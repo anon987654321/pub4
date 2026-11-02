@@ -37,7 +37,7 @@ class TestCliFaceDispatch < Minitest::Test
     session.define_singleton_method(:stop_background_loop) { events << :stop }
     session.define_singleton_method(:start_background_loop) { events << :start }
 
-    Master::CLI::CommandRegistry.stub(:dispatch_face, -> { events << :face; "face0: closed" }) do
+    Master::CLI::CommandRegistry.stub(:dispatch_face, ->(**) { events << :face; "face0: closed" }) do
       assert_nil session.send(:run_face)
     end
 
@@ -94,7 +94,7 @@ class TestCliFaceDispatch < Minitest::Test
 
   def test_face_cancellation_reaches_the_session_token_and_event_bus
     session = Master::CLI::Session.allocate
-    token = Master::Core::CancellationToken.new
+    token = Master::Core::CancellationToken.new.activate!
     events = []
     bus = Object.new
     bus.define_singleton_method(:publish) { |name, **payload| events << [name, payload] }
@@ -102,8 +102,9 @@ class TestCliFaceDispatch < Minitest::Test
     session.instance_variable_set(:@turn_children, :children)
     session.instance_variable_set(:@refs, Struct.new(:bus).new(bus))
 
-    session.send(:cancel_face_turn)
+    cooperative = session.send(:cancel_face_turn, Object.new, :children)
 
+    assert cooperative
     assert_predicate token, :cancelled?
     assert_equal "face interrupted", token.reason
     assert_equal "user:interrupt", events.first.first
