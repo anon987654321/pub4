@@ -98,7 +98,6 @@ TRUTHFUL_STATUS_no_simulated_completion:
   resolution: never
   anti_simulation:
     scope: repository_work_claims
-    forbidden: [will, would, could, might]
     require_evidence:
       file_read: "show content with SHA-256"
       modification: "show unified diff"
