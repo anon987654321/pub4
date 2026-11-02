@@ -146,6 +146,9 @@ en:
     usage_heading: "Use"
     usage_lede: "POST up to 20 files as JSON with your key as a bearer token."
     response_lede: "Each finding names its file, line, law and severity, and the reply carries this month's usage."
+    copy_review_heading: "Review creative copy"
+    copy_review_lede: "POST /api/v1/copy-review with a creative object and, when available, its current product snapshot. One review is one API check."
+    copy_review_trust: "Product details are supplied by your application and are not independently verified. External claims remain inconclusive without reviewed evidence. A passing report is not legal advice, certification or publication approval."
     limits_heading: "Limits"
     limit_files: "Up to %{files} files a request, %{kilobytes} kB each. One file is one check."
     limit_quota: >-
