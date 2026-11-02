@@ -534,11 +534,14 @@ actionable root-backlog item. Keep them open until the relevant evidence exists.
   checkpoint/recovery states, scoped execution, typed provider failures and bounded
   fallback); retain MASTER's Ruby/law authority and avoid importing a parallel agent
   framework. Link each accepted pattern to a production caller and regression test.
-- [ ] **Model routing carry-forward:** prove signed-in `claude-cli:`, `codex-cli:` and
-  `grok-cli:` lanes are selected according to the route policy, no cloud Ollama route is
-  admitted, and the sole permitted local Ollama fallback is the explicitly allowlisted
-  `ollama:gemma3:4b`. Verify the actual served model/provider and the failure/retry
-  boundary, not just a routing log.
+- [x] **Model routing — temporary Ollama exclusion:** during November 2026, Ollama is
+  disabled in `models.yml` and filtered from both normal selection and the all-dead
+  fallback. The allowlisted Gemma remains dormant; only an explicit
+  `MASTER_OLLAMA_ENABLED=1` opts in, and `MASTER_NO_OLLAMA=1` is a hard-off.
+- [ ] **Model routing — live provider proof:** on or after December 1, 2026, review the
+  account/quota state before considering re-enabling Ollama. Prove signed-in
+  `claude-cli:`, `codex-cli:` and `grok-cli:` selection, actual served model/provider
+  and failure/retry behavior with live evidence, not just a routing log.
 - [ ] **Personalized MASTER behavior:** test that stable operator preferences and
   corrections influence greeting, language, response style and workflow selection through
   bounded, provenance-bearing memory. Memory must be retractable and must never override

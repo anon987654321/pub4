@@ -43,6 +43,8 @@ class TestLaneSelection < Minitest::Test
 
   def setup
     @saved_ollama_enabled = ENV["MASTER_OLLAMA_ENABLED"]
+    @saved_no_ollama = ENV["MASTER_NO_OLLAMA"]
+    ENV.delete("MASTER_NO_OLLAMA")
     ENV["MASTER_OLLAMA_ENABLED"] = "1"
     @dir = Dir.mktmpdir
     Quota.path = File.join(@dir, "lane_quota.yml")
@@ -53,6 +55,7 @@ class TestLaneSelection < Minitest::Test
     Quota.path = nil
     Quota.clock = -> { Time.now.to_f }
     @saved_ollama_enabled.nil? ? ENV.delete("MASTER_OLLAMA_ENABLED") : ENV["MASTER_OLLAMA_ENABLED"] = @saved_ollama_enabled
+    @saved_no_ollama.nil? ? ENV.delete("MASTER_NO_OLLAMA") : ENV["MASTER_NO_OLLAMA"] = @saved_no_ollama
     FileUtils.remove_entry(@dir)
   end
 

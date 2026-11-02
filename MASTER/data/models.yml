@@ -559,11 +559,11 @@ replicate_chat:
   - google/gemini-2.5-flash
   - moonshotai/kimi-k2.5
 
-# Tier-D is the local Ollama fallback. The only enabled model is the explicitly
-# allowlisted Gemma 3 4B; remotely executed Ollama cloud models have no catalogue
-# or route to re-enable accidentally. Discovery proves presence, not permission.
-# keep_alive holds the local model in memory between turns; max_num_ctx caps the
-# request window (ollama_sender.rb).
+# Tier-D is a dormant local Ollama fallback. It is disabled by default; when
+# explicitly enabled, the only eligible model is allowlisted Gemma 3 4B.
+# Remotely executed Ollama cloud models have no catalogue or route. Discovery
+# proves presence, not permission. keep_alive holds the model between turns;
+# max_num_ctx caps the request window (ollama_sender.rb).
 ollama:
   enabled: false
   default_base_url: "http://localhost:11434"

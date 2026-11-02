@@ -54,6 +54,8 @@ class TestComputePool < Minitest::Test
   end
 
   def test_ollama_is_declared_but_disabled_until_explicit_opt_in
+    old_enabled = ENV.delete("MASTER_OLLAMA_ENABLED")
+    old_no_ollama = ENV.delete("MASTER_NO_OLLAMA")
     policy = Master.load_yaml(File.join(Master::ROOT, "data", "models.yml"))
     local_ids = policy.fetch("models").fetch("local").map { |row| row.fetch("id") }
 
@@ -62,10 +64,17 @@ class TestComputePool < Minitest::Test
     refute Master::Io::LaneSelection.ollama_enabled?(cfg: policy)
     assert_empty Master::Io::LaneSelection.order_or_all(local_ids, cfg: policy)
 
+    ENV["MASTER_OLLAMA_ENABLED"] = "1"
+    assert Master::Io::LaneSelection.ollama_enabled?(cfg: policy)
+    assert_equal local_ids, Master::Io::LaneSelection.order_or_all(local_ids, cfg: policy)
+
     %w[default primary strong].each do |tier|
       ids = policy.fetch("models").fetch(tier).map { |row| row.fetch("id") }
       refute_includes ids, "ollama:gemma3:4b", "#{tier} must not promote the constrained Ollama lane"
     end
+  ensure
+    old_enabled.nil? ? ENV.delete("MASTER_OLLAMA_ENABLED") : ENV["MASTER_OLLAMA_ENABLED"] = old_enabled
+    old_no_ollama.nil? ? ENV.delete("MASTER_NO_OLLAMA") : ENV["MASTER_NO_OLLAMA"] = old_no_ollama
   end
 
   def test_task_strengths_change_the_actual_rank_with_equal_base_scores
