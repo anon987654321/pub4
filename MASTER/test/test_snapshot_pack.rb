@@ -314,6 +314,20 @@ end
     assert_includes err, "--only needs at least one non-empty path"
     assert_includes err, "--since needs a non-empty commit reference"
   end
+  def test_mirror_rejects_options_it_cannot_honour
+    incompatible = %w[
+      --budget=1000 --part-bytes=1000 --only=MASTER/lib
+      --tests --code --code-only --verify
+    ]
+
+    incompatible.each do |option|
+      _out, err = capture_io do
+        assert_equal 2, Operator::Snapshot.cli(["MASTER", "--mirror", option]), option
+      end
+      assert_includes err, "--mirror cannot be combined with #{option.split("=", 2).first}", option
+    end
+  end
+
   def test_incremental_pack_keeps_the_full_map_but_inlines_only_changed_tracked_source
     Dir.mktmpdir("snapshot-since-") do |repo|
       Thread.current[:snapshot_repo] = repo
