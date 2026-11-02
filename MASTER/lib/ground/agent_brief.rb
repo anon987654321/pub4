@@ -30,7 +30,8 @@ module Master
           Source authority (highest first): #{authority}.
           Soul owns global identity, preservation, source order and protected paths;
             laws.yml owns individual Law identities, statements and invariant-node order.
-          law_runtime.yml is live transitional execution metadata; law/ and checks/ implement it.
+          laws.yml#law_catalogue owns per-Law execution policy; law_runtime.yml keeps scanner, veto,
+            plugin and /fix runtime configuration. law/ and checks/ implement and verify the Laws.
           Never let an autonomous repair rewrite soul.yml or laws.yml. Write straight to main;
             commit path-scoped (git commit -- <paths>), never -a.
           Commits take MASTER's shape (MASTER/data/commit_format.yml): a capitalised subject of at most #{limit}
@@ -40,8 +41,9 @@ module Master
           At the start of every task, run ruby MASTER/tools/agent_context.rb --json and consume
             conduct, blocking_rules, coverage, task_contract_schema and capabilities. For broad or
             cross-tree work, add --tree. Before the first write, retrieve each applicable Law with
-            MASTER/bin/operator laws <ID>, then inspect its live law_runtime.yml metadata where
-            execution policy or reach is relevant, its Law.define implementation and proof fixtures.
+            MASTER/bin/operator laws <ID>, then inspect its laws.yml#law_catalogue entry, its
+            Law.define implementation and proof fixtures. Read law_runtime.yml only when the task
+            changes scanner, veto, plugin or /fix runtime configuration.
             Before finishing, MASTER/bin/operator lint --changed-lines <files> shows what a changed
             line breaks; record any unrun check as NOT_RUN or INCONCLUSIVE, never PASS.
         TEXT

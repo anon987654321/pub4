@@ -59,10 +59,12 @@ Before planning or acting, load MASTER's canonical context:
    system identity, preservation principles, source precedence and
    `absolute.sacred_paths`. It cannot create individual Law identities or
    restate their requirement statements.
-2. `MASTER/data/laws.yml` is the one catalogue of individual Law records. It
-   owns Law identities and statements, parent and root relationships, the
-   ordered nine invariant nodes, root and severity vocabularies, resolutions,
-   and declared enforcement contracts.
+2. `MASTER/data/laws.yml` is the one catalogue of individual Law records and
+   their execution policy. It owns Law identities and statements, parent and
+   root relationships, the ordered nine invariant nodes, root and severity
+   vocabularies, resolutions and declared enforcement contracts. Its reserved
+   `law_catalogue` block owns severity, mode, lifecycle, autofix, language,
+   surface and path-reach metadata for each executable Law.
 3. At the start of every task, run
    `ruby MASTER/tools/agent_context.rb --json` and consume its current
    `conduct`, `blocking_rules`, `coverage`, `task_contract_schema`, and
@@ -70,11 +72,13 @@ Before planning or acting, load MASTER's canonical context:
    for reading the relevant Law records. For unfamiliar, cross-tree or
    repository-wide work, add `--tree` to the same command so the scope is
    grounded in the current checkout.
-4. Read the applicable Law records in `laws.yml`. When changing executable
-   behaviour or reach, also read that Law's `MASTER/data/law_runtime.yml`
-   metadata, its `Law.define` implementation and its bad/good fixtures (or
-   `proved_by` test), plus the focused tests. A declared adapter or fixture
-   does not prove that the detector ran or that the product is excellent.
+4. Read the applicable Law row in `laws.yml`. When changing executable
+   behaviour or reach, also read that Law's `laws.yml#law_catalogue` entry
+   (severity, mode, lifecycle, autofix, languages, surfaces and path reach),
+   its `Law.define` implementation and bad/good fixtures (or `proved_by` test),
+   plus the focused tests. `law_runtime.yml` is not a source of per-Law policy.
+   A declared adapter or fixture does not prove that the detector ran or that
+   the product is excellent.
 5. Read `MASTER/AGENTS.md` for repository workflow,
    `MASTER/docs/task-contracts.md` and the generated
    `MASTER/docs/task-map.md` for task entry, and
@@ -127,21 +131,13 @@ policy, and neither overrides the constitution. The four owners are MASTER/
 up), OPENBSD/ (deployment and vm23), and STUDIO/ (Dilla, photograph,
 Replicate). `MASTER/tools/` keeps compatibility entrypoints for STUDIO tools.
 
-`law_runtime.yml` remains a live, transitional second metadata source.
-`Law::Definition` reads `law_runtime.yml#law_catalogue.entries` for each
-executable Law's severity, mode, lifecycle, autofix, languages, surfaces,
-and path reach. `LawCataloguePreflight` and `LawRegistryAudit` reconcile
-that inventory against `Law.define` sources; boot receipts count it as the
-executable metadata population. This is migration debt — not scanner or
-runtime settings — and the strict single-source goal is not yet complete.
-Do not add normative Law statements, invariant precedence, roots, protected
-paths, or global severity vocabulary there. Do not remove or silently
-bypass the legacy entries — that would disable or misconfigure executable
-Laws. The next migration moves or redesigns this per-Law metadata inside
-`laws.yml` and updates `Law::Definition`, `LawCataloguePreflight`,
-`LawRegistryAudit`, `BootReceipt`, the DSL fixtures, and all relevant tests
-together. Until then, call `laws.yml` the normative Law catalogue and
-`law_runtime.yml#law_catalogue` a legacy execution-metadata dependency.
+`laws.yml#law_catalogue` is the single source for per-Law severity, mode,
+lifecycle, autofix, language, surface and path reach. `Law::Definition`,
+`LawCataloguePreflight`, `LawRegistryAudit` and `BootReceipt` all read that
+same block. `law_runtime.yml` no longer contains a Law catalogue; it retains
+scanner, veto, plugin and `/fix` runtime configuration. Its guard rejects any
+attempt to add a duplicate `law_catalogue` there. Do not move per-Law policy
+back into runtime configuration or infer it from a detector's Ruby source.
 
 Task entry: before a substantive edit, state intent, repository-relative
 scope, mandatory preservation dimensions, and proof. Validate programmatic
@@ -606,18 +602,15 @@ in `OPENBSD/CLAUDE.md`.
   Soul schema/source hierarchy and Law catalogue invariants, preserve existing
   protected paths, prove Law-catalogue reconciliation, and run the relevant
   checks before a human commits the result.
-- **One normative Law catalogue, with transitional execution metadata.**
-  `data/laws.yml` is the sole normative source for Law identity, statements,
-  parent/root relationships and constitutional authority. It does not currently
-  contain every per-Law execution field. `data/law_runtime.yml#law_catalogue.entries`
-  remains live and is consumed by `Law::Definition` for severity, mode,
-  lifecycle, autofix, languages, surfaces and path reach; other runtime sections
-  feed scanner, veto, browser and /fix readers. This is execution configuration,
-  not authority to create or restate a Law. Read both sources for changes to
-  executable Law behaviour. Do not delete or bypass runtime entries until one
-  atomic migration updates every reader, schema guard, receipt, fixture and test,
-  and proves unchanged reach and outcomes. ID/source parity is not policy parity.
-  Missing evidence stays INCONCLUSIVE.
+- **One Law catalogue, with separate runtime configuration.**
+  `data/laws.yml` owns individual Law identities and statements; its reserved
+  `law_catalogue` block also owns executable severity, mode, lifecycle, autofix,
+  languages, surfaces and path reach. `Law::Definition`, preflight, registry
+  audit and boot receipts consume this same source. `data/law_runtime.yml` keeps
+  scanner, veto, plugin and `/fix` runtime configuration, and its guard refuses
+  a second `law_catalogue`. Read the Law row and its catalogue entry together;
+  do not infer reach from Ruby source or runtime configuration. Missing evidence
+  stays INCONCLUSIVE.
 - **No second record beside memory.** A belief store of verified, inferred and
   contradicted facts, an execution-context object and a durable notification
   queue each copy what memory, fiber locals and `StandingOrders` already hold.

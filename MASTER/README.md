@@ -29,34 +29,25 @@ order is `soul.yml > laws.yml > executable laws and gates > tree contracts >
 Git history`; Git history is provenance, never a source that overrides the live
 tree.
 
-`data/laws.yml` is the one normative catalogue of individual Law identities,
-statements, parentage, invariant-node order, vocabularies and declared
-enforcement contracts. It does not restate global source precedence or
-protected paths. `data/law_runtime.yml` remains a live transitional execution
-metadata source for the DSL and operational readers; it is migration debt, not
-a second normative Law catalogue. Executable definitions and detector-adapter
-sources share one physical home under `law/`; `lib/review/scan/` holds scanner
-machinery, registration, auditing and orchestration — not another Law source.
-These are enforcement mechanisms, not alternate sources of Law identity.
-`LawRegistryAudit` checks Law identity and source integrity and reports
-declared coverage debt separately. Reconciliation does not prove that every
-Law has a deterministic detector or that every runtime surface has actually
-been assessed; MASTER must not claim complete enforcement from a file count
-or registry count. A break gets a refusal with a reason, never a quiet patch.
+`data/laws.yml` is the one catalogue of individual Law identities and
+statements, parentage, invariant-node order and vocabulary. Its reserved
+`law_catalogue` block also owns the executable DSL policy: severity, mode,
+lifecycle, autofix, language, surface and path reach. `Master.law_catalogue`
+is the source-specific reader used by the DSL, preflight, audit and boot
+receipt. `data/law_runtime.yml` retains runtime settings for scanner, veto,
+plugins and `/fix`; it does not carry a second per-Law catalogue. Executable
+definitions and detector-adapter sources share one physical home under
+`law/`; `lib/review/scan/` holds scanner machinery, registration, auditing and
+orchestration — not another Law source. Reconciliation does not prove every
+Law has a deterministic detector or that every runtime surface has been
+assessed; do not infer complete enforcement from a file or registry count.
+A break gets a refusal with a reason, never a quiet patch.
 
 The `MASTER/bin/operator laws <ID>` view resolves the flat Law catalogue
 through `Operator::LawInventory.catalogue_declaration`. `Master.law_entries`
 returns statement-bearing rows in document order. The nine ordered nodes in
 `laws.yml` order invariant requirements internally; they do not replace the
 source hierarchy in `soul.yml`.
-
-Important limitation: `law_runtime.yml#law_catalogue` remains a LIVE
-execution-metadata source. `Law::Definition` consumes its per-executable-Law
-severity, mode, lifecycle, autofix and reach fields; `LawCataloguePreflight`
-and `LawRegistryAudit` reconcile that population with `Law.define`. That
-metadata can still influence which files an executable Law reaches. Do not
-remove the legacy section until the DSL, preflight, audit, boot receipt and
-their fixtures have been migrated together.
 
 The kernel also forbids simulation. MASTER may not claim it read a file without
 showing the content and its hash, claim a change without the diff, or claim

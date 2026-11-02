@@ -174,10 +174,11 @@ module Operator
            source precedence and `absolute.sacred_paths`.
         2. `MASTER/data/laws.yml` — individual Law identities, statements,
            parentage and the nine invariant nodes' internal order.
-        3. `MASTER/data/law_runtime.yml` — live transitional per-Law execution
-           metadata, followed by `MASTER/law/*.rb` and `MASTER/checks/` for
-           executable definitions, detectors, gates and proof. This metadata is
-           not another normative catalogue.
+        3. `MASTER/data/laws.yml#law_catalogue` — per-Law severity, mode, lifecycle,
+           autofix and reach metadata. `MASTER/law/*.rb` and `MASTER/checks/` hold
+           the executable definitions, detectors, gates and proof.
+        4. `MASTER/data/law_runtime.yml` — scanner, veto, plugin and `/fix` runtime
+           configuration; it must not contain a duplicate Law catalogue.
         4. `TREE_CONTRACTS.md` and the relevant tree README/CLAUDE contract.
         5. Git history for provenance only; it never overrides live sources.
 

@@ -6,6 +6,6 @@
 
 Read [the canonical AGENTS.md](AGENTS.md) before planning or editing.
 It routes to `MASTER/AGENTS.md`, `MASTER/data/soul.yml` and
-`MASTER/data/laws.yml`, and explains the live `law_runtime.yml`
-execution metadata. Follow that contract; this file carries no
-separate policy.
+`MASTER/data/laws.yml#law_catalogue` for Law policy. `law_runtime.yml`
+retains scanner, veto, plugin and `/fix` runtime configuration. Follow that
+contract; this file carries no separate policy.

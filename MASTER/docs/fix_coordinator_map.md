@@ -8,9 +8,10 @@ call sites are a text search of `lib/`, `bin/`, `tools/`, `checks/` and the
 Rakefile, so a `send`, `const_get` or string-built require is not seen.
 
 Source authority is `soul.yml` > `laws.yml` > executable laws and gates > tree contracts > Git history. Soul owns global identity, preservation and protected paths; the Law catalogue owns individual Law records.
-The legacy `law_runtime.yml#law_catalogue` remains a live per-definition
-metadata dependency and must be migrated before claiming a single-source Law
-system. This file maps implementations; it is not a second policy surface.
+Per-Law severity, mode, lifecycle, autofix and reach now live in
+`laws.yml#law_catalogue`, consumed through `Master.law_catalogue`. Runtime
+configuration remains in `law_runtime.yml`, which is not a second Law policy
+surface. This file maps implementations; it is not a second policy surface.
 
 ## Owners
 

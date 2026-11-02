@@ -144,15 +144,6 @@ each batch; compare pinned revisions only.
   receipt-parity tests prove they can be retired. Run focused
   interruption/recovery tests before and after.
 
-- [ ] MASTER Law metadata: migrate the live per-Law metadata in
-  `MASTER/data/law_runtime.yml#law_catalogue.entries` into the authoritative
-  `MASTER/data/laws.yml` representation. Update Law::Definition,
-  LawCataloguePreflight, LawRegistryAudit, BootReceipt, DSL fixtures and all
-  readers/tests atomically. Preserve every executable Law's severity, mode,
-  lifecycle, autofix, language, surface and path reach. Do not delete the
-  transitional file or bypass its readers until parity is proven and the
-  migration has an explicit compatibility/rollback plan.
-
 - [ ] MASTER artifact-preservation enforcement: carry validated task contracts
   through the operator-facing /fix entrypoint and enforce scope and required
   preservation at the transaction/mutation boundary, not only in agent protocol

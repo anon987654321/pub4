@@ -240,7 +240,7 @@ SINGULARITY_configuration_shape:
   statement: "A config that reads as a program."
   resolution: review
 
-SINGULARITY_legacy_law_metadata_is_a_second_source:
+SINGULARITY_LAW_POLICY_HAS_ONE_OWNER:
   parent: SINGULARITY
   statement: "Per-Law severity, mode, lifecycle, autofix and reach metadata has one owner in laws.yml#law_catalogue; runtime configuration must not duplicate that policy."
   resolution: never
