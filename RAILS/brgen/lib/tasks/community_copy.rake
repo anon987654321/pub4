@@ -22,7 +22,10 @@ module BrgenCommunityCopy
 
   # [name, description] to write, or nil when the row is not seeder copy.
   def rewrite_for(community)
-    city_name = community.city&.name.presence || "Bergen"
+    # A cityless row has no trustworthy local context. Do not silently turn
+    # missing tenancy into a claim that the community belongs to Bergen.
+    city_name = community.city&.name.presence
+    return if city_name.blank?
     return unless seeded_description?(community, city_name)
 
     name, description = Brgen::PlausibleContent.community(community.slug, city_name)

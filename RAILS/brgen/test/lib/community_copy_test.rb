@@ -21,6 +21,12 @@ class CommunityCopyTest < ActiveSupport::TestCase
     end
   end
 
+  def test_the_task_does_not_guess_bergen_for_a_cityless_community
+    orphan = Community.new(slug: "kultur", name: "Kultur", description: "Kultur community for Hoppeton")
+
+    assert_nil BrgenCommunityCopy.rewrite_for(orphan)
+  end
+
   def test_the_task_rewrites_seeder_copy_once_and_leaves_hand_copy_alone
     seeded = create_community("kultur", "Kultur", "Kultur community for Hoppeton")
     english = create_community("food", "Food", "Food community for Pfefferton")
