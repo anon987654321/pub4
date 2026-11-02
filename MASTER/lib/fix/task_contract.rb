@@ -34,7 +34,12 @@ module Master
         raise Invalid, "task contract schema is unreadable: #{error.message}"
       end
 
-      def build(attributes, path: PATH)
+      def build(attributes = nil, path: PATH, **keyword_attributes)
+        if attributes.nil?
+          attributes = keyword_attributes
+        elsif keyword_attributes.any?
+          raise Invalid, "task contract attributes must be passed as one mapping"
+        end
         raise Invalid, "task contract must be a mapping" unless attributes.is_a?(Hash)
         input = attributes.to_h { |key, value| [key.to_s, value] }
         missing = REQUIRED - input.keys

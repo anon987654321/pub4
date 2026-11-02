@@ -2,6 +2,7 @@
 
 require_relative "../../operator/check_chain"
 require_relative "../../fix/outcome_policy"
+require_relative "../../fix/task_contract"
 require_relative "pass_result"
 require_relative "target_resolver"
 require_relative "proof"
@@ -61,7 +62,8 @@ module Master
 
         def self.halted?(ending) = Master::Fix::OutcomePolicy.halted?(ending)
 
-        def initialize(scanner:, fix_loop:, root:, deliberation: nil, bus: nil, swarm: nil)
+        def initialize(scanner:, fix_loop:, root:, deliberation: nil, bus: nil, swarm: nil,
+                       task_intent: "functional_change")
           @failed_stages = []
           @causes = {}
           @swarm = swarm
@@ -70,6 +72,9 @@ module Master
           @root = root
           @deliberation = deliberation
           @bus = bus
+          @task_intent = task_intent.to_s
+          @task_contract = nil
+          @task_contract_error = nil
           @t0 = Process.clock_gettime(Process::CLOCK_MONOTONIC)
           @unit = "review0"
           @observation_totals = {}
@@ -116,6 +121,16 @@ module Master
           shell = shell_target(resolved)
           @apply = apply
           @critique_enabled = critique
+          if apply && run?("fix")
+            begin
+              @task_contract = build_task_contract(resolved)
+              @bus&.publish("fix:task_contract", target: resolved, **@task_contract.to_h)
+            rescue Master::Fix::TaskContract::Invalid => e
+              @task_contract_error = e.message
+              @failed_stages << "task_contract"
+              @causes["task_contract"] = e.message
+            end
+          end
 
           dmesg_boot(resolved, posture, apply, critique, aesthetic)
           @bus&.publish("review:start", target: resolved, mode: posture[:name], apply:)
@@ -142,6 +157,10 @@ module Master
           if @unknown_stages&.any?
             sections << ["stages", "unknown stage: #{@unknown_stages.join(", ")} — " \
                                    "--only takes #{STAGES.join(", ")} (council is a spelling of critique)"]
+          end
+          if @task_contract_error && run?("fix")
+            sections << ["task contract", "blocked before mutation: #{@task_contract_error}"]
+            return sections
           end
           sections.concat(guarded_fix_sections(resolved:, shell:, posture:, aesthetic:, critique:)) if run?("fix")
           sections << ["scorecard", scorecard_line] if @scored
@@ -484,12 +503,43 @@ def default_apply?(*) = false
 
         def run_fix_loop(abs)
           parameters = @fix_loop.method(:run).parameters
-          supports_cancellation = parameters.any? do |kind, name|
-            kind == :keyrest || (%i[key keyreq].include?(kind) && name == :cancellation)
+          accepts_keyword = lambda do |name|
+            parameters.any? do |kind, parameter|
+              kind == :keyrest || (%i[key keyreq].include?(kind) && parameter == name)
+            end
           end
           options = { requested: true }
-          options[:cancellation] = @cancellation if supports_cancellation
-          @fix_loop.run(abs, **options)
+          options[:cancellation] = @cancellation if accepts_keyword.call(:cancellation)
+          contract = @task_contract || Master::Fix::TaskContract.current
+          options[:task_contract] = contract if contract && accepts_keyword.call(:task_contract)
+
+          runner = -> { @fix_loop.run(abs, **options) }
+          contract ? Master::Fix::TaskContract.with_current(contract, &runner) : runner.call
+        end
+
+        # Pin every interactive write-enabled /fix to a validated, repository-
+        # relative scope before the FixLoop inventories or mutates its target.
+        def build_task_contract(target)
+          repo_root = File.expand_path(Master::REPO_ROOT)
+          absolute = File.expand_path(target.to_s)
+          unless absolute == repo_root || absolute.start_with?(repo_root + File::SEPARATOR)
+            raise Master::Fix::TaskContract::Invalid, "fix target escapes repository scope"
+          end
+
+          relative = absolute == repo_root ? nil : absolute.delete_prefix(repo_root + File::SEPARATOR)
+          scope = if relative.nil?
+                    MasterPaths::TREES.map { |tree| "#{tree}/**" }
+                  elsif File.directory?(absolute)
+                    ["#{relative}/**"]
+                  else
+                    [relative]
+                  end
+          Master::Fix::TaskContract.build(
+            intent: @task_intent,
+            scope:,
+            preserve: [],
+            proof: ["focused_tests"],
+          )
         end
 
         def run_fix(abs)

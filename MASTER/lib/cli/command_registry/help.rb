@@ -21,6 +21,8 @@ module Master
             "--trace expands the redacted event payload; --normal and --quiet reduce output;",
             "MASTER_CLI_QUIET=1 silences the unit lines in the interactive CLI.",
             "--dry-run stops after the reading and says what it would take on.",
+            "--intent=<content_only|content_and_structure|functional_change|redesign> pins",
+            "the task contract; the default is functional_change.",
             "--only style (cosmetic, typography) runs the typographic audit alone: the",
             "marks the operator-facing strings wear, against laws.yml#typography.",
             "On a target inside one RAILS app, /fix then runs the layout loop on that app:",

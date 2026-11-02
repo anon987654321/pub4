@@ -82,7 +82,8 @@ module Master
           Master::Fix::WorkLane.set!(overrides.fetch(:lane))
           dispatch_fix_parsed(
             scanner:, fix_loop:, deliberation:, root:, bus:, swarm:, raw:,
-            apply:, critique:, aesthetic:, only:, target:, cancellation:
+            apply:, critique:, aesthetic:, only:, target:, cancellation:,
+            task_intent: overrides[:task_intent] || "functional_change"
           )
         ensure
           Master::Fix::AutofixGuard.restore_mode_override(previous_mode)
@@ -173,7 +174,8 @@ module Master
       end
 
       def dispatch_fix_parsed(scanner:, fix_loop:, deliberation:, root:, bus:, swarm:, raw:,
-                              apply:, critique:, aesthetic:, only:, target:, cancellation: nil)
+                              apply:, critique:, aesthetic:, only:, target:, cancellation: nil,
+                              task_intent: "functional_change")
         Master::Fix::RunBudget.with_shared_run(
           root: Master::ROOT,
           max_passes: Master::Fix::FixLoop::ABSOLUTE_MAX_PASSES,
@@ -237,7 +239,7 @@ module Master
                 run_fix_target(
                   scanner:, fix_loop:, root:, deliberation:, bus:, swarm:,
                   target: fix_target, writes_requested:, effective_critique:, critique:, aesthetic:, only:,
-                  cancellation:
+                  cancellation:, task_intent:
                 )
               end
               failure = results.find { |result| result.is_a?(Master::Result::Err) }
@@ -271,7 +273,8 @@ module Master
       end
 
       def run_fix_target(scanner:, fix_loop:, root:, deliberation:, bus:, swarm:, target:,
-                         writes_requested:, effective_critique:, critique:, aesthetic:, only:, cancellation: nil)
+                         writes_requested:, effective_critique:, critique:, aesthetic:, only:, cancellation: nil,
+                         task_intent: "functional_change")
         check_label = ::Operator::CheckChain.baseline_scope_key(target)
         # What already fails, taken before any repair, so delivery can be judged on
         # what the run added instead of on debt it did not create. This scan-only
@@ -299,7 +302,7 @@ module Master
         return cancelled_fix_result(cancellation) if cancellation&.cancelled?
 
         value = run_pass({ scanner:, fix_loop:, root:, deliberation:, bus:, swarm: },
-                         target:, apply: writes_requested, critique: effective_critique,
+                         task_intent:, target:, apply: writes_requested, critique: effective_critique,
                          aesthetic:, only:, cancellation:)
         return cancelled_fix_result(cancellation) if cancellation&.cancelled?
         return value unless writes_requested
@@ -320,7 +323,7 @@ module Master
             "check0", "verification changed #{check_changed.size} file(s), re-entering /fix"
           )
           value = run_pass({ scanner:, fix_loop:, root:, deliberation:, bus:, swarm: },
-                           target:, apply: true, critique: critique.nil? ? council_default : critique,
+                           task_intent:, target:, apply: true, critique: critique.nil? ? council_default : critique,
                            aesthetic:, only: "fix", cancellation:)
           return cancelled_fix_result(cancellation) if cancellation&.cancelled?
           return incomplete_fix_pipeline(value) if incomplete_fix_pipeline?(value)
@@ -414,8 +417,8 @@ module Master
         trees.size > 1
       end
 
-      def run_pass(deps, **call_args)
-        Master::CLI::Pipeline::Pass.new(**deps).call(**call_args).render
+      def run_pass(deps, task_intent: "functional_change", **call_args)
+        Master::CLI::Pipeline::Pass.new(**deps, task_intent:).call(**call_args).render
       end
 
       # /fix may select a read-only stage with --only. Apply permission never
@@ -474,7 +477,10 @@ module Master
       LANE_FLAG = /\A--lane=(code|visual|all)\z/i
 
       # Flags read per dispatch (execution_overrides), never part of the target.
-      DISPATCH_FLAG = Regexp.union(AUTOFIX_FLAG, MAX_FILES_FLAG, BLOCKERS_FLAG, LANE_FLAG, /\A--until-checks\z/i)
+      TASK_INTENT_FLAG = /\A--intent=(\S+)\z/i
+      DISPATCH_FLAG = Regexp.union(
+        AUTOFIX_FLAG, MAX_FILES_FLAG, BLOCKERS_FLAG, LANE_FLAG, TASK_INTENT_FLAG, /\A--until-checks\z/i
+      )
 
       # Status messages are one-line operator evidence. Do not let a path label
       # inject terminal controls or forged log lines into the dmesg stream.
@@ -490,7 +496,7 @@ module Master
         lane = tokens.filter_map { |token| token[LANE_FLAG, 1] }.last ||
                (multi_tree_run?(raw) ? "elevate" : Master::Fix::WorkLane::DEFAULT.to_s)
         overrides = { autofix_mode: nil, max_files: nil, blockers: false, lane:, plan: tokens.include?("--plan"),
-                      until_checks: tokens.include?("--until-checks") }
+                      until_checks: tokens.include?("--until-checks"), task_intent: nil }
         raw.to_s.split(/\s+/).each do |token|
           if (match = AUTOFIX_FLAG.match(token))
             overrides[:autofix_mode] = match[1]
@@ -498,6 +504,8 @@ module Master
             overrides[:max_files] = match[1]
           elsif BLOCKERS_FLAG.match?(token)
             overrides[:blockers] = true
+          elsif (match = TASK_INTENT_FLAG.match(token))
+            overrides[:task_intent] = match[1]
           end
         end
         overrides

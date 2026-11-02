@@ -75,6 +75,14 @@ class TestWorkLaneWiring < Minitest::Test
     assert_equal "RAILS", registry.parse_pass_flags("RAILS --lane=code").last
   end
 
+  def test_fix_reads_the_task_intent_flag_and_keeps_it_out_of_the_target
+    registry = Master::CLI::CommandRegistry
+
+    assert_equal "content_only", registry.execution_overrides("RAILS --intent=content_only")[:task_intent]
+    assert_equal "RAILS", registry.parse_pass_flags("RAILS --intent=content_only").last
+    assert_equal "not_a_contract", registry.execution_overrides("RAILS --intent=not_a_contract")[:task_intent]
+  end
+
   def test_the_check_runner_is_told_the_lane
     assert_equal({ "CHECK_LANE" => "code" }, Lane.check_env(:code))
   end

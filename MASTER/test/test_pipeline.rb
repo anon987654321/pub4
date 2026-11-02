@@ -205,6 +205,53 @@ class TestPipeline < Minitest::Test
     Master::Ops::LoopOwner.release
   end
 
+  def test_fix_loop_receives_the_same_validated_task_contract_in_keyword_and_thread_scope
+    contract = Master::Fix::TaskContract.build(
+      intent: "functional_change",
+      scope: ["MASTER/lib/cli/**"],
+      preserve: [],
+      proof: ["focused_tests"],
+    )
+    seen = nil
+    probe = Object.new
+    probe.define_singleton_method(:run) do |_target, requested:, task_contract:|
+      seen = [task_contract, Master::Fix::TaskContract.current]
+      Master::Result.ok("DONE: clean")
+    end
+    pass = Master::CLI::Pipeline::Pass.allocate
+    pass.instance_variable_set(:@fix_loop, probe)
+    pass.instance_variable_set(:@cancellation, nil)
+    pass.instance_variable_set(:@task_contract, contract)
+
+    pass.send(:run_fix_loop, File.join(Master::REPO_ROOT, "MASTER"))
+
+    assert_equal [contract, contract], seen
+    assert_nil Master::Fix::TaskContract.current
+  end
+
+  def test_task_contract_scope_is_repository_relative_and_target_bounded
+    pass = Master::CLI::Pipeline::Pass.new(
+      scanner: nil,
+      fix_loop: Object.new,
+      root: Master::ROOT,
+      task_intent: "content_only",
+    )
+
+    contract = pass.send(:build_task_contract, File.join(Master::ROOT, "lib", "cli"))
+
+    assert_equal "content_only", contract.intent
+    assert_equal ["MASTER/lib/cli/**"], contract.scope
+    assert_includes contract.preserve, "visual_identity"
+    assert_includes contract.proof, "focused_tests"
+  end
+
+  def test_whole_checkout_task_contract_names_only_the_four_governed_trees
+    pass = Master::CLI::Pipeline::Pass.new(scanner: nil, fix_loop: Object.new, root: Master::ROOT)
+    contract = pass.send(:build_task_contract, Master::REPO_ROOT)
+
+    assert_equal %w[MASTER/** OPENBSD/** RAILS/** STUDIO/**], contract.scope
+  end
+
   def test_intake_rejects_an_empty_message
     result = Master::CLI::Pipeline.new([Master::CLI::Stages::Intake.new])
                                    .call(Master::CLI::PipelineContext.build(user_message: "   "))
