@@ -106,9 +106,29 @@ class TestLanePool < Minitest::Test
     assert_equal [HAIKU, LUNA], Tail.models, "free, over-cap and models.yml's own models are left out"
   end
 
+  # models.yml with the ollama.enabled switch set, so ordering is graded
+  # against the file's switch rather than the environment opt-ins.
+  def models_config(ollama:)
+    config = Selection.config
+    config.merge("ollama" => config.fetch("ollama").merge("enabled" => ollama))
+  end
+
+  def without_ollama_env
+    saved = %w[MASTER_NO_OLLAMA MASTER_OLLAMA_ENABLED].to_h { |key| [key, ENV.delete(key)] }
+    yield
+  ensure
+    saved.each { |key, value| value.nil? ? ENV.delete(key) : ENV[key] = value }
+  end
+
+  # Ollama is opt-in (models.yml ollama.enabled: false), so the local lane is
+  # dropped by default and ranks between the paid tail and the free lanes once on.
   def test_the_paid_tail_sits_after_live_lanes_and_before_the_free_ones
     mixed = [SUPER, HAIKU, LOCAL, LUNA, DEEPSEEK, OPUS]
-    assert_equal [OPUS, DEEPSEEK, HAIKU, LUNA, LOCAL, SUPER], Selection.order(mixed)
+
+    without_ollama_env do
+      assert_equal [OPUS, DEEPSEEK, HAIKU, LUNA, LOCAL, SUPER], Selection.order(mixed, cfg: models_config(ollama: true))
+      assert_equal [OPUS, DEEPSEEK, HAIKU, LUNA, SUPER], Selection.order(mixed, cfg: models_config(ollama: false))
+    end
     assert_equal :paid_tail, Selection.kind(HAIKU)
   end
 

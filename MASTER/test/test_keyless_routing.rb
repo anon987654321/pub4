@@ -90,8 +90,8 @@ class TestKeylessRouting < Minitest::Test
   end
 
   # The local tier is whatever the daemon holds, with or without
-  # OLLAMA_BASE_URL, and a pulled model closes the chain. Ollama is on unless
-  # MASTER_NO_OLLAMA says otherwise, so a daemon that cannot list
+  # OLLAMA_BASE_URL, and a pulled model closes an ordinary route's chain. Ollama
+  # is off unless MASTER_OLLAMA_ENABLED opts in; once on, a daemon that cannot list
   # its models leaves the configured local chain standing, as it does with the
   # variable set.
   def test_local_tier_is_what_the_daemon_lists_and_closes_the_chain
@@ -105,10 +105,21 @@ class TestKeylessRouting < Minitest::Test
     assert_includes router.fallback_chain(task_type: :exploration), "ollama:gemma3:4b"
 
     router.define_singleton_method(:ollama_installed_models) { ["gemma3:4b"] }
-    chain = router.fallback_chain(task_type: :exploration)
-    assert_equal "ollama:gemma3:4b", chain.last
+    # Ordinary routes run premium/API -> free API -> browser chat -> local, so
+    # the pulled model closes the chain.
+    assert_equal "ollama:gemma3:4b", router.fallback_chain(task_type: :refactoring).last
+    assert_keyless_lanes_precede(router.fallback_chain(task_type: :exploration), "ollama:gemma3:4b")
   ensure
     ENV.delete("OLLAMA_BASE_URL")
+  end
+
+  # Free routes (exploration) put keyless lanes first and local compute ahead
+  # of keyed remote APIs (73d006b0b): local follows the free and browser lanes.
+  def assert_keyless_lanes_precede(chain, local)
+    local_at = chain.index(local)
+    keyless = chain.each_index.select { |at| chain[at].end_with?(":free") || chain[at].start_with?("web-chat:") }
+    refute_empty keyless
+    assert_operator keyless.max, :<, local_at, "every keyless lane must precede #{local}"
   end
 
   def test_local_tier_is_offered_once_ollama_base_url_is_set
