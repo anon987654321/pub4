@@ -258,7 +258,8 @@ module Operator
       # 100%/100% inside an absolute box, but the reservation is SCSS-nested, so
       # wrapper_classes cannot see it and the marker is the honest answer.
       # 13 -> 10 on 2026-10-27: the lint finds ten; the ratchet only tightens.
-      "unreserved_media" => 10,
+      # 10 -> 9 on 2026-11-03: the takeaway cover preview reserves 3/2.
+      "unreserved_media" => 9,
       "layout_transition" => 2,
       "font_without_display" => 0,
     }.freeze

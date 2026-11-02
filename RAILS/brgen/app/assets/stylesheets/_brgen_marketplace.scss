@@ -503,10 +503,11 @@ a.deal-card,
   object-fit: cover;
 }
 
+/* The :card variant is 960x640, so 3/2 reserves the box before it loads. */
 .restaurant-cover-preview {
   display: block;
-  max-width: min(100%, 32rem);
-  max-height: 12rem;
+  inline-size: min(100%, 18rem);
+  aspect-ratio: 3 / 2;
   margin-block-start: 12px;
   border-radius: var(--radius-sm);
   object-fit: cover;
