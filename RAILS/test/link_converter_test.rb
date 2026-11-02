@@ -1,10 +1,12 @@
 # frozen_string_literal: true
 
-# ActiveSupport comes from brgen's bundle: the contract suite runs under bare Ruby.
-ENV["BUNDLE_GEMFILE"] = File.expand_path("../brgen/Gemfile", __dir__)
-require "bundler/setup"
+# The contract suite runs under bare Ruby, where brgen's bundle (edge Rails from
+# git) is not installed. The converter only needs blank?/presence/try, so load
+# those core extensions from whatever ActiveSupport the interpreter has.
 require "minitest/autorun"
-require "active_support/all"
+require "active_support"
+require "active_support/core_ext/object/blank"
+require "active_support/core_ext/object/try"
 require_relative "../__shared/app/services/shared/link_converter"
 
 # Why this exists: amber showed affiliate links and earned nothing from them, for
