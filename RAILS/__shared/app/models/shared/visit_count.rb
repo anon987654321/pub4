@@ -17,11 +17,12 @@ module Shared
   # product would store — puts unbounded write volume on a SQLite database on a
   # 1 vCPU host, to answer a question that only ever needs the total.
   #
-  # Deliberately not personal data. No IP, no user agent, no user id, no session,
-  # no path parameters: `route` is controller#action, which is the shape of the
-  # page and not the identity of the thing viewed. So this needs no consent
-  # banner and cannot become a liability, which is the same reasoning
-  # OutboundClick records a host instead of a URL.
+  # Deliberately aggregate. No IP, user agent, user id, session, cookie or path
+  # parameters are read or stored: `route` is controller#action, the shape of a
+  # surface rather than the identity of a page or visitor. This is not a visitor
+  # tracking cookie. Any future non-essential cookie or cross-request visitor
+  # identifier must be consent-gated; storing it server-side does not create an
+  # exemption. OutboundClick records a merchant host rather than a full URL.
   class VisitCount < ApplicationRecord
     self.table_name = "visit_counts"
 
