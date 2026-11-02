@@ -70,6 +70,9 @@ module DesignTokens
   APP_OWNED_PALETTE = {
     "RAILS/amber/app/assets/stylesheets/application.scss" => %w[luxury-bg luxury-text luxury-muted luxury-border].freeze,
     "RAILS/amber/app/assets/stylesheets/_amber_late_product_finish.scss" => %w[luxury-bg luxury-text luxury-muted luxury-border].freeze,
+    # bsdports' white search-first front page sets Arial first on purpose;
+    # layout_contract_test pins that dialect.
+    "RAILS/bsdports/app/assets/stylesheets/application.scss" => %w[font].freeze,
   }.freeze
 
   module_function

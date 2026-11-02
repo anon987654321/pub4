@@ -157,7 +157,7 @@
   flex: none;
   display: inline-flex;
   align-items: center;
-  min-height: 44px;
+  min-height: var(--tap-min);
   background: var(--gold);
   color: var(--ink);
   border-radius: var(--radius-pill);

@@ -235,7 +235,7 @@
 .option-chip {
   display: inline-flex;
   align-items: center;
-  min-height: 44px;
+  min-height: var(--tap-min);
   gap: 8px;
   padding: 8px 16px;
   border-radius: var(--radius-pill);

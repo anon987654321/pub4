@@ -171,7 +171,7 @@ nav[data-pwa-primary-nav] a[aria-current="page"] {
   --text-secondary: #4d5156;
   --accent: #1a0dab;
   --accent-ink: #ffffff;
-  --font: "Helvetica Neue Pro", "Helvetica Neue", Arial, sans-serif;
+  --font: Arial, "Helvetica Neue", Helvetica, sans-serif;
   // The status ambers are picked for a light ground: each clears WCAG AA
   // against --bg #ffffff at the small sizes this app sets.
   --status-stale-border: #a1660a;

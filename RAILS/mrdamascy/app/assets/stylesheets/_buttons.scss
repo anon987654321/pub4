@@ -6,7 +6,7 @@
   align-items: center;
   justify-content: center;
   gap: 8px;
-  min-height: 44px;
+  min-height: var(--tap-min);
   border: 0;
   border-radius: var(--radius-sm);
   padding: 8px 16px;
