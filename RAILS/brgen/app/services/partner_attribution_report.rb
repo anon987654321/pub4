@@ -105,10 +105,17 @@ class PartnerAttributionReport
     raise ArgumentError, "dimension must be one of #{DIMENSIONS.join(', ')}" unless DIMENSIONS.include?(key)
 
     clicks.where.not(epi: nil).each_with_object(Hash.new(0)) do |row, counts|
-      value = row.epi_parts[key]
+      value = epi_parts(row.epi)[key]
       name = dimension_name(value, key)
       counts[name || "unattributed"] += 1
     end.sort_by { |name, count| [name, count] }.to_h
+  end
+
+  def epi_parts(value)
+    value.to_s.split("|").each_with_object({}) do |part, parts|
+      field, content = part.split(":", 2)
+      parts[field] = content if field.present? && content.present?
+    end
   end
 
   def dimension_name(value, key)
