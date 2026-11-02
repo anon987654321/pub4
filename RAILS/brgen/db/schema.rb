@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.2].define(version: 2026_11_02_160000) do
+ActiveRecord::Schema[8.2].define(version: 2026_11_02_170000) do
   create_table "account_merges", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "guest_user_id", null: false
@@ -1444,6 +1444,7 @@ ActiveRecord::Schema[8.2].define(version: 2026_11_02_160000) do
     t.datetime "audio_replaced_at"
     t.datetime "created_at", null: false
     t.integer "duration_seconds"
+    t.string "embed_url"
     t.datetime "expires_at"
     t.string "genre"
     t.string "privacy", default: "private", null: false

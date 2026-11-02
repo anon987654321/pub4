@@ -6,9 +6,10 @@ module Playlist
   class TrackImport
     Result = Struct.new(:track, :line, :created, keyword_init: true)
 
-    def initialize(user:, playlist:)
+    def initialize(user:, playlist:, whyp_embed_resolver: Playlist::WhypEmbedResolver.new)
       @user = user
       @playlist = playlist
+      @whyp_embed_resolver = whyp_embed_resolver
     end
 
     def call(text)
@@ -19,7 +20,7 @@ module Playlist
 
     private
 
-    attr_reader :user, :playlist
+    attr_reader :user, :playlist, :whyp_embed_resolver
 
     def import_line(line)
       attrs = attributes_for(line)
@@ -27,7 +28,11 @@ module Playlist
       track = existing if existing&.visible_to?(user)
       created = track.nil?
       track ||= ::Playlist::Track.new(attrs.merge(user: user))
-      track.assign_attributes(attrs) if created
+      if created
+        track.assign_attributes(attrs)
+      elsif attrs[:embed_url].present? && track.has_attribute?(:embed_url) && track.embed_url.blank?
+        track.embed_url = attrs[:embed_url]
+      end
       track.save!
       playlist.add_track!(track, user: user)
       Result.new(track: track, line: line, created: created)
@@ -41,13 +46,18 @@ module Playlist
       source_type = source_type_for(host)
       title = title_for(uri, source_type)
 
-      {
+      attributes = {
         title: title,
         artist: "Imported",
         source_type: source_type,
         source_url: line,
         privacy: "public",
       }
+      if source_type == "whyp"
+        embed_url = whyp_embed_resolver.call(line)
+        attributes[:embed_url] = embed_url if embed_url.present?
+      end
+      attributes
     end
 
     # Hosts compared whole, never by substring — matching Shared::LinkEmbed's

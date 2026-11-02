@@ -40,6 +40,23 @@ class Playlist::TrackImportTest < ActiveSupport::TestCase
     assert_equal 1, Playlist::Track.where(source_url: url).count
   end
 
+  test "Whyp share URLs resolve at import time and persist their embed URL" do
+    source = "https://www.whyp.it/tracks/radio-bergen-1?token=private-token&in=collection-token"
+    embed = "https://whyp.it/embeds/track/trackSlug?token=private-token&in=collection-token"
+    resolver = ->(url) do
+      assert_equal source, url
+      embed
+    end
+
+    result = Playlist::TrackImport.new(
+      user: @user, playlist: @playlist, whyp_embed_resolver: resolver
+    ).call(source).first
+
+    assert result.created
+    assert_equal embed, result.track.embed_url
+    assert_equal embed, result.track.external_embed_url
+  end
+
   test "each provider plays through its own embed player" do
     embeds = {
       "https://youtu.be/abc123" => "https://www.youtube.com/embed/abc123",

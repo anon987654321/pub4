@@ -82,7 +82,7 @@ class Playlist::Track < ApplicationRecord
     when "soundcloud"
       "https://w.soundcloud.com/player/?url=#{CGI.escape(source_url)}"
     when "whyp"
-      whyp_embed_url
+      persisted_whyp_embed_url || whyp_embed_url
     end
   end
 
@@ -115,6 +115,10 @@ class Playlist::Track < ApplicationRecord
     "https://open.spotify.com/embed/#{parts[-2]}/#{parts[-1]}"
   rescue URI::InvalidURIError
     nil
+  end
+
+  def persisted_whyp_embed_url
+    self[:embed_url] if has_attribute?(:embed_url) && self[:embed_url].present?
   end
 
   def whyp_embed_url
