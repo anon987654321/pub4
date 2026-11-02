@@ -21,6 +21,8 @@ class FlowCoverageTest < Minitest::Test
   ROOT = File.expand_path("../../..", __dir__)
   FLOWS = YAML.safe_load_file(File.join(ROOT, "MASTER", "checks", "data", "flows.yml")).fetch("flows")
   APPS = YAML.safe_load_file(File.join(ROOT, "RAILS", "apps.yml")).fetch("apps").keys
+  # The flows run against served apps; an app marked deployed: false has none yet.
+  FLEET = Deploy::Inventory.new(root: ROOT).app_names
 
   STEP_KEYS = %w[
     name get post host params expect_status expect_final_path expect_body expect_any forbid_body
@@ -151,7 +153,7 @@ class FlowCoverageTest < Minitest::Test
   # --- coverage ---------------------------------------------------------------
 
   def test_every_declared_app_has_a_flow_that_writes
-    APPS.each do |app|
+    FLEET.each do |app|
       writers = FLOWS.select { |flow| flow["app"] == app && writes?(flow) }
       refute_empty writers, "#{app} has no journey that changes state; its flows only prove a stranger sees no 500"
     end
@@ -242,7 +244,8 @@ class FlowCoverageTest < Minitest::Test
 
     assert_equal :inconclusive, result.outcome
     refute result.conclusive?
-    assert_equal APPS.sort, Deploy::FlowCoverage.down_apps(result).sort, "every declared app is named as skipped:app-down"
+    assert_equal FLEET.sort, Deploy::FlowCoverage.down_apps(result).sort,
+                 "every declared app is named as skipped:app-down"
     assert(result.warnings.any? { |line| line.include?("skipped:app-down") })
     assert_equal FLOWS.size, result.warnings.grep(/\Asurface0: .* SKIPPED/).size, "each flow reports its own outcome"
   end

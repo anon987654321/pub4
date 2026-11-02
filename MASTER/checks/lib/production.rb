@@ -42,6 +42,8 @@ module Deploy
 
       @result.checked!(2)
       apps.each do |name, metadata|
+        next if metadata["deployed"] == false
+
         check_app(name, metadata)
       end
 
