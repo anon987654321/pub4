@@ -4,8 +4,8 @@
 # Static layout drift audit for Brgen, Amber and MASTER.
 #
 # Run from any directory:
-#   ruby RAILS/tools/layout_drift_audit.rb
-#   ruby RAILS/tools/layout_drift_audit.rb --json
+#   ruby MASTER/tools/rails/layout_drift_audit.rb
+#   ruby MASTER/tools/rails/layout_drift_audit.rb --json
 #
 # This check is deliberately report-only. It does not rewrite generated CSS,
 # edit layouts, commit, push, deploy, or claim rendered/browser verification.
