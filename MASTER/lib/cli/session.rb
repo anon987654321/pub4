@@ -49,7 +49,7 @@ module Master
         load_cli_history
         setup_completion
         init_session_state!
-        # The optional face paints the live Reline prompt, never a second shell-style prompt.
+        # The face is a visual layer above the one live Reline prompt.
         Fiber[:master_cli_prompt] = -> { @focus_mode ? focus_prompt : normal_prompt }
         set_visitor_mode_if_unauthenticated
       end
@@ -135,7 +135,7 @@ module Master
       # Reline remains the only keyboard/input owner; no alternate screen,
       # raw-key reader or second prompt is started for ordinary CLI use.
       def face_overlay_text(cols: 32)
-        rows, fitted_cols = Master::CLI::Face::Sizing.fit(12, cols, mode: "#{cols}x12")
+        rows, fitted_cols = Master::CLI::Face::Sizing.fit(12, cols + 4, mode: "#{cols}x12")
         Master::CLI::Face.frame(
           state: :idle,
           rows:,
