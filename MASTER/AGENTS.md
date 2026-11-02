@@ -2,13 +2,12 @@
 
 Task-scoped entry for coding agents (Cursor, Codex, Grok, Claude Code). This file is the contract; `README.md` is the tour.
 
-**Read the repo-root `CLAUDE.md` first.** It is only Claude Code's bootstrap
-pointer. MASTER owns the governing configuration and Law catalogue. Read
-`MASTER/data/soul.yml` — the identity kernel — then `MASTER/data/laws.yml`,
-the sole normative constitution; the Ruby enforcement lives in `MASTER/law/`,
-then this workflow contract and `TREE_CONTRACTS.md` for the tree contracts.
-`MASTER/lib/review/scan/` contains scanner machinery, not a second Law
-source tree.
+**Start at the repo-root `AGENTS.md` (or your harness pointer, which routes there).**
+That is the shared entrypoint; this file is the detailed MASTER contract.
+Read `MASTER/data/soul.yml` — subordinate identity and delivery — then
+`MASTER/data/laws.yml`, the sole normative constitution. Ruby enforcement
+lives in `MASTER/law/`; `MASTER/lib/review/scan/` is scanner machinery, not a
+second Law source tree. `CLAUDE.md` is a short pointer, not a policy source.
 
 The block below is the source every other agent's entry file is generated
 from — root `AGENTS.md`, `GEMINI.md`, `GLM.md`, `.cursorlaws` and
@@ -64,9 +63,11 @@ Before planning or acting, load MASTER's canonical context:
    `ruby MASTER/tools/agent_context.rb --tree` to establish repository
    structure. Use `--json` when a harness needs the machine-readable
    authority, task-contract schema, and capability snapshot.
-4. Read the applicable Law records in `laws.yml`, then their implementations
-   and tests under `MASTER/law/`. A declared adapter or fixture does not
-   prove that the detector ran or that the product is excellent.
+4. Read the applicable Law records in `laws.yml`. When changing executable
+   behaviour or reach, also read that Law's `MASTER/data/law_runtime.yml`
+   metadata, its `Law.define` implementation and its bad/good fixtures (or
+   `proved_by` test), plus the focused tests. A declared adapter or fixture
+   does not prove that the detector ran or that the product is excellent.
 5. Read `MASTER/AGENTS.md` for repository workflow,
    `MASTER/docs/task-contracts.md` and the generated
    `MASTER/docs/task-map.md` for task entry, and
@@ -104,6 +105,14 @@ excellent product are four different claims. A missing or unrun measurement
 is INCONCLUSIVE, never PASS. No count of declared Laws, files, tests, or
 detectors proves the code correct, the design usable, or the system can
 support a stated scale.
+
+For every Law-affecting task, inspect its normative row in `laws.yml`, its
+runtime metadata in `MASTER/data/law_runtime.yml` when execution policy or reach
+is involved, the exact `Law.define`, and its bad/good fixtures or `proved_by`
+test. Verify identity, parent/root, severity, lifecycle, autofix, language,
+surface and path reach, and actual execution evidence. Keep Law identity and
+statements in `laws.yml`; runtime metadata is not a second normative catalogue.
+Never claim a Law is enforced because its name or detector is merely declared.
 
 `MASTER/docs/synonyms.yml` is glossary-only. `MASTER/checks/checks.yml`
 routes operational checks. Neither creates Law identities or normative
@@ -588,17 +597,18 @@ in `OPENBSD/CLAUDE.md`.
   Parse and validate the candidate, preserve required security invariants, prove
   Law-catalogue reconciliation, and run the relevant checks before publication. No
   separate operator-only path is required for a routine, evidence-backed repair.
-- **One Law model, not two registries.** `data/laws.yml#law_catalogue.entries`
-  is the canonical Law identity inventory and universal modality contract. Each entry
-  also owns its enforcement policy — severity, mode, languages, `path`/`path_pattern`,
-  `path_exclude`, lifecycle, autofix and assessment surfaces, over the catalogue's
-  `defaults` — and `Law::Builder` and the scanner read it from there; a `Law.define`
-  block has no method to declare it again. The two registries are gone (2026-10-30):
-  `LawDSL`, `LawFactory` and the self-registering `Scan::Law` class were folded into
-  `Law.define`, so a Law's detector, fixtures (or `proved_by` test), tags, example
-  path and repair `transform` live in its one `Law.define` and nowhere else. Statements,
-  questions and fixes are written there too. Do not describe ID/source reconciliation
-  as full policy reconciliation. Missing evidence stays INCONCLUSIVE.
+- **One normative Law catalogue, with transitional execution metadata.**
+  `data/laws.yml` is the sole normative source for Law identity, statements,
+  parent/root relationships and constitutional authority. It does not currently
+  contain every per-Law execution field. `data/law_runtime.yml#law_catalogue.entries`
+  remains live and is consumed by `Law::Definition` for severity, mode,
+  lifecycle, autofix, languages, surfaces and path reach; other runtime sections
+  feed scanner, veto, browser and /fix readers. This is execution configuration,
+  not authority to create or restate a Law. Read both sources for changes to
+  executable Law behaviour. Do not delete or bypass runtime entries until one
+  atomic migration updates every reader, schema guard, receipt, fixture and test,
+  and proves unchanged reach and outcomes. ID/source parity is not policy parity.
+  Missing evidence stays INCONCLUSIVE.
 - **No second record beside memory.** A belief store of verified, inferred and
   contradicted facts, an execution-context object and a durable notification
   queue each copy what memory, fiber locals and `StandingOrders` already hold.

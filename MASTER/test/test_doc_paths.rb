@@ -114,7 +114,6 @@ class TestDocPaths < Minitest::Test
     MASTER/docs/editorial-quality.md
     MASTER/docs/efficient-repair-pass.md
     MASTER/docs/efficient_repair_workflow.md
-    MASTER/docs/map.md
     MASTER/docs/task-contracts.md
     MASTER/docs/task-map.md
     MASTER/docs/visual/bergen_brand_systems.md
@@ -154,35 +153,40 @@ class TestDocPaths < Minitest::Test
                  "non-README Markdown needs a documented exception: #{extras.join(", ")}"
   end
 
-  # The operator's rule is one shared checkout written straight to main; the
-  # contract and every harness copy must teach that and nothing else.
+  # The canonical generated AGENTS.md carries the workflow; other harness
+  # files are short pointers rather than five copies of the contract.
   def test_agent_contract_teaches_the_single_checkout_workflow
     source = File.read(File.join(REPO, "MASTER/AGENTS.md"))
-    block = source[/<!-- agent-contract:begin -->\n(.*?)<!-- agent-contract:end -->/m, 1]
+    block = source[/<!-- agent-contract:begin -->\\n(.*?)<!-- agent-contract:end -->/m, 1]
     refute_nil block
-
     assert_includes block, "commit straight to `main`"
     refute_match(/managed worktrees|topic branch/, block)
 
-    HARNESS_FILES.each do |relative|
+    canonical = File.read(File.join(REPO, "AGENTS.md"))
+    assert_includes canonical, "commit straight to `main`"
+    assert_includes canonical, "MASTER/data/laws.yml"
+    refute_match(/managed worktrees|topic branch/, canonical)
+
+    HARNESS_FILES.drop(1).each do |relative|
       body = File.read(File.join(REPO, relative))
-      assert_includes body, "commit straight to `main`", "#{relative} does not teach the active workflow"
-      refute_match(/managed worktrees|topic branch/, body, "#{relative} still teaches worktrees")
+      assert_match(/\\]\\((?:\\.\\.\\/)?AGENTS\\.md\\)/, body, "#{relative} does not route to AGENTS.md")
+      refute_includes body, "commit straight to `main`", "#{relative} duplicates workflow policy"
     end
   end
 
   def test_every_harness_file_points_at_the_law
     missing = HARNESS_FILES.reject { |relative| File.file?(File.join(REPO, relative)) }
+    assert_empty missing, "no entry file for an agent that reads it: #{missing.join(', ')}"
 
-    assert_empty missing, "no entry file for an agent that reads it: #{missing.join(", ")}"
+    canonical = File.read(File.join(REPO, "AGENTS.md"))
+    %w[MASTER/AGENTS.md MASTER/data/soul.yml MASTER/data/laws.yml MASTER/data/law_runtime.yml].each do |path|
+      assert_includes canonical, path, "AGENTS.md does not route agents to #{path}"
+    end
 
-    HARNESS_FILES.each do |relative|
+    HARNESS_FILES.drop(1).each do |relative|
       body = File.read(File.join(REPO, relative))
-
-      assert_includes body, "MASTER/data/soul.yml", "#{relative} does not name the kernel" # source-assertion: ok — a document has no behaviour but its text
-      assert_includes body, "MASTER/data/laws.yml", "#{relative} does not name the rule catalogue" # source-assertion: ok — a document has no behaviour but its text
-      assert_includes body, "docs:agent_contracts", # source-assertion: ok — a document has no behaviour but its text
-                      "#{relative} does not say where it came from"
+      assert_includes body, "AGENTS.md", "#{relative} is not a pointer"
+      assert_includes body, "canonical", "#{relative} does not identify the canonical entry"
     end
   end
 
