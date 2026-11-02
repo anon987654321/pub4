@@ -39,18 +39,18 @@ one measurement nobody has taken on a non-macOS host.
   its own deadline — where the helper comment promises about a minute across
   the corpus. Either the host is that much slower or a ratchet walks
   something it should not; the run's per-ratchet durations say which.
-## Open from the 2026-11-01 session — repository flattening
+## Structural baseline on main (8748756b0e6b)
 
-Initial recursive Git tree at `496cfb32497bcedb4de6a98bc452d030e82d886b`
-contained 5,597 files and 719 directories. After the STUDIO and RAILS batches,
-the pinned source tree at `88bbd45bb2ede7a10d768c101c796ec786e15f70`
-contains 5,593 files and 718 directories: MASTER 2,210/125, RAILS
-3,085/556, OPENBSD 281/29, STUDIO 3/2. RAILS has 379 files at depth 7
-or greater and 102 at depth 8 or greater; maximum path depth is 9. The four
-removed files comprise one duplicate STUDIO implementation and three duplicate
-Turbo Stream templates. Measurements are structural signals, not proof that a
-directory or namespace is unnecessary. Refresh them at the start and end of
-each batch; compare pinned revisions only.
+The current Git tree contains 5,897 files and 807 directories, with maximum
+path depth 9. Per-tree counts (files / descendant directories): MASTER
+2,230 / 143; RAILS 3,350 / 623; OPENBSD 283 / 30; STUDIO 20 / 11.
+RAILS has 413 files at depth 7 or greater and 102 at depth 8 or greater.
+An exact-blob census finds 50 duplicate-content groups across 159 paths,
+including the 22 empty `.keep` placeholders. These are investigation signals,
+not deletion instructions: app-local migrations, pins, entrypoint shims,
+license texts and intentional stubs remain until their ownership contracts
+prove a safe consolidation. Refresh the census at each bounded batch and
+compare pinned revisions only.
 
 ### Remaining work
 
@@ -125,8 +125,9 @@ each batch; compare pinned revisions only.
   Preserve Rails lookup contracts and each product's visual identity. Share
   foundations, not product compositions.
 
-- [ ] Residual exact-blob audit: a post-dedup scan still finds 46 duplicate
-  content groups across the repository. This is an investigation set, not a
+- [ ] Residual exact-blob audit: the current census finds 50 duplicate-content
+  groups across 159 paths, including the 22 empty `.keep` placeholders. This is
+  an investigation set, not a
   deletion list. It includes per-app Ruby/version pins, boot/config files,
   migration and test files that must remain at app-local paths, framework
   entrypoint/constant shims, and repeated assets/licence text. The Amber and
