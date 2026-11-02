@@ -13,46 +13,26 @@ class TestCliFaceDispatch < Minitest::Test
     assert defined?(::Operator::CheckChain), "fix registry must load top-level Operator::CheckChain"
   end
 
-  def test_face_pauses_the_repl_background_scanner
+  def test_face_redraws_without_stopping_the_existing_session
     session = Master::CLI::Session.allocate
-    session.instance_variable_set(:@running, true)
-    session.instance_variable_set(:@bg_thread, Object.new.tap { |o| def o.alive? = true })
     events = []
-
+    session.define_singleton_method(:print_face_overlay) { events << :overlay }
     session.define_singleton_method(:stop_background_loop) { events << :stop }
     session.define_singleton_method(:start_background_loop) { events << :start }
 
-    Master::CLI::CommandRegistry.stub(:dispatch_face, ->(**) { events << :face; "face0: closed" }) do
-      assert_nil session.send(:run_face)
-    end
+    assert_nil session.send(:run_face)
 
-    assert_equal %i[stop face start], events
+    assert_equal [:overlay], events
   end
 
-  def test_leaving_the_face_does_not_start_a_scanner_that_was_off
+  def test_slash_face_redraws_the_overlay_inside_the_repl
     session = Master::CLI::Session.allocate
-    session.instance_variable_set(:@running, true)
     events = []
+    session.define_singleton_method(:print_face_overlay) { events << :overlay }
 
-    session.define_singleton_method(:stop_background_loop) { events << :stop }
-    session.define_singleton_method(:start_background_loop) { events << :start }
+    assert_nil session.send(:dispatch_core_slash_command, "/face")
 
-    Master::CLI::CommandRegistry.stub(:dispatch_face, ->(**) { events << :face; "face0: closed" }) do
-      assert_nil session.send(:run_face)
-    end
-
-    assert_equal %i[stop face], events
-  end
-
-  def test_face_is_dispatched_synchronously_from_repl
-    session = Master::CLI::Session.allocate
-    called = false
-
-    Master::CLI::CommandRegistry.stub(:dispatch_face, ->(**) { called = true; "face0: closed" }) do
-      assert_nil session.send(:dispatch_core_slash_command, "/face")
-    end
-
-    assert called
+    assert_equal [:overlay], events
   end
   def test_run_input_starts_a_new_ground_truth_turn_before_dispatch
     session = Master::CLI::Session.allocate
