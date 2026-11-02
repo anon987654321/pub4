@@ -42,6 +42,8 @@ class TestLaneSelection < Minitest::Test
   end
 
   def setup
+    @saved_ollama_enabled = ENV["MASTER_OLLAMA_ENABLED"]
+    ENV["MASTER_OLLAMA_ENABLED"] = "1"
     @dir = Dir.mktmpdir
     Quota.path = File.join(@dir, "lane_quota.yml")
     Quota.clock = -> { NOON }
@@ -50,6 +52,7 @@ class TestLaneSelection < Minitest::Test
   def teardown
     Quota.path = nil
     Quota.clock = -> { Time.now.to_f }
+    @saved_ollama_enabled.nil? ? ENV.delete("MASTER_OLLAMA_ENABLED") : ENV["MASTER_OLLAMA_ENABLED"] = @saved_ollama_enabled
     FileUtils.remove_entry(@dir)
   end
 
@@ -62,6 +65,20 @@ class TestLaneSelection < Minitest::Test
   ensure
     Selection.singleton_class.send(:remove_method, method_name)
   end
+
+
+  def test_ollama_is_absent_from_default_order_and_all_dead_fallback
+    ENV.delete("MASTER_OLLAMA_ENABLED")
+
+    refute Selection.ollama_enabled?
+    assert_empty Selection.order([LOCAL])
+    assert_empty Selection.order_or_all([LOCAL]), "order_or_all must not resurrect a disabled local lane"
+
+    ENV["MASTER_OLLAMA_ENABLED"] = "1"
+    assert Selection.ollama_enabled?
+    assert_equal [LOCAL], Selection.order_or_all([LOCAL]), "explicit opt-in retains the configured recovery lane"
+  end
+
 
   def test_first_live_of_the_tier_skips_a_quota_dead_lane
     tier = [AGY, OPUS, GROK, NEMOTRON]

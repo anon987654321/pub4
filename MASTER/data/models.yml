@@ -216,9 +216,9 @@ model_defs:
     <<: *model_defaults
     context_window: 128000
     score: { quality: 0.90, speed: 0.76, cost: 1.0 }
-# Ollama remains available as a local fallback, but is deliberately excluded
-# from ordinary default/primary/strong routes while the operator's remote quota
-# constraint is active. Re-enable it in those tiers only after an explicit review.
+# Ollama's local tier is retained for an explicitly enabled future recovery
+# path, but is disabled by default while the operator's local account/quota
+# constraint is active. Do not enable it implicitly through discovery.
 models:
   grok_primary:
     - *grok_cli_auto
@@ -565,6 +565,7 @@ replicate_chat:
 # keep_alive holds the local model in memory between turns; max_num_ctx caps the
 # request window (ollama_sender.rb).
 ollama:
+  enabled: false
   default_base_url: "http://localhost:11434"
   keep_alive: 30m
   max_num_ctx: 16384

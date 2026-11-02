@@ -61,12 +61,26 @@ module Master
       end
 
       # Live models, remote before local before free, each group in the order given.
-      # `free_last: false` keeps the given order, for the routes that choose the
-      # free tier on purpose (greetings, explanations), where only the dead go.
+      # Ollama is removed before ranking unless its config or explicit opt-in enables
+      # it; even the all-dead fallback may not resurrect a disabled local lane.
+      # `free_last: false` keeps the given order for routes that choose free on purpose.
       # `latency` answers seconds for a model or nil when it was never measured.
       # `vision: true` puts the lanes that read images ahead of those that do not.
-      def order(models, free_last: true, latency: nil, vision: false, manual: LaneQuota.manual_dead, lead: [])
+      def ollama_model?(model) = model.to_s.start_with?("ollama:", "ollama/")
+
+      # One policy for routing, inventory and boot selection. The file is the
+      # default; an environment opt-in is deliberately explicit and reversible.
+      def ollama_enabled?(cfg: config)
+        return false if ENV["MASTER_NO_OLLAMA"] == "1"
+        return true if ENV["MASTER_OLLAMA_ENABLED"] == "1"
+
+        cfg.dig("ollama", "enabled") == true
+      end
+
+      def order(models, free_last: true, latency: nil, vision: false, manual: LaneQuota.manual_dead, lead: [],
+                cfg: config)
         live = Array(models).map(&:to_s).reject(&:empty?).uniq
+        live.reject! { |id| ollama_model?(id) && !ollama_enabled?(cfg:) }
         live = live.reject { |id| LaneQuota.dead?(id, manual:) || !LaneState.usable?(id) }
         live = live.reject { |id| kind(id) == :paid_tail && !Io::PaidTail.enabled? }
         return live unless free_last
@@ -158,9 +172,11 @@ module Master
 
       # `order`, except that when every model is dead the list comes back as it
       # was, so the dispatcher can refuse it with the typed Offline that says why.
-      def order_or_all(models, free_last: true, **rest)
-        live = order(models, free_last:, **rest)
-        live.empty? ? Array(models) : live
+      def order_or_all(models, free_last: true, cfg: config, **rest)
+        candidates = Array(models).map(&:to_s).reject(&:empty?).uniq
+        candidates.reject! { |id| ollama_model?(id) && !ollama_enabled?(cfg:) }
+        live = order(candidates, free_last:, cfg:, **rest)
+        live.empty? ? candidates : live
       end
 
       # The live models of the best class that has any: a pool may rank them by
@@ -226,11 +242,12 @@ module Master
 
       # The tier's live models whose lane can answer on this machine, in selection order.
       def pool(name = "default", cfg: config, alive: method(:alive?))
-        order(tier(name, cfg:)).select { |id| alive.call(id) }
+        order(tier(name, cfg:), cfg:).select { |id| alive.call(id) }
       end
 
       def alive?(model)
         id = model.to_s
+        return false if ollama_model?(id) && !ollama_enabled?
         return false if Master::Io::ModelQuota.over_quota?(id)
 
         binary = CLI_BINARIES[LaneQuota.lane_of(id)]
@@ -252,6 +269,7 @@ module Master
 
       # A local model needs the daemon, which this starts once when it is down.
       def ollama_alive?(id)
+        return false unless ollama_enabled?
         return false if LaneQuota.dead?(id)
 
         %i[up started].include?(LaneHealth.ensure_ollama.state)

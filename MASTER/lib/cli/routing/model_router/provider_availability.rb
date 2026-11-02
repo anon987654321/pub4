@@ -3,6 +3,7 @@
 require "json"
 require "net/http"
 require "uri"
+require_relative "../../../io/lane_selection"
 
 module Master
   module CLI
@@ -108,13 +109,11 @@ module Master
 
           def web_chat_model?(model_id) = model_id.to_s.start_with?("web-chat:")
 
-          # Ollama is a first-class local lane. localhost:11434 is the default daemon;
-          # OLLAMA_BASE_URL can point elsewhere, and MASTER_NO_OLLAMA is the
-          # explicit opt-out. When discovery cannot answer, the configured list
-          # still provides a deterministic fallback.
+          # Delegate to the same opt-in policy used by /fix, boot selection and
+          # the emergency catalogue fallback; this prevents a disabled local lane
+          # from reappearing through a separate model-router gate.
           def ollama_enabled?
-            return false if ENV["MASTER_NO_OLLAMA"] == "1"
-            true
+            Master::Io::LaneSelection.ollama_enabled?(cfg: @rules)
           end
 
 def ollama_model?(model_id) = model_id.to_s.start_with?("ollama:", "ollama/")

@@ -12,7 +12,7 @@ class TestKeylessRouting < Minitest::Test
     @saved_env = %w[
       XAI_API_KEY OPENROUTER_API_KEY ANTHROPIC_API_KEY OPENAI_API_KEY
       DEEPSEEK_API_KEY GOOGLE_API_KEY GEMINI_API_KEY MISTRAL_API_KEY
-      MASTER_KEYLESS MASTER_WEB_CHAT MASTER_NO_WEB_CHAT MASTER_LOCAL_ONLY MASTER_NO_CLAUDE_CLI MASTER_NO_GROK_CLI MASTER_NO_AGY_CLI MASTER_NO_OLLAMA
+      MASTER_KEYLESS MASTER_WEB_CHAT MASTER_NO_WEB_CHAT MASTER_LOCAL_ONLY MASTER_NO_CLAUDE_CLI MASTER_NO_GROK_CLI MASTER_NO_AGY_CLI MASTER_NO_OLLAMA MASTER_OLLAMA_ENABLED
       MASTER_NO_POOL_PROBES MASTER_LLM_GATEWAY_URL MASTER_LLM_GATEWAY_KEY FREELLMPOOL_PROXY_KEY
     ].to_h { |key| [key, ENV[key]] }
     @saved_env.each_key { |key| ENV.delete(key) }
@@ -29,12 +29,29 @@ class TestKeylessRouting < Minitest::Test
     @restore_routing = Master::TestSupport::RoutingIsolation.install
   end
 
-  def local_ollama! = ENV.delete("MASTER_NO_OLLAMA")
+  def local_ollama!
+    ENV.delete("MASTER_NO_OLLAMA")
+    ENV["MASTER_OLLAMA_ENABLED"] = "1"
+  end
 
   def teardown
     @restore_routing&.call
     @saved_env.each { |key, val| val.nil? ? ENV.delete(key) : ENV[key] = val }
   end
+
+
+  def test_ollama_is_disabled_by_default_and_never_enters_the_pool
+    router = Master::CLI::Routing::ModelRouter.new(
+      config: FakeConfig.new(model: Master.free_primary_model), root: Master::ROOT,
+    )
+
+    refute router.ollama_enabled?
+    assert_empty router.local_models
+    refute router.reachable?("ollama:gemma3:4b")
+    assert_empty router.pool.grep(/\Aollama[:\/]/)
+    assert_empty router.fallback_chain(task_type: :exploration).grep(/\Aollama[:\/]/)
+  end
+
 
   def test_default_model_is_web_chat_grok_without_keys
     assert_equal "web-chat:grok", Master.default_model

@@ -53,11 +53,15 @@ class TestComputePool < Minitest::Test
     assert_equal 1.0, @pool.send(:task_factor, candidate, :unknown_task)
   end
 
-  def test_ollama_remains_local_fallback_only
+  def test_ollama_is_declared_but_disabled_until_explicit_opt_in
     policy = Master.load_yaml(File.join(Master::ROOT, "data", "models.yml"))
     local_ids = policy.fetch("models").fetch("local").map { |row| row.fetch("id") }
 
     assert_includes local_ids, "ollama:gemma3:4b"
+    assert_equal false, policy.fetch("ollama").fetch("enabled")
+    refute Master::Io::LaneSelection.ollama_enabled?(cfg: policy)
+    assert_empty Master::Io::LaneSelection.order_or_all(local_ids, cfg: policy)
+
     %w[default primary strong].each do |tier|
       ids = policy.fetch("models").fetch(tier).map { |row| row.fetch("id") }
       refute_includes ids, "ollama:gemma3:4b", "#{tier} must not promote the constrained Ollama lane"

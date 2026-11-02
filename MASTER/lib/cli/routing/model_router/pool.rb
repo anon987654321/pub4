@@ -441,7 +441,7 @@ module Master
           end
 
           def ollama_problem(id)
-            return "ollama switched off (MASTER_NO_OLLAMA=1)" unless ollama_enabled?
+            return "ollama disabled (set MASTER_OLLAMA_ENABLED=1 to opt in)" unless ollama_enabled?
             return "ollama cloud models are unsupported" if ollama_cloud_model?(id)
 
             name = id.sub(%r{\Aollama[:/]}, "")
