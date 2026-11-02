@@ -155,6 +155,27 @@ class TestLawContract < Minitest::Test
     assert rule.key?("good")
   end
 
+  def test_digest_covers_law_path_reach
+    id, law = Law.definitions.first
+    baseline = Law::Contract.digest
+
+    path = Regexp.new("MASTER/lib", Regexp::IGNORECASE)
+    excluded = Regexp.new("fixtures", Regexp::MULTILINE)
+    entry = law.with(path:, path_exclude: excluded).contract_entry
+    assert_equal({ "source" => "MASTER/lib", "options" => Regexp::IGNORECASE }, entry.fetch("path"))
+    assert_equal({ "source" => "fixtures", "options" => Regexp::MULTILINE }, entry.fetch("path_exclude"))
+
+    with_path = Law.definitions.merge(id => law.with(path:))
+    Law.stub(:definitions, with_path) do
+      refute_equal baseline, Law::Contract.digest
+    end
+
+    with_exclusion = Law.definitions.merge(id => law.with(path_exclude: excluded))
+    Law.stub(:definitions, with_exclusion) do
+      refute_equal baseline, Law::Contract.digest
+    end
+  end
+
   def test_digest_covers_governing_transformation_policy
     original = Master.method(:law)
     before = Law::Contract.digest
