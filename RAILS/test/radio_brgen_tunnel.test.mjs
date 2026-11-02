@@ -53,18 +53,37 @@ test("all 22 mode indices have an ordered GLSL branch and the classic mode is ne
   assert.match(RING_SHAPE_GLSL, /float ringShape\(float th, float i, float t\)/)
 })
 
-test("Radio tunnel wires the mode shader and left/right keyboard controls", async () => {
+test("Radio tunnel wires the visual module and left/right keyboard controls", async () => {
   const source = await readFile(resolve(ROOT, "brgen/app/javascript/radio_brgen_tunnel.js"), "utf8")
-  assert.match(source, /MODES, RING_SHAPE_GLSL, modeAfterStep/)
-  assert.match(source, /this\.mode = modeAfterStep\(this\.mode, step\)/)
-  assert.match(source, /gl\.uniform1f\(u\.uMode, this\.mode\)/)
-  assert.match(source, /gl\.uniform1f\(u\.uModeTwist, MODES\[this\.mode\]\.twist\)/)
+  const visual = await readFile(resolve(ROOT, "brgen/app/javascript/radio_brgen_visual.js"), "utf8")
+  assert.match(visual, /MODES, RING_SHAPE_GLSL, modeAfterStep/)
+  assert.match(visual, /this\.mode = modeAfterStep\(this\.mode, step\)/)
+  assert.match(visual, /gl\.uniform1f\(u\.uMode, this\.mode\)/)
+  assert.match(visual, /gl\.uniform1f\(u\.uModeTwist, MODES\[this\.mode\]\.twist\)/)
   assert.match(source, /e\.code === "ArrowRight" \|\| e\.code === "ArrowLeft"/)
   assert.match(source, /this\.visualEngine\.shiftMode\(e\.code === "ArrowRight" \? 1 : -1\)/)
 })
 
+
+test("Radio audio, visual and integration responsibilities live in separate modules", async () => {
+  const entry = await readFile(resolve(ROOT, "brgen/app/javascript/radio_brgen_tunnel.js"), "utf8")
+  const audio = await readFile(resolve(ROOT, "brgen/app/javascript/radio_brgen_audio.js"), "utf8")
+  const visual = await readFile(resolve(ROOT, "brgen/app/javascript/radio_brgen_visual.js"), "utf8")
+  const imports = await readFile(resolve(ROOT, "brgen/config/importmap.rb"), "utf8")
+
+  assert.match(entry, /import \{ AudioEngine \} from "radio_brgen_audio"/)
+  assert.match(entry, /import \{ VisualEngine, MODES \} from "radio_brgen_visual"/)
+  assert.match(audio, /export class AudioEngine/)
+  assert.match(audio, /export function initialTrackIndex/)
+  assert.doesNotMatch(audio, /class VisualEngine|createShader\(/)
+  assert.match(visual, /export class VisualEngine/)
+  assert.doesNotMatch(visual, /class AudioEngine|YT\.Player/)
+  assert.match(imports, /pin "radio_brgen_audio", to: "radio_brgen_audio\.js"/)
+  assert.match(imports, /pin "radio_brgen_visual", to: "radio_brgen_visual\.js"/)
+})
+
 async function loadInitialTrackIndex() {
-  const source = await readFile(resolve(ROOT, "brgen/app/javascript/radio_brgen_tunnel.js"), "utf8")
+  const source = await readFile(resolve(ROOT, "brgen/app/javascript/radio_brgen_audio.js"), "utf8")
   const match = source.match(/export function initialTrackIndex\(tracks, openingTrackId\) \{[\s\S]*?\n\}/)
   assert.ok(match, "radio tunnel exports the tested track-selection helper")
   return vm.runInNewContext("(" + match[0].replace(/^export\s+/, "") + ")")
