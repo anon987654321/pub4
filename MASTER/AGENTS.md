@@ -676,10 +676,10 @@ because agents read the Law one identity at a time. Reopen with a duplicate body
   the execution-contract references, the generated Law digest, the glossary and
   preserved handoffs that `test/test_doc_paths.rb` names one by one; a new file
   there needs its entry in that test.
-- **Media generation lives behind STUDIO.** Dilla, postpro, replicate and
-  lora are tool boundaries under `STUDIO/`; `MASTER/tools/` keeps compatibility
-  entrypoints, and `lib/core/world.rb` routes to them instead of owning their
-  provider or media logic.
+- **Media generation lives behind STUDIO.** Dilla, photograph and replicate
+  are tool boundaries under `STUDIO/` (postpro and lora are retired, trees and
+  entrypoints alike); `MASTER/tools/` keeps entrypoints, and `lib/core/world.rb`
+  routes to them instead of owning their provider or media logic.
 - **No unmeasured gem.** The ruby_llm satellites stay out: `-schema` is
   deprecated in favour of a Hash, and `-resilience`, `-top_secret`, `-agents`,
   `-team` and `-template` are thinner than what MASTER owns. `-test`,

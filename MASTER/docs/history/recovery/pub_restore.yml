@@ -1,6 +1,6 @@
 ---
 name: pub_restore_contract
-# source_repo and target_repo live once, in data/recovery/legacy_manifest.yml,
+# source_repo and target_repo live once, in docs/history/recovery/legacy_manifest.yml,
 # which this file already names under checks.file_presence. Both keys stood here
 # too, with the same two values and no reader in either tree — a second copy that
 # could only drift. lint:data_singularity and lint:dedup both failed on the pair.
@@ -48,15 +48,15 @@ critical_items:
     check: retirement_or_archive_note
   - id: privcam_active_decision
     source: __OLD_BACKUPS/MEGA_ALL_APPS.md
-    expected_target: retired, with the reason in recovery/legacy_manifest.yml
+    expected_target: retired, with the reason in docs/history/recovery/legacy_manifest.yml
     current_state: retired
     check: active_app_or_retirement_note
 
 checks:
   file_presence:
-    - MASTER/data/recovery/legacy_manifest.yml
-    - MASTER/data/recovery/plugin_schema_v1.json
-    - MASTER/data/recovery/pub_restore.yml
+    - MASTER/docs/history/recovery/legacy_manifest.yml
+    - MASTER/docs/history/recovery/plugin_schema_v1.json
+    - MASTER/docs/history/recovery/pub_restore.yml
 
   # Only genuinely absent paths stay here. Historical DEPLOY/bp paths belonged
   # to the old layout and the bplans pipeline never had the generator/templates
@@ -65,6 +65,6 @@ checks:
     - MASTER/data/recovery/ai3/legacy/ai3.rb
 
 agent_prompt: >
-  Before claiming pub4 restored pub, read MASTER/data/recovery/legacy_manifest.yml and this file.
+  Before claiming pub4 restored pub, read MASTER/docs/history/recovery/legacy_manifest.yml and this file.
   For every item in critical_items, prove it is restored, ported, archived, or
   retired. Do not infer completion from naming similarity.

@@ -19,9 +19,9 @@ class TestRecoveryPubManifest < Minitest::Test
     # opened by dating themselves to a layout this repo had already renamed.
     # The ledger is what the contract needs; git holds the prose.
     required = [
-      "MASTER/data/recovery/legacy_manifest.yml",
-      "MASTER/data/recovery/plugin_schema_v1.json",
-      "MASTER/data/recovery/pub_restore.yml",
+      "MASTER/docs/history/recovery/legacy_manifest.yml",
+      "MASTER/docs/history/recovery/plugin_schema_v1.json",
+      "MASTER/docs/history/recovery/pub_restore.yml",
     ]
 
     missing = required.reject { |path| ROOT.join(path).file? }
@@ -29,16 +29,16 @@ class TestRecoveryPubManifest < Minitest::Test
   end
 
   def test_restore_prompt_names_the_canonical_manifest
-    contract = YAML.safe_load(ROOT.join("MASTER/data/recovery/pub_restore.yml").read, permitted_classes: [Date])
+    contract = YAML.safe_load(ROOT.join("MASTER/docs/history/recovery/pub_restore.yml").read, permitted_classes: [Date])
     prompt = contract.fetch("agent_prompt")
 
-    assert_includes prompt, "MASTER/data/recovery/legacy_manifest.yml"
+    assert_includes prompt, "MASTER/docs/history/recovery/legacy_manifest.yml"
     refute_includes prompt, "RESTORE_FROM_PUB.md"
-    assert ROOT.join("MASTER/data/recovery/legacy_manifest.yml").file?
+    assert ROOT.join("MASTER/docs/history/recovery/legacy_manifest.yml").file?
   end
 
   def test_recovery_contract_has_critical_items
-    contract = YAML.safe_load(ROOT.join("MASTER/data/recovery/pub_restore.yml").read, permitted_classes: [Date])
+    contract = YAML.safe_load(ROOT.join("MASTER/docs/history/recovery/pub_restore.yml").read, permitted_classes: [Date])
     ids = contract.fetch("critical_items").map { |item| item.fetch("id") }
 
     assert_includes ids, "mega_all_apps"
@@ -48,7 +48,7 @@ class TestRecoveryPubManifest < Minitest::Test
   end
 
   def test_ai3_recovery_target_is_canonical_across_ledgers
-    contract = YAML.safe_load(ROOT.join("MASTER/data/recovery/pub_restore.yml").read, permitted_classes: [Date])
+    contract = YAML.safe_load(ROOT.join("MASTER/docs/history/recovery/pub_restore.yml").read, permitted_classes: [Date])
     ai3_item = contract.fetch("critical_items").find { |item| item.fetch("id") == "ai3_standalone" }
     expected_target = "MASTER/data/recovery/ai3/legacy/"
 
@@ -56,7 +56,7 @@ class TestRecoveryPubManifest < Minitest::Test
     assert_equal expected_target, ai3_item.fetch("expected_target")
     assert_includes contract.fetch("checks").fetch("missing_until_restored"), "#{expected_target}ai3.rb"
 
-    manifest = YAML.safe_load(ROOT.join("MASTER/data/recovery/legacy_manifest.yml").read, permitted_classes: [Date])
+    manifest = YAML.safe_load(ROOT.join("MASTER/docs/history/recovery/legacy_manifest.yml").read, permitted_classes: [Date])
     legacy_ai3 = manifest.fetch("legacy_roots").find { |item| item.fetch("path") == "ai3/" }
 
     refute_nil legacy_ai3
@@ -64,7 +64,7 @@ class TestRecoveryPubManifest < Minitest::Test
   end
 
   def test_legacy_manifest_has_state_definitions
-    manifest = YAML.safe_load(ROOT.join("MASTER/data/recovery/legacy_manifest.yml").read, permitted_classes: [Date])
+    manifest = YAML.safe_load(ROOT.join("MASTER/docs/history/recovery/legacy_manifest.yml").read, permitted_classes: [Date])
     states = manifest.fetch("states")
 
     %w[restored ported absorbed archived missing partial retired].each do |state|
@@ -73,7 +73,7 @@ class TestRecoveryPubManifest < Minitest::Test
   end
 
   def test_legacy_manifest_uses_declared_states
-    manifest = YAML.safe_load(ROOT.join("MASTER/data/recovery/legacy_manifest.yml").read, permitted_classes: [Date])
+    manifest = YAML.safe_load(ROOT.join("MASTER/docs/history/recovery/legacy_manifest.yml").read, permitted_classes: [Date])
     declared = manifest.fetch("states").keys
     used = manifest.fetch("legacy_roots").filter_map { |item| item["state"] }
     used.concat(manifest.fetch("rails_restore_debt").values.filter_map { |item| item["state"] })
@@ -83,7 +83,7 @@ class TestRecoveryPubManifest < Minitest::Test
   end
 
   def test_archive_inventory_has_one_record_per_generation
-    manifest = YAML.safe_load(ROOT.join("MASTER/data/recovery/legacy_manifest.yml").read, permitted_classes: [Date])
+    manifest = YAML.safe_load(ROOT.join("MASTER/docs/history/recovery/legacy_manifest.yml").read, permitted_classes: [Date])
     inventory = manifest.fetch("archive_inventory").fetch("repositories")
 
     %w[pub pub2 pub3 pub4].each do |repo|
@@ -100,7 +100,7 @@ class TestRecoveryPubManifest < Minitest::Test
   end
 
   def test_historical_refs_keep_the_unmerged_lines_visible
-    manifest = YAML.safe_load(ROOT.join("MASTER/data/recovery/legacy_manifest.yml").read, permitted_classes: [Date])
+    manifest = YAML.safe_load(ROOT.join("MASTER/docs/history/recovery/legacy_manifest.yml").read, permitted_classes: [Date])
     refs = manifest.fetch("repository_refs")
 
     assert_equal(
@@ -118,7 +118,7 @@ class TestRecoveryPubManifest < Minitest::Test
   end
 
   def test_archaeology_records_preserve_disposition
-    manifest = YAML.safe_load(ROOT.join("MASTER/data/recovery/legacy_manifest.yml").read, permitted_classes: [Date])
+    manifest = YAML.safe_load(ROOT.join("MASTER/docs/history/recovery/legacy_manifest.yml").read, permitted_classes: [Date])
 
     manifest.fetch("mass_change_reviews").each do |review|
       assert review["repo"]
@@ -136,7 +136,7 @@ class TestRecoveryPubManifest < Minitest::Test
   end
 
   def test_master_json_lineage_is_evidence_not_a_second_authority
-    manifest = YAML.safe_load(ROOT.join("MASTER/data/recovery/legacy_manifest.yml").read, permitted_classes: [Date])
+    manifest = YAML.safe_load(ROOT.join("MASTER/docs/history/recovery/legacy_manifest.yml").read, permitted_classes: [Date])
     lineage = manifest.fetch("master_json_lineage").fetch("pub3_my_work")
 
     assert_equal "50.0.0", lineage.fetch("version")
@@ -145,7 +145,7 @@ class TestRecoveryPubManifest < Minitest::Test
   end
 
   def test_legacy_manifest_has_no_duplicate_top_level_keys
-    lines = ROOT.join("MASTER/data/recovery/legacy_manifest.yml").read.each_line
+    lines = ROOT.join("MASTER/docs/history/recovery/legacy_manifest.yml").read.each_line
     keys = lines.filter_map do |line|
       match = line.match(/\A([A-Za-z_][A-Za-z0-9_-]*):(?:\s|$)/)
       match && match[1]
@@ -155,7 +155,7 @@ class TestRecoveryPubManifest < Minitest::Test
     assert_empty duplicates, "duplicate top-level recovery keys: #{duplicates.join(", ")}"
   end
   def test_master2_and_face_reviews_are_explicitly_dispositioned
-    manifest = YAML.safe_load(ROOT.join("MASTER/data/recovery/legacy_manifest.yml").read, permitted_classes: [Date])
+    manifest = YAML.safe_load(ROOT.join("MASTER/docs/history/recovery/legacy_manifest.yml").read, permitted_classes: [Date])
     master2 = manifest.fetch("master2_lineage")
     assert_includes master2.fetch("retained_semantics"), "Keep workflow lifecycle explicit and observable, but do not reinflate the retired eight-phase MASTER2 state machine."
 
@@ -170,7 +170,7 @@ class TestRecoveryPubManifest < Minitest::Test
     assert_includes v43.fetch("not_restored"), "The old prediction_engine confidence-based autonomous mutation policy."
   end
   def test_accidental_collapse_recovery_is_pinned
-    manifest = YAML.safe_load(ROOT.join("MASTER/data/recovery/legacy_manifest.yml").read, permitted_classes: [Date])
+    manifest = YAML.safe_load(ROOT.join("MASTER/docs/history/recovery/legacy_manifest.yml").read, permitted_classes: [Date])
     recovery = manifest.fetch("mass_recovery_reviews").fetch("pub4_accidental_collapse")
     assert_equal "b4c510ef96eac87cfa6ca946fd30f530f8c5c8a0", recovery.fetch("recovery_commit")
     assert_equal 5507, recovery.fetch("restored_tree_entries")
@@ -178,7 +178,7 @@ class TestRecoveryPubManifest < Minitest::Test
     assert_equal "recovery-authoritative", recovery.fetch("disposition")
   end
   def test_legacy_capability_reviews_are_explicit
-    manifest = YAML.safe_load(ROOT.join("MASTER/data/recovery/legacy_manifest.yml").read, permitted_classes: [Date])
+    manifest = YAML.safe_load(ROOT.join("MASTER/docs/history/recovery/legacy_manifest.yml").read, permitted_classes: [Date])
 
     aight = manifest.fetch("legacy_capability_reviews").fetch("pub3_aight")
     assert_includes aight.fetch("absorbed").map { |item| item.fetch("capability") }, "memory, context and session lifecycle"
@@ -193,7 +193,7 @@ class TestRecoveryPubManifest < Minitest::Test
   end
 
   def test_recovered_regressions_have_a_current_disposition
-    manifest = YAML.safe_load(ROOT.join("MASTER/data/recovery/legacy_manifest.yml").read, permitted_classes: [Date])
+    manifest = YAML.safe_load(ROOT.join("MASTER/docs/history/recovery/legacy_manifest.yml").read, permitted_classes: [Date])
     reviews = manifest.fetch("recovered_regression_reviews")
 
     assert_equal 13, reviews.size
@@ -216,7 +216,7 @@ class TestRecoveryPubManifest < Minitest::Test
   end
 
   def test_legacy_deploy_bundle_is_reconciled
-    manifest = YAML.safe_load(ROOT.join("MASTER/data/recovery/legacy_manifest.yml").read, permitted_classes: [Date])
+    manifest = YAML.safe_load(ROOT.join("MASTER/docs/history/recovery/legacy_manifest.yml").read, permitted_classes: [Date])
     review = manifest.fetch("legacy_deploy_bundle_review")
 
     assert_equal "41dcb7c8a88ada5ab948d0fd65e222ed3683d037", review.fetch("restoration_commit")
@@ -227,7 +227,7 @@ class TestRecoveryPubManifest < Minitest::Test
   end
 
   def test_late_archaeology_records_are_pinned
-    manifest = YAML.safe_load(ROOT.join("MASTER/data/recovery/legacy_manifest.yml").read, permitted_classes: [Date])
+    manifest = YAML.safe_load(ROOT.join("MASTER/docs/history/recovery/legacy_manifest.yml").read, permitted_classes: [Date])
 
     dilla = manifest.fetch("pub2_dilla_carousel_review")
     assert_equal "absorbed; do-not-restore-html-monolith", dilla.fetch("disposition")
@@ -242,7 +242,7 @@ class TestRecoveryPubManifest < Minitest::Test
   end
 
   def test_pub_backup_plan_is_reconciled_to_current_rails_tree
-    manifest = YAML.safe_load(ROOT.join("MASTER/data/recovery/legacy_manifest.yml").read, permitted_classes: [Date])
+    manifest = YAML.safe_load(ROOT.join("MASTER/docs/history/recovery/legacy_manifest.yml").read, permitted_classes: [Date])
     review = manifest.fetch("pub_backup_restoration_plan_review")
 
     assert_equal "18d9bbbc63121aedfedd2366f540b8ee56006674", review.fetch("source_commit")
@@ -253,7 +253,7 @@ class TestRecoveryPubManifest < Minitest::Test
   end
 
   def test_pub2_reasoning_lineage_is_absorbed_without_a_second_authority
-    manifest = YAML.safe_load(ROOT.join("MASTER/data/recovery/legacy_manifest.yml").read, permitted_classes: [Date])
+    manifest = YAML.safe_load(ROOT.join("MASTER/docs/history/recovery/legacy_manifest.yml").read, permitted_classes: [Date])
     lineage = manifest.fetch("pub2_semantic_lineage")
 
     assert_equal "absorbed-semantic", lineage.dig("reasoning_framework_v135", "disposition")
@@ -263,7 +263,7 @@ class TestRecoveryPubManifest < Minitest::Test
     assert_includes lineage.fetch("caution"), "The old JSON versions are historical reasoning evidence, not runtime configuration."
   end
   def test_archive_restore_required_commands_refer_to_existing_scripts
-    plan = YAML.safe_load(ROOT.join("MASTER/data/recovery/pub_archive_restore.yml").read)
+    plan = YAML.safe_load(ROOT.join("MASTER/docs/history/recovery/pub_archive_restore.yml").read)
     commands = plan.fetch("checks").fetch("required")
 
     refute_empty commands, "archive restore needs at least one executable verification command"
@@ -275,7 +275,7 @@ class TestRecoveryPubManifest < Minitest::Test
   end
 
   def test_missing_until_restored_contains_only_absent_targets
-    contract = YAML.safe_load(ROOT.join("MASTER/data/recovery/pub_restore.yml").read, permitted_classes: [Date])
+    contract = YAML.safe_load(ROOT.join("MASTER/docs/history/recovery/pub_restore.yml").read, permitted_classes: [Date])
     paths = contract.fetch("checks").fetch("missing_until_restored")
     present = paths.select { |path| ROOT.join(path).file? }
 

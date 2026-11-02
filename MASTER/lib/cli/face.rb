@@ -35,7 +35,7 @@ module Master
       # source (Head by default); chars and mode replace the ramp and invert it
       # (MASTER_FACE_CHARS, MASTER_FACE_MODE=light). MASTER_FACE_QUIET=1 draws
       # the plain word only; CLI log quietness never hides the face. MASTER_REDUCED_MOTION=1
-      # holds the head still.
+      # holds the head and the particle field still.
       def frame(state:, rows:, cols:, t:, level: nil, events: [], motion: Motion.new, color: false, heard: false, viseme: "neutral", source: nil, chars: nil, mode: nil, show_laws: nil)
         raise ArgumentError, "face: unknown state #{state.inspect}" unless STATES.include?(state)
 
@@ -53,7 +53,10 @@ module Master
         # A morphed head is new every frame, so it is not worth keeping.
         ascii = shaped.equal?(head) ? renderer(head, rows, cols, chars, mode) : Ascii.new(shaped, rows, cols, chars:, mode:)
         frame = ascii.render(look, state:, laws:)
-        if source.nil? && Master::Face::Swarm.enabled? && ENV.fetch("MASTER_FACE_SWARM", "1") != "0"
+        # REDUCED_MOTION also rests the particle field: a frozen swarm would
+        # still paint its seeded home positions over the plain frame, and the
+        # reduced frame must equal the plain one (the ascii-face contract).
+        if source.nil? && ENV["MASTER_REDUCED_MOTION"] != "1" && Master::Face::Swarm.enabled? && ENV.fetch("MASTER_FACE_SWARM", "1") != "0"
           SWARMS.clear if SWARMS.size >= 4
           requested = ENV["MASTER_FACE_SWARM_BUDGET"]
           configured_budget = Integer(Master::Face::Swarm.config.fetch("particle_budget"))

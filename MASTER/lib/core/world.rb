@@ -57,7 +57,7 @@ module Master::Core
         elsif verb == :probe
           @probe && @capabilities.allow?(:probe)
         else
-          @capabilities.allow?(Effect::CAPABILITIES.fetch(verb))
+          @capabilities.allow?(CAPABILITIES.fetch(verb))
         end
       end
     end

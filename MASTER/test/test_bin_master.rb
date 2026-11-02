@@ -24,7 +24,11 @@ class TestBinMaster < Minitest::Test
   def run_core(prelude = "")
     Dir.mktmpdir("master-core-test") do |workspace|
       script = "#{prelude}; load File.join(#{ROOT.inspect}, 'bin', 'master')"
-      Open3.capture2e(RbConfig.ruby, "-I#{File.join(ROOT, 'lib')}", "-e", script, "--",
+      # The prelude runs before bin/master, and bin/master re-execs into its own
+      # Ruby unless the spawn already looks bundler-managed. A real `bundle exec`
+      # run has BUNDLE_BIN_PATH set, so the in-process prelude survives; name the
+      # same context here or the override below is exec'd out of existence.
+      Open3.capture2e({ "BUNDLE_BIN_PATH" => "1" }, RbConfig.ruby, "-I#{File.join(ROOT, 'lib')}", "-e", script, "--",
                       "core", "--root", workspace, "--max-turns", "6", "smoke", chdir: ROOT)
     end
   end
