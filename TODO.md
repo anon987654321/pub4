@@ -39,7 +39,7 @@ one measurement nobody has taken on a non-macOS host.
   its own deadline — where the helper comment promises about a minute across
   the corpus. Either the host is that much slower or a ratchet walks
   something it should not; the run's per-ratchet durations say which.
-## Structural baseline on main (2da771ba4b34)
+## Structural baseline on main (b20f21a82933)
 
 The current Git tree contains 5,901 files and 809 directories, with maximum
 path depth 9. Per-tree file counts: MASTER 2,230; RAILS 3,354; OPENBSD 283;
