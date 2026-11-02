@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Screenshot sweep <%= escape(summary["generated_at"]) %></title>
+  <link rel="stylesheet" href="gallery.css">
+</head>
+<body>
+  <h1>Screenshot sweep</h1>
+  <p><%= summary["pages"] %> pages, <%= summary["screenshots"] %> screenshots,
+    <%= summary["dialogs"] %> dialog states, <%= summary["failed"] %> pages not captured.
+    Widths: <%= Array(summary["widths"]).join(", ") %>.</p>
+  <% if summary["error"] %><p class="bad"><%= escape(summary["error"]) %></p><% end %>
+  <% unless unresolved.empty? %>
+    <h2>Routes no visited page linked to (not captured)</h2>
+    <ul>
+      <% unresolved.each do |app, routes| %>
+        <li><%= escape(app) %>: <%= routes.map { |route| escape(route) }.join(", ") %></li>
+      <% end %>
+    </ul>
+  <% end %>
+  <% rows.each do |row| %>
+    <section>
+      <h2><%= escape(row[:app]) %> <%= escape(row[:host]) %><%= escape(row[:path]) %></h2>
+      <p>route <%= escape(row[:route]) %> · HTTP <%= escape(row.fetch(:status) || "?") %></p>
+      <% if row[:note] %><p class="bad"><%= escape(row[:note]) %></p><% end %>
+      <div class="shots">
+        <% figures(row).each do |file, caption| %>
+          <figure>
+            <a href="<%= escape(file) %>">
+              <img loading="lazy" src="<%= escape(file) %>" alt="<%= escape(caption) %>">
+            </a>
+            <figcaption><%= escape(caption) %></figcaption>
+          </figure>
+        <% end %>
+      </div>
+    </section>
+  <% end %>
+</body>
+</html>

@@ -109,17 +109,40 @@ module Master
         missing_apps = engine_names - auditor_apps
         raise "frontend auditor misses Rails app(s): #{missing_apps.join(", ")}" if missing_apps.any?
 
+        observe_rendered_fleet!
+        @fleet_verified = true
+      end
+
+      # The lane-gated rendered stages: the layout suite, then the screenshot record.
+      def observe_rendered_fleet!
         if WorkLane.runs?(:layout_sweep)
           observe_layout_suite!
         else
           Master::Trace::Dmesg.status("layout0", "RAILS family sweep not run, lane=#{WorkLane.current}")
         end
-        @fleet_verified = true
+        screenshot_sweep!
       end
 
       def engine_app?(path)
         gemfile = File.join(path, "Gemfile")
         File.file?(gemfile) && File.read(gemfile).include?('gem "pub4-shared"')
+      end
+
+      # Once per run: every page, width and dialog on disk before any visual
+      # repair, so the record shows what rendered whatever the passes decide.
+      def screenshot_sweep!
+        unless WorkLane.runs?(:screenshot_sweep) && ENV.fetch("MASTER_SCREENSHOT_SWEEP", "1") != "0"
+          Master::Trace::Dmesg.status("shots0", "screenshot sweep not run, lane=#{WorkLane.current}")
+          return
+        end
+
+        # Browser probes load only when the stage runs.
+        require_relative "screenshot_sweep"
+        sweep = ScreenshotSweep.new(root: @repo_root, bus: @bus)
+        summary = sweep.run
+        line = "#{summary["pages"]} pages, #{summary["screenshots"]} shots, #{summary["dialogs"]} dialogs, " \
+               "#{summary["failed"]} not captured -> #{sweep.dir}"
+        Master::Trace::Dmesg.status("shots0", summary["error"] ? "screenshot sweep: #{summary["error"]}" : line)
       end
 
       def sweep_layout_suite!

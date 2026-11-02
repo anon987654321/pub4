@@ -1,0 +1,37 @@
+/* Screenshot sweep gallery. System colours only: it is a local record, not a product surface. */
+body {
+  margin: 24px;
+  background: Canvas;
+  color: CanvasText;
+  font: 14px/1.4 "Helvetica Neue", Arial, sans-serif;
+}
+
+section {
+  padding: 12px 0;
+  border-top: 1px solid GrayText;
+}
+
+.shots {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: flex-start;
+}
+
+figure {
+  margin: 0;
+}
+
+img {
+  width: 120px;
+  border: 1px solid GrayText;
+}
+
+figcaption {
+  color: GrayText;
+  font-size: 12px;
+}
+
+.bad {
+  font-weight: bold;
+}

@@ -16,7 +16,7 @@ module Master
       # named in the run's summary, so a code run never reads as visual proof.
       STAGES = {
         research: "research0 web research", architecture: "architecture exploration",
-        layout_sweep: "layout sweep", browser_checks: "browser checks",
+        layout_sweep: "layout sweep", browser_checks: "browser checks", screenshot_sweep: "screenshot sweep",
         visual_pass: "rendered visual review", code_passes: "code-law repair passes",
         visual_groups: "grouped visual repair", improve_code: "code elevation",
         improve_prose: "prose elevation", improve_visual: "visual elevation",
@@ -25,8 +25,8 @@ module Master
 
       RUNS = {
         code: %i[code_passes],
-        visual: %i[layout_sweep browser_checks visual_groups],
-        all: %i[research architecture layout_sweep browser_checks visual_pass code_passes],
+        visual: %i[layout_sweep browser_checks screenshot_sweep visual_groups],
+        all: %i[research architecture layout_sweep browser_checks screenshot_sweep visual_pass code_passes],
         elevate: %i[improve_code improve_prose improve_visual improve_music ideate restructure_drive code_passes],
       }.freeze
 

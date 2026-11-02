@@ -24,6 +24,10 @@ snapshot_aliases:
   "brgen/conversations/desktop": "brgen/messenger/desktop"
 
 # Width sweep for the reflow check — WCAG 1.4.10 floor through desktop.
+# The screenshot sweep (MASTER/lib/fix/screenshot_sweep.rb) captures every page at
+# each of these widths, the set the rendered-layout backlog item names.
+sweep_widths: [320, 360, 375, 390, 430, 480, 640, 768, 1024, 1280]
+
 reflow_widths: [320, 360, 375, 390, 414, 430, 480, 540, 600, 640, 680, 768, 834, 900, 1024, 1180, 1280, 1440, 1600]
 
 include_brgen_verticals: true
