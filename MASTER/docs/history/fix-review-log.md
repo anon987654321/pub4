@@ -4,6 +4,8 @@ Preserved review records in chronological order. These are provenance, not
 live task instructions; current authority and open work live in
 `MASTER/AGENTS.md`, `MASTER/data/laws.yml`, `MASTER/data/law_runtime.yml`
 and `TODO.md`.
+Historical authority descriptions below reflect their dated review snapshots;
+follow the live contract and configuration above when they differ.
 
 ## 2026-10-22 — Law authority, operational checks and /fix RAILS
 
