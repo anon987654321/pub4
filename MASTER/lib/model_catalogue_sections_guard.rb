@@ -119,9 +119,10 @@ module Master
         end
       end
 
-      strict_fields(data["ollama"], %w[default_base_url keep_alive max_num_ctx local_model_allowlist],
+      strict_fields(data["ollama"], %w[enabled default_base_url keep_alive max_num_ctx local_model_allowlist],
                     "models.yml ollama", errors)
       ollama = data["ollama"].is_a?(Hash) ? data["ollama"] : {}
+      errors << "models.yml ollama.enabled must be boolean" unless [true, false].include?(ollama["enabled"])
       %w[default_base_url keep_alive].each do |field|
         errors << "models.yml ollama.#{field} must be non-empty text" unless ollama[field].is_a?(String) && !ollama[field].empty?
       end
