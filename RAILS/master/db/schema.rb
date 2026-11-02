@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_31_130000) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_02_150000) do
   create_table "api_keys", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.datetime "current_period_end"
@@ -27,4 +27,24 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_31_130000) do
     t.index ["stripe_subscription_id"], name: "index_api_keys_on_stripe_subscription_id", unique: true
     t.index ["token_digest"], name: "index_api_keys_on_token_digest", unique: true
   end
+
+  create_table "api_copy_reviews", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.string "creative_sha256", null: false
+    t.integer "api_key_id", null: false
+    t.json "finding_codes", default: [], null: false
+    t.json "summary", default: {}, null: false
+    t.string "product_sha256"
+    t.integer "report_version", null: false
+    t.string "request_id", null: false
+    t.string "reviewer_sha256", null: false
+    t.string "source_trust", default: "caller_supplied_unverified", null: false
+    t.string "status", null: false
+    t.datetime "updated_at", null: false
+    t.index ["api_key_id", "created_at"], name: "index_api_copy_reviews_on_api_key_id_and_created_at"
+    t.index ["api_key_id"], name: "index_api_copy_reviews_on_api_key_id"
+    t.index ["request_id"], name: "index_api_copy_reviews_on_request_id", unique: true
+  end
+
+  add_foreign_key "api_copy_reviews", "api_keys"
 end
