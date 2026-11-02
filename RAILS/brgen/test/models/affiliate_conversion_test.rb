@@ -38,6 +38,24 @@ class AffiliateConversionTest < ActiveSupport::TestCase
     assert_equal 1, Shared::AffiliateConversion.where(order_number: "ORD-NOID").count
   end
 
+  test "drops TradeDoubler visitor identifiers from columns and raw postback evidence" do
+    params = {
+      "transactionId" => "txn-no-visitor",
+      "messageTypeId" => "5",
+      "epi" => "city:bergen|surface:marketplace",
+      "visitorId" => "network-visitor-secret"
+    }
+
+    record = Shared::AffiliateConversion.record_from_postback!(params)
+
+    refute_includes Shared::AffiliateConversion.column_names, "visitor_id"
+    refute_includes record.attributes.keys, "visitor_id"
+    refute_includes record.raw_payload.to_h.keys.map(&:to_s), "visitorId"
+    refute_includes record.raw_payload.to_h.keys.map(&:to_s), "visitor_id"
+    refute_includes record.raw_payload.to_json, "network-visitor-secret"
+    assert_equal "bergen", record.epi_parts["city"]
+  end
+
   test "rejects blank message type" do
     assert_nil Shared::AffiliateConversion.record_from_postback!({ "orderNumber" => "x" })
   end
