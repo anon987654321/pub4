@@ -35,7 +35,11 @@ module Master
           catalogue = Master.load_yaml(File.join(Master.master_root(root: @root), "data", "laws.yml"))
           golden_id = references["golden_law"].to_s
           golden = catalogue[golden_id] || {}
-          truthful = catalogue["TRUTHFUL_STATUS"] || {}
+          simulation = catalogue["TRUTHFUL_STATUS_no_simulated_completion"] || {}
+          anti_simulation = simulation["anti_simulation"].is_a?(Hash) ? simulation["anti_simulation"] : {}
+          anti_simulation = anti_simulation.merge(
+            "forbidden" => Array(manifest.dig("absolute", "anti_simulation", "forbidden"))
+          ).freeze
           authorship = catalogue["SACRED_AUTHORSHIP"] || {}
           {
             "golden_law" => [golden_id, golden["statement"]].compact.join(": "),
@@ -44,7 +48,7 @@ module Master
               "protected_paths" => Master::Soul.sacred_paths(root: @root),
             }.freeze,
             "banned_output" => voice["banned_output"],
-            "anti_simulation" => manifest.dig("absolute", "anti_simulation", "forbidden"),
+            "anti_simulation" => anti_simulation,
             "communication_style" => voice["style"],
           }.freeze
         end
