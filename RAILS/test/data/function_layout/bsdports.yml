@@ -34,7 +34,7 @@ checks:
   - {id: ports.tree, in: bsdports/app/views/ports/_dependency_tree.html.erb, has: [tree]}
   - {id: ports.watch, in: bsdports/app/views/ports/_watch_toggle.html.erb, has: [watch]}
   - {id: ports.watch_stream, in: bsdports/app/views/ports/watch.turbo_stream.erb, has: [watch]}
-  - {id: ports.unwatch_stream, in: bsdports/app/views/ports/unwatch.turbo_stream.erb, has: [watch]}
+  - {id: ports.unwatch_stream, in: bsdports/app/controllers/ports_controller.rb, has: ["render :watch"]}
   - {id: ports.row, in: bsdports/app/views/ports/_row.html.erb, has: [port]}
   # --- comments ---
   - {id: comments.form, in: bsdports/app/views/comments/new.html.erb, has: [comment]}
