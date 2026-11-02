@@ -82,7 +82,7 @@ class TestCorePaths < Minitest::Test
       File.write(File.join(data_dir, "soul.yml"), "absolute:\n  sacred_paths: []\n")
       repo_paths = Master::Core::Constitution::Paths.new(root:)
 
-      assert_raises(RuntimeError) { repo_paths.sacred_paths }
+      assert_raises(Master::Soul::IntegrityError) { repo_paths.sacred_paths }
       assert repo_paths.sacred?("lib/fix/fix_loop.rb")
       assert_includes repo_paths.commit_refusal("data/spine.yml"), "constitution unreadable"
     end
@@ -95,7 +95,7 @@ class TestCorePaths < Minitest::Test
       File.write(File.join(data_dir, "soul.yml"), "absolute:\n  sacred_paths:\n    - \"\"\n")
       repo_paths = Master::Core::Constitution::Paths.new(root:)
 
-      assert_raises(RuntimeError) { repo_paths.sacred_paths }
+      assert_raises(Master::Soul::IntegrityError) { repo_paths.sacred_paths }
       assert_includes repo_paths.commit_refusal("data/spine.yml"), "constitution unreadable"
     end
   end
