@@ -34,7 +34,9 @@ require_relative "engine_roots"
 class KeyboardReachableControlsTest < Minitest::Test
   ROOT = File.expand_path("..", __dir__)
 
-  TAG = /<([a-z][a-z0-9]*)((?:\s+[^\s=>]+(?:\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]+))?)*)\s*\/?>/mi
+  # Tag names take a hyphen: a custom element such as <turbo-frame> carries
+  # data-action like any other, and a name stopping at "turbo" skipped the tag.
+  TAG = /<([a-z][a-z0-9-]*)((?:\s+[^\s=>]+(?:\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]+))?)*)\s*\/?>/mi
 
   # ARIA roles whose contract includes keyboard operation.
   WIDGET_ROLES = %w[
@@ -68,13 +70,21 @@ class KeyboardReachableControlsTest < Minitest::Test
   # 10, not the 8 this read before each_tag blanked ERB: the mobile sheet and the
   # search palette backdrop were always there, behind attributes whose ERB nests
   # quotes. The tree did not grow; the matcher learned to read it.
-  GESTURE_SURFACE_CEILING = 10
+  #
+  # 12 since 2026-10-30, two surfaces that each keep a button: the notification
+  # card swipes left to press its own Dismiss button, and the brgen post card
+  # opens on a long press the same "more" menu its menu button opens.
+  GESTURE_SURFACE_CEILING = 12
 
   # A drag is a start event and a move event bound on one element. A move with
   # no start is a hover effect — parallax-tilt on the affiliate unit — and the
   # browser taking the pan there is the right outcome.
   MOVE_EVENTS = %w[pointermove touchmove mousemove].freeze
   START_EVENTS = %w[pointerdown touchstart mousedown].freeze
+  # A press-and-hold binds a move only to cancel once the finger travels. The
+  # browser taking the pan is the outcome it wants (the scroll cancels the hold),
+  # so it is not a drag and declares no touch-action.
+  HOLD_CONTROLLERS = %w[long-press].freeze
   MOVE_LISTENER = /(\w+(?:\.\w+)*)\.addEventListener\(\s*["'](?:pointermove|touchmove|mousemove)["']/
   START_LISTENER = /this\.element\.addEventListener\(\s*["'](?:pointerdown|touchstart|mousedown)["']/
 
@@ -85,7 +95,7 @@ class KeyboardReachableControlsTest < Minitest::Test
   PANNING_TOUCH_ACTION = %w[auto manipulation inherit initial unset revert].freeze
 
   VOID_TAGS = %w[area base br col embed hr img input link meta source track wbr].freeze
-  MARKUP = Regexp.new("</[a-z][a-z0-9]*\\s*>|#{TAG.source}", Regexp::IGNORECASE | Regexp::MULTILINE)
+  MARKUP = Regexp.new("</[a-z][a-z0-9-]*\\s*>|#{TAG.source}", Regexp::IGNORECASE | Regexp::MULTILINE)
 
   # Surfaces that drag without a touch-action, each with the reason it is still
   # so. The value is CSS on a surface whose feel in the hand is the operator's,
@@ -142,7 +152,8 @@ class KeyboardReachableControlsTest < Minitest::Test
       next unless events.intersect?(MOVE_EVENTS) && events.intersect?(START_EVENTS)
 
       move = actions.find { |a| MOVE_EVENTS.include?(event_of(a)) }
-      found << Surface.new(path, tag, attrs, move[/->([\w-]+)#/, 1], match)
+      controller = move[/->([\w-]+)#/, 1]
+      found << Surface.new(path, tag, attrs, controller, match) unless HOLD_CONTROLLERS.include?(controller)
     end
     found
   end

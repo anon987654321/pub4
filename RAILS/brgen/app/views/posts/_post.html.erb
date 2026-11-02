@@ -2,11 +2,13 @@
     loads posts#show into this frame — the show template has no matching
     id, and the card becomes "Content missing". Vote still replaces the
     frame via turbo_stream; only <a> navigation is affected. %>
-<%# Press and hold the card to open its "more" menu (long_press_controller). %>
-<%= turbo_frame_tag dom_id(post), target: "_top",
-      data: { controller: "long-press",
-              action: "pointerdown->long-press#start pointermove->long-press#move pointerup->long-press#cancel " \
-                      "pointercancel->long-press#cancel contextmenu->long-press#context click->long-press#swallow:capture" } do %>
+<%# Press and hold the card to open its "more" menu (long_press_controller).
+    Literal markup rather than turbo_frame_tag's data hash, so the gesture
+    census in keyboard_reachable_controls_test can read the bound move. %>
+<turbo-frame id="<%= dom_id(post) %>" target="_top" data-controller="long-press"
+             data-action="pointerdown->long-press#start pointermove->long-press#move pointerup->long-press#cancel
+                          pointercancel->long-press#cancel contextmenu->long-press#context
+                          click->long-press#swallow:capture">
 <%# The viewer's vote/repost state and image-loading priority affect
     rendered attributes, so they all belong in the fragment cache key. Only the
     first feed card gets eager/high-priority image loading; later cards stay lazy. %>
@@ -130,4 +132,4 @@
           actions: post_actions,
           frame: false %>
   <% end %>
-<% end %>
+</turbo-frame>

@@ -373,7 +373,11 @@ body.vertical-playlist input[type="range"] {
 
 /* Empty state styles live in shared/_empty_state.scss */
 
-/* Notification deep-link cards */
+/* Notification deep-link cards. A card swipes left to dismiss
+   (swipe_dismiss_controller), so the browser keeps only the vertical pan. */
+.notification-card {
+  touch-action: pan-y;
+}
 .notification-card .notification-title-link {
   color: inherit;
   text-decoration: none;

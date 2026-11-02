@@ -6,16 +6,12 @@ import Haptics from "pub4/haptics"
 // button's; a row that fails to go simply stays, with the button still there.
 //
 // A press that moves more up or down than sideways is a scroll and is left to
-// the page (touch-action: pan-y keeps vertical scrolling native).
+// the page (.notification-card's touch-action: pan-y keeps vertical scrolling native).
 const START_PX = 10
 const DISMISS_RATIO = 0.35
 
 export default class extends Controller {
   static targets = ["button"]
-
-  connect() {
-    this.element.style.touchAction = "pan-y"
-  }
 
   start(event) {
     if (!event.isPrimary || event.button > 0 || event.target.closest("a, button, input, textarea")) return
