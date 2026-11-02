@@ -36,7 +36,6 @@ class TestDocPaths < Minitest::Test
     AGENTS.md
     GEMINI.md
     .cursorlaws
-    .github/copilot-instructions.md
     MASTER/README.md
     MASTER/AGENTS.md
     OPENBSD/README.md
@@ -77,11 +76,9 @@ class TestDocPaths < Minitest::Test
     refute_match(/MASTER\/data\/rules\.yml`? > this file >.*executable law/i, claude)
   end
 
-  # AGENTS.md is generated from MASTER/AGENTS.md. Vendor-specific harnesses
-  # are generated pointers to AGENTS.md; the lint checks both forms.
-  HARNESS_FILES = %w[
-    AGENTS.md GEMINI.md GLM.md .cursorlaws .github/copilot-instructions.md
-  ].freeze
+  # AGENTS.md is generated from MASTER/AGENTS.md. Gemini, GLM and Cursor
+  # have short pointer files; Codex and Copilot read AGENTS.md directly.
+  HARNESS_FILES = %w[AGENTS.md GEMINI.md GLM.md .cursorlaws].freeze
 
   # Non-entry Markdown has a narrow purpose: face/reference contracts, archived
   # RAILS experiments and research, recovery material, and STUDIO migration guides.
@@ -143,7 +140,6 @@ class TestDocPaths < Minitest::Test
       File.basename(path) == "README.md" ||
         path == "TODO.md" ||
         File.basename(path).match?(/\A(?:AGENTS|CLAUDE|GEMINI|GLM)\.md\z/) ||
-        path == ".github/copilot-instructions.md" ||
         path == "OPENBSD/RUNBOOK.md" ||
         path.match?(%r{\AMASTER/data/(?:SOUL|IDENTITY|CANON)\.md\z}) ||
         MARKDOWN_REFERENCE_EXCEPTIONS.include?(path)
@@ -153,8 +149,8 @@ class TestDocPaths < Minitest::Test
                  "non-README Markdown needs a documented exception: #{extras.join(", ")}"
   end
 
-  # The canonical generated AGENTS.md carries the workflow; other harness
-  # files are short pointers rather than five copies of the contract.
+  # The canonical generated AGENTS.md carries the workflow; other vendor
+  # harnesses are short pointers rather than duplicate policy copies.
   def test_agent_contract_teaches_the_single_checkout_workflow
     source = File.read(File.join(REPO, "MASTER/AGENTS.md"))
     block = source[/<!-- agent-contract:begin -->\n(.*?)<!-- agent-contract:end -->/m, 1]
