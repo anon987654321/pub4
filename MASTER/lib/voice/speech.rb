@@ -574,11 +574,15 @@ module Master
         return output_path if transcendent_stream_written?(text_str, voice, opts, output_path, progress)
         return output_path if edge_stream_written?(text_str, voice, style_config, output_path, progress)
 
-        path = attempt_espeak_synthesis(text_str, output_path, progress)
-        return path if path
+        # OS voices are a different speaker. The streaming/web path must obey
+        # the same explicit opt-in as the non-streaming synthesizer.
+        if os_voice_fallback?
+          path = attempt_espeak_synthesis(text_str, output_path, progress)
+          return path if path
 
-        path = attempt_say_synthesis(text_str, output_path, progress)
-        return path if path
+          path = attempt_say_synthesis(text_str, output_path, progress)
+          return path if path
+        end
 
         @last_error ||= "streaming synthesis produced empty audio"
         false
