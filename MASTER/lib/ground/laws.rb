@@ -44,7 +44,7 @@ module Master
               "protected_paths" => Master::Soul.sacred_paths(root: @root),
             }.freeze,
             "banned_output" => voice["banned_output"],
-            "anti_simulation" => truthful["anti_simulation"],
+            "anti_simulation" => manifest.dig("absolute", "anti_simulation", "forbidden"),
             "communication_style" => voice["style"],
           }.freeze
         end
