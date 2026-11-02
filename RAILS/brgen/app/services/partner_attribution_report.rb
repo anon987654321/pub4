@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "set"
+
 # Clicks we sent, conversions that came back, and the gap between them.
 #
 # The join is EPI, not the merchant name. Shared::OutboundClick records the
@@ -50,9 +52,8 @@ class PartnerAttributionReport
   end
 
   def silent_merchants
-    converted_merchants = approved_conversions.filter_map do |row|
-      Shared::OutboundClick.find_by(epi: row.epi)&.merchant if row.epi.present?
-    end.to_set
+    converted_epis = approved_conversions.filter_map(&:epi).to_set
+    converted_merchants = clicks.where(epi: converted_epis.to_a).distinct.pluck(:merchant).to_set
     clicks_by_merchant.keys.reject { |merchant| converted_merchants.include?(merchant) }
   end
 
