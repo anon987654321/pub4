@@ -12,11 +12,12 @@ statements, parentage and the nine invariant nodes' internal order.
 and verify those requirements; `MASTER/lib/review/scan/` is scanner machinery,
 not another Law source tree. `CLAUDE.md` is a short bootstrap pointer.
 
-The block below generates the full root `AGENTS.md`. Gemini, GLM, Cursor and
-Copilot entry files are short generated pointers to that one contract. Edit
+The block below generates the full root `AGENTS.md`. Gemini, GLM and Cursor
+entry files are short generated pointers to that one contract. Copilot reads
+the root `AGENTS.md` directly; Claude reads the root `CLAUDE.md` pointer. Edit
 this block and run `cd MASTER && rake docs:agent_contracts`; `rake
-lint:agent_contracts` checks the contract and all pointers. One source, five
-harness doors, one complete policy copy.
+lint:agent_contracts` checks the contract and all pointers. One source,
+four generated files, one complete policy copy.
 
 ## Task entry and artifact preservation
 
@@ -43,11 +44,11 @@ Every `/fix` exit runs `Master::Fix::FinalCleanup`. It releases the current invo
 
 <!-- agent-contract:begin -->
 pub4 is governed by MASTER, the primary configuration for every agent
-working in this repository. This text is the one contract: every harness
-door — `AGENTS.md`, `GEMINI.md`, `GLM.md`, `.cursorlaws`, and
-`.github/copilot-instructions.md` — is generated from the marked block in
-`MASTER/AGENTS.md`, and `CLAUDE.md` is the hand-written pointer at it. Edit
-the block there; never edit a generated door.
+working in this repository. This text is the shared contract. Codex and
+Copilot read the root `AGENTS.md` directly; Gemini, GLM and Cursor use short
+generated pointers. Claude Code uses the hand-written root `CLAUDE.md`
+pointer. The contract is derived from the marked block in `MASTER/AGENTS.md`;
+edit the block there, never a generated pointer.
 
 Workflow: one shared checkout; commit straight to `main` with path-scoped
 commits; never force-push.
