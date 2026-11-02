@@ -3,8 +3,8 @@
 require_relative "test_helper"
 
 # ProposeTree runs when a fix loop goes clean or plateaus: it shows the agent
-# lib/, asks for radical layouts, keeps the most compact three and cools down
-# for a day. Every failure is a message, never a raise into the bus thread.
+# a bounded recursive lib/ inventory, ranks for legibility and ownership, and
+# cools down for a day. Every failure is a message, never a raise into the bus thread.
 class TestFixProposeTree < Minitest::Test
   RecordingAgent = Struct.new(:reply, :prompts) do
     def ask(prompt)
@@ -39,15 +39,18 @@ class TestFixProposeTree < Minitest::Test
     FileUtils.rm_rf(@root)
   end
 
-  def test_shows_the_agent_each_directory_with_its_children
+  def test_shows_the_agent_a_bounded_recursive_inventory_and_sprawl
+    FileUtils.mkdir_p(File.join(@root, "lib", "review", "scan", "deep"))
+    File.write(File.join(@root, "lib", "review", "scan", "deep", "core.rb"), "x" * 500)
     agent = RecordingAgent.new(REPLY, [])
     Master::Fix::ProposeTree.new(root: @root, agent:).call(n: 2)
 
-    assert_includes agent.prompts.first, "review/\n  rule.rb\n  scan/"
-    assert_includes agent.prompts.first, "master.rb"
+    prompt = agent.prompts.first
+    assert_includes prompt, "review/\n  rule.rb\n  scan/\n    deep/\n      core.rb"
+    assert_match(/files=\d+ dirs=\d+ sprawl=/, prompt)
   end
 
-  def test_keeps_named_proposals_ranked_by_sketch_size_and_writes_the_report
+  def test_keeps_named_proposals_ranked_by_tree_quality_and_writes_the_report
     message = Master::Fix::ProposeTree.new(root: @root, agent: RecordingAgent.new(REPLY, [])).call(n: 2)
 
     assert_equal "propose-tree: drafted 2, kept top 2 → runtime/proposals.md", message

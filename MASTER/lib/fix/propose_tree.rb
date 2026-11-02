@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "yaml"
+require "json"
 require "fileutils"
 require_relative "tree_sprawl"
 
@@ -14,6 +15,7 @@ module Master
       DRAFT_N = 10
       KEEP_TOP = 3
       COOLDOWN_SECS = 86_400
+      MAX_TREE_ENTRIES = 240
 
       def initialize(root:, agent:, event_bus: nil)
         @root = root
@@ -51,22 +53,41 @@ module Master
         "propose-tree: cooldown — next run in #{mins}m"
       end
 
+      # Show a bounded recursive inventory, not just one directory level.
+      # The summary comes from the same TreeSprawl implementation as /fix.
       def current_tree
-        entries = Dir.glob(File.join(@root, "lib", "*")).sort.flat_map { |e| describe_entry(e) }
-        entries.first(120).join("\n")
-      end
+        lib_root = File.join(@root, "lib")
+        entries = Dir.glob(File.join(lib_root, "**", "*")).sort
+        relative_entries = entries.map { |path| path.delete_prefix("#{lib_root}/") }
+        files = entries.select { |path| File.file?(path) }
+        relative_files = files.map { |path| "lib/#{path.delete_prefix("#{lib_root}/")}" }
+        directories = relative_files.group_by { |path| File.dirname(path) }.map do |directory, members|
+          directory_entry = Struct.new(:path, :files, :bytes, :depth)
+          directory_entry.new(
+            directory,
+            members.size,
+            members.sum { |member| File.size(File.join(@root, member)) },
+            directory == "." ? 0 : directory.count("/") + 1
+          )
+        end
+        sizes = relative_files.to_h do |path|
+          [path, File.size(File.join(@root, path))]
+        end
+        sprawl = TreeSprawl.new(files: relative_files, directories:, sizes:).to_h
+        counts = sprawl.transform_values(&:size)
 
-      def describe_entry(entry)
-        return [File.basename(entry)] unless File.directory?(entry)
-
-        subs = Dir.glob(File.join(entry, "*")).sort.map { |f| "  #{File.basename(f)}#{File.directory?(f) ? "/" : ""}" }
-        ["#{File.basename(entry)}/", *subs]
+        lines = relative_entries.first(MAX_TREE_ENTRIES).map do |path|
+          depth = path.count("/")
+          "#{ "  " * depth }#{File.basename(path)}#{File.directory?(File.join(lib_root, path)) ? "/" : ""}"
+        end
+        lines << "... #{relative_entries.size - MAX_TREE_ENTRIES} more entries" if relative_entries.size > MAX_TREE_ENTRIES
+        ["files=#{relative_files.size} dirs=#{directories.size} sprawl=#{JSON.generate(counts)}", *lines].join("\n")
       end
 
       def prompt(tree, n)
         <<~PROMPT
-        Propose #{n} radically simplified file/folder layouts for this Ruby project (Master).
-        Current lib/ structure:
+        Propose #{n} candidate file/folder layouts for this Ruby project (Master).
+        Current recursive lib/ structure and measured sprawl:
 
         #{tree}
 
