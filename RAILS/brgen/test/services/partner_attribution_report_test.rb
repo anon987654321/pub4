@@ -94,6 +94,27 @@ class PartnerAttributionReportTest < ActiveSupport::TestCase
     assert_raises(ArgumentError) { report.clicks_by_dimension(:visitor) }
   end
 
+  test "silent merchants are the clicks whose EPI had no approved conversion" do
+    click(merchant: "Zalando", epi: "city:bergen|surface:marketplace")
+    click(merchant: "Ellos", epi: "city:oslo|surface:marketplace")
+    Shared::AffiliateConversion.create!(
+      source: "tradedoubler", transaction_id: "txn-zalando", message_type_id: 5,
+      publisher_commission: BigDecimal("5.00"), currency: "NOK",
+      epi: "city:bergen|surface:marketplace"
+    )
+
+    assert_equal ["Ellos"], PartnerAttributionReport.new.silent_merchants
+  end
+
+  test "a missing approved commission remains a zero rather than breaking the report" do
+    Shared::AffiliateConversion.create!(
+      source: "tradedoubler", transaction_id: "txn-no-commission", message_type_id: 5,
+      currency: "NOK", epi: "city:bergen|surface:marketplace"
+    )
+
+    assert_equal BigDecimal("0"), PartnerAttributionReport.new.approved_commission_by_currency.fetch("NOK")
+  end
+
   # A host, never a full URL: the question is which merchants get traffic, not
   # what each visitor shops for.
   test "the click record keeps a host and not a path" do
