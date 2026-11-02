@@ -115,8 +115,8 @@ class PartnerAttributionReportTest < ActiveSupport::TestCase
     assert_equal({ route => 1 }, report.page_views_by_route)
     assert_equal({ route => 1 }, report.clicks_by_route)
     assert_equal(
-      { route => { page_views: 1, clicks: 1, ctr: 1.0 } },
-      report.click_through_by_route
+      { route => { page_views: 1, clicks: 1, clicks_per_view: 1.0 } },
+      report.clicks_per_view_by_route
     )
     assert_equal({ [route, "NOK"] => BigDecimal("6.25") },
                  report.approved_commission_by_dimension(:route))
