@@ -114,4 +114,10 @@ class InfiniteScrollReflexContractTest < Minitest::Test
     assert_empty redefiners.map { |p| p.delete_prefix("#{ROOT}/") }.sort,
                  "these re-implement the shared spine; override after_paginate if a reflex needs extra work"
   end
+
+  def test_retired_reflex_plugin_archive_is_absent
+    refute Dir.exist?(File.join(ROOT, "plugins", "reflexes")),
+           "the unloaded archive is retired; live Reflexes remain app- and engine-owned"
+  end
+
 end
