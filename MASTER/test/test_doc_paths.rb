@@ -77,7 +77,7 @@ class TestDocPaths < Minitest::Test
   # block in MASTER/AGENTS.md. This asserts they exist and still point at the
   # law; rake lint:agent_contracts asserts they are byte-identical to it.
   HARNESS_FILES = %w[
-    AGENTS.md GEMINI.md .cursorlaws .github/copilot-instructions.md
+    AGENTS.md GEMINI.md GLM.md .cursorlaws .github/copilot-instructions.md
   ].freeze
 
   # Non-entry Markdown has a narrow purpose: face/reference contracts, archived
@@ -122,6 +122,10 @@ class TestDocPaths < Minitest::Test
     docs/runbooks/studio-render.md
     docs/runbooks/voice-path.md
     docs/todo-triage.md
+
+    # The one tree-contract file at the repo root; the per-tree CLAUDE.md
+    # contracts folded into it by operator order.
+    TREE_CONTRACTS.md
   ].freeze
 
   # README.md is the human entry point at each tree/project boundary. Other
@@ -135,7 +139,7 @@ class TestDocPaths < Minitest::Test
     extras = tracked_md.reject do |path|
       File.basename(path) == "README.md" ||
         path == "TODO.md" ||
-        File.basename(path).match?(/\A(?:AGENTS|CLAUDE|GEMINI)\.md\z/) ||
+        File.basename(path).match?(/\A(?:AGENTS|CLAUDE|GEMINI|GLM)\.md\z/) ||
         path == ".github/copilot-instructions.md" ||
         path == "OPENBSD/RUNBOOK.md" ||
         path.match?(%r{\AMASTER/data/(?:SOUL|IDENTITY|CANON)\.md\z}) ||

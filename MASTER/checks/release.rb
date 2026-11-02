@@ -23,7 +23,7 @@ require_relative "../lib/io/exec"
 # file, and `constitutional_scan` was wired under release earlier tonight on the
 # assumption it ran at all.
 #
-# checks.yml is where a check's require lives — RAILS/CLAUDE.md calls it declared
+# checks.yml is where a check's require lives — TREE_CONTRACTS.md calls it declared
 # once — so reading it here is what stops the next move breaking this file again.
 # Keyed on the classes this file names, not on `covered_by: release`: it also
 # runs frontend_auditor, which belongs to layout_suite, so requiring its own

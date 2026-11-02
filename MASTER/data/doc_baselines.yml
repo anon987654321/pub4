@@ -10,3 +10,10 @@ doc_paths:
   OPENBSD/RUNBOOK.md:
   - path: db/seeds/launch.rb
     why: 'Prescriptive, not stale. The line asks for a launch seed to be written that week; the file is meant not to exist yet. It comes out of this list the day someone writes it.'
+  TREE_CONTRACTS.md:
+  - path: RAILS/shared
+    why: 'Names the path that must not be used; the engine directory is RAILS/__shared. The mention is the guard, not a citation.'
+  - path: master_web_assets_check.rb
+    why: 'Lives on vm23 under /etc/rc.d/master; OPENBSD/dev/operator_stage_2.zsh is the tracked caller. The prose teaches the check, the box owns the script.'
+  - path: public/three.module.js
+    why: 'Deleted 2026-07-28; the section is the register that records the deletion, so it must be able to name the path.'
