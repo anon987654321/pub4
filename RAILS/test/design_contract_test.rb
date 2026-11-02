@@ -561,6 +561,16 @@ def test_brgen_marketplace_badge_offsets_are_valid_css
     end
   end
 
+  def test_reply_icon_is_directional_and_not_the_messages_bubble
+    icons = File.join(SHARED, "app", "views", "shared", "icons")
+    reply = File.read(File.join(icons, "_reply.html.erb"))
+    messages = File.read(File.join(icons, "_messages.html.erb"))
+
+    refute_equal messages, reply
+    assert_includes reply, '<path d="m9 17-5-5 5-5" />'
+    assert_includes reply, '<path d="M20 18v-2a4 4 0 0 0-4-4H4" />'
+  end
+
   def test_web_vitals_wired
     hotwire = File.read(HOTWIRE_JS)
     fleet = File.read(FLEET_ROUTES)
