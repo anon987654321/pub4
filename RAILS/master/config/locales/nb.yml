@@ -160,6 +160,9 @@ nb:
     usage_heading: "Bruk"
     usage_lede: "Send opptil 20 filer som JSON med nøkkelen din som bearer-token."
     response_lede: "Hvert funn oppgir fil, linje, lov og alvorlighet, og svaret viser månedens forbruk."
+    copy_review_heading: "Gjennomgå annonsetekst"
+    copy_review_lede: "Send POST /api/v1/copy-review med et kreativt objekt og, når det finnes, et oppdatert produktøyeblikksbilde. Én gjennomgang bruker én API-sjekk."
+    copy_review_trust: "Produktopplysningene kommer fra applikasjonen din og verifiseres ikke uavhengig. Eksterne påstander forblir uavklarte uten gjennomgått dokumentasjon. En bestått rapport er ikke juridisk rådgivning, sertifisering eller publiseringsgodkjenning."
     limits_heading: "Grenser"
     limit_files: "Opptil %{files} filer per forespørsel, %{kilobytes} kB hver. Én fil er én sjekk."
     limit_quota: >-
