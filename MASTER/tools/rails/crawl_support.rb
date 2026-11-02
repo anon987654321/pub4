@@ -23,7 +23,7 @@ module CrawlSupport
 
   def sync_inventory_failures
     out = []
-    yml = load_apps_yml
+    yml = load_deployed_apps_yml
     json_apps = load_master_json.fetch("apps", [])
     json_by_name = json_apps.to_h { |row| [row["name"].to_s, row] }
 
@@ -92,6 +92,11 @@ module CrawlSupport
 
   def load_apps_yml
     YAML.safe_load(File.read(APPS_YML)).fetch("apps")
+  end
+
+  # deploy_inventory.json is what vm23 serves; a deployed: false app has no host.
+  def load_deployed_apps_yml
+    load_apps_yml.reject { |_name, meta| meta["deployed"] == false }
   end
 
   def load_master_json

@@ -12,6 +12,12 @@ RELAYD = File.join(ROOT, "OPENBSD", "etc", "relayd.conf")
 HTTPD = File.join(ROOT, "OPENBSD", "etc", "httpd.conf")
 APPS_YML = File.join(RAILS_ROOT, "apps.yml")
 
+# The apps vm23 serves. A deployed: false app (apps.yml) lives in the tree with
+# no domain, relay or production host yet, so the smoke contract skips it.
+def deployed_apps
+  YAML.safe_load(File.read(APPS_YML)).fetch("apps", {}).reject { |_name, meta| meta["deployed"] == false }
+end
+
 def assert_forward(relayd_text, failures, name, port, domain)
   # relayd uses a named table plus a forward line in the relay, not a named
   # backend block. Check both halves against the same service name.
@@ -30,7 +36,7 @@ def check_relayd(failures)
   failures << "relayd: missing X-Forwarded-Proto" unless relayd.include?("X-Forwarded-Proto")
   failures << "relayd: missing /up health check" unless relayd.include?('check http "/up"')
 
-  apps = YAML.safe_load(File.read(APPS_YML)).fetch("apps", {})
+  apps = deployed_apps
   apps.each do |name, metadata|
     assert_forward(relayd, failures, name, metadata.fetch("port"), metadata.fetch("domain"))
   end
@@ -97,7 +103,7 @@ def check_master_rc(failures, rc_text = (File.read(MASTER_RC) if File.file?(MAST
 end
 
 def check_apps_production(failures)
-  apps = YAML.safe_load(File.read(APPS_YML)).fetch("apps", {})
+  apps = deployed_apps
   apps.each do |name, metadata|
     production = File.join(RAILS_ROOT, name, "config", "environments", "production.rb")
     next unless File.file?(production)
@@ -203,5 +209,5 @@ if failures.any?
   exit 1
 end
 
-apps_count = YAML.safe_load(File.read(APPS_YML)).fetch("apps", {}).size
+apps_count = deployed_apps.size
 puts "Deploy smoke check passed (relayd and httpd templates + #{apps_count} production configs + RAILS/master probes)."

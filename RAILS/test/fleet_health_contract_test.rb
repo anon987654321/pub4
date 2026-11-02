@@ -23,12 +23,18 @@ class FleetHealthContractTest < Minitest::Test
     end
   end
 
-  def test_master_json_mirrors_apps_yml
+  # deploy_inventory.json is what vm23 serves; a deployed: false app (mrdamascy)
+  # lives in apps.yml without a host, so the mirror covers the deployed set.
+  def deployed_apps
     require "yaml"
+    apps = YAML.safe_load(File.read(File.join(ROOT, "apps.yml"))).fetch("apps")
+    apps.reject { |_name, meta| meta["deployed"] == false }
+  end
+
+  def test_master_json_mirrors_apps_yml
     require "json"
     master = JSON.parse(File.read(File.expand_path("../../OPENBSD/deploy_inventory.json", __dir__)))
-    apps_yml = YAML.safe_load(File.read(File.join(ROOT, "apps.yml"))).fetch("apps")
-    expected = apps_yml.map { |name, meta| [name, meta["domain"], meta["port"]] }.sort
+    expected = deployed_apps.map { |name, meta| [name, meta["domain"], meta["port"]] }.sort
     actual = master.fetch("apps").map { |row| [row["name"], row["domain"], row["port"]] }.sort
     assert_equal expected, actual
   end
