@@ -95,7 +95,7 @@ module Master
           "disagreement means drift to diagnose, not permission to guess",
           "bridge: RAILS/apps.yml → OPENBSD/deploy_inventory.json → vps-deploy → rcctl → public health",
           "inventory_alignment: #{inventory_alignment(repo_root)}",
-          "bridge: MASTER/data/laws.yml governs; MASTER/data/soul.yml is subordinate identity/delivery; " +
+          "bridge: source authority is MASTER/data/soul.yml > MASTER/data/laws.yml > executable laws/gates > tree contracts > Git history; " +
           "MASTER/checks/ is the cross-tree verification plane",
           "research pointers: Rails=RAILS/CLAUDE.md + RAILS/apps.yml; " +
           "OpenBSD=OPENBSD/CLAUDE.md + OPENBSD/RUNBOOK.md + OPENBSD/data/operator.yml",
