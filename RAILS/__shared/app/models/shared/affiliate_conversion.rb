@@ -47,7 +47,11 @@ module Shared
     end
 
     def self.record_from_postback!(params, source: "tradedoubler")
-      raw = payload_hash(params)
+      raw = payload_hash(params).dup
+      # TradeDoubler's visitorId is not needed for the EPI join. Do not retain
+      # a network visitor identifier in either a dedicated field or raw payload.
+      %w[visitorId visitor_id].each { |key| raw.delete(key) }
+      %i[visitorId visitor_id].each { |key| raw.delete(key) }
       attrs = normalize_params(raw)
       return nil if attrs[:message_type_id].blank?
 
@@ -121,7 +125,6 @@ module Shared
       {
         epi: fetch_any(payload, :epi),
         epi2: fetch_any(payload, :epi2),
-        visitor_id: fetch_any(payload, :visitorId, :visitor_id),
         sequence_number: fetch_any(payload, :sequenceNumber, :sequence_number),
       }
     end
