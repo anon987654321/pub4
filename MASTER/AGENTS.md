@@ -9,12 +9,11 @@ Read `MASTER/data/soul.yml` — subordinate identity and delivery — then
 lives in `MASTER/law/`; `MASTER/lib/review/scan/` is scanner machinery, not a
 second Law source tree. `CLAUDE.md` is a short pointer, not a policy source.
 
-The block below is the source every other agent's entry file is generated
-from — root `AGENTS.md`, `GEMINI.md`, `GLM.md`, `.cursorlaws` and
-`.github/copilot-instructions.md`. Edit it here and run
-`cd MASTER && rake docs:agent_contracts`; `rake lint:agent_contracts` fails
-when a generated file drifts from it. One source, five harnesses, no second
-copy to rot.
+The block below generates the full root `AGENTS.md`. Gemini, GLM, Cursor and
+Copilot entry files are short generated pointers to that one contract. Edit
+this block and run `cd MASTER && rake docs:agent_contracts`; `rake
+lint:agent_contracts` checks the contract and all pointers. One source, five
+harness doors, one complete policy copy.
 
 ## Task entry and artifact preservation
 

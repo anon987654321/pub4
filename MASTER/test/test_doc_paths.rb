@@ -71,11 +71,8 @@ class TestDocPaths < Minitest::Test
     refute_match(/MASTER\/data\/rules\.yml`? > this file >.*executable law/i, root)
   end
 
-  # Every coding agent reads a different file, and pub4 had one of the five.
-  # An agent that never sees MASTER's law does not follow it however well the
-  # law is written, so the four harness files are generated from one marked
-  # block in MASTER/AGENTS.md. This asserts they exist and still point at the
-  # law; rake lint:agent_contracts asserts they are byte-identical to it.
+  # AGENTS.md is generated from MASTER/AGENTS.md. Vendor-specific harnesses
+  # are generated pointers to AGENTS.md; the lint checks both forms.
   HARNESS_FILES = %w[
     AGENTS.md GEMINI.md GLM.md .cursorlaws .github/copilot-instructions.md
   ].freeze
@@ -157,7 +154,7 @@ class TestDocPaths < Minitest::Test
   # files are short pointers rather than five copies of the contract.
   def test_agent_contract_teaches_the_single_checkout_workflow
     source = File.read(File.join(REPO, "MASTER/AGENTS.md"))
-    block = source[/<!-- agent-contract:begin -->\\n(.*?)<!-- agent-contract:end -->/m, 1]
+    block = source[/<!-- agent-contract:begin -->\n(.*?)<!-- agent-contract:end -->/m, 1]
     refute_nil block
     assert_includes block, "commit straight to `main`"
     refute_match(/managed worktrees|topic branch/, block)
@@ -169,7 +166,7 @@ class TestDocPaths < Minitest::Test
 
     HARNESS_FILES.drop(1).each do |relative|
       body = File.read(File.join(REPO, relative))
-      assert_match(/\\]\\((?:\\.\\.\\/)?AGENTS\\.md\\)/, body, "#{relative} does not route to AGENTS.md")
+      assert_match(/\]\((?:\.\.\/)?AGENTS\.md\)/, body, "#{relative} does not route to AGENTS.md")
       refute_includes body, "commit straight to `main`", "#{relative} duplicates workflow policy"
     end
   end

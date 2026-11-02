@@ -109,14 +109,13 @@ directory. If the answer is "no strings", record that sentence in
 `brgen_messenger/README.md`; if "strings exist", they need keys before they
 need a directory.
 
-**F9 — the four generated agent surfaces.** AGENTS.md, GEMINI.md,
-`.cursorlaws` and `.github/copilot-instructions.md` are generated from one
-marked block, with drift linted — the right mechanism. The next step is not a
-rename but pointer-ization: three of the four becoming one-line pointers to
-AGENTS.md, so even generated drift becomes impossible. Gate: the harnesses
-that read each file must be confirmed to follow a pointer (each vendor's
-resolver behaves differently); until confirmed per harness, the generated
-copies stay.
+**F9 — generated agent surfaces.** `AGENTS.md` is the one full generated
+contract from `MASTER/AGENTS.md`; Gemini, GLM, Cursor and Copilot files are
+short generated pointers to it. The generator and `lint:agent_contracts`
+check both forms. This removes four repeated contract bodies, but the vendor
+resolver gate remains open: each harness must be exercised to confirm that it
+follows the pointer. No per-harness runtime verification was available in this
+review, so pointer consumption remains NOT_RUN.
 
 **F10 — prose drift is real and argues for generated brevity.**
 `tools/agent_context.rb`'s header says `data/laws.yml` is 4,609 lines; it is
