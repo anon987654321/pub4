@@ -58,7 +58,7 @@ module Master
             statement: preserve what works
         YML
         "law_runtime.yml" => <<~YML,
-          veto_patterns:
+          veto_pattern_config:
             secrets:
               detect: "(?i)(?:api[_-]?key|secret|token)"
             unsafe_calls:

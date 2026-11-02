@@ -139,7 +139,7 @@ class TestKernelSpine < Minitest::Test
   # A veto pattern that fails to compile used to be dropped, leaving its rule
   # with nothing to match: every secret passed.
   def test_an_invalid_veto_regex_refuses_to_build_the_constitution
-    data = { "veto_patterns" => { "secrets" => { "detect" => "sk-(" } } }
+    data = { "veto_pattern_config" => { "secrets" => { "detect" => "sk-(" } } }
 
     error = assert_raises(ArgumentError) { Master::Core::Constitution.send(:default_rules, data) }
     assert_match(/secrets/, error.message)

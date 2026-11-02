@@ -153,7 +153,7 @@ module Master::Core
     # The rules. Each is a few lines because the dangerous thing is expressed as
     # a predicate, not prose. Safety rules Block; hygiene rules Revise.
     def self.default_rules(data, sacred_paths: [], master_root: nil, workspace_root: nil, probe: nil)
-      veto = (data["veto_patterns"] || {}).to_h { |n, s| [n, safe_rx(n, s["detect"])] }
+      veto = (data["veto_pattern_config"] || {}).to_h { |n, s| [n, safe_rx(n, s["detect"])] }
       immutable = Array(sacred_paths).map(&:to_s).freeze
 
       [
@@ -232,7 +232,7 @@ module Master::Core
       Law.new(id: :no_secret, verbs: %i[write note exec git], judge: lambda { |effect, _memory|
         pattern = veto["secrets"]
         next Verdict::Block.new(
-          reason: "veto_patterns.secrets missing or invalid — effects are unjudgeable for secrets",
+          reason: "veto_pattern_config.secrets missing or invalid — effects are unjudgeable for secrets",
           by: :no_secret,
         ) unless pattern.respond_to?(:match?)
 

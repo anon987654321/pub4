@@ -82,11 +82,27 @@ class TestConfigurationGuard < Minitest::Test
     assert_match(/law_runtime.yml must not duplicate law_catalogue/, reason)
   end
 
+  def test_runtime_rejects_a_law_identity_duplicated_from_the_catalogue
+    path = File.join(Master::ROOT, "data", "law_runtime.yml")
+    data = YAML.safe_load_file(path, aliases: true)
+    data["ROBUSTNESS"] = { "statement" => "duplicate" }
+
+    reason = Guard.validate(path:, content: YAML.dump(data))
+
+    assert_match(/duplicates Law identity.*ROBUSTNESS/, reason)
+  end
+
   def test_law_execution_policy_has_one_source
     laws = YAML.safe_load_file(laws_path, aliases: true)
     runtime = YAML.safe_load_file(File.join(Master::ROOT, "data", "law_runtime.yml"), aliases: true)
-    assert_operator laws.fetch("law_catalogue").fetch("entries").size, :>, 200
+    entries = laws.fetch("law_catalogue").fetch("entries")
+    law_ids = (laws.keys - ["law_catalogue"]) + entries.keys
+
+    assert_operator entries.size, :>, 200
     refute runtime.key?("law_catalogue")
+    assert_empty runtime.keys & law_ids
+    assert runtime.key?("veto_pattern_config")
+    refute runtime.key?("veto_patterns")
   end
 
   def test_catalogue_entry_cannot_drop_a_modality

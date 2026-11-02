@@ -17,10 +17,8 @@ module Master
 
     LAW_MODALITIES = LawVocabulary::MODALITIES
 
-    REQUIRED_RUNTIME_LAW_SECTIONS = %w[
-      CAPABILITY_STATUS_MUST_BE_TRUTHFUL ROBUSTNESS SINGULARITY LINEARITY
-      PROXIMITY ABSTRACTION DENSITY RENDERED_VALUES INTER_MODEL_CONTRACT
-      veto_patterns law_map transformation_policy
+    REQUIRED_RUNTIME_CONFIG_SECTIONS = %w[
+      veto_pattern_config law_map transformation_policy
     ].freeze
     # The Soul manifest owns the protected-path boundary. Broad data/ or
     # retired scanner paths would freeze runtime-written configuration or code
@@ -50,7 +48,7 @@ module Master
 
       case kind
       when :laws then validate_laws(data, path: absolute, text: content)
-      when :law_runtime then validate_runtime_laws(data, path: absolute, text: content)
+      when :law_runtime then validate_runtime_config(data, path: absolute)
       when :soul then validate_soul(data, path: absolute)
       when :providers then ProviderCatalogueGuard.validate(data)
       when :models then ModelCatalogueGuard.validate(data, path: absolute)
@@ -242,16 +240,26 @@ module Master
       validate_catalogue_key_duplicates(text, entries.keys)
     end
 
-    # law_runtime.yml contains non-identity runtime configuration only. Reject
-    # an attempted second declaration of Law execution policy.
-    def validate_runtime_laws(data, path:, text:)
-      validate_required_runtime_law_sections(data)
+    # law_runtime.yml contains runtime configuration, never Law identities.
+    # Compare with normative Law nodes and the execution catalogue so new
+    # duplicates are rejected without maintaining a second ID list.
+    def validate_runtime_config(data, path:)
+      validate_required_runtime_config_sections(data)
       raise ArgumentError, "law_runtime.yml must not duplicate law_catalogue" if data.key?("law_catalogue")
+
+      laws_path = File.join(File.dirname(path), "laws.yml")
+      raise ArgumentError, "law_runtime.yml cannot find its canonical laws.yml" unless File.file?(laws_path)
+
+      laws = YAML.safe_load_file(laws_path, aliases: true)
+      catalogue = laws.fetch("law_catalogue") { raise KeyError, "laws.yml has no law_catalogue" }
+      law_ids = (laws.keys.map(&:to_s) - ["law_catalogue"]) + catalogue.fetch("entries").keys.map(&:to_s)
+      duplicates = data.keys.map(&:to_s) & law_ids
+      raise ArgumentError, "law_runtime.yml duplicates Law identity/identities owned by laws.yml: #{duplicates.sort.join(', ')}" unless duplicates.empty?
     end
 
-    def validate_required_runtime_law_sections(data)
-      missing = REQUIRED_RUNTIME_LAW_SECTIONS - data.keys.map(&:to_s)
-      raise ArgumentError, "required runtime Law sections missing: #{missing.join(', ')}" unless missing.empty?
+    def validate_required_runtime_config_sections(data)
+      missing = REQUIRED_RUNTIME_CONFIG_SECTIONS - data.keys.map(&:to_s)
+      raise ArgumentError, "required runtime configuration section(s) missing: #{missing.join(', ')}" unless missing.empty?
     end
 
     def validate_catalogue_contract(catalogue)
