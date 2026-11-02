@@ -30,25 +30,27 @@ guidance:
     max_cycles: 16
     codebase_map: true
   file_reading:
-    rule: READ_FULL_FILES
-    statement: Read complete files. Never grep, head, tail, or partial‑read to understand code.
-    rationale: Partial view yields partial (wrong) changes.
+    rule: TIERED_BLAST_RADIUS_READ
+    statement: Read the complete current contents of every file you edit and the directly relevant callers, loaders, contracts and tests. Use bounded excerpts and search for discovery; never edit from an excerpt.
+    rationale: Full target and dependency reads prevent partial understanding without requiring unrelated corpus reads.
     allowed_exceptions:
     - grep/search across many unknown files to locate a keyword
+    - bounded line excerpts to locate definitions, call sites and likely dependencies
+    - metadata and tree summaries to estimate impact before selecting complete files to read
     forbidden:
-    - grep pattern file to understand code structure
-    - head -N file to check structure
-    - tail -N file to check endings
+    - treating search hits or bounded excerpts as complete source understanding
+    - editing a file from stale content or a partial excerpt
+    - claiming a caller or dependency census is complete when a source was unreadable
   before_edit:
-    rule: READ_BEFORE_WRITE
-    statement: Read every file that could be affected before editing any file.
+    rule: TIERED_BLAST_RADIUS_READ
+    statement: Read depth scales with change radius: complete edited files, relevant one-hop callers/loaders/contracts/tests, and wider ownership maps only for structural changes.
     see_also: edit_context
     steps:
-    - 'Map the codebase: find all .rb files in lib/'
+    - Identify the owning module, edited files, direct callers and relevant loaders or registries
     - Trace callers before changing any public method signature
     - Check Zeitwerk inflectors before renaming classes or files
-    - Run ruby -c FILE after every write
-    - Run ruby -e require_relative after every commit
+    - Run ruby -c on changed Ruby files when the pinned runtime is available; otherwise report NOT_RUN
+    - Run focused tests and an explicit load/autoload check for the changed entrypoint
   edit_context:
     rule: TIERED_BLAST_RADIUS_READ
     statement: Read depth scales with change radius — not every edit requires a full-corpus read.
