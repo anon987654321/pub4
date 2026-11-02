@@ -9,6 +9,7 @@ require_relative "../../MASTER/tools/css_coverage_lint"
 # defines — a hook the author expected to do something.
 class CssCoverageLintTest < Minitest::Test
   L = Operator::CssCoverageLint
+  ROOT = File.expand_path("..", __dir__)
 
   def test_no_kind_exceeds_its_baseline
     exceeded = L.over_baseline
@@ -81,7 +82,7 @@ class CssCoverageLintTest < Minitest::Test
     assert L.views.any? { |path| path.include?("/brgen_marketplace/") },
            "extracted marketplace views must contribute class usage"
     # The extracted engine ships no stylesheets; brgen's pipeline owns its styles.
-    owned = %r{/brgen/app/assets/stylesheets/_brgen_shared_marketplace_\w+\.scss\z}
+    owned = %r{/brgen/app/assets/stylesheets/_brgen_marketplace\.scss\z}
     assert L.stylesheets.any? { |path| path.match?(owned) },
            "the marketplace stylesheets brgen owns must contribute class definitions"
   end
