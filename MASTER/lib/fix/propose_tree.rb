@@ -129,43 +129,43 @@ module Master
           next if line.strip.empty?
 
           depth = line[/\A\s*/].to_s.length / 2
-          name = line.strip.sub(/\A[│├└─|\x60+\-]+\s*/, "").sub(/\/+\z/, "").strip
-          [depth, name]
+          raw_name = line.strip.sub(/\A[│├└─|\x60+\-]+\s*/, "")
+          directory = raw_name.end_with?("/")
+          name = raw_name.sub(/\/+\z/, "").strip
+          [depth, name, directory]
         end
         return [0, 0, 0, 0, 0, 0, 0] if rows.empty?
 
         child_counts = Hash.new(0)
         stack = []
         ancestors = []
-        root_node = nil
-        rows.each_with_index do |(depth, name), index|
+        rows.each_with_index do |(depth, name, _directory), index|
           stack = stack.first(depth)
           ancestors << stack.dup
           parent = stack.last || :root
           child_counts[parent] += 1
-          node = "#{index}:#{name}"
-          root_node ||= node if depth.zero?
-          stack << node
+          stack << "#{index}:#{name}"
         end
 
-        ugly = rows.count do |_depth, name|
+        ugly = rows.count do |_depth, name, _directory|
           stem = File.basename(name, File.extname(name))
           TreeSprawl::UGLY_NAME_PATTERN.match?(stem)
         end
         owners_by_stem = Hash.new { |hash, stem| hash[stem] = Set.new }
-        rows.each_with_index do |(_depth, name), index|
-          next if File.extname(name).empty?
+        rows.each_with_index do |(_depth, name, directory), index|
+          next if directory || File.extname(name).empty?
 
           owner = ancestors[index][1] || :root
           owners_by_stem[File.basename(name, File.extname(name))] << owner
         end
         scatter = owners_by_stem.count { |_stem, owners| owners.size >= 3 }
-        buried = rows.count do |depth, name|
+        buried = rows.count do |depth, name, _directory|
           stem = File.basename(name, File.extname(name))
           depth > TreeSprawl::MAX_CONCEPT_DEPTH && TreeSprawl::IMPORTANT_CONCEPTS.include?(stem)
         end
         too_wide = child_counts.values.count { |count| count > TreeSprawl::WIDE }
-        root_clutter = root_node && child_counts.fetch(root_node, 0) > TreeSprawl::ROOT_FILE_LIMIT ? 1 : 0
+        root_files = rows.count { |depth, _name, directory| depth == 1 && !directory }
+        root_clutter = root_files > TreeSprawl::ROOT_FILE_LIMIT ? 1 : 0
         max_depth = rows.map(&:first).max
 
         [ugly, scatter, buried, too_wide, root_clutter, max_depth, rows.size]

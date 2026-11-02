@@ -97,6 +97,16 @@ class TestFixProposeTree < Minitest::Test
                     subject.send(:sketch_score, owned)[1]
   end
 
+  def test_root_clutter_counts_root_files_not_top_level_directories
+    agent = RecordingAgent.new(REPLY, [])
+    subject = Master::Fix::ProposeTree.new(root: @root, agent:)
+    directories = ["lib/"] + 19.times.map { |index| "  group_#{index}/" }
+    files = ["lib/"] + 19.times.map { |index| "  root_#{index}.rb" }
+
+    assert_equal 0, subject.send(:sketch_score, directories.join("\\n"))[4]
+    assert_equal 1, subject.send(:sketch_score, files.join("\\n"))[4]
+  end
+
   def test_a_recent_report_cools_the_proposal_down
     FileUtils.mkdir_p(File.join(@root, "runtime"))
     File.write(File.join(@root, "runtime", "proposals.md"), "previous")
