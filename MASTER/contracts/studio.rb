@@ -26,7 +26,7 @@ module Contracts
     def dilla_script = first_file("dilla/dilla.rb")
     def photograph_script = first_file("photograph.rb")
     def postpro_script = first_file("postpro/postpro.rb")
-    def replicate_script = first_file("replicate/replicate.rb")
+    def replicate_script = first_file("replicate/client.rb")
 
     def first_file(relative)
       path = File.join(root, relative)
