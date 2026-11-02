@@ -1,8 +1,6 @@
 # frozen_string_literal: true
 
 require "test_helper"
-require "copy_review_check"
-
 class CopyReviewCheckTest < ActiveSupport::TestCase
   def creative
     {
@@ -76,7 +74,7 @@ class CopyReviewCheckTest < ActiveSupport::TestCase
   test "oversized input is refused" do
     invalid = creative.merge(body: "x" * (CopyReviewCheck::MAX_INPUT_BYTES + 1))
     assert_raises(CopyReviewCheck::InvalidInput) do
-      CopyReviewCheck.prepare(creative: invalid, product:)
+      CopyReviewCheck.prepare(creative: invalid, product: product)
     end
   end
 end
