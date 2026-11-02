@@ -247,11 +247,17 @@ compare pinned revisions only.
   same-host POST only, with session cookies, per-site/per-task approval and
   a real login-form regression. Do not widen the existing GET/HEAD browser
   contract before the seam is explicitly closed.
-- [ ] Resolve Whyp track slugs for embeds without network work in an Active
-  Record render. Use the provider's documented oEmbed endpoint during an
-  explicit import/refresh step, validate the returned iframe host and path,
-  and preserve private `token` / collection `in` query parameters. Cover
-  numeric IDs, slugs, malformed responses and private links.
+- [ ] Verify the import-time Whyp oEmbed implementation on the pinned
+  Brgen checkout: run the playlist TrackImport tests and
+  `playlist/whyp_embed_resolver_test.rb`. The resolver now requests
+  `https://api.whyp.it/api/oembed` only during explicit import, validates
+  the returned HTTPS `whyp.it/embeds/track/...` URL, and persists it in
+  `playlist_tracks.embed_url`; page rendering reads the stored URL and does
+  no network work. Regression sources cover slug links, malformed/non-rich
+  responses, unsafe hosts, status/size failures and private `token` /
+  collection `in` preservation. These tests are NOT_RUN here. Existing
+  slug-only rows need an explicit re-import/refresh to populate the column;
+  no live collection was imported.
 - [ ] Re-run `MASTER/bin/operator measure` on the pinned checkout with a
   bounded timeout and identify which ratchet dominates after
   `SPONSORED_LINK_REL`. The previous 500-second attempt did not finish and
