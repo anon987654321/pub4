@@ -288,7 +288,17 @@ compare pinned revisions only.
 
 ## Carried-forward requests from earlier sessions
 
-- [ ] **Complete AI3 archive archaeology:** the bounded findings and no-port decision are recorded in [`STUDIO/docs/ai3_legacy_audit_2026-10-28.md`](STUDIO/docs/ai3_legacy_audit_2026-10-28.md). The visible AI3 tree and extracted reports were inspected, but the historical archive blobs were not all extracted; preserve this item as open until that source recovery is actually completed. No AI3 feature claim counts as working behavior without implementation and runtime evidence.
+- [ ] **Complete AI3 archive archaeology:** the extant provenance records are
+  `MASTER/docs/history/recovery/legacy_manifest.yml` and
+  `MASTER/docs/history/recovery/pub_restore.yml`. They classify the former
+  standalone tree as absorbed but explicitly say its old Ruby CLI/configuration
+  source is not preserved; the recovery record still lists
+  `MASTER/data/recovery/ai3/legacy/ai3.rb` as missing. These are recovery
+  inventories, not a completed no-port audit. Recover and compare the historical
+  archive blobs, map each unique role against current MASTER owners, then record
+  the actual operator decision or implement only grounded behavior. No AI3
+  feature claim counts as working behavior without implementation and runtime
+  evidence.
 
 These requests were visible in prior conversations or handoffs but lacked an explicit,
 actionable root-backlog item. Keep them open until the relevant evidence exists.
