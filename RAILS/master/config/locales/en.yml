@@ -154,7 +154,7 @@ en:
     limit_quota: >-
       The quota resets on the first of each month (UTC). A request that does not fit is refused whole and costs
       nothing.
-    limit_errors: "401 bad key, 402 subscription not active, 422 bad request, 429 quota or rate limit."
+    limit_errors: "401 bad key, 402 subscription not active, 422 bad request, 429 quota or rate limit, 413 oversized request."
     limit_account: >-
       GET /api/v1/key shows usage; POST /api/v1/key/rotate replaces the key; POST /api/v1/key/portal opens billing.
     limit_privacy: "Source and creative are judged in memory. Copy and product fields are not stored; copy-review receipts retain only input hashes, verdict summaries and finding codes."
