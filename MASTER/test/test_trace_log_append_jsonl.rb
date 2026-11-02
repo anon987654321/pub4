@@ -319,8 +319,9 @@ class TraceLogAppendJsonlTest < Minitest::Test
 
       assert_equal 1, records.length
       payload = records.first.fetch("payload")
-      assert_equal 64, payload.fetch(:query_digest).length
-      assert_equal 64, payload.fetch(:metadata_digest).length
+      # String keys, like the parsed record around it and every reader of it.
+      assert_equal 64, payload.fetch("query_digest").length
+      assert_equal 64, payload.fetch("metadata_digest").length
       serialized = JSON.generate(records)
       refute_includes serialized, "legacy-secret"
       refute_includes serialized, "legacy-private"
