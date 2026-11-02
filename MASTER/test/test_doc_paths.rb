@@ -54,8 +54,8 @@ class TestDocPaths < Minitest::Test
   end
   def test_root_backlog_markdown_links_resolve
     body = File.read(File.join(REPO, "TODO.md"))
-    broken = body.scan(/\\[[^\\]]*\\]\\(([^)]+)\\)/).flatten.filter_map do |target|
-      next if target.match?(%r{\\A(?:https?:|mailto:|tel:|#|/) }ix)
+    broken = body.scan(/\[[^\]]*\]\(([^)]+)\)/).flatten.filter_map do |target|
+      next if target.match?(%r{\A(?:https?:|mailto:|tel:|#|/)}i)
 
       path = target.split(/[?#]/, 2).first
       next if path.empty? || File.exist?(File.join(REPO, path))
@@ -63,7 +63,7 @@ class TestDocPaths < Minitest::Test
       "#{target} (missing #{path})"
     end
 
-    assert_empty broken, "TODO.md contains broken local links:\\n  #{broken.join("\\n  ")}"
+    assert_empty broken, "TODO.md contains broken local links:\n  #{broken.join("\n  ")}"
   end
 
   def test_root_backlog_and_historical_reviews_are_not_competing_checklists
