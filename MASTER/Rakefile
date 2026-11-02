@@ -482,8 +482,6 @@ AGENT_CONTRACT_TARGETS = {
   "AGENTS.md" => "Codex, Grok, and every agent that reads AGENTS.md",
   "GEMINI.md" => "Gemini CLI",
   "GLM.md" => "GLM (Z.ai) and every agent that reads GLM.md",
-  "GLM.md" => "GLM (Z.ai) and every agent that reads GLM.md",
-  "GLM.md" => "GLM (Z.ai) and every agent that reads GLM.md",
   ".cursorlaws" => "Cursor",
   ".github/copilot-instructions.md" => "GitHub Copilot",
 }.freeze

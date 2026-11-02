@@ -23,7 +23,8 @@ class TestScriptDispatch < Minitest::Test
     workspace = File.expand_path("../..", __dir__)
     path = Master::Io::ScriptDispatch.script_path(workspace, "replicate")
 
-    assert_equal File.join(MasterPaths.repo, "STUDIO", "replicate", "replicate.rb"), path
+    assert_equal File.join(MasterPaths.repo, "STUDIO", "replicate", "client.rb"), path
+    assert File.file?(path)
   end
 
   def test_uses_own_directory_as_working_directory_for_studio_tool
@@ -33,19 +34,19 @@ class TestScriptDispatch < Minitest::Test
     assert_equal File.join(MasterPaths.repo, "STUDIO", "replicate"), Master::Io::ScriptDispatch.working_directory(workspace, script)
   end
 
-  def test_finds_lora_tool_at_its_canonical_nested_entrypoint
+  def test_a_retired_tool_reports_its_missing_entrypoint
+    # lora and postpro retired with their STUDIO trees. The dispatch keeps one
+    # name-to-entrypoint rule and reports the miss; it does not widen the
+    # search into whatever happens to share the name. Restoration re-adds the
+    # TOOL_ENTRYPOINTS row and its test together.
     workspace = File.expand_path("../..", __dir__)
     path = Master::Io::ScriptDispatch.script_path(workspace, "lora")
 
-    assert_equal File.join(MasterPaths.repo, "STUDIO", "replicate", "lora", "lora.rb"), path
-    assert File.file?(path)
-  end
-
-  def test_uses_the_nested_lora_directory_as_working_directory
-    workspace = File.expand_path("../..", __dir__)
-    script = Master::Io::ScriptDispatch.script_path(workspace, "lora")
-
-    assert_equal File.join(MasterPaths.repo, "STUDIO", "replicate", "lora"), Master::Io::ScriptDispatch.working_directory(workspace, script)
+    assert_equal File.join(MasterPaths.repo, "STUDIO", "lora", "lora.rb"), path
+    refute File.file?(path)
+    result = Master::Io::ScriptDispatch.run(root: workspace, tool: "lora")
+    refute result.ok?
+    assert_match(/missing tool entrypoint/, result.message)
   end
 
   def test_finds_dilla_engine_under_studio

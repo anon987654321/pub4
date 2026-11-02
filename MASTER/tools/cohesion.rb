@@ -152,7 +152,11 @@ module Operator
       candidates = files.flat_map { |path| [File.basename(path, ".rb"), *symbols(path)] }.uniq
       corpus = Dir.glob(File.join(corpus_root, "**/*.rb"))
                     .uniq
-                    .reject { |path| files.include?(path) || path.match?(SKIP) }
+                    # SKIP matches the corpus-relative path, not the absolute
+                    # one: the corpus root itself may legitimately sit in a
+                    # directory SKIP names (Dir.tmpdir on Linux is /tmp), and
+                    # matching it there emptied the evidence for every scan.
+                    .reject { |path| files.include?(path) || path.delete_prefix("#{corpus_root}/").match?(SKIP) }
 
       corpus.filter_map do |path|
         body = File.read(path, encoding: "UTF-8")
@@ -371,7 +375,7 @@ module Operator
       RAILS/__shared/app RAILS/__shared/lib
       RAILS/brgen/app RAILS/brgen/lib RAILS/amber/app RAILS/amber/lib
       RAILS/bsdports/app RAILS/bsdports/lib
-      STUDIO/replicate/lora STUDIO/postpro STUDIO/replicate
+      STUDIO/replicate
       OPENBSD/lib
     ].freeze
 

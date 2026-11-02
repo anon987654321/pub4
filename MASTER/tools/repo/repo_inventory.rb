@@ -30,11 +30,17 @@ ALLOWED_ROOT_FILES = %w[
   .ruby-version
   AGENTS.md
   CLAUDE.md
+  FETAT.md
+  FULL.yml
   GEMINI.md
-  LICENSE
+  GLM.md
   README.md
   TODO.md
+  TREE_CONTRACTS.md
   VERSION
+  output_paths.rb
+  redeploy
+  subprocess.rb
 ].freeze
 GENERATED_ROOT_FILES = %w[
   snapshot_MASTER.md
@@ -49,6 +55,7 @@ ALLOWED_ROOT_DIRS = %w[
   OPENBSD
   RAILS
   STUDIO
+  replicate
 ].freeze
 SKIP_DIRS = %w[
   .git
