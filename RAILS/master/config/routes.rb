@@ -53,6 +53,7 @@ Rails.application.routes.draw do
   namespace :api do
     namespace :v1 do
       post "lint" => "lint#create"
+      post "copy-review" => "copy_reviews#create"
       get  "key" => "keys#show"
       post "key/rotate" => "keys#rotate"
       post "key/portal" => "keys#portal"
