@@ -226,12 +226,15 @@ each batch; compare pinned revisions only.
   second visualizer, audio engine or generator. Reassess only after the
   `radio_brgen_tunnel.js` audio/visual split has a tested ownership boundary.
 
-- [ ] Root governance and agent instructions: retain one canonical generated
-  instruction source and regenerate compatibility files through the existing
-  generator. Compare `AGENTS.md`, `GEMINI.md`, `.cursorlaws`,
-  `CLAUDE.md` and their generator inputs; do not hand-edit generated copies.
-  Verify tool auto-discovery and root-directory contracts before relocating
-  any configuration. Root `TODO.md` remains the single actionable backlog.
+- [x] Root governance and agent instructions: the generator now has one source
+  in `MASTER/AGENTS.md`, emits only `AGENTS.md`, `GEMINI.md`, `GLM.md`
+  and `.cursorlaws`, and does not recreate `.github/`. Copilot reads root
+  `AGENTS.md`; Claude's native settings path is a root symlink into
+  `STUDIO/agent-guidance/claude/`. The four-directory root contract is enforced.
+- [ ] Verify from a local Claude Code session on macOS that project hooks load
+  through the `.claude` symlink; this session could verify the Git tree and
+  link target but could not launch Claude Code. Root `TODO.md` remains the
+  single actionable backlog.
 
 - [ ] FULL.yml retirement: reconcile every remaining item against
   `MASTER/data/recovery/full_yml_assessment.yml` and current implementation;
@@ -345,7 +348,10 @@ each batch; compare pinned revisions only.
 - Marketplace: active-filter chips with clear on the results; trim tile badges to one
   delivery line. Takeaway menu categories and restaurant cover photos need a schema
   column each.
-- `radio_brgen_tunnel.js` is 1,234 lines; split the audio engine from the visual engine.
+- [x] Split the 1,269-line `radio_brgen_tunnel.js` into a 216-line
+  coordinator, `radio_brgen_audio.js` and `radio_brgen_visual.js`. Importmap
+  pins and module-boundary regression tests are in place; Node/browser execution
+  remains NOT_RUN in this GitHub-only pass.
 
 ## Session note 2026-10-28 (bounded provider-health history)
 
