@@ -21,38 +21,42 @@ See [Efficient checks → repair → proof](docs/efficient-repair-pass.md) for t
 ## The idea
 
 Most AI is written in Python, chosen for its libraries more than its clarity.
-MASTER is written in Ruby, and that is the point. A law governs a system only
-when a human can read both the Law and the code that enforces it, and Ruby reads
-like intention. The constitution therefore stays legible. `data/laws.yml` is the sole
-normative constitution: it owns Law identities, statements, parentage, ordered
-invariant nodes, vocabularies, protected paths and declared enforcement
-contracts. `data/soul.yml` is subordinate identity and delivery configuration;
-it attests the Ruby identity body and references the preservation Law without
-creating policy of its own. `data/law_runtime.yml` remains a transitional
-compatibility registry for operational readers and is migration debt, not a
-second normative constitution. Executable definitions and detector-adapter
-sources share one physical home under `law/`; detector adapters live in
-`law/`. `lib/review/scan/` holds scanner machinery, registration,
-auditing, and orchestration—not a second Law source tree. These are enforcement
-mechanisms, not alternate sources of normative authority. `LawRegistryAudit`
-checks Law identity and source integrity and reports declared coverage debt
-separately. Reconciliation does not prove that every Law has a deterministic
-detector or that every runtime surface has actually been assessed; MASTER must
-not claim complete enforcement from a file count or registry count.
-A break gets a refusal with a reason, never a quiet patch.
+MASTER is written in Ruby, and that is the point. A requirement is useful only
+when a human can read both the Law and the code that enforces it. The system's
+global source authority is declared once in `data/soul.yml`: it owns identity,
+preservation principles, source precedence and `absolute.sacred_paths`. The
+order is `soul.yml > laws.yml > executable laws and gates > tree contracts >
+Git history`; Git history is provenance, never a source that overrides the live
+tree.
 
-The `MASTER/bin/operator laws <ID>` view resolves the flat normative catalogue
+`data/laws.yml` is the one normative catalogue of individual Law identities,
+statements, parentage, invariant-node order, vocabularies and declared
+enforcement contracts. It does not restate global source precedence or
+protected paths. `data/law_runtime.yml` remains a live transitional execution
+metadata source for the DSL and operational readers; it is migration debt, not
+a second normative Law catalogue. Executable definitions and detector-adapter
+sources share one physical home under `law/`; `lib/review/scan/` holds scanner
+machinery, registration, auditing and orchestration — not another Law source.
+These are enforcement mechanisms, not alternate sources of Law identity.
+`LawRegistryAudit` checks Law identity and source integrity and reports
+declared coverage debt separately. Reconciliation does not prove that every
+Law has a deterministic detector or that every runtime surface has actually
+been assessed; MASTER must not claim complete enforcement from a file count
+or registry count. A break gets a refusal with a reason, never a quiet patch.
+
+The `MASTER/bin/operator laws <ID>` view resolves the flat Law catalogue
 through `Operator::LawInventory.catalogue_declaration`. `Master.law_entries`
-returns its statement-bearing rows in document order. Constitutional precedence
-comes from the nine ordered nodes in `laws.yml`, never a numeric priority.
-Important limitation: `law_runtime.yml#law_catalogue` is still a LIVE second
-metadata source. `Law::Definition` consumes its per-executable-Law severity,
-mode, lifecycle, autofix and reach fields; `LawCataloguePreflight` and
-`LawRegistryAudit` reconcile that population with `Law.define`. That metadata
-can still influence which files an executable Law reaches. The flat catalogue
-is the normative constitution, but the strict single-source migration is NOT
-YET COMPLETE. Do not remove the legacy section until the DSL, preflight, audit,
-boot receipt and their fixtures have been migrated together.
+returns statement-bearing rows in document order. The nine ordered nodes in
+`laws.yml` order invariant requirements internally; they do not replace the
+source hierarchy in `soul.yml`.
+
+Important limitation: `law_runtime.yml#law_catalogue` remains a LIVE
+execution-metadata source. `Law::Definition` consumes its per-executable-Law
+severity, mode, lifecycle, autofix and reach fields; `LawCataloguePreflight`
+and `LawRegistryAudit` reconcile that population with `Law.define`. That
+metadata can still influence which files an executable Law reaches. Do not
+remove the legacy section until the DSL, preflight, audit, boot receipt and
+their fixtures have been migrated together.
 
 The kernel also forbids simulation. MASTER may not claim it read a file without
 showing the content and its hash, claim a change without the diff, or claim
@@ -261,8 +265,8 @@ failed steps sends the proof back to the whole suite. A target is Rails when its
 files say so, an application or an engine above it, and a Rails target is proved
 by the check runner over the apps `RAILS/apps.yml` registers. A run whose budget
 ran out while no process held it is closed, and the next `/fix` starts afresh.
-Every commit the runtime makes refuses the sacred paths `data/soul.yml`
-declares, whichever writer left them changed.
+Every commit the runtime makes refuses the sacred paths declared by
+`data/soul.yml#absolute.sacred_paths`, whichever writer left them changed.
 
 For model-assisted findings, each /fix repair route proposes several materially
 different candidates (three by default), then selects one using the target Law and
