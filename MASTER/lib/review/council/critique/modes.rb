@@ -92,7 +92,6 @@ module Master
                 ../STUDIO/dilla/data/showcase.json
                 ../STUDIO/dilla/data/recovered_music.json
                 lib/voice/dilla.rb lib/voice/production_dna.rb
-                ../STUDIO/postpro/analog_capabilities.rb
               ],
               quality_kind: :sound,
               ideation_prompt: "Review the Dilla engine and measured mix. For EACH problem the panel " \

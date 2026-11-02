@@ -6,6 +6,51 @@ vm23 is a seam in `MASTER/data/operator_seams.yml`. Refusals live under
 "Refused, and why" in `MASTER/AGENTS.md`. An item closes by being deleted in
 the commit that carries its evidence; nothing here records finished work.
 
+## Open from the 2026-11-02 session — external tree audit (MASTER)
+
+An external pass ran the full suite on Linux (Ruby 4.0.9, no browser, no
+operator state) and landed the mechanical fixes in the same commit as this
+section. The three clusters below are what an agent cannot close alone, plus
+one measurement nobody has taken on a non-macOS host.
+
+- [ ] **Land the soul-declared sacred-paths migration.** `test_core_paths.rb`
+  (4 failures, 1 error) and `test_autofix_guard.rb` (2 failures) pin a
+  contract the constitution has not grown into: `Core::Constitution::Paths`
+  must read each tree's own `data/soul.yml#absolute.sacred_paths` (fixture
+  roots governed by their soul, missing soul raising ENOENT, an empty or
+  blank declaration raising, refusal wording "(soul.yml
+  absolute.sacred_paths)"), while the implementation still derives paths
+  fail-closed from `laws.yml#SACRED_AUTHORSHIP.protected_paths`. The live
+  `data/soul.yml` declares no `absolute:` block yet, and both it and
+  `laws.yml` are sacred — the declaration itself is an operator change, and
+  the code side must not land before it or the live tree fails closed.
+  `lib/review/prompt_filter.rb` now falls back to the default modality words
+  when `absolute.anti_simulation.forbidden` is absent; the same `absolute:`
+  declaration should carry the real list when it lands.
+- [ ] **Measure the suite on Linux and triage the environment-skewed
+  failures.** ~85 test files fail here for machine reasons, not tree
+  reasons: no headless Chrome (`TestCdpSessionHistory`, browser suites),
+  `/tmp`-trust hooks refusals (`ToolHooksTest`), `NO_COLOR`/truecolor
+  terminal contracts (`TraceDmesgTest`, `TestCliTerminalFace`), sandboxed
+  fork/pty limits (`TestFixKernelLifecycle#test_execution_lock_serializes_independent_processes`,
+  `TestCliReplExit`), and missing operator state. The method that separates
+  them from real defects: rerun each failing file alone with
+  `bundle exec ruby -Ilib:test <loader> <file>` and compare against the
+  parallel shard run. Files that fail both ways and are not in the clusters
+  above still need a per-file disposition (~90 at audit time).
+- [ ] **Explain the ratchet run's shape on Linux.**
+  `TestRatchets#test_no_ratchet_is_over_its_ceiling` measured 300 s here —
+  its own deadline — where the helper comment promises about a minute across
+  the corpus. Either the host is that much slower or a ratchet walks
+  something it should not; the run's per-ratchet durations say which.
+- [ ] **Finish the retired-tool surface.** The postpro/lora trees are gone
+  and the compatibility contracts now match (`MASTER/tools` symlinks,
+  `ScriptDispatch`, cohesion roots, doc baselines), but `Io::LoraIntent` and
+  `Io::MediaIntent` still call `ScriptDispatch.run(tool: "lora"/"postpro")`
+  and degrade into missing-entrypoint errors at request time. Decide the
+  intent layer's fate with the `STUDIO/postpro` / `STUDIO/replicate`
+  archaeology item below rather than widening dispatch again.
+
 ## Open from the 2026-11-01 session — repository flattening
 
 Initial recursive Git tree at `496cfb32497bcedb4de6a98bc452d030e82d886b`

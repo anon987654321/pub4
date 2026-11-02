@@ -13,6 +13,9 @@ doc_paths:
   TREE_CONTRACTS.md:
   - path: RAILS/shared
     why: 'Names the path that must not be used; the engine directory is RAILS/__shared. The mention is the guard, not a citation.'
+  MASTER/AGENTS.md:
+  - path: STUDIO/postpro/
+    why: 'The retired tree stays on the AutofixGuard protected list, so the prose must be able to name what the guard refuses. The directory itself is gone; its restoration is the TODO.md archaeology item.'
   - path: master_web_assets_check.rb
     why: 'Lives on vm23 under /etc/rc.d/master; OPENBSD/dev/operator_stage_2.zsh is the tracked caller. The prose teaches the check, the box owns the script.'
   - path: public/three.module.js

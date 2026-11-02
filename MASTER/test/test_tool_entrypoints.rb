@@ -39,12 +39,6 @@ class TestToolEntrypoints < Minitest::Test
       tools/master_design.rb
       tools/scss.rb
       tools/frontend_law_set.rb
-      tools/postpro/frame_set.rb
-      tools/postpro/rescue.rb
-      tools/postpro/uncanny.rb
-      tools/replicate/chain.rb
-      tools/replicate/craft.rb
-      tools/replicate/schema_snapshot.rb
     ]
     missing = expected.reject { |path| File.file?(File.join(ROOT, path)) }
     assert_empty missing, "flattened tool file(s) missing: #{missing.join(', ')}"

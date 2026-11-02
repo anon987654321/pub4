@@ -109,8 +109,8 @@ support a stated scale.
 routes operational checks. Neither creates Law identities or normative
 policy, and neither overrides the constitution. The four owners are MASTER/
 (runtime, `MASTER/bin/master`), RAILS/ (apps, `MASTER/bin/operator` triangle
-up), OPENBSD/ (deployment and vm23), and STUDIO/ (Dilla, postpro, Replicate,
-and LoRA). `MASTER/tools/` keeps compatibility entrypoints for STUDIO tools.
+up), OPENBSD/ (deployment and vm23), and STUDIO/ (Dilla, photograph,
+Replicate). `MASTER/tools/` keeps compatibility entrypoints for STUDIO tools.
 
 `law_runtime.yml` remains a live, transitional second metadata source.
 `Law::Definition` reads `law_runtime.yml#law_catalogue.entries` for each
@@ -193,10 +193,9 @@ git — `NO_CHANGELOG_COMMENT` in `law/universal.rb` enforces it.
 **The RAILS apps default to Norwegian.** Assert through I18n keys, never
 English literals; a hardcoded English string is a defect, not a placeholder.
 
-**Renders are replaceable.** dilla and postpro write output that a new run may
-delete and replace; postpro removes a source's earlier takes before it renders a
-new family. Never change a rendered-sound or graded-look default on your own
-judgement.
+**Renders are replaceable.** dilla and photograph write output that a new run
+may delete and replace. Never change a rendered-sound or graded-look default on
+your own judgement.
 
 **Scanner findings are hashes with a path, not Finding objects.**
 `Scanner#findings(paths)` is the flat API. `scan_dir` returns Result wrapping
@@ -332,10 +331,10 @@ run ends as DONE, PLATEAU, BLOCKED or VALIDATION_FAILED, and only DONE claims
 the work is finished. `/review` and `/critique` read and argue without writing.
 `/scan` is the detector-only observation surface; `/fix` adds repair and verification.
 
-**That means a fix mutates the tree** — it has broken dilla, postpro and
-MASTER's own chat path. `--no-autofix` and `--dry-run` hold it back. Read the
-printed diff before committing, and never commit rewrites of generated caches:
-the scanner descends into them.
+**That means a fix mutates the tree** — it has broken dilla and MASTER's own
+chat path. `--no-autofix` and `--dry-run` hold it back. Read the printed diff
+before committing, and never commit rewrites of generated caches: the scanner
+descends into them.
 
 The deterministic autofix stage, which runs before any model is asked, answers
 to `Fix::AutofixGuard`. It never opens a protected path: the sacred paths
@@ -731,10 +730,6 @@ because agents read the Law one identity at a time. Reopen with a duplicate body
   An upgrade is its own commit with compatible Gemfiles and lockfiles and the
   app, contract and browser suites after it. Reopen on an upstream release or a
   security advisory.
-- **The 200-entry analogue catalogue claims nothing it has not implemented.**
-  `analog_capabilities.rb` reports every entry `unverified` with `enabled: null`
-  until the status registry names a concrete implementation and a regression.
-  Do not mark one enabled to tidy the count.
 - **The Pluribus logo PDF is not chased.** The only copy sat under `__DELETE/`
   with a text layer that did not match its page; a source that disagrees with its
   own label is not evidence for a visual identity. The identity rests on the

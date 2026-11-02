@@ -23,22 +23,25 @@ class LifecycleToolsSpec < Minitest::Test
   end
 
   def test_media_tool_compatibility_links_point_at_studio
-    # lora trains through Replicate and lives under it.
-    homes = { "dilla" => "dilla", "lora" => "replicate/lora", "postpro" => "postpro", "replicate" => "replicate" }
-    homes.each do |tool, home|
+    # Each entry names its canonical file: dilla and replicate are one-file
+    # entrypoints, and STUDIO/replicate/client.rb is replicate's. lora and
+    # postpro retired with their STUDIO trees; a symlink must not outlive the
+    # tree it points at. Restoration re-adds the link and this row together.
+    homes = { "dilla" => ["dilla", "dilla.rb"], "replicate" => ["replicate", "client.rb"] }
+    homes.each do |tool, (home, entry_name)|
       link = File.join(ROOT, "tools", tool)
       target = "../../STUDIO/#{home}"
 
       assert File.symlink?(link), "MASTER/tools/#{tool} must remain a compatibility symlink"
       assert_equal target, File.readlink(link), "MASTER/tools/#{tool} target drifted"
 
-      entry = File.join(ROOT, "..", "STUDIO", home, "#{tool}.rb")
-      assert File.file?(entry), "missing canonical STUDIO/#{tool}/#{tool}.rb"
+      entry = File.join(ROOT, "..", "STUDIO", home, entry_name)
+      assert File.file?(entry), "missing canonical STUDIO/#{home}/#{entry_name}"
     end
   end
 
   def test_media_tools_have_one_physical_home
-    %w[dilla lora postpro replicate].each do |tool|
+    %w[dilla replicate].each do |tool|
       path = File.join(ROOT, "tools", tool)
       assert File.symlink?(path), "MASTER/tools/#{tool} must not become a second physical tool tree"
     end

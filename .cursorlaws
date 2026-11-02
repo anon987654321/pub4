@@ -71,8 +71,8 @@ support a stated scale.
 routes operational checks. Neither creates Law identities or normative
 policy, and neither overrides the constitution. The four owners are MASTER/
 (runtime, `MASTER/bin/master`), RAILS/ (apps, `MASTER/bin/operator` triangle
-up), OPENBSD/ (deployment and vm23), and STUDIO/ (Dilla, postpro, Replicate,
-and LoRA). `MASTER/tools/` keeps compatibility entrypoints for STUDIO tools.
+up), OPENBSD/ (deployment and vm23), and STUDIO/ (Dilla, photograph,
+Replicate). `MASTER/tools/` keeps compatibility entrypoints for STUDIO tools.
 
 `law_runtime.yml` remains a live, transitional second metadata source.
 `Law::Definition` reads `law_runtime.yml#law_catalogue.entries` for each

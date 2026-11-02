@@ -86,7 +86,9 @@ class TestDocPaths < Minitest::Test
   # MASTER/docs/handoffs holds preserved run logs and the archived predecessor ledger.
   # These are artifacts, not substitutes for tree/project README entry points.
   # MASTER/docs holds the execution-contract references that TODO.md, the code
-  # comments and the lifecycle work cite by path.
+  # comments and the lifecycle work cite by path. TREE_CONTRACTS.md is the one
+  # tree-contract file at the repo root; the per-tree CLAUDE.md contracts folded
+  # into it by operator order, so the boundary rule below must admit it.
   MARKDOWN_REFERENCE_EXCEPTIONS = %w[
     MASTER/FACE_WORLD.md
     MASTER/data/principles/openbsd_kernel_philosophy.md
@@ -101,31 +103,31 @@ class TestDocPaths < Minitest::Test
     MASTER/docs/mobile.md
     MASTER/docs/restructure_assessment.md
     MASTER/lib/cli/face/contract.md
-    RAILS/INTERACTION_CAMPAIGN.md
-    RAILS/__shared/LAYOUT_MICRO_REFINEMENT_MATRIX.md
     RAILS/__shared/SOCIAL_FRONT_PAGE.md
-    RAILS/__shared/SURFACE_MICRO_REFINEMENT_MATRIX.md
-    RAILS/__shared/SURFACE_MICRO_REFINEMENT_MATRIX_II.md
-    RAILS/__shared/UI_ARCHAEOLOGY.md
-    RAILS/__shared/UI_ARCHAEOLOGY_II.md
-    STUDIO/dilla/ENGINE_NOTES.md
-    STUDIO/dilla/REFERENCE_STUDY.md
-    STUDIO/postpro/LEGACY_RESTORE.md
-    STUDIO/replicate/lora/guides/photography.md
-    STUDIO/replicate/lora/guides/prompting.md
-    docs/runbooks/cli-web-ux.md
-    docs/runbooks/openbsd-deploy-restore.md
-    docs/runbooks/provider-integration.md
-    docs/runbooks/pwa.md
-    docs/runbooks/release-pass.md
-    docs/runbooks/rendered-layout.md
-    docs/runbooks/studio-render.md
-    docs/runbooks/voice-path.md
-    docs/todo-triage.md
-
-    # The one tree-contract file at the repo root; the per-tree CLAUDE.md
-    # contracts folded into it by operator order.
     TREE_CONTRACTS.md
+    FETAT.md
+    MASTER/docs/LOVDATA.md
+    MASTER/docs/PUB4_PERMISSION_MATRIX.md
+    MASTER/docs/ad_creative_governance.md
+    MASTER/docs/data-freeze.md
+    MASTER/docs/editorial-quality.md
+    MASTER/docs/efficient-repair-pass.md
+    MASTER/docs/efficient_repair_workflow.md
+    MASTER/docs/map.md
+    MASTER/docs/task-contracts.md
+    MASTER/docs/task-map.md
+    MASTER/docs/visual/bergen_brand_systems.md
+    MASTER/docs/visual/browserless_ad_audits.md
+    OPENBSD/docs/log_rotation.md
+    RAILS/__other/mrdamascy/APP_SPEC.md
+    RAILS/__other/mrdamascy/docs/fix-ledger-2026-11-01.md
+    RAILS/docs/INTERACTION_CAMPAIGN.md
+    RAILS/docs/LEGACY_PROMISES.md
+    RAILS/docs/archive/LAYOUT_MICRO_REFINEMENT_MATRIX.md
+    RAILS/docs/archive/SURFACE_MICRO_REFINEMENT_MATRIX.md
+    RAILS/docs/archive/SURFACE_MICRO_REFINEMENT_MATRIX_II.md
+    RAILS/docs/archive/UI_ARCHAEOLOGY.md
+    RAILS/docs/archive/UI_ARCHAEOLOGY_II.md
   ].freeze
 
   # README.md is the human entry point at each tree/project boundary. Other

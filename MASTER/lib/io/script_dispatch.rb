@@ -14,9 +14,12 @@ module Master
     module ScriptDispatch
       module_function
 
-      # Public tool names resolve to one canonical entrypoint. LoRA lives under
-      # STUDIO/replicate because that tree owns the whole provider boundary.
-      TOOL_ENTRYPOINTS = { "lora" => File.join("replicate", "lora", "lora.rb") }.freeze
+      # Public tool names resolve to one canonical entrypoint. STUDIO owns the
+      # whole provider boundary, and STUDIO/replicate/client.rb is replicate's
+      # one entrypoint. lora and postpro retired with their STUDIO trees; an
+      # unknown name keeps the default <tool>/<tool>.rb probe and reports a
+      # missing entrypoint instead of silently widening the search.
+      TOOL_ENTRYPOINTS = { "replicate" => File.join("replicate", "client.rb") }.freeze
 
       def run(root:, tool:, arg: "", env: {})
         requested_root = File.expand_path(root.to_s.empty? ? Dir.pwd : root)
