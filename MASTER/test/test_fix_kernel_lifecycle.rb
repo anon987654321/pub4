@@ -295,7 +295,7 @@ class TestFixKernelLifecycle < Minitest::Test
       second_attempting = Queue.new
       second_entered = Queue.new
 
-      first_adapter = Object.new
+      first_adapter = cancellation_protocol(Object.new)
       first_adapter.define_singleton_method(:last_terminal_state) { :done }
       first_adapter.define_singleton_method(:run_unlocked) do |_target, **_options|
         first_entered << :entered
@@ -303,7 +303,7 @@ class TestFixKernelLifecycle < Minitest::Test
         Master::Result.ok("DONE: first fixture")
       end
 
-      second_adapter = Object.new
+      second_adapter = cancellation_protocol(Object.new)
       second_adapter.define_singleton_method(:last_terminal_state) { :done }
       second_adapter.define_singleton_method(:run_unlocked) do |_target, **_options|
         second_entered << :entered
