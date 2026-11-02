@@ -135,6 +135,28 @@ class DinteroCheckoutTest < ActiveSupport::TestCase
     )
   end
 
+  test "a seller failing validation leaves every basket split contract unwritten" do
+    active = Store.new(
+      dintero_payout_destination_id: "seller-1",
+      dintero_payout_destination_status: "ACTIVE"
+    )
+    inactive = Store.new(
+      dintero_payout_destination_id: "seller-2",
+      dintero_payout_destination_status: "WAITING_FOR_SIGNATURE"
+    )
+    first = order(store: active)
+    second = order(store: inactive)
+    checkout = Marketplace::Checkout.allocate
+    checkout.define_singleton_method(:order_lines) { [first, second] }
+
+    assert_raises(Marketplace::Payments::DinteroCheckout::SellerNotReady) do
+      Marketplace::Payments::DinteroCheckout.send(:persist_split_contracts!, checkout)
+    end
+
+    assert_nil first.dintero_split_json
+    assert_nil second.dintero_split_json
+  end
+
   test "an unapproved seller is rejected before the Dintero request" do
     seller = Store.new(
       dintero_payout_destination_id: "seller-1",
