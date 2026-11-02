@@ -7,6 +7,7 @@
 <% deals = affiliate_deals_for(category: local_assigns[:category], limit: brgen_surface ? 24 : 8) %>
 <% visible_deals = deals.select { |deal| affiliate_product_content_allowed?(deal) || deal.respond_to?(:source) && deal.source.to_s == "amazon" } %>
 <% visible_deals = visible_deals.rotate(band * 6).first(6) if brgen_surface %>
+<% click_epi = Shared::LinkConverter.request_epi %>
 <% if visible_deals.any? %>
   <% unit_classes = ["affiliate_feed_unit",
                      ("affiliate_feed_unit--brgen affiliate_feed_unit--collage" if brgen_surface),
@@ -45,6 +46,7 @@
            data-outbound-click-url-value="<%= deal.click_url %>"
            data-outbound-click-merchant-value="<%= affiliate_program_label(deal) %>"
            data-outbound-click-surface-value="<%= local_assigns[:surface].presence || "affiliate_feed" %>"
+           data-outbound-click-epi-value="<%= click_epi %>"
            data-parallax-tilt-target="tile"
            data-parallax-tilt-depth="<%= affiliate_depths[index % affiliate_depths.length] %>">
           <% if amazon && !amazon_content %>
