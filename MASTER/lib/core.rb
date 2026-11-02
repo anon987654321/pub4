@@ -168,7 +168,7 @@ module Master::Core
     # reversible. A failed arbitrary command has no generic rollback.
     def reversibility
       case verb
-      when :read, :critique, :ask, :done
+      when :read, :probe, :critique, :ask, :done
         Reversibility.new(kind: :non_mutating)
       when :note
         Reversibility.new(kind: :session_state, scope: "conversation memory",
