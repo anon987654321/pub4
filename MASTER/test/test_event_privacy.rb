@@ -97,6 +97,19 @@ class TestEventPrivacy < Minitest::Test
     refute_includes json, "secret-not-a-boolean"
   end
 
+  def test_effect_lifecycle_preserves_reversibility_and_replay_safety_metadata
+    persisted = Master::Trace::EventPrivacy.persisted(
+      "core:effect:before",
+      reversibility: "reversible",
+      replay_requires_reconciliation: false,
+    )
+
+    assert_equal "reversible", persisted.fetch(:reversibility)
+    assert_equal false, persisted.fetch(:replay_requires_reconciliation)
+    refute persisted.key?(:reversibility_digest)
+    refute persisted.key?(:replay_requires_reconciliation_digest)
+  end
+
   def test_exception_telemetry_publishers_use_digest_only_diagnostics
     publishers = {
       "lib/review/agent.rb" => %w[llm:record_error],
