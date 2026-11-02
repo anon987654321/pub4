@@ -14,11 +14,11 @@ module Master
       # Repeated framework entrypoints and standard Rails templates do not
       # represent a domain concept scattered across owners.
       GENERIC_CONCEPT_STEMS = %w[
-        .rubocop Gemfile README Rakefile application application_controller base config
-        create.turbo_stream create.turbo_stream.html development edit.html engine Gemfile.lock
-        helper home_controller index index.html manifest master new.html pwa_controller
-        rails readme routes schema show.html storage test_helper version
-        _card.html _form.html _live_search_results.html
+        .rubocop Gemfile README Rakefile application application_controller base base_controller
+        config create.turbo_stream create.turbo_stream.html database development edit.html engine
+        environment Gemfile.lock helper home_controller index index.html manifest master new.html
+        pwa_controller production rails readme routes schema seeds show.html storage test_helper version
+        application_reflex _card.html _form.html _live_search_results.html
       ].freeze
       UGLY_NAME_PATTERN = /(?:\A__|_{2,}|_(?:helper|utils|old)\z)/
       SIGNALS = %i[
