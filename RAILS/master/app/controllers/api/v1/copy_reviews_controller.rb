@@ -13,6 +13,10 @@ module Api
                  with: -> { refuse(:too_many_requests, "rate_limited") }
 
       def create
+        if request.content_length.to_i > CopyReviewCheck::MAX_INPUT_BYTES + 4_096
+          return refuse(:payload_too_large, "payload_too_large")
+        end
+
         prepared = CopyReviewCheck.prepare(
           creative: params[:creative],
           product: params[:product],
