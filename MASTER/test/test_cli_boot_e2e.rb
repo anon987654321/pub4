@@ -246,15 +246,20 @@ class TestCliReplExit < Minitest::Test
         refute_match(/\e\[\?1049h/, output, "bare startup must not take over the alternate screen")
 
         previous_count = output.scan(marker).length
-        prompt_count = output.scan(READY).length
         writer.write("/face\n")
         deadline = Time.now + 8
-        while (output.scan(marker).length <= previous_count || output.scan(READY).length <= prompt_count) &&
-              Time.now < deadline
+        loop do
+          marker_at = output.rindex(marker)
+          prompt_after_overlay = marker_at && output[(marker_at + marker.length)..].to_s.match?(READY)
+          break if output.scan(marker).length > previous_count && prompt_after_overlay
+          break if Time.now >= deadline
+
           output << reader.readpartial(4096) if reader.wait_readable(0.2)
         end
         assert_operator output.scan(marker).length, :>, previous_count, "/face did not redraw the in-place overlay"
-        assert_operator output.scan(READY).length, :>, prompt_count, "/face did not return to the same working prompt"
+        marker_at = output.rindex(marker)
+        assert_match(READY, output[(marker_at + marker.length)..].to_s,
+                     "/face did not return to the same working prompt"
         refute_match(/\e\[\?1049h/, output, "/face must not switch terminal input modes")
 
         writer.write("\x04")
