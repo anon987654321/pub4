@@ -8,7 +8,7 @@ module Master
       include Base
       TIER = :guarded
       NAME = "write_file".freeze
-      DESCRIPTION = "Atomically write content to a file, with undo snapshot.".freeze
+      DESCRIPTION = "Atomically write content to a file, with undo snapshot and a fresh-read requirement for existing files.".freeze
 
       def initialize(root:, undo:, governor:, event_bus: nil, diff_stager: nil, ground_truth: nil)
         @root, @undo, @governor, @bus, @diff_stager, @ground_truth =
@@ -26,7 +26,10 @@ module Master
           next resolved if resolved.err?
 
           full = resolved.value!
-          next stale_read(path, full) if @ground_truth&.changed_since_read?(full)
+          if @ground_truth && File.file?(full)
+            next stale_read(path, full) if @ground_truth.changed_since_read?(full)
+            next unread_read(path, full) unless @ground_truth.fresh?(full)
+          end
 
           perm = permit(path)
           next perm if perm.err?
@@ -39,8 +42,13 @@ module Master
       private
 
       def stale_read(path, full)
-        @bus&.publish("ground_truth:stale", path: full, reason: "write_file")
+        @bus&.publish("ground_truth:stale", path: full, reason: "write_file_changed")
         Result.err("write refused — #{path} changed since it was read; read it again", category: :policy)
+      end
+
+      def unread_read(path, full)
+        @bus&.publish("ground_truth:stale", path: full, reason: "write_file_read_missing_or_expired")
+        Result.err("write refused — #{path} must be read in this turn with its SHA-256 receipt before replacing it", category: :policy)
       end
     end
   end

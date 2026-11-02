@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "digest"
+
 module Master
   module Io
     # ReadFile — read file contents with line-range support and undo tracking.
@@ -8,7 +10,7 @@ module Master
       TIER = :safe
       MAX_LINES = 2000
       NAME = "read_file".freeze
-      DESCRIPTION = "Read a file with line numbers. Guarded to project root; full=true reads every line.".freeze
+      DESCRIPTION = "Read a file with line numbers and a whole-file SHA-256 receipt. Guarded to project root; full=true reads every line.".freeze
 
       def initialize(root:, undo:, event_bus: nil, ground_truth: nil)
         @root = File.realpath(root)
@@ -39,7 +41,10 @@ module Master
         return @cache[key] if @cache.key?(key) && !@ground_truth&.changed_since_read?(full_path)
         return Result.err("not found: #{path}", category: :validation) unless File.exist?(full_path)
 
-        result = Result.ok(format_file_slice(full_path, offset:, limit:, hashline:, full:))
+        formatted = format_file_slice(full_path, offset:, limit:, hashline:, full:)
+        return formatted if formatted.is_a?(Result) && formatted.err?
+
+        result = Result.ok(formatted)
         @cache[key] = result
         result
       end
@@ -48,7 +53,11 @@ module Master
 
       def format_file_slice(full_path, offset:, limit:, hashline:, full:)
         lines = File.readlines(full_path)
-        @ground_truth&.record_read!(full_path, content: lines.join)
+        content = lines.join
+        digest = Digest::SHA256.hexdigest(content)
+        if @ground_truth && !@ground_truth.record_read!(full_path, content:)
+          return Result.err("read completed but its ground-truth receipt could not be recorded", category: :infrastructure)
+        end
         total = lines.size
         slice = limit ? (lines[offset, limit] || []) : (lines[offset..] || [])
 
@@ -59,7 +68,9 @@ module Master
             slice.each_with_index.map { |l, i| "#{offset + i + 1}\t#{l}" }.join
           end
         suffix = limit && total > offset + limit ? "\n[...truncated, #{total} total lines]" : ""
-        numbered + suffix
+        output = "#{numbered}#{suffix}"
+        output << "\n" unless output.empty? || output.end_with?("\n")
+        output << "[read receipt: sha256=#{digest} bytes=#{content.bytesize} lines=#{total} shown=#{slice.size} offset=#{offset} scope=whole_file]"
       end
     end
   end

@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "test_helper"
+require "digest"
 
 class TestGroundTruth < Minitest::Test
   # laws.yml has no ground_truth_check key, so the default window must be positive
@@ -24,6 +25,42 @@ class TestGroundTruth < Minitest::Test
       assert gt.fresh?(path)
       stale = gt.assert_fresh!(path, reason: "claim_task_complete")
       assert stale.ok?
+    end
+  end
+
+  def test_read_file_shows_the_whole_file_digest_for_a_bounded_slice
+    Dir.mktmpdir do |dir|
+      path = File.join(dir, "source.rb")
+      content = (1..8).map { |line| "line #{line}\n" }.join
+      File.write(path, content)
+      truth = Master::Ground::Truth.new
+      reader = Master::Io::ReadFile.new(root: dir, undo: nil, ground_truth: truth)
+
+      result = reader.call(path: "source.rb", offset: 2, limit: 2)
+
+      assert result.ok?, result.to_s
+      assert_includes result.value!, "3\tline 3"
+      assert_includes result.value!, "4\tline 4"
+      refute_includes result.value!, "2\tline 2"
+      assert_includes result.value!, "sha256=#{Digest::SHA256.hexdigest(content)}"
+      assert_includes result.value!, "bytes=#{content.bytesize} lines=8 shown=2 offset=2 scope=whole_file"
+      assert truth.fresh?(path)
+    end
+  end
+
+  def test_read_file_does_not_report_success_when_ground_truth_receipt_fails
+    Dir.mktmpdir do |dir|
+      File.write(File.join(dir, "source.rb"), "source\n")
+      truth = Object.new
+      truth.define_singleton_method(:record_read!) { |*| nil }
+      truth.define_singleton_method(:changed_since_read?) { |_| false }
+      reader = Master::Io::ReadFile.new(root: dir, undo: nil, ground_truth: truth)
+
+      result = reader.call(path: "source.rb")
+
+      refute result.ok?
+      assert_equal :infrastructure, result.category
+      assert_match(/receipt could not be recorded/, result.message)
     end
   end
 
@@ -51,6 +88,25 @@ class TestGroundTruth < Minitest::Test
       reader.call(path: "notes.txt")
       assert writer.call(path: "notes.txt", content: "third\n").ok?, "a reread, even from the turn cache, clears it"
       assert writer.call(path: "fresh.txt", content: "new\n").ok?, "a file never read is not stale"
+    end
+  end
+
+  def test_write_file_refuses_to_overwrite_an_existing_file_without_a_fresh_read
+    Dir.mktmpdir do |dir|
+      path = File.join(dir, "existing.txt")
+      File.write(path, "original\n")
+      truth = Master::Ground::Truth.new
+      governor = Object.new
+      def governor.permit?(*) = Master::Result.ok(true)
+      undo = Master::Trace::Undo.new(session: Object.new.tap { |s| def s.snapshot(*) = nil }, root: dir)
+      writer = Master::Io::WriteFile.new(root: dir, undo:, governor:, ground_truth: truth)
+
+      result = writer.call(path: "existing.txt", content: "replacement\n")
+
+      refute result.ok?
+      assert_equal :policy, result.category
+      assert_match(/must be read in this turn/, result.message)
+      assert_equal "original\n", File.read(path)
     end
   end
 

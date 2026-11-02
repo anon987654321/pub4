@@ -14,7 +14,9 @@ class TestOpenCrabsFeatures < Minitest::Test
       result = tool.call(path: "lib/example.rb", full: true)
 
       assert result.ok?, result.to_s
-      assert_equal "1\talpha\n2\talpha\n3\talpha\n", result.value!
+      assert_includes result.value!, "1\talpha\n2\talpha\n3\talpha\n"
+      assert_includes result.value!, "scope=whole_file"
+      assert_match(/sha256=[0-9a-f]{64}/, result.value!)
       refute_includes result.value!, "truncated"
     end
   end
