@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require "test_helper"
-require_relative "../lib/review/agent/model_selector"
+require_relative "../lib/review/agent"
 require "tmpdir"
 require_relative "support_council_answer"
 
