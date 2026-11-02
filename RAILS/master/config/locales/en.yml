@@ -135,8 +135,8 @@ en:
     title: "MASTER law API: code review by rule, over HTTPS"
     heading: "MASTER law API"
     lede: >-
-      Send source files, get back every MASTER law they break, with the line and the reason. Deterministic rules, no
-      model: the same answer every time, in seconds.
+      Send source files or affiliate creative, get back deterministic findings with evidence, line references where
+      applicable, and the reason. The review does not use a model.
     plans_heading: "Plans"
     per_month: "a month"
     subscribe: "Subscribe"
@@ -144,7 +144,7 @@ en:
     unavailable: "That plan cannot be started right now. Nothing was charged."
     not_confirmed: "Stripe has not confirmed that checkout. If you paid, reload this page in a minute."
     usage_heading: "Use"
-    usage_lede: "POST up to 20 files as JSON with your key as a bearer token."
+    usage_lede: "POST up to 20 source files to /api/v1/lint or one creative and product snapshot to /api/v1/copy-review, using your bearer key."
     response_lede: "Each finding names its file, line, law and severity, and the reply carries this month's usage."
     copy_review_heading: "Review creative copy"
     copy_review_lede: "POST /api/v1/copy-review with a creative object and, when available, its current product snapshot. One review is one API check."
@@ -157,7 +157,7 @@ en:
     limit_errors: "401 bad key, 402 subscription not active, 422 bad request, 429 quota or rate limit."
     limit_account: >-
       GET /api/v1/key shows usage; POST /api/v1/key/rotate replaces the key; POST /api/v1/key/portal opens billing.
-    limit_privacy: "Source is judged in memory and never stored or written to disk."
+    limit_privacy: "Source and creative are judged in memory. Copy and product fields are not stored; copy-review receipts retain only input hashes, verdict summaries and finding codes."
     key_title: "Your API key"
     key_once: "Copy it now: it is shown once and only its fingerprint is kept."
     key_shown: >-
