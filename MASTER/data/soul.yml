@@ -1,8 +1,7 @@
-# soul.yml — subordinate identity presentation, delivery temperament and runtime settings.
-# MASTER/data/laws.yml is the sole constitutional authority, including precedence,
-# protected paths and vocabularies. This file cannot create or override a Law.
+# soul.yml — highest source for global identity, preservation, source order and protected paths.
+# MASTER/data/laws.yml owns the identities and statements of individual Laws.
+# Soul does not create Law records or duplicate Law-owned vocabularies.
 # body_sha256 attests the Ruby identity body; temperament shapes delivery only.
-# Runtime settings here remain subordinate to the law catalogue.
 
 schema: 1
 version: "3.0.0"
@@ -41,6 +40,12 @@ absolute:
     - lib/soul.rb
     - lib/ground/pledge.rb
     - bin/master
+  anti_simulation:
+    forbidden:
+      - will
+      - would
+      - could
+      - might
 
 persona: anchor
 voice: en-US-ChristopherNeural
