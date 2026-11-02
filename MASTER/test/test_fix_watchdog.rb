@@ -285,7 +285,9 @@ class TestFixWatchdog < Minitest::Test
     record = JSON.parse(File.read(path))
     record["lease_owner"] = "another-host:999:other"
     record["lease_until"] = (Time.now.utc + 180).iso8601
+    record["last_seen_at"] = "2020-01-01T00:00:00Z"
     original_deadline = record.fetch("lease_until")
+    original_last_seen = record.fetch("last_seen_at")
     File.write(path, JSON.generate(record))
 
     run = budget
@@ -294,6 +296,7 @@ class TestFixWatchdog < Minitest::Test
     renewed = JSON.parse(File.read(path))
     assert_equal "another-host:999:other", renewed.fetch("lease_owner")
     assert_equal original_deadline, renewed.fetch("lease_until")
+    assert_equal original_last_seen, renewed.fetch("last_seen_at")
     assert_equal mission.id, renewed.fetch("id")
   end
 
