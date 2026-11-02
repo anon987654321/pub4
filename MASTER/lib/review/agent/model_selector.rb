@@ -75,7 +75,8 @@ module Master
           end
           configured = @config.model.to_s
           candidates = Array(ordered).map(&:to_s).reject(&:empty?)
-          candidates << configured unless configured.empty? || candidates.include?(configured)
+          candidates.delete(configured) unless configured.empty?
+          candidates << configured unless configured.empty?
           candidates.uniq
         rescue StandardError => e
           @bus&.publish("llm:route_fallback_error", error_class: e.class.name,

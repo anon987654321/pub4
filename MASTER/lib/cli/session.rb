@@ -263,8 +263,11 @@ module Master
           return presentation == :face ? host_err : display_result(result: host_err, accumulated: "", streamed: false)
         end
         budget_err = budget_block_if_exceeded
-        return presentation == :face ? budget_err :
-          display_result(result: budget_err, accumulated: "", streamed: false) if budget_err
+        if budget_err
+          return budget_err if presentation == :face
+
+          return display_result(result: budget_err, accumulated: "", streamed: false)
+        end
 
         nil
       end

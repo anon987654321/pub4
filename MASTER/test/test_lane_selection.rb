@@ -395,7 +395,7 @@ class TestLaneSelection < Minitest::Test
     chain = selector.send(:routed_chain, "write a parser", task_type: :general)
 
     assert_operator chain.length, :>, 1, "a route error must retain independent alternatives"
-    assert_includes chain, GROK, "the configured model remains the final fallback"
+    assert_equal GROK, chain.last, "the configured model remains the final fallback"
     assert_equal chain.uniq, chain
     assert(events.any? { |name, _| name == "llm:route_error" })
     assert(events.any? { |name, payload| name == "llm:route_fallback" && payload[:source] == "models_catalogue" })
