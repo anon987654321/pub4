@@ -162,11 +162,14 @@ module Master
         with_lock do
           load_writable_unlocked!
           return self unless @record
+          # A heartbeat is not a general "last seen" write. A fresh, unclaimed
+          # handle may observe another worker's mission, but must not mutate its
+          # timestamps or make a stale owner look alive.
+          return self unless @record["state"] == "running" &&
+                             @record["lease_owner"].to_s == self.class.instance_id
 
           @record["last_seen_at"] = now
-          if @record["state"] == "running" && @record["lease_owner"].to_s == self.class.instance_id
-            @record["lease_until"] = (Time.now.utc + LEASE_SECONDS).iso8601
-          end
+          @record["lease_until"] = (Time.now.utc + LEASE_SECONDS).iso8601
           persist!
         end
         self
