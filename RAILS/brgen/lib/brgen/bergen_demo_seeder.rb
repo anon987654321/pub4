@@ -16,6 +16,10 @@ module Brgen
     end
 
     def seed!
+      unless @city&.domain.to_s == "brgen.no"
+        raise ArgumentError, "BergenDemoSeeder only seeds brgen.no; use PerCitySeeder for other city tenants"
+      end
+
       unless Brgen::DemoMode.seed_allowed?
         raise "Refusing synthetic Brgen seed in this environment. " \
               "Use development/test or a disclosed demo deployment."
