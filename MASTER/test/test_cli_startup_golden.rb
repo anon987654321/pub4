@@ -49,7 +49,7 @@ class TestCliStartupGolden < Minitest::Test
 
   def clean_command
     ["env", "-i", "HOME=#{Dir.home}", "PATH=#{ENV["PATH"]}", "USER=#{ENV.fetch("USER", "dev")}",
-     "TERM=xterm-256color", "MASTER_INTERNAL_CHILD=1", "MASTER_BOOT_SOUND=0", "MASTER_FACE_ON_START=0",
+     "TERM=xterm-256color", "MASTER_INTERNAL_CHILD=1", "MASTER_BOOT_SOUND=0",
      File.join(Master::ROOT, "bin", "master")]
   end
 
