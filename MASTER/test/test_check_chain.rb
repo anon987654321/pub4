@@ -553,6 +553,26 @@ class TestCheckChain < Minitest::Test
     assert G.council_fix?(scan_only: false)
   end
 
+  def test_general_check_ignores_newer_cherry_picks_from_other_modes
+    general = Master::Review::Council::Harvest.render(
+      mode: :general, files: [], feedback: [], ideas: {}, cherry: ["general pick"],
+    )
+    sound = Master::Review::Council::Harvest.render(
+      mode: :sound_critique, files: [], feedback: [], ideas: {}, cherry: ["sound pick"],
+    )
+
+    Dir.mktmpdir do |root|
+      dir = File.join(root, ".master", "critiques")
+      FileUtils.mkdir_p(dir)
+      File.write(File.join(dir, "general_latest.md"), general)
+      File.write(File.join(dir, "sound_critique_latest.md"), sound)
+      File.utime(Time.now - 60, Time.now - 60, File.join(dir, "general_latest.md"))
+
+      assert_equal ["general pick"], G.picks_in(dir, mode: :general)
+      assert_equal ["sound pick"], G.picks_in(dir, mode: :sound_critique)
+    end
+  end
+
   def test_cherry_picks_are_read_out_of_the_harvest_format
     body = Master::Review::Council::Harvest.render(
       mode: :general, files: ["lib/x.rb"], feedback: [], ideas: {}, cherry: ["collapse the two registries"],
