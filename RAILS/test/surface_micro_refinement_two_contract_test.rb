@@ -5,7 +5,7 @@ require "minitest/autorun"
 class SurfaceMicroRefinementTwoContractTest < Minitest::Test
   ROOT = File.expand_path("..", __dir__)
   SHEET = File.join(ROOT, "__shared/app/assets/stylesheets/_surface_micro_refinements_two.scss")
-  MATRIX = File.join(ROOT, "__shared/SURFACE_MICRO_REFINEMENT_MATRIX_II.md")
+  MATRIX = File.join(ROOT, "docs/archive/SURFACE_MICRO_REFINEMENT_MATRIX_II.md")
   STACKS = %w[
     __shared/app/assets/stylesheets/_stack.scss
     __shared/app/assets/stylesheets/_stack_brgen.scss

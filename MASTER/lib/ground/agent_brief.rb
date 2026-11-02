@@ -33,9 +33,13 @@ module Master
             characters with no type prefix and no full stop, a blank line, a body saying what changed and what it
             cost, a blank line, and a Co-authored-by trailer.
 
-          Before the first write, read the governing Laws (ruby MASTER/tools/agent_context.rb --tree,
-            then MASTER/bin/operator laws <ID>); before you finish, MASTER/bin/operator lint --changed-lines
-            <files> shows what a line you changed breaks.
+          At the start of every task, run ruby MASTER/tools/agent_context.rb --json and consume
+            conduct, blocking_rules, coverage, task_contract_schema and capabilities. For broad or
+            cross-tree work, add --tree. Before the first write, retrieve each applicable Law with
+            MASTER/bin/operator laws <ID>, then inspect its live law_runtime.yml metadata where
+            execution policy or reach is relevant, its Law.define implementation and proof fixtures.
+            Before finishing, MASTER/bin/operator lint --changed-lines <files> shows what a changed
+            line breaks; record any unrun check as NOT_RUN or INCONCLUSIVE, never PASS.
         TEXT
       end
 

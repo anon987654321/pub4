@@ -94,7 +94,7 @@ class TestDocPaths < Minitest::Test
     MASTER/docs/free_compute.md
     MASTER/docs/handoffs/2026-10-22-laws-checks-rails-fix.md
     MASTER/docs/handoffs/2026-10-26-master-hardening-review.md
-    MASTER/docs/handoffs/MEGA_ALL_APPS.md
+    MASTER/docs/history/recovery/legacy-apps-handoff.md
     MASTER/docs/laws_digest.md
     MASTER/docs/lifecycle_ownership.md
     MASTER/docs/mobile.md
@@ -160,6 +160,7 @@ class TestDocPaths < Minitest::Test
     canonical = File.read(File.join(REPO, "AGENTS.md"))
     assert_includes canonical, "commit straight to `main`"
     assert_includes canonical, "MASTER/data/laws.yml"
+    assert_includes canonical, "ruby MASTER/tools/agent_context.rb --json"
     refute_match(/managed worktrees|topic branch/, canonical)
 
     HARNESS_FILES.drop(1).each do |relative|

@@ -58,10 +58,13 @@ Before planning or acting, load MASTER's canonical context:
    identities and statements, parent and root relationships, the ordered
    nine invariant nodes, root and severity vocabularies, resolutions, and
    declared enforcement contracts.
-3. For unfamiliar or broad work, run
-   `ruby MASTER/tools/agent_context.rb --tree` to establish repository
-   structure. Use `--json` when a harness needs the machine-readable
-   authority, task-contract schema, and capability snapshot.
+3. At the start of every task, run
+   `ruby MASTER/tools/agent_context.rb --json` and consume its current
+   `conduct`, `blocking_rules`, `coverage`, `task_contract_schema`, and
+   `capabilities` fields. This is the live working brief, not a replacement
+   for reading the relevant Law records. For unfamiliar, cross-tree or
+   repository-wide work, add `--tree` to the same command so the scope is
+   grounded in the current checkout.
 4. Read the applicable Law records in `laws.yml`. When changing executable
    behaviour or reach, also read that Law's `MASTER/data/law_runtime.yml`
    metadata, its `Law.define` implementation and its bad/good fixtures (or
