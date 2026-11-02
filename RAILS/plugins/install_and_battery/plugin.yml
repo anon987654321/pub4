@@ -5,5 +5,9 @@ description: "Parked (RAILS side): PWA install prompt and battery-aware UI helpe
 revive_when: a user asks from a phone
 loader: none
 note: Render calls removed from the three application layouts; stimulus imports/registrations and importmap pins removed; @forward lines removed from _stack/_stack_brgen; onboarding order test and brgen engagement test moved in; rendered-invariant overlap cases removed.
+locales: >-
+  install.* moved from brgen, amber and bsdports en/nb into
+  locales/<app>.<locale>.yml on 2026-11-03, since nothing read them while
+  parked; git mv each back into its app's config/locales on revival.
 parked_on: 2026-11-01
 sponsor: operator

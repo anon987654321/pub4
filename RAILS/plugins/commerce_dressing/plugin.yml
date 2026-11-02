@@ -5,5 +5,9 @@ description: "Parked (RAILS side): Newsletter capture popup surface."
 revive_when: the first transaction clears (with the affiliate rails revival decision)
 loader: none
 note: Render removed from _site_legal_footer; stimulus import/registration and importmap pin removed; _shell_widgets @use line removed; flat-contract and mobile-first tests updated. promotional_art and the affiliate collage STAY in the tree - both render live.
+locales: >-
+  The popup's own newsletter_popup.* strings moved into locales/ on
+  2026-11-03; marketing_opt_in and consent_required stay in __shared because
+  the live subscribe forms read them. Merge them back on revival.
 parked_on: 2026-11-01
 sponsor: operator

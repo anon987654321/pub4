@@ -1615,14 +1615,6 @@ en:
     push_title: Someone nearby
     push_body: "%{handle} is within %{km} km — tap to chat"
     empty_located_body: Check back later — or drop a Live note while you wait.
-  install:
-    title: Install Brgen
-    body: Live notes, marketplace, and nearby — one tap from your home screen.
-    ios_safari: Share → Add to Home Screen.
-    ios_chrome: Open in Safari, then Share → Add to Home Screen.
-    android: "Chrome menu (⋮) → Install app."
-    not_now: Not now
-    action: Install
   mailer:
     confirm_subscription: Confirm your subscription
     confirm_lede: Thanks for trusting us with your inbox. We send one curated city letter — not noise.

@@ -1622,14 +1622,6 @@ nb:
     push_body: "%{handle} er innen %{km} km — trykk for å chatte"
     empty_located_body: Kom tilbake senere — eller legg igjen en Live-notat mens du
       venter.
-  install:
-    title: Installer Brgen
-    body: Live, markedsplass og i nærheten — ett trykk fra hjem-skjermen.
-    ios_safari: Del → Legg til på Hjem-skjerm.
-    ios_chrome: Åpne i Safari, så Del → Legg til på Hjem-skjerm.
-    android: "Chrome-menyen (⋮) → Installer app."
-    not_now: Ikke nå
-    action: Installer
   mailer:
     confirm_subscription: Bekreft abonnementet
     confirm_lede: Takk for at du gir oss plass i innboksen. Vi sender ett kuratert bybrev — ikke støy.
