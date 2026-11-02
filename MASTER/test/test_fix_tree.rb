@@ -74,6 +74,7 @@ class TestFixTree < Minitest::Test
   def test_rails_helper_conventions_do_not_count_as_ugly_names
     write("RAILS/brgen/app/helpers/application_helper.rb", BODY)
     write("RAILS/brgen/test/test_helper.rb", BODY)
+    write("RAILS/brgen/test/support_face_manifest_helper.rb", BODY)
     write("RAILS/brgen/app/services/reply_utils.rb", BODY)
     git("add", ".")
 
@@ -81,6 +82,7 @@ class TestFixTree < Minitest::Test
 
     refute_includes ugly, "RAILS/brgen/app/helpers/application_helper.rb"
     refute_includes ugly, "RAILS/brgen/test/test_helper.rb"
+    refute_includes ugly, "RAILS/brgen/test/support_face_manifest_helper.rb"
     assert_includes ugly, "RAILS/brgen/app/services/reply_utils.rb"
   end
 
@@ -88,6 +90,9 @@ class TestFixTree < Minitest::Test
     %w[brgen amber bsdports].each do |app|
       write("RAILS/#{app}/app/views/posts/index.html.erb", BODY)
       write("RAILS/#{app}/README.md", BODY)
+      write("RAILS/#{app}/app/controllers/application_controller.rb", BODY)
+      write("RAILS/#{app}/Gemfile", BODY)
+      write("RAILS/#{app}/Rakefile", BODY)
       write("RAILS/#{app}/app/models/dispatch_policy.rb", BODY)
     end
     git("add", ".")
@@ -96,6 +101,9 @@ class TestFixTree < Minitest::Test
 
     refute_includes scatter, "index.html"
     refute_includes scatter, "README"
+    refute_includes scatter, "application_controller"
+    refute_includes scatter, "Gemfile"
+    refute_includes scatter, "Rakefile"
     assert_includes scatter, "dispatch_policy"
   end
 

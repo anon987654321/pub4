@@ -14,9 +14,10 @@ module Master
       # Repeated framework entrypoints and standard Rails templates do not
       # represent a domain concept scattered across owners.
       GENERIC_CONCEPT_STEMS = %w[
-        .rubocop README application base config create.turbo_stream.html
-        development edit.html engine helper index index.html manifest
-        new.html readme routes schema show.html storage test_helper version
+        .rubocop Gemfile README Rakefile application application_controller base config
+        create.turbo_stream create.turbo_stream.html development edit.html engine Gemfile.lock
+        helper home_controller index index.html manifest master new.html pwa_controller
+        rails readme routes schema show.html storage test_helper version
         _card.html _form.html _live_search_results.html
       ].freeze
       UGLY_NAME_PATTERN = /(?:\A__|_{2,}|_(?:helper|utils|old)\z)/
@@ -102,6 +103,8 @@ module Master
       def conventional_rails_helper?(path, stem)
         return true if stem == "test_helper"
         path_parts = path.split("/")
+        return true if (path_parts.include?("test") || path_parts.include?("spec")) && stem.end_with?("_helper")
+
         path_parts.each_cons(2).any? { |left, right| left == "app" && right == "helpers" } &&
           stem.end_with?("_helper")
       end
