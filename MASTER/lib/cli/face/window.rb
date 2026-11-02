@@ -420,6 +420,10 @@ module Master
 
           set(:thinking, ["you: #{text}"])
           result = think(text)
+          if result == :face_toggle
+            @closing = true
+            return
+          end
           if result.is_a?(Master::Result) && result.err?
             set(:idle, [result.message])
             return

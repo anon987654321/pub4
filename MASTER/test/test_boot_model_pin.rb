@@ -134,4 +134,34 @@ class TestBootModelPin < Minitest::Test
 
     assert_equal 1, router.probes
   end
+
+  class RouteFailureProbe
+    include Master::Review::Agent::ModelSelector
+
+    def initialize(router:, model:)
+      @model_router = router
+      @config = Struct.new(:model, :task_type).new(model, :exploration)
+      @homeostat = nil
+      @bus = nil
+    end
+
+    public :routed_chain
+  end
+
+  def test_router_exception_retains_the_independent_fallback_ladder
+    router = Object.new
+    router.define_singleton_method(:fallback_chain) do |task_type:|
+      raise IOError, "router cache unavailable for #{task_type}"
+    end
+    probe = RouteFailureProbe.new(router:, model: "configured/last-resort")
+    catalogue = %w[paid/primary local/secondary free/final]
+
+    chain = Master::Io::LaneSelection.stub(:explicit_models, catalogue) do
+      Master::Io::LaneSelection.stub(:order_or_all, ->(models) { models.reverse }) do
+        probe.routed_chain(nil, task_type: :exploration)
+      end
+    end
+
+    assert_equal %w[free/final local/secondary paid/primary configured/last-resort], chain
+  end
 end

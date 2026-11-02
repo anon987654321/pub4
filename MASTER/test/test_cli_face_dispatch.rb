@@ -74,22 +74,60 @@ class TestCliFaceDispatch < Minitest::Test
     assert_equal :unhandled, session.send(:dispatch_core_slash_command, "/not-a-command")
   end
 
-  def test_face_turn_uses_the_session_pipeline_and_shared_history
+  def test_face_turn_uses_the_session_dispatcher_and_shared_history
     session = Master::CLI::Session.allocate
     calls = []
     history = []
-    session.define_singleton_method(:run_input) do |input, presentation:|
-      calls << [input, presentation]
-      :result
+    session.define_singleton_method(:handle_repl_line) do |input|
+      calls << input
+      :handled
     end
 
     result = Reline::HISTORY.stub(:<<, ->(line) { history << line }) do
       session.send(:run_face_turn, "  use the face input  ")
     end
 
-    assert_equal :result, result
-    assert_equal [["  use the face input  ", :face]], calls
+    assert_equal :handled, result
+    assert_equal ["  use the face input  "], calls
     assert_equal ["  use the face input  "], history
+  end
+
+  def test_face_slash_face_returns_to_the_existing_repl
+    session = Master::CLI::Session.allocate
+    called = false
+    session.define_singleton_method(:handle_repl_line) { |_input| called = true }
+
+    result = Reline::HISTORY.stub(:<<, ->(_line) {}) do
+      session.send(:run_face_turn, "/face")
+    end
+
+    assert_equal :face_toggle, result
+    refute called
+  end
+
+  def test_natural_language_from_the_face_uses_the_face_presentation_of_the_session_pipeline
+    session = Master::CLI::Session.allocate
+    session.instance_variable_set(:@face_open, true)
+    session.define_singleton_method(:host_refusal_for) { |_line| nil }
+    calls = []
+    session.define_singleton_method(:run_input) do |line, presentation:|
+      calls << [line, presentation]
+      :result
+    end
+
+    assert_equal :result, session.send(:run_agent_turn, "hello from the face")
+    assert_equal [["hello from the face", :face]], calls
+  end
+
+  def test_face_window_treats_face_toggle_as_a_presentation_change
+    window = Master::CLI::Face::Window.allocate
+    window.define_singleton_method(:set) { |*| nil }
+    window.define_singleton_method(:think) { |_text| :face_toggle }
+
+    window.send(:answer, "/face")
+
+    assert window.instance_variable_get(:@closing)
+    refute window.instance_variable_get(:@exit_requested)
   end
 
   def test_face_cancellation_reaches_the_session_token_and_event_bus

@@ -228,7 +228,10 @@ module Master
                  @exit_code = 0
                  result.to_s
                end
-        print_terminal_output(text, mode: @last_ok ? :dim : :error) unless text.empty?
+        # The face renders command replies in its own transcript. Printing
+        # them here would write through the alternate screen and duplicate the
+        # reply; the same Result is returned to the face renderer instead.
+        print_terminal_output(text, mode: @last_ok ? :dim : :error) unless text.empty? || @face_open
         result
       rescue StandardError => e
         @last_ok = false
@@ -309,6 +312,10 @@ module Master
           Master::Trace::Dmesg.status("host0", refusal)
           return
         end
+
+        # A face utterance has already crossed the Session command boundary.
+        # Keep it on the same pipeline, but preserve the face presentation.
+        return run_input(line.strip, presentation: :face) if @face_open
 
         if $stdin.tty? && $stdout.tty? && Thread.current != @turn_worker
           enqueue_interactive_line(line)

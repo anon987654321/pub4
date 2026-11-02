@@ -138,14 +138,17 @@ module Master
         @user_active = false
       end
 
-      # Face typing and speech are input adapters for this Session. Its
-      # cancellable face worker is the turn worker, avoiding a nested thread.
+      # The face is an input adapter for the same command dispatcher as
+      # Reline. Only the renderer changes; history, slash commands, queue
+      # controls and natural-language turns retain Session ownership.
       def run_face_turn(input)
         text = input.to_s
         return empty_input(:face) if text.strip.empty?
 
         Reline::HISTORY << text
-        run_input(text, presentation: :face)
+        return :face_toggle if text.strip.casecmp("/face").zero?
+
+        handle_repl_line(text)
       end
 
       def face_reply_text(result, streamed)
