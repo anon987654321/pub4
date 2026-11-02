@@ -20,10 +20,19 @@ module Master
       # unknown name keeps the default <tool>/<tool>.rb probe and reports a
       # missing entrypoint instead of silently widening the search.
       TOOL_ENTRYPOINTS = { "replicate" => File.join("replicate", "client.rb") }.freeze
+      RETIRED_TOOLS = %w[lora postpro].freeze
 
       def run(root:, tool:, arg: "", env: {})
+        name = tool.to_s
+        if RETIRED_TOOLS.include?(name)
+          return Result.err(
+            "#{name}: retired; no executable entrypoint is registered. Restore the owning STUDIO tool and its contract before re-enabling this intent.",
+            category: :validation,
+          )
+        end
+
         requested_root = File.expand_path(root.to_s.empty? ? Dir.pwd : root)
-        script = script_path(requested_root, tool)
+        script = script_path(requested_root, name)
         return Result.err("#{tool}: missing tool entrypoint #{script}", category: :validation) unless File.file?(script)
 
         argv = Shellwords.split(arg.to_s)

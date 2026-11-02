@@ -139,11 +139,12 @@ class MediaIntentTest < Minitest::Test
     assert_match(/blue-hour-\d{8}T\d{6}Z(?:-\d+)?\.wav\z/, words[words.index("--out") + 1])
   end
 
-  def test_postpro_capability_question_does_not_require_source_path
+  def test_postpro_capability_question_does_not_claim_a_retired_tool_is_ready
     result = Master::Io::MediaIntent.dispatch("can you use postpro.rb?", root: MasterPaths.root)
 
-    assert result.ok?, -> { result.message.to_s }
-    assert_match(/provide an existing image file or directory path/, result.value!.fetch(:rendered))
+    refute result.ok?
+    assert_match(/retired/, result.message)
+    assert_match(%r{STUDIO/postpro}, result.message)
   end
 
   def test_background_music_is_a_media_intent

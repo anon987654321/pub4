@@ -5,8 +5,9 @@ require_relative "../lib/operator/baseline_ratchet"
 module Operator
   # Empty states, in both directions.
   #
-  # missing_action — a shared/empty_state render that skips the action:/actions:
-  # local the partial already supports. A rendered empty state with no next step
+  # missing_action — a shared/empty_state render that skips its action: local.
+  # legacy_actions — a call that still uses the removed String-based actions: API.
+  # A rendered empty state with no next step
   # is a dead end (NO_DEAD_ENDS / rams_checklist.thorough), and 47 of 54 call
   # sites had exactly this gap when first audited 2026-07-21. Add
   # `<%# empty_state: no-action-ok %>` immediately above a call site to mark it
@@ -36,7 +37,7 @@ module Operator
     # views at all — the */app/views glob had silently excluded engines/ since
     # the verticals moved (the same blind spot four scanners had in the
     # engines migration).
-    BASELINES = { "missing_action" => 0, "no_empty_state" => 0 }.freeze
+    BASELINES = { "missing_action" => 0, "legacy_actions" => 0, "no_empty_state" => 0 }.freeze
 
     Finding = Struct.new(:kind, :file, :line)
 
@@ -79,9 +80,13 @@ module Operator
         content.to_enum(:scan, RENDER_CALL).each do
           match = Regexp.last_match
           call = match[0]
-          next if call.include?("action:") || call.include?("actions:")
-
           line = content[0...match.begin(0)].count("\n") + 1
+          if call.include?("actions:")
+            findings << Finding.new("legacy_actions", relative(path), line)
+            next
+          end
+          next if call.include?("action:")
+
           preceding = content.lines[0...(line - 1)].last(2).join
           next if preceding.include?(OPT_OUT)
 

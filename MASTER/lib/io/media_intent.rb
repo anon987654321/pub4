@@ -397,8 +397,8 @@ module Master
       end
 
       def postpro_capability
-        line = "postpro0: ready — provide an existing image file or directory path; default selection is the five newest images"
-        Result.ok(output: line, rendered: line, media: :postpro_help)
+        line = "postpro0: retired — the STUDIO/postpro entrypoint is not present; this intent stays unavailable until a supported processor and its tests are restored"
+        Result.err(line, category: :validation)
       end
 
       def reference_audio_request?(text)

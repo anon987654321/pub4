@@ -10,10 +10,6 @@
 <% title = local_assigns[:title] %>
 <% body = local_assigns[:body] || local_assigns[:message] %>
 <% action = local_assigns[:action] %>
-<% if local_assigns[:actions].present? %>
-  <%# Compatibility only: the String API is deprecated in favour of action: { label:, path: }. %>
-  <% Rails.logger.warn("DEPRECATION: shared/empty_state actions: is deprecated; use action: { label:, path: }") %>
-<% end %>
 <% live = local_assigns.fetch(:live, true) %>
 <section
   class="empty empty-state<%= " #{local_assigns[:class]}" if local_assigns[:class].present? %>"
@@ -33,9 +29,5 @@
   <% end %>
   <% if action.is_a?(Hash) && action[:label].present? && action[:path].present? %>
     <%= link_to action[:label], action[:path], class: "btn btn-primary empty-state-action" %>
-  <% elsif local_assigns[:actions].present? %>
-    <%# DEPRECATION: use action: { label:, path: }; the String-based actions local is retained only for compatibility. %>
-    <% Rails.logger.warn("[DEPRECATION] shared/empty_state actions: use action: { label:, path: }") %>
-    <div class="empty-state-actions"><%= local_assigns[:actions] %></div>
   <% end %>
 </section>

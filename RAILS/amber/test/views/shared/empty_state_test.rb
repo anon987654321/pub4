@@ -3,17 +3,16 @@
 require "test_helper"
 
 class SharedEmptyStateTest < ActionView::TestCase
-  test "legacy String actions local logs its deprecation and remains rendered" do
-    warnings = []
+  test "hash action renders one clear call to action" do
+    render partial: "shared/empty_state",
+           locals: {
+             title: "Nothing here",
+             body: "Start by adding an item.",
+             action: { label: "Browse items", path: "/items" },
+           }
 
-    Rails.logger.stub(:warn, ->(message) { warnings << message }) do
-      render partial: "shared/empty_state",
-             locals: { title: "Nothing here", actions: "Legacy action" }
-    end
-
-    assert_select ".empty-state-actions", text: "Legacy action"
-    assert_equal 1, warnings.length
-    assert_includes warnings.first, "DEPRECATION: shared/empty_state actions:"
-    assert_includes warnings.first, "action: { label:, path: }"
+    assert_select "section.empty-state[role=status]"
+    assert_select "a.empty-state-action[href='/items']", text: "Browse items"
+    refute_select ".empty-state-actions"
   end
 end
