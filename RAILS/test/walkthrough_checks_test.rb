@@ -67,11 +67,10 @@ class WalkthroughChecksTest < Minitest::Test
 
   def first_screen_tree(tap_min: "44px")
     sheets = %w[
-      brgen/app/assets/stylesheets/application.scss
       brgen/app/assets/stylesheets/_brgen_navigation.scss
       brgen/app/assets/stylesheets/_brgen_marketplace.scss
-      amber/app/assets/stylesheets/_amber_chrome.scss
-      bsdports/app/assets/stylesheets/_bsdports_layout.scss
+      amber/app/assets/stylesheets/application.scss
+      bsdports/app/assets/stylesheets/application.scss
       __shared/app/assets/stylesheets/_search_yep.scss
     ].to_h { |rel| [rel, FIRST_SCREEN_SHEET] }
     sheets.merge("__shared/app/assets/stylesheets/_dialect_tokens.scss" => ":root { --tap-min: #{tap_min}; }\n")
@@ -177,12 +176,12 @@ class WalkthroughChecksTest < Minitest::Test
   # else in the same stylesheet is the file-scoped reading this check left.
   def test_first_screen_fails_when_a_control_stops_declaring_a_touch_target
     tree = first_screen_tree
-    tree["amber/app/assets/stylesheets/_amber_chrome.scss"] = FIRST_SCREEN_SHEET.sub(
+    tree["amber/app/assets/stylesheets/application.scss"] = FIRST_SCREEN_SHEET.sub(
       ".btn { min-height: var(--tap-min); }", ".btn { height: 30px; }"
     )
 
     assert_names check(Deploy::FirstScreenCheck, tree),
-                 %r{amber/app/assets/stylesheets/_amber_chrome\.scss /\\A\\\.btn\\z/ rule missing min-height}
+                 %r{amber/app/assets/stylesheets/application\.scss /\\A\\\.btn\\z/ rule missing min-height}
   end
 
   def test_first_screen_fails_when_the_named_rule_is_gone

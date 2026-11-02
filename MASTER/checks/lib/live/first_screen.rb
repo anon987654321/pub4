@@ -46,12 +46,12 @@ module Deploy
     # A css_touch row is [stylesheet, selector, needle]. Host-shell rules and
     # vertical feature rules name their owning partial so a floor in another
     # module cannot make an unmeasured control pass.
-    BRGEN_CSS = "brgen/app/assets/stylesheets/application.scss"
-    # The 2026-10-28 merge folded each app's partials into one application.scss;
-    # the vertical shells keep owning their rules inside it, so the rows below
-    # name the merged file and the selector carries the ownership.
-    BRGEN_NAV_CSS = "brgen/app/assets/stylesheets/application.scss"
-    BRGEN_MARKETPLACE_CSS = "brgen/app/assets/stylesheets/application.scss"
+    # The 2026-10-28 merge folded amber's and bsdports' partials into one
+    # application.scss each, so their rows name the merged file and the selector
+    # carries the ownership. brgen was re-cut into @use partials on 2026-11-01,
+    # and its root sheet holds only @use lines: its rows name the owning partial.
+    BRGEN_NAV_CSS = "brgen/app/assets/stylesheets/_brgen_navigation.scss"
+    BRGEN_MARKETPLACE_CSS = "brgen/app/assets/stylesheets/_brgen_marketplace.scss"
 
     # Map surface labels (from SURFACES / verticals) → schema ids.
     # live_first_screen builds label as "app/label" (e.g. brgen/vertical_marketplace).
