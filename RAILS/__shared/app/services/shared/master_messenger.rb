@@ -17,9 +17,9 @@ module Shared
 
     def available? = @client.available?
 
-    def reply(messages:, sender:, message:, session_key:, channel:)
+    def reply(messages:, sender:, message:, session_key:, channel:, context: nil)
       result = @client.turn(
-        prompt(messages:, sender:, message:),
+        prompt(messages:, sender:, message:, context:),
         session_key:,
         channel:,
       )
@@ -33,13 +33,13 @@ module Shared
 
     private
 
-    def prompt(messages:, sender:, message:)
+    def prompt(messages:, sender:, message:, context:)
       <<~TEXT.byteslice(0, MAX_PROMPT_BYTES)
         You are MASTER, the shared assistant invited into a messenger conversation.
         You are a participant, not the owner of the conversation. Answer the latest human
         message directly, preserve participant privacy, and never invent access to data or actions.
         Re-read or research when the question needs current evidence.
-
+        #{context_section(context)}
         Conversation:
         #{transcript(messages)}
 
@@ -47,6 +47,11 @@ module Shared
         Latest message:
         #{message_text(message)}
       TEXT
+    end
+
+    def context_section(context)
+      value = context.to_s.strip
+      value.empty? ? "" : "Additional context:\n#{value}\n"
     end
 
     def transcript(messages)

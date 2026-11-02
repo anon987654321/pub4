@@ -188,11 +188,20 @@ class ChannelBot
     PROMPT
   end
 
+  def self.master_context_for(channel)
+    city = city_name_for(channel)
+    return if city.blank?
+
+    "This public room is city-scoped to #{city}. Use that city for local context; " \
+      "do not assume Bergen or invent venue names, events or opening hours."
+  end
+
   def self.generate_master(channel, message)
     messages = channel.messages.includes(:sender).order(:created_at).last(MAX_CONTEXT)
     Shared::MasterMessenger.new.reply(
       messages:, sender: message.sender, message:,
-      session_key: "brgen:conversation:#{channel.id}", channel: "brgen-messenger"
+      session_key: "brgen:conversation:#{channel.id}", channel: "brgen-messenger",
+      context: master_context_for(channel)
     ).to_s.first(MAX_LEN)
   end
 

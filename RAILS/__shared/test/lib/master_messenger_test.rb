@@ -29,6 +29,21 @@ class MasterMessengerTest < Minitest::Test
     assert_equal "amber-messenger", call.fetch(:channel)
   end
 
+  def test_optional_context_reaches_master_without_changing_the_ingress_shape
+    client = Client.new([])
+    sender = Sender.new("Ada")
+    latest = Message.new(sender, "Where should we meet?")
+
+    Shared::MasterMessenger.new(client:).reply(
+      messages: [latest], sender:, message: latest,
+      session_key: "brgen:conversation:42", channel: "brgen-messenger",
+      context: "This room is in Trondheim. Do not assume Bergen."
+    )
+
+    assert_includes client.calls.fetch(0).fetch(:message), "This room is in Trondheim"
+    assert_includes client.calls.fetch(0).fetch(:message), "Do not assume Bergen"
+  end
+
   def test_uses_one_shared_ingress_contract
     client = Client.new([])
     sender = Sender.new("Ada")

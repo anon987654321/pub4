@@ -28,7 +28,9 @@ class ChannelRosterTest < ActiveSupport::TestCase
 
     assert_equal "Trondheim", ChannelBot.city_name_for(channel)
     assert_includes prompt, "Trondheim"
+    assert_includes ChannelBot.master_context_for(channel), "city-scoped to Trondheim"
     refute_match(/Bergen|Fløyen|Fløibanen/, prompt)
+    refute_match(/Bergen/, ChannelBot.master_context_for(channel))
     refute_match(/Bergen|Fløyen|Fløibanen/, cupid[:voice])
     refute_match(/Bergen|Fløyen|Fløibanen/, cupid[:canned].join(" "))
     stored_bot = User.find_by!(username: "cupid", bot: true)
