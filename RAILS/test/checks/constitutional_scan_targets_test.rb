@@ -2,11 +2,14 @@
 
 require "minitest/autorun"
 require_relative "../../../MASTER/lib/operator/checks"
+require_relative "method_swap"
 
 # The check scans six explicit constitutional targets, ~11 minutes end to end (brgen alone is
 # ~4.5). These cover which targets it picks, which is the part worth changing
 # and the only part cheap enough to test.
 class ConstitutionalScanTargetsTest < Minitest::Test
+  include MethodSwap
+
   def build(changed:, changed_only: true)
     previous = ENV["CHECK_SCAN_CHANGED"]
     ENV["CHECK_SCAN_CHANGED"] = changed_only ? "1" : "0"
@@ -109,7 +112,7 @@ class ConstitutionalScanTargetsTest < Minitest::Test
       end
     end
 
-    BoundedCommand.stub(:capture2e, capture) do
+    swap(BoundedCommand, :capture2e, capture) do
       assert_equal [
         "MASTER/tracked.rb",
         "MASTER/untracked.rb",

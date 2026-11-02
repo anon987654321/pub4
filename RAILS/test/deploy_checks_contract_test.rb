@@ -193,7 +193,7 @@ class DeployChecksContractTest < Minitest::Test
 
     refute_empty expected
     assert_operator expected.size, :>, 50
-    assert_includes expected.map { |p| p.sub("#{ROOT}/", "") }, "test/checks/calibration_test.rb",
+    assert_includes expected.map { |p| p.sub("#{ROOT}/", "") }, "test/checks/runner_explain_test.rb",
                     "test/checks/ is part of the suite; a top-level-only glob drops nine files"
   end
 
@@ -281,7 +281,7 @@ class DeployChecksContractTest < Minitest::Test
   def test_manifest_registers_the_leaf_checks
     %w[
       apps_yml generated_asset human_walkthrough port_inventory schema_migration
-      phantom_foreign_keys shared_wiring surface_schema design_metrics visual_quality calibration
+      phantom_foreign_keys shared_wiring surface_schema design_metrics visual_quality
       page_simulation flow_journey mobile_flow keyboard_flow
     ].each do |check|
       assert CHECKS.key?(check), "checks.yml should register #{check}"
@@ -291,12 +291,11 @@ class DeployChecksContractTest < Minitest::Test
   end
 
   def test_check_support_files_exist
-    %w[dom_surface_schema guest_flow_persona exemplar_structure visual_quality check_calibration page_inventory]
+    %w[dom_surface_schema guest_flow_persona exemplar_structure visual_quality page_inventory]
       .each do |name|
         assert File.file?(File.join(MASTER_CHECKS, "support", "#{name}.rb")), "missing checks/support/#{name}.rb"
       end
     assert File.directory?(File.join(MASTER_CHECKS, "fixtures", "exemplars"))
-    assert File.file?(File.join(MASTER_CHECKS, "data", "calibration.yml"))
   end
 
   def test_surface_schema_fixtures_exist
@@ -350,7 +349,7 @@ class DeployChecksContractTest < Minitest::Test
       "domain_alignment" => "release", "security_headers_source" => "release",
       "surface_schema" => "layout_suite",
       "design_metrics" => "layout_suite", "visual_quality" => "layout_suite",
-      "calibration" => "layout_suite", "rendered_suite" => "layout_suite", "rendered_geometry" => "rendered_suite",
+      "rendered_suite" => "layout_suite", "rendered_geometry" => "rendered_suite",
     }.each do |leaf, parent|
       assert_equal parent, CHECKS.dig(leaf, "covered_by"), "#{leaf} should be covered by #{parent}"
     end

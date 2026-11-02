@@ -70,12 +70,7 @@ class DesignContractTest < Minitest::Test
   end
 
   def app_rules(app)
-    styles = File.join(ROOT, app, "app", "assets", "stylesheets")
-    source = File.read(File.join(styles, "application.scss"))
-    Dir.glob(File.join(styles, "_#{app}_*.scss")).sort.each do |path|
-      source = "#{source}\n#{File.read(path)}"
-    end
-    Operator::ScssRules.rules(source)
+    Operator::ScssRules.rules(stylesheet_source(app))
   end
 
 def test_bsdports_styles_load_as_ordered_feature_modules
@@ -201,7 +196,7 @@ end
   # Moving the include into a layer, or under a narrower selector, silently
   # restores a palette this app deliberately left.
 def test_brgen_old_dialect_outranks_the_social_stack
-  source = application_scss("brgen")
+  source = stylesheet_source("brgen")
   roots = app_rules("brgen").select { |rule| rule.selector == ":root" && rule.body.include?("brgen-old-dark-tokens") }
 
   assert_includes(source, '@include meta.load-css("stack_brgen");',
@@ -297,10 +292,7 @@ def test_brgen_old_dialect_outranks_the_social_stack
   end
 
   def test_product_roots_preserve_shared_keyboard_focus_indicators
-    roots = %w[amber brgen bsdports].to_h do |app|
-      path = File.join(ROOT, app, "app", "assets", "stylesheets", "application.scss")
-      [app, File.read(path, encoding: "UTF-8")]
-    end
+    roots = %w[amber brgen bsdports].to_h { |app| [app, stylesheet_source(app)] }
     roots.each do |app, source|
       assert_includes source, '@include meta.load-css("focus_ring");',
                       "#{app} must load the shared focus indicator after local styles"
@@ -360,7 +352,7 @@ def test_brgen_feature_styles_are_loaded_at_their_original_boundaries
     brgen_vertical_surfaces
     brgen_city_surfaces
     brgen_shared_overrides
-  ], stylesheet_module_names("brgen"), "Brgen module order is a cascade contract"
+  ], stylesheet_module_names("brgen").grep_v(/\Asection_\d+\z/), "Brgen module order is a cascade contract"
 
   expected_rules = {
     "brgen_marketplace" => ".deal-card",
@@ -466,12 +458,12 @@ end
 
   def test_post_voting_compact_gap_is_mobile_first
     source = File.read(File.join(ROOT, "__shared", "app", "assets", "stylesheets", "_post_voting.scss"))
-    mobile = source.split("@media (min-width: 480px)", 2).first
-    wide = source.split("@media (min-width: 480px)", 2).last
 
+    # The base rule sits at column 0 (outside any query); the wider gap is the
+    # 480px override. Splitting at the file's first 480px query missed the rule.
     refute_match(/@media\s*\(\s*max-width\b/, source)
-    assert_match(/\.post-reading-layout\s*\{[^}]*gap:\s*var\(--space-2\);/m, mobile)
-    assert_match(/\.post-reading-layout\s*\{[^}]*gap:\s*var\(--space-3\);/m, wide)
+    assert_match(/^\.post-reading-layout\s*\{[^}]*gap:\s*var\(--space-2\);/m, source)
+    assert_match(/@media \(min-width: 480px\) \{\s*\.post-reading-layout\s*\{[^}]*gap:\s*var\(--space-3\);/m, source)
   end
 
 def test_brgen_marketplace_badge_offsets_are_valid_css
@@ -525,7 +517,7 @@ def test_brgen_marketplace_badge_offsets_are_valid_css
   end
 
   def test_brgen_emoji_actions_use_the_shared_local_token
-    source = File.read(File.join(ROOT, "brgen", "app", "assets", "stylesheets", "application.scss"))
+    source = stylesheet_source("brgen")
     assert_includes source, '--font-emoji: "Twemoji Mozilla", "Apple Color Emoji", "Segoe UI Emoji", sans-serif;'
     assert_includes source, ".compose-actions span { font-family: var(--font-emoji); }"
   end

@@ -5,8 +5,11 @@
 require "minitest/autorun"
 require_relative "engine_roots"
 require_relative "../../MASTER/tools/scss"
+require_relative "support/stylesheet_modules"
 
 class LayoutContractTest < Minitest::Test
+  include StylesheetModules
+
   # __dir__ is RAILS/test → ROOT is RAILS/ → REPO is pub4 checkout root.
   ROOT = File.expand_path("..", __dir__)
   REPO = File.expand_path("..", ROOT)
@@ -19,9 +22,6 @@ class LayoutContractTest < Minitest::Test
   DIALECT = File.join(SHARED, "app", "assets", "stylesheets", "_dialect_tokens.scss")
   # One stylesheet per app: the former vertical partials are modules of
   # brgen/application.scss.
-  RADIO_HOME_CSS = File.join(ROOT, "brgen", "app", "assets", "stylesheets", "application.scss")
-  MAPS_CSS = File.join(ROOT, "brgen", "app", "assets", "stylesheets", "application.scss")
-  BRGEN_CORE_SHELL = File.join(ROOT, "brgen", "app", "assets", "stylesheets", "application.scss")
 
   LAYOUTS = {
     "brgen" => File.join(ROOT, "brgen", "app", "views", "layouts", "application.html.erb"),
@@ -157,7 +157,7 @@ class LayoutContractTest < Minitest::Test
     }
 
     stacks.each do |app, stack_name|
-      source = File.read(File.join(ROOT, app, "app/assets/stylesheets/application.scss"))
+      source = stylesheet_source(app)
       # One stylesheet per app (operator, 2026-10-28): the shared stack mounts
       # through an unlayered meta.load-css at the top of the merged sheet.
       assert_includes source, %(@include meta.load-css("#{stack_name}");),
@@ -351,17 +351,12 @@ class LayoutContractTest < Minitest::Test
   end
 
   def app_rules(app, selector)
-    source = File.read(File.join(ROOT, app, "app/assets/stylesheets/application.scss"))
-    if %w[brgen amber bsdports].include?(app)
-      features = Dir.glob(File.join(ROOT, app, "app/assets/stylesheets/_#{app}_*.scss")).sort
-      features.each { |path| source = "#{source}\n#{File.read(path)}" }
-    end
-    Operator::ScssRules.matching(source, selector)
+    Operator::ScssRules.matching(stylesheet_source(app), selector)
   end
 
   def test_radio_actions_clear_the_persistent_navigation_band
-    radio = File.read(RADIO_HOME_CSS)
-    shell = File.read(BRGEN_CORE_SHELL)
+    radio = stylesheet_source("brgen")
+    shell = stylesheet_source("brgen")
 
     mobile_nav = radio.match(/\.radio-nav\s*\{([^}]*)\}/m)&.[](1)
     assert mobile_nav, "radio action links need one base positioning rule"
@@ -386,8 +381,8 @@ class LayoutContractTest < Minitest::Test
   end
 
   def test_map_hud_clears_the_persistent_navigation_band
-    maps = File.read(MAPS_CSS)
-    shell = File.read(BRGEN_CORE_SHELL)
+    maps = stylesheet_source("brgen")
+    shell = stylesheet_source("brgen")
 
     mobile_hud = maps.match(/body\.vertical-maps \.map-hud\s*\{([^}]*)\}/m)&.[](1)
     assert mobile_hud, "map HUD must have one source positioning rule"

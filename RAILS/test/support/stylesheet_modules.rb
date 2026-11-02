@@ -18,13 +18,36 @@ module StylesheetModules
   MODULE_OPEN = /\A\/\/ ={5,} module: ([a-z0-9_]+)\s*\z/.freeze
   MODULE_CLOSE = /\A\/\/ ={5,} \/module: /.freeze
 
+  # brgen was re-cut into `@use` partials on 2026-11-01; amber and bsdports keep
+  # the banner layout. Both are read here so the law tests name modules, not files.
+  LOCAL_USE = /\A@use "([a-z0-9_]+)";\s*\z/.freeze
+  WRAPPER_LINE = %r{\A\s*(?:@use\b.*|//.*)?\z}.freeze
+
   def application_scss(app)
     File.read(File.join(ROOT, app, "app", "assets", "stylesheets", "application.scss"))
   end
 
+  def partial_path(app, name)
+    path = File.join(ROOT, app, "app", "assets", "stylesheets", "_#{name}.scss")
+    path if File.file?(path)
+  end
+
+  # Local partials the root sheet loads with a bare `@use`, in cascade order.
+  def used_partials(app)
+    application_scss(app).lines.filter_map { |line| line[LOCAL_USE, 1] }.select { |name| partial_path(app, name) }
+  end
+
+  # The whole stylesheet as the compiler sees it: root sheet plus its partials.
+  def stylesheet_source(app)
+    [application_scss(app), *used_partials(app).map { |name| File.read(partial_path(app, name)) }].join("\n")
+  end
+
   # The text of one former partial, exactly as it was before the merge —
-  # banner lines excluded, content byte-identical.
+  # banner lines excluded, content byte-identical. A split app answers with
+  # the partial file of that name.
   def stylesheet_module(app, name)
+    return File.read(partial_path(app, name)) if used_partials(app).include?(name)
+
     found = []
     inside = false
     application_scss(app).each_line do |line|
@@ -45,6 +68,13 @@ module StylesheetModules
   # sequence via load-css call positions. The banner regex anchors at the start
   # of its line, so the scan runs per line rather than over the whole sheet.
   def stylesheet_module_names(app)
-    application_scss(app).lines.filter_map { |line| line[MODULE_OPEN, 1] }
+    banners = application_scss(app).lines.filter_map { |line| line[MODULE_OPEN, 1] }
+    return banners unless banners.empty?
+
+    # A partial that only re-exports (`@use` lines and comments) is a wrapper,
+    # not a feature module.
+    used_partials(app).reject do |name|
+      File.readlines(partial_path(app, name)).all? { |line| line.match?(WRAPPER_LINE) }
+    end
   end
 end
