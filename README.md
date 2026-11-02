@@ -1,9 +1,10 @@
 # pub4
 
-**One checkout, four trees, and a written constitution that outranks every
+**One checkout, four trees, and a written source hierarchy that outranks every
 agent working in any of them.** pub4 is a self-governing repository: the model
-only proposes, and nothing touches a file until `MASTER/data/laws.yml` admits
-it. Nothing here acts first and inspects the wreckage afterward.
+only proposes; Soul defines global identity, preservation, source order and
+protected paths, while the Law catalogue defines the requirements each change
+must satisfy.
 
 ## The four trees
 
@@ -28,13 +29,18 @@ entry files are short pointers to it; `CLAUDE.md` is the bootstrap pointer.
 cross-tree backlog; an item closes by being deleted in the commit that carries
 its evidence.
 
-## The constitution
+## Source authority and Laws
 
-`MASTER/data/laws.yml` is the sole normative document; `MASTER/data/soul.yml`
-is subordinate identity and delivery configuration. Authority runs laws.yml >
-soul.yml > Ruby implementations and executable Law adapters > checks and tree
-contracts > agent-harness prose. A missing or unrun measurement is
-INCONCLUSIVE, never PASS.
+`MASTER/data/soul.yml` owns global identity, preservation principles,
+source precedence and `absolute.sacred_paths`. Its source hierarchy is:
+
+`soul.yml > laws.yml > executable laws and gates > tree contracts > Git history`.
+
+`MASTER/data/laws.yml` is the one catalogue of individual Law identities,
+statements, parentage and the nine invariant nodes' internal order. It does not
+restate the source hierarchy or protected-path list. `law_runtime.yml` remains
+live transitional execution metadata; it is not a second normative Law
+catalogue. A missing or unrun measurement is INCONCLUSIVE, never PASS.
 
 ## Repository facts
 
