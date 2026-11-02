@@ -255,9 +255,12 @@ compare pinned revisions only.
   `playlist_tracks.embed_url`; page rendering reads the stored URL and does
   no network work. Regression sources cover slug links, malformed/non-rich
   responses, unsafe hosts, status/size failures and private `token` /
-  collection `in` preservation. These tests are NOT_RUN here. Existing
-  slug-only rows need an explicit re-import/refresh to populate the column;
-  no live collection was imported.
+  collection `in` preservation. The resolver, resolver test and migration
+  pass `ruby -c` on the available Ruby 3.3.8, and an isolated fake-transport
+  smoke passes slug resolution, parameter preservation and unsafe-host refusal.
+  This is not pinned Ruby 4.0.5 or Rails evidence: the TrackImport and focused
+  Rails tests remain NOT_RUN. Existing slug-only rows need an explicit
+  re-import/refresh to populate the column; no live collection was imported.
 - [ ] Re-run `MASTER/bin/operator measure` on the pinned checkout with a
   bounded timeout and identify which ratchet dominates after
   `SPONSORED_LINK_REL`. The previous 500-second attempt did not finish and
