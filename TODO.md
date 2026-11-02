@@ -828,9 +828,9 @@ source and tests they could not run; this pass is what measures them.
 
 ## Root directory contract
 
-- [ ] Enforce mechanically that the only tracked directories directly under the repository root are `MASTER/`, `RAILS/`, `OPENBSD/`, and `STUDIO/`. Keep root metadata and instruction files as files; don't add root-level tooling or documentation directories.
-- [ ] After reviewing the agent-contract generator, its marked source block and root-directory tests, reconcile `rake docs:agent_contracts` with the four-directory root contract so it does not recreate `.github/`. The Copilot instructions and Claude hooks are preserved under `STUDIO/agent-guidance/`, but that relocated configuration is no longer auto-loaded by those tools.
-- [ ] Reconcile the root `.claude/settings.json` hook behavior with supported user-level or in-tree configuration without violating the root directory contract. Review the generator, hook contract, affected harnesses and their focused tests; a complete read of unrelated MASTER files is not a prerequisite.
+- [x] The tracked root directories are exactly `MASTER/`, `RAILS/`, `OPENBSD/` and `STUDIO/`. Claude's native settings path is a root symlink into `STUDIO/agent-guidance/claude`, not another root directory.
+- [x] The agent-contract generator no longer creates `.github/`. Copilot uses root `AGENTS.md`; Gemini, GLM and Cursor retain generated pointers. `rake lint:agent_contracts` remains the drift check.
+- [x] Claude's hooks remain available at the native `.claude/settings.json` path through the root symlink, with their configuration stored under `STUDIO/agent-guidance/claude/`.
 
 ## Open from the 2026-11-01 session — WebGL / WebGPU ecosystem research
 

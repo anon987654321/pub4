@@ -18,12 +18,12 @@ INVENTORY_ROOT = File.expand_path("../../..", __dir__)
 # the repo's own trees as sprawl. A report that names its own trees as sprawl is
 # one nobody acts on, and that is how it stayed wrong.
 #
-# CLAUDE.md says what belongs at the root: the repository contracts and the four
-# governed trees. The generated harness files sit beside it because their agents
-# read them there.
-# `rake docs:agent_contracts` and have to sit where their agent reads them.
+# The four governed trees are the only tracked root directories. Claude Code's
+# native .claude/settings.json path is a symlink into STUDIO/agent-guidance;
+# Copilot reads root AGENTS.md, so no generated .github directory is needed.
 # test/test_lifecycle_tools.rb holds both lists to the tree in both directions.
 ALLOWED_ROOT_FILES = %w[
+  .claude
   .cursorlaws
   .gitattributes
   .gitignore
@@ -46,8 +46,6 @@ GENERATED_ROOT_FILES = %w[
   snapshot_STUDIO.md
 ].freeze
 ALLOWED_ROOT_DIRS = %w[
-  .claude
-  .github
   MASTER
   OPENBSD
   RAILS
@@ -100,7 +98,7 @@ end
 def loose_root_entries
   root_entries.filter_map do |name|
     full_path = File.join(INVENTORY_ROOT, name)
-    if File.directory?(full_path)
+    if File.directory?(full_path) && !File.symlink?(full_path)
       next if ALLOWED_ROOT_DIRS.include?(name)
       Entry.new(path: name, kind: "root_dir", reason: "non-canonical top-level directory")
     else

@@ -15,7 +15,10 @@ class LifecycleToolsSpec < Minitest::Test
     # The tool's own reading rather than a second one beside it: root_entries
     # drops what git ignores, which Dir.children would not.
     present = root_entries
-    files, dirs = present.partition { |name| File.file?(File.join(repo, name)) }
+    files, dirs = present.partition do |name|
+      path = File.join(repo, name)
+      File.file?(path) || File.symlink?(path)
+    end
     assert_equal files.sort, Object.const_get(:ALLOWED_ROOT_FILES).sort,
                  "repo_inventory's ALLOWED_ROOT_FILES and the repo root have drifted"
     assert_equal dirs.sort, Object.const_get(:ALLOWED_ROOT_DIRS).sort,
@@ -54,4 +57,13 @@ class LifecycleToolsSpec < Minitest::Test
   def load_inventory
     load File.join(ROOT, "tools", "repo_inventory.rb")
   end
+  def test_claude_settings_keep_the_native_path_without_a_root_directory
+    repo = File.expand_path("..", ROOT)
+    link = File.join(repo, ".claude")
+
+    assert File.symlink?(link)
+    assert_equal "STUDIO/agent-guidance/claude", File.readlink(link)
+    assert File.file?(File.join(link, "settings.json"))
+  end
+
 end
