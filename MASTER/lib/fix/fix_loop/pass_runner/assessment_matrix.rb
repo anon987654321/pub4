@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "../../kernel"
+require_relative "../../task_contract"
 
 # This file is also imported directly by assessment tests. Reuse the canonical
 # class object without recursively loading the full convergence graph.

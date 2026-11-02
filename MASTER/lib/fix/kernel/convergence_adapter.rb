@@ -304,6 +304,7 @@ module Master
           adapters: @pass_runner.assessment_adapters(target:),
           max_passes:, budget_seconds:, task_contract: TaskContract.current,
         )
+        TaskContract.attach_plan!(@fix_plan.digest)
         @bus&.publish("fix_loop:plan", **@fix_plan.to_h.slice(
           "digest", "identity_digest", "source_digest", "scope_digest", "law_digest",
           "law_source_digest", "authority_digest", "toolchain_digest", "exclusion_digest",

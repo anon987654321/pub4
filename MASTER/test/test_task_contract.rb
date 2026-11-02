@@ -3,6 +3,7 @@
 require_relative "test_helper"
 require "tmpdir"
 require_relative "../lib/fix/task_contract"
+require_relative "../lib/fix/artifact_preservation"
 require_relative "../lib/fix/transaction"
 
 class TestTaskContract < Minitest::Test
@@ -22,6 +23,45 @@ class TestTaskContract < Minitest::Test
       end
     end
     assert_nil CONTRACT.current
+  end
+
+  def test_preservation_receipts_are_plan_bound_and_nested_scopes_are_restored
+    first = CONTRACT.build(intent: "content_only", scope: ["page.html"], preserve: [], proof: [])
+    second = CONTRACT.build(intent: "functional_change", scope: ["worker.rb"], preserve: [], proof: [])
+    result = Master::Fix::ArtifactPreservation::Result.new("PASS", ["html_markup"], nil)
+
+    CONTRACT.with_current(first) do
+      CONTRACT.attach_plan!("plan-one")
+      row = CONTRACT.record_preservation!(
+        path: File.join(Master::REPO_ROOT, "page.html"),
+        format: "html",
+        before: "<p>before</p>",
+        after: "<p>after</p>",
+        result:,
+      )
+      assert_equal "plan-one", row.fetch("plan_digest")
+      assert_match(/\A[0-9a-f]{64}\z/, row.fetch("before_sha256"))
+      assert_equal "INCONCLUSIVE", CONTRACT.preservation_evidence.fetch("status")
+
+      CONTRACT.with_current(second) do
+        assert_equal "not_measured", CONTRACT.preservation_evidence.fetch("status")
+        CONTRACT.attach_plan!("plan-two")
+        CONTRACT.record_preservation!(
+          path: File.join(Master::REPO_ROOT, "worker.rb"),
+          format: "rb",
+          before: "x = 1",
+          after: "x = 2",
+          result: Master::Fix::ArtifactPreservation::Result.new("INCONCLUSIVE", [], "no Ruby source verifier"),
+        )
+        assert_equal "plan-two", CONTRACT.preservation_evidence.fetch("plan_digest")
+      end
+
+      evidence = CONTRACT.preservation_evidence
+      assert_equal "plan-one", evidence.fetch("plan_digest")
+      assert_equal ["page.html"], evidence.fetch("results").map { |entry| entry.fetch("path") }
+    end
+
+    assert_equal "not_measured", CONTRACT.preservation_evidence.fetch("status")
   end
 
   def test_transaction_rejects_out_of_scope_paths_before_snapshotting

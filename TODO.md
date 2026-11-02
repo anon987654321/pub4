@@ -144,12 +144,14 @@ each batch; compare pinned revisions only.
   receipt-parity tests prove they can be retired. Run focused
   interruption/recovery tests before and after.
 
-- [ ] MASTER artifact-preservation enforcement: carry validated task contracts
-  through the operator-facing /fix entrypoint and enforce scope and required
-  preservation at the transaction/mutation boundary, not only in agent protocol
-  instructions. The current HTML verifier is a callable source-level guard; it
-  is not yet an automatic mutation veto. Persist each result with the existing
-  FixPlan and assessment evidence.
+- [ ] MASTER artifact-preservation enforcement: validated task contracts now
+  enter operator-facing /fix via --intent, bound the resolved repository-relative
+  scope in FixPlan and Transaction, and produce before/after SHA-256 receipts
+  linked to the FixPlan digest in the persisted assessment artifact. RepairAdapter
+  now invokes the HTML/ERB source verifier before accepting a candidate; a failed
+  or inconclusive supported-format check vetoes the write. Full required-dimension
+  proof remains open: source-level PASS is still reported INCONCLUSIVE until
+  rendered, runtime and accessibility evidence is complete.
 
 - [ ] MASTER artifact-format coverage: add format-aware preservation and
   rendered-output comparison for DOCX, PDF, XLSX and PPTX. Changed files without

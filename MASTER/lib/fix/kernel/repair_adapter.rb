@@ -34,6 +34,8 @@ require_relative "../repair_loop/fix_strategies"
 require_relative "../repair_loop/fix_verification"
 require_relative "../repair_loop/outcome_tracking"
 require_relative "../visual_custody_blocking"
+require_relative "../artifact_preservation"
+require_relative "../task_contract"
 require_relative "../best_of_n"
 require_relative "../tool_breaker"
 require_relative "../../review/scan/law_health"
@@ -379,6 +381,78 @@ module Master
           false
         end
 
+        # Run the format-specific source guard at the mutation boundary.
+        # Unsupported formats stay INCONCLUSIVE; HTML/ERB failures veto writes.
+        # Stylesheet changes additionally need live visual custody when visual
+        # identity is part of the active contract.
+        def assess_artifact_preservation(path, before, after)
+          contract = TaskContract.current
+          return unless contract
+
+          format = File.extname(path).downcase.delete_prefix(".")
+          result = ArtifactPreservation.verify(before:, after:, intent: contract.intent, format:)
+          receipt = TaskContract.record_preservation!(path:, format:, before:, after:, result:)
+          @bus&.publish("fix:artifact_preservation", receipt) if receipt
+
+          if result.status == "FAIL"
+            reject_preservation(path, result)
+            return :rejected
+          end
+
+          if %w[html htm erb].include?(format) && result.status != "PASS"
+            reject_preservation(path, result)
+            return :rejected
+          end
+
+          if %w[css scss].include?(format) && result.status == "INCONCLUSIVE" &&
+             contract.preserve.include?("visual_identity") && !@visual_custody
+            failure = ArtifactPreservation::Result.new(
+              "INCONCLUSIVE", result.checks,
+              "stylesheet change requires live visual custody before it can be accepted",
+            )
+            TaskContract.record_preservation!(path:, format:, before:, after:, result: failure)
+            reject_preservation(path, failure)
+            return :rejected
+          end
+
+          result
+        rescue StandardError => e
+          Master::Ground::Swallow.log(e, context: "RepairAdapter.artifact_preservation", event_bus: @bus, path:)
+          failure = ArtifactPreservation::Result.new("INCONCLUSIVE", [], "#{e.class}: #{e.message}")
+          TaskContract.record_preservation!(path:, format: File.extname(path), before:, after:, result: failure)
+          if %w[html htm erb css scss].include?(format.to_s)
+            reject_preservation(path, failure)
+            return :rejected
+          end
+          failure
+        end
+
+        def reject_preservation(path, result)
+          reason = [result.status, result.reason].compact.join(": ")
+          RunLedger.reject("artifact_preservation", file: path, law: @law.id, bus: @bus)
+          RunLedger.refused_because(reason)
+          refuse(:verifier, path, reason:)
+          @bus&.publish(
+            "repair_loop:fix_rejected",
+            law: @law.id, file: path, reason: "artifact_preservation", evidence: result.to_h,
+          )
+          FixTrace.rejected(@law.id, path, "artifact preservation #{reason[0, 180]}")
+          false
+        end
+
+        def record_visual_custody(path, before, after, custody, status:)
+          result = ArtifactPreservation::Result.new(
+            status,
+            ["rendered_visual_custody"],
+            status == "PASS" ? nil : [custody.message, custody.gap&.clause].compact.join(", "),
+          )
+          receipt = TaskContract.record_preservation!(
+            path:, format: File.extname(path), before:, after:, result:, verifier: "visual_custody"
+          )
+          @bus&.publish("fix:artifact_preservation", receipt) if receipt
+          result
+        end
+
         # The scan can be minutes older than the model answer. Check the same
         # semantic fingerprint again at the mutation boundary so a human edit made
         # while the model was thinking is never overwritten by stale work.
@@ -388,6 +462,9 @@ module Master
           if (reason = VisualCompletion.change_blocker(root: @root, path:, before: old_src, after: new_src, custody: @visual_custody))
             return reject_fix(path, old_src, "visual_operator_owned", evidence: reason)
           end
+          preservation = assess_artifact_preservation(path, old_src, new_src)
+          return false if preservation == :rejected
+
           scope = ChangeScope.between(old_src, new_src)
           if (collapsed = collapsed_reason(scope, proposal: new_src, original: old_src))
             return reject_fix(path, old_src, "collapsed_content", evidence: collapsed)
@@ -421,7 +498,11 @@ module Master
 
           if @visual_custody && visual_source?(path)
             custody = @visual_custody.verify!(anchors: [violation[:anchor]].compact, committer: @committer)
-            return reject_fix(path, old_src, "visual_regression", evidence: [custody.message, custody.gap&.clause].compact.join(", ")) unless custody.ok?
+            unless custody.ok?
+              record_visual_custody(path, old_src, new_src, custody, status: "FAIL")
+              return reject_fix(path, old_src, "visual_regression", evidence: [custody.message, custody.gap&.clause].compact.join(", "))
+            end
+            record_visual_custody(path, old_src, new_src, custody, status: "PASS")
           end
 
           @committer&.attest_written!(path)

@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "digest"
+require "json"
 require "yaml"
 
 module Master
@@ -11,6 +13,9 @@ module Master
 
       PATH = File.expand_path("../../data/task_contract.yml", __dir__).freeze
       REQUIRED = %w[intent scope preserve proof].freeze
+      EVIDENCE_KEY = :master_fix_task_contract_preservation_evidence
+      PLAN_KEY = :master_fix_task_contract_plan_digest
+      MAX_PRESERVATION_ROWS = 256
 
       Contract = Data.define(:schema, :intent, :scope, :preserve, :proof) do
         def to_h
@@ -92,10 +97,90 @@ module Master
 
       def with_current(value)
         previous = current
-        Thread.current[:master_fix_task_contract] = value.nil? ? nil : coerce(value)
+        previous_evidence = Thread.current[EVIDENCE_KEY]
+        previous_plan = Thread.current[PLAN_KEY]
+        contract = value.nil? ? nil : coerce(value)
+        Thread.current[:master_fix_task_contract] = contract
+        unless contract && previous == contract
+          Thread.current[EVIDENCE_KEY] = []
+          Thread.current[PLAN_KEY] = nil
+        end
         yield
       ensure
         Thread.current[:master_fix_task_contract] = previous
+        Thread.current[EVIDENCE_KEY] = previous_evidence
+        Thread.current[PLAN_KEY] = previous_plan
+      end
+
+      # Bind runtime preservation receipts to the immutable FixPlan.
+      def attach_plan!(digest)
+        return unless current
+
+        Thread.current[PLAN_KEY] = digest.to_s
+      end
+
+      def record_preservation!(path:, format:, before:, after:, result:, verifier: "artifact_preservation")
+        contract = current
+        return unless contract
+
+        absolute = File.expand_path(path.to_s)
+        repository = File.expand_path(defined?(Master::REPO_ROOT) ? Master::REPO_ROOT : File.expand_path("../../..", __dir__))
+        relative = if absolute == repository
+                     "."
+                   elsif absolute.start_with?(repository + File::SEPARATOR)
+                     absolute.delete_prefix(repository + File::SEPARATOR)
+                   else
+                     absolute
+                   end
+        value = result.to_h
+        contract_digest = Digest::SHA256.hexdigest(JSON.generate(contract.to_h))
+        row = {
+          "path" => relative,
+          "format" => format.to_s.downcase.delete_prefix("."),
+          "intent" => contract.intent,
+          "verifier" => verifier.to_s,
+          "evidence_level" => verifier.to_s == "artifact_preservation" ? "source_level" : "runtime_or_external",
+          "status" => (value[:status] || value["status"]).to_s,
+          "checks" => Array(value[:checks] || value["checks"]).map(&:to_s),
+          "reason" => (value[:reason] || value["reason"])&.to_s&.slice(0, 300),
+          "before_sha256" => Digest::SHA256.hexdigest(before.to_s.b),
+          "after_sha256" => Digest::SHA256.hexdigest(after.to_s.b),
+          "contract_digest" => contract_digest,
+          "plan_digest" => Thread.current[PLAN_KEY],
+        }.compact
+        rows = Thread.current[EVIDENCE_KEY] ||= []
+        rows << row.freeze
+        rows.shift while rows.size > MAX_PRESERVATION_ROWS
+        row
+      end
+
+      # Source-level checks are never promoted into full rendered/runtime/
+      # accessibility preservation proof.
+      def preservation_evidence
+        contract = current
+        rows = Array(Thread.current[EVIDENCE_KEY])
+        return { "status" => "not_measured", "results" => [] } unless contract
+
+        statuses = rows.map { |row| row["status"] }
+        status = if statuses.include?("FAIL")
+                   "FAIL"
+                 elsif rows.empty?
+                   "not_measured"
+                 elsif statuses.include?("INCONCLUSIVE") || rows.any? { |row| row["evidence_level"] == "source_level" }
+                   "INCONCLUSIVE"
+                 else
+                   "PASS"
+                 end
+        {
+          "status" => status,
+          "contract_digest" => Digest::SHA256.hexdigest(JSON.generate(contract.to_h)),
+          "plan_digest" => Thread.current[PLAN_KEY],
+          "required_dimensions" => contract.preserve,
+          "result_count" => rows.size,
+          "results" => rows.dup,
+          "reason" => "source-level checks do not prove rendered, runtime or accessibility preservation" if
+            rows.any? { |row| row["evidence_level"] == "source_level" },
+        }.compact
       end
 
       def covers?(path, scope:)
