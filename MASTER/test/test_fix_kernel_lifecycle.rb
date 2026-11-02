@@ -18,7 +18,6 @@ class TestFixKernelLifecycle < Minitest::Test
     adapter.define_singleton_method(:with_cancellation) do |token, &operation|
       previous = @cancellation
       @cancellation = token
-      token.activate! if token&.respond_to?(:activate!)
       operation.call
     ensure
       @cancellation = previous
@@ -68,6 +67,36 @@ class TestFixKernelLifecycle < Minitest::Test
     assert_match(/controlled cancellation-scope failure/, error.message)
     assert_same previous, adapter.instance_variable_get(:@cancellation)
     refute adapter.cancellation_requested?
+  end
+
+  def test_kernel_activation_error_is_recorded_as_unknown_outcome
+    with_workspace do |root|
+      kernel = K.new(root:)
+      adapter = cancellation_protocol(Object.new)
+      adapter.define_singleton_method(:last_terminal_state) { nil }
+      adapter.define_singleton_method(:run_unlocked) do |*_args, **_options|
+        raise "unexpected adapter execution"
+      end
+      token = Object.new
+      token.define_singleton_method(:activate!) { raise IOError, "activation failed" }
+
+      error = assert_raises(IOError) do
+        kernel.run_fix_loop(
+          adapter, target: root, max_passes: 2, budget_seconds: 60,
+          incremental: false, requested: true, cancellation: token
+        )
+      end
+
+      assert_match(/activation failed/, error.message)
+      events = kernel.verify_log!
+      started = events.find { |row| row["kind"] == "coordinator_started" }
+      terminal = events.find do |row|
+        row["kind"] == "coordinator_terminal" && row["run_id"] == started.fetch("run_id")
+      end
+      assert_equal "unknown_outcome", terminal.dig("payload", "state")
+      assert_nil adapter.instance_variable_get(:@cancellation)
+      assert_nil kernel.instance_variable_get(:@current_run_id)
+    end
   end
 
   def test_kernel_serializes_and_terminalizes_a_fix_loop_adapter

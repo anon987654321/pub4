@@ -182,7 +182,6 @@ module Master
       def with_cancellation(token)
         previous = @cancellation
         @cancellation = token
-        token.activate! if token&.respond_to?(:activate!)
         yield
       ensure
         @cancellation = previous

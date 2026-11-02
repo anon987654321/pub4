@@ -81,6 +81,7 @@ module Master
               begin
                 @current_run_id = nil
                 @current_attempt_id = attempt_id
+                cancellation.activate! if cancellation&.respond_to?(:activate!)
                 reconcile_coordinated_runs!
                 result = adapter.run_unlocked(
                   target, max_passes:, budget_seconds:, incremental:, requested:
