@@ -407,6 +407,12 @@ body.vertical-marketplace .search {
   letter-spacing: 0;
 }
 
+/* A takeaway menu is one section per menu category, heading then tile grid;
+   the next category starts a full step below the grid's 24px row gap. */
+.takeaway-menu-section + .takeaway-menu-section {
+  margin-block-start: 48px;
+}
+
 /* ---- tile grid ------------------------------------------------------ */
 
 /* Kaufland's rule is repeat(columns, minmax(130px, 1fr)) with a 24px row gap
