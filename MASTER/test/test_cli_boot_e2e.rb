@@ -259,7 +259,7 @@ class TestCliReplExit < Minitest::Test
         assert_operator output.scan(marker).length, :>, previous_count, "/face did not redraw the in-place overlay"
         marker_at = output.rindex(marker)
         assert_match(READY, output[(marker_at + marker.length)..].to_s,
-                     "/face did not return to the same working prompt"
+                     "/face did not return to the same working prompt")
         refute_match(/\e\[\?1049h/, output, "/face must not switch terminal input modes")
 
         writer.write("\x04")
