@@ -498,6 +498,20 @@ a.deal-card,
   display: block;
 }
 
+/* Restaurant photography is a scene, not a product cutout: fill the well. */
+.deal-card-img img.restaurant-cover-image {
+  object-fit: cover;
+}
+
+.restaurant-cover-preview {
+  display: block;
+  max-width: min(100%, 32rem);
+  max-height: 12rem;
+  margin-block-start: 12px;
+  border-radius: var(--radius-sm);
+  object-fit: cover;
+}
+
 .deal-card-img--store {
   aspect-ratio: 16 / 10;
 }
