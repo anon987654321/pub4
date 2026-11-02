@@ -11,6 +11,8 @@ require "review/copy_review"
 class CopyReviewCheck
   MAX_INPUT_BYTES = 100_000
   CREATIVE_FIELDS = %w[headline body cta locale disclosure claims].freeze
+  CREATIVE_TEXT_FIELDS = %w[headline body cta locale disclosure].freeze
+  PRODUCT_TEXT_FIELDS = %w[source external_id title merchant program_id currency category market last_seen_at].freeze
   CLAIM_FIELDS = %w[kind text reference source_reference].freeze
   PRODUCT_FIELDS = %w[
     source external_id title merchant program_id price_cents currency
@@ -35,19 +37,34 @@ class CopyReviewCheck
     creative = clean_hash(creative, "creative", CREATIVE_FIELDS)
     product = clean_hash(product, "product", PRODUCT_FIELDS) unless product.nil?
 
-    if creative.key?("claims")
+    validate_string_fields!(creative, CREATIVE_TEXT_FIELDS, "creative")
+    if creative.key?("claims") && !creative["claims"].nil?
       claims = creative["claims"]
       raise InvalidInput, "creative.claims must be an array" unless claims.is_a?(Array)
 
       creative["claims"] = claims.each_with_index.map do |claim, index|
-        clean_hash(claim, "creative.claims[#{index}]", CLAIM_FIELDS)
+        normalized = clean_hash(claim, "creative.claims[#{index}]", CLAIM_FIELDS)
+        validate_string_fields!(normalized, CLAIM_FIELDS, "creative.claims[#{index}]")
+        normalized
       end
     end
 
-    if product&.key?("price_cents") && !product["price_cents"].is_a?(Integer)
-      raise InvalidInput, "product.price_cents must be an integer in minor currency units"
+    if product
+      validate_string_fields!(product, PRODUCT_TEXT_FIELDS, "product")
+      if product.key?("price_cents") && !product["price_cents"].nil? && !product["price_cents"].is_a?(Integer)
+        raise InvalidInput, "product.price_cents must be an integer in minor currency units"
+      end
+      %w[in_stock placeholder].each do |field|
+        value = product[field]
+        next if value.nil? || value == true || value == false
+
+        raise InvalidInput, "product.#{field} must be true, false or null"
+      end
     end
 
+    unless market.nil? || market.is_a?(String)
+      raise InvalidInput, "market must be a string"
+    end
     normalized_market = market.to_s.strip.upcase.presence
     payload = { "creative" => creative, "product" => product, "market" => normalized_market }
     bytes = JSON.generate(canonical(payload)).bytesize
@@ -61,9 +78,19 @@ class CopyReviewCheck
       product_sha256: product && digest(product),
       reviewer_sha256: reviewer_digest
     )
-  rescue JSON::GeneratorError, EncodingError => e
+  rescue JSON::GeneratorError, EncodingError, TypeError => e
     raise InvalidInput, "copy-review input is not valid JSON data (#{e.class})"
   end
+
+  def self.validate_string_fields!(record, fields, name)
+    fields.each do |field|
+      value = record[field]
+      next if value.nil? || value.is_a?(String)
+
+      raise InvalidInput, "#{name}.#{field} must be a string or null"
+    end
+  end
+  private_class_method :validate_string_fields!
 
   def self.call(prepared)
     report = Master::Review::CopyReview.review(
