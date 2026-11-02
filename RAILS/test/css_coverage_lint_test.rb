@@ -91,4 +91,17 @@ class CssCoverageLintTest < Minitest::Test
     refute_empty L.used_names
     assert_operator L.defined_names.size, :>, 500, "the stylesheet glob stopped matching"
   end
+
+  def test_brgen_application_has_no_empty_section_wrappers
+    stylesheets = File.join(ROOT, "brgen", "app", "assets", "stylesheets")
+    application = File.read(File.join(stylesheets, "application.scss"))
+
+    %w[01 02 03 06].each do |section|
+      refute_includes application, %(@use "section_#{section}";),
+                      "section_#{section} has no stylesheet content to load"
+      refute File.file?(File.join(stylesheets, "_section_#{section}.scss")),
+             "an empty compatibility wrapper should not return"
+    end
+  end
+
 end
