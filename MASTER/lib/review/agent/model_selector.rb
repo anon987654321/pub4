@@ -57,7 +57,15 @@ module Master
 
           # Cost/quality bias may reorder within the available pool, but never
           # move browser chat or local compute ahead of the declared fallback ladder.
-          @model_router.priority_fallback_order(chain, task_type: task)
+          ordered = Array(@model_router.priority_fallback_order(chain, task_type: task))
+            .map(&:to_s).reject(&:empty?).uniq
+          return ordered unless ordered.empty?
+
+          # An empty route can mean stale probes or an unavailable router pool,
+          # not that the independent catalogue has no usable candidates.
+          fallback = route_fallback_candidates
+          @bus&.publish("llm:route_fallback", source: "router_empty", candidate_count: fallback.length)
+          fallback
         rescue StandardError => e
           @bus&.publish("llm:route_error", error_class: e.class.name, **Master::Execution::Contract.diagnostic_fields(e.message))
           chain = route_fallback_candidates

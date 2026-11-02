@@ -164,4 +164,20 @@ class TestBootModelPin < Minitest::Test
 
     assert_equal %w[free/final local/secondary paid/primary configured/last-resort], chain
   end
+
+  def test_empty_router_ladder_uses_the_independent_fallback_catalogue
+    router = Object.new
+    router.define_singleton_method(:fallback_chain) { |task_type:| [] }
+    router.define_singleton_method(:priority_fallback_order) { |models, task_type:| models }
+    probe = RouteFailureProbe.new(router:, model: "configured/last-resort")
+    catalogue = %w[paid/primary local/secondary free/final]
+
+    chain = Master::Io::LaneSelection.stub(:explicit_models, catalogue) do
+      Master::Io::LaneSelection.stub(:order_or_all, ->(models) { models.reverse }) do
+        probe.routed_chain(nil, task_type: :exploration)
+      end
+    end
+
+    assert_equal %w[free/final local/secondary paid/primary configured/last-resort], chain
+  end
 end
