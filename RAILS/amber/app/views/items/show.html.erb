@@ -90,6 +90,7 @@
         are actually configured, and says nothing when none are. %>
     <p><%= t("items.affiliate_help") %></p>
     <%= render "shared/affiliate_disclosure" %>
+    <% affiliate_click_epi = Shared::LinkConverter.request_epi %>
     <% if @item.affiliate_links.any? %>
       <ul>
         <% @item.affiliate_links.each do |link| %>
@@ -100,7 +101,9 @@
                 rewrite it — see outbound_click_controller.js. %>
             <%= link_to link.merchant, link.url, rel: "sponsored noopener", target: "_blank",
                   data: { controller: "outbound-click", action: "click->outbound-click#record",
-                          outbound_click_merchant_value: link.merchant, outbound_click_surface_value: "item_affiliate" } %>
+                          outbound_click_merchant_value: link.merchant,
+                          outbound_click_surface_value: "item_affiliate",
+                          outbound_click_epi_value: affiliate_click_epi } %>
             <%= button_to t("actions.remove"), item_affiliate_link_path(@item, link), method: :delete, class: "btn-sm",
                   data: { turbo_confirm: t("items.confirm_remove_affiliate_link") } %>
           </li>
@@ -116,7 +119,8 @@
                   rel: "sponsored noopener", target: "_blank",
                   data: { controller: "outbound-click", action: "click->outbound-click#record",
                           outbound_click_merchant_value: suggestion.merchant,
-                          outbound_click_surface_value: "shop_the_look" } %>
+                          outbound_click_surface_value: "shop_the_look",
+                          outbound_click_epi_value: affiliate_click_epi } %>
             <span class="tag commerce-fit-source"><%= suggestion.source %></span>
             <% if suggestion.reasons.present? %>
               <span class="commerce-fit-reasons"><%= suggestion.reasons.to_sentence %></span>
