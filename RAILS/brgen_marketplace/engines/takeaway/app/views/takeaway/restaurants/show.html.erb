@@ -25,7 +25,10 @@
   <div class="store-pdp-media">
     <% dish = @menu_items.find { |item| item.photo.attached? } %>
     <div class="deal-card-img">
-      <% if dish %>
+      <% if @restaurant.cover.attached? %>
+        <%= image_tag main_app.url_for(@restaurant.media_variant(:cover, :hero)),
+              alt: @restaurant.name, class: "restaurant-cover-image" %>
+      <% elsif dish %>
         <%= responsive_image_tag dish.photo, alt: dish.name, widths: [ 720, 1_200 ], sizes: "(max-width: 768px) 100vw, 780px" %>
       <% else %>
         <div class="deal-card-placeholder" aria-hidden="true"><%= @restaurant.name.to_s.first&.upcase %></div>
@@ -89,6 +92,7 @@
         <div class="field"><%= f.text_field :name, placeholder: t("takeaway.item_name"), aria: { label: t("takeaway.item_name") }, required: true %></div>
         <div class="field"><%= f.number_field :price_cents, placeholder: t("takeaway.item_price"), aria: { label: t("takeaway.item_price") }, required: true, inputmode: "numeric" %></div>
         <div class="field"><%= f.text_field :description, placeholder: t("takeaway.item_description"), aria: { label: t("takeaway.item_description") } %></div>
+        <div class="field"><%= f.text_field :menu_category_name, placeholder: t("takeaway.menu_category"), aria: { label: t("takeaway.menu_category") }, maxlength: 40 %><%= tag.p t("takeaway.menu_category_hint"), class: "form-help" %></div>
         <div class="field field--check"><%= f.check_box :available, checked: true %><%= f.label :available %></div>
         <div class="field field--check"><%= f.check_box :vegetarian %><%= f.label :vegetarian %></div>
         <div class="field field--check"><%= f.check_box :vegan %><%= f.label :vegan %></div>

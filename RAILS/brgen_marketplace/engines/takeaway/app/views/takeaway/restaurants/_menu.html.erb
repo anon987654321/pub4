@@ -9,29 +9,36 @@
           action: { label: t("actions.all_restaurants"), path: restaurants_path } %>
   <% else %>
     <%= form_with scope: :takeaway_order, url: restaurant_orders_path(@restaurant), data: { controller: "form-submit", action: "submit->form-submit#lock" } do |f| %>
-      <div class="deal-grid" role="list">
-        <% @menu_items.each do |item| %>
-          <article class="deal-card" role="listitem">
-            <div class="deal-card-img">
-              <% if item.photo.attached? %>
-                <%= responsive_image_tag item.photo, alt: "", widths: [ 360, 720 ], sizes: "(max-width: 768px) 50vw, 260px" %>
-              <% else %>
-                <div class="deal-card-placeholder" aria-hidden="true"><%= item.name.to_s.first&.upcase %></div>
-              <% end %>
-            </div>
-            <div class="deal-card-body">
-              <div class="deal-price"><%= item.price_display %></div>
-              <%= tag.h3 item.name, class: "deal-card-title" %>
-              <%= tag.p item.description, class: "deal-meta deal-meta--clamp" if item.description.present? %>
-              <%= tag.span t("takeaway.vegetarian"), class: "store-badge" if item.vegetarian? %>
-              <%= tag.span t("takeaway.vegan"), class: "store-badge" if item.vegan? %>
-              <% if Current.user.present? %>
-                <%= number_field_tag "takeaway_order[items][#{item.id}]", 0, min: 0, class: "qty-field", aria: { label: t("takeaway.qty_for", name: item.name) } %>
-              <% end %>
-            </div>
-          </article>
-        <% end %>
-      </div>
+      <% menu_sections = @menu_items.group_by { |item| item.menu_category&.name.presence || t("takeaway.other_items") } %>
+      <% menu_sections.each do |section_name, items| %>
+        <% section_id = "menu-category-#{section_name.parameterize}" %>
+        <section class="takeaway-menu-section" aria-labelledby="<%= section_id %>">
+          <%= tag.h3 section_name, id: section_id, class: "store-heading menu-category-heading" %>
+          <div class="deal-grid" role="list">
+            <% items.each do |item| %>
+              <article class="deal-card" role="listitem">
+                <div class="deal-card-img">
+                  <% if item.photo.attached? %>
+                    <%= responsive_image_tag item.photo, alt: "", widths: [ 360, 720 ], sizes: "(max-width: 768px) 50vw, 260px" %>
+                  <% else %>
+                    <div class="deal-card-placeholder" aria-hidden="true"><%= item.name.to_s.first&.upcase %></div>
+                  <% end %>
+                </div>
+                <div class="deal-card-body">
+                  <div class="deal-price"><%= item.price_display %></div>
+                  <%= tag.h4 item.name, class: "deal-card-title" %>
+                  <%= tag.p item.description, class: "deal-meta deal-meta--clamp" if item.description.present? %>
+                  <%= tag.span t("takeaway.vegetarian"), class: "store-badge" if item.vegetarian? %>
+                  <%= tag.span t("takeaway.vegan"), class: "store-badge" if item.vegan? %>
+                  <% if Current.user.present? %>
+                    <%= number_field_tag "takeaway_order[items][#{item.id}]", 0, min: 0, class: "qty-field", aria: { label: t("takeaway.qty_for", name: item.name) } %>
+                  <% end %>
+                </div>
+              </article>
+            <% end %>
+          </div>
+        </section>
+      <% end %>
 
       <% if Current.user.present? %>
         <div class="store-panel store-order">

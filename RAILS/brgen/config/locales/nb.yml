@@ -1452,6 +1452,13 @@ nb:
     item_name: Navn
     item_price: Pris (øre)
     item_description: Beskrivelse
+    menu_category: Menygruppe
+    menu_category_hint: Skriv et gruppenavn. Eksisterende grupper gjenbrukes.
+    other_items: Andre retter
+    restaurant_cover: Forsidebilde for restauranten
+    restaurant_cover_hint: JPG, PNG eller WebP, maks 8 MB.
+    cover_image_invalid: Velg et JPG-, PNG- eller WebP-bilde.
+    cover_image_too_large: Velg et bilde på maks 8 MB.
     license_number: Lisensnummer
     latitude: Breddegrad
     longitude: Lengdegrad

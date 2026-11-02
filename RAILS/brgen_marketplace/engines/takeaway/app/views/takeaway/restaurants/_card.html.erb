@@ -6,7 +6,12 @@
 <article class="deal-card restaurant" role="listitem">
   <%= link_to restaurant_path(restaurant), class: "deal-card-hit" do %>
     <div class="deal-card-img">
-      <div class="deal-card-placeholder" aria-hidden="true"><%= restaurant.name.to_s.first&.upcase %></div>
+      <% if restaurant.cover.attached? %>
+        <%= image_tag main_app.url_for(restaurant.media_variant(:cover, :card)),
+              alt: "", class: "restaurant-cover-image", loading: "lazy" %>
+      <% else %>
+        <div class="deal-card-placeholder" aria-hidden="true"><%= restaurant.name.to_s.first&.upcase %></div>
+      <% end %>
       <%= tag.span restaurant.cuisine_type, class: "deal-badge deal-badge--soft" if restaurant.cuisine_type.present? %>
     </div>
     <div class="deal-card-body">

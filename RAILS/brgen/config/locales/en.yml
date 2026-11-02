@@ -1446,6 +1446,13 @@ en:
     item_name: Name
     item_price: Price (øre)
     item_description: Description
+    menu_category: Menu section
+    menu_category_hint: Type a section name; existing sections are reused.
+    other_items: Other dishes
+    restaurant_cover: Restaurant cover
+    restaurant_cover_hint: JPG, PNG or WebP, up to 8 MB.
+    cover_image_invalid: Choose a JPG, PNG or WebP image.
+    cover_image_too_large: Choose an image no larger than 8 MB.
     license_number: License number
     latitude: Latitude
     longitude: Longitude
