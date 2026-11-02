@@ -46,6 +46,12 @@ class TestDocPaths < Minitest::Test
     STUDIO/README.md
   ].freeze
 
+  def test_execution_ownership_map_covers_core_and_deployment_lifecycle
+    map = File.read(File.join(REPO, "MASTER/docs/fix_coordinator_map.md"))
+    %w[Core::Fold Core::Constitution Core::World Fix::Mission Deployment].each do |owner|
+      assert_includes map, owner
+    end
+  end
   def test_root_backlog_and_historical_reviews_are_not_competing_checklists
     backlog = File.read(File.join(REPO, "TODO.md"))
     completed = backlog.lines.select { |line| line.lstrip.start_with?("- [x] ", "- [X] ") }
@@ -110,7 +116,6 @@ class TestDocPaths < Minitest::Test
     MASTER/docs/history/fix-review-log.md
     MASTER/docs/history/recovery/legacy-apps-handoff.md
     MASTER/docs/law-navigation.md
-    MASTER/docs/lifecycle_ownership.md
     MASTER/docs/mobile.md
     MASTER/lib/cli/face/contract.md
     RAILS/__shared/SOCIAL_FRONT_PAGE.md
