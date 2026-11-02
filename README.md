@@ -23,8 +23,9 @@ must satisfy.
 ## How to enter
 
 `AGENTS.md` is the canonical agent entrypoint and carries the shared workflow
-contract generated from `MASTER/AGENTS.md`. Gemini, GLM, Cursor and Copilot
-entry files are short pointers to it; `CLAUDE.md` is the bootstrap pointer.
+contract generated from `MASTER/AGENTS.md`. Gemini, GLM and Cursor have short
+generated pointers to it; Codex and Copilot read it directly. `CLAUDE.md` is
+the bootstrap pointer.
 `TREE_CONTRACTS.md` is the one per-tree contract file. `TODO.md` is the one
 cross-tree backlog; an item closes by being deleted in the commit that carries
 its evidence.
