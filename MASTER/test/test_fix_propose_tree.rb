@@ -46,7 +46,7 @@ class TestFixProposeTree < Minitest::Test
     Master::Fix::ProposeTree.new(root: @root, agent:).call(n: 2)
 
     prompt = agent.prompts.first
-    assert_includes prompt, "review/\n  rule.rb\n  scan/\n    deep/\n      core.rb"
+    assert_includes prompt, "lib/\n  review/\n    rule.rb\n    scan/\n      deep/\n        core.rb"
     assert_match(/files=\d+ dirs=\d+ sprawl=/, prompt)
   end
 

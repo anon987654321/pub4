@@ -28,8 +28,9 @@ module Master
       # Every directory holding tracked files, with its own file count and size.
       def directories
         @directories ||= files.group_by { |path| File.dirname(path) }.sort.map do |dir, paths|
+          target_dir = target_relative(dir)
           Entry.new(path: dir, files: paths.size, bytes: paths.sum { |path| size(path) },
-                    depth: dir == "." ? 0 : dir.count("/") + 1)
+                    depth: target_dir == "." ? 0 : target_dir.count("/") + 1)
         end
       end
 
@@ -40,7 +41,10 @@ module Master
       end
 
       def sprawl
-        @sprawl ||= TreeSprawl.new(files:, directories:, sizes: files.to_h { |path| [path, size(path)] }).to_h
+        @sprawl ||= TreeSprawl.new(
+          files:, directories:, sizes: files.to_h { |path| [path, size(path)] },
+          root_prefix: relative(@target)
+        ).to_h
       end
 
       def metrics
@@ -81,6 +85,13 @@ module Master
       def relative(path)
         full = File.expand_path(path.to_s)
         full == @root ? "." : full.delete_prefix("#{@root}/")
+      end
+
+      def target_relative(path)
+        prefix = relative(@target)
+        return path if prefix == "."
+
+        path.delete_prefix("#{prefix}/")
       end
     end
   end

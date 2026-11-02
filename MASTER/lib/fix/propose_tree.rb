@@ -64,28 +64,26 @@ module Master
         files = entries.select { |path| File.file?(path) }
         relative_files = files.map { |path| "lib/#{path.delete_prefix("#{lib_root}/")}" }
         directories = relative_files.group_by { |path| File.dirname(path) }.map do |directory, members|
+          relative_directory = directory.delete_prefix("lib").delete_prefix("/")
+          depth = relative_directory.empty? ? 0 : relative_directory.count("/") + 1
           DirectoryEntry.new(
             path: directory,
             files: members.size,
             bytes: members.sum { |member| File.size(File.join(@root, member)) },
-            depth: directory == "." ? 0 : directory.count("/") + 1
+            depth:
           )
         end
         sizes = relative_files.to_h do |path|
           [path, File.size(File.join(@root, path))]
         end
-        sprawl = TreeSprawl.new(files: relative_files, directories:, sizes:).to_h
+        sprawl = TreeSprawl.new(files: relative_files, directories:, sizes:, root_prefix: "lib").to_h
         counts = sprawl.transform_values(&:size)
-        # The proposal sketch is rooted at lib/, not the repository root.
-        # Count direct lib files here so the prompt's metric matches its drawing.
-        lib_root_files = files.count { |path| File.dirname(path) == lib_root }
-        counts[:root_clutter] = lib_root_files > TreeSprawl::ROOT_FILE_LIMIT ? lib_root_files : 0
 
-        lines = relative_entries.first(MAX_TREE_ENTRIES).map do |path|
-          depth = path.count("/")
+        lines = ["lib/"] + relative_entries.first(MAX_TREE_ENTRIES).map do |path|
+          depth = path.count("/") + 1
           "#{ "  " * depth }#{File.basename(path)}#{File.directory?(File.join(lib_root, path)) ? "/" : ""}"
         end
-        lines << "... #{relative_entries.size - MAX_TREE_ENTRIES} more entries" if relative_entries.size > MAX_TREE_ENTRIES
+        lines << "  ... #{relative_entries.size - MAX_TREE_ENTRIES} more entries" if relative_entries.size > MAX_TREE_ENTRIES
         ["files=#{relative_files.size} dirs=#{directories.size} sprawl=#{JSON.generate(counts)}", *lines].join("\n")
       end
 

@@ -89,6 +89,17 @@ class TestFixTree < Minitest::Test
     assert_equal 19, Master::Fix::Tree.new(root: @root).sprawl[:root_clutter].size
   end
 
+  def test_root_clutter_is_relative_to_the_selected_target
+    19.times { |index| write("lib/root_#{index}.rb", BODY) }
+    git("add", ".")
+
+    lib_tree = Master::Fix::Tree.new(root: @root, target: "lib")
+    repository_tree = Master::Fix::Tree.new(root: @root)
+
+    assert_equal 19, lib_tree.sprawl[:root_clutter].size
+    assert_empty repository_tree.sprawl[:root_clutter]
+  end
+
   def test_paths_hold_every_file_and_each_directory_above_it
     paths = Master::Fix::Tree.new(root: @root).paths
 

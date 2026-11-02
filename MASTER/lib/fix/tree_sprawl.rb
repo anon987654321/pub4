@@ -20,10 +20,11 @@ module Master
         ugly_names concept_scatter depth_tax root_clutter
       ].freeze
 
-      def initialize(files:, directories:, sizes:)
+      def initialize(files:, directories:, sizes:, root_prefix: ".")
         @files = files
         @directories = directories
         @sizes = sizes
+        @root_prefix = root_prefix.to_s
       end
 
       def to_h = SIGNALS.to_h { |signal| [signal, public_send(signal)] }
@@ -70,7 +71,7 @@ module Master
       # discover and usually indicate that ownership has drifted too deep.
       def depth_tax
         @files.select do |path|
-          path.split("/").each_with_index.any? do |segment, index|
+          target_path(path).split("/").each_with_index.any? do |segment, index|
             next false unless index + 1 > MAX_CONCEPT_DEPTH
 
             stem = File.basename(segment, File.extname(segment))
@@ -79,18 +80,27 @@ module Master
         end
       end
 
-      # Root files are individually visible, but a crowded root stops reading
-      # like a map. Return no finding while it remains within the stated limit.
+      # Root files are counted at the measured target's boundary, not always
+      # at the checkout root (a scan of MASTER/lib has its own root).
       def root_clutter
-        root_files = @files.select { |path| File.dirname(path) == "." }
+        root_files = @files.select { |path| File.dirname(target_path(path)) == "." }
         root_files.size > ROOT_FILE_LIMIT ? root_files : []
       end
 
       private
 
       def concept_owner(path)
-        parts = path.split("/")
-        parts.first == "lib" && parts.size > 2 ? parts.first(2).join("/") : parts.first
+        parts = target_path(path).split("/")
+        lib_index = parts.index("lib")
+        return parts.first(lib_index + 2).join("/") if lib_index && parts.size > lib_index + 2
+
+        parts.first
+      end
+
+      def target_path(path)
+        return path if @root_prefix.empty? || @root_prefix == "."
+
+        path.delete_prefix("#{@root_prefix}/")
       end
 
       def twins_among(paths)
