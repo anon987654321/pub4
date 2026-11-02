@@ -121,6 +121,35 @@ module Brgen
       CITY_NETWORK_DOMAINS.map { |domain| ENTRIES_BY_DOMAIN.fetch(domain) }.sort_by(&:city)
     end
 
+    # Navigation may expose only domains that are both public-network members
+    # and in the operator's TLS-live inventory. These sets are not interchangeable.
+    def self.live_network_domains
+      CITY_NETWORK_DOMAINS & LIVE_DOMAINS
+    end
+
+    def self.live_network_entries
+      live_network_domains.map { |domain| ENTRIES_BY_DOMAIN.fetch(domain) }.sort_by(&:city)
+    end
+
+    def self.pending_network_domains
+      CITY_NETWORK_DOMAINS - LIVE_DOMAINS
+    end
+
+    def self.pending_network_entries
+      pending_network_domains.map { |domain| ENTRIES_BY_DOMAIN.fetch(domain) }.sort_by(&:city)
+    end
+
+    # Full operator worklist, including registered cities outside the public
+    # network. Promote a domain only after DNS and TLS have been verified.
+    def self.not_yet_live_domains
+      ENTRIES.map(&:domain) - LIVE_DOMAINS
+    end
+
+    def self.nordic?(entry)
+      record = entry.is_a?(Entry) ? entry : ENTRIES_BY_DOMAIN[entry.to_s]
+      record ? %w[DK FI IS NO SE].include?(record.country.to_s.upcase) : false
+    end
+
     # The city apexes that actually serve this app. Every other ENTRIES row is a
     # domain we intend to run and have wired into OPERATOR.sh#ALL_DOMAINS, but
     # relayd only answers for an apex whose certificate exists on disk — see

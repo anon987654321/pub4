@@ -156,20 +156,19 @@ class ApplicationHelperTest < ActionView::TestCase
     assert_includes city_network_entries.map(&:city), "Los Angeles"
   end
 
-  test "city network preserves live verticals and uses apexes for non-live cities" do
+  test "city network links only TLS-live destinations and preserves live verticals" do
     Current.domain = "brgen.no"
 
     Current.subapp = :marketplace
     live = Brgen::DomainRegistry::ENTRIES_BY_DOMAIN.fetch("oshlo.no")
     assert_equal "https://markedsplass.oshlo.no/", city_network_href(live)
 
-    non_live = Brgen::DomainRegistry::ENTRIES_BY_DOMAIN.fetch("lndon.uk")
-    assert_equal "https://lndon.uk/", city_network_href(non_live)
+    pending = Brgen::DomainRegistry::ENTRIES_BY_DOMAIN.fetch("lndon.uk")
+    assert_nil city_network_href(pending)
 
     Current.subapp = :ai
-    assert_equal "https://lsangeles.com/", city_network_href(
-      Brgen::DomainRegistry::ENTRIES_BY_DOMAIN.fetch("lsangeles.com")
-    )
+    frankfurt = Brgen::DomainRegistry::ENTRIES_BY_DOMAIN.fetch("frankfrt.de")
+    assert_equal "https://frankfrt.de/", city_network_href(frankfurt)
   end
 
   test "schema_url_for makes listing URLs absolute on the marketplace host" do

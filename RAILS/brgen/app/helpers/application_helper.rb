@@ -40,12 +40,10 @@ module ApplicationHelper
   # evidence remain separate: parked or unverified cities always receive their
   # apex, never a guessed vertical hostname.
   def city_network_href(entry)
+    return unless Brgen::DomainRegistry.live_network_domains.include?(entry.domain)
+
     subdomain = Brgen::DomainRegistry.city_subdomain_for(active_vertical, entry) if active_vertical
-    if subdomain.present? && Brgen::DomainRegistry.live_city_domain?(entry.domain)
-      "https://#{subdomain}.#{entry.domain}/"
-    else
-      "https://#{entry.domain}/"
-    end
+    subdomain.present? ? "https://#{subdomain}.#{entry.domain}/" : "https://#{entry.domain}/"
   end
 
   def marketplace_subdomain

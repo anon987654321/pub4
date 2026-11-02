@@ -6,6 +6,29 @@ require "brgen/locale_bridge"
 require "brgen/city_content"
 
 class DomainRegistryTest < ActiveSupport::TestCase
+  test "network readiness separates live, pending and not-yet-live domains" do
+    assert_equal %w[brgen.no cardff.uk edinbrgh.uk frankfrt.de oshlo.no stvanger.no trndheim.no],
+                 Brgen::DomainRegistry.live_network_domains.sort
+    assert_equal %w[denvr.us lsangeles.com lndon.uk wshingtondc.com],
+                 Brgen::DomainRegistry.pending_network_domains.sort
+    assert_equal Brgen::DomainRegistry.live_network_domains.sort,
+                 Brgen::DomainRegistry.live_network_entries.map(&:domain).sort
+    assert_equal Brgen::DomainRegistry.pending_network_domains.sort,
+                 Brgen::DomainRegistry.pending_network_entries.map(&:domain).sort
+    assert_equal (Brgen::DomainRegistry::ENTRIES.map(&:domain) - Brgen::DomainRegistry::LIVE_DOMAINS).sort,
+                 Brgen::DomainRegistry.not_yet_live_domains.sort
+  end
+
+  test "nordic readiness helper uses country identity rather than locale aliases" do
+    %w[brgen.no oshlo.no reykjavk.is kbenhvn.dk gtebrg.se hlsinki.fi].each do |domain|
+      assert Brgen::DomainRegistry.nordic?(domain), "#{domain} should be Nordic"
+    end
+    %w[cardff.uk frankfrt.de lsangeles.com].each do |domain|
+      refute Brgen::DomainRegistry.nordic?(domain), "#{domain} should not be Nordic"
+    end
+    refute Brgen::DomainRegistry.nordic?("missing.example")
+  end
+
   test "resolves brgen.no to bergen with norwegian locale" do
     result = Brgen::DomainRegistry.resolve("brgen.no")
 
