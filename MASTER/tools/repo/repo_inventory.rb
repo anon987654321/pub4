@@ -31,7 +31,6 @@ ALLOWED_ROOT_FILES = %w[
   AGENTS.md
   CLAUDE.md
   FETAT.md
-  FULL.yml
   GEMINI.md
   GLM.md
   README.md

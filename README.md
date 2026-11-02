@@ -38,8 +38,10 @@ INCONCLUSIVE, never PASS.
 
 ## Repository facts
 
-`VERSION` records the release line. `FULL.yml` is the generated self-contained
-rule corpus. `FETAT.md` is the working master of the FETAT proposal — a
-document, not policy. `redeploy` is the workstation deploy entrypoint, and
-`replicate/`, `output_paths.rb` and `subprocess.rb` are root-level shims over
-STUDIO's canonical implementations.
+`VERSION` records the release line. The FULL.yml rule corpus was retired on
+2026-11-02: it declared itself `not_a_live_config` and every one of its rows
+in `MASTER/data/law_runtime.yml` is marked covered — the constitution lives
+in `MASTER/law/` and `MASTER/data/laws.yml`. `FETAT.md` (working master of
+the FETAT proposal, a document, not policy) lives at
+`STUDIO/docs/fetat/proposal.md`. `redeploy` is the workstation deploy
+entrypoint.
