@@ -52,67 +52,6 @@ Turbo Stream templates. Measurements are structural signals, not proof that a
 directory or namespace is unnecessary. Refresh them at the start and end of
 each batch; compare pinned revisions only.
 
-### Decisions landed
-
-- [x] RAILS shared namespaces — **RETAIN**. The repeated `shared` segment
-  expresses the `Shared` Ruby namespace and Rails view lookup contract across
-  controllers/concerns, models/concerns, helpers, services, channels, reflexes
-  and views. The shared engine README describes these as one engine-owned
-  surface; flattening the segment would change constants or partial names, not
-  remove accidental structure. Keep true service subdomains such as
-  `discovery/` and `link_embed/`.
-
-- [x] RAILS service namespaces — **RETAIN**. `Marketplace::Payments`,
-  `Fediverse`, `Marketplace` and `Dating` are real constant and ownership
-  boundaries. Payment providers, federation delivery, marketplace services and
-  dating matchmaking do not become clearer or safer by moving their files to
-  a generic `services/` root or across engine boundaries.
-
-- [x] Takeaway boundary — **RETAIN as a nested isolated engine**. It has
-  `Takeaway::Engine`, `isolate_namespace Takeaway`, its own routes,
-  controllers, models, views and locale files, and an explicit
-  `takeaway_` table contract. Brgen mounts the same engine at Marketplace
-  `/food` and on the legacy Takeaway host. The nested location reflects that
-  ownership; moving it to a sibling app would contradict the product topology
-  and compatibility mount.
-
-- [x] RAILS cross-app implementation duplication — keep the existing
-  extraction boundary. `RAILS/test/app_duplication_test.rb` compares shared
-  relative paths across Amber, Brgen and BSDPorts and fails when identical
-  implementation exceeds its 12-line compatibility budget. Bare-name
-  controller/Reflex host constants remain thin adapters; shared behavior lives
-  in `__shared`. The shared-engine historical migrations are deliberately
-  inert: `Shared::Engine` does not add a migration path, and
-  `engine_migration_convention_test.rb` freezes the three historical files
-  while requiring live migrations in each app. Do not flatten app-specific
-  schemas or migration histories.
-
-- [x] STUDIO duplicate IdeaPicture implementation — **DELETE** landed.
-  Removed unused `STUDIO/generators/idea_picture.rb`; the only entrypoint,
-  `STUDIO/photograph.rb`, and `STUDIO/test/idea_picture_test.rb` load
-  `STUDIO/photograph/idea_picture.rb`. The removed file had the exact same
-  Git blob and no tracked caller was found. The `generators/` directory
-  disappeared with it. A regression test now asserts that the photograph
-  implementation exists and the duplicate generator path stays absent; that
-  test is committed but NOT_RUN in this GitHub editing pass.
-  Commit: `2fe2701ec268ed94b04c2f1602853a3657872db1` (delete) followed by
-  `9a5c884de24857effebe44f9686da6592453bf29` (test).
-- [x] Duplicate Turbo Stream responses — **MERGE** landed. Three alternate
-  action templates were byte-identical to their paired action template:
-  Amber `follows/destroy` now renders `:create` after deleting the Follow;
-  Amber `planned_outfits/destroy` runs `load_planner` then renders
-  `:create`; BSDPorts `ports#unwatch` renders `:watch` after setting
-  `@watching = false`. Deleted the three redundant templates without
-  changing URLs, response MIME types or the post-mutation state rendered.
-  Added request regressions for follow/unfollow, planner removal and
-  watch/unwatch. A structural assertion in
-  `RAILS/test/app_duplication_test.rb` also prevents the retired templates
-  from reappearing without explicit canonical reuse. Functional and static
-  regressions are committed but NOT_RUN in this GitHub editing pass. The
-  controller edits, removals and functional tests were committed through
-  `2b660c5c080f5ecff2eae0ec15b2257269561a73`; the structural ratchet followed
-  in `88bbd45bb2ede7a10d768c101c796ec786e15f70`.
-
 ### Remaining work
 
 - [ ] Complete the semantic flattening census before moving more code. For
@@ -211,11 +150,6 @@ each batch; compare pinned revisions only.
   second visualizer, audio engine or generator. Reassess only after the
   `radio_brgen_tunnel.js` audio/visual split has a tested ownership boundary.
 
-- [x] Root governance and agent instructions: the generator now has one source
-  in `MASTER/AGENTS.md`, emits only `AGENTS.md`, `GEMINI.md`, `GLM.md`
-  and `.cursorlaws`, and does not recreate `.github/`. Copilot reads root
-  `AGENTS.md`; Claude's native settings path is a root symlink into
-  `STUDIO/agent-guidance/claude/`. The four-directory root contract is enforced.
 - [ ] Verify from a local Claude Code session on macOS that project hooks load
   through the `.claude` symlink; this session could verify the Git tree and
   link target but could not launch Claude Code. Root `TODO.md` remains the
@@ -241,8 +175,6 @@ each batch; compare pinned revisions only.
   before/after structural metrics and compare behavior. Keep unrun checks
   NOT_RUN and unknown behavior INCONCLUSIVE; do not claim a code flattening
   is complete from a tree-only audit.
-
-- [x] Replace the obsolete whole-tree read gate with scoped source review. The operator authorizes bounded implementation when the root and MASTER agent contracts, applicable Law records, target sources, direct callers, focused tests and task contract have been read. Record unreviewed adjacent surfaces as INCONCLUSIVE; do not remove compatibility APIs or change constitutional authority without specific evidence. This narrows the reading scope, not the preservation, Law, safety or verification requirements.
 
 ## Open from the 2026-11-01 session — Baymard UX audit
 
@@ -309,96 +241,28 @@ each batch; compare pinned revisions only.
 
 ## Open from the 2026-10-31 session
 
-- MASTER browser: submit forms for an operator-approved host. The operator chose
-  "approve per site, then free" (2026-11-01); `Io::WebBrowse` forwards only GET/HEAD,
-  so add same-host POST with the session cookies, once-per-site-per-task approval,
-  and a test against a real login form. Blocked on the session_browser_post_policy seam.
-- whyp.it slug links (`/tracks/radio-bergen-1-…`) carry no numeric id, so
-  `Playlist::Track#whyp_embed_url` returns nil for them; resolve the id.
-- Run under Ruby 4.0.5 the app tests written but NOT_RUN: billing core
-  (`stripe_billing_test`), law API (`api_key_test`, `api_lint_controller_test`),
-  dating identity gate and splash, `radio_bergen_manifest_test`, `track_import_test`.
-- `test_core_bridge` `test_lifecycle_events_persist_without_a_host_bus` fails at
-  HEAD (expected "reversible", got nil).
-- `MASTER/bin/operator measure` did not finish in 500s here; re-read the ratchets
-  (law trace debt after SPONSORED_LINK_REL).
-- Remaining FULL.yml adopts (see `MASTER/data/recovery/full_yml_assessment.yml`), then
-  delete FULL.yml.
-- Marketplace: active-filter chips with clear on the results; trim tile badges to one
-  delivery line. Takeaway menu categories and restaurant cover photos need a schema
-  column each.
-- [x] Split the 1,269-line `radio_brgen_tunnel.js` into a 216-line
-  coordinator, `radio_brgen_audio.js` and `radio_brgen_visual.js`. Importmap
-  pins and module-boundary regression tests are in place; Node/browser execution
-  remains NOT_RUN in this GitHub-only pass.
+- [ ] Browser form submission remains blocked on the
+  `session_browser_post_policy` operator seam. The approved direction is
+  same-host POST only, with session cookies, per-site/per-task approval and
+  a real login-form regression. Do not widen the existing GET/HEAD browser
+  contract before the seam is explicitly closed.
+- [ ] Resolve Whyp track slugs for embeds without network work in an Active
+  Record render. Use the provider's documented oEmbed endpoint during an
+  explicit import/refresh step, validate the returned iframe host and path,
+  and preserve private `token` / collection `in` query parameters. Cover
+  numeric IDs, slugs, malformed responses and private links.
+- [ ] Re-run `MASTER/bin/operator measure` on the pinned checkout with a
+  bounded timeout and identify which ratchet dominates after
+  `SPONSORED_LINK_REL`. The previous 500-second attempt did not finish and
+  is not a measurement result.
+- [ ] Marketplace UX/schema follow-through: active-filter chips with a clear
+  action on results; one delivery line per tile; Takeaway menu categories and
+  restaurant cover images with explicit schema, validations and migration
+  proof. Preserve existing product-specific card layouts.
+- [ ] Run the focused billing, API-key/API-lint, dating identity, Radio manifest
+  and track-import regressions listed in the RAILS verification gate below;
+  no result is inferred from their source files alone.
 
-## Session note 2026-10-28 (bounded provider-health history)
-
-- Provider-health scoring already uses a 15-minute event window and recovery bonus.
-  This batch bounds defensive reads independently of the shared 25 MiB writer cap:
-  at most 5 MiB and 20,000 complete records per file generation are parsed, with
-  partial leading records discarded. Regression tests cover byte and event caps.
-- Runtime tests remain NOT_RUN; the hardening-review item stays open until the focused
-  provider-health and routing regressions execute successfully on Ruby 4.0.5.
-
-## Session note 2026-10-28 (fail-closed hooks and canonical Ruby pin)
-
-- Configured PreToolUse hooks now deny by default on hook failures, and an
-  absent, malformed, symlinked, untrusted or broadly writable hook config refuses
-  effects instead of silently disabling the gate. Explicit `on_fault: allow` is
-  the only fail-open switch. Regression cases cover faults and config errors.
-- Root and MASTER `.ruby-version` are reconciled to Ruby 4.0.5, matching every
-  Rails app pin and MASTER's lockfile declaration. The dependency contract now
-  asserts the exact canonical pin. Runtime tests remain NOT_RUN from GitHub.
-- This commit establishes the implementation and tests; it does not claim their
-  execution or full-suite completion.
-
-## Session note 2026-10-28 (face-first boot and Dilla bed removal)
-
-- Bare interactive `bin/master` now opens the existing terminal face by default;
-  it carries the same live operator prompt. `MASTER_FACE_ON_START=0` keeps the
-  shell-first prompt for diagnosis. Scripted messages and pipes remain plain.
-- Removed the persistent Dilla bed as a runtime feature: no boot start, narrator
-  restart, held-bed cleanup, or face microphone coupling; removed its config and
-  module. Dilla remains available for deliberate Studio and `/play` work.
-- Regression tests were updated for the new prompt default and the absence of
-  ambient-bed configuration/runtime calls. Ruby tests and a live PTY launch were
-  **NOT_RUN** through the GitHub editing surface. The full verification list below
-  remains open; no suite or visual test is claimed as passing.
-
-## Session note 2026-10-31 (historical recovery)
-
-- Reconciled selected Library archives, the available `1_BACKUP.LOG` session log,
-  `master_FULL.yml`, older recovery notes and the current GitHub tree. Pushed
-  the Radio queue-order fix, importer tenant guard, corrected Law-parity wording,
-  and explicit legacy app/visualizer dispositions in the preceding commits.
-- Historical searches found already-absorbed work: shared RAILS cascade/auth test
-  examples, MASTER quota/model-skip routing, per-language voice policy, FaceState
-  stipple dial modulation, Dilla progression/patch rotation and the canonical
-  Radio tunnel. Do not recreate parallel renderers, ad engines, Law registries or
-  generators to satisfy stale snapshots.
-- This is not an account-wide ChatGPT audit. The available recovery bundle states
-  that not every ChatGPT conversation from account inception was available. The
-  unresolved source/export boundary is listed below; no claim that every old chat
-  was read is made.
-- The older request for a floating footer transport is already implemented by the
-  Playlist engine's `_transport_bar.html.erb` and `.playlist-transport-bar` CSS:
-  play/pause/previous/stop/next/volume, floating rounded geometry, safe-area offset,
-  nav autohide and reduced-motion handling. No duplicate implementation is needed.
-- The TTS lip-sync implementation is already present: `face_speech_playback.js`
-  schedules viseme plans against their audio clock, with `viseme_plan.test.mjs` and
-  `performance_timeline.test.mjs` coverage. Audible latency/quality on the target
-  device remains a separate runtime check.
-- The current language policy (English Christopher; Norwegian Pernille/Finn; Malay
-  Yasmin/Osman) supersedes the earlier request to rotate all voices indiscriminately.
-  Preserve the per-language routing; do not regress into cross-language voice rotation.
-- The requested Brgen responsive screenshot set is already present in Git: mobile and
-  desktop pairs for Brgen, Dating, Maps, Marketplace, Messenger, Radio, TV and MASTER,
-  plus Amber and BSDPorts. This is a current-tree asset inventory, not a fresh runtime
-  capture from this recovery pass.
-- Full Ruby 4.0.5/Rails/MASTER/STUDIO suites, live GPU/browser captures, local TTS
-  renders and vm23 checks were not run through the GitHub editing surface. No
-  production deployment or media import is claimed.
 
 ## Carried-forward requests from earlier sessions
 
@@ -513,10 +377,6 @@ actionable root-backlog item. Keep them open until the relevant evidence exists.
   checkpoint/recovery states, scoped execution, typed provider failures and bounded
   fallback); retain MASTER's Ruby/law authority and avoid importing a parallel agent
   framework. Link each accepted pattern to a production caller and regression test.
-- [x] **Model routing — temporary Ollama exclusion:** during November 2026, Ollama is
-  disabled in `models.yml` and filtered from both normal selection and the all-dead
-  fallback. The allowlisted Gemma remains dormant; only an explicit
-  `MASTER_OLLAMA_ENABLED=1` opts in, and `MASTER_NO_OLLAMA=1` is a hard-off.
 - [ ] **Model routing — live provider proof:** on or after December 1, 2026, review the
   account/quota state before considering re-enabling Ollama. Prove signed-in
   `claude-cli:`, `codex-cli:` and `grok-cli:` selection, actual served model/provider
@@ -525,102 +385,6 @@ actionable root-backlog item. Keep them open until the relevant evidence exists.
   corrections influence greeting, language, response style and workflow selection through
   bounded, provenance-bearing memory. Memory must be retractable and must never override
   `soul.yml`, `laws.yml`, executable laws or explicit current instructions.
-
-## Session note 2026-10-28 (A/B/C/D execution)
-
-- **B — branch hygiene:** deleted 40 stale agent/fix/session/codex/claude/work
-  branches that were 1-ahead/1-behind concurrent tips. Remote now has **only
-  `main`**. Archaeology remains in commit history and tags.
-- **C — bplans:** owner decision recorded as **archived** (not imported into
-  public pub4). Updated `MASTER/data/recovery/pub_restore.yml` and
-  `legacy_manifest.yml`. Provenance stays in `anon987654321/pub`.
-- **D — CSP probe (external):** 2026-10-28 HTTPS probes show
-  `Content-Security-Policy-Report-Only` on `brgen.no`, `amberapp.art`, and
-  `ai.brgen.no` — enforcement not live. Evidence in
-  `STUDIO/docs/evidence/csp_probe_2026-10-28.md`. Seam `csp_enforced_on_vm23` stays
-  open until operator sets `PUB4_CSP_ENFORCE=1` on vm23 and re-probes.
-- **A — verification:** full focused suite still needs pinned Ruby 4.0.5 and
-  a successful `bundle install`. Added `MASTER/bin/verify-focused` to run the TODO list and
-  report per-file exit codes. Dependency-light FinalCleanup remains
-  3/17/0 on Ruby 3.2.3 in this executor.
-
-## Session note 2026-10-28 (Grok triage + light proof)
-
-- Branch inventory: ~40 agent/fix/session/codex/claude/work branches remain on
-  the remote. Every inspected tip is **1 commit ahead and 1 behind** `main`
-  (concurrent divergence). Priority tips checked:
-  `fix/kernel-lifecycle-consolidation-20261028-final`,
-  `fix/recovery-gate-mission-child-restart-20261028`,
-  `polish/master-command-surface-2026-10-28`,
-  `fix/master-state-group-write-boundary-20261028`. Main already carries longer
-  `test_recovery_gates.rb` (440 lines) than the recovery-gate branch tip (313);
-  unique branch content appears superseded or partially folded. No open PRs.
-  Safe next step for the operator: after one verification pass on main, delete
-  the stale agent branches (or leave them as archaeology).
-- Executor constraint: this host is Ruby 3.2.3 / 1.2 GiB RAM. `bundle install`
-  fails closed because `opentelemetry-sdk ~> 1.11` requires Ruby >= 3.3. Full
-  MASTER suite and `rake test` remain **BLOCKED** here; they need the pinned
-  4.0.5 checkout (or the explicitly supported OpenBSD runtime lane).
-- Re-ran the dependency-light FinalCleanup harness against current
-  `lib/fix/final_cleanup.rb` and the three tests in `test_final_cleanup.rb`:
-  **3 runs, 17 assertions, 0 failures, 0 errors, 0 skips** (Ruby 3.2.3). This
-  reconfirms the focused cleanup contract only; it is not repository-dependency
-  integration and not the full MASTER suite.
-- Recovery / restore ledger still open for owner decision: `bplans` (no
-  generator ever existed; content may be sensitive; pub4 is public) — see
-  `MASTER/data/recovery/pub_restore.yml`.
-- Operator seams unchanged; CSP live enforcement on vm23 remains the production
-  gate that source alone cannot close.
-
-## Session note 2026-10-28
-
-- Historical checkpoint: root and MASTER temporarily used the available Ruby
-  3.3.8 in the constrained executor. The canonical pin is now 4.0.5 as the
-  execution contract requires; see the newer session note above. This does not
-  claim test results.
-- Added the token-owned face swarm under face_interface.swarm, the shared
-  Master::Face::Swarm module, CLI frame overlay, and web stipple integration.
-  Coverage was added for token reading, deterministic seeding, force direction,
-  cohesion/separation, bounded integration, depth/ramp mapping, spatial budget,
-  reduced-motion freeze, and CLI/web adapter contracts. The Ruby and Node suites
-  still need to run against a checkout.
-- Added six named recovery gates before any Fix::Kernel fold. Gate 1 now
-  exercises a real aborted Transaction and checks byte-exact binary restoration,
-  file mode/owner/group, and deletion of a newly created path. That source test
-  has not yet been run here. Gates 2–6 remain explicit skips; wire each to the
-  production recovery path and prove red then green before folding coordinator
-  owners.
-- Added STUDIO/docs/seo_audit_2026-10-28.md from session-provided observations. Raw HTTP
-  captures were not attached to this commit, so those observations are advisory;
-  re-probe and preserve timestamped headers/bodies before closing the SEO audit.
-- Post-merge static review removed duplicate appended test definitions from the
-  RunJournal, quota, ComputePool, RoutePolicy and trace JSONL/storage test files,
-  and added `test_recovery_gates.rb` to the focused release battery. These were
-  source-structure repairs only; no project test command has been executed.
-- Follow-up STUDIO review normalized shadow/highlight detail ratios before using
-  them in correction thresholds, made missing pixel bands produce no tone-curve
-  proposal, and tightened JSON-round-trip replay-manifest verification plus exact
-  modality-version checks. Replay manifests now carry declared temporal schedule
-  hashes and refuse mismatches. Reference-derived styles now require a source
-  fingerprint per transferred attribute, and minted versions must name their
-  predecessor. The seven cross-modal style contracts remain in laws.yml as STUDIO
-  policy entries; they are not silently counted as MASTER's nine priority
-  constitutional laws without MASTER detector coverage. Negative-list matching
-  still needs a real modality-specific matcher; no lexical substitute is claimed
-  as complete. Regression cases were added; the STUDIO and MASTER project suites
-  remain NOT_RUN here.
-- Added `Master::Fix::FinalCleanup` as the explicit final stage on every `/fix`
-  exit. It releases the commit lease and owned visual runtime, removes the current
-  run's temporary visual captures, prunes only unretained exact-named assessment
-  and architecture artifacts, and writes a cleanup receipt; source files,
-  checkpoints, transaction/recovery evidence, audit logs and test logs are not
-  cleanup candidates. The exact committed cleanup implementation and test file were run in a
-  dependency-light local harness with only `test_helper` replaced by a Minitest-only
-  stub: Ruby 3.3.8 reported 3 runs, 17 assertions, 0 failures, 0 errors, 0 skips.
-  This proves the focused cleanup behavior, not repository dependency integration
-  or the full MASTER suite. The full project suite remains
-  NOT_RUN in this executor: it has no Bundler executable and outbound DNS cannot
-  resolve GitHub; Vercel was not used as test evidence.
 
 ## Agent ergonomics (2026-10-28 wishlist)
 
@@ -673,6 +437,7 @@ source and tests they could not run; this pass is what measures them.
   `bundle exec ruby -Ilib:test test/test_keyless_routing.rb`,
   `bundle exec ruby -Ilib:test test/test_llm_dispatcher.rb`,
   `bundle exec ruby -Ilib:test test/test_event_privacy.rb`,
+  `bundle exec ruby -Ilib:test test/test_core_bridge.rb`,
   `bundle exec ruby -Ilib:test test/test_trace_log_append_jsonl.rb`,
   `bundle exec ruby -Ilib:test test/test_trace_metrics_log.rb`,
   `bundle exec ruby -Ilib:test test/test_trace_telemetry.rb`,
@@ -685,7 +450,14 @@ source and tests they could not run; this pass is what measures them.
   workers and mismatched start/result counts. Then run `rake audit` (the complete declared lint
   inventory), followed by `bin/check --profile=agent`.
 - [ ] RAILS: `ruby RAILS/test/contract_runner_contract_test.rb`, `ruby RAILS/test/deploy_checks_contract_test.rb`, `ruby RAILS/test/check_failopen_test.rb`, `ruby RAILS/test/checks/runner_explain_test.rb`, `ruby RAILS/test/checks/constitutional_scan_targets_test.rb`, `ruby RAILS/test/run_all.rb`, and
-  `bin/ci` in each app in `RAILS/apps.yml`, including the 26 playlist, tv and takeaway tests
+  `bin/ci` in each app in `RAILS/apps.yml`, plus focused Brgen regressions for
+  `test/services/stripe_billing_test.rb`, `test/models/api_key_test.rb`,
+  `test/controllers/api_lint_controller_test.rb`,
+  `test/controllers/dating_identity_gate_test.rb`,
+  `test/lib/radio_bergen_manifest_test.rb` and
+  `RAILS/brgen_radio/playlist/test/models/playlist/track_import_test.rb`.
+  Preserve per-command exit codes and evidence; a queued command is not a pass.
+  Include the 26 playlist, tv and takeaway tests
   that no command ran until `Pub4TestScope`, brgen's share-target, share-draft and job
   concurrency tests and a fresh test database for amber's `account_merges` and identity migrations.
 - [ ] OPENBSD: `ruby OPENBSD/test/test_pf_policy_check.rb`, `ruby OPENBSD/test/run_all.rb` and
@@ -813,12 +585,6 @@ source and tests they could not run; this pass is what measures them.
 - [ ] Run focused local tests for the curated manifest/import guard and the Playlist tunnel view/controller; add full importer idempotency, ordering, checksum and failure-atomicity coverage, then execute them. This GitHub-only pass did not run Rails tests.
 - [ ] MASTER plugin candidates from pub2 misc remain reference-only; no plugin implementation until the existing adapter, provider contracts, applicable Laws and focused tests have been reviewed.
 
-
-## Root directory contract
-
-- [x] The tracked root directories are exactly `MASTER/`, `RAILS/`, `OPENBSD/` and `STUDIO/`. Claude's native settings path is a root symlink into `STUDIO/agent-guidance/claude`, not another root directory.
-- [x] The agent-contract generator no longer creates `.github/`. Copilot uses root `AGENTS.md`; Gemini, GLM and Cursor retain generated pointers. `rake lint:agent_contracts` remains the drift check.
-- [x] Claude's hooks remain available at the native `.claude/settings.json` path through the root symlink, with their configuration stored under `STUDIO/agent-guidance/claude/`.
 
 ## Open from the 2026-11-01 session — WebGL / WebGPU ecosystem research
 
@@ -1023,11 +789,6 @@ browser support and bundle/runtime cost before adopting a dependency.
   compatibility review, performance evidence, license review and a tested
   progressive fallback.
 
-## 2026-11-01 — renderer implementation status
-
-- [x] **Brgen Maps:** MapLibre clustering uses GeoJSON source/layers with cluster expansion, safe DOM popups, same-city URL checks and a text/list fallback. Browser verification is still NOT_RUN.
-- [x] **BSDPorts:** port pages now offer an optional collapsed SVG dependency overview from recorded database edges. Traversal is bounded to 60 packages and six dependency levels; the existing text tree remains the readable baseline. English and Norwegian labels are supplied. No graph renderer dependency was added.
-- [x] **Brgen Radio / Dilla:** the existing radio tunnel already owns the WebGL renderer and 2D fallback. Local hosted audio can supply real FFT data; cross-origin iframe playback cannot, and the existing proxy motion is not measured spectrum. No parallel audio engine was introduced.
 - [ ] **Amber 3D:** deferred until the product has real, optimized garment assets and an honest fit-data contract. The current product documentation explicitly excludes virtual fitting; a decorative mannequin would imply a capability the application does not have.
 - [ ] **MASTER visual/observability work:** no MASTER implementation was edited. The obsolete whole-tree read gate has been replaced by scoped source review; read the relevant authority, face, browser, event, receipt and visual-conformance paths before editing.
 - [ ] **Verification:** run `cd RAILS/bsdports && bin/ci` and the focused graph/controller tests, then capture browser evidence. This GitHub editing session could not execute Rails or browser tests; they remain NOT_RUN, not PASS. Brgen Maps browser checks are also outstanding.
