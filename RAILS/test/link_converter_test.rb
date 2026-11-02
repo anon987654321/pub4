@@ -94,6 +94,11 @@ class LinkConverterTest < Minitest::Test
     assert_equal "city:bergen|surface:amber", LC.epi_for(city: "bergen", surface: "amber")
   end
 
+  def test_request_epi_uses_supplied_dimensions_for_first_party_click_attribution
+    assert_equal "city:bergen|surface:marketplace",
+                 LC.request_epi(city: "bergen", surface: "marketplace")
+  end
+
   # Ad blockers target tradedoubler.com by hostname, so a first-party copy is the
   # one that survives — but an app with no sync job of its own must still get a
   # script, because remote-and-sometimes-blocked beats absent.
