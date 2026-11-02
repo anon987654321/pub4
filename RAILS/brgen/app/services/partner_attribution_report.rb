@@ -61,7 +61,7 @@ class PartnerAttributionReport
   # currencies separate; converting with a guessed or stale FX rate would turn
   # an attribution report into a misleading revenue figure.
   def approved_commission_by_currency
-    approved_conversions.group(:currency).sum(:publisher_commission)
+    approved_conversions.group(:currency).sum(:publisher_commission).transform_values { |amount| amount || BigDecimal("0") }
   end
 
   # Coarse attribution only. The current EPI contract carries city and surface;
