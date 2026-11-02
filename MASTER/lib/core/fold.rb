@@ -70,8 +70,18 @@ module Master::Core
             return Done.new(reason: :blocked, turns: turn + 1, summary:)
           end
         in Verdict::Request(effect: asked, prompt:, reason:, by:)
-          done = approve(turn, asked, prompt:, reason:, by:)
-          return done if done
+          approval = approve(turn, asked, prompt:, reason:, by:)
+          return approval if approval.is_a?(Done)
+
+          if approval == :refused
+            signature = [asked.verb, by.to_s, reason.to_s]
+            blocked_by[by.to_s] += 1
+            blocked_effects[signature] += 1
+            if blocked_by[by.to_s] >= BLOCK_LIMIT || blocked_effects[signature] >= 2
+              summary = block_limit_summary(asked, by, reason, blocked_effects[signature])
+              return Done.new(reason: :needs_user, turns: turn + 1, summary:)
+            end
+          end
         in Verdict::Allow(effect: admitted)
           done = apply(turn, admitted)
           return done if done
@@ -137,7 +147,7 @@ private
       emit(turn, effect, observation)
       return Done.new(reason: :needs_user, turns: turn, summary: detail) if answer.err? && answer.detail.to_s == "no surface to ask"
 
-      nil
+      :refused
     end
 
     # Anything that is not a clear yes is a no.
