@@ -447,7 +447,19 @@ module Operator
       if since && (flags["--mirror"] || flags["--verify"])
         return usage_error("--since cannot be combined with --mirror or --verify")
       end
-      return run(trees, mirror: true) if flags["--mirror"]
+      if flags["--mirror"]
+        ignored = []
+        ignored << "--budget" if budget_arg
+        ignored << "--part-bytes" if part_bytes_arg
+        ignored << "--only" if only_arg
+        ignored << "--tests" if flags["--tests"]
+        ignored << "--code" if flags["--code"]
+        ignored << "--code-only" if flags["--code-only"]
+        ignored << "--verify" if flags["--verify"]
+        return usage_error("--mirror cannot be combined with #{ignored.join(", ")}") if ignored.any?
+
+        return run(trees, mirror: true)
+      end
       return verify(trees, only:) if flags["--verify"]
 
       options = { tests: !flags["--tests"].nil?, full: budget.nil?, only:, part_bytes:, since:,
