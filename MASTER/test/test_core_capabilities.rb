@@ -9,6 +9,7 @@ class CoreCapabilitiesTest < Minitest::Test
   def test_effect_capability_is_derived_from_verb
     assert_equal :read, E.read("x").capability
     assert_equal :write, E.write("x", "body").capability
+    assert_equal :probe, E.probe(%w[ruby -c check.rb]).capability
     assert_equal :execute, E.exec(%w[echo hi]).capability
     assert_equal :read, E.git(:diff).capability
     assert_equal :write, E.git(:stage, paths: ["x"]).capability
@@ -43,8 +44,18 @@ class CoreCapabilitiesTest < Minitest::Test
     capabilities = Master::Core::Capabilities.read_only
 
     assert capabilities.allow?(:read)
+    assert capabilities.allow?(:probe)
     refute capabilities.allow?(:write)
     refute capabilities.allow?(:execute)
+  end
+
+  def test_observe_and_plan_allow_probes_without_general_execution
+    %i[observe plan].each do |profile|
+      capabilities = Master::Core::Capabilities.for(profile)
+      assert capabilities.allow?(:probe), "#{profile} must allow bounded read-only probes"
+      refute capabilities.allow?(:execute), "#{profile} must not grant general execution"
+      refute capabilities.allow?(:write), "#{profile} must not grant writes"
+    end
   end
 
   def test_constitution_blocks_effects_missing_current_capability

@@ -52,7 +52,7 @@ class TestBootModelPin < Minitest::Test
     router.define_singleton_method(:tier_for_model) do |model|
       %w[openrouter/free-model:free ollama:gemma3:4b].include?(model) ? "cheap" : "strong"
     end
-    router.define_singleton_method(:priority_fallback_order) do |models|
+    router.define_singleton_method(:priority_fallback_order) do |models, task_type: :exploration|
       models.each_with_index.sort_by do |model, index|
         rank = if model.start_with?("web-chat:")
                  3

@@ -48,7 +48,9 @@ module Master::Core
       @max_turns.times do |turn|
         return cancellation_done(turn) if cancellation_requested?
 
-        effect = @model.propose(@memory.context, verbs: @world.verbs, scope: @memory.proof.scope)
+        proof_scope = @memory.proof.scope
+        proof_scope = proof_scope.merge(git_operations: @world.git_operations) if @world.respond_to?(:git_operations)
+        effect = @model.propose(@memory.context, verbs: @world.verbs, scope: proof_scope)
         return cancellation_done(turn + 1) if cancellation_requested?
 
         verdict = @law.admit(effect, @memory)

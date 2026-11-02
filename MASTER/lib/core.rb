@@ -18,7 +18,7 @@ module Master::Core
   # An Effect is something the agent wants to do. Nothing reaches the world
   # except by proposing an Effect and having the Constitution admit it. The verb
   # set is closed and small; that closure is what makes the agent auditable.
-  VERBS = %i[read write exec git http ask note critique done].freeze
+  VERBS = %i[read write probe exec git http ask note critique done].freeze
 
   # Cooperative cancellation shared by hosts and the Fold. A cancellation is
   # sticky: the first reason remains authoritative across racing callers.
@@ -97,6 +97,7 @@ module Master::Core
   Effect = Data.define(:verb, :args, :capability) do
     def self.read(path) = new(verb: :read, args: { path: })
     def self.write(path, content) = new(verb: :write, args: { path:, content: })
+    def self.probe(argv, timeout: 20) = new(verb: :probe, args: { argv:, timeout: })
     def self.http(url) = new(verb: :http, args: { url: })
     def self.exec(argv, timeout: 60, evidence: nil, env: {}, compensation: nil)
       args = { argv:, timeout:, evidence:, env: }
@@ -115,6 +116,7 @@ module Master::Core
     CAPABILITIES = {
       read: :read,
       write: :write,
+      probe: :probe,
       exec: :execute,
       git: :write,
       ask: :stdio,
@@ -299,16 +301,16 @@ module Master::Core
   # halfway through a task.
   class Capabilities
     PROFILES = {
-      boot: %i[stdio read execute],
+      boot: %i[stdio read probe execute],
       model: %i[stdio read model],
       # Reading the web is observing: the http verb is a guarded GET, so a
       # question about a page runs in observe or plan mode and must be able to
       # fetch it. Writing and executing stay out.
-      observe: %i[stdio read network],
-      plan: %i[stdio read model network],
-      fix: %i[stdio read write create execute network],
-      repair: %i[stdio read write create execute network],
-      deploy: %i[stdio read write create execute network deploy],
+      observe: %i[stdio read probe network],
+      plan: %i[stdio read probe model network],
+      fix: %i[stdio read probe write create execute network],
+      repair: %i[stdio read probe write create execute network],
+      deploy: %i[stdio read probe write create execute network deploy],
       device: %i[stdio read device],
       world: %i[stdio read world],
     }.freeze
@@ -319,7 +321,7 @@ module Master::Core
     end
 
     def self.read_only
-      new(name: :read_only, capabilities: %i[stdio read])
+      new(name: :read_only, capabilities: %i[stdio read probe])
     end
 
     def initialize(name:, capabilities:)

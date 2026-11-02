@@ -304,6 +304,20 @@ class TestLaneSelection < Minitest::Test
 
   Config = Struct.new(:task_type, :model, :reasoning_mode, keyword_init: true)
 
+  def test_agent_model_selector_preserves_the_task_specific_free_route
+    cohere_free = "cohere/north-mini-code:free"
+    router = router_over([cohere_free, GROK], [cohere_free, GROK])
+    selector = Object.new.extend(Master::Review::Agent::ModelSelector)
+    selector.instance_variable_set(:@model_router, router)
+    selector.instance_variable_set(:@config, Config.new(task_type: "code_generation", model: GROK))
+    selector.instance_variable_set(:@homeostat, nil)
+
+    assert_equal [GROK, cohere_free],
+                 selector.send(:routed_chain, nil, task_type: :code_generation)
+    assert_equal [cohere_free, GROK],
+                 selector.send(:routed_chain, nil, task_type: :exploration)
+  end
+
   # The fix loop asks through the real Agent: ask -> routed chain -> router ->
   # LaneSelection. The dispatcher is a counting stub that records which model the
   # request was addressed to, in the real provider spellings.

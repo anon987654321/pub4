@@ -62,6 +62,8 @@ class NoLibBackedgesTest < Minitest::Test
     assert_includes constitution, "Verdict::Block"
     assert_includes world, "def perform(effect)"
     assert_includes world, "@capabilities.require!(effect.capability)"
+    assert_includes world, "def do_probe"
+    assert_includes constitution, "read_only_probe_rule"
     assert_includes memory, "def record(effect, observation)"
     assert_includes memory, "@proof.record_evidence(effect, observation)"
     assert_includes proof, "PRODUCERS ="
