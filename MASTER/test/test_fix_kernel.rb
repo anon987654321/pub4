@@ -110,7 +110,7 @@ class TestFixKernel < Minitest::Test
       with_workspace do |root|
         path = write_log(root, [%w[observation a], %w[terminal a]])
         File.write(path, File.read(path).sub("\n", "\n#{interstitial}"))
-        File.chmod(path, 0o600)
+        File.chmod(0o600, path)
 
         error = assert_raises(K::LedgerCorruption) { K.read_log(path) }
 

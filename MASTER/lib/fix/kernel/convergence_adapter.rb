@@ -177,9 +177,12 @@ module Master
         end
       end
 
+      # Installing the token is where this adapter starts honouring it, so it activates the token
+      # here as well as in Kernel#run_fix_loop; a caller scoping the adapter directly gets the same.
       def with_cancellation(token)
         previous = @cancellation
         @cancellation = token
+        token.activate! if token.respond_to?(:activate!)
         yield
       ensure
         @cancellation = previous

@@ -33,7 +33,17 @@ class TestFixLoopObservability < Minitest::Test
     def cleanup_visual_runtime = nil
   end
 
-  Plan = Struct.new(:to_h)
+  Plan = Struct.new(:to_h) do
+    def digest = "plan-observability"
+  end
+
+  # The Kernel the run binds its journal and mission to; this test claims nothing about it.
+  KernelDouble = Class.new do
+    def bind_fix_run(**) = nil
+    def link_fix_mission(**) = nil
+  end
+
+  Mission = Struct.new(:id)
 
   # Unrequested: a requested run first builds the dependency graph and the research brief, which
   # this test does not exercise. The journal, the plan and the budget open before begin_run, so
@@ -44,13 +54,14 @@ class TestFixLoopObservability < Minitest::Test
 
     loop = Master::Fix::FixLoop.allocate
     loop.instance_variable_set(:@bus, bus)
+    loop.instance_variable_set(:@kernel, KernelDouble.new)
     loop.instance_variable_set(:@file_collector, Collector.new(1, 0, [File.join(Master::ROOT, "data", "laws.yml")]))
     loop.instance_variable_set(:@convergence_discipline, Discipline.new(error))
     loop.instance_variable_set(:@run_journal, Journal.new("run-observability"))
     loop.instance_variable_set(:@pass_runner, PassRunner.new)
     # An empty transaction root: run start recovers stranded passes before preflight.
     loop.instance_variable_set(:@transaction_root, Dir.mktmpdir("fix-observability-"))
-    loop.define_singleton_method(:mission_for) { |**| nil }
+    loop.define_singleton_method(:mission_for) { |**| Mission.new("mission-observability") }
     loop.define_singleton_method(:exhausted_budget) { |**| nil }
     loop.define_singleton_method(:bind_fix_plan!) { |*| nil }
     loop.define_singleton_method(:repair_seconds_left) { |_| 30 }

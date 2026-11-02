@@ -30,15 +30,18 @@ class FixMissionTest < Minitest::Test
       mission.checkpoint!(files: [])
       record_path = File.join(root, ".master", "mission.json")
       record = JSON.parse(File.read(record_path))
-      record["lease_owner"] = "99999999"
+
+      dead_pid = Process.spawn("true")
+      Process.wait(dead_pid)
+      record["lease_owner"] = "#{Socket.gethostname}:#{dead_pid}:deadbeefdeadbeef"
       record["lease_until"] = (Time.now.utc + 300).iso8601
       File.write(record_path, JSON.generate(record))
 
-      resumed = Master::Fix::Mission.new(root:, checkpoint: checkpoint_factory(root)).start!(
+      resumed = Master::Fix::Mission.new(root:, checkpoint: checkpoint_factory(root)).start_or_resume!(
         goal: "resume interrupted /fix", scope: "MASTER", origin: "manual",
       )
       assert_equal mission.id, resumed.id
-      assert_equal "running", resumed.status
+      assert_equal "running", resumed.record.fetch("state")
       assert_equal "MASTER", JSON.parse(File.read(record_path)).fetch("scope")
       assert JSON.parse(File.read(record_path)).fetch("checkpoint")
     end
@@ -360,4 +363,14 @@ end
     end
   end
 
+  private
+
+  # The checkpoint writer FixLoop#mission_for hands a Mission: the shared store under .master/checkpoints.
+  def checkpoint_factory(_root)
+    lambda do |id:, root:, files:|
+      Master::Fix::Checkpoint.new(root:, dir: File.join(root, ".master", "checkpoints")).create(
+        label: "mission-#{id}", files:,
+      )
+    end
+  end
 end

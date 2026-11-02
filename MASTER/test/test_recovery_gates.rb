@@ -168,7 +168,7 @@ module Master
           # state: Git restores tracked files; the independent Checkpoint restores
           # pre-pass files Git cannot recover (including new/untracked paths).
           git.call("checkout", "--", "tracked.rb")
-          checkpoint_store.restore(checkpoint.fetch("id"))
+          checkpoint_store.restore(checkpoint.fetch(:id))
 
           assert_equal tracked_bytes, File.binread(tracked_path)
           assert_equal checkpoint_bytes, File.binread(untracked_path)
@@ -270,7 +270,9 @@ module Master
           adapter.define_singleton_method(:consensus_approves?) { |_violation, _source| true }
 
           violation = { file: path, law: law.id, line: 8, severity: :warning }
-          result = RunBudget.stub(:law_limit_exceeded?, false) do
+          # capture_io answers the captured [stdout, stderr]; the repair result is assigned inside it.
+          result = nil
+          RunBudget.stub(:law_limit_exceeded?, false) do
             RunBudget.stub(:run_spend, [0.0, 0]) do
               RunBudget.stub(:note_law_cost, nil) do
                 ToolBreaker.stub(:state_of, {}) do
@@ -278,7 +280,7 @@ module Master
                     ToolBreaker.stub(:record, nil) do
                       BestOfN.stub(:active?, false) do
                         capture_io do
-                          adapter.run_once([path], external_violations: [violation])
+                          result = adapter.run_once([path], external_violations: [violation])
                         end
                       end
                     end
@@ -371,7 +373,7 @@ module Master
             File.join(direct_root, "MASTER"), max_passes: 2, budget_seconds: 60,
             incremental: false, requested: true
           )
-          assert direct_result.ok?, direct_result.message
+          assert direct_result.ok?, -> { direct_result.message }
           direct_signature = receipt_signature(direct_kernel)
 
           Dir.mktmpdir("fix-recovery-gate-receipt-cli") do |cli_root|
@@ -393,6 +395,7 @@ module Master
             end
 
             output = nil
+            empty_baseline = ->(**_options) { { "lexical" => [], "source" => [] } }
             Master::Fix::RunBudget.stub(
               :with_shared_run, ->(**_options, &operation) { operation.call }
             ) do
@@ -404,11 +407,11 @@ module Master
                         Master::CLI::CommandRegistry.stub(:structural_review, ->(**_options) { nil }) do
                           Master::CLI::CommandRegistry.stub(:resume_from_residual, ->(_target) { nil }) do
                             Master::CLI::CommandRegistry.stub(:run_pass, run_pass) do
-                              Operator::CheckChain.stub(:clear_verified_fix_snapshots!, -> {}) do
-                                Operator::CheckChain.stub(:baseline_scope_key, ->(_target) { "MASTER" }) do
-                                  Operator::CheckChain.stub(:baseline, ->(**_options) { { "lexical" => [], "source" => [] } }) do
-                                    Operator::CheckChain.stub(:verify_fix, ->(**_options) { [0, []] }) do
-                                      Operator::CheckChain.stub(:persist_verified_baselines!, ->(_targets) {}) do
+                              ::Operator::CheckChain.stub(:clear_verified_fix_snapshots!, -> {}) do
+                                ::Operator::CheckChain.stub(:baseline_scope_key, ->(_target) { "MASTER" }) do
+                                  ::Operator::CheckChain.stub(:baseline, empty_baseline) do
+                                    ::Operator::CheckChain.stub(:verify_fix, ->(**_options) { [0, []] }) do
+                                      ::Operator::CheckChain.stub(:persist_verified_baselines!, ->(_targets) {}) do
                                         output = Master::CLI::CommandRegistry.dispatch_fix(
                                           scanner: Object.new, fix_loop: cli_loop, deliberation: nil,
                                           root: cli_root, bus: nil, ctx: { args: "--apply MASTER" }, swarm: nil

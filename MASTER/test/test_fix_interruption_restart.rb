@@ -49,14 +49,17 @@ class TestFixInterruptionRestart < Minitest::Test
         )
         mission.checkpoint!(files: ["sample.rb"])
         kernel = Master::Fix::Kernel.new(root:, actor: "journal-loss-probe")
-        coordinator_run_id = kernel.begin_coordinated_run(
-          target: File.join(root, "MASTER"), max_passes: 2,
-          budget_seconds: 60, requested: true
-        )
         journal = Master::Fix::RunJournal.new(root:)
         run = journal.start_or_resume(
           target: File.join(root, "MASTER"), files: [sample], max_passes: 2, budget_seconds: 60
         )
+        # The order FixLoop#run_unlocked follows: the journal run opens, the Kernel
+        # binds its receipts to that ID, then links the Mission to it.
+        coordinator_run_id = kernel.bind_fix_run(
+          adapter: Object.new, run_id: run.fetch("id"), target: File.join(root, "MASTER"),
+          max_passes: 2, budget_seconds: 60, requested: true
+        )
+        kernel.link_fix_mission(mission_id: mission.id, run_id: coordinator_run_id)
         transaction = Master::Fix::Transaction.new(root:, paths: ["sample.rb"], id: "journal-loss-probe")
         transaction.begin!
         File.write(sample, "partial mutation\n")
@@ -103,11 +106,18 @@ class TestFixInterruptionRestart < Minitest::Test
         require "fix/checkpoint"
         require "fix/fix_loop"
 
-        root, old_coordinator_id = ARGV
+        root, old_coordinator_id, old_run_id, old_mission_id = ARGV
         kernel = Master::Fix::Kernel.new(root:, actor: "journal-loss-probe")
         kernel.send(:reconcile_coordinated_runs!)
-        coordinator = kernel.verify_log!.find do |row|
+        receipts = kernel.verify_log!
+
+        coordinator = receipts.find do |row|
           row["kind"] == "coordinator_terminal" && row["run_id"] == old_coordinator_id
+        end
+
+        mission_linked = receipts.any? do |row|
+          row["kind"] == "coordinator_mission_link" && row["run_id"] == old_run_id &&
+            row.dig("payload", "mission_id") == old_mission_id
         end
         loop = Master::Fix::FixLoop.allocate
         loop.instance_variable_set(:@root, root)
@@ -139,12 +149,14 @@ class TestFixInterruptionRestart < Minitest::Test
             root:, id: "journal-loss-probe"
           ),
           "coordinator_state" => coordinator && coordinator.dig("payload", "state"),
-          "coordinator_recovered" => coordinator && coordinator.dig("payload", "recovered")
+          "coordinator_recovered" => coordinator && coordinator.dig("payload", "recovered"),
+          "mission_linked" => mission_linked
         )
       RUBY
       output, restart_status = Open3.capture2e(
         RbConfig.ruby, "-I", File.join(Master::ROOT, "lib"), "-e", restart, root,
-        marker_record.fetch("coordinator_run_id"), chdir: Master::ROOT
+        marker_record.fetch("coordinator_run_id"), marker_record.fetch("run_id"),
+        marker_record.fetch("mission_id"), chdir: Master::ROOT
       )
       assert restart_status.success?, "journal-loss restart failed: #{output}"
       receipt = JSON.parse(output.lines.last)
@@ -210,9 +222,13 @@ class TestFixInterruptionRestart < Minitest::Test
         require "fix/repair_loop"
 
         Operator::CheckChain.define_singleton_method(:baseline) { |**| {} }
+        # The only bytes this probe may change are the interrupted repair's; the
+        # deterministic autofixes (a frozen_string_literal header) would otherwise
+        # rewrite sample.rb on the restart's clean passes.
+        ENV["MASTER_AUTOFIX_MODE"] = "off"
 
         class RestartProbeScanner
-          def scan(path, laws: nil)
+          def scan(path, depth: :deep, laws: nil)
             findings = if ENV["MASTER_FIX_CRASH_PROBE"] == "1" && File.basename(path) == "sample.rb"
               [{ law: "LONG_LINE", line: 1, message: "controlled interrupted repair", severity: :warning }]
             else
@@ -358,10 +374,6 @@ class TestFixInterruptionRestart < Minitest::Test
           row["kind"] == "coordinator_mission_link" && row["run_id"] == old_run_id &&
             row.dig("payload", "mission_id") == mission.fetch("id")
         end
-        mission_linked = kernel_events.any? do |row|
-          row["kind"] == "coordinator_mission_link" && row["run_id"] == old_run_id &&
-            row.dig("payload", "mission_id") == mission.fetch("id")
-        end
 
         puts JSON.generate(
           "run_id" => run && run.fetch("id"),
@@ -380,7 +392,6 @@ class TestFixInterruptionRestart < Minitest::Test
           ),
           "coordinator_state" => coordinator && coordinator.dig("payload", "state"),
           "coordinator_recovered" => coordinator && coordinator.dig("payload", "recovered"),
-          "mission_linked" => mission_linked,
           "mission_linked" => mission_linked,
           "result_category" => result.respond_to?(:category) ? result.category.to_s : nil
         )

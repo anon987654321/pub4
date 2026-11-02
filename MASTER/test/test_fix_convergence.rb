@@ -142,7 +142,7 @@ end
     end
     result = loop.run(@root, max_passes: 1, budget_seconds: 30, incremental: false, requested: true)
 
-    assert result.ok?, result.message.to_s
+    assert result.ok?, -> { result.message.to_s }
     assert_same kernel, loop.kernel, "a run must not replace its lifecycle owner"
     assert_same kernel.lifecycle_journal, loop.instance_variable_get(:@run_journal)
     events = kernel.verify_log!
@@ -1620,6 +1620,7 @@ end
 
     deferred = []
     mission = Object.new
+    mission.define_singleton_method(:id) { "mission-expired" }
     mission.define_singleton_method(:defer!) { |reason:| deferred << reason }
     mission.define_singleton_method(:requeue_if_requested!) { false }
 
@@ -1673,6 +1674,7 @@ end
 
     recovered_calls = []
     mission = Object.new
+    mission.define_singleton_method(:id) { "mission-expired" }
     mission.define_singleton_method(:defer!) { |reason:| nil }
     mission.define_singleton_method(:requeue_if_requested!) { false }
 

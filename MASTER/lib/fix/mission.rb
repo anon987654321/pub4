@@ -392,18 +392,33 @@ module Master
         return unless File.file?(path)
 
         record = JSON.parse(File.read(path, encoding: "UTF-8"))
-        migrate_record(record)
+        migrate_record(record, root:)
       rescue JSON::ParserError => e
         Master::Ground::Swallow.log(e, context: "mission.current")
         nil
       end
 
-      def self.migrate_record(record, now: Time.now.utc.iso8601)
+      def self.migrate_record(record, now: Time.now.utc.iso8601, root: nil)
         version = record["version"].to_i
-        return normalize_v2(record) if version == VERSION
-        return migrate_v1(record, now:) if version == 1
+        migrated = if version == VERSION
+                     normalize_v2(record)
+                   elsif version == 1
+                     migrate_v1(record, now:)
+                   else
+                     raise "mission version #{record["version"]} is unsupported"
+                   end
+        root_scope(migrated, root)
+      end
 
-        raise "mission version #{record["version"]} is unsupported"
+      # Records written before #relative answered "." for the tree root hold its
+      # absolute path; read them as "." so the same objective still matches.
+      def self.root_scope(record, root)
+        return record unless root
+
+        scope = record["scope"].to_s
+        return record unless scope.start_with?(File::SEPARATOR) && File.expand_path(scope) == File.expand_path(root)
+
+        record.merge("scope" => ".")
       end
 
       def self.normalize_v2(record)
@@ -663,7 +678,7 @@ module Master
         return unless File.file?(path)
 
         raw = JSON.parse(File.read(path, encoding: "UTF-8"))
-        migrated = self.class.migrate_record(raw)
+        migrated = self.class.migrate_record(raw, root: @root)
         persist_record(path, migrated) if migrated != raw
         migrated
       rescue JSON::ParserError => e
@@ -721,7 +736,9 @@ module Master
       def relative(path)
         full = File.expand_path(path.to_s, @root)
         root = File.expand_path(@root)
-        return path.to_s unless full == root || full.start_with?(root + File::SEPARATOR)
+        # The tree root itself is "."; delete_prefix below would leave it absolute.
+        return "." if full == root
+        return path.to_s unless full.start_with?(root + File::SEPARATOR)
 
         full.delete_prefix(root + File::SEPARATOR)
       rescue ArgumentError

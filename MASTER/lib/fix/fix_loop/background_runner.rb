@@ -136,7 +136,9 @@ module Master
         def relative_target(path)
           full = File.expand_path(path)
           root = File.expand_path(@root)
-          return path.to_s unless full == root || full.start_with?(root + File::SEPARATOR)
+          # The tree root itself is "."; delete_prefix below would leave it absolute.
+          return "." if full == root
+          return path.to_s unless full.start_with?(root + File::SEPARATOR)
 
           full.delete_prefix(root + File::SEPARATOR)
         end

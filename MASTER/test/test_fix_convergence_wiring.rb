@@ -16,6 +16,7 @@ class FixConvergenceWiringTest < Minitest::Test
     wishlist_source = File.read(File.expand_path("../lib/fix/wishlist.rb", __dir__))
     journal_source = File.read(File.expand_path("../lib/fix/kernel/lifecycle_journal.rb", __dir__))
     repair_source = File.read(File.expand_path("../lib/fix/kernel/repair_adapter.rb", __dir__))
+    kernel_lifecycle_source = File.read(File.expand_path("../lib/fix/kernel/lifecycle.rb", __dir__))
 
     assert_includes loop_source, 'require_relative "../visual_pass"'
     assert_includes compatibility_entrypoint, 'require_relative "kernel/convergence_adapter"'
@@ -38,9 +39,12 @@ class FixConvergenceWiringTest < Minitest::Test
     assert_includes pass_source, "continue_with_wishlist"
     assert_includes pass_source, "WISHLIST_MAX_ROUNDS"
     assert_includes lifecycle_source, "verify_incremental_scope"
-    assert_includes lifecycle_source, "adapter.with_cancellation(cancellation)"
-    refute_includes lifecycle_source, "instance_variable_get(:@cancellation)"
-    refute_includes lifecycle_source, "instance_variable_set(:@cancellation"
+    # Kernel#run_fix_loop owns the run boundary, so it scopes the adapter's cancellation token.
+    assert_includes kernel_lifecycle_source, "adapter.with_cancellation(cancellation)"
+    [lifecycle_source, kernel_lifecycle_source].each do |source|
+      refute_includes source, "instance_variable_get(:@cancellation)"
+      refute_includes source, "instance_variable_set(:@cancellation"
+    end
     assert_includes loop_source, "def with_cancellation(token)"
     assert_includes completion_source, "finish_run"
     assert_includes wishlist_source, 'LEDGER_PATH = ".master/fix_wishlist.json"'
