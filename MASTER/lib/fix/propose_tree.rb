@@ -2,11 +2,12 @@
 
 require "yaml"
 require "fileutils"
+require_relative "tree_sprawl"
 
 module Master
   module Fix
-  # Asks the agent for N radically simplified tree layouts, ranks them by
-  # sketch compactness (radical = fewer files), writes top K to runtime/proposals.md.
+  # Asks for simpler tree layouts, ranking them by legibility and ownership
+  # rather than rewarding the smallest sketch or the fewest files alone.
   # Triggered manually via /propose-tree or by the bus on fix_loop:clean|plateau.
     class ProposeTree
       OUT_PATH = "runtime/proposals.md"
@@ -76,8 +77,14 @@ module Master
         - costs: 2-3 lines (cons, separated by " · ")
         - sketch: ASCII tree, ≤18 lines, indented with 2 spaces per level
 
-        Be radical: collapse modules, merge concepts, rename for clarity.
-        No incrementalism. No prose around the YAML.
+        Prefer a shallow, legible tree with one clear owner per concept.
+        Treat ugly names, concept scatter, deep important concepts and root clutter as
+        measurable costs; fewer lines or files is not a quality score by itself.
+        Respect PATH_OWNERSHIP.yml, the boot load order, the core fold boundary,
+        Zeitwerk contracts and tested public paths. Do not move a protected boundary
+        merely to make the sketch smaller. Name require/autoload/external-consumer
+        evidence and migration costs for every proposed move.
+        Make decisive proposals, but preserve behavior and reversibility. No prose outside YAML.
         Return a YAML array of #{n} entries.
       PROMPT
       end
@@ -92,7 +99,41 @@ module Master
       end
 
       def rank(proposals)
-        proposals.sort_by { |p| p["sketch"].to_s.lines.size }
+        proposals.sort_by { |proposal| sketch_score(proposal["sketch"]) }
+      end
+
+      def sketch_score(sketch)
+        rows = sketch.to_s.lines.filter_map do |line|
+          next if line.strip.empty?
+
+          depth = line[/\A\s*/].to_s.length / 2
+          name = line.strip.sub(/\A[│├└─|\x60+\-]+\s*/, "").sub(/\/+\z/, "").strip
+          [depth, name]
+        end
+        return [0, 0, 0, 0, 0, 0] if rows.empty?
+
+        child_counts = Hash.new(0)
+        stack = []
+        rows.each_with_index do |(depth, name), index|
+          stack = stack.first(depth)
+          parent = stack.last || :root
+          child_counts[parent] += 1
+          stack << "#{index}:#{name}"
+        end
+
+        ugly = rows.count do |_depth, name|
+          stem = File.basename(name, File.extname(name))
+          TreeSprawl::UGLY_NAME_PATTERN.match?(stem)
+        end
+        buried = rows.count do |depth, name|
+          stem = File.basename(name, File.extname(name))
+          depth > TreeSprawl::MAX_CONCEPT_DEPTH && TreeSprawl::IMPORTANT_CONCEPTS.include?(stem)
+        end
+        too_wide = child_counts.values.count { |count| count > TreeSprawl::WIDE }
+        root_clutter = child_counts.fetch(:root, 0) > TreeSprawl::ROOT_FILE_LIMIT ? 1 : 0
+        max_depth = rows.map(&:first).max
+
+        [ugly, buried, too_wide, root_clutter, max_depth, rows.size]
       end
 
       def write_report(top, total)

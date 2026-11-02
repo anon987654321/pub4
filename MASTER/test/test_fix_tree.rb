@@ -39,6 +39,56 @@ class TestFixTree < Minitest::Test
     assert_includes sprawl[:name_twins], %w[lib/a.rb lib/a_helper.rb]
   end
 
+  def test_aesthetic_signals_find_ugly_names_without_flagging_clean_names
+    write("lib/__old.rb", BODY)
+    write("lib/legacy_utils.rb", BODY)
+    write("lib/too___many.rb", BODY)
+    write("lib/clean_name.rb", BODY)
+    git("add", ".")
+
+    ugly = Master::Fix::Tree.new(root: @root).sprawl[:ugly_names]
+
+    assert_includes ugly, "lib/__old.rb"
+    assert_includes ugly, "lib/legacy_utils.rb"
+    assert_includes ugly, "lib/too___many.rb"
+    refute_includes ugly, "lib/clean_name.rb"
+  end
+
+  def test_concept_scatter_requires_three_owners
+    %w[ai fix voice].each do |owner|
+      write("lib/#{owner}/dispatch_policy.rb", BODY)
+    end
+    %w[ai fix].each do |owner|
+      write("lib/#{owner}/shared_cache.rb", BODY)
+    end
+    git("add", ".")
+
+    scatter = Master::Fix::Tree.new(root: @root).sprawl[:concept_scatter]
+
+    assert_includes scatter.map(&:first), "dispatch_policy"
+    refute_includes scatter.map(&:first), "shared_cache"
+  end
+
+  def test_depth_tax_only_flags_important_concepts_beyond_depth_three
+    write("deep/a/b/core.rb", BODY)
+    write("lib/core/fold.rb", BODY)
+    git("add", ".")
+
+    tax = Master::Fix::Tree.new(root: @root).sprawl[:depth_tax]
+
+    assert_includes tax, "deep/a/b/core.rb"
+    refute_includes tax, "lib/core/fold.rb"
+  end
+
+  def test_root_clutter_waits_until_more_than_eighteen_files
+    assert_empty Master::Fix::Tree.new(root: @root).sprawl[:root_clutter]
+
+    19.times { |index| write("root_#{index}.rb", BODY) }
+    git("add", ".")
+
+    assert_equal 19, Master::Fix::Tree.new(root: @root).sprawl[:root_clutter].size
+  end
+
   def test_paths_hold_every_file_and_each_directory_above_it
     paths = Master::Fix::Tree.new(root: @root).paths
 

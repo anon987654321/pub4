@@ -2,15 +2,23 @@
 
 module Master
   module Fix
-
-    # What is wrong with the shape of a file tree, as lists of paths: a folder for one file, a file
-    # too small to be a concept, nesting deeper than a reader holds, a folder too wide to scan, and
-    # two files in one folder where one name extends the other.
+    # Structural signals for a tracked tree. These are measurements, not a
+    # mandate to flatten protected boundaries or optimise file count at any cost.
     class TreeSprawl
       TINY_BYTES = 200
-      DEEP = 6
-      WIDE = 40
-      SIGNALS = %i[single_file_dirs tiny_files deep_dirs wide_dirs name_twins].freeze
+      DEEP = 5
+      WIDE = 28
+      MAX_CONCEPT_DEPTH = 3
+      ROOT_FILE_LIMIT = 18
+      IMPORTANT_CONCEPTS = %w[core fix law runtime soul].freeze
+      GENERIC_CONCEPT_STEMS = %w[
+        application base config helper index manifest routes schema test_helper version
+      ].freeze
+      UGLY_NAME_PATTERN = /(?:\A__|_{2,}|_(?:helper|utils|old)\z)/
+      SIGNALS = %i[
+        single_file_dirs tiny_files deep_dirs wide_dirs name_twins
+        ugly_names concept_scatter depth_tax root_clutter
+      ].freeze
 
       def initialize(files:, directories:, sizes:)
         @files = files
@@ -20,7 +28,9 @@ module Master
 
       def to_h = SIGNALS.to_h { |signal| [signal, public_send(signal)] }
 
-      def single_file_dirs = @directories.select { |dir| dir.files == 1 && dir.path != "." }.map(&:path)
+      def single_file_dirs
+        @directories.select { |dir| dir.files == 1 && dir.path != "." }.map(&:path)
+      end
 
       def tiny_files = @files.select { |path| @sizes.fetch(path) <= TINY_BYTES }
 
@@ -33,10 +43,58 @@ module Master
         @files.group_by { |path| File.dirname(path) }.values.flat_map { |paths| twins_among(paths) }
       end
 
+      # Flag path segments, not merely file extensions: __shared/, *_helper.rb,
+      # *_utils.rb and *_old.rb are all names a human should review.
+      def ugly_names
+        @files.select do |path|
+          path.split("/").any? do |segment|
+            stem = File.basename(segment, File.extname(segment))
+            UGLY_NAME_PATTERN.match?(stem)
+          end
+        end
+      end
+
+      # lib/<owner>/ is the meaningful top-level boundary for Ruby concepts;
+      # other trees use their first directory. Generic file entrypoints are
+      # excluded so repeated index.rb or application.rb files are not noise.
+      def concept_scatter
+        @files.group_by { |path| File.basename(path, File.extname(path)) }.filter_map do |stem, paths|
+          next if stem.length < 5 || GENERIC_CONCEPT_STEMS.include?(stem)
+
+          owners = paths.map { |path| concept_owner(path) }.uniq
+          [stem, paths.sort] if owners.size >= 3
+        end
+      end
+
+      # Important concepts buried beyond the third path segment are hard to
+      # discover and usually indicate that ownership has drifted too deep.
+      def depth_tax
+        @files.select do |path|
+          path.split("/").each_with_index.any? do |segment, index|
+            next false unless index + 1 > MAX_CONCEPT_DEPTH
+
+            stem = File.basename(segment, File.extname(segment))
+            IMPORTANT_CONCEPTS.include?(stem)
+          end
+        end
+      end
+
+      # Root files are individually visible, but a crowded root stops reading
+      # like a map. Return no finding while it remains within the stated limit.
+      def root_clutter
+        root_files = @files.select { |path| File.dirname(path) == "." }
+        root_files.size > ROOT_FILE_LIMIT ? root_files : []
+      end
+
       private
 
+      def concept_owner(path)
+        parts = path.split("/")
+        parts.first == "lib" && parts.size > 2 ? parts.first(2).join("/") : parts.first
+      end
+
       def twins_among(paths)
-        by_stem = paths.to_h { |path| [File.basename(path, ".*"), path] }
+        by_stem = paths.to_h { |path| [File.basename(path, File.extname(path)), path] }
         by_stem.keys.product(by_stem.keys).filter_map do |stem, other|
           [by_stem[stem], by_stem[other]] if other.start_with?("#{stem}_")
         end

@@ -55,6 +55,23 @@ class TestFixProposeTree < Minitest::Test
     assert_operator report.index("1. short"), :<, report.index("2. long")
   end
 
+  def test_ranking_prefers_a_clean_owned_tree_over_a_smaller_ugly_sketch
+    agent = RecordingAgent.new(REPLY, [])
+    subject = Master::Fix::ProposeTree.new(root: @root, agent:)
+    compact_but_ugly = {
+      "name" => "compact",
+      "sketch" => "lib/\n        __old/\n          deep/\n            core.rb"
+    }
+    clear_and_shallow = {
+      "name" => "clear",
+      "sketch" => "lib/\n  runtime/\n  mind/\n  design/\n  operator/"
+    }
+
+    ranked = subject.send(:rank, [compact_but_ugly, clear_and_shallow])
+
+    assert_equal %w[clear compact], ranked.map { |proposal| proposal.fetch("name") }
+  end
+
   def test_a_recent_report_cools_the_proposal_down
     FileUtils.mkdir_p(File.join(@root, "runtime"))
     File.write(File.join(@root, "runtime", "proposals.md"), "previous")
