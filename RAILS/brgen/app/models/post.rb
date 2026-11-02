@@ -129,9 +129,10 @@ class Post < ApplicationRecord
 
   # Geo-stamped Live posts (Jodel layer). Not all posts are Live.
   scope :live,   -> { where.not(latitude: nil).where.not(longitude: nil) }
+  # No existence guard: a missing posts_fts raises, and Shared::LiveSearch
+  # checks for the table first and falls back to LIKE, so an empty answer here
+  # would only hide a broken index (raw_schema_objects_test holds this).
   scope :search, ->(q) {
-    next none unless connection.data_source_exists?("posts_fts")
-
     ids = connection.select_values(sanitize_sql_array([ "SELECT rowid FROM posts_fts WHERE posts_fts MATCH ?", q ]))
     ids.any? ? where(id: ids) : none
   }

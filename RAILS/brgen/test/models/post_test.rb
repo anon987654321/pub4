@@ -29,9 +29,9 @@ class PostTest < ActiveSupport::TestCase
     assert_equal 0, Post.new(content: "<p> </p>").reading_time_minutes
   end
 
-  test "search returns no posts when the FTS table is absent" do
-    Post.connection.stub(:data_source_exists?, false) do
-      assert_empty Post.search("bergen")
-    end
+  test "search raises when the FTS table is absent instead of answering empty" do
+    skip "this database has posts_fts" if Post.connection.data_source_exists?("posts_fts")
+
+    assert_raises(ActiveRecord::StatementInvalid) { Post.search("bergen") }
   end
 end
