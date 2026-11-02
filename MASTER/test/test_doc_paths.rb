@@ -55,7 +55,7 @@ class TestDocPaths < Minitest::Test
     refute_match(/\]\(ARCHITECTURE\.md\)/, root_readme)
   end
 
-  def test_authority_order_puts_executable_law_above_harnesses
+  def test_source_authority_places_soul_before_laws_and_execution
     docs = %w[CLAUDE.md MASTER/AGENTS.md RAILS/CLAUDE.md OPENBSD/CLAUDE.md]
     docs.each do |doc|
       body = File.read(File.join(REPO, doc))
@@ -67,8 +67,14 @@ class TestDocPaths < Minitest::Test
       assert enforcement && enforcement > laws, "#{doc} must name MASTER/law/ as enforcement after laws.yml"
     end
 
-    root = File.read(File.join(REPO, "CLAUDE.md"))
-    refute_match(/MASTER\/data\/rules\.yml`? > this file >.*executable law/i, root)
+    root = File.read(File.join(REPO, "AGENTS.md"))
+    master = File.read(File.join(REPO, "MASTER/AGENTS.md"))
+    expected = /soul\.yml > laws\.yml > executable laws and gates > tree contracts > Git history/
+    assert_match expected, root
+    assert_match expected, master
+
+    claude = File.read(File.join(REPO, "CLAUDE.md"))
+    refute_match(/MASTER\/data\/rules\.yml`? > this file >.*executable law/i, claude)
   end
 
   # AGENTS.md is generated from MASTER/AGENTS.md. Vendor-specific harnesses
