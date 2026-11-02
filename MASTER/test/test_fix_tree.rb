@@ -100,6 +100,17 @@ class TestFixTree < Minitest::Test
     assert_empty repository_tree.sprawl[:root_clutter]
   end
 
+  def test_single_file_dirs_excludes_the_selected_target_root
+    write("lib/tiny_area/root.rb", BODY)
+    write("lib/tiny_area/only/one.rb", BODY)
+    git("add", ".")
+
+    tree = Master::Fix::Tree.new(root: @root, target: "lib/tiny_area")
+
+    refute_includes tree.sprawl[:single_file_dirs], "lib/tiny_area"
+    assert_includes tree.sprawl[:single_file_dirs], "lib/tiny_area/only"
+  end
+
   def test_paths_hold_every_file_and_each_directory_above_it
     paths = Master::Fix::Tree.new(root: @root).paths
 

@@ -30,7 +30,7 @@ module Master
       def to_h = SIGNALS.to_h { |signal| [signal, public_send(signal)] }
 
       def single_file_dirs
-        @directories.select { |dir| dir.files == 1 && dir.path != "." }.map(&:path)
+        @directories.select { |dir| dir.files == 1 && target_path(dir.path) != "." }.map(&:path)
       end
 
       def tiny_files = @files.select { |path| @sizes.fetch(path) <= TINY_BYTES }
