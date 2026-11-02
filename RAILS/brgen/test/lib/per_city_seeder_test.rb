@@ -99,6 +99,21 @@ class PerCitySeederTest < ActiveSupport::TestCase
     assert_equal previous_locale, Faker::Config.locale
   end
 
+  test "every registered city has a usable locale and non-Bergen content fallback" do
+    Brgen::DomainRegistry::ENTRIES.each do |entry|
+      locale = Brgen::CityContent.locale_for(entry.country)
+      assert locale.present?, "#{entry.domain} (#{entry.country}) needs a Faker locale"
+
+      norwegian = Brgen::PlausibleContent.norwegian_country?(entry.country)
+      assert_equal(entry.country == "NO", norwegian,
+                   "#{entry.domain} must not inherit Norwegian copy by default")
+      assert Brgen::PlausibleContent.post_title(entry.city, norwegian:).present?,
+             "#{entry.domain} needs a post-title fallback"
+      assert Brgen::PlausibleContent.post_body(norwegian:).present?,
+             "#{entry.domain} needs a post-body fallback"
+    end
+  end
+
   # The bug this guards: db/seeds.rb creates admin@brgen.no with no city_id,
   # but seed! runs inside with_tenant and User is tenant-scoped, so a scoped
   # find_or_create_by! could not see that row and tripped the global email

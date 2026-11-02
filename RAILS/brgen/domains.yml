@@ -5,11 +5,13 @@
 # Agent entry with the subapp table:
 #   AGENTS.md
 #
-# The footer links the public city network. A click changes apex and therefore
-# tenant; it does not merge city data. Verticals are subdomains of the city
-# apex, not path prefixes and not separate Rails apps. Every DomainRegistry city
-# works this way — Bergen and Los Angeles are examples. Apexes are usually the
-# city with a vowel missing
+# CITY_NETWORK_DOMAINS is product membership; LIVE_DOMAINS is operator-verified
+# TLS readiness. The city network footer, search palette and mobile switcher
+# use DomainRegistry.live_network_entries, so pending domains stay out of public
+# links until DNS and TLS are verified. A click changes apex and tenant; it
+# does not merge city data. Verticals are subdomains of the city apex, not path
+# prefixes or separate Rails apps. Every ENTRIES city follows this host rule.
+# Apexes are usually the city with a vowel missing
 # (brgen.no, oshlo.no, lndon.uk, chcago.us).
 
 # <subapp>.<city-apex>

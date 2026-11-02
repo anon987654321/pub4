@@ -20,9 +20,11 @@ can finish is listed in `MASTER/data/operator_seams.yml`.
 
 A city is an apex host, and the apex serves the social feed. The registry in
 Brgen::DomainRegistry lists forty-three apexes, each the city's name with a vowel dropped:
-brgen.no for Bergen, oshlo.no, lsangeles.com, lndon.uk, chcago.us. The footer links a smaller
-public network of eleven, and the registry counts only seven of the forty-three as holding a
-certificate on the box, so a link in the footer does not mean a city is served. The registry is
+brgen.no for Bergen, oshlo.no, lsangeles.com, lndon.uk, chcago.us. The public network has eleven members, while LIVE_DOMAINS records the seven
+apexes with verified TLS in the deployment contract. Footer, search palette and
+mobile city navigation show only CITY_NETWORK_DOMAINS intersected with LIVE_DOMAINS;
+the four pending network domains are omitted until DNS and certificates are ready.
+Membership, registry support and live deployment are separate facts. The registry is
 the only list of hosts, and a host that is not in it does not exist. Local requests to 127.0.0.1
 or localhost resolve to Bergen.
 

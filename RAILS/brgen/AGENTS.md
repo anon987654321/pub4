@@ -10,9 +10,11 @@ same `<subapp>.<apex>` rule.
 
 Apex names are the city with a vowel dropped (or similar): Bergen → `brgen.no`,
 Oslo → `oshlo.no`, Los Angeles → `lsangeles.com`, London → `lndon.uk`. Do not
-invent a host; the list is only `ENTRIES`. The footer links the deliberate
-`CITY_NETWORK_DOMAINS` subset; `LIVE_DOMAINS` remains the TLS/deployment fact
-set, so a network link never implies that a certificate is already installed.
+invent a host; the list is only `ENTRIES`. `CITY_NETWORK_DOMAINS` is product
+membership and `LIVE_DOMAINS` is the operator-verified TLS/deployment set.
+The footer, search palette and mobile switcher use
+`DomainRegistry.live_network_entries`: only their intersection is linked;
+pending members remain quiet until DNS and TLS are verified.
 
 The Host header picks both the city (`acts_as_tenant`) and the vertical. Same
 users, same session, same deploy.
