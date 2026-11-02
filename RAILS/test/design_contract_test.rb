@@ -572,7 +572,7 @@ def test_brgen_marketplace_badge_offsets_are_valid_css
   end
 
   def test_takeaway_restaurant_cover_styles_fill_wells_and_bound_previews
-    scss = File.read(File.join(SHARED, "..", "..", "brgen", "app", "assets", "stylesheets", "_brgen_marketplace.scss"))
+    scss = File.read(File.join(ROOT, "brgen", "app", "assets", "stylesheets", "_brgen_marketplace.scss"))
 
     assert_match(/\.deal-card-img img\.restaurant-cover-image\s*\{[^}]*object-fit:\s*cover/s, scss)
     assert_match(/\.restaurant-cover-preview\s*\{[^}]*max-width:\s*min\(100%,\s*32rem\)/s, scss)
