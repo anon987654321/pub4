@@ -48,6 +48,11 @@ class TestSoul < Minitest::Test
     assert_equal :truthful_status, Master::Soul.winner(:truthful_status, :robustness)
   end
 
+  def test_soul_owns_anti_simulation_words
+    data = Master.load_yaml(Master.data_path("soul.yml"))
+    assert_equal %w[will would could might], data.dig("absolute", "anti_simulation", "forbidden")
+  end
+
   def test_soul_write_guard_protects_the_ruby_authority
     assert Master::Soul.sacred?("lib/soul.rb")
     refute Master::Soul.sacred?("lib/fix/fix_loop.rb")
