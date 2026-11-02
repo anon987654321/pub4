@@ -8,6 +8,7 @@ require_relative "run_ledger"
 require_relative "refusals"
 require_relative "tool_breaker"
 require_relative "resource_budget"
+require_relative "mission"
 require_relative "../review/llm_dispatcher/pass_clock"
 
 module Master
@@ -21,7 +22,7 @@ module Master
       DEFAULT_MAX_COST = 50.0
       DEFAULT_MAX_MINUTES = 480.0
       HEARTBEAT_SECONDS = 28
-      MACHINE_BEAT_SECONDS = 60
+      MACHINE_BEAT_SECONDS = Mission::LEASE_RENEW_SECONDS
       GUARD_CHECK_SECONDS = 300
       RESOURCE_CHECK_SECONDS = 30
       WARN_SHARE = 0.8
@@ -377,9 +378,23 @@ module Master
         return if now - (@last_machine_beat || 0) < MACHINE_BEAT_SECONDS
 
         @last_machine_beat = now
+        renew_owned_mission_lease
         @say.call(@pulse.machine_line(now - @started))
         reasons = RunLedger.why_line
         @say.call("fix0: not landed so far, #{reasons}") if reasons
+      end
+
+      # The watchdog runs in the mission-owning process. Mission#heartbeat!
+      # checks lease_owner before extending the durable lease, so this cannot
+      # keep another worker's lease alive. Long model calls need this: commits
+      # alone are too sparse to renew a five-minute lease safely.
+      def renew_owned_mission_lease
+        return unless File.file?(File.join(@root, Mission::REL_PATH))
+
+        Mission.new(root: @root).heartbeat!
+      rescue StandardError => error
+        Master::Ground::Swallow.log(error, context: "Fix::RunBudget.mission_heartbeat", severity: :load_bearing)
+        @say.call("fix0: mission heartbeat warning #{error.class}: #{error.message.to_s[0, 120]}")
       end
 
       # Safety monitor: measure disk pressure every 30 seconds and stop before
