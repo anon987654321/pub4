@@ -170,7 +170,7 @@ nb:
       koster ingenting.
     limit_errors: >-
       401 ugyldig nøkkel, 402 abonnementet er ikke aktivt, 422 ugyldig forespørsel, 429 kvote eller
-      hastighetsgrense.
+      hastighetsgrense, 413 for stor forespørsel.
     limit_account: >-
       GET /api/v1/key viser forbruk; POST /api/v1/key/rotate bytter nøkkel; POST /api/v1/key/portal åpner betaling.
     limit_privacy: "Kildekode og annonsetekst vurderes i minnet. Tekst og produktfelter lagres ikke; kvitteringer for copy review beholder bare hashverdier, sammendrag av resultatet og funnkoder."
