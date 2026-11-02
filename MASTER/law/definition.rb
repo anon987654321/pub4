@@ -598,10 +598,12 @@ module Law
         "proof" => proof_kind.to_s,
         "question" => ask.to_s,
         "practice" => practice.to_s,
+        "path" => path.is_a?(Regexp) ? { "source" => path.source, "options" => path.options } : path&.to_s,
+        "path_exclude" => path_exclude.is_a?(Regexp) ? { "source" => path_exclude.source, "options" => path_exclude.options } : path_exclude&.to_s,
         "fix" => fix.to_s,
         "bad" => bad.to_s,
         "good" => good.to_s,
-      }.reject { |_, value| value.respond_to?(:empty?) && value.empty? }
+      }.reject { |_, value| value.nil? || (value.respond_to?(:empty?) && value.empty?) }
     end
 
   end
