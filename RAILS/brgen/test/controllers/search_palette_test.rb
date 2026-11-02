@@ -67,10 +67,11 @@ class SearchPaletteTest < ActionDispatch::IntegrationTest
     assert_select ".search_palette_cities a[href='https://lsangeles.com/']", 1
   end
 
-  test "the mobile More sheet exposes the same city network" do
+  test "the mobile More sheet exposes the same TLS-ready city network" do
     get communities_path
 
-    assert_select ".mobile-sheet-cities .city-network-item", Brgen::DomainRegistry::CITY_NETWORK_DOMAINS.size
+    assert_select ".mobile-sheet-cities .city-network-item", Brgen::DomainRegistry.live_network_entries.size
+    assert_select ".mobile-sheet-cities a[href='https://lndon.uk/']", 0
     assert_select "#mobile-sheet-cities-title", 1
   end
 
