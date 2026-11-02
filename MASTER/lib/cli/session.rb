@@ -69,26 +69,18 @@ module Master
         terminal_puts(@refs.renderer.session_line(@refs.session.name, @refs.session.messages.size)) if @refs.session.name
         print_repo_tree unless booted_before?
         terminal_puts
-        run_input(initial_message) if initial_message
+        face_request = initial_message.to_s.strip.match?(/\A\/face(?:\s|\z)/i)
+        if face_request
+          run_face
+        else
+          run_input(initial_message) if initial_message
+        end
         greet_from_model unless initial_message
         @running = true
         play_boot_sound
         start_reminder_watch
-        if face_on_start?(initial_message)
-          @face_open = true
-          run_face
-          @face_open = false
-        end
+        print_face_overlay unless @face_overlay_rendered
         repl_loop
-      end
-
-      # Bare interactive TTY sessions open on the face; its input row uses the same live operator prompt.
-      # MASTER_FACE_ON_START=0 restores shell-first entry. Messages and non-TTY pipes remain plain.
-      def face_on_start?(initial_message)
-        return false if initial_message || ENV["MASTER_FACE_ON_START"] == "0"
-        return false unless $stdin.tty? && $stdout.tty?
-
-        ENV["MASTER_FACE_ON_START"] == "1" || Master.patterns_config.fetch("cli", {})["face_on_start"] == true
       end
 
       def pipe(input)
@@ -139,9 +131,41 @@ module Master
         @user_active = false
       end
 
-      # The face is an input adapter for the same command dispatcher as
-      # Reline. Only the renderer changes; history, slash commands, queue
-      # controls and natural-language turns retain Session ownership.
+      # The face is a compact visual projection above the canonical prompt.
+      # Reline remains the only keyboard/input owner; no alternate screen,
+      # raw-key reader or second prompt is started for ordinary CLI use.
+      def face_overlay_text(cols: 32)
+        rows, fitted_cols = Master::CLI::Face::Sizing.fit(12, cols, mode: "#{cols}x12")
+        Master::CLI::Face.frame(
+          state: :idle,
+          rows:,
+          cols: fitted_cols,
+          t: 0.0,
+          motion: Master::CLI::Face::Motion.new(seed: 7),
+          color: false,
+          show_laws: false,
+        )
+      end
+
+      def print_face_overlay
+        return false unless $stdin.tty? && $stdout.tty?
+
+        terminal_cols = Master::CLI::Face::Sizing.winsize.last.to_i
+        face_cols = [terminal_cols - 4, 32].min
+        return false if face_cols < 16
+
+        frame = face_overlay_text(cols: face_cols)
+        terminal_puts(frame.lines.map { |line| line.chomp.center(terminal_cols) }.join("\n"))
+        terminal_puts("face0 at master0: visual layer refreshed; Reline owns input")
+        @face_overlay_rendered = true
+        true
+      rescue StandardError => e
+        Master::Ground::Swallow.log(e, context: "cli.face.overlay", event_bus: @refs.bus)
+        false
+      end
+
+      # The face renderer can still be used by explicit visual clients, but
+      # normal terminal turns never hand keyboard ownership to it.
       def run_face_turn(input)
         text = input.to_s
         return empty_input(:face) if text.strip.empty?
