@@ -27,15 +27,10 @@ module Master
         ACCENT = "\e[38;2;224;229;238m"
         COOL = "\e[38;2;164;174;190m"
 
-        WORDS = %w[/face face].freeze
-        MESSAGE_FLAGS = %w[-m -p --message --prompt].freeze
-
-        # Whether a command line asks for the face and nothing else: `face`,
-        # `/face`, or either after -m, which is how bin/master passes it on.
-        def self.asked?(argv)
-          words = argv.reject { |arg| MESSAGE_FLAGS.include?(arg) }
-          words.size == 1 && WORDS.include?(words.first.strip)
-        end
+        # The legacy full-screen window is not an entry mode. bin/master must
+        # always reach Session/Reline first; the face is rendered above that
+        # prompt and never takes over terminal input.
+        def self.asked?(_argv) = false
 
         # What the face says goes through TurnRouter, as a line typed at
         # bin/master does. The container comes from a block called once, on
