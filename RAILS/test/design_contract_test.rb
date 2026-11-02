@@ -40,7 +40,7 @@ class DesignContractTest < Minitest::Test
     | backdrop-filter\s*:\s*(?!\s*none\b)
     | filter\s*:\s*[^;]*(?:\bblur\s*\(|\bdrop-shadow\s*\()
   /ix
-  UI_STYLESHEET_EXCLUSIONS = %r{/(?:__other|vendor|builds|public/assets|node_modules)/}.freeze
+  UI_STYLESHEET_EXCLUSIONS = %r{/(?:mrdamascy|vendor|builds|public/assets|node_modules)/}.freeze
 
   SCSS_PARAM_MAP = {
     "bg" => "bg",

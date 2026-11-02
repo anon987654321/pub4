@@ -193,10 +193,10 @@ Mr. Damascy is the **first restaurant** destined for the planned `RAILS/brgen_ta
 - **The payment lanes are per-order, not per-app.** `orders.payment_method` + `PaymentGateway` mean a takeaway umbrella can add its own PSPs alongside Vipps/Stripe without touching either client.
 - **The tracking seam is already public.** `track/:token` + `track/:token/status` (JSON) are token-scoped and unguessable — exactly the surface a takeaway app needs to embed live order status.
 - **Suggested landing path when brgen_takeaway starts:** mount mrdamascy's kitchen identity as the first `Kitchen`, re-use the øre-integer money rule and the 8-point-star design tokens, and let takeaway own discovery while mrdamascy keeps checkout + payment (the two things the commission argument is about).
-- Until then, nothing here depends on the monorepo: the app stays self-contained in `RAILS/__other/`.
+- The app is self-contained: nothing here depends on the monorepo. Since 2026-11-02 it lives as a first-class app at `RAILS/mrdamascy/` (promoted out of the retired `RAILS/__other/` junk drawer; recorded in `RAILS/apps.yml`).
 
 ## Repository notes
 
-- This app lives at `RAILS/__other/mrdamascy` — inside `__other/`, outside the contract test's four fixed roots. See `APP_SPEC.md` (the single source of truth) and `AGENTS.md` (contributor contract).
+- This app lives at `RAILS/mrdamascy` — a first-class RAILS app path since 2026-11-02. See `APP_SPEC.md` (the single source of truth) and `AGENTS.md` (contributor contract).
 - Logo assets in `public/` are the **operator's originals — the marks already in use at the restaurant — retained byte-for-byte**. Do not regenerate or redesign them; a VTracer re-trace was attempted and rolled back (see `docs/fix-ledger-2026-11-02.md`).
-- Webflow reference screenshots of the current site (`RAILS/__other/mrdamascy_1..3.png`) and live app screenshots (`screenshots/01–11`) document both the original and this build.
+- Webflow reference screenshots of the current site (`docs/webflow-reference/mrdamascy_1..3.png`) and live app screenshots (`screenshots/01–11`) document both the original and this build.

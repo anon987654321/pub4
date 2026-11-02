@@ -3554,7 +3554,7 @@ law_catalogue:
       # Brand-export trees only. The four RAILS apps paint #ffffff as their
       # measured light-mode ground (RAILS/__shared dialect tokens) and mailer
       # HTML needs literals; both are deliberate, not drift.
-      path_pattern: '/__other/'
+      path_pattern: '/mrdamascy/'
     PARALLEL_INHERITANCE:
       definition_sources: [MASTER/law/universal.rb]
       severity: warning
@@ -3567,7 +3567,7 @@ law_catalogue:
       severity: warn
       # Brand-export trees only: app icon partials and the marketplace animated
       # logo carry long hand-tuned paths that are artwork, not brand marks.
-      path_pattern: '/__other/'
+      path_pattern: '/mrdamascy/'
     PARSE_DONT_VALIDATE:
       definition_sources: [MASTER/law/universal.rb]
       severity: warning
@@ -3894,7 +3894,7 @@ law_catalogue:
       # Brand-export trees only. --accent is the canonical token of the RAILS
       # one-scheme (RAILS/__shared/app/assets/stylesheets/_dialect_tokens.scss);
       # this law governs ad-hoc brand palettes, not that scheme.
-      path_pattern: '/__other/'
+      path_pattern: '/mrdamascy/'
     SIGNAL_NOISE:
       definition_sources: [MASTER/law/surface.rb]
       severity: info

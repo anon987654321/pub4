@@ -462,6 +462,31 @@ apps:
         - { name: infrastructure knowledge graph,                          status: planned, agent: ignore }
         - { name: OpenBSD package intelligence,                            status: planned, agent: ignore }
 
+  mrdamascy:
+    title: Mr. Damascy
+    brand:
+      category: bergen_street_kebab_pwa
+      promise: "Fra Damaskus med kjærlighet — grilled in Bergen, ordered in three steps."
+      position: "One Bergen kitchen at Danmarksplass with its own mobile-first PWA: no Foodora, no courier marketplace, no commission between the customer and the grill."
+      distinctive_mechanic: "Vipps Express + Stripe two-lane checkout in three stored steps, Sahtein-kortet ten-star loyalty, and a public token-scoped tracking seam."
+      voice: [warm, damascene, bergensk, honest]
+      visual_character: [damask_patterns, mint_studio_food_photos, eight_point_star, mobile_first_pwa]
+      experience_principles: [one_kitchen, fewer_steps_than_foodora, tip_goes_to_the_courier, kvartover_honest_portions]
+    port: 47314
+    stack_now: SQLite3, Rails 8.2.0.alpha, Hotwire, PWA (manifest + service worker + offline), Vipps Express mock + Stripe Checkout
+    stack_later: production Vipps + Stripe live keys, own domain, deploy script and relayd vhost
+    deploy_script: pending — no _mrdamascy.sh yet; app is self-contained and boots standalone
+    deploy_root: RAILS/mrdamascy
+    public: true
+    promoted: 2026-11-02 — moved out of the retired RAILS/__other/ junk drawer to a first-class app path (RESTRUCTURE.md Phase 2.1)
+    features:
+      core:
+        - { name: Menu (category chips, item sheets, heat scale, quick add),     status: done, notes: "seeded single-kitchen menu; menu_controller_test" }
+        - { name: Two-lane checkout (Vipps Express + Stripe Checkout),            status: done, notes: "payment_method per order; checkout_flow_test, stripe_callback_test, stripe_client_test" }
+        - { name: Public order tracking by token,                                 status: done, notes: "token-scoped track/:token + status JSON" }
+        - { name: Sahtein-kortet loyalty (10 stars, 10th wrap free),              status: done, notes: "auto-applied at checkout when >= 9 unredeemed stamps" }
+        - { name: Own domain + production deploy lane,                            status: planned, agent: note, notes: "no _mrdamascy.sh, no relayd vhost yet — feature rows above verified against landed tests, the rest awaits the bin/check --tree=RAILS verify pass" }
+
 archived_subsystems:
   baibl:
     recovery_source: MASTER/data/recovery/legacy_manifest.yml
