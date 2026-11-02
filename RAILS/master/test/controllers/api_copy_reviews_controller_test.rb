@@ -45,7 +45,7 @@ class ApiCopyReviewsControllerTest < ActionDispatch::IntegrationTest
     }
   end
 
-  def copy_review(payload = { creative:, product:, market: "NO" }, token: @token)
+  def copy_review(payload = { creative: creative, product: product, market: "NO" }, token: @token)
     post "/api/v1/copy-review",
          params: payload.to_json,
          headers: {
@@ -82,7 +82,7 @@ class ApiCopyReviewsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "without a product snapshot the report says inconclusive" do
-    copy_review({ creative:, market: "NO" })
+    copy_review({ creative: creative, market: "NO" })
 
     assert_response :success
     assert_equal "inconclusive", response.parsed_body.dig("review", "status")
@@ -90,7 +90,7 @@ class ApiCopyReviewsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "invalid fields are refused before consuming quota or creating a receipt" do
-    copy_review({ creative: creative.merge(visitor_token: "not-allowed"), product: })
+    copy_review({ creative: creative.merge(visitor_token: "not-allowed"), product: product })
 
     assert_response :unprocessable_entity
     assert_equal 0, @key.reload.usage_count
@@ -98,7 +98,7 @@ class ApiCopyReviewsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "an unknown or missing bearer key cannot reach the reviewer" do
-    copy_review({ creative:, product: }, token: "mk_live_invalid")
+    copy_review({ creative: creative, product: product }, token: "mk_live_invalid")
 
     assert_response :unauthorized
     assert_equal 0, @key.reload.usage_count
