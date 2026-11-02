@@ -478,7 +478,7 @@ apps:
     deploy_script: pending — no _mrdamascy.sh yet; app is self-contained and boots standalone
     deploy_root: RAILS/mrdamascy
     public: true
-    promoted: 2026-11-02 — moved out of the retired RAILS/__other/ junk drawer to a first-class app path (RESTRUCTURE.md Phase 2.1)
+    promoted: 2026-11-02 — moved out of the retired RAILS/__other/ junk drawer to a first-class app path (migration retained in Git history)
     features:
       core:
         - { name: Menu (category chips, item sheets, heat scale, quick add),     status: done, notes: "seeded single-kitchen menu; menu_controller_test" }

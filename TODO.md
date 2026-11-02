@@ -39,14 +39,6 @@ one measurement nobody has taken on a non-macOS host.
   its own deadline — where the helper comment promises about a minute across
   the corpus. Either the host is that much slower or a ratchet walks
   something it should not; the run's per-ratchet durations say which.
-- [ ] **Finish the retired-tool surface.** The postpro/lora trees are gone
-  and the compatibility contracts now match (`MASTER/tools` symlinks,
-  `ScriptDispatch`, cohesion roots, doc baselines), but `Io::LoraIntent` and
-  `Io::MediaIntent` still call `ScriptDispatch.run(tool: "lora"/"postpro")`
-  and degrade into missing-entrypoint errors at request time. Decide the
-  intent layer's fate with the `STUDIO/postpro` / `STUDIO/replicate`
-  archaeology item below rather than widening dispatch again.
-
 ## Open from the 2026-11-01 session — repository flattening
 
 Initial recursive Git tree at `496cfb32497bcedb4de6a98bc452d030e82d886b`
@@ -228,12 +220,6 @@ each batch; compare pinned revisions only.
   through the `.claude` symlink; this session could verify the Git tree and
   link target but could not launch Claude Code. Root `TODO.md` remains the
   single actionable backlog.
-
-- [ ] FULL.yml retirement: reconcile every remaining item against
-  `MASTER/data/recovery/full_yml_assessment.yml` and current implementation;
-  adopt only unique, still-valid material with provenance, then delete
-  `FULL.yml` in the same commit that proves no required material is lost.
-  Preserve source archives/history as appropriate.
 
 - [ ] Cross-tree duplication graph: detect repeated decision logic,
   configuration defaults, status/error vocabularies, adapters, serializers,
@@ -1068,22 +1054,20 @@ browser support and bundle/runtime cost before adopting a dependency.
   the same configured database; and inspect `/admin/jobs`. Queue/cache YAML
   and the development adapter/database mapping are committed, but this runtime
   proof is NOT_RUN.
-- [ ] Complete empty-state migration with a full caller scan across every Rails
-  app and engine. The shared partial now logs a deprecation when legacy
-  `actions:` is supplied and documents `action: { label:, path: }`; migrate
-  any remaining legacy callers, prove none remain, then remove the compatibility
-  branch in a separately verified change. The new logging regression is
-  committed but NOT_RUN.
-- [ ] Finish the canonical token correction in `MASTER/data/tokens.yml` and
-  `MASTER/tools/design_tokens.rb`, then regenerate
-  `RAILS/__shared/design_tokens.yml`, `RAILS/__shared/public/styles/tokens.css`
-  and CSS through the documented builder. Current `social.surface` and
-  `social.surface_elevated` are both `#111111`; light-mode generation hardcodes
-  a white background and a white highlight. The canonical light palette already
-  defines a grey page background, so the generator must consume that source
-  rather than invent another palette. `radius-md` is already 12px and
-  `radius-lg` 16px; preserve this correct distinction. Do not hand-edit
-  generated token artifacts.
+- [ ] Run the empty-state source and view proof on the pinned Ruby/Rails checkout:
+  `ruby MASTER/tools/empty_state_lint.rb` plus the focused Amber/Brgen view
+  suites. The String-based `actions:` branch and its deprecation tests are
+  removed; `legacy_actions` now has a zero-baseline ratchet beside the existing
+  missing-action and empty-collection checks. This GitHub-only pass did not run
+  those commands; leave their result NOT_RUN until real output is captured.
+- [ ] Run the token projection and CSS proof on the pinned Ruby/Rails checkout:
+  `ruby MASTER/tools/rails/build_all_css.rb --check` and the shared
+  `design_tokens_test.rb` suite. The canonical source and generator already
+  distinguish dark elevated surfaces (`#1a1a1a`) from light paper surfaces
+  (`#ffffff` / `#f2f2f2`); the committed `tokens.css` and the embedded
+  family block in `RAILS/master/public/face.css` have now been reconciled
+  with that projection. The builder and regression suite were NOT_RUN here.
+  Preserve the existing 12px `radius-md` / 16px `radius-lg` distinction.
 - [ ] Finish the face CSS audit by distinguishing semantic constants from
   presentation literals. Keep the black canvas/print surfaces and OpenBSD
   wscons green where they are identity or accessibility requirements. Replace

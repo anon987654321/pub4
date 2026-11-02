@@ -100,18 +100,15 @@ class TestDocPaths < Minitest::Test
     MASTER/docs/law-navigation.md
     MASTER/docs/lifecycle_ownership.md
     MASTER/docs/mobile.md
-    MASTER/docs/restructure_assessment.md
     MASTER/lib/cli/face/contract.md
     RAILS/__shared/SOCIAL_FRONT_PAGE.md
     TREE_CONTRACTS.md
-    RESTRUCTURE.md
     STUDIO/docs/fetat/proposal.md
     MASTER/docs/LOVDATA.md
     MASTER/docs/PUB4_PERMISSION_MATRIX.md
     MASTER/docs/ad_creative_governance.md
     MASTER/docs/data-freeze.md
     MASTER/docs/editorial-quality.md
-    MASTER/docs/efficient-repair-pass.md
     MASTER/docs/efficient_repair_workflow.md
     MASTER/docs/task-contracts.md
     MASTER/docs/task-map.md

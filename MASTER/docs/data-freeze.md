@@ -16,7 +16,7 @@ your usual message/detail/reach fields; do not hand-edit the YAML around it)
 Scope note: this freezes *files*, not values — thresholds, models, prompts
 and laws keep changing inside the files they already live in. The freeze
 targets the growth pattern the audit measured: the fifteen largest data
-files grew to ~17.7k lines while `restructure_assessment.md` recorded
+files grew to ~17.7k lines while the earlier structure assessment recorded
 `laws.yml` at 2,170 lines — it is 4,289 now. The corpus doubled between the
 assessment and this snapshot, which is exactly the drift F10/F11 exist for.
 
