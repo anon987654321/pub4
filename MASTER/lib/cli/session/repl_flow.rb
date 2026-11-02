@@ -197,7 +197,7 @@ module Master
         when %r{\A/(?:help|\?)(?:\s+(.+))?\z} then run_help(Regexp.last_match(1))
         when "/exit", "/quit" then exit_cli
         when "/undo" then run_undo
-        when "/clear" then run_input("/clear")
+        when "/clear" then run_input("/clear", presentation: @face_open ? :face : :terminal)
         when "/face" then run_face
         else dispatch_registered_slash_command(stripped)
         end
@@ -237,6 +237,8 @@ module Master
         @last_ok = false
         @exit_code = 2
         text = "cmd0: /#{name} failed — #{e.class}: #{e.message}"
+        return Master::Result.err(text, category: :infrastructure) if @face_open
+
         print_terminal_output(text, mode: :error)
         nil
       end
@@ -274,12 +276,14 @@ module Master
 
         result = shell.call(command:)
         text = result.ok? ? result.value!.to_s : result.message.to_s
-        terminal_puts(@refs.renderer.render(text, mode: result.ok? ? :dim : :error))
         @refs.session.add_message(
           role: :user,
           content: "$ #{command}\n#{text}",
           layer: :execution,
         )
+        return result if @face_open
+
+        terminal_puts(@refs.renderer.render(text, mode: result.ok? ? :dim : :error))
       end
 
       def bang_shell
@@ -297,6 +301,8 @@ module Master
         text = result.ok? ? result.value!.to_s : result.message.to_s
         @last_ok = result.ok?
         @exit_code = result.ok? ? 0 : 2
+        return result if @face_open
+
         puts @refs.renderer.render(text, mode: result.ok? ? :dim : :error)
       end
 
@@ -304,7 +310,7 @@ module Master
         input = @last_repeatable_input.to_s
         return Master::Trace::Dmesg.status("cli0", "nothing to repeat") if input.empty?
 
-        run_input(input)
+        run_input(input, presentation: @face_open ? :face : :terminal)
       end
 
       def run_agent_turn(line)

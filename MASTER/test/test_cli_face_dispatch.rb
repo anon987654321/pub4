@@ -162,4 +162,73 @@ class TestCliFaceDispatch < Minitest::Test
     assert exited
   end
 
+  def test_face_help_returns_its_text_without_writing_to_the_hidden_terminal
+    session = Master::CLI::Session.allocate
+    session.instance_variable_set(:@face_open, true)
+    session.define_singleton_method(:print_terminal_output) { |*| flunk "help must render in the face" }
+
+    result = Master::CLI::CommandRegistry.stub(:help_text, "status help") do
+      session.send(:run_help, "status")
+    end
+
+    assert result.ok?
+    assert_equal "status help", result.value!
+  end
+
+  def test_face_clear_keeps_the_face_presentation
+    session = Master::CLI::Session.allocate
+    session.instance_variable_set(:@face_open, true)
+    calls = []
+    session.define_singleton_method(:run_input) do |input, presentation:|
+      calls << [input, presentation]
+      :cleared
+    end
+
+    assert_equal :cleared, session.send(:dispatch_core_slash_command, "/clear")
+    assert_equal [["/clear", :face]], calls
+  end
+
+  def test_face_repeat_uses_the_face_presentation
+    session = Master::CLI::Session.allocate
+    session.instance_variable_set(:@face_open, true)
+    session.instance_variable_set(:@last_repeatable_input, "repeat me")
+    calls = []
+    session.define_singleton_method(:run_input) do |input, presentation:|
+      calls << [input, presentation]
+      :repeated
+    end
+
+    assert_equal :repeated, session.send(:repeat_last)
+    assert_equal [["repeat me", :face]], calls
+  end
+
+  def test_face_direct_shell_returns_the_result_to_the_face_transcript
+    session = Master::CLI::Session.allocate
+    session.instance_variable_set(:@face_open, true)
+    shell = Object.new
+    shell.define_singleton_method(:call) { |command:| Master::Result.ok("shell output") }
+    session.define_singleton_method(:bang_shell) { shell }
+
+    result = session.send(:run_direct_shell, "echo hello")
+
+    assert result.ok?
+    assert_equal "shell output", result.value!
+    assert_equal 0, session.instance_variable_get(:@exit_code)
+  end
+
+  def test_face_registered_command_failure_is_returned_as_a_visible_error
+    session = Master::CLI::Session.allocate
+    session.instance_variable_set(:@face_open, true)
+    session.instance_variable_set(:@container, {
+      commands: { "broken" => ->(args:) { raise IOError, "command output unavailable" } },
+    })
+    session.define_singleton_method(:print_terminal_output) { |*| flunk "face errors must not print behind the face" }
+
+    result = session.send(:dispatch_registered_slash_command, "/broken")
+
+    refute result.ok?
+    assert_equal :infrastructure, result.category
+    assert_match(/command output unavailable/, result.message)
+  end
+
 end
