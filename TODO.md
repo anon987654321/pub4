@@ -41,11 +41,11 @@ one measurement nobody has taken on a non-macOS host.
   something it should not; the run's per-ratchet durations say which.
 ## Structural baseline on main (2da771ba4b34)
 
-The current Git tree contains 5,904 files and 809 directories, with maximum
-path depth 9. Per-tree file counts: MASTER 2,230; RAILS 3,357; OPENBSD 283;
-STUDIO 20. RAILS has 418 files at depth 7 or greater and 105 at depth 8 or
-greater. An exact-blob census finds 49 duplicate-content groups across 157
-paths, including the 22 empty `.keep` placeholders. The duplicate count
+The current Git tree contains 5,901 files and 809 directories, with maximum
+path depth 9. Per-tree file counts: MASTER 2,230; RAILS 3,354; OPENBSD 283;
+STUDIO 20. RAILS has 415 files at depth 7 or greater and 104 at depth 8 or
+greater. An exact-blob census finds 49 duplicate-content groups across 154
+paths, including the 19 necessary empty `.keep` placeholders. The duplicate count
 excludes the former `_messages.html.erb` / `_reply.html.erb` collision:
 `_reply` now has a directional arrow rather than the messages bubble, with a
 source regression; rendered/browser proof remains open. These are investigation
@@ -128,7 +128,7 @@ and compare pinned revisions only.
   foundations, not product compositions.
 
 - [ ] Residual exact-blob audit: the current census finds 49 duplicate-content
-  groups across 157 paths, including the 22 empty `.keep` placeholders. This
+  groups across 154 paths, including the 19 necessary empty `.keep` placeholders. This
   is an investigation set, not a deletion list. It includes per-app Ruby/version
   pins, boot/config files, migration and test files that must remain at app-local
   paths, framework entrypoint/constant shims, and repeated assets/licence text.
