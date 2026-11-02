@@ -52,6 +52,17 @@ class FoldBlockLimitTest < Minitest::Test
     end
   end
 
+  class ChangingApprovalLaw
+    def initialize = @count = 0
+
+    def admit(effect, _memory)
+      @count += 1
+      Master::Core::Verdict::Request.new(
+        effect:, prompt: "approve this operation?", reason: "operator approval required #{@count}", by: :same_law,
+      )
+    end
+  end
+
   class DecliningWorld
     attr_reader :asked
 
@@ -97,7 +108,7 @@ class FoldBlockLimitTest < Minitest::Test
     world = DecliningWorld.new
     fold = Master::Core::Fold.new(
       model: ScriptedModel.new(*Array.new(5, effect)),
-      constitution: RequiringApprovalLaw.new,
+      constitution: ChangingApprovalLaw.new,
       world:,
       memory:,
       max_turns: 10,
