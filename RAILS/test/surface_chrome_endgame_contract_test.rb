@@ -18,7 +18,8 @@ class SurfaceChromeEndgameContractTest < Minitest::Test
   end
 
   def test_brgen_endgame_is_after_late_radio_marketplace_and_messenger_rules
-    app = application_scss("brgen")
+    # brgen is split into @use partials; stylesheet_source joins them in cascade order.
+    app = stylesheet_source("brgen")
     endpoint = stylesheet_module("brgen", "brgen_shared_overrides")
 
     [".radio-home-header {", ".radio-track-card-art {", ".playlist-transport-bar {",
@@ -26,7 +27,8 @@ class SurfaceChromeEndgameContractTest < Minitest::Test
       assert_includes app, selector
     end
 
-    assert_match(/\n@include endgame\.brgen;\s*\z/, endpoint,
+    # The partial file keeps its closing module banner; a comment is not a rule.
+    assert_match(%r{\n@include endgame\.brgen;\s*(?://[^\n]*\s*)*\z}, endpoint,
                  "the endgame include must remain the module's last rule")
     assert_operator app.rindex("module: brgen_shared_overrides"), :>,
                     app.rindex(".radio-home-header {"),
@@ -37,7 +39,7 @@ class SurfaceChromeEndgameContractTest < Minitest::Test
     app = application_scss("amber")
     endpoint = stylesheet_module("amber", "amber_shared_overrides")
 
-    [".feed-post {", ".amber-editorial-nav{", ".amber-messenger-composer textarea,.amber-messenger-composer select",
+    [".feed-card {", ".amber-editorial-nav{", ".amber-messenger-composer textarea,.amber-messenger-composer select",
      'body[data-surface="luxury"] .item-card--luxury {'].each do |selector|
       assert_includes app, selector
     end
@@ -45,7 +47,7 @@ class SurfaceChromeEndgameContractTest < Minitest::Test
     assert_match(/\n@include endgame\.amber;\s*\z/, endpoint,
                  "the endgame include must remain the module's last rule")
     assert_operator app.rindex("module: amber_shared_overrides"), :>,
-                    app.rindex(".feed-post {"),
+                    app.rindex(".feed-card {"),
                     "the overrides module must load after the late luxury and messenger rules"
   end
 
