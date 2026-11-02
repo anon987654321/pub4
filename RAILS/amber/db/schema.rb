@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.2].define(version: 2026_10_31_120000) do
+ActiveRecord::Schema[8.2].define(version: 2026_11_02_160000) do
   create_table "account_merges", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "guest_user_id", null: false
@@ -74,7 +74,6 @@ ActiveRecord::Schema[8.2].define(version: 2026_10_31_120000) do
     t.datetime "time_of_visit"
     t.string "transaction_id", limit: 128
     t.datetime "updated_at", null: false
-    t.string "visitor_id", limit: 128
     t.index ["created_at"], name: "index_affiliate_conversions_on_created_at"
     t.index ["epi"], name: "index_affiliate_conversions_on_epi"
     t.index ["event_type_id"], name: "index_affiliate_conversions_on_event_type_id"
