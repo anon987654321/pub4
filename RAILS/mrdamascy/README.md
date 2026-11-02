@@ -198,5 +198,5 @@ Mr. Damascy is the **first restaurant** destined for the planned `RAILS/brgen_ta
 ## Repository notes
 
 - This app lives at `RAILS/mrdamascy` — a first-class RAILS app path since 2026-11-02. See `APP_SPEC.md` (the single source of truth) and `AGENTS.md` (contributor contract).
-- Logo assets in `public/` are the **operator's originals — the marks already in use at the restaurant — retained byte-for-byte**. Do not regenerate or redesign them; a VTracer re-trace was attempted and rolled back (see `docs/fix-ledger-2026-11-02.md`).
+- Logo assets in `public/` are the **operator's originals — the marks already in use at the restaurant — retained byte-for-byte**. Do not regenerate or redesign them; a VTracer re-trace was attempted and rolled back (see `docs/fix-ledger.md`).
 - Webflow reference screenshots of the current site (`docs/webflow-reference/mrdamascy_1..3.png`) and live app screenshots (`screenshots/01–11`) document both the original and this build.

@@ -117,8 +117,7 @@ class TestDocPaths < Minitest::Test
     MASTER/docs/visual/browserless_ad_audits.md
     OPENBSD/docs/log_rotation.md
     RAILS/mrdamascy/APP_SPEC.md
-    RAILS/mrdamascy/docs/fix-ledger-2026-11-01.md
-    RAILS/mrdamascy/docs/fix-ledger-2026-11-02.md
+    RAILS/mrdamascy/docs/fix-ledger.md
     RAILS/docs/INTERACTION_CAMPAIGN.md
     RAILS/docs/LEGACY_PROMISES.md
     RAILS/docs/archive/LAYOUT_MICRO_REFINEMENT_MATRIX.md
