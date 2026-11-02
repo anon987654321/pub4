@@ -10,7 +10,7 @@ require "set"
 # never a visitor identity or an individual page path.
 class PartnerAttributionReport
   DEFAULT_WINDOW = 7.days
-  DIMENSIONS = %w[city surface].freeze
+  DIMENSIONS = %w[city surface route].freeze
 
   def initialize(window: DEFAULT_WINDOW, now: Time.current)
     @window = window
@@ -67,6 +67,26 @@ class PartnerAttributionReport
   # Coarse attribution only. The current EPI contract carries city and surface;
   # it does not carry a page slug, a visitor ID or a route. Missing dimensions
   # remain visible as unattributed rather than being inferred from a URL.
+  def page_views_by_route
+    return {} unless defined?(Shared::VisitCount)
+
+    Shared::VisitCount.where(day: since.to_date..@now.to_date)
+                       .group(:route).sum(:count)
+  end
+
+  def clicks_by_route = clicks_by_dimension(:route)
+
+  def click_through_by_route
+    views = page_views_by_route
+    route_clicks = clicks_by_route
+    (views.keys | route_clicks.keys).sort.to_h do |route|
+      page_views = views.fetch(route, 0)
+      click_count = route_clicks.fetch(route, 0)
+      [route, { page_views:, clicks: click_count,
+                ctr: page_views.positive? ? click_count.to_f / page_views : 0.0 }]
+    end
+  end
+
   def approved_commission_by_dimension(dimension)
     key = dimension.to_s
     raise ArgumentError, "dimension must be one of #{DIMENSIONS.join(', ')}" unless DIMENSIONS.include?(key)
@@ -74,7 +94,7 @@ class PartnerAttributionReport
     matched_epis = click_epis
     approved_conversions.each_with_object(Hash.new { |hash, bucket| hash[bucket] = BigDecimal("0") }) do |row, sums|
       matched = row.epi.present? && matched_epis.include?(row.epi)
-      name = matched ? row.epi_parts[key].presence : nil
+      name = matched ? dimension_name(row.epi_parts[key], key) : nil
       currency = row.currency.presence || "unknown"
       sums[[name || "unattributed", currency]] += BigDecimal(row.publisher_commission.to_s.presence || "0")
     end.sort_by { |(name, currency), amount| [name, currency, amount] }.to_h
@@ -85,12 +105,26 @@ class PartnerAttributionReport
     raise ArgumentError, "dimension must be one of #{DIMENSIONS.join(', ')}" unless DIMENSIONS.include?(key)
 
     clicks.where.not(epi: nil).each_with_object(Hash.new(0)) do |row, counts|
-      name = row.epi.to_s.split("|").filter_map do |part|
-        field, value = part.split(":", 2)
-        value if field == key && value.present?
-      end.first
+      value = row.epi_parts[key]
+      name = dimension_name(value, key)
       counts[name || "unattributed"] += 1
     end.sort_by { |name, count| [name, count] }.to_h
+  end
+
+  def dimension_name(value, key)
+    return if value.blank?
+    return value unless key == "route"
+
+    route_labels_by_code.fetch(value, "unmapped:#{value}")
+  end
+
+  def route_labels_by_code
+    @route_labels_by_code ||= begin
+      return {} unless defined?(Shared::VisitCount)
+
+      routes = Shared::VisitCount.where(day: since.to_date..@now.to_date).distinct.pluck(:route)
+      routes.index_by { |route| Shared::LinkConverter.route_code(route).to_s }
+    end
   end
 
   # Plain text, because it goes to a log the operator greps and to a terminal.
@@ -118,6 +152,17 @@ class PartnerAttributionReport
     else
       approved_commission_by_currency.each do |currency, amount|
         lines << format("    %-12s %12.2f", currency.presence || "unknown", amount.to_f)
+      end
+    end
+    lines << ""
+    lines << "  route funnel (page views → outbound clicks):"
+    route_funnel = click_through_by_route
+    if route_funnel.empty?
+      lines << "    none"
+    else
+      route_funnel.each do |route, counts|
+        lines << format("    %-36s %7d views %6d clicks %7.2f%%",
+                        route, counts[:page_views], counts[:clicks], counts[:ctr] * 100)
       end
     end
     DIMENSIONS.each do |dimension|
