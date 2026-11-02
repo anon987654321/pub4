@@ -642,13 +642,15 @@ module Operator
       [failed.zero?, lines, failed.zero? ? 0 : 1]
     end
 
-    # Harvest writes every deliberation to .master/critiques/<mode>_latest.md
-    # rather than losing it to scrollback. That file is this stage's input.
-    def cherry_picks = picks_in(File.join(MASTER, ".master", "critiques"))
+    # The check ladder's semantic stage invokes the general /critique mode.
+    # Harvests for UI, sound and other review modes are separate inputs and must
+    # never become executable picks for this stage.
+    def cherry_picks = picks_in(File.join(MASTER, ".master", "critiques"), mode: :general)
 
-    def picks_in(dir)
-      latest = Dir.glob(File.join(dir, "*_latest.md")).max_by { |file| File.mtime(file) }
-      return [] unless latest
+    def picks_in(dir, mode: :general)
+      slug = mode.to_s.gsub(/[^a-z0-9]+/i, "_").downcase
+      latest = File.join(dir, "#{slug}_latest.md")
+      return [] unless File.file?(latest)
 
       section = File.read(latest).split("## cherry-picked", 2)[1].to_s
       return [] if section.empty?
