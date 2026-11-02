@@ -324,8 +324,15 @@ module Marketplace
 
         def persist_split_contracts!(payable)
           orders = payable.is_a?(Marketplace::Checkout) ? payable.order_lines.to_a : [ payable ]
-          orders.each do |order|
-            contract = { splits: split_for(order), fee_split: fee_split }.compact
+          # Validate the complete basket before writing any line. A seller can
+          # lose ACTIVE status between the controller preflight and this call;
+          # one later failure must not leave earlier lines with a partial set of
+          # frozen payout contracts.
+          contracts = orders.map do |order|
+            [order, { splits: split_for(order), fee_split: fee_split }.compact]
+          end
+
+          contracts.each do |order, contract|
             order.update_columns(dintero_split_json: JSON.generate(contract))
           end
         end
