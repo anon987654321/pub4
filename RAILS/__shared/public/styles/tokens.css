@@ -3,7 +3,7 @@
   color-scheme: dark;
   --bg: #000000;
   --surface: #111111;
-  --surface-elevated: #111111;
+  --surface-elevated: #1a1a1a;
   --search-bg: #111111;
   --text: #efefef;
   --text-secondary: #a3a3a3;
@@ -45,14 +45,21 @@
 @media (prefers-color-scheme: light) {
   :root {
     color-scheme: light;
-    --bg: #ffffff;
-    --text: #0f1419;
-    --text-secondary: #536471;
-    --border: #eff3f4;
-    --hover: color-mix(in srgb, var(--text) 10%, transparent);
-    --hover-subtle: color-mix(in srgb, var(--text) 3%, transparent);
+    --bg: #efefef;
+    --surface: #ffffff;
+    --surface-elevated: #f2f2f2;
+    --search-bg: #ffffff;
+    --text: #333333;
+    --text-secondary: #4d4d4d;
+    --border: #666666;
+    --hover: rgba(26, 24, 36, 0.1);
+    --hover-subtle: rgba(26, 24, 36, 0.03);
+    --accent: #000000;
+    --danger: #a9483c;
     --color-background: var(--bg);
-    --color-highlight: var(--bg);
+    --color-highlight: var(--surface-elevated);
+    --color-accent: var(--accent);
+    --color-border: var(--border);
     --text-primary: var(--text);
   }
 }
