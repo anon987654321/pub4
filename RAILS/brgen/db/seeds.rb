@@ -38,16 +38,6 @@ unless Rails.env.development? || Rails.env.test?
   end
   exit 0
 end
-if City.table_exists?
-  puts 'Seeding flagship per-city content (brgen.no, lsangeles.com, amstrdam.nl, oshlo.no)...'
-  City.where(domain: %w[brgen.no lsangeles.com amstrdam.nl oshlo.no]).find_each do |city|
-# Eight, not four. The four cities with a dialect bank carry eight posts
-# each and PerCitySeeder walks them in order, so asking for four seeded
-# half of every bank and dropped the second half of what was written.
-Brgen::PerCitySeeder.new(city, posts_per_city: 8).seed!
-  end
-end
-
 puts 'Seeding Brgen (core + subapps) with rich fictive data...'
 
 if Rails.env.development? || Rails.env.test?
@@ -96,6 +86,16 @@ end
 
 seed_city = City.find_by(domain: 'brgen.no') || City.first
 ActsAsTenant.current_tenant = seed_city if seed_city
+
+# Run after the dev/test table wipe, and cover the full registered host matrix.
+# Production exits above: only the separately disclosed Bergen demo is seeded there.
+if City.table_exists?
+  city_domains = Brgen::DomainRegistry::ENTRIES.map(&:domain)
+  seed_cities = City.where(domain: city_domains).order(:id).to_a
+  puts "Seeding #{seed_cities.size} registered city tenants..."
+  Brgen::PerCitySeeder.seed_all!(cities: seed_cities, posts_per_city: 8)
+  admin.reload
+end
 
 puts "Created #{users.size + 1} users (incl admin)"
 

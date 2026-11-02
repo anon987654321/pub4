@@ -111,7 +111,27 @@ class PerCitySeederTest < ActiveSupport::TestCase
              "#{entry.domain} needs a post-title fallback"
       assert Brgen::PlausibleContent.post_body(norwegian:).present?,
              "#{entry.domain} needs a post-body fallback"
+
+      slugs = Brgen::CityContent.community_slugs_for(entry.country, domain: entry.domain)
+      if entry.country == "NO" && entry.domain != "brgen.no"
+        refute_includes slugs, "bergen", "#{entry.domain} must not seed a Bergen community"
+        assert_includes slugs, "lokalt", "#{entry.domain} needs a city-neutral local community"
+      end
+      next if entry.domain == "brgen.no"
+
+      slugs.each do |slug|
+        copy = Brgen::PlausibleContent.community(slug, entry.city)
+        refute_match(/\bBergen\b/, copy.join(" ")) if copy
+      end
     end
+  end
+
+  test "the flagship keeps its Bergen community while other Norwegian cities do not" do
+    assert_includes Brgen::CityContent.community_slugs_for("NO", domain: "brgen.no"), "bergen"
+    assert_equal %w[lokalt norge kultur mat musikk],
+                 Brgen::CityContent.community_slugs_for("NO", domain: "oshlo.no")
+    assert_equal ["Lokalt", "Lokale nyheter og samtaler fra Oslo og omegn."],
+                 Brgen::PlausibleContent.community("lokalt", "Oslo")
   end
 
   # The bug this guards: db/seeds.rb creates admin@brgen.no with no city_id,

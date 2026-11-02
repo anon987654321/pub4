@@ -68,6 +68,7 @@ module Brgen
     # with their Norwegian twins.
     COMMUNITIES = {
       "bergen" => [ "Bergen", "Byliv i Bergen: vær, trafikk og hverdag fra Bryggen og Nordnes til Åsane og Fana." ],
+      "lokalt" => [ "Lokalt", "Lokale nyheter og samtaler fra %{city} og omegn." ],
       "norge" => [ "Norge", "Nyheter og samtaler fra hele landet, sett fra %{city}." ],
       "kultur" => [ "Kultur", "Kulturfellesskap for %{city} sentrum: konserter, teater, utstillinger og festivaler." ],
       "mat" => [ "Mat", "Mat og drikke i %{city}: kafeer, restauranter, torgdager og oppskrifter." ],

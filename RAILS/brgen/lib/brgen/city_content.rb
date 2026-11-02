@@ -253,8 +253,12 @@ module Brgen
       SUBREDDITS_BY_DOMAIN.fetch(domain) { [ domain.to_s.split(".").first ] }
     end
 
-    def community_slugs_for(country_code)
-      COMMUNITY_SLUGS.fetch(country_code.to_s.upcase, COMMUNITY_SLUGS["US"])
+    def community_slugs_for(country_code, domain: nil)
+      country = country_code.to_s.upcase
+      slugs = COMMUNITY_SLUGS.fetch(country, COMMUNITY_SLUGS["US"])
+      return slugs unless country == "NO" && domain.present? && domain.to_s != "brgen.no"
+
+      slugs.map { |slug| slug == "bergen" ? "lokalt" : slug }
     end
 
     def locale_for(country_code)

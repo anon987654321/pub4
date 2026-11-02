@@ -68,7 +68,7 @@ module Brgen
     end
 
     def seed_communities(admin)
-      Brgen::CityContent.community_slugs_for(country).map do |slug|
+      Brgen::CityContent.community_slugs_for(country, domain: @city.domain).map do |slug|
         # Norwegian copy for the Norwegian slugs; other countries keep the
         # city-and-slug line until someone writes their languages.
         name, description = Brgen::PlausibleContent.community(slug, @city.name) if Brgen::PlausibleContent.norwegian_country?(country)
