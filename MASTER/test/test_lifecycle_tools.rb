@@ -50,13 +50,6 @@ class LifecycleToolsSpec < Minitest::Test
     end
   end
 
-  private
-
-  # The tool is a script with top-level constants and a `$PROGRAM_NAME` guard, so
-  # loading it defines them here and runs nothing.
-  def load_inventory
-    load File.join(ROOT, "tools", "repo_inventory.rb")
-  end
   def test_claude_settings_keep_the_native_path_without_a_root_directory
     repo = File.expand_path("..", ROOT)
     link = File.join(repo, ".claude")
@@ -66,4 +59,11 @@ class LifecycleToolsSpec < Minitest::Test
     assert File.file?(File.join(link, "settings.json"))
   end
 
+  private
+
+  # The tool is a script with top-level constants and a `$PROGRAM_NAME` guard, so
+  # loading it defines them here and runs nothing.
+  def load_inventory
+    load File.join(ROOT, "tools", "repo_inventory.rb")
+  end
 end
