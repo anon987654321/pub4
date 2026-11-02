@@ -41,6 +41,7 @@ class AffiliateFeedUnitTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_includes response.body, "affiliate_feed_unit"
     assert_includes response.body, "affiliate_feed_grid"
+    assert_match(/data-outbound-click-epi-value=/, response.body)
   end
 
   # The unit reads the shared locale file. Until the engine loaded every locale
