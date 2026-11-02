@@ -99,6 +99,7 @@ module Master
 
       def target_path(path)
         return path if @root_prefix.empty? || @root_prefix == "."
+        return "." if path == @root_prefix
 
         path.delete_prefix("#{@root_prefix}/")
       end

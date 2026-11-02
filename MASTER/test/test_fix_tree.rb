@@ -109,6 +109,7 @@ class TestFixTree < Minitest::Test
 
     refute_includes tree.sprawl[:single_file_dirs], "lib/tiny_area"
     assert_includes tree.sprawl[:single_file_dirs], "lib/tiny_area/only"
+    assert_equal 0, tree.directories.find { |dir| dir.path == "lib/tiny_area" }.depth
   end
 
   def test_paths_hold_every_file_and_each_directory_above_it

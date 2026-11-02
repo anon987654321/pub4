@@ -90,6 +90,7 @@ module Master
       def target_relative(path)
         prefix = relative(@target)
         return path if prefix == "."
+        return "." if path == prefix
 
         path.delete_prefix("#{prefix}/")
       end
