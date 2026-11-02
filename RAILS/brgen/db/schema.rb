@@ -1642,8 +1642,8 @@ ActiveRecord::Schema[8.2].define(version: 2026_11_02_180000) do
 
   create_table "takeaway_menu_categories", force: :cascade do |t|
     t.datetime "created_at", null: false
-    t.integer "restaurant_id", null: false
     t.string "name", limit: 40, null: false
+    t.integer "restaurant_id", null: false
     t.datetime "updated_at", null: false
     t.index ["restaurant_id", "name"], name: "index_takeaway_menu_categories_on_restaurant_and_name", unique: true
   end
@@ -1652,8 +1652,8 @@ ActiveRecord::Schema[8.2].define(version: 2026_11_02_180000) do
     t.boolean "available", default: true, null: false
     t.datetime "created_at", null: false
     t.text "description"
-    t.string "name"
     t.integer "menu_category_id"
+    t.string "name"
     t.integer "price_cents"
     t.integer "restaurant_id", null: false
     t.datetime "updated_at", null: false

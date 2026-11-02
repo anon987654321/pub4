@@ -265,10 +265,22 @@ compare pinned revisions only.
   bounded timeout and identify which ratchet dominates after
   `SPONSORED_LINK_REL`. The previous 500-second attempt did not finish and
   is not a measurement result.
-- [ ] Marketplace UX/schema follow-through: active-filter chips with a clear
-  action on results; one delivery line per tile; Takeaway menu categories and
-  restaurant cover images with explicit schema, validations and migration
-  proof. Preserve existing product-specific card layouts.
+- [ ] Verify the Marketplace/Takeaway UX and schema batch on pinned Ruby
+  4.0.5. Applied-filter chips now sit beside the result set; removing one keeps
+  the other filters, and Clear filters preserves query, listing kind and sort.
+  Listing tiles render their delivery promise once, with a regression for the
+  single-line contract. Takeaway now has restaurant-scoped menu sections
+  (existing names are reused case-insensitively), optional categories for old
+  dishes, and restaurant cover images validated as JPEG/PNG/WebP up to 8 MB.
+  Migration `20261102180000` adds the category table/reference without
+  changing existing dish rows. Focused tests cover filters, delivery badge
+  count, category ownership/reuse, cover validation and both restaurant/menu
+  renders. Run `storefront_search_test.rb`,
+  `storefront_card_ladder_test.rb`, `vertical_mutations_test.rb`,
+  `engine_render_smoke_test.rb`, and the Takeaway model tests on the pinned
+  checkout; verify migration on both fresh and upgraded databases and capture
+  real responsive/browser evidence. All of these Rails tests and migrations
+  remain NOT_RUN here; source and test files are not a PASS.
 - [ ] Run the focused billing, API-key/API-lint, dating identity, Radio manifest
   and track-import regressions listed in the RAILS verification gate below;
   no result is inferred from their source files alone.
