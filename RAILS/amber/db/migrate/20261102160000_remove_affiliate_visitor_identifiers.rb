@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "json"
+
 # The TradeDoubler visitor identifier is not used by the EPI attribution join.
 # Remove it and scrub old copies from raw webhook payloads. City/surface
 # attribution continues to work without visitor-level tracking.
@@ -22,13 +24,13 @@ class RemoveAffiliateVisitorIdentifiers < ActiveRecord::Migration[8.1]
     connection.select_all(
       "SELECT id, raw_payload FROM affiliate_conversions WHERE raw_payload IS NOT NULL"
     ).each do |row|
-      payload = JSON.parse(row.fetch("raw_payload"))
+      raw = row.fetch("raw_payload")
+      payload = raw.is_a?(String) ? JSON.parse(raw) : raw
       next unless payload.is_a?(Hash)
+      next unless payload.key?("visitorId") || payload.key?("visitor_id")
 
-      removed = payload.delete("visitorId")
-      removed = payload.delete("visitor_id") || removed
-      next if removed.nil?
-
+      payload.delete("visitorId")
+      payload.delete("visitor_id")
       json = connection.quote(JSON.generate(payload))
       id = connection.quote(row.fetch("id"))
       connection.execute("UPDATE affiliate_conversions SET raw_payload = #{json} WHERE id = #{id}")
