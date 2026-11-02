@@ -196,8 +196,7 @@ module Master
         case stripped
         when %r{\A/(?:help|\?)(?:\s+(.+))?\z} then run_help(Regexp.last_match(1))
         when "/exit", "/quit" then exit_cli
-        when "/undo" then run_undo
-        when "/clear" then run_input("/clear", presentation: @face_open ? :face : :terminal)
+        when "/undo", "/clear" then dispatch_registered_slash_command(stripped)
         when "/face" then run_face
         else dispatch_registered_slash_command(stripped)
         end

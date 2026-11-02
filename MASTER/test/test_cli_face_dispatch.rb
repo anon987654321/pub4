@@ -175,17 +175,27 @@ class TestCliFaceDispatch < Minitest::Test
     assert_equal "status help", result.value!
   end
 
-  def test_face_clear_keeps_the_face_presentation
+  def test_face_clear_dispatches_the_deterministic_registered_command
     session = Master::CLI::Session.allocate
     session.instance_variable_set(:@face_open, true)
-    calls = []
-    session.define_singleton_method(:run_input) do |input, presentation:|
-      calls << [input, presentation]
-      :cleared
-    end
+    session.instance_variable_set(:@container, {
+      commands: {
+        "clear" => Master::CLI::CommandRegistry::Command.new { "context cleared" },
+      },
+    })
 
-    assert_equal :cleared, session.send(:dispatch_core_slash_command, "/clear")
-    assert_equal [["/clear", :face]], calls
+    assert_equal "context cleared", session.send(:dispatch_core_slash_command, "/clear")
+  end
+
+  def test_undo_uses_the_registered_command_instead_of_the_model_turn
+    session = Master::CLI::Session.allocate
+    session.instance_variable_set(:@container, {
+      commands: {
+        "undo" => Master::CLI::CommandRegistry::Command.new { "reverted: note.txt" },
+      },
+    })
+
+    assert_equal "reverted: note.txt", session.send(:dispatch_core_slash_command, "/undo")
   end
 
   def test_face_repeat_uses_the_face_presentation
