@@ -61,6 +61,30 @@ class StorefrontSearchTest < ActionDispatch::IntegrationTest
   # update keeps the region's id for the next keystroke, and the named target
   # stays clear of the search palette's #live_search_results, which comes first
   # in the document.
+  test "applied listing filters render as removable chips with a clear action" do
+    host! "markedsplass.brgen.no"
+    get marketplace.listings_path(
+      q: "Racersykkel", kind: "goods", from: "person", category_id: @bikes.id,
+      min_price: "100", max_price: "1000", sort: "recent"
+    )
+
+    assert_response :success
+    assert_select "nav.listing-active-filters[aria-label=?]", I18n.t("marketplace.active_filters")
+    category_chip = css_select("nav.listing-active-filters a").find { |node| node.text.strip == @bikes.name }
+    assert category_chip, "the selected category should be named in the result chips"
+    category_params = Rack::Utils.parse_nested_query(URI.parse(category_chip["href"]).query)
+    assert_nil category_params["category_id"]
+    assert_equal "person", category_params["from"]
+    assert_equal "Racersykkel", category_params["q"]
+    assert_equal "100", category_params["min_price"]
+    assert_equal "1000", category_params["max_price"]
+
+    clear = css_select("nav.listing-active-filters a.listing-clear-filters").first
+    assert clear, "the result row needs one clear-filters action"
+    clear_params = Rack::Utils.parse_nested_query(URI.parse(clear["href"]).query)
+    assert_equal({ "q" => "Racersykkel", "kind" => "goods", "sort" => "recent" }, clear_params)
+  end
+
   test "a search streams into the storefront region, not the palette's" do
     host! "markedsplass.brgen.no"
     get marketplace.listings_path(q: "Racersykkel", kind: "goods"), headers: STREAM

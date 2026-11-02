@@ -1313,6 +1313,9 @@ nb:
     store_categories: Butikkategorier
     new_listing_form: Opprett annonse
     filters: Filtre
+    active_filters: Aktive filtre
+    clear_filters: Fjern filtre
+    filter_near_me_within: "Nær meg · innen %{radius} km"
     filter_distance: Avstand
     filter_price: Pris
     under_price: "Under %{price}"

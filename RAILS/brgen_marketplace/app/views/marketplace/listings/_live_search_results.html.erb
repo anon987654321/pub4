@@ -33,6 +33,39 @@
   <%= render "marketplace/top_offers", offers: @top_offers %>
 <% end %>
 
+<% filter_params = request.query_parameters.except("page", "format") %>
+<% removable_filter_keys = %w[from category_id condition min_price max_price lat lng radius_km] %>
+<% active_filter_chips = [] %>
+<% if params[:from] == "person" %>
+  <% active_filter_chips << [t("marketplace.from_a_person"), filter_params.except("from")] %>
+<% elsif params[:from] == "shop" %>
+  <% active_filter_chips << [t("marketplace.from_a_shop"), filter_params.except("from")] %>
+<% end %>
+<% if params[:category_id].present? %>
+  <% selected_category = @categories.flat_map { |category| [category, *category.children] }.find { |category| category.id.to_s == params[:category_id].to_s } %>
+  <% active_filter_chips << [selected_category&.name || t("marketplace.filter_category"), filter_params.except("category_id")] %>
+<% end %>
+<% if params[:condition].present? %>
+  <% active_filter_chips << [t("marketplace.conditions.#{params[:condition]}", default: params[:condition].humanize), filter_params.except("condition")] %>
+<% end %>
+<% if params[:min_price].present? %>
+  <% active_filter_chips << [t("marketplace.over_price", price: Shared::MoneyDisplay.format(params[:min_price].to_i * 100)), filter_params.except("min_price")] %>
+<% end %>
+<% if params[:max_price].present? %>
+  <% active_filter_chips << [t("marketplace.under_price", price: Shared::MoneyDisplay.format(params[:max_price].to_i * 100)), filter_params.except("max_price")] %>
+<% end %>
+<% if params[:lat].present? && params[:lng].present? %>
+  <% active_filter_chips << [t("marketplace.filter_near_me_within", radius: @radius_km), filter_params.except("lat", "lng", "radius_km")] %>
+<% end %>
+<% if active_filter_chips.any? %>
+  <nav class="store-pills listing-active-filters" aria-label="<%= t("marketplace.active_filters") %>">
+    <% active_filter_chips.each do |label, remaining_params| %>
+      <%= link_to label, listings_path(remaining_params), class: "deal-cat active" %>
+    <% end %>
+    <%= link_to t("marketplace.clear_filters"), listings_path(filter_params.except(*removable_filter_keys)), class: "deal-cat listing-clear-filters" %>
+  </nav>
+<% end %>
+
 <% if @listings.any? %>
   <%# bol and Kaufland open the results on how many there are and the order
       they are in, as pills beside the count; the sort used to sit inside the
