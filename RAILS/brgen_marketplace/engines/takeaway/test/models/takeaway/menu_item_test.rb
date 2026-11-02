@@ -47,6 +47,20 @@ class Takeaway::MenuItemTest < ActiveSupport::TestCase
     end
   end
 
+  test "a menu item cannot use another restaurant's category" do
+    other = Takeaway::Restaurant.create!(
+      user: @owner, name: "Other Kitchen", address: "Marken 5",
+      cuisine_type: "Norwegian", city: @city, active: true
+    )
+    foreign_category = other.menu_categories.create!(name: "Middag")
+    item = @restaurant.menu_items.new(
+      name: "Foreign dish", price_cents: 12_900, menu_category: foreign_category
+    )
+
+    assert_not item.valid?
+    assert item.errors.added?(:menu_category, :invalid)
+  end
+
   test "a dish found by id names its restaurant's owner" do
     id = Takeaway::MenuItem.create!(restaurant: @restaurant, name: "Persetorsk", price_cents: 229_00).id
 

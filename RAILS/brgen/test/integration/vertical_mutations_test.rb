@@ -142,6 +142,32 @@ class VerticalMutationsTest < ActionDispatch::IntegrationTest
            Dating::Match.active.exists?(initiator_id: b.id, receiver_id: a.id)
   end
 
+  test "takeaway menu item creation reuses a restaurant-scoped category" do
+    owner = make_user("menu_owner")
+    restaurant = ActsAsTenant.with_tenant(@city) do
+      Takeaway::Restaurant.create!(
+        user: owner, name: "Category Kitchen", address: "Marken 4",
+        cuisine_type: "Norwegian", active: true
+      )
+    end
+
+    host! "takeaway.brgen.no"
+    sign_in_with_session_cookie!(owner)
+
+    2.times do |index|
+      post takeaway.restaurant_menu_items_path(restaurant), params: {
+        takeaway_menu_item: {
+          name: "Dish #{index}", price_cents: 12_900,
+          menu_category_name: "Middag"
+        }
+      }
+      assert_redirected_to takeaway.restaurant_path(restaurant)
+    end
+
+    category = restaurant.menu_categories.find_by!(name: "Middag")
+    assert_equal 2, category.menu_items.count
+  end
+
   test "takeaway order create requires delivery address and line items" do
     owner = make_user("rest_owner")
     customer = make_user("diner")

@@ -106,11 +106,21 @@ class EngineRenderSmokeTest < ActionDispatch::IntegrationTest
       cuisine_type: "Pizza",
       active: true
     )
+    attach_pixel(restaurant.cover, "restaurant-cover.png")
+    category = restaurant.menu_categories.create!(name: "Middag")
+    restaurant.menu_items.create!(name: "Smoke soup", price_cents: 12_900, menu_category: category)
 
     host! "markedsplass.brgen.no"
     get "/food/restaurants/#{restaurant.to_param}"
     assert_response :success, "marketplace food 500'd: #{@response.body[0, 300]}"
     assert_includes response.body, "Smoke Food"
+    assert_select "img.restaurant-cover-image[alt=?]", "Smoke Food"
+    assert_select "h3.menu-category-heading", text: "Middag"
+
+    host! "takeaway.brgen.no"
+    get "/"
+    assert_response :success
+    assert_select ".deal-card.restaurant img.restaurant-cover-image"
   end
 
   test "takeaway home renders the canonical promotional art with a photographed menu item" do
