@@ -201,9 +201,10 @@ class TestEcosystemFeatures < Minitest::Test
     # back as one-time pairing codes for local access (11f15666b), and
     # /preferences governs per-person settings (cddc6ff0e).
     # /rules became /laws with the Law registry (0202b2a76), and /skill reviews and
-    # approves skill revisions (3a6b3a980).
+    # approves skill revisions (3a6b3a980). /mov is the Io::Mov shelf adapter
+    # (yt-dlp, official uploads only; 3c2fb182f), not the archived torrent bundle.
     assert_equal %w[agenda android bard capabilities clear commit critique deploy doctor events explain face fix
-                    help incident ios laws model narrate orders pair play plugin preferences privacy prove reload
+                    help incident ios laws model mov narrate orders pair play plugin preferences privacy prove reload
                     review screen session size skill snapshot soul status support task undo voice wake why wishlist],
                  registry.keys.sort
   end
