@@ -66,7 +66,7 @@ module Playlist
     YOUTUBE_HOSTS = %w[youtube.com www.youtube.com m.youtube.com youtu.be].freeze
     SPOTIFY_HOSTS = %w[open.spotify.com spotify.com].freeze
     SOUNDCLOUD_HOSTS = %w[soundcloud.com www.soundcloud.com m.soundcloud.com].freeze
-    WHYP_HOSTS = %w[whyp.it].freeze
+    WHYP_HOSTS = %w[whyp.it www.whyp.it].freeze
 
     def source_type_for(host)
       return "youtube" if YOUTUBE_HOSTS.include?(host)

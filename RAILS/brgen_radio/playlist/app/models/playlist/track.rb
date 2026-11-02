@@ -130,8 +130,11 @@ class Playlist::Track < ApplicationRecord
     id = uri.path[%r{/tracks/(\d+)}, 1]
     return unless id
 
-    token = Rack::Utils.parse_query(uri.query)["token"].presence
-    "https://whyp.it/embeds/track/#{id}#{"?token=#{CGI.escape(token)}" if token}"
+    share = Rack::Utils.parse_query(uri.query).select do |key, value|
+      %w[token in].include?(key) && value.present?
+    end
+    query = URI.encode_www_form(share)
+    "https://whyp.it/embeds/track/#{id}#{"?#{query}" unless query.empty?}""
   rescue URI::InvalidURIError
     nil
   end
