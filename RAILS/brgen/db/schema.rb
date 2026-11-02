@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.2].define(version: 2026_11_02_170000) do
+ActiveRecord::Schema[8.2].define(version: 2026_11_02_180000) do
   create_table "account_merges", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "guest_user_id", null: false
@@ -1640,16 +1640,26 @@ ActiveRecord::Schema[8.2].define(version: 2026_11_02_170000) do
     t.index ["user_id"], name: "index_takeaway_favorite_restaurants_on_user_id"
   end
 
+  create_table "takeaway_menu_categories", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.integer "restaurant_id", null: false
+    t.string "name", limit: 40, null: false
+    t.datetime "updated_at", null: false
+    t.index ["restaurant_id", "name"], name: "index_takeaway_menu_categories_on_restaurant_and_name", unique: true
+  end
+
   create_table "takeaway_menu_items", force: :cascade do |t|
     t.boolean "available", default: true, null: false
     t.datetime "created_at", null: false
     t.text "description"
     t.string "name"
+    t.integer "menu_category_id"
     t.integer "price_cents"
     t.integer "restaurant_id", null: false
     t.datetime "updated_at", null: false
     t.boolean "vegan", default: false, null: false
     t.boolean "vegetarian", default: false, null: false
+    t.index ["menu_category_id"], name: "index_takeaway_menu_items_on_menu_category_id"
     t.index ["restaurant_id"], name: "index_takeaway_menu_items_on_restaurant_id"
   end
 
@@ -2173,6 +2183,8 @@ ActiveRecord::Schema[8.2].define(version: 2026_11_02_170000) do
   add_foreign_key "takeaway_delivery_drivers", "users"
   add_foreign_key "takeaway_favorite_restaurants", "takeaway_restaurants", column: "restaurant_id"
   add_foreign_key "takeaway_favorite_restaurants", "users"
+  add_foreign_key "takeaway_menu_categories", "takeaway_restaurants", column: "restaurant_id"
+  add_foreign_key "takeaway_menu_items", "takeaway_menu_categories", column: "menu_category_id"
   add_foreign_key "takeaway_menu_items", "takeaway_restaurants", column: "restaurant_id"
   add_foreign_key "takeaway_opening_hours", "takeaway_restaurants", column: "restaurant_id"
   add_foreign_key "takeaway_order_items", "takeaway_menu_items", column: "menu_item_id"

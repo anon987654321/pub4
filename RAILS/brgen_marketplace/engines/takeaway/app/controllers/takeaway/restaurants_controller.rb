@@ -13,7 +13,7 @@ class Takeaway::RestaurantsController < Takeaway::BaseController
   def index
     # :city as well as :user — the card renders restaurant.city, which was one
     # query per restaurant (14 on a full page).
-    scope = Takeaway::Restaurant.indexable.includes(:user, :city)
+    scope = Takeaway::Restaurant.indexable.with_attached_cover.includes(:user, :city)
     scope = scope.where(cuisine_type: params[:cuisine]) if params[:cuisine].present?
     scope = apply_live_search(scope, columns: %w[name city cuisine_type description], vertical: "takeaway") if live_search_query.present?
     if params[:lat].present? && params[:lng].present?
@@ -27,7 +27,8 @@ class Takeaway::RestaurantsController < Takeaway::BaseController
   def show
     return if redirect_id_to_slug(@restaurant)
 
-    @menu_items = @restaurant.menu_items.available.with_attached_photo.to_a
+    @menu_items = @restaurant.menu_items.available.with_attached_photo.includes(:menu_category)
+      .order(:menu_category_id, :name).to_a
     @favorited = Current.user.present? && Current.user.takeaway_favorite_restaurants.exists?(restaurant: @restaurant)
     @reviews = load_neighbour_reviews
     @can_review = can_leave_review?
@@ -90,6 +91,7 @@ class Takeaway::RestaurantsController < Takeaway::BaseController
     :longitude,
     :active,
     :place_id,
+    :cover,
   )
 
   def load_neighbour_reviews

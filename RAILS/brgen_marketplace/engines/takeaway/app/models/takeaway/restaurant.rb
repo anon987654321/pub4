@@ -18,11 +18,17 @@ class Takeaway::Restaurant < ApplicationRecord
 
   belongs_to :user
   belongs_to :place, optional: true
+  has_one_attached :cover
+  process_media_variants :cover, variants: {
+    card: { resize_to_limit: [ 960, 640 ], format: :webp },
+    hero: { resize_to_limit: [ 1_600, 1_000 ], format: :webp },
+  }
   # Order history is a receipt, not a child resource the restaurant owner can erase. It is declared
   # before menu_items because dependent callbacks run in declaration order: the refusal has to come
   # first, or destroy deletes menu items that order_items still reference and the database raises.
   has_many :orders, class_name: "Takeaway::Order", dependent: :restrict_with_error
   has_many :menu_items, class_name: "Takeaway::MenuItem", dependent: :destroy
+  has_many :menu_categories, class_name: "Takeaway::MenuCategory", dependent: :destroy
   has_many :favorites, class_name: "Takeaway::FavoriteRestaurant", dependent: :destroy
   has_many :reviews, class_name: "Takeaway::Review", dependent: :destroy
   has_many :opening_hours, class_name: "Takeaway::OpeningHour", dependent: :destroy
@@ -35,7 +41,11 @@ class Takeaway::Restaurant < ApplicationRecord
   # a typo rather than an ambition; the form enforces the same ceiling.
   MAX_DELIVERY_RADIUS_KM = 50
 
+  MAX_COVER_BYTES = 8.megabytes
+  COVER_CONTENT_TYPES = %w[image/jpeg image/png image/webp].freeze
+
   validates :name, :address, :cuisine_type, presence: true
+  validate :cover_must_be_a_supported_image
   validates :delivery_fee_cents, :min_order_cents,
             numericality: { greater_than_or_equal_to: 0 }, allow_nil: true
   validates :delivery_radius_km,
@@ -113,5 +123,19 @@ class Takeaway::Restaurant < ApplicationRecord
     # updated_at with it -- same reason as Marketplace::Listing#update_rating!:
     # the rating is displayed, so the fragment cache has to see the write.
     update_columns(rating: avg&.round(1) || 0, updated_at: Time.current)
+  end
+
+  private
+
+  def cover_must_be_a_supported_image
+    return unless cover.attached?
+
+    blob = cover.blob
+    unless COVER_CONTENT_TYPES.include?(blob.content_type)
+      errors.add(:cover, I18n.t("takeaway.cover_image_invalid"))
+    end
+    if blob.byte_size > MAX_COVER_BYTES
+      errors.add(:cover, I18n.t("takeaway.cover_image_too_large"))
+    end
   end
 end
