@@ -103,7 +103,7 @@ class TestFixProposeTree < Minitest::Test
     directories = ["lib/"] + 19.times.map { |index| "  group_#{index}/" }
     files = ["lib/"] + 19.times.map { |index| "  root_#{index}.rb" }
 
-    assert_equal 0, subject.send(:sketch_score, directories.join("\\n"))[4]
+    assert_equal 0, subject.send(:sketch_score, directories.join("\n"))[4]
     assert_equal 1, subject.send(:sketch_score, files.join("\\n"))[4]
   end
 
