@@ -70,7 +70,9 @@ class CoveragePolicyTest < Minitest::Test
     source = File.read(File.join(ROOT, "..", "MASTER", "tools", "rails", "premerge.rb"))
 
     assert_includes source, 'group: :coverage'
-    assert_includes source, 'else %i[apps pwa contracts coverage checks]'
+    # The default list grows (interactions joined in 8fce03e4a1); what it may
+    # never do is drop coverage.
+    assert_match(/else %i\[[^\]]*\bcoverage\b[^\]]*\]/, source)
     assert_includes source, 'elsif ARGV.include?("--coverage") then [:coverage]'
     assert_includes source, 'elsif ARGV.include?("--checks") then [:checks]'
   end
