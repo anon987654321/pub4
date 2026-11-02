@@ -4,10 +4,7 @@
 <% if Shared::LinkConverter.configured? %>
   <% script_src = Shared::LinkConverter.script_src(Rails.public_path) %>
   <% if script_src.present? %>
-    <% epi = Shared::LinkConverter.epi_for(
-      city: (defined?(Current) && (Current.try(:city) || Current.try(:city_record)&.try(:slug))),
-      surface: (defined?(Current) && Current.try(:subapp)) || Rails.application.class.module_parent_name.downcase
-    ) %>
+    <% epi = Shared::LinkConverter.request_epi %>
     <%= tag.div data: {
       controller: "link-converter",
       link_converter_src_value: script_src,
