@@ -103,8 +103,8 @@ module Master
         @focus_mode ? focus_prompt : normal_prompt
       end
 
-      # The ordinary shell keeps Reline in charge of the prompt. /face opens the
-      # dedicated alternate-screen stage when the operator wants the full face.
+      # Reline owns the working prompt and line editor; the face is an
+      # append-only visual layer above it, never a terminal-input handoff.
       def normal_prompt
         state, prompt = @refs.renderer.prompt_line(
           @refs.agent.model, @refs.session.phase,
@@ -197,7 +197,7 @@ module Master
         when %r{\A/(?:help|\?)(?:\s+(.+))?\z} then run_help(Regexp.last_match(1))
         when "/exit", "/quit" then exit_cli
         when "/undo", "/clear" then dispatch_registered_slash_command(stripped)
-        when "/face" then run_face
+        when %r{\A/face(?:\s+.*)?\z} then run_face
         else dispatch_registered_slash_command(stripped)
         end
       end
@@ -243,27 +243,9 @@ module Master
         nil
       end
 
-      def run_face
-        # The face owns terminal input presentation only. Typed and spoken
-        # turns are handed to the existing Session pipeline and transcript.
-        was_running = @bg_thread&.alive?
-        was_face_open = @face_open
-        @face_open = true
-        stop_background_loop
-        result = CommandRegistry.dispatch_face(
-          prompt: Fiber[:master_cli_prompt],
-          turn: method(:run_face_turn),
-          cancel: method(:cancel_face_turn),
-        )
-        if result == "face0: exit"
-          exit_cli
-        elsif result && result != "face0: closed"
-          terminal_puts(result)
-        end
+      def run_face(_arguments = nil)
+        print_face_overlay
         nil
-      ensure
-        @face_open = was_face_open
-        start_background_loop if was_running && @running
       end
 
       # !command runs one zsh line through the Io::Shell the model's zsh tool
