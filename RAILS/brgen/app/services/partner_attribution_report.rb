@@ -6,8 +6,8 @@ require "set"
 #
 # The join is EPI, not the merchant name. Shared::OutboundClick records the
 # merchant we linked to; Shared::AffiliateConversion records the EPI
-# TradeDoubler echoed back. EPI carries coarse city and surface dimensions,
-# never a visitor identity or an individual page path.
+# TradeDoubler echoed back. EPI carries coarse city/surface dimensions and a
+# short route hash, never a visitor identity, slug or individual page path.
 class PartnerAttributionReport
   DEFAULT_WINDOW = 7.days
   DIMENSIONS = %w[city surface route].freeze
