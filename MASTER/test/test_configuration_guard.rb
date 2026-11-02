@@ -89,6 +89,21 @@ class TestConfigurationGuard < Minitest::Test
     assert_match(/runtime-written data and retired scanner paths cannot be sacred: data\//, reason)
   end
 
+  def test_soul_rejects_an_empty_anti_simulation_word
+    data = YAML.safe_load_file(soul_path, aliases: true)
+    data.fetch("absolute").fetch("anti_simulation")["forbidden"] = [""]
+
+    reason = Guard.validate(path: soul_path, content: YAML.dump(data))
+
+    assert_match(/absolute\.anti_simulation\.forbidden/, reason)
+  end
+
+  def test_soul_keeps_anti_simulation_words_in_its_manifest
+    data = YAML.safe_load_file(soul_path, aliases: true)
+
+    assert_equal %w[will would could might], data.dig("absolute", "anti_simulation", "forbidden")
+  end
+
   # Operator decision 2026-10-28: the laws and the soul are off-limits to automation.
   def test_the_live_soul_protects_the_laws_and_itself
     sacred = YAML.safe_load_file(soul_path, aliases: true).dig("absolute", "sacred_paths")
