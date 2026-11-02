@@ -5,9 +5,8 @@ require "yaml"
 
 module Deploy
   class Inventory
-    # Both copies can load into one process (a check chain that reads OPENBSD
-    # through MASTER's support tree), so the constants guard against
-    # redefinition warnings instead of assuming a fresh namespace.
+    # Single canonical inventory implementation. MASTER's support path is a
+    # require-only adapter into this file, so both toolchains share behavior.
     App = Struct.new(:name, :title, :domain, :port, :deploy_script, :deploy_root, :public, keyword_init: true) unless defined?(App)
 
     attr_reader :root

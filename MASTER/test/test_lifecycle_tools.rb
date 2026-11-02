@@ -59,6 +59,17 @@ class LifecycleToolsSpec < Minitest::Test
     assert File.file?(File.join(link, "settings.json"))
   end
 
+
+  def test_master_deploy_inventory_adapter_uses_the_openbsd_implementation
+    require File.join(ROOT, "checks", "support", "deploy_inventory")
+
+    actual = File.expand_path(Deploy::Inventory.instance_method(:load_apps).source_location.first)
+    expected = File.expand_path("../OPENBSD/lib/deploy_inventory.rb", ROOT)
+
+    assert_equal expected, actual
+  end
+
+
   private
 
   # The tool is a script with top-level constants and a `$PROGRAM_NAME` guard, so
