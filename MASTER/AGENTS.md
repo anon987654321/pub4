@@ -4,10 +4,13 @@ Task-scoped entry for coding agents (Cursor, Codex, Grok, Claude Code). This fil
 
 **Start at the repo-root `AGENTS.md` (or your harness pointer, which routes there).**
 That is the shared entrypoint; this file is the detailed MASTER contract.
-Read `MASTER/data/soul.yml` — subordinate identity and delivery — then
-`MASTER/data/laws.yml`, the sole normative constitution. Ruby enforcement
-lives in `MASTER/law/`; `MASTER/lib/review/scan/` is scanner machinery, not a
-second Law source tree. `CLAUDE.md` is a short pointer, not a policy source.
+Read `MASTER/data/soul.yml` first. It owns global identity, preservation,
+source precedence and `absolute.sacred_paths`. Then read
+`MASTER/data/laws.yml`, the canonical catalogue of individual Law identities,
+statements, parentage and the nine invariant nodes' internal order.
+`MASTER/law/`, `MASTER/data/law_runtime.yml` and `MASTER/checks/` implement
+and verify those requirements; `MASTER/lib/review/scan/` is scanner machinery,
+not another Law source tree. `CLAUDE.md` is a short bootstrap pointer.
 
 The block below generates the full root `AGENTS.md`. Gemini, GLM, Cursor and
 Copilot entry files are short generated pointers to that one contract. Edit
@@ -51,13 +54,14 @@ commits; never force-push.
 
 Before planning or acting, load MASTER's canonical context:
 
-1. `MASTER/data/soul.yml` attests the identity body and the delivery
-   configuration. It may not create or override Laws, precedence, protected
-   paths, severity, or enforcement policy.
-2. `MASTER/data/laws.yml` is the sole normative constitution. It owns Law
-   identities and statements, parent and root relationships, the ordered
-   nine invariant nodes, root and severity vocabularies, resolutions, and
-   declared enforcement contracts.
+1. `MASTER/data/soul.yml` is the highest source of global authority. It owns
+   system identity, preservation principles, source precedence and
+   `absolute.sacred_paths`. It cannot create individual Law identities or
+   restate their requirement statements.
+2. `MASTER/data/laws.yml` is the one catalogue of individual Law records. It
+   owns Law identities and statements, parent and root relationships, the
+   ordered nine invariant nodes, root and severity vocabularies, resolutions,
+   and declared enforcement contracts.
 3. At the start of every task, run
    `ruby MASTER/tools/agent_context.rb --json` and consume its current
    `conduct`, `blocking_rules`, `coverage`, `task_contract_schema`, and
@@ -79,20 +83,19 @@ Read the relevant source, tests, and local documentation for the requested
 work. Never substitute remembered instructions, summaries, or assumptions
 for the live files.
 
-Authority: laws.yml > soul.yml > Ruby implementations and executable Law
-adapters > checks and tree contracts > agent-harness prose. The flat
-catalogue is ordered data: one row holds one identity and one statement,
-tied to a constitutional node, a root, or a parent. The nine invariant nodes
-open the catalogue in constitutional order; the catalogue holds no numeric
-priority, no per-law path scopes, and no second precedence graph.
+Source authority: `soul.yml > laws.yml > executable laws and gates > tree
+contracts > Git history`. Soul is highest for global identity, preservation,
+source order and protected paths. The Law catalogue is authoritative for
+individual Law identities and statements; its nine invariant nodes order Laws
+internally. Git history is provenance, never an override of a live source.
 
-`MASTER/lib/soul.rb` derives its precedence and protected-path views from
-`laws.yml`; Ruby constants must not introduce a competing graph or path
-list. `MASTER/law/*.rb` holds the executable Law implementations and
-adapters. `MASTER/lib/review/scan/` is the scanner runtime — an enforcement
-instrument, not a normative catalogue. `SACRED_AUTHORSHIP.protected_paths`
-is the one protected-path declaration. Automatic resolutions require proof
-fixtures.
+`MASTER/lib/soul.rb` reads the source hierarchy and protected-path list from
+`soul.yml`, and derives the nine-node Law order from `laws.yml`; it does not
+author a competing graph. `MASTER/law/*.rb` holds executable Law definitions
+and adapters. `MASTER/data/law_runtime.yml` holds live transitional execution
+metadata. `MASTER/checks/` routes operational checks. These are enforcement
+instruments, not alternate sources of Law identity. Automatic resolutions
+require proof fixtures.
 
 One Law system: every Law is one catalogue entry and one `Law.define`, and
 its detector is a `detect` regex, a `check` block, or a detector class in
@@ -136,7 +139,7 @@ bypass the legacy entries — that would disable or misconfigure executable
 Laws. The next migration moves or redesigns this per-Law metadata inside
 `laws.yml` and updates `Law::Definition`, `LawCataloguePreflight`,
 `LawRegistryAudit`, `BootReceipt`, the DSL fixtures, and all relevant tests
-together. Until then, call `laws.yml` the normative constitution and
+together. Until then, call `laws.yml` the normative Law catalogue and
 `law_runtime.yml#law_catalogue` a legacy execution-metadata dependency.
 
 Task entry: before a substantive edit, state intent, repository-relative
@@ -348,9 +351,12 @@ before committing, and never commit rewrites of generated caches: the scanner
 descends into them.
 
 The deterministic autofix stage, which runs before any model is asked, answers
-to `Fix::AutofixGuard`. It never opens a protected path: the sacred paths
-`soul.yml` declares (all of `data/`), `lib/cli/face/`, the voice and TTS files,
-`STUDIO/dilla/`, `STUDIO/postpro/` and golden fixtures. It parses every
+to `Fix::AutofixGuard`. It never opens a protected path: Soul declares
+`data/laws.yml`, `data/soul.yml`, `data/project_context.yml`,
+`lib/soul.rb`, `lib/ground/pledge.rb` and `bin/master`. Other
+`lib/cli/face/`, voice/TTS, `STUDIO/dilla/`, `STUDIO/postpro/` and golden
+fixture paths have their own tree or artifact contracts; they are not silently
+added to the constitutional sacred-path list. It parses every
 candidate (Ruby, YAML, JSON) and never applies an edit to a data file that only
 moves whitespace. After a write it runs the file's own `test_<name>.rb` when one
 exists and puts the original bytes back if that test goes red. RuboCop's
@@ -592,13 +598,13 @@ in `OPENBSD/CLAUDE.md`.
   OpenBSD host does not ask. A session writable set seeded from git-dirty paths
   inverts in a shared checkout, admitting the files other sessions hold; the
   fold's `new_path_ask` scopes writes to what the turn has read instead.
-- **No unreviewed self-modification.** Do not let a background learning loop rewrite
-  the constitution without a task, evidence and verification. However, `data/soul.yml`
-  and `data/laws.yml` are ordinary editable source files: do not protect them from
-  normal validated edits, `/fix`, or commits merely because they govern the system.
-  Parse and validate the candidate, preserve required security invariants, prove
-  Law-catalogue reconciliation, and run the relevant checks before publication. No
-  separate operator-only path is required for a routine, evidence-backed repair.
+- **No unreviewed self-modification.** `data/soul.yml` and `data/laws.yml`
+  are operator-owned, sacred to autonomous writers and repair loops. A human
+  may edit them deliberately and commit the validated change. Do not route
+  edits to these files through `/fix` or an automatic writer. Validate the
+  Soul schema/source hierarchy and Law catalogue invariants, preserve existing
+  protected paths, prove Law-catalogue reconciliation, and run the relevant
+  checks before a human commits the result.
 - **One normative Law catalogue, with transitional execution metadata.**
   `data/laws.yml` is the sole normative source for Law identity, statements,
   parent/root relationships and constitutional authority. It does not currently
