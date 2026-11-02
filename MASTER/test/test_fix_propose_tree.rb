@@ -97,6 +97,17 @@ class TestFixProposeTree < Minitest::Test
                     subject.send(:sketch_score, owned)[1]
   end
 
+  def test_current_tree_measures_root_clutter_at_the_lib_boundary
+    19.times do |index|
+      File.write(File.join(@root, "lib", "root_#{index}.rb"), "x" * 240)
+    end
+
+    summary = Master::Fix::ProposeTree.new(root: @root, agent: RecordingAgent.new(REPLY, []))
+                                      .send(:current_tree)
+
+    assert_match(/"root_clutter":19/, summary)
+  end
+
   def test_root_clutter_counts_root_files_not_top_level_directories
     agent = RecordingAgent.new(REPLY, [])
     subject = Master::Fix::ProposeTree.new(root: @root, agent:)
@@ -104,7 +115,7 @@ class TestFixProposeTree < Minitest::Test
     files = ["lib/"] + 19.times.map { |index| "  root_#{index}.rb" }
 
     assert_equal 0, subject.send(:sketch_score, directories.join("\n"))[4]
-    assert_equal 1, subject.send(:sketch_score, files.join("\\n"))[4]
+    assert_equal 1, subject.send(:sketch_score, files.join("\n"))[4]
   end
 
   def test_a_recent_report_cools_the_proposal_down

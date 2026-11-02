@@ -76,6 +76,10 @@ module Master
         end
         sprawl = TreeSprawl.new(files: relative_files, directories:, sizes:).to_h
         counts = sprawl.transform_values(&:size)
+        # The proposal sketch is rooted at lib/, not the repository root.
+        # Count direct lib files here so the prompt's metric matches its drawing.
+        lib_root_files = files.count { |path| File.dirname(path) == lib_root }
+        counts[:root_clutter] = lib_root_files > TreeSprawl::ROOT_FILE_LIMIT ? lib_root_files : 0
 
         lines = relative_entries.first(MAX_TREE_ENTRIES).map do |path|
           depth = path.count("/")
