@@ -17,6 +17,16 @@ class BergenDemoSeederTest < ActiveSupport::TestCase
     ActsAsTenant.current_tenant = nil
   end
 
+  test "refuses to seed Bergen-specific fixtures into another city" do
+    oslo = City.find_by!(domain: "oshlo.no")
+
+    error = assert_raises(ArgumentError) do
+      Brgen::BergenDemoSeeder.new(oslo, attach_media: false).seed!
+    end
+
+    assert_match(/only seeds brgen\\.no/, error.message)
+  end
+
   test "seeds norwegian bergen posts and users without remote media" do
     ActsAsTenant.with_tenant(@city) do
       Brgen::BergenDemoSeeder.new(@city, attach_media: false).seed!
