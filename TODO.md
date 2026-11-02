@@ -39,18 +39,20 @@ one measurement nobody has taken on a non-macOS host.
   its own deadline — where the helper comment promises about a minute across
   the corpus. Either the host is that much slower or a ratchet walks
   something it should not; the run's per-ratchet durations say which.
-## Structural baseline on main (8748756b0e6b)
+## Structural baseline on main (2da771ba4b34)
 
-The current Git tree contains 5,897 files and 807 directories, with maximum
-path depth 9. Per-tree counts (files / descendant directories): MASTER
-2,230 / 143; RAILS 3,350 / 623; OPENBSD 283 / 30; STUDIO 20 / 11.
-RAILS has 413 files at depth 7 or greater and 102 at depth 8 or greater.
-An exact-blob census finds 50 duplicate-content groups across 159 paths,
-including the 22 empty `.keep` placeholders. These are investigation signals,
-not deletion instructions: app-local migrations, pins, entrypoint shims,
-license texts and intentional stubs remain until their ownership contracts
-prove a safe consolidation. Refresh the census at each bounded batch and
-compare pinned revisions only.
+The current Git tree contains 5,904 files and 809 directories, with maximum
+path depth 9. Per-tree file counts: MASTER 2,230; RAILS 3,357; OPENBSD 283;
+STUDIO 20. RAILS has 418 files at depth 7 or greater and 105 at depth 8 or
+greater. An exact-blob census finds 49 duplicate-content groups across 157
+paths, including the 22 empty `.keep` placeholders. The duplicate count
+excludes the former `_messages.html.erb` / `_reply.html.erb` collision:
+`_reply` now has a directional arrow rather than the messages bubble, with a
+source regression; rendered/browser proof remains open. These are investigation
+signals, not deletion instructions: app-local migrations, pins, entrypoint
+shims, licence texts and intentional stubs remain until their ownership
+contracts prove a safe consolidation. Refresh the census at each bounded batch
+and compare pinned revisions only.
 
 ### Remaining work
 
@@ -125,18 +127,17 @@ compare pinned revisions only.
   Preserve Rails lookup contracts and each product's visual identity. Share
   foundations, not product compositions.
 
-- [ ] Residual exact-blob audit: the current census finds 50 duplicate-content
-  groups across 159 paths, including the 22 empty `.keep` placeholders. This is
-  an investigation set, not a
-  deletion list. It includes per-app Ruby/version pins, boot/config files,
-  migration and test files that must remain at app-local paths, framework
-  entrypoint/constant shims, and repeated assets/licence text. The Amber and
-  Brgen `DraftsController` pair is already a thin adapter over
+- [ ] Residual exact-blob audit: the current census finds 49 duplicate-content
+  groups across 157 paths, including the 22 empty `.keep` placeholders. This
+  is an investigation set, not a deletion list. It includes per-app Ruby/version
+  pins, boot/config files, migration and test files that must remain at app-local
+  paths, framework entrypoint/constant shims, and repeated assets/licence text.
+  The Amber and Brgen `DraftsController` pair is already a thin adapter over
   `Shared::DraftsActions`; `Session` and `Current` are similarly tiny
-  host-level class declarations, not worth adding another shared abstraction
-  for. Keep the `_messages` / `_reply` icon SVG collision open until a
-  rendered visual review establishes whether the same glyph is intentional.
-  Do not perform hash-only deletion.
+  host-level class declarations, not worth adding another shared abstraction.
+  The former `_messages` / `_reply` duplicate was corrected: the reply action
+  now draws a directional arrow and has a source regression. Keep only its
+  rendered/browser proof open. Do not perform hash-only deletion.
 
 - [ ] OPENBSD: inspect `OPENBSD/bin/`, `OPENBSD/lib/`,
   `OPENBSD/checks/` and source-layout mirrors `OPENBSD/etc/`, `home/`,
