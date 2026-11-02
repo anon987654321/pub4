@@ -189,7 +189,7 @@ class TestCliReplExit < Minitest::Test
   # historical shell prompt ends in host:path$.
   ENV_FOR_PTY = TestCliBootE2e::BOOT_ENV.merge(
     "MASTER_FAST" => "0", "MASTER_SKIP_BOOT_SCAN" => "1", "MASTER_SKIP_TTS" => "1", "TERM" => "xterm",
-    "MASTER_FACE_ON_START" => "0", "MASTER_FACE_AUTO_MIC" => "0"
+    "MASTER_FACE_AUTO_MIC" => "0"
   ).freeze
   READY = /\S+:\S+\$ /
 
@@ -230,28 +230,29 @@ class TestCliReplExit < Minitest::Test
     refute_match(/Error|from .+\.rb:\d+/, output)
   end
 
-  # Opening the face must be an escape hatch from the ordinary REPL, not a
-  # terminal handoff. This does not ask a model or microphone: it proves the
-  # alternate screen is entered, exited, and followed by the same host:path$ prompt.
-  def test_face_exit_restores_the_canonical_repl_prompt
+  # Bare entry must show the face projection without taking keyboard ownership.
+  # /face refreshes that projection in place; Ctrl-D exits the one Reline session.
+  def test_bare_entry_keeps_the_canonical_prompt_beneath_the_face_overlay
     require "pty"
     output = +""
     status = nil
     completed = false
+    marker = "face0 at master0: visual layer refreshed; Reline owns input"
     PTY.spawn(boot_env, Master::BUNDLE_BIN, "exec", "ruby", "bin/master", chdir: ROOT) do |reader, writer, pid|
       begin
         read_until(reader, output, READY, 30)
-        assert_match(READY, output, "CLI never showed its initial host:path$ prompt")
-        sleep 0.5
+        assert_match(READY, output, "CLI never showed its working Reline prompt")
+        assert_includes output, marker, "bare startup did not render the face layer"
+        refute_match(/\e\[\?1049h/, output, "bare startup must not take over the alternate screen")
 
+        previous_count = output.scan(marker).length
         writer.write("/face\n")
-        read_until(reader, output, /\e\[\?1049h/, 15)
-        assert_match(/\e\[\?1049h/, output, "the /face command did not enter the alternate screen")
-
-        writer.write("/exit\n")
-        restored_prompt = /\e\[\?1049l.*?\S+:\S+\$ /m
-        read_until(reader, output, restored_prompt, 20)
-        assert_match(restored_prompt, output, "leaving /face did not restore the canonical REPL prompt")
+        deadline = Time.now + 8
+        while output.scan(marker).length <= previous_count && Time.now < deadline
+          output << reader.readpartial(4096) if reader.wait_readable(0.2)
+        end
+        assert_operator output.scan(marker).length, :>, previous_count, "/face did not redraw the in-place overlay"
+        refute_match(/\e\[\?1049h/, output, "/face must not switch terminal input modes")
 
         writer.write("\x04")
         deadline = Time.now + 10
