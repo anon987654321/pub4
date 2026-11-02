@@ -26,6 +26,7 @@ module Master
         moderated_user_test expert_walkthrough browser_task screen_reader_review
       ].freeze
       STATUSES = %w[pass fail inconclusive not_applicable].freeze
+      EMPTY_SCOPE_DETAIL = "no readable source files in the required scope"
       TASK_EVIDENCE_FIELDS = %w[status method participants summary artifacts].freeze
       SAFE_ARTIFACT_EXTENSIONS = %w[.md .txt .json .yml .yaml .png .jpg .jpeg .webp].freeze
       TEXT_ARTIFACT_EXTENSIONS = %w[.md .txt .json .yml .yaml].freeze
@@ -294,7 +295,7 @@ module Master
 
       def source_assessment(app, id, spec, markup, styles)
         scope = id == "focus_visibility" ? styles : markup
-        return assessment(app, id, spec, "inconclusive", "no readable source files in the required scope", 0, []) if scope.empty?
+        return [assessment(app, id, spec, "inconclusive", EMPTY_SCOPE_DETAIL, 0, []), []] if scope.empty?
 
         probe = SourceAudit.new.call(id, scope)
         issues = probe.issues

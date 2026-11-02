@@ -13,7 +13,8 @@ module Master
           method = "probe_#{id}"
           raise BaymardLaw::InvalidProfile, "no source probe for #{id}" unless respond_to?(method, true)
 
-          public_send(method, records).then do |issues, measured, unknown|
+          # Probes are private; the respond_to? guard above admits only probe_* ids.
+          __send__(method, records).then do |issues, measured, unknown|
             Result.new(issues:, measured:, unknown:)
           end
         end
