@@ -60,11 +60,13 @@ class SearchPaletteTest < ActionDispatch::IntegrationTest
     refute_includes response.body, leaving.username
   end
 
-  test "the palette exposes the whole city network" do
+  test "the palette exposes only TLS-ready city network entries" do
     get communities_path
 
-    assert_select ".search_palette_cities .city-network-item", Brgen::DomainRegistry::CITY_NETWORK_DOMAINS.size
-    assert_select ".search_palette_cities a[href='https://lsangeles.com/']", 1
+    assert_select ".search_palette_cities .city-network-item", Brgen::DomainRegistry.live_network_entries.size
+    assert_select ".search_palette_cities a[href='https://oshlo.no/']", 1
+    assert_select ".search_palette_cities a[href='https://lndon.uk/']", 0
+    assert_select ".search_palette_cities a[href='https://lsangeles.com/']", 0
   end
 
   test "the mobile More sheet exposes the same TLS-ready city network" do
