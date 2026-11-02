@@ -56,12 +56,14 @@ module Shared
     # The exact EPI the consent-gated Link Converter assigns to links on
     # this request. First-party click beacons reuse it so their row can join a
     # conversion postback without introducing a visitor identifier.
-    def request_epi
-      city = if defined?(Current)
-        Current.try(:city) || Current.try(:city_record)&.try(:slug)
+    def request_epi(city: nil, surface: nil)
+      if defined?(Current)
+        city ||= Current.try(:city) || Current.try(:city_record)&.try(:slug)
+        surface ||= Current.try(:subapp)
       end
-      surface = defined?(Current) && Current.try(:subapp)
-      surface ||= Rails.application.class.module_parent_name.downcase
+      if surface.blank? && defined?(Rails) && Rails.respond_to?(:application)
+        surface = Rails.application.class.module_parent_name.downcase
+      end
       epi_for(city:, surface:)
     end
 
