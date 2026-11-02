@@ -43,7 +43,7 @@ one measurement nobody has taken on a non-macOS host.
 
 The current Git tree contains 5,901 files and 809 directories, with maximum
 path depth 9. Per-tree file counts: MASTER 2,230; RAILS 3,354; OPENBSD 283;
-STUDIO 20. RAILS has 415 files at depth 7 or greater and 104 at depth 8 or
+STUDIO 20. RAILS has 416 files at depth 7 or greater and 105 at depth 8 or
 greater. An exact-blob census finds 49 duplicate-content groups across 154
 paths, including the 19 necessary empty `.keep` placeholders. The duplicate count
 excludes the former `_messages.html.erb` / `_reply.html.erb` collision:
