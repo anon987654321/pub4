@@ -529,12 +529,6 @@ namespace :docs do
     end
   end
 
-  desc "Regenerate docs/laws_digest.md from data/laws.yml and law/*.rb"
-  task :laws_digest do
-    require_relative "tools/laws_digest"
-    digest = Operator::LawsDigest.write
-    puts "docs:laws_digest: wrote docs/laws_digest.md (#{digest.count("\n")} lines)"
-  end
 end
 
 namespace :lint do
@@ -586,20 +580,6 @@ task :agent_contracts do
         "point at the catalogue, do not reproduce it" if quoted.any?
 
   puts "lint:agent_contracts: #{AGENT_CONTRACT_TARGETS.size} harness files match their source; CLAUDE.md pointer contract holds"
-end
-
-desc "docs/laws_digest.md matches what data/laws.yml and law/*.rb generate"
-task :laws_digest do
-  require_relative "tools/laws_digest"
-  path = Operator::LawsDigest::OUTPUT
-  abort "lint:laws_digest: docs/laws_digest.md is missing — run `rake docs:laws_digest`" unless File.file?(path)
-
-  current = File.read(path)
-  fresh = Operator::LawsDigest.render
-  abort "lint:laws_digest: docs/laws_digest.md drifted from data/laws.yml and law/*.rb — " \
-        "edit the sources and run `rake docs:laws_digest`" unless current == fresh
-
-  puts "lint:laws_digest: docs/laws_digest.md matches its sources"
 end
 
   desc "Check all Ruby files have # frozen_string_literal: true"
@@ -950,7 +930,7 @@ end
 AUDIT_CHECKS = %w[
   dogfood constitution selftest selfcheck tools core_smoke architecture boot_smoke kernel_autoload_smoke security_sweep
   lint:frozen lint:data_singularity lint:spine lint:autoload
-  lint:law_trace lint:law_parity lint:agent_contracts lint:laws_digest lint:scan_coverage lint:agent_map lint:reader_singularity lint:doc_citations lint:task_map lint:alias_sites
+  lint:law_trace lint:law_parity lint:agent_contracts lint:scan_coverage lint:agent_map lint:reader_singularity lint:doc_citations lint:task_map lint:alias_sites
   lint:do_not_touch lint:instruments lint:swallowed lint:law_audit lint:autofix_reach
   lint:rule_hygiene lint:constant_collisions lint:capability lint:cohesion lint:law_reach
   lint:models lint:dedup lint:word_boundary lint:test_naming ad_organ:test_browserless

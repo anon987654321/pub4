@@ -124,12 +124,13 @@ The fix is in this patch's spirit rather than its letter: figures that can
 drift belong in generated output (`--json` fields), not hand-written headers.
 The one stale figure in this file's header is corrected in the same batch.
 
-**F11 — brevity for laws.yml.** 2,170 lines is the canonical catalogue and is
-read linearly every session. A generated digest (tier → id → one-line
-requirement → pointer), produced the way the agent contracts are — `rake`
-task, drift lint, never hand-edited — would cut the largest recurring token
-cost without touching authority. Proposal only; the rake task wants a Ruby
-host to write and lint it honestly.
+**F11 — resolved 2026-11-02: no second copy of the Law catalogue.** The large
+generated digest was removed rather than retained as a drifting representation
+of the per-Law execution policies. Agent entrypoints require the live
+`agent_context --json` preflight; targeted Law records and execution reach are
+retrieved from `laws.yml` and `laws.yml#law_catalogue` through
+`MASTER/bin/operator laws <ID>`. `MASTER/docs/law-navigation.md` provides the
+short retrieval path without copying the Law statements.
 
 **F12 — `__shared` keeps its name.** Renaming it to `pub4_shared/` (matching
 the gem) would touch the gemspec, deploy scripts, `_core.sh`-family paths,
@@ -148,8 +149,8 @@ the double underscore already says "not an app". Keep.
 - **P3 — `lib/fix` consolidation** per `docs/fix_coordinator_map.md`, which
   carries F1 and F2 entirely.
 - **P4 — the one rename:** F7 messenger module, with its full gate list.
-- **P5 — generated brevity:** F9 pointer-ization per harness as each is
-  confirmed; F11 laws digest behind its rake task.
+- **P5 — harness pointers:** F9 pointer-ization is committed; vendor resolver
+  consumption remains NOT_RUN until each harness is exercised.
 
 ## What this assessment does not claim
 

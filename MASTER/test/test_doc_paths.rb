@@ -97,7 +97,7 @@ class TestDocPaths < Minitest::Test
     MASTER/docs/free_compute.md
     MASTER/docs/history/fix-review-log.md
     MASTER/docs/history/recovery/legacy-apps-handoff.md
-    MASTER/docs/laws_digest.md
+    MASTER/docs/law-navigation.md
     MASTER/docs/lifecycle_ownership.md
     MASTER/docs/mobile.md
     MASTER/docs/restructure_assessment.md

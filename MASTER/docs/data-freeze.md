@@ -29,17 +29,12 @@ this?") to be tried before a new name exists.
 
 ## Where the released budget goes
 
-The freeze alone does not shrink anything; it stops the inflow while three
+The freeze alone does not shrink anything; it stops the inflow while two
 outflows run:
 
-1. **F11 — the laws digest.** Generated brevity (`rake` task, drift lint,
-   never hand-edited) for the catalogue read linearly every session. This is
-   the single largest recurring token cost in the tree and the assessment
-   already scoped it; it needs a Ruby host, which the phase gates already
-   require.
-2. **The archaeology eviction** — `p2-hygiene/archive-recovery.sh` moves
+1. **The archaeology eviction** — `p2-hygiene/archive-recovery.sh` moves
    11.9k lines to `docs/history/` (gated, dry-run first).
-3. **The cognition time-box (below).**
+2. **The cognition time-box (below).**
 
 ## Cognition time-box
 
