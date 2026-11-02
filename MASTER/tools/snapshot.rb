@@ -167,16 +167,19 @@ module Operator
 
         ### 7. The law you are reviewing against
 
-        This repository is governed by MASTER, and its law is data rather than prose. Read it before
-        you judge anything, in this order — all four governed trees are represented by their own snapshots:
+        This repository is governed by MASTER. Read the live sources in their
+        declared authority order before judging or changing a governed tree:
 
-        1. `MASTER/data/laws.yml` — the normative constitution and ordered invariant nodes.
-        2. `MASTER/data/soul.yml` — subordinate identity, voice and delivery; it cannot override a Law.
-        3. `MASTER/law/*.rb` — executable Law definitions and their bad/good fixtures. A declared detector
-           is not proof it executed; inspect the live registry and the evidence for the target.
-        4. `MASTER/data/law_runtime.yml` — transitional per-Law execution metadata still consumed by
-           Law.define (severity, lifecycle, autofix and applicability). This is known migration debt, not
-           an authority that may override the normative constitution.
+        1. `MASTER/data/soul.yml` — global identity, preservation principles,
+           source precedence and `absolute.sacred_paths`.
+        2. `MASTER/data/laws.yml` — individual Law identities, statements,
+           parentage and the nine invariant nodes' internal order.
+        3. `MASTER/data/law_runtime.yml` — live transitional per-Law execution
+           metadata, followed by `MASTER/law/*.rb` and `MASTER/checks/` for
+           executable definitions, detectors, gates and proof. This metadata is
+           not another normative catalogue.
+        4. `TREE_CONTRACTS.md` and the relevant tree README/CLAUDE contract.
+        5. Git history for provenance only; it never overrides live sources.
 
         The house rules that reject otherwise-correct patches:
 
