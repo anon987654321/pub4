@@ -8,7 +8,7 @@ module Master
       include Base
       TIER = :guarded
       NAME = "write_file".freeze
-      DESCRIPTION = "Atomically write content to a file, with undo snapshot and a fresh-read requirement for existing files.".freeze
+      DESCRIPTION = "Atomically write content to a file, with undo snapshot and a current-turn read requirement for existing files.".freeze
 
       def initialize(root:, undo:, governor:, event_bus: nil, diff_stager: nil, ground_truth: nil)
         @root, @undo, @governor, @bus, @diff_stager, @ground_truth =
@@ -28,7 +28,12 @@ module Master
           full = resolved.value!
           if @ground_truth && File.file?(full)
             next stale_read(path, full) if @ground_truth.changed_since_read?(full)
-            next unread_read(path, full) unless @ground_truth.fresh?(full)
+            fresh = if @ground_truth.respond_to?(:fresh_in_current_turn?)
+                      @ground_truth.fresh_in_current_turn?(full)
+                    else
+                      @ground_truth.fresh?(full)
+                    end
+            next unread_read(path, full) unless fresh
           end
 
           perm = permit(path)

@@ -215,6 +215,7 @@ module Master
         command = @container.fetch(:commands, {})[name]
         return :unhandled unless command
 
+        @refs.ground_truth&.begin_turn! if @refs&.respond_to?(:ground_truth)
         result = command.call(args: match[:args].to_s)
         # Pipe mode (`bin/master /fix RAILS` with no TTY) reaches commands here, and bin/master
         # exits with @exit_code: a failed command must not exit 0.

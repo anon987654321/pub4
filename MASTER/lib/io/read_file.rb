@@ -36,9 +36,14 @@ module Master
         return resolved if resolved.err?
 
         full_path = resolved.value!
-        # A cached slice is reusable only while its backing whole-file read
-        # remains fresh. Expired receipts are refreshed before returning content.
-        return @cache[key] if @cache.key?(key) && (!@ground_truth || @ground_truth.fresh?(full_path))
+        # A cached slice is reusable only when the backing read belongs to
+        # this turn and its bytes/age remain fresh.
+        receipt_fresh = if @ground_truth&.respond_to?(:fresh_in_current_turn?)
+                          @ground_truth.fresh_in_current_turn?(full_path)
+                        else
+                          !@ground_truth || @ground_truth.fresh?(full_path)
+                        end
+        return @cache[key] if @cache.key?(key) && receipt_fresh
         return Result.err("not found: #{path}", category: :validation) unless File.exist?(full_path)
 
         formatted = format_file_slice(full_path, offset:, limit:, hashline:, full:)

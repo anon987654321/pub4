@@ -28,6 +28,25 @@ class TestGroundTruth < Minitest::Test
     end
   end
 
+  def test_reads_from_an_earlier_turn_remain_fresh_but_cannot_authorize_current_turn_writes
+    Dir.mktmpdir do |dir|
+      path = File.join(dir, "existing.txt")
+      File.write(path, "original\n")
+      truth = Master::Ground::Truth.new(max_age_seconds: 60)
+
+      truth.record_read!(path)
+      assert truth.fresh?(path)
+      assert truth.fresh_in_current_turn?(path)
+      previous_turn = truth.current_turn_id
+
+      truth.begin_turn!
+
+      assert_equal previous_turn + 1, truth.current_turn_id
+      assert truth.fresh?(path), "age/content freshness remains available to non-write checks"
+      refute truth.fresh_in_current_turn?(path), "a prior turn cannot authorize a replacement"
+    end
+  end
+
   def test_read_file_shows_the_whole_file_digest_for_a_bounded_slice
     Dir.mktmpdir do |dir|
       path = File.join(dir, "source.rb")
@@ -63,6 +82,26 @@ class TestGroundTruth < Minitest::Test
       assert first.ok?
       assert second.ok?
       assert_equal 2, events.count { |event, _| event == "ground_truth:read" }
+    end
+  end
+
+  def test_read_file_refreshes_a_cached_receipt_at_the_start_of_a_new_turn
+    Dir.mktmpdir do |dir|
+      File.write(File.join(dir, "source.rb"), "source\n")
+      events = []
+      bus = Object.new
+      bus.define_singleton_method(:publish) { |event, **payload| events << [event, payload] }
+      truth = Master::Ground::Truth.new(event_bus: bus)
+      reader = Master::Io::ReadFile.new(root: dir, undo: nil, ground_truth: truth)
+
+      first = reader.call(path: "source.rb")
+      truth.begin_turn!
+      second = reader.call(path: "source.rb")
+
+      assert first.ok?
+      assert second.ok?
+      assert_equal 2, events.count { |event, _| event == "ground_truth:read" }
+      assert truth.fresh_in_current_turn?(File.join(dir, "source.rb"))
     end
   end
 
@@ -106,6 +145,28 @@ class TestGroundTruth < Minitest::Test
       reader.call(path: "notes.txt")
       assert writer.call(path: "notes.txt", content: "third\n").ok?, "a reread, even from the turn cache, clears it"
       assert writer.call(path: "fresh.txt", content: "new\n").ok?, "a file never read is not stale"
+    end
+  end
+
+  def test_write_file_refuses_a_read_from_the_previous_turn
+    Dir.mktmpdir do |dir|
+      path = File.join(dir, "existing.txt")
+      File.write(path, "original\n")
+      truth = Master::Ground::Truth.new(max_age_seconds: 60)
+      governor = Object.new
+      def governor.permit?(*) = Master::Result.ok(true)
+      undo = Master::Trace::Undo.new(session: Object.new.tap { |s| def s.snapshot(*) = nil }, root: dir)
+      reader = Master::Io::ReadFile.new(root: dir, undo:, ground_truth: truth)
+      writer = Master::Io::WriteFile.new(root: dir, undo:, governor:, ground_truth: truth)
+
+      assert reader.call(path: "existing.txt").ok?
+      truth.begin_turn!
+      result = writer.call(path: "existing.txt", content: "replacement\n")
+
+      refute result.ok?
+      assert_equal :policy, result.category
+      assert_match(/must be read in this turn/, result.message)
+      assert_equal "original\n", File.read(path)
     end
   end
 

@@ -54,6 +54,45 @@ class TestCliFaceDispatch < Minitest::Test
 
     assert called
   end
+  def test_run_input_starts_a_new_ground_truth_turn_before_dispatch
+    session = Master::CLI::Session.allocate
+    truth = Master::Ground::Truth.new
+    session.instance_variable_set(:@refs, Struct.new(:ground_truth).new(truth))
+    session.instance_variable_set(:@turn_queue_mutex, Mutex.new)
+    session.define_singleton_method(:turn_cancel_requested?) { false }
+    session.define_singleton_method(:check_budget_blocks) { |*| nil }
+    session.define_singleton_method(:init_turn_state) { |_input| [false, { streamed: false }, []] }
+    session.define_singleton_method(:dispatch_face_turn) do |_input, accumulated:, state:|
+      assert_equal 1, truth.current_turn_id
+      Master::Result.ok("done")
+    end
+    session.define_singleton_method(:stop_thinking_indicator) {}
+    session.define_singleton_method(:close_unit_console) {}
+
+    result = session.run_input("hello", presentation: :face)
+
+    assert result.ok?
+  end
+
+  def test_registered_slash_command_starts_a_new_ground_truth_turn
+    session = Master::CLI::Session.allocate
+    truth = Master::Ground::Truth.new
+    session.instance_variable_set(:@refs, Struct.new(:ground_truth).new(truth))
+    session.instance_variable_set(:@container, {
+      commands: {
+        "probe" => ->(args:) {
+          Master::Result.ok("turn=#{truth.current_turn_id}")
+        },
+      },
+    })
+    session.define_singleton_method(:print_terminal_output) { |*| nil }
+
+    result = session.send(:dispatch_registered_slash_command, "/probe")
+
+    assert result.ok?
+    assert_equal "turn=1", result.value!
+  end
+
   def test_known_slash_commands_bypass_the_llm_turn
     session = Master::CLI::Session.allocate
     session.instance_variable_set(:@container, {

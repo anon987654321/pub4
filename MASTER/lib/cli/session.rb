@@ -105,6 +105,7 @@ module Master
         blocked = check_budget_blocks(input, presentation:)
         return blocked if blocked
 
+        @refs.ground_truth&.begin_turn! if @refs.respond_to?(:ground_truth)
         @user_active = true
         @last_input = input
         Master::Trace::WriteTracker.current&.reset!
