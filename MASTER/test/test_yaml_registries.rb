@@ -110,11 +110,12 @@ class TestLawsYamlRegistry < Minitest::Test
 
   def test_soul_golden_law_maps_to_kernel_preserve_rule
     soul = Master.load_yaml(File.join(DATA, "soul.yml"))
-    law_id = soul.dig("absolute", "golden_law")
+    law_id = soul.dig("references", "golden_law")
     laws = Master.load_yaml(File.join(DATA, "laws.yml"))
     assert_equal "STEWARDSHIP_preserve_first", law_id
     assert_match(/preserve/i, laws.fetch(law_id).fetch("statement"))
-    refute soul.dig("absolute", "rules"), "soul must not hold laws; laws.yml is the constitution"
+    refute soul.key?("rules"), "soul must not hold individual Law records; laws.yml owns that catalogue"
+    assert_kind_of Array, soul.dig("absolute", "sacred_paths"), "Soul owns protected paths"
     law_dir = File.expand_path("../law", __dir__)
     require File.join(law_dir, "definition")
     ::Law.load_all(law_dir) if ::Law.definitions.empty?

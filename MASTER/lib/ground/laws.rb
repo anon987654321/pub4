@@ -25,8 +25,8 @@ module Master
         # Lazy, for the same reason limits.yml stopped being parsed in the
         # constructor: `constitution` is the only reader, and every Laws built
         # to ask for `laws` was opening soul.yml to back an accessor it never
-        # touched. Soul remains a subordinate identity/temperament manifest;
-        # Law statements and protected paths are resolved from laws.yml.
+        # touched. Soul owns global source authority and protected paths;
+        # laws.yml owns individual Law statements and invariant-node order.
         def soul_data = Master.soul_config(root: @root)
 
         def constitution
@@ -41,7 +41,7 @@ module Master
             "golden_law" => [golden_id, golden["statement"]].compact.join(": "),
             "protection" => {
               "principle" => authorship["statement"],
-              "protected_paths" => Array(authorship["protected_paths"]),
+              "protected_paths" => Master::Soul.sacred_paths(root: @root),
             }.freeze,
             "banned_output" => voice["banned_output"],
             "anti_simulation" => truthful["anti_simulation"],

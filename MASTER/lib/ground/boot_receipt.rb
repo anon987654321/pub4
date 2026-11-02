@@ -24,8 +24,8 @@ module Master
       # makes "the same constitution" checkable, rather than a version string
       # somebody remembered to bump.
       GOVERNING_FILES = %w[
-        data/laws.yml data/soul.yml data/providers.yml data/models.yml data/console.yml data/scan.yml
-        data/budgets.yml
+        data/soul.yml data/laws.yml data/law_runtime.yml data/providers.yml data/models.yml
+        data/console.yml data/scan.yml data/budgets.yml
       ].freeze
 
       module_function

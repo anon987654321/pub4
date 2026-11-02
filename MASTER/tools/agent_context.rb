@@ -194,8 +194,15 @@ module Operator
       "source_tree: unavailable: #{e.class}: #{e.message}"
     end
 
+    def source_authority
+      load_master
+      require File.join(MASTER_DIR, "lib", "soul") unless defined?(Master::Soul)
+      Master::Soul.authority_order(root: REPO_ROOT)
+    end
+
     def render(query = nil)
-      out = ["MASTER conduct in force (law/practice.rb):"]
+      authority = source_authority.map { |row| row.fetch("id") }.join(" > ")
+      out = ["Source authority (highest first): #{authority}", "MASTER conduct in force (law/practice.rb):"]
       conduct.each { |name, text| out << "  #{name}: #{text.to_s.split(/(?<=\.)\s/).first}" }
       out << ""
       out << "Rules that can refuse a write (#{blocking_rules.size}): #{blocking_rules.join(', ')}"
@@ -217,15 +224,11 @@ module Operator
     # one. With --tree, the rendered tree lines ride along under "tree".
     def session_json(tree: false, tree_root: REPO_ROOT, tree_depth: TREE_DEFAULT_DEPTH, tree_max_entries: TREE_DEFAULT_MAX_ENTRIES)
       require "json"
+      authority_order = source_authority
       payload = {
         "source" => "MASTER/tools/agent_context.rb",
-        "authority" => [
-          "MASTER/data/laws.yml",
-          "MASTER/data/soul.yml (subordinate identity and delivery)",
-          "MASTER/law/*.rb",
-          "tree contracts",
-          "agent-harness prose",
-        ],
+        "authority_order" => authority_order,
+        "authority" => authority_order.map { |row| row.fetch("source") },
         "conduct" => conduct,
         "blocking_rules" => blocking_rules,
         "coverage" => coverage,

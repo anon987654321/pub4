@@ -22,12 +22,12 @@ module Master
     AUTHORITY_ORDER_IDS = %w[
       soul laws executable_laws_and_gates tree_contracts git_history
     ].freeze
-    AUTHORITY_ORDER_SOURCES = [
-      "MASTER/data/soul.yml",
-      "MASTER/data/laws.yml",
-      %w[MASTER/data/law_runtime.yml MASTER/law/ MASTER/checks/].freeze,
-      ["TREE_CONTRACTS.md", "tree-local README.md and CLAUDE.md"].freeze,
-      "Git history",
+    # Required tiers are a schema set, not a second ordering declaration.
+    # The order itself is read only from soul.yml#authority_order.
+    AUTHORITY_ORDER_SOURCES = %w[
+      MASTER/data/soul.yml MASTER/data/laws.yml
+      MASTER/data/law_runtime.yml MASTER/law/ MASTER/checks/
+      TREE_CONTRACTS.md
     ].freeze
     REQUIRED_SACRED_PATHS = %w[
       data/laws.yml data/soul.yml data/project_context.yml
@@ -207,13 +207,15 @@ module Master
         end
 
         ids = rows.map { |row| row["id"].to_s }
-        unless ids == AUTHORITY_ORDER_IDS
-          raise IntegrityError, "soul.yml authority_order must be #{AUTHORITY_ORDER_IDS.join(' > ')}"
+        unless ids.sort == AUTHORITY_ORDER_IDS.sort
+          raise IntegrityError, "soul.yml authority_order must contain exactly #{AUTHORITY_ORDER_IDS.join(', ')}"
         end
 
-        rows.zip(AUTHORITY_ORDER_SOURCES).each do |row, expected_source|
+        rows.each do |row|
           source = row["source"]
-          unless source == expected_source && row["scope"].is_a?(String) && !row["scope"].strip.empty?
+          sources = source.is_a?(Array) ? source : [source]
+          unless !sources.empty? && sources.all? { |item| item.is_a?(String) && !item.strip.empty? } &&
+                 row["scope"].is_a?(String) && !row["scope"].strip.empty?
             raise IntegrityError, "soul.yml authority tier #{row['id']} has invalid source or scope"
           end
         end
@@ -224,8 +226,8 @@ module Master
         unless paths.is_a?(Array) && !paths.empty? &&
                paths.all? do |path|
                  path.is_a?(String) && !path.strip.empty? &&
-                   !path.start_with?("/") && !path.match?(/\\A[A-Za-z]:/) &&
-                   !path.tr("\\\\", "/").split("/").include?("..")
+                   !path.start_with?("/") && !path.match?(/\A[A-Za-z]:/) &&
+                   !path.tr("\\", "/").split("/").include?("..")
                end && paths.uniq == paths
           raise IntegrityError, "soul.yml absolute.sacred_paths must be unique safe relative paths"
         end

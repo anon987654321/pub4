@@ -47,13 +47,14 @@ module Master
       ].freeze
 
       BOOT_CONFIG = {
+        "MASTER/data/soul.yml" => %w[
+          constitution authority_order absolute references persona voice language
+          temperament prompt_ordering negotiable hooks
+        ],
         "MASTER/data/laws.yml" => %w[
           TRUTHFUL_STATUS ROBUSTNESS SINGULARITY LINEARITY PROXIMITY ABSTRACTION
           DENSITY OPERATOR_RENDERED INTER_MODEL_CONTRACT SACRED_AUTHORSHIP
           SOUL_SUBORDINATE_TO_LAW PRESERVE_FIRST
-        ],
-        "MASTER/data/soul.yml" => %w[
-          constitution references persona voice language temperament prompt_ordering negotiable hooks
         ],
         "MASTER/data/providers.yml" => [],
         "MASTER/data/patterns.yml" => [],

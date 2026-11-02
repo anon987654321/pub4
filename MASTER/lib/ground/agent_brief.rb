@@ -20,13 +20,17 @@ module Master
 
       def briefing(root)
         limit = CommitFormat.max_chars(root: File.join(root, "MASTER"))
+        soul = YAML.safe_load_file(File.join(root, "MASTER", "data", "soul.yml"), aliases: true)
+        authority = soul.fetch("authority_order").map { |row| row.fetch("id").to_s }.join(" > ")
 
         <<~TEXT
           pub4 session context. You work under MASTER's constitution. No hook refuses a tool call or a finish;
           the laws are yours to apply.
 
-          Authority: MASTER/data/laws.yml > subordinate MASTER/data/soul.yml > MASTER/lib/soul.rb
-            and MASTER/law/*.rb > agent contracts > tree contracts.
+          Source authority (highest first): #{authority}.
+          Soul owns global identity, preservation, source order and protected paths;
+            laws.yml owns individual Law identities, statements and invariant-node order.
+          law_runtime.yml is live transitional execution metadata; law/ and checks/ implement it.
           Never let an autonomous repair rewrite soul.yml or laws.yml. Write straight to main;
             commit path-scoped (git commit -- <paths>), never -a.
           Commits take MASTER's shape (MASTER/data/commit_format.yml): a capitalised subject of at most #{limit}
