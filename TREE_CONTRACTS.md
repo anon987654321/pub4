@@ -10,6 +10,18 @@ RAILS/README.md is the maintained long-form reference (check tables,
 rendered-check semantics, deploy blockers, subdomain map) and
 `RAILS/apps.yml` is feature truth — do not restate either in this file.
 
+### The deploy script layer
+
+`RAILS/_*.sh` files (`_assets`, `_bundle`, `_core`, `_database`,
+`_deploy`, `_runtime_check`, `_service`) are libraries of sourced shell
+functions, not entrypoints. Each app's `deploy.sh` sources them; root
+`redeploy` is the operator's workstation entry; `apps.yml` is the
+canonical matrix and `apps.horizon.yml` the planned one — the two must
+not drift without a session note. An app counts as first-class when it
+has an `apps.yml` entry, a `deploy_root` and (when it reaches the VPS) a
+`deploy_script`; `mrdamascy` is first-class as of 2026-11-02 with its
+deploy lane still pending.
+
 ### Commands
 
 ```zsh
@@ -832,3 +844,25 @@ file to sit on.
   the box, a changed IP needing a new PTR, a stale Solid Queue backlog.
   `RUNBOOK.md` lists them, so removing one removes a recovery step an operator
   reads at the worst time.
+
+## Repository mechanics
+
+**One branch.** `main` is the only branch; work lands as path-scoped
+commits straight to it, per the agent contract. The topic-branch and PR
+era ended on 2026-11-02: all fifteen remote branches were folded into
+`main` and deleted, all open PRs were resolved, and GitHub auto-deletes
+a branch when its PR merges. Tags mark the archaeology:
+`consolidation-20261102` is the fold point; `v0.1`, `v1.0`,
+`dilla-v0.1` and `dilla-engine-final` predate the current lineage.
+
+**Never force-push.** The pre-consolidation re-cut era is over. A bad
+landing is reverted with a commit, not rewritten away.
+
+**Generated artifacts are not tracked.** `FULL.yml` (retired
+2026-11-02) was the last generated corpus kept in git; snapshots under
+`snapshot_*.md` stay untracked by the same rule.
+
+**Vendorables trend out of git.** The ML binaries under
+`RAILS/master/public/` (~28 MB: onnxruntime WASM, smart-turn model,
+face mask, webfonts) are the remaining weight; prefer fetching at
+deploy time with checksums before ever considering LFS.
