@@ -495,18 +495,40 @@ class TestSpeech < Minitest::Test
 
   def test_streaming_falls_back_to_say_when_edge_and_espeak_miss
     path = File.join(Dir.tmpdir, "m3_stream_say_fallback_test.mp3")
-    Master::Voice::Speech.stub(:attempt_espeak_synthesis, false) do
-      Master::Voice::Speech.stub(:edge_stream_written?, false) do
-        Master::Voice::Speech.stub(:transcendent_stream_written?, false) do
-          Master::Voice::Speech.stub(:attempt_say_synthesis, ->(_text, output_path, _on_chunk) { File.write(output_path, "fake-say-audio"); true }) do
-            assert Master::Voice::Speech.synthesize_streaming_to_file("hello", output_path: path, voice: :jenny, style: :neutral)
-          end
-        end
-      end
+    stub_speech(
+      os_voice_fallback?: true,
+      attempt_espeak_synthesis: false,
+      edge_stream_written?: false,
+      transcendent_stream_written?: false,
+      attempt_say_synthesis: ->(_text, output_path, _on_chunk) { File.write(output_path, "fake-say-audio"); true },
+    ) do
+      assert Master::Voice::Speech.synthesize_streaming_to_file("hello", output_path: path, voice: :jenny, style: :neutral)
     end
     assert_equal "fake-say-audio", File.read(path)
   ensure
     File.delete(path) if path && File.exist?(path)
+  end
+
+  def test_streaming_does_not_use_os_voice_fallback_when_policy_is_disabled
+    calls = []
+    stub_speech(
+      os_voice_fallback?: false,
+      resolve_streaming_style: [:jenny, {}],
+      transcendent_stream_written?: false,
+      edge_stream_written?: false,
+      attempt_espeak_synthesis: ->(*) { calls << :espeak; false },
+      attempt_say_synthesis: ->(*) { calls << :say; false },
+    ) do
+      result = Master::Voice::Speech.send(
+        :synthesize_streaming_to_file_unlocked,
+        "hello",
+        output_path: File.join(Dir.tmpdir, "m3_stream_fallback_disabled_test.mp3"),
+      )
+
+      refute result
+    end
+
+    assert_empty calls
   end
 
   def test_synthesize_falls_back_to_say_when_edge_and_espeak_miss
