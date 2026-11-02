@@ -20,7 +20,7 @@ class ChannelBot
   PERSONAS = {
     "master" => {
       emoji: "▲",
-      voice: "MASTER, a calm constitutional local AI for Bergen. Grounded, concrete, active voice, never hedges.",
+      voice: "MASTER, a calm constitutional local AI. Grounded, concrete, active voice, never hedges.",
       canned: [ "noted — what's the block you're stuck on?", "say more, I'm listening.", "the honest answer is: it depends on the neighbourhood." ],
     },
     "echo" => {
@@ -35,8 +35,8 @@ class ChannelBot
     },
     "cupid" => {
       emoji: "❤",
-      voice: "a warm, tactful dating-scene regular with low-key first-date ideas around Bergen.",
-      canned: [ "coffee at a bakery beats dinner for a first date.", "just ask — the worst is a no.", "Fløyen at sunset never misses." ],
+      voice: "a warm, tactful dating-scene regular with low-key first-date ideas.",
+      canned: [ "coffee somewhere relaxed beats a long dinner for a first date.", "pick somewhere you can both talk without shouting.", "a short first date leaves room for a second." ],
     },
     "dj" => {
       emoji: "♪",
@@ -50,13 +50,13 @@ class ChannelBot
     },
     "foodie" => {
       emoji: "●",
-      voice: "a hungry local who always knows what's good to order right now in Bergen.",
-      canned: [ "get the fish soup, thank me later.", "anything with fresh bread wins.", "order early, kitchens back up on weekends." ],
+      voice: "a hungry local who knows how to find a good meal in the city.",
+      canned: [ "ask what's fresh and popular with the regulars.", "anything made fresh is usually a good start.", "order early; kitchens can back up on weekends." ],
     },
     "scout" => {
       emoji: "◎",
       voice: "a local map scout with directions, hidden spots and honest tips.",
-      canned: [ "take the Fløibanen, skip the queue at opening.", "the harbour path is worth the detour.", "which part of town are you in?" ],
+      canned: [ "start with the neighbourhood you want to explore.", "tell me what kind of place you're looking for and I'll help narrow it down.", "which part of town are you in?" ],
     },
   }.freeze
 
@@ -66,7 +66,11 @@ class ChannelBot
   def self.bot_for(handle)
     persona = PERSONAS[handle] or return nil
     ActsAsTenant.without_tenant do
-      User.find_by(username: handle, bot: true) ||
+      bot = User.find_by(username: handle, bot: true)
+      if bot
+        bot.update_column(:persona, persona[:voice]) if bot.persona != persona[:voice]
+        bot
+      else
         User.create!(
           username: handle,
           email_address: "bot.#{handle}@brgen.local",
@@ -74,6 +78,7 @@ class ChannelBot
           bot: true,
           persona: persona[:voice]
         )
+      end
     end
   end
 
@@ -154,19 +159,33 @@ class ChannelBot
   def self.generate(persona, channel, message)
     return generate_master(channel, message) if persona.equal?(PERSONAS["master"])
 
-    spec = Conversation::CHANNELS[channel.slug] || {}
-    prompt = <<~PROMPT
+    prompt = prompt_for(persona, channel)
+    reply = Shared::Llm.new(model: MODEL).ask(prompt, json: false).to_s.strip
+    reply.delete_prefix('"').delete_suffix('"').first(MAX_LEN)
+  end
+
+  def self.city_name_for(channel)
+    channel.city&.name.presence
+  end
+
+  # One prompt builder keeps city context explicit and testable without making
+  # a background job depend on request-scoped Current attributes.
+  def self.prompt_for(persona, channel)
+    city = city_name_for(channel)
+    location = city.present? ? city : "the city"
+    blurb = Conversation.channel_blurb(channel.slug)
+    <<~PROMPT
       You are #{persona[:voice]}
-      You are in the public chat room "#{channel.name}" (#{spec[:blurb]}).
+      You are in the public chat room "#{channel.name}" in #{location} (#{blurb}).
+      Use the room's city as your local context. Never assume another city or
+      invent specific venues, events or opening hours. When unsure, ask for a
+      neighbourhood or a little more context.
       Everyone is anonymous. Recent messages (oldest first):
       #{transcript(channel)}
       Reply to the latest message in ONE short, natural sentence (max 200 characters).
       Stay fully in character, be genuinely useful and local, use active voice, no
       hedging, no emoji, no quotation marks, no name prefix. Just the message.
     PROMPT
-
-    reply = Shared::Llm.new(model: MODEL).ask(prompt, json: false).to_s.strip
-    reply.delete_prefix('"').delete_suffix('"').first(MAX_LEN)
   end
 
   def self.generate_master(channel, message)

@@ -20,6 +20,21 @@ class ChannelRosterTest < ActiveSupport::TestCase
     assert_operator channel.messages.count, :>=, 2, "the room must read alive on open"
   end
 
+  test "channel bot prompts use the room city rather than Bergen defaults" do
+    city = City.find_by!(domain: "trndheim.no")
+    channel = Conversation.find_or_create_channel("dating", city:)
+    cupid = ChannelBot::PERSONAS.fetch("cupid")
+    prompt = ChannelBot.prompt_for(cupid, channel)
+
+    assert_equal "Trondheim", ChannelBot.city_name_for(channel)
+    assert_includes prompt, "Trondheim"
+    refute_match(/Bergen|Fløyen|Fløibanen/, prompt)
+    refute_match(/Bergen|Fløyen|Fløibanen/, cupid[:voice])
+    refute_match(/Bergen|Fløyen|Fløibanen/, cupid[:canned].join(" "))
+    stored_bot = User.find_by!(username: "cupid", bot: true)
+    assert_equal cupid[:voice], stored_bot.persona
+  end
+
   test "by_rank puts ops before voices" do
     channel = Conversation.find_or_create_channel("brgen", city: @city)
     assert_equal "op", channel.conversation_participants.by_rank.first.role

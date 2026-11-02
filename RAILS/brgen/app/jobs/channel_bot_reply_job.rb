@@ -9,8 +9,8 @@ class ChannelBotReplyJob < ApplicationJob
 
   # Loaded the way Message#broadcast_to_logs loads it, and for the same reason.
   # ApplicationRecord sets strict_loading_by_default = true in every
-  # environment, ChannelBot.reply_to reads message.conversation, and a plain
-  # `Message.find_by` raises:
+  # environment. ChannelBot reads message.conversation and its city for local
+  # context, and a plain `Message.find_by` raises:
   #
   #   ActiveRecord::StrictLoadingViolationError: `Message` is marked for
   #   strict_loading. The Conversation association named `:conversation` cannot
@@ -22,7 +22,7 @@ class ChannelBotReplyJob < ApplicationJob
   # was waiting in it. Two faults stacked: the bots did not reply because nothing
   # ran the job, and would not have replied if it had.
   def perform(message_id)
-    message = Message.strict_loading(false).includes(:sender, :conversation).find_by(id: message_id) or return
+    message = Message.strict_loading(false).includes(:sender, conversation: :city).find_by(id: message_id) or return
     ChannelBot.reply_to(message)
   end
 end

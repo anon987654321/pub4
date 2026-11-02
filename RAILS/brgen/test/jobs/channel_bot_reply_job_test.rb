@@ -54,6 +54,25 @@ class ChannelBotReplyJobTest < ActiveSupport::TestCase
     assert @channel.messages.order(:created_at).last.sender.bot?
   end
 
+  test "the job preloads the channel city for city-aware bot prompts" do
+    city = City.find_by!(domain: "trndheim.no")
+    channel = Conversation.find_or_create_channel("dating", city:)
+    message = channel.messages.create!(
+      sender: @human,
+      message_type: "text",
+      content: "@cupid any good first-date ideas?"
+    )
+
+    ChannelBot.stub(:reply_to, lambda { |fresh_message|
+      conversation = fresh_message.conversation
+      assert conversation.association(:city).loaded?,
+             "city must be preloaded before the background job reads local context"
+      assert_equal city.id, conversation.city.id
+    }) do
+      ChannelBotReplyJob.new.perform(message.id)
+    end
+  end
+
   test "a missing message is a no-op rather than an error" do
     assert_nothing_raised { ChannelBotReplyJob.new.perform(-1) }
   end
