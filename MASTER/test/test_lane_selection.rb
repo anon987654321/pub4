@@ -401,4 +401,16 @@ class TestLaneSelection < Minitest::Test
     assert(events.any? { |name, payload| name == "llm:route_fallback" && payload[:source] == "models_catalogue" })
   end
 
+  def test_missing_router_uses_the_independent_model_catalogue
+    config = Struct.new(:model, :task_type).new(GROK, :general)
+    selector = Object.new.extend(Master::Review::Agent::ModelSelector)
+    selector.instance_variable_set(:@config, config)
+    selector.instance_variable_set(:@model_router, nil)
+
+    chain = selector.send(:routed_chain, "write a parser", task_type: :general)
+
+    assert_operator chain.length, :>, 1, "the router is optional during recovery"
+    assert_equal GROK, chain.last
+  end
+
 end

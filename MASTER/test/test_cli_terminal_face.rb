@@ -753,4 +753,16 @@ class TestCliTerminalFace < Minitest::Test
     assert_operator levels[3], :<, 1.0
   end
 
+  def test_spoken_exit_words_leave_the_face_without_starting_a_turn
+    %w[exit quit /exit /quit].each do |word|
+      face = window
+      face.instance_variable_set(:@turn, ->(_text) { flunk("exit word reached the model") })
+
+      face.send(:answer, word)
+
+      assert face.instance_variable_get(:@closing), "#{word} did not close the face"
+      assert face.instance_variable_get(:@exit_requested), "#{word} did not request session exit"
+    end
+  end
+
 end

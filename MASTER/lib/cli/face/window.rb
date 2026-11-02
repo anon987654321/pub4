@@ -412,6 +412,12 @@ module Master
         end
 
         def answer(text)
+          if EXIT_WORDS.include?(text.to_s.strip.downcase)
+            @exit_requested = true
+            @closing = true
+            return
+          end
+
           set(:thinking, ["you: #{text}"])
           result = think(text)
           if result.is_a?(Master::Result) && result.err?

@@ -43,7 +43,11 @@ module Master
         end
 
         def routed_chain(message, task_type:)
-          return [@config.model] unless @model_router
+          unless @model_router
+            chain = route_fallback_candidates
+            @bus&.publish("llm:route_fallback", source: "router_missing", candidate_count: chain.length)
+            return chain
+          end
           task = normalize_task_type(task_type || @config.task_type)
           task = @model_router.classify_intent(message) if task == :general && message
           chain = @model_router.fallback_chain(task_type: task)
