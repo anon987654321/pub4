@@ -99,6 +99,18 @@ class LinkConverterTest < Minitest::Test
                  LC.request_epi(city: "bergen", surface: "marketplace")
   end
 
+  def test_request_epi_adds_a_short_stable_route_code_without_a_path
+    route = "marketplace/categories#show"
+    expected = "city:bergen|surface:marketplace|route:#{LC.route_code(route)}"
+    actual = LC.request_epi(city: "bergen", surface: "marketplace", route:)
+
+    assert_equal expected, actual
+    assert_equal 11, LC.route_code(route).length
+    assert_operator actual.length, :<=, 64
+    refute_includes actual, "categories"
+    assert_equal LC.route_code(route), LC.route_code(route)
+  end
+
   # Ad blockers target tradedoubler.com by hostname, so a first-party copy is the
   # one that survives — but an app with no sync job of its own must still get a
   # script, because remote-and-sometimes-blocked beats absent.
