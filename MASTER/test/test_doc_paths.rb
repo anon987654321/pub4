@@ -48,11 +48,15 @@ class TestDocPaths < Minitest::Test
 
   def test_root_backlog_and_historical_reviews_are_not_competing_checklists
     backlog = File.read(File.join(REPO, "TODO.md"))
-    refute_match(/^\\s*- \\[xX\\] /, backlog, "completed work must be deleted from TODO.md")
+    completed = backlog.lines.select { |line| line.lstrip.start_with?("- [x] ", "- [X] ") }
+    assert_empty completed, "completed work must be deleted from TODO.md"
 
     review = File.read(File.join(REPO, "MASTER/docs/history/fix-review-log.md"))
     assert_includes review, "not live task instructions"
-    refute_match(/^\\s*- \\[ xX\\] /, review, "historical review must not act as another backlog")
+    checklist = review.lines.select do |line|
+      line.lstrip.start_with?("- [ ] ", "- [x] ", "- [X] ")
+    end
+    assert_empty checklist, "historical review must not act as another backlog"
   end
 
   def test_design_authority_is_laws_yml_without_a_parallel_architecture_document
