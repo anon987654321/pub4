@@ -1,5 +1,6 @@
-# Omakase Ruby styling for Rails (pub4 family) — aligned with rubocop/rails-style-guide.
-inherit_gem: { rubocop-rails-omakase: rubocop.yml }
+# Shared Rails code tightens the family baseline without defining another
+# copy of the Omakase inheritance or the disabled metrics policy.
+inherit_from: ../.rubocop.yml
 
 AllCops:
   NewCops: disable
@@ -9,10 +10,8 @@ AllCops:
     - "tmp/**"
     - "vendor/**"
 
-# Omakase disables metrics; keep off for large apps but enforce layout and literals.
-Metrics:
-  Enabled: false
-
+# Keep shared code's stricter lexical/layout checks in one place. Product apps
+# inherit the common Rails baseline; MASTER Rails code opts into this layer.
 Layout/LineLength:
   Enabled: true
   Max: 120
