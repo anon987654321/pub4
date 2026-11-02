@@ -185,8 +185,8 @@ end
 # wrong.
 class TestCliReplExit < Minitest::Test
   ROOT = File.expand_path("..", __dir__)
-  # patterns.yml cli.face_on_start opens the face on a terminal; these drive the
-  # historical shell prompt ends in host:path$.
+  # These PTY cases exercise the same Reline prompt used by bare bin/master;
+  # the face is printed above it and never owns terminal input.
   ENV_FOR_PTY = TestCliBootE2e::BOOT_ENV.merge(
     "MASTER_FAST" => "0", "MASTER_SKIP_BOOT_SCAN" => "1", "MASTER_SKIP_TTS" => "1", "TERM" => "xterm",
     "MASTER_FACE_AUTO_MIC" => "0"
@@ -246,12 +246,15 @@ class TestCliReplExit < Minitest::Test
         refute_match(/\e\[\?1049h/, output, "bare startup must not take over the alternate screen")
 
         previous_count = output.scan(marker).length
+        prompt_count = output.scan(READY).length
         writer.write("/face\n")
         deadline = Time.now + 8
-        while output.scan(marker).length <= previous_count && Time.now < deadline
+        while (output.scan(marker).length <= previous_count || output.scan(READY).length <= prompt_count) &&
+              Time.now < deadline
           output << reader.readpartial(4096) if reader.wait_readable(0.2)
         end
         assert_operator output.scan(marker).length, :>, previous_count, "/face did not redraw the in-place overlay"
+        assert_operator output.scan(READY).length, :>, prompt_count, "/face did not return to the same working prompt"
         refute_match(/\e\[\?1049h/, output, "/face must not switch terminal input modes")
 
         writer.write("\x04")
