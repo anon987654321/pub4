@@ -51,7 +51,7 @@ module Master
             root: @fix_plan.root,
             target:, files:, laws: @laws, excluded: exclusions,
             adapters: @pass_runner.assessment_adapters(target:),
-            max_passes:, budget_seconds:
+            max_passes:, budget_seconds:, task_contract: TaskContract.current
           )
           @pass_runner.plan_refresh_succeeded! if @pass_runner.respond_to?(:plan_refresh_succeeded!)
           current = @fix_plan

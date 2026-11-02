@@ -8,6 +8,7 @@ require "securerandom"
 require_relative "../io/atomic_write"
 require_relative "../core/world"
 require_relative "../trace/mutation_observer"
+require_relative "task_contract"
 require_relative "transaction/delivery"
 require_relative "transaction/recovery"
 
@@ -42,6 +43,7 @@ module Master
         @paths = Array(paths).map { |path| normalize(path) }
         raise "transaction contains an unsafe path" if @paths.any?(&:nil?)
         @paths.uniq!
+        validate_task_contract_paths!(@paths)
         @id = self.class.send(:normalize_id, id)
         @bus = bus
         @lifecycle_observer = Master::Trace::MutationObserver.new(
@@ -109,6 +111,7 @@ module Master
         raw = Array(paths)
         selected = raw.map { |path| normalize(path) }
         raise "transaction enlistment contains an unsafe path" if selected.any?(&:nil?)
+        validate_task_contract_paths!(selected)
 
         added = selected.uniq - @paths
         staged = added.to_h { |path| [path, snapshot(path)] }
@@ -126,6 +129,9 @@ module Master
 
         emit("fix:transaction_paths_enlisted", id: @id, paths: added)
         Result.ok(added)
+      rescue TaskContract::Invalid => e
+        emit("fix:transaction_enlist_failed", id: @id, error: e.message)
+        Result.err("transaction enlistment refused: #{e.message}", category: :policy)
       rescue StandardError => e
         emit("fix:transaction_enlist_failed", id: @id, error: e.message)
         Result.err("transaction enlistment: #{e.message}", category: :infrastructure)
@@ -526,6 +532,24 @@ module Master
         @lock.flock(File::LOCK_UN)
         @lock.close
         @lock = nil
+      end
+
+      def validate_task_contract_paths!(paths)
+        contract = TaskContract.current
+        return unless contract
+
+        repo_root = File.expand_path(outer_root)
+        uncovered = Array(paths).reject do |path|
+          full = File.expand_path(path, @root)
+          next false unless inside?(full, repo_root)
+
+          relative = Pathname.new(full).relative_path_from(Pathname.new(repo_root)).to_s
+          TaskContract.covers?(relative, scope: contract.scope)
+        end
+        return if uncovered.empty?
+
+        raise TaskContract::Invalid,
+              "transaction paths outside task-contract scope: #{uncovered.first(5).join(", ")}"
       end
 
       def normalize(path)

@@ -45,10 +45,14 @@ visual and accessibility evidence.
 
 The existing evidence spine remains canonical; no parallel receipt registry is
 introduced. FixPlan records eligible source hashes, task scope, Law identity,
-authority, toolchain and adapter digests. A validated task contract can be
-passed to ConvergenceAdapter#run(task_contract:); the plan pins the contract and
-its digest, and the existing RunJournal terminal evidence carries that plan
+authority, toolchain and adapter digests. A validated task contract can be passed to
+ConvergenceAdapter#run(task_contract:); the plan pins the contract and its
+digest, and the existing RunJournal terminal evidence carries that plan
 alongside the checksum-verified Law × stream × surface assessment receipt.
+The active contract is scoped around the synchronous Fix invocation.
+Transaction rejects an out-of-scope initial path before taking a snapshot and
+applies the same check to later enlistments, so an adapter cannot widen the
+write set after plan capture.
 
 Legacy /fix callers that do not supply a task contract remain compatible and
 their plan explicitly omits it. Do not describe such a run as task-contract

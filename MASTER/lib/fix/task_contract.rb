@@ -79,6 +79,20 @@ module Master
         build(attributes, path:)
       end
 
+      # The active contract is scoped to the synchronous Fix call. Nested calls
+      # restore their caller's contract, and exceptions never leak it to later work.
+      def current
+        Thread.current[:master_fix_task_contract]
+      end
+
+      def with_current(value)
+        previous = current
+        Thread.current[:master_fix_task_contract] = value.nil? ? nil : coerce(value)
+        yield
+      ensure
+        Thread.current[:master_fix_task_contract] = previous
+      end
+
       def covers?(path, scope:)
         candidate = path.to_s
         Array(scope).any? do |entry|

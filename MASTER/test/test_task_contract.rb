@@ -1,10 +1,57 @@
 # frozen_string_literal: true
 
 require_relative "test_helper"
+require "tmpdir"
 require_relative "../lib/fix/task_contract"
+require_relative "../lib/fix/transaction"
 
 class TestTaskContract < Minitest::Test
   CONTRACT = Master::Fix::TaskContract
+
+  def test_current_contract_is_nested_and_restored_after_exceptions
+    first = CONTRACT.build(intent: "content_only", scope: ["one.txt"], preserve: [], proof: [])
+    second = CONTRACT.build(intent: "content_only", scope: ["two.txt"], preserve: [], proof: [])
+
+    assert_nil CONTRACT.current
+    assert_raises(RuntimeError) do
+      CONTRACT.with_current(first) do
+        assert_equal first, CONTRACT.current
+        CONTRACT.with_current(second) { assert_equal second, CONTRACT.current }
+        assert_equal first, CONTRACT.current
+        raise "leave the contract scope"
+      end
+    end
+    assert_nil CONTRACT.current
+  end
+
+  def test_transaction_rejects_out_of_scope_paths_before_snapshotting
+    Dir.mktmpdir("task-contract-transaction") do |root|
+      contract = CONTRACT.build(intent: "functional_change", scope: ["allowed.txt"], preserve: [], proof: [])
+
+      CONTRACT.with_current(contract) do
+        transaction = Master::Fix::Transaction.new(root:, paths: ["allowed.txt"])
+        assert_instance_of Master::Fix::Transaction, transaction
+        assert_raises(CONTRACT::Invalid) do
+          Master::Fix::Transaction.new(root:, paths: ["blocked.txt"])
+        end
+      end
+    end
+  end
+
+  def test_transaction_rejects_out_of_scope_enlistment
+    Dir.mktmpdir("task-contract-enlistment") do |root|
+      contract = CONTRACT.build(intent: "functional_change", scope: ["allowed.txt"], preserve: [], proof: [])
+
+      CONTRACT.with_current(contract) do
+        transaction = Master::Fix::Transaction.new(root:, paths: ["allowed.txt"]).begin!
+        result = transaction.enlist!(["blocked.txt"])
+        refute result.ok?
+        assert_equal :policy, result.category
+        assert_match(/outside task-contract scope/, result.message)
+        assert transaction.rollback!.ok?
+      end
+    end
+  end
 
   def test_content_only_adds_all_mandatory_preservation_and_proof
     contract = CONTRACT.build(
