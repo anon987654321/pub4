@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "test_helper"
+require_relative "../lib/review/agent/model_selector"
 require "tmpdir"
 require_relative "support_council_answer"
 
@@ -379,4 +380,25 @@ class TestLaneSelection < Minitest::Test
   ensure
     ENV["PATH"] = previous
   end
+  def test_routing_failure_falls_back_to_the_model_catalogue
+    config = Struct.new(:model, :task_type).new(GROK, :general)
+    router = Object.new
+    router.define_singleton_method(:classify_intent) { |*| raise IOError, "router unavailable" }
+    events = []
+    bus = Object.new
+    bus.define_singleton_method(:publish) { |name, **payload| events << [name, payload] }
+    selector = Object.new.extend(Master::Review::Agent::ModelSelector)
+    selector.instance_variable_set(:@config, config)
+    selector.instance_variable_set(:@model_router, router)
+    selector.instance_variable_set(:@bus, bus)
+
+    chain = selector.send(:routed_chain, "write a parser", task_type: :general)
+
+    assert_operator chain.length, :>, 1, "a route error must retain independent alternatives"
+    assert_includes chain, GROK, "the configured model remains the final fallback"
+    assert_equal chain.uniq, chain
+    assert(events.any? { |name, _| name == "llm:route_error" })
+    assert(events.any? { |name, payload| name == "llm:route_fallback" && payload[:source] == "models_catalogue" })
+  end
+
 end

@@ -56,7 +56,32 @@ module Master
           @model_router.priority_fallback_order(chain, task_type: task)
         rescue StandardError => e
           @bus&.publish("llm:route_error", error_class: e.class.name, **Master::Execution::Contract.diagnostic_fields(e.message))
-          [@config.model]
+          chain = route_fallback_candidates
+          @bus&.publish("llm:route_fallback", source: "models_catalogue", candidate_count: chain.length)
+          chain
+        end
+
+        # A router failure must not collapse the retry ladder to the one model
+        # that was already selected. LaneSelection reads the independent model
+        # catalogue and retains its declared provider/local/free ordering.
+        def route_fallback_candidates
+          models = Io::LaneSelection.explicit_models
+          ordered = begin
+            Io::LaneSelection.order_or_all(models)
+          rescue StandardError => e
+            @bus&.publish("llm:route_fallback_order_error", error_class: e.class.name,
+                                                               **Master::Execution::Contract.diagnostic_fields(e.message))
+            models
+          end
+          configured = @config.model.to_s
+          candidates = Array(ordered).map(&:to_s).reject(&:empty?)
+          candidates << configured unless configured.empty? || candidates.include?(configured)
+          candidates.uniq
+        rescue StandardError => e
+          @bus&.publish("llm:route_fallback_error", error_class: e.class.name,
+                                                       **Master::Execution::Contract.diagnostic_fields(e.message))
+          configured = @config.model.to_s
+          configured.empty? ? [] : [configured]
         end
 
         def cheap_first(chain)
