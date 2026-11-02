@@ -78,7 +78,6 @@ if [[ -r "$STATE" ]]; then
   done < "$STATE"
 fi
 
-now=$(date +%s)
 STATE_TMP="$STATE.new.$$"
 : > "$STATE_TMP" || exit 1
 alerted=0

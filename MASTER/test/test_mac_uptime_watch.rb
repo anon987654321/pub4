@@ -73,6 +73,6 @@ class TestMacUptimeWatch < Minitest::Test
       "PUB4_TEST_NOTIFY_LOG" => @notifications,
     }
     system(env, "/bin/zsh", SCRIPT, out: File::NULL, err: File::NULL)
-    $CHILD_STATUS&.exitstatus || $?.exitstatus
+    $?.exitstatus
   end
 end
