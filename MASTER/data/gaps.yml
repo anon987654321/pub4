@@ -13,8 +13,9 @@ purpose: >
   renders. The chain is one direction: ledger -> ideation record
   (data/ideations/) -> pick -> convergence.yml workstream -> law-gated
   implementation. This file routes appetite; it grants no authority of its
-  own — normative Law authority lives in laws.yml; soul.yml is subordinate identity/delivery data, and the budget ratchet still
-  only ever goes down.
+  own — source authority is soul.yml > laws.yml > executable laws and gates >
+  tree contracts > Git history. Soul owns global identity and protected paths;
+  laws.yml owns individual Law records. The budget ratchet still only ever goes down.
 authorization: >
   Operator request of 2026-10-27 (chat e2c7ceca): ideate over the planned
   rows, keep the survivors, implement the winners. Same chat, follow-up
