@@ -134,6 +134,27 @@ class TestLaneSelection < Minitest::Test
     assert_equal [GROK, "availability"], Selection.boot_choice(env: {}, saved: sonnet, alive: ALL), "a dead preference is not tried"
   end
 
+  def test_announce_lists_only_lanes_available_on_this_machine
+    cfg = {
+      "models" => {
+        "default" => [{ "id" => OPUS }, { "id" => GROK }],
+        "strong" => [],
+        "local" => [],
+      },
+    }
+    messages = []
+
+    live = Master::Trace::Dmesg.stub(:status, ->(unit, message, **) { messages << [unit, message] }) do
+      Selection.announce(cfg:, alive: ->(model) { model == GROK })
+    end
+
+    assert_equal [GROK], live
+    selection_line = messages.find { |unit, message| unit == "lane0" && message.start_with?("selection order:") }
+    refute_nil selection_line
+    assert_includes selection_line.last, GROK
+    refute_includes selection_line.last, OPUS
+  end
+
   def test_the_primary_report_names_the_lane_and_why
     Quota.note(AGY, AGY_REPLY)
     assert_match(/\Aprimary: #{Regexp.escape(OPUS)} \(first live lane by availability.*; dead: agy/, Selection.primary_report(env: {}, alive: ALL))
