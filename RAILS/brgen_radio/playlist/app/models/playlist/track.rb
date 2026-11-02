@@ -134,7 +134,7 @@ class Playlist::Track < ApplicationRecord
       %w[token in].include?(key) && value.present?
     end
     query = URI.encode_www_form(share)
-    "https://whyp.it/embeds/track/#{id}#{"?#{query}" unless query.empty?}""
+    "https://whyp.it/embeds/track/#{id}#{"?#{query}" unless query.empty?}"
   rescue URI::InvalidURIError
     nil
   end

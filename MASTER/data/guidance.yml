@@ -43,7 +43,7 @@ guidance:
     - claiming a caller or dependency census is complete when a source was unreadable
   before_edit:
     rule: TIERED_BLAST_RADIUS_READ
-    statement: Read depth scales with change radius: complete edited files, relevant one-hop callers/loaders/contracts/tests, and wider ownership maps only for structural changes.
+    statement: "Read depth scales with change radius: complete edited files, relevant one-hop callers/loaders/contracts/tests, and wider ownership maps only for structural changes."
     see_also: edit_context
     steps:
     - Identify the owning module, edited files, direct callers and relevant loaders or registries

@@ -1,7 +1,7 @@
 ---
 id: install_and_battery
 version: 1.0.0
-description: Parked (RAILS side): PWA install prompt and battery-aware UI helpers.
+description: "Parked (RAILS side): PWA install prompt and battery-aware UI helpers."
 revive_when: a user asks from a phone
 loader: none
 note: Render calls removed from the three application layouts; stimulus imports/registrations and importmap pins removed; @forward lines removed from _stack/_stack_brgen; onboarding order test and brgen engagement test moved in; rendered-invariant overlap cases removed.

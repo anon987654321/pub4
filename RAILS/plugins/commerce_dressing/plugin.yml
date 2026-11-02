@@ -1,7 +1,7 @@
 ---
 id: commerce_dressing
 version: 1.0.0
-description: Parked (RAILS side): Newsletter capture popup surface.
+description: "Parked (RAILS side): Newsletter capture popup surface."
 revive_when: the first transaction clears (with the affiliate rails revival decision)
 loader: none
 note: Render removed from _site_legal_footer; stimulus import/registration and importmap pin removed; _shell_widgets @use line removed; flat-contract and mobile-first tests updated. promotional_art and the affiliate collage STAY in the tree - both render live.

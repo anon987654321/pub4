@@ -171,6 +171,7 @@ module Master
                  else
                    "PASS"
                  end
+        source_only = rows.any? { |row| row["evidence_level"] == "source_level" }
         {
           "status" => status,
           "contract_digest" => Digest::SHA256.hexdigest(JSON.generate(contract.to_h)),
@@ -178,8 +179,7 @@ module Master
           "required_dimensions" => contract.preserve,
           "result_count" => rows.size,
           "results" => rows.dup,
-          "reason" => "source-level checks do not prove rendered, runtime or accessibility preservation" if
-            rows.any? { |row| row["evidence_level"] == "source_level" },
+          "reason" => ("source-level checks do not prove rendered, runtime or accessibility preservation" if source_only),
         }.compact
       end
 
