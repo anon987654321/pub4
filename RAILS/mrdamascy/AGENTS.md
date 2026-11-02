@@ -5,12 +5,12 @@
 ## Where this app lives
 
 ```
-RAILS/__other/mrdamascy/          ← you are here (standalone Rails 8 app, amber pattern)
+RAILS/mrdamascy/                   ← you are here (standalone Rails 8 app, amber pattern)
 ```
 
 Integration rules with the monorepo:
 
-- The app lives **inside `RAILS/__other/`**, deliberately **outside** the contract-test's four fixed roots. It must not break or be broken by `MASTER/`, `apps.yml`, or the contract-tested apps (amber, brgen, bsdports, radio …).
+- The app lived inside `RAILS/__other/` until 2026-11-02, deliberately outside the contract roots while under construction. It is now a first-class app at `RAILS/mrdamascy/` with an `apps.yml` entry; it still must not break or be broken by `MASTER/`, or the contract-tested apps (amber, brgen, bsdports, radio …).
 - **Do not touch** `MASTER/`, `apps.yml`, other apps, or anything above the app root. Do not edit `APP_SPEC.md` (proposals go through the spec owner).
 - Do not depend on `__shared/` (no `Shared::` libs, no shared coverage/test_defaults tooling) — this app is standalone and self-contained, same pattern as amber's core but with its own plain `test_helper.rb`.
 

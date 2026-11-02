@@ -1,6 +1,11 @@
 # RESTRUCTURE.md — pub4 consolidation, cleanup and restructuring proposal
 
-**Status:** Proposal for operator review — nothing in here has been executed beyond Phase 0.
+**Status:** Executed 2026-11-02 (operator-approved): Phase 0 tag `consolidation-20261102`;
+root shims retired (8171130cb); FULL.yml + the recovery assessment retired (92bf64485);
+FETAT.md relocated (7357a5f7d); mrdamascy promoted (c5a176b4c); contracts and ownership
+extended (e7ddfeb01, dde802564). NOT executed, deliberately: the TODO.md session-log split
+(operator asked for direct work instead of new TODO surfaces), and Phase 4's git-LFS
+conversion (it rewrites history; the fetch-at-deploy variant is the acceptable path).
 **Prepared:** 2026-11-02, from a full-repo audit at `main` = `9424bcac5`.
 **Verification basis:** every claim below was checked against the live tree and git
 metadata on 2026-11-02; commands are given so each claim can be re-verified.

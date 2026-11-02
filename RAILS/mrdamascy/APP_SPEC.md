@@ -1,6 +1,6 @@
-# APP_SPEC.md — mrdamascy (RAILS/__other/mrdamascy)
+# APP_SPEC.md — mrdamascy (RAILS/mrdamascy)
 
-Single source of truth for the **Mr. Damascy** app. Every contributor/agent implements exactly against this document. The app lives at `RAILS/__other/mrdamascy` — a standalone Rails 8 app (same pattern as `RAILS/amber`), safely inside `__other/` (outside the contract test's four fixed roots).
+Single source of truth for the **Mr. Damascy** app. Every contributor/agent implements exactly against this document. The app lives at `RAILS/mrdamascy` — a standalone Rails 8 app (same pattern as `RAILS/amber`), a first-class RAILS app path since 2026-11-02 (promoted out of the retired `__other/` junk drawer).
 
 **What it is:** a mobile-first PWA for ordering shawarma & kebab from one Bergen kitchen (Solheimsgaten 60, 5054 Bergen at **Danmarksplass** — the real restaurant), built to make ordering+paying (Vipps Express, plus card via Stripe) **fewer steps than Foodora**, wrapped in Damascus/Syrian warmth and Bergen street-kebab culture.
 

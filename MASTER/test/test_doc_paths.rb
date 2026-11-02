@@ -105,6 +105,7 @@ class TestDocPaths < Minitest::Test
     MASTER/lib/cli/face/contract.md
     RAILS/__shared/SOCIAL_FRONT_PAGE.md
     TREE_CONTRACTS.md
+    RESTRUCTURE.md
     STUDIO/docs/fetat/proposal.md
     MASTER/docs/LOVDATA.md
     MASTER/docs/PUB4_PERMISSION_MATRIX.md
