@@ -63,6 +63,37 @@ class PartnerAttributionReportTest < ActiveSupport::TestCase
     assert_equal 1, PartnerAttributionReport.new.unattributed_conversions
   end
 
+  test "approved commission is attributed by EPI city and surface without mixing currencies" do
+    epi = "city:bergen|surface:marketplace"
+    click(merchant: "Zalando", epi:)
+    Shared::AffiliateConversion.create!(
+      source: "tradedoubler", transaction_id: "txn-approved", message_type_id: 5,
+      publisher_commission: BigDecimal("12.34"), currency: "EUR", epi:
+    )
+    Shared::AffiliateConversion.create!(
+      source: "tradedoubler", transaction_id: "txn-pending", message_type_id: 4,
+      publisher_commission: BigDecimal("99.00"), currency: "GBP", epi:
+    )
+
+    report = PartnerAttributionReport.new
+
+    assert_equal BigDecimal("12.34"), report.approved_commission_by_currency.fetch("EUR")
+    assert_equal({ ["bergen", "EUR"] => BigDecimal("12.34") },
+                 report.approved_commission_by_dimension(:city))
+    assert_equal({ ["marketplace", "EUR"] => BigDecimal("12.34") },
+                 report.approved_commission_by_dimension(:surface))
+    assert_equal({ "bergen" => 1 }, report.clicks_by_dimension(:city))
+    assert_includes report.render, "approved commission by surface"
+    refute report.approved_commission_by_currency.key?("GBP")
+  end
+
+  test "dimension reports reject dimensions absent from the EPI contract" do
+    report = PartnerAttributionReport.new
+
+    assert_raises(ArgumentError) { report.approved_commission_by_dimension(:page) }
+    assert_raises(ArgumentError) { report.clicks_by_dimension(:visitor) }
+  end
+
   # A host, never a full URL: the question is which merchants get traffic, not
   # what each visitor shops for.
   test "the click record keeps a host and not a path" do

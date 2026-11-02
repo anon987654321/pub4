@@ -27,6 +27,14 @@
   <pre><code>{"findings":[{"path":"app/models/user.rb","line":1,"law":"FROZEN_STRING_LITERAL",
   "severity":"warning","message":"…"}],"usage":{"period":"2026-10","used":1,"quota":10000}}</code></pre>
 
+  <%= tag.h2 t("api.copy_review_heading") %>
+  <%= tag.p t("api.copy_review_lede") %>
+  <pre><code>curl https://ai.brgen.no/api/v1/copy-review \
+  -H "Authorization: Bearer $MASTER_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"creative":{"headline":"Wool coat — NOK 149.90","body":"Wool coat from Fjord Studio. In stock.","cta":"View item","locale":"en","disclosure":"Advertisement","claims":[{"kind":"product_title","text":"Wool coat"},{"kind":"merchant","text":"Fjord Studio"},{"kind":"price","text":"NOK 149.90"},{"kind":"availability","text":"In stock"}]},"product":{"source":"tradedoubler","external_id":"td-42","title":"Wool coat","merchant":"Fjord Studio","price_cents":14990,"currency":"NOK","market":"NO","in_stock":true,"placeholder":false,"last_seen_at":"2026-11-02T12:00:00Z"},"market":"NO"}'</code></pre>
+  <%= tag.p t("api.copy_review_trust") %>
+
   <%= tag.h2 t("api.limits_heading") %>
   <ul>
     <%= tag.li t("api.limit_files", files: LawCheck::MAX_FILES, kilobytes: LawCheck::MAX_BYTES / 1000) %>
