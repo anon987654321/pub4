@@ -93,17 +93,22 @@ class TestFixTree < Minitest::Test
       write("RAILS/#{app}/app/controllers/application_controller.rb", BODY)
       write("RAILS/#{app}/Gemfile", BODY)
       write("RAILS/#{app}/Rakefile", BODY)
+      write("RAILS/#{app}/config/database.yml", BODY)
+      write("RAILS/#{app}/config/environment.rb", BODY)
+      write("RAILS/#{app}/config/environments/production.rb", BODY)
+      write("RAILS/#{app}/db/seeds.rb", BODY)
       write("RAILS/#{app}/app/models/dispatch_policy.rb", BODY)
+    end
+    %w[dating maps marketplace].each do |engine|
+      write("RAILS/brgen_#{engine}/app/controllers/#{engine}/base_controller.rb", BODY)
     end
     git("add", ".")
 
     scatter = Master::Fix::Tree.new(root: @root).sprawl[:concept_scatter].map(&:first)
 
-    refute_includes scatter, "index.html"
-    refute_includes scatter, "README"
-    refute_includes scatter, "application_controller"
-    refute_includes scatter, "Gemfile"
-    refute_includes scatter, "Rakefile"
+    %w[index.html README application_controller Gemfile Rakefile database environment production seeds base_controller].each do |stem|
+      refute_includes scatter, stem
+    end
     assert_includes scatter, "dispatch_policy"
   end
 
