@@ -158,7 +158,7 @@ class TestDocPaths < Minitest::Test
   # README.md is the human entry point at each tree/project boundary. Other
   # Markdown survives only when it has a distinct runtime, archive, or recovery job.
   def test_keep_markers_only_preserve_empty_directories
-    markers = tracked.grep(%r{(?:\\A|/)\\.keep\\z})
+    markers = tracked.grep(%r{(?:\A|/)\.keep\z})
     redundant = markers.select do |marker|
       directory = File.dirname(marker)
       tracked.any? do |path|
@@ -167,7 +167,7 @@ class TestDocPaths < Minitest::Test
     end
 
     assert_empty redundant,
-                 ".keep markers are redundant when their directory already has tracked contents:\\n  #{redundant.join("\\n  ")}"
+                 ".keep markers are redundant when their directory already has tracked contents:\n  #{redundant.join("\n  ")}"
   end
 
   def test_markdown_stays_at_meaningful_boundaries
