@@ -179,8 +179,8 @@ module Operator
            the executable definitions, detectors, gates and proof.
         4. `MASTER/data/law_runtime.yml` — scanner, veto, plugin and `/fix` runtime
            configuration; it must not contain a duplicate Law catalogue.
-        4. `TREE_CONTRACTS.md` and the relevant tree README/CLAUDE contract.
-        5. Git history for provenance only; it never overrides live sources.
+        5. `TREE_CONTRACTS.md` and the relevant tree README/CLAUDE contract.
+        6. Git history for provenance only; it never overrides live sources.
 
         The house rules that reject otherwise-correct patches:
 

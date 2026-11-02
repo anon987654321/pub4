@@ -97,10 +97,11 @@ internally. Git history is provenance, never an override of a live source.
 `MASTER/lib/soul.rb` reads the source hierarchy and protected-path list from
 `soul.yml`, and derives the nine-node Law order from `laws.yml`; it does not
 author a competing graph. `MASTER/law/*.rb` holds executable Law definitions
-and adapters. `MASTER/data/law_runtime.yml` holds live transitional execution
-metadata. `MASTER/checks/` routes operational checks. These are enforcement
-instruments, not alternate sources of Law identity. Automatic resolutions
-require proof fixtures.
+and adapters. `MASTER/data/laws.yml#law_catalogue` owns per-Law execution
+policy; `MASTER/data/law_runtime.yml` holds scanner, veto, plugin and `/fix`
+runtime configuration. `MASTER/checks/` routes operational checks. These are
+enforcement instruments, not alternate sources of Law identity. Automatic
+resolutions require proof fixtures.
 
 One Law system: every Law is one catalogue entry and one `Law.define`, and
 its detector is a `detect` regex, a `check` block, or a detector class in
@@ -116,12 +117,12 @@ is INCONCLUSIVE, never PASS. No count of declared Laws, files, tests, or
 detectors proves the code correct, the design usable, or the system can
 support a stated scale.
 
-For every Law-affecting task, inspect its normative row in `laws.yml`, its
-runtime metadata in `MASTER/data/law_runtime.yml` when execution policy or reach
-is involved, the exact `Law.define`, and its bad/good fixtures or `proved_by`
-test. Verify identity, parent/root, severity, lifecycle, autofix, language,
-surface and path reach, and actual execution evidence. Keep Law identity and
-statements in `laws.yml`; runtime metadata is not a second normative catalogue.
+For every Law-affecting task, inspect its normative row in `laws.yml` and its
+`laws.yml#law_catalogue` metadata when execution policy or reach is involved,
+then inspect the exact `Law.define`, bad/good fixtures or `proved_by` test.
+Verify identity, parent/root, severity, lifecycle, autofix, language, surface
+and path reach, plus actual execution evidence. Read `law_runtime.yml` only
+when the task changes scanner, veto, plugin or `/fix` runtime configuration.
 Never claim a Law is enforced because its name or detector is merely declared.
 
 `MASTER/docs/synonyms.yml` is glossary-only. `MASTER/checks/checks.yml`
