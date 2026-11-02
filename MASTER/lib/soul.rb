@@ -215,7 +215,7 @@ module Master
         true
       end
 
-      def validate_sacred_paths!(paths)
+      def validate_sacred_paths!(paths, enforce_master_floor: true)
         unless paths.is_a?(Array) && !paths.empty? &&
                paths.all? do |path|
                  path.is_a?(String) && !path.strip.empty? &&
@@ -225,13 +225,15 @@ module Master
           raise IntegrityError, "soul.yml absolute.sacred_paths must be unique safe relative paths"
         end
 
-        broad = paths & FORBIDDEN_SACRED_PATHS
-        unless broad.empty?
-          raise IntegrityError, "runtime-written data and retired scanner paths cannot be sacred: #{broad.join(', ')}"
-        end
+        if enforce_master_floor
+          broad = paths & FORBIDDEN_SACRED_PATHS
+          unless broad.empty?
+            raise IntegrityError, "runtime-written data and retired scanner paths cannot be sacred: #{broad.join(', ')}"
+          end
 
-        missing = REQUIRED_SACRED_PATHS - paths
-        raise IntegrityError, "critical path protections missing: #{missing.join(', ')}" unless missing.empty?
+          missing = REQUIRED_SACRED_PATHS - paths
+          raise IntegrityError, "critical path protections missing: #{missing.join(', ')}" unless missing.empty?
+        end
 
         paths
       end
@@ -254,7 +256,11 @@ module Master
       def sacred_paths(root: ROOT)
         master_root = resolve_master_root(root)
         document = YAML.safe_load_file(File.join(master_root, "data", "soul.yml"), aliases: true)
-        paths = validate_sacred_paths!(document.dig("absolute", "sacred_paths"))
+        enforce_master_floor = File.expand_path(master_root) == File.expand_path(ROOT)
+        paths = validate_sacred_paths!(
+          document.dig("absolute", "sacred_paths"),
+          enforce_master_floor:
+        )
         paths.map(&:dup).freeze
       rescue IntegrityError
         raise
@@ -303,7 +309,10 @@ module Master
         end
 
         validate_authority_order!(manifest["authority_order"])
-        validate_sacred_paths!(manifest.dig("absolute", "sacred_paths"))
+        validate_sacred_paths!(
+          manifest.dig("absolute", "sacred_paths"),
+          enforce_master_floor: File.expand_path(master_root) == File.expand_path(ROOT)
+        )
         validate_anti_simulation!(manifest.dig("absolute", "anti_simulation"))
         validate_references!(manifest, master_root:)
         validate_temperament!(manifest["temperament"])
