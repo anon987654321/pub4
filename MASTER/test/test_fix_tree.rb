@@ -54,9 +54,10 @@ class TestFixTree < Minitest::Test
     refute_includes ugly, "lib/clean_name.rb"
   end
 
-  def test_concept_scatter_requires_three_owners
+  def test_concept_scatter_requires_three_owners_and_ignores_framework_entrypoints
     %w[ai fix voice].each do |owner|
       write("lib/#{owner}/dispatch_policy.rb", BODY)
+      write("lib/#{owner}/engine.rb", BODY)
     end
     %w[ai fix].each do |owner|
       write("lib/#{owner}/shared_cache.rb", BODY)
@@ -67,6 +68,20 @@ class TestFixTree < Minitest::Test
 
     assert_includes scatter.map(&:first), "dispatch_policy"
     refute_includes scatter.map(&:first), "shared_cache"
+    refute_includes scatter.map(&:first), "engine"
+  end
+
+  def test_rails_helper_conventions_do_not_count_as_ugly_names
+    write("RAILS/brgen/app/helpers/application_helper.rb", BODY)
+    write("RAILS/brgen/test/test_helper.rb", BODY)
+    write("RAILS/brgen/app/services/reply_utils.rb", BODY)
+    git("add", ".")
+
+    ugly = Master::Fix::Tree.new(root: @root).sprawl[:ugly_names]
+
+    refute_includes ugly, "RAILS/brgen/app/helpers/application_helper.rb"
+    refute_includes ugly, "RAILS/brgen/test/test_helper.rb"
+    assert_includes ugly, "RAILS/brgen/app/services/reply_utils.rb"
   end
 
   def test_depth_tax_only_flags_important_concepts_beyond_depth_three

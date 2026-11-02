@@ -12,7 +12,7 @@ module Master
       ROOT_FILE_LIMIT = 18
       IMPORTANT_CONCEPTS = %w[core fix law runtime soul].freeze
       GENERIC_CONCEPT_STEMS = %w[
-        application base config helper index manifest routes schema test_helper version
+        application base config engine helper index manifest routes schema test_helper version
       ].freeze
       UGLY_NAME_PATTERN = /(?:\A__|_{2,}|_(?:helper|utils|old)\z)/
       SIGNALS = %i[
@@ -50,6 +50,8 @@ module Master
         @files.select do |path|
           path.split("/").any? do |segment|
             stem = File.basename(segment, File.extname(segment))
+            next false if conventional_rails_helper?(path, stem)
+
             UGLY_NAME_PATTERN.match?(stem)
           end
         end
@@ -88,6 +90,16 @@ module Master
       end
 
       private
+
+      # Rails deliberately names helper files with the _helper suffix, and
+      # test_helper.rb is a conventional test entrypoint. They are not
+      # structural naming debt. Keep __ prefixes and repeated underscores visible.
+      def conventional_rails_helper?(path, stem)
+        return true if stem == "test_helper"
+        path_parts = path.split("/")
+        path_parts.each_cons(2).any? { |left, right| left == "app" && right == "helpers" } &&
+          stem.end_with?("_helper")
+      end
 
       def concept_owner(path)
         parts = target_path(path).split("/")
