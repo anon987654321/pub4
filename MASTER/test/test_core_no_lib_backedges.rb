@@ -105,7 +105,7 @@ class NoLibBackedgesTest < Minitest::Test
     assert soul_path.file?, "the canonical soul data must remain present"
     assert laws_path.file?, "the canonical law catalogue must remain present"
     assert_includes soul_path.read, "PRESERVE_FIRST"
-    assert_includes laws_path.read, "preserve working code and behaviour"
+    assert_match(/^PRESERVE_FIRST:\n(?:  .*\n)*?  statement: "Preserve working code and behaviour/i, laws_path.read)
     contract = contract_path.read
     assert_includes contract, "MASTER/data/soul.yml"
     assert_includes contract, "MASTER/data/laws.yml"
