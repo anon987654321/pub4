@@ -110,6 +110,7 @@ module Master
         Master::Trace::WriteTracker.current&.reset!
         paste, state, accumulated = init_turn_state(input)
         state[:presentation] = presentation
+        state[:face_output] = +"" if presentation == :face
 
         print_thinking_indicator unless paste || presentation == :face
         result = presentation == :face ? dispatch_face_turn(input, accumulated:, state:) :
@@ -125,6 +126,8 @@ module Master
           display_result(result:, accumulated:, streamed: state[:streamed])
         end
         @last_repeatable_input = input if result.ok? && Master::Io::MediaIntent.repeatable?(input)
+        return face_reply_text(result, state[:face_output]) if presentation == :face && result.ok? && state[:streamed]
+
         result
       ensure
         @pipeline_thread = nil
@@ -143,6 +146,15 @@ module Master
 
         Reline::HISTORY << text
         run_input(text, presentation: :face)
+      end
+
+      def face_reply_text(result, streamed)
+        final = success_text(result).to_s.strip
+        stream = streamed.to_s.strip
+        return stream if final.empty? || stream.include?(final[0, 120])
+        return final if stream.empty?
+
+        "#{stream}\n#{final}"
       end
 
       def cancel_face_turn
@@ -365,6 +377,7 @@ module Master
 
       def handle_stream_text(text, state)
         if state[:presentation] == :face
+          state[:face_output] << text.to_s
           state[:streamed] = true
           return
         end
