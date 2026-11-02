@@ -193,9 +193,10 @@ module Master
       Master::Soul.validate_authority_order!(data["authority_order"])
       absolute = data.fetch("absolute") { raise KeyError, "absolute.sacred_paths is required" }
       raise ArgumentError, "absolute must be a mapping" unless absolute.is_a?(Hash)
-      unknown_absolute = absolute.keys.map(&:to_s) - ["sacred_paths"]
+      unknown_absolute = absolute.keys.map(&:to_s) - %w[sacred_paths anti_simulation]
       raise ArgumentError, "absolute has unknown field(s): #{unknown_absolute.join(', ')}" unless unknown_absolute.empty?
       Master::Soul.validate_sacred_paths!(absolute["sacred_paths"])
+      Master::Soul.validate_anti_simulation!(absolute["anti_simulation"])
 
       references = data.fetch("references") { raise KeyError, "references.golden_law is required" }
       raise ArgumentError, "references must be a mapping" unless references.is_a?(Hash)
