@@ -177,12 +177,19 @@ class TestTraceRecorderStorage < Minitest::Test
     end
   end
 
-  def test_non_private_trace_directory_is_refused
-    Dir.mktmpdir("trace-storage-directory-mode") do |root|
-      FileUtils.mkdir_p(trace_directory(root), mode: 0o700)
-      File.chmod(0o755, trace_directory(root))
+  # Same policy as Log.prepare_directory: an existing directory the owner can
+  # repair is tightened to 0700 before any trace is written into it, whether
+  # it was merely readable or group/world-writable.
+  def test_non_private_trace_directory_is_tightened_before_use
+    [0o755, 0o777].each do |loose|
+      Dir.mktmpdir("trace-storage-directory-mode") do |root|
+        FileUtils.mkdir_p(trace_directory(root), mode: 0o700)
+        File.chmod(loose, trace_directory(root))
 
-      assert_raises(IOError) { recorder(root) }
+        recorder(root)
+
+        assert_equal 0o700, File.stat(trace_directory(root)).mode & 0o7777, format("0%o was not tightened", loose)
+      end
     end
   end
 end
