@@ -7,7 +7,7 @@ reach it. Sizes are line counts of the class file (plus its subdirectory);
 call sites are a text search of `lib/`, `bin/`, `tools/`, `checks/` and the
 Rakefile, so a `send`, `const_get` or string-built require is not seen.
 
-Authority is `laws.yml` > subordinate `soul.yml` > executable enforcement.
+Source authority is `soul.yml` > `laws.yml` > executable laws and gates > tree contracts > Git history. Soul owns global identity, preservation and protected paths; the Law catalogue owns individual Law records.
 The legacy `law_runtime.yml#law_catalogue` remains a live per-definition
 metadata dependency and must be migrated before claiming a single-source Law
 system. This file maps implementations; it is not a second policy surface.
