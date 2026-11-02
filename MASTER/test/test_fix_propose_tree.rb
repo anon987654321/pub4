@@ -75,6 +75,16 @@ class TestFixProposeTree < Minitest::Test
     assert_equal %w[clear compact], ranked.map { |proposal| proposal.fetch("name") }
   end
 
+  def test_ranking_penalizes_the_same_concept_scattered_across_three_owners
+    agent = RecordingAgent.new(REPLY, [])
+    subject = Master::Fix::ProposeTree.new(root: @root, agent:)
+    scattered = "lib/\\n  runtime/\\n    dispatch_policy.rb\\n  mind/\\n    dispatch_policy.rb\\n  design/\\n    dispatch_policy.rb"
+    owned = "lib/\\n  runtime/\\n    dispatch_policy.rb"
+
+    assert_operator subject.send(:sketch_score, scattered)[1], :>,
+                    subject.send(:sketch_score, owned)[1]
+  end
+
   def test_a_recent_report_cools_the_proposal_down
     FileUtils.mkdir_p(File.join(@root, "runtime"))
     File.write(File.join(@root, "runtime", "proposals.md"), "previous")
