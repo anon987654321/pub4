@@ -183,7 +183,7 @@
   // is the family's bundled serif (shared /fonts, OFL-1.1); Source Sans 3 the
   // bundled body face — no downloads, no third-party host.
   --font-display: "Source Serif 4", Georgia, "Times New Roman", serif;
-  --font: "Source Sans 3", "Helvetica Neue Pro", "Helvetica Neue", Arial, sans-serif;
+  --font: "Helvetica Neue Pro", "Helvetica Neue", Arial, sans-serif;
   // Not inverted. These name the ink and the paper, and .btn paints
   // background: var(--color-black) with no border, so the other way round
   // every button would take the page's own colour and only its label would show.

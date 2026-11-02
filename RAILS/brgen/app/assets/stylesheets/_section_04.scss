@@ -39,7 +39,7 @@
   // through stack → fonts. The family law in MASTER/data/tokens.yml still
   // records Helvetica until the sync tool moves it on the VPS; this pin is
   // the app-root override that law's own comment sanctions.
-  --font: "Source Sans 3", "Helvetica Neue Pro", "Helvetica Neue", Arial, sans-serif;
+  --font: "Helvetica Neue Pro", "Helvetica Neue", Arial, sans-serif;
   // Real 2014 mobile.css body base ("font: 18px sans-serif") -- this app's
   // own deliberate size, distinct from the 16px shared default.
   --font-size: var(--text-lg);

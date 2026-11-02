@@ -64,7 +64,7 @@
   --text-meta: 0.8125rem;    // 13px — meta, captions (MASTER font_size_meta)
   --text-body: 1rem;         // 16px — body, buttons, inputs
   --text-title: 1.25rem;     // 20px — page/section titles (MASTER type_tokens)
-  --text-display: 1.75rem;   // 28px — hero/display (MASTER font_size_display)
+  --text-display: clamp(40px, 6vw, 88px); // 40–88px — hero/display (MASTER font_size_display)
   --text-display-xl: clamp(2.75rem, 11.5vw, 3.5rem); // star mark — CLAMP_TYPOGRAPHY
 
   --font: "Helvetica Neue Pro", "Helvetica Neue", Arial, sans-serif;
