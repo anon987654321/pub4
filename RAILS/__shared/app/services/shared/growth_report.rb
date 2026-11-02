@@ -60,10 +60,20 @@ module Shared
       Shared::AffiliateConversion.where(created_at: since..).count
     end
 
+    # Order value is gross basket value, not money earned by the publisher.
+    # Commission is exposed separately and never combined across currencies.
     def affiliate_order_value
       return 0 unless defined?(Shared::AffiliateConversion)
 
       Shared::AffiliateConversion.where(created_at: since..).sum(:order_value).to_f
+    end
+
+    def approved_affiliate_commission_by_currency
+      return {} unless defined?(Shared::AffiliateConversion)
+
+      Shared::AffiliateConversion.where(created_at: since..).approved
+                                .group(:currency).sum(:publisher_commission)
+                                .transform_keys { |currency| currency.presence || "unknown" }
     end
 
     def partner_conversions
@@ -104,7 +114,16 @@ module Shared
       lines << format("    outbound merchant clicks   %d", outbound_clicks)
       outbound_clicks_by_surface.first(12).each { |surface, count| lines << format("    %-28s %d", surface || "(none)", count) }
       lines << format("    network conversions        %d", affiliate_conversions)
-      lines << format("    external order value       %.2f", affiliate_order_value)
+      lines << format("    external order value       %.2f (gross, not publisher revenue)", affiliate_order_value)
+      lines << "    approved publisher commission:"
+      commission = approved_affiliate_commission_by_currency
+      if commission.empty?
+        lines << "      none"
+      else
+        commission.sort.each do |currency, amount|
+          lines << format("      %-8s %.2f", currency, amount.to_f)
+        end
+      end
       lines.join("\n")
     end
   end
