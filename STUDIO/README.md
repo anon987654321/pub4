@@ -31,3 +31,10 @@ but the implementation is owned here.
 and proves the contracts answer, `rake test` runs `test/` (the Dilla and
 IdeaPicture suites), and `rake` runs both. The suite runs without network
 access and without the Replicate API.
+
+## Writing projects
+
+`docs/fetat/proposal.md` is the working master of the FETAT /
+Familieetaten proposal — a consolidated document (source history,
+evidence audit, implementation blueprint). It is writing output, not
+policy, and not part of the check surface.
