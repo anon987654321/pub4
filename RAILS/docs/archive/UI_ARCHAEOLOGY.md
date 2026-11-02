@@ -47,3 +47,16 @@ The archive inventory is broader than the Rails snapshots alone: `BRGEN_OLD.zip`
 The GitHub connector can enumerate these binary archive objects but cannot safely decode ZIP/TGZ bytes as UTF-8, so this session did not perform a false "extraction" claim. Their expanded/textual descendants, archive inventory, historical commits, old master configs, prompts, Rails generators and UI notes were cross-checked instead. The existing `MASTER/tools/extract_legacy_archives.zsh` remains the deterministic local extractor when binary bytes are materialized on a machine.
 
 Historical dependencies such as Redis, StimulusReflex, Bootstrap-era cards and framework-specific chrome were not restored. The recovered semantics were carried forward into the current law registry and token system instead.
+
+## Additional carryover synthesis
+
+Selective carryover from pub, pub2 and pub3 continues here. The historical brgen application
+contributed explicit post/form feedback and compact action grouping; the current pass applies those
+ideas without restoring Bootstrap boxes. Early Amber contributed editorial pacing, wardrobe grids
+and large visual anchors; the current pass keeps those relationships while removing gradients,
+filters and shadowed cards. The marketplace generators contributed stepwise listing entry, photo
+capture, seller context, deals and cart/payment grouping; the current engine keeps those
+relationships but separates them with space and type. The playlist generations contributed player,
+queue and timestamped comment anatomy; pub3's fullscreen visualizer contributed safe-area and
+low-chrome discipline. Promotional surfaces remain distinct from editorial content: first-party
+vertical promotion can have identity, while third-party ad slots stay quiet and labelled.

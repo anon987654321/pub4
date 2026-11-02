@@ -125,7 +125,6 @@ class TestDocPaths < Minitest::Test
     RAILS/docs/archive/SURFACE_MICRO_REFINEMENT_MATRIX.md
     RAILS/docs/archive/SURFACE_MICRO_REFINEMENT_MATRIX_II.md
     RAILS/docs/archive/UI_ARCHAEOLOGY.md
-    RAILS/docs/archive/UI_ARCHAEOLOGY_II.md
   ].freeze
 
   # README.md is the human entry point at each tree/project boundary. Other
