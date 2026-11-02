@@ -8,6 +8,7 @@ Copilot entry files point there; it carries the shared contract generated from
 `MASTER/AGENTS.md`. Tree contracts for RAILS, RAILS/master and OPENBSD live in
 `TREE_CONTRACTS.md`.
 
-`MASTER/data/soul.yml` attests the identity body. `MASTER/data/laws.yml` is
-the sole normative constitution, and the executable law tree `MASTER/law/`
-enforces the catalogue in Ruby.
+`MASTER/data/soul.yml` is the highest source for global identity,
+preservation, source order and protected paths. `MASTER/data/laws.yml`
+owns individual Law identities and statements; `MASTER/law/`,
+`MASTER/data/law_runtime.yml` and `MASTER/checks/` implement and verify them.
