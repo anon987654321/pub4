@@ -875,14 +875,9 @@ end
     # entry that stops matching is a hole in the check and fails the task
     # (EXEMPTIONS_EXPIRE). "open:" entries are known debt with a collapse
     # recorded in the old backlog — tolerated so the check can land, never permanent.
-    # The visual/ad and style-registry law block landed in BOTH registries in
-    # one commit: laws.yml as the normative home (its own header says new law
-    # identities live there) and law_runtime.yml because the constitution
-    # still loads its runtime rules from that file. Removing either copy
-    # un-enforces the laws for one reader population, so each coincident line
-    # is exempt until the collapse — which is the documented law_runtime.yml
-    # retirement itself.
-    migration = "same law line in both registries during the documented law_runtime.yml → laws.yml migration: constitution.rb still loads its rules from law_runtime.yml, so the collapse is that registry's retirement (see its header)"
+    # The visual/ad migration exemptions that were here are gone rather than
+    # expired: the collapse they waited for has landed upstream (the law block
+    # now lives in laws.yml alone, and law_runtime.yml no longer repeats it).
     known = {
       "voice: en-US-ChristopherNeural" =>
         "coincident strings for two different facts: the soul anchor voice and the trader persona voice are separate settings that name the same voice today",
@@ -901,31 +896,15 @@ end
       "# Split out of data/limits.yml on 2026-10-31." =>
         "coincident provenance note for one split event: budgets, guidance and scan each carry the same date line under their own header prose",
       "auxiliary: '(?:was|were|been)'" =>
-        "same detector row in both registries during the documented registry migration (comment above): the passive-voice pattern block is normative in laws.yml and consumed from law_runtime.yml",
+        "same detector row in both registries during the documented registry migration: the passive-voice pattern block is normative in laws.yml and consumed from law_runtime.yml",
       "banned_commands: [sed, awk, tr, cut, find, head, tail, wc, perl, python, bash]" =>
-        "same detector row in both registries during the documented registry migration (comment above): the zsh ban list is normative in laws.yml and read from law_runtime.yml by Io::GnuTextTools",
+        "same detector row in both registries during the documented registry migration: the zsh ban list is normative in laws.yml and read from law_runtime.yml by Io::GnuTextTools",
       # "strategy: highest_priority_wins" was removed rather than expired:
       # the line now exists only in guidance.yml (the limits.yml half was
       # split away), so it is no longer a cross-file duplicate at all.
-      "detector: \"Master::Visual::AdAudit.identity_tokens\"" => migration,
-      "statement: \"Ad-organ CSS resolves colour, typography and spacing through the canonical visual token contract; hardcoded presentation values fail the audit.\"" => migration,
-      "contract: \"MASTER/data/tokens.yml#tokens.ad_visual_contract\"" => migration,
-      "detector: \"Master::Visual::AdAudit.contrast\"" => migration,
-      "statement: \"Every audited ad text/background pair meets WCAG AA contrast thresholds in the token contract and in rendered evidence.\"" => migration,
-      "detector: \"Master::Visual::AdAudit.disclosure\"" => migration,
-      "statement: \"Native and affiliate creatives identify their commercial nature near the content with readable, contrasting disclosure.\"" => migration,
-      "detector: \"Master::Visual::AdAudit.alt_text\"" => migration,
-      "statement: \"Every image in an ad creative has non-empty alternative text unless it is explicitly decorative.\"" => migration,
-      "detector: \"Master::Visual::AdAudit.safe_zone\"" => migration,
-      "statement: \"Rendered headline, logo and call-to-action bounds remain inside the placement safe zone.\"" => migration,
-      "detector: \"Master::Visual::AdAudit.render_integrity\"" => migration,
-      "statement: \"A creative passes only with rendered evidence proving assets loaded, transfer size within budget and layout shift within budget.\"" => migration,
-      "statement: \"Each named style resolves to one immutable versioned entry per modality; tools consume the registry instead of maintaining parallel house looks.\"" => migration,
-      "statement: \"Reference-derived styles transfer only explicitly declared attribute classes, each with its own source fingerprint and strength.\"" => migration,
-      "statement: \"Released style versions are write-once; changes mint a higher version with owner, rationale and predecessor while prior versions remain resolvable.\"" => migration,
-      "statement: \"A render uses one style instance throughout unless a schedule hash is declared in both the registry and render manifest.\"" => migration,
-      "statement: \"Negative-list constraints are evaluated before rendering; refusal reports the matched constraint and never masquerades as a generation failure.\"" => migration,
-      "statement: \"Reviewers adjudicate declared contracts and evidence, not taste; aesthetic decisions remain with the operator under RENDERED_VALUES.\"" => migration,
+      # The nineteen visual/ad law-line exemptions were removed the same way:
+      # upstream collapsed the migration block, so no cross-file duplicate
+      # remains for them to name.
       # The three "open:" entries that were here are gone rather than expired:
       # each named a cross-file duplicate that has since been collapsed to one
       # source. anti_simulation's forbidden list is soul.yml only now (the

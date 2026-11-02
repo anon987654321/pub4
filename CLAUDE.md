@@ -11,5 +11,5 @@ at the native `.claude/settings.json` path.
 
 `MASTER/data/soul.yml` is the highest source for global identity,
 preservation, source order and protected paths. `MASTER/data/laws.yml`
-owns individual Law identities and statements; `MASTER/law/`,
-`MASTER/data/law_runtime.yml` and `MASTER/checks/` implement and verify them.
+owns individual Law identities and statements; the executable Law Ruby in `MASTER/law/`,
+`MASTER/data/law_runtime.yml` and `MASTER/checks/` implements and verifies them.

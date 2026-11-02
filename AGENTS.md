@@ -47,16 +47,17 @@ Read the relevant source, tests, and local documentation for the requested
 work. Never substitute remembered instructions, summaries, or assumptions
 for the live files.
 
-Source authority: `soul.yml > laws.yml > executable laws and gates > tree
-contracts > Git history`. Soul is highest for global identity, preservation,
+Source authority:
+`soul.yml > laws.yml > executable laws and gates > tree contracts > Git history`.
+Soul is highest for global identity, preservation,
 source order and protected paths. The Law catalogue is authoritative for
 individual Law identities and statements; its nine invariant nodes order Laws
 internally. Git history is provenance, never an override of a live source.
 
 `MASTER/lib/soul.rb` reads the source hierarchy and protected-path list from
 `soul.yml`, and derives the nine-node Law order from `laws.yml`; it does not
-author a competing graph. `MASTER/law/*.rb` holds executable Law definitions
-and adapters. `MASTER/data/laws.yml#law_catalogue` owns per-Law execution
+author a competing graph. The executable Law Ruby in `MASTER/law/*.rb` holds
+the definitions and adapters. `MASTER/data/laws.yml#law_catalogue` owns per-Law execution
 policy; `MASTER/data/law_runtime.yml` holds scanner, veto, plugin and `/fix`
 runtime configuration. `MASTER/checks/` routes operational checks. These are
 enforcement instruments, not alternate sources of Law identity. Automatic

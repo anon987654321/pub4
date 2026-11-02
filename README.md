@@ -48,7 +48,6 @@ catalogue. A missing or unrun measurement is INCONCLUSIVE, never PASS.
 `VERSION` records the release line. The FULL.yml rule corpus was retired on
 2026-11-02: it declared itself `not_a_live_config` and every one of its rows
 in `MASTER/data/law_runtime.yml` is marked covered — the constitution lives
-in `MASTER/law/` and `MASTER/data/laws.yml`. `FETAT.md` (working master of
-the FETAT proposal, a document, not policy) lives at
-`STUDIO/docs/fetat/proposal.md`. `redeploy` is the workstation deploy
-entrypoint.
+in `MASTER/law/` and `MASTER/data/laws.yml`. The working master of the FETAT
+proposal (a document, not policy) lives at `STUDIO/docs/fetat/proposal.md`.
+`redeploy` is the workstation deploy entrypoint.
