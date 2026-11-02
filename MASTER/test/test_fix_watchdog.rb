@@ -259,6 +259,44 @@ class TestFixWatchdog < Minitest::Test
     assert_equal "fix0 phase=stream fixed=1 failed=1 rejected=2 lane=grok-cli:auto elapsed=61", p.machine_line(61.4)
   end
 
+  def test_machine_heartbeat_renews_the_current_process_mission_lease
+    mission = Master::Fix::Mission.new(root: @root).start_or_resume!(
+      goal: "fix MASTER", scope: @root, model: "stub", effort: "high", plan: "observe", origin: "manual",
+    )
+    path = File.join(@root, Master::Fix::Mission::REL_PATH)
+    record = JSON.parse(File.read(path))
+    record["lease_until"] = (Time.now.utc + 5).iso8601
+    File.write(path, JSON.generate(record))
+
+    run = budget
+    run.send(:machine_beat, 61.0)
+
+    renewed = JSON.parse(File.read(path))
+    assert_operator Time.iso8601(renewed.fetch("lease_until")), :>, Time.now.utc + 240
+    assert_equal mission.id, renewed.fetch("id")
+    assert_equal Master::Fix::Mission.instance_id, renewed.fetch("lease_owner")
+  end
+
+  def test_machine_heartbeat_never_extends_another_process_lease
+    mission = Master::Fix::Mission.new(root: @root).start_or_resume!(
+      goal: "fix MASTER", scope: @root, model: "stub", effort: "high", plan: "observe", origin: "manual",
+    )
+    path = File.join(@root, Master::Fix::Mission::REL_PATH)
+    record = JSON.parse(File.read(path))
+    record["lease_owner"] = "another-host:999:other"
+    record["lease_until"] = (Time.now.utc + 180).iso8601
+    original_deadline = record.fetch("lease_until")
+    File.write(path, JSON.generate(record))
+
+    run = budget
+    run.send(:machine_beat, 61.0)
+
+    renewed = JSON.parse(File.read(path))
+    assert_equal "another-host:999:other", renewed.fetch("lease_owner")
+    assert_equal original_deadline, renewed.fetch("lease_until")
+    assert_equal mission.id, renewed.fetch("id")
+  end
+
   def test_the_machine_heartbeat_comes_once_a_minute
     run = budget
     run.instance_variable_set(:@pulse, pulse)
