@@ -1,5 +1,21 @@
 ---
 ownership:
+  ../STUDIO/output_paths.rb:
+    purpose: canonical STUDIO path policy — the root shim that used to shadow it is retired (2026-11-02)
+    risk: low
+    check: cd STUDIO && rake check
+  ../STUDIO/subprocess.rb:
+    purpose: canonical STUDIO subprocess boundary — the root shim that used to shadow it is retired (2026-11-02)
+    risk: medium
+    check: cd STUDIO && rake check
+  ../STUDIO/docs/fetat/proposal.md:
+    purpose: the FETAT proposal working master — writing output, not policy
+    risk: low
+    check: none (prose)
+  ../RAILS/mrdamascy/:
+    purpose: the Mr. Damascy PWA — first-class RAILS app since 2026-11-02 (promoted out of the retired RAILS/__other/); deploy lane pending
+    risk: medium
+    check: cd RAILS/mrdamascy && bin/rails test
   README.md:
     purpose: project front door
     risk: low
