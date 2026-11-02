@@ -13,20 +13,16 @@ operator state) and landed the mechanical fixes in the same commit as this
 section. The three clusters below are what an agent cannot close alone, plus
 one measurement nobody has taken on a non-macOS host.
 
-- [ ] **Land the soul-declared sacred-paths migration.** `test_core_paths.rb`
-  (4 failures, 1 error) and `test_autofix_guard.rb` (2 failures) pin a
-  contract the constitution has not grown into: `Core::Constitution::Paths`
-  must read each tree's own `data/soul.yml#absolute.sacred_paths` (fixture
-  roots governed by their soul, missing soul raising ENOENT, an empty or
-  blank declaration raising, refusal wording "(soul.yml
-  absolute.sacred_paths)"), while the implementation still derives paths
-  fail-closed from `laws.yml#SACRED_AUTHORSHIP.protected_paths`. The live
-  `data/soul.yml` declares no `absolute:` block yet, and both it and
-  `laws.yml` are sacred — the declaration itself is an operator change, and
-  the code side must not land before it or the live tree fails closed.
-  `lib/review/prompt_filter.rb` now falls back to the default modality words
-  when `absolute.anti_simulation.forbidden` is absent; the same `absolute:`
-  declaration should carry the real list when it lands.
+- [ ] **Verify the Soul-owned authority and absolute-policy migration on the pinned toolchain.**
+  `soul.yml#authority_order`, `absolute.sacred_paths` and
+  `absolute.anti_simulation.forbidden` are now declared and validated.
+  `Master::Soul`, `ConfigurationGuard`, `Core::Constitution::Paths`,
+  `FlatLawCatalogue`, PromptFilter, the agent context and receipt readers
+  have been aligned; focused regressions are present. The GitHub editing pass
+  did not execute them. Run the Soul, configuration-guard, core-path,
+  PromptFilter/agent and registry tests on the pinned Ruby toolchain, then
+  run the MASTER suite. Keep the outcome NOT_RUN until commands produce actual
+  output; do not infer success from source changes.
 - [ ] **Measure the suite on Linux and triage the environment-skewed
   failures.** ~85 test files fail here for machine reasons, not tree
   reasons: no headless Chrome (`TestCdpSessionHistory`, browser suites),
