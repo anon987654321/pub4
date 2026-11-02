@@ -136,11 +136,14 @@ class TestAxioms < Minitest::Test
     end
   end
 
-  # The anti-simulation evidence contract belongs to TRUTHFUL_STATUS in laws.yml.
-  def test_constitution_carries_anti_simulation_from_truthful_status_law
+  # TRUTHFUL_STATUS owns the repository-work scope and evidence requirements;
+  # Soul owns the global forbidden-word list.
+  def test_constitution_composes_anti_simulation_from_law_and_soul
     anti = @laws.constitution["anti_simulation"]
     refute_nil anti, "TRUTHFUL_STATUS must own its anti-simulation evidence contract"
+    assert_equal "repository_work_claims", anti["scope"]
     assert_equal %w[will would could might], anti["forbidden"]
     assert anti.dig("require_evidence", "completion"), "evidence contract must survive"
+    assert_equal anti["forbidden"], @laws.soul_data.dig("absolute", "anti_simulation", "forbidden")
   end
 end
