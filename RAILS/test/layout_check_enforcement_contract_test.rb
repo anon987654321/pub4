@@ -6,7 +6,9 @@ require "yaml"
 
 class LayoutCheckEnforcementContractTest < Minitest::Test
   ROOT = File.expand_path("../..", __dir__)
-  LAWS = File.join(ROOT, "MASTER/data/laws.yml")
+  # The design-principle catalogue (law_map) lives in law_runtime.yml; laws.yml
+  # holds the Law records the principles map to.
+  LAW_MAP = File.join(ROOT, "MASTER/data/law_runtime.yml")
   SURFACE_LAWS = File.join(ROOT, "MASTER/law/surface.rb")
   LAYOUT_SUITE = File.join(ROOT, "MASTER/checks/lib/layout_suite.rb")
   CHECKS = File.join(ROOT, "MASTER/checks/checks.yml")
@@ -16,7 +18,7 @@ class LayoutCheckEnforcementContractTest < Minitest::Test
   BSDPORTS_APP = File.join(ROOT, "RAILS/bsdports/app/assets/stylesheets/application.scss")
 
   def test_core_grid_and_typography_principles_resolve_to_executable_laws
-    data = YAML.safe_load_file(LAWS, aliases: true)
+    data = YAML.safe_load_file(LAW_MAP, aliases: true).fetch("law_map")
 
     {
       "grid_based_layouts" => %w[GRID_STRUCTURE EIGHT_PX_RHYTHM],

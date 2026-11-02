@@ -19,6 +19,8 @@ class TestRailsInteractionCraft < Minitest::Test
   SEARCH_LOADING = File.join(SHARED, "app", "views", "shared", "_search_loading.html.erb")
   EMPTY_STATE = File.join(SHARED, "app", "assets", "stylesheets", "_empty_state.scss")
   LAWS = File.join(ROOT, "MASTER", "data", "laws.yml")
+  # The principle catalogue (law_map) moved out of laws.yml into law_runtime.yml.
+  LAW_RUNTIME = File.join(ROOT, "MASTER", "data", "law_runtime.yml")
   INTERFACE = File.join(ROOT, "MASTER", "law", "interface.rb")
 
   def test_shared_interaction_craft_is_forwarded
@@ -60,9 +62,10 @@ class TestRailsInteractionCraft < Minitest::Test
 
   def test_waiting_state_is_constitutionally_registered
     laws = File.read(LAWS)
+    runtime = File.read(LAW_RUNTIME)
     interface = File.read(INTERFACE)
-    assert_includes laws, "waiting_state_meaning:"
-    assert_includes laws, "WAITING_STATE_MEANING"
+    assert_match(/^\s+waiting_state_meaning: \{[^}]*"law_ids": \["WAITING_STATE_MEANING"\]/, runtime)
+    assert_includes laws, "WAITING_STATE_MEANING:"
     assert_includes interface, "Law.define(:WAITING_STATE_MEANING)"
   end
 
