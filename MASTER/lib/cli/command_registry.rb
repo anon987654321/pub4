@@ -289,9 +289,11 @@ module Master
         "snapshot0: failed — #{e.class}: #{e.message}"
       end
 
-      # Open the full-screen terminal face without inventing a second model route.
-      # `/face size auto|small|large|WxH` chooses how big the face is drawn and
-      # opens it; the choice holds for the session. WxH is columns by rows.
+      # Legacy isolated-window adapter for explicit non-Session consumers.
+      # Normal CLI /face is intercepted by Session and draws Face.frame above
+      # Reline; this method retains its dedicated /dev/tty boundary for callers
+      # that deliberately request the old full-screen viewport.
+      # `size auto|small|large|WxH` chooses its viewport (WxH is columns by rows).
       def dispatch_face(ctx = nil, prompt: nil, turn: nil, cancel: nil)
         chosen = face_size(arg_for(ctx))
         return chosen if chosen.is_a?(String) && chosen.start_with?("face0:")
