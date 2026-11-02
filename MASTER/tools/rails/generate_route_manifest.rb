@@ -30,6 +30,7 @@ module Deploy
   module RouteManifest
     ROOT = File.expand_path("../../..", __dir__)
     require File.join(ROOT, "MASTER", "lib", "operator", "ruby_runner")
+    require File.join(ROOT, "MASTER", "checks", "support", "fleet")
     RAILS_ROOT = File.join(ROOT, "RAILS")
     PATH = File.join(ROOT, "MASTER", "checks", "data", "route_manifest.yml")
     # Prefix and defaults are both optional and the prefix may be blank, so anchor
@@ -38,8 +39,12 @@ module Deploy
     ENDPOINT = /^(?<controller>[a-z0-9_\/]+)#(?<action>[a-z0-9_]+)(?:\s+\{(?<defaults>.*)\})?$/
 
     module_function
+    # The apps PageInventory probes (Fleet.engine_apps), not every apps.yml
+    # entry: master and mrdamascy are listed there but mount no pub4-shared
+    # engine and are never page-probed, and mrdamascy's bundle is not installed
+    # here, so a full run died on them and the manifest could not be refreshed.
     def apps
-      YAML.safe_load_file(File.join(RAILS_ROOT, "apps.yml"), aliases: true).fetch("apps").keys.map(&:to_s).sort
+      Fleet.engine_apps.sort
     end
 
     def app_root(app) = File.join(RAILS_ROOT, app)

@@ -2,7 +2,7 @@
 schema: 1
 apps:
   amber:
-    digest: 5bddd9c42970955d
+    digest: 0c3a0b365fb0cba1
     routes:
       shared/changelog#show:
       - "/changelog"
@@ -42,6 +42,8 @@ apps:
       - "/two_factor_setup"
       omniauth_callbacks#create:
       - "/auth/:provider/callback"
+      billing#show:
+      - "/billing"
       email_verifications#show:
       - "/verify/:token"
       site_verifications#well_known:
@@ -52,8 +54,6 @@ apps:
       - "/notifications/badge"
       notifications#index:
       - "/notifications"
-      billing#show:
-      - "/billing"
       fleet_health#show:
       - "/health"
       passwords#new:
@@ -247,6 +247,8 @@ apps:
       - "/.well-known/:network-site-verification"
       site_verifications#file:
       - "/:network:token.html"
+      billing#show:
+      - "/billing"
       fleet_health#show:
       - "/health"
       activity_events#index:
@@ -255,8 +257,6 @@ apps:
       - "/notifications/badge"
       notifications#index:
       - "/notifications"
-      billing#show:
-      - "/billing"
       admin/reports#index:
       - "/admin/reports"
       admin/business_verifications#index:
@@ -335,6 +335,8 @@ apps:
       - "/i/:token"
       conversations#search:
       - "/conversations/search"
+      messages#index:
+      - "/conversations/:conversation_id/messages"
       conversations#index:
       - "/"
       - "/conversations"
@@ -457,6 +459,8 @@ apps:
       - "/playlists"
       playlist/playlists#embed:
       - "/playlists/:id/embed"
+      playlist/playlists#analytics:
+      - "/playlists/:id/analytics"
       playlist/playlists#new:
       - "/playlists/new"
       playlist/playlists#edit:
