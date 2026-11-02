@@ -4,7 +4,8 @@
 <% if Shared::LinkConverter.configured? %>
   <% script_src = Shared::LinkConverter.script_src(Rails.public_path) %>
   <% if script_src.present? %>
-    <% epi = Shared::LinkConverter.request_epi %>
+    <% route = "#{params[:controller]}##{params[:action]}" %>
+    <% epi = Shared::LinkConverter.request_epi(route: route) %>
     <%= tag.div data: {
       controller: "link-converter",
       link_converter_src_value: script_src,
