@@ -22,7 +22,7 @@ UNIT_LINE = /\A[a-z]+\d+(?: at [a-z]+\d+)?: /
 # The thinking spinner: a glyph, the stage, the seconds so far.
 SPINNER = /\A\S \S+ \d+(?:\.\d+)?s\z/
 ENV_FOR_PTY = {
-  "MASTER_RUBY_REEXEC_DONE" => "1", "TERM" => "xterm", "MASTER_FACE_ON_START" => "0",
+  "MASTER_RUBY_REEXEC_DONE" => "1", "TERM" => "xterm",
   "MASTER_WEB" => "0", "MASTER_BACKGROUND" => "0", "MASTER_AUTOFIX" => "0",
   "MASTER_WATCH" => "0", "MASTER_WATCHER" => "0", "MASTER_HEARTBEAT" => "0", "MASTER_SKIP_TTS" => "1",
   "MASTER_BED" => "0"
