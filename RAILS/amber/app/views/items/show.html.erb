@@ -90,7 +90,8 @@
         are actually configured, and says nothing when none are. %>
     <p><%= t("items.affiliate_help") %></p>
     <%= render "shared/affiliate_disclosure" %>
-    <% affiliate_click_epi = Shared::LinkConverter.request_epi %>
+    <% affiliate_route = "#{params[:controller]}##{params[:action]}" %>
+    <% affiliate_click_epi = Shared::LinkConverter.request_epi(route: affiliate_route) %>
     <% if @item.affiliate_links.any? %>
       <ul>
         <% @item.affiliate_links.each do |link| %>
