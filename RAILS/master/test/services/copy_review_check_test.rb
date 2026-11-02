@@ -36,7 +36,7 @@ class CopyReviewCheckTest < ActiveSupport::TestCase
   end
 
   test "a current supplied product snapshot can pass deterministic copy checks" do
-    prepared = CopyReviewCheck.prepare(creative:, product:, market: "NO")
+    prepared = CopyReviewCheck.prepare(creative: creative, product: product, market: "NO")
     result = CopyReviewCheck.call(prepared)
 
     assert_equal :pass, result.report.status
@@ -47,7 +47,7 @@ class CopyReviewCheckTest < ActiveSupport::TestCase
   end
 
   test "a missing product snapshot remains inconclusive rather than passing" do
-    prepared = CopyReviewCheck.prepare(creative:)
+    prepared = CopyReviewCheck.prepare(creative: creative)
     result = CopyReviewCheck.call(prepared)
 
     assert_equal :inconclusive, result.report.status
@@ -64,12 +64,12 @@ class CopyReviewCheckTest < ActiveSupport::TestCase
   test "each claim must be an object using only declared fields" do
     invalid = creative.merge(claims: ["a free-form claim"])
     assert_raises(CopyReviewCheck::InvalidInput) do
-      CopyReviewCheck.prepare(creative: invalid, product:)
+      CopyReviewCheck.prepare(creative: invalid, product: product)
     end
 
     invalid = creative.merge(claims: [{ kind: "price", text: "149.90", confidence: 1.0 }])
     assert_raises(CopyReviewCheck::InvalidInput) do
-      CopyReviewCheck.prepare(creative: invalid, product:)
+      CopyReviewCheck.prepare(creative: invalid, product: product)
     end
   end
 
