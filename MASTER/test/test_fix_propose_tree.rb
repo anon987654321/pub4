@@ -78,8 +78,20 @@ class TestFixProposeTree < Minitest::Test
   def test_ranking_penalizes_the_same_concept_scattered_across_three_owners
     agent = RecordingAgent.new(REPLY, [])
     subject = Master::Fix::ProposeTree.new(root: @root, agent:)
-    scattered = "lib/\\n  runtime/\\n    dispatch_policy.rb\\n  mind/\\n    dispatch_policy.rb\\n  design/\\n    dispatch_policy.rb"
-    owned = "lib/\\n  runtime/\\n    dispatch_policy.rb"
+    scattered = <<~TREE
+      lib/
+        runtime/
+          dispatch_policy.rb
+        mind/
+          dispatch_policy.rb
+        design/
+          dispatch_policy.rb
+    TREE
+    owned = <<~TREE
+      lib/
+        runtime/
+          dispatch_policy.rb
+    TREE
 
     assert_operator subject.send(:sketch_score, scattered)[1], :>,
                     subject.send(:sketch_score, owned)[1]

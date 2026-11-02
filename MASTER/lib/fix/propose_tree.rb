@@ -2,6 +2,7 @@
 
 require "yaml"
 require "json"
+require "set"
 require "fileutils"
 require_relative "tree_sprawl"
 
@@ -131,7 +132,7 @@ module Master
           name = line.strip.sub(/\A[│├└─|\x60+\-]+\s*/, "").sub(/\/+\z/, "").strip
           [depth, name]
         end
-        return [0, 0, 0, 0, 0, 0] if rows.empty?
+        return [0, 0, 0, 0, 0, 0, 0] if rows.empty?
 
         child_counts = Hash.new(0)
         stack = []
