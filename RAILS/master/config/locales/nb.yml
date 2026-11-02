@@ -149,8 +149,8 @@ nb:
     title: "MASTER lov-API: kodegjennomgang etter regler, over HTTPS"
     heading: "MASTER lov-API"
     lede: >-
-      Send kildefiler og få tilbake hver MASTER-lov de bryter, med linje og begrunnelse. Faste regler, ingen modell:
-      samme svar hver gang, på sekunder.
+      Send kildefiler eller affiliate-annonsetekst og få deterministiske funn med dokumentasjon, linjehenvisninger
+      der det passer, og begrunnelse. Gjennomgangen bruker ikke en modell.
     plans_heading: "Abonnement"
     per_month: "i måneden"
     subscribe: "Abonner"
@@ -158,7 +158,7 @@ nb:
     unavailable: "Det abonnementet kan ikke startes akkurat nå. Ingenting ble trukket."
     not_confirmed: "Stripe har ikke bekreftet den betalingen. Har du betalt, last siden på nytt om et minutt."
     usage_heading: "Bruk"
-    usage_lede: "Send opptil 20 filer som JSON med nøkkelen din som bearer-token."
+    usage_lede: "Send opptil 20 kildefiler til /api/v1/lint eller ett kreativt objekt med produktøyeblikksbilde til /api/v1/copy-review med bearer-nøkkelen din."
     response_lede: "Hvert funn oppgir fil, linje, lov og alvorlighet, og svaret viser månedens forbruk."
     copy_review_heading: "Gjennomgå annonsetekst"
     copy_review_lede: "Send POST /api/v1/copy-review med et kreativt objekt og, når det finnes, et oppdatert produktøyeblikksbilde. Én gjennomgang bruker én API-sjekk."
@@ -173,7 +173,7 @@ nb:
       hastighetsgrense.
     limit_account: >-
       GET /api/v1/key viser forbruk; POST /api/v1/key/rotate bytter nøkkel; POST /api/v1/key/portal åpner betaling.
-    limit_privacy: "Kildekoden vurderes i minnet og lagres aldri eller skrives til disk."
+    limit_privacy: "Kildekode og annonsetekst vurderes i minnet. Tekst og produktfelter lagres ikke; kvitteringer for copy review beholder bare hashverdier, sammendrag av resultatet og funnkoder."
     key_title: "API-nøkkelen din"
     key_once: "Kopier den nå: den vises én gang, og bare fingeravtrykket lagres."
     key_shown: >-
