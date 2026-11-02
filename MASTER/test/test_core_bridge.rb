@@ -466,8 +466,10 @@ class CoreBridgeTest < Minitest::Test
       )
 
       assert_equal :blocked, result[:reason]
+      # Turn 3 is the second exec refusal, so the stop came on the repeat; the
+      # summary is the plain-language capability refusal (1bd314947).
       assert_equal 3, result[:turns]
-      assert_match(/repeated exec refusal/, result[:summary])
+      assert_equal "blocked: command execution is not enabled in this session; no command was run", result[:summary]
       assert_equal "blocked", result[:mission]["state"]
     end
   end
