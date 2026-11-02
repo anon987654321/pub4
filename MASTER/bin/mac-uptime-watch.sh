@@ -1,42 +1,86 @@
 #!/bin/zsh
-# mac-uptime-watch -- a second vantage point that is not vm23 and not cron-on-vm23.
+# mac-uptime-watch -- an external vantage point for the public service surface.
 #
-#   runs on:  the operator's Mac (launchd or cron, every 5 minutes, single shot)
-#   state:    ~/.pub4/uptime_watch.state
-#
-# Why it exists. box-heartbeat.sh covers "the box stopped talking". This script
-# covers the inverse failure: the box says everything is fine while a public
-# surface is not reachable the way a visitor reaches it -- relayd answering,
-# an app port closed, a DNS or registrar problem, or TLS that terminates
-# somewhere unexpected. The box's own uptime-check.sh cannot see these from
-# inside; a poll from the operator's network can.
-#
-# This mirrors OPENBSD/bin/uptime-check.sh's contract rather than re-inventing
-# it: public HTTPS /up only, no vm23 tools, and the same waiver idea for a
-# domain that cannot pass today (bsdports.org parked at the registrar -- the
-# box carries ALLOW_BSDPORTS_DOWN=1 for the same reason). Drop the waiver the
-# day delegation returns, here and in crontab.vm23, in the same commit.
-#
-# cron line on the Mac:
-#   */5 * * * * /usr/local/bin/mac-uptime-watch.sh >> /tmp/pub4_uptime_watch.log 2>&1
-# or launchd with StartInterval=300. One invocation = one tick (their idiom),
-# so state persists between ticks in the state file.
+# One invocation is one tick. State persists under ~/.pub4; launchd or cron
+# may call this every five minutes. A wedged curl is bounded and stale locks
+# are recovered only after the owning process is confirmed gone.
+
+umask 077
 
 : ${PUB4_UPTIME_HOSTS:="brgen.no amberapp.no ai.brgen.no bsdports.org"}
-: ${PUB4_UPTIME_WAIVED:="bsdports.org"}     # ALLOW_BSDPORTS_DOWN equivalent
-: ${PUB4_UPTIME_FAILS:=3}                   # 3 consecutive ticks == 15 minutes, same as the box
+: ${PUB4_UPTIME_WAIVED:="bsdports.org"}
+: ${PUB4_UPTIME_FAILS:=3}
+
 STATE="$HOME/.pub4/uptime_watch.state"
 LOCKDIR="$HOME/.pub4/uptime_watch.lock"
+STALE_LOCK_AGE=30
+LOCK_OWNED=0
+STATE_TMP=""
+SCRIPT_NAME=${0:t}
 
-mkdir -p "$HOME/.pub4" 2>/dev/null
-# One instance at a time; a wedged curl must not stack ticks.
-mkdir "$LOCKDIR" 2>/dev/null || exit 0
-trap 'rmdir "$LOCKDIR" 2>/dev/null' EXIT
-touch "$STATE" 2>/dev/null || exit 0
+mkdir -p "$HOME/.pub4" 2>/dev/null || exit 1
+
+lock_appears_live() {
+  local owner process_command lock_mtime current
+  owner=""
+  [[ -r "$LOCKDIR/pid" ]] && owner=$(<"$LOCKDIR/pid")
+
+  if [[ "$owner" == <-> ]] && kill -0 "$owner" 2>/dev/null; then
+    process_command=$(ps -p "$owner" -o command= 2>/dev/null)
+    [[ "$process_command" == *"$SCRIPT_NAME"* ]] && return 0
+  fi
+
+  # A creator may be between mkdir and writing pid. Give it a short grace
+  # period; after that, an absent or dead owner is safe to reap.
+  lock_mtime=$(stat -f %m "$LOCKDIR" 2>/dev/null)
+  [[ "$lock_mtime" == <-> ]] || return 0
+  current=$(date +%s)
+  (( current - lock_mtime < STALE_LOCK_AGE ))
+}
+
+acquire_lock() {
+  local attempt
+  for attempt in 1 2 3; do
+    if mkdir "$LOCKDIR" 2>/dev/null; then
+      if print -r -- "$$" > "$LOCKDIR/pid"; then
+        LOCK_OWNED=1
+        return 0
+      fi
+      rmdir "$LOCKDIR" 2>/dev/null
+      return 1
+    fi
+
+    lock_appears_live && return 1
+    [[ -f "$LOCKDIR/pid" ]] && rm -f "$LOCKDIR/pid"
+    rmdir "$LOCKDIR" 2>/dev/null || return 1
+  done
+  return 1
+}
+
+cleanup() {
+  [[ -n "$STATE_TMP" ]] && rm -f "$STATE_TMP"
+  if (( LOCK_OWNED )) && [[ -r "$LOCKDIR/pid" ]] && [[ "$(<"$LOCKDIR/pid")" == "$$" ]]; then
+    rm -f "$LOCKDIR/pid"
+    rmdir "$LOCKDIR" 2>/dev/null
+  fi
+}
+trap cleanup EXIT
+trap 'exit 130' INT
+trap 'exit 143' TERM
+
+acquire_lock || exit 0
+
+typeset -A previous_failures
+if [[ -r "$STATE" ]]; then
+  while IFS=' ' read -r host previous_code previous_count; do
+    [[ -n "$host" && "$previous_count" == <-> ]] || continue
+    previous_failures[$host]="$previous_count"
+  done < "$STATE"
+fi
 
 now=$(date +%s)
-new="$STATE.new"
-: >"$new"
+STATE_TMP="$STATE.new.$$"
+: > "$STATE_TMP" || exit 1
 alerted=0
 
 for host in ${(z)PUB4_UPTIME_HOSTS}; do
@@ -45,32 +89,29 @@ for host in ${(z)PUB4_UPTIME_HOSTS}; do
   fi
 
   code=$(curl -sS -m 10 -o /dev/null -w '%{http_code}' "https://$host/up" 2>/dev/null)
-  # curl -w already prints 000 on a failed connect; only a missing curl
-  # yields empty, and that is also "cannot pass right now".
   [[ -z "$code" ]] && code=000
 
+  previous=${previous_failures[$host]:-0}
   if [[ "$code" == "200" ]]; then
-    prev=$(grep "^$host " "$STATE" 2>/dev/null | tail -n 1)
-    if [[ -n "$prev" ]] && [[ $(print -r -- "$prev" | awk '{print $3}') -ge $PUB4_UPTIME_FAILS ]]; then
+    if (( previous >= PUB4_UPTIME_FAILS )); then
       print -r -- "RECOVERED $host $(date '+%Y-%m-%d %H:%M:%S')" >> "$HOME/.pub4/uptime_watch.log"
       osascript -e "display notification \"$host /up is answering again\" with title \"pub4 uptime\"" >/dev/null 2>&1 || true
     fi
-    print -r -- "$host 0 0" >> "$new"
+    print -r -- "$host 0 0" >> "$STATE_TMP"
   else
-    prev=$(grep "^$host " "$STATE" 2>/dev/null | tail -n 1)
-    fails=1
-    if [[ -n "$prev" ]]; then
-      fails=$(( $(print -r -- "$prev" | awk '{print $3}') + 1 ))
-    fi
-    print -r -- "$host $code $fails" >> "$new"
+    fails=$(( previous + 1 ))
+    print -r -- "$host $code $fails" >> "$STATE_TMP"
     if (( fails >= PUB4_UPTIME_FAILS )); then
       alerted=1
-      print -r -- "DOWN $host code=$code ticks=$fails $(date '+%Y-%m-%d %H:%M:%S')" >> "$HOME/.pub4/uptime_watch.log"
-      osascript -e "display notification \"$host /up down (HTTP $code, $fails ticks)\" with title \"pub4 uptime\" sound name \"Basso\"" >/dev/null 2>&1 || true
+      if (( previous < PUB4_UPTIME_FAILS )); then
+        print -r -- "DOWN $host code=$code ticks=$fails $(date '+%Y-%m-%d %H:%M:%S')" >> "$HOME/.pub4/uptime_watch.log"
+        osascript -e "display notification \"$host /up down (HTTP $code, $fails ticks)\" with title \"pub4 uptime\" sound name \"Basso\"" >/dev/null 2>&1 || true
+      fi
     fi
   fi
 done
 
-mv "$new" "$STATE"
-(( alerted )) && exit 1   # non-zero for cron mail, without being noisy per tick
+mv -f "$STATE_TMP" "$STATE" || exit 1
+STATE_TMP=""
+(( alerted )) && exit 1
 exit 0
