@@ -74,8 +74,9 @@ via `Kernel#build_fix_loop`; the convergence implementation is
 compatibility constants for callers that have not been re-pointed.
 
 The Kernel enters cancellation through the adapter-owned `with_cancellation`
-scope. The adapter activates and restores its token in an `ensure` boundary;
-Kernel does not read or write adapter instance variables.
+scope. The adapter installs and restores its token in an `ensure` boundary;
+Kernel activates the token inside its receipt/rescue boundary and never reads
+or writes adapter instance variables.
 
 The existing `FixLoop` / `Transaction` mutation and rollback path remains the
 only source-editing path. Kernel appends a start receipt before execution and a

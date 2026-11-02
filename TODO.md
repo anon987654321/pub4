@@ -463,7 +463,7 @@ actionable root-backlog item. Keep them open until the relevant evidence exists.
   and rendered mobile/desktop behavior before closing.
 - [ ] **Norwegian MASTER README:** the earlier explicit request for a complete
   `MASTER.norwegian.md` translation is not represented in the current tree (no
-  Norwegian counterpart exists). After the mandatory complete MASTER read, translate
+  Norwegian counterpart exists). After reviewing the canonical README, its links and the language policy, translate
   the canonical README without changing technical meaning, keep links/commands/code
   identical, and add a parity check so material English README sections cannot silently
   disappear from the Norwegian edition.
@@ -503,7 +503,7 @@ actionable root-backlog item. Keep them open until the relevant evidence exists.
   unreachable/history-recoverable objects and historical wording across pub4, pub3,
   pub2 and pub. Restore only grounded, unique logic, ideas, contracts and tests into
   current owners; preserve provenance and do not reintroduce a deleted tree wholesale.
-- [ ] **Unlanded `MASTER/plugins/mov/` proposal:** an archived integration bundle exists, but it is not the current `MASTER/lib/io/mov.rb` adapter. The archived engine selects modern streaming-catalog titles but acquires releases through Torrentio, apibay/TPB, YTS and EZTV with `aria2c` magnet downloads; no licensing/provenance gate is demonstrated. Do not merge or run that acquisition path. After the complete MASTER read, decide whether a safe plugin limited to lawful public-domain downloads and/or provider availability links is still wanted. The bundle is based on an old commit and its engine defaults to US while its README claims Norway; any plugin policy registration remains a human-owned change to sacred `MASTER/data/laws.yml`.
+- [ ] **Unlanded `MASTER/plugins/mov/` proposal:** an archived integration bundle exists, but it is not the current `MASTER/lib/io/mov.rb` adapter. The archived engine selects modern streaming-catalog titles but acquires releases through Torrentio, apibay/TPB, YTS and EZTV with `aria2c` magnet downloads; no licensing/provenance gate is demonstrated. Do not merge or run that acquisition path. After reviewing the adapter, provider contracts, licensing and applicable Laws, decide whether a safe plugin limited to lawful public-domain downloads and/or provider availability links is still wanted. The bundle is based on an old commit and its engine defaults to US while its README claims Norway; any plugin policy registration remains a human-owned change to sacred `MASTER/data/laws.yml`.
 - [ ] **Oct. 26 hardening review:** reconcile every P01–P11 follow-up and the outstanding
   findings in `MASTER/docs/history/fix-review-log.md`. Explicitly
   verify SILENT_RESCUE freshness, INTER_MODEL_CONTRACT heredoc/keyword sites, the
@@ -827,13 +827,13 @@ source and tests they could not run; this pass is what measures them.
 - [ ] Radio Bergen: confirm distribution rights individually for the 35 selected recordings, then run `radio_bergen:import_curated` from `RAILS/brgen` against the local `pub2` checkout and verify the public Playlist/Active Storage streaming path in a local Rails test environment. The importer is committed; the audio itself is not yet imported.
 - [ ] Run `cd RAILS && npm run test:radio` in the full checkout and preserve its actual exit output. The selector fix and focused Node regression are committed; the isolated harness used during this pass is not a full Rails checkout or a browser playback proof.
 - [ ] Run focused local tests for the curated manifest/import guard and the Playlist tunnel view/controller; add full importer idempotency, ordering, checksum and failure-atomicity coverage, then execute them. This GitHub-only pass did not run Rails tests.
-- [ ] MASTER plugin candidates from pub2 misc remain reference-only; no MASTER edits or plugin implementation until the required complete MASTER read and contract review are satisfied.
+- [ ] MASTER plugin candidates from pub2 misc remain reference-only; no plugin implementation until the existing adapter, provider contracts, applicable Laws and focused tests have been reviewed.
 
 
 ## Root directory contract
 
 - [ ] Enforce mechanically that the only tracked directories directly under the repository root are `MASTER/`, `RAILS/`, `OPENBSD/`, and `STUDIO/`. Keep root metadata and instruction files as files; don't add root-level tooling or documentation directories.
-- [ ] After the required complete read of MASTER, reconcile `rake docs:agent_contracts` with the four-directory root contract so it does not recreate `.github/`. The Copilot instructions and Claude hooks are preserved under `STUDIO/agent-guidance/`, but that relocated configuration is no longer auto-loaded by those tools.
+- [ ] After reviewing the agent-contract generator, its marked source block and root-directory tests, reconcile `rake docs:agent_contracts` with the four-directory root contract so it does not recreate `.github/`. The Copilot instructions and Claude hooks are preserved under `STUDIO/agent-guidance/`, but that relocated configuration is no longer auto-loaded by those tools.
 - [ ] Reconcile the root `.claude/settings.json` hook behavior with supported user-level or in-tree configuration without violating the root directory contract. Review the generator, hook contract, affected harnesses and their focused tests; a complete read of unrelated MASTER files is not a prerequisite.
 
 ## Open from the 2026-11-01 session — WebGL / WebGPU ecosystem research
@@ -1018,7 +1018,7 @@ browser support and bundle/runtime cost before adopting a dependency.
   not execute Rails or browser tests; these checks are NOT_RUN, not PASS.
 - [ ] The MASTER execution observatory, memory/code constellation, particle-face
   experiments and system telemetry remain proposals, not implementations.
-  Complete the required MASTER authority/read prerequisites and inspect the
+  Review the applicable MASTER authority records and inspect the
   existing face, browser, event, receipt and visual-conformance paths before
   changing any MASTER implementation. Keep real receipts as the only source
   of execution state; no simulated telemetry or second face renderer.
@@ -1045,7 +1045,7 @@ browser support and bundle/runtime cost before adopting a dependency.
 - [x] **BSDPorts:** port pages now offer an optional collapsed SVG dependency overview from recorded database edges. Traversal is bounded to 60 packages and six dependency levels; the existing text tree remains the readable baseline. English and Norwegian labels are supplied. No graph renderer dependency was added.
 - [x] **Brgen Radio / Dilla:** the existing radio tunnel already owns the WebGL renderer and 2D fallback. Local hosted audio can supply real FFT data; cross-origin iframe playback cannot, and the existing proxy motion is not measured spectrum. No parallel audio engine was introduced.
 - [ ] **Amber 3D:** deferred until the product has real, optimized garment assets and an honest fit-data contract. The current product documentation explicitly excludes virtual fitting; a decorative mannequin would imply a capability the application does not have.
-- [ ] **MASTER visual/observability work:** no MASTER implementation was edited. The repository requires a complete read of every file under MASTER before such edits; the current tree has 2,210 files, so that prerequisite remains open.
+- [ ] **MASTER visual/observability work:** no MASTER implementation was edited. The obsolete whole-tree read gate has been replaced by scoped source review; read the relevant authority, face, browser, event, receipt and visual-conformance paths before editing.
 - [ ] **Verification:** run `cd RAILS/bsdports && bin/ci` and the focused graph/controller tests, then capture browser evidence. This GitHub editing session could not execute Rails or browser tests; they remain NOT_RUN, not PASS. Brgen Maps browser checks are also outstanding.
 
 ## Open from the 2026-11-01 session — Rails ABC, configuration, UX and tokens
