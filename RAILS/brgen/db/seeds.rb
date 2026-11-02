@@ -84,7 +84,7 @@ users = Brgen::CityContent.with_faker_locale('NO') do
   end
 end
 
-seed_city = City.find_by(domain: 'brgen.no') || City.first
+seed_city = City.find_by!(domain: 'brgen.no')
 ActsAsTenant.current_tenant = seed_city if seed_city
 
 # Run after the dev/test table wipe, and cover the full registered host matrix.
@@ -113,7 +113,7 @@ end
 # Core posts + activity. Bergen's feed is authored by BergenDemoSeeder, which
 # owns the hand-written stories, comments, engagement and vertical discovery.
 # Other city seeds retain the generated/localized pool below.
-city_display_name = seed_city&.name.presence || 'Bergen'
+city_display_name = seed_city.name
 posts = if seed_city&.domain == 'brgen.no'
   []
 else
@@ -375,7 +375,7 @@ puts "Playlist: #{playlists.size} playlists, tracks, sets"
 # Takeaway subapp
 # CityTenantable adds belongs_to :city; string column :city is display label only (not the association).
 ActsAsTenant.current_tenant = seed_city if seed_city
-city_label = seed_city&.name.presence || "Bergen"
+city_label = seed_city.name
 # Cuisine now travels with the restaurant name (PlausibleContent.restaurant_for).
 num_rest = (15 * SEED_SCALE).clamp(5, 100)
 restaurants = num_rest.times.map do |i|

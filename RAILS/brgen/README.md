@@ -119,9 +119,19 @@ retired solidus_marketplace gem is not to be installed.
 
 ## Seeding
 
-Seeds draw curated fictional Bergen content from Brgen::BergenDemoSeeder and localized bulk
-content from Brgen::PlausibleContent. Rich synthetic data belongs in development/test or an
-explicitly disclosed demonstration deployment; it must not imply a genuine public audience.
+Development/test `db:seed` first builds a per-city baseline for every entry in
+`Brgen::DomainRegistry::ENTRIES` after the replant wipe. Each city receives its own
+admin, users, communities and posts. A curated `CityContent` bank is used when one
+exists; other cities fall back to locale-appropriate names and city-named
+`PlausibleContent` copy. Non-Bergen Norwegian cities use the neutral `lokalt`
+community rather than a Bergen-branded one.
+
+The remaining bulk vertical catalogue is deliberately Bergen-specific: its
+addresses, coordinates, dating bios and local fixture copy belong to
+`brgen.no`, which the seed now requires explicitly. The curated
+`BergenDemoSeeder` remains a separate disclosed-demo path. Rich synthetic data
+belongs in development/test or an explicitly disclosed demonstration deployment;
+it must not imply a genuine public audience.
 
 In production-like environments, `db:seed` skips synthetic content by default. An explicit demo
 seed requires both `BRGEN_DEMO_MODE=1` and `BRGEN_DEMO_NOTICE=1`; the application shows a
