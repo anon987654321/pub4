@@ -50,6 +50,7 @@ class TestCoreReversibility < Minitest::Test
     effects = [
       E.read("a.rb"),
       E.write("a.rb", "A = 1"),
+      E.probe(%w[git ls-files]),
       E.exec(%w[ruby -v]),
       E.git(:diff),
       E.http("https://example.com"),
@@ -63,14 +64,14 @@ class TestCoreReversibility < Minitest::Test
     assert_equal Master::Core::VERBS.sort, by_verb.keys.sort
     assert_equal(
       {
-        read: :read, write: :write, exec: :execute, git: :read, http: :network,
+        read: :read, write: :write, probe: :probe, exec: :execute, git: :read, http: :network,
         ask: :stdio, note: :stdio, critique: :stdio, done: :stdio
       },
       by_verb.transform_values(&:capability),
     )
     assert_equal(
       {
-        read: :non_mutating, write: :reversible, exec: :policy_gated, git: :non_mutating,
+        read: :non_mutating, write: :reversible, probe: :non_mutating, exec: :policy_gated, git: :non_mutating,
         http: :policy_gated, ask: :non_mutating, note: :session_state,
         critique: :non_mutating, done: :non_mutating
       },
@@ -130,6 +131,7 @@ class TestCoreReversibility < Minitest::Test
 
   def test_contract_is_derived_from_effect_type_and_operation
     assert_equal :non_mutating, E.read("a.rb").reversibility.kind
+    assert_equal :non_mutating, E.probe(%w[git ls-files]).reversibility.kind
     assert_equal :reversible, E.write("a.rb", "A = 1").reversibility.kind
     assert_equal :scoped_checkpoint_restore, E.write("a.rb", "A = 1").reversibility.compensation
     assert_equal :policy_gated, E.exec(%w[ruby -v]).reversibility.kind
@@ -138,6 +140,16 @@ class TestCoreReversibility < Minitest::Test
     assert_equal :approval_required, E.git(:commit, paths: ["a.rb"]).reversibility.kind
     assert_predicate E.git(:commit, paths: ["a.rb"]).reversibility, :approval_required?
     assert_equal :unknown, E.git(:reset).reversibility.kind
+  end
+
+  def test_admitted_read_only_probe_is_non_mutating
+    constitution = C.load(data_dir: DATA_DIR, probe: ->(_argv) { nil })
+    effect = E.probe(%w[git ls-files])
+
+    verdict = constitution.admit(effect, Master::Core::Memory.new)
+
+    assert_instance_of Master::Core::Verdict::Allow, verdict
+    assert_equal :non_mutating, verdict.effect.reversibility.kind
   end
 
   def test_compensating_action_is_typed_and_requires_a_reason
