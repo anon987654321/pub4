@@ -4,6 +4,7 @@ require "minitest/autorun"
 require "tmpdir"
 require "socket"
 require "yaml"
+require_relative "../lib/deploy_inventory"
 require "open3"
 
 # vps-deploy is the entrypoint for every production deploy and had no test.
@@ -17,7 +18,7 @@ class VpsDeployContractTest < Minitest::Test
   ROOT = File.expand_path("../..", __dir__)
   SOURCE = File.read(File.join(ROOT, "OPENBSD", "bin", "vps-deploy"), encoding: "UTF-8")
   CI_SOURCE = File.read(File.join(ROOT, "OPENBSD", "bin", "vps_ci.sh"), encoding: "UTF-8")
-  APPS = YAML.safe_load_file(File.join(ROOT, "RAILS", "apps.yml")).fetch("apps").keys.map(&:to_s)
+  APPS = Deploy::Inventory.new(root: ROOT).app_names
   MASTER_DEPLOY = File.read(File.join(ROOT, "OPENBSD", "bin", "vps_deploy_master.sh"), encoding: "UTF-8")
 
   def deploy_all
@@ -99,10 +100,11 @@ class VpsDeployContractTest < Minitest::Test
     assert_includes SOURCE, "doas /usr/local/sbin/pub4-admin disk-usage $mount_point"
     refute_includes SOURCE, "doas du -xk $mount_point"
   end
+  # vps-deploy runs as root, so its hints name the broker without doas.
   def test_failure_hints_use_the_bounded_service_broker
-    assert_includes SOURCE, "doas /usr/local/sbin/pub4-admin service restart <app>"
-    assert_includes SOURCE, 'doas /usr/local/sbin/pub4-admin service start $app'
-    assert_includes SOURCE, 'doas /usr/local/sbin/pub4-admin service restart $other'
+    assert_includes SOURCE, "/usr/local/sbin/pub4-admin service restart <app>"
+    assert_includes SOURCE, "/usr/local/sbin/pub4-admin service start $app"
+    assert_includes SOURCE, "/usr/local/sbin/pub4-admin service restart $other"
   end
 
   def test_vps_deploy_fails_closed_without_root_fallbacks
@@ -114,7 +116,7 @@ class VpsDeployContractTest < Minitest::Test
     refute_includes SOURCE, 'doas tee "$file"'
   end
   def test_deploy_uses_the_fixed_root_broker_when_installed
-    assert_includes SOURCE, 'doas /usr/local/sbin/pub4-admin service'
+    assert_includes SOURCE, '/usr/local/sbin/pub4-admin service "$action" "$@"'
     assert_includes SOURCE, 'admin_request stamp "$name" "$sha" "$stamp_status"'
     assert_includes SOURCE, "admin_request resource-guard"
     assert_includes SOURCE, 'admin_request solid-queue-proof "$app"'
@@ -348,12 +350,18 @@ class VpsDeployContractTest < Minitest::Test
     refute_match(/doas\s+(?:sh\s+-c|(?:rm|mkdir|chown|chmod|tee|groupadd|usermod|tar)\b)/, CI_SOURCE)
   end
 
-  def test_it_refuses_to_run_as_root
-    assert_match(/if \[\[ \$\(id -u\) -eq 0 \]\]; then/, SOURCE,
-                 "the uid guard is gone — root reaches git pull and fails on a host key instead")
-    guard = SOURCE[/if \[\[ \$\(id -u\) -eq 0 \]\]; then.*?^fi$/m]
+  # Since 2026-10-28 the deploy runs as root and re-execs itself through
+  # passwordless doas. Root has no github.com host key by design, so every git
+  # call must still go through the unprivileged deploy user.
+  def test_it_runs_as_root_and_keeps_git_as_the_deploy_user
+    guard = SOURCE[/if \[\[ \$\(id -u\) -ne 0 \]\]; then.*?^fi$/m]
 
-    assert_match(/exit 2/, guard, "the root guard must exit, not warn")
+    refute_nil guard, "the uid gate is gone"
+    assert_includes guard, 'exec doas -n /usr/bin/env "${deploy_env[@]}" zsh "$self" "$@"'
+    assert_match(/exit 2/, guard, "without doas the gate must exit, not continue unprivileged")
+    assert_includes SOURCE, 'su -s /bin/sh "$DEPLOY_USER" -c "$snippet"'
+    refute_match(/^\s*git\s+(?:-C\s+\S+\s+)?(?:fetch|pull|checkout|merge|reset)\b/, SOURCE,
+                 "a bare git call runs as root, which cannot reach github")
   end
 
   # SKIP_CI=1 does not mean no check runs: it takes the ${app}.sh branch, which
@@ -617,11 +625,11 @@ class VpsDeployContractTest < Minitest::Test
       assert_includes out, "stamp brgen failed"
       assert_includes out, 'brgen FAILED at stage "migrate" (exit 1)'
       assert_includes out, "brgen was stopped for this deploy and is DOWN"
-      assert_includes out, "doas /usr/local/sbin/pub4-admin service start brgen"
+      assert_includes out, "/usr/local/sbin/pub4-admin service start brgen"
       assert_includes out, "amber is DOWN"
       refute_includes out, "bsdports is DOWN"
       assert_includes out, "released"
-      assert_match(/exit=1 stage=migrate/, log)
+      assert_match(/stage=migrate finished exit=1/, log)
       refute File.exist?(File.join(dir, ".flag")), "the deploy flag outlived the script"
     end
   end
@@ -646,7 +654,7 @@ class VpsDeployContractTest < Minitest::Test
       out, status, log = finish_run(dir, "deploy_stage=final-check; exit 0")
       assert_equal 0, status
       refute_includes out, "FAILED"
-      assert_match(/exit=0 stage=final-check/, log)
+      assert_match(/stage=final-check finished exit=0/, log)
     end
   end
 
@@ -669,14 +677,14 @@ class VpsDeployContractTest < Minitest::Test
   end
 
   def disk_block
-    SOURCE[/^deploy_stage=preflight-disk$.*?^done$/m]
+    SOURCE[/^set_stage preflight-disk$.*?^done$/m]
   end
 
   def disk_run(dir, free_kb:)
     File.write(File.join(dir, "df"), "#!/bin/sh\nprintf 'Filesystem 1024-blocks Used Available Capacity Mounted on\\n/dev/sd0k 17000000 1000 #{free_kb} 80%% %s\\n' \"$2\"\n")
     File.chmod(0o755, File.join(dir, "df"))
     File.write(File.join(dir, "df"), "#!/bin/sh\nfor last; do :; done\nprintf 'Filesystem 1024-blocks Used Available Capacity Mounted on\\n/dev/x 17000000 1000 #{free_kb} 80%% %s\\n' \"$last\"\n")
-    script = "app=brgen; VPS_DEPLOY_DF=#{dir}/df\n#{disk_block}\nprint passed\n"
+    script = "app=brgen; VPS_DEPLOY_DF=#{dir}/df; set_stage() { :; }\n#{disk_block}\nprint passed\n"
     out = IO.popen(["zsh", "-c", script, { err: %i[child out] }], &:read)
     [out, $?.exitstatus]
   end
