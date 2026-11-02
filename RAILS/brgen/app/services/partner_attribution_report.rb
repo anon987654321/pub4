@@ -71,10 +71,12 @@ class PartnerAttributionReport
     key = dimension.to_s
     raise ArgumentError, "dimension must be one of #{DIMENSIONS.join(', ')}" unless DIMENSIONS.include?(key)
 
+    matched_epis = click_epis
     approved_conversions.each_with_object(Hash.new { |hash, bucket| hash[bucket] = BigDecimal("0") }) do |row, sums|
-      name = row.epi_parts[key].presence || "unattributed"
+      matched = row.epi.present? && matched_epis.include?(row.epi)
+      name = matched ? row.epi_parts[key].presence : nil
       currency = row.currency.presence || "unknown"
-      sums[[name, currency]] += BigDecimal(row.publisher_commission.to_s.presence || "0")
+      sums[[name || "unattributed", currency]] += BigDecimal(row.publisher_commission.to_s.presence || "0")
     end.sort_by { |(name, currency), amount| [name, currency, amount] }.to_h
   end
 
