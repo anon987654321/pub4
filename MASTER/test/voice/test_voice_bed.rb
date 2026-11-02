@@ -26,6 +26,7 @@ class TestVoiceBedRemoved < Minitest::Test
     readme = File.read(File.join(Master::ROOT, "README.md"))
 
     refute_match(/bed under the speech|terminal bed uses Dilla|dilla-chords/i, readme)
-    assert_match(/Music plays only after an explicit operator request/i, readme)
+    # The README is hard-wrapped Markdown, so the sentence may cross a line break.
+    assert_match(/Music\s+plays\s+only\s+after\s+an\s+explicit\s+operator\s+request/i, readme)
   end
 end
