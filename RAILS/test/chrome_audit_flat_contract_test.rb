@@ -23,10 +23,9 @@ class ChromeAuditFlatContractTest < Minitest::Test
   def test_auth_and_promo_surfaces_do_not_reintroduce_container_borders
     auth = read("__shared/app/assets/stylesheets/_auth_form.scss")
     promo = stylesheet_module("brgen", "vertical_promo")
-    app = read("brgen/app/assets/stylesheets/application.scss")
     assert_includes auth, ".oauth-button {"
     assert_includes auth, "border: 0;"
-    assert_includes app, "module: vertical_promo"
+    assert_includes stylesheet_module_names("brgen"), "vertical_promo"
     assert_includes promo, ".brgen-vertical-promo {"
     assert_includes promo, "background: var(--bg);"
     assert_includes promo, ".promo-disc {"
@@ -40,7 +39,7 @@ class ChromeAuditFlatContractTest < Minitest::Test
   end
 
   def test_brgen_uses_the_shared_canonical_reduced_motion_reset
-    source = read("brgen/app/assets/stylesheets/application.scss")
+    source = stylesheet_source("brgen")
     stack = read("__shared/app/assets/stylesheets/_stack_brgen.scss")
     animations = read("__shared/app/assets/stylesheets/_animations.scss")
 

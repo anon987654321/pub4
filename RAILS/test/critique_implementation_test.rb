@@ -19,6 +19,12 @@ class CritiqueImplementationTest < Minitest::Test
     ([host] + features).join("\n")
   end
 
+  # The radio tunnel was split into tunnel, audio and visual modules; the
+  # contract is about the radio as a whole, so it reads all three.
+  def radio_source
+    %w[tunnel audio visual].map { |part| read("brgen/app/javascript/radio_brgen_#{part}.js") }.join("\n")
+  end
+
   def amber_css_source
     host = read("amber/app/assets/stylesheets/application.scss")
     features = Dir.glob(File.join(ROOT, "amber/app/assets/stylesheets/_amber_*.scss")).sort
@@ -202,7 +208,7 @@ class CritiqueImplementationTest < Minitest::Test
     brgen_stack = read("__shared/app/assets/stylesheets/_stack_brgen.scss")
     amber = amber_css_source
     bsdports = read("bsdports/app/assets/stylesheets/application.scss")
-    brgen = read("brgen/app/assets/stylesheets/application.scss")
+    brgen = stylesheet_source("brgen")
 
     assert_includes shared_stack, '@forward "search_yep";'
     assert_includes brgen_stack, '@forward "search_yep";'
@@ -257,7 +263,7 @@ class CritiqueImplementationTest < Minitest::Test
   end
 
   def test_radio_restores_first_party_device_tilt_contract
-    source = read("brgen/app/javascript/radio_brgen_tunnel.js")
+    source = radio_source
     assert_includes source, "DeviceOrientationEvent"
     assert_includes source, "requestPermission"
     assert_includes source, 'deviceorientation'
@@ -265,7 +271,7 @@ class CritiqueImplementationTest < Minitest::Test
   end
 
   def test_brgen_radio_restores_the_original_eight_track_warp_tunnel
-    source = read("brgen/app/javascript/radio_brgen_tunnel.js")
+    source = radio_source
     importmap = read("brgen/config/importmap.rb")
 
     %w[
@@ -303,7 +309,7 @@ class CritiqueImplementationTest < Minitest::Test
     brgen_stack = read("__shared/app/assets/stylesheets/_stack_brgen.scss")
     amber = amber_css_source
     bsdports = read("bsdports/app/assets/stylesheets/application.scss")
-    brgen = read("brgen/app/assets/stylesheets/application.scss")
+    brgen = stylesheet_source("brgen")
 
     assert_includes shared_stack, '@forward "search_yep";'
     assert_includes brgen_stack, '@forward "search_yep";'
@@ -518,11 +524,11 @@ class CritiqueImplementationTest < Minitest::Test
     assert_match(/<li>\s*<div data-controller="offline-feed"/m, brgen_results)
     assert_match(/<\/li>\s*<% end %>\s*<\/ul>/m, brgen_results)
     assert_includes amber_index, '<ul class="feed_list post-card-list" id="amber-posts-list" role="list">'
-    assert_match(/@posts\.each do \|post\|\s*<li><%= render post %><\/li>\s*<% end %>/m, amber_index)
+    assert_match(/@posts\.each do \|post\| %>\s*<li><%= render post %><\/li>\s*<% end %>/m, amber_index)
     assert_includes amber_home, '<ul class="feed_list post-card-list" id="amber-home-posts-list" role="list">'
     assert_includes amber_styles, '@include meta.load-css("feed_list");'
     assert_includes feed_list_css, ".feed_list.post-card-list > li {\n  display: block;"
-    assert_match(/posts\.each do \|post\|\s*<li><%= render "posts\/post", post: post %><\/li>/m, amber_home)
+    assert_match(/posts\.each do \|post\| %>\s*<li><%= render "posts\/post", post: post %><\/li>/m, amber_home)
   end
 
   def test_feed_lists_keep_safari_list_roles_and_post_item_boxes
