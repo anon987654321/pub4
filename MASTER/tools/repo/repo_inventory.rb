@@ -30,7 +30,6 @@ ALLOWED_ROOT_FILES = %w[
   .ruby-version
   AGENTS.md
   CLAUDE.md
-  FETAT.md
   GEMINI.md
   GLM.md
   README.md
