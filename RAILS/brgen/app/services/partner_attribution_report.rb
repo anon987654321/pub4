@@ -76,14 +76,17 @@ class PartnerAttributionReport
 
   def clicks_by_route = clicks_by_dimension(:route)
 
-  def click_through_by_route
+  # This is click events divided by page views, not a unique-visitor CTR.
+  # Several outbound links can be clicked from one view, and no visitor
+  # identifier is added just to force a conventional rate.
+  def clicks_per_view_by_route
     views = page_views_by_route
     route_clicks = clicks_by_route
     (views.keys | route_clicks.keys).sort.to_h do |route|
       page_views = views.fetch(route, 0)
       click_count = route_clicks.fetch(route, 0)
       [route, { page_views:, clicks: click_count,
-                ctr: page_views.positive? ? click_count.to_f / page_views : 0.0 }]
+                clicks_per_view: page_views.positive? ? click_count.to_f / page_views : 0.0 }]
     end
   end
 
@@ -162,14 +165,14 @@ class PartnerAttributionReport
       end
     end
     lines << ""
-    lines << "  route funnel (page views → outbound clicks):"
-    route_funnel = click_through_by_route
+    lines << "  route funnel (page views → outbound click events):"
+    route_funnel = clicks_per_view_by_route
     if route_funnel.empty?
       lines << "    none"
     else
       route_funnel.each do |route, counts|
-        lines << format("    %-36s %7d views %6d clicks %7.2f%%",
-                        route, counts[:page_views], counts[:clicks], counts[:ctr] * 100)
+        lines << format("    %-36s %7d views %6d clicks %7.3f clicks/view",
+                        route, counts[:page_views], counts[:clicks], counts[:clicks_per_view])
       end
     end
     DIMENSIONS.each do |dimension|
