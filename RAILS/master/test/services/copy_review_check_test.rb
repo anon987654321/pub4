@@ -71,6 +71,20 @@ class CopyReviewCheckTest < ActiveSupport::TestCase
     end
   end
 
+  test "field values must have the declared primitive types" do
+    assert_raises(CopyReviewCheck::InvalidInput) do
+      CopyReviewCheck.prepare(creative: creative.merge(headline: { text: "Wool coat" }))
+    end
+
+    assert_raises(CopyReviewCheck::InvalidInput) do
+      CopyReviewCheck.prepare(creative: creative, product: product.merge(in_stock: "yes"))
+    end
+
+    assert_raises(CopyReviewCheck::InvalidInput) do
+      CopyReviewCheck.prepare(creative: creative, product: product, market: ["NO"])
+    end
+  end
+
   test "oversized input is refused" do
     invalid = creative.merge(body: "x" * (CopyReviewCheck::MAX_INPUT_BYTES + 1))
     assert_raises(CopyReviewCheck::InvalidInput) do
