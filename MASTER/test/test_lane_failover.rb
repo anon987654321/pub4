@@ -7,10 +7,9 @@ require "tmpdir"
 require "open3"
 require "rbconfig"
 
-# The always-online guarantee. Every remote lane is exhausted in turn with the
-# reply that provider really sends, the next lane in the tier answers, and
-# a counting stub proves no call goes to a lane already dead. When the last lane
-# (a local Ollama model) is dead too, the answer is a typed Offline, not a crash.
+# Provider failover is tested with Ollama explicitly opted in because its local
+# tier is disabled by default. Separate tests prove that the default policy does
+# not probe, start, or reintroduce the dormant lane.
 class TestLaneFailover < Minitest::Test
   Quota = Master::Io::LaneQuota
   Health = Master::Io::LaneHealth
@@ -26,6 +25,10 @@ class TestLaneFailover < Minitest::Test
   NOON = Time.utc(2026, 10, 11, 12, 0, 0).to_f
 
   def setup
+    @saved_ollama_enabled = ENV["MASTER_OLLAMA_ENABLED"]
+    @saved_no_ollama = ENV["MASTER_NO_OLLAMA"]
+    ENV.delete("MASTER_NO_OLLAMA")
+    ENV["MASTER_OLLAMA_ENABLED"] = "1"
     @dir = Dir.mktmpdir
     @now = NOON
     Quota.path = File.join(@dir, "lane_quota.yml")
@@ -38,6 +41,8 @@ class TestLaneFailover < Minitest::Test
     Quota.path = nil
     Quota.clock = -> { Time.now.to_f }
     @lists.values.flatten.each { |model| Silence.record(true, Silence.lane_of(model)) }
+    @saved_ollama_enabled.nil? ? ENV.delete("MASTER_OLLAMA_ENABLED") : ENV["MASTER_OLLAMA_ENABLED"] = @saved_ollama_enabled
+    @saved_no_ollama.nil? ? ENV.delete("MASTER_NO_OLLAMA") : ENV["MASTER_NO_OLLAMA"] = @saved_no_ollama
     FileUtils.remove_entry(@dir)
   end
 
@@ -81,6 +86,25 @@ class TestLaneFailover < Minitest::Test
     first = door.send_with_cache(models.first, [{ role: "user", content: "hi" }])
     agent.send(:retry_on_broke_lane, first, models.first, [{ role: "user", content: "hi" }])
   end
+
+
+  def test_default_policy_does_not_probe_or_start_ollama
+    ENV.delete("MASTER_OLLAMA_ENABLED")
+    probes = 0
+    starts = 0
+
+    result = Health.ensure_ollama(
+      base: "http://localhost:11434",
+      up: ->(_base) { probes += 1; true },
+      spawn: ->(_binary) { starts += 1 },
+    )
+
+    assert_equal :off, result.state
+    assert_match(/MASTER_OLLAMA_ENABLED=1/, result.message)
+    assert_equal 0, probes
+    assert_equal 0, starts
+  end
+
 
   def test_each_tier_survives_losing_its_lanes_one_at_a_time
     Master.stub(:llm_reachable?, true) do

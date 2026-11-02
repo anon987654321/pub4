@@ -63,10 +63,12 @@ module Master
         false
       end
 
-      # Starts `ollama serve` detached when a local daemon is down, once per
-      # minute at most, and reports what happened. A remote daemon is never started.
+      # Starts `ollama serve` only when the canonical model policy has explicitly
+      # enabled the local lane. A disabled lane is neither probed nor revived.
       def ensure_ollama(base: ollama_base, up: method(:ollama_up?), spawn: method(:spawn_ollama), binary: "ollama")
-        return Ollama.new(:off, "ollama switched off (MASTER_NO_OLLAMA=1)") if ENV["MASTER_NO_OLLAMA"] == "1"
+        unless LaneSelection.ollama_enabled?
+          return Ollama.new(:off, "ollama disabled (set MASTER_OLLAMA_ENABLED=1 to opt in)")
+        end
         return Ollama.new(:up, "ollama is up at #{base}") if up.call(base)
         return Ollama.new(:failed, "ollama is down at #{base} and is not local, start it there") unless local?(base)
 
