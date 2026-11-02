@@ -24,7 +24,7 @@ class BergenDemoSeederTest < ActiveSupport::TestCase
       Brgen::BergenDemoSeeder.new(oslo, attach_media: false).seed!
     end
 
-    assert_match(/only seeds brgen\\.no/, error.message)
+    assert_match(/only seeds brgen\.no/, error.message)
   end
 
   test "seeds norwegian bergen posts and users without remote media" do
