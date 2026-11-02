@@ -22,13 +22,6 @@ module Master
     AUTHORITY_ORDER_IDS = %w[
       soul laws executable_laws_and_gates tree_contracts git_history
     ].freeze
-    # Required tiers are a schema set, not a second ordering declaration.
-    # The order itself is read only from soul.yml#authority_order.
-    AUTHORITY_ORDER_SOURCES = %w[
-      MASTER/data/soul.yml MASTER/data/laws.yml
-      MASTER/data/law_runtime.yml MASTER/law/ MASTER/checks/
-      TREE_CONTRACTS.md
-    ].freeze
     REQUIRED_SACRED_PATHS = %w[
       data/laws.yml data/soul.yml data/project_context.yml
       lib/soul.rb lib/ground/pledge.rb bin/master
@@ -243,6 +236,21 @@ module Master
         paths
       end
 
+      def validate_anti_simulation!(block)
+        unless block.is_a?(Hash) && block.keys.map(&:to_s) == ["forbidden"]
+          raise IntegrityError, "soul.yml absolute.anti_simulation must contain only forbidden"
+        end
+
+        words = block["forbidden"]
+        unless words.is_a?(Array) &&
+               words.all? { |word| word.is_a?(String) && !word.strip.empty? } &&
+               words.uniq == words
+          raise IntegrityError, "soul.yml absolute.anti_simulation.forbidden must be a unique list of non-empty words"
+        end
+
+        words
+      end
+
       def sacred_paths(root: ROOT)
         master_root = resolve_master_root(root)
         document = YAML.safe_load_file(File.join(master_root, "data", "soul.yml"), aliases: true)
@@ -296,6 +304,7 @@ module Master
 
         validate_authority_order!(manifest["authority_order"])
         validate_sacred_paths!(manifest.dig("absolute", "sacred_paths"))
+        validate_anti_simulation!(manifest.dig("absolute", "anti_simulation"))
         validate_references!(manifest, master_root:)
         validate_temperament!(manifest["temperament"])
         manifest
