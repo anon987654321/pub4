@@ -179,6 +179,15 @@ module Master
         Thread.current[key] = nil if defined?(key) && key
       end
 
+      def with_cancellation(token)
+        previous = @cancellation
+        @cancellation = token
+        token.activate! if token&.respond_to?(:activate!)
+        yield
+      ensure
+        @cancellation = previous
+      end
+
       def cancellation_requested? = @cancellation&.cancelled? == true
 
       def cancellation_terminal

@@ -9,9 +9,22 @@ require "timeout"
 require_relative "../lib/fix/kernel"
 require_relative "../lib/fix/run_journal"
 require_relative "../lib/fix/kernel/repair_adapter"
+require_relative "../lib/fix/kernel/convergence_adapter"
 
 class TestFixKernelLifecycle < Minitest::Test
   K = Master::Fix::Kernel
+
+  def cancellation_protocol(adapter)
+    adapter.define_singleton_method(:with_cancellation) do |token, &operation|
+      previous = @cancellation
+      @cancellation = token
+      token.activate! if token&.respond_to?(:activate!)
+      operation.call
+    ensure
+      @cancellation = previous
+    end
+    adapter
+  end
 
   def with_workspace
     Dir.mktmpdir("pub4-kernel-lifecycle") do |root|
@@ -27,10 +40,40 @@ class TestFixKernelLifecycle < Minitest::Test
     end
   end
 
+  def test_convergence_adapter_restores_the_previous_cancellation_token_after_exception
+    adapter = K::ConvergenceAdapter.allocate
+    token_class = Class.new do
+      attr_reader :activated
+
+      def activate!
+        @activated = true
+      end
+
+      def cancelled?
+        activated == true
+      end
+    end
+    previous = token_class.new
+    active = token_class.new
+    adapter.instance_variable_set(:@cancellation, previous)
+
+    error = assert_raises(RuntimeError) do
+      adapter.with_cancellation(active) do
+        assert_predicate active, :activated
+        assert adapter.cancellation_requested?
+        raise "controlled cancellation-scope failure"
+      end
+    end
+
+    assert_match(/controlled cancellation-scope failure/, error.message)
+    assert_same previous, adapter.instance_variable_get(:@cancellation)
+    refute adapter.cancellation_requested?
+  end
+
   def test_kernel_serializes_and_terminalizes_a_fix_loop_adapter
     with_workspace do |root|
       kernel = K.new(root:, actor: "fix-test")
-      adapter = Object.new
+      adapter = cancellation_protocol(Object.new)
       adapter.define_singleton_method(:last_terminal_state) { :done }
       adapter.define_singleton_method(:run_unlocked) do |target, **options|
         @target = target
@@ -73,7 +116,7 @@ class TestFixKernelLifecycle < Minitest::Test
   def test_adapter_exception_records_unknown_outcome_and_cleans_run_context
     with_workspace do |root|
       kernel = K.new(root:)
-      adapter = Object.new
+      adapter = cancellation_protocol(Object.new)
       adapter.define_singleton_method(:last_terminal_state) { nil }
       adapter.define_singleton_method(:run_unlocked) do |*_args, **_options|
         raise IOError, "simulated loss after an unobserved effect"

@@ -264,10 +264,7 @@ each batch; compare pinned revisions only.
   NOT_RUN and unknown behavior INCONCLUSIVE; do not claim a code flattening
   is complete from a tree-only audit.
 
-- [ ] Respect the existing root TODO and MASTER complete-read prerequisites:
-  do not edit MASTER implementation or documentation until the required
-  complete MASTER read is fulfilled. This register is a scoped work inventory,
-  not authorization to bypass constitutional or sacred-path review.
+- [x] Replace the obsolete whole-tree read gate with scoped source review. The operator authorizes bounded implementation when the root and MASTER agent contracts, applicable Law records, target sources, direct callers, focused tests and task contract have been read. Record unreviewed adjacent surfaces as INCONCLUSIVE; do not remove compatibility APIs or change constitutional authority without specific evidence. This narrows the reading scope, not the preservation, Law, safety or verification requirements.
 
 ## Open from the 2026-11-01 session — Baymard UX audit
 
@@ -837,7 +834,7 @@ source and tests they could not run; this pass is what measures them.
 
 - [ ] Enforce mechanically that the only tracked directories directly under the repository root are `MASTER/`, `RAILS/`, `OPENBSD/`, and `STUDIO/`. Keep root metadata and instruction files as files; don't add root-level tooling or documentation directories.
 - [ ] After the required complete read of MASTER, reconcile `rake docs:agent_contracts` with the four-directory root contract so it does not recreate `.github/`. The Copilot instructions and Claude hooks are preserved under `STUDIO/agent-guidance/`, but that relocated configuration is no longer auto-loaded by those tools.
-- [ ] Following the same complete-MASTER-read prerequisite, decide how the root `.claude/settings.json` hook behavior can be provided through supported user-level or in-tree configuration without violating the root directory contract. Do not edit MASTER until every file under MASTER has been read in full.
+- [ ] Reconcile the root `.claude/settings.json` hook behavior with supported user-level or in-tree configuration without violating the root directory contract. Review the generator, hook contract, affected harnesses and their focused tests; a complete read of unrelated MASTER files is not a prerequisite.
 
 ## Open from the 2026-11-01 session — WebGL / WebGPU ecosystem research
 
