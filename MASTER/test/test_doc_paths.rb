@@ -80,7 +80,7 @@ class TestDocPaths < Minitest::Test
   # Non-entry Markdown has a narrow purpose: face/reference contracts, archived
   # RAILS experiments and research, recovery material, and STUDIO migration guides.
   # docs/runbooks and docs/todo-triage.md are the evidence procedures TODO.md cites;
-  # MASTER/docs/handoffs holds preserved run logs and the archived predecessor ledger.
+  # MASTER/docs/history keeps dated review records and recovery provenance.
   # These are artifacts, not substitutes for tree/project README entry points.
   # MASTER/docs holds the execution-contract references that TODO.md, the code
   # comments and the lifecycle work cite by path. TREE_CONTRACTS.md is the one
@@ -92,8 +92,7 @@ class TestDocPaths < Minitest::Test
     MASTER/docs/execution-contracts.md
     MASTER/docs/fix_coordinator_map.md
     MASTER/docs/free_compute.md
-    MASTER/docs/handoffs/2026-10-22-laws-checks-rails-fix.md
-    MASTER/docs/handoffs/2026-10-26-master-hardening-review.md
+    MASTER/docs/history/fix-review-log.md
     MASTER/docs/history/recovery/legacy-apps-handoff.md
     MASTER/docs/laws_digest.md
     MASTER/docs/lifecycle_ownership.md

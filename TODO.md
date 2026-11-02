@@ -508,7 +508,7 @@ actionable root-backlog item. Keep them open until the relevant evidence exists.
   current owners; preserve provenance and do not reintroduce a deleted tree wholesale.
 - [ ] **Unlanded `MASTER/plugins/mov/` proposal:** an archived integration bundle exists, but it is not the current `MASTER/lib/io/mov.rb` adapter. The archived engine selects modern streaming-catalog titles but acquires releases through Torrentio, apibay/TPB, YTS and EZTV with `aria2c` magnet downloads; no licensing/provenance gate is demonstrated. Do not merge or run that acquisition path. After the complete MASTER read, decide whether a safe plugin limited to lawful public-domain downloads and/or provider availability links is still wanted. The bundle is based on an old commit and its engine defaults to US while its README claims Norway; any plugin policy registration remains a human-owned change to sacred `MASTER/data/laws.yml`.
 - [ ] **Oct. 26 hardening review:** reconcile every P01–P11 follow-up and the outstanding
-  findings in `MASTER/docs/handoffs/2026-10-26-master-hardening-review.md`. Explicitly
+  findings in `MASTER/docs/history/fix-review-log.md`. Explicitly
   verify SILENT_RESCUE freshness, INTER_MODEL_CONTRACT heredoc/keyword sites, the
   declarative/runtime self-test parity, headless registry failures and strict-error
   policy; resource bounds/log append cache; DesignRun transaction and recovery semantics,
