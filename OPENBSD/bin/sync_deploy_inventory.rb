@@ -8,7 +8,7 @@
 # inventory look changed, and port_inventory already says when the two disagree.
 
 require "json"
-require "yaml"
+require_relative "../lib/deploy_inventory"
 
 if ARGV.intersect?(%w[-h --help])
   puts "usage: ruby OPENBSD/bin/sync_deploy_inventory.rb [--check]   # rewrites (or verifies) OPENBSD/deploy_inventory.json from RAILS/apps.yml"
@@ -16,12 +16,10 @@ if ARGV.intersect?(%w[-h --help])
 end
 
 ROOT = File.expand_path("../..", __dir__)
-APPS_YML = File.join(ROOT, "RAILS", "apps.yml")
 OUT = File.join(ROOT, "OPENBSD", "deploy_inventory.json")
 
-data = YAML.safe_load(File.read(APPS_YML))
-apps = data.fetch("apps").map do |name, meta|
-  { "name" => name, "domain" => meta.fetch("domain"), "port" => meta.fetch("port").to_i }
+apps = Deploy::Inventory.new(root: ROOT).apps.map do |app|
+  { "name" => app.name, "domain" => app.domain, "port" => app.port }
 end.sort_by { |row| row["name"] }
 
 payload = {

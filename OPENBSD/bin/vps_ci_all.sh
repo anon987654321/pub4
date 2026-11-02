@@ -13,7 +13,8 @@ script=${repo}/OPENBSD/bin/vps_ci.sh
 source "${repo}/OPENBSD/lib/ruby_select.sh"
 # The fleet is apps.yml's, in its order; a literal list here keeps testing three
 # apps after a fourth ships.
-apps=(${(f)"$("$RUBY" -ryaml -e 'puts YAML.safe_load_file(ARGV[0]).fetch("apps").keys' "${repo}/RAILS/apps.yml")"})
+apps=(${(f)"$("$RUBY" -r"${repo}/OPENBSD/lib/deploy_inventory" \
+  -e 'puts Deploy::Inventory.new(root: ARGV[0]).app_names' "$repo")"})
 (( ${#apps} )) || { print -u2 "vps_ci_all: no apps read from ${repo}/RAILS/apps.yml"; exit 1 }
 max_load=${PUB4_CI_MAX_LOAD:-4}
 

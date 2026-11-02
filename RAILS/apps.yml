@@ -475,7 +475,7 @@ apps:
     port: 47314
     stack_now: SQLite3, Rails 8.2.0.alpha, Hotwire, PWA (manifest + service worker + offline), Vipps Express mock + Stripe Checkout
     stack_later: production Vipps + Stripe live keys, own domain, deploy script and relayd vhost
-    deploy_script: pending — no _mrdamascy.sh yet; app is self-contained and boots standalone
+    deployed: false
     deploy_root: RAILS/mrdamascy
     public: true
     promoted: 2026-11-02 — moved out of the retired RAILS/__other/ junk drawer to a first-class app path (migration retained in Git history)

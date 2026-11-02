@@ -447,7 +447,10 @@ typeset -A deploy_ports
 load_deploy_ports() {
   (( $#deploy_ports )) && return 0
   local line
-  for line in ${(f)"$("$RUBY" -ryaml -e 'YAML.safe_load_file(ARGV[0]).fetch("apps").each { |n, v| puts "#{n} #{v["port"]}" if v["port"] }' "$repo/RAILS/apps.yml" 2>/dev/null)"}; do
+  local -a rows
+  rows=(${(f)"$("$RUBY" -r"$repo/OPENBSD/lib/deploy_inventory" \
+    -e 'Deploy::Inventory.new(root: ARGV[0]).apps.each { |a| puts "#{a.name} #{a.port}" }' "$repo" 2>/dev/null)"})
+  for line in $rows; do
     deploy_ports[${line%% *}]=${line##* }
   done
   return 0

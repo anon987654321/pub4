@@ -66,7 +66,8 @@ admin_service restart master 2>/dev/null || admin_service start master
 admin_service check master || { log "WARN: master not ok"; failed=$((failed + 1)); }
 
 typeset -a APPS
-APPS=(${(f)"$("$RUBY" -ryaml -e 'puts YAML.safe_load_file(ARGV[0]).fetch("apps").keys' "${PUB4}/RAILS/apps.yml")"})
+APPS=(${(f)"$("$RUBY" -r"${PUB4}/OPENBSD/lib/deploy_inventory" \
+  -e 'puts Deploy::Inventory.new(root: ARGV[0]).app_names' "$PUB4")"})
 (( ${#APPS} )) || { log "ERR: no apps read from ${PUB4}/RAILS/apps.yml"; exit 1 }
 
 # master is in apps.yml but was installed above: it runs in place under

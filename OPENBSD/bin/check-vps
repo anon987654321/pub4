@@ -5,6 +5,7 @@ require_relative "../lib/check_runner"
 require_relative "../lib/environment"
 require_relative "../lib/ruby_runner"
 require_relative "../lib/deploy_stamp"
+require_relative "../lib/deploy_inventory"
 require_relative "../lib/dmesg"
 require "json"
 require "open3"
@@ -38,8 +39,7 @@ def git_head
 end
 
 def configured_ports
-  apps = YAML.safe_load_file(File.join(ROOT, "RAILS", "apps.yml")).fetch("apps")
-  rows = apps.map { |name, metadata| "#{name}:#{metadata.fetch("port")}" }
+  rows = Deploy::Inventory.new(root: ROOT).apps.map { |app| "#{app.name}:#{app.port}" }
   inventory = JSON.parse(File.read(File.join(ROOT, "OPENBSD", "deploy_inventory.json")))
   face = inventory.fetch("master_face")
   rows << "master:#{Integer(face.fetch("port"))}"

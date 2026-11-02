@@ -37,27 +37,32 @@ module Deploy
     # `KeyError: key not found: "deploy_root"` six frames inside a check, which reads
     # as a broken check rather than an incomplete entry — every check that reads the
     # inventory died the same anonymous way.
+    # `deployed: false` marks an app that lives in the tree and runs CI but has no
+    # host, port lane or rc.d script yet; the deploy inventory is what vm23 serves.
     def load_apps
       path = File.join(root, "RAILS", "apps.yml")
 
       data = YAML.safe_load(File.read(path))
-      data.fetch("apps").map do |name, metadata|
-        missing = REQUIRED_APP_KEYS.reject { |key| metadata.is_a?(Hash) && metadata.key?(key) }
-        unless missing.empty?
-          raise KeyError, "RAILS/apps.yml: app #{name.inspect} is missing #{missing.join(', ')} " \
-                          "(every app needs #{REQUIRED_APP_KEYS.join(', ')})"
-        end
+      deployable = data.fetch("apps").reject { |_name, meta| meta.is_a?(Hash) && meta["deployed"] == false }
+      deployable.map { |name, metadata| app_from_yaml(name, metadata) }
+    end
 
-        App.new(
-          name: name,
-          title: metadata["title"],
-          domain: metadata.fetch("domain"),
-          port: metadata.fetch("port").to_i,
-          deploy_script: metadata.fetch("deploy_script"),
-          deploy_root: metadata.fetch("deploy_root"),
-          public: metadata.fetch("public", false)
-        )
+    def app_from_yaml(name, metadata)
+      missing = REQUIRED_APP_KEYS.reject { |key| metadata.is_a?(Hash) && metadata.key?(key) }
+      unless missing.empty?
+        raise KeyError, "RAILS/apps.yml: app #{name.inspect} is missing #{missing.join(', ')} " \
+                        "(every app needs #{REQUIRED_APP_KEYS.join(', ')})"
       end
+
+      App.new(
+        name:,
+        title: metadata["title"],
+        domain: metadata.fetch("domain"),
+        port: metadata.fetch("port").to_i,
+        deploy_script: metadata.fetch("deploy_script"),
+        deploy_root: metadata.fetch("deploy_root"),
+        public: metadata.fetch("public", false)
+      )
     end
 
     def app_from_json(entry)

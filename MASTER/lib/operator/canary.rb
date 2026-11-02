@@ -111,7 +111,7 @@ module Operator
 
       def load_apps(only)
         data = YAML.safe_load_file(File.join(@root, "RAILS", "apps.yml"), aliases: true).fetch("apps")
-        apps = data.select { |_name, row| row["public"] && row["port"] }
+        apps = data.select { |_name, row| row["public"] && row["port"] && row["deployed"] != false }
                    .transform_values { |row| row.slice("domain", "port") }
         only ? apps.slice(*only) : apps
       end
