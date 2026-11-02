@@ -48,6 +48,24 @@ class TestGroundTruth < Minitest::Test
     end
   end
 
+  def test_read_file_refreshes_an_expired_cached_receipt
+    Dir.mktmpdir do |dir|
+      File.write(File.join(dir, "source.rb"), "source\n")
+      events = []
+      bus = Object.new
+      bus.define_singleton_method(:publish) { |event, **payload| events << [event, payload] }
+      truth = Master::Ground::Truth.new(max_age_seconds: -1, event_bus: bus)
+      reader = Master::Io::ReadFile.new(root: dir, undo: nil, ground_truth: truth)
+
+      first = reader.call(path: "source.rb")
+      second = reader.call(path: "source.rb")
+
+      assert first.ok?
+      assert second.ok?
+      assert_equal 2, events.count { |event, _| event == "ground_truth:read" }
+    end
+  end
+
   def test_read_file_does_not_report_success_when_ground_truth_receipt_fails
     Dir.mktmpdir do |dir|
       File.write(File.join(dir, "source.rb"), "source\n")
