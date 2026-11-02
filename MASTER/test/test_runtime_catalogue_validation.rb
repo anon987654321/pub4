@@ -25,6 +25,16 @@ class TestRuntimeCatalogueValidation < Minitest::Test
     assert_nil validated_file("models.yml")
   end
 
+  def test_ollama_enabled_must_be_a_boolean
+    path = catalogue_path("models.yml")
+    data = YAML.safe_load_file(path, aliases: true)
+    data.fetch("ollama")["enabled"] = "false"
+
+    error = Guard.validate(path:, content: YAML.dump(data))
+
+    assert_match(/models.yml ollama.enabled must be boolean/, error)
+  end
+
   def test_provider_registry_rejects_a_non_array_environment_list
     path = catalogue_path("providers.yml")
     data = YAML.safe_load_file(path, aliases: true)
