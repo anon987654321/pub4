@@ -6,6 +6,7 @@ live task instructions; current authority and open work live in
 and `TODO.md`.
 Historical authority descriptions below reflect their dated review snapshots;
 follow the live contract and configuration above when they differ.
+Checklist markers in this preserved review were historical triage notation. The live, consolidated follow-up is in root `TODO.md`; this file is provenance, not a second task list.
 
 ## 2026-10-22 — Law authority, operational checks and /fix RAILS
 
@@ -59,75 +60,75 @@ One concrete Kernel boundary needs a measured decision: `MASTER/bin/master repla
 
 ## P0 — prove the current RAILS state and preserve trial integrity
 
-- [ ] Identify whether a bounded /fix trial is still running, and record its pinned starting SHA, target tree, toolchain identity, Law digest, baseline output, repair output, and terminal state. Do not use a moving branch name as the only trial identity.
-- [ ] Run MASTER/bin/operator check --scan-only --tree=RAILS on the actual checkout. Preserve the exact output for schema_migration, release, css_constitution, and rendered/visual status. Do not infer a green result from this handoff.
-- [ ] Run the RAILS source checks and check suite on the same tree. If schema_migration is green, keep the schema untouched. If CSS is red, repair the reported files one at a time, re-measure, and compare the full check output before/after.
-- [ ] Treat missing browser, closed app ports, missing baseline, and provider-unavailable results as INCONCLUSIVE or SKIPPED according to the existing result contract, never as a source failure and never as green proof.
-- [ ] Read the actual rejection and ratchet records from the trial, if they exist: .master/rejections.jsonl, the run ledger, retained run logs, and the named proof envelope. Do not claim a file exists merely because an earlier handoff proposed it.
+- Identify whether a bounded /fix trial is still running, and record its pinned starting SHA, target tree, toolchain identity, Law digest, baseline output, repair output, and terminal state. Do not use a moving branch name as the only trial identity.
+- Run MASTER/bin/operator check --scan-only --tree=RAILS on the actual checkout. Preserve the exact output for schema_migration, release, css_constitution, and rendered/visual status. Do not infer a green result from this handoff.
+- Run the RAILS source checks and check suite on the same tree. If schema_migration is green, keep the schema untouched. If CSS is red, repair the reported files one at a time, re-measure, and compare the full check output before/after.
+- Treat missing browser, closed app ports, missing baseline, and provider-unavailable results as INCONCLUSIVE or SKIPPED according to the existing result contract, never as a source failure and never as green proof.
+- Read the actual rejection and ratchet records from the trial, if they exist: .master/rejections.jsonl, the run ledger, retained run logs, and the named proof envelope. Do not claim a file exists merely because an earlier handoff proposed it.
 
 Rationale: C1 is the reported problem that main starts red, C2 is the reported long proof cycle, and C3 is the reported repair-quality risk. These claims came from a prior handoff and were not re-measured in this source-only review. The bounded trial and its evidence answer those questions; a narrative does not.
 
 ## P1 — prove write-path admission and transaction safety
 
-- [ ] Trace every write, stage, and commit path from the actual call sites before writing tests: World Effect execution, Constitution#admit, Master::Io::Base, DiffStager, Committer, Fix::Transaction, rollback/recovery, direct File.write/IO.write and FileUtils mutation paths.
-- [ ] Define the property before building the write-path audit. Core::Fold-proposed Effects must pass Master::Core::Constitution#admit before Master::Core::World performs them. Master::Io::Base, DiffStager, Fix::Transaction, Committer, and other /fix mutation sites are distinct write planes with their own guards and transaction responsibilities; they must not be assumed to be literal Core Effects.
-- [ ] Instrument representative flows in each write plane and correlate every agent-originated write with the applicable admission/guard decision, normalized path, transactional owner, and outcome evidence. If a write bypasses its intended protection, fix that exact path. Only unify all planes behind Constitution#admit if source tracing proves that is the intended invariant and the shared API can preserve the distinct transaction and staging contracts.
-- [ ] Add transaction end-to-end tests after inspecting the existing Transaction API. Cover atomic snapshot ownership, crash recovery, concurrent run serialization, rollback evidence/orphans, attempts to roll back after commit, and rollback on verification failure. Any assumed class or method signature in old notes is unverified until fetched from main.
-- [ ] Prove semantic scan coverage: every applicable detector evaluates every target file in scope, and a Law change invalidates cached findings. Verify that FindingCache keys include all inputs a detector reads, including the Law/catalogue digest where needed.
-- [ ] Implement or locate a trial-hygiene command that proves baseline and repair share the same source SHA or pinned worktree, laws digest, and toolchain identity. If an earlier artifact exists, inspect and repair it rather than creating a second command.
-- [ ] Measure transaction snapshot bytes, elapsed time, and file count with a reproducible baseline. Do not add hand-entered cost estimates to checks.yml; use the existing ledger and measurements.
-- [ ] Audit swallowed exceptions, including rescue nil, in load-bearing paths. Separate intentional nil-return contracts from true failure swallowing and make unhandled failure evidence visible.
-- [ ] Prove a fresh clone can run the documented setup and canonical Minitest suite. Record actual wall time; the five-minute setup target is a measurement, not an assertion to fake.
+- Trace every write, stage, and commit path from the actual call sites before writing tests: World Effect execution, Constitution#admit, Master::Io::Base, DiffStager, Committer, Fix::Transaction, rollback/recovery, direct File.write/IO.write and FileUtils mutation paths.
+- Define the property before building the write-path audit. Core::Fold-proposed Effects must pass Master::Core::Constitution#admit before Master::Core::World performs them. Master::Io::Base, DiffStager, Fix::Transaction, Committer, and other /fix mutation sites are distinct write planes with their own guards and transaction responsibilities; they must not be assumed to be literal Core Effects.
+- Instrument representative flows in each write plane and correlate every agent-originated write with the applicable admission/guard decision, normalized path, transactional owner, and outcome evidence. If a write bypasses its intended protection, fix that exact path. Only unify all planes behind Constitution#admit if source tracing proves that is the intended invariant and the shared API can preserve the distinct transaction and staging contracts.
+- Add transaction end-to-end tests after inspecting the existing Transaction API. Cover atomic snapshot ownership, crash recovery, concurrent run serialization, rollback evidence/orphans, attempts to roll back after commit, and rollback on verification failure. Any assumed class or method signature in old notes is unverified until fetched from main.
+- Prove semantic scan coverage: every applicable detector evaluates every target file in scope, and a Law change invalidates cached findings. Verify that FindingCache keys include all inputs a detector reads, including the Law/catalogue digest where needed.
+- Implement or locate a trial-hygiene command that proves baseline and repair share the same source SHA or pinned worktree, laws digest, and toolchain identity. If an earlier artifact exists, inspect and repair it rather than creating a second command.
+- Measure transaction snapshot bytes, elapsed time, and file count with a reproducible baseline. Do not add hand-entered cost estimates to checks.yml; use the existing ledger and measurements.
+- Audit swallowed exceptions, including rescue nil, in load-bearing paths. Separate intentional nil-return contracts from true failure swallowing and make unhandled failure evidence visible.
+- Prove a fresh clone can run the documented setup and canonical Minitest suite. Record actual wall time; the five-minute setup target is a measurement, not an assertion to fake.
 
 Rationale: The central architectural property is one admission decision per Core Effect, not a simplistic replacement of all existing protection layers. Transaction, immutable-path, staging, I/O-tool and commit checks may have different jobs and operate on different APIs. The evidence must prove that each relevant write plane is governed and that the protections compose; it must not manufacture an architectural requirement that all internal writes literally call Constitution#admit.
 
 ## P1 — keep DesignSweep inside the transaction boundary
 
-- [ ] Keep the standalone design command out of automatic /fix application until its write/apply phase is transaction-aware. The current standalone runner can commit each kept edit locally; a later check failure cannot undo those independent commits.
-- [ ] Design a candidate/apply split: evaluate edits in an isolated candidate representation, validate the whole result, then apply through the existing Fix::Transaction and normal Committer only after admission and verification.
-- [ ] Add failure tests showing rejected candidate, failed visual evidence, and failed final verification do not leave partial source changes or stray commits.
-- [ ] Do not add a branch or worktree as a workaround. The repository contract says changes land on main; use a temporary disposable copy for any destructive experiment.
+- Keep the standalone design command out of automatic /fix application until its write/apply phase is transaction-aware. The current standalone runner can commit each kept edit locally; a later check failure cannot undo those independent commits.
+- Design a candidate/apply split: evaluate edits in an isolated candidate representation, validate the whole result, then apply through the existing Fix::Transaction and normal Committer only after admission and verification.
+- Add failure tests showing rejected candidate, failed visual evidence, and failed final verification do not leave partial source changes or stray commits.
+- Do not add a branch or worktree as a workaround. The repository contract says changes land on main; use a temporary disposable copy for any destructive experiment.
 
 Rationale: The visual sweep is useful, but its current commit semantics are not an atomic phase of /fix. Keeping it separate is more honest than saying the full lifecycle is transactional when it is not.
 
 ## P2 — consolidate the Law catalogue without inventing a second authority
 
-- [ ] Run LawRegistryAudit and save yaml_only, law_only, registry_only, lexical_unwired, structural_unwired, semantic_only and dep_graph_gaps. Resolve each drift with an explanation backed by source and tests.
-- [ ] Audit each check/check for whether it is a policy assertion, a factual measurement, an environment precondition, or a composite. Link policy assertions to real existing Law IDs when the mapping is accurate; record unmapped normative checks as coverage gaps instead of fabricating IDs.
-- [ ] Define an enforced registry schema only after the audit shows which fields are necessary. Do not add parallel rule registries, a rules: subtree, or undocumented severity/tier values.
-- [ ] Keep LawDSL positive and negative fixtures for every new detector. Run the fixture test, registry audit, law inventory, and autofix reach report whenever scanner registration changes.
-- [ ] Inspect the real Law Definition contract before adding metadata. Proposed fields such as provenance, counter_law, rationale and last_reviewed are not proven requirements of the current schema; adding them must include migrations/schema validation, consumers, fixtures, and stale-data policy.
-- [ ] If law review age matters, implement a report (for example, older than 90 days) only after there is a trusted, machine-readable review timestamp and a deterministic lint result.
+- Run LawRegistryAudit and save yaml_only, law_only, registry_only, lexical_unwired, structural_unwired, semantic_only and dep_graph_gaps. Resolve each drift with an explanation backed by source and tests.
+- Audit each check/check for whether it is a policy assertion, a factual measurement, an environment precondition, or a composite. Link policy assertions to real existing Law IDs when the mapping is accurate; record unmapped normative checks as coverage gaps instead of fabricating IDs.
+- Define an enforced registry schema only after the audit shows which fields are necessary. Do not add parallel rule registries, a rules: subtree, or undocumented severity/tier values.
+- Keep LawDSL positive and negative fixtures for every new detector. Run the fixture test, registry audit, law inventory, and autofix reach report whenever scanner registration changes.
+- Inspect the real Law Definition contract before adding metadata. Proposed fields such as provenance, counter_law, rationale and last_reviewed are not proven requirements of the current schema; adding them must include migrations/schema validation, consumers, fixtures, and stale-data policy.
+- If law review age matters, implement a report (for example, older than 90 days) only after there is a trusted, machine-readable review timestamp and a deterministic lint result.
 
 Rationale: A detector ID, a constitutional Law ID, a check ID, and a test name can all be different identifiers because they answer different questions. The goal is traceable one-source policy, not false one-to-one identity or a global class/file rename.
 
 ## P2 — RAILS/CSS follow-through
 
-- [ ] Confirm the component partial order and output with the existing CSS bundle and visual/source tests. The _components.scss wrapper currently includes base, forms, overlays, feedback, fields, progress_and_uploads, and content_controls in order.
-- [ ] Use the real CSS check and current source line counts to select the next oversize candidate. Do not split _surface_chrome_endgame.scss or _minimal.scss from stale historical numbers alone.
-- [ ] After each CSS split, compare all check output, keep cascade order, then lower/remove the exact ratchet entry. No line-count ceiling should be raised just to get green.
-- [ ] Run the complete release composite after source blockers are resolved. Diagnose browser evidence separately from schema/CSS source defects.
-- [ ] Centralize RailsApp detection only if a source trace confirms meaningful duplication among rails_app.rb, visual_pass, RailsProof and the RAILS/<app>/fix.yml profiles. Add tests before delegating callers.
+- Confirm the component partial order and output with the existing CSS bundle and visual/source tests. The _components.scss wrapper currently includes base, forms, overlays, feedback, fields, progress_and_uploads, and content_controls in order.
+- Use the real CSS check and current source line counts to select the next oversize candidate. Do not split _surface_chrome_endgame.scss or _minimal.scss from stale historical numbers alone.
+- After each CSS split, compare all check output, keep cascade order, then lower/remove the exact ratchet entry. No line-count ceiling should be raised just to get green.
+- Run the complete release composite after source blockers are resolved. Diagnose browser evidence separately from schema/CSS source defects.
+- Centralize RailsApp detection only if a source trace confirms meaningful duplication among rails_app.rb, visual_pass, RailsProof and the RAILS/<app>/fix.yml profiles. Add tests before delegating callers.
 
 ## P2 — glossary, help, and contributor polish
 
-- [x] Add a glossary-only vocabulary file outside sacred data/, clarify Law/check/proof/result-state terms, and state that the execution registry has no policy authority.
-- [x] Make bin/operator check the one user-facing command for the ladder.
-- [x] Keep shell completion and its Minitest drift check in sync with both spellings.
-- [x] Add a Minitest contract that keeps checks.yml limited to execution metadata, preventing policy IDs/severity/tiers from silently growing into a parallel Law catalogue.
-- [ ] Run rake docs:agent_contracts and rake lint:agent_contracts on a real checkout after synchronizing the generated agent files.
-- [ ] Consider man pages for vocabulary and the write path only if they become the single source for command/help generation; avoid a second prose source.
-- [ ] Derive CLI help from canonical command/docs once the existing registry supports it and test for drift rather than hand-maintaining another help list.
-- [ ] Measure cold-start time before setting a 200 ms version-command ratchet. A target without a baseline is aspirational, not evidence.
-- [ ] Keep commit subjects aligned with MASTER/data/commit_format.yml.
+- Add a glossary-only vocabulary file outside sacred data/, clarify Law/check/proof/result-state terms, and state that the execution registry has no policy authority.
+- Make bin/operator check the one user-facing command for the ladder.
+- Keep shell completion and its Minitest drift check in sync with both spellings.
+- Add a Minitest contract that keeps checks.yml limited to execution metadata, preventing policy IDs/severity/tiers from silently growing into a parallel Law catalogue.
+- Run rake docs:agent_contracts and rake lint:agent_contracts on a real checkout after synchronizing the generated agent files.
+- Consider man pages for vocabulary and the write path only if they become the single source for command/help generation; avoid a second prose source.
+- Derive CLI help from canonical command/docs once the existing registry supports it and test for drift rather than hand-maintaining another help list.
+- Measure cold-start time before setting a 200 ms version-command ratchet. A target without a baseline is aspirational, not evidence.
+- Keep commit subjects aligned with MASTER/data/commit_format.yml.
 
 ## P3 — test whether self-regeneration pays for itself
 
-- [ ] Choose the smallest grain with a stable API and clear behavior (the prior proposal names ProseMetrics, which must be verified to exist and be suitable).
-- [ ] Write a behavioral specification and independent oracle before deleting implementation. Run the deletion experiment only in a disposable copy outside the shared working tree.
-- [ ] Measure regeneration tokens, wall time, human correction, and behavioral-evaluation pass rate. Compare regeneration cost to careful maintenance.
-- [ ] Only generalize to neighboring grains if the smallest experiment succeeds or shows a measured positive return. A governed, non-regenerative MASTER remains a valid result if that is what the evidence supports.
-- [ ] Treat whole-harness self-regeneration as long-range research, not a completion criterion for the current /fix repair.
+- Choose the smallest grain with a stable API and clear behavior (the prior proposal names ProseMetrics, which must be verified to exist and be suitable).
+- Write a behavioral specification and independent oracle before deleting implementation. Run the deletion experiment only in a disposable copy outside the shared working tree.
+- Measure regeneration tokens, wall time, human correction, and behavioral-evaluation pass rate. Compare regeneration cost to careful maintenance.
+- Only generalize to neighboring grains if the smallest experiment succeeds or shows a measured positive return. A governed, non-regenerative MASTER remains a valid result if that is what the evidence supports.
+- Treat whole-harness self-regeneration as long-range research, not a completion criterion for the current /fix repair.
 
 ## Verification commands to run on the real checkout
 

@@ -46,6 +46,15 @@ class TestDocPaths < Minitest::Test
     STUDIO/README.md
   ].freeze
 
+  def test_root_backlog_and_historical_reviews_are_not_competing_checklists
+    backlog = File.read(File.join(REPO, "TODO.md"))
+    refute_match(/^\\s*- \\[xX\\] /, backlog, "completed work must be deleted from TODO.md")
+
+    review = File.read(File.join(REPO, "MASTER/docs/history/fix-review-log.md"))
+    assert_includes review, "not live task instructions"
+    refute_match(/^\\s*- \\[ xX\\] /, review, "historical review must not act as another backlog")
+  end
+
   def test_design_authority_is_laws_yml_without_a_parallel_architecture_document
     refute File.exist?(File.join(REPO, "ARCHITECTURE.md"))
 
@@ -82,7 +91,6 @@ class TestDocPaths < Minitest::Test
 
   # Non-entry Markdown has a narrow purpose: face/reference contracts, archived
   # RAILS experiments and research, recovery material, and STUDIO migration guides.
-  # docs/runbooks and docs/todo-triage.md are the evidence procedures TODO.md cites;
   # MASTER/docs/history keeps dated review records and recovery provenance.
   # These are artifacts, not substitutes for tree/project README entry points.
   # MASTER/docs holds the execution-contract references that TODO.md, the code
@@ -107,7 +115,6 @@ class TestDocPaths < Minitest::Test
     MASTER/docs/LOVDATA.md
     MASTER/docs/PUB4_PERMISSION_MATRIX.md
     MASTER/docs/ad_creative_governance.md
-    MASTER/docs/data-freeze.md
     MASTER/docs/editorial-quality.md
     MASTER/docs/efficient_repair_workflow.md
     MASTER/docs/task-contracts.md
@@ -123,7 +130,6 @@ class TestDocPaths < Minitest::Test
     RAILS/docs/archive/SURFACE_MICRO_REFINEMENT_MATRIX.md
     RAILS/docs/archive/SURFACE_MICRO_REFINEMENT_MATRIX_II.md
     RAILS/docs/archive/UI_ARCHAEOLOGY.md
-    RESTRUCTURE.md
   ].freeze
 
   # README.md is the human entry point at each tree/project boundary. Other
