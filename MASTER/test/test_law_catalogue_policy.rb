@@ -50,6 +50,17 @@ class TestLawCataloguePolicy < Minitest::Test
     assert_empty declared & Law::Builder.public_instance_methods(false), "a second source beside laws.yml"
   end
 
+  def test_unscoped_law_inherits_universal_reach_and_all_assessment_surfaces
+    with_catalogue_entry(:UNSCOPED_LAW, "severity" => "info") do
+      law = build(:UNSCOPED_LAW)
+
+      assert law.universal?
+      assert_empty law.languages
+      assert_equal Law::ASSESSMENT_SURFACES, law.assessment_surfaces
+      assert law.applies?("/repo/vendor/unknown_file.xyz", "unknown")
+    end
+  end
+
   def test_catalogue_defaults_fill_what_an_entry_omits
     with_catalogue_entry(:CATALOGUE_DEFAULT_PROBE, "severity" => "info") do
       policy = Law.catalogue_policy(:CATALOGUE_DEFAULT_PROBE)

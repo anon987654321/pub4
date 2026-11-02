@@ -53,9 +53,8 @@ APPLICATION_IS_UNIFORM_unrecorded_finding:
 
 APPLICATION_IS_UNIFORM_legacy_reach_is_not_global:
   parent: APPLICATION_IS_UNIFORM
-  statement: "The executable Law DSL still consumes language, surface and path reach filters from law_runtime.yml, so universal application to every file is not yet proven."
-  resolution: review
-  migration: "Move per-Law reach metadata into this catalogue or remove the exclusions; update Law::Definition, preflight, registry audit and fixtures together."
+  statement: "Per-Law language, surface and path reach is sourced only from law_catalogue; an unscoped Law inherits the catalogue's universal-by-default policy."
+  resolution: never
 
 
 APPLICATION_IS_UNIFORM_constitution_self_governed:
