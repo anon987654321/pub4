@@ -15,6 +15,8 @@ class VisualSystemContractTest < Minitest::Test
   BRGEN_LAYOUT = ROOT.join("brgen/app/views/layouts/application.html.erb")
   AMBER_LAYOUT = ROOT.join("amber/app/views/layouts/application.html.erb")
   RADIO = ROOT.join("brgen/app/javascript/radio_brgen_tunnel.js")
+  # The track queue left the tunnel for its own module on 2026-11-02.
+  RADIO_AUDIO = ROOT.join("brgen/app/javascript/radio_brgen_audio.js")
 
   NODE_HARNESS = <<~JS
     import fs from "node:fs"
@@ -186,10 +188,12 @@ class VisualSystemContractTest < Minitest::Test
   end
 
   def test_radio_publishes_into_the_shared_visual_contract
-    source = RADIO.read
-    assert_includes source, 'import { publishVisual } from "pub4/visual_field"'
-    assert_includes source, 'publishVisual("radio:audio"'
-    assert_includes source, 'publishVisual("radio:track"'
+    # Each module that publishes imports the function itself.
+    [RADIO, RADIO_AUDIO].each do |path|
+      assert_includes path.read, 'import { publishVisual } from "pub4/visual_field"', path.basename.to_s
+    end
+    assert_includes RADIO.read, 'publishVisual("radio:audio"'
+    assert_includes RADIO_AUDIO.read, 'publishVisual("radio:track"'
   end
 
   def test_shared_visual_field_remains_the_single_particle_contract
