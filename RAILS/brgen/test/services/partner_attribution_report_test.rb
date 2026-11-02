@@ -9,6 +9,7 @@ class PartnerAttributionReportTest < ActiveSupport::TestCase
   setup do
     Shared::OutboundClick.delete_all
     Shared::AffiliateConversion.delete_all
+    Shared::VisitCount.delete_all
   end
 
   def click(merchant:, epi: nil, at: Time.current)
@@ -95,6 +96,30 @@ class PartnerAttributionReportTest < ActiveSupport::TestCase
     assert_equal({ "bergen" => 1 }, report.clicks_by_dimension(:city))
     assert_includes report.render, "approved commission by surface"
     assert_equal 1, report.unattributed_conversions
+  end
+
+  test "route EPI joins page-view counters, clicks and approved commission" do
+    route = "marketplace/categories#show"
+    Shared::VisitCount.record(app: "brgen", host: "brgen.no", route:, day: Date.current)
+    epi = Shared::LinkConverter.epi_for(
+      city: "bergen", surface: "marketplace", route:
+    )
+    click(merchant: "Zalando", epi:)
+    Shared::AffiliateConversion.create!(
+      source: "tradedoubler", transaction_id: "txn-route", message_type_id: 5,
+      publisher_commission: BigDecimal("6.25"), currency: "NOK", epi:
+    )
+
+    report = PartnerAttributionReport.new
+
+    assert_equal({ route => 1 }, report.page_views_by_route)
+    assert_equal({ route => 1 }, report.clicks_by_route)
+    assert_equal(
+      { route => { page_views: 1, clicks: 1, ctr: 1.0 } },
+      report.click_through_by_route
+    )
+    assert_equal({ [route, "NOK"] => BigDecimal("6.25") },
+                 report.approved_commission_by_dimension(:route))
   end
 
   test "dimension reports reject dimensions absent from the EPI contract" do
