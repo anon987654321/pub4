@@ -9,6 +9,39 @@ version: "3.0.0"
 body_sha256: "7845a0f371c09d1fac17e18539b59242abf14ec4326003b1cb7b45e3921c4b34"
 constitution: MASTER/data/laws.yml
 
+# Source authority, highest first. This order governs conflicts between files;
+# it is distinct from the nine invariant Law nodes ordered inside laws.yml.
+authority_order:
+  - id: soul
+    source: MASTER/data/soul.yml
+    scope: System identity, global values, preservation, protected paths and source precedence.
+  - id: laws
+    source: MASTER/data/laws.yml
+    scope: Individual Law identities, statements, parentage, invariant-node order and Law vocabularies.
+  - id: executable_laws_and_gates
+    source:
+      - MASTER/data/law_runtime.yml
+      - MASTER/law/
+      - MASTER/checks/
+    scope: Execution metadata, detectors, gates and tests; these implement but cannot override higher sources.
+  - id: tree_contracts
+    source:
+      - TREE_CONTRACTS.md
+      - tree-local README.md and CLAUDE.md
+    scope: Tree-specific constraints below repository-wide authority.
+  - id: git_history
+    source: Git history
+    scope: Provenance and historical evidence only; it never overrides live sources.
+
+absolute:
+  sacred_paths:
+    - data/laws.yml
+    - data/soul.yml
+    - data/project_context.yml
+    - lib/soul.rb
+    - lib/ground/pledge.rb
+    - bin/master
+
 persona: anchor
 voice: en-US-ChristopherNeural
 language:

@@ -563,13 +563,13 @@ module Master::Core
 
     # One source for paths that are constitutionally protected.
     #
-    # laws.yml owns protected paths: the files no automated writer —
+    # soul.yml owns the protected-path boundary: the files no automated writer —
     # the Fold, /fix and its autofix, a tool write, a runtime commit — may change.
     # A person changes them with an ordinary git commit. This class is deliberately
     # small: readers can ask for the declarations or whether one path is protected
-    # without knowing how laws.yml is laid out.
+    # without knowing how soul.yml is laid out.
     class Paths
-      MANIFEST = "data/laws.yml"
+      MANIFEST = "data/soul.yml"
 
       def self.sacred_paths(root:)
         new(root:).sacred_paths
@@ -633,7 +633,7 @@ module Master::Core
         sacred_paths
         return unless sacred?(path)
 
-        "#{relative} is sacred: no automated writer may change it (laws.yml#SACRED_AUTHORSHIP.protected_paths)"
+        "#{relative} is sacred: no automated writer may change it (soul.yml absolute.sacred_paths)"
       rescue ArgumentError
         "#{path} is outside #{@root}"
       rescue StandardError => e
@@ -644,18 +644,12 @@ module Master::Core
 
       def legacy_sacred_paths
         begin
-          # Fail closed: a missing, unreadable, invalid, or empty laws.yml must
+          # Fail closed: a missing, unreadable, invalid, or empty soul.yml must
           # never degrade into "nothing is sacred" and silently disable protection.
           root = manifest_root
           raise Errno::ENOENT, "#{MANIFEST} not found under #{@root}" unless root
 
-          laws = YAML.safe_load_file(File.join(root, MANIFEST), aliases: true)
-          authorship = laws.is_a?(Hash) ? laws["SACRED_AUTHORSHIP"] : nil
-          declared = authorship.is_a?(Hash) ? Array(authorship["protected_paths"]) : []
-          if declared.empty? || declared.any? { |path| path.to_s.strip.empty? }
-            raise "laws.yml under #{@root} declares no valid SACRED_AUTHORSHIP.protected_paths — refusing to derive empty sacred paths"
-          end
-
+          declared = Master::Soul.sacred_paths(root:)
           declared.map(&:to_s).map do |path|
             entry = normalize("#{manifest_prefix}#{path}")
             # normalize resolves the path and drops the slash that marks a subtree;

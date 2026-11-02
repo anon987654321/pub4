@@ -161,18 +161,9 @@ module Master
       def validate_protected_paths!(rows)
         entry = rows.find { |row| row.fetch("id") == "SACRED_AUTHORSHIP" }
         raise Invalid, "SACRED_AUTHORSHIP is required" unless entry
-
-        paths = entry["protected_paths"]
-        unless paths.is_a?(Array) && !paths.empty? &&
-               paths.all? { |path| path.is_a?(String) && !path.strip.empty? &&
-                 !path.start_with?("/") && !path.split("/").include?("..") } &&
-               paths.uniq == paths
-          raise Invalid, "SACRED_AUTHORSHIP.protected_paths must be unique safe relative paths"
+        if entry.key?("protected_paths")
+          raise Invalid, "protected paths belong to soul.yml#absolute.sacred_paths, not laws.yml"
         end
-
-        required = %w[data/laws.yml data/soul.yml lib/soul.rb]
-        missing = required - paths
-        raise Invalid, "protected paths omit constitutional source(s): #{missing.join(', ')}" unless missing.empty?
       end
 
       def validate_special_metadata!(rows)

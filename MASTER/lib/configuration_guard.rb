@@ -22,13 +22,10 @@ module Master
       PROXIMITY ABSTRACTION DENSITY RENDERED_VALUES INTER_MODEL_CONTRACT
       veto_patterns law_map transformation_policy law_catalogue
     ].freeze
-    # Sacred means no automated writer may change the path. The whole data/
-    # directory cannot be: tokens, state and ratchet ceilings there are written
-    # by the runtime every day. Nor can the retired scanner directories, which
-    # would freeze scanner code that must evolve.
-    TOO_BROAD_SACRED_PATHS = %w[
-      data/ data lib/review/scan/ lib/review/scan/laws lib/review/scan/laws/
-    ].freeze
+    # The Soul manifest owns the protected-path boundary. Broad data/ or
+    # retired scanner paths would freeze runtime-written configuration or code
+    # that must evolve, so the shared Soul validator refuses those entries.
+    TOO_BROAD_SACRED_PATHS = Master::Soul::FORBIDDEN_SACRED_PATHS
     LIVE_SOUL = File.expand_path("../data/soul.yml", __dir__)
     REQUIRED_TOKEN_MAPS = %w[
       visual_identity viewport shared_chrome system storefront_art radio luxury promotional_art
@@ -185,13 +182,20 @@ module Master
       raise ArgumentError, "soul schema must be 1" unless data["schema"] == 1
       raise ArgumentError, "soul version must match MASTER::Soul::VERSION" unless data["version"] == Master::Soul::VERSION
 
-      expected_digest = Master::Soul.print(root: File.dirname(File.dirname(path))).fetch("body_sha256")
+      expected_digest = Master::Soul.print.fetch("body_sha256")
       unless data["body_sha256"].to_s == expected_digest
         raise ArgumentError, "soul body_sha256 must match MASTER/lib/soul.rb (#{expected_digest})"
       end
 
       raise ArgumentError, "soul constitution must be MASTER/data/laws.yml" unless
         data["constitution"] == "MASTER/data/laws.yml"
+
+      Master::Soul.validate_authority_order!(data["authority_order"])
+      absolute = data.fetch("absolute") { raise KeyError, "absolute.sacred_paths is required" }
+      raise ArgumentError, "absolute must be a mapping" unless absolute.is_a?(Hash)
+      unknown_absolute = absolute.keys.map(&:to_s) - ["sacred_paths"]
+      raise ArgumentError, "absolute has unknown field(s): #{unknown_absolute.join(', ')}" unless unknown_absolute.empty?
+      Master::Soul.validate_sacred_paths!(absolute["sacred_paths"])
 
       references = data.fetch("references") { raise KeyError, "references.golden_law is required" }
       raise ArgumentError, "references must be a mapping" unless references.is_a?(Hash)
@@ -200,6 +204,7 @@ module Master
 
       master_root = File.dirname(File.dirname(path))
       laws_path = File.join(master_root, "data", "laws.yml")
+      laws_path = File.join(Master::ROOT, "data", "laws.yml") unless File.file?(laws_path)
       laws = YAML.safe_load_file(laws_path, aliases: true)
       golden_id = references["golden_law"].to_s
       golden = laws[golden_id]
@@ -207,7 +212,7 @@ module Master
         raise ArgumentError, "references.golden_law must resolve to an existing preservation Law in laws.yml"
       end
 
-      forbidden = %w[absolute precedence precedence_graph priority severity severity_rank
+      forbidden = %w[precedence precedence_graph priority severity severity_rank
                      severity_vocabulary roots_vocabulary sacred_paths protected_paths
                      enforcement law_catalogue law_map]
       shadowed = forbidden.select { |key| data.key?(key) }

@@ -7,17 +7,35 @@ require "yaml"
 module Master
   # The canonical identity implementation.
   #
-  # laws.yml owns every Law, including ordered constitutional nodes and
-  # protected paths. This class reads those declarations and implements Soul;
-  # neither Ruby constants nor soul.yml may establish a parallel constitution.
-  # data/soul.yml attests the identity body and supplies subordinate delivery
-  # temperament and runtime settings.
+  # soul.yml owns global identity, source authority, preservation priorities and
+  # the protected-path boundary. laws.yml owns individual Law identities,
+  # statements and the internal order of its nine invariant nodes. This class
+  # implements Soul and exposes derived views of both contracts; it creates
+  # neither a parallel Law catalogue nor a competing source hierarchy.
   class Soul
     class IntegrityError < StandardError; end
     class ProtectedWrite < StandardError; end
 
     VERSION = "3.0.0"
     ROOT = File.expand_path("..", __dir__).freeze
+
+    AUTHORITY_ORDER_IDS = %w[
+      soul laws executable_laws_and_gates tree_contracts git_history
+    ].freeze
+    AUTHORITY_ORDER_SOURCES = [
+      "MASTER/data/soul.yml",
+      "MASTER/data/laws.yml",
+      %w[MASTER/data/law_runtime.yml MASTER/law/ MASTER/checks/].freeze,
+      ["TREE_CONTRACTS.md", "tree-local README.md and CLAUDE.md"].freeze,
+      "Git history",
+    ].freeze
+    REQUIRED_SACRED_PATHS = %w[
+      data/laws.yml data/soul.yml data/project_context.yml
+      lib/soul.rb lib/ground/pledge.rb bin/master
+    ].freeze
+    FORBIDDEN_SACRED_PATHS = %w[
+      data/ data lib/review/scan/ lib/review/scan/laws lib/review/scan/laws/
+    ].freeze
 
     IDENTITY = "MASTER is not a mascot, oracle, or corporate assistant. MASTER is a system designed to preserve a coherent working identity across sessions without depending on one human session. It studies the system as it is, improves what it can justify, and keeps uncertainty visible.".freeze
 
@@ -58,8 +76,9 @@ module Master
       "No single session owns continuity. Files, code, tests, decisions and Git history carry durable state; every session re-establishes facts from those sources."
     ].freeze
 
-    # Compatibility projection for the identity digest. The graph is derived
-    # from laws.yml in document order; no edge is authored in Ruby.
+    # Compatibility projection for the nine invariant Law nodes. Their
+    # internal order is derived from the node rows in laws.yml. This is not
+    # the cross-source authority order, which is owned by soul.yml.
     PRECEDENCE_GRAPH = begin
       document = YAML.safe_load_file(File.join(ROOT, "data", "laws.yml"), aliases: true)
       nodes = document.filter_map do |_id, row|
@@ -119,7 +138,8 @@ module Master
           section("Judgment", JUDGMENT),
           section("Boundaries", BOUNDARIES),
           temperament_section(manifest.fetch("temperament")),
-          "Constitutional precedence: #{invariant_order(root:).join(" > ")}.",
+          "Source authority (highest first): #{authority_order(root:).map { |row| row.fetch("id") }.join(" > ")}.",
+          "Invariant Law order: #{invariant_order(root:).join(" > ")}.",
           "Interaction: state the real problem plainly. Ask for the best-supported answer. Say whether you want pushback or execution."
         ].join("\n\n")
       end
@@ -161,22 +181,75 @@ module Master
         nil
       end
 
-      def sacred_paths(root: ROOT)
+      def authority_order(root: ROOT)
         master_root = resolve_master_root(root)
-        path = File.join(master_root, "data", "laws.yml")
-        document = YAML.safe_load_file(path, aliases: true)
-        paths = document.fetch("SACRED_AUTHORSHIP").fetch("protected_paths")
-        unless paths.is_a?(Array) && !paths.empty? &&
-               paths.all? { |entry| entry.is_a?(String) && !entry.strip.empty? } &&
-               paths.uniq == paths
-          raise IntegrityError, "SACRED_AUTHORSHIP.protected_paths must be a unique non-empty list"
+        document = YAML.safe_load_file(File.join(master_root, "data", "soul.yml"), aliases: true)
+        rows = document.fetch("authority_order")
+        validate_authority_order!(rows)
+        rows.map do |row|
+          source = row.fetch("source")
+          {
+            "id" => row.fetch("id").to_s,
+            "source" => source.is_a?(Array) ? source.map(&:to_s).freeze : source.to_s,
+            "scope" => row.fetch("scope").to_s,
+          }.freeze
+        end.freeze
+      rescue IntegrityError
+        raise
+      rescue StandardError => e
+        raise IntegrityError, "source authority could not be read from soul.yml: #{e.class}: #{e.message}"
+      end
+
+      def validate_authority_order!(rows)
+        unless rows.is_a?(Array) && rows.length == AUTHORITY_ORDER_IDS.length &&
+               rows.all? { |row| row.is_a?(Hash) }
+          raise IntegrityError, "soul.yml authority_order must declare the five ordered authority tiers"
         end
 
+        ids = rows.map { |row| row["id"].to_s }
+        unless ids == AUTHORITY_ORDER_IDS
+          raise IntegrityError, "soul.yml authority_order must be #{AUTHORITY_ORDER_IDS.join(' > ')}"
+        end
+
+        rows.zip(AUTHORITY_ORDER_SOURCES).each do |row, expected_source|
+          source = row["source"]
+          unless source == expected_source && row["scope"].is_a?(String) && !row["scope"].strip.empty?
+            raise IntegrityError, "soul.yml authority tier #{row['id']} has invalid source or scope"
+          end
+        end
+        true
+      end
+
+      def validate_sacred_paths!(paths)
+        unless paths.is_a?(Array) && !paths.empty? &&
+               paths.all? do |path|
+                 path.is_a?(String) && !path.strip.empty? &&
+                   !path.start_with?("/") && !path.match?(/\\A[A-Za-z]:/) &&
+                   !path.tr("\\\\", "/").split("/").include?("..")
+               end && paths.uniq == paths
+          raise IntegrityError, "soul.yml absolute.sacred_paths must be unique safe relative paths"
+        end
+
+        broad = paths & FORBIDDEN_SACRED_PATHS
+        unless broad.empty?
+          raise IntegrityError, "runtime-written data and retired scanner paths cannot be sacred: #{broad.join(', ')}"
+        end
+
+        missing = REQUIRED_SACRED_PATHS - paths
+        raise IntegrityError, "critical path protections missing: #{missing.join(', ')}" unless missing.empty?
+
+        paths
+      end
+
+      def sacred_paths(root: ROOT)
+        master_root = resolve_master_root(root)
+        document = YAML.safe_load_file(File.join(master_root, "data", "soul.yml"), aliases: true)
+        paths = validate_sacred_paths!(document.dig("absolute", "sacred_paths"))
         paths.map(&:dup).freeze
       rescue IntegrityError
         raise
       rescue StandardError => e
-        raise IntegrityError, "protected paths could not be read from laws.yml: #{e.class}: #{e.message}"
+        raise IntegrityError, "protected paths could not be read from soul.yml#absolute.sacred_paths: #{e.class}: #{e.message}"
       end
 
       def sacred?(path, root: ROOT)
@@ -200,7 +273,7 @@ module Master
         return unless sacred?(path, root:)
 
         raise ProtectedWrite,
-              "#{path} is sacred: no automated writer may change it (laws.yml#SACRED_AUTHORSHIP.protected_paths)"
+              "#{path} is sacred: no automated writer may change it (soul.yml#absolute.sacred_paths)"
       end
 
       private
@@ -219,6 +292,8 @@ module Master
                 "soul manifest mismatch: #{path}; expected #{BODY_SHA256}, found #{actual}"
         end
 
+        validate_authority_order!(manifest["authority_order"])
+        validate_sacred_paths!(manifest.dig("absolute", "sacred_paths"))
         validate_references!(manifest, master_root:)
         validate_temperament!(manifest["temperament"])
         manifest
