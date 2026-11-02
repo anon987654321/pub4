@@ -69,9 +69,24 @@ class TestConfigurationGuard < Minitest::Test
     assert_match(/configuration invariant failed/, reason)
   end
 
-  def test_empty_catalogue_is_refused
+  def test_empty_law_source_is_refused
     reason = Guard.validate(path: laws_path, content: "law_catalogue: {}\n")
-    assert_match(/required Law sections missing/, reason)
+    assert_match(/laws.yml declares no flat laws/, reason)
+  end
+
+  def test_runtime_rejects_a_duplicate_law_catalogue
+    path = File.join(Master::ROOT, "data", "law_runtime.yml")
+    data = YAML.safe_load_file(path, aliases: true)
+    data["law_catalogue"] = { "entries" => { "DUPLICATE" => {} } }
+    reason = Guard.validate(path:, content: YAML.dump(data))
+    assert_match(/law_runtime.yml must not duplicate law_catalogue/, reason)
+  end
+
+  def test_law_execution_policy_has_one_source
+    laws = YAML.safe_load_file(laws_path, aliases: true)
+    runtime = YAML.safe_load_file(File.join(Master::ROOT, "data", "law_runtime.yml"), aliases: true)
+    assert_operator laws.fetch("law_catalogue").fetch("entries").size, :>, 200
+    refute runtime.key?("law_catalogue")
   end
 
   def test_catalogue_entry_cannot_drop_a_modality

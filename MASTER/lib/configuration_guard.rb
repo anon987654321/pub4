@@ -17,10 +17,10 @@ module Master
 
     LAW_MODALITIES = LawVocabulary::MODALITIES
 
-    REQUIRED_LAW_SECTIONS = %w[
+    REQUIRED_RUNTIME_LAW_SECTIONS = %w[
       CAPABILITY_STATUS_MUST_BE_TRUTHFUL ROBUSTNESS SINGULARITY LINEARITY
       PROXIMITY ABSTRACTION DENSITY RENDERED_VALUES INTER_MODEL_CONTRACT
-      veto_patterns law_map transformation_policy law_catalogue
+      veto_patterns law_map transformation_policy
     ].freeze
     # The Soul manifest owns the protected-path boundary. Broad data/ or
     # retired scanner paths would freeze runtime-written configuration or code
@@ -235,22 +235,23 @@ module Master
 
     def validate_laws(data, path:, text:)
       Master::FlatLawCatalogue.validate!(data)
-    end
-
-    # Compatibility validator for scanner/execution configuration that has not
-    # yet moved to its owning registry. It is not the normative law catalogue.
-    def validate_runtime_laws(data, path:, text:)
-      validate_required_law_sections(data)
-      catalogue = data.fetch("law_catalogue")
+      catalogue = data.fetch("law_catalogue") { raise KeyError, "laws.yml requires law_catalogue" }
       validate_catalogue_contract(catalogue)
       entries = catalogue.fetch("entries")
       validate_catalogue_entries(entries, repository_root(path))
       validate_catalogue_key_duplicates(text, entries.keys)
     end
 
-    def validate_required_law_sections(data)
-      missing = REQUIRED_LAW_SECTIONS - data.keys.map(&:to_s)
-      raise ArgumentError, "required Law sections missing: #{missing.join(', ')}" unless missing.empty?
+    # law_runtime.yml contains non-identity runtime configuration only. Reject
+    # an attempted second declaration of Law execution policy.
+    def validate_runtime_laws(data, path:, text:)
+      validate_required_runtime_law_sections(data)
+      raise ArgumentError, "law_runtime.yml must not duplicate law_catalogue" if data.key?("law_catalogue")
+    end
+
+    def validate_required_runtime_law_sections(data)
+      missing = REQUIRED_RUNTIME_LAW_SECTIONS - data.keys.map(&:to_s)
+      raise ArgumentError, "required runtime Law sections missing: #{missing.join(', ')}" unless missing.empty?
     end
 
     def validate_catalogue_contract(catalogue)

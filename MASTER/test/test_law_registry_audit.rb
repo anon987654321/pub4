@@ -150,7 +150,7 @@ class TestLawRegistryAudit < Minitest::Test
   # Universal by default and assessed in the catalogue's three modalities; an
   # entry repeats neither, and may say `universal: false` for a domain Law.
   def test_every_catalogue_entry_names_its_ruby_source_and_no_constant_flags
-    manifest = Master.law("law_catalogue").fetch("entries")
+    manifest = Master.law_catalogue.fetch("entries")
 
     assert_operator manifest.size, :>, 400
     manifest.each do |id, entry|

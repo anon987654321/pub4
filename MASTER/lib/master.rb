@@ -180,9 +180,8 @@ module Master
     load_yaml(File.join(root, "data", "soul.yml")) || {}
   end
 
-  # The one reader of the normative flat law catalogue.
-  # Runtime compatibility settings and legacy detector metadata are loaded
-  # separately through load_laws (data/law_runtime.yml).
+  # The one reader of the normative Law execution catalogue in laws.yml.
+  # Scanner, veto, plugin and /fix settings remain in law_runtime.yml.
   def self.law_entries(root: ROOT)
     master_root = Master.master_root(root:)
     path = File.join(master_root, "data", "laws.yml")
@@ -207,9 +206,18 @@ module Master
     end
   end
 
+  def self.law_catalogue(root: ROOT)
+    master_root = Master.master_root(root:)
+    path = File.join(master_root, "data", "laws.yml")
+    data = load_yaml(path) || {}
+    data.fetch("law_catalogue") { raise KeyError, "data/laws.yml has no law_catalogue section" }
+  end
+
+  # Runtime-only sections are read from law_runtime.yml. The per-Law catalogue
+  # has its own source-specific reader above.
   def self.law(section, root: ROOT)
     data = load_laws(root:)
-    data.fetch(section.to_s) { raise KeyError, "data/laws.yml has no #{section}: section" }
+    data.fetch(section.to_s) { raise KeyError, "data/law_runtime.yml has no #{section}: section" }
   end
 
   # The one reader of data/agent_taxonomy.yml. It had three, each building the

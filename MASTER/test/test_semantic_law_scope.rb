@@ -123,7 +123,7 @@ class TestSemanticLawScope < Minitest::Test
   # same reason — nothing emits them, and while the key was unread nothing said
   # so. Now that it is read, a phantom language aims a rule at no file at all.
   def test_semantic_population_matches_the_canonical_law_catalogue
-    catalogue = Master.law("law_catalogue").fetch("entries").keys.map(&:upcase).sort
+    catalogue = Master.law_catalogue.fetch("entries").keys.map(&:upcase).sort
     assessed = rule.send(:load_semantic_laws).keys.sort
 
     assert_equal catalogue, assessed

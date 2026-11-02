@@ -296,7 +296,7 @@ module Master
             # The YAML catalogue owns Law identity and membership. Ruby files
             # provide detectors and explanatory text; they cannot add, remove,
             # or scope a Law out of semantic assessment.
-            catalogue = Master.law("law_catalogue", root: Master::ROOT)
+            catalogue = Master.law_catalogue(root: Master::ROOT)
             entries = catalogue.fetch("entries")
             raise "canonical Law catalogue is empty" unless entries.is_a?(Hash) && !entries.empty?
 

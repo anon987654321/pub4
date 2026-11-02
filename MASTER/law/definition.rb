@@ -16,32 +16,28 @@ require_relative "../lib/law_vocabulary"
 # Contract: `rake dogfood` is the archaeological audit. A capability that goes
 # missing is a fixture that stops passing — nothing to compare by hand.
 module Law
-  # laws.yml owns the normative constitution: ordered invariant nodes, roots,
-  # statements, severity vocabulary and protected paths. The DSL still reads
-  # law_runtime.yml#law_catalogue for per-executable-Law severity, lifecycle,
-  # autofix and reach metadata. That is a live second metadata source and a
-  # migration boundary; it must not be mistaken for the normative constitution.
+  # laws.yml owns normative Law records and the per-Law execution catalogue.
+  # Ruby files implement declared detectors and evaluators; law_runtime.yml
+  # retains scanner, veto, plugin and /fix runtime settings.
   require_relative "../lib/master" unless defined?(Master::ROOT)
   require_relative "../lib/law_catalogue_preflight"
-  LAW_CATALOGUE = Master.load_laws.fetch("law_catalogue").freeze
+  LAW_CATALOGUE = Master.law_catalogue.freeze
   ASSESSMENT_SURFACES = Array(LAW_CATALOGUE.fetch("surfaces")).map(&:to_sym).freeze
 
   def self.catalogue_entry(id)
     key = id.to_s
     entries = LAW_CATALOGUE.fetch("entries")
     entry = entries[key] || entries.find { |name, _value| name.to_s.casecmp?(key) }&.last
-    raise KeyError, "Law #{key} is absent from MASTER/data/law_runtime.yml law_catalogue.entries" unless entry
+    raise KeyError, "Law #{key} is absent from MASTER/data/laws.yml law_catalogue.entries" unless entry
 
     entry
   end
 
-  # Transitional execution metadata comes from law_runtime.yml, merged with
-  # the catalogue defaults. This remains a duplicate policy source until the
-  # Law DSL and preflight/audit readers are migrated together. Reach fields
-  # are still consumed here and must not be silently dropped.
+  # Execution defaults and entry-specific reach are merged from the one canonical
+  # Law catalogue. Reach is part of the policy contract and is never discarded.
   def self.catalogue_policy(id, entry = catalogue_entry(id))
     policy = LAW_CATALOGUE.fetch("defaults", {}).merge(entry)
-    raise ArgumentError, "Law #{id} has no severity in law_runtime.yml law_catalogue" if policy["severity"].to_s.empty?
+    raise ArgumentError, "Law #{id} has no severity in laws.yml law_catalogue" if policy["severity"].to_s.empty?
 
     named = policy.slice("severity", "mode", "lifecycle", "autofix").to_h { |key, value| [key.to_sym, value.to_sym] }
     named.merge(reach(policy))

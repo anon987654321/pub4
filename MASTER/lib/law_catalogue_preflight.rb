@@ -4,11 +4,8 @@ require "pathname"
 require "ripper"
 
 module Master
-  # Transitional preflight for Law.define against law_runtime.yml#law_catalogue.
-  # The flat laws.yml is the normative constitution, but the executable DSL still
-  # depends on this separate per-Law metadata inventory. Keep the debt explicit;
-  # a future migration must update this, Law::Definition, the registry audit and
-  # all fixtures together before removing the legacy metadata.
+  # Preflight Law.define against the one execution catalogue in laws.yml.
+  # Each entry maps to an actual Ruby declaration and source file.
   module LawCataloguePreflight
     module_function
 
@@ -16,7 +13,7 @@ module Master
       law_root = File.expand_path(law_dir)
       repository_root = File.expand_path(repo_root)
       entries = catalogue.fetch("entries")
-      raise ArgumentError, "law_runtime.yml law_catalogue.entries must be a mapping" unless entries.is_a?(Hash)
+      raise ArgumentError, "laws.yml law_catalogue.entries must be a mapping" unless entries.is_a?(Hash)
 
       declarations = source_declarations(law_root, repository_root)
       declarations.concat(normalize_generated(generated_declarations))
@@ -96,7 +93,7 @@ module Master
       unknown_manifest_fields = catalogue.keys.map(&:to_s) - allowed_manifest_fields
       errors << "law_catalogue has unknown field(s): #{unknown_manifest_fields.sort.join(', ')}" unless unknown_manifest_fields.empty?
       errors << "law_catalogue.schema must be 1" unless catalogue["schema"] == 1
-      errors << "law_catalogue.identity_source must be this_section" unless catalogue["identity_source"] == "this_section"
+      errors << "law_catalogue.identity_source must be MASTER/data/laws.yml" unless catalogue["identity_source"] == "MASTER/data/laws.yml"
       errors << "law_catalogue.universal_by_default must be true" unless catalogue["universal_by_default"] == true
       errors << "law_catalogue.missing_assessor must be inconclusive" unless catalogue["missing_assessor"] == "inconclusive"
 

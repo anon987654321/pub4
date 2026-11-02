@@ -75,7 +75,7 @@ module Master
           "receipt: soul #{receipt[:constitution][:soul_version]} " \
           "persona=#{receipt[:constitution][:persona]} " \
           "sacred_paths=#{receipt[:constitution][:sacred_paths]}",
-          "receipt: law normative=#{law_counts[:normative]}, legacy_metadata=#{law_counts[:declared]}, " \
+          "receipt: law normative=#{law_counts[:normative]}, catalogue=#{law_counts[:catalogue]}, " \
           "scan=#{law_counts[:registry]}, executable=#{law_counts[:domain]}",
           "receipt: providers #{availability(receipt[:providers])}",
           "receipt: capabilities #{availability(receipt[:capabilities])}",
@@ -124,26 +124,19 @@ module Master
         }
       end
 
-      # Keep the normative flat constitution distinct from the legacy
-      # execution-metadata population. Law::Definition still consumes
-      # law_runtime.yml#law_catalogue for severity/lifecycle/autofix/reach; that
-      # is migration debt, not the normative identity source. The compatibility
-      # field :declared retains its historical meaning until its consumers move.
+      # Report normative rows, per-Law execution metadata and the loaded
+      # detector registry as distinct populations.
       def law(root: MasterPaths::ROOT)
-        legacy_count = Master.law("law_catalogue", root:).fetch("entries").size
+        catalogue_count = Master.law_catalogue(root:).fetch("entries").size
         registry_count = domain_law_count(root)
         {
           normative: Master.law_entries(root:).size,
-          declared: legacy_count,
-          legacy_execution_metadata: legacy_count,
+          catalogue: catalogue_count,
           registry: registry_count,
           domain: registry_count,
         }
       end
 
-      # Loaded here rather than assumed: law/ reaches the registry only when
-      # something has required it, so a receipt printed from bin/doctor said
-      # "0 in law/" while 122 laws were defined and waiting.
       def domain_law_count(root)
         law_root = executable_law_root(root)
         require File.join(law_root, "law", "definition.rb")

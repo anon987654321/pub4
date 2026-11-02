@@ -23,19 +23,20 @@ class TestBootReceipt < Minitest::Test
     assert_operator constitution[:sacred_paths], :>, 0
   end
 
-  # The normative flat catalogue and legacy executable metadata are distinct
-  # populations during migration. The receipt must label both, not merge them.
-  def test_the_receipt_counts_all_three_rule_populations
+  # Normative rows, per-Law policy entries and the loaded detector registry
+  # are distinct populations, all read from their current source owner.
+  def test_the_receipt_counts_normative_rows_catalogue_entries_and_registry
     law = Receipt.law
 
     assert_operator law[:normative], :>, 100
-    assert_operator law[:declared], :>, 200
-    assert_equal law[:declared], law[:legacy_execution_metadata]
+    assert_operator law[:catalogue], :>, 200
     assert_equal Master::law_entries(root: Master::ROOT).size, law[:normative]
+    assert_equal Master.law_catalogue(root: Master::ROOT).fetch("entries").size, law[:catalogue]
     assert_equal Master::Review::Scan::LawTree.ids.size, law[:registry]
     output = Receipt.lines.join("\n")
     assert_includes output, "normative=#{law[:normative]}"
-    assert_includes output, "legacy_metadata=#{law[:declared]}"
+    assert_includes output, "catalogue=#{law[:catalogue]}"
+    refute_includes output, "legacy_metadata="
   end
 
   # `schema:` is a version pin sharing the file with the providers. It has no

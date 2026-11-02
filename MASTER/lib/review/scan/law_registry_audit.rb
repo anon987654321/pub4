@@ -5,9 +5,9 @@ require "set"
 module Master
   module Review
     module Scan
-      # Audits the transitional law_runtime.yml execution metadata population against
-      # Ruby definitions and scanner registry. It is not the normative flat
-      # constitution audit; that is FlatLawCatalogue.
+      # Audits the canonical laws.yml execution catalogue against Ruby
+      # definitions and the scanner registry. Normative row integrity is
+      # separately measured by FlatLawCatalogue.
       class LawRegistryAudit
         Report = Data.define(
           :yaml_laws, :registry_ids, :kernel_ids, :lexical_wired, :lexical_unwired,
@@ -253,18 +253,14 @@ module Master
           raise "law registry law census failed: #{e.class}: #{e.message}"
         end
 
-        # Transitional audit input: Law::Definition still takes per-Law severity,
-        # lifecycle, autofix and reach metadata from law_runtime.yml. This
-        # population is execution metadata, not the normative laws.yml catalogue.
+        # Read the same canonical policy source as Law::Definition. A missing
+        # catalogue is an integrity failure, never an empty synthetic population.
         def load_yaml_laws
-          data = Master.load_laws(root: @root)
-          catalogue = data.fetch("law_catalogue") do
-            raise "data/law_runtime.yml has no law_catalogue; refusing a synthetic Law population"
-          end
+          catalogue = Master.law_catalogue(root: @root)
           entries = catalogue.fetch("entries") do
-            raise "data/law_runtime.yml law_catalogue has no entries"
+            raise "data/laws.yml law_catalogue has no entries"
           end
-          raise "data/law_runtime.yml law_catalogue entries must be a non-empty mapping" unless entries.is_a?(Hash) && !entries.empty?
+          raise "data/laws.yml law_catalogue entries must be a non-empty mapping" unless entries.is_a?(Hash) && !entries.empty?
 
           entries.map do |id, entry|
             raise "law_catalogue entry #{id} must be a mapping" unless entry.is_a?(Hash)
@@ -274,7 +270,7 @@ module Master
         end
 
         def law_catalogue_report(entries, registry:)
-          data = Master.law("law_catalogue", root: @root)
+          data = Master.law_catalogue(root: @root)
           required_modalities = Master::LawVocabulary::MODALITIES
           required_surfaces = ::Law::ASSESSMENT_SURFACES.map(&:to_s)
           modalities = Array(data["modalities"]).map(&:to_s)

@@ -232,7 +232,7 @@ class VisualPassContractTest < Minitest::Test
   end
 
   def test_visual_review_uses_every_canonical_law
-    catalogue = Master.law("law_catalogue").fetch("entries").keys.map(&:to_s).sort
+    catalogue = Master.law_catalogue.fetch("entries").keys.map(&:to_s).sort
 
     assert_equal catalogue, Master::Fix::VisualUsability.ids
     context = Master::Fix::VisualUsability.context
