@@ -62,6 +62,7 @@ class MetaFactsContractTest < Minitest::Test
     template = read("__shared/app/views/shared/_post_card.html.erb")
     refute_includes template, " · <span class=\"feed-post-place\""
     refute_includes template, 'class="feed-card-time">· '
-    assert_includes template, '<% if meta.present? %><p><%= meta %></p><% end %>'
+    # Since the 2026-11-01 canonical card, meta is its own flex row of facts.
+    assert_includes template, '<% if meta.present? %><div class="feed-card-meta"><%= meta %></div><% end %>'
   end
 end
