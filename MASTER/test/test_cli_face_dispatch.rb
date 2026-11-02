@@ -168,17 +168,15 @@ class TestCliFaceDispatch < Minitest::Test
     assert_equal :children, events.first.last[:children]
   end
 
-  def test_face_exit_exits_the_master_session
+  def test_face_redraw_never_exits_the_master_session
     session = Master::CLI::Session.allocate
-    exited = false
-    session.define_singleton_method(:stop_background_loop) {}
-    session.define_singleton_method(:exit_cli) { exited = true }
+    rendered = false
+    session.define_singleton_method(:print_face_overlay) { rendered = true }
+    session.define_singleton_method(:exit_cli) { flunk "face redraw must not exit the shared session" }
 
-    Master::CLI::CommandRegistry.stub(:dispatch_face, ->(**) { "face0: exit" }) do
-      session.send(:run_face)
-    end
+    assert_nil session.send(:run_face)
 
-    assert exited
+    assert rendered
   end
 
   def test_face_help_returns_its_text_without_writing_to_the_hidden_terminal
