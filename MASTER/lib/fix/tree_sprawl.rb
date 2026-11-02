@@ -11,8 +11,13 @@ module Master
       MAX_CONCEPT_DEPTH = 3
       ROOT_FILE_LIMIT = 18
       IMPORTANT_CONCEPTS = %w[core fix law runtime soul].freeze
+      # Repeated framework entrypoints and standard Rails templates do not
+      # represent a domain concept scattered across owners.
       GENERIC_CONCEPT_STEMS = %w[
-        application base config engine helper index manifest routes schema test_helper version
+        .rubocop README application base config create.turbo_stream.html
+        development edit.html engine helper index index.html manifest
+        new.html readme routes schema show.html storage test_helper version
+        _card.html _form.html _live_search_results.html
       ].freeze
       UGLY_NAME_PATTERN = /(?:\A__|_{2,}|_(?:helper|utils|old)\z)/
       SIGNALS = %i[

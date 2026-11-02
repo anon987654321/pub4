@@ -84,6 +84,21 @@ class TestFixTree < Minitest::Test
     assert_includes ugly, "RAILS/brgen/app/services/reply_utils.rb"
   end
 
+  def test_concept_scatter_ignores_standard_rails_templates_and_readmes
+    %w[brgen amber bsdports].each do |app|
+      write("RAILS/#{app}/app/views/posts/index.html.erb", BODY)
+      write("RAILS/#{app}/README.md", BODY)
+      write("RAILS/#{app}/app/models/dispatch_policy.rb", BODY)
+    end
+    git("add", ".")
+
+    scatter = Master::Fix::Tree.new(root: @root).sprawl[:concept_scatter].map(&:first)
+
+    refute_includes scatter, "index.html"
+    refute_includes scatter, "README"
+    assert_includes scatter, "dispatch_policy"
+  end
+
   def test_depth_tax_only_flags_important_concepts_beyond_depth_three
     write("deep/a/b/core.rb", BODY)
     write("lib/core/fold.rb", BODY)
