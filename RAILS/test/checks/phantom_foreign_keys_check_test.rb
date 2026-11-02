@@ -48,6 +48,15 @@ class PhantomForeignKeysCheckTest < Minitest::Test
     assert_equal 1, result.checks_ran
   end
 
+  # mrdamascy is not an engine host: its own schema creates a bare `orders`
+  # table, so a key to it is real, while the same key without the table is not.
+  def test_a_bare_name_the_schema_itself_creates_passes
+    orders = %(  create_table "orders", force: :cascade do |t|\n  end\n)
+    result = over(schema(%(#{orders}  add_foreign_key "reviews", "orders"\n)))
+
+    assert result.ok?, result.failures.join(", ")
+  end
+
   # Every schema in the tree, not the first one. A loop that stopped early would
   # pass on a fixture whose only defect is in the second app.
   def test_a_defect_in_the_second_schema_is_found_too

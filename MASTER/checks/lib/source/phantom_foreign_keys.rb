@@ -27,8 +27,14 @@ module Deploy
 
       files.each do |path|
         result.checked!
-        File.read(path).scan(/add_foreign_key\s+"([^"]+)"\s*,\s*"([^"]+)"/).each do |from, to|
+        text = File.read(path)
+        # The names are phantom where an engine prefixes them (brgen's
+        # marketplace_orders). An app whose own schema creates the bare table,
+        # as mrdamascy creates orders and menu_items, points at a real one.
+        created = text.scan(/create_table\s+"([^"]+)"/).flatten
+        text.scan(/add_foreign_key\s+"([^"]+)"\s*,\s*"([^"]+)"/).each do |from, to|
           next unless PHANTOM_TABLES.include?(to)
+          next if created.include?(to)
 
           result.fail("#{path}: add_foreign_key #{from} → #{to} (phantom — use prefixed table or to_table:)")
         end
