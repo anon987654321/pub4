@@ -11,7 +11,7 @@ class Takeaway::MenuItemsController < Takeaway::BaseController
 
     saved = ActiveRecord::Base.transaction do
       if category_name.present?
-        category = @restaurant.menu_categories.find_or_initialize_by(name: category_name)
+        category = @restaurant.menu_categories.where("LOWER(name) = ?", category_name.downcase).first_or_initialize
         unless category.save
           @item.errors.add(:base, category.errors.full_messages.to_sentence)
           raise ActiveRecord::Rollback

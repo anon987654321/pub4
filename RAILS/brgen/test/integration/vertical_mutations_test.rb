@@ -158,7 +158,7 @@ class VerticalMutationsTest < ActionDispatch::IntegrationTest
       post takeaway.restaurant_menu_items_path(restaurant), params: {
         takeaway_menu_item: {
           name: "Dish #{index}", price_cents: 12_900,
-          menu_category_name: "Middag"
+          menu_category_name: index.zero? ? "Middag" : "middag"
         }
       }
       assert_redirected_to takeaway.restaurant_path(restaurant)

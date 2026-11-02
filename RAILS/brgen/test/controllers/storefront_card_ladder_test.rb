@@ -23,8 +23,10 @@ class StorefrontCardLadderTest < ActionDispatch::IntegrationTest
     )
     @bikes = Marketplace::Category.create!(name: "Sykler", slug: "sykler-#{SecureRandom.hex(4)}")
     listing = Marketplace::Listing.create!(user: seller, category: @bikes, title: "Racersykkel #{SecureRandom.hex(2)}",
-                                           price_cents: 90_000, location: "Nordnes")
+                                           price_cents: 90_000, location: "Nordnes",
+                                           delivery_promise: Marketplace::Listing::DELIVERY_PROMISES.fetch(:same_day_bergen))
     listing.update_columns(rating: 4.5, reviews_count: 3)
+    @listing = listing
     Marketplace::Deal.create!(listing:, headline: "Halv pris i helgen", discount_percent: 50, featured: true,
                               ends_at: 2.days.from_now)
     Marketplace::Store.create!(owner: seller, name: "Sykkelbutikken", slug: "sykkelbutikken-#{SecureRandom.hex(4)}",
@@ -63,6 +65,17 @@ class StorefrontCardLadderTest < ActionDispatch::IntegrationTest
     assert_ladder marketplace.deals_path
     assert_ladder marketplace.category_path(@bikes)
     assert_ladder marketplace.shops_path
+  end
+
+  test "a listing tile shows its delivery promise exactly once" do
+    host! "markedsplass.brgen.no"
+    get marketplace.listings_path
+
+    card = css_select(".deal-card.listing[data-product-id='#{@listing.id}']").first
+    assert card, "the listing tile should be present"
+    delivery_lines = card.css(".store-badge--delivery")
+    assert_equal 1, delivery_lines.length
+    assert_equal @listing.delivery_badge, delivery_lines.first.text.strip
   end
 
   test "a deal tile carries what it sells, its stars and its end in that order" do
