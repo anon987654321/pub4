@@ -239,14 +239,25 @@ module Master
       end
 
       def run_face
-        # The scanner's own thread, not the REPL's @running: the REPL is always running here, and
-        # reading it started the opt-in lib/ scan on every exit from the face.
+        # The face owns terminal input presentation only. Typed and spoken
+        # turns are handed to the existing Session pipeline and transcript.
         was_running = @bg_thread&.alive?
+        was_face_open = @face_open
+        @face_open = true
         stop_background_loop
-        result = CommandRegistry.dispatch_face
-        terminal_puts(result) if result && result != "face0: closed"
+        result = CommandRegistry.dispatch_face(
+          prompt: Fiber[:master_cli_prompt],
+          turn: method(:run_face_turn),
+          cancel: method(:cancel_face_turn),
+        )
+        if result == "face0: exit"
+          exit_cli
+        elsif result && result != "face0: closed"
+          terminal_puts(result)
+        end
         nil
       ensure
+        @face_open = was_face_open
         start_background_loop if was_running && @running
       end
 

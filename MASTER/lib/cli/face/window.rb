@@ -56,8 +56,10 @@ module Master
         end
 
         def initialize(turn:, ear: Ear.new, mouth: Mouth.new, input: $stdin, output: $stdout,
-                       size: -> { Sizing.winsize }, event_bus: nil, size_mode: nil, prompt: nil)
+                       size: -> { Sizing.winsize }, event_bus: nil, size_mode: nil, prompt: nil,
+                       cancel: nil)
           @turn = turn
+          @cancel_turn = cancel
           @ear = ear
           @mouth = mouth
           @input = input
@@ -93,7 +95,7 @@ module Master
           @output.print("\e[?1049h\e[2J")
           painter = Thread.new { paint_forever }
           raw { converse }
-          "face0: closed"
+          @exit_requested ? "face0: exit" : "face0: closed"
         rescue EOFError, IOError, SystemCallError
           "face0: terminal closed"
         ensure
@@ -372,7 +374,10 @@ module Master
         def submit
           text = @draft.strip
           change { @draft.clear }
-          return @closing = true if EXIT_WORDS.include?(text)
+          if EXIT_WORDS.include?(text)
+            @exit_requested = true
+            return @closing = true
+          end
 
           answer(text) if text && !text.empty?
         end
@@ -483,11 +488,20 @@ module Master
         end
 
         def cancel_worker(worker, children)
+          if @cancel_turn
+            begin
+              @cancel_turn.call
+            rescue StandardError => e
+              Master::Ground::Swallow.log(e, context: "face.cancel_turn", event_bus: @event_bus)
+            end
+          end
           worker.kill
           children.kill_all
-          @event_bus&.publish(
-            "user:interrupt", reason: "face", source: "face", children:
-          )
+          unless @cancel_turn
+            @event_bus&.publish(
+              "user:interrupt", reason: "face", source: "face", children:
+            )
+          end
           worker.join(1)
           if @closing
             Master::Result.err("face0: turn cancelled — leaving face", category: :timeout)

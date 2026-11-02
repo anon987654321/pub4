@@ -98,30 +98,58 @@ module Master
         handle_repl_line(stripped)
       end
 
-      def run_input(input)
+      def run_input(input, presentation: :terminal)
         return empty_input(:run_input) if input.strip.empty?
         @turn_queue_mutex.synchronize { @turn_cancel_requested = false unless @turn_queue_paused }
         return Master::Result.err("turn cancelled before start", category: :abort) if turn_cancel_requested?
-        blocked = check_budget_blocks(input)
+        blocked = check_budget_blocks(input, presentation:)
         return blocked if blocked
 
         @user_active = true
         @last_input = input
         Master::Trace::WriteTracker.current&.reset!
         paste, state, accumulated = init_turn_state(input)
+        state[:presentation] = presentation
 
-        print_thinking_indicator unless paste
-        result = dispatch_turn(input, accumulated:, state:)
+        print_thinking_indicator unless paste || presentation == :face
+        result = presentation == :face ? dispatch_face_turn(input, accumulated:, state:) :
+                                          dispatch_turn(input, accumulated:, state:)
         stop_thinking_indicator
-        print_bridge_footer(result.value[:core], state:) if result.ok? && state[:streamed] && result.value[:core]
-        display_result(result:, accumulated:, streamed: state[:streamed])
+        if presentation == :face
+          unless result.err? && result.category == :abort
+            @last_ok = result.ok?
+            @exit_code = result.ok? ? 0 : exit_code_for(result)
+          end
+        else
+          print_bridge_footer(result.value[:core], state:) if result.ok? && state[:streamed] && result.value[:core]
+          display_result(result:, accumulated:, streamed: state[:streamed])
+        end
         @last_repeatable_input = input if result.ok? && Master::Io::MediaIntent.repeatable?(input)
+        result
       ensure
         @pipeline_thread = nil
         @turn_cancellation = nil
+        @turn_children = nil if presentation == :face
         stop_thinking_indicator
         close_unit_console
         @user_active = false
+      end
+
+      # Face typing and speech are input adapters for this Session. Its
+      # cancellable face worker is the turn worker, avoiding a nested thread.
+      def run_face_turn(input)
+        text = input.to_s
+        return empty_input(:face) if text.strip.empty?
+
+        Reline::HISTORY << text
+        run_input(text, presentation: :face)
+      end
+
+      def cancel_face_turn
+        @turn_cancellation&.cancel!(reason: "face interrupted")
+        @refs.bus&.publish("user:interrupt", reason: "face", source: "cli", children: @turn_children)
+      rescue StandardError => e
+        Master::Ground::Swallow.log(e, context: "cli.face.cancel", event_bus: @refs.bus)
       end
 
       private
@@ -218,14 +246,31 @@ module Master
         [paste, state, accumulated]
       end
 
-      def check_budget_blocks(input)
+      def check_budget_blocks(input, presentation: :terminal)
         if (host_err = host_budget_block(input))
-          return display_result(result: host_err, accumulated: "", streamed: false)
+          return presentation == :face ? host_err : display_result(result: host_err, accumulated: "", streamed: false)
         end
         budget_err = budget_block_if_exceeded
-        return display_result(result: budget_err, accumulated: "", streamed: false) if budget_err
+        return presentation == :face ? budget_err :
+          display_result(result: budget_err, accumulated: "", streamed: false) if budget_err
 
         nil
+      end
+
+      def dispatch_face_turn(input, accumulated:, state:)
+        return Master::Result.err("turn cancelled before dispatch", category: :abort) if turn_cancel_requested?
+
+        on_turn = build_on_turn_handler(accumulated, state)
+        @turn_cancellation = Master::Core::CancellationToken.new
+        @turn_children = Fiber[:master_children] || Master::Io::Exec::Children.new
+        TurnRouter.call(
+          message: input,
+          container: @container,
+          felt_sense: cli_felt_sense,
+          on_turn:,
+          on_chunk: build_on_chunk_handler(accumulated, state),
+          cancellation: @turn_cancellation,
+        )
       end
 
       def dispatch_turn(input, accumulated:, state:)
@@ -319,6 +364,10 @@ module Master
       end
 
       def handle_stream_text(text, state)
+        if state[:presentation] == :face
+          state[:streamed] = true
+          return
+        end
         if state[:thinking_shown] && $stdout.isatty
           stop_thinking_indicator
           terminal_print("\r\e[K")

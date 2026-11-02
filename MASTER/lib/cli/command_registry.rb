@@ -292,7 +292,7 @@ module Master
       # Open the full-screen terminal face without inventing a second model route.
       # `/face size auto|small|large|WxH` chooses how big the face is drawn and
       # opens it; the choice holds for the session. WxH is columns by rows.
-      def dispatch_face(ctx = nil, prompt: nil)
+      def dispatch_face(ctx = nil, prompt: nil, turn: nil, cancel: nil)
         chosen = face_size(arg_for(ctx))
         return chosen if chosen.is_a?(String) && chosen.start_with?("face0:")
 
@@ -301,15 +301,15 @@ module Master
         container = Fiber[:master_cli_container]
         return "face0: no session" unless container
 
-        turn = ->(text) do
-          return face_shell_only_notice if face_shell_only?(text)
-
+        turn ||= lambda do |text|
           streamed = +""
           result = TurnRouter.call(message: text, container:, on_turn: ->(line) { streamed << line << "\n" })
           return result if streamed.strip.empty? || result.err?
 
           streamed
         end
+        handler = turn
+        turn = ->(text) { face_shell_only?(text) ? face_shell_only_notice : handler.call(text) }
         prompt ||= Fiber[:master_cli_prompt]
         prompt ||= lambda do
           renderer = container[:renderer]
@@ -332,6 +332,7 @@ module Master
           input: terminal,
           output: terminal,
           prompt:,
+          cancel:,
         ).run
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "cli.face")

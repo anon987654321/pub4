@@ -22,7 +22,7 @@ class TestCliFaceDispatch < Minitest::Test
     session.define_singleton_method(:stop_background_loop) { events << :stop }
     session.define_singleton_method(:start_background_loop) { events << :start }
 
-    Master::CLI::CommandRegistry.stub(:dispatch_face, -> { events << :face; "face0: closed" }) do
+    Master::CLI::CommandRegistry.stub(:dispatch_face, ->(**) { events << :face; "face0: closed" }) do
       assert_nil session.send(:run_face)
     end
 
@@ -48,7 +48,7 @@ class TestCliFaceDispatch < Minitest::Test
     session = Master::CLI::Session.allocate
     called = false
 
-    Master::CLI::CommandRegistry.stub(:dispatch_face, -> { called = true; "face0: closed" }) do
+    Master::CLI::CommandRegistry.stub(:dispatch_face, ->(**) { called = true; "face0: closed" }) do
       assert_nil session.send(:dispatch_core_slash_command, "/face")
     end
 
@@ -72,6 +72,55 @@ class TestCliFaceDispatch < Minitest::Test
     session = Master::CLI::Session.allocate
     session.instance_variable_set(:@container, { commands: {} })
     assert_equal :unhandled, session.send(:dispatch_core_slash_command, "/not-a-command")
+  end
+
+  def test_face_turn_uses_the_session_pipeline_and_shared_history
+    session = Master::CLI::Session.allocate
+    calls = []
+    history = []
+    session.define_singleton_method(:run_input) do |input, presentation:|
+      calls << [input, presentation]
+      :result
+    end
+
+    result = Reline::HISTORY.stub(:<<, ->(line) { history << line }) do
+      session.send(:run_face_turn, "  use the face input  ")
+    end
+
+    assert_equal :result, result
+    assert_equal [["  use the face input  ", :face]], calls
+    assert_equal ["  use the face input  "], history
+  end
+
+  def test_face_cancellation_reaches_the_session_token_and_event_bus
+    session = Master::CLI::Session.allocate
+    token = Master::Core::CancellationToken.new
+    events = []
+    bus = Object.new
+    bus.define_singleton_method(:publish) { |name, **payload| events << [name, payload] }
+    session.instance_variable_set(:@turn_cancellation, token)
+    session.instance_variable_set(:@turn_children, :children)
+    session.instance_variable_set(:@refs, Struct.new(:bus).new(bus))
+
+    session.send(:cancel_face_turn)
+
+    assert_predicate token, :cancelled?
+    assert_equal "face interrupted", token.reason
+    assert_equal "user:interrupt", events.first.first
+    assert_equal :children, events.first.last[:children]
+  end
+
+  def test_face_exit_exits_the_master_session
+    session = Master::CLI::Session.allocate
+    exited = false
+    session.define_singleton_method(:stop_background_loop) {}
+    session.define_singleton_method(:exit_cli) { exited = true }
+
+    Master::CLI::CommandRegistry.stub(:dispatch_face, ->(**) { "face0: exit" }) do
+      session.send(:run_face)
+    end
+
+    assert exited
   end
 
 end
