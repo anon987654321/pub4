@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require "digest"
 require "fileutils"
 require "net/http"
 require "uri"
@@ -43,20 +44,29 @@ module Shared
     # conversion, so a sale can be attributed to a city and a surface rather than
     # to "the website". Nil when there is nothing worth recording, so callers can
     # skip the parameter instead of sending an empty one.
-    def epi_for(city: nil, surface: nil, tribe: nil, edition: nil, post_id: nil)
+    def epi_for(city: nil, surface: nil, route: nil, tribe: nil, edition: nil, post_id: nil)
       parts = []
       parts << "city:#{city}" if city.present?
       parts << "surface:#{surface}" if surface.present?
+      parts << "route:#{route_code(route)}" if route.present?
       parts << "tribe:#{tribe}" if tribe.present?
       parts << "edition:#{edition}" if edition.present?
       parts << "post:#{post_id}" if post_id.present?
       parts.join("|").presence
     end
 
+    # A short, stable route code joins page-view counters, click beacons and
+    # network postbacks without placing a path, slug or visitor identity in EPI.
+    def route_code(route)
+      return nil if route.blank?
+
+      "r#{Digest::SHA256.hexdigest(route.to_s)[0, 10]}"
+    end
+
     # The exact EPI the consent-gated Link Converter assigns to links on
     # this request. First-party click beacons reuse it so their row can join a
     # conversion postback without introducing a visitor identifier.
-    def request_epi(city: nil, surface: nil)
+    def request_epi(city: nil, surface: nil, route: nil)
       if defined?(Current)
         city ||= Current.try(:city) || Current.try(:city_record)&.try(:slug)
         surface ||= Current.try(:subapp)
@@ -64,7 +74,7 @@ module Shared
       if surface.blank? && defined?(Rails) && Rails.respond_to?(:application)
         surface = Rails.application.class.module_parent_name.downcase
       end
-      epi_for(city:, surface:)
+      epi_for(city:, surface:, route:)
     end
 
     def append_epi(url, epi:, epi2: nil)
