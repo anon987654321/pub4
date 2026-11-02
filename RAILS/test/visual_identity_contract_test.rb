@@ -2,16 +2,16 @@
 
 require "minitest/autorun"
 require_relative "../../MASTER/tools/master_design"
+require_relative "support/stylesheet_modules"
 
 class VisualIdentityContractTest < Minitest::Test
+  include StylesheetModules
+
   ROOT = File.expand_path("..", __dir__)
   FACE_SOURCE = File.join(ROOT, "master", "styles", "face", "10_foundation.css")
   FACE_COMPILED = File.join(ROOT, "master", "public", "face.css")
-  BRGEN_NAV = File.join(ROOT, "brgen", "app", "assets", "stylesheets", "application.scss")
-  BRGEN_STEPS = File.join(ROOT, "brgen", "app", "assets", "stylesheets", "application.scss")
   SHARED_CHROME = File.join(ROOT, "__shared", "app", "assets", "stylesheets", "_layout_chrome.scss")
   BRGEN_POSTS = File.join(ROOT, "brgen", "app", "views", "posts", "index.html.erb")
-  BRGEN_SHELL = File.join(ROOT, "brgen", "app", "assets", "stylesheets", "application.scss")
   AMBER_LAYOUT = File.join(ROOT, "amber", "app", "views", "layouts", "application.html.erb")
   AMBER_SIDEBAR = File.join(ROOT, "amber", "app", "views", "shared", "_sidebar_nav.html.erb")
   AMBER_STYLES = File.join(ROOT, "amber", "app", "assets", "stylesheets", "application.scss")
@@ -19,7 +19,9 @@ class VisualIdentityContractTest < Minitest::Test
   BSDPORTS_LAYOUT = File.join(ROOT, "bsdports", "app", "views", "layouts", "application.html.erb")
   FACE_MOTION = File.join(ROOT, "master", "styles", "face", "40_accessibility_motion.css")
   SHARED_MOTION = File.join(ROOT, "__shared", "app", "assets", "stylesheets", "_interaction_craft.scss")
-  LAWS_SOURCE = File.read(File.expand_path("../../MASTER/data/laws.yml", __dir__), encoding: "UTF-8")
+  # laws.yml states each Law; law_runtime.yml carries the executable requirements.
+  LAW_FILES = %w[laws.yml law_runtime.yml].map { |name| File.expand_path("../../MASTER/data/#{name}", __dir__) }
+  LAWS_SOURCE = LAW_FILES.map { |path| File.read(path, encoding: "UTF-8") }.join("\n")
 
   def test_signal_is_canonical_original_and_semantically_named
     identity = Operator::MasterDesign.tokens.fetch("visual_identity")
@@ -42,8 +44,9 @@ class VisualIdentityContractTest < Minitest::Test
   end
 
   def test_brgen_signal_is_a_selected_marker_not_a_forced_brand_palette
-    nav = File.read(BRGEN_NAV, encoding: "UTF-8")
-    steps = File.read(BRGEN_STEPS, encoding: "UTF-8")
+    # brgen is split into @use partials; stylesheet_source reads them all.
+    nav = stylesheet_source("brgen")
+    steps = nav
 
     assert_includes nav, "border-block-end-color: var(--pub4-signal);"
     assert_includes nav, "border-block-end-color: var(--pub4-signal-on-light);"
@@ -52,7 +55,7 @@ class VisualIdentityContractTest < Minitest::Test
   end
 
   def test_selected_sort_state_uses_the_signal_without_repainting_the_product_palette
-    css = File.read(BRGEN_SHELL, encoding: "UTF-8")
+    css = stylesheet_source("brgen")
 
     assert_includes css, "border-block-end-color: var(--pub4-signal);"
     assert_includes css, ':root[data-theme="light"] .sort-tab.active'
