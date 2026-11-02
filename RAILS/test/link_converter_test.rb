@@ -108,7 +108,7 @@ class LinkConverterTest < Minitest::Test
     assert_equal 11, LC.route_code(route).length
     assert_operator actual.length, :<=, 64
     refute_includes actual, "categories"
-    assert_equal LC.route_code(route), LC.route_code(route)
+    refute_equal LC.route_code(route), LC.route_code("marketplace/categories#index")
   end
 
   # Ad blockers target tradedoubler.com by hostname, so a first-party copy is the
