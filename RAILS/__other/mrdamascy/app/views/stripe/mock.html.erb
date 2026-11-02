@@ -1,0 +1,28 @@
+<%# Stripe Checkout stand-in for dev/test: StripeClient redirects here with
+    ?token=… in mock mode. Approving marks the payment captured, confirms the
+    order and lands on the tracking page — the same semantics as the real
+    hosted Checkout returning to the success_url. Layout reuses the shared
+    .vipps-mock chrome; only the wordmark and button tone are Stripe's. %>
+<% order = @order %>
+
+<div class="vipps-mock">
+  <header class="vipps-head">
+    <span class="stripe-wordmark-lg" aria-hidden="true">stripe</span>
+    <p class="vipps-merchant"><%= t("stripe.merchant") %></p>
+    <p class="vipps-amount"><%= money(order.total_ore) %></p>
+    <p class="ink-soft mb-0"><%= t("stripe.amount") %> · #<%= order.id %></p>
+  </header>
+
+  <%= form_with url: "/stripe/mock/approve", method: :patch,
+        html: { class: "vipps-form" }, data: { controller: "vipps-mock" } do %>
+    <%= hidden_field_tag :token, order.tracking_token %>
+    <button type="button" class="btn btn-stripe btn-block btn-lg"
+            data-action="vipps-mock#approve">
+      <%= t("stripe.approve") %>
+      <span class="stripe-lock" aria-hidden="true"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></span>
+    </button>
+  <% end %>
+
+  <%= link_to t("stripe.cancel"), track_path(order.tracking_token), class: "vipps-cancel" %>
+  <p class="vipps-note"><%= t("stripe.mock_note") %></p>
+</div>

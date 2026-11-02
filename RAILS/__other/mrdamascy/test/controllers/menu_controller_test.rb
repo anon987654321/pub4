@@ -16,7 +16,7 @@ class MenuControllerTest < ActionDispatch::IntegrationTest
     assert_match "Damaskus Kylling Shawarma", response.body
     assert_match "129 kr", response.body                       # money(12900)
     assert_match(/4[.,]9/, response.body)                      # kitchen rating ⭐
-    assert_match "11–23", response.body                        # opening hours
+    assert_match "11–21", response.body                        # opening hours
     assert_match "Wraps &amp; Ruller", response.body  # HTML-escaped in the section title               # category section
   end
 

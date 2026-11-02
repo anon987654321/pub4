@@ -44,6 +44,13 @@
   --vipps-btn: #cc4409;
   --vipps-btn-hover: #b83c08;
   --vipps-ink: #c73a00;  // 5.2:1 on white
+
+  // Stripe — brand blurple for wordmarks and the mock; the button surface is
+  // darkened so white label text passes 4.5:1 (white on #635bff is 4.0:1).
+  --stripe: #635bff;
+  --stripe-btn: #4f45e4;
+  --stripe-btn-hover: #4338ca;
+  --stripe-ink: #4f45e4;  // 5.6:1 on white
   --on-dark-dim: rgba(255, 255, 255, 0.2);
 
   // Radii — pixel_perfection: nothing above 16px except the pill.

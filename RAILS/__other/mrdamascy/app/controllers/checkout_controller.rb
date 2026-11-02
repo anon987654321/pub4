@@ -4,10 +4,12 @@ class CheckoutController < ApplicationController
   # The min-basket flash formats øre through the same money() rule as the
   # views — one formatter, no controller-side copy.
   include ApplicationHelper
-  # Real mode without credentials raises VippsClient::NotAvailable; the checkout
-  # says so honestly instead of 500-ing (payment honesty: no fake success, no
-  # half-captured orders — the cart is untouched and the customer can retry).
-  rescue_from VippsClient::NotAvailable, with: :payment_unavailable
+  # Real mode without credentials raises VippsClient::NotAvailable or
+  # StripeClient::NotAvailable; the checkout says so honestly instead of
+  # 500-ing (payment honesty: no fake success, no half-captured orders — the
+  # cart is untouched and the customer can retry).
+  rescue_from VippsClient::NotAvailable, StripeClient::NotAvailable,
+              with: :payment_unavailable
 
   # The one confirm screen (APP_SPEC §6/§12): prefilled address, mode toggle,
   # Vipps payment row, auto-applied promo line, totals — one "Betal med
@@ -79,13 +81,20 @@ class CheckoutController < ApplicationController
       return render :show, status: :unprocessable_entity
     end
 
+    # Payment lane: Vipps (default) or Stripe Checkout — the two buttons on
+    # the confirm screen each submit their own payment_method value. Unknown
+    # values fall back to Vipps (PaymentGateway.normalize!).
+    payment_method = PaymentGateway.normalize!(attrs[:payment_method])
+    order.payment_method = payment_method
+
     # init_payment owns the payment state: mock → "authorised" (the mock page
-    # approves it next), real → "pending" until Vipps reports AUTHORIZED (the
-    # webhook or tracking-poll sync then captures). One seam, no double truth.
+    # approves it next), real → "pending" until the PSP reports paid
+    # (the webhook or tracking-poll sync then captures). One seam, no double
+    # truth.
     begin
-      VippsClient.init_payment(order: order)
+      PaymentGateway.init!(order, method: payment_method)
       order.save!
-    rescue VippsClient::NotAvailable
+    rescue VippsClient::NotAvailable, StripeClient::NotAvailable
       # No payment was reserved — never leave a zombie on the kitchen board.
       # The cart is untouched, so the customer just retries (payment honesty).
       order.cancel! if order.persisted? && order.state == "placed"
@@ -118,10 +127,11 @@ class CheckoutController < ApplicationController
   end
 
   # Accepts both the form_with model shape (params[:order][…]) and plain
-  # field names, so the confirm form stays free to pick either.
+  # field names, so the confirm form stays free to pick either. The payment
+  # method rides plain params (each pay button submits its own value).
   def checkout_params
     source = params[:order].is_a?(ActionController::Parameters) ? params.require(:order) : params
-    source.permit(:address, :postcode, :phone, :delivery_mode)
+    source.permit(:address, :postcode, :phone, :delivery_mode, :payment_method)
   end
 
   # Shared between show and the zone-failure re-render. The mode toggle on the

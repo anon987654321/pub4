@@ -4,7 +4,9 @@
     provides @cart, @mode, @order, @returning_customer, @zone, @subtotal_ore,
     @discount_ore, @delivery_fee_ore, @total_ore and @eta_minutes. Live zone
     feedback comes from zone_check_controller → GET /checkout/zone. POSTing
-    checkout_path builds the order and redirects to Vipps. %>
+    checkout_path builds the order and redirects to the chosen PSP (Vipps or
+    Stripe) — each pay button submits its own payment_method value, so the
+    choice needs no script. %>
 
 <h1 class="page-title"><%= t("checkout.title") %></h1>
 <% if @subtotal_ore.positive? %>
@@ -84,6 +86,14 @@
     <% end %>
   </section>
 
+  <section class="pay-row card">
+    <span class="stripe-wordmark" aria-hidden="true">stripe</span>
+    <div>
+      <strong><%= t("checkout.stripe_row") %></strong>
+      <p class="ink-soft mb-0"><%= t("checkout.stripe_note") %></p>
+    </div>
+  </section>
+
   <% if @promo[:promo].present? %>
     <p class="promo-line">
       <span aria-hidden="true">✓</span> <%= t("checkout.promo_auto", code: @promo[:promo].code) %>
@@ -98,6 +108,20 @@
     <p class="totals-note mb-0"><%= t("checkout.totals_note") %></p>
   </section>
 
-  <%= f.submit t("checkout.vipps_cta"), class: "btn btn-vipps btn-block btn-lg" %>
+  <%# One form, two lanes: each button submits its own payment_method value
+      (plain params, PaymentGateway.normalize! guards it server-side).
+      Vipps stays the recommended primary; the card button is the fallback
+      for customers without the Vipps app. button_tag keeps the label free
+      from the submitted value (f.submit would print the value instead).
+      No script, no card fields here — Stripe hosts the card entry on its
+      own PCI-scoped page. %>
+  <%= button_tag type: :submit, name: "payment_method", value: "vipps",
+        class: "btn btn-vipps btn-block btn-lg" do %>
+    <%= t("checkout.vipps_cta") %>
+  <% end %>
+  <%= button_tag type: :submit, name: "payment_method", value: "stripe",
+        class: "btn btn-stripe btn-block" do %>
+    <%= t("checkout.stripe_cta") %>
+  <% end %>
   <p class="steps-note"><%= t("checkout.steps_note") %></p>
 <% end %>

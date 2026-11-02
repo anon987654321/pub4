@@ -87,3 +87,14 @@
   opacity: 0.8;
   cursor: progress;
 }
+
+// Second payment lane (operator-mandated): Stripe Checkout button — same
+// discipline as .btn-vipps (darkened brand surface, white label ≥ 4.5:1).
+.btn-stripe {
+  background: var(--stripe-btn);
+  color: var(--paper);
+}
+
+.btn-stripe:hover {
+  background: var(--stripe-btn-hover);
+}

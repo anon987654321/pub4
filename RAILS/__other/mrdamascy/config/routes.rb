@@ -2,6 +2,9 @@
 
 # APP_SPEC §3 — final, no deviations — plus the single extra route mandated by
 # APP_SPEC §8: `get "checkout/zone"` feeds the zone_check Stimulus controller.
+# Operator addition (2026-11-02): the three stripe/* routes wire the second
+# payment lane (Stripe Checkout) mandated for Mr. Damascy — mock stand-in and
+# real webhook, mirroring the vipps/* pair. Everything else is §3 verbatim.
 Rails.application.routes.draw do
   root "menu#show"
   get "menu", to: "menu#show"
@@ -50,6 +53,13 @@ Rails.application.routes.draw do
   # webhook secret; body is [{reference:, state:, …}]. CSRF-exempt in the
   # controller — see VippsController#callback.
   post "vipps/callback", to: "vipps#callback"
+
+  # Second payment lane (operator-mandated): Stripe Checkout. Same shape as
+  # the vipps routes — mock approval page + real webhook. The webhook is
+  # HMAC-signed via the Stripe-Signature header (StripeController#callback).
+  get "stripe/mock", to: "stripe#mock"             # dev/test Checkout stand-in
+  patch "stripe/mock/approve", to: "stripe#approve"
+  post "stripe/callback", to: "stripe#callback"    # real Stripe webhook
 
   # PWA
   get "manifest.json", to: "pwa#manifest", as: :pwa_manifest

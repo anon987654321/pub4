@@ -17,7 +17,11 @@
 
 <article class="sheet" data-turbo-frame="_top">
   <header class="sheet-head star-pattern">
-    <span class="sheet-emoji" aria-hidden="true"><%= item.emoji %></span>
+    <% if (photo = food_photo(item)) %>
+      <%= image_tag photo, alt: "", class: "sheet-photo" %>
+    <% else %>
+      <span class="sheet-emoji" aria-hidden="true"><%= item.emoji %></span>
+    <% end %>
     <h1 class="sheet-name"><%= item.name %></h1>
     <% if item.name_en.present? %>
       <p class="ink-soft mb-0"><%= item.name_en %></p>

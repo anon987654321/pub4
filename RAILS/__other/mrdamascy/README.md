@@ -5,7 +5,7 @@
 > "Bestefar solgte shawarma ved Souq al-Hamidiyah i Damaskus. Hvitløkssausen lages hver morgen — toum som dere husker den."
 > *(Grandfather sold shawarma by Souq al-Hamidiyah in Damascus. The garlic sauce is made every morning — toum the way you remember it.)*
 
-Mr. Damascy is a mobile-first Rails 8 PWA for ordering shawarma and kebab from **one Bergen kitchen** — Strandgaten 47, 5004 Bergen (currently the only outlet). It carries Damascus/Syrian warmth (Ahlan! Yalla! Sahtein!) wrapped around Bergen street-kebab culture: kvartover-honest portions, a proud free salad bar, and a kebabrull when the west-coast rain sets in. There is no Foodora, no courier marketplace, no commission between you and the kitchen — you order and pay with **Vipps Express** in fewer steps than any delivery app, and the money lands directly with the people at the grill.
+Mr. Damascy is a mobile-first Rails 8 PWA for ordering shawarma and kebab from **one Bergen kitchen** — Solheimsgaten 60, 5054 Bergen at **Danmarksplass** (the real Mr. Damascy restaurant, mr-damascy.webflow.io). Opening hours follow the restaurant: **Man–Fre 11–21, Lør–Søn 14–21**. It carries Damascus/Syrian warmth (Ahlan! Yalla! Sahtein!) wrapped around Bergen street-kebab culture: kvartover-honest portions, a proud free salad bar, and a kebabrull when the west-coast rain sets in. There is no Foodora, no courier marketplace, no commission between you and the kitchen — you order and pay with **Vipps Express** in fewer steps than any delivery app, and the money lands directly with the people at the grill.
 
 ---
 
@@ -23,8 +23,9 @@ Mr. Damascy is a mobile-first Rails 8 PWA for ordering shawarma and kebab from *
 | Menu | Category chips, item sheets with origin stories (12 cities), heat scale (Uten/Mild/Middels/Sterk!), weight badge ("450 g — kvartover-ærlig"), free salatbar chips, 1-tap quick add |
 | Reorder | "Yalla igjen" card on the menu — last order rebuilt into the cart in one tap (2 taps to paid for returning users) |
 | Cart | Cart bar fixed above the tab bar, quantity stepper, auto-applied best promo (no code fields), mode toggle (delivery/pickup) |
-| Checkout | **One confirm screen**: prefilled address, live postcode zone check (fee + ETA), Vipps payment row, totals, one gold-orange CTA "Betal med Vipps" |
-| Payment | Vipps Express (mock in dev): authorise → approve in the mock Vipps page → capture. `payment_steps` stores 3 — "Betalte i 3 steg" chip on orders |
+| Checkout | **One confirm screen**: prefilled address, live postcode zone check (fee + ETA), two payment rows (Vipps + card/Stripe), totals, "Betal med Vipps" primary + "Betal med kort" secondary CTA |
+| Payment | **Two lanes** (operator-mandated): Vipps Express (mock in dev) and **Stripe Checkout** for card/Apple Pay/Google Pay. Each order stores its `payment_method`; both converge on the same captured+confirmed states. `payment_steps` stores 3 — "Betalte i 3 steg" chip on orders |
+| Photos | Every dish has a generated studio photo (flat mint background, no text) with a provenance sidecar in `app/assets/images/food/provenance.json`; items without a photo fall back to their emoji tile |
 | Tracking | Public tracking by token: 5-step timeline with 8-point star milestones, ETA polling, courier line, tip chips (0/20/40 kr) + star review after delivery — "Takk for handelen — Sahtein! صحتين" |
 | Loyalty | **Sahtein-kortet**: 10 star stamps (one per order), the 10th wrap is free (auto-applied at checkout when ≥ 9 unredeemed stamps) |
 | Auth | Phone-first, passwordless: mock OTP `1234` in dev/test. Roles: customer / staff / courier / admin |
@@ -166,9 +167,36 @@ With `VIPPS_MOCK=0` the client speaks the **Vipps ePayment API v1** (`api.vipps.
 
 In mock mode the client never raises and never touches the network.
 
+## Real Stripe (production)
+
+The second payment lane (operator-mandated) is Stripe Checkout — hosted card entry, Apple Pay and Google Pay included by Stripe. Mock mode is the default (`ENV["STRIPE_MOCK"]` unset ≠ `"0"`); the dev stand-in lives at `/stripe/mock`. To go live:
+
+```bash
+STRIPE_MOCK=0
+STRIPE_SECRET_KEY=sk_live_...      # or sk_test_... for Stripe test mode
+STRIPE_WEBHOOK_SECRET=whsec_...    # signing secret of the /stripe/callback endpoint
+```
+
+With `STRIPE_MOCK=0` the client speaks the **Stripe Checkout Sessions REST API** (`api.stripe.com/v1`, Net::HTTP only — no gems): `POST /v1/checkout/sessions` creates a hosted session in NOK with the exact øre total and a stable `Idempotency-Key`; the returned `url` becomes the order's redirect target and `success_url` lands back on the tracking page. The order stays `pending` until Stripe reports `payment_status: paid` — via the **webhook** (`POST /stripe/callback`, HMAC-signed `Stripe-Signature` verified constant-time with a ±5 min timestamp tolerance) or the tracking page's own poll sync — and then the order is captured+confirmed. Session id and hosted url reuse the order's generic PSP columns (`vipps_order_id`/`vipps_url`), and each order carries its `payment_method` (`vipps` default, `stripe`) so syncs always route to the right client via `PaymentGateway`.
+
+Honesty guards mirror Vipps exactly: missing `STRIPE_SECRET_KEY` or a failed call raises `StripeClient::NotAvailable` → honest "payment could not start" screen (cart intact, orphan cancelled); signature failures answer 400; the mock Stripe page answers 404 in real mode, so a mock approval can never capture an order no PSP reserved.
+
+
 Three real-mode honesty guards: missing credentials or a failed Vipps call raise `VippsClient::NotAvailable`, which the checkout renders as an honest "payment could not start — nothing reserved" screen (HTTP 503, cart intact, orphan order cancelled); the webhook answers 401 to anything without the webhook secret; and the mock Vipps pages answer 404, so a mock approval can never capture a real order.
+
+
+## brgen_takeaway — the planned multi-restaurant future
+
+Mr. Damascy is the **first restaurant** destined for the planned `RAILS/brgen_takeaway` app (the food-ordering vertical the marketplace already stubs at `/food`). The integration path, deliberately left as a seam rather than built ahead of need (YAGNI):
+
+- **No schema coupling.** mrdamascy is standalone (own SQLite, own auth, `MrDamascy` module) — brgen_takeaway can adopt its `orders`/`menu_items` shapes without dragging the engine along.
+- **The payment lanes are per-order, not per-app.** `orders.payment_method` + `PaymentGateway` mean a takeaway umbrella can add its own PSPs alongside Vipps/Stripe without touching either client.
+- **The tracking seam is already public.** `track/:token` + `track/:token/status` (JSON) are token-scoped and unguessable — exactly the surface a takeaway app needs to embed live order status.
+- **Suggested landing path when brgen_takeaway starts:** mount mrdamascy's kitchen identity as the first `Kitchen`, re-use the øre-integer money rule and the 8-point-star design tokens, and let takeaway own discovery while mrdamascy keeps checkout + payment (the two things the commission argument is about).
+- Until then, nothing here depends on the monorepo: the app stays self-contained in `RAILS/__other/`.
 
 ## Repository notes
 
 - This app lives at `RAILS/__other/mrdamascy` — inside `__other/`, outside the contract test's four fixed roots. See `APP_SPEC.md` (the single source of truth) and `AGENTS.md` (contributor contract).
-- Logo assets in `public/` are final — do not regenerate.
+- Logo assets in `public/` are the **operator's originals — the marks already in use at the restaurant — retained byte-for-byte**. Do not regenerate or redesign them; a VTracer re-trace was attempted and rolled back (see `docs/fix-ledger-2026-11-02.md`).
+- Webflow reference screenshots of the current site (`RAILS/__other/mrdamascy_1..3.png`) and live app screenshots (`screenshots/01–11`) document both the original and this build.

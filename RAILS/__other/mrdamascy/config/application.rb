@@ -33,7 +33,7 @@ module MrDamascy
     # These settings can be overridden in specific environments using the files
     # in config/environments, which are processed later.
     #
-    # One Bergen kitchen (Strandgaten): orders, ETAs and stamps all live on
+    # One Bergen kitchen (Danmarksplass): orders, ETAs and stamps all live on
     # Norwegian local time.
     config.time_zone = "Europe/Oslo"
     config.i18n.default_locale = :nb

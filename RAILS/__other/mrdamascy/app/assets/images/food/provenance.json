@@ -1,0 +1,136 @@
+{
+  "pipeline": "MASTER artwork.yml analog \u2014 lane g3 (conditioned diffusion), grade+disclosure+derivatives+promote applied locally",
+  "house_rules": {
+    "text_in_artwork": "forbidden_for_diffusion (prompts forbid text/watermarks)",
+    "flat_backgrounds": true,
+    "renderer": "z-ai image generation (sandbox stand-in for g3 diffusion)"
+  },
+  "generated": "2026-11-02",
+  "files": {
+    "damaskus-kylling-shawarma": {
+      "file": "food/damaskus-kylling-shawarma.jpg",
+      "bytes": 81309,
+      "prompt_id": "damaskus-kylling-shawarma"
+    },
+    "beirut-lam-shawarma": {
+      "file": "food/beirut-lam-shawarma.jpg",
+      "bytes": 84028,
+      "prompt_id": "beirut-lam-shawarma"
+    },
+    "berlin-gemuse-kebap": {
+      "file": "food/berlin-gemuse-kebap.jpg",
+      "bytes": 92559,
+      "prompt_id": "berlin-gemuse-kebap"
+    },
+    "adana-sterk-durum": {
+      "file": "food/adana-sterk-durum.jpg",
+      "bytes": 76879,
+      "prompt_id": "adana-sterk-durum"
+    },
+    "bergen-kebab-i-durum": {
+      "file": "food/bergen-kebab-i-durum.jpg",
+      "bytes": 83858,
+      "prompt_id": "bergen-kebab-i-durum"
+    },
+    "dubai-gatens-shawarma": {
+      "file": "food/dubai-gatens-shawarma.jpg",
+      "bytes": 75254,
+      "prompt_id": "dubai-gatens-shawarma"
+    },
+    "blomkal-pita": {
+      "file": "food/blomkal-pita.jpg",
+      "bytes": 85123,
+      "prompt_id": "blomkal-pita"
+    },
+    "bursa-iskender": {
+      "file": "food/bursa-iskender.jpg",
+      "bytes": 83429,
+      "prompt_id": "bursa-iskender"
+    },
+    "gaziantep-ali-nazik": {
+      "file": "food/gaziantep-ali-nazik.jpg",
+      "bytes": 87047,
+      "prompt_id": "gaziantep-ali-nazik"
+    },
+    "familie-fest-mezze": {
+      "file": "food/familie-fest-mezze.jpg",
+      "bytes": 93743,
+      "prompt_id": "familie-fest-mezze"
+    },
+    "stockholm-kebabpizza": {
+      "file": "food/stockholm-kebabpizza.jpg",
+      "bytes": 110179,
+      "prompt_id": "stockholm-kebabpizza"
+    },
+    "sydney-snackpack-hsp": {
+      "file": "food/sydney-snackpack-hsp.jpg",
+      "bytes": 85028,
+      "prompt_id": "sydney-snackpack-hsp"
+    },
+    "hvitloks-pommes": {
+      "file": "food/hvitloks-pommes.jpg",
+      "bytes": 70834,
+      "prompt_id": "hvitloks-pommes"
+    },
+    "halloumi-pommes": {
+      "file": "food/halloumi-pommes.jpg",
+      "bytes": 87171,
+      "prompt_id": "halloumi-pommes"
+    },
+    "kisir-bulgursal": {
+      "file": "food/kisir-bulgursal.jpg",
+      "bytes": 93827,
+      "prompt_id": "kisir-bulgursal"
+    },
+    "syltebolle": {
+      "file": "food/syltebolle.jpg",
+      "bytes": 58516,
+      "prompt_id": "syltebolle"
+    },
+    "ayran": {
+      "file": "food/ayran.jpg",
+      "bytes": 31453,
+      "prompt_id": "ayran"
+    },
+    "salgam": {
+      "file": "food/salgam.jpg",
+      "bytes": 69802,
+      "prompt_id": "salgam"
+    },
+    "tamarind-drikk": {
+      "file": "food/tamarind-drikk.jpg",
+      "bytes": 56839,
+      "prompt_id": "tamarind-drikk"
+    },
+    "jallab": {
+      "file": "food/jallab.jpg",
+      "bytes": 69378,
+      "prompt_id": "jallab"
+    },
+    "myntesitronlimonade": {
+      "file": "food/myntesitronlimonade.jpg",
+      "bytes": 45764,
+      "prompt_id": "myntesitronlimonade"
+    },
+    "baklava": {
+      "file": "food/baklava.jpg",
+      "bytes": 89767,
+      "prompt_id": "baklava"
+    },
+    "knefeh": {
+      "file": "food/knefeh.jpg",
+      "bytes": 76572,
+      "prompt_id": "knefeh"
+    },
+    "mamoul": {
+      "file": "food/mamoul.jpg",
+      "bytes": 78544,
+      "prompt_id": "mamoul"
+    },
+    "damascy-boss-boks": {
+      "file": "food/damascy-boss-boks.jpg",
+      "bytes": 85266,
+      "prompt_id": "damascy-boss-boks"
+    }
+  }
+}

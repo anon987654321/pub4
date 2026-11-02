@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.2].define(version: 2026_11_01_000015) do
+ActiveRecord::Schema[8.2].define(version: 2026_11_01_000020) do
   create_table "cart_items", force: :cascade do |t|
     t.integer "cart_id", null: false
     t.integer "menu_item_id", null: false
@@ -162,7 +162,9 @@ ActiveRecord::Schema[8.2].define(version: 2026_11_01_000015) do
     t.datetime "updated_at", null: false
     t.string "external_delivery_id"
     t.string "external_delivery_url"
+    t.string "payment_method", default: "vipps", null: false
     t.index ["kitchen_id"], name: "index_orders_on_kitchen_id"
+    t.index ["payment_method"], name: "index_orders_on_payment_method"
     t.index ["payment_state"], name: "index_orders_on_payment_state"
     t.index ["state"], name: "index_orders_on_state"
     t.index ["tracking_token"], name: "index_orders_on_tracking_token", unique: true

@@ -14,11 +14,13 @@ class OrdersController < ApplicationController
 
   # Public live tracking by unguessable token (APP_SPEC §6): state timeline,
   # ETA, courier blurb, poll feed, tip chips + review form after delivery.
-  # Vipps sync on load: the customer lands here straight from the Vipps app,
-  # so this is where "paid" becomes true — no refresh, no extra tap.
+  # Payment sync on load: the customer lands here straight from the PSP
+  # (Vipps app or Stripe hosted Checkout), so this is where "paid" becomes
+  # true — no refresh, no extra tap. The gateway dispatch picks the right
+  # client for the order's payment lane.
   def track
     @order = Order.find_by!(tracking_token: params[:token].to_s)
-    VippsClient.sync_payment!(order: @order)
+    PaymentGateway.sync!(@order)
     @review = @order.review || @order.build_review
   end
 
@@ -27,7 +29,7 @@ class OrdersController < ApplicationController
   # payment state so the page can flip "betaling" → "betalt" live.
   def status
     order = Order.find_by!(tracking_token: params[:token].to_s)
-    VippsClient.sync_payment!(order: order)
+    PaymentGateway.sync!(order)
     order.reload
     render json: { state: order.state, eta: order.eta_minutes,
                    payment_state: order.payment_state,

@@ -80,6 +80,69 @@ module VippsHttpStubbing
   end
 end
 
+# Same seam discipline for StripeClient (second payment lane): swap the HTTP
+# core for path-keyed canned answers. `stripe_real_mode!` turns STRIPE_MOCK
+# off, grants the ENV credentials and records every call; mock-mode tests
+# simply never call it. Always paired with `stripe_restore_http!`.
+module StripeHttpStubbing
+  def stripe_real_mode!(remote_status: "paid")
+    ENV["STRIPE_MOCK"] = "0"
+    ENV["STRIPE_SECRET_KEY"] = "sk_test_stripe"
+    ENV["STRIPE_API_BASE"] = "https://api.stripe.test"
+    StripeClient.instance_variable_set(:@calls, [])
+
+    sc = StripeClient.singleton_class
+    sc.send(:alias_method, :orig_perform_request, :perform_request)
+    sc.send(:define_method, :perform_request) do |request_class, path, headers, body|
+      calls = StripeClient.instance_variable_get(:@calls) || []
+      calls << {
+        method: request_class.name.split("::").last,
+        path: path,
+        headers: headers,
+        body: body,
+        body_parsed: body.is_a?(String) ? URI.decode_www_form(body).to_h : body
+      }
+      StripeClient.instance_variable_set(:@calls, calls)
+
+      if path == "/v1/checkout/sessions"
+        { "id" => "cs_test_123", "url" => "https://checkout.stripe.com/c/pay/cs_test_123",
+          "payment_status" => "unpaid" }
+      elsif path.start_with?("/v1/checkout/sessions/")
+        { "id" => "cs_test_123", "payment_status" => remote_status }
+      else
+        raise "unexpected path in stub: #{path}"
+      end
+    end
+  end
+
+  def stripe_restore_http!
+    sc = StripeClient.singleton_class
+    if sc.method_defined?(:orig_perform_request)
+      sc.send(:alias_method, :perform_request, :orig_perform_request)
+      sc.send(:remove_method, :orig_perform_request)
+    end
+    StripeClient.instance_variable_set(:@calls, nil)
+    %w[STRIPE_MOCK STRIPE_SECRET_KEY STRIPE_API_BASE STRIPE_WEBHOOK_SECRET].each do |key|
+      ENV.delete(key)
+    end
+  end
+
+  def stripe_calls
+    StripeClient.instance_variable_get(:@calls) || []
+  end
+
+  def stripe_call_for(path)
+    call = stripe_calls.find { |c| c[:path] == path }
+    assert call, "expected an HTTP call to #{path}, got: #{stripe_calls.map { |c| c[:path] }.inspect}"
+    call
+  end
+
+  # A valid Stripe-Signature header for a payload, keyed by webhook secret.
+  def stripe_signature_for(payload, secret: "whsec_test", timestamp: Time.current.to_i)
+    "t=#{timestamp},v1=#{OpenSSL::HMAC.hexdigest('SHA256', secret, "#{timestamp}.#{payload}")}"
+  end
+end
+
 module ActiveSupport
   class TestCase
     # No fixtures — every test seeds its own minimal world inline with create!
@@ -90,6 +153,7 @@ module ActiveSupport
     parallelize(workers: :number_of_processors)
 
     include VippsHttpStubbing
+    include StripeHttpStubbing
 
     # users.role enum (APP_SPEC §4): customer:0 staff:1 courier:2 admin:3
     ROLES = { customer: 0, staff: 1, courier: 2, admin: 3 }.freeze
@@ -142,11 +206,11 @@ module ActiveSupport
       # helper like seed_order! that seeds the kitchen again — the second
       # create! would violate the unique slug and fail every such test.
       Kitchen.find_or_create_by!(slug: "bergen") do |k|
-        k.name = "Mr. Damascy — Bergen sentrum"
-        k.address = "Strandgaten 47, 5004 Bergen"
-        k.postcode = "5004"
-        k.phone = "55 00 35 35"
-        k.opening_hours = "Man–Søn 11–23"
+        k.name = "Mr. Damascy — Danmarksplass"
+        k.address = "Solheimsgaten 60, 5054 Bergen"
+        k.postcode = "5054"
+        k.phone = "955 55 600"
+        k.opening_hours = "Man–Fre 11–21 · Lør–Søn 14–21"
         k.rating = 4.9
       end
     end

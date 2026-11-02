@@ -28,20 +28,22 @@ end
 # --- Kitchen (single row) ---------------------------------------------------
 
 kitchen = Kitchen.create!(
-  name: "Mr. Damascy — Bergen sentrum",
+  name: "Mr. Damascy — Danmarksplass",
   slug: "bergen",
-  address: "Strandgaten 47, 5004 Bergen",
-  postcode: "5004",
-  phone: "55 00 35 35",
-  opening_hours: "Man–Søn 11–23",
+  address: "Solheimsgaten 60, 5054 Bergen",
+  postcode: "5054",
+  phone: "955 55 600",
+  opening_hours: "Man–Fre 11–21 · Lør–Søn 14–21",
   rating: 4.9
 )
 
 # --- Delivery zones: postcode, name, fee kr, min basket kr, eta min ---------
-# Central Bergen (Vestland). The one outlet is at Strandgaten; the closest
-# codes deliver fastest, outer boroughs cost more and take longer.
+# Central Bergen (Vestland). The one outlet is at Danmarksplass (Solheimsgaten
+# 60, 5054); the closest codes deliver fastest, outer boroughs cost more and
+# take longer.
 
 {
+  "5054" => [ "Danmarksplass",    29, 150, 15 ],
   "5003" => [ "Bergen sentrum",   39, 200, 25 ],
   "5004" => [ "Strandgaten",      29, 150, 15 ],
   "5006" => [ "Vågsbunnen",       29, 150, 20 ],

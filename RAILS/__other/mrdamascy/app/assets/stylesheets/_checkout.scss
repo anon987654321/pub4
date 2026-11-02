@@ -179,3 +179,33 @@
   font-size: var(--text-xs);
   margin-top: 12px;
 }
+
+// Stripe wordmark chips — the pay-row variant mirrors .vipps-wordmark; the
+// mock page reuses the .vipps-mock chrome with a Stripe tone.
+.stripe-wordmark {
+  flex: none;
+  font-weight: 700;
+  font-size: var(--text-body);
+  color: var(--stripe-ink);
+  border: 2px solid var(--stripe);
+  border-radius: var(--radius-xs);
+  padding: 4px 12px;
+}
+
+.stripe-wordmark-lg {
+  display: block;
+  font-size: var(--text-display);
+  font-weight: 700;
+  color: var(--stripe-ink);
+  margin-bottom: 12px;
+}
+
+.stripe-lock {
+  display: inline-flex;
+  vertical-align: -3px;
+  margin-inline-start: 2px;
+}
+
+.stripe-lock svg {
+  display: block;
+}

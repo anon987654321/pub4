@@ -160,13 +160,16 @@ nb:
     vipps_row: Vipps
     vipps_note: 'Raskere enn Foodora: ingen kortfelter'
     vipps_last_used: Sist brukt
+    stripe_row: Kort
+    stripe_note: Visa, Mastercard, Apple Pay — trygg betaling hos Stripe
+    stripe_cta: Betal med kort
     promo_auto: '%{code} lagt inn automatisk'
     subtotal: Delsum
     delivery_fee: Levering
     discount: Rabatt
     total: Totalt
     min_basket_fail: Du mangler %{amount} til minstebestillingen i %{name}
-    pickup_note: Hent på Strandgaten 47 — vi starter når du har betalt
+    pickup_note: Hent på Solheimsgaten 60 (Danmarksplass) — vi starter når du har betalt
     cta: Betal med Vipps
     steps_note: 3 steg · ingen kortfelter
     terms_note: Ved å betale godkjenner du at maten blir spist med stor glede
@@ -202,6 +205,12 @@ nb:
     login_mock_name: Navn (valgfritt)
     login_mock_continue: Fortsett
     login_mock_note: Mock-innlogging (utviklingsmodus) — ekte Vipps Login kobles på med VIPPS_MOCK=0.
+  stripe:
+    merchant: Mr. Damascy
+    amount: Å betale
+    approve: 'Betal med kort'
+    cancel: Avbryt
+    mock_note: Mock-betaling (utviklingsmodus) — ekte Stripe kobles på med STRIPE_MOCK=0.
   orders:
     title: Dine bestillinger
     empty_title: Ingen bestillinger ennå
@@ -229,7 +238,7 @@ nb:
     step_pending: Venter
     courier_line: '%{courier} henter maten din'
     courier_anonymous: Budet henter maten din om kort
-    pickup_line: Hent på Strandgaten 47 — si Ahlan!
+    pickup_line: Hent på Solheimsgaten 60 — si Ahlan!
     track_title: Spor bestillingen
     track_hint: Denne siden oppdaterer seg selv — lene deg tilbake
     thanks: Takk for handelen — Sahtein! صحتين
@@ -405,7 +414,7 @@ nb:
   about:
     title: Fra Damaskus med kjærlighet
     story_title: Historien
-    story: Bestefar solgte shawarma ved Souq al-Hamidiyah i Damaskus — toum hver morgen, lam tynt skåret, brød fra steinovnen. I dag griller vi samme oppskrift på Strandgaten i Bergen, med samme gjestfrihet og kortere vei til maten.
+    story: Bestefar solgte shawarma ved Souq al-Hamidiyah i Damaskus — toum hver morgen, lam tynt skåret, brød fra steinovnen. I dag griller vi samme oppskrift på Danmarksplass i Bergen, med samme gjestfrihet og kortere vei til maten.
     fair_title: Rettferdig mat, rettferdig vei
     fair: 'Ingen Foodora mellom oss: pengene går direkte til kjøkkenet som lager maten din. Du betaler med Vipps på 3 steg — raskere enn å klikke deg gjennom åtte skjermer.'
     world_tour_title: Verdensturné i kebab
@@ -456,11 +465,11 @@ nb:
     links_about: Om oss
     links_track: Spor ordre
     hours_label: Åpningstider
-    hours: Man–Søn 11–23
+    hours: Man–Fre 11–21 · Lør–Søn 14–21
     address_label: Adresse
-    address: Strandgaten 47, 5004 Bergen
+    address: Solheimsgaten 60, 5054 Bergen
     vipps_note: Betalt med Vipps — 3 steg, null kortfelter
     ahlan: Ahlan wa sahlan — alle er velkomne hit
     copyright: © %{year} Mr. Damascy
-    line: Mr. Damascy · Strandgaten 47, 5004 Bergen · Man–Søn 11–23
+    line: Mr. Damascy · Solheimsgaten 60, Danmarksplass · Man–Fre 11–21, Lør–Søn 14–21
     sahtein: Laget med kjærlighet i Bergen — صحتين

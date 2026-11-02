@@ -323,3 +323,25 @@
   width: 100%;
   max-width: 448px;
 }
+
+// Food photos — same footprint as the emoji tile on cards; the sheet header
+// gets a rounded hero photo. Flat rules only (no shadow/blur/glow).
+.item-photo {
+  flex: none;
+  width: 56px;
+  height: 56px;
+  border-radius: var(--radius-sm);
+  object-fit: cover;
+  background: var(--mint-100);
+}
+
+.sheet-photo {
+  display: block;
+  width: 100%;
+  max-width: 320px;
+  aspect-ratio: 1 / 1;
+  object-fit: cover;
+  border-radius: var(--radius);
+  margin: 0 auto 12px;
+  background: var(--mint-100);
+}

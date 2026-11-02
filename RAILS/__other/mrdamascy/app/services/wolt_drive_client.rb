@@ -129,7 +129,7 @@ class WoltDriveClient
       headers = auth_headers  # validate the Bearer token before the URL
       uri = URI("#{API_BASE}/#{require_env('WOLT_DRIVE_CLIENT_ID')}/deliveries")
       payload = {
-        pickup: { location: pickup_location, comment: "Mr. Damascy, Strandgaten 47" },
+        pickup: { location: pickup_location, comment: "Mr. Damascy, Solheimsgaten 60" },
         dropoff: { location: dropoff_location(order),
                    comment: order.address,
                    customer: { name: order.phone, phone: order.phone } },
@@ -164,7 +164,9 @@ class WoltDriveClient
     end
 
     def pickup_location
-      { coordinates: { latitude: 60.3930, longitude: 5.3242 }, formatted_address: "Strandgaten 47, 5004 Bergen" }
+      # Danmarksplass, Bergen (the kitchen's corner) — real coordinates from
+      # the restaurant's Google Maps listing.
+      { coordinates: { latitude: 60.3757, longitude: 5.3379 }, formatted_address: "Solheimsgaten 60, 5054 Bergen" }
     end
 
     def dropoff_location(order)

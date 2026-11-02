@@ -9,7 +9,7 @@ require "test_helper"
 class CheckoutFlowTest < ActionDispatch::IntegrationTest
   setup do
     @kitchen = seed_kitchen!
-    # The tests post 5004 (Strandgaten) — the zone must cover the postcode the
+    # The tests post 5004 (Strandgaten) — a real delivery zone one district away
     # checkout actually sends, and its minimum must admit the crown's single
     # 129 kr wrap; the dedicated min-basket test below works against this too.
     @zone = seed_zone!(postcode: "5004", fee_ore: 2900, min_basket_ore: 10000, eta_minutes: 20)
@@ -17,6 +17,13 @@ class CheckoutFlowTest < ActionDispatch::IntegrationTest
     @item = seed_item!(@category, name: "Damaskus Kylling Shawarma", price_ore: 12900)
     seed_option!(@item, name: "Toum", kind: "sauce", default_on: true)
     @user = customer_sign_in
+  end
+
+  teardown do
+    # The real-mode tracking test turns STRIPE_MOCK off; without this restore
+    # the env leaks into whichever test minitest shuffles next (the crown's
+    # card lane would then hit real HTTP and stay "pending").
+    stripe_restore_http!
   end
 
   test "the crown: add to cart, pay with mock Vipps, confirm, track with Sahtein" do
@@ -36,6 +43,7 @@ class CheckoutFlowTest < ActionDispatch::IntegrationTest
 
     order = Order.order(:id).last
     assert_not_nil order, "checkout create must build an order from the cart"
+    assert_equal "vipps", order.payment_method, "Vipps stays the default lane"
     assert_equal @user.id, order.user_id
     assert_equal @kitchen.id, order.kitchen_id
     assert_equal "placed", order.state
@@ -124,5 +132,77 @@ class CheckoutFlowTest < ActionDispatch::IntegrationTest
 
     assert_equal "placed", order.reload.state, "mock approval must never fire in real mode"
     assert_equal "pending", order.reload.payment_state
+  end
+
+  test "the crown, card lane: add to cart, pay with mock Stripe, confirm, track" do
+    post add_item_cart_url, params: { menu_item_id: @item.id, quantity: 1,
+                                      option_ids: [], note: "" }
+
+    post checkout_url, params: { order: { address: "Nygårdsgaten 12", postcode: "5004",
+                                          phone: "90000004", delivery_mode: "delivery",
+                                          payment_method: "stripe" } }
+
+    order = Order.order(:id).last
+    assert_not_nil order, "checkout create must build an order from the cart"
+    assert_equal "stripe", order.payment_method
+    assert_equal "authorised", order.payment_state
+    assert_equal 15800, order.total_ore, "totals math is identical on both lanes"
+    assert_equal "mock-stripe-#{order.tracking_token}", order.vipps_order_id
+    assert_match %r{/stripe/mock\?token=#{order.tracking_token}\z}, order.vipps_url
+    assert_redirected_to order.vipps_url
+
+    patch stripe_mock_approve_url, params: { token: order.tracking_token }
+    assert_redirected_to track_path(order.tracking_token)
+    assert_equal "captured", order.reload.payment_state
+    assert_equal "confirmed", order.reload.state
+
+    get track_url(order.tracking_token)
+    assert_response :success
+    assert_match(/Sahtein|صحتين/, response.body)
+  end
+
+  test "an unknown payment_method falls back to the Vipps lane" do
+    post add_item_cart_url, params: { menu_item_id: @item.id, quantity: 1,
+                                      option_ids: [], note: "" }
+
+    post checkout_url, params: { order: { address: "Nygårdsgaten 12", postcode: "5004",
+                                          phone: "90000004", delivery_mode: "delivery",
+                                          payment_method: "paypal" } }
+
+    order = Order.order(:id).last
+    assert_equal "vipps", order.payment_method, "tampered PSP values must not select a lane"
+    assert_match %r{/vipps/mock}, order.vipps_url
+  end
+
+  test "the mock Stripe page answers 404 in real mode — no free captures" do
+    order = seed_order!(kitchen: @kitchen, state: "placed", token: "tok-stripe-guard")
+
+    ENV["STRIPE_MOCK"] = "0"
+    begin
+      get stripe_mock_url, params: { token: order.tracking_token }
+      assert_response :not_found
+
+      patch stripe_mock_approve_url, params: { token: order.tracking_token }
+      assert_response :not_found
+    ensure
+      ENV.delete("STRIPE_MOCK")
+    end
+
+    assert_equal "placed", order.reload.state, "mock approval must never fire in real mode"
+    assert_equal "pending", order.reload.payment_state
+  end
+
+  test "the tracking page completes a real-mode Stripe payment via the sync seam" do
+    order = seed_order!(kitchen: @kitchen, state: "placed", token: "tok-stripe-poll")
+    order.update!(payment_method: "stripe", payment_state: "authorised",
+                  vipps_order_id: "cs_test_poll")
+    stripe_real_mode!
+
+    get track_url(order.tracking_token)
+
+    assert_response :success
+    @order = order.reload
+    assert_equal "captured", @order.payment_state
+    assert_equal "confirmed", @order.state
   end
 end
