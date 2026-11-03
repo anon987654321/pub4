@@ -48,11 +48,23 @@ in the folder; it is output, and git should not carry it.
 
 ## Restored historical creative vocabulary
 
-The `pub` v12.9/v13.3.14 and `pub2` v14.2.0 generations are preserved as a behavioral lineage, not as competing runtimes. Their 29 named creative effects are all accounted for: five already had current equivalents (`light_leaks`, `lens_distortion`, `bleach_bypass`, `day_for_night`, `chromatic_aberration`); the other 24 are implemented through `legacy_effects.rb` and the current dispatcher. The restored names are `film_grain`, `film_halation`, `bloom_effect`, `cross_process`, `golden_hour_glow`, `lomo`, `sepia`, `teal_and_orange`, `anamorphic_simulation`, `vhs_degrade`, `color_fade`, `soft_focus`, `double_exposure`, `polaroid_frame`, `tape_degradation`, `frame_distortion`, `super8_flicker`, `cinemascope_bars`, `halftone_print`, `film_scratches`, `film_stock_emulation`, `sprocket_holes`, `lens_flare` and `glitch`. See [LEGACY_RESTORE.md](./LEGACY_RESTORE.md) for the full mapping and [ARCHAEOLOGY.md](./ARCHAEOLOGY.md) for the repository-by-repository source trail.
+The `pub` v12.9/v13.3.14 and `pub2` v14.2 vocabularies are preserved as
+compatibility names and provenance, not parallel runtimes. Five historic names
+already had current equivalents; the other 24 are restored through
+`legacy_effects.rb` and the current dispatcher. The complete name-to-effect
+mapping belongs in [LEGACY_RESTORE.md](./LEGACY_RESTORE.md); the repository
+lineage and disposition of historic behavior belong in
+[ARCHAEOLOGY.md](./ARCHAEOLOGY.md).
 
-The old interactive workflow is retained as an operating concept: professional/experimental intensity lanes, random variations, 1–5 effect chains, recursive batch selection, custom JSON recipes, retries, progress and aggregate statistics. In the current engine these responsibilities are deliberately split between named presets, bounded `--random`/`--rough`/`--heavy` chains, checked recipes, batch processing, per-variation failure reporting and provenance sidecars. The historical prompt flow and its old retry/bootstrap code are not reintroduced: loading Postpro stays observational, dependency installation stays explicit, and every recipe still resolves through the one measured grade dispatcher.
-
-The `pub2` 14.2 preset vocabulary (Portrait, Landscape, Street and Blockbuster), Repligen handoff, Portra/Vision3/Velvia/Tri-X looks, camera-profile correction, skin protection, highlight shoulder, micro-contrast and film grain are all represented in the current preset, stock, profile and effect systems. Historical parameter examples are not treated as calibrated physical measurements; current stock tables and measured implementations remain authoritative.
+The original interactive workflow remains as an operating concept: professional
+and experimental intensity, random variations, short effect chains, recursive
+batch selection, custom JSON recipes, retries, progress and aggregate statistics.
+Those responsibilities now live in named presets, bounded `--random`,
+`--rough` and `--heavy` chains, checked recipes, batch processing,
+per-variation failure reporting and provenance sidecars. The old prompt flow
+and retry/bootstrap code are not restored: loading Postpro stays observational,
+dependency installation stays explicit, and every recipe resolves through the
+one measured grade dispatcher.
 
 ## The checks that catch what does not raise
 
