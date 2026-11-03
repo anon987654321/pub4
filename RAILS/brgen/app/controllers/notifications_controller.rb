@@ -15,6 +15,7 @@ class NotificationsController < Shared::NotificationsController
 
   def read_all
     notification_scope.unread.update_all(read_at: Time.current, updated_at: Time.current)
+    Notification.broadcast_unread_badge(Current.user.id)
     load_notification_index_state
     respond_to do |format|
       format.html { redirect_to notifications_path }

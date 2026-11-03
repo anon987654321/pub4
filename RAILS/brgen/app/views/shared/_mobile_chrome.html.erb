@@ -79,7 +79,16 @@
     <%# Notifications lived only in the left rail, and the rail is gone. It is
         a secondary destination, so it belongs in the sheet rather than as a
         seventh tab -- five plus More is already the ceiling for a tab bar. %>
-    <%= link_to t("nav.notifications"), main_app.notifications_path if Current.user %>
+    <% if Current.user %>
+      <%# The reader's own stream, signed: Notification.broadcast_unread_badge
+          redraws the count here as notifications arrive and are read. %>
+      <%# A soft guest not yet saved has no notifications and no stream. %>
+      <%= turbo_stream_from(*Notification.unread_badge_stream(Current.user)) if Current.user.persisted? %>
+      <%= link_to main_app.notifications_path do %>
+        <%= t("nav.notifications") %>
+        <%= render "notifications/unread_badge", count: Notification.unread_count_for(Current.user) %>
+      <% end %>
+    <% end %>
     <%= link_to t("nav.new_community"), main_app.new_community_path %>
     <% if authenticated? %>
       <%= link_to t("nav.profile"), main_app.user_path(Current.user) %>

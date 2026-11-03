@@ -22,6 +22,31 @@ class Notification < ApplicationRecord
   scope :unread, -> { where(read_at: nil) }
   scope :recent, -> { order(created_at: :desc) }
 
+  # The unread count beside Varsler in the menu, on every page, live: a new
+  # notification, one read or dismissed, and read_all (an update_all, so the
+  # controller calls broadcast_unread_badge itself) each redraw it on the
+  # reader's own signed stream.
+  after_commit :broadcast_own_unread_badge, on: %i[create destroy]
+  # Its own name: Rails keeps only the last of two commit callbacks that share one.
+  after_update_commit :broadcast_unread_badge_on_read, if: :saved_change_to_read_at?
+
+  def self.unread_count_for(user) = user&.persisted? ? where(user_id: user.id).unread.count : 0
+
+  def self.unread_badge_stream(user) = [ user, :notification_badge ]
+
+  def self.broadcast_unread_badge(user_id)
+    reader = User.find_by(id: user_id)
+    return unless reader
+
+    Turbo::StreamsChannel.broadcast_replace_to(
+      unread_badge_stream(reader),
+      target: "notifications-unread-badge", partial: "notifications/unread_badge",
+      locals: { count: unread_count_for(reader) }
+    )
+  rescue StandardError => e
+    Rails.logger.warn("Notification.broadcast_unread_badge #{user_id}: #{e.class}: #{e.message}")
+  end
+
   # High-signal kinds also fire a browser push; likes/reactions stay in-app only
   # so the lock screen doesn't become noise. `order` and `alert` are here
   # because both are things the reader is actively waiting on — a parcel moving,
@@ -62,6 +87,9 @@ class Notification < ApplicationRecord
     else "/notifications"
     end
   end
+
+  def broadcast_own_unread_badge = self.class.broadcast_unread_badge(user_id)
+  def broadcast_unread_badge_on_read = broadcast_own_unread_badge
 
   def read?
     read_at.present?

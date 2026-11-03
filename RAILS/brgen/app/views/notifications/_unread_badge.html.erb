@@ -1,0 +1,9 @@
+<%# Always rendered, empty at zero, so Notification.broadcast_unread_badge has
+    an element to replace whichever way the count moves. The number is
+    decoration; the words are what a screen reader says. %>
+<span id="notifications-unread-badge">
+  <% if count.positive? %>
+    <%= tag.sup count, class: "nav_link_badge", aria: { hidden: true } %>
+    <%= tag.span t("notifications.unread_count", count: count), class: "visually-hidden" %>
+  <% end %>
+</span>
