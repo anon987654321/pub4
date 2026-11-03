@@ -28,11 +28,13 @@ Rails.application.configure do
   # Store uploaded files on the local file system (see config/storage.yml for options).
   config.active_storage.service = :local
 
-  # Solid adapters everywhere: cache in its own SQLite database, jobs on the
-  # queue database (bin/jobs or the :solid_queue Puma plugin drives it).
+  # Cache in its own SQLite database. Jobs run in-process (:async): the app
+  # enqueues none of its own, and on vm23 a Solid Queue supervisor, worker and
+  # dispatcher would cost more resident memory than the app itself. Go back to
+  # :solid_queue, with connects_to the queue database and an rc.d worker, the
+  # day it gains real background work.
   config.cache_store = :solid_cache_store
-  config.active_job.queue_adapter = :solid_queue
-  config.solid_queue.connects_to = { database: { writing: :queue } }
+  config.active_job.queue_adapter = :async
 
   # relayd terminates TLS on vm23 and serves only port 443, so every request is
   # https already. assume_ssl makes Rails believe it; force_ssl would add a

@@ -985,7 +985,15 @@ fi
 
 set_stage solid_queue
 queue_schema="$repo/RAILS/${app}/db/queue_schema.rb"
-if [[ -f $queue_schema ]] && ! "$RUBY" -e 'exit File.read(ARGV[0]).include?("define(version: 0)")' "$queue_schema"; then
+# An app whose production config runs jobs in-process (mrdamascy: :async) has
+# no worker to prove; the proof would demand one, or an hourly drain, for nothing.
+queue_async=0
+"$RUBY" -e 'exit File.read(ARGV[0]).match?(/queue_adapter\s*=\s*:async\b/)' \
+  "$repo/RAILS/${app}/config/environments/production.rb" 2>/dev/null && queue_async=1
+queue_empty=0
+[[ -f $queue_schema ]] && "$RUBY" -e 'exit File.read(ARGV[0]).include?("define(version: 0)")' \
+  "$queue_schema" && queue_empty=1
+if (( ! queue_async && ! queue_empty )) && [[ -f $queue_schema ]]; then
   print "vps-deploy: $app (solid_queue proof)"
   admin_request solid-queue-proof "$app" \
     || { write_stamp "$app" failed; print -u2 "vps-deploy: solid_queue proof failed for $app"; exit 1; }

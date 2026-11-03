@@ -67,11 +67,17 @@ module Deploy
         return
       end
 
-      domain = metadata.fetch("domain")
-      failures = []
       prod_active = production_lines(production)
 
       return check_master_app(name, app_dir:, prod_active:) if name == "master"
+      return check_standalone_app(name, metadata, app_dir:, prod_active:) unless mounts_shared_engine?(app_dir)
+
+      check_engine_app(name, metadata, app_dir:, prod_active:)
+    end
+
+    def check_engine_app(name, metadata, app_dir:, prod_active:)
+      domain = metadata.fetch("domain")
+      failures = []
 
       @result.checked!(6)
       check_production_config(failures, prod_active, domain)
@@ -99,6 +105,39 @@ module Deploy
       check_master_ci(failures, app_dir)
 
       failures.each { |failure| @result.fail("#{name}: #{failure}") }
+    end
+
+    def mounts_shared_engine?(app_dir)
+      gemfile = File.join(app_dir, "Gemfile")
+      File.file?(gemfile) && File.read(gemfile).include?('gem "pub4-shared"')
+    end
+
+    # An app that mounts no pub4-shared (mrdamascy) has no shared fleet route,
+    # shared CI or Solid Queue worker to assert, so it gets the contracts that do
+    # not come from the engine: TLS and hosts, its own bin/ci running its tests,
+    # and the copy-tree deploy script.
+    def check_standalone_app(name, metadata, app_dir:, prod_active:)
+      failures = []
+      domain = metadata.fetch("domain")
+
+      @result.checked!(4)
+      check_production_config(failures, prod_active, domain)
+      check_standalone_ci(failures, app_dir)
+      check_deploy_script(failures, metadata, domain)
+      gemfile = File.join(app_dir, "Gemfile")
+      fail_app!(failures, "missing Gemfile") unless File.file?(gemfile)
+
+      failures.each { |failure| @result.fail("#{name}: #{failure}") }
+    end
+
+    def check_standalone_ci(app_failures, app_dir)
+      ci_bin = File.join(app_dir, "bin", "ci")
+      return fail_app!(app_failures, "missing bin/ci") unless File.file?(ci_bin)
+
+      ci_config = File.join(app_dir, "config", "ci.rb")
+      ci_text = [File.read(ci_bin), File.file?(ci_config) ? File.read(ci_config) : ""].join("\n")
+      fail_app!(app_failures, "bin/ci must be executable") unless File.executable?(ci_bin)
+      fail_app!(app_failures, "bin/ci must run Rails tests") unless ci_text.include?("rails test")
     end
 
     # Its bin/ci runs bundler-audit, Brakeman and the Rails tests; it has no RuboCop step.

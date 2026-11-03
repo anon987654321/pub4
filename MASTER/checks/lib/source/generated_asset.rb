@@ -56,8 +56,8 @@ module Deploy
 
     def source_files(app_dir)
       shared_dir = File.join(RAILS_ROOT, "__shared")
-      patterns = WATCHED.map { |pattern| File.join(app_dir, pattern) } +
-                 SHARED_WATCHED.map { |pattern| File.join(shared_dir, pattern) }
+      patterns = WATCHED.map { |pattern| File.join(app_dir, pattern) }
+      patterns += SHARED_WATCHED.map { |pattern| File.join(shared_dir, pattern) } if mounts_shared_engine?(app_dir)
 
       # brgen's application.scss @uses each vertical's partials from its engine
       # (vertical_maps_shell and the rest), so an engine edit stales the build too.
@@ -119,6 +119,14 @@ module Deploy
 
       content_stale?(sources, build, result, app_name)
       service_worker_stale?(app_dir, result, app_name)
+    end
+
+    # The shared stylesheets and the Workbox worker reach only the apps whose
+    # Gemfile mounts pub4-shared. mrdamascy mounts none: its CSS is its own and
+    # its service-worker.js.erb is hand-written, served by its PwaController.
+    def mounts_shared_engine?(app_dir)
+      gemfile = File.join(app_dir, "Gemfile")
+      File.file?(gemfile) && File.read(gemfile).include?('gem "pub4-shared"')
     end
 
     # mtime and dirtiness miss a committed build that no longer matches its
@@ -222,6 +230,8 @@ module Deploy
     # A worker that is not recognisably Workbox-generated is not silently accepted:
     # that would turn a drifted generator path into a green asset check.
     def service_worker_stale?(app_dir, result, app_name)
+      return unless mounts_shared_engine?(app_dir)
+
       sw_source = File.join(RAILS_ROOT, "__shared", "pwa", "service_worker.js")
 
       sw_build = File.join(app_dir, "app", "views", "pwa", "service-worker.js")
