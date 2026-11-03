@@ -1,6 +1,6 @@
 #!/bin/ksh
 # mrdamascy — the Mr. Damascy ordering PWA, served as the mrd.brgen.no demo.
-# One Puma process (no cluster workers), three threads, nothing else resident:
+# One Puma process (single mode, no cluster), three threads, nothing else resident:
 # the app enqueues no jobs, so there is no mrdamascy_jobs and no Solid Queue
 # supervisor in this process. Vipps, Stripe and Wolt run in their mock modes
 # (each client is mock unless its *_MOCK variable is "0"), so no payment key is
@@ -24,8 +24,9 @@ for _bundle in /usr/local/bin/bundle4.0 /usr/local/bin/bundle40 /usr/local/bin/b
 done
 # The -b bind replaces the one config/puma.rb takes from PORT, so the listener is
 # loopback only and relayd is the one public door. RAILS_MAX_THREADS sizes both
-# Puma and the SQLite pool.
-_env="RUBY_YJIT_ENABLE=0 RAILS_ENV=production HOME=/home/mrdamascy PORT=${PORT} WEB_CONCURRENCY=1"
+# Puma and the SQLite pool. WEB_CONCURRENCY=0, not 1: Puma 8 reads it as its
+# worker count, and 1 starts a cluster parent plus one worker, two processes.
+_env="RUBY_YJIT_ENABLE=0 RAILS_ENV=production HOME=/home/mrdamascy PORT=${PORT} WEB_CONCURRENCY=0"
 _env="${_env} RAILS_MAX_THREADS=3 RAILS_MIN_THREADS=1 MRDAMASCY_HOST=mrd.brgen.no BUNDLE_VERSION=system"
 _exec="exec ${_bundle} exec puma -b tcp://127.0.0.1:${PORT}"
 daemon_flags="-c 'cd ${APP_DIR} && set -a && . /etc/mrdamascy.env && set +a && export ${_env} && ${_exec}'"
