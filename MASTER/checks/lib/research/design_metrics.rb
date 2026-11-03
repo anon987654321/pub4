@@ -37,7 +37,7 @@ module Deploy
     SAMPLES = {
       posts: /\A(?:\.(?:post[-_]|vote-|comment[-_]|form-wrap|field\b|story-(?:reply|ring)|fedi-follow)|(?:label|input|textarea|select)\b)/,
       nav: /\A\.(?:feed-(?:header|brand-mark|tabs?)|compose-(?:hint|avatar|input|actions?))\b/,
-      forms: /\A(?:\.(?:btn|media-btn|char-counter|form-help|advanced-fields|disappearing-settings|compose-box)\b|#comments-section\b)/,
+      forms: /\A(?:\.(?:button|media-button|char-counter|form-help|advanced-fields|disappearing-settings|compose-box)\b|#comments-section\b)/,
       marketplace: /\A\.(?:marketplace-actions|store-(?:pills|results|filters)|deal-cat|cart-pay-actions|order-(?:chat|returns?)|listing-(?:questions?|answer|facets?|filters?)|variant-|address)/,
       dating_actions: /\A\.swipe-/,
       channels: /\A\.(?:channels?-|roster-|msg-nick|chat-code)/,
@@ -376,9 +376,9 @@ module Deploy
 
       min_px = @rules.dig("layout_rules", "touch", "target_min_px").to_i
       probes = [
-        { label: "core", path: "/", selector: ".tab-item, .compose-btn, a.tab-item" },
-        { label: "marketplace", path: "/", selector: "#navBar a, .deal-fav, .btn" },
-        { label: "nearby", path: "/nearby", selector: ".btn, .nearby-locate-actions button" },
+        { label: "core", path: "/", selector: ".tab-item, .compose-button, a.tab-item" },
+        { label: "marketplace", path: "/", selector: "#navBar a, .deal-fav, .button" },
+        { label: "nearby", path: "/nearby", selector: ".button, .nearby-locate-actions button" },
       ]
 
       surfaces = probes.filter_map do |probe|

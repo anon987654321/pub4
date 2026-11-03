@@ -1263,7 +1263,7 @@ nb:
     list_it: Legg ut
     save_search: Lagre dette søket
     message_seller: Melding til selger (valgfritt)
-    message_seller_btn: Meld selger
+    message_seller_button: Meld selger
     radius_km: Radius km
     radius_label: Radius i kilometer
     accept: Godta

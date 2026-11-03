@@ -16,7 +16,7 @@
       <%= tag.strong t("nearby.room_title") %>
       <p><%= t("nearby.room_body", km: Conversation::GEO_ROOM_RADIUS_KM.to_i) %></p>
     </div>
-    <%= link_to t("nearby.join"), nearby_room_path, class: "btn btn-primary btn-sm" %>
+    <%= link_to t("nearby.join"), nearby_room_path, class: "button button-primary button-small" %>
   </article>
 
   <% if @nearby.any? %>
@@ -26,7 +26,7 @@
           <%= tag.strong u.anon_handle %>
           <p><%= t("nearby.distance_away", km: number_with_precision(distance, precision: 1)) %></p>
         </div>
-        <%= button_to t("nearby.chat"), nearby_path, params: { user_id: u.id }, method: :post, class: "btn btn-primary btn-sm" %>
+        <%= button_to t("nearby.chat"), nearby_path, params: { user_id: u.id }, method: :post, class: "button button-primary button-small" %>
       </article>
     <% end %>
   <% else %>
@@ -44,9 +44,9 @@
     <p><%= t("nearby.share_location_body", km: @radius_km.to_i) %></p>
     <p class="nearby-locate-actions">
       <button type="button"
-              class="btn btn-primary btn-sm"
+              class="button button-primary button-small"
               data-action="request-location#request"><%= t("chat.use_location") %></button>
-      <%= link_to t("chat.open_brgen_channel"), channel_path("brgen"), class: "btn btn-sm" %>
+      <%= link_to t("chat.open_brgen_channel"), channel_path("brgen"), class: "button button-small" %>
     </p>
     <p>
       <%= t("nearby.lobby_hint_before") %>

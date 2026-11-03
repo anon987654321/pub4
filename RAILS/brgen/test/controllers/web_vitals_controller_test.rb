@@ -20,12 +20,12 @@ class WebVitalsControllerTest < ActionDispatch::IntegrationTest
 
   test "an interaction target reaches the log as a selector" do
     line = logged_line do
-      post "/web_vitals", params: { inp: "340", inp_target: "button.vote-btn[data-controller=action]", path: "/" }
+      post "/web_vitals", params: { inp: "340", inp_target: "button.vote-button[data-controller=action]", path: "/" }
     end
 
     assert_response :no_content
     assert_includes line, "inp=340"
-    assert_includes line, "inp_target=button.vote-btn[data-controller=action]"
+    assert_includes line, "inp_target=button.vote-button[data-controller=action]"
   end
 
   test "a target carrying anything but selector characters is stripped" do

@@ -9,9 +9,9 @@
 <% if authenticated? && (Current.user == @playlist.user || @playlist.collaborations.exists?(user: Current.user, role: %w[owner editor])) %>
   <section class="playlist-admin" aria-label="<%= t("playlist.management") %>">
     <nav class="cluster" aria-label="<%= t("playlist.actions") %>">
-      <%= link_to t("actions.edit"), edit_playlist_path(@playlist), class: "btn btn-ghost btn-sm" %>
-      <%= link_to t("playlist.analytics"), analytics_playlist_path(@playlist), class: "btn btn-ghost btn-sm" if Current.user == @playlist.user %>
-      <%= button_to t("actions.delete"), playlist_path(@playlist), method: :delete, data: { turbo_confirm: t("actions.confirm_delete") }, class: "btn btn-danger btn-sm" %>
+      <%= link_to t("actions.edit"), edit_playlist_path(@playlist), class: "button button-ghost button-small" %>
+      <%= link_to t("playlist.analytics"), analytics_playlist_path(@playlist), class: "button button-ghost button-small" if Current.user == @playlist.user %>
+      <%= button_to t("actions.delete"), playlist_path(@playlist), method: :delete, data: { turbo_confirm: t("actions.confirm_delete") }, class: "button button-danger button-small" %>
     </nav>
 
     <details>
@@ -23,7 +23,7 @@
           <div class="field"><%= f.select :source_type, Playlist::Track::SOURCE_TYPES.map { |type| [type.humanize, type] }, { include_blank: t("playlist.source") }, { aria: { label: t("playlist.source") } } %></div>
           <div class="field"><%= f.url_field :source_url, placeholder: t("playlist.url_optional"), aria: { label: t("playlist.url_optional") }, inputmode: "url" %></div>
           <div class="field"><%= f.datetime_field :expires_at, aria: { label: t("playlist.expires_at") } %></div>
-          <div class="field"><%= f.submit t("takeaway.add"), class: "btn btn-primary btn-sm" %></div>
+          <div class="field"><%= f.submit t("takeaway.add"), class: "button button-primary button-small" %></div>
         <% end %>
       </div>
     </details>
@@ -33,7 +33,7 @@
       <div class="form-wrap form-wrap--flush">
         <%= form_with url: playlist_imports_path(@playlist), method: :post do |f| %>
           <div class="field"><%= f.text_area :urls, rows: 4, placeholder: t("playlist.import_urls_placeholder"), aria: { label: t("playlist.import_urls_placeholder") } %></div>
-          <div class="field"><%= f.submit t("playlist.import"), class: "btn btn-primary btn-sm" %></div>
+          <div class="field"><%= f.submit t("playlist.import"), class: "button button-primary button-small" %></div>
         <% end %>
       </div>
     </details>

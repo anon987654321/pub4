@@ -17,7 +17,7 @@
             <%= form_with model: question, url: listing_question_path(listing, question), method: :patch do |f| %>
               <%= f.label :answer, t("marketplace.answer") %>
               <%= f.text_area :answer, rows: 2, required: true %>
-              <%= f.submit t("marketplace.post_answer"), class: "btn btn-sm" %>
+              <%= f.submit t("marketplace.post_answer"), class: "button button-small" %>
             <% end %>
           <% else %>
             <p class="listing-question-meta"><%= t("marketplace.awaiting_answer") %></p>
@@ -33,7 +33,7 @@
           <%= f.label :body, t("marketplace.ask_question") %>
           <%= f.text_area :body, rows: 2, required: true, placeholder: t("marketplace.ask_placeholder") %>
         </div>
-        <div class="field"><%= f.submit t("marketplace.post_question"), class: "btn btn-primary" %></div>
+        <div class="field"><%= f.submit t("marketplace.post_question"), class: "button button-primary" %></div>
       <% end %>
     </div>
   <% end %>

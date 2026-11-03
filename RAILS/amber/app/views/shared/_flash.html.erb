@@ -14,7 +14,7 @@
       <%= button_to undo["label"].presence || t("items.undo_restore"),
             undo["path"],
             method: (undo["method"].presence || :post).to_sym,
-            class: "btn btn-ghost btn-sm flash-undo" %>
+            class: "button button-ghost button-small flash-undo" %>
     <% end %>
   <% end %>
   <%= render "shared/system_signal", state:, classes: ["flash", "flash--#{type}"], content: %>

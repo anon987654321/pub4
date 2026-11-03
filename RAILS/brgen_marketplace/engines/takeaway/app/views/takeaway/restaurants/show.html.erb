@@ -42,7 +42,7 @@
       <%= render "business_verifications/status", business: @restaurant, kind: "restaurant", owner: authenticated? && @restaurant.owner?(Current.user) %>
       <% if authenticated? && @restaurant.owner?(Current.user) %>
         <nav aria-label="<%= t("takeaway.restaurant_actions") %>">
-          <%= link_to t("actions.edit"), edit_restaurant_path(@restaurant), class: "btn btn-ghost btn-sm" %>
+          <%= link_to t("actions.edit"), edit_restaurant_path(@restaurant), class: "button button-ghost button-small" %>
         </nav>
       <% end %>
     </div>
@@ -64,13 +64,13 @@
         <p><%= link_to t("maps.on_the_map"), record_public_href(@restaurant.place) %></p>
       <% end %>
       <div class="listing-buy-bar-actions">
-        <%= link_to t("takeaway.browse_menu"), "#menu", class: "btn btn-primary" %>
+        <%= link_to t("takeaway.browse_menu"), "#menu", class: "button button-primary" %>
         <% if Current.user.present? && !@restaurant.owner?(Current.user) %>
           <% if @favorited %>
             <%# destructive: no-confirm-ok — reversible — the button becomes Save again in place %>
-            <%= button_to t("takeaway.unsave"), restaurant_favorite_restaurant_path(@restaurant), method: :delete, class: "btn" %>
+            <%= button_to t("takeaway.unsave"), restaurant_favorite_restaurant_path(@restaurant), method: :delete, class: "button" %>
           <% else %>
-            <%= button_to t("takeaway.save_restaurant"), restaurant_favorite_restaurant_path(@restaurant), method: :post, class: "btn" %>
+            <%= button_to t("takeaway.save_restaurant"), restaurant_favorite_restaurant_path(@restaurant), method: :post, class: "button" %>
           <% end %>
         <% end %>
       </div>
@@ -96,7 +96,7 @@
         <div class="field field--check"><%= f.check_box :available, checked: true %><%= f.label :available %></div>
         <div class="field field--check"><%= f.check_box :vegetarian %><%= f.label :vegetarian %></div>
         <div class="field field--check"><%= f.check_box :vegan %><%= f.label :vegan %></div>
-        <div class="field"><%= f.submit t("takeaway.add"), class: "btn btn-primary btn-sm" %></div>
+        <div class="field"><%= f.submit t("takeaway.add"), class: "button button-primary button-small" %></div>
       <% end %>
     </div>
   </section>
@@ -139,7 +139,7 @@
   <span class="char-counter" data-character-counter-target="counter" aria-live="polite"></span>
 </div>
     </div>
-    <div class="field"><%= f.submit t("marketplace.post_review"), class: "btn btn-primary btn-sm" %></div>
+    <div class="field"><%= f.submit t("marketplace.post_review"), class: "button button-primary button-small" %></div>
   <% end %>
 </section>
 <% end %>

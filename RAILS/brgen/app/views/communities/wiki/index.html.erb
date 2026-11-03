@@ -6,7 +6,7 @@
     <%= tag.h1 t("wiki.heading") %>
   </hgroup>
   <% if @community.moderator?(Current.user) %>
-    <%= link_to t("wiki.new_page"), new_community_wiki_path(@community), class: "btn btn-sm" %>
+    <%= link_to t("wiki.new_page"), new_community_wiki_path(@community), class: "button button-small" %>
   <% end %>
 </div>
 

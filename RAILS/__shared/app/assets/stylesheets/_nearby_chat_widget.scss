@@ -280,13 +280,13 @@
   outline-offset: 2px;
 }
 
-.nearby-chat-widget-composer .btn {
+.nearby-chat-widget-composer .button {
   flex-shrink: 0;
   min-height: var(--tap-min);
   min-width: var(--tap-min);
 }
 
-.nearby-chat-widget-composer .btn:disabled {
+.nearby-chat-widget-composer .button:disabled {
   opacity: 0.45;
   cursor: not-allowed;
 }

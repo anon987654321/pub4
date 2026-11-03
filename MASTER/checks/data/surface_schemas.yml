@@ -50,7 +50,7 @@ schemas:
         max: 1
         principle: hierarchy
       primary_actions:
-        pattern: 'btn-primary'
+        pattern: 'button-primary'
         max: 6
         principle: hicks_law
     markers:
@@ -134,7 +134,7 @@ schemas:
         max: 1
         principle: hierarchy
       primary_actions:
-        pattern: 'btn-primary'
+        pattern: 'button-primary'
         max: 6
         principle: hicks_law
     markers:
@@ -198,7 +198,7 @@ schemas:
         max: 1
         principle: hierarchy
       primary_actions:
-        pattern: 'btn-primary'
+        pattern: 'button-primary'
         max: 6
         principle: hicks_law
     markers:
@@ -262,7 +262,7 @@ schemas:
         max: 1
         principle: hierarchy
       primary_actions:
-        pattern: 'btn-primary'
+        pattern: 'button-primary'
         max: 6
         principle: hicks_law
     markers:
@@ -324,7 +324,7 @@ schemas:
         max: 1
         principle: hierarchy
       primary_actions:
-        pattern: 'btn-primary'
+        pattern: 'button-primary'
         max: 6
         principle: hicks_law
     forbidden:

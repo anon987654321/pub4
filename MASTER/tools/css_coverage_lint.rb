@@ -310,7 +310,7 @@ module Operator
 #   amber-stardust-spark--5 amber-stardust-spark--6 amber-stardust-spark--7
 #   amber-stardust-speck--1 amber-stardust-speck--2 amber-stardust-speck--3
 #   amber-stardust-speck--4 amber-stardust-speck--5 amber-stardust-speck--6
-#   amber-stardust-speck--7 amber_precision amber alert notice lines vote-btn
+#   amber-stardust-speck--7 amber_precision amber alert notice lines vote-button
 #   down active-up active-down vote-score inherit affiliate-deal
 #   affiliate-title affiliate-merchant media-gallery__item map-marker
 #   radio-home radio-home-header radio-section-header radio-home-label

@@ -226,7 +226,7 @@ body.vertical-marketplace .listing-status--notice {
   width: auto;
 }
 
-.store-pdp .store-buybox .btn {
+.store-pdp .store-buybox .button {
   width: 100%;
   min-height: 48px;
   padding-inline: 24px;
@@ -238,17 +238,17 @@ body.vertical-marketplace .listing-status--notice {
   font-weight: var(--weight-bold);
 }
 
-.store-pdp .store-buybox .btn:hover {
+.store-pdp .store-buybox .button:hover {
   background: var(--store-well);
 }
 
-.store-pdp .store-buybox .btn-primary {
+.store-pdp .store-buybox .button-primary {
   border-color: var(--store-red);
   background: var(--store-red);
   color: var(--store-page);
 }
 
-.store-pdp .store-buybox .btn-primary:hover {
+.store-pdp .store-buybox .button-primary:hover {
   background: var(--store-red);
   text-decoration: underline;
 }
@@ -491,7 +491,7 @@ font-family: var(--font-brand);
 }
 
 .radio-nav a,
-.radio-nav-btn {
+.radio-nav-button {
   padding: 8px 12px;
   border: 0;
   background: var(--scrim-65);
@@ -1352,7 +1352,7 @@ body.vertical-playlist .playlist-details {
   }
 }
 
-.playlist-transport-bar .transport-btn {
+.playlist-transport-bar .transport-button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -1365,13 +1365,13 @@ body.vertical-playlist .playlist-details {
   cursor: pointer;
 }
 
-.playlist-transport-bar .transport-btn:hover {
+.playlist-transport-bar .transport-button:hover {
   background: var(--hover);
 }
 
 /* The one emphasised control, filled rather than enlarged so the row keeps a
    single tap-target height. */
-.playlist-transport-bar .transport-btn--primary {
+.playlist-transport-bar .transport-button--primary {
   background: var(--text);
   color: var(--bg);
 }
@@ -1389,8 +1389,8 @@ body.vertical-playlist .playlist-details {
 
 /* One button, two glyphs, swapped by state — see #syncPlayButton. */
 .playlist-transport-bar .transport-icon-pause { display: none; }
-.playlist-transport-bar .transport-btn--primary.is-playing .transport-icon-play { display: none; }
-.playlist-transport-bar .transport-btn--primary.is-playing .transport-icon-pause { display: inline; }
+.playlist-transport-bar .transport-button--primary.is-playing .transport-icon-play { display: none; }
+.playlist-transport-bar .transport-button--primary.is-playing .transport-icon-pause { display: inline; }
 
 // Classes the markup uses that nothing else defines, as
 // Operator::CssCoverageLint finds them. Token-only, no hex.
@@ -1466,8 +1466,8 @@ body.vertical-takeaway {
 /* Flat, in Kaufland's dark primary: #3c3c3c with white 600 type in a pill, the
    same button markedsplass wears. --food-dash and --foodora keep their other
    jobs, the eta chip's urgency red and the discovery border. */
-body.vertical-takeaway .btn,
-body.vertical-takeaway .btn-primary {
+body.vertical-takeaway .button,
+body.vertical-takeaway .button-primary {
   background: var(--store-ink);
   color: var(--store-page);
   border-radius: var(--radius-pill);
@@ -1682,11 +1682,11 @@ body.vertical-tv .preset-opt input:checked + span {
   color: var(--accent-ink);
 }
 
-/* --accent-ink, not --text: this paints ON the accent, and the shared .btn
+/* --accent-ink, not --text: this paints ON the accent, and the shared .button
    rule already reads the ink the vertical accent map tunes for it. Overriding
    the background without the ink would put --text (#333333) on #dc635c at
    3.60, under the 4.5 floor for 15.8px type. */
-body.vertical-tv .btn-primary {
+body.vertical-tv .button-primary {
   background: var(--tv-accent);
   color: var(--accent-ink);
   border-radius: var(--radius-pill);
@@ -2048,8 +2048,8 @@ body.vertical-maps article.place dd {
    --maps-surface, which is what its other three uses ask of it, and on the
    accent it reads 3.34 against the 4.5 floor. The vertical shell tunes one
    ink for anything painted on an accent; this is that. */
-body.vertical-maps .btn,
-body.vertical-maps .btn-primary {
+body.vertical-maps .button,
+body.vertical-maps .button-primary {
   background: var(--maps-accent);
   color: var(--accent-ink);
   border: 1px solid color-mix(in srgb, var(--maps-accent) 40%, var(--maps-border));
@@ -2057,7 +2057,7 @@ body.vertical-maps .btn-primary {
   font-weight: var(--weight-bold);
 }
 
-body.vertical-maps .btn-ghost {
+body.vertical-maps .button-ghost {
   background: transparent;
   border-color: var(--maps-border);
   color: var(--maps-muted);

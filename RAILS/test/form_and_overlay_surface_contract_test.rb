@@ -15,13 +15,13 @@ class FormAndOverlaySurfaceContractTest < Minitest::Test
     assert_includes CSS, 'input[type="datetime-local"]'
     assert_includes CSS, "min-block-size: var(--tap-min)"
     # Text fields are borderless, so focus shows as the shared outline ring.
-    assert_match(/\):not\(\.btn\):focus-visible \{\s*outline: var\(--focus-ring\);/, CSS)
-    assert_includes CSS, ':not(.btn):user-invalid'
+    assert_match(/\):not\(\.button\):focus-visible \{\s*outline: var\(--focus-ring\);/, CSS)
+    assert_includes CSS, ":not(.button):user-invalid"
   end
 
   def test_unclassified_submit_controls_cannot_fall_back_to_ua_buttons
-    assert_includes CSS, 'input[type="submit"]:not(.btn):not([class])'
-    assert_includes CSS, 'button[type="submit"]:not(.btn):not([class])'
+    assert_includes CSS, 'input[type="submit"]:not(.button):not([class])'
+    assert_includes CSS, 'button[type="submit"]:not(.button):not([class])'
   end
 
   def test_native_dialog_and_popover_have_shared_tokens

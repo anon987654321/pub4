@@ -39,6 +39,6 @@
     </details>
     <div class="field"><%= f.label :status %><%= f.select :status, Marketplace::Listing::STATUSES %></div>
     <div class="field"><%= f.label :photos %><%= f.file_field :photos, multiple: true, accept: "image/*", direct_upload: true, data: { controller: "direct-upload" } %></div>
-    <div class="field"><%= f.submit t("actions.save"), class: "btn btn-primary" %></div>
+    <div class="field"><%= f.submit t("actions.save"), class: "button button-primary" %></div>
   <% end %>
 </div>

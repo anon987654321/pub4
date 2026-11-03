@@ -46,7 +46,7 @@ module Operator
     # --tap-min in both axes. Both are the state-indicator case the 3:1 non-text
     # floor exists for, so both were reported as prose the moment the glob below
     # widened far enough to reach them.
-    INTERACTIVE_SELECTOR = /\ba\b|button|\.btn|link|tab|chip|badge|action|:hover|:focus|active|vote|toggle|nav|pill|switch|control|icon|spinner|progress|ring|cursor|caret|brand|logo|accent|input|select|textarea|summary|delete|fav/i
+    INTERACTIVE_SELECTOR = /\ba\b|button|link|tab|chip|badge|action|:hover|:focus|active|vote|toggle|nav|pill|switch|control|icon|spinner|progress|ring|cursor|caret|brand|logo|accent|input|select|textarea|summary|delete|fav/i
 
     # All four measure 0: the light-theme vertical accents carry darkened
     # same-hue variants, the image helpers reserve intrinsically, and every raw
@@ -76,7 +76,7 @@ module Operator
       "unreserved_image" => 0,
       "accent_on_prose" => 0,
       "compose_costume" => 0,
-      "btn_vocabulary" => 0,
+      "button_vocabulary" => 0,
     }.freeze
 
     Finding = Struct.new(:kind, :file, :detail)
@@ -86,7 +86,7 @@ module Operator
     module_function
 
     def scan
-      contrast_findings + image_findings + accent_findings + costume_findings + btn_findings
+      contrast_findings + image_findings + accent_findings + costume_findings + button_findings
     end
 
     def run
@@ -302,28 +302,30 @@ end
     # --- button vocabulary ----------------------------------------------------
 
     # The closed set (2026-08-21 consolidation): base + four variants + two
-    # rare utilities. The zen-era btn--primary BEM twins died in the same
+    # rare utilities. The zen-era button--primary BEM twins died in the same
     # pass; any new spelling is the next schism at birth.
-    # btn-share is its own pill (share control on marketplace/tv/nearby), not a
+    # button-share is its own pill (share control on marketplace/tv/nearby), not a
     # variant of the base — in the vocabulary because it is worn and styled.
-    BTN_VOCABULARY = %w[btn btn-primary btn-ghost btn-danger btn-sm btn-link btn-block btn-share].to_set
+    BUTTON_VOCABULARY = %w[
+      button button-primary button-ghost button-danger button-small button-link button-block button-share
+    ].to_set
 
-    # A class of this vocabulary begins with btn, so the character before it is
+    # A class of this vocabulary begins with button, so the character before it is
     # neither a word character nor a hyphen. `\b` treated a hyphen as a boundary
-    # and so read every component whose own name ends in -btn as a stray variant
-    # of this one: playlist's transport-btn--primary, a BEM modifier on a
+    # and so read every component whose own name ends in -button as a stray variant
+    # of this one: playlist's transport-button--primary, a BEM modifier on a
     # different component that the stylesheet and two layout snapshots spell the
-    # same way, was reported twice as the btn--primary schism.
-    STRAY_BTN = /(?<![\w-])btn--?[\w-]+/
+    # same way, was reported twice as the button--primary schism.
+    STRAY_BUTTON = /(?<![\w-])button--?[\w-]+/
 
-    def btn_findings
+    def button_findings
       views = Dir.glob(File.join(RAILS_ROOT, "{brgen,amber,bsdports,__shared}/app/views/**/*.erb")) +
               Dir.glob(File.join(RAILS_ROOT, "brgen/engines/*/app/views/**/*.erb"))
       views.flat_map do |path|
         File.read(path, encoding: "UTF-8").each_line.with_index(1).filter_map do |line, n|
-          stray = line.scan(STRAY_BTN).uniq.reject { |c| BTN_VOCABULARY.include?(c) }
+          stray = line.scan(STRAY_BUTTON).uniq.reject { |c| BUTTON_VOCABULARY.include?(c) }
           next if stray.empty?
-          Finding.new("btn_vocabulary", path.sub("#{RAILS_ROOT}/", ""), "line #{n}: #{stray.join(" ")}")
+          Finding.new("button_vocabulary", path.sub("#{RAILS_ROOT}/", ""), "line #{n}: #{stray.join(" ")}")
         end
       end
     end

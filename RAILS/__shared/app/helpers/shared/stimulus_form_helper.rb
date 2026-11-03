@@ -42,7 +42,7 @@ module Shared
           form.password_field(method, **opts),
           tag.button(
             type: "button",
-            class: "btn btn-ghost btn-sm password-toggle",
+            class: "button button-ghost button-small password-toggle",
             data: { action: "password-visibility#toggle" },
             aria: { label: I18n.t("auth.toggle_password_visibility") },
           ) do
@@ -83,7 +83,7 @@ tag.div(
            tags: Shared::RichTextHelper::TAGS, attributes: []),
   class: class_name, data: { read_more_target: "content" }
 ),
-          tag.button(type: "button", class: "btn-link", data: { action: "read-more#toggle" }) { more },
+          tag.button(type: "button", class: "button-link", data: { action: "read-more#toggle" }) { more },
         ])
       end
     end

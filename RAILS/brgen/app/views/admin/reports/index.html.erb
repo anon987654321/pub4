@@ -30,7 +30,7 @@
         <% if report.details.present? %><%= tag.p report.details %><% end %>
         <nav class="cluster">
           <% %w[open reviewing resolved dismissed].each do |status| %>
-            <%= button_to t("community.mark_#{status}"), admin_report_path(report, status: status), method: :patch, class: "btn btn-ghost btn-sm" %>
+            <%= button_to t("community.mark_#{status}"), admin_report_path(report, status: status), method: :patch, class: "button button-ghost button-small" %>
           <% end %>
         </nav>
       </article>

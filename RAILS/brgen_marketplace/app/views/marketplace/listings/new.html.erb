@@ -58,7 +58,7 @@
                   class: "media-input-hidden",
                   aria: { label: t("marketplace.add_photos") },
                   data: { media_picker_target: "input", action: "change->media-picker#pick" } %>
-            <button type="button" class="listing-photo-camera media-btn"
+            <button type="button" class="listing-photo-camera media-button"
                     data-action="click->media-picker#trigger">
               <%= icon :camera, size: 28 %>
               <span><%= t("marketplace.take_photo") %></span>
@@ -101,7 +101,7 @@
           </div>
         </div>
         <div class="listing-step-actions">
-          <button type="button" class="btn btn-primary" data-action="click->listing-form#next">
+          <button type="button" class="button button-primary" data-action="click->listing-form#next">
             <%= t("marketplace.continue") %>
           </button>
         </div>
@@ -208,8 +208,8 @@
         </details>
 
         <div class="listing-step-actions">
-          <button type="button" class="btn btn-ghost" data-action="click->listing-form#back"><%= t("marketplace.back") %></button>
-          <button type="button" class="btn btn-primary" data-action="click->listing-form#next"><%= t("marketplace.continue") %></button>
+          <button type="button" class="button button-ghost" data-action="click->listing-form#back"><%= t("marketplace.back") %></button>
+          <button type="button" class="button button-primary" data-action="click->listing-form#next"><%= t("marketplace.continue") %></button>
         </div>
       </fieldset>
 
@@ -225,7 +225,7 @@
           <%= f.label :location %>
           <div class="listing-location-row">
             <%= f.text_field :location, required: true, autocomplete: "street-address" %>
-            <button type="button" class="btn btn-ghost" data-action="click->listing-form#useLocation">
+            <button type="button" class="button button-ghost" data-action="click->listing-form#useLocation">
               <%= t("marketplace.use_current_location") %>
             </button>
           </div>
@@ -254,8 +254,8 @@
         </details>
 
         <div class="listing-step-actions">
-          <button type="button" class="btn btn-ghost" data-action="click->listing-form#back"><%= t("marketplace.back") %></button>
-          <button type="button" class="btn btn-primary" data-action="click->listing-form#next"><%= t("marketplace.continue") %></button>
+          <button type="button" class="button button-ghost" data-action="click->listing-form#back"><%= t("marketplace.back") %></button>
+          <button type="button" class="button button-primary" data-action="click->listing-form#next"><%= t("marketplace.continue") %></button>
         </div>
       </fieldset>
 
@@ -280,13 +280,13 @@
         </div>
 
         <div class="listing-draft-row">
-          <button type="button" class="btn btn-ghost" data-action="click->listing-form#saveDraft"><%= t("marketplace.save_draft") %></button>
+          <button type="button" class="button button-ghost" data-action="click->listing-form#saveDraft"><%= t("marketplace.save_draft") %></button>
           <span class="form-help" data-listing-form-target="draftStatus" aria-live="polite"></span>
         </div>
 
         <div class="listing-step-actions">
-          <button type="button" class="btn btn-ghost" data-action="click->listing-form#back"><%= t("marketplace.back") %></button>
-          <%= f.submit t("marketplace.list_it"), class: "btn btn-primary" %>
+          <button type="button" class="button button-ghost" data-action="click->listing-form#back"><%= t("marketplace.back") %></button>
+          <%= f.submit t("marketplace.list_it"), class: "button button-primary" %>
         </div>
       </fieldset>
     <% end %>

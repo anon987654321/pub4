@@ -985,7 +985,7 @@ body.vertical-marketplace .top-offers-rail .sale-ad .deal-price {
   margin: var(--space-3) 0;
 }
 
-.cart-pay-actions .btn {
+.cart-pay-actions .button {
   min-height: var(--tap-min);
 }
 
@@ -1077,7 +1077,7 @@ body.vertical-marketplace .top-offers-rail .sale-ad .deal-price {
    A row of its own in the page, where the in-page search field used to sit, at
    that field's 16px. Its controls belong to the header search through their
    form attribute. Out of .search, the yep pen's rule that hides a select, a
-   number field and a .btn inside a .search-form no longer reaches them: inside
+   number field and a .button inside a .search-form no longer reaches them: inside
    it, the category, sort, radius and price controls and "near me" were never
    shown. */
 .listing-filters {

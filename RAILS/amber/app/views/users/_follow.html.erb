@@ -2,12 +2,12 @@
   <% if authenticated? && Current.user != user %>
     <% if Current.user.following?(user) %>
       <%# destructive: no-confirm-ok — reversible — the button becomes Follow again in place %>
-      <%= button_to t("actions.unfollow"), unfollow_user_path(user), method: :delete, class: "btn" %>
+      <%= button_to t("actions.unfollow"), unfollow_user_path(user), method: :delete, class: "button" %>
     <% else %>
-      <%= button_to t("actions.follow"), follow_user_path(user), method: :post, class: "btn btn-primary" %>
+      <%= button_to t("actions.follow"), follow_user_path(user), method: :post, class: "button button-primary" %>
     <% end %>
     <% unless Current.user.connected_with?(user) %>
-      <%= button_to t("users.connect"), connections_path, method: :post, params: { user_id: user.id }, class: "btn btn-ghost" %>
+      <%= button_to t("users.connect"), connections_path, method: :post, params: { user_id: user.id }, class: "button button-ghost" %>
     <% end %>
   <% end %>
 <% end %>

@@ -10,13 +10,13 @@
 <div class="post-vote-rail" role="group" aria-label="<%= t("post.voting") %>" data-viewer-state="vote">
   <% if vote_path.present? && voter.present? %>
     <%= button_to vote_path, method: :post, params: { vote: { value: 1 } },
-          class: "post-vote-btn#{' is-active' if upvoted}", form_class: "post-vote-form",
+          class: "post-vote-button#{' is-active' if upvoted}", form_class: "post-vote-form",
           aria: { label: t("post.upvote"), pressed: upvoted } do %>
       <%= render "shared/feed_icon", name: "upvote" %>
     <% end %>
     <span class="post-vote-score" data-post-score="<%= dom_id(post) %>"><%= vote_score %></span>
     <%= button_to vote_path, method: :post, params: { vote: { value: -1 } },
-          class: "post-vote-btn#{' is-active' if downvoted}", form_class: "post-vote-form",
+          class: "post-vote-button#{' is-active' if downvoted}", form_class: "post-vote-form",
           aria: { label: t("post.downvote"), pressed: downvoted } do %>
       <%= render "shared/feed_icon", name: "downvote" %>
     <% end %>

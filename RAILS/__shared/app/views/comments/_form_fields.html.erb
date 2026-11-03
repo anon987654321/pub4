@@ -19,9 +19,9 @@
           } %>
     <div class="tiptap_mount" data-tiptap-editor-target="mount" hidden></div>
     <div class="tiptap_toolbar" data-tiptap-editor-target="toolbar" hidden>
-      <button type="button" class="tiptap_btn" data-action="mousedown->tiptap-editor#bold" title="<%= t("compose.bold") %>"><strong>B</strong></button>
-      <button type="button" class="tiptap_btn" data-action="mousedown->tiptap-editor#italic" title="<%= t("compose.italic") %>"><em>i</em></button>
-      <button type="button" class="tiptap_btn" data-action="mousedown->tiptap-editor#bulletList" title="<%= t("compose.bullet_list") %>">&bull;</button>
+      <button type="button" class="tiptap_button" data-action="mousedown->tiptap-editor#bold" title="<%= t("compose.bold") %>"><strong>B</strong></button>
+      <button type="button" class="tiptap_button" data-action="mousedown->tiptap-editor#italic" title="<%= t("compose.italic") %>"><em>i</em></button>
+      <button type="button" class="tiptap_button" data-action="mousedown->tiptap-editor#bulletList" title="<%= t("compose.bullet_list") %>">&bull;</button>
     </div>
     <span class="char-counter" data-character-counter-target="counter" aria-live="polite"></span>
   </div>
@@ -30,5 +30,5 @@
   <p class="error" role="alert"><%= comment.errors.full_messages.to_sentence %></p>
 <% end %>
 <div class="field">
-  <%= form.submit submit, class: "btn btn-primary btn-sm" %>
+  <%= form.submit submit, class: "button button-primary button-small" %>
 </div>

@@ -93,7 +93,7 @@ module Deploy
 
       # The largest button, or link styled as one, is the action the page asks
       # for; its siblings are every other action on the surface.
-      def actions(elements) = elements.select { |el| el["tag"] == "button" || el["key"].to_s.match?(/\.btn\b/) }
+      def actions(elements) = elements.select { |el| el["tag"] == "button" || el["key"].to_s.match?(/\.button\b/) }
 
       def primary(elements) = actions(elements).max_by { |el| [area(el), el["key"].to_s] }
 

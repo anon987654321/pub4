@@ -15,7 +15,8 @@
     <% if @order.group? %>
       <%= link_to t("takeaway.group_link"), group_order_url(@order.group_token) %>
     <% else %>
-      <%= button_to t("takeaway.open_group"), order_group_path(@order), method: :post, class: "btn btn-ghost btn-sm" %>
+      <%= button_to t("takeaway.open_group"), order_group_path(@order), method: :post,
+            class: "button button-ghost button-small" %>
     <% end %>
   </p>
 <% end %>
@@ -86,11 +87,11 @@
 </article>
 
 <nav aria-label="<%= t("takeaway.order_actions") %>">
-  <%= button_to t("actions.reorder"), again_order_path(@order), method: :post, class: "btn" %>
-  <%= link_to t("actions.all_orders"), orders_path, class: "btn btn-ghost" %>
+  <%= button_to t("actions.reorder"), again_order_path(@order), method: :post, class: "button" %>
+  <%= link_to t("actions.all_orders"), orders_path, class: "button button-ghost" %>
   <% if authenticated? && @order.restaurant.owner?(Current.user) && @order.advanceable? %>
     <% Takeaway::Order::TRANSITIONS.fetch(@order.status, []).each do |status| %>
-      <%= button_to t("takeaway.statuses.#{status}"), order_path(@order), method: :patch, params: { status: status }, class: "btn btn-primary" %>
+      <%= button_to t("takeaway.statuses.#{status}"), order_path(@order), method: :patch, params: { status: status }, class: "button button-primary" %>
     <% end %>
   <% end %>
 </nav>

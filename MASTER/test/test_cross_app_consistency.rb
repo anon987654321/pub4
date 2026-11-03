@@ -73,8 +73,8 @@ class CrossAppConsistencyTest < Minitest::Test
   end
 
   def test_probe_samples_add_padding_and_border
-    a = Check::Sample.new(app: "brgen", viewport: "desktop", primitive: "button", selector: "button.btn", style: { "padding" => "8px 16px 8px 16px" })
-    b = Check::Sample.new(app: "bsdports", viewport: "desktop", primitive: "button", selector: "button.btn", style: { "padding" => "4px 8px 4px 8px" })
+    a = Check::Sample.new(app: "brgen", viewport: "desktop", primitive: "button", selector: "button.button", style: { "padding" => "8px 16px 8px 16px" })
+    b = Check::Sample.new(app: "bsdports", viewport: "desktop", primitive: "button", selector: "button.button", style: { "padding" => "4px 8px 4px 8px" })
     r = Check.new([a, b]).report
     assert_equal ["padding"], r[:findings].map { |f| f[:prop] }
   end

@@ -70,7 +70,7 @@
           <span class="char-counter" data-character-counter-target="counter" aria-live="polite"></span>
         </div>
         <%= f.hidden_field :message_type, value: "text" %>
-        <%= f.submit t("actions.send"), class: "btn btn-primary" %>
+        <%= f.submit t("actions.send"), class: "button button-primary" %>
       <% end %>
       <p>
         <%= t("chat.posting_as") %> <%= tag.strong handle %><% if Current.user.guest? %> — <%= t("chat.no_signup") %><% end %>.
@@ -81,7 +81,7 @@
           opens, from the session guest id, so only a fresh page reconnects it as
           the guest this request creates. %>
       <p class="channel-signin"><%= t("chat.anyone_join") %></p>
-      <p><%= link_to t("chat.join_room"), channel_path(@conversation.slug), class: "btn btn-primary", data: { turbo: false } %></p>
+      <p><%= link_to t("chat.join_room"), channel_path(@conversation.slug), class: "button button-primary", data: { turbo: false } %></p>
     <% end %>
   </section>
   <% end %>

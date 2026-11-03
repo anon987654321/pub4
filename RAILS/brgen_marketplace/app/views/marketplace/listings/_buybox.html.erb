@@ -7,7 +7,7 @@
   <% elsif buybox_listing.expired? %>
     <p class="listing-status"><%= t("marketplace.expired_notice") %></p>
     <% if Current.user.present? && Current.user&.id == buybox_listing.user_id %>
-      <%= button_to t("marketplace.renew"), renew_listing_path(buybox_listing), method: :post, class: "btn btn-primary btn-sm" %>
+      <%= button_to t("marketplace.renew"), renew_listing_path(buybox_listing), method: :post, class: "button button-primary button-small" %>
     <% end %>
   <% end %>
   <% if buybox_listing.photo_processing? %>
@@ -51,6 +51,6 @@
       listing page. %>
   <% seller = buybox_listing.user %>
   <% if buybox_listing.buyable? && Current.user.present? && seller.present? && Current.user != seller %>
-    <%= button_to t("marketplace.message_seller_btn"), main_app.user_conversations_path(seller), method: :post, class: "btn btn-ghost" %>
+    <%= button_to t("marketplace.message_seller_button"), main_app.user_conversations_path(seller), method: :post, class: "button button-ghost" %>
   <% end %>
 </section>

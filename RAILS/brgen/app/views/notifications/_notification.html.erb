@@ -16,13 +16,13 @@
   </p>
   <div class="notification-actions cluster">
     <% if href.present? %>
-      <%= link_to t("notifications.open"), href, class: "btn btn-ghost btn-sm" %>
+      <%= link_to t("notifications.open"), href, class: "button button-ghost button-small" %>
     <% end %>
     <% unless notification.read? %>
-      <%= button_to t("actions.mark_read"), notification_path(notification), method: :patch, data: { turbo_stream: true }, class: "btn btn-ghost btn-sm" %>
+      <%= button_to t("actions.mark_read"), notification_path(notification), method: :patch, data: { turbo_stream: true }, class: "button button-ghost button-small" %>
     <% end %>
     <%= button_to t("notifications.dismiss"), notification_path(notification), method: :delete,
-          data: { turbo_stream: true, swipe_dismiss_target: "button" }, class: "btn btn-ghost btn-sm",
+          data: { turbo_stream: true, swipe_dismiss_target: "button" }, class: "button button-ghost button-small",
           aria: { label: t("notifications.dismiss_label") } %>
   </div>
 </article>

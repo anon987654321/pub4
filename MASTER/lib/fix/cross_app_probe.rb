@@ -17,7 +17,7 @@ module Master
             header: pick('header', 1),
             nav_link: pick('nav a, nav button', 3),
             footer: pick('footer', 1),
-            button: pick("button, input[type=submit], a.btn, [role=button]", 12).filter((el) => !insideNav(el)).slice(0, 3),
+            button: pick("button, input[type=submit], a.button, [role=button]", 12).filter((el) => !insideNav(el)).slice(0, 3),
             form_control: pick("input:not([type=hidden]):not([type=submit]):not([type=checkbox]):not([type=radio]), select, textarea", 3),
           };
           const rows = [];

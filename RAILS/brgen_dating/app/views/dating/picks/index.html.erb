@@ -5,7 +5,7 @@
     <p><%= t("dating.picks_eyebrow") %></p>
     <%= tag.h1 t("dating.picks_title") %>
   </hgroup>
-  <%= link_to t("dating.back_to_deck"), root_path, class: "btn btn-ghost" %>
+  <%= link_to t("dating.back_to_deck"), root_path, class: "button button-ghost" %>
 </div>
 
 <% if @picks.any? %>
@@ -23,7 +23,8 @@
           <% if profile.verified_at %><span class="chip"><%= t("dating.verified") %></span><% end %>
         </p>
         <p class="pick-meta"><%= [ profile.age, profile.bydel.presence || profile.location ].compact.join(" · ") %></p>
-        <%= button_to t("dating.like"), likes_path(user_id: profile.user_id), method: :post, class: "btn btn-sm" %>
+        <%= button_to t("dating.like"), likes_path(user_id: profile.user_id), method: :post,
+              class: "button button-small" %>
       </li>
     <% end %>
   </ul>

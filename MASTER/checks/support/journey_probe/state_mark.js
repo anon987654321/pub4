@@ -10,7 +10,7 @@
     return r.width > 0 && r.height > 0 && r.bottom > 0 && r.top < innerHeight &&
       cs.visibility !== 'hidden' && cs.display !== 'none';
   };
-  const controls = [...document.querySelectorAll('button, input[type=submit], input[type=button], a.btn, .btn')]
+  const controls = [...document.querySelectorAll('button, input[type=submit], input[type=button], a.button, .button')]
     .filter((el) => shown(el) && !el.disabled && el.getAttribute('aria-disabled') !== 'true')
     .slice(0, 6);
   return controls.map((el, index) => {

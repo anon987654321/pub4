@@ -25,7 +25,7 @@ const _StimulusSortable = class _StimulusSortable extends Controller {
       ].forEach(([name, label, delta]) => {
         const button = document.createElement("button");
         button.type = "button";
-        button.className = "btn btn-ghost btn-sm";
+        button.className = "button button-ghost button-small";
         button.textContent = delta < 0 ? "↑" : "↓";
         button.setAttribute("aria-label", label);
         button.dataset.action = `${this.identifier}#moveBy`;

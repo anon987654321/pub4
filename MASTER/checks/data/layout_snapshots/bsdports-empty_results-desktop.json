@@ -141,7 +141,7 @@
       "position": "static"
     },
     {
-      "key": "#ports>section.empty.empty-state>a.btn.btn-primary.empty-state-action",
+      "key": "#ports>section.empty.empty-state>a.button.button-primary.empty-state-action",
       "tag": "a",
       "rect": {
         "x": 649,
@@ -269,7 +269,7 @@
       "position": "static"
     },
     {
-      "key": "div.app-shell>nav>div.nav-actions>a.btn.btn-ghost",
+      "key": "div.app-shell>nav>div.nav-actions>a.button.button-ghost",
       "tag": "a",
       "rect": {
         "x": 294,

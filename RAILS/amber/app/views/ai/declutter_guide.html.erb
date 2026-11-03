@@ -1,6 +1,6 @@
 <% content_for :title, t("pages.declutter_guide") %>
 <%= tag.h1 t("pages.declutter_guide") %>
-<p><%= link_to t("ai.declutter_dashboard"), declutter_index_path, class: "btn" %></p>
+<p><%= link_to t("ai.declutter_dashboard"), declutter_index_path, class: "button" %></p>
 <% if @candidates.any? %>
   <p><%= t("ai.letting_go") %></p>
   <div class="item-grid"><%= render @candidates %></div>

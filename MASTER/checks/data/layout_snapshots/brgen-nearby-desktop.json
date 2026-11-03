@@ -45,7 +45,7 @@
       "position": "static"
     },
     {
-      "key": "#main-content>div.section-divider--24>p.nearby-locate-actions>a.btn.btn-sm",
+      "key": "#main-content>div.section-divider--24>p.nearby-locate-actions>a.button.button-small",
       "tag": "a",
       "rect": {
         "x": 575,
@@ -61,7 +61,7 @@
       "position": "static"
     },
     {
-      "key": "#main-content>div.section-divider--24>p.nearby-locate-actions>button.btn.btn-primary.btn-sm",
+      "key": "#main-content>div.section-divider--24>p.nearby-locate-actions>button.button.button-primary.button-small",
       "tag": "button",
       "rect": {
         "x": 438,

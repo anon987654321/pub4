@@ -1255,7 +1255,7 @@ en:
     list_it: List it
     save_search: Save this search
     message_seller: Message to seller (optional)
-    message_seller_btn: Message seller
+    message_seller_button: Message seller
     radius_km: Radius km
     radius_label: Radius in kilometres
     accept: Accept

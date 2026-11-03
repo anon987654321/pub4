@@ -60,7 +60,7 @@ class PostLiveCardBroadcastTest < ActiveSupport::TestCase
     assert_equal "post_#{@post.id}", card["target"]
     html = card.at_css("template").inner_html
     assert_includes html, "Rettet tittel"
-    assert_not_includes html, "post-vote-btn", "a card for the stream must not carry the editor's vote buttons"
+    assert_not_includes html, "post-vote-button", "a card for the stream must not carry the editor's vote buttons"
   end
 
   test "a vote does not resend the card" do

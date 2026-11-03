@@ -34,7 +34,7 @@
       <%= link_to t("radio.upload"), new_hosted_track_path %>
     <% end %>
     <% if local_assigns.fetch(:show_library, false) %>
-      <button type="button" class="radio-nav-btn" data-action="click->radio-tunnel#openLibrary"><%= t("playlist.library") %></button>
+      <button type="button" class="radio-nav-button" data-action="click->radio-tunnel#openLibrary"><%= t("playlist.library") %></button>
     <% end %>
   </nav>
 

@@ -7,6 +7,6 @@
   <% if business_verification_pending?(business) %>
     <%= tag.p t("business_verifications.pending") %>
   <% else %>
-    <%= tag.p link_to(t("business_verifications.request"), main_app.new_business_verification_path(kind: kind, business_id: business.id), class: "btn btn-ghost btn-sm") %>
+    <%= tag.p link_to(t("business_verifications.request"), main_app.new_business_verification_path(kind: kind, business_id: business.id), class: "button button-ghost button-small") %>
   <% end %>
 <% end %>

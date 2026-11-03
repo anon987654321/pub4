@@ -162,7 +162,7 @@ quality:
       # The peer-choice limit is MASTER's: laws.yml UX_LAWS.hick
       # max_visible_choices. It is not restated here, because it was, as 4
       # against the law's 7, and the private copy won for months.
-      max_btn_primary: 3
+      max_button_primary: 3
     guest_open:
       forbid: 'Sign in to continue'
     dialect_purity:

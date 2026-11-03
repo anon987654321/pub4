@@ -43,7 +43,7 @@ class TestRailsInteractionCraft < Minitest::Test
     css = File.read(BUTTONS)
     assert_includes css, "touch-action: manipulation;"
     assert_includes css, "transform var(--duration-m3-short) var(--ease-m3-spring)"
-    assert_includes css, ".btn:active"
+    assert_includes css, ".button:active"
   end
 
   def test_bottom_sheet_uses_shared_spring_tokens_and_pointer_capture

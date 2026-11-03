@@ -285,7 +285,7 @@
       "position": "fixed"
     },
     {
-      "key": "section>div.map-hud>div.cluster>a.btn.btn-ghost.btn-sm",
+      "key": "section>div.map-hud>div.cluster>a.button.button-ghost.button-small",
       "tag": "a",
       "rect": {
         "x": 267,

@@ -42,7 +42,7 @@ class HomeControllerTest < ActionDispatch::IntegrationTest
     # A garment name reaches the page whether or not a demo wardrobe is seeded.
     assert_includes response.body, "Gold hoop earrings"
     # The landing page stays quiet when the public post index has no entries.
-    assert_select ".sidebar, .widgets, .amber-compose-box, .btn", 0
+    assert_select ".sidebar, .widgets, .amber-compose-box, .button", 0
     assert_not_includes response.body, 'class="master-embed-frame"'
   end
 

@@ -5,7 +5,8 @@
     <p><%= link_to @community.name, community_path(@community) %></p>
     <%= tag.h1 t("community.bans") %>
   </hgroup>
-  <%= link_to t("community.mod_queue"), community_moderation_index_path(@community), class: "btn btn-ghost btn-sm" %>
+  <%= link_to t("community.mod_queue"), community_moderation_index_path(@community),
+        class: "button button-ghost button-small" %>
 </div>
 
 <% if @bans.any? %>
@@ -22,7 +23,7 @@
             other's mistakes escalates every disagreement to the owner. %>
         <%# destructive: no-confirm-ok — reversible — the comment above is the whole argument: a mod team undoes its own mistakes, and banning again is a click %>
         <%= button_to t("community.lift_ban"), community_ban_path(@community, ban),
-              method: :delete, class: "btn btn-ghost btn-sm" %>
+              method: :delete, class: "button button-ghost button-small" %>
       </li>
     <% end %>
   </ul>

@@ -187,7 +187,7 @@ aside:not([class]) > h2 {
 .site-legal .affiliate-fine { grid-column: 1 / -1; margin: 0; }
 
 /* G · a11y floor + touch targets */
-:where(button, .btn, .feed-action, .nav-item, .nav_link, a.chip, .push-enable-btn) {
+:where(button, .button, .feed-action, .nav-item, .nav_link, a.chip, .push-enable-button) {
   min-height: var(--tap-min);
   min-width: var(--tap-min);
 }
@@ -524,7 +524,7 @@ body.vertical-playlist input[type="range"] {
 
 /* Safe area + tap highlight */
 .nav_swiper,
-.push-enable-btn {
+.push-enable-button {
   padding-inline: max(0px, env(safe-area-inset-left));
 }
 // ============================================================ /module: brgen_city_surfaces

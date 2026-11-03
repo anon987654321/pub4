@@ -2,7 +2,7 @@
 
 <div class="page-header">
   <%= tag.h1 t("dating.who_liked_you") %>
-  <%= link_to t("dating.back_to_deck"), root_path, class: "btn btn-ghost btn-sm" %>
+  <%= link_to t("dating.back_to_deck"), root_path, class: "button button-ghost button-small" %>
 </div>
 
 <% if @likes.any? %>
@@ -29,9 +29,9 @@
 
         <div class="cluster">
           <%= button_to t("dating.like_back"), likes_path(user_id: like.liker_id),
-                method: :post, class: "btn btn-primary btn-sm" %>
+                method: :post, class: "button button-primary button-small" %>
           <%= button_to t("dating.pass"), dislikes_path(user_id: like.liker_id),
-                method: :post, class: "btn btn-ghost btn-sm" %>
+                method: :post, class: "button button-ghost button-small" %>
         </div>
       </li>
     <% end %>

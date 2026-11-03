@@ -253,15 +253,15 @@ main#main-content {
   padding: clamp(2rem, 6vw, 4.5rem) clamp(1rem, 4vw, 2rem) 4rem;
 }
 
-main#main-content :is(button, input[type="submit"], .btn) {
+main#main-content :is(button, input[type="submit"], .button) {
   min-height: var(--tap-min);
 }
 
 // The sign-in link and the search submit sit outside main#main-content, so the
-// tap floor above misses them. The sign-in anchor carries btn-ghost alone,
-// which is why `.nav-actions .btn` would not match it.
-div.nav-actions > a.btn-ghost,
-div.search-form > input.btn.btn-sm {
+// tap floor above misses them. The sign-in anchor carries button-ghost alone,
+// which is why `.nav-actions .button` would not match it.
+div.nav-actions > a.button-ghost,
+div.search-form > input.button.button-small {
   min-height: var(--tap-min);
   min-width: var(--tap-min);
 }

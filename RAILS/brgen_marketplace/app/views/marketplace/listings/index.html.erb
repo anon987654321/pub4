@@ -67,7 +67,7 @@
           <%# .deal-cat, not a style of its own. This control opens the drawer holding
               the source chips, so it is a sibling of them and wears their geometry —
               a second chip vocabulary for one summary would be the schism at birth
-              that btn_vocabulary exists to prevent. %>
+              that button_vocabulary exists to prevent. %>
           <summary class="deal-cat listing-filters-toggle">
             <%= t("marketplace.filters") %>
             <% if active_filters.positive? %>
@@ -109,7 +109,7 @@
               <div class="listing-filter-controls">
                 <%# lat and lng are hidden fields of the header form, which is where
                     geolocation#pin looks for them through this button's form. %>
-                <button type="button" class="btn btn-ghost btn-sm" form="<%= StorefrontSearch::FORM %>" data-controller="geolocation" data-action="geolocation#pin">
+                <button type="button" class="button button-ghost button-small" form="<%= StorefrontSearch::FORM %>" data-controller="geolocation" data-action="geolocation#pin">
                   <%= t("marketplace.near_me") %>
                 </button>
                 <%= f.number_field :radius_km, value: @radius_km, min: 1, max: Marketplace::Listing::MAX_RADIUS_KM, step: 1, placeholder: t("marketplace.radius_km"), form: StorefrontSearch::FORM, aria: { label: t("marketplace.radius_label") }, inputmode: "numeric" %>

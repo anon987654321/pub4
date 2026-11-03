@@ -85,7 +85,7 @@
   inline-size: var(--vote-target);
 }
 .post-vote-form { margin: 0; }
-.post-vote-btn {
+.post-vote-button {
   display: grid;
   place-items: center;
   inline-size: var(--vote-target);
@@ -100,18 +100,18 @@
 }
 /* The arrow fills most of its target. Drawn by the icon set at 18px; sized here
    so a retune is the token's, and the SVG attribute loses to this rule. */
-.post-vote-btn svg {
+.post-vote-button svg {
   inline-size: var(--vote-icon);
   block-size: var(--vote-icon);
 }
 /* Colour answers a hover; a filled disc behind an arrow this large is chrome.
    Keyboard focus keeps the shared focus ring (_focus_ring.scss). */
-.post-vote-btn:hover,
-.post-vote-btn:focus-visible {
+.post-vote-button:hover,
+.post-vote-button:focus-visible {
   background: transparent;
   color: var(--text);
 }
-.post-vote-btn.is-active {
+.post-vote-button.is-active {
   background: transparent;
   color: var(--accent);
 }

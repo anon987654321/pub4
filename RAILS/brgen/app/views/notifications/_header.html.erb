@@ -10,6 +10,6 @@
   </hgroup>
 
   <% if @unread_count.to_i.positive? %>
-    <%= button_to t("notifications.mark_all"), read_all_notifications_path, method: :patch, class: "btn btn-primary", data: { turbo_stream: true } %>
+    <%= button_to t("notifications.mark_all"), read_all_notifications_path, method: :patch, class: "button button-primary", data: { turbo_stream: true } %>
   <% end %>
 </div>

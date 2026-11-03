@@ -34,7 +34,7 @@ class DesignMetricsTest < Minitest::Test
   end
 
   def test_extract_min_heights
-    css = ".btn { min-height: 44px; } .x { min-height: 2rem; }"
+    css = ".button { min-height: 44px; } .x { min-height: 2rem; }"
     heights = Deploy::DesignMetrics.extract_min_heights(css)
     assert_includes heights, 44.0
     assert_includes heights, 32.0

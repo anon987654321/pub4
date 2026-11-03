@@ -108,8 +108,8 @@ thead th {
 }
 
 @media (forced-colors: active) {
-  .btn,
-  .compose-btn,
+  .button,
+  .compose-button,
   button {
     forced-color-adjust: auto;
     border: 1px solid ButtonText;
@@ -119,8 +119,8 @@ thead th {
 @media print {
   .sidebar,
   .nav,
-  .btn,
-  .compose-btn,
+  .button,
+  .compose-button,
   nav {
     display: none !important;
   }

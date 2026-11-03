@@ -47,7 +47,7 @@
           <span class="char-counter" data-character-counter-target="counter" aria-live="polite"></span>
         </div>
       </div>
-      <%= form.submit t("declutter.save_review"), class: "btn" %>
+      <%= form.submit t("declutter.save_review"), class: "button" %>
     <% end %>
   </section>
 
@@ -55,9 +55,10 @@
     <%= tag.h2 t("declutter.move_item") %>
     <nav role="navigation">
       <% %w[keep wear_this_week repair sell donate sentimental_archive release].each do |target| %>
-        <%= button_to target.humanize, move_declutter_path(@item, target: target), method: :patch, class: "btn-sm" %>
+        <%= button_to target.humanize, move_declutter_path(@item, target: target), method: :patch,
+              class: "button-small" %>
       <% end %>
-      <%= button_to t("declutter.declutter_box"), move_declutter_path(@item, target: "declutter_box"), method: :patch, class: "btn-sm" %>
+      <%= button_to t("declutter.declutter_box"), move_declutter_path(@item, target: "declutter_box"), method: :patch, class: "button-small" %>
     </nav>
   </section>
 
@@ -72,7 +73,7 @@
         <%= form.label :note %>
         <%= form.text_field :note, value: "Wear once before deciding." %>
       </div>
-      <%= form.submit t("declutter.create_challenge"), class: "btn" %>
+      <%= form.submit t("declutter.create_challenge"), class: "button" %>
     <% end %>
   </section>
 
@@ -85,7 +86,7 @@
           <li>
             <%= tag.strong Array(suggestion[:titles] || suggestion["titles"]).join(" · ") %>
             <p><%= suggestion[:reason] || suggestion["reason"] %></p>
-            <%= button_to t("declutter.create_outfit"), create_last_chance_outfit_declutter_path(@item, index: index), method: :post, class: "btn-sm" %>
+            <%= button_to t("declutter.create_outfit"), create_last_chance_outfit_declutter_path(@item, index: index), method: :post, class: "button-small" %>
           </li>
         <% end %>
       </ul>

@@ -200,16 +200,16 @@ export default class extends Controller {
     const text = document.createElement("p")
     text.className = "hotkey-coach-text"
     text.textContent = this.coachValue
-    const btn = document.createElement("button")
-    btn.type = "button"
-    btn.className = "hotkey-coach-dismiss"
-    btn.textContent = this.coachDismissValue
-    btn.addEventListener("click", () => {
+    const button = document.createElement("button")
+    button.type = "button"
+    button.className = "hotkey-coach-dismiss"
+    button.textContent = this.coachDismissValue
+    button.addEventListener("click", () => {
       try { localStorage.setItem(COACH_KEY, "1") } catch (_) { /* private mode */ }
       coach.remove()
     })
     coach.appendChild(text)
-    coach.appendChild(btn)
+    coach.appendChild(button)
     document.body.appendChild(coach)
     this._coachEl = coach
     // Auto-dismiss after long read window; still marks dismissed so we don't nag.

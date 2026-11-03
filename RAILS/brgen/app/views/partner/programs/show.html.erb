@@ -30,7 +30,7 @@
 
   <nav class="cluster" aria-label="<%= t("partner.actions") %>">
     <% if authenticated? && Current.user == @program.store.owner %>
-      <%= link_to t("partner.edit_program"), edit_partner_program_path(@program), class: "btn" %>
+      <%= link_to t("partner.edit_program"), edit_partner_program_path(@program), class: "button" %>
     <% elsif authenticated? %>
       <% if @membership %>
         <p><%= t("partner.status_label") %> <%= tag.strong @membership.status %></p>
@@ -40,14 +40,14 @@
             <%= t("partner.share") %>
             <code><%= partner_click_url(token: @membership.token, host: request.host, protocol: request.protocol.delete("://")) rescue "https://#{request.host}/p/#{@membership.token}" %></code>
           </p>
-          <%= link_to t("partner.membership_dashboard"), partner_membership_path(@membership), class: "btn" %>
+          <%= link_to t("partner.membership_dashboard"), partner_membership_path(@membership), class: "button" %>
         <% end %>
       <% elsif @program.open? %>
-        <%= button_to t("partner.join"), partner_program_memberships_path(@program), method: :post, class: "btn" %>
+        <%= button_to t("partner.join"), partner_program_memberships_path(@program), method: :post, class: "button" %>
       <% end %>
     <% else %>
-      <%= link_to t("partner.sign_in_to_join"), new_session_path, class: "btn" %>
+      <%= link_to t("partner.sign_in_to_join"), new_session_path, class: "button" %>
     <% end %>
-    <%= link_to t("partner.all_programs"), partner_programs_path, class: "btn btn-ghost" %>
+    <%= link_to t("partner.all_programs"), partner_programs_path, class: "button button-ghost" %>
   </nav>
 </article>

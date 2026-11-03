@@ -45,7 +45,7 @@
               aria: { label: t("posts.add_photo") },
               data: { media_picker_target: "input", post_progressive_target: "mediaInput",
                       action: "change->media-picker#pick" } %>
-        <button type="button" class="post-photo-camera media-btn"
+        <button type="button" class="post-photo-camera media-button"
                 data-action="click->media-picker#trigger">
           <%= icon :camera, size: 28 %>
           <strong><%= t("posts.add_photo") %></strong>
@@ -85,11 +85,11 @@
       </div>
 
       <div class="post-progressive-actions">
-        <button type="button" class="btn btn-primary"
+        <button type="button" class="button button-primary"
                 data-action="click->post-progressive#next">
           <%= t("post.new_continue") %>
         </button>
-        <button type="button" class="btn btn-ghost"
+        <button type="button" class="button button-ghost"
                 data-action="click->post-progressive#skipMedia">
           <%= t("post.new_text_only") %>
         </button>
@@ -132,13 +132,13 @@
           <div class="tiptap_mount tiptap_mount--post"
                data-tiptap-editor-target="mount" hidden></div>
           <div class="tiptap_toolbar" data-tiptap-editor-target="toolbar" hidden>
-            <button type="button" class="tiptap_btn"
+            <button type="button" class="tiptap_button"
                     data-action="mousedown->tiptap-editor#bold"
                     title="<%= t("compose.bold") %>"><b>B</b></button>
-            <button type="button" class="tiptap_btn"
+            <button type="button" class="tiptap_button"
                     data-action="mousedown->tiptap-editor#italic"
                     title="<%= t("compose.italic") %>"><i>i</i></button>
-            <button type="button" class="tiptap_btn"
+            <button type="button" class="tiptap_button"
                     data-action="mousedown->tiptap-editor#bulletList"
                     title="<%= t("compose.bullet_list") %>">•</button>
           </div>
@@ -157,14 +157,14 @@
       <% end %>
 
       <div class="post-progressive-actions">
-        <button type="button" class="btn btn-ghost"
+        <button type="button" class="button button-ghost"
                 data-action="click->post-progressive#back">
           <%= t("actions.back") %>
         </button>
-        <%= f.submit t("post.submit"), class: "btn btn-primary" %>
+        <%= f.submit t("post.submit"), class: "button button-primary" %>
       </div>
       <div class="field">
-        <%= link_to t("actions.cancel"), posts_path, class: "btn btn-ghost" %>
+        <%= link_to t("actions.cancel"), posts_path, class: "button button-ghost" %>
         <span data-autosave-target="status" aria-live="polite"></span>
       </div>
     </section>

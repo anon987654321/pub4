@@ -31,24 +31,25 @@
        }.each do |zone, label| %>
       <div class="zone-row">
         <span class="zone-tag"><%= label %></span>
-        <button class="carousel-btn" data-action="wardrobe-carousel#prev" data-wardrobe-carousel-zone-param="<%= zone %>" aria-label="<%= t("dressing_room.previous", zone: label) %>">‹</button>
+        <button class="carousel-button" data-action="wardrobe-carousel#prev" data-wardrobe-carousel-zone-param="<%= zone %>" aria-label="<%= t("dressing_room.previous", zone: label) %>">‹</button>
         <span class="zone-info">
           <span data-zone-label="<%= zone %>">—</span>
           <span class="zone-count" data-zone-count="<%= zone %>"></span>
           <span class="zone-why" data-zone-why="<%= zone %>"></span>
         </span>
-        <button class="carousel-btn" data-action="wardrobe-carousel#next" data-wardrobe-carousel-zone-param="<%= zone %>" aria-label="<%= t("dressing_room.next", zone: label) %>">›</button>
+        <button class="carousel-button" data-action="wardrobe-carousel#next" data-wardrobe-carousel-zone-param="<%= zone %>" aria-label="<%= t("dressing_room.next", zone: label) %>">›</button>
       </div>
     <% end %>
   </div>
 
   <div class="dressing-room-actions">
     <button type="button"
-            class="btn"
+            class="button"
             data-action="wardrobe-carousel#toggle"
             data-wardrobe-carousel-target="playToggle"
             aria-pressed="false"><%= t("dressing_room.pause") %></button>
-    <button type="button" class="btn" data-action="wardrobe-carousel#shuffle"><%= t("dressing_room.shuffle") %></button>
+    <button type="button" class="button"
+            data-action="wardrobe-carousel#shuffle"><%= t("dressing_room.shuffle") %></button>
 
     <%# Saving used to be a bare link to the empty outfit form, which discarded
         whatever combination the carousels were showing. The hidden inputs are
@@ -61,7 +62,7 @@
         <% %i[head top bottom shoes].each do |zone| %>
           <input type="hidden" name="item_ids[]" value="" data-wardrobe-carousel-target="pick" data-zone-pick="<%= zone %>">
         <% end %>
-        <%= f.submit t("dressing_room.save"), class: "btn" %>
+        <%= f.submit t("dressing_room.save"), class: "button" %>
       <% end %>
     <% end %>
   </div>

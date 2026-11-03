@@ -17,7 +17,7 @@
       <span class="group-line-sum"><%= line.subtotal_display %></span>
       <% if line.user_id == Current.user&.id %>
         <%# destructive: no-confirm-ok — reversible — the item goes back in the group order from the menu %>
-        <%= button_to t("actions.remove"), group_order_path(@order.group_token, line_id: line.id), method: :delete, class: "btn btn-ghost btn-sm" %>
+        <%= button_to t("actions.remove"), group_order_path(@order.group_token, line_id: line.id), method: :delete, class: "button button-ghost button-small" %>
       <% end %>
     </li>
   <% end %>
@@ -35,7 +35,7 @@
       <%= f.label :quantity, t("takeaway.group_quantity") %>
       <%= f.number_field :quantity, value: 1, min: 1, max: 20, inputmode: "numeric" %>
     </div>
-    <p><%= f.submit t("takeaway.group_add"), class: "btn btn-primary" %></p>
+    <p><%= f.submit t("takeaway.group_add"), class: "button button-primary" %></p>
   <% end %>
 </div>
 

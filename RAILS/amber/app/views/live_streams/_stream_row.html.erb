@@ -11,8 +11,8 @@
       <%= tag.time l(starts_at, format: :long), datetime: starts_at.iso8601 %>
     </p>
     <% if live_stream.user_id == Current.user.id %>
-      <%= button_to t("live_streams.mark_live"), live_stream_path(live_stream), method: :patch, params: { start: true }, class: "btn", data: { turbo_frame: "live-streams" } if live_stream.status == "scheduled" %>
-      <%= button_to t("live_streams.mark_ended"), live_stream_path(live_stream), method: :patch, params: { end: true }, class: "btn", data: { turbo_frame: "live-streams" } if live_stream.status == "live" %>
+      <%= button_to t("live_streams.mark_live"), live_stream_path(live_stream), method: :patch, params: { start: true }, class: "button", data: { turbo_frame: "live-streams" } if live_stream.status == "scheduled" %>
+      <%= button_to t("live_streams.mark_ended"), live_stream_path(live_stream), method: :patch, params: { end: true }, class: "button", data: { turbo_frame: "live-streams" } if live_stream.status == "live" %>
     <% end %>
   </article>
 </li>

@@ -20,8 +20,9 @@
           <%= f.text_area :note, id: "note-#{verification.id}", rows: 2 %>
         </div>
         <p class="cluster">
-          <%= f.button t("business_verifications.approve"), name: "decision", value: "approve", class: "btn btn-sm" %>
-          <%= f.button t("business_verifications.reject"), name: "decision", value: "reject", class: "btn btn-ghost btn-sm" %>
+          <%= f.button t("business_verifications.approve"), name: "decision", value: "approve",
+                class: "button button-small" %>
+          <%= f.button t("business_verifications.reject"), name: "decision", value: "reject", class: "button button-ghost button-small" %>
         </p>
       <% end %>
     </article>

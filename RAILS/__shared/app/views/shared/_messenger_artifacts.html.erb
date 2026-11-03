@@ -32,7 +32,7 @@
           <%= image_tag url_for(artifact_message.attachment), alt: t("messages.artifact_image_alt"), loading: "lazy", decoding: "async", class: "messenger-artifact-image" %>
         <% else %>
           <p class="messenger-artifact-kind"><%= t("messages.artifact_file") %></p>
-          <%= link_to t("messages.open_attachment"), url_for(artifact_message.attachment), class: "btn btn-ghost btn-sm" %>
+          <%= link_to t("messages.open_attachment"), url_for(artifact_message.attachment), class: "button button-ghost button-small" %>
         <% end %>
       <% elsif artifact_message.respond_to?(:link_preview) && artifact_message.link_preview.present? %>
         <p class="messenger-artifact-kind"><%= t("messages.artifact_preview") %></p>

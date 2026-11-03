@@ -23,13 +23,14 @@
     <%= f.select :season, amber_season_options, { selected: params[:season] }, { include_blank: t("ai.any_season") } %>
   </div>
   <div class="actions">
-    <%= f.submit @ai_available ? t("ai.generate_suggestions") : t("ai.generate_rules"), class: "btn btn-primary" %>
+    <%= f.submit @ai_available ? t("ai.generate_suggestions") : t("ai.generate_rules"),
+          class: "button button-primary" %>
   </div>
 <% end %>
 
 <div class="actions">
   <%= button_to t("ai_forms.generate_save"), ai_generate_outfit_path, method: :post,
-        params: { occasion: params[:occasion], season: params[:season] }, class: "btn" %>
+        params: { occasion: params[:occasion], season: params[:season] }, class: "button" %>
 </div>
 
 <% if @suggestions.present? %>
@@ -45,7 +46,7 @@
       <% end %>
       <% if s["source"] %><p><%= t("ai.source", source: s["source"]) %></p><% end %>
       <% if s["outfit_id"] %>
-        <p><%= link_to t("actions.view_outfit"), outfit_path(s["outfit_id"]), class: "btn" %></p>
+        <p><%= link_to t("actions.view_outfit"), outfit_path(s["outfit_id"]), class: "button" %></p>
       <% end %>
     </article>
   <% end %>

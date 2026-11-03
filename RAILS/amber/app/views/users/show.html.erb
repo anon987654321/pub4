@@ -4,9 +4,9 @@
   <%= tag.p t("users.profile_counts", items: @user.items.count, followers: @user.followers.count, following: @user.following.count) %>
   <%= render "users/follow", user: @user %>
   <% if @user.public_creator? %>
-    <p><%= link_to t("actions.creator_profile"), creator_profile_path(@user.creator_profile.handle), class: "btn btn-sm" %></p>
+    <p><%= link_to t("actions.creator_profile"), creator_profile_path(@user.creator_profile.handle), class: "button button-small" %></p>
   <% elsif authenticated? && Current.user == @user %>
-    <p><%= link_to t("actions.setup_creator"), new_my_creator_profile_path, class: "btn btn-sm" %></p>
+    <p><%= link_to t("actions.setup_creator"), new_my_creator_profile_path, class: "button button-small" %></p>
   <% end %>
 </header>
 <%= tag.h2 t("users.recent_items") %>

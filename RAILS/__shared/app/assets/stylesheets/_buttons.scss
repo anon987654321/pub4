@@ -4,25 +4,25 @@
  * `_stack_brgen.scss`, and that position is the contract rather than a
  * convenience. It has to stay after `layout_chrome` and `minimal`, whose own
  * comment records that _components's position is the one that wins, and before
- * _components's `@media (forced-colors: active)` block, which ties with `.btn` at
+ * _components's `@media (forced-colors: active)` block, which ties with `.button` at
  * 0-1-0 and must keep the later word. Move this line and a button changes
  * colour on Windows High Contrast.
  *
  * Nothing else in _components's head can beat these rules: `*` and `:focus-visible`
- * are 0-0-0 and 0-1-0 over properties `.btn` does not set, `input, button,
- * textarea, select { font: inherit }` is 0-0-1 against `.btn`'s 0-1-0, and no
- * element in the tree wears `.btn` beside a `.mt-*`, `.text-sm` or
+ * are 0-0-0 and 0-1-0 over properties `.button` does not set, `input, button,
+ * textarea, select { font: inherit }` is 0-0-1 against `.button`'s 0-1-0, and no
+ * element in the tree wears `.button` beside a `.mt-*`, `.text-sm` or
  * `.visually-hidden` utility, which are the only other 0-1-0 rules there that
  * share a property with it.
  */
 
-// An app whose own later .btn restates every property of the base below, as
+// An app whose own later .button restates every property of the base below, as
 // brgen's accent skin does, forwards this file with ($base: false). The base
 // would never win a property there; the variants stay either way.
 $base: true !default;
 
 @if $base {
-.btn {
+.button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -49,35 +49,35 @@ $base: true !default;
 }
 }
 
-.btn:hover {
+.button:hover {
   opacity: 0.88;
   text-decoration: none;
 }
 
-.btn:active {
+.button:active {
   transform: scale(0.97);
 }
 
-.btn:disabled,
-.btn[aria-disabled="true"] {
+.button:disabled,
+.button[aria-disabled="true"] {
   opacity: 0.5;
   cursor: not-allowed;
   transform: none;
 }
 
-/* Variants are compound (.btn.btn-primary, 0-2-0) so they beat any app's later
-   .btn base (0-1-0) by specificity: an app dialect-skins the BASE (brgen's
+/* Variants are compound (.button.button-primary, 0-2-0) so they beat any app's later
+   .button base (0-1-0) by specificity: an app dialect-skins the BASE (brgen's
    _forms paints it accent), and the variant contract holds everywhere without
    caring about load order. An app that must re-skin a variant writes the same
    compound later. Fill instead of outline in every variant — a transparent
    button with a 1px edge is a line, and the flat system separates by surface.
-   The zen-era btn--primary BEM twins are retired. */
-.btn.btn-primary {
+   The zen-era button--primary BEM twins are retired. */
+.button.button-primary {
   background: var(--text);
   color: var(--bg);
 }
 
-.btn.btn-ghost {
+.button.button-ghost {
   background: var(--hover-subtle);
   border: 0;
   /* The ink is the context's: a ghost inherits, so wscons ghosts stay green
@@ -85,17 +85,17 @@ $base: true !default;
   color: inherit;
 }
 
-.btn.btn-ghost:hover {
+.button.button-ghost:hover {
   background: var(--hover);
 }
 
-.btn.btn-danger {
+.button.button-danger {
   background: var(--hover);
   color: var(--danger);
   border: 0;
 }
 
-.btn.btn-sm {
+.button.button-small {
   min-height: var(--tap-min);
   padding: var(--space-1) var(--space-3);
   font-size: var(--text-sm);

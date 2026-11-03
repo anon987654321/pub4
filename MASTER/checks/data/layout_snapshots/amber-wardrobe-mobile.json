@@ -221,7 +221,7 @@
       "position": "static"
     },
     {
-      "key": "div.auth-form>form>div.actions>input.btn.btn-link",
+      "key": "div.auth-form>form>div.actions>input.button.button-link",
       "tag": "input",
       "rect": {
         "x": 141,
@@ -237,7 +237,7 @@
       "position": "static"
     },
     {
-      "key": "div.auth-form>form>div.actions>input.btn.btn-primary",
+      "key": "div.auth-form>form>div.actions>input.button.button-primary",
       "tag": "input",
       "rect": {
         "x": 35,
@@ -301,7 +301,7 @@
       "position": "static"
     },
     {
-      "key": "div.theme-root>header.amber-logo-banner.amber-logo-banner--nav>div.amber-nav-actions>a.btn-sm",
+      "key": "div.theme-root>header.amber-logo-banner.amber-logo-banner--nav>div.amber-nav-actions>a.button-small",
       "tag": "a",
       "rect": {
         "x": 260,
@@ -381,7 +381,7 @@
       "position": "static"
     },
     {
-      "key": "form>div.field>div.password-field>button.btn.btn-ghost.btn-sm",
+      "key": "form>div.field>div.password-field>button.button.button-ghost.button-small",
       "tag": "button",
       "rect": {
         "x": 299,

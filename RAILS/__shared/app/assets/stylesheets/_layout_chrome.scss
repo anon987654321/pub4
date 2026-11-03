@@ -75,7 +75,7 @@ body[data-layout="document"] {
   min-inline-size: 0;
 }
 
-.page-header > :where(h1, h2, h3, hgroup, .page-title, .btn, nav) {
+.page-header > :where(h1, h2, h3, hgroup, .page-title, .button, nav) {
   min-inline-size: 0;
 }
 
@@ -130,7 +130,7 @@ body[data-layout="document"] {
     flex: 1 1 auto;
   }
 
-  .page-header > :where(.btn, nav, .page-actions) {
+  .page-header > :where(.button, nav, .page-actions) {
     flex: 0 0 auto;
   }
 }
@@ -150,13 +150,13 @@ body[data-layout="document"] {
    full-width members, which are already wider than the floor. */
 :where(
   button,
-  .btn,
+  .button,
   .tab-item,
   .nav-item,
   .nav_link,
   .feed-action,
   a.chip,
-  .push-enable-btn,
+  .push-enable-button,
   .password-toggle
 ) {
   min-height: var(--tap-min);

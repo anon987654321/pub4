@@ -18,15 +18,15 @@ export default class extends Controller {
 
   // Optional: quick "wear" feedback with temporary class
   wear(event) {
-    const btn = event.currentTarget
-    const originalText = btn.textContent
-    btn.textContent = "Added ✓"
-    btn.disabled = true
+    const button = event.currentTarget
+    const originalText = button.textContent
+    button.textContent = "Added ✓"
+    button.disabled = true
 
     setTimeout(() => {
-      if (btn) {
-        btn.textContent = originalText
-        btn.disabled = false
+      if (button) {
+        button.textContent = originalText
+        button.disabled = false
       }
     }, 1400)
   }

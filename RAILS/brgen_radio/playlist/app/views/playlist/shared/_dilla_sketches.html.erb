@@ -19,9 +19,9 @@
 
         <%= t("playlist.sketch_by", name: sk.user&.try(:display_name) || sk.user&.email || t("chat.anon")) %>
         <% if can_manage %>
-          <%= button_to t("playlist.render"), render_path_proc.call(sk), method: :post, class: "btn btn-primary btn-sm", params: { publish: "1" } %>
+          <%= button_to t("playlist.render"), render_path_proc.call(sk), method: :post, class: "button button-primary button-small", params: { publish: "1" } %>
           <% if local_assigns[:destroy_path_proc] %>
-            <%= button_to t("actions.remove"), destroy_path_proc.call(sk), method: :delete, class: "btn btn-ghost btn-sm",
+            <%= button_to t("actions.remove"), destroy_path_proc.call(sk), method: :delete, class: "button button-ghost button-small",
                 data: { turbo_confirm: t("playlist.confirm_remove_sketch") } %>
           <% end %>
         <% end %>
@@ -55,7 +55,7 @@
           <%= f.text_field :notes, placeholder: t("playlist.notes_optional"), aria: { label: t("playlist.notes_optional") } %>
           <label><input type="checkbox" name="render_now" value="1" checked /> <%= t("playlist.render_now") %></label>
           <label><input type="checkbox" name="publish" value="1" checked /> <%= t("playlist.publish_as_track") %></label>
-          <%= f.submit t("playlist.save_sketch"), class: "btn btn-primary btn-sm" %>
+          <%= f.submit t("playlist.save_sketch"), class: "button button-primary button-small" %>
         <% end %>
       <% else %>
         <%= form_with url: create_url, scope: local_assigns[:form_scope] || :playlist_dilla_sketch do |f| %>
@@ -70,7 +70,8 @@
             <%= f.text_area :notes, placeholder: t("playlist.notes_instructions"), aria: { label: t("playlist.notes_instructions") }, rows: 2, data: { character_counter_target: "input" } %>
             <span class="char-counter" data-character-counter-target="counter" aria-live="polite"></span>
           </div>
-          <div class="field"><%= f.submit t("playlist.save_sketch_collab"), class: "btn btn-primary btn-sm" %></div>
+          <div class="field"><%= f.submit t("playlist.save_sketch_collab"),
+                class: "button button-primary button-small" %></div>
         <% end %>
       <% end %>
     </div>

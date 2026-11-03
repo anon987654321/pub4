@@ -205,7 +205,7 @@
       "position": "static"
     },
     {
-      "key": "#tv-channels-list>section.empty.empty-state>a.btn.btn-primary.empty-state-action",
+      "key": "#tv-channels-list>section.empty.empty-state>a.button.button-primary.empty-state-action",
       "tag": "a",
       "rect": {
         "x": 147,

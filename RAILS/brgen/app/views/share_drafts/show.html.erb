@@ -37,12 +37,12 @@
       <%= f.label :anonymous, t("posts.post_anonymously") %>
     </div>
     <div class="field">
-      <%= f.submit t("post.submit"), class: "btn btn-primary" %>
-      <%= link_to t("actions.cancel"), posts_path, class: "btn btn-ghost" %>
+      <%= f.submit t("post.submit"), class: "button button-primary" %>
+      <%= link_to t("actions.cancel"), posts_path, class: "button button-ghost" %>
     </div>
   <% end %>
 
   <%= button_to t("actions.delete"), share_draft_path(@share_draft),
-        method: :delete, class: "btn btn-ghost",
+        method: :delete, class: "button button-ghost",
         data: { turbo_confirm: t("actions.confirm_delete") } %>
 </div>

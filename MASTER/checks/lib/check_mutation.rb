@@ -74,7 +74,7 @@ module Deploy
        ->(html) {
          return unless html.match?(/<body[^>]*>/i)
 
-         extra = Array.new(12) { |i| "<button class=\"btn-primary\" type=\"submit\">Act #{i}</button>" }.join("\n")
+         extra = Array.new(12) { |i| "<button class=\"button-primary\" type=\"submit\">Act #{i}</button>" }.join("\n")
          html.sub(/(<body[^>]*>)/i) { "#{Regexp.last_match(1)}\n#{extra}" }
        }],
 
@@ -194,14 +194,14 @@ module Deploy
     MOBILE_CLEAN = {
       "has_main" => true, "has_skip" => true, "has_tab_bar" => true, "overflow" => false,
       "scroll_width" => 390, "client_width" => 390,
-      "chrome" => [{ "label" => "btn-primary Post", "w" => 120, "h" => 48, "min" => 48 }]
+      "chrome" => [{ "label" => "button-primary Post", "w" => 120, "h" => 48, "min" => 48 }]
     }.freeze
 
     MOBILE_PLANTS = [
       ["no main landmark", { "has_main" => false }],
       ["no skip link", { "has_skip" => false }],
       ["horizontal overflow", { "overflow" => true, "scroll_width" => 520 }],
-      ["a primary touch target under 44px", { "chrome" => [{ "label" => "btn-primary Post", "w" => 120, "h" => 30, "min" => 30 }] }],
+      ["a primary touch target under 44px", { "chrome" => [{ "label" => "button-primary Post", "w" => 120, "h" => 30, "min" => 30 }] }],
     ].freeze
 
     def plant_mobile_flow

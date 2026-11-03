@@ -237,7 +237,7 @@
       "position": "fixed"
     },
     {
-      "key": "div.form-wrap.dating-profile-form>form>div.field>input.btn.btn-primary",
+      "key": "div.form-wrap.dating-profile-form>form>div.field>input.button.button-primary",
       "tag": "input",
       "rect": {
         "x": 18,

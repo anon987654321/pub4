@@ -572,7 +572,7 @@ Law.define(:HTML_CSS_STYLE) do
   source "MASTER constitution (soul.yml absolute.rules)"
   practice <<~TEXT
     Semantic HTML — bare selectors (nav a, main, h1) over class soup; tag
-    helpers over content_tag; omit class attributes unless brand, btn or badge
+    helpers over content_tag; omit class attributes unless brand, button or badge
     semantics require them. Structure carries meaning, classes are the last
     resort.
   TEXT

@@ -53,13 +53,13 @@
               <span class="char-counter" data-character-counter-target="counter" aria-live="polite"></span>
             </div>
           </div>
-          <%= f.submit t("takeaway.place_order"), class: "btn btn-primary" %>
+          <%= f.submit t("takeaway.place_order"), class: "button button-primary" %>
         </div>
       <% end %>
     <% end %>
     <% unless Current.user.present? %>
       <p><%= t("takeaway.reload_to_order") %></p>
-      <p><%= link_to t("actions.reload"), restaurant_path(@restaurant), class: "btn btn-primary" %></p>
+      <p><%= link_to t("actions.reload"), restaurant_path(@restaurant), class: "button button-primary" %></p>
     <% end %>
   <% end %>
 </section>

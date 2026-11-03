@@ -61,7 +61,7 @@ const webVitalsSampled = () => {
 }
 
 // The element behind the slowest interaction, so a slow INP in the log names
-// the control ("button.vote-btn[data-controller=action]") rather than only a number.
+// the control ("button.vote-button[data-controller=action]") rather than only a number.
 const describeTarget = (element) => {
   if (!(element instanceof Element)) return ""
 

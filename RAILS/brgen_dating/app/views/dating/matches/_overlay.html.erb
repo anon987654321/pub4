@@ -5,6 +5,6 @@
         match.initiator here instead raises: Dating::Match is strict_loading and
         the broadcast renders this from an after_commit, off an unloaded record. %>
     <p><%= other_user&.display_name || t("dating.someone") %> <%= t("dating.ready_to_chat") %></p>
-    <%= link_to t("dating.open_messages"), main_app.conversations_path, class: "btn btn-primary btn-sm", data: { controller: "haptics", action: "click->haptics#match" } %>
+    <%= link_to t("dating.open_messages"), main_app.conversations_path, class: "button button-primary button-small", data: { controller: "haptics", action: "click->haptics#match" } %>
   </div>
 </div>

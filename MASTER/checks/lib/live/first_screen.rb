@@ -80,10 +80,10 @@ module Deploy
         first_screen: [%r{skip-link|Skip to main}i, %r{main-content|<main\b}i, %r{Amber|jox|Signup|Login|wardrobe}i],
         # A real 44px floor on a control amber renders. The row once named
         # .jox-buttons, a class nothing rendered in either app, and passed.
-        css_touch: [["amber/app/assets/stylesheets/application.scss", /\A\.btn\z/, TAP_MIN]] },
+        css_touch: [["amber/app/assets/stylesheets/application.scss", /\A\.button\z/, TAP_MIN]] },
       { app: "bsdports", port_key: "bsdports", path: "/", host: nil,
         first_screen: [%r{skip-link|Skip to main}i, %r{main-content|<main\b}i, %r{BSD|port}i],
-        css_touch: [["bsdports/app/assets/stylesheets/application.scss", /main#main-content :is\(button, input\[type="submit"\], \.btn\)/, TAP_MIN]] },
+        css_touch: [["bsdports/app/assets/stylesheets/application.scss", /main#main-content :is\(button, input\[type="submit"\], \.button\)/, TAP_MIN]] },
       { app: "bsdports", port_key: "bsdports", path: "/ports", host: nil, label: "ports",
         first_screen: [%r{search|port}i, %r{<main\b|main-content}i],
         css_touch: [] },

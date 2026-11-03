@@ -59,9 +59,9 @@ class WalkthroughChecksTest < Minitest::Test
   # the number it resolves to.
   FIRST_SCREEN_SHEET = <<~SCSS
     .feed-tab, .deal-cat { min-height: var(--tap-min); }
-    .btn { min-height: var(--tap-min); }
+    .button { min-height: var(--tap-min); }
     .deal-card { --font: 1rem; }
-    main#main-content :is(button, input[type="submit"], .btn) { min-height: var(--tap-min); }
+    main#main-content :is(button, input[type="submit"], .button) { min-height: var(--tap-min); }
     .search { color: red; }
   SCSS
 
@@ -177,11 +177,11 @@ class WalkthroughChecksTest < Minitest::Test
   def test_first_screen_fails_when_a_control_stops_declaring_a_touch_target
     tree = first_screen_tree
     tree["amber/app/assets/stylesheets/application.scss"] = FIRST_SCREEN_SHEET.sub(
-      ".btn { min-height: var(--tap-min); }", ".btn { height: 30px; }"
+      ".button { min-height: var(--tap-min); }", ".button { height: 30px; }"
     )
 
     assert_names check(Deploy::FirstScreenCheck, tree),
-                 %r{amber/app/assets/stylesheets/application\.scss /\\A\\\.btn\\z/ rule missing min-height}
+                 %r{amber/app/assets/stylesheets/application\.scss /\\A\\\.button\\z/ rule missing min-height}
   end
 
   def test_first_screen_fails_when_the_named_rule_is_gone

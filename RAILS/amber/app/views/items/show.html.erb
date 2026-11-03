@@ -65,21 +65,21 @@
   </section>
 
   <nav role="navigation" aria-label="<%= t("items.actions_label") %>" class="luxury-actions" data-controller="haptics">
-    <%= button_to t("items.worn_today"), wear_item_path(@item), method: :post, class: "btn",
+    <%= button_to t("items.worn_today"), wear_item_path(@item), method: :post, class: "button",
           data: { action: "pointerdown->haptics#press" } %>
     <% if @item.spark_joy? %>
-      <%= button_to t("items.no_joy"), clear_joy_item_path(@item), method: :post, class: "btn" %>
+      <%= button_to t("items.no_joy"), clear_joy_item_path(@item), method: :post, class: "button" %>
     <% else %>
-      <%= button_to t("items.sparks_joy"), spark_joy_item_path(@item), method: :post, class: "btn" %>
+      <%= button_to t("items.sparks_joy"), spark_joy_item_path(@item), method: :post, class: "button" %>
     <% end %>
-    <%= button_to amber_ai_available? ? t("items.analyze_ai") : t("items.analyze_heuristic"), ai_analyze_item_path(@item), method: :post, class: "btn" %>
-    <%= button_to amber_ai_available? ? t("items.tag_ai") : t("items.tag_heuristic"), ai_tag_item_path(@item), method: :post, class: "btn" %>
-    <%= link_to t("items.declutter_review"), review_declutter_path(@item), class: "btn" %>
-    <%= link_to t("actions.edit"), edit_item_path(@item), class: "btn" %>
+    <%= button_to amber_ai_available? ? t("items.analyze_ai") : t("items.analyze_heuristic"), ai_analyze_item_path(@item), method: :post, class: "button" %>
+    <%= button_to amber_ai_available? ? t("items.tag_ai") : t("items.tag_heuristic"), ai_tag_item_path(@item), method: :post, class: "button" %>
+    <%= link_to t("items.declutter_review"), review_declutter_path(@item), class: "button" %>
+    <%= link_to t("actions.edit"), edit_item_path(@item), class: "button" %>
     <% if @item.lifecycle_state == "sentimental_archive" %>
-      <%= button_to t("items.restore"), restore_item_path(@item), method: :post, class: "btn" %>
+      <%= button_to t("items.restore"), restore_item_path(@item), method: :post, class: "button" %>
     <% else %>
-      <%= button_to t("items.archive"), archive_item_path(@item), method: :post, class: "btn" %>
+      <%= button_to t("items.archive"), archive_item_path(@item), method: :post, class: "button" %>
     <% end %>
   </nav>
 
@@ -105,7 +105,8 @@
                           outbound_click_merchant_value: link.merchant,
                           outbound_click_surface_value: "item_affiliate",
                           outbound_click_epi_value: affiliate_click_epi } %>
-            <%= button_to t("actions.remove"), item_affiliate_link_path(@item, link), method: :delete, class: "btn-sm",
+            <%= button_to t("actions.remove"), item_affiliate_link_path(@item, link), method: :delete,
+                  class: "button-small",
                   data: { turbo_confirm: t("items.confirm_remove_affiliate_link") } %>
           </li>
         <% end %>
@@ -136,14 +137,14 @@
     <%= form_with model: [@item, @affiliate_link], url: item_affiliate_links_path(@item), class: "form-wrap" do |f| %>
       <div class="field"><%= f.label :merchant %><%= f.text_field :merchant, required: true, placeholder: t("items.merchant_placeholder") %></div>
       <div class="field"><%= f.label :url %><%= f.url_field :url, required: true, placeholder: t("items.url_placeholder"), inputmode: "url" %></div>
-      <div class="field"><%= f.submit t("items.save_link"), class: "btn" %></div>
+      <div class="field"><%= f.submit t("items.save_link"), class: "button" %></div>
     <% end %>
   </section>
 
   <details class="danger-zone">
     <summary><%= t("items.permanent_removal") %></summary>
     <p><%= t("items.archiving_safer") %></p>
-    <%= button_to t("items.delete_permanent"), @item, method: :delete, data: { turbo_confirm: t("items.confirm_delete") }, class: "btn btn-danger" %>
+    <%= button_to t("items.delete_permanent"), @item, method: :delete, data: { turbo_confirm: t("items.confirm_delete") }, class: "button button-danger" %>
   </details>
   </div>
 </div>

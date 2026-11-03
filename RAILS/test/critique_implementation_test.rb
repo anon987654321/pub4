@@ -135,7 +135,7 @@ class CritiqueImplementationTest < Minitest::Test
     assert_includes show, 'render "shared/post_vote_rail"'
     assert_includes show, '<%= tag.h1 @post.title %>'
     assert show.index('render "shared/post_vote_rail"') < show.index("<%= tag.h1 @post.title %>")
-    assert_includes partial, "post-vote-btn"
+    assert_includes partial, "post-vote-button"
     assert_includes partial, "post-vote-score"
     assert_includes stream, 'frame.start_with?("post-vote-")'
     assert_includes stream, 'render "shared/post_vote_rail"'

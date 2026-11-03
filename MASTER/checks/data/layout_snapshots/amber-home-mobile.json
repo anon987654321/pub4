@@ -125,7 +125,7 @@
       "position": "static"
     },
     {
-      "key": "#main-content>section.amber-guest-feed>section.empty.empty-state>a.btn.btn-primary.empty-state-action",
+      "key": "#main-content>section.amber-guest-feed>section.empty.empty-state>a.button.button-primary.empty-state-action",
       "tag": "a",
       "rect": {
         "x": 91,
@@ -173,7 +173,7 @@
       "position": "static"
     },
     {
-      "key": "#main-content>section.amber-guest-hero>p.actions>a.btn.btn-ghost",
+      "key": "#main-content>section.amber-guest-hero>p.actions>a.button.button-ghost",
       "tag": "a",
       "rect": {
         "x": 229,
@@ -189,7 +189,7 @@
       "position": "static"
     },
     {
-      "key": "#main-content>section.amber-guest-hero>p.actions>a.btn.btn-primary",
+      "key": "#main-content>section.amber-guest-hero>p.actions>a.button.button-primary",
       "tag": "a",
       "rect": {
         "x": 10,
@@ -301,7 +301,7 @@
       "position": "static"
     },
     {
-      "key": "div.amber-compose-inner>div.amber-compose-footer>div.amber-compose-submit>input.btn.btn-primary.amber-compose-btn",
+      "key": "div.amber-compose-inner>div.amber-compose-footer>div.amber-compose-submit>input.button.button-primary.amber-compose-button",
       "tag": "input",
       "rect": {
         "x": 295,
@@ -317,7 +317,7 @@
       "position": "static"
     },
     {
-      "key": "div.amber-compose-inner>div>div.tiptap_toolbar>button.tiptap_btn",
+      "key": "div.amber-compose-inner>div>div.tiptap_toolbar>button.tiptap_button",
       "tag": "button",
       "rect": {
         "x": 69,
@@ -445,7 +445,7 @@
       "position": "static"
     },
     {
-      "key": "div.theme-root>header.amber-logo-banner.amber-logo-banner--nav>div.amber-nav-actions>a.btn-sm",
+      "key": "div.theme-root>header.amber-logo-banner.amber-logo-banner--nav>div.amber-nav-actions>a.button-small",
       "tag": "a",
       "rect": {
         "x": 260,

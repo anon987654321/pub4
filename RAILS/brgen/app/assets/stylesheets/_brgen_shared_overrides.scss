@@ -766,17 +766,17 @@ body.vertical-marketplace .deal-card-img .deal-badge--sale {
 /* One button style in the marketplace: pills, in the accent. The buy box's
    primary read --store-red, which is the sale red now, and a buy button is
    not a discount. */
-body.vertical-marketplace :is(.deal-card-buy, .listing-buy-bar-cta, .chip, .store-buybox .btn) {
+body.vertical-marketplace :is(.deal-card-buy, .listing-buy-bar-cta, .chip, .store-buybox .button) {
   border-radius: var(--radius-pill);
 }
 
-body.vertical-marketplace .store-buybox .btn-primary {
+body.vertical-marketplace .store-buybox .button-primary {
   border-color: var(--accent);
   background: var(--accent);
   color: var(--accent-ink);
 }
 
-body.vertical-marketplace .store-buybox .btn-primary:hover {
+body.vertical-marketplace .store-buybox .button-primary:hover {
   background: var(--bol-blue-dark);
 }
 
@@ -1806,7 +1806,7 @@ body.vertical-marketplace .listing-source-badge--shop {
     pointer-events: none;
   }
 
-  body.vertical-marketplace .listing-step-actions .btn-ghost {
+  body.vertical-marketplace .listing-step-actions .button-ghost {
     display: none;
   }
 }
@@ -2143,12 +2143,12 @@ form[data-publishing="true"] .post-progressive-nav {
   margin-block-start: var(--space-4);
 }
 
-.post-progressive-actions .btn-primary {
+.post-progressive-actions .button-primary {
   min-width: 8rem;
 }
 
 @media (max-width: 479px) {
-  .post-progressive-actions .btn {
+  .post-progressive-actions .button {
     flex: 1 1 auto;
   }
 
@@ -2397,7 +2397,7 @@ body.vertical-marketplace .store-buybox {
   border-radius: 16px;
 }
 
-body.vertical-marketplace .store-buybox .btn-primary {
+body.vertical-marketplace .store-buybox .button-primary {
   border-radius: 999px;
   background: var(--bol-blue);
 }

@@ -18,12 +18,12 @@
       <% if membership.role == "member" %>
         <%= button_to t("community.make_moderator"),
               community_moderators_path(@community, user_id: membership.user_id),
-              method: :post, class: "btn btn-ghost btn-sm" %>
+              method: :post, class: "button button-ghost button-small" %>
       <% elsif membership.role == "moderator" %>
         <%# destructive: no-confirm-ok — reversible — the same row offers Make moderator once the role is member %>
         <%= button_to t("community.remove_moderator"),
               community_moderator_path(@community, membership),
-              method: :delete, class: "btn btn-ghost btn-sm" %>
+              method: :delete, class: "button button-ghost button-small" %>
       <% else %>
         <%# The last owner cannot be demoted: there would be nobody left who can
             appoint anyone, and nothing else in the app creates an owner. %>

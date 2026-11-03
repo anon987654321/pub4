@@ -2,7 +2,7 @@
 @use "base";
 
 // Preserve the previous cascade exactly: these partials are emitted in source
-// order, and the final partial retains the late .btn media overrides.
+// order, and the final partial retains the late .button media overrides.
 @use "components/forms";
 @use "components/overlays";
 @use "components/feedback";

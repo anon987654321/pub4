@@ -156,7 +156,7 @@
     .radio-home-header, .radio-featured, .radio-section-header, .radio-archaeology,
     .radio-library, .radio-library-header, .radio-library-item, .radio-track-card,
     .radio-track-list, .radio-playlist-list, .playlist-transport, .playlist-queue,
-    .playlist-queue-item, .playlist-comments, .playlist-artwork, .radio-nav-btn,
+    .playlist-queue-item, .playlist-comments, .playlist-artwork, .radio-nav-button,
     .storefront-utility--bol, .bol-kind-tabs, .listing-filter-group, .listing-step,
     .listing-step-link, .listing-photo-gallery, .media-thumb, .media-thumb-rm,
     .listing-video-field, .listing-source-option, .listing-review-card,
@@ -236,7 +236,7 @@
   .radio-home-link,
   .radio-section-link,
   .radio-nav a,
-  .radio-nav-btn,
+  .radio-nav-button,
   .playlist-top-action,
   .playlist-add-comment,
   .playlist-transport-play,
@@ -359,7 +359,7 @@
       border-bottom-color: transparent;
     }
 
-    .store-buybox .btn,
+    .store-buybox .button,
     .deal-card-buy,
     .listing-buy-bar-cta,
     .bol-primary {
@@ -386,7 +386,7 @@
   .style-phase-card,
   .occasion-card,
   .zone-row,
-  .carousel-btn,
+  .carousel-button,
   .today-look,
   .today-look-pick,
   .newsletter-cta,
@@ -440,8 +440,8 @@
       border-radius: 0;
     }
 
-    .btn,
-    .btn-sm,
+    .button,
+    .button-small,
     input,
     select,
     textarea {
@@ -469,7 +469,7 @@
   main#main-content :is(p, li, dd) { text-wrap: pretty; }
   main#main-content :is(button, input, select, textarea) { box-sizing: border-box; }
   // Fields only. A submit input is a button: matched here at (1,1,1) it lost
-  // .btn-primary's fill and pill to the field surface, so "Publiser" and
+  // .button-primary's fill and pill to the field surface, so "Publiser" and
   // "Kommenter" sat as grey slabs beside black pill buttons in the same row.
   $field: "input:not([type=submit], [type=button], [type=reset], [type=image])";
   main#main-content :is(#{$field}, select, textarea) {
@@ -571,7 +571,10 @@
     outline: var(--focus-ring); outline-offset: 2px;
   }
   body[data-surface="luxury"] .luxury-actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); }
-  body[data-surface="luxury"] .luxury-actions .btn { min-block-size: var(--tap-min); min-inline-size: var(--tap-min); }
+  body[data-surface="luxury"] .luxury-actions .button {
+    min-block-size: var(--tap-min);
+    min-inline-size: var(--tap-min);
+  }
   body[data-surface="luxury"] .luxury-title { max-inline-size: 12ch; text-wrap: balance; overflow-wrap: anywhere; }
   body[data-surface="luxury"] .amber-looks { min-inline-size: 0; row-gap: var(--section-rhythm); }
   body[data-surface="luxury"] .amber-look { min-inline-size: 0; }
@@ -621,8 +624,8 @@
   body.wscons .ports-purpose { max-inline-size: 62ch; text-wrap: pretty; }
   body.wscons .install-panel, body.wscons .install-panel [data-controller="clipboard"] { min-inline-size: 0; }
   body.wscons .install-panel input { min-inline-size: 0; min-block-size: var(--tap-min); }
-  body.wscons :is(input, select, textarea, button, .btn) { box-sizing: border-box; }
-  body.wscons :is(input, select, textarea, button, .btn):focus-visible { outline: var(--focus-ring); outline-offset: 2px; }
+  body.wscons :is(input, select, textarea, button, .button) { box-sizing: border-box; }
+  body.wscons :is(input, select, textarea, button, .button):focus-visible { outline: var(--focus-ring); outline-offset: 2px; }
   body.wscons article :is(pre, code) { overflow-wrap: anywhere; }
   body.wscons article pre { max-inline-size: 100%; white-space: pre-wrap; tab-size: 2; }
   body.wscons .install-panel [data-controller="clipboard"] {

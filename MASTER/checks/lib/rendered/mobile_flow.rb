@@ -29,11 +29,11 @@ module Deploy
       ".edge-grip",
       ".nearby-chat-widget-tab",
       ".chat-tab",
-      "header .btn",
-      ".page-header .btn",
-      ".btn-primary",
-      "a.btn--primary",
-      "button.btn-primary",
+      "header .button",
+      ".page-header .button",
+      ".button-primary",
+      "a.button--primary",
+      "button.button-primary",
     ].join(", ")
 
     MEASURE = <<~JS
@@ -259,7 +259,7 @@ module Deploy
 
       undersized = Array(m["chrome"]).select { |c| c["min"].to_f.positive? && c["min"].to_f < TOUCH_MIN }
       # Soft: many icon-only chrome bits are 32px; fail hard only when primary
-      # buttons (.btn-primary) undershoot, soft for the rest.
+      # buttons (.button-primary) undershoot, soft for the rest.
       undersized.each do |c|
         primary = c["label"].to_s.match?(/primary|sign|logg|cart|sell|post|add|live/i)
         sev = primary ? :hard : :soft

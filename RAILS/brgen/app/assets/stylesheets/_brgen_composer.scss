@@ -187,7 +187,7 @@
 
 /* Full ink, not --text-secondary: at default weight on a dark surface the B,
    the i and the bullet would be the dimmest thing in the dialog. */
-.composer-body .tiptap_btn {
+.composer-body .tiptap_button {
   min-width: var(--tap-min);
   min-height: var(--tap-min);
   border: 0;
@@ -198,7 +198,7 @@
   font-size: var(--text-base);
 }
 
-.composer-body .tiptap_btn:hover { background: var(--hover); }
+.composer-body .tiptap_button:hover { background: var(--hover); }
 
 /* The "attach my area" opt-in, selected by what it is rather than by a class
    the markup has to carry. :has() is the reason this is possible at all — a

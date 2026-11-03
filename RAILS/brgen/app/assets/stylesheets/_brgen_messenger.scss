@@ -492,7 +492,7 @@ body.vertical-messenger .layout > main#main-content > section.messenger-window {
 }
 
 .messenger-details-form input { min-block-size: var(--tap-min); }
-.messenger-details-form .btn { justify-self: start; }
+.messenger-details-form .button { justify-self: start; }
 
 // The log is the scrolling middle. overscroll-behavior stops a flick at the end
 // of it from scrolling the page behind it, which on a chat is the difference

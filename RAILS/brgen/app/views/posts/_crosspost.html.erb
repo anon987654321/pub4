@@ -14,7 +14,7 @@
     <%= form_with url: post_crossposts_path(post), method: :post do |f| %>
       <%= f.label :community_id, t("post.crosspost_to") %>
       <%= f.select :community_id, targets %>
-      <%= f.submit t("post.crosspost"), class: "btn btn-sm" %>
+      <%= f.submit t("post.crosspost"), class: "button button-small" %>
     <% end %>
   </section>
 <% end %>

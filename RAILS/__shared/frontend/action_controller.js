@@ -39,10 +39,10 @@ export default class extends Controller {
   toggle(event) {
 
     event.preventDefault()
-    const btn = event.currentTarget || this.element
-    const isActive = btn.classList.contains(this.activeClassValue)
+    const button = event.currentTarget || this.element
+    const isActive = button.classList.contains(this.activeClassValue)
 
-    btn.classList.toggle(this.activeClassValue, !isActive)
+    button.classList.toggle(this.activeClassValue, !isActive)
 
     if (this.hasCountTarget) {
       const delta = isActive ? -1 : 1
@@ -70,41 +70,41 @@ export default class extends Controller {
       }
       fetch(this.urlValue, init).then(res => {
         if (res.ok) {
-          this._succeeded(btn)
+          this._succeeded(button)
         } else {
-          this._failed(btn, isActive)
+          this._failed(button, isActive)
         }
-      }).catch(() => this._failed(btn, isActive))
-    } else if (btn.dataset.interactionState === "pressed") {
-      btn.dataset.interactionState = "idle"
+      }).catch(() => this._failed(button, isActive))
+    } else if (button.dataset.interactionState === "pressed") {
+      button.dataset.interactionState = "idle"
     }
   }
 
-  _succeeded(btn) {
-    btn.dataset.interactionState = "confirmed"
-    btn.removeAttribute("aria-busy")
+  _succeeded(button) {
+    button.dataset.interactionState = "confirmed"
+    button.removeAttribute("aria-busy")
     Haptics.pulse([12, 30, 12])
     window.setTimeout(() => {
-      if (btn.dataset.interactionState === "confirmed") {
-        btn.dataset.interactionState = "idle"
+      if (button.dataset.interactionState === "confirmed") {
+        button.dataset.interactionState = "idle"
       }
     }, 260)
   }
 
-  _failed(btn, wasActive) {
-    this._rollback(btn, wasActive)
-    btn.dataset.interactionState = "error"
-    btn.removeAttribute("aria-busy")
+  _failed(button, wasActive) {
+    this._rollback(button, wasActive)
+    button.dataset.interactionState = "error"
+    button.removeAttribute("aria-busy")
     this._notify(this.errorMessageValue)
     window.setTimeout(() => {
-      if (btn.dataset.interactionState === "error") {
-        btn.dataset.interactionState = "idle"
+      if (button.dataset.interactionState === "error") {
+        button.dataset.interactionState = "idle"
       }
     }, 400)
   }
 
-  _rollback(btn, wasActive) {
-    btn.classList.toggle(this.activeClassValue, wasActive)
+  _rollback(button, wasActive) {
+    button.classList.toggle(this.activeClassValue, wasActive)
     if (this.hasCountTarget) {
       this.countValue = this.originalCount
       this.countTarget.textContent = this.originalCount

@@ -100,12 +100,12 @@
 
   <% if authenticated? && Current.user.id == @event.user_id %>
     <nav aria-label="<%= t("events.organiser_actions") %>">
-      <%= link_to t("actions.edit"), edit_event_path(@event), class: "btn btn-ghost btn-sm" %>
+      <%= link_to t("actions.edit"), edit_event_path(@event), class: "button button-ghost button-small" %>
       <% unless @event.cancelled? %>
         <%# Cancel, not delete: people have it in their calendar, and an event
             that vanishes tells them nothing. %>
         <%= button_to t("events.cancel_event"), cancel_event_path(@event), method: :patch,
-              class: "btn btn-ghost btn-sm",
+              class: "button button-ghost button-small",
               data: { turbo_confirm: t("events.confirm_cancel") } %>
       <% end %>
     </nav>

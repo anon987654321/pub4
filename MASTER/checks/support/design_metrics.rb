@@ -453,7 +453,7 @@ decls.compact.each { |_, v, _| values << v }
 
     # Interactive selector clusters that must declare Fitts-safe min-height somewhere nearby.
     INTERACTIVE_NEEDLES = [
-      [/\.btn\b/, "button .btn"],
+      [/\.button\b/, "button .button"],
       [/\.tab-item\b|\.tab-bar\b/, "mobile tab bar"],
       [/\.swipe-action\b/, "dating swipe"],
       [/\.feed-action\b/, "feed action"],

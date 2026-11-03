@@ -63,7 +63,7 @@
   <% if @video.allow_duets? && Current.user&.tv_channels&.any? %>
     <%= link_to t("tv.make_a_duet"),
           new_channel_video_path(Current.user.tv_channels.first, duet_of_id: @video.id),
-          class: "btn btn-ghost btn-sm" %>
+          class: "button button-ghost button-small" %>
   <% end %>
 </p>
   <% if @video.description.present? %>
@@ -86,9 +86,9 @@
     <% if authenticated? && Current.user != @video.channel.user %>
       <% if @video.channel.subscriptions.exists?(user: Current.user) %>
         <%# destructive: no-confirm-ok — reversible — the button becomes Subscribe again in place %>
-        <%= button_to t("tv.unsubscribe"), unsubscribe_channel_path(@video.channel), method: :delete, class: "btn btn-ghost btn-sm" %>
+        <%= button_to t("tv.unsubscribe"), unsubscribe_channel_path(@video.channel), method: :delete, class: "button button-ghost button-small" %>
       <% else %>
-        <%= button_to t("tv.subscribe"), subscribe_channel_path(@video.channel), method: :post, class: "btn btn-primary btn-sm" %>
+        <%= button_to t("tv.subscribe"), subscribe_channel_path(@video.channel), method: :post, class: "button button-primary button-small" %>
       <% end %>
     <% end %>
   </article>
@@ -116,7 +116,7 @@
         <%= f.label :timestamp, t("tv.note_timestamp") %>
         <%= f.number_field :timestamp, min: 0, step: 1, inputmode: "numeric" %>
       </div>
-      <%= f.submit t("tv.save_note"), class: "btn btn-primary btn-sm" %>
+      <%= f.submit t("tv.save_note"), class: "button button-primary button-small" %>
     <% end %>
   <% end %>
 </section>
@@ -150,7 +150,7 @@
   <span class="char-counter" data-character-counter-target="counter" aria-live="polite"></span>
 </div>
       </div>
-      <%= f.submit t("tv.post_comment"), class: "btn btn-primary btn-sm" %>
+      <%= f.submit t("tv.post_comment"), class: "button button-primary button-small" %>
     <% end %>
   <% end %>
 </section>

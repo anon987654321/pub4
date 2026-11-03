@@ -12,7 +12,7 @@
       <p><%= t("email_preferences.marketing_help") %></p>
     </fieldset>
 
-    <%= form.submit t("email_preferences.save"), class: "btn" %>
+    <%= form.submit t("email_preferences.save"), class: "button" %>
   <% end %>
 
   <hr>
@@ -21,5 +21,5 @@
   <p><%= t("email_preferences.unsubscribe_help") %></p>
   <%# destructive: no-confirm-ok — reversible — the address can subscribe again from any newsletter form %>
   <%= button_to t("email_preferences.unsubscribe"), email_subscription_path(token: @subscription.token),
-        method: :delete, class: "btn btn-ghost" %>
+        method: :delete, class: "button button-ghost" %>
 </main>

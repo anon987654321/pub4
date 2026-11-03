@@ -5,7 +5,7 @@
   <%= form_with url: ai_search_path, method: :get, class: "search-form" do |f| %>
     <%= f.search_field :q, value: @query, placeholder: t("ai_forms.search_placeholder"),
                        aria: { label: t("ai_forms.search_placeholder") }, autofocus: true %>
-    <%= f.submit t("search.submit"), class: "btn" %>
+    <%= f.submit t("search.submit"), class: "button" %>
   <% end %>
 </div>
 <% if @explanation.present? %>

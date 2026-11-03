@@ -22,6 +22,6 @@
     <div class="field"><%= f.label :hold_days %><%= f.number_field :hold_days, min: 0, inputmode: "numeric" %></div>
     <div class="field"><%= f.check_box :auto_approve_partners %><%= f.label :auto_approve_partners %></div>
     <div class="field"><%= f.label :terms %><%= f.text_area :terms, rows: 5 %></div>
-    <%= f.submit t("partner.create"), class: "btn" %>
+    <%= f.submit t("partner.create"), class: "button" %>
   <% end %>
 </section>

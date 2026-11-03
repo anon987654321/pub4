@@ -29,6 +29,6 @@
     <div class="field"><%= f.label :delivery_radius_km, t("takeaway.delivery_radius") %><%= f.number_field :delivery_radius_km, min: 1, max: Takeaway::Restaurant::MAX_DELIVERY_RADIUS_KM, inputmode: "numeric" %></div>
     <div class="field field--check"><%= f.check_box :active %><%= f.label :active, t("takeaway.active") %></div>
     <%= render "takeaway/restaurants/place_field", f: f %>
-    <div class="field"><%= f.submit t("takeaway.save"), class: "btn btn-primary" %></div>
+    <div class="field"><%= f.submit t("takeaway.save"), class: "button button-primary" %></div>
   <% end %>
 </div>

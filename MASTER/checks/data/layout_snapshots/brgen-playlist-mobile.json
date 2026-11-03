@@ -125,7 +125,7 @@
       "position": "fixed"
     },
     {
-      "key": "#main-content>div.radio-tunnel>nav.playlist-transport-bar>button.transport-btn",
+      "key": "#main-content>div.radio-tunnel>nav.playlist-transport-bar>button.transport-button",
       "tag": "button",
       "rect": {
         "x": 173,
@@ -141,7 +141,7 @@
       "position": "static"
     },
     {
-      "key": "#main-content>div.radio-tunnel>nav.playlist-transport-bar>button.transport-btn.transport-btn--primary",
+      "key": "#main-content>div.radio-tunnel>nav.playlist-transport-bar>button.transport-button.transport-button--primary",
       "tag": "button",
       "rect": {
         "x": 111,

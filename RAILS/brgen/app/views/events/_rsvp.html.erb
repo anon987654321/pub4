@@ -17,7 +17,7 @@
         <%= button_to rsvp_event_path(event, status: status),
               method: :post,
               disabled: blocked,
-              class: "btn btn-sm#{" active" if held}",
+              class: "button button-small#{" active" if held}",
               form_class: "rsvp-form",
               aria: { pressed: held } do %>
           <%= t("events.rsvp_#{status}") %>

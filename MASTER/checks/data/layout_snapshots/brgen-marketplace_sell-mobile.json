@@ -349,7 +349,7 @@
       "position": "static"
     },
     {
-      "key": "div.form-wrap>form>div.field>input.btn.btn-primary",
+      "key": "div.form-wrap>form>div.field>input.button.button-primary",
       "tag": "input",
       "rect": {
         "x": 18,
@@ -381,7 +381,7 @@
       "position": "static"
     },
     {
-      "key": "form>div.field>div.media-actions>button.media-btn",
+      "key": "form>div.field>div.media-actions>button.media-button",
       "tag": "button",
       "rect": {
         "x": 18,

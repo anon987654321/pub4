@@ -15,7 +15,7 @@ form :is(
   input[type="datetime-local"],
   select,
   textarea
-):not(.btn) {
+):not(.button) {
   inline-size: 100%;
   min-block-size: var(--tap-min);
   padding: var(--space-2) var(--space-3);
@@ -44,7 +44,7 @@ form :is(
   input[type="datetime-local"],
   select,
   textarea
-):not(.btn):focus-visible {
+):not(.button):focus-visible {
   outline: var(--focus-ring);
   outline-offset: 1px;
   background: var(--surface-elevated);
@@ -65,7 +65,7 @@ form :is(
   input[type="datetime-local"],
   select,
   textarea
-):not(.btn):disabled {
+):not(.button):disabled {
   opacity: 0.55;
   cursor: not-allowed;
 }
@@ -85,7 +85,7 @@ form :is(
   input[type="datetime-local"],
   select,
   textarea
-):not(.btn)[aria-invalid="true"],
+):not(.button)[aria-invalid="true"],
 form :is(
   input[type="text"],
   input[type="email"],
@@ -101,7 +101,7 @@ form :is(
   input[type="datetime-local"],
   select,
   textarea
-):not(.btn):user-invalid {
+):not(.button):user-invalid {
   outline: 2px solid var(--danger);
   outline-offset: 1px;
   background: color-mix(in srgb, var(--danger) 8%, var(--surface));
@@ -147,8 +147,8 @@ form > fieldset {
   padding: 0;
 }
 
-form input[type="submit"]:not(.btn):not([class]),
-form button[type="submit"]:not(.btn):not([class]) {
+form input[type="submit"]:not(.button):not([class]),
+form button[type="submit"]:not(.button):not([class]) {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -163,13 +163,13 @@ form button[type="submit"]:not(.btn):not([class]) {
   cursor: pointer;
 }
 
-form input[type="submit"]:not(.btn):not([class]):hover,
-form button[type="submit"]:not(.btn):not([class]):hover {
+form input[type="submit"]:not(.button):not([class]):hover,
+form button[type="submit"]:not(.button):not([class]):hover {
   opacity: 0.88;
 }
 
-form input[type="submit"]:not(.btn):not([class]):focus-visible,
-form button[type="submit"]:not(.btn):not([class]):focus-visible {
+form input[type="submit"]:not(.button):not([class]):focus-visible,
+form button[type="submit"]:not(.button):not([class]):focus-visible {
   outline: var(--focus-ring);
   outline-offset: 2px;
 }

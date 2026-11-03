@@ -29,7 +29,7 @@
       "position": "static"
     },
     {
-      "key": "#dating-matches>section.empty.empty-state>a.btn.btn-primary.empty-state-action",
+      "key": "#dating-matches>section.empty.empty-state>a.button.button-primary.empty-state-action",
       "tag": "a",
       "rect": {
         "x": 674,
@@ -109,7 +109,7 @@
       "position": "static"
     },
     {
-      "key": "#main-content>div.page-header>nav>a.btn.btn-ghost.btn-sm",
+      "key": "#main-content>div.page-header>nav>a.button.button-ghost.button-small",
       "tag": "a",
       "rect": {
         "x": 833,

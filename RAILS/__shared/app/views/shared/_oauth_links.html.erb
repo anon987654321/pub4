@@ -6,24 +6,24 @@
   <nav class="oauth-links" aria-label="<%= t("auth.options") %>">
     <% if active.include?("bankid") %>
       <%= button_to t("auth.with_bankid"), "/auth/bankid", method: :post,
-            class: "btn btn-primary oauth-button oauth-bankid", data: { turbo: false } %>
+            class: "button button-primary oauth-button oauth-bankid", data: { turbo: false } %>
     <% end %>
     <% if active.include?("vipps") %>
       <%# The official wordmark, unmodified (images/vipps/README.md), beside the
           label that already says Vipps, so its alt is empty. %>
       <%= button_to "/auth/vipps", method: :post,
-            class: "btn btn-primary oauth-button oauth-vipps", data: { turbo: false } do %>
+            class: "button button-primary oauth-button oauth-vipps", data: { turbo: false } do %>
         <%= image_tag "vipps/vipps-wordmark-on-orange.svg", alt: "", width: 59, height: 24 %>
         <%= t("auth.with_vipps") %>
       <% end %>
     <% end %>
     <% if active.include?("google_oauth2") %>
       <%= button_to t("auth.with_google"), "/auth/google_oauth2", method: :post,
-            class: "btn btn-ghost oauth-button oauth-google", data: { turbo: false } %>
+            class: "button button-ghost oauth-button oauth-google", data: { turbo: false } %>
     <% end %>
     <% if active.include?("facebook") %>
       <%= button_to t("auth.with_facebook"), "/auth/facebook", method: :post,
-            class: "btn btn-ghost oauth-button oauth-facebook", data: { turbo: false } %>
+            class: "button button-ghost oauth-button oauth-facebook", data: { turbo: false } %>
     <% end %>
   </nav>
   <p class="oauth-divider" aria-hidden="true"><%= t("auth.or_email") %></p>

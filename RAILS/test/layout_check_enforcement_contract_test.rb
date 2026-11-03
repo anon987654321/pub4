@@ -81,7 +81,7 @@ class LayoutCheckEnforcementContractTest < Minitest::Test
     assert_includes source, "main#main-content :is(input, select, textarea)"
     # Text fields are borderless; keyboard focus is the shared outline ring.
     assert_includes source, ":focus-visible { border: 0; outline: var(--focus-ring); outline-offset: 2px; }"
-    assert_includes source, "body.wscons :is(input, select, textarea, button, .btn):focus-visible"
+    assert_includes source, "body.wscons :is(input, select, textarea, button, .button):focus-visible"
 
     require_relative "support/stylesheet_modules"
     modules = Class.new { include StylesheetModules }.new

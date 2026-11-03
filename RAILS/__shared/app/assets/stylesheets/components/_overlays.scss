@@ -1,5 +1,5 @@
-form input[type="submit"]:not(.btn):not([class]):disabled,
-form button[type="submit"]:not(.btn):not([class]):disabled {
+form input[type="submit"]:not(.button):not([class]):disabled,
+form button[type="submit"]:not(.button):not([class]):disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }
@@ -52,12 +52,12 @@ dialog::backdrop {
     input[type="datetime-local"],
     select,
     textarea
-  ):not(.btn) {
+  ):not(.button) {
     transition: none;
   }
 }
 
 /* The shared stack forwards _buttons.scss immediately before this sequence.
-   Keep the .btn media overrides at the sequence end: forced-colors ties with
+   Keep the .button media overrides at the sequence end: forced-colors ties with
    the base selector at 0-1-0, so later source order must win. */
 

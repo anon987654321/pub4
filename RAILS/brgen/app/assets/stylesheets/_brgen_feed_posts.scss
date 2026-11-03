@@ -7,7 +7,7 @@
 
 // ============================================================ components: posts, forms, feed cards
 
-.vote-btn {
+.vote-button {
   background: none;
   border: none;
   color: var(--text-secondary);
@@ -24,10 +24,10 @@
   justify-content: center;
 }
 
-.vote-btn:hover { color: var(--upvote); }
-.vote-btn.down:hover { color: var(--downvote); }
-.vote-btn.active-up { color: var(--upvote); }
-.vote-btn.active-down { color: var(--downvote); }
+.vote-button:hover { color: var(--upvote); }
+.vote-button.down:hover { color: var(--downvote); }
+.vote-button.active-up { color: var(--upvote); }
+.vote-button.active-down { color: var(--downvote); }
 .vote-score { font: var(--weight-heavy) var(--vote-score-size) / 1 var(--font); font-variant-numeric: tabular-nums; color: var(--text); }
 
 .post_body { color: var(--text); line-height: var(--leading-loose); font-size: var(--text-base); }
@@ -267,11 +267,11 @@ textarea { min-height: 120px; resize: vertical; line-height: var(--leading-loose
 }
 
 /* Buttons */
-.btn {
+.button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  /* One control block with the shared .btn. brgen roots at 18px, so a rem
+  /* One control block with the shared .button. brgen roots at 18px, so a rem
      inset would render 22.5px here against 20px everywhere else; the control
      tokens are absolute for that reason. What stays brgen is the fill below —
      a dialect skins the button, it does not resize it. */
@@ -289,12 +289,12 @@ textarea { min-height: 120px; resize: vertical; line-height: var(--leading-loose
   min-height: var(--tap-min);
 }
 
-/* No .btn:hover here: shared/_buttons.scss sets the same opacity .88 and
-   the same text-decoration none, and it is the sheet that owns .btn. */
+/* No .button:hover here: shared/_buttons.scss sets the same opacity .88 and
+   the same text-decoration none, and it is the sheet that owns .button. */
 /* Fill instead of outline. A transparent button with a 1px edge is a line;
    a subtle surface is a button. */
-.btn:focus-visible,
-.media-btn:focus-visible {
+.button:focus-visible,
+.media-button:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
 }

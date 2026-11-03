@@ -39,7 +39,7 @@
         <%= extra_fields %>
       <% end %>
       <% if local_assigns.fetch(:show_submit, true) %>
-        <%= f.submit t("search.submit"), class: local_assigns.fetch(:submit_class, "btn btn-sm"), aria: { label: t("search.submit") } %>
+        <%= f.submit t("search.submit"), class: local_assigns.fetch(:submit_class, "button button-small"), aria: { label: t("search.submit") } %>
       <% end %>
     </div>
   <% end %>

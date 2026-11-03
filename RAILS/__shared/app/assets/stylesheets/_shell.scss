@@ -54,7 +54,7 @@ html .turbo-progress-bar {
 /* Forced colors (Windows High Contrast) — ported from components */
 @media (forced-colors: active) {
   .skip-link,
-  .btn,
+  .button,
   .tab-bar a,
   .nav_link {
     forced-color-adjust: none;
@@ -350,7 +350,7 @@ main[role="main"] {
    /session/new the accent IS #f2f2f2, so the primary "Post" button rendered
    white on near-white at 1.12:1 and was simply invisible. Every other rule
    painting on --accent already pairs it with --bg. */
-.compose-btn {
+.compose-button {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -370,7 +370,7 @@ main[role="main"] {
   transition: opacity var(--transition-fast) var(--ease-out);
   text-decoration: none;
 }
-.compose-btn:hover {
+.compose-button:hover {
   opacity: 0.88;
   text-decoration: none;
   color: var(--accent-ink);

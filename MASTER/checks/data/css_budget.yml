@@ -336,7 +336,7 @@ rules:
 # lines below the unconditional one (1,061B); _posts.scss restated the seven
 # comment-chrome rules shared/_chat_reactions.scss owns and loads after it;
 # _mobile.scss restated .tab-bar and four .tab-item rules that shared/_tab_bar
-# owns; _forms.scss restated .btn:hover; .visually-hidden was declared three
+# owns; _forms.scss restated .button:hover; .visually-hidden was declared three
 # times identically; --feed-max sat in a palette mixin and an app-root mixin
 # both; and the messenger's own new CSS repeated one hover state across six
 # controls and two list-row cells across four rows. Every cut was checked for
@@ -409,7 +409,7 @@ weight_kb:
   # helper or script names; brgen's second copy of the promotional art;
   # var(--token, fallback) where the token is always declared; declarations a
   # later same-selector rule always outranks; unread custom properties; the
-  # layered palette, luxury tokens, drawer chrome and .btn base brgen outranks
+  # layered palette, luxury tokens, drawer chrome and .button base brgen outranks
   # or never renders (switches in _tokens, _shell and _buttons, off only in
   # brgen); and prefixes allow_browser :modern does not need. Proven by nine
   # pages at 390 and 1440 screenshotting identically and by computed custom

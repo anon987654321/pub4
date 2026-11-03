@@ -20,11 +20,11 @@
         <input id="map-search" type="search" placeholder="<%= t("search.places") %>" data-map-target="search"
                role="searchbox" aria-label="<%= t("search.places_label") %>">
       </div>
-      <%= link_to t("maps.browse_list"), places_path, class: "btn btn-ghost btn-sm map-browse-link" %>
+      <%= link_to t("maps.browse_list"), places_path, class: "button button-ghost button-small map-browse-link" %>
     </div>
     <div id="place-popup" class="map-place-popup" data-map-target="popup" hidden role="status" aria-live="polite"></div>
   </div>
   <noscript>
-    <p class="empty-state"><%= t("maps.needs_js") %> <%= link_to t("maps.browse_as_list"), places_path, class: "btn" %>.</p>
+    <p class="empty-state"><%= t("maps.needs_js") %> <%= link_to t("maps.browse_as_list"), places_path, class: "button" %>.</p>
   </noscript>
 </section>

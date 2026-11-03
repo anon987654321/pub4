@@ -26,7 +26,7 @@
         </li>
       <% end %>
     </ul>
-    <%= button_to t("billing.manage"), portal_billing_path, class: "btn" %>
+    <%= button_to t("billing.manage"), portal_billing_path, class: "button" %>
   </section>
 <% end %>
 
@@ -41,7 +41,7 @@
         <%= t("billing.per_#{plan.interval}") %>
       </p>
       <% if plan.available? %>
-        <%= button_to t("billing.subscribe"), billing_path, params: { plan: plan.key }, class: "btn btn-primary",
+        <%= button_to t("billing.subscribe"), billing_path, params: { plan: plan.key }, class: "button button-primary",
                                                            data: { turbo: false } %>
       <% else %>
         <p><%= t("billing.not_yet") %></p>

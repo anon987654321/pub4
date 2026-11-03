@@ -109,7 +109,7 @@
       "position": "static"
     },
     {
-      "key": "div.auth-form>form>div.actions>input.btn.btn-link",
+      "key": "div.auth-form>form>div.actions>input.button.button-link",
       "tag": "input",
       "rect": {
         "x": 647,
@@ -125,7 +125,7 @@
       "position": "static"
     },
     {
-      "key": "div.auth-form>form>div.actions>input.btn.btn-primary",
+      "key": "div.auth-form>form>div.actions>input.button.button-primary",
       "tag": "input",
       "rect": {
         "x": 540,
@@ -157,7 +157,7 @@
       "position": "static"
     },
     {
-      "key": "form>div.field.field--float>div.password-field>button.btn.btn-ghost.btn-sm",
+      "key": "form>div.field.field--float>div.password-field>button.button.button-ghost.button-small",
       "tag": "button",
       "rect": {
         "x": 850,

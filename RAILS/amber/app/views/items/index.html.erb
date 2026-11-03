@@ -15,29 +15,29 @@
     </hgroup>
     <div class="wardrobe-action-groups">
       <nav role="navigation" aria-label="<%= t("wardrobe.primary_actions") %>" class="wardrobe-action-group">
-        <%= link_to t("home.add_item"), new_item_path, class: "btn btn-primary" %>
-        <%= link_to t("actions.compose_outfit"), new_outfit_path, class: "btn" %>
+        <%= link_to t("home.add_item"), new_item_path, class: "button button-primary" %>
+        <%= link_to t("actions.compose_outfit"), new_outfit_path, class: "button" %>
       </nav>
       <details class="wardrobe-more-tools">
         <summary><%= t("wardrobe.more_tools") %></summary>
         <nav role="navigation" aria-label="<%= t("wardrobe.use_what_i_own") %>" class="wardrobe-action-group">
           <%= tag.h2 t("wardrobe.use_what_i_own") %>
-          <%= link_to t("wardrobe.ai_pair"), ai_suggest_outfits_path, class: "btn" %>
-          <%= link_to t("wardrobe.packing_list"), ai_packing_list_path, class: "btn" %>
-          <%= link_to t("wardrobe.declutter_thoughtfully"), declutter_index_path, class: "btn" %>
+          <%= link_to t("wardrobe.ai_pair"), ai_suggest_outfits_path, class: "button" %>
+          <%= link_to t("wardrobe.packing_list"), ai_packing_list_path, class: "button" %>
+          <%= link_to t("wardrobe.declutter_thoughtfully"), declutter_index_path, class: "button" %>
         </nav>
         <nav role="navigation" aria-label="<%= t("wardrobe.records_gaps_nav") %>" class="wardrobe-action-group wardrobe-action-group--secondary">
           <%= tag.h2 t("wardrobe.records_gaps") %>
-          <%= link_to t("wardrobe.wear_analytics"), analytics_wardrobe_items_path, class: "btn" %>
-          <%= link_to t("pages.organize"), organize_wardrobe_items_path, class: "btn" %>
-          <%= link_to t("wardrobe.color_palette"), ai_palette_path, class: "btn" %>
+          <%= link_to t("wardrobe.wear_analytics"), analytics_wardrobe_items_path, class: "button" %>
+          <%= link_to t("pages.organize"), organize_wardrobe_items_path, class: "button" %>
+          <%= link_to t("wardrobe.color_palette"), ai_palette_path, class: "button" %>
           <%# Also routed and linked from nowhere. It answers "which occasions does my
               wardrobe cover", which is the same question as gaps and analytics, so it
               sits with them. %>
-          <%= link_to t("wardrobe.occasion_map"), ai_occasions_path, class: "btn" %>
-          <%= link_to t("wardrobe.shop_gap"), shopping_list_items_path, class: "btn" %>
-          <%= button_to t("items.archive_seasonal"), archive_seasonal_items_path, method: :post, class: "btn" %>
-          <%= button_to t("items.resurface_seasonal"), resurface_seasonal_items_path, method: :post, class: "btn" %>
+          <%= link_to t("wardrobe.occasion_map"), ai_occasions_path, class: "button" %>
+          <%= link_to t("wardrobe.shop_gap"), shopping_list_items_path, class: "button" %>
+          <%= button_to t("items.archive_seasonal"), archive_seasonal_items_path, method: :post, class: "button" %>
+          <%= button_to t("items.resurface_seasonal"), resurface_seasonal_items_path, method: :post, class: "button" %>
         </nav>
       </details>
     </div>

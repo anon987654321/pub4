@@ -30,10 +30,10 @@ module Deploy
       include GrammarChecks
 
       # Placement is about *the* primary action, not every control. CRITICAL is
-      # deliberately broad — it matches any `btn` — which is right for "did this
+      # deliberately broad — it matches any `button` — which is right for "did this
       # control get occluded" and wrong here, where it would flag a secondary
       # ghost button in a page header as a stranded primary CTA.
-      PRIMARY_ACTION = /\b(?:btn--primary|btn-primary|compose-trigger|compose-submit|
+      PRIMARY_ACTION = /\b(?:button--primary|button-primary|compose-trigger|compose-submit|
                             listing-buy-bar|cta|submit)\b/x
 
       # Indexed selectors (`a.nav_link[3]`) and card/list ancestry mark a repeated
@@ -242,7 +242,7 @@ module Deploy
       end
 
       BUTTON_INPUTS = %w[submit button].freeze
-      BUTTON_KEY = /\b(?:btn|button)\b/
+      BUTTON_KEY = /\bbutton\b/
 
       def button_like?(el)
         el["tag"] == "button" || el["role"] == "button" || BUTTON_INPUTS.include?(el["input_type"]) ||

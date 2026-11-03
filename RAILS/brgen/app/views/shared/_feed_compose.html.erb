@@ -64,9 +64,9 @@
             unrelated toolbars and cost a row of height on a phone. %>
         <div class="composer-toolbar">
           <div class="tiptap_toolbar" data-tiptap-editor-target="toolbar">
-            <button type="button" class="tiptap_btn" data-action="mousedown->tiptap-editor#bold" title="<%= t("compose.bold") %>"><b>B</b></button>
-            <button type="button" class="tiptap_btn" data-action="mousedown->tiptap-editor#italic" title="<%= t("compose.italic") %>"><i>i</i></button>
-            <button type="button" class="tiptap_btn" data-action="mousedown->tiptap-editor#bulletList" title="<%= t("compose.bullet_list") %>">•</button>
+            <button type="button" class="tiptap_button" data-action="mousedown->tiptap-editor#bold" title="<%= t("compose.bold") %>"><b>B</b></button>
+            <button type="button" class="tiptap_button" data-action="mousedown->tiptap-editor#italic" title="<%= t("compose.italic") %>"><i>i</i></button>
+            <button type="button" class="tiptap_button" data-action="mousedown->tiptap-editor#bulletList" title="<%= t("compose.bullet_list") %>">•</button>
           </div>
           <div class="compose-actions">
             <%# Each of these wraps its input in a <label>, which normally names it —
@@ -108,7 +108,7 @@
         <%= f.hidden_field :nearby, value: true %>
       <% end %>
 
-      <%= f.submit t("feed.post_action"), class: "btn btn-primary composer-submit" %>
+      <%= f.submit t("feed.post_action"), class: "button button-primary composer-submit" %>
 
       <%# Guests used to get two sentences here: how many posts remained in this
           browser, and why the cap exists. The cap is a rule you meet at most once

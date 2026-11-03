@@ -53,15 +53,15 @@ export default class extends Controller {
     this.onNativeToken = (event) => this.#saveNative(event.detail)
     window.addEventListener("pub4:native-push-token", this.onNativeToken)
 
-    const btn = document.getElementById("push-enable-btn")
-    if (btn && mayPrompt("push")) {
-      window.addEventListener(YIELD_EVENT, () => { btn.hidden = true }, { once: true })
+    const button = document.getElementById("push-enable-button")
+    if (button && mayPrompt("push")) {
+      window.addEventListener(YIELD_EVENT, () => { button.hidden = true }, { once: true })
       window.addEventListener("pub4:native-push-status", (event) => {
         if (event.detail?.status !== "notDetermined") return
-        btn.hidden = false
-        btn.addEventListener("click", () => {
+        button.hidden = false
+        button.addEventListener("click", () => {
           window.webkit.messageHandlers.pub4Push.postMessage({ action: "request" })
-          btn.hidden = true
+          button.hidden = true
         }, { once: true })
       }, { once: true })
     }
@@ -82,19 +82,19 @@ export default class extends Controller {
 
   #prompt(reg) {
     // Defer permission request to a user gesture via the "Enable notifications" button if present.
-    const btn = document.getElementById("push-enable-btn")
-    if (!btn) return
+    const button = document.getElementById("push-enable-button")
+    if (!button) return
     // Notifications are the last onboarding request. Wait for a familiar
     // visitor and never compete with the install prompt.
     if (!mayPrompt("push")) return
 
-    const yieldToInstall = () => { btn.hidden = true }
+    const yieldToInstall = () => { button.hidden = true }
     window.addEventListener(YIELD_EVENT, yieldToInstall, { once: true })
 
-    btn.hidden = false
-    btn.addEventListener("click", async () => {
+    button.hidden = false
+    button.addEventListener("click", async () => {
       const perm = await Notification.requestPermission()
-      if (perm === "granted") { await this.#subscribe(reg); btn.hidden = true }
+      if (perm === "granted") { await this.#subscribe(reg); button.hidden = true }
     }, { once: true })
   }
 

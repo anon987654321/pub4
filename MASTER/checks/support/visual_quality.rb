@@ -163,11 +163,11 @@ module Deploy
       max_choices = Operator::MasterDesign.dig("ux_laws", "hick", "max_visible_choices").to_i
       max_choices = @rules.dig("cta_budget", "max_visible_choices").to_i if max_choices <= 0
       max_choices = 7 if max_choices <= 0
-      max_pri = @rules.dig("cta_budget", "max_btn_primary").to_i
+      max_pri = @rules.dig("cta_budget", "max_button_primary").to_i
       max_pri = 3 if max_pri <= 0
 
       choices = peer_choices(body)
-      primary = body.scan(/btn-primary|button_to/i).size
+      primary = body.scan(/button-primary|button_to/i).size
 
       score = pts
       if choices > max_choices

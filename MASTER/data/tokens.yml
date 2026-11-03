@@ -1725,10 +1725,11 @@ tokens:
         No ornamental box-shadow/text-shadow/backdrop-filter/filter blur.
         Floating chrome uses 1px border + elevated surface. CHECK_AUTOFIX strips
         shadows. Exception policy under pixel_perfection.exception_policy.
-    btn_aliases:
+    button_family:
       action: >
-        Family supports both btn-primary and btn--primary (and btn-ghost /
-        btn--ghost). Empty-state CTAs should emit both class names.
+        One family, spelled out: button with button-primary, button-ghost,
+        button-danger, button-small, button-link, button-block and button-share.
+        The button--primary BEM twins are retired; emit one class name per role.
     playbook_order:
       - strip_flat_ui_shadows
       - wire_empty_search_to_t

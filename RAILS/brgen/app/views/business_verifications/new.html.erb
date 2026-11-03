@@ -17,5 +17,5 @@
     <%= f.label :organisation_number %>
     <%= f.text_field :organisation_number, required: true, inputmode: "numeric", pattern: "[0-9 ]{9,11}", autocomplete: "off" %>
   </div>
-  <%= tag.p f.submit(t("business_verifications.send"), class: "btn btn-primary") %>
+  <%= tag.p f.submit(t("business_verifications.send"), class: "button button-primary") %>
 <% end %>

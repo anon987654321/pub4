@@ -7,9 +7,10 @@
   </hgroup>
   <div> <%# scan: intentional — an anonymous text block; the flex row is the layout and a name here would have no reader %>
     <%# The other shape of this page: no choosing, just the next thing. %>
-    <%= link_to t("tv.feed.title"), feed_path, class: "btn" %>
-    <%= link_to t("tv.channels_title"), channels_path, class: "btn btn-ghost" %>
-    <% if authenticated? %><%= link_to t("tv.create_channel"), new_channel_path, class: "btn btn-ghost" %><% end %>
+    <%= link_to t("tv.feed.title"), feed_path, class: "button" %>
+    <%= link_to t("tv.channels_title"), channels_path, class: "button button-ghost" %>
+    <% if authenticated? %><%= link_to t("tv.create_channel"), new_channel_path,
+          class: "button button-ghost" %><% end %>
   </div>
 </div>
 

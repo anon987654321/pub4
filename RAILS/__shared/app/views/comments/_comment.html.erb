@@ -37,7 +37,7 @@
         <%= button_to t("actions.delete"), destroy_arg,
               method: :delete,
               data: { turbo_confirm: t("actions.confirm_delete") },
-              class: "btn btn-ghost btn-sm comment-delete" %>
+              class: "button button-ghost button-small comment-delete" %>
       <% end %>
     </header>
 
@@ -55,7 +55,7 @@
       <% elsif can_interact && respond_to?(:generate_summary_comment_path) %>
         <%= button_to t("comments.ai_summary"), generate_summary_comment_path(comment),
               method: :post,
-              class: "btn btn-ghost btn-sm",
+              class: "button button-ghost button-small",
               data: { turbo: true } %>
       <% end %>
     <% end %>

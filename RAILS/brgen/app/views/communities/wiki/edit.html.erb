@@ -11,7 +11,7 @@
     <%= f.text_area :body, rows: 14, required: true %>
   </div>
   <p>
-    <%= f.submit t("actions.save"), class: "btn btn-primary" %>
-    <%= link_to t("actions.cancel"), community_wiki_path(@community, @page), class: "btn btn-ghost" %>
+    <%= f.submit t("actions.save"), class: "button button-primary" %>
+    <%= link_to t("actions.cancel"), community_wiki_path(@community, @page), class: "button button-ghost" %>
   </p>
 <% end %>

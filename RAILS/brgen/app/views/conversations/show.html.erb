@@ -64,7 +64,7 @@
                       <% if @is_group_admin || participant.id == Current.user.id %>
                         <%= button_to participant.id == Current.user.id ? t("messages.group_leave") : t("actions.remove"),
                               group_member_path(@conversation, participant), method: :delete,
-                              class: "btn btn-ghost btn-sm",
+                              class: "button button-ghost button-small",
                               data: { turbo_confirm: t("messages.confirm_group_remove") } %>
                       <% end %>
                     </li>
@@ -74,14 +74,14 @@
                               class: "messenger-details-form" do |f| %>
                   <%= f.label :username, t("messages.group_add") %>
                   <%= f.text_field :username, placeholder: t("messages.username"), autocomplete: "username" %>
-                  <%= f.submit t("actions.add_one"), class: "btn btn-sm" %>
+                  <%= f.submit t("actions.add_one"), class: "button button-small" %>
                 <% end %>
                 <% if @is_group_admin %>
                   <%= form_with model: @conversation, url: group_path(@conversation), method: :patch,
                                 class: "messenger-details-form" do |f| %>
                     <%= f.label :name, t("messages.group_name") %>
                     <%= f.text_field :name, value: @conversation.name, maxlength: 80 %>
-                    <%= f.submit t("actions.save"), class: "btn btn-sm" %>
+                    <%= f.submit t("actions.save"), class: "button button-small" %>
                   <% end %>
                 <% end %>
               </section>
@@ -99,22 +99,23 @@
             <section class="messenger-details-section">
               <% if @participant&.muted? %>
                 <%# destructive: no-confirm-ok — reversible — the thread is muted again with one click %>
-                <%= button_to t("messages.unmute"), conversation_mute_path(@conversation), method: :delete, class: "btn btn-ghost btn-sm" %>
+                <%= button_to t("messages.unmute"), conversation_mute_path(@conversation), method: :delete, class: "button button-ghost button-small" %>
               <% else %>
-                <%= button_to t("messages.mute"), conversation_mute_path(@conversation), class: "btn btn-ghost btn-sm" %>
+                <%= button_to t("messages.mute"), conversation_mute_path(@conversation), class: "button button-ghost button-small" %>
               <% end %>
               <% if @participant&.archived? %>
                 <%# destructive: no-confirm-ok — reversible — the thread is archived again with one click %>
-                <%= button_to t("messages.unarchive"), conversation_archive_path(@conversation), method: :delete, class: "btn btn-ghost btn-sm" %>
+                <%= button_to t("messages.unarchive"), conversation_archive_path(@conversation), method: :delete, class: "button button-ghost button-small" %>
               <% else %>
-                <%= button_to t("messages.archive"), conversation_archive_path(@conversation), class: "btn btn-ghost btn-sm", form: { data: { turbo_frame: "_top" } } %>
+                <%= button_to t("messages.archive"), conversation_archive_path(@conversation), class: "button button-ghost button-small", form: { data: { turbo_frame: "_top" } } %>
               <% end %>
               <% if @conversation.direct? && (blockee = @conversation.other_participants(Current.user).first) %>
                 <% if @blocked_by_me %>
                   <%# destructive: no-confirm-ok — reversible — lifting a block loses nothing; the person can be blocked again %>
-                  <%= button_to t("messages.unblock_user"), unblock_user_path(blockee), method: :delete, class: "btn btn-ghost btn-sm" %>
+                  <%= button_to t("messages.unblock_user"), unblock_user_path(blockee), method: :delete, class: "button button-ghost button-small" %>
                 <% else %>
-                  <%= button_to t("messages.block_user"), block_user_path(blockee), class: "btn btn-ghost btn-sm",
+                  <%= button_to t("messages.block_user"), block_user_path(blockee),
+                        class: "button button-ghost button-small",
                         data: { turbo_confirm: t("messages.confirm_block") } %>
                 <% end %>
               <% end %>
@@ -208,8 +209,8 @@
             <%= f.text_area :content, rows: 3, value: @editing.content %>
           </div>
           <p>
-            <%= f.submit t("actions.save"), class: "btn btn-primary" %>
-            <%= link_to t("actions.cancel"), conversation_path(@conversation), class: "btn btn-ghost" %>
+            <%= f.submit t("actions.save"), class: "button button-primary" %>
+            <%= link_to t("actions.cancel"), conversation_path(@conversation), class: "button button-ghost" %>
           </p>
         <% end %>
       <% end %>
@@ -224,9 +225,9 @@
                      id: "message_request_title" %>
           <%= tag.p t("messages.request_body") %>
           <%= button_to t("messages.request_accept"), conversation_request_path(@conversation),
-                class: "btn btn-primary btn-sm", form: { data: { turbo_frame: "_top" } } %>
+                class: "button button-primary button-small", form: { data: { turbo_frame: "_top" } } %>
           <%= button_to t("messages.request_decline"), conversation_request_path(@conversation), method: :delete,
-                class: "btn btn-ghost btn-sm",
+                class: "button button-ghost button-small",
                 form: { data: { turbo_frame: "_top", turbo_confirm: t("messages.confirm_request_decline") } } %>
         </section>
       <% else %>

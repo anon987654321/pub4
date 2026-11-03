@@ -21,7 +21,7 @@ class LocaleCopyContractTest < Minitest::Test
   CEILING = { generic_verb: 1, verb_stem: 0, apology: 2 }.freeze
 
   GENERIC = ["ok", "okay", "send", "send inn", "utfør", "klikk her", "trykk her", "submit", "klikk", "gjør det", "gå videre"].freeze
-  BUTTON_KEY = /(?:\A|\.)(?:submit|button|btn|cta|action|send|save|confirm)(?:_label|_text|_button)?\z|\.(?:buttons|cta|actions)\./
+  BUTTON_KEY = /(?:\A|\.)(?:submit|button|cta|action|send|save|confirm)(?:_label|_text|_button)?\z|\.(?:buttons|cta|actions)\./
   APOLOGY = /beklager|unnskyld|\bups\b|oops|noe gikk galt|noe gikk feil|uventet feil/i
   FIX = /prøv|sjekk|kontroller|fordi|\bmå\b|velg|fyll|logg inn|på nytt|forsøk|ta kontakt|kontakt/i
   PAIRS = { "publish" => "published", "create" => "created", "delete" => "deleted", "save" => "saved", "send" => "sent",

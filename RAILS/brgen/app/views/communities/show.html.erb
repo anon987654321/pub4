@@ -21,25 +21,27 @@
     <p class="cluster">
       <% if Current.user.member_of?(@community) %>
         <%# destructive: no-confirm-ok — reversible — a community you leave is one you can rejoin; posts stay %>
-        <%= button_to t("community.leave"), leave_community_path(@community), method: :delete, class: "btn btn-ghost btn-sm" %>
+        <%= button_to t("community.leave"), leave_community_path(@community), method: :delete, class: "button button-ghost button-small" %>
       <% else %>
-        <%= button_to t("community.join"), join_community_path(@community), method: :post, class: "btn btn-sm" %>
+        <%= button_to t("community.join"), join_community_path(@community), method: :post,
+              class: "button button-small" %>
       <% end %>
     </p>
   <% end %>
   <%# The wiki is readable by whoever can read the community, so the link is not
       moderator-only — only writing it is. %>
   <p class="cluster">
-    <%= link_to t("wiki.heading"), community_wiki_index_path(@community), class: "btn btn-ghost btn-sm" %>
+    <%= link_to t("wiki.heading"), community_wiki_index_path(@community), class: "button button-ghost button-small" %>
   </p>
   <%# Moderators maintain rules and flair; only an owner can delete the place. %>
   <% if @moderator %>
     <p class="cluster">
-      <%= link_to t("actions.edit"), edit_community_path(@community), class: "btn btn-ghost btn-sm" %>
-      <%= link_to t("community.mod_queue"), community_moderation_index_path(@community), class: "btn btn-ghost btn-sm" %>
+      <%= link_to t("actions.edit"), edit_community_path(@community), class: "button button-ghost button-small" %>
+      <%= link_to t("community.mod_queue"), community_moderation_index_path(@community), class: "button button-ghost button-small" %>
       <% if @community.owner?(Current.user) %>
-        <%= link_to t("community.moderators"), community_moderators_path(@community), class: "btn btn-ghost btn-sm" %>
-        <%= button_to t("actions.delete"), community_path(@community), method: :delete, data: { turbo_confirm: t("communities.confirm_delete") }, class: "btn btn-danger btn-sm" %>
+        <%= link_to t("community.moderators"), community_moderators_path(@community),
+              class: "button button-ghost button-small" %>
+        <%= button_to t("actions.delete"), community_path(@community), method: :delete, data: { turbo_confirm: t("communities.confirm_delete") }, class: "button button-danger button-small" %>
       <% end %>
     </p>
   <% end %>
@@ -85,7 +87,7 @@
   <% if @pagy.next %>
     <nav class="cluster" aria-label="<%= t("nav.pagination") %>">
       <%= link_to t("actions.load_more"),
-                  community_path(@community, page: @pagy.next), rel: "next", class: "btn btn-ghost" %>
+                  community_path(@community, page: @pagy.next), rel: "next", class: "button button-ghost" %>
     </nav>
   <% end %>
 <% else %>

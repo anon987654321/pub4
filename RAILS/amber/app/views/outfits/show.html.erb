@@ -41,9 +41,9 @@
 
 <nav role="navigation" aria-label="<%= t("outfits.actions_label") %>">
   <%= render "outfits/like_button", outfit: @outfit %>
-  <%= button_to t("outfits.share_brgen"), share_outfit_path(@outfit), method: :post, class: "btn" %>
-  <%= button_to t("outfits.wear_again"), wear_outfit_path(@outfit), method: :post, class: "btn" %>
-  <%= link_to t("actions.edit"), edit_outfit_path(@outfit), class: "btn" %>
-  <%= link_to t("nav.outfits"), outfits_path, class: "btn" %>
-  <%= button_to t("actions.delete"), @outfit, method: :delete, data: { turbo_confirm: t("actions.confirm_delete") }, class: "btn btn-danger" %>
+  <%= button_to t("outfits.share_brgen"), share_outfit_path(@outfit), method: :post, class: "button" %>
+  <%= button_to t("outfits.wear_again"), wear_outfit_path(@outfit), method: :post, class: "button" %>
+  <%= link_to t("actions.edit"), edit_outfit_path(@outfit), class: "button" %>
+  <%= link_to t("nav.outfits"), outfits_path, class: "button" %>
+  <%= button_to t("actions.delete"), @outfit, method: :delete, data: { turbo_confirm: t("actions.confirm_delete") }, class: "button button-danger" %>
 </nav>

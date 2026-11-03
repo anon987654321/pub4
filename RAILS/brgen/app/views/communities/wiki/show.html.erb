@@ -7,7 +7,7 @@
       <%= tag.h1 @page.title %>
     </hgroup>
     <% if @community.moderator?(Current.user) %>
-      <%= link_to t("actions.edit"), edit_community_wiki_path(@community, @page), class: "btn btn-sm" %>
+      <%= link_to t("actions.edit"), edit_community_wiki_path(@community, @page), class: "button button-small" %>
     <% end %>
   </div>
 
@@ -28,7 +28,7 @@
             <%= revision.user&.display_name || t("wiki.someone") %>
             <% if @community.moderator?(Current.user) %>
               <%= button_to t("wiki.revert"), revert_community_wiki_path(@community, @page, revision_id: revision.id),
-                    method: :post, class: "btn btn-ghost btn-sm",
+                    method: :post, class: "button button-ghost button-small",
                     data: { turbo_confirm: t("wiki.confirm_revert") } %>
             <% end %>
           </li>

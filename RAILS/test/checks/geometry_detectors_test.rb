@@ -32,21 +32,21 @@ class GeometryDetectorsTest < Minitest::Test
   end
 
   def test_wrap_names_a_button_label_on_two_lines
-    found = wrap_findings([element("form>button.btn", tag: "button", lines: 2)])
+    found = wrap_findings([element("form>button.button", tag: "button", lines: 2)])
 
     assert_equal 1, found.size, found.inspect
-    assert_match(/breaks 1 control label.*form>button\.btn \(2 lines\)/, found.first)
+    assert_match(/breaks 1 control label.*form>button\.button \(2 lines\)/, found.first)
   end
 
   # The case height over line-height gets wrong: 44px of box around one 20px line.
   def test_wrap_passes_a_padded_button_whose_label_is_one_line
-    assert_empty wrap_findings([element("form>button.btn", tag: "button", lines: 1)])
+    assert_empty wrap_findings([element("form>button.button", tag: "button", lines: 1)])
   end
 
   def test_wrap_reads_a_span_inside_a_button_as_the_label
-    found = wrap_findings([element("div.actions>a.btn>span", tag: "span", lines: 2)])
+    found = wrap_findings([element("div.actions>a.button>span", tag: "span", lines: 2)])
 
-    assert_match(/a\.btn>span/, found.join)
+    assert_match(/a\.button>span/, found.join)
   end
 
   def test_wrap_counts_a_repeated_label_once_with_its_instances
@@ -65,12 +65,12 @@ class GeometryDetectorsTest < Minitest::Test
 
   def test_wrap_leaves_running_text_and_wide_viewports_alone
     assert_empty wrap_findings([element("article>p", tag: "p", lines: 6)])
-    assert_empty wrap_findings([element("form>button.btn", tag: "button", lines: 2)], width: 1440)
+    assert_empty wrap_findings([element("form>button.button", tag: "button", lines: 2)], width: 1440)
   end
 
   def test_wrap_runs_as_part_of_the_worn_type_check
     result = Deploy::CheckResult.new
-    TYPE.check(result, surface, { "elements" => [element("form>button.btn", tag: "button", lines: 2)] })
+    TYPE.check(result, surface, { "elements" => [element("form>button.button", tag: "button", lines: 2)] })
 
     assert result.soft_failures.any? { |m| m.start_with?("geometry wrap:") }, result.soft_failures.inspect
   end
@@ -160,14 +160,14 @@ class GeometryDetectorsTest < Minitest::Test
 
   def test_dominance_names_a_white_banner_that_outweighs_the_screen
     found = dominance(page(box("div.promo-banner", [0, 80, 390, 300], fill: "#ffffff"),
-                           box("button.btn.btn--primary", [16, 400, 120, 44], fill: "#f2f2f2")))
+                           box("button.button.button--primary", [16, 400, 120, 44], fill: "#f2f2f2")))
 
     assert_equal 1, found.size, found.inspect
     assert_match(/div\.promo-banner carries \d+% of the visual weight of 3 painted boxes/, found.first)
   end
 
   def test_dominance_spares_the_primary_action_when_it_is_the_heaviest_box
-    assert_empty dominance(page(box("button.btn.btn--primary", [16, 400, 358, 120], fill: "#ffffff"),
+    assert_empty dominance(page(box("button.button.button--primary", [16, 400, 358, 120], fill: "#ffffff"),
                                 box("span.badge", [16, 80, 60, 24], fill: "#333333")))
   end
 
@@ -175,7 +175,7 @@ class GeometryDetectorsTest < Minitest::Test
   def test_dominance_reads_a_viewport_sized_box_as_ground_not_figure
     assert_empty dominance(page(box("main#main-content", [0, 0, 390, 844], fill: "#ffffff"),
                                 box("div.promo-banner", [0, 80, 390, 150], fill: "#ffffff"),
-                                box("button.btn.btn--primary", [0, 400, 390, 200], fill: "#ffffff")))
+                                box("button.button.button--primary", [0, 400, 390, 200], fill: "#ffffff")))
   end
 
   # A subtle header is most of a page that paints almost nothing, and still light.
@@ -196,35 +196,35 @@ class GeometryDetectorsTest < Minitest::Test
   def action_weight(elements) = check_findings { |check| check.check_action_weight(surface, elements) }
 
   def test_action_weight_names_a_ghost_heavier_than_its_primary
-    found = action_weight([action("div.actions>button.btn.btn--primary", 16, 100, "#333333"),
-                           action("div.actions>button.btn.btn-ghost", 132, 140, "#ffffff")])
+    found = action_weight([action("div.actions>button.button.button--primary", 16, 100, "#333333"),
+                           action("div.actions>button.button.button-ghost", 132, 140, "#ffffff")])
 
     assert_equal 1, found.size, found.inspect
-    assert_match(/button\.btn\.btn-ghost over div\.actions>button\.btn\.btn--primary/, found.first)
+    assert_match(/button\.button\.button-ghost over div\.actions>button\.button\.button--primary/, found.first)
   end
 
   # Larger but paler is a trade, and a trade is the operator's to make.
   def test_action_weight_leaves_a_trade_between_axes_alone
-    assert_empty action_weight([action("div.actions>button.btn.btn--primary", 16, 100, "#ffffff"),
-                                action("div.actions>button.btn.btn-ghost", 132, 160, "#333333")])
+    assert_empty action_weight([action("div.actions>button.button.button--primary", 16, 100, "#ffffff"),
+                                action("div.actions>button.button.button-ghost", 132, 160, "#333333")])
   end
 
   def test_action_weight_compares_siblings_only
-    assert_empty action_weight([action("div.actions>button.btn.btn--primary", 16, 100, "#333333"),
-                                action("nav>button.btn", 132, 140, "#ffffff", parent: "nav")])
+    assert_empty action_weight([action("div.actions>button.button.button--primary", 16, 100, "#333333"),
+                                action("nav>button.button", 132, 140, "#ffffff", parent: "nav")])
   end
 
   def test_action_weight_counts_a_heavier_font_as_an_axis
-    found = action_weight([action("div.actions>button.btn.btn--primary", 16, 100, "#333333"),
-                           action("div.actions>button.btn", 132, 100, "#ffffff", font_weight: "700")])
+    found = action_weight([action("div.actions>button.button.button--primary", 16, 100, "#333333"),
+                           action("div.actions>button.button", 132, 100, "#ffffff", font_weight: "700")])
 
-    assert_match(/button\.btn over/, found.join)
+    assert_match(/button\.button over/, found.join)
   end
 
   def test_layout_runs_the_weight_and_grammar_checks
     elements = page(box("div.promo-banner", [0, 80, 390, 300], fill: "#ffffff"),
-                    action("div.actions>button.btn.btn--primary", 16, 100, "#333333"),
-                    action("div.actions>button.btn.btn-ghost", 132, 140, "#ffffff"),
+                    action("div.actions>button.button.button--primary", 16, 100, "#333333"),
+                    action("div.actions>button.button.button-ghost", 132, 140, "#ffffff"),
                     search_field("header>form>input"), search_field("main>form>input"))
     found = check_findings { |check| check.check_layout(surface, { "elements" => elements }) }
 
@@ -299,14 +299,14 @@ class GeometryDetectorsTest < Minitest::Test
   def lost(*controls) = grammar(:check_lost_action, controls)
 
   def test_lost_action_names_a_small_button_alone_in_a_screen_sized_card
-    found = lost(control_in("section.signup-card", "div>button.btn", [44, 44]))
+    found = lost(control_in("section.signup-card", "div>button.button", [44, 44]))
 
-    assert_match(/lost_action: .*section\.signup-card \(358x600\) holds div>button\.btn/, found.join)
+    assert_match(/lost_action: .*section\.signup-card \(358x600\) holds div>button\.button/, found.join)
   end
 
   def test_lost_action_spares_a_full_width_action_a_small_card_and_a_list
-    assert_empty lost(control_in("section.signup-card", "div>button.btn", [326, 48]))
-    assert_empty lost(control_in("div.mini-card", "div>button.btn", [44, 44], card_h: 120))
+    assert_empty lost(control_in("section.signup-card", "div>button.button", [326, 48]))
+    assert_empty lost(control_in("div.mini-card", "div>button.button", [44, 44], card_h: 120))
     assert_empty lost(control_in("article.feed-card", "footer>button", [44, 44]),
                       control_in("article.feed-card", "footer>button[2]", [44, 44], card_y: 700))
   end

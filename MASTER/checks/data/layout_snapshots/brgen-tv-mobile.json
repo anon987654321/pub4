@@ -109,7 +109,7 @@
       "position": "static"
     },
     {
-      "key": "#main-content>div.page-header>div>a.btn",
+      "key": "#main-content>div.page-header>div>a.button",
       "tag": "a",
       "rect": {
         "x": 18,
@@ -125,7 +125,7 @@
       "position": "static"
     },
     {
-      "key": "#main-content>div.page-header>div>a.btn.btn-ghost",
+      "key": "#main-content>div.page-header>div>a.button.button-ghost",
       "tag": "a",
       "rect": {
         "x": 100,
@@ -205,7 +205,7 @@
       "position": "static"
     },
     {
-      "key": "#main-content>section>section.empty.empty-state>a.btn.btn-primary.empty-state-action",
+      "key": "#main-content>section>section.empty.empty-state>a.button.button-primary.empty-state-action",
       "tag": "a",
       "rect": {
         "x": 151,

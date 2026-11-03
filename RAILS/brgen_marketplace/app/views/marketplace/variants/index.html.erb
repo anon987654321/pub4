@@ -21,7 +21,8 @@
           <%= variant.unlimited_stock? ? t("marketplace.stock_unlimited") : t("marketplace.stock_left", count: variant.stock.to_i) %>
         </span>
         <%= button_to t("actions.remove"), listing_variant_path(@listing, variant), method: :delete,
-              class: "btn btn-ghost btn-sm", data: { turbo_confirm: t("marketplace.confirm_remove_variant") } %>
+              class: "button button-ghost button-small",
+              data: { turbo_confirm: t("marketplace.confirm_remove_variant") } %>
       </li>
     <% end %>
   </ul>
@@ -50,6 +51,6 @@
       <%= f.label :stock, t("marketplace.variant_stock") %>
       <%= f.number_field :stock, min: 0, step: 1, inputmode: "numeric" %>
     </div>
-    <p><%= f.submit t("marketplace.add_variant"), class: "btn btn-primary" %></p>
+    <p><%= f.submit t("marketplace.add_variant"), class: "button button-primary" %></p>
   <% end %>
 </div>

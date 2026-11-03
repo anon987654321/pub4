@@ -8,7 +8,7 @@
       <%= form.email_field :email_address, required: true, autofocus: true, autocomplete: "username", value: params[:email_address], inputmode: "email" %>
     </div>
     <div class="actions">
-      <%= form.submit t("auth.email_reset"), class: "btn btn-primary" %>
+      <%= form.submit t("auth.email_reset"), class: "button button-primary" %>
     </div>
     <p class="auth-form-footer">
       <%= link_to t("auth.back_to_sign_in"), new_session_path %>

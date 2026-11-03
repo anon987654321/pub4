@@ -19,7 +19,7 @@
         <%= t("stories.expires_in", time: distance_of_time_in_words(Time.current, @story.expires_at)) %>
       </time>
     </p>
-    <%= link_to t("actions.close"), stories_path, class: "btn btn-ghost btn-sm" %>
+    <%= link_to t("actions.close"), stories_path, class: "button button-ghost button-small" %>
   </header>
 
   <% if @story.media.attached? %>
@@ -48,7 +48,7 @@
     <%= form_with url: story_replies_path(@story), method: :post, class: "story-reply" do |f| %>
       <%= f.label :content, t("stories.reply_label") %>
       <%= f.text_field :content, required: true, maxlength: 500, placeholder: t("stories.reply_placeholder") %>
-      <%= f.submit t("actions.send"), class: "btn btn-sm" %>
+      <%= f.submit t("actions.send"), class: "button button-small" %>
     <% end %>
   <% end %>
 
@@ -62,7 +62,7 @@
         <% end %>
       </ul>
       <%= button_to t("actions.delete"), story_path(@story), method: :delete,
-            class: "btn btn-ghost btn-sm",
+            class: "button button-ghost button-small",
             data: { turbo_confirm: t("stories.confirm_delete") } %>
     </section>
   <% else %>

@@ -37,7 +37,7 @@
               <span><%= item.listing.price_display %> ×</span>
               <%= f.number_field :quantity, value: item.quantity || 1, min: 1, max: item.listing.available_quantity,
                     inputmode: "numeric", aria: { label: t("marketplace.order_quantity") } %>
-              <%= f.submit t("marketplace.update_quantity"), class: "btn btn-ghost btn-sm" %>
+              <%= f.submit t("marketplace.update_quantity"), class: "button button-ghost button-small" %>
             <% end %>
           <% end %>
         </div>
@@ -46,7 +46,7 @@
           <div class="cluster">
             <%# destructive: no-confirm-ok — a cart line comes back by adding the listing again %>
             <%= button_to t("actions.remove"), cart_item_path(item),
-                  method: :delete, class: "btn btn-ghost btn-sm" %>
+                  method: :delete, class: "button button-ghost button-small" %>
           </div>
         </div>
       </article>
@@ -62,10 +62,10 @@
     <div class="cart-address">
       <% if @delivery_address %>
         <p><%= tag.strong t("marketplace.deliver_to") %> <%= @delivery_address %></p>
-        <%= link_to t("marketplace.change_address"), addresses_path, class: "btn btn-ghost btn-sm" %>
+        <%= link_to t("marketplace.change_address"), addresses_path, class: "button button-ghost button-small" %>
       <% else %>
         <p><%= t("marketplace.no_address_yet") %></p>
-        <%= link_to t("marketplace.add_address"), addresses_path, class: "btn btn-sm" %>
+        <%= link_to t("marketplace.add_address"), addresses_path, class: "button button-small" %>
       <% end %>
     </div>
 
@@ -81,13 +81,13 @@
         <% if dintero_ready %>
           <%= button_to t("marketplace.pay_dintero"), checkout_path,
                 method: :post, params: { provider: "dintero" },
-                class: "btn btn-primary cart-pay-dintero",
+                class: "button button-primary cart-pay-dintero",
                 form: { data: { turbo: false } } %>
         <% end %>
         <% if vipps_ready %>
           <%= button_to checkout_path,
                 method: :post, params: { provider: "vipps" },
-                class: "btn btn-primary cart-pay-vipps",
+                class: "button button-primary cart-pay-vipps",
                 form: { data: { turbo: false } } do %>
             <%= image_tag "vipps/vipps-wordmark-on-orange.svg", alt: "", width: 59, height: 24 %>
             <%= t("marketplace.pay_vipps") %>
@@ -96,7 +96,7 @@
         <% if stripe_ready %>
           <%= button_to t("marketplace.pay_stripe"), checkout_path,
                 method: :post, params: { provider: "stripe" },
-                class: "btn btn-ghost cart-pay-stripe",
+                class: "button button-ghost cart-pay-stripe",
                 form: { data: { turbo: false } } %>
         <% end %>
       </div>
@@ -106,7 +106,7 @@
     <p class="hint mt-8"><%= t("marketplace.cart_honest_pay") %></p>
 
     <%= button_to t("marketplace.send_all_offers"), send_offers_cart_path,
-          method: :post, class: "btn btn-ghost",
+          method: :post, class: "button button-ghost",
           data: { turbo_confirm: t("marketplace.send_offers_confirm") } %>
     <p class="hint mt-8"><%= t("marketplace.cart_sellers_hint") %></p>
   </aside>
