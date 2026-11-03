@@ -1721,6 +1721,8 @@ nb:
       pending: spurt
       accepted: følger
   flash:
+    message_request_accepted: "Forespørselen er godtatt. Samtalen ligger i innboksen din."
+    message_request_declined: "Forespørselen er avslått."
     master_invited: MASTER ble med i chatten.
     business_verifications:
       sent: Forespørselen er sendt. En person vurderer den.

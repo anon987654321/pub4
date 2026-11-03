@@ -546,9 +546,27 @@ en:
     edit_heading: Edit partner program
     save: Save
   activerecord:
+    models:
+      post:
+        one: post
+        other: posts
+      playlist/set:
+        one: set
+        other: sets
     attributes:
       comment:
         content: "Comment"
+      post:
+        title: "Title"
+        content: "Text"
+      playlist/playlist:
+        name: "Name"
+        description: "Description"
+      tv/channel:
+        name: "Name"
+        description: "Description"
+        avatar: "Profile picture"
+        banner: "Banner image"
       community:
         name: "Name"
         slug: "Address"
@@ -610,6 +628,8 @@ en:
       playlist/set:
         name: "Name"
         privacy: "Privacy"
+        description: "Description"
+        collaborative: "Collaborative"
       dating/prompt:
         question: "Question"
         answer: "Answer"
@@ -707,6 +727,7 @@ en:
             menu_item:
               unavailable: is unavailable
   post:
+    submit: Post
     repost: Repost
     repost_notification: "%{user} reposted your post"
     quote: Quote
@@ -1691,6 +1712,8 @@ en:
       pending: asked
       accepted: following
   flash:
+    message_request_accepted: "Request accepted. The conversation is in your inbox."
+    message_request_declined: "Request declined."
     master_invited: MASTER joined the chat.
     business_verifications:
       sent: Request sent. A person reviews it.

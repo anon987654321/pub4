@@ -15,6 +15,3 @@ nb:
     request_decline: "Avslå"
     confirm_request_decline: >-
       Avslå forespørselen? Samtalen fjernes fra meldingene dine, og avsenderen får ikke beskjed.
-  flash:
-    message_request_accepted: "Forespørselen er godtatt. Samtalen ligger i innboksen din."
-    message_request_declined: "Forespørselen er avslått."

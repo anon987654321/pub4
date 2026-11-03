@@ -15,6 +15,3 @@ en:
     request_decline: "Decline"
     confirm_request_decline: >-
       Decline this request? The conversation is removed from your messages and the sender is not told.
-  flash:
-    message_request_accepted: "Request accepted. The conversation is in your inbox."
-    message_request_declined: "Request declined."

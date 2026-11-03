@@ -25,7 +25,7 @@ module Shared
 
     def safety_sections
       safe_join(SAFETY_SECTIONS.map do |section, keys|
-        items = keys.map { |key| tag.li(t("legal.safety_page.#{section}.#{key}")) }
+        items = keys.map { |key| tag.li(t("#{section}.#{key}", scope: "legal.safety_page")) }
         tag.h2(t("legal.safety_page.#{section}_heading")) + tag.ul(safe_join(items))
       end)
     end
@@ -33,7 +33,7 @@ module Shared
     def safety_sites
       items = SAFETY_SITES.map do |host, key|
         tag.li(safe_join([ link_to(host, "https://#{host}", rel: "noopener"), " ",
-                          tag.small(t("legal.safety_page.sites.#{key}")) ]))
+                          tag.small(t(key, scope: "legal.safety_page.sites")) ]))
       end
       tag.h2(t("legal.safety_page.sites_heading")) + tag.ul(safe_join(items))
     end
