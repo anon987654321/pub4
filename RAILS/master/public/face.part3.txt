@@ -135,6 +135,11 @@ const debugPanel = showDebug ? (() => {
 let fpsLastSample = performance.now();
 let fpsSampleFrames = 0;
 let fpsEma = 24;
+// Keep the animation clock cheap when the face is still. rAF may arrive at
+// 60–120 Hz on a MacBook display; the face does not need to repaint that often.
+let faceLastPaintAt = 0;
+const FACE_ACTIVE_FPS = 30;
+const FACE_IDLE_FPS = 8;
 window.addEventListener('master:pressure', (ev) => {
   const d = ev.detail || {};
   State.pressureFields = {
@@ -291,6 +296,18 @@ function frame(t) {
   }
   frameLoopActive = true;
   if (!_pumpTick) _naturalRafSeen = true;
+
+  const stillModeAtEntry = window.MASTER_FACE_STATE?.isStillMode?.(State.mode) ?? State.mode === 'idle';
+  const stillAge = t - Number(State.lastTouch || 0);
+  const stillAfter = Number(window.MASTER_FACE_STATE?.stillAfterActivityMs ?? 700);
+  const quietFace = stillModeAtEntry && !tts.playing && !gestureStart &&
+    stillAge >= stillAfter && (State.pulse || 0) <= 0.01;
+  const targetFrameMs = 1000 / (quietFace ? FACE_IDLE_FPS : FACE_ACTIVE_FPS);
+  if (faceLastPaintAt && t - faceLastPaintAt < targetFrameMs) {
+    requestAnimationFrame(frame);
+    return;
+  }
+  faceLastPaintAt = t;
   _dbgFrames++;
   fpsSampleFrames++;
   if (t - fpsLastSample >= 500) {
