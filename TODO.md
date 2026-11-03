@@ -102,147 +102,107 @@ one measurement nobody has taken on a non-macOS host.
   its own deadline — where the helper comment promises about a minute across
   the corpus. Either the host is that much slower or a ratchet walks
   something it should not; the run's per-ratchet durations say which.
-## Structural baseline on main (b20f21a82933)
+## Structural baseline on main (502f80d736b6)
 
-The current Git tree contains 5,901 files and 809 directories, with maximum
-path depth 9. Per-tree file counts: MASTER 2,230; RAILS 3,354; OPENBSD 283;
-STUDIO 20. RAILS has 416 files at depth 7 or greater and 105 at depth 8 or
-greater. An exact-blob census finds 49 duplicate-content groups across 154
-paths, including the 19 necessary empty `.keep` placeholders. The duplicate count
-excludes the former `_messages.html.erb` / `_reply.html.erb` collision:
-`_reply` now has a directional arrow rather than the messages bubble, with a
-source regression; rendered/browser proof remains open. These are investigation
-signals, not deletion instructions: app-local migrations, pins, entrypoint
-shims, licence texts and intentional stubs remain until their ownership
-contracts prove a safe consolidation. Refresh the census at each bounded batch
-and compare pinned revisions only.
+The current Git tree has **5,966 files**, **816 directories** and maximum
+path depth **9**. Per-tree file counts: MASTER **2,231**; RAILS **3,368**;
+OPENBSD **284**; STUDIO **69**; root-level files **14**. The tree contains
+**77 Markdown files**. Exact-blob matching finds **50 duplicate-content groups
+across 156 paths**, including **19 required empty `.keep` placeholders**.
+These are investigation signals, not deletion instructions. Identical bytes do
+not prove identical ownership or behavior: app-local migrations, version pins,
+boot/config files, Rails entrypoint shims, licences and product assets may be
+intentionally local. Refresh this census from a pinned revision at each
+structural batch; never delete on hash equality or path depth alone.
 
 ### Remaining work
 
-- [ ] Complete the semantic flattening census before moving more code. For
-  every candidate record current path, owning application/engine, Ruby
-  constant or asset/view identity, all callers/references, autoload/eager-load
-  behavior, routes, migrations, serialization/public API effects, test
-  coverage, compatibility requirements, proposed destination and rollback
-  plan. Classify each as MERGE, MOVE, RENAME, INLINE, DELETE, RETAIN or
-  INVESTIGATE. Never infer redundancy from path depth or repeated words alone.
+- [ ] **Cross-tree semantic ownership and duplication census.** Map each
+  candidate's current path, owning tree/app/engine, Ruby constant or asset/view
+  identity, callers/references, autoload/eager-load behavior, routes, migrations,
+  serialization/public API effects, test coverage, compatibility needs,
+  destination and rollback plan. Classify MERGE, MOVE, RENAME, INLINE, DELETE,
+  RETAIN or INVESTIGATE. Cover repeated decisions, configuration defaults,
+  status/error vocabularies, adapters, serializers, wrappers, registries,
+  generated artifacts, test fixtures, documentation, one-use abstractions,
+  single-child directories and stale pointers. Distinguish identical behavior
+  from superficial similarity with different security, transaction, tenant,
+  product or runtime contracts. Compare structural metrics before/after and
+  consolidate authority, not syntax. The latest exact-blob census above is a
+  starting index, not a delete list.
 
-- [ ] MASTER /fix ownership and Kernel convergence: map every production caller
-  and state owner across `MASTER/lib/fix/fix_loop/`,
+- [ ] **MASTER /fix ownership and convergence proof.** Reconcile production
+  callers and state owners across `MASTER/lib/fix/fix_loop/`,
   `MASTER/lib/fix/fix_loop/pass_runner/`, `MASTER/lib/fix/repair_loop/`,
-  `MASTER/lib/fix/scan/` and `Fix::Kernel`. Use
-  `MASTER/docs/fix_coordinator_map.md` as the responsibility/evidence map.
-  Production `/fix` enters Kernel, which owns the repository-wide lock,
-  coordinator receipts, shared journal accessor, adapter factories and
-  unknown-outcome reconciliation. The convergence, repair and lifecycle-journal
-  implementations live under `Fix::Kernel`; `FixLoop`, `RepairLoop` and
-  `RunJournal` remain compatibility identities until caller and recovery
-  parity are proved. Consolidate only duplicate orchestration; retain distinct
-  transaction, verification, recovery, budget, evidence and terminal-outcome
-  responsibilities.
+  `MASTER/lib/fix/scan/` and `Fix::Kernel` against
+  `MASTER/docs/fix_coordinator_map.md`. The map now distinguishes Kernel
+  coordination, per-pass `Fix::Transaction`, multi-file `Fix::Restructure`,
+  Mission, journal, watcher, improvement, restructure sweep, Governor and
+  model redaction. Retain the compatibility identities until caller and recovery
+  parity are proved. Run focused interruption/recovery tests on pinned Ruby
+  4.0.5, then prove budget/collapse behavior, zero-repair ledger honesty, the
+  full adapter receipt-parity matrix and one real repository-wide `/fix` run.
+  Tests are authored but unexecuted; do not claim completion from the map.
 
-  Process-kill regressions cover transaction rollback, Mission/checkpoint
-  survival, durable journal resumption, orphan-receipt recovery and journal
-  deletion with the Mission checkpoint retained. These tests are authored but
-  unexecuted. Run them on pinned Ruby 4.0.5, then prove budget/collapse behavior,
-  zero-repair ledger honesty, the full adapter receipt-parity matrix and a real
-  repository-wide `/fix` trial. Do not remove compatibility aliases until
-  those gates pass.
+- [ ] **MASTER artifact preservation across formats.** Task contracts, resolved
+  repository-relative scope and before/after SHA-256 receipts now enter FixPlan
+  and Transaction; RepairAdapter invokes the HTML/ERB source verifier before
+  accepting a candidate. Complete the preservation contract for DOCX, PDF,
+  XLSX and PPTX with format-aware source verification and rendered-output
+  comparison. Add baseline/candidate fixtures spanning HTML, Ruby, Rails
+  interactions, long-form documents, spreadsheets and slide decks. A changed
+  format without a verifier remains INCONCLUSIVE; archive-byte equality or
+  successful parsing is not visual preservation. Keep intentional-change
+  fixtures as well as regressions.
 
-- [ ] MASTER artifact-preservation enforcement: validated task contracts now
-  enter operator-facing /fix via --intent, bound the resolved repository-relative
-  scope in FixPlan and Transaction, and produce before/after SHA-256 receipts
-  linked to the FixPlan digest in the persisted assessment artifact. RepairAdapter
-  now invokes the HTML/ERB source verifier before accepting a candidate; a failed
-  or inconclusive supported-format check vetoes the write. Full required-dimension
-  proof remains open: source-level PASS is still reported INCONCLUSIVE until
-  rendered, runtime and accessibility evidence is complete.
-
-- [ ] MASTER artifact-format coverage: add format-aware preservation and
-  rendered-output comparison for DOCX, PDF, XLSX and PPTX. Changed files without
-  a registered verifier must remain INCONCLUSIVE; do not treat archive-byte
-  equality or successful parsing as visual preservation.
-
-- [ ] MASTER golden preservation campaign: add real baseline/candidate fixtures
-  spanning HTML, Ruby source, Rails pages and interactions, legal/long-form
-  documents, spreadsheets and slide decks. Prove the requested preservation
-  dimensions per format and keep tests that demonstrate intentional change as
-  well as regressions. Do not claim broad artifact preservation from the HTML
-  fixtures alone.
-
-- [ ] MASTER scanner/check boundaries: trace production call graphs across
-  `MASTER/lib/review/scan/`, `MASTER/lib/fix/scan/`, `MASTER/checks/`
-  and `MASTER/checks/support/`. Keep the three distinct concepts explicit:
-  Law (requirement), detector/check (measurement instrument), evidence
-  (observed result). Unify duplicate finding schemas, registries or dispatch
-  only where callers and cache invalidation semantics match. A Law/catalogue
-  change must invalidate affected cached findings.
-
-- [ ] MASTER nested modules: inspect
-  `MASTER/lib/cli/face/ascii/`,
+- [ ] **MASTER scanner, check and nested-module ownership.** Trace production
+  call graphs across `MASTER/lib/review/scan/`, `MASTER/lib/fix/scan/`,
+  `MASTER/checks/` and `MASTER/checks/support/`. Keep Law (requirement),
+  detector/check (measurement instrument) and evidence (observed result)
+  separate; a Law/catalogue change must invalidate affected cached findings.
+  Also inspect `MASTER/lib/cli/face/ascii/`,
   `MASTER/lib/cli/pipeline/proof/`,
   `MASTER/lib/cli/routing/model_router/`,
   `MASTER/lib/fix/scan/ast_fixer/` and
-  `MASTER/lib/review/council/critique/`. Establish whether each nesting
-  level represents a stable public namespace or only file grouping. Preserve
-  the single face renderer, model-routing authority, AST transformation
-  coverage, proof semantics and council behavior. No blind directory moves.
+  `MASTER/lib/review/council/critique/`. Determine whether each directory
+  represents a stable public namespace or only file grouping. Preserve the
+  single face renderer, model-routing authority, AST transformation coverage,
+  proof semantics and council behavior; do not move directories blindly.
 
-- [ ] RAILS view/asset/test organization: inspect mailer templates currently
-  under `RAILS/__shared/app/views/shared/passwordless_mailer/` and
-  `verification_mailer/`, shared icon partials under
-  `app/views/shared/icons/`, repeated product asset/token imports, and
-  duplicate test support under `RAILS/__shared/test/`, `RAILS/test/` and
-  app-local test trees. In particular, `_messages.html.erb` and
-  `_reply.html.erb` currently contain the same SVG path; determine whether
-  that is intentional reuse or an incorrect icon only after rendered review.
-  Preserve Rails lookup contracts and each product's visual identity. Share
-  foundations, not product compositions.
+- [ ] **RAILS shared view, asset and test ownership.** Inspect the mailer
+  templates under `RAILS/__shared/app/views/shared/passwordless_mailer/`
+  and `verification_mailer/`, shared icon partials under
+  `app/views/shared/icons/`, repeated product asset/token imports and duplicate
+  test support across `RAILS/__shared/test/`, `RAILS/test/` and app-local
+  test trees. The former `_messages.html.erb` / `_reply.html.erb` source
+  collision is fixed: `_reply` now has a directional arrow and a source
+  regression. Keep its rendered/browser proof open. Preserve Rails lookup
+  contracts and product identity; share foundations, not product compositions.
+  Treat the 50 exact-blob groups as candidates for inspection only.
 
-- [ ] Residual exact-blob audit: the current census finds 49 duplicate-content
-  groups across 154 paths, including the 19 necessary empty `.keep` placeholders. This
-  is an investigation set, not a deletion list. It includes per-app Ruby/version
-  pins, boot/config files, migration and test files that must remain at app-local
-  paths, framework entrypoint/constant shims, and repeated assets/licence text.
-  The Amber and Brgen `DraftsController` pair is already a thin adapter over
-  `Shared::DraftsActions`; `Session` and `Current` are similarly tiny
-  host-level class declarations, not worth adding another shared abstraction.
-  The former `_messages` / `_reply` duplicate was corrected: the reply action
-  now draws a directional arrow and has a source regression. Keep only its
-  rendered/browser proof open. Do not perform hash-only deletion.
-
-- [ ] OPENBSD: inspect `OPENBSD/bin/`, `OPENBSD/lib/`,
-  `OPENBSD/checks/` and source-layout mirrors `OPENBSD/etc/`, `home/`,
-  `usr/`, `var/`, `dev/`. Distinguish repository source organization
-  from the target host filesystem contract. Consolidate duplicate
+- [ ] **OPENBSD source/target boundary census.** Inspect `OPENBSD/bin/`,
+  `OPENBSD/lib/`, `OPENBSD/checks/` and source-layout mirrors
+  `OPENBSD/etc/`, `home/`, `usr/`, `var/`, `dev/`. Distinguish repository
+  source organization from the target host filesystem contract. Consolidate
   deployment/backup/verification wrappers only after host-path, privilege,
-  rollback and evidence behavior is proven. Never flatten required target
+  rollback and evidence behavior is proved. Never flatten required target
   filesystem paths.
 
-- [ ] STUDIO audio pipeline: preserve its already-small tree. Keep one Dilla
-  generation entrypoint and one audio processing pipeline; do not introduce a
-  second visualizer, audio engine or generator. Reassess only after the
-  `radio_brgen_tunnel.js` audio/visual split has a tested ownership boundary.
+- [ ] **STUDIO audio ownership.** Keep one Dilla generation entrypoint and one
+  audio processing pipeline. Map the audio clock, section manifest, render/export
+  and `radio_brgen_tunnel.js` ownership boundaries before any visual/audio
+  rework. Do not introduce a second visualizer, audio engine or generator, and
+  do not let frame timing drive audio.
 
 - [ ] Verify from a local Claude Code session on macOS that project hooks load
-  through the `.claude` symlink; this session could verify the Git tree and
-  link target but could not launch Claude Code. Root `TODO.md` remains the
-  single actionable backlog.
-
-- [ ] Cross-tree duplication and shape census: map repeated decision logic,
-  configuration defaults, status/error vocabularies, adapters, serializers,
-  wrappers, registries, generated artifacts, test fixtures and documentation.
-  Include one-use abstractions, single-child directories and stale pointers.
-  For each candidate, distinguish identical behavior from superficially
-  similar behavior with different security, transaction, tenant, product or
-  runtime contracts. Compare structural ratchets before and after, and
-  consolidate the authority rather than merely the syntax.
+  through the `.claude` symlink. The Git tree and symlink target were checked,
+  but this session could not launch Claude Code.
 
 - [ ] Add or extend structural ratchets for file count, directory count,
   maximum path depth, single-child directories, repeated namespace segments,
   dependency fan-out/cycles, public API changes and duplicate implementation
-  fingerprints. Ratchets must be measured from a pinned revision and must not
-  encourage deleting meaningful boundaries or merging unrelated code.
+  fingerprints. Measure from a pinned revision; do not incentivise deleting
+  meaningful boundaries or merging unrelated code.
 
 ## Open from the 2026-11-01 session — Baymard UX audit
 
