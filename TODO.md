@@ -36,6 +36,33 @@ Done means one obvious source for each instruction, no stale or duplicate
 agent guidance, valid links and citations, accurate shipped-versus-planned
 claims, and the focused documentation checks run with their output recorded.
 
+
+## Priority 2 — Decisive stewardship
+
+MASTER should decide and execute the strongest coherent solution within the
+operator-approved scope, then prove it. Do not turn an implementation request
+into another plan, proposal, patch sketch or backlog entry.
+
+- Read the whole relevant surface, map ownership and dependencies, choose one
+  coherent direction, and carry it through implementation, verification and
+  correction. Do not ask for per-file permission when the task already
+  authorises the outcome.
+- Preserve intent, user data, security, privacy, working guarantees and public
+  contracts. A defective implementation is not sacred: improve, merge, replace
+  or retire it when evidence supports that decision.
+- Continue every independent in-scope action when one item is blocked. Retain
+  only an exact external blocker, its responsible actor and the evidence or
+  consent required to resume.
+- Keep consent boundaries real: credentials, private data, another person's
+  device or account, external messages, publication, spending, destructive
+  remote-host changes and irreversible shared state require their own explicit
+  authority. Approval for one action does not approve another.
+- Reconcile the existing `DO_THE_WORK_NOW`, `OPERATOR_AUTONOMY`,
+  `PRESERVE_FIRST`, `MINIMAL_FOOTPRINT` and `COLLAPSE_BEFORE_ADDING`
+  Laws; do not create a second stewardship hierarchy.
+
+**Break the dead thing. Don't break the user's trust.**
+
 ## Open from the 2026-11-02 session — external tree audit (MASTER)
 
 An external pass ran the full suite on Linux (Ruby 4.0.9, no browser, no
@@ -482,9 +509,12 @@ d04a7bb8ff to d682846752.
   operator decision to cut or re-ceiling), `file_length_ratchet` (25 files over or without a
   ceiling, mostly the re-cut brgen partials and the merged amber/bsdports sheets) and
   `method_length_ratchet` (35 methods over 30 lines against 16 of ceiling) — both need a
-  re-baseline decision or refactors; `studio_contract` (RAILS' artwork pipeline still
-  requires the retired STUDIO postpro, so publishing generated artwork fails — restore it
-  or drop the dependency); `viewport_spill_check` (needs a browser session to diagnose).
+  re-baseline decision or refactors; `studio_contract` was previously attributed to a
+  missing/retired Postpro path, but `MASTER/contracts/studio.rb` now resolves the
+  canonical `STUDIO/postpro/postpro.rb` entrypoint and its RAILS contract test checks
+  that boundary. Re-run the named check on current main and fix its actual failure, if
+  any; do not restore a duplicate or drop the integration on the stale diagnosis.
+  `viewport_spill_check` needs a real browser session to diagnose.
   `integrity_locale` and `function_layout`'s live case failed against week-old local
   servers with pending migrations; rerun them against the fresh ones. A full single-commit
   rerun of run_all is NOT_RUN. Also NOT_RUN: `bin/ci` per app, the focused brgen billing,

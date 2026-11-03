@@ -69,8 +69,10 @@ class TestAgyReachability < Minitest::Test
     Master::CLI::Routing::ModelRouter.new(config: FakeConfig.new(model: "x"), root: Master::ROOT)
   end
 
+  # The availability contract is tested on code generation, where a live
+  # subscription lane should lead. Exploration is explicitly a free route.
   def chain
-    router.fallback_chain(task_type: :exploration)
+    router.fallback_chain(task_type: :code_generation)
   end
 
   # --- 1. never offered when the binary is absent --------------------------
