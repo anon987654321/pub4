@@ -2,7 +2,7 @@
 schema: 1
 apps:
   amber:
-    digest: 3f0f4162948a2298
+    digest: b252fdca37be163d
     routes:
       shared/changelog#show:
       - "/changelog"
@@ -57,6 +57,8 @@ apps:
       - "/notifications/badge"
       notifications#index:
       - "/notifications"
+      link_previews#show:
+      - "/link_previews"
       fleet_health#show:
       - "/health"
       passwords#new:
@@ -192,7 +194,7 @@ apps:
       active_storage/disk#show:
       - "/rails/active_storage/disk/:encoded_key/*filename"
   brgen:
-    digest: aa915d20cc34a6bc
+    digest: b00fd57e20d2e65b
     routes:
       shared/changelog#show:
       - "/changelog"
@@ -263,12 +265,18 @@ apps:
       - "/notifications/badge"
       notifications#index:
       - "/notifications"
+      link_previews#show:
+      - "/link_previews"
       admin/reports#index:
       - "/admin/reports"
       admin/business_verifications#index:
       - "/admin/business_verifications"
       business_verifications#new:
       - "/business_verifications/:kind/:business_id/new"
+      post_catch_ups#feed:
+      - "/posts/since"
+      post_catch_ups#comments:
+      - "/posts/:post_id/comments/since"
       posts#index:
       - "/posts"
       - "/communities/:community_id/posts"
@@ -564,7 +572,7 @@ apps:
       maps/places#show:
       - "/places/:id"
   bsdports:
-    digest: 149ffa540567740b
+    digest: 4771de780207eb21
     routes:
       shared/changelog#show:
       - "/changelog"
