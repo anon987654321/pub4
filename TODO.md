@@ -13,9 +13,10 @@ why" in `MASTER/AGENTS.md`. This file is not a record of finished work.
 ## Priority 1 — Documentation reduction and reorganisation
 
 Make the documentation corpus smaller, clearer and easier for both people and
-agents to follow. The measured starting point is 83 tracked Markdown files;
-that is a baseline, not a quota. Reduce duplicated authority and stale
-instructions, not useful context for the sake of a lower count.
+agents to follow. The measured baseline was 83 tracked Markdown files; current
+main has 77. The baseline is a progress measure, not a quota. Reduce duplicated
+authority and stale instructions, not useful context for the sake of a lower
+count.
 
 - Keep one canonical entry at each real boundary: the repository, each
   governed tree, and each product/engine that has distinct ownership.
@@ -57,9 +58,14 @@ into another plan, proposal, patch sketch or backlog entry.
   device or account, external messages, publication, spending, destructive
   remote-host changes and irreversible shared state require their own explicit
   authority. Approval for one action does not approve another.
-- Reconcile the existing `DO_THE_WORK_NOW`, `OPERATOR_AUTONOMY`,
-  `PRESERVE_FIRST`, `MINIMAL_FOOTPRINT` and `COLLAPSE_BEFORE_ADDING`
-  Laws; do not create a second stewardship hierarchy.
+- The decision contract is now reconciled across
+  `DO_THE_WORK_NOW`, `OPERATOR_AUTONOMY`, `PRESERVE_FIRST`,
+  `MINIMAL_FOOTPRINT` and `COLLAPSE_BEFORE_ADDING`. `DO_THE_WORK_NOW` is
+  registered in the Law catalogue and reaches both the session-start briefing
+  and agent conduct context. Focused regression assertions are in
+  `test_fix_protocol.rb`, `test_soul.rb` and `test_master_loop.rb`; execute
+  them on pinned Ruby 4.0.5 before claiming runtime proof. Do not create a
+  second stewardship hierarchy.
 
 **Break the dead thing. Don't break the user's trust.**
 
@@ -646,28 +652,26 @@ fallback and device evidence are named.
   links, keyboard/list alternative, WebGL failure fallback, context teardown and
   console errors. The GitHub editing pass could not execute Rails or browser tests;
   these checks remain NOT_RUN, not PASS.
-- [ ] MASTER execution observatory, memory/code constellation, particle-face work
-  and system telemetry remain proposals. The older avatar-derived face request
-  remains separately recorded above. Before implementation, inspect the relevant
-  authority, face, browser, event, receipt and visual-conformance paths; preserve
-  scoped source review, keep receipts as the source of execution truth, and do not
-  simulate telemetry or add a second face renderer.
-- [ ] The STUDIO/Dilla audio-reactive renderer and reproducible artwork export
-  remain proposals. Map the existing audio clock, section manifest, render/export
-  and `radio_brgen_tunnel.js` ownership boundaries first. Do not add a second
-  audio engine or let frame timing drive audio.
-- [ ] Amber 3D garment/product inspection stays deferred until optimized real
-  garment assets and an honest fit-data contract exist. Preserve the original
-  large Amber identity, neutral fashion surfaces and truthful product colours;
-  do not use a decorative mannequin that implies virtual fitting, and retain the
-  current non-WebGL product path.
-- [ ] BSDPorts dependency visualization remains a proposal. Preserve its
-  ultraminimal white search-first experience; add a graph only as an optional
-  drill-down over actual package dependency data.
-- [ ] Verify the BSDPorts dependency graph/controller work in a real browser and
-  run `cd RAILS/bsdports && bin/ci`. Capture browser evidence; Brgen Maps browser
-  proof is tracked in the first item above. Source and test files alone are not
-  runtime or rendered evidence.
+- [ ] Deferred experiments — keep these grouped until a concrete consumer,
+  measured need and acceptance contract justify implementation:
+  - MASTER execution observatory, memory/code constellation and expanded
+    particle-face telemetry. Retain the separately recorded avatar-derived
+    face request; use the existing one renderer and keep receipts as execution
+    truth. No simulated telemetry or second renderer.
+  - STUDIO/Dilla audio-reactive artwork export. Map the existing audio clock,
+    section manifest and `radio_brgen_tunnel.js` boundary first; no second
+    audio engine and no frame-driven audio.
+  - Amber 3D garment inspection. Wait for optimized real assets and an honest
+    fit-data contract; retain the large Amber identity, neutral fashion
+    surfaces and working non-WebGL path. No decorative mannequin implying
+    virtual fitting.
+- [ ] Verify BSDPorts' source-implemented dependency graph in a real browser
+  and run `cd RAILS/bsdports && bin/ci`, including the dependency graph/tree
+  model tests. `Dependency.graph_for` is bounded to 60 nodes and six levels;
+  the text dependency tree remains the accessible source of truth and the SVG
+  is an optional drill-down. Capture mobile/desktop browser evidence and
+  context/console behavior. Brgen Maps browser proof remains in the first
+  item above; source and test files alone are not runtime or rendered evidence.
 
 ## Open from the 2026-11-01 session — Rails ABC, configuration, UX and tokens
 

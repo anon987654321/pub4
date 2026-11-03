@@ -53,6 +53,7 @@ class TestFixProtocol < Minitest::Test
     do_work = ::Law.definitions.fetch(:DO_THE_WORK_NOW)
     autonomy = ::Law.definitions.fetch(:OPERATOR_AUTONOMY)
     minimal = ::Law.definitions.fetch(:MINIMAL_FOOTPRINT)
+    collapse = ::Law.definitions.fetch(:COLLAPSE_BEFORE_ADDING)
 
     assert_match(/complete current target/i, preserve.practice)
     assert_match(/continue every independent in-scope task/i, preserve.practice)
@@ -62,6 +63,7 @@ class TestFixProtocol < Minitest::Test
     assert_match(/do not create backlog entries/i, do_work.practice.gsub(/\s+/, " "))
     assert_match(/Git-reversible source edits/i, autonomy.practice)
     assert_match(/tracked edits, refactors, renames and deletions/i, minimal.practice)
+    assert_match(/adding is the last resort/i, collapse.practice)
   end
 
   def test_external_context_carries_the_cross_tree_operating_model
