@@ -52,7 +52,7 @@
     <% else %>
       <%= button_to add_item_cart_path, params: { menu_item_id: item.id, quantity: 1 },
             class: "btn btn-primary btn-sm item-add" do %>
-        + <%= t("menu.quick_add") %>
+        <%= t("menu.quick_add") %>
       <% end %>
     <% end %>
   </span>

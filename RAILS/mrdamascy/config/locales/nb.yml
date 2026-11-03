@@ -464,12 +464,8 @@ nb:
     links_loyalty: Sahtein-kortet
     links_about: Om oss
     links_track: Spor ordre
-    hours_label: Åpningstider
-    hours: Man–Fre 11–21 · Lør–Søn 14–21
-    address_label: Adresse
-    address: Solheimsgaten 60, 5054 Bergen
     vipps_note: Betalt med Vipps — 3 steg, null kortfelter
     ahlan: Ahlan wa sahlan — alle er velkomne hit
     copyright: © %{year} Mr. Damascy
-    line: Mr. Damascy · Solheimsgaten 60, Danmarksplass · Man–Fre 11–21, Lør–Søn 14–21
+    line: Mr. Damascy · %{address} · %{hours}
     sahtein: Laget med kjærlighet i Bergen — صحتين

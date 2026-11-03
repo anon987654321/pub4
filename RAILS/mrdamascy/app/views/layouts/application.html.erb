@@ -45,7 +45,10 @@
       <%= yield %>
 
       <footer class="app-footer">
-        <p class="ink-soft mb-0"><%= t("footer.line") %></p>
+        <% if current_kitchen %>
+          <%= tag.p t("footer.line", address: current_kitchen.address, hours: current_kitchen.opening_hours),
+                    class: "ink-soft mb-0" %>
+        <% end %>
         <p class="footer-sahtein mb-0"><%= t("footer.sahtein") %></p>
       </footer>
     </main>

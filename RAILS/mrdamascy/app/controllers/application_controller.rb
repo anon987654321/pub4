@@ -3,7 +3,7 @@
 class ApplicationController < ActionController::Base
   allow_browser versions: :modern
 
-  helper_method :current_user, :current_cart, :cart_count, :cart_subtotal_ore
+  helper_method :current_user, :current_cart, :cart_count, :cart_subtotal_ore, :current_kitchen
 
   before_action :set_locale
 
@@ -41,6 +41,14 @@ class ApplicationController < ActionController::Base
 
   def cart_subtotal_ore
     current_cart.subtotal_ore
+  end
+
+  # The one kitchen's record is the only home of its address and opening
+  # hours; the footer reads it rather than keeping a copy in the locales.
+  def current_kitchen
+    return @current_kitchen if defined?(@current_kitchen)
+
+    @current_kitchen = Kitchen.first
   end
 
   # Cookie-store sessions may not expose an id before their first write, so we

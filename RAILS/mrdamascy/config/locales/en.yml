@@ -464,12 +464,8 @@ en:
     links_loyalty: The Sahtein Card
     links_about: About us
     links_track: Track order
-    hours_label: Opening hours
-    hours: Mon–Fri 11am–9pm · Sat–Sun 2pm–9pm
-    address_label: Address
-    address: Solheimsgaten 60, 5054 Bergen
     vipps_note: Paid with Vipps — 3 steps, zero card fields
     ahlan: Ahlan wa sahlan — everyone is welcome here
     copyright: © %{year} Mr. Damascy
-    line: Mr. Damascy · Solheimsgaten 60, Danmarksplass · Mon–Fri 11am–9pm, Sat–Sun 2pm–9pm
+    line: Mr. Damascy · %{address} · %{hours}
     sahtein: Made with love in Bergen — صحتين
