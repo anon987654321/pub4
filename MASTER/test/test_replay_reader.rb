@@ -8,7 +8,7 @@ class TestReplayReader < Minitest::Test
   def setup
     @dir = Dir.mktmpdir
     @events_dir = File.join(@dir, "runtime", "events")
-    FileUtils.mkdir_p(@events_dir)
+    FileUtils.mkdir_p(@events_dir, mode: 0o700)
   end
 
   def teardown
@@ -17,7 +17,7 @@ class TestReplayReader < Minitest::Test
 
   def test_replay_activity_formats_recent_events
     path = File.join(@events_dir, "activity.jsonl")
-    File.write(path, "{\"timestamp\":\"2026-06-25T10:00:00Z\",\"event\":\"scan:complete\",\"payload\":{\"count\":1}}\n")
+    File.write(path, "{\"timestamp\":\"2026-06-25T10:00:00Z\",\"event\":\"scan:complete\",\"payload\":{\"count\":1}}\n", mode: 0o600)
     output = Trace::ReplayReader.new(root: @dir).render(arg: "5")
     assert_includes output, "replay activity"
     assert_includes output, "scan:complete"
@@ -40,6 +40,7 @@ class TestReplayReader < Minitest::Test
     File.write(
       File.join(master_root, "runtime", "events", "activity.jsonl"),
       "{\"timestamp\":\"#{committed_at}\",\"event\":\"ops:commit\",\"payload\":{\"head\":\"#{sha}\"}}\n",
+      mode: 0o600,
     )
 
     output = Trace::ReplayReader.new(root: master_root).render(arg: "commit #{sha}")
@@ -50,7 +51,7 @@ class TestReplayReader < Minitest::Test
 
   def test_replay_evidence_reads_operational_stream
     evidence_path = File.join(@events_dir, "evidence.jsonl")
-    File.write(evidence_path, "{\"timestamp\":\"2026-06-25T10:00:00Z\",\"event\":\"ops:commit\",\"payload\":{\"head\":\"abc\"}}\n")
+    File.write(evidence_path, "{\"timestamp\":\"2026-06-25T10:00:00Z\",\"event\":\"ops:commit\",\"payload\":{\"head\":\"abc\"}}\n", mode: 0o600)
     output = Trace::ReplayReader.new(root: @dir).render(arg: "evidence")
     assert_includes output, "replay evidence"
     assert_includes output, "ops:commit"
@@ -61,7 +62,7 @@ class TestReplayReader < Minitest::Test
     File.write(path, [
       "{\"timestamp\":\"2026-06-25T10:00:00Z\",\"event\":\"scan:complete\",\"payload\":{}}",
       "{\"timestamp\":\"2026-06-25T10:00:01Z\",\"event\":\"scan:error\",\"payload\":{\"error\":\"boom\"}}",
-    ].join("\n") + "\n")
+    ].join("\n") + "\n", mode: 0o600)
     output = Trace::ReplayReader.new(root: @dir).render(arg: "failures")
     assert_includes output, "scan:error"
     refute_includes output, "scan:complete"

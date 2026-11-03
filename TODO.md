@@ -460,10 +460,11 @@ d04a7bb8ff to d682846752.
   omitted `proximity` root. The canonical vocabulary now includes all thirteen
   roots and a regression asserts the DEFRAG/RELOCATE assignments. Re-run the
   focused Law parity, YAML registry and Law catalogue tests on pinned Ruby 4.0.5.
-  The separate recorded failures still need individual triage:
-  `test_replay_reader.rb` (fixtures write 0644 logs the reader has refused since
-  8c4f834d5), `test_fix_loop_oscillation.rb` (cycle detector, red before that
-  session), `test_agy_reachability.rb`, `test_runs.rb` (parked
+  The replay-reader fixtures now create owner-private event files and a private
+  events directory to match the production log contract; rerun that focused test
+  on pinned Ruby before closing it. Other recorded failures remain:
+  `test_fix_loop_oscillation.rb` (cycle detector, red before that session),
+  `test_agy_reachability.rb`, `test_runs.rb` (parked
   design_calibration plugin tests are unwired; the STUDIO census finds 2 files)
   and `test_tools_media.rb` (reads the retired STUDIO postpro).
 - [ ] MASTER full suite: `MASTER_TEST_START_MARKERS=1 MASTER_TEST_JOBS=1 MASTER_TEST_PROGRESS_EVERY=25 rake test`,
