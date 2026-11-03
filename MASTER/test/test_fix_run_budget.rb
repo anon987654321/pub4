@@ -279,7 +279,8 @@ class TestFixRunBudget < Minitest::Test
                "ending the repair to prove what it did"
 
     assert_equal [line, "fix0: #{stalled}", stopping], @said
-    assert_match(/\Afix0: pass 2\/8 scan0 phase scan files 812\/2638 \(31%\) run_pulse\.rb fixes 1 ok 1 failed /, line)
+    assert line.start_with?("fix0: pass 2/8 run ≥16% scan0 phase scan files 812/2638 (31%) " \
+                            "run_pulse.rb fixes 1 ok 1 failed "), line
     assert_includes line, "lane claude-cli:claude-opus-5-5 last call 2412s ago"
     assert_includes line, "tokens = 342191 (342K) elapsed = 2412s (40m12s)"
     assert_match(/ eta (~\d+m|unknown) load \d+\.\d\z/, line)
@@ -542,4 +543,22 @@ class TestFixRunBudget < Minitest::Test
     cost(2.0, 5)
     assert_equal [3.0, 15], run.spend
   end
+
+  # The heartbeat says how far the whole run is and, in the first pass, when
+  # this pass should end, rather than "ETA unknown" until a pass finishes.
+  def test_the_pulse_reports_run_progress_and_a_first_pass_eta
+    now = 0.0
+    pulse = Master::Fix::RunPulse.new(max_passes: 4, clock: -> { now }, load: -> { 0.0 })
+    pulse.observe("fix_loop:pass_start", { pass: 1, file_count: 40 })
+    now = 100.0
+    pulse.observe("scan:progress", { done: 10, total: 40, path: "lib/a.rb" })
+
+    line = pulse.line(elapsed: 100.0, tokens: 0, eta: "ETA unknown")
+    assert_includes line, "run ≥6%", "a quarter of pass 1 of 4"
+    assert_includes line, "eta pass ~5m00s", "30 files left at 10 per 100 s"
+    refute_includes line, "ETA unknown"
+
+    assert_includes pulse.line(elapsed: 100.0, tokens: 0, eta: "ETA ~12m"), "ETA ~12m", "a finished pass's ETA stands"
+  end
+
 end

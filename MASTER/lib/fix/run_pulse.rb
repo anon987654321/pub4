@@ -91,9 +91,9 @@ module Master
       # The line itself. `eta` and `tokens` come from RunBudget, which owns the ledger.
       def line(elapsed:, tokens:, eta:)
         @lock.synchronize do
-          parts = ["fix0: pass #{@pass}/#{@max_passes}", @unit, phase_part, files_part, fixes_part, lane_part(elapsed),
-                   "tokens = #{tokens} (#{self.class.human_count(tokens)})",
-                   "elapsed = #{elapsed.round}s (#{self.class.human_time(elapsed)})", eta,
+          parts = ["fix0: pass #{@pass}/#{@max_passes}", run_part, @unit, phase_part, files_part, fixes_part,
+                   lane_part(elapsed), "tokens = #{tokens} (#{self.class.human_count(tokens)})",
+                   "elapsed = #{elapsed.round}s (#{self.class.human_time(elapsed)})", pass_eta(eta),
                    "load #{format("%.1f", @load.call)}"]
           parts.compact.join(" ")
         end
@@ -339,6 +339,26 @@ module Master
       end
 
       def fixes_part = "fixes #{@fixes[:ok]} ok #{@fixes[:failed]} failed"
+
+      # How far the run is, as passes done plus this pass's share of its files, out
+      # of the most passes the run may take: a floor, since a run that converges stops
+      # early and is then further along than this says.
+      def run_part
+        return unless @pass.positive? && @max_passes.to_i.positive?
+
+        share = @file_total.positive? ? @file_done.fdiv(@file_total) : 0.0
+        "run ≥#{(100.0 * ((@pass - 1) + share) / @max_passes).floor}%"
+      end
+
+      # RunBudget's ETA needs a finished pass; until then this pass's own file rate
+      # gives one, named as the pass's, so the first pass is not "ETA unknown" for
+      # its whole length.
+      def pass_eta(eta)
+        return eta unless eta.to_s.include?("unknown") && @file_done.positive? && @file_total > @file_done
+
+        spent = @clock.call - @pass_started_at
+        "eta pass ~#{self.class.human_time(spent / @file_done * (@file_total - @file_done))}"
+      end
 
       # Blocked on a model: name the lane and the wait. Otherwise the lane that
       # answered last, and how long ago.
