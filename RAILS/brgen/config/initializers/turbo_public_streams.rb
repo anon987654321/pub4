@@ -11,4 +11,12 @@ Rails.application.config.after_initialize do
 
     reject unless ApplicationCable::PublicStreams.public?(verified_stream_name_from_params)
   end
+
+  # Somebody connected is still asked whether the stream is theirs: a removed
+  # group member keeps a validly signed name for the conversation they left.
+  Turbo::StreamsChannel.before_subscribe do
+    next unless current_user
+
+    reject unless ApplicationCable::PrivateStreams.allowed?(verified_stream_name_from_params, current_user)
+  end
 end
