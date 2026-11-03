@@ -3,8 +3,8 @@
 class NewsletterEditionDeliveryJob < ApplicationJob
   queue_as :bulk
 
-  retry_on ActiveRecord::RecordNotFound, wait: :exponentially_longer, attempts: 5
-  retry_on StandardError, wait: :exponentially_longer, attempts: 5
+  retry_on ActiveRecord::RecordNotFound, wait: :polynomially_longer, attempts: 5
+  retry_on StandardError, wait: :polynomially_longer, attempts: 5
   discard_on ActiveJob::DeserializationError
 
   def perform(edition_id, subscription_ids)
