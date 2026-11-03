@@ -123,179 +123,42 @@ add a constraint, add a rule. The spine does not grow.
 
 ## Fixing
 
-`/fix [path]` is the single write-enabled convergence operation. `/review` and
-`/critique` are read-only. The pre-repair baseline is deliberately read-only,
-but it is a preflight stage, not a silent downgrade to dry-run. Explicit
-`--dry-run` plans and measures without writing.
+`/fix [path]` is MASTER's write-enabled repair and convergence operation.
+`/review` and `/critique` are read-only; explicit `--dry-run` measures and
+plans without writing. A repair reads the eligible scope and its available
+source relationships before proposing changes. Missing or unresolved context
+blocks the affected repair rather than inviting a guess.
 
-Since the elevation engine, `/fix` does not only repair: it improves, ideates
-and restructures toward each domain's ideal. `lib/fix/improve` measures code,
-prose, visuals and music against law-grounded ideals, emits one anchored
-improvement step per domain per pass through the existing improvement stage,
-writes build ideas to `.master/fix_ideas.json` for the next run, and proposes
-contract-safe merges through `restructure_sweep`'s proof machinery. A run that
-names every tree — `bin/master /fix MASTER RAILS OPENBSD STUDIO` — takes the
-`elevate` lane automatically; single-tree runs keep the convergence-first
-`code` lane unless `--lane=elevate` is explicit. Elevation never blocks a run:
-plateau and convergence guards apply to it as to any other finding.
+The owners are deliberately separate. `Fix::Kernel` owns the process-shared
+execution lock, coordinator receipts, journal access and adapter construction.
+`Kernel::ConvergenceAdapter` coordinates passes; `Kernel::RepairAdapter`
+applies Law-driven repair policy. `Fix::Transaction` remains the only source
+mutation, rollback, recovery and Git-delivery path. `Fix::Mission` preserves
+the objective across runs. `FixLoop`, `RepairLoop` and `RunJournal` remain
+compatibility entrypoints until caller and recovery parity justify retiring
+them. The [coordinator map](docs/fix_coordinator_map.md) records responsibility
+and migration evidence; the [Fix boundary map](lib/fix/README.md) describes
+the local subsystem.
 
-The architectural boundary matters: `Core::Fold` governs the general model-effect
-loop, while `/fix` owns repository repair and convergence. They share constitutional
-principles but are not the same workflow. Production boot creates one
-`Fix::Kernel` and enters through `Kernel#build_fix_loop`. The canonical
-convergence class is `Kernel::ConvergenceAdapter`, exposed to existing callers as
-`FixLoop`; the canonical per-Law repair class is `Kernel::RepairAdapter`, exposed
-as `RepairLoop`; the canonical durable run journal is `Kernel::LifecycleJournal`,
-exposed as `RunJournal`. The compatibility constants and on-disk journal schema
-remain while call sites are migrated and recovery parity is proved.
-The current `RunJournal` serializes access through `.master/fix_runs.lock` and
-refuses symlinked state/lock paths, group/world-writable state directories,
-non-regular or non-private lock files, and lock-path/inode replacement around
-`flock`.
+A run measures first, attempts every actionable finding within its scope, and
+repeats measurement and repair. Each kept repair must pass its applicable
+syntax, intent, Law and delivery guards. The repository workflow commits and
+pushes verified checkpoints by default; `MASTER_FIX_PUSH=end` defers pushes
+until final verification, and `MASTER_FIX_NO_PUBLISH=1` deliberately leaves
+commits local. Other sessions' dirty work is never swept into a repair.
 
-Kernel now owns the outer execution lock, hash-chained coordinator start/terminal
-receipts, a shared journal accessor, a repair factory and bounded repair-outcome
-receipts. The durable journal's separate lock rejects symlinked state and lock paths,
-insecure state-directory permissions and non-private lock files. A process restart reconciles an orphaned coordinator receipt to
-`unknown_outcome` only after a same-host process identity proves the writer is
-gone. Kernel does not apply source edits: the existing FixLoop/repair policy and
-disk-backed `Transaction` remain the mutation, rollback and Git-delivery path.
-`Mission` remains the durable cross-run objective and lease owner.
+A one-app RAILS target also enters the app's measured layout-improvement loop.
+A target that does not resolve to one app skips that loop. Browser, rendered,
+runtime and accessibility evidence are separate from source checks; missing
+evidence remains NOT_RUN or INCONCLUSIVE. The 400-row interaction inventory
+guides relevant repairs but does not make those rows executed browser tests.
 
-The convergence implementation retains its existing responsibility modules:
-`FixLoop::Lifecycle` owns journal resume, incremental-scope proof and checkpoint
-restoration; `FixLoop::PassExecution` owns bounded passes and structural
-follow-ups; `FixLoop::Completion` owns gap-aware terminalization and Mission
-updates. `Fix::OutcomePolicy` remains the common source for terminal states and
-result-category mapping. Regression tests now cover Kernel receipts and a
-process-boundary crash/restart with an open transaction, journal resume, Mission
-checkpoint survival and orphan-receipt reconciliation. They are **authored, not
-executed** on the pinned Ruby 4.0.5 runtime, so Mission/journal-loss reconstruction,
-budget/collapse behavior, adapter receipt parity and a real repository-wide
-`/fix` trial remain open proof gates in `docs/fix_coordinator_map.md`.
+Only `DONE` with full applicable coverage and the required consecutive clean
+readings proves convergence. Unsupported surfaces, unresolved findings,
+timeouts, unavailable tools, quota limits and human decisions remain visible
+as non-DONE outcomes. The detailed execution-contract migration and remaining
+proof gaps are in [Execution contracts](docs/execution-contracts.md).
 
-CoreBridge attaches a lifecycle observer to the Fold even when the host does not
-supply a bus; that case uses the event log at the task runtime root, or MASTER's
-canonical runtime root when working in pub4 itself. The standalone `bin/master core`
-subcommand uses the same shared Trace::EffectObserver adapter, so it does not bypass
-the lifecycle contract. `core:effect:before` is durably published before each World effect and
-`core:effect:after` records the observed outcome and elapsed time. Rollback is a
-separate audited operation linked to the failed effect and its checkpoint. If the
-required after-event cannot be persisted, the mission fails terminally instead of
-being automatically resumed against an ambiguous side effect. Event payloads carry a typed
-effect ID, turn, verb, capability, run ID, attempt ID and mission ID; source scope is
-represented by a SHA-256 digest, not a raw path, URL or command argument. Failure to persist the before-event
-prevents the effect from running; failure to persist the after-event returns `trace_failed`
-rather than claiming the task completed. This path uses `EventBus#publish_required` and the
-event log's strict append method, while ordinary best-effort telemetry retains its existing
-failure-swallowing behavior. The legacy `core:turn` stream is privacy-safe as well: action
-subjects are categorical, the detail is reduced to completed/failed, and read/exec output is
-represented by byte and line counts. Full observations remain only in the local operator
-transcript. This is the first slice of the external-action event contract, not yet a shared
-event adapter for every tool and /fix path.
-
-Interactive turns carry a cooperative cancellation token through the session and TurnRouter.
-The general Core Fold checks it at safe proposal/admission/effect boundaries. The canonical
-`/fix` command carries the same token through PipelineContext and FixLoop, which stops
-between preflight phases and repair passes. If cancellation arrives during a pass, that
-bounded pass is allowed to finish and record its receipt before any later repair or structural
-pass is started; persisted active-transaction recovery runs before a resumed repair is stopped.
-Cancelled, unknown-outcome and recovery-failed repair missions are terminal and cannot be
-automatically resumed, and cancellation never claims delivery. A model request, check or
-external operation already in progress is not forcibly killed; non-interactive background runs
-and other commands retain their existing lifecycle.
-
-The normalized contract adapter and its migration boundary are documented in
-[Execution contracts](docs/execution-contracts.md). Its existence does not mean the
-Fix transaction, all tools, background jobs or deployment paths have already migrated.
-The new regression tests are source changes only until executed on the pinned Ruby runtime;
-validation remains INCONCLUSIVE in this checkout.
-
-A requested repair starts by inventorying its eligible corpus, refreshing the
-static reference graph and refusing to proceed if an eligible source could not
-be read or indexed. Before a proposed edit, the repair receives the complete
-target file and complete sources for the direct graph-linked dependencies and
-callers that the graph can resolve, with SHA-256 identifiers. These are treated
-as untrusted source data, never as instructions. A missing linked file or a
-context that exceeds `MASTER_FIX_CONTEXT_MAX_BYTES` stops that repair rather
-than clipping the input and guessing. The graph now uses Prism to identify Ruby class, module, constant and
-method definitions, plus statically identifiable method calls, inheritance,
-mixins and constant references, alongside import edges. It reports unresolved
-references and dynamic sites; repairs defer when unresolved relationships could
-affect the target or its directly linked files. Dynamic receiver types,
-reflection, metaprogramming, plugin discovery, runtime loading and non-Ruby
-import/call graphs remain incomplete, so this is not proof that every possible
-caller has been discovered.
-
-The unbounded worklist is scanned before repair starts, then prioritized by the
-highest finding severity, weighted finding impact and a stable path tie-break.
-An explicit `--max-files` is a bounded lane; `MASTER_FIX_RANK=1` asks for a
-full scan before choosing the highest-impact files within that cap. Formatting
-frequency and alphabetical order are not importance measures.
-
-On a target inside one RAILS app, `/fix` follows the verified fix with the layout loop of
-`bin/operator design`, with no flag to add. That loop keeps a stylesheet edit only when the surface's measured layout score
-rises and nothing else gets worse, commits each kept edit locally for review, and never pushes; a target
-that names no single app skips the loop.
-
-Each owned repair checkpoint must pass its applicable syntax, intent and delivery
-guards before it is committed and pushed. This is the default; set
-`MASTER_FIX_PUSH=end` to defer pushes until final verification, or
-`MASTER_FIX_NO_PUBLISH=1` to leave commits local deliberately. Another operator's
-pre-existing dirty work is never part of the batch. An unsuccessful or
-unconfirmed push is a delivery failure, not a completed repair.
-
-Every repair is proved against what was already red. Before its first edit,
-`/fix` measures the target read-only; a commit another session lands meanwhile
-leaves that measurement valid, while a file edited under it does not. A
-whole-MASTER repair is then proved by the tests that name the files it changed,
-judged against the known-red record the last whole suite left, so a failing test
-that record does not name refuses the repair. The record names failing tests,
-lapses after a day or a change of Ruby or lockfile, and a record naming only
-failed steps sends the proof back to the whole suite. A target is Rails when its
-files say so, an application or an engine above it, and a Rails target is proved
-by the check runner over the apps `RAILS/apps.yml` registers. A run whose budget
-ran out while no process held it is closed, and the next `/fix` starts afresh.
-Every commit the runtime makes refuses the sacred paths declared by
-`data/soul.yml#absolute.sacred_paths`, whichever writer left them changed.
-
-For model-assisted findings, each /fix repair route proposes several materially
-different candidates (three by default), then selects one using the target Law and
-focused-test evidence. The candidate prompt draws action/fault oracles from
-RAILS/test/interaction_campaign_400.json for the relevant surface. Existing focused
-tests run against the baseline and each candidate in test mode; candidates that
-introduce failures are rejected and the exact original source is restored after
-each run. /fix records the command paths and distinguishes PASS, improved,
-no-regression, blocked and unavailable outcomes. The 400 natural-language
-campaign cases guide candidates but are not themselves 400 executable browser
-tests; a case stays NOT_RUN until that interaction is run and evidenced.
-
-Code that changes behavior, interfaces, commands, configuration or operations
-must carry matching changes to the relevant README or contract. Generated
-documentation is regenerated from its canonical source, never hand-edited, and
-unrelated documents are left alone.
-
-A fix run attempts every actionable finding in scope and repeats measurement and
-repair. It cannot promise to repair literally everything: unsupported surfaces,
-unresolved findings, timeouts, quota exhaustion and human decisions must remain
-visible. Only `DONE` with full applicable coverage and the required consecutive
-clean readings proves completion; every other terminal state remains open work.
-
-The run is journaled before its first repair pass, so a crashed attempt is resumed
-rather than mistaken for success. An unfinished goal is a durable mission in
-`.master/mission.json`; its supervisor renews its lease and retries with bounded
-backoff. Observe, plan, repair and deploy modes choose a starting set of
-capabilities but never outrank the law.
-
-For the web, source-clean is not enough. When the target is under `RAILS/`, the
-visual pass captures browser renders and geometry when the browser and app are
-available; missing live evidence remains inconclusive, never a pass. The repair
-loop uses its ordinary finding and candidate-selection path to propose layout
-changes, then measures the resulting render again. The multi-model critique
-council is opt-in inside `/fix`: set `MASTER_FIX_COUNCIL=1` or request
-`--critique`; otherwise the report offers `/critique` on the result instead
-of making every repair wait on the council. A successful source scan alone does
-not prove visual completion.
 
 ## Debugging Ruby behavior
 
