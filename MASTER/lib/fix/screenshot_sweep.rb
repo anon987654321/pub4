@@ -67,7 +67,7 @@ module Master
         visit = Visit.new(camera:, port:, frontier: Frontier.new(@plan, app), dialogs:)
         MAX_PAGES.times do
           page = visit.frontier.next_page or break
-          rows << capture(page, visit)
+          rows << capture(page, visit).tap { |row| progress(rows.size + 1, row) }
         end
         visit.frontier.unresolved
       end
@@ -79,6 +79,12 @@ module Master
                              note: shot.html ? nil : "not an HTML page")
       rescue StandardError => e
         failed(page, "#{e.class.name.split("::").last}: #{e.message}")
+      end
+
+      # One line per page as it lands, so a long sweep is watchable and a failure shows at once.
+      def progress(count, row)
+        verdict = row.note ? "FAILED #{row.note}" : "#{row.shots.size} widths, #{row.dialogs.size} dialogs"
+        warn("shots0: #{count} #{row.app} #{row.host}#{row.path} HTTP #{row.status || "?"} #{verdict}")
       end
 
       def failed(page, note) = Row.new(**page.to_h, status: nil, shots: {}, dialogs: [], note:)
