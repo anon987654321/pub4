@@ -224,8 +224,14 @@ class Post < ApplicationRecord
   #
   # Synchronous, matching broadcast_live_refresh above and for its reason: the
   # _later_ variants enqueue a job and nothing on vm23 runs the queue.
+  #
+  # The stream reaches every front page open in the city, members or not, so a
+  # post in a private community stays off it; its members see it in the
+  # community. Asked of the table rather than the association, which strict
+  # loading would refuse here.
   def broadcast_to_city_feed
     return if city_id.blank? || removed_at.present?
+    return if community_id && Community.exists?(id: community_id, privacy: "private")
 
     broadcast_prepend_to(
       self.class.city_feed_stream(city_id),
