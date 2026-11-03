@@ -1,14 +1,14 @@
 # pub4 outstanding work
 
-This is the single carry-forward register, not a substitute for execution.
-`DO_THE_WORK_NOW` governs every agent: complete authorised, executable work in
-the current run instead of adding TODOs, plans or promises for later. Do not add
-an item for work available with the current tools, credentials and authority.
-Keep only unresolved work that is explicitly deferred or genuinely depends on
-an external actor, device, credential, paid call, human decision or vm23
-console; operator-only seams belong in `MASTER/data/operator_seams.yml`.
-Refusals live under "Refused, and why" in `MASTER/AGENTS.md`. An item closes
-when its evidence is delivered; this file is not a record of finished work.
+This is the single carry-forward register, not a planning substitute. Its
+existing entries are inherited work, not permission to defer a relevant task:
+when an authorised request overlaps an entry, execute it now and remove the
+entry when its evidence is committed. `DO_THE_WORK_NOW` governs every agent:
+never add a row for work available with current tools, credentials and
+authority. Add a new row only for work the user explicitly defers or a genuine
+external prerequisite that blocks the remaining action. Operator-only seams
+belong in `MASTER/data/operator_seams.yml`; refusals live under "Refused, and
+why" in `MASTER/AGENTS.md`. This file is not a record of finished work.
 
 ## Priority 1 — Documentation reduction and reorganisation
 
@@ -19,11 +19,7 @@ instructions, not useful context for the sake of a lower count.
 
 - Keep one canonical entry at each real boundary: the repository, each
   governed tree, and each product/engine that has distinct ownership.
-- Keep MASTER's agent contract and Laws authoritative. Merge task navigation,
-  task-contract guidance and editorial instructions into their existing
-  canonical owners where this removes repeated policy; do not create another
-  guide to explain the guides.
-- Shorten README files by removing duplicated product briefs and feature
+remove completed docs consolidation task- Shorten README files by removing duplicated product briefs and feature
   inventories already owned by the engine README or `RAILS/apps.yml`.
   Preserve each product's actual identity and its useful local instructions.
 - Retire unreferenced navigation pages and duplicated instructions only after
@@ -39,36 +35,6 @@ instructions, not useful context for the sake of a lower count.
 Done means one obvious source for each instruction, no stale or duplicate
 agent guidance, valid links and citations, accurate shipped-versus-planned
 claims, and the focused documentation checks run with their output recorded.
-
-## Priority 2 — Decisive stewardship
-
-Make MASTER decisive inside an explicitly approved task, without turning
-autonomy into permission to violate trust. The target is not "preserve every
-existing implementation". Preserve the user's intent, data, security,
-privacy, working guarantees and public contracts; improve or retire the
-implementation when evidence justifies it.
-
-- Reconcile `STEWARDSHIP`, `PRESERVE_FIRST`, `OPERATOR_AUTONOMY`,
-  `MINIMAL_FOOTPRINT` and `COLLAPSE_BEFORE_ADDING`. They must describe one
-  compatible decision policy, not pull in opposite directions.
-- Within a clearly requested repository scope, read and measure first, choose
-  the strongest coherent solution, perform related reversible edits to
-  convergence, verify, and report once. Do not ask for approval after every
-  file or every repair.
-- Treat tracked source changes, refactors and deletions inside that scope as
-  reviewable, rollbackable work when the task authorises them. Preserve
-  evidence and make rollback possible; do not confuse a Git-reversible change
-  with irreversible loss of user data.
-- Keep real consent boundaries: credentials and private data, personal-device
-  access, actions on another person's behalf, external messages/publication,
-  spending, destructive remote-host operations and other irreversible
-  shared-state changes. Approval for one such action does not grant the next.
-- Change the canonical Law statement(s), executable practice, catalogue
-  metadata, prompts and proof tests together. Prefer reconciling existing Law
-  identities over inventing a parallel "decisive" rule. A Law declaration is
-  not enforcement; demonstrate the behaviour with tests and observed runs.
-
-Working motto: **Break the dead thing. Don't break the user's trust.**
 
 ## Open from the 2026-11-02 session — external tree audit (MASTER)
 
