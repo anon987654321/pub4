@@ -463,10 +463,13 @@ d04a7bb8ff to d682846752.
   The replay-reader fixtures now create owner-private event files and a private
   events directory to match the production log contract; rerun that focused test
   on pinned Ruby before closing it. Other recorded failures remain:
-  `test_fix_loop_oscillation.rb` (cycle detector, red before that session),
-  `test_agy_reachability.rb`, `test_runs.rb` (parked
-  design_calibration plugin tests are unwired; the STUDIO census finds 2 files)
-  and `test_tools_media.rb` (reads the retired STUDIO postpro).
+  The cycle-detector fixture now observes the current five-pass recurrence
+  window; rerun it on pinned Ruby before closing the test. Also rerun
+  `test_agy_reachability.rb` and `test_runs.rb` (parked design_calibration
+  plugin tests are unwired; the STUDIO census finds 2 files).
+  `test_tools_media.rb` reads the current canonical `STUDIO/postpro` source,
+  not a retired path; include it in the pinned suite instead of treating the
+  source path as a defect.
 - [ ] MASTER full suite: `MASTER_TEST_START_MARKERS=1 MASTER_TEST_JOBS=1 MASTER_TEST_PROGRESS_EVERY=25 rake test`,
   then `MASTER_TEST_JOBS=3 rake test`; check `.master/check/suite-report.json` for incomplete
   workers and mismatched start/result counts. Then run `rake audit` (the complete declared lint

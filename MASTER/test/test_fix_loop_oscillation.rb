@@ -220,13 +220,15 @@ def publish_pending! = :nothing_to_publish
       [persistent],
       [persistent, { law: "TEST_RULE", file: "dummy.yml", line: 2, message: "new" }],
       [persistent, { law: "TEST_RULE", file: "dummy.yml", line: 3, message: "newer" }],
+      [persistent, { law: "TEST_RULE", file: "dummy.yml", line: 4, message: "newest" }],
+      [persistent, { law: "TEST_RULE", file: "dummy.yml", line: 5, message: "latest" }],
     ]
     loop = build_loop_with_scanner(SequenceScanner.new(scans))
     loop.run(@root, max_passes: 5)
 
     cycles = @bus.events.select { |e| e[:event] == "fix_loop:cycle_detected" }
     assert_equal 1, cycles.size
-    assert_equal 3, cycles.first[:payload][:threshold]
+    assert_equal 5, cycles.first[:payload][:threshold]
     assert_equal persistent, cycles.first[:payload][:violation].to_h.slice(:file, :line, :law, :message)
   end
 
