@@ -12,6 +12,12 @@ module ApplicationHelper
     Brgen::DomainRegistry.city_network_entries
   end
 
+  # What city navigation shows: network members whose apex has verified TLS.
+  # Pending members stay in city_network_entries until DNS and certificates land.
+  def live_city_network_entries
+    Brgen::DomainRegistry.live_network_entries
+  end
+
   def safe_http_link(label, url)
     safe_url = safe_http_url(url)
     return unless safe_url

@@ -9,7 +9,7 @@ class DomainRegistryTest < ActiveSupport::TestCase
   test "network readiness separates live, pending and not-yet-live domains" do
     assert_equal %w[brgen.no cardff.uk edinbrgh.uk frankfrt.de oshlo.no stvanger.no trndheim.no],
                  Brgen::DomainRegistry.live_network_domains.sort
-    assert_equal %w[denvr.us lsangeles.com lndon.uk wshingtondc.com],
+    assert_equal %w[denvr.us lndon.uk lsangeles.com wshingtondc.com],
                  Brgen::DomainRegistry.pending_network_domains.sort
     assert_equal Brgen::DomainRegistry.live_network_domains.sort,
                  Brgen::DomainRegistry.live_network_entries.map(&:domain).sort
