@@ -3,9 +3,9 @@
 module Shared
   class ReviewCasesController < ApplicationController
     before_action :require_current_user
+    before_action :locate_target, only: :create
 
     def create
-      @target = GlobalID::Locator.locate_signed!(params.require(:target_gid))
       @review_case = Shared::ReviewCase.create!(
         reporter: current_user,
         reviewable: @target,
@@ -33,6 +33,14 @@ module Shared
     end
 
     private
+
+    # globalid ships locate_signed, not locate_signed!: every report amber filed
+    # through here raised NoMethodError. A bad or expired signature returns nil,
+    # which is the reader's mistake, not a server error.
+    def locate_target
+      @target = GlobalID::Locator.locate_signed(params.require(:target_gid))
+      head :not_found unless @target
+    end
 
     def require_current_user
       return if respond_to?(:current_user, true) && current_user
