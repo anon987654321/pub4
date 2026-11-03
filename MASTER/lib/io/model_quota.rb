@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "date"
+require "etc"
 require "fileutils"
 require "json"
 require "time"
@@ -180,8 +181,18 @@ module Master
         raise IOError, "cannot safely lock model quota state: #{e.class}: #{e.message}"
       end
 
+      # One private directory per OS user inside .master. On vm23 .master is a
+      # group-shared 0770 directory (dev deploys, the master service runs),
+      # which the private-directory check rightly refuses; a quota-<user>
+      # directory created 0700 keeps each count private without loosening it.
       def path
-        ENV["MASTER_MODEL_QUOTA_PATH"] || File.join(Master::ROOT, ".master", "model_quota.json")
+        ENV["MASTER_MODEL_QUOTA_PATH"] || File.join(Master::ROOT, ".master", "quota-#{owner_name}", "model_quota.json")
+      end
+
+      def owner_name
+        Etc.getpwuid(Process.uid)&.name || Process.uid.to_s
+      rescue ArgumentError
+        Process.uid.to_s
       end
 
       def today_key = Time.now.utc.strftime("%Y-%m-%d")

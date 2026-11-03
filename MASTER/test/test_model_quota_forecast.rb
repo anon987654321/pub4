@@ -52,6 +52,8 @@ class ModelQuotaForecastTest < Minitest::Test
     Dir.mktmpdir do |dir|
       path = File.join(dir, "model_quota.json")
       File.write(path, "{}")
+      # The private-state rule, so the read itself is what fails.
+      File.chmod(0o600, path)
 
       Check.stub(:path, path) do
         File.stub(:read, ->(*) { raise Errno::EACCES, path }) { assert_equal 0, Check.count("demo:free") }
