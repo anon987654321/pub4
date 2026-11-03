@@ -220,8 +220,7 @@ done' ;;
   ci)
     command="PUB4_RAILS_ROOT=/home/$app/pub4-rails/RAILS RAILS_ENV=test CI=1 PUB4_CI_GUARD=1 $bundle exec bin/ci" ;;
   overlay-initializers)
-    command=$(cat <<'EOF'
-shared=/home/dev/pub4/RAILS/__shared/config/initializers
+    command='shared=/home/dev/pub4/RAILS/__shared/config/initializers
 target=/home/$PUB4_TASK_APP/app/config/initializers
 [ -d "$shared" ] && [ ! -L "$shared" ] || exit 0
 [ -d "/home/$PUB4_TASK_APP/app/config" ] && [ ! -L "/home/$PUB4_TASK_APP/app/config" ] || exit 1
@@ -233,12 +232,9 @@ fi
 for entry in "$shared"/* "$shared"/.[!.]*; do
   [ -e "$entry" ] || continue
   cp -R "$entry" "$target/"
-done
-EOF
-) ;;
+done' ;;
   overlay-public)
-    command=$(cat <<'EOF'
-shared=/home/dev/pub4/RAILS/__shared/public
+    command='shared=/home/dev/pub4/RAILS/__shared/public
 target=/home/$PUB4_TASK_APP/app/public
 [ -d "$shared" ] && [ ! -L "$shared" ] || exit 0
 if [ -e "$target" ] || [ -L "$target" ]; then
@@ -276,13 +272,11 @@ rubocop_target="/home/$PUB4_TASK_APP/app/.rubocop.yml"
 if [ -f "$rubocop_config" ] && [ ! -L "$rubocop_config" ]; then
   [ ! -L "$rubocop_target" ] || { echo "rails-task: refusing .rubocop.yml symlink" >&2; exit 1; }
   cp "$rubocop_config" "$rubocop_target"
-fi
-EOF
-) ;;
+fi' ;;
 esac
 
-script=$(cat <<EOF
-set -eu
+# A plain string, not a heredoc: see the overlay tasks above.
+script="set -eu
 export HOME=/home/$app
 export PATH=/usr/local/bin:/usr/bin:/bin
 export NPM_CONFIG_CACHE=/home/$app/.npm
@@ -296,7 +290,5 @@ export SECRET_KEY_BASE
 unset RUBYOPT RUBYLIB RUBYPATH RUBYGEMS_GEMDEPS GEM_HOME GEM_PATH
 unset BUNDLE_GEMFILE BUNDLE_PATH BUNDLE_BIN_PATH BUNDLE_WITH BUNDLE_WITHOUT
 cd /home/$app/app
-$command
-EOF
-)
+$command"
 exec /usr/bin/su -m "$app" -c "$script"
