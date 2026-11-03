@@ -15,10 +15,13 @@ class TestSoul < Minitest::Test
 
   def test_the_conduct_rules_reach_the_agent_context
     conduct = Operator::AgentContext.conduct
+    rendered = Operator::AgentContext.render
 
     assert_operator conduct.size, :>, 40
     assert_includes conduct.keys, "PRESERVE_FIRST"
-    assert_includes Operator::AgentContext.render, "PRESERVE_FIRST: never rewrite working code"
+    assert_includes rendered, "PRESERVE_FIRST: never rewrite working code"
+    assert_includes conduct.keys, "DO_THE_WORK_NOW"
+    assert_match(/DO_THE_WORK_NOW: treat a clear user request/, rendered)
   end
 
   def test_soul_manifest_matches_the_canonical_ruby_body
