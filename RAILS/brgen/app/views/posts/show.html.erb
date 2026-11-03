@@ -104,7 +104,10 @@
   </div>
 </article>
 
-<section id="comments-section">
+<%# Comments arrive in place over [post, "comments"] (Comment#broadcast_to_thread);
+    live_comments_controller keeps the writer's own copy of theirs. %>
+<section id="comments-section" data-controller="live-comments">
+  <%= turbo_stream_from @post, :comments %>
   <h2>
     <%= t("comments.submit") %>
     <%= tag.strong Current.user&.guest? ? t("chat.anon") : (Current.user&.username || t("chat.anon")) %>
@@ -113,7 +116,12 @@
     <%= render "shared/post_auth_prompt", post: @post, sign_up_path: (respond_to?(:new_user_path) ? new_user_path : new_registration_path) %>
   <% end %>
   <% if authenticated? || guest? %>
-    <%= render "comments/form", comment: @new_comment, commentable: @post %>
+    <%# Permanent, so a refresh of this page (an edit to the post) leaves a
+        half-written comment where it is. Keyed by the post, so navigating to
+        another post brings no composer along. %>
+    <div id="<%= dom_id(@post, :composer) %>" data-turbo-permanent>
+      <%= render "comments/form", comment: @new_comment, commentable: @post %>
+    </div>
   <% end %>
 
   <% if @comments.any? %>

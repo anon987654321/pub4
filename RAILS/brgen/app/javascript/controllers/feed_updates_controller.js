@@ -3,7 +3,7 @@ import { Controller } from "@hotwired/stimulus"
 // New posts arrive without moving the page.
 //
 // The feed already had a realtime mechanism and it was the wrong one:
-// Post#broadcast_live_refresh sends broadcast_refresh_to "posts", and a refresh
+// Post#broadcast_live_refresh sent broadcast_refresh_to "posts", and a refresh
 // replaces the list under whoever is reading it. Somebody three screens down a
 // thread gets pulled back to the top by a stranger posting. That is the first
 // thing BRGEN-105 asks not to do.

@@ -13,7 +13,7 @@ class Post
     included do
       # In-request refresh, not broadcasts_refreshes: that macro enqueues
       # Turbo::Streams::BroadcastStreamJob, and nothing on vm23 runs the queue.
-      # "posts" is the index stream; self is posts#show.
+      # The city's posts stream is posts#index; self is posts#show.
       after_commit :broadcast_live_refresh
       # BRGEN-105. The front page is its own stream, and it gets an append rather
       # than a refresh: a refresh replaces the feed under whoever is reading it,
@@ -31,6 +31,9 @@ class Post
       # Per city, because posts are city-tenanted and one shared stream would put
       # Bergen's feed on Oslo's front page.
       def city_feed_stream(city_id) = "brgen:feed:#{city_id}"
+
+      # posts#index, per city for the same reason.
+      def city_posts_stream(city_id) = "brgen:posts:#{city_id}"
     end
 
     # Takes the card off every front page in the city: out of the pending chip if
@@ -128,9 +131,25 @@ class Post
     # every reader there may see.
     def live_streams = [ (self.class.city_feed_stream(city_id) if city_feed_public?), self ].compact
 
+    # A refresh re-renders the page under its reader, so it is kept for what
+    # only a re-render can show: a post created, deleted, or rewritten. A vote
+    # or a comment touches the post too, and refreshing for those closed every
+    # open reply box on the page; the counts and the comment arrive on their
+    # own (broadcast_live_counts, Comment#broadcast_to_thread).
     def broadcast_live_refresh
-      broadcast_refresh_to "posts"
+      return unless refresh_worthy_commit?
+
+      broadcast_refresh_to self.class.city_posts_stream(city_id) if city_id && city_feed_public?
       broadcast_refresh_to self
+    end
+
+    TOUCH_COLUMNS = %w[updated_at score comments_count reposts_count crossposts_count].freeze
+    private_constant :TOUCH_COLUMNS
+
+    def refresh_worthy_commit?
+      return true if destroyed? || previously_new_record?
+
+      saved_changes.keys.any? { |column| TOUCH_COLUMNS.exclude?(column) }
     end
 
     # Rendered with no Current.user, so the card carries nobody's vote, repost or

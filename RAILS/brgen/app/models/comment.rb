@@ -22,7 +22,10 @@ class Comment < ApplicationRecord
   # from another post put this reply under a thread its writer may not be able to read.
   validate :parent_on_the_same_thread, if: -> { parent_id.present? && will_save_change_to_parent_id? }
 
-  after_create_commit -> { broadcast_append_to [ commentable, "comments" ], partial: "comments/comment", locals: { comment: self } }
+  # posts#show subscribes to [post, "comments"]: a new comment lands in place,
+  # under its parent when it is a reply, and a deleted one leaves.
+  after_create_commit :broadcast_to_thread
+  after_destroy_commit :broadcast_removal
   # The count on every card and page showing the post. The counter cache
   # increments with SQL, so the post runs no callback of its own for it.
   after_commit :broadcast_commentable_counts, on: [ :create, :destroy ]
@@ -65,7 +68,48 @@ class Comment < ApplicationRecord
     thread_summary.present? && summary_updated_at.present?
   end
 
+  # Public because ModerationWorkflow removes with update_columns, which runs
+  # no callback.
+  def broadcast_removal
+    stream = thread_stream
+    broadcast_remove_to(stream) if stream
+  rescue StandardError => e
+    Rails.logger.warn("Comment#broadcast_removal #{id}: #{e.class}: #{e.message}")
+  end
+
   private
+
+  # Rendered for nobody, and marked so: on the creating request Current.user is
+  # the writer, and the partial would hand every reader the writer's delete
+  # button. The writer's own response appends their copy, with the button;
+  # live_comments_controller keeps it when this one arrives after it.
+  def broadcast_to_thread
+    stream = thread_stream
+    return unless stream
+
+    broadcast_remove_to(stream, target: "comments_empty") unless parent_id
+    Current.set(user: nil, session: nil) do
+      broadcast_append_to(
+        stream, target: thread_target, partial: "comments/comment", locals: { comment: self },
+        attributes: { "data-viewer-neutral": "" }
+      )
+    end
+  rescue StandardError => e
+    Rails.logger.warn("Comment#broadcast_to_thread #{id}: #{e.class}: #{e.message}")
+  end
+
+  def thread_target = parent_id ? ActionView::RecordIdentifier.dom_id(Comment.new(id: parent_id), :replies) : "comments"
+
+  # By key when the commentable is not loaded: a comment found by id for its
+  # deletion has none, and strict loading refuses the lazy read.
+  def thread_stream
+    record = if association(:commentable).loaded?
+      commentable
+    else
+      commentable_type.to_s.safe_constantize&.unscoped&.find_by(id: commentable_id)
+    end
+    [ record, "comments" ] if record
+  end
 
   # By key: a comment found by id for its deletion has no commentable loaded,
   # and strict loading refuses the lazy read. Posts are the commentable with
