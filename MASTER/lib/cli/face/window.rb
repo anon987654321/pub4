@@ -66,6 +66,19 @@ module Master
           @prompt_text = nil
           @prompt_error_reported = false
           @lock = Mutex.new
+          @render_cv = ConditionVariable.new
+          @dirty = true
+          @painted_once = false
+          @last_render_state = nil
+          @next_frame_at = 0.0
+          @motion_until = nil
+          @settled = true
+          @reduced_motion = ENV["MASTER_REDUCED_MOTION"] == "1"
+          frame_budget = Master::Face::Contract.budget
+          @active_fps = Float(frame_budget.fetch("terminal_active_fps", 12)).clamp(1.0, 24.0)
+          @settle_fps = Float(frame_budget.fetch("terminal_settle_fps", 8)).clamp(1.0, 12.0)
+          @particle_budget = Integer(frame_budget.fetch("terminal_particles", 48)).clamp(0, 240)
+          @resize_poll = Float(frame_budget.fetch("terminal_resize_poll_ms", 500)).clamp(100.0, 1_000.0) / 1_000.0
           @state = :idle
           law_config = Master::Face::LawField.config
           @law_field_visible = law_config.fetch("terminal_law_ring", true) != false
@@ -97,8 +110,11 @@ module Master
           # Shutdown is a lifecycle boundary for every reader and painter.
           # Stop microphone capture cooperatively; then bound joins so a closed
           # tty cannot leave an orphaned thread behind.
-          @closing = true
-          @halt_ear = true
+          @lock.synchronize do
+            @closing = true
+            @halt_ear = true
+            @render_cv.broadcast
+          end
           hearing = @hearing
           if hearing&.alive?
             hearing.join(0.25)
@@ -138,6 +154,7 @@ module Master
             level:,
             events:,
             motion: @motion,
+            swarm_budget: @particle_budget,
             heard: user_speaking?(state),
             viseme: current_viseme,
             color: @output.respond_to?(:tty?) && @output.tty? && ENV["NO_COLOR"] != "1",
@@ -171,18 +188,73 @@ module Master
 
         private
 
+        # Paint only when state/input changes, or while a semantic motion is
+        # active. Idle is one retained frame, not a 20 FPS screen saver.
+        # The reader and event callbacks only mark dirty and signal this loop;
+        # this remains the one owner of terminal painting.
         def paint_forever
-          last = nil
+          last_size = nil
           loop do
             rows, cols = @size.call
-            @output.print("\e[2J") if last && last != [rows, cols]
-            last = [rows, cols]
-            @output.print(screen(rows, cols, now - @opened))
+            size = [rows, cols]
+            current = now
+            render = false
+            active = false
+            settling = false
+            frame_rate = nil
+
+            @lock.synchronize do
+              break if @closing
+
+              active = !Master::Face::Contract.still_mode?(@state) && !@reduced_motion
+              settling = !active && !@reduced_motion && !@settled && !@motion_until.nil?
+              state_changed = @state != @last_render_state
+              size_changed = size != last_size
+              due = !@painted_once || size_changed
+
+              if active
+                due ||= state_changed || current >= @next_frame_at
+                frame_rate = @active_fps
+              elsif settling
+                due ||= state_changed || current >= @next_frame_at || current >= @motion_until
+                frame_rate = @settle_fps if current < @motion_until
+              else
+                due ||= state_changed || (@dirty && current >= @next_frame_at)
+              end
+
+              if due
+                render = true
+                @dirty = false
+                @painted_once = true
+                @last_render_state = @state
+                @settled = true if settling && current >= @motion_until
+              else
+                deadline = if active
+                             @next_frame_at
+                           elsif settling
+                             [@next_frame_at, @motion_until].min
+                           else
+                             current + @resize_poll
+                           end
+                wait_for = [[deadline - current, 0.01].max, @resize_poll].min
+                @render_cv.wait(@lock, wait_for)
+              end
+            end
+
+            next unless render
+
+            @output.print("\e[2J") if last_size && last_size != size
+            @output.print(screen(rows, cols, current - @opened))
             @output.flush
-            sleep 1.0 / Face::FPS
+            last_size = size
+            @next_frame_at = current + (1.0 / frame_rate) if frame_rate
+            @next_frame_at = current if !frame_rate && !settling
           end
         rescue IOError, SystemCallError
-          @closing = true
+          @lock.synchronize do
+            @closing = true
+            @render_cv.broadcast
+          end
         end
 
         def now = Process.clock_gettime(Process::CLOCK_MONOTONIC)
@@ -577,7 +649,12 @@ module Master
 
         def set(state, words)
           change do
+            previous = @state
             @state = state
+            if previous != state
+              @motion_until = now + (Master::Face::Contract.still_after_activity_ms / 1_000.0)
+              @settled = false
+            end
             @level = nil
             @words = words
             note_job(words)
@@ -597,7 +674,15 @@ module Master
         def show(words) = change { @words = words }
 
         # Something the face reacts to on its next frame (Motion::EVENTS).
-        def nudge(event) = change { @events << event }
+        def nudge(event)
+          change do
+            limit = Integer(Master::Face::Contract.budget.fetch("pulse_limit", 24)).clamp(1, 64)
+            @events << event
+            @events.shift while @events.size > limit
+            @motion_until = now + (Master::Face::Contract.still_after_activity_ms / 1_000.0)
+            @settled = false unless @reduced_motion
+          end
+        end
 
         # The terminal face listens to the same runtime event families as the
         # browser face. Event delivery only queues a bounded motion event; the
@@ -634,7 +719,14 @@ module Master
         rescue StandardError => e
           Master::Ground::Swallow.log(e, context: "face.window.unsubscribe")
         end
-        def change(&) = @lock.synchronize(&)
+        def change
+          @lock.synchronize do
+            result = yield
+            @dirty = true
+            @render_cv.signal
+            result
+          end
+        end
 
         def heading(state, color:)
           mic = mic_label
