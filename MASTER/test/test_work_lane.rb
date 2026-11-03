@@ -75,6 +75,16 @@ class TestWorkLaneWiring < Minitest::Test
     assert_equal "RAILS", registry.parse_pass_flags("RAILS --lane=code").last
   end
 
+  # Two words used to match nothing: the run took the code lane and "all" joined the target.
+  def test_the_lane_flag_reads_as_two_words_and_names_every_lane
+    registry = Master::CLI::CommandRegistry
+
+    assert_equal "all", registry.execution_overrides(". --lane all")[:lane]
+    assert_equal ". --lane=all", registry.lane_flag_joined(". --lane all")
+    assert_equal "elevate", registry.execution_overrides("RAILS --lane=elevate")[:lane]
+    assert_raises(ArgumentError) { Lane.parse(registry.execution_overrides("RAILS --lane=everything")[:lane]) }
+  end
+
   def test_fix_reads_the_task_intent_flag_and_keeps_it_out_of_the_target
     registry = Master::CLI::CommandRegistry
 

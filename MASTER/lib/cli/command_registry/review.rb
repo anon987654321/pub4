@@ -60,7 +60,7 @@ module Master
       # Command-line overrides are temporary: a setting on one turn must
       # not change how the next command repairs the repository.
       def dispatch_fix(scanner:, fix_loop:, deliberation:, root:, bus:, ctx: nil, swarm: nil, **_legacy)
-        raw = arg_for(ctx).to_s.strip
+        raw = lane_flag_joined(arg_for(ctx).to_s.strip)
         apply, critique, aesthetic, only, target = parse_pass_flags(raw)
         overrides = execution_overrides(raw)
         previous_mode = Master::Fix::AutofixGuard.explicit_mode_override
@@ -474,7 +474,14 @@ module Master
       BLOCKERS_FLAG = /\A--blockers\z/i
 
       # code, visual or all: which half of /fix runs (Fix::WorkLane).
-      LANE_FLAG = /\A--lane=(code|visual|all)\z/i
+      # Any word: WorkLane.parse names the lanes and refuses an unknown one, so
+      # --lane=elevate is honoured and a typo stops the run instead of quietly
+      # running the code lane.
+      LANE_FLAG = /\A--lane=([a-z]+)\z/i
+
+      # "--lane all" as two words reads as "--lane=all". Split, the flag matched
+      # nothing and "all" became part of the target, so the run took the code lane.
+      def lane_flag_joined(raw) = raw.to_s.gsub(/(?<!\S)--lane\s+([a-z]+)/i, '--lane=\1')
 
       # Flags read per dispatch (execution_overrides), never part of the target.
       TASK_INTENT_FLAG = /\A--intent=(\S+)\z/i
@@ -492,6 +499,7 @@ module Master
       end
 
       def execution_overrides(raw)
+        raw = lane_flag_joined(raw)
         tokens = raw.to_s.split(/\s+/).map(&:downcase)
         lane = tokens.filter_map { |token| token[LANE_FLAG, 1] }.last ||
                (multi_tree_run?(raw) ? "elevate" : Master::Fix::WorkLane::DEFAULT.to_s)
