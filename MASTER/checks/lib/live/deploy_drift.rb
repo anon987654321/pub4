@@ -90,7 +90,8 @@ module Deploy
         return
       end
 
-      # ci_ok means CI passed but vps-deploy had not finished; ok is the only
+      # ci_ok, ci_attested and ci_skipped mean CI finished (ran here, passed on
+      # the operator's machine, or was skipped) but vps-deploy had not; ok is the only
       # value that means the app is actually running this SHA.
       result.fail("deploy_drift: #{app} last deploy status is #{status.inspect}, not \"ok\"") unless status == "ok"
       result.checked!

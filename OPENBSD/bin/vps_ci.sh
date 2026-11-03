@@ -121,8 +121,10 @@ if [[ ${VPS_DEPLOY_SKIP_TESTS:-} == 1 || ( -n $attested && $attested == $head ) 
     || { deploy_status "$app" "bundle install (suite skipped)" "failed"; exit 1; }
   if [[ -n $attested && $attested == $head ]]; then
     print "vps_ci: $app suite skipped - bin/ci passed on the operator's machine for $attested"
+    ci_stamp=ci_attested
   else
     print "vps_ci: WARNING - $app deployed with NO test run (VPS_DEPLOY_SKIP_TESTS=1, break-glass) on $head"
+    ci_stamp=ci_skipped
   fi
 else
   deploy_status "$app" "bundle install + bin/ci"
@@ -131,8 +133,12 @@ else
   ci_timeout=${PUB4_CI_TIMEOUT:-7200}
   doas /usr/local/sbin/pub4-admin ci-run "$app" "$ci_timeout" \
     || { deploy_status "$app" "bundle install + bin/ci" "failed"; exit 1; }
+  ci_stamp=ci_ok
 fi
 
 sha=$(git -C "$repo" rev-parse --short HEAD 2>/dev/null || echo unknown)
-doas /usr/local/sbin/pub4-admin stamp "$app" "$sha" ci_ok
+# The stamp says how this commit was tested: ci_ok (the suite ran here),
+# ci_attested (it passed on the operator's machine) or ci_skipped (break-glass,
+# no suite anywhere). It said ci_ok for all three.
+doas /usr/local/sbin/pub4-admin stamp "$app" "$sha" "$ci_stamp"
 deploy_status "$app" "done" "done"

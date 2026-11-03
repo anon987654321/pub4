@@ -367,6 +367,15 @@ class VpsDeployContractTest < Minitest::Test
     assert_includes CI_SOURCE, %q{doas /usr/local/sbin/pub4-admin ci-run "$app" "$ci_timeout"}
   end
 
+  # The CI stamp says how the commit was tested; it said ci_ok even when the
+  # break-glass had skipped every suite.
+  def test_the_ci_stamp_names_how_the_commit_was_tested
+    %w[ci_stamp=ci_ok ci_stamp=ci_attested ci_stamp=ci_skipped].each { |line| assert_includes CI_SOURCE, line }
+    assert_includes CI_SOURCE, %q{doas /usr/local/sbin/pub4-admin stamp "$app" "$sha" "$ci_stamp"}
+    admin = File.read(File.join(ROOT, "OPENBSD", "usr", "local", "sbin", "pub4-admin"), encoding: "UTF-8")
+    assert_includes admin, "%w[ok failed ci_ok ci_attested ci_skipped].include?(status)"
+  end
+
   def test_it_runs_as_root_and_keeps_git_as_the_deploy_user
     guard = SOURCE[/if \[\[ \$\(id -u\) -ne 0 \]\]; then.*?^fi$/m]
 

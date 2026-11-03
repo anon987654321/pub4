@@ -128,7 +128,7 @@ module Pub4Admin
   def write_stamp(app, sha, status)
     raise "unknown app: #{app}" unless APPS.include?(app)
     raise "invalid commit id" unless sha.match?(/\A(?:[0-9a-f]{7,40}|unknown)\z/i)
-    raise "invalid deploy status" unless %w[ok failed ci_ok].include?(status)
+    raise "invalid deploy status" unless %w[ok failed ci_ok ci_attested ci_skipped].include?(status)
 
     if File.symlink?(STAMP_DIR)
       raise "#{STAMP_DIR} is a symlink; refusing root write"
