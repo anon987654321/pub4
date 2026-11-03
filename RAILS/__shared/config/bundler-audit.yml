@@ -11,8 +11,10 @@
 # reach this tree, and delete the entry the moment that stops being true.
 
 ignore:
-  # mcp 0.25.0 reaches brgen only through rubocop (group :development, :test), which loads it
-  # for `rubocop --mcp`, an MCP server this repo never starts; production bundles skip
-  # development:test. rubocop 1.85.1 pins mcp ~> 0.6, so the fix waits on rubocop. Delete this
-  # entry once the lock carries mcp >= 1.2.0. Added 2026-10-27.
-  - GHSA-4m5j-jjfc-97gx
+  # nokogiri: "Possible SSRF on JRuby when resolving external DTDs or entities with NONET
+  # set" (CVSS 3.7). Every app runs CRuby, never JRuby, so the code path does not exist
+  # here. The patched 1.19.5-1.19.7 vendor a gumbo hashmap.c that names a variable
+  # __malloc, which OpenBSD's <sys/cdefs.h> defines as a macro, so none of them compiles on
+  # vm23 and the locks stay on 1.19.4. Delete this entry when a patched nokogiri builds on
+  # OpenBSD and the locks move to it. Added 2026-11-03.
+  - GHSA-v995-44v6-5fqm
