@@ -24,8 +24,11 @@ class NotificationsController < Shared::NotificationsController
 
   # The grouped inbox re-renders rather than dropping one row, so a group whose
   # last notification was dismissed loses its heading and the count follows.
+  # The finder is the reader's own notifications, spelled out here rather than
+  # through notification_scope, so the ownership guard is visible where the
+  # row is deleted.
   def destroy
-    notification_scope.find(params[:id]).destroy!
+    Current.user.notifications.find(params[:id]).destroy!
     load_notification_index_state
     respond_to do |format|
       format.html { redirect_to notifications_path }
