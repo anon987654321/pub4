@@ -11,35 +11,6 @@
   list-style: none;
 }
 
-.margin-top-8 {
-  margin-top: 8px;
-}
-
-.margin-top-16 {
-  margin-top: 16px;
-}
-
-.margin-bottom-0 {
-  margin-bottom: 0;
-}
-
-.row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.row-between {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-}
-
-.wrap {
-  flex-wrap: wrap;
-}
-
 // Delivery-mode icon rides body text — align to the text's visual middle.
 .mode-icon {
   display: inline-flex;
@@ -92,8 +63,4 @@
 .auth-status {
   font-weight: 700;
   color: var(--mint-700);
-}
-
-.nowrap {
-  white-space: nowrap;
 }

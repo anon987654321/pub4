@@ -3,7 +3,7 @@
 <%# MenuController#show provides @kitchen, @categories (available_items with
     their options) and @last_order. This view only presents. %>
 
-<section class="hero star-pattern">
+<section class="hero">
   <%= image_tag "/icon.svg", alt: "", class: "hero-mark" %>
   <p class="hero-greeting" aria-hidden="true"><%= t("app.greeting") %></p>
   <h1 class="hero-title"><%= t("app.tagline") %></h1>
@@ -13,15 +13,15 @@
       <%= number_with_precision(@kitchen.rating, precision: 1) %> · <%= @kitchen.opening_hours %>
     </p>
   <% end %>
-  <p class="hero-meta margin-bottom-0"><%= t("menu.zone_note") %></p>
+  <%= tag.p t("menu.zone_note"), class: "hero-meta" %>
 </section>
 
 <% if @last_order && @last_order.order_items.any? %>
   <section class="reorder-card card">
     <div class="reorder-copy">
       <h2 class="reorder-title"><%= t("menu.reorder") %></h2>
-      <p class="margin-bottom-0"><%= t("menu.last_order") %></p>
-      <ul class="fact-list margin-bottom-0">
+      <%= tag.p t("menu.last_order") %>
+      <ul class="fact-list">
         <% @last_order.order_items.each do |line| %>
           <li><%= line.quantity %>× <%= line.name %></li>
         <% end %>
@@ -30,7 +30,7 @@
     <% first_line = @last_order.order_items.first %>
     <%= link_to t("menu.reorder_cta"),
           (first_line.menu_item_id ? menu_item_path(first_line.menu_item_id) : root_path),
-          class: "button button-gold" %>
+          class: "button button-reorder" %>
   </section>
 <% end %>
 

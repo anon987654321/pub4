@@ -6,16 +6,16 @@
 
 <div class="vipps-mock">
   <header class="vipps-head">
-    <%= image_tag "vipps/vipps-wordmark.svg", alt: "", class: "vipps-wordmark-large" %>
+    <%= image_tag "vipps/vipps-wordmark.svg", alt: "", class: "vipps-wordmark" %>
     <p class="vipps-merchant"><%= t("vipps.merchant") %></p>
     <p class="vipps-amount"><%= money(order.total_ore) %></p>
-    <p class="ink-soft margin-bottom-0"><%= t("vipps.amount") %> · #<%= order.id %></p>
+    <%= tag.p "#{t("vipps.amount")} · ##{order.id}", class: "vipps-reference" %>
   </header>
 
   <%= form_with url: "/vipps/mock/approve", method: :patch,
         html: { class: "vipps-form" }, data: { controller: "vipps-mock" } do %>
     <%= hidden_field_tag :token, order.tracking_token %>
-    <button type="button" class="button-vipps button-block button-large"
+    <button type="button" class="button-vipps"
             data-action="vipps-mock#approve">
       <%= t("vipps.approve") %>
       <span class="vipps-heart" aria-hidden="true"><svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg></span>

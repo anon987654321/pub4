@@ -58,11 +58,11 @@
   background: var(--mint-500);
 }
 
-.step-current {
+.step[aria-current="step"] {
   color: var(--ink);
 }
 
-.step-current .step-star {
+.step[aria-current="step"] .step-star {
   background: var(--gold);
 }
 
@@ -70,7 +70,7 @@
   font-weight: 600;
 }
 
-.step-current .step-label {
+.step[aria-current="step"] .step-label {
   font-weight: 700;
 }
 
@@ -94,17 +94,11 @@
 }
 
 // Tip chips (after delivery only).
-.tip-row {
+.tip-choices {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
   margin: 8px 0 4px;
-}
-
-.tip-row .button {
-  border-radius: var(--radius-pill);
-  padding: 4px 16px;
-  font-size: var(--text-meta);
 }
 
 .thanks-line {
@@ -146,15 +140,23 @@
   margin-inline-end: 8px;
 }
 
+.order-head p {
+  margin: 0;
+}
+
 .order-lines-list {
   list-style: none;
 }
 
+// Emoji | name and options | price.
 .order-line {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 8px;
   padding: 8px 0;
   border-top: 1px solid var(--line);
   font-size: var(--text-meta);
-  gap: 8px;
 }
 
 .order-line .line-options {
@@ -162,6 +164,7 @@
 }
 
 .order-delivery {
+  margin-top: 16px;
   border-top: 1px solid var(--line);
   padding-top: 8px;
   font-size: var(--text-meta);

@@ -6,12 +6,12 @@
     advance turbo-stream can replace or remove them. %>
 <% orders_by_state = @orders_by_state.presence || {} %>
 
-<header class="board-head star-pattern">
-  <h1 class="margin-bottom-0"><%= t("staff.title") %></h1>
+<header class="board-head">
+  <%= tag.h1 t("staff.title") %>
 </header>
 
 <% if orders_by_state.values.all?(&:empty?) %>
-  <p class="board-empty ink-soft"><%= t("staff.empty") %></p>
+  <%= tag.p t("staff.empty"), class: "board-empty" %>
 <% end %>
 
 <div class="board-grid">

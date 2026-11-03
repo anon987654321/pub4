@@ -68,6 +68,11 @@ ol {
   padding: 0;
 }
 
+// A heading group's subtitle hugs its heading.
+hgroup > p {
+  margin: 0;
+}
+
 button {
   cursor: pointer;
 }
@@ -141,12 +146,34 @@ main.shell {
   gap: 8px;
 }
 
+// A second section inside one card opens with the same 16px as a new card.
+.section-title:not(:first-child) {
+  margin-top: 16px;
+}
+
+// Page flow: consecutive cards and greeting surfaces sit 16px apart, and so
+// does the closing row of page actions (track, back, log in).
+main.shell > :is(.card, .hero, .loyalty-card) + .card {
+  margin-top: 16px;
+}
+
+.page-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 16px;
+}
+
 .app-footer {
   margin-top: 32px;
   padding: 16px 4px 8px;
   border-top: 1px solid var(--line);
   text-align: center;
   font-size: var(--text-meta);
+}
+
+.app-footer p {
+  margin: 0;
 }
 
 .footer-facts {
@@ -199,6 +226,7 @@ body.act-item main.shell {
 }
 
 .toast-body {
+  margin: 0;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;

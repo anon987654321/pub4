@@ -16,20 +16,20 @@
 <% badges = item.badges.to_s.split(",").map(&:strip).reject(&:blank?) & badge_labels.keys %>
 
 <article class="sheet" data-turbo-frame="_top">
-  <header class="sheet-head star-pattern">
+  <header class="sheet-head">
     <% if (photo = food_photo(item)) %>
       <%= image_tag photo, alt: "", class: "sheet-photo" %>
     <% else %>
       <span class="sheet-emoji" aria-hidden="true"><%= item.emoji %></span>
     <% end %>
-    <h1 class="sheet-name"><%= item.name %></h1>
-    <% if item.name_en.present? %>
-      <p class="ink-soft margin-bottom-0"><%= item.name_en %></p>
-    <% end %>
+    <hgroup>
+      <%= tag.h1 item.name, class: "sheet-name" %>
+      <%= tag.p item.name_en if item.name_en.present? %>
+    </hgroup>
     <p class="sheet-facts">
       <%= tag.span t("menu.origin_chip", origin: origin_label(item.origin)), class: "badge" if item.origin.present? %>
       <% if item.weight_g.to_i.positive? %>
-        <%= tag.span "#{item.weight_g} g", class: "badge badge-plain" %>
+        <%= tag.span "#{item.weight_g} g", class: "badge badge-weight" %>
       <% end %>
       <% if item.heat.to_i.positive? %>
         <span class="heat heat-<%= item.heat.to_i %>">
@@ -41,7 +41,7 @@
         </span>
       <% end %>
       <% badges.each do |badge| %>
-        <%= tag.span badge_labels[badge], class: "badge badge-gold" %>
+        <%= tag.span badge_labels[badge], class: "badge badge-#{badge}" %>
       <% end %>
     </p>
   </header>
@@ -115,7 +115,7 @@
 
     <footer class="sheet-footer">
       <%= f.submit t("menu.add_with_price", price: money(item.price_ore)),
-            class: "button button-primary button-block button-large",
+            class: "button button-primary",
             data: { item_sheet_target: "submit" } %>
     </footer>
   <% end %>

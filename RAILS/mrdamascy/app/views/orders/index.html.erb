@@ -10,9 +10,10 @@
       <article class="card order-card">
         <header class="order-card-head">
           <%= tag.span t("orders.states.#{order.state}"), class: "state-chip state-#{order.state}" %>
-          <span class="ink-soft">#<%= order.id %></span>
+          <%= tag.span "##{order.id}" %>
           <% if order.placed_at.present? %>
-            <span class="ink-soft"><%= t("orders.placed_at", time: order.placed_at.strftime("%d.%m %H:%M")) %></span>
+            <%= tag.time t("orders.placed_at", when: order.placed_at.strftime("%d.%m %H:%M")),
+                  datetime: order.placed_at.iso8601 %>
           <% end %>
         </header>
 
@@ -25,12 +26,12 @@
         <footer class="order-card-foot">
           <strong><%= money(order.total_ore) %></strong>
           <% if order.payment_steps.to_i == 3 %>
-            <span class="badge"><%= t("orders.paid_steps") %></span>
+            <%= tag.span t("orders.paid_steps", steps: order.payment_steps), class: "badge badge-paid-steps" %>
           <% end %>
           <span class="order-actions">
-            <%= link_to t("orders.view"), order_path(order), class: "button button-small" %>
+            <%= link_to t("orders.view"), order_path(order), class: "button" %>
             <% if order.tracking_token.present? %>
-              <%= link_to t("orders.track"), track_path(order.tracking_token), class: "button button-primary button-small" %>
+              <%= link_to t("orders.track"), track_path(order.tracking_token), class: "button button-primary" %>
             <% end %>
           </span>
         </footer>

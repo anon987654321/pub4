@@ -1,9 +1,10 @@
 // Buttons — flat, generous, mint-first. Vipps orange is reserved for payment
 // actions so the color always means "paying". Fitts law: every control is a
-// 44px target; primary actions (button-large/button-block) are 48px.
+// 44px target; the action a card or form exists for is 48px.
 // The <button> element is styled directly; a link that acts as a button
 // takes the .button class. :where keeps specificity at zero so any class wins.
-// Unmarked buttons are outlined (secondary); filled variants below.
+// Unmarked buttons are outlined (secondary); filled variants below. Size
+// comes from where a button sits (see the end of this file), never a class.
 :where(button, .button) {
   display: inline-flex;
   align-items: center;
@@ -66,31 +67,19 @@
   display: block;
 }
 
-.button-gold {
+// Hand-offs wear the gold: order again, handed over at the door, call a courier.
+.button-reorder,
+.button-deliver,
+.button-dispatch {
   border-color: transparent;
   background: var(--gold);
   color: var(--ink);
 }
 
-.button-gold:hover {
+.button-reorder:hover,
+.button-deliver:hover,
+.button-dispatch:hover {
   background: var(--gold-deep);
-}
-
-.button-small {
-  padding: 4px 12px;
-  font-size: var(--text-meta);
-}
-
-// Primary actions: 48px (Fitts primary_action_min_px).
-.button-large {
-  min-height: 48px;
-  padding: 12px 20px;
-  font-size: var(--text-body);
-}
-
-.button-block {
-  width: 100%;
-  min-height: 48px;
 }
 
 // Vipps mock approval — the state change itself is the feedback (disabled
@@ -110,4 +99,37 @@
 
 .button-stripe:hover {
   background: var(--stripe-button-hover);
+}
+
+// The action a card or form exists for spans the column at 48px (Fitts
+// primary_action_min_px). button_to forms are excluded: their buttons sit
+// inline in rows (quantity, tips, courier stops) unless a context below says so.
+form:not(.button_to) > button[type="submit"],
+.vipps-form > button,
+.page-actions > .button,
+.cart-summary > .button,
+.vipps-login > .button,
+.loyalty-rules-card > .button,
+.auth-card > .button,
+.auth-card > .button_to > button,
+.board-card .button_to > button,
+.sheet-footer .button {
+  width: 100%;
+  min-height: 48px;
+}
+
+// Paying and signing in are the screen's decisive step: roomier still.
+.cart-summary > .button-vipps,
+.checkout-form > .button-vipps,
+.auth-card > .button-vipps,
+.vipps-form > button,
+.sheet-footer .button {
+  padding: 12px 20px;
+}
+
+// Actions inside a list entry (menu card, order card) stay compact.
+.item-add,
+.order-actions .button {
+  padding: 4px 12px;
+  font-size: var(--text-meta);
 }

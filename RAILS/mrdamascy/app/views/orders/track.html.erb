@@ -16,7 +16,8 @@
      data-track-eta-template-value="<%= t("orders.eta") %>">
 
   <h1 class="page-title"><%= t("orders.track_title") %></h1>
-  <p class="ink-soft">#<%= order.id %> · <%= order.delivery_mode == "pickup" ? t("checkout.mode_pickup") : t("checkout.mode_delivery") %></p>
+  <% mode_key = order.delivery_mode == "pickup" ? "checkout.mode_pickup" : "checkout.mode_delivery" %>
+  <%= tag.p "##{order.id} · #{t(mode_key)}" %>
 
   <% if order.state == "cancelled" %>
     <p class="track-cancelled"><%= t("orders.states.cancelled") %></p>
@@ -29,11 +30,11 @@
 
     <ol class="timeline" data-track-target="steps">
       <% steps.each_with_index do |step, index| %>
-        <li class="step<%= " step-done" if current_index && index <= current_index %><%= " step-current" if current_index == index %>"
-            data-state="<%= step %>">
-          <span class="step-star eight-point-star" aria-hidden="true"></span>
-          <span class="step-label"><%= t("orders.states.#{step}") %></span>
-        </li>
+        <%= tag.li class: ["step", ("step-done" if current_index && index <= current_index)],
+              aria: { current: ("step" if current_index == index) }, data: { state: step } do %>
+          <span class="step-star" aria-hidden="true"></span>
+          <%= tag.span t("orders.states.#{step}"), class: "step-label" %>
+        <% end %>
       <% end %>
     </ol>
 
@@ -44,9 +45,9 @@
 </section>
 
 <% if order.state == "delivered" %>
-  <section class="card margin-top-16">
+  <section class="card">
     <h2 class="section-title"><%= t("orders.tip_title") %></h2>
-    <div class="tip-row">
+    <div class="tip-choices">
       <%= button_to t("orders.tip_none"), order_tip_path(order.tracking_token),
             method: :post, params: { tip_ore: 0 } %>
       <%= button_to t("orders.tip_20"), order_tip_path(order.tracking_token),
@@ -55,7 +56,7 @@
             method: :post, params: { tip_ore: 4000 } %>
     </div>
 
-    <h2 class="section-title margin-top-16"><%= t("orders.review_title") %></h2>
+    <%= tag.h2 t("orders.review_title"), class: "section-title" %>
     <%= form_with url: order_review_path(order.id), class: "review-form" do %>
       <div class="field">
         <%= label_tag :rating, t("orders.review_stars") %>
@@ -67,9 +68,9 @@
         <%= label_tag :body, t("orders.review_body") %>
         <%= text_area_tag :body, nil, placeholder: t("orders.review_body_placeholder") %>
       </div>
-      <button type="submit" class="button-primary button-block"><%= t("orders.review_submit") %></button>
+      <%= tag.button t("orders.review_submit"), type: "submit", class: "button-primary" %>
     <% end %>
 
-    <p class="thanks-line margin-bottom-0"><%= t("orders.thanks") %></p>
+    <%= tag.p t("orders.thanks"), class: "thanks-line" %>
   </section>
 <% end %>

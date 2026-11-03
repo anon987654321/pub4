@@ -1,4 +1,4 @@
-// Sahtein-kortet — star-pattern card with 10 stampable 8-point stars.
+// Sahtein-kortet — Damascus-motif card with 10 stampable 8-point stars.
 .loyalty-card {
   border: 0;
   border-radius: var(--radius);
@@ -39,7 +39,7 @@
   transition: background-color var(--transition-normal) var(--ease-out);
 }
 
-.loyalty-star-filled {
+.loyalty-star-stamped {
   background: var(--gold);
 }
 
@@ -69,4 +69,9 @@
 
 .loyalty-rules-card .button {
   margin-top: 8px;
+}
+
+// Guests see one line and the way in.
+.loyalty-login p {
+  margin: 0 0 8px;
 }

@@ -36,7 +36,7 @@
   font-weight: 600;
 }
 
-.tab-active {
+.tab[aria-current="page"] {
   background: var(--mint-100);
   color: var(--mint-700);
 }

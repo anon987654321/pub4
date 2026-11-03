@@ -1,4 +1,5 @@
-// Menu: hero, sticky category chips, item cards, item sheet.
+// Menu: hero, sticky category chips, item cards. The item sheet lives in
+// _item_sheet.scss.
 // Landing hero follows MASTER reading_patterns: z-pattern, primary area
 // top-left — left-aligned, not centered.
 .hero {
@@ -32,6 +33,11 @@
   margin-bottom: 2px;
 }
 
+// Address and hours each stay on one line.
+.hero-meta span {
+  white-space: nowrap;
+}
+
 .hero-rating {
   display: inline-flex;
   color: var(--gold-deep);
@@ -39,7 +45,6 @@
 
 // "Yalla igjen" reorder card.
 .reorder-card {
-  margin-top: 16px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -184,166 +189,13 @@
   color: var(--ink-soft);
 }
 
-// Item sheet — left-aligned like the hero (z-pattern, max 3 centered lines).
-.sheet-head {
-  border: 0;
-  border-radius: var(--radius);
-  padding: 24px 20px;
-  margin-bottom: 16px;
-}
-
-.sheet-emoji {
-  display: block;
-  font-size: var(--text-display-xl);
-  line-height: 1;
-  margin-bottom: 8px;
-}
-
-.sheet-facts {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 8px;
-  margin: 8px 0 0;
-}
-
-.sheet-description {
-  font-size: var(--text-body);
-}
-
-.origin-story {
-  border-inline-start: 3px solid var(--mint-300);
-  padding: 4px 0 4px 12px;
-  color: var(--ink-soft);
-  font-size: var(--text-meta);
-  font-style: italic;
-}
-
-.option-group legend {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-weight: 700;
-  color: var(--ink);
-  margin-bottom: 8px;
-}
-
-.option-chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.option-chip {
-  display: inline-flex;
-  align-items: center;
-  min-height: var(--tap-min);
-  gap: 8px;
-  padding: 8px 16px;
-  border-radius: var(--radius-pill);
-  background: var(--surface-elevated);
-  border: 1px solid var(--line);
-  font-size: var(--text-meta);
-  cursor: pointer;
-}
-
-.option-chip input[type="checkbox"],
-.option-chip input[type="radio"] {
-  accent-color: var(--mint-600);
-  margin: 0;
-}
-
-.option-chip:has(input:checked) {
-  background: var(--mint-100);
-  border-color: var(--mint-300);
-}
-
-.option-chip input:disabled {
-  opacity: 0.4;
-}
-
-.option-price {
-  color: var(--ink-soft);
-  font-size: var(--text-meta);
-}
-
-// Quantity stepper.
-.quantity-stepper {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.quantity-button {
-  flex: none;
-  width: 44px;
-  height: 44px;
-  border: 1px solid var(--line);
-  border-radius: var(--radius-sm);
-  background: var(--surface-elevated);
-  font-size: var(--text-title);
-  font-weight: 700;
-  line-height: 1;
-  padding: 0;
-}
-
-.quantity-input {
-  width: 56px;
-  text-align: center;
-  font-weight: 700;
-  border: 1px solid var(--line);
-  border-radius: var(--radius-sm);
-  padding: 12px 4px;
-}
-
-.sheet-total {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 12px 2px;
-  font-size: var(--text-body);
-  font-weight: 700;
-}
-
-// Sticky pay bar for the sheet — flat chrome above the tab bar: solid
-// surface + 1px border, no gradient (pixel_perfection).
-.sheet-footer {
-  position: fixed;
-  inset-inline: 0;
-  bottom: calc(var(--tab-bar-height) + env(safe-area-inset-bottom, 0px));
-  z-index: 35;
-  display: flex;
-  justify-content: center;
-  padding: 12px 16px 16px;
-  background: var(--paper);
-  border-top: 1px solid var(--line);
-  pointer-events: none;
-}
-
-.sheet-footer .button {
-  pointer-events: auto;
-  width: 100%;
-  max-width: 448px;
-}
-
-// Food photos — same footprint as the emoji tile on cards; the sheet header
-// gets a rounded hero photo. Flat rules only (no shadow/blur/glow).
+// Food photos — same footprint as the emoji tile. Flat rules only (no
+// shadow/blur/glow).
 .item-photo {
   flex: none;
   width: 56px;
   height: 56px;
   border-radius: var(--radius-sm);
   object-fit: cover;
-  background: var(--mint-100);
-}
-
-.sheet-photo {
-  display: block;
-  width: 100%;
-  max-width: 320px;
-  aspect-ratio: 1 / 1;
-  object-fit: cover;
-  border-radius: var(--radius);
-  margin: 0 auto 12px;
   background: var(--mint-100);
 }

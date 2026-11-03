@@ -12,6 +12,10 @@
   margin-bottom: 4px;
 }
 
+.vipps-login strong + p {
+  margin: 0;
+}
+
 .vipps-login .button {
   margin-top: 12px;
 }
@@ -33,18 +37,19 @@
   }
 }
 
-.pay-row {
+.payment-option {
   display: flex;
   align-items: center;
   gap: 12px;
   margin: 16px 0;
 }
 
-.pay-row-text {
+.payment-option-text {
   flex: 1;
+  margin: 0;
 }
 
-.pay-row strong {
+.payment-option strong {
   display: block;
 }
 
@@ -72,10 +77,11 @@
   margin: 12px 0;
 }
 
-.totals-row {
+.checkout-subtotal {
   display: flex;
   justify-content: space-between;
   gap: 12px;
+  margin: 0;
   padding: 4px 0;
 }
 
@@ -84,8 +90,8 @@
   font-weight: 600;
 }
 
-.totals-row-strong,
-.totals-strong {
+// The grand total closes the list.
+.totals-sum {
   font-size: var(--text-title);
   font-weight: 700;
   border-top: 1px solid var(--line);
@@ -140,7 +146,7 @@
   margin-bottom: 16px;
 }
 
-.vipps-wordmark-large {
+.vipps-head .vipps-wordmark {
   display: block;
   height: 64px;
   width: auto;
@@ -153,9 +159,16 @@
   margin: 4px 0;
 }
 
-// Mock login header variant — verify line instead of the amount.
-.vipps-amount-small {
+// Mock login header — a verify line in place of the amount.
+.vipps-verify {
   font-size: var(--text-title);
+  font-weight: 700;
+  margin: 4px 0;
+}
+
+// "Beløp · #id" under the amount.
+.vipps-reference {
+  margin: 0;
 }
 
 .vipps-merchant {
@@ -176,7 +189,7 @@
   margin-top: 12px;
 }
 
-// Stripe wordmark chips — the pay-row variant mirrors .vipps-wordmark; the
+// Stripe wordmark chips — the payment-option variant mirrors .vipps-wordmark; the
 // mock page reuses the .vipps-mock chrome with a Stripe tone.
 .stripe-wordmark {
   flex: none;
@@ -188,11 +201,11 @@
   padding: 4px 12px;
 }
 
-.stripe-wordmark-large {
+.vipps-head .stripe-wordmark {
   display: block;
+  border: 0;
+  padding: 0;
   font-size: var(--text-display);
-  font-weight: 700;
-  color: var(--stripe-ink);
   margin-bottom: 12px;
 }
 
@@ -203,10 +216,6 @@
 }
 
 .stripe-lock svg {
-  display: block;
-}
-
-.pay-row-text .ink-soft {
   display: block;
 }
 

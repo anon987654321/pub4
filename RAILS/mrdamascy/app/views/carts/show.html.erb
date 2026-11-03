@@ -34,13 +34,13 @@
                   params: { quantity: line.quantity.to_i + 1 },
                   class: "quantity-button", aria: { label: t("cart.increase") } %>
             <%= button_to t("cart.remove"), remove_item_cart_path(line.id), method: :delete,
-                  class: "link-danger" %>
+                  class: "line-remove" %>
           </div>
         </div>
         <div class="line-side">
           <strong class="line-sum"><%= money(line.line_total_ore) %></strong>
           <% if line.quantity.to_i > 1 %>
-            <span class="ink-soft"><%= money(line.unit_price_ore) %> × <%= line.quantity %></span>
+            <%= tag.span "#{money(line.unit_price_ore)} × #{line.quantity}" %>
           <% end %>
         </div>
       </article>
@@ -48,25 +48,25 @@
   </div>
 
   <section class="cart-summary card">
-    <div class="total-row">
+    <div class="cart-subtotal">
       <span><%= t("cart.subtotal") %></span>
       <strong><%= money(@cart.subtotal_ore) %></strong>
     </div>
 
     <p class="promo-hint">
-      <span class="badge badge-gold" aria-hidden="true">SAHTEIN10</span>
+      <%= tag.span "SAHTEIN10", class: "badge badge-promo", aria: { hidden: true } %>
       <%= t("cart.promo_hint") %>
     </p>
 
     <nav class="mode-toggle" aria-label="<%= t("checkout.mode") %>">
       <%= link_to t("checkout.mode_delivery"), checkout_path(mode: "delivery"),
-            class: class_names("chip", "chip-active": @cart.delivery_mode != "pickup") %>
+            class: "chip", aria: { current: (@cart.delivery_mode != "pickup").presence } %>
       <%= link_to t("checkout.mode_pickup"), checkout_path(mode: "pickup"),
-            class: class_names("chip", "chip-active": @cart.delivery_mode == "pickup") %>
+            class: "chip", aria: { current: (@cart.delivery_mode == "pickup").presence } %>
     </nav>
 
-    <%= link_to t("cart.vipps_cta"), checkout_path, class: "button button-vipps button-block button-large" %>
-    <p class="cart-action-note margin-bottom-0"><%= t("checkout.steps_note") %></p>
+    <%= link_to t("cart.vipps_cta"), checkout_path, class: "button button-vipps" %>
+    <%= tag.p t("checkout.steps_note"), class: "cart-action-note" %>
   </section>
 <% else %>
   <%= render "shared/empty",

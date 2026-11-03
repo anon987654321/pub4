@@ -6,7 +6,7 @@
        data-controller="toast"
        role="status"
        aria-live="polite">
-    <p class="toast-body margin-bottom-0"><%= message %></p>
+    <%= tag.p message, class: "toast-body" %>
     <button type="button" class="toast-close" data-action="toast#dismiss" aria-label="<%= t("flash.dismiss") %>">×</button>
   </div>
 <% end %>

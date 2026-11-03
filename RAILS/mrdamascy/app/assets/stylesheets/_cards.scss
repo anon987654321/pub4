@@ -7,6 +7,13 @@
   padding: 16px;
 }
 
+// A surface's padding owns its bottom edge: the last block inside sits flush.
+.card > :last-child,
+.hero > :last-child,
+.loyalty-card > :last-child {
+  margin-bottom: 0;
+}
+
 .chip {
   display: inline-flex;
   align-items: center;
@@ -26,7 +33,8 @@ a.chip:hover {
   background: var(--mint-200);
 }
 
-.chip-active {
+// The selected choice in a set of chip links (aria-current).
+.chip[aria-current] {
   background: var(--mint-700);
   color: var(--paper);
 }
@@ -42,19 +50,26 @@ a.chip:hover {
   color: var(--mint-700);
 }
 
-.badge-plain {
+// Quiet facts: dish weight, payment state, delivery mode on the board.
+.badge-weight,
+.badge-payment,
+.badge-mode {
   background: var(--surface-elevated);
   color: var(--ink-soft);
 }
 
-.badge-gold {
+// Gold highlights: the promo code, the last-used payment, a three-step
+// payment, and the menu's own item badges.
+.badge-promo,
+.badge-last-used,
+.badge-paid-steps,
+.badge-signature,
+.badge-veg,
+.badge-sharing,
+.badge-secret,
+.badge-deal {
   background: var(--gold-100);
   color: var(--gold-ink);
-}
-
-.badge-pom {
-  background: var(--pom-100);
-  color: var(--pom);
 }
 
 // State chips — placed mint, confirmed gold, preparing gold-deep, ready

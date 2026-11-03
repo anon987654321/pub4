@@ -73,7 +73,7 @@
 }
 
 // Courier runs.
-.run-row {
+.run-stop {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -82,7 +82,7 @@
   padding: 12px 0;
 }
 
-.run-row:first-of-type {
+.run-stop:first-of-type {
   border-top: 0;
 }
 

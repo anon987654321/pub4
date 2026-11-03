@@ -63,7 +63,7 @@
 }
 
 // Fitts: the remove action is a 44px target too.
-.link-danger {
+.line-remove {
   background: none;
   border: 0;
   padding: 12px 8px;
@@ -76,7 +76,7 @@
   margin-top: 16px;
 }
 
-.total-row {
+.cart-subtotal {
   display: flex;
   justify-content: space-between;
   font-size: var(--text-body);

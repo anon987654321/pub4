@@ -8,14 +8,14 @@
 <section class="card">
   <h2 class="section-title"><%= t("courier.ready_title") %></h2>
   <% if @ready_orders.empty? %>
-    <p class="ink-soft margin-bottom-0"><%= t("courier.empty") %></p>
+    <%= tag.p t("courier.empty") %>
   <% end %>
   <% @ready_orders.each do |order| %>
-    <article class="run-row">
+    <article class="run-stop">
       <div class="run-info">
         <strong>#<%= order.id %></strong>
-        <p class="run-address margin-bottom-0"><%= order.address %> · <%= order.postcode %></p>
-        <ul class="fact-list run-meta margin-bottom-0">
+        <%= tag.p "#{order.address} · #{order.postcode}", class: "run-address" %>
+        <ul class="fact-list run-meta">
           <li><%= money(order.total_ore) %></li>
           <% order.order_items.each do |line| %>
             <li><%= line.quantity %>× <%= line.name %></li>
@@ -28,17 +28,17 @@
   <% end %>
 </section>
 
-<section class="card margin-top-16">
+<section class="card">
   <h2 class="section-title"><%= t("courier.onway_title") %></h2>
   <% if @on_the_way_orders.empty? %>
-    <p class="ink-soft margin-bottom-0"><%= t("courier.empty") %></p>
+    <%= tag.p t("courier.empty") %>
   <% end %>
   <% @on_the_way_orders.each do |order| %>
-    <article class="run-row">
+    <article class="run-stop">
       <div class="run-info">
         <strong>#<%= order.id %></strong>
-        <p class="run-address margin-bottom-0"><%= order.address %> · <%= order.postcode %></p>
-        <ul class="fact-list run-meta margin-bottom-0">
+        <%= tag.p "#{order.address} · #{order.postcode}", class: "run-address" %>
+        <ul class="fact-list run-meta">
           <li><%= money(order.total_ore) %></li>
           <% order.order_items.each do |line| %>
             <li><%= line.quantity %>× <%= line.name %></li>
@@ -46,7 +46,7 @@
         </ul>
       </div>
       <%= button_to t("courier.deliver"), courier_deliver_order_path(order),
-            method: :patch, class: "button-gold" %>
+            method: :patch, class: "button-deliver" %>
     </article>
   <% end %>
 </section>

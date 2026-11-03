@@ -84,15 +84,21 @@
 }
 
 // Damascus 8-point star motif — two interleaved squares as a faint mint tile.
-// Subtle by design (~6% visible): heroes, loyalty card, staff board header.
-.star-pattern {
+// Subtle by design (~6% visible): the surfaces that greet — heroes, the item
+// sheet head, the loyalty card, the staff board header.
+.hero,
+.sheet-head,
+.loyalty-card,
+.board-head {
   background-color: var(--surface-elevated);
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='84' height='84' viewBox='0 0 84 84'%3E%3Cg fill='none' stroke='%23C9EDDD' stroke-opacity='.4' stroke-width='1'%3E%3Crect x='26' y='26' width='32' height='32'/%3E%3Crect x='26' y='26' width='32' height='32' transform='rotate(45 42 42)'/%3E%3C/g%3E%3C/svg%3E");
   background-size: 84px 84px;
 }
 
 // Solid 8-point star (khatam) — timeline milestones, loyalty stamps, empties.
-.eight-point-star {
+.step-star,
+.loyalty-star,
+.empty-star {
   clip-path: polygon(
     50% 0%, 60% 26%, 85.4% 14.6%, 74% 40%, 100% 50%, 74% 60%, 85.4% 85.4%,
     60% 74%, 50% 100%, 40% 74%, 14.6% 85.4%, 26% 60%, 0% 50%, 26% 40%, 14.6% 14.6%, 40% 26%

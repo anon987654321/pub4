@@ -5,12 +5,18 @@
 
 <header class="order-head">
   <%= tag.span t("orders.states.#{order.state}"), class: "state-chip state-#{order.state}" %>
-  <%= tag.span t("orders.payment_state.#{order.payment_state}"), class: "badge badge-plain" if order.payment_state.present? %>
+  <% if order.payment_state.present? %>
+    <%= tag.span t("orders.payment_state.#{order.payment_state}"), class: "badge badge-payment" %>
+  <% end %>
   <% if order.payment_steps.to_i == 3 %>
-    <span class="badge badge-gold"><%= t("orders.paid_steps") %></span>
+    <%= tag.span t("orders.paid_steps", steps: order.payment_steps), class: "badge badge-paid-steps" %>
   <% end %>
   <% if order.placed_at.present? %>
-    <p class="ink-soft margin-bottom-0">#<%= order.id %> · <%= t("orders.placed_at", time: order.placed_at.strftime("%d.%m %H:%M")) %></p>
+    <p>
+      #<%= order.id %> ·
+      <%= tag.time t("orders.placed_at", when: order.placed_at.strftime("%d.%m %H:%M")),
+            datetime: order.placed_at.iso8601 %>
+    </p>
   <% end %>
 </header>
 
@@ -18,32 +24,29 @@
   <h2 class="section-title"><%= t("orders.items_title") %></h2>
   <ul class="order-lines-list">
   <% order.order_items.each do |line| %>
-    <li class="order-line row-between">
-      <span class="row">
-        <span aria-hidden="true"><%= line.emoji %></span>
-        <span>
-          <strong><%= line.quantity %>× <%= line.name %></strong>
-          <% if line.options_text.present? %>
-            <span class="ink-soft line-options"><%= line.options_text %></span>
-          <% end %>
-        </span>
+    <li class="order-line">
+      <%= tag.span line.emoji, aria: { hidden: true } %>
+      <span>
+        <%= tag.strong "#{line.quantity}× #{line.name}" %>
+        <%= tag.span line.options_text, class: "line-options" if line.options_text.present? %>
       </span>
-      <strong><%= money(line.line_total_ore) %></strong>
+      <%= tag.strong money(line.line_total_ore) %>
     </li>
   <% end %>
   </ul>
 
-  <p class="order-delivery margin-top-16 margin-bottom-0">
+  <p class="order-delivery">
     <% if order.delivery_mode == "pickup" %>
-      <%= render "shared/mode_icon", mode: "pickup" %> <%= t("orders.pickup_at") %>
+      <%= render "shared/mode_icon", mode: "pickup" %>
+      <%= t("orders.pickup_at", address: current_kitchen&.address) %>
     <% else %>
-      <%= render "shared/mode_icon", mode: "delivery" %> <%= t("orders.delivery_to") %>
-      <%= tag.span order.address, class: "nowrap" %> <%= tag.span order.postcode, class: "nowrap" %>
+      <%= render "shared/mode_icon", mode: "delivery" %>
+      <%= t("orders.delivery_to", address: [order.address, order.postcode].compact_blank.join(" ")) %>
     <% end %>
   </p>
 </section>
 
-<dl class="card totals margin-top-16">
+<dl class="card totals">
   <dt><%= t("orders.subtotal") %></dt>
   <dd><%= money(order.subtotal_ore) %></dd>
   <% if order.delivery_fee_ore.to_i.positive? && order.delivery_mode != "pickup" %>
@@ -58,11 +61,13 @@
     <dt><%= t("orders.tip_line") %></dt>
     <dd><%= money(order.tip_ore) %></dd>
   <% end %>
-  <dt class="totals-strong"><%= t("orders.total") %></dt>
-  <dd class="totals-strong"><%= money(order.total_ore) %></dd>
+  <%= tag.dt t("orders.total"), class: "totals-sum" %>
+  <%= tag.dd money(order.total_ore), class: "totals-sum" %>
 </dl>
 
-<% if order.tracking_token.present? %>
-  <%= link_to t("orders.track"), track_path(order.tracking_token), class: "button button-primary button-block margin-top-16" %>
+<%= tag.nav class: "page-actions", aria: { label: t("orders.title") } do %>
+  <% if order.tracking_token.present? %>
+    <%= link_to t("orders.track"), track_path(order.tracking_token), class: "button button-primary" %>
+  <% end %>
+  <%= link_to t("orders.back"), orders_path, class: "button" %>
 <% end %>
-<%= link_to t("orders.back"), orders_path, class: "button button-block margin-top-8" %>

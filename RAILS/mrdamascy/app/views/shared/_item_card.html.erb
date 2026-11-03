@@ -24,7 +24,7 @@
       <span class="item-facts">
         <%= tag.span t("menu.origin_chip", origin: origin_label(item.origin)), class: "badge" if item.origin.present? %>
         <% if item.weight_g.to_i.positive? %>
-          <%= tag.span "#{item.weight_g} g", class: "badge badge-plain" %>
+          <%= tag.span "#{item.weight_g} g", class: "badge badge-weight" %>
         <% end %>
         <% if item.heat.to_i.positive? %>
           <span class="heat heat-<%= item.heat.to_i %>">
@@ -39,7 +39,7 @@
       <% if badges.any? %>
         <span class="item-badges">
           <% badges.each do |badge| %>
-            <%= tag.span badge_labels[badge], class: "badge badge-gold" %>
+            <%= tag.span badge_labels[badge], class: "badge badge-#{badge}" %>
           <% end %>
         </span>
       <% end %>
@@ -49,10 +49,10 @@
   <span class="item-side">
     <span class="item-price"><%= money(item.price_ore) %></span>
     <% if needs_options %>
-      <%= link_to t("menu.customize"), menu_item_path(item), class: "button button-small item-add" %>
+      <%= link_to t("menu.customize"), menu_item_path(item), class: "button item-add" %>
     <% else %>
       <%= button_to add_item_cart_path, params: { menu_item_id: item.id, quantity: 1 },
-            class: "button-primary button-small item-add" do %>
+            class: "button-primary item-add" do %>
         <%= t("menu.quick_add") %>
       <% end %>
     <% end %>

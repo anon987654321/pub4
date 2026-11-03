@@ -7,19 +7,18 @@
 
 <section class="card auth-card">
   <h1 class="page-title"><%= t("auth.title") %></h1>
-  <p class="ink-soft"><%= t("auth.blurb") %></p>
+  <%= tag.p t("auth.blurb") %>
 
   <% if current_user %>
     <p class="auth-status">
       <%= t("auth.logged_in_as", name: current_user.name.presence || current_user.phone) %>
     </p>
-    <%= button_to t("auth.logout"), session_path, method: :delete, class: "button-block" %>
+    <%= button_to t("auth.logout"), session_path, method: :delete %>
   <% else %>
     <%# Fastest path first (§12): Vipps verifies the phone and hands back
         name + address — no OTP, no forms. The SMS fallback stays below. %>
-    <%= link_to t("auth.vipps_login"), session_vipps_path,
-          class: "button button-vipps button-block button-large" %>
-    <p class="login-or"><%= t("auth.or_sms") %></p>
+    <%= link_to t("auth.vipps_login"), session_vipps_path, class: "button button-vipps" %>
+    <%= tag.p t("auth.or_sms"), class: "login-or" %>
 
     <%= form_with url: "/session/request_code", method: :post, class: "auth-form" do %>
       <div class="field">
@@ -27,10 +26,9 @@
         <%= telephone_field_tag :phone, params[:phone],
               inputmode: "numeric",
               autocomplete: "tel-national",
-              placeholder: t("auth.phone_placeholder"),
-              class: "input-large" %>
+              placeholder: t("auth.phone_placeholder") %>
       </div>
-      <button type="submit" class="button-primary button-block"><%= t("auth.send_code") %></button>
+      <%= tag.button t("auth.send_code"), type: "submit", class: "button-primary" %>
     <% end %>
 
     <%# In development SessionsController#request_code flashes the mock code
@@ -44,10 +42,9 @@
         <%= text_field_tag :code, nil,
               inputmode: "numeric",
               autocomplete: "one-time-code",
-              placeholder: t("auth.code_placeholder"),
-              class: "input-large" %>
+              placeholder: t("auth.code_placeholder") %>
       </div>
-      <button type="submit" class="button-primary button-block"><%= t("auth.verify") %></button>
+      <%= tag.button t("auth.verify"), type: "submit", class: "button-primary" %>
     <% end %>
   <% end %>
 </section>

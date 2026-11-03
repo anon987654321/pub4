@@ -5,7 +5,7 @@
     reward, so 9 filled already means the next wrap is on the house. %>
 <% filled_display = [@unredeemed.to_i, @stamp_slots.to_i].min %>
 
-<section class="loyalty-card star-pattern">
+<section class="loyalty-card">
   <p class="loyalty-brand">
     <%= image_tag "/icon.svg", alt: "", class: "loyalty-mark" %>
     <%= t("loyalty.title") %>
@@ -13,11 +13,11 @@
 
   <ol class="loyalty-stars" aria-hidden="true">
     <% @stamp_slots.times do |slot| %>
-      <li class="loyalty-star eight-point-star<%= " loyalty-star-filled" if slot < filled_display %>"></li>
+      <%= tag.li class: ["loyalty-star", ("loyalty-star-stamped" if slot < filled_display)] %>
     <% end %>
   </ol>
 
-  <p class="loyalty-progress margin-bottom-0">
+  <p class="loyalty-progress">
     <% if current_user.nil? %>
       <%= t("loyalty.progress.remaining", count: @stamp_slots) %>
     <% elsif @free_wrap_ready %>
@@ -27,23 +27,23 @@
     <% end %>
   </p>
   <% if current_user %>
-    <p class="ink-soft margin-bottom-0"><%= t("loyalty.filled", count: filled_display, total: @stamp_slots) %></p>
+    <%= tag.p t("loyalty.filled", count: filled_display, total: @stamp_slots) %>
   <% end %>
 </section>
 
 <% if current_user.nil? %>
-  <section class="card margin-top-16 center">
-    <p class="margin-bottom-0"><%= t("loyalty.login_hint") %></p>
-    <%= link_to t("auth.login"), new_session_path, class: "button button-primary margin-top-8" %>
+  <section class="card loyalty-login">
+    <%= tag.p t("loyalty.login_hint") %>
+    <%= link_to t("auth.login"), new_session_path, class: "button button-primary" %>
   </section>
 <% end %>
 
-<section class="card loyalty-rules-card margin-top-16">
+<section class="card loyalty-rules-card">
   <h2 class="section-title"><%= t("loyalty.how_title") %></h2>
   <ul class="loyalty-rules">
     <li><%= t("loyalty.rule_one") %></li>
     <li><%= t("loyalty.rule_two") %></li>
     <li><%= t("loyalty.rule_three") %></li>
   </ul>
-  <%= link_to t("loyalty.cta"), root_path, class: "button button-primary button-block margin-top-16" %>
+  <%= link_to t("loyalty.cta"), root_path, class: "button button-primary" %>
 </section>

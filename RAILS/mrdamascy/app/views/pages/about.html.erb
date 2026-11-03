@@ -1,29 +1,29 @@
 <% content_for :title, t("about.title") %>
 
-<section class="hero star-pattern">
+<section class="hero">
   <%= image_tag "/icon.svg", alt: "", class: "hero-mark" %>
   <h1 class="hero-title"><%= t("about.title") %></h1>
   <% if current_kitchen %>
-    <p class="hero-meta margin-bottom-0">
-      <%= tag.span current_kitchen.address, class: "nowrap" %>
-      <%= tag.span current_kitchen.opening_hours, class: "nowrap" %>
+    <p class="hero-meta">
+      <%= tag.span current_kitchen.address %>
+      <%= tag.span current_kitchen.opening_hours %>
     </p>
   <% end %>
 </section>
 
-<section class="card margin-top-16">
+<section class="card">
   <h2 class="section-title"><%= t("about.story_title") %></h2>
-  <p class="margin-bottom-0"><%= t("about.story_body") %></p>
+  <%= tag.p t("about.story_body") %>
 </section>
 
-<section class="card margin-top-16">
+<section class="card">
   <h2 class="section-title"><%= t("about.fairness_title") %></h2>
-  <p class="margin-bottom-0"><%= t("about.fairness_body") %></p>
+  <%= tag.p t("about.fairness_body") %>
 </section>
 
-<section class="card margin-top-16">
+<section class="card">
   <h2 class="section-title"><%= t("about.worldtour_title") %></h2>
-  <p class="ink-soft"><%= t("about.worldtour_intro") %></p>
+  <%= tag.p t("about.worldtour_intro") %>
   <ul class="about-credits">
     <li><%= t("about.credit_damaskus") %></li>
     <li><%= t("about.credit_beirut") %></li>
@@ -40,15 +40,15 @@
   </ul>
 </section>
 
-<section class="card margin-top-16">
+<section class="card">
   <h2 class="section-title"><%= t("about.vipps_title") %></h2>
-  <p class="margin-bottom-0"><%= t("about.vipps_body") %></p>
+  <%= tag.p t("about.vipps_body") %>
 </section>
 
-<section class="margin-top-16">
+<%= tag.nav class: "page-actions", aria: { label: t("about.title") } do %>
   <% if current_user %>
-    <%= link_to t("about.orders_link"), orders_path, class: "button button-block" %>
+    <%= link_to t("about.orders_link"), orders_path, class: "button" %>
   <% else %>
-    <%= link_to t("auth.login"), new_session_path, class: "button button-block" %>
+    <%= link_to t("auth.login"), new_session_path, class: "button" %>
   <% end %>
-</section>
+<% end %>
