@@ -22,6 +22,9 @@ module Master
         external_messages purchases deployment destructive_actions
       ].freeze
       SUBJECT_SCOPES = %w[personal_memory calendar_read].freeze
+      MICROPHONE_PURPOSE = "capture live voice input for a MASTER CLI conversation"
+      SPEECH_RECOGNITION_PURPOSE = "transcribe live microphone audio using the configured transcription provider"
+      VOICE_GRANT_SECONDS = 3_600
       MAX_PURPOSE_BYTES = 500
       MAX_ACTOR_BYTES = 120
 
