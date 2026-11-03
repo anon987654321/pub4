@@ -31,7 +31,7 @@
         url: post_path(post),
         author_url: (post.anonymous? || post.user&.guest? ? nil : user_path(post.user)),
         post_url: post_path(post),
-        content: post.body,
+        content: rich_text(post.body),
         title: strip_tags(post.body.to_s).squish.truncate(88, separator: " "),
         show_votes: true,
         vote_path: post_vote_path(post),
