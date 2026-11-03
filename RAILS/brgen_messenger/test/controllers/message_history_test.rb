@@ -108,8 +108,12 @@ class MessageHistoryTest < ActionDispatch::IntegrationTest
 
   test "history renders neither expired nor unsent messages" do
     write_history(4)
-    @conversation.messages.visible.order(:created_at).first.update!(deleted_at: Time.current)
-    expired = @conversation.messages.visible.order(:created_at).second
+    # Both picked before either changes: once line 0 is unsent, "the second
+    # visible message" is line 2, and line 1 was never expired at all.
+    visible = @conversation.messages.visible
+    in_order = visible.order(:created_at)
+    unsent, expired = in_order.first(2)
+    unsent.update!(deleted_at: Time.current)
     expired.update_columns(expires_at: 1.hour.ago)
     sign_in_as(@reader)
 
