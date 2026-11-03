@@ -58,15 +58,22 @@ class Reaction < ApplicationRecord
   # reaction and un-reaction enqueued a job that raised MissingTemplate into a stream
   # with no listener. Reviving it means subscribing wherever shared/_reaction_bar
   # renders, which is the 50+ subscriptions the paragraph above rules out.
+  #
+  # broadcast: true, because this renders inside the reactor's request and goes
+  # to everyone in the room: read as Current.user, the reactor's chip arrived
+  # pressed for every reader. The reload brings the reactions in one query and
+  # sees the row this callback was fired for, created or gone.
   def broadcast_reaction_change
-    msg = target
-    return unless msg.is_a?(Message) && msg.conversation
+    return unless reactable_type == "Message" && reactable_id
+
+    msg = Message.strict_loading(false).includes(:conversation, :reactions).find_by(id: reactable_id)
+    return unless msg&.conversation
 
     Turbo::StreamsChannel.broadcast_replace_to(
       msg.conversation,
       target: "reactions_#{ActionView::RecordIdentifier.dom_id(msg)}",
       partial: "messages/reactions",
-      locals: { message: msg }
+      locals: { message: msg, broadcast: true }
     )
   end
 end

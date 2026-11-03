@@ -74,7 +74,7 @@ class NearbyController < ApplicationController
 # reads message_receipts, link_preview and parent.sender. :sender alone left
 # three queries per message on a fifty-message widget.
 @messages = @conversation.messages.visible.unexpired
-                         .includes(:sender, :message_receipts, :link_preview, parent: :sender)
+                         .includes(:sender, :message_receipts, :link_preview, :reactions, parent: :sender)
                          .order(:created_at).last(50).to_a
     end
     @message = Message.new

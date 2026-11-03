@@ -10,22 +10,22 @@
     under every line on exactly the surface this comment was written about.
 
     Replaced live by Reaction#broadcast_reaction_change over the conversation's
-    own stream, so the id has to match what that broadcast targets. %>
-<% counts = message.reactions.group(:kind).count %>
-<span class="msg_reactions" id="reactions_<%= dom_id(message) %>">
-  <% counts.sort_by { |kind, n| [ -n, kind ] }.each do |kind, n| %>
-    <% mine = Current.user && message.reacted_by?(Current.user, kind: kind) %>
-    <%= button_to reactions_path,
-          params: { target_gid: message.to_signed_global_id.to_s, kind: kind },
-          data: { turbo_stream: true },
-          class: "msg_reaction_chip#{' is_mine' if mine}",
-          aria: { pressed: mine ? "true" : "false",
-                  label: t(mine ? "reactions.chip_mine_aria" : "reactions.chip_aria", count: n, kind: t("reactions.kinds.#{kind}")) } do %>
-      <span aria-hidden="true"><%= Reaction.glyph(kind) %></span><span class="msg_reaction_count"><%= n %></span>
-    <% end %>
-  <% end %>
+    own stream, so the id has to match what that broadcast targets.
 
-  <% if Current.user %>
+    A broadcast has no viewer: rendered inside the reactor's request it read
+    Current.user, and every reader saw the reactor's chip as their own. With
+    broadcast: true no chip is pressed; each carries the ids of the people who
+    used it, and conversation_log_controller presses the viewer's.
+
+    Counted from the loaded association, not with a COUNT and an EXISTS per kind:
+    the log preloads :reactions, so a page of fifty lines costs no query here. %>
+<% broadcast = local_assigns.fetch(:broadcast, false) %>
+<% viewer = broadcast ? nil : Current.user %>
+<span class="msg_reactions" id="reactions_<%= dom_id(message) %>">
+  <%= render partial: "messages/reaction_chip", collection: message.reaction_tally, as: :tally_entry,
+             locals: { message:, viewer: } %>
+
+  <% if broadcast || Current.user %>
     <span class="msg_reaction_picker" role="group" aria-label="<%= t("aria.react") %>">
       <% Reaction::KINDS.each do |kind| %>
         <%= button_to reactions_path,

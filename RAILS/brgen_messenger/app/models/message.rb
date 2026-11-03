@@ -172,6 +172,15 @@ end
     [ read_by.positive? ? :read : :sent, read_by ]
   end
 
+  # The chip row: each kind someone used, with who used it, most used first.
+  # Read off the association, so a log that preloaded :reactions pays nothing
+  # per line where a grouped COUNT and an EXISTS per kind used to cost two.
+  def reaction_tally
+    reactions.to_a.group_by(&:kind)
+             .transform_values { |rows| rows.map(&:user_id) }
+             .sort_by { |kind, user_ids| [ -user_ids.size, kind ] }
+  end
+
   def mark_as_read!(user)
     receipt = message_receipts.find_or_initialize_by(user: user)
     receipt.update!(read_at: Time.current) unless receipt.read_at
@@ -215,7 +224,7 @@ end
   end
 
   def broadcast_to_logs
-  fresh = Message.strict_loading(false).includes(:sender, :conversation, :link_preview).find(id)
+  fresh = Message.strict_loading(false).includes(:sender, :conversation, :link_preview, :reactions).find(id)
   fresh.broadcast_append_to(
     fresh.conversation,
     targets: ".conversation-log",
@@ -227,7 +236,7 @@ end
 # `targets:` with the dom id as a selector, for the same reason as the append:
 # a channel page can hold the line twice, in the page and in the corner widget.
 def broadcast_change_to_logs
-  fresh = Message.strict_loading(false).includes(:sender, :conversation, :link_preview).find(id)
+  fresh = Message.strict_loading(false).includes(:sender, :conversation, :link_preview, :reactions).find(id)
   fresh.broadcast_replace_to(
     fresh.conversation,
     targets: "##{ActionView::RecordIdentifier.dom_id(fresh)}",

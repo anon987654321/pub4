@@ -1,0 +1,14 @@
+<%# One chip of messages/_reactions: a kind someone used, its count, and who
+    used it, so the log can press the viewer's own on a broadcast line. %>
+<% kind, user_ids = tally_entry %>
+<% n = user_ids.size %>
+<% mine = viewer.present? && user_ids.include?(viewer.id) %>
+<% label = t("reactions.chip_aria", count: n, kind: t("reactions.kinds.#{kind}")) %>
+<% mine_label = t("reactions.chip_mine_aria", count: n, kind: t("reactions.kinds.#{kind}")) %>
+<%= button_to reactions_path,
+      params: { target_gid: message.to_signed_global_id.to_s, kind: kind },
+      data: { turbo_stream: true, reactor_ids: user_ids.join(" "), mine_label: },
+      class: "msg_reaction_chip#{' is_mine' if mine}",
+      aria: { pressed: mine ? "true" : "false", label: mine ? mine_label : label } do %>
+  <%= tag.span Reaction.glyph(kind), aria: { hidden: true } %><%= tag.span n, class: "msg_reaction_count" %>
+<% end %>

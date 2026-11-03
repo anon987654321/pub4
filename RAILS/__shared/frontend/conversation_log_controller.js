@@ -64,6 +64,17 @@ export default class extends Controller {
     })
     this.observer.observe(this.element, { childList: true })
 
+    // A reaction replaces the chips inside a line, which the observer above
+    // does not see: it watches the log's own children, and widening it to the
+    // subtree would re-run grouping and day breaks on every chip. This one
+    // looks only for a fresh chip row and presses the viewer's own reactions.
+    this.reactionObserver = new MutationObserver((mutations) => {
+      mutations.forEach((m) => m.addedNodes.forEach((node) => {
+        if (node.nodeType === Node.ELEMENT_NODE && node.matches(".msg_reactions")) this.#markReactions(node)
+      }))
+    })
+    this.reactionObserver.observe(this.element, { childList: true, subtree: true })
+
     this.onScroll = () => {
       if (this.#atTail()) { this.unread = 0; this.#renderPill() }
     }
@@ -112,6 +123,8 @@ export default class extends Controller {
   disconnect() {
     this.observer?.disconnect()
     this.observer = null
+    this.reactionObserver?.disconnect()
+    this.reactionObserver = null
     this.historyObserver?.disconnect()
     this.historyObserver = null
     this.element.removeEventListener("scroll", this.onScroll)
@@ -326,6 +339,21 @@ export default class extends Controller {
       // messages/_message); only the ones for this viewer stay.
       el.querySelectorAll(own ? '[data-for="others"]' : '[data-for="sender"]').forEach((control) => control.remove())
       if (!this.viewerAccountValue) el.querySelectorAll("[data-needs-account]").forEach((control) => control.remove())
+      el.querySelectorAll(".msg_reactions").forEach((chips) => this.#markReactions(chips))
+    })
+  }
+
+  // A broadcast chip row presses nobody's chip (see messages/_reactions); each
+  // chip names who used it, and the viewer's own is pressed here. The button
+  // carries the attributes; button_to puts it inside a form.
+  #markReactions(chips) {
+    if (!this.viewerIdValue) return
+    chips.querySelectorAll("[data-reactor-ids]").forEach((chip) => {
+      const ids = chip.dataset.reactorIds.split(" ")
+      if (!ids.includes(this.viewerIdValue)) return
+      chip.classList.add("is_mine")
+      chip.setAttribute("aria-pressed", "true")
+      if (chip.dataset.mineLabel) chip.setAttribute("aria-label", chip.dataset.mineLabel)
     })
   }
 

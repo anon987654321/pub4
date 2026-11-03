@@ -5,7 +5,9 @@ module Shared
     before_action :require_current_user
 
     def create
-      @target = GlobalID::Locator.locate_signed!(params.require(:target_gid))
+      # globalid ships locate_signed and no bang form, so every reaction raised
+      # NoMethodError. A bad or expired signature answers nil: not found.
+      @target = GlobalID::Locator.locate_signed(params.require(:target_gid)) or raise ActiveRecord::RecordNotFound
       @kind = params[:kind].presence || "like"
       @active = Shared::ReactionToggle.call(user: current_user, reactable: @target, kind: @kind)
 

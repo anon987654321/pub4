@@ -34,7 +34,7 @@ class MessagesController < ApplicationController
   # this action renders no frame, no layout and no chrome. set_conversation
   # scopes through for_user, so a reader reaches only threads they take part in.
   def index
-    scope = @conversation.messages.visible.unexpired
+    scope = history_scope
     before = params[:before].to_i
     scope = scope.where(Message.arel_table[:id].lt(before)) if before.positive?
 
@@ -133,6 +133,14 @@ class MessagesController < ApplicationController
 
   def from_widget? = params[:origin] == "widget"
 
+  # The lines a history page may hold, with what each line reads preloaded once
+  # for the page, as show does.
+  def history_scope
+    messages = @conversation.messages
+    messages.visible.unexpired
+            .includes(:sender, :message_receipts, :link_preview, :reactions, parent: :sender)
+  end
+
   # Where a forward from this page can go: the reader's other DM threads. The
   # same computation ConversationsController#show runs, so a message that
   # arrived through history forwards like one that arrived in the window.
@@ -145,7 +153,8 @@ class MessagesController < ApplicationController
   def render_created
     # The sender's own copy, reloaded with what the line reads so the partial
     # renders it here as it does in the broadcast job.
-    @rendered = Message.strict_loading(false).includes(:sender, :conversation, :link_preview).find(@message.id)
+    @rendered = Message.strict_loading(false).includes(:sender, :conversation, :link_preview, :reactions)
+                       .find(@message.id)
     respond_to do |format|
       # The corner chat widget and the full channel page post to the same
       # endpoint but own different composers; answering with the page form

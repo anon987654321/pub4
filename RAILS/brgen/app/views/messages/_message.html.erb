@@ -79,7 +79,7 @@
       <% end %>
     <% end %>
   <% end %>
-  <%= render "messages/reactions", message: message %>
+  <%= render "messages/reactions", message: message, broadcast: broadcast %>
   <%# Reply, edit, unsend and forward all had a route, a model method and no
       control anywhere in the tree, so none of them could be reached from a
       page. Plain forms and links rather than a Stimulus controller: the state

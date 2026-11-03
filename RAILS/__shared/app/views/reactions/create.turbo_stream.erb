@@ -1,3 +1,15 @@
-<%= turbo_stream.replace "reactions_#{dom_id(@target)}" do %>
-  <%= render "shared/reaction_bar", target: @target, kind: @kind, active: @active %>
+<%# A chat message keeps its own chips. The post bar drawn into a message line
+    replaced the room's compact chips with seven labelled buttons, until the
+    room's broadcast happened to land after this response. An app that draws
+    message reactions ships messages/_reactions; one that does not falls back. %>
+<% chat_line = @target.class.name == "Message" &&
+               lookup_context.exists?("reactions", [ "messages" ], true, formats: [ :html ]) %>
+<% if chat_line %>
+  <%= turbo_stream.replace "reactions_#{dom_id(@target)}" do %>
+    <%= render "messages/reactions", message: @target %>
+  <% end %>
+<% else %>
+  <%= turbo_stream.replace "reactions_#{dom_id(@target)}" do %>
+    <%= render "shared/reaction_bar", target: @target, kind: @kind, active: @active %>
+  <% end %>
 <% end %>

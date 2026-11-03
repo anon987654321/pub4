@@ -93,7 +93,7 @@ class ConversationsController < ApplicationController
     # than the window answers "is there more behind this?" — so show learns the
     # answer without paying a COUNT, and the log gets its first history cursor.
     @messages = @conversation.messages.visible.unexpired
-                             .includes(:sender, :message_receipts, :link_preview, parent: :sender)
+                             .includes(:sender, :message_receipts, :link_preview, :reactions, parent: :sender)
                              .recent.limit(MessagesController::HISTORY_PAGE + 1)
     @older_available = @messages.size > MessagesController::HISTORY_PAGE
     @messages = @messages.first(MessagesController::HISTORY_PAGE).reverse
