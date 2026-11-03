@@ -93,11 +93,39 @@ class DeployPreflightTest < Minitest::Test
     end
   end
 
-  def remote(env: {}, runner: ->(*) { ["", true] }, **git)
+  def remote(env: {}, runner: ->(*) { ["", true] }, app: "all",
+             ci_runner: ->(**) { flunk "bin/ci must not run" }, **git)
     dir = tree("MASTER/lib/ok.rb" => "x = 1\n")
-    Pre.remote_command(root: dir, app: "all", env:, git: fake_git(**git), runner:, out: StringIO.new)
+    Pre.remote_command(root: dir, app:, env:, git: fake_git(**git), runner:, out: StringIO.new, ci_runner:)
   ensure
     FileUtils.rm_rf(dir)
+  end
+
+  # vm23 runs brgen's suite in about 50 minutes on one core; a green bin/ci here
+  # on the same commit lets the box install the bundle and skip it.
+  def test_a_green_local_ci_attests_that_exact_commit_for_one_app
+    ran = []
+    ok, command = remote(app: "brgen", ci_runner: ->(root:, app:) { ran << app; true })
+
+    assert ok
+    assert_equal ["brgen"], ran
+    assert_equal "cd /home/dev/pub4 && VPS_DEPLOY_SHA=#{SHA} VPS_DEPLOY_PREFLIGHT_SHA=#{SHA} " \
+                 "VPS_DEPLOY_CI_SHA=#{SHA} zsh OPENBSD/bin/vps-deploy brgen", command
+  end
+
+  def test_a_red_local_ci_sends_nothing
+    ok, reason = remote(app: "amber", ci_runner: ->(**) { false })
+
+    refute ok
+    assert_includes reason, "amber bin/ci failed here"
+    assert_includes reason, "nothing was sent to the box"
+  end
+
+  def test_local_ci_can_be_left_to_the_box
+    ok, command = remote(app: "bsdports", env: { "VPS_DEPLOY_LOCAL_CI" => "0" })
+
+    assert ok
+    refute_includes command, "VPS_DEPLOY_CI_SHA"
   end
 
   def test_remote_command_pins_the_sha_and_attests_the_preflight
@@ -122,7 +150,7 @@ class DeployPreflightTest < Minitest::Test
   def test_remote_command_refuses_a_dirty_tree_because_it_would_judge_the_edits
     ok, reason = remote(dirty: " M MASTER/lib/x.rb\n")
     refute ok
-    assert_includes reason, "tracked files are modified"
+    assert_includes reason, "commit these first"
   end
 
   def test_remote_break_glass_needs_the_acknowledgement
@@ -140,6 +168,6 @@ class DeployPreflightTest < Minitest::Test
     source = File.read(File.expand_path("../bin/operator", __dir__))
     deploy = source[/when "deploy"\n.*?when "admin"/m]
     assert_includes deploy, "Operator::DeployPreflight.remote_command"
-    assert_operator deploy.index("remote_command"), :<, deploy.index("ssh_run(command)")
+    assert_operator deploy.index("remote_command"), :<, deploy.index("ssh_run(")
   end
 end

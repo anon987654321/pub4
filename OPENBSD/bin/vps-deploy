@@ -12,6 +12,7 @@ usage() {
   all          master, then every app, amber and bsdports last (master last when the box is short of memory)
   VPS_DEPLOY_SHA=<sha>   deploy exactly this commit (default: origin/main, fetched once)
   VPS_DEPLOY_PREFLIGHT_SHA=<sha>   the operator's machine already proved this commit boots
+  VPS_DEPLOY_CI_SHA=<sha>   the operator's machine ran the app's bin/ci green on this commit; the box skips its suite
   VPS_DEPLOY_SKIP_PREFLIGHT=1      break-glass, needs I_UNDERSTAND_FAST_DEPLOY=1
   SKIP_CI=1    skip vps_ci.sh; \${app}.sh and its runtime check still run
   VPS_DEPLOY_DRIFT=fail   refuse to deploy when the box's configs differ from the repo
@@ -617,6 +618,12 @@ if (( lock_owner )); then
     || deploy_refuse "$pin is not a fast-forward of the box's HEAD $head_before"
   export VPS_DEPLOY_SHA=$pin
   print "vps-deploy: pinned $pin (box HEAD was $head_before; git as $DEPLOY_USER)"
+  # A CI attestation names one commit; tests that passed on another prove nothing here.
+  if [[ -n ${VPS_DEPLOY_CI_SHA:-} ]]; then
+    [[ $VPS_DEPLOY_CI_SHA == $pin ]] \
+      || deploy_refuse "bin/ci ran on $VPS_DEPLOY_CI_SHA but this run would deploy $pin"
+    print "vps-deploy: bin/ci passed on the operator's machine for $pin; the box skips its suite"
+  fi
   if [[ -n ${VPS_DEPLOY_PREFLIGHT_SHA:-} ]]; then
     [[ $VPS_DEPLOY_PREFLIGHT_SHA == $pin ]] \
       || deploy_refuse "preflight ran on $VPS_DEPLOY_PREFLIGHT_SHA but this run would deploy $pin"

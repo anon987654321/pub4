@@ -75,6 +75,12 @@ Symlinked from
 once.
 .It Ev VPS_DEPLOY_PREFLIGHT_SHA
 Commit whose boot was already proved by the operator's machine.
+.It Ev VPS_DEPLOY_CI_SHA
+Commit whose
+.Pa bin/ci
+passed on the operator's machine.
+The box installs the bundle and skips its own test suite for that commit
+only, and refuses a run that would deploy any other.
 .It Ev VPS_DEPLOY_SKIP_PREFLIGHT
 Break-glass preflight bypass.
 Setting this to

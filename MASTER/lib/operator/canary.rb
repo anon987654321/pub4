@@ -306,7 +306,13 @@ module Operator
     # The commit judged is HEAD, and HEAD must be origin/main with no edits to
     # tracked files in the governed trees, because the box deploys origin/main and a
     # preflight of anything else proves nothing about what it will run.
-    def remote_command(root:, app:, env: ENV, git: method(:git_out), runner: method(:capture), out: $stdout)
+    #
+    # For one Rails app, the app's bin/ci runs here too and a green run adds
+    # VPS_DEPLOY_CI_SHA: the box then installs the bundle and skips its own suite,
+    # which takes about 50 minutes on vm23's single core. VPS_DEPLOY_LOCAL_CI=0
+    # leaves the suite to the box.
+    def remote_command(root:, app:, env: ENV, git: method(:git_out), runner: method(:capture), out: $stdout,
+                       ci_runner: method(:local_ci))
       git.call(root, "fetch", "-q", "origin", "main")
       sha = git.call(root, "rev-parse", "HEAD")
       return [false, "cannot read HEAD of #{root}"] if sha.empty?
@@ -327,7 +333,38 @@ module Operator
       out.puts(report(results))
       return [false, "preflight failed on #{sha[0, 9]}; nothing was sent to the box"] unless results.all?(&:ok)
 
-      [true, "#{lead} VPS_DEPLOY_PREFLIGHT_SHA=#{sha} #{tail}"]
+      run_ci = lambda do
+        out.puts("ci0: #{app} bin/ci on #{sha[0, 9]} here; a green run lets the box skip its suite")
+        ci_runner.call(root:, app:)
+      end
+      ok, ci_word = ci_attestation(app:, sha:, env:, run: run_ci)
+      return [false, ci_word] unless ok
+
+      [true, ["#{lead} VPS_DEPLOY_PREFLIGHT_SHA=#{sha}", ci_word, tail].compact.join(" ")]
+    end
+
+    CI_APPS = %w[brgen amber bsdports].freeze
+
+    # [true, nil] when the box keeps its own suite, [true, "VPS_DEPLOY_CI_SHA=..."]
+    # after a green bin/ci here, [false, reason] after a red one.
+    def ci_attestation(app:, sha:, env:, run:)
+      return [true, nil] unless CI_APPS.include?(app) && env["VPS_DEPLOY_LOCAL_CI"] != "0"
+      return [false, "#{app} bin/ci failed here on #{sha[0, 9]}; nothing was sent to the box"] unless run.call
+
+      [true, "VPS_DEPLOY_CI_SHA=#{sha}"]
+    end
+
+    # The app's own bin/ci under the Ruby its .ruby-version pins (rbenv when
+    # present), with the caller's Bundler environment cleared so the app's
+    # Gemfile and gems are the ones that run.
+    def local_ci(root:, app:)
+      dir = File.join(root, "RAILS", app)
+      version = File.read(File.join(dir, ".ruby-version")).strip
+      rbenv_ruby = File.join(Dir.home, ".rbenv", "versions", version, "bin", "ruby")
+      ruby = File.executable?(rbenv_ruby) ? rbenv_ruby : RbConfig.ruby
+      cleared = %w[BUNDLE_GEMFILE BUNDLE_PATH BUNDLE_BIN_PATH GEM_HOME GEM_PATH RUBYOPT RUBYLIB].to_h { [_1, nil] }
+      env = cleared.merge("PATH" => "#{File.dirname(ruby)}:#{ENV.fetch("PATH", "")}", "PUB4_CI_APP" => app)
+      system(env, ruby, "bin/ci", chdir: dir)
     end
 
     def git_out(root, *argv)

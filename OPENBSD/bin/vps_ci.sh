@@ -100,12 +100,26 @@ doas /usr/local/sbin/pub4-admin ci-prepare "$app"
 chmod -R u+rX,g+rX "${repo}/MASTER/tools"
 deploy_status "$app" "sync tree"
 sync_from_repo
-deploy_status "$app" "bundle install + bin/ci"
-# The brgen suite ran 59 minutes on this 1 vCPU box (coverage on) and was cut off at the
-# guard's default 3600s still running, so CI gets two hours; the guard itself stays on.
-ci_timeout=${PUB4_CI_TIMEOUT:-7200}
-doas /usr/local/sbin/pub4-admin ci-run "$app" "$ci_timeout" \
-  || { deploy_status "$app" "bundle install + bin/ci" "failed"; exit 1; }
+# VPS_DEPLOY_CI_SHA: the operator's machine ran this app's bin/ci on exactly the
+# commit checked out here (bin/operator vps deploy --remote sets it only after a
+# green run). The box then installs the bundle and skips the suite, which takes
+# about 50 minutes on this 1 vCPU / 1 GB machine; any other commit runs it here.
+attested=${VPS_DEPLOY_CI_SHA:-}
+if [[ -n $attested && $attested == $(git -C "$repo" rev-parse HEAD) ]]; then
+  deploy_status "$app" "bundle install (CI attested)"
+  . "${repo}/RAILS/_runtime_check.sh"
+  . "${repo}/RAILS/_bundle.sh"
+  bundle_install_as_app "$app" "$app_dir" \
+    || { deploy_status "$app" "bundle install (CI attested)" "failed"; exit 1; }
+  print "vps_ci: $app suite skipped - bin/ci passed on the operator's machine for $attested"
+else
+  deploy_status "$app" "bundle install + bin/ci"
+  # The brgen suite ran 59 minutes on this 1 vCPU box (coverage on) and was cut off at the
+  # guard's default 3600s still running, so CI gets two hours; the guard itself stays on.
+  ci_timeout=${PUB4_CI_TIMEOUT:-7200}
+  doas /usr/local/sbin/pub4-admin ci-run "$app" "$ci_timeout" \
+    || { deploy_status "$app" "bundle install + bin/ci" "failed"; exit 1; }
+fi
 
 sha=$(git -C "$repo" rev-parse --short HEAD 2>/dev/null || echo unknown)
 doas /usr/local/sbin/pub4-admin stamp "$app" "$sha" ci_ok

@@ -353,6 +353,16 @@ class VpsDeployContractTest < Minitest::Test
   # Since 2026-10-28 the deploy runs as root and re-execs itself through
   # passwordless doas. Root has no github.com host key by design, so every git
   # call must still go through the unprivileged deploy user.
+  # A CI attestation vouches for one commit: vps-deploy refuses any other, and
+  # vps_ci.sh skips the suite only when the checked-out HEAD is that commit.
+  def test_a_ci_attestation_covers_exactly_the_commit_it_names
+    assert_includes SOURCE, %q{[[ $VPS_DEPLOY_CI_SHA == $pin ]]}
+    assert_includes SOURCE, %q{deploy_refuse "bin/ci ran on $VPS_DEPLOY_CI_SHA but this run would deploy $pin"}
+    assert_includes CI_SOURCE, %q{if [[ -n $attested && $attested == $(git -C "$repo" rev-parse HEAD) ]]; then}
+    assert_includes CI_SOURCE, %q{bundle_install_as_app "$app" "$app_dir"}
+    assert_includes CI_SOURCE, %q{doas /usr/local/sbin/pub4-admin ci-run "$app" "$ci_timeout"}
+  end
+
   def test_it_runs_as_root_and_keeps_git_as_the_deploy_user
     guard = SOURCE[/if \[\[ \$\(id -u\) -ne 0 \]\]; then.*?^fi$/m]
 

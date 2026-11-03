@@ -56,14 +56,17 @@ module NokogiriOpenbsd
     # A failed `bundle install` leaves the unpacked source without a spec.
     half_built = File.directory?(stale) && !File.exist?(File.join(dir, "specifications", "nokogiri-#{version}.gemspec"))
     FileUtils.rm_rf(stale) if half_built
-    cmd = gem_cmd("install", "--local", "--ignore-dependencies", "--no-document", "--install-dir", dir, gem_path)
+    # Against OpenBSD's libxml2 and libxslt packages, as the box always built
+    # nokogiri; only gumbo stays vendored, and the rename above covers it.
+    cmd = gem_cmd("install", "--local", "--ignore-dependencies", "--no-document", "--install-dir", dir, gem_path,
+                  "--", "--use-system-libraries")
     user ? run!("su", "-s", "/bin/sh", user, "-c", cmd.map { |part| "'#{part}'" }.join(" ")) : run!(*cmd)
     puts "nokogiri-openbsd: #{version} installed in #{dir}#{" as #{user}" if user}"
   end
 
   def main(argv)
     version, *targets = argv
-    abort("usage: nokogiri-openbsd VERSION BUNDLE_DIR[:USER] ...") if version.nil? || targets.empty?
+    abort("usage: nokogiri-openbsd VERSION BUNDLE_DIR[:USER] [BUNDLE_DIR[:USER] …]") if version.nil? || targets.empty?
 
     Dir.mktmpdir("nokogiri-openbsd") do |dir|
       File.chmod(0o755, dir)

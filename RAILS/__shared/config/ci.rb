@@ -35,10 +35,14 @@ Operator::CiGuard.run! do
     # On vm23 the tree is already /home/<app>/app. bin/setup's db:prepare
     # loads development configs against that tree and dies (nil configurations).
     # Test DB has its own step below; production is migrated after CI.
+    # brgen, amber and bsdports dropped their generated bin/setup on 2026-10-08
+    # (27251ab77e); calling it anyway failed every local run of those apps.
     if vps_host
       step "setup", "echo 'vps: skip bin/setup'"
-    else
+    elsif File.exist?("bin/setup")
       step "setup", "bin/setup --skip-server"
+    else
+      step "setup", "echo 'setup: this app has no bin/setup; test_db_prepare prepares the test DB'"
     end
     css_builder = [
       File.join(master_rails_tools, "build_all_css.rb"),
