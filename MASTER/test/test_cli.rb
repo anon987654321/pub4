@@ -435,6 +435,17 @@ end
     assert_equal :interrupted, result
   end
 
+  def test_reline_closed_terminal_is_treated_as_eof
+    result = nil
+    capture_io do
+      Reline.stub(:readline, ->(*) { raise IOError, "terminal closed" }) do
+        result = @cli.send(:safe_read_line, "master$ ")
+      end
+    end
+
+    assert_nil result
+  end
+
   def test_model_greeting_is_opt_in_to_protect_the_first_operator_turn
     previous = ENV.delete("MASTER_GREETING")
     spawned = false

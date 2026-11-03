@@ -102,6 +102,10 @@ module Master
         clean = line.gsub(TERMINAL_REPLY, "").chomp
         Reline::HISTORY << clean unless clean.strip.empty?
         clean
+      rescue IOError, Errno::EIO => e
+        Master::Ground::Swallow.log(e, context: "cli.safe_read_line", event_bus: @refs.bus)
+        Master::Trace::Dmesg.status("input0", "terminal unavailable, closing")
+        nil
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "cli.safe_read_line", event_bus: @refs.bus)
         Master::Trace::Dmesg.status("input0", "read failed, #{e.class}; retrying")
