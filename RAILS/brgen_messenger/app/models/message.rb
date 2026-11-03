@@ -106,6 +106,15 @@ after_update_commit :broadcast_change_to_logs, if: :saved_change_to_content?
   # carry.
   def forwardable? = !deleted? && !expired?
 
+  # The forwarder's copy, unsaved, sharing the blob rather than uploading it
+  # twice. Attached before the save: a wordless photo or voice note is valid only
+  # with its attachment, so creating first failed "content required" (a 422).
+  def forward_copy(into:, sender:)
+    copy = into.messages.build(sender:, content:, message_type:, duration_seconds:, forwarded_from: self)
+    copy.attachment.attach(attachment.blob) if attachment.attached?
+    copy
+  end
+
   # Editing is bounded: a message that can be rewritten hours later is a
   # message a reader cannot trust, and the receipt they already read is gone.
   EDIT_WINDOW = 15.minutes
@@ -172,9 +181,8 @@ end
     [ read_by.positive? ? :read : :sent, read_by ]
   end
 
-  # The chip row: each kind someone used, with who used it, most used first.
-  # Read off the association, so a log that preloaded :reactions pays nothing
-  # per line where a grouped COUNT and an EXISTS per kind used to cost two.
+  # The chip row: each kind used, by whom, most used first. Read off the
+  # association, so a log that preloaded :reactions pays no query per line.
   def reaction_tally
     reactions.to_a.group_by(&:kind)
              .transform_values { |rows| rows.map(&:user_id) }

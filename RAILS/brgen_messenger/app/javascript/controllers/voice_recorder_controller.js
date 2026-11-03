@@ -65,11 +65,26 @@ export default class extends Controller {
     const file = new File([blob], `voice-${seconds}s.webm`, { type: blob.type })
     const transfer = new DataTransfer()
     transfer.items.add(file)
-    this.fileTarget.files = transfer.files
-    this.durationTarget.value = seconds
-    this.typeTarget.value = "audio"
+    const fileField = this.#field("file")
+    if (!fileField) return
+    fileField.files = transfer.files
+    const duration = this.#field("duration")
+    if (duration) duration.value = seconds
+    const type = this.#field("type")
+    if (type) type.value = "audio"
+    // Setting files from script fires nothing; the composer enables Send on change.
+    fileField.dispatchEvent(new Event("change", { bubbles: true }))
     if (this.hasRecordLabelValue) this.buttonTarget.textContent = this.recordLabelValue
     this.#say(`${seconds}s`)
+  }
+
+  // The composer puts the file, duration and type fields beside this element,
+  // not inside it, and Stimulus targets are descendants only: this.fileTarget
+  // threw on every finished recording, so no voice note was ever attached.
+  // The fields are looked up in the form both share.
+  #field(name) {
+    const selector = `[data-voice-recorder-target~="${name}"]`
+    return this.element.querySelector(selector) || this.element.closest("form")?.querySelector(selector)
   }
 
   #stopTracks() {

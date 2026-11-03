@@ -67,6 +67,22 @@ class MessageForwardTest < ActionDispatch::IntegrationTest
     assert_nil copy.reload.forwarded_from_id
   end
 
+  # A photo with no words is valid only once it carries the photo, so a forward
+  # that saved before attaching failed "content required".
+  test "a photo sent without words forwards as the same photo" do
+    photo = @source.messages.build(sender: @friend, content: "", message_type: "text")
+    photo.attachment.attach(io: StringIO.new("GIF89a"), filename: "kart.gif", content_type: "image/gif")
+    photo.save!
+    sign_in_as(@user)
+
+    assert_difference -> { @target.messages.count }, 1 do
+      post forward_conversation_message_path(@source, photo), params: { target_conversation_id: @target.id }
+    end
+    copy = @target.messages.order(:created_at).last
+    assert_equal photo.attachment.blob, copy.attachment.blob, "the blob is shared, not uploaded twice"
+    assert_equal "image", copy.message_type
+  end
+
   test "a thread the reader is not in is neither source nor target" do
     sign_in_as(@user)
     theirs_message = say(@theirs, @stranger, "Hemmelig")
