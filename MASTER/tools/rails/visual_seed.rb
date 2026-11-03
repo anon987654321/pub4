@@ -164,8 +164,16 @@ module Deploy
                        "BUNDLER_SETUP" => nil, "BUNDLER_VERSION" => nil, "RUBYOPT" => nil, "RUBYLIB" => nil)
       out, status = Master::Io::Exec.capture2e(full, Operator::RubyRunner.bundle_cmd, "exec", Operator::RubyRunner.ruby_cmd,
                                                "bin/rails", task, chdir: app_dir(app), timeout: TIMEOUT)
-      @out.puts("visual seed: #{app} #{task} failed\n#{out.lines.last(8).join}") unless status.success?
+      @out.puts("visual seed: #{app} #{task} failed\n#{failure_excerpt(out)}") unless status.success?
       status.success?
+    end
+
+    # A rake failure ends in eight lines of backtrace; the exception line comes
+    # first, so name it before the tail or the reason is cut off.
+    def failure_excerpt(out)
+      lines = out.lines
+      cause = lines.find { |line| line.match?(/\b[A-Z]\w*(?:Error|Invalid|Exception)\b|rake aborted/) }
+      [cause, *lines.last(8)].compact.uniq.join
     end
   end
 end
