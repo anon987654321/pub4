@@ -280,7 +280,7 @@ class TestMasterLoop < Minitest::Test
   def test_operator_conduct_is_a_rule_like_any_other
     rules = Master::Ground::Laws.new.laws
 
-    %w[OPERATOR_AUTONOMY EXECUTE_NOT_INSTRUCT SHELL_DISCIPLINE VPS_SERIAL_TRUTH NO_NEW_FILES
+    %w[OPERATOR_AUTONOMY EXECUTE_NOT_INSTRUCT DO_THE_WORK_NOW SHELL_DISCIPLINE VPS_SERIAL_TRUTH NO_NEW_FILES
        STRUNK_WHITE FLAT_PIXELS VOICE_TERSE_UNIX MICRO_REFINEMENTS].each do |id|
       assert rules.key?(id), "#{id} binds conduct and must still be a rule"
     end

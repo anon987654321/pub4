@@ -140,10 +140,7 @@ class TestDocPaths < Minitest::Test
     MASTER/docs/LOVDATA.md
     MASTER/docs/PUB4_PERMISSION_MATRIX.md
     MASTER/docs/ad_creative_governance.md
-    MASTER/docs/editorial-quality.md
     MASTER/docs/efficient_repair_workflow.md
-    MASTER/docs/task-contracts.md
-    MASTER/docs/task-map.md
     MASTER/docs/visual/bergen_brand_systems.md
     MASTER/docs/visual/browserless_ad_audits.md
     OPENBSD/docs/log_rotation.md

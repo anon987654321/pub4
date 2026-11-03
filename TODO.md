@@ -1,10 +1,14 @@
 # pub4 outstanding work
 
-The one cross-tree backlog: work an agent in this checkout can do. Work that
-needs the operator, a device, a credential, a paid call, ears or a console on
-vm23 is a seam in `MASTER/data/operator_seams.yml`. Refusals live under
-"Refused, and why" in `MASTER/AGENTS.md`. An item closes by being deleted in
-the commit that carries its evidence; nothing here records finished work.
+This is the single carry-forward register, not a substitute for execution.
+`DO_THE_WORK_NOW` governs every agent: complete authorised, executable work in
+the current run instead of adding TODOs, plans or promises for later. Do not add
+an item for work available with the current tools, credentials and authority.
+Keep only unresolved work that is explicitly deferred or genuinely depends on
+an external actor, device, credential, paid call, human decision or vm23
+console; operator-only seams belong in `MASTER/data/operator_seams.yml`.
+Refusals live under "Refused, and why" in `MASTER/AGENTS.md`. An item closes
+when its evidence is delivered; this file is not a record of finished work.
 
 ## Priority 1 — Documentation reduction and reorganisation
 

@@ -2164,6 +2164,9 @@ law_catalogue:
     DONT_OUTRUN_HEADLIGHTS:
       definition_sources: [MASTER/law/universal.rb]
       severity: info
+    DO_THE_WORK_NOW:
+      definition_sources: [MASTER/law/practice.rb]
+      severity: error
     DOUBLE_BRACKET:
       definition_sources: [MASTER/law/javascript.rb]
       severity: warning

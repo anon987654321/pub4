@@ -38,10 +38,9 @@ Before planning or acting, load MASTER's canonical context:
    plus the focused tests. `law_runtime.yml` is not a source of per-Law policy.
    A declared adapter or fixture does not prove that the detector ran or that
    the product is excellent.
-5. Read `MASTER/AGENTS.md` for repository workflow,
-   `MASTER/docs/task-contracts.md` and the generated
-   `MASTER/docs/task-map.md` for task entry, and
-   `MASTER/docs/editorial-quality.md` for editorial review.
+5. Follow this contract and the relevant owning tree/product contract. Task
+   routing, preservation dimensions, minimum proof and editorial review are
+   defined here so agents do not need a second navigation guide.
 
 Read the relevant source, tests, and local documentation for the requested
 work. Never substitute remembered instructions, summaries, or assumptions
@@ -105,6 +104,38 @@ scope, mandatory preservation dimensions, and proof. Validate programmatic
 contracts with `Master::Fix::TaskContract`; the schema lives in
 `MASTER/data/task_contract.yml`. `not_probed` marks an operation that no
 run has exercised; permission observations do not prove a successful write.
+
+
+Task routing and minimum proof:
+
+- **MASTER behavior or Laws:** read the owning Law, implementation and callers;
+  run focused tests, changed-line Law assessment and the relevant suite.
+- **Task intent or preservation:** read `MASTER/data/task_contract.yml` and
+  `Master::Fix::TaskContract`; verify scope, required preservation and evidence.
+- **HTML or interface work:** inspect the owning renderer, styles, interactions
+  and contract; prove source changes plus desktop/mobile renders, keyboard and
+  accessibility behavior as applicable.
+- **Rails behavior:** trace the owning app/engine, shared dependencies, routes,
+  models, controllers, views and tests; run relevant app and browser proof.
+- **Deployment:** read the OpenBSD contract and runbook; require actual host
+  output, health checks and backup/recovery evidence.
+- **STUDIO media:** use the owning project README, manifest and renderer; verify
+  reproducible output, seed/version and alignment while retaining the prior take.
+- **DOCX, PDF, XLSX or PPTX:** compare source and rendered pages, sheets or slides;
+  parsing alone is not visual preservation.
+- **Research/editorial work:** establish provenance, separate facts from claims
+  and inferences, source material claims, and report editorial review separately.
+- **Generated documents:** edit the owning generator/source and prove generated
+  output matches it.
+
+**Do the work now.** A clearly authorised request is an instruction to execute,
+not an invitation to produce another plan. Finish every independent, in-scope
+step available with the current tools, including repairs, proof and delivery.
+Do not add TODOs or promise later work for a task that can be completed now.
+Leave only a precisely named remainder that genuinely needs an unavailable
+credential, device, human decision, external consent, remote authority or
+unmet dependency; complete the independent work while that remainder is blocked.
+Break the dead thing. Do not break the user's trust.
 
 Shell commands obey the shell Laws in `laws.yml`. The runtime compatibility
 registry may still carry older command metadata; it does not override the

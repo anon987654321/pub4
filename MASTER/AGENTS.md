@@ -24,15 +24,47 @@ four generated files, one complete policy copy.
 For every substantive change, state intent, repository-relative scope, mandatory preservation
 dimensions and the proof required before editing. The canonical schema is
 `MASTER/data/task_contract.yml`; validate programmatic contracts with
-`Master::Fix::TaskContract`. Consult `MASTER/docs/task-contracts.md`, the generated
-`MASTER/docs/task-map.md` and `MASTER/docs/editorial-quality.md` when relevant.
+`Master::Fix::TaskContract`. Choose the narrowest intent that fits:
+
+| Intent | Allowed change | Preserve |
+|---|---|---|
+| `content_only` | Requested words or data | Visual identity, layout, structure, assets, behavior, accessibility, public contracts and operator-owned values |
+| `content_and_structure` | Content and document/page structure | Visual identity, assets, behavior, accessibility, public contracts and operator-owned values |
+| `functional_change` | Behavior inside the agreed scope | Visual identity, layout, accessibility, public contracts outside scope, operator-owned values and data meaning |
+| `redesign` | Presentation and layout | Product identity, content meaning, data meaning, accessibility, public contracts and operator-owned values |
+
+Intent is not inferred from a file extension. The validator adds mandatory
+preservation dimensions even when the caller omits them. HTML source checks prove
+only named source invariants; they do not prove responsive layout, accessibility,
+correct interactions or a browser render. Changed DOCX, PDF, XLSX and PPTX files
+remain INCONCLUSIVE until a format-aware source check and rendered-output
+comparison exist. An unchanged binary may pass exact-byte comparison; a redesign
+needs rendered visual and accessibility evidence.
+
+The existing evidence spine is canonical. FixPlan records eligible source hashes,
+task scope, Law identity, authority, toolchain and adapter digests. The validated
+contract and its digest are carried by the existing RunJournal terminal evidence
+alongside the Law × stream × surface assessment. Transactions reject paths outside
+the captured scope, including later enlistments. Legacy callers without a contract
+remain compatible but must not be described as contract-verified. Missing proof is
+NOT_RUN or INCONCLUSIVE, never PASS; a local edit is not a delivered change.
 
 `ruby MASTER/tools/agent_context.rb --json` is the shared machine-readable entrypoint. It
 returns the live authority, task-contract schema, Law coverage and a process capability
 snapshot. `not_probed` means not tested; permission observations are not successful writes.
 
-The HTML preservation verifier proves source-level invariants only. It never replaces browser,
-viewport, keyboard, screen-reader or rendered-output verification.
+## Research and editorial quality
+
+Separate engineering verification from editorial review. A passing suite does not
+prove factual accuracy, fairness, accessibility or clarity; polished prose does not
+prove software works. Define terms, institutions, populations and time periods.
+Source material factual claims and retain publication date, population, method and
+limitations. Distinguish verified facts, attributed claims, proposals, inferences
+and open questions. Use descriptive headings and links, plain language and
+accessible structure. Consider relevant trade-offs, uncertainty, counter-evidence
+and affected groups; do not present advocacy as neutral research or false balance
+as fairness. Report an unreviewed editorial dimension as INCONCLUSIVE.
+
 
 ## Local test execution and /fix cleanup
 
@@ -79,10 +111,9 @@ Before planning or acting, load MASTER's canonical context:
    plus the focused tests. `law_runtime.yml` is not a source of per-Law policy.
    A declared adapter or fixture does not prove that the detector ran or that
    the product is excellent.
-5. Read `MASTER/AGENTS.md` for repository workflow,
-   `MASTER/docs/task-contracts.md` and the generated
-   `MASTER/docs/task-map.md` for task entry, and
-   `MASTER/docs/editorial-quality.md` for editorial review.
+5. Follow this contract and the relevant owning tree/product contract. Task
+   routing, preservation dimensions, minimum proof and editorial review are
+   defined here so agents do not need a second navigation guide.
 
 Read the relevant source, tests, and local documentation for the requested
 work. Never substitute remembered instructions, summaries, or assumptions
@@ -146,6 +177,38 @@ scope, mandatory preservation dimensions, and proof. Validate programmatic
 contracts with `Master::Fix::TaskContract`; the schema lives in
 `MASTER/data/task_contract.yml`. `not_probed` marks an operation that no
 run has exercised; permission observations do not prove a successful write.
+
+
+Task routing and minimum proof:
+
+- **MASTER behavior or Laws:** read the owning Law, implementation and callers;
+  run focused tests, changed-line Law assessment and the relevant suite.
+- **Task intent or preservation:** read `MASTER/data/task_contract.yml` and
+  `Master::Fix::TaskContract`; verify scope, required preservation and evidence.
+- **HTML or interface work:** inspect the owning renderer, styles, interactions
+  and contract; prove source changes plus desktop/mobile renders, keyboard and
+  accessibility behavior as applicable.
+- **Rails behavior:** trace the owning app/engine, shared dependencies, routes,
+  models, controllers, views and tests; run relevant app and browser proof.
+- **Deployment:** read the OpenBSD contract and runbook; require actual host
+  output, health checks and backup/recovery evidence.
+- **STUDIO media:** use the owning project README, manifest and renderer; verify
+  reproducible output, seed/version and alignment while retaining the prior take.
+- **DOCX, PDF, XLSX or PPTX:** compare source and rendered pages, sheets or slides;
+  parsing alone is not visual preservation.
+- **Research/editorial work:** establish provenance, separate facts from claims
+  and inferences, source material claims, and report editorial review separately.
+- **Generated documents:** edit the owning generator/source and prove generated
+  output matches it.
+
+**Do the work now.** A clearly authorised request is an instruction to execute,
+not an invitation to produce another plan. Finish every independent, in-scope
+step available with the current tools, including repairs, proof and delivery.
+Do not add TODOs or promise later work for a task that can be completed now.
+Leave only a precisely named remainder that genuinely needs an unavailable
+credential, device, human decision, external consent, remote authority or
+unmet dependency; complete the independent work while that remainder is blocked.
+Break the dead thing. Do not break the user's trust.
 
 Shell commands obey the shell Laws in `laws.yml`. The runtime compatibility
 registry may still carry older command metadata; it does not override the
