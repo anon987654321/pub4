@@ -32,7 +32,8 @@ class FrontPageWeightTest < ActionDispatch::IntegrationTest
   # 140,236 bytes. Lower these when you cut something; raising one needs a reason
   # in the commit.
   INSTANCE_BUDGET = 150
-  PER_POST_BUDGET = 5 # action x2, clipboard x2, dropdown x1
+  # long-press, dropdown, clipboard x2, post-gallery.
+  PER_POST_BUDGET = 5
 
   setup do
     Brgen::CitySeed.sync! if City.table_exists?

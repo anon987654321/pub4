@@ -82,33 +82,35 @@
         Each photo link carries the gallery action itself, so a keyboard Enter on
         the focused link opens the gallery exactly as a click does. %>
     <% post_media = capture do %>
-      <% if post.images.attached? %>
+      <%# One gallery wrapper for either photo source, so a card pays for one
+          post-gallery instance and the source says so (FrontPageWeightTest
+          counts the partial's data-controller attributes). %>
+      <% if post.images.attached? || post.image.attached? %>
         <div class="post-images" data-controller="post-gallery">
-          <% post.images.each_with_index do |image, image_index| %>
-            <% priority_image = priority && image_index.zero? %>
-            <%= link_to rails_blob_path(image, disposition: "inline"),
+          <% if post.images.attached? %>
+            <% post.images.each_with_index do |image, image_index| %>
+              <% priority_image = priority && image_index.zero? %>
+              <%= link_to rails_blob_path(image, disposition: "inline"),
+                    data: { gallery_item: true, action: "click->post-gallery#open" },
+                    aria: { label: post.title } do %>
+                <%= image_tag image.variant(resize_to_limit: [800, 800]), alt: post.title,
+                      loading: (priority_image ? "eager" : "lazy"),
+                      fetchpriority: (priority_image ? "high" : "auto"),
+                      decoding: "async", class: "post-image" %>
+              <% end %>
+            <% end %>
+          <% else %>
+            <%= link_to rails_blob_path(post.image, disposition: "inline"),
                   data: { gallery_item: true, action: "click->post-gallery#open" },
                   aria: { label: post.title } do %>
-              <%= image_tag image.variant(resize_to_limit: [800, 800]), alt: post.title,
-                    loading: (priority_image ? "eager" : "lazy"),
-                    fetchpriority: (priority_image ? "high" : "auto"),
-                    decoding: "async", class: "post-image" %>
+              <%= responsive_image_tag(post.image, alt: post.title,
+                    loading: (priority ? "eager" : "lazy"),
+                    fetchpriority: (priority ? "high" : "auto"),
+                    class: "post-image") %>
             <% end %>
           <% end %>
         </div>
-        <%= render "shared/photo_credit", blob: post.images.first&.blob %>
-      <% elsif post.image.attached? %>
-        <div class="post-images" data-controller="post-gallery">
-          <%= link_to rails_blob_path(post.image, disposition: "inline"),
-                data: { gallery_item: true, action: "click->post-gallery#open" },
-                aria: { label: post.title } do %>
-            <%= responsive_image_tag(post.image, alt: post.title,
-                  loading: (priority ? "eager" : "lazy"),
-                  fetchpriority: (priority ? "high" : "auto"),
-                  class: "post-image") %>
-          <% end %>
-        </div>
-        <%= render "shared/photo_credit", blob: post.image.blob %>
+        <%= render "shared/photo_credit", blob: (post.images.attached? ? post.images.first&.blob : post.image.blob) %>
       <% end %>
       <% if (embed = post.link_embed_record) %>
         <%= render "shared/link_embed", embed: embed %>
