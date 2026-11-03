@@ -210,7 +210,8 @@ and compare pinned revisions only.
   Preserve the actual output and exit status. Then run
   `rake -f MASTER/Rakefile ux:baymard` and review the complete report for
   every declared RAILS app and shared engine. The 21 regression methods are
-  committed but were not executed in the GitHub editing pass. Fix confirmed
+  committed; on 2026-11-03 the file ran 24/24 after its private-probe and
+  empty-scope bugs were fixed. `ux:baymard` remains NOT_RUN. Fix confirmed
   defects; do not suppress findings merely to obtain a green report, and keep
   framework-generated or otherwise unmeasurable cases INCONCLUSIVE.
 
@@ -425,73 +426,52 @@ One pass on one commit, recorded as PASS, FAIL, INCONCLUSIVE, BLOCKED or
 TIMEOUT per command. The 2026-10-25 and 2026-10-26 connector sessions committed
 source and tests they could not run; this pass is what measures them.
 
-- [ ] MASTER focused regressions on the pinned Ruby: from `MASTER/`, run
-  `bundle exec ruby -Ilib:test test/test_cli_face_on_start.rb`,
-  `bundle exec ruby -Ilib:test test/voice/test_voice_bed.rb`,
-  `bundle exec ruby -Ilib:test test/test_final_cleanup.rb`,
-  `bundle exec ruby -Ilib:test test/test_fix_loop_observability.rb`,
-  `bundle exec ruby -Ilib:test test/test_law_parity.rb`,
-  `bundle exec ruby -Ilib:test test/test_fix_kernel_lifecycle.rb`,
-  `bundle exec ruby -Ilib:test test/test_recovery_gates.rb`,
-  `bundle exec ruby -Ilib:test test/test_fix_convergence.rb`,
-  `bundle exec ruby -Ilib:test test/test_fix_convergence_wiring.rb`,
-  `bundle exec ruby -Ilib:test test/test_fix_mission.rb`,
-  `bundle exec ruby -Ilib:test test/test_core_no_lib_backedges.rb`,
-  `bundle exec ruby -Ilib:test test/test_fix_interruption_restart.rb`,
-  `bundle exec ruby -Ilib:test test/test_ingress_jobs.rb`,
-  `bundle exec ruby -Ilib:test test/test_security_audit.rb`,
-  `bundle exec ruby -Ilib:test test/test_io_atomic_write.rb`,
-  `bundle exec ruby -Ilib:test test/test_security_headers_source_check.rb`,
-  `bundle exec ruby -Ilib:test test/test_check_runner_registry.rb`,
-  `bundle exec ruby -Ilib:test test/test_turn_router.rb`,
-  `bundle exec ruby -Ilib:test test/test_command_registry_dispatch.rb`,
-  `bundle exec ruby -Ilib:test test/test_architecture_exploration.rb`,
-  `bundle exec ruby -Ilib:test test/test_run_journal_lifecycle.rb`,
+Measured on 2026-11-03 with Homebrew Ruby 4.0.5 (MASTER) and rbenv 4.0.5 (the apps),
+each file in its own process; the commits that fixed what they found are on main from
+d04a7bb8ff to d682846752.
 
-  `bundle exec ruby -Ilib:test test/test_fix_kernel.rb`,
-  `bundle exec ruby -Ilib:test test/test_check_chain.rb`,
-  `bundle exec ruby -Ilib:test test/test_strict_mode.rb`,
-  `bundle exec ruby -Ilib:test test/test_ecosystem_features.rb`,
-  `bundle exec ruby -Ilib:test test/test_compute_pool.rb`,
-  `bundle exec ruby -Ilib:test test/test_provider_concurrency.rb`,
-  `bundle exec ruby -Ilib:test test/test_keyless_routing.rb`,
-  `bundle exec ruby -Ilib:test test/test_llm_dispatcher.rb`,
-  `bundle exec ruby -Ilib:test test/test_event_privacy.rb`,
-  `bundle exec ruby -Ilib:test test/test_core_bridge.rb`,
-  `bundle exec ruby -Ilib:test test/test_trace_log_append_jsonl.rb`,
-  `bundle exec ruby -Ilib:test test/test_trace_metrics_log.rb`,
-  `bundle exec ruby -Ilib:test test/test_trace_telemetry.rb`,
-  `bundle exec ruby -Ilib:test test/test_trace_recorder_storage.rb`,
-  `bundle exec ruby -Ilib:test test/test_dom_surface_seo_metadata.rb`, and
-  `bundle exec ruby -Ilib:test test/test_cli_boot_e2e.rb` (the last exercises the real
-  PTY prompt/face lifecycle; its live-model case remains opt-in).
+- [ ] MASTER focused regressions: all 43 files in the former list pass except
+  `test/test_law_parity.rb` (2 failures, 2 errors): DEFRAG and RELOCATE in `laws.yml` use
+  `root: proximity`, which `ROOTS_VOCABULARY` does not list. Operator decision: add the
+  thirteenth root or move both Laws onto an existing one; `laws.yml` is human-owned.
+  Outside the list and still red: `test_replay_reader.rb` (fixtures write 0644 logs the
+  reader has refused since 8c4f834d5), `test_fix_loop_oscillation.rb` (cycle detector,
+  red before this session), `test_agy_reachability.rb`, `test_runs.rb` (parked
+  design_calibration plugin tests are unwired; the STUDIO census finds 2 files) and
+  `test_tools_media.rb` (reads the retired STUDIO postpro).
 - [ ] MASTER full suite: `MASTER_TEST_START_MARKERS=1 MASTER_TEST_JOBS=1 MASTER_TEST_PROGRESS_EVERY=25 rake test`,
   then `MASTER_TEST_JOBS=3 rake test`; check `.master/check/suite-report.json` for incomplete
   workers and mismatched start/result counts. Then run `rake audit` (the complete declared lint
-  inventory), followed by `bin/check --profile=agent`.
-- [ ] RAILS: `ruby RAILS/test/contract_runner_contract_test.rb`, `ruby RAILS/test/deploy_checks_contract_test.rb`, `ruby RAILS/test/check_failopen_test.rb`, `ruby RAILS/test/checks/runner_explain_test.rb`, `ruby RAILS/test/checks/constitutional_scan_targets_test.rb`, `ruby RAILS/test/run_all.rb`, and
-  `bin/ci` in each app in `RAILS/apps.yml`, plus focused Brgen regressions for
-  `test/services/stripe_billing_test.rb`, `test/models/api_key_test.rb`,
-  `test/controllers/api_lint_controller_test.rb`,
-  `test/controllers/dating_identity_gate_test.rb`,
-  `test/lib/radio_bergen_manifest_test.rb` and
-  `RAILS/brgen_radio/playlist/test/models/playlist/track_import_test.rb`.
-  Preserve per-command exit codes and evidence; a queued command is not a pass.
-  Include the 26 playlist, tv and takeaway tests
-  that no command ran until `Pub4TestScope`, brgen's share-target, share-draft and job
-  concurrency tests and a fresh test database for amber's `account_merges` and identity migrations.
-- [ ] OPENBSD: `ruby OPENBSD/test/test_pf_policy_check.rb`, `ruby OPENBSD/test/run_all.rb` and
-  `ruby OPENBSD/test/test_evidence_tool.rb`, smoke-testing PASS, FAIL, BLOCKED, INCONCLUSIVE and TIMEOUT
-  with process-group termination. The PF policy test includes a negative case for protocol-specific
-  unscoped pass rules; validate native syntax separately on OpenBSD with `pfctl -nf /etc/pf.conf`.
-- [ ] STUDIO: `cd STUDIO && rake check test`, including the full `test/dilla_test.rb` (25 minutes;
-  seven failures on 2026-10-23, reconciled in source on 2026-10-24 and never rerun).
+  inventory), followed by `bin/check --profile=agent`. NOT_RUN.
+- [ ] RAILS contracts: `ruby RAILS/test/run_all.rb` went from 34 red files to 6 after this
+  session's fixes, each file rerun alone after its fix. Still red: `check_live_and_css_budget`
+  (a fresh build measures brgen 289KB/217KB, amber 154/103, bsdports 91/62 — real growth,
+  operator decision to cut or re-ceiling), `file_length_ratchet` (25 files over or without a
+  ceiling, mostly the re-cut brgen partials and the merged amber/bsdports sheets) and
+  `method_length_ratchet` (35 methods over 30 lines against 16 of ceiling) — both need a
+  re-baseline decision or refactors; `studio_contract` (RAILS' artwork pipeline still
+  requires the retired STUDIO postpro, so publishing generated artwork fails — restore it
+  or drop the dependency); `viewport_spill_check` (needs a browser session to diagnose).
+  `integrity_locale` and `function_layout`'s live case failed against week-old local
+  servers with pending migrations; rerun them against the fresh ones. A full single-commit
+  rerun of run_all is NOT_RUN. Also NOT_RUN: `bin/ci` per app, the focused brgen billing,
+  API-key, API-lint, dating identity, Radio manifest and TrackImport tests, the share and
+  job-concurrency tests, and a fresh test database for amber's `account_merges`. The
+  takeaway engine suite ran 28/28 and amber's post tests 46/46.
+- [ ] OPENBSD: `ruby OPENBSD/test/run_all.rb` 45 files, 0 red; `ruby OPENBSD/bin/rehearse`
+  16/16; `test_pf_policy_check.rb` 11/11 and `test_evidence_tool.rb` 9/9. Left: validate
+  native syntax on OpenBSD with `pfctl -nf /etc/pf.conf`.
+- [ ] STUDIO: `rake check` passes; `test/dilla_test.rb` ran in full (17 runs, 386 assertions),
+  and its one failure, a macOS /private/var path comparison in the test, is fixed (d433c7c066).
+  Left: one uninterrupted `cd STUDIO && rake check test` on a single commit.
 - [ ] Generated outputs match their sources: `RAILS/__shared/design_tokens.yml`,
   `RAILS/master/public/face.runtime.js`, `face.css`, and `rake docs:agent_contracts` followed by
-  `rake lint:agent_contracts`.
-- [ ] The route suites on MASTER's pinned Ruby with Ollama cloud absent and only local `ollama:gemma3:4b` allowlisted: `test_route_policy.rb`,
+  `rake lint:agent_contracts`. `build_all_css.rb` reports clean for 4 apps; the rest NOT_RUN.
+- [ ] The route suites with Ollama cloud absent and only local `ollama:gemma3:4b` allowlisted.
+  On the default configuration (`models.yml ollama.enabled: false`) `test_route_policy.rb`,
   `test_lane_selection.rb`, `test_fix_fresh_checkout_models.rb`, `test_compute_pool.rb`,
-  `test_fallback_chain.rb`, `test_lane_pool.rb`, `test_ecosystem_features.rb`.
+  `test_fallback_chain.rb`, `test_lane_pool.rb` and `test_ecosystem_features.rb` all pass;
+  the allowlisted-local configuration itself is NOT_RUN.
 - [ ] Refresh `MASTER/data/self_findings.yml` through `ruby MASTER/lib/operator/self_findings.rb --ratchet` after source changes settle. Review the law and registry member deltas and both counts; the ratchet must refuse to raise either existing ceiling.
 - [ ] Then `/fix` on the repository root: four independent reports, 30–40 grounded tournament
   candidates per tree, and each terminal state (DONE, PLATEAU, HUMAN_DECISION, BLOCKED,
@@ -547,9 +527,13 @@ source and tests they could not run; this pass is what measures them.
 
 - [ ] The 400-case interaction inventory in `RAILS/test/interaction_campaign_400.json`, run against
   the real CLI, HTTP and browser surfaces an agent can reach, with each case's observed result.
-- [ ] Rendered layout through the CDP checks at 320, 360, 375, 390, 430, 480, 640, 768, 1024 and
-  1280 px, with keyboard-only, zoom, forced-colours and reduced-motion passes; `bin/operator
-  triangle up` first.
+- [ ] Rendered layout: the widths are captured. `bin/operator visual sweep` (the /fix
+  screenshot_sweep stage) recorded 181 pages, 1751 screenshots and 697 dialog states on
+  2026-11-03 with 0 failures (`MASTER/.master/visual_artifacts/sweep-20261103T002444Z`), and
+  its findings so far are fixed (bsdports dark-OS contrast, amber escaped post markup). Left:
+  review the remaining captures, the 64 parameter routes no visited page linked to (mostly
+  signed-in pages; the sweep runs as a guest), and keyboard-only, zoom, forced-colours and
+  reduced-motion passes.
 - [ ] brgen journeys end to end in integration tests: feed, posts, moderation, maps, marketplace,
   dating, messenger, radio and takeaway, with authorisation boundaries and empty and error states.
 - [ ] Guest-to-account conversion and guest-transfer retry tests through every sign-in path.
