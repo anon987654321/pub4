@@ -36,7 +36,7 @@ class DatingIdentityGateTest < ActionDispatch::IntegrationTest
     host! "dating.brgen.no"
   end
 
-  def with_vipps(available)
+  def with_vipps(available:)
     Rails.application.config.x.oauth_provider_slugs = available ? %w[vipps] : []
   end
 
@@ -47,7 +47,7 @@ class DatingIdentityGateTest < ActionDispatch::IntegrationTest
 
     get dating.new_profile_path
 
-    assert_redirected_to sign_in_path
+    assert_redirected_to new_session_path
     assert flash[:alert].present?
   end
 
@@ -68,7 +68,7 @@ class DatingIdentityGateTest < ActionDispatch::IntegrationTest
 
     get dating.new_profile_path
 
-    assert_redirected_to sign_in_path
+    assert_redirected_to new_session_path
   end
 
   test "with Vipps configured the gate answers to verification, not the bypass" do
@@ -78,7 +78,7 @@ class DatingIdentityGateTest < ActionDispatch::IntegrationTest
 
     get dating.new_profile_path
 
-    assert_redirected_to sign_in_path
+    assert_redirected_to new_session_path
   end
   def verify(user, slug:, assurance: "verified")
     provider = IdentityProvider.find_or_create_by!(slug:) { |row| row.name = slug.capitalize }
@@ -102,7 +102,7 @@ class DatingIdentityGateTest < ActionDispatch::IntegrationTest
 
     get dating.new_profile_path
 
-    assert_redirected_to sign_in_path
+    assert_redirected_to new_session_path
   end
 
   # The first screen names the check the gate really makes, and none when

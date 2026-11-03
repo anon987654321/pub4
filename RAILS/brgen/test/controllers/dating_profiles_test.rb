@@ -7,11 +7,17 @@ class DatingProfilesTest < ActionDispatch::IntegrationTest
     Brgen::CitySeed.sync! if City.table_exists?
     @city = City.find_by!(domain: "brgen.no")
     ActsAsTenant.current_tenant = @city
+    # Profile writes sit behind the identity gate (Dating::BaseController), so
+    # these accounts pass it the way a real one does: Vipps configured and a
+    # verified Vipps identity on record.
+    @previous_slugs = Rails.application.config.x.oauth_provider_slugs
+    Rails.application.config.x.oauth_provider_slugs = %w[vipps]
     @me = user_with_profile("dp_me", visible: false)
   end
 
   teardown do
     ActsAsTenant.current_tenant = nil
+    Rails.application.config.x.oauth_provider_slugs = @previous_slugs
   end
 
   def user_with_profile(handle, visible: true, gender: "woman", looking_for: "man")
@@ -19,7 +25,9 @@ class DatingProfilesTest < ActionDispatch::IntegrationTest
       email_address: "#{handle}@brgen.no", password: "password123",
       username: handle, guest: false, city: @city
     )
-    profile = Dating::Profile.new(user: user, age: 30, bio: "hei", visible: visible, gender: gender, looking_for: looking_for)
+    vipps = IdentityProvider.find_or_create_by!(slug: "vipps") { |row| row.name = "Vipps" }
+    ExternalIdentity.create!(user:, identity_provider: vipps, subject: "sub-#{handle}", assurance_level: "verified")
+    profile = Dating::Profile.new(user:, age: 30, bio: "hei", visible:, gender:, looking_for:)
     attach_pixel!(profile.photos, filename: "#{handle}.png")
     profile.save!
     user
@@ -130,6 +138,8 @@ class DatingProfilesTest < ActionDispatch::IntegrationTest
     Dating::Like.create!(liker: viewer, likee: liked)
     Dating::Dislike.create!(disliker: viewer, dislikee: passed)
     sign_in_as(viewer)
+    # Past the first-visit splash, onto the deck.
+    get dating.root_path(start: 1)
 
     get dating.root_path
 
