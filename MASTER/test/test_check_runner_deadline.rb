@@ -10,19 +10,25 @@ class TestCheckRunnerDeadline < Minitest::Test
 
   def test_a_hung_script_check_fails_at_its_deadline
     Dir.mktmpdir do |dir|
-      script = File.join(dir, "hang.rb")
-      File.write(script, "sleep 60\n")
-      relative = Pathname.new(script).relative_path_from(File.dirname(RUNNER)).to_s
-      checks = File.join(dir, "checks.yml")
-      File.write(checks, "hung_check:\n  script: #{relative}\n  timeout_seconds: 1\n")
-      env = { "CHECKS_FILE" => checks, "CHECK_LEDGER" => File.join(dir, "ledger.jsonl") }
+      # The registry refuses parent and absolute script paths and resolves
+      # scripts against the runner's own directory, so the hung script is
+      # registered from there and removed when the assertion ends.
+      hung = File.join(File.dirname(RUNNER), "hang.rb")
+      File.write(hung, "sleep 60\n")
+      begin
+        checks = File.join(dir, "checks.yml")
+        File.write(checks, "hung_check:\n  script: hang.rb\n  timeout_seconds: 1\n")
+        env = { "CHECKS_FILE" => checks, "CHECK_LEDGER" => File.join(dir, "ledger.jsonl") }
 
-      started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
-      out, status = Open3.capture2e(env, RbConfig.ruby, RUNNER, "--all")
+        started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+        out, status = Open3.capture2e(env, RbConfig.ruby, RUNNER, "--all")
 
-      assert_operator Process.clock_gettime(Process::CLOCK_MONOTONIC) - started, :<, 30
-      refute status.success?, out
-      assert_includes out, "hang.rb timed out after 1s"
+        assert_operator Process.clock_gettime(Process::CLOCK_MONOTONIC) - started, :<, 30
+        refute status.success?, out
+        assert_includes out, "hang.rb timed out after 1s"
+      ensure
+        File.delete(hung)
+      end
     end
   end
 end

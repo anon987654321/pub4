@@ -7,6 +7,8 @@ require "tmpdir"
 require_relative "../lib/operator/check_heartbeat"
 
 class TestCheckHeartbeat < Minitest::Test
+  RUNNER = File.expand_path("../checks/runner.rb", __dir__)
+
   def heartbeat(path, lines, now:, wall: 1000.0)
     Operator::CheckHeartbeat.new(label: "rails checks", path:, cadence: 28, clock: -> { now.first },
                                 wall: -> { wall }, say: ->(text) { lines << text })
@@ -103,12 +105,21 @@ class TestCheckHeartbeat < Minitest::Test
     Dir.mktmpdir do |dir|
       path = File.join(dir, "p.json")
       checks = File.join(dir, "checks.yml")
-      File.write(checks, "absent_check:\n  script: no_such_script.rb\n")
-      env = { "CHECK_PROGRESS_FILE" => path, "CHECKS_FILE" => checks, "CHECK_LEDGER" => File.join(dir, "ledger.jsonl") }
-      Open3.capture2e(env, RbConfig.ruby, File.expand_path("../checks/runner.rb", __dir__), "--all")
+      # The registry refuses a script that does not exist and resolves
+      # scripts against the runner's own directory, so the probe ships one
+      # from there; the progress row is the part under test.
+      probe = File.join(File.dirname(RUNNER), "probe.rb")
+      File.write(probe, "exit 0\n")
+      begin
+        File.write(checks, "absent_check:\n  script: probe.rb\n")
+        env = { "CHECK_PROGRESS_FILE" => path, "CHECKS_FILE" => checks, "CHECK_LEDGER" => File.join(dir, "ledger.jsonl") }
+        Open3.capture2e(env, RbConfig.ruby, File.expand_path("../checks/runner.rb", __dir__), "--all")
 
-      row = JSON.parse(File.read(path))
-      assert_equal [1, 1, "absent_check"], row.values_at("n", "total", "name")
+        row = JSON.parse(File.read(path))
+        assert_equal [1, 1, "absent_check"], row.values_at("n", "total", "name")
+      ensure
+        File.delete(probe)
+      end
     end
   end
 end
