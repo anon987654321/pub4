@@ -122,8 +122,11 @@ module Master
             hearing.join(0.1)
           end
           if painter&.alive?
-            painter.kill
-            painter.join(0.1)
+            painter.join(0.25)
+            if painter.alive?
+              painter.kill
+              painter.join(0.1)
+            end
           end
           unsubscribe_from_bus
           begin
