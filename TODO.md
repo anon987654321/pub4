@@ -465,8 +465,10 @@ d04a7bb8ff to d682846752.
   on pinned Ruby before closing it. Other recorded failures remain:
   The cycle-detector fixture now observes the current five-pass recurrence
   window; rerun it on pinned Ruby before closing the test. Also rerun
-  `test_agy_reachability.rb` and `test_runs.rb` (parked design_calibration
-  plugin tests are unwired; the STUDIO census finds 2 files).
+  `test_agy_reachability.rb` and `test_runs.rb`. The test-runner census now
+  counts STUDIO's two maintained tests and includes the parked calibration
+  regression files in the MASTER suite; execute those focused tests before
+  closing this gate.
   `test_tools_media.rb` reads the current canonical `STUDIO/postpro` source,
   not a retired path; include it in the pinned suite instead of treating the
   source path as a defect.

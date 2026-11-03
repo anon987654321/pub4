@@ -67,6 +67,9 @@ module Operator
         "RAILS/test/pwa_offline_store.test.mjs",
         "RAILS/test/stimulus_components_runtime_contract.test.mjs",
       ],
+      # STUDIO's Rakefile builds this path from separate File.join arguments,
+      # so the source-glob reader cannot recover the directory on its own.
+      "STUDIO/Rakefile" => ["STUDIO/test/**/*_test.rb"],
     }.freeze
 
     # Support files named like tests. A runner loads these; nothing runs them.

@@ -63,16 +63,15 @@ class TestRuns < Minitest::Test
     assert_empty Operator::Runs.who_runs("MASTER/test/no_such_file.rb")
   end
 
-  # STUDIO was the fourth tree and the census never looked at it: 23 test files
-  # outside every question this check asks. A runner that names one file outright
-  # runs it, which a glob-only extractor could not see — STUDIO's Rakefile lists
-  # test_studio_check.rb by name on purpose.
+  # STUDIO is deliberately small: its two maintained suites cover Dilla and
+  # idea-picture output. Its Rakefile builds the glob through File.join, so the
+  # census carries that exact runner convention rather than guessing a path.
   def test_every_governed_tree_contributes_tests_to_the_census
     minimums = {
       "MASTER/" => 250,
       "RAILS/" => 100,
       "OPENBSD/" => 20,
-      "STUDIO/" => 15,
+      "STUDIO/" => 2,
     }
 
     minimums.each do |prefix, floor|
@@ -82,7 +81,7 @@ class TestRuns < Minitest::Test
     end
 
     assert_includes Operator::Runs.globs.keys, "STUDIO/Rakefile",
-                    "the dilla and tool suites must be part of the runner census"
+                    "the Dilla and idea-picture suites must be part of the runner census"
   end
 
   def test_node_and_shell_test_files_are_in_the_same_reachability_census
@@ -106,12 +105,14 @@ class TestRuns < Minitest::Test
                     "only #{cross_language.size} Node/shell tests are in the reachability census"
   end
 
-  def test_studio_is_in_the_census_and_its_named_runner_counts
+  def test_studio_is_in_the_census_and_its_runner_reaches_both_suites
     studio = Operator::Runs.test_files.select { |path| path.start_with?("STUDIO/") }
 
-    assert_operator studio.size, :>, 15, "STUDIO's suite is not being read"
-    assert_includes Operator::Runs.who_runs("STUDIO/test/test_studio_check.rb"), "STUDIO/Rakefile"
+    assert_operator studio.size, :>=, 2, "STUDIO's two maintained suites are not being read"
+    assert_includes studio, "STUDIO/test/dilla_test.rb"
+    assert_includes studio, "STUDIO/test/idea_picture_test.rb"
     assert_includes Operator::Runs.who_runs("STUDIO/test/dilla_test.rb"), "STUDIO/Rakefile"
+    assert_includes Operator::Runs.who_runs("STUDIO/test/idea_picture_test.rb"), "STUDIO/Rakefile"
   end
 
   # What makes a file a test is the directory, not the name — three source files
