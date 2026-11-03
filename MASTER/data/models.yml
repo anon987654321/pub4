@@ -234,12 +234,17 @@ models:
     - *agy_auto
     - *nemotron_super
     - *gemini_flash_openrouter
+    # Every failover tier ends in the local lane: when every remote lane is
+    # spent the run degrades to the local model instead of going dark. The
+    # dormant-lane policy keeps it skipped unless MASTER_OLLAMA_ENABLED=1.
+    - *ollama_gemma
   primary:
     - *claude_cli_opus
     - *claude_cli_sonnet
     - *agy_auto
     - *claude_opus_api
     - *nemotron_super
+    - *ollama_gemma
   strong:
     - *claude_cli_opus
     - *claude_cli_sonnet
@@ -252,6 +257,7 @@ models:
     - *gemini_flash
     - *command_r_plus
     - *grok_cli_auto
+    - *ollama_gemma
   vision:
     - *gemini_flash
     - *claude_sonnet
