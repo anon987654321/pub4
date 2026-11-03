@@ -336,3 +336,75 @@ proposals:
       root's, and vps-deploy line 126 tests -d /home/<app>/app as dev, which
       keeps working because /home/<app> and /app stay 755. Operator call: it is a
       production permissions change.
+
+# MASTER retirements backfilled 2026-11-03 from the superseded master.json
+# (v15.0.0-unified) and master.yml (v12.9.0) configs, so the next loop cannot
+# re-propose what the tree already retired. Per the header above, refuted rows
+# are never deleted.
+  - id: capability-feature-flags
+    tree: MASTER
+    state: refuted
+    claim: "runtime feature_flags toggled capabilities and fences on and off without a commit"
+    reason: >
+      A switch the governed party can flip is not a control, and a flag flipped
+      back after a bad run leaves no diff to review. Authorization lives where a
+      commit can be refused: laws.yml, PATH_OWNERSHIP.yml and the council
+      quorum. The nearest honest shape survives as standing orders that default
+      disabled and are turned on by hand.
+    refuted_by: data/state.yml autocommit_post_chat
+
+  - id: target-stack-auto-detection
+    tree: MASTER
+    state: refuted
+    claim: "the loop probed a target to guess its framework, test runner and package manager before acting"
+    reason: >
+      A guess that succeeds silently becomes a licence: the next round acts on
+      the detection instead of the contract. The tree contract names every
+      stack up front, and an unnamed tree is a gap to report, not a surface to
+      probe into an assumption.
+    refuted_by: MASTER/PATH_OWNERSHIP.yml
+
+  - id: multi-temperature-best-of-n
+    tree: MASTER
+    state: refuted
+    claim: "candidate repairs were sampled N times across temperatures and the best one kept"
+    reason: >
+      Best by whose judgement - the model that produced the candidates scored
+      its own output, the no-independent-evidence shape INCONCLUSIVE_IS_NOT_PASS
+      exists for, at N times the spend and no ceiling. One pinned model per lane
+      with outcome history replaces resampling with reruns that leave receipts.
+    refuted_by: convergence.yml workstream model_laboratory
+
+  - id: slack-webhook-notifications
+    tree: MASTER
+    state: refuted
+    claim: "run summaries were posted to a Slack webhook on every loop iteration"
+    reason: >
+      An outbound webhook is unscoped egress, a third party inside the trust
+      boundary and a secret in the repo, for a summary the operator pulls anyway
+      through doctor and the availability heartbeat. Reopen only as an
+      operator-owned relay: allowlisted endpoint, secret held outside the tree -
+      the shape ops_alert_channel records as missing.
+    refuted_by: data/state.yml availability_posture
+
+  - id: okr-style-self-scoring
+    tree: MASTER
+    state: refuted
+    claim: "the loop scored itself against OKR-style objectives it also wrote"
+    reason: >
+      A score the subject writes is narrative, and a typed target drifts from
+      its reader - the exact defect that removed the cost field from the check
+      registry. Measured values in receipts, under ceilings that only ratchet
+      down, replaced it.
+    refuted_by: checks/data/constitutional_budget.yml
+
+  - id: coverage-percentage-gate
+    tree: MASTER
+    state: refuted
+    claim: "convergence was gated on a coverage percentage"
+    reason: >
+      A percentage rewards tests that execute lines over proofs that bind
+      behaviour, and it reads green while rescues discard what went wrong.
+      Proof is named per task instead, and the number's retirement was
+      deliberate, not an omission.
+    refuted_by: data/task_contract.yml proof_types

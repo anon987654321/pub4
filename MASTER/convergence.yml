@@ -290,3 +290,39 @@ workstreams:
       free-model quota matches OpenRouter's 50/day per model
     implementation: MASTER/docs/free_compute.md + MASTER/data/models.yml
     proof: MASTER/test/test_model_quota_forecast.rb; no lane in the doc is wired until its gate is met
+
+  # --- architecture review of MASTER (2026-11-03, operator chat) ---
+  # Design of record only: nothing below is wired, each row names where its
+  # proof will live, per the free_compute_design_of_record convention. The
+  # review that surfaced them read the tree statically; the numbers each proof
+  # needs come from the first measured run, not from the review.
+  - id: inconclusive_aging
+    state: missing
+    title: >-
+      An INCONCLUSIVE that outlives its operation's review window reopens as
+      FAIL carrying the receipt that first dated it, so tri-state evidence
+      cannot settle into permanent amber
+    implementation: MASTER/lib/convergence/proof.rb
+    proof: escalation rows in the convergence receipt; test_convergence_proof fails on a dated INCONCLUSIVE whose window closed without a verdict
+  - id: constitution_self_budget
+    state: missing
+    title: >-
+      The constitution measures itself: laws.yml carries a line ceiling under
+      the same only-ratchets-down contract the scan budgets charge the code
+    implementation: MASTER/data/laws.yml
+    proof: a ceiling row beside checks/data/constitutional_budget.yml and a test that fails when the constitution grows without an equal removal
+  - id: documentation_completeness
+    state: missing
+    title: >-
+      A change that moves a public contract moves its document in the same
+      commit, declared on the task contract as documentation_review proof
+    implementation: MASTER/data/task_contract.yml
+    proof: test_task_contract builds a contract carrying documentation_review; contract-touching intents without it fail the fix review
+  - id: ops_alert_channel
+    state: missing
+    title: >-
+      Heartbeat FAILs leave the box through one operator-owned relay with an
+      allowlisted endpoint and a secret held outside the tree, instead of
+      relying on the operator looking
+    implementation: OPENBSD relayd + MASTER/data/state.yml availability_posture
+    proof: watched delivery drill on vm23, recorded like the restore drill
