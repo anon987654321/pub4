@@ -8,6 +8,10 @@ require_relative "../lib/cli/face/ear"
 # noise and the face heard nothing.
 class TestFaceEarCheck < Minitest::Test
   Ear = Master::CLI::Face::Ear
+  class AllowVoice
+    def allowed?(scope:, purpose: nil, subject: nil) = true
+  end
+  ALLOW_VOICE = AllowVoice.new
 
   def test_a_quiet_room_keeps_the_floor
     assert_in_delta 0.3, Ear.check_for(0.04)
@@ -28,7 +32,7 @@ class TestFaceEarCheck < Minitest::Test
 
   # A room at 0.4% checks at 1.2%, about 393 of 32768.
   def ear_with(stream, transcriber)
-    ear = Ear.new(device: Object.new, capture: -> { stream }, transcriber:)
+    ear = Ear.new(device: Object.new, capture: -> { stream }, transcriber:, permissions: ALLOW_VOICE)
     ear.instance_variable_set(:@room, 0.4)
     ear.instance_variable_set(:@room_at, Process.clock_gettime(Process::CLOCK_MONOTONIC))
     ear
@@ -78,7 +82,7 @@ class TestFaceEarCheck < Minitest::Test
 
   # A phone with whisper and parec streams; the recogniser app is the fallback.
   def phone_ear(lane, stream, parec: true)
-    ear = Ear.new(device: Phone.new(true), capture: -> { stream }, words: Words.new(lane))
+    ear = Ear.new(device: Phone.new(true), capture: -> { stream }, words: Words.new(lane), permissions: ALLOW_VOICE)
     ear.instance_variable_set(:@room, 0.4)
     ear.instance_variable_set(:@room_at, Process.clock_gettime(Process::CLOCK_MONOTONIC))
     ear.define_singleton_method(:termux_listen) { |**| "recogniser" }
