@@ -424,10 +424,10 @@ end
     refute session.instance_variable_get(:@reading_input)
   end
 
-  def test_reline_read_error_does_not_masquerade_as_ctrl_d
+  def test_transient_reline_read_error_does_not_masquerade_as_ctrl_d
     result = nil
     capture_io do
-      Reline.stub(:readline, ->(*) { raise IOError, "terminal read failed" }) do
+      Reline.stub(:readline, ->(*) { raise RuntimeError, "transient input read failed" }) do
         result = @cli.send(:safe_read_line, "master$ ")
       end
     end
