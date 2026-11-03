@@ -134,11 +134,11 @@ module Master
       # The face is a compact visual projection above the canonical prompt.
       # Reline remains the only keyboard/input owner; no alternate screen,
       # raw-key reader or second prompt is started for ordinary CLI use.
-      FACE_INTRO_FRAMES = 16
+      FACE_INTRO_FRAMES = 6
       FACE_OVERLAY_MARKER = "face0 at master0: visual layer refreshed; Reline owns input"
       FACE_OVERLAY_PRESENT = "face0 at master0: already visible; Reline owns input"
 
-      def face_overlay_text(cols: 32)
+      def face_overlay_text(cols: 32, swarm_budget: nil)
         rows, fitted_cols = Master::CLI::Face::Sizing.fit(12, cols + 4, mode: "#{cols}x12")
         @face_started_at ||= Process.clock_gettime(Process::CLOCK_MONOTONIC)
         @face_motion ||= Master::CLI::Face::Motion.new(seed: Random.new_seed % 1_000_003)
@@ -151,6 +151,7 @@ module Master
           motion: @face_motion,
           color: false,
           show_laws: nil,
+          swarm_budget: swarm_budget || Master::Face::Contract.budget.fetch("terminal_intro_particles", 24),
         )
       end
 
@@ -193,13 +194,13 @@ module Master
 
         block_rows = face_rows + 1
         FACE_INTRO_FRAMES.times do
-          frame = face_overlay_text(cols:)
+          frame = face_overlay_text(cols:, swarm_budget: Master::Face::Contract.budget.fetch("terminal_intro_particles", 24))
           rendered = frame.lines.map { |line| line.chomp.center(terminal_cols) }.join("\n")
           Master::Trace::Dmesg.terminal_write do |target|
             target.write("\e7\e[?25l\e[#{block_rows}A\r#{rendered}\n#{FACE_OVERLAY_MARKER}\e[?25h\e8")
             target.flush
           end
-          sleep(1.0 / Master::CLI::Face::FPS)
+          sleep(1.0 / Float(Master::Face::Contract.budget.fetch("terminal_intro_fps", 8)).clamp(1.0, 12.0))
         end
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "cli.face.animation", event_bus: @refs.bus)
