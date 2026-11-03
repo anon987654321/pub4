@@ -2,6 +2,7 @@
 
 require "test_helper"
 require "tmpdir"
+require "minitest/mock"
 
 class RadioBergenImportGuardTest < ActiveSupport::TestCase
   setup do
@@ -53,7 +54,7 @@ class RadioBergenImportGuardTest < ActiveSupport::TestCase
       playlist_name = "Radio Bergen tenant test"
       result = nil
 
-      Brgen::RadioBergenManifest.stub(:curated_tracks, [entry]) do
+      Brgen::RadioBergenManifest.stub(:curated_tracks, [ entry ]) do
         Brgen::RadioBergenManifest.stub(:curated_playlist_name, playlist_name) do
           Brgen::RadioBergenManifest.stub(:curated_description, "Tenant-scoped import test") do
             Brgen::RadioBergenManifest.stub(:curated_album, "Tenant-scoped test") do

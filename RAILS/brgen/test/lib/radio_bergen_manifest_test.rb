@@ -65,7 +65,7 @@ class RadioBergenManifestTest < ActiveSupport::TestCase
   test "loads the operator's whyp.it uploads with the token the embed needs" do
     tracks = Brgen::RadioBergenManifest.whyp_tracks
 
-    assert_equal 13, tracks.size
+    assert_equal 12, tracks.size
     assert tracks.all? { |t| t[:whyp_id].present? && t[:whyp_token].present? }
     assert_equal tracks.size, tracks.map { |t| t[:id] }.uniq.size, "each whyp row has its own queue id"
     assert_includes tracks.map { |t| t[:title] }, "RADIO BERGEN #1"

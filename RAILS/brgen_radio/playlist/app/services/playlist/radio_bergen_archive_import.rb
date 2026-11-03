@@ -56,6 +56,7 @@ module Playlist
         imported_tracks = []
         attached_count = 0
         added_count = 0
+        opened_files = []
 
         ActiveRecord::Base.transaction do
           playlist = ::Playlist::Playlist.find_or_initialize_by(
@@ -82,9 +83,11 @@ module Playlist
             )
             track.save!
             unless track.audio_file.attached?
-              File.open(path, "rb") do |file|
-                track.audio_file.attach(io: file, filename: path.basename.to_s, content_type: "audio/mpeg")
-              end
+              # Active Storage analyses the io on save and uploads it after
+              # commit, so the file stays open until the transaction ends.
+              file = path.open("rb")
+              opened_files << file
+              track.audio_file.attach(io: file, filename: path.basename.to_s, content_type: "audio/mpeg")
               track.save!
               attached_count += 1
             end
@@ -98,6 +101,8 @@ module Playlist
 
         Result.new(playlist: playlist, tracks: imported_tracks,
                    new_audio_attachments: attached_count, new_playlist_entries: added_count)
+      ensure
+        opened_files&.each(&:close)
       end
     end
     private

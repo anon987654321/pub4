@@ -43,7 +43,9 @@ class RadioWhypImportTest < ActiveSupport::TestCase
       previous_path = ENV["PATH"]
       previous_timeout = ENV["YTDLP_TIMEOUT"]
       ENV["PATH"] = dir
-      ENV["YTDLP_TIMEOUT"] = "0.5"
+      # Long enough for a loaded CI box to start the shell and record the
+      # child pid; at 0.5s the full suite killed the shell before it wrote it.
+      ENV["YTDLP_TIMEOUT"] = "2"
 
       error = assert_raises(SystemExit) { importer.send(:download_collection) }
       assert_equal 1, error.status
