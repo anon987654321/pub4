@@ -165,6 +165,10 @@ nav[data-pwa-primary-nav] a[aria-current="page"] {
 // results-snippet grey #4d5156 at 8.0:1. Arial needs no download — that IS
 // the classic frontpage's face — so this app alone pins no bundled webfont.
 :root {
+  // White paper whatever the OS asks for. The shared minimal base is dark
+  // with a prefers-color-scheme: light override, so under a dark OS this
+  // block's ink sat on its black ground (2026-11-03 screenshot sweep).
+  @include x.light-tokens;
   @include x.app-root-tokens;
   // The classic frontpage palette.
   --text: #202124;

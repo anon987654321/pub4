@@ -152,16 +152,17 @@ def test_amber_feature_styles_are_loaded_at_their_original_boundaries
     amber_shared_overrides
   ], names, "Amber module order is a cascade contract"
 
-  expected_rules = {
-    "amber_guest_compose" => ".amber-compose-box",
-    "amber_wardrobe" => ".item-grid",
-    "amber_item_forms" => ".form .field",
-    "amber_dashboard" => ".dash-stats dl",
-    "amber_dressing_room" => ".viz-rows",
-    "amber_looks" => ".amber-looks",
-    "amber_jox_logo" => ".jox-logo",
-    "amber_editorial_feed" => ".feed-post"
-  }
+  # Pairs, not a hash: a module can own more than one pinned rule.
+  expected_rules = [
+    ["amber_guest_compose", ".amber-compose-box"],
+    ["amber_wardrobe", ".item-grid"],
+    ["amber_item_forms", ".form .field"],
+    ["amber_dashboard", ".dash-stats dl"],
+    ["amber_dressing_room", ".viz-rows"],
+    ["amber_looks", ".amber-looks"],
+    ["amber_jox_logo", ".jox-logo"],
+    ["amber_editorial_feed", ".feed-post"]
+  ]
   expected_rules.each do |name, selector|
     assert_includes stylesheet_module("amber", name), selector, "#{name} lost its feature rule"
   end
@@ -354,19 +355,21 @@ def test_brgen_feature_styles_are_loaded_at_their_original_boundaries
     brgen_shared_overrides
   ], stylesheet_module_names("brgen").grep_v(/\Asection_\d+\z/), "Brgen module order is a cascade contract"
 
-  expected_rules = {
-    "brgen_marketplace" => ".deal-card",
-    "brgen_vertical_surfaces" => ".listing-buy-bar-cta",
-    "brgen_city_surfaces" => ".store-promo-art-cta",
-    "brgen_messenger" => ".messenger-artifact-pane",
-    "brgen_composer" => ".composer[open]::backdrop",
-    "brgen_feed_posts" => ".feed-action",
-    "brgen_nearby_channels" => ".nearby-alert",
-    "brgen_share_media" => ".media-actions",
-    "brgen_dating" => ".swipe-card",
-    "brgen_vertical_shell" => "body[class*=\"vertical-\"] .feed-header",
-    "brgen_city_surfaces" => ".profile-header"
-  }
+  # Pairs, not a hash: brgen_city_surfaces pins two rules, and a repeated
+  # hash key silently dropped the first.
+  expected_rules = [
+    ["brgen_marketplace", ".deal-card"],
+    ["brgen_vertical_surfaces", ".listing-buy-bar-cta"],
+    ["brgen_shared_overrides", "body.vertical-marketplace .store-promo-art-cta"],
+    ["brgen_messenger", ".messenger-artifact-pane"],
+    ["brgen_composer", ".composer[open]::backdrop"],
+    ["brgen_feed_posts", ".feed-action"],
+    ["brgen_nearby_channels", ".nearby-alert"],
+    ["brgen_share_media", ".media-actions"],
+    ["brgen_dating", ".swipe-card"],
+    ["brgen_vertical_shell", "body[class*=\"vertical-\"] .feed-header"],
+    ["brgen_city_surfaces", ".profile-header"]
+  ]
   expected_rules.each do |name, selector|
     assert_includes stylesheet_module("brgen", name), selector, "#{name} lost its representative feature rule"
   end
@@ -567,8 +570,10 @@ def test_brgen_marketplace_badge_offsets_are_valid_css
     scss = File.read(File.join(ROOT, "brgen", "app", "assets", "stylesheets", "_brgen_marketplace.scss"))
 
     assert_match(/\.deal-card-img img\.restaurant-cover-image\s*\{[^}]*object-fit:\s*cover/, scss)
-    assert_match(/\.restaurant-cover-preview\s*\{[^}]*max-width:\s*min\(100%,\s*32rem\)/, scss)
-    assert_match(/\.restaurant-cover-preview\s*\{[^}]*max-height:\s*12rem/, scss)
+    # Bounded and reserved: an 18rem-wide 3:2 box caps the preview at 12rem
+    # tall and holds its space before the image loads (layout stability).
+    assert_match(/\.restaurant-cover-preview\s*\{[^}]*inline-size:\s*min\(100%,\s*18rem\)/, scss)
+    assert_match(/\.restaurant-cover-preview\s*\{[^}]*aspect-ratio:\s*3\s*\/\s*2/, scss)
   end
 
   def test_web_vitals_wired
