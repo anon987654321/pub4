@@ -48,9 +48,16 @@ class TestDocPaths < Minitest::Test
 
   def test_execution_ownership_map_covers_core_and_deployment_lifecycle
     map = File.read(File.join(REPO, "MASTER/docs/fix_coordinator_map.md"))
-    %w[Core::Fold Core::Constitution Core::World Fix::Mission Deployment].each do |owner|
+    %w[
+      Core::Fold Core::Constitution Core::World Fix::Mission Deployment
+      Fix::Restructure Fix::WatchLoop Improve::Engine RestructureSweep
+      Fix::Governor Review::LLMDispatcher Ground::Redactor
+    ].each do |owner|
       assert_includes map, owner
     end
+    assert_match(/does \*\*not\*\* use.*Fix::Transaction/m, map)
+    refute File.exist?(File.join(REPO, "MASTER/lib/fix/README.md")),
+           "the coordinator map now owns the local fix boundary"
   end
   def test_root_backlog_markdown_links_resolve
     body = File.read(File.join(REPO, "TODO.md"))

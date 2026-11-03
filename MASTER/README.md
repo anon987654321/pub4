@@ -132,13 +132,14 @@ blocks the affected repair rather than inviting a guess.
 The owners are deliberately separate. `Fix::Kernel` owns the process-shared
 execution lock, coordinator receipts, journal access and adapter construction.
 `Kernel::ConvergenceAdapter` coordinates passes; `Kernel::RepairAdapter`
-applies Law-driven repair policy. `Fix::Transaction` remains the only source
-mutation, rollback, recovery and Git-delivery path. `Fix::Mission` preserves
-the objective across runs. `FixLoop`, `RepairLoop` and `RunJournal` remain
-compatibility entrypoints until caller and recovery parity justify retiring
-them. The [coordinator map](docs/fix_coordinator_map.md) records responsibility
-and migration evidence; the [Fix boundary map](lib/fix/README.md) describes
-the local subsystem.
+applies Law-driven repair policy. `Fix::Transaction` is the per-pass mutation, rollback, recovery and
+Git-delivery path for ordinary source repairs. Multi-file structural work is
+also coordinated inside /fix, but `Fix::Restructure` has its own snapshot,
+proof, undo and one-commit delivery path; it is not Transaction-backed.
+`Fix::Mission` preserves the objective across runs. `FixLoop`, `RepairLoop`
+and `RunJournal` remain compatibility entrypoints until caller and recovery
+parity justify retiring them. The [coordinator map](docs/fix_coordinator_map.md)
+is the single responsibility and migration reference.
 
 A run measures first, attempts every actionable finding within its scope, and
 repeats measurement and repair. Each kept repair must pass its applicable

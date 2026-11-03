@@ -40,10 +40,18 @@ surface. This file maps implementations; it is not a second policy surface.
   `fix_loop/pass_runner/stream_stage.rb`, `kernel/repair_adapter.rb`,
   `repair_loop/file_budget.rb`, `run_budget.rb`, `run_pulse.rb`.
 - **`Fix::Transaction`** (728 + `transaction/{delivery,recovery}.rb` (930
-  lines)): staged writes, rollback, crash recovery and Git delivery of a pass.
-  Called from `fix_loop.rb`, `fix_loop/{committer,lifecycle,pass_runner}.rb`,
-  `fix_plan.rb`, `patch.rb`, `dead_css_sweep.rb`, `scale_snap.rb`,
-  `tap_target_pad.rb`, `tools/dead_css_sweep.rb`.
+  lines)): the per-pass source-write boundary for ordinary repairs: staged writes,
+  rollback, crash recovery and Git delivery. Called from `fix_loop.rb`,
+  `fix_loop/{committer,lifecycle,pass_runner}.rb`, `fix_plan.rb`, `patch.rb`,
+  `dead_css_sweep.rb`, `scale_snap.rb`, `tap_target_pad.rb` and
+  `tools/dead_css_sweep.rb`.
+- **`Fix::Restructure`**: the multi-file commit path used by `RestructureSweep`.
+  It validates the transformation plan and fresh source evidence, snapshots every
+  touched path, applies the plan, runs adversarial review and tree-specific proof,
+  then either restores the snapshot or makes one path-scoped commit and push.
+  It is coordinated inside the Kernel-owned /fix run, but it does **not** use
+  `Fix::Transaction`; its snapshot/undo and delivery contract must be assessed
+  separately from per-pass transaction recovery.
 - **`Fix::Kernel`**: production coordinator boundary and hash-chained receipt
   writer, while retaining `bin/master replay` and the existing log verification API.
   It owns the process-shared execution lock, run start/terminal receipts, the
@@ -79,13 +87,18 @@ scope. The adapter installs and restores its token in an `ensure` boundary;
 Kernel activates the token inside its receipt/rescue boundary and never reads
 or writes adapter instance variables.
 
-The existing `FixLoop` / `Transaction` mutation and rollback path remains the
-only source-editing path. Kernel appends a start receipt before execution and a
-truthful terminal receipt after it. If a writer dies before terminalization,
-a later process marks the orphan `unknown_outcome` only after same-host process
-identity proves the writer is gone. It does not infer success. Pass outcomes
-record law, status, bounded counts and run identity without source text or model
-prompts.
+Ordinary per-file repairs mutate through `FixLoop` / `Fix::Transaction`.
+Multi-file structural changes are the explicit second path: `FixLoop` owns the
+sweep, while `Fix::Restructure` uses a bounded snapshot, proof, undo and one
+scoped delivery commit rather than the per-pass Transaction journal. Do not
+describe a restructure as Transaction-backed or collapse the two paths without
+crash/recovery and receipt-parity evidence.
+
+Kernel appends a start receipt before execution and a truthful terminal receipt
+after it. If a writer dies before terminalization, a later process marks the
+orphan `unknown_outcome` only after same-host process identity proves the writer
+is gone. It does not infer success. Pass outcomes record law, status, bounded
+counts and run identity without source text or model prompts.
 
 The new `test_fix_kernel_lifecycle.rb` and `test_fix_interruption_restart.rb`
 cover owner identity, outcome receipts, repair counts and breakdowns, independent
@@ -104,6 +117,10 @@ behavioral parity.
   pass metadata. Merging any two of them needs the recovery tests first.
 - `Transaction` owns delivery (commit and push) as well as staging; `FixLoop`'s
   `committer.rb` also decides what to commit.
+- `Restructure` has its own in-memory snapshot/undo and one-commit delivery
+  path. Keep it an explicit owner until a process-interruption test proves
+  recovery parity with `Transaction`; ordinary pass receipts alone do not prove
+  per-file rollback after a crash during a multi-file restructure.
 
 ## Recovery tests and gate status
 
@@ -158,6 +175,36 @@ pass transaction and relies on the reflexion verifier, the consensus panel, the
 collapse guard and the Committer's path validation. WatchLoop builds none: a
 changed file wakes the background runner or starts an incremental FixLoop run,
 so its repairs get a transaction and a run ledger like any other.
+
+
+### Reactive, improvement and restructure lanes
+
+- **`WatchLoop`** observes supported source changes, debounces and rate-limits
+  events, then either wakes the live background runner or starts an incremental
+  `FixLoop` run. It never edits files itself.
+- **`Improve::Engine`** is the elevation sensor, not a writer. It emits
+  Law-grounded findings, ideation and merge/flatten proposals. `PassRunner`
+  turns the findings into the existing improvement lane; proposals enter
+  `RestructureSweep`'s candidate, plan and review flow.
+- **`RestructureSweep`** is built by `Kernel::ConvergenceAdapter` and runs
+  inside the same Kernel-owned /fix execution. `Improve::Restructure` only
+  proposes candidates. The final multi-file write is `Fix::Restructure`:
+  validate operations and current source evidence, snapshot, apply, inspect the
+  diff, run adversarial review and tree proof, then undo on failure or deliver
+  one scoped commit. This is a distinct path from the per-pass
+  `Fix::Transaction` journal.
+- **Tool admission** belongs to `Fix::Governor`: guarded/dangerous tier rules,
+  human-consent checks, the exact unattended allowlist and per-run dangerous
+  budget live there, not in a watcher, pass stage or individual tool.
+- **Model dispatch and redaction** belong to `Review::LLMDispatcher` and
+  `Ground::Redactor`. Outbound system text and messages pass through the
+  redactor; a loop must not construct provider requests or maintain a second
+  secret-pattern list.
+
+The improvement and watcher paths still have distinct budgets and clocks.
+Their names do not imply one shared scheduler or cost ledger; measure and
+reconcile those only after the runtime call graph and interruption behavior are
+proved.
 
 ### Fix::Mission
 
