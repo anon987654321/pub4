@@ -446,8 +446,10 @@ remove second Norwegian request- [ ] **Dilla local sample-flip interface — imp
 ## Verification run, after the fixes below land
 
 One pass on one commit, recorded as PASS, FAIL, INCONCLUSIVE, BLOCKED or
-TIMEOUT per command. The 2026-10-25 and 2026-10-26 connector sessions committed
-source and tests they could not run; this pass is what measures them.
+TIMEOUT per command. Include each affected app's `bin/ci` and
+`ruby MASTER/checks/runner.rb --all` in this same pass. The 2026-10-25 and
+2026-10-26 connector sessions committed source and tests they could not run;
+this pass is what measures them.
 
 Measured on 2026-11-03 with Homebrew Ruby 4.0.5 (MASTER) and rbenv 4.0.5 (the apps),
 each file in its own process; the commits that fixed what they found are on main from
@@ -689,8 +691,3 @@ fallback and device evidence are named.
   endpoint first. The fallback policy and regression tests have been updated;
   run the focused routing suite and the full MASTER check runner before
   treating the change as verified.
-- [ ] Run each affected app's `bin/ci`, then
-  `ruby MASTER/checks/runner.rb --all`, and capture fresh output/evidence.
-  GitHub-only editing cannot execute these commands or validate SQLite,
-  Rails rendering, RuboCop metrics or browser contracts; all new tests in this
-  batch remain NOT_RUN until run from a working checkout.
