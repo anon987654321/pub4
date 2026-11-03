@@ -71,9 +71,9 @@ class Marketplace::StoresControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_not_includes response.body, @store.name
 
-    assert_raises(ActiveRecord::RecordNotFound) do
-      get marketplace.shop_path(@store.slug)
-    end
+    # The test environment rescues RecordNotFound into the 404 a visitor gets.
+    get marketplace.shop_path(@store.slug)
+    assert_response :not_found
   end
 
   test "the owner opens a shop and the slug comes from the name" do

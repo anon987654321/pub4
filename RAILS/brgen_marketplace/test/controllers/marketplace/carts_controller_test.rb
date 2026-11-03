@@ -110,14 +110,15 @@ class Marketplace::CartsControllerTest < ActionDispatch::IntegrationTest
   test "someone else's cart line does not exist for you" do
     sign_in(@stranger)
 
-    assert_raises(ActiveRecord::RecordNotFound) do
-      patch marketplace.cart_item_path(@item), params: { quantity: 1 }
-    end
+    # The test environment rescues RecordNotFound into the 404 a visitor gets.
+    patch marketplace.cart_item_path(@item), params: { quantity: 1 }
+    assert_response :not_found
 
-    assert_raises(ActiveRecord::RecordNotFound) do
-      delete marketplace.cart_item_path(@item)
-    end
-    assert_equal 2, @item.reload.quantity
+    delete marketplace.cart_item_path(@item)
+    assert_response :not_found
+    @item.reload
+    assert_equal 2, @item.quantity
+    assert_equal "pending", @item.status
   end
 
   # build_basket refuses before any Checkout row is written: a basket paid

@@ -10,7 +10,7 @@ class Marketplace::OrdersController < Marketplace::BaseController
   def index
     @pagy, @orders = pagy(
       Marketplace::Order.where(buyer_id: Current.user.id)
-                        .includes(:listing)
+                        .includes(listing: :category)
                         .order(created_at: :desc)
     )
   end

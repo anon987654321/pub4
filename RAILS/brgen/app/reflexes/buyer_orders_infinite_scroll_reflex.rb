@@ -10,7 +10,7 @@ class BuyerOrdersInfiniteScrollReflex < Shared::InfiniteScrollReflex
 
   def scope
     Marketplace::Order.where(buyer_id: Current.user.id)
-                      .includes(:listing)
+                      .includes(listing: :category)
                       .order(created_at: :desc)
   end
 end
