@@ -1,0 +1,6 @@
+# A Radio Brgen track between posts on the front page (home/_radio_unit).
+nb:
+  home:
+    radio_unit:
+      heading: Fra Radio Brgen
+      label: Låt fra Radio Brgen

@@ -19,6 +19,9 @@
          <%= render "home/vertical_promo_unit", promotion: Brgen::HomeFeed.promotion_for(position) %>
        <% elsif ((position % Brgen::HomeFeed::AFFILIATE_EVERY).zero? && position < @posts.size) %>
          <%= render "shared/affiliate_feed_unit", surface: "brgen", band: position / Brgen::HomeFeed::AFFILIATE_EVERY %>
+       <% elsif live_search_query.blank? && position < @posts.size &&
+                (track = Brgen::HomeFeed.radio_track_for(position)) %>
+         <%= render "home/radio_unit", track: %>
        <% end %>
      </li>
    <% end %>

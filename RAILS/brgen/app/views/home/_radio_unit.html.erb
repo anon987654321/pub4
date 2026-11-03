@@ -1,0 +1,7 @@
+<%# locals: (track:) %>
+<%# A Radio Brgen track between posts: the same player facade a post's link
+    gets, under the radio's name and a way to the station. %>
+<aside class="radio-unit" aria-label="<%= t("home.radio_unit.label") %>">
+  <%= tag.h2 link_to(t("home.radio_unit.heading"), "//radio.#{Current.domain}/") %>
+  <%= render "shared/link_embed", embed: track %>
+</aside>

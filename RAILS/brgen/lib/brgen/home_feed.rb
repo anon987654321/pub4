@@ -18,6 +18,12 @@ module Brgen
       ai
     ].freeze
 
+    # A track from Radio Brgen sits at the odd positions 5, 15, 25…, where no
+    # sponsored unit or vertical promotion goes, and the choice turns with the
+    # day so the front page plays something new.
+    RADIO_EVERY = 10
+    RADIO_AT = 5
+
     module_function
 
     def following?(feed:)
@@ -74,6 +80,15 @@ module Brgen
 
       index = (position.to_i / PROMOTION_EVERY) - 1
       VERTICAL_PROMOTIONS.fetch(index % VERTICAL_PROMOTIONS.length)
+    end
+
+    def radio_slot?(position) = position.to_i % RADIO_EVERY == RADIO_AT
+
+    def radio_track_for(position, day: Date.current)
+      return unless radio_slot?(position)
+
+      tracks = Brgen::RadioBergenManifest.embed_records
+      tracks[((position.to_i / RADIO_EVERY) + day.yday) % tracks.size] unless tracks.empty?
     end
 
     # A blocker never sees blocked users' posts in any feed.

@@ -123,6 +123,29 @@ module Brgen
         end
       end
 
+      # The radio's tracks as the same embed records a post's link resolves to, so
+      # the front page plays them through shared/_link_embed. Built from the
+      # manifest alone: titles are ours, YouTube's still has a fixed address, and
+      # no provider is asked. YouTube and whyp.it alternate, as the radio does.
+      def embed_records
+        youtube = youtube_tracks.map do |track|
+          radio_record("https://www.youtube.com/watch?v=#{track[:id]}", track,
+                       thumbnail: "https://i.ytimg.com/vi/#{track[:id]}/hqdefault.jpg")
+        end
+        whyp = whyp_tracks.map do |track|
+          radio_record("https://whyp.it/tracks/#{track[:whyp_id]}?token=#{track[:whyp_token]}", track)
+        end
+        youtube.zip(whyp).flatten.compact + youtube.drop(whyp.size).compact
+      end
+
+      def radio_record(url, track, thumbnail: nil)
+        match = Shared::LinkEmbed.match_url(url)
+        return unless match
+
+        Shared::LinkEmbed::Record.new(match:, status: "ok", title: "#{track[:artist]} – #{track[:title]}",
+                                      author_name: "Radio Brgen", thumbnail_url: thumbnail)
+      end
+
       def archaeology_lines
         manifest = load
         meta = manifest["meta"] || {}

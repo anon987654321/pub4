@@ -124,3 +124,24 @@
   }
 }
 // ============================================================ /module: vertical_promo
+
+/* A Radio Brgen track between posts (home/_radio_unit): the station's name as
+   a small heading over the shared embed facade, flat like the promo above. */
+.radio-unit {
+  display: grid;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  background: var(--bg);
+}
+
+.radio-unit h2 {
+  margin: 0;
+  font-size: var(--text-sm);
+  font-weight: var(--weight-bold);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.radio-unit h2 a {
+  color: var(--text-secondary);
+}
