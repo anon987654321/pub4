@@ -159,6 +159,61 @@ expectations; a declared case is not an executed browser test. Browser,
 rendered, runtime and accessibility evidence remain distinct from source
 checks, and missing evidence stays NOT_RUN or INCONCLUSIVE.
 
+### Tree-scoped workflow
+
+Use the shortest measured loop: focused read-only checks, one-tree repair, then
+read-only proof. First confirm the active Ruby matches the tree's `.ruby-version`.
+From `MASTER/`, run the inexpensive architecture boundary check and the
+`layout_suite` composite:
+
+```zsh
+bundle exec ruby checks/runner.rb --scan-only architecture layout_suite
+```
+
+This runner selects registry check names. `layout_suite` already includes the
+CSS constitution, scale, typography, source contracts and rendered suite; do
+not rerun its leaves manually. Its `--scan-only` flag disables check autofix,
+but a missing browser, skipped route or inconclusive measurement is not a
+rendered PASS. This is not the same interface as
+`bin/operator check --only=...`, which selects CheckChain stages.
+
+Repair only the tree that owns the findings. From `MASTER/`, use
+`bin/master /fix RAILS` for product surfaces or `bin/master /fix MASTER`
+for MASTER runtime, CLI, Law or scanner work. Keep one tree per run unless
+cross-tree evidence establishes a dependency.
+
+For broad, deterministic RAILS proof without the provider-backed council:
+
+```zsh
+bin/operator check --scan-only --tree=RAILS --only=lexical,source,rehearse,suites,ratchets,sprawl
+```
+
+The `--only` values are CheckChain stages, not registry check names.
+Omitting `council` is deliberate and must not be reported as a council pass.
+To run the full configured chain, including council:
+
+```zsh
+bin/operator check --scan-only --tree=RAILS
+```
+
+The separate constitutional Law-corpus check is:
+
+```zsh
+bundle exec ruby checks/runner.rb --scan-only constitutional_scan
+```
+
+Its default population is six targets: brgen, amber, bsdports, `__shared`,
+OPENBSD and MASTER. `CHECK_SCAN_CHANGED=1` narrows it to changed targets; that
+is an adjunct, never full-corpus evidence. LawRegistryAudit and agent/self-test
+gates remain necessary where a Law's detector or modality coverage is in doubt.
+
+Widen only when the work requires it: rendered/browser and accessibility proof
+for interface changes; OPENBSD plus native `pfctl -nf /etc/pf.conf` for PF
+changes; STUDIO's FFmpeg/Vips proof for media changes. Run the full four-tree
+tournament only for genuinely cross-tree architectural decisions. Report source
+checks, skipped/inconclusive measurements, runtime/deployment evidence and
+provider-backed advice as separate outcomes.
+
 Only `DONE` with full applicable coverage and the required consecutive clean
 readings proves convergence. Unsupported surfaces, unresolved findings,
 timeouts, unavailable tools, quota limits and human decisions remain visible

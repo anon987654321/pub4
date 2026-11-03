@@ -60,6 +60,15 @@ class TestDocPaths < Minitest::Test
     refute File.exist?(File.join(REPO, "MASTER/lib/fix/README.md")),
            "the coordinator map now owns the local fix boundary"
   end
+  def test_fix_workflow_is_consolidated_in_master_readme
+    readme = File.read(File.join(REPO, "MASTER/README.md"))
+
+    assert_includes readme, "bundle exec ruby checks/runner.rb --scan-only architecture layout_suite"
+    assert_includes readme, "bin/operator check --scan-only --tree=RAILS"
+    assert_includes readme, "constitutional_scan"
+    refute File.exist?(File.join(REPO, "MASTER/docs/efficient_repair_workflow.md"))
+  end
+
   def test_root_backlog_markdown_links_resolve
     body = File.read(File.join(REPO, "TODO.md"))
     broken = body.scan(/\[[^\]]*\]\(([^)]+)\)/).flatten.filter_map do |target|
@@ -148,7 +157,6 @@ class TestDocPaths < Minitest::Test
     MASTER/docs/LOVDATA.md
     MASTER/docs/PUB4_PERMISSION_MATRIX.md
     MASTER/docs/ad_creative_governance.md
-    MASTER/docs/efficient_repair_workflow.md
     MASTER/docs/visual/bergen_brand_systems.md
     MASTER/docs/visual/browserless_ad_audits.md
     OPENBSD/docs/log_rotation.md
