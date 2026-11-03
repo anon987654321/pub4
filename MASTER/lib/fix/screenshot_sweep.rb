@@ -21,8 +21,19 @@ module Master
     class ScreenshotSweep
       GEOMETRY = File.join("MASTER", "checks", "data", "geometry_surfaces.yml")
       MAX_PAGES = Integer(ENV.fetch("MASTER_SCREENSHOT_SWEEP_MAX_PAGES", "600"))
+      # A JSON or text route the manifest lists is skipped, not failed.
+      NOT_A_PAGE = "skipped: not an HTML page"
 
-      Row = Data.define(:app, :host, :path, :route, :status, :shots, :dialogs, :note)
+      Row = Data.define(:app, :host, :path, :route, :status, :shots, :dialogs, :note) do
+        def skipped? = note == NOT_A_PAGE
+        def failed? = !note.nil? && !skipped?
+
+        def verdict
+          return "FAILED #{note}" if failed?
+
+          skipped? ? note : "#{shots.size} widths, #{dialogs.size} dialogs"
+        end
+      end
       # What one app's pages share while they are captured.
       Visit = Data.define(:camera, :port, :frontier, :dialogs) do
         # Captures the surface and feeds its links back into the crawl.
@@ -76,15 +87,14 @@ module Master
         page_dir = File.join(@dir, page.app, slugify(page.key))
         shot = visit.shoot(surface_for(page, port: visit.port), page_dir:)
         Row.new(**page.to_h, status: shot.status, shots: shot.widths, dialogs: shot.dialogs,
-                             note: shot.html ? nil : "not an HTML page")
+                             note: shot.html ? nil : NOT_A_PAGE)
       rescue StandardError => e
         failed(page, "#{e.class.name.split("::").last}: #{e.message}")
       end
 
       # One line per page as it lands, so a long sweep is watchable and a failure shows at once.
       def progress(count, row)
-        verdict = row.note ? "FAILED #{row.note}" : "#{row.shots.size} widths, #{row.dialogs.size} dialogs"
-        warn("shots0: #{count} #{row.app} #{row.host}#{row.path} HTTP #{row.status || "?"} #{verdict}")
+        warn("shots0: #{count} #{row.app} #{row.host}#{row.path} HTTP #{row.status || "?"} #{row.verdict}")
       end
 
       def failed(page, note) = Row.new(**page.to_h, status: nil, shots: {}, dialogs: [], note:)
@@ -112,8 +122,11 @@ module Master
 
       def totals(rows)
         {
-          "pages" => rows.size, "screenshots" => rows.sum { |row| row.shots.size },
-          "dialogs" => rows.sum { |row| row.dialogs.size }, "failed" => rows.count(&:note)
+          "pages" => rows.size,
+          "screenshots" => rows.sum { |row| row.shots.size },
+          "dialogs" => rows.sum { |row| row.dialogs.size },
+          "failed" => rows.count(&:failed?),
+          "skipped" => rows.count(&:skipped?)
         }
       end
 

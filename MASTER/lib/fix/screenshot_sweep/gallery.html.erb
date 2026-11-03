@@ -8,7 +8,8 @@
 <body>
   <h1>Screenshot sweep</h1>
   <p><%= summary["pages"] %> pages, <%= summary["screenshots"] %> screenshots,
-    <%= summary["dialogs"] %> dialog states, <%= summary["failed"] %> pages not captured.
+    <%= summary["dialogs"] %> dialog states, <%= summary["failed"] %> pages failed,
+    <%= summary["skipped"] %> skipped (not HTML).
     Widths: <%= Array(summary["widths"]).join(", ") %>.</p>
   <% if summary["error"] %><p class="bad"><%= escape(summary["error"]) %></p><% end %>
   <% unless unresolved.empty? %>
