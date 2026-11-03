@@ -138,4 +138,15 @@ class TestTaskContract < Minitest::Test
     assert_equal ["baseline_hashes", "law_assessment", "path_scoped_diff"],
                  contract.proof.grep(/baseline_hashes|law_assessment|path_scoped_diff/)
   end
+
+  def test_documentation_review_is_an_accepted_proof_type
+    contract = CONTRACT.build(
+      intent: "functional_change",
+      scope: ["MASTER/data/task_contract.yml"],
+      preserve: [],
+      proof: ["documentation_review"],
+    )
+
+    assert_includes contract.proof, "documentation_review"
+  end
 end
