@@ -48,7 +48,7 @@
   inset-inline-start: var(--space-1);
   padding: 0 var(--space-1);
   background: var(--surface);
-  font-size: var(--text-sm);
+  font-size: var(--text-small);
 }
 
 .affiliate_feed_cta {
@@ -57,7 +57,7 @@
   padding-inline: var(--space-2);
   background: var(--accent);
   color: var(--accent-ink);
-  font-size: var(--text-2xl);
+  font-size: var(--text-extra-extra-large);
   font-weight: var(--weight-heavy);
   line-height: var(--leading-tight);
   pointer-events: none;

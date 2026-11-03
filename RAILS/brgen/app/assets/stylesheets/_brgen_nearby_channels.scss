@@ -43,7 +43,7 @@
 .nearby-alert-dot {
   width: 8px;
   height: 8px;
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-small);
   background: var(--text-secondary);
   flex-shrink: 0;
   animation: pulse-dot 1.8s var(--ease-in-out) infinite;
@@ -63,7 +63,7 @@
   border: none;
   color: var(--text-secondary);
   cursor: pointer;
-  font-size: var(--text-sm);
+  font-size: var(--text-small);
   padding: 4px 4px;
   flex-shrink: 0;
 }
@@ -77,7 +77,7 @@
   color: var(--text-secondary);
   border-radius: var(--radius-pill);
   padding: 0.25rem 0.75rem; /* 4px / 12px — eight_px_rhythm */
-  font-size: var(--text-sm);
+  font-size: var(--text-small);
   cursor: pointer;
   transition: color var(--transition-fast) var(--ease-out), border-color var(--transition-fast) var(--ease-out);
 }
@@ -110,7 +110,7 @@
 /* Distinct from TV .channel-card (video posters) */
 .channel-list .channel-card {
   border: 0;
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-medium);
   background: var(--surface-elevated);
 }
 
@@ -133,7 +133,7 @@
    selector because compiled CSS cannot show it the ancestor <a>. */
 .channel-card-link .channel-name {
   font-weight: var(--weight-bold);
-  font-size: var(--text-lg);
+  font-size: var(--text-large);
   letter-spacing: var(--tracking-tight);
   color: var(--accent);
 }
@@ -145,7 +145,7 @@
 }
 
 .channel-meta {
-  font-size: var(--text-sm);
+  font-size: var(--text-small);
   font-variant-numeric: tabular-nums;
 }
 
@@ -171,7 +171,7 @@
 }
 
 .channel-back {
-  font-size: var(--text-sm);
+  font-size: var(--text-small);
   color: var(--text-secondary);
   text-decoration: none;
   min-height: var(--tap-min);
@@ -198,14 +198,14 @@
   position: sticky;
   bottom: max(var(--space-3), env(safe-area-inset-bottom));
   padding: var(--space-3);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-medium);
 }
 
 .channel-composer textarea {
   width: 100%;
   resize: vertical;
   border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-small);
   background: var(--bg);
   color: var(--text);
   padding: var(--space-2) var(--space-3);
@@ -243,7 +243,7 @@
   gap: var(--space-1) var(--space-3);
 }
 .roster-nick {
-  font: var(--text-sm)/1 var(--font);
+  font: var(--text-small)/1 var(--font);
   color: oklch(var(--hue-ink-lightness) 0.13 var(--nick-hue, 240));
   white-space: nowrap;
 }
@@ -255,6 +255,6 @@
   font-size: 0.92em;
   background: var(--hover);
   padding: 0 var(--space-1);
-  border-radius: var(--radius-xs);
+  border-radius: var(--radius-extra-small);
 }
 // ============================================================ /module: brgen_nearby_channels

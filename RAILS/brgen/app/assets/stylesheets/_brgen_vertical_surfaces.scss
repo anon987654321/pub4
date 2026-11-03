@@ -26,7 +26,7 @@
   gap: 12px;
   min-height: 274px;
   padding: 24px;
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-small);
   background: var(--store-well);
 }
 
@@ -161,7 +161,7 @@ body.vertical-marketplace .listing-status--notice {
   display: grid;
   gap: 16px;
   padding: 16px;
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-small);
   background: var(--store-page);
   color: var(--store-ink);
 }
@@ -282,7 +282,7 @@ body.vertical-marketplace :is(.also-nearby h2, .section-heading--md) {
   min-height: 48px;
   padding-inline: 12px;
   border: 1px solid var(--store-rule);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-small);
   background: var(--store-page);
 }
 
@@ -464,7 +464,7 @@ display: block;
    wordmark. .radio-tunnel sets --font, so without this "brgen" would read in
    the body face here and the brand face everywhere else in the app. */
 font-family: var(--font-brand);
-  font-size: var(--text-xl);
+  font-size: var(--text-extra-large);
   font-weight: var(--weight-bold);
   margin: 0;
 }
@@ -497,7 +497,7 @@ font-family: var(--font-brand);
   background: var(--scrim-65);
   color: var(--color-text);
   border: 0;
-  font-size: var(--text-sm);
+  font-size: var(--text-small);
   text-decoration: none;
   cursor: pointer;
 }
@@ -513,8 +513,8 @@ font-family: var(--font-brand);
   gap: var(--space-2);
 /* Ramped rather than stepped: the clamp adapts to width by itself, so no
    width query makes the size jump at one pixel. The floor is px because
-   brgen roots at 18px, where --text-sm is 15.75px. */
-font-size: clamp(12px, 3vw, var(--text-sm));
+   brgen roots at 18px, where --text-small is 15.75px. */
+font-size: clamp(12px, 3vw, var(--text-small));
 /* Pinned, not themed, and opaque rather than translucent. This panel floats
    over the tunnel's WebGL canvas, so a translucent background would be
    whatever the animation happens to render, with no stable contrast to hold.
@@ -579,7 +579,7 @@ font-size: clamp(12px, 3vw, var(--text-sm));
 
 .radio-start-hint {
   margin: 0;
-  font: var(--text-sm)/1.5 var(--font);
+  font: var(--text-small)/1.5 var(--font);
   color: var(--color-muted);
   pointer-events: none;
 }
@@ -594,7 +594,7 @@ font-size: clamp(12px, 3vw, var(--text-sm));
   background: color-mix(in srgb, var(--color-bg) 88%, transparent);
   border: 0;
   border: 0;
-  font: var(--text-xs)/1.4 var(--font);
+  font: var(--text-extra-small)/1.4 var(--font);
   color: var(--color-accent);
   pointer-events: none;
 }
@@ -651,7 +651,7 @@ font-size: clamp(12px, 3vw, var(--text-sm));
   border: 0;
   background: transparent;
   color: var(--color-text);
-  font-size: var(--text-xl);
+  font-size: var(--text-extra-large);
   line-height: var(--leading-normal);
   cursor: pointer;
 }
@@ -676,7 +676,7 @@ font-size: clamp(12px, 3vw, var(--text-sm));
 }
 
 .radio-library-item span {
-  font-size: var(--text-xs);
+  font-size: var(--text-extra-small);
   color: var(--color-muted);
 }
 // ---- /brgen_vertical_radio_home ----
@@ -709,7 +709,7 @@ font-size: clamp(12px, 3vw, var(--text-sm));
 .radio-home-label {
   margin: 0 0 var(--space-2);
   color: var(--text-secondary);
-  font-size: var(--text-sm);
+  font-size: var(--text-small);
   font-weight: var(--weight-normal);
   letter-spacing: var(--tracking-normal);
   text-transform: none;
@@ -718,7 +718,7 @@ font-size: clamp(12px, 3vw, var(--text-sm));
 .radio-section-label {
   margin: 0 0 var(--space-3);
   color: var(--text);
-  font-size: var(--text-lg);
+  font-size: var(--text-large);
   font-weight: var(--weight-bold);
   line-height: var(--leading-tight);
   letter-spacing: var(--tracking-normal);
@@ -811,7 +811,7 @@ font-size: clamp(12px, 3vw, var(--text-sm));
   display: inline-flex;
   margin-block-start: 12px;
   color: var(--accent);
-  font-size: var(--text-sm);
+  font-size: var(--text-small);
   font-weight: var(--weight-bold);
 }
 
@@ -856,7 +856,7 @@ font-size: clamp(12px, 3vw, var(--text-sm));
   overflow: hidden;
   background: color-mix(in srgb, var(--accent) 10%, var(--surface));
   border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-small);
   color: var(--accent);
   font-weight: var(--weight-heavy);
 }
@@ -900,7 +900,7 @@ font-size: clamp(12px, 3vw, var(--text-sm));
   border-radius: var(--radius-pill);
   background: transparent;
   color: var(--accent);
-  font-size: var(--text-sm);
+  font-size: var(--text-small);
   cursor: pointer;
 }
 
@@ -1034,7 +1034,7 @@ body.vertical-playlist .radio-back-link {
 body.vertical-playlist .radio-back-link a {
   color: var(--color-accent);
   text-decoration: none;
-  font-size: var(--text-sm);
+  font-size: var(--text-small);
 }
 
 body.vertical-playlist .playlist-app,
@@ -1068,7 +1068,7 @@ body.vertical-playlist .playlist-details {
   width: 100%;
   height: 96px;
   display: block;
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-small);
   cursor: pointer;
 }
 
@@ -1108,7 +1108,7 @@ body.vertical-playlist .playlist-details {
   width: 100%;
   min-height: 180px;
   border: 0;
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-small);
   background: var(--color-elevated);
 }
 
@@ -1145,7 +1145,7 @@ body.vertical-playlist .playlist-details {
   border: 0;
   color: var(--color-accent);
   text-decoration: none;
-  font-size: var(--text-sm);
+  font-size: var(--text-small);
   font-weight: var(--weight-bold);
 }
 
@@ -1189,7 +1189,7 @@ body.vertical-playlist .playlist-details {
 
 .playlist-now-playing-meta {
   margin: 8px 0 0;
-  font-size: var(--text-sm);
+  font-size: var(--text-small);
 }
 
 .playlist-transport-time {
@@ -1205,7 +1205,7 @@ body.vertical-playlist .playlist-details {
   color: var(--color-text);
   border: 0;
   padding: 8px 12px;
-  font-size: var(--text-xs);
+  font-size: var(--text-extra-small);
   cursor: pointer;
 }
 
@@ -1221,7 +1221,7 @@ body.vertical-playlist .playlist-details {
   min-width: 0;
   padding: 8px 12px;
   border: 1px solid var(--edge-strong);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-small);
   background: rgba(0, 0, 0, 0.4); // scan: intentional — pane-on-glass dimming, measured for this stage
   color: inherit;
 }
@@ -1233,7 +1233,7 @@ body.vertical-playlist .playlist-details {
 
 .playlist-queue-heading {
   margin: var(--space-6) 0 var(--space-4);
-  font-size: var(--text-sm);
+  font-size: var(--text-small);
   color: var(--color-muted);
 }
 
@@ -1247,7 +1247,7 @@ body.vertical-playlist .playlist-details {
   width: 48px;
   height: 48px;
   object-fit: cover;
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-small);
   background: var(--color-elevated);
 }
 
@@ -1266,7 +1266,7 @@ body.vertical-playlist .playlist-details {
 }
 
 .playlist-queue-meta span {
-  font-size: var(--text-sm);
+  font-size: var(--text-small);
   color: var(--color-muted);
 }
 
@@ -1278,7 +1278,7 @@ body.vertical-playlist .playlist-details {
 
 .playlist-comments h3 {
   margin: 0 0 var(--space-4);
-  font-size: var(--text-sm);
+  font-size: var(--text-small);
 }
 
 .playlist-comment {
@@ -1286,7 +1286,7 @@ body.vertical-playlist .playlist-details {
   gap: 12px;
   padding: 8px 0;
   cursor: pointer;
-  font-size: var(--text-sm);
+  font-size: var(--text-small);
 }
 
 .playlist-comment .time {
@@ -1322,7 +1322,7 @@ body.vertical-playlist .playlist-details {
   gap: var(--space-4);
   block-size: var(--transport-bar-h);
   padding: 0 var(--space-4);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-medium);
   background: var(--surface-elevated);
   border: 1px solid var(--border);
   color: var(--text);
@@ -1479,7 +1479,7 @@ body.vertical-takeaway .eta-badge {
   display: inline-block;
   padding: 4px var(--space-2);
   border-radius: var(--radius-pill);
-  font-size: var(--text-xs);
+  font-size: var(--text-extra-small);
   font-weight: var(--weight-bold);
   background: var(--food-eta-bg);
   color: var(--food-dash);
@@ -1560,7 +1560,7 @@ body.vertical-takeaway .order-status {
   bottom: calc(72px + var(--safe-bottom));
   margin: var(--space-4);
   padding: var(--space-3) var(--space-4);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-medium);
   background: var(--surface-elevated);
   /* Flat UI (design_rules pixel_perfection): sticky bar uses border contrast, not shadow */
   border: 1px solid var(--border);
@@ -1604,7 +1604,7 @@ body.vertical-takeaway .order-status {
 .group-note,
 .group-share {
   color: var(--text-secondary);
-  font-size: var(--text-sm);
+  font-size: var(--text-small);
 }
 // ---- /brgen_vertical_takeaway ----
 
@@ -1642,7 +1642,7 @@ body.vertical-tv .tv-media,
 body.vertical-tv .video-player {
   width: 100%;
   max-height: min(72vh, 720px);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-small);
   background: var(--tv-stage);
 }
 
@@ -1703,7 +1703,7 @@ body.vertical-tv .show-grid {
 }
 
 body.vertical-tv .show-grid {
-  grid-template-columns: repeat(auto-fill, minmax(min(100%, var(--tile-min-xl)), 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, var(--tile-min-extra-large)), 1fr));
   padding: 0 var(--space-4) var(--space-6);
 }
 
@@ -1794,13 +1794,13 @@ width: 100dvw;
 .sound-count {
   margin-inline-start: var(--space-2);
   color: var(--text-secondary);
-  font-size: var(--text-sm);
+  font-size: var(--text-small);
 }
 
 .video-lineage {
   margin-block: var(--space-2);
   color: var(--text-secondary);
-  font-size: var(--text-sm);
+  font-size: var(--text-small);
 }
 
 .video-lineage + p {
@@ -1817,7 +1817,7 @@ width: 100dvw;
   padding: 0;
   list-style: none;
   color: var(--text-secondary);
-  font-size: var(--text-sm);
+  font-size: var(--text-small);
   font-variant-numeric: tabular-nums;
 }
 
@@ -1836,7 +1836,7 @@ width: 100dvw;
 .live-stream-grid {
   display: grid;
   gap: var(--space-3);
-  grid-template-columns: repeat(auto-fill, minmax(min(100%, var(--tile-min-2xl)), 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, var(--tile-min-extra-extra-large)), 1fr));
 }
 
 .tv-live-stream {
@@ -1878,7 +1878,7 @@ width: 100dvw;
   min-width: 0;
   padding: 0.75rem; /* 12px — eight_px_rhythm; form field keeps 1px border */
   border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-small);
   background: var(--surface-elevated);
   color: var(--text);
 }
@@ -1901,7 +1901,7 @@ width: 100dvw;
   overflow: hidden;
   background: var(--surface-elevated);
   border: 0;
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-small);
 }
 .tv-poster-img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .tv-poster--empty { background: var(--hover-subtle); }
@@ -1910,17 +1910,17 @@ width: 100dvw;
   inset-block-end: 8px;
   inset-inline-end: 8px;
   padding: 0px 4px;
-  font: var(--weight-bold) var(--text-xs)/1.4 var(--font);
+  font: var(--weight-bold) var(--text-extra-small)/1.4 var(--font);
   font-variant-numeric: tabular-nums;
   color: var(--text);
   background: color-mix(in srgb, var(--bg) 78%, transparent);
   border: 0;
-  border-radius: var(--radius-xs);
+  border-radius: var(--radius-extra-small);
 }
 .tv-card-meta { padding-block-start: 8px; }
 .tv-card-title { display: block; font-weight: var(--weight-bold); color: var(--text); line-height: var(--leading-tight); text-decoration: none; }
 .tv-card-title:hover { color: var(--accent); }
-.tv-card-sub { color: var(--text-secondary); font-size: var(--text-sm); margin-block-start: 4px; }
+.tv-card-sub { color: var(--text-secondary); font-size: var(--text-small); margin-block-start: 4px; }
 .tv-views { font-variant-numeric: tabular-nums; }
 // ---- /brgen_vertical_tv ----
 
@@ -2030,14 +2030,14 @@ body.vertical-maps article.place dl {
   grid-template-columns: auto 1fr;
   gap: 4px 1rem;
   padding: 1rem;
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-small);
   background: rgba(255, 255, 255, 0.04); // scan: intentional — white-alpha lift on the maps night shell
   border: 0;
 }
 
 body.vertical-maps article.place dt {
   color: var(--maps-muted);
-  font-size: var(--text-xs);
+  font-size: var(--text-extra-small);
 }
 
 body.vertical-maps article.place dd {
@@ -2079,7 +2079,7 @@ body.vertical-maps .place-list {
 
 body.vertical-maps .place-card {
   padding: var(--space-3) 1rem;
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-small);
   background: rgba(255, 255, 255, 0.04); // scan: intentional — white-alpha lift on the maps night shell
   border: 0;
 }
@@ -2170,7 +2170,7 @@ body.vertical-messenger ul[aria-label="Conversations"] strong {
 body.vertical-messenger ul[aria-label="Conversations"] span {
   grid-column: 1;
   color: var(--msg-muted);
-  font-size: var(--text-sm);
+  font-size: var(--text-small);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -2180,7 +2180,7 @@ body.vertical-messenger ul[aria-label="Conversations"] time {
   grid-column: 2;
   grid-row: 1 / span 2;
   align-self: center;
-  font-size: var(--text-xs);
+  font-size: var(--text-extra-small);
   color: var(--msg-muted);
 }
 
@@ -2193,7 +2193,7 @@ body.vertical-messenger ul[aria-label="Conversations"] mark {
   min-width: 1.25rem;
   height: 1.25rem;
   padding: 0 var(--space-1);
-  font-size: var(--text-xs);
+  font-size: var(--text-extra-small);
   font-weight: var(--weight-bold);
   display: grid;
   place-items: center;
@@ -2264,7 +2264,7 @@ body.vertical-messenger ul[aria-label="Conversations"] mark {
 }
 
 .person-handle {
-  font-size: var(--text-sm);
+  font-size: var(--text-small);
   color: var(--text-secondary);
 }
 
@@ -2301,7 +2301,7 @@ body.vertical-messenger article[data-from="peer"] > header .read-receipt {
    content, and it sits in a line the reader scans rather than reads. */
 .edited-mark {
   color: var(--text-secondary);
-  font-size: var(--text-sm);
+  font-size: var(--text-small);
 }
 
 /* card-embed extensions: shared/_minimal.scss carries these for the other
@@ -2315,7 +2315,7 @@ body.vertical-messenger article[data-from="peer"] > header .read-receipt {
 }
 
 .feed-card-meta {
-  font-size: var(--text-sm);
+  font-size: var(--text-small);
   color: var(--text-secondary);
   margin: 4px 0;
   line-height: var(--leading-normal);
@@ -2352,7 +2352,7 @@ body.vertical-messenger article[data-from="peer"] > header .read-receipt {
   width: 100%;
   height: auto;
   aspect-ratio: 16 / 9;
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-small);
   margin-bottom: 8px;
   flex: none;
 }
@@ -2368,7 +2368,7 @@ body.vertical-messenger article[data-from="peer"] > header .read-receipt {
     width: 80px;
     height: 80px;
     aspect-ratio: auto;
-    border-radius: var(--radius-sm);
+    border-radius: var(--radius-small);
     margin-bottom: 0;
   }
 }
@@ -2387,13 +2387,13 @@ body.vertical-messenger header[aria-label="Conversation header"] h1 {
 
 body.vertical-messenger header[aria-label="Conversation header"] nav a {
   color: var(--msg-muted);
-  font: var(--text-sm) / 1 var(--font);
+  font: var(--text-small) / 1 var(--font);
   text-decoration: none;
 }
 
 body.vertical-messenger .disappearing-settings {
   margin-top: 0.5rem;
-  font-size: var(--text-sm);
+  font-size: var(--text-small);
   color: var(--msg-muted);
 }
 
@@ -2402,7 +2402,7 @@ body.vertical-messenger .disappearing-settings select {
   background: var(--msg-surface);
   border: 1px solid var(--msg-border);
   color: var(--msg-ink);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-small);
   padding: 0.25rem 0.5rem;
 }
 
@@ -2486,7 +2486,7 @@ body.vertical-messenger #messages article header {
   flex-wrap: wrap;
   gap: var(--space-1) var(--space-2);
   margin-bottom: var(--space-1);
-  font-size: var(--text-xs);
+  font-size: var(--text-extra-small);
   font-variant-numeric: tabular-nums;
   font-family: var(--font);
 }
@@ -2503,7 +2503,7 @@ body.vertical-messenger #messages article p {
 
 body.vertical-messenger #messages article img {
   margin-top: 0.5rem;
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-medium);
   max-width: 100%;
 }
 // ---- /brgen_vertical_messenger_threads ----
@@ -2526,7 +2526,7 @@ body.vertical-messenger #new_message:not(.messenger-composer) textarea {
   resize: vertical;
   min-height: 4rem;
   padding: var(--space-2) var(--space-3);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-medium);
   border: 1px solid var(--msg-border);
   background: var(--msg-surface);
   color: var(--msg-ink);
@@ -2550,7 +2550,7 @@ body.vertical-messenger #new_message:not(.messenger-composer) input[type="submit
 body.vertical-messenger #typing-indicator {
   min-height: var(--space-4);
   color: var(--msg-muted);
-  font-size: var(--text-xs);
+  font-size: var(--text-extra-small);
   font-style: italic;
 }
 
@@ -2588,14 +2588,14 @@ body.vertical-messenger .msg-forwarded,
 body.vertical-messenger .msg-reply-context {
   margin: 0 0 var(--space-1);
   color: var(--msg-muted);
-  font-size: var(--text-sm);
+  font-size: var(--text-small);
 }
 
 /* Reply, edit, unsend and forward, folded away until asked for — a message
    list is long, and four controls per line would outweigh the lines. */
 body.vertical-messenger .msg-actions {
   margin-top: var(--space-1);
-  font-size: var(--text-sm);
+  font-size: var(--text-small);
 }
 
 body.vertical-messenger .msg-actions summary {
@@ -2620,7 +2620,7 @@ body.vertical-messenger .link-preview {
   margin-top: var(--space-2);
   padding: var(--space-2);
   border: 1px solid var(--msg-border);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-small);
   color: inherit;
   text-decoration: none;
 }
@@ -2628,7 +2628,7 @@ body.vertical-messenger .link-preview {
 body.vertical-messenger .link-preview-site {
   display: block;
   color: var(--msg-muted);
-  font-size: var(--text-sm);
+  font-size: var(--text-small);
 }
 
 body.vertical-messenger .link-preview-title {
@@ -2639,7 +2639,7 @@ body.vertical-messenger .link-preview-title {
 body.vertical-messenger .link-preview-body {
   display: block;
   color: var(--msg-muted);
-  font-size: var(--text-sm);
+  font-size: var(--text-small);
 }
 
 // Must load after vertical_messenger_thread: it turns that file's bubble rules
@@ -2679,7 +2679,7 @@ body.vertical-messenger #messages.channel-log {
 
   gap: 0;
   font-family: var(--font-mono);
-  font-size: var(--text-sm);
+  font-size: var(--text-small);
   line-height: var(--leading-normal);
 }
 
@@ -2815,13 +2815,13 @@ body.vertical-messenger #messages.channel-log article[data-expiry="soon"] > head
    so it is the topic — set it as one line under the channel name. */
 body.vertical-messenger .channel-room-header h1 {
   font-family: var(--font-mono);
-  font-size: var(--text-lg);
+  font-size: var(--text-large);
   letter-spacing: 0;
 }
 
 body.vertical-messenger .channel-room-header .channel-topic {
   font-family: var(--font-mono);
-  font-size: var(--text-xs);
+  font-size: var(--text-extra-small);
   color: var(--text-secondary);
 }
 
@@ -2830,7 +2830,7 @@ body.vertical-messenger .roster-list { gap: 0 var(--space-2); }
 
 body.vertical-messenger .roster-nick {
   font-family: var(--font-mono);
-  font-size: var(--text-xs);
+  font-size: var(--text-extra-small);
 }
 
 /* One edge around one control: the "no lines at all" rule exempts form-field

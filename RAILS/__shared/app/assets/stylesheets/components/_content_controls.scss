@@ -5,7 +5,7 @@ input[type="radio"].star:checked {
 }
 
 .field-error {
-  font-size: var(--text-sm);
+  font-size: var(--text-small);
   color: var(--color-danger);
   margin-block-start: var(--space-1);
   display: flex;
@@ -18,7 +18,7 @@ input[type="radio"].star:checked {
   padding: var(--space-4);
   border: 1px solid var(--color-danger);
   border-inline-start-width: 4px;
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-small);
   background: color-mix(in srgb, var(--color-danger) 9%, var(--color-surface));
 }
 
@@ -53,7 +53,7 @@ fieldset {
 }
 
 legend {
-  font-size: var(--text-sm);
+  font-size: var(--text-small);
   font-weight: var(--weight-bold);
   color: var(--text-secondary);
   margin-bottom: var(--space-4);
@@ -62,7 +62,7 @@ legend {
 [data-state="active"] { opacity: 1; }
 [data-state="inactive"] { opacity: 0.65; }
 [data-variant="danger"] { color: var(--color-danger); }
-[data-size="sm"] { font-size: var(--text-sm); }
+[data-size="sm"] { font-size: var(--text-small); }
 
 :is(h1, h2, h3, h4) {
   text-wrap: balance;

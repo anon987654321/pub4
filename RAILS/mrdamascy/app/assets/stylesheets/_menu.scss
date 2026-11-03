@@ -111,7 +111,7 @@
   flex: none;
   width: 56px;
   height: 56px;
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-small);
   background: var(--mint-100);
   display: flex;
   align-items: center;
@@ -184,7 +184,7 @@
 
 .heat-label {
   margin-inline-start: 4px;
-  font-size: var(--text-xs);
+  font-size: var(--text-extra-small);
   font-weight: 700;
   color: var(--ink-soft);
 }
@@ -195,7 +195,7 @@
   flex: none;
   width: 56px;
   height: 56px;
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-small);
   object-fit: cover;
   background: var(--mint-100);
 }

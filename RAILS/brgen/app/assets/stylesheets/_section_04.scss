@@ -39,7 +39,7 @@
   --font: "Helvetica Neue Pro", "Helvetica Neue", Arial, sans-serif;
   // Real 2014 mobile.css body base ("font: 18px sans-serif") -- this app's
   // own deliberate size, distinct from the 16px shared default.
-  --font-size: var(--text-lg);
+  --font-size: var(--text-large);
   --upvote: var(--accent);
   --downvote: oklch(58% 0.15 30);
   --z-canvas: 0;
@@ -80,7 +80,7 @@
 
      --brand-mark-glyphs comes from the layout, which is the only place that
      knows the label. The 9 fallback covers a mark rendered without it. */
-    /* The nav link is a 44px box now, text-sm on --space-3 padding lifted
+    /* The nav link is a 44px box now, --text-small on --space-3 padding lifted
        to the tap floor, the same box as the fixed chrome, so the shared 1.6px
        nudge that matched the old 47.25px link would put the mark and toggle
        below the links' centre line. */
@@ -135,7 +135,7 @@
   @include x.brgen-old-light-tokens;
   @include x.app-root-tokens;
   color-scheme: light;
-  --font-size: var(--text-lg);
+  --font-size: var(--text-large);
   --hue-ink-lightness: 38%;
   --nav-rule: #1a8cd8;
   --nav-badge-fill: #1d9bf0;

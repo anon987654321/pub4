@@ -401,7 +401,7 @@ body.primer-autostart #primer {
 }
 
 .chips { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-top: 16px; }
-.chip { font: var(--text-meta)/1.5 var(--font-mono); letter-spacing: .08em; padding: 8px 14px; min-height: var(--tap-min); border: 1px solid color-mix(in srgb, var(--face-fg) 8%, transparent); border-radius: var(--radius-xs); color: color-mix(in srgb, var(--c-text) 62%, transparent); transition: background 120ms var(--ease-out); }
+.chip { font: var(--text-meta)/1.5 var(--font-mono); letter-spacing: .08em; padding: 8px 14px; min-height: var(--tap-min); border: 1px solid color-mix(in srgb, var(--face-fg) 8%, transparent); border-radius: var(--radius-extra-small); color: color-mix(in srgb, var(--c-text) 62%, transparent); transition: background 120ms var(--ease-out); }
 #primer .tagline { opacity: .72; font-size: .9em; margin-top: 16px; letter-spacing: .1em; }
 
 /* #56 Sleeping dim */
@@ -444,7 +444,7 @@ body[data-tts-loading="true"] canvas { filter: none; }
   color: var(--face-fg);
   font: var(--text-meta)/1.5 var(--font-mono);
   overflow-wrap: anywhere;
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-medium);
   pointer-events: none;
 }
 
@@ -517,7 +517,7 @@ body[data-phantom-glitch="1"] canvas {
   gap: 8px;
   padding: 8px 12px;
   border: 1px solid var(--border-soft);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-medium);
   background: color-mix(in srgb, var(--face-bg) 92%, transparent);
   color: var(--face-fg);
   transform: translateX(calc(-100% - 18px));
@@ -565,7 +565,7 @@ body[data-phantom-glitch="1"] canvas {
   width: 100%;
   background: transparent;
   border: 1px solid var(--border-soft);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-small);
   color: inherit;
   font: 1rem/1.5 var(--font-mono);
   padding: 8px 8px;
@@ -587,7 +587,7 @@ body[data-phantom-glitch="1"] canvas {
   grid-template-columns: 42px 1fr;
   gap: 8px;
   padding: 8px 4px;
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-small);
   cursor: pointer;
   content-visibility: auto;
   contain-intrinsic-size: auto 48px;

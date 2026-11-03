@@ -240,7 +240,7 @@ test("canonical theme token reaches CSS, routes and PWA manifest", () => {
   }
   assert.match(dashboard, /rel="manifest" href="<%= pwa_manifest_path\(format: :json\) %>"/);
   assert.doesNotMatch(faceMotion, /--c-accent: oklch\(82% 0\.12 222\)/);
-  assert.doesNotMatch(faceMotion, /--radius-md: 12px/);
+  assert.doesNotMatch(faceMotion, /--radius-medium: 12px/);
 });
 
 test("session chrome is mobile-first, nuanced, flat and touch-ready", () => {

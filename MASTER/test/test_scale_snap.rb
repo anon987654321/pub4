@@ -39,7 +39,7 @@ class ScaleSnapTest < Minitest::Test
                YAML.dump("scale" => { "space_px" => [0, 4, 8, 16, 24], "radius_px" => [0, 4, 8, 12] },
                          "shared_chrome" => { "font_size_body" => "1rem", "font_size_title" => "1.25rem" }))
     File.write(File.join(@root, "RAILS/__shared/app/assets/stylesheets/_tokens.scss"),
-               "  --space-1: 0.25rem;\n  --space-2: 0.5rem;\n  --text-sm: 0.875rem;\n  --text-base: 1rem;\n  --radius-md: 12px;\n")
+               "  --space-1: 0.25rem;\n  --space-2: 0.5rem;\n  --text-small: 0.875rem;\n  --text-base: 1rem;\n  --radius-medium: 12px;\n")
     @sheet = File.join(@root, "RAILS/brgen/app/assets/stylesheets/card.scss")
     File.write(@sheet, SHEET)
     @tokens = Master::Fix::LayoutScoreTokens.load(@root)
@@ -62,7 +62,7 @@ class ScaleSnapTest < Minitest::Test
   def test_leaves_ties_colours_fonts_and_context_alone
     found = afters
     assert_nil found[5], "15px sits between 14 and 16"
-    assert_equal "border-radius: var(--radius-md, 12px);", found[6]
+    assert_equal "border-radius: var(--radius-medium, 12px);", found[6]
     assert_nil found[7], "colour"
     assert_nil found[8], "font family"
     assert_nil found[9], "width is not a snapped property"

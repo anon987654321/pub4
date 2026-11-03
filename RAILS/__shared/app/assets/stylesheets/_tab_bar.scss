@@ -84,7 +84,7 @@ html.chrome-hidden .tab-bar {
 .tab-bar-peel:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-small);
 }
 /* When the bar is open the peel is unused (controller sets [hidden]). */
 .tab-bar-peel[hidden] {
@@ -126,7 +126,7 @@ html.drawer-open .tab-bar-peel {
   padding: 0.75rem var(--space-3);
   background: var(--surface-elevated);
   border: 0;
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-small);
   font-family: var(--font);
   color: var(--text);
   box-sizing: border-box;
@@ -139,7 +139,7 @@ html.drawer-open .tab-bar-peel {
      measure, and this ran past it. */
   max-width: var(--measure-narrow);
   margin: 0 0 var(--space-2);
-  font-size: var(--text-sm);
+  font-size: var(--text-small);
   line-height: var(--leading-snug);
 }
 .tab-bar-coach-actions {
@@ -153,7 +153,7 @@ html.drawer-open .tab-bar-peel {
   min-height: var(--tap-min);
   min-width: var(--tap-min);
   padding: var(--space-1) 0.75rem;
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-small);
   /* Fill, not outline. These two buttons were the last eight lines on the
      rendered front page (measured 390x844: 8 visible borders, all of them
      here) -- the 2026-08-04 "no lines at all" pass converted .button-ghost,
@@ -164,7 +164,7 @@ html.drawer-open .tab-bar-peel {
   border: 0;
   background: var(--hover);
   color: var(--text);
-  font: var(--weight-bold) var(--text-xs)/1 var(--font);
+  font: var(--weight-bold) var(--text-extra-small)/1 var(--font);
   cursor: pointer;
 }
 .tab-bar-coach-show {

@@ -85,11 +85,11 @@
   }
 
   h1 {
-    font-size: var(--text-2xl);
+    font-size: var(--text-extra-extra-large);
     font-weight: var(--weight-heavy);
   }
   h2 {
-    font-size: var(--text-xl);
+    font-size: var(--text-extra-large);
     font-weight: var(--weight-bold);
   }
   h3 {
@@ -129,7 +129,7 @@
 
 .feed-post-meta,
 .feed-post-byline {
-  font-size: var(--text-sm);
+  font-size: var(--text-small);
   line-height: var(--leading-tight);
   color: var(--text-secondary);
   letter-spacing: var(--tracking-normal);
@@ -146,7 +146,7 @@
 .page-title,
 .feed-post-show h1,
 main#main-content > header h1 {
-  font-size: var(--text-2xl);
+  font-size: var(--text-extra-extra-large);
   line-height: var(--leading-tight);
   letter-spacing: var(--tracking-tight);
   font-weight: var(--weight-heavy);

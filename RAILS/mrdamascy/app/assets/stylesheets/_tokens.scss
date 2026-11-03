@@ -55,18 +55,18 @@
 
   // Radii — pixel_perfection: nothing above 16px except the pill.
   --radius: 16px;        // cards (MASTER radius_card)
-  --radius-sm: 12px;     // controls (MASTER radius_md)
-  --radius-xs: 8px;      // badges
+  --radius-small: 12px;     // controls (MASTER radius_medium)
+  --radius-extra-small: 8px;      // badges
   --radius-pill: 9999px; // MASTER radius_pill
 
   // Type — MASTER shared_chrome scale: six sizes, three weights (400/600/700).
-  --text-xs: 0.75rem;        // 12px — badges, tab labels
+  --text-extra-small: 0.75rem;        // 12px — badges, tab labels
   --tap-min: 44px;           // tap floor (WCAG 2.5.5), shared with MASTER tap_min
   --text-meta: 0.8125rem;    // 13px — meta, captions (MASTER font_size_meta)
   --text-body: 1rem;         // 16px — body, buttons, inputs
   --text-title: 1.25rem;     // 20px — page/section titles (MASTER type_tokens)
   --text-display: clamp(40px, 6vw, 88px); // 40–88px — hero/display (MASTER font_size_display)
-  --text-display-xl: clamp(2.75rem, 11.5vw, 3.5rem); // star mark — CLAMP_TYPOGRAPHY
+  --text-display-extra-large: clamp(2.75rem, 11.5vw, 3.5rem); // star mark — CLAMP_TYPOGRAPHY
 
   --font: "Helvetica Neue Pro", "Helvetica Neue", Arial, sans-serif;
 

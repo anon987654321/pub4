@@ -90,7 +90,7 @@
   background: transparent;
   border: 0;
   color: var(--luxury-muted);
-  font-size: var(--text-xs);
+  font-size: var(--text-extra-small);
   letter-spacing: var(--tracking-normal);
   line-height: var(--leading-tight);
   text-transform: none;
@@ -309,7 +309,7 @@ body {
 
 @media (min-width: 1280px) {
   html {
-    font-size: var(--text-lg);
+    font-size: var(--text-large);
     line-height: var(--leading-normal);
   }
 }
@@ -494,7 +494,7 @@ h2 {
    column grid fits as many columns as the width holds and no more. */
 .amber-footer {
   display: block;
-  margin-block-start: var(--luxury-space-xl);
+  margin-block-start: var(--luxury-space-extra-large);
   padding: var(--space-16) var(--page-gutter) var(--space-12);
   border: 0;
 }
@@ -571,7 +571,7 @@ h2 {
 .wardrobe-grid {
   display: grid;
   gap: var(--space-6);
-  grid-template-columns: repeat(auto-fill, minmax(min(100%, var(--tile-min-md)), 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, var(--tile-min-medium)), 1fr));
 }
 
 .items-grid > :first-child,
@@ -603,7 +603,7 @@ h2 {
   color: var(--text-secondary);
   display: grid;
   place-items: center;
-  font-size: var(--text-xs);
+  font-size: var(--text-extra-small);
   min-height: 8rem;
   aspect-ratio: 3 / 4;
   border: var(--elev-1);
@@ -615,7 +615,7 @@ h2 {
 }
 
 .skeleton {
-  border-radius: var(--radius-sm, 6px);
+  border-radius: var(--radius-small, 6px);
   background: linear-gradient(
     90deg,
     var(--hover-subtle) 0%,
@@ -733,7 +733,7 @@ h2 {
   gap: var(--space-1);
   flex-wrap: wrap;
   color: var(--text-secondary);
-  font-size: var(--text-xs);
+  font-size: var(--text-extra-small);
 }
 
 .amber-compose-tags span {
@@ -758,7 +758,7 @@ h2 {
 }
 
 .amber-compose-hint {
-  font-size: var(--text-sm);
+  font-size: var(--text-small);
   color: var(--text-secondary);
   margin: var(--space-1) 0 0;
 }
@@ -882,7 +882,7 @@ main#main-content header > nav form {
 .compose-label {
   margin-inline-start: var(--space-2);
   color: var(--text-secondary);
-  font-size: var(--text-sm);
+  font-size: var(--text-small);
 }
 // ============================================================ /module: amber_layout
 // ============================================================ components: wardrobe items
@@ -891,7 +891,7 @@ main#main-content header > nav form {
 
 .item-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(min(100%, var(--tile-min-lg)), 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, var(--tile-min-large)), 1fr));
   gap: var(--space-4);
 }
 
@@ -927,12 +927,12 @@ main#main-content header > nav form {
 .wardrobe-more-tools .wardrobe-action-group {
   padding: var(--space-6);
   border: 0;
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-small);
   background: var(--surface-elevated, var(--surface));
   margin-block-end: var(--space-3);
 }
 .wardrobe-more-tools .wardrobe-action-group--secondary { background: var(--hover-subtle); }
-.outfit-composition { display: grid; grid-template-columns: repeat(2, 1fr); gap: 4px; aspect-ratio: 4 / 5; overflow: hidden; background: var(--luxury-border); border-radius: var(--radius-sm); }
+.outfit-composition { display: grid; grid-template-columns: repeat(2, 1fr); gap: 4px; aspect-ratio: 4 / 5; overflow: hidden; background: var(--luxury-border); border-radius: var(--radius-small); }
 /* contain, not cover: a garment cropped to fill a square is a different garment.
    The surface behind it keeps a narrow piece from floating on the grey gap. */
 .outfit-composition img { width: 100%; height: 100%; min-height: 0; object-fit: contain; background: var(--surface); }
@@ -948,7 +948,7 @@ main#main-content header > nav form {
   gap: var(--space-2);
   padding: var(--space-3);
   border: 0;
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-small);
   background: var(--surface-elevated, var(--surface));
 }
 
@@ -959,7 +959,7 @@ main#main-content header > nav form {
   aspect-ratio: 1;
   object-fit: contain;
   background: var(--surface);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-small);
 }
 
 .item-card .item-title {
@@ -1071,7 +1071,7 @@ main#main-content header > nav form {
 
 .ai-card {
   background: var(--color-extra-light-grey);
-  border-radius: var(--radius-xs);
+  border-radius: var(--radius-extra-small);
   padding: var(--space-6);
   margin: var(--space-6) 0;
 }
@@ -1087,7 +1087,7 @@ main#main-content header > nav form {
   border: none;
   border-radius: var(--radius-pill);
   cursor: pointer;
-  font-size: var(--text-sm);
+  font-size: var(--text-small);
   text-decoration: none;
 }
 
@@ -1107,7 +1107,7 @@ main#main-content header > nav form {
   justify-content: center;
   min-height: var(--tap-min);
   padding: var(--space-2) var(--space-3);
-  font-size: var(--text-xs);
+  font-size: var(--text-extra-small);
   background: var(--hover-subtle);
   color: var(--text);
   border: none;
@@ -1124,8 +1124,8 @@ main#main-content header > nav form {
   display: inline-block;
   background: var(--color-badge);
   padding: var(--space-2) var(--space-3);
-  border-radius: var(--radius-xs);
-  font-size: var(--text-xs);
+  border-radius: var(--radius-extra-small);
+  font-size: var(--text-extra-small);
   font-weight: var(--weight-bold);
 }
 
@@ -1133,14 +1133,14 @@ main#main-content header > nav form {
 
 /* Luxury minimalist refinements (Aesop/Toteme/Nécessaire) */
 .item-grid--luxury {
-  grid-template-columns: repeat(auto-fill, minmax(min(100%, var(--tile-min-xl)), 1fr));
-  gap: var(--luxury-space-lg);
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, var(--tile-min-extra-large)), 1fr));
+  gap: var(--luxury-space-large);
 }
 
 .item-card--luxury {
   display: flex;
   flex-direction: column;
-  gap: var(--luxury-space-xs);
+  gap: var(--luxury-space-extra-small);
   transition: opacity var(--transition-fast) var(--ease-out);
 }
 
@@ -1179,11 +1179,11 @@ main#main-content header > nav form {
 
 .item-card--luxury nav {
   display: flex;
-  gap: var(--luxury-space-xs);
+  gap: var(--luxury-space-extra-small);
   flex-wrap: wrap;
   position: absolute;
-  inset-inline: var(--luxury-space-xs);
-  bottom: var(--luxury-space-xs);
+  inset-inline: var(--luxury-space-extra-small);
+  bottom: var(--luxury-space-extra-small);
   opacity: 0;
   transform: translateY(4px);
   transition: opacity 160ms var(--ease-out), transform 160ms var(--ease-out);
@@ -1204,7 +1204,7 @@ main#main-content header > nav form {
 /* Luxury PDP */
 .luxury-detail-grid {
   display: grid;
-  gap: var(--luxury-space-xl);
+  gap: var(--luxury-space-extra-large);
 }
 
 @media (min-width: 768px) {
@@ -1217,7 +1217,7 @@ main#main-content header > nav form {
 .luxury-photos {
   display: flex;
   flex-direction: column;
-  gap: var(--luxury-space-md);
+  gap: var(--luxury-space-medium);
 }
 
 .luxury-title {
@@ -1229,14 +1229,14 @@ main#main-content header > nav form {
 }
 
 .luxury-tags {
-  margin: var(--luxury-space-sm) 0;
+  margin: var(--luxury-space-small) 0;
 }
 
 .luxury-meta-list {
   display: grid;
   grid-template-columns: max-content 1fr;
-  gap: var(--luxury-space-xs) var(--luxury-space-md);
-  margin: var(--luxury-space-md) 0;
+  gap: var(--luxury-space-extra-small) var(--luxury-space-medium);
+  margin: var(--luxury-space-medium) 0;
   font-size: var(--luxury-font-meta);
 }
 
@@ -1246,14 +1246,14 @@ main#main-content header > nav form {
 }
 
 .luxury-section {
-  margin: var(--luxury-space-lg) 0;
+  margin: var(--luxury-space-large) 0;
 }
 
 .luxury-actions {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--luxury-space-sm);
-  margin-top: var(--luxury-space-lg);
+  gap: var(--luxury-space-small);
+  margin-top: var(--luxury-space-large);
 }
 
 .luxury-actions .button {
@@ -1267,7 +1267,7 @@ main#main-content header > nav form {
 .tagline {
   margin-block: var(--space-2) 0;
   color: var(--text-secondary);
-  font-size: var(--text-sm);
+  font-size: var(--text-small);
 }
 // ============================================================ /module: amber_wardrobe
 // ============================================================ components: item forms
@@ -1289,7 +1289,7 @@ main#main-content header > nav form {
 .form select,
 .form textarea {
   border: 1px solid var(--color-extra-light-grey);
-  border-radius: var(--radius-xs);
+  border-radius: var(--radius-extra-small);
   padding: var(--space-3);
   font: inherit;
 }
@@ -1303,7 +1303,7 @@ main#main-content header > nav form {
 
 .media-picker {
   border: 1px dashed var(--border, var(--color-border));
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-small);
   padding: 1rem;
 }
 
@@ -1314,7 +1314,7 @@ main#main-content header > nav form {
 
 .media-picker-preview {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(min(100%, var(--tile-min-xs)), 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, var(--tile-min-extra-small)), 1fr));
   gap: 0.5rem;
 }
 
@@ -1323,7 +1323,7 @@ main#main-content header > nav form {
   aspect-ratio: 1;
   object-fit: contain;
   background: var(--surface);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-small);
 }
 // ============================================================ /module: amber_item_forms
 // ============================================================ pages: dashboard
@@ -1354,17 +1354,17 @@ main#main-content header > nav form {
   min-width: 0;
   padding: var(--space-3);
   border: 0;
-  border-radius: var(--radius-xs);
+  border-radius: var(--radius-extra-small);
   background: var(--surface-elevated, var(--surface));
 }
 
 .dash-stats dt {
-  font-size: var(--text-xs);
+  font-size: var(--text-extra-small);
   color: var(--text-secondary);
 }
 
 .dash-stats dd {
-  font-size: var(--text-xl);
+  font-size: var(--text-extra-large);
   font-weight: var(--weight-bold);
   line-height: var(--leading-tight);
   font-variant-numeric: lining-nums tabular-nums;
@@ -1398,7 +1398,7 @@ main#main-content header > nav form {
   background: color-mix(in srgb, var(--accent) 15%, var(--surface-elevated));
   border-bottom: 0;
   padding: var(--space-3) var(--space-6);
-  font-size: var(--text-sm);
+  font-size: var(--text-small);
   line-height: var(--leading-snug);
   font-variant-numeric: lining-nums tabular-nums;
   color: var(--accent);
@@ -1426,7 +1426,7 @@ main#main-content header > nav form {
 .plan-date {
   font-weight: var(--weight-bold);
   min-width: 4rem;
-  font-size: var(--text-sm);
+  font-size: var(--text-small);
   color: var(--text-secondary);
 }
 
@@ -1449,7 +1449,7 @@ main#main-content header > nav form {
 }
 
 .cpw-val {
-  font-size: var(--text-xs);
+  font-size: var(--text-extra-small);
   color: var(--danger);
   font-weight: var(--weight-bold);
   font-variant-numeric: tabular-nums;
@@ -1467,7 +1467,7 @@ main#main-content header > nav form {
 
 .input {
   border: 1px solid var(--border);
-  border-radius: var(--radius-xs);
+  border-radius: var(--radius-extra-small);
   padding: var(--space-2) var(--space-3);
   font: inherit;
 }
@@ -1481,8 +1481,8 @@ main#main-content header > nav form {
   display: inline-block;
   background: var(--hover-subtle);
   padding: var(--space-2) var(--space-3);
-  border-radius: var(--radius-xs);
-  font-size: var(--text-xs);
+  border-radius: var(--radius-extra-small);
+  font-size: var(--text-extra-small);
   font-weight: var(--weight-bold);
   margin-inline-end: var(--space-2);
 }
@@ -1494,14 +1494,14 @@ main#main-content header > nav form {
 
 .style-phase-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, var(--tile-min-xl)), 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, var(--tile-min-extra-large)), 1fr));
   gap: var(--space-8);
   margin: var(--space-8) 0;
 }
 
 .style-phase-card {
   border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-small);
   padding: var(--space-6);
 }
 
@@ -1543,14 +1543,14 @@ main#main-content header > nav form {
 
 .occasion-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(min(100%, var(--tile-min-md)), 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, var(--tile-min-medium)), 1fr));
   gap: var(--space-8);
   margin: var(--space-8) 0;
 }
 
 .occasion-card {
   border: 2px solid var(--border);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-small);
   padding: var(--space-6);
 }
 
@@ -1558,7 +1558,7 @@ main#main-content header > nav form {
 // ratio, so the heading level fits the outline without growing the type.
 // amber's h1, h2 rule in the base supplies family, weight and tracking.
 .occasion-card h2 {
-  font-size: var(--text-lg);
+  font-size: var(--text-large);
   margin-bottom: var(--space-2);
 }
 
@@ -1572,13 +1572,13 @@ main#main-content header > nav form {
 }
 
 .occasion-count {
-  font-size: var(--text-xl);
+  font-size: var(--text-extra-large);
   font-weight: var(--weight-bold);
   display: block;
 }
 
 .occasion-warn {
-  font-size: var(--text-xs);
+  font-size: var(--text-extra-small);
 }
 
 .capsule-list {
@@ -1592,7 +1592,7 @@ main#main-content header > nav form {
   gap: var(--space-3);
   align-items: flex-start;
   padding: var(--space-3) var(--space-6);
-  border-radius: var(--radius-xs);
+  border-radius: var(--radius-extra-small);
 }
 
 .capsule-row--keep {
@@ -1608,7 +1608,7 @@ main#main-content header > nav form {
 }
 
 .capsule-decision {
-  font-size: var(--text-xs);
+  font-size: var(--text-extra-small);
   font-weight: var(--weight-bold);
   min-width: 60px;
   padding-top: var(--space-2);
@@ -1648,7 +1648,7 @@ main#main-content header > nav form {
 }
 
 .zone-tag {
-  font-size: var(--text-xs);
+  font-size: var(--text-extra-small);
   font-weight: var(--weight-bold);
   color: var(--color-grey-text);
   min-width: 70px;
@@ -1662,7 +1662,7 @@ main#main-content header > nav form {
   width: var(--tap-min);
   height: var(--tap-min);
   cursor: pointer;
-  font-size: var(--text-lg);
+  font-size: var(--text-large);
   line-height: var(--leading-normal);
   display: flex;
   align-items: center;
@@ -1682,21 +1682,21 @@ main#main-content header > nav form {
   min-width: 0;
   display: flex;
   flex-direction: column;
-  font-size: var(--text-sm);
+  font-size: var(--text-small);
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
 }
 
 .zone-count {
-  font-size: var(--text-xs);
+  font-size: var(--text-extra-small);
   color: var(--color-grey-text);
 }
 
 // Why this garment leads its zone — TasteRanker's reasons, so the rotation is
 // legible as a preference model rather than a random shuffle.
 .zone-why {
-  font-size: var(--text-xs);
+  font-size: var(--text-extra-small);
   color: var(--color-grey-text);
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1743,13 +1743,13 @@ main#main-content header > nav form {
 
 .viz-title {
   margin: 0;
-  font-size: var(--text-sm);
+  font-size: var(--text-small);
   font-weight: var(--weight-bold);
 }
 
 .viz-caption {
   margin: 0;
-  font-size: var(--text-xs);
+  font-size: var(--text-extra-small);
 }
 
 // Ranked bars
@@ -1774,7 +1774,7 @@ main#main-content header > nav form {
   display: flex;
   flex-direction: column;
   min-width: 0;
-  font-size: var(--text-sm);
+  font-size: var(--text-small);
 }
 
 .viz-label-text,
@@ -1785,7 +1785,7 @@ main#main-content header > nav form {
 }
 
 .viz-note {
-  font-size: var(--text-xs);
+  font-size: var(--text-extra-small);
 }
 
 .viz-track {
@@ -1805,7 +1805,7 @@ main#main-content header > nav form {
 
 .viz-value {
   font-family: var(--font);
-  font-size: var(--text-sm);
+  font-size: var(--text-small);
   font-variant-numeric: tabular-nums;
   text-align: end;
   white-space: nowrap;
@@ -1834,7 +1834,7 @@ main#main-content header > nav form {
 }
 
 .viz-column-value {
-  font-size: var(--text-xs);
+  font-size: var(--text-extra-small);
   font-variant-numeric: tabular-nums;
   color: var(--color-grey-text);
 }
@@ -1851,7 +1851,7 @@ main#main-content header > nav form {
   padding-top: var(--space-1);
   border: 0;
   text-align: center;
-  font-size: var(--text-xs);
+  font-size: var(--text-extra-small);
   color: var(--color-grey-text);
 }
 
@@ -1874,7 +1874,7 @@ main#main-content header > nav form {
 
   h3 {
     margin: 0 0 var(--space-1);
-    font-size: var(--text-sm);
+    font-size: var(--text-small);
     font-weight: var(--weight-bold);
   }
 
@@ -1886,7 +1886,7 @@ main#main-content header > nav form {
 
 .organize-principle {
   margin-top: var(--space-1);
-  font-size: var(--text-xs);
+  font-size: var(--text-extra-small);
   font-style: italic;
 }
 
@@ -1909,7 +1909,7 @@ main#main-content header > nav form {
 
   p {
     margin: var(--space-1) 0 0;
-    font-size: var(--text-sm);
+    font-size: var(--text-small);
   }
 }
 
@@ -1929,7 +1929,7 @@ main#main-content header > nav form {
 }
 
 .today-look-zone {
-  font-size: var(--text-xs);
+  font-size: var(--text-extra-small);
   font-weight: var(--weight-bold);
   color: var(--color-grey-text);
 }
@@ -1938,7 +1938,7 @@ main#main-content header > nav form {
   // Second row under the garment, spanning past the zone column, so a long
   // list of reasons wraps into the card rather than out of it.
   grid-column: 2;
-  font-size: var(--text-xs);
+  font-size: var(--text-extra-small);
 }
 
 .today-look-actions {
@@ -1998,7 +1998,7 @@ main#main-content .amber-look-title {
   gap: var(--space-2);
   min-height: var(--tap-min);
   padding-inline: var(--space-2);
-  font-size: var(--text-sm);
+  font-size: var(--text-small);
   color: var(--text);
   white-space: nowrap;
 }
@@ -2082,7 +2082,7 @@ main#main-content .amber-look-title {
 
 .feed-post-meta,
 .feed-post-byline {
-  font-size: var(--text-sm);
+  font-size: var(--text-small);
   line-height: var(--leading-tight, 1.25);
   color: var(--text-secondary);
   margin-bottom: var(--space-2, 0.5rem);
@@ -2208,7 +2208,7 @@ main#main-content form .field :is(
 // Wardrobe item collection and detail.
 .wardrobe-items {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(min(100%, var(--tile-min-lg)), 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, var(--tile-min-large)), 1fr));
   gap: var(--space-3);
 }
 
@@ -2218,7 +2218,7 @@ main#main-content form .field :is(
   min-inline-size: 0;
   gap: var(--space-1);
   border: 1px solid var(--border);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-medium);
   padding: var(--space-2);
 }
 
@@ -2279,7 +2279,7 @@ main#main-content form .field :is(
   place-items: center;
   aspect-ratio: 1;
   border: 1px dashed var(--border);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-small);
   color: var(--text-secondary);
   text-align: center;
 }
@@ -2348,7 +2348,7 @@ main#main-content form .field :is(
 .amber-messenger-composer textarea,.amber-messenger-composer select{width:100%;min-height:var(--tap-min);border:1px solid var(--border);border-radius:0;background:var(--surface);color:var(--text);padding:var(--space-2) var(--space-3);font:inherit}
 .amber-messenger-composer .button{width:100%}
 .amber-message{padding:var(--space-3) var(--space-4)}
-.amber-message header{display:flex;align-items:baseline;justify-content:space-between;gap:var(--space-3);font-size:var(--text-xs)}
+.amber-message header{display:flex;align-items:baseline;justify-content:space-between;gap:var(--space-3);font-size:var(--text-extra-small)}
 .amber-message p{margin:var(--space-1) 0 0;white-space:pre-wrap;overflow-wrap:anywhere}
 .amber-message--mine{text-align:end}.amber-message--mine p{text-align:start;margin-inline-start:15%}
 .post-show-reading {

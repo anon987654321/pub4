@@ -89,7 +89,7 @@
   display: block;
   min-width: var(--tap-min);
   min-height: var(--tap-min);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-small);
   overflow: hidden;
 }
 
@@ -102,7 +102,7 @@
   display: block;
   width: 100%;
   height: auto;
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-medium);
 }
 
 // Validation errors. role="alert" is already on the element; this gives the list the
@@ -161,7 +161,7 @@
 .event-card-media {
   display: block;
   overflow: hidden;
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-small);
 }
 
 .event-card-media img,
@@ -200,7 +200,7 @@
 .event-hero {
   margin: 0;
   overflow: hidden;
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-medium);
 }
 
 .rsvp-bar {
@@ -267,11 +267,11 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-size: var(--text-sm);
+  font-size: var(--text-small);
 }
 
 .story-ring-count {
-  font-size: var(--text-xs);
+  font-size: var(--text-extra-small);
   color: var(--text-secondary);
   font-variant-numeric: tabular-nums;
 }
@@ -297,7 +297,7 @@
   height: auto;
   object-fit: contain;
   background: var(--surface-elevated);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-medium);
 }
 
 .story-caption {
@@ -336,7 +336,7 @@
 }
 
 .mod-queue th {
-  font-size: var(--text-sm);
+  font-size: var(--text-small);
   font-weight: var(--weight-bold);
   color: var(--text-secondary);
 }
@@ -698,7 +698,7 @@ body.vertical-marketplace .listing-filter-controls input {
   width: 100%;
   min-height: var(--tap-min);
   border: 1px solid var(--bol-rule);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-medium);
   background: #fff;
   padding: 0 12px;
   color: var(--bol-ink);
@@ -781,7 +781,7 @@ body.vertical-marketplace .store-buybox .button-primary:hover {
 }
 
 body.vertical-marketplace .search-form input[type="search"] {
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-medium);
 }
 
 body.vertical-marketplace .deal-fav svg {
@@ -1211,7 +1211,7 @@ body.vertical-marketplace .storefront-bol-search .nav-search-input {
   min-width: 0;
   height: var(--bol-search-control-block);
   border: 0;
-  border-radius: var(--radius-md) 0 0 var(--radius-md);
+  border-radius: var(--radius-medium) 0 0 var(--radius-medium);
   background: #fff;
   color: var(--bol-ink);
   padding-inline: 16px;
@@ -1222,7 +1222,7 @@ body.vertical-marketplace .storefront-bol-search .nav-search-submit {
   flex: 0 0 52px;
   width: 52px;
   border: 0;
-  border-radius: 0 var(--radius-md) var(--radius-md) 0;
+  border-radius: 0 var(--radius-medium) var(--radius-medium) 0;
   background: var(--bol-blue-dark);
   color: #fff;
 }
@@ -1945,13 +1945,13 @@ body.vertical-marketplace .listing-review-cover-image {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-size: var(--text-sm);
+  font-size: var(--text-small);
   line-height: 1.3;
 }
 
 .brgen-media-caption span {
   color: var(--text-secondary);
-  font-size: var(--text-xs);
+  font-size: var(--text-extra-small);
   line-height: 1.35;
   overflow-wrap: anywhere;
 }
@@ -1997,7 +1997,7 @@ body.vertical-marketplace .listing-review-cover-image {
 
 .brgen-media-add-link small {
   color: var(--text-secondary);
-  font-size: var(--text-xs);
+  font-size: var(--text-extra-small);
 }
 
 .brgen-media-image {
@@ -2028,7 +2028,7 @@ body.vertical-marketplace .listing-review-cover-image {
 .post-progressive-indicator {
   padding: 0 var(--space-2) var(--space-2);
   color: var(--text-secondary);
-  font-size: var(--text-sm);
+  font-size: var(--text-small);
 }
 
 .post-progressive-indicator.is-active {
@@ -2059,7 +2059,7 @@ html[data-theme="light"] .post-progressive-indicator.is-active {
   place-items: center;
   margin-block: var(--space-6);
   color: var(--text-secondary);
-  font-size: var(--text-lg);
+  font-size: var(--text-large);
   font-weight: var(--weight-bold);
   text-align: center;
 }
@@ -2090,7 +2090,7 @@ form[data-publishing="true"] .post-progressive-nav {
 
 .post-photo-camera small {
   color: var(--text-secondary);
-  font-size: var(--text-xs);
+  font-size: var(--text-extra-small);
 }
 
 .post-media-secondary {
@@ -2132,7 +2132,7 @@ form[data-publishing="true"] .post-progressive-nav {
 .post-media-choice small {
   margin-block-start: 2px;
   color: var(--text-secondary);
-  font-size: var(--text-xs);
+  font-size: var(--text-extra-small);
 }
 
 .post-progressive-actions {
@@ -2168,7 +2168,7 @@ form[data-publishing="true"] .post-progressive-nav {
 .city-network-heading {
   margin: 0 0 var(--space-2);
   color: var(--text);
-  font-size: var(--text-sm);
+  font-size: var(--text-small);
   font-weight: 600;
 }
 
@@ -2184,7 +2184,7 @@ form[data-publishing="true"] .post-progressive-nav {
   align-items: center;
   padding-inline: var(--space-2);
   border: 1px solid transparent;
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-small);
   color: var(--text);
   text-decoration: none;
 }

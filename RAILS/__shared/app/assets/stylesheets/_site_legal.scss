@@ -21,7 +21,7 @@
 
 .site-legal .site-verify {
   flex-basis: 100%;
-  font-size: var(--text-xs);
+  font-size: var(--text-extra-small);
   color: var(--text);
   display: flex;
   flex-wrap: wrap;
@@ -41,7 +41,7 @@
 
  .legal-prose h1 {
   margin: 0;
-  font-size: var(--text-2xl);
+  font-size: var(--text-extra-extra-large);
   line-height: var(--leading-tight);
   margin-block-end: var(--space-2);
   text-wrap: balance;
@@ -50,7 +50,7 @@
 .legal-prose .legal-updated {
   color: var(--text-secondary);
   font-variant-numeric: tabular-nums;
-  font-size: var(--text-sm);
+  font-size: var(--text-small);
   line-height: var(--leading-snug);
   margin: 0 0 var(--space-6);
 }
@@ -83,7 +83,7 @@
   margin-block-start: var(--space-8);
   padding-block-start: var(--space-4);
   border-top: 1px solid var(--border);
-  font-size: var(--text-sm);
+  font-size: var(--text-small);
 }
 
 /* dating is a swipe surface with no room for a legal band. It kept this rule

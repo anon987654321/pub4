@@ -131,7 +131,7 @@ body[data-mode="speaking"] #mic-dot {
   max-width: min(calc(100vw - 24px - var(--safe-left) - var(--safe-right)), 520px);
   padding: 8px 8px;
   border: 1px solid var(--border-faint);
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-large);
   background: #000;
   contain: layout style paint;
 }

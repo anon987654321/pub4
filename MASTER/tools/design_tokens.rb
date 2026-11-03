@@ -43,14 +43,14 @@ module DesignTokens
     "light_muted" => "luxury-muted",
     "light_border" => "luxury-border",
     "light_accent" => "luxury-accent",
-    "space_xs" => "luxury-space-xs",
-    "space_sm" => "luxury-space-sm",
-    "space_md" => "luxury-space-md",
-    "space_lg" => "luxury-space-lg",
-    "space_xl" => "luxury-space-xl",
-    "radius_sm" => "luxury-radius-sm",
-    "radius_md" => "luxury-radius-md",
-    "radius_lg" => "luxury-radius-lg",
+    "space_extra_small" => "luxury-space-extra-small",
+    "space_small" => "luxury-space-small",
+    "space_medium" => "luxury-space-medium",
+    "space_large" => "luxury-space-large",
+    "space_extra_large" => "luxury-space-extra-large",
+    "radius_small" => "luxury-radius-small",
+    "radius_medium" => "luxury-radius-medium",
+    "radius_large" => "luxury-radius-large",
     "font_size_display" => "luxury-font-display",
     "font_size_title" => "luxury-font-title",
     "font_size_meta" => "luxury-font-meta",
@@ -118,11 +118,11 @@ module DesignTokens
         --weight-medium: 500;
         --weight-bold: 700;
         --weight-heavy: 800;
-        --radius-xs: #{social.fetch("radius_xs")};
-        --radius-sm: #{social.fetch("radius_sm")};
-        --radius-md: #{social.fetch("radius_md")};
+        --radius-extra-small: #{social.fetch("radius_extra_small")};
+        --radius-small: #{social.fetch("radius_small")};
+        --radius-medium: #{social.fetch("radius_medium")};
         --radius-card: #{social.fetch("radius_card")};
-        --radius-lg: #{social.fetch("radius_lg")};
+        --radius-large: #{social.fetch("radius_large")};
         --radius-pill: #{social.fetch("radius_pill")};
         --transition-fast: #{shared_chrome.fetch("transition_fast")};
         --transition-normal: #{shared_chrome.fetch("transition_normal")};

@@ -238,10 +238,10 @@ body.wscons-mode {
   --c-text: #63c363;
   --x-text: #63c363;
   --face-phosphor-decay: 0;
-  --radius-xs: 0;
-  --radius-sm: 0;
-  --radius-md: 0;
-  --radius-lg: 0;
+  --radius-extra-small: 0;
+  --radius-small: 0;
+  --radius-medium: 0;
+  --radius-large: 0;
   --radius-pill: 0;
 }
 

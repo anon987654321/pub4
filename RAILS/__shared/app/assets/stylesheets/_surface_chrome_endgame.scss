@@ -33,7 +33,7 @@
   }
 
   main#main-content :is(h2, h3, h4, h5, h6, .section-title, .empty-state-title) {
-    font-size: var(--text-lg);
+    font-size: var(--text-large);
     font-weight: var(--weight-bold);
     line-height: var(--leading-tight);
     letter-spacing: var(--tracking-normal);

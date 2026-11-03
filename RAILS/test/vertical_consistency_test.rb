@@ -121,7 +121,8 @@ class VerticalConsistencyTest < Minitest::Test
   # The shared scales are --text-* and --space-N. A vertical inventing
   # --font-size-large or --space-md gives the same element two sizes depending on
   # which subapp renders it.
-  FORKED_SCALES = /^\s*--(font-size-(base|large|small|xs|sm|md|lg|xl)|space-(xs|sm|md|lg|xl)|border-radius):/
+  FORKED_SCALES = /^\s*--(font-size-(base|large|small|xs|sm|md|lg|xl)|
+                       space-(xs|sm|md|lg|xl|extra-small|small|medium|large|extra-large)|border-radius):/x
 
   def test_no_vertical_forks_the_type_or_spacing_scale
     offenders = brgen_stylesheets.flat_map do |path|
@@ -136,8 +137,9 @@ class VerticalConsistencyTest < Minitest::Test
 
         #{offenders.join("\n  ")}
 
-      The shared vocabulary is --text-xs..--text-2xl and --space-1..--space-16,
-      in shared/app/assets/stylesheets/_tokens.scss. A parallel scale under a
+      The shared vocabulary is --text-extra-small..--text-extra-extra-large and
+      --space-1..--space-16, in shared/app/assets/stylesheets/_tokens.scss. A
+      parallel scale under a
       different name is how playlist ended up spacing and sizing unlike every
       other surface.
     MSG

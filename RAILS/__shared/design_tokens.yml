@@ -83,13 +83,13 @@ viewport:
   wide: 1265
   xl: 1280
 shared_chrome:
-  space_2xs: 0.25rem
-  space_xs: 0.5rem
-  space_sm: 0.75rem
-  space_md: 1.5rem
-  space_lg: 2rem
-  space_xl: 3rem
-  space_2xl: 4rem
+  space_extra_extra_small: 0.25rem
+  space_extra_small: 0.5rem
+  space_small: 0.75rem
+  space_medium: 1.5rem
+  space_large: 2rem
+  space_extra_large: 3rem
+  space_extra_extra_large: 4rem
   color_success: "#00ba7c"
   color_warning: "#c9a227"
   color_info: "#5b9fd4"
@@ -197,19 +197,19 @@ luxury:
   dark_muted: "#999999"
   dark_border: "#666666"
   dark_accent: "#efefef"
-  space_2xs: 0.25rem
-  space_xs: 0.5rem
-  space_sm: 0.75rem
-  space_md: 1.5rem
-  space_lg: 2rem
-  space_xl: 3rem
-  space_2xl: 4rem
+  space_extra_extra_small: 0.25rem
+  space_extra_small: 0.5rem
+  space_small: 0.75rem
+  space_medium: 1.5rem
+  space_large: 2rem
+  space_extra_large: 3rem
+  space_extra_extra_large: 4rem
   color_success: "#00ba7c"
   color_warning: "#c9a227"
   color_info: "#5b9fd4"
-  radius_sm: 6px
-  radius_md: 10px
-  radius_lg: 14px
+  radius_small: 6px
+  radius_medium: 10px
+  radius_large: 14px
   font_size_display: clamp(1.953rem, 1.5rem + 2vw, 2.441rem)
   font_size_title: 1.563rem
   font_size_body: 1rem
@@ -365,10 +365,10 @@ face_root:
     measure: 60ch
     leading-body: '1.5'
     leading-title: '1.25'
-    radius-xs: '0'
-    radius-sm: '0'
-    radius-md: '0'
-    radius-lg: '0'
+    radius-extra-small: '0'
+    radius-small: '0'
+    radius-medium: '0'
+    radius-large: '0'
     radius-pill: '0'
     face-bar-height: 44px
     bar-height: 44px
@@ -1281,12 +1281,12 @@ brgen_old_dark:
   accent_hover: "#d0d0d0"
   danger: "#e46151"
   chrome_bg: "#0d0d0d"
-  radius_xs: 4px
-  radius_sm: 8px
-  radius_md: 12px
+  radius_extra_small: 4px
+  radius_small: 8px
+  radius_medium: 12px
   radius_pill: 9999px
   radius_card: 8px
-  radius_lg: 8px
+  radius_large: 8px
 brgen_old_light:
   bg: "#efefef"
   surface: "#ffffff"
@@ -1299,12 +1299,12 @@ brgen_old_light:
   accent_hover: "#000000"
   danger: "#b24c3f"
   chrome_bg: "#333333"
-  radius_xs: 4px
-  radius_sm: 8px
-  radius_md: 12px
+  radius_extra_small: 4px
+  radius_small: 8px
+  radius_medium: 12px
   radius_pill: 9999px
   radius_card: 8px
-  radius_lg: 8px
+  radius_large: 8px
 openbsd_wscons:
   bg: "#000000"
   surface: "#000000"
@@ -1337,18 +1337,18 @@ social:
   danger: "#e46151"
   font_size: 16px
   line_height: 20px
-  radius_xs: 4px
-  radius_sm: 8px
-  radius_md: 12px
+  radius_extra_small: 4px
+  radius_small: 8px
+  radius_medium: 12px
   radius_pill: 9999px
   radius_card: 16px
-  radius_lg: 16px
-  space_2xs: 0.25rem
-  space_xs: 0.5rem
-  space_sm: 0.75rem
-  space_md: 1rem
-  space_lg: 1.5rem
-  space_xl: 2rem
+  radius_large: 16px
+  space_extra_extra_small: 0.25rem
+  space_extra_small: 0.5rem
+  space_small: 0.75rem
+  space_medium: 1rem
+  space_large: 1.5rem
+  space_extra_large: 2rem
   color_success: "#00ba7c"
   color_warning: "#c9a227"
   color_info: "#5b9fd4"

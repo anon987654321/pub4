@@ -9,7 +9,7 @@
   padding: var(--space-6) var(--space-4);
   text-align: center;
   border: 0;
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-medium);
   max-width: 28rem;
   margin-inline: auto;
   color: var(--text-secondary);
@@ -27,7 +27,7 @@
   border: 0;
   border-radius: var(--radius-pill);
   background: var(--hover-subtle);
-  font-size: var(--text-xs);
+  font-size: var(--text-extra-small);
   line-height: var(--leading-none);
   color: var(--text-secondary);
   opacity: 0.85;
@@ -51,7 +51,7 @@
 
 .empty-state-title {
   margin: 0;
-  font-size: var(--text-lg);
+  font-size: var(--text-large);
   line-height: var(--leading-tight);
   font-weight: var(--weight-bold);
   font-family: var(--font);
@@ -98,7 +98,7 @@ body[data-theme="wscons"] .empty-state,
 .search-loading-message {
   margin-inline: var(--space-4);
   color: var(--text-secondary);
-  font-size: var(--text-sm);
+  font-size: var(--text-small);
 }
 
 .search-skeleton {
@@ -142,7 +142,7 @@ body[data-theme="wscons"] .empty-state,
 
 /* Shared skeleton if app did not define one */
 .skeleton {
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-small);
   background: linear-gradient(
     90deg,
     var(--hover-subtle) 0%,

@@ -18,7 +18,7 @@
   color: var(--text);
   border-radius: var(--radius-pill);
   padding: var(--space-2) var(--space-4);
-  font-size: var(--text-sm);
+  font-size: var(--text-small);
   cursor: pointer;
   transition: background var(--transition-fast) var(--ease-out);
 }
@@ -50,12 +50,12 @@
   background: var(--scrim-65);
   border: none;
   color: var(--text);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-small);
   /* The thumbnail control keeps a 32px footprint by deliberate exception: its
      80px host leaves room for the neighboring controls without obscuring the image. */
   width: 32px;
   height: 32px;
-  font-size: var(--text-xs);
+  font-size: var(--text-extra-small);
   line-height: var(--leading-normal);
   cursor: pointer;
   display: flex;
@@ -85,7 +85,7 @@
    what they do to the photo they sit under. */
 .preset-strip-legend {
   padding: 0;
-  font-size: var(--text-sm);
+  font-size: var(--text-small);
   color: var(--text-secondary);
 }
 
@@ -102,7 +102,7 @@
   padding: var(--space-1) var(--space-3);
   border: 1px solid var(--border);
   border-radius: var(--radius-pill);
-  font-size: var(--text-sm);
+  font-size: var(--text-small);
   color: var(--text-secondary);
   transition: background var(--transition-fast) var(--ease-out), border-color var(--transition-fast) var(--ease-out), color var(--transition-fast) var(--ease-out);
 }
@@ -143,7 +143,7 @@
   border: none;
   border-radius: var(--radius-pill);
   padding: var(--space-2) var(--space-5);
-  font-size: var(--text-sm);
+  font-size: var(--text-small);
   font-weight: var(--weight-bold);
   cursor: pointer;
   z-index: calc(var(--z-splash) - 1);
@@ -175,12 +175,12 @@
 }
 
 .affiliate-title {
-  font-size: var(--text-sm);
+  font-size: var(--text-small);
   font-weight: var(--weight-bold);
   line-height: var(--leading-normal);
   margin-bottom: var(--space-1);
 }
-.affiliate-merchant { font-size: var(--text-xs); }
+.affiliate-merchant { font-size: var(--text-extra-small); }
 
 .item-subtotal { float: inline-end; }
 .qty-field { width: 60px; }
@@ -192,7 +192,7 @@
 .form-inline-errors {
   margin: 0;
   padding: var(--space-3) var(--space-3);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-small);
   background: color-mix(in srgb, var(--color-danger) 10%, white);
   color: color-mix(in srgb, var(--color-danger) 86%, black);
   list-style: none;
@@ -213,35 +213,35 @@
 .mb-8 { margin-bottom: var(--space-2); }
 .mb-12 { margin-bottom: var(--space-3); }
 .m-16 { margin: var(--space-4); }
-.text-sm { font-size: var(--text-sm); }
+.text-sm { font-size: var(--text-small); }
 .text-visible { color: var(--color-success); }
 .text-hidden { color: var(--text-secondary); }
 .button-block { width: 100%; }
 .section-divider { padding: var(--space-4); border-bottom: 0; }
 .section-divider--24 { padding: var(--space-6) var(--space-4); border-bottom: 0; }
-.section-heading { font-size: var(--text-lg); font-weight: var(--weight-heavy); margin-bottom: var(--space-3); }
+.section-heading { font-size: var(--text-large); font-weight: var(--weight-heavy); margin-bottom: var(--space-3); }
 .section-heading--md { font-size: var(--text-base); font-weight: var(--weight-heavy); margin-bottom: var(--space-3); }
 .form-wrap--flush { padding: 0; max-width: none; }
 .field--row { flex-direction: row; align-items: center; }
 .field--grow { flex: 1; min-width: 0; }
-.field--check-label { display: flex; align-items: flex-start; gap: var(--space-2); font-size: var(--text-sm); margin-bottom: var(--space-2); cursor: pointer; }
+.field--check-label { display: flex; align-items: flex-start; gap: var(--space-2); font-size: var(--text-small); margin-bottom: var(--space-2); cursor: pointer; }
 .field--check-label input { margin-top: 4px; flex-shrink: 0; }
 /* The 44px Fitts floor for the checkbox. label.field--check-label > input is
    one specificity step above `.field--check-label input`, so the floor wins
    over that rule's box. */
 label.field--check-label > input { min-height: var(--tap-min); min-width: var(--tap-min); }
-.listing-price { font-size: var(--text-2xl); font-weight: var(--weight-heavy); color: var(--danger); margin-bottom: var(--space-1); }
+.listing-price { font-size: var(--text-extra-extra-large); font-weight: var(--weight-heavy); color: var(--danger); margin-bottom: var(--space-1); }
 .track-row { display: flex; align-items: center; justify-content: space-between; }
 /* swipe_controller's _queueTrack adds this once the listen-queue POST
    succeeds (playlist/sets/show); a settled affirmation, not the mid-swipe
    "liked" transform above it. */
-.track-row.queued { background: rgb(from var(--color-success) r g b / var(--opacity-soft)); border-radius: var(--radius-sm); }
+.track-row.queued { background: rgb(from var(--color-success) r g b / var(--opacity-soft)); border-radius: var(--radius-small); }
 .photo-strip { display: flex; gap: var(--space-2); padding: var(--space-4) 0; border-bottom: 0; flex-wrap: wrap; }
-.photo-thumb { width: 96px; height: 96px; object-fit: cover; border-radius: var(--radius-sm); }
+.photo-thumb { width: 96px; height: 96px; object-fit: cover; border-radius: var(--radius-small); }
 .dating-discover { margin-top: var(--space-5); }
 .tv-media { border-bottom: 0; }
 .tv-media-image { width: 100%; max-height: 420px; object-fit: cover; display: block; }
-.affiliate-fine { font-size: var(--text-xs); margin-top: var(--space-2); }
+.affiliate-fine { font-size: var(--text-extra-small); margin-top: var(--space-2); }
 .link-inherit { color: inherit; }
 .map-canvas { position: fixed; inset: 0; z-index: var(--z-canvas); }
 /* Starts clear of the fixed city brand, which otherwise covered the left edge
@@ -249,7 +249,7 @@ label.field--check-label > input { min-height: var(--tap-min); min-width: var(--
 .map-hud { position: fixed; top: var(--space-4); left: var(--brand-mark-inline); z-index: var(--z-app); display: flex; flex-direction: column; gap: var(--space-2); max-width: 280px; }
 /* min-height: the newsletter email field carries this class, and it holds the
    44px design_rules.ux_laws.fitts minimum. */
-.map-place-popup { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: var(--space-3); font-size: var(--text-sm); }
+.map-place-popup { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-small); padding: var(--space-3); font-size: var(--text-small); }
 
 /* In-feed affiliate unit. Grid packs the images and one Stimulus controller does the tilt, so the unit costs no dependency and no extra license. */
 

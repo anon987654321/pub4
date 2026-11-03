@@ -16,7 +16,7 @@
 .home-neighborhood-filter label,
 .local-activity-heading h2 {
   margin: 0;
-  font-size: var(--text-sm, 0.875rem);
+  font-size: var(--text-small, 0.875rem);
   font-weight: 600;
   line-height: 1.35;
 }
@@ -50,7 +50,7 @@
 .local-activity-item > span,
 .local-activity-item small {
   color: var(--text-secondary, inherit);
-  font-size: var(--text-xs, 0.75rem);
+  font-size: var(--text-extra-small, 0.75rem);
   line-height: var(--leading-snug);
 }
 

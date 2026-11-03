@@ -37,7 +37,7 @@
 .compose-trigger-prompt {
   flex: 1;
   min-width: 0;
-  font-size: var(--text-lg);
+  font-size: var(--text-large);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -47,7 +47,7 @@
 .compose-trigger .compose-avatar {
   width: 32px;
   height: 32px;
-  font-size: var(--text-sm);
+  font-size: var(--text-small);
 }
 
 /* --- the floating composer --- */
@@ -95,7 +95,7 @@
 
 .composer-title {
   margin: 0;
-  font-size: var(--text-lg);
+  font-size: var(--text-large);
   font-weight: var(--weight-bold);
 }
 
@@ -124,7 +124,7 @@
 
 .composer-author-name {
   font-weight: var(--weight-bold);
-  font-size: var(--text-sm);
+  font-size: var(--text-small);
 }
 
 /* The one part that scrolls. Header, attach row and submit stay put, so the
@@ -141,7 +141,7 @@
 .composer-body .compose-input,
 .composer-body .tiptap_area {
   min-height: 120px;
-  font-size: var(--text-lg);
+  font-size: var(--text-large);
   padding-inline: var(--space-4);
   border: 0;
   background: transparent;
@@ -191,7 +191,7 @@
   min-width: var(--tap-min);
   min-height: var(--tap-min);
   border: 0;
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-small);
   background: transparent;
   color: var(--text);
   cursor: pointer;
@@ -223,7 +223,7 @@
 
 .composer .compose-hint {
   padding: 0 var(--space-4) var(--space-4);
-  font-size: var(--text-sm);
+  font-size: var(--text-small);
 }
 
 .composer .compose-hint p {
@@ -380,7 +380,7 @@ body[class*="vertical-"] .compose-launcher {
 .mobile-sheet-links a {
   display: block;
   padding: var(--space-3) var(--space-3);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-small);
   background: var(--surface-elevated);
   color: var(--text);
   text-decoration: none;

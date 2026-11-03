@@ -102,7 +102,7 @@
   flex-wrap: wrap;
   gap: 0 var(--space-2);
   margin: 0.25rem 0 0;
-  font: var(--text-sm) / 1 var(--font);
+  font: var(--text-small) / 1 var(--font);
   color: var(--text-secondary);
 }
 
@@ -111,7 +111,7 @@
   top: 1.25rem;
   padding: 4px var(--space-2);
   border: 3px solid currentColor;
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-small);
   font: var(--weight-heavy) 1.5rem / 1 var(--font);
   letter-spacing: var(--tracking-wider);
   opacity: 0;
@@ -186,18 +186,18 @@
 .swipe-traits li {
   border: 1px solid var(--border);
   border-radius: var(--radius-pill);
-  font: var(--text-xs) / 1 var(--font);
+  font: var(--text-extra-small) / 1 var(--font);
   padding: var(--space-1) var(--space-2);
 }
 
 .swipe-prompt {
   margin: 0;
-  font: var(--text-sm) / 1.4 var(--font);
+  font: var(--text-small) / 1.4 var(--font);
 }
 
 .swipe-recency {
   margin: var(--space-1) 0 0;
-  font: var(--text-xs) / 1.25 var(--font);
+  font: var(--text-extra-small) / 1.25 var(--font);
   color: var(--dating-muted, var(--text-secondary));
 }
 
@@ -243,7 +243,7 @@
   height: var(--space-16);
   border-radius: var(--radius-pill);
   border: 2px solid transparent;
-  font-size: var(--text-xl);
+  font-size: var(--text-extra-large);
   line-height: var(--leading-normal);
   display: grid;
   place-items: center;
@@ -270,7 +270,7 @@
 .swipe-action--rewind {
   width: var(--space-12);
   height: var(--space-12);
-  font-size: var(--text-lg);
+  font-size: var(--text-large);
   background: transparent;
   border-color: var(--border);
   color: var(--dating-muted, var(--text-secondary));
@@ -361,7 +361,7 @@ body.vertical-dating {
 
 .dating-splash-start {
   color: inherit;
-  font-size: var(--text-2xl);
+  font-size: var(--text-extra-extra-large);
   text-decoration: none;
 }
 
@@ -411,7 +411,7 @@ body.vertical-dating {
 .dating-splash-trust {
   margin: 0;
   color: var(--dating-splash-quiet);
-  font-size: var(--text-lg);
+  font-size: var(--text-large);
 }
 
 .dating-splash-trust strong {
@@ -582,7 +582,7 @@ body.vertical-dating header nav {
 body.vertical-dating .button-ghost {
   color: var(--dating-muted);
   border-color: var(--border);
-  font: var(--text-xs) / 1 var(--font);
+  font: var(--text-extra-small) / 1 var(--font);
 }
 
 body.vertical-dating .dating-discover {

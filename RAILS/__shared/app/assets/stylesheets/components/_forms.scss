@@ -138,7 +138,7 @@ form :is(.field, fieldset, p:has(> label)) > label,
 form :is(.field, fieldset) > legend {
   display: block;
   color: var(--text-secondary);
-  font-size: var(--text-sm);
+  font-size: var(--text-small);
   line-height: var(--leading-snug);
 }
 

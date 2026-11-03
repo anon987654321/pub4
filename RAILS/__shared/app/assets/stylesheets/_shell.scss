@@ -36,7 +36,7 @@ html .turbo-progress-bar {
   background: var(--text);
   color: var(--bg);
   text-decoration: none;
-  font-size: var(--text-sm);
+  font-size: var(--text-small);
   border-radius: var(--radius-pill);
   /* Hard hide — no partial paint if top-offset math fails. */
   width: 1px;
@@ -276,7 +276,7 @@ main[role="main"] {
   inset-inline-start: 0;
   inset-inline-end: 0;
   transform: translateY(-50%);
-  font-size: var(--text-xl);
+  font-size: var(--text-extra-large);
   line-height: var(--leading-none);
   color: var(--text-secondary);
   transition: color var(--transition-fast) var(--ease-out), opacity var(--transition-fast) var(--ease-out);
@@ -305,7 +305,7 @@ main[role="main"] {
 }
 .brand-text {
   font-family: var(--font);
-  font-size: var(--text-lg);
+  font-size: var(--text-large);
   font-weight: var(--weight-bold);
   letter-spacing: var(--tracking-tightest);
   text-transform: none;
@@ -363,7 +363,7 @@ main[role="main"] {
   color: var(--accent-ink);
   border: none;
   border-radius: var(--radius-pill);
-  font-size: var(--text-lg);
+  font-size: var(--text-large);
   font-weight: var(--weight-bold);
   touch-action: manipulation;
   cursor: pointer;
@@ -401,13 +401,13 @@ main[role="main"] {
      the toast tier, one step above modals, not above the skip-link. */
   z-index: var(--z-toast);
   padding: 0.375rem 0.75rem;
-  font-size: var(--text-xs);
+  font-size: var(--text-extra-small);
   line-height: var(--leading-snug);
   color: var(--text);
   background: var(--surface-elevated);
   /* Floating chrome separates by surface, not by rule. */
   border: 0;
-  border-radius: var(--radius-xs);
+  border-radius: var(--radius-extra-small);
   max-width: min(24rem, calc(100vw - 2rem));
 }
 
@@ -436,7 +436,7 @@ main[role="main"] {
   background: transparent;
   color: inherit;
   cursor: pointer;
-  border-radius: var(--radius-xs);
+  border-radius: var(--radius-extra-small);
 }
 
 .hotkey-focus {

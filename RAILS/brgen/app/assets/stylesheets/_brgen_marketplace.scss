@@ -357,7 +357,7 @@ body.vertical-marketplace .search {
 }
 
 #logoWrapper .number_animate {
-  font-size: var(--text-2xl);
+  font-size: var(--text-extra-extra-large);
   left: 4px;
   top: -16px;
 }
@@ -482,7 +482,7 @@ a.deal-card,
 :is(.deal-card, .deal-card-hit):focus-visible {
   outline: 2px solid var(--store-focus);
   outline-offset: 2px;
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-small);
 }
 
 .deal-card-img {
@@ -492,7 +492,7 @@ a.deal-card,
   aspect-ratio: 1 / 1;
   padding: 12px;
   overflow: hidden;
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-small);
   background: var(--store-well);
 }
 
@@ -515,7 +515,7 @@ a.deal-card,
   inline-size: min(100%, 18rem);
   aspect-ratio: 3 / 2;
   margin-block-start: 12px;
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-small);
   object-fit: cover;
 }
 
@@ -542,7 +542,7 @@ a.deal-card,
   align-items: center;
   min-height: 24px;
   padding-inline: 8px;
-  border-radius: var(--radius-xs);
+  border-radius: var(--radius-extra-small);
   background: var(--store-red);
   color: var(--store-page);
   font-size: var(--store-text-meta);
@@ -678,7 +678,7 @@ body.vertical-marketplace .top-offers-rail .sale-ad .deal-price {
   min-height: 24px;
   padding-inline: 8px;
   overflow: hidden;
-  border-radius: var(--radius-xs);
+  border-radius: var(--radius-extra-small);
   background: var(--store-well);
   color: var(--store-ink);
   font-size: var(--store-text-meta);
@@ -745,7 +745,7 @@ body.vertical-marketplace .top-offers-rail .sale-ad .deal-price {
   place-items: center;
   inline-size: 100%;
   aspect-ratio: 1 / 1;
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-small);
   background: var(--store-page);
   color: var(--store-ink-soft);
   font-size: var(--store-text-heading);
@@ -757,7 +757,7 @@ body.vertical-marketplace .top-offers-rail .sale-ad .deal-price {
   flex-direction: column;
   gap: 16px;
   padding: 16px;
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-small);
   background: var(--store-well);
 }
 
@@ -783,7 +783,7 @@ body.vertical-marketplace .top-offers-rail .sale-ad .deal-price {
   min-height: 48px;
   padding-inline: 16px;
   border: 0;
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-small);
   background: var(--store-page);
   color: var(--store-ink);
   font-size: 16px;
@@ -805,7 +805,7 @@ body.vertical-marketplace .top-offers-rail .sale-ad .deal-price {
   gap: 0 24px;
   margin-block: 0 var(--store-section);
   padding: 24px;
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-small);
   background: var(--store-well);
 }
 
@@ -991,11 +991,11 @@ body.vertical-marketplace .top-offers-rail .sale-ad .deal-price {
 
 // The order page's chat heading: an h2 inside <section class="order-chat">, one
 // level under the order h1. As a plain h2 it would render at 30.375px, and
-// inside a <section> __components's `section h2` takes it to --text-xs (13.5px).
+// inside a <section> __components's `section h2` takes it to --text-extra-small (13.5px).
 // The class (0,1,1) outranks that pair (0,0,2), and 1.17em is the UA h3 ratio,
 // the size the heading reads at.
 .order-chat h2 {
-  font-size: var(--text-lg);
+  font-size: var(--text-large);
   margin-bottom: var(--space-2);
 }
 
@@ -1016,7 +1016,7 @@ body.vertical-marketplace .top-offers-rail .sale-ad .deal-price {
 
 .listing-question-meta {
   margin: 0;
-  font-size: var(--text-sm);
+  font-size: var(--text-small);
   color: var(--text-secondary);
 }
 
@@ -1046,7 +1046,7 @@ body.vertical-marketplace .top-offers-rail .sale-ad .deal-price {
 
 .listing-facet-name {
   margin: 0 0 var(--space-1);
-  font-size: var(--text-sm);
+  font-size: var(--text-small);
   color: var(--text-secondary);
 }
 
@@ -1112,7 +1112,7 @@ body.vertical-marketplace .top-offers-rail .sale-ad .deal-price {
   border-radius: var(--radius-pill);
   background: var(--accent);
   color: var(--accent-ink);
-  font-size: var(--text-xs);
+  font-size: var(--text-extra-small);
   font-weight: var(--weight-bold);
   font-variant-numeric: tabular-nums;
 }
@@ -1143,7 +1143,7 @@ body.vertical-marketplace .top-offers-rail .sale-ad .deal-price {
 .listing-filter-group legend {
   padding: 0;
   margin-block-end: var(--space-1);
-  font-size: var(--text-sm);
+  font-size: var(--text-small);
   color: var(--text-secondary);
 }
 
@@ -1197,7 +1197,7 @@ body.vertical-marketplace .top-offers-rail .sale-ad .deal-price {
 .variant-price,
 .variant-stock {
   color: var(--text-secondary);
-  font-size: var(--text-sm);
+  font-size: var(--text-small);
 }
 
 /* A return on the order page: what was asked, what was answered, and whether
@@ -1217,7 +1217,7 @@ body.vertical-marketplace .top-offers-rail .sale-ad .deal-price {
 .order-return-note {
   margin: var(--space-1) 0 0;
   color: var(--text-secondary);
-  font-size: var(--text-sm);
+  font-size: var(--text-small);
 }
 
 .order-return-form {
@@ -1241,7 +1241,7 @@ body.vertical-marketplace .top-offers-rail .sale-ad .deal-price {
   gap: var(--space-3);
   padding: var(--space-4);
   border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-small);
   background: var(--surface-elevated);
 }
 .address p {
@@ -1269,7 +1269,7 @@ body.vertical-marketplace .top-offers-rail .sale-ad .deal-price {
 
 .listing-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(min(100%, var(--tile-min-2xl)), 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, var(--tile-min-extra-extra-large)), 1fr));
   gap: var(--space-3);
 }
 
@@ -1293,20 +1293,20 @@ body.vertical-marketplace .top-offers-rail .sale-ad .deal-price {
   display: block;
   margin-block-end: var(--space-1);
   color: var(--text-secondary);
-  font-size: var(--text-sm);
+  font-size: var(--text-small);
 }
 
 .listing-delivery {
   margin: 0 0 var(--space-2);
   color: var(--text-secondary);
-  font-size: var(--text-sm);
+  font-size: var(--text-small);
 }
 
 .buy-box-offers {
   margin-block: var(--space-2);
   padding: var(--space-2);
   border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-small);
 }
 
 .buy-box-reasons {

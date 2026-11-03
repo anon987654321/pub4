@@ -21,11 +21,11 @@
   --weight-medium: 500;
   --weight-bold: 700;
   --weight-heavy: 800;
-  --radius-xs: 4px;
-  --radius-sm: 8px;
-  --radius-md: 12px;
+  --radius-extra-small: 4px;
+  --radius-small: 8px;
+  --radius-medium: 12px;
   --radius-card: 16px;
-  --radius-lg: 16px;
+  --radius-large: 16px;
   --radius-pill: 9999px;
   --transition-fast: 180ms;
   --transition-normal: 300ms;

@@ -61,19 +61,19 @@ $luxury: true !default;
        same role rendered 14px in one sheet and 15px in another. The 13/15/17
        sites were migrated onto these steps; raw font-size literals are now
        counted by css_constitution's type_scale budget.
-       --text-xl and --text-2xl are new only in the sense of being *declared*:
+       --text-extra-large and --text-extra-extra-large are new only in the sense of being *declared*:
        both were already referenced with no fallback (4 and 1 sites), and a
        var() that resolves to nothing drops the whole declaration, so the amber
        stat numbers and the affiliate listing price were rendering at body size. */
-    --text-xs: 0.75rem;
-    --text-sm: 0.875rem;
+    --text-extra-small: 0.75rem;
+    --text-small: 0.875rem;
     --text-base: 1rem;
-    --text-lg: 1.125rem;
+    --text-large: 1.125rem;
     /* Page / section titles — design_tokens shared_chrome.font_size_title */
     --text-title: 1.25rem;
-    --text-xl: 1.5rem;
+    --text-extra-large: 1.5rem;
     /* design_tokens ui_polish.type_tokens.text_display */
-    --text-2xl: 1.75rem;
+    --text-extra-extra-large: 1.75rem;
   /* One restrained editorial display slot from
      MASTER/data/tokens.yml#tokens.visual_identity.display_size. Pixel-based
      bounds are deliberate because Brgen roots at 18px; every screen uses this
@@ -160,15 +160,15 @@ $luxury: true !default;
        amber's root shift would otherwise make the same grid hold a different
        number of them above 1280px.
 
-       --tile-min-xl is the catalogue step; --tile-gap-row and --tile-gap-col
+       --tile-min-extra-large is the catalogue step; --tile-gap-row and --tile-gap-col
        below pair with it. A wide row gap against a narrow column gap is what
        makes a dense grid read as rows of goods rather than as a mosaic. */
-    --tile-min-xs: 72px;
-    --tile-min-sm: 108px;
-    --tile-min-md: 160px;
-    --tile-min-lg: 192px;
-    --tile-min-xl: 224px;
-    --tile-min-2xl: 280px;
+    --tile-min-extra-small: 72px;
+    --tile-min-small: 108px;
+    --tile-min-medium: 160px;
+    --tile-min-large: 192px;
+    --tile-min-extra-large: 224px;
+    --tile-min-extra-extra-large: 280px;
     --tile-gap-row: 24px;
     --tile-gap-col: 8px;
     --transition-fast: 180ms;
@@ -223,11 +223,11 @@ $luxury: true !default;
       --luxury-text: #333333;
       --luxury-muted: #4d4d4d;
       --luxury-border: #888888;
-      --luxury-space-xs: 0.5rem;
-      --luxury-space-sm: 0.75rem;
-      --luxury-space-md: 1.5rem;
-      --luxury-space-lg: 2rem;
-      --luxury-space-xl: 3rem;
+      --luxury-space-extra-small: 0.5rem;
+      --luxury-space-small: 0.75rem;
+      --luxury-space-medium: 1.5rem;
+      --luxury-space-large: 2rem;
+      --luxury-space-extra-large: 3rem;
       --luxury-font-display: clamp(1.953rem, 1.5rem + 2vw, 2.441rem);
       --luxury-font-title: 1.563rem;
       --luxury-font-meta: 0.875rem;

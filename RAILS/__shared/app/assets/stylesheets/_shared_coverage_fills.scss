@@ -37,7 +37,7 @@
   min-height: var(--tap-min);
   padding-inline: var(--space-3);
   border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-small);
   color: var(--text);
   text-decoration: none;
 }
@@ -83,13 +83,13 @@
 .ad-slot {
   margin-block: var(--space-6);
   border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-small);
   padding: var(--space-2);
 }
 
 .ad-slot-label {
   margin: 0 0 var(--space-1);
-  font-size: var(--text-sm);
+  font-size: var(--text-small);
 }
 
 // Publisher verification, rendered in the legal footer when the ids are configured.
@@ -135,5 +135,5 @@
   min-height: var(--tap-min);
   padding-inline: var(--space-2);
   color: var(--text-secondary);
-  font-size: var(--text-sm);
+  font-size: var(--text-small);
 }

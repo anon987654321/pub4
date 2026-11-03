@@ -117,7 +117,7 @@ module Master
 
       social = tokens["social"].is_a?(Hash) ? tokens["social"] : {}
       %w[bg surface surface_elevated search_bg text text_secondary border accent danger
-         radius_xs radius_sm radius_md radius_card radius_lg radius_pill].each do |field|
+         radius_extra_small radius_small radius_medium radius_card radius_large radius_pill].each do |field|
         errors << "tokens.social.#{field} must be non-empty text" unless
           social[field].is_a?(String) && !social[field].strip.empty?
       end

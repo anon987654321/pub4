@@ -195,7 +195,7 @@ class CritiqueImplementationTest < Minitest::Test
     refute_match(/box-shadow:(?!\s*none\b)/, search)
     assert_includes affiliate, 'data-controller="parallax-tilt"'
     assert_includes affiliate, 'data-parallax-tilt-target="tile"'
-    assert_match(/\.affiliate_feed_label\s*\{[^}]*font-size:\s*var\(--text-xs\);/m, affiliate_css)
+    assert_match(/\.affiliate_feed_label\s*\{[^}]*font-size:\s*var\(--text-extra-small\);/m, affiliate_css)
     assert_match(/\.affiliate_feed_label\s*\{[^}]*letter-spacing:\s*var\(--tracking-normal\);/m, affiliate_css)
     assert_match(/\.affiliate_feed_label\s*\{[^}]*line-height:\s*var\(--leading-tight\);/m, affiliate_css)
     refute_match(/\.affiliate_feed_label\s*\{[^}]*font-size:\s*9px;/m, affiliate_css)
@@ -348,7 +348,7 @@ class CritiqueImplementationTest < Minitest::Test
 
     assert_includes amber_polish, ".commerce-fit-suggestion"
     assert_includes amber_polish, ".commerce-fit-reasons"
-    assert_match(/\.commerce-fit-source\s*\{[^}]*font-size:\s*var\(--text-xs\);/m, amber_polish)
+    assert_match(/\.commerce-fit-source\s*\{[^}]*font-size:\s*var\(--text-extra-small\);/m, amber_polish)
     assert_match(/\.commerce-fit-source\s*\{[^}]*line-height:\s*var\(--leading-tight\);/m, amber_polish)
     refute_match(/\.commerce-fit-source\s*\{[^}]*font-size:\s*11px;/m, amber_polish)
     assert_includes seller, 'class="store-seller-center"'

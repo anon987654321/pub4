@@ -29,7 +29,7 @@
 
 .affiliate_feed_label {
   color: var(--text-secondary);
-  font-size: var(--text-xs);
+  font-size: var(--text-extra-small);
   font-weight: var(--weight-heavy);
   letter-spacing: var(--tracking-normal);
   line-height: var(--leading-tight);
@@ -38,7 +38,7 @@
 
 .affiliate_feed_header h2 {
   margin-block-start: 2px;
-  font-size: var(--text-lg);
+  font-size: var(--text-large);
   line-height: var(--leading-tight);
 }
 
@@ -76,7 +76,7 @@
   aspect-ratio: 1 / 1;
   overflow: hidden;
   background: var(--surface-elevated);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-medium);
 }
 
 .affiliate_feed_media img {
@@ -89,7 +89,7 @@
 .affiliate_feed_link_disclosure,
 .affiliate_feed_placeholder {
   color: var(--text-secondary);
-  font-size: var(--text-xs);
+  font-size: var(--text-extra-small);
   line-height: var(--leading-tight);
 }
 
@@ -100,13 +100,13 @@
 
 .affiliate_feed_title {
   color: var(--text);
-  font-size: var(--text-sm);
+  font-size: var(--text-small);
   line-height: var(--leading-snug);
 }
 
 .affiliate_feed_price {
   color: var(--text);
-  font-size: var(--text-lg);
+  font-size: var(--text-large);
   font-weight: var(--weight-heavy);
   line-height: 1.1;
 }
@@ -122,10 +122,10 @@
   min-height: var(--space-6);
   width: fit-content;
   padding-inline: var(--space-2);
-  border-radius: var(--radius-xs);
+  border-radius: var(--radius-extra-small);
   background: var(--text);
   color: var(--surface);
-  font-size: var(--text-xs);
+  font-size: var(--text-extra-small);
   font-weight: var(--weight-heavy);
 }
 
@@ -185,7 +185,7 @@
   aspect-ratio: 1 / 1;
   overflow: hidden;
   background: var(--surface-elevated);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-small);
 }
 
 .affiliate_sidebar_media img {
@@ -220,7 +220,7 @@
     "disclosure";
   padding: var(--space-2);
   border: 1px solid var(--border);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-medium);
   background: var(--surface-elevated);
 }
 

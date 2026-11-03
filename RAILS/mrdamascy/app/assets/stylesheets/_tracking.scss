@@ -79,7 +79,7 @@
   align-items: center;
   gap: 8px;
   background: var(--surface-elevated);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-small);
   padding: 12px;
   font-size: var(--text-meta);
   font-weight: 600;
@@ -88,7 +88,7 @@
 .track-cancelled {
   background: var(--pom-100);
   color: var(--danger);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-small);
   padding: 12px;
   font-weight: 700;
 }

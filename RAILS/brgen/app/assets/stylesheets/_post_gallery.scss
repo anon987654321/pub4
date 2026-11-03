@@ -27,7 +27,7 @@
   height: auto;
   max-height: min(34rem, 72svh);
   object-fit: cover;
-  border-radius: var(--radius-md, 0.5rem);
+  border-radius: var(--radius-medium, 0.5rem);
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -25,7 +25,7 @@
   padding: var(--space-3);
   background: var(--hover-subtle);
   border-inline-start: 3px solid var(--accent);
-  font-size: var(--text-sm);
+  font-size: var(--text-small);
   line-height: var(--leading-normal);
   color: var(--text-secondary);
 }
@@ -60,7 +60,7 @@
 }
 
 .feed-post-show-meta {
-  font-size: var(--text-sm);
+  font-size: var(--text-small);
   color: var(--text-secondary);
   margin-bottom: var(--space-2);
 }
@@ -74,7 +74,7 @@
 .post-show-aside {
   padding: var(--space-4);
   color: var(--text-secondary);
-  font-size: var(--text-sm);
+  font-size: var(--text-small);
 }
 
 // h2, not h3: these follow the page h1 with no h2 between them, and a skipped
@@ -91,7 +91,7 @@
 }
 
 // The id matters here beyond habit. #comments-section is a <section>, and
-// __components's `section h2 { font-size: var(--text-xs) }` would otherwise catch
+// __components's `section h2 { font-size: var(--text-extra-small) }` would otherwise catch
 // this heading. An id (1,0,1) outranks that element pair (0,0,2), so it stays
 // at --text-base.
 #comments-section h2 {
@@ -102,13 +102,13 @@
 // The two class-less <aside> sidebars, communities/show and posts/index, carry
 // h2 headings that nothing else sizes. 1.17em is the UA h3 ratio, which keeps
 // them at the size an h3 would render rather than the UA h2 size. It is not on
-// the type scale: at brgen's 20.25px root the scale offers --text-lg 20.25px and
-// --text-xl 27px, and moving them onto it is a visual decision.
+// the type scale: at brgen's 20.25px root the scale offers --text-large 20.25px and
+// --text-extra-large 27px, and moving them onto it is a visual decision.
 //
 // :not([class]) keeps this off .post-show-aside, .sidebar-card, .sidebar,
 // .widgets and .channel-roster, all of which size their own headings.
 aside:not([class]) > h2 {
-  font-size: var(--text-lg);
+  font-size: var(--text-large);
   margin-bottom: var(--space-2);
 }
 
@@ -170,7 +170,7 @@ aside:not([class]) > h2 {
   max-width: var(--container-max);
   margin: var(--section-rhythm) auto 0;
   padding: var(--space-12) var(--page-gutter) calc(var(--space-16) + var(--tap-min));
-  font-size: var(--text-sm);
+  font-size: var(--text-small);
   color: var(--text-secondary);
 }
 
@@ -212,7 +212,7 @@ time {
 .toast,
 .nearby-alerts > * {
   border: var(--elev-1);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-small);
   background: var(--surface-elevated);
   padding: var(--space-3) var(--space-4);
   z-index: var(--z-toast);
@@ -246,7 +246,7 @@ body.vertical-tv .tv-poster {
   aspect-ratio: 16 / 9;
   object-fit: cover;
   width: 100%;
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-small);
 }
 body.vertical-tv .live-badge::before {
   content: "● ";
@@ -292,8 +292,8 @@ body.vertical-playlist input[type="range"] {
 .flash-alert {
   margin: var(--space-3) var(--space-4) 0;
   padding: var(--space-3) var(--space-4);
-  border-radius: var(--radius-sm);
-  font-size: var(--text-sm);
+  border-radius: var(--radius-small);
+  font-size: var(--text-small);
 }
 
 .flash-alert {
@@ -401,7 +401,7 @@ body.vertical-playlist input[type="range"] {
   border: 0;
   background: none;
   color: var(--text);
-  font: var(--weight-bold) var(--text-sm) / 1 var(--font);
+  font: var(--weight-bold) var(--text-small) / 1 var(--font);
   cursor: pointer;
 }
 
@@ -429,7 +429,7 @@ body.vertical-playlist input[type="range"] {
   border: 1px solid var(--border);
   border-radius: var(--radius-pill);
   color: var(--text);
-  font-size: var(--text-sm);
+  font-size: var(--text-small);
   text-decoration: none;
 }
 
@@ -450,13 +450,13 @@ body.vertical-playlist input[type="range"] {
 .activity-event {
   padding: var(--space-3) var(--space-4);
   border: 1px solid var(--border);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-medium);
   background: var(--surface-elevated);
 }
 
 .activity-event h2 {
   margin: 0 0 4px;
-  font-size: var(--text-lg);
+  font-size: var(--text-large);
 }
 
 .activity-event-link {
@@ -475,7 +475,7 @@ body.vertical-playlist input[type="range"] {
   gap: var(--space-1) var(--space-3);
   margin: 0;
   color: var(--text-secondary);
-  font-size: var(--text-sm);
+  font-size: var(--text-small);
 }
 
 .activity-event-cta {
@@ -495,7 +495,7 @@ body.vertical-playlist input[type="range"] {
 .field .error,
 .field .helper {
   min-height: 1.1em;
-  font-size: var(--text-sm);
+  font-size: var(--text-small);
   color: var(--text-secondary);
 }
 .field .error { color: var(--danger); }
@@ -504,7 +504,7 @@ body.vertical-playlist input[type="range"] {
 
 /* Skeleton */
 .skeleton {
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-small);
   background: linear-gradient(
     90deg,
     var(--hover-subtle) 0%,
