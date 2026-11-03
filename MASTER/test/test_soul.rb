@@ -11,6 +11,7 @@ class TestSoul < Minitest::Test
     refute_empty laws, "the executable Law registry must load"
     missing = laws.keys.reject { |id| prompt.include?(id) }
     assert_empty missing, "laws absent from the prompt: #{missing.first(5).join(', ')}"
+    assert_match(/DO_THE_WORK_NOW: treat a clear user request/, prompt)
   end
 
   def test_the_conduct_rules_reach_the_agent_context
