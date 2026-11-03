@@ -54,10 +54,13 @@ module Shared
       Marketplace::Order.where(payment_status: "paid", paid_at: since..).where.not(gclid: [ nil, "" ]).count
     end
 
+    # Counts approved conversions only. TradeDoubler posts one row per status
+    # change (tracked, pending, approved, paid, ...), so counting every row
+    # counted one sale several times and included invalid and deleted ones.
     def affiliate_conversions
       return 0 unless defined?(Shared::AffiliateConversion)
 
-      Shared::AffiliateConversion.where(created_at: since..).count
+      approved_affiliate_conversions.count
     end
 
     # Order value is gross basket value, not money earned by the publisher.
@@ -65,15 +68,15 @@ module Shared
     def affiliate_order_value
       return 0 unless defined?(Shared::AffiliateConversion)
 
-      Shared::AffiliateConversion.where(created_at: since..).sum(:order_value).to_f
+      approved_affiliate_conversions.sum(:order_value).to_f
     end
 
     def approved_affiliate_commission_by_currency
       return {} unless defined?(Shared::AffiliateConversion)
 
-      Shared::AffiliateConversion.where(created_at: since..).approved
-                                .group(:currency).sum(:publisher_commission)
-                                .transform_keys { |currency| currency.presence || "unknown" }
+      approved_affiliate_conversions
+        .group(:currency).sum(:publisher_commission)
+        .transform_keys { |currency| currency.presence || "unknown" }
     end
 
     def partner_conversions
@@ -126,5 +129,9 @@ module Shared
       end
       lines.join("\n")
     end
+
+    private
+
+    def approved_affiliate_conversions = Shared::AffiliateConversion.where(created_at: since..).approved
   end
 end
