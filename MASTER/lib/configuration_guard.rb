@@ -206,9 +206,8 @@ module Master
         references.keys.map(&:to_s) == ["golden_law"]
 
       master_root = File.dirname(File.dirname(path))
-      laws_path = File.join(master_root, "data", "laws.yml")
-      laws_path = File.join(Master::ROOT, "data", "laws.yml") unless File.file?(laws_path)
-      laws = YAML.safe_load_file(laws_path, aliases: true)
+      laws_root = File.file?(File.join(master_root, "data", "laws.yml")) ? master_root : Master::ROOT
+      laws = Master.laws_document(root: laws_root)
       golden_id = references["golden_law"].to_s
       golden = laws[golden_id]
       unless golden.is_a?(Hash) && golden["statement"].to_s.match?(/preserve/i)
@@ -251,10 +250,11 @@ module Master
       validate_required_runtime_config_sections(data)
       raise ArgumentError, "law_runtime.yml must not duplicate law_catalogue" if data.key?("law_catalogue")
 
-      laws_path = File.join(File.dirname(path), "laws.yml")
-      raise ArgumentError, "law_runtime.yml cannot find its canonical laws.yml" unless File.file?(laws_path)
+      data_root = File.dirname(File.dirname(path))
+      raise ArgumentError, "law_runtime.yml cannot find its canonical laws.yml" unless
+        File.file?(File.join(data_root, "data", "laws.yml"))
 
-      laws = YAML.safe_load_file(laws_path, aliases: true)
+      laws = Master.laws_document(root: data_root)
       catalogue = laws.fetch("law_catalogue") { raise KeyError, "laws.yml has no law_catalogue" }
       law_ids = (laws.keys.map(&:to_s) - ["law_catalogue"]) + catalogue.fetch("entries").keys.map(&:to_s)
       duplicates = data.keys.map(&:to_s) & law_ids

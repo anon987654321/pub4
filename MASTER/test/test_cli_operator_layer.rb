@@ -14,6 +14,7 @@ require "cli/operator_grammar"
 class TestCliOperatorLayer < Minitest::Test
   def test_ollama_down_is_unavailable_during_route_preflight
     router = Class.new do
+      include Master::CLI::Routing::ModelRouter::ProviderAvailability
       include Master::CLI::Routing::ModelRouter::Pool
 
       # ollama_problem reads the catalogue and the configured model when the
@@ -124,6 +125,20 @@ class TestCliOperatorLayer < Minitest::Test
     refute evidence
   end
 
+  # The grammar consults PATH for the first executable; ssh is the canonical
+  # installed-command example, so pin its presence instead of the machine's.
+  def with_ssh_on_path
+    dir = Dir.mktmpdir("ssh-bin")
+    File.write(File.join(dir, "ssh"), "#!/bin/sh\nexit 0\n")
+    File.chmod(0o755, File.join(dir, "ssh"))
+    saved = ENV["PATH"]
+    ENV["PATH"] = "#{dir}#{File::PATH_SEPARATOR}#{saved}"
+    yield
+  ensure
+    saved.nil? ? ENV.delete("PATH") : ENV["PATH"] = saved
+    FileUtils.remove_entry(dir) rescue nil
+  end
+
   # An installed command's name at the start of a sentence does not make the sentence a command.
   def test_prose_that_starts_with_a_command_name_goes_to_the_agent
     grammar = Master::CLI::OperatorGrammar
@@ -132,7 +147,9 @@ class TestCliOperatorLayer < Minitest::Test
     assert_nil grammar.parse("open the door for me please")
     assert_nil grammar.parse("which one should I pick?")
     assert_equal :direct_shell, grammar.parse("which ruby").kind
-    assert_equal :direct_shell, grammar.parse("ssh dev@brgen.no uname -a").kind
+    with_ssh_on_path do
+      assert_equal :direct_shell, grammar.parse("ssh dev@brgen.no uname -a").kind
+    end
   end
 
   def test_direct_shell_accepts_read_only_chains_but_not_pipes
@@ -148,7 +165,9 @@ class TestCliOperatorLayer < Minitest::Test
     assert_equal :direct_shell, grammar.parse("ls && ps aux").kind
     assert_nil grammar.parse("/fix")
     assert_nil grammar.parse("/fix --dry-run MASTER")
-    assert_equal :direct_shell, grammar.parse("ssh dev@brgen.no uname -a").kind
+    with_ssh_on_path do
+      assert_equal :direct_shell, grammar.parse("ssh dev@brgen.no uname -a").kind
+    end
     assert_equal :direct_shell, grammar.parse("curl https://example.com").kind
     assert_equal :direct_shell, grammar.parse("ls | cat").kind
     assert_equal :direct_shell, grammar.parse("rm -rf /").kind

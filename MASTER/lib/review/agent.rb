@@ -449,7 +449,7 @@ module Master
       end
 
       def specialized_web_source(message)
-        return evidence_tool("Lovdata") if message.match?(/\b(?:lovdata|LOV-\d{4}-\d{2}-\d+|FOR-\d{4}-\d{2}-\d+)\b/i) ||
+        return evidence_tool("Lovdata") if message.match?(/\b(?:lovdata|LOV-\d{4}-\d{2}-\d+(?:-\d+)?|FOR-\d{4}-\d{2}-\d+(?:-\d+)?)\b/i) ||
           (message.match?(/§\s*\d/) && message.match?(/\b[\p{L}]+(?:loven|forskriften)\b/i))
         return evidence_tool("Linguist") if message.match?(/\b(?:etymology|etymological|word origin|linguistic(?:s)?|idiom|pragmatics|register|grammar of|meaning of the word|word usage)\b/i) &&
           message.match?(/["'“][^"'”]{1,120}["'”]|\b(?:word|phrase)\s+[\p{L}\p{N}'-]{2,80}/i)
@@ -466,9 +466,9 @@ module Master
 
       def specialized_web_args(message)
         case
-        when message.match?(/\b(?:lovdata|LOV-\d{4}-\d{2}-\d+|FOR-\d{4}-\d{2}-\d+)\b/i)
+        when message.match?(/\b(?:lovdata|LOV-\d{4}-\d{2}-\d+(?:-\d+)?|FOR-\d{4}-\d{2}-\d+(?:-\d+)?)\b/i)
           reference = message[%r{https://(?:www\.)?lovdata\.no/dokument/NL/(?:lov|forskrift)/[^\s)]+}] ||
-                      message[/\b(?:LOV|FOR)-\d{4}-\d{2}-\d+\b/i] || message
+                      message[/\b(?:LOV|FOR)-\d{4}-\d{2}-\d+(?:-\d+)?\b/i] || message
           { reference:, action: message.match?(/\b(?:search|find|which|hvilken|søk|finn)\b/i) ? "search" : "lookup",
             section: message[/§\s*([0-9]+[a-z]?(?:-[0-9]+[a-z]?)?)/i, 1] }
         when message.match?(/\b(?:etymology|etymological|word origin|linguistic(?:s)?|idiom|pragmatics|register|grammar of|meaning of the word|word usage)\b/i)

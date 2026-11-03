@@ -16,7 +16,7 @@ module Master
 
       def summary
         Master::Soul.load!(root: @root)
-        manifest = Master.load_yaml(File.join(@root, "data", "soul.yml"))
+        manifest = Master.soul_config(root: @root)
         [
           "soul0: rev #{manifest.fetch("version")}, persona #{manifest.fetch("persona", "none")}",
           Master::Soul::IDENTITY

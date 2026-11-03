@@ -131,8 +131,7 @@ module Master
         checks = profile["checks"]
         raise InvalidProfile, "checks must be a non-empty mapping" unless checks.is_a?(Hash) && !checks.empty?
 
-        laws_path = File.join(root, "data", "laws.yml")
-        laws = YAML.safe_load_file(laws_path, aliases: true)
+        laws = Master.laws_document(root:)
         raise InvalidProfile, "data/laws.yml must be a mapping" unless laws.is_a?(Hash)
         authority_law = research["authority_law"].to_s
         raise InvalidProfile, "research authority Law is not declared in laws.yml" unless laws.key?(authority_law)

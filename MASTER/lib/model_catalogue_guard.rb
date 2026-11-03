@@ -49,7 +49,7 @@ module Master
 
       providers_path = File.join(File.dirname(path), "providers.yml")
       if File.file?(providers_path)
-        provider_data = YAML.safe_load_file(providers_path, aliases: true)
+        provider_data = Master.provider_config(root: File.dirname(File.dirname(providers_path)))
         if provider_data.is_a?(Hash) && !provider_data.key?(routing["provider"])
           errors << "models.yml routing.provider #{routing["provider"].inspect} is absent from providers.yml"
         end

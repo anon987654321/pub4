@@ -32,7 +32,7 @@ module Master
         def constitution
           manifest = soul_data
           references = manifest["references"] || {}
-          catalogue = Master.load_yaml(File.join(Master.master_root(root: @root), "data", "laws.yml"))
+          catalogue = Master.laws_document(root: @root)
           golden_id = references["golden_law"].to_s
           golden = catalogue[golden_id] || {}
           simulation = catalogue["TRUTHFUL_STATUS_no_simulated_completion"] || {}

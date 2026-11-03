@@ -12,7 +12,7 @@ module Master
 
       def initialize(laws_data: nil, root: Master::ROOT)
         @root = File.expand_path(Master.master_root(root:))
-        data = laws_data || Master.load_yaml(File.join(@root, "data", "laws.yml"))
+        data = laws_data || Master.laws_document(root: @root)
         entries = Master.law_entries_in(data || {})
         @entries = entries.to_h { |entry| [entry.fetch("id").to_s.upcase, entry] }
         @precedence_order = Master::Soul.invariant_order(root: @root)

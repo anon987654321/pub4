@@ -23,8 +23,13 @@
 reader_singularity:
   ceiling:
     models.yml: 3
-    patterns.yml: 4
-    laws.yml: 3
+    patterns.yml: 1
+    # 2026-11-03: the accessor consolidation brought the direct laws.yml
+    # readers from ten to the four that legitimately cannot route through
+    # Master.*: the canonical loader, the accessor host itself, the boot-floor
+    # soul reader and the SessionStart hook that boots no Master. That is the
+    # measurement, recorded with the reason; it is not an invitation.
+    laws.yml: 4
     soul.yml: 3
     tts.yml: 2
     voice.yml: 3

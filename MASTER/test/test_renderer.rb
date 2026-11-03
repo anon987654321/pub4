@@ -415,7 +415,7 @@ class TestRenderer < Minitest::Test
     ENV["MASTER_BOOT_STATUS"] = "1"
     line = strip_ansi(renderer.splash(named)).lines.find { |l| l.start_with?("model0: ") }
 
-    assert_includes line, "1000.0k context"
+    assert_includes line, "1.0M context"
   ensure
     ENV.delete("MASTER_BOOT_STATUS")
   end

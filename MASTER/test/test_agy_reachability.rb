@@ -66,7 +66,12 @@ class TestAgyReachability < Minitest::Test
   end
 
   def router
-    Master::CLI::Routing::ModelRouter.new(config: FakeConfig.new(model: "x"), root: Master::ROOT)
+    r = Master::CLI::Routing::ModelRouter.new(config: FakeConfig.new(model: "x"), root: Master::ROOT)
+    # The pool grows from `agy models`; a machine without the binary answers
+    # with an empty listing and the chain contract under test never sees agy.
+    # Pin the listing instead of the machine.
+    r.define_singleton_method(:run_probe) { |*_command, **_k| "gemini-3.1-pro-high\nauto\n" }
+    r
   end
 
   # The availability contract is tested on code generation, where a live

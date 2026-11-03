@@ -17,7 +17,7 @@ module Master
       end
 
       def call
-        document = Master.load_yaml(@laws_file)
+        document = document_to_judge
         Master::FlatLawCatalogue.validate!(document)
         nodes = Master::FlatLawCatalogue.entries(document).select { |entry| entry["node"] }
 
@@ -46,13 +46,22 @@ module Master
       def report
         gaps = call
         if gaps.empty?
-          entries = Master::FlatLawCatalogue.entries(Master.load_yaml(@laws_file)).select { |entry| entry["node"] }
+          entries = Master::FlatLawCatalogue.entries(document_to_judge).select { |entry| entry["node"] }
           ids = entries.map { |entry| entry.fetch("id") }
           "law_parity: declarations complete (#{ids.size} ordered invariant laws; execution evidence measured separately)"
         else
           lines = gaps.map { |gap| "  #{gap.id}: #{gap.reason}" }
           "law_parity: #{gaps.size} declaration gap(s)\n#{lines.join("\n")}"
         end
+      end
+
+      # A fixture path is read as content through the shared parser; the
+      # default goes through the whole-document accessor. The two live apart
+      # so the fixture read never sits beside the default path literal.
+      def document_to_judge
+        return Master.parse_yaml_content(File.read(@laws_file), source: @laws_file) if @laws_file
+
+        Master.laws_document(root: @root)
       end
     end
   end

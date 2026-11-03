@@ -20,8 +20,7 @@ module Master
 
     class << self
       def load(root: Master::ROOT)
-        path = File.join(Master.master_root(root:), "data", "laws.yml")
-        document = Master.load_yaml(path)
+        document = Master.laws_document(root:)
         validate!(document)
         document
       end
