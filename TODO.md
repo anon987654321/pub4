@@ -274,11 +274,6 @@ and compare pinned revisions only.
 
 ## Open from the 2026-10-31 session
 
-- [ ] Browser form submission remains blocked on the
-  `session_browser_post_policy` operator seam. The approved direction is
-  same-host POST only, with session cookies, per-site/per-task approval and
-  a real login-form regression. Do not widen the existing GET/HEAD browser
-  contract before the seam is explicitly closed.
 - [ ] Verify the import-time Whyp oEmbed implementation on the pinned
   Brgen checkout: run the playlist TrackImport tests and
   `playlist/whyp_embed_resolver_test.rb`. The resolver now requests
@@ -588,8 +583,6 @@ d04a7bb8ff to d682846752.
   invariant that the current checks miss.
 
 ## Production security evidence
-
-- [ ] Close the live CSP operator seam in `MASTER/data/operator_seams.yml` (`csp_enforced_on_vm23`): the operator must enable `PUB4_CSP_ENFORCE=1` for the intended app environments, inspect real HTTPS response headers on `brgen.no`, `ai.brgen.no` and `amberapp.art`, and verify the MASTER face still embeds from the approved Brgen/Amber origins. Record the host, timestamp, headers and embed result. The source contract and report-only responses are not proof of enforcement; do not install a global CSP in relayd.
 
 ## Cross-tree
 
