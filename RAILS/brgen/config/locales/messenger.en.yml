@@ -2,3 +2,19 @@ en:
   messages:
     preview_photo: "Photo"
     preview_voice: "Voice message"
+    requests_link: "Message requests (%{count})"
+    requests_title: "Message requests"
+    requests_empty_title: "No message requests"
+    requests_empty_body: >-
+      Messages from people you have not talked to and do not follow wait here until you accept them.
+    request_title: "%{name} wants to send you a message"
+    request_body: >-
+      You have not talked before. They will not see that you have read this until you accept,
+      and you can decline without them being told.
+    request_accept: "Accept"
+    request_decline: "Decline"
+    confirm_request_decline: >-
+      Decline this request? The conversation is removed from your messages and the sender is not told.
+  flash:
+    message_request_accepted: "Request accepted. The conversation is in your inbox."
+    message_request_declined: "Request declined."

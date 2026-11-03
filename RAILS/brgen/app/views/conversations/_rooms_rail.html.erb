@@ -41,12 +41,16 @@
   <% end %>
 
   <h2 class="messenger-inbox-heading"><%= t("messages.title") %></h2>
-  <%# The archive is a second list behind one link, shown only when it holds
-      something. %>
-  <% if @archive %>
+  <%# The archive and message requests are lists behind a link of their own,
+      shown only when they hold something. %>
+  <% if @archive || @requests %>
     <%= link_to t("messages.inbox_link"), conversations_path, class: "messenger-inbox-search", data: { turbo_frame: "_top" } %>
   <% elsif (@archived_count || 0).positive? %>
     <%= link_to t("messages.archive_link", count: @archived_count), conversations_path(arkiv: 1),
+                class: "messenger-inbox-search", data: { turbo_frame: "_top" } %>
+  <% end %>
+  <% if !@requests && (@request_count || 0).positive? %>
+    <%= link_to t("messages.requests_link", count: @request_count), conversations_path(requests: 1),
                 class: "messenger-inbox-search", data: { turbo_frame: "_top" } %>
   <% end %>
   <ul class="messenger-inbox-list" role="list" id="rail_conversations">

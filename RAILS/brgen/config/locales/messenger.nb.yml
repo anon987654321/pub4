@@ -2,3 +2,19 @@ nb:
   messages:
     preview_photo: "Bilde"
     preview_voice: "Talemelding"
+    requests_link: "Meldingsforespørsler (%{count})"
+    requests_title: "Meldingsforespørsler"
+    requests_empty_title: "Ingen meldingsforespørsler"
+    requests_empty_body: >-
+      Meldinger fra folk du ikke har snakket med og ikke følger, venter her til du godtar dem.
+    request_title: "%{name} vil sende deg en melding"
+    request_body: >-
+      Dere har ikke snakket sammen før. Avsenderen ser ikke at du har lest dette før du godtar,
+      og du kan avslå uten at hen får beskjed.
+    request_accept: "Godta"
+    request_decline: "Avslå"
+    confirm_request_decline: >-
+      Avslå forespørselen? Samtalen fjernes fra meldingene dine, og avsenderen får ikke beskjed.
+  flash:
+    message_request_accepted: "Forespørselen er godtatt. Samtalen ligger i innboksen din."
+    message_request_declined: "Forespørselen er avslått."

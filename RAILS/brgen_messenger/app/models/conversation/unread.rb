@@ -29,11 +29,13 @@ class Conversation
                .visible.unexpired
       end
 
-      # DMs only — public channels are ambient and must not light the badge, and a
-      # muted thread was silenced by its owner, so it does not either.
+      # DMs only — public channels are ambient and must not light the badge. Nor
+      # does a thread its owner muted, or a message request, which waits in
+      # Requests until it is accepted.
       def unread_total_for(user)
         unread_scope_for(user).where(conversations: { slug: nil })
-                              .where(conversation_participants: { muted_at: nil }).count
+                              .where(conversation_participants: { muted_at: nil })
+                              .where.not(conversation_participants: { accepted_at: nil }).count
       end
 
       # The newest message of each conversation, in two queries. A list row shows

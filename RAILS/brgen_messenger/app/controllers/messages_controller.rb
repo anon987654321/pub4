@@ -57,6 +57,7 @@ class MessagesController < ApplicationController
       return render_created
     end
 
+    accept_by_answering
     @message = @conversation.messages.build(message_params)
     @message.sender = Current.user
 
@@ -64,17 +65,7 @@ class MessagesController < ApplicationController
       notify_recipients(@message)
       render_created
     else
-      respond_to do |format|
-        # Keep the dock usable after a validation miss (empty send, etc.).
-        format.turbo_stream do
-          if from_widget?
-            render :create_widget, status: :unprocessable_entity
-          else
-            head :unprocessable_entity
-          end
-        end
-        format.html { render :new, status: :unprocessable_entity }
-      end
+      render_rejected
     end
   rescue ActiveRecord::RecordNotUnique
     # Two copies of one attempt in flight at once: the index kept one, and this
@@ -125,6 +116,12 @@ class MessagesController < ApplicationController
 
   def from_widget? = params[:origin] == "widget"
 
+  # Answering a message request accepts it, as it does anywhere people chat.
+  def accept_by_answering
+    requests = @conversation.conversation_participants.requests
+    requests.find_by(user_id: Current.user.id)&.accept!
+  end
+
   # A socket that was down missed broadcasts Action Cable does not replay. One
   # history page per request; X-Catch-Up-More tells the client to ask again from
   # the last line it got, so a long absence arrives in pages rather than at once.
@@ -167,6 +164,20 @@ class MessagesController < ApplicationController
                 .map { |other| [ other.display_name_for(Current.user), other.id ] }
   end
 
+  def render_rejected
+    respond_to do |format|
+      # Keep the dock usable after a validation miss (empty send, etc.).
+      format.turbo_stream do
+        if from_widget?
+          render :create_widget, status: :unprocessable_entity
+        else
+          head :unprocessable_entity
+        end
+      end
+      format.html { render :new, status: :unprocessable_entity }
+    end
+  end
+
   def render_created
     # The sender's own copy, reloaded with what the line reads so the partial
     # renders it here as it does in the broadcast job.
@@ -197,10 +208,11 @@ class MessagesController < ApplicationController
 
   # One query for the memberships and one for who has blocked the sender, rather
   # than a participant load and a block lookup per recipient. A muted thread and
-  # a person who blocked the sender get no push; guests have no durable endpoint.
+  # a person who blocked the sender get no push; guests have no durable endpoint;
+  # a message request waits, silent, until it is accepted.
   def notify_recipients(message)
-    memberships = @conversation.conversation_participants
-                               .where.not(user_id: Current.user.id).where(muted_at: nil).includes(:user).to_a
+    participants = @conversation.conversation_participants
+    memberships = participants.pushable_except(Current.user).includes(:user).to_a
     blockers = Block.where(blocker_id: memberships.map(&:user_id), blocked_id: Current.user.id).pluck(:blocker_id).to_set
     memberships.each do |membership|
       recipient = membership.user

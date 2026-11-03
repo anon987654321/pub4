@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.2].define(version: 2026_11_02_180000) do
+ActiveRecord::Schema[8.2].define(version: 2026_11_03_120000) do
   create_table "account_merges", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "guest_user_id", null: false
@@ -347,10 +347,12 @@ ActiveRecord::Schema[8.2].define(version: 2026_11_02_180000) do
     t.integer "user_id", null: false
     t.datetime "muted_at"
     t.datetime "archived_at"
+    t.datetime "accepted_at"
     t.index ["conversation_id", "user_id"], name: "index_conversation_participants_on_pair", unique: true
     t.index ["conversation_id"], name: "index_conversation_participants_on_conversation_id"
-    t.index ["user_id", "pinned_at"], name: "index_conversation_participants_on_user_id_and_pinned_at"
+    t.index ["user_id", "accepted_at"], name: "index_conversation_participants_on_user_id_and_accepted_at"
     t.index ["user_id", "archived_at"], name: "index_conversation_participants_on_user_id_and_archived_at"
+    t.index ["user_id", "pinned_at"], name: "index_conversation_participants_on_user_id_and_pinned_at"
     t.index ["user_id"], name: "index_conversation_participants_on_user_id"
   end
 
@@ -831,8 +833,8 @@ ActiveRecord::Schema[8.2].define(version: 2026_11_02_180000) do
     t.float "ranking_score", default: 0.0, null: false
     t.float "seller_score", default: 0.8, null: false
     t.index ["category_id"], name: "index_marketplace_listings_on_category_id"
-    t.index ["city_id", "kind", "category_id"], name: "index_marketplace_listings_on_city_id_and_kind_and_category_id"
     t.index ["city_id", "buy_box_key"], name: "index_marketplace_listings_on_city_and_buy_box_key", where: "buy_box_key IS NOT NULL"
+    t.index ["city_id", "kind", "category_id"], name: "index_marketplace_listings_on_city_id_and_kind_and_category_id"
     t.index ["city_id", "ranking_score"], name: "index_marketplace_listings_on_city_and_ranking"
     t.index ["city_id", "slug"], name: "index_marketplace_listings_on_city_and_slug", unique: true
     t.index ["city_id"], name: "index_marketplace_listings_on_city_id"

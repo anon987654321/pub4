@@ -32,6 +32,24 @@ class ConversationParticipant < ApplicationRecord
   def muted? = muted_at.present?
   def archived? = archived_at.present?
 
+  # A message request is a membership not yet accepted: the thread waits in
+  # Requests, lights no badge and pushes nothing until its owner accepts it,
+  # and the sender is not told it was seen. Every other way into a thread is
+  # accepted on arrival; only Conversation.find_or_create_direct asks for a
+  # request, through `request`.
+  attribute :request, :boolean, default: false
+  before_create { self.accepted_at ||= Time.current unless request }
+  scope :accepted, -> { where.not(accepted_at: nil) }
+  scope :requests, -> { where(accepted_at: nil) }
+  # Who a new message in this thread pushes to: everyone but its sender who has
+  # neither muted the thread nor left it waiting as a request.
+  scope :pushable_except, ->(sender) { where(muted_at: nil).accepted.where("user_id <> ?", sender.id) }
+
+  def request? = accepted_at.nil?
+  # In the inbox list and the rail: neither put away nor waiting as a request.
+  def listed? = !archived? && !request?
+  def accept! = update!(accepted_at: Time.current)
+
   # Reading a thread, muting it or pinning it changes this person's row and
   # badge and nobody else's, so only their inbox is redrawn (InboxBroadcastJob).
   after_update_commit :refresh_inbox, if: :inbox_row_changed?
@@ -39,7 +57,8 @@ class ConversationParticipant < ApplicationRecord
   def refresh_inbox = InboxBroadcastJob.perform_later(conversation_id, [ user_id ])
 
   def inbox_row_changed?
-    saved_change_to_last_read_at? || saved_change_to_muted_at? || saved_change_to_pinned_at?
+    saved_change_to_last_read_at? || saved_change_to_muted_at? || saved_change_to_pinned_at? ||
+      saved_change_to_accepted_at?
   end
 
   # Ops, then voices, then members; stable by id within a tier.

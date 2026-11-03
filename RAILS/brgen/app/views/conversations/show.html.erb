@@ -216,6 +216,19 @@
 
       <% if @blocked %>
         <p class="messenger-blocked" role="status"><%= @blocked_by_me ? t("messages.blocked_by_me") : t("messages.blocked_either") %></p>
+      <% elsif @participant&.request? %>
+        <%# A message request: read it, then accept or decline. Answering is
+            accepting, so the composer waits behind the choice. %>
+        <section aria-labelledby="message_request_title">
+          <%= tag.h2 t("messages.request_title", name: @conversation.display_name_for(Current.user)),
+                     id: "message_request_title" %>
+          <%= tag.p t("messages.request_body") %>
+          <%= button_to t("messages.request_accept"), conversation_request_path(@conversation),
+                class: "btn btn-primary btn-sm", form: { data: { turbo_frame: "_top" } } %>
+          <%= button_to t("messages.request_decline"), conversation_request_path(@conversation), method: :delete,
+                class: "btn btn-ghost btn-sm",
+                form: { data: { turbo_frame: "_top", turbo_confirm: t("messages.confirm_request_decline") } } %>
+        </section>
       <% else %>
         <%= render "conversations/composer",
                       conversation: @conversation,

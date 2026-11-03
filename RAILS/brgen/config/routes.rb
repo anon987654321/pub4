@@ -192,6 +192,7 @@ get "i/:token" => "invites#show", as: :invite
     resource :pin, only: %i[create destroy], controller: "conversation_pins"
     resource :mute, only: %i[create destroy], controller: "conversation_mutes"
     resource :archive, only: %i[create destroy], controller: "conversation_archives"
+    resource :request, only: %i[create destroy], controller: "conversation_requests"
   end
 
   # A group DM is a Conversation with a name and no slug; a #channel is one with
@@ -250,6 +251,7 @@ get "i/:token" => "invites#show", as: :invite
       resource :pin, only: %i[create destroy], controller: "conversation_pins"
       resource :mute, only: %i[create destroy], controller: "conversation_mutes"
       resource :archive, only: %i[create destroy], controller: "conversation_archives"
+      resource :request, only: %i[create destroy], controller: "conversation_requests"
     end
   end
 

@@ -23,13 +23,13 @@
   <%= turbo_frame_tag "messenger-pane", class: "messenger-pane" do %>
     <header class="messenger-conversation-header">
       <div class="messenger-header-identity">
-        <%= tag.h1 @archive ? t("messages.archive_title") : t("messages.title") %>
+        <%= tag.h1 t(@list_title_key) %>
       </div>
     </header>
     <div class="messenger-inbox-pane-content">
       <% if @conversations.any? %>
         <ul class="messenger-inbox-list" role="list" aria-label="<%= t("messages.title") %>"
-            id="<%= @archive ? "archived_conversations" : "inbox_conversations" %>">
+            id="<%= @list_id %>">
           <% @conversations.each do |conversation| %>
             <%= render "conversations/conversation_row",
                        conversation: conversation,
@@ -40,6 +40,11 @@
           <% end %>
         </ul>
         <%= render "shared/pager", pagy: @pagy %>
+      <% elsif @requests %>
+        <%= render "shared/empty_state",
+              title: t("messages.requests_empty_title"),
+              body: t("messages.requests_empty_body"),
+              action: { label: t("messages.inbox_link"), path: conversations_path } %>
       <% elsif @archive %>
         <%= render "shared/empty_state",
               title: t("messages.archive_empty_title"),

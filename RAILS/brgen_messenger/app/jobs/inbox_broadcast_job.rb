@@ -57,7 +57,7 @@ class InboxBroadcastJob < ApplicationJob
 
   def refresh(membership)
     reader = membership.user
-    draw_rows(reader, pinned: membership.pinned?, muted: membership.muted?) unless membership.archived?
+    draw_rows(reader, pinned: membership.pinned?, muted: membership.muted?) if membership.listed?
 
     Turbo::StreamsChannel.broadcast_replace_to(
       reader, :inbox, target: "messenger_unread_badge", partial: "conversations/unread_badge",

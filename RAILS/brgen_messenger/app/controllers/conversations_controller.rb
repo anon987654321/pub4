@@ -4,6 +4,12 @@ class ConversationsController < ApplicationController
   # #new is the people picker: apply_live_search and finish_live_search come from here.
   include Shared::LiveSearchable
   before_action :require_user_session
+  # A guest can start a conversation, and everything a guest starts is a message
+  # request (Conversation.known_to?). Requests are the spam channel, so a guest
+  # opens a handful an hour; an account is limited by its sends instead.
+  rate_limit to: 5, within: 1.hour, only: :create, name: "guest_requests",
+             by: -> { "u#{Current.user.id}" }, if: -> { Current.user&.guest? },
+             with: -> { redirect_to conversations_path, alert: t("flash.messages_rate_limited") }
   # The rail is part of the window, not part of the inbox, so it loads for the
   # room you are reading as well as for the list. Arriving straight at a
   # conversation URL used to give you that conversation and nothing else — no
@@ -20,12 +26,11 @@ class ConversationsController < ApplicationController
     # LEFT-JOIN-duplicates each conversation once per message.
     # ?arkiv=1 is the archive: the same list, the other half of the viewer's own
     # archive flag.
+    # ?requests=1 is the third list: message requests waiting to be accepted.
     @archive = params[:arkiv].present?
-    threads = Conversation.for_user(Current.user).where(slug: nil)
+    @requests = !@archive && params[:requests].present?
     @pagy, @conversations = pagy(
-      (@archive ? threads.in_archive : threads.in_inbox)
-                  .includes(:participants)
-                  .order(Conversation::INBOX_ORDER)
+      listed_threads.includes(:participants).order(Conversation::INBOX_ORDER)
     )
 
     @last_messages = Conversation.last_messages_for(@conversations.map(&:id))
@@ -79,30 +84,13 @@ class ConversationsController < ApplicationController
     # participants for the group roster; strict loading makes that a preload
     # rather than a nice-to-have.
     @conversation = Conversation.for_user(Current.user).includes(:participants).find(params[:id])
-    # Before the read is recorded: what was opened on an earlier visit goes now,
-    # and what is being opened for the first time stays for this one.
-    @conversation.expire_read_messages!
-    @conversation.mark_read_for!(Current.user)
+    open_for_reader
     load_rail
-    @participant = @conversation.conversation_participants.find_by(user: Current.user)
     @blocked = @conversation.blocked_between?(Current.user)
     @blocked_by_me = @blocked && @conversation.other_participants(Current.user).any? { |other| Current.user.blocking?(other) }
-    # parent: :sender for the reply line, message_receipts for the read chip —
-    # both are read once per message, so both are preloaded once per page.
-    # The thread window and a history page are the same size, and one row more
-    # than the window answers "is there more behind this?" — so show learns the
-    # answer without paying a COUNT, and the log gets its first history cursor.
-    @messages = @conversation.messages.visible.unexpired
-                             .includes(:sender, :message_receipts, :link_preview, :reactions, parent: :sender)
-                             .recent.limit(MessagesController::HISTORY_PAGE + 1)
-    @older_available = @messages.size > MessagesController::HISTORY_PAGE
-    @messages = @messages.first(MessagesController::HISTORY_PAGE).reverse
+    load_window
     @message = Message.new
-    # Where a forward can go: the reader's other threads. Built once for the
-    # page rather than per message.
-    @forward_targets = Conversation.for_user(Current.user).where(slug: nil).where.not(id: @conversation.id)
-                                   .includes(:participants)
-                                   .map { |other| [ other.display_name_for(Current.user), other.id ] }
+    load_forward_targets
     # A reply or an edit is chosen by a link, so the composer reads it off the
     # URL: no client state, and the choice survives a reload.
     @reply_to = @conversation.messages.visible.unexpired.find_by(id: params[:reply_to])
@@ -149,13 +137,59 @@ class ConversationsController < ApplicationController
       redirect_to conversations_path, alert: t("flash.user_not_found")
       return
     end
-    @conversation = Conversation.find_or_create_direct(Current.user, other)
+    @conversation = Conversation.find_or_create_direct(Current.user, other, as_request: true)
     redirect_to @conversation
   rescue ActiveRecord::RecordNotFound
     redirect_to conversations_path, alert: t("flash.user_not_found")
   end
 
   private
+
+  def open_for_reader
+    # Before the read is recorded: what was opened on an earlier visit goes now,
+    # and what is being opened for the first time stays for this one.
+    @conversation.expire_read_messages!
+    @participant = @conversation.conversation_participants.find_by(user: Current.user)
+    # Opening a request is not reading it: the sender is told nothing until it
+    # is accepted, which is the point of a request.
+    @conversation.mark_read_for!(Current.user) unless @participant&.request?
+  end
+
+  def load_window
+    # parent: :sender for the reply line, message_receipts for the read chip —
+    # both are read once per message, so both are preloaded once per page.
+    # The thread window and a history page are the same size, and one row more
+    # than the window answers "is there more behind this?" — so show learns the
+    # answer without paying a COUNT, and the log gets its first history cursor.
+    thread = @conversation.messages
+    @messages = thread.visible.unexpired
+                      .includes(:sender, :message_receipts, :link_preview, :reactions, parent: :sender)
+                      .recent.limit(MessagesController::HISTORY_PAGE + 1)
+    @older_available = @messages.size > MessagesController::HISTORY_PAGE
+    @messages = @messages.first(MessagesController::HISTORY_PAGE).reverse
+  end
+
+  # Where a forward can go: the reader's other threads. Built once for the
+  # page rather than per message.
+  def load_forward_targets
+    @forward_targets = Conversation.for_user(Current.user).where(slug: nil).where.not(id: @conversation.id)
+                                   .includes(:participants)
+                                   .map { |other| [ other.display_name_for(Current.user), other.id ] }
+  end
+
+  # Which of the three lists this page is: its threads, its heading and the id
+  # the inbox stream prepends into (only the inbox's own list takes new rows).
+  LISTS = {
+    inbox: %w[in_inbox messages.title inbox_conversations],
+    archive: %w[in_archive messages.archive_title archived_conversations],
+    requests: %w[in_requests messages.requests_title requested_conversations]
+  }.freeze
+
+  def listed_threads
+    list = (:archive if @archive) || (:requests if @requests) || :inbox
+    scope, @list_title_key, @list_id = LISTS.fetch(list)
+    Conversation.for_user(Current.user).where(slug: nil).public_send(scope)
+  end
 
   # The rooms rail: the reader's DMs, newest first, plus the public channels.
   # Deliberately not paginated — the rail is chrome, and an inbox long enough to
@@ -171,11 +205,17 @@ class ConversationsController < ApplicationController
                                       .includes(:participants)
                                       .order(Conversation::INBOX_ORDER)
                                       .limit(30)
-    # How many threads are put away, so the rail links to them only when there is
-    # something behind the link.
-    @archived_count = Conversation.for_user(Current.user).where(slug: nil).in_archive.count
+    count_side_lists
     @rail_last_messages = Conversation.last_messages_for(@rail_conversations.map(&:id))
     @rail_unread = Conversation.unread_counts_for(Current.user)
+  end
+
+  # How many threads are put away and how many wait as requests, so the rail
+  # links to each only when there is something behind the link.
+  def count_side_lists
+    threads = Conversation.for_user(Current.user).where(slug: nil)
+    @archived_count = threads.in_archive.count
+    @request_count = threads.in_requests.count
   end
 
   # DMs only, matching the list this search sits on. Public rooms are ambient

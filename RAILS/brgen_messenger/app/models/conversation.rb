@@ -38,7 +38,11 @@ class Conversation < ApplicationRecord
   # The inbox is two lists: what you keep in view and what you put away. The
   # archive state is the viewer's own, read off the participant row that
   # for_user already joins.
-  scope :in_inbox, -> { where(conversation_participants: { archived_at: nil }) }
+  # A message request is in neither list until it is accepted; it has its own.
+  scope :in_inbox, lambda {
+    where(conversation_participants: { archived_at: nil }).where.not(conversation_participants: { accepted_at: nil })
+  }
+  scope :in_requests, -> { where(conversation_participants: { accepted_at: nil }) }
   scope :in_archive, -> { where.not(conversation_participants: { archived_at: nil }) }
   scope :channels, -> { where(conversation_type: "group").where.not(slug: nil).order(:slug) }
 
@@ -94,15 +98,33 @@ class Conversation < ApplicationRecord
     conversation
   end
 
-  def self.find_or_create_direct(a, b)
+  # as_request: the thread opens as a message request for b unless b already
+  # knows a (see .known_to?). Only the people picker and a profile's message
+  # button ask for it; a dating match, an order, a story reply, an invite link
+  # and a nearby chat each carry their own reason to talk.
+  def self.find_or_create_direct(a, b, as_request: false)
     tenant = ActsAsTenant.current_tenant
     if tenant.nil? && Current.domain.present?
       raise ActiveRecord::RecordNotFound, "city context is unavailable for private messaging"
     end
 
     direct_between(a, b) || create!(conversation_type: "direct", city: tenant).tap do |c|
-      c.participants << a << b
+      c.conversation_participants.create!(user: a)
+      c.conversation_participants.create!(user: b, request: as_request && !known_to?(b, a))
     end
+  end
+
+  # Whether recipient already knows sender: recipient follows them, or has
+  # written in a private thread sender is in. A guest is known to nobody, so
+  # everything a guest starts is a request. A public channel is not knowing
+  # someone; everyone in the city can talk there.
+  def self.known_to?(recipient, sender)
+    return false if sender.guest?
+    return true if Follow.exists?(follower_id: recipient.id, followed_id: sender.id)
+
+    shared = ConversationParticipant.where(user_id: sender.id).select(:conversation_id)
+    Message.joins(:conversation).where(conversations: { slug: nil })
+           .exists?(sender_id: recipient.id, conversation_id: shared)
   end
 
   # A group DM: a named conversation with more than two people in it, as opposed
