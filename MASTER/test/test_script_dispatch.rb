@@ -49,17 +49,17 @@ class TestScriptDispatch < Minitest::Test
     end
   end
 
-# postpro was deleted by accident on 2026-11-01 (b5acc93bcf) and restored
-# on 2026-11-03; it dispatches through the default <tool>/<tool>.rb probe.
-def test_finds_postpro_under_studio
-  workspace = File.expand_path("../..", __dir__)
-  path = Master::Io::ScriptDispatch.script_path(workspace, "postpro")
+  # b5acc93bcf deleted postpro by accident on 2026-11-01; the 2026-11-03
+  # restore dispatches it through the default <tool>/<tool>.rb probe.
+  def test_finds_postpro_under_studio
+    workspace = File.expand_path("../..", __dir__)
+    path = Master::Io::ScriptDispatch.script_path(workspace, "postpro")
 
-  assert_equal File.join(MasterPaths.repo, "STUDIO", "postpro", "postpro.rb"), path
-  assert File.file?(path)
-end
+    assert_equal File.join(MasterPaths.repo, "STUDIO", "postpro", "postpro.rb"), path
+    assert File.file?(path)
+  end
 
-def test_finds_dilla_engine_under_studio
+  def test_finds_dilla_engine_under_studio
     workspace = File.expand_path("../..", __dir__)
     path = Master::Io::ScriptDispatch.script_path(workspace, "dilla")
 
