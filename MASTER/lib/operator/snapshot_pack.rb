@@ -255,10 +255,32 @@ module Operator
       return nothing_matched(tree, io) if paths.empty?
 
       size = part_bytes || ENV.fetch("MASTER_SNAPSHOT_PART_BYTES", SnapshotParts::DEFAULT_PART_BYTES).to_i
-      variants.flat_map do |variant|
-        written = SnapshotParts.write(host, tree, paths:, variant:, part_bytes: size, io:)
-        SnapshotVerify.call(host, tree, variant:, only:, io:)
-        written
+      variants.flat_map { |variant| write_verified(host, tree, variant:, paths:, size:, only:, io:) }
+    end
+
+    # The pack is read from the working tree and then checked against it. In a
+    # checkout other writers share, a file saved between the two reads fails the
+    # check although nothing is wrong with the pack, and the pre-push hook then
+    # refuses an unrelated push. Writing again settles a file caught mid-save; a
+    # real defect fails every attempt and still raises.
+    VERIFY_ATTEMPTS = 3
+    # Seconds before the second attempt, doubled before each one after.
+    VERIFY_BACKOFF = 0.25
+
+    def write_verified(host, tree, variant:, **options)
+      VERIFY_ATTEMPTS.times do |index|
+        written = SnapshotParts.write(host, tree, paths: options[:paths], variant:,
+                                                  part_bytes: options[:size], io: options[:io])
+        begin
+          SnapshotVerify.call(host, tree, variant:, only: options[:only], io: options[:io])
+          return written
+        rescue SnapshotVerify::Failed
+          raise if index + 1 == VERIFY_ATTEMPTS
+
+          note = "#{tree} changed while packing, writing again (#{index + 1}/#{VERIFY_ATTEMPTS})"
+          Master::Trace::Dmesg.status("snapshot0", note, io: options[:io])
+          sleep(VERIFY_BACKOFF * (2**index))
+        end
       end
     end
 

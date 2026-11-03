@@ -521,4 +521,39 @@ end
       Thread.current[:snapshot_repo] = nil
     end
   end
+# Another writer saving a file between the pack and its check is not a broken
+# pack: the next write settles it.
+def test_a_pack_caught_mid_save_is_written_again
+  without_backoff
+  outcomes = [ :changed, :ok ]
+  writes = 0
+  verify = ->(*, **) { raise Operator::SnapshotVerify::Failed, "differs" if outcomes.shift == :changed }
+  Operator::SnapshotParts.stub(:write, ->(*, **) { writes += 1; [ "part" ] }) do
+    Operator::SnapshotVerify.stub(:call, verify) { assert_equal [ "part" ], write_demo_pack }
+  end
+  assert_equal 2, writes
+end
+
+# A pack that never verifies is a real defect and still raises.
+def test_a_pack_that_never_verifies_still_raises
+  without_backoff
+  failing = ->(*, **) { raise Operator::SnapshotVerify::Failed, "differs" }
+  Operator::SnapshotParts.stub(:write, ->(*, **) { [ "part" ] }) do
+    Operator::SnapshotVerify.stub(:call, failing) do
+      assert_raises(Operator::SnapshotVerify::Failed) { write_demo_pack }
+    end
+  end
+end
+
+def write_demo_pack
+  Pack.write_verified(Object, "DEMO", variant: :exact, paths: [], size: 1, only: nil, io: StringIO.new)
+end
+
+def without_backoff
+  return unless Pack::VERIFY_BACKOFF.positive?
+
+  Pack.send(:remove_const, :VERIFY_BACKOFF)
+  Pack.const_set(:VERIFY_BACKOFF, 0)
+end
+
 end
