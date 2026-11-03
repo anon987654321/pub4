@@ -269,7 +269,10 @@ module Operator
 
     def write_verified(host, tree, variant:, **options)
       VERIFY_ATTEMPTS.times do |index|
-        written = SnapshotParts.write(host, tree, paths: options[:paths], variant:,
+        # Listed again each time: a file added after the first listing is in the
+        # tree the check reads, so a stale list fails every attempt the same way.
+        paths = index.zero? ? options[:paths] : paths_for(host, tree, only: options[:only])
+        written = SnapshotParts.write(host, tree, paths:, variant:,
                                                   part_bytes: options[:size], io: options[:io])
         begin
           SnapshotVerify.call(host, tree, variant:, only: options[:only], io: options[:io])
