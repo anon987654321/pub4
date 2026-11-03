@@ -86,7 +86,7 @@
 
 /* Post link embeds: shared/_link_embed.html.erb, played by
    media_exclusive_controller.js. The thumbnail and the player sit on the
-   elevated surface with no shadow, and the play glyph on its own disc is the
+   elevated surface with no shadow, and the play arrow is the
    only mark over the image. The stage keeps one 16:9 box before and after the
    tap, so swapping the facade for the player moves nothing around it. Written
    lean, because every byte lands in both apps' weight ceilings in
@@ -119,17 +119,31 @@
   object-fit: cover;
 }
 
+/* The play arrow is the operator's own mark from the first brgen: a hairline
+   ring around a triangle, white over the thumbnail at a fifth of its width,
+   half-there until the pointer or focus arrives. Painted as a mask so the
+   markup stays a bare labelled button and the colour stays a token. */
 .link_embed_play {
+  display: grid;
+  place-items: center;
   background: none;
-  color: var(--text);
+  color: var(--on-media);
   cursor: pointer;
 }
 
-.link_embed_icon {
-  box-sizing: content-box;
-  padding: var(--space-3);
-  border-radius: 50%;
-  background: var(--bg);
+.link_embed_play::after {
+  content: "";
+  inline-size: 22%;
+  aspect-ratio: 1;
+  background: currentColor;
+  mask: url("play_arrow.svg") center / contain no-repeat;
+  opacity: 0.6;
+  transition: opacity var(--transition-fast) var(--ease-out);
+}
+
+.link_embed_play:hover::after,
+.link_embed_play:focus-visible::after {
+  opacity: 0.9;
 }
 
 .link_embed a {

@@ -21,9 +21,7 @@
               data-media-exclusive-src-param="<%= embed.player_url %>"
               data-media-exclusive-allow-param="<%= embed.allow %>"
               data-media-exclusive-title-param="<%= embed.title %>"
-              aria-label="<%= t("link_embed.play", title: embed.title, provider: embed.label) %>">
-        <%= icon :play, size: 32, css_class: "link_embed_icon" %>
-      </button>
+              aria-label="<%= t("link_embed.play", title: embed.title, provider: embed.label) %>"></button>
     </div>
     <figcaption>
       <%= tag.strong embed.title %><br>

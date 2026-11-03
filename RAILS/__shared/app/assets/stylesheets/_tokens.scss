@@ -93,6 +93,10 @@ $luxury: true !default;
        the scale own gaps. These are their tokens, in rem like the rest of the
        ladder: spacing that stops growing when a reader raises their font size is a
        worse answer than spacing that is 0.4px off a grid. */
+    /* Ink over photos and video stills, the same in both themes: the image
+       underneath, not the page, is what it sits on. */
+    --on-media: #fff;
+
     --space-0-5: 0.125rem;  /* 2px  */
     --space-1: 0.25rem;
     --space-2: 0.5rem;
