@@ -97,7 +97,14 @@ module Master
             Master::Device.android? && Master::Device::Agent.paired?(root:)
           subject = Master::Device::Agent.owner_subject(root:).to_s
         end
-        return "privacy: no paired subject; pair the local owner before enabling personal memory" if subject.empty?
+        if subject.empty?
+          if voice_args.empty? || voice_args == ["status"]
+            microphone = permissions.allowed?(scope: "microphone", purpose: Master::Ground::PersonalPermissions::MICROPHONE_PURPOSE)
+            speech_recognition = permissions.allowed?(scope: "speech_recognition", purpose: Master::Ground::PersonalPermissions::SPEECH_RECOGNITION_PURPOSE)
+            return "privacy: microphone #{microphone ? "enabled" : "disabled"}; speech recognition #{speech_recognition ? "enabled" : "disabled"}; personal memory requires a paired local subject"
+          end
+          return "privacy: no paired subject; pair the local owner before enabling personal memory"
+        end
 
         arg = arg_for(ctx).to_s.strip.downcase
         case arg
