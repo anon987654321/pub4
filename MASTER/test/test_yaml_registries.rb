@@ -35,14 +35,16 @@ class TestYamlRegistries < Minitest::Test
   def test_root_vocabulary_covers_every_law_root
     laws = Master.load_yaml(Master.data_path("laws.yml"))
     roots = laws.fetch("ROOTS_VOCABULARY").fetch("values")
+    used = laws.filter_map do |id, row|
+      row["root"] if row.is_a?(Hash) && id != "ROOTS_VOCABULARY"
+    end
 
     assert_equal 13, roots.size
     assert_includes roots, "proximity"
-    assert_equal %w[proximity], %w[DEFRAG RELOCATE].filter_map do |id|
-      laws.fetch(id).fetch("root") unless roots.include?(laws.fetch(id).fetch("root"))
-    end
+    assert_empty used.uniq - roots
+    assert_equal "proximity", laws.fetch("DEFRAG").fetch("root")
+    assert_equal "proximity", laws.fetch("RELOCATE").fetch("root")
   end
-
   YAML_SPECS.each do |filename, spec|
     define_method(:"test_#{filename.tr('.', '_')}_parses") do
       path = File.join(DATA, filename)
