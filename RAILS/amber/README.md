@@ -20,58 +20,16 @@ switcher in the footer sets it. Chrome, empty states and flash messages all go t
 the sentences the shared engine owns, such as not_authorized and rate_limited, come from
 shared.flash. Tests assert through keys and never through English literals.
 
-## The original fashion-network promise, restored honestly
+## Product boundary
 
-The first Amber brief was broader than a wardrobe tracker: a fashion companion where people could
-photograph what they own, understand their taste, compose new looks, care for garments, discover
-ideas and share style with others. That ambition still guides the product. The old list is not,
-however, a declaration that every proposed surface shipped.
-
-The promise resolves against the current application as follows:
-
-- **Wardrobe photography and visualisation — shipped, with a narrower image pipeline.** Members
-  upload garment photographs, see their wardrobe and use the dressing room. Processing makes
-  Active Storage variants, applies one portrait polish pass and extracts a dominant colour.
-  Automated garment cut-out, background removal, relighting, AI-model try-on and true image
-  segmentation are not present.
-- **Daily styling and mix-and-match — shipped.** The daily Style Assistant builds a weather-aware
-  look from the member's own garments. The dressing room has four taste-ranked, counter-rotating
-  zone carousels; explanations draw on stated preferences, joy, wear, recency and life phase.
-- **Fashion feed and community — partly shipped.** Amber has posts, comments, reactions, follows,
-  mutual connections and direct messages. It can display supported media-link players. This is
-  a member-created social feed, not a continuously curated runway or global-trend feed, and it is
-  not a public live-chat room.
-- **Shop smarter — shipped as a restraint-first assistant.** It surfaces wardrobe gaps, duplicate
-  candidates and affiliate links the member has chosen to save. It does not import a global
-  fashion catalogue or push purchases as the default answer.
-- **Wardrobe analytics and closet care — shipped.** Usage, cost per wear, idle garments, category
-  mix, wear distribution, care, storage, zoning and restraint advice are available. These scores
-  and tips are heuristics, not independent sustainability or lifecycle certifications.
-- **Travel packing — shipped in a basic form.** A member can generate and save a packing list from
-  wardrobe items for a selected trip duration and climate. It is not a full itinerary planner.
-- **Community feedback and challenges — partly shipped.** Members can discuss and react to posts;
-  declutter challenges help decide whether to keep or release a garment. They are not public
-  fashion competitions with rankings or prizes.
-- **Mood, occasion and style discovery — partly shipped.** Mood-board matching, occasion coverage,
-  style preferences and occasion-aware outfit suggestions exist. A dedicated emotional mood
-  coach and a calendar-linked event outfit planner remain distinct product work.
-- **Weather suggestions — shipped with a defined boundary.** The daily look can use cached
-  Bergen weather. Do not imply global weather coverage or a live weather agent.
-- **Care, repair and sustainability — partly shipped.** Care and storage guidance and a
-  heuristic sustainability score exist. Repair estimates, recycling workflows, resale and
-  lifecycle assessment are not yet a complete product.
-- **Inclusive styling — a design constraint, not a finished fit engine.** Amber must remain useful
-  without judging bodies or assuming one ideal shape. Body-aware fit advice and virtual fitting
-  are not shipped.
-- **Not yet delivered:** virtual fitting, live webcam/video streaming, a dedicated inspiration
-  library, DIY/fabric-design tools, celebrity-look matching, runway reviews, fashion-history
-  publishing, global trend intelligence and local-designer discovery.
-
-The old phrase “AI-enhanced” also needs precision. OpenRouter can power selected analyses when
-configured; otherwise explicit deterministic rules and heuristics are used. A photo fingerprint
-is an exact local checksum, not semantic visual search. A scheduled style session is a calendar
-record, not a webcam broadcast. These boundaries are part of Amber's trust contract, not caveats
-to hide.
+Amber is a private wardrobe companion, not a fashion storefront. It helps its owner
+understand and wear what she already owns, then supports deliberate decluttering and
+selective discovery. Its shipped feature inventory lives in `RAILS/apps.yml`;
+aspirational work lives in `RAILS/apps.horizon.yml`. Do not promote planned features
+to promises: visual similarity search, garment segmentation, virtual fitting and live
+video remain unshipped. OpenRouter powers selected analysis only when configured;
+otherwise Amber uses explicit rules and heuristics. A garment fingerprint is a local
+CRC32-64 checksum, not semantic image search, and a scheduled style session is not video.
 
 ## The wardrobe
 
@@ -178,127 +136,31 @@ reports the failure rather than marking erasure complete.
 
 ## Architecture
 
-Amber is a wardrobe intelligence graph. Layers 1–4 are restored verbatim from
-`DEPLOY/rails/amber/ARCHITECTURE.md`, deleted at `ee3a56e33` and never replaced;
-all 23 components it named are still present and still accurate. Layer 5 and the
-service catalog cover what grew after the deletion and had no written record.
+Amber owns wardrobe-specific records and services. The shared engine supplies common
+identity, authentication, tenancy, media processing and social integration.
 
-### Additional component catalog
+- **Identity and privacy:** `User`, `Profile`, `PrivacySetting`,
+  `IdentityVerification`, `ConsentEvent` and `CreatorProfile` govern account
+  identity, wardrobe visibility, analysis consent and creator remix consent.
+- **Wardrobe:** `Item` is the garment. `Outfit`, `OutfitItem`,
+  `PlannedOutfit`, `WearLog` and `StylePreference` describe combinations and use.
+  `WardrobeItem` joins one garment to one user and stores that owner's condition;
+  it is not a second garment record.
+- **Intelligence and media:** `TasteRanker`, `StyleAssistant`,
+  `OutfitGeneration`, `WardrobeAnalytics` and `ClosetOrganization` use
+  declared preferences, wardrobe history and bounded heuristics. The legacy
+  `GarmentEmbedding` record is not an active embedding or vector-search pipeline.
+  `FingerprintGarmentJob` performs exact local deduplication; no garment matting
+  or segmentation pipeline is shipped.
+- **Commerce and travel:** `AffiliateLink` stores owner-selected links;
+  `PackingList` records trip wardrobes. Marketplace lookups use the bounded
+  BRGEN integration, not an Amber-owned product catalogue.
+- **Social and declutter:** posts, comments, reactions, follows, connections,
+  messages and creator publishing use the shared social graph. Challenges,
+  outcomes, reviews and the hygiene job implement the KonMari decision loop.
 
-The layer headings below keep the original identity and wardrobe structure. The following components belong to those same boundaries and are named explicitly so the catalog remains searchable as the code grows.
-
-**Models**
-
-- `AffiliateLink`: an owner-managed product link used by Shop the Look.
-- `Comment`: a comment within the social content graph.
-- `Connection`: a mutual connection between user accounts.
-- `ConsentEvent`: an auditable consent-change record.
-- `CreatorProfile`: the public creator identity for publishing and remixing garments.
-- `CreatorWardrobeItem`: the creator-owned garment record used by creator publishing.
-- `DeclutterChallenge`: a time-bound prompt to consider releasing a garment.
-- `DeclutterOutcome`: the recorded result of a declutter action.
-- `DeclutterReview`: the stored review associated with a declutter decision.
-- `Follow`: a directional social-follow relationship.
-- `GarmentEmbedding`: a legacy JSON-backed vector record; this does not imply an active embedding-generation or vector-search pipeline.
-- `IdentityVerification`: account verification evidence, handled as private identity data.
-- `LiveStream`: the record for a user's live-stream activity.
-- `Reaction`: one like per person and target, so a like counts once per user.
-
-**Services**
-
-- `BrgenCommerce`: the shared commerce integration used by Amber's commerce-facing flows.
-- `CapsuleBuilder`: assembles a capsule from garments in the wardrobe.
-- `CommerceFit`: the fit-related service used by commerce recommendations.
-- `DeclutterActionRouter`: routes a declutter choice to its selected destination.
-- `DeclutterDashboard`: prepares the declutter progress and challenge view.
-- `GarmentTaxonomy`: the canonical garment-category vocabulary.
-- `LastChanceOutfit`: proposes a final outfit before an item is released.
-
-**Jobs**
-
-- `CalculateSustainabilityJob`: refreshes Amber's heuristic sustainability score; it is not a lifecycle assessment.
-- `MasterMessageReplyJob`: runs the queued work for a MASTER reply in a message thread.
-
-## 1. Identity and privacy
-
-- `User`
-- `Profile`
-- `PrivacySetting`
-- `IdentityVerification`
-- `ConsentEvent`
-- `CreatorProfile`
-
-This layer owns user identity, public creator mode, wardrobe visibility,
-AI-analysis consent, and creator remix consent.
-
-## 2. Wardrobe graph
-
-- `Item`
-- `Outfit`
-- `OutfitItem`
-- `PlannedOutfit`
-- `WearLog`
-- `StylePreference`
-
-This layer owns garments, combinations, usage history, preferences, planning,
-and style evolution.
-
-## 3. Intelligence and media
-
-- `GarmentEmbedding`
-- `Recommendation`
-- `EmbedGarmentJob`
-- `RecommendOutfitsJob`
-- `SegmentGarmentImageJob`
-- `RemoveBackgroundJob`
-
-This layer owns embeddings, semantic matching, recommendation records,
-segmentation hooks, background-removal hooks, and safe AI fallbacks.
-
-## 4. Sustainability, travel, and commerce
-
-- `SustainabilityMetric`
-- `PackingList`
-- `PackingListItem`
-- `AffiliateLink`
-- `CalculateSustainabilityJob`
-
-This layer owns cost-per-wear, resale estimates, repair estimates, packing,
-travel wardrobes, and affiliate commerce.
-
-## 5. Social graph and declutter
-
-Added after the original specification was deleted, so nothing described it
-until now. Migration `20260802180000_create_amber_social_tables.rb` created the
-social tables; the controllers and routes predated them.
-
-**Social graph** — `Post`, `Comment`, `Follow`, `Connection`, `Message`,
-`LiveStream`, `CreatorWardrobeItem`. `Follow` is one-directional; `Connection`
-is the mutual request with `pending/accepted/blocked` and no self-connection.
-`LiveStream` carries `scheduled/live/ended/cancelled` and its own start/end
-transitions. `CreatorWardrobeItem` joins a `CreatorProfile` to an `Item`, which
-is how a creator publishes a garment for remix under layer 1's consent rules.
-Controllers: `posts`, `comments`, `follows`, `connections`, `messages`,
-`live_streams`, `reactions`, `reports`, `notifications`.
-
-**Declutter loop** — `DeclutterChallenge`, `DeclutterOutcome`,
-`DeclutterReview`, `DeclutterHygieneJob`, with `DeclutterScore`,
-`DeclutterActionRouter`, `DeclutterDashboard`, and `LastChanceOutfit` in the
-service layer. A challenge binds a user, an item, an optional outfit and a due
-date through `pending/completed/skipped/expired`; the score decomposes into joy,
-utility and fit; the router turns a decision into a destination and donation
-bucket; `LastChanceOutfit` proposes a final way to wear a release candidate
-before it leaves the wardrobe.
-
-**Media and session** — `FingerprintGarmentJob`, `WardrobeMediaJob`,
-`WardrobeItem`, `Session`, `Current`.
-
-`Item` and `WardrobeItem` are not a duplicate pair. `Item` is the garment —
-attributes, price, embedding, sustainability metric, declutter review.
-`WardrobeItem` `belongs_to :item` and `belongs_to :user` with a uniqueness scope
-on the pair, and carries condition only
-(`new/excellent/good/worn/repair/retire`, `needs_attention`). It is the
-per-owner care record layered on a garment, not a rival model.
+The app's routes and source define the complete model inventory. `RAILS/apps.yml`
+remains the authority for shipped feature status; this summary explains ownership.
 
 ## Service layer
 
@@ -331,12 +193,12 @@ All under `app/services/`.
 Controllers are discoverable from `config/routes.rb`; service intent is not,
 which is why services are enumerated here and controllers are not.
 
-### Current components added after the archived architecture
+### Later host integrations
 
-- `Vote` stores user-scoped polymorphic up/down votes and applies score deltas to votable records that expose a score column.
-- `MasterMessageReplyJob` handles Amber messages addressed to MASTER and delegates reply generation to `Shared::MasterMessenger`.
-- `BrgenCommerce` queries the BRGEN marketplace catalog with bounded HTTP timeouts and short-lived caching.
-- `CommerceFit` scores marketplace-product relevance from category, brand and description signals, and flags potential duplicates.
+`Vote` stores user-scoped polymorphic scores. `MasterMessageReplyJob` handles
+Amber messages addressed to MASTER through `Shared::MasterMessenger`.
+`BrgenCommerce` and `CommerceFit` provide the bounded BRGEN catalogue integration
+listed in the service table above.
 
 ## Running it
 
