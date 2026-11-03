@@ -14,4 +14,16 @@ nb:
     city: "By"
     coordinates: "Koordinater"
     kind: "Type"
+    # A place's kind is stored as an English slug; these are what a reader sees.
+    kinds:
+      attraction: "Attraksjon"
+      bar: "Bar"
+      cafe: "Kafé"
+      market: "Marked"
+      museum: "Museum"
+      park: "Park"
+      restaurant: "Restaurant"
+      shop: "Butikk"
+      trail: "Tursti"
+      venue: "Scene"
     neighborhood: "Nabolag"

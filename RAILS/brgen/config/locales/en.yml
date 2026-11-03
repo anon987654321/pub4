@@ -485,6 +485,11 @@ en:
     offline: You are offline. The message is sent when you are back online.
   comments:
     sort_label: Sort comments
+    sort:
+      best: Best
+      new: Newest
+      top: Top
+      controversial: Controversial
   push:
     enable: Enable notifications
   partner:
@@ -1650,14 +1655,20 @@ en:
     video_published: New video
     event_created: New event
     post_created: New post
+    message_sent: Message sent
+    comment_created: New comment
+    reaction_created: New reaction
+    filters_aria: Filter activity
     verticals:
       takeaway: takeaway
       marketplace: marketplace
       social: posts
       tv: TV
       dating: dating
-      playlist: playlist
+      playlist: radio
       maps: maps
+      messages: messages
+      general: general
   a11y:
     city_link: "%{city} (%{domain})"
     skip_to_content: Skip to main content

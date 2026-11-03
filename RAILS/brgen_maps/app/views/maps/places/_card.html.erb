@@ -5,7 +5,11 @@
     <% end %>
   <% end %>
   <h2><%= link_to place.name, place_path(place) %></h2>
-  <p class="meta-facts"><span><%= place.kind %></span><% if place.city %><span><%= place.city.name %></span><% end %><% if place.neighborhood %><span><%= place.neighborhood.name %></span><% end %></p>
+  <p class="meta-facts">
+    <%= tag.span t("maps.kinds.#{place.kind}", default: place.kind.to_s.humanize) %>
+    <%= tag.span place.city.name if place.city %>
+    <%= tag.span place.neighborhood.name if place.neighborhood %>
+  </p>
   <% if place.address.present? %>
     <p><%= place.address %></p>
   <% end %>

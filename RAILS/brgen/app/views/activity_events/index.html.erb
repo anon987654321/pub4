@@ -7,22 +7,17 @@
   </hgroup>
 </div>
 
-<div class="chips chips--bar">
-  <% %w[marketplace takeaway dating tv playlist core].each do |vertical| %>
-    <% active = params[:vertical] == vertical %>
-    <%= link_to t("activity.verticals.#{vertical}", default: vertical), activity_events_path(vertical: vertical), class: "chip#{" active" if active}", aria: { current: active ? "page" : nil } %>
-  <% end %>
-</div>
+<nav class="activity-filters" aria-label="<%= t("activity.filters_aria") %>">
+  <%= render partial: "activity_events/filter", collection: ActivityEvent::FILTER_VERTICALS, as: :vertical %>
+</nav>
 
 <%= turbo_frame_tag "activity-events" do %>
 <% if @events.any? %>
-  <div class="activity-event-list" role="list">
+  <ul class="activity-event-list">
     <% @events.each do |event| %>
-      <div role="listitem">
-        <%= render "activity_events/event", event: event %>
-      </div>
+      <%= tag.li render("activity_events/event", event: event) %>
     <% end %>
-  </div>
+  </ul>
 <% else %>
   <%= render "shared/empty_state",
         title: t("empty.no_activity"),

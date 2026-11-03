@@ -2064,6 +2064,12 @@ html[data-theme="light"] .post-progressive-indicator.is-active {
   text-align: center;
 }
 
+/* display: grid above outranks the UA [hidden] rule, so "Publiserer…" stood on
+   every fresh compose form before anything was sent. Hidden means hidden. */
+.post-publishing[hidden] {
+  display: none;
+}
+
 form[data-publishing="true"] .post-progressive-nav {
   display: none;
 }
@@ -2635,6 +2641,14 @@ body:not([class*="vertical-"]) .chrome-corner .theme-toggle {
   body:not([class*="vertical-"]) .brgen-top-chrome {
     block-size: calc(var(--top-band-block) + var(--nav-swiper-h));
   }
+}
+
+/* Sign-in, sign-up and password pages hide the navigation run (_auth_form), so
+   the band keeps only the wordmark row. Sized for the run, it left an empty
+   black block under the wordmark on exactly the pages that have the least on
+   them. */
+body.auth-surface:not([class*="vertical-"]) .brgen-top-chrome {
+  block-size: calc(var(--top-band-block) + var(--safe-top));
 }
 
 @media (min-width: 1265px) {

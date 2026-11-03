@@ -22,13 +22,13 @@
 </div>
 
 <article>
-  <div class="chips">
-    <span class="chip"><%= t("tv.subscribers", count: @channel.subscribers_count.to_i) %></span>
-    <span class="chip"><%= t("tv.total_views", count: @channel.total_views.to_i) %></span>
-    <span class="chip"><%= t("tv.videos_shown", count: @videos.count) %></span>
-  </div>
+  <ul class="tv-facts">
+    <%= tag.li t("tv.subscribers", count: @channel.subscribers_count.to_i) %>
+    <%= tag.li t("tv.total_views", count: @channel.total_views.to_i) %>
+    <%= tag.li t("tv.videos_shown", count: @videos.count) %>
+  </ul>
   <% if @channel.description.present? %>
-    <%= tag.p simple_format(@channel.description) %>
+    <%= simple_format(@channel.description) %>
   <% else %>
     <p><%= t("tv.no_description") %></p>
   <% end %>

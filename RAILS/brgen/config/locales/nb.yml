@@ -489,6 +489,11 @@ nb:
     offline: Du er frakoblet. Meldingen sendes når du er på nett igjen.
   comments:
     sort_label: Sorter kommentarer
+    sort:
+      best: Best
+      new: Nyeste
+      top: Topp
+      controversial: Omstridt
   push:
     enable: Slå på varsler
   partner:
@@ -545,9 +550,19 @@ nb:
     edit_heading: Rediger partnerprogram
     save: Lagre
   activerecord:
+    models:
+      post:
+        one: innlegg
+        other: innlegg
+      playlist/set:
+        one: sett
+        other: sett
     attributes:
       comment:
         content: "Kommentar"
+      post:
+        title: "Tittel"
+        content: "Tekst"
       community:
         name: "Navn"
         slug: "Adresse"
@@ -608,7 +623,17 @@ nb:
         price_cents: "Pris"
       playlist/set:
         name: "Navn"
+        description: "Beskrivelse"
         privacy: "Synlighet"
+        collaborative: "Samarbeid"
+      playlist/playlist:
+        name: "Navn"
+        description: "Beskrivelse"
+      tv/channel:
+        name: "Navn"
+        description: "Beskrivelse"
+        avatar: "Profilbilde"
+        banner: "Toppbilde"
       dating/prompt:
         question: "Spørsmål"
         answer: "Svar"
@@ -707,6 +732,8 @@ nb:
             menu_item:
               unavailable: er utsolgt
   post:
+    # "Post" is the noun for mail in Norwegian; the button publishes.
+    submit: Publiser
     repost: Del igjen
     repost_notification: "%{user} delte innlegget ditt"
     quote: Siter
@@ -1658,14 +1685,20 @@ nb:
     video_published: Ny video
     event_created: Nytt arrangement
     post_created: Nytt innlegg
+    message_sent: Melding sendt
+    comment_created: Ny kommentar
+    reaction_created: Ny reaksjon
+    filters_aria: Filtrer aktivitet
     verticals:
       takeaway: takeaway
       marketplace: markedsplass
       social: innlegg
       tv: TV
       dating: dating
-      playlist: spilleliste
+      playlist: radio
       maps: kart
+      messages: meldinger
+      general: generelt
   a11y:
     city_link: "%{city} (%{domain})"
     skip_to_content: Hopp til innholdet

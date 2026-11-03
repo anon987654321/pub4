@@ -85,10 +85,13 @@
                 form: { data: { turbo: false } } %>
         <% end %>
         <% if vipps_ready %>
-          <%= button_to t("marketplace.pay_vipps"), checkout_path,
+          <%= button_to checkout_path,
                 method: :post, params: { provider: "vipps" },
                 class: "btn btn-primary cart-pay-vipps",
-                form: { data: { turbo: false } } %>
+                form: { data: { turbo: false } } do %>
+            <%= image_tag "vipps/vipps-wordmark-on-orange.svg", alt: "", width: 59, height: 24 %>
+            <%= t("marketplace.pay_vipps") %>
+          <% end %>
         <% end %>
         <% if stripe_ready %>
           <%= button_to t("marketplace.pay_stripe"), checkout_path,

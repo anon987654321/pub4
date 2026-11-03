@@ -84,7 +84,10 @@
 .form-wrap { padding: var(--space-6) var(--space-4); max-width: 480px; }
 .form-wrap--compact { padding: var(--space-3) var(--space-4); max-width: none; }
 .field { flex-direction: column; margin-bottom: var(--space-4); }
-.field--check { flex-direction: row; align-items: center; gap: var(--space-2); }
+/* .field is a one-column grid (city surfaces), which put the box on one row and
+   its label centred on the next. A check field is the box and its label side by
+   side, so it leaves the grid for a row. */
+.field.field--check { display: flex; flex-direction: row; align-items: center; gap: var(--space-2); }
 
 /* Not in the list below, because a file input must keep the browser's own
    button rather than take the field treatment — but it ships an intrinsic
@@ -644,6 +647,8 @@ textarea { min-height: 120px; resize: vertical; line-height: var(--leading-loose
 }
 
 @include meta.load-css("feed_list");
+// The guest sign-in nudge under a post; brgen skips _modal, which carried it.
+@include meta.load-css("post_auth_prompt");
 
 [data-popover-target="card"] {
   position: absolute;

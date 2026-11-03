@@ -5,9 +5,12 @@
   <% else %>
     <%= tag.h2 activity_event_title(event) %>
   <% end %>
-  <p>
-    <%= activity_event_vertical(event) %> · <%= event.subject_type.to_s.demodulize %>
-    · <%= time_ago(event.created_at) %>
+  <%# Where it happened and when, as two facts spaced apart. The model class
+      name (Message, Post) used to sit between them: an English internal word
+      on every row. %>
+  <p class="activity-event-meta">
+    <%= tag.span activity_event_vertical(event) %>
+    <%= tag.time time_ago(event.created_at), datetime: event.created_at.iso8601 %>
   </p>
   <% if event.locality.present? %><p><%= event.locality %></p><% end %>
   <% if href.present? %>

@@ -1,3 +1,7 @@
+<%# Only an answer to a search. Without a query the page's own Upcoming section
+    already lists the events or says there are none; rendering here too put the
+    same list, or the same empty state, on the page twice. %>
+<% unless live_search_query.blank? %>
 <% if live_search_query.present? %>
   <p><%= t("search.results_for", count: @events.size, query: live_search_query) %></p>
 <% end %>
@@ -15,4 +19,5 @@
         title: t("events.empty_title"),
         body: t("events.empty_search"),
         action: { label: t("empty.clear_search"), path: events_path } %>
+<% end %>
 <% end %>

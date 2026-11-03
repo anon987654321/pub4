@@ -26,7 +26,7 @@
       <%= tag.dd @place.address %>
     <% end %>
     <dt><%= t("maps.kind") %></dt>
-    <%= tag.dd @place.kind %>
+    <%= tag.dd t("maps.kinds.#{@place.kind}", default: @place.kind.to_s.humanize) %>
     <% if @place.city %>
       <dt><%= t("maps.city") %></dt>
       <%= tag.dd @place.city.name %>

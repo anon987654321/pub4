@@ -17,6 +17,10 @@ class ActivityEvent < ApplicationRecord
   # Never surface private activity on a public profile (dating likes are private).
   scope :public_only, -> { where(visibility: "public") }
 
+  # The verticals the activity page offers as filters, in the order shown.
+  # "general" stands where "core" stood: no event was ever filed under core.
+  FILTER_VERTICALS = %w[marketplace takeaway dating tv playlist general].freeze
+
   # Public vertical births for the city-home strip. Posts stay on the feed;
   # this is interconnection, not a second timeline.
   HOME_STRIP_EVENTS = %w[

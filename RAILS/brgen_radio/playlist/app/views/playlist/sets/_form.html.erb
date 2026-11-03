@@ -21,12 +21,12 @@
 
   <div class="field">
     <%= form.label :privacy %>
-    <%= form.select :privacy, Playlist::Set::PRIVACY_LEVELS.map { |level| [level.humanize, level] } %>
+    <%= form.select :privacy, Playlist::Set::PRIVACY_LEVELS.map { |level| [t("playlist.privacy.#{level}"), level] } %>
   </div>
 
-  <div class="field">
-    <%= form.label :collaborative %>
+  <div class="field field--check">
     <%= form.check_box :collaborative %>
+    <%= form.label :collaborative, t("playlist.collaborative") %>
   </div>
 
   <%= form.submit class: "btn btn-primary btn-sm" %>

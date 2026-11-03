@@ -28,4 +28,8 @@ nb:
     recent: "Nylig"
     share: "Del"
     shows_aria: "TV-serier"
+    video_status:
+      processing: "Behandles"
+      ready: "Klar"
+      unlisted: "Ulistet"
     videos: "Videoer"

@@ -71,7 +71,7 @@
 .nearby-alert-close:hover { color: var(--text); }
 
 /* Share + push-enable buttons */
-.btn-share {
+.button-share {
   background: transparent;
   border: 1px solid var(--border);
   color: var(--text-secondary);
@@ -82,7 +82,7 @@
   transition: color var(--transition-fast) var(--ease-out), border-color var(--transition-fast) var(--ease-out);
 }
 
-.btn-share:hover { color: var(--text); border-color: var(--text-secondary); }
+.button-share:hover { color: var(--text); border-color: var(--text-secondary); }
 
 /* Nearby chat widget styles live in shared/_shell_widgets.scss (fleet-wide). */
 

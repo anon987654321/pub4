@@ -28,4 +28,8 @@ en:
     recent: "Recent"
     share: "Share"
     shows_aria: "TV shows"
+    video_status:
+      processing: "Processing"
+      ready: "Ready"
+      unlisted: "Unlisted"
     videos: "Videos"

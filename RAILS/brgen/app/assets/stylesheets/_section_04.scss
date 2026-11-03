@@ -34,11 +34,8 @@
   // mixin's parameter now — brgen-old-dark-tokens — so the accent map stays
   // the only thing that declares --accent on this tree, which is what the
   // vertical_accent_single_map law checks.
-  // Operator 2026-10-28: every app ships its bundled face. Source Sans 3 is
-  // self-hosted by the shared engine at /fonts and already @font-face'd
-  // through stack → fonts. The family law in MASTER/data/tokens.yml still
-  // records Helvetica until the sync tool moves it on the VPS; this pin is
-  // the app-root override that law's own comment sanctions.
+  // brgen is Swiss sans only (operator 2026-10-11): Helvetica Neue Pro, then
+  // Helvetica Neue, then Arial. Both themes state the same stack.
   --font: "Helvetica Neue Pro", "Helvetica Neue", Arial, sans-serif;
   // Real 2014 mobile.css body base ("font: 18px sans-serif") -- this app's
   // own deliberate size, distinct from the 16px shared default.
@@ -133,7 +130,7 @@
    here. There is no @media (prefers-color-scheme: light) twin: [data-theme=light]
    is a stated choice and holds whatever the OS prefers. X.com is dark-first,
    so light keeps the family palette and takes only the mirror's blue chrome
-   (rule, badge) plus the bundled face. */
+   (rule, badge) and restates the Swiss sans stack. */
 :root[data-theme="light"] {
   @include x.brgen-old-light-tokens;
   @include x.app-root-tokens;
@@ -143,7 +140,7 @@
   --nav-rule: #1a8cd8;
   --nav-badge-fill: #1d9bf0;
   --nav-badge-ink: #000000;
-  --font: "Source Sans 3", "Helvetica Neue Pro", "Helvetica Neue", Arial, sans-serif;
+  --font: "Helvetica Neue Pro", "Helvetica Neue", Arial, sans-serif;
 }
 @each $v, $c in x.$vertical-accents {
   body.vertical-#{$v} {

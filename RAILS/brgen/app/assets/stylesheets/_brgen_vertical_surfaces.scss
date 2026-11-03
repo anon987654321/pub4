@@ -212,6 +212,20 @@ body.vertical-marketplace .listing-status--notice {
   min-height: var(--tap-min);
 }
 
+/* The Vipps wordmark sits before the label on Vipps's own pay buttons, at its
+   own proportions (images/vipps/README.md: never stretched or recoloured). */
+:is(.listing-buy-bar-cta, .cart-pay-vipps):has(> img) {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+:is(.listing-buy-bar-cta, .cart-pay-vipps) > img {
+  flex: none;
+  height: 1.5rem;
+  width: auto;
+}
+
 .store-pdp .store-buybox .btn {
   width: 100%;
   min-height: 48px;
@@ -1787,6 +1801,24 @@ width: 100dvw;
   margin-block: var(--space-2);
   color: var(--text-secondary);
   font-size: var(--text-sm);
+}
+
+.video-lineage + p {
+  margin-top: var(--space-3);
+}
+
+/* A channel's or a video's counts: each fact its own item, spaced apart rather
+   than run together or joined by dots. */
+.tv-facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1) var(--space-4);
+  margin: 0 0 var(--space-3);
+  padding: 0;
+  list-style: none;
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+  font-variant-numeric: tabular-nums;
 }
 
 /* TV live streams + video card chrome */

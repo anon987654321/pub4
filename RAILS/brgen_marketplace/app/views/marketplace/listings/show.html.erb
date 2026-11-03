@@ -70,7 +70,7 @@
 
 <section class="store-pdp-description">
   <div><%= read_more(@listing.description, lines: 6, more: t("actions.read_more"), less: t("actions.read_less")) %></div> <%# scan: intentional — read_more needs one block to clamp %>
-  <button class="btn-share" data-controller="share"
+  <button class="button-share" data-controller="share"
           data-share-title-value="<%= @listing.title %>"
           data-share-url-value="<%= request.original_url %>"
           data-action="click->share#share"><%= t("marketplace.share") %></button>
