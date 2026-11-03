@@ -16,7 +16,10 @@ module Shared
     TAGS = %w[p br strong em b i ul ol li].freeze
 
     def rich_text(html)
-      sanitize(html.to_s, tags: TAGS, attributes: [])
+      sanitize(emojify(html.to_s), tags: TAGS, attributes: [])
     end
+
+    # :fire: as 🔥, the way the first brgen read shortcodes; see Shared::Emoji.
+    def emojify(text) = Shared::Emoji.emojify(text)
   end
 end

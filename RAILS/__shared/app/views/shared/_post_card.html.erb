@@ -32,7 +32,7 @@
         <% if derived_title.present? %><h2 class="feed-card-text post-reading-title"><%= post_url.present? ? link_to(derived_title, post_url) : derived_title %></h2><% end %>
         <% if content.present? %>
           <div class="post-reading-preview">
-            <div class="feed-card-body post-reading-body-preview"><%= content %></div>
+            <%= tag.div emojify(content), class: "feed-card-body post-reading-body-preview" %>
             <% if post_url.present? && body_plain.length > 260 %>
               <%= link_to "…", post_url, class: "post-reading-more", aria: { label: more_label }, title: more_label %>
             <% end %>
