@@ -37,7 +37,7 @@ class TestScriptDispatch < Minitest::Test
   def test_retired_tools_fail_closed_without_searching_for_similar_scripts
     workspace = File.expand_path("../..", __dir__)
 
-    %w[lora postpro].each do |tool|
+    %w[lora].each do |tool|
       path = Master::Io::ScriptDispatch.script_path(workspace, tool)
 
       assert_equal File.join(MasterPaths.repo, "STUDIO", tool, "#{tool}.rb"), path
@@ -49,7 +49,17 @@ class TestScriptDispatch < Minitest::Test
     end
   end
 
-  def test_finds_dilla_engine_under_studio
+# postpro was deleted by accident on 2026-11-01 (b5acc93bcf) and restored
+# on 2026-11-03; it dispatches through the default <tool>/<tool>.rb probe.
+def test_finds_postpro_under_studio
+  workspace = File.expand_path("../..", __dir__)
+  path = Master::Io::ScriptDispatch.script_path(workspace, "postpro")
+
+  assert_equal File.join(MasterPaths.repo, "STUDIO", "postpro", "postpro.rb"), path
+  assert File.file?(path)
+end
+
+def test_finds_dilla_engine_under_studio
     workspace = File.expand_path("../..", __dir__)
     path = Master::Io::ScriptDispatch.script_path(workspace, "dilla")
 

@@ -72,7 +72,8 @@ class TestDocPaths < Minitest::Test
     assert_empty completed, "completed work must be deleted from TODO.md"
 
     review = File.read(File.join(REPO, "MASTER/docs/history/fix-review-log.md"))
-    assert_includes review, "not live task instructions"
+    # The sentence wraps in the file; compare it as prose, not as one line.
+    assert_includes review.gsub(/\s+/, " "), "not live task instructions"
     checklist = review.lines.select do |line|
       line.lstrip.start_with?("- [ ] ", "- [x] ", "- [X] ")
     end
@@ -135,6 +136,8 @@ class TestDocPaths < Minitest::Test
     RAILS/__shared/SOCIAL_FRONT_PAGE.md
     TREE_CONTRACTS.md
     STUDIO/docs/fetat/proposal.md
+    STUDIO/postpro/ARCHAEOLOGY.md
+    STUDIO/postpro/LEGACY_RESTORE.md
     MASTER/docs/LOVDATA.md
     MASTER/docs/PUB4_PERMISSION_MATRIX.md
     MASTER/docs/ad_creative_governance.md

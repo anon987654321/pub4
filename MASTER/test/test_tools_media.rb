@@ -9,7 +9,7 @@ require "rbconfig"
 # temp: and a costume --final model survive.
 class TestToolsMedia < Minitest::Test
   ROOT = File.expand_path("../..", __dir__)
-  POSTPRO = File.join(ROOT, "MASTER/tools", "postpro", "postpro.rb")
+  POSTPRO = File.join(ROOT, "STUDIO", "postpro", "postpro.rb")
 
   # postpro.rb loads its methods from lib/, so its source is the entry file and lib/ together.
   def postpro_source
