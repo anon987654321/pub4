@@ -94,6 +94,23 @@ contracts. The three `*_micro_refinements*.scss` sheets are intentionally exclud
 from both production stacks until each proposed change has rendered before/after
 evidence and explicit operator approval. A count of CSS declarations is not a quality measure.
 
+## Vipps brand assets
+
+The shared engine carries two official Vipps wordmarks for the apps that use
+its payment and login surfaces:
+
+- `app/assets/images/vipps/vipps-wordmark.svg`: orange wordmark for light
+  backgrounds, sourced from the
+  [Vipps WooCommerce merchant plugin](https://github.com/vippsas/vipps-woocommerce/blob/052b7fd57365ec9c68e91a7b60df7af210bb61d2/payment/img/vipps-rgb-orange-pos.svg).
+- `app/assets/images/vipps/vipps-wordmark-on-orange.svg`: white wordmark on
+  the Vipps-orange block, sourced from the
+  [negative merchant wordmark](https://github.com/vippsas/vipps-woocommerce/blob/052b7fd57365ec9c68e91a7b60df7af210bb61d2/payment/img/vipps-rgb-orange-neg.svg).
+
+Both are retained unmodified. Do not recolour or stretch them; replace them
+with the restaurant or merchant's supplied brand-kit files when the applicable
+merchant agreement provides them. Mr. Damascy is not on this shared engine and
+keeps its own wordmark copy.
+
 ## External page extraction
 
 `Shared::Scrape` is an outbound-network boundary, not just a browser helper. It accepts

@@ -50,7 +50,8 @@ class TestDocPaths < Minitest::Test
     map = File.read(File.join(REPO, "MASTER/docs/fix_coordinator_map.md"))
     %w[
       Core::Fold Core::Constitution Core::World Fix::Mission Deployment
-      Fix::Restructure Fix::WatchLoop Improve::Engine RestructureSweep
+      Fix::Restructure Fix::WatchLoop Fix::Improve::Engine
+      Fix::Improve::Restructure Fix::RestructureSweep
       Fix::Governor Review::LLMDispatcher Ground::Redactor
     ].each do |owner|
       assert_includes map, owner

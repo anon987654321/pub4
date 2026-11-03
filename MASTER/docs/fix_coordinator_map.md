@@ -179,16 +179,17 @@ so its repairs get a transaction and a run ledger like any other.
 
 ### Reactive, improvement and restructure lanes
 
-- **`WatchLoop`** observes supported source changes, debounces and rate-limits
-  events, then either wakes the live background runner or starts an incremental
-  `FixLoop` run. It never edits files itself.
-- **`Improve::Engine`** is the elevation sensor, not a writer. It emits
-  Law-grounded findings, ideation and merge/flatten proposals. `PassRunner`
-  turns the findings into the existing improvement lane; proposals enter
-  `RestructureSweep`'s candidate, plan and review flow.
-- **`RestructureSweep`** is built by `Kernel::ConvergenceAdapter` and runs
-  inside the same Kernel-owned /fix execution. `Improve::Restructure` only
-  proposes candidates. The final multi-file write is `Fix::Restructure`:
+- **`Fix::WatchLoop`** observes supported source changes, debounces and
+  rate-limits events, then either wakes the live background runner or starts an
+  incremental `FixLoop` run. It never edits files itself.
+- **`Fix::Improve::Engine`** is the elevation sensor, not a writer. It emits
+  Law-grounded findings, ideation and merge/flatten proposals.
+  `FixLoop::PassRunner` turns those findings into the existing improvement
+  lane; proposals enter `Fix::RestructureSweep`'s candidate, plan and review flow.
+- **`Fix::RestructureSweep`** is built by `Kernel::ConvergenceAdapter` and
+  runs inside the same Kernel-owned /fix execution.
+  `Fix::Improve::Restructure` only proposes candidates. The final multi-file
+  write is `Fix::Restructure`:
   validate operations and current source evidence, snapshot, apply, inspect the
   diff, run adversarial review and tree proof, then undo on failure or deliver
   one scoped commit. This is a distinct path from the per-pass
