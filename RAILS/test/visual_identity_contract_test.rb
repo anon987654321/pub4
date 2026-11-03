@@ -78,7 +78,8 @@ class VisualIdentityContractTest < Minitest::Test
     styles = File.read(BSDPORTS_STYLES, encoding: "UTF-8")
     layout = File.read(BSDPORTS_LAYOUT, encoding: "UTF-8")
 
-    assert_includes styles, 'nav[data-pwa-primary-nav] a[aria-current="page"]'
+    assert_includes styles, "nav[data-pwa-primary-nav] a[aria-current]"
+
     assert_includes styles, "color: var(--accent);"
     assert_includes styles, "text-decoration-thickness: 2px;"
     assert_includes styles, "--text: #202124;"

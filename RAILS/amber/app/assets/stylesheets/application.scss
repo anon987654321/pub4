@@ -178,11 +178,11 @@
   @include amber-editorial-inks;
   @include x.app-root-tokens;
   color-scheme: light;
-  // The editorial pairing: serif display over a clean commerce sans. The New
-  // Yorker reads headlines in a serif; Outnet's UI is the sans. Source Serif 4
-  // is the family's bundled serif (shared /fonts, OFL-1.1); Source Sans 3 the
-  // bundled body face — no downloads, no third-party host.
-  --font-display: "Source Serif 4", Georgia, "Times New Roman", serif;
+  // Display type is the same Swiss sans as the body: amber carries no serif
+  // (operator, 2026-10-11). Every heading but the cookie notice's already
+  // rendered in the sans through later rules; that one h2 still read this
+  // token and came out in Source Serif 4.
+  --font-display: var(--font);
   --font: "Helvetica Neue Pro", "Helvetica Neue", Arial, sans-serif;
   // Not inverted. These name the ink and the paper, and .btn paints
   // background: var(--color-black) with no border, so the other way round
@@ -729,6 +729,7 @@ h2 {
 
 .amber-compose-tags {
   display: flex;
+  margin: 0;
   gap: var(--space-1);
   flex-wrap: wrap;
   color: var(--text-secondary);
@@ -746,13 +747,6 @@ h2 {
   align-items: center;
   gap: 0.5rem;
   margin-inline-start: auto;
-}
-
-.amber-compose-as {
-  font-size: var(--text-sm);
-  font-weight: var(--weight-bold);
-  color: var(--text-secondary);
-  text-transform: lowercase;
 }
 
 .amber-compose-btn {
@@ -2154,6 +2148,50 @@ main#main-content .amber-look-title {
 .btn-link:hover,
 .btn-link:focus-visible {
   color: var(--text);
+}
+
+// Form fields. The shared field contract (surface_chrome_endgame) gives text
+// fields a fill and never a border, and fills them with --surface, which in
+// amber is the page's own white: the sign-in email and password, the post
+// body and the outfit and item selects had no visible edge until focused.
+// The fill is a 6% tint of the ink (--surface-elevated is #fcf8fd here, 1.05:1
+// on white). The feed compose box sits outside .field and keeps its white
+// field inside its card.
+main#main-content form .field :is(
+  input:not(
+    [type="checkbox"], [type="radio"], [type="range"], [type="file"],
+    [type="submit"], [type="button"], [type="reset"], [type="image"], [type="hidden"]
+  ),
+  select, textarea
+) {
+  background-color: color-mix(in srgb, var(--text) 6%, var(--bg));
+}
+
+// "Email me a sign-in link" is the secondary path: amber's .btn-link text, not
+// a second filled button beside "Sign in" with an underline painted inside it.
+.auth-form .actions input[formaction] {
+  padding-inline: 0;
+  background: none;
+  color: var(--text-secondary);
+}
+
+// Post and comment text: a pasted URL is one unbreakable word, and at 390px it
+// ran past the card's edge and was clipped mid-path.
+:is(.feed-card-body, .feed-post-prose, .comment-body) {
+  overflow-wrap: anywhere;
+}
+
+// A grid item's minimum is its content, so the 16:9 link-embed stage took the
+// thumbnail's natural width (453px in a 255px column) and the card clipped it.
+.link_embed {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+// Author and age, with a space between them rather than a middle dot.
+.feed-post-byline {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
 }
 
 // Wardrobe item collection and detail.

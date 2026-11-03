@@ -37,8 +37,7 @@ nb:
     feed:
       compose_prompt: "Del en #ootd tanke…"
       post_action: "Publiser"
-      posting_as_anon: "anonym"
-      guest_hint: "Poster som anon · %{remaining} av %{limit} innlegg igjen i denne nettleseren"
+      guest_hint: "Du poster anonymt, %{remaining} av %{limit} innlegg igjen i denne nettleseren"
       advanced_post: "Merk antrekk eller plagg →"
     nav:
       ai_suggest: "Antrekkforslag"

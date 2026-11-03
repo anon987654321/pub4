@@ -38,8 +38,7 @@ en:
     feed:
       compose_prompt: "Share an #ootd thought…"
       post_action: "Post"
-      posting_as_anon: "anon"
-      guest_hint: "Posting as anon · %{remaining} of %{limit} posts left this browser"
+      guest_hint: "Posting anonymously, %{remaining} of %{limit} posts left in this browser"
       advanced_post: "Tag outfit or item →"
     nav:
       ai_suggest: "Outfit suggestions"

@@ -19,6 +19,21 @@ class PostsControllerAnonymousTest < ActionDispatch::IntegrationTest
     assert_equal "Loving this linen capsule #ootd", post.body
   end
 
+  # A rejected post comes back as the form with the writer's text and the
+  # reason, not a redirect home that drops both.
+  def test_rejected_post_keeps_the_text_and_shows_the_errors
+    too_long = "camel coat " * 60
+
+    assert_no_difference -> { Post.count } do
+      post posts_url, params: { post: { body: too_long, anonymous: true } }
+    end
+
+    assert_response :unprocessable_content
+    assert_select "form textarea[name='post[body]']" do |field|
+      assert_includes field.text, "camel coat camel coat"
+    end
+  end
+
   def test_guest_feed_shows_actionable_empty_state_when_no_posts_exist
     Post.destroy_all
 

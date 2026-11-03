@@ -41,7 +41,7 @@ class PostsController < ApplicationController
       redirect_to(guest? ? root_path : posts_path,
                   notice: t(guest? ? "flash.posted_anonymously" : "flash.posted"))
     else
-      redirect_to root_path, alert: @post.errors.full_messages.to_sentence
+      render :new, status: :unprocessable_content
     end
   end
 

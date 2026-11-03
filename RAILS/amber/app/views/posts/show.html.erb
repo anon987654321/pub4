@@ -14,7 +14,9 @@
         sides ("for 2 måneder siden"), so the suffix cannot be appended. The
         timeago Stimulus controller that used to hang off this tag is gone —
         it read data-timeago-datetime-value, which no view ever set. %>
-    · <time datetime="<%= @post.created_at.iso8601 %>"><%= time_ago(@post.created_at) %></time>
+    <%= tag.time time_ago(@post.created_at),
+                 datetime: @post.created_at.iso8601,
+                 title: l(@post.created_at, format: :long) %>
   </header>
   <%# Stripped first: truncating the raw field would cut inside a tag and put
       half an element in the page title. %>
@@ -34,7 +36,10 @@
     <%= render "posts/like_button", post: @post %>
     <%= render "shared/post_embed_action", post: @post, url: post_url(@post) %>
     <% if @post.user == Current.user %>
-      <%= button_to t("actions.delete"), post_path(@post), method: :delete, data: { turbo_confirm: t("actions.confirm_delete") } %>
+      <%# The same action button the feed card draws, not a second style. %>
+      <%= button_to t("actions.delete"), post_path(@post), method: :delete,
+            class: "feed-action", form_class: "feed-action-form",
+            data: { turbo_confirm: t("actions.confirm_delete") } %>
     <% end %>
   </footer>
     </div>
