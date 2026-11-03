@@ -36,7 +36,7 @@ module Master
       # (MASTER_FACE_CHARS, MASTER_FACE_MODE=light). MASTER_FACE_QUIET=1 draws
       # the plain word only; CLI log quietness never hides the face. MASTER_REDUCED_MOTION=1
       # holds the head and the particle field still.
-      def frame(state:, rows:, cols:, t:, level: nil, events: [], motion: Motion.new, color: false, heard: false, viseme: "neutral", source: nil, chars: nil, mode: nil, show_laws: nil)
+      def frame(state:, rows:, cols:, t:, level: nil, events: [], motion: Motion.new, color: false, heard: false, viseme: "neutral", source: nil, chars: nil, mode: nil, show_laws: nil, swarm_budget: nil)
         raise ArgumentError, "face: unknown state #{state.inspect}" unless STATES.include?(state)
 
         look = motion.step(state:, t:, level:, events:, heard:, viseme:, count: 0)
@@ -60,7 +60,13 @@ module Master
           SWARMS.clear if SWARMS.size >= 4
           requested = ENV["MASTER_FACE_SWARM_BUDGET"]
           configured_budget = Integer(Master::Face::Swarm.config.fetch("particle_budget"))
-          count = requested&.match?(/\A-?\d+\z/) ? Integer(requested).clamp(0, configured_budget) : nil
+          count = if requested&.match?(/\A-?\d+\z/)
+                     Integer(requested).clamp(0, configured_budget)
+                   elsif swarm_budget.nil?
+                     nil
+                   else
+                     Integer(swarm_budget).clamp(0, configured_budget)
+                   end
           swarm_key = [rows, cols, count]
           swarm = (SWARMS[swarm_key] ||= Master::Face::Swarm::Simulation.new(count:))
           swarm.step(mode: state, time: t, reduced_motion: ENV["MASTER_REDUCED_MOTION"] == "1", events:)
