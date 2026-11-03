@@ -338,6 +338,9 @@ class TestLLMDispatcher < Minitest::Test
 
   def test_send_claude_cli_returns_timeout_error
     dispatcher, _session, _bus = build_dispatcher
+    # The timeout contract is the sender's, not the machine's: probe presence
+    # so the run measures it where no claude binary is installed.
+    dispatcher.define_singleton_method(:claude_on_path?) { true }
     def dispatcher.capture3_with_timeout(_timeout_s, *_args, **)
       raise Timeout::Error
     end
@@ -399,6 +402,7 @@ class TestLLMDispatcher < Minitest::Test
       lock.synchronize { state[:live] -= 1 }
       ["ok", "", ok_status]
     end
+    dispatcher.define_singleton_method(:claude_on_path?) { true }
     dispatcher.define_singleton_method(:capture3_with_timeout) { |_t, *_a, **_k| probe.call }
 
     threads = 4.times.map do
@@ -421,6 +425,8 @@ class TestLLMDispatcher < Minitest::Test
 
   def test_send_agy_cli_returns_timeout_error
     dispatcher, = build_dispatcher
+    # Same as the claude timeout test: probe presence, measure the contract.
+    dispatcher.define_singleton_method(:find_agy_bin) { "/usr/local/bin/agy" }
     def dispatcher.capture3_with_timeout(_timeout_s, *_args, **)
       raise Timeout::Error
     end
@@ -433,6 +439,7 @@ class TestLLMDispatcher < Minitest::Test
 
   def test_send_agy_cli_success
     dispatcher, = build_dispatcher
+    dispatcher.define_singleton_method(:find_agy_bin) { "/usr/local/bin/agy" }
     ok_status = Struct.new(:success?).new(true)
     captured_args = nil
     dispatcher.define_singleton_method(:capture3_with_timeout) do |_t, *args, **|

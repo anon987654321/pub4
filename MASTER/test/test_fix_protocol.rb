@@ -11,7 +11,10 @@ class TestFixProtocol < Minitest::Test
   def test_structural_delivery_paths_share_fix_safety_and_delivery_contracts
     restructure = File.read(File.join(Master::ROOT, "lib/fix/restructure.rb"), encoding: "UTF-8")
     rename = File.read(File.join(Master::ROOT, "lib/fix/file_rename.rb"), encoding: "UTF-8")
-    fix_loop = File.read(File.join(Master::ROOT, "lib/fix/fix_loop.rb"), encoding: "UTF-8")
+    # fix_loop.rb is a compatibility shim; the loop wiring it used to carry lives
+    # in the pass_runner_builder, which threads ground truth and user intent into
+    # every convergence adapter it builds.
+    fix_loop = File.read(File.join(Master::ROOT, "lib/fix/fix_loop/pass_runner_builder.rb"), encoding: "UTF-8")
 
     [restructure, rename].each do |source|
       assert_includes source, "Operator::RatchetSponsor.validate!"
@@ -55,8 +58,10 @@ class TestFixProtocol < Minitest::Test
     minimal = ::Law.definitions.fetch(:MINIMAL_FOOTPRINT)
     collapse = ::Law.definitions.fetch(:COLLAPSE_BEFORE_ADDING)
 
+    # The protocol text renders with wrapped lines; whitespace-normalize the
+    # practice the same way the other prose assertions below do.
     assert_match(/complete current target/i, preserve.practice)
-    assert_match(/continue every independent in-scope task/i, preserve.practice)
+    assert_match(/continue every independent in-scope task/i, preserve.practice.gsub(/\s+/, " "))
     assert_match(/canonical generator/i, docs.practice)
     assert_match(/deliver every authorised/i, execute.practice.gsub(/\s+/, " "))
     assert_match(/do not answer executable work/i, do_work.practice.gsub(/\s+/, " "))
@@ -166,7 +171,7 @@ class TestFixProtocol < Minitest::Test
 
       payload = JSON.parse(Master::Fix::Protocol.render(root:, target: root))
 
-      assert_equal 6, Master::Fix::Protocol::VERSION
+      assert_equal 7, Master::Fix::Protocol::VERSION
       assert_equal Master::Fix::Protocol::VERSION, payload.fetch("fix_protocol_version")
       assert_includes payload.fetch("stages"), "semantic"
       assert_includes payload.fetch("terminal_states"), "PLATEAU"
