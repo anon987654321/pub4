@@ -1,0 +1,43 @@
+# The safety page (pages/safety), restored from the first brgen.
+nb:
+  legal:
+    safety: Sikkerhet
+    safety_page:
+      heading: Din sikkerhet
+      police: politiet
+      intro_html: Bruk disse rådene for å være trygg. Har du vært utsatt for en kriminell
+        handling, kontakt %{police}; i nødstilfeller ring 112.
+      dating_heading: Ved dating
+      dating:
+        meet_in_public: Møt alltid på et åpent, offentlig sted.
+        no_strangers_home: Inviter aldri fremmede hjem.
+        carry_phone: Ha alltid med mobilen.
+        bring_friend: Vurder å ta med en venn.
+        tell_someone: Fortell en venn eller et familiemedlem hvor du skal.
+      trading_heading: Ved kjøp og salg
+      trading:
+        deal_locally: Handle lokalt, med folk du kan møte ansikt til ansikt.
+        no_transfers: Unngå forskuddsbetaling og frakt til fremmede.
+        no_links: Ikke klikk på lenker fra fremmede.
+        no_gifts: Vær på vakt mot fremmede som tilbyr gaver.
+        no_proxy_ads: Legg aldri ut annonser på vegne av andre.
+        research: Undersøk grundig før du handler.
+        trust_gut: Er du i tvil, stol på magefølelsen.
+      health_heading: Helse
+      health:
+        not_medical_html: Dette er ikke et sted for medisinske råd eller for å oppmuntre
+          til selvskading, spiseforstyrrelser eller selvmord.
+        no_liability_html: Vi fraskriver oss ansvar for tap knyttet til bruk av slik
+          informasjon.
+        ask_doctor_html: Spør alltid fastlegen din om helseråd.
+        emergency_html: 'Akutt sykdom eller skade: ring <strong>113</strong>.'
+        helpline_html: 'Trenger du noen å snakke med: Mental Helses hjelpetelefon
+          <strong>116 123</strong>, døgnåpen.'
+      sites_heading: Nyttige nettsteder
+      sites:
+        slettmeg: hjelp til å fjerne krenkende innhold om deg på nett
+        dubestemmer: om personvern for barn og unge
+        nettvett: råd om trygg nettbruk
+        norsis: Norsk senter for informasjonssikring
+        forbrukertilsynet: dine rettigheter som forbruker
+        datatilsynet: personvernmyndigheten

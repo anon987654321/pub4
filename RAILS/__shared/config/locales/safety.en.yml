@@ -1,0 +1,43 @@
+# The safety page (pages/safety), restored from the first brgen.
+en:
+  legal:
+    safety: Safety
+    safety_page:
+      heading: Your safety
+      police: the police
+      intro_html: Use these guidelines to stay safe. If you have been the victim of
+        a crime, contact %{police}; in an emergency call 112.
+      dating_heading: When dating
+      dating:
+        meet_in_public: Always meet in an open, public place.
+        no_strangers_home: Never invite strangers into your home.
+        carry_phone: Always carry your phone.
+        bring_friend: Consider bringing a friend.
+        tell_someone: Tell a friend or family member where you are going.
+      trading_heading: When buying or selling
+      trading:
+        deal_locally: Deal locally, with people you can meet in person.
+        no_transfers: Avoid paying strangers in advance or shipping to them.
+        no_links: Do not click links from strangers.
+        no_gifts: Be wary of strangers offering gifts.
+        no_proxy_ads: Never post ads on behalf of others.
+        research: Do your research before you buy.
+        trust_gut: When in doubt, trust your gut.
+      health_heading: Health
+      health:
+        not_medical_html: This is not a place for medical advice or for encouraging
+          self-harm, eating disorders or suicide.
+        no_liability_html: We disclaim liability for any loss connected with using
+          such information.
+        ask_doctor_html: Always ask your doctor for health advice.
+        emergency_html: 'Acute illness or injury: call <strong>113</strong>.'
+        helpline_html: 'If you need someone to talk to: Mental Helse''s helpline <strong>116
+          123</strong>, open around the clock.'
+      sites_heading: Useful sites
+      sites:
+        slettmeg: help removing offensive content about you online
+        dubestemmer: privacy for children and young people
+        nettvett: advice on staying safe online
+        norsis: the Norwegian Centre for Information Security
+        forbrukertilsynet: your rights as a consumer
+        datatilsynet: the data protection authority

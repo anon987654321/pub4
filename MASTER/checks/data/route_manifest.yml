@@ -2,7 +2,7 @@
 schema: 1
 apps:
   amber:
-    digest: 0c3a0b365fb0cba1
+    digest: 3f0f4162948a2298
     routes:
       shared/changelog#show:
       - "/changelog"
@@ -26,6 +26,7 @@ apps:
       - "/session/new"
       pages#show:
       - "/terms"
+      - "/safety"
       - "/privacy"
       - "/cookies"
       pages#privacy:
@@ -34,6 +35,8 @@ apps:
       - "/terms"
       pages#cookies:
       - "/cookies"
+      pages#safety:
+      - "/safety"
       account_settings#export:
       - "/account/export"
       account_settings#show:
@@ -189,7 +192,7 @@ apps:
       active_storage/disk#show:
       - "/rails/active_storage/disk/:encoded_key/*filename"
   brgen:
-    digest: d3d35f0bd92d66c6
+    digest: aa915d20cc34a6bc
     routes:
       shared/changelog#show:
       - "/changelog"
@@ -217,6 +220,7 @@ apps:
       - "/saved"
       pages#show:
       - "/terms"
+      - "/safety"
       - "/privacy"
       - "/cookies"
       pages#privacy:
@@ -225,6 +229,8 @@ apps:
       - "/terms"
       pages#cookies:
       - "/cookies"
+      pages#safety:
+      - "/safety"
       sessions#magic:
       - "/session/magic"
       sessions#new:
@@ -558,7 +564,7 @@ apps:
       maps/places#show:
       - "/places/:id"
   bsdports:
-    digest: 99ed28570d07e083
+    digest: 149ffa540567740b
     routes:
       shared/changelog#show:
       - "/changelog"
@@ -578,6 +584,7 @@ apps:
       - "/session/new"
       pages#show:
       - "/terms"
+      - "/safety"
       - "/privacy"
       - "/cookies"
       pages#privacy:
@@ -586,6 +593,8 @@ apps:
       - "/terms"
       pages#cookies:
       - "/cookies"
+      pages#safety:
+      - "/safety"
       account_settings#export:
       - "/account/export"
       account_settings#show:

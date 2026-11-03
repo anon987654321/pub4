@@ -1,0 +1,11 @@
+<%# The first brgen's safety page (2014), brought back: meeting strangers, buying
+    and selling, and health talk, with today's emergency numbers and sites.
+    The entries are named in Shared::Safety, the words in safety.*.yml. %>
+<% content_for :title, t("legal.safety") %>
+
+<article class="legal-prose">
+  <%= tag.h1 t("legal.safety_page.heading") %>
+  <%= safety_intro %>
+  <%= safety_sections %>
+  <%= safety_sites %>
+</article>

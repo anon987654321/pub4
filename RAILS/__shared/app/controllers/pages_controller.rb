@@ -3,7 +3,11 @@
 # Privacy / terms / cookies for every host app. Public by design — a privacy
 # policy behind a login helps no one. Content lives in the views.
 class PagesController < ApplicationController
-  PAGES = %w[privacy terms cookies].freeze
+  # The public pages every app serves without an account; config/routes/legal.rb
+  # draws a route for each.
+  PAGES = %w[privacy terms cookies safety].freeze
+
+  helper Shared::Safety
 
   allow_unauthenticated_access only: :show if respond_to?(:allow_unauthenticated_access)
 

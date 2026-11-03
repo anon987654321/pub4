@@ -64,6 +64,7 @@ module Deploy
       # bsdports keeps the social routes behind BSDPORTS_SOCIAL=1.
       %w[notifications index] => { path: "/notifications", persona: "auth", apps: %w[brgen amber] },
       %w[pages privacy] => { path: "/privacy", persona: "guest" }, %w[pages terms] => { path: "/terms", persona: "guest" }, %w[pages cookies] => { path: "/cookies", persona: "guest" },
+      %w[pages safety] => { path: "/safety", persona: "guest" },
       %w[shared changelog] => { path: "/changelog", persona: "guest" },
       # Paid plans (970aa52d6): a singular resource eval'd from the apps'
       # routes.rb that sell one, controller Shared::BillingController.

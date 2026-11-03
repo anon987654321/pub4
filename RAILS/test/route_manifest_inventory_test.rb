@@ -67,6 +67,7 @@ class RouteManifestInventoryTest < Minitest::Test
       expected["#{app}/shared/pages/privacy"] = "/privacy"
       expected["#{app}/shared/pages/terms"] = "/terms"
       expected["#{app}/shared/pages/cookies"] = "/cookies"
+      expected["#{app}/shared/pages/safety"] = "/safety"
     end
 
     expected.each do |id, path|
