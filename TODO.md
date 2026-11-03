@@ -615,40 +615,35 @@ fallback and device evidence are named.
 
 ## Open from the 2026-11-01 session — GPU rendering implementation
 
-- [ ] Verify the Brgen Maps MapLibre clustering change on a real browser with
-  WebGL enabled. Run
-  `cd RAILS/brgen && bundle exec ruby -Itest test/controllers/maps_layers_test.rb`
-  and the existing WebGL surface check; then inspect maps.brgen.no at mobile
-  and desktop viewports. Confirm cluster expansion, unclustered point popups,
-  search updates, cross-city links, keyboard/list alternative, WebGL failure
-  fallback, context teardown and console errors. The GitHub editing pass could
-  not execute Rails or browser tests; these checks are NOT_RUN, not PASS.
-- [ ] The MASTER execution observatory, memory/code constellation, particle-face
-  experiments and system telemetry remain proposals, not implementations.
-  Review the applicable MASTER authority records and inspect the
-  existing face, browser, event, receipt and visual-conformance paths before
-  changing any MASTER implementation. Keep real receipts as the only source
-  of execution state; no simulated telemetry or second face renderer.
-- [ ] The STUDIO / Dilla audio-reactive renderer and reproducible artwork export
-  remain proposals. First map the existing audio-clock, section manifest,
-  render/export and radio_brgen_tunnel.js ownership boundaries. Do not add a
-  second audio engine or let frame timing drive audio.
-- [ ] Amber 3D garment/product inspection remains a proposal. Preserve the
-  original large Amber identity, neutral fashion surfaces and truthful product
-  colours; prototype only against real optimized assets and retain the current
-  non-WebGL product path.
+- [ ] Verify the Brgen Maps MapLibre clustering change in a real WebGL browser.
+  Run `cd RAILS/brgen && bundle exec ruby -Itest test/controllers/maps_layers_test.rb`
+  and the existing WebGL surface check. Inspect maps.brgen.no at mobile and desktop
+  widths: cluster expansion, unclustered point popups, search updates, cross-city
+  links, keyboard/list alternative, WebGL failure fallback, context teardown and
+  console errors. The GitHub editing pass could not execute Rails or browser tests;
+  these checks remain NOT_RUN, not PASS.
+- [ ] MASTER execution observatory, memory/code constellation, particle-face work
+  and system telemetry remain proposals. The older avatar-derived face request
+  remains separately recorded above. Before implementation, inspect the relevant
+  authority, face, browser, event, receipt and visual-conformance paths; preserve
+  scoped source review, keep receipts as the source of execution truth, and do not
+  simulate telemetry or add a second face renderer.
+- [ ] The STUDIO/Dilla audio-reactive renderer and reproducible artwork export
+  remain proposals. Map the existing audio clock, section manifest, render/export
+  and `radio_brgen_tunnel.js` ownership boundaries first. Do not add a second
+  audio engine or let frame timing drive audio.
+- [ ] Amber 3D garment/product inspection stays deferred until optimized real
+  garment assets and an honest fit-data contract exist. Preserve the original
+  large Amber identity, neutral fashion surfaces and truthful product colours;
+  do not use a decorative mannequin that implies virtual fitting, and retain the
+  current non-WebGL product path.
 - [ ] BSDPorts dependency visualization remains a proposal. Preserve its
   ultraminimal white search-first experience; add a graph only as an optional
   drill-down over actual package dependency data.
-- [ ] Evaluate WebGPU only against a measured compute/rendering need. Current
-  Brgen Maps uses its existing MapLibre WebGL renderer; do not add Three.js,
-  PixiJS, deck.gl, Sigma.js or a WebGPU dependency without a concrete consumer,
-  compatibility review, performance evidence, license review and a tested
-  progressive fallback.
-
-- [ ] **Amber 3D:** deferred until the product has real, optimized garment assets and an honest fit-data contract. The current product documentation explicitly excludes virtual fitting; a decorative mannequin would imply a capability the application does not have.
-- [ ] **MASTER visual/observability work:** no MASTER implementation was edited. The obsolete whole-tree read gate has been replaced by scoped source review; read the relevant authority, face, browser, event, receipt and visual-conformance paths before editing.
-- [ ] **Verification:** run `cd RAILS/bsdports && bin/ci` and the focused graph/controller tests, then capture browser evidence. This GitHub editing session could not execute Rails or browser tests; they remain NOT_RUN, not PASS. Brgen Maps browser checks are also outstanding.
+- [ ] Verify the BSDPorts dependency graph/controller work in a real browser and
+  run `cd RAILS/bsdports && bin/ci`. Capture browser evidence; Brgen Maps browser
+  proof is tracked in the first item above. Source and test files alone are not
+  runtime or rendered evidence.
 
 ## Open from the 2026-11-01 session — Rails ABC, configuration, UX and tokens
 
