@@ -36,7 +36,10 @@
       verticals at desktop width. It announced itself as "Seksjoner" instead,
       which named a part of the page rather than the navigation of the site, and
       left the page with no primary navigation landmark at all. %>
-  <nav id="nav_sections" class="nav_swiper_bar" aria-label="<%= t("nav.primary_nav") %>" data-brgen-shell-target="navSections">
+  <%# navigation-glide gives a mouse the wheel, drag and edge glide a finger
+      already has, and marks the ends so a side with nothing more loses its fade. %>
+  <nav id="nav_sections" class="nav_swiper_bar" aria-label="<%= t("nav.primary_nav") %>"
+       data-brgen-shell-target="navSections" data-controller="navigation-glide">
     <div class="nav_swiper_group nav_swiper_group--verticals">
       <% brgen_nav_items.each do |slug, label, href| %>
         <% active = nav_item_active?(slug) %>

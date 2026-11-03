@@ -241,6 +241,36 @@ label.compose-action:hover { color: var(--text); }
 
 .nav_swiper_bar::-webkit-scrollbar { display: none; }
 
+/* navigation_glide_controller marks the ends. A side with nothing more to show
+   loses its fade, so the first and last links are never half dissolved at rest,
+   and the fade that remains says which way there is more. */
+.nav_swiper_bar[data-at-start] { --nav-fade-lead: 0px; }
+
+/* On a phone nothing overlaps the bar, so the fades are only about direction:
+   a leading fade appears once the run has moved off its start, and the trailing
+   one goes once it reaches its end. From md up both are restated, because there
+   they also dissolve links under the wordmark and the toggle. */
+.nav_swiper_bar:not([data-at-start]) { --nav-fade-lead: var(--space-8); }
+.nav_swiper_bar[data-at-end] {
+  --nav-fade-start: 100%;
+  --nav-fade-stop: 100%;
+}
+
+@media (min-width: 768px) {
+  .nav_swiper_bar:not([data-at-start]) { --nav-fade-lead: var(--brand-mark-inline); }
+  .nav_swiper_bar[data-at-end] {
+    --nav-fade-stop: calc(100% - var(--chrome-toggle-inline));
+    --nav-fade-start: calc(var(--nav-fade-stop) - 2.5rem);
+  }
+}
+
+/* A mouse drag or edge glide moves the run a pixel at a time; snapping would
+   pull each step back to the nearest link. It snaps again once it stops. */
+.nav_swiper_bar[data-moving] {
+  scroll-snap-type: none;
+  cursor: grabbing;
+}
+
 /* One continuous run. The Hick's-law grouping is gone — the bar is eight
    entries, which is the size the grouping existed to buy — so the only groups
    left are the verticals and, on the front page, the feed orderings. */

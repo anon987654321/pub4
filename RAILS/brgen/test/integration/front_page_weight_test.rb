@@ -31,7 +31,9 @@ class FrontPageWeightTest < ActionDispatch::IntegrationTest
   # Measured 2026-08-10 against a seeded feed of POSTS posts: 144 instances,
   # 140,236 bytes. Lower these when you cut something; raising one needs a reason
   # in the commit.
-  INSTANCE_BUDGET = 150
+  # 151 from 2026-11-03: navigation-glide, one instance on the primary nav, gives
+  # a mouse the wheel, drag and edge glide that touch already had.
+  INSTANCE_BUDGET = 151
   # long-press, dropdown, clipboard x2, post-gallery.
   PER_POST_BUDGET = 5
 
