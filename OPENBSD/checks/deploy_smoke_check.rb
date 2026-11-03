@@ -119,15 +119,22 @@ def check_apps_production(failures)
     # Fix: /up check was performance theater (matching /upload)
     failures << "#{name}: production.rb missing /up host_authorization exclude" unless text.include?("/up")
     failures << "#{name}: production.rb missing /health host_authorization exclude" unless text.include?("/health")
-
-    # master does not mount the shared engine: its own HealthController answers
-    # /health with TTS, git and container state, which check_master_web and
-    # health_check.rb read, so the shared fleet route is not asked of it.
-    next if name == "master"
-
-    routes = File.join(RAILS_ROOT, name, "config", "routes.rb")
-    failures << "#{name}: routes must load shared fleet health endpoint" if File.file?(routes) && !File.read(routes).include?("fleet.rb")
+    check_fleet_route(failures, name)
   end
+end
+
+# The fleet route draws controllers from the shared engine, so it is asked only
+# of apps whose Gemfile mounts pub4-shared. master's own HealthController answers
+# /health with TTS, git and container state, which check_master_web and
+# health_check.rb read; mrdamascy is standalone and answers /up alone.
+def check_fleet_route(failures, name)
+  gemfile = File.join(RAILS_ROOT, name, "Gemfile")
+  return unless File.file?(gemfile) && File.read(gemfile).include?('gem "pub4-shared"')
+
+  routes = File.join(RAILS_ROOT, name, "config", "routes.rb")
+  return unless File.file?(routes) && !File.read(routes).include?("fleet.rb")
+
+  failures << "#{name}: routes must load shared fleet health endpoint"
 end
 
 def check_master_web(failures)

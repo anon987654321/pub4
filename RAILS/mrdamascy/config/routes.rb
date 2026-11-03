@@ -6,6 +6,9 @@
 # payment lane (Stripe Checkout) mandated for Mr. Damascy — mock stand-in and
 # real webhook, mirroring the vipps/* pair. Everything else is §3 verbatim.
 Rails.application.routes.draw do
+  # Liveness for rc.d/mrdamascy and relayd's backend check on vm23.
+  get "up", to: "rails/health#show", as: :rails_health_check
+
   root "menu#show"
   get "menu", to: "menu#show"
   get "menu/:id", to: "menu#item", as: :menu_item

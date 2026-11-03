@@ -1,12 +1,13 @@
 # Rails apps
 
-**Four Rails apps, one shared engine, and one process that answers to a hundred
+**Five Rails apps, one shared engine, and one process that answers to a hundred
 hostnames, each built so that a stranger on a phone sees a single, quiet product
 and never the machinery beneath it.** brgen is the city network, amber is the
-wardrobe, bsdports is a search of the ports tree, and master is MASTER's face
-on `ai.brgen.no`. They run on SQLite behind
-Falcon, on one box called vm23, and everything they share lives in one engine
-so that a fix made once is made everywhere.
+wardrobe, bsdports is a search of the ports tree, master is MASTER's face
+on `ai.brgen.no`, and mrdamascy is one Bergen kitchen's ordering app. They run
+on SQLite behind Falcon (mrdamascy behind Puma), on one box called vm23, and
+everything the first four share lives in one engine so that a fix made once is
+made everywhere; mrdamascy stands alone and mounts none of it.
 
 This README is the entry to the tree. Feature truth is `apps.yml`, which also
 holds the ports, the domains and the stack versions, so nothing here restates

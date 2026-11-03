@@ -2,6 +2,6 @@
 httpd_flags=
 nsd_flags=
 pf=YES
-pkg_scripts=master brgen amber bsdports brgen_jobs
+pkg_scripts=master brgen amber bsdports mrdamascy brgen_jobs
 relayd_flags=
 sndiod_flags=NO

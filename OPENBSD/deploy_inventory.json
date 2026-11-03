@@ -21,6 +21,11 @@
       "name": "master",
       "domain": "ai.brgen.no",
       "port": 53187
+    },
+    {
+      "name": "mrdamascy",
+      "domain": "mrd.brgen.no",
+      "port": 47314
     }
   ]
 }

@@ -2,7 +2,7 @@
 $ORIGIN brgen.no.
 $TTL 3600
 @ IN SOA ns.brgen.no. hostmaster.brgen.no. (
-    2026102802 1800 900 604800 86400)
+    2026110301 1800 900 604800 86400)
 @ IN NS ns.brgen.no.
 @ IN NS ns.hyp.net.
 @ IN A 46.23.89.226
@@ -14,6 +14,7 @@ dating IN A 46.23.89.226
 maps IN A 46.23.89.226
 markedsplass IN A 46.23.89.226
 messenger IN A 46.23.89.226
+mrd IN A 46.23.89.226
 ns IN A 46.23.89.226
 radio IN A 46.23.89.226
 takeaway IN A 46.23.89.226

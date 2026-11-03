@@ -73,8 +73,15 @@ bin/rails test
 ```
 
 Deployment is owned by `RAILS/mrdamascy/mrdamascy.sh` and the repository's
-OpenBSD deployment contract. The service runs as its own app; do not infer
-production payment readiness from a successful local mock checkout.
+OpenBSD deployment contract (`RAILS/apps.yml` holds the port and domain). The
+app runs as a demo at `https://mrd.brgen.no`: one Puma process on
+`127.0.0.1:47314` behind relayd, payments in mock mode. On vm23, as dev,
+`VPS_DEPLOY_SHA=<sha> zsh OPENBSD/bin/vps-deploy mrdamascy` deploys it and
+`curl -fsS http://127.0.0.1:47314/up` answers once it is up. No deploy seeds:
+the menu was loaded once, and `db/seeds.rb` destroys every row before it
+recreates the menu. Stopping the demo, and removing its route, is
+`OPENBSD/RUNBOOK.md`, "Mr. Damascy demo". Do not infer production payment
+readiness from a successful mock checkout.
 
 ## Product assets and future boundary
 

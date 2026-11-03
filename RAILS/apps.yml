@@ -464,6 +464,7 @@ apps:
 
   mrdamascy:
     title: Mr. Damascy
+    domain: mrd.brgen.no
     brand:
       category: bergen_street_kebab_pwa
       promise: "Fra Damaskus med kjærlighet — grilled in Bergen, ordered in three steps."
@@ -474,8 +475,8 @@ apps:
       experience_principles: [one_kitchen, fewer_steps_than_foodora, tip_goes_to_the_courier, kvartover_honest_portions]
     port: 47314
     stack_now: SQLite3, Rails 8.2.0.alpha, Hotwire, PWA (manifest + service worker + offline), Vipps Express mock + Stripe Checkout
-    stack_later: production Vipps + Stripe live keys, own domain, deploy script and relayd vhost
-    deployed: false
+    stack_later: production Vipps + Stripe live keys and the restaurant's own domain
+    deploy_script: RAILS/mrdamascy/mrdamascy.sh
     deploy_root: RAILS/mrdamascy
     public: true
     promoted: 2026-11-02 — moved out of the retired RAILS/__other/ junk drawer to a first-class app path (migration retained in Git history)
@@ -485,7 +486,8 @@ apps:
         - { name: Two-lane checkout (Vipps Express + Stripe Checkout),            status: done, notes: "payment_method per order; checkout_flow_test, stripe_callback_test, stripe_client_test" }
         - { name: Public order tracking by token,                                 status: done, notes: "token-scoped track/:token + status JSON" }
         - { name: Sahtein-kortet loyalty (10 stars, 10th wrap free),              status: done, notes: "auto-applied at checkout when >= 9 unredeemed stamps" }
-        - { name: Own domain + production deploy lane,                            status: planned, agent: note, notes: "no _mrdamascy.sh, no relayd vhost yet — feature rows above verified against landed tests, the rest awaits the bin/check --tree=RAILS verify pass" }
+        - { name: Demo deploy at mrd.brgen.no, status: done, notes: "one Puma, mock payments; see RUNBOOK" }
+        - { name: Own domain, status: planned, agent: note, notes: "needs a zone, an acme-client block, a keypair" }
 
 archived_subsystems:
   baibl:

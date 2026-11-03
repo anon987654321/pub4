@@ -51,7 +51,7 @@ class VpsDeployContractTest < Minitest::Test
 
   def test_it_rejects_an_unknown_deploy_target
     assert_match(
-      /case \$app in\n\s+all\|master\|brgen\|amber\|bsdports\) ;;.*\n\s+\*\) .*exit 2/,
+      /case \$app in\n\s+all\|master\|brgen\|amber\|bsdports\|mrdamascy\) ;;.*\n\s+\*\) .*exit 2/,
       SOURCE,
       "an arbitrary app name must not reach filesystem, service or deploy-stamp paths"
     )

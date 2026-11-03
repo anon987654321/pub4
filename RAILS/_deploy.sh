@@ -22,7 +22,7 @@ typeset _deploy_sh_dir=${${(%):-%x}:A:h}
 deploy_tracked_app() {
   local app_name=${1:-$APP_NAME}
   case "$app_name" in
-    brgen|amber|bsdports) ;;
+    brgen|amber|bsdports|mrdamascy) ;;
     *) log_err "deploy_tracked_app: refused unknown app: $app_name"; return 2 ;;
   esac
 
@@ -49,12 +49,16 @@ deploy_tracked_app() {
   }
 
   rails_sync_app_tree "$app_name" app
-  rails_sync_app_tree "$app_name" shared
-  if [[ $app_name == brgen ]]; then
-    rails_sync_app_tree "$app_name" verticals
+  # mrdamascy is standalone: its Gemfile names no pub4-shared path gem, and the
+  # shared initializers would load Shared:: constants it never defines.
+  if [[ $app_name != mrdamascy ]]; then
+    rails_sync_app_tree "$app_name" shared
+    if [[ $app_name == brgen ]]; then
+      rails_sync_app_tree "$app_name" verticals
+    fi
+    overlay_shared_initializers "$APP_DIR"
+    overlay_shared_public "$APP_DIR"
   fi
-  overlay_shared_initializers "$APP_DIR"
-  overlay_shared_public "$APP_DIR"
   # The app-user sync preserves log, storage and compiled public/assets in the
   # staged replacement. No root chown of checkout-owned tree content is needed.
 

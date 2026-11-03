@@ -44,7 +44,7 @@ class DnsDelegationTest < Minitest::Test
   def test_every_owned_app_is_covered
     names = apps.map { |app| app["name"] }.sort
 
-    assert_equal %w[amber brgen bsdports master], names,
+    assert_equal %w[amber brgen bsdports master mrdamascy], names,
                  "the app set changed; the delegation check covers whatever is here, so confirm that is intended"
   end
 

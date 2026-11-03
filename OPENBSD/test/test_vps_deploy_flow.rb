@@ -313,14 +313,14 @@ class VpsDeployFlowTest < Minitest::Test
   def test_master_leads_only_when_every_app_is_up_and_memory_allows
     Dir.mktmpdir do |dir|
       out, = order_run(dir, avail: 14)
-      assert_includes out, "ORDER=master brgen amber bsdports"
+      assert_includes out, "ORDER=master brgen mrdamascy amber bsdports"
 
       out, = order_run(dir, avail: 8)
-      assert_includes out, "ORDER=brgen amber bsdports master"
+      assert_includes out, "ORDER=brgen mrdamascy amber bsdports master"
       assert_includes out, "memory availability 8% is under 10%"
 
       out, = order_run(dir, avail: 14, apps_up: false)
-      assert_includes out, "ORDER=brgen amber bsdports master"
+      assert_includes out, "ORDER=brgen mrdamascy amber bsdports master"
       assert_includes out, "is not answering /up"
     end
   end
@@ -328,7 +328,7 @@ class VpsDeployFlowTest < Minitest::Test
   def test_unreadable_memory_is_not_a_licence_to_put_master_first
     Dir.mktmpdir do |dir|
       out, = order_run(dir, avail: nil)
-      assert_includes out, "ORDER=brgen amber bsdports master"
+      assert_includes out, "ORDER=brgen mrdamascy amber bsdports master"
       assert_includes out, "unreadable"
     end
   end

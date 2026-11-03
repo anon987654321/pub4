@@ -1,0 +1,10 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+# mrdamascy is standalone (no pub4-shared), so it runs Rails' own CI runner with
+# its own steps instead of RAILS/__shared/config/ci.rb.
+require_relative "../config/boot"
+require "active_support/continuous_integration"
+
+CI = ActiveSupport::ContinuousIntegration
+require_relative "../config/ci"

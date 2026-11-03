@@ -166,6 +166,7 @@ SSH aliases, host topology and provider access are kept in this runbook so live-
 | brgen · messenger | `https://messenger.brgen.no` |
 | amber | `https://amberapp.art` |
 | bsdports | `https://bsdports.org` |
+| mrdamascy (demo) | `https://mrd.brgen.no` |
 
 The brgen verticals (marketplace/dating/playlist/takeaway/tv/messenger + `maps`)
 are one Rails app served under subdomains via `<brgen>`; relayd already routes
@@ -224,6 +225,55 @@ NXDOMAIN at the registrar or parked at Domeneshop.
 
 TLS terminates at relayd. Rails sets `config.assume_ssl = true`; do not enable
 `force_ssl`.
+
+### Mr. Damascy demo
+
+`https://mrd.brgen.no` serves RAILS/mrdamascy, the restaurant's ordering PWA, as
+a demo for its owner. It is an ordinary inventory app (apps.yml port 47314,
+`rc.d/mrdamascy`, `vps-deploy mrdamascy`) kept deliberately light: one Puma
+process with three threads, SQLite under `/home/mrdamascy/app/storage`, no jobs
+worker (the app enqueues none), and Vipps, Stripe and Wolt in mock mode, so no
+payment key exists on the box. `mrd` is an A record in the brgen.no zone and a
+SAN on the brgen.no certificate; `/etc/ssl/mrd.brgen.no.crt` and
+`/etc/ssl/private/mrd.brgen.no.key` are symlinks to the brgen.no pair, the same
+arrangement as ai.brgen.no. resource_guard does not know it, so it is never shed;
+under pressure the guard sheds bsdports and amber instead.
+
+The menu comes from `db/seeds.rb`, which destroys and recreates every row,
+orders and users included. It ran once at first deploy; a deploy never seeds,
+so run it again only to reset the demo:
+
+```zsh
+doas /usr/local/sbin/pub4-admin rails-task mrdamascy db-seed
+```
+
+**Stop the demo** (reversible; the tree, database and certificate stay):
+
+```zsh
+doas rcctl stop mrdamascy
+doas rcctl disable mrdamascy
+```
+
+`disable` takes it out of `pkg_scripts`, so a reboot does not start it.
+
+relayd then marks `<mrdamascy>` down and mrd.brgen.no answers TLS with an empty
+reply. Start it again with `doas rcctl enable mrdamascy && doas rcctl start mrdamascy`.
+
+**Remove the route as well**, so mrd.brgen.no stops terminating at all. Every
+mrdamascy line in relayd.conf names `mrdamascy` or `mrd.brgen.no`:
+
+```zsh
+doas cp -p /etc/relayd.conf /etc/relayd.conf.$(date +%Y%m%d%H%M)
+doas ruby34 -e 'f = "/etc/relayd.conf"; File.write(f, File.readlines(f).reject { |l| l.match?(/mrdamascy|mrd\.brgen\.no/) }.join)'
+doas relayd -n -f /etc/relayd.conf && doas rcctl restart relayd
+```
+
+Then in the repo: put `deployed: false` back on mrdamascy in RAILS/apps.yml
+(drop its `domain` and `deploy_script`), run `ruby OPENBSD/bin/sync_deploy_inventory.rb`,
+take `mrd` out of `extra_hosts` and `cert_extra_names` in `OPENBSD/data/dns.yml`,
+run `ruby OPENBSD/bin/render_dns.rb`, and remove the same lines from
+`OPENBSD/etc/relayd.conf`, so the tree matches the box. The DNS record and the
+SAN can stay until the next certificate renewal; neither serves anything.
 
 ## Agent contract
 

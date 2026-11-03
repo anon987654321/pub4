@@ -379,9 +379,15 @@ module Deploy
 
       actual = match[:apps].scan(/"([^"]+)"/).flatten.sort
       # master serves its own public/sw.js, which owns the face's boot and offline
-      # contract; the shared Workbox worker is built for the engine-mounting apps.
-      expected = apps.map(&:name).reject { |name| name == "master" }.sort
+      # contract, and mrdamascy its own service-worker.js; the shared Workbox worker
+      # is built for the apps whose Gemfile mounts pub4-shared.
+      expected = apps.select { |app| mounts_shared_engine?(app) }.map(&:name).sort
       result.fail("Workbox APPS must mirror RAILS/apps.yml active apps") unless actual == expected
+    end
+
+    def mounts_shared_engine?(app)
+      gemfile = File.join(ROOT, app.deploy_root, "Gemfile")
+      File.file?(gemfile) && File.read(gemfile, encoding: "UTF-8").include?('gem "pub4-shared"')
     end
 
     def check_readmes(result, apps)

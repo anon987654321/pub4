@@ -59,6 +59,14 @@ apps:
         - type: selector
           id: main-content
 
+  mrdamascy:
+    port: 47314
+    paths:
+      - path: /up
+        expect_status: 200
+      - path: /
+        expect_status: 200
+
   bsdports:
     port: 47312
     paths:

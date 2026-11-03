@@ -1,0 +1,123 @@
+#!/bin/ksh
+# mrdamascy — the Mr. Damascy ordering PWA, served as the mrd.brgen.no demo.
+# One Puma process (no cluster workers), three threads, nothing else resident:
+# the app enqueues no jobs, so there is no mrdamascy_jobs and no Solid Queue
+# supervisor in this process. Vipps, Stripe and Wolt run in their mock modes
+# (each client is mock unless its *_MOCK variable is "0"), so no payment key is
+# needed or read. To take the demo down see OPENBSD/RUNBOOK.md, "Mr. Damascy demo".
+#
+# Same PATH reason as rc.d/bsdports: rc_pre and the post-start block run curl
+# from /usr/local/bin, which root cron does not have.
+export PATH=/usr/local/bin:/usr/local/sbin:/usr/bin:/usr/sbin:/bin:/sbin
+PORT=47314
+APP_DIR=/home/mrdamascy/app
+# /etc/mrdamascy.env (root:mrdamascy 640) holds SECRET_KEY_BASE; pub4-admin
+# ensure-secret writes it on the first deploy. It is sourced inside the exec by
+# the app user, never interpolated into daemon_flags, so the secret stays out
+# of ps argv.
+[[ -r /etc/mrdamascy.env ]] && . /etc/mrdamascy.env
+: "${SECRET_KEY_BASE:?missing SECRET_KEY_BASE in /etc/mrdamascy.env}"
+daemon="/bin/ksh"
+for _bundle in /usr/local/bin/bundle4.0 /usr/local/bin/bundle40 /usr/local/bin/bundle3.4 \
+    /usr/local/bin/bundle34 /usr/local/bin/bundle3.3 /usr/local/bin/bundle33 /usr/local/bin/bundle; do
+  if [[ -x $_bundle ]]; then break; fi
+done
+# The -b bind replaces the one config/puma.rb takes from PORT, so the listener is
+# loopback only and relayd is the one public door. RAILS_MAX_THREADS sizes both
+# Puma and the SQLite pool.
+_env="RUBY_YJIT_ENABLE=0 RAILS_ENV=production HOME=/home/mrdamascy PORT=${PORT} WEB_CONCURRENCY=1"
+_env="${_env} RAILS_MAX_THREADS=3 RAILS_MIN_THREADS=1 MRDAMASCY_HOST=mrd.brgen.no BUNDLE_VERSION=system"
+_exec="exec ${_bundle} exec puma -b tcp://127.0.0.1:${PORT}"
+daemon_flags="-c 'cd ${APP_DIR} && set -a && . /etc/mrdamascy.env && set +a && export ${_env} && ${_exec}'"
+daemon_user="mrdamascy"
+daemon_execdir="/home/mrdamascy/app"
+daemon_logger="daemon.notice"
+daemon_timeout="120"
+. /etc/rc.d/rc.subr
+# rc.subr matches pexp with pgrep -xf, the whole argv, which reads
+# "ruby34 .../bundle34 exec puma -b ..." while booting and Puma's retitled
+# "ruby34: puma 8.x (tcp://127.0.0.1:47314) [app]" after; both end past the port.
+pexp="ruby[0-9.]*.*puma.*${PORT}.*"
+rc_bg=YES
+rc_reload=NO
+
+# port holders: begin
+# The pkills match falcon by its argv, so a process bound to the port under any
+# other name (a worker that retitled itself, a hand-started server, a test run)
+# survives them, the next falcon dies on EADDRINUSE, and rc reports a start that
+# never serves. fstat(1) names every process with a socket on the port whatever
+# its argv. Its socket lines read USER CMD PID FD internet stream tcp ADDR
+# LOCAL [ARROW PEER]; a listener is the line with no peer, which leaves relayd's
+# connections to the port and the app's accepted ones alone.
+port_holders() {
+  fstat 2>/dev/null | while read -r _u _c _pid _fd _kind _type _proto _addr _local _rest; do
+    [[ $_kind == internet || $_kind == internet6 ]] || continue
+    [[ $_proto == tcp && -z $_rest ]] || continue
+    [[ $_local == *:"$PORT" ]] && print -n -- "$_pid "
+  done
+}
+
+# Sends signal $1 to every holder, one pid at a time.
+signal_holders() {
+  for _p in $(port_holders); do
+    kill "-$1" "$_p" 2>/dev/null
+  done
+}
+
+# TERM whatever still holds the port, KILL it after the grace period, and fail
+# when the port is still held, so the start is refused with the reason logged.
+free_port() {
+  _holders=$(port_holders)
+  [[ -n $_holders ]] || return 0
+  logger -t "$PORT_OWNER" "stale :${PORT} holder(s) ${_holders% } before start, TERM"
+  signal_holders TERM
+  _w=0
+  while [[ -n $(port_holders) ]] && (( _w < ${PORT_GRACE:-20} )); do
+    sleep 1
+    _w=$((_w + 1))
+  done
+  _holders=$(port_holders)
+  [[ -n $_holders ]] || return 0
+  logger -t "$PORT_OWNER" "stale :${PORT} holder(s) ${_holders% } survived TERM, KILL"
+  signal_holders KILL
+  sleep 1
+  [[ -z $(port_holders) ]] && return 0
+  logger -t "$PORT_OWNER" "CRITICAL: :${PORT} still held after TERM and KILL, refusing to start"
+  return 1
+}
+# port holders: end
+
+rc_pre() {
+  touch /home/dev/pub4/.deploying-mrdamascy 2>/dev/null || true
+  pkill -f "puma.*${PORT}" 2>/dev/null || true
+  sleep 1
+  PORT_OWNER=mrdamascy
+  free_port || { rm -f /home/dev/pub4/.deploying-mrdamascy 2>/dev/null; return 1; }
+}
+
+rc_cmd $1
+rc=$?
+if [[ "$1" = "start" ]] || [[ "$1" = "restart" ]]; then
+  if [[ "$rc" = "0" ]]; then
+    # relayd can keep routing to the old (now-dead) backend connection after a
+    # restart until it's kicked — same fix already used by MASTER's rc.d script.
+    _i=0
+    _up_ok=0
+    while [[ "$_i" -lt 300 ]]; do
+      curl -fsS -m 5 "http://127.0.0.1:${PORT}/up" >/dev/null 2>&1 && { _up_ok=1; break; }
+      sleep 1
+      _i=$((_i + 1))
+    done
+    if [[ "$_up_ok" = "1" ]]; then
+      rcctl restart relayd 2>/dev/null || true
+    else
+      logger -t mrdamascy "relayd skipped: /up not ready after restart"
+    fi
+  fi
+fi
+# rc_pre touched the deploy flag; it comes off here, after the /up wait, so the
+# cold boot is inside the window resource_guard reads it for.
+if [[ "$1" = "start" ]] || [[ "$1" = "restart" ]]; then
+  rm -f /home/dev/pub4/.deploying-mrdamascy 2>/dev/null || true
+fi
+exit $rc

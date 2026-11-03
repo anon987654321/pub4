@@ -158,7 +158,7 @@ if File.file?(admin_path) && !File.symlink?(admin_path)
                     admin.include?("SERVICES")
   failures << "pub4-admin must be a fixed-path closed broker" unless broker_contract
   task_app_scope = admin.include?("known_apps = helper == RAILS_TASK ? RAILS_TASK_APPS : RAILS_APPS") &&
-                   admin.include?("RAILS_TASK_APPS = %w[master brgen amber bsdports].freeze")
+                   admin.include?("RAILS_TASK_APPS = %w[master brgen amber bsdports mrdamascy].freeze")
   failures << "pub4-admin must validate each helper against its own app allowlist" unless task_app_scope
   fixed_spawn = 'Process.spawn(environment, "/bin/ksh", helper, *arguments, pgroup: true, unsetenv_others: true)'
   safe_spawn = admin.include?(fixed_spawn) &&
@@ -450,11 +450,11 @@ install_all_source = File.read(File.join(OPENBSD, "bin", "vps_install_all.sh"))
 
 install_all_contract = install_all_source.include?("admin_service() {") &&
                        install_all_source.include?('case "$action" in check|start|stop|restart)') &&
-                       install_all_source.include?('case "$service" in master|brgen|amber|bsdports)') &&
+                       install_all_source.include?('case "$service" in master|brgen|amber|bsdports|mrdamascy)') &&
                        install_all_source.include?('doas /usr/local/sbin/pub4-admin service "$action" "$service"') &&
                        install_all_source.include?('doas rcctl "$action" "$service"') &&
                        install_all_source.include?("Bootstrap fallback only") &&
-                       install_all_source.include?('case "$app" in brgen|amber|bsdports)')
+                       install_all_source.match?(/case "\$app" in\s+brgen\|amber\|bsdports\|mrdamascy\)/)
 
 failures << "vps_install_all service control must be broker-first and app-allowlisted" unless install_all_contract
 deploy_all_source = File.read(File.join(OPENBSD, "bin", "deploy_all.sh"))

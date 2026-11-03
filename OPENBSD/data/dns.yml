@@ -118,3 +118,12 @@ extra_records:
 extra_hosts:
   brgen.no:
     - ns
+    # The Mr. Damascy demo (RAILS/mrdamascy), served until the restaurant has a
+    # domain of its own; cert_extra_names puts it on the brgen.no certificate.
+    - mrd
+
+# Names under a city apex that its certificate must cover and that are not
+# verticals: render_dns.rb adds each as <name>.<apex> to that acme-client block.
+cert_extra_names:
+  brgen.no:
+    - mrd

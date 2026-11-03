@@ -1467,3 +1467,28 @@ flows:
         asset: true
         expect_status: [401]
         expect_body: ['unlock denied']
+
+  - id: mrdamascy_quick_add_fills_the_cart
+    app: mrdamascy
+    mutates: true
+    description: A stranger's quick add from the menu puts a line in the cart, which starts empty.
+    requires_data: [item_id]
+    steps:
+      - name: empty_cart
+        get: /cart
+        expect_status: [200]
+        count: { pattern: 'class="cart-line card"', as: before }
+      - name: menu
+        get: /
+        expect_status: [200]
+        capture: [{ pattern: 'name="menu_item_id" value="(\d+)"', as: item_id }]
+      - name: quick_add
+        post: /cart/add_item
+        needs: [item_id]
+        params: { menu_item_id: "$item_id", quantity: "1" }
+        expect_status: [200]
+        expect_final_path: /cart
+        count: { pattern: 'class="cart-line card"', as: after }
+    assert:
+      - { left: before, op: "==", right: 0, why: "a new visitor's cart is empty" }
+      - { left: after, op: ">", right: before, why: "quick add writes a cart line" }

@@ -541,6 +541,7 @@ typeset -A APP_PORTS=(
   brgen 38182
   amber 61352
   bsdports 47312
+  mrdamascy 47314
   master 53187
 )
 typeset -A FAILED_CERTS
@@ -552,6 +553,7 @@ ALL_APPS=(
   brgen:brgen.no
   amber:amberapp.art
   bsdports:bsdports.org
+  mrdamascy:mrd.brgen.no
 )
 
 SERVICES=()

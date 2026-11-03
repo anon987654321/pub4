@@ -22,7 +22,7 @@ log() { printf '[%s] %s\n' "$(date +%H:%M:%S)" "$*" }
 admin_service() {
   local action=${1:-} service=${2:-}
   case "$action" in check|start|stop|restart) ;; *) log "ERR: refused service action: $action"; return 2 ;; esac
-  case "$service" in master|brgen|amber|bsdports) ;; *) log "ERR: refused service: $service"; return 2 ;; esac
+  case "$service" in master|brgen|amber|bsdports|mrdamascy) ;; *) log "ERR: refused service: $service"; return 2 ;; esac
   if [[ -L /usr/local/sbin/pub4-admin ]]; then
     log "ERR: pub4-admin is a symlink; refusing service control"
     return 1
@@ -74,7 +74,10 @@ APPS=(${(f)"$("$RUBY" -r"${PUB4}/OPENBSD/lib/deploy_inventory" \
 # RAILS/master, and it has no <app>.sh copy-tree script to run here.
 for app in $APPS; do
   [[ $app == master ]] && continue
-  case "$app" in brgen|amber|bsdports) ;; *) log "ERR: refused app from apps.yml: $app"; failed=$((failed + 1)); continue ;; esac
+  case "$app" in
+    brgen|amber|bsdports|mrdamascy) ;;
+    *) log "ERR: refused app from apps.yml: $app"; failed=$((failed + 1)); continue ;;
+  esac
   typeset script="${PUB4}/RAILS/${app}/${app}.sh"
   log "=== Rails: ${app} ==="
   if [[ ! -f $script ]]; then

@@ -6,7 +6,7 @@
 .Nd deploy approved pub4 services to the production VPS
 .Sh SYNOPSIS
 .Nm
-.Cm all | master | brgen | amber | bsdports
+.Cm all | master | brgen | amber | bsdports | mrdamascy
 .Sh DESCRIPTION
 .Nm
 is the serialized production deploy entry point at
@@ -48,8 +48,9 @@ The accepted targets are
 .Cm master ,
 .Cm brgen ,
 .Cm amber ,
+.Cm bsdports ,
 and
-.Cm bsdports .
+.Cm mrdamascy .
 Unknown targets are refused before deployment.
 .Sh ENVIRONMENT
 .Bl -tag -width "VPS_DEPLOY_PREFLIGHT_SHA"

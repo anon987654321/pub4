@@ -1,6 +1,6 @@
 #!/usr/bin/env zsh
 # Serial VPS deploy entrypoint — sync, CI, restart, health, deploy stamp.
-# Usage: zsh OPENBSD/bin/vps-deploy all|brgen|amber|bsdports|master
+# Usage: zsh OPENBSD/bin/vps-deploy all|brgen|amber|bsdports|mrdamascy|master
 set -euo pipefail
 
 # SSH executes this as a non-login shell on vm23; pin the OpenBSD package path.
@@ -88,8 +88,8 @@ app=${1:-}
 [[ -n $app ]] || { usage >&2; exit 2 }
 
 case $app in
-  all|master|brgen|amber|bsdports) ;;
-  *) print -u2 "vps-deploy: unknown app \"$app\" — allowed: all, master, brgen, amber, bsdports"; exit 2 ;;
+  all|master|brgen|amber|bsdports|mrdamascy) ;;
+  *) print -u2 "vps-deploy: unknown app \"$app\" — allowed: all, master, brgen, amber, bsdports, mrdamascy"; exit 2 ;;
 esac
 
 # Environment values below participate in shell arithmetic and bounded waits.
@@ -667,14 +667,14 @@ fi
 # last folds the restore into the same pass instead of leaving a window where
 # they are down and nobody is looking. master leads because it is independent of
 # the Rails apps and is the one that gets forgotten.
-DEPLOY_ALL=(master brgen amber bsdports)
+DEPLOY_ALL=(master brgen mrdamascy amber bsdports)
 
 # master leads only when the box can take it: every app that was started is
 # answering /up and memory availability (the last resource_guard tick) is at or
 # above VPS_DEPLOY_MASTER_MIN_AVAIL percent. Otherwise the apps go first and master
 # last, so a master failure halts a pass whose apps are already deployed and up
 # instead of one that has shed them. The restore in the exit trap covers either order.
-DEPLOY_ALL_DEGRADED=(brgen amber bsdports master)
+DEPLOY_ALL_DEGRADED=(brgen mrdamascy amber bsdports master)
 choose_deploy_order() {
   local svc port avail why=
   load_deploy_ports

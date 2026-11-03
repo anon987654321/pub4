@@ -34,10 +34,15 @@ Rails.application.configure do
   config.active_job.queue_adapter = :solid_queue
   config.solid_queue.connects_to = { database: { writing: :queue } }
 
-  # Assume all access to the app is happening through an SSL-terminating reverse
-  # proxy; whether the proxy forces https itself is a deployment question.
+  # relayd terminates TLS on vm23 and serves only port 443, so every request is
+  # https already. assume_ssl makes Rails believe it; force_ssl would add a
+  # second HSTS header beside relayd's and redirect its plain-http /up probe.
   config.assume_ssl = true
-  config.force_ssl = true
+
+  # The demo host. /up and /health answer any Host, so rc.d and relayd can probe
+  # the loopback without one.
+  config.hosts = [ "mrd.brgen.no" ]
+  config.host_authorization = { exclude: ->(request) { %w[/up /health].include?(request.path) } }
 
   # Log to STDOUT by default, tagged with the request id so interleaved
   # requests stay readable.
@@ -54,7 +59,7 @@ Rails.application.configure do
 
   # Mail: links generated from one host, delivery errors are loud.
   config.action_mailer.raise_delivery_errors = true
-  config.action_mailer.default_url_options = { host: ENV.fetch("MRDAMASCY_HOST", "localhost"), protocol: "https" }
+  config.action_mailer.default_url_options = { host: ENV.fetch("MRDAMASCY_HOST", "mrd.brgen.no"), protocol: "https" }
 
   # No blanket `config.i18n.fallbacks = true` here: environment config loads
   # after application.rb, and a blanket true would silently overwrite this

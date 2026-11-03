@@ -238,7 +238,7 @@ class Pub4AdminTest < Minitest::Test
   def test_rails_task_uses_its_own_app_allowlist
     source = File.read(File.expand_path("../usr/local/sbin/pub4-admin", __dir__))
     assert_includes source, "known_apps = helper == RAILS_TASK ? RAILS_TASK_APPS : RAILS_APPS"
-    assert_includes source, "RAILS_TASK_APPS = %w[master brgen amber bsdports].freeze"
+    assert_includes source, "RAILS_TASK_APPS = %w[master brgen amber bsdports mrdamascy].freeze"
   end
   def test_npm_cache_task_is_app_owned_and_symlink_safe
     broker = File.read(File.expand_path("../usr/local/sbin/pub4-admin", __dir__))
@@ -305,7 +305,7 @@ class Pub4AdminTest < Minitest::Test
     helper = File.read(File.expand_path("../usr/local/libexec/rails-task.ksh", __dir__))
     assert_includes source, 'args[0] == "rails-task" && RAILS_TASK_APPS.include?(args[1])'
     assert_includes source, 'args[0] == "ensure-secret" && APPS.include?(args[1])'
-    assert_includes source, "RAILS_TASK_APPS = %w[master brgen amber bsdports].freeze"
+    assert_includes source, "RAILS_TASK_APPS = %w[master brgen amber bsdports mrdamascy].freeze"
     assert_includes helper, "master|brgen|amber|bsdports"
     assert_includes helper, "rails-task: /home must be a real root-owned directory"
     assert_includes helper, "app .bundle must be a real app-owned directory"

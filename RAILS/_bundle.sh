@@ -48,7 +48,7 @@ bundle_cas_root() {
 
 bundle_cas_prepare() {
   local app_name=$1 app_dir=$2
-  [[ $app_name == brgen || $app_name == amber || $app_name == bsdports ]] || {
+  [[ $app_name == brgen || $app_name == amber || $app_name == bsdports || $app_name == mrdamascy ]] || {
     log_err "bundle_cas_prepare: refused app: $app_name"
     return 2
   }
@@ -67,7 +67,7 @@ bundle_cas_prepare() {
 
 bundle_cas_capture() {
   local app_name=$1 app_dir=$2
-  [[ $app_name == brgen || $app_name == amber || $app_name == bsdports ]] || {
+  [[ $app_name == brgen || $app_name == amber || $app_name == bsdports || $app_name == mrdamascy ]] || {
     log_err "bundle_cas_capture: refused app: $app_name"
     return 2
   }
