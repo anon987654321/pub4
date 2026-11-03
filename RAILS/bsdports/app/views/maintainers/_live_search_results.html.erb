@@ -8,7 +8,7 @@
  <li>
  <%= link_to maintainer.name, maintainer_path(maintainer) %>
  <% if maintainer.email.present? %><%= tag.small maintainer.email %><% end %>
- <small>(<%= maintainer.ports.size %> ports)</small>
+ <%= tag.small t("ports.port_count", count: maintainer.ports.size) %>
  </li>
  <% end %>
 </ul>

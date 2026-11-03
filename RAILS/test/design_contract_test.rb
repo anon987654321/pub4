@@ -125,7 +125,7 @@ def test_bsdports_primary_nav_rules_target_the_rendered_landmark
                  "mobile clearance must match two 44px rows, their gap, vertical nav padding, notch and one spacing step")
     assert_match(/body\s*\{[^}]*padding-block-start:\s*calc\(var\(--nav-swiper-h\)\s*\+\s*var\(--space-1\)\)/m, pages_css,
                  "wide clearance must cover one row and the top safe area")
-    assert_match(/nav\[data-pwa-primary-nav\]\s+a\[aria-current="page"\]/, layout_css)
+    assert_match(/nav\[data-pwa-primary-nav\]\s+a\[aria-current\]/, layout_css)
     assert_match(/nav\[data-pwa-primary-nav\]\s*\{[^}]*flex-wrap:\s*nowrap/m, pages_css)
     refute_match(/nav\[data-pwa-primary-nav\]\s*\{[^}]*transform:\s*translateY\(0\)/m, layout_css,
                  "shared chrome must retain ownership of scroll-away visibility")

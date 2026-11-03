@@ -15,9 +15,18 @@
   <% end %>
   <dl>
     <%= tag.dt t("ports.exact_identity") %><dd><code><%= @port.pkgpath %>@<%= @port.version %></code></dd>
-    <%= tag.dt t("ports.platform") %><dd><code><%= @port.platform.name %></code> · <%= t("ports.platform_unknown") %></dd>
+    <%= tag.dt t("ports.platform") %>
+    <%= tag.dd tag.code(@port.platform.name) %>
+    <%= tag.dd t("ports.platform_unknown"), class: "data-state" %>
     <%= tag.dt t("ports.maintainer") %><dd><% if @maintainer %><%= link_to @maintainer.name, maintainer_path(@maintainer) %><% else %><span class="data-state"><%= @port[:maintainer].presence || t("ports.unknown") %></span><% end %></dd>
-    <%= tag.dt t("ports.local_install") %><%= tag.dd @pkg_info.present? ? t("ports.installed", info: @pkg_info) : t("ports.not_installed") %>
+    <%# nil means pkg_info could not be asked (CI, or a host that is not OpenBSD);
+        that is unknown, not "installed (pkg_info not available)". %>
+    <%= tag.dt t("ports.local_install") %>
+    <% if @pkg_info.nil? %>
+      <%= tag.dd t("ports.unknown"), class: "data-state" %>
+    <% else %>
+      <%= tag.dd @pkg_info.present? ? t("ports.installed", info: @pkg_info) : t("ports.not_installed") %>
+    <% end %>
     <%= tag.dt t("ports.pkgpath") %><dd><code><%= @port.pkgpath %></code></dd>
     <% if @port.homepage.present? %><%= tag.dt t("ports.homepage") %><dd><% if @port.homepage.match?(/\Ahttps?:\/\//i) %><%= link_to @port.homepage, @port.homepage, rel: "nofollow noopener noreferrer" %><% else %><%= @port.homepage %><% end %></dd><% end %>
     <% update_age = @port.last_updated && (Date.current - @port.last_updated).to_i %>

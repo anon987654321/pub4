@@ -63,9 +63,13 @@
 <nav class="nav-visible" data-pwa-primary-nav data-turbo-permanent aria-label="<%= t("nav.primary_nav") %>">
   <%# The wordmark is shared/_brand_mark, fixed top-left above this nav. A
       second copy inside the nav was the same link twice, 9px apart. %>
-  <%= link_to t("nav.ports"), ports_path, aria: { current: current_page?(ports_path) ? "page" : nil } %>
-  <%= link_to t("nav.categories"), categories_path, aria: { current: current_page?(categories_path) ? "page" : nil } %>
-  <%= link_to t("nav.maintainers"), maintainers_path, aria: { current: current_page?(maintainers_path) ? "page" : nil } %>
+  <%# The section, not the exact URL: "/" is the ports index and a port page is
+      inside Ports, and current_page?(ports_path) marked neither. "page" on the
+      index, "true" (current section) below it. %>
+  <% section_current = ->(name) { controller_name == name ? (action_name == "index" ? "page" : "true") : nil } %>
+  <%= link_to t("nav.ports"), ports_path, aria: { current: section_current.("ports") } %>
+  <%= link_to t("nav.categories"), categories_path, aria: { current: section_current.("categories") } %>
+  <%= link_to t("nav.maintainers"), maintainers_path, aria: { current: section_current.("maintainers") } %>
   <div class="nav-actions">
     <% if authenticated? %>
       <%= render "shared/inbox_link" %>

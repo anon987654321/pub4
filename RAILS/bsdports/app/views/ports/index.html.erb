@@ -9,7 +9,38 @@
   <nav role="navigation" aria-label="<%= t("nav.ports") %>">
     <%= link_to t("ports.rss_link"), ports_path(format: :rss) %>
   </nav>
-  <div><%= live_search_index url: ports_path, results_partial: "ports/live_search_results", placeholder: t("ports.search_placeholder"), label: t("ports.search_label"), frame_id: "bsdports-ports" %></div> <%# scan: intentional — the search slot in the header row %>
+  <%# The import date and the sort order belong above the list they describe.
+      live_search_index renders the result list itself, so anything after it sat
+      below an infinite scroll where nobody reached it. %>
+  <% unless @catalog_empty %>
+    <%# A ports tree with no date is a ports tree nobody can trust. %>
+    <p>
+      <% if @last_import %>
+        <%= t("ports.last_import",
+              status: @last_import.status,
+              count: @last_import.ports_count.to_i,
+              when: time_ago_in_words(@last_import.started_at)) %>
+      <% else %>
+        <%= t("ports.never_imported") %>
+      <% end %>
+    </p>
+
+    <%# sort=updated was written in the controller and reachable only by typing the
+        query string. Name is the implicit default, so both are named here. The
+        first chip read "OpenBSD ports", the page title, which named no order. %>
+    <% by_updated = params[:sort] == "updated" %>
+    <nav class="sort-order" role="navigation" aria-label="<%= t("ports.sort_label") %>">
+      <%= link_to t("ports.sort_name"), ports_path(category_id: params[:category_id]),
+                  class: "chip", aria: { current: by_updated ? nil : "true" } %>
+      <%= link_to t("ports.updated"), ports_path(category_id: params[:category_id], sort: "updated"),
+                  class: "chip", aria: { current: by_updated ? "true" : nil } %>
+    </nav>
+  <% end %>
+  <%= live_search_index url: ports_path,
+                        results_partial: "ports/live_search_results",
+                        placeholder: t("ports.search_placeholder"),
+                        label: t("ports.search_label"),
+                        frame_id: "bsdports-ports" %>
 </header>
 
 <%# An empty tree and a quiet tree look identical once the category list renders
@@ -20,27 +51,6 @@
     <%= tag.p t("ports.empty_unimported") %>
   </section>
 <% else %>
-  <%# A ports tree with no date is a ports tree nobody can trust. %>
-  <p>
-    <% if @last_import %>
-      <%= t("ports.last_import",
-            status: @last_import.status,
-            count: @last_import.ports_count.to_i,
-            when: time_ago_in_words(@last_import.started_at)) %>
-    <% else %>
-      <%= t("ports.never_imported") %>
-    <% end %>
-  </p>
-
-  <%# sort=updated was written in the controller and reachable only by typing the
-      query string. Name is the implicit default, so both are named here. %>
-  <nav role="navigation" aria-label="<%= t("ports.list_label") %>">
-    <%= link_to t("pages.ports"), ports_path(category_id: params[:category_id]),
-                class: "chip#{' active' if params[:sort] != 'updated'}" %>
-    <%= link_to t("ports.updated"), ports_path(category_id: params[:category_id], sort: "updated"),
-                class: "chip#{' active' if params[:sort] == 'updated'}" %>
-  </nav>
-
   <% if @categories&.any? %>
     <section class="categories" aria-label="<%= t("ports.categories_section_label") %>">
       <h2><%= t("ports.categories") %></h2>

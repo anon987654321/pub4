@@ -61,16 +61,7 @@ class PortsController < ApplicationController
     @dependency_tree = Dependency.tree_for(@port)
     @dependency_graph = Dependency.graph_for(@port)
     @explore_summary = Ports::ExploreAssistant.summarize(@port)
-    @pkg_info = if ENV["CI"] == "1" || Rails.env.test?
-      "(pkg_info skipped in CI)"
-    else
-      begin
-        out, = Open3.capture2e("pkg_info", "-q", @port.name)
-        out.strip
-      rescue StandardError
-        "(pkg_info not available in this env)"
-      end
-    end
+    @pkg_info = local_pkg_info
   end
 
   def watch
@@ -135,6 +126,20 @@ class PortsController < ApplicationController
   end
 
   private
+
+  # What pkg_info says about this port on this host. nil means it could not be
+  # asked (CI, test, a host without pkg_info) and the view says unknown rather
+  # than printing a placeholder inside "installed (%{info})". A non-zero exit
+  # means not installed; its message is not installation info.
+  def local_pkg_info
+    return if ENV["CI"] == "1" || Rails.env.test?
+
+    out, status = Open3.capture2e("pkg_info", "-q", @port.name)
+    status.success? ? out.strip : ""
+  rescue SystemCallError => e
+    Rails.logger.info("pkg_info unavailable: #{e.class}")
+    nil
+  end
 
   def nvd_operator?
     configured_email = ENV["BSDPORTS_ADMIN_EMAIL"].to_s.strip

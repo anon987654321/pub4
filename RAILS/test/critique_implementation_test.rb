@@ -677,7 +677,7 @@ class CritiqueImplementationTest < Minitest::Test
     assert_localised "bsdports", "ports/index.html.erb", "ports.purpose",
                      "Answer three questions quickly: what package is this, can this machine install it, and what does the local advisory index know?"
     assert_localised "bsdports", "ports/show.html.erb", "ports.platform_unknown",
-                     "branch unknown · architecture unknown"
+                     "branch and architecture unknown"
     assert_localised "bsdports", "ports/show.html.erb", "ports.advisories_none",
                      "Unknown: no advisories are linked in this local index. This is not the same as a verified clean security record."
     assert_localised "bsdports", "ports/show.html.erb", "ports.requires",

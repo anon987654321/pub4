@@ -329,7 +329,7 @@ module Operator
 #   dating-intro total amber-page-header item-detail-grid site-legal-footer
 #   system-signal welcome-onboarding--amber star field_with_errors nav
 #   toast--success tooltip toggle
-    BASELINES = { "undefined_class" => 0, "unused_selector" => 112 }.freeze
+    BASELINES = { "undefined_class" => 0, "unused_selector" => 110 }.freeze
 
     Finding = Struct.new(:kind, :name, :count, :example)
 
