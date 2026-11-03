@@ -33,21 +33,18 @@
           <% if item.listing.one_of_a_kind? %>
             <div><%= item.listing.price_display %> × <%= item.quantity || 1 %></div> <%# scan: intentional — a line of text inside the item block %>
           <% else %>
-            <%= form_with url: cart_item_path(item), method: :patch, class: "cluster" do |f| %>
+            <%= form_with url: cart_item_path(item), method: :patch, class: "cart-quantity" do |f| %>
               <span><%= item.listing.price_display %> ×</span>
               <%= f.number_field :quantity, value: item.quantity || 1, min: 1, max: item.listing.available_quantity,
                     inputmode: "numeric", aria: { label: t("marketplace.order_quantity") } %>
-              <%= f.submit t("marketplace.update_quantity"), class: "button button-ghost button-small" %>
+              <%= f.submit t("marketplace.update_quantity"), class: "button button-ghost" %>
             <% end %>
           <% end %>
         </div>
         <div class="cart-item-sum">
           <%= tag.strong item.total_display, class: "deal-price", data: { money: true } %>
-          <div class="cluster">
-            <%# destructive: no-confirm-ok — a cart line comes back by adding the listing again %>
-            <%= button_to t("actions.remove"), cart_item_path(item),
-                  method: :delete, class: "button button-ghost button-small" %>
-          </div>
+          <%# destructive: no-confirm-ok — a cart line comes back by adding the listing again %>
+          <%= button_to t("actions.remove"), cart_item_path(item), method: :delete, class: "button button-ghost" %>
         </div>
       </article>
     <% end %>
@@ -62,10 +59,10 @@
     <div class="cart-address">
       <% if @delivery_address %>
         <p><%= tag.strong t("marketplace.deliver_to") %> <%= @delivery_address %></p>
-        <%= link_to t("marketplace.change_address"), addresses_path, class: "button button-ghost button-small" %>
+        <%= link_to t("marketplace.change_address"), addresses_path, class: "button button-ghost" %>
       <% else %>
         <p><%= t("marketplace.no_address_yet") %></p>
-        <%= link_to t("marketplace.add_address"), addresses_path, class: "button button-small" %>
+        <%= link_to t("marketplace.add_address"), addresses_path, class: "button" %>
       <% end %>
     </div>
 
@@ -101,14 +98,14 @@
         <% end %>
       </div>
     <% else %>
-      <p class="hint mt-8" role="status"><%= t("marketplace.cart_pay_unavailable") %></p>
+      <%= tag.p t("marketplace.cart_pay_unavailable"), class: "hint", role: "status" %>
     <% end %>
-    <p class="hint mt-8"><%= t("marketplace.cart_honest_pay") %></p>
+    <%= tag.p t("marketplace.cart_honest_pay"), class: "hint" %>
 
     <%= button_to t("marketplace.send_all_offers"), send_offers_cart_path,
           method: :post, class: "button button-ghost",
           data: { turbo_confirm: t("marketplace.send_offers_confirm") } %>
-    <p class="hint mt-8"><%= t("marketplace.cart_sellers_hint") %></p>
+    <%= tag.p t("marketplace.cart_sellers_hint"), class: "hint" %>
   </aside>
   </div>
 <% else %>

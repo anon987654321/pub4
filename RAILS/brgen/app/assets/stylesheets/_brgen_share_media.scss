@@ -243,6 +243,10 @@ label.field--check-label > input { min-height: var(--tap-min); min-width: var(--
 .tv-media-image { width: 100%; max-height: 420px; object-fit: cover; display: block; }
 .affiliate-fine { font-size: var(--text-extra-small); margin-top: var(--space-2); }
 .link-inherit { color: inherit; }
+/* A name on a card and the compose dialog's way out are links that keep the
+   ink around them; the place says so, not a class on the link. */
+.feed-card-name a,
+.compose-hint a { color: inherit; }
 .map-canvas { position: fixed; inset: 0; z-index: var(--z-canvas); }
 /* Starts clear of the fixed city brand, which otherwise covered the left edge
    of #map-search and ate taps meant for the search box. */

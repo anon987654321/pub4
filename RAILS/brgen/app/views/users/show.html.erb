@@ -13,22 +13,22 @@
   <% if authenticated? && Current.user != @user %>
     <%= render "shared/follow_button", user: @user, active: @active_follow %>
     <%= button_to t("actions.message"), user_conversations_path(@user), method: :post,
-          class: "button button-ghost button-small" %>
+          class: "button button-ghost" %>
     <% if @active_block %>
       <%# destructive: no-confirm-ok — reversible — the button becomes Block again in place %>
       <%= button_to t("block.unblock"), unblock_user_path(@user), method: :delete,
-            class: "button button-ghost button-small" %>
+            class: "button button-ghost" %>
     <% else %>
       <%= button_to t("block.block"), block_user_path(@user), method: :post,
-            class: "button button-ghost button-small" %>
+            class: "button button-ghost" %>
     <% end %>
   <% elsif authenticated? && Current.user == @user %>
-    <%= link_to t("profile.edit"), edit_user_path(@user), class: "button button-ghost button-small" %>
+    <%= link_to t("profile.edit"), edit_user_path(@user), class: "button button-ghost" %>
   <% end %>
 
   <% if @user.dating_profile.present? %>
     <p><%= link_to t("dating.your_profile"), dating.root_url(subdomain: "dating"),
-          class: "button button-ghost button-small" %></p>
+          class: "button button-ghost" %></p>
   <% end %>
 </header>
 

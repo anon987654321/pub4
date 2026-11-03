@@ -51,7 +51,7 @@
         <option value="<%= neighborhood.id %>" <%= "selected" if @neighborhood_id.to_s == neighborhood.id.to_s %>><%= neighborhood.name %></option>
       <% end %>
     </select>
-    <button type="submit" class="button button-ghost button-small"><%= t("actions.apply") %></button>
+    <button type="submit" class="button button-ghost"><%= t("actions.apply") %></button>
   </form>
 <% end %>
 

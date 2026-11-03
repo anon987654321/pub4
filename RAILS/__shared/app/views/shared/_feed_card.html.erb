@@ -30,7 +30,7 @@
     <div class="feed-card-header">
       <span class="feed-card-name">
         <% if local_assigns[:url] %>
-          <%= link_to local_assigns[:name], local_assigns[:url], class: "link-inherit" %>
+          <%= link_to local_assigns[:name], local_assigns[:url] %>
         <% else %>
           <%= local_assigns[:name] %>
         <% end %>

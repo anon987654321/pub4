@@ -21,6 +21,12 @@
 // would never win a property there; the variants stay either way.
 $base: true !default;
 
+// Where a button sits decides whether it is the compact one; markup names no
+// size (Johann, 2026-11-03). An app forwards the single-class contexts whose
+// buttons are all compact, and each `<context> .button` joins .button-small
+// below at the same 0-2-0 and the same cascade position.
+$compact-contexts: () !default;
+
 @if $base {
 .button {
   display: inline-flex;
@@ -95,7 +101,12 @@ $base: true !default;
   border: 0;
 }
 
-.button.button-small {
+$compact: ".button.button-small";
+@each $context in $compact-contexts {
+  $compact: "#{$compact}, #{$context} .button";
+}
+
+#{$compact} {
   min-height: var(--tap-min);
   padding: var(--space-1) var(--space-3);
   font-size: var(--text-small);

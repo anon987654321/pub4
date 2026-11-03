@@ -13,7 +13,11 @@
 // Immediately before components, and that is a cascade position rather than an
 // alphabetical one: _components's forced-colors block ties with `.button` at 0-1-0
 // and has to keep the later word.
-@forward "buttons" with ($base: false);
+@forward "buttons" with (
+  $base: false,
+  $compact-contexts: (".profile-header", ".home-neighborhood-filter", ".local-activity-heading",
+                      ".feed-quote-form", ".feed-post-actions", ".cart-item", ".cart-address")
+);
 @forward "components";
 @forward "search_yep";
 @forward "empty_state";

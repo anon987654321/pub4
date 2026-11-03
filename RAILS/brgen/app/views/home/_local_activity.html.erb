@@ -1,13 +1,13 @@
 <% if @local_activity && (@local_activity.listing || @local_activity.track) %>
   <aside class="local-activity" data-controller="local-activity"
          aria-label="<%= t("home.local_activity") %>">
-    <div class="local-activity-heading">
+    <header class="local-activity-heading">
       <h2><%= t("home.local_activity") %></h2>
-      <button type="button" class="button button-ghost button-small"
+      <button type="button" class="button button-ghost"
               data-action="click->local-activity#dismiss">
         <%= t("actions.dismiss") %>
       </button>
-    </div>
+    </header>
     <% if @local_activity.listing %>
       <article class="local-activity-item">
         <span><%= t("home.local_marketplace") %></span>

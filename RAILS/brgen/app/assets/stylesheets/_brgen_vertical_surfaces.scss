@@ -328,6 +328,18 @@ body.vertical-marketplace :is(.also-nearby h2, .section-heading--md) {
   grid-column: 2;
 }
 
+/* The quantity, its field and the update button read as one line. */
+.cart-quantity {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.cart-summary .hint {
+  margin-top: var(--space-2);
+}
+
 /* Grid tracks, so a long title wraps inside the column instead of widening it. */
 .cart-items,
 .store-results-body {
