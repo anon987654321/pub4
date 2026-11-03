@@ -65,12 +65,14 @@ class RestoreScriptsTest < Minitest::Test
   def test_vps_deploy_stamps_head_after_the_work
     source = File.read(File.join(ROOT, "bin/vps-deploy"))
     assert_includes source, "write_stamp()"
-    assert_includes source, 'sha=$(git -C "$repo" rev-parse --short HEAD)'
+    # The deploy runs as root and reads the checkout as the deploy user, in $repo.
+    assert_includes source, "sha=$(git_as_deploy_user rev-parse --short HEAD)"
+    assert_includes source[/^git_as_deploy_user\(\) \{.*?^\}$/m].to_s, %q{cd $(printf '%q' "$repo") && git }
     # The read must live inside write_stamp, not above the master pull.
     write = source[ /write_stamp\(\) \{.*?\n\}/m ]
     assert write, "write_stamp function missing"
-    assert_includes write, "rev-parse --short HEAD"
-    refute_match(/sha=\$\(git -C "\$repo" rev-parse --short HEAD\)\nstarted=/, source.split("write_stamp()")[0])
+    assert_includes write, "sha=$(git_as_deploy_user rev-parse --short HEAD)"
+    refute_match(/rev-parse --short HEAD/, source.split("write_stamp()")[0], "HEAD is read before the work it stamps")
     # The pin moves the checkout (merge --ff-only of the pinned SHA); a hand run of
     # vps_deploy_master.sh without a pin still pulls.
     assert_includes source, %q{merge -q --ff-only "$pin"}

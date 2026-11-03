@@ -16,6 +16,23 @@ class VpsDeployFlowTest < Minitest::Test
   PIN_BLOCK = SOURCE[/^deploy_refuse\(\).*?^fi$/m]
   FINISH_BLOCK = SOURCE[/^deploy_stage=start$.*?^trap 'exit 143' TERM$/m]
   ORDER_BLOCK = SOURCE[/^DEPLOY_ALL=.*?^choose_deploy_order\(\) \{.*?^\}$/m]
+  # The script runs as root and does git as DEPLOY_USER through su; it records
+  # stages, logs and retries through its own helpers. The blocks above call them,
+  # so they come from the same source rather than being stubbed. Without its own
+  # `log`, zsh falls through to its `log` builtin and every call errors.
+  DEPLOY_USER_LINES = SOURCE[/^DEPLOY_USER=.*\n^DEPLOY_HOME=.*$/]
+  HELPER_NAMES = %w[run_as_deploy_user git_as_deploy_user log_ts log set_stage retry admin_service_retry].freeze
+  HELPERS = HELPER_NAMES.to_h { |name| [name, SOURCE[/^#{name}\(\) \{.*?^\}$/m]] }
+  HELPER_SOURCE = HELPERS.values.join("\n")
+  # su stands in for root changing to the deploy user: it refuses any other user
+  # or shape, then runs the snippet as this test's user.
+  SU_STUB = <<~'ZSH'
+    su() {
+      [[ $# == 5 && $1 == -s && $2 == /bin/sh && -n $3 && $3 == "$DEPLOY_USER" && $4 == -c ]] \
+        || { print -u2 "su stub: unexpected su $*"; return 1 }
+      /bin/sh -c "$5"
+    }
+  ZSH
 
   def zsh(script)
     out, status = Open3.capture2e("zsh", "-c", script)
@@ -57,7 +74,11 @@ class VpsDeployFlowTest < Minitest::Test
   def run_pin(box, env = {})
     exports = env.map { |k, v| "export #{k}=#{v}" }.join("\n")
     zsh(<<~ZSH)
-      repo=#{box}; lock_owner=1; deploy_stage=start
+      repo=#{box}; lock_owner=1; deploy_stage=start; app=all
+      unset VPS_DEPLOY_USER VPS_DEPLOY_HOME
+      #{DEPLOY_USER_LINES}
+      #{HELPER_SOURCE}
+      #{SU_STUB}
       admin_service() { print "amber brgen master sshd"; }
       #{exports}
       #{PIN_BLOCK}
@@ -67,6 +88,18 @@ class VpsDeployFlowTest < Minitest::Test
 
   def test_the_pin_block_is_present
     refute_nil PIN_BLOCK, "the pin and preflight block is gone, the scan broke, or the block did"
+    refute_nil DEPLOY_USER_LINES, "DEPLOY_USER and DEPLOY_HOME are no longer set where the harness reads them"
+    HELPERS.each { |name, body| refute_nil body, "#{name}() is gone from vps-deploy" }
+  end
+
+  def test_git_in_the_pin_runs_as_the_deploy_user
+    with_box do |_dir, box, work, git|
+      push_commit(work, git, "two")
+      out, status = run_pin(box)
+      assert_equal 0, status, out
+      assert_includes out, "git as dev)"
+      refute_includes out, "su stub: unexpected"
+    end
   end
 
   def test_an_unattested_run_pins_origin_main_runs_the_preflight_and_moves_the_checkout
@@ -161,6 +194,7 @@ class VpsDeployFlowTest < Minitest::Test
       export VPS_DEPLOY_STARTED="#{started}" VPS_DEPLOY_POLL=1 VPS_DEPLOY_RESTORE_WAIT=3 VPS_DEPLOY_SHED_FILE=#{dir}/shed
       release_deploy_lock() { print released; }
       sleep() { :; }
+      #{HELPER_SOURCE}
       admin_service() { doas rcctl "$@"; }
       doas() {
         [[ $1 == rcctl ]] || return 0
