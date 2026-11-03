@@ -20,7 +20,7 @@ class OutfitTest < ActiveSupport::TestCase
   test "context_label joins season category and occasion" do
     outfit = Outfit.new(user: @user, name: "Rain day", season: "fall", category: "casual", occasion: "work")
 
-    assert_equal "fall · casual · work", outfit.context_label
+    assert_equal "fall, casual, work", outfit.context_label
   end
 
   # likes_count counted presses; one person could raise it as fast as the write limit.

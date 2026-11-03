@@ -16,5 +16,10 @@
     </nav>
   </div>
   <%= link_to item.title, item, class: "item-title" %>
-  <%= item.category %><%= " · #{item.color}" if item.color.present? %>
+  <%# The card's facts are separate words in .item-meta, spaced by the
+      stylesheet; a middle dot between them was punctuation standing in for layout. %>
+  <p class="item-meta">
+    <%= tag.span item.category %>
+    <%= tag.span item.color if item.color.present? %>
+  </p>
 </article>

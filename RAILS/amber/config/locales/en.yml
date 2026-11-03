@@ -9,6 +9,11 @@ en:
       long: "%B %-d, %Y"
       month: "%B %Y"
       day: "%a %-d"
+  # purchase_date is a Date, and l(date, format: :month) reads date.formats,
+  # not time.formats: the item page raised MissingTranslationData.
+  date:
+    formats:
+      month: "%B %Y"
   compose:
     bold: "Bold"
     italic: "Italic"
@@ -33,7 +38,7 @@ en:
       search_unavailable: "AI search unavailable — using local match when possible"
     declutter:
       box_elapsed: "30-day declutter box elapsed for «%{title}» — sell, donate, or restore with intention."
-      last_chance_outfit: "Last chance · %{title}"
+      last_chance_outfit: "Last chance: %{title}"
     logo_aria: "Amber logo with retro lines"
     feed:
       compose_prompt: "Share an #ootd thought…"
@@ -129,7 +134,7 @@ en:
     capsule_plan: "Capsule plan"
     this_week: "This week"
     worst_cpw: "Worst cost-per-wear"
-    cpw_value: "%{amount}/wear · worn %{count}×"
+    cpw_value: "%{amount}/wear, worn %{count}×"
     aging_unworn: "Aging unworn"
     recent: "Recent"
     all_items: "All items →"
@@ -557,7 +562,7 @@ en:
     schedule: "Schedule session"
     mark_live: "Mark live"
     mark_ended: "Mark ended"
-    style_session: "%{status} · style session (not a video stream)"
+    style_session: "%{status}, style session (not a video stream)"
     header_label: "Style session header"
     status:
       scheduled: "scheduled"
@@ -627,12 +632,12 @@ en:
     all_pieces: "Every piece"
     spark_joy: "Sparks joy"
     index_tagline: "Browse a realistic capsule before you sign in — cost-per-wear, categories, and outfit combos."
-    capsule_kicker: "Capsule demo · %{name}"
+    capsule_kicker: "Capsule demo: %{name}"
     create_hint: "Create an account to track wears, declutter scores, and outfit suggestions on your own wardrobe."
     back_to_wardrobe: "← Demo wardrobe"
   users:
     recent_items: "Recent pieces"
-    profile_counts: "%{items} items · %{followers} followers · %{following} following"
+    profile_counts: "%{items} items, %{followers} followers, %{following} following"
     profile_header: "User profile header"
     posts: "Posts"
     connect: "Connect"

@@ -47,7 +47,7 @@ class Outfit < ApplicationRecord
   after_commit :broadcast_live_refresh
 
   def context_label
-    [ season, category, occasion ].compact_blank.join(" · ")
+    [ season, category, occasion ].compact_blank.join(", ")
   end
 
   def total_wears

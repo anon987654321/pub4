@@ -17,7 +17,7 @@
   <div class="luxury-meta">
     <header role="banner" aria-label="<%= t("items.header_label") %>">
       <hgroup>
-        <p><%= @item.category %><%= " · #{@item.brand}" if @item.brand.present? %></p>
+        <%= tag.p [@item.category, @item.brand].compact_blank.join(", ") %>
         <h1 class="luxury-title"><%= @item.title %></h1>
       </hgroup>
       <% if @item.spark_joy? %><span class="badge"><%= t("items.sparks_joy") %></span><% end %>

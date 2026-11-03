@@ -8,6 +8,11 @@ nb:
       long: "%-d. %B %Y"
       month: "%B %Y"
       day: "%a %-d."
+  # purchase_date is a Date, and l(date, format: :month) reads date.formats,
+  # not time.formats: the item page raised MissingTranslationData.
+  date:
+    formats:
+      month: "%B %Y"
   compose:
     bold: "Fet"
     italic: "Kursiv"
@@ -32,7 +37,7 @@ nb:
       search_unavailable: "AI-søk er utilgjengelig — bruker lokalt treff der det går"
     declutter:
       box_elapsed: "30-dagers utrangeringsboks utløpt for «%{title}» — selg, gi bort, eller sett i stand med omtanke."
-      last_chance_outfit: "Siste sjanse · %{title}"
+      last_chance_outfit: "Siste sjanse: %{title}"
     logo_aria: "Amber-logo med retrolinjer"
     feed:
       compose_prompt: "Del en #ootd tanke…"
@@ -128,7 +133,7 @@ nb:
     capsule_plan: "Kapselplan"
     this_week: "Denne uken"
     worst_cpw: "Dårligst kostnad per bruk"
-    cpw_value: "%{amount}/bruk · brukt %{count}×"
+    cpw_value: "%{amount}/bruk, brukt %{count}×"
     aging_unworn: "Aldrende ubrukte"
     recent: "Nylig"
     all_items: "Alle plagg →"
@@ -556,7 +561,7 @@ nb:
     schedule: "Planlegg økt"
     mark_live: "Merk som live"
     mark_ended: "Merk som avsluttet"
-    style_session: "%{status} · stiløkt (ikke en videostrøm)"
+    style_session: "%{status}, stiløkt (ikke en videostrøm)"
     header_label: "Topptekst for stiløkt"
     status:
       scheduled: "planlagt"
@@ -626,12 +631,12 @@ nb:
     all_pieces: "Alle plagg"
     spark_joy: "Gir glede"
     index_tagline: "Bla gjennom en realistisk kapsel før du logger inn — kostnad per bruk, kategorier og antrekkskombinasjoner."
-    capsule_kicker: "Kapseldemo · %{name}"
+    capsule_kicker: "Kapseldemo: %{name}"
     create_hint: "Opprett konto for å følge bruk, ryddescore og antrekksforslag i din egen garderobe."
     back_to_wardrobe: "← Demogarderobe"
   users:
     recent_items: "Nylige plagg"
-    profile_counts: "%{items} plagg · %{followers} følgere · %{following} følger"
+    profile_counts: "%{items} plagg, %{followers} følgere, %{following} følger"
     profile_header: "Topptekst for brukerprofil"
     posts: "Innlegg"
     connect: "Koble til"

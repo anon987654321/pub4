@@ -13,12 +13,19 @@
           <% if item.photos.attached? %>
             <%= responsive_image_tag item.photos.first, alt: item.title, preset: :thumb, sizes: "90px" %>
           <% else %>
-            <%= item.category.to_s.first(2).upcase %>
+            <%# A span per tile: the composition grid styles .outfit-composition span,
+                and bare text ran the four initials together in one corner. %>
+            <%= tag.span item.category.to_s.first(2).upcase %>
           <% end %>
         <% end %>
       </div>
     <% end %>
   </div>
   <%= link_to outfit.name, outfit, class: "item-title" %>
-  <%= t("wardrobe.chip_items", count: outfit.items.size) %> · <%= t("outfits.combined_wears", count: outfit.total_wears) %>
+  <%# The card's facts are separate words in .item-meta, spaced by the
+      stylesheet; a middle dot between them was punctuation standing in for layout. %>
+  <p class="item-meta">
+    <%= tag.span t("wardrobe.chip_items", count: outfit.items.size) %>
+    <%= tag.span t("outfits.combined_wears", count: outfit.total_wears) %>
+  </p>
 </article>

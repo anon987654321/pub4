@@ -22,7 +22,7 @@
         <% @outfits.each do |outfit| %>
           <div class="plan-row">
             <%= tag.strong outfit.name %>
-            <%= outfit.context_label %> · <%= t("items.pieces", count: outfit.items.size) %>
+            <%= outfit.context_label %>, <%= t("items.pieces", count: outfit.items.size) %>
           </div>
         <% end %>
       </div>

@@ -1,8 +1,7 @@
 <turbo-frame id="nearby-chat-widget-frame" class="nearby-chat-widget-frame">
   <%= turbo_stream_from "amber:messages:#{Current.user.id}" %>
   <div class="nearby-chat-widget-mode">
-    <strong><%= t("nav.messages") %></strong>
-    <span aria-hidden="true">·</span>
+    <%= tag.strong t("nav.messages") %>
     <%= t("chat.private_messages_lead") %>
   </div>
   <ul id="amber-message-log" class="nearby-chat-widget-log conversation-log" role="log"

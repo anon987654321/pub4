@@ -26,7 +26,7 @@
 <% elsif @demo_items&.any? %>
   <div class="sidebar-card">
     <%= tag.h3 t("wardrobe.demo_capsule") %>
-    <p><%= t("items.pieces", count: @demo_items.size) %> · <%= t("outfits.count", count: @demo_outfits&.size.to_i) %></p>
+    <p><%= t("items.pieces", count: @demo_items.size) %>, <%= t("outfits.count", count: @demo_outfits&.size.to_i) %></p>
     <p><%= link_to t("home.browse_demo"), demo_wardrobe_path %></p>
   </div>
 <% end %>
