@@ -66,6 +66,32 @@ module Master
       def dispatch_privacy(root, ctx: nil)
         return "privacy: local-only; visitors cannot grant personal capabilities" if Fiber[:master_visitor] == true
 
+        permissions = Master::Ground::PersonalPermissions.new(root:)
+        voice_args = Shellwords.split(arg_for(ctx).to_s)
+        voice_scope = voice_args[1].to_s.downcase
+        if voice_args[0].to_s.downcase == "grant" && %w[microphone speech_recognition].include?(voice_scope)
+          purpose = voice_scope == "microphone" ?
+            Master::Ground::PersonalPermissions::MICROPHONE_PURPOSE :
+            Master::Ground::PersonalPermissions::SPEECH_RECOGNITION_PURPOSE
+          confirmation = "GRANT #{voice_scope}"
+          expected = ["grant", voice_scope, "--confirm", confirmation]
+          unless voice_args == expected
+            return "privacy: voice consent requires the exact command /privacy grant #{voice_scope} --confirm \"#{confirmation}\""
+          end
+          permissions.grant(
+            scope: voice_scope,
+            confirmed_by: "local operator",
+            purpose:,
+            expires_at: Time.now.utc + Master::Ground::PersonalPermissions::VOICE_GRANT_SECONDS
+          )
+          return "privacy: #{voice_scope} enabled for one hour; OS microphone permission is still required"
+        end
+        if voice_args[0].to_s.downcase == "revoke" && %w[microphone speech_recognition].include?(voice_scope)
+          permissions.revoke(scope: voice_scope, confirmed_by: "local operator",
+                             reason: "voice input revoked by local operator")
+          return "privacy: #{voice_scope} revoked immediately"
+        end
+
         subject = Fiber[:master_pair_subject].to_s.strip
         if subject.empty? && defined?(Master::Device::Agent) && Master::Device.respond_to?(:android?) &&
             Master::Device.android? && Master::Device::Agent.paired?(root:)
@@ -73,7 +99,6 @@ module Master
         end
         return "privacy: no paired subject; pair the local owner before enabling personal memory" if subject.empty?
 
-        permissions = Master::Ground::PersonalPermissions.new(root:)
         arg = arg_for(ctx).to_s.strip.downcase
         case arg
         when "", "status"
@@ -83,7 +108,9 @@ module Master
           calendar = permissions.allowed?(
             scope: "calendar_read", subject:, purpose: Master::Ground::PersonalCalendar::READ_PERMISSION_PURPOSE,
           )
-          "privacy: personal profile and memory #{active ? "enabled" : "disabled"}; local calendar #{calendar ? "enabled" : "disabled"}; consent is bound to this paired subject"
+          microphone = permissions.allowed?(scope: "microphone", purpose: Master::Ground::PersonalPermissions::MICROPHONE_PURPOSE)
+          speech_recognition = permissions.allowed?(scope: "speech_recognition", purpose: Master::Ground::PersonalPermissions::SPEECH_RECOGNITION_PURPOSE)
+          "privacy: personal profile and memory #{active ? "enabled" : "disabled"}; local calendar #{calendar ? "enabled" : "disabled"}; microphone #{microphone ? "enabled" : "disabled"}; speech recognition #{speech_recognition ? "enabled" : "disabled"}; voice grants expire after one hour"
         when "grant personal_memory"
           permissions.grant(
             scope: "personal_memory", subject:, confirmed_by: "local operator",
@@ -119,7 +146,7 @@ module Master
           )
           revoked ? "privacy: personal profile and memory disabled immediately" : "privacy: no active personal-memory grant"
         else
-          "privacy: status | grant personal_memory | revoke personal_memory"
+          "privacy: status | grant personal_memory | revoke personal_memory | grant microphone | grant speech_recognition | revoke microphone | revoke speech_recognition"
         end
       rescue StandardError => e
         "privacy0: unavailable — #{e.class}: #{e.message}"
