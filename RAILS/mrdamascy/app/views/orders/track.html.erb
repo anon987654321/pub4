@@ -31,7 +31,7 @@
       <% steps.each_with_index do |step, index| %>
         <li class="step<%= " step-done" if current_index && index <= current_index %><%= " step-current" if current_index == index %>"
             data-state="<%= step %>">
-          <span class="step-star star8" aria-hidden="true"></span>
+          <span class="step-star eight-point-star" aria-hidden="true"></span>
           <span class="step-label"><%= t("orders.states.#{step}") %></span>
         </li>
       <% end %>
@@ -44,18 +44,18 @@
 </section>
 
 <% if order.state == "delivered" %>
-  <section class="card mt-16">
+  <section class="card margin-top-16">
     <h2 class="section-title"><%= t("orders.tip_title") %></h2>
     <div class="tip-row">
       <%= button_to t("orders.tip_none"), order_tip_path(order.tracking_token),
-            method: :post, params: { tip_ore: 0 }, class: "btn" %>
+            method: :post, params: { tip_ore: 0 } %>
       <%= button_to t("orders.tip_20"), order_tip_path(order.tracking_token),
-            method: :post, params: { tip_ore: 2000 }, class: "btn btn-gold" %>
+            method: :post, params: { tip_ore: 2000 } %>
       <%= button_to t("orders.tip_40"), order_tip_path(order.tracking_token),
-            method: :post, params: { tip_ore: 4000 }, class: "btn btn-gold" %>
+            method: :post, params: { tip_ore: 4000 } %>
     </div>
 
-    <h2 class="section-title mt-16"><%= t("orders.review_title") %></h2>
+    <h2 class="section-title margin-top-16"><%= t("orders.review_title") %></h2>
     <%= form_with url: order_review_path(order.id), class: "review-form" do %>
       <div class="field">
         <%= label_tag :rating, t("orders.review_stars") %>
@@ -67,9 +67,9 @@
         <%= label_tag :body, t("orders.review_body") %>
         <%= text_area_tag :body, nil, placeholder: t("orders.review_body_placeholder") %>
       </div>
-      <button type="submit" class="btn btn-primary btn-block"><%= t("orders.review_submit") %></button>
+      <button type="submit" class="button-primary button-block"><%= t("orders.review_submit") %></button>
     <% end %>
 
-    <p class="thanks-line mb-0"><%= t("orders.thanks") %></p>
+    <p class="thanks-line margin-bottom-0"><%= t("orders.thanks") %></p>
   </section>
 <% end %>

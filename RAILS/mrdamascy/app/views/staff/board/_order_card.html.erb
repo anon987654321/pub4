@@ -23,16 +23,16 @@
                        "preparing" => t("staff.advance_ready") }[order.state] %>
   <% if advance_label %>
     <%= button_to advance_label, staff_advance_order_path(order),
-          method: :patch, class: "btn btn-primary btn-block" %>
+          method: :patch, class: "button-primary button-block" %>
   <% elsif order.external_delivery_id.present? %>
     <%# Wolt Drive dispatch done — show who is carrying the bag. %>
-    <p class="board-wait ink-soft mb-0">
+    <p class="board-wait ink-soft margin-bottom-0">
       <%= render "shared/mode_icon", mode: "delivery" %> <%= t("staff.wolt_courier", courier: "Bergen Bud") %>
     </p>
   <% elsif order.delivery? %>
     <%= button_to t("staff.wolt_cta"), staff_wolt_order_path(order),
-          method: :patch, class: "btn btn-gold btn-block" %>
+          method: :patch, class: "button-gold button-block" %>
   <% else %>
-    <p class="board-wait ink-soft mb-0"><%= t("staff.awaiting_courier") %></p>
+    <p class="board-wait ink-soft margin-bottom-0"><%= t("staff.awaiting_courier") %></p>
   <% end %>
 </article>

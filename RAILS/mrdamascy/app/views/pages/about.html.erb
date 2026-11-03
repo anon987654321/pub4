@@ -3,20 +3,25 @@
 <section class="hero star-pattern">
   <%= image_tag "/icon.svg", alt: "", class: "hero-mark" %>
   <h1 class="hero-title"><%= t("about.title") %></h1>
-  <p class="hero-meta mb-0"><%= t("app.tagline") %></p>
+  <% if current_kitchen %>
+    <p class="hero-meta margin-bottom-0">
+      <%= tag.span current_kitchen.address, class: "nowrap" %>
+      <%= tag.span current_kitchen.opening_hours, class: "nowrap" %>
+    </p>
+  <% end %>
 </section>
 
-<section class="card mt-16">
+<section class="card margin-top-16">
   <h2 class="section-title"><%= t("about.story_title") %></h2>
-  <p class="mb-0"><%= t("about.story_body") %></p>
+  <p class="margin-bottom-0"><%= t("about.story_body") %></p>
 </section>
 
-<section class="card mt-16">
+<section class="card margin-top-16">
   <h2 class="section-title"><%= t("about.fairness_title") %></h2>
-  <p class="mb-0"><%= t("about.fairness_body") %></p>
+  <p class="margin-bottom-0"><%= t("about.fairness_body") %></p>
 </section>
 
-<section class="card mt-16">
+<section class="card margin-top-16">
   <h2 class="section-title"><%= t("about.worldtour_title") %></h2>
   <p class="ink-soft"><%= t("about.worldtour_intro") %></p>
   <ul class="about-credits">
@@ -35,15 +40,15 @@
   </ul>
 </section>
 
-<section class="card mt-16">
+<section class="card margin-top-16">
   <h2 class="section-title"><%= t("about.vipps_title") %></h2>
-  <p class="mb-0"><%= t("about.vipps_body") %></p>
+  <p class="margin-bottom-0"><%= t("about.vipps_body") %></p>
 </section>
 
-<section class="mt-16">
+<section class="margin-top-16">
   <% if current_user %>
-    <%= link_to t("about.orders_link"), orders_path, class: "btn btn-block" %>
+    <%= link_to t("about.orders_link"), orders_path, class: "button button-block" %>
   <% else %>
-    <%= link_to t("auth.login"), new_session_path, class: "btn btn-block" %>
+    <%= link_to t("auth.login"), new_session_path, class: "button button-block" %>
   <% end %>
 </section>

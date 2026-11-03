@@ -27,12 +27,12 @@
             <% if line.quantity.to_i > 1 %>
               <%= button_to "−", update_item_cart_path(line.id), method: :patch,
                     params: { quantity: line.quantity.to_i - 1 },
-                    class: "qty-btn", aria: { label: t("cart.decrease") } %>
+                    class: "quantity-button", aria: { label: t("cart.decrease") } %>
             <% end %>
-            <span class="qty-val" aria-label="<%= t("menu.qty") %>"><%= line.quantity %></span>
+            <span class="quantity-value" aria-label="<%= t("menu.qty") %>"><%= line.quantity %></span>
             <%= button_to "+", update_item_cart_path(line.id), method: :patch,
                   params: { quantity: line.quantity.to_i + 1 },
-                  class: "qty-btn", aria: { label: t("cart.increase") } %>
+                  class: "quantity-button", aria: { label: t("cart.increase") } %>
             <%= button_to t("cart.remove"), remove_item_cart_path(line.id), method: :delete,
                   class: "link-danger" %>
           </div>
@@ -58,15 +58,15 @@
       <%= t("cart.promo_hint") %>
     </p>
 
-    <div class="mode-toggle" role="group" aria-label="<%= t("checkout.mode") %>">
+    <nav class="mode-toggle" aria-label="<%= t("checkout.mode") %>">
       <%= link_to t("checkout.mode_delivery"), checkout_path(mode: "delivery"),
             class: class_names("chip", "chip-active": @cart.delivery_mode != "pickup") %>
       <%= link_to t("checkout.mode_pickup"), checkout_path(mode: "pickup"),
             class: class_names("chip", "chip-active": @cart.delivery_mode == "pickup") %>
-    </div>
+    </nav>
 
-    <%= link_to t("cart.vipps_cta"), checkout_path, class: "btn btn-vipps btn-block btn-lg" %>
-    <p class="cart-cta-note mb-0"><%= t("checkout.steps_note") %></p>
+    <%= link_to t("cart.vipps_cta"), checkout_path, class: "button button-vipps button-block button-large" %>
+    <p class="cart-action-note margin-bottom-0"><%= t("checkout.steps_note") %></p>
   </section>
 <% else %>
   <%= render "shared/empty",

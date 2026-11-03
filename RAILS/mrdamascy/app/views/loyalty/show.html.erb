@@ -11,13 +11,13 @@
     <%= t("loyalty.title") %>
   </p>
 
-  <div class="loyalty-stars" aria-hidden="true">
+  <ol class="loyalty-stars" aria-hidden="true">
     <% @stamp_slots.times do |slot| %>
-      <span class="loyal-star star8<%= " loyal-star-filled" if slot < filled_display %>"></span>
+      <li class="loyalty-star eight-point-star<%= " loyalty-star-filled" if slot < filled_display %>"></li>
     <% end %>
-  </div>
+  </ol>
 
-  <p class="loyalty-progress mb-0">
+  <p class="loyalty-progress margin-bottom-0">
     <% if current_user.nil? %>
       <%= t("loyalty.progress.remaining", count: @stamp_slots) %>
     <% elsif @free_wrap_ready %>
@@ -27,23 +27,23 @@
     <% end %>
   </p>
   <% if current_user %>
-    <p class="ink-soft mb-0"><%= t("loyalty.filled", count: filled_display, total: @stamp_slots) %></p>
+    <p class="ink-soft margin-bottom-0"><%= t("loyalty.filled", count: filled_display, total: @stamp_slots) %></p>
   <% end %>
 </section>
 
 <% if current_user.nil? %>
-  <section class="card mt-16 center">
-    <p class="mb-0"><%= t("loyalty.login_hint") %></p>
-    <%= link_to t("auth.login"), new_session_path, class: "btn btn-primary mt-8" %>
+  <section class="card margin-top-16 center">
+    <p class="margin-bottom-0"><%= t("loyalty.login_hint") %></p>
+    <%= link_to t("auth.login"), new_session_path, class: "button button-primary margin-top-8" %>
   </section>
 <% end %>
 
-<section class="card loyalty-rules-card mt-16">
+<section class="card loyalty-rules-card margin-top-16">
   <h2 class="section-title"><%= t("loyalty.how_title") %></h2>
   <ul class="loyalty-rules">
     <li><%= t("loyalty.rule_one") %></li>
     <li><%= t("loyalty.rule_two") %></li>
     <li><%= t("loyalty.rule_three") %></li>
   </ul>
-  <%= link_to t("loyalty.cta"), root_path, class: "btn btn-primary btn-block mt-16" %>
+  <%= link_to t("loyalty.cta"), root_path, class: "button button-primary button-block margin-top-16" %>
 </section>

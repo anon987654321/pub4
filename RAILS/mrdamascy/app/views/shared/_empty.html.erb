@@ -3,12 +3,12 @@
                    action: { label: …, path: … } %>
 <% action = local_assigns[:action] %>
 <section class="empty card" role="status" aria-live="polite">
-  <span class="empty-star star8" aria-hidden="true"></span>
+  <span class="empty-star eight-point-star" aria-hidden="true"></span>
   <h2 class="empty-title"><%= local_assigns[:title] %></h2>
   <% if local_assigns[:body].present? %>
     <p class="empty-body"><%= local_assigns[:body] %></p>
   <% end %>
   <% if action.is_a?(Hash) && action[:label].present? && action[:path].present? %>
-    <%= link_to action[:label], action[:path], class: "btn btn-primary empty-cta" %>
+    <%= link_to action[:label], action[:path], class: "button button-primary empty-action" %>
   <% end %>
 </section>

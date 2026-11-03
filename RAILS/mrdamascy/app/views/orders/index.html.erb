@@ -28,9 +28,9 @@
             <span class="badge"><%= t("orders.paid_steps") %></span>
           <% end %>
           <span class="order-actions">
-            <%= link_to t("orders.view"), order_path(order), class: "btn btn-sm" %>
+            <%= link_to t("orders.view"), order_path(order), class: "button button-small" %>
             <% if order.tracking_token.present? %>
-              <%= link_to t("orders.track"), track_path(order.tracking_token), class: "btn btn-primary btn-sm" %>
+              <%= link_to t("orders.track"), track_path(order.tracking_token), class: "button button-primary button-small" %>
             <% end %>
           </span>
         </footer>

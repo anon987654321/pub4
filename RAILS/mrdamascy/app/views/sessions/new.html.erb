@@ -13,12 +13,12 @@
     <p class="auth-status">
       <%= t("auth.logged_in_as", name: current_user.name.presence || current_user.phone) %>
     </p>
-    <%= button_to t("auth.logout"), session_path, method: :delete, class: "btn btn-block" %>
+    <%= button_to t("auth.logout"), session_path, method: :delete, class: "button-block" %>
   <% else %>
     <%# Fastest path first (§12): Vipps verifies the phone and hands back
         name + address — no OTP, no forms. The SMS fallback stays below. %>
     <%= link_to t("auth.vipps_login"), session_vipps_path,
-          class: "btn btn-vipps btn-block btn-lg" %>
+          class: "button button-vipps button-block button-large" %>
     <p class="login-or"><%= t("auth.or_sms") %></p>
 
     <%= form_with url: "/session/request_code", method: :post, class: "auth-form" do %>
@@ -28,9 +28,9 @@
               inputmode: "numeric",
               autocomplete: "tel-national",
               placeholder: t("auth.phone_placeholder"),
-              class: "input-lg" %>
+              class: "input-large" %>
       </div>
-      <button type="submit" class="btn btn-primary btn-block"><%= t("auth.send_code") %></button>
+      <button type="submit" class="button-primary button-block"><%= t("auth.send_code") %></button>
     <% end %>
 
     <%# In development SessionsController#request_code flashes the mock code
@@ -45,9 +45,9 @@
               inputmode: "numeric",
               autocomplete: "one-time-code",
               placeholder: t("auth.code_placeholder"),
-              class: "input-lg" %>
+              class: "input-large" %>
       </div>
-      <button type="submit" class="btn btn-primary btn-block"><%= t("auth.verify") %></button>
+      <button type="submit" class="button-primary button-block"><%= t("auth.verify") %></button>
     <% end %>
   <% end %>
 </section>

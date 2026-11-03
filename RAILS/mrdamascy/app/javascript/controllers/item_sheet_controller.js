@@ -4,7 +4,7 @@ import { Controller } from "@hotwired/stimulus"
 // and live recalculation of the sticky "Legg i kurv · pris" total. Extras are
 // priced via data-price-ore on each option; sauces/toppings are free.
 export default class extends Controller {
-  static targets = ["qty", "price", "submit", "option"]
+  static targets = ["quantity", "price", "submit", "option"]
   static values = { base: Number, template: String }
 
   connect() {
@@ -37,12 +37,12 @@ export default class extends Controller {
   // private
 
   quantity() {
-    const parsed = Number.parseInt(this.qtyTarget.value, 10)
+    const parsed = Number.parseInt(this.quantityTarget.value, 10)
     return Number.isNaN(parsed) || parsed < 1 ? 1 : parsed
   }
 
   setQuantity(next) {
-    this.qtyTarget.value = Math.min(10, Math.max(1, next))
+    this.quantityTarget.value = Math.min(10, Math.max(1, next))
     this.recalc()
   }
 

@@ -11,15 +11,15 @@
   list-style: none;
 }
 
-.mt-8 {
+.margin-top-8 {
   margin-top: 8px;
 }
 
-.mt-16 {
+.margin-top-16 {
   margin-top: 16px;
 }
 
-.mb-0 {
+.margin-bottom-0 {
   margin-bottom: 0;
 }
 
@@ -92,4 +92,8 @@
 .auth-status {
   font-weight: 700;
   color: var(--mint-700);
+}
+
+.nowrap {
+  white-space: nowrap;
 }

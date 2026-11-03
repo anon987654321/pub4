@@ -46,10 +46,13 @@
 
       <footer class="app-footer">
         <% if current_kitchen %>
-          <%= tag.p t("footer.line", address: current_kitchen.address, hours: current_kitchen.opening_hours),
-                    class: "ink-soft mb-0" %>
+          <p class="footer-facts ink-soft margin-bottom-0">
+            <%= tag.span t("app.name") %>
+            <%= tag.span current_kitchen.address %>
+            <%= tag.span current_kitchen.opening_hours %>
+          </p>
         <% end %>
-        <p class="footer-sahtein mb-0"><%= t("footer.sahtein") %></p>
+        <p class="footer-sahtein margin-bottom-0"><%= t("footer.sahtein") %></p>
       </footer>
     </main>
 
@@ -78,7 +81,7 @@
         </li>
         <li>
           <%= link_to loyalty_path, class: class_names("tab", "tab-active": active_tab == "loyalty") do %>
-            <%# Damascus khatam — the same 8-point star as .star8 in _tokens.scss. %>
+            <%# Damascus khatam — the same 8-point star as .eight-point-star in _tokens.scss. %>
             <span class="tab-icon" aria-hidden="true">
               <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor" aria-hidden="true"><polygon points="12,0 14.4,6.2 20.5,3.5 17.8,9.6 24,12 17.8,14.4 20.5,20.5 14.4,17.8 12,24 9.6,17.8 3.5,20.5 6.2,14.4 0,12 6.2,9.6 3.5,3.5 9.6,6.2"/></svg>
             </span>

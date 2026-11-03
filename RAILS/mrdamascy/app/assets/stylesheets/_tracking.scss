@@ -101,7 +101,7 @@
   margin: 8px 0 4px;
 }
 
-.tip-row .btn {
+.tip-row .button {
   border-radius: var(--radius-pill);
   padding: 4px 16px;
   font-size: var(--text-meta);
@@ -144,6 +144,10 @@
 .order-head .state-chip,
 .order-head .badge {
   margin-inline-end: 8px;
+}
+
+.order-lines-list {
+  list-style: none;
 }
 
 .order-line {

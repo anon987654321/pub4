@@ -1,15 +1,20 @@
 // Buttons — flat, generous, mint-first. Vipps orange is reserved for payment
 // actions so the color always means "paying". Fitts law: every control is a
-// 44px target; primary actions (btn-lg/btn-block) are 48px.
-.btn {
+// 44px target; primary actions (button-large/button-block) are 48px.
+// The <button> element is styled directly; a link that acts as a button
+// takes the .button class. :where keeps specificity at zero so any class wins.
+// Unmarked buttons are outlined (secondary); filled variants below.
+:where(button, .button) {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
   min-height: var(--tap-min);
-  border: 0;
+  border: 1px solid var(--mint-700);
   border-radius: var(--radius-sm);
   padding: 8px 16px;
+  background: transparent;
+  color: var(--mint-700);
   font-weight: 700;
   text-align: center;
   text-decoration: none;
@@ -17,31 +22,37 @@
   transition: transform 180ms ease, background-color var(--transition-fast) var(--ease-out);
 }
 
-.btn:active {
+:where(button:hover, .button:hover) {
+  background: var(--mint-100);
+}
+
+:where(button:active, .button:active) {
   transform: scale(0.98);
 }
 
-.btn:disabled {
+:where(button:disabled, .button:disabled) {
   opacity: 0.6;
   cursor: default;
 }
 
-.btn-primary {
+.button-primary {
+  border-color: transparent;
   background: var(--mint-700);
   color: var(--paper);
 }
 
-.btn-primary:hover {
+.button-primary:hover {
   background: var(--mint-800);
 }
 
-.btn-vipps {
-  background: var(--vipps-btn);
+.button-vipps {
+  border-color: transparent;
+  background: var(--vipps-button);
   color: var(--paper);
 }
 
-.btn-vipps:hover {
-  background: var(--vipps-btn-hover);
+.button-vipps:hover {
+  background: var(--vipps-button-hover);
 }
 
 // Vipps mock heart rides the button label.
@@ -55,46 +66,48 @@
   display: block;
 }
 
-.btn-gold {
+.button-gold {
+  border-color: transparent;
   background: var(--gold);
   color: var(--ink);
 }
 
-.btn-gold:hover {
+.button-gold:hover {
   background: var(--gold-deep);
 }
 
-.btn-sm {
+.button-small {
   padding: 4px 12px;
   font-size: var(--text-meta);
 }
 
 // Primary actions: 48px (Fitts primary_action_min_px).
-.btn-lg {
+.button-large {
   min-height: 48px;
   padding: 12px 20px;
   font-size: var(--text-body);
 }
 
-.btn-block {
+.button-block {
   width: 100%;
   min-height: 48px;
 }
 
 // Vipps mock approval — the state change itself is the feedback (disabled
 // + dimmed): stillness by default, motion only when meaning moves.
-.btn.is-loading {
+:where(button.is-loading, .button.is-loading) {
   opacity: 0.8;
   cursor: progress;
 }
 
 // Second payment lane (operator-mandated): Stripe Checkout button — same
-// discipline as .btn-vipps (darkened brand surface, white label ≥ 4.5:1).
-.btn-stripe {
-  background: var(--stripe-btn);
+// discipline as .button-vipps (darkened brand surface, white label ≥ 4.5:1).
+.button-stripe {
+  border-color: transparent;
+  background: var(--stripe-button);
   color: var(--paper);
 }
 
-.btn-stripe:hover {
-  background: var(--stripe-btn-hover);
+.button-stripe:hover {
+  background: var(--stripe-button-hover);
 }

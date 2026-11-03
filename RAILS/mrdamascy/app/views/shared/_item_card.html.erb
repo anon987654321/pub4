@@ -27,11 +27,12 @@
           <%= tag.span "#{item.weight_g} g", class: "badge badge-plain" %>
         <% end %>
         <% if item.heat.to_i.positive? %>
-          <span class="heat heat-<%= item.heat.to_i %>" title="<%= t("menu.heat.#{item.heat.to_i}") %>">
-            <span class="visually-hidden"><%= t("menu.heat_label") %>: <%= t("menu.heat.#{item.heat.to_i}") %></span>
+          <span class="heat heat-<%= item.heat.to_i %>">
+            <span class="visually-hidden"><%= t("menu.heat_label") %>:</span>
             <% 3.times do |dot| %>
               <span class="heat-dot<%= " on" if dot < item.heat.to_i %>" aria-hidden="true"></span>
             <% end %>
+            <%= tag.span t("menu.heat.#{item.heat.to_i}"), class: "heat-label" %>
           </span>
         <% end %>
       </span>
@@ -48,10 +49,10 @@
   <span class="item-side">
     <span class="item-price"><%= money(item.price_ore) %></span>
     <% if needs_options %>
-      <%= link_to t("menu.customize"), menu_item_path(item), class: "btn btn-sm item-add" %>
+      <%= link_to t("menu.customize"), menu_item_path(item), class: "button button-small item-add" %>
     <% else %>
       <%= button_to add_item_cart_path, params: { menu_item_id: item.id, quantity: 1 },
-            class: "btn btn-primary btn-sm item-add" do %>
+            class: "button-primary button-small item-add" do %>
         <%= t("menu.quick_add") %>
       <% end %>
     <% end %>

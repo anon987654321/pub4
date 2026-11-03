@@ -18,12 +18,10 @@
     arrives prefilled and the only remaining button is "Betal med Vipps". %>
 <% unless current_user %>
   <section class="vipps-login card">
-    <div>
-      <strong><%= t("checkout.login_row") %></strong>
-      <p class="ink-soft mb-0"><%= t("checkout.login_note") %></p>
-    </div>
+    <strong><%= t("checkout.login_row") %></strong>
+    <p class="ink-soft margin-bottom-0"><%= t("checkout.login_note") %></p>
     <%= link_to t("checkout.login_cta"),
-          session_vipps_path(to: "checkout"), class: "btn btn-vipps btn-block" %>
+          session_vipps_path(to: "checkout"), class: "button button-vipps button-block" %>
     <p class="login-or"><%= t("checkout.login_or") %></p>
   </section>
 <% end %>
@@ -76,11 +74,11 @@
   </div>
 
   <section class="pay-row card">
-    <span class="vipps-wordmark" aria-hidden="true">Vipps</span>
-    <div>
+    <%= image_tag "vipps/vipps-wordmark.svg", alt: "", class: "vipps-wordmark" %>
+    <p class="pay-row-text margin-bottom-0">
       <strong><%= t("checkout.vipps_row") %></strong>
-      <p class="ink-soft mb-0"><%= t("checkout.vipps_note") %></p>
-    </div>
+      <%= tag.span t("checkout.vipps_note"), class: "ink-soft" %>
+    </p>
     <% if @returning_customer %>
       <span class="badge badge-gold"><%= t("checkout.sist_brukt") %></span>
     <% end %>
@@ -88,10 +86,10 @@
 
   <section class="pay-row card">
     <span class="stripe-wordmark" aria-hidden="true">stripe</span>
-    <div>
+    <p class="pay-row-text margin-bottom-0">
       <strong><%= t("checkout.stripe_row") %></strong>
-      <p class="ink-soft mb-0"><%= t("checkout.stripe_note") %></p>
-    </div>
+      <%= tag.span t("checkout.stripe_note"), class: "ink-soft" %>
+    </p>
   </section>
 
   <% if @promo[:promo].present? %>
@@ -101,11 +99,11 @@
   <% end %>
 
   <section class="totals card">
-    <div class="totals-row">
+    <p class="totals-row margin-bottom-0">
       <span><%= t("checkout.subtotal") %></span>
       <strong><%= money(@subtotal_ore) %></strong>
-    </div>
-    <p class="totals-note mb-0"><%= t("checkout.totals_note") %></p>
+    </p>
+    <p class="totals-note margin-bottom-0"><%= t("checkout.totals_note") %></p>
   </section>
 
   <%# One form, two lanes: each button submits its own payment_method value
@@ -116,11 +114,11 @@
       No script, no card fields here — Stripe hosts the card entry on its
       own PCI-scoped page. %>
   <%= button_tag type: :submit, name: "payment_method", value: "vipps",
-        class: "btn btn-vipps btn-block btn-lg" do %>
+        class: "button-vipps button-block button-large" do %>
     <%= t("checkout.vipps_cta") %>
   <% end %>
   <%= button_tag type: :submit, name: "payment_method", value: "stripe",
-        class: "btn btn-stripe btn-block" do %>
+        class: "button-stripe button-block" do %>
     <%= t("checkout.stripe_cta") %>
   <% end %>
   <p class="steps-note"><%= t("checkout.steps_note") %></p>

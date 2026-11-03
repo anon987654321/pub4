@@ -8,14 +8,14 @@
 <section class="card">
   <h2 class="section-title"><%= t("courier.ready_title") %></h2>
   <% if @ready_orders.empty? %>
-    <p class="ink-soft mb-0"><%= t("courier.empty") %></p>
+    <p class="ink-soft margin-bottom-0"><%= t("courier.empty") %></p>
   <% end %>
   <% @ready_orders.each do |order| %>
     <article class="run-row">
       <div class="run-info">
         <strong>#<%= order.id %></strong>
-        <p class="run-address mb-0"><%= order.address %> · <%= order.postcode %></p>
-        <ul class="fact-list run-meta mb-0">
+        <p class="run-address margin-bottom-0"><%= order.address %> · <%= order.postcode %></p>
+        <ul class="fact-list run-meta margin-bottom-0">
           <li><%= money(order.total_ore) %></li>
           <% order.order_items.each do |line| %>
             <li><%= line.quantity %>× <%= line.name %></li>
@@ -23,22 +23,22 @@
         </ul>
       </div>
       <%= button_to t("courier.pickup"), courier_pickup_order_path(order),
-            method: :patch, class: "btn btn-primary" %>
+            method: :patch, class: "button-primary" %>
     </article>
   <% end %>
 </section>
 
-<section class="card mt-16">
+<section class="card margin-top-16">
   <h2 class="section-title"><%= t("courier.onway_title") %></h2>
   <% if @on_the_way_orders.empty? %>
-    <p class="ink-soft mb-0"><%= t("courier.empty") %></p>
+    <p class="ink-soft margin-bottom-0"><%= t("courier.empty") %></p>
   <% end %>
   <% @on_the_way_orders.each do |order| %>
     <article class="run-row">
       <div class="run-info">
         <strong>#<%= order.id %></strong>
-        <p class="run-address mb-0"><%= order.address %> · <%= order.postcode %></p>
-        <ul class="fact-list run-meta mb-0">
+        <p class="run-address margin-bottom-0"><%= order.address %> · <%= order.postcode %></p>
+        <ul class="fact-list run-meta margin-bottom-0">
           <li><%= money(order.total_ore) %></li>
           <% order.order_items.each do |line| %>
             <li><%= line.quantity %>× <%= line.name %></li>
@@ -46,7 +46,7 @@
         </ul>
       </div>
       <%= button_to t("courier.deliver"), courier_deliver_order_path(order),
-            method: :patch, class: "btn btn-gold" %>
+            method: :patch, class: "button-gold" %>
     </article>
   <% end %>
 </section>

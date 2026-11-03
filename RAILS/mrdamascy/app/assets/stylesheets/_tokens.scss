@@ -41,15 +41,15 @@
   // Vipps — brand orange for wordmarks and the mock; the button surface is
   // darkened so white label text passes 4.5:1 (white on #ff5b24 is 3.1:1).
   --vipps: #ff5b24;
-  --vipps-btn: #cc4409;
-  --vipps-btn-hover: #b83c08;
+  --vipps-button: #cc4409;
+  --vipps-button-hover: #b83c08;
   --vipps-ink: #c73a00;  // 5.2:1 on white
 
   // Stripe — brand blurple for wordmarks and the mock; the button surface is
   // darkened so white label text passes 4.5:1 (white on #635bff is 4.0:1).
   --stripe: #635bff;
-  --stripe-btn: #4f45e4;
-  --stripe-btn-hover: #4338ca;
+  --stripe-button: #4f45e4;
+  --stripe-button-hover: #4338ca;
   --stripe-ink: #4f45e4;  // 5.6:1 on white
   --on-dark-dim: rgba(255, 255, 255, 0.2);
 
@@ -92,7 +92,7 @@
 }
 
 // Solid 8-point star (khatam) — timeline milestones, loyalty stamps, empties.
-.star8 {
+.eight-point-star {
   clip-path: polygon(
     50% 0%, 60% 26%, 85.4% 14.6%, 74% 40%, 100% 50%, 74% 60%, 85.4% 85.4%,
     60% 74%, 50% 100%, 40% 74%, 14.6% 85.4%, 26% 60%, 0% 50%, 26% 40%, 14.6% 14.6%, 40% 26%

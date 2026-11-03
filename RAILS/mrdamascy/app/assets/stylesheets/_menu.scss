@@ -58,7 +58,7 @@
 }
 
 // Sticky anchor chips under the brand bar (bar content 48px + 1px hairline).
-.cat-chips {
+.category-chips {
   position: sticky;
   top: 48px;
   z-index: 30;
@@ -70,9 +70,11 @@
   background: var(--paper);
   scrollbar-width: none;
   -webkit-overflow-scrolling: touch;
+  // The fade says "more this way" where the hidden scrollbar cannot.
+  mask-image: linear-gradient(to right, #000 85%, transparent);
 }
 
-.cat-chips::-webkit-scrollbar {
+.category-chips::-webkit-scrollbar {
   display: none;
 }
 
@@ -205,7 +207,7 @@
   margin: 8px 0 0;
 }
 
-.sheet-desc {
+.sheet-description {
   font-size: var(--text-body);
 }
 
@@ -266,13 +268,13 @@
 }
 
 // Quantity stepper.
-.qty-stepper {
+.quantity-stepper {
   display: inline-flex;
   align-items: center;
   gap: 4px;
 }
 
-.qty-btn {
+.quantity-button {
   flex: none;
   width: 44px;
   height: 44px;
@@ -285,7 +287,7 @@
   padding: 0;
 }
 
-.qty-input {
+.quantity-input {
   width: 56px;
   text-align: center;
   font-weight: 700;
@@ -318,7 +320,7 @@
   pointer-events: none;
 }
 
-.sheet-footer .btn {
+.sheet-footer .button {
   pointer-events: auto;
   width: 100%;
   max-width: 448px;

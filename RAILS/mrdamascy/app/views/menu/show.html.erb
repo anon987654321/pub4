@@ -13,15 +13,15 @@
       <%= number_with_precision(@kitchen.rating, precision: 1) %> · <%= @kitchen.opening_hours %>
     </p>
   <% end %>
-  <p class="hero-meta mb-0"><%= t("menu.zone_note") %></p>
+  <p class="hero-meta margin-bottom-0"><%= t("menu.zone_note") %></p>
 </section>
 
 <% if @last_order && @last_order.order_items.any? %>
   <section class="reorder-card card">
     <div class="reorder-copy">
       <h2 class="reorder-title"><%= t("menu.reorder") %></h2>
-      <p class="mb-0"><%= t("menu.last_order") %></p>
-      <ul class="fact-list mb-0">
+      <p class="margin-bottom-0"><%= t("menu.last_order") %></p>
+      <ul class="fact-list margin-bottom-0">
         <% @last_order.order_items.each do |line| %>
           <li><%= line.quantity %>× <%= line.name %></li>
         <% end %>
@@ -30,11 +30,11 @@
     <% first_line = @last_order.order_items.first %>
     <%= link_to t("menu.reorder_cta"),
           (first_line.menu_item_id ? menu_item_path(first_line.menu_item_id) : root_path),
-          class: "btn btn-gold" %>
+          class: "button button-gold" %>
   </section>
 <% end %>
 
-<nav class="cat-chips" aria-label="<%= t("menu.categories") %>">
+<nav class="category-chips" aria-label="<%= t("menu.categories") %>">
   <% @categories.each do |category| %>
     <%= link_to "#cat-#{category.slug}", class: "chip" do %>
       <span aria-hidden="true"><%= category.emoji %></span> <%= category.name %>

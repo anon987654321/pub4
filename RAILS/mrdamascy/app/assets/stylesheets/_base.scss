@@ -149,6 +149,17 @@ main.shell {
   font-size: var(--text-meta);
 }
 
+.footer-facts {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  column-gap: 12px;
+}
+
+.footer-facts span {
+  white-space: nowrap;
+}
+
 .footer-sahtein {
   color: var(--mint-700);
   font-weight: 700;
@@ -201,6 +212,7 @@ body.act-item main.shell {
   height: 44px;
   margin: -8px -8px;
   border: 0;
+  padding: 0;
   border-radius: 50%;
   background: var(--on-dark-dim);
   color: var(--paper);
@@ -223,7 +235,7 @@ body.act-item main.shell {
     scroll-behavior: auto;
   }
 
-  .btn,
+  .button,
   .tab,
   .step-star,
   .toast,
@@ -234,7 +246,7 @@ body.act-item main.shell {
     animation: none;
   }
 
-  .btn:active {
+  .button:active {
     transform: none;
   }
 }

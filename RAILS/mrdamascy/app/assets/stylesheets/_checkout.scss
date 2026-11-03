@@ -12,7 +12,7 @@
   margin-bottom: 4px;
 }
 
-.vipps-login .btn {
+.vipps-login .button {
   margin-top: 12px;
 }
 
@@ -40,7 +40,7 @@
   margin: 16px 0;
 }
 
-.pay-row > div {
+.pay-row-text {
   flex: 1;
 }
 
@@ -50,12 +50,8 @@
 
 .vipps-wordmark {
   flex: none;
-  font-weight: 700;
-  font-size: var(--text-body);
-  color: var(--vipps-ink);
-  border: 2px solid var(--vipps);
-  border-radius: var(--radius-xs);
-  padding: 4px 12px;
+  height: 32px;
+  width: auto;
 }
 
 .promo-line {
@@ -88,7 +84,8 @@
   font-weight: 600;
 }
 
-.totals-row-strong {
+.totals-row-strong,
+.totals-strong {
   font-size: var(--text-title);
   font-weight: 700;
   border-top: 1px solid var(--line);
@@ -143,12 +140,11 @@
   margin-bottom: 16px;
 }
 
-.vipps-wordmark-lg {
+.vipps-wordmark-large {
   display: block;
-  font-size: var(--text-display);
-  font-weight: 700;
-  color: var(--vipps-ink);
-  margin-bottom: 12px;
+  height: 64px;
+  width: auto;
+  margin: 0 auto 12px;
 }
 
 .vipps-amount {
@@ -158,7 +154,7 @@
 }
 
 // Mock login header variant — verify line instead of the amount.
-.vipps-amount-sm {
+.vipps-amount-small {
   font-size: var(--text-title);
 }
 
@@ -192,7 +188,7 @@
   padding: 4px 12px;
 }
 
-.stripe-wordmark-lg {
+.stripe-wordmark-large {
   display: block;
   font-size: var(--text-display);
   font-weight: 700;
@@ -208,4 +204,21 @@
 
 .stripe-lock svg {
   display: block;
+}
+
+.pay-row-text .ink-soft {
+  display: block;
+}
+
+// Order totals: a description list laid out as label | amount rows.
+dl.totals {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  column-gap: 12px;
+  row-gap: 8px;
+}
+
+dl.totals dd {
+  margin: 0;
+  text-align: end;
 }
