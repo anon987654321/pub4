@@ -21,6 +21,8 @@ class DatingSwipeTest < ApplicationSystemTestCase
   test "liking the top card records the like and removes the card" do
     sign_in_on_city(@me)
     visit_city("dating", "/")
+    # A first visit opens on the splash (3c539cc2ee); its link starts the deck.
+    click_link I18n.t("dating.splash.start", locale: :nb)
 
     assert_selector "section.dating-discover-panel", visible: true, wait: 5
 
