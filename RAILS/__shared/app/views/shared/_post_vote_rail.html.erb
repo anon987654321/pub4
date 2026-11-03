@@ -4,20 +4,23 @@
 <% voter = Current.user if defined?(Current) %>
 <% upvoted = local_assigns.fetch(:upvoted) { voter.present? && post.respond_to?(:upvoted_by?) && post.upvoted_by?(voter) } %>
 <% downvoted = local_assigns.fetch(:downvoted) { voter.present? && post.respond_to?(:downvoted_by?) && post.downvoted_by?(voter) } %>
-<div class="post-vote-rail" role="group" aria-label="<%= t("post.voting") %>">
+<%# data-post-score names the element a live score is written into, and
+    data-viewer-state marks the rail as this reader's own: kept when a card
+    rendered for nobody replaces the one around it. %>
+<div class="post-vote-rail" role="group" aria-label="<%= t("post.voting") %>" data-viewer-state="vote">
   <% if vote_path.present? && voter.present? %>
     <%= button_to vote_path, method: :post, params: { vote: { value: 1 } },
           class: "post-vote-btn#{' is-active' if upvoted}", form_class: "post-vote-form",
           aria: { label: t("post.upvote"), pressed: upvoted } do %>
       <%= render "shared/feed_icon", name: "upvote" %>
     <% end %>
-    <span class="post-vote-score"><%= vote_score %></span>
+    <span class="post-vote-score" data-post-score="<%= dom_id(post) %>"><%= vote_score %></span>
     <%= button_to vote_path, method: :post, params: { vote: { value: -1 } },
           class: "post-vote-btn#{' is-active' if downvoted}", form_class: "post-vote-form",
           aria: { label: t("post.downvote"), pressed: downvoted } do %>
       <%= render "shared/feed_icon", name: "downvote" %>
     <% end %>
   <% else %>
-    <span class="post-vote-score post-vote-score--static"><%= vote_score %></span>
+    <span class="post-vote-score post-vote-score--static" data-post-score="<%= dom_id(post) %>"><%= vote_score %></span>
   <% end %>
 </div>

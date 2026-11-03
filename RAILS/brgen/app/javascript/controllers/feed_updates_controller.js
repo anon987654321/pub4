@@ -31,10 +31,40 @@ export default class extends Controller {
     this.observer = new MutationObserver(() => this.refreshChip())
     this.observer.observe(this.pendingTarget, { childList: true })
     this.refreshChip()
+    this.keepViewerState = this.keepViewerState.bind(this)
+    document.addEventListener("turbo:before-stream-render", this.keepViewerState)
   }
 
   disconnect() {
     this.observer?.disconnect()
+    document.removeEventListener("turbo:before-stream-render", this.keepViewerState)
+  }
+
+  // An edited card, or one whose link embed has resolved, arrives whole from
+  // the city stream, rendered for nobody (Post#broadcast_card_replacement marks
+  // it data-viewer-neutral). The reader's own vote rail, repost button and quote
+  // form — the elements marked data-viewer-state — are carried over from the
+  // card it replaces, so an edit never takes anyone's vote or buttons away. A
+  // replace from the reader's own request (a vote) is theirs already and is left
+  // alone.
+  keepViewerState(event) {
+    const stream = event.target
+    if (stream.getAttribute("action") !== "replace" || !stream.hasAttribute("data-viewer-neutral")) return
+
+    const id = stream.getAttribute("target") ?? ""
+    const card = document.getElementById(id)
+    if (!card || !this.element.contains(card)) return
+
+    const own = card.querySelectorAll("[data-viewer-state]")
+    const kept = new Map(Array.from(own, (node) => [node.dataset.viewerState, node]))
+    const render = event.detail.render
+    event.detail.render = async (element) => {
+      await render(element)
+      document.getElementById(id)?.querySelectorAll("[data-viewer-state]").forEach((node) => {
+        const mine = kept.get(node.dataset.viewerState)
+        if (mine) node.replaceWith(mine)
+      })
+    }
   }
 
   // The chip is the whole indicator: a count and a way to act on it. It hides

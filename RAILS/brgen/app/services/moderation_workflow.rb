@@ -94,6 +94,8 @@ class ModerationWorkflow
     return unless content.respond_to?(:removed_at) && content.removed_at.nil?
 
     content.update_columns(removed_at: Time.current, updated_at: Time.current)
+    # No callback ran, so the open pages are told here.
+    content.try(:broadcast_removal)
   end
 
   def penalize_owner(report)

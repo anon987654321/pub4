@@ -20,6 +20,9 @@ module Shared
       # write that leaves updated_at alone leaves every cached card without its
       # player.
       record.update_columns(link_embed: Shared::LinkEmbed.resolve(current).to_h, updated_at: Time.current)
+      # update_columns runs no callback, so a record that shows the player live
+      # (brgen Post) is told here.
+      record.try(:link_embed_resolved)
     end
   end
 end

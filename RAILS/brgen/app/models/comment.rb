@@ -23,6 +23,9 @@ class Comment < ApplicationRecord
   validate :parent_on_the_same_thread, if: -> { parent_id.present? && will_save_change_to_parent_id? }
 
   after_create_commit -> { broadcast_append_to [ commentable, "comments" ], partial: "comments/comment", locals: { comment: self } }
+  # The count on every card and page showing the post. The counter cache
+  # increments with SQL, so the post runs no callback of its own for it.
+  after_commit :broadcast_commentable_counts, on: [ :create, :destroy ]
 
   BEST_SQL = Arel.sql("SUM(COALESCE(votes.value, 0)) DESC")
   CONTROVERSIAL_SQL = Arel.sql("ABS(SUM(votes.value)) ASC")
@@ -63,6 +66,15 @@ class Comment < ApplicationRecord
   end
 
   private
+
+  # By key: a comment found by id for its deletion has no commentable loaded,
+  # and strict loading refuses the lazy read. Posts are the commentable with
+  # live counts.
+  def broadcast_commentable_counts
+    return unless commentable_type == "Post"
+
+    Post.unscoped.find_by(id: commentable_id)&.broadcast_live_counts
+  end
 
   # By key: a lazy load of parent raises under strict loading.
   def parent_on_the_same_thread
