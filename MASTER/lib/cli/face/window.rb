@@ -203,44 +203,48 @@ module Master
             settling = false
             frame_rate = nil
 
+            stopping = false
             @lock.synchronize do
-              break if @closing
-
-              active = !Master::Face::Contract.still_mode?(@state) && !@reduced_motion
-              settling = !active && !@reduced_motion && !@settled && !@motion_until.nil?
-              state_changed = @state != @last_render_state
-              size_changed = size != last_size
-              due = !@painted_once || size_changed
-
-              if active
-                due ||= state_changed || current >= @next_frame_at
-                frame_rate = @active_fps
-              elsif settling
-                due ||= state_changed || current >= @next_frame_at || current >= @motion_until
-                frame_rate = @settle_fps if current < @motion_until
+              if @closing
+                stopping = true
               else
-                due ||= state_changed || (@dirty && current >= @next_frame_at)
-              end
+                active = !Master::Face::Contract.still_mode?(@state) && !@reduced_motion
+                settling = !active && !@reduced_motion && !@settled && !@motion_until.nil?
+                state_changed = @state != @last_render_state
+                size_changed = size != last_size
+                due = !@painted_once || size_changed
 
-              if due
-                render = true
-                @dirty = false
-                @painted_once = true
-                @last_render_state = @state
-                @settled = true if settling && current >= @motion_until
-              else
-                deadline = if active
-                             @next_frame_at
-                           elsif settling
-                             [@next_frame_at, @motion_until].min
-                           else
-                             current + @resize_poll
-                           end
-                wait_for = [[deadline - current, 0.01].max, @resize_poll].min
-                @render_cv.wait(@lock, wait_for)
+                if active
+                  due ||= state_changed || current >= @next_frame_at
+                  frame_rate = @active_fps
+                elsif settling
+                  due ||= state_changed || current >= @next_frame_at || current >= @motion_until
+                  frame_rate = @settle_fps if current < @motion_until
+                else
+                  due ||= state_changed || (@dirty && current >= @next_frame_at)
+                end
+
+                if due
+                  render = true
+                  @dirty = false
+                  @painted_once = true
+                  @last_render_state = @state
+                  @settled = true if settling && current >= @motion_until
+                else
+                  deadline = if active
+                               @next_frame_at
+                             elsif settling
+                               [@next_frame_at, @motion_until].min
+                             else
+                               current + @resize_poll
+                             end
+                  wait_for = [[deadline - current, 0.01].max, @resize_poll].min
+                  @render_cv.wait(@lock, wait_for)
+                end
               end
             end
 
+            break if stopping
             next unless render
 
             @output.print("\e[2J") if last_size && last_size != size
