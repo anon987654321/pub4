@@ -408,7 +408,7 @@ actionable root-backlog item. Keep them open until the relevant evidence exists.
   previews, and capture only actual command output. Publish media under the
   generated-media policy; do not re-track ignored MP4/WAV without a separate
   storage decision.
-remove second Norwegian request- [ ] **Dilla local sample-flip interface — implementation landed; validation open:**
+- [ ] **Dilla local sample-flip interface — implementation landed; validation open:**
   the bounded local-file path is now in `STUDIO/dilla/dilla.rb`: `SAMPLE_LOOP`,
   `SAMPLE_LOOP_VOL`, `SAMPLE_LOOP_WEIGHT`, plus CLI controls for volume, weight
   and slice count. It decodes at most 24 seconds through local FFmpeg, estimates

@@ -84,6 +84,13 @@ provenance sidecars in `app/assets/images/food/provenance.json`. Reference
 captures of the former Webflow site and the current app are retained under
 `docs/webflow-reference/` and `screenshots/`.
 
+The orange Vipps wordmark in `app/assets/images/vipps/vipps-wordmark.svg` is
+an unmodified copy of the asset published in the Vipps WooCommerce merchant
+plugin:
+https://github.com/vippsas/vipps-woocommerce/blob/052b7fd57365ec9c68e91a7b60df7af210bb61d2/payment/img/vipps-rgb-orange-pos.svg
+Use it without recolouring or stretching. Replace it with the asset supplied
+under the restaurant's merchant agreement when that brand kit is available.
+
 Mr. Damascy is the first restaurant intended for the future Brgen Takeaway
 surface. That does not make this standalone app a multi-restaurant marketplace
 today. Any future integration must preserve its own order/payment ownership
