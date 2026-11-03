@@ -35,6 +35,8 @@ nb:
     submit: "Kommenter"
     reply_placeholder: "Svar…"
     reply: "Svar"
+    # Who a reply answers; %{name} is "@name" or the anonymous label.
+    replying_to: "Svarer %{name}"
     title: "Kommentarer"
     back: "Tilbake"
     empty_body: "Vær den første til å svare — gjester kan kommentere uten konto."

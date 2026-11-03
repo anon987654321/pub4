@@ -10,6 +10,8 @@
   locals:
     comment       — required
     destroy_arg   — optional override for delete button path/model
+    parent        — optional, the comment this one replies to, when the
+                    caller has it loaded (the thread rendering its replies)
     threaded      — force on/off replies+children (default: auto)
 %>
 <% threaded = local_assigns.fetch(:threaded) { comment.respond_to?(:depth) || comment.respond_to?(:replies) } %>
@@ -21,11 +23,15 @@
 
 <%= turbo_frame_tag dom_id(comment) do %>
   <article class="comment comment_item" data-depth="<%= depth %>">
-    <%# Author, age and delete are spaced apart by the header itself, not
-        joined by dots; the age carries its full date on hover. %>
+    <%# Author, who a reply answers, age and delete are spaced apart by the
+        header itself, not joined by dots; the age reads "for 2 timer siden"
+        and carries its full date on hover. %>
     <header>
       <%= tag.span comment_author_name(comment), class: "comment-author" %>
-      <%= tag.time time_ago_in_words(comment.created_at),
+      <% if (answers = comment_reply_target(comment, local_assigns[:parent])) %>
+        <%= tag.span t("comments.replying_to", name: answers), class: "comment-replying-to" %>
+      <% end %>
+      <%= tag.time time_ago(comment.created_at),
             datetime: comment.created_at.iso8601, title: l(comment.created_at, format: :long) %>
       <% if can_delete %>
         <%= button_to t("actions.delete"), destroy_arg,
@@ -73,7 +79,7 @@
           landing as a sibling of the parent at the bottom of #comments. %>
       <div class="comment-replies" id="<%= dom_id(comment, :replies) %>">
         <% comment_children(comment).each do |reply| %>
-          <%= render "comments/comment", comment: reply, threaded: true %>
+          <%= render "comments/comment", comment: reply, threaded: true, parent: comment %>
         <% end %>
       </div>
     <% end %>

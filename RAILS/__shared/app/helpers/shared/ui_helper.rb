@@ -185,12 +185,36 @@ module Shared
       klass = comment.class
 
       if klass.respond_to?(:best)
-        klass.where(parent_id: comment.id).best
+        # Each reply reads its author and, for its reply form, the thread it is
+        # on; neither is loaded by a query this shape, and strict loading
+        # refuses the lazy read. A post page with a single reply raised on it.
+        loads = %i[user commentable].select { |name| klass.reflect_on_association(name) }
+        replies = klass.where(parent_id: comment.id)
+        replies.best.preload(*loads)
       elsif comment.respond_to?(:replies)
         comment.replies.order(:created_at)
       else
         klass.none
       end
+    end
+
+    # Who a reply answers, as the row shows it: "@name", or the anonymous label
+    # on its own (an "@anon" would read as somebody's handle). Nil for a
+    # top-level comment, and for apps whose comments do not thread.
+    #
+    # The parent is passed in when the thread is rendering it anyway; a reply
+    # rendered alone (a create response, a broadcast) looks it up with its user,
+    # which strict loading would refuse to read lazily.
+    def comment_reply_target(comment, parent = nil)
+      parent_id = comment.try(:parent_id)
+      return if parent_id.blank?
+
+      with_authors = comment.class.includes(:user)
+      parent ||= with_authors.find_by(id: parent_id)
+      return unless parent
+
+      name = comment_author_name(parent)
+      name == t("chat.anon", default: "anon") ? name : "@#{name}"
     end
 
     # Cross-app post author (brgen author_name / amber author_name / fallback).
