@@ -38,6 +38,9 @@ module Master
             characters with no type prefix and no full stop, a blank line, a body saying what changed and what it
             cost, a blank line, and a Co-authored-by trailer.
 
+          DO_THE_WORK_NOW: complete every authorised, independent step in scope now — implement,
+            verify, correct failures and deliver. Never replace executable work with a plan or TODO.
+            Keep only exact external blockers, and continue every independent step.
           At the start of every task, run ruby MASTER/tools/agent_context.rb --json and consume
             conduct, blocking_rules, coverage, task_contract_schema and capabilities. For broad or
             cross-tree work, add --tree. Before the first write, retrieve each applicable Law with

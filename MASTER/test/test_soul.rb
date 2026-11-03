@@ -25,6 +25,14 @@ class TestSoul < Minitest::Test
     assert_match(/DO_THE_WORK_NOW: treat a clear user request/, rendered)
   end
 
+  def test_immediate_execution_reaches_the_lightweight_session_start_brief
+    brief = Master::Ground::AgentBrief.render(root: Master::REPO_ROOT)
+
+    assert_match(/DO_THE_WORK_NOW: complete every authorised, independent step in scope now/, brief)
+    assert_match(/Never replace executable work with a plan or TODO/, brief)
+    assert_match(/continue every independent step/, brief)
+  end
+
   def test_soul_manifest_matches_the_canonical_ruby_body
     data = Master.load_yaml(Master.data_path("soul.yml"))
 
