@@ -206,33 +206,38 @@ class MessagesController < ApplicationController
     end
   end
 
+  # Web push and, for the iOS shell, APNs: a message is not a Notification row,
+  # so NativePushJob never fired for one and a chat never reached a phone. Same
+  # words and the same path on both, and one lock-screen thread per conversation.
+  def notify_recipients(message)
+    payload = { title: Current.user.display_name, body: push_body_for(message), path: conversation_path(@conversation) }
+    native = Apns.configured?
+    push_recipients.each do |recipient|
+      Shared::Pushable.push_to(recipient, title: payload[:title], body: payload[:body], url: payload[:path])
+      next unless native
+
+      NativePushJob.perform_later(user_id: recipient.id, thread: "brgen-conversation-#{@conversation.id}", **payload)
+    end
+  end
+
   # One query for the memberships and one for who has blocked the sender, rather
   # than a participant load and a block lookup per recipient. A muted thread and
-  # a person who blocked the sender get no push; guests have no durable endpoint;
-  # a message request waits, silent, until it is accepted.
-  def notify_recipients(message)
+  # a person who blocked the sender get no push; guests and bots have no durable
+  # endpoint; a message request waits, silent, until it is accepted.
+  def push_recipients
     participants = @conversation.conversation_participants
-    memberships = participants.pushable_except(Current.user).includes(:user).to_a
-    blockers = Block.where(blocker_id: memberships.map(&:user_id), blocked_id: Current.user.id).pluck(:blocker_id).to_set
-    memberships.each do |membership|
-      recipient = membership.user
-      next if recipient.guest? || blockers.include?(recipient.id)
-
-      Shared::Pushable.push_to(recipient,
-        title: Current.user.display_name,
-        body:  push_body_for(message),
-        url:   conversation_path(@conversation)
-      )
-    end
+    recipients = participants.pushable_except(Current.user).includes(:user).map(&:user)
+    blockers = Block.where(blocker_id: recipients.map(&:id), blocked_id: Current.user.id).pluck(:blocker_id).to_set
+    recipients.reject { |user| user.guest? || user.bot? || blockers.include?(user.id) }
   end
 
   # Nothing about the words leaves the thread when the thread is meant to be
   # forgotten: the lock screen would otherwise keep what the timer was set to
-  # remove.
+  # remove. A photo or a voice note says which it is rather than nothing.
   def push_body_for(message)
     return t("messages.push_body_disappearing") if @conversation.ephemeral? || message.should_expire?
 
-    message.content.to_s.truncate(120)
+    helpers.conversation_preview(@conversation, message, length: 120)
   end
 
   def set_conversation
