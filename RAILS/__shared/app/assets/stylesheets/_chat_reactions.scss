@@ -173,6 +173,11 @@ li:focus-within .msg_reaction_picker {
   color: var(--text);
   font-weight: var(--weight-bold);
 }
+/* "Svarer @name": which comment a reply answers, quieter than the author. */
+.comment-replying-to {
+  color: var(--text-secondary);
+  font-size: var(--text-small);
+}
 .comment-body {
   color: var(--text);
   line-height: var(--leading-normal);
