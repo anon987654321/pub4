@@ -5,6 +5,7 @@ require "minitest/autorun"
 require "open3"
 require "rbconfig"
 require "yaml"
+require_relative "../lib/deploy_inventory"
 
 # Four places name the fleet: RAILS/apps.yml (the truth), deploy_inventory.json,
 # the DNS zones and relayd's routes. The first is edited; the rest are generated or
@@ -30,11 +31,11 @@ class TestInventoriesAgree < Minitest::Test
   end
 
   def test_every_apps_yml_domain_has_a_relayd_keypair
-    apps = YAML.safe_load_file(File.join(ROOT, "RAILS", "apps.yml")).fetch("apps")
+    apps = Deploy::Inventory.new(root: ROOT).apps
     relayd = File.read(File.join(ROOT, "OPENBSD", "etc", "relayd.conf"), encoding: "UTF-8")
     keypairs = relayd.scan(/tls keypair "([^"]+)"/).flatten
 
-    missing = apps.values.map { |meta| meta.fetch("domain") }.reject { |domain| keypairs.include?(domain) }
+    missing = apps.map(&:domain).reject { |domain| keypairs.include?(domain) }
 
     assert_empty missing, "apps.yml domains with no relayd tls keypair: #{missing.join(', ')}"
   end

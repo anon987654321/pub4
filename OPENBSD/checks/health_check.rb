@@ -10,6 +10,7 @@ require_relative "../lib/guard_state"
 require_relative "../lib/permission_audit"
 require_relative "../lib/disk_usage"
 require_relative "../lib/deploy_stamp"
+require_relative "../lib/deploy_inventory"
 
 ROOT = File.expand_path("../..", __dir__)
 APPS_YML = File.join(ROOT, "RAILS", "apps.yml")
@@ -69,10 +70,9 @@ def privileged(*cmd)
 end
 
 def load_apps
-  body = YAML.safe_load(File.read(APPS_YML)) || {}
-
-  body.fetch("apps").to_h do |name, metadata|
-    [name.to_s, { "domain" => metadata.fetch("domain").to_s, "port" => Integer(metadata.fetch("port")) }]
+  # The served fleet: Deploy::Inventory leaves out apps marked deployed: false.
+  Deploy::Inventory.new(root: ROOT).apps.to_h do |app|
+    [app.name, { "domain" => app.domain.to_s, "port" => Integer(app.port) }]
   end
 rescue StandardError => e
   # A run that cannot read the fleet must not print "health check ok" having

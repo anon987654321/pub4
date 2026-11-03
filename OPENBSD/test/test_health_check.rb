@@ -9,6 +9,7 @@ require "yaml"
 # vm23 -- Ruby defaults file reads to US-ASCII. Same require, same reason, as
 # MASTER/checks/runner.rb.
 require_relative "../lib/utf8"
+require_relative "../lib/deploy_inventory"
 
 # Behaviour, not spelling. These run health_check.rb the way the laptop and the
 # installed uptime wrapper do -- --public-only, which needs no vm23 tool -- with
@@ -16,7 +17,8 @@ require_relative "../lib/utf8"
 class HealthCheckBehaviourTest < Minitest::Test
   OPENBSD = File.expand_path("..", __dir__)
   SCRIPT = File.join(OPENBSD, "checks", "health_check.rb")
-  APPS = YAML.safe_load_file(File.join(OPENBSD, "..", "RAILS", "apps.yml")).fetch("apps")
+  # The served fleet; an apps.yml row marked deployed: false has no public host.
+  APPS = Deploy::Inventory.new(root: File.expand_path("..", OPENBSD)).apps
 
   def stub_curl(dir, body)
     path = File.join(dir, "curl")
@@ -42,7 +44,7 @@ class HealthCheckBehaviourTest < Minitest::Test
     Dir.mktmpdir do |dir|
       _, err, status = run_public_only(stub_curl(dir, "echo 'curl: (7) Failed to connect' >&2; exit 7"))
       refute status.success?
-      APPS.each_value { |meta| assert_includes err, "#{meta.fetch('domain')} https" }
+      APPS.each { |app| assert_includes err, "#{app.domain} https" }
     end
   end
 
@@ -50,7 +52,7 @@ class HealthCheckBehaviourTest < Minitest::Test
     Dir.mktmpdir do |dir|
       out, _, status = run_public_only(stub_curl(dir, "exit 0"), "--json")
       assert status.success?
-      assert_equal APPS.keys.sort, JSON.parse(out).fetch("apps_checked")
+      assert_equal APPS.map(&:name).sort, JSON.parse(out).fetch("apps_checked")
     end
   end
 
