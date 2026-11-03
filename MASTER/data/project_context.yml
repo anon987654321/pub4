@@ -402,3 +402,11 @@ entries:
     enforces part of it. The btn family is defined in RAILS/__shared and used by amber
     and bsdports, so its rename is one fleet-wide change; shared design tokens
     (--radius-sm, --text-xs) come from MASTER/data/tokens.yml and rename the same way.
+    Done 2026-11-03: the btn family is button everywhere (MASTER checks and layout
+    snapshots included) and the size tokens are spelled out (--text-small,
+    --radius-extra-small, yml radius_small); both renames compile every app to the
+    same CSS bytes. Size by place, not class: __shared/_buttons.scss takes
+    $compact-contexts, and an app's stack forwards the single-class places whose
+    buttons are compact (brgen's profile, post, front page and cart use it). Still
+    open: button-small, cluster, mt-8 and the layout wrappers in the remaining
+    views (marketplace listing, messenger thread, posts/new and most verticals).

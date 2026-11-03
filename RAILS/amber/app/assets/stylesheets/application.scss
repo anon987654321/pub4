@@ -1093,7 +1093,8 @@ main#main-content header > nav form {
 
 .button:focus-visible,
 .button-small:focus-visible,
-.button.button-small:focus-visible {
+.button.button-small:focus-visible,
+.profile-creator-link .button:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
@@ -1101,7 +1102,8 @@ main#main-content header > nav form {
 /* inline-flex so the label sits in the middle of the 44px it is given; as an
    inline link the height grows below the text and "Sign in" hugs the top. */
 .button-small,
-.button.button-small {
+.button.button-small,
+.profile-creator-link .button {
   display: inline-flex;
   align-items: center;
   justify-content: center;

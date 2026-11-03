@@ -4,9 +4,12 @@
   <%= tag.p t("users.profile_counts", items: @user.items.count, followers: @user.followers.count, following: @user.following.count) %>
   <%= render "users/follow", user: @user %>
   <% if @user.public_creator? %>
-    <p><%= link_to t("actions.creator_profile"), creator_profile_path(@user.creator_profile.handle), class: "button button-small" %></p>
+    <%= tag.p link_to(t("actions.creator_profile"), creator_profile_path(@user.creator_profile.handle),
+                      class: "button"),
+              class: "profile-creator-link" %>
   <% elsif authenticated? && Current.user == @user %>
-    <p><%= link_to t("actions.setup_creator"), new_my_creator_profile_path, class: "button button-small" %></p>
+    <%= tag.p link_to(t("actions.setup_creator"), new_my_creator_profile_path, class: "button"),
+              class: "profile-creator-link" %>
   <% end %>
 </header>
 <%= tag.h2 t("users.recent_items") %>
@@ -21,7 +24,7 @@
       <% if item.photos.attached? %>
         <%= responsive_image_tag item.photos.first, alt: item.title, preset: :card, sizes: "(max-width: 768px) 50vw, 240px" %>
       <% else %>
-        <div class="item-placeholder"><%= item.category %></div>
+        <%= tag.span item.category, class: "item-placeholder" %>
       <% end %>
       <%= tag.p item.title %>
     <% end %>

@@ -52,7 +52,7 @@
       <% if guest? %>
         <%= t("amber.feed.guest_hint", limit: Shared::AnonymousPost::LIMIT, remaining: anon.remaining) %>
       <% else %>
-        <%= link_to t("amber.feed.advanced_post"), new_post_path, class: "link-inherit" %>
+        <%= link_to t("amber.feed.advanced_post"), new_post_path %>
       <% end %>
     </p>
   </div>
