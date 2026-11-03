@@ -104,14 +104,26 @@ sync_from_repo
 # commit checked out here (bin/operator vps deploy --remote sets it only after a
 # green run). The box then installs the bundle and skips the suite, which takes
 # about 50 minutes on this 1 vCPU / 1 GB machine; any other commit runs it here.
+# VPS_DEPLOY_SKIP_TESTS=1 is break-glass: the operator deploys without any test
+# run, and like the preflight bypass it needs I_UNDERSTAND_FAST_DEPLOY=1. The log
+# says the suite did not run anywhere, which is the difference from an attestation.
 attested=${VPS_DEPLOY_CI_SHA:-}
-if [[ -n $attested && $attested == $(git -C "$repo" rev-parse HEAD) ]]; then
-  deploy_status "$app" "bundle install (CI attested)"
+head=$(git -C "$repo" rev-parse HEAD)
+if [[ ${VPS_DEPLOY_SKIP_TESTS:-} == 1 && ${I_UNDERSTAND_FAST_DEPLOY:-} != 1 ]]; then
+  print -u2 "vps_ci: VPS_DEPLOY_SKIP_TESTS=1 needs the human-only I_UNDERSTAND_FAST_DEPLOY=1"
+  exit 2
+fi
+if [[ ${VPS_DEPLOY_SKIP_TESTS:-} == 1 || ( -n $attested && $attested == $head ) ]]; then
+  deploy_status "$app" "bundle install (suite skipped)"
   . "${repo}/RAILS/_runtime_check.sh"
   . "${repo}/RAILS/_bundle.sh"
   bundle_install_as_app "$app" "$app_dir" \
-    || { deploy_status "$app" "bundle install (CI attested)" "failed"; exit 1; }
-  print "vps_ci: $app suite skipped - bin/ci passed on the operator's machine for $attested"
+    || { deploy_status "$app" "bundle install (suite skipped)" "failed"; exit 1; }
+  if [[ -n $attested && $attested == $head ]]; then
+    print "vps_ci: $app suite skipped - bin/ci passed on the operator's machine for $attested"
+  else
+    print "vps_ci: WARNING - $app deployed with NO test run (VPS_DEPLOY_SKIP_TESTS=1, break-glass) on $head"
+  fi
 else
   deploy_status "$app" "bundle install + bin/ci"
   # The brgen suite ran 59 minutes on this 1 vCPU box (coverage on) and was cut off at the

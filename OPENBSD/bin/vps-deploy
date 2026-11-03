@@ -14,6 +14,7 @@ usage() {
   VPS_DEPLOY_PREFLIGHT_SHA=<sha>   the operator's machine already proved this commit boots
   VPS_DEPLOY_CI_SHA=<sha>   the operator's machine ran the app's bin/ci green on this commit; the box skips its suite
   VPS_DEPLOY_SKIP_PREFLIGHT=1      break-glass, needs I_UNDERSTAND_FAST_DEPLOY=1
+  VPS_DEPLOY_SKIP_TESTS=1          break-glass: no test suite anywhere, needs I_UNDERSTAND_FAST_DEPLOY=1
   SKIP_CI=1    skip vps_ci.sh; \${app}.sh and its runtime check still run
   VPS_DEPLOY_DRIFT=fail   refuse to deploy when the box's configs differ from the repo
   PUB4_DEPLOY_BROWSER_CHECKS=1   add the browser checks after restart

@@ -358,7 +358,11 @@ class VpsDeployContractTest < Minitest::Test
   def test_a_ci_attestation_covers_exactly_the_commit_it_names
     assert_includes SOURCE, %q{[[ $VPS_DEPLOY_CI_SHA == $pin ]]}
     assert_includes SOURCE, %q{deploy_refuse "bin/ci ran on $VPS_DEPLOY_CI_SHA but this run would deploy $pin"}
-    assert_includes CI_SOURCE, %q{if [[ -n $attested && $attested == $(git -C "$repo" rev-parse HEAD) ]]; then}
+    assert_includes CI_SOURCE, %q{head=$(git -C "$repo" rev-parse HEAD)}
+    assert_includes CI_SOURCE, %q{( -n $attested && $attested == $head )}
+    # The no-tests break-glass needs the human acknowledgement and says so in the log.
+    assert_includes CI_SOURCE, %q{if [[ ${VPS_DEPLOY_SKIP_TESTS:-} == 1 && ${I_UNDERSTAND_FAST_DEPLOY:-} != 1 ]]; then}
+    assert_includes CI_SOURCE, "deployed with NO test run"
     assert_includes CI_SOURCE, %q{bundle_install_as_app "$app" "$app_dir"}
     assert_includes CI_SOURCE, %q{doas /usr/local/sbin/pub4-admin ci-run "$app" "$ci_timeout"}
   end
