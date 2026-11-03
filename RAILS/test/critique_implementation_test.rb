@@ -142,7 +142,9 @@ class CritiqueImplementationTest < Minitest::Test
   end
 
   def test_messenger_has_four_pane_desktop_contract_and_shared_artifacts
-    rooms = read("brgen/app/views/conversations/_rooms_rail.html.erb")
+    # The rail's DM row is its own partial, so the inbox stream can redraw it.
+    rooms = read("brgen/app/views/conversations/_rooms_rail.html.erb") +
+            read("brgen/app/views/conversations/_rail_row.html.erb")
     window = read("brgen/app/views/conversations/show.html.erb")
     channel = read("brgen/app/views/channels/show.html.erb")
     css = brgen_css_source
@@ -151,7 +153,7 @@ class CritiqueImplementationTest < Minitest::Test
     assert_includes rooms, 'class="messenger-rail"'
     assert_includes rooms, 'class="messenger-inbox"'
     assert_includes rooms, 't("messages.unread_badge", count: unread)'
-    assert_includes rooms, 'class="messenger-rail-unread" aria-hidden="true"'
+    assert_includes rooms, 'class: "messenger-rail-unread", aria: { hidden: true }'
     assert_includes window, 'render "shared/messenger_artifacts"'
     assert_includes channel, 'render "shared/messenger_artifacts"'
     assert_includes css, "grid-template-columns: 56px 300px minmax(0, 1fr) 360px;"

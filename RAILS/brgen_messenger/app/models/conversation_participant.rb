@@ -32,6 +32,16 @@ class ConversationParticipant < ApplicationRecord
   def muted? = muted_at.present?
   def archived? = archived_at.present?
 
+  # Reading a thread, muting it or pinning it changes this person's row and
+  # badge and nobody else's, so only their inbox is redrawn (InboxBroadcastJob).
+  after_update_commit :refresh_inbox, if: :inbox_row_changed?
+
+  def refresh_inbox = InboxBroadcastJob.perform_later(conversation_id, [ user_id ])
+
+  def inbox_row_changed?
+    saved_change_to_last_read_at? || saved_change_to_muted_at? || saved_change_to_pinned_at?
+  end
+
   # Ops, then voices, then members; stable by id within a tier.
   scope :by_rank, lambda {
     order(Arel.sql("CASE role WHEN 'op' THEN 0 WHEN 'voice' THEN 1 ELSE 2 END"), :id)

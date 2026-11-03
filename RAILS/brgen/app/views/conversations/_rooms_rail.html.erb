@@ -49,35 +49,10 @@
     <%= link_to t("messages.archive_link", count: @archived_count), conversations_path(arkiv: 1),
                 class: "messenger-inbox-search", data: { turbo_frame: "_top" } %>
   <% end %>
-  <ul class="messenger-inbox-list" role="list">
+  <ul class="messenger-inbox-list" role="list" id="rail_conversations">
     <% if Current.user %>
-      <% rail_conversations.each do |room| %>
-        <% unread = rail_unread.fetch(room.id, 0) %>
-        <% last = rail_last_messages[room.id] %>
-        <li role="listitem">
-          <%= link_to conversation_path(room), class: "messenger-inbox-room",
-                      data: { turbo_frame: "messenger-pane" },
-                      aria: { current: current_room&.id == room.id ? "page" : nil } do %>
-            <span class="messenger-room-avatar" aria-hidden="true">
-              <%= room.display_name_for(Current.user).to_s.first&.upcase || "?" %>
-            </span>
-            <span class="messenger-room-copy">
-              <span class="messenger-inbox-name"><%= room.display_name_for(Current.user) %></span>
-              <% if last %>
-                <span class="messenger-room-preview"><%= room.view_once? ? t("messages.view_once_chip").upcase_first : truncate(last.content.to_s, length: 56) %></span>
-              <% end %>
-            </span>
-            <span class="messenger-room-meta">
-              <% if unread.positive? %>
-                <span class="messenger-rail-unread" aria-hidden="true"><%= unread %></span>
-                <span class="visually-hidden"><%= t("messages.unread_badge", count: unread) %></span>
-              <% elsif last %>
-                <time datetime="<%= last.created_at.iso8601 %>"><%= time_ago(last.created_at) %></time>
-              <% end %>
-            </span>
-          <% end %>
-        </li>
-      <% end %>
+      <%= render partial: "conversations/rail_row", collection: rail_conversations, as: :room,
+                 locals: { unread_counts: rail_unread, last_messages: rail_last_messages, current_room: } %>
       <% if rail_conversations.empty? %>
         <li role="listitem" class="messenger-inbox-empty"><%= t("messages.empty_title") %></li>
       <% end %>

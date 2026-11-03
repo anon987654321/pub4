@@ -123,6 +123,10 @@
   <% if Current.user %>
     <%= turbo_stream_from "nearby_alerts_#{Current.user.id}" %>
     <%= turbo_stream_from "brgen:matches:#{Current.user.id}" %>
+    <%# The reader's own inbox: thread rows and the unread count, replaced live
+        by InboxBroadcastJob. Signed, and one per person, so it carries only
+        what that person may see. %>
+    <%= turbo_stream_from Current.user, :inbox unless Current.user.guest? %>
     <%# DMs only — public channels are ambient and must not light the badge.
         One COUNT, not a Ruby sum over 2 queries per thread on every render of
         every page. The filter lives in unread_total_for. %>

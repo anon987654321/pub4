@@ -39,8 +39,12 @@ class Conversation
       # The newest message of each conversation, in two queries. A list row shows
       # one preview line, and includes(:messages) loaded every message of every
       # thread on the page to supply it.
+      #
+      # Of what is still there: an unsent or disappeared line has no body, and as
+      # the preview it emptied the row while the thread said something else.
       def last_messages_for(conversations)
-        newest = Message.where(conversation_id: conversations).group(:conversation_id).select("MAX(messages.id)")
+        newest = Message.visible.unexpired.where(conversation_id: conversations)
+                        .group(:conversation_id).select("MAX(messages.id)")
         Message.where(id: newest).index_by(&:conversation_id)
       end
 

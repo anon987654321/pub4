@@ -1,0 +1,10 @@
+<%# The Messenger entry's unread count, in the pill "nytt!" uses; 99+ keeps the
+    pill from growing past its word. The wrapper is always drawn, empty at zero,
+    so InboxBroadcastJob has something to replace when the first message lands
+    and when the last one is read. %>
+<span id="messenger_unread_badge">
+  <% if count.positive? %>
+    <sup class="nav_link_badge"><%= count > 99 ? "99+" : count %></sup>
+    <%= tag.span t("messages.unread_badge", count:), class: "visually-hidden" %>
+  <% end %>
+</span>

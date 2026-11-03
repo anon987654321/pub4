@@ -13,9 +13,13 @@
     Same anatomy as the rail's DM row — avatar, name, preview, then unread or
     time — because they are the same object at two sizes. The rail row is the
     compact one; this is the same row with room to breathe, and the pin control
-    that the rail has no space for. %>
-<li role="listitem">
-  <% display_name = conversation.display_name_for(Current.user) %>
+    that the rail has no space for.
+
+    Rendered by InboxBroadcastJob too, once per reader into their own stream,
+    so the viewer is a local there; the id is what that job replaces. %>
+<% viewer = local_assigns[:viewer] || Current.user %>
+<li role="listitem" id="<%= dom_id(conversation, :inbox) %>">
+  <% display_name = conversation.display_name_for(viewer) %>
   <% last = local_assigns[:last] %>
   <div class="messenger-inbox-row">
     <%= link_to conversation_path(conversation), class: "messenger-inbox-link" do %>
@@ -25,9 +29,7 @@
       <span class="messenger-inbox-main">
         <strong class="messenger-inbox-name"><%= display_name.presence || t("messages.anonymous") %></strong>
         <% if last %>
-          <%# A view-once line is not previewed: the list would otherwise keep
-              showing what the thread has promised to remove. %>
-          <span class="messenger-inbox-preview"><%= conversation.view_once? ? t("messages.view_once_chip").upcase_first : truncate(last.content.to_s, length: 80) %></span>
+          <%= tag.span conversation_preview(conversation, last, length: 80), class: "messenger-inbox-preview" %>
         <% end %>
       </span>
       <span class="messenger-inbox-meta">
@@ -41,7 +43,7 @@
         <% end %>
       </span>
     <% end %>
-    <% if @archive %>
+    <% if local_assigns.fetch(:archived, @archive) %>
       <%# destructive: no-confirm-ok — reversible — it moves the thread back to the inbox, nothing else %>
       <%= button_to t("messages.unarchive"), conversation_archive_path(conversation), method: :delete, class: "btn btn-ghost btn-sm" %>
     <% end %>
