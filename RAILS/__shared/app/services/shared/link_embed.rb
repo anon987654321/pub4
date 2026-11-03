@@ -59,7 +59,10 @@ module Shared
       discover search stream upload you charts pages jobs terms-of-use mobile settings messages
     ].freeze
     VIMEO_PATH = %r{\A/(\d+)(?:/([0-9a-f]+))?/?\z}
-    SPOTIFY_PATH = %r{\A/(?:intl-[a-z]{2}(?:-[a-z]{2})?/)?(track|album|playlist|episode|show)/([A-Za-z0-9]{22})/?\z}
+    # /tracks/<id> with an optional title slug after it.
+    WHYP_PATH = %r{\A/tracks/([A-Za-z0-9_-]+)(?:/[A-Za-z0-9_-]+)?/?\z}
+    WHYP_TOKEN = /\A[A-Za-z0-9_-]{1,64}\z/
+    SPOTIFY_PATH =%r{\A/(?:intl-[a-z]{2}(?:-[a-z]{2})?/)?(track|album|playlist|episode|show)/([A-Za-z0-9]{22})/?\z}
 
     PROVIDERS = [
       Provider.new(
@@ -123,6 +126,32 @@ module Shared
         player: ->(id) { "https://open.spotify.com/embed/#{id}" },
         thumbnail_hosts: [ "i.scdn.co", /\Aimage-cdn-[a-z]+\.spotifycdn\.com\z/ ],
         allow: "autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+      ),
+      # A whyp.it share link names the track and, for a private upload, the
+      # share token that opens it; the player takes the same two. The oEmbed
+      # answer names its player by a different id, which is ignored like the
+      # rest of its markup.
+      Provider.new(
+        key: "whyp", label: "Whyp",
+        hosts: %w[whyp.it www.whyp.it],
+        media_id: lambda { |uri|
+          track = uri.path[WHYP_PATH, 1]
+          token = URI.decode_www_form(uri.query.to_s).to_h["token"]
+          next unless track
+          next track unless token
+          "#{track}/#{token}" if token.match?(WHYP_TOKEN)
+        },
+        canonical: lambda { |id|
+          track, token = id.split("/")
+          "https://whyp.it/tracks/#{track}#{"?token=#{token}" if token}"
+        },
+        oembed: "https://api.whyp.it/api/oembed",
+        player: lambda { |id|
+          track, token = id.split("/")
+          "https://whyp.it/embeds/track/#{track}#{"?token=#{token}" if token}"
+        },
+        thumbnail_hosts: %w[cdn.whyp.it],
+        allow: "autoplay"
       ),
     ].freeze
 

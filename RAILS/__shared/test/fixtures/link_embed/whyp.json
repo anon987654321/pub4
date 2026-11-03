@@ -1,0 +1,16 @@
+{
+  "version": "1.0",
+  "type": "rich",
+  "provider_name": "Whyp",
+  "provider_url": "https://whyp.it",
+  "title": "J Dilla - Players (Second Version) (Unreleased)",
+  "width": 800,
+  "height": 200,
+  "html": "<iframe src=\"https://whyp.it/embeds/track/0rUvpM3mlgB4\" width=\"100%\" height=\"200\" scrolling=\"no\" frameborder=\"0\" allow=\"autoplay\" loading=\"lazy\"></iframe>",
+  "cache_age": 300,
+  "author_name": "how",
+  "author_url": "https://whyp.it/users/how-nXdKN5uwUd9K",
+  "thumbnail_url": "https://cdn.whyp.it/2cf3811e-ffd1-4b1b-a39f-695e23c85f64.jpg",
+  "thumbnail_width": 800,
+  "thumbnail_height": 800
+}

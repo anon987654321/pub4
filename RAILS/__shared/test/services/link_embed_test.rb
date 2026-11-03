@@ -8,8 +8,8 @@ require_relative "../../app/services/shared/outbound_http"
 require_relative "../../app/services/shared/link_embed"
 require_relative "../../app/services/shared/link_embed/record"
 
-# The oEmbed answers under fixtures/link_embed/ were recorded from the four
-# providers' public endpoints on 2026-09-15. Nothing here opens a socket: every
+# The oEmbed answers under fixtures/link_embed/ were recorded from the providers'
+# public endpoints, four on 2026-09-15 and whyp.it on 2026-11-03. Nothing here opens a socket: every
 # resolve is handed a fetcher that reads one of those files.
 class LinkEmbedTest < Minitest::Test
   FIXTURES = File.expand_path("../fixtures/link_embed", __dir__)
@@ -28,6 +28,10 @@ class LinkEmbedTest < Minitest::Test
       "https://soundcloud.com/kygo/sets/kids-in-love" => %w[soundcloud kygo/sets/kids-in-love],
       "https://vimeo.com/1084537" => %w[vimeo 1084537],
       "https://open.spotify.com/intl-no/track/4cOdK2wGLETKBW3PvgPWqT" => %w[spotify track/4cOdK2wGLETKBW3PvgPWqT],
+
+      "https://whyp.it/tracks/292777?token=zaB8x" => %w[whyp 292777/zaB8x],
+      "https://www.whyp.it/tracks/292777/players-second-version?token=zaB8x&in=abc" => %w[whyp 292777/zaB8x],
+      "https://whyp.it/tracks/292777" => %w[whyp 292777],
     }.each do |url, (provider, id)|
       found = match(url)
       refute_nil found, url
@@ -57,7 +61,18 @@ class LinkEmbedTest < Minitest::Test
     ].each { |url| assert_nil match(url), url }
   end
 
-  def test_the_first_recognised_link_in_prose_or_editor_html_is_found
+# A whyp.it link is a track page with, at most, a share token made of
+# plain word characters; anything else names nothing.
+def test_whyp_names_only_track_pages_with_a_plain_token
+  [
+    "https://whyp.it.evil.test/tracks/292777",
+    "https://whyp.it/users/how-nXdKN5uwUd9K",
+    "https://whyp.it/tracks/292777?token=%22%3E%3Cscript%3E",
+    "https://whyp.it/embeds/track/0rUvpM3mlgB4",
+  ].each { |url| assert_nil match(url), url }
+end
+
+def test_the_first_recognised_link_in_prose_or_editor_html_is_found
     prose = "Se denne: https://example.com/artikkel og så https://youtu.be/d_HlPboLRL8."
     assert_equal "https://youtu.be/d_HlPboLRL8", Shared::LinkEmbed.find(prose).source_url
 
@@ -106,6 +121,10 @@ class LinkEmbedTest < Minitest::Test
         "spotify",
         "https://open.spotify.com/embed/track/4cOdK2wGLETKBW3PvgPWqT",
       ],
+
+      # Recorded 2026-11-03; the answer's own iframe names an opaque id, but the
+      # player is rebuilt from the share link's track id and token.
+      "https://whyp.it/tracks/292777?token=zaB8x" => [ "whyp", "https://whyp.it/embeds/track/292777?token=zaB8x" ],
     }.each do |url, (fixture, player)|
       record = Shared::LinkEmbed.resolve(match(url), fetch: ->(_) { recorded(fixture) })
       assert record.ok?, url
