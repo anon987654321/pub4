@@ -14,6 +14,7 @@ class Takeaway::Restaurant < ApplicationRecord
   include Shared::Notifiable
   include Shared::Reactable
   include Shared::GeoLocatable
+  include Shared::MediaProcessable
   tracks_activity created: "TakeawayRestaurantCreated", updated: "TakeawayRestaurantUpdated", source_vertical: "takeaway", actor: :user
 
   belongs_to :user
