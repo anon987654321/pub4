@@ -15,14 +15,24 @@
 # `bundle install` finds it present and never compiles the unpatched source.
 #
 # Delete this tool once an upstream nokogiri release builds on OpenBSD.
+#
+# On 2026-11-03 `gem fetch` grew to 546 MB on vm23 (1 GB RAM), filled swap and
+# took every app down for about 17 minutes. So the .gem is downloaded directly
+# and checked against rubygems.org's SHA-256, and on OpenBSD the tool refuses to
+# start while less than MIN_FREE_SWAP_MB of swap is free (--force overrides).
 
+require "digest"
 require "fileutils"
+require "json"
+require "net/http"
 require "rbconfig"
 require "tmpdir"
 
 module NokogiriOpenbsd
   HASHMAP = File.join("gumbo-parser", "src", "hashmap.c")
   CLASHING = /\b__(malloc|realloc|free)\b/
+  MIN_FREE_SWAP_MB = 400
+  RUBYGEMS = "https://rubygems.org"
 
   module_function
 
@@ -36,7 +46,7 @@ module NokogiriOpenbsd
   end
 
   def build(version, dir)
-    run!(*gem_cmd("fetch", "nokogiri", "-v", version, "--platform", "ruby"), chdir: dir)
+    download(version, dir)
     run!(*gem_cmd("unpack", "nokogiri-#{version}.gem"), chdir: dir)
 
     root = File.join(dir, "nokogiri-#{version}")
@@ -46,6 +56,54 @@ module NokogiriOpenbsd
     File.write(File.join(root, "nokogiri.gemspec"), spec)
     run!(*gem_cmd("build", "nokogiri.gemspec"), chdir: root)
     File.join(root, "nokogiri-#{version}.gem")
+  end
+
+  # One HTTP GET of the .gem, streamed to disk, instead of `gem fetch`, which
+  # loads the remote spec index into memory; the published SHA-256 must match.
+  def download(version, dir)
+    want = published_sha(version)
+    path = File.join(dir, "nokogiri-#{version}.gem")
+    fetch_to(URI("#{RUBYGEMS}/downloads/nokogiri-#{version}.gem"), path)
+    got = Digest::SHA256.file(path).hexdigest
+    abort("nokogiri-openbsd: checksum mismatch for #{version}: #{got} != #{want}") unless got == want
+    path
+  end
+
+  def published_sha(version)
+    uri = URI("#{RUBYGEMS}/api/v2/rubygems/nokogiri/versions/#{version}.json?platform=ruby")
+    sha = JSON.parse(Net::HTTP.get(uri))["sha"].to_s
+    sha.match?(/\A\h{64}\z/) ? sha : abort("nokogiri-openbsd: rubygems.org gave no checksum for #{version}")
+  end
+
+  def fetch_to(uri, path, redirects: 3)
+    Net::HTTP.start(uri.host, uri.port, use_ssl: true) do |http|
+      http.request(Net::HTTP::Get.new(uri)) do |response|
+        if response.is_a?(Net::HTTPRedirection) && redirects.positive?
+          return fetch_to(URI(response["location"]), path, redirects: redirects - 1)
+        end
+        abort("nokogiri-openbsd: download failed: #{response.code}") unless response.is_a?(Net::HTTPSuccess)
+
+        File.open(path, "wb") { |io| response.read_body { |chunk| io.write(chunk) } }
+      end
+    end
+  end
+
+  # Free swap in MB from swapctl -s (512-byte blocks), or nil off OpenBSD.
+  def free_swap_mb
+    out = IO.popen(["swapctl", "-s"], err: File::NULL, &:read)
+    blocks = out[/(\d+) available/, 1]
+    blocks&.then { |count| count.to_i * 512 / (1024 * 1024) }
+  rescue SystemCallError => e
+    warn "nokogiri-openbsd: no swapctl (#{e.class}), not OpenBSD; swap guard skipped"
+    nil
+  end
+
+  def memory_guard!(force:)
+    free = free_swap_mb
+    return if force || free.nil? || free >= MIN_FREE_SWAP_MB
+
+    abort("nokogiri-openbsd: only #{free} MB of swap free (needs #{MIN_FREE_SWAP_MB}); a build now risks the " \
+          "running apps. Free memory first, or pass --force.")
   end
 
   # Each bundle is installed by its owner, so the files belong to the app
@@ -65,8 +123,11 @@ module NokogiriOpenbsd
   end
 
   def main(argv)
+    force = !argv.delete("--force").nil?
     version, *targets = argv
-    abort("usage: nokogiri-openbsd VERSION BUNDLE_DIR[:USER] [BUNDLE_DIR[:USER] …]") if version.nil? || targets.empty?
+    usage = "usage: nokogiri-openbsd [--force] VERSION BUNDLE_DIR[:USER] [BUNDLE_DIR[:USER] …]"
+    abort(usage) if version.nil? || targets.empty?
+    memory_guard!(force:)
 
     Dir.mktmpdir("nokogiri-openbsd") do |dir|
       File.chmod(0o755, dir)
