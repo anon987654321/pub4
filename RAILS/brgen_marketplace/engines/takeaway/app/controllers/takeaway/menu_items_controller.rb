@@ -11,7 +11,7 @@ class Takeaway::MenuItemsController < Takeaway::BaseController
 
     saved = ActiveRecord::Base.transaction do
       if category_name.present?
-        category = @restaurant.menu_categories.where("LOWER(name) = ?", category_name.downcase).first_or_initialize
+        category = menu_category_named(category_name)
         unless category.save
           @item.errors.add(:base, category.errors.full_messages.to_sentence)
           raise ActiveRecord::Rollback
@@ -34,6 +34,14 @@ class Takeaway::MenuItemsController < Takeaway::BaseController
   end
 
   private
+
+  # Case-insensitive, so "middag" lands in "Middag". A new section takes the
+  # typed name: first_or_initialize cannot copy it out of the string condition.
+  def menu_category_named(name)
+    same_name = @restaurant.menu_categories.where("LOWER(name) = ?", name.downcase)
+    same_name.first_or_initialize(name:)
+  end
+
   def set_restaurant = (@restaurant = find_by_slug_or_id(Current.user.takeaway_restaurants, params[:restaurant_id]))
   def item_params = params.require(:takeaway_menu_item).permit(:name, :description, :price_cents, :available, :vegetarian, :vegan, :photo, :menu_category_name)
 end
