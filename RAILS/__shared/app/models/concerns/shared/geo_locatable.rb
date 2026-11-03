@@ -55,6 +55,13 @@ module Shared
       degrees_for_km(km) / Math.cos(deg_to_rad([ latitude.to_f.abs, 0.0001 ].max))
     end
 
+    # The rounded centre nearby searches from, or nil when GeoIsolation refuses
+    # the coordinate. A module method, like cell_id, so it needs no model.
+    def self.isolated_bounds_for(lat, lng)
+      isolated = GeoIsolation.compute_isolated_bounds(latitude: lat, longitude: lng)
+      isolated[:bounds] unless isolated[:status] == :error
+    end
+
     class_methods do
       # Bbox-filtered nearby (fast, chainable like .nearby(lat, lng, 5).limit(20).includes(...) ).
       # For high precision on small result sets, post-filter with haversine or call .select.
@@ -79,10 +86,7 @@ module Shared
 
       private
 
-      def isolated_bounds_for(lat, lng)
-        isolated = GeoIsolation.compute_isolated_bounds(latitude: lat, longitude: lng)
-        isolated[:bounds] unless isolated[:status] == :error
-      end
+      def isolated_bounds_for(lat, lng) = Shared::GeoLocatable.isolated_bounds_for(lat, lng)
     end
 
     def geo?
