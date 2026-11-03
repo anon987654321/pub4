@@ -72,8 +72,11 @@ class EngineRenderSmokeTest < ActionDispatch::IntegrationTest
     assert_response :success, "marketplace index 500'd on a photo card: #{@response.body[0, 300]}"
   end
 
-  test "radio home exposes discovery and sharing instead of the tunnel-only shell" do
-    track = Playlist::Track.create!(
+  # 0191a54bb6 made the Radio Bergen tunnel the radio home on purpose: it is
+  # the player and its library drawer opens the playlists. Hosted uploads are
+  # one click away on the tracks index, which must list them.
+  test "radio home is the Radio Bergen tunnel and hosted tracks stay one click away" do
+    Playlist::Track.create!(
       user: @user,
       title: "Smoke radio",
       artist: "Smoke artist",
@@ -92,10 +95,14 @@ class EngineRenderSmokeTest < ActionDispatch::IntegrationTest
     host! "radio.brgen.no"
     get "/"
     assert_response :success
-    assert_includes response.body, "radio-track-card"
+    assert_select "div.radio-tunnel[data-controller='radio-tunnel']", 1
+    assert_select "button[data-action='click->radio-tunnel#openLibrary']", 1
+    assert_select ".radio-nav a[href='/hosted_tracks']", 1
+
+    get "/hosted_tracks"
+    assert_response :success
     assert_includes response.body, "Smoke radio"
-    refute_includes response.body, "radio-tunnel"
-    assert_includes response.body, ERB::Util.html_escape(I18n.t("playlist.share_track", title: track.title))
+    assert_includes response.body, "Featured radio"
   end
 
   test "marketplace food renders through the nested takeaway engine" do
