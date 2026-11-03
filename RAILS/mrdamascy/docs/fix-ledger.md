@@ -203,6 +203,10 @@ against `rails s` with a real browser session.
    AGENTS now describe the assets as retained originals; do not
    regenerate. The 96.3 % figure above survives only as the fidelity
    record of the discarded attempt.
+   **Reversed 2026-11-03:** the restored "originals" were the generated
+   chef illustration (DejaVu text, three <text> nodes), not the
+   restaurant's mark; the owner chose the trace, so d27be96e26's assets
+   are back in public/ and the docs describe them as the restaurant's own.
 3. **Second payment lane — Stripe Checkout.** Additive migration
    `20261101000020_add_payment_method_to_orders` (orders.payment_method,
    default "vipps", indexed). `StripeClient` (Net::HTTP, Checkout Sessions

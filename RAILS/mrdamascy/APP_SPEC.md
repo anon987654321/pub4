@@ -4,14 +4,14 @@ Single source of truth for the **Mr. Damascy** app. Every contributor/agent impl
 
 **What it is:** a mobile-first PWA for ordering shawarma & kebab from one Bergen kitchen (Solheimsgaten 60, 5054 Bergen at **Danmarksplass** — the real restaurant), built to make ordering+paying (Vipps Express, plus card via Stripe) **fewer steps than Foodora**, wrapped in Damascus/Syrian warmth and Bergen street-kebab culture.
 
-**Operator-mandated deltas (2026-11-02, binding like the rest of this spec):** (1) the kitchen is the real Danmarksplass restaurant — Solheimsgaten 60, 5054 Bergen, Man–Fre 11–21 · Lør–Søn 14–21, phone 955 55 600; (2) a **second payment lane, Stripe Checkout**, rides beside Vipps (`orders.payment_method`, `StripeClient`, `PaymentGateway`, three `stripe/*` routes, mock stand-in + signed webhook); (3) the logo assets are the operator's originals — the marks already in use at the restaurant — retained byte-for-byte (a VTracer re-trace was attempted and rolled back; never regenerate); (4) every menu item carries a generated studio photo (`app/assets/images/food/`, provenance sidecar, emoji fallback).
+**Operator-mandated deltas (2026-11-02, binding like the rest of this spec):** (1) the kitchen is the real Danmarksplass restaurant — Solheimsgaten 60, 5054 Bergen, Man–Fre 11–21 · Lør–Søn 14–21, phone 955 55 600; (2) a **second payment lane, Stripe Checkout**, rides beside Vipps (`orders.payment_method`, `StripeClient`, `PaymentGateway`, three `stripe/*` routes, mock stand-in + signed webhook); (3) the logo is the restaurant's own mark — the white-and-gold "Mr. Damascy" wordmark with the chef's hat and moustache in use on its signage and website — as a vector trace of its bitmap (96.3 % pixel match, restored 2026-11-03 after a revert had brought back a generated stand-in; never regenerate); (4) every menu item carries a generated studio photo (`app/assets/images/food/`, provenance sidecar, emoji fallback).
 
 ---
 
 ## 1. Brand & design tokens
 
 - Name: **Mr. Damascy** — "Fra Damaskus med kjærlighet". Greetings sprinkled in copy: `Ahlan!`, `Yalla!`, `Sahtein!` (+ Arabic `صحتين` on confirmation only).
-- Logo assets exist in `public/` (icon.svg, logo.svg, icon-*.png, icon-maskable-*.png, apple-touch-icon.png, favicon*, og-card.png). They are the **operator's originals, kept byte-for-byte** — the marks are already in use at the restaurant and must not be redesigned or regenerated.
+- Logo assets exist in `public/` (icon.svg, logo.svg, icon-*.png, icon-maskable-*.png, apple-touch-icon.png, favicon*, og-card.png). They are a **vector trace of the restaurant's own mark** (commit d27be96e26, restored 2026-11-03) — it is already in use at the restaurant, so it must not be redesigned; regenerate the rasters only from these SVGs.
 - **Palette** (CSS custom properties, white background, light minty pastels derived from the logo):
 
 ```css

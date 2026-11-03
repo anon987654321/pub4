@@ -1,6 +1,6 @@
 # AGENTS.md — contributor contract for mrdamascy
 
-**Read `APP_SPEC.md` first, in full.** It is the single source of truth for this app (routes §3, schema §4, services §5, controllers §6, views §7, Stimulus §8, SCSS §9, locales §10, seeds §11, Vipps Express §12, research credits §13, tests §14, docs §15, validator §16). Implement exactly against it — no deviations, no extra gems, no schema drift. **Operator-mandated deltas of 2026-11-02 are part of the spec** (see the header of APP_SPEC.md): the real Danmarksplass kitchen identity, the Stripe Checkout second payment lane, the retained original logo assets and the generated food photos.
+**Read `APP_SPEC.md` first, in full.** It is the single source of truth for this app (routes §3, schema §4, services §5, controllers §6, views §7, Stimulus §8, SCSS §9, locales §10, seeds §11, Vipps Express §12, research credits §13, tests §14, docs §15, validator §16). Implement exactly against it — no deviations, no extra gems, no schema drift. **Operator-mandated deltas of 2026-11-02 are part of the spec** (see the header of APP_SPEC.md): the real Danmarksplass kitchen identity, the Stripe Checkout second payment lane, the restaurant's own logo, as a vector trace and the generated food photos.
 
 ## Where this app lives
 
