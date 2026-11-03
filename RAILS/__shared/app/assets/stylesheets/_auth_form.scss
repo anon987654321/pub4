@@ -1,4 +1,5 @@
 /* Shared sign-in/sign-up form shell — shared/_offline_page.scss's sibling. */
+@use "account_settings";
 
 body.auth-surface {
   .tab-bar,
@@ -21,6 +22,10 @@ body.auth-surface {
     max-width: 28rem;
     margin-inline: auto;
     min-height: 100dvh;
+    /* The viewport's width at most: sized to its content the column was 435px
+       on a 390px phone, and every field ran off the right edge. */
+    inline-size: 100%;
+    box-sizing: border-box;
   }
 }
 
@@ -69,6 +74,10 @@ body.auth-surface {
   color: var(--text-secondary);
 }
 
+/* The rule above outranks .field--float; as a flex column it hung the label
+   under its input. A floating field keeps its grid. */
+.auth-form .field--float { display: grid; gap: 0; }
+
 .auth-form .field--check {
   flex-direction: row;
   align-items: center;
@@ -114,6 +123,7 @@ body.auth-surface {
 .auth-form .actions {
   margin-top: var(--space-4);
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 0.75rem;
 }
@@ -225,7 +235,9 @@ body.auth-surface {
   opacity: 0.92;
 }
 
-.oauth-vipps::before { content: "V"; }
+.oauth-vipps::before { content: none; }
+.oauth-vipps { padding-inline-start: 96px; }
+.oauth-vipps img { position: absolute; left: 1rem; top: 50%; height: 1.5rem; width: auto; transform: translateY(-50%); }
 .oauth-google::before { content: "G"; }
 .oauth-facebook::before { content: "f"; text-transform: lowercase; }
 .oauth-github::before { content: "GH"; font-size: 0.55rem; }

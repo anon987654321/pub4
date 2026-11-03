@@ -468,8 +468,22 @@
   main#main-content :is(h1, h2, h3, h4) { text-wrap: balance; overflow-wrap: anywhere; }
   main#main-content :is(p, li, dd) { text-wrap: pretty; }
   main#main-content :is(button, input, select, textarea) { box-sizing: border-box; }
-  main#main-content :is(input, select, textarea) { min-block-size: var(--tap-min); border: 0; background: var(--surface); color: var(--text); border-radius: 0; }
-  main#main-content :is(input, select, textarea):focus-visible { border: 0; outline: var(--focus-ring); outline-offset: 2px; }
+  // Fields only. A submit input is a button: matched here at (1,1,1) it lost
+  // .btn-primary's fill and pill to the field surface, so "Publiser" and
+  // "Kommenter" sat as grey slabs beside black pill buttons in the same row.
+  $field: "input:not([type=submit], [type=button], [type=reset], [type=image])";
+  main#main-content :is(#{$field}, select, textarea) {
+    min-block-size: var(--tap-min);
+    border: 0;
+    background: var(--surface);
+    color: var(--text);
+    border-radius: 0;
+  }
+  main#main-content :is(#{$field}, select, textarea):focus-visible {
+    border: 0;
+    outline: var(--focus-ring);
+    outline-offset: 2px;
+  }
   .feed-card, .post-reading, .comment_item, .newsletter-cta { min-inline-size: 0; overflow-wrap: anywhere; }
   .feed-card :is(img, video), .post-reading :is(img, video) { display: block; max-inline-size: 100%; block-size: auto; }
   .feed-post-prose, .feed-post-body, .post-reading-body-preview { max-inline-size: 66ch; line-height: var(--leading-normal); }

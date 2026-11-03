@@ -21,22 +21,17 @@
 
 <%= turbo_frame_tag dom_id(comment) do %>
   <article class="comment comment_item" data-depth="<%= depth %>">
+    <%# Author, age and delete are spaced apart by the header itself, not
+        joined by dots; the age carries its full date on hover. %>
     <header>
-      <span class="comment-author"><%= comment_author_name(comment) %></span>
-      <span>
-        ·
-        <time datetime="<%= comment.created_at.iso8601 %>">
-          <%= time_ago_in_words(comment.created_at) %>
-        </time>
-      </span>
+      <%= tag.span comment_author_name(comment), class: "comment-author" %>
+      <%= tag.time time_ago_in_words(comment.created_at),
+            datetime: comment.created_at.iso8601, title: l(comment.created_at, format: :long) %>
       <% if can_delete %>
-        <span class="comment-actions">
-          ·
-          <%= button_to t("actions.delete"), destroy_arg,
-                method: :delete,
-                data: { turbo_confirm: t("actions.confirm_delete") },
-                class: "btn btn-ghost btn-sm comment-delete" %>
-        </span>
+        <%= button_to t("actions.delete"), destroy_arg,
+              method: :delete,
+              data: { turbo_confirm: t("actions.confirm_delete") },
+              class: "btn btn-ghost btn-sm comment-delete" %>
       <% end %>
     </header>
 

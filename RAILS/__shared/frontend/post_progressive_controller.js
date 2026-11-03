@@ -16,7 +16,13 @@ export default class extends Controller {
     this.mediaInputTargets.forEach((input) => {
       input.addEventListener("change", this.mediaChanged)
     })
-    this.#show(0)
+    // No focus move on arrival: a heading focused by script reads as
+    // :focus-visible, so the first step opened with its title boxed in a focus
+    // ring before anyone had touched the form.
+    // A form sent back with errors opens on the writing step, where the fields
+    // the errors name are; starting over at the media step hid both.
+    const returned = this.element.querySelector(".errors[role=alert]") ? 1 : 0
+    this.#show(returned, { focus: false })
   }
 
   disconnect() {
@@ -53,7 +59,7 @@ export default class extends Controller {
     this.indicators.forEach((indicator) => { indicator.hidden = active })
   }
 
-  #show(next) {
+  #show(next, { focus = true } = {}) {
     if (!this.steps.length) return
     this.index = Math.max(0, Math.min(next, this.steps.length - 1))
 
@@ -67,6 +73,8 @@ export default class extends Controller {
       indicator.classList.toggle("is-active", active)
       indicator.setAttribute("aria-current", active ? "step" : "false")
     })
+
+    if (!focus) return
 
     const heading = this.steps[this.index]?.querySelector("h2, legend, [data-post-progressive-heading]")
     heading?.focus?.({ preventScroll: true })

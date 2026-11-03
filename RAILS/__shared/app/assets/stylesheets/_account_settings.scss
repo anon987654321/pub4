@@ -1,0 +1,32 @@
+// The account page (shared/account_settings/show), loaded through _auth_form,
+// whose column it shares, by every app that loads that.
+
+/* Account page: the sign-in column, its links one hairline row each. */
+.account-settings {
+  max-width: 22rem;
+  margin-inline: auto;
+  padding: clamp(4.5rem, 12vw, 6rem) var(--space-4) var(--space-8);
+}
+.account-settings h1 {
+  margin: 0 0 var(--space-2);
+  font-size: var(--text-xl);
+  letter-spacing: var(--tracking-tighter);
+}
+.account-settings > p {
+  margin: 0 0 var(--space-4);
+  color: var(--text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.account-settings ul { margin: 0 0 var(--space-4); padding: 0; list-style: none; border-top: 1px solid var(--border); }
+.account-settings li { border-bottom: 1px solid var(--border); }
+.account-settings li a {
+  display: flex;
+  align-items: center;
+  min-height: var(--tap-min);
+  color: var(--text);
+  font-weight: var(--weight-bold);
+  text-decoration: none;
+}
+.account-settings li a:is(:hover, :focus-visible) { text-decoration: underline; }

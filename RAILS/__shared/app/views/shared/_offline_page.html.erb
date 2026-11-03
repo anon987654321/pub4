@@ -1,7 +1,9 @@
 <% app_name ||= "App" %>
 <% storage_key ||= app_name.downcase %>
 
-<section class="offline-page" data-controller="offline-page" data-offline-page-storage-key-value="<%= storage_key %>">
+<section class="offline-page" data-controller="offline-page"
+         data-offline-page-storage-key-value="<%= storage_key %>"
+         data-offline-page-empty-text-value="<%= t("offline.empty") %>">
   <hgroup>
     <p class="offline-page-meta"><%= t("offline.badge") %></p>
     <%= tag.h1 t("offline.title", app: app_name) %>

@@ -1,0 +1,75 @@
+// The sign-in nudge a guest meets on a post (shared/_post_auth_prompt). Its own
+// partial because brgen loads it alone: brgen does not forward _modal, and the
+// prompt rendered there with no styling at all, its trigger a bare browser button.
+
+/* Small auth interruption: borrow X's focused follow/login popup without
+   turning a read action into a full page detour. */
+.post-auth-prompt-host {
+  display: inline;
+}
+
+.post-auth-prompt {
+  inline-size: min(22rem, calc(100vw - (var(--space-4) * 2)));
+  margin: auto;
+  padding: var(--space-4);
+  border: 0;
+  border-radius: 0;
+  background: var(--surface);
+  color: var(--text);
+}
+
+.post-auth-prompt[popover] {
+  max-inline-size: min(22rem, calc(100vw - (var(--space-4) * 2)));
+  padding: var(--space-4);
+}
+
+.post-auth-prompt > :is(h2, p) {
+  margin: 0;
+}
+
+.post-auth-prompt h2 {
+  font-size: var(--text-base);
+  line-height: var(--leading-snug);
+}
+
+.post-auth-prompt p {
+  margin-block-start: var(--space-2);
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+  line-height: var(--leading-normal);
+}
+
+.post-auth-prompt-actions {
+  display: grid;
+  gap: var(--space-2);
+  margin-block-start: var(--space-4);
+}
+
+.post-auth-prompt-actions .btn {
+  inline-size: 100%;
+}
+
+.post-auth-prompt-trigger {
+  min-block-size: var(--tap-min);
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--accent);
+  font: inherit;
+  font-weight: var(--weight-bold);
+  text-decoration: underline;
+  text-underline-offset: 0.15em;
+  cursor: pointer;
+}
+
+.post-auth-prompt-trigger:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: 3px;
+}
+
+.post-auth-prompt-note {
+  margin-block-start: var(--space-3);
+  padding-block-start: var(--space-3);
+  border-block-start: 0;
+  font-size: var(--text-xs);
+}

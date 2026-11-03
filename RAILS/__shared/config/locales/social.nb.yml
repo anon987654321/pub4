@@ -291,6 +291,7 @@ nb:
     lead: "Vi viser det sist mellomlagrede innholdet fra denne enheten når det er tilgjengelig."
     retry: "Prøv igjen"
     loading: "Laster mellomlagret innhold…"
+    empty: "Ingenting er mellomlagret ennå."
     list_label: "Liste over frakoblet innhold"
     connection_lost: "Du er frakoblet. Det som allerede vises, kan fortsatt leses."
   # Shared::AttachmentLimits, which every model inherits through ApplicationRecord.

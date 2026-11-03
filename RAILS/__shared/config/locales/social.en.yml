@@ -288,6 +288,7 @@ en:
     lead: "We’ll show the last cached items from this device when they’re available."
     retry: "Retry"
     loading: "Loading cached items…"
+    empty: "No cached items yet."
     list_label: "Offline content list"
     connection_lost: "You are offline. What is already on screen stays readable."
   # Shared::AttachmentLimits, which every model inherits through ApplicationRecord.

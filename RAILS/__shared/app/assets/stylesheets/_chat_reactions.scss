@@ -158,11 +158,17 @@ li:focus-within .msg_reaction_picker {
   background: var(--hover-subtle);
 }
 .comment.comment_item header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0 var(--space-2);
   font-size: var(--text-sm);
   line-height: var(--leading-normal);
   color: var(--text-secondary);
   margin-bottom: var(--space-1);
 }
+.comment.comment_item header time { font-variant-numeric: tabular-nums; }
+.comment.comment_item header form { margin-inline-start: auto; }
 .comment-author {
   color: var(--text);
   font-weight: var(--weight-bold);

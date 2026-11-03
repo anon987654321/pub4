@@ -79,12 +79,9 @@ select {
   color: var(--accent-ink);
 }
 
-// Only the steps a view asks for: marketplace's cart and listing pages carry
-// .mt-8 and tv's video page .mt-12. Every other step, and every .px- twin, was
-// a class no template named.
-@each $step in (8, 12) {
-  .mt-#{$step} { margin-top: var(--space-#{$step}); }
-}
+// Only the step a view asks for: marketplace's cart and listing pages carry
+// .mt-8. Every other step, and every .px- twin, was a class no template named.
+.mt-8 { margin-top: var(--space-8); }
 
 .text-sm { font-size: var(--text-sm); line-height: var(--leading-normal); }
 

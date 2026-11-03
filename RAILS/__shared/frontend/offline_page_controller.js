@@ -4,7 +4,7 @@ const STORE_NAME = "snapshots"
 
 export default class extends Controller {
   static targets = ["list"]
-  static values = { storageKey: String }
+  static values = { storageKey: String, emptyText: String }
 
   connect() {
     this.load()
@@ -75,7 +75,12 @@ export default class extends Controller {
   }
 
   renderEmpty() {
-    this.listTarget.innerHTML = '<li class="offline-page-item">No cached items yet.</li>'
+    // The words come from the page, in its locale; the English literal here was
+    // what every Norwegian visitor read.
+    const item = document.createElement("li")
+    item.className = "offline-page-item"
+    item.textContent = this.emptyTextValue
+    this.listTarget.replaceChildren(item)
   }
 
   safeUrl(value) {

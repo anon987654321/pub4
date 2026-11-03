@@ -1,12 +1,17 @@
-<%= tag.h1 t("pages.account") %>
+<section class="account-settings">
+  <%= tag.h1 t("pages.account") %>
 
-<%= tag.p Current.user.email_address %>
+  <%= tag.p Current.user.email_address, title: Current.user.email_address %>
 
-<% if Current.user.deletion_pending? %>
-  <%= tag.p t("account.deletion_scheduled", on: l(Current.user.deletion_scheduled_at, format: :long)) %>
-  <%= button_to t("account.cancel_deletion"), cancel_deletion_account_path, method: :post %>
-<% else %>
-  <%= link_to t("account.export"), export_account_path %>
-  <%= link_to t("account.two_factor"), two_factor_setup_path %>
-  <%= button_to t("account.delete"), account_path, method: :delete, data: { turbo_confirm: t("account.delete_confirm") } %>
-<% end %>
+  <% if Current.user.deletion_pending? %>
+    <%= tag.p t("account.deletion_scheduled", on: l(Current.user.deletion_scheduled_at, format: :long)) %>
+    <%= button_to t("account.cancel_deletion"), cancel_deletion_account_path, method: :post %>
+  <% else %>
+    <ul>
+      <%= tag.li link_to(t("account.export"), export_account_path) %>
+      <%= tag.li link_to(t("account.two_factor"), two_factor_setup_path) %>
+    </ul>
+    <%= button_to t("account.delete"), account_path, method: :delete,
+                  data: { turbo_confirm: t("account.delete_confirm") } %>
+  <% end %>
+</section>

@@ -9,8 +9,13 @@
             class: "btn btn-primary oauth-button oauth-bankid", data: { turbo: false } %>
     <% end %>
     <% if active.include?("vipps") %>
-      <%= button_to t("auth.with_vipps"), "/auth/vipps", method: :post,
-            class: "btn btn-primary oauth-button oauth-vipps", data: { turbo: false } %>
+      <%# The official wordmark, unmodified (images/vipps/README.md), beside the
+          label that already says Vipps, so its alt is empty. %>
+      <%= button_to "/auth/vipps", method: :post,
+            class: "btn btn-primary oauth-button oauth-vipps", data: { turbo: false } do %>
+        <%= image_tag "vipps/vipps-wordmark-on-orange.svg", alt: "", width: 59, height: 24 %>
+        <%= t("auth.with_vipps") %>
+      <% end %>
     <% end %>
     <% if active.include?("google_oauth2") %>
       <%= button_to t("auth.with_google"), "/auth/google_oauth2", method: :post,
