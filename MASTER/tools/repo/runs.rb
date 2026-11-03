@@ -69,7 +69,7 @@ module Operator
       ],
       # STUDIO's Rakefile builds this path from separate File.join arguments,
       # so the source-glob reader cannot recover the directory on its own.
-      "STUDIO/Rakefile" => ["STUDIO/test/**/*_test.rb"],
+      "STUDIO/Rakefile" => ["STUDIO/test/*_test.rb"],
     }.freeze
 
     # Support files named like tests. A runner loads these; nothing runs them.

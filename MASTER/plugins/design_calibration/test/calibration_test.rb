@@ -2,9 +2,9 @@
 
 require "minitest/autorun"
 require "fileutils"
-require_relative "../../../MASTER/checks/support/check_calibration"
-require_relative "../../../MASTER/checks/lib/research/calibration"
-require_relative "../../../OPENBSD/lib/check_result"
+require_relative "../../../checks/support/check_calibration"
+require_relative "../../../checks/lib/research/calibration"
+require_relative "../../../../OPENBSD/lib/check_result"
 
 class CalibrationTest < Minitest::Test
   def setup
