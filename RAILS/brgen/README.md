@@ -163,23 +163,26 @@ and never assumed granted.
 
 ## IRC bridge
 
-brgen can speak IRC. A pure-Ruby gateway maps the city channels onto the protocol, so someone on
-a public IRC network can point a client at brgen and land in the same #brgen room that a phone
-browser sees. Messages cross both ways, and the ops and voice modes and the roster map onto MODE
-and NAMES. Brgen::Irc has a message parser, a session state machine with no sockets, a bridge to
-the models, and a threaded socket server, and bin/irc-gateway boots it. test/lib/irc_test.rb
-covers the protocol and the full session flows.
+The gateway is a limited channel bridge, not a general IRC server. It supports
+registration (`NICK`/`USER`), `PING`/`PONG`, `JOIN`, `PART`,
+channel `PRIVMSG`, `NAMES` and `QUIT`. Unknown channels return 403.
+`NAMES` displays the read-only role prefixes supplied by Brgen's roster;
+clients cannot change them because `MODE` is not implemented. `CAP` is
+ignored: no capabilities are negotiated. Direct messages, NickServ and SASL
+are not supported. The focused tests cover this subset, not the full IRC
+protocol.
 
-Channels are anonymous by design, so a web viewer sees an IRC poster as an anonymous handle,
-while the nick survives on the IRC side. Only the known city channels can be joined, and a
-guessed slug returns 403. The gateway binds 127.0.0.1:6667 and starts nothing on its own. To go
-public the operator enables irc_gateway in rc.conf.local, using OPENBSD/etc/rc.d/irc_gateway,
-and either terminates TLS on 6697 in relayd and forwards to the local port, or opens 6667 in pf
-with IRC_HOST set, which is cleartext. DNS for irc.brgen.no is a separate step. The known limits
-are real: there is no NickServ or SASL, web messages reach IRC by a two-second poll, direct
-messages are not bridged, and each bridged nick leaves a user row that wants a sweep like guest
-pruning.
+The socket server polls web-side messages every two seconds and relays them to
+joined IRC clients. It binds to `127.0.0.1:6667` by default and starts only
+when `bin/irc-gateway` is invoked. To expose it, the operator enables
+`irc_gateway` in `rc.conf.local` using `OPENBSD/etc/rc.d/irc_gateway`,
+then either terminates TLS on 6697 in relayd and forwards to the local port,
+or opens 6667 in pf with `IRC_HOST` set (cleartext). DNS for
+`irc.brgen.no` is a separate step.
 
+Web viewers see IRC posters as anonymous handles while the IRC-side nick is
+retained. Direct messages are not bridged, and each bridged nick leaves a user
+row that still needs the same review/pruning discipline as guest identities.
 ## Account deletion and private messages
 
 Account deletion has a 30-day grace period and is processed by the daily

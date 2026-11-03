@@ -73,7 +73,7 @@ module Brgen
           numeric("001", "Welcome to the brgen IRC bridge, #{@nick}"),
           numeric("002", "Your host is #{@server}"),
           numeric("003", "brgen bridges a city's channels to IRC"),
-          numeric("004", "#{@server} brgen-bridge o ov"),
+          numeric("004", "#{@server} brgen-bridge - -"),
           numeric("375", "- #{@server} -"),
           numeric("372", "- IRC's honesty, a city's chat. Try /join #brgen"),
           numeric("376", "End of /MOTD command"),

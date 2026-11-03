@@ -76,6 +76,8 @@ class BrgenIrcSessionTest < ActiveSupport::TestCase
     out = @session.handle("USER alice 0 * :Alice")
     assert @session.registered?
     assert(out.any? { |l| l.include?(" 001 ") && l.include?("alice") })
+    assert(out.any? { |l| l == ":srv 004 alice srv brgen-bridge - -" },
+           "the bridge must not advertise MODE capabilities it does not implement")
     assert(out.any? { |l| l.include?(" 376 ") })
   end
 
@@ -101,6 +103,21 @@ class BrgenIrcSessionTest < ActiveSupport::TestCase
     out = @session.handle("PRIVMSG #brgen :hei alle")
     assert_empty out, "IRC never echoes your own PRIVMSG"
     assert_equal [ { slug: "brgen", nick: "alice", text: "hei alle" } ], @bridge.posts
+  end
+
+  test "MODE is unsupported and cannot change read-only roster prefixes" do
+    register!
+    @session.handle("JOIN #brgen")
+    before = @session.handle("NAMES #brgen")
+    assert_empty @session.handle("MODE #brgen +o alice")
+    assert_equal before, @session.handle("NAMES #brgen")
+  end
+
+  test "direct messages and capability negotiation are not bridged" do
+    register!
+    assert_empty @session.handle("CAP LS")
+    assert_empty @session.handle("PRIVMSG bob :private message")
+    assert_empty @bridge.posts
   end
 
   test "poll relays web-side messages but not the client's own nick" do
