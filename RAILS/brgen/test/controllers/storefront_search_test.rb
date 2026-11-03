@@ -46,11 +46,19 @@ class StorefrontSearchTest < ActionDispatch::IntegrationTest
   end
 
   test "the filter drawer joins the header form and the header carries the kind" do
+    Marketplace::Listing.create!(user: @seller, category: @bikes, kind: "job",
+                                 title: "Sykkelbud #{SecureRandom.hex(2)}", price_cents: 0)
     host! "markedsplass.brgen.no"
     get marketplace.listings_path(kind: "job")
 
     assert_equal StorefrontSearch::FORM, css_select("select[name=category_id]").first["form"]
-    assert_equal StorefrontSearch::FORM, css_select("select[name=sort]").first["form"]
+    # The sort left the drawer for pills over the results (13c3f05c50); each
+    # pill keeps the page's query, so narrowing the jobs list stays on jobs.
+    sort_pills = css_select("nav.store-pills[aria-label=\"#{I18n.t("marketplace.sort_label")}\"] a")
+    assert sort_pills.any?, "the results carry the sort pills"
+    sort_pills.each do |pill|
+      assert_equal "job", Rack::Utils.parse_nested_query(URI.parse(pill["href"]).query)["kind"], pill["href"]
+    end
     assert_equal StorefrontSearch::FORM, css_select("input[name=min_price]").first["form"]
     assert_equal "job", css_select("##{StorefrontSearch::FORM} input[type=hidden][name=kind]").first["value"]
     # geolocation#pin fills these through the button's form, so they are
