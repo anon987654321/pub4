@@ -1,0 +1,7 @@
+<%# The same places Comment#broadcast_to_thread puts a comment: under its parent
+    when it is a reply, else at the end of the thread. A comment already on the
+    page is replaced by its own copy (Turbo drops the duplicate by id). A reply
+    only arrives under a comment already shown, so any arrival ends the empty
+    state. %>
+<%= turbo_stream.remove "comments_empty" if @comments.present? %>
+<%= render partial: "post_catch_ups/missed_comment", collection: @comments, as: :comment %>

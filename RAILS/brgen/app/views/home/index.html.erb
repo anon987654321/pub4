@@ -21,9 +21,6 @@
     this is, and Current.city is set from a domain-registry entry that need not
     be the City record. %>
 <% feed_city = ActsAsTenant.current_tenant %>
-<% if feed_city.respond_to?(:id) %>
-  <%= turbo_stream_from Post.city_feed_stream(feed_city.id) %>
-<% end %>
 
 <nav class="home-feed-views" aria-label="<%= t("home.feed_views") %>">
   <%= link_to t("home.feed_view"), root_path(feed: params[:feed]), class: "home-feed-view#{' is-active' if params[:view].to_s != "media"}", aria: { current: ("page" if params[:view].to_s != "media") } %>
@@ -63,7 +60,14 @@
 <section id="feed-panel" aria-label="<%= t("home.local_posts") %>" data-visitor-orientation
          data-controller="feed-updates"
          data-feed-updates-one-value="<%= t("home.new_posts.one") %>"
-         data-feed-updates-other-value="<%= t("home.new_posts.other") %>">
+         data-feed-updates-other-value="<%= t("home.new_posts.other") %>"
+         data-feed-updates-since-url-value="<%= posts_since_path %>"
+         data-feed-updates-after-value="<%= newest_post_id %>">
+  <%# Inside the panel so the controller sees it reconnect and asks
+      PostCatchUpsController for what the stream carried while it was down. %>
+  <% if feed_city.respond_to?(:id) %>
+    <%= turbo_stream_from Post.city_feed_stream(feed_city.id), data: { feed_updates_target: "source" } %>
+  <% end %>
   <%# Where the broadcasts land. Hidden and out of the accessibility tree: these
       cards are not on the page yet in any sense a reader would recognise, and
       announcing them as they arrive is the interruption the chip exists to

@@ -79,6 +79,10 @@ Rails.application.routes.draw do
   # route matched /posts/new first and sent "new" through as an id, so the
   # standalone new-post page answered 404 ("Couldn't find Post with id=new")
   # while new_post_path happily generated the link to it.
+  # Catch-up for a live page whose cable was down (PostCatchUpsController).
+  # Above resources :posts, which would read "since" as a post slug.
+  get "posts/since" => "post_catch_ups#feed", as: :posts_since
+  get "posts/:post_id/comments/since" => "post_catch_ups#comments", as: :post_comments_since
   resources :posts do
     resources :comments, shallow: true, only: %i[create destroy]
     resource :vote, only: [ :create ], controller: "votes"

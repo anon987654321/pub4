@@ -1,4 +1,5 @@
 import { Controller } from "@hotwired/stimulus"
+import { fetchMissed, newestId, watchForCatchUp } from "controllers/catch_up"
 
 // New posts arrive without moving the page.
 //
@@ -17,14 +18,18 @@ import { Controller } from "@hotwired/stimulus"
 // 100%-CPU spin in 951dcd00d, and optimistic_send_controller carries the same
 // warning for the same reason.
 export default class extends Controller {
-  static targets = ["pending", "chip", "count", "feed"]
+  static targets = ["pending", "chip", "count", "feed", "source"]
   // Both plural forms come from the server already translated, so the rule
   // stays I18n's rather than becoming an English one written in JavaScript.
   // brgen renders nb, and a hardcoded "new posts" here would be an English
   // string on a Norwegian page, which the suite treats as a defect.
   static values = {
     one: { type: String, default: "" },
-    other: { type: String, default: "" }
+    other: { type: String, default: "" },
+    // PostCatchUpsController#feed, and the newest post id when the page was
+    // rendered: the feed is ranked, so the newest post need not be on screen.
+    sinceUrl: { type: String, default: "" },
+    after: { type: Number, default: 0 }
   }
 
   connect() {
@@ -33,11 +38,19 @@ export default class extends Controller {
     this.refreshChip()
     this.keepViewerState = this.keepViewerState.bind(this)
     document.addEventListener("turbo:before-stream-render", this.keepViewerState)
+    this.stopWatching = watchForCatchUp(this.hasSourceTarget ? this.sourceTarget : null, () => this.catchUp())
   }
 
   disconnect() {
     this.observer?.disconnect()
     document.removeEventListener("turbo:before-stream-render", this.keepViewerState)
+    this.stopWatching?.()
+  }
+
+  // Posts the city stream carried while this page was not listening land in
+  // the pending list, where the chip counts them like any other arrival.
+  catchUp() {
+    fetchMissed(this.sinceUrlValue, newestId(this.element, "post", this.afterValue))
   }
 
   // An edited card, or one whose link embed has resolved, arrives whole from

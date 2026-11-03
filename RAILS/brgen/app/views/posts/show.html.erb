@@ -106,8 +106,9 @@
 
 <%# Comments arrive in place over [post, "comments"] (Comment#broadcast_to_thread);
     live_comments_controller keeps the writer's own copy of theirs. %>
-<section id="comments-section" data-controller="live-comments">
-  <%= turbo_stream_from @post, :comments %>
+<section id="comments-section" data-controller="live-comments"
+         data-live-comments-since-url-value="<%= post_comments_since_path(@post) %>">
+  <%= turbo_stream_from @post, :comments, data: { live_comments_target: "source" } %>
   <h2>
     <%= t("comments.submit") %>
     <%= tag.strong Current.user&.guest? ? t("chat.anon") : (Current.user&.username || t("chat.anon")) %>

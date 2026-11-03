@@ -4,6 +4,8 @@ class HomeController < ApplicationController
   include Shared::LiveSearchable
   include Shared::MasterGuestHome
 
+  helper_method :newest_post_id
+
   def index
     return render_master_guest_home!(title: "Brgen") if params[:master].present? && master_guest_home?
 
@@ -23,4 +25,10 @@ class HomeController < ApplicationController
     @communities = Community.popular_cached(limit: 10)
     finish_live_search(partial: "home/live_search_results")
   end
+
+  private
+
+  # The high-water mark a reconnecting front page catches up from: the feed is
+  # ranked, so the newest post need not be among the cards on screen.
+  def newest_post_id = Post.maximum(:id).to_i
 end

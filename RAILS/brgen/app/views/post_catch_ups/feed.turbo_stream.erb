@@ -1,0 +1,4 @@
+<%# Into the hidden staging list the city stream fills, one prepend per post as
+    the stream sends them, so the chip counts these exactly as it counts a
+    broadcast and the newest ends on top. %>
+<%= render partial: "post_catch_ups/missed_post", collection: @posts, as: :post %>

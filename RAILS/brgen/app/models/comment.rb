@@ -68,6 +68,10 @@ class Comment < ApplicationRecord
     thread_summary.present? && summary_updated_at.present?
   end
 
+  # Where a comment goes on the post page: under its parent when it is a reply,
+  # else at the end of the thread. Public for PostCatchUpsController's view.
+  def thread_target = parent_id ? ActionView::RecordIdentifier.dom_id(Comment.new(id: parent_id), :replies) : "comments"
+
   # Public because ModerationWorkflow removes with update_columns, which runs
   # no callback.
   def broadcast_removal
@@ -97,8 +101,6 @@ class Comment < ApplicationRecord
   rescue StandardError => e
     Rails.logger.warn("Comment#broadcast_to_thread #{id}: #{e.class}: #{e.message}")
   end
-
-  def thread_target = parent_id ? ActionView::RecordIdentifier.dom_id(Comment.new(id: parent_id), :replies) : "comments"
 
   # By key when the commentable is not loaded: a comment found by id for its
   # deletion has none, and strict loading refuses the lazy read.
