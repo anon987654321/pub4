@@ -12,6 +12,9 @@ module Master
       class Camera
         SETTLE = 0.15
         DIALOG_WIDTH = 390
+        # Chrome refuses a capture taller than its texture limit (16384px);
+        # such a page is recorded down to this depth and its file says so.
+        MAX_CAPTURE_HEIGHT = 16_000
 
         # Same per-page bound VisualPass uses for composition states.
         DIALOG_LIMIT = Integer(ENV.fetch("MASTER_SCREENSHOT_SWEEP_DIALOGS", "12"))
@@ -34,6 +37,7 @@ module Master
           load(surface)
           status = @cdp.status
           return Shot.new(status:, html: false, links: [], widths: {}, dialogs: []) unless html?
+          return error_shot(status, page_dir) if status.to_i >= 400
 
           links = JSON.parse(@cdp.evaluate(LINKS_JS).to_s)
           widths = shoot_widths(page_dir)
@@ -53,14 +57,35 @@ module Master
 
         def html? = @cdp.evaluate("document.contentType") == "text/html"
 
+        # An error page is recorded as it first shows, viewport-sized: a Rails
+        # development routing error lists every route and runs to 600,000px.
+        def error_shot(status, page_dir)
+          file = File.join(page_dir, "w#{@widths.first}_http#{status}.png")
+          @cdp.screenshot(file)
+          Shot.new(status:, html: true, links: [], widths: { @widths.first => relative(file) }, dialogs: [])
+        end
+
         def shoot_widths(page_dir)
           @widths.to_h do |width|
             @cdp.viewport(width, self.class.height(width), mobile: width < 500)
             sleep SETTLE
-            file = File.join(page_dir, "w#{width}.png")
-            @cdp.screenshot(file, capture_beyond_viewport: true)
-            [width, relative(file)]
+            [width, relative(shoot(page_dir, width))]
           end
+        end
+
+        def shoot(page_dir, width)
+          file = File.join(page_dir, "w#{width}.png")
+          @cdp.screenshot(file, capture_beyond_viewport: true)
+        rescue CdpSession::Error => e
+          raise unless e.message.include?("too large")
+
+          shoot_top(page_dir, width)
+        end
+
+        def shoot_top(page_dir, width)
+          file = File.join(page_dir, "w#{width}_top#{MAX_CAPTURE_HEIGHT}px.png")
+          clip = { x: 0, y: 0, width:, height: MAX_CAPTURE_HEIGHT }
+          @cdp.screenshot(file, capture_beyond_viewport: true, clip:)
         end
 
         # CompositionProbe clicks each control that changes state and records

@@ -55,6 +55,18 @@ class TestScreenshotSweep < Minitest::Test
     assert_includes hosts, "maps.brgen.no"
   end
 
+  # The engines mount at / on their own subdomains; asking the apex for /feed
+  # returns the routing-error page, not tv's feed.
+  def test_brgen_engine_routes_are_planned_on_their_engine_subdomain
+    plan = Master::Fix::ScreenshotSweep::Plan.new(root: ROOT)
+    hosts = plan.seeds("brgen").to_h { |page| [[page.path, page.host], true] }
+
+    assert hosts[["/feed", "tv.brgen.no"]], "tv/feed#index belongs on tv.brgen.no"
+    assert hosts[["/profile/new", "dating.brgen.no"]], "dating/profiles#new belongs on dating.brgen.no"
+    assert hosts[["/shops", "markedsplass.brgen.no"]], "marketplace/stores#index belongs on a marketplace alias"
+    refute hosts[["/feed", "brgen.no"]], "the apex has no /feed"
+  end
+
   def test_the_stage_runs_in_the_rendering_lanes_and_not_the_code_lane
     assert Master::Fix::WorkLane.runs?(:screenshot_sweep, :visual)
     assert Master::Fix::WorkLane.runs?(:screenshot_sweep, :all)
