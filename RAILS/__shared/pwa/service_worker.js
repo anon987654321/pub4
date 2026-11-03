@@ -20,6 +20,34 @@ const DYNAMIC_PREFIXES = [
   "/posts",
 ]
 
+// A person's own pages: conversations, notifications, account and sign-in.
+// They are never written to a cache, because a cache outlives the session —
+// the next person on a shared phone, offline, would be served them.
+const PRIVATE_PREFIXES = [
+  "/conversations",
+  "/messages",
+  "/notifications",
+  "/account",
+  "/settings",
+  "/session",
+  "/registration",
+  "/passwords",
+  "/checkout",
+  "/orders",
+]
+const isPrivatePath = path => PRIVATE_PREFIXES.some(prefix => path === prefix || path.startsWith(`${prefix}/`))
+
+// Only writing something new is worth replaying after a dead connection: a
+// post, a comment or reply, a message. Everything else — sign-in with its
+// password, payment, deleting, settings — must not wait in IndexedDB and
+// fire later on its own.
+const REPLAYABLE_POST = /(^|\/)(posts|comments|replies|messages)$/
+
+const clearPrivateCaches = async () => {
+  const names = await caches.keys()
+  await Promise.all(names.filter(name => /-(pages|dynamic)-/.test(name)).map(name => caches.delete(name)))
+}
+
 const sanitizeTargetUrl = rawUrl => {
   if (!rawUrl || typeof rawUrl !== "string") return "/"
 
@@ -68,6 +96,7 @@ const assets = new CacheFirst({
   ],
 })
 
+registerRoute(({ request, url }) => request.mode === "navigate" && isPrivatePath(url.pathname), new NetworkOnly())
 registerRoute(({ request }) => request.mode === "navigate", pages)
 
 registerRoute(
@@ -75,8 +104,9 @@ registerRoute(
     if (url.origin !== self.location.origin) return false
     if (request.mode === "navigate") return false
 
-    const path = url.pathname
-    const isDynamicPath = DYNAMIC_PREFIXES.some(prefix => path.startsWith(prefix))
+const path = url.pathname
+if (isPrivatePath(path)) return false
+const isDynamicPath = DYNAMIC_PREFIXES.some(prefix => path.startsWith(prefix))
     const isJson = path.includes(".json") || (request.destination === "" && request.headers.get("Accept")?.includes("application/json"))
     return isDynamicPath || isJson
   },
@@ -88,8 +118,20 @@ registerRoute(
     ["style", "script", "worker", "image", "font"].includes(request.destination),
   assets
 )
+// Signing in or out (POST /session; the sign-out button rides _method=delete)
+// starts a different person's session on this device: drop what the last one
+// left in the page and data caches before the request goes out.
 registerRoute(
-  ({ request, url }) => request.method === "POST" && url.origin === self.location.origin,
+  ({ url }) => url.origin === self.location.origin && url.pathname === "/session",
+  async ({ request }) => {
+    await clearPrivateCaches()
+    return fetch(request)
+  },
+  "POST"
+)
+registerRoute(
+  ({ request, url }) => request.method === "POST" && url.origin === self.location.origin &&
+    REPLAYABLE_POST.test(url.pathname),
   new NetworkOnly({
     plugins: [new BackgroundSyncPlugin(FORM_QUEUE, { maxRetentionTime: 24 * 60 })],
   }),
@@ -98,6 +140,9 @@ registerRoute(
 
 setCatchHandler(async ({ event, request }) => {
   if (request.mode !== "navigate") return Response.error()
+  // A private page that cannot load says so; it is never stood in for by
+  // whatever public page happens to be cached.
+  if (isPrivatePath(new URL(request.url).pathname)) return (await caches.match(OFFLINE_URL)) || Response.error()
   try {
     return await pages.handle({ event, request })
   } catch (_error) {
@@ -108,6 +153,12 @@ setCatchHandler(async ({ event, request }) => {
     if (cached) return cached
     return Response.error()
   }
+})
+
+// The page can ask for the same clean-up, e.g. after a sign-out that did not
+// go through POST /session.
+self.addEventListener("message", event => {
+  if (event.data?.type === "clear-private-caches") event.waitUntil(clearPrivateCaches())
 })
 
 self.addEventListener("install", event => {

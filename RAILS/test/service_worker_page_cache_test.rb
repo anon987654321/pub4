@@ -25,4 +25,24 @@ class ServiceWorkerPageCacheTest < Minitest::Test
       refute_includes worker, "statuses:[0,200]", app
     end
   end
+
+  # A cache outlives a session, so a person's own pages are never written to
+  # one, signing in or out empties the page caches, and only new posts,
+  # comments and messages wait offline to be replayed. Checked in the source
+  # and in every built copy, which is what a phone actually runs.
+  def test_private_pages_stay_out_of_every_cache_and_only_new_content_replays
+    source = File.read(File.join(RAILS, "__shared/pwa/service_worker.js"))
+    %w[/conversations /messages /notifications /session /checkout].each do |path|
+      assert_includes source, %("#{path}"), "#{path} must be a private prefix"
+    end
+    assert_includes source, "const REPLAYABLE_POST = /(^|\\/)(posts|comments|replies|messages)$/"
+
+    APPS.each do |app|
+      built = File.read(File.join(RAILS, app, "app/views/pwa/service-worker.js"))
+      assert_includes built, '"/conversations"', "#{app}: rebuild with npm run build:pwa"
+      assert_includes built, "clear-private-caches", "#{app}: rebuild with npm run build:pwa"
+      assert_includes built, "(posts|comments|replies|messages)$", "#{app}: rebuild with npm run build:pwa"
+    end
+  end
+
 end
