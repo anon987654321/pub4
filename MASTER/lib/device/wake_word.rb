@@ -3,6 +3,7 @@
 require "json"
 require "fileutils"
 require_relative "../io/exec"
+require_relative "../ground/personal_permissions"
 require "tempfile"
 require_relative "../trace/dmesg"
 
@@ -19,8 +20,10 @@ module Master
       STATE_PATH = ".master/wake_word.json"
 
       def initialize(root:, transcriber: nil, which: ->(cmd) { command?(cmd) }, run: Master::Io::Exec.method(:capture3),
-                     sleeper: ->(seconds) { sleep seconds }, clock: -> { Time.now.to_i }, out: $stderr)
+                     sleeper: ->(seconds) { sleep seconds }, clock: -> { Time.now.to_i }, out: $stderr,
+                     permissions: nil)
         @root = root
+        @permissions = permissions || Master::Ground::PersonalPermissions.new(root:)
         @transcriber = transcriber
         @which = which
         @run = run
@@ -31,10 +34,12 @@ module Master
       end
 
       def enabled?
-        state["enabled"] == true && Device.android? && Device.termux?
+        state["enabled"] == true && Device.android? && Device.termux? && voice_permissions_allowed?
       end
 
       def enable!(phrases: DEFAULT_PHRASES)
+        raise "wake word requires explicit microphone and speech-recognition consent; use /privacy grant microphone and /privacy grant speech_recognition with their exact confirmations" unless voice_permissions_allowed?(refresh: true)
+
         normalized = normalize_phrases(phrases)
         raise ArgumentError, "wake word requires at least one phrase" if normalized.empty?
 
@@ -79,6 +84,21 @@ module Master
 
       private
 
+      def voice_permissions_allowed?(refresh: false)
+        return false unless @permissions.allowed?(
+          scope: "microphone",
+          purpose: Master::Ground::PersonalPermissions::MICROPHONE_PURPOSE
+        )
+        return false unless @permissions.allowed?(
+          scope: "speech_recognition",
+          purpose: Master::Ground::PersonalPermissions::SPEECH_RECOGNITION_PURPOSE
+        )
+
+        true
+      rescue StandardError
+        false
+      end
+
       def listen_once
         Tempfile.create(["master-wake-", ".wav"], binmode: true) do |file|
           file.close
@@ -98,6 +118,8 @@ module Master
       end
 
       def start_recording(path)
+        raise "wake word microphone consent expired or revoked" unless voice_permissions_allowed?(refresh: true)
+
         _out, err, status = @run.call(
           "termux-microphone-record", "-f", path, "-l", WINDOW_SECONDS.to_s,
           "-e", "wav", "-r", RATE_HZ.to_s, "-c", "1"
@@ -114,6 +136,8 @@ module Master
       end
 
       def transcribe(path)
+        return "" unless voice_permissions_allowed?(refresh: true)
+
         model = whisper_model
         return "" unless model
 
