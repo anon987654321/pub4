@@ -6,6 +6,66 @@ vm23 is a seam in `MASTER/data/operator_seams.yml`. Refusals live under
 "Refused, and why" in `MASTER/AGENTS.md`. An item closes by being deleted in
 the commit that carries its evidence; nothing here records finished work.
 
+## Priority 1 — Documentation reduction and reorganisation
+
+Make the documentation corpus smaller, clearer and easier for both people and
+agents to follow. The measured starting point is 83 tracked Markdown files;
+that is a baseline, not a quota. Reduce duplicated authority and stale
+instructions, not useful context for the sake of a lower count.
+
+- Keep one canonical entry at each real boundary: the repository, each
+  governed tree, and each product/engine that has distinct ownership.
+- Keep MASTER's agent contract and Laws authoritative. Merge task navigation,
+  task-contract guidance and editorial instructions into their existing
+  canonical owners where this removes repeated policy; do not create another
+  guide to explain the guides.
+- Shorten README files by removing duplicated product briefs and feature
+  inventories already owned by the engine README or `RAILS/apps.yml`.
+  Preserve each product's actual identity and its useful local instructions.
+- Retire unreferenced navigation pages and duplicated instructions only after
+  checking code, generators, links, tests and agent entrypoints. Keep unique
+  archive, recovery and provenance records.
+- Apply Strunk and White: concrete words, active verbs, economical sentences,
+  and no needless qualifiers removed from meaning. Apply Bringhurst to
+  hierarchy, measure, spacing and typographic restraint. Neither is a licence
+  to flatten every document into the same shape.
+- Update generators, links, path baselines and focused tests in the same
+  change. Add no new Markdown files.
+
+Done means one obvious source for each instruction, no stale or duplicate
+agent guidance, valid links and citations, accurate shipped-versus-planned
+claims, and the focused documentation checks run with their output recorded.
+
+## Priority 2 — Decisive stewardship
+
+Make MASTER decisive inside an explicitly approved task, without turning
+autonomy into permission to violate trust. The target is not "preserve every
+existing implementation". Preserve the user's intent, data, security,
+privacy, working guarantees and public contracts; improve or retire the
+implementation when evidence justifies it.
+
+- Reconcile `STEWARDSHIP`, `PRESERVE_FIRST`, `OPERATOR_AUTONOMY`,
+  `MINIMAL_FOOTPRINT` and `COLLAPSE_BEFORE_ADDING`. They must describe one
+  compatible decision policy, not pull in opposite directions.
+- Within a clearly requested repository scope, read and measure first, choose
+  the strongest coherent solution, perform related reversible edits to
+  convergence, verify, and report once. Do not ask for approval after every
+  file or every repair.
+- Treat tracked source changes, refactors and deletions inside that scope as
+  reviewable, rollbackable work when the task authorises them. Preserve
+  evidence and make rollback possible; do not confuse a Git-reversible change
+  with irreversible loss of user data.
+- Keep real consent boundaries: credentials and private data, personal-device
+  access, actions on another person's behalf, external messages/publication,
+  spending, destructive remote-host operations and other irreversible
+  shared-state changes. Approval for one such action does not grant the next.
+- Change the canonical Law statement(s), executable practice, catalogue
+  metadata, prompts and proof tests together. Prefer reconciling existing Law
+  identities over inventing a parallel "decisive" rule. A Law declaration is
+  not enforcement; demonstrate the behaviour with tests and observed runs.
+
+Working motto: **Break the dead thing. Don't break the user's trust.**
+
 ## Open from the 2026-11-02 session — external tree audit (MASTER)
 
 An external pass ran the full suite on Linux (Ruby 4.0.9, no browser, no

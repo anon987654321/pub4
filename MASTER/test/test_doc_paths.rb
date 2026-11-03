@@ -130,7 +130,6 @@ class TestDocPaths < Minitest::Test
     MASTER/docs/free_compute.md
     MASTER/docs/history/fix-review-log.md
     MASTER/docs/history/recovery/legacy-apps-handoff.md
-    MASTER/docs/law-navigation.md
     MASTER/docs/mobile.md
     MASTER/lib/cli/face/contract.md
     RAILS/__shared/SOCIAL_FRONT_PAGE.md
