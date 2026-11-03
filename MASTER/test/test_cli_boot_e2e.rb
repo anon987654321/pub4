@@ -312,28 +312,52 @@ class TestCliReplExit < Minitest::Test
   def test_plain_chitchat_gets_a_reply_and_returns_to_prompt
     skip "set MASTER_CLI_E2E=1 to drive a live model turn" unless ENV["MASTER_CLI_E2E"] == "1"
 
-    output, status = drive_conversation("hi there")
+    response_token = "MSTR63"
+    message = "Reply with exactly #{response_token} and no other words."
+    output, status = drive_conversation(message, response_token:)
 
     assert_equal 0, status.exitstatus, output
     refute_match(/Error|from .+\.rb:\d+/, output)
-    assert_match(/model [\w:.-]+, ctx \d/, output, "expected a model line after the reply")
+    assert_match(/MSTR63/, output, "the submitted message never received a model reply")
   end
 
   private
 
-  def drive_conversation(message)
+  def drive_conversation(message, response_token:)
     require "pty"
     output = +""
     PTY.spawn(boot_env, Master::BUNDLE_BIN, "exec", "ruby", "bin/master", chdir: ROOT) do |reader, writer, pid|
       read_until(reader, output, READY, 30)
       sleep 0.5
+      start = output.length
       writer.write("#{message}\n")
-      read_until(reader, output, READY, 90)
+      read_until_after(reader, output, Regexp.new(Regexp.escape(message)), start:, seconds: 10)
+      echo_at = output.index(message, start)
+      flunk "CLI did not echo the submitted message: #{output[-1200, 1200]}" unless echo_at
+      reply_start = echo_at + message.length
+      read_until_after(reader, output, Regexp.new(Regexp.escape(response_token)), start: reply_start, seconds: 90)
+      reply_at = output.index(response_token, reply_start)
+      flunk "CLI did not answer the submitted message: #{output[-1200, 1200]}" unless reply_at
+      reply_end = reply_at + response_token.length
+      read_until_after(reader, output, READY, start: reply_end, seconds: 30)
+      flunk "CLI did not return to its working prompt after the reply: #{output[-1200, 1200]}" unless output[reply_end..].to_s.match?(READY)
       writer.write("\x04")
       read_until(reader, output, nil, 20)
       _, status = Process.waitpid2(pid)
       return [output, status]
     end
+  end
+
+  def read_until_after(reader, output, pattern, start:, seconds:)
+    deadline = Time.now + seconds
+    while Time.now < deadline
+      break if output[start..].to_s.match?(pattern)
+      next unless reader.wait_readable(0.2)
+
+      output << reader.readpartial(4096)
+    end
+  rescue Errno::EIO, EOFError
+    output
   end
 
   def drive

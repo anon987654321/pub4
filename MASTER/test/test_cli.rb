@@ -394,6 +394,73 @@ end
     assert_nil @cli.instance_variable_get(:@turn_worker)
   end
 
+  def test_prompt_state_is_announced_before_reline_owns_the_input_row
+    session = Master::CLI::Session.allocate
+    events = []
+    session.instance_variable_set(:@reading_input, false)
+    session.define_singleton_method(:prompt_for_mode) do
+      events << [:prompt, @reading_input]
+      terminal_puts("state0")
+      "master$ "
+    end
+    session.define_singleton_method(:terminal_puts) do |text = "", **|
+      events << [:announce, @reading_input, text]
+    end
+    session.define_singleton_method(:reserve_activity_row) do
+      events << [:reserve, @reading_input]
+    end
+    session.define_singleton_method(:safe_read_line) do |prompt|
+      events << [:read, @reading_input, prompt]
+      "hello"
+    end
+
+    assert_equal "hello", session.send(:read_prompt_line)
+    assert_equal [
+      [:prompt, false],
+      [:announce, false, "state0"],
+      [:reserve, true],
+      [:read, true, "master$ "],
+    ], events
+    refute session.instance_variable_get(:@reading_input)
+  end
+
+  def test_reline_read_error_does_not_masquerade_as_ctrl_d
+    result = nil
+    capture_io do
+      Reline.stub(:readline, ->(*) { raise IOError, "terminal read failed" }) do
+        result = @cli.send(:safe_read_line, "master$ ")
+      end
+    end
+
+    assert_equal :interrupted, result
+  end
+
+  def test_model_greeting_is_opt_in_to_protect_the_first_operator_turn
+    previous = ENV.delete("MASTER_GREETING")
+    spawned = false
+
+    Thread.stub(:new, ->(*_args, &_block) { spawned = true }) do
+      $stdout.stub(:tty?, true) { @cli.send(:greet_from_model) }
+    end
+
+    refute spawned
+  ensure
+    ENV["MASTER_GREETING"] = previous if previous
+  end
+
+  def test_face_does_not_stack_a_second_overlay
+    session = Master::CLI::Session.allocate
+    session.instance_variable_set(:@face_overlay_rendered, true)
+    output = nil
+    session.define_singleton_method(:terminal_puts) { |text = "", **| output = text }
+    $stdin.stub(:tty?, true) do
+      $stdout.stub(:tty?, true) do
+        assert session.send(:print_face_overlay)
+      end
+    end
+    assert_equal "face0 at master0: already visible; Reline owns input", output
+  end
+
   def test_prompt_refreshes_skills_before_rendering
     skills = Minitest::Mock.new
     skills.expect(:discover!, [])

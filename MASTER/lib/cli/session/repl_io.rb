@@ -104,6 +104,8 @@ module Master
         clean
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "cli.safe_read_line", event_bus: @refs.bus)
+        Master::Trace::Dmesg.status("input0", "read failed, #{e.class}; retrying")
+        :interrupted
       end
 
       def pasted_lines

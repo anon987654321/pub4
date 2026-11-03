@@ -62,7 +62,6 @@ module Master
         # One vertical rhythm: the dmesg, a blank line, the ready block, then
         # a blank line before each block that follows and before the prompt.
         print_splash
-        start_boot_scan if background_scan_enabled?
         # One line for a resumed session. Replaying its last turns printed an old
         # reply above the prompt, which read as a canned answer to a message not
         # yet typed.
@@ -78,8 +77,9 @@ module Master
         greet_from_model unless initial_message
         @running = true
         play_boot_sound
-        start_reminder_watch
         print_face_overlay unless @face_overlay_rendered
+        start_boot_scan if background_scan_enabled?
+        start_reminder_watch
         repl_loop
       end
 
@@ -134,21 +134,40 @@ module Master
       # The face is a compact visual projection above the canonical prompt.
       # Reline remains the only keyboard/input owner; no alternate screen,
       # raw-key reader or second prompt is started for ordinary CLI use.
+      FACE_INTRO_FRAMES = 16
+      FACE_OVERLAY_MARKER = "face0 at master0: visual layer refreshed; Reline owns input"
+      FACE_OVERLAY_PRESENT = "face0 at master0: already visible; Reline owns input"
+
       def face_overlay_text(cols: 32)
         rows, fitted_cols = Master::CLI::Face::Sizing.fit(12, cols + 4, mode: "#{cols}x12")
+        @face_started_at ||= Process.clock_gettime(Process::CLOCK_MONOTONIC)
+        @face_motion ||= Master::CLI::Face::Motion.new(seed: Random.new_seed % 1_000_003)
+        now = Process.clock_gettime(Process::CLOCK_MONOTONIC)
         Master::CLI::Face.frame(
-          state: :idle,
+          state: face_state,
           rows:,
           cols: fitted_cols,
-          t: 0.0,
-          motion: Master::CLI::Face::Motion.new(seed: 7),
+          t: now - @face_started_at,
+          motion: @face_motion,
           color: false,
-          show_laws: false,
+          show_laws: nil,
         )
+      end
+
+      def face_state
+        return :error if @last_ok == false
+        return :thinking if @user_active || @pipeline_thread&.alive?
+
+        :ready
       end
 
       def print_face_overlay
         return false unless $stdin.tty? && $stdout.tty?
+
+        if @face_overlay_rendered
+          terminal_puts(FACE_OVERLAY_PRESENT)
+          return true
+        end
 
         terminal_cols = Master::CLI::Face::Sizing.winsize.last.to_i
         face_cols = [terminal_cols - 4, 32].min
@@ -156,12 +175,34 @@ module Master
 
         frame = face_overlay_text(cols: face_cols)
         terminal_puts(frame.lines.map { |line| line.chomp.center(terminal_cols) }.join("\n"))
-        terminal_puts("face0 at master0: visual layer refreshed; Reline owns input")
+        terminal_puts(FACE_OVERLAY_MARKER)
         @face_overlay_rendered = true
+        animate_face_intro(cols: face_cols, terminal_cols:, face_rows: frame.lines.count)
         true
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "cli.face.overlay", event_bus: @refs.bus)
         false
+      end
+
+      # The short ready-state reveal advances the existing facial springs before
+      # Reline starts reading. It never opens a second input loop or screen.
+      def animate_face_intro(cols:, terminal_cols:, face_rows:)
+        return if ENV["MASTER_REDUCED_MOTION"] == "1"
+        return if terminal_cols < FACE_OVERLAY_MARKER.length
+        return if TTY::Screen.height.to_i < face_rows + 7
+
+        block_rows = face_rows + 1
+        FACE_INTRO_FRAMES.times do
+          frame = face_overlay_text(cols:)
+          rendered = frame.lines.map { |line| line.chomp.center(terminal_cols) }.join("\n")
+          Master::Trace::Dmesg.terminal_write do |target|
+            target.write("\e7\e[?25l\e[#{block_rows}A\r#{rendered}\n#{FACE_OVERLAY_MARKER}\e[?25h\e8")
+            target.flush
+          end
+          sleep(1.0 / Master::CLI::Face::FPS)
+        end
+      rescue StandardError => e
+        Master::Ground::Swallow.log(e, context: "cli.face.animation", event_bus: @refs.bus)
       end
 
       # The face renderer can still be used by explicit visual clients, but

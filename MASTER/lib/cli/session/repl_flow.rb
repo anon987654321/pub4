@@ -38,8 +38,11 @@ module Master
       end
 
       def read_prompt_line
-        @reading_input = true
+        # Prompt-state output is emitted while computing the prompt. Reline does
+        # not own the editable row until readline starts, so do not clear or
+        # redisplay a draft that does not exist yet.
         @active_prompt = prompt_for_mode
+        @reading_input = true
         reserve_activity_row
         line = safe_read_line(@active_prompt)
         terminal_puts if line.nil?

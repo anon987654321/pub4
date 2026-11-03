@@ -12,20 +12,28 @@ class TestCliFaceOnStart < Minitest::Test
     refute Master::CLI::Face::Window.asked?(["-m", "/face"])
   end
 
-  def test_face_overlay_uses_the_shared_ascii_renderer
-    seen = nil
-    rendered = Master::CLI::Face.stub(:frame, lambda { |**options|
-      seen = options
+  def test_face_overlay_uses_live_ready_motion_and_the_shared_law_setting
+    seen = []
+    session = Master::CLI::Session.allocate
+    renderer = lambda do |**options|
+      seen << options
       "compact face"
-    }) do
-      Master::CLI::Session.allocate.face_overlay_text
     end
 
-    assert_equal "compact face", rendered
-    assert_equal :idle, seen.fetch(:state)
-    assert_equal 12, seen.fetch(:rows)
-    assert_equal 32, seen.fetch(:cols)
-    assert_equal false, seen.fetch(:color)
-    assert_equal false, seen.fetch(:show_laws)
+    rendered = Master::CLI::Face.stub(:frame, renderer) do
+      first = session.face_overlay_text
+      sleep 0.001
+      second = session.face_overlay_text
+      [first, second]
+    end
+
+    assert_equal ["compact face", "compact face"], rendered
+    assert_equal :ready, seen.first.fetch(:state)
+    assert_equal 12, seen.first.fetch(:rows)
+    assert_equal 32, seen.first.fetch(:cols)
+    assert_equal false, seen.first.fetch(:color)
+    assert_nil seen.first.fetch(:show_laws)
+    assert_operator seen.last.fetch(:t), :>, seen.first.fetch(:t)
+    assert_same seen.first.fetch(:motion), seen.last.fetch(:motion)
   end
 end

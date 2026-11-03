@@ -353,8 +353,8 @@ module Master
         "face" => {
           summary: "a compact visual layer above the canonical working prompt",
           detail: [
-            "/face — redraw the compact terminal face above the current Reline prompt.",
-            "Bare bin/master enters the normal working prompt directly with the face projection above it.",
+            "/face — confirm the already visible terminal face; it never stacks another image.",
+            "Bare bin/master enters the normal working prompt directly with a short ready-state motion reveal above it.",
             "The face is visual output only; Reline owns keyboard input, history, slash commands and exit.",
             "No alternate screen, raw-key reader, second prompt or /exit handoff is involved.",
             "Ctrl-C interrupts active work or clears the current draft; Ctrl-D exits the one interactive session.",

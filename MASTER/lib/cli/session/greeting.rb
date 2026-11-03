@@ -7,12 +7,12 @@ module Master
     class Session
       private
 
-      # The model greets in its own words once the runtime is up, beside the prompt rather than before it: the
-      # live-state line Welcome printed before boot is the instant answer, this is the personal one. It never
-      # joins the conversation's history, and a model that cannot answer leaves nothing behind.
-      # MASTER_GREETING=0 switches it off.
+      # The live-state welcome is enough at startup. A second model request can
+      # occupy the same provider lane as the operator's first turn.
+      # Keep the personal greeting available as an explicit opt-in.
+      # MASTER_GREETING=1 enables it.
       def greet_from_model
-        return if ENV["MASTER_GREETING"] == "0" || !$stdout.tty?
+        return unless ENV["MASTER_GREETING"] == "1" && $stdout.tty?
 
         Thread.new { deliver_greeting }
       end
@@ -23,7 +23,7 @@ module Master
         text = @refs.agent.ask_once(greeting_prompt, law: false).to_s.strip
         # A full-screen face owns the terminal until it closes.
         sleep 0.2 while @face_open
-        return if text.empty? || @pipeline_thread
+        return if text.empty? || @user_active || !@last_input.to_s.empty? || @pipeline_thread
 
         terminal_puts(@refs.renderer.render(text.lines.first.to_s.strip, mode: :dim))
       rescue StandardError => e
