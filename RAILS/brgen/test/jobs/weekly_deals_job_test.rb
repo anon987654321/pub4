@@ -3,6 +3,10 @@
 require "test_helper"
 
 class WeeklyDealsJobTest < ActiveSupport::TestCase
+  # WeeklyDealsJob hands each batch of subscribers to NewsletterEditionDeliveryJob;
+  # running the enqueued jobs is what reaches the mailer.
+  include ActiveJob::TestHelper
+
   test "sends weekly deals edition to marketing subscribers" do
     edition = NewsletterEdition.create!(
       kind: "weekly_deals",
@@ -27,7 +31,7 @@ class WeeklyDealsJobTest < ActiveSupport::TestCase
       Object.new.tap { |mail| mail.define_singleton_method(:deliver_now) { delivered = true } }
     end
 
-    WeeklyDealsJob.perform_now
+    perform_enqueued_jobs { WeeklyDealsJob.perform_now }
 
     NewsletterMailer.define_singleton_method(:edition, original)
     assert delivered
@@ -54,7 +58,7 @@ class WeeklyDealsJobTest < ActiveSupport::TestCase
       Object.new.tap { |mail| mail.define_singleton_method(:deliver_now) { delivered = true } }
     end
 
-    WeeklyDealsJob.perform_now
+    perform_enqueued_jobs { WeeklyDealsJob.perform_now }
 
     NewsletterMailer.define_singleton_method(:edition, original)
     assert_not delivered
