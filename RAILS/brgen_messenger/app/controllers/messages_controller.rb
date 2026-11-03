@@ -33,17 +33,15 @@ class MessagesController < ApplicationController
   # the top of its own list and re-derives grouping and day breaks there, so
   # this action renders no frame, no layout and no chrome. set_conversation
   # scopes through for_user, so a reader reaches only threads they take part in.
+  #
+  # `after` asks the other way: the lines newer than the newest one the log
+  # holds, oldest first, for conversation_catch_up after a dropped socket.
   def index
-    scope = history_scope
-    before = params[:before].to_i
-    scope = scope.where(Message.arel_table[:id].lt(before)) if before.positive?
+    return catch_up if params[:after].present?
 
-    page = scope.recent.limit(HISTORY_PAGE + 1).to_a
-    more = page.size > HISTORY_PAGE
-    page = page.first(HISTORY_PAGE).reverse
-
-    response.set_header("X-History-Next", conversation_messages_path(@conversation, before: page.first.id)) if more && page.any?
-    render partial: "messages/message", collection: page, locals: { forward_targets: forward_targets }
+    page, more = history_page(params[:before].to_i)
+    response.set_header("X-History-Next", conversation_messages_path(@conversation, before: page.first.id)) if more
+    render_lines(page)
   end
 
   def create
@@ -126,6 +124,31 @@ class MessagesController < ApplicationController
   private
 
   def from_widget? = params[:origin] == "widget"
+
+  # A socket that was down missed broadcasts Action Cable does not replay. One
+  # history page per request; X-Catch-Up-More tells the client to ask again from
+  # the last line it got, so a long absence arrives in pages rather than at once.
+  def catch_up
+    newer = history_scope.where(Message.arel_table[:id].gt(params[:after].to_i))
+    lines = newer.order(:id).limit(HISTORY_PAGE + 1).to_a
+    return head :no_content if lines.empty?
+
+    response.set_header("X-Catch-Up-More", "1") if lines.size > HISTORY_PAGE
+    render_lines(lines.first(HISTORY_PAGE))
+  end
+
+  # The newest page above the cursor, oldest first, and whether more is behind it.
+  def history_page(before)
+    scope = history_scope
+    scope = scope.where(Message.arel_table[:id].lt(before)) if before.positive?
+    page = scope.recent.limit(HISTORY_PAGE + 1).to_a
+    [ page.first(HISTORY_PAGE).reverse, page.size > HISTORY_PAGE ]
+  end
+
+  # Message partials alone, rendered for this reader in this request.
+  def render_lines(lines)
+    render partial: "messages/message", collection: lines, locals: { forward_targets: }
+  end
 
   # The lines a history page may hold, with what each line reads preloaded once
   # for the page, as show does.

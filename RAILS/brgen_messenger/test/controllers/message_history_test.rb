@@ -54,6 +54,7 @@ class MessageHistoryTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_select "#messages[data-conversation-log-history-url-value*='before=']"
+    assert_select "#messages[data-controller~=conversation-catch-up][data-conversation-catch-up-url-value]"
     assert_select "#messages > li[role=listitem]", count: PAGE
   end
 
@@ -130,6 +131,46 @@ class MessageHistoryTest < ActionDispatch::IntegrationTest
     sign_in_as(@stranger)
 
     get conversation_messages_path(@conversation)
+
+    assert_response :not_found
+  end
+
+  # A broadcast sent while the socket was down is not replayed; the log asks for
+  # what came after its newest line when the stream, the network or the tab
+  # comes back.
+  test "after= returns the lines newer than the cursor, oldest first, as this reader sees them" do
+    write_history(4)
+    lines = @conversation.messages.order(:id).to_a
+    lines.last.unsend!
+    sign_in_as(@reader)
+
+    get conversation_messages_path(@conversation, after: lines[1].id)
+
+    assert_response :success
+    assert_select "li[id]", count: 1, text: /line 2/
+    refute_includes response.body, "line 1"
+    assert_nil response.headers["X-Catch-Up-More"]
+    assert_select "article[data-from=peer]", count: 1
+  end
+
+  test "after= pages a long absence and answers nothing new with no content" do
+    write_history(PAGE + 2)
+    first = @conversation.messages.minimum(:id)
+    sign_in_as(@reader)
+
+    get conversation_messages_path(@conversation, after: first)
+    assert_equal "1", response.headers["X-Catch-Up-More"]
+    assert_select "li[id^=message_]", count: PAGE
+
+    get conversation_messages_path(@conversation, after: @conversation.messages.maximum(:id))
+    assert_response :no_content
+  end
+
+  test "a stranger catches up on nothing" do
+    write_history(2)
+    sign_in_as(@stranger)
+
+    get conversation_messages_path(@conversation, after: 0)
 
     assert_response :not_found
   end
