@@ -987,8 +987,9 @@ set_stage solid_queue
 queue_schema="$repo/RAILS/${app}/db/queue_schema.rb"
 # An app whose production config runs jobs in-process (mrdamascy: :async) has
 # no worker to prove; the proof would demand one, or an hourly drain, for nothing.
+# UTF-8 explicitly: the box runs this with no LANG, and production.rb has em dashes.
 queue_async=0
-"$RUBY" -e 'exit File.read(ARGV[0]).match?(/queue_adapter\s*=\s*:async\b/)' \
+"$RUBY" -e 'exit File.read(ARGV[0], encoding: "UTF-8").match?(/queue_adapter\s*=\s*:async\b/)' \
   "$repo/RAILS/${app}/config/environments/production.rb" 2>/dev/null && queue_async=1
 queue_empty=0
 [[ -f $queue_schema ]] && "$RUBY" -e 'exit File.read(ARGV[0]).include?("define(version: 0)")' \
