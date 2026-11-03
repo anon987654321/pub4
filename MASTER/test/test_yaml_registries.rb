@@ -32,6 +32,17 @@ DELETED_FILES = %w[
 ].freeze
 
 class TestYamlRegistries < Minitest::Test
+  def test_root_vocabulary_covers_every_law_root
+    laws = Master.load_yaml(Master.data_path("laws.yml"))
+    roots = laws.fetch("ROOTS_VOCABULARY").fetch("values")
+
+    assert_equal 13, roots.size
+    assert_includes roots, "proximity"
+    assert_equal %w[proximity], %w[DEFRAG RELOCATE].filter_map do |id|
+      laws.fetch(id).fetch("root") unless roots.include?(laws.fetch(id).fetch("root"))
+    end
+  end
+
   YAML_SPECS.each do |filename, spec|
     define_method(:"test_#{filename.tr('.', '_')}_parses") do
       path = File.join(DATA, filename)

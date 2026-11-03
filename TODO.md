@@ -455,15 +455,17 @@ Measured on 2026-11-03 with Homebrew Ruby 4.0.5 (MASTER) and rbenv 4.0.5 (the ap
 each file in its own process; the commits that fixed what they found are on main from
 d04a7bb8ff to d682846752.
 
-- [ ] MASTER focused regressions: all 43 files in the former list pass except
-  `test/test_law_parity.rb` (2 failures, 2 errors): DEFRAG and RELOCATE in `laws.yml` use
-  `root: proximity`, which `ROOTS_VOCABULARY` does not list. Operator decision: add the
-  thirteenth root or move both Laws onto an existing one; `laws.yml` is human-owned.
-  Outside the list and still red: `test_replay_reader.rb` (fixtures write 0644 logs the
-  reader has refused since 8c4f834d5), `test_fix_loop_oscillation.rb` (cycle detector,
-  red before this session), `test_agy_reachability.rb`, `test_runs.rb` (parked
-  design_calibration plugin tests are unwired; the STUDIO census finds 2 files) and
-  `test_tools_media.rb` (reads the retired STUDIO postpro).
+- [ ] MASTER focused regressions: the recorded 2026-11-03 pass had 43
+  files pass and four failures/errors in `test/test_law_parity.rb`, caused by the
+  omitted `proximity` root. The canonical vocabulary now includes all thirteen
+  roots and a regression asserts the DEFRAG/RELOCATE assignments. Re-run the
+  focused Law parity, YAML registry and Law catalogue tests on pinned Ruby 4.0.5.
+  The separate recorded failures still need individual triage:
+  `test_replay_reader.rb` (fixtures write 0644 logs the reader has refused since
+  8c4f834d5), `test_fix_loop_oscillation.rb` (cycle detector, red before that
+  session), `test_agy_reachability.rb`, `test_runs.rb` (parked
+  design_calibration plugin tests are unwired; the STUDIO census finds 2 files)
+  and `test_tools_media.rb` (reads the retired STUDIO postpro).
 - [ ] MASTER full suite: `MASTER_TEST_START_MARKERS=1 MASTER_TEST_JOBS=1 MASTER_TEST_PROGRESS_EVERY=25 rake test`,
   then `MASTER_TEST_JOBS=3 rake test`; check `.master/check/suite-report.json` for incomplete
   workers and mismatched start/result counts. Then run `rake audit` (the complete declared lint

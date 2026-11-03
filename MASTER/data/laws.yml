@@ -1646,12 +1646,12 @@ SEVERITY_VOCABULARY:
 
 ROOTS_VOCABULARY:
   root: visible_state
-  statement: "The twelve roots a universal law names."
+  statement: "The thirteen roots a universal law names."
   severity: info
   resolution: never
   values: [one_source, no_surplus, one_responsibility, least_surprise,
            visible_state, bounded_load, stable_contract, proportion,
-           least_authority, stewardship, reach, abstraction]
+           least_authority, stewardship, reach, abstraction, proximity]
 
 EVIDENCE_SCORING:
   root: visible_state
