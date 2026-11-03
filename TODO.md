@@ -19,7 +19,7 @@ instructions, not useful context for the sake of a lower count.
 
 - Keep one canonical entry at each real boundary: the repository, each
   governed tree, and each product/engine that has distinct ownership.
-remove completed docs consolidation task- Shorten README files by removing duplicated product briefs and feature
+- Shorten README files by removing duplicated product briefs and feature
   inventories already owned by the engine README or `RAILS/apps.yml`.
   Preserve each product's actual identity and its useful local instructions.
 - Retire unreferenced navigation pages and duplicated instructions only after
