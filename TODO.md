@@ -187,26 +187,20 @@ and compare pinned revisions only.
   link target but could not launch Claude Code. Root `TODO.md` remains the
   single actionable backlog.
 
-- [ ] Cross-tree duplication graph: detect repeated decision logic,
+- [ ] Cross-tree duplication and shape census: map repeated decision logic,
   configuration defaults, status/error vocabularies, adapters, serializers,
   wrappers, registries, generated artifacts, test fixtures and documentation.
-  For each duplicate distinguish identical behavior from superficially
+  Include one-use abstractions, single-child directories and stale pointers.
+  For each candidate, distinguish identical behavior from superficially
   similar behavior with different security, transaction, tenant, product or
-  runtime contracts. Consolidate the authority, not merely the syntax.
+  runtime contracts. Compare structural ratchets before and after, and
+  consolidate the authority rather than merely the syntax.
 
 - [ ] Add or extend structural ratchets for file count, directory count,
   maximum path depth, single-child directories, repeated namespace segments,
   dependency fan-out/cycles, public API changes and duplicate implementation
   fingerprints. Ratchets must be measured from a pinned revision and must not
   encourage deleting meaningful boundaries or merging unrelated code.
-
-- [ ] Execute verification after each bounded batch: focused tests, relevant
-  app/engine tests, autoload/eager-load checks, route/view rendering, asset
-  builds, law/check parity and full suites where available. Capture exact
-  commands, revision, output, exit status and evidence paths. Run
-  before/after structural metrics and compare behavior. Keep unrun checks
-  NOT_RUN and unknown behavior INCONCLUSIVE; do not claim a code flattening
-  is complete from a tree-only audit.
 
 ## Open from the 2026-11-01 session — Baymard UX audit
 
@@ -582,12 +576,8 @@ d04a7bb8ff to d682846752.
   not add duplicate checks or new Law IDs until the audit proves a distinct, repeatable
   invariant that the current checks miss.
 
-## Production security evidence
-
 ## Cross-tree
 
-- [ ] DRY and duplication census: duplicate decisions, one-use abstractions, single-child
-  directories, stale pointers; compare structural ratchets before and after.
 - [ ] Performance sweep with before/after numbers: boot, CLI response, web first paint, payloads,
   memory.
 - [ ] Adapter contracts for CLI, web, voice, browser and MCP: caller identity, scope, typed
