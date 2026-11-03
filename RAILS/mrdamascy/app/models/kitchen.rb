@@ -7,4 +7,10 @@ class Kitchen < ApplicationRecord
 
   validates :name, presence: true
   validates :slug, presence: true, uniqueness: true
+
+  # The hours in the reader's language; Norwegian is the kitchen's own wording
+  # and the fallback when no English one is set.
+  def localized_opening_hours
+    (I18n.locale == :en && opening_hours_en.presence) || opening_hours
+  end
 end

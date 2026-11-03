@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.2].define(version: 2026_11_01_000020) do
+ActiveRecord::Schema[8.2].define(version: 2026_11_03_160000) do
   create_table "cart_items", force: :cascade do |t|
     t.integer "cart_id", null: false
     t.integer "menu_item_id", null: false
@@ -70,6 +70,7 @@ ActiveRecord::Schema[8.2].define(version: 2026_11_01_000020) do
     t.float "rating", default: 4.9, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "opening_hours_en"
     t.index ["slug"], name: "index_kitchens_on_slug", unique: true
   end
 

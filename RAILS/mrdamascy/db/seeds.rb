@@ -34,6 +34,7 @@ kitchen = Kitchen.create!(
   postcode: "5054",
   phone: "955 55 600",
   opening_hours: "Man–Fre 11–21 · Lør–Søn 14–21",
+  opening_hours_en: "Mon–Fri 11am–9pm · Sat–Sun 2pm–9pm",
   rating: 4.9
 )
 

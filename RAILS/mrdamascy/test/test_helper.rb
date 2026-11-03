@@ -211,6 +211,7 @@ module ActiveSupport
         k.postcode = "5054"
         k.phone = "955 55 600"
         k.opening_hours = "Man–Fre 11–21 · Lør–Søn 14–21"
+        k.opening_hours_en = "Mon–Fri 11am–9pm · Sat–Sun 2pm–9pm"
         k.rating = 4.9
       end
     end
