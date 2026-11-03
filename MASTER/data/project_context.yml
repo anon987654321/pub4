@@ -384,3 +384,21 @@ entries:
     minutes, writes autofix edits into the shared checkout and finds defects the suites and code
     should have shown. How to apply - find and fix /fix defects through test_fix_*, test_proof_*,
     test_check_chain and the full suite; run /fix only when Johann says so after hearing what is fixed.
+- key: rails_markup_names_and_semantics_2026_11
+  name: spelled-out names, semantic markup, no style words in HTML
+  description: Operator directives 2026-11-03 for every RAILS view and stylesheet
+  type: feedback
+  body: >-
+    Johann, 2026-11-03, during the mrdamascy and brgen design passes. Names are whole
+    words: button, not btn (button-small, quantity-value, category-chips); style the
+    real element where it is safe (mrdamascy styles :where(button, .button), and a
+    link that acts as a button takes .button). Views avoid divitis: wrapper divs
+    become the element that means the thing (ul/li, dl/dt/dd, nav, header, footer,
+    section, output, time) or go away. Markup carries meaning only: no utility or
+    presentational class names (margin-*, row, nowrap, ink-soft, *-small/-large/-block,
+    colour words); the SCSS styles the element or a role-named component. Why - style
+    words and abbreviations in markup hide intent and drift from the CSS. How to
+    apply - every RAILS view or SCSS change; MASTER/law/html.rb PRESENTATIONAL_CLASS_NAME
+    enforces part of it. The btn family is defined in RAILS/__shared and used by amber
+    and bsdports, so its rename is one fleet-wide change; shared design tokens
+    (--radius-sm, --text-xs) come from MASTER/data/tokens.yml and rename the same way.
