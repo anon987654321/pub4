@@ -488,27 +488,37 @@ Measured on 2026-11-03 with Homebrew Ruby 4.0.5 (MASTER) and rbenv 4.0.5 (the ap
 each file in its own process; the commits that fixed what they found are on main from
 d04a7bb8ff to d682846752.
 
-- [ ] MASTER focused regressions: the recorded 2026-11-03 pass had 43
-  files pass and four failures/errors in `test/test_law_parity.rb`, caused by the
-  omitted `proximity` root. The canonical vocabulary now includes all thirteen
-  roots and a regression asserts the DEFRAG/RELOCATE assignments. Re-run the
-  focused Law parity, YAML registry and Law catalogue tests on pinned Ruby 4.0.5.
-  The replay-reader fixtures now create owner-private event files and a private
-  events directory to match the production log contract; rerun that focused test
-  on pinned Ruby before closing it. Other recorded failures remain:
-  The cycle-detector fixture now observes the current five-pass recurrence
-  window; rerun it on pinned Ruby before closing the test. Also rerun
-  `test_agy_reachability.rb` and `test_runs.rb`. The test-runner census now
-  counts STUDIO's two maintained tests and includes the parked calibration
-  regression files in the MASTER suite; execute those focused tests before
-  closing this gate.
-  `test_tools_media.rb` reads the current canonical `STUDIO/postpro` source,
-  not a retired path; include it in the pinned suite instead of treating the
-  source path as a defect.
-- [ ] MASTER full suite: `MASTER_TEST_START_MARKERS=1 MASTER_TEST_JOBS=1 MASTER_TEST_PROGRESS_EVERY=25 rake test`,
-  then `MASTER_TEST_JOBS=3 rake test`; check `.master/check/suite-report.json` for incomplete
-  workers and mismatched start/result counts. Then run `rake audit` (the complete declared lint
-  inventory), followed by `bin/check --profile=agent`. NOT_RUN.
+- [ ] MASTER pinned-Ruby verification gate (Homebrew Ruby 4.0.5): rerun the
+  focused regressions below first, then the serial and parallel full suites, audit
+  and agent profile on the same clean commit. Record each command, exit status,
+  actual failures and the suite report; never infer a pass from source changes.
+  Focused regressions:
+  - `test/test_law_parity.rb`, `test/test_yaml_registries.rb`,
+    `test/test_law_catalogue.rb` and `test/test_soul.rb`: the recorded
+    2026-11-03 pass had four Law parity failures/errors because DEFRAG and
+    RELOCATE used the omitted `proximity` root. The canonical vocabulary now
+    includes all thirteen roots and regression coverage checks the assignments,
+    every registered root and the immediate-execution briefing.
+  - `test/test_replay_reader.rb`: fixtures now create owner-private event files
+    and a private events directory matching the production log contract.
+  - `test/test_fix_loop_oscillation.rb`: its fixture now observes the current
+    five-pass recurrence window.
+  - `test/test_agy_reachability.rb`, `test/test_runs.rb` and the parked
+    `design_calibration` regression files: the test-runner census now includes
+    STUDIO's two maintained tests and those parked files.
+  - `test/test_tools_media.rb`: it reads canonical `STUDIO/postpro`, not a
+    retired path; execute it as a regression, not as evidence that the source
+    path is broken.
+  Then run:
+  ```zsh
+  MASTER_TEST_START_MARKERS=1 MASTER_TEST_JOBS=1 MASTER_TEST_PROGRESS_EVERY=25 rake test
+  MASTER_TEST_JOBS=3 rake test
+  rake audit
+  bin/check --profile=agent
+  ```
+  Check `.master/check/suite-report.json` for incomplete workers and mismatched
+  start/result counts. The focused runs, full suites, audit and agent profile
+  remain NOT_RUN until real pinned-runtime output is captured.
 - [ ] RAILS contracts: `ruby RAILS/test/run_all.rb` went from 34 red files to 6 after this
   session's fixes, each file rerun alone after its fix. Still red: `check_live_and_css_budget`
   (a fresh build measures brgen 289KB/217KB, amber 154/103, bsdports 91/62 — real growth,
