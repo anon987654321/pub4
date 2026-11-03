@@ -193,7 +193,7 @@ class ChannelBot
     return if city.blank?
 
     "This public room is city-scoped to #{city}. Use that city for local context; " \
-      "do not assume Bergen or invent venue names, events or opening hours."
+      "do not assume another city or invent venue names, events or opening hours."
   end
 
   def self.generate_master(channel, message)
