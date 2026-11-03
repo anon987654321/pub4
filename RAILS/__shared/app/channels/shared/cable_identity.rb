@@ -15,10 +15,15 @@ module Shared
     end
 
     def connect
-      set_current_user || reject_unauthorized_connection
+      set_current_user || allow_anonymous_connection? || reject_unauthorized_connection
     end
 
     private
+
+    # An app whose public pages are live (brgen's front page and post pages)
+    # answers true and keeps its private streams to itself in the channel; the
+    # default refuses a connection with nobody behind it.
+    def allow_anonymous_connection? = false
 
     def set_current_user
       # The user loads with the session, as Shared::Authentication loads it;

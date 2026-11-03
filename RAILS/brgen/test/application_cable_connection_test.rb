@@ -35,8 +35,12 @@ module ApplicationCable
       assert_equal user.id, connection.current_user.id
     end
 
-    test "a request with no session or guest is refused" do
-      assert_reject_connection { connect }
+    # Signed-out visitors read the front page and post pages live; which streams
+    # they may read is the channel's question (public_streams_test).
+    test "a request with no session or guest connects as nobody" do
+      connect
+
+      assert_nil connection.current_user
     end
   end
 end

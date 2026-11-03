@@ -6,6 +6,11 @@ module ApplicationCable
 
     private
 
+    # Signed-out visitors read the front page and post pages live too. They
+    # connect as nobody, and PublicStreams lets them subscribe to those pages'
+    # streams and to nothing else.
+    def allow_anonymous_connection? = true
+
     # Soft guests (Craigslist-style): the session cookie carries guest_user_id
     # without a signed Session row, so a guest can hold a live cable connection.
     def set_current_user
