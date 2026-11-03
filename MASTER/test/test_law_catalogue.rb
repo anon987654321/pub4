@@ -18,11 +18,16 @@ class TestRuleCatalogue < Minitest::Test
     def scannable? = !detect.nil?
   end
 
-  # laws.yml's own shape: each law a top-level key carrying a priority and a statement. `catalogue` builds one
-  # from rows with an id; the extra keys (learned_smells) sit beside them as they do in the file.
+  # laws.yml's own shape: each law a top-level key carrying a statement and a
+  # root (or a node, or a parent). `catalogue` builds one from rows with an id;
+  # the extra keys (learned_smells) sit beside them as they do in the file.
+  # law_entries_in only counts rows that carry one of those three, so the
+  # fixture rows do too, and retired ranking fields (tier, priority) stay out.
   def catalogue(*rows, **extra)
     entries = rows.to_h do |row|
-      [row.fetch("id"), { "priority" => 1, "statement" => "s" }.merge(row.except("id"))]
+      body = { "statement" => "s" }.merge(row.except("id"))
+      body["root"] ||= "one_source" unless body["parent"] || body["node"]
+      [row.fetch("id"), body]
     end
     # law_catalogue owns Law identity in laws.yml, so the fixture catalogues each row it declares.
     identities = { "law_catalogue" => { "entries" => entries.keys.to_h { |id| [id, {}] } } }
@@ -34,8 +39,8 @@ class TestRuleCatalogue < Minitest::Test
   # and no tier or severity, because a check name is not a law.
   def body_with_checks
     catalogue(
-      { "id" => "EIGHT_PX_RHYTHM", "tier" => "design", "severity" => "warning" },
-      { "id" => "AUTOMATED_CSS_ANALYSIS", "tier" => "design", "severity" => "warning",
+      { "id" => "EIGHT_PX_RHYTHM", "severity" => "warning" },
+      { "id" => "AUTOMATED_CSS_ANALYSIS", "severity" => "warning",
         "config" => { "checks" => [{ "id" => "eight_px_rhythm", "enforce" => ["Operator::ScaleLint"] },
                                    { "id" => "touch_target", "enforce" => ["TOUCH_TARGET_MIN"] }] } },
       learned_smells: [{ "id" => "magic_number", "pattern" => "\\d", "severity" => "warning" }],
@@ -66,7 +71,7 @@ class TestRuleCatalogue < Minitest::Test
   # laws.yml's `laws:` key: a learned smell reports under its own id, so it
   # collides with a registered rule exactly as another rule would.
   def test_a_learned_smell_still_counts_as_a_population
-    body = catalogue({ "id" => "BARE_RESCUE", "tier" => "safety", "severity" => "error" },
+    body = catalogue({ "id" => "BARE_RESCUE", "severity" => "error" },
                      learned_smells: [{ "id" => "bare_rescue", "pattern" => "rescue" }])
     with_body(body) do
       assert_equal [%w[BARE_RESCUE bare_rescue]], Operator::LawHygiene.id_case_collisions
@@ -74,9 +79,11 @@ class TestRuleCatalogue < Minitest::Test
     end
   end
 
-  def test_a_rule_declaring_only_a_tier_has_metadata
-    body = catalogue({ "id" => "A", "tier" => "design" }, { "id" => "B", "severity" => "info" }, { "id" => "C" })
-    with_body(body) { assert_equal ["C"], Operator::LawHygiene.missing_metadata }
+  def test_a_child_inherits_the_severity_its_parent_declares
+    body = catalogue({ "id" => "PARENT", "severity" => "error" },
+                     { "id" => "CHILD", "parent" => "PARENT" },
+                     { "id" => "ALONE" })
+    with_body(body) { assert_equal ["ALONE"], Operator::LawHygiene.missing_metadata }
   end
 
   # Replaces the one Law population the hygiene checks below read.
@@ -93,7 +100,7 @@ class TestRuleCatalogue < Minitest::Test
   # deterministic detector and a semantic question, while the catalogue keeps
   # descriptive metadata only.
   def test_a_semantic_prompt_beside_a_detector_is_one_rule_at_two_depths
-    body = catalogue({ "id" => "FAIL_VISIBLY", "tier" => "kernel", "severity" => "error" })
+    body = catalogue({ "id" => "FAIL_VISIBLY", "severity" => "error" })
     laws = { FAIL_VISIBLY: Law.new(id: :FAIL_VISIBLY, detect: ->(_) { true }, fix: "Catch it.", severity: :error) }
     with_body(body) do
       with_populations(laws:) { assert_empty Operator::LawHygiene.cross_population_duplicates }
@@ -101,7 +108,7 @@ class TestRuleCatalogue < Minitest::Test
   end
 
   def test_legacy_yaml_detector_fields_are_rejected
-    body = catalogue({ "id" => "BARE_RESCUE", "tier" => "safety", "severity" => "error",
+    body = catalogue({ "id" => "BARE_RESCUE", "severity" => "error",
                        "detect_lexical" => "rescue$" })
     with_body(body) do
       error = assert_raises(RuntimeError) { Operator::LawHygiene.yaml_laws }
@@ -141,8 +148,8 @@ class TestRuleCatalogue < Minitest::Test
   # live rule is the defect. Both asserted, because narrowing this check to
   # silence the second would turn it off rather than fix it.
   def test_an_alias_is_reported_only_when_its_subject_is_still_alive
-    body = catalogue({ "id" => "DRY", "tier" => "principle", "aliases" => %w[duplicate_code retired_id] },
-                     { "id" => "duplicate_code", "tier" => "smell" })
+    body = catalogue({ "id" => "DRY", "severity" => "error", "aliases" => %w[duplicate_code retired_id] },
+                     { "id" => "duplicate_code", "severity" => "warning" })
     with_body(body) do
       reported = Operator::LawHygiene.alias_shadows_live_law
       assert_equal [{ law: "DRY", alias_name: "duplicate_code" }], reported

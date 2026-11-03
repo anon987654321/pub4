@@ -29,7 +29,9 @@ module Master
           mode = entry["coverage_mode"].to_s
           missing << "coverage_mode" unless COVERAGE_MODES.include?(mode)
           missing << "detector_ids" if mode == "deterministic" && Array(entry["detector_ids"]).empty?
-          next if missing.empty?
+          # flat_map keeps nil elements, and a complete contract must not look
+          # like a gap: contribute an empty list, not a bare next.
+          next [] if missing.empty?
 
           [Gap.new(
             id: entry.fetch("id"),

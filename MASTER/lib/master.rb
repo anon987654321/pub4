@@ -180,6 +180,14 @@ module Master
     load_yaml(File.join(root, "data", "soul.yml")) || {}
   end
 
+  # The one whole-document reader of data/laws.yml: the normative rows and the
+  # reserved law_catalogue block together. Readers wanting one population keep
+  # using law_entries / law_catalogue; audits that must see both read this.
+  def self.laws_document(root: ROOT)
+    master_root = Master.master_root(root:)
+    load_yaml(File.join(master_root, "data", "laws.yml")) || {}
+  end
+
   # The one reader of the normative Law execution catalogue in laws.yml.
   # Scanner, veto, plugin and /fix settings remain in law_runtime.yml.
   def self.law_entries(root: ROOT)
@@ -187,7 +195,7 @@ module Master
     path = File.join(master_root, "data", "laws.yml")
     return [] unless master_root == ROOT || File.file?(path)
 
-    law_entries_in(load_yaml(path) || {})
+    law_entries_in(laws_document(root:))
   end
 
   # Preserve source order. Parent entries inherit their constitutional root;
@@ -207,10 +215,7 @@ module Master
   end
 
   def self.law_catalogue(root: ROOT)
-    master_root = Master.master_root(root:)
-    path = File.join(master_root, "data", "laws.yml")
-    data = load_yaml(path) || {}
-    data.fetch("law_catalogue") { raise KeyError, "data/laws.yml has no law_catalogue section" }
+    laws_document(root:).fetch("law_catalogue") { raise KeyError, "data/laws.yml has no law_catalogue section" }
   end
 
   # Runtime-only sections are read from law_runtime.yml. The per-Law catalogue

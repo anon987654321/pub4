@@ -125,7 +125,7 @@ class TestLawsYamlRegistry < Minitest::Test
     soul = Master.load_yaml(File.join(DATA, "soul.yml"))
     law_id = soul.dig("references", "golden_law")
     laws = Master.load_yaml(File.join(DATA, "laws.yml"))
-    assert_equal "STEWARDSHIP_preserve_first", law_id
+    assert_equal "PRESERVE_FIRST", law_id
     assert_match(/preserve/i, laws.fetch(law_id).fetch("statement"))
     refute soul.key?("rules"), "soul must not hold individual Law records; laws.yml owns that catalogue"
     assert_kind_of Array, soul.dig("absolute", "sacred_paths"), "Soul owns protected paths"
@@ -375,6 +375,12 @@ class TestConstitutionYamlLoading < Minitest::Test
     test/test_cli_face_contract.rb # standalone; boots no Master to load through
     lib/finance/tradedoubler.rb
     lib/review/council/inter_model_contract.rb
+    # soul.rb is the boot floor: it reads soul.yml and laws.yml before any
+    # boot loader exists, so it cannot load through Master.load_yaml.
+    lib/soul.rb
+    # standalone tests that boot no Master to load through
+    test/test_configuration_guard.rb
+    test/test_laws_reflow.rb
   ].freeze
 
   def test_data_yml_runtime_readers_use_master_loader

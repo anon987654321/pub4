@@ -31,12 +31,14 @@ module Operator
 
     # Through the accessor, not a second load of laws.yml: the file this tool
     # audits has to be the file the runtime reads, and reader_singularity is
-    # the ratchet that keeps those two from drifting apart.
+    # the ratchet that keeps those two from drifting apart. The whole document
+    # reader is the one accessor that sees both populations this tool audits:
+    # the normative rows and the reserved law_catalogue block beside them.
     def master_laws
       lib = File.join(MASTER, "lib")
       $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
       require "master"
-      Master.load_laws(root: MASTER)
+      Master.laws_document(root: MASTER)
     end
 
     # The two populations laws.yml declares, and no third. A hand-rolled walk
@@ -87,11 +89,18 @@ module Operator
       end
     end
 
-    # A law with neither tier nor severity cannot be sorted, filtered or
-    # prioritised, and every count that groups by either quietly omits it.
+    # A law with no severity of its own and none to inherit from its parent
+    # cannot be sorted, filtered or prioritised, and every count that groups by
+    # severity quietly omits it. tier and priority are retired ranking fields;
+    # parentage is the catalogue's own mechanism for a child that shares its
+    # parent's severity, so a covered child carries metadata.
     def missing_metadata
-      yaml_laws.select { |r| r["tier"].to_s.strip.empty? && r["severity"].to_s.strip.empty? }
-                .map { |r| r["id"] }
+      by_id = yaml_laws.to_h { |r| [r["id"], r] }
+      yaml_laws.select do |r|
+        parent = by_id[r["parent"].to_s] if r["parent"]
+        r["severity"].to_s.strip.empty? &&
+          (!parent || parent["severity"].to_s.strip.empty?)
+      end.map { |r| r["id"] }
     end
 
     # One id, two definitions, two wordings, and no way for a reader to tell

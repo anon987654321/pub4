@@ -1881,7 +1881,6 @@ law_catalogue:
       definition_sources: [MASTER/law/html.rb]
       severity: warn
       languages: [html]
-      path: '/app/views/'
     BIG_TENT:
       definition_sources: [MASTER/law/universal.rb]
       severity: info
@@ -1911,7 +1910,6 @@ law_catalogue:
       definition_sources: [MASTER/law/capability.rb]
       severity: error
       languages: [ruby]
-      path: 'MASTER/lib/core.rb'
     CAPABILITY_STATUS_MUST_BE_TRUTHFUL:
       definition_sources: [MASTER/law/interface.rb]
       severity: error
@@ -1941,23 +1939,19 @@ law_catalogue:
       definition_sources: [MASTER/law/interface.rb]
       severity: error
       languages: [yaml]
-      path: 'MASTER/data/patterns.yml'
     CLI_FACE_DEDICATED_TTY:
       definition_sources: [MASTER/law/interface.rb]
       severity: error
       languages: [ruby]
-      path: 'MASTER/lib/cli/command_registry.rb'
     CLI_PROMPT_COMPOSITION:
       definition_sources: [MASTER/law/interface.rb]
       severity: warning
       mode: opportunity
       languages: [ruby]
-      path: 'MASTER/lib/voice/renderer/'
     CLI_TREE_TARGET_RESOLUTION:
       definition_sources: [MASTER/law/interface.rb]
       severity: error
       languages: [ruby]
-      path: 'MASTER/lib/cli/'
     co_change_coupling:
       definition_sources: [MASTER/law/graph.rb]
       severity: info
@@ -1983,15 +1977,12 @@ law_catalogue:
     COMMERCE_AMBER_DOES_NOT_OWN_BRGEN:
       definition_sources: [MASTER/law/commerce.rb]
       severity: error
-      path: 'RAILS/amber/'
     COMMERCE_BRGEN_DOES_NOT_OWN_AMBER:
       definition_sources: [MASTER/law/commerce.rb]
       severity: error
-      path: 'RAILS/brgen_marketplace/'
     COMMERCE_EXTERNAL_SOURCES_STAY_EXPLAINABLE:
       definition_sources: [MASTER/law/commerce.rb]
       severity: error
-      path: 'RAILS/amber/app/services/'
     COMPLETE_MEDIATION:
       definition_sources: [MASTER/law/universal.rb]
       severity: error
@@ -2140,7 +2131,6 @@ law_catalogue:
       severity: warning
       mode: opportunity
       languages: [html, javascript, css, scss]
-      path: 'RAILS/'
     DIRNAME_FILE:
       definition_sources: [MASTER/law/ruby.rb]
       severity: info
@@ -2362,7 +2352,6 @@ law_catalogue:
       severity: warning
       mode: opportunity
       languages: [html, css, scss, javascript]
-      path: 'RAILS/'
     GIT_COMMITS:
       definition_sources: [MASTER/law/practice.rb]
       severity: warn
@@ -2400,7 +2389,6 @@ law_catalogue:
       severity: info
       mode: opportunity
       languages: [javascript]
-      path: 'RAILS/'
     HASH_FETCH:
       definition_sources: [MASTER/law/ruby.rb]
       severity: info
@@ -2443,7 +2431,6 @@ law_catalogue:
       definition_sources: [MASTER/law/html.rb]
       severity: warn
       languages: [html]
-      path: '/app/views/'
     IDEMPOTENT:
       definition_sources: [MASTER/law/universal.rb]
       severity: info
@@ -2492,13 +2479,11 @@ law_catalogue:
       definition_sources: [MASTER/law/inter_model.rb]
       severity: error
       languages: [ruby]
-      path: 'MASTER/lib/review/council/'
     INTERACTION_PERFORMANCE:
       definition_sources: [MASTER/law/css.rb]
       severity: warning
       mode: opportunity
       languages: [css, scss]
-      path: 'RAILS/'
     INTERACTION_SEMANTICS:
       definition_sources: [MASTER/law/recovered_design_semantics.rb]
       severity: warning
@@ -2641,22 +2626,18 @@ law_catalogue:
       definition_sources: [MASTER/law/ruby.rb]
       severity: error
       languages: [ruby]
-      path: '/db/migrate/'
     MIGRATION_FIND_OR_CREATE_BY:
       definition_sources: [MASTER/law/ruby.rb]
       severity: warn
       languages: [ruby]
-      path: '/db/migrate/'
     MIGRATION_NOT_NULL_NO_DEFAULT:
       definition_sources: [MASTER/law/ruby.rb]
       severity: error
       languages: [ruby]
-      path: '/db/migrate/'
     MIGRATION_REMOVE_COLUMN:
       definition_sources: [MASTER/law/ruby.rb]
       severity: error
       languages: [ruby]
-      path: '/db/migrate/'
     MINIMAL_FOOTPRINT:
       definition_sources: [MASTER/law/practice.rb]
       severity: error
@@ -2944,7 +2925,6 @@ law_catalogue:
       definition_sources: [MASTER/law/lexical.rb]
       severity: warning
       languages: [ruby, javascript]
-      path_pattern: '(?:\A|/)(?:test|spec)/'
     NO_TODO_IN_VIEWS:
       definition_sources: [MASTER/law/web.rb]
       severity: warning
@@ -3022,7 +3002,6 @@ law_catalogue:
       severity: warning
       mode: opportunity
       languages: [ruby]
-      path: 'MASTER/lib/voice/'
     OPERATOR_AUTONOMY:
       definition_sources: [MASTER/law/practice.rb]
       severity: warn
@@ -3045,7 +3024,6 @@ law_catalogue:
       # Brand-export trees only. The four RAILS apps paint #ffffff as their
       # measured light-mode ground (RAILS/__shared dialect tokens) and mailer
       # HTML needs literals; both are deliberate, not drift.
-      path_pattern: '/mrdamascy/'
     PARALLEL_INHERITANCE:
       definition_sources: [MASTER/law/universal.rb]
       severity: warning
@@ -3058,7 +3036,6 @@ law_catalogue:
       severity: warn
       # Brand-export trees only: app icon partials and the marketplace animated
       # logo carry long hand-tuned paths that are artwork, not brand marks.
-      path_pattern: '/mrdamascy/'
     PARSE_DONT_VALIDATE:
       definition_sources: [MASTER/law/universal.rb]
       severity: warning
@@ -3093,7 +3070,6 @@ law_catalogue:
       severity: info
       mode: opportunity
       languages: [javascript]
-      path: 'RAILS/'
     POKA_YOKE:
       definition_sources: [MASTER/law/universal.rb]
       severity: warning
@@ -3145,24 +3121,20 @@ law_catalogue:
       definition_sources: [MASTER/law/prose.rb]
       severity: info
       languages: [markdown, ruby]
-      path_pattern: '.'
     PROSE_ACTIVE_VOICE_NB:
       definition_sources: [MASTER/law/prose.rb]
       severity: info
       languages: [yaml]
-      path_pattern: '(?:\A|[/.])nb\.yml\z'
     PROSE_OMIT_QUALIFIERS:
       definition_sources: [MASTER/law/prose.rb]
       severity: warn
       languages: [markdown, ruby]
-      path_pattern: '.'
     PROSE_OMIT_QUALIFIERS_NB:
       definition_sources: [MASTER/law/prose.rb]
       severity: warn
       languages: [yaml]
       # Bokmål reaches the tree through the Rails locale files and nowhere else;
       # every comment in the repo is English. Scoped there, `bare` is Norwegian.
-      path_pattern: '(?:\A|[/.])nb\.yml\z'
     PROSE_ONE_TOPIC_PARAGRAPH:
       definition_sources: [MASTER/law/universal.rb]
       severity: info
@@ -3239,7 +3211,6 @@ law_catalogue:
       definition_sources: [MASTER/law/ruby.rb]
       severity: error
       languages: [ruby]
-      path: '/app/controllers/'
     README_PROSE:
       definition_sources: [MASTER/law/cosmetic.rb]
       severity: info
@@ -3250,7 +3221,6 @@ law_catalogue:
       severity: info
       mode: opportunity
       languages: [markdown]
-      path: 'MASTER/README.md'
     RECOGNITION_OVER_RECALL:
       definition_sources: [MASTER/law/universal.rb]
       severity: info
@@ -3385,7 +3355,6 @@ law_catalogue:
       # Brand-export trees only. --accent is the canonical token of the RAILS
       # one-scheme (RAILS/__shared/app/assets/stylesheets/_dialect_tokens.scss);
       # this law governs ad-hoc brand palettes, not that scheme.
-      path_pattern: '/mrdamascy/'
     SIGNAL_NOISE:
       definition_sources: [MASTER/law/surface.rb]
       severity: info
@@ -3395,7 +3364,6 @@ law_catalogue:
       severity: info
       mode: opportunity
       languages: [html, javascript, css, scss]
-      path: 'RAILS/'
     SILENCE_ON_SUCCESS:
       definition_sources: [MASTER/law/universal.rb]
       severity: info
@@ -3429,7 +3397,6 @@ law_catalogue:
       definition_sources: [MASTER/law/html.rb]
       severity: warn
       languages: [html]
-      path: '/app/views/layouts/'
       path_exclude: 'mailer'
     SMALL_FILES:
       definition_sources: [MASTER/law/structural.rb]
@@ -3455,7 +3422,6 @@ law_catalogue:
       severity: warning
       mode: opportunity
       languages: [html, css, scss, javascript]
-      path: 'RAILS/'
     STEPDOWN:
       definition_sources: [MASTER/law/universal.rb]
       severity: info
@@ -3471,7 +3437,6 @@ law_catalogue:
       definition_sources: [MASTER/law/ruby.rb]
       severity: info
       languages: [ruby]
-      path: '/app/models/'
     STRICT_MODE_ZSH:
       definition_sources: [MASTER/law/shell.rb]
       severity: error
@@ -3525,7 +3490,6 @@ law_catalogue:
       severity: info
       mode: opportunity
       languages: [javascript]
-      path: 'RAILS/'
     TEMPLATE_LITERALS:
       definition_sources: [MASTER/law/javascript.rb]
       severity: warn
@@ -3632,7 +3596,6 @@ law_catalogue:
       definition_sources: [MASTER/law/html.rb]
       severity: warn
       languages: [html]
-      path: '/app/views/'
     VERIFICATION_REQUIRED_FOR_COMPLETION:
       definition_sources: [MASTER/law/universal.rb]
       severity: error
@@ -3657,18 +3620,15 @@ law_catalogue:
       definition_sources: [MASTER/law/recovered_design_semantics.rb]
       severity: warning
       languages: [yaml]
-      path: 'MASTER/data/tokens.yml'
     VISUAL_PARTICLE_STIPPLE_PRIMARY:
       definition_sources: [MASTER/law/recovered_design_semantics.rb]
       severity: warning
       languages: [yaml]
-      path: 'MASTER/data/tokens.yml'
     VOICE_FAILURES_ARE_ACTIONABLE:
       definition_sources: [MASTER/law/interface.rb]
       severity: info
       mode: opportunity
       languages: [ruby]
-      path: 'MASTER/lib/voice/'
     VOICE_TERSE_UNIX:
       definition_sources: [MASTER/law/practice.rb]
       severity: warn
@@ -3680,7 +3640,6 @@ law_catalogue:
       severity: info
       mode: opportunity
       languages: [html, css, scss, javascript]
-      path: 'RAILS/'
     WEB_PLATFORM_DEFAULTS:
       definition_sources: [MASTER/law/universal.rb]
       severity: warning

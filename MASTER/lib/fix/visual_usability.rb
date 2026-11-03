@@ -58,7 +58,7 @@ module Master
       end
 
       def catalogue
-        @catalogue ||= Master.law(CATALOGUE_SECTION, root: Master::ROOT)
+        @catalogue ||= Master.law_catalogue(root: Master::ROOT)
       end
 
       def catalogue_entries
