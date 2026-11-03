@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "open3"
+require_relative "../../ground/personal_permissions"
 
 module Master
   module CLI
@@ -48,16 +49,24 @@ module Master
 
         # transcriber takes the whole take and interim the take so far; both
         # default to words, which picks whisper or Gemini.
-        def initialize(device: Master::Device, capture: nil, transcriber: nil, interim: nil, words: Transcriber.new)
+        PERMISSION_CACHE_S = 1.0
+        PERMISSION_HINT = 'voice input is off by default; grant with /privacy grant microphone --confirm "GRANT microphone" and /privacy grant speech_recognition --confirm "GRANT speech_recognition"'
+
+        def initialize(device: Master::Device, capture: nil, transcriber: nil, interim: nil, words: Transcriber.new,
+                       permissions: nil, root: Master::REPO_ROOT)
           @device = device
           @words = words
           @capture = capture || -> { open_stream }
           @transcriber = transcriber || words.method(:final)
           @interim = interim || transcriber || words.method(:interim)
+          @permissions = permissions || Master::Ground::PersonalPermissions.new(root:)
+          @permission_checked_at = nil
+          @permission_allowed = false
         end
 
         # Nil when the ear can listen, otherwise the sentence that says why not.
         def missing
+          return "mic0: #{PERMISSION_HINT}" unless voice_permissions_allowed?
           return (streaming? ? nil : termux_missing) if @device.android?
           return "mic0: sox missing — type instead" unless on_path?("sox")
           return "mic0: #{@words.describe} — type instead" unless @words.lane
@@ -71,6 +80,7 @@ module Master
         # handing each partial match to on_partial as it arrives. Returns the
         # last match, which is the fullest, or nil when nothing was heard.
         def listen(stop:, on_partial: nil)
+          return unless voice_permissions_allowed?(refresh: true)
           return termux_listen(stop:, on_partial:) if @device.android? && !streaming?
 
           heard = host_listen(stop:, on_partial:)
@@ -80,6 +90,25 @@ module Master
         end
 
         private
+
+        def voice_permissions_allowed?(refresh: false)
+          current = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+          if refresh || @permission_checked_at.nil? || current - @permission_checked_at >= PERMISSION_CACHE_S
+            @permission_allowed =
+              @permissions.allowed?(
+                scope: "microphone",
+                purpose: Master::Ground::PersonalPermissions::MICROPHONE_PURPOSE
+              ) &&
+              @permissions.allowed?(
+                scope: "speech_recognition",
+                purpose: Master::Ground::PersonalPermissions::SPEECH_RECOGNITION_PURPOSE
+              )
+            @permission_checked_at = current
+          end
+          @permission_allowed
+        rescue StandardError
+          @permission_allowed = false
+        end
 
         def termux_missing
           return if Master::Voice::Playback.which("termux-speech-to-text")
@@ -101,6 +130,8 @@ module Master
         # termux-speech-to-text prints the phrase and exits. Device has no
         # speech helper; the command is the recogniser.
         def termux_listen(stop:, on_partial:)
+          return unless voice_permissions_allowed?(refresh: true)
+
           stdin = stdout = nil
           stdin, stdout, wait_thr = Open3.popen2("termux-speech-to-text")
           stdin.close
@@ -127,6 +158,8 @@ module Master
         # take sends the whole of it to the accurate one, and that transcript
         # is the one kept.
         def host_listen(stop:, on_partial:)
+          return unless voice_permissions_allowed?(refresh: true)
+
           stream = @capture.call
           take = capture_take(stream, stop:, on_partial:)
           return unless take && take.bytesize > (MIN_TAKE_S * RATE_HZ * 2)
@@ -197,6 +230,8 @@ module Master
         end
 
         def open_stream
+          raise "mic0: #{PERMISSION_HINT}" unless voice_permissions_allowed?(refresh: true)
+
           system(*PULSE, out: File::NULL, err: File::NULL) if @device.android?
           IO.popen(record_argv, "rb", err: File::NULL)
         end
