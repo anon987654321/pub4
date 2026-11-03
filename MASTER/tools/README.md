@@ -54,10 +54,11 @@ fails on a pick whose critique did not keep it, a gap with fewer candidates
 than a real choice needs, a "picked" ledger row with no workstream, and any
 workstream name that exists nowhere.
 
-Media work is no longer implemented here. The tools named dilla, lora, postpro
-and replicate are symbolic links into `STUDIO/`, which owns that code and its
-contracts. Their READMEs carry the detail, and the links remain so that older
-callers still find them. Add nothing to a link target from this side.
+Media implementations belong to `STUDIO/`. The two compatibility links
+that remain here are `dilla` and `replicate`; their targets and contracts are
+owned by STUDIO. Postpro is invoked through its canonical `STUDIO/postpro`
+entrypoint, not a MASTER/tools link. Read the owning project README before
+changing media behavior, and do not add a second implementation here.
 
 ## Read this part first
 
