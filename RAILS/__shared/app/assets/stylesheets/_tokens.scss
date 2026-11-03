@@ -96,6 +96,9 @@ $luxury: true !default;
     /* Ink over photos and video stills, the same in both themes: the image
        underneath, not the page, is what it sits on. */
     --on-media: #fff;
+    /* The backdrop media plays on in cinema mode: near-black, so white ink and
+       the images carry the page. */
+    --cinema-backdrop: #0a0a0a;
 
     --space-0-5: 0.125rem;  /* 2px  */
     --space-1: 0.25rem;

@@ -352,7 +352,7 @@ def test_brgen_feature_styles_are_loaded_at_their_original_boundaries
     brgen_vertical_shell
     brgen_vertical_surfaces
     brgen_city_surfaces
-    brgen_shared_overrides
+    brgen_shared_overrides brgen_cinema
   ], stylesheet_module_names("brgen").grep_v(/\Asection_\d+\z/), "Brgen module order is a cascade contract"
 
   # Pairs, not a hash: brgen_city_surfaces pins two rules, and a repeated
