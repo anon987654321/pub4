@@ -3,10 +3,14 @@
   <%= render "shared/errors", object: @post %>
   <div class="field">
     <%= f.label :body, t("post.body_label") %>
-    <div class="compose-surface" data-controller="tiptap-editor character-counter" data-character-counter-countdown-value="true">
+    <div class="compose-surface" data-controller="tiptap-editor character-counter link-preview"
+         data-character-counter-countdown-value="true">
       <%= f.text_area :body, rows: 3,
             placeholder: t("post.body_placeholder"),
-            data: { character_counter_target: "input", tiptap_editor_target: "field" } %>
+            data: { character_counter_target: "input", tiptap_editor_target: "field",
+                    action: "input->link-preview#scan" } %>
+      <%= tag.output data: { link_preview_target: "preview" },
+                     aria: { live: "polite", label: t("link_preview.label") } %>
       <div class="tiptap_mount" data-tiptap-editor-target="mount" hidden></div>
       <div class="tiptap_toolbar" data-tiptap-editor-target="toolbar" hidden>
         <button type="button" class="tiptap_btn" data-action="mousedown->tiptap-editor#bold" title="<%= t("compose.bold") %>"><strong>B</strong></button>

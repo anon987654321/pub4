@@ -33,7 +33,9 @@ class FrontPageWeightTest < ActionDispatch::IntegrationTest
   # in the commit.
   # 151 from 2026-11-03: navigation-glide, one instance on the primary nav, gives
   # a mouse the wheel, drag and edge glide that touch already had.
-  INSTANCE_BUDGET = 151
+  # 152 from 2026-11-03: link-preview, one instance in the composer, shows the
+  # player a pasted link will become before the post is published.
+  INSTANCE_BUDGET = 152
   # long-press, dropdown, clipboard x2, post-gallery.
   PER_POST_BUDGET = 5
 

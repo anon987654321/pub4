@@ -58,6 +58,7 @@ pin "pub4/media_picker", to: "media_picker_controller.js"
 pin "pub4/image_compression", to: "image_compression.js", preload: false
 pin "pub4/post_progressive", to: "post_progressive_controller.js"
 pin "pub4/feed_compose", to: "feed_compose_controller.js"
+pin "pub4/link_preview", to: "link_preview_controller.js"
 pin "pub4/feed_hotkey", to: "feed_hotkey_controller.js"
 pin "pub4/offline_feed", to: "offline_feed_controller.js"
 pin "pub4/pwa_standalone", to: "pwa_standalone_controller.js"

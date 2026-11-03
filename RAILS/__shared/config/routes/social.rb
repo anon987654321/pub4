@@ -8,6 +8,8 @@ resources :notifications, only: %i[index update destroy] do
 end
 resources :reactions, only: :create
 resources :reports, only: :create
+# The player a link in an unfinished post will become (LinkPreviewsController).
+get "link_previews", to: "link_previews#show", as: :link_preview
 
 # Outbound affiliate/partner clicks. A beacon, not a redirect: this endpoint never
 # receives a URL it will send anyone to, so it cannot become an open redirect, and

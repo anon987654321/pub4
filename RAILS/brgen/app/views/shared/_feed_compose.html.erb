@@ -44,7 +44,7 @@
         <% end %>
       </div>
 
-      <div class="composer-body" data-controller="tiptap-editor">
+      <div class="composer-body" data-controller="tiptap-editor link-preview">
         <%= f.label :content, t("feed.compose_title", city: city_name), class: "visually-hidden" %>
         <%= f.hidden_field :title, data: { feed_compose_target: "title" } %>
         <%= f.text_area :content,
@@ -54,9 +54,11 @@
               data: {
                 feed_compose_target: "input",
                 tiptap_editor_target: "field",
-                action: "input->feed-compose#syncTitle"
+                action: "input->feed-compose#syncTitle input->link-preview#scan"
               } %>
         <div class="tiptap_mount" data-tiptap-editor-target="mount" hidden></div>
+        <%= tag.output data: { link_preview_target: "preview" },
+                       aria: { live: "polite", label: t("link_preview.label") } %>
         <%# One row, two groups: what marks up the text on the left, what
             attaches to it on the right. These were stacked, which read as two
             unrelated toolbars and cost a row of height on a phone. %>
