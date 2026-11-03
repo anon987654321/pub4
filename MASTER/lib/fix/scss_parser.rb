@@ -11,7 +11,7 @@ module Master
     # cannot flatten exactly (interpolation, placeholders) is marked `dynamic`
     # and never judged. Blocks that hold no style rules (@keyframes, @mixin,
     # @font-face, ...) are skipped whole.
-    module ScssRules
+    module ScssParser
       Rule = Data.define(:selectors, :file, :start, :stop, :line, :end_line, :leaf, :dynamic, :context)
 
       SKIPPED = /\A@(?:-\w+-)?(?:keyframes|font-face|mixin|function|property|page|counter-style|font-feature-values)\b/

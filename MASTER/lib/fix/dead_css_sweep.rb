@@ -89,7 +89,7 @@ module Master
 
       def analyse(app)
         sheets = sheet_files(app)
-        rules = sheets.flat_map { |f| ScssRules.parse(File.read(f, encoding: "UTF-8"), file: f) }
+        rules = sheets.flat_map { |f| ScssParser.parse(File.read(f, encoding: "UTF-8"), file: f) }
         static = DeadCssStatic.new(roots: corpus_roots(app), extra_text: sheets.map { |f| File.read(f, encoding: "UTF-8") })
         coverage = coverage_for(app)
         verdicts = rules.reject(&:dynamic).map { |rule| verdict(rule, static, coverage["selectors"]) }
@@ -98,8 +98,8 @@ module Master
 
       def verdict(rule, static, covered)
         rows = rule.selectors.map do |sel|
-          names = ScssRules.required_names(sel)
-          [static.unnamed(names), covered[ScssRules.normalize(sel)]]
+          names = ScssParser.required_names(sel)
+          [static.unnamed(names), covered[ScssParser.normalize(sel)]]
         end
         unnamed = rows.flat_map(&:first).uniq
         statically_dead = rows.all? { |u, _| !u.empty? }

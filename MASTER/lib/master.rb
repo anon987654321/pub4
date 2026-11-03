@@ -284,7 +284,8 @@ module Master
     "mcp_server" => "MCPServer", "mcp_coordinator" => "McpCoordinator", "github_repo_miner" => "GitHubRepoMiner",
     "github_operations" => "GitHubOperations",
     "diff_stager" => "DiffStager", "code_index" => "CodeIndex", "git_context" => "GitContext",
-    "ast_edit" => "AstEdit", "tts" => "TTS", "md" => "MD", "pdf" => "PDF"
+    "ast_edit" => "AstEdit", "tts" => "TTS", "md" => "MD", "pdf" => "PDF",
+    "ux_refinement_catalog" => "UXRefinementCatalog"
   )
   loader.enable_reloading if defined?(MASTER_DEV_MODE) || ENV["MASTER_DEV"].to_s == "1"
 

@@ -69,8 +69,8 @@ module Master
           prelude = text[u["startOffset"].to_i...u["endOffset"].to_i].to_s[/\A[^{]*/].to_s.strip
           next if prelude.empty? || prelude.start_with?("@")
 
-          ScssRules.split_list(prelude).each do |selector|
-            key = ScssRules.normalize(selector)
+          ScssParser.split_list(prelude).each do |selector|
+            key = ScssParser.normalize(selector)
             seen[key] = !!(seen[key] || u["used"])
           end
         end

@@ -10,7 +10,7 @@ require "json"
 # and together; nothing here reads the real RAILS tree.
 class DeadCssSweepTest < Minitest::Test
   Sweep = Master::Fix::DeadCssSweep
-  Rules = Master::Fix::ScssRules
+  Rules = Master::Fix::ScssParser
 
   SCSS = <<~SCSS
     .card { color: red; }

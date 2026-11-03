@@ -25,6 +25,8 @@ autoload:
     - cli/session/result_display.rb
     - cli/session/signals.rb
     - cli/session/thinking_indicator.rb
+    - cli/session/greeting.rb
+    - cli/session/reminders.rb
     # Master::CLI::CommandRegistry -- one file per verb or pipeline stage.
     # command.rb defines its own constant and is left autoloadable.
     - cli/command_registry/help.rb
@@ -35,6 +37,7 @@ autoload:
     - cli/command_registry/laws.rb
     - cli/command_registry/status.rb
     - cli/command_registry/workspace.rb
+    - cli/command_registry/convergence.rb
     # Master::CLI::Pipeline::Pass -- pass_result.rb holds its Result value type.
     - cli/pipeline/pass_result.rb
     # Master::Builder module functions, split out of builder.rb.
@@ -62,3 +65,9 @@ autoload:
     - master
     # The directory; llm_dispatcher.rb itself autoloads as LLMDispatcher.
     - review/llm_dispatcher
+    # Master::CLI::Routing::RoutePolicy, required by model_router.rb; the policy is a
+    # sibling of ModelRouter, not a constant inside it.
+    - cli/routing/model_router/route_policy.rb
+    # Master::Fix::FixLoop::LawOrder, required by path from visual_groups.rb and the
+    # Kernel convergence adapter before FixLoop itself is loaded.
+    - fix/fix_loop/order.rb
