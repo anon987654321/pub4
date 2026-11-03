@@ -1,6 +1,10 @@
 # frozen_string_literal: true
 
 require "yaml"
+# TOO_BROAD_SACRED_PATHS reads Master::Soul at load time; this file is also
+# required below the boot floor (write_guard -> mechanical_autofix), where soul
+# is not loaded yet.
+require_relative "soul"
 require_relative "law_vocabulary"
 require_relative "provider_catalogue_guard"
 require_relative "model_catalogue_guard"

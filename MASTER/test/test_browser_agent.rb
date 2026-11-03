@@ -121,7 +121,7 @@ class TestBrowserAgent < Minitest::Test
 
   def test_policy_and_runtime_registration_agree
     root = Master::ROOT
-    policy = Master.load_yaml(File.join(root, "data", "laws.yml")).fetch("browser_policy")
+    policy = Master.law("browser_policy", root:)
     assert_equal true, policy.fetch("consent_required")
     assert_includes policy.fetch("write_actions"), "click"
     assert_equal %w[status navigate login extract look follow paginate close], policy.fetch("read_actions")

@@ -269,7 +269,8 @@ class TestMasterLoop < Minitest::Test
     refute File.exist?(Master.data_path("style.yml"))
     refute File.exist?(Master.data_path("operator_principles.yml"))
     assert File.exist?(Master.data_path("laws.yml"))
-    assert Master.law("RENDERED_VALUES").key?("statement")
+    rendered = Master.law_catalogue.fetch("entries").fetch("RENDERED_VALUES")
+    assert rendered.fetch("definition_sources"), "retired style data stays owned by the RENDERED_VALUES law"
     assert Master.tokens.key?("scale")
   end
 

@@ -119,7 +119,7 @@ class CheckContractSpec < Minitest::Test
     assert_includes source, "require_relative \"ruby_runner\""
     assert_includes source, "Operator::RubyRunner.ruby_cmd"
     assert_includes source, "Operator::RubyRunner.bundle_cmd"
-    assert_includes source, "Open3.popen2e(SAFE_ENV, File.join(ROOT, \"bin\", \"master\"), chdir: REPO)"
+    assert_includes source, "Open3.popen2e(Master::Io::ProcessSpawn.environment(SAFE_ENV), File.join(ROOT, \"bin\", \"master\"), chdir: REPO)"
   end
 
   def test_operator_app_suites_use_the_shared_runtime

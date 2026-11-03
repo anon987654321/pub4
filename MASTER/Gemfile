@@ -2,12 +2,12 @@
 
 source "https://rubygems.org"
 # .ruby-version records the preferred development line; focused checks must also run on the Ruby available in constrained environments.
-ruby ">= 3.2", "< 4.1"
+ruby ">= 3.3", "< 4.1"
 
 gem "fiddle"
 gem "psych"
 gem "yaml"
-# Keep the locked JSON API stable across the declared Ruby 3.2+ range; the dependency manager activates this bundle before application boot.
+# Keep the locked JSON API stable across the declared Ruby 3.3+ range; the dependency manager activates this bundle before application boot.
 gem "json", "= 2.18.0"
 
 gem "ruby_llm", "~> 2.1.0"

@@ -322,10 +322,17 @@ module Master
           # shape: one file, one top-level Master constant that autoloads from it.
           # So are configuration_guard, convergence, face, gap, law_vocabulary,
           # md, pdf, phoenix and proof, each the single file of its constant.
+          # soul.rb is the boot-floor authority reader, and the catalogue
+          # retirement landed flat_law_catalogue, law_catalogue_preflight and
+          # the four *_guard files beside it — the same one file, one
+          # top-level constant shape.
           ALLOWED_ROOT_FILES = %w[
-            builder.rb configuration_guard.rb convergence.rb core.rb design.rb device.rb
-            face.rb gap.rb law_vocabulary.rb master.rb md.rb ops.rb pdf.rb phoenix.rb
-            plugin.rb proof.rb result.rb security_error.rb snapshot.rb unwrap_error.rb
+            builder.rb config_sections_guard.rb configuration_guard.rb content.rb
+            convergence.rb core.rb design.rb device.rb face.rb flat_law_catalogue.rb
+            gap.rb law_catalogue_preflight.rb law_vocabulary.rb master.rb md.rb
+            model_catalogue_guard.rb model_catalogue_sections_guard.rb ops.rb pdf.rb
+            phoenix.rb plugin.rb proof.rb provider_catalogue_guard.rb result.rb
+            security_error.rb snapshot.rb soul.rb unwrap_error.rb
           ].freeze
 
 

@@ -6,7 +6,7 @@ require "rbconfig"
 class TestPlugins < Minitest::Test
   def test_manifests_have_local_policy
     manifests = Master::Plugin.list
-    assert_equal %w[air_superiority session_browser social_browser travel_browser], manifests.map(&:id)
+    assert_equal %w[air_superiority design_calibration session_browser social_browser tap_probes travel_browser tts_dsp video_recordings], manifests.map(&:id)
     manifests.each { |manifest| assert Master::Plugin.policy(manifest.id).is_a?(Hash) }
   end
 
