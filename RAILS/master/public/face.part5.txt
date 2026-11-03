@@ -64,7 +64,7 @@ function ttsToggleMute() {
 }
 
 function ttsToggleMic() {
-  if (State.sttActive) stopSTT();
+  if (State.sttActive || State.sttStarting) stopSTT();
   else startSTT();
 }
 
@@ -122,16 +122,19 @@ let _voiceModeArmedAt = 0;
 function syncMicIndicator(reason = "idle") {
   State.micReason = String(reason || "idle");
   const dot = document.getElementById("mic-dot");
-  const open = Boolean(State.sttActive && recognition);
+  const starting = Boolean(State.sttStarting && recognition);
+  const open = Boolean((State.sttActive || starting) && recognition);
   if (dot) {
-    dot.dataset.mic = open ? "open" : "closed";
+    dot.dataset.mic = starting ? "starting" : open ? "open" : "closed";
     dot.setAttribute("aria-label", open ? "Turn microphone off" : "Turn microphone on");
-    dot.setAttribute("title", open ? "Microphone listening — tap to turn off" : "Microphone off — tap to turn on");
+    dot.setAttribute("title", starting ? "Microphone starting — tap to turn off" :
+      open ? "Microphone listening — tap to turn off" : "Microphone off — tap to turn on");
     dot.setAttribute("aria-pressed", open ? "true" : "false");
     const label = dot.querySelector("[data-mic-state-text]");
-    if (label) label.textContent = open ? "microphone listening" : "microphone off";
+    if (label) label.textContent = starting ? "microphone starting" : open ? "microphone listening" : "microphone off";
   }
   rootBody.dataset.micOpen = open ? "1" : "0";
+  rootBody.dataset.micStarting = starting ? "1" : "0";
 }
 
 // The mic opens when the page loads, on the operator's ask (2026-09-15): the
@@ -313,6 +316,17 @@ if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
 
   recognition.onstart = () => {
     if (_sttStartTimer) { clearTimeout(_sttStartTimer); _sttStartTimer = null; }
+    State.sttStarting = false;
+    // start() returns before this event. A stop, TTS start, or permission
+    // change can cancel the request in that gap; never accept a late onstart.
+    if (!State.sttStartRequested || tts.playing || tts.loading) {
+      State.sttStartRequested = false;
+      State.sttActive = false;
+      State.sttDuck = 0;
+      try { recognition.abort(); } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:stt_late_start_abort", err); }
+      syncMicIndicator("start-cancelled");
+      return;
+    }
     State.sttActive = true;
     syncMicIndicator("listening");
     State.mode = 'listening';
@@ -331,9 +345,13 @@ if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
       if (heard && WAKE_PHRASE_RE.test(heard)) {
         sttPartial = ''; sttFinalSoFar = '';
         if (sttSilenceTimer) { clearTimeout(sttSilenceTimer); sttSilenceTimer = null; }
+        State.wakeArmed = false;
         State.sttActive = false;
-        try { recognition.stop(); } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:wake_stop", err); }
-        enterVoiceMode({ fromWake: true });
+        State.sttStarting = false;
+        State.sttStartRequested = false;
+        try { recognition.abort(); } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:wake_stop", err); }
+        // Let onend release the old recogniser before the continuous session starts.
+        enterVoiceMode({ fromWake: true, deferStart: true });
       }
       return;
     }
@@ -375,7 +393,10 @@ if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
     const t2 = sttPartial;
     window.dispatchEvent(new CustomEvent('stt:end', { detail: { transcript: t2, text: t2, source: 'speech-recognition' } }));
     window.MasterInteraction?.commitTurn?.(t2, 'voice', { endpoint: 'semantic-silence' });
-    sttPartial = ''; sttFinalSoFar = ''; State.sttActive = false;
+    sttPartial = ''; sttFinalSoFar = '';
+    State.sttActive = false;
+    State.sttStarting = false;
+    State.sttStartRequested = false;
     _smartTurnExtensions = 0;
     try { recognition.stop(); } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:stt_silence_stop", err); }
     if (State.voiceMode && EXIT_PHRASE_RE.test(t2)) { exitVoiceMode(); return; }
@@ -409,7 +430,11 @@ if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
     }
   }
   recognition.onend = () => {
-    State.sttActive = false; State.sttDuck = 0;
+    State.sttActive = false;
+    State.sttStarting = false;
+    State.sttStartRequested = false;
+    State.sttDuck = 0;
+    if (_sttStartTimer) { clearTimeout(_sttStartTimer); _sttStartTimer = null; }
     syncMicIndicator("ended");
     const orphanedTranscript = sttPartial.trim();
     if (sttSilenceTimer) { clearTimeout(sttSilenceTimer); sttSilenceTimer = null; }
@@ -432,7 +457,11 @@ if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
     }
   };
   recognition.onerror = (e) => {
-    State.sttActive = false; State.sttDuck = 0;
+    State.sttActive = false;
+    State.sttStarting = false;
+    State.sttStartRequested = false;
+    State.sttDuck = 0;
+    if (_sttStartTimer) { clearTimeout(_sttStartTimer); _sttStartTimer = null; }
     syncMicIndicator(e?.error || "error");
     if (sttSilenceTimer) { clearTimeout(sttSilenceTimer); sttSilenceTimer = null; }
     if (e && (e.error === 'not-allowed' || e.error === 'service-not-allowed')) {
@@ -452,14 +481,26 @@ if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
 }
 
 function startWakeListening() {
-  if (!recognition || State.sttActive || State.voiceMode) return;
+  if (!recognition || State.sttActive || State.sttStarting || State.voiceMode) return;
   State.wakeArmed = true;
   // Record the intent to listen but don't open the mic yet if TTS is still
   // speaking (e.g. exitVoiceMode() calling this synchronously right after an
   // Escape-triggered ttsSkip()) -- resumeSttAfterSpeech() re-checks
   // State.wakeArmed and finishes arming once playback genuinely ends.
-  if (tts.playing) return;
-  try { recognition.start(); State.sttActive = true; } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:wake_start", err); }
+  if (tts.playing || tts.loading) return;
+  State.sttStartRequested = true;
+  State.sttStarting = true;
+  syncMicIndicator("starting");
+  try {
+    armSTTStartTimeout();
+    recognition.start();
+  } catch (err) {
+    if (_sttStartTimer) { clearTimeout(_sttStartTimer); _sttStartTimer = null; }
+    State.sttStartRequested = false;
+    State.sttStarting = false;
+    syncMicIndicator("wake-start-error");
+    window.MASTER_LOG?.warn?.("face_runtime:wake_start", err);
+  }
 }
 function armWakeWord() {
   if (!recognition || !wakeWordEnabled() || State.voiceMode) return;
@@ -467,7 +508,7 @@ function armWakeWord() {
 }
 function disarmWakeWord() {
   State.wakeArmed = false;
-  if (recognition && State.sttActive) { try { recognition.stop(); } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:wake_disarm", err); } }
+  if (recognition && (State.sttActive || State.sttStarting)) stopSTT();
 }
 
 function enterVoiceMode(opts = {}) {
@@ -484,7 +525,7 @@ function enterVoiceMode(opts = {}) {
   // Fetch the model and open the second mic stream now rather than on the
   // first pause, so the download is not paid inside a decision.
   window.MASTER_SMART_TURN?.warmUp?.().catch((err) => window.MASTER_LOG?.warn?.("face_runtime:smart_turn_warm", err));
-  startSTT();
+  if (!opts.deferStart) startSTT();
 }
 function exitVoiceMode(opts = {}) {
   if (!State.voiceMode) return;
@@ -557,8 +598,23 @@ function boostEyeAttention(delta = 0.25) {
 }
 
 let _sttStartTimer = null;
+function armSTTStartTimeout() {
+  if (_sttStartTimer) clearTimeout(_sttStartTimer);
+  _sttStartTimer = setTimeout(() => {
+    _sttStartTimer = null;
+    if (State.sttActive || !State.sttStartRequested) return;
+    // A slow permission prompt is still a live request. Keep it cancellable;
+    // the operator can tap the mic again, and a later onstart remains valid.
+    syncMicIndicator("start-waiting");
+    if (uiStatus) uiStatus.textContent = 'waiting for microphone — check browser permission';
+    window.MASTER_LOG?.warn?.('face_runtime:stt_start_timeout', 'recognition.start() has not fired onstart yet');
+  }, 2600);
+}
 function startSTT() {
-  if (!recognition || State.sttActive) return false;
+  if (!recognition || State.sttActive || State.sttStarting) return false;
+  State.sttStartRequested = true;
+  State.sttStarting = true;
+  syncMicIndicator("starting");
   _voiceModeArmedAt = performance.now();
   wakeFromSleep();
   if (tts.playing && !State.voiceMode) ttsSkip();
@@ -577,20 +633,16 @@ function startSTT() {
   window.MASTERVisual?.event?.('stt:arming', { topology: 'papua-mask', entropy: 0.16, confidence: 0.88, mode: 'arming' });
   window.MASTEREcology?.terrain?.('stt:arming', { confidence: 0.84, entropy: 0.14 });
   try {
+    armSTTStartTimeout();
     recognition.start();
-    if (_sttStartTimer) clearTimeout(_sttStartTimer);
-    _sttStartTimer = setTimeout(() => {
-      _sttStartTimer = null;
-      if (State.sttActive || !State.voiceMode) return;
-      State.sttDuck = 0;
-      State.mode = 'idle';
-      if (uiStatus) uiStatus.textContent = 'mic did not start — tap again';
-      window.MASTER_LOG?.warn?.('face_runtime:stt_start_timeout', 'recognition.start() returned without onstart');
-    }, 2600);
     return true;
   } catch (err) {
+    if (_sttStartTimer) { clearTimeout(_sttStartTimer); _sttStartTimer = null; }
+    State.sttStartRequested = false;
+    State.sttStarting = false;
     State.sttDuck = 0;
     State.mode = 'idle';
+    syncMicIndicator("start-error");
     window.MASTER_LOG?.warn?.('face_runtime:stt_start', err);
     if (uiStatus) uiStatus.textContent = 'mic unavailable — tap again';
     return false;
@@ -599,9 +651,19 @@ function startSTT() {
 function stopSTT() {
   if (!recognition) return;
   if (_sttStartTimer) { clearTimeout(_sttStartTimer); _sttStartTimer = null; }
-  if (!State.sttActive) return;
+  const pending = State.sttStarting === true;
+  const active = State.sttActive === true;
+  State.sttStartRequested = false;
+  State.sttStarting = false;
   State.sttActive = false;
-  try { recognition.stop(); } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:stt_stop", err); }
+  if (!pending && !active) { syncMicIndicator("stopped"); return; }
+  try {
+    // abort() cancels a request that has not fired onstart; stop() lets an
+    // already-open recogniser flush its final segment before onend.
+    if (pending && !active) recognition.abort();
+    else recognition.stop();
+  } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:stt_stop", err); }
+  syncMicIndicator("stopped");
 }
 
 // Re-open the mic once the TTS queue actually empties -- called from
@@ -612,7 +674,7 @@ function stopSTT() {
 // reopening the mic mid-speech (which fed the assistant's own TTS back into
 // itself as if the user had spoken it).
 function resumeSttAfterSpeech() {
-  if (State.voiceMode) { if (!State.sttActive) startSTT(); return; }
+  if (State.voiceMode) { if (!State.sttActive && !State.sttStarting) startSTT(); return; }
   // A greeting that outlasted maybeAutoVoice()'s wait parks its intent here
   // rather than opening the mic over its own voice. This is the moment playback
   // has actually drained, which is what that function was waiting for.

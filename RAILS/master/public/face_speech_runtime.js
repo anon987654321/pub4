@@ -1480,7 +1480,7 @@ function ttsTick() {
   // playback transcribes the assistant's own reply and resubmits it as if the
   // user said it, producing an unprompted follow-up reply (reported as the
   // assistant "randomly saying facts"). See resumeSttAfterSpeech() below.
-  if (State.sttActive) { try { stopSTT(); } catch (err) { window.MASTER_LOG?.warn?.("face_speech_runtime:tts_tick_stt_duck", err); } }
+  if (State.sttActive || State.sttStarting) { try { stopSTT(); } catch (err) { window.MASTER_LOG?.warn?.("face_speech_runtime:tts_tick_stt_duck", err); } }
   const token = ++tts.cancelToken;
   setTTSLoading(true);
   if (actx?.state === 'suspended') actx.resume().catch(() => {});
