@@ -23,9 +23,19 @@ class TestBootEntrypoint < Minitest::Test
   end
 
   def test_bundle_activation_uses_the_lockfile_bundler_version
-    assert_match(/version = locked_bundler_version\(root\)/, SOURCE)
-    assert_match(/gem\("bundler", version\) unless version\.empty\?/, SOURCE)
+    assert_match(/activate_locked_bundler\(locked_bundler_version\(root\)\)/, SOURCE)
+    assert_match(/gem\("bundler", version\)/, SOURCE)
     assert_match(/require "bundler\/setup"/, SOURCE)
+  end
+
+  # vm23's Ruby 3.4 package ships Bundler 2.6 while the lock is written by 4.x;
+  # the 2026-11-03 deploy preflight died on Gem::MissingSpecVersionError.
+  def test_a_locked_bundler_that_is_not_installed_is_named_not_fatal
+    out, = capture_io do
+      Master::Boot::Entrypoint.activate_locked_bundler("99.0.0")
+    end
+
+    assert_match(/lock wants bundler 99\.0\.0, (not installed|another is active); using the installed one/, out)
   end
 
   def test_json_is_loaded_only_after_bundler_activation

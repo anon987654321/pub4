@@ -117,9 +117,20 @@ module Master
         return unless File.file?(gemfile)
 
         ENV["BUNDLE_GEMFILE"] = gemfile
-        version = locked_bundler_version(root)
-        gem("bundler", version) unless version.empty?
+        activate_locked_bundler(locked_bundler_version(root))
         require "bundler/setup"
+      end
+
+      # The lock records the Bundler that wrote it (4.x on Ruby 4.0); vm23's
+      # Ruby 3.4 package ships Bundler 2.6. Bundler reads a newer lock and only
+      # warns, so a missing exact version is named and the installed one used.
+      def activate_locked_bundler(version)
+        return if version.empty?
+
+        gem("bundler", version)
+      rescue Gem::LoadError => e
+        reason = e.is_a?(Gem::MissingSpecError) ? "not installed" : "another is active"
+        Master::Trace::Dmesg.status("bundler0", "lock wants bundler #{version}, #{reason}; using the installed one")
       end
 
       def locked_bundler_version(root)
