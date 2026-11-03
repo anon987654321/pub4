@@ -131,7 +131,7 @@ class MapsPlacesControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to "/places/#{place.id}"
     assert_equal I18n.t("flash.checked_in_at", place: place.name), flash[:notice]
 
-    check_in = PlaceCheckIn.order(:id).last
+    check_in = PlaceCheckIn.includes(:place, :user).order(:id).last
     assert_equal place, check_in.place
     assert check_in.user.guest?, "the soft guest is a real identity for check-ins"
   end

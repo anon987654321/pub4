@@ -18,7 +18,10 @@ module Maps
               city: p.city&.name, neighborhood: p.neighborhood&.name }
           }
         end
-        format.html do
+        # Both page formats, not html alone: finish_live_search answers a
+        # turbo_stream request with its own respond_to, and an outer block that
+        # had matched html for the same request raised RespondToMismatchError.
+        format.any(:html, :turbo_stream) do
           @pagy, @places = pagy(scope.order(:name))
           finish_live_search(partial: "maps/places/live_search_results")
         end
