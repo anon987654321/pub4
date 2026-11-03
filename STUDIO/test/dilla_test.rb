@@ -62,7 +62,8 @@ class TestDillaCliContract < Minitest::Test
 
       out, _e, status = run_dilla("output-path", "reference-root", env: { "XDG_DATA_HOME" => dir })
       assert status.success?
-      assert_equal File.join(dir, "dilla-references"), out.strip
+      # The reference root resolves symlinks; macOS's /var is /private/var.
+      assert_equal File.join(File.realpath(dir), "dilla-references"), out.strip
     end
   end
 
