@@ -94,18 +94,27 @@ and compare pinned revisions only.
   plan. Classify each as MERGE, MOVE, RENAME, INLINE, DELETE, RETAIN or
   INVESTIGATE. Never infer redundancy from path depth or repeated words alone.
 
-- [ ] MASTER /fix: map every production caller and state owner across
-  `MASTER/lib/fix/fix_loop/`, `MASTER/lib/fix/fix_loop/pass_runner/`,
-  `MASTER/lib/fix/repair_loop/`, `MASTER/lib/fix/scan/`, and the existing
-  `Fix::Kernel` implementation. The current tree has separate files for
-  pass execution, pass runner, builder, lifecycle, completion, committer,
-  background runner, convergence configuration, repo scope, council round,
-  stream cursor, file collector, and repair policies. Consolidate only
-  demonstrably duplicate orchestration; retain distinct transaction,
-  verification, recovery, budget, evidence and terminal-outcome
-  responsibilities. Compatibility constants remain until caller and
-  receipt-parity tests prove they can be retired. Run focused
-  interruption/recovery tests before and after.
+- [ ] MASTER /fix ownership and Kernel convergence: map every production caller
+  and state owner across `MASTER/lib/fix/fix_loop/`,
+  `MASTER/lib/fix/fix_loop/pass_runner/`, `MASTER/lib/fix/repair_loop/`,
+  `MASTER/lib/fix/scan/` and `Fix::Kernel`. Use
+  `MASTER/docs/fix_coordinator_map.md` as the responsibility/evidence map.
+  Production `/fix` enters Kernel, which owns the repository-wide lock,
+  coordinator receipts, shared journal accessor, adapter factories and
+  unknown-outcome reconciliation. The convergence, repair and lifecycle-journal
+  implementations live under `Fix::Kernel`; `FixLoop`, `RepairLoop` and
+  `RunJournal` remain compatibility identities until caller and recovery
+  parity are proved. Consolidate only duplicate orchestration; retain distinct
+  transaction, verification, recovery, budget, evidence and terminal-outcome
+  responsibilities.
+
+  Process-kill regressions cover transaction rollback, Mission/checkpoint
+  survival, durable journal resumption, orphan-receipt recovery and journal
+  deletion with the Mission checkpoint retained. These tests are authored but
+  unexecuted. Run them on pinned Ruby 4.0.5, then prove budget/collapse behavior,
+  zero-repair ledger honesty, the full adapter receipt-parity matrix and a real
+  repository-wide `/fix` trial. Do not remove compatibility aliases until
+  those gates pass.
 
 - [ ] MASTER artifact-preservation enforcement: validated task contracts now
   enter operator-facing /fix via --intent, bound the resolved repository-relative
@@ -505,26 +514,6 @@ d04a7bb8ff to d682846752.
 
 ## Execution contract
 
-- [ ] Complete and verify the Kernel consolidation in `MASTER/docs/fix_coordinator_map.md`:
-  production `/fix` now enters Kernel; the convergence, lifecycle-journal and repair-policy
-  implementations live under `Fix::Kernel`, with compatibility constants retained. Kernel owns
-  the repository-wide, process-shared execution lock at `.master/fix-execution.lock`,
-  coordinator receipts, shared journal accessor, repair factory and unknown-outcome
-  reconciliation. Regression sources cover separate Kernel instances in one process,
-  independent processes, and refusal of symlinked or group/world-writable lock paths.
-  The hash-chained ledger also refuses symlinked paths, hard links, non-regular files and
-  non-private permissions. Runtime results remain unmeasured here. The process-kill tests cover
-  transaction rollback, Mission/checkpoint survival, durable journal resumption and orphan-receipt
-  recovery, but are unexecuted. Run them on pinned Ruby 4.0.5, then prove budget/collapse and
-  zero-repair ledger honesty, the full adapter receipt-parity matrix and a real repository-wide
-  `/fix` trial. Do not remove compatibility aliases until those gates pass.
-  No recovery gate remains as a placeholder skip. Gates 1–6 now have concrete tests for rollback,
-  Mission restart, Git/Checkpoint source recovery after journal deletion, budget/collapse refusal,
-  per-file zero-repair evidence, and the public CommandRegistry-to-Kernel receipt contract. Gate 6
-  controls Pipeline::Pass so it does not invoke a model or mutate a real tree; the wider adapter
-  matrix and end-to-end process-interruption trial remain separate gates. All are authored but
-  unexecuted; run the focused file on pinned Ruby 4.0.5 and preserve its actual output before
-  treating any consolidation gate as closed.
 - [ ] Define a retention/segmentation policy for hash-chained `.master/log.jsonl` before
   long-running production use. Any compaction must preserve verifiable chain continuity with
   explicit segment checkpoints; never truncate arbitrary prefixes.
