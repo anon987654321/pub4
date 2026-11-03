@@ -368,25 +368,20 @@ actionable root-backlog item. Keep them open until the relevant evidence exists.
   deprecated standalone seven-mode visualizer. Implement and test only the two current
   visualizers' track-driven transition and confirm the shared style, reduced motion,
   and rendered mobile/desktop behavior before closing.
-- [ ] **Norwegian MASTER README:** the earlier explicit request for a complete
-  `MASTER.norwegian.md` translation is not represented in the current tree (no
-  Norwegian counterpart exists). After reviewing the canonical README, its links and the language policy, translate
-  the canonical README without changing technical meaning, keep links/commands/code
-  identical, and add a parity check so material English README sections cannot silently
-  disappear from the Norwegian edition.
-- [ ] **MASTER README narrated face preview:** older requests include an inline
-  face-speaking preview, mobile `README_ss.webp` and Norwegian counterpart,
-  a full-README TTS narration, and a real SSH/`bin/master` dmesg transcript.
-  None of those image assets or a captured terminal-session transcript is present
-  in the current README/tree. The `MASTER/tools/readme_take.rb` generator exists
-  and can produce `README.wav`, `loop.mp4` and `loop.gif`; it requires the
-  pinned local Ruby, a running face server, the TTS worker and FFmpeg, and defaults
-  to highlights unless `--full` is passed. Run and inspect a fresh `--full` take
-  on the supported host, produce the desktop/mobile and Norwegian previews, and
-  capture only actual command output (no invented dmesg). Publish the GIF/MP4 and
-  screenshots according to the generated-media policy. Do not re-track the ignored
-  MP4/WAV without a separate storage decision.
-- [ ] **Dilla local sample-flip interface — implementation landed; validation open:**
+- [ ] **MASTER README translation and narrated preview:** create the requested
+  `MASTER.norwegian.md` as a complete Norwegian translation of the canonical README,
+  preserving technical meaning, links, commands and code; add a parity check so
+  material English sections cannot silently disappear. The same delivery includes
+  the requested face-speaking preview, mobile `README_ss.webp` and Norwegian
+  counterpart, full-README TTS narration, and a real SSH/`bin/master` dmesg
+  transcript. The `MASTER/tools/readme_take.rb` generator can produce
+  `README.wav`, `loop.mp4` and `loop.gif`; it requires pinned local Ruby, a
+  running face server, the TTS worker and FFmpeg, and defaults to highlights unless
+  `--full` is passed. Review the full take, produce desktop/mobile and Norwegian
+  previews, and capture only actual command output. Publish media under the
+  generated-media policy; do not re-track ignored MP4/WAV without a separate
+  storage decision.
+remove second Norwegian request- [ ] **Dilla local sample-flip interface — implementation landed; validation open:**
   the bounded local-file path is now in `STUDIO/dilla/dilla.rb`: `SAMPLE_LOOP`,
   `SAMPLE_LOOP_VOL`, `SAMPLE_LOOP_WEIGHT`, plus CLI controls for volume, weight
   and slice count. It decodes at most 24 seconds through local FFmpeg, estimates
