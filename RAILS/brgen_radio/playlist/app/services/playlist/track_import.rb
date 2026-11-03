@@ -6,7 +6,7 @@ module Playlist
   class TrackImport
     Result = Struct.new(:track, :line, :created, keyword_init: true)
 
-    def initialize(user:, playlist:, whyp_embed_resolver: Playlist::WhypEmbedResolver.new)
+    def initialize(user:, playlist:, whyp_embed_resolver: ::Playlist::WhypEmbedResolver.new)
       @user = user
       @playlist = playlist
       @whyp_embed_resolver = whyp_embed_resolver
