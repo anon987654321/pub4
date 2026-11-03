@@ -1,10 +1,23 @@
 <% in_channel = message.conversation.channel? %>
+<%# A broadcast is rendered once, inside the sender's request, and delivered
+    to everyone in the thread, so in it there is no viewer: Current.user is
+    the sender, and reading it gave every recipient the sender's edit and
+    unsend links and hid their own report button. Rendered with broadcast:
+    true, the line carries every control, each marked for the sender or for
+    the others, and conversation_log_controller keeps the ones that belong to
+    whoever is looking. %>
+<% broadcast = local_assigns.fetch(:broadcast, false) %>
+<% viewer = broadcast ? nil : Current.user %>
 <% who = in_channel ? message.sender.channel_handle : message.sender.display_name %>
 <li id="<%= dom_id(message) %>" role="listitem">
 <%# data-sender-id is viewer-independent so it stays correct when this partial
     is rendered from a broadcast job (no Current.user); the conversation-log
     controller turns it into data-from on arrival. %>
-<article data-sender-id="<%= message.sender_id %>" data-from="<%= message.sender_id == Current.user&.id ? "self" : "peer" %>"<%= " data-bot" if in_channel && message.sender.bot? %><%= " data-expiry=\"#{message.expiry_urgency}\"" if message.expiry_urgency %> aria-label="<%= t("messages.from_aria", name: who) %>">
+<article data-sender-id="<%= message.sender_id %>"
+         data-from="<%= message.sender_id == viewer&.id ? "self" : "peer" %>"
+         <%= " data-bot" if in_channel && message.sender.bot? %>
+         <%= " data-expiry=\"#{message.expiry_urgency}\"" if message.expiry_urgency %>
+         aria-label="<%= t("messages.from_aria", name: who) %>">
   <header>
     <span class="msg-nick" style="<%= nick_style(who) %>"><%= who %></span> <%# scan: intentional — nick_style emits only the --nick-hue custom property %>
     <%# A channel is a transcript, so the time is absolute and stable: [19:32],
@@ -71,20 +84,23 @@
       control anywhere in the tree, so none of them could be reached from a
       page. Plain forms and links rather than a Stimulus controller: the state
       each one needs lives in the URL, and a message list is long. %>
-  <% if !message.deleted? && (!in_channel || message.sender_id != Current.user&.id) %>
+  <% if !message.deleted? && (broadcast || !in_channel || message.sender_id != viewer&.id) %>
     <details class="msg-actions">
       <summary><%= t("messages.actions") %></summary>
-      <% if in_channel && Current.user.present? && !message.sender.guest? && !message.sender.bot? && message.sender.deleted_at.blank? %>
+      <% sender = message.sender %>
+      <% messageable = !sender.guest? && !sender.bot? && sender.deleted_at.blank? %>
+      <% if in_channel && (broadcast || viewer.present?) && messageable %>
         <%= button_to t("messages.private_message_action"), user_conversations_path(message.sender),
-              method: :post, class: "msg-action" %>
+              method: :post, class: "msg-action", form: { data: { for: "others" } } %>
       <% else %>
         <%= link_to t("messages.reply"), conversation_path(message.conversation, reply_to: message.id) %>
-        <% if message.editable_by?(Current.user) %>
-          <%= link_to t("actions.edit"), conversation_path(message.conversation, edit: message.id) %>
+        <% if message.editable_by?(broadcast ? message.sender : viewer) %>
+          <%= link_to t("actions.edit"), conversation_path(message.conversation, edit: message.id),
+                      data: { for: "sender" } %>
         <% end %>
-        <% if message.deletable_by?(Current.user) %>
+        <% if message.deletable_by?(broadcast ? message.sender : viewer) %>
           <%= button_to t("messages.unsend"), conversation_message_path(message.conversation, message), method: :delete,
-                data: { turbo_confirm: t("messages.confirm_unsend") } %>
+                data: { turbo_confirm: t("messages.confirm_unsend") }, form: { data: { for: "sender" } } %>
         <% end %>
         <% if message.forwardable? && local_assigns[:forward_targets].present? %>
           <%= form_with url: forward_conversation_message_path(message.conversation, message), method: :post do |f| %>
@@ -96,8 +112,9 @@
         <%# Reporting is for someone else's line, and for a signed-in person: a
             report names its author, and an anonymous visitor has no name to put
             on one. %>
-        <% if message.sender_id != Current.user&.id && authenticated? %>
-          <%= render "shared/report_button", target: message, reason: "abuse" %>
+        <% if broadcast || (message.sender_id != viewer&.id && authenticated?) %>
+          <%= render "shared/report_button", target: message, reason: "abuse",
+                     marks: (broadcast ? { for: "others", needs_account: true } : {}) %>
         <% end %>
       <% end %>
     </details>

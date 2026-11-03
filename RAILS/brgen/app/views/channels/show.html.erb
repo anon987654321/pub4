@@ -35,6 +35,7 @@
     <ul id="messages" role="log" class="channel-log conversation-log"
         data-controller="conversation-log"
         data-conversation-log-viewer-id-value="<%= Current.user&.id %>"
+        data-conversation-log-viewer-account-value="<%= authenticated? %>"
         data-conversation-log-unread-one-value="<%= t("messages.unread_one") %>"
         data-conversation-log-unread-other-value="<%= t("messages.unread_other") %>"
         data-conversation-log-today-label-value="<%= t("messages.today") %>"

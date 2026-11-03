@@ -66,7 +66,10 @@ class Message < ApplicationRecord
   # `targets:` (a CSS selector), not `target:` (one dom id): the corner chat
   # widget lives in the layout, so a channel page has two logs — a selector
   # appends to every open .conversation-log rather than whichever came first.
-  after_create_commit :broadcast_to_logs
+after_create_commit :broadcast_to_logs
+# An edit replaces the line in every open thread; unsend! does the same by
+# hand, because update_columns runs no callbacks.
+after_update_commit :broadcast_change_to_logs, if: :saved_change_to_content?
 
   # What the link in this message is. Attached on create, filled in off the
   # request, and shared with every other message carrying the same URL.
@@ -123,11 +126,14 @@ class Message < ApplicationRecord
 
   # The row stays, the body goes: a hard delete leaves a hole in a thread and
   # orphans whatever replied to it.
-  def unsend!
-    update_columns(
-      content: "", deleted_at: Time.current, updated_at: Time.current,
-    )
-  end
+def unsend!
+  update_columns(
+    content: "", deleted_at: Time.current, updated_at: Time.current,
+  )
+  # The photo or voice note was the message as much as the words were.
+  attachment.purge_later if attachment.attached?
+  broadcast_change_to_logs
+end
 
   # Expiry is unsend, not destroy: a hard delete holes a thread and orphans
   # replies (the reason unsend! exists). Attachments go with the body.
@@ -137,7 +143,6 @@ class Message < ApplicationRecord
     return if deleted_at.present?
 
     unsend!
-    attachment.purge if attachment.attached?
   end
 
   # Urgency tier for the fading-bubble treatment in the message thread —
@@ -210,14 +215,26 @@ class Message < ApplicationRecord
   end
 
   def broadcast_to_logs
-    fresh = Message.strict_loading(false).includes(:sender, :conversation, :link_preview).find(id)
-    fresh.broadcast_append_to(
-      conversation,
-      targets: ".conversation-log",
-      partial: "messages/message",
-      locals: { message: fresh },
-    )
-  end
+  fresh = Message.strict_loading(false).includes(:sender, :conversation, :link_preview).find(id)
+  fresh.broadcast_append_to(
+    fresh.conversation,
+    targets: ".conversation-log",
+    partial: "messages/message",
+    locals: { message: fresh, broadcast: true },
+  )
+end
+
+# `targets:` with the dom id as a selector, for the same reason as the append:
+# a channel page can hold the line twice, in the page and in the corner widget.
+def broadcast_change_to_logs
+  fresh = Message.strict_loading(false).includes(:sender, :conversation, :link_preview).find(id)
+  fresh.broadcast_replace_to(
+    fresh.conversation,
+    targets: "##{ActionView::RecordIdentifier.dom_id(fresh)}",
+    partial: "messages/message",
+    locals: { message: fresh, broadcast: true },
+  )
+end
 
   # One LinkPreview per URL, not per message: the same article gets pasted into
   # twenty rooms, and fetching it twenty times points this app at whoever was

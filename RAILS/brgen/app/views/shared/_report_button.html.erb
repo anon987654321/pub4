@@ -1,6 +1,8 @@
-<span id="report_<%= dom_id(target) %>">
+<%# marks: data attributes from the caller; a broadcast line marks the button for
+    the log controller, which drops it for the author and for a visitor without an account. %>
+<%= tag.span id: "report_#{dom_id(target)}", data: local_assigns.fetch(:marks, {}) do %>
   <%= button_to t("actions.report"), main_app.reports_path,
       params: { target_gid: target.to_signed_global_id.to_s, reason: reason || "other" },
       data: { turbo_stream: true },
       aria: { label: t("a11y.report_target", type: target.class.model_name.human.downcase) } %>
-</span>
+<% end %>

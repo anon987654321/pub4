@@ -176,6 +176,7 @@
             data: {
               controller: "conversation-log",
               conversation_log_viewer_id_value: Current.user&.id,
+              conversation_log_viewer_account_value: authenticated?,
               conversation_log_unread_one_value: t("messages.unread_one"),
               conversation_log_unread_other_value: t("messages.unread_other"),
               conversation_log_today_label_value: t("messages.today"),

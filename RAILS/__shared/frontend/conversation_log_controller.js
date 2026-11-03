@@ -19,6 +19,7 @@ const GROUP_WINDOW_MS = 5 * 60 * 1000
 export default class extends Controller {
   static values = {
     viewerId: String,
+    viewerAccount: { type: Boolean, default: false },
     unreadOne: { type: String, default: "%{count} new message ↓" },
     unreadOther: { type: String, default: "%{count} new messages ↓" },
     todayLabel: { type: String, default: "Today" },
@@ -319,7 +320,12 @@ export default class extends Controller {
       : Array.from(node.querySelectorAll?.("[data-sender-id]") || [])
 
     targets.forEach((el) => {
-      el.dataset.from = el.dataset.senderId === this.viewerIdValue ? "self" : "peer"
+      const own = el.dataset.senderId === this.viewerIdValue
+      el.dataset.from = own ? "self" : "peer"
+      // A broadcast line carries every control, marked for whom (see
+      // messages/_message); only the ones for this viewer stay.
+      el.querySelectorAll(own ? '[data-for="others"]' : '[data-for="sender"]').forEach((control) => control.remove())
+      if (!this.viewerAccountValue) el.querySelectorAll("[data-needs-account]").forEach((control) => control.remove())
     })
   }
 
