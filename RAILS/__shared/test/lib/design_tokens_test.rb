@@ -173,9 +173,22 @@ def test_only_amber_owns_four_luxury_properties_and_the_check_still_passes
     refute DesignTokens.app_owned?(brgen, var), "brgen must not own --#{var}"
   end
   refute DesignTokens.app_owned?(amber, "luxury-accent"), "the exemption must stay at four properties"
-  # Two amber stylesheets own the same four properties; the exemption is the four names.
-  assert_equal 4, DesignTokens::APP_OWNED_PALETTE.values.flatten.uniq.size
   assert_empty DesignTokens.dialect_token_drift
+end
+
+# The exemption is exactly amber's four luxury properties (in its two
+# stylesheets) and bsdports' Arial-first font; no other app owns anything.
+def test_the_app_owned_palette_names_only_amber_and_bsdports
+  luxury = %w[luxury-bg luxury-text luxury-muted luxury-border]
+  expected = {
+    "RAILS/amber/app/assets/stylesheets/application.scss" => luxury,
+    "RAILS/amber/app/assets/stylesheets/_amber_late_product_finish.scss" => luxury,
+    "RAILS/bsdports/app/assets/stylesheets/application.scss" => %w[font],
+  }
+
+  assert_equal expected, DesignTokens::APP_OWNED_PALETTE
+  brgen = File.join(DesignTokens::ROOT, "RAILS/brgen/app/assets/stylesheets/application.scss")
+  refute DesignTokens.app_owned?(brgen, "font"), "brgen must not own --font"
 end
   def test_signal_and_stillness_is_single_sourced_for_both_css_generators
     identity = DesignTokens.load.fetch("visual_identity")
