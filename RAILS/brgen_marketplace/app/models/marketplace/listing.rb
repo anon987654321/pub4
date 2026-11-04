@@ -242,13 +242,14 @@ class Marketplace::Listing < ApplicationRecord
   end
 
   # The observation trail the anchor reads. Creation observes too, so a
-  # freshly repriced listing still has a window; a nil price (job, housing and
-  # gig listings carry none) observes nothing.
+  # freshly repriced listing still has a window. A nil price (job, housing and
+  # gig listings carry none) or a free one observes nothing: an observation must
+  # be positive, so a free job listing raised on create and could not be posted.
   after_create :record_price_observation
   after_update :record_price_observation, if: :saved_change_to_price_cents?
 
   def record_price_observation
-    return if price_cents.blank?
+    return unless price_cents.to_i.positive?
 
     price_observations.create!(price_cents: price_cents, observed_at: Time.current)
   end

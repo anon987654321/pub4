@@ -19,6 +19,20 @@ class Marketplace::ListingPersuasionTest < ActiveSupport::TestCase
     end
   end
 
+  # Creation observes the price, so a test of older observations first moves that
+  # one out of the window; otherwise the 500 kr listed today is the minimum.
+  def listed_long_ago = @listing.price_observations.update_all(observed_at: 40.days.ago)
+
+  test "a free listing records no price observation" do
+    free = ActsAsTenant.with_tenant(@city) do
+      Marketplace::Listing.create!(user: @listing.user, title: "Gis bort", category: @listing.category,
+                                   price_cents: 0, status: "active")
+    end
+
+    assert_empty free.price_observations
+    assert_nil free.omnibus_anchor_display
+  end
+
   test "scarcity_quantity is nil for a one-of-a-kind listing" do
     ActsAsTenant.with_tenant(@city) do
       @listing.update!(stock: nil)
@@ -53,6 +67,7 @@ class Marketplace::ListingPersuasionTest < ActiveSupport::TestCase
 
   test "the reference price ignores observations older than 30 days" do
     ActsAsTenant.with_tenant(@city) do
+      listed_long_ago
       @listing.price_observations.create!(price_cents: 70_000, observed_at: 40.days.ago)
       @listing.price_observations.create!(price_cents: 55_000, observed_at: 2.days.ago)
     end
@@ -70,6 +85,7 @@ class Marketplace::ListingPersuasionTest < ActiveSupport::TestCase
 
   test "the anchor renders the observed minimum when the current price is strictly below it" do
     ActsAsTenant.with_tenant(@city) do
+      listed_long_ago
       @listing.price_observations.create!(price_cents: 60_000, observed_at: 2.days.ago)
     end
 
