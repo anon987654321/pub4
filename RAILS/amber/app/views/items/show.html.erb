@@ -18,7 +18,7 @@
   <% end %>
 
   <div class="luxury-meta">
-    <header role="banner" aria-label="<%= t("items.header_label") %>">
+    <header aria-label="<%= t("items.header_label") %>">
       <hgroup>
         <%= tag.p [item_category_label(@item.category), @item.brand].compact_blank.join(", ") %>
         <h1 class="luxury-title"><%= @item.title %></h1>

@@ -4,7 +4,7 @@
     crawler — this page is the one that was worth describing. %>
 <% content_for :json_ld, json_ld_script(demo_item_list_schema(@items, title: t("demo.wardrobe"))) %>
 
-<header role="banner" aria-label="<%= t("demo.wardrobe_header") %>">
+<header aria-label="<%= t("demo.wardrobe_header") %>">
   <p><%= t("demo.capsule_kicker", name: Amber::DemoWardrobe::DEMO_DISPLAY_NAME) %></p>
   <%= tag.h1 t("demo.wardrobe") %>
   <p class="tagline"><%= t("demo.index_tagline") %></p>

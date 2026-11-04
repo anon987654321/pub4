@@ -1,7 +1,7 @@
 <% content_for :title, @profile.display_name %>
 <%= turbo_stream_from @profile %>
 
-<header class="profile-header" role="banner" aria-label="<%= t("creator.profile_label") %>">
+<header class="profile-header" aria-label="<%= t("creator.profile_label") %>">
   <%= tag.h1 @profile.display_name %>
   <p>@<%= @profile.handle %></p>
   <% if @profile.bio.present? %>

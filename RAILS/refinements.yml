@@ -341,7 +341,7 @@ items:
   path: RAILS/amber/app/views/items/index.html.erb
   item: Remove role="banner" from in-page <header> elements across amber views; there
     should be one banner per page and the masthead already is it.
-  status: open
+  status: done
 - id: amber-042
   app: amber
   area: markup

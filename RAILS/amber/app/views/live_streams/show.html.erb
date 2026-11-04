@@ -1,6 +1,6 @@
 <% content_for :title, @live_stream.title %>
 
-<header role="banner" aria-label="<%= t("live_streams.header_label") %>">
+<header aria-label="<%= t("live_streams.header_label") %>">
   <hgroup>
     <%= tag.p t("live_streams.style_session", status: live_stream_status_label(@live_stream.status)) %>
     <%= tag.h1 @live_stream.title %>

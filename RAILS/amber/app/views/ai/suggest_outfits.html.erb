@@ -1,5 +1,5 @@
 <% content_for :title, t("pages.suggest_outfits") %>
-<header role="banner" aria-label="<%= t("ai.suggest_header") %>">
+<header aria-label="<%= t("ai.suggest_header") %>">
   <%= tag.h1 t("pages.suggest_outfits") %>
   <% if @ai_available %>
     <p><%= t("ai.suggest_lead", vision: (Current.user.items.joins(:photos_attachments).exists? ? t("ai.suggest_vision") : "")) %></p>

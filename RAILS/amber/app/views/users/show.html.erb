@@ -1,7 +1,7 @@
 <% content_for :title, @user.display_name %>
 <% content_for :description, t("users.profile_description", name: @user.display_name) %>
 <%= turbo_stream_from @user %>
-<header class="profile-header" role="banner" aria-label="<%= t("users.profile_header") %>">
+<header class="profile-header" aria-label="<%= t("users.profile_header") %>">
   <%= tag.h1 @user.display_name %>
   <%= tag.p t("users.profile_counts", items: @user.items.count, followers: @user.followers.count, following: @user.following.count) %>
   <%= render "users/follow", user: @user %>

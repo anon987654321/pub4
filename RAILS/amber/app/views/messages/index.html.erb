@@ -1,6 +1,6 @@
 <% content_for :title, t("messages.title") %>
 
-<header role="banner" aria-label="<%= t("messages.title") %>">
+<header aria-label="<%= t("messages.title") %>">
   <%= tag.h1 t("pages.messages") %>
   <% if @unread_count.to_i.positive? %>
     <p><%= t("messages.unread_count", count: @unread_count) %></p>
