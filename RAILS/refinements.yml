@@ -6094,7 +6094,7 @@ items:
   path: RAILS/__shared/app/views/pages/privacy.html.erb
   item: Derive legal.updated_on from one constant instead of a hand-typed date in
     each locale, and label the page's nav.
-  status: open
+  status: done
 - id: shared-022
   app: shared
   area: mail

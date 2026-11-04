@@ -3,7 +3,7 @@
 
 <article class="legal-prose">
   <h1><%= t("legal.cookies_page.heading", host: request.host) %></h1>
-  <p class="legal-updated"><%= t("legal.updated_on") %></p>
+  <%= render "pages/updated_on" %>
 
   <p><%= t("legal.cookies_page.intro_html") %></p>
 
@@ -28,7 +28,7 @@
   <p><%= t("legal.cookies_page.control_body",
            partner: social ? t("legal.cookies_page.control_partner_clause") : "") %></p>
 
-  <nav>
+  <nav aria-label="<%= t("legal.related_pages") %>">
     <%= link_to t("legal.privacy"), privacy_path %>
     <%= link_to t("legal.terms"), terms_path %>
   </nav>

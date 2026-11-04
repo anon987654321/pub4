@@ -13,7 +13,8 @@
 # "", so the sentences read exactly as they did.
 nb:
   legal:
-    updated_on: Sist oppdatert 12. august 2026
+    updated_on_html: Sist oppdatert %{date}
+    related_pages: Andre juridiske sider
     cookies_page:
       heading: Informasjonskapsler på %{host}
       intro_html: Vi holder bruken av informasjonskapsler på et minimum. Strengt nødvendig lagring holder tjenesten i gang. Valgfri analyse og partnerannonsering er av før du velger.

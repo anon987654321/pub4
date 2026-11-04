@@ -7,6 +7,10 @@ class PagesController < ApplicationController
   # draws a route for each.
   PAGES = %w[privacy terms cookies safety rules].freeze
 
+  # The day the privacy, terms and cookies pages last changed, once for every
+  # locale: each locale used to hand-type its own copy of the date.
+  UPDATED_ON = Date.new(2026, 8, 12)
+
   helper Shared::Safety
   helper Shared::Rules
 

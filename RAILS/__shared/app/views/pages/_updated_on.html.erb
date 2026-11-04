@@ -1,0 +1,4 @@
+<%# One date for the privacy, terms and cookies pages, written out per locale. %>
+<% updated_on = PagesController::UPDATED_ON %>
+<%= tag.p t("legal.updated_on_html", date: tag.time(l(updated_on, format: :long).strip, datetime: updated_on.iso8601)),
+          class: "legal-updated" %>

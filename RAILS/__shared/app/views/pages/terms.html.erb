@@ -4,7 +4,7 @@
 
 <article class="legal-prose">
   <h1><%= t("legal.terms_page.heading", host: request.host) %></h1>
-  <p class="legal-updated"><%= t("legal.updated_on") %></p>
+  <%= render "pages/updated_on" %>
 
   <p><%= t("legal.terms_page.intro") %></p>
 
@@ -38,7 +38,7 @@
   <%= tag.h2 t("legal.terms_page.termination_heading") %>
   <p><%= t("legal.terms_page.termination_body") %></p>
 
-  <nav>
+  <nav aria-label="<%= t("legal.related_pages") %>">
     <%= link_to t("legal.privacy"), privacy_path %>
     <%= link_to t("legal.cookies"), cookies_path %>
   </nav>

@@ -13,7 +13,8 @@
 # "", so the sentences read exactly as they did.
 en:
   legal:
-    updated_on: Last updated 12 August 2026
+    updated_on_html: Last updated %{date}
+    related_pages: Other legal pages
     cookies_page:
       heading: Cookies on %{host}
       intro_html: We keep cookie use to a minimum. Strictly necessary storage keeps the service working. Optional analytics and partner advertising technology stay off until you choose.
