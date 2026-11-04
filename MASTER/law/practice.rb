@@ -669,13 +669,13 @@ Law.define(:HOSTILE_AUDIT) do
     Interrogate applicable Laws, assumptions and evidence against the proposed
     change. Try to falsify the leading explanation with a plausible
     counter-hypothesis; distinguish observed facts, attributed claims, inference
-    and unknowns. Check anchoring, confirmation, recency, availability,
-    sunk-cost, optimism, expert-blind-spot and not-invented-here bias when
-    material; ask what evidence would change the conclusion. Consider relevant
-    user, maintainer, security and failure-mode perspectives in proportion to
-    risk. Keep the smallest robust remediation supported by evidence. Never
-    manufacture agreement, persona quotas or filler; council remains conditional
-    under COUNCIL_WHEN_RISKY.
+    and unknowns. For material decisions, ask what evidence would change the
+    conclusion. Use data/council.yml#questions.biases and #questions.red_team
+    when the risk and review path call for them rather than maintaining a second
+    bias checklist. Consider relevant user, maintainer, security and failure-mode
+    perspectives in proportion to risk. Keep the smallest robust remediation
+    supported by evidence. Never manufacture agreement, persona quotas or filler;
+    council remains conditional under COUNCIL_WHEN_RISKY.
   TEXT
   fix "Try to falsify the change against the law before accepting it."
   bad  "accepts the change after a single friendly reading"
