@@ -158,4 +158,34 @@ class AuthorizationBoundariesTest < ActionDispatch::IntegrationTest
       refute_includes blocker.reload.blocked_users, target
     end
   end
+
+  # Messenger: group settings and message edits.
+
+  test "a group member who is not an admin cannot change the disappearing timer" do
+    ActsAsTenant.current_tenant = @city
+    founder = user("timer-founder")
+    member = user("timer-member")
+    group = Conversation.create_group!(creator: founder, name: "Timer", users: [ member ])
+    sign_in(member)
+
+    patch conversation_path(group), params: { disappearing: "1h" }
+
+    assert_redirected_to conversation_path(group)
+    assert_nil group.reload.disappearing_duration
+    assert_equal I18n.t("flash.settings_update_failed"), flash[:alert]
+  end
+
+  test "a blank message edit answers 422 and keeps the text" do
+    ActsAsTenant.current_tenant = @city
+    me = user("edit-me")
+    other = user("edit-other")
+    conversation = Conversation.find_or_create_direct(me, other)
+    message = conversation.messages.create!(sender: me, content: "hei", message_type: "text")
+    sign_in(me)
+
+    patch conversation_message_path(conversation, message), params: { message: { content: "" } }, as: :turbo_stream
+
+    assert_response :unprocessable_entity
+    assert_equal "hei", message.reload.content
+  end
 end

@@ -3871,14 +3871,14 @@ items:
   size: S
   path: RAILS/brgen/test/controllers/authorization_boundaries_test.rb
   item: Add a test that a non-admin group member cannot change the disappearing timer.
-  status: open
+  status: done
 - id: brgen-360
   app: brgen
   area: tests
   size: S
   path: RAILS/brgen/test/controllers/authorization_boundaries_test.rb
   item: Add a test that a blank message edit answers 422.
-  status: open
+  status: done
 - id: brgen-361
   app: brgen
   area: tests
@@ -3886,7 +3886,7 @@ items:
   path: RAILS/brgen/test/controllers/comments_controller_test.rb
   item: Add a test that a reply failing validation re-renders the reply form, not
     the root form.
-  status: open
+  status: done
 - id: brgen-362
   app: brgen
   area: tests
@@ -3903,7 +3903,7 @@ items:
   path: RAILS/brgen/test/controllers/posts_controller_test.rb
   item: Add a test that a signed-in user's quick-compose post stays attributed when
     nearby is not chosen.
-  status: open
+  status: done
 - id: brgen-364
   app: brgen
   area: tests
@@ -3919,7 +3919,7 @@ items:
   path: RAILS/brgen/test/controllers/query_budget_test.rb
   item: Add a query-budget test for posts#show with nested replies to catch Comment#depth
     and comment_children N+1.
-  status: open
+  status: done
 - id: brgen-366
   app: brgen
   area: tests
@@ -3943,14 +3943,14 @@ items:
   size: S
   path: RAILS/brgen/test/models/blocking_test.rb
   item: Add a test that blocking removes follows in both directions.
-  status: open
+  status: done
 - id: brgen-369
   app: brgen
   area: tests
   size: S
   path: RAILS/brgen/test/models/comment_test.rb
   item: Add a test that the controversial comment sort excludes removed comments.
-  status: open
+  status: done
 - id: brgen-370
   app: brgen
   area: tests
