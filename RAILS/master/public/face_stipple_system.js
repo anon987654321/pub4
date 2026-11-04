@@ -206,10 +206,10 @@
         uDepthFromRank: { value: swarmConfiguration().size_from_depth === true ? 1.0 : 0.0 },
         uDepthSteps: { value: Math.max(2, Array.isArray(swarmConfiguration().glyph_ramp) ? swarmConfiguration().glyph_ramp.length : 2) },
         uDensity: { value: idle.density },
-        uRipple: { value: idle.ripple }, uTurbulence: { value: idle.turbulence },
+        uRipple: { value: 0 }, uTurbulence: { value: 0 },
         uLuminosity: { value: idle.luminosity }, uAttract: { value: idle.attract },
         uOpacity: { value: 0.74 }, uEntropy: { value: 0.18 },
-        uMotionScale: { value: 1 },
+        uMotionScale: { value: 0 },
         uColor: { value: new THREE.Color(0.90, 0.89, 0.86) }
       },
       vertexShader: `
@@ -414,7 +414,7 @@
     const softness = Math.max(0.001, Number(field.softness) || 0.72);
     const multipliers = modeMultipliersFor(state);
     const contract = window.MASTER_FACE_CONTRACT || {};
-    const mode = String(state.mode || state.mood || "idle").toLowerCase();
+
     const force = contract.stipple_force?.[mode] || contract.stipple_force?.idle || "none";
     const residualActive = force === "residual";
     const residual = config.residual || {};
