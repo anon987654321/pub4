@@ -799,7 +799,7 @@ items:
   path: RAILS/amber/app/views/passwords/edit.html.erb
   item: Add required to the password reset email field and minlength plus shared/errors
     to the new-password form.
-  status: open
+  status: done
 - id: amber-099
   app: amber
   area: ux
