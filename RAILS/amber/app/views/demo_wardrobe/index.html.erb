@@ -14,6 +14,13 @@
   </nav>
 </header>
 
+<% if @zones.values.any?(&:present?) %>
+  <section aria-labelledby="demo-mix-match">
+    <%= tag.h2 t("nav.mix_match"), id: "demo-mix-match" %>
+    <%= render "shared/dressing_room", zones: @zones, savable: false %>
+  </section>
+<% end %>
+
 <% if @outfits.any? %>
   <%= turbo_frame_tag "demo-outfits" do %>
     <section>

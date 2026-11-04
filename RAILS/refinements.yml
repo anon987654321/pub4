@@ -693,7 +693,7 @@ items:
   path: RAILS/amber/app/views/demo_wardrobe/index.html.erb
   item: 'Show the dressing room in read-only mode on the demo wardrobe page (savable:
     false exists for exactly this) so guests can try Mix & Match.'
-  status: open
+  status: done
 - id: amber-086
   app: amber
   area: ux

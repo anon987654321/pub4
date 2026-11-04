@@ -17,6 +17,20 @@ class PlanListsMarkupTest < ActionDispatch::IntegrationTest
     assert_select "ul.plan-list > li.plan-row strong", text: "Søndagsbrunsj"
   end
 
+  # The dressing room had a read-only mode (savable: false) for exactly this
+  # and the demo, the one page a guest can try amber on, never used it.
+  test "a guest can try Mix & Match on the demo, without a save form" do
+    demo = User.strict_loading(false).find_by(email_address: Amber::DemoWardrobe::DEMO_EMAIL) ||
+           User.strict_loading(false).create!(email_address: Amber::DemoWardrobe::DEMO_EMAIL, password: "password")
+    shirt = demo.items.create!(title: "Linen shirt", category: "Tops")
+
+    get demo_wardrobe_path
+    assert_select "h2#demo-mix-match", text: I18n.t("nav.mix_match")
+    zones = JSON.parse(css_select("[data-wardrobe-carousel-zones-value]").first["data-wardrobe-carousel-zones-value"])
+    assert_includes zones["top"].map { _1["id"] }, shirt.id
+    assert_select "form[action=?]", save_look_outfits_path, 0
+  end
+
   test "the creator profile form has no legendless fieldsets" do
     email = "creator-form-#{SecureRandom.hex(4)}@example.test"
     User.strict_loading(false).create!(email_address: email, password: "password")
