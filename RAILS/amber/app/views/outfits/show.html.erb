@@ -1,4 +1,8 @@
 <% content_for :title, @outfit.name %>
+<% summary = @outfit.description.to_s.squish %>
+<% content_for :description, summary.truncate(160).presence ||
+                               t("outfits.meta_description", name: @outfit.name, count: @outfit.items.size) %>
+<% content_for :json_ld, json_ld_script(outfit_schema(@outfit)) %>
 
 <header aria-label="<%= t("outfits.header_label") %>">
   <hgroup>
@@ -32,11 +36,6 @@
   <div class="item-grid" data-controller="outfit-sortable" data-outfit-sortable-update-url-value="<%= reorder_outfit_path(@outfit) %>" data-sortable-move-up-label-value="<%= t("actions.move_up") %>" data-sortable-move-down-label-value="<%= t("actions.move_down") %>">
     <%= render @outfit.items %>
   </div>
-</section>
-
-<section>
-  <%= tag.h2 t("outfits.style_intelligence") %>
-  <p><%= t("outfits.style_intelligence_lead") %></p>
 </section>
 
 <nav role="navigation" aria-label="<%= t("outfits.actions_label") %>">

@@ -51,7 +51,35 @@ module AmberSchemaHelper
     }.compact
   end
 
+  # An outfit is a list of garments. Item pages sit behind the owner's
+  # visibility settings, so a garment is named here without a URL to follow.
+  def outfit_schema(outfit)
+    garments = outfit.items.map.with_index(1) do |item, position|
+      { "@type" => "ListItem", "position" => position, "item" => outfit_garment_schema(item) }
+    end
+
+    {
+      "@context" => "https://schema.org",
+      "@type" => "ItemList",
+      "name" => outfit.name,
+      "description" => outfit.description.presence,
+      "url" => outfit_url(outfit),
+      "numberOfItems" => garments.size,
+      "itemListElement" => garments,
+    }.compact
+  end
+
   private
+
+  def outfit_garment_schema(item)
+    {
+      "@type" => "Product",
+      "name" => item.title,
+      "category" => item.category.presence,
+      "color" => schema_colour(item),
+      "brand" => ({ "@type" => "Brand", "name" => item.brand } if item.brand.present?),
+    }.compact
+  end
 
   # Item#color holds either a name or a hex value written by the dominant-colour
   # extractor. A hex string is not a colour name and does not belong in schema.

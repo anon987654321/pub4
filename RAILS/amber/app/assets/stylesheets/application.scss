@@ -2367,16 +2367,6 @@ main#main-content form .field :is(
   max-width: 880px;
   margin-inline: auto;
 }
-.post-show-reading .post-reading-title {
-  font-family: var(--font-beauty-sans);
-  font-size: clamp(1.75rem, 5vw, 3.5rem);
-  font-weight: 400;
-  letter-spacing: -0.02em;
-  line-height: 0.98;
-  text-wrap: balance;
-  font-kerning: normal;
-  font-variant-ligatures: common-ligatures;
-}
 .post-show-reading .feed-post-byline {
   margin-block-end: var(--space-3);
 }

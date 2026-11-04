@@ -19,8 +19,9 @@
                  title: l(@post.created_at, format: :long) %>
   </header>
   <%# Stripped first: truncating the raw field would cut inside a tag and put
-      half an element in the page title. %>
-  <h1 class="post-title post-reading-title"><%= strip_tags(@post.body.to_s).truncate(80, separator: " ") %></h1>
+      half an element in the page title. Hidden from sight: the body below
+      opens with the same words, and printed it read twice. %>
+  <%= tag.h1 strip_tags(@post.body.to_s).truncate(80, separator: " "), class: "visually-hidden" %>
   <div class="feed-post-body feed-post-prose prose"><%= rich_text @post.body %></div>
   <% if (embed = @post.link_embed_record) %>
     <%= render "shared/link_embed", embed: embed %>

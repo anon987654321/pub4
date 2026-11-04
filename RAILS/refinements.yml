@@ -504,7 +504,7 @@ items:
   path: RAILS/amber/app/views/outfits/show.html.erb
   item: Add content_for :description and Outfit JSON-LD (ItemList of garments) on
     public outfit pages.
-  status: open
+  status: done
 - id: amber-062
   app: amber
   area: seo
@@ -791,7 +791,7 @@ items:
   path: RAILS/amber/app/views/outfits/show.html.erb
   item: Remove or fill the 'Style intelligence' section on the outfit page, which
     is a heading and one static paragraph.
-  status: open
+  status: done
 - id: amber-098
   app: amber
   area: ux
@@ -823,7 +823,7 @@ items:
   path: RAILS/amber/app/views/posts/show.html.erb
   item: Drop the h1 that repeats the first 80 characters of the body on posts#show,
     or use it as a visually hidden heading, so the post's opening is not printed twice.
-  status: open
+  status: done
 - id: amber-102
   app: amber
   area: ux

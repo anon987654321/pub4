@@ -111,4 +111,35 @@ class StructuredDataTest < ActionDispatch::IntegrationTest
     assert_operator schemas.size, :>=, 1
     schemas.each { |data| assert_equal "https://schema.org", data["@context"] }
   end
+  # The outfit page had no description of its own and no structured data, and
+  # closed on a "Style intelligence" heading over one static paragraph.
+  test "an outfit page describes itself and lists its garments" do
+    user = User.strict_loading(false).create!(email_address: "schema-outfit@example.com", password: "password")
+    coat = user.items.create!(title: "Wool coat", category: "Outerwear", brand: "Acne")
+    outfit = user.outfits.create!(name: "Fredagsantrekk")
+    outfit.outfit_items.create!(item: coat, position: 0)
+    post session_path, params: { email_address: user.email_address, password: "password" }
+
+    get outfit_url(outfit)
+
+    assert_response :success
+    description = I18n.t("outfits.meta_description", name: "Fredagsantrekk", count: 1)
+    assert_select "meta[name=description][content=?]", description
+    list = schema_of("ItemList")
+    assert list, "the outfit page emitted no ItemList"
+    assert_equal "Fredagsantrekk", list["name"]
+    assert_equal [ "Wool coat" ], list["itemListElement"].map { _1.dig("item", "name") }
+    assert_select "h2", count: 0, text: /Hva dette antrekket gjør|What this outfit is doing/
+  end
+
+  # posts#show printed its opening twice: an h1 of the first 80 characters,
+  # then the body that begins with them.
+  test "a post page keeps its heading for screen readers without printing it twice" do
+    user = User.strict_loading(false).create!(email_address: "schema-post-h1@example.com", password: "password")
+    post_record = user.posts.create!(body: "A linen shirt is the whole summer wardrobe.")
+
+    get post_url(post_record)
+
+    assert_select "h1.visually-hidden", text: "A linen shirt is the whole summer wardrobe."
+  end
 end
