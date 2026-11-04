@@ -1175,7 +1175,7 @@ items:
   path: RAILS/brgen/app/views/communities/show.html.erb
   item: Point the empty-state action at new post only when the viewer can post; otherwise
     offer Join.
-  status: open
+  status: done
 - id: brgen-037
   app: brgen
   area: communities
