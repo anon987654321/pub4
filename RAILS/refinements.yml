@@ -4721,7 +4721,7 @@ items:
   path: RAILS/bsdports/app/views/ports/show.html.erb
   item: Render the homepage link with its host only ('git-scm.com') and the full URL
     in title, so long homepages do not wrap across the definition list.
-  status: open
+  status: done
 - id: bsdports-064
   app: bsdports
   area: ux
