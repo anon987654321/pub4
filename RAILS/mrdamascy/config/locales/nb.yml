@@ -388,6 +388,7 @@ nb:
     phone_placeholder: 900 00 000
     phone_hint: 8 siffer holder — norske numre, ingen landkode
     send_code: Send kode
+    send_again: Send ny kode
     code_label: Kode fra SMS
     code_placeholder: '1234'
     verify: Logg inn

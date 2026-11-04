@@ -388,6 +388,7 @@ en:
     phone_placeholder: 900 00 000
     phone_hint: 8 digits is enough — Norwegian numbers, no country code
     send_code: Send code
+    send_again: Send a new code
     code_label: Code from SMS
     code_placeholder: '1234'
     verify: Sign in

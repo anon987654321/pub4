@@ -24,26 +24,15 @@ class SessionsController < ApplicationController
   # Mock-SMS: the fixed code is stored in the session for #create; in
   # development the login page shows it as a dev notice (APP_SPEC §6).
   def request_code
-    phone = params[:phone].to_s.gsub(/\D/, "")
-
-    unless phone.match?(/\A\d{8,12}\z/)
-      flash.now[:alert] = t("auth.phone_invalid")
-      return render :new, status: :unprocessable_entity
-    end
-
-    unless self.class.sms_mocked?
-      flash.now[:alert] = t("auth.sms_unavailable")
-      return render :new, status: :service_unavailable
-    end
-
-    remember_code!(phone)
-
-    if Rails.env.development?
-      flash.now[:notice] = t("auth.mock_code", code: MOCK_CODE)
+    @phone = params[:phone]
+    phone = @phone.to_s.gsub(/\D/, "")
+    if !phone.match?(/\A\d{8,12}\z/)
+      refuse_sign_in(t("auth.phone_invalid"), :unprocessable_entity)
+    elsif !self.class.sms_mocked?
+      refuse_sign_in(t("auth.sms_unavailable"), :service_unavailable)
     else
-      flash.now[:notice] = t("auth.code_sent")
+      send_code(phone)
     end
-    render :new
   end
 
   # Verifies the code this session requested for this phone, find-or-creates
@@ -52,24 +41,14 @@ class SessionsController < ApplicationController
   # anybody, so the code is bound to the session that requested it.
   def create
     phone = params[:phone].to_s.gsub(/\D/, "")
-    code = params[:code].to_s.strip
-
-    unless requested_code?(phone, code)
-      flash.now[:alert] = t("auth.code_invalid")
-      return render :new, status: :unprocessable_entity
+    if requested_code?(phone, params[:code].to_s.strip)
+      sign_in_by_phone(phone)
+    else
+      # A wrong code keeps the code form, with the phone as typed.
+      @phone = params[:phone]
+      @code_requested = session[:otp_phone].present?
+      refuse_sign_in(t("auth.code_invalid"), :unprocessable_entity)
     end
-
-    user = User.find_or_create_by!(phone: phone) do |fresh|
-      fresh.name = params[:name].presence
-    end
-
-    sign_in!(user)
-
-    session.delete(:otp_phone)
-    session.delete(:otp_code)
-    session.delete(:otp_sent_at)
-
-    redirect_to root_path, notice: t("flash.welcome")
   end
 
   # --- "Logg inn med Vipps" (the zero-typing path, APP_SPEC §12) -----------
@@ -143,6 +122,28 @@ class SessionsController < ApplicationController
   end
 
   private
+
+  def refuse_sign_in(message, status)
+    flash.now[:alert] = message
+    render :new, status:
+  end
+
+  # The code form follows, with the phone kept editable (sessions/new).
+  def send_code(phone)
+    remember_code!(phone)
+    @code_requested = true
+    flash.now[:notice] = Rails.env.development? ? t("auth.mock_code", code: MOCK_CODE) : t("auth.code_sent")
+    render :new
+  end
+
+  def sign_in_by_phone(phone)
+    user = User.find_or_create_by!(phone:) { |fresh| fresh.name = params[:name].presence }
+    sign_in!(user)
+    session.delete(:otp_phone)
+    session.delete(:otp_code)
+    session.delete(:otp_sent_at)
+    redirect_to root_path, notice: t("flash.welcome")
+  end
 
   # The mock code, bound to the phone and the moment this session asked.
   def remember_code!(phone)

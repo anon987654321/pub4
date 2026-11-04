@@ -5134,7 +5134,7 @@ items:
   path: RAILS/mrdamascy/app/views/sessions/new.html.erb
   item: Show the code form only after request_code succeeds, with the phone visible
     and editable, instead of rendering both forms at once.
-  status: open
+  status: done
 - id: mrdamascy-010
   app: mrdamascy
   area: auth
@@ -5150,7 +5150,7 @@ items:
   path: RAILS/mrdamascy/config/routes.rb
   item: Use the session_request_code_path helper instead of the literal "/session/request_code"
     in the login form.
-  status: open
+  status: done
 - id: mrdamascy-012
   app: mrdamascy
   area: cart

@@ -1,7 +1,7 @@
 <% content_for :title, t("auth.title") %>
 
-<%# Phone-first login (§6): POST /session/request_code sends the mock OTP,
-    then POST session (session_path) verifies and signs in. Dev notice shows
+<%# Phone-first login (§6): session_request_code_path sends the mock OTP,
+    then session_path verifies and signs in. Dev notice shows
     the fixed mock code; sessions#create also accepts the phone param kept
     alongside the code. %>
 
@@ -20,33 +20,44 @@
     <%= link_to t("auth.vipps_login"), session_vipps_path, class: "button button-vipps" %>
     <%= tag.p t("auth.or_sms"), class: "login-or" %>
 
-    <%= form_with url: "/session/request_code", method: :post, class: "auth-form" do %>
-      <div class="field">
-        <%= label_tag :phone, t("auth.phone") %>
-        <%= telephone_field_tag :phone, params[:phone],
-              required: true,
-              inputmode: "numeric",
-              autocomplete: "tel-national",
-              placeholder: t("auth.phone_placeholder") %>
-      </div>
-      <%= tag.button t("auth.send_code"), type: "submit", class: "button-primary" %>
+    <%# One step at a time: the phone first; once a code is on its way, the
+        code form, with the phone still shown and editable and a button that
+        sends a new code to whatever number it now holds. %>
+    <% if @code_requested %>
+      <%= form_with url: session_path, method: :post, class: "auth-form" do %>
+        <div class="field">
+          <%= label_tag :phone, t("auth.phone") %>
+          <%= telephone_field_tag :phone, @phone, required: true, inputmode: "numeric",
+                autocomplete: "tel-national", placeholder: t("auth.phone_placeholder") %>
+        </div>
+        <div class="field">
+          <%= label_tag :code, t("auth.code") %>
+          <%= text_field_tag :code, nil,
+                required: true, maxlength: 4, pattern: "[0-9]{4}",
+                inputmode: "numeric",
+                autocomplete: "one-time-code",
+                placeholder: t("auth.code_placeholder") %>
+        </div>
+        <%= tag.button t("auth.verify"), type: "submit", class: "button-primary" %>
+        <%= tag.button t("auth.send_again"), type: "submit", class: "button",
+              formaction: session_request_code_path, formnovalidate: true %>
+      <% end %>
+    <% else %>
+      <%= form_with url: session_request_code_path, method: :post, class: "auth-form" do %>
+        <div class="field">
+          <%= label_tag :phone, t("auth.phone") %>
+          <%= telephone_field_tag :phone, @phone,
+                required: true,
+                inputmode: "numeric",
+                autocomplete: "tel-national",
+                placeholder: t("auth.phone_placeholder") %>
+        </div>
+        <%= tag.button t("auth.send_code"), type: "submit", class: "button-primary" %>
+      <% end %>
     <% end %>
 
     <%# In development SessionsController#request_code flashes the mock code
         as a notice — it renders through shared/_toast. No standing mock-code
         paragraph here: it would leak the OTP in every other environment. %>
-
-    <%= form_with url: session_path, method: :post, class: "auth-form" do %>
-      <%= hidden_field_tag :phone, params[:phone] %>
-      <div class="field">
-        <%= label_tag :code, t("auth.code") %>
-        <%= text_field_tag :code, nil,
-              required: true, maxlength: 4, pattern: "[0-9]{4}",
-              inputmode: "numeric",
-              autocomplete: "one-time-code",
-              placeholder: t("auth.code_placeholder") %>
-      </div>
-      <%= tag.button t("auth.verify"), type: "submit", class: "button-primary" %>
-    <% end %>
   <% end %>
 </section>
