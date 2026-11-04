@@ -30,4 +30,12 @@ class TrackPageTest < ActionDispatch::IntegrationTest
     assert_equal I18n.t("orders.states.delivered"), steps.last.at_css(".step-label").text
     assert_equal "step", steps[3]["aria-current"], "mid-courier the ready step stays current"
   end
+  test "the review stars are radios named in words" do
+    order = seed_order!(state: "delivered")
+    get track_url(order.tracking_token)
+    radios = Nokogiri::HTML(response.body).css("input[type=radio][name=rating]")
+
+    assert_equal %w[5 4 3 2 1], radios.map { |r| r["value"] }
+    assert_includes radios.first.parent.text, "5 av 5 stjerner"
+  end
 end

@@ -5080,7 +5080,7 @@ items:
   path: RAILS/mrdamascy/app/views/orders/track.html.erb
   item: Replace the star-glyph <select> rating with a radio fieldset whose labels
     read "5 av 5 stjerner"; screen readers spell out the glyphs.
-  status: open
+  status: done
 - id: mrdamascy-004
   app: mrdamascy
   area: accessibility

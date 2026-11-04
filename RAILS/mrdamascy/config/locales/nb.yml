@@ -281,6 +281,9 @@ nb:
     review_body: Din anmeldelse
     review_body_placeholder: Hvordan var maten og leveringen?
     review_prompt: Gi stjerner til bestillingen
+    review_star_option:
+      one: 1 av 5 stjerner
+      other: "%{count} av 5 stjerner"
     review_stars: Stjerner
     review_submit: Send anmeldelse
     review_title: Hva synes du?

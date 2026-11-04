@@ -281,6 +281,9 @@ en:
     review_body: Your review
     review_body_placeholder: How was the food and delivery?
     review_prompt: Rate your order
+    review_star_option:
+      one: 1 of 5 stars
+      other: "%{count} of 5 stars"
     review_stars: Stars
     review_submit: Send review
     review_title: How was it?

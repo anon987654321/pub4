@@ -62,12 +62,19 @@
 
     <%= tag.h2 t("orders.review_title"), class: "section-title" %>
     <%= form_with url: order_review_path(order.id), class: "review-form" do %>
-      <div class="field">
-        <%= label_tag :rating, t("orders.review_stars") %>
-        <%= select_tag :rating,
-              options_for_select([["★★★★★", 5], ["★★★★", 4], ["★★★", 3], ["★★", 2], ["★", 1]]),
-              prompt: t("orders.review_prompt") %>
-      </div>
+      <%# Radios named in words: a screen reader spells out star glyphs. %>
+      <fieldset class="option-group">
+        <legend><%= t("orders.review_stars") %></legend>
+        <div class="option-chips">
+          <% 5.downto(1) do |stars| %>
+            <label class="option-chip">
+              <%= radio_button_tag :rating, stars, false, required: true %>
+              <%= tag.span "★" * stars, aria: { hidden: true } %>
+              <%= tag.span t("orders.review_star_option", count: stars), class: "visually-hidden" %>
+            </label>
+          <% end %>
+        </div>
+      </fieldset>
       <div class="field">
         <%= label_tag :body, t("orders.review_body") %>
         <%= text_area_tag :body, nil, placeholder: t("orders.review_body_placeholder") %>
