@@ -133,15 +133,27 @@ class User < ApplicationRecord
   has_many :blocks_as_blocker, class_name: "Block", foreign_key: :blocker_id, dependent: :destroy, inverse_of: :blocker
   has_many :blocked_users, through: :blocks_as_blocker, source: :blocked
 
+  # A block ends any follow between the two, both ways: left standing, the
+  # blocked person still followed and was still notified.
   def block!(other)
     return if other == self
 
-    blocks_as_blocker.find_or_create_by!(blocked: other)
+    transaction do
+      Follow.where(follower: self, followed: other).or(Follow.where(follower: other, followed: self)).destroy_all
+      blocks_as_blocker.create_or_find_by!(blocked: other)
+    end
   end
 
   def unblock!(other) = blocks_as_blocker.find_by(blocked: other)&.destroy
   def blocking?(other) = blocks_as_blocker.exists?(blocked_id: other.id)
   def blocked_user_ids = blocks_as_blocker.pluck(:blocked_id)
+
+  # People on neither side of a block with user, for lists that offer someone:
+  # search results and the new-conversation picker.
+  scope :unblocked_with, lambda { |user|
+    where.not(id: Block.where(blocker_id: user.id).select(:blocked_id))
+      .where.not(id: Block.where(blocked_id: user.id).select(:blocker_id))
+  }
 
   has_many :share_drafts, dependent: :destroy
   has_many :community_memberships, dependent: :destroy

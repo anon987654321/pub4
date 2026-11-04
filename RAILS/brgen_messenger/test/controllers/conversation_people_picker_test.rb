@@ -40,4 +40,21 @@ class ConversationPeoplePickerTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_includes response.body, user_conversations_path(@other)
   end
+
+  # User.messageable filters guests, bots and leaving accounts; a block, either
+  # way, has to keep the person out of the picker too.
+  test "the picker leaves out people on either side of a block" do
+    blocked = create_user("picker_blocked")
+    blocker = create_user("picker_blocker")
+    @me.block!(blocked)
+    blocker.block!(@me)
+    host! "brgen.no"
+    post session_path, params: { email_address: @me.email_address, password: "password123" }
+
+    get new_conversation_path
+
+    assert_includes response.body, user_conversations_path(@other)
+    refute_includes response.body, user_conversations_path(blocked)
+    refute_includes response.body, user_conversations_path(blocker)
+  end
 end

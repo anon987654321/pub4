@@ -90,4 +90,24 @@ class SearchPaletteTest < ActionDispatch::IntegrationTest
     assert_includes html, I18n.t("search.no_exact_matches", locale: :nb)
     assert_not_includes html, "No exact matches"
   end
+
+  # A block holds in search too: neither the person blocked nor the person who
+  # blocked the reader is offered as a result.
+  test "people search leaves out both sides of a block" do
+    tag = "srchblk_#{SecureRandom.hex(3)}"
+    people = %w[me blocked blocker open].to_h do |role|
+      user = User.create!(email_address: "#{tag}-#{role}@brgen.no", password: "password123", username: "#{tag}_#{role}")
+      [ role, user ]
+    end
+    people["me"].block!(people["blocked"])
+    people["blocker"].block!(people["me"])
+    post session_path, params: { email_address: people["me"].email_address, password: "password123" }
+
+    get global_search_path(q: tag)
+
+    assert_response :success
+    assert_includes response.body, people["open"].username
+    refute_includes response.body, people["blocked"].username
+    refute_includes response.body, people["blocker"].username
+  end
 end

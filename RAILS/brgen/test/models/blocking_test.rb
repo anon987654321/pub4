@@ -25,4 +25,16 @@ class BlockingTest < ActiveSupport::TestCase
     assert_nil @me.block!(@me)
     assert_not @me.blocking?(@me)
   end
+
+  # Left standing, a follow across a block kept the blocked person following
+  # and notified.
+  test "blocking ends follows in both directions" do
+    Follow.create!(follower: @me, followed: @them)
+    Follow.create!(follower: @them, followed: @me)
+
+    @me.block!(@them)
+
+    refute Follow.exists?(follower: @me, followed: @them)
+    refute Follow.exists?(follower: @them, followed: @me)
+  end
 end

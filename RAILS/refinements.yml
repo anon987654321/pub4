@@ -3326,7 +3326,7 @@ items:
   path: RAILS/brgen/app/controllers/search_controller.rb
   item: Exclude users the viewer blocks, and users who block the viewer, from search
     people results.
-  status: open
+  status: done
 - id: brgen-293
   app: brgen
   area: privacy
@@ -3368,7 +3368,7 @@ items:
   path: RAILS/brgen/app/models/user.rb
   item: Remove follows in both directions when User#block! runs; a block today leaves
     the blocked person following and notified.
-  status: open
+  status: done
 - id: brgen-298
   app: brgen
   area: privacy
@@ -3417,7 +3417,7 @@ items:
   path: RAILS/brgen_messenger/app/controllers/conversations_controller.rb
   item: Exclude blocked users from the new-conversation people picker (User.messageable
     only filters guests, bots and deleted accounts).
-  status: open
+  status: done
 - id: brgen-304
   app: brgen
   area: profile

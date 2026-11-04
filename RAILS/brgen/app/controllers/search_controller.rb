@@ -23,11 +23,7 @@ class SearchController < ApplicationController
     @results = {}
     return if @query.blank?
 
-    @results[:people] = apply_live_search(
-      User.public_profiles.where(bot: false),
-      columns: %w[username display_name],
-      vertical: "people"
-    )
+    @results[:people] = people_results
     @results[:posts] = apply_live_search(Post.kept.visible_to(Current.user), columns: %w[title content], vertical: "feed")
     @results[:listings] = apply_live_search(
       Marketplace::Listing.publicly_visible.includes(:category),
@@ -65,6 +61,13 @@ class SearchController < ApplicationController
   end
 
   private
+
+  # A block holds in search: neither side of one is offered to the other.
+  def people_results
+    people = User.public_profiles.where(bot: false)
+    people = people.unblocked_with(Current.user) if Current.user
+    apply_live_search(people, columns: %w[username display_name], vertical: "people")
+  end
 
   def global_search_label(record)
     case record

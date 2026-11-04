@@ -58,7 +58,7 @@ class ConversationsController < ApplicationController
   # This is the same live-search machinery communities and events already use,
   # pointed at people, and every row carries the button that opens the thread.
   def new
-    scope = User.messageable.where.not(id: Current.user.id)
+    scope = User.messageable.unblocked_with(Current.user).where.not(id: Current.user.id)
     scope = apply_live_search(scope, columns: %w[username display_name], vertical: "people")
     # No query yet: show who is around rather than an empty box. Newest first is
     # the closest thing to "recently active" without another column.
