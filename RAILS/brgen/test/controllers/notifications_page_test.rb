@@ -53,6 +53,26 @@ class NotificationsPageTest < ActionDispatch::IntegrationTest
     assert_equal links.uniq, links
   end
 
+  test "following a notification's title marks it read and lands where it leads" do
+    notification = Notification.create!(user: @user, actor: @actor, kind: "follow")
+
+    get notifications_path
+    assert_select "article##{ActionView::RecordIdentifier.dom_id(notification)} a.notification-title-link[href=?]",
+                  open_notification_path(notification)
+
+    get open_notification_path(notification)
+    assert_redirected_to user_path(@actor)
+    assert notification.reload.read?
+  end
+
+  test "nobody opens another reader's notification" do
+    theirs = Notification.create!(user: @actor, actor: @user, kind: "follow")
+
+    get open_notification_path(theirs)
+    assert_response :not_found
+    refute theirs.reload.read?
+  end
+
   test "the read reflex morphs the inbox's own card" do
     notification = Notification.create!(user: @user, actor: @actor, kind: "follow")
     html = ApplicationController.render(partial: Shared::NotificationReadReflex::PARTIAL, locals: { notification: })

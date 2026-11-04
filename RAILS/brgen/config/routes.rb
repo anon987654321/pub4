@@ -65,6 +65,10 @@ Rails.application.routes.draw do
   instance_eval(File.read(File.expand_path("../../__shared/config/routes/fleet.rb", __dir__)))
   resources :activity_events, only: :index
   instance_eval(File.read(File.expand_path("../../__shared/config/routes/social.rb", __dir__)))
+  # Following a notification marks it read on the way to what it is about.
+  resources :notifications, only: [] do
+    member { get :open }
+  end
 
   namespace :admin do
     resources :reports, only: %i[index update]

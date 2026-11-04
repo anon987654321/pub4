@@ -2628,7 +2628,7 @@ items:
   path: RAILS/brgen/app/views/notifications/_notification.html.erb
   item: Mark a notification read when it is opened (route Open/title through an action
     that marks then redirects).
-  status: open
+  status: done
 - id: brgen-211
   app: brgen
   area: notifications

@@ -37,7 +37,31 @@ class NotificationsController < Shared::NotificationsController
     end
   end
 
+  # The title link comes through here, so a notification someone has followed
+  # stops counting as unread. Somewhere this site's own, or its vertical
+  # subdomains (a match lives on dating.), and the inbox otherwise.
+  def open
+    notification = Current.user.notifications.find(params[:id])
+    unless notification.read?
+      notification.mark_as_read!
+      Notification.broadcast_unread_badge(Current.user.id)
+    end
+    href = helpers.notification_href(notification)
+    return redirect_to(notifications_path) unless own_site?(href)
+
+    redirect_to href, allow_other_host: true
+  end
+
   private
+
+  def own_site?(href)
+    return false if href.blank?
+
+    host = URI.parse(href).host
+    host.nil? || host == request.host || host.end_with?(".#{request.domain}")
+  rescue URI::InvalidURIError
+    false
+  end
 
   def load_notification_index_state
     @notifications = notification_scope.recent.includes(:actor, :notifiable).limit(100)
