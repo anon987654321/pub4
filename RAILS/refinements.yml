@@ -2168,7 +2168,7 @@ items:
   path: RAILS/brgen/app/assets/stylesheets/_brgen_messenger.scss
   item: Add :focus-visible rings to rail rows, header actions and composer tools;
     the messenger stylesheet has none.
-  status: open
+  status: done
 - id: brgen-155
   app: brgen
   area: messenger
@@ -2199,7 +2199,7 @@ items:
   item: 'Make the composer''s maxlength and Message''s content length validation one
     constant: the textarea caps at 500 while the model allows 10_000, so pasted text
     is silently truncated client-side.'
-  status: open
+  status: done
 - id: brgen-159
   app: brgen
   area: messenger
@@ -2207,7 +2207,7 @@ items:
   path: RAILS/brgen/app/views/conversations/_composer.html.erb
   item: Align the composer's maxlength 500 with Message's 10_000 validation, or set
     a model limit of 500 for DMs.
-  status: open
+  status: done
 - id: brgen-160
   app: brgen
   area: messenger
@@ -2216,7 +2216,7 @@ items:
   item: Add a visually-hidden t('messages.unread_badge', count:) beside the bare <mark>
     unread count in the inbox row, as the rail row already does, so screen readers
     hear 'unread' rather than a lone number.
-  status: open
+  status: done
 - id: brgen-161
   app: brgen
   area: messenger
@@ -2224,7 +2224,7 @@ items:
   path: RAILS/brgen/app/views/conversations/_presence.html.erb
   item: Move the hard-coded English 'here now' in the channel presence span into nb/en
     locale keys with pluralisation.
-  status: open
+  status: done
 - id: brgen-162
   app: brgen
   area: messenger
@@ -2248,14 +2248,14 @@ items:
   path: RAILS/brgen/app/views/conversations/index.html.erb
   item: 'Remove the second h1 on the inbox: a hidden h1 and the pane''s list-title
     h1 both render.'
-  status: open
+  status: done
 - id: brgen-165
   app: brgen
   area: messenger
   size: S
   path: RAILS/brgen/app/views/conversations/show.html.erb
   item: Hide the composer while the edit form is open; both show at once today.
-  status: open
+  status: done
 - id: brgen-166
   app: brgen
   area: messenger
@@ -2286,7 +2286,7 @@ items:
   size: S
   path: RAILS/brgen/app/views/conversations/show.html.erb
   item: Link the DM header name to the other person's profile.
-  status: open
+  status: done
 - id: brgen-170
   app: brgen
   area: messenger
@@ -2301,7 +2301,7 @@ items:
   path: RAILS/brgen/app/views/conversations/show.html.erb
   item: Show until when a line can still be edited (EDIT_WINDOW is 15 minutes) next
     to the edit form.
-  status: open
+  status: done
 - id: brgen-172
   app: brgen
   area: messenger
@@ -2317,7 +2317,7 @@ items:
   path: RAILS/brgen/app/views/messages/_message.html.erb
   item: Render a message's photo or voice note above its actions disclosure; it currently
     prints after 'Meldingsvalg'.
-  status: open
+  status: done
 - id: brgen-174
   app: brgen
   area: messenger
@@ -2325,7 +2325,7 @@ items:
   path: RAILS/brgen/app/views/messages/_message.html.erb
   item: Make the reply context line a link to the parent message's anchor and briefly
     highlight it.
-  status: open
+  status: done
 - id: brgen-175
   app: brgen
   area: messenger
@@ -2342,7 +2342,7 @@ items:
   item: 'In the reply context line, render a ''message no longer available'' note
     when the parent is deleted or expired instead of ''Name: '' followed by the unsent
     (blank) or expired parent''s text.'
-  status: open
+  status: done
 - id: brgen-177
   app: brgen
   area: messenger
@@ -2359,7 +2359,7 @@ items:
   path: RAILS/brgen/app/views/messages/_message.html.erb
   item: Show a voice note's duration (duration_seconds is stored) and give the audio
     element an aria-label.
-  status: open
+  status: done
 - id: brgen-179
   app: brgen
   area: messenger
@@ -2367,7 +2367,7 @@ items:
   path: RAILS/brgen/app/views/messages/_message.html.erb
   item: Give message photos alt text ('Bilde fra <name>') instead of the uploaded
     filename's base.
-  status: open
+  status: done
 - id: brgen-180
   app: brgen
   area: messenger
@@ -2375,7 +2375,7 @@ items:
   path: RAILS/brgen/app/views/messages/_message.html.erb
   item: 'Give image attachments a meaningful alt (e.g. t(''messages.photo_from'',
     name: who)) instead of the uploaded filename base like ''IMG_4031''.'
-  status: open
+  status: done
 - id: brgen-181
   app: brgen
   area: messenger
@@ -2383,7 +2383,7 @@ items:
   path: RAILS/brgen/app/views/messages/_message.html.erb
   item: Give each forward select a unique id; f.select :target_conversation_id repeats
     the same id for every message, breaking the label link.
-  status: open
+  status: done
 - id: brgen-182
   app: brgen
   area: messenger

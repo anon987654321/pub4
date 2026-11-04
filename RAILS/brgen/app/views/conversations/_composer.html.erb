@@ -72,7 +72,7 @@
          data-controller="character-counter" data-character-counter-countdown-value="true">
       <%= f.text_area :content, rows: 1,
             placeholder: t("chat.dm_placeholder"),
-            maxlength: 500,
+            maxlength: Message::MAX_LENGTH,
             enterkeyhint: "send",
             aria: { label: t("chat.message_label") },
             data: { character_counter_target: "input" } %>

@@ -5,6 +5,6 @@
 <span id="presence_<%= conversation.id %>" class="channel_presence" aria-live="polite">
   <% if n.positive? %>
     <span class="channel_presence_dot" aria-hidden="true"></span>
-    <%= n %> here now
+    <%= t("messages.here_now", count: n) %>
   <% end %>
 </span>

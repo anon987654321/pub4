@@ -425,6 +425,7 @@ en:
     actions: Message actions
     replying_to: "Replying to %{name}"
     editing: Edit message
+    editable_until: Can be edited until %{time}
     unsend: Unsend
     confirm_unsend: Unsend this message? The text goes, the thread keeps its shape.
     forward: Forward
@@ -434,6 +435,9 @@ en:
     forward_to: Forward to
     forwarded: Forwarded
     replying_to_story: Replied to your story
+    photo_from: Photo from %{name}
+    voice_note_from: Voice note from %{name}
+    parent_gone: That message is no longer available
     new_group: New group
     group_name: Group name
     group_members_label: People
@@ -483,6 +487,9 @@ en:
       after_read: Once read
     disappearing_note: A screenshot cannot be prevented. The person you write to can still photograph the screen or copy the text.
     view_once_chip: disappears once read
+    here_now:
+      one: "%{count} here now"
+      other: "%{count} here now"
     offline: You are offline. The message is sent when you are back online.
   comments:
     sort_label: Sort comments

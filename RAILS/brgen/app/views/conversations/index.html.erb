@@ -13,17 +13,16 @@
     <h1> at all — two <h2>s in the rail under nothing, and the only page-level
     name was this section's aria-label, which a heading-navigation key cannot
     reach. conversations/show has one already (the room's name), so the inbox was
-    the single messenger surface without. Hidden rather than drawn because the
-    window deliberately has no visible page title, and aria-labelledby rather
-    than a second aria-label so the name is written once. %>
+    the single messenger surface without. The pane's list title is that h1;
+    a second, visually hidden one above it gave the page two, and
+    aria-labelledby names the window from it so the name is written once. %>
 <section class="messenger-window" aria-labelledby="messenger_window_title">
-  <h1 id="messenger_window_title" class="visually-hidden"><%= t("messages.title") %></h1>
   <%= render "conversations/rooms_rail" %>
 
   <%= turbo_frame_tag "messenger-pane", class: "messenger-pane" do %>
     <header class="messenger-conversation-header">
       <div class="messenger-header-identity">
-        <%= tag.h1 t(@list_title_key) %>
+        <%= tag.h1 t(@list_title_key), id: "messenger_window_title" %>
       </div>
     </header>
     <div class="messenger-inbox-pane-content">

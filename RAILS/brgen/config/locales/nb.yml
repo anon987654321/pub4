@@ -429,6 +429,7 @@ nb:
     actions: Meldingsvalg
     replying_to: "Svarer %{name}"
     editing: Rediger melding
+    editable_until: Kan endres til kl. %{time}
     unsend: Angre
     confirm_unsend: Angre denne meldingen? Teksten forsvinner, tråden beholder formen.
     forward: Videresend
@@ -438,6 +439,9 @@ nb:
     forward_to: Videresend til
     forwarded: Videresendt
     replying_to_story: Svarte på historien din
+    photo_from: Bilde fra %{name}
+    voice_note_from: Lydmelding fra %{name}
+    parent_gone: Meldingen finnes ikke lenger
     new_group: Ny gruppe
     group_name: Gruppenavn
     group_members_label: Deltakere
@@ -487,6 +491,9 @@ nb:
       after_read: Når den er lest
     disappearing_note: Skjermbilde kan ikke hindres. Den du skriver til kan fortsatt ta bilde av skjermen eller kopiere teksten.
     view_once_chip: forsvinner når den er lest
+    here_now:
+      one: "%{count} her nå"
+      other: "%{count} her nå"
     offline: Du er frakoblet. Meldingen sendes når du er på nett igjen.
   comments:
     sort_label: Sorter kommentarer

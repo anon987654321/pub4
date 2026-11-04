@@ -649,6 +649,16 @@ body.vertical-messenger .layout > main#main-content > section.messenger-window {
   font-size: var(--text-extra-small);
 }
 
+// A reply's context line links to the line it answers. Arriving there marks
+// that line for a moment, then lets it go, so the log does not stay lit.
+.conversation-log > li:target > article {
+  animation: messenger-reply-target 1.6s ease-out;
+}
+
+@keyframes messenger-reply-target {
+  from { background-color: var(--hover); }
+}
+
 /* The empty state is a message, not a room. Hold it to a measure and put it
    near the top of the pane, where the first line of a conversation would be —
    dead centre of a tall column is where nothing lives. */

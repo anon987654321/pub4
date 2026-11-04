@@ -45,7 +45,10 @@ class Message < ApplicationRecord
   # an image only for message_type "image": a photo showed as a filename link.
   # The type follows what was attached, so no client has to get it right.
   before_validation :type_from_attachment
-  validates :content, length: { maximum: 10_000 }
+  # The DM composer caps its textarea at the same number, so a paste is never
+  # cut short in the browser while the server would have taken it.
+  MAX_LENGTH = 10_000
+  validates :content, length: { maximum: MAX_LENGTH }
   # A token is a name for one attempt, not content: bounded so a client cannot
   # park a large string in an indexed column.
   validates :client_token, length: { maximum: 64 }, allow_nil: true

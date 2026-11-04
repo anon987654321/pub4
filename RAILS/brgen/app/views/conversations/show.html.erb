@@ -32,7 +32,13 @@
       </span>
 
       <div class="messenger-header-identity">
-        <%= tag.h1 @conversation.display_name_for(Current.user) %>
+        <%# A DM's name is a person, so it opens their profile; a group's is not. %>
+        <% other = @conversation.direct? ? @conversation.other_participants(Current.user).first : nil %>
+        <% if other && !other.guest? && other.deleted_at.blank? %>
+          <%= tag.h1 link_to(other.display_name, user_path(other), data: { turbo_frame: "_top" }) %>
+        <% else %>
+          <%= tag.h1 @conversation.display_name_for(Current.user) %>
+        <% end %>
         <% if @conversation.group_dm? %>
           <p class="messenger-header-meta"><%= t("messages.member_count", count: @conversation.participants.size) %></p>
         <% end %>
@@ -209,8 +215,11 @@
                       class: "messenger-edit-form" do |f| %>
           <div class="field">
             <%= f.label :content, t("messages.editing") %>
-            <%= f.text_area :content, rows: 3, value: @editing.content %>
+            <%= f.text_area :content, rows: 3, value: @editing.content, aria: { describedby: "edit_window_note" } %>
           </div>
+          <%# The window is the model's rule; saying when it shuts beats a refusal after it has. %>
+          <%= tag.p t("messages.editable_until", time: l(@editing.created_at + Message::EDIT_WINDOW, format: "%H:%M")),
+                    id: "edit_window_note", class: "form-help" %>
           <p>
             <%= f.submit t("actions.save"), class: "button button-primary" %>
             <%= link_to t("actions.cancel"), conversation_path(@conversation), class: "button button-ghost" %>
@@ -233,7 +242,8 @@
                 class: "button button-ghost button-small",
                 form: { data: { turbo_frame: "_top", turbo_confirm: t("messages.confirm_request_decline") } } %>
         </section>
-      <% else %>
+      <%# One box at a time: the edit form above replaces the composer until saved or cancelled. %>
+      <% elsif !@editing %>
         <%= render "conversations/composer",
                       conversation: @conversation,
                       message: @message,

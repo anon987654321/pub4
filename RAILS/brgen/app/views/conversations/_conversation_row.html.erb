@@ -37,7 +37,9 @@
           <small><%= t("messages.muted") %></small>
         <% end %>
         <% if unread.positive? %>
-          <mark><%= unread %></mark>
+          <%# A bare number says nothing to a screen reader; the rail row says "unread" too. %>
+          <%= tag.mark unread, aria: { hidden: true } %>
+          <%= tag.span t("messages.unread_badge", count: unread), class: "visually-hidden" %>
         <% elsif last %>
           <time datetime="<%= last.created_at.iso8601 %>"><%= time_ago(last.created_at) %></time>
         <% end %>

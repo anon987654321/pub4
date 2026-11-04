@@ -63,8 +63,18 @@
   <% if message.forwarded? %>
     <p class="msg-forwarded"><%= t("messages.forwarded") %></p>
   <% end %>
+  <%# An unsent parent keeps its row with a blank body and an expired one is
+      gone from the log, so either reads as a note rather than "Name: ".
+      Otherwise the line links to the parent, which :target lights up. %>
   <% if message.reply? && message.parent %>
-    <p class="msg-reply-context"><%= t("messages.replying_to", name: message.parent.sender.display_name) %>: <%= truncate(message.parent.content.to_s, length: 60) %></p>
+    <% parent = message.parent %>
+    <% if parent.deleted? || parent.expired? %>
+      <%= tag.p t("messages.parent_gone"), class: "msg-reply-context" %>
+    <% else %>
+      <% replying = t("messages.replying_to", name: parent.sender.display_name) %>
+      <% quoted = [ replying, truncate(parent.content.to_s, length: 60) ] %>
+      <%= tag.p link_to(quoted.join(": "), "##{dom_id(parent)}"), class: "msg-reply-context" %>
+    <% end %>
   <% end %>
   <%= tag.p format_chat_body(message.content) %>
   <% if message.link_preview&.ok? %>
@@ -77,6 +87,23 @@
       <% if message.link_preview.description.present? %>
         <span class="link-preview-body"><%= truncate(message.link_preview.description, length: 160) %></span>
       <% end %>
+    <% end %>
+  <% end %>
+  <%# Part of the message, so above its actions rather than after them. The alt
+      says whose photo it is; the uploaded file's name ("IMG_4031") says nothing. %>
+  <% if message.attachment.attached? %>
+    <% attachment = message.attachment %>
+    <% if message.message_type == "image" %>
+      <%= lazy_image_tag attachment, alt: t("messages.photo_from", name: who),
+            blurhash: attachment.try(:metadata).try(:[], "blurhash") %>
+    <% elsif message.message_type == "audio" %>
+      <%= audio_tag message.attachment, controls: true, aria: { label: t("messages.voice_note_from", name: who) } %>
+      <% if message.duration_seconds.to_i.positive? %>
+        <%= tag.time format("%d:%02d", *message.duration_seconds.to_i.divmod(60)),
+              datetime: "PT#{message.duration_seconds.to_i}S", class: "msg-voice-duration" %>
+      <% end %>
+    <% else %>
+      <%= link_to message.attachment.filename, message.attachment %>
     <% end %>
   <% end %>
   <%= render "messages/reactions", message: message, broadcast: broadcast %>
@@ -104,8 +131,9 @@
         <% end %>
         <% if message.forwardable? && local_assigns[:forward_targets].present? %>
           <%= form_with url: forward_conversation_message_path(message.conversation, message), method: :post do |f| %>
-            <%= f.label :target_conversation_id, t("messages.forward_to") %>
-            <%= f.select :target_conversation_id, forward_targets %>
+            <%# One per message on the page, so the id has to be too. %>
+            <%= f.label :target_conversation_id, t("messages.forward_to"), for: dom_id(message, :forward_target) %>
+            <%= f.select :target_conversation_id, forward_targets, {}, id: dom_id(message, :forward_target) %>
             <%= f.submit t("messages.forward") %>
           <% end %>
         <% end %>
@@ -118,15 +146,6 @@
         <% end %>
       <% end %>
     </details>
-  <% end %>
-  <% if message.attachment.attached? %>
-    <% if message.message_type == "image" %>
-      <%= lazy_image_tag message.attachment, alt: message.attachment.filename.base, blurhash: message.attachment.try(:metadata).try(:[], "blurhash") %>
-    <% elsif message.message_type == "audio" %>
-      <%= audio_tag message.attachment, controls: true %>
-    <% else %>
-      <%= link_to message.attachment.filename, message.attachment %>
-    <% end %>
   <% end %>
 </article>
 </li>
