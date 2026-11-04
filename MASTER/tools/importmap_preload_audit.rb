@@ -25,11 +25,11 @@ module Operator
   module ImportmapPreloadAudit
     EXTERNAL = %r{\A(?:https?:)?//}
 
-# Pinned to a CDN, deliberately not preloaded, and each one optional at
-# runtime — nothing on any page breaks if the host is unreachable:
-#
-#   web-vitals          sampled at 1%, with a local PerformanceObserver
-#                       fallback, so 99 visitors in 100 never fetch it
+# Empty: no pin may resolve off-site. web-vitals was the last one, on
+# cdn.jsdelivr.net, and is vendored to shared/vendor/javascript/web-vitals.js
+# because script-src does not allow that host. A pin added here would need
+# deliberately not to be preloaded, to be optional at runtime, and its host
+# would need a place in the CSP.
 #
 # @tiptap/core and @tiptap/starter-kit were here and are not any more: they
 # are vendored to shared/vendor/javascript/tiptap.js by
@@ -42,9 +42,7 @@ module Operator
 # That mattered more once the editor stopped being a brgen-only feature.
 #
 # date-fns remains the standing example of a pin that cannot be flattened.
-ALLOWED_EXTERNAL_PINS = %w[
-  web-vitals
-].freeze
+ALLOWED_EXTERNAL_PINS = %w[].freeze
 
     module_function
 

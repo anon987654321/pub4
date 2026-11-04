@@ -49,7 +49,9 @@ pin "pub4/brgen_shell", to: "brgen_shell_controller.js"
 pin "pub4/nav_autohide", to: "nav_autohide_controller.js"
 pin "pub4/action", to: "action_controller.js"
 pin "pub4/bottom_sheet", to: "bottom_sheet_controller.js"
-pin "web-vitals", to: "https://cdn.jsdelivr.net/npm/web-vitals@4.2.4/dist/web-vitals.js", preload: false, integrity: false
+# Vendored rather than pinned to cdn.jsdelivr.net, which script-src does not
+# allow: the 1% sample would fail once CSP is enforced. Lazy, as before.
+pin "web-vitals", to: "web-vitals.js", preload: false
 pin "pub4/autosave", to: "autosave_controller.js"
 pin "pub4/draft_store", to: "draft_store_controller.js"
 pin "pub4/media_picker", to: "media_picker_controller.js"

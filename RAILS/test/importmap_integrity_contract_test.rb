@@ -24,13 +24,15 @@ class ImportmapIntegrityContractTest < Minitest::Test
     end
   end
 
-  test "external importmap pins make integrity handling explicit" do
+  # A CDN pin carries no SRI (integrity: false), and script-src allows none of
+  # those hosts, so once CSP is enforced its import fails. web-vitals was the
+  # last, on cdn.jsdelivr.net; it is vendored now, like every other module.
+  test "no importmap pin points at another host" do
     source = File.read(File.join(ROOT, "__shared", "config", "importmap_baseline.rb"))
+    external = source.lines.grep(/^\s*pin\s+["'][^"']+["'].*["'](?:https?:)?\/\//)
 
-    source.lines.grep(/pin\s+["'][^"']+["'].*https?:\/\//).each do |line|
-      assert_match(/integrity:\s*(?:false|["'][^"']+["'])/, line,
-                   "external importmap pin has implicit integrity policy: #{line.strip}")
-    end
+    assert_empty external.map(&:strip), "vendor these into __shared/vendor/javascript"
+    assert File.file?(File.join(ROOT, "__shared", "vendor", "javascript", "web-vitals.js"))
   end
 
   test "the shared importmap stays the single pin source for framework modules" do

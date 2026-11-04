@@ -6229,7 +6229,7 @@ items:
   path: RAILS/__shared/config/importmap_baseline.rb
   item: 'Vendor web-vitals locally instead of pinning cdn.jsdelivr.net with integrity:
     false; script-src does not allow that host, so it breaks once CSP is enforced.'
-  status: open
+  status: done
 - id: shared-039
   app: shared
   area: security
