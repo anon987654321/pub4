@@ -63,7 +63,7 @@ class SessionsController < ApplicationController
       fresh.name = params[:name].presence
     end
 
-    cookies.signed.permanent[:session_token] = Session.create!(user: user).token
+    sign_in!(user)
 
     session.delete(:otp_phone)
     session.delete(:otp_code)
@@ -129,7 +129,7 @@ class SessionsController < ApplicationController
       return login_state_mismatch
     end
 
-    cookies.signed.permanent[:session_token] = Session.create!(user: user).token
+    sign_in!(user)
     clear_login_state
 
     destination = session.delete(:vipps_login_to) == "checkout" ? checkout_path : root_path

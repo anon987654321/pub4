@@ -51,11 +51,20 @@ class ApplicationController < ActionController::Base
     @current_kitchen = Kitchen.first
   end
 
-  # Cookie-store sessions may not expose an id before their first write, so we
-  # fall back to a random key persisted in the session cookie itself — Cart.for
-  # needs a stable, non-blank identity for anonymous baskets.
+  # Cart.for needs a stable, non-blank identity for anonymous baskets. A
+  # cookie-store session has no id before its first write, and preferring the
+  # id once it existed re-keyed the basket on the second request, so the key
+  # is stored once in the session (an existing id is kept as that key).
   def cart_session_key
-    session.id.to_s.presence || (session[:cart_key] ||= SecureRandom.hex(16))
+    session[:cart_key] ||= session.id.to_s.presence || SecureRandom.hex(16)
+  end
+
+  # One sign-in for the OTP and Vipps paths: the session cookie, and the
+  # guest basket this browser built carried into the customer's own cart.
+  def sign_in!(user)
+    cookies.signed.permanent[:session_token] = Session.create!(user:).token
+    guest = Cart.where(user_id: nil, session_key: cart_session_key).joins(:cart_items).first
+    Cart.for(user, cart_session_key).absorb!(guest) if guest
   end
 
   # Staff board + courier runs gate on roles; admin may always step in.

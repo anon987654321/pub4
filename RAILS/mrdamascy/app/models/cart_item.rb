@@ -18,6 +18,15 @@ class CartItem < ApplicationRecord
     ItemOption.where(id: selected_option_ids).order(:position, :id).map(&:name)
   end
 
+  # Moves this line into another cart, adding to a matching line there.
+  def move_to!(other)
+    same = other.cart_items.find_by(menu_item_id:, option_ids:, note:)
+    return update!(cart: other) unless same
+
+    same.update!(quantity: same.quantity + quantity)
+    destroy!
+  end
+
   def line_total_ore
     unit_price_ore.to_i * quantity
   end

@@ -5168,7 +5168,7 @@ items:
   path: RAILS/mrdamascy/app/controllers/sessions_controller.rb
   item: Merge the anonymous session cart into the user's cart on OTP and Vipps sign-in,
     so a basket built before logging in at checkout is not lost.
-  status: open
+  status: done
 - id: mrdamascy-015
   app: mrdamascy
   area: cart

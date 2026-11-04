@@ -24,7 +24,9 @@ class Cart < ApplicationRecord
     else
       raise ArgumentError, "session_key is required for anonymous carts" if session_key.blank?
 
-      where(session_key: session_key).first_or_create!
+      # A signed-in cart carries the session_key it was made under; without
+      # user_id: nil a guest on the same browser after sign-out got it back.
+      where(user_id: nil, session_key:).first_or_create!
     end
   end
 
@@ -51,6 +53,18 @@ class Cart < ApplicationRecord
 
   def total_quantity
     cart_items.sum(:quantity)
+  end
+
+  # A basket built before signing in follows the customer into their own
+  # cart: matching lines add up, the rest move over, the guest cart goes.
+  def absorb!(guest)
+    return self if guest.nil? || guest == self
+
+    transaction do
+      guest.cart_items.each { |line| line.move_to!(self) }
+      guest.reload.destroy!
+    end
+    self
   end
 
   def empty!
