@@ -5249,7 +5249,7 @@ items:
   path: RAILS/mrdamascy/app/controllers/checkout_controller.rb
   item: Add a delivery note field (door code, floor, ring the bell) to checkout and
     carry it onto the order, the staff board card and the courier run.
-  status: open
+  status: done
 - id: mrdamascy-024
   app: mrdamascy
   area: checkout
@@ -5318,7 +5318,7 @@ items:
   item: List the cart lines (quantity, name, options) in a details/summary block on
     the confirm screen so the customer sees what they are paying for without going
     back to the cart.
-  status: open
+  status: done
 - id: mrdamascy-032
   app: mrdamascy
   area: checkout
@@ -5326,7 +5326,7 @@ items:
   path: RAILS/mrdamascy/app/views/checkout/show.html.erb
   item: Add a name field with autocomplete="name", prefilled from current_user, so
     kitchen and courier can address the customer.
-  status: open
+  status: done
 - id: mrdamascy-033
   app: mrdamascy
   area: checkout

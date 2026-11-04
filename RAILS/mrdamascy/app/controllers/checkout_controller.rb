@@ -100,7 +100,9 @@ class CheckoutController < ApplicationController
     Order.new(
       user: current_user, kitchen:, state: "placed", delivery_mode: inputs[:mode],
       address: inputs[:address], postcode: delivery ? inputs[:postcode] : kitchen.postcode,
-      phone: inputs[:phone], payment_state: "pending", payment_steps: 3, express: true, payment_method:
+      phone: inputs[:phone], payment_state: "pending", payment_steps: 3, express: true, payment_method:,
+      customer_name: checkout_params[:name].presence || current_user&.name,
+      delivery_note: (checkout_params[:delivery_note].presence if delivery)
     ).snapshot_from_cart!(@cart)
   end
 
@@ -226,7 +228,21 @@ class CheckoutController < ApplicationController
   # method rides plain params (each pay button submits its own value).
   def checkout_params
     source = params[:order].is_a?(ActionController::Parameters) ? params.require(:order) : params
-    source.permit(:address, :postcode, :phone, :delivery_mode, :payment_method)
+    source.permit(:address, :postcode, :phone, :delivery_mode, :payment_method, :name, :delivery_note)
+  end
+
+  # A refused post re-renders with what was typed, not the saved defaults.
+  def typed_order
+    typed = checkout_params.to_h.symbolize_keys.compact_blank
+    typed[:customer_name] = typed.delete(:name)
+    details = typed.slice(:address, :postcode, :phone, :customer_name, :delivery_note).compact
+    Order.new(saved_details.merge(details, delivery_mode: @mode))
+  end
+
+  # What the signed-in customer saved, so the confirm screen arrives filled.
+  def saved_details
+    user = current_user
+    { address: user&.default_address, postcode: user&.default_postcode, phone: user&.phone, customer_name: user&.name }
   end
 
   # Shared between show and the zone-failure re-render. The mode toggle on the
@@ -235,14 +251,7 @@ class CheckoutController < ApplicationController
     @cart = current_cart
     @lines = @cart.cart_items.includes(:menu_item).order(:id)
     @mode = params[:mode].presence || @cart.delivery_mode || "delivery"
-    # A refused post re-renders with what was typed, not the saved defaults.
-    typed = checkout_params
-    @order = Order.new(
-      address: typed[:address].presence || current_user&.default_address,
-      postcode: typed[:postcode].presence || current_user&.default_postcode,
-      phone: typed[:phone].presence || current_user&.phone,
-      delivery_mode: @mode
-    )
+    @order = typed_order
     @returning_customer = current_user.present? && current_user.orders.exists?
     @zone = @mode == "pickup" ? nil : DeliveryZone.for_postcode(@order.postcode)
     quote = checkout_quote(cart: @cart, mode: @mode, zone: @zone)

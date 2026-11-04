@@ -127,9 +127,7 @@ class WoltDriveClient
       uri = URI("#{API_BASE}/#{require_env('WOLT_DRIVE_CLIENT_ID')}/deliveries")
       payload = {
         pickup: { location: pickup_location, comment: "Mr. Damascy, Solheimsgaten 60" },
-        dropoff: { location: dropoff_location(order),
-                   comment: order.address,
-                   customer: { name: order.phone, phone: order.phone } },
+        dropoff: dropoff(order),
         items: item_summary(order),
         tips: { amount: { value: order.tip_ore.to_i, currency: "NOK" } }
       }.to_json
@@ -153,6 +151,13 @@ class WoltDriveClient
     # the staff board.
     def store_delivery!(order, id:, url:, courier:)
       order.update!(external_delivery_id: id, external_delivery_url: url, courier_name: courier)
+    end
+
+    # Where the bag goes and who to ask for: the courier reads the address
+    # with the customer's note (door code, floor) and the name they gave.
+    def dropoff(order)
+      { location: dropoff_location(order), comment: order.courier_comment,
+        customer: { name: order.addressee, phone: order.phone } }
     end
 
     # --- Shared real-mode plumbing -----------------------------------------

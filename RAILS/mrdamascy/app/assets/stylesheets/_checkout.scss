@@ -239,3 +239,17 @@ dl.totals dd {
   margin: 0;
   text-align: end;
 }
+
+// The confirm screen's folded cart: one summary line, then the lines.
+.checkout-lines summary {
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.checkout-lines summary > * + * {
+  margin-inline-start: 8px;
+}
+
+.checkout-lines .order-line {
+  grid-template-columns: 1fr auto;
+}

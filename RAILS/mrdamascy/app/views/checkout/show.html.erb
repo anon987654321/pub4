@@ -9,8 +9,17 @@
     choice needs no script. %>
 
 <h1 class="page-title"><%= t("checkout.title") %></h1>
+<%# What is being paid for, folded under one line so the confirm screen
+    stays one screen. %>
 <% if @subtotal_ore.positive? %>
-  <%= tag.p t("checkout.cart_summary", total: money(@subtotal_ore)) %>
+  <details class="checkout-lines card">
+    <summary>
+      <%= tag.span t("checkout.cart_summary") %>
+      <%= tag.span t("cart.bar_items", count: @cart.total_quantity) %>
+      <%= tag.strong money(@subtotal_ore) %>
+    </summary>
+    <%= tag.ul safe_join(@lines.map { |line| render("checkout/line", line:) }), class: "order-lines-list" %>
+  </details>
 <% end %>
 
 <%# The zero-typing path (§12): one tap logs in with Vipps, and Vipps hands
@@ -70,6 +79,18 @@
     <p class="zone-feedback" data-zone-check-target="feedback" aria-live="polite"></p>
     <%= tag.p @minimum_text, class: "zone-fail", hidden: @minimum_text.blank?,
           data: { zone_check_target: "minimum" }, aria: { live: "polite" } %>
+  </div>
+
+  <div class="field" data-zone-check-target="addressWrap">
+    <%= label_tag :delivery_note, t("checkout.delivery_note") %>
+    <%= text_field_tag :delivery_note, @order.delivery_note, maxlength: 200, disabled: @mode == "pickup",
+          placeholder: t("checkout.delivery_note_placeholder") %>
+  </div>
+
+  <div class="field">
+    <%= label_tag :name, t("checkout.name_label") %>
+    <%= text_field_tag :name, @order.customer_name, autocomplete: "name", maxlength: 80,
+          placeholder: t("checkout.name_placeholder") %>
   </div>
 
   <div class="field">

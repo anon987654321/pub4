@@ -1,0 +1,9 @@
+<%# One cart line on the confirm screen: quantity, dish, options, note. %>
+<li class="order-line">
+  <span>
+    <%= tag.strong "#{line.quantity}× #{line.menu_item&.localized(:name)}" %>
+    <%= tag.span line.options_list.join(", "), class: "line-options" if line.options_list.any? %>
+    <%= tag.span "“#{line.note}”", class: "line-options" if line.note.present? %>
+  </span>
+  <%= tag.strong money(line.line_total_ore) %>
+</li>

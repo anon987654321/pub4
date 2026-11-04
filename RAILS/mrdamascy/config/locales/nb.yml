@@ -151,6 +151,10 @@ nb:
     postcode_label: Postnummer
     postcode_placeholder: '5004'
     phone_placeholder: "900 00 000"
+    delivery_note: "Til budet"
+    delivery_note_placeholder: "Dørkode, etasje, ring på … (valgfritt)"
+    name_label: "Navn"
+    name_placeholder: "Så kjøkkenet og budet vet hvem maten er til"
     card_mark: "Kort"
     errors:
       address_blank: "Skriv gate og nummer, så finner budet fram"

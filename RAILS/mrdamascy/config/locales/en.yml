@@ -151,6 +151,10 @@ en:
     postcode_label: Postcode
     postcode_placeholder: '5004'
     phone_placeholder: "900 00 000"
+    delivery_note: "For the courier"
+    delivery_note_placeholder: "Door code, floor, ring the bell … (optional)"
+    name_label: "Name"
+    name_placeholder: "So the kitchen and courier know who it's for"
     card_mark: "Card"
     errors:
       address_blank: "Add your street and number so the courier finds you"

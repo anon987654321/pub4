@@ -17,8 +17,10 @@
       </li>
     <% end %>
   </ul>
+  <%= tag.p order.customer_name, class: "board-card-name" if order.customer_name.present? %>
   <% if order.address.present? && order.delivery? %>
     <%= tag.p "#{order.address} · #{order.postcode}", class: "board-card-address" %>
+    <%= tag.p tag.q(order.delivery_note), class: "board-card-address" if order.delivery_note.present? %>
   <% end %>
   <% if order.phone.present? %>
     <%= tag.p class: "board-card-phone" do %>

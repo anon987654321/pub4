@@ -28,6 +28,8 @@ class Order < ApplicationRecord
   validates :payment_state, inclusion: { in: PAYMENT_STATES }
   validates :delivery_mode, inclusion: { in: %w[delivery pickup] }, allow_nil: true
   validates :phone, presence: true
+  validates :customer_name, length: { maximum: 80 }
+  validates :delivery_note, length: { maximum: 200 }
   validates :tracking_token, presence: true, uniqueness: true
 
   before_validation :assign_tracking_token
@@ -69,6 +71,16 @@ class Order < ApplicationRecord
 
     update!(state: "cancelled")
     self
+  end
+
+  # The address with the customer's note (door code, floor) for a courier.
+  def courier_comment
+    [address, delivery_note].compact_blank.join(" — ")
+  end
+
+  # Who to ask for at the door: the name given, else the number.
+  def addressee
+    customer_name.presence || phone
   end
 
   def delivery?
