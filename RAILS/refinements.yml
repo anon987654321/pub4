@@ -5657,7 +5657,7 @@ items:
   size: S
   path: RAILS/mrdamascy/app/controllers/checkout_controller.rb
   item: Rate-limit the JSON endpoints checkout#zone and orders#status.
-  status: open
+  status: done
 - id: mrdamascy-075
   app: mrdamascy
   area: security

@@ -3,6 +3,10 @@
 class OrdersController < ApplicationController
   before_action :set_order, only: [:show]
 
+  # A tracking tab polls six times a minute; counted per order, not per IP,
+  # so customers behind one mobile carrier address never share a budget.
+  rate_limit to: 30, within: 1.minute, only: :status, name: "track_status", by: -> { params[:token].to_s }
+
   def index
     return redirect_to(new_session_path, notice: t("auth.sign_in_first")) unless current_user
 

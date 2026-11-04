@@ -11,6 +11,10 @@ class CheckoutController < ApplicationController
   rescue_from VippsClient::NotAvailable, StripeClient::NotAvailable,
               with: :payment_unavailable
 
+  # The postcode lookup is debounced as it is typed; a script walking every
+  # postcode in Norway is not.
+  rate_limit to: 60, within: 1.minute, only: :zone, name: "zone_lookup"
+
   # The one confirm screen (APP_SPEC §6/§12): prefilled address, mode toggle,
   # Vipps payment row, auto-applied promo line, totals — one "Betal med
   # Vipps" CTA. No promo field, no card fields, no tip step.
