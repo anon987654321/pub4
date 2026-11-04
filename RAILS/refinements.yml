@@ -2565,7 +2565,7 @@ items:
   path: RAILS/brgen/app/services/newsletter_edition_builder.rb
   item: 'Replace the hard-coded English ''Code: '' prefix in merge_vouchers! with
     an I18n key resolved in the edition''s locale.'
-  status: open
+  status: done
 - id: brgen-203
   app: brgen
   area: newsletter

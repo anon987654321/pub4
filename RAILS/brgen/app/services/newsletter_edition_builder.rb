@@ -81,7 +81,7 @@ class NewsletterEditionBuilder
       host:
     )
     record = persist!("weekly_deals", city_name, edition)
-    merge_vouchers!(record, vouchers) if vouchers.any?
+    merge_vouchers!(record, vouchers, locale: edition.locale) if vouchers.any?
     record
   end
 
@@ -99,13 +99,13 @@ class NewsletterEditionBuilder
     end
   end
 
-  def merge_vouchers!(record, vouchers)
+  def merge_vouchers!(record, vouchers, locale:)
     existing = Array(record.deals)
     voucher_rows = vouchers.first(2).map do |v|
       {
         "title" => v.title.to_s,
         "url" => v.track_url.to_s,
-        "description" => [ v.short_description, v.code.present? ? "Code: #{v.code}" : nil ].compact.join(" — "),
+        "description" => [ v.short_description, voucher_code(v.code, locale) ].compact.join(" — "),
         "price" => v.discount_amount.to_s,
         "currency" => v.currency.to_s,
         "merchant" => v.program_name.to_s,
@@ -113,6 +113,11 @@ class NewsletterEditionBuilder
       }
     end
     record.update!(deals: existing + voucher_rows)
+  end
+
+  # In the edition's own language, like every other line of the letter.
+  def voucher_code(code, locale)
+    I18n.t("newsletter.voucher_code", code:, locale:) if code.present?
   end
 
   # A newsletter reaches anyone subscribed, so it carries only what a signed-out

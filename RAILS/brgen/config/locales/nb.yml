@@ -1637,6 +1637,7 @@ nb:
     view_offer: Se tilbudet
     curated_offers: Utvalgte tilbud
     today_in: I dag i %{city}
+    voucher_code: "Kode: %{code}"
   pwa:
     home: Hjem
     new: Ny

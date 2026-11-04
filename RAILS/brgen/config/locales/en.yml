@@ -1630,6 +1630,7 @@ en:
     view_offer: View offer
     curated_offers: Curated offers
     today_in: Today in %{city}
+    voucher_code: "Code: %{code}"
   pwa:
     home: Home
     new: New

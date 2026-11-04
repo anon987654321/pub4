@@ -72,4 +72,19 @@ class NewsletterEditionBuilderTest < ActiveSupport::TestCase
     assert_nothing_raised { Post.includes(:user).with_attached_image.limit(1).to_a }
     assert_raises(ActiveRecord::AssociationNotFoundError) { Post.includes(:image).limit(1).to_a }
   end
+
+  Voucher = Struct.new(:title, :track_url, :short_description, :code, :discount_amount, :currency, :program_name,
+                       keyword_init: true)
+
+  # A voucher line read "Code: ..." in every letter, whatever its language.
+  test "a voucher code is labelled in the edition locale" do
+    voucher = Voucher.new(title: "Sko", track_url: "https://example.com/v", short_description: "20 % av",
+                          code: "BYSKO20", discount_amount: 20, currency: "NOK", program_name: "Skobutikken")
+    record = NewsletterEdition.create!(kind: "weekly_deals", city: @city.slug, edition_date: Date.current,
+                                       subject: "Ukens tilbud", lede: "Tilbud fra byen.", deals: [])
+
+    NewsletterEditionBuilder.new(city: @city.slug).send(:merge_vouchers!, record, [ voucher ], locale: "nb")
+
+    assert_equal "20 % av — Kode: BYSKO20", record.reload.deals.last["description"]
+  end
 end
