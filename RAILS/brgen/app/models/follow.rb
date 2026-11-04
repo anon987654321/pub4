@@ -18,8 +18,13 @@ class Follow < ApplicationRecord
     errors.add(:base, :self_follow) if follower_id == followed_id
   end
 
+  # Follow, unfollow and follow again notified the person each time. One
+  # follow notification per follower per day is enough to say who it was.
+  FOLLOW_NOTICE_QUIET = 1.day
+
   def emit_follow_created
-    followed.notifications.create!(actor: follower, kind: "follow", notifiable: self)
+    told = followed.notifications.exists?(actor_id: follower_id, kind: "follow", created_at: FOLLOW_NOTICE_QUIET.ago..)
+    followed.notifications.create!(actor: follower, kind: "follow", notifiable: self) unless told
     Shared::EventEmitter.call("brgen.follow.created", follower_id:, followed_id:) if defined?(Shared::EventEmitter)
   rescue StandardError => e
     Rails.logger.warn("Follow notification skipped: #{e.class}: #{e.message}")

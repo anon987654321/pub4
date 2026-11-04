@@ -3360,7 +3360,7 @@ items:
   path: RAILS/brgen/app/models/follow.rb
   item: Collapse repeated follow notifications from the same follower within a day;
     follow/unfollow/follow today notifies three times.
-  status: open
+  status: done
 - id: brgen-297
   app: brgen
   area: privacy
