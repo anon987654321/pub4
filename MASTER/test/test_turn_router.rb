@@ -65,9 +65,10 @@ class TurnRouterTest < Minitest::Test
     assert_equal "/fix RAILS --no-autofix", router.rewrite_slash("/scan RAILS --no-autofix")
     assert_equal "/fix x", router.rewrite_slash("/sweep x")
     assert_equal "/fix", router.rewrite_slash("/triad")
-    assert_equal "/review --only critique lib", router.rewrite_slash("/critique lib")
-    assert_equal "/review --only critique lib", router.rewrite_slash("/council lib")
-    assert_equal "/review master", router.rewrite_slash("/review master")
+    # The reading words are /fix too: write-free, council on (folded 2026-11-04).
+    assert_equal "/fix --dry-run --critique --only critique lib", router.rewrite_slash("/critique lib")
+    assert_equal "/fix --dry-run --critique --only critique lib", router.rewrite_slash("/council lib")
+    assert_equal "/fix --dry-run --critique --only critique,map master", router.rewrite_slash("/review master")
   end
 
   def test_scan_is_a_spelling_of_fix_not_a_command

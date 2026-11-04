@@ -882,7 +882,7 @@ cli:
   # false makes it push to talk (Tab). The status line says "mic on" whenever it can hear.
   face_auto_mic: true
   # Commands that run for minutes and would leave the face looking stuck; the face points to the shell for them.
-  face_shell_only: ["/fix", "/review", "/critique", "/scan"]
+  face_shell_only: ["/fix", "/scan"]
 
 # Merged from former heartbeat.yml — heartbeat jobs live here. Schedule-based
 # maintenance outside the heartbeat remains removed. self_test runs as the

@@ -133,16 +133,14 @@ class WorkflowInferenceTest < Minitest::Test
     refute_match(/would repair/, out)
   end
 
-  # /review is where the council is a stage of its own. Inside /fix it argues
+  # The reading (/review, now /fix --dry-run --critique --only critique,map)
+  # is where the council is a stage of its own. Inside a writing /fix it argues
   # per repair instead, which test_fix_council covers.
-  def test_review_reaches_deliberation_when_critique_is_on
+  def test_the_reading_reaches_deliberation_when_critique_is_on
     asked = []
     deliberation = FakeDeliberation.new(asked)
     out = Master::CLI::CommandRegistry.stub(:observe, ->(*, **) { "clean -- no violations" }) do
-      Master::CLI::CommandRegistry.dispatch_review(
-        scanner: FakeScanner.new, fix_loop: FakeFixLoop.new, deliberation:,
-        root: File.expand_path("..", __dir__), bus: nil, ctx: { args: ". --critique" }
-      )
+      read_only_fix(deliberation:, args: ". --dry-run --critique --only critique,map")
     end
 
     assert_match(/^crit0 at review0: critique$/, out)
@@ -150,13 +148,11 @@ class WorkflowInferenceTest < Minitest::Test
     refute_match(/NoMethodError/, out)
   end
 
-  # /review writes nothing, whatever it is asked: the verb that writes is /fix.
-  def test_review_never_repairs
+  # The reading writes nothing, whatever else it is asked.
+  def test_the_reading_never_repairs
     out = Master::CLI::CommandRegistry.stub(:observe, ->(*, **) { "clean -- no violations" }) do
-      Master::CLI::CommandRegistry.dispatch_review(
-        scanner: FakeScanner.new, fix_loop: FakeFixLoop.new, deliberation: FakeDeliberation.new([]),
-        root: File.expand_path("..", __dir__), bus: nil, ctx: { args: ". --apply --no-critique" }
-      )
+      args = ". --dry-run --apply --no-critique --only critique,map"
+      read_only_fix(deliberation: FakeDeliberation.new([]), args:)
     end
 
     refute_includes out.lines.map(&:chomp), "repair"
@@ -217,6 +213,15 @@ class WorkflowInferenceTest < Minitest::Test
     yield
   ensure
     previous.nil? ? ENV.delete(key) : ENV[key] = previous
+  end
+
+  def read_only_fix(deliberation:, args:)
+    Master::CLI::CommandRegistry.stub(:steady_trace, CLEAN_TRACE) do
+      Master::CLI::CommandRegistry.dispatch_fix(
+        scanner: FakeScanner.new, fix_loop: FakeFixLoop.new, deliberation:,
+        root: File.expand_path("..", __dir__), bus: nil, ctx: { args: }
+      )
+    end
   end
 
   def dispatch(critique:, deliberation: FakeDeliberation.new([]), fix_loop: FakeFixLoop.new, apply: false)

@@ -341,6 +341,7 @@ class TestCLI < Minitest::Test
     assert_match(/^health0 at master0: \/status \/doctor \/events$/, summary)
     assert_match(/^help0 at master0: \/help \[command\]$/, summary)
     refute_includes summary, "--dry-run"
+    # /review is a spelling of /fix now; its help is the /fix page, which names it.
     assert_includes review, "/review [path]"
     assert_includes review, "--only", "the stages are the detail, not the summary"
     assert_includes fix, "--dry-run", "the flag that holds the repair back is the detail"

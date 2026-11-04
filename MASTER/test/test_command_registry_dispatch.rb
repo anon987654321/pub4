@@ -72,7 +72,7 @@ class TestCommandRegistryDispatch < Minitest::Test
     assert_includes Registry.help_summary, "help0 at master0: /help [command]"
     assert_includes Registry.help_summary, "/exit /quit"
     assert_includes Registry.help_summary, "input0 at master0: describe work in plain language; slash commands are optional."
-    assert_includes Registry.help_summary, "fix0 at master0: /fix [path] writes; /review and /critique read; /help <command> shows syntax."
+    assert_includes Registry.help_summary, "fix0 at master0: #{Registry::FIX_SUMMARY}"
   end
 
   def test_task_and_capability_commands_are_registered_and_documented
@@ -432,18 +432,17 @@ class TestCommandRegistryDispatch < Minitest::Test
     assert_operator result.length, :<=, 170
   end
 
-  def test_critique_is_a_documented_discoverable_command
-    assert built.key?("critique")
-    assert_includes Registry::HELP_TOPICS.keys, "critique"
-    assert_includes Registry.slash_commands, "/critique"
-    assert_match(%r{/critique}, Registry.help_text("critique"))
-    # review_verbs builds keyword calls in a block, so there is no method_name
-    # to read; the command is proved by what it calls.
-    called = nil
-    Registry.stub(:dispatch_critique, ->(**kwargs) { called = kwargs.keys }) do
-      built.fetch("critique").call(Master::CLI::PipelineContext.new(user_message: "/critique", args: ""))
+  # /review and /critique were read-only adapters over /fix. They are words
+  # now, not verbs: nothing in the registry answers them, the router rewrites
+  # them to /fix, and help documents them on the /fix page.
+  def test_review_and_critique_are_spellings_of_fix_not_verbs
+    %w[review critique].each do |word|
+      refute built.key?(word), "#{word} is a registry verb again"
+      refute_includes Registry::HELP_TOPICS.keys, word
+      refute Registry.respond_to?(:"dispatch_#{word}"), "dispatch_#{word} came back"
+      assert_match(%r{\A/fix --dry-run --critique}, Master::CLI::TurnRouter.rewrite_slash("/#{word} lib"))
     end
-    assert_includes called, :ctx
+    assert_match(%r{/review}, Registry.help_text("fix"))
   end
 
   # A `*_commands` method is a table of verbs. Only control_commands exists,

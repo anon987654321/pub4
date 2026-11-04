@@ -1123,10 +1123,8 @@ end
     deliberation = Object.new
     bus = Object.new
 
-    Master::CLI::CommandRegistry.stub(
-      :dispatch_critique,
-      ->(**) { raise "critique stage recursively re-entered dispatch_critique" },
-    ) do
+    refute Master::CLI::CommandRegistry.respond_to?(:dispatch_critique), "the critique adapter came back"
+    begin
       Master::CLI::CouncilCrit.stub(
         :run,
         lambda do |root:, deliberation:, bus:|

@@ -21,6 +21,9 @@ module Master
             "--trace expands the redacted event payload; --normal and --quiet reduce output;",
             "MASTER_CLI_QUIET=1 silences the unit lines in the interactive CLI.",
             "--dry-run stops after the reading and says what it would take on.",
+            "/review [path] is the reading with the council and principle map, nothing",
+            "written (/fix --dry-run --critique --only critique,map); /critique and",
+            "/council are the council alone (--only critique).",
             "--intent=<content_only|content_and_structure|functional_change|redesign> pins",
             "the task contract; the default is functional_change.",
             "--only style (cosmetic, typography) runs the typographic audit alone: the",
@@ -37,24 +40,6 @@ module Master
             "/deploy master --confirm — deploy MASTER to vm23.",
             "Deployment is always remote and review-gated. The command delegates to bin/operator",
             "and OPENBSD/bin/vps-deploy; it does not create a second deploy implementation.",
-          ],
-        },
-        "review" => {
-          summary: "read-only compatibility view over the /fix pipeline",
-          detail: [
-            "/review [path] — runs the /fix observation, critique and map stages",
-            "without writing. /fix is the canonical lifecycle and owns repair.",
-            "",
-            "--only <stage> runs one part: --only critique or --only map, and",
-            "`council` is a spelling of critique. --only fix gives the reading and",
-            "what a repair would take on, without taking it on.",
-          ],
-        },
-        "critique" => {
-          summary: "read-only: the council, without the principle map",
-          detail: [
-            "/critique [path] — run the council against the path. It reads and argues, then stops.",
-            "/review runs the critique plus the principle map; /fix is the operation that writes.",
           ],
         },
         "play" => {
@@ -369,6 +354,10 @@ module Master
         return help_summary if key.empty?
         return "/#{key} — leave the current MASTER session." if %w[exit quit].include?(key)
 
+        # review, critique, council, scan and the other pipeline words rewrite to
+        # /fix, so their help is the /fix page rather than "unknown command".
+        spellings = defined?(Master::CLI::TurnRouter) ? Master::CLI::TurnRouter::PIPELINE_SLASH : []
+        key = "fix" if !HELP_TOPICS.key?(key) && spellings.include?(key)
         topic = HELP_TOPICS[key]
         return unknown_command_text(key) unless topic
 
@@ -394,7 +383,7 @@ module Master
         "session" => "session", "pair" => "session", "clear" => "session", "undo" => "session",
         "model" => "model", "plugin" => "model", "screen" => "session", "wake" => "model",
         "privacy" => "constitution", "preferences" => "interface", "agenda" => "session", "task" => "session", "skill" => "constitution", "capabilities" => "model",
-        "review" => "review", "critique" => "review", "laws" => "review",
+        "laws" => "review",
         "why" => "review", "explain" => "review", "prove" => "review",
         "commit" => "change", "deploy" => "change", "snapshot" => "change",
         "orders" => "change", "wishlist" => "change",
@@ -406,7 +395,9 @@ module Master
         "soul" => "constitution", "help" => "help", "exit" => "session", "quit" => "session"
       }.freeze
 
-      CATEGORY_ORDER = %w[fix health session model review change interface media constitution help].freeze
+      FIX_SUMMARY = "/fix [path] writes; /review and /critique are its reading; /help <command> shows syntax."
+
+      CATEGORY_ORDER =%w[fix health session model review change interface media constitution help].freeze
 
       def command_surface
         slash_commands.filter_map do |slash|
@@ -435,7 +426,7 @@ module Master
           "#{category}0 at master0: #{commands.join(' ')}"
         end
         lines << "input0 at master0: describe work in plain language; slash commands are optional."
-        lines << "fix0 at master0: /fix [path] writes; /review and /critique read; /help <command> shows syntax."
+        lines << "fix0 at master0: #{FIX_SUMMARY}"
         lines.join("\n")
       end
     end

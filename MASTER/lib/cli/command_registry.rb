@@ -105,10 +105,9 @@ module Master
       end
 
       # Positional, and the order is load-bearing: Command#dependency_kwargs
-      # zips these against dispatch_review's keyword names in declaration
-      # order, so swarm goes last in both places. /fix takes the same
-      # dependencies as /review because it is the same pipeline with the
-      # repair turned on -- the one verb that writes.
+      # zips these against dispatch_fix's keyword names in declaration
+      # order, so swarm goes last in both places. /fix is the one pipeline
+      # verb; review and critique are spellings of its reading half.
       def review_verbs(d)
         # These dispatchers are keyword-only. Build the calls as keyword calls
         # here rather than relying on positional-to-keyword recovery in Command;
@@ -118,8 +117,6 @@ module Master
           root: d[:root], bus: d[:bus], swarm: d[:swarm]
         }
         {
-          "review" => Command.new { |ctx| dispatch_review(**deps, ctx:) },
-          "critique" => Command.new { |ctx| dispatch_critique(**deps, ctx:) },
           "fix" => Command.new { |ctx| dispatch_fix(**deps, ctx:) },
         }
       end

@@ -33,7 +33,7 @@ module Master
         # Falcon user and wrote under ~.
         return casual_reply(text, container:, felt_sense:, on_chunk:, image:) if visitor?
         if text.match?(%r{\A(?:review|critique)\b}i) || text.match?(FIX_COMMAND)
-          return dispatch_slash("/#{text}", container:, felt_sense:, on_turn:, cancellation:)
+          return dispatch_slash(rewrite_slash("/#{text}"), container:, felt_sense:, on_turn:, cancellation:)
         end
         if deployment_intent?(text)
           return dispatch_slash("/deploy #{deployment_args(text)}".strip, container:, felt_sense:, on_turn:)
@@ -131,18 +131,17 @@ module Master
 
       # Two vocabularies, and they are not the same size on purpose.
       #
-      # PIPELINE_COMMANDS is what a person types: three words where there were
-      # ten. /fix is the operation that changes the tree — it observes,
-      # critiques, repairs and observes again — while /review and /critique read
-      # and argue without writing. /scan remains only as a compatibility alias
-      # that rewrites to /fix; there is no separate scan operation.
+      # PIPELINE_COMMANDS is what a person types. There is one operation, /fix:
+      # it observes, critiques, repairs and observes again. "review" and
+      # "critique" are words for its reading half and rewrite to /fix --dry-run
+      # with the council on (READING_SLASH); /scan rewrites to /fix.
       PIPELINE_COMMANDS = %w[review fix critique].freeze
 
       # MODEL_ALIASES is what the intent router accepts from a model, which is not
       # ours to shrink. A model asked to name the command may answer "sweep" or
       # "triad" — words this surface no longer offers — and the cost of not
       # accepting them is a request that falls silently to chat. They are read as
-      # /review; none of them reaches the registry under its own name.
+      # /fix; none of them reaches the registry under its own name.
       MODEL_ALIASES = %w[through workflow triad sweep self council].freeze
       PIPELINE_WORDS = (PIPELINE_COMMANDS + MODEL_ALIASES).freeze
       FOLD_SLASH = %w[fold run].freeze
@@ -150,9 +149,9 @@ module Master
       # What a typed slash is allowed to be. Wider than the three words the surface
       # offers, and deliberately: /scan, /sweep and /council were spellings people
       # had learned, and a retired word that falls silently to chat is a worse
-      # answer than one that still works. They rewrite to the canonical form; only
-      # review, fix and critique are advertised.
-      PIPELINE_SLASH = %w[fix critique council scan self workflow triad sweep through].freeze
+      # answer than one that still works. They rewrite to /fix, the one command
+      # advertised.
+      PIPELINE_SLASH = %w[fix review critique council scan self workflow triad sweep through].freeze
 
       INFER_MIN_CONFIDENCE = 0.62
 
@@ -180,8 +179,7 @@ module Master
       # patterns.yml infers words no handler takes, and a sentence that merely
       # named one died there: "read the dmesg module" answered "unknown command:
       # /dmesg". An inferred word becomes a command only when the registry answers
-      # it; writing aliases rewrite to /fix, and critique aliases rewrite to
-      # /review --only critique.
+      # it; every pipeline word rewrites to /fix (rewrite_slash).
       def answered?(command, container)
         commands = container[:commands]
         PIPELINE_WORDS.include?(command) || !commands.respond_to?(:key?) || commands.key?(command)
@@ -360,9 +358,12 @@ module Master
         memory
       end
 
-      # The words that reach the council rather than the repair. /council is
-      # /critique under the name people learned for it.
-      STAGE_FOR_SLASH = { "critique" => "critique", "council" => "critique" }.freeze
+      # The words that read and argue without writing, and the /fix stages each
+      # selects. They were /review and /critique, two read-only adapters over the
+      # /fix pipeline; folded on 2026-11-04 so /fix is the only entry. --dry-run
+      # keeps them write-free and --critique turns the council on, which /fix
+      # leaves off when it is not writing. /council is the name people learned.
+      READING_SLASH = { "review" => "critique,map", "critique" => "critique", "council" => "critique" }.freeze
 
       # The words that mean "go through the tree and change it". They are
       # spellings of /fix: a sweep with its own reading-and-repair lifecycle
@@ -375,8 +376,7 @@ module Master
         return input unless PIPELINE_SLASH.include?(name)
         return ["/fix", rest.to_s.strip].reject(&:empty?).join(" ") if WRITING_SLASH.include?(name)
 
-        parts = ["/review", ("--only #{STAGE_FOR_SLASH[name]}" if STAGE_FOR_SLASH[name]), rest.to_s.strip]
-        parts.compact.reject(&:empty?).join(" ")
+        ["/fix --dry-run --critique --only #{READING_SLASH.fetch(name)}", rest.to_s.strip].reject(&:empty?).join(" ")
       end
 
       def dispatch_slash(input, container:, felt_sense: nil, on_turn: nil, cancellation: nil)
