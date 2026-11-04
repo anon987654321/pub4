@@ -74,9 +74,12 @@
 
   <%= render "shared/also_nearby", items: @nearby_places, title: t("maps.nearby_places") %>
 
-  <% if @recent_check_ins.any? %>
+  <% if @recent_check_ins.any? || @unnamed_check_in_count.positive? %>
     <section>
       <%= tag.h2 t("maps.recent_check_ins") %>
+      <% if @unnamed_check_in_count.positive? %>
+        <%= tag.p t("maps.checked_in_last_hour", count: @unnamed_check_in_count) %>
+      <% end %>
       <ul>
         <% @recent_check_ins.each do |check_in| %>
           <li>

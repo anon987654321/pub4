@@ -1997,7 +1997,7 @@ items:
   item: Hide or delay recent check-ins on the public place page (show counts, or names
     only after an hour), since a named check-in with a relative timestamp publishes
     where a person is right now.
-  status: open
+  status: done
 - id: brgen-135
   app: brgen
   area: maps

@@ -1602,6 +1602,9 @@ nb:
   maps:
     your_courier: Budet ditt
     recent_check_ins: Nylige innsjekkinger
+    checked_in_last_hour:
+      one: Én person sjekket inn her den siste timen.
+      other: "%{count} personer sjekket inn her den siste timen."
     hud_aria: Kartsøk og informasjon
     browse_list: Bla i listen
     needs_js: Kartet krever JavaScript.

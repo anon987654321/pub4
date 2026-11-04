@@ -1595,6 +1595,9 @@ en:
   maps:
     your_courier: Your courier
     recent_check_ins: Recent check-ins
+    checked_in_last_hour:
+      one: One person checked in here in the last hour.
+      other: "%{count} people checked in here in the last hour."
     hud_aria: Map search and info
     browse_list: Browse list
     needs_js: Map needs JavaScript.

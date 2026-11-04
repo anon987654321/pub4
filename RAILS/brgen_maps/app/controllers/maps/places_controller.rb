@@ -5,6 +5,10 @@ module Maps
     # "Checked in recently" means recently: a visit yesterday does not stop a
     # check-in today.
     CHECK_IN_WINDOW = 4.hours
+    # A name beside "3 minutes ago" says where that person is right now, on a
+    # public page. Check-ins are named once this long has passed, and counted
+    # until then.
+    NAMED_CHECK_IN_DELAY = 1.hour
 
     include Shared::LiveSearchable
 
@@ -40,7 +44,7 @@ module Maps
     def show
       @place = places_in_current_city.includes(:city, :neighborhood).find(params[:id])
       @place.record_activity!("PlaceViewed", source_vertical: "maps") unless passive_request?
-      @recent_check_ins = @place.place_check_ins.includes(:user).recent.limit(10)
+      load_check_ins
       # Guests may check in (see the require_user_session check on #check_in),
       # so the "already here" flag has to follow the same identity. With
       # authenticated? it stayed false for a guest who had just checked in and
@@ -63,6 +67,14 @@ module Maps
     end
 
     private
+
+    def load_check_ins
+      named_before = NAMED_CHECK_IN_DELAY.ago
+      check_ins = @place.place_check_ins
+      named = check_ins.where(checked_in_at: ...named_before).includes(:user)
+      @recent_check_ins = named.recent.limit(10)
+      @unnamed_check_in_count = check_ins.checked_in_since(named_before).count
+    end
 
     # The one place the list and its JSON twin decide which places match: city,
     # kind filter, then the live search.
