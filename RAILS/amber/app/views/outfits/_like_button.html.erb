@@ -1,1 +1,3 @@
-<%= button_to t("actions.like_count", count: outfit.likes_count.to_i), like_outfit_path(outfit), method: :post, class: "button", form: { id: dom_id(outfit, :like) } %>
+<%= button_to t("actions.like_count", count: outfit.likes_count.to_i), like_outfit_path(outfit),
+              method: :post, class: "button",
+              form: { id: dom_id(outfit, :like) }, aria: { pressed: outfit.liked_by?(Current.user) } %>

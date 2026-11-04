@@ -67,4 +67,21 @@ class LikeCountStreamTest < ActionDispatch::IntegrationTest
     assert_redirected_to posts_path
     assert_operator record.reload.updated_at, :>, before
   end
+
+  # The like buttons only carried the count, so a viewer could not hear whether
+  # they had already liked a post or an outfit.
+  test "like buttons say whether the viewer has liked" do
+    record = @user.posts.create!(body: "Ny kåpe")
+    outfit = Outfit.create!(user: @user, name: "Høst")
+
+    get post_path(record)
+    assert_select "form#like_post_#{record.id} button[aria-pressed=false]"
+    get outfit_path(outfit)
+    assert_select "form#like_outfit_#{outfit.id} button[aria-pressed=false]"
+
+    post like_post_path(record), headers: TURBO
+    assert_select "template form#like_post_#{record.id} button[aria-pressed=true]"
+    post like_outfit_path(outfit), headers: TURBO
+    assert_select "template form#like_outfit_#{outfit.id} button[aria-pressed=true]"
+  end
 end

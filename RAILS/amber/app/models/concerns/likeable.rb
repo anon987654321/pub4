@@ -18,4 +18,9 @@ module Likeable
   rescue ActiveRecord::RecordNotUnique
     false
   end
+
+  # The like buttons say whether this viewer already liked, as aria-pressed.
+  def liked_by?(user)
+    user.present? && likes.exists?(user:)
+  end
 end

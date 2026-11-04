@@ -29,7 +29,7 @@ items:
   path: RAILS/amber/app/views/posts/_like_button.html.erb
   item: Give like buttons aria-pressed for the liked state on posts and outfits; the
     label only carries the count.
-  status: open
+  status: done
 - id: amber-004
   app: amber
   area: accessibility
