@@ -392,6 +392,8 @@ en:
     phone_invalid: That phone number looks odd — eight digits, please.
     sign_in_first: Sign in first, then we'll take it from there.
     login_failed: The sign-in was interrupted — please try again.
+    too_many_attempts: Too many tries in a short time — wait a moment and try again.
+    sms_unavailable: Sign-in by SMS is not available yet — sign in with Vipps.
     vipps_login: Sign in with Vipps
     or_sms: or with an SMS code
   flash:

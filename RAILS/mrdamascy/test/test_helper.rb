@@ -155,6 +155,10 @@ module ActiveSupport
     include VippsHttpStubbing
     include StripeHttpStubbing
 
+    # The sign-in rate limit counts in Rails.cache (a memory store here); a
+    # count left by one test would lock the next test's sign_in out.
+    setup { Rails.cache.clear }
+
     # users.role enum (APP_SPEC §4): customer:0 staff:1 courier:2 admin:3
     ROLES = { customer: 0, staff: 1, courier: 2, admin: 3 }.freeze
 
@@ -168,6 +172,7 @@ module ActiveSupport
       # SIGNED cookie. Writing a plain cookie here made every controller see a
       # guest: carts keyed on user_id vanished, the reorder card never
       # rendered, staff pages bounced.
+      post session_request_code_url, params: { phone: user.phone }
       post session_url, params: { phone: user.phone, code: "1234", name: user.name }
       raise "sign-in failed for #{user.phone} (#{response.status})" unless User.exists?(user.id)
       user

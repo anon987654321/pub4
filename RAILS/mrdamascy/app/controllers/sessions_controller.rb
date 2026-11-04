@@ -4,6 +4,15 @@ class SessionsController < ApplicationController
   # Mock OTP — fixed per APP_SPEC §2/§11. No SMS gateway, no extra gem.
   MOCK_CODE = "1234"
 
+  # A fixed code proves nothing, so it may only open accounts while identity
+  # itself is mocked: development, test, or the Vipps mock the demo runs.
+  # With real Vipps Login live it would let anyone become any customer.
+  def self.sms_mocked? = Rails.env.local? || VippsClient.mock_mode?
+
+  # Guessing a code or spraying phone numbers costs a visitor ten tries.
+  rate_limit to: 10, within: 10.minutes, only: %i[request_code create], name: "phone_sign_in",
+             with: -> { redirect_to new_session_path, alert: t("auth.too_many_attempts") }
+
   def new
     return redirect_to(root_path, notice: t("flash.welcome")) if current_user
   end
@@ -18,6 +27,11 @@ class SessionsController < ApplicationController
       return render :new, status: :unprocessable_entity
     end
 
+    unless self.class.sms_mocked?
+      flash.now[:alert] = t("auth.sms_unavailable")
+      return render :new, status: :service_unavailable
+    end
+
     session[:otp_phone] = phone
     session[:otp_code] = MOCK_CODE
 
@@ -29,14 +43,15 @@ class SessionsController < ApplicationController
     render :new
   end
 
-  # Verifies the stored code (or the fixed mock code), find-or-creates the
-  # user by phone, and drops a signed permanent session cookie.
+  # Verifies the code this session requested for this phone, find-or-creates
+  # the user by phone, and drops a signed permanent session cookie. Posting
+  # the fixed code for a phone that never asked for one used to sign in as
+  # anybody, so the code is bound to the session that requested it.
   def create
     phone = params[:phone].to_s.gsub(/\D/, "")
     code = params[:code].to_s.strip
 
-    unless phone.match?(/\A\d{8,12}\z/) && code.present? &&
-           (code == session[:otp_code] || code == MOCK_CODE)
+    unless requested_code?(phone, code)
       flash.now[:alert] = t("auth.code_invalid")
       return render :new, status: :unprocessable_entity
     end
@@ -124,6 +139,14 @@ class SessionsController < ApplicationController
   end
 
   private
+
+  # The code this session asked for, for this phone, while identity is mocked.
+  def requested_code?(phone, code)
+    return false unless self.class.sms_mocked? && phone.match?(/\A\d{8,12}\z/) && code.present?
+
+    phone == session[:otp_phone].to_s &&
+      ActiveSupport::SecurityUtils.secure_compare(code, session[:otp_code].to_s)
+  end
 
   def valid_login_state?
     params[:state].to_s.present? &&

@@ -392,6 +392,8 @@ nb:
     phone_invalid: Telefonnummeret ser rart ut — åtte siffer, takk.
     sign_in_first: Logg inn først, så ordner vi resten.
     login_failed: Innloggingen ble avbrutt — prøv igjen.
+    too_many_attempts: Mange forsøk på kort tid — vent litt og prøv igjen.
+    sms_unavailable: Innlogging med SMS er ikke tilgjengelig ennå — logg inn med Vipps.
     vipps_login: Logg inn med Vipps
     or_sms: eller med SMS-kode
   flash:
