@@ -47,6 +47,9 @@ nb:
     meta_description: "%{name} vedlikeholder %{ports} i OpenBSD-porttreet."
     email_obfuscated: "%{user} (at) %{domain}"
   ports:
+    copy_pkg_add: "pkg_add-kommando"
+    copy_make_install: "Bygg fra porttreet"
+    copy_pkgpath: "Portsti"
     import_status:
       running: "pågår"
       succeeded: "fullført"

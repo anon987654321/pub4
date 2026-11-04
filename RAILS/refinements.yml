@@ -4730,7 +4730,7 @@ items:
   path: RAILS/bsdports/app/views/ports/show.html.erb
   item: Add copy buttons for the pkgpath and for 'cd /usr/ports/<pkgpath> && make
     install' next to the pkg_add command.
-  status: open
+  status: done
 - id: bsdports-065
   app: bsdports
   area: ux

@@ -47,6 +47,9 @@ en:
     meta_description: "%{name} maintains %{ports} in the OpenBSD ports tree."
     email_obfuscated: "%{user} (at) %{domain}"
   ports:
+    copy_pkg_add: "pkg_add command"
+    copy_make_install: "Build from the ports tree"
+    copy_pkgpath: "Port path"
     import_status:
       running: "running"
       succeeded: "completed"

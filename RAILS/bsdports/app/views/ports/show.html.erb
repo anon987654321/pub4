@@ -11,7 +11,11 @@
   <%= tag.p @port.comment %>
   <section class="install-panel" aria-labelledby="install-heading">
     <h2 id="install-heading"><%= t("ports.install") %></h2>
-    <%= render "shared/copyable", text: "doas pkg_add #{@port.name}" %>
+    <%= render "shared/copyable", text: "doas pkg_add #{@port.name}", label: t("ports.copy_pkg_add") %>
+    <%# Building from the ports tree is the other way in; both are one copy away. %>
+    <%= render "shared/copyable", text: "cd /usr/ports/#{@port.pkgpath} && make install",
+                                  label: t("ports.copy_make_install") %>
+    <%= render "shared/copyable", text: @port.pkgpath, label: t("ports.copy_pkgpath") %>
     <p><%= t("ports.install_note_html", platform: @port.platform.name) %></p>
   </section>
   <% if @port.description.present? %>
