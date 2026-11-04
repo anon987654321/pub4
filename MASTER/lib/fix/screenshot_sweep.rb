@@ -7,6 +7,7 @@ require "json"
 require "time"
 require_relative "screenshot_sweep/plan"
 require_relative "screenshot_sweep/camera"
+require_relative "screenshot_sweep/review_set"
 require_relative "visual_runtime"
 require_relative "../../checks/support/deploy_inventory"
 
@@ -49,6 +50,9 @@ module Master
         @bus = bus
         @runtime = runtime || VisualRuntime.new(root:, bus:)
         stamp = Time.now.utc.strftime("%Y%m%dT%H%M%SZ")
+        # Only a sweep into the standing folder refreshes the review set and
+        # prunes; one pointed elsewhere (a test, a one-off) leaves both alone.
+        @standing = out.nil?
         @dir = out || File.join(root, "MASTER", ".master", "visual_artifacts", "sweep-#{stamp}")
         @plan = Plan.new(root:)
         @widths = Array(YAML.safe_load_file(File.join(root, GEOMETRY)).fetch("sweep_widths")).map(&:to_i)
@@ -116,8 +120,15 @@ module Master
         File.write(File.join(@dir, "index.json"), JSON.pretty_generate(summary))
         File.write(File.join(@dir, "index.html"), Gallery.new(summary).render)
         FileUtils.cp(Gallery::STYLESHEET, File.join(@dir, "gallery.css"))
+        refresh_review_set(rows) if @standing && error.nil?
         @bus&.publish("fix_loop:screenshot_sweep", dir: @dir, **totals(rows).transform_keys(&:to_sym))
         summary
+      end
+
+      def refresh_review_set(rows)
+        review = ReviewSet.new(root: @root, sweep_dir: @dir)
+        copied = review.publish!(rows)
+        warn("shots0: review set RAILS/screenshot_*.png, #{copied} pages; pruned #{review.prune!} old sweeps")
       end
 
       def totals(rows)
