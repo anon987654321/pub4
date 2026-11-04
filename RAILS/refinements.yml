@@ -4219,7 +4219,8 @@ items:
   path: RAILS/bsdports/app/views/layouts/application.html.erb
   item: Announce the flash alert through the shared flash toast instead of a <p role=alert>
     rendered above main and outside the toast region.
-  status: open
+  status: invalid
+  note: "The in-page role=alert paragraph is deliberate: shared/flash_toasts toasts only notices, because an alert names something to act on and may not run on a timer (WCAG 2.2.1); it is not duplicated in the toast region."
 - id: bsdports-003
   app: bsdports
   area: accessibility
@@ -4438,7 +4439,7 @@ items:
   path: RAILS/bsdports/app/views/pwa/manifest.json.erb
   item: 'Align the manifest theme_color/background_color (#0ea5e9 sky blue) with the
     white Google-frontpage palette and meta theme-color #ffffff.'
-  status: open
+  status: done
 - id: bsdports-029
   app: bsdports
   area: routing
