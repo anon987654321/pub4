@@ -24,7 +24,7 @@ module Master
                  end
         if result.err?
           message = result.message.to_s
-          vetoed_by = message[/\\Acouncil: veto from ([^\\n]+)/i, 1]
+          vetoed_by = message.match(/\Acouncil: veto from ([^\n]+)/i)&.captures&.first
           if vetoed_by
             bus&.publish("council:veto", vetoed_by:, message: message[0, 500])
           else
