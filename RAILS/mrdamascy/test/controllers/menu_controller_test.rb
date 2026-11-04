@@ -20,6 +20,15 @@ class MenuControllerTest < ActionDispatch::IntegrationTest
     assert_match "Wraps &amp; Ruller", response.body  # HTML-escaped in the section title               # category section
   end
 
+  test "a menu card is named by everything it shows, not the dish name alone" do
+    get root_url
+    card = Nokogiri::HTML(response.body).at_css("a.item-card-hit")
+
+    assert_nil card["aria-label"]
+    assert_includes card.text, @item.name
+    assert_includes card.text, "450 g"
+  end
+
   test "the item page shows the origin story and the options" do
     seed_option!(@item, name: "Toum", kind: "sauce", default_on: true)
     seed_option!(@item, name: "Salat", kind: "topping")

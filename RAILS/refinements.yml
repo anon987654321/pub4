@@ -5105,7 +5105,7 @@ items:
   path: RAILS/mrdamascy/app/views/shared/_item_card.html.erb
   item: Remove aria-label=item.name from the item card link so its accessible name
     includes the origin, heat and badges it visibly contains.
-  status: open
+  status: done
 - id: mrdamascy-007
   app: mrdamascy
   area: accessibility
