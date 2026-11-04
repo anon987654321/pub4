@@ -16,12 +16,16 @@
 
   <ol class="viz-plot">
     <% columns.each do |column| %>
+      <%# One sentence per column for a screen reader ("Never worn: 12 garments");
+          the drawn value and label read as two loose fragments. %>
       <li class="viz-column<%= " is-emphasis" if column[:emphasis] %>">
-        <span class="viz-column-value"><%= column[:value] %></span>
+        <%= tag.span t("wardrobe.viz.column_items", label: column[:label], count: column[:value].to_i),
+                     class: "visually-hidden" %>
+        <%= tag.span column[:value], class: "viz-column-value", aria: { hidden: true } %>
         <% if column[:share].to_f.positive? %>
           <span class="viz-column-fill" style="--share: <%= column[:share] %>"></span>
         <% end %>
-        <span class="viz-column-label"><%= column[:label] %></span>
+        <%= tag.span column[:label], class: "viz-column-label", aria: { hidden: true } %>
       </li>
     <% end %>
   </ol>

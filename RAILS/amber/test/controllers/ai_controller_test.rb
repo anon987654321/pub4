@@ -88,4 +88,15 @@ class AiControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :redirect
   end
+
+  # A description that matched nothing left the page as if it had not been asked.
+  test "a mood board with no match says so" do
+    sign_in_as("ai-mood-empty@example.com")
+
+    # An empty wardrobe: whatever the offline matcher reads, it has nothing to pick.
+    get ai_mood_board_path(description: "neon rave")
+
+    assert_response :success
+    assert_includes response.body, I18n.t("ai.mood_no_match")
+  end
 end

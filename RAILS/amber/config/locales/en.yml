@@ -318,6 +318,9 @@ en:
     your_wardrobe: "Your wardrobe"
     viz:
       region: "Wardrobe figures"
+      column_items:
+        one: "%{label}: %{count} garment"
+        other: "%{label}: %{count} garments"
       category_caption: "Active wardrobe, %{count} garments"
       category_empty: "Add a garment to see what the wardrobe is made of."
       usage: "How often garments get worn"
@@ -382,6 +385,8 @@ en:
     climate: "Climate"
     generate_master: "Generate with MASTER"
     mood_describe: "Describe the aesthetic or paste a style reference"
+    mood_no_match: "Nothing in your wardrobe matches that yet"
+    mood_no_match_body: "Try other words for the look, or add the garments it needs."
     match_wardrobe: "Match from wardrobe"
     body_type: "1. Body type"
     lines_patterns: "2. Lines vs patterns"

@@ -317,6 +317,9 @@ nb:
     your_wardrobe: "Garderoben din"
     viz:
       region: "Garderobefigurer"
+      column_items:
+        one: "%{label}: %{count} plagg"
+        other: "%{label}: %{count} plagg"
       category_caption: "Aktiv garderobe, %{count} plagg"
       category_empty: "Legg til et plagg for å se hva garderoben består av."
       usage: "Hvor ofte plaggene brukes"
@@ -381,6 +384,8 @@ nb:
     climate: "Klima"
     generate_master: "Generer med MASTER"
     mood_describe: "Beskriv estetikken eller lim inn en stilreferanse"
+    mood_no_match: "Ingenting i garderoben passer til det ennå"
+    mood_no_match_body: "Prøv andre ord for stilen, eller legg til plaggene den trenger."
     match_wardrobe: "Match fra garderobe"
     body_type: "1. Kroppstype"
     lines_patterns: "2. Linjer vs mønstre"

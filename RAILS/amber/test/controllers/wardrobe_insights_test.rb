@@ -44,6 +44,10 @@ class WardrobeInsightsTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_select ".viz-plot .viz-column", 6
+    # Each column reads as one sentence; the drawn value and label are hidden from it.
+    never = I18n.t("wardrobe.viz.column_items", label: I18n.t("wardrobe.viz.never"), count: 0)
+    assert_select ".viz-plot .viz-column .visually-hidden", text: never
+    assert_select ".viz-plot .viz-column-value[aria-hidden=true]", 6
   end
 
   test "closet organization is reachable and groups tips by register" do

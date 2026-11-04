@@ -55,7 +55,7 @@ items:
   item: 'Give histogram columns an accessible value (''Never worn: 12 items'') via
     a visually hidden table or aria-label; screen readers read value and label as
     separate fragments.'
-  status: open
+  status: done
 - id: amber-007
   app: amber
   area: accessibility
@@ -638,7 +638,7 @@ items:
   size: S
   path: RAILS/amber/app/views/ai/mood_board.html.erb
   item: Add a result empty state to the mood board when a description returns no match.
-  status: open
+  status: done
 - id: amber-079
   app: amber
   area: ux
