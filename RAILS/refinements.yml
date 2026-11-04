@@ -3271,7 +3271,7 @@ items:
   path: RAILS/brgen/app/views/shared/members_only.html.erb
   item: Pass return_to on the members-only sign-in action so a reader lands back on
     the restricted post after signing in.
-  status: open
+  status: done
 - id: brgen-286
   app: brgen
   area: posts-index

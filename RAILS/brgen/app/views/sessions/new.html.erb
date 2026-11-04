@@ -4,6 +4,8 @@
   <p class="auth-form-lead"><%= t("auth.sign_in_lead") %></p>
   <%= render "shared/oauth_links" %>
   <%= form_with url: session_path do |f| %>
+    <%# Back to the page that asked for a sign-in; checked again on the way out. %>
+    <%= hidden_field_tag :return_to, params[:return_to] if local_return_path(params[:return_to]) %>
     <%= render "shared/errors", object: f.object if f.object.respond_to?(:errors) %>
     <%# input then label, and a one-space placeholder, because that is what
         .field--float needs: :placeholder-shown has to have a placeholder to be

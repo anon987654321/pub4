@@ -19,12 +19,25 @@ class ApplicationController < ActionController::Base
   # the conversation they were invited to, not on the city feed. Without this the
   # link works only for people who already have an account, which is every person
   # except the one it was sent to.
+  #
+  # A sign-in asked for by a page (the members-only post) goes back to it.
   def after_authentication_url
+    back = local_return_path(params[:return_to])
+    return back if back
+
     token = session.delete(:invite_token)
     return super if token.blank?
 
     invite_path(token: token)
   end
+
+  # A path on this site only: an absolute or protocol-relative URL here would
+  # make the sign-in form an open redirect.
+  def local_return_path(path)
+    path = path.to_s
+    path if path.start_with?("/") && !path.start_with?("//", "/\\") && !path.match?(/[[:cntrl:]]/)
+  end
+  helper_method :local_return_path
 
   def set_domain_context
     # City (and full branding/locale) is resolved automatically from the request's TLD/domain.

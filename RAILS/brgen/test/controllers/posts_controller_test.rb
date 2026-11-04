@@ -120,6 +120,37 @@ class PostsControllerTest < ActionDispatch::IntegrationTest
     assert_select "a[aria-label=?]", I18n.t("post.photo_of", number: 2, total: 3, title: "Tre bilder")
   end
 
+  test "a members-only post sends its sign-in back to the post" do
+    city = brgen_city
+    owner = User.create!(email_address: "club-own-#{SecureRandom.hex(4)}@example.com", password: "password12345")
+    member = User.create!(email_address: "club-mem-#{SecureRandom.hex(4)}@example.com", password: "password12345")
+    club = ActsAsTenant.with_tenant(city) do
+      Community.create!(slug: "lukket-#{SecureRandom.hex(3)}", name: "Lukket", user: owner, city:, privacy: "private")
+    end
+    CommunityMembership.create!(community: club, user: member)
+    post = Post.create!(user: owner, title: "Bare for medlemmer", content: "body", city:, community: club)
+    host! "brgen.no"
+
+    get post_url(post)
+    assert_response :forbidden
+    assert_select "a[href=?]", new_session_path(return_to: post_path(post))
+
+    get new_session_path(return_to: post_path(post))
+    assert_select "form[action=?] input[type=hidden][name=return_to][value=?]", session_path, post_path(post)
+    credentials = { email_address: member.email_address, password: "password12345" }
+    post session_url, params: credentials.merge(return_to: post_path(post))
+    assert_redirected_to post_path(post)
+  end
+
+  test "the sign-in refuses to send anyone off the site" do
+    user = User.create!(email_address: "ret-#{SecureRandom.hex(4)}@example.com", password: "password12345")
+    host! "brgen.no"
+
+    credentials = { email_address: user.email_address, password: "password12345" }
+    post session_url, params: credentials.merge(return_to: "//evil.example/steal")
+    assert_redirected_to root_path
+  end
+
   test "show answers markdown for AI and ActivityPub clients" do
     user = User.create!(email_address: "post-md-#{SecureRandom.hex(4)}@example.com", password: "password12345")
     post = Post.create!(user:, title: "Markdown fixture", content: "A body paragraph.", city: brgen_city)
