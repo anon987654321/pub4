@@ -73,7 +73,9 @@ end
   end
 
   def address_params(recipient)
-    { address: { recipient: recipient, line1: "Torget 1", postcode: "5003", city_name: "Bergen", country_code: "NO" } }
+    # marketplace_address: the key the address page's form posts.
+    { marketplace_address: { recipient:, line1: "Torget 1", postcode: "5003",
+                             city_name: "Bergen", country_code: "NO" } }
   end
 
   test "the first address saved becomes the default" do
