@@ -6,7 +6,8 @@ class MessagesController < ApplicationController
 
   def index
     load_inbox
-    @message = Current.user.sent_messages.build
+    # A connection's Message link names the person; the select starts on them.
+    @message = Current.user.sent_messages.build(recipient_id: params[:recipient_id].presence)
     @master_invited = master_invited?
     # One UPDATE, not one per message. This issued a write per unread row on a
     # GET, so opening a large inbox turned a read into an unbounded write burst.

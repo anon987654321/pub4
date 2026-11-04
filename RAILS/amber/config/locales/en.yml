@@ -214,6 +214,7 @@ en:
     shop_smarter: "Shop smarter"
   actions:
     move_up: "Move up"
+    decline: "Decline"
     move_down: "Move down"
     compose_outfit: "Compose an outfit"
     new_post: "New post"
@@ -1125,6 +1126,7 @@ en:
     message_sent: "Message sent."
     connection_accepted: "Connection accepted."
     connection_blocked: "Connection blocked."
+    connection_declined: "Request declined."
     pick_a_garment_first: "Pick at least one garment first."
     look_saved: "Look saved."
     outfit_generated: "Outfit generated."

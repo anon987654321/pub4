@@ -3,14 +3,28 @@
     <% @connections.each do |connection| %>
       <% other = connection.requester == Current.user ? connection.addressee : connection.requester %>
       <article>
-        <%= tag.strong other.display_name %>
+        <%# Who it is: their picture and their profile, not a bare name. %>
+        <% avatar = other.profile&.avatar %>
+        <% if avatar&.attached? %>
+          <%= image_tag avatar, alt: "", class: "avatar avatar--32", width: 32, height: 32, loading: "lazy" %>
+        <% else %>
+          <%= tag.span other.display_name.to_s.first.to_s.upcase, class: "avatar-initials avatar--32",
+                                                                  aria: { hidden: true } %>
+        <% end %>
+        <%= tag.strong link_to(other.display_name, user_path(other)) %>
         <%= t("connections.status.#{connection.status}", default: connection.status) %>
         <% if connection.requester == Current.user && connection.status == "pending" %>
           <%= t("connections.you_requested") %>
         <% end %>
         <% if connection.addressee == Current.user && connection.status == "pending" %>
           <%= button_to t("actions.accept"), connection_path(connection), method: :patch, params: { accept: true }, class: "button", data: { turbo_frame: "connections" } %>
+          <%= button_to t("actions.decline"), connection_path(connection), method: :patch, params: { decline: true },
+                class: "button button-ghost", data: { turbo_frame: "connections" } %>
           <%= button_to t("actions.block"), connection_path(connection), method: :patch, params: { block: true }, class: "button button-ghost", data: { turbo_frame: "connections" } %>
+        <% end %>
+        <% if connection.status == "accepted" %>
+          <%= link_to t("actions.message"), messages_path(recipient_id: other.id),
+                      class: "button", data: { turbo_frame: "_top" } %>
         <% end %>
       </article>
     <% end %>

@@ -646,7 +646,7 @@ items:
   path: RAILS/amber/app/views/connections/_list.html.erb
   item: Add a 'Decline' option to pending connection requests; only Accept and Block
     exist, and Block is the harsh default for a stranger.
-  status: open
+  status: done
 - id: amber-080
   app: amber
   area: ux
@@ -654,7 +654,7 @@ items:
   path: RAILS/amber/app/views/connections/_list.html.erb
   item: Show the other person's avatar and link to their profile in connection rows,
     and add 'Message' for accepted connections.
-  status: open
+  status: done
 - id: amber-081
   app: amber
   area: ux

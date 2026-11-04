@@ -15,13 +15,7 @@ class ConnectionsController < ApplicationController
 
   def update
     connection = Current.user.connections_received.find(params[:id])
-    if params[:accept]
-      connection.accept!
-      notice = t("flash.connection_accepted")
-    elsif params[:block]
-      connection.block!
-      notice = t("flash.connection_blocked")
-    end
+    notice = decide(connection)
     respond_to do |format|
       format.turbo_stream do
         load_connections
@@ -33,10 +27,31 @@ class ConnectionsController < ApplicationController
 
   private
 
+  PROFILE_WITH_AVATAR = { profile: { avatar_attachment: :blob } }.freeze
+
+  # Accept, block or decline, and the notice that says which. Declined is gone
+  # rather than blocked: a stranger turned down may ask again.
+  def decide(connection)
+    if params[:accept]
+      connection.accept!
+      return t("flash.connection_accepted")
+    end
+
+    if params[:block]
+      connection.block!
+      return t("flash.connection_blocked")
+    end
+
+    return unless params[:decline] && connection.status == "pending"
+
+    connection.destroy!
+    t("flash.connection_declined")
+  end
+
   def load_connections
     @pagy, @connections = pagy(
       Connection.where(requester: Current.user).or(Connection.where(addressee: Current.user))
-                .includes(requester: :profile, addressee: :profile).order(created_at: :desc)
+                .includes(requester: PROFILE_WITH_AVATAR, addressee: PROFILE_WITH_AVATAR).order(created_at: :desc)
     )
   end
 end

@@ -213,6 +213,7 @@ nb:
     shop_smarter: "Handle smartere"
   actions:
     move_up: "Flytt opp"
+    decline: "Avslå"
     move_down: "Flytt ned"
     compose_outfit: "Sett sammen antrekk"
     new_post: "Nytt innlegg"
@@ -1129,6 +1130,7 @@ nb:
     message_sent: "Meldingen er sendt."
     connection_accepted: "Forbindelsen er godtatt."
     connection_blocked: "Forbindelsen er blokkert."
+    connection_declined: "Forespørselen er avslått."
     pick_a_garment_first: "Velg minst ett plagg først."
     look_saved: "Antrekket er lagret."
     outfit_generated: "Antrekk er generert."
