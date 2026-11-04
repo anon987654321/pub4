@@ -195,13 +195,25 @@ module Master
 
         private
 
-        # The council reached its deadline after satisfying its declared quorum
-        # and every veto-capable reviewer's response requirement. Non-veto voices
-        # that did not finish are visible as a timeout, not counted as answers.
+        # A timeout is still an incomplete review, even after quorum and veto
+        # checks. Preserve the partial evidence and the satisfied safeguards in
+        # the receipt, but never return a successful council verdict on expiry.
         def deadline_result(feedback)
-          Master::Trace::Dmesg.status("council0", "quorum reached, deadline #{Master::Review::LLMDispatcher::PassClock.budget_s || "cancelled"}s (#{feedback.size} of #{@panel_size} personas answered)")
-          @bus&.publish(:council_timeout, completed: feedback.size, total: @panel_size)
-          Result.ok(feedback)
+          veto_roles_answered = Array(feedback).select { |entry| entry[:veto_role] }.map { |entry| entry[:persona].to_s }
+          budget = Master::Review::LLMDispatcher::PassClock.budget_s || "cancelled"
+          Master::Trace::Dmesg.status("council0", "INCONCLUSIVE, deadline #{budget}s (#{feedback.size} of #{@panel_size} personas answered)")
+          @bus&.publish(
+            :council_timeout,
+            completed: feedback.size,
+            total: @panel_size,
+            quorum: :reached,
+            veto_roles_required: @required_veto_role_names,
+            veto_roles_answered:,
+          )
+          Result.err(
+            "council: incomplete, deadline #{budget}s (#{feedback.size}/#{@panel_size} answered)",
+            category: :timeout,
+          )
         end
 
         def review_round(code, context, round, maximum, image: nil)
