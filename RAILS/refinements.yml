@@ -1275,7 +1275,7 @@ items:
   path: RAILS/brgen/app/controllers/posts_controller.rb
   item: Name each rejection specifically when create fails moderation and keep the
     typed content on new_post_path instead of redirecting to an empty form.
-  status: open
+  status: done
 - id: brgen-050
   app: brgen
   area: compose

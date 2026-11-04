@@ -101,12 +101,7 @@ class PostsController < ApplicationController
     @post.community = @community if @community
     verdict = PostModeration.new(@post).decide
     unless verdict.approved
-      # Named refusals. The one generic message was fine while the only rejection
-      # path was an LLM saying no; the link rule needs to tell the author what to
-      # change, or it reads as the site being broken.
-      key = verdict.reason == :unverified_author_spam_signals ? "flash.link_requires_verified_account"
-                                                           : "flash.post_blocked_by_moderation"
-      redirect_to new_post_path, alert: t(key)
+      refuse_by_moderation(verdict)
       return
     end
 
@@ -215,6 +210,16 @@ class PostsController < ApplicationController
     )
     # A moderator-removed post is gone for everyone, including via direct link.
     raise ActiveRecord::RecordNotFound if @post&.removed_at?
+  end
+
+  # Named refusals, so the link rule tells the author what to change, and the
+  # form comes back with what was typed rather than empty.
+  def refuse_by_moderation(verdict)
+    key = verdict.reason == :unverified_author_spam_signals ? "flash.link_requires_verified_account"
+                                                         : "flash.post_blocked_by_moderation"
+    flash.now[:alert] = t(key)
+    load_compose_choices
+    render :new, status: :unprocessable_entity
   end
 
   def render_members_only
