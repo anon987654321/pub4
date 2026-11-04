@@ -1405,7 +1405,7 @@ items:
   item: Add named rate_limits to LikesController#create and DislikesController#create
     (e.g. 120 per hour); the swipe endpoints take any visible user_id with no throttle
     against scripted mass-liking.
-  status: open
+  status: done
 - id: brgen-066
   app: brgen
   area: dating
@@ -1589,7 +1589,7 @@ items:
   path: RAILS/brgen/app/controllers/event_rsvps_controller.rb
   item: Add rate_limit to EventRsvpsController#create (it has none, unlike votes/reposts)
     so a script cannot churn RSVP rows and attendee notifications.
-  status: open
+  status: done
 - id: brgen-087
   app: brgen
   area: events
@@ -1694,7 +1694,7 @@ items:
   path: RAILS/brgen/app/controllers/fediverse/follows_controller.rb
   item: Add rate_limit to Fediverse::FollowsController#create; each request makes
     the server fetch an arbitrary user-supplied URI and send a signed Follow.
-  status: open
+  status: done
 - id: brgen-099
   app: brgen
   area: fediverse
@@ -1960,7 +1960,7 @@ items:
   path: RAILS/brgen_maps/app/controllers/maps/places_controller.rb
   item: Add a named rate_limit to PlacesController#check_in; soft guests may check
     in and nothing bounds how fast they write PlaceCheckIn rows.
-  status: open
+  status: done
 - id: brgen-131
   app: brgen
   area: maps

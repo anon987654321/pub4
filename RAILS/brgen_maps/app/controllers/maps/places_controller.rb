@@ -6,6 +6,9 @@ module Maps
 
     allow_unauthenticated_access only: %i[index show]
     before_action :require_user_session, only: :check_in
+    # Soft guests may check in, and nothing bounded how fast they wrote rows.
+    rate_limit to: 20, within: 1.hour, only: :check_in, name: "check_ins",
+      with: -> { redirect_back fallback_location: root_path, alert: t("shared.flash.rate_limited") }
 
     def index
       scope = places_scope

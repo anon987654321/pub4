@@ -4,6 +4,9 @@
 class Dating::VerificationsController < Dating::BaseController
   before_action :require_user_session
   before_action :set_profile, only: %i[new create]
+  # Each request is a photo a person has to review.
+  rate_limit to: 5, within: 1.hour, only: :create, name: "verification_requests",
+    with: -> { redirect_back fallback_location: root_path, alert: t("shared.flash.rate_limited") }
 
   # The pose is drawn here and carried in the form, so the reviewer knows which
   # gesture was asked for. Drawing it at submit time would let a stale photo be

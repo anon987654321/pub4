@@ -7,6 +7,9 @@ class EventRsvpsController < ApplicationController
   include Shared::FindableBySlug
 
   before_action :require_user_session
+  # Each RSVP writes a row and notifies the organiser.
+  rate_limit to: 30, within: 10.minutes, only: :create, name: "rsvps",
+    with: -> { redirect_back fallback_location: root_path, alert: t("shared.flash.rate_limited") }
 
   def create
     # A member route on resources :events, so the segment is :id — not

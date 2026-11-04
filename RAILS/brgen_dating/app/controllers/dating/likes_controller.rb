@@ -2,6 +2,9 @@
 
 class Dating::LikesController < Dating::BaseController
   before_action :require_user_session
+  # A swipe takes any visible user_id; nothing bounded how fast a script could like.
+  rate_limit to: 120, within: 1.hour, only: :create, name: "likes",
+    with: -> { redirect_back fallback_location: root_path, alert: t("shared.flash.rate_limited") }
 
   # A like may carry a prompt it is about and a sentence about it — the Hinge
   # interaction — or neither, which is still a like.

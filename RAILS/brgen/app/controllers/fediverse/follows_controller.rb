@@ -4,6 +4,9 @@ module Fediverse
   # Following an account on another instance.
   class FollowsController < ApplicationController
     before_action :require_user_session
+    # Each follow makes the server fetch a user-supplied URI and send a signed request.
+    rate_limit to: 20, within: 1.hour, only: :create, name: "fediverse_follows",
+      with: -> { redirect_back fallback_location: root_path, alert: t("shared.flash.rate_limited") }
 
     def index
       @follows = FediFollow.outbound.where(user_id: Current.user.id).includes(:fedi_actor).order(created_at: :desc)
