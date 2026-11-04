@@ -147,6 +147,8 @@ nb:
     move_down: "Flytt ned"
     any_query: Alle søkeord
     alerts_on: varsler på
+    alerts_turn_on: Slå på varsler
+    alerts_turn_off: Slå av varsler
     partner_program: Partnerprogram
     store_created: Butikken er opprettet
     store_updated: Butikken er oppdatert

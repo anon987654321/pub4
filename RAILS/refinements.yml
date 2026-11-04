@@ -2039,7 +2039,7 @@ items:
   item: Add require_user_session to SavedSearchesController and use create with an
     error flash instead of create!, so a signed-out visitor or an invalid name gets
     a message rather than a 500.
-  status: open
+  status: done
 - id: brgen-140
   app: brgen
   area: marketplace
@@ -2144,7 +2144,7 @@ items:
   path: RAILS/brgen_marketplace/app/views/marketplace/saved_searches/index.html.erb
   item: Add an alerts on/off toggle (update action) per saved search on the saved
     searches page, and include the saved location in the Run search link.
-  status: open
+  status: done
 - id: brgen-152
   app: brgen
   area: marketplace

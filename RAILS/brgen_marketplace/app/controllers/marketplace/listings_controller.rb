@@ -27,6 +27,8 @@ class Marketplace::ListingsController < Marketplace::BaseController
     @facets = Marketplace::ListingFacets.new(scope, params)
     scope = scope.where(category_id: params[:category_id]) if params[:category_id].present?
     scope = scope.where(condition: params[:condition]) if params[:condition].present?
+    # The place a saved search watches, matched the way its alerts match it.
+    scope = scope.where(location: params[:location]) if params[:location].present?
     @search_lat = params[:lat].presence
     @search_lng = params[:lng].presence
     @radius_km = Marketplace::Listing.radius_from(params[:radius_km].presence || Marketplace::Listing::DEFAULT_RADIUS_KM)

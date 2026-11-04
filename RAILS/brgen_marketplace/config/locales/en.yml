@@ -147,6 +147,8 @@ en:
     move_down: "Move down"
     any_query: Any query
     alerts_on: alerts on
+    alerts_turn_on: Turn alerts on
+    alerts_turn_off: Turn alerts off
     partner_program: Partner program
     store_created: Store created
     store_updated: Store updated

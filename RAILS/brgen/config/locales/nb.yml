@@ -1810,6 +1810,8 @@ nb:
       offer_failed: Kunne ikke sende budet.
       review_saved: Vurderingen er lagret.
       search_saved: Søket er lagret.
+      alerts_on: Varsler er slått på for søket.
+      alerts_off: Varsler er slått av for søket.
       search_deleted: Det lagrede søket er slettet.
       payment_statuses:
         open: ikke fullført

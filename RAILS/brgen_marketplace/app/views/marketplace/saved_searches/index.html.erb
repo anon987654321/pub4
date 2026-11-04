@@ -11,8 +11,15 @@
 <% if @saved_searches.any? %>
   <div class="post-grid">
     <% @saved_searches.each do |saved_search| %>
+      <%# The run link carries every part of the search, the place included,
+          so it shows what the alert watches. %>
+      <% run_path = listings_path(q: saved_search.query, category_id: saved_search.category_id,
+                                  location: saved_search.location.presence) %>
       <% search_actions = capture do %>
-        <%= link_to t("marketplace.run_search"), listings_path(q: saved_search.query, category_id: saved_search.category_id), class: "feed-action feed-action--primary" %>
+        <%= link_to t("marketplace.run_search"), run_path, class: "feed-action feed-action--primary" %>
+        <%= button_to (saved_search.notify? ? t("marketplace.alerts_turn_off") : t("marketplace.alerts_turn_on")),
+              saved_search_path(saved_search), method: :patch, params: { notify: !saved_search.notify? },
+              class: "feed-action", aria: { pressed: saved_search.notify? } %>
         <%= button_to t("actions.delete"), saved_search_path(saved_search), method: :delete,
               data: { turbo_confirm: t("marketplace.confirm_delete_saved_search") }, class: "feed-action" %>
       <% end %>
@@ -25,7 +32,7 @@
           (saved_search.notify? ? t("marketplace.alerts_on") : nil)
         ].compact.join(" · "),
         actions: search_actions,
-        url: listings_path(q: saved_search.query, category_id: saved_search.category_id),
+        url: run_path,
         class: "listing" %>
     <% end %>
   </div>

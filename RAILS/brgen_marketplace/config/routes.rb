@@ -49,7 +49,7 @@ end
   get "webhooks/dintero/callback", to: "webhooks#dintero_callback", as: :webhooks_dintero_callback
   post "webhooks/dintero", to: "webhooks#dintero", as: :webhooks_dintero
   resources :categories, only: :show, param: :id
-  resources :saved_searches, only: %i[index create destroy]
+  resources :saved_searches, only: %i[index create update destroy]
   # The saved list. The star on every card had nowhere to lead until now.
   #
   # /wishlist, not /saved: the host declares `get "saved" => "bookmarks#index"`

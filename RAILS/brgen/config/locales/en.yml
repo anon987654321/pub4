@@ -1801,6 +1801,8 @@ en:
       offer_failed: Could not send the offer.
       review_saved: Review saved.
       search_saved: Search saved.
+      alerts_on: Alerts are on for this search.
+      alerts_off: Alerts are off for this search.
       search_deleted: Saved search deleted.
       payment_statuses:
         open: not completed
