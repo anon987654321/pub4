@@ -3856,7 +3856,7 @@ items:
   item: Broadcast status changes on the order (turbo_stream_from @order, replace the
     status block on transition) so the diner's tracking page updates without reloading,
     and narrow aria-live to the current status line instead of the whole chips block.
-  status: open
+  status: done
 - id: brgen-358
   app: brgen
   area: takeaway

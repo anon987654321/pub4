@@ -1544,6 +1544,7 @@ nb:
     nearby_restaurants: I nærheten
     leave_review: Legg igjen en omtale
     status_timeline: Statusforløp
+    status_now: "Nå: %{status}"
     courier_distance: "%{km} km unna"
     courier_unassigned: Ingen ledig bud i nærheten ennå.
     order_cancelled: Bestillingen er kansellert

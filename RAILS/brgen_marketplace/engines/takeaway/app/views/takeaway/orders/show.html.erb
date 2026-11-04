@@ -5,7 +5,6 @@
     <p><%= link_to @order.restaurant.name, restaurant_path(@order.restaurant) %></p>
     <%= tag.h1 t("takeaway.order_title", id: @order.id) %>
   </hgroup>
-  <span class="chip"><%= t("takeaway.statuses.#{@order.status}") %></span>
 </div>
 
 <%# One ticket, several people. Only the host opens it and only the host sends
@@ -21,47 +20,8 @@
   </p>
 <% end %>
 
-<div class="order-status" role="status" aria-live="polite">
-  <%= tag.h2 t("takeaway.status_timeline") %>
-  <div class="chips">
-    <% Takeaway::Order::STATUSES.each do |status| %>
-      <span class="chip"><%= t("takeaway.statuses.#{status}") %><%= " ✓" if @order.status == status %></span>
-    <% end %>
-  </div>
-  <% if (fraction = @order.progress_fraction) %>
-    <div class="order-progress" role="presentation">
-      <div class="order-progress-fill" style="--progress: <%= (fraction * 100).round %>%"></div>
-    </div>
-  <% end %>
-  <%# An unaccepted cart expires on a clock; say so while it still can. Same
-      countdown controller as the ETA, pointed at the same kind of deadline. %>
-  <% if @order.status == "pending" && @order.expires_at.present? %>
-    <p class="eta-badge" data-controller="countdown" data-countdown-target-time-value="<%= @order.expires_at.iso8601 %>"><%= t("takeaway.cart_expiring") %></p>
-  <% end %>
-  <% if @order.status == "delivered" %>
-    <p class="eta-badge eta-badge--done"><%= t("takeaway.delivered") %></p>
-  <% elsif @order.status == "cancelled" %>
-    <p class="eta-badge eta-badge--cancelled"><%= t("takeaway.order_cancelled") %></p>
-  <% else %>
-    <p class="eta-badge" data-controller="countdown" data-countdown-target-time-value="<%= @order.estimated_ready_at.iso8601 %>"><%= t("takeaway.eta_calculating") %></p>
-  <% end %>
-
-  <%# Named courier once one is dispatched. Absence is a real state — nobody
-      free within the dispatch radius — so it says so rather than rendering an
-      empty row. %>
-  <% if @order.status == "out_for_delivery" %>
-    <% if (courier = @order.courier_display_name) %>
-      <p class="courier">
-        <%= tag.strong courier %>
-        <% if (km = @order.courier_distance_km) %>
-          <%= t("takeaway.courier_distance", km: km.round(1)) %>
-        <% end %>
-      </p>
-    <% else %>
-      <p class="courier"><%= t("takeaway.courier_unassigned") %></p>
-    <% end %>
-  <% end %>
-</div>
+<%= turbo_stream_from @order %>
+<%= render "takeaway/orders/status", order: @order %>
 
 <article aria-label="<%= t("takeaway.order_item") %>">
   <p><%= t("takeaway.delivery_to", address: @order.delivery_address) %></p>

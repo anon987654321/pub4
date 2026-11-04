@@ -1,0 +1,48 @@
+<%# The order's status block on the diner's tracking page. Takeaway::Order
+    replaces it whenever the order moves, so the page follows the kitchen
+    without a reload; only the "now" line is a live region, so a screen reader
+    hears the new status rather than the whole timeline again. %>
+<%= tag.div id: dom_id(order, :status), class: "order-status" do %>
+  <%= tag.p t("takeaway.status_now", status: t("takeaway.statuses.#{order.status}")), role: "status" %>
+  <%= tag.h2 t("takeaway.status_timeline") %>
+  <div class="chips">
+    <%= safe_join(Takeaway::Order::STATUSES.map do |status|
+          tag.span("#{t("takeaway.statuses.#{status}")}#{" ✓" if order.status == status}", class: "chip")
+        end) %>
+  </div>
+  <% if (fraction = order.progress_fraction) %>
+    <div class="order-progress" role="presentation">
+      <div class="order-progress-fill" style="--progress: <%= (fraction * 100).round %>%"></div>
+    </div>
+  <% end %>
+  <%# An unaccepted cart expires on a clock; say so while it still can. Same
+      countdown controller as the ETA, pointed at the same kind of deadline. %>
+  <% if order.status == "pending" && order.expires_at.present? %>
+    <%= tag.p t("takeaway.cart_expiring"), class: "eta-badge",
+              data: { controller: "countdown", countdown_target_time_value: order.expires_at.iso8601 } %>
+  <% end %>
+  <% if order.status == "delivered" %>
+    <%= tag.p t("takeaway.delivered"), class: "eta-badge eta-badge--done" %>
+  <% elsif order.status == "cancelled" %>
+    <%= tag.p t("takeaway.order_cancelled"), class: "eta-badge eta-badge--cancelled" %>
+  <% else %>
+    <%= tag.p t("takeaway.eta_calculating"), class: "eta-badge",
+              data: { controller: "countdown", countdown_target_time_value: order.estimated_ready_at.iso8601 } %>
+  <% end %>
+
+  <%# Named courier once one is dispatched. Absence is a real state — nobody
+      free within the dispatch radius — so it says so rather than rendering an
+      empty row. %>
+  <% if order.status == "out_for_delivery" %>
+    <% if (courier = order.courier_display_name) %>
+      <p class="courier">
+        <%= tag.strong courier %>
+        <% if (km = order.courier_distance_km) %>
+          <%= t("takeaway.courier_distance", km: km.round(1)) %>
+        <% end %>
+      </p>
+    <% else %>
+      <%= tag.p t("takeaway.courier_unassigned"), class: "courier" %>
+    <% end %>
+  <% end %>
+<% end %>

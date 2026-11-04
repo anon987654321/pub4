@@ -43,6 +43,7 @@ class Takeaway::Order
         source: self,
         # Waiting on food is the case a push exists for.
         kind: "order")
+      broadcast_status_change
       record_activity!("TakeawayOrderUpdated",
         actor: restaurant_record&.user,
         source_vertical: "takeaway",
@@ -66,6 +67,15 @@ class Takeaway::Order
     def prepare! = transition_to!("preparing")
     def dispatch! = transition_to!("out_for_delivery")
     def deliver! = transition_to!("delivered")
+
+    # The diner's tracking page subscribes to the order; every move redraws its
+    # status block there.
+    def broadcast_status_change
+      Turbo::StreamsChannel.broadcast_replace_to(
+        self, target: ActionView::RecordIdentifier.dom_id(self, :status),
+        partial: "takeaway/orders/status", locals: { order: self }
+      )
+    end
 
     private
 
