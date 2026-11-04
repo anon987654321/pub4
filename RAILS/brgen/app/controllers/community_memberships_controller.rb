@@ -15,7 +15,13 @@ class CommunityMembershipsController < ApplicationController
 
   def destroy
     # Scoped to Current.user's own membership — you only ever leave for yourself.
-    Current.user.community_memberships.find_by(community_id: params[:community_id])&.destroy
-    redirect_back fallback_location: main_app.community_path(params[:community_id]), notice: t("community.left", default: "Left.")
+    membership = Current.user.community_memberships.find_by(community_id: params[:community_id])
+    back = main_app.community_path(params[:community_id])
+    # The last owner is refused: hand ownership on first, or the community has nobody to run it.
+    if membership && !membership.destroy
+      redirect_back fallback_location: back, alert: t("flash.community.last_owner_leaving")
+      return
+    end
+    redirect_back fallback_location: back, notice: t("community.left", default: "Left.")
   end
 end

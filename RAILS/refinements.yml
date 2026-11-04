@@ -1124,7 +1124,7 @@ items:
   item: Block the last owner from leaving in CommunityMembershipsController#destroy
     (the last_owner guard only fires on role change, not on destroy), so a community
     cannot be orphaned.
-  status: open
+  status: done
 - id: brgen-031
   app: brgen
   area: communities

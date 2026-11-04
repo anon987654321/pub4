@@ -143,4 +143,23 @@ class CommunityGovernanceTest < ActiveSupport::TestCase
 
     assert_equal 1, c.moderation_queue.count
   end
+
+  # The last_owner guard fired only on a role change, so the sole owner could
+  # leave and orphan the community.
+  test "the last owner cannot leave, but a second owner frees the first" do
+    c = community
+    sole = c.community_memberships.find_by!(user: @owner)
+
+    refute sole.destroy, "the only owner left the community"
+    assert c.community_memberships.exists?(user: @owner, role: "owner")
+
+    c.community_memberships.create!(user: @mod, role: "owner")
+    assert sole.reload.destroy
+  end
+
+  test "deleting a community still removes its last owner's membership" do
+    c = community
+    assert c.destroy
+    refute CommunityMembership.exists?(community_id: c.id)
+  end
 end

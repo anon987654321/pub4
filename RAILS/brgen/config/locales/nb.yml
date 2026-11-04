@@ -1739,6 +1739,7 @@ nb:
     story_removed: Historie slettet
     community:
       banned: Utestengt
+      last_owner_leaving: Du er eneste eier. Gjør noen andre til eier før du forlater fellesskapet.
       ban_lifted: Utestengelse opphevet
       no_such_person: Fant ikke personen
       not_a_member: Denne personen er ikke medlem

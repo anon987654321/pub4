@@ -1730,6 +1730,7 @@ en:
     story_removed: Story removed
     community:
       banned: Banned
+      last_owner_leaving: You are the only owner. Make someone else an owner before you leave.
       ban_lifted: Ban lifted
       no_such_person: No such person
       not_a_member: That person is not a member

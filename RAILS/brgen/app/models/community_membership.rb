@@ -11,6 +11,7 @@ class CommunityMembership < ApplicationRecord
   validates :user_id, uniqueness: { scope: :community_id }
   validates :role, inclusion: { in: ROLES }
   validate :owner_cannot_be_demoted_to_nothing, on: :update
+  before_destroy :last_owner_cannot_leave
 
   scope :moderating, -> { where(role: %w[moderator owner]) }
 
@@ -27,5 +28,15 @@ class CommunityMembership < ApplicationRecord
     return if community.community_memberships.where(role: "owner").where.not(id: id).exists?
 
     errors.add(:role, :last_owner)
+  end
+
+  # Leaving is the other way to lose the last owner. Deleting the community or the
+  # account cascades through here too, and those must still go through.
+  def last_owner_cannot_leave
+    return if destroyed_by_association || !owner?
+    return if CommunityMembership.where(community_id:, role: "owner").where.not(id:).exists?
+
+    errors.add(:role, :last_owner)
+    throw :abort
   end
 end
