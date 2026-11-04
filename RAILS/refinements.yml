@@ -355,7 +355,7 @@ items:
   path: RAILS/amber/app/views/messages/index.html.erb
   item: Wrap message <li> rows in a <ol id=message-list>; messages/index renders li
     elements directly inside a <section>, which is invalid.
-  status: open
+  status: done
 - id: amber-044
   app: amber
   area: markup
@@ -485,7 +485,8 @@ items:
   path: RAILS/amber/app/controllers/sitemaps_controller.rb
   item: Limit sitemap posts to Post.public_feed so private-account posts are not advertised
     to crawlers.
-  status: open
+  status: invalid
+  note: "Post.public_feed is only recent with no privacy filter, and posts#index/#show serve every post to guests, so the sitemap lists what is already public. Whether profile visibility should hide posts is an operator decision."
 - id: amber-060
   app: amber
   area: seo
@@ -548,7 +549,7 @@ items:
   path: RAILS/amber/test/controllers
   item: Add a messages test that the inbox markup is a valid list and that the empty
     state disappears after the first send.
-  status: open
+  status: done
 - id: amber-068
   app: amber
   area: tests
@@ -762,7 +763,8 @@ items:
   path: RAILS/amber/app/views/messages/_message.html.erb
   item: Preserve line breaks in message bodies with simple_format; multi-line messages
     collapse into one paragraph.
-  status: open
+  status: invalid
+  note: ".amber-message p already has white-space: pre-wrap in application.scss, so line breaks in message bodies are kept."
 - id: amber-095
   app: amber
   area: ux
@@ -771,7 +773,7 @@ items:
   item: 'Remove the empty state after the first message is sent; create.turbo_stream
     prepends into #message-list but the ''no messages'' empty state stays above the
     new row.'
-  status: open
+  status: done
 - id: amber-096
   app: amber
   area: ux
@@ -4474,10 +4476,7 @@ items:
     LIKE, so page 2+ of a search matches the same pkgpath/maintainer/dependency/advisory
     fields as page 1.
   status: invalid
-  note: 'Page 1 never reaches Port.search either: Shared::LiveSearch gates FTS on data_source_exists?("ports_fts"),
-  which is false for SQLite virtual tables, so both pages run the same name/comment/description
-  LIKE. The real defect is in RAILS/__shared/app/services/shared/live_search.rb (out
-  of scope here).'
+  note: "Page 1 never reaches Port.search either: Shared::LiveSearch gates FTS on data_source_exists?(\"ports_fts\"), which is false for SQLite virtual tables, so both pages run the same name/comment/description LIKE. The real defect is in RAILS/__shared/app/services/shared/live_search.rb (out of scope here)."
 - id: bsdports-034
   app: bsdports
   area: seo

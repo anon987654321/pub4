@@ -2349,6 +2349,7 @@ main#main-content form .field :is(
 .amber-messenger-composer .field:first-of-type{display:none}
 .amber-messenger-composer textarea,.amber-messenger-composer select{width:100%;min-height:var(--tap-min);border:1px solid var(--border);border-radius:0;background:var(--surface);color:var(--text);padding:var(--space-2) var(--space-3);font:inherit}
 .amber-messenger-composer .button{width:100%}
+.amber-message-list{list-style:none;margin:0;padding:0}
 .amber-message{padding:var(--space-3) var(--space-4)}
 .amber-message header{display:flex;align-items:baseline;justify-content:space-between;gap:var(--space-3);font-size:var(--text-extra-small)}
 .amber-message p{margin:var(--space-1) 0 0;white-space:pre-wrap;overflow-wrap:anywhere}

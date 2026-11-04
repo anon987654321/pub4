@@ -16,14 +16,17 @@
   <%= render "messages/form", message: @message, recipients: @recipients %>
 </section>
 
-<section aria-label="<%= t("messages.title") %>" id="message-list">
-  <% if @messages.any? %>
-    <%= render partial: "messages/message", collection: @messages, as: :message %>
-  <% else %>
-    <%= render "shared/empty_state",
-          title: t("empty.no_messages"),
-          body: t("messages.empty_body"),
-          action: { label: t("messages.connections"), path: connections_path } %>
+<section aria-label="<%= t("messages.title") %>">
+  <%# An ol even when empty: create.turbo_stream prepends the first message
+      into it, and removes the empty state beside it. %>
+  <%= tag.ol render(partial: "messages/message", collection: @messages, as: :message),
+             id: "message-list", class: "amber-message-list" %>
+  <% if @messages.empty? %>
+    <%= tag.div render("shared/empty_state",
+                       title: t("empty.no_messages"),
+                       body: t("messages.empty_body"),
+                       action: { label: t("messages.connections"), path: connections_path }),
+                id: "message-list-empty" %>
   <% end %>
 </section>
 
