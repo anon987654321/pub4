@@ -443,7 +443,7 @@ items:
   path: RAILS/amber/app/views/outfits/_live_search_results.html.erb
   item: Use outfit.items.size in outfit show and live search tag-rows; @outfit.items.count
     and outfits.sum { items.count } issue a COUNT per outfit.
-  status: open
+  status: done
 - id: amber-055
   app: amber
   area: performance

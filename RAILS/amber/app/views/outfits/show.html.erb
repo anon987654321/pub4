@@ -8,7 +8,7 @@
 </header>
 
 <div class="tag-row">
-  <span class="tag"><%= t("outfits.linked_items", count: @outfit.items.count) %></span>
+  <%= tag.span t("outfits.linked_items", count: @outfit.items.size), class: "tag" %>
   <%= render "outfits/likes_tag", outfit: @outfit %>
   <span class="tag"><%= t("outfits.combined_wears", count: @outfit.total_wears) %></span>
   <% if @outfit.estimated_value.positive? %><span class="tag"><%= t("outfits.wardrobe_value", amount: number_to_currency(@outfit.estimated_value)) %></span><% end %>
