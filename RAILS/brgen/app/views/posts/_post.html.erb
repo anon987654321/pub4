@@ -164,6 +164,7 @@
           upvoted: Current.user.present? && post.upvoted_by?(Current.user),
           downvoted: Current.user.present? && post.downvoted_by?(Current.user),
           actions: post_actions,
+          meta: (render("posts/edited_mark", at: post.edited_at) if post.edited_at),
           frame: false %>
   <% end %>
 </turbo-frame>

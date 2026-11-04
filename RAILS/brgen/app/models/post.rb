@@ -52,6 +52,14 @@ class Post < ApplicationRecord
 
   include LiveCard
 
+  # The author's edit. A changed title or body stamps edited_at, which the card
+  # and the post page show; a new image or community alone does not.
+  def revise(attributes)
+    assign_attributes(attributes)
+    self.edited_at = Time.current if will_save_change_to_title? || will_save_change_to_content?
+    save
+  end
+
   def to_markdown
     [ "# #{title}", content.to_s ].join("\n\n")
   end

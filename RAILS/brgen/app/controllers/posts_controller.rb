@@ -122,7 +122,7 @@ class PostsController < ApplicationController
   end
 
   def update
-    unless @post.update(post_params)
+    unless @post.revise(post_params)
       load_compose_choices
       return render :edit, status: :unprocessable_entity
     end

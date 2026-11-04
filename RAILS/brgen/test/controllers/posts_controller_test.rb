@@ -177,6 +177,29 @@ class PostsControllerTest < ActionDispatch::IntegrationTest
     assert_includes response.body, "A body paragraph."
   end
 
+  test "an edit to what a post says marks it edited on its page and its card" do
+    author = User.create!(email_address: "post-edit-#{SecureRandom.hex(4)}@example.com", password: "password12345",
+                          city: brgen_city)
+    post_record = ActsAsTenant.with_tenant(brgen_city) do
+      Post.create!(user: author, title: "Først", content: "Opprinnelig tekst", city: brgen_city)
+    end
+    host! "brgen.no"
+    post session_url, params: { email_address: author.email_address, password: "password12345" }
+    edited = I18n.t("posts.edited", locale: :nb)
+
+    get post_url(post_record)
+    assert_select ".feed-post-show-meta .edited-mark", 0
+
+    patch post_url(post_record), params: { post: { content: "Rettet tekst" } }
+    post_record.reload
+    assert post_record.edited_at, "the edit was not stamped"
+
+    get post_url(post_record)
+    assert_select ".feed-post-show-meta .edited-mark", text: edited
+    get posts_url
+    assert_select "turbo-frame#post_#{post_record.id} .feed-card-meta .edited-mark", text: edited
+  end
+
   test "non-owner cannot update another user's post" do
     owner = User.create!(email_address: "post-owner-#{SecureRandom.hex(4)}@example.com", password: "password12345")
     other = User.create!(email_address: "post-other-#{SecureRandom.hex(4)}@example.com", password: "password12345")

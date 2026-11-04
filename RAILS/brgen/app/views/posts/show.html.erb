@@ -22,6 +22,7 @@
         <%= @post.attributed? ? link_to(@post.author_name, user_path(@post.user)) : @post.author_name %> ·
         <%= tag.time time_ago(@post.created_at), datetime: @post.created_at.iso8601,
                      title: l(@post.created_at, format: :long) %>
+        <% if @post.edited_at %>· <%= render "posts/edited_mark", at: @post.edited_at %><% end %>
         <% if @post.reading_time_minutes.positive? %>
           · <%= t("posts.min_read", n: @post.reading_time_minutes) %>
         <% end %>

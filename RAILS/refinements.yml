@@ -3180,7 +3180,7 @@ items:
   path: RAILS/brgen/app/views/posts/show.html.erb
   item: Mark edited posts with a small 'edited' marker on cards and show, as messages
     already do with edited_at.
-  status: open
+  status: done
 - id: brgen-274
   app: brgen
   area: post-show

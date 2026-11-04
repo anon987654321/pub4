@@ -917,6 +917,7 @@ nb:
     within_a_km: "under 1 km unna"
     km_away: "%{count} km unna"
   posts:
+    edited: endret
     link_copied: Lenken er kopiert
     confirm_delete: Slette dette innlegget?
     community_label: Fellesskap

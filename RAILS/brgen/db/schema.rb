@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.2].define(version: 2026_11_04_100000) do
+ActiveRecord::Schema[8.2].define(version: 2026_11_04_200000) do
   create_table "account_merges", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "guest_user_id", null: false
@@ -1478,6 +1478,7 @@ ActiveRecord::Schema[8.2].define(version: 2026_11_04_100000) do
     t.datetime "created_at", null: false
     t.integer "crossposted_from_id"
     t.integer "crossposts_count", default: 0, null: false
+    t.datetime "edited_at"
     t.string "flair"
     t.decimal "latitude", precision: 10, scale: 6
     t.json "link_embed"
