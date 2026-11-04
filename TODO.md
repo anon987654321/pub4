@@ -1249,3 +1249,46 @@ that need the semantic census above before any move. Asterisked rows first.
 - [ ] Each tree keeps one README with a three-line purpose at the top.
 - [ ] Move every generator's output path into one manifest.
 - [ ] Remove the snapshot pre-push step once snapshots are release artefacts.
+
+## pub5 — a ported fresh start (planned 2026-11-04)
+
+pub5 is a new repository built by porting pub4, not rewriting it: every
+behaviour is locked as an executable contract in pub4 first, then rebuilt
+smaller against that contract. Target about 2,700–3,300 files from about
+6,000 (MASTER 700–900, RAILS 1,800–2,200, OPENBSD 100–150, STUDIO 40–50).
+Rule for the whole port: same behaviour, less code; new features wait.
+
+### Phase 0 — lock behaviour in pub4
+
+- [ ] * Route contracts: per app and route, the anonymous GET status, redirect target, title, landmarks and form actions, recorded from a running app and checkable against any base URL.
+- [ ] Signed-in route contracts with a seeded demo user.
+- [ ] Golden screenshots for every manifest route and dialog state at 390, 768 and 1280 px.
+- [ ] One proof fixture per Law generated from `laws.yml`, runnable against either repo.
+- [ ] Data export/import round-trip test per app schema.
+- [ ] MASTER CLI command contract: command, exit code, output shape.
+- [ ] One acceptance command that runs all of the above against a target repo or URL.
+
+### Phase 1 — skeleton
+
+- [ ] Root README and `AGENTS.md` only; one Ruby version reconciled with vm23; one lint config; one test command; commit-format hook from the first commit; generated output outside git.
+
+### Phase 2 — OPENBSD
+
+- [ ] Port with configs generated from `data/` and one Ruby deploy tool that ships a Mac-built artifact.
+
+### Phase 3 — RAILS
+
+- [ ] Shared base (tokens, SCSS foundation, Stimulus, auth, embeds, PWA), then bsdports, mrdamascy, amber, brgen core, and each brgen engine under `brgen/engines/`. Each app goes live only when its contracts and screenshots pass.
+
+### Phase 4 — STUDIO
+
+- [ ] dilla and postpro behind one CLI.
+
+### Phase 5 — MASTER
+
+- [ ] Port last; pub4 MASTER governs until pub5 MASTER passes every Law fixture. `soul.yml` and `laws.yml` move byte for byte.
+
+### Conditions
+
+- [ ] Freeze pub4 for other writers, or route them to pub5, before Phase 1.
+- [ ] pub4 stays as a read-only archive; pub5's first commit names the pub4 commit it ported from.
