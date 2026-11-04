@@ -134,6 +134,9 @@ en:
       blocked: blocked
     deals:
       ends_in: "ends in %{time}"
+    persuasion:
+      only_n_left: "Only %{n} left"
+      was_price: "Was %{price}"
     wishlist:
       add: Save listing
       remove: Remove from saved

@@ -43,6 +43,9 @@ class Marketplace::Listing < ApplicationRecord
   has_many :variants, class_name: "Marketplace::Variant", dependent: :destroy
   has_many :events, class_name: "Marketplace::ListingEvent",
            foreign_key: :listing_id, dependent: :delete_all, inverse_of: :listing
+  # The price trail the Omnibus anchor reads — see record_price_observation.
+  has_many :price_observations, class_name: "Marketplace::ListingPriceObservation",
+           foreign_key: :listing_id, dependent: :delete_all, inverse_of: :listing
   has_one :job_detail, class_name: "Marketplace::JobDetail", dependent: :destroy
   has_one :housing_detail, class_name: "Marketplace::HousingDetail", dependent: :destroy
   has_one :gig_detail, class_name: "Marketplace::GigDetail", dependent: :destroy
@@ -202,6 +205,53 @@ class Marketplace::Listing < ApplicationRecord
   def in_stock? = one_of_a_kind? ? !sold? : stock.to_i.positive?
 
   def available_quantity = one_of_a_kind? ? (sold? ? 0 : 1) : stock.to_i
+
+  # --- Persuasion truth: the grey patterns must stay grey ---
+  # A scarcity badge is grey only while the count is the real one. nil stock is
+  # one of a kind (never scarce, however the card feels about it), a varied
+  # listing sells by its variants so the listing-level number would lie, a
+  # sold one has nothing left, and anything above the threshold is not scarce
+  # no matter how much a card would like it to be. Cards render
+  # scarcity_quantity only when it answers.
+  SCARCITY_THRESHOLD = 5
+
+  def scarcity_quantity
+    return if one_of_a_kind? || varied? || sold?
+    return unless (1..SCARCITY_THRESHOLD).cover?(stock.to_i)
+
+    stock.to_i
+  end
+
+  # The Omnibus Art. 6a anchor: the lowest price this listing actually carried
+  # in the trailing 30 days, or nil. A card may say "was X" only when X is
+  # that observed minimum and the current price is strictly below it — never
+  # from a seller-entered field, and never from a price nobody observed.
+  def omnibus_reference_price_cents
+    price_observations.trailing_30_days.minimum(:price_cents)
+  end
+
+  # Nil, or the Omnibus-true "was" price for a deal card, formatted. One
+  # reader so every card renders the anchor the same way; the current price
+  # not being strictly below the minimum is exactly the case where there is
+  # nothing honest to say.
+  def omnibus_anchor_display
+    was = omnibus_reference_price_cents
+    return if was.nil? || price_cents.nil? || price_cents >= was
+
+    Shared::MoneyDisplay.format(was)
+  end
+
+  # The observation trail the anchor reads. Creation observes too, so a
+  # freshly repriced listing still has a window; a nil price (job, housing and
+  # gig listings carry none) observes nothing.
+  after_create :record_price_observation
+  after_update :record_price_observation, if: :saved_change_to_price_cents?
+
+  def record_price_observation
+    return if price_cents.blank?
+
+    price_observations.create!(price_cents: price_cents, observed_at: Time.current)
+  end
 
   # Called when an order is paid. update_column-style so a legacy listing with a
   # since-tightened validation cannot block a sale that has already been paid

@@ -802,6 +802,16 @@ ActiveRecord::Schema[8.2].define(version: 2026_11_03_120000) do
     t.index ["user_id"], name: "index_marketplace_listing_favorites_on_user_id"
   end
 
+  create_table "marketplace_listing_price_observations", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.integer "listing_id", null: false
+    t.datetime "observed_at", null: false
+    t.integer "price_cents", null: false
+    t.datetime "updated_at", null: false
+    t.index ["listing_id"], name: "index_marketplace_price_observations_on_listing"
+    t.index ["listing_id", "observed_at"], name: "index_marketplace_price_observations_on_listing_time"
+  end
+
   create_table "marketplace_listings", force: :cascade do |t|
     t.string "buy_box_key"
     t.integer "category_id", null: false

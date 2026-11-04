@@ -53,6 +53,7 @@
       <div class="listing-source-badges">
         <%= tag.span listing.store_id.present? ? t("marketplace.from_a_shop") : t("marketplace.from_a_person"), class: "store-badge listing-source-badge#{listing.store_id.present? ? " listing-source-badge--shop" : ""}" %>
         <%= tag.span listing.delivery_badge, class: "store-badge store-badge--delivery" if listing.delivery_badge.present? %>
+        <%= tag.span t("marketplace.persuasion.only_n_left", n: listing.scarcity_quantity), class: "store-badge store-badge--scarcity" if listing.scarcity_quantity %>
       </div>
       <% if (seller = listing.user&.display_name).present? %>
         <%= tag.span t("marketplace.seller_badge", name: seller), class: "store-badge" %>

@@ -9,6 +9,13 @@
   <div class="deal-card-body">
     <% if listing %>
       <div class="deal-price"><%= listing.price_display %></div>
+      <% if (was = listing.omnibus_anchor_display) %>
+        <%# Omnibus Art. 6a: the observed trailing-30-day minimum, rendered
+            only when the current price is strictly below it. The number
+            comes from ListingPriceObservation, never from a seller field —
+            the persuasion_honesty contract forbids the literal. %>
+        <p class="deal-meta deal-meta--was"><%= t("marketplace.persuasion.was_price", price: was) %></p>
+      <% end %>
     <% end %>
     <h2 class="deal-card-title"><%= deal.headline %></h2>
     <%# The rungs in StorefrontCardLadderTest's order: what the deal sells, its
@@ -19,6 +26,12 @@
       <% if listing.reviews_count.to_i.positive? %>
         <%= render "shared/store_stars", rating: listing.rating, count: listing.reviews_count %>
       <% end %>
+    <% end %>
+    <% if listing&.scarcity_quantity %>
+      <%# True scarcity: the real available count from the listing row, for
+            the narrow band where it is genuinely low. One of a kind, varied
+            and sold listings answer nil and render nothing. %>
+      <p class="deal-meta deal-meta--scarcity"><%= t("marketplace.persuasion.only_n_left", n: listing.scarcity_quantity) %></p>
     <% end %>
     <% if deal.ends_in %>
       <p class="deal-meta deal-meta--countdown"><%= t("marketplace.deals.ends_in", time: distance_of_time_in_words(Time.current, deal.ends_at)) %></p>
