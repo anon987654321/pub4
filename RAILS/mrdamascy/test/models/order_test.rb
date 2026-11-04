@@ -127,6 +127,19 @@ class OrderTest < ActiveSupport::TestCase
     assert_equal "delivered", order.reload.state
   end
 
+  test "each move keeps its own moment" do
+    order = seed_order!(user: @user, kitchen: @kitchen, state: "placed")
+    times = {}
+    travel_to(Time.zone.local(2026, 11, 4, 12, 0)) { order.advance!; times[:confirmed_at] = Time.current }
+    travel_to(Time.zone.local(2026, 11, 4, 12, 3)) { order.advance! }
+    travel_to(Time.zone.local(2026, 11, 4, 12, 15)) { order.advance!; times[:ready_at] = Time.current }
+    travel_to(Time.zone.local(2026, 11, 4, 12, 20)) { order.pickup!; times[:picked_up_at] = Time.current }
+    travel_to(Time.zone.local(2026, 11, 4, 12, 35)) { order.deliver!; times[:delivered_at] = Time.current }
+
+    order.reload
+    times.each { |column, moment| assert_equal moment, order.public_send(column), column }
+  end
+
   test "delivering awards exactly one loyalty stamp to the order's user" do
     order = seed_order!(user: @user, kitchen: @kitchen, state: "ready")
 

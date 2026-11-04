@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.2].define(version: 2026_11_04_150000) do
+ActiveRecord::Schema[8.2].define(version: 2026_11_04_160000) do
   create_table "cart_items", force: :cascade do |t|
     t.integer "cart_id", null: false
     t.integer "menu_item_id", null: false
@@ -170,6 +170,10 @@ ActiveRecord::Schema[8.2].define(version: 2026_11_04_150000) do
     t.string "courier_name"
     t.string "customer_name"
     t.string "delivery_note"
+    t.datetime "confirmed_at"
+    t.datetime "ready_at"
+    t.datetime "picked_up_at"
+    t.datetime "delivered_at"
     t.index ["cart_id"], name: "index_orders_on_cart_id"
     t.index ["kitchen_id"], name: "index_orders_on_kitchen_id"
     t.index ["payment_method"], name: "index_orders_on_payment_method"

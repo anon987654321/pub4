@@ -5563,7 +5563,7 @@ items:
   path: RAILS/mrdamascy/app/models/order.rb
   item: Record state timestamps (confirmed_at, ready_at, picked_up_at, delivered_at)
     so ETAs and the staff board can be measured.
-  status: open
+  status: done
 - id: mrdamascy-062
   app: mrdamascy
   area: orders

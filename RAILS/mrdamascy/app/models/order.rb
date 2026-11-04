@@ -14,6 +14,9 @@ class Order < ApplicationRecord
   # owns picked_up/delivered, and cancel is mercy before the pan heats up.
   ADVANCEABLE = %w[placed confirmed preparing].freeze
   CANCELABLE = %w[placed confirmed].freeze
+  # The moves whose moment is kept (placed_at is set on create), so ETAs
+  # and the board can be measured.
+  TIMED_STATES = %w[confirmed ready picked_up delivered].freeze
 
   belongs_to :user, optional: true
   belongs_to :kitchen
@@ -47,21 +50,21 @@ class Order < ApplicationRecord
     next_state = { "placed" => "confirmed", "confirmed" => "preparing", "preparing" => "ready" }[state]
     raise InvalidTransition, "cannot advance an order from #{state.inspect}" unless next_state
 
-    update!(state: next_state)
+    move_to!(next_state)
     self
   end
 
   def pickup!
     raise InvalidTransition, "cannot pick up an order in #{state.inspect}" unless state == "ready"
 
-    update!(state: "picked_up")
+    move_to!("picked_up")
     self
   end
 
   def deliver!
     raise InvalidTransition, "cannot deliver an order in #{state.inspect}" unless state == "picked_up"
 
-    update!(state: "delivered")
+    move_to!("delivered")
     award_stamp!
     self
   end
@@ -147,6 +150,11 @@ class Order < ApplicationRecord
   end
 
   private
+
+  def move_to!(next_state)
+    times = TIMED_STATES.include?(next_state) ? { "#{next_state}_at" => Time.current } : {}
+    update!(state: next_state, **times)
+  end
 
   def assign_tracking_token
     self.tracking_token ||= SecureRandom.hex(10)
