@@ -217,6 +217,27 @@ end
     wardrobe_swatch_pair(color).first
   end
 
+  # A photo's alt and its lightbox link's name: the title for a lone photo,
+  # "Wool coat, photo 2 of 3" when there are several.
+  # index counts from 0, as each_with_index does.
+  def item_photo_labels(item, index)
+    count = item.photos.size
+    return [ item.title, nil ] if count < 2
+
+    numbered = { title: item.title, position: index + 1, count: }
+    [ t("items.photo_numbered", **numbered), t("items.open_photo", **numbered) ]
+  end
+
+  # A garment's colour as an SVG dot. A fill attribute, not style="--swatch",
+  # so pages with a swatch need no 'unsafe-inline' in style-src. Decorative
+  # unless labelled: the colour's name is usually printed beside it.
+  def wardrobe_swatch_tag(color, label: nil, small: false)
+    dot = tag.circle(cx: 10, cy: 10, r: 10, fill: wardrobe_color_swatch(color))
+    tag.svg(safe_join([ (tag.title(label) if label), dot ].compact),
+            class: [ "color-swatch", ("color-swatch--sm" if small) ], viewBox: "0 0 20 20",
+            role: ("img" if label), aria: label ? { label: } : { hidden: true })
+  end
+
   def wardrobe_swatch_ink(color)
     wardrobe_swatch_pair(color).last
   end

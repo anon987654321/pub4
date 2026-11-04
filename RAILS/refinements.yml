@@ -21,7 +21,7 @@ items:
   path: RAILS/amber/app/views/items/show.html.erb
   item: Give multiple item photos distinct alt text ('Title, photo 2 of 3') and label
     the lightbox links.
-  status: open
+  status: done
 - id: amber-003
   app: amber
   area: accessibility
@@ -599,7 +599,7 @@ items:
   path: RAILS/amber/app/views/items/show.html.erb
   item: Move the colour swatch's inline style into a data attribute or CSS custom
     property set by a helper, so CSP style-src does not need 'unsafe-inline'.
-  status: open
+  status: done
 - id: amber-074
   app: amber
   area: ux
@@ -631,7 +631,7 @@ items:
   path: RAILS/amber/app/views/ai/color_palette.html.erb
   item: Render colour palette chips with accessible names; the swatch span has no
     text alternative and the chip title is the item title, not the colour.
-  status: open
+  status: done
 - id: amber-078
   app: amber
   area: ux

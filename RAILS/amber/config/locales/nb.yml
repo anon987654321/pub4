@@ -434,6 +434,8 @@ nb:
     price_in: "%{attribute} (%{unit})"
     save: "Lagre plagg"
     color_named: "Farge: %{color}"
+    photo_numbered: "%{title}, bilde %{position} av %{count}"
+    open_photo: "Åpne %{title}, bilde %{position} av %{count}, i full størrelse"
     add_header_label: "Legg til plagg"
     mood_label: "Stemning: %{mood}"
     worn_times_short: "Brukt %{count}×"

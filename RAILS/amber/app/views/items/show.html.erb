@@ -9,10 +9,14 @@
   <div class="luxury-detail-grid">
   <% if @item.photos.attached? %>
     <div class="luxury-photos" data-controller="lightbox">
-      <% @item.photos.each do |photo| %>
-        <a href="<%= url_for(photo) %>" data-turbo="false">
-          <%= responsive_image_tag photo, alt: @item.title, preset: :detail, sizes: "(max-width: 768px) 100vw, 520px", class: "item-photo luxury-photo" %>
-        </a>
+      <%# One photo is the garment; several are numbered, so each alt and each
+          lightbox link says which one it is. %>
+      <% @item.photos.each_with_index do |photo, index| %>
+        <% alt, link_label = item_photo_labels(@item, index) %>
+        <%= link_to url_for(photo), data: { turbo: false }, aria: { label: link_label } do %>
+          <%= responsive_image_tag photo, alt:, preset: :detail, sizes: "(max-width: 768px) 100vw, 520px",
+                                          class: "item-photo luxury-photo" %>
+        <% end %>
       <% end %>
     </div>
   <% end %>
@@ -25,7 +29,7 @@
       </hgroup>
       <% if @item.spark_joy? %><span class="badge"><%= t("items.sparks_joy") %></span><% end %>
       <% if @item.color.present? %>
-        <span class="color-swatch" style="--swatch: <%= wardrobe_color_swatch(@item.color) %>" title="<%= t("items.color_named", color: @item.color) %>" aria-label="<%= t("items.color_named", color: @item.color) %>"></span>
+        <%= wardrobe_swatch_tag(@item.color, label: t("items.color_named", color: @item.color)) %>
       <% end %>
     </header>
 

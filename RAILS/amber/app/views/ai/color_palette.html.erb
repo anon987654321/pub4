@@ -7,10 +7,13 @@
     <%= tag.h2 t("ai.swatches_from_items") %>
     <div class="tag-row color-swatch-row">
       <% @swatches.each do |title, color| %>
-        <span class="chip" title="<%= title %>">
-          <span class="color-swatch color-swatch--sm" style="--swatch: <%= wardrobe_color_swatch(color) %>"></span>
+        <%# The chip says its colour; the garment's name follows for a screen
+            reader, where it was a hover title naming the item, not the colour. %>
+        <%= tag.span class: "chip" do %>
+          <%= wardrobe_swatch_tag(color, small: true) %>
           <%= color %>
-        </span>
+          <%= tag.span ", #{title}", class: "visually-hidden" %>
+        <% end %>
       <% end %>
     </div>
   </section>

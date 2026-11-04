@@ -435,6 +435,8 @@ en:
     price_in: "%{attribute} (%{unit})"
     save: "Save piece"
     color_named: "Color: %{color}"
+    photo_numbered: "%{title}, photo %{position} of %{count}"
+    open_photo: "Open %{title}, photo %{position} of %{count}, full size"
     add_header_label: "Add wardrobe item"
     mood_label: "Mood: %{mood}"
     worn_times_short: "Worn %{count}×"
