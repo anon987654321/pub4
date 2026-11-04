@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "prism"
+
 module Master
   module Review
     module Scan
@@ -686,20 +688,23 @@ module Master
           path.to_s.match?(RAILSISH)
         end
 
-        # Line index of the matching `end` for a `def` starting at `start`,
-        # via brace-depth tracking. Own method so its loop's nesting doesn't
-        # compound with the caller's own while/if nesting (NESTING_DEPTH).
+        # One past the line index of the `end` closing the `def` on line `start`.
+        # Prism reads the method's own span: counting keywords took every modifier
+        # `if`/`unless`, endless `def x = ...` and keyword in a string as an opener
+        # with no `end`, so a 17-line action measured as ~100 and ran to the file's end.
         def method_body_end_line(lines, start)
-          depth = 0
-          j = start
+          def_end_lines(lines.join)[start + 1] || lines.size
+        end
 
-          while j < lines.size
-            depth += lines[j].scan(/\b(do|def|class|module|if|unless|begin|case)\b/).size
-            depth -= lines[j].scan(/\bend\b/).size
-            j += 1
-            break if depth <= 0 && j > start + 1
+        # { def start line => end line } (1-based) for every method in the source.
+        def def_end_lines(src)
+          ends = {}
+          queue = [Prism.parse(src).value]
+          while (node = queue.shift)
+            ends[node.location.start_line] = node.location.end_line if node.is_a?(Prism::DefNode)
+            queue.concat(node.compact_child_nodes)
           end
-          j
+          ends
         end
 
         ::Law.define(:THIN_CONTROLLER) do
