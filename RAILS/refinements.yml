@@ -2612,7 +2612,7 @@ items:
   path: RAILS/brgen/app/views/notifications/_grouped_list.html.erb
   item: Offer a chronological 'All' view next to the kind-grouped one; grouping by
     kind hides what happened most recently.
-  status: open
+  status: done
 - id: brgen-209
   app: brgen
   area: notifications
@@ -2635,7 +2635,7 @@ items:
   size: M
   path: RAILS/brgen/app/views/notifications/_notification.html.erb
   item: Show the actor's avatar and link their name in each notification.
-  status: open
+  status: done
 - id: brgen-212
   app: brgen
   area: notifications

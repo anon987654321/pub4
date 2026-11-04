@@ -2,5 +2,5 @@
   <%= render "notifications/header" %>
 <% end %>
 <%= turbo_stream.replace "notification_list" do %>
-  <%= render "notifications/grouped_list" %>
+  <%= render @list_partial %>
 <% end %>

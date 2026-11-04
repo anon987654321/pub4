@@ -179,6 +179,9 @@ nb:
     status_network: Nettverksfeil ved lagring av posisjon — prøv igjen.
   notifications:
     title: Varsler
+    views_label: Visning
+    view_grouped: Etter type
+    view_all: Alle, nyeste først
     mark_all: Merk alle som lest
     empty_title: Ingen varsler ennå
     empty_body: Tilbud, ordrer og lokale oppdateringer vises her.

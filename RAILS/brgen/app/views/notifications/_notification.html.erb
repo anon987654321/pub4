@@ -6,6 +6,12 @@
 <article id="<%= dom_id(notification) %>" class="<%= notification.read? ? "read" : "unread" %> notification-card"
          data-controller="swipe-dismiss"
          data-action="pointerdown->swipe-dismiss#start pointermove->swipe-dismiss#move pointerup->swipe-dismiss#end pointercancel->swipe-dismiss#reset">
+<% if (actor = notification.shown_actor) %>
+  <%= link_to main_app.user_path(actor), class: "notification-actor" do %>
+    <%= image_tag actor.avatar_url, alt: "", width: 32, height: 32, class: "avatar avatar--32" %>
+    <%= tag.span actor.display_name %>
+  <% end %>
+<% end %>
   <% if href.present? %>
     <%= tag.h3 link_to(notification.title, open_notification_path(notification), class: "notification-title-link") %>
   <% else %>
@@ -20,7 +26,8 @@
     <% unless notification.read? %>
       <%= button_to t("actions.mark_read"), notification_path(notification), method: :patch, data: { turbo_stream: true }, class: "button button-ghost button-small" %>
     <% end %>
-    <%= button_to t("notifications.dismiss"), notification_path(notification), method: :delete,
+    <%# The view rides along so the inbox redraws as the reader was reading it. %>
+    <%= button_to t("notifications.dismiss"), notification_path(notification), method: :delete, params: { view: @view },
           data: { turbo_stream: true, swipe_dismiss_target: "button" }, class: "button button-ghost button-small",
           aria: { label: t("notifications.dismiss_label") } %>
   </div>

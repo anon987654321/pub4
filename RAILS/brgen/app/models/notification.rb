@@ -30,6 +30,13 @@ class Notification < ApplicationRecord
   # Its own name: Rails keeps only the last of two commit callbacks that share one.
   after_update_commit :broadcast_unread_badge_on_read, if: :saved_change_to_read_at?
 
+  # The person a notification is from, when it may name them: a guest wrote
+  # anonymously and a departing account is gone, so neither is shown.
+  def shown_actor
+    person = strict_safe(:actor)
+    person if person && !person.guest? && person.deleted_at.nil? && person.deletion_scheduled_at.nil?
+  end
+
   def self.unread_count_for(user) = user&.persisted? ? where(user_id: user.id).unread.count : 0
 
   def self.unread_badge_stream(user) = [ user, :notification_badge ]

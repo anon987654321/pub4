@@ -1,0 +1,12 @@
+<%# Every notification newest first, whatever its kind: what happened last. %>
+<% if @notifications.any? %>
+  <section class="notification-group" aria-labelledby="notifications-all-heading">
+    <%= tag.h2 t("notifications.view_all"), id: "notifications-all-heading", class: "visually-hidden" %>
+    <%= render partial: "notifications/notification", collection: @notifications, as: :notification %>
+  </section>
+<% else %>
+  <%= render "shared/empty_state",
+        title: t("notifications.empty_title"),
+        body: t("notifications.empty_body"),
+        action: { label: t("nav.home"), path: root_path } %>
+<% end %>

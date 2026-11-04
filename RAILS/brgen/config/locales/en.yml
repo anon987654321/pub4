@@ -175,6 +175,9 @@ en:
     status_network: Network error saving location — try again.
   notifications:
     title: Notifications
+    views_label: View
+    view_grouped: By kind
+    view_all: All, newest first
     mark_all: Mark all read
     empty_title: No notifications yet
     empty_body: Offers, orders, and local updates will appear here.

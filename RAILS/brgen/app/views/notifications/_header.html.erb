@@ -10,6 +10,16 @@
   </hgroup>
 
   <% if @unread_count.to_i.positive? %>
-    <%= button_to t("notifications.mark_all"), read_all_notifications_path, method: :patch, class: "button button-primary", data: { turbo_stream: true } %>
+    <%= button_to t("notifications.mark_all"), read_all_notifications_path, method: :patch,
+          params: { view: @view }, class: "button button-primary", data: { turbo_stream: true } %>
   <% end %>
 </div>
+
+<%# Two ways to read the inbox: by kind, or as it happened. Links, so the
+    choice is in the URL and the pager keeps it. %>
+<nav class="notification-views cluster" aria-label="<%= t("notifications.views_label") %>">
+  <%= link_to t("notifications.view_grouped"), notifications_path, class: "chip",
+        aria: { current: (@view == "grouped" ? "page" : nil) }, data: { turbo_frame: "_top" } %>
+  <%= link_to t("notifications.view_all"), notifications_path(view: "all"), class: "chip",
+        aria: { current: (@view == "all" ? "page" : nil) }, data: { turbo_frame: "_top" } %>
+</nav>

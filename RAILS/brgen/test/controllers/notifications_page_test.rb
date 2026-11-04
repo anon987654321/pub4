@@ -34,6 +34,40 @@ class NotificationsPageTest < ActionDispatch::IntegrationTest
     assert_select "hgroup p[role='status'] .badge", text: I18n.t("notifications.unread_count", count: 1, locale: :nb)
   end
 
+  test "a card shows who it is from, linked to them, unless they wrote as a guest" do
+    @actor.update_columns(display_name: "Avsender Navn")
+    named = Notification.create!(user: @user, actor: @actor, kind: "follow")
+    guest = User.strict_loading(false).create!(email_address: "np-guest-#{SecureRandom.hex(3)}@brgen.no",
+                                               password: "password123", guest: true, city: @city)
+    anonymous = Notification.create!(user: @user, actor: guest, kind: "mention")
+
+    get notifications_path
+
+    actor_link = "article##{ActionView::RecordIdentifier.dom_id(named)} a.notification-actor[href=?]"
+    assert_select actor_link, user_path(@actor) do
+      assert_select "img[src=?][alt='']", @actor.avatar_url
+      assert_select "span", text: "Avsender Navn"
+    end
+    assert_select "article##{ActionView::RecordIdentifier.dom_id(anonymous)} a.notification-actor", 0
+  end
+
+  test "the All view lists every kind newest first, beside the grouped default" do
+    Notification.create!(user: @user, actor: @actor, kind: "follow", title: "Eldste varsel", created_at: 2.hours.ago)
+    Notification.create!(user: @user, actor: @actor, kind: "mention", title: "Midterste varsel", created_at: 1.hour.ago)
+    Notification.create!(user: @user, actor: @actor, kind: "follow", title: "Nyeste varsel")
+
+    get notifications_path
+    assert_select "nav.notification-views a[aria-current=page][href=?]", notifications_path
+    grouped = response.body
+    assert_operator grouped.index("Midterste varsel"), :<, grouped.index("Nyeste varsel"), "mentions lead by kind"
+
+    get notifications_path(view: "all")
+    assert_select "nav.notification-views a[aria-current=page][href=?]", notifications_path(view: "all")
+    body = response.body
+    assert_operator body.index("Nyeste varsel"), :<, body.index("Midterste varsel")
+    assert_operator body.index("Midterste varsel"), :<, body.index("Eldste varsel")
+  end
+
   test "the kicker names the city the inbox is in" do
     get notifications_path
 

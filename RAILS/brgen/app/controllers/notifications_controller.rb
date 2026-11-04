@@ -71,5 +71,8 @@ class NotificationsController < Shared::NotificationsController
     @unread_count = notification_scope.unread.count
     @grouped_notifications = @notifications.group_by { |notification| notification.kind.to_s }
     @group_order = GROUP_ORDER
+    # Grouped by kind hides what happened last; ?view=all lists it newest first.
+    @view = params[:view] == "all" ? "all" : "grouped"
+    @list_partial = @view == "all" ? "notifications/chronological_list" : "notifications/grouped_list"
   end
 end
