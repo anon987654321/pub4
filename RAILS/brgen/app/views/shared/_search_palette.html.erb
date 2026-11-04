@@ -60,6 +60,9 @@
               </li>
             <% end %>
           </ul>
+          <%= button_to t("nav.clear_recent_searches"), main_app.clear_recent_searches_path, method: :delete,
+                class: "button button-ghost button-small",
+                data: { turbo_confirm: t("nav.confirm_clear_recent_searches") } %>
         </nav>
       <% end %>
       <%= render "shared/city_network",

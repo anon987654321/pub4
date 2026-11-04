@@ -94,6 +94,8 @@ nb:
     search: Søk
     search_placeholder: Søk i Brgen
     recent_searches: Nylige søk
+    clear_recent_searches: Tøm nylige søk
+    confirm_clear_recent_searches: Slette alle nylige søk?
     show_menu: Vis meny
     menu_coach: Menyen er nederst — trykk på stripen eller scroll opp.
     menu_coach_dismiss: Skjønner
@@ -1732,6 +1734,7 @@ nb:
       pending: spurt
       accepted: følger
   flash:
+    recent_searches_cleared: Nylige søk er tømt.
     message_request_accepted: "Forespørselen er godtatt. Samtalen ligger i innboksen din."
     message_request_declined: "Forespørselen er avslått."
     master_invited: MASTER ble med i chatten.

@@ -298,6 +298,7 @@ get "i/:token" => "invites#show", as: :invite
   get "live" => redirect("/nearby/room"), as: :live
   resources :channels, only: %i[index show], param: :slug
   get "search" => "search#index", as: :global_search
+  delete "search/recent" => "search#clear_recent", as: :clear_recent_searches
   get "sitemap.xml" => "sitemaps#index", as: :sitemap
   get "robots.txt" => "robots#show", as: :robots
 

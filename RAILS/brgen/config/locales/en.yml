@@ -90,6 +90,8 @@ en:
     search: Search
     search_placeholder: Search Brgen
     recent_searches: Recent searches
+    clear_recent_searches: Clear recent searches
+    confirm_clear_recent_searches: Delete all recent searches?
     show_menu: Show menu
     menu_coach: Menu is down here — tap the bar or scroll up.
     menu_coach_dismiss: Got it
@@ -1723,6 +1725,7 @@ en:
       pending: asked
       accepted: following
   flash:
+    recent_searches_cleared: Recent searches cleared.
     message_request_accepted: "Request accepted. The conversation is in your inbox."
     message_request_declined: "Request declined."
     master_invited: MASTER joined the chat.

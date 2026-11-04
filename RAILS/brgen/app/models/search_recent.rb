@@ -44,6 +44,10 @@ class SearchRecent < ApplicationRecord
       row
     end
 
+    def clear_for(user)
+      where(user_id: user.id).delete_all if user
+    end
+
     # Newest first, most recent use at the top. `id` as the tiebreak keeps two
     # searches recorded in the same second in a stable order.
     def recent_for(user, limit: SHOWN_LIMIT)

@@ -110,4 +110,20 @@ class SearchPaletteTest < ActionDispatch::IntegrationTest
     refute_includes response.body, people["blocked"].username
     refute_includes response.body, people["blocker"].username
   end
+
+  # Every committed search was stored for the palette and nothing let the
+  # reader take them back.
+  test "a reader can clear their recent searches from the palette" do
+    reader = User.create!(email_address: "srch-clear-#{SecureRandom.hex(3)}@brgen.no", password: "password123",
+                          username: "srch_clear_#{SecureRandom.hex(3)}")
+    SearchRecent.record!(reader, "sykkel")
+    post session_path, params: { email_address: reader.email_address, password: "password123" }
+
+    get communities_path
+    assert_select ".search_palette_recents form[action=?]", clear_recent_searches_path
+
+    delete clear_recent_searches_path
+    assert_response :redirect
+    assert_empty SearchRecent.recent_for(reader)
+  end
 end

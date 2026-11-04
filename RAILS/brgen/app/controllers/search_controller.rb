@@ -60,6 +60,14 @@ class SearchController < ApplicationController
     end
   end
 
+  # Every committed search is stored for the palette, so the reader can also
+  # take them all back. Signed-in only: allow_unauthenticated_access covers
+  # index alone.
+  def clear_recent
+    SearchRecent.clear_for(Current.user)
+    redirect_back fallback_location: root_path, notice: t("flash.recent_searches_cleared")
+  end
+
   private
 
   # A block holds in search: neither side of one is offered to the other.

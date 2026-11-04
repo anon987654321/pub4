@@ -3334,7 +3334,7 @@ items:
   path: RAILS/brgen/app/controllers/search_controller.rb
   item: Let people clear their recent searches; SearchRecent.record! stores every
     query and there is no clear control.
-  status: open
+  status: done
 - id: brgen-294
   app: brgen
   area: privacy
