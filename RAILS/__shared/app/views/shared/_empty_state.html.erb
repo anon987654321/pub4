@@ -5,10 +5,9 @@
       title: "No posts",
       body: "Try another search.",
       action: { label: "Compose", path: new_post_path }
-    The legacy actions: String local is deprecated; use only action: { label:, path: }.
 %>
 <% title = local_assigns[:title] %>
-<% body = local_assigns[:body] || local_assigns[:message] %>
+<% body = local_assigns[:body] %>
 <% action = local_assigns[:action] %>
 <% live = local_assigns.fetch(:live, true) %>
 <section

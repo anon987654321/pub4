@@ -15,4 +15,12 @@ class SharedEmptyStateTest < ActionView::TestCase
     assert_select "a.empty-state-action[href='/items']", text: "Browse items"
     refute_select ".empty-state-actions"
   end
+
+  # body: is the one name for the text; the message: alias had no caller left.
+  test "the old message alias renders nothing" do
+    render partial: "shared/empty_state", locals: { title: "Nothing here", message: "Old words" }
+
+    assert_select "h2.empty-state-title", text: "Nothing here"
+    refute_select ".empty-state-body"
+  end
 end

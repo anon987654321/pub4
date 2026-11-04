@@ -5992,7 +5992,7 @@ items:
   path: RAILS/__shared/app/views/shared/_empty_state.html.erb
   item: 'Remove the message: alias and the deprecated actions comment from the empty-state
     partial.'
-  status: open
+  status: done
 - id: shared-009
   app: shared
   area: cleanup
