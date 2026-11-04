@@ -76,7 +76,7 @@ module Master
       def save!
         directory = File.dirname(@path)
         FileUtils.mkdir_p(directory, mode: 0o700)
-        File.chmod(MasterPaths.private_dir_mode(directory), directory)
+        MasterPaths.tighten_private_dir(directory)
         errs = validate
         warn "config: validation issues before save: #{errs.join('; ')}" unless errs.empty?
         # config.yml may include web_token and web_secret_key_base.

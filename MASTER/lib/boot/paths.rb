@@ -33,4 +33,11 @@ module MasterPaths
 
     base | (stat.mode & 0o2070)
   end
+
+  # chmod is the owner's alone: on vm23 the master app runs as master and reaches
+  # the dev-owned MASTER/.master through its group, and a chmod there raised
+  # EPERM and stopped the agent container booting. The owner tightens it.
+  def tighten_private_dir(dir, base = 0o700)
+    File.chmod(private_dir_mode(dir, base), dir) if File.owned?(dir)
+  end
 end

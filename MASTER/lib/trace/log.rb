@@ -187,7 +187,7 @@ module Master
       # allocation is freed before the bounded bytes are written back, so recovery
       # still works on a full disk. A partial first record is discarded.
       # Others lose access; a group the directory was handed to keeps it (MasterPaths).
-      def self.tighten_directory(directory, base) = File.chmod(MasterPaths.private_dir_mode(directory, base), directory)
+      def self.tighten_directory(directory, base) = MasterPaths.tighten_private_dir(directory, base)
 
       def self.compact_rotated(path, max_bytes, mode: 0o600)
         return unless File.exist?(path) || File.symlink?(path)

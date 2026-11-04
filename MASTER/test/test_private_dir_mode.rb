@@ -35,6 +35,26 @@ class PrivateDirModeTest < Minitest::Test
     end
   end
 
+  # vm23: master runs as master, MASTER/.master is dev's, and chmod is the
+  # owner's alone. A chmod there raised EPERM and the agent container never booted.
+  def test_swallow_leaves_a_directory_it_does_not_own_alone
+    Dir.mktmpdir do |dir|
+      as_another_owner { Master::Ground::Swallow.send(:private_directory, dir) }
+
+      assert_path_exists dir
+    end
+  end
+
+  # File.owned? false, and chmod raising EPERM as the kernel does for a non-owner.
+  def as_another_owner
+    real = %i[owned? chmod].to_h { |name| [name, File.method(name)] }
+    File.define_singleton_method(:owned?) { |*| false }
+    File.define_singleton_method(:chmod) { |*args| raise Errno::EPERM, args.last.to_s }
+    yield
+  ensure
+    real.each { |name, method| File.define_singleton_method(name, method) }
+  end
+
   def test_swallow_leaves_a_shared_state_directory_reachable_by_its_group
     gid = other_group
     skip "this account belongs to no second group" unless gid
