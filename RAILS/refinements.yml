@@ -427,7 +427,7 @@ items:
   path: RAILS/amber/app/views/layouts/application.html.erb
   item: Load /lightgallery.css only on pages with data-controller=lightbox (items#show)
     via content_for :head instead of on every page.
-  status: open
+  status: done
 - id: amber-053
   app: amber
   area: performance
@@ -435,7 +435,7 @@ items:
   path: RAILS/amber/app/views/layouts/application.html.erb
   item: Remove the global /swiper-bundle.min.css stylesheet; no amber view or importmap
     pin uses Swiper, and it is render-blocking on every page.
-  status: open
+  status: done
 - id: amber-054
   app: amber
   area: performance

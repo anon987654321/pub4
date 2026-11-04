@@ -1,3 +1,6 @@
+<%# The one page with a lightbox loads its stylesheet; the layout loaded it,
+    and an unused Swiper bundle, render-blocking on every page. %>
+<% content_for :head, tag.link(rel: "stylesheet", href: "/lightgallery.css") %>
 <% content_for :title, @item.title %>
 <% content_for :description, meta_description_for(@item) if respond_to?(:meta_description_for) %>
 <% content_for :json_ld, json_ld_for(@item, type: :product) %>

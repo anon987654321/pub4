@@ -41,8 +41,6 @@
   <%# The wordmark sits in the nav bar at first paint, so its face is fetched
       before the stylesheet asks for it. %>
   <link rel="preload" as="font" type="font/woff2" href="/fonts/caprasimo-latin-400-normal.woff2" crossorigin>
-  <link rel="stylesheet" href="/swiper-bundle.min.css">
-  <link rel="stylesheet" href="/lightgallery.css">
   <%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>
   <%= yield :json_ld %>
   <%= json_ld_script(organization_json_ld(site_name: "Amber", url: root_url)) %>
