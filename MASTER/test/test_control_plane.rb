@@ -181,6 +181,43 @@ class ControlPlaneSpec < Minitest::Test
     FileUtils.remove_entry(dir) if dir && Dir.exist?(dir)
   end
 
+  def test_a_waiting_acquire_queues_until_the_holder_lets_go
+    dir = Dir.mktmpdir("master-lock-wait")
+    path = File.join(dir, "master.lock")
+    holder = Master::Ops::ProcessLock.acquire!(path:, mode: "interactive")
+    waited_on = []
+    sleeper = lambda do |_seconds|
+      Master::Ops::ProcessLock.release(holder) if waited_on.size == 2
+    end
+
+    lock = Master::Ops::ProcessLock.acquire_waiting!(path:, mode: "headless", wait: 60, sleeper:) do |owner|
+      waited_on << owner["mode"]
+    end
+
+    refute_nil lock, "the queued run never got the lock after the holder released it"
+    assert_equal %w[interactive interactive], waited_on.first(2)
+    Master::Ops::ProcessLock.release(lock)
+  ensure
+    FileUtils.remove_entry(dir) if dir && Dir.exist?(dir)
+  end
+
+  def test_a_waiting_acquire_gives_up_at_its_deadline
+    dir = Dir.mktmpdir("master-lock-deadline")
+    path = File.join(dir, "master.lock")
+    holder = Master::Ops::ProcessLock.acquire!(path:, mode: "interactive")
+    now = 0
+    clock = -> { now }
+    sleeper = ->(seconds) { now += seconds }
+
+    lock = Master::Ops::ProcessLock.acquire_waiting!(path:, mode: "headless", wait: 12, poll: 5, sleeper:, clock:)
+
+    assert_nil lock
+    assert_equal 15, now, "it should poll until the deadline, then stop"
+  ensure
+    Master::Ops::ProcessLock.release(holder) if holder
+    FileUtils.remove_entry(dir) if dir && Dir.exist?(dir)
+  end
+
   def test_process_lock_fd_is_closed_on_exec_unless_explicitly_inherited
     dir = Dir.mktmpdir("master-lock-exec")
     path = File.join(dir, "master.lock")

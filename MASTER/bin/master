@@ -294,6 +294,19 @@ require "ops"
 $MASTER_PROCESS_LOCK = if internal_master_child
                          Master::Trace::Dmesg.status("master0", "internal child, parent owns control plane", io: $stderr)
                          nil
+                       elsif ENV["MASTER_HEADLESS"] == "1" || ARGV.include?("--headless")
+                         # Headless work queues behind the holder (MASTER_LOCK_WAIT seconds, default an hour).
+                         # ARGV is read directly: the option parse that sets MASTER_HEADLESS runs later.
+                         told = false
+                         wait = Integer(ENV.fetch("MASTER_LOCK_WAIT", "3600"), exception: false) || 3600
+                         lock_root = Master::ROOT
+                         Master::Ops::ProcessLock.acquire_waiting!(root: lock_root, mode: "headless", wait:) do |holder|
+                           next if told
+
+                           told = true
+                           queued = "queued behind pid=#{holder["pid"]} mode=#{holder["mode"]}, up to #{wait}s"
+                           Master::Trace::Dmesg.status("master0", queued, io: $stderr)
+                         end
                        else
                          lock_mode = daemon ? "control_plane" : "interactive"
                          Master::Ops::ProcessLock.acquire!(root: Master::ROOT, mode: lock_mode)
@@ -301,7 +314,7 @@ $MASTER_PROCESS_LOCK = if internal_master_child
 
 unless internal_master_child || $MASTER_PROCESS_LOCK
   owner = Master::Ops::ProcessLock.owner
-  detail = owner.empty? ? "" : " pid=#{owner["pid"]} host=#{owner["host"]} mode=#{owner["mode"]}"
+  detail = owner.empty? ? "" : " pid=#{owner["pid"]} host=#{owner["host"]} mode=#{owner["mode"]} since=#{owner["at"]}"
   Master::Trace::Dmesg.status("master0", "another process owns the control plane#{detail}", io: $stderr)
   exit 75
 end

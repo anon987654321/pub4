@@ -56,6 +56,24 @@ module Master
         raise
       end
 
+      # A headless run queues behind whoever holds the lock instead of exiting
+      # 75: on 2026-11-04 a backlog item handed to `bin/master --headless` died at
+      # once because an interactive session had held the lock for 13 hours.
+      # Yields the owner before each wait so the caller can say who it waits on.
+      def acquire_waiting!(wait:, path: nil, root: Master::ROOT, mode: "master", poll: 5,
+                           sleeper: ->(seconds) { sleep(seconds) },
+                           clock: -> { Process.clock_gettime(Process::CLOCK_MONOTONIC) })
+        deadline = clock.call + wait
+        loop do
+          lock = acquire!(path:, root:, mode:)
+          return lock if lock
+          return if clock.call >= deadline
+
+          yield owner(path: path || lock_path(root)) if block_given?
+          sleeper.call(poll)
+        end
+      end
+
       MEDIA_PLAYER_COMMAND = %r{(?:/|\\)STUDIO/dilla/dilla\.rb(?:\s|$)}.freeze
 
       def reclaimable?(path)
