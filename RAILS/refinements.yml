@@ -4237,7 +4237,7 @@ items:
   item: Make SVG graph nodes links (wrap each <g> in <a href=port_path>) and give
     the svg role=img with a summary instead of aria-hidden, since the graph is the
     only view of transitive depth.
-  status: open
+  status: done
 - id: bsdports-005
   app: bsdports
   area: accessibility

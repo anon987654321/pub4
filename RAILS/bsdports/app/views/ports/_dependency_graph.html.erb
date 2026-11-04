@@ -11,9 +11,14 @@
     <summary><%= t("ports.graph_heading") %></summary>
     <p class="dep-graph-note"><%= t("ports.graph_description") %></p>
     <div class="dep-graph-scroll">
+      <%# The only view of transitive depth, so it is an image with a summary, not
+          aria-hidden; each package is a link to its port, the root excepted. %>
+      <% summary = t("ports.graph_summary", name: graph[:nodes].first[:name], count: graph[:nodes].size - 1,
+                                            depth: max_depth) %>
       <svg class="dep-graph" width="<%= width %>" height="<%= height %>"
-           viewBox="0 0 <%= width %> <%= height %>" aria-hidden="true" focusable="false">
-        <title><%= t("ports.graph_heading") %></title>
+           viewBox="0 0 <%= width %> <%= height %>" role="img" aria-labelledby="dep-graph-title dep-graph-desc">
+        <%= tag.title t("ports.graph_heading"), id: "dep-graph-title" %>
+        <%= tag.desc summary, id: "dep-graph-desc" %>
         <% graph[:edges].each do |edge| %>
           <% source = positions[edge[:from]] %>
           <% target = positions[edge[:to]] %>
@@ -23,10 +28,13 @@
         <% end %>
         <% graph[:nodes].each do |node| %>
           <% point = positions[node[:id]] %>
-          <g class="dep-graph-node<%= " is-root" if node[:depth].zero? %>">
-            <circle cx="<%= point[0] %>" cy="<%= point[1] %>" r="17" />
-            <text x="<%= point[0] + 25 %>" y="<%= point[1] + 4 %>"><%= node[:name] %></text>
-          </g>
+          <% marker = capture do %>
+            <g class="dep-graph-node<%= " is-root" if node[:depth].zero? %>">
+              <circle cx="<%= point[0] %>" cy="<%= point[1] %>" r="17" />
+              <text x="<%= point[0] + 25 %>" y="<%= point[1] + 4 %>"><%= node[:name] %></text>
+            </g>
+          <% end %>
+          <%= node[:depth].zero? ? marker : link_to(marker, graph_node_path(node)) %>
         <% end %>
       </svg>
     </div>

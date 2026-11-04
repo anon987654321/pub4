@@ -1,5 +1,8 @@
 nb:
   ports:
     graph_heading: "Avhengighetsgraf"
+    graph_summary:
+      one: "%{name} avhenger av %{count} pakke (dybde %{depth})."
+      other: "%{name} avhenger av %{count} pakker (dybde %{depth})."
     graph_description: "Valgfri oversikt over registrerte avhengighetsstier."
     graph_truncated: "Begrenset til %{nodes} pakker og %{depth} nivåer; hele avhengighetstreet er fortsatt tilgjengelig ovenfor."

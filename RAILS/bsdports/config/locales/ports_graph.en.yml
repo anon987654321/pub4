@@ -1,5 +1,8 @@
 en:
   ports:
     graph_heading: "Dependency graph"
+    graph_summary:
+      one: "%{name} depends on %{count} package (depth %{depth})."
+      other: "%{name} depends on %{count} packages (depth %{depth})."
     graph_description: "Optional overview of recorded dependency paths."
     graph_truncated: "Limited to %{nodes} packages and %{depth} levels; the full dependency tree remains above."

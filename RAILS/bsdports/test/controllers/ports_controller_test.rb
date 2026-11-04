@@ -68,6 +68,21 @@ class PortsControllerTest < ActionDispatch::IntegrationTest
     assert_select "svg.dep-graph g.dep-graph-node", 2
   end
 
+  # The graph is the only view of transitive depth and was aria-hidden, its
+  # packages plain text: an image with a summary now, each dependency a link.
+  def test_the_dependency_graph_is_a_described_image_of_links
+    git = seed_port
+    gettext = Port.create!(platform: git.platform, category: git.category, name: "gettext", version: "1",
+                           pkgpath: "devel/gettext")
+    Dependency.create!(port: git, depends_on: gettext, dep_type: "build")
+
+    get port_url(git)
+    assert_select "svg.dep-graph[role=img]:not([aria-hidden]) desc",
+                  text: I18n.t("ports.graph_summary", name: "git", count: 1, depth: 1)
+    assert_select "svg.dep-graph a[href=?] g.dep-graph-node", port_path(gettext)
+    assert_select "svg.dep-graph a g.dep-graph-node.is-root", 0
+  end
+
   def test_the_updated_sort_has_a_control_on_the_page
     seed_port
     get root_url
