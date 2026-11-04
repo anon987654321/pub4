@@ -151,6 +151,8 @@ module Master
                 "fix_loop:hard_critique_veto",
                 files: files.size,
                 vetoed_by:,
+                veto_exercised: true,
+                security_veto_exercised: vetoed_by.casecmp?("Security"),
                 message: message[0, 180],
               )
               Master::Trace::Dmesg.status("fix0", "hard critique VETO by #{vetoed_by}")
@@ -184,6 +186,8 @@ module Master
             cherry_picks: Array(value[:cherry_picks]).size,
             veto_roles_answered:,
             security_reviewed: veto_roles_answered.any? { |name| name.casecmp?("Security") },
+            veto_exercised: false,
+            security_veto_exercised: false,
           )
           Master::Trace::Dmesg.status(
             "fix0",
