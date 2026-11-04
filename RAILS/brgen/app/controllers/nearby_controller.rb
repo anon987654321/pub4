@@ -82,20 +82,32 @@ class NearbyController < ApplicationController
 
   def create
     other = User.messageable.find(params[:user_id])
-    return redirect_to(nearby_path, alert: t("flash.thats_you")) if other == Current.user
+    refusal = refusal_for(other)
+    return redirect_to(nearby_path, alert: t(refusal)) if refusal
 
-    # Only start chats with people actually in range — don't let the endpoint
-    # open a DM to an arbitrary user id (enumeration / non-consensual contact).
-    lat = Current.user&.latitude
-    lng = Current.user&.longitude
-    in_range = lat && lng && other.distance_to(lat, lng).to_f <= MAX_RADIUS_KM
-    return redirect_to(nearby_path, alert: t("flash.no_longer_nearby")) unless in_range
-
-    conversation = Conversation.find_or_create_direct(Current.user, other)
+    # A stranger nearby is still a stranger: the chat opens as a message request,
+    # as conversations#create does, not as an accepted DM.
+    conversation = Conversation.find_or_create_direct(Current.user, other, as_request: true)
     redirect_to conversation
   end
 
   private
+
+  # Why a chat with other may not open, as a flash key; nil when it may.
+  def refusal_for(other)
+    return "flash.thats_you" if other == Current.user
+    return "flash.no_longer_nearby" unless in_range?(other)
+
+    # A block either way ends contact here as it does in the messenger.
+    "flash.user_not_found" if blocked_ids.include?(other.id)
+  end
+
+  # Only people actually in range: the endpoint must not open a DM to an
+  # arbitrary user id (enumeration, non-consensual contact).
+  def in_range?(other)
+    me = Current.user
+    me&.latitude && me.longitude && other.distance_to(me.latitude, me.longitude).to_f <= MAX_RADIUS_KM
+  end
 
   def render_widget_shell
     # Empty @conversation: template shows locate / lobby CTAs.
@@ -108,11 +120,18 @@ class NearbyController < ApplicationController
 
   NEARBY_LIMIT = 100
 
+  # People the viewer blocks or is blocked by, who are never listed or reachable here.
+  def blocked_ids
+    me = Current.user
+    @blocked_ids ||= me ? me.blocked_user_ids + Block.where(blocked_id: me.id).pluck(:blocker_id) : []
+  end
+
   # The reject/filter_map/sort_by below all happen in Ruby, so the scope has to
   # be bounded before it gets there -- inside a dense city this was every user
   # within the radius, on a 1GB box.
   def nearby_users(lat, lng, radius)
-    User.messageable.nearby(lat, lng, radius).limit(NEARBY_LIMIT).reject { |user| user == Current.user }.filter_map do |user|
+    candidates = User.messageable.nearby(lat, lng, radius).where.not(id: blocked_ids).limit(NEARBY_LIMIT)
+    candidates.reject { |user| user == Current.user }.filter_map do |user|
       distance = user.distance_to(lat, lng)
       next if distance.nil? || distance > radius
 

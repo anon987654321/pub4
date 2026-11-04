@@ -109,6 +109,45 @@ class NearbyControllerTest < ActionDispatch::IntegrationTest
     assert_nil Conversation.direct_between(me, leaving)
   end
 
+  # brgen.no scopes users to Bergen; one with no city is a 404 to the endpoint.
+  def bergen
+    Brgen::CitySeed.sync! if City.table_exists?
+    City.find_by!(domain: "brgen.no")
+  end
+
+  def located_user(tag, lat, lng)
+    User.create!(email_address: "nearby-#{tag}-#{SecureRandom.hex(4)}@example.com", password: "password12345",
+                 latitude: lat, longitude: lng, city: bergen)
+  end
+
+  test "a chat with someone nearby opens as a message request for them" do
+    lat, lng = random_base_coords
+    me = located_user("asker", lat, lng)
+    other = located_user("asked", lat, lng)
+    sign_in(me)
+
+    post nearby_path, params: { user_id: other.id }
+
+    conversation = Conversation.direct_between(me, other)
+    assert conversation, "no conversation was opened"
+    assert conversation.conversation_participants.find_by(user: other).request?, "the stranger got an accepted DM"
+  end
+
+  test "someone who blocked you is neither listed nor reachable nearby" do
+    lat, lng = random_base_coords
+    me = located_user("blocked", lat, lng)
+    other = located_user("blocker", lat, lng)
+    other.block!(me)
+    sign_in(me)
+
+    get nearby_path
+    refute_includes response.body, other.display_name
+
+    post nearby_path, params: { user_id: other.id }
+    assert_redirected_to nearby_path
+    assert_nil Conversation.direct_between(me, other)
+  end
+
   test "visiting an unknown geo-room slug directly does not auto-create it" do
     get channel_path("nearby-999:999")
     assert_redirected_to channels_path

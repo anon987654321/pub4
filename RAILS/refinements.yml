@@ -1882,7 +1882,7 @@ items:
   path: RAILS/brgen/app/controllers/nearby_controller.rb
   item: Exclude users who block or are blocked by the viewer from nearby_users, and
     refuse NearbyController#create for a blocked pair before opening the conversation.
-  status: open
+  status: done
 - id: brgen-122
   app: brgen
   area: maps
@@ -1891,7 +1891,7 @@ items:
   item: 'Open nearby 1:1 chats as message requests (find_or_create_direct(..., as_request:
     true)), as ConversationsController#create does; NearbyController#create currently
     gives an anonymous stranger a fully accepted DM.'
-  status: open
+  status: done
 - id: brgen-123
   app: brgen
   area: maps
