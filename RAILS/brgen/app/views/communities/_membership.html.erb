@@ -1,0 +1,17 @@
+<%# Join or Leave for one community, on its page and on its card in the list.
+    The form is the target community_memberships/update replaces after either;
+    a <p> around it would be closed by the parser before the form began.
+    locals: community, joined %>
+<%# The reflex that appends a page of cards renders this too, outside a request's helpers. %>
+<% signed_in = respond_to?(:authenticated?) ? authenticated? : (Current.user.present? && !Current.user.guest?) %>
+<% if signed_in && Current.user.id != community.user_id %>
+  <% form = { id: dom_id(community, :membership) } %>
+  <% if joined %>
+    <%# destructive: no-confirm-ok — reversible — a community you leave is one you can rejoin; posts stay %>
+    <%= button_to t("community.leave"), leave_community_path(community), method: :delete, form:,
+          class: "button button-ghost button-small" %>
+  <% else %>
+    <%= button_to t("community.join"), join_community_path(community), method: :post, form:,
+          class: "button button-small" %>
+  <% end %>
+<% end %>

@@ -13,6 +13,8 @@ class CommunitiesController < ApplicationController
     scope = Community.visible_to(Current.user).popular.includes(:user)
     scope = apply_live_search(scope, columns: %w[name description], vertical: "communities") if live_search_query.present?
     @pagy, @communities = pagy(scope)
+    # One query for every card's Join or Leave.
+    @joined_community_ids = Current.user&.community_memberships&.pluck(:community_id).to_a.to_set
     finish_live_search(partial: "communities/live_search_results")
   end
 

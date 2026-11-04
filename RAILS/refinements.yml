@@ -1131,7 +1131,7 @@ items:
   size: M
   path: RAILS/brgen/app/views/communities/_card.html.erb
   item: Give community cards a member count and a Join button in the index results.
-  status: open
+  status: done
 - id: brgen-032
   app: brgen
   area: communities
@@ -1189,7 +1189,7 @@ items:
   size: M
   path: RAILS/brgen/app/views/communities/show.html.erb
   item: Make Join/Leave update in place over Turbo Stream with the new member count.
-  status: open
+  status: done
 - id: brgen-039
   app: brgen
   area: communities

@@ -4,9 +4,11 @@ class CommunityMembershipsController < ApplicationController
   before_action :require_user_session
   before_action :set_community, :refuse_outsider_of_private, :refuse_banned, only: :create
 
+  # Over Turbo, the button and the member count change in place; without it,
+  # the page reloads with a flash, as before.
   def create
     Current.user.join_community!(@community)
-    redirect_back fallback_location: main_app.community_path(@community), notice: t("community.joined")
+    respond_in_place(joined: true, notice: t("community.joined"))
   end
 
   def destroy
@@ -18,10 +20,22 @@ class CommunityMembershipsController < ApplicationController
       redirect_back fallback_location: back, alert: t("flash.community.last_owner_leaving")
       return
     end
-    redirect_back fallback_location: back, notice: t("community.left")
+    @community = Community.find_by(id: params[:community_id])
+    return redirect_back(fallback_location: back, notice: t("community.left")) unless @community
+
+    respond_in_place(joined: false, notice: t("community.left"))
   end
 
   private
+
+  def respond_in_place(joined:, notice:)
+    @community.reload
+    @joined = joined
+    respond_to do |format|
+      format.turbo_stream { render :update }
+      format.html { redirect_back fallback_location: main_app.community_path(@community), notice: }
+    end
+  end
 
   def set_community
     @community = Community.find(params[:community_id])

@@ -1,0 +1,3 @@
+<%# Polite live text: after Join or Leave the new count is what a screen reader hears. %>
+<%= tag.span t("community.members_count", count: community.members_count), id: dom_id(community, :members_count),
+      aria: { live: "polite" } %>

@@ -6,7 +6,9 @@ class CommunitiesInfiniteScrollReflex < Shared::InfiniteScrollReflex
   private
 
   def scope
-    scope = Community.popular.includes(:user)
+    # The index's own scope: without visible_to, page two listed private
+    # communities to people outside them.
+    scope = Community.visible_to(Current.user).popular.includes(:user)
     return scope unless element.dataset["q"].present?
 
     term = "%#{ActiveRecord::Base.sanitize_sql_like(element.dataset["q"])}%"

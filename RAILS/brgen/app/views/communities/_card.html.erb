@@ -1,6 +1,12 @@
+<%# A community in a list: how many are in it, and Join or Leave beside it.
+    joined: the index's one query for the reader's memberships; a page the
+    reflex appends asks per card. %>
+<% joined = local_assigns.fetch(:joined) { Current.user.present? && Current.user.member_of?(community) } %>
 <%= render "shared/feed_card",
   avatar_url: nil,
   name: community.name,
   content: community.description,
   url: community_path(community),
+  meta: [ render("communities/members_count", community:) ],
+  actions: render("communities/membership", community:, joined:).presence,
   class: "community" %>

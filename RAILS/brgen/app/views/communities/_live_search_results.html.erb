@@ -6,7 +6,7 @@
  <%= turbo_frame_tag "communities-list", target: "_top" do %>
  <ul class="community-list" id="communities-list">
  <% @communities.each do |community| %>
-   <%= render "communities/card", community: community %>
+   <%= render "communities/card", community:, joined: @joined_community_ids.include?(community.id) %>
  <% end %>
  </ul>
 

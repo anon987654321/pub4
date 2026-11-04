@@ -25,22 +25,13 @@
   <% if @community.description.present? %><%= tag.p @community.description %><% end %>
   <p>
     <%= t("community.posts_count", count: header_posts_count) %> ·
-    <%= t("community.members_count", count: @community.members_count) %>
+    <%= render "communities/members_count", community: @community %>
   </p>
   <%# user_id, not user: comparing the association is a lazy read on a
       strict-loading record. Preloaded in the controller too, but the id
       comparison is what makes this page independent of that. %>
-  <% if authenticated? && Current.user.id != @community.user_id %>
-    <p class="cluster">
-      <% if Current.user.member_of?(@community) %>
-        <%# destructive: no-confirm-ok — reversible — a community you leave is one you can rejoin; posts stay %>
-        <%= button_to t("community.leave"), leave_community_path(@community), method: :delete, class: "button button-ghost button-small" %>
-      <% else %>
-        <%= button_to t("community.join"), join_community_path(@community), method: :post,
-              class: "button button-small" %>
-      <% end %>
-    </p>
-  <% end %>
+  <%= render "communities/membership", community: @community,
+                                        joined: authenticated? && Current.user.member_of?(@community) %>
   <%# The wiki is readable by whoever can read the community, so the link is not
       moderator-only — only writing it is. %>
   <p class="cluster">

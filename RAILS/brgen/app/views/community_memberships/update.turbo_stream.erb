@@ -1,0 +1,4 @@
+<%= turbo_stream.replace dom_id(@community, :membership), partial: "communities/membership",
+      locals: { community: @community, joined: @joined } %>
+<%= turbo_stream.replace dom_id(@community, :members_count), partial: "communities/members_count",
+      locals: { community: @community } %>

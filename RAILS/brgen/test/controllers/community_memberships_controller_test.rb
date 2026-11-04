@@ -44,6 +44,53 @@ class CommunityMembershipsControllerTest < ActionDispatch::IntegrationTest
     refute club.member?(@visitor)
   end
 
+  test "over Turbo, Join and Leave swap in place with the new member count" do
+    club = community
+    sign_in_as(@visitor)
+    membership = ActionView::RecordIdentifier.dom_id(club, :membership)
+    count = ActionView::RecordIdentifier.dom_id(club, :members_count)
+
+    post join_community_path(club), as: :turbo_stream
+    assert_select "turbo-stream[action=replace][target=?] template form[id=?][action=?]", membership, membership,
+                  leave_community_path(club) do
+      assert_select "input[name=_method][value=delete]"
+    end
+    assert_select "turbo-stream[action=replace][target=?] template", count,
+                  text: I18n.t("community.members_count", count: club.reload.members_count)
+
+    delete leave_community_path(club), as: :turbo_stream
+    assert_select "turbo-stream[action=replace][target=?] template form[id=?][action=?]", membership, membership,
+                  join_community_path(club)
+    refute club.member?(@visitor)
+  end
+
+  test "each community card says how many are in it and offers Join or Leave" do
+    joined = community
+    other = community
+    @visitor.join_community!(joined)
+    sign_in_as(@visitor)
+
+    get communities_path
+
+    [ joined, other ].each do |club|
+      assert_select "##{ActionView::RecordIdentifier.dom_id(club, :members_count)}",
+                    text: I18n.t("community.members_count", count: club.reload.members_count)
+    end
+    assert_select "form##{ActionView::RecordIdentifier.dom_id(joined, :membership)} input[name=_method][value=delete]"
+    assert_select "form##{ActionView::RecordIdentifier.dom_id(other, :membership)} input[name=_method]", 0
+  end
+
+  test "a later page of the community list leaves out private communities the reader is outside" do
+    hidden = community(privacy: "private")
+    Current.user = @visitor
+    reflex = CommunitiesInfiniteScrollReflex.allocate
+    reflex.define_singleton_method(:element) { Struct.new(:dataset).new({}) }
+
+    refute_includes reflex.send(:scope).to_a, hidden
+  ensure
+    Current.reset
+  end
+
   test "an outsider cannot join a private community" do
     club = community(privacy: "private")
     sign_in_as(@visitor)
