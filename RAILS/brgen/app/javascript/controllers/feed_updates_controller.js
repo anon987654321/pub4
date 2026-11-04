@@ -29,7 +29,10 @@ export default class extends Controller {
     // PostCatchUpsController#feed, and the newest post id when the page was
     // rendered: the feed is ranked, so the newest post need not be on screen.
     sinceUrl: { type: String, default: "" },
-    after: { type: Number, default: 0 }
+    after: { type: Number, default: 0 },
+    // People the reader has blocked. The city stream is rendered for nobody,
+    // so their new cards arrive too and are dropped here.
+    hiddenAuthors: { type: Array, default: [] }
   }
 
   connect() {
@@ -104,7 +107,12 @@ export default class extends Controller {
   // can deliver a post the stream also carried, and counting it twice offers
   // the reader a post they can already see.
   unseen() {
-    return Array.from(this.pendingTarget.children).filter((card) => !this.inFeed(card))
+    return Array.from(this.pendingTarget.children).filter((card) => !this.inFeed(card) && !this.hidden(card))
+  }
+
+  hidden(card) {
+    const author = Number(card.dataset.authorId)
+    return Boolean(author) && this.hiddenAuthorsValue.includes(author)
   }
 
   inFeed(card) {
@@ -129,7 +137,9 @@ export default class extends Controller {
     if (!this.hasFeedTarget) return window.location.reload()
 
     const staged = this.unseen().reverse()
-    Array.from(this.pendingTarget.children).filter((card) => this.inFeed(card)).forEach((card) => card.remove())
+    Array.from(this.pendingTarget.children)
+      .filter((card) => this.inFeed(card) || this.hidden(card))
+      .forEach((card) => card.remove())
 
     let first = null
     for (const card of staged) {

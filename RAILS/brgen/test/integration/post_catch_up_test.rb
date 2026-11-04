@@ -78,4 +78,27 @@ class PostCatchUpTest < ActionDispatch::IntegrationTest
 
     assert_response :not_found
   end
+
+  # The city stream is rendered for nobody, so a blocked person's new card
+  # reaches the reader's pending list too; the page names whom to drop, each
+  # card names its author, and the catch-up leaves them out on its own side.
+  test "a blocked author's new posts stay out of the reader's new-posts chip" do
+    reader = User.strict_loading(false).create!(email_address: "catch-reader@brgen.no", password: "password123",
+                                                username: "leser_innhent", guest: false, city: @city)
+    reader.block!(@author)
+    post session_path, params: { email_address: reader.email_address, password: "password123" }
+
+    neighbour = User.strict_loading(false).create!(email_address: "catch-nabo@brgen.no", password: "password123",
+                                                   username: "nabo_innhent", guest: false, city: @city)
+    shown = Post.create!(user: neighbour, city: @city, title: "Synlig", content: "Fra naboen")
+
+    get root_path
+    assert_select "#feed-panel[data-feed-updates-hidden-authors-value=?]", [ @author.id ].to_json
+    assert_select "turbo-frame#post_#{shown.id}[data-author-id='#{neighbour.id}']"
+
+    Post.create!(user: @author, city: @city, title: "Blokkert", content: "Skal ikke vises")
+    get posts_since_path(after: shown.id)
+    assert_response :success
+    assert_empty streams
+  end
 end

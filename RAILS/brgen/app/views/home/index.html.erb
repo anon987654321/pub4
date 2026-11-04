@@ -70,7 +70,8 @@
          data-feed-updates-one-value="<%= t("home.new_posts.one") %>"
          data-feed-updates-other-value="<%= t("home.new_posts.other") %>"
          data-feed-updates-since-url-value="<%= posts_since_path %>"
-         data-feed-updates-after-value="<%= newest_post_id %>">
+         data-feed-updates-after-value="<%= newest_post_id %>"
+         data-feed-updates-hidden-authors-value="<%= hidden_author_ids.to_json %>">
   <%# Inside the panel so the controller sees it reconnect and asks
       PostCatchUpsController for what the stream carried while it was down. %>
   <% if feed_city.respond_to?(:id) %>

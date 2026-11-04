@@ -3352,7 +3352,7 @@ items:
   item: Drop pending live cards from blocked authors in feed_updates_controller (or
     tag broadcasts with author id) so a blocked user's new post never lands in the
     new-posts chip.
-  status: open
+  status: done
 - id: brgen-296
   app: brgen
   area: privacy

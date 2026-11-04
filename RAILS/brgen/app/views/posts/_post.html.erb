@@ -5,7 +5,10 @@
 <%# Press and hold the card to open its "more" menu (long_press_controller).
     Literal markup rather than turbo_frame_tag's data hash, so the gesture
     census in keyboard_reachable_controls_test can read the bound move. %>
+<%# The author, for a post that names one, so the front page can keep a
+    blocked person's live card out of its new-posts chip. %>
 <turbo-frame id="<%= dom_id(post) %>" target="_top" data-controller="long-press"
+             <% if post.attributed? %>data-author-id="<%= post.user_id %>"<% end %>
              data-action="pointerdown->long-press#start pointermove->long-press#move pointerup->long-press#cancel
                           pointercancel->long-press#cancel contextmenu->long-press#context
                           click->long-press#swallow:capture">

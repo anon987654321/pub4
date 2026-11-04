@@ -4,7 +4,7 @@ class HomeController < ApplicationController
   include Shared::LiveSearchable
   include Shared::MasterGuestHome
 
-  helper_method :newest_post_id
+  helper_method :newest_post_id, :hidden_author_ids
 
   def index
     return render_master_guest_home!(title: "Brgen") if params[:master].present? && master_guest_home?
@@ -31,4 +31,9 @@ class HomeController < ApplicationController
   # The high-water mark a reconnecting front page catches up from: the feed is
   # ranked, so the newest post need not be among the cards on screen.
   def newest_post_id = Post.maximum(:id).to_i
+
+  # People the reader has blocked, whose live cards feed_updates_controller
+  # drops from the new-posts chip as HomeFeed drops their posts from the feed:
+  # the city stream is rendered for nobody, so it cannot leave them out.
+  def hidden_author_ids = Array(Current.user&.blocked_user_ids)
 end

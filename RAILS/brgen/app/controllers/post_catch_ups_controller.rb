@@ -41,10 +41,17 @@ class PostCatchUpsController < ApplicationController
   def after_id = params[:after].to_i
 
   def missed_posts
-    public_posts = Post.kept.visible_to(nil)
+    public_posts = without_blocked(Post.kept.visible_to(nil))
     fresh = public_posts.where(posts: { id: (after_id + 1).. }).order(:id).limit(FEED_LIMIT)
     with_media = fresh.with_attached_image.with_attached_images
     with_media.includes(:user, :community, :votes)
+  end
+
+  # The reader's blocks, as HomeFeed applies them to the feed. A post with no
+  # user is kept: NOT IN alone would drop it with the blocked ones.
+  def without_blocked(posts)
+    hidden = Array(Current.user&.blocked_user_ids)
+    hidden.any? ? posts.where(user_id: nil).or(posts.where.not(user_id: hidden)) : posts
   end
 
   def missed_comments
