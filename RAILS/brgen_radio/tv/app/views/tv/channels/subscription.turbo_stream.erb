@@ -1,0 +1,4 @@
+<%= turbo_stream.replace dom_id(@channel, :subscribe_button),
+      partial: "tv/channels/subscribe_button", locals: { channel: @channel, subscribed: @subscribed } %>
+<%= turbo_stream.replace dom_id(@channel, :subscribers),
+      partial: "tv/channels/subscriber_count", locals: { channel: @channel } %>

@@ -38,15 +38,25 @@ class Tv::ChannelsController < Tv::BaseController
 
   def subscribe
     Tv::Subscription.find_or_create_by!(user_id: Current.user.id, tv_channel_id: @channel.id)
-    redirect_back fallback_location: channel_path(@channel)
+    answer_subscription(subscribed: true)
   end
 
   def unsubscribe
     Tv::Subscription.find_by(user_id: Current.user.id, tv_channel_id: @channel.id)&.destroy
-    redirect_back fallback_location: channel_path(@channel)
+    answer_subscription(subscribed: false)
   end
 
   private
+
+  # The button and the count change in place; without Turbo, back to the page.
+  def answer_subscription(subscribed:)
+    @subscribed = subscribed
+    @channel.reload
+    respond_to do |format|
+      format.turbo_stream { render :subscription }
+      format.html { redirect_back fallback_location: channel_path(@channel) }
+    end
+  end
   # params[:slug], not params[:id]: the route declares `param: :slug`, so the
   # segment arrives under that name and params[:id] is nil. find_by!(slug: nil)
   # raises RecordNotFound every time, so every channel link on /channels 404'd

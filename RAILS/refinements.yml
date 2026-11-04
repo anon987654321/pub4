@@ -4012,7 +4012,7 @@ items:
   item: Answer subscribe/unsubscribe with a turbo_stream that swaps the button and
     the subscriber count in place, and add a request test for both; today they do
     a full redirect_back and no test covers them.
-  status: open
+  status: done
 - id: brgen-377
   app: brgen
   area: tv

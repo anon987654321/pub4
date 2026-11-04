@@ -164,4 +164,26 @@ class TvRefinementsTest < ActionDispatch::IntegrationTest
     get tv.feed_path
     assert_select "[data-tv-feed-sound-off-label-value=?]", I18n.t("tv.feed.sound_off")
   end
+
+  test "subscribing swaps the button and the count in place, and unsubscribing undoes both" do
+    sign_in_as(@viewer)
+    button = ActionView::RecordIdentifier.dom_id(@channel, :subscribe_button)
+    count = ActionView::RecordIdentifier.dom_id(@channel, :subscribers)
+
+    post tv.subscribe_channel_path(@channel), as: :turbo_stream
+    assert_response :success
+    assert_select "turbo-stream[action=replace][target=?]", button
+    assert_select "turbo-stream[target=?] template", count, text: I18n.t("tv.subscribers", count: 1)
+    assert_equal 1, @channel.reload.subscribers_count
+
+    delete tv.unsubscribe_channel_path(@channel), as: :turbo_stream
+    assert_select "turbo-stream[target=?] template", count, text: I18n.t("tv.subscribers", count: 0)
+    assert_equal 0, @channel.reload.subscribers_count.to_i
+
+    post tv.subscribe_channel_path(@channel)
+    assert_redirected_to tv.channel_path(@channel)
+    get tv.channel_path(@channel)
+    assert_select "##{button} form[action=?]", tv.unsubscribe_channel_path(@channel)
+    assert_select "li##{count}", text: I18n.t("tv.subscribers", count: 1)
+  end
 end

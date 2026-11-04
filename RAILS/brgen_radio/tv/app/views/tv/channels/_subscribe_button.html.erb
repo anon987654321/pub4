@@ -1,0 +1,11 @@
+<%# Swapped in place by subscribe/unsubscribe's turbo_stream, with the count. %>
+<%= tag.div id: dom_id(channel, :subscribe_button) do %>
+  <% if subscribed %>
+    <%# destructive: no-confirm-ok — reversible — the button becomes Subscribe again in place %>
+    <%= button_to t("tv.unsubscribe"), unsubscribe_channel_path(channel), method: :delete,
+          class: "button button-ghost button-small" %>
+  <% else %>
+    <%= button_to t("tv.subscribe"), subscribe_channel_path(channel), method: :post,
+          class: "button button-primary button-small" %>
+  <% end %>
+<% end %>
