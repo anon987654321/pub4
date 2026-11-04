@@ -72,4 +72,18 @@ class StaffBoardTest < ActionDispatch::IntegrationTest
     assert_equal "Toum", card.at_css(".board-card-options")&.text
     assert_equal "Uten løk", card.at_css(".board-card-note")&.text
   end
+
+  test "a Wolt dispatch names the courier Wolt gave and the card dials the phone" do
+    staff_sign_in
+    @order.update!(state: "ready")
+
+    patch staff_wolt_order_url(@order)
+    assert_equal "Bergen Bud", @order.reload.courier_name
+
+    @order.update!(courier_name: "Amina")
+    get staff_board_url
+    card = Nokogiri::HTML(response.body).at_css("#order_card_#{@order.id}")
+    assert_includes card.at_css(".board-wait").text, "Amina"
+    assert card.at_css(%(.board-card-phone a[href="tel:90000004"]))
+  end
 end

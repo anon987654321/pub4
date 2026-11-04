@@ -5756,7 +5756,7 @@ items:
   path: RAILS/mrdamascy/app/views/courier/runs/show.html.erb
   item: Extract the duplicated run-stop markup into a partial and confirm before "Levert"
     so a mis-tap cannot close a run.
-  status: open
+  status: done
 - id: mrdamascy-086
   app: mrdamascy
   area: staff
@@ -5772,7 +5772,7 @@ items:
   path: RAILS/mrdamascy/app/views/staff/board/_order_card.html.erb
   item: 'Make phone numbers tel: links on board cards and courier stops, and addresses
     map links on courier stops.'
-  status: open
+  status: done
 - id: mrdamascy-088
   app: mrdamascy
   area: staff
@@ -5788,7 +5788,7 @@ items:
   path: RAILS/mrdamascy/app/views/staff/board/_order_card.html.erb
   item: Replace the hard-coded "Bergen Bud" courier name with the courier WoltDriveClient
     returned, stored on the order.
-  status: open
+  status: done
 - id: mrdamascy-090
   app: mrdamascy
   area: staff
@@ -5851,7 +5851,7 @@ items:
   path: RAILS/mrdamascy/test/controllers/staff_board_test.rb
   item: Add courier runs controller tests (role gate, pickup, deliver awards a stamp)
     and a Wolt dispatch test.
-  status: open
+  status: done
 - id: mrdamascy-098
   app: mrdamascy
   area: tests

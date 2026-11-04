@@ -378,6 +378,7 @@ nb:
     cannot_deliver: Kan ikke levere ennå — hent først.
     cannot_pickup: Ordren er ikke klar fra kjøkkenet.
     deliver: Levert
+    deliver_confirm: "Merke ordre #%{id} som levert? Det avslutter løpet."
     delivered: Levert! Sahtein!
     onway_title: På vei
     picked_up: Hentet — på vei til kunden.

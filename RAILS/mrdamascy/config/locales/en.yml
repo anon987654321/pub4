@@ -378,6 +378,7 @@ en:
     cannot_deliver: Can't deliver yet — pick up first.
     cannot_pickup: The order isn't ready from the kitchen.
     deliver: Delivered
+    deliver_confirm: "Mark order #%{id} as delivered? That closes the run."
     delivered: Delivered! Sahtein!
     onway_title: On the way
     picked_up: Picked up — heading to the customer.

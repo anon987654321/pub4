@@ -49,6 +49,12 @@ module ApplicationHelper
     rester.zero? ? "#{kroner} kr" : format("%d,%02d kr", kroner, rester)
   end
 
+  # Opens an address in the phone's maps app (Google Maps' cross-platform
+  # search URL), for the courier's stops.
+  def map_search_url(address, postcode)
+    "https://www.google.com/maps/search/?api=1&query=#{ERB::Util.url_encode("#{address}, #{postcode}")}"
+  end
+
   # A form field's server-side error, rendered beside the field and named
   # by its aria-describedby (field_error_aria), or nothing when it passed.
   def field_error(errors, field)

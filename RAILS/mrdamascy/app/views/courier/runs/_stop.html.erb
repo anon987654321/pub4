@@ -1,0 +1,18 @@
+<%# One stop on the courier run: order number, an address that opens in
+    maps, a phone that dials, the total and lines, and the stop's one
+    action. Locals: order, action (a button_to rendered by the caller). %>
+<article class="run-stop">
+  <div class="run-info">
+    <%= tag.strong "##{order.id}" %>
+    <%= tag.p class: "run-address" do %>
+      <%= link_to "#{order.address} · #{order.postcode}", map_search_url(order.address, order.postcode),
+            rel: "noopener", target: "_blank" %>
+    <% end %>
+    <%= tag.p link_to(order.phone, "tel:#{order.phone}"), class: "run-phone" if order.phone.present? %>
+    <ul class="fact-list run-meta">
+      <%= tag.li money(order.total_ore) %>
+      <%= safe_join(order.order_items.map { |line| tag.li("#{line.quantity}× #{line.name}") }) %>
+    </ul>
+  </div>
+  <%= action %>
+</article>

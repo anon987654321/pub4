@@ -117,11 +117,8 @@ class WoltDriveClient
 
     def request_mock_delivery(order)
       delivery_id = "mock-wolt-#{order.tracking_token}"
-      order.update!(
-        external_delivery_id: delivery_id,
-        external_delivery_url: tracking_url(delivery_id)
-      )
-      { id: delivery_id, status: "courier_assigned", courier: "Bergen Bud",
+      store_delivery!(order, id: delivery_id, url: tracking_url(delivery_id), courier: "Bergen Bud")
+      { id: delivery_id, status: "courier_assigned", courier: order.courier_name,
         tracking_url: order.external_delivery_url }
     end
 
@@ -147,11 +144,15 @@ class WoltDriveClient
 
       body = JSON.parse(response.body.to_s)
       delivery_id = body["id"] || "wolt-#{order.tracking_token}"
-      order.update!(
-        external_delivery_id: delivery_id,
-        external_delivery_url: body["tracking"] && body["tracking"]["url"]
-      )
-      { id: delivery_id, status: body["status"], courier: nil, tracking_url: order.external_delivery_url }
+      store_delivery!(order, id: delivery_id, url: body.dig("tracking", "url"), courier: body.dig("courier", "name"))
+      { id: delivery_id, status: body["status"], courier: order.courier_name,
+        tracking_url: order.external_delivery_url }
+    end
+
+    # The booked delivery and the courier Wolt named, kept on the order for
+    # the staff board.
+    def store_delivery!(order, id:, url:, courier:)
+      order.update!(external_delivery_id: id, external_delivery_url: url, courier_name: courier)
     end
 
     # --- Shared real-mode plumbing -----------------------------------------

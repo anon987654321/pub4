@@ -11,20 +11,9 @@
     <%= tag.p t("courier.empty") %>
   <% end %>
   <% @ready_orders.each do |order| %>
-    <article class="run-stop">
-      <div class="run-info">
-        <strong>#<%= order.id %></strong>
-        <%= tag.p "#{order.address} · #{order.postcode}", class: "run-address" %>
-        <ul class="fact-list run-meta">
-          <li><%= money(order.total_ore) %></li>
-          <% order.order_items.each do |line| %>
-            <li><%= line.quantity %>× <%= line.name %></li>
-          <% end %>
-        </ul>
-      </div>
-      <%= button_to t("courier.pickup"), courier_pickup_order_path(order),
-            method: :patch, class: "button-primary" %>
-    </article>
+    <%= render "courier/runs/stop", order:,
+          action: button_to(t("courier.pickup"), courier_pickup_order_path(order),
+                            method: :patch, class: "button-primary") %>
   <% end %>
 </section>
 
@@ -33,20 +22,11 @@
   <% if @on_the_way_orders.empty? %>
     <%= tag.p t("courier.empty") %>
   <% end %>
+  <%# "Levert" closes the run for good, so a mis-tap asks first. %>
   <% @on_the_way_orders.each do |order| %>
-    <article class="run-stop">
-      <div class="run-info">
-        <strong>#<%= order.id %></strong>
-        <%= tag.p "#{order.address} · #{order.postcode}", class: "run-address" %>
-        <ul class="fact-list run-meta">
-          <li><%= money(order.total_ore) %></li>
-          <% order.order_items.each do |line| %>
-            <li><%= line.quantity %>× <%= line.name %></li>
-          <% end %>
-        </ul>
-      </div>
-      <%= button_to t("courier.deliver"), courier_deliver_order_path(order),
-            method: :patch, class: "button-deliver" %>
-    </article>
+    <%= render "courier/runs/stop", order:,
+          action: button_to(t("courier.deliver"), courier_deliver_order_path(order),
+                            method: :patch, class: "button-deliver",
+                            form: { data: { turbo_confirm: t("courier.deliver_confirm", id: order.id) } }) %>
   <% end %>
 </section>
