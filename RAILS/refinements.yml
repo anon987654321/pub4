@@ -5984,7 +5984,7 @@ items:
   path: RAILS/__shared/app/services/shared/cache_policy.rb
   item: Delete the CachePolicy keys no caller reads (feed_fragment, user_profile,
     search_results), or wire them into the code they name.
-  status: open
+  status: done
 - id: shared-008
   app: shared
   area: cleanup

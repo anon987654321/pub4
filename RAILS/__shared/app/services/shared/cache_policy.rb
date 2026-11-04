@@ -1,10 +1,11 @@
 # frozen_string_literal: true
 
 module Shared
+  # The TTLs the apps write with: :search_results in Tradedoubler, and
+  # brgen's weekly and monthly rollup jobs. :static_page is the legal pages'
+  # day, kept for when PagesController sends HTTP caching.
   module CachePolicy
     TTL = {
-      feed_fragment: 300,
-      user_profile: 3600,
       search_results: 900,
       static_page: 86_400,
       weekly_stats: 604_800,
