@@ -85,6 +85,7 @@
         <%= render "comments/comment", comment: comment %>
       <% end %>
     </div>
+    <%= render "shared/pager", pagy: @comments_pagy, param: :comments_page %>
   </section>
 
   <% if authenticated? && Current.user.id == @event.user_id %>

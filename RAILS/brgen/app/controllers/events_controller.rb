@@ -30,7 +30,7 @@ class EventsController < ApplicationController
 
     @rsvp = @event.rsvp_for(Current.user)
     @attendees = @event.attendee_preview
-    @comments = @event.comments.includes(:user).order(created_at: :desc)
+    load_comments
     @comment = Comment.new if Current.user.present?
     @nearby = nearby_events
   end
@@ -74,6 +74,18 @@ class EventsController < ApplicationController
   end
 
   private
+
+  COMMENTS_PER_PAGE = 20
+
+  # The newest page of comments, shown oldest first: comments/create appends a
+  # new one at the bottom, so the list has to read downwards to the latest.
+  # Older pages are behind the pager rather than all loaded at once.
+  def load_comments
+    comments = @event.comments.includes(:user)
+    newest = comments.order(created_at: :desc, id: :desc)
+    @comments_pagy, page = pagy(newest, limit: COMMENTS_PER_PAGE, page_key: "comments_page")
+    @comments = page.reverse
+  end
 
   def set_event
     @event = find_by_slug_or_id(Event.includes(:user, :place, :neighborhood), params[:id])

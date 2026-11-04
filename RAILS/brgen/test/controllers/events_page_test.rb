@@ -85,4 +85,21 @@ class EventsPageTest < ActionDispatch::IntegrationTest
     assert_select "input#event_price_cents[aria-describedby='event_price_hint']"
     assert_select "small#event_price_hint.form-help"
   end
+
+  test "the event shows its newest comments oldest first, with older ones behind the pager" do
+    talker = person("ep_talk")
+    rows = (1..22).map do |n|
+      { user_id: talker.id, commentable_type: "Event", commentable_id: @event.id, content: "Kommentar-#{n}-slutt",
+        created_at: n.minutes.ago, updated_at: n.minutes.ago }
+    end
+    Comment.insert_all!(rows)
+
+    get event_path(@event)
+
+    assert_equal 20, css_select("#comments article.comment").size
+    body = response.body
+    assert_operator body.index("Kommentar-2-slutt"), :<, body.index("Kommentar-1-slutt"), "the newest comes last"
+    refute_includes body, "Kommentar-22-slutt"
+    assert_select "nav.pager a[rel=next][href*=?]", "comments_page=2"
+  end
 end

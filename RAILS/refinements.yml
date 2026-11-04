@@ -1625,7 +1625,7 @@ items:
   item: Paginate @comments on EventsController#show (currently every comment loads,
     unbounded) and order them ascending to match comments/create.turbo_stream.erb,
     which appends new comments at the bottom while the page lists newest first.
-  status: open
+  status: done
 - id: brgen-091
   app: brgen
   area: events
