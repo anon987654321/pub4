@@ -61,6 +61,15 @@
     </div>
 
     <%= tag.h2 t("orders.review_title"), class: "section-title" %>
+    <% review = order.review %>
+    <% if review&.persisted? %>
+      <%# One review per order: once given, the page shows it back. %>
+      <p class="review-given">
+        <%= tag.span "★" * review.rating, aria: { hidden: true } %>
+        <%= tag.span t("orders.review_star_option", count: review.rating), class: "visually-hidden" %>
+      </p>
+      <%= tag.p review.body if review.body.present? %>
+    <% else %>
     <%= form_with url: order_review_path(order.id), class: "review-form" do %>
       <%# Radios named in words: a screen reader spells out star glyphs. %>
       <fieldset class="option-group">
@@ -80,6 +89,7 @@
         <%= text_area_tag :body, nil, placeholder: t("orders.review_body_placeholder") %>
       </div>
       <%= tag.button t("orders.review_submit"), type: "submit", class: "button-primary" %>
+    <% end %>
     <% end %>
 
     <%= tag.p t("orders.thanks"), class: "thanks-line" %>

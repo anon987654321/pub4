@@ -38,4 +38,15 @@ class TrackPageTest < ActionDispatch::IntegrationTest
     assert_equal %w[5 4 3 2 1], radios.map { |r| r["value"] }
     assert_includes radios.first.parent.text, "5 av 5 stjerner"
   end
+  test "a given review is shown back instead of a fresh form" do
+    order = seed_order!(state: "delivered")
+    Review.create!(order:, user: order.user, rating: 4, body: "Toum til himmelen")
+
+    get track_url(order.tracking_token)
+    page = Nokogiri::HTML(response.body)
+
+    assert_nil page.at_css("form.review-form")
+    assert_includes page.at_css(".review-given").text, "4 av 5 stjerner"
+    assert_includes response.body, "Toum til himmelen"
+  end
 end

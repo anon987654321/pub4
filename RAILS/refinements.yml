@@ -5908,7 +5908,7 @@ items:
   size: S
   path: RAILS/mrdamascy/app/views/orders/track.html.erb
   item: Hide the review form once a review exists and show the submitted rating instead.
-  status: open
+  status: done
 - id: mrdamascy-106
   app: mrdamascy
   area: typography
