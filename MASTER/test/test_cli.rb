@@ -204,7 +204,12 @@ class TestCLI < Minitest::Test
       assert_equal "council: veto from Security\ncritical finding", result.message
       assert_equal ["council:start", { scope: "staged", bytes: 4 }], events[0]
       assert_equal(
-        ["council:veto", { vetoed_by: "Security", message: "council: veto from Security\ncritical finding" }],
+        ["council:veto", {
+          vetoed_by: "Security",
+          veto_exercised: true,
+          security_veto_exercised: true,
+          message: "council: veto from Security\ncritical finding",
+        }],
         events[1],
       )
     end
@@ -280,7 +285,13 @@ class TestCLI < Minitest::Test
       assert_includes result.value!, "synthesis: ship it"
       assert_equal Master::CLI::CouncilCrit::MAX_DIFF_BYTES + "\n... [truncated]".bytesize, reviewed.bytesize
       assert_equal(
-        ["council:pass", { jurors: 3, veto_roles_answered: ["Security"], security_reviewed: true }],
+        ["council:pass", {
+          jurors: 3,
+          veto_roles_answered: ["Security"],
+          security_reviewed: true,
+          veto_exercised: false,
+          security_veto_exercised: false,
+        }],
         events.last,
       )
     end
