@@ -11,9 +11,18 @@
 %>
 <% id_prefix = local_assigns.fetch(:id_prefix, "amber-logo") %>
 <% view_box = local_assigns.fetch(:view_box, "0 0 1000 500") %>
+<%# decorative: true inside a link that already carries the name, so the
+    mark is not announced a second (and third, via <title>) time. %>
+<% decorative = local_assigns.fetch(:decorative, false) %>
 <div class="amber-instance">
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="<%= view_box %>" preserveAspectRatio="xMinYMid meet" role="img" aria-label="<%= t("amber.logo_aria") %>" class="amber-logo-svg">
-    <title><%= t("amber.logo_aria") %></title>
+  <% naming = if decorative
+               { "aria-hidden" => "true", "focusable" => "false" }
+             else
+               { "role" => "img", "aria-label" => t("amber.logo_aria") }
+             end %>
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="<%= view_box %>" preserveAspectRatio="xMinYMid meet"
+       class="amber-logo-svg" <%= tag.attributes(naming) %>>
+    <% unless decorative %><title><%= t("amber.logo_aria") %></title><% end %>
     <defs>
       <path id="<%= id_prefix %>-swoosh-path" d="M50,220 C250,180 750,180 950,220"/>
       <clipPath id="<%= id_prefix %>-text-mask">

@@ -72,7 +72,7 @@
   </nav>
   <div class="amber-footer-mark">
     <%= link_to root_path, class: "amber-footer-home", aria: { label: t("nav.brand_home") } do %>
-      <%= render "shared/logo", id_prefix: "amber-footer", view_box: "58 105 410 108" %>
+      <%= render "shared/logo", id_prefix: "amber-footer", view_box: "58 105 410 108", decorative: true %>
     <% end %>
     <p class="amber-footer-legal">&copy; <%= Date.current.year %> <%= t("app.name") %>. <%= t("footer.tagline") %></p>
     <%# The affiliate note the shared legal row carried; its privacy, terms and

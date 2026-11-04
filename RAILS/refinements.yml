@@ -46,7 +46,7 @@ items:
   item: Mark the footer logo aria-hidden inside its labelled link; the link has an
     aria-label and the SVG also has role=img with its own label and title, announced
     twice.
-  status: open
+  status: done
 - id: amber-006
   app: amber
   area: accessibility
@@ -292,7 +292,8 @@ items:
   path: RAILS/amber/app/views/declutter/index.html.erb
   item: Fix the declutter grids' class 'items-grid', which matches no style; the rest
     of the app uses 'item-grid'.
-  status: open
+  status: invalid
+  note: ".items-grid is styled: application.scss defines .items-grid with .wardrobe-grid (grid, gap, the first-tile span), so the declutter grids are laid out; renaming them to item-grid would change their look."
 - id: amber-036
   app: amber
   area: markup
