@@ -1076,7 +1076,7 @@ items:
   size: M
   path: RAILS/brgen/app/controllers/posts_controller.rb
   item: Paginate root comments (or 'show more') on posts#show; all roots load at once.
-  status: open
+  status: done
 - id: brgen-025
   app: brgen
   area: comments

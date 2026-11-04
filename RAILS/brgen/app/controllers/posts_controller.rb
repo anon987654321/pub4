@@ -53,7 +53,8 @@ class PostsController < ApplicationController
     return if redirect_id_to_slug(@post)
 
     @comment_sort = COMMENT_SORTS.include?(params[:sort]) ? params[:sort] : "best"
-    @comments = sorted_comment_roots.includes(:user, :votes, replies: [ :user, :votes ])
+    roots = sorted_comment_roots.includes(:user, :votes, replies: [ :user, :votes ])
+    @comments_pagy, @comments = pagy(roots, limit: 30, page_key: "comments_page")
     @new_comment = Comment.new
     @quotes = @post.reposts.quoted.includes(:user).order(created_at: :desc)
     @quote_comment = @post.quote_comment_by(Current.user)

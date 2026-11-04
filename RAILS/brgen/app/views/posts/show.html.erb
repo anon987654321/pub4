@@ -166,6 +166,8 @@
             live: false %></div>
     <% end %>
   </div>
+  <%# Thirty threads a page: a post with hundreds of root comments loaded them all. %>
+  <%= render "shared/pager", pagy: @comments_pagy, param: :comments_page %>
 </section>
 
 <aside class="post-show-aside">
