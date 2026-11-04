@@ -929,10 +929,44 @@ nb:
     position: "Side %{page} av %{pages}"
   activerecord:
     attributes:
-      comment:
-        content: "Kommentar"
+      # Form labels read these through human_attribute_name; without them the
+      # nb forms printed English humanized column names.
+      item:
+        title: "Navn"
+        category: "Kategori"
+        color: "Farge"
+        size: "Størrelse"
+        material: "Materiale"
+        brand: "Merke"
+        price: "Pris"
+        purchase_date: "Kjøpsdato"
+        season: "Sesong"
+        photos: "Bilder"
       outfit:
         name: "Navn"
+        description: "Beskrivelse"
+        category: "Kategori"
+        season: "Sesong"
+        occasion: "Anledning"
+      message:
+        recipient_id: "Mottaker"
+        body: "Melding"
+      live_stream:
+        description: "Beskrivelse"
+        scheduled_at: "Tidspunkt"
+      declutter_review:
+        decision: "Beslutning"
+        reason_kept: "Grunn til å beholde"
+        notes: "Notater"
+      declutter_challenge:
+        due_on: "Frist"
+        note: "Notat"
+      creator_profile:
+        handle: "Brukernavn"
+        display_name: "Visningsnavn"
+        bio: "Bio"
+      comment:
+        content: "Kommentar"
       post:
         body: "Innlegg"
       affiliate_link:

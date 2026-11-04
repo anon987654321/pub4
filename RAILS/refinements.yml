@@ -250,7 +250,7 @@ items:
   item: Add activerecord.attributes.item.* (title, category, color, size, material,
     brand, price, purchase_date, season, photos); the item form labels render the
     English humanized attribute names in nb.
-  status: open
+  status: done
 - id: amber-031
   app: amber
   area: i18n
@@ -259,7 +259,7 @@ items:
   item: Add activerecord.attributes for live_stream (description, scheduled_at), declutter_review
     (decision, reason_kept, notes), creator_profile (handle, display_name, bio) and
     the challenge form (due_on, note).
-  status: open
+  status: done
 - id: amber-032
   app: amber
   area: i18n
@@ -267,7 +267,7 @@ items:
   path: RAILS/amber/config/locales/nb.yml
   item: Add activerecord.attributes.outfit.description/category/season/occasion translations
     for the outfit form labels.
-  status: open
+  status: done
 - id: amber-033
   app: amber
   area: i18n
@@ -275,7 +275,7 @@ items:
   path: RAILS/amber/config/locales/nb.yml
   item: Add activerecord.attributes.message.recipient_id/body translations; the form
     labels fall back to English 'Recipient'/'Body' in nb.
-  status: open
+  status: done
 - id: amber-034
   app: amber
   area: markup
@@ -573,7 +573,7 @@ items:
   path: RAILS/amber/test/services/laws_engine_i18n_test.rb
   item: Add an i18n test that renders the item and outfit forms in nb and asserts
     no English attribute labels remain.
-  status: open
+  status: done
 - id: amber-071
   app: amber
   area: ui

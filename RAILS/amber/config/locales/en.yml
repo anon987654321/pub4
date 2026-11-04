@@ -931,10 +931,42 @@ en:
     position: "Page %{page} of %{pages}"
   activerecord:
     attributes:
-      comment:
-        content: "Comment"
+      item:
+        title: "Title"
+        category: "Category"
+        color: "Colour"
+        size: "Size"
+        material: "Material"
+        brand: "Brand"
+        price: "Price"
+        purchase_date: "Purchase date"
+        season: "Season"
+        photos: "Photos"
       outfit:
         name: "Name"
+        description: "Description"
+        category: "Category"
+        season: "Season"
+        occasion: "Occasion"
+      message:
+        recipient_id: "Recipient"
+        body: "Message"
+      live_stream:
+        description: "Description"
+        scheduled_at: "Time"
+      declutter_review:
+        decision: "Decision"
+        reason_kept: "Reason to keep"
+        notes: "Notes"
+      declutter_challenge:
+        due_on: "Due"
+        note: "Note"
+      creator_profile:
+        handle: "Handle"
+        display_name: "Display name"
+        bio: "Bio"
+      comment:
+        content: "Comment"
       post:
         body: "Post"
       affiliate_link:

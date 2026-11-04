@@ -66,11 +66,11 @@
     <%= tag.h2 t("declutter.week_challenge") %>
     <%= form_with url: challenge_declutter_path(@item), method: :post do |form| %>
       <div class="field">
-        <%= form.label :due_on %>
+        <%= form.label :due_on, DeclutterChallenge.human_attribute_name(:due_on) %>
         <%= form.date_field :due_on, value: 7.days.from_now.to_date %>
       </div>
       <div class="field">
-        <%= form.label :note %>
+        <%= form.label :note, DeclutterChallenge.human_attribute_name(:note) %>
         <%= form.text_field :note, value: "Wear once before deciding." %>
       </div>
       <%= form.submit t("declutter.create_challenge"), class: "button" %>
