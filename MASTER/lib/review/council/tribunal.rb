@@ -17,7 +17,7 @@ module Master
           @speak_personas = speak_personas
         end
 
-        def review(evidence:, personas:, context:, image: nil)
+        def review(evidence:, personas:, context:, image: nil, required_veto_roles: [])
           bundle = normalize(evidence)
           return inconclusive(bundle, "no evidence") if bundle.empty?
 
@@ -34,7 +34,7 @@ module Master
             event_bus: @bus,
             judge_enabled: @judge_enabled,
             voice_personas: @speak_personas,
-          ).review(payload, context:, image:)
+          ).review(payload, context:, image:, required_veto_roles:)
 
           return result unless result.ok?
 
