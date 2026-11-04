@@ -161,6 +161,6 @@ class PortsController < ApplicationController
 
   def set_port
     scope = Port.includes(:category, :platform, :maintainer)
-    @port = scope.find_by(pkgpath: params[:id].to_s.tr("-", "/")) || scope.find(params[:id])
+    @port = scope.from_param(params[:id])
   end
 end

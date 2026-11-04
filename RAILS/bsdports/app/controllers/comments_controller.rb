@@ -54,6 +54,6 @@ class CommentsController < ApplicationController
 
   private
 
-  def set_port = @port = Port.find(params[:port_id])
+  def set_port = @port = Port.from_param(params[:port_id])
   def comment_params = params.require(:comment).permit(:content)
 end

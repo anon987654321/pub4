@@ -4439,7 +4439,7 @@ items:
   path: RAILS/bsdports/app/controllers/comments_controller.rb
   item: Look the port up in CommentsController#set_port the same way PortsController
     does (pkgpath first), so comment URLs work with the same slug a port page uses.
-  status: open
+  status: done
 - id: bsdports-030
   app: bsdports
   area: routing
@@ -4448,7 +4448,7 @@ items:
   item: Give Port a to_param built from pkgpath and stop decoding with tr('-', '/')
     in set_port; pkgpaths like devel/py-foo contain hyphens and cannot round-trip,
     so port URLs stay numeric ids.
-  status: open
+  status: done
 - id: bsdports-031
   app: bsdports
   area: search
@@ -4473,7 +4473,11 @@ items:
   item: Make PortsInfiniteScrollReflex reuse Port.search instead of a bare name/comment/description
     LIKE, so page 2+ of a search matches the same pkgpath/maintainer/dependency/advisory
     fields as page 1.
-  status: open
+  status: invalid
+  note: 'Page 1 never reaches Port.search either: Shared::LiveSearch gates FTS on data_source_exists?("ports_fts"),
+  which is false for SQLite virtual tables, so both pages run the same name/comment/description
+  LIKE. The real defect is in RAILS/__shared/app/services/shared/live_search.rb (out
+  of scope here).'
 - id: bsdports-034
   app: bsdports
   area: seo

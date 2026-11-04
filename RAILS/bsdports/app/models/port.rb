@@ -76,6 +76,20 @@ class Port < ApplicationRecord
   }
   scope :semantic_search, ->(q) { search(q) } # stub for sqlite-vec embeddings on description (DG02)
 
+  # "12-devel-py-foo": the id finds the row and the pkgpath makes the URL
+  # readable. A pkgpath alone cannot be the param: it holds slashes, the same
+  # pkgpath exists once per platform, and hyphens inside it (devel/py-foo)
+  # meant the old "-" for "/" swap could never be decoded.
+  def to_param
+    "#{id}-#{pkgpath.to_s.parameterize}" if id
+  end
+
+  # The one lookup ports and their comments share: an exact pkgpath typed into
+  # the URL first, then the leading id of to_param ("12-devel-git" casts to 12).
+  def self.from_param(param)
+    find_by(pkgpath: param.to_s) || find(param)
+  end
+
   def watched_by?(user)
     watches.exists?(user: user)
   end
