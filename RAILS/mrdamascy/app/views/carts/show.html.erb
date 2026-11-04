@@ -54,7 +54,7 @@
     </div>
 
     <p class="promo-hint">
-      <%= tag.span "SAHTEIN10", class: "badge badge-promo", aria: { hidden: true } %>
+      <%= tag.span @promo.code, class: "badge badge-promo", aria: { hidden: true } if @promo %>
       <%= t("cart.promo_hint") %>
     </p>
 

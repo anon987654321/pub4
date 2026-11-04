@@ -119,6 +119,18 @@ class CartsControllerTest < ActionDispatch::IntegrationTest
     targets.each { |id| assert page.at_css("##{id}"), "the cart page has no ##{id} for its stream" }
   end
 
+  test "the promo badge names the code checkout will apply, and only that" do
+    customer_sign_in
+    post add_item_cart_url, params: { menu_item_id: @item.id, quantity: 1 }
+
+    get cart_url
+    assert_nil Nokogiri::HTML(response.body).at_css(".badge-promo"), "no active code, no badge"
+
+    seed_promo!(code: "YALLA15", kind: "percent", value: 15)
+    get cart_url
+    assert_equal "YALLA15", Nokogiri::HTML(response.body).at_css(".badge-promo")&.text
+  end
+
   test "an empty cart invites you back to the menu" do
     customer_sign_in
 

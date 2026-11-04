@@ -7,6 +7,9 @@ class CartsController < ApplicationController
   def show
     @cart = current_cart
     @lines = @cart.cart_items.includes(:menu_item).order(:id)
+    # The badge names the code checkout will apply, or none at all.
+    @promo = PromoApplier.call(subtotal_ore: @cart.subtotal_ore, delivery_mode: @cart.delivery_mode,
+                               user: current_user)[:promo]
   end
 
   # Quick-add from the menu (APP_SPEC §6): a Turbo Stream refreshes the cart

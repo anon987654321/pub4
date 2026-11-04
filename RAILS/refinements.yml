@@ -5210,7 +5210,7 @@ items:
   path: RAILS/mrdamascy/app/views/carts/show.html.erb
   item: Drop the hard-coded "SAHTEIN10" badge from the cart summary or read it from
     an active PromoCode; the promo hint beside it says no code is needed.
-  status: open
+  status: done
 - id: mrdamascy-020
   app: mrdamascy
   area: cart
