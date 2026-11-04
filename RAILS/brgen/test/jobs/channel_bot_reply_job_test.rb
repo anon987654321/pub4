@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "test_helper"
+require "minitest/mock"
 
 # The bots never replied, for two reasons stacked on top of each other.
 #
