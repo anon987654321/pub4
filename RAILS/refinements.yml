@@ -1704,7 +1704,7 @@ items:
   item: Run the cheap Signature checks (header coverage, Date freshness, Digest match)
     before Fediverse::ActorFetcher.for_key_id in InboxesController#create, so stale
     or unsigned POSTs are refused without an outbound fetch to a sender-chosen URL.
-  status: open
+  status: done
 - id: brgen-100
   app: brgen
   area: fediverse

@@ -36,9 +36,8 @@ class Fediverse::InboxesController < ApplicationController
     activity = parse(body)
     return head :bad_request if activity.blank?
 
-    # Before the actor is fetched: a blocked instance must not be able to make
-    # this one issue an outbound request by POSTing here.
-    return head :forbidden if FediBlock.blocked_uri?(signature_key_id)
+    refusal = refusal_before_fetch(body)
+    return head refusal if refusal
 
     actor = Fediverse::ActorFetcher.for_key_id(signature_key_id)
     return head :unauthorized if actor.blank?
@@ -75,6 +74,25 @@ class Fediverse::InboxesController < ApplicationController
 
   def signature_key_id
     Fediverse::Signature.parse(request.headers["Signature"])["keyId"]
+  end
+
+  # Before the actor is fetched: a blocked instance must not be able to make
+  # this one issue an outbound request by POSTing here, and a stale, unsigned
+  # or body-swapped POST is refused without brgen fetching a URL the sender
+  # chose.
+  def refusal_before_fetch(body)
+    return :forbidden if FediBlock.blocked_uri?(signature_key_id)
+
+    :unauthorized unless signature_preconditions?(body)
+  end
+
+  # Fediverse::Signature.verify repeats these; they run here first because
+  # they are free and the actor fetch is not.
+  def signature_preconditions?(body)
+    covered = Fediverse::Signature.parse(request.headers["Signature"])["headers"].to_s.split(/\s+/)
+    (Fediverse::Signature::REQUIRED_COVERAGE - covered).empty? &&
+      Fediverse::Signature.fresh?(request.headers["Date"]) &&
+      Fediverse::Signature.digest_matches?(request.headers["Digest"], body)
   end
 
   def claims_match?(activity, actor)
