@@ -25,6 +25,11 @@ class MessagesController < ApplicationController
 
   rate_limit to: 40, within: 3.minutes, only: :create, name: "sustained",
     with: -> { redirect_back fallback_location: root_path, alert: t("flash.messages_rate_limited") }
+  # A forward is a message into another thread, and the two limits above cover
+  # only :create, so forwarding was an unlimited fan-out.
+  rate_limit to: 20, within: 5.minutes, only: :forward, name: "forward",
+    by: -> { Current.user&.id ? "u#{Current.user.id}" : request.remote_ip },
+    with: -> { redirect_back fallback_location: root_path, alert: t("flash.messages_rate_limited") }
 
   # The page of history above the cursor. `before` is the oldest message the
   # log already holds; the reply carries the next cursor in X-History-Next, or
@@ -93,6 +98,8 @@ class MessagesController < ApplicationController
   # a thread they are not in nor drop a message into one.
   def forward
     message = @conversation.messages.visible.unexpired.find(params[:id])
+    return head(:forbidden) unless message.forwardable?
+
     target = Conversation.for_user(Current.user).find(params[:target_conversation_id])
     # The block that holds in create holds here too: a forward is a message into target.
     return refuse_blocked if target.blocked_between?(Current.user)

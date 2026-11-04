@@ -2433,7 +2433,7 @@ items:
   item: Add a named rate_limit to MessagesController#forward; the burst and sustained
     limits cover only :create, so forward is an unlimited fan-out path into every
     thread the sender holds.
-  status: open
+  status: done
 - id: brgen-188
   app: brgen
   area: messenger
@@ -2442,7 +2442,7 @@ items:
   item: Add a named rate_limit to TypingIndicatorsController#create (e.g. 40 per minute
     per user); the client throttle to 2 s is the only guard on the highest-frequency
     write in the app.
-  status: open
+  status: done
 - id: brgen-189
   app: brgen
   area: messenger
@@ -2451,7 +2451,7 @@ items:
   item: Refuse typing pings in a conversation where blocked_between? is true or the
     pinger is still a request participant, so a blocked or unaccepted person cannot
     signal presence.
-  status: open
+  status: done
 - id: brgen-190
   app: brgen
   area: messenger
@@ -2460,7 +2460,7 @@ items:
   item: Make Message#forwardable? return false for messages in an ephemeral or view-once
     conversation (or that should_expire?), so forwarding cannot copy a disappearing
     message into a permanent thread.
-  status: open
+  status: done
 - id: brgen-191
   app: brgen
   area: messenger

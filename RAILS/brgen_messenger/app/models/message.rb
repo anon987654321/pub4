@@ -91,8 +91,9 @@ class Message < ApplicationRecord
 
   # A forward carries the body into another thread. Same promise as search: a
   # message that has disappeared or been unsent is gone, so there is nothing to
-  # carry.
-  def forwardable? = !deleted? && !expired?
+  # carry. Nor is one that will disappear: a copy in another thread would
+  # outlive the timer or the single viewing its sender chose.
+  def forwardable? = !deleted? && !expired? && !should_expire? && !conversation.ephemeral?
 
   # The forwarder's copy, unsaved, sharing the blob rather than uploading it
   # twice. Attached before the save: a wordless photo or voice note is valid only

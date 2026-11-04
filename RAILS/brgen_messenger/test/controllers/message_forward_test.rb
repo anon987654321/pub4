@@ -36,6 +36,30 @@ class MessageForwardTest < ActionDispatch::IntegrationTest
     post session_path, params: { email_address: user.email_address, password: "password123" }
   end
 
+  # A copy in another thread would outlive the timer or the single viewing the
+  # sender chose for the original.
+  test "a message from a disappearing or view-once thread cannot be forwarded" do
+    sign_in_as(@user)
+    [3600, 0].each do |duration|
+      @source.update!(disappearing_duration: duration)
+      message = say(@source, @friend, "Forsvinner #{duration}")
+
+      assert_no_difference -> { @target.messages.count } do
+        post forward_conversation_message_path(@source, message), params: { target_conversation_id: @target.id }
+      end
+      assert_response :forbidden
+    end
+  end
+
+  test "typing is not signalled across a block" do
+    @friend.block!(@user)
+    sign_in_as(@user)
+
+    post conversation_typing_indicators_path(@source)
+
+    assert_response :not_found
+  end
+
   test "forwarding writes a copy into the target thread" do
     sign_in_as(@user)
 
