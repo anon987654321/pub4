@@ -28,5 +28,8 @@
     <div data-nested-form-target="target"></div>
     <button type="button" class="button-link" data-action="nested-form#add"><%= t("outfits.add_item") %></button>
   </section>
-  <div class="actions"><%= f.submit class: "button" %> <%= link_to t("actions.cancel"), outfits_path %></div>
+  <div class="actions">
+    <%= f.submit t("outfits.save"), class: "button" %>
+    <%= link_to t("actions.cancel"), outfits_path %>
+  </div>
 <% end %>

@@ -168,7 +168,7 @@ items:
   path: RAILS/amber/app/views/items/_form.html.erb
   item: Give the item and outfit form submits explicit translated labels ('Lagre plagg',
     'Lagre antrekk') instead of the default f.submit model name.
-  status: open
+  status: done
 - id: amber-021
   app: amber
   area: i18n

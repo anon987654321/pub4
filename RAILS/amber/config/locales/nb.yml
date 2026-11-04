@@ -429,6 +429,7 @@ nb:
     queued: "Lagret for offline"
 
   items:
+    save: "Lagre plagg"
     color_named: "Farge: %{color}"
     add_header_label: "Legg til plagg"
     mood_label: "Stemning: %{mood}"
@@ -526,6 +527,7 @@ nb:
       one: "%{count} plagg"
       other: "%{count} plagg"
   outfits:
+    save: "Lagre antrekk"
     item: "Plagg"
     select_item: "Velg plagg…"
     items_in: "Plagg i %{name}: %{items}"

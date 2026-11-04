@@ -430,6 +430,7 @@ en:
     queued: "Saved for offline"
 
   items:
+    save: "Save piece"
     color_named: "Color: %{color}"
     add_header_label: "Add wardrobe item"
     mood_label: "Mood: %{mood}"
@@ -527,6 +528,7 @@ en:
       one: "%{count} piece"
       other: "%{count} pieces"
   outfits:
+    save: "Save outfit"
     item: "Item"
     select_item: "Select item…"
     items_in: "Items in %{name}: %{items}"

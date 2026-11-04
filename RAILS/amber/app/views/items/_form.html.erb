@@ -41,5 +41,9 @@
     <div class="media-picker-preview" data-media-picker-target="preview"></div>
     <p><%= t("items.photo_processing_html") %></p>
   </div>
-  <div class="actions"><%= f.submit class: "button" %> <%= link_to t("actions.cancel"), items_path %> <span data-autosave-target="status" aria-live="polite"></span></div>
+  <div class="actions">
+    <%= f.submit t("items.save"), class: "button" %>
+    <%= link_to t("actions.cancel"), items_path %>
+    <span data-autosave-target="status" aria-live="polite"></span>
+  </div>
 <% end %>
