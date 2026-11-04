@@ -278,7 +278,7 @@ class TestCLI < Minitest::Test
     Master::CLI::CouncilCrit.stub(:diff_artifact, "diff") do
       result = runner.call(root: "/tmp/master")
 
-      assert_includes result.value!, "Rhea: pre-ship council check (diff)"
+      assert_includes result.value!, "Security: pre-ship council check (diff)"
     end
   end
 
