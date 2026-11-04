@@ -130,13 +130,17 @@
             <section class="messenger-details-section">
               <% if @conversation.disappearing_settable_by?(Current.user) %>
               <%= form_with url: conversation_path(@conversation), method: :patch,
+                    data: { controller: "auto-submit", auto_submit_delay_value: 0 },
                     class: "disappearing-settings#{" disappearing-settings--active" if @conversation.disappearing_messages?}" do |form| %>
                 <span class="disappearing-badge" aria-hidden="true"></span>
                 <label for="disappearing"><%= t("messages.disappearing") %></label>
                 <%= form.select :disappearing,
                       Conversation::DISAPPEARING_OPTIONS.keys.map { |key| [t("messages.disappearing_options.#{key}"), key] },
                       { selected: Conversation::DISAPPEARING_OPTIONS.key(@conversation.disappearing_duration) || "off" },
-                      { id: "disappearing", onchange: "this.form.requestSubmit()" } %>
+                      { id: "disappearing", data: { action: "change->auto-submit#submit" } } %>
+                <%# An inline onchange stops once the CSP is enforced; the button is
+                    for a browser without JavaScript, where nothing listens. %>
+                <noscript><%= form.submit t("actions.save"), class: "button" %></noscript>
               <% end %>
               <% end %>
               <%# Said once, where the setting is: a disappearing message is a

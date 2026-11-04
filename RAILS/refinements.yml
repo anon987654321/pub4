@@ -2264,7 +2264,7 @@ items:
   item: Replace the inline onchange="this.form.requestSubmit()" on the disappearing-messages
     select with a Stimulus action; the comment in nearby/_alert notes inline handlers
     fail once the CSP leaves Report-Only.
-  status: open
+  status: done
 - id: brgen-167
   app: brgen
   area: messenger
@@ -2309,7 +2309,7 @@ items:
   path: RAILS/brgen/app/views/conversations/show.html.erb
   item: Replace the inline onchange="this.form.requestSubmit()" on the disappearing
     select with the auto-submit Stimulus controller and a <noscript> Save button.
-  status: open
+  status: done
 - id: brgen-173
   app: brgen
   area: messenger

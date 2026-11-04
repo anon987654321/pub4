@@ -175,6 +175,21 @@ class AuthorizationBoundariesTest < ActionDispatch::IntegrationTest
     assert_equal I18n.t("flash.settings_update_failed"), flash[:alert]
   end
 
+  # An inline onchange handler stops running once the CSP leaves report-only.
+  test "the disappearing timer submits through Stimulus with a no-script Save" do
+    ActsAsTenant.current_tenant = @city
+    founder = user("timer-own")
+    group = Conversation.create_group!(creator: founder, name: "Timer", users: [ user("timer-peer") ])
+    sign_in(founder)
+
+    get conversation_path(group)
+
+    assert_response :success
+    assert_select "form[data-controller='auto-submit'] select#disappearing[data-action='change->auto-submit#submit']"
+    assert_select "select#disappearing[onchange]", count: 0
+    assert_select "form[data-controller='auto-submit'] noscript", 1
+  end
+
   test "a blank message edit answers 422 and keeps the text" do
     ActsAsTenant.current_tenant = @city
     me = user("edit-me")
