@@ -29,8 +29,12 @@ module RouteContracts
   # environment and are not product behaviour; development answers 500 there.
   FRAMEWORK = "/rails/"
 
-  # The app under test and where it answers; host is sent as the Host header.
-  Target = Data.define(:app, :base, :host)
+  # The app under test and where it answers. host is sent as the Host header; a
+  # comma list names the app's other hosts too (brgen's verticals answer only on
+  # their own subdomains, which the route manifest does not record).
+  Target = Data.define(:app, :base, :host) do
+    def hosts = host.to_s.split(",").then { |list| list.empty? ? [nil] : list }
+  end
 
   module_function
 
@@ -46,10 +50,10 @@ module RouteContracts
   def contract_path(app) = File.join(DIR, "#{app}.yml")
 
   # One anonymous GET, no redirect following: the redirect is part of the contract.
-  def fetch(target, path)
+  def fetch(target, path, host = target.hosts.first)
     uri = URI.join(target.base, path)
     request = Net::HTTP::Get.new(uri)
-    request["Host"] = target.host if target.host
+    request["Host"] = host if host
     request["Accept"] = "text/html,application/json;q=0.9,*/*;q=0.8"
     options = { use_ssl: uri.scheme == "https", read_timeout: TIMEOUT, open_timeout: TIMEOUT }
     Net::HTTP.start(uri.host, uri.port, **options) { |http| http.request(request) }
@@ -86,12 +90,26 @@ module RouteContracts
   # Seeded ids and counts move between databases; the shape must not.
   def normalise(value) = value.gsub(/\d+/, "N")
 
-  def observe(target)
+  # pinned maps a path to the host its contract was recorded on.
+  def observe(target, pinned = {})
     paths(target.app).to_h do |path|
-      [path, describe(fetch(target, path))]
+      [path, answer(target, path, pinned[path])]
     rescue StandardError => e
       [path, { "error" => e.class.name }]
     end
+  end
+
+  # The first host that does not 404 answers for the path, and the row names it
+  # when it is not the primary host; a path every host 404s keeps the primary's.
+  def answer(target, path, pinned)
+    primary = target.hosts.first
+    (pinned ? [pinned] : target.hosts).each do |host|
+      row = describe(fetch(target, path, host))
+      next if row["status"] == 404 && !pinned
+
+      return host == primary ? row : row.merge("host" => host)
+    end
+    describe(fetch(target, path, primary))
   end
 
   def record(target)
@@ -120,7 +138,8 @@ module RouteContracts
 
   def check(target)
     recorded = YAML.load_file(contract_path(target.app))
-    compare(recorded["routes"], observe(target.with(host: target.host || recorded["host"])))
+    pinned = recorded["routes"].filter_map { |path, row| [path, row["host"]] if row["host"] }.to_h
+    compare(recorded["routes"], observe(target.with(host: target.host || recorded["host"]), pinned))
   end
 
   def summary(observed)

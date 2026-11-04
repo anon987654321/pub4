@@ -1,0 +1,1126 @@
+---
+schema: 1
+app: brgen
+host: brgen.no,markedsplass.brgen.no,dating.brgen.no,radio.brgen.no,takeaway.brgen.no,tv.brgen.no,maps.brgen.no,messenger.brgen.no
+routes:
+  "/":
+    status: 200
+    type: text/html
+    title: Bergen
+    heading: Hjem
+    landmarks:
+    - header
+    - nav
+    - main
+    - aside
+    - footer
+    - form
+    - dialog
+    forms:
+    - "/"
+    - "/posts"
+    - "/posts/beste-kanelbolle-i-sentrum/repost"
+    - "/posts/beste-kanelbolle-i-sentrum/vote"
+    - "/posts/brann-pa-stadion-i-kveld-hvor-ser-dere-kampen/repost"
+    - "/posts/brann-pa-stadion-i-kveld-hvor-ser-dere-kampen/vote"
+    - "/posts/bybanen-forsinket-igjen/repost"
+    - "/posts/bybanen-forsinket-igjen/vote"
+    - "/posts/dating-i-bergen-ghosting-eller-bare-regn/repost"
+    - "/posts/dating-i-bergen-ghosting-eller-bare-regn/vote"
+    - "/posts/forste-date-kaffe-fjell-eller-bare-ga/repost"
+    - "/posts/forste-date-kaffe-fjell-eller-bare-ga/vote"
+    - "/posts/gratis-helgeplan-velg-et-fjell-og-en-helt-tilfeldig-kafe/repost"
+    - "/posts/gratis-helgeplan-velg-et-fjell-og-en-helt-tilfeldig-kafe/vote"
+    - "/posts/gratis-kaffe-pa-uteservering-ved-torget-ta-med-egen-kopp/repost"
+    - "/posts/gratis-kaffe-pa-uteservering-ved-torget-ta-med-egen-kopp/vote"
+    - "/posts/harmonien-spiller-morgenstemning-perfekt-til-bybanen-i-dag/repost"
+    - "/posts/harmonien-spiller-morgenstemning-perfekt-til-bybanen-i-dag/vote"
+    - "/posts/hunden-min-romte-ved-nordnesparken-brun-terrier-svarer-pa-pip/repost"
+    - "/posts/hunden-min-romte-ved-nordnesparken-brun-terrier-svarer-pa-pip/vote"
+    - "/posts/hva-skjer-i-bergen-i-helgen/repost"
+    - "/posts/hva-skjer-i-bergen-i-helgen/vote"
+    - "/posts/hvorfor-oppdager-jeg-nye-smau-hver-gang-jeg-bruker-maps/repost"
+    - "/posts/hvorfor-oppdager-jeg-nye-smau-hver-gang-jeg-bruker-maps/vote"
+    - "/posts/jeg-fant-en-helt-absurd-sofa-pa-markedsplassen/repost"
+    - "/posts/jeg-fant-en-helt-absurd-sofa-pa-markedsplassen/vote"
+    - "/posts/ledig-sitteplass-pa-bybanen-mot-fyllingsdalen-vogn-N/repost"
+    - "/posts/ledig-sitteplass-pa-bybanen-mot-fyllingsdalen-vogn-N/vote"
+    - "/posts/messenger-eller-send-meg-pa-messenger-og-sa-blir-det-borte/repost"
+    - "/posts/messenger-eller-send-meg-pa-messenger-og-sa-blir-det-borte/vote"
+    - "/posts/noen-som-har-sett-royk-over-damsgard-eller-bare-take/repost"
+    - "/posts/noen-som-har-sett-royk-over-damsgard-eller-bare-take/vote"
+    - "/posts/noen-som-trenger-et-paraplylan-pa-bryggen-har-en-ekstra/repost"
+    - "/posts/noen-som-trenger-et-paraplylan-pa-bryggen-har-en-ekstra/vote"
+    - "/posts/pepperkakebyen-ko-er-kort-akkurat-na-hverdag-N-N/repost"
+    - "/posts/pepperkakebyen-ko-er-kort-akkurat-na-hverdag-N-N/vote"
+    - "/posts/radio-bergen-playlisten-er-oppe-hvem-lager-neste/repost"
+    - "/posts/radio-bergen-playlisten-er-oppe-hvem-lager-neste/vote"
+    - "/posts/radio-bergen-trenger-en-lat-du-alltid-setter-pa-etter-midnatt/repost"
+    - "/posts/radio-bergen-trenger-en-lat-du-alltid-setter-pa-etter-midnatt/vote"
+    - "/posts/regnvaersdag-pa-bryggen/repost"
+    - "/posts/regnvaersdag-pa-bryggen/vote"
+    - "/posts/rett-opp-og-ned-er-fortsatt-en-bergen-klassiker/repost"
+    - "/posts/rett-opp-og-ned-er-fortsatt-en-bergen-klassiker/vote"
+    - "/posts/sol-pa-floyen-verdt-hele-turen/repost"
+    - "/posts/sol-pa-floyen-verdt-hele-turen/vote"
+    - "/posts/stille-pa-floyen-i-kveld-nesten-ingen-turister/repost"
+    - "/posts/stille-pa-floyen-i-kveld-nesten-ingen-turister/vote"
+    - "/posts/takeaway-sporsmalet-som-splitter-kollektivet-vart/repost"
+    - "/posts/takeaway-sporsmalet-som-splitter-kollektivet-vart/vote"
+    - "/posts/tv-pa-nett-men-faktisk-fra-bergen/repost"
+    - "/posts/tv-pa-nett-men-faktisk-fra-bergen/vote"
+    - "/search"
+  "/.well-known/apple-app-site-association":
+    status: 200
+    type: application/json
+  "/.well-known/assetlinks.json":
+    status: 200
+    type: application/json
+  "/.well-known/nodeinfo":
+    status: 200
+    type: application/json
+  "/.well-known/webfinger":
+    status: 404
+    type: text/html
+    landmarks: []
+    forms: []
+  "/account":
+    status: 200
+    type: text/html
+    title: Bergen
+    heading: Konto
+    landmarks:
+    - header
+    - nav
+    - main
+    - footer
+    - form
+    forms:
+    - "/account"
+    - "/search"
+  "/account/export":
+    status: 200
+    type: text/csv
+  "/activity_events":
+    status: 200
+    type: text/html
+    title: Aktivitet — Bergen
+    heading: Aktivitet
+    landmarks:
+    - header
+    - nav
+    - main
+    - footer
+    - form
+    forms:
+    - "/search"
+  "/addresses":
+    status: 200
+    type: text/html
+    title: Leveringsadresser — Bergen
+    heading: Leveringsadresser
+    landmarks:
+    - header
+    - nav
+    - main
+    - footer
+    - form
+    forms:
+    - "/addresses"
+    - "/listings"
+    - "/search"
+    host: markedsplass.brgen.no
+  "/admin/business_verifications":
+    status: 302
+    type: text/html
+    location: "/"
+    landmarks: []
+    forms: []
+  "/admin/reports":
+    status: 302
+    type: text/html
+    location: "/"
+    landmarks: []
+    forms: []
+  "/billing":
+    status: 302
+    type: text/html
+    location: "/session/new"
+    landmarks: []
+    forms: []
+  "/cart":
+    status: 200
+    type: text/html
+    title: Handlekurv — Bergen
+    heading: Handlekurv
+    landmarks:
+    - header
+    - nav
+    - main
+    - footer
+    - form
+    forms:
+    - "/listings"
+    - "/search"
+    host: markedsplass.brgen.no
+  "/catalog.json":
+    status: 500
+    type: text/html
+    title: 'Action Controller: Exception caught'
+    heading: NoMethodError in Marketplace::CatalogController#index
+    landmarks:
+    - header
+    - main
+    forms: []
+    host: markedsplass.brgen.no
+  "/changelog":
+    status: 200
+    type: text/html
+    title: Bergen
+    heading: Hva har endret seg
+    landmarks:
+    - header
+    - nav
+    - main
+    - footer
+    - form
+    forms:
+    - "/search"
+  "/channels":
+    status: 200
+    type: text/html
+    title: Kanaler — Bergen
+    heading: Kanaler · Bergen
+    landmarks:
+    - header
+    - nav
+    - main
+    - footer
+    - form
+    forms:
+    - "/search"
+  "/channels/new":
+    status: 302
+    type: text/html
+    location: "/channels"
+    landmarks: []
+    forms: []
+  "/checkout":
+    status: 302
+    type: text/html
+    location: "/cart"
+    landmarks: []
+    forms: []
+    host: markedsplass.brgen.no
+  "/communities":
+    status: 200
+    type: text/html
+    title: Fellesskap — Bergen
+    heading: Fellesskap
+    landmarks:
+    - header
+    - nav
+    - main
+    - footer
+    - form
+    forms:
+    - "/communities"
+    - "/search"
+  "/communities/new":
+    status: 302
+    type: text/html
+    location: "/session/new"
+    landmarks: []
+    forms: []
+  "/conversations":
+    status: 200
+    type: text/html
+    title: Meldinger — Bergen
+    heading: Meldinger
+    landmarks:
+    - header
+    - nav
+    - main
+    - footer
+    - form
+    forms:
+    - "/search"
+  "/conversations/new":
+    status: 200
+    type: text/html
+    title: Ny melding — Bergen
+    heading: Ny melding
+    landmarks:
+    - header
+    - nav
+    - main
+    - footer
+    - form
+    forms:
+    - "/conversations/new"
+    - "/search"
+    - "/users/N/conversations"
+  "/conversations/search":
+    status: 200
+    type: text/html
+    title: Søk i meldinger — Bergen
+    heading: Søk i meldinger
+    landmarks:
+    - header
+    - nav
+    - main
+    - footer
+    - form
+    forms:
+    - "/conversations/search"
+    - "/search"
+  "/cookies":
+    status: 200
+    type: text/html
+    title: Informasjonskapsler — Bergen
+    heading: Informasjonskapsler på brgen.no
+    landmarks:
+    - header
+    - nav
+    - main
+    - footer
+    - form
+    forms:
+    - "/search"
+  "/deals":
+    status: 200
+    type: text/html
+    title: Tilbud — Bergen
+    heading: Tilbud
+    landmarks:
+    - header
+    - nav
+    - main
+    - footer
+    - form
+    forms:
+    - "/deals"
+    - "/search"
+    host: markedsplass.brgen.no
+  "/delivery_drivers":
+    status: 200
+    type: text/html
+    title: Budsjåfører — Bergen
+    heading: Budsjåfører
+    landmarks:
+    - header
+    - nav
+    - main
+    - footer
+    - form
+    forms:
+    - "/search"
+    host: takeaway.brgen.no
+  "/events":
+    status: 200
+    type: text/html
+    title: Hva skjer — Bergen
+    heading: Hva skjer
+    landmarks:
+    - header
+    - nav
+    - main
+    - footer
+    - form
+    forms:
+    - "/events"
+    - "/search"
+  "/events/new":
+    status: 302
+    type: text/html
+    location: "/session/new"
+    landmarks: []
+    forms: []
+  "/fediverse_follows":
+    status: 200
+    type: text/html
+    title: Følger andre steder — Bergen
+    heading: Følger andre steder
+    landmarks:
+    - header
+    - nav
+    - main
+    - footer
+    - form
+    forms:
+    - "/fediverse_follows"
+    - "/search"
+  "/feed":
+    status: 200
+    type: text/html
+    title: Strøm — Bergen
+    heading: Strøm
+    landmarks:
+    - header
+    - nav
+    - main
+    - footer
+    - form
+    forms:
+    - "/search"
+    host: tv.brgen.no
+  "/groups/new":
+    status: 200
+    type: text/html
+    title: Ny gruppe — Bergen
+    heading: Ny gruppe
+    landmarks:
+    - header
+    - nav
+    - main
+    - footer
+    - form
+    forms:
+    - "/groups"
+    - "/search"
+  "/health":
+    status: 200
+    type: application/json
+  "/hosted_tracks":
+    status: 200
+    type: text/html
+    title: Hostede spor — Bergen
+    heading: Hostede spor
+    landmarks:
+    - header
+    - nav
+    - main
+    - footer
+    - form
+    forms:
+    - "/search"
+    host: radio.brgen.no
+  "/hosted_tracks/new":
+    status: 302
+    type: text/html
+    location: "/session/new"
+    landmarks: []
+    forms: []
+    host: radio.brgen.no
+  "/internal/status":
+    status: 401
+    type: text/html
+    landmarks: []
+    forms: []
+  "/likes":
+    status: 200
+    type: text/html
+    title: Hvem har likt deg — Bergen
+    heading: Hvem har likt deg
+    landmarks:
+    - header
+    - nav
+    - main
+    - footer
+    - form
+    forms:
+    - "/search"
+    host: dating.brgen.no
+  "/link_previews":
+    status: 204
+    type: ''
+  "/listings":
+    status: 200
+    type: text/html
+    title: Markedsplass · Bergen — Bergen
+    heading: Markedsplass · Bergen
+    landmarks:
+    - header
+    - nav
+    - main
+    - aside
+    - footer
+    - form
+    forms:
+    - "/listings"
+    - "/listings/airpods-pro-N-gen-N/favorite"
+    - "/listings/barnevogn-god-stand/favorite"
+    - "/listings/bergans-regnjakke-str-l-N/favorite"
+    - "/listings/bortkjoring-av-avfall-N/favorite"
+    - "/listings/brukt-sykkel-bergen-sentrum/favorite"
+    - "/listings/fjellstovler-str-N-N/favorite"
+    - "/listings/google-pixel-N-som-ny-N/favorite"
+    - "/listings/hjornesofa-beige-N/favorite"
+    - "/listings/ikea-sofa-hentes-fana/favorite"
+    - "/listings/iphone-N-N-gb-N/favorite"
+    - "/listings/iphone-N-N-gb-pent-brukt-N/favorite"
+    - "/listings/kommode-med-fire-skuffer-N/favorite"
+    - "/listings/macbook-air-mN-pent-brukt/favorite"
+    - "/listings/maler-tar-oppdrag-N/favorite"
+    - "/listings/matematikkundervisning-ungdomsskole-N/favorite"
+    - "/listings/moped-N-modell-N/favorite"
+    - "/listings/moped-N-modell/favorite"
+    - "/listings/norskundervisning-privat-N/favorite"
+    - "/listings/skrivebord-med-hev-senk-N/favorite"
+    - "/listings/sofabord-i-glass-N/favorite"
+    - "/listings/sonos-one-hvit-N/favorite"
+    - "/listings/steam-deck-N-gb-N/favorite"
+    - "/listings/telemarkski-stovler/favorite"
+    - "/listings/vaskehjelp-fast-avtale-N/favorite"
+    - "/search"
+    host: markedsplass.brgen.no
+  "/listings/new":
+    status: 200
+    type: text/html
+    title: Ny annonse — Bergen
+    heading: Ny annonse
+    landmarks:
+    - header
+    - nav
+    - main
+    - aside
+    - footer
+    - form
+    forms:
+    - "/listings"
+    - "/search"
+    host: markedsplass.brgen.no
+  "/live_streams":
+    status: 200
+    type: text/html
+    title: Direktesendinger — Bergen
+    heading: Direktesendinger
+    landmarks:
+    - header
+    - nav
+    - main
+    - footer
+    - form
+    forms:
+    - "/search"
+    host: tv.brgen.no
+  "/manifest":
+    status: 200
+    type: application/manifest+json
+  "/manifest.json":
+    status: 200
+    type: application/manifest+json
+  "/matches":
+    status: 200
+    type: text/html
+    title: Matcher — Bergen
+    heading: Matcher
+    landmarks:
+    - header
+    - nav
+    - main
+    - footer
+    - form
+    forms:
+    - "/search"
+    host: dating.brgen.no
+  "/merchant-feed.xml":
+    status: 500
+    type: text/html
+    title: 'Action Controller: Exception caught'
+    heading: NoMethodError in Marketplace::MerchantFeedsController#show
+    landmarks:
+    - header
+    - main
+    forms: []
+    host: markedsplass.brgen.no
+  "/nearby":
+    status: 200
+    type: text/html
+    title: I nærheten — Bergen
+    heading: I nærheten
+    landmarks:
+    - header
+    - nav
+    - main
+    - footer
+    - form
+    forms:
+    - "/search"
+  "/nearby/room":
+    status: 302
+    type: text/html
+    location: "/nearby"
+    landmarks: []
+    forms: []
+  "/nearby/widget":
+    status: 200
+    type: text/html
+    landmarks:
+    - header
+    - form
+    forms:
+    - "/conversations/N/messages"
+    - "/reactions"
+  "/next":
+    status: 200
+    type: text/html
+    title: Bergen
+    landmarks:
+    - header
+    - nav
+    - main
+    - footer
+    - form
+    forms:
+    - "/reports"
+    - "/rewind"
+    - "/search"
+    - "/users/N/block"
+    host: dating.brgen.no
+  "/nodeinfo/2.1":
+    status: 200
+    type: application/json
+  "/notifications":
+    status: 302
+    type: text/html
+    location: "/session/new"
+    landmarks: []
+    forms: []
+  "/notifications/badge":
+    status: 302
+    type: text/html
+    location: "/session/new"
+    landmarks: []
+    forms: []
+  "/offline":
+    status: 200
+    type: text/html
+    title: Bergen
+    heading: brgen er frakoblet
+    landmarks:
+    - header
+    - nav
+    - main
+    - footer
+    - form
+    forms:
+    - "/search"
+  "/orders":
+    status: 200
+    type: text/html
+    title: Dine bestillinger — Bergen
+    heading: Dine bestillinger
+    landmarks:
+    - header
+    - nav
+    - main
+    - footer
+    - form
+    forms:
+    - "/search"
+    host: markedsplass.brgen.no
+  "/partner/programs":
+    status: 200
+    type: text/html
+    title: Partnerprogrammer — Bergen
+    heading: Partnerprogrammer
+    landmarks:
+    - header
+    - nav
+    - main
+    - footer
+    - form
+    forms:
+    - "/search"
+  "/partner/programs/new":
+    status: 302
+    type: text/html
+    location: "/session/new"
+    landmarks: []
+    forms: []
+  "/passwords/new":
+    status: 200
+    type: text/html
+    title: Bergen
+    heading: Glemt passord?
+    landmarks:
+    - header
+    - nav
+    - main
+    - footer
+    - form
+    forms:
+    - "/passwords"
+    - "/search"
+  "/path_crossings":
+    status: 200
+    type: text/html
+    title: Krysset spor — Bergen
+    heading: Krysset spor
+    landmarks:
+    - header
+    - nav
+    - main
+    - footer
+    - form
+    forms:
+    - "/search"
+    host: dating.brgen.no
+  "/picks":
+    status: 302
+    type: text/html
+    location: "/profile/new"
+    landmarks: []
+    forms: []
+    host: dating.brgen.no
+  "/places":
+    status: 200
+    type: text/html
+    title: Steder — Bergen
+    heading: Steder
+    landmarks:
+    - header
+    - nav
+    - main
+    - footer
+    - form
+    forms:
+    - "/places"
+    - "/search"
+    host: maps.brgen.no
+  "/playlists":
+    status: 200
+    type: text/html
+    title: Spilleliste — Bergen
+    heading: Radio
+    landmarks:
+    - header
+    - nav
+    - main
+    - aside
+    - footer
+    - form
+    forms:
+    - "/search"
+    host: radio.brgen.no
+  "/playlists/new":
+    status: 200
+    type: text/html
+    title: Ny spilleliste — Bergen
+    heading: Ny spilleliste
+    landmarks:
+    - header
+    - nav
+    - main
+    - footer
+    - form
+    forms:
+    - "/playlists"
+    - "/search"
+    host: radio.brgen.no
+  "/posts":
+    status: 200
+    type: text/html
+    title: Alle innlegg — Bergen
+    heading: Alle innlegg
+    landmarks:
+    - header
+    - nav
+    - main
+    - aside
+    - footer
+    - form
+    forms:
+    - "/posts"
+    - "/posts/beste-kanelbolle-i-sentrum/repost"
+    - "/posts/beste-kanelbolle-i-sentrum/vote"
+    - "/posts/brann-pa-stadion-i-kveld-hvor-ser-dere-kampen/repost"
+    - "/posts/brann-pa-stadion-i-kveld-hvor-ser-dere-kampen/vote"
+    - "/posts/bybanen-forsinket-igjen/repost"
+    - "/posts/bybanen-forsinket-igjen/vote"
+    - "/posts/dag-N-med-regn-teller-noen-fortsatt/repost"
+    - "/posts/dag-N-med-regn-teller-noen-fortsatt/vote"
+    - "/posts/dating-i-bergen-ghosting-eller-bare-regn/repost"
+    - "/posts/dating-i-bergen-ghosting-eller-bare-regn/vote"
+    - "/posts/den-mest-bergen-aktige-lyden-jeg-vet-om/repost"
+    - "/posts/den-mest-bergen-aktige-lyden-jeg-vet-om/vote"
+    - "/posts/festspillene-N-hva-var-hoydepunktet-deres/repost"
+    - "/posts/festspillene-N-hva-var-hoydepunktet-deres/vote"
+    - "/posts/flyttet-til-bergen-forrige-uke-hva-bor-jeg-vite/repost"
+    - "/posts/flyttet-til-bergen-forrige-uke-hva-bor-jeg-vite/vote"
+    - "/posts/forste-date-kaffe-fjell-eller-bare-ga/repost"
+    - "/posts/forste-date-kaffe-fjell-eller-bare-ga/vote"
+    - "/posts/gratis-helgeplan-velg-et-fjell-og-en-helt-tilfeldig-kafe/repost"
+    - "/posts/gratis-helgeplan-velg-et-fjell-og-en-helt-tilfeldig-kafe/vote"
+    - "/posts/harmonien-spiller-morgenstemning-perfekt-til-bybanen-i-dag/repost"
+    - "/posts/harmonien-spiller-morgenstemning-perfekt-til-bybanen-i-dag/vote"
+    - "/posts/hva-skjer-i-bergen-i-helgen/repost"
+    - "/posts/hva-skjer-i-bergen-i-helgen/vote"
+    - "/posts/hvorfor-oppdager-jeg-nye-smau-hver-gang-jeg-bruker-maps/repost"
+    - "/posts/hvorfor-oppdager-jeg-nye-smau-hver-gang-jeg-bruker-maps/vote"
+    - "/posts/jeg-fant-en-helt-absurd-sofa-pa-markedsplassen/repost"
+    - "/posts/jeg-fant-en-helt-absurd-sofa-pa-markedsplassen/vote"
+    - "/posts/kygo-stars-will-align-rett-fra-soundcloud/repost"
+    - "/posts/kygo-stars-will-align-rett-fra-soundcloud/vote"
+    - "/posts/leiepriser-i-bergen-har-de-flatet-ut/repost"
+    - "/posts/leiepriser-i-bergen-har-de-flatet-ut/vote"
+    - "/posts/pepperkakebyen-tips-for-forste-gang/repost"
+    - "/posts/pepperkakebyen-tips-for-forste-gang/vote"
+    - "/posts/radio-bergen-playlisten-er-oppe-hvem-lager-neste/repost"
+    - "/posts/radio-bergen-playlisten-er-oppe-hvem-lager-neste/vote"
+    - "/posts/radio-bergen-trenger-en-lat-du-alltid-setter-pa-etter-midnatt/repost"
+    - "/posts/radio-bergen-trenger-en-lat-du-alltid-setter-pa-etter-midnatt/vote"
+    - "/posts/regnvaersdag-pa-bryggen/repost"
+    - "/posts/regnvaersdag-pa-bryggen/vote"
+    - "/posts/regnvaersmusikk-fra-bergen-kings-of-convenience-pa-repeat/repost"
+    - "/posts/regnvaersmusikk-fra-bergen-kings-of-convenience-pa-repeat/vote"
+    - "/posts/rett-opp-og-ned-er-fortsatt-en-bergen-klassiker/repost"
+    - "/posts/rett-opp-og-ned-er-fortsatt-en-bergen-klassiker/vote"
+    - "/posts/sol-pa-floyen-verdt-hele-turen/repost"
+    - "/posts/sol-pa-floyen-verdt-hele-turen/vote"
+    - "/posts/takeaway-sporsmalet-som-splitter-kollektivet-vart/repost"
+    - "/posts/takeaway-sporsmalet-som-splitter-kollektivet-vart/vote"
+    - "/posts/tv-pa-nett-men-faktisk-fra-bergen/repost"
+    - "/posts/tv-pa-nett-men-faktisk-fra-bergen/vote"
+    - "/search"
+  "/posts/new":
+    status: 200
+    type: text/html
+    title: Nytt innlegg — Bergen
+    heading: Nytt innlegg
+    landmarks:
+    - header
+    - nav
+    - main
+    - footer
+    - form
+    forms:
+    - "/posts"
+    - "/search"
+  "/posts/since":
+    status: 200
+    type: text/vnd.turbo-stream.html
+  "/privacy":
+    status: 200
+    type: text/html
+    title: Personvern — Bergen
+    heading: Personvern hos brgen.no
+    landmarks:
+    - header
+    - nav
+    - main
+    - footer
+    - form
+    forms:
+    - "/search"
+  "/profile":
+    status: 302
+    type: text/html
+    location: "/profile/new"
+    landmarks: []
+    forms: []
+    host: dating.brgen.no
+  "/profile/edit":
+    status: 302
+    type: text/html
+    location: "/session/new"
+    landmarks: []
+    forms: []
+    host: dating.brgen.no
+  "/profile/new":
+    status: 302
+    type: text/html
+    location: "/session/new"
+    landmarks: []
+    forms: []
+    host: dating.brgen.no
+  "/recede_historical_location":
+    status: 200
+    type: text/html
+    landmarks: []
+    forms: []
+  "/refresh_historical_location":
+    status: 200
+    type: text/html
+    landmarks: []
+    forms: []
+  "/restaurants":
+    status: 200
+    type: text/html
+    title: Restauranter — Bergen
+    landmarks:
+    - header
+    - nav
+    - main
+    - footer
+    - form
+    forms:
+    - "/restaurants"
+    - "/search"
+    host: takeaway.brgen.no
+  "/restaurants/new":
+    status: 302
+    type: text/html
+    location: "/session/new"
+    landmarks: []
+    forms: []
+    host: takeaway.brgen.no
+  "/resume_historical_location":
+    status: 200
+    type: text/html
+    landmarks: []
+    forms: []
+  "/robots.txt":
+    status: 200
+    type: text/plain
+  "/safety":
+    status: 200
+    type: text/html
+    title: Sikkerhet — Bergen
+    heading: Din sikkerhet
+    landmarks:
+    - header
+    - nav
+    - main
+    - footer
+    - form
+    forms:
+    - "/search"
+  "/saved":
+    status: 200
+    type: text/html
+    title: Lagret — Bergen
+    heading: Lagret
+    landmarks:
+    - header
+    - nav
+    - main
+    - footer
+    - form
+    forms:
+    - "/search"
+  "/saved_searches":
+    status: 200
+    type: text/html
+    title: Lagrede søk — Bergen
+    heading: Lagrede søk
+    landmarks:
+    - header
+    - nav
+    - main
+    - footer
+    - form
+    forms:
+    - "/search"
+    host: markedsplass.brgen.no
+  "/search":
+    status: 200
+    type: text/html
+    title: Søk — Bergen
+    heading: Søk i Brgen
+    landmarks:
+    - header
+    - nav
+    - main
+    - footer
+    - form
+    forms:
+    - "/search"
+  "/service-worker":
+    status: 200
+    type: application/javascript
+  "/service-worker.js":
+    status: 200
+    type: application/javascript
+  "/session/magic":
+    status: 302
+    type: text/html
+    location: "/session/new"
+    landmarks: []
+    forms: []
+  "/session/new":
+    status: 200
+    type: text/html
+    title: Bergen
+    heading: Logg inn
+    landmarks:
+    - header
+    - nav
+    - main
+    - footer
+    - form
+    forms:
+    - "/search"
+    - "/session"
+  "/sets":
+    status: 200
+    type: text/html
+    title: Sett — Bergen
+    heading: Sett
+    landmarks:
+    - header
+    - nav
+    - main
+    - footer
+    - form
+    forms:
+    - "/search"
+    - "/sets"
+    host: radio.brgen.no
+  "/sets/new":
+    status: 200
+    type: text/html
+    title: Nytt sett — Bergen
+    heading: Nytt sett
+    landmarks:
+    - header
+    - nav
+    - main
+    - footer
+    - form
+    forms:
+    - "/search"
+    - "/sets"
+    host: radio.brgen.no
+  "/shops":
+    status: 200
+    type: text/html
+    title: Butikker — Bergen
+    heading: Butikker
+    landmarks:
+    - header
+    - nav
+    - main
+    - footer
+    - form
+    forms:
+    - "/search"
+    - "/shops"
+    host: markedsplass.brgen.no
+  "/shops/new":
+    status: 302
+    type: text/html
+    location: "/session/new"
+    landmarks: []
+    forms: []
+    host: markedsplass.brgen.no
+  "/sitemap.xml":
+    status: 200
+    type: application/xml
+  "/sounds":
+    status: 200
+    type: text/html
+    title: Lyder — Bergen
+    heading: Lyder
+    landmarks:
+    - header
+    - nav
+    - main
+    - footer
+    - form
+    forms:
+    - "/search"
+    host: tv.brgen.no
+  "/sso/from_master":
+    status: 302
+    type: text/html
+    location: "/session/new"
+    landmarks: []
+    forms: []
+  "/stories":
+    status: 200
+    type: text/html
+    title: Historier — Bergen
+    heading: Historier
+    landmarks:
+    - header
+    - nav
+    - main
+    - footer
+    - form
+    forms:
+    - "/search"
+  "/stories/new":
+    status: 200
+    type: text/html
+    title: Ny historie — Bergen
+    heading: Ny historie
+    landmarks:
+    - header
+    - nav
+    - main
+    - footer
+    - form
+    forms:
+    - "/search"
+    - "/stories"
+  "/terms":
+    status: 200
+    type: text/html
+    title: Vilkår — Bergen
+    heading: Vilkår for brgen.no
+    landmarks:
+    - header
+    - nav
+    - main
+    - footer
+    - form
+    forms:
+    - "/search"
+  "/two_factor_setup":
+    status: 200
+    type: text/html
+    title: Bergen
+    heading: Tofaktorautentisering
+    landmarks:
+    - header
+    - nav
+    - main
+    - footer
+    - form
+    forms:
+    - "/search"
+    - "/two_factor_setup"
+  "/up":
+    status: 200
+    type: text/html
+    landmarks: []
+    forms: []
+  "/users/new":
+    status: 200
+    type: text/html
+    title: Opprett konto — Bergen
+    heading: Opprett konto
+    landmarks:
+    - header
+    - nav
+    - main
+    - footer
+    - form
+    forms:
+    - "/search"
+    - "/users"
+  "/verifications":
+    status: 403
+    type: text/html
+    landmarks: []
+    forms: []
+    host: dating.brgen.no
+  "/verifications/new":
+    status: 302
+    type: text/html
+    location: "/profile/new"
+    landmarks: []
+    forms: []
+    host: dating.brgen.no
+  "/webhooks/dintero/callback":
+    status: 400
+    type: text/html
+    landmarks: []
+    forms: []
+    host: markedsplass.brgen.no
+  "/wishlist":
+    status: 200
+    type: text/html
+    title: Lagrede annonser — Bergen
+    heading: Lagrede annonser
+    landmarks:
+    - header
+    - nav
+    - main
+    - footer
+    - form
+    forms:
+    - "/search"
+    host: markedsplass.brgen.no

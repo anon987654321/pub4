@@ -8,6 +8,15 @@ class TestRouteContracts < Minitest::Test
     def [](name) = headers[name]
   end
 
+  # minitest/mock is not installed here; swap the module function for the block.
+  def with_fetch(fake)
+    original = RouteContracts.method(:fetch)
+    RouteContracts.define_singleton_method(:fetch) { |*args| fake.call(*args) }
+    yield
+  ensure
+    RouteContracts.define_singleton_method(:fetch, original)
+  end
+
   def html_response(body) = Response.new("200", { "Content-Type" => "text/html; charset=utf-8" }, body)
 
   PAGE = File.read(File.join(__dir__, "fixtures", "route_contracts", "post_page.html"))
@@ -43,6 +52,19 @@ class TestRouteContracts < Minitest::Test
       ["/gone", "missing from the target"],
       ["/new", "not in the recorded contract"],
     ], RouteContracts.compare(expected, actual)
+  end
+
+  # brgen's verticals 404 on brgen.no and answer on their subdomain.
+  def test_a_path_that_404s_on_the_primary_host_is_recorded_on_the_host_that_answers
+    target = RouteContracts::Target.new(app: "brgen", base: "http://127.0.0.1:1", host: "brgen.no,markedsplass.brgen.no")
+    answers = { "brgen.no" => "404", "markedsplass.brgen.no" => "200" }
+    fake = ->(_target, _path, host) { html_response("<title>Marked</title>").tap { |r| r.code = answers.fetch(host) } }
+    with_fetch(fake) do
+      row = RouteContracts.answer(target, "/listings", nil)
+      assert_equal 200, row["status"]
+      assert_equal "markedsplass.brgen.no", row["host"]
+      assert_equal 404, RouteContracts.answer(target, "/listings", "brgen.no")["status"], "a pinned host is asked alone"
+    end
   end
 
   def test_matching_contracts_have_no_differences

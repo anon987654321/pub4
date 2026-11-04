@@ -1,0 +1,495 @@
+---
+schema: 1
+app: amber
+host:
+routes:
+  "/":
+    status: 200
+    type: text/html
+    title: Oversikt — Amber
+    heading: Fire antrekk fra garderoben
+    landmarks:
+    - header
+    - nav
+    - main
+    - footer
+    - form
+    forms:
+    - "/posts/N/vote"
+  "/.well-known/apple-app-site-association":
+    status: 200
+    type: application/json
+  "/.well-known/assetlinks.json":
+    status: 200
+    type: application/json
+  "/account":
+    status: 200
+    type: text/html
+    title: Amber
+    heading: Konto
+    landmarks:
+    - header
+    - nav
+    - main
+    - aside
+    - footer
+    - form
+    forms:
+    - "/account"
+    - "/ai/search"
+  "/account/export":
+    status: 200
+    type: text/csv
+  "/ai/capsule":
+    status: 302
+    type: text/html
+    location: "/session/new"
+    landmarks: []
+    forms: []
+  "/ai/declutter":
+    status: 302
+    type: text/html
+    location: "/session/new"
+    landmarks: []
+    forms: []
+  "/ai/moodboard":
+    status: 302
+    type: text/html
+    location: "/session/new"
+    landmarks: []
+    forms: []
+  "/ai/occasions":
+    status: 302
+    type: text/html
+    location: "/session/new"
+    landmarks: []
+    forms: []
+  "/ai/outfits/suggest":
+    status: 302
+    type: text/html
+    location: "/session/new"
+    landmarks: []
+    forms: []
+  "/ai/pack":
+    status: 302
+    type: text/html
+    location: "/session/new"
+    landmarks: []
+    forms: []
+  "/ai/palette":
+    status: 302
+    type: text/html
+    location: "/session/new"
+    landmarks: []
+    forms: []
+  "/ai/search":
+    status: 302
+    type: text/html
+    location: "/session/new"
+    landmarks: []
+    forms: []
+  "/ai/style":
+    status: 302
+    type: text/html
+    location: "/session/new"
+    landmarks: []
+    forms: []
+  "/billing":
+    status: 302
+    type: text/html
+    location: "/session/new"
+    landmarks: []
+    forms: []
+  "/changelog":
+    status: 200
+    type: text/html
+    title: Amber
+    heading: Hva har endret seg
+    landmarks:
+    - header
+    - nav
+    - main
+    - aside
+    - footer
+    - form
+    forms:
+    - "/ai/search"
+  "/connections":
+    status: 302
+    type: text/html
+    location: "/session/new"
+    landmarks: []
+    forms: []
+  "/cookies":
+    status: 200
+    type: text/html
+    title: Informasjonskapsler — Amber
+    heading: Informasjonskapsler på N.N.N.N
+    landmarks:
+    - header
+    - nav
+    - main
+    - aside
+    - footer
+    - form
+    forms:
+    - "/ai/search"
+  "/creator_profile/edit":
+    status: 302
+    type: text/html
+    location: "/session/new"
+    landmarks: []
+    forms: []
+  "/creator_profile/new":
+    status: 302
+    type: text/html
+    location: "/session/new"
+    landmarks: []
+    forms: []
+  "/declutter":
+    status: 302
+    type: text/html
+    location: "/session/new"
+    landmarks: []
+    forms: []
+  "/demo":
+    status: 200
+    type: text/html
+    title: Demogarderobe — Amber
+    heading: Demogarderobe
+    landmarks:
+    - header
+    - nav
+    - main
+    - aside
+    - footer
+    - form
+    forms:
+    - "/ai/search"
+  "/health":
+    status: 200
+    type: application/json
+  "/internal/status":
+    status: 401
+    type: text/html
+    landmarks: []
+    forms: []
+  "/items":
+    status: 302
+    type: text/html
+    location: "/session/new"
+    landmarks: []
+    forms: []
+  "/items/new":
+    status: 302
+    type: text/html
+    location: "/session/new"
+    landmarks: []
+    forms: []
+  "/items/shopping_list":
+    status: 302
+    type: text/html
+    location: "/session/new"
+    landmarks: []
+    forms: []
+  "/link_previews":
+    status: 204
+    type: ''
+  "/live_streams":
+    status: 302
+    type: text/html
+    location: "/session/new"
+    landmarks: []
+    forms: []
+  "/manifest":
+    status: 200
+    type: application/manifest+json
+  "/messages":
+    status: 200
+    type: text/html
+    title: Meldinger — Amber
+    heading: Meldinger
+    landmarks:
+    - header
+    - nav
+    - main
+    - aside
+    - footer
+    - form
+    forms:
+    - "/ai/search"
+    - "/messages"
+    - "/messages/invite_master"
+  "/messages/widget":
+    status: 200
+    type: text/html
+    title: Amber
+    landmarks:
+    - header
+    - nav
+    - main
+    - aside
+    - footer
+    - form
+    forms:
+    - "/ai/search"
+    - "/messages"
+  "/notifications":
+    status: 200
+    type: text/html
+    title: Varsler — Amber
+    heading: Varsler
+    landmarks:
+    - header
+    - nav
+    - main
+    - aside
+    - footer
+    - form
+    forms:
+    - "/ai/search"
+  "/notifications/badge":
+    status: 200
+    type: application/json
+  "/offline":
+    status: 200
+    type: text/html
+    title: Amber
+    heading: Amber er frakoblet
+    landmarks:
+    - header
+    - nav
+    - main
+    - aside
+    - footer
+    - form
+    forms:
+    - "/ai/search"
+  "/outfits":
+    status: 302
+    type: text/html
+    location: "/session/new"
+    landmarks: []
+    forms: []
+  "/outfits/dressing_room":
+    status: 302
+    type: text/html
+    location: "/session/new"
+    landmarks: []
+    forms: []
+  "/outfits/new":
+    status: 302
+    type: text/html
+    location: "/session/new"
+    landmarks: []
+    forms: []
+  "/passwords/new":
+    status: 200
+    type: text/html
+    title: Amber
+    heading: Tilbakestill passord
+    landmarks:
+    - header
+    - nav
+    - main
+    - aside
+    - footer
+    - form
+    forms:
+    - "/ai/search"
+    - "/passwords"
+  "/planned_outfits":
+    status: 302
+    type: text/html
+    location: "/session/new"
+    landmarks: []
+    forms: []
+  "/posts":
+    status: 200
+    type: text/html
+    title: Amber
+    heading: Fellesskap
+    landmarks:
+    - header
+    - nav
+    - main
+    - aside
+    - footer
+    - form
+    forms:
+    - "/ai/search"
+    - "/posts"
+    - "/posts/N/vote"
+  "/posts/feed":
+    status: 302
+    type: text/html
+    location: "/session/new"
+    landmarks: []
+    forms: []
+  "/posts/new":
+    status: 302
+    type: text/html
+    location: "/session/new"
+    landmarks: []
+    forms: []
+  "/privacy":
+    status: 200
+    type: text/html
+    title: Personvern — Amber
+    heading: Personvern hos N.N.N.N
+    landmarks:
+    - header
+    - nav
+    - main
+    - aside
+    - footer
+    - form
+    forms:
+    - "/ai/search"
+  "/privacy_setting":
+    status: 302
+    type: text/html
+    location: "/session/new"
+    landmarks: []
+    forms: []
+  "/recede_historical_location":
+    status: 200
+    type: text/html
+    landmarks: []
+    forms: []
+  "/refresh_historical_location":
+    status: 200
+    type: text/html
+    landmarks: []
+    forms: []
+  "/registration/new":
+    status: 200
+    type: text/html
+    title: Amber
+    heading: Opprett konto
+    landmarks:
+    - header
+    - nav
+    - main
+    - aside
+    - footer
+    - form
+    forms:
+    - "/ai/search"
+    - "/registration"
+  "/resume_historical_location":
+    status: 200
+    type: text/html
+    landmarks: []
+    forms: []
+  "/safety":
+    status: 200
+    type: text/html
+    title: Sikkerhet — Amber
+    heading: Din sikkerhet
+    landmarks:
+    - header
+    - nav
+    - main
+    - aside
+    - footer
+    - form
+    forms:
+    - "/ai/search"
+  "/service-worker":
+    status: 200
+    type: application/javascript
+  "/session/magic":
+    status: 302
+    type: text/html
+    location: "/session/new"
+    landmarks: []
+    forms: []
+  "/session/new":
+    status: 200
+    type: text/html
+    title: Amber
+    heading: Logg inn
+    landmarks:
+    - header
+    - nav
+    - main
+    - aside
+    - footer
+    - form
+    forms:
+    - "/ai/search"
+    - "/session"
+  "/sitemap.xml":
+    status: 200
+    type: application/xml
+  "/sso/from_master":
+    status: 302
+    type: text/html
+    location: "/session/new"
+    landmarks: []
+    forms: []
+  "/terms":
+    status: 200
+    type: text/html
+    title: Vilkår — Amber
+    heading: Vilkår for N.N.N.N
+    landmarks:
+    - header
+    - nav
+    - main
+    - aside
+    - footer
+    - form
+    forms:
+    - "/ai/search"
+  "/two_factor_setup":
+    status: 200
+    type: text/html
+    title: Amber
+    heading: Tofaktorautentisering
+    landmarks:
+    - header
+    - nav
+    - main
+    - aside
+    - footer
+    - form
+    forms:
+    - "/ai/search"
+    - "/two_factor_setup"
+  "/up":
+    status: 200
+    type: text/html
+    landmarks: []
+    forms: []
+  "/wardrobe_items":
+    status: 302
+    type: text/html
+    location: "/session/new"
+    landmarks: []
+    forms: []
+  "/wardrobe_items/analytics":
+    status: 302
+    type: text/html
+    location: "/session/new"
+    landmarks: []
+    forms: []
+  "/wardrobe_items/new":
+    status: 302
+    type: text/html
+    location: "/session/new"
+    landmarks: []
+    forms: []
+  "/wardrobe_items/organize":
+    status: 302
+    type: text/html
+    location: "/session/new"
+    landmarks: []
+    forms: []
+  "/wardrobe_items/timeline":
+    status: 302
+    type: text/html
+    location: "/session/new"
+    landmarks: []
+    forms: []
