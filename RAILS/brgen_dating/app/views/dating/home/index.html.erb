@@ -11,7 +11,12 @@
       <%= button_to t("dating.rewind"), rewind_path, method: :post, class: "button button-ghost" %>
       <%= link_to t("dating.matches"), matches_path, class: "button button-ghost" %>
       <% if Current.user.present? %>
+        <%= link_to t("dating.who_liked_you"), likes_path, class: "button button-ghost" %>
+        <%= link_to t("dating.picks_title"), picks_path, class: "button button-ghost" %>
         <%= link_to t("dating.path_crossings_title"), path_crossings_path, class: "button button-ghost" %>
+      <% end %>
+      <% if Current.user&.dating_profile.present? && Current.user.dating_profile.verified_at.nil? %>
+        <%= link_to t("dating.verify_title"), new_verification_path, class: "button button-ghost" %>
       <% end %>
       <% if Current.user&.dating_profile.present? %>
         <%= link_to t("dating.edit_profile"), edit_profile_path, class: "button button-ghost" %>
@@ -27,9 +32,13 @@
         data-controller="swipe"
         data-swipe-like-url-value="<%= likes_path %>"
         data-swipe-dislike-url-value="<%= dislikes_path %>"
-        data-action="pointerdown->swipe#pointerDown pointermove->swipe#pointerMove pointerup->swipe#pointerUp pointercancel->swipe#pointerUp touchstart->swipe#pointerDown touchmove->swipe#pointerMove touchend->swipe#pointerUp keydown.left@window->swipe#pass keydown.right@window->swipe#like"
+        data-action="pointerdown->swipe#pointerDown pointermove->swipe#pointerMove pointerup->swipe#pointerUp
+                     pointercancel->swipe#pointerUp keydown.left@window->swipe#pass keydown.right@window->swipe#like"
         class="dating-discover"
       >
+        <%# The card leaves the deck silently; this says what the choice was. %>
+        <p class="visually-hidden" role="status" aria-live="polite" data-swipe-target="announcement"
+           data-liked="<%= t("dating.announce_liked") %>" data-passed="<%= t("dating.announce_passed") %>"></p>
         <div id="swipe-stack">
           <% @profiles.each_with_index do |profile, index| %>
             <%= render "card", profile: profile, index: index %>

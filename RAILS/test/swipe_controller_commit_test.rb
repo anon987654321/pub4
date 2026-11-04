@@ -90,6 +90,39 @@ class SwipeControllerCommitTest < Minitest::Test
     assert_equal({ "cards" => 0, "queued" => 0 }, result)
   end
 
+  # A window-level arrow key is a swipe only when nobody is typing.
+  KEY_IN_A_FIELD = <<~JS
+    const key = { type: "keydown", target: { closest: (s) => (s.includes("textarea") ? {} : null) } }
+    console.log(JSON.stringify(await swipe(() => ({ ok: true, status: 200 }), (c) => c.like(key))))
+  JS
+
+  KEY_WITH_A_MODIFIER = <<~JS
+    const key = { type: "keydown", altKey: true, target: { closest: () => null } }
+    console.log(JSON.stringify(await swipe(() => ({ ok: true, status: 200 }), (c) => c.pass(key))))
+  JS
+
+  ANNOUNCED_LIKE = <<~JS
+    const region = { textContent: "", dataset: { liked: "Liked %{name}", passed: "Passed" } }
+    cards[0].dataset.name = "Kari"
+    await swipe(() => ({ ok: true, status: 200 }), (c) => {
+      Object.assign(c, { hasAnnouncementTarget: true, announcementTarget: region })
+      return c.like()
+    })
+    console.log(JSON.stringify({ said: region.textContent }))
+  JS
+
+  def test_an_arrow_key_typed_into_a_field_leaves_the_card
+    assert_equal({ "cards" => 1, "queued" => 0 }, run_page(KEY_IN_A_FIELD))
+  end
+
+  def test_an_arrow_key_held_with_a_modifier_leaves_the_card
+    assert_equal({ "cards" => 1, "queued" => 0 }, run_page(KEY_WITH_A_MODIFIER))
+  end
+
+  def test_a_recorded_like_is_announced_by_name
+    assert_equal({ "said" => "Liked Kari" }, run_page(ANNOUNCED_LIKE))
+  end
+
   def test_a_lost_connection_queues_the_like_and_removes_the_card
     result = run_page(<<~JS)
       console.log(JSON.stringify(await swipe(() => { throw new TypeError("Failed to fetch") }, (c) => c.like())))

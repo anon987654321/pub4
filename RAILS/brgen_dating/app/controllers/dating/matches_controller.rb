@@ -11,6 +11,7 @@ class Dating::MatchesController < Dating::BaseController
           initiator: { dating_profile: { photos_attachments: :blob } },
           receiver: { dating_profile: { photos_attachments: :blob } }
         )
+        .order(created_at: :desc, id: :desc)
     )
   end
 

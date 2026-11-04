@@ -10,6 +10,8 @@
 # Keys the host already carries are NOT copied here. Use them.
 en:
   dating:
+    announce_liked: "Liked %{name}"
+    announce_passed: "Passed"
     home_blurb: "Meet people nearby. Swipe to like or pass."
     bio: "Bio"
     gender: "Gender"

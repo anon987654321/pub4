@@ -87,7 +87,7 @@ class Dating::Match < ApplicationRecord
         "brgen:matches:#{user.id}",
         target: "match-overlays",
         partial: "dating/matches/overlay",
-        locals: { match: self, current_user: user, other_user: other_user(user) }
+        locals: { match: self, current_user: user, other_user: other_user(user), conversation: }
       )
     end
   end

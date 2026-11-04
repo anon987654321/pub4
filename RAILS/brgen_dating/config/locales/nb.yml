@@ -10,6 +10,8 @@
 # Keys the host already carries are NOT copied here. Use them.
 nb:
   dating:
+    announce_liked: "Du likte %{name}"
+    announce_passed: "Gikk videre"
     home_blurb: "Møt folk i nærheten. Sveip for å like eller gå videre."
     bio: "Bio"
     gender: "Kjønn"

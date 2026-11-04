@@ -3,6 +3,7 @@ import { enqueueSync } from "pwa/offline_store"
 import Haptics from "pub4/haptics"
 
 export default class extends Controller {
+  static targets = ["announcement"]
   static values = { likeUrl: String, dislikeUrl: String, listenUrl: String, mode: String }
 
   connect() {
@@ -133,6 +134,7 @@ export default class extends Controller {
       // broadcasts the overlay to both users over the match stream this page
       // already subscribes to. A match appears only when it is actually mutual.
       const kept = await this._postChoice(url, userId)
+      if (kept) this._announce(card, isLike)
       setTimeout(() => (kept ? this._removeCard(card) : this._springBack(card)), 180)
     } else {
       this._springBack(this.currentCard)
@@ -192,15 +194,28 @@ export default class extends Controller {
     return document.querySelector('meta[name="csrf-token"]')?.content ?? ""
   }
 
+  // The arrow keys listen on the window: one typed into a field, or held with a modifier, is not a swipe.
+  _foreignKey(e) {
+    return e?.type === "keydown" && Boolean(e.altKey || e.ctrlKey || e.metaKey || e.shiftKey ||
+      e.target?.isContentEditable || e.target?.closest?.("input, textarea, select, [contenteditable]"))
+  }
+
+  _announce(card, isLike) {
+    if (!this.hasAnnouncementTarget) return
+    const region = this.announcementTarget
+    const label = (isLike ? region.dataset.liked : region.dataset.passed) ?? ""
+    region.textContent = label.replace("%{name}", card.dataset.name ?? "")
+  }
+
   // Button fallbacks
-  like() {
-    if (!this.currentCard) return
+  like(e) {
+    if (this._foreignKey(e) || !this.currentCard) return
     this.currentX = this.threshold + 10
     this._commitLike()
   }
 
-  pass() {
-    if (!this.currentCard) return
+  pass(e) {
+    if (this._foreignKey(e) || !this.currentCard) return
     this.currentX = -(this.threshold + 10)
     this._commitLike()
   }
@@ -215,6 +230,7 @@ export default class extends Controller {
     card.style.transform = `translateX(${dir * 480}px) rotate(${dir * 20}deg)`
 
     const kept = await this._postChoice(url, card.dataset.userId)
+    if (kept) this._announce(card, isLike)
     setTimeout(() => {
       if (!kept) return this._springBack(card)
       this._removeCard(card)

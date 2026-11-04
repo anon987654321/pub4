@@ -1378,7 +1378,7 @@ items:
   item: Ignore the window-level keydown.left and keydown.right swipe shortcuts when
     focus is in an input, textarea, select or contenteditable (or a modifier key is
     held), so arrow keys in the report form do not like or pass the top card.
-  status: open
+  status: done
 - id: brgen-063
   app: brgen
   area: dating
@@ -1387,7 +1387,7 @@ items:
   item: Announce each like or pass in a polite live region ('Liked Kari', 'Passed')
     after _commitLike, because the card is removed silently and the only aria-live
     region sits inside the hidden dating-next frame.
-  status: open
+  status: done
 - id: brgen-064
   app: brgen
   area: dating
@@ -1415,7 +1415,7 @@ items:
   item: Order the matches list explicitly (newest first, created_at desc); Dating::Match.active
     is paginated with no order, so pages and infinite scroll come back in arbitrary
     order.
-  status: open
+  status: done
 - id: brgen-067
   app: brgen
   area: dating
@@ -1450,7 +1450,7 @@ items:
   path: RAILS/brgen_dating/app/views/dating/home/_card.html.erb
   item: Show the verified badge (profile.verified_at) on the swipe card caption; it
     currently appears only on picks, so the deck gives no trust signal.
-  status: open
+  status: done
 - id: brgen-071
   app: brgen
   area: dating
@@ -1459,7 +1459,7 @@ items:
   item: 'Hide the rewind button in the home nav from guests, as the card already does:
     it renders outside the Current.user check and posts to a require_user_session
     action.'
-  status: open
+  status: done
 - id: brgen-072
   app: brgen
   area: dating
@@ -1468,7 +1468,7 @@ items:
   item: 'Drop the duplicate touchstart/touchmove/touchend bindings on the deck (pointer
     events already fire on touch) and set touch-action: pan-y on the card, so a touch
     does not run pointerDown twice and vertical scrolling of a long bio still works.'
-  status: open
+  status: done
 - id: brgen-073
   app: brgen
   area: dating
@@ -1477,7 +1477,7 @@ items:
   item: Link 'Who liked you' (likes_path), 'Today's picks' (picks_path) and 'Verify
     your profile' (new_verification_path) from the dating home nav; none of these
     pages is linked from anywhere in the app.
-  status: open
+  status: done
 - id: brgen-074
   app: brgen
   area: dating
@@ -1494,7 +1494,7 @@ items:
   path: RAILS/brgen_dating/app/views/dating/matches/_overlay.html.erb
   item: Point the match overlay's 'Open messages' link at the direct conversation
     announce_match already created (pass it as a local), not at the inbox index.
-  status: open
+  status: done
 - id: brgen-076
   app: brgen
   area: dating

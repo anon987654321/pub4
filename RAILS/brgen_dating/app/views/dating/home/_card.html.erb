@@ -3,6 +3,7 @@
 <article
   class="swipe-card swipe-card--stack-<%= index %>"
   data-user-id="<%= profile.user_id %>"
+  data-name="<%= display_name %>"
 >
   <div class="swipe-photo">
     <% if profile.photos.attached? %>
@@ -25,6 +26,7 @@
         <%= tag.p safe_join(places.map { |place| tag.span(place) }), class: "swipe-location" %>
       <% end %>
       <%= tag.p t(profile.recency_key), class: "swipe-recency" %>
+      <%= tag.span t("dating.verified"), class: "chip" if profile.verified_at %>
     </header>
   </div>
 
