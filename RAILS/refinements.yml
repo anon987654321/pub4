@@ -4313,7 +4313,7 @@ items:
   item: Drop the arrow glyphs from 'Requires → dependencies' and 'Required by ← reverse
     dependencies'; screen readers read them as 'right arrow' and the headings carry
     the meaning already.
-  status: open
+  status: done
 - id: bsdports-014
   app: bsdports
   area: i18n
