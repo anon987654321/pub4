@@ -138,19 +138,32 @@ module Master
           unless result.ok?
             @bus&.publish("fix_loop:hard_critique_inconclusive", files: files.size, error: result.message.to_s[0, 180])
             Master::Trace::Dmesg.status("fix0", "hard critique INCONCLUSIVE: #{result.message.to_s[0, 120]}")
-          else
-            value = result.value!
-            @bus&.publish(
-              "fix_loop:hard_critique",
-              files: files.size,
-              issues: Array(value[:issues]).size,
-              cherry_picks: Array(value[:cherry_picks]).size,
-            )
-            Master::Trace::Dmesg.status(
-              "fix0",
-              "hard critique #{Array(value[:issues]).size} issue(s), #{Array(value[:cherry_picks]).size} repair candidate(s)",
-            )
+            return result
           end
+
+          value = result.value!
+          if value[:status].to_s == "inconclusive"
+            reason = value[:reason].to_s
+            @bus&.publish(
+              "fix_loop:hard_critique_inconclusive",
+              files: files.size,
+              reason: reason[0, 180],
+            )
+            message = "hard critique INCONCLUSIVE#{": #{reason}" unless reason.empty?}"
+            Master::Trace::Dmesg.status("fix0", message[0, 160])
+            return Master::Result.err(message, category: :inconclusive)
+          end
+
+          @bus&.publish(
+            "fix_loop:hard_critique",
+            files: files.size,
+            issues: Array(value[:issues]).size,
+            cherry_picks: Array(value[:cherry_picks]).size,
+          )
+          Master::Trace::Dmesg.status(
+            "fix0",
+            "hard critique #{Array(value[:issues]).size} issue(s), #{Array(value[:cherry_picks]).size} repair candidate(s)",
+          )
           result
         rescue StandardError => e
           @bus&.publish("fix_loop:hard_critique_inconclusive", files: files.size, error: e.message[0, 180])
