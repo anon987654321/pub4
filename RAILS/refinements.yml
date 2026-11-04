@@ -990,7 +990,7 @@ items:
   path: RAILS/__shared/app/views/comments/_comment.html.erb
   item: Add a report button to each comment; posts and messages have one, comments
     do not.
-  status: open
+  status: done
 - id: brgen-014
   app: brgen
   area: comments
@@ -2176,7 +2176,7 @@ items:
   path: RAILS/brgen/app/assets/stylesheets/_brgen_vertical_surfaces.scss
   item: Style .msg-actions outside body.vertical-messenger; on brgen.no/conversations
     the disclosure falls back to unstyled text under every line.
-  status: open
+  status: done
 - id: brgen-156
   app: brgen
   area: messenger

@@ -98,6 +98,12 @@ class MessengerViewTest < ActionDispatch::IntegrationTest
     assert_match(/\.conversation-log > li:target > article \{\s*animation: messenger-reply-target/, css)
   end
 
+  test "the actions disclosure is styled on brgen.no as well as the messenger host" do
+    css = Rails.root.join("app/assets/stylesheets/_brgen_messenger.scss").read
+
+    assert_match(/^\.messenger-pane \.msg-actions summary \{/, css)
+  end
+
   test "a photo says whose it is and sits above the line's actions" do
     photo = Message.new(conversation: @conversation, sender: @friend, content: "", message_type: "text")
     photo.attachment.attach(io: StringIO.new(file_fixture_png), filename: "IMG_4031.png", content_type: "image/png")

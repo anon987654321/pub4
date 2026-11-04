@@ -659,6 +659,28 @@ body.vertical-messenger .layout > main#main-content > section.messenger-window {
   from { background-color: var(--hover); }
 }
 
+// A line's actions, folded away. The thread rules in _brgen_vertical_surfaces
+// hang on body.vertical-messenger, which only messenger.brgen.no sets, so on
+// brgen.no/conversations the disclosure fell back to bare text under each line.
+.messenger-pane .msg-actions {
+  margin-top: var(--space-1);
+  font-size: var(--text-small);
+}
+
+.messenger-pane .msg-actions summary {
+  display: flex;
+  align-items: center;
+  min-height: var(--tap-min);
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+.messenger-pane .msg-actions a,
+.messenger-pane .msg-actions button {
+  margin-inline-end: var(--space-2);
+  color: var(--text);
+}
+
 // A voice note's length, beside its player.
 .msg-voice-duration {
   color: var(--text-secondary);
