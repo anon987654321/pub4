@@ -117,6 +117,12 @@ end
     end
   end
 
+  # [title, id] for the outfit form's item picker, loaded once per form and
+  # shared by the row template and every existing row, which each queried.
+  def outfit_item_options
+    Current.user.items.order(:title).pluck(:title, :id)
+  end
+
   def live_stream_status_label(status)
     t("live_streams.status.#{status}", default: status.to_s)
   end

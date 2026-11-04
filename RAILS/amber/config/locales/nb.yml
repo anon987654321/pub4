@@ -517,6 +517,8 @@ nb:
       one: "%{count} plagg"
       other: "%{count} plagg"
   outfits:
+    item: "Plagg"
+    select_item: "Velg plagg…"
     items_in: "Plagg i %{name}: %{items}"
     wardrobe_value: "%{amount} garderobeverdi"
     add_item: "Legg til plagg"

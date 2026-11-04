@@ -518,6 +518,8 @@ en:
       one: "%{count} piece"
       other: "%{count} pieces"
   outfits:
+    item: "Item"
+    select_item: "Select item…"
     items_in: "Items in %{name}: %{items}"
     wardrobe_value: "%{amount} wardrobe value"
     add_item: "Add a garment"

@@ -209,7 +209,7 @@ items:
   path: RAILS/amber/app/views/outfits/_outfit_item_fields.html.erb
   item: Translate the hardcoded 'Item' label and 'Select item…' blank in the outfit
     item fields.
-  status: open
+  status: done
 - id: amber-026
   app: amber
   area: i18n
@@ -452,7 +452,7 @@ items:
   path: RAILS/amber/app/views/outfits/_outfit_item_fields.html.erb
   item: Load the user's item options once in the outfit form; _outfit_item_fields
     queries Current.user.items for the template and again for every existing row.
-  status: open
+  status: done
 - id: amber-056
   app: amber
   area: performance

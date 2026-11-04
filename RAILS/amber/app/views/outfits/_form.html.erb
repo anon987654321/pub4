@@ -16,13 +16,14 @@
   <div class="field"><%= f.label :occasion %><%= f.text_field :occasion %></div>
   <section class="nested-form" data-controller="nested-form">
     <%= tag.h3 t("outfits.items_heading") %>
+    <% item_options = outfit_item_options %>
     <template data-nested-form-target="template">
       <%= f.fields_for :outfit_items, OutfitItem.new, child_index: "NEW_RECORD" do |outfit_item_fields| %>
-        <%= render "outfit_item_fields", f: outfit_item_fields %>
+        <%= render "outfit_item_fields", f: outfit_item_fields, item_options: %>
       <% end %>
     </template>
     <%= f.fields_for :outfit_items do |outfit_item_fields| %>
-      <%= render "outfit_item_fields", f: outfit_item_fields %>
+      <%= render "outfit_item_fields", f: outfit_item_fields, item_options: %>
     <% end %>
     <div data-nested-form-target="target"></div>
     <button type="button" class="button-link" data-action="nested-form#add"><%= t("outfits.add_item") %></button>
