@@ -4356,7 +4356,7 @@ items:
   path: RAILS/bsdports/app/views/ports/index.html.erb
   item: Remove role="main" from <main> and role="banner"/role="navigation" from in-page
     header/nav elements; banner on a nested header is wrong and the rest are implicit.
-  status: open
+  status: done
 - id: bsdports-019
   app: bsdports
   area: mobile

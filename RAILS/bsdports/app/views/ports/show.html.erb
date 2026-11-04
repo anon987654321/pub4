@@ -137,7 +137,7 @@
     <% end %>
   </section>
 
-  <nav role="navigation" aria-label="<%= t("ports.actions_label") %>">
+  <nav aria-label="<%= t("ports.actions_label") %>">
     <% if authenticated? %>
       <%= render "ports/watch_toggle", port: @port, watching: @watching %>
     <% else %>

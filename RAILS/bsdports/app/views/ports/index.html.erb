@@ -4,11 +4,11 @@
 <%# search-hotkey was a bsdports-local controller binding / and Cmd-K on this page
     only, so the rest of the app had no search shortcut at all. Both keys are in the
     shared feed-hotkey controller now, declared once on the layout body. %>
-<header class="page-header" role="banner" aria-label="<%= t("ports.header_page_label") %>" data-visitor-orientation>
+<header class="page-header" aria-label="<%= t("ports.header_page_label") %>" data-visitor-orientation>
   <%= tag.h1 t("pages.ports") %>
   <p class="ports-purpose"><%= t("ports.purpose") %></p>
   <p><%= t("ports.search_hint") %></p>
-  <nav role="navigation" aria-label="<%= t("nav.ports") %>">
+  <nav aria-label="<%= t("nav.ports") %>">
     <%= link_to t("ports.rss_link"), ports_path(format: :rss) %>
   </nav>
   <%# The import date and the sort order belong above the list they describe.
@@ -33,7 +33,7 @@
     <% by_updated = params[:sort] == "updated" %>
     <%# q rides along, or switching the order threw the search away. %>
     <% kept = { q: params[:q].presence, category_id: params[:category_id].presence } %>
-    <nav class="sort-order" role="navigation" aria-label="<%= t("ports.sort_label") %>">
+    <nav class="sort-order" aria-label="<%= t("ports.sort_label") %>">
       <%= link_to t("ports.sort_name"), ports_path(kept),
                   class: "chip", aria: { current: by_updated ? nil : "true" } %>
       <%= link_to t("ports.updated"), ports_path(kept.merge(sort: "updated")),
