@@ -131,18 +131,28 @@ class MessengerViewTest < ActionDispatch::IntegrationTest
     assert_select "time.msg-voice-duration[datetime='PT75S']", text: "1:15"
   end
 
-  test "every forward picker has its own id and label" do
-    Conversation.find_or_create_direct(@user, create_user("view_third"))
+  # Each line carried a select of every other thread, fifty copies a page. A
+  # line links to one picker now, which loads the threads when it is opened.
+  test "each line links to the forward picker, which lists the other threads once" do
+    third = create_user("view_third")
+    Conversation.find_or_create_direct(@user, third)
     first = line("en")
     second = line("to")
     sign_in_as(@user)
     get conversation_path(@conversation)
 
+    assert_select "select[name=target_conversation_id]", 0
     [ first, second ].each do |message|
-      id = ActionView::RecordIdentifier.dom_id(message, :forward_target)
-      assert_select "select##{id}", count: 1
-      assert_select "label[for=?]", id, count: 1
+      assert_select "a[href=?]", forward_to_conversation_message_path(@conversation, message), 1
     end
+
+    get forward_to_conversation_message_path(@conversation, first)
+    assert_response :success
+    assert_select "form[action=?] select[name=target_conversation_id]",
+                  forward_conversation_message_path(@conversation, first) do
+      assert_select "option", text: third.display_name
+    end
+    assert_select "label[for=target_conversation_id]", I18n.t("messages.forward_to")
   end
 
   private

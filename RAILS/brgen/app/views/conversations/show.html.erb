@@ -201,7 +201,7 @@
               conversation_log_history_url_value: conversation_messages_path(@conversation, before: @messages.first.id)
             } : {}) do %>
         <% @messages.each do |m| %>
-          <%= render "messages/message", message: m, forward_targets: @forward_targets %>
+          <%= render "messages/message", message: m %>
         <% end %>
       <% end %>
     <% end %>

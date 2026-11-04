@@ -459,6 +459,9 @@ nb:
     master_present: MASTER er her
     master_joined: MASTER ble med i denne chatten.
     forward_to: Videresend til
+    forward_title: Videresend melding
+    forward_none: Ingen andre samtaler
+    forward_none_body: Start en samtale med noen først, så kan du videresende til den.
     forwarded: Videresendt
     replying_to_story: Svarte på historien din
     photo_from: Bilde fra %{name}

@@ -454,6 +454,9 @@ en:
     master_present: MASTER is here
     master_joined: MASTER joined this chat.
     forward_to: Forward to
+    forward_title: Forward message
+    forward_none: No other conversations
+    forward_none_body: Start a conversation with someone first, then forward into it.
     forwarded: Forwarded
     replying_to_story: Replied to your story
     photo_from: Photo from %{name}

@@ -90,7 +90,6 @@ class ConversationsController < ApplicationController
     @blocked_by_me = @blocked && @conversation.other_participants(Current.user).any? { |other| Current.user.blocking?(other) }
     load_window
     @message = Message.new
-    load_forward_targets
     # A reply or an edit is chosen by a link, so the composer reads it off the
     # URL: no client state, and the choice survives a reload.
     @reply_to = @conversation.messages.visible.unexpired.find_by(id: params[:reply_to])
@@ -182,14 +181,6 @@ class ConversationsController < ApplicationController
                       .recent.limit(MessagesController::HISTORY_PAGE + 1)
     @older_available = @messages.size > MessagesController::HISTORY_PAGE
     @messages = @messages.first(MessagesController::HISTORY_PAGE).reverse
-  end
-
-  # Where a forward can go: the reader's other threads. Built once for the
-  # page rather than per message.
-  def load_forward_targets
-    @forward_targets = Conversation.for_user(Current.user).where(slug: nil).where.not(id: @conversation.id)
-                                   .includes(:participants)
-                                   .map { |other| [ other.display_name_for(Current.user), other.id ] }
   end
 
   # Which of the three lists this page is: its threads, its heading and the id

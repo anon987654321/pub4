@@ -1,0 +1,19 @@
+<% content_for :title, t("messages.forward_title") %>
+
+<%= tag.div tag.h1(t("messages.forward_title")), class: "page-header" %>
+
+<%= tag.blockquote truncate(@message.content.to_s, length: 280), class: "forward-quote" if @message.content.present? %>
+
+<% if @forward_targets.any? %>
+  <%= form_with url: forward_conversation_message_path(@conversation, @message), method: :post do |f| %>
+    <%= f.label :target_conversation_id, t("messages.forward_to") %>
+    <%= f.select :target_conversation_id, @forward_targets %>
+    <%= f.submit t("messages.forward"), class: "button button-primary" %>
+    <%= link_to t("actions.cancel"), conversation_path(@conversation), class: "button button-ghost" %>
+  <% end %>
+<% else %>
+  <%= render "shared/empty_state",
+        title: t("messages.forward_none"),
+        body: t("messages.forward_none_body"),
+        action: { label: t("actions.back"), path: conversation_path(@conversation) } %>
+<% end %>

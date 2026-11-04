@@ -111,6 +111,17 @@ class MessagesController < ApplicationController
     redirect_to conversation_path(target), notice: t("flash.message_forwarded")
   end
 
+  # The forward picker: the reader's other threads, built when someone asks to
+  # forward one message rather than for every message on every thread page,
+  # where each line carried its own select of every other thread.
+  def forward_to
+    messages = @conversation.messages.visible
+    @message = messages.unexpired.find(params[:id])
+    raise ActiveRecord::RecordNotFound unless @message.forwardable?
+
+    @forward_targets = forward_targets
+  end
+
   def destroy
     message = @conversation.messages.find(params[:id])
     return head :forbidden unless message.deletable_by?(Current.user)
@@ -154,7 +165,7 @@ class MessagesController < ApplicationController
 
   # Message partials alone, rendered for this reader in this request.
   def render_lines(lines)
-    render partial: "messages/message", collection: lines, locals: { forward_targets: }
+    render partial: "messages/message", collection: lines
   end
 
   # The lines a history page may hold, with what each line reads preloaded once
@@ -165,9 +176,7 @@ class MessagesController < ApplicationController
             .includes(:sender, :message_receipts, :link_preview, :reactions, parent: :sender)
   end
 
-  # Where a forward from this page can go: the reader's other DM threads. The
-  # same computation ConversationsController#show runs, so a message that
-  # arrived through history forwards like one that arrived in the window.
+  # Where a forward can go: the reader's other direct threads.
   def forward_targets
     Conversation.for_user(Current.user).where(slug: nil).where.not(id: @conversation.id)
                 .includes(:participants)

@@ -2351,7 +2351,7 @@ items:
   item: Replace the per-message forward <form> with its full <select> of every other
     thread (50 copies per page) by one shared forward dialog or a link to a forward
     picker, cutting thread DOM size.
-  status: open
+  status: done
 - id: brgen-178
   app: brgen
   area: messenger
@@ -2426,7 +2426,7 @@ items:
   path: RAILS/brgen_messenger/app/controllers/conversations_controller.rb
   item: Load forward targets lazily (on opening the forward control) or cap them;
     show builds every DM thread with participants for each page.
-  status: open
+  status: done
 - id: brgen-187
   app: brgen
   area: messenger

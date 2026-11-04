@@ -191,9 +191,9 @@ get "i/:token" => "invites#show", as: :invite
     # index is the page of history above the cursor — the thread window renders
     # the newest fifty and hands the log the URL for the fifty behind them.
     # update is a bounded edit; destroy is an unsend, which keeps the row so a
-    # threaded reply is not orphaned. forward writes a copy into another thread.
+    # threaded reply is not orphaned. forward writes a copy; forward_to picks where.
     resources :messages, only: %i[index create update destroy] do
-      member { post :forward }
+      member { post :forward; get :forward_to }
     end
     resources :typing_indicators, only: [ :create ]
     resource :presence, only: %i[create destroy]

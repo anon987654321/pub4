@@ -136,7 +136,15 @@ class MessageForwardTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_includes response.body, conversation_path(@source, reply_to: @message.id)
     assert_includes response.body, conversation_path(@source, edit: mine.id)
-    assert_includes response.body, forward_conversation_message_path(@source, @message)
+    assert_includes response.body, forward_to_conversation_message_path(@source, @message)
+  end
+
+  test "the forward picker refuses a message that cannot be forwarded" do
+    sign_in_as(@user)
+    @message.unsend!
+
+    get forward_to_conversation_message_path(@source, @message)
+    assert_response :not_found
   end
 
   test "a reply chosen by link is sent as a reply" do

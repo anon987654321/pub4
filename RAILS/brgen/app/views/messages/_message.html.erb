@@ -129,13 +129,10 @@
           <%= button_to t("messages.unsend"), conversation_message_path(message.conversation, message), method: :delete,
                 data: { turbo_confirm: t("messages.confirm_unsend") }, form: { data: { for: "sender" } } %>
         <% end %>
-        <% if message.forwardable? && local_assigns[:forward_targets].present? %>
-          <%= form_with url: forward_conversation_message_path(message.conversation, message), method: :post do |f| %>
-            <%# One per message on the page, so the id has to be too. %>
-            <%= f.label :target_conversation_id, t("messages.forward_to"), for: dom_id(message, :forward_target) %>
-            <%= f.select :target_conversation_id, forward_targets, {}, id: dom_id(message, :forward_target) %>
-            <%= f.submit t("messages.forward") %>
-          <% end %>
+        <%# A link to one picker, not a select of every other thread on every
+            line: fifty copies of that list made the thread page heavy. %>
+        <% if message.forwardable? %>
+          <%= link_to t("messages.forward"), forward_to_conversation_message_path(message.conversation, message) %>
         <% end %>
         <%# Reporting is for someone else's line, and for a signed-in person: a
             report names its author, and an anonymous visitor has no name to put
