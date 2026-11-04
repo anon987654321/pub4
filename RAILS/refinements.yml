@@ -5619,7 +5619,7 @@ items:
   path: RAILS/mrdamascy/app/javascript/application.js
   item: Register the service worker once on load; the turbo:load listener re-registers
     it on every navigation.
-  status: open
+  status: done
 - id: mrdamascy-069
   app: mrdamascy
   area: pwa
@@ -5627,7 +5627,7 @@ items:
   path: RAILS/mrdamascy/app/views/layouts/application.html.erb
   item: Link icon.svg as rel=icon type=image/svg+xml and remove or reference the unused
     favicon-32.png and icon-152.png.
-  status: open
+  status: done
 - id: mrdamascy-070
   app: mrdamascy
   area: pwa
@@ -5635,7 +5635,7 @@ items:
   path: RAILS/mrdamascy/app/views/pwa/manifest.json.erb
   item: Add id and screenshots to the manifest, and point the "Spor ordre" shortcut
     at something that works signed out (it opens /orders, which redirects to login).
-  status: open
+  status: done
 - id: mrdamascy-071
   app: mrdamascy
   area: pwa
@@ -5643,7 +5643,7 @@ items:
   path: RAILS/mrdamascy/app/views/pwa/offline.html.erb
   item: Make the offline page's retry reload the requested URL; its link goes to the
     menu root, which also fails offline.
-  status: open
+  status: done
 - id: mrdamascy-072
   app: mrdamascy
   area: pwa
@@ -5651,7 +5651,7 @@ items:
   path: RAILS/mrdamascy/app/views/pwa/service-worker.js.erb
   item: Derive CACHE_VERSION from the asset digest or app revision instead of the
     hand-bumped "damascy-v3".
-  status: open
+  status: done
 - id: mrdamascy-073
   app: mrdamascy
   area: pwa
@@ -5659,7 +5659,7 @@ items:
   path: RAILS/mrdamascy/app/views/pwa/service-worker.js.erb
   item: Serve the menu page and food photos stale-while-revalidate so the menu opens
     offline; navigations are network-only with /offline as the sole fallback.
-  status: open
+  status: done
 - id: mrdamascy-074
   app: mrdamascy
   area: security
@@ -5811,7 +5811,7 @@ items:
   path: RAILS/mrdamascy/test/controllers
   item: 'Add PwaController tests: manifest parses as JSON, every icon path exists
     in public/, and every service-worker precache URL answers 200.'
-  status: open
+  status: done
 - id: mrdamascy-093
   app: mrdamascy
   area: tests

@@ -1,8 +1,10 @@
 <%# Web app manifest (§7) — PwaController#manifest renders this as JSON.
     Static Norwegian copy on purpose: the manifest is machine-read, not
-    user-locale-rendered. Icons/shortcuts point at existing public/ assets
-    and §3 routes. %>
+    user-locale-rendered. Icons, screenshots and shortcuts point at existing
+    public/ assets and §3 routes; the shortcuts open pages that work signed
+    out (order history needs a login). %>
 <%= raw({
+  id: "/",
   name: "Mr. Damascy — Shawarma & Kebab",
   short_name: "Damascy",
   description: "Shawarma og kebab fra Damaskus, midt i Bergen sentrum. Bestill på under ett minutt og betal med Vipps — ingen kortfelter.",
@@ -21,8 +23,14 @@
     { src: "/icon-maskable-192.png", sizes: "192x192", type: "image/png", purpose: "maskable" },
     { src: "/icon-maskable-512.png", sizes: "512x512", type: "image/png", purpose: "maskable" }
   ],
+  screenshots: [
+    { src: "/screenshots/menu.jpg", sizes: "500x813", type: "image/jpeg", form_factor: "narrow",
+      label: "Menyen med wraps og retter fra Damaskus" },
+    { src: "/screenshots/tracking.jpg", sizes: "500x1000", type: "image/jpeg", form_factor: "narrow",
+      label: "Bestillingen følges steg for steg" }
+  ],
   shortcuts: [
     { name: "Yalla igjen", short_name: "Yalla", url: "/cart", description: "Handlekurven din" },
-    { name: "Spor ordre", short_name: "Spor", url: "/orders", description: "Følg bestillingen din live" }
+    { name: "Meny", short_name: "Meny", url: "/menu", description: "Hele menyen" }
   ]
 }.to_json) %>

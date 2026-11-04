@@ -1,10 +1,14 @@
 // Mr. Damascy service worker (§7) — offline shell + asset cache.
 // Navigations are network-first with the precached /offline page as fallback;
-// hashed /assets/* and brand /icon*, /logo* are cache-first (immutable).
-// Bump the version when the precache list changes so old caches clear.
-const CACHE_VERSION = "damascy-v3"; // exact-traced operator logo (2026-11-02)
+// the menu page keeps its last good copy, so the menu (its food photos ride
+// the asset cache) still opens offline. Hashed /assets/* and brand /icon*,
+// /logo* are cache-first (immutable). CACHE_VERSION is derived from the
+// asset digests and precached files (PwaController#cache_version), so old
+// caches clear by themselves when any of them changes.
+const CACHE_VERSION = "damascy-<%= @cache_version %>";
 const OFFLINE_URL = "/offline";
-const PRECACHE_URLS = [OFFLINE_URL, "/icon-192.png", "/icon-512.png", "/logo.svg"];
+const MENU_URLS = ["/", "/menu"];
+const PRECACHE_URLS = <%= raw PwaController::PRECACHE_URLS.to_json %>;
 const ASSET_PATTERN = /^\/(assets\/|icon|logo)/;
 
 self.addEventListener("install", (event) => {
@@ -34,7 +38,25 @@ self.addEventListener("fetch", (event) => {
   const url = new URL(request.url);
   if (url.origin !== self.location.origin) return;
 
-  // Page navigations: network first, offline shell last.
+  // The menu: network first, its last good copy when offline. Not served
+  // stale while online — the page carries the live cart count and form
+  // tokens.
+  if (request.mode === "navigate" && MENU_URLS.includes(url.pathname)) {
+    event.respondWith(
+      fetch(request)
+        .then((response) => {
+          if (response.ok) {
+            const copy = response.clone();
+            caches.open(CACHE_VERSION).then((cache) => cache.put(url.pathname, copy));
+          }
+          return response;
+        })
+        .catch(() => caches.match(url.pathname).then((cached) => cached || caches.match(OFFLINE_URL)))
+    );
+    return;
+  }
+
+  // Other page navigations: network first, offline shell last.
   if (request.mode === "navigate") {
     event.respondWith(fetch(request).catch(() => caches.match(OFFLINE_URL)));
     return;
