@@ -6063,7 +6063,7 @@ items:
   path: RAILS/__shared/app/services/shared/link_embed.rb
   item: Re-resolve failed or stale oEmbed records after a TTL so a link that failed
     once does not stay a plain link forever.
-  status: open
+  status: done
 - id: shared-018
   app: shared
   area: i18n

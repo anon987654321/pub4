@@ -27,6 +27,12 @@ production:
     class: UserPurgeJob
     queue: bulk
     schedule: every day at 3:50am
+  # A failed link lookup is asked again after a day, a resolved one after a month.
+  refresh_link_embeds:
+    class: Shared::LinkEmbedRefreshJob
+    queue: bulk
+    args: ["Post"]
+    schedule: every day at 3:30am
 
 development:
   declutter_hygiene:

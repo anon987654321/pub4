@@ -48,6 +48,16 @@ module Shared
 
       def ok? = status == "ok"
       def pending? = status == "pending"
+
+      # Due to be asked again: a failed answer after a day, a resolved one after
+      # a month, so a provider that was down once, or a title that changed, is
+      # caught up rather than kept for good. A pending record is already asked.
+      def stale?(now = Time.current)
+        return false if pending?
+
+        fetched = Time.zone.parse(fetched_at.to_s)
+        fetched.nil? || now - fetched > (ok? ? Record::REFRESH_OK_AFTER : Record::RETRY_FAILED_AFTER)
+      end
       def player_url = match.provider.player_url(match.media_id)
       def source_url = match.source_url
       def canonical_url = match.canonical_url
@@ -69,5 +79,7 @@ module Shared
     Record::STATUSES = %w[pending ok failed].freeze
     Record::TITLE_MAX = 200
     Record::AUTHOR_MAX = 100
+    Record::RETRY_FAILED_AFTER = 86_400
+    Record::REFRESH_OK_AFTER = 30 * 86_400
   end
 end
