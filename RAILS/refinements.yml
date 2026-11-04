@@ -583,7 +583,7 @@ items:
   path: RAILS/amber/app/assets/stylesheets/application.scss
   item: Fix stale SCSS comments that say 'serif display' and 'the serif carries headlines';
     amber's display is the Swiss sans since 2026-10-11.
-  status: open
+  status: done
 - id: amber-072
   app: amber
   area: ui

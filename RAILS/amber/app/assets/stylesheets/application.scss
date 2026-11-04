@@ -149,7 +149,7 @@
 
 // The New Yorker + Outnet mirror, operator 2026-10-28. amber stops borrowing
 // the family's social-light dialect and states its own editorial light: white
-// paper, near-black literary ink, hairline rules, serif display. The inks are
+// paper, near-black literary ink, hairline rules, Swiss sans display. The inks are
 // re-tuned to the tree's own floors the way the reference sites are not —
 // The New Yorker's #121212 is real and clears everything, the hairline and
 // the muted grey are picked at the law's boundary rather than under it.
@@ -370,7 +370,8 @@ a {
 h1,
 h2 {
   margin-bottom: var(--space-3);
-  // Editorial display: the serif carries headlines, the sans carries UI.
+  // Editorial display: the Swiss sans carries headlines and UI alike (no
+  // serifs since 2026-10-11); headlines differ by weight and tracking.
   // Weights and tracking are the New Yorker's masthead proportions — tight
   // leading, near-black ink, no heavy display weight beyond 700.
   font-family: var(--font-display);
