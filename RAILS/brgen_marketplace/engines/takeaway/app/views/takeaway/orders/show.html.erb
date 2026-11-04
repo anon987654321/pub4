@@ -83,11 +83,15 @@
 <article aria-label="<%= t("takeaway.order_item") %>">
   <p><%= t("takeaway.subtotal", amount: @order.subtotal_display) %></p>
   <p><%= t("takeaway.delivery", amount: @order.delivery_fee_display) %></p>
+  <%# The tip is in the total, so it is on the bill. %>
+  <%= tag.p t("takeaway.tip_line", amount: @order.tip_display) if @order.tip_cents.to_i.positive? %>
   <%= tag.strong t("takeaway.total", amount: @order.total_display) %>
 </article>
 
 <nav aria-label="<%= t("takeaway.order_actions") %>">
-  <%= button_to t("actions.reorder"), again_order_path(@order), method: :post, class: "button" %>
+  <% if @order.reorderable_by?(Current.user) %>
+    <%= button_to t("actions.reorder"), again_order_path(@order), method: :post, class: "button" %>
+  <% end %>
   <%= link_to t("actions.all_orders"), orders_path, class: "button button-ghost" %>
   <% if authenticated? && @order.restaurant.owner?(Current.user) && @order.advanceable? %>
     <% Takeaway::Order::TRANSITIONS.fetch(@order.status, []).each do |status| %>

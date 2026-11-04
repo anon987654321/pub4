@@ -118,6 +118,17 @@ class Takeaway::Order < ApplicationRecord
     amount_display(tip_cents)
   end
 
+  # The quantity of one dish on this order, so a form re-rendered with errors
+  # keeps what the diner chose.
+  def quantity_for(menu_item)
+    order_items.detect { |line| line.menu_item_id == menu_item.id }&.quantity.to_i
+  end
+
+  # Reorder belongs to the diner, once the order is over.
+  def reorderable_by?(user)
+    user.present? && user_id == user.id && %w[delivered cancelled].include?(status)
+  end
+
   private
 
   def amount_display(cents)

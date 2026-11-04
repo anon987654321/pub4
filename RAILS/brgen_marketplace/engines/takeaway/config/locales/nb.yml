@@ -10,4 +10,15 @@
 # Keys the host already carries are NOT copied here. Use them.
 nb:
   takeaway:
+    tip_line: "Tips: %{amount}"
+    position: "Posisjon"
+    use_current_location: "Bruk nåværende posisjon"
+    locating: "Henter posisjonen din…"
+    location_denied: "Fikk ikke lest posisjonen. Du kan skrive den inn selv."
+    vehicle_types:
+      bicycle: "Sykkel"
+      scooter: "Scooter"
+      car: "Bil"
+      van: "Varebil"
+      walking: "Til fots"
     driver_updated: "Sjåføren er oppdatert."

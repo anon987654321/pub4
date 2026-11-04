@@ -75,13 +75,18 @@ class Takeaway::Restaurant < ApplicationRecord
   def hours_known? = Takeaway::OpeningHour.exists?(restaurant_id: id)
 
   # An order for later is still allowed while the kitchen is shut — that is
-  # most of what scheduling is for. With no hours recorded the kitchen has said
-  # nothing about when it cooks, so `active` alone decides: most restaurants
-  # have no hours yet, and refusing their orders would empty the vertical.
+  # most of what scheduling is for — but only for a time the kitchen is open.
+  # With no hours recorded the kitchen has said nothing about when it cooks, so
+  # `active` alone decides: most restaurants have no hours yet, and refusing
+  # their orders would empty the vertical.
   def accepting_orders?(scheduled_for: nil)
-    return active? if scheduled_for.present? || !hours_known?
+    return active? unless hours_known?
+    return open_now? if scheduled_for.blank?
 
-    open_now?
+    moment = Time.zone.parse(scheduled_for.to_s)
+    active? && moment.present? && Takeaway::OpeningHour.open_at?(id, moment)
+  rescue ArgumentError
+    false
   end
 
   def hours_for(wday) = opening_hours.for_weekday(wday).order(:opens_minute)

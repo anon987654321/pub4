@@ -36,8 +36,9 @@
             </p>
           </hgroup>
           <div class="field">
-            <%= label_tag "takeaway_order_items_#{item.id}", t("takeaway.qty") %>
-            <%= number_field_tag "takeaway_order[items][#{item.id}]", 0, min: 0, id: "takeaway_order_items_#{item.id}", class: "qty-field" %>
+            <%= label_tag "takeaway_order_items_#{item.id}", t("takeaway.qty_for", name: item.name) %>
+            <%= number_field_tag "takeaway_order[items][#{item.id}]", @order.quantity_for(item), min: 0,
+                  id: "takeaway_order_items_#{item.id}", class: "qty-field" %>
           </div>
         </article>
       <% end %>

@@ -81,6 +81,7 @@ class TakeawayOrderAgainTest < ActionDispatch::IntegrationTest
 
   test "the order page posts to again rather than linking at the restaurant" do
     source = placed_order
+    source.update_columns(status: "delivered")
     sign_in_as(@buyer)
     host! "takeaway.brgen.no"
 

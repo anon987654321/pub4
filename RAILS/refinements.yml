@@ -1565,7 +1565,7 @@ items:
   item: Give the driver's licence, latitude and longitude fields visible labels instead
     of placeholders, and add a 'Use current location' button like the listing form's
     useLocation.
-  status: open
+  status: done
 - id: brgen-084
   app: brgen
   area: delivery
@@ -1573,7 +1573,7 @@ items:
   path: RAILS/brgen_marketplace/engines/takeaway/app/views/takeaway/delivery_drivers/show.html.erb
   item: Translate the vehicle type options on the driver form through takeaway.vehicle_types.*
     instead of type.humanize, which shows English on nb.
-  status: open
+  status: done
 - id: brgen-085
   app: brgen
   area: events
@@ -3769,7 +3769,7 @@ items:
   item: Add controller tests that a stranger gets 404 on another diner's takeaway
     order page, and that placing an order at a closed restaurant redirects with closed_now
     unless scheduled_for falls inside opening hours.
-  status: open
+  status: done
 - id: brgen-348
   app: brgen
   area: takeaway
@@ -3804,7 +3804,7 @@ items:
   item: 'Label each quantity field on the order form with t(''takeaway.qty_for'',
     name: item.name), as _menu does, instead of the same ''Qty'' label repeated for
     every dish.'
-  status: open
+  status: done
 - id: brgen-352
   app: brgen
   area: takeaway
@@ -3830,7 +3830,7 @@ items:
   path: RAILS/brgen_marketplace/engines/takeaway/app/views/takeaway/orders/new.html.erb
   item: Keep the chosen quantities when the order form re-renders with errors (read
     params[:takeaway_order][:items]), instead of resetting every field to 0.
-  status: open
+  status: done
 - id: brgen-355
   app: brgen
   area: takeaway
@@ -3839,7 +3839,7 @@ items:
   item: Show Reorder only to the diner and only once the order is delivered or cancelled;
     the kitchen sees it today and again looks the order up in Current.user.takeaway_orders,
     so the kitchen gets a 404.
-  status: open
+  status: done
 - id: brgen-356
   app: brgen
   area: takeaway
@@ -3847,7 +3847,7 @@ items:
   path: RAILS/brgen_marketplace/engines/takeaway/app/views/takeaway/orders/show.html.erb
   item: Show the tip line (tip_display) between delivery and total on the order page;
     the tip is in total_cents but not listed, so the sum does not add up on screen.
-  status: open
+  status: done
 - id: brgen-357
   app: brgen
   area: takeaway
