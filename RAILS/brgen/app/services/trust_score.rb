@@ -5,6 +5,7 @@ class TrustScore
     "account_created" => 5,
     "email_verified" => 10,
     "phone_verified" => 20,
+    "dating_photo_verified" => 25,
     "bankid_verified" => 100,
     "merchant_verified" => 150,
     "successful_trade" => 15,

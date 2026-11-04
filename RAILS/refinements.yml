@@ -3967,7 +3967,7 @@ items:
   item: Record a 'dating_photo_verified' TrustSignal with a weight in SIGNAL_WEIGHTS
     when Dating::Verification#approve! runs, and recompute TrustScore, so photo verification
     counts toward reputation.
-  status: open
+  status: done
 - id: brgen-372
   app: brgen
   area: trust

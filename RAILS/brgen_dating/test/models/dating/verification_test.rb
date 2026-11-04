@@ -103,4 +103,16 @@ class Dating::VerificationTest < ActiveSupport::TestCase
   def request!
     build_request.tap(&:save!)
   end
+
+  # Photo verification counted for nothing in reputation; it now records a
+  # trust signal and recomputes the owner's score.
+  test "approving a request records a trust signal and rescores the owner" do
+    request!.approve!(by: @reviewer)
+
+    signal = @owner.trust_signals.find_by(kind: "dating_photo_verified")
+    assert signal
+    assert_equal TrustScore::SIGNAL_WEIGHTS.fetch("dating_photo_verified"), signal.weight
+    score = @owner.reputation_scores.find_by(scope: "global")
+    assert_equal @owner.trust_signals.sum(:weight), score.score
+  end
 end

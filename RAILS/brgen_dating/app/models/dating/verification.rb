@@ -40,6 +40,7 @@ class Dating::Verification < ApplicationRecord
       Dating::Profile.where(id: profile_id).update_all(verified_at: reviewed_at)
     end
     notify(I18n.t("dating.verification_approved_title"), I18n.t("dating.verification_approved_body"))
+    record_trust_signal
   end
 
   def reject!(by:, note: nil)
@@ -58,6 +59,20 @@ class Dating::Verification < ApplicationRecord
   def notify(title, body)
     owner = User.find_by(id: Dating::Profile.where(id: profile_id).pick(:user_id))
     deliver_notification(owner, title: title, body: body, source: self, kind: "alert")
+  end
+
+  # A reviewed photo match is evidence about the person, so it counts toward
+  # their reputation as phone or BankID verification does. One signal per
+  # approved request: the unique (user, kind, source) index holds a repeat.
+  def record_trust_signal
+    owner = User.find_by(id: Dating::Profile.where(id: profile_id).pick(:user_id))
+    return unless owner
+
+    kind = "dating_photo_verified"
+    owner.trust_signals.create_or_find_by!(kind:, source: "dating_verification:#{id}") do |signal|
+      signal.weight = TrustScore::SIGNAL_WEIGHTS.fetch(kind)
+    end
+    TrustScore.new(user: owner).call
   end
 
   def selfie_must_be_attached
