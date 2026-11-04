@@ -5953,7 +5953,7 @@ items:
   path: RAILS/__shared/app/views/shared/_brand_mark.html.erb
   item: Include the visible wordmark in the brand mark's accessible name; aria-label=t("nav.brand_home")
     replaces it (WCAG 2.5.3).
-  status: open
+  status: done
 - id: shared-004
   app: shared
   area: accessibility
