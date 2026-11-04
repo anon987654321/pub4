@@ -181,6 +181,13 @@ module Shared
       parent
     end
 
+    # People the reader has blocked. Their comments stay out of every thread the
+    # reader opens; memoised, because a thread asks once per comment.
+    def blocked_comment_author_ids
+      reader = defined?(Current) ? Current.user : nil
+      @blocked_comment_author_ids ||= Array(reader.try(:blocked_user_ids))
+    end
+
     def comment_children(comment)
       klass = comment.class
 
@@ -190,6 +197,7 @@ module Shared
         # refuses the lazy read. A post page with a single reply raised on it.
         loads = %i[user commentable].select { |name| klass.reflect_on_association(name) }
         replies = klass.where(parent_id: comment.id)
+        replies = replies.where.not(user_id: blocked_comment_author_ids)
         replies.best.preload(*loads)
       elsif comment.respond_to?(:replies)
         comment.replies.order(:created_at)

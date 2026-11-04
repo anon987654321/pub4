@@ -3318,7 +3318,7 @@ items:
   path: RAILS/brgen/app/controllers/posts_controller.rb
   item: Hide comments by users the viewer has blocked on posts#show, or collapse them
     behind a 'blocked user' line.
-  status: open
+  status: done
 - id: brgen-292
   app: brgen
   area: privacy

@@ -44,20 +44,16 @@ class PostsController < ApplicationController
   end
 
   COMMENT_SORTS = %w[best new top controversial].freeze
+  COMMENT_SORT_SCOPES = {
+    "best" => :best, "new" => :new_first, "top" => :top, "controversial" => :controversial,
+  }.freeze
 
   def show
     return render_members_only unless @post.readable_by?(Current.user)
     return if redirect_id_to_slug(@post)
 
     @comment_sort = COMMENT_SORTS.include?(params[:sort]) ? params[:sort] : "best"
-    roots = @post.comments.where(parent_id: nil)
-    roots = case @comment_sort
-    when "new"           then roots.new_first
-    when "top"           then roots.top
-    when "controversial" then roots.controversial
-    else roots.best
-    end
-    @comments = roots.includes(:user, :votes, replies: [ :user, :votes ])
+    @comments = sorted_comment_roots.includes(:user, :votes, replies: [ :user, :votes ])
     @new_comment = Comment.new
     @quotes = @post.reposts.quoted.includes(:user).order(created_at: :desc)
     @quote_comment = @post.quote_comment_by(Current.user)
@@ -191,6 +187,14 @@ class PostsController < ApplicationController
   end
 
   private
+
+  # A blocked author's comments stay out of the reader's thread; replies are
+  # filtered the same way in comment_children.
+  def sorted_comment_roots
+    roots = @post.comments.where(parent_id: nil)
+    roots = roots.where.not(user_id: Current.user&.blocked_user_ids.to_a)
+    roots.public_send(COMMENT_SORT_SCOPES.fetch(@comment_sort, :best))
+  end
 
   # postable_by? reads bans before privacy, so a community that banned this
   # account never appears as somewhere to send the post.
