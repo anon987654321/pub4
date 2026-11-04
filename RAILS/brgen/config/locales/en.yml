@@ -331,6 +331,8 @@ en:
     confirm_cancel: Cancel this event? Everyone who answered is told.
     cancelled_notification: "%{title} is cancelled"
     cancelled_body: The organiser has cancelled this event.
+    changed_notification: "%{title} has changed"
+    changed_body: "Now %{when}, %{where}."
     full_body: Full — you can still mark yourself interested.
     organiser_actions: Organiser actions
     rsvp: Answer

@@ -40,6 +40,7 @@ class Event < ApplicationRecord
   validate  :ends_after_it_starts
 
   before_validation :inherit_place_location
+  after_update_commit :notify_attendees_of_change, if: :attendee_facing_change?
 
   scope :published, -> { where(status: "published") }
   # Upcoming means "has not finished", not "has not started": a three-day
@@ -125,8 +126,26 @@ class Event < ApplicationRecord
     errors.add(:ends_at, :before_start)
   end
 
-  # Everyone who said they were coming needs telling, and this is the one place
-  # an event can change under them.
+  # When, until when and where: the three things an attendee planned around.
+  ATTENDEE_FACING_COLUMNS = %w[starts_at ends_at venue_name place_id].freeze
+
+  def attendee_facing_change?
+    !cancelled? && saved_changes.keys.intersect?(ATTENDEE_FACING_COLUMNS)
+  end
+
+  # A new time or venue reaches everyone who said they were coming, the way a
+  # cancellation does; the organiser, who made the change, is not told.
+  def notify_attendees_of_change
+    body = I18n.t("events.changed_body", when: I18n.l(starts_at, format: :long), where: venue_name.presence || "–")
+    others = rsvps.where.not(user_id:)
+    coming = others.where(status: %w[going interested])
+    coming.includes(:user).find_each do |rsvp|
+      deliver_notification(rsvp.user, title: I18n.t("events.changed_notification", title:), body:,
+                                      source: self, kind: "alert")
+    end
+  end
+
+  # Everyone who said they were coming needs telling when it is called off.
   def notify_attendees_of_cancellation
     rsvps.where(status: %w[going interested]).includes(:user).find_each do |rsvp|
       deliver_notification(

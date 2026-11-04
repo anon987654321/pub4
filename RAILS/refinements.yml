@@ -1634,7 +1634,7 @@ items:
   item: Notify going/interested attendees when an organiser changes starts_at, ends_at
     or venue on update, mirroring notify_attendees_of_cancellation; today only cancellation
     tells anyone.
-  status: open
+  status: done
 - id: brgen-092
   app: brgen
   area: events

@@ -133,6 +133,24 @@ class EventTest < ActiveSupport::TestCase
     assert_not_nil party.cancelled_at
   end
 
+  test "a new time or venue tells everyone coming, but not the organiser" do
+    party = event(title: "Flyttes")
+    EventRsvp.create!(event: party, user: @guest, status: "interested")
+    EventRsvp.create!(event: party, user: @organiser, status: "going")
+
+    assert_difference -> { @guest.notifications.count }, 1 do
+      assert_no_difference -> { @organiser.notifications.count } do
+        party.update!(starts_at: party.starts_at + 1.day, venue_name: "Kulturhuset")
+      end
+    end
+    told = @guest.notifications.order(:id).last
+    assert_includes told.body.to_s, "Kulturhuset"
+
+    assert_no_difference -> { @guest.notifications.count } do
+      party.update!(description: "Ny tekst")
+    end
+  end
+
   test "a cancelled event leaves the upcoming listing" do
     party = event(title: "Borte")
     party.cancel!

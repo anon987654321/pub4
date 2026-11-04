@@ -335,6 +335,8 @@ nb:
     confirm_cancel: Avlyse arrangementet? Alle som har svart får beskjed.
     cancelled_notification: "%{title} er avlyst"
     cancelled_body: Arrangøren har avlyst dette arrangementet.
+    changed_notification: "%{title} er endret"
+    changed_body: "Nå %{when}, %{where}."
     full_body: Fullt — du kan fortsatt melde interesse.
     organiser_actions: Arrangørhandlinger
     rsvp: Svar
