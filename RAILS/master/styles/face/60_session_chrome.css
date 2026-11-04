@@ -101,7 +101,7 @@ body.mission-control .mission-heading { max-inline-size: 80ch; margin: 0 0 1rem;
      gap and follow the same keyboard/safe-area offsets as the prompt. */
   #chat-history-panel { bottom: calc(80px + var(--safe-bottom) + var(--keyboard-inset, 0px)); }
 }
-@media (min-width: 768px) { body.mission-control .panel { margin-block-end: 24px; } }
+@media (min-width: 768px) { body.mission-control #mission-grid > section { margin-block-end: 24px; } }
 @media (prefers-reduced-motion: reduce) { #zsh, .master-titlebar *, .master-session-tab, #turn-control { transition: none; scroll-behavior: auto; } }
 @media (prefers-reduced-transparency: reduce) { #zsh { background: var(--chrome-surface); } }
 @media (forced-colors: active) {

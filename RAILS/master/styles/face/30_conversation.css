@@ -92,16 +92,16 @@ body.mission-control h1 {
    under another in an 80-column measure, space between them rather than boxes
    around them (UI_POLISH.space_not_lines), and each section named in lowercase
    by brightness rather than tracked capitals (TYPOGRAPHY_DISCIPLINE). */
-body.mission-control .grid {
+body.mission-control #mission-grid {
   display: block;
   max-inline-size: 80ch;
 }
-body.mission-control .panel {
+body.mission-control #mission-grid > section {
   margin-block-end: 20px;
   padding-inline-start: 0;
   border-inline-start: 0;
 }
-body.mission-control .panel h2 {
+body.mission-control #mission-grid h2 {
   font-size: var(--text-meta);
   font-weight: 400;
   color: var(--chrome-muted);

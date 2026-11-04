@@ -193,10 +193,10 @@ test("evidence events retain their event name and reach the shared FaceWorld clo
 test("mission control distinguishes fresh, failed and terminal live states", () => {
   // The view owns the status node and localized strings; dashboard_live.js polls.
   const poller = readFileSync(join(publicDir, "dashboard_live.js"), "utf8");
-  assert.match(dashboard, /id="refresh-state"[^>]*role="status"/);
+  assert.match(dashboard, /id: "refresh-state", role: "status"/);
   assert.match(dashboard, /data-i18n-refresh-failed=/);
   assert.match(dashboard, /data-i18n-updated=/);
-  assert.match(dashboard, /<script src="\/dashboard_live\.js"/);
+  assert.match(dashboard, /<script src="<%= asset_path\("dashboard_live\.js"\) %>"/);
   assert.match(poller, /if \(!r\.ok \|\| d\.error\)/);
   assert.match(poller, /catch \(error\)/);
   assert.match(poller, /document\.hidden/);
@@ -211,11 +211,11 @@ test("chat and mission control share accessible Ghostty-inspired session tabs", 
     assert.match(page, /class="[^"]*\bmaster-titlebar\b/);
     assert.match(page, /class="master-session-tabs" aria-label=/);
     assert.match(page, /class="master-session-tab"/);
-    assert.match(page, /href="\/" /);
-    assert.match(page, /href="\/dashboard"/);
+    assert.match(page, /href="<%= root_path %>"/);
+    assert.match(page, /href="<%= dashboard_path %>"/);
   }
-  assert.match(chatIndex, /href="\/" aria-current="page"/);
-  assert.match(dashboard, /href="\/dashboard" aria-current="page"/);
+  assert.match(chatIndex, /href="<%= root_path %>" aria-current="page"/);
+  assert.match(dashboard, /href="<%= dashboard_path %>" aria-current="page"/);
   assert.match(faceChrome, /\.master-session-tab\[aria-current="page"\]::after/);
   assert.match(faceChrome, /@media \(min-width: 480px\)/);
   assert.match(faceChrome, /\.master-session-tab:focus-visible/);

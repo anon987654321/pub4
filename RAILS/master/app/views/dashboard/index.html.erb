@@ -12,22 +12,24 @@
   <link rel="manifest" href="<%= pwa_manifest_path(format: :json) %>">
   <link rel="apple-touch-icon" href="<%= asset_path("icon.png") %>">
   <title><%= t("dashboard.title") %></title>
-  <link rel="stylesheet" href="/face.css">
+  <link rel="stylesheet" href="<%= asset_path("face.css") %>">
 </head>
 <body class="mission-control" data-layout="document" data-surface="face" data-theme="dark">
   <a class="skip-link" href="#main-content"><%= t("skip_to_content") %></a>
-  <header class="page-header master-titlebar" role="banner">
-    <a class="brand-mark" href="/" aria-label="<%= t("face.title") %>">
+  <header class="page-header master-titlebar">
+    <a class="brand-mark" href="<%= root_path %>" aria-label="<%= t("face.title") %>">
       <span class="brand-text"><%= t("face.title") %></span>
     </a>
     <nav class="master-session-tabs" aria-label="<%= t("dashboard.session_navigation") %>">
-      <a class="master-session-tab" href="/"><%= t("dashboard.heading_chat") %></a>
-      <a class="master-session-tab" href="/dashboard" aria-current="page"><%= t("dashboard.heading_mission") %></a>
+      <a class="master-session-tab" href="<%= root_path %>"><%= t("dashboard.heading_chat") %></a>
+      <a class="master-session-tab" href="<%= dashboard_path %>" aria-current="page">
+        <%= t("dashboard.heading_mission") %>
+      </a>
     </nav>
   </header>
-  <main id="main-content" role="main" aria-label="<%= t("dashboard.main_label") %>">
+  <main id="main-content" aria-label="<%= t("dashboard.main_label") %>">
     <h1 class="mission-heading"><%= t("dashboard.heading_mission") %></h1>
-    <div class="grid" id="mission-grid"
+    <div id="mission-grid"
          data-i18n-loading="<%= t("dashboard.loading") %>"
          data-i18n-auth="<%= t("dashboard.auth_required") %>"
          data-i18n-none="<%= t("dashboard.empty_none") %>"
@@ -51,18 +53,30 @@
          data-label-headroom="<%= t("dashboard.pressure.headroom") %>"
          data-label-status="<%= t("dashboard.providers.status") %>"
          data-label-open-breakers="<%= t("dashboard.providers.open_breakers") %>">
-      <div class="panel"><h2><%= t("dashboard.panels.status") %></h2><p id="refresh-state" role="status" aria-live="polite"><%= t("dashboard.loading") %></p><pre id="status" aria-live="polite"><%= t("dashboard.loading") %></pre></div>
-      <div class="panel"><h2><%= t("dashboard.panels.rtk") %></h2><pre id="rtk" aria-live="polite"><%= t("dashboard.loading") %></pre></div>
-      <div class="panel"><h2><%= t("dashboard.panels.plan") %></h2><pre id="plan" aria-live="polite"><%= t("dashboard.loading") %></pre></div>
-      <div class="panel"><h2><%= t("dashboard.panels.rsi") %></h2><pre id="rsi" aria-live="polite"><%= t("dashboard.loading") %></pre></div>
-      <div class="panel"><h2><%= t("dashboard.panels.skills") %></h2><pre id="skills" aria-live="polite"><%= t("dashboard.loading") %></pre></div>
-      <div class="panel"><h2><%= t("dashboard.panels.pressure") %></h2><pre id="pressure" aria-live="polite"><%= t("dashboard.loading") %></pre></div>
-      <div class="panel"><h2><%= t("dashboard.panels.providers") %></h2><pre id="providers" aria-live="polite"><%= t("dashboard.loading") %></pre></div>
-      <div class="panel"><h2><%= t("dashboard.panels.repair") %></h2><pre id="repair" aria-live="polite"><%= t("dashboard.loading") %></pre></div>
-      <div class="panel"><h2><%= t("dashboard.panels.bus") %></h2><pre id="bus" aria-live="polite"><%= t("dashboard.loading") %></pre></div>
+      <%# One section per panel, named by its heading. The panes stay out of the
+          live region: the poll rewrites them every few seconds, and refresh-state
+          alone says whether the refresh worked. %>
+      <% panel = lambda do |key, heading|
+           tag.section(aria: { labelledby: "panel-#{key}" }) do
+             tag.h2(heading, id: "panel-#{key}") + tag.pre(t("dashboard.loading"), id: key)
+           end
+         end %>
+      <%= tag.section aria: { labelledby: "panel-status" } do %>
+        <%= tag.h2 t("dashboard.panels.status"), id: "panel-status" %>
+        <%= tag.p t("dashboard.loading"), id: "refresh-state", role: "status", aria: { live: "polite" } %>
+        <%= tag.pre t("dashboard.loading"), id: "status" %>
+      <% end %>
+      <%= panel.("rtk", t("dashboard.panels.rtk")) %>
+      <%= panel.("plan", t("dashboard.panels.plan")) %>
+      <%= panel.("rsi", t("dashboard.panels.rsi")) %>
+      <%= panel.("skills", t("dashboard.panels.skills")) %>
+      <%= panel.("pressure", t("dashboard.panels.pressure")) %>
+      <%= panel.("providers", t("dashboard.panels.providers")) %>
+      <%= panel.("repair", t("dashboard.panels.repair")) %>
+      <%= panel.("bus", t("dashboard.panels.bus")) %>
     </div>
   </main>
   <%# The dashboard poller is a standalone same-origin asset; no first-paint guard needs to precede it. %>
-  <script src="/dashboard_live.js" nonce="<%= content_security_policy_nonce %>" defer></script>
+  <script src="<%= asset_path("dashboard_live.js") %>" nonce="<%= content_security_policy_nonce %>" defer></script>
 </body>
 </html>

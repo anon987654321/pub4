@@ -322,7 +322,7 @@ class LayoutContractTest < Minitest::Test
     assert_includes body, 'data-layout="document"'
     assert_includes body, 'id="main-content"'
     assert_includes body, "skip-link"
-    assert_includes body, 'role="main"'
+    assert_includes body, '<main id="main-content"'
   end
 
   def test_stack_forwards_layout_chrome

@@ -159,4 +159,25 @@ class ChatControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_includes response.body, "pong"
   end
+
+  test "index names this host, links through the routes and uses native landmarks" do
+    host! "face.example.test"
+    get root_path, env: { "SCRIPT_NAME" => "/master" }
+
+    assert_response :success
+    assert_select ".brand-mark .brand-text", text: "face.example.test"
+    assert_select "a.brand-mark[href='/master/']"
+    assert_select "a.master-session-tab[href='/master/'][aria-current='page']"
+    assert_select "a.master-session-tab[href='/master/dashboard']"
+    assert_select "main#chat-shell:not([role])"
+  end
+
+  test "index uses the icon file as its favicon and lets the photo picker offer the gallery" do
+    get root_path
+
+    assert_select "link[rel='icon'][type='image/svg+xml'][href*='/assets/icon-']"
+    refute_match(%r{rel="icon"[^>]*data:}, response.body)
+    assert_select "input#photo[type='file'][accept='image/*']"
+    assert_select "input#photo[capture]", count: 0
+  end
 end

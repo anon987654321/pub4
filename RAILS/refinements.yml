@@ -4786,7 +4786,7 @@ items:
   path: RAILS/master/app/views/dashboard/index.html.erb
   item: Remove aria-live from the nine <pre> panes, which the 8-second poll re-announces,
     and keep the single refresh-state status.
-  status: open
+  status: done
 - id: master-005
   app: master
   area: api
@@ -4834,7 +4834,7 @@ items:
   path: RAILS/master/app/views/chat/index.html.erb
   item: Remove capture="environment" from the photo input so phones offer the gallery
     as well as the camera.
-  status: open
+  status: done
 - id: master-011
   app: master
   area: ci
@@ -4864,7 +4864,7 @@ items:
   size: S
   path: RAILS/master/app/views/chat/index.html.erb
   item: Use /icon.svg as the favicon instead of the inline data-URI circle.
-  status: open
+  status: done
 - id: master-015
   app: master
   area: design
@@ -4872,7 +4872,7 @@ items:
   path: RAILS/master/app/views/chat/index.html.erb
   item: Read the brand mark text from the request host or config instead of the literal
     "ai.brgen.no".
-  status: open
+  status: done
 - id: master-016
   app: master
   area: design
@@ -5000,7 +5000,7 @@ items:
   path: RAILS/master/app/views/chat/index.html.erb
   item: Use root_path and dashboard_path for the session tabs instead of literal "/"
     and "/dashboard".
-  status: open
+  status: done
 - id: master-032
   app: master
   area: security
@@ -5031,7 +5031,7 @@ items:
   size: S
   path: RAILS/master/app/views/dashboard/index.html.erb
   item: Replace div.grid and div.panel with a section per panel labelled by its h2.
-  status: open
+  status: done
 - id: master-036
   app: master
   area: tests

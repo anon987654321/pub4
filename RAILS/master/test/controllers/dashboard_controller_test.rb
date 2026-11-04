@@ -13,7 +13,7 @@ class DashboardControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_includes response.body, I18n.t("dashboard.heading_mission")
     assert_select "#refresh-state[role='status']"
-    assert_select "#status[aria-live='polite']"
+    assert_select "pre#status"
     assert_includes response.body, I18n.t("dashboard.refresh_failed")
   end
 
@@ -97,5 +97,32 @@ class DashboardControllerTest < ActionDispatch::IntegrationTest
     assert body.key?("context_pressure")
     assert body.key?("provider_health")
     assert_equal "healthy", body.dig("provider_health", "status")
+  end
+
+  test "index labels a section per panel and leaves the panes out of the live region" do
+    get "/dashboard"
+
+    assert_response :success
+
+    panels = css_select("#mission-grid > section")
+    assert_equal 9, panels.size
+    panels.each do |panel|
+      heading = panel.at_css("h2")
+      assert_equal heading["id"], panel["aria-labelledby"]
+    end
+    assert_select "#mission-grid pre[aria-live]", count: 0
+    assert_select "[aria-live]", count: 1
+    assert_select "#refresh-state[role='status'][aria-live='polite']"
+    assert_select "div.panel, div.grid", count: 0
+  end
+
+  test "index loads digested assets through native landmarks and route helpers" do
+    get "/dashboard", env: { "SCRIPT_NAME" => "/master" }
+
+    assert_select "link[rel='stylesheet'][href*='/assets/face-']"
+    assert_select "script[src*='/assets/dashboard_live-'][defer]"
+    assert_select "header.master-titlebar:not([role])"
+    assert_select "main#main-content:not([role])"
+    assert_select "a.master-session-tab[href='/master/dashboard'][aria-current='page']"
   end
 end

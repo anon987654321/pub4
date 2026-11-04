@@ -53,8 +53,8 @@ class PwaMasterContractTest < Minitest::Test
     dashboard = read("app/views/dashboard/index.html.erb")
     script = read("public/dashboard_live.js")
 
-    assert_includes dashboard,
-'<script src="/dashboard_live.js" nonce="<%= content_security_policy_nonce %>" defer></script>'
+    # One external, digested, nonced and deferred poller.
+    assert_match(/src="[^"]*asset_path\("dashboard_live\.js"\).* nonce=.* defer/, dashboard)
     refute_match(/<script\b(?![^>]*\bsrc=)[^>]*>[\s\S]*?fetch\(['"]\/dashboard\/live/m, dashboard)
     assert_includes script, "fetch('/dashboard/live'"
     assert_includes script, "cache: 'no-store'"
