@@ -4554,7 +4554,7 @@ items:
   path: RAILS/bsdports/test/controllers
   item: Add controller tests for categories#index/show and maintainers#index/show
     including empty search results.
-  status: open
+  status: done
 - id: bsdports-043
   app: bsdports
   area: tests
