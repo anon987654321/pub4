@@ -1,5 +1,3 @@
-<!-- Luxury minimalist card (Aesop/Toteme/Nécessaire inspired) -->
-<!-- Use class="item-card item-card--luxury" or wrap grid in item-grid--luxury for full effect -->
 <article class="item-card item-card--luxury" id="<%= dom_id(item) %>" data-id="<%= item.id %>" data-category="<%= item.category %>" data-controller="offline-feed luxury-product" data-offline-feed-key-value="amber-items" data-offline-feed-title-value="<%= item.title %>" data-offline-feed-url-value="<%= item_path(item) %>" data-offline-feed-meta-value="<%= [item.category, item.color, item.brand].compact.join(" · ") %>">
   <div class="item-photo-wrap">
     <% if item.photos.attached? %>

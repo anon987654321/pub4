@@ -315,7 +315,7 @@ items:
   path: RAILS/amber/app/views/items/_item.html.erb
   item: Remove the HTML comments 'Luxury minimalist card (Aesop/Toteme/Nécessaire
     inspired)' from items/_item; they ship to every client in every card.
-  status: open
+  status: done
 - id: amber-039
   app: amber
   area: markup
