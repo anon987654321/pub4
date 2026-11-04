@@ -29,9 +29,12 @@
       <% end %>
     <% end %>
   </div>
-<% else %>
+<% elsif authenticated? && Current.user == @profile.user %>
   <%= render "shared/empty_state",
         title: t("empty.no_showcase"),
         body: t("empty.no_showcase_edit_body"),
         action: { label: t("actions.edit_showcase"), path: edit_my_creator_profile_path } %>
+<% else %>
+  <%# edit_my_creator_profile_path is the viewer's own profile, not this one. %>
+  <%= render "shared/empty_state", title: t("empty.no_showcase") %>
 <% end %>

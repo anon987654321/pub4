@@ -667,7 +667,7 @@ items:
   path: RAILS/amber/app/views/creator_profiles/show.html.erb
   item: Hide the 'edit showcase' empty-state action from visitors on a creator profile;
     edit_my_creator_profile_path is the owner's route.
-  status: open
+  status: done
 - id: amber-083
   app: amber
   area: ux
