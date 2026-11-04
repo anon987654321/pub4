@@ -11,10 +11,21 @@ class ApplicationController < ActionController::Base
 
   private
 
-  # Norwegian first; ?locale=en flips to the English mirror (APP_SPEC §6/§10).
+  # Norwegian first; ?locale=en flips to the English mirror (APP_SPEC §6/§10)
+  # and is kept in a cookie, so the next link stays in the chosen language.
   def set_locale
     requested = params[:locale].to_s.to_sym
+    if I18n.available_locales.include?(requested)
+      cookies.permanent[:locale] = requested.to_s
+    else
+      requested = cookies[:locale].to_s.to_sym
+    end
     I18n.locale = I18n.available_locales.include?(requested) ? requested : I18n.default_locale
+  end
+
+  # Links written for an English reader carry the choice too.
+  def default_url_options
+    I18n.locale == I18n.default_locale ? {} : { locale: I18n.locale }
   end
 
   # Phone-number auth: the signed, permanent cookie holds the Session token.

@@ -20,7 +20,7 @@
       <span class="item-emoji" aria-hidden="true"><%= item.emoji %></span>
     <% end %>
     <span class="item-body">
-      <span class="item-name"><%= item.name %></span>
+      <%= tag.span item.localized(:name), class: "item-name" %>
       <span class="item-facts">
         <%= tag.span t("menu.origin_chip", origin: origin_label(item.origin)), class: "badge" if item.origin.present? %>
         <% if item.weight_g.to_i.positive? %>

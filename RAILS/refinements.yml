@@ -5442,7 +5442,7 @@ items:
   path: RAILS/mrdamascy/app/controllers/application_controller.rb
   item: Persist ?locale=en in a cookie and default_url_options and offer a language
     switch under "Mer"; the next link drops the parameter today.
-  status: open
+  status: done
 - id: mrdamascy-047
   app: mrdamascy
   area: i18n
@@ -5458,7 +5458,7 @@ items:
   item: Render category and item names and descriptions per locale from the existing
     name_en/description_en columns; the menu always prints the Norwegian columns,
     even with ?locale=en.
-  status: open
+  status: done
 - id: mrdamascy-049
   app: mrdamascy
   area: i18n

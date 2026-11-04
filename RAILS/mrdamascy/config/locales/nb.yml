@@ -434,6 +434,7 @@ nb:
     dismiss: Lukk
     not_found: Fant den ikke — den er kanskje spist.
   about:
+    language: Språk
     title: Fra Damaskus med kjærlighet
     story_title: Historien
     story: Bestefar solgte shawarma ved Souq al-Hamidiyah i Damaskus — toum hver morgen, lam tynt skåret, brød fra steinovnen. I dag griller vi samme oppskrift på Danmarksplass i Bergen, med samme gjestfrihet og kortere vei til maten.

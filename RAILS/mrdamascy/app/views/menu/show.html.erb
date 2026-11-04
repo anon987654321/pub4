@@ -37,7 +37,7 @@
 <nav class="category-chips" aria-label="<%= t("menu.categories") %>">
   <% @categories.each do |category| %>
     <%= link_to "#cat-#{category.slug}", class: "chip" do %>
-      <span aria-hidden="true"><%= category.emoji %></span> <%= category.name %>
+      <%= tag.span category.emoji, aria: { hidden: true } %> <%= category.localized(:name) %>
     <% end %>
   <% end %>
 </nav>
@@ -45,7 +45,7 @@
 <% @categories.each do |category| %>
   <section class="menu-section" id="<%= "cat-#{category.slug}" %>">
     <h2 class="section-title">
-      <span aria-hidden="true"><%= category.emoji %></span> <%= category.name %>
+      <%= tag.span category.emoji, aria: { hidden: true } %> <%= category.localized(:name) %>
     </h2>
     <% category.available_items.each do |item| %>
       <%= render "shared/item_card", item: item %>

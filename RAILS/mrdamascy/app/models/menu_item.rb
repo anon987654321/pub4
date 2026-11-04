@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 class MenuItem < ApplicationRecord
+  include LocalizedColumns
+
   # The "best of the world's kebab" tour — every I18n origins.<origin> story
   # key comes from this list.
   # Bergen, not Oslo: one kitchen, Solheimsgaten 60 (Danmarksplass) — the home city origin.

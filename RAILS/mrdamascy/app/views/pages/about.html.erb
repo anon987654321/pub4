@@ -45,6 +45,15 @@
   <%= tag.p t("about.vipps_body") %>
 </section>
 
+<%# Each language is named in itself, so either reader finds theirs. %>
+<%= tag.nav class: "card language-switch", aria: { label: t("about.language") } do %>
+  <%= tag.h2 t("about.language"), class: "section-title" %>
+  <%= link_to "Norsk", about_path(locale: "nb"), class: "chip", lang: "nb",
+        aria: { current: ("true" if I18n.locale == :nb) } %>
+  <%= link_to "English", about_path(locale: "en"), class: "chip", lang: "en",
+        aria: { current: ("true" if I18n.locale == :en) } %>
+<% end %>
+
 <%= tag.nav class: "page-actions", aria: { label: t("about.title") } do %>
   <% if current_user %>
     <%= link_to t("about.orders_link"), orders_path, class: "button" %>

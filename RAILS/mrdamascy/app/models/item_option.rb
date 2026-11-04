@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 class ItemOption < ApplicationRecord
+  include LocalizedColumns
+
   KINDS = %w[sauce topping extra].freeze
 
   belongs_to :menu_item

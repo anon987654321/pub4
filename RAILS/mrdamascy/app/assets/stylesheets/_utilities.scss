@@ -54,6 +54,18 @@
   font-size: var(--text-meta);
 }
 
+// About page language choice: the heading, then one chip per language.
+.language-switch {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.language-switch .section-title {
+  flex-basis: 100%;
+}
+
 // Auth card.
 .auth-card {
   max-width: 420px;
