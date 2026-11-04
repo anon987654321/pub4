@@ -56,4 +56,35 @@ class CheckoutPageTest < ActionDispatch::IntegrationTest
 
     assert_equal [I18n.t("checkout.vipps_cta"), I18n.t("checkout.stripe_cta")], labels
   end
+
+  test "the zone answer carries this cart's fee, total, ETA and pay labels" do
+    get checkout_zone_path(postcode: "5004"), as: :json
+    answer = response.parsed_body
+
+    assert_equal 10_000, answer["min_basket_ore"]
+    assert_equal "29 kr", answer["fee_text"]
+    assert_equal "158 kr", answer["total_text"]
+    assert_equal I18n.t("checkout.eta_delivery", eta: 20), answer["eta_text"]
+    assert_nil answer["minimum_text"]
+    assert_equal "Betal 158 kr med Vipps", answer["vipps_label"]
+  end
+
+  test "a basket under the zone minimum is named before the tap" do
+    seed_zone!(postcode: "5005", name: "Nordnes", fee_ore: 2900, min_basket_ore: 20_000, eta_minutes: 25)
+    get checkout_zone_path(postcode: "5005"), as: :json
+    assert_equal I18n.t("checkout.min_basket_fail", amount: "71 kr", name: "Nordnes"),
+                 response.parsed_body["minimum_text"]
+
+    User.last.update!(default_postcode: "5005")
+    warning = page.at_css("[data-zone-check-target=minimum]")
+    assert_equal I18n.t("checkout.min_basket_fail", amount: "71 kr", name: "Nordnes"), warning.text
+    assert_nil warning["hidden"]
+  end
+
+  test "the zone lookup url comes from the route" do
+    get checkout_url, env: { "SCRIPT_NAME" => "/mat" }
+    form = Nokogiri::HTML(response.body).at_css("form.checkout-form")
+
+    assert_equal "/mat/checkout/zone", form["data-zone-check-url-value"]
+  end
 end

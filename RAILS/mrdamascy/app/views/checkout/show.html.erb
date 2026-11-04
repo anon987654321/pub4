@@ -27,7 +27,7 @@
 
 <%= form_with url: checkout_path, method: :post, class: "checkout-form",
       data: { controller: "zone-check",
-              zone_check_url_value: "/checkout/zone",
+              zone_check_url_value: checkout_zone_path,
               zone_check_ok_value: t("checkout.zone_ok"),
               zone_check_fail_value: t("checkout.zone_fail"),
               zone_check_checking_value: t("checkout.checking"),
@@ -63,6 +63,8 @@
           placeholder: t("checkout.postcode_placeholder"),
           data: { zone_check_target: "postcode", action: "input->zone-check#check" } %>
     <p class="zone-feedback" data-zone-check-target="feedback" aria-live="polite"></p>
+    <%= tag.p @minimum_text, class: "zone-fail", hidden: @minimum_text.blank?,
+          data: { zone_check_target: "minimum" }, aria: { live: "polite" } %>
   </div>
 
   <div class="field">
@@ -109,14 +111,15 @@
     <% unless @mode == "pickup" %>
       <p class="checkout-subtotal">
         <%= tag.span t("checkout.delivery_fee") %>
-        <%= tag.strong money(@delivery_fee_ore) %>
+        <%= tag.strong money(@delivery_fee_ore), data: { zone_check_target: "fee" } %>
       </p>
     <% end %>
     <p class="checkout-subtotal totals-sum">
       <%= tag.span t("checkout.total") %>
-      <%= tag.strong money(@total_ore) %>
+      <%= tag.strong money(@total_ore), data: { zone_check_target: "total" } %>
     </p>
-    <%= tag.p t("checkout.eta_delivery", eta: @eta_minutes) if @eta_minutes %>
+    <%= tag.p (t("checkout.eta_delivery", eta: @eta_minutes) if @eta_minutes), hidden: @eta_minutes.nil?,
+          data: { zone_check_target: "eta" } %>
     <%= tag.p t("checkout.totals_note"), class: "totals-note" %>
   </section>
 
@@ -132,11 +135,11 @@
     the delivery fee. %>
 <% total_known = @mode == "pickup" || @zone.present? %>
   <%= button_tag type: :submit, name: "payment_method", value: "vipps",
-        class: "button-vipps", data: { turbo_submits_with: t("checkout.paying") } do %>
+        class: "button-vipps", data: { turbo_submits_with: t("checkout.paying"), zone_check_target: "vipps" } do %>
     <%= total_known ? t("checkout.vipps_cta_total", total: money(@total_ore)) : t("checkout.vipps_cta") %>
   <% end %>
   <%= button_tag type: :submit, name: "payment_method", value: "stripe",
-        class: "button-stripe", data: { turbo_submits_with: t("checkout.paying") } do %>
+        class: "button-stripe", data: { turbo_submits_with: t("checkout.paying"), zone_check_target: "stripe" } do %>
     <%= total_known ? t("checkout.stripe_cta_total", total: money(@total_ore)) : t("checkout.stripe_cta") %>
   <% end %>
   <%= tag.p t("checkout.steps_note"), class: "steps-note" %>

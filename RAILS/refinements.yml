@@ -5257,7 +5257,7 @@ items:
   path: RAILS/mrdamascy/app/controllers/checkout_controller.rb
   item: 'Return min_basket_ore from #zone and warn inline before submit when the basket
     is under the zone minimum, rather than failing after the tap.'
-  status: open
+  status: done
 - id: mrdamascy-025
   app: mrdamascy
   area: checkout
@@ -5265,7 +5265,7 @@ items:
   path: RAILS/mrdamascy/app/javascript/controllers/zone_check_controller.js
   item: Update the delivery fee, total and ETA lines live when the zone lookup answers,
     so the screen never shows a stale total while the postcode is typed.
-  status: open
+  status: done
 - id: mrdamascy-026
   app: mrdamascy
   area: checkout
@@ -5273,7 +5273,7 @@ items:
   path: RAILS/mrdamascy/app/javascript/controllers/zone_check_controller.js
   item: Abort the previous zone lookup with an AbortController before starting the
     next, so a slow answer for an earlier postcode cannot overwrite the current one.
-  status: open
+  status: done
 - id: mrdamascy-027
   app: mrdamascy
   area: checkout
@@ -5352,7 +5352,7 @@ items:
   path: RAILS/mrdamascy/config/routes.rb
   item: Pass the route helper checkout_zone_path to zone_check_url_value instead of
     the literal "/checkout/zone".
-  status: open
+  status: done
 - id: mrdamascy-036
   app: mrdamascy
   area: ci

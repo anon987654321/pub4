@@ -114,16 +114,52 @@ class CheckoutController < ApplicationController
   end
 
   # Zone feedback for the zone_check Stimulus controller while the postcode
-  # is typed (APP_SPEC §8): JSON {ok, fee_ore, eta, name}.
+  # is typed (APP_SPEC §8): JSON {ok, fee_ore, eta, name, min_basket_ore}
+  # plus the confirm screen's fee, total and pay-button lines for this cart,
+  # worded and formatted here so the page never shows a stale total and the
+  # basket minimum is named before the tap.
   def zone
-    if (z = DeliveryZone.for_postcode(params[:postcode]))
-      render json: { ok: true, fee_ore: z.fee_ore, eta: z.eta_minutes, name: z.name }
-    else
-      render json: { ok: false, fee_ore: nil, eta: nil, name: nil }
-    end
+    z = DeliveryZone.for_postcode(params[:postcode])
+    quote = checkout_quote(cart: current_cart, mode: "delivery", zone: z)
+    render json: zone_answer(z).merge(zone_lines(z, quote))
   end
 
   private
+
+  def zone_answer(zone)
+    return { ok: false, fee_ore: nil, eta: nil, name: nil, min_basket_ore: nil } unless zone
+
+    { ok: true, fee_ore: zone.fee_ore, eta: zone.eta_minutes, name: zone.name, min_basket_ore: zone.min_basket_ore }
+  end
+
+  def zone_lines(zone, quote)
+    total = money(quote[:total_ore])
+    unless zone
+      return { total_text: total, vipps_label: t("checkout.vipps_cta"), stripe_label: t("checkout.stripe_cta") }
+    end
+
+    { fee_text: money(quote[:delivery_fee_ore]), total_text: total,
+      eta_text: t("checkout.eta_delivery", eta: zone.eta_minutes),
+      minimum_text: minimum_text(zone, quote[:subtotal_ore]),
+      vipps_label: t("checkout.vipps_cta_total", total:), stripe_label: t("checkout.stripe_cta_total", total:) }
+  end
+
+  # Names what the basket lacks for the zone minimum, or nil once it clears.
+  def minimum_text(zone, subtotal_ore)
+    short_ore = zone.min_basket_ore.to_i - subtotal_ore
+    t("checkout.min_basket_fail", amount: money(short_ore), name: zone.name) if short_ore.positive?
+  end
+
+  # Subtotal, promo, delivery fee and total for a cart in a mode and zone —
+  # one sum for the confirm screen and the live zone answer.
+  def checkout_quote(cart:, mode:, zone:)
+    subtotal_ore = cart.subtotal_ore
+    promo = PromoApplier.call(subtotal_ore:, delivery_mode: mode, user: current_user,
+                              delivery_fee_ore: zone&.fee_ore.to_i)
+    delivery_fee_ore = mode == "pickup" ? 0 : promo[:delivery_fee_ore]
+    { subtotal_ore:, promo:, delivery_fee_ore:, discount_ore: promo[:discount_ore],
+      total_ore: subtotal_ore - promo[:discount_ore] + delivery_fee_ore }
+  end
 
   # The cart's delivery/pickup toggle links here with ?mode=; keeping the
   # choice on the cart lets the toggle show it when the guest goes back.
@@ -162,16 +198,10 @@ class CheckoutController < ApplicationController
     )
     @returning_customer = current_user.present? && current_user.orders.exists?
     @zone = @mode == "pickup" ? nil : DeliveryZone.for_postcode(params[:postcode].presence || current_user&.default_postcode)
-    @subtotal_ore = @cart.subtotal_ore
-    @promo = PromoApplier.call(
-      subtotal_ore: @subtotal_ore,
-      delivery_mode: @mode,
-      user: current_user,
-      delivery_fee_ore: @zone&.fee_ore.to_i
-    )
-    @delivery_fee_ore = @mode == "pickup" ? 0 : @promo[:delivery_fee_ore]
-    @discount_ore = @promo[:discount_ore]
-    @total_ore = @subtotal_ore - @discount_ore + @delivery_fee_ore
+    quote = checkout_quote(cart: @cart, mode: @mode, zone: @zone)
+    @subtotal_ore, @promo, @delivery_fee_ore, @discount_ore, @total_ore =
+      quote.values_at(:subtotal_ore, :promo, :delivery_fee_ore, :discount_ore, :total_ore)
+    @minimum_text = @zone && minimum_text(@zone, @subtotal_ore)
     @eta_minutes = @mode == "pickup" ? nil : @zone&.eta_minutes
   end
 end
