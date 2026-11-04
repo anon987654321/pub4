@@ -26,7 +26,14 @@
 
   <% if @story.media.attached? %>
     <div class="story-media">
-      <%= image_tag @story.media_variant(:media, :full), alt: @story.caption.to_s, width: 1080, height: 1920 %>
+      <%# A clip has no image variant to build; it plays muted and inline, the
+          way a story is watched, with controls for sound. %>
+      <% if @story.media.video? %>
+        <%= video_tag url_for(@story.media), controls: true, playsinline: true, muted: true, preload: "metadata",
+                      aria: { label: @story.caption.presence || t("stories.by", user: @story.user.display_name) } %>
+      <% else %>
+        <%= image_tag @story.media_variant(:media, :full), alt: @story.caption.to_s, width: 1080, height: 1920 %>
+      <% end %>
     </div>
   <% end %>
 

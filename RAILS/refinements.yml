@@ -3760,7 +3760,7 @@ items:
   item: Render a <video controls playsinline muted> for video stories in stories/show;
     the form accepts video/* but the viewer always calls image_tag with a variant,
     which fails for video blobs.
-  status: open
+  status: done
 - id: brgen-347
   app: brgen
   area: takeaway

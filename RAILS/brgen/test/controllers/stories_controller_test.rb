@@ -64,6 +64,24 @@ class StoriesControllerTest < ActionDispatch::IntegrationTest
     assert_select "li.story-ring--seen", 1
   end
 
+  # The form takes video/*; asking a clip for an image variant raised, so a
+  # video story could be posted and then neither opened nor listed.
+  test "a video story plays in the viewer and lists without a thumbnail" do
+    clip = Story.new(user: @author, caption: "Klipp")
+    clip.media.attach(ActiveStorage::Blob.create_and_upload!(
+      io: StringIO.new("fake-mp4-bytes"), filename: "klipp.mp4", content_type: "video/mp4", identify: false
+    ))
+    clip.save!
+    sign_in_as(@viewer)
+
+    get story_path(clip)
+    assert_response :success
+    assert_select ".story-media video[controls][playsinline][muted][aria-label=?]", "Klipp"
+
+    get stories_path
+    assert_response :success
+  end
+
   test "opening someone's story records one view" do
     sign_in_as(@viewer)
 

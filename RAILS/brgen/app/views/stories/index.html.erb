@@ -19,7 +19,7 @@
       <% streak = @streak_days&.dig(newest.user_id).to_i %>
       <li class="story-ring<%= " story-ring--seen" if seen %>">
         <%= link_to story_path(newest), aria: { label: story_ring_label(stories, streak:, seen:) } do %>
-          <% if newest.media.attached? %>
+          <% if newest.media.attached? && newest.media.image? %>
             <%= image_tag newest.media_variant(:media, :thumb), alt: "", width: 240, height: 320 %>
           <% end %>
           <span class="story-ring-name"><%= newest.user.display_name %></span>

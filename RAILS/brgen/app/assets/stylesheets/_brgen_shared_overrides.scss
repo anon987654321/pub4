@@ -290,7 +290,8 @@
   gap: var(--space-4);
 }
 
-.story-media img {
+.story-media img,
+.story-media video {
   display: block;
   width: 100%;
   max-height: 100dvh;
