@@ -34,6 +34,7 @@ class Story < ApplicationRecord
 
   validates :caption, length: { maximum: 280 }
   validate  :media_must_be_attached
+  validate  :media_is_a_photo_or_clip, if: -> { attachment_changes.key?("media") }
 
   # Opt-in tagging of roughly where the author is. The position is the one
   # locations#update already stored — coarsened there to a ~1 km grid — rather
@@ -63,6 +64,14 @@ class Story < ApplicationRecord
   def expires_in = expired? ? 0 : (expires_at - Time.current).to_i
 
   def seen_by?(user) = user.present? && story_views.exists?(user_id: user.id)
+
+  # Which of these stories the user has opened, in one query for the whole
+  # ring list rather than one EXISTS per ring.
+  def self.seen_ids(user, stories)
+    return Set.new if user.blank?
+
+    StoryView.where(user_id: user.id, story_id: stories.map(&:id)).pluck(:story_id).to_set
+  end
 
   # Returns false rather than raising when the viewer has already seen it, so a
   # double-tap is not an error. Counting is a set, not a log.
@@ -114,5 +123,22 @@ class Story < ApplicationRecord
   # view, because an empty ring is worse than a refused upload.
   def media_must_be_attached
     errors.add(:media, :blank) unless media.attached?
+  end
+
+  # To Shared::AttachmentLimits `media` is a mixed slot, held to size alone. A
+  # story is a photo or a clip, so it takes those families at their own sizes.
+  def media_is_a_photo_or_clip
+    blob = media.blob
+    kind = media_kind(blob.content_type.to_s.downcase)
+    return errors.add(:media, :file_type_not_allowed) unless kind
+
+    max = Shared::AttachmentLimits::KINDS.dig(kind, :max_bytes)
+    errors.add(:media, :file_too_large, count: max / Shared::AttachmentLimits::MB) if blob.byte_size.to_i > max
+  end
+
+  def media_kind(type)
+    return :image if Shared::AttachmentLimits::IMAGE_TYPES.include?(type)
+
+    :video if type.start_with?("video/")
   end
 end

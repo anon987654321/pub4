@@ -3713,7 +3713,7 @@ items:
   path: RAILS/brgen/app/models/story.rb
   item: Replace the per-ring newest.seen_by?(Current.user) (one EXISTS query per ring)
     with a single StoryView pluck of seen story ids passed in from StoriesController#index.
-  status: open
+  status: done
 - id: brgen-342
   app: brgen
   area: stories
@@ -3722,7 +3722,7 @@ items:
   item: Validate story media content type (image/*, video/*) and maximum byte size
     in Story; only presence is checked, so any file type or size is accepted by direct
     upload.
-  status: open
+  status: done
 - id: brgen-343
   app: brgen
   area: stories

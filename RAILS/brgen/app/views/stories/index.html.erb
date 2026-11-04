@@ -15,7 +15,7 @@
   <ul class="story-rings" role="list">
     <% @rings.each do |stories| %>
       <% newest = stories.first %>
-      <% seen = newest.seen_by?(Current.user) %>
+      <% seen = @seen_story_ids.include?(newest.id) %>
       <% streak = @streak_days&.dig(newest.user_id).to_i %>
       <li class="story-ring<%= " story-ring--seen" if seen %>">
         <%= link_to story_path(newest), aria: { label: story_ring_label(stories, streak:, seen:) } do %>

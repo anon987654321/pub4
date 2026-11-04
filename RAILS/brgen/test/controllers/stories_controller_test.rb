@@ -42,6 +42,28 @@ class StoriesControllerTest < ActionDispatch::IntegrationTest
     assert_match @author.display_name, response.body
   end
 
+  # The ring list asked "seen?" once per ring; it is one query for the page.
+  test "the ring index reads seen state in one query however many rings" do
+    others = 3.times.map do |i|
+      User.strict_loading(false).create!(email_address: "sc_ring#{i}@brgen.no", password: "password123",
+                                         username: "sc_ring#{i}", guest: false)
+    end
+    others.each { |user| build_story(user) }
+    @story.view_by!(@viewer)
+    sign_in_as(@viewer)
+
+    queries = []
+    subscriber = ActiveSupport::Notifications.subscribe("sql.active_record") do |*, payload|
+      queries << payload[:sql] if payload[:sql].include?("story_views")
+    end
+    get stories_path
+    ActiveSupport::Notifications.unsubscribe(subscriber)
+
+    assert_response :success
+    assert_equal 1, queries.size, queries.join("\n")
+    assert_select "li.story-ring--seen", 1
+  end
+
   test "opening someone's story records one view" do
     sign_in_as(@viewer)
 

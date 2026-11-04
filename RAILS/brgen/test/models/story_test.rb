@@ -66,6 +66,47 @@ class StoryTest < ActiveSupport::TestCase
     assert s.errors.of_kind?(:media, :blank)
   end
 
+def blob(content_type:, filename:, byte_size: nil)
+  b = ActiveStorage::Blob.create_and_upload!(io: StringIO.new("bytes"), filename:, content_type:, identify: false)
+  b.update_column(:byte_size, byte_size) if byte_size
+  b
+end
+
+def story_with(blob)
+  s = Story.new(user: @author, caption: "fil")
+  s.media.attach(blob)
+  s
+end
+
+# Direct upload hands the model whatever the browser sent; the accept
+# attribute on the field is a hint, not a check.
+test "a story takes a photo or a clip and nothing else" do
+  assert story_with(blob(content_type: "video/mp4", filename: "klipp.mp4")).valid?
+
+  [ %w[text/html side.html], %w[application/pdf doc.pdf], %w[image/svg+xml tegning.svg] ].each do |type, name|
+    s = story_with(blob(content_type: type, filename: name))
+    refute s.valid?, type
+    assert s.errors.of_kind?(:media, :file_type_not_allowed), type
+  end
+end
+
+test "a story photo is held to the image size limit" do
+  max = Shared::AttachmentLimits::KINDS.dig(:image, :max_bytes)
+  s = story_with(blob(content_type: "image/jpeg", filename: "stor.jpg", byte_size: max + 1))
+
+  refute s.valid?
+  assert s.errors.of_kind?(:media, :file_too_large)
+end
+
+test "seen ids answers for a whole ring list at once" do
+  seen = story
+  unseen = story
+  seen.view_by!(@viewer)
+
+  assert_equal Set[seen.id], Story.seen_ids(@viewer, [ seen, unseen ])
+  assert_empty Story.seen_ids(nil, [ seen, unseen ])
+end
+
   test "seen is a set — viewing twice counts once" do
     s = story
 
