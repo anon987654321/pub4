@@ -10,13 +10,13 @@
 
     Pending or failed, it is the plain link. %>
 <% if embed.ok? %>
-  <figure class="link_embed">
-    <div class="link_embed_stage">
+  <figure class="link-embed">
+    <div class="link-embed-stage">
       <% if embed.thumbnail_url %>
-        <%# reserved: container — .link_embed_stage is a 16:9 box the img fills %>
+        <%# reserved: container — .link-embed-stage is a 16:9 box the img fills %>
         <img src="<%= embed.thumbnail_url %>" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer">
       <% end %>
-      <button type="button" class="link_embed_play"
+      <button type="button" class="link-embed-play"
               data-action="click->media-exclusive#playEmbed"
               data-media-exclusive-src-param="<%= embed.player_url %>"
               data-media-exclusive-allow-param="<%= embed.allow %>"
@@ -24,14 +24,16 @@
               aria-label="<%= t("link_embed.play", title: embed.title, provider: embed.label) %>"></button>
     </div>
     <figcaption>
-      <%= tag.strong embed.title %><br>
-      <%= tag.small [ embed.label, embed.author_name ].compact.join(" · ") %>
-      <%= link_to t("link_embed.open", provider: embed.label), embed.canonical_url,
-                  rel: "nofollow noopener noreferrer", target: "_blank" %>
+      <%= tag.p tag.strong(embed.title) %>
+      <p class="link-embed-source">
+        <%= safe_join(embed.credits.map { |credit| tag.small(credit) }) %>
+      </p>
+      <p><%= link_to t("link_embed.open", provider: embed.label), embed.canonical_url,
+                     rel: "nofollow noopener noreferrer", target: "_blank" %></p>
     </figcaption>
   </figure>
 <% else %>
-  <p class="link_embed">
+  <p class="link-embed">
     <%= link_to embed.source_url, embed.source_url, rel: "nofollow noopener noreferrer", target: "_blank" %>
   </p>
 <% end %>

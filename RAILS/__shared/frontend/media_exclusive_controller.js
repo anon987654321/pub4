@@ -50,7 +50,7 @@ export default class extends Controller {
   }
 
   playEmbed({ currentTarget, params }) {
-    const stage = currentTarget.closest(".link_embed_stage")
+    const stage = currentTarget.closest(".link-embed-stage")
     const src = this.httpsUrl(params.src)
     if (!stage || !src) return
 

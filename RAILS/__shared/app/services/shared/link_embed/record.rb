@@ -53,6 +53,8 @@ module Shared
       def canonical_url = match.canonical_url
       def label = match.provider.label
       def allow = match.provider.allow
+      # The caption credits the provider and the author as two facts.
+      def credits = [ label, author_name ].compact
 
       def to_h
         {

@@ -93,14 +93,14 @@
    css_budget.yml. */
 
 /* The figure, and the plain-link paragraph that stands in for it. */
-.link_embed {
+.link-embed {
   display: grid;
   gap: var(--space-1);
   margin: var(--space-2) 0 0;
   font-size: var(--text-small);
 }
 
-.link_embed_stage {
+.link-embed-stage {
   display: grid;
   aspect-ratio: 16 / 9;
 }
@@ -109,7 +109,7 @@
    whole thumbnail, and the player takes the same box. Each rounds its own
    corners rather than the stage clipping them, so the button's focus ring is
    drawn outside it and stays visible. */
-.link_embed_stage > * {
+.link-embed-stage > * {
   grid-area: 1 / 1;
   inline-size: 100%;
   block-size: 100%;
@@ -123,7 +123,7 @@
    ring around a triangle, white over the thumbnail at a fifth of its width,
    half-there until the pointer or focus arrives. Painted as a mask so the
    markup stays a bare labelled button and the colour stays a token. */
-.link_embed_play {
+.link-embed-play {
   display: grid;
   place-items: center;
   background: none;
@@ -131,7 +131,7 @@
   cursor: pointer;
 }
 
-.link_embed_play::after {
+.link-embed-play::after {
   content: "";
   inline-size: 22%;
   aspect-ratio: 1;
@@ -141,12 +141,24 @@
   transition: opacity var(--transition-fast) var(--ease-out);
 }
 
-.link_embed_play:hover::after,
-.link_embed_play:focus-visible::after {
+.link-embed-play:hover::after,
+.link-embed-play:focus-visible::after {
   opacity: 0.9;
 }
 
-.link_embed a {
+/* One line each for the title, the provider and the link out; the provider
+   and the author are two facts, set apart by the gap rather than a dot. */
+.link-embed figcaption p {
+  margin: 0;
+}
+
+.link-embed-source {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.link-embed a {
   display: inline-flex;
   align-items: center;
   min-block-size: var(--tap-min);

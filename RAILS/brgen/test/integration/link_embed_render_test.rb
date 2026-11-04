@@ -37,15 +37,22 @@ class LinkEmbedRenderTest < ActionDispatch::IntegrationTest
     assert_response :success
 
     assert_select "body[data-controller~='media-exclusive']"
-    assert_select "figure.link_embed" do
+    assert_select "figure.link-embed" do
       assert_select "img[src='https://i.ytimg.com/vi/d_HlPboLRL8/hqdefault.jpg'][loading='lazy'][referrerpolicy='no-referrer']"
-      assert_select "button.link_embed_play[data-action='click->media-exclusive#playEmbed']" do |buttons|
+      assert_select "button.link-embed-play[data-action='click->media-exclusive#playEmbed']" do |buttons|
         button = buttons.first
         assert_equal "https://www.youtube-nocookie.com/embed/d_HlPboLRL8?autoplay=1", button["data-media-exclusive-src-param"]
         assert_equal I18n.t("link_embed.play", title: "AURORA - Runaway", provider: "YouTube"), button["aria-label"]
       end
       assert_select "figcaption a[href='https://www.youtube.com/watch?v=d_HlPboLRL8']",
                     text: I18n.t("link_embed.open", provider: "YouTube")
+      # One block per line, no <br>; and the link says it leaves for a new tab.
+      assert_select "figcaption br", count: 0
+      assert_select "figcaption > p", count: 3
+      assert_select "figcaption a[target='_blank']", text: /ny fane/
+      # Provider and author are two facts in two elements, not one dotted string.
+      assert_select "figcaption small", count: 2
+      assert_no_match(/ · /, css_select("figcaption").text)
     end
     assert_select "iframe[src*='youtube']", count: 0
   end
@@ -56,7 +63,7 @@ class LinkEmbedRenderTest < ActionDispatch::IntegrationTest
     get post_path(post)
     assert_response :success
 
-    assert_select "figure.link_embed button.link_embed_play[data-media-exclusive-allow-param='autoplay']"
+    assert_select "figure.link-embed button.link-embed-play[data-media-exclusive-allow-param='autoplay']"
     assert_select "iframe[src*='soundcloud']", count: 0
   end
 
@@ -66,8 +73,8 @@ class LinkEmbedRenderTest < ActionDispatch::IntegrationTest
     get root_path
     assert_response :success
 
-    assert_select "p.link_embed a[href='https://vimeo.com/1084537'][rel='nofollow noopener noreferrer']"
-    assert_select "figure.link_embed", count: 0
+    assert_select "p.link-embed a[href='https://vimeo.com/1084537'][rel='nofollow noopener noreferrer']"
+    assert_select "figure.link-embed", count: 0
   end
 
   # The title reaches three places — an attribute, an aria-label and the
@@ -82,6 +89,6 @@ class LinkEmbedRenderTest < ActionDispatch::IntegrationTest
     refute_includes response.body, %(<img src=x onerror)
     refute_includes response.body, "<b>x</b>"
     assert_select "figcaption strong", text: %(<img src=x onerror="alert(1)">"')
-    assert_select "button.link_embed_play[data-media-exclusive-title-param=?]", %(<img src=x onerror="alert(1)">"')
+    assert_select "button.link-embed-play[data-media-exclusive-title-param=?]", %(<img src=x onerror="alert(1)">"')
   end
 end

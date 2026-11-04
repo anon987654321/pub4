@@ -2201,7 +2201,7 @@ main#main-content form .field :is(
 
 // A grid item's minimum is its content, so the 16:9 link-embed stage took the
 // thumbnail's natural width (453px in a 255px column) and the card clipped it.
-.link_embed {
+.link-embed {
   grid-template-columns: minmax(0, 1fr);
 }
 

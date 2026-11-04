@@ -25,7 +25,7 @@ class HomeRadioUnitTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_select "aside.radio-unit h2 a", I18n.t("home.radio_unit.heading", locale: :nb)
-    assert_select "aside.radio-unit figure.link_embed button.link_embed_play[data-media-exclusive-src-param]"
+    assert_select "aside.radio-unit figure.link-embed button.link-embed-play[data-media-exclusive-src-param]"
   end
 
   test "the slots are the odd places no sponsored unit uses, and the track turns with the day" do

@@ -20,7 +20,8 @@ class LinkEmbedRenderTest < ActionDispatch::IntegrationTest
     assert_response :success
 
     assert_select "body[data-controller~='media-exclusive']"
-    assert_select "#amber-posts-list figure.link_embed button.link_embed_play[data-action='click->media-exclusive#playEmbed']" do |buttons|
+    play = "button.link-embed-play[data-action='click->media-exclusive#playEmbed']"
+    assert_select "#amber-posts-list figure.link-embed #{play}" do |buttons|
       assert_equal "https://open.spotify.com/embed/track/4cOdK2wGLETKBW3PvgPWqT", buttons.first["data-media-exclusive-src-param"]
     end
     assert_select "iframe[src*='spotify']", count: 0
@@ -32,7 +33,7 @@ class LinkEmbedRenderTest < ActionDispatch::IntegrationTest
     get posts_path
     assert_response :success
 
-    assert_select "#amber-posts-list p.link_embed a[href='https://vimeo.com/1084537']"
-    assert_select "#amber-posts-list figure.link_embed", count: 0
+    assert_select "#amber-posts-list p.link-embed a[href='https://vimeo.com/1084537']"
+    assert_select "#amber-posts-list figure.link-embed", count: 0
   end
 end

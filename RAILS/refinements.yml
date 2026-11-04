@@ -5961,7 +5961,7 @@ items:
   path: RAILS/__shared/app/views/shared/_link_embed.html.erb
   item: Replace the <br> in the figcaption with block elements and say in the link
     name that it opens a new tab.
-  status: open
+  status: done
 - id: shared-005
   app: shared
   area: accessibility
@@ -6031,7 +6031,7 @@ items:
   path: RAILS/__shared/app/views/shared/_link_embed.html.erb
   item: Rename the link_embed_* underscore classes to kebab-case like the rest of
     the system.
-  status: open
+  status: done
 - id: shared-014
   app: shared
   area: design
