@@ -17,13 +17,19 @@ test("heavy components stay self-contained and local", async () => {
   ])
   for (const source of sources) {
     assert.match(source, /@hotwired\/stimulus/)
-    assert.doesNotMatch(source, /swiper|chart\.js|@simonwep\/pickr|https?:\/\//)
+    // The bar is on third-party runtime imports and remote references, not on
+    // a local adapter's property name: the carousel keeps the upstream API
+    // surface (this.swiper.slideNext) over a scroll-snap implementation.
+    assert.doesNotMatch(
+      source,
+      /from ["'](swiper|chart\.js|@simonwep\/pickr)["']|require\(["'](swiper|chart\.js|@simonwep\/pickr)["']\)|https?:\/\//,
+    )
   }
 })
 
 test("carousel exposes the component surface without third-party runtime", async () => {
   const source = await readVendor("@stimulus-components--carousel.js")
-  assert.match(source, /static values=\{options:Object\}/)
+  assert.match(source, /static values\s*=\s*\{\s*options\s*:\s*Object\s*\}/)
   assert.match(source, /this\.swiper/)
   assert.match(source, /slideNext/)
   assert.match(source, /slidePrev/)
@@ -34,9 +40,9 @@ test("carousel exposes the component surface without third-party runtime", async
 
 test("chartjs exposes a canvas chart surface without Chart.js", async () => {
   const source = await readVendor("@stimulus-components--chartjs.js")
-  assert.match(source, /static targets=\["canvas"\]/)
-  assert.match(source, /static values=\{type:/)
-  assert.match(source, /data:Object/)
+  assert.match(source, /static targets\s*=\s*\[\s*"canvas"\s*\]/)
+  assert.match(source, /static values\s*=\s*\{\s*type:/)
+  assert.match(source, /data\s*:\s*Object/)
   assert.match(source, /this\.chart/)
   assert.match(source, /update/)
   assert.match(source, /destroyChart/)
@@ -44,7 +50,7 @@ test("chartjs exposes a canvas chart surface without Chart.js", async () => {
 
 test("color picker exposes the picker lifecycle without Pickr", async () => {
   const source = await readVendor("@stimulus-components--color-picker.js")
-  assert.match(source, /static targets=\["button","input"\]/)
+  assert.match(source, /static targets\s*=\s*\[\s*"button"\s*,\s*"input"\s*\]/)
   assert.match(source, /this\.picker/)
   assert.match(source, /setColor/)
   assert.match(source, /show/)
