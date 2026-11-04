@@ -47,6 +47,7 @@ class Takeaway::Order < ApplicationRecord
   validate :within_delivery_area, on: :create
 
   scope :active, -> { where.not(status: TERMINAL_STATUSES) }
+  scope :out_for_delivery, -> { where(status: "out_for_delivery") }
   scope :recent, -> { order(created_at: :desc) }
   # Rows with no deadline are never expired by definition; the sweep is what
   # turns a stale one into a cancelled row. Mirrors the SQL shape the feed and

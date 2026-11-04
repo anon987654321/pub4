@@ -58,6 +58,12 @@ module Takeaway
       orders.where(status: "out_for_delivery").exists?
     end
 
+    # The orders this courier is carrying, oldest dispatch first, for their own page.
+    def current_jobs
+      carrying = orders.out_for_delivery
+      carrying.includes(:restaurant).order(:updated_at)
+    end
+
     def geo? = location?
     def latitude = current_lat
     def longitude = current_lng

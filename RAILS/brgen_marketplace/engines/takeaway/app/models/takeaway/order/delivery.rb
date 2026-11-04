@@ -43,6 +43,12 @@ class Takeaway::Order
       (stages.index(status).to_i + 1) / stages.size.to_f
     end
 
+    # Whether +user+ is the courier this order went out with: the one person
+    # besides the kitchen who may mark it delivered.
+    def carried_by?(user)
+      user.present? && strict_safe(:delivery_driver)&.user_id == user.id
+    end
+
     # The courier's name for customer-facing copy, or nil when nobody is assigned.
     # strict_safe because an order loaded by id has no association preloaded.
     def courier_display_name

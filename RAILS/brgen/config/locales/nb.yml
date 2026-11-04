@@ -1544,6 +1544,11 @@ nb:
     nearby_restaurants: I nærheten
     leave_review: Legg igjen en omtale
     status_timeline: Statusforløp
+    courier_jobs: Dine leveringer
+    courier_jobs_empty: Ingen bestillinger venter på deg nå.
+    courier_job_from: "Hentes hos %{kitchen}, %{address}"
+    mark_delivered: Merk som levert
+    marked_delivered: "Bestilling %{id} er levert."
     status_now: "Nå: %{status}"
     courier_distance: "%{km} km unna"
     courier_unassigned: Ingen ledig bud i nærheten ennå.

@@ -18,6 +18,19 @@
   <% end %>
 </article>
 
+<% if @jobs %>
+  <section aria-labelledby="courier-jobs-heading">
+    <%= tag.h2 t("takeaway.courier_jobs"), id: "courier-jobs-heading" %>
+    <% if @jobs.any? %>
+      <ul role="list">
+        <%= render partial: "takeaway/delivery_drivers/job", collection: @jobs, as: :order %>
+      </ul>
+    <% else %>
+      <%= tag.p t("takeaway.courier_jobs_empty") %>
+    <% end %>
+  </section>
+<% end %>
+
 <% if authenticated? && Current.user == @delivery_driver.user %>
   <%= form_with model: @delivery_driver, url: delivery_driver_path(@delivery_driver), scope: :delivery_driver, method: :patch do |form| %>
     <%= render "shared/errors", object: @delivery_driver %>

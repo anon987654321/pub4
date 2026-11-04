@@ -11,7 +11,12 @@ module Takeaway
       @delivery_drivers = Takeaway::DeliveryDriver.publicly_available.includes(:user).limit(100)
     end
 
+    # The courier's own page also lists the jobs dispatch gave them: nowhere
+    # else shows a courier the address they are meant to ride to.
     def show
+      return unless Current.user && Current.user.id == @delivery_driver.user_id
+
+      @jobs = @delivery_driver.current_jobs
     end
 
     def update

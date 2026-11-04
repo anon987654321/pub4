@@ -1,0 +1,9 @@
+<%# One order the courier is carrying: where from, where to, and the one step
+    that is theirs to take. %>
+<li>
+  <%= tag.h3 t("takeaway.order_title", id: order.id) %>
+  <%= tag.p t("takeaway.courier_job_from", kitchen: order.restaurant.name, address: order.restaurant.address) %>
+  <%= tag.p t("takeaway.delivery_to", address: order.delivery_address) %>
+  <%= button_to t("takeaway.mark_delivered"), order_path(order), method: :patch, params: { status: "delivered" },
+        class: "button button-primary button-small" %>
+</li>

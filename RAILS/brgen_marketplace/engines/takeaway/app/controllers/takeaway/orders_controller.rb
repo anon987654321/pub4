@@ -53,6 +53,8 @@ class Takeaway::OrdersController < Takeaway::BaseController
     # restaurant: :user, because transition_to! names the kitchen's owner as the
     # activity actor, and a preloaded restaurant is strict about its own user.
     @order = Takeaway::Order.includes(restaurant: :user).find(params[:id])
+    return mark_delivered_by_courier if !@order.restaurant.owner?(Current.user) && @order.carried_by?(Current.user)
+
     if @order.restaurant.owner?(Current.user)
       target_status = params[:status].presence || @order.next_status
       # transition_to! refuses any step Takeaway::Order::TRANSITIONS does not
@@ -89,6 +91,15 @@ class Takeaway::OrdersController < Takeaway::BaseController
     else
       redirect_to restaurant_path(restaurant), alert: @order.errors.full_messages.to_sentence
     end
+  end
+
+  # The courier can do one thing to an order: say it arrived. Any other step
+  # stays the kitchen's.
+  def mark_delivered_by_courier
+    driver_page = delivery_driver_path(@order.delivery_driver_id)
+    return redirect_to(driver_page, alert: @order.errors.full_messages.to_sentence) unless @order.deliver!
+
+    redirect_to driver_page, notice: t("takeaway.marked_delivered", id: @order.id)
   end
 
   private

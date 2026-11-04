@@ -1556,7 +1556,7 @@ items:
   item: Add a courier view of their assigned out-for-delivery orders (address, kitchen,
     a Delivered button) on the driver page, since dispatch assigns couriers but they
     have nowhere to see the job.
-  status: open
+  status: done
 - id: brgen-083
   app: brgen
   area: delivery
