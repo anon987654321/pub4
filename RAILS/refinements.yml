@@ -3310,7 +3310,7 @@ items:
   path: RAILS/brgen/app/controllers/posts_controller.rb
   item: Apply Brgen::HomeFeed.exclude_blocked to posts#index (Post.sorted_lane) so
     /posts honours blocks like the front page does.
-  status: open
+  status: done
 - id: brgen-291
   app: brgen
   area: privacy

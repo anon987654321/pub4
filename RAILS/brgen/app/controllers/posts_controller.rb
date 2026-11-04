@@ -32,6 +32,8 @@ class PostsController < ApplicationController
   def index
     scope = Post.sorted_lane(params[:sort], viewer: Current.user)
     scope = Post.visible_to(Current.user).merge(scope)
+    # A block holds on /posts as it does on the front page.
+    scope = Brgen::HomeFeed.exclude_blocked(scope, Current.user)
     scope = scope.with_attached_image.with_attached_images.includes(:user, :community, :votes)
     scope = apply_live_search(scope, columns: %w[title content], vertical: "feed") if live_search_query.present?
     @pagy, @posts = pagy(scope)

@@ -168,4 +168,20 @@ class PostsControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to post_url(post)
     assert Post.exists?(post.id), "the post the guard refused to delete should still be there"
   end
+
+  test "index leaves out posts by people the reader blocks" do
+    city = brgen_city
+    reader, blocked = %w[reader blocked].map do |role|
+      User.create!(email_address: "post-#{role}-#{SecureRandom.hex(4)}@example.com", password: "password12345", city:)
+    end
+    theirs = ActsAsTenant.with_tenant(city) { Post.create!(user: blocked, title: "Blokkert", content: "x", city:) }
+    reader.block!(blocked)
+
+    host! "brgen.no"
+    post session_path, params: { email_address: reader.email_address, password: "password12345" }
+    get posts_url
+
+    assert_response :success
+    assert_select "article#post_#{theirs.id}", 0
+  end
 end
