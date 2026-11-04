@@ -1,17 +1,18 @@
 <%= form_with model: profile, url: my_creator_profile_path, method: (profile.persisted? ? :patch : :post) do |form| %>
   <%= render "shared/errors", object: profile %>
+  <%# One field each, so a div.field: a fieldset without a legend grouped nothing. %>
 
-  <%= tag.fieldset do %>
+  <%= tag.div class: "field" do %>
     <%= form.label :handle %>
     <%= form.text_field :handle, required: true %>
   <% end %>
 
-  <%= tag.fieldset do %>
+  <%= tag.div class: "field" do %>
     <%= form.label :display_name %>
     <%= form.text_field :display_name, required: true %>
   <% end %>
 
-  <%= tag.fieldset do %>
+  <%= tag.div class: "field" do %>
     <%= form.label :bio %>
     <div data-controller="character-counter" data-character-counter-countdown-value="true">
   <div class="compose-surface" data-controller="tiptap-editor">
@@ -23,7 +24,7 @@
 </div>
   <% end %>
 
-  <%= tag.fieldset do %>
+  <%= tag.div class: "field" do %>
     <%= form.label :public, t("creator_profiles.public_label") %>
     <%= form.check_box :public %>
   <% end %>

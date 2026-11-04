@@ -18,14 +18,14 @@
   <%= turbo_frame_tag "demo-outfits" do %>
     <section>
       <%= tag.h2 t("nav.outfits") %>
-      <div class="plan-list">
+      <ul class="plan-list" role="list">
         <% @outfits.each do |outfit| %>
-          <div class="plan-row">
+          <li class="plan-row">
             <%= tag.strong outfit.name %>
             <%= outfit.context_label %>, <%= t("items.pieces", count: outfit.items.size) %>
-          </div>
+          </li>
         <% end %>
-      </div>
+      </ul>
     </section>
   <% end %>
 <% end %>

@@ -1424,6 +1424,8 @@ main#main-content header > nav form {
   flex-direction: column;
   gap: var(--space-3);
   margin: var(--space-6) 0;
+  padding: 0;
+  list-style: none;
 }
 
 .plan-row {
@@ -1446,6 +1448,8 @@ main#main-content header > nav form {
   flex-direction: column;
   gap: var(--space-3);
   margin: var(--space-6) 0;
+  padding: 0;
+  list-style: none;
 }
 
 .cpw-row {

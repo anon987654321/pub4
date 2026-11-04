@@ -91,7 +91,7 @@ class HomeControllerTest < ActionDispatch::IntegrationTest
     stub_weather { get root_url }
 
     assert_response :success
-    assert_select ".cpw-row", text: /Gala dress/
+    assert_select "ul.cpw-list > li.cpw-row", text: /Gala dress/
   end
 
   def test_signed_in_dashboard_offers_a_look_for_today
@@ -138,7 +138,7 @@ class HomeControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_select ".plan-date", text: I18n.l(Date.current, format: :day)
-    assert_select ".plan-row a", text: "Fredagsantrekk"
+    assert_select "ul.plan-list > li.plan-row a", text: "Fredagsantrekk"
   end
 
   def test_signed_in_dashboard_survives_an_empty_wardrobe

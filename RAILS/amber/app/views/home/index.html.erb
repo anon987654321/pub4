@@ -49,33 +49,33 @@
   <% if @planned_this_week.any? %>
     <section>
       <%= tag.h2 t("home.this_week") %>
-      <div class="plan-list">
+      <ul class="plan-list" role="list">
         <% @planned_this_week.each do |plan| %>
-          <div class="plan-row">
+          <li class="plan-row">
             <span class="plan-date"><%= l(plan.planned_date, format: :day) %></span>
             <%= link_to plan.outfit.name, plan.outfit %>
             <%# destructive: no-confirm-ok — reversible — this drops the outfit from today's plan, not the outfit %>
             <%= button_to t("actions.remove"), planned_outfit_path(plan), method: :delete, class: "button-link" %>
-          </div>
+          </li>
         <% end %>
-      </div>
+      </ul>
     </section>
   <% end %>
 
   <% if @worst_cpw.any? %>
     <section>
       <%= tag.h2 t("home.worst_cpw") %>
-      <div class="cpw-list">
+      <ul class="cpw-list" role="list">
         <% @worst_cpw.each do |item| %>
-          <div class="cpw-row">
+          <li class="cpw-row">
             <%= link_to item.title, item %>
             <%# Was a hardcoded £ next to eight number_to_currency calls that
                 rendered $ — three currencies in one app, for a wardrobe priced
                 in øre. %>
             <span class="cpw-val"><%= t("home.cpw_value", amount: number_to_currency(item.cost_per_wear), count: item.times_worn.to_i) %></span>
-          </div>
+          </li>
         <% end %>
-      </div>
+      </ul>
     </section>
   <% end %>
 

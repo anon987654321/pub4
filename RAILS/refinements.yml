@@ -284,7 +284,7 @@ items:
   path: RAILS/amber/app/views/creator_profiles/_form.html.erb
   item: Replace one-field fieldsets in the creator profile form with div.field; a
     fieldset without legend groups nothing.
-  status: open
+  status: done
 - id: amber-035
   app: amber
   area: markup
@@ -309,7 +309,7 @@ items:
   path: RAILS/amber/app/views/demo_wardrobe/index.html.erb
   item: Render demo outfits, home 'this week' plans and cost-per-wear rows as ul/li
     instead of div.plan-list/div.plan-row/div.cpw-row.
-  status: open
+  status: done
 - id: amber-038
   app: amber
   area: markup
