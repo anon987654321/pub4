@@ -60,9 +60,9 @@ class ConversationsController < ApplicationController
   def new
     scope = User.messageable.unblocked_with(Current.user).where.not(id: Current.user.id)
     scope = apply_live_search(scope, columns: %w[username display_name], vertical: "people")
-    # No query yet: show who is around rather than an empty box. Newest first is
-    # the closest thing to "recently active" without another column.
-    @people = scope.order(created_at: :desc).limit(24)
+    # No query yet: show who is around rather than an empty box, the people the
+    # reader follows or has talked to first.
+    @people = PeoplePicker.rank(scope, Current.user).limit(24)
     finish_live_search(partial: "conversations/people_results")
   end
 

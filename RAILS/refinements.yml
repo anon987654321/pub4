@@ -2418,7 +2418,7 @@ items:
   path: RAILS/brgen_messenger/app/controllers/conversations_controller.rb
   item: Rank the new-conversation picker by people the viewer follows or has talked
     to, not newest signups.
-  status: open
+  status: done
 - id: brgen-186
   app: brgen
   area: messenger
