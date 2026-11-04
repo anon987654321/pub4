@@ -61,13 +61,7 @@ module Shared
         html: page_html,
       ).broadcast
 
-      if @pagy&.next
-        cable_ready
-          .set_attribute(selector:, name: "data-next-page", value: @pagy.next)
-          .broadcast
-      else
-        cable_ready.remove(selector:).broadcast
-      end
+      advance_sentinel
 
       # Always clear loading state for Hotwire/Stimulus integration
       cable_ready
@@ -135,6 +129,20 @@ module Shared
       per_page = @pagy&.limit.to_i
       offset = per_page.positive? ? (page - 1) * per_page : 0
       offset + index + 1
+    end
+
+    # Point the sentinel at the next page, or, once the last page is in, turn
+    # it into the line that says the list has ended.
+    def advance_sentinel
+      if @pagy&.next
+        cable_ready.set_attribute(selector:, name: "data-next-page", value: @pagy.next).broadcast
+      else
+        cable_ready.outer_html(selector:, html: end_of_list_html).broadcast
+      end
+    end
+
+    def end_of_list_html
+      %(<p class="infinite-scroll-end">#{ERB::Util.html_escape(I18n.t("status.end_of_list"))}</p>)
     end
 
     def page_html

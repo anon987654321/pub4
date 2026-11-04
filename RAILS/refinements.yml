@@ -1748,7 +1748,7 @@ items:
   path: RAILS/__shared/app/views/shared/_infinite_scroll_sentinel.html.erb
   item: Give the infinite-scroll sentinel a real 'Load more' button so keyboard and
     switch users can page without reaching the bottom edge.
-  status: open
+  status: done
 - id: brgen-105
   app: brgen
   area: feed
@@ -1756,7 +1756,7 @@ items:
   path: RAILS/__shared/app/views/shared/_infinite_scroll_sentinel.html.erb
   item: Render an end-of-feed line when pagy.next is nil instead of ending without
     a word.
-  status: open
+  status: done
 - id: brgen-106
   app: brgen
   area: feed
@@ -1764,7 +1764,7 @@ items:
   path: RAILS/__shared/app/views/shared/_infinite_scroll_sentinel.html.erb
   item: 'Stop announcing ''Loading more'' on page load: the sentinel is aria-live
     polite with its text already present; set the text only while loading.'
-  status: open
+  status: done
 - id: brgen-107
   app: brgen
   area: feed

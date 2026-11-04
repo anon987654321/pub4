@@ -112,6 +112,8 @@ nb:
     saved_locally: "Lagret lokalt"
     restored: "Gjenopprettet"
     loading_more: "Laster mer…"
+    load_more: "Last inn flere"
+    end_of_list: "Du har nådd slutten."
     loading_results: "Laster resultater…"
   theme:
     region: "Tema"

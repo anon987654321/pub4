@@ -113,6 +113,8 @@ en:
     saved_locally: "Saved locally"
     restored: "Restored"
     loading_more: "Loading more…"
+    load_more: "Load more"
+    end_of_list: "You have reached the end."
     loading_results: "Loading results…"
   theme:
     region: "Theme"
