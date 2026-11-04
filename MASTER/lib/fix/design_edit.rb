@@ -81,7 +81,11 @@ module Master
         return [] unless open
 
         start = (head.rindex(/[};]/, open) || -1) + 1
-        head[start...open].scan(/[.#][\w-]+/).uniq
+        # The span up to `{` carries any comment above the rule, and a note naming
+        # "_tokens.scss" or "README.md" read as the classes .scss and .md: every such
+        # edit was refused as "not on this page". A class or id cannot start with a digit.
+        selector = head[start...open].gsub(%r{/\*.*?\*/}m, " ").gsub(%r{//[^\n]*}, " ")
+        selector.scan(/[.#](?!\d)[\w-]+/).uniq
       end
 
       # Raises Refused with the reason; returns the file's current text.

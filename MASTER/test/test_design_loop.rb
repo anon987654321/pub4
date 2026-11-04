@@ -287,6 +287,16 @@ class TestDesignLoop < Minitest::Test
     end
   end
 
+  # A comment above a rule is not its selector: "see _tokens.scss and README.md"
+  # read as the classes .scss and .md, and the edit was refused as not on the page.
+  def test_a_comment_above_the_rule_is_not_read_as_its_selector
+    sheet = ".x { gap: 4px; }\n// keep in step with _tokens.scss and README.md\n/* v1.2 */\n" \
+            ".look-title {\n  margin: 0;\n}\n"
+    with_sheet(sheet) do |path|
+      assert_equal %w[.look-title], parse(path, find: "margin: 0;", replace: "margin: 4px;").selector_tokens
+    end
+  end
+
   # font-size is the one font property the loop may set, on a declared step and never smaller.
   def test_a_font_size_takes_only_a_declared_step_and_never_shrinks
     steps = [16.0, 20.0, 24.0]
