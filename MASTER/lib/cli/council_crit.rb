@@ -41,13 +41,22 @@ module Master
         end
 
         feedback = result.value!
+        security_response = feedback.find do |entry|
+          entry[:persona].to_s.casecmp?("Security") && entry[:veto_role]
+        end
+        unless security_response
+          message = "critique: Security reviewer did not complete the pre-ship review"
+          bus&.publish("council:inconclusive", category: "inconclusive", reason: message)
+          return Master::Result.err(message, category: :inconclusive)
+        end
+
         summary = tribunal_summary(feedback)
         veto_roles_answered = feedback.select { |entry| entry[:veto_role] }.map { |entry| entry[:persona].to_s }
         bus&.publish(
           "council:pass",
           jurors: feedback.size,
           veto_roles_answered:,
-          security_reviewed: veto_roles_answered.any? { |name| name.casecmp?("Security") },
+          security_reviewed: true,
         )
         Master::Result.ok(summary)
       # Programming defects must escape this boundary. Converting a missing
