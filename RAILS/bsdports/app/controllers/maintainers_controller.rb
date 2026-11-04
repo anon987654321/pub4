@@ -6,9 +6,12 @@ class MaintainersController < ApplicationController
   allow_unauthenticated_access only: %i[index show]
 
   def index
-    scope = Maintainer.order(:name).includes(:ports)
+    scope = Maintainer.order(:name)
     scope = apply_live_search(scope, columns: %w[name email], vertical: "maintainers") if live_search_query.present?
     @pagy, @maintainers = pagy(scope)
+    # One grouped COUNT for the page; includes(:ports) loaded every port row
+    # of every maintainer on it to print a number.
+    @port_counts = Port.where(maintainer_id: @maintainers.map(&:id)).group(:maintainer_id).count
     finish_live_search(partial: "maintainers/live_search_results")
   end
 

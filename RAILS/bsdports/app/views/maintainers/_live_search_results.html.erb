@@ -8,7 +8,7 @@
  <li>
  <%= link_to maintainer.name, maintainer_path(maintainer) %>
  <% if maintainer.email.present? %><%= tag.small obfuscated_email(maintainer.email) %><% end %>
- <%= tag.small t("ports.port_count", count: maintainer.ports.size) %>
+ <%= tag.small t("ports.port_count", count: @port_counts.fetch(maintainer.id, 0)) %>
  </li>
  <% end %>
 </ul>

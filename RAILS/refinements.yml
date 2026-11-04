@@ -4378,7 +4378,7 @@ items:
   item: Replace includes(:ports) + cat.ports.size on the categories index with a counter
     cache or a grouped count; it loads every port row of every category just to print
     a number.
-  status: open
+  status: done
 - id: bsdports-022
   app: bsdports
   area: performance
@@ -4387,7 +4387,7 @@ items:
   item: Replace includes(:ports) + maintainer.ports.size on the maintainers index
     with a ports_count counter cache; the index loads every port of every maintainer
     on the page.
-  status: open
+  status: done
 - id: bsdports-023
   app: bsdports
   area: performance
