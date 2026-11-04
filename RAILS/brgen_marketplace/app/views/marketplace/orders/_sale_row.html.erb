@@ -1,0 +1,9 @@
+<%# One order on the seller's own listing: what sold, to whom, and where it stands. %>
+<li class="order-row">
+  <%= link_to order, class: "order-link" do %>
+    <%= tag.span order.listing&.title || t("marketplace.orders.listing"), class: "order-title" %>
+  <% end %>
+  <%= tag.span order.buyer&.display_name, class: "order-buyer" %>
+  <%= tag.span t("marketplace.order_statuses.#{order.status}"), class: "order-status chip" %>
+  <%= tag.time time_ago(order.created_at), datetime: order.created_at.iso8601 %>
+</li>

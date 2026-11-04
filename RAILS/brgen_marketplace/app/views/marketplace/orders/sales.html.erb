@@ -1,0 +1,27 @@
+<% content_for :title, t("marketplace.orders.sales_title") %>
+
+<header class="page-header">
+  <%= tag.h1 t("marketplace.orders.sales_title") %>
+</header>
+<%= render "marketplace/orders/sides", side: "sales" %>
+
+<nav class="chips" aria-label="<%= t("marketplace.orders.status_filter_label") %>">
+  <%= link_to t("marketplace.orders.all_statuses"), orders_path(side: "sales"), class: "chip",
+        aria: { current: (@status.nil? ? "page" : nil) } %>
+  <%= safe_join(Marketplace::Sales::STATUSES.map do |status|
+        link_to t("marketplace.order_statuses.#{status}"), orders_path(side: "sales", status:), class: "chip",
+                aria: { current: (@status == status ? "page" : nil) }
+      end) %>
+</nav>
+
+<% if @orders.any? %>
+  <ul class="order-list" id="seller-orders">
+    <%= render partial: "marketplace/orders/sale_row", collection: @orders, as: :order %>
+  </ul>
+  <%= render "shared/pager", pagy: @pagy %>
+<% else %>
+  <%= render "shared/empty_state",
+        title: t("marketplace.orders.sales_empty_title"),
+        body: t("marketplace.orders.sales_empty_body"),
+        action: { label: t("actions.sell_something"), path: new_listing_path } %>
+<% end %>

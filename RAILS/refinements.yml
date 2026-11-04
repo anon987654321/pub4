@@ -2021,7 +2021,7 @@ items:
   path: RAILS/brgen_marketplace/app/controllers/marketplace/orders_controller.rb
   item: Add a seller-side sales list (orders where the current user is the seller,
     paginated, filterable by status) next to the buyer-only orders index.
-  status: open
+  status: done
 - id: brgen-138
   app: brgen
   area: marketplace

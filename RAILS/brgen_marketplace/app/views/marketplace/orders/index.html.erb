@@ -3,6 +3,7 @@
 <header class="page-header">
   <%= tag.h1 t("marketplace.orders.title") %>
 </header>
+<%= render "marketplace/orders/sides", side: "purchases" %>
 
 <% if @orders.any? %>
   <ul class="order-list" id="buyer-orders">

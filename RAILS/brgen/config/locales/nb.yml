@@ -1291,6 +1291,14 @@ nb:
       empty_title: Ingen bestillinger ennå
       listing: Annonse
       title: Dine bestillinger
+      sales_title: Salgene dine
+      purchases_tab: Kjøp
+      sales_tab: Salg
+      sides_label: Kjøp eller salg
+      status_filter_label: Filtrer på status
+      all_statuses: Alle
+      sales_empty_title: Ingen salg ennå
+      sales_empty_body: Bestillinger på annonsene dine dukker opp her.
     sort_label: Sorter
     sort_price_high: Pris ↓
     sort_price_low: Pris ↑

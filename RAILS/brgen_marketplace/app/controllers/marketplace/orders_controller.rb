@@ -8,6 +8,8 @@ class Marketplace::OrdersController < Marketplace::BaseController
   # Buyer's order history — a paid order used to vanish (the cart only lists
   # pending). Scoped to Current.user's own orders.
   def index
+    return index_sales if params[:side] == "sales"
+
     @pagy, @orders = pagy(
       Marketplace::Order.where(buyer_id: Current.user.id)
                         .includes(listing: :category)
@@ -83,6 +85,14 @@ class Marketplace::OrdersController < Marketplace::BaseController
   end
 
   private
+
+  # The seller's list beside the buyer's: orders on their own listings,
+  # filterable by status, with the pager rather than the buyer-only reflex.
+  def index_sales
+    @status = params[:status].presence_in(Marketplace::Sales::STATUSES)
+    @pagy, @orders = pagy(Marketplace::Sales.for(Current.user, status: @status))
+    render :sales
+  end
 
   def set_listing = (@listing = find_by_slug_or_id(Marketplace::Listing.includes(:user), params[:listing_id]))
 

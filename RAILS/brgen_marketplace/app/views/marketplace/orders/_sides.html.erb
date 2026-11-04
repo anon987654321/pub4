@@ -1,0 +1,7 @@
+<%# Purchases and sales are two lists of the same orders, seen from each end. %>
+<nav class="chips" aria-label="<%= t("marketplace.orders.sides_label") %>">
+  <%= link_to t("marketplace.orders.purchases_tab"), orders_path, class: "chip",
+        aria: { current: (side == "purchases" ? "page" : nil) } %>
+  <%= link_to t("marketplace.orders.sales_tab"), orders_path(side: "sales"), class: "chip",
+        aria: { current: (side == "sales" ? "page" : nil) } %>
+</nav>

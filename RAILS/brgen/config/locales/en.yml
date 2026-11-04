@@ -1282,6 +1282,14 @@ en:
       empty_title: No orders yet
       listing: Listing
       title: Your orders
+      sales_title: Your sales
+      purchases_tab: Purchases
+      sales_tab: Sales
+      sides_label: Purchases or sales
+      status_filter_label: Filter by status
+      all_statuses: All
+      sales_empty_title: No sales yet
+      sales_empty_body: Orders on your listings show up here.
     sort_label: Sort
     sort_price_high: Price ↓
     sort_price_low: Price ↑
