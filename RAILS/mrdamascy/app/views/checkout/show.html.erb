@@ -53,15 +53,20 @@
     <%= label_tag :address, t("checkout.address") %>
     <%= text_field_tag :address, @order.address,
           placeholder: t("checkout.address_placeholder"),
-          autocomplete: "street-address" %>
+          autocomplete: "street-address", required: true, disabled: @mode == "pickup",
+          aria: field_error_aria(@field_errors, :address) %>
+    <%= field_error(@field_errors, :address) %>
   </div>
 
   <div class="field" data-zone-check-target="addressWrap">
     <%= label_tag :postcode, t("checkout.postcode") %>
     <%= text_field_tag :postcode, @order.postcode,
           inputmode: "numeric", autocomplete: "postal-code", maxlength: 4,
+          required: true, pattern: "[0-9]{4}", disabled: @mode == "pickup",
           placeholder: t("checkout.postcode_placeholder"),
+          aria: field_error_aria(@field_errors, :postcode),
           data: { zone_check_target: "postcode", action: "input->zone-check#check" } %>
+    <%= field_error(@field_errors, :postcode) %>
     <p class="zone-feedback" data-zone-check-target="feedback" aria-live="polite"></p>
     <%= tag.p @minimum_text, class: "zone-fail", hidden: @minimum_text.blank?,
           data: { zone_check_target: "minimum" }, aria: { live: "polite" } %>
@@ -70,8 +75,10 @@
   <div class="field">
     <%= label_tag :phone, t("checkout.phone_label") %>
     <%= telephone_field_tag :phone, @order.phone,
-          inputmode: "numeric", autocomplete: "tel", maxlength: 12,
-          placeholder: "900 00 000" %>
+          inputmode: "numeric", autocomplete: "tel", maxlength: 12, required: true,
+          placeholder: t("checkout.phone_placeholder"),
+          aria: field_error_aria(@field_errors, :phone) %>
+    <%= field_error(@field_errors, :phone) %>
   </div>
 
   <section class="payment-option card">
@@ -84,7 +91,7 @@
   </section>
 
   <section class="payment-option card">
-    <span class="stripe-wordmark" aria-hidden="true">stripe</span>
+    <%= tag.span t("checkout.card_mark"), class: "stripe-wordmark", aria: { hidden: true } %>
     <p class="payment-option-text">
       <%= tag.strong t("checkout.stripe_row") %>
       <%= t("checkout.stripe_note") %>

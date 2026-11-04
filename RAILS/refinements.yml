@@ -5335,7 +5335,7 @@ items:
   item: Add required and pattern="[0-9]{4}" to postcode, required to phone and address
     in delivery mode, and render server-side errors beside each field via aria-describedby
     instead of only a toast.
-  status: open
+  status: done
 - id: mrdamascy-034
   app: mrdamascy
   area: checkout
@@ -5344,7 +5344,7 @@ items:
   item: Replace the styled "stripe" text span with a plain "Kort" label or the official
     Stripe wordmark SVG beside vipps-wordmark.svg, so the card lane reads as a payment
     method rather than a vendor name.
-  status: open
+  status: done
 - id: mrdamascy-035
   app: mrdamascy
   area: checkout
@@ -5449,7 +5449,7 @@ items:
   size: S
   path: RAILS/mrdamascy/app/views/checkout/show.html.erb
   item: Move the phone placeholder "900 00 000" into the locale files.
-  status: open
+  status: done
 - id: mrdamascy-048
   app: mrdamascy
   area: i18n

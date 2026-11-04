@@ -57,4 +57,11 @@ class ZoneCheckControllerTest < ActiveSupport::TestCase
     assert_equal "Betal 158 kr med Vipps", seen["vipps"]
     assert_equal "Betal 158 kr med kort", seen["stripe"]
   end
+
+  test "pickup hides the address fields and disables their inputs" do
+    seen = run_stimulus("zone_check", "zone_check_pickup.mjs")
+
+    assert_equal [true, true], seen["hidden"]
+    assert_equal [true, true], seen["disabled"], "hidden required fields must not block a pickup order"
+  end
 end

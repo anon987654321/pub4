@@ -148,6 +148,12 @@ nb:
     address_placeholder: Gate og nummer
     postcode_label: Postnummer
     postcode_placeholder: '5004'
+    phone_placeholder: "900 00 000"
+    card_mark: "Kort"
+    errors:
+      address_blank: "Skriv gate og nummer, så finner budet fram"
+      postcode_invalid: "Et postnummer har fire sifre"
+      phone_blank: "Vi trenger et nummer å ringe hvis budet ikke finner fram"
     phone_label: Telefon
     mode_label: Levering eller henting?
     mode_delivery: Levering

@@ -124,6 +124,14 @@
   color: var(--danger);
 }
 
+// A field's own server-side error, named by its aria-describedby.
+.field-error {
+  color: var(--danger);
+  font-size: var(--text-meta);
+  font-weight: 600;
+  margin: 8px 0 0;
+}
+
 .steps-note {
   text-align: center;
   color: var(--ink-soft);

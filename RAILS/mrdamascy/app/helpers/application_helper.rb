@@ -49,6 +49,17 @@ module ApplicationHelper
     rester.zero? ? "#{kroner} kr" : format("%d,%02d kr", kroner, rester)
   end
 
+  # A form field's server-side error, rendered beside the field and named
+  # by its aria-describedby (field_error_aria), or nothing when it passed.
+  def field_error(errors, field)
+    message = errors.to_h[field]
+    tag.p(message, id: "#{field}_error", class: "field-error") if message
+  end
+
+  def field_error_aria(errors, field)
+    errors.to_h[field] ? { describedby: "#{field}_error", invalid: true } : {}
+  end
+
   # Three dots; lit dots take their own level colour (1 mint-500 Mild, 2 gold
   # Middels, 3 pom Sterk!) so the scale reads at a glance.
   # SCSS contract: .heat-dots > .heat-dot.heat-1|heat-2|heat-3 + .is-lit.

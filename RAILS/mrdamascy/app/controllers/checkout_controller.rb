@@ -29,86 +29,20 @@ class CheckoutController < ApplicationController
     @cart = current_cart
     return redirect_to(cart_path, alert: t("cart.empty")) if @cart.cart_items.empty?
 
-    attrs = checkout_params
-    # The confirm form's radios are named `mode` (the cart links here with
-    # ?mode= too); reading only delivery_mode turned every pickup into delivery.
-    mode = (attrs[:delivery_mode].presence || params[:mode]) == "pickup" ? "pickup" : "delivery"
-    address = attrs[:address].presence || current_user&.default_address
-    postcode = attrs[:postcode].presence || current_user&.default_postcode
-    phone = attrs[:phone].presence || current_user&.phone
-
-    zone = mode == "delivery" ? DeliveryZone.for_postcode(postcode) : nil
-    subtotal_ore = @cart.subtotal_ore
-
-    # Zone rule (APP_SPEC §4): postcode must be served and the basket must
-    # clear the zone minimum. Pickup skips the zone entirely.
-    if mode == "delivery" && zone.nil?
-      load_checkout_vars
-      flash.now[:alert] = t("flash.zone_error", postcode: postcode.to_s)
-      return render :show, status: :unprocessable_entity
-    end
-    if mode == "delivery" && !zone.covers?(subtotal_ore)
-      load_checkout_vars
-      flash.now[:alert] = t("flash.min_basket", name: zone.name,
-                                                amount: money(zone.min_basket_ore))
-      return render :show, status: :unprocessable_entity
-    end
+    inputs = checkout_inputs
+    zone = inputs[:mode] == "delivery" ? DeliveryZone.for_postcode(inputs[:postcode]) : nil
+    return if refused_checkout?(inputs, zone)
 
     kitchen = Kitchen.first
     return redirect_to(cart_path, alert: t("checkout.closed")) if kitchen.nil?
 
-    order = Order.new(
-      user: current_user,
-      kitchen: kitchen,
-      state: "placed",
-      delivery_mode: mode,
-      address: address,
-      postcode: mode == "delivery" ? postcode : kitchen.postcode,
-      phone: phone,
-      payment_state: "pending",
-      payment_steps: 3,
-      express: true
-    )
-
-    # Denormalised snapshot: order_items are frozen copies of the cart lines
-    # (name, emoji, unit price incl. options, human option list) — one shared
-    # implementation on the model, used for both new and persisted orders.
-    order.snapshot_from_cart!(@cart)
-
-    promo_result = PromoApplier.call(
-      subtotal_ore: subtotal_ore,
-      delivery_mode: mode,
-      user: current_user,
-      delivery_fee_ore: zone&.fee_ore.to_i
-    )
-
-    begin
-      order.compute_totals!(zone, promo_result)
-    rescue ActiveRecord::RecordInvalid
-      load_checkout_vars
-      flash.now[:alert] = t("checkout.failed")
-      return render :show, status: :unprocessable_entity
-    end
-
     # Payment lane: Vipps (default) or Stripe Checkout — the two buttons on
     # the confirm screen each submit their own payment_method value. Unknown
     # values fall back to Vipps (PaymentGateway.normalize!).
-    payment_method = PaymentGateway.normalize!(attrs[:payment_method])
-    order.payment_method = payment_method
+    order = build_order(inputs, kitchen:, payment_method: PaymentGateway.normalize!(checkout_params[:payment_method]))
+    return unless priced?(order, inputs[:mode], zone)
 
-    # init_payment owns the payment state: mock → "authorised" (the mock page
-    # approves it next), real → "pending" until the PSP reports paid
-    # (the webhook or tracking-poll sync then captures). One seam, no double
-    # truth.
-    begin
-      PaymentGateway.init!(order, method: payment_method)
-      order.save!
-    rescue VippsClient::NotAvailable, StripeClient::NotAvailable
-      # No payment was reserved — never leave a zombie on the kitchen board.
-      # The cart is untouched, so the customer just retries (payment honesty).
-      order.cancel! if order.persisted? && order.state == "placed"
-      raise
-    end
+    pay!(order)
     @cart.empty!
     redirect_to_payment(order)
   end
@@ -126,6 +60,76 @@ class CheckoutController < ApplicationController
 
   private
 
+  def checkout_inputs
+    attrs = checkout_params
+
+    # The confirm form's radios are named `mode` (the cart links here with
+    # ?mode= too); reading only delivery_mode turned every pickup into delivery.
+    { mode: (attrs[:delivery_mode].presence || params[:mode]) == "pickup" ? "pickup" : "delivery",
+      address: attrs[:address].presence || current_user&.default_address,
+      postcode: attrs[:postcode].presence || current_user&.default_postcode,
+      phone: attrs[:phone].presence || current_user&.phone }
+  end
+
+  # Renders the refusal and answers true when a rule turns the order back.
+  # Each refused field is named beside itself (field_error), not only in the
+  # toast. Zone rule (APP_SPEC §4): postcode must be served and the basket
+  # must clear the zone minimum. Pickup skips the zone entirely.
+  def refused_checkout?(inputs, zone)
+    errors = checkout_field_errors(**inputs)
+    refused = errors.any? || (inputs[:mode] == "delivery" && delivery_refused?(inputs[:postcode], zone, errors))
+    refuse_fields(errors) if refused
+    refused
+  end
+
+  # An unserved postcode is named beside its field and in the toast; a
+  # basket under the zone minimum in the toast. Nil when the zone takes it.
+  def delivery_refused?(postcode, zone, errors)
+    if zone.nil?
+      errors[:postcode] = flash.now[:alert] = t("flash.zone_error", postcode: postcode.to_s)
+    elsif !zone.covers?(@cart.subtotal_ore)
+      flash.now[:alert] = t("flash.min_basket", name: zone.name, amount: money(zone.min_basket_ore))
+    end
+  end
+
+  # Denormalised snapshot: order_items are frozen copies of the cart lines
+  # (name, emoji, unit price incl. options, human option list) — one shared
+  # implementation on the model, used for both new and persisted orders.
+  def build_order(inputs, kitchen:, payment_method:)
+    delivery = inputs[:mode] == "delivery"
+    Order.new(
+      user: current_user, kitchen:, state: "placed", delivery_mode: inputs[:mode],
+      address: inputs[:address], postcode: delivery ? inputs[:postcode] : kitchen.postcode,
+      phone: inputs[:phone], payment_state: "pending", payment_steps: 3, express: true, payment_method:
+    ).snapshot_from_cart!(@cart)
+  end
+
+  def priced?(order, mode, zone)
+    promo_result = PromoApplier.call(subtotal_ore: @cart.subtotal_ore, delivery_mode: mode,
+                                     user: current_user, delivery_fee_ore: zone&.fee_ore.to_i)
+    order.compute_totals!(zone, promo_result)
+    true
+  rescue ActiveRecord::RecordInvalid
+    load_checkout_vars
+    flash.now[:alert] = t("checkout.failed")
+    render :show, status: :unprocessable_entity
+    false
+  end
+
+  # init_payment owns the payment state: mock → "authorised" (the mock page
+  # approves it next), real → "pending" until the PSP reports paid
+  # (the webhook or tracking-poll sync then captures). One seam, no double
+  # truth.
+  def pay!(order)
+    PaymentGateway.init!(order, method: order.payment_method)
+    order.save!
+  rescue VippsClient::NotAvailable, StripeClient::NotAvailable
+    # No payment was reserved — never leave a zombie on the kitchen board.
+    # The cart is untouched, so the customer retries (payment honesty).
+    order.cancel! if order.persisted?
+    raise
+  end
+
   # Idempotent per cart: a repeat post of the confirm form goes on to the
   # order it already placed, and a post while another is still placing the
   # order is turned back instead of building a second one.
@@ -142,6 +146,24 @@ class CheckoutController < ApplicationController
     ensure
       cart.release_checkout!
     end
+  end
+
+  # Delivery needs a street and a four-digit postcode; every order needs a
+  # phone the kitchen and courier can call.
+  def checkout_field_errors(mode:, address:, postcode:, phone:)
+    errors = {}
+    if mode == "delivery"
+      errors[:address] = t("checkout.errors.address_blank") if address.blank?
+      errors[:postcode] = t("checkout.errors.postcode_invalid") unless postcode.to_s.gsub(/\s+/, "").match?(/\A\d{4}\z/)
+    end
+    errors[:phone] = t("checkout.errors.phone_blank") if phone.blank?
+    errors
+  end
+
+  def refuse_fields(errors)
+    load_checkout_vars
+    @field_errors = errors
+    render :show, status: :unprocessable_entity
   end
 
   def redirect_to_payment(order)
@@ -213,14 +235,16 @@ class CheckoutController < ApplicationController
     @cart = current_cart
     @lines = @cart.cart_items.includes(:menu_item).order(:id)
     @mode = params[:mode].presence || @cart.delivery_mode || "delivery"
+    # A refused post re-renders with what was typed, not the saved defaults.
+    typed = checkout_params
     @order = Order.new(
-      address: current_user&.default_address,
-      postcode: current_user&.default_postcode,
-      phone: current_user&.phone,
+      address: typed[:address].presence || current_user&.default_address,
+      postcode: typed[:postcode].presence || current_user&.default_postcode,
+      phone: typed[:phone].presence || current_user&.phone,
       delivery_mode: @mode
     )
     @returning_customer = current_user.present? && current_user.orders.exists?
-    @zone = @mode == "pickup" ? nil : DeliveryZone.for_postcode(params[:postcode].presence || current_user&.default_postcode)
+    @zone = @mode == "pickup" ? nil : DeliveryZone.for_postcode(@order.postcode)
     quote = checkout_quote(cart: @cart, mode: @mode, zone: @zone)
     @subtotal_ore, @promo, @delivery_fee_ore, @discount_ore, @total_ore =
       quote.values_at(:subtotal_ore, :promo, :delivery_fee_ore, :discount_ore, :total_ore)

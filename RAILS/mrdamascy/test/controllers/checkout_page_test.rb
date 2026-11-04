@@ -87,4 +87,44 @@ class CheckoutPageTest < ActionDispatch::IntegrationTest
 
     assert_equal "/mat/checkout/zone", form["data-zone-check-url-value"]
   end
+
+  test "the fields say what they need and the card lane reads as a method" do
+    form = page.at_css("form.checkout-form")
+
+    assert form.at_css("input#address[required]")
+    assert_equal "[0-9]{4}", form.at_css("input#postcode[required]")["pattern"]
+    assert_equal I18n.t("checkout.phone_placeholder"), form.at_css("input#phone[required]")["placeholder"]
+    assert_equal I18n.t("checkout.card_mark"), form.at_css(".stripe-wordmark").text
+  end
+
+  test "refused fields are named beside themselves and keep what was typed" do
+    post checkout_url, params: { mode: "delivery", address: "", postcode: "50", phone: "90000009" }
+
+    assert_response :unprocessable_entity
+    assert_equal 0, Order.count
+    form = Nokogiri::HTML(response.body)
+
+    { address: "address_blank", postcode: "postcode_invalid" }.each do |field, key|
+      input = form.at_css("input##{field}")
+      assert_equal "#{field}_error", input["aria-describedby"]
+      assert_equal "true", input["aria-invalid"]
+      assert_equal I18n.t("checkout.errors.#{key}"), form.at_css("##{field}_error").text
+    end
+    assert_equal "90000009", form.at_css("input#phone")["value"]
+    assert_nil form.at_css("#phone_error")
+  end
+
+  test "an unserved postcode is named beside the postcode field" do
+    post checkout_url, params: { mode: "delivery", address: "Nygårdsgaten 12", postcode: "9999", phone: "90000009" }
+
+    error = Nokogiri::HTML(response.body).at_css("#postcode_error")
+    assert_equal I18n.t("flash.zone_error", postcode: "9999"), error&.text
+  end
+
+  test "a pickup order needs no address" do
+    post checkout_url, params: { mode: "pickup", address: "", postcode: "", phone: "90000009" }
+
+    assert_equal 1, Order.count
+    assert_equal "pickup", Order.sole.delivery_mode
+  end
 end

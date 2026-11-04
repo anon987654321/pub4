@@ -101,8 +101,13 @@ export default class extends Controller {
   toggleAddress() {
     const pickupInput = this.element.querySelector('input[name="mode"]:checked')
     const pickup = pickupInput ? pickupInput.value === "pickup" : false
+    // Hidden fields are disabled too, so their required rules do not
+    // block a pickup order.
     this.addressWrapTargets.forEach((element) => {
       element.hidden = pickup
+      element.querySelectorAll("input").forEach((input) => {
+        input.disabled = pickup
+      })
     })
     if (this.hasFeedbackTarget) {
       if (pickup) {

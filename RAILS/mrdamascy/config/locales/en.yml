@@ -148,6 +148,12 @@ en:
     address_placeholder: Street and number
     postcode_label: Postcode
     postcode_placeholder: '5004'
+    phone_placeholder: "900 00 000"
+    card_mark: "Card"
+    errors:
+      address_blank: "Add your street and number so the courier finds you"
+      postcode_invalid: "A postcode has four digits"
+      phone_blank: "We need a number to call if the courier can't find you"
     phone_label: Phone
     mode_label: Delivery or pickup?
     mode_delivery: Delivery
