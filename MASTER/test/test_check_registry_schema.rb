@@ -23,7 +23,7 @@ class CheckRegistrySchemaTest < Minitest::Test
       refute status.success?, output
       assert_equal 1, status.exitstatus, output
       assert_includes output, "checks: invalid registry"
-      assert_includes output, "headless must declare class: or script:"
+      assert_includes output, "headless must declare exactly one of class: or script:"
       refute_includes output, "headless passed"
     end
   end

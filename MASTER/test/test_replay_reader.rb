@@ -17,7 +17,7 @@ class TestReplayReader < Minitest::Test
 
   def test_replay_activity_formats_recent_events
     path = File.join(@events_dir, "activity.jsonl")
-    File.write(path, "{\"timestamp\":\"2026-06-25T10:00:00Z\",\"event\":\"scan:complete\",\"payload\":{\"count\":1}}\n", mode: 0o600)
+    write_private(path, "{\"timestamp\":\"2026-06-25T10:00:00Z\",\"event\":\"scan:complete\",\"payload\":{\"count\":1}}\n")
     output = Trace::ReplayReader.new(root: @dir).render(arg: "5")
     assert_includes output, "replay activity"
     assert_includes output, "scan:complete"
@@ -37,10 +37,9 @@ class TestReplayReader < Minitest::Test
 
     master_root = File.join(repo, "MASTER")
     FileUtils.mkdir_p(File.join(master_root, "runtime", "events"))
-    File.write(
+    write_private(
       File.join(master_root, "runtime", "events", "activity.jsonl"),
       "{\"timestamp\":\"#{committed_at}\",\"event\":\"ops:commit\",\"payload\":{\"head\":\"#{sha}\"}}\n",
-      mode: 0o600,
     )
 
     output = Trace::ReplayReader.new(root: master_root).render(arg: "commit #{sha}")
@@ -51,7 +50,7 @@ class TestReplayReader < Minitest::Test
 
   def test_replay_evidence_reads_operational_stream
     evidence_path = File.join(@events_dir, "evidence.jsonl")
-    File.write(evidence_path, "{\"timestamp\":\"2026-06-25T10:00:00Z\",\"event\":\"ops:commit\",\"payload\":{\"head\":\"abc\"}}\n", mode: 0o600)
+    write_private(evidence_path, "{\"timestamp\":\"2026-06-25T10:00:00Z\",\"event\":\"ops:commit\",\"payload\":{\"head\":\"abc\"}}\n")
     output = Trace::ReplayReader.new(root: @dir).render(arg: "evidence")
     assert_includes output, "replay evidence"
     assert_includes output, "ops:commit"
@@ -59,12 +58,21 @@ class TestReplayReader < Minitest::Test
 
   def test_replay_failures_filters_error_events
     path = File.join(@events_dir, "activity.jsonl")
-    File.write(path, [
+    write_private(path, [
       "{\"timestamp\":\"2026-06-25T10:00:00Z\",\"event\":\"scan:complete\",\"payload\":{}}",
       "{\"timestamp\":\"2026-06-25T10:00:01Z\",\"event\":\"scan:error\",\"payload\":{\"error\":\"boom\"}}",
-    ].join("\n") + "\n", mode: 0o600)
+    ].join("\n") + "\n")
     output = Trace::ReplayReader.new(root: @dir).render(arg: "failures")
     assert_includes output, "scan:error"
     refute_includes output, "scan:complete"
+  end
+
+  private
+
+  # File.write's mode: kwarg holds open(2) flags, not permission bits; match
+  # the production log contract by chmodding the written file to 0600.
+  def write_private(path, content)
+    File.write(path, content)
+    File.chmod(0o600, path)
   end
 end

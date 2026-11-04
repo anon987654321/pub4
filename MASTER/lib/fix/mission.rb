@@ -712,13 +712,15 @@ module Master
       end
 
       def persist_record(path, record)
-        FileUtils.mkdir_p(File.dirname(path))
+        # .master must stay owner-private (0700) or the Kernel execution lock
+        # refuses the workspace; a default umask of 0002 would leave it 0775.
+        FileUtils.mkdir_p(File.dirname(path), mode: 0o700)
         write_atomic(path, JSON.pretty_generate(record) + "\n", mode: 0o600)
       end
 
       def with_lock
         lock_path = File.join(@root, LOCK_PATH)
-        FileUtils.mkdir_p(File.dirname(lock_path))
+        FileUtils.mkdir_p(File.dirname(lock_path), mode: 0o700)
         File.open(lock_path, File::RDWR | File::CREAT, 0o600) do |io|
           io.flock(File::LOCK_EX)
           yield
