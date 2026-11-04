@@ -20,6 +20,26 @@ class PostsControllerTest < ActionDispatch::IntegrationTest
     assert_select "#post_#{post_record.id} .post-vote-rail", 1
   end
 
+  # The card's Copy link and Share passed the URL as data-clipboard-source-value,
+  # but the vendored clipboard controller reads a `source` target, so every
+  # press threw "Missing target" and copied nothing.
+  test "the card's copy and share buttons carry their URL to a controller that reads it" do
+    city = brgen_city
+    user = User.create!(email_address: "post-copy-#{SecureRandom.hex(4)}@example.com",
+                        password: "password12345", city:)
+    post_record = ActsAsTenant.with_tenant(city) do
+      Post.create!(user:, title: "Kopier meg", content: "lenke", city:)
+    end
+
+    host! "brgen.no"
+    get posts_url
+
+    card = "#post_#{post_record.id}"
+    assert_select "#{card} [data-clipboard-source-value]", 0
+    assert_select "#{card} button[data-controller='share'][data-action='click->share#copy']", 1
+    assert_select "#{card} button[data-controller='share'][data-action='click->share#share']", 1
+  end
+
   # Post includes CityTenantable -> acts_as_tenant :city. A request to brgen.no
   # sets ActsAsTenant.current_tenant (application_controller.rb:66-69), which
   # scopes every Post query to that city_id. A fixture built out here, with no

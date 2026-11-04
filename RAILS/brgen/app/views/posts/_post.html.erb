@@ -58,8 +58,14 @@
           <%= render "shared/feed_icon", name: "more" %>
         </button>
         <div class="feed-action-menu-list hidden" data-dropdown-target="menu">
-          <button type="button" data-controller="clipboard" data-clipboard-source-value="<%= post_url(post) %>"
-                  data-action="click->clipboard#copy"><%= t("post.copy_link") %></button>
+          <%# The vendored clipboard controller reads a `source` target, not a
+              value, so these buttons threw and copied nothing; share#copy
+              takes the URL as a value. %>
+          <%= tag.button type: "button", data: { controller: "share", share_url_value: post_url(post),
+                                                share_copied_value: t("posts.link_copied"),
+                                                action: "click->share#copy" } do %>
+            <%= tag.span t("post.copy_link"), data: { share_target: "label" } %>
+          <% end %>
           <%= link_to t("post.view"), post_path(post) %>
           <%= form_with url: post_repost_path(post), method: :post, class: "feed-quote-form",
                         data: { viewer_state: "quote" } do %>
@@ -72,9 +78,10 @@
       </div>
       <%= render "shared/post_embed_action", post: post, url: post_url(post) %>
       <button type="button" class="feed-action"
-              data-controller="clipboard"
-              data-clipboard-source-value="<%= post_url(post) %>"
-              data-action="click->clipboard#copy"
+              data-controller="share"
+              data-share-title-value="<%= post.title %>"
+              data-share-url-value="<%= post_url(post) %>"
+              data-action="click->share#share"
               title="<%= t("post.share_short") %>"
               aria-label="<%= t("post.share") %>">
         <%= render "shared/feed_icon", name: "share" %>

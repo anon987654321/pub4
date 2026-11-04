@@ -58,8 +58,15 @@ class SharedStimulusComponentsTest < Minitest::Test
     # could not fire on a touch viewport at all, and removing it from all four
     # buttons cost 100 of the page's 270 controller instances. Assert the
     # component that does the work, not the company it keeps.
+    #
+    # It then pinned data-controller="clipboard" itself, and the clipboard
+    # component was never doing the work: it reads a `source` target and the
+    # card passed data-clipboard-source-value, so every press threw. The card
+    # uses the share controller (share#share, share#copy), which reads the URL
+    # as a value; the attribute nothing reads must not come back.
     post_partial = read_source(File.join(ROOT, "brgen/app/views/posts/_post.html.erb"))
-    assert_includes post_partial, 'data-controller="clipboard"'
+    assert_includes post_partial, 'data-controller="share"'
+    refute_includes post_partial, "data-clipboard-source-value"
     # ERB comments stripped before the refutation. This fired on 2026-08-10
     # against a partial containing no popover at all: the comment recording *why*
     # the popover was removed says the word, and a refute_includes over raw source

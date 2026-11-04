@@ -19,7 +19,12 @@ export default class extends Controller {
       return
     }
 
-    await navigator.clipboard.writeText(payload.url)
+    await this.copy()
+  }
+
+  // "Copy link" asks for the clipboard, never the share sheet.
+  async copy() {
+    await navigator.clipboard.writeText(this.urlValue || location.href)
     if (!this.hasLabelTarget || !this.copiedValue) return
 
     const label = this.labelTarget.textContent
