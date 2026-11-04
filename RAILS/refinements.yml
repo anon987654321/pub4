@@ -5611,7 +5611,7 @@ items:
   path: RAILS/mrdamascy/public/logo.svg
   item: Optimise logo.svg (46 KB, drawn on every page in the brand bar) with path
     simplification.
-  status: open
+  status: done
 - id: mrdamascy-068
   app: mrdamascy
   area: pwa
