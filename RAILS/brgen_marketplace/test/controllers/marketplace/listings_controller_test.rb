@@ -212,4 +212,23 @@ class Marketplace::ListingsControllerTest < ActionDispatch::IntegrationTest
     listing = Marketplace::Listing.order(:id).last
     assert User.exists?(id: listing.user_id, guest: true)
   end
+
+  # Reporting reached posts and messages only, so a scam listing, a review or
+  # a question could not be reported from the page that shows it.
+  test "a signed-in reader can report the listing, its reviews and its questions" do
+    listing = listing_for(@seller, "Mistenkelig sykkel", price_cents: 1_000)
+    reviewer = User.create!(email_address: "li_reviewer@example.com", password: "secret1234")
+    # Past the purchase rule: the review's existence is the subject, not how it got there.
+    review = Marketplace::Review.new(listing:, user: reviewer, rating: 5, body: "Strålende")
+    review.save!(validate: false)
+    question = Marketplace::Question.create!(listing:, user: @seller, body: "Ring meg?")
+    sign_in(@buyer)
+
+    get marketplace.listing_path(listing)
+
+    assert_response :success
+    [ listing, review, question ].each do |target|
+      assert_select "#report_#{ActionView::RecordIdentifier.dom_id(target)} form[action=?]", main_app.reports_path
+    end
+  end
 end

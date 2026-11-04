@@ -140,4 +140,16 @@ class Marketplace::StoresControllerTest < ActionDispatch::IntegrationTest
     assert_equal I18n.t("marketplace.store_updated"), flash[:notice]
     assert_equal "Nytt sortiment", @store.reload.description
   end
+
+  test "a signed-in visitor can report a shop, and its owner is not offered to" do
+    report = "#report_#{ActionView::RecordIdentifier.dom_id(@store)}"
+    sign_in(@stranger)
+    get marketplace.shop_path(@store.slug)
+    assert_select report, 1
+
+    delete main_app.session_path
+    sign_in(@owner)
+    get marketplace.shop_path(@store.slug)
+    assert_select report, 0
+  end
 end

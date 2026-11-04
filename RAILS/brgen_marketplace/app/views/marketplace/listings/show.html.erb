@@ -58,6 +58,8 @@
           <%= render "marketplace/listings/favorite_button",
                 listing: @listing,
                 favorited: @listing.favorite_for(Current.user).present? %>
+          <%# A scam listing is reported from its own page; reporting needs an account. %>
+          <%= render "shared/report_button", target: @listing, reason: "scam" if authenticated? %>
         <% end %>
       </nav>
     </div>
@@ -102,13 +104,7 @@
     </div>
   <% end %>
   <% if @reviews.any? %>
-    <% @reviews.each do |review| %>
-      <article>
-        <%= render "shared/store_stars", rating: review.rating %>
-        <p class="deal-meta"><%= review.user&.display_name || t("chat.anon") %> · <%= time_ago(review.created_at) %></p>
-        <%= simple_format(review.body) if review.body.present? %>
-      </article>
-    <% end %>
+    <%= render partial: "marketplace/listings/review", collection: @reviews %>
   <% else %>
     <%= render "shared/empty_state",
           title: t("empty.no_reviews"),

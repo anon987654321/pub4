@@ -4003,7 +4003,7 @@ items:
   item: Render shared/report_button on listings, questions, reviews and shops (it
     is only used on posts and messages today), so a buyer can report a scam listing
     without leaving the page.
-  status: open
+  status: done
 - id: brgen-376
   app: brgen
   area: tv

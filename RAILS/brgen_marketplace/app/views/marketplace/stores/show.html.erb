@@ -19,6 +19,8 @@
         <%= link_to t("marketplace.partner_program"), main_app.new_partner_program_path(store_id: @store.slug), class: "button button-ghost button-small" %>
         <%= button_to t("marketplace.stores.delete"), shop_path(@store.slug), method: :delete, data: { turbo_confirm: t("marketplace.stores.delete_confirm") }, class: "button button-danger button-small" %>
       <% end %>
+    <% elsif authenticated? %>
+      <%= render "shared/report_button", target: @store, reason: nil %>
     <% end %>
   <% end %>
 

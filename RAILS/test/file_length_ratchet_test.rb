@@ -219,7 +219,7 @@ class FileLengthRatchetTest < Minitest::Test
     "brgen/app/services/marketplace/payments/dintero_checkout.rb" => 346,
     "brgen/app/views/conversations/show.html.erb" => 151,
     "brgen/test/helpers/application_helper_test.rb" => 322,
-    "brgen_marketplace/app/views/marketplace/listings/show.html.erb" => 189,
+    "brgen_marketplace/app/views/marketplace/listings/show.html.erb" => 187,
     "test/critique_implementation_test.rb" => 500,
     "test/design_contract_test.rb" => 490,
     "test/checks/flow_coverage_test.rb" => 360,
