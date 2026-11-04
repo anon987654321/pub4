@@ -1010,7 +1010,6 @@ with voice rotation and the dilla fx rack, `RAILS/master` face page,
 - [ ] Norwegian voice for Norwegian text, detected per sentence.
 - [ ] Volume and speed per context (night quieter, summaries faster).
 - [ ] Loudness normalised to one target so voices don't jump.
-- [ ] Optional dilla bed under long summaries, ducked under speech.
 - [ ] Earcons: short distinct sounds for land, fail, decision needed.
 - [ ] Measure and ratchet time-to-first-audio.
 - [ ] Local fallback voice when edge TTS is unreachable.
