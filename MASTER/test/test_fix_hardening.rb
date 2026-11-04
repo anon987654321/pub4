@@ -100,7 +100,7 @@ class FixHardeningTest < Minitest::Test
     assert_equal :human_decision, loop.send(:pass_outcome, 0)
   end
 
-  def coverage_report(semantic_full:)
+  def coverage_report(semantic_full:, council: nil)
     events = []
     bus = Object.new
     bus.define_singleton_method(:publish) do |event, payload = nil, **keywords|
@@ -118,7 +118,7 @@ class FixHardeningTest < Minitest::Test
       plateau_window: 3,
       ground_truth: nil,
       homeostat: nil,
-      council: nil,
+      council:,
       visual_pass: nil,
       opportunity_pass: nil,
       discipline: Object.new,
@@ -129,6 +129,12 @@ class FixHardeningTest < Minitest::Test
     event = events.find { |name, _payload| name == "fix_loop:coverage" }
     refute_nil event
     event.last
+  end
+
+  def test_council_coverage_reports_configuration_not_a_completed_review
+    report = coverage_report(semantic_full: false, council: Object.new)
+
+    assert_equal "configured", report.fetch(:abstract)
   end
 
   def test_sampled_semantic_coverage_is_explicit_in_the_event_contract
