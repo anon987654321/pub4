@@ -12,7 +12,7 @@
           <%= tag.span t("orders.states.#{order.state}"), class: "state-chip state-#{order.state}" %>
           <%= tag.span "##{order.id}" %>
           <% if order.placed_at.present? %>
-            <%= tag.time t("orders.placed_at", when: order.placed_at.strftime("%d.%m %H:%M")),
+            <%= tag.time t("orders.placed_at", when: l(order.placed_at, format: :placed)),
                   datetime: order.placed_at.iso8601 %>
           <% end %>
         </header>

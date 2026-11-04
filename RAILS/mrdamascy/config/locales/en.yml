@@ -5,6 +5,7 @@ en:
       short: '%H:%M'
       long: '%-d %B %Y at %H:%M'
       day: '%a %-d'
+      placed: '%-d %b %H:%M'
   number:
     format:
       delimiter: ','

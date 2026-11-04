@@ -5460,7 +5460,7 @@ items:
   path: RAILS/mrdamascy/app/views/orders/index.html.erb
   item: 'Format placed_at with I18n.l(…, format: :short) instead of strftime("%d.%m
     %H:%M") so the English locale gets its own format.'
-  status: open
+  status: done
 - id: mrdamascy-050
   app: mrdamascy
   area: menu

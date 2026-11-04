@@ -14,7 +14,7 @@
   <% if order.placed_at.present? %>
     <p>
       #<%= order.id %> ·
-      <%= tag.time t("orders.placed_at", when: order.placed_at.strftime("%d.%m %H:%M")),
+      <%= tag.time t("orders.placed_at", when: l(order.placed_at, format: :placed)),
             datetime: order.placed_at.iso8601 %>
     </p>
   <% end %>
