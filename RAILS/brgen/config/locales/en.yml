@@ -52,6 +52,7 @@ en:
     photo_by: "Photo by"
     on_source: "on"
   feed:
+    post_nearby: "Post as Live nearby: anonymous, your area only, 500 characters max"
     compose_prompt: What are you up to today?
     compose_blank: Write something first.
     compose_title: Create post

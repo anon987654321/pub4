@@ -52,6 +52,7 @@ nb:
     photo_by: "Foto av"
     on_source: "på"
   feed:
+    post_nearby: "Del som Live i nærheten: anonymt, bare området, maks 500 tegn"
     compose_prompt: Del noe spennende nå
     compose_blank: Skriv noe først.
     compose_title: Opprett innlegg

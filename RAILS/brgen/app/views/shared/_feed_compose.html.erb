@@ -98,14 +98,15 @@
         </div>
       </div>
 
-      <%# The Live layer, folded in. Attaching your area is the default rather than
-          an opt-in: the coordinate is only here at all because you already shared
-          it, and it is rounded to about a kilometre before anything stores it, so
-          the checkbox was asking permission for something already granted at a
-          precision that names a district rather than an address. Hidden, not
-          removed — the field still travels with the form. %>
+      <%# The Live layer, folded in, and asked for. A Live post is stamped with
+          your area and posted anonymously with a 500-character cap
+          (Post#stamp_live_location!), so this cannot be a hidden default: as one
+          it turned every signed-in post anonymous under the name shown above. %>
       <% if Current.user&.latitude.present? && Current.user.longitude.present? %>
-        <%= f.hidden_field :nearby, value: true %>
+        <label>
+          <%= f.check_box :nearby, {}, "true", "false" %>
+          <%= t("feed.post_nearby") %>
+        </label>
       <% end %>
 
       <%= f.submit t("feed.post_action"), class: "button button-primary composer-submit" %>
