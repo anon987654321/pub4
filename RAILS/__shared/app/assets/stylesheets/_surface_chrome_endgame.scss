@@ -12,7 +12,7 @@
   main#main-content h1,
   main#main-content .page-title,
   main#main-content .post-reading-title {
-    max-inline-size: 18ch;
+    max-inline-size: 40ch;
     margin-block: 0 var(--space-5);
     font-family: var(--font);
     font-size: clamp(2rem, 5vw, 3.25rem);
