@@ -51,6 +51,7 @@ module Master
         # load_yaml already answers {} for a missing or unparseable file, so the
         # literal below is the fallback and no rescue is needed to reach it.
         council_params = Master.load_yaml(Master::COUNCIL_PATH, default: {})["parameters"]
+        VETO_PRECEDENCE = Array(council_params.to_h["veto_precedence"]).map(&:to_s).freeze
         CONVERGENCE_OVERLAP = Float(council_params.to_h["consensus_threshold"] || 0.7)
         CONVERGENCE_TEXT_SIM = 0.6
         LEGACY_PROMPTS_PATH = Master.data_path("prompts", "council.yml").freeze
@@ -141,8 +142,16 @@ module Master
           false
         end
 
-        def review(code, context: nil, personas: nil, image: nil)
-          active = active_personas(personas)
+        # The explicit pre-ship gate always requires Security, even when a
+        # caller supplied a narrower specialist persona panel.
+        def review_pre_ship(code, context: nil, image: nil)
+          review(code, context:, image:, required_veto_roles: ["Security"])
+        end
+
+        def review(code, context: nil, personas: nil, image: nil, required_veto_roles: [])
+          active = active_personas(personas, required_veto_roles:)
+          configuration_error = veto_role_configuration_error
+          return configuration_error if configuration_error
           if active.empty? || !Deliberation.reachable_for?(@agent)
             return unconvened("council: no personas, or no provider reached", :validation, Gap.new(horizon: :never, cost_to_check: :minutes))
           end
@@ -157,14 +166,20 @@ module Master
           context = reflexion_context(context)
           @panel_size = active.size
           feedback = collect_feedback(active, code, context, image:)
-          return deadline_result(feedback) if Master::Review::LLMDispatcher::PassClock.expired?
 
           speak_persona_feedback(feedback) if @voice_personas
+          required_veto = required_veto_response_error(feedback)
+          return required_veto if required_veto
+
           quorum = quorum_error(feedback)
           return quorum if quorum
 
           veto = enforce_veto(feedback)
           return veto if veto
+
+          # A timed-out panel may finish on quorum, but expiry is never allowed
+          # to bypass quorum or a selected veto-capable reviewer's response.
+          return deadline_result(feedback) if Master::Review::LLMDispatcher::PassClock.expired?
 
           append_judge_synthesis(feedback:, code:, context:, image:)
           publish_confidence(feedback)
@@ -180,13 +195,12 @@ module Master
 
         private
 
-        # The council ran out of clock. Whoever answered is the verdict; the pass
-        # goes on to its fixes instead of waiting for the rest.
+        # The council reached its deadline after satisfying its declared quorum
+        # and every veto-capable reviewer's response requirement. Non-veto voices
+        # that did not finish are visible as a timeout, not counted as answers.
         def deadline_result(feedback)
-          Master::Trace::Dmesg.status("council0", "skipped, deadline #{Master::Review::LLMDispatcher::PassClock.budget_s || "cancelled"}s (#{feedback.size} of #{@panel_size} personas answered)")
+          Master::Trace::Dmesg.status("council0", "quorum reached, deadline #{Master::Review::LLMDispatcher::PassClock.budget_s || "cancelled"}s (#{feedback.size} of #{@panel_size} personas answered)")
           @bus&.publish(:council_timeout, completed: feedback.size, total: @panel_size)
-          return Result.err("council: skipped, deadline (0 of #{@panel_size} answered)", category: :timeout) if feedback.empty?
-
           Result.ok(feedback)
         end
 
@@ -196,17 +210,71 @@ module Master
           review(code, context:, image:)
         end
 
-        def active_personas(names)
+        def active_personas(names, required_veto_roles: [])
           active = names ? @personas.select { |persona| names.include?(persona.name) } : @personas
           active = @personas if active.empty? && !@personas.empty?
 
+          explicit = Array(required_veto_roles).map(&:to_s).reject(&:empty?)
+          explicit_downcased = explicit.map(&:downcase)
+          required = @personas.select { |persona| explicit_downcased.include?(persona.name.to_s.downcase) }
+          active |= required
+
+          veto_roles = active.select { |persona| veto_role?(persona) }
+          ordered_veto_roles = veto_roles.each_with_index.sort_by do |persona, index|
+            priority = VETO_PRECEDENCE.index(persona.name.to_s) || VETO_PRECEDENCE.size
+            [priority, index]
+          end.map(&:first)
+          ordered = ordered_veto_roles + (active - ordered_veto_roles)
+
+          @required_veto_role_names = (veto_roles.map { |persona| persona.name.to_s } + explicit).uniq
+          configured_names = @personas.map { |persona| persona.name.to_s.downcase }
+          veto_names = @personas.select { |persona| veto_role?(persona) }.map { |persona| persona.name.to_s.downcase }
+          @veto_role_configuration_errors = explicit.reject do |name|
+            configured_names.include?(name.downcase) && veto_names.include?(name.downcase)
+          end
+          @omitted_veto_role_names = []
+
           target = @availability.council_target(
-            current: active.size,
+            current: ordered.size,
             local_posture: self.class.local_posture?,
             scarce: panel_blocked?,
             local_only: local_floor_available? && !cloud_floor_available?,
           )
-          active.first(target)
+          selected = ordered.first(target)
+          selected_names = selected.map { |persona| persona.name.to_s }
+          @omitted_veto_role_names = @required_veto_role_names.reject do |name|
+            selected_names.any? { |selected_name| selected_name.casecmp?(name) }
+          end
+          selected
+        end
+
+        def veto_role_configuration_error
+          errors = Array(@veto_role_configuration_errors)
+          return if errors.empty?
+
+          @bus&.publish(:council_veto_configuration_missing, required: @required_veto_role_names, invalid: errors)
+          Result.err(
+            "council: required veto reviewer is not configured as a veto role: #{errors.join(", ")}",
+            category: :inconclusive,
+          )
+        end
+
+        def required_veto_response_error(feedback)
+          answered = Array(feedback).filter_map { |entry| entry[:persona]&.to_s }
+          missing = (@required_veto_role_names - answered) | Array(@omitted_veto_role_names)
+          return if missing.empty?
+
+          @bus&.publish(
+            :council_veto_response_missing,
+            required: @required_veto_role_names,
+            answered:,
+            missing: missing.uniq,
+            omitted_by_capacity: @omitted_veto_role_names,
+          )
+          Result.err(
+            "council: required veto reviewer(s) did not answer: #{missing.uniq.join(", ")}",
+            category: :inconclusive,
+          )
         end
 
         # The paid tier is closed for the panel only when every lane it could
@@ -262,10 +330,10 @@ module Master
         end
 
         def quorum_error(feedback)
-          quorum = [MIN_QUORUM, @personas.size].min
+          quorum = [MIN_QUORUM, @panel_size.to_i].min
           return if feedback.size >= quorum
 
-          @bus&.publish(:council_timeout, completed: feedback.size, total: @personas.size)
+          @bus&.publish(:council_timeout, completed: feedback.size, total: @panel_size.to_i)
           # The tally, not just the score. "quorum not reached (2/26)" sent an
           # operator into the per-persona log lines to learn that the answer
           # was "OpenRouter is out of credits" — the reasons were already
@@ -275,7 +343,7 @@ module Master
           # "this tier could not run" instead of parsing prose, and so the
           # verdict never folds "could not run" into "timed out".
           limited = Io::QuotaCheck.tripped?
-          message = "council: quorum not reached (#{feedback.size}/#{@personas.size})#{failure_summary}#{quota_note}"
+          message = "council: quorum not reached (#{feedback.size}/#{@panel_size.to_i})#{failure_summary}#{quota_note}"
           return unconvened(message, Io::QuotaCheck::CATEGORY, spend_gap) if limited
 
           Result.err(message, category: :timeout)
