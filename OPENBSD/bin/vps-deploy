@@ -874,6 +874,22 @@ else
     admin_service stop "$jobs_service" >/dev/null 2>&1 && { jobs_was_up=1; own_stops+=("$jobs_service") }
   fi
 
+  # Swap floor, measured after the stand-down above has freed what it frees.
+  # CI, bundle and asset work on a 1 GB box with swap nearly gone is how every
+  # app was shed: on 2026-11-03 a gem fetch at ~200 MB free took all sites down
+  # for 17 minutes, and on 2026-11-04 a MASTER run at 217 MB free timed brgen out.
+  set_stage preflight-swap
+  min_swap_mb=${VPS_DEPLOY_MIN_FREE_SWAP_MB:-400}
+  swap_blocks=${${(M)${(z)"$(${VPS_DEPLOY_SWAPCTL:-swapctl} -s 2>/dev/null)"}:#<->}[3]:-}
+  if [[ $swap_blocks == <-> ]] && (( swap_blocks * 512 / 1048576 < min_swap_mb )); then
+    (( jobs_was_up )) && admin_service start "$jobs_service" >/dev/null 2>&1
+    free_swap_mb=$(( swap_blocks * 512 / 1048576 ))
+    print -u2 "vps-deploy: $app refused - $free_swap_mb MB of swap free, the floor is $min_swap_mb MB."
+    print -u2 "            The app's jobs service is back up; nothing else was stopped. Free memory (stop another"
+    print -u2 "            app's *_jobs service), then rerun: doas zsh OPENBSD/bin/vps-deploy $app"
+    exit 1
+  fi
+
   set_stage ci+sync
   print "vps-deploy: $app (ci + sync)"
   # `|| ci_status=$?` rather than a bare call and `ci_status=$?` after it. This

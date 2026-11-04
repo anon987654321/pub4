@@ -703,6 +703,47 @@ class VpsDeployContractTest < Minitest::Test
     SOURCE[/^set_stage preflight-disk$.*?^done$/m]
   end
 
+  def swap_block
+    SOURCE[/^  set_stage preflight-swap$.*?^  fi$/m]
+  end
+
+  # vm23's own `swapctl -s` line, with the available count swapped in.
+  def swap_run(dir, available_blocks:)
+    swapctl = File.join(dir, "swapctl")
+    line = "total: 2588672 512-blocks allocated, 2143016 used, #{available_blocks} available"
+    File.write(swapctl, "#!/bin/sh\necho '#{line}'\n")
+    File.chmod(0o755, swapctl)
+    # The gate silences admin_service's own output, so the stub records calls in a file.
+    calls = File.join(dir, "calls")
+    stub = "set_stage() { :; }; admin_service() { print \"admin_service $*\" >> #{calls}; }"
+    script = "app=brgen; jobs_service=brgen_jobs; jobs_was_up=1; VPS_DEPLOY_SWAPCTL=#{swapctl}\n" \
+             "#{stub}\n#{swap_block}\nprint passed\n"
+    out = IO.popen(["zsh", "-c", script, { err: %i[child out] }], &:read)
+    [out + (File.exist?(calls) ? File.read(calls) : ""), $?.exitstatus]
+  end
+
+  def test_too_little_swap_refuses_the_deploy_and_brings_the_jobs_service_back
+    refute_nil swap_block, "the swap preflight is gone - the scan broke, or the check did"
+    Dir.mktmpdir do |dir|
+      out, status = swap_run(dir, available_blocks: 445_656)
+
+      assert_equal 1, status
+      assert_includes out, "217 MB of swap free, the floor is 400 MB"
+      assert_includes out, "admin_service start brgen_jobs"
+      refute_includes out, "passed"
+    end
+  end
+
+  def test_enough_swap_lets_the_deploy_continue
+    Dir.mktmpdir do |dir|
+      out, status = swap_run(dir, available_blocks: 1_200_000)
+
+      assert_equal 0, status
+      assert_includes out, "passed"
+      refute_includes out, "admin_service start"
+    end
+  end
+
   def disk_run(dir, free_kb:)
     File.write(File.join(dir, "df"), "#!/bin/sh\nprintf 'Filesystem 1024-blocks Used Available Capacity Mounted on\\n/dev/sd0k 17000000 1000 #{free_kb} 80%% %s\\n' \"$2\"\n")
     File.chmod(0o755, File.join(dir, "df"))

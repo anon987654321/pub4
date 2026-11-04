@@ -730,7 +730,6 @@ recommended first ten.
 - [ ] * Vendor gems on the Mac for OpenBSD/amd64; no `bundle install` compiles on vm23.
 - [ ] Cache built native gems (nokogiri and others) and reuse the `.so` files.
 - [ ] Stop each app's web server during its own deploy rather than run two copies.
-- [ ] * vps-deploy memory gate: refuse to start with under 400 MB swap free.
 - [ ] Report memory pressure to brgen's internal status page.
 - [ ] Smaller SQLite cache sizes per database.
 - [ ] Drop unused middleware and engines per app in production.
@@ -843,8 +842,6 @@ recommended first ten.
 
 ### Hooks and visibility
 
-- [ ] * requested-vs-done hook recognises `push_only.rb` and `operator vps deploy` inside scripts.
-- [ ] * It counts only the current user message's requests, and accepts a pure question.
 - [ ] One `/internal/status` page: deploy commit, memory, swap, jobs, errors.
 - [ ] Push notification when vm23 swap drops under 150 MB.
 - [ ] Weekly digest: landed, failed, waiting on the operator.
