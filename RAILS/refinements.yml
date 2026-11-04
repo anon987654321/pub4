@@ -5113,7 +5113,7 @@ items:
   path: RAILS/mrdamascy/app/views/shared/_toast.html.erb
   item: Give alert flashes role="alert" and keep them until dismissed; toast_controller
     removes alerts after 3.5 s as well (WCAG 2.2.1).
-  status: open
+  status: done
 - id: mrdamascy-008
   app: mrdamascy
   area: accessibility
