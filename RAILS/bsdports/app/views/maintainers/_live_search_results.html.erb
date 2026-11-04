@@ -7,7 +7,7 @@
  <% @maintainers.each do |maintainer| %>
  <li>
  <%= link_to maintainer.name, maintainer_path(maintainer) %>
- <% if maintainer.email.present? %><%= tag.small maintainer.email %><% end %>
+ <% if maintainer.email.present? %><%= tag.small obfuscated_email(maintainer.email) %><% end %>
  <%= tag.small t("ports.port_count", count: maintainer.ports.size) %>
  </li>
  <% end %>

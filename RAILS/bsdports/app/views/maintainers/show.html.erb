@@ -2,7 +2,7 @@
 <header>
   <%= tag.h1 @maintainer.name %>
   <% if @maintainer.email.present? %>
-    <p><%= link_to @maintainer.email, "mailto:#{@maintainer.email}" %></p>
+    <%= tag.p obfuscated_email(@maintainer.email) %>
   <% end %>
 </header>
 <ul id="ports" class="port-list">

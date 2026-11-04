@@ -4428,7 +4428,7 @@ items:
   item: Render maintainer email addresses with the shared obfuscation (or mailto only
     on click) on maintainer index and show pages, which are crawlable lists of ~1000
     addresses.
-  status: open
+  status: done
 - id: bsdports-028
   app: bsdports
   area: pwa
