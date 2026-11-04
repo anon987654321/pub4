@@ -6276,7 +6276,7 @@ items:
   path: RAILS/__shared/config/initializers/security_headers.rb
   item: Test that this Permissions-Policy matches the one in OPENBSD relayd.conf,
     which the comment says must stay in agreement.
-  status: open
+  status: done
 - id: shared-045
   app: shared
   area: tokens
