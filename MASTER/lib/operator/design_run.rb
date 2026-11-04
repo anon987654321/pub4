@@ -148,7 +148,9 @@ module Operator
       Master::Io::GitOperations.new(root).git!("commit", "-q", "-m", message, "--", relative)
       true
     rescue RuntimeError => e
-      say("not committed: #{e.message[0, 200]}")
+      # The pre-commit hook's "leaving uncommitted" list comes first and filled the
+      # old 200-character cut, hiding the refusal itself; its last lines say why.
+      say("not committed: #{e.message.lines.map(&:strip).reject(&:empty?).last(4).join(' / ')[0, 400]}")
       false
     end
 

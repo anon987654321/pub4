@@ -30,6 +30,26 @@ class TestDesignLoop < Minitest::Test
 
   def refused(edit) = assert_raises(EDIT::Refused) { edit.check! }.message
 
+  # The commit-msg hook holds every commit to MASTER's shape. The loop wrote
+  # "design: <the whole rationale>." with no trailer, so all six edits a run
+  # kept on 2026-11-04 were refused and sat uncommitted.
+  def test_a_kept_edit_commits_in_masters_commit_shape
+    with_sheet do |path|
+      why = "A 32px gap under the sign-in heading separates it from the lead paragraph."
+      edit = EDIT.parse(reply(path, find: "padding: 4px;", replace: "padding: 8px;", why:),
+                        allowed: [path], rules: EDIT::Rules.new(guard: nil, scale: nil))
+      loop_run = LOOP.new(plan: LOOP::Plan.new(surfaces: [], root: Dir.pwd, rounds: 1, candidates: 1), world: nil)
+      surface = Surface.new("amber/sessions_new/desktop", "amber")
+      loop_run.instance_variable_set(:@target, { surface:, score: 52.8 })
+
+      message = loop_run.send(:commit_message, edit, 55.6)
+
+      assert_empty Master::Ground::CommitFormat.problems(message, root: File.expand_path("..", __dir__))
+      assert message.start_with?("Refine the amber sessions new layout at desktop width\n\n")
+      assert_includes message, "52.8 -> 55.6"
+    end
+  end
+
   def test_an_edit_to_spacing_is_applied_and_undone
     with_sheet do |path|
       edit = parse(path, find: "padding: 4px;", replace: "padding: 16px;")

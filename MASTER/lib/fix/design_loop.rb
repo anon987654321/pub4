@@ -316,10 +316,17 @@ module Master
         round(number:, why: edit.why, outcome: :kept, after:)
       end
 
+      # MASTER's commit shape (data/commit_format.yml), which the commit-msg hook
+      # enforces: a short subject naming the surface, the reasoning in the body, a
+      # trailer. It was "design: <the whole rationale>." with no trailer, so the
+      # hook refused every kept edit and they sat uncommitted in the tree.
       def commit_message(edit, after)
-        "design: #{edit.why}\n\n" \
-          "#{@target[:surface].id} layout score #{@target[:score].round(1)} -> #{after.round(1)}\n" \
-          "Made by the operator-run design loop; local until the operator pushes, revert this commit to undo."
+        app, page, viewport = @target[:surface].id.split("/")
+        subject = "Refine the #{app} #{page.to_s.tr('_', ' ')} layout at #{viewport} width"
+        body = "#{edit.why}\n\n#{@target[:surface].id} layout score #{@target[:score].round(1)} -> " \
+               "#{after.round(1)}. Made by the operator-run design loop; local until the operator " \
+               "pushes, and reverting this commit undoes it."
+        "#{subject}\n\n#{body}\n\n#{Master::Core::World::COMMIT_TRAILER}"
       end
 
       # The rows re-measured after a kept edit replace their old entries; the rest stay.
