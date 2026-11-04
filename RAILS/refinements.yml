@@ -176,7 +176,7 @@ items:
   path: RAILS/amber/app/views/items/_item.html.erb
   item: Translate the item category value in the item page dl and item cards using
     the same labels amber_item_category_options uses.
-  status: open
+  status: done
 - id: amber-022
   app: amber
   area: i18n
@@ -184,7 +184,7 @@ items:
   path: RAILS/amber/app/views/items/show.html.erb
   item: Translate lifecycle_state, mood_effect and life_phase values on the item page
     and AI tag card instead of printing raw or humanized enum strings.
-  status: open
+  status: done
 - id: amber-023
   app: amber
   area: i18n

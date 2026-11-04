@@ -29,6 +29,20 @@ module ApplicationHelper
 
   def amber_season_options = amber_enum_options(Item::SEASONS, scope: "outfits.seasons")
 
+  # One stored enum value in the reader's language, keyed the way
+  # amber_enum_options keys the select it was chosen from. An unknown value
+  # prints as stored rather than raising.
+  def amber_enum_label(value, scope:)
+    return if value.blank?
+
+    t("#{scope}.#{value.to_s.tr('-', '_').downcase}", default: value.to_s).upcase_first
+  end
+
+  def item_category_label(value) = amber_enum_label(value, scope: "items.item_categories")
+  def lifecycle_state_label(value) = amber_enum_label(value, scope: "lifecycle_states")
+  def mood_effect_label(value) = amber_enum_label(value, scope: "items.mood_effects")
+  def life_phase_label(value) = amber_enum_label(value, scope: "items.life_phases")
+
   def amber_item_category_options = amber_enum_options(Item::CATEGORIES, scope: "items.item_categories")
 
   def amber_mood_effect_options = amber_enum_options(Item::MOOD_EFFECTS, scope: "items.mood_effects")

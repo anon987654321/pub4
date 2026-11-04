@@ -1,9 +1,9 @@
 <div id="item_<%= item.id %>_tags" class="ai-card">
   <% if item.mood_effect.present? %>
-    <span class="tag"><%= t("items.mood_label", mood: item.mood_effect) %></span>
+    <%= tag.span t("items.mood_label", mood: mood_effect_label(item.mood_effect)), class: "tag" %>
   <% end %>
   <% if item.life_phase.present? %>
-    <span class="tag tag--phase"><%= item.life_phase %></span>
+    <%= tag.span life_phase_label(item.life_phase), class: "tag tag--phase" %>
   <% end %>
   <% if result["reason"].present? %>
     <p><%= result["reason"] %></p>
