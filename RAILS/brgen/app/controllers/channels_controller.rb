@@ -52,14 +52,16 @@ rooms = Conversation.channels.where(city_id: @city&.id).to_a
   private
 
   def load_rail
-    return unless Current.user
+    reader = Current.user
+    return unless reader
 
-    @rail_conversations = Conversation.for_user(Current.user)
+    @rail_conversations = Conversation.for_user(reader)
                                       .where(slug: nil)
                                       .includes(:participants)
                                       .order(Conversation::INBOX_ORDER)
                                       .limit(30)
     @rail_last_messages = Conversation.last_messages_for(@rail_conversations.map(&:id))
-    @rail_unread = Conversation.unread_counts_for(Current.user)
+    @rail_pinned, @rail_muted = ConversationParticipant.flag_sets_for(reader, @rail_conversations.map(&:id))
+    @rail_unread = Conversation.unread_counts_for(reader)
   end
 end

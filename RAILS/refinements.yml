@@ -2232,7 +2232,7 @@ items:
   path: RAILS/brgen/app/views/conversations/_rail_row.html.erb
   item: Show a muted icon and a pinned marker on rail rows; @muted_ids and pins exist
     but the rail draws neither.
-  status: open
+  status: done
 - id: brgen-163
   app: brgen
   area: messenger

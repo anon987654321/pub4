@@ -56,7 +56,8 @@
   <ul class="messenger-inbox-list" role="list" id="rail_conversations">
     <% if Current.user %>
       <%= render partial: "conversations/rail_row", collection: rail_conversations, as: :room,
-                 locals: { unread_counts: rail_unread, last_messages: rail_last_messages, current_room: } %>
+                 locals: { unread_counts: rail_unread, last_messages: rail_last_messages, current_room:,
+                           pinned_ids: @rail_pinned || Set.new, muted_ids: @rail_muted || Set.new } %>
       <% if rail_conversations.empty? %>
         <li role="listitem" class="messenger-inbox-empty"><%= t("messages.empty_title") %></li>
       <% end %>

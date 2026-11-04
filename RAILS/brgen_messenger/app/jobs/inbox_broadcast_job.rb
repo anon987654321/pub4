@@ -74,8 +74,11 @@ class InboxBroadcastJob < ApplicationJob
           locals: { conversation: @conversation, viewer: reader, unread:, pinned:, muted:, last:, archived: false })
     place(reader, "conversations/rail_row", move:,
           locals: { room: @conversation, viewer: reader, unread_counts: { @conversation.id => unread },
-                    last_messages: @last_messages })
+                    last_messages: @last_messages, pinned_ids: flag_set(pinned), muted_ids: flag_set(muted) })
   end
+
+  # The rail row reads the reader's pins and mutes as sets of ids.
+  def flag_set(flag) = flag ? Set[@conversation.id] : Set.new
 
   # A prepend with the row's id moves it: Turbo removes the list's existing
   # child with the same id before inserting, so a thread already on screen is

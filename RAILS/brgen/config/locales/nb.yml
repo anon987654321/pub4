@@ -479,6 +479,7 @@ nb:
     mute: Demp
     unmute: Opphev demping
     muted: Dempet
+    pinned: Festet
     archive: Arkiver
     unarchive: Flytt til innboksen
     archive_link: "Arkiv (%{count})"

@@ -211,6 +211,7 @@ class ConversationsController < ApplicationController
                                       .limit(30)
     count_side_lists
     @rail_last_messages = Conversation.last_messages_for(@rail_conversations.map(&:id))
+    @rail_pinned, @rail_muted = ConversationParticipant.flag_sets_for(Current.user, @rail_conversations.map(&:id))
     @rail_unread = Conversation.unread_counts_for(Current.user)
   end
 

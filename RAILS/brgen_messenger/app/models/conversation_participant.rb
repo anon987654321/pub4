@@ -27,6 +27,13 @@ class ConversationParticipant < ApplicationRecord
   # Both are the viewer's own handling of their inbox, and both are timestamps
   # for the reason pinned_at is.
   scope :muted, -> { where.not(muted_at: nil) }
+
+  # The reader's pinned and muted threads among +conversation_ids+, as two
+  # sets, in one read: what the rooms rail marks on each row.
+  def self.flag_sets_for(user, conversation_ids)
+    rows = where(user_id: user.id, conversation_id: conversation_ids).pluck(:conversation_id, :pinned_at, :muted_at)
+    [ rows.select { |row| row[1] }.to_set(&:first), rows.select { |row| row[2] }.to_set(&:first) ]
+  end
   scope :archived, -> { where.not(archived_at: nil) }
 
   def muted? = muted_at.present?

@@ -475,6 +475,7 @@ en:
     mute: Mute
     unmute: Unmute
     muted: Muted
+    pinned: Pinned
     archive: Archive
     unarchive: Move to inbox
     archive_link: "Archive (%{count})"

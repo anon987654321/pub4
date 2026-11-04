@@ -6,6 +6,8 @@
 <% unread = unread_counts.fetch(room.id, 0) %>
 <% last = last_messages[room.id] %>
 <% name = room.display_name_for(viewer) %>
+<% pinned = local_assigns.fetch(:pinned_ids, Set.new).include?(room.id) %>
+<% muted = local_assigns.fetch(:muted_ids, Set.new).include?(room.id) %>
 <li role="listitem" id="<%= dom_id(room, :rail) %>">
   <%= link_to conversation_path(room), class: "messenger-inbox-room",
               data: { turbo_frame: "messenger-pane" },
@@ -20,6 +22,8 @@
       <% end %>
     </span>
     <span class="messenger-room-meta">
+      <%= tag.small t("messages.pinned"), class: "messenger-rail-flag" if pinned %>
+      <%= tag.small t("messages.muted"), class: "messenger-rail-flag" if muted %>
       <% if unread.positive? %>
         <%= tag.span unread, class: "messenger-rail-unread", aria: { hidden: true } %>
         <%= tag.span t("messages.unread_badge", count: unread), class: "visually-hidden" %>

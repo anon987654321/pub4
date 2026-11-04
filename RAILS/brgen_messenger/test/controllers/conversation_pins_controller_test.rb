@@ -87,4 +87,20 @@ class ConversationPinsControllerTest < ActionDispatch::IntegrationTest
     post conversation_pin_path(@old)
     assert_response :not_found
   end
+
+  # The rail drew neither, so a pinned or muted thread looked like any other
+  # wherever the inbox list was not on screen.
+  test "the rooms rail marks a pinned thread and a muted one" do
+    participant(@old, @user).update!(pinned_at: Time.current)
+    participant(@new, @user).update!(muted_at: Time.current)
+    sign_in_as(@user)
+
+    get conversations_path
+
+    pinned_row = "##{ActionView::RecordIdentifier.dom_id(@old, :rail)}"
+    muted_row = "##{ActionView::RecordIdentifier.dom_id(@new, :rail)}"
+    assert_select "#{pinned_row} .messenger-rail-flag", text: I18n.t("messages.pinned")
+    assert_select "#{muted_row} .messenger-rail-flag", text: I18n.t("messages.muted")
+    assert_select "#{muted_row} .messenger-rail-flag", count: 1
+  end
 end
