@@ -513,6 +513,7 @@ nb:
       "24h": 24 timer
       after_read: Når den er lest
     disappearing_note: Skjermbilde kan ikke hindres. Den du skriver til kan fortsatt ta bilde av skjermen eller kopiere teksten.
+    disappearing_changed: "Endret forsvinnende meldinger til «%{setting}»."
     view_once_chip: forsvinner når den er lest
     here_now:
       one: "%{count} her nå"

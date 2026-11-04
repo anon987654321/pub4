@@ -3612,7 +3612,7 @@ items:
   path: RAILS/brgen_messenger/app/controllers/conversations_controller.rb
   item: Post a system line into the thread when the disappearing timer changes, so
     every participant sees who changed it and to what.
-  status: open
+  status: done
 - id: brgen-329
   app: brgen
   area: security

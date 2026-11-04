@@ -120,7 +120,9 @@ class ConversationsController < ApplicationController
       return
     end
     duration = Conversation::DISAPPEARING_OPTIONS[params[:disappearing]]
+    changed = @conversation.disappearing_duration != duration
     if @conversation.update(disappearing_duration: duration)
+      announce_disappearing_change if changed
       redirect_to @conversation, notice: t("flash.disappearing_messages_updated")
     else
       redirect_to @conversation, alert: t("flash.settings_update_failed")
@@ -142,6 +144,15 @@ class ConversationsController < ApplicationController
   private
 
   # Channel rooms keep CHANNEL_TTL; a group's timer is set by its ops.
+  # A changed timer is said in the thread, as a line from whoever changed it,
+  # so every participant sees who set it and to what. The sender is the who;
+  # naming them in the text would undo an anonymous room's handles.
+  def announce_disappearing_change
+    setting = t("messages.disappearing_options.#{params[:disappearing]}")
+    @conversation.messages.create!(sender: Current.user, message_type: "text",
+                                   content: t("messages.disappearing_changed", setting:))
+  end
+
   def disappearing_refusal
     return "flash.channel_ttl_locked" if @conversation.channel?
     return "flash.settings_update_failed" unless Conversation::DISAPPEARING_OPTIONS.key?(params[:disappearing])

@@ -508,6 +508,7 @@ en:
       "24h": 24 hours
       after_read: Once read
     disappearing_note: A screenshot cannot be prevented. The person you write to can still photograph the screen or copy the text.
+    disappearing_changed: "Changed disappearing messages to “%{setting}”."
     view_once_chip: disappears once read
     here_now:
       one: "%{count} here now"
