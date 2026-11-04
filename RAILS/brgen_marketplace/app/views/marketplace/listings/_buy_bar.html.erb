@@ -16,9 +16,12 @@
               params: { quantity: 1 },
               class: "button button-ghost listing-buy-bar-secondary" %>
       <% elsif Marketplace::Payments::VippsCheckout.configured? %>
+        <%# Without Turbo, as the Dintero button: the answer is a redirect to
+            landing.vipps.no, which a Turbo fetch cannot follow cross-origin. %>
         <%= button_to checkout_path,
               params: { provider: "vipps", listing_id: buybar_listing.id },
-              class: "button button-primary listing-buy-bar-cta" do %>
+              class: "button button-primary listing-buy-bar-cta",
+              form: { data: { turbo: false } } do %>
           <%= image_tag "vipps/vipps-wordmark-on-orange.svg", alt: "", width: 59, height: 24 %>
           <%= t("marketplace.buy_now_vipps") %>
         <% end %>

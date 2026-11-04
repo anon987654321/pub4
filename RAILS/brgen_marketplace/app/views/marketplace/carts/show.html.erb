@@ -72,20 +72,22 @@
     <% stripe_ready = Marketplace::Payments::StripeCheckout.configured? &&
          !(Rails.env.production? && Marketplace::Payments::StripeCheckout.test_key?) %>
     <%# The pay buttons submit without Turbo: checkout answers with a redirect to
-        the provider's own host, and a fetch cannot follow a cross-origin redirect. %>
+        the provider's own host, and a fetch cannot follow a cross-origin redirect.
+        form-submit#lock disables a button once pressed, as the takeaway order
+        form does: a second click started a second payment session. %>
     <% if dintero_ready || vipps_ready || stripe_ready %>
       <div class="cart-pay-actions" role="group" aria-label="<%= t("marketplace.payment_methods") %>">
         <% if dintero_ready %>
           <%= button_to t("marketplace.pay_dintero"), checkout_path,
                 method: :post, params: { provider: "dintero" },
                 class: "button button-primary cart-pay-dintero",
-                form: { data: { turbo: false } } %>
+                form: { data: { turbo: false, controller: "form-submit", action: "submit->form-submit#lock" } } %>
         <% end %>
         <% if vipps_ready %>
           <%= button_to checkout_path,
                 method: :post, params: { provider: "vipps" },
                 class: "button button-primary cart-pay-vipps",
-                form: { data: { turbo: false } } do %>
+                form: { data: { turbo: false, controller: "form-submit", action: "submit->form-submit#lock" } } do %>
             <%= image_tag "vipps/vipps-wordmark-on-orange.svg", alt: "", width: 59, height: 24 %>
             <%= t("marketplace.pay_vipps") %>
           <% end %>
@@ -94,7 +96,7 @@
           <%= button_to t("marketplace.pay_stripe"), checkout_path,
                 method: :post, params: { provider: "stripe" },
                 class: "button button-ghost cart-pay-stripe",
-                form: { data: { turbo: false } } %>
+                form: { data: { turbo: false, controller: "form-submit", action: "submit->form-submit#lock" } } %>
         <% end %>
       </div>
     <% else %>

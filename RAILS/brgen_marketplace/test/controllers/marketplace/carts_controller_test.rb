@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "test_helper"
+require "minitest/mock"
 
 # A pending order is a line in the buyer's cart. These tests cover the cart
 # page, the quantity and withdraw edits on a line, the bulk seller re-notify,
@@ -137,5 +138,23 @@ class Marketplace::CartsControllerTest < ActionDispatch::IntegrationTest
     assert_equal I18n.t("flash.marketplace.address_needed"), flash[:alert]
   ensure
     prior ? ENV["STRIPE_SECRET_KEY"] = prior : ENV.delete("STRIPE_SECRET_KEY")
+  end
+
+  # The pay buttons run without Turbo, so nothing stopped a second click from
+  # starting a second payment session. Each now locks its form once pressed.
+  test "every pay button locks its form once pressed" do
+    sign_in(@buyer)
+
+    Marketplace::Payments::VippsCheckout.stub(:configured?, true) do
+      Marketplace::Payments::StripeCheckout.stub(:configured?, true) do
+        get marketplace.cart_path
+      end
+    end
+
+    assert_response :success
+    assert_select "form[data-turbo=false] button.cart-pay-vipps", 1
+    assert_select "form[data-turbo=false] [type=submit].cart-pay-stripe", 1
+    assert_select "form[data-turbo=false]:not([data-action~='submit->form-submit#lock']) .cart-pay-vipps", 0
+    assert_select "form[data-turbo=false]:not([data-action~='submit->form-submit#lock']) .cart-pay-stripe", 0
   end
 end

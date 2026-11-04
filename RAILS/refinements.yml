@@ -2835,7 +2835,7 @@ items:
   item: 'Disable the cart pay buttons on submit (form-submit#lock, as the takeaway
     order form does), since they run with turbo: false and a second click starts a
     second PSP session.'
-  status: open
+  status: done
 - id: brgen-235
   app: brgen
   area: payments
@@ -2845,7 +2845,7 @@ items:
     buy bar, matching the Dintero button beside it, so the cross-origin redirect to
     landing.vipps.no is followed by the browser instead of failing inside a Turbo
     fetch.'
-  status: open
+  status: done
 - id: brgen-236
   app: brgen
   area: playlist

@@ -9,6 +9,9 @@ export default class extends Controller {
     // button dead forever, and Turbo restores this form from cache on back.
     this.element.addEventListener("turbo:submit-end", this.onSubmitEnd)
     document.addEventListener("turbo:before-cache", this.onSubmitEnd)
+    // A form that submits without Turbo leaves the page, and Back can restore
+    // it from the browser's own cache with the button still disabled.
+    window.addEventListener("pageshow", this.onSubmitEnd)
     this.unlock()
   }
 
@@ -16,6 +19,7 @@ export default class extends Controller {
     this.element.removeEventListener("submit", this.onSubmit)
     this.element.removeEventListener("turbo:submit-end", this.onSubmitEnd)
     document.removeEventListener("turbo:before-cache", this.onSubmitEnd)
+    window.removeEventListener("pageshow", this.onSubmitEnd)
   }
 
   // Double-submit guard. Two composer forms have carried

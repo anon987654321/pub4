@@ -67,4 +67,16 @@ class BuyNowVippsTest < ActionDispatch::IntegrationTest
       end
     end
   end
+
+  # The answer to the Vipps buy-now is a redirect to landing.vipps.no, which a
+  # Turbo fetch cannot follow cross-origin; the Dintero button beside it
+  # already submitted without Turbo.
+  test "the Vipps buy-now button submits without Turbo" do
+    Marketplace::Payments::VippsCheckout.stub(:configured?, true) do
+      get "/listings/#{@listing.to_param}"
+    end
+
+    assert_response :success
+    assert_select "form[data-turbo=false] input[name=provider][value=vipps]", 1
+  end
 end
