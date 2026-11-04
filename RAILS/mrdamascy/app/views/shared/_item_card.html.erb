@@ -1,28 +1,32 @@
 <%# Menu item card — photo tile (generated studio shot) with the emoji as
     the no-photo fallback, name, origin chip (flag-free), heat dots, weight
     honesty badge, price, and either a one-tap quick-add (items without
-    options) or a jump to the full item sheet. %>
+    options) or a jump to the full item sheet. The dish's own face (photo,
+    name, facts, badges) is fragment-cached per dish version and language;
+    the add form stays live, since it carries the visitor's form token. %>
 <% needs_options = item.item_options.any? %>
-<% badges = badge_tags(item) %>
 
 <article class="item-card card" data-turbo-frame="_top">
-  <%= link_to menu_item_path(item), class: "item-card-hit" do %>
-    <% if (picture = food_picture(item, size: 56, class: "item-photo", loading: "lazy")) %>
-      <%= picture %>
-    <% else %>
-      <span class="item-emoji" aria-hidden="true"><%= item.emoji %></span>
-    <% end %>
-    <span class="item-body">
-      <%= tag.span item.localized(:name), class: "item-name" %>
-      <span class="item-facts">
-        <%= origin_chip(item) %>
-        <% if item.weight_g.to_i.positive? %>
-          <%= tag.span "#{item.weight_g} g", class: "badge badge-weight" %>
-        <% end %>
-        <%= heat_dots(item) %>
+  <% cache [item, I18n.locale] do %>
+    <%= link_to menu_item_path(item), class: "item-card-hit" do %>
+      <% if (picture = food_picture(item, size: 56, class: "item-photo", loading: "lazy")) %>
+        <%= picture %>
+      <% else %>
+        <%= tag.span item.emoji, class: "item-emoji", aria: { hidden: true } %>
+      <% end %>
+      <span class="item-body">
+        <%= tag.span item.localized(:name), class: "item-name" %>
+        <span class="item-facts">
+          <%= origin_chip(item) %>
+          <% if item.weight_g.to_i.positive? %>
+            <%= tag.span "#{item.weight_g} g", class: "badge badge-weight" %>
+          <% end %>
+          <%= heat_dots(item) %>
+        </span>
+        <% badges = badge_tags(item) %>
+        <%= tag.span badges, class: "item-badges" if badges.present? %>
       </span>
-      <%= tag.span badges, class: "item-badges" if badges.present? %>
-    </span>
+    <% end %>
   <% end %>
 
   <span class="item-side">

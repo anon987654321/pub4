@@ -5603,7 +5603,7 @@ items:
   path: RAILS/mrdamascy/app/views/menu/show.html.erb
   item: Fragment-cache the menu sections keyed on the categories' and items' max updated_at;
     every request re-renders every item and option.
-  status: open
+  status: done
 - id: mrdamascy-067
   app: mrdamascy
   area: performance
