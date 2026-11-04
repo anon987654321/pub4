@@ -29,6 +29,9 @@ module Webhooks
 
     # Events that mean money is reserved / taken — treat as paid for marketplace.
     PAID_NAMES = %w[AUTHORIZED CAPTURED].freeze
+    # The buyer backed out, or the payment lapsed or was stopped. Ignoring these
+    # left the order or basket pending_payment for good, with no way to retry.
+    FAILED_NAMES = %w[ABORTED EXPIRED CANCELLED TERMINATED].freeze
 
     def create
       payload = request.raw_post
@@ -92,17 +95,18 @@ module Webhooks
 
     def handle_payload(body)
       name = body["name"].to_s.upcase
-      success = body["success"] == true
       reference = body["reference"].to_s
-      return unless success
-      return unless PAID_NAMES.include?(name)
-      return if reference.blank?
+      return unless body["success"] == true && reference.present?
 
-      order = Webhooks::PaymentPaid.find_order_from_vipps_reference(reference)
-      return if order.nil?
+      payable = Webhooks::PaymentPaid.find_order_from_vipps_reference(reference)
+      return if payable.nil?
 
-      Webhooks::PaymentPaid.mark_paid!(order, reference: reference)
-      Webhooks::PaymentPaid.enqueue_google_conversion(order)
+      if PAID_NAMES.include?(name)
+        Webhooks::PaymentPaid.mark_paid!(payable, reference:)
+        Webhooks::PaymentPaid.enqueue_google_conversion(payable)
+      elsif FAILED_NAMES.include?(name)
+        payable.fail_payment!(provider: "vipps")
+      end
     end
   end
 end

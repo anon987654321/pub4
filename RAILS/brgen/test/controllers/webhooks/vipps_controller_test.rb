@@ -72,6 +72,31 @@ class Webhooks::VippsControllerTest < ActionDispatch::IntegrationTest
     assert_response :unauthorized
   end
 
+  # An aborted or expired payment was ignored, so the order stayed
+  # pending_payment and the buyer could never pay again.
+  test "an aborted payment returns the order to payable" do
+    Brgen::CitySeed.sync! if City.table_exists?
+    ActsAsTenant.current_tenant = City.find_by!(domain: "brgen.no")
+    buyer = User.create!(email_address: "va-#{SecureRandom.hex(4)}@brgen.no", password: "password123")
+    listing = Marketplace::Listing.create!(
+      user: User.create!(email_address: "vs-#{SecureRandom.hex(4)}@brgen.no", password: "password123"),
+      title: "Ting #{SecureRandom.hex(3)}", category: Marketplace::Category.create!(name: "D-#{SecureRandom.hex(3)}"),
+      price_cents: 20_000, status: "active", currency: "NOK"
+    )
+    order = Marketplace::Order.create!(buyer:, listing:, quantity: 1, price_cents: 20_000)
+    reference = "brgen-order-#{order.id}-abcd1234"
+    order.mark_payment_pending!(provider: "vipps", reference:)
+
+    payload = { reference:, name: "ABORTED", success: true, occurred: Time.current.httpdate }.to_json
+    post webhooks_vipps_path, params: payload, headers: headers_for(payload)
+
+    assert_response :ok
+    assert_equal "failed", order.reload.payment_status
+    assert order.startable?, "the buyer cannot try the payment again"
+  ensure
+    ActsAsTenant.current_tenant = nil
+  end
+
   test "accepts a correctly signed callback" do
     payload = body
     post webhooks_vipps_path, params: payload, headers: headers_for(payload)

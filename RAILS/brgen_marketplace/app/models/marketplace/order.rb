@@ -149,11 +149,12 @@ class Marketplace::Order < ApplicationRecord
     )
   end
 
-  def fail_payment!(transaction_id: nil)
+  def fail_payment!(transaction_id: nil, provider: payment_provider)
     return self if payment_status.in?(%w[paid refunded])
 
     update!(
       payment_status: "failed",
+      payment_provider: provider,
       dintero_transaction_id: transaction_id.presence || dintero_transaction_id
     )
   end

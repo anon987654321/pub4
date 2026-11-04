@@ -92,16 +92,18 @@ class Marketplace::Checkout < ApplicationRecord
     end
   end
 
-  def fail_payment!(transaction_id: nil)
+  # Reopens the basket so the buyer can pay again. Vipps calls this too, for a
+  # payment the buyer aborted or let expire, so the provider is the caller's.
+  def fail_payment!(transaction_id: nil, provider: "dintero")
     return self if status == "paid"
 
     transaction do
       update!(
-        payment_provider: "dintero",
+        payment_provider: provider,
         dintero_transaction_id: transaction_id.presence || dintero_transaction_id,
         status: "open"
       )
-      order_lines.each { |order| order.fail_payment!(transaction_id: transaction_id) }
+      order_lines.each { |order| order.fail_payment!(transaction_id:, provider:) }
     end
   end
 
