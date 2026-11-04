@@ -1,0 +1,140 @@
+diff --git a/file.c b/file.c
+--- a/file.c
++++ b/file.c
+@@ -532,39 +532,52 @@
+ static struct rb_stat *
+ stat_alloc(VALUE klass, VALUE *obj)
+ {
+     struct rb_stat *rb_st;
+     *obj = TypedData_Make_Struct(klass, struct rb_stat, &stat_data_type, rb_st);
+     return rb_st;
+ }
+ 
++#if RUBY_USE_STATX
++/*
++ * Convert the portable stat result into the representation used by
++ * File::Stat when Ruby was compiled with statx support. STATX_BTIME is
++ * intentionally absent: legacy stat cannot report a birth time.
++ */
++static void
++rb_statx_from_stat(struct statx *destination, const struct stat *source)
++{
++    *destination = (struct statx) {
++        .stx_mask = STATX_BASIC_STATS,
++        .stx_blksize = (uint32_t)source->st_blksize,
++        .stx_nlink = (uint32_t)source->st_nlink,
++        .stx_uid = (uint32_t)source->st_uid,
++        .stx_gid = (uint32_t)source->st_gid,
++        .stx_mode = (uint16_t)source->st_mode,
++        .stx_atime = stat_atimespec(source),
++        .stx_mtime = stat_mtimespec(source),
++        .stx_ctime = stat_ctimespec(source),
++        .stx_ino = source->st_ino,
++        .stx_size = source->st_size,
++        .stx_blocks = source->st_blocks,
++        .stx_dev_major = major(source->st_dev),
++        .stx_dev_minor = minor(source->st_dev),
++        .stx_rdev_major = major(source->st_rdev),
++        .stx_rdev_minor = minor(source->st_rdev),
++    };
++}
++#endif
++
+ VALUE
+ rb_stat_new(const struct stat *st)
+ {
+     VALUE obj;
+     struct rb_stat *rb_st = stat_alloc(rb_cStat, &obj);
+     if (st) {
+ #if RUBY_USE_STATX
+-# define CP(m) .stx_ ## m = st->st_ ## m
+-# define CP_32(m) .stx_ ## m = (uint32_t)st->st_ ## m
+-# define CP_TS(m) .stx_ ## m = stat_ ## m ## spec(st)
+-        rb_st->stat = (struct statx){
+-            .stx_mask = STATX_BASIC_STATS,
+-            CP(mode),
+-            CP_32(nlink),
+-            CP(uid),
+-            CP(gid),
+-            CP_TS(atime),
+-            CP_TS(mtime),
+-            CP_TS(ctime),
+-            CP(ino),
+-            CP(size),
+-            CP(blocks),
+-        };
+-# undef CP
+-# undef CP_TS
++        rb_statx_from_stat(&rb_st->stat, st);
+ #else
+         rb_st->stat = *st;
+ #endif
+         rb_st->initialized = true;
+@@ -1327,29 +1340,63 @@
+     return (void *)io_blocking_statx(data);
+ }
+ 
++static int
++statx_unavailable_error(void)
++{
++    /* ENOSYS: kernel has no statx; EPERM: a seccomp profile denied it. */
++    return errno == ENOSYS || errno == EPERM;
++}
++
+ static int
+ statx_without_gvl(const char *path, rb_io_stat_data *stx, unsigned int mask)
+ {
+     no_gvl_rb_io_stat_data data = {stx, AT_FDCWD, path, 0, mask};
++    struct stat fallback;
++    int result;
+ 
+     /* call statx(2) with pathname */
+-    return IO_WITHOUT_GVL_INT(no_gvl_statx, &data);
++    result = IO_WITHOUT_GVL_INT(no_gvl_statx, &data);
++    if (result >= 0 || !statx_unavailable_error()) return result;
++    if (stat_without_gvl(path, &fallback) < 0) return -1;
++    rb_statx_from_stat(stx, &fallback);
++    return 0;
+ }
+ 
++#ifdef HAVE_LSTAT
++static int lstat_without_gvl(const char *path, struct stat *st);
++#endif
++
+ static int
+ lstatx_without_gvl(const char *path, rb_io_stat_data *stx, unsigned int mask)
+ {
+     no_gvl_rb_io_stat_data data = {stx, AT_FDCWD, path, AT_SYMLINK_NOFOLLOW, mask};
++    struct stat fallback;
++    int result;
+ 
+     /* call statx(2) with pathname */
+-    return IO_WITHOUT_GVL_INT(no_gvl_statx, &data);
++    result = IO_WITHOUT_GVL_INT(no_gvl_statx, &data);
++    if (result >= 0 || !statx_unavailable_error()) return result;
++#ifdef HAVE_LSTAT
++    if (lstat_without_gvl(path, &fallback) < 0) return -1;
++    rb_statx_from_stat(stx, &fallback);
++    return 0;
++#else
++    return result;
++#endif
+ }
+ 
+ static int
+ fstatx_without_gvl(rb_io_t *fptr, rb_io_stat_data *stx, unsigned int mask)
+ {
+     no_gvl_rb_io_stat_data data = {stx, fptr->fd, "", AT_EMPTY_PATH, mask};
++    struct stat fallback;
++    int result;
+ 
+     /* call statx(2) with fd */
+-    return (int)rb_io_blocking_region(fptr, io_blocking_statx, &data);
++    result = (int)rb_io_blocking_region(fptr, io_blocking_statx, &data);
++    if (result >= 0 || !statx_unavailable_error()) return result;
++    if (fstat_without_gvl(fptr, &fallback) < 0) return -1;
++    rb_statx_from_stat(stx, &fallback);
++    return 0;
+ }
+ 
+ #define FSTATX(fd, st) statx(fd, "", AT_EMPTY_PATH, STATX_ALL, st)
