@@ -1,13 +1,14 @@
 # frozen_string_literal: true
 
 require "minitest/autorun"
-require_relative "../../brgen/test/source_reader"
 
 # The server takes a photo or a voice note with no words (Message validates
 # content only when nothing is attached); the composer must let one be sent.
 # Read from source because the suite has no browser for these controllers.
+# The engine's own controllers sit beside this test in the repo and on the box,
+# where brgen itself is /home/brgen/app and ../../brgen does not exist.
 class ComposerAttachmentContractTest < Minitest::Test
-  CONTROLLERS = File.join(SourceReader::ROOT, "brgen_messenger", "app", "javascript", "controllers")
+  CONTROLLERS = File.expand_path("../app/javascript/controllers", __dir__)
 
   def test_send_is_enabled_by_an_attached_file
     source = File.read(File.join(CONTROLLERS, "typing_input_controller.js"))
