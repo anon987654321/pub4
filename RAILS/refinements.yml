@@ -5703,7 +5703,7 @@ items:
   path: RAILS/mrdamascy/config/initializers/content_security_policy.rb
   item: Generate the CSP nonce with SecureRandom.base64(16) per request; request.session.id
     repeats across requests and is blank before the session is first written.
-  status: open
+  status: done
 - id: mrdamascy-080
   app: mrdamascy
   area: security
