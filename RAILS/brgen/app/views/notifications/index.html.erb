@@ -10,4 +10,5 @@
   <div id="notification_list">
     <%= render "notifications/grouped_list" %>
   </div>
+  <%= render "shared/pager", pagy: @pagy, label: t("notifications.title") %>
 <% end %>

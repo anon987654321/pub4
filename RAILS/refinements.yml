@@ -2581,7 +2581,7 @@ items:
   size: M
   path: RAILS/brgen/app/controllers/notifications_controller.rb
   item: Page past the 100 most recent notifications instead of truncating silently.
-  status: open
+  status: done
 - id: brgen-205
   app: brgen
   area: notifications

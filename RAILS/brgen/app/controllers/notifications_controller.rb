@@ -8,6 +8,7 @@ class NotificationsController < Shared::NotificationsController
   before_action :require_real_user
 
   GROUP_ORDER = %w[mention match message reply like reaction follow order alert custom].freeze
+  PER_PAGE = 100
 
   def index
     load_notification_index_state
@@ -64,7 +65,9 @@ class NotificationsController < Shared::NotificationsController
   end
 
   def load_notification_index_state
-    @notifications = notification_scope.recent.includes(:actor, :notifiable).limit(100)
+    # A hundred a page, and the pager past them: a hard limit(100) dropped
+    # everything older without a word.
+    @pagy, @notifications = pagy(notification_scope.recent.includes(:actor, :notifiable), limit: PER_PAGE)
     @unread_count = notification_scope.unread.count
     @grouped_notifications = @notifications.group_by { |notification| notification.kind.to_s }
     @group_order = GROUP_ORDER

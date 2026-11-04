@@ -65,6 +65,22 @@ class NotificationsPageTest < ActionDispatch::IntegrationTest
     assert notification.reload.read?
   end
 
+  test "the inbox pages past its hundred newest instead of dropping the rest" do
+    rows = (1..101).map do |n|
+      at = n.minutes.ago
+      { user_id: @user.id, kind: "custom", title: "Varsel-#{n}-slutt", created_at: at, updated_at: at }
+    end
+    Notification.insert_all!(rows)
+
+    get notifications_path
+    assert_select "article.notification-card", 100
+    refute_includes response.body, "Varsel-101-slutt"
+    assert_select "nav.pager a[rel=next][href*=?]", "page=2"
+
+    get notifications_path(page: 2)
+    assert_includes response.body, "Varsel-101-slutt"
+  end
+
   test "nobody opens another reader's notification" do
     theirs = Notification.create!(user: @actor, actor: @user, kind: "follow")
 
