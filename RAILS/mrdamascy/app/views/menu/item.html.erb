@@ -1,4 +1,5 @@
 <% content_for :title, @item&.localized(:name) || t("menu.title") %>
+<% content_for :description, @item.localized(:description) if @item&.localized(:description).present? %>
 
 <%# MenuController#item provides @item with its options (ordered, in @options).
     The item sheet is one form posting to add_item_cart: option chips

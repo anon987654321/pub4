@@ -95,6 +95,7 @@ en:
     reorder: Yalla again
     total: Total
     zone_note: We deliver across inner east — check your postcode at checkout.
+    delivery_facts: "Delivery from %{fee} · at your door within %{eta} min"
   origins:
     damaskus: The recipe comes from grandfather's shawarma stall by Souq al-Hamidiyah. The garlic sauce is made every morning — toum the way you remember it.
     beirut: Beirut carves its lamb thin and generous — Joseph and Jabbour taught us that pomegranate and red onion are the best of friends. One bite and you're standing on the Corniche.

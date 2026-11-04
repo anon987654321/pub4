@@ -95,6 +95,7 @@ nb:
     reorder: Yalla igjen
     total: Totalt
     zone_note: Vi leverer på indre øst — sjekk postnummeret i kassen.
+    delivery_facts: "Levering fra %{fee} · fram på inntil %{eta} min"
   origins:
     damaskus: Oppskriften fra bestefars shawarma-bod ved Souq al-Hamidiyah. Hvitløkssausen lages hver morgen — toum som dere husker den.
     beirut: Beirut skjærer lammen tynt og gavmildt — Joseph og Jabbour lærte oss at granateple og rødløk er beste vennepar. Én bit, og du står på Corniche.

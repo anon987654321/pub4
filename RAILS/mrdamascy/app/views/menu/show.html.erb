@@ -1,4 +1,5 @@
 <% content_for :title, t("menu.title") %>
+<%= restaurant_json_ld(@kitchen, @categories) if @kitchen %>
 
 <%# MenuController#show provides @kitchen, @categories (available_items with
     their options) and @last_order. This view only presents. %>
@@ -13,7 +14,12 @@
       <%= number_with_precision(@kitchen.rating, precision: 1) %> · <%= @kitchen.localized_opening_hours %>
     </p>
   <% end %>
-  <%= tag.p t("menu.zone_note"), class: "hero-meta" %>
+  <%# The zones' own cheapest fee and slowest promise, once any exist. %>
+  <% if @min_delivery_fee_ore && @max_eta_minutes %>
+    <%= tag.p t("menu.delivery_facts", fee: money(@min_delivery_fee_ore), eta: @max_eta_minutes), class: "hero-meta" %>
+  <% else %>
+    <%= tag.p t("menu.zone_note"), class: "hero-meta" %>
+  <% end %>
 </section>
 
 <% if @last_order && @last_order.order_items.any? %>

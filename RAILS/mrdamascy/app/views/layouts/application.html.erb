@@ -4,7 +4,18 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <title><%= content_for?(:title) ? yield(:title) : t("app.title") %></title>
-    <meta name="description" content="<%= t("app.description") %>">
+    <%# A page may say what it is (content_for :description); the app's own
+        line otherwise. The share card (public/og-card.png) rides along. %>
+    <% description = content_for?(:description) ? yield(:description) : t("app.description") %>
+    <%= tag.meta name: "description", content: description %>
+    <%= tag.meta property: "og:type", content: "website" %>
+    <%= tag.meta property: "og:site_name", content: t("app.name") %>
+    <%= tag.meta property: "og:title", content: content_for?(:title) ? yield(:title) : t("app.title") %>
+    <%= tag.meta property: "og:description", content: description %>
+    <%= tag.meta property: "og:url", content: request.original_url %>
+    <%= tag.meta property: "og:image", content: "#{request.base_url}/og-card.png" %>
+    <%= tag.meta property: "og:locale", content: I18n.locale == :en ? "en_GB" : "nb_NO" %>
+    <%= tag.meta name: "twitter:card", content: "summary_large_image" %>
     <meta name="theme-color" content="#FFFFFF">
     <link rel="manifest" href="/manifest.json">
     <link rel="apple-touch-icon" href="/apple-touch-icon.png">

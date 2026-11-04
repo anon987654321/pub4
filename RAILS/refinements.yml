@@ -5498,7 +5498,7 @@ items:
   path: RAILS/mrdamascy/app/views/menu/show.html.erb
   item: Use @min_delivery_fee_ore and @max_eta_minutes, which MenuController#show
     already queries, in the hero instead of the static menu.zone_note copy.
-  status: open
+  status: done
 - id: mrdamascy-054
   app: mrdamascy
   area: menu
@@ -5724,7 +5724,7 @@ items:
   path: RAILS/mrdamascy/app/views/layouts/application.html.erb
   item: Let pages set their own meta description (content_for :description), starting
     with the item description on menu/:id.
-  status: open
+  status: done
 - id: mrdamascy-082
   app: mrdamascy
   area: seo
@@ -5732,7 +5732,7 @@ items:
   path: RAILS/mrdamascy/app/views/layouts/application.html.erb
   item: Add Open Graph and Twitter card tags using public/og-card.png, which exists
     but is referenced nowhere.
-  status: open
+  status: done
 - id: mrdamascy-083
   app: mrdamascy
   area: seo
@@ -5740,7 +5740,7 @@ items:
   path: RAILS/mrdamascy/app/views/menu/show.html.erb
   item: Add Restaurant and Menu JSON-LD (address, opening hours, price range, menu
     items) to the menu page.
-  status: open
+  status: done
 - id: mrdamascy-084
   app: mrdamascy
   area: staff
