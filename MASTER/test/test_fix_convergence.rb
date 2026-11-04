@@ -1966,6 +1966,19 @@ end
     assert_equal :learned, guidance[:prediction][:status]
   end
 
+  # vm23: boot wired cognition through the /fix execution lock, a file the
+  # master user cannot open, and the agent container never booted.
+  def test_wiring_cognition_at_boot_takes_no_fix_execution_lock
+    loop = build_loop([])
+    lock = Object.new
+    lock.define_singleton_method(:synchronize) { raise Errno::EACCES, ".master/fix-execution.lock" }
+    loop.instance_variable_set(:@run_mutex, lock)
+    cognition = Object.new
+
+    assert_same loop, loop.wire_cognition(cognition)
+    assert_same cognition, loop.instance_variable_get(:@cognition)
+  end
+
   def test_sparse_fix_outcome_history_does_not_change_requested_scope
     loop = build_loop([])
     cognition = Object.new

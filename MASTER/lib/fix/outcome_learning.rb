@@ -15,19 +15,23 @@ module Master
       CANONICAL_TREES = MasterPaths::TREES
 
       # Boot wires the already-running cognitive service after restoring its
-      # state. Serialized against active attempts so a run sees one reader.
+      # state. A run reads @cognition once, so it sees one reader. This takes no
+      # /fix execution lock: that lock is a file in the checkout's .master, and
+      # the master app on vm23 runs as a user who cannot open dev's lock, so
+      # boot raised EACCES. Boot would also have waited for any /fix running.
       def wire_cognition(cognition)
-        @run_mutex.synchronize { @cognition = cognition }
+        @cognition = cognition
         self
       end
 
       private
 
       def outcome_guidance(target:, incremental:)
-        return { incremental:, prediction: nil } unless @cognition
+        cognition = @cognition
+        return { incremental:, prediction: nil } unless cognition
 
         label = fix_target_label(target)
-        prediction = @cognition.predict_outcome(context: "target=#{label}", action: "/fix")
+        prediction = cognition.predict_outcome(context: "target=#{label}", action: "/fix")
         guarded = incremental && prediction[:status] == :learned &&
                   prediction[:success_probability].to_f < 0.5
         if prediction[:samples].to_i.positive?
