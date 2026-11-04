@@ -114,6 +114,16 @@ class HotwireSurfacesTest < ActionDispatch::IntegrationTest
     assert_includes response.body, "interaction-check"
   end
 
+  # From a wardrobe card there is no stats frame to replace, so the press must
+  # confirm itself somewhere the grid can see.
+  test "wearing an item confirms with a toast and a translated state" do
+    item = @user.items.create!(title: "Coat", category: "Outerwear", times_worn: 0, lifecycle_state: "active")
+    post wear_item_path(item), as: :turbo_stream
+    assert_select "turbo-stream[action=append][targets=body] template .toast-stack .toast[role=status]",
+                  text: I18n.t("flash.worn_today")
+    assert_not_includes response.body, %(<span class="tag">Active</span>)
+  end
+
   test "wear action has an early tactile signal without a new per-button controller" do
     item = @user.items.create!(title: "Jacket", category: "Outerwear", times_worn: 0)
     get item_path(item)

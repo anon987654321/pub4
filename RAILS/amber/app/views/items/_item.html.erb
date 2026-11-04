@@ -2,6 +2,9 @@
   <div class="item-photo-wrap">
     <% if item.photos.attached? %>
       <%= responsive_image_tag item.photos.first, alt: item.title, preset: :card, sizes: "(max-width: 768px) 50vw, 280px", class: "item-photo" %>
+    <% else %>
+      <%# The category's initial, as the demo and outfit cards draw it; the wrap was empty. %>
+      <%= tag.div item.category.to_s.first, class: "item-photo item-photo--placeholder", aria: { hidden: true } %>
     <% end %>
     <nav role="navigation" aria-label="<%= t("items.actions_label") %>">
       <%= button_to t("items.wear"), wear_item_path(item), method: :post, class: "button-small" %>

@@ -718,7 +718,7 @@ items:
   path: RAILS/amber/app/views/items/_item.html.erb
   item: Show a photo placeholder (category initial) on wardrobe cards without photos,
     as demo and outfit cards do; items/_item renders an empty photo wrap.
-  status: open
+  status: done
 - id: amber-089
   app: amber
   area: ux
@@ -750,7 +750,7 @@ items:
   path: RAILS/amber/app/views/items/wear.turbo_stream.erb
   item: Give feedback when 'Wear' is pressed on an item card in the grid; wear.turbo_stream
     only replaces the item page's stats frame, so the card shows nothing.
-  status: open
+  status: done
 - id: amber-093
   app: amber
   area: ux
