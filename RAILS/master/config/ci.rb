@@ -7,7 +7,7 @@ CI.run do
   step "Security: Gem audit", "bundle exec bundler-audit check"
   step "Style: RuboCop", "bundle exec rubocop"
   step "Security: Brakeman", "bundle exec brakeman --quiet --no-pager --exit-on-warn --exit-on-error"
-  step "Face boot static tests", "node --test test/face_boot.test.mjs"
+  step "Node tests", "node --test test/*.test.mjs"
   step "Web CI probe", "ruby script/ci_web_probe"
   step "Rails tests", "bin/rails test"
 end

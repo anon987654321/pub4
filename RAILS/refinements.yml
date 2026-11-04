@@ -4842,7 +4842,7 @@ items:
   path: RAILS/master/config/ci.rb
   item: Run every test/*.test.mjs in bin/ci; only face_boot.test.mjs runs, the other
     two dozen node tests never do.
-  status: open
+  status: done
 - id: master-012
   app: master
   area: cleanup
