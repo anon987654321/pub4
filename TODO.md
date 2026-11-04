@@ -1071,3 +1071,181 @@ with voice rotation and the dilla fx rack, `RAILS/master` face page,
 - [ ] Learn preferences from accepted vs rejected proposals.
 - [ ] Never guess pronouns; use the stated ones or they/them.
 - [ ] Weekly reflection: what annoyed the operator this week and what changed because of it.
+
+## Open from the 2026-11-04 session — /fix gets better at design
+
+/fix already carries `design_audit`, `design_loop`, `layout_score`,
+`typography_audit`, `scale_snap`, `tap_target_pad`, `taste_memory`,
+`ux_refinement_catalog`, the `visual_*` family and `dead_css_*`. Most rows
+below wire, measure or tighten those rather than add new modules.
+Asterisked rows first.
+
+### Seeing
+
+- [ ] * Every design mission captures 390, 768 and 1280 px before and after; no visual commit without the pair.
+- [ ] * Opacity-stack overlays across pages of one app (the 2026-11-03 method) as a standing consistency score.
+- [ ] Canny edge stacks to expose misaligned columns and gutters.
+- [ ] Capture dialog, menu, error, empty and loading states, not only default pages.
+- [ ] Capture `?view=media` and other query-driven modes from the route manifest.
+- [ ] Dark-mode capture for every page.
+- [ ] Capture with Norwegian and English copy; flag overflow from the longer one.
+- [ ] Capture at 200% text zoom; flag clipped or overlapping text.
+- [ ] Capture with reduced motion and forced colours.
+- [ ] Keyboard-only walk: record focus order and visible focus per page.
+- [ ] Touch walk at 390 px: every target at least 44 px, measured from the render.
+- [ ] Record scroll-length per page; flag pages that grew more than 20%.
+
+### Measuring
+
+- [ ] * Spacing rhythm score: every vertical gap on the 4/8 px scale, measured from computed styles.
+- [ ] * Type scale score: every rendered font size and line height maps to a token.
+- [ ] Colour score: every rendered colour maps to a token; contrast WCAG AA at minimum.
+- [ ] Alignment score: left edges per page cluster on few columns.
+- [ ] Density score: content area to chrome ratio at 390 px.
+- [ ] Measure line length in characters; flag over 75 or under 30.
+- [ ] Count distinct button shapes per app; target one per role.
+- [ ] Count distinct border radii, shadows and borders; target the token set.
+- [ ] Detect divitis: wrapper depth and non-semantic containers per view.
+- [ ] Detect presentational class names in ERB.
+- [ ] Layout shift (CLS) and largest paint per page from the capture run.
+- [ ] CSS weight per app and unused selector share from coverage.
+- [ ] Icon consistency: stroke width and optical size per icon set.
+- [ ] Ratchet each score per app; a design commit may not lower any.
+
+### Judging
+
+- [ ] * A vision critique pass per page against the house style (flat brutalist, Swiss sans + mono, no serifs) with findings tied to elements.
+- [ ] * Pairwise judge: show before and after, ask which is better and why; reject commits that lose.
+- [ ] Reference board per app: approved screenshots the judge compares against.
+- [ ] Heuristic checklist from Baymard and Nielsen run per page type (form, list, detail, checkout).
+- [ ] Copy critique: plain words, active verbs, no needless words, nb and en.
+- [ ] Hierarchy critique: one primary action per view.
+- [ ] Empty-state critique: every list says what to do next.
+- [ ] Error-state critique: every error says what happened and how to fix it.
+- [ ] Separate the judge model from the editing model.
+- [ ] Record the judge's reasons with the commit.
+
+### Editing
+
+- [ ] * Edit tokens and shared partials before page-level CSS; a fix in one place beats twenty.
+- [ ] * Exact-string edits with a capture after each; revert on any score drop.
+- [ ] Prefer removing CSS to adding it; report net lines.
+- [ ] Replace wrapper divs with semantic elements as a mechanical transform with a render check.
+- [ ] Rename presentational classes to role names, moving style into SCSS.
+- [ ] Snap stray values to the nearest token (`scale_snap`) with a diff preview.
+- [ ] Pad tap targets (`tap_target_pad`) only where the measure fails.
+- [ ] Fix contrast by moving to the nearest passing token, never ad-hoc colours.
+- [ ] Merge near-duplicate components found by the overlay.
+- [ ] Batch one design rule across all apps in one mission, one commit per app.
+- [ ] Never edit the operator's hand-written CSS outside rule-derived changes.
+
+### Taste
+
+- [ ] * Feed accepted and rejected design commits into `taste_memory` with the screenshots.
+- [ ] Store the operator's design directives as checkable rules (no serifs, one font, flat).
+- [ ] Learn per-app identity: brgen, amber, bsdports and mrdamascy stay distinct where they should.
+- [ ] Score proposals against the taste memory before the judge sees them.
+- [ ] Show the operator a contact sheet of proposed changes; one tap approves the batch.
+
+### Process
+
+- [ ] * Design missions run on a local server with fresh assets, never stale precompiled ones.
+- [ ] Reset the test DB and seed demo content before capture so pages are full.
+- [ ] Capture and score in one background job; edits wait for the baseline.
+- [ ] One app at a time on the 8 GB Mac.
+- [ ] Contact sheet per mission in the morning summary.
+- [ ] Golden design set: ten past design commits /fix must reproduce or beat.
+- [ ] Track design score per app over time in a chart on the master web UI.
+- [ ] Stop and report when two edits in a row fail the judge.
+
+## Open from the 2026-11-04 session — radically simplify and reorganise pub4
+
+Measured 2026-11-04: MASTER 2,232 tracked files (lib 801 files, 144,904
+Ruby lines, 215 of them under `lib/fix`; test 822; data 93 YAML), RAILS
+3,443 (brgen 1,011, `__shared` 603, five `brgen_*` engines at the top
+level), OPENBSD 286, STUDIO 69, 81 Markdown files. These are candidates
+that need the semantic census above before any move. Asterisked rows first.
+
+### Repository root
+
+- [ ] * Move generated `snapshot_*.md` out of the root into an ignored build directory or a release artifact.
+- [ ] * One agent entry file (`AGENTS.md`); `CLAUDE.md`, `GEMINI.md` and `GLM.md` become one-line pointers or symlinks.
+- [ ] Fold `TREE_CONTRACTS.md` into each tree's own README.
+- [ ] Remove the root `redeploy` and `tmp` entries or ignore them.
+- [ ] Keep `VERSION` only if something reads it.
+- [ ] Split this file into `backlog.yml` per tree plus a short human index.
+
+### MASTER
+
+- [ ] * Collapse `lib/fix` (215 files) into a handful of subsystems: intake, plan, edit, verify, commit, learn, visual.
+- [ ] * Merge `lib/review/scan`, `lib/fix/scan` and `checks/` into one detector registry.
+- [ ] Merge `lib/io` and `lib/ground` where both wrap external tools.
+- [ ] Move the face (`lib/face`, `lib/cli/face`) into one module with one renderer.
+- [ ] Move `lib/music` to STUDIO; MASTER calls it, not owns it.
+- [ ] Move `lib/finance`, `lib/mobile`, `lib/device` behind plugins or delete if unreached.
+- [ ] Delete modules with no production caller (reachability scan), one batch per commit.
+- [ ] Fold the 93 data YAML files into fewer files by owner: soul, laws, runtime, models, design, voice.
+- [ ] One config loader for all data files.
+- [ ] Merge `contracts/`, `convergence.yml` and `PATH_OWNERSHIP.yml` into the data tree.
+- [ ] Move `docs/` and `man/` into one `doc/` with generated man pages.
+- [ ] Prune `tools/` (135 files): delete one-off scripts, promote the rest to `bin/operator` subcommands.
+- [ ] Collapse `bin/` (30 files) to `master`, `operator` and `fix`.
+- [ ] Test tree mirrors lib tree one to one; delete tests for deleted code.
+- [ ] Replace per-file tests of tiny helpers with table-driven tests.
+- [ ] Remove compatibility constants once the receipt-parity tests pass.
+- [ ] Drop `plugins/` that nothing loads.
+- [ ] Cap file length at 300 lines and method length at 20 with the existing ratchets.
+- [ ] Rename vague modules (`gap`, `phoenix`, `unwrap_error`) to what they do.
+
+### RAILS
+
+- [ ] * Move the five top-level `brgen_*` engines under `RAILS/brgen/engines/`.
+- [ ] * Merge `master` and `master_web` into one app.
+- [ ] Replace the `_*.sh` root scripts with one Ruby `bin/rails-ops` tool.
+- [ ] Delete `__other` after checking every reference.
+- [ ] Merge `apps.yml` and `apps.horizon.yml`.
+- [ ] Move `coverage/`, `visual_completion.yml` and `crawl_manifest.yml` under `RAILS/test/` or an ignored build directory.
+- [ ] Move `RAILS/screenshot_*.png` into `RAILS/screenshots/` (still ignored).
+- [ ] One Gemfile base in `__shared` that apps extend.
+- [ ] One `config/` base in `__shared` (initializers, puma/falcon, locales) with per-app overrides.
+- [ ] Move shared test support into `__shared/test/support`; delete the copies.
+- [ ] One SCSS foundation in `__shared`; apps keep identity tokens only.
+- [ ] One Stimulus controller set in `__shared/frontend`; delete per-app forks.
+- [ ] Shared mailer layouts and templates; apps override copy only.
+- [ ] Rename `__shared` to `shared` once tooling follows.
+- [ ] Generate per-app boilerplate (bin, config.ru, boot) from one template.
+- [ ] Delete dead routes and controllers found by the route manifest and coverage.
+- [ ] Collapse migrations per app into a schema load plus recent migrations.
+- [ ] Move seeds to fixtures-based demo data in one shared loader.
+- [ ] Merge `RAILS/test` contract tests into MASTER checks or the apps' own tests.
+- [ ] Drop `package.json` and `package-lock.json` if importmap covers everything.
+- [ ] Merge `RAILS/docs` into the app READMEs.
+
+### OPENBSD
+
+- [ ] * Move the loose root scripts (`OPERATOR.sh`, `_net.sh`, `backup_priv.sh`, `emergency_cpu.sh`, `sync.rb`, `ptr_openbsd_amsterdam.rb`, `relayd_prune_keypairs.rb`) into `bin/`, rewritten in Ruby where they are zsh.
+- [ ] * Mirror the box: `etc/`, `usr/`, `var/`, `home/` hold only what is installed; everything else moves to `bin/` or `lib/`.
+- [ ] Merge `deploy_inventory.json` and `vm_resource.yml` into `data/`.
+- [ ] Merge `RUNBOOK.md`, `README.md` and `CLAUDE.md` into one README.
+- [ ] One deploy entry point (`bin/vps-deploy`); retire the others.
+- [ ] Generate relayd, httpd and rc.d files from `data/` (DNS already works this way).
+- [ ] Delete `dev/` if it is scratch.
+
+### STUDIO
+
+- [ ] Move `photograph.rb`, `subprocess.rb` and `output_paths.rb` into `lib/`.
+- [ ] Merge `agent-guidance` and `docs` into the README.
+- [ ] Decide whether `replicate` belongs in STUDIO or MASTER.
+- [ ] One CLI entry for dilla and postpro.
+
+### Cross-tree
+
+- [ ] * One test command for the whole repo that runs each tree's suite with the right Ruby.
+- [ ] One Ruby version across trees and vm23 (3.4 vs 4.0 still diverge).
+- [ ] One lint configuration at the root.
+- [ ] One place for generated artefacts, ignored by git.
+- [ ] Delete exact-duplicate files beyond the necessary `.keep` placeholders.
+- [ ] Measure and ratchet tracked file counts per tree downwards.
+- [ ] Each tree keeps one README with a three-line purpose at the top.
+- [ ] Move every generator's output path into one manifest.
+- [ ] Remove the snapshot pre-push step once snapshots are release artefacts.
