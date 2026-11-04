@@ -6,6 +6,7 @@ nb:
     formats:
       short: "%H:%M"
       long: "%-d. %B %Y"
+      datetime: "%-d. %B %Y kl. %H:%M"
       month: "%B %Y"
       day: "%a %-d."
   # purchase_date is a Date, and l(date, format: :month) reads date.formats,

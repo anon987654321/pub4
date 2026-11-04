@@ -4,11 +4,12 @@
 <li>
   <article>
     <h2><%= link_to live_stream.title, live_stream_path(live_stream) %></h2>
-    <%# The raw Time printed "2026-11-03 13:00:00 UTC"; a localised date in <time>. %>
+    <%# The raw Time printed "2026-11-03 13:00:00 UTC"; a localised date and
+        time in <time>, since :long is date-only and a session is at an hour. %>
     <% starts_at = live_stream.scheduled_at || live_stream.created_at %>
     <p>
       <%= live_stream_status_label(live_stream.status) %>,
-      <%= tag.time l(starts_at, format: :long), datetime: starts_at.iso8601 %>
+      <%= tag.time l(starts_at, format: :datetime), datetime: starts_at.iso8601 %>
     </p>
     <% if live_stream.user_id == Current.user.id %>
       <%= button_to t("live_streams.mark_live"), live_stream_path(live_stream), method: :patch, params: { start: true }, class: "button", data: { turbo_frame: "live-streams" } if live_stream.status == "scheduled" %>

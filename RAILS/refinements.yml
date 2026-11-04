@@ -193,7 +193,7 @@ items:
   item: 'Show the time of a scheduled live stream: the stream row uses l(time, :long)
     and nb time.formats.long is date-only, and show uses :short which is time-only,
     so neither page shows date and time together.'
-  status: open
+  status: done
 - id: amber-024
   app: amber
   area: i18n
@@ -201,7 +201,7 @@ items:
   path: RAILS/amber/app/views/live_streams/show.html.erb
   item: Translate live stream status in the show page hgroup; it passes the raw status
     into style_session while the list uses live_stream_status_label.
-  status: open
+  status: done
 - id: amber-025
   app: amber
   area: i18n
