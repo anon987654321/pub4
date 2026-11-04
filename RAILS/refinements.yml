@@ -1044,7 +1044,7 @@ items:
   item: On a failed reply, replace reply_form_<parent_id> instead of the hard-coded
     'comment_form' in CommentsController#create; today a reply's errors overwrite
     the top-level form and the typed reply is lost.
-  status: open
+  status: done
 - id: brgen-021
   app: brgen
   area: comments
@@ -1052,7 +1052,7 @@ items:
   path: RAILS/brgen/app/controllers/comments_controller.rb
   item: Re-render the failing reply form (reply_form_<id>) on a reply error; the failure
     path always replaces the root comment_form.
-  status: open
+  status: done
 - id: brgen-022
   app: brgen
   area: comments
@@ -1061,7 +1061,7 @@ items:
   item: Refuse comments on posts in communities where community.banned?(Current.user)
     in CommentsController#set_commentable; postable_by? stops banned users posting,
     but nothing stops them commenting.
-  status: open
+  status: done
 - id: brgen-023
   app: brgen
   area: comments

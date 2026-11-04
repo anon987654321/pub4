@@ -15,7 +15,7 @@ class CommentsController < ApplicationController
   before_action :require_real_user, only: [ :destroy, :generate_summary ]
   rate_limit to: 5, within: 1.minute, only: :generate_summary, name: "summary",
              by: -> { Current.user&.id ? "u#{Current.user.id}" : request.remote_ip }
-  before_action :set_commentable, only: :create
+  before_action :set_commentable, :refuse_banned_commenter, only: :create
   before_action :set_own_comment, only: :destroy
   before_action :set_summary_comment, :authorize_summary_comment, only: :generate_summary
 
@@ -31,7 +31,7 @@ class CommentsController < ApplicationController
       end
     else
       respond_to do |format|
-        format.turbo_stream { render turbo_stream: turbo_stream.replace("comment_form", partial: "comments/form", locals: { comment: @comment, commentable: @commentable }) }
+        format.turbo_stream { render turbo_stream: failed_form_stream }
         format.html         { redirect_back fallback_location: root_path, alert: @comment.errors.full_messages.to_sentence }
       end
     end
@@ -67,6 +67,19 @@ class CommentsController < ApplicationController
     head :forbidden unless Current.user && @comment.user_id == Current.user.id
   end
 
+  # A failed reply goes back into its own disclosure with the typed text and
+  # the errors. Replacing the root comment_form put a reply's errors at the top
+  # of the thread and dropped what the person wrote under the comment.
+  def failed_form_stream
+    locals = { comment: @comment, commentable: @commentable }
+    return turbo_stream.replace("comment_form", partial: "comments/form", locals:) unless @comment.parent_id
+
+    form_id = "reply_form_#{@comment.parent_id}"
+    reply = { parent_id: @comment.parent_id, form_id:, rows: 3,
+              placeholder: t("comments.reply_placeholder"), submit: t("comments.reply") }
+    turbo_stream.replace(form_id, partial: "comments/form", locals: locals.merge(reply))
+  end
+
   def set_summary_comment
     @comment = Comment.includes(:user, :votes, replies: :user).find(params[:id])
   end
@@ -98,6 +111,12 @@ class CommentsController < ApplicationController
     raise ActiveRecord::RecordNotFound unless @commentable
     return unless @commentable.respond_to?(:readable_by?)
     raise ActiveRecord::RecordNotFound unless @commentable.readable_by?(Current.user)
+  end
+
+  # postable_by? keeps a banned member from posting in the community; the same
+  # ban has to keep them out of its comment threads.
+  def refuse_banned_commenter
+    head :forbidden if @commentable.is_a?(Post) && @commentable.community&.banned?(Current.user)
   end
 
   def comment_params

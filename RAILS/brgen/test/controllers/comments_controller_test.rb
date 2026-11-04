@@ -112,6 +112,38 @@ class CommentsControllerTest < ActionDispatch::IntegrationTest
     assert_response :not_found
   end
 
+  test "a failed reply re-renders its own reply form, not the root comment form" do
+    ActsAsTenant.with_tenant(@city) do
+      post_record = a_post(user("failed-reply"))
+      parent = Comment.create!(user: post_record.user, commentable: post_record, content: "root")
+
+      assert_no_difference -> { Comment.count } do
+        post post_comments_path(post_record),
+             params: { comment: { content: "" }, parent_id: parent.id },
+             as: :turbo_stream
+      end
+
+      assert_select "turbo-stream[action='replace'][target=?]", "reply_form_#{parent.id}"
+      assert_select "turbo-stream[action='replace'][target='comment_form']", count: 0
+      assert_select "form#reply_form_#{parent.id} input[name='parent_id'][value=?]", parent.id.to_s
+    end
+  end
+
+  test "a member banned from a community cannot comment on its posts" do
+    owner = user("ban-owner")
+    banned = user("ban-commenter")
+    banned.update_columns(email_verified_at: Time.current)
+    community = Community.create!(name: "Banned #{SecureRandom.hex(3)}", user: owner, city: @city, privacy: "public")
+    post_record = Post.create!(user: owner, title: "open thread", city: @city, community:)
+    CommunityBan.create!(community:, user: banned, banned_by: owner, reason: "spam")
+
+    post session_path, params: { email_address: banned.email_address, password: "password123" }
+    assert_no_difference -> { Comment.count } do
+      post post_comments_path(post_record), params: { comment: { content: "still here" } }, as: :turbo_stream
+    end
+    assert_response :forbidden
+  end
+
   test "a comment posted to no parent is a 404, not a 500" do
     post comments_path, params: { comment: { content: "til ingen" } }
     assert_response :not_found
