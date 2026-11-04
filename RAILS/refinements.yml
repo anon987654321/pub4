@@ -6268,7 +6268,7 @@ items:
   path: RAILS/__shared/config/importmap_baseline.rb
   item: Add a test that every importmap_baseline pin resolves to a file in frontend/
     or vendor/javascript.
-  status: open
+  status: done
 - id: shared-044
   app: shared
   area: tests
