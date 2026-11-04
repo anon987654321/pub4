@@ -166,15 +166,15 @@ class TestCLI < Minitest::Test
     end
   end
 
-  def test_council_crit_publishes_veto_and_preserves_error
+  def test_council_crit_publishes_a_real_veto_and_preserves_error
     events = []
     bus = Object.new
     bus.define_singleton_method(:publish) { |event, **details| events << [event, details] }
     deliberation = Object.new
-    deliberation.define_singleton_method(:review) do |_artifact, context:|
+    deliberation.define_singleton_method(:review_pre_ship) do |_artifact, context:|
       raise "unexpected context: #{context}" unless context == "pre-ship council check (staged)"
 
-      Master::Result.err("blocked", category: :policy)
+      Master::Result.err("council: veto from Security\ncritical finding", category: :validation)
     end
 
     Master::CLI::CouncilCrit.stub(:diff_artifact, "diff") do
@@ -185,9 +185,33 @@ class TestCLI < Minitest::Test
         bus:,
       )
 
-      assert_equal "blocked", result.message
+      assert_equal "council: veto from Security\ncritical finding", result.message
       assert_equal ["council:start", { scope: "staged", bytes: 4 }], events[0]
-      assert_equal ["council:veto", { message: "blocked" }], events[1]
+      assert_equal(
+        ["council:veto", { vetoed_by: "Security", message: "council: veto from Security\ncritical finding" }],
+        events[1],
+      )
+    end
+  end
+
+  def test_council_crit_does_not_call_unavailable_reviewers_a_veto
+    events = []
+    bus = Object.new
+    bus.define_singleton_method(:publish) { |event, **details| events << [event, details] }
+    deliberation = Object.new
+    deliberation.define_singleton_method(:review_pre_ship) do |_artifact, context:|
+      Master::Result.err("council: required veto reviewer(s) did not answer: Security", category: :inconclusive)
+    end
+
+    Master::CLI::CouncilCrit.stub(:diff_artifact, "diff") do
+      result = Master::CLI::CouncilCrit.run(root: "/tmp/master", deliberation:, bus:)
+
+      assert result.err?
+      assert_equal :inconclusive, result.category
+      assert_equal "council:inconclusive", events.last.first
+      assert_equal "inconclusive", events.last.last[:category]
+      assert_includes events.last.last[:reason], "Security"
+      refute events.any? { |event, _details| event == "council:veto" }
     end
   end
 
@@ -197,16 +221,18 @@ class TestCLI < Minitest::Test
     bus = Object.new
     bus.define_singleton_method(:publish) { |event, **details| events << [event, details] }
     deliberation = Object.new
-    deliberation.define_singleton_method(:review) do |artifact, context:|
+    deliberation.define_singleton_method(:review_pre_ship) do |artifact, context:|
+      raise "unexpected context: #{context}" unless context == "pre-ship council check (diff)"
+
       reviewed = artifact
       Master::Result.ok(
         [
+          { persona: "Security", role: "Security Review", veto_role: true, feedback: "no critical issue" },
           { persona: "Rhea", feedback: "looks good\nwith detail", role: "Reviewer" },
           { persona: "Synthesis", feedback: "ship it", role: "Synthesis" },
         ],
       )
     end
-
     status = Object.new
     status.define_singleton_method(:success?) { true }
     Master::Io::Exec.stub(:capture2e, ["x" * 40_000, status]) do
@@ -217,7 +243,10 @@ class TestCLI < Minitest::Test
       assert_includes result.value!, "Rhea: looks good"
       assert_includes result.value!, "synthesis: ship it"
       assert_equal Master::CLI::CouncilCrit::MAX_DIFF_BYTES + "\n... [truncated]".bytesize, reviewed.bytesize
-      assert_equal ["council:pass", { jurors: 2 }], events.last
+      assert_equal(
+        ["council:pass", { jurors: 3, veto_roles_answered: ["Security"], security_reviewed: true }],
+        events.last,
+      )
     end
   end
 
