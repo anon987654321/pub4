@@ -4,10 +4,13 @@
     5-step timeline with 8-point star milestones; track_controller polls
     /track/:token/status every 10s and reloads on state change. %>
 <% order = @order %>
-<% steps = %w[placed confirmed preparing ready delivered] %>
-<%# picked_up sits between ready and delivered; the timeline keeps everything
-    through ready lit so progress never visually resets mid-courier. %>
-<% current_index = order.state == "picked_up" ? 3 : steps.index(order.state) %>
+<%# A pickup order ends when the customer collects it ("Hentet"); a delivery
+    order at the door. picked_up sits between ready and delivered for a
+    delivery, so the timeline keeps everything through ready lit
+    mid-courier. %>
+<% last_step = order.pickup? ? "picked_up" : "delivered" %>
+<% steps = %w[placed confirmed preparing ready] << last_step %>
+<% current_index = steps.index(order.state) || { "picked_up" => 3, "delivered" => 4 }[order.state] %>
 
 <section class="track-head card"
      data-controller="track"

@@ -5901,7 +5901,7 @@ items:
   path: RAILS/mrdamascy/app/views/orders/track.html.erb
   item: Give pickup orders their own last step ("hentet") instead of the delivery
     timeline ending in "levert".
-  status: open
+  status: done
 - id: mrdamascy-105
   app: mrdamascy
   area: tracking
