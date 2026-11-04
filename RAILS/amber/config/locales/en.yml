@@ -419,6 +419,10 @@ en:
     handoff: "Started from a BRGEN marketplace item. Saving keeps the source reference with this wardrobe record."
     local: "BRGEN marketplace"
   post:
+    comments_heading:
+      zero: "No comments yet"
+      one: "1 comment"
+      other: "%{count} comments"
     index_description: "Outfits, wardrobe finds and style notes shared by the amber community."
     feed_description: "Posts from the people you follow on amber."
     like: "Like"

@@ -418,6 +418,10 @@ nb:
     handoff: "Startet fra en vare i BRGEN-markedsplassen. Når du lagrer, følger kilden med garderobeposten."
     local: "BRGEN-markedsplassen"
   post:
+    comments_heading:
+      zero: "Ingen kommentarer ennå"
+      one: "1 kommentar"
+      other: "%{count} kommentarer"
     index_description: "Antrekk, garderobefunn og stilnotater delt av amber-fellesskapet."
     feed_description: "Innlegg fra folk du følger på amber."
     like: "Lik"

@@ -95,7 +95,7 @@ items:
   path: RAILS/amber/app/views/posts/show.html.erb
   item: Use a translated plural for the comment heading count ('3 kommentarer') rather
     than 'Comments (3)'.
-  status: open
+  status: done
 - id: amber-012
   app: amber
   area: i18n
