@@ -4270,7 +4270,8 @@ items:
   item: Print the platform's 'branch and architecture unknown' dd only when the platform
     carries no branch/arch; today it is emitted unconditionally beside the platform
     name, giving the Platform term two definitions.
-  status: open
+  status: invalid
+  note: "Platform has no branch or architecture columns (db/schema.rb platforms table), so 'branch and architecture unknown' is always the true state, and a dt with two dd elements is valid HTML."
 - id: bsdports-009
   app: bsdports
   area: copy
@@ -4401,7 +4402,8 @@ items:
   path: RAILS/bsdports/app/controllers/ports_controller.rb
   item: Drop @deps in PortsController#show; it is loaded with includes(:category)
     and never read by the view.
-  status: open
+  status: invalid
+  note: "@deps is a lazy relation that is never iterated, so no query runs; it is dead code, not a performance cost."
 - id: bsdports-025
   app: bsdports
   area: performance
@@ -4701,7 +4703,7 @@ items:
   path: RAILS/bsdports/app/views/ports/index.html.erb
   item: Keep the active search query when switching sort chips; the Name/Updated links
     rebuild the URL with category_id only and drop q.
-  status: open
+  status: done
 - id: bsdports-062
   app: bsdports
   area: ux

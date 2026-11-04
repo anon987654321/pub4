@@ -29,10 +29,12 @@
         query string. Name is the implicit default, so both are named here. The
         first chip read "OpenBSD ports", the page title, which named no order. %>
     <% by_updated = params[:sort] == "updated" %>
+    <%# q rides along, or switching the order threw the search away. %>
+    <% kept = { q: params[:q].presence, category_id: params[:category_id].presence } %>
     <nav class="sort-order" role="navigation" aria-label="<%= t("ports.sort_label") %>">
-      <%= link_to t("ports.sort_name"), ports_path(category_id: params[:category_id]),
+      <%= link_to t("ports.sort_name"), ports_path(kept),
                   class: "chip", aria: { current: by_updated ? nil : "true" } %>
-      <%= link_to t("ports.updated"), ports_path(category_id: params[:category_id], sort: "updated"),
+      <%= link_to t("ports.updated"), ports_path(kept.merge(sort: "updated")),
                   class: "chip", aria: { current: by_updated ? "true" : nil } %>
     </nav>
   <% end %>
