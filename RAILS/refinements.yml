@@ -5578,7 +5578,7 @@ items:
   path: RAILS/mrdamascy/app/controllers/orders_controller.rb
   item: Skip PaymentGateway.sync! in OrdersController#status once payment_state is
     captured or failed; every open tracking tab calls the PSP every 10 seconds.
-  status: open
+  status: done
 - id: mrdamascy-065
   app: mrdamascy
   area: performance

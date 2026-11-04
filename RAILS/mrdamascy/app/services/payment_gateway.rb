@@ -10,6 +10,10 @@ class PaymentGateway
   # never pick a PSP the checkout did not intend.
   DEFAULT_METHOD = "vipps"
   METHODS = %w[vipps stripe].freeze
+  # Captured and failed are where a payment ends (failed covers Vipps
+  # ABORTED/EXPIRED/TERMINATED and an expired Stripe session); asking the PSP
+  # again only spends a call from every open tracking tab.
+  SETTLED = %w[captured failed].freeze
 
   class << self
     def normalize!(value)
@@ -29,6 +33,8 @@ class PaymentGateway
     # The reconciliation seam dispatch: webhook and tracking poll both land
     # here, idempotent regardless of lane.
     def sync!(order)
+      return order if SETTLED.include?(order.payment_state)
+
       case order.payment_method
       when "stripe"
         StripeClient.sync_payment!(order: order)

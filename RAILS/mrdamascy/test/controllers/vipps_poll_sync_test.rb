@@ -61,6 +61,16 @@ class VippsPollSyncTest < ActionDispatch::IntegrationTest
     assert_equal "failed", body["payment_state"]
   end
 
+  test "failed payments are not asked about again" do
+    @order.update!(payment_state: "failed")
+    vipps_real_mode!
+
+    get track_status_path(token: "tok-poll-1"), as: :json
+
+    assert_equal "failed", JSON.parse(response.body)["payment_state"]
+    assert_equal 0, vipps_calls.count, "no Vipps HTTP once the payment has failed"
+  end
+
   test "captured orders are left alone by later polls" do
     @order.update!(payment_state: "captured", state: "confirmed")
     vipps_real_mode!
