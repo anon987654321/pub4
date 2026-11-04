@@ -3,6 +3,7 @@
 <% content_for :description, t("ports.meta_description", name: @port.name, version: @port.version,
                                comment: @port.comment.presence || t("ports.explore_assistant.no_comment"),
                                pkgpath: @port.pkgpath) %>
+<% content_for :json_ld, json_ld_script(@port.software_application_schema(page_url: port_url(@port))) %>
 <article aria-label="<%= t("ports.details_label") %>">
   <header aria-label="<%= t("ports.header_label") %>">
     <h1><%= @port.name %> <%= tag.small @port.version %></h1>

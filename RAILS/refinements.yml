@@ -4299,7 +4299,7 @@ items:
   item: Rename the ports.purpose lead, which is a question list for the operator,
     to a one-line visitor-facing sentence, and move the three-questions framing to
     the about text.
-  status: open
+  status: done
 - id: bsdports-012
   app: bsdports
   area: copy
@@ -4307,7 +4307,7 @@ items:
   path: RAILS/bsdports/config/locales/en.yml
   item: Shorten install_note_html; three clauses of caveats under every install command
     bury the command. Keep one sentence and link the rest.
-  status: open
+  status: done
 - id: bsdports-013
   app: bsdports
   area: copy
@@ -4529,7 +4529,7 @@ items:
   path: RAILS/bsdports/app/views/ports/show.html.erb
   item: Emit SoftwareApplication JSON-LD on the port page (name, softwareVersion,
     operatingSystem OpenBSD, url=homepage) through the shared json_ld_script helper.
-  status: open
+  status: done
 - id: bsdports-040
   app: bsdports
   area: seo

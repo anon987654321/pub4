@@ -100,7 +100,9 @@ en:
     header_label: "Port header"
     homepage: "Homepage"
     install: "Install"
-    install_note_html: "Command targets %{platform}. Branch, release and architecture availability are <strong>unknown in this index</strong>; confirm against your configured package repository before installing."
+    install_note_html: >-
+      For %{platform}; <a href="https://man.openbsd.org/pkg_add">check your package mirror</a>
+      carries your release and architecture.
     installed: "installed (%{info})"
     json_summary: "JSON summary"
     local_install: "Local install"
@@ -136,7 +138,7 @@ en:
     never_imported: "No import has been run."
     header_page_label: "OpenBSD ports header"
     list_label: "OpenBSD ports list"
-    purpose: "Answer three questions quickly: what package is this, can this machine install it, and what does the local advisory index know?"
+    purpose: "Every OpenBSD port: what it is, how to install it, and its known security advisories."
     rss_link: "RSS (new last 7 days)"
     categories_results_label: "Categories"
     category_header_label: "Category header"

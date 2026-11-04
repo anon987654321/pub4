@@ -100,7 +100,9 @@ nb:
     header_label: "Porthode"
     homepage: "Hjemmeside"
     install: "Installer"
-    install_note_html: "Kommandoen gjelder %{platform}. Tilgjengelighet for gren, utgivelse og arkitektur er <strong>ukjent i denne indeksen</strong>; kontroller mot ditt konfigurerte pakkearkiv før du installerer."
+    install_note_html: >-
+      For %{platform}; <a href="https://man.openbsd.org/pkg_add">sjekk at pakkespeilet ditt</a>
+      har din utgivelse og arkitektur.
     installed: "installert (%{info})"
     json_summary: "JSON-sammendrag"
     local_install: "Lokal installasjon"
@@ -136,7 +138,7 @@ nb:
     never_imported: "Ingen importering er kjørt."
     header_page_label: "Hode for OpenBSD-porter"
     list_label: "Liste over OpenBSD-porter"
-    purpose: "Svar raskt på tre spørsmål: hvilken pakke er dette, kan denne maskinen installere den, og hva vet den lokale varselindeksen?"
+    purpose: "Hver OpenBSD-port: hva den er, hvordan du installerer den, og kjente sikkerhetsvarsler."
     rss_link: "RSS (nye siste 7 dager)"
     categories_results_label: "Kategorier"
     category_header_label: "Kategorihode"

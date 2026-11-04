@@ -135,6 +135,24 @@ class Port < ApplicationRecord
     find_by(pkgpath: param.to_s) || find(param)
   end
 
+  # The port as schema.org SoftwareApplication. url is the project's homepage
+  # when the port names one, else the port's own page.
+  def software_application_schema(page_url:)
+    url = homepage.to_s.match?(%r{\Ahttps?://}i) ? homepage : page_url
+
+    {
+      "@context" => "https://schema.org",
+      "@type" => "SoftwareApplication",
+
+      "name" => name,
+      "softwareVersion" => version,
+      "operatingSystem" => "OpenBSD",
+      "applicationCategory" => category&.name,
+      "description" => comment.presence,
+      "url" => url,
+    }.compact
+  end
+
   def watched_by?(user)
     watches.exists?(user: user)
   end
