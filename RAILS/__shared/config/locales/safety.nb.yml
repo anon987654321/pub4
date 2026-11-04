@@ -30,9 +30,9 @@ nb:
         no_liability_html: Vi fraskriver oss ansvar for tap knyttet til bruk av slik
           informasjon.
         ask_doctor_html: Spør alltid fastlegen din om helseråd.
-        emergency_html: 'Akutt sykdom eller skade: ring <strong>113</strong>.'
+        emergency_html: 'Akutt sykdom eller skade: ring <a href="tel:113"><strong>113</strong></a>.'
         helpline_html: 'Trenger du noen å snakke med: Mental Helses hjelpetelefon
-          <strong>116 123</strong>, døgnåpen.'
+          <a href="tel:116123"><strong>116 123</strong></a>, døgnåpen.'
       sites_heading: Nyttige nettsteder
       sites:
         slettmeg: hjelp til å fjerne krenkende innhold om deg på nett

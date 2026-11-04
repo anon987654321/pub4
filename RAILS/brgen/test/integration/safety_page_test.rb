@@ -16,6 +16,17 @@ class SafetyPageTest < ActionDispatch::IntegrationTest
     assert_select "a[href='https://www.politiet.no/kontakt-politiet/']"
   end
 
+  # A phone in a hand in trouble should dial, not ask the reader to copy digits.
+  test "the emergency and helpline numbers are tel: links in both languages" do
+    %w[brgen.no lsangeles.com].each do |host|
+      host! host
+      get "/safety"
+
+      assert_select "a[href='tel:113']", text: "113"
+      assert_select "a[href='tel:116123']", text: "116 123"
+    end
+  end
+
   # lsangeles.com is the English flagship; brgen.no is always Norwegian.
   test "it reads in English on an English city" do
     host! "lsangeles.com"

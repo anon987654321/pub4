@@ -30,9 +30,9 @@ en:
         no_liability_html: We disclaim liability for any loss connected with using
           such information.
         ask_doctor_html: Always ask your doctor for health advice.
-        emergency_html: 'Acute illness or injury: call <strong>113</strong>.'
-        helpline_html: 'If you need someone to talk to: Mental Helse''s helpline <strong>116
-          123</strong>, open around the clock.'
+        emergency_html: 'Acute illness or injury: call <a href="tel:113"><strong>113</strong></a>.'
+        helpline_html: 'If you need someone to talk to: Mental Helse''s helpline <a href="tel:116123"><strong>116
+          123</strong></a>, open around the clock.'
       sites_heading: Useful sites
       sites:
         slettmeg: help removing offensive content about you online

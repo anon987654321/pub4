@@ -5945,7 +5945,7 @@ items:
   size: S
   path: RAILS/__shared/app/helpers/shared/safety.rb
   item: 'Render the emergency and helpline numbers on the safety page as tel: links.'
-  status: open
+  status: done
 - id: shared-003
   app: shared
   area: accessibility
