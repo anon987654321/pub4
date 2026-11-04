@@ -4324,7 +4324,7 @@ items:
   path: RAILS/bsdports/app/views/layouts/application.html.erb
   item: Add a locale switcher (nb/en) to the bsdports footer or nav; nb.yml exists
     but nothing routes a reader to it.
-  status: open
+  status: done
 - id: bsdports-015
   app: bsdports
   area: i18n

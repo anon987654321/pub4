@@ -42,6 +42,11 @@ nb:
     mark_all: "Merk alle som lest"
     empty_title: "Ingen varsler ennå"
     empty_body: "Oppdateringer vises her."
+  footer:
+    language: "Språk"
+    locales:
+      nb: "Norsk"
+      en: "English"
   maintainers:
     ports_label: "Porter vedlikeholdt av %{name}"
     no_ports: "Ingen porter står på denne vedlikeholderen etter siste import."

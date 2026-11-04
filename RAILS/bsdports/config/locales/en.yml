@@ -42,6 +42,11 @@ en:
     mark_all: "Mark all read"
     empty_title: "No notifications yet"
     empty_body: "Updates will appear here."
+  footer:
+    language: "Language"
+    locales:
+      nb: "Norsk"
+      en: "English"
   maintainers:
     ports_label: "Ports maintained by %{name}"
     no_ports: "No ports list this maintainer after the latest import."

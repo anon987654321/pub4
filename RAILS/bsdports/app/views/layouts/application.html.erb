@@ -87,6 +87,12 @@
       the same link three times on every page. The mark is the one. %>
   <%= yield %>
 </main>
+<%# nb.yml and en.yml were both complete and nothing routed a reader to the
+    second. Plain links, so they work before any JavaScript; the choice sticks
+    in the session. %>
+<% content_for :site_footer_columns do %>
+  <%= tag.nav locale_links, class: "site-footer-col", aria: { label: t("footer.language") } %>
+<% end %>
 <%= render "shared/site_legal_footer" %>
 </div>
 <%= render "shared/flash_toasts" %>

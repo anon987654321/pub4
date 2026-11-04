@@ -38,7 +38,7 @@ class PortsController < ApplicationController
       # The feed has no chrome, so it can be cached for everyone. The HTML index
       # is root, where sign-in lands, and its nav belongs to one viewer.
       format.rss do
-        expires_in 10.minutes, public: true if params[:q].blank? && params[:category_id].blank?
+        expires_in 10.minutes, public: true if feed_publicly_cacheable?
         @ports = scope.where("last_updated >= ?", 7.days.ago).order(last_updated: :desc).limit(100)
         render layout: false
       end
@@ -125,6 +125,12 @@ class PortsController < ApplicationController
   end
 
   private
+
+  # Unscoped and in the default language: a shared cache keys on the URL, and
+  # the language comes from the session or Accept-Language.
+  def feed_publicly_cacheable?
+    params[:q].blank? && params[:category_id].blank? && I18n.locale == I18n.default_locale
+  end
 
   def index_scope
     scope = Port.includes(:category)
