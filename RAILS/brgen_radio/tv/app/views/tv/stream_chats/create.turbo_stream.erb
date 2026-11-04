@@ -1,3 +1,6 @@
 <%= turbo_stream.append "tv-live-stream-#{@live_stream.id}-entries" do %>
   <%= render "tv/stream_chats/stream_chat", stream_chat: @stream_chat %>
 <% end %>
+<%= turbo_stream.replace "tv-live-stream-#{@live_stream.id}-composer" do %>
+  <%= render "tv/stream_chats/composer", live_stream: @live_stream %>
+<% end %>

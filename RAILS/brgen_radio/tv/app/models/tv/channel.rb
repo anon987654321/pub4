@@ -35,7 +35,18 @@ class Tv::Channel < ApplicationRecord
 
   scope :publicly_visible, -> { joins(:user).where(users: { deleted_at: nil, deletion_scheduled_at: nil }) }
   scope :popular, -> { order(subscribers_count: :desc) }
+  # Whether each channel is live, read in the list query itself rather than one
+  # EXISTS per row.
+  LIVE_NOW_SQL = <<~SQL.squish
+    EXISTS (SELECT 1 FROM tv_broadcasts WHERE tv_broadcasts.tv_channel_id = tv_channels.id
+            AND tv_broadcasts.status = 'live') AS live_now
+  SQL
+  scope :with_live_flag, -> { select(arel_table[Arel.star]).select(Arel.sql(LIVE_NOW_SQL)) }
 
   def to_param = slug
-  def live? = broadcasts.where(status: "live").exists?
+  def live?
+    return ActiveModel::Type::Boolean.new.cast(self[:live_now]) if has_attribute?(:live_now)
+
+    broadcasts.where(status: "live").exists?
+  end
 end

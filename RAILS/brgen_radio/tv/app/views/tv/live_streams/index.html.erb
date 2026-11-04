@@ -12,7 +12,7 @@
     <% @live_streams.each do |live_stream| %>
       <%= render "shared/feed_card",
         name: live_stream.title,
-        meta: live_stream.status,
+        meta: t("tv.live_streams.status.#{live_stream.status.presence || "scheduled"}"),
         content: live_stream.description,
         url: live_stream_path(live_stream),
         class: "tv",

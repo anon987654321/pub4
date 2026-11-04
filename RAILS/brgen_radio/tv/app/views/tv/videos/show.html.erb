@@ -124,12 +124,7 @@
 <section>
   <h2><%= t("tv.discussion") %></h2>
   <% if @video.comments.any? %>
-    <% @video.comments.order(created_at: :asc).each do |comment| %>
-      <article>
-        <p><%= comment.user&.display_name || t("chat.anon") %></p>
-        <%= tag.p comment.body %>
-      </article>
-    <% end %>
+    <%= render partial: "tv/videos/comment", collection: @video.comments_oldest_first, as: :comment %>
   <% else %>
     <%= render "shared/empty_state",
           title: t("empty.no_comments"),

@@ -11,7 +11,7 @@
   <ul class="episode-list">
     <% @episodes.each do |ep| %>
       <li>
-        <%= link_to channel_show_episode_path(@channel, @show, ep.number), class: "episode-link" do %>
+        <%= link_to episode_channel_show_path(@channel, @show, number: ep.number), class: "episode-link" do %>
           <%= tag.strong t("tv.episode_line", number: ep.number, title: ep.title) %>
           <% if ep.video %>
             <span class="chip"><%= ep.video.duration_formatted %></span>

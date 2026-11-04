@@ -16,7 +16,9 @@ class Tv::CommentsController < Tv::BaseController
   private
 
   def set_video
-    @video = find_by_slug_or_id(Tv::Video, params[:video_id])
+    # Only a video the public can see takes comments: not a draft, and not one
+    # whose account is leaving.
+    @video = find_by_slug_or_id(Tv::Video.publicly_visible, params[:video_id])
   end
 
   def comment_params

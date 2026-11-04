@@ -10,6 +10,15 @@
 # Keys the host already carries are NOT copied here. Use them.
 nb:
   tv:
+    stream_chat_slow_mode: "Vent et par sekunder før neste melding."
+    feed:
+      sound_off: "Lyd av"
+    live_streams:
+      status:
+        scheduled: "Planlagt"
+        live: "Direkte"
+        ended: "Avsluttet"
+        cancelled: "Avlyst"
     add_comment: "Skriv en kommentar"
     add_note: "Legg til et notat"
     channel_actions_aria: "Kanalhandlinger"

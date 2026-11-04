@@ -66,6 +66,10 @@ class Tv::Video < ApplicationRecord
 
   after_update_commit :record_video_published, if: :published_status_change?
 
+  # Off the preloaded comments: an ordered query would load each comment's
+  # user lazily, which strict loading refuses.
+  def comments_oldest_first = comments.sort_by(&:created_at)
+
   def duration_formatted
     return "—" unless duration_seconds
     h, rem = duration_seconds.divmod(3600)

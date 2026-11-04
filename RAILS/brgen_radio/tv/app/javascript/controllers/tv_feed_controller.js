@@ -7,10 +7,14 @@ import { Controller } from "@hotwired/stimulus"
 // what plays and what gets recorded, which is the part CSS cannot do.
 export default class extends Controller {
   static targets = ["scroller", "item", "video", "soundButton"]
-  static values = { signedIn: Boolean, nextUrl: String }
+  static values = { signedIn: Boolean, nextUrl: String, soundOnLabel: String, soundOffLabel: String }
 
   connect() {
     this.muted = true
+    // A reader who asked for less motion, or for less data, presses play
+    // themselves: no video starts just because it scrolled into view.
+    this.calm = Boolean(window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ||
+      navigator.connection?.saveData)
     this.events = new Map()   // item element -> { url, watched }
     this.timers = new Map()
 
@@ -39,8 +43,13 @@ export default class extends Controller {
   toggleSound(event) {
     this.muted = !this.muted
     this.videoTargets.forEach(video => { video.muted = this.muted })
-    const button = event.currentTarget
-    button.setAttribute("aria-pressed", String(!this.muted))
+    // Every item's button says the same thing, because sound is one setting
+    // for the whole feed, not one per clip.
+    const label = this.muted ? this.soundOnLabelValue : this.soundOffLabelValue
+    this.soundButtonTargets.forEach(button => {
+      button.setAttribute("aria-pressed", String(!this.muted))
+      if (label) button.textContent = label
+    })
   }
 
   itemTargetConnected(item) {
@@ -53,7 +62,9 @@ export default class extends Controller {
     const video = item.querySelector("video")
     if (!video) return
 
-    if (entry.isIntersecting) {
+    if (entry.isIntersecting && this.calm) {
+      this.#offerPlay(item, video)
+    } else if (entry.isIntersecting) {
       video.muted = this.muted
       video.play().catch(() => {})
       this.#startTracking(item, video)
@@ -61,6 +72,14 @@ export default class extends Controller {
       video.pause()
       this.#stopTracking(item, video)
     }
+  }
+
+  // The native controls are the play button; watching is recorded once the
+  // reader presses it.
+  #offerPlay(item, video) {
+    video.muted = this.muted
+    video.controls = true
+    video.addEventListener("play", () => this.#startTracking(item, video), { once: true })
   }
 
   async #startTracking(item, video) {
@@ -143,19 +162,30 @@ export default class extends Controller {
       })
       if (!response.ok) return
       const html = await response.text()
+      const before = this.itemTargets.length
       window.Turbo?.renderStreamMessage(html)
-      // The appended items arrive with their own next-offset; re-arm on the
-      // new last item.
-      this.nextUrlValue = this.#bumpOffset(this.nextUrlValue)
-      requestAnimationFrame(() => this.#watchForEnd())
+      // Turbo renders the stream on the next repaint; this frame runs after it.
+      requestAnimationFrame(() => this.#afterPage(before))
     } catch (_) { /* the feed still holds what it has */ }
   }
 
-  #bumpOffset(url) {
+  // The next page starts where the feed now ends. A page that added nothing
+  // is the bottom: re-arming on the same, still visible, last item fetched
+  // empty pages in a loop.
+  #afterPage(before) {
+    const count = this.itemTargets.length
+    if (count === before) {
+      this.nextUrlValue = ""
+      return
+    }
+    this.nextUrlValue = this.#offsetUrl(this.nextUrlValue, count)
+    this.#watchForEnd()
+  }
+
+  #offsetUrl(url, offset) {
     try {
       const parsed = new URL(url, window.location.origin)
-      const offset = parseInt(parsed.searchParams.get("offset") || "0", 10)
-      parsed.searchParams.set("offset", String(offset + this.itemTargets.length))
+      parsed.searchParams.set("offset", String(offset))
       return parsed.pathname + parsed.search
     } catch (_) {
       return ""

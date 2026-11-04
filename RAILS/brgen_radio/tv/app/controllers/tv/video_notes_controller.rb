@@ -27,7 +27,7 @@ module Tv
     private
 
     def set_video
-      @video = find_by_slug_or_id(Tv::Video, params[:video_id])
+      @video = find_by_slug_or_id(Tv::Video.publicly_visible, params[:video_id])
     end
 
     def video_note_params

@@ -13,7 +13,7 @@ module Tv
     end
 
     def show
-      @stream_chats = @live_stream.stream_chats.chronological.limit(200)
+      @stream_chats = @live_stream.stream_chats.page_log
     end
 
     def new

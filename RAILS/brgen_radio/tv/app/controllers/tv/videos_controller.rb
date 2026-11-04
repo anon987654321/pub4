@@ -29,6 +29,8 @@ class Tv::VideosController < Tv::BaseController
 
     @view_event = @video.view_events.create!(user: Current.user) if authenticated?
     @video.increment!(:views_count)
+    # The channel's total is the sum of its videos' views, kept as they happen.
+    Tv::Channel.update_counters(@video.tv_channel_id, total_views: 1)
   end
 
   # Both actions are routed under a channel; scoping the lookup to the current

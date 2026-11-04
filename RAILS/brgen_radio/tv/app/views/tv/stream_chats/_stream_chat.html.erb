@@ -4,4 +4,8 @@
     to_partial_path, which resolved to tv/stream_chats/_stream_chat — this file,
     which did not exist — so the enqueued job raised MissingTemplate and nobody but
     the sender ever saw a new message. %>
-<p id="<%= dom_id(stream_chat) %>"><%= stream_chat.message %></p>
+<p id="<%= dom_id(stream_chat) %>">
+  <%= tag.strong stream_chat.author&.display_name || t("chat.anon") %>
+  <%= time_tag stream_chat.created_at, l(stream_chat.created_at, format: "%H:%M") %>
+  <%= stream_chat.message %>
+</p>

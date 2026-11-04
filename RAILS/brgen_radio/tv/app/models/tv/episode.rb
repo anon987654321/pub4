@@ -15,6 +15,9 @@ module Tv
     validates :title, :number, presence: true
     validates :number, uniqueness: { scope: :show_id }
 
+    # A show's running order, with each episode's video, which the list reads.
+    scope :listed, -> { includes(:video).order(:number) }
+
     def to_param
       number.to_s
     end

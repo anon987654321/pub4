@@ -4021,7 +4021,7 @@ items:
   item: Scope CommentsController and VideoNotesController#set_video to Tv::Video.publicly_visible,
     so comments and notes cannot be posted onto unpublished videos or videos of departing
     accounts by slug.
-  status: open
+  status: done
 - id: brgen-378
   app: brgen
   area: tv
@@ -4030,7 +4030,7 @@ items:
   item: Preload episodes' video in ShowsController#show (@show.episodes.includes(:video).order(:number));
     shows/show reads ep.video per row, which raises under strict loading once an episode
     has a video, and the existing test only covers a show with no episodes.
-  status: open
+  status: done
 - id: brgen-379
   app: brgen
   area: tv
@@ -4039,7 +4039,7 @@ items:
   item: Add a per-user slow mode to stream chat (for example one line every 2 seconds
     per live stream) with a localized refusal, since only the global 120-write throttle
     stands between a flooder and every viewer's broadcast.
-  status: open
+  status: done
 - id: brgen-380
   app: brgen
   area: tv
@@ -4047,7 +4047,7 @@ items:
   path: RAILS/brgen_radio/tv/app/javascript/controllers/tv_feed_controller.js
   item: Respect prefers-reduced-motion and navigator.connection.saveData in the vertical
     feed by not autoplaying on intersection and showing a play button per item instead.
-  status: open
+  status: done
 - id: brgen-381
   app: brgen
   area: tv
@@ -4056,7 +4056,7 @@ items:
   item: Sync aria-pressed and the label (Lyd på / Lyd av) on every soundButton target
     in toggleSound; it updates only the clicked button and the text always reads sound_on,
     so the other items show the wrong state.
-  status: open
+  status: done
 - id: brgen-382
   app: brgen
   area: tv
@@ -4065,7 +4065,7 @@ items:
   item: 'Stop #loadMore once a page returns no new items (the server knows @has_more);
     right now the end watcher re-arms on the same last item, which is still visible,
     and fetches empty pages in a loop at the bottom of the feed.'
-  status: open
+  status: done
 - id: brgen-383
   app: brgen
   area: tv
@@ -4075,7 +4075,7 @@ items:
     to the previous offset, so the second fetch skips a page (10, then 30 instead
     of 20); set the offset to the item count instead, or read the next URL from the
     appended stream.'
-  status: open
+  status: done
 - id: brgen-384
   app: brgen
   area: tv
@@ -4093,7 +4093,7 @@ items:
   item: Either write Tv::Channel#total_views (sum of its videos' views_count, updated
     on increment) or drop the fact; nothing in the tree writes total_views, so every
     channel and video page shows 0 total views.
-  status: open
+  status: done
 - id: brgen-386
   app: brgen
   area: tv
@@ -4112,7 +4112,7 @@ items:
   item: Replace the per-row channel.live? EXISTS query in channels/_row with one grouped
     live-broadcast lookup in ChannelsController#index, which removes the N+1 on the
     channels list.
-  status: open
+  status: done
 - id: brgen-388
   app: brgen
   area: tv
@@ -4121,7 +4121,7 @@ items:
   item: Show the channel's real video total on channels/show (@pagy.count) instead
     of @videos.count, which counts the paginated relation and caps the 'videos' fact
     at one page.
-  status: open
+  status: done
 - id: brgen-389
   app: brgen
   area: tv
@@ -4147,7 +4147,7 @@ items:
   path: RAILS/brgen_radio/tv/app/views/tv/live_streams/show.html.erb
   item: Translate the live-stream status badge and the index card meta through t('tv.live_streams.status.*');
     both print the raw English 'scheduled'/'ended' word on nb pages.
-  status: open
+  status: done
 - id: brgen-392
   app: brgen
   area: tv
@@ -4165,7 +4165,7 @@ items:
   item: Show the author handle and a time element on each stream chat line, add role='log'
     with aria-live to the entries container, and reset the input after the turbo_stream
     create; _stream_chat renders only the message text.
-  status: open
+  status: done
 - id: brgen-394
   app: brgen
   area: tv
@@ -4184,7 +4184,7 @@ items:
     an ordered association) in videos/show; @video.comments.order(created_at: :asc)
     issues a fresh query with no user preload, so comment.user raises a strict-loading
     violation in production.'
-  status: open
+  status: done
 - id: brgen-396
   app: brgen
   area: tv

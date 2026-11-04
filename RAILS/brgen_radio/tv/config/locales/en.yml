@@ -10,6 +10,15 @@
 # Keys the host already carries are NOT copied here. Use them.
 en:
   tv:
+    stream_chat_slow_mode: "Wait a couple of seconds before your next message."
+    feed:
+      sound_off: "Sound off"
+    live_streams:
+      status:
+        scheduled: "Scheduled"
+        live: "Live"
+        ended: "Ended"
+        cancelled: "Cancelled"
     add_comment: "Add a comment"
     add_note: "Add a note"
     channel_actions_aria: "Channel actions"
