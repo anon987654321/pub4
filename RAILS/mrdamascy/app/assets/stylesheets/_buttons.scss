@@ -20,11 +20,7 @@
   text-align: center;
   text-decoration: none;
   -webkit-tap-highlight-color: transparent;
-  transition: transform 180ms ease, background-color var(--transition-fast) var(--ease-out);
-}
-
-:where(button:hover, .button:hover) {
-  background: var(--mint-100);
+  transition: transform var(--transition-fast) var(--ease-out), background-color var(--transition-fast) var(--ease-out);
 }
 
 :where(button:active, .button:active) {
@@ -42,18 +38,10 @@
   color: var(--paper);
 }
 
-.button-primary:hover {
-  background: var(--mint-800);
-}
-
 .button-vipps {
   border-color: transparent;
   background: var(--vipps-button);
   color: var(--paper);
-}
-
-.button-vipps:hover {
-  background: var(--vipps-button-hover);
 }
 
 // Vipps mock heart rides the button label.
@@ -76,12 +64,6 @@
   color: var(--ink);
 }
 
-.button-reorder:hover,
-.button-deliver:hover,
-.button-dispatch:hover {
-  background: var(--gold-deep);
-}
-
 // Vipps mock approval — the state change itself is the feedback (disabled
 // + dimmed): stillness by default, motion only when meaning moves.
 :where(button.is-loading, .button.is-loading) {
@@ -95,10 +77,6 @@
   border-color: transparent;
   background: var(--stripe-button);
   color: var(--paper);
-}
-
-.button-stripe:hover {
-  background: var(--stripe-button-hover);
 }
 
 // Turbo disables only the tapped pay button and marks the form aria-busy
@@ -138,4 +116,45 @@ form:not(.button_to) > button[type="submit"],
 .order-actions .button {
   padding: 4px 12px;
   font-size: var(--text-meta);
+}
+
+// A tap on a phone leaves :hover stuck until the next tap, so hover
+// backgrounds belong to pointers that hover.
+@media (hover: hover) {
+  :where(button:hover, .button:hover) {
+    background: var(--mint-100);
+  }
+
+  .button-primary:hover {
+    background: var(--mint-800);
+  }
+
+  .button-vipps:hover {
+    background: var(--vipps-button-hover);
+  }
+
+  .button-reorder:hover,
+  .button-deliver:hover,
+  .button-dispatch:hover {
+    background: var(--gold-deep);
+  }
+
+  .button-stripe:hover {
+    background: var(--stripe-button-hover);
+  }
+}
+
+// Windows high contrast drops backgrounds and transparent borders, so
+// the filled buttons and chips draw an edge in the system's text colour.
+@media (forced-colors: active) {
+  .button-primary,
+  .button-vipps,
+  .button-stripe,
+  .button-reorder,
+  .button-deliver,
+  .button-dispatch,
+  .cart-bar-action,
+  .chip {
+    border: 1px solid ButtonText;
+  }
 }

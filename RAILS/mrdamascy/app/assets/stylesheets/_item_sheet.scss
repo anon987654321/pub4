@@ -133,7 +133,7 @@
   position: fixed;
   inset-inline: 0;
   bottom: calc(var(--tab-bar-height) + env(safe-area-inset-bottom, 0px));
-  z-index: 35;
+  z-index: var(--z-sheet-footer);
   display: flex;
   justify-content: center;
   padding: 12px 16px 16px;

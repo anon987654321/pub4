@@ -62,11 +62,12 @@
   font-size: var(--text-meta);
 }
 
-// Sticky anchor chips under the brand bar (bar content 48px + 1px hairline).
+// Sticky anchor chips under the brand bar (its content height; the 1px
+// hairline tucks beneath).
 .category-chips {
   position: sticky;
-  top: 48px;
-  z-index: 30;
+  top: var(--brand-bar-height);
+  z-index: var(--z-category-chips);
   display: flex;
   gap: 8px;
   overflow-x: auto;

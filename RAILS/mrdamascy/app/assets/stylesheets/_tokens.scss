@@ -78,8 +78,20 @@
   --transition-normal: 300ms;
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
 
-  // Shell geometry: tab bar height + safe area drive bottom clearance.
+  // Shell geometry: tab bar height + safe area drive bottom clearance; the
+  // brand bar's content height places the sticky chips and the toasts.
   --tab-bar-height: 62px;
+  --brand-bar-height: 48px;
+
+  // Layers, lowest first: sticky chips, the sheet's pay footer, the brand
+  // and tab bars, the pay-bar, toasts, and the skip link over everything.
+  --z-category-chips: 30;
+  --z-sheet-footer: 35;
+  --z-brand-bar: 40;
+  --z-tab-bar: 40;
+  --z-pay-bar: 45;
+  --z-toast: 60;
+  --z-skip-link: 100;
   --bottom-clearance: calc(var(--tab-bar-height) + env(safe-area-inset-bottom, 0px));
 }
 

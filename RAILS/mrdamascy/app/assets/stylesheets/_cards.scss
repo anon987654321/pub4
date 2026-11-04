@@ -29,8 +29,10 @@
   white-space: nowrap;
 }
 
-a.chip:hover {
-  background: var(--mint-200);
+@media (hover: hover) {
+  a.chip:hover {
+    background: var(--mint-200);
+  }
 }
 
 // The selected choice in a set of chip links (aria-current).

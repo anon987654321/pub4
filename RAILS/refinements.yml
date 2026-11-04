@@ -5070,7 +5070,7 @@ items:
   path: RAILS/mrdamascy/app/assets/stylesheets/_buttons.scss
   item: 'Add a @media (forced-colors: active) border to the filled buttons and chips
     so they keep an edge in Windows high contrast.'
-  status: open
+  status: done
 - id: mrdamascy-002
   app: mrdamascy
   area: accessibility
@@ -5368,7 +5368,7 @@ items:
   path: RAILS/mrdamascy/app/assets/stylesheets/_base.scss
   item: Add z-index tokens for the brand bar (40), pay-bar, tab bar and toasts instead
     of literals.
-  status: open
+  status: done
 - id: mrdamascy-038
   app: mrdamascy
   area: design
@@ -5376,7 +5376,7 @@ items:
   path: RAILS/mrdamascy/app/assets/stylesheets/_base.scss
   item: Derive the toast's top offset (64px) from a --brand-bar-height token shared
     with the sticky chips.
-  status: open
+  status: done
 - id: mrdamascy-039
   app: mrdamascy
   area: design
@@ -5384,7 +5384,7 @@ items:
   path: RAILS/mrdamascy/app/assets/stylesheets/_buttons.scss
   item: 'Wrap hover backgrounds in @media (hover: hover) so a tap on a phone does
     not leave a stuck mint hover.'
-  status: open
+  status: done
 - id: mrdamascy-040
   app: mrdamascy
   area: design
@@ -5522,7 +5522,7 @@ items:
   path: RAILS/mrdamascy/app/assets/stylesheets/_buttons.scss
   item: Replace `transform 180ms ease` in buttons and `300ms ease` in the cart pulse
     with --transition-fast and --ease-out.
-  status: open
+  status: done
 - id: mrdamascy-057
   app: mrdamascy
   area: motion
@@ -5922,7 +5922,7 @@ items:
   path: RAILS/mrdamascy/app/assets/stylesheets/_base.scss
   item: 'Let .page-title wrap with text-wrap: balance instead of truncating long dish
     names with an ellipsis.'
-  status: open
+  status: done
 - id: mrdamascy-107
   app: mrdamascy
   area: typography
@@ -5930,7 +5930,7 @@ items:
   path: RAILS/mrdamascy/app/assets/stylesheets/_cards.scss
   item: 'Set font-variant-numeric: tabular-nums on prices, totals, the pay-bar and
     board counts.'
-  status: open
+  status: done
 - id: shared-001
   app: shared
   area: accessibility

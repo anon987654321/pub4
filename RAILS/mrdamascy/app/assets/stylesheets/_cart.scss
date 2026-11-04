@@ -131,7 +131,7 @@
   bottom: calc(var(--tab-bar-height) + env(safe-area-inset-bottom, 0px) + 8px);
   width: calc(100% - 32px);
   max-width: 448px;
-  z-index: 45;
+  z-index: var(--z-pay-bar);
   display: flex;
   align-items: center;
   gap: 12px;
@@ -174,7 +174,7 @@
 }
 
 .cart-bar-pulse {
-  animation: cart-bar-pulse 300ms ease;
+  animation: cart-bar-pulse var(--transition-normal) var(--ease-out);
 }
 
 @keyframes cart-bar-pulse {

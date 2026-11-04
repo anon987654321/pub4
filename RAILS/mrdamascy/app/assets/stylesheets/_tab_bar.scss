@@ -4,7 +4,7 @@
   position: fixed;
   inset-inline: 0;
   bottom: 0;
-  z-index: 40;
+  z-index: var(--z-tab-bar);
   display: flex;
   justify-content: center;
   background: var(--paper);

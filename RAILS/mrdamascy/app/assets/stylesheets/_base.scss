@@ -18,13 +18,13 @@ html {
   inset-inline-start: 16px;
   top: 8px;
   transform: translateY(-56px);
-  z-index: 100;
+  z-index: var(--z-skip-link);
   padding: 8px 16px;
   border-radius: var(--radius-small);
   background: var(--ink);
   color: var(--paper);
   font-weight: 700;
-  transition: transform 180ms ease;
+  transition: transform var(--transition-fast) var(--ease-out);
 }
 
 .skip-link:focus-visible {
@@ -107,7 +107,7 @@ main.shell {
 .brand-bar {
   position: sticky;
   top: 0;
-  z-index: 40;
+  z-index: var(--z-brand-bar);
   background: var(--paper);
   border-bottom: 1px solid var(--line);
 }
@@ -136,6 +136,7 @@ main.shell {
 .page-title {
   font-size: var(--text-title);
   margin: 4px 0 12px;
+  text-wrap: balance;
 }
 
 .section-title {
@@ -201,10 +202,10 @@ body.act-item main.shell {
 // no shadow (pixel_perfection).
 .toast {
   position: fixed;
-  top: calc(64px + env(safe-area-inset-top, 0px));
+  top: calc(var(--brand-bar-height) + 16px + env(safe-area-inset-top, 0px));
   left: 50%;
   transform: translateX(-50%);
-  z-index: 60;
+  z-index: var(--z-toast);
   display: flex;
   align-items: center;
   gap: 12px;
@@ -251,7 +252,20 @@ body.act-item main.shell {
 .toast-out {
   opacity: 0;
   transform: translateX(-50%) translateY(-6px);
-  transition: opacity 180ms ease, transform 180ms ease;
+  transition: opacity var(--transition-fast) var(--ease-out), transform var(--transition-fast) var(--ease-out);
+}
+
+// Amounts line up digit under digit in lists, totals and counts.
+.item-price,
+.option-price,
+.sheet-total,
+.line-sum,
+.cart-subtotal,
+.order-line,
+.totals,
+.cart-bar-meta,
+.board-count {
+  font-variant-numeric: tabular-nums;
 }
 
 // MASTER motion law: honor prefers-reduced-motion — keep every state
