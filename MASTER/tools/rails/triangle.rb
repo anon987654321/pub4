@@ -27,8 +27,12 @@ module Deploy
   module Triangle
     ROOT = File.expand_path("../../..", __dir__)
     RAILS_ROOT = File.join(ROOT, "RAILS")
-    RUBY = Operator::RubyRunner.ruby_cmd
-    BUNDLE = Operator::RubyRunner.bundle_cmd
+    # The apps' bundles are installed for the project-pinned rbenv Ruby. The
+    # general runner picks the newest Ruby and, on a tie with Homebrew's of the
+    # same version, kept Homebrew's, whose gems are not the apps': every boot
+    # died in db:prepare and the design loop reported the apps as down.
+    RUBY = Operator::RubyRunner.rbenv_path("ruby") || Operator::RubyRunner.ruby_cmd
+    BUNDLE = Operator::RubyRunner.rbenv_path("bundle") || Operator::RubyRunner.bundle_cmd
     RUN_DIR = File.join(RAILS_ROOT, "tmp", "triangle")
     BOOT_TIMEOUT = Integer(ENV.fetch("TRIANGLE_BOOT_TIMEOUT", "180"))
 

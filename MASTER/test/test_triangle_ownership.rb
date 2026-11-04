@@ -6,6 +6,17 @@ require "tmpdir"
 require_relative "../tools/rails/triangle"
 
 class TestTriangleOwnership < Minitest::Test
+  # The apps boot on the project-pinned rbenv Ruby their bundles were installed
+  # for. On a version tie the general runner kept Homebrew's Ruby, and every
+  # boot died in db:prepare.
+  def test_apps_boot_on_the_pinned_rbenv_ruby_when_there_is_one
+    pinned = Operator::RubyRunner.rbenv_path("ruby")
+    skip "no rbenv Ruby for the pinned version on this host" unless pinned
+
+    assert_equal pinned, Deploy::Triangle::RUBY
+    assert_equal Operator::RubyRunner.rbenv_path("bundle"), Deploy::Triangle::BUNDLE
+  end
+
   # A server left behind by a killed /fix run answers /up like a live one. The
   # triangle has to know whose tree it was started in before trusting it.
   def test_listener_reports_the_directory_the_server_was_started_in
