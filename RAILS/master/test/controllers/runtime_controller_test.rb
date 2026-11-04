@@ -31,4 +31,11 @@ class RuntimeControllerTest < ActionDispatch::IntegrationTest
   ensure
     Rails.application.config.x.master_container = nil
   end
+
+  test "status reports the same build the page names its cache after" do
+    get "/runtime/status"
+
+    assert_equal Rails.application.config.x.cache_version, JSON.parse(response.body)["build"]
+    refute_nil JSON.parse(response.body)["build"]
+  end
 end

@@ -16,3 +16,9 @@ Rails.application.config.x.booted_sha = begin
 rescue SystemCallError # scan: intentional — no git binary means no provenance, and /health reports null
   nil
 end
+
+# The asset and service-worker cache generation: rc.d exports CACHE_VERSION from
+# the deployed HEAD, and a process started without it uses the commit it booted,
+# so a new deploy still names a new cache instead of every build sharing "v2".
+Rails.application.config.x.cache_version =
+  ENV["CACHE_VERSION"].presence || Rails.application.config.x.booted_sha || "dev"

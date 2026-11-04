@@ -23,13 +23,15 @@ class RuntimeController < ApplicationController
       model:,
       uptime_ms: ((Process.clock_gettime(Process::CLOCK_MONOTONIC) * 1000).to_i - start_ms),
       tier: request.env["master.tier"].to_s,
-      build: ENV.fetch("CACHE_VERSION", "dev"),
+      build: cache_version,
       face_boot_ms: metrics[:face_boot_ms] || metrics["face_boot_ms"],
       particle_worker_alive: metrics[:particle_worker_alive] || metrics["particle_worker_alive"],
     })
   end
 
   private
+
+  def cache_version = Rails.application.config.x.cache_version
 
   def render_runtime_json(payload)
     render body: JSON.generate(payload), content_type: "application/json"

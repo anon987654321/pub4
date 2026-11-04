@@ -180,4 +180,12 @@ class ChatControllerTest < ActionDispatch::IntegrationTest
     assert_select "input#photo[type='file'][accept='image/*']"
     assert_select "input#photo[capture]", count: 0
   end
+
+  test "index names the service worker cache after the deployed revision, not a fixed v2" do
+    revision = ENV["CACHE_VERSION"].presence || Rails.application.config.x.booted_sha || "dev"
+    get root_path
+
+    assert_includes response.body, %(window.MASTER_CACHE_VERSION = #{revision.to_json};)
+    refute_includes response.body, %(window.MASTER_CACHE_VERSION = "v2";)
+  end
 end

@@ -4983,7 +4983,7 @@ items:
   path: RAILS/master/public/sw.js
   item: Derive CACHE_VERSION and MASTER_CACHE_VERSION from the deploy revision instead
     of defaulting to "v2".
-  status: open
+  status: done
 - id: master-030
   app: master
   area: pwa
