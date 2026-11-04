@@ -4,6 +4,10 @@ class SessionsController < ApplicationController
   # Mock OTP — fixed per APP_SPEC §2/§11. No SMS gateway, no extra gem.
   MOCK_CODE = "1234"
 
+  # A requested code is good for this long; an old one left in a shared
+  # browser must not sign the next person in.
+  CODE_TTL = 5.minutes
+
   # A fixed code proves nothing, so it may only open accounts while identity
   # itself is mocked: development, test, or the Vipps mock the demo runs.
   # With real Vipps Login live it would let anyone become any customer.
@@ -32,8 +36,7 @@ class SessionsController < ApplicationController
       return render :new, status: :service_unavailable
     end
 
-    session[:otp_phone] = phone
-    session[:otp_code] = MOCK_CODE
+    remember_code!(phone)
 
     if Rails.env.development?
       flash.now[:notice] = t("auth.mock_code", code: MOCK_CODE)
@@ -64,6 +67,7 @@ class SessionsController < ApplicationController
 
     session.delete(:otp_phone)
     session.delete(:otp_code)
+    session.delete(:otp_sent_at)
 
     redirect_to root_path, notice: t("flash.welcome")
   end
@@ -140,9 +144,17 @@ class SessionsController < ApplicationController
 
   private
 
+  # The mock code, bound to the phone and the moment this session asked.
+  def remember_code!(phone)
+    session[:otp_phone] = phone
+    session[:otp_code] = MOCK_CODE
+    session[:otp_sent_at] = Time.current.to_i
+  end
+
   # The code this session asked for, for this phone, while identity is mocked.
   def requested_code?(phone, code)
     return false unless self.class.sms_mocked? && phone.match?(/\A\d{8,12}\z/) && code.present?
+    return false unless Time.current.to_i - session[:otp_sent_at].to_i <= CODE_TTL
 
     phone == session[:otp_phone].to_s &&
       ActiveSupport::SecurityUtils.secure_compare(code, session[:otp_code].to_s)

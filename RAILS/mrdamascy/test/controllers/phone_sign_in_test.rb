@@ -35,6 +35,15 @@ class PhoneSignInTest < ActionDispatch::IntegrationTest
     assert signed_in?
   end
 
+  test "a requested code expires after a few minutes" do
+    post session_request_code_url, params: { phone: OWNER }
+    travel 6.minutes do
+      post session_url, params: { phone: OWNER, code: "1234" }
+    end
+    assert_response :unprocessable_entity
+    refute signed_in?
+  end
+
   test "with real identity live the fixed code opens nothing" do
     original = SessionsController.method(:sms_mocked?)
     SessionsController.define_singleton_method(:sms_mocked?) { false }

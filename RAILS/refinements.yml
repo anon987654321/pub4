@@ -5673,7 +5673,8 @@ items:
   path: RAILS/mrdamascy/app/controllers/sessions_controller.rb
   item: 'Rate-limit request_code and create (rate_limit to: 5, within: 10.minutes)
     and expire the stored OTP after a few minutes.'
-  status: open
+  status: done
+  note: "Rate limit already existed (10 per 10 min, kept so the test sign-in helper still fits); this adds the missing 5-minute code expiry."
 - id: mrdamascy-077
   app: mrdamascy
   area: security
