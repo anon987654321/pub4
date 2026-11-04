@@ -4251,7 +4251,8 @@ items:
   path: RAILS/bsdports/app/views/ports/_watch_toggle.html.erb
   item: Give the Watch/Unwatch button aria-pressed so its state is announced as a
     toggle.
-  status: open
+  status: invalid
+  note: "The button's visible label already flips between Watch and Unwatch; adding aria-pressed on top would announce 'Unwatch, pressed', which the WAI-ARIA toggle-button pattern says not to combine with a changing label."
 - id: bsdports-007
   app: bsdports
   area: bug
@@ -4732,7 +4733,7 @@ items:
   path: RAILS/bsdports/app/views/ports/show.html.erb
   item: Hide 'Run MASTER review' from guests or explain that sign-in is required;
     the button posts to an authenticated route and bounces guests to sign-in.
-  status: open
+  status: done
 - id: bsdports-066
   app: bsdports
   area: ux
@@ -4740,7 +4741,7 @@ items:
   path: RAILS/bsdports/app/views/ports/show.html.erb
   item: Show a sign-in prompt in place of the Watch button for guests, instead of
     rendering an empty 'Port actions' nav.
-  status: open
+  status: done
 - id: bsdports-067
   app: bsdports
   area: ux

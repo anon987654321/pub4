@@ -107,7 +107,13 @@
 
   <%= tag.h2 t("ports.master_review") %>
   <%= tag.p t("ports.master_review_lead_html") %>
-  <%= button_to t("ports.run_master_review"), review_port_path(@port), method: :post %>
+  <%# review, watch and unwatch require a session; a guest's press bounced to
+      sign-in, so a guest gets the sign-in link instead of the button. %>
+  <% if authenticated? %>
+    <%= button_to t("ports.run_master_review"), review_port_path(@port), method: :post %>
+  <% else %>
+    <%= tag.p link_to(t("ports.sign_in_to_review"), new_session_path) %>
+  <% end %>
 
   <section id="comments" aria-labelledby="comments-heading">
     <%= tag.h2 t("ports.comments_heading"), id: "comments-heading" %>
@@ -123,6 +129,8 @@
   <nav role="navigation" aria-label="<%= t("ports.actions_label") %>">
     <% if authenticated? %>
       <%= render "ports/watch_toggle", port: @port, watching: @watching %>
+    <% else %>
+      <%= link_to t("ports.sign_in_to_watch"), new_session_path %>
     <% end %>
   </nav>
 </article>
