@@ -23,7 +23,9 @@ class CheckoutController < ApplicationController
     return redirect_to(cart_path, alert: t("cart.empty")) if @cart.cart_items.empty?
 
     attrs = checkout_params
-    mode = attrs[:delivery_mode] == "pickup" ? "pickup" : "delivery"
+    # The confirm form's radios are named `mode` (the cart links here with
+    # ?mode= too); reading only delivery_mode turned every pickup into delivery.
+    mode = (attrs[:delivery_mode].presence || params[:mode]) == "pickup" ? "pickup" : "delivery"
     address = attrs[:address].presence || current_user&.default_address
     postcode = attrs[:postcode].presence || current_user&.default_postcode
     phone = attrs[:phone].presence || current_user&.phone

@@ -73,6 +73,18 @@ class CheckoutFlowTest < ActionDispatch::IntegrationTest
     assert_match(/Sahtein|صحتين/, response.body)
   end
 
+  # The confirm form posts plain fields and names its radios `mode`; the tests
+  # above post order[delivery_mode], which the form never sends, so choosing
+  # pickup on the real page placed a delivery order.
+  test "choosing pickup on the confirm form places a pickup order" do
+    post add_item_cart_url, params: { menu_item_id: @item.id, quantity: 1, option_ids: [], note: "" }
+
+    assert_difference -> { Order.count }, 1 do
+      post checkout_url, params: { mode: "pickup", phone: "90000004" }
+    end
+    assert_equal "pickup", Order.order(:id).last.delivery_mode
+  end
+
   test "an unknown postcode re-renders the confirm screen and creates nothing" do
     post add_item_cart_url, params: { menu_item_id: @item.id, quantity: 1,
                                       option_ids: [], note: "" }
