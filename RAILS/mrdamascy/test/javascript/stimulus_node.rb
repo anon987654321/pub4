@@ -4,6 +4,7 @@ require "open3"
 
 # Runs a Stimulus controller's own source under node with a stand-in
 # Controller base class, so its behaviour is exercised without a browser.
+# The app's own modules it imports (app/javascript/<name>.js) are inlined.
 # The script sees the controller class as `Subject`, assigns the targets
 # and values it needs as plain fields, and prints one JSON line to read back.
 # Each script is JavaScript source, or the name of a .mjs file beside this
@@ -25,6 +26,11 @@ module StimulusNode
          .sub(%r{^import \{ Controller \} from "@hotwired/stimulus"\n},
               "class Controller { constructor(element) { this.element = element } }\n")
          .sub("export default class", "const Subject = class")
+         .gsub(/^import \{ [\w, ]+ \} from "(\w+)"\n/) { app_module(Regexp.last_match(1)) }
+  end
+
+  def app_module(name)
+    Rails.root.join("app/javascript/#{name}.js").read.gsub(/^export /, "")
   end
 
   def stimulus_script(part)

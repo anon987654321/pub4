@@ -68,4 +68,17 @@ class MenuControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_no_match(/Hemmelig test-wrap/, response.body)
   end
+
+  test "the sauce legend states the cap and the sheet carries its polite notice" do
+    seed_option!(@item, name: "Toum", kind: "sauce")
+
+    get menu_item_url(@item)
+    page = Nokogiri::HTML(response.body)
+    legend = page.css("fieldset.option-group legend").find { |node| node.text.include?(I18n.t("menu.sauces")) }
+
+    assert_includes legend.text, I18n.t("menu.sauce_limit", count: Cart::MAX_SAUCES)
+    notice = page.at_css("[data-item-sheet-target=sauceNotice]")
+    assert_equal "polite", notice["aria-live"]
+    assert_equal I18n.t("menu.sauce_limit_reached"), page.at_css("form.sheet-form")["data-item-sheet-sauce-limit-value"]
+  end
 end

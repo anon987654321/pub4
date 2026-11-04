@@ -44,6 +44,12 @@
   margin-bottom: 8px;
 }
 
+// The sauce cap, said in the legend beside the group's name.
+.legend-note {
+  color: var(--ink-soft);
+  font-size: var(--text-meta);
+}
+
 .option-chips {
   display: flex;
   flex-wrap: wrap;

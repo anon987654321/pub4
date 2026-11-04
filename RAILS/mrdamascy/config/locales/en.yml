@@ -62,6 +62,8 @@ en:
     salatbar: Salad bar
     salatbar_hint: Pick freely from the salad bar — everything is free, as it should be in Bergen
     sauces: Sauces
+    sauce_limit: "Pick up to %{count}"
+    sauce_limit_reached: "Two sauces chosen — the others are locked until you drop one"
     toppings: Salad bar
     extras: Extras
     max_sauces: Max 2 sauces — even generosity has a limit inside the wrap

@@ -57,7 +57,8 @@
         data: { controller: "item-sheet",
                 item_sheet_base_value: item.price_ore,
                 item_sheet_max_value: Cart::MAX_QUANTITY,
-                item_sheet_template_value: t("menu.add_with_price") } do |f| %>
+                item_sheet_template_value: t("menu.add_with_price"),
+                item_sheet_sauce_limit_value: t("menu.sauce_limit_reached") } do |f| %>
 
     <%= f.hidden_field :menu_item_id, value: item.id %>
 
@@ -73,6 +74,7 @@
         <legend>
           <%= heading %>
           <% if kind != "extra" %><span class="badge"><%= t("menu.free") %></span><% end %>
+          <%= tag.span t("menu.sauce_limit", count: Cart::MAX_SAUCES), class: "legend-note" if kind == "sauce" %>
         </legend>
         <div class="option-chips">
           <% options.each do |option| %>
@@ -90,6 +92,10 @@
             </label>
           <% end %>
         </div>
+        <% if kind == "sauce" %>
+          <%= tag.p "", class: "visually-hidden", aria: { live: "polite" },
+                data: { item_sheet_target: "sauceNotice" } %>
+        <% end %>
       </fieldset>
     <% end %>
 

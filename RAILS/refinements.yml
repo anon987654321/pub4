@@ -5078,7 +5078,7 @@ items:
   path: RAILS/mrdamascy/app/views/menu/item.html.erb
   item: State the two-sauce limit in the sauces legend and announce it in a live region
     when item_sheet_controller disables the remaining chips.
-  status: open
+  status: done
 - id: mrdamascy-003
   app: mrdamascy
   area: accessibility
@@ -5410,7 +5410,7 @@ items:
   item: Format money with one shared Intl.NumberFormat("nb-NO") helper in cart_bar,
     item_sheet and zone_check; all three round to whole kroner while money() prints
     øre decimals.
-  status: open
+  status: done
 - id: mrdamascy-043
   app: mrdamascy
   area: design
@@ -5530,7 +5530,7 @@ items:
   path: RAILS/mrdamascy/app/javascript/controllers/cart_bar_controller.js
   item: Pulse the pay-bar only after a successful cart form submission; it listens
     to every turbo:submit-end, failed ones included.
-  status: open
+  status: done
 - id: mrdamascy-058
   app: mrdamascy
   area: ordering

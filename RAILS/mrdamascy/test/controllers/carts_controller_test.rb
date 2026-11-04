@@ -208,4 +208,12 @@ class CartsControllerTest < ActionDispatch::IntegrationTest
     get order_url(order)
     assert Nokogiri::HTML(response.body).at_css(".order-line img.line-photo"), "the order line shows it too"
   end
+
+  test "the pay-bar knows the cart path it pulses for" do
+    customer_sign_in
+    post add_item_cart_url, params: { menu_item_id: @item.id, quantity: 1 }
+
+    get root_url
+    assert_equal cart_path, Nokogiri::HTML(response.body).at_css("#cart_bar")["data-cart-bar-cart-path-value"]
+  end
 end

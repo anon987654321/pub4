@@ -62,6 +62,8 @@ nb:
     salatbar: Salatbar
     salatbar_hint: Velg fritt fra salatbaren — alt er gratis, som det skal være i Bergen
     sauces: Sauser
+    sauce_limit: "Velg opptil %{count}"
+    sauce_limit_reached: "To sauser valgt — de andre er låst til du fjerner en"
     toppings: Salatbar
     extras: Ekstra
     max_sauces: Maks 2 sauser — gavmildheten har en grense i selve wrapen

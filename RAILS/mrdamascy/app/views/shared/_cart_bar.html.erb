@@ -7,7 +7,8 @@
 <% total_ore = local_assigns.fetch(:cart_total_ore) { cart_subtotal_ore } %>
 
 <% if count.to_i.positive? %>
-  <%= link_to cart_path, id: "cart_bar", class: "cart-bar", data: { controller: "cart-bar" } do %>
+  <%= link_to cart_path, id: "cart_bar", class: "cart-bar",
+        data: { controller: "cart-bar", cart_bar_cart_path_value: cart_path } do %>
     <span class="cart-bar-info">
       <span class="cart-bar-title"><%= t("cart.bar_title") %></span>
       <span class="cart-bar-meta">

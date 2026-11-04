@@ -1,11 +1,12 @@
 import { Controller } from "@hotwired/stimulus"
+import { formatOre } from "money"
 
 // Item sheet (§8): qty stepper, option chip logic (max two sauces at once),
 // and live recalculation of the sticky "Legg i kurv · pris" total. Extras are
 // priced via data-price-ore on each option; sauces/toppings are free.
 export default class extends Controller {
-  static targets = ["quantity", "price", "submit", "option"]
-  static values = { base: Number, template: String, max: { type: Number, default: 20 } }
+  static targets = ["quantity", "price", "submit", "option", "sauceNotice"]
+  static values = { base: Number, template: String, max: { type: Number, default: 20 }, sauceLimit: String }
 
   connect() {
     this.recalc()
@@ -47,15 +48,22 @@ export default class extends Controller {
   }
 
   // Toum plus tarator plus chili is a trio too far — cap free sauces at two.
+  // Reaching the cap is said in the polite notice, once, so a screen-reader
+  // user hears why the other chips went quiet.
   enforceSauceLimit() {
     const sauces = this.optionTargets.filter((input) => input.dataset.kind === "sauce")
-    const checked = sauces.filter((input) => input.checked)
+    const full = sauces.filter((input) => input.checked).length >= 2
     sauces.forEach((input) => {
-      input.disabled = checked.length >= 2 && !input.checked
+      input.disabled = full && !input.checked
     })
+
+    if (this.hasSauceNoticeTarget && full !== this.sauceLimitReached) {
+      this.sauceNoticeTarget.textContent = full ? this.sauceLimitValue : ""
+    }
+    this.sauceLimitReached = full
   }
 
   formatOre(ore) {
-    return `${Math.round(ore / 100)} kr`
+    return formatOre(ore)
   }
 }

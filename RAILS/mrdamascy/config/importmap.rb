@@ -4,6 +4,7 @@
 # the app has no CDN-hosted third-party JavaScript.
 
 pin "application"
+pin "money"
 
 pin "@hotwired/turbo-rails", to: "turbo.min.js", preload: true
 pin "@hotwired/stimulus", to: "stimulus.min.js", preload: true
