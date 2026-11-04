@@ -30,4 +30,7 @@
            q: params[:q],
            category_id: params[:category_id],
            sort: params[:sort] %>
+<%# The sentinel needs a reflex over ActionCable; without JavaScript the list
+    stopped at page one with no way on. %>
+<noscript><%= render "shared/pager", pagy: @pagy %></noscript>
 <% end %>

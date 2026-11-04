@@ -4681,7 +4681,7 @@ items:
   path: RAILS/bsdports/app/views/ports/_list.html.erb
   item: Add a no-JS pager under the infinite-scroll sentinel on the ports list and
     maintainer page, as amber does with <noscript> pager.
-  status: open
+  status: done
 - id: bsdports-059
   app: bsdports
   area: ux
