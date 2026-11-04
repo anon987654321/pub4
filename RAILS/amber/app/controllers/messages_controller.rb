@@ -49,13 +49,22 @@ class MessagesController < ApplicationController
 
   def message_params = params.require(:message).permit(:recipient_id, :body)
 
+  # One lookup per request: master_invited?, resolve_recipient and load_inbox
+  # each ran this find_by, up to three times for one send. The ivar is set
+  # even when the row is absent, so nil is remembered too.
+  def master
+    return @master if defined?(@master)
+
+    @master = User.find_by(email_address: "master@amber.local", bot: true)
+  end
+
   def master_invited?
-    master = User.find_by(email_address: "master@amber.local", bot: true)
-    master.present? && Current.user.received_messages.where(sender: master).exists?
+    return @master_invited if defined?(@master_invited)
+
+    @master_invited = master.present? && Current.user.received_messages.where(sender: master).exists?
   end
 
   def resolve_recipient(id)
-    master = User.find_by(email_address: "master@amber.local", bot: true)
     return master if master && master.id == id.to_i && master_invited?
 
     Current.user.messageable_users.find_by(id:)
@@ -68,7 +77,6 @@ class MessagesController < ApplicationController
     )
     @unread_count = Current.user.received_messages.unread.count
     @recipients = Current.user.messageable_users.to_a
-    master = User.find_by(email_address: "master@amber.local", bot: true)
     @recipients << master if master && master_invited?
   end
 end

@@ -411,7 +411,7 @@ items:
   path: RAILS/amber/app/controllers/messages_controller.rb
   item: 'Memoize the MASTER bot lookup in MessagesController; User.find_by(email_address:
     ''master@amber.local'') runs up to three times per request.'
-  status: open
+  status: done
 - id: amber-051
   app: amber
   area: performance
