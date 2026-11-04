@@ -262,6 +262,14 @@ class WorkflowInferenceTest < Minitest::Test
 
     # The council check asks through review; the tribunal path through review_convergent.
     def review(payload, context:) = review_convergent(payload, context:)
+
+    # The pre-ship critique (CouncilCrit) passes only with a Security juror in a
+    # veto role, so the fake answers as a real panel would.
+    def review_pre_ship(payload, context:)
+      @asked << context
+      juror = { persona: "Security", role: "Security", veto_role: true, feedback: "ok for #{payload.to_s[0, 20]}" }
+      Master::Result.ok([juror])
+    end
   end
 
   class FakeScanner
