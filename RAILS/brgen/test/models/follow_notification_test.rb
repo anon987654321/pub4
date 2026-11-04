@@ -10,7 +10,8 @@ class FollowNotificationTest < ActiveSupport::TestCase
   end
 
   def person(prefix)
-    User.strict_loading(false).create!(email_address: "#{prefix}-#{SecureRandom.hex(3)}@brgen.no", password: "password123")
+    email_address = "#{prefix}-#{SecureRandom.hex(3)}@brgen.no"
+    User.strict_loading(false).create!(email_address:, password: "password123")
   end
 
   def follow_notices = Notification.where(user: @followed, actor_id: @follower.id, kind: "follow")

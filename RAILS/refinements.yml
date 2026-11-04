@@ -898,7 +898,7 @@ items:
   path: RAILS/brgen/app/views/sessions/new.html.erb
   item: Give sessions/new a content_for :title; the sign-in tab shows only the city
     name.
-  status: open
+  status: done
 - id: brgen-003
   app: brgen
   area: channels
@@ -3393,7 +3393,7 @@ items:
   path: RAILS/brgen/app/views/users/show.html.erb
   item: Add a confirm (turbo_confirm) to the Block button on profiles, matching the
     messenger's confirm_block.
-  status: open
+  status: done
 - id: brgen-301
   app: brgen
   area: privacy
@@ -3401,7 +3401,7 @@ items:
   path: RAILS/brgen/app/views/users/show.html.erb
   item: Add a Report-user button to profiles; reporting is reachable for posts and
     messages but not for an account.
-  status: open
+  status: done
 - id: brgen-302
   app: brgen
   area: privacy

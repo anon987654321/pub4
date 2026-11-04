@@ -20,8 +20,11 @@
             class: "button button-ghost" %>
     <% else %>
       <%= button_to t("block.block"), block_user_path(@user), method: :post,
-            class: "button button-ghost" %>
+            class: "button button-ghost",
+            data: { turbo_confirm: t("messages.confirm_block") } %>
     <% end %>
+    <%# Posts, comments and messages could be reported; the account itself could not. %>
+    <%= render "shared/report_button", target: @user, reason: nil %>
   <% elsif authenticated? && Current.user == @user %>
     <%= link_to t("profile.edit"), edit_user_path(@user), class: "button button-ghost" %>
   <% end %>

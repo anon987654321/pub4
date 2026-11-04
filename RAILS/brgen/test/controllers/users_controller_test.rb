@@ -174,4 +174,26 @@ class UsersControllerTest < ActionDispatch::IntegrationTest
     assert_response :unprocessable_entity
     assert_nil User.find_by(email_address: email)
   end
+
+  # The sign-in tab showed only the city name.
+  test "the sign-in page names itself in the tab" do
+    get new_session_path
+
+    assert_select "title", /#{Regexp.escape(I18n.t("auth.sign_in"))}/
+  end
+
+  # Blocking asks first, as the messenger's block does, and the account itself
+  # can be reported from the profile, not only its posts and messages.
+  test "another member's profile confirms a block and offers a report" do
+    viewer = User.create!(email_address: "uc-viewer@brgen.no", password: "password123", username: "uc_viewer")
+    other = User.create!(email_address: "uc-other@brgen.no", password: "password123", username: "uc_other")
+    post session_path, params: { email_address: viewer.email_address, password: "password123" }
+
+    get user_path(other)
+
+    assert_response :success
+    confirm = I18n.t("messages.confirm_block")
+    assert_select "form[action=?] button[data-turbo-confirm=?]", block_user_path(other), confirm
+    assert_select "#report_#{ActionView::RecordIdentifier.dom_id(other)} form[action=?]", reports_path
+  end
 end
