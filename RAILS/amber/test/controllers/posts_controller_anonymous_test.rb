@@ -45,4 +45,15 @@ class PostsControllerAnonymousTest < ActionDispatch::IntegrationTest
     assert_select "a.empty-state-action[href='#{new_post_path}']", I18n.t("empty.first_post")
     assert_includes response.body, "amber-compose-box"
   end
+
+  # The inline compose box had no counter for its 500-character limit, which
+  # posts/new shows, and three hashtag pills that looked tappable and did nothing.
+  def test_the_feed_compose_box_counts_down_and_offers_no_dead_pills
+    get posts_url
+    box = "form.amber-compose-box"
+    assert_select "#{box}[data-controller~=character-counter][data-character-counter-countdown-value=true]"
+    assert_select "form.amber-compose-box textarea[maxlength=\"500\"][data-character-counter-target=input]"
+    assert_select "form.amber-compose-box .char-counter[data-character-counter-target=counter][aria-live=polite]"
+    assert_select ".amber-compose-tags", 0
+  end
 end

@@ -839,7 +839,7 @@ items:
   path: RAILS/amber/app/views/shared/_feed_compose.html.erb
   item: 'Make the compose hashtag pills (#ootd, #capsulewardrobe, #style) insert the
     tag on click, or remove them; they are aria-hidden decoration that looks tappable.'
-  status: open
+  status: done
 - id: amber-104
   app: amber
   area: ux
@@ -847,7 +847,7 @@ items:
   path: RAILS/amber/app/views/shared/_feed_compose.html.erb
   item: Show a character counter on the feed compose box; posts/new has one, the inline
     compose has none despite a 500 limit.
-  status: open
+  status: done
 - id: amber-105
   app: amber
   area: ux

@@ -1,7 +1,8 @@
 <% anon = Shared::AnonymousPost.new(request: request, user: Current.user) %>
 <%= form_with model: Post.new, url: posts_path, class: "amber-compose-box",
       data: {
-        controller: "feed-compose",
+        controller: "feed-compose character-counter",
+        character_counter_countdown_value: true,
         pwa_offline: true,
         pwa_queued_text: t("pwa.queued"),
         feed_compose_target: "box",
@@ -22,19 +23,17 @@
             data: {
               feed_compose_target: "input",
               tiptap_editor_target: "field",
+              character_counter_target: "input",
               action: "focus->feed-compose#expand blur->feed-compose#collapse"
             } %>
       <div class="tiptap_mount" data-tiptap-editor-target="mount" hidden></div>
       <%= render "shared/tiptap_toolbar" %>
     </div>
     <div class="amber-compose-footer" data-feed-compose-target="footer" hidden>
-      <%# Three tags, one pill span per tag; as one text node the three ran
-          together with no space between them. %>
-      <p class="amber-compose-tags" aria-hidden="true">
-        <span>#ootd</span>
-        <span>#capsulewardrobe</span>
-        <span>#style</span>
-      </p>
+      <%# The 500-character budget, counted down as posts/new does. Three
+          hashtag pills stood here: aria-hidden decoration that looked tappable
+          and did nothing. %>
+      <span class="char-counter" data-character-counter-target="counter" aria-live="polite"></span>
       <div class="amber-compose-submit">
         <%# The hint under the box says the post goes out anonymously, so the
             button carries no second "anon" label. %>
