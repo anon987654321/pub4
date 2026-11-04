@@ -3278,7 +3278,7 @@ items:
   size: S
   path: RAILS/brgen/app/views/posts/index.html.erb
   item: Add aria-current to the active sort tab on /posts.
-  status: open
+  status: done
 - id: brgen-287
   app: brgen
   area: posts-index
@@ -3286,7 +3286,7 @@ items:
   path: RAILS/brgen/app/views/posts/index.html.erb
   item: Replace the presentational class pub4-display-title on the /posts heading
     with a semantic name.
-  status: open
+  status: done
 - id: brgen-288
   app: brgen
   area: posts-index
@@ -3294,7 +3294,7 @@ items:
   path: RAILS/brgen/app/views/posts/index.html.erb
   item: Use Community.popular_cached for the /posts aside, as the home controller
     does, instead of an uncached query per render.
-  status: open
+  status: done
 - id: brgen-289
   app: brgen
   area: privacy

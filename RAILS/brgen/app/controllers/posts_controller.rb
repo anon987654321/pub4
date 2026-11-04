@@ -38,6 +38,8 @@ class PostsController < ApplicationController
     scope = scope.with_attached_image.with_attached_images.includes(:user, :community, :votes)
     scope = apply_live_search(scope, columns: %w[title content], vertical: "feed") if live_search_query.present?
     @pagy, @posts = pagy(scope)
+    # The cached list the front page reads, not a query on every render.
+    @popular_communities = Community.popular_cached(limit: 8)
     finish_live_search(partial: "posts/live_search_results")
   end
 

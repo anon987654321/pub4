@@ -95,10 +95,11 @@ class VisualIdentityContractTest < Minitest::Test
     css = File.read(SHARED_CHROME, encoding: "UTF-8")
     view = File.read(BRGEN_POSTS, encoding: "UTF-8")
 
-    assert_includes css, ".page-header h1.pub4-display-title"
+    assert_includes css, ".page-header h1.primary-title"
     assert_includes css, "font-size: var(--text-display);"
     assert_includes css, "line-height: var(--leading-none);"
-    assert_includes view, 'class: "pub4-display-title"'
+    assert_includes view, 'class: "primary-title"'
+    refute_match(/pub4-display-title/, css + view)
   end
 
   def test_face_display_weight_tokens_live_outside_the_generated_root
