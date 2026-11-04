@@ -5,19 +5,19 @@
 .hero {
   border: 0;
   border-radius: var(--radius);
-  padding: 24px 20px;
+  padding: var(--space-24) var(--space-20);
 }
 
 .hero-mark {
   width: 56px;
   height: 56px;
-  margin: 0 0 8px;
+  margin: 0 0 var(--space-8);
 }
 
 .hero-greeting {
   color: var(--mint-700);
   font-weight: 700;
-  margin-bottom: 2px;
+  margin-bottom: var(--space-2);
 }
 
 .hero-title {
@@ -27,10 +27,10 @@
 .hero-meta {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: var(--space-4);
   color: var(--ink-soft);
   font-size: var(--text-meta);
-  margin-bottom: 2px;
+  margin-bottom: var(--space-2);
 }
 
 // Address and hours each stay on one line.
@@ -48,7 +48,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
+  gap: var(--space-12);
 }
 
 .reorder-title {
@@ -58,7 +58,7 @@
 }
 
 .reorder-copy p {
-  margin: 2px 0 0;
+  margin: var(--space-2) 0 0;
   font-size: var(--text-meta);
 }
 
@@ -69,10 +69,10 @@
   top: var(--brand-bar-height);
   z-index: var(--z-category-chips);
   display: flex;
-  gap: 8px;
+  gap: var(--space-8);
   overflow-x: auto;
-  margin: 12px -16px 0;
-  padding: 12px 16px;
+  margin: var(--space-12) calc(-1 * var(--space-16)) 0;
+  padding: var(--space-12) var(--space-16);
   background: var(--paper);
   scrollbar-width: none;
   -webkit-overflow-scrolling: touch;
@@ -88,22 +88,22 @@
 .menu-section {
   scroll-margin-top: 130px;
   display: grid;
-  gap: 12px;
+  gap: var(--space-12);
 }
 
 // Item card — emoji tile, facts, price, quick-add.
 .item-card {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 16px;
+  gap: var(--space-12);
+  padding: var(--space-16);
 }
 
 .item-card-hit {
   flex: 1;
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: var(--space-12);
   min-width: 0;
   color: inherit;
 }
@@ -133,15 +133,15 @@
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 4px;
-  margin-top: 4px;
+  gap: var(--space-4);
+  margin-top: var(--space-4);
 }
 
 .item-badges {
   display: flex;
   flex-wrap: wrap;
-  gap: 4px;
-  margin-top: 4px;
+  gap: var(--space-4);
+  margin-top: var(--space-4);
 }
 
 .item-side {
@@ -149,7 +149,7 @@
   display: flex;
   flex-direction: column;
   align-items: flex-end;
-  gap: 8px;
+  gap: var(--space-8);
 }
 
 .item-price {
@@ -161,7 +161,7 @@
 .heat {
   display: inline-flex;
   align-items: center;
-  gap: 3px;
+  gap: var(--space-3);
 }
 
 .heat-dot {
@@ -184,7 +184,7 @@
 }
 
 .heat-label {
-  margin-inline-start: 4px;
+  margin-inline-start: var(--space-4);
   font-size: var(--text-extra-small);
   font-weight: 700;
   color: var(--ink-soft);

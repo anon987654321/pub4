@@ -3,7 +3,7 @@
 .cart-line {
   display: grid;
   grid-template-columns: 44px 1fr auto;
-  gap: 12px;
+  gap: var(--space-12);
 }
 
 .line-emoji {
@@ -34,21 +34,21 @@
 .line-options {
   color: var(--ink-soft);
   font-size: var(--text-meta);
-  margin: 2px 0;
+  margin: var(--space-2) 0;
 }
 
 .line-note {
   color: var(--mint-700);
   font-size: var(--text-meta);
   font-style: italic;
-  margin: 2px 0;
+  margin: var(--space-2) 0;
 }
 
 .line-side {
   display: flex;
   flex-direction: column;
   align-items: flex-end;
-  gap: 4px;
+  gap: var(--space-4);
   font-size: var(--text-meta);
 }
 
@@ -61,8 +61,8 @@
 .line-tools {
   display: flex;
   align-items: center;
-  gap: 4px;
-  margin-top: 8px;
+  gap: var(--space-4);
+  margin-top: var(--space-8);
 }
 
 .quantity-value {
@@ -75,14 +75,14 @@
 .line-remove {
   background: none;
   border: 0;
-  padding: 12px 8px;
+  padding: var(--space-12) var(--space-8);
   color: var(--danger);
   font-size: var(--text-meta);
   font-weight: 600;
 }
 
 .cart-summary {
-  margin-top: 16px;
+  margin-top: var(--space-16);
 }
 
 .cart-subtotal {
@@ -90,24 +90,24 @@
   justify-content: space-between;
   font-size: var(--text-body);
   font-weight: 700;
-  padding: 4px 0 8px;
+  padding: var(--space-4) 0 var(--space-8);
 }
 
 .promo-hint {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--space-8);
   color: var(--mint-700);
   font-size: var(--text-meta);
   background: var(--surface-elevated);
   border-radius: var(--radius-small);
-  padding: 8px 12px;
+  padding: var(--space-8) var(--space-12);
 }
 
 .mode-toggle {
   display: flex;
-  gap: 8px;
-  margin: 12px 0;
+  gap: var(--space-8);
+  margin: var(--space-12) 0;
 }
 
 .mode-toggle .chip {
@@ -119,7 +119,7 @@
   text-align: center;
   color: var(--ink-soft);
   font-size: var(--text-meta);
-  margin-top: 8px;
+  margin-top: var(--space-8);
 }
 
 // Pay-bar — dark ink pill with a gold "Betal" chip. Flat: 1px border, no
@@ -128,14 +128,14 @@
   position: fixed;
   left: 50%;
   transform: translateX(-50%);
-  bottom: calc(var(--tab-bar-height) + env(safe-area-inset-bottom, 0px) + 8px);
+  bottom: calc(var(--tab-bar-height) + env(safe-area-inset-bottom, 0px) + var(--space-8));
   width: calc(100% - 32px);
   max-width: 448px;
   z-index: var(--z-pay-bar);
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 8px 12px 8px 16px;
+  gap: var(--space-12);
+  padding: var(--space-8) var(--space-12) var(--space-8) var(--space-16);
   border: 1px solid var(--ink);
   border-radius: var(--radius-pill);
   background: var(--ink);
@@ -170,7 +170,7 @@
   background: var(--gold);
   color: var(--ink);
   border-radius: var(--radius-pill);
-  padding: 0 16px;
+  padding: 0 var(--space-16);
 }
 
 .cart-bar-pulse {

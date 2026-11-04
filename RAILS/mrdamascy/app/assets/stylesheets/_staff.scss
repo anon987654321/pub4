@@ -2,8 +2,8 @@
 .board-head {
   border: 0;
   border-radius: var(--radius);
-  padding: 16px;
-  margin-bottom: 16px;
+  padding: var(--space-16);
+  margin-bottom: var(--space-16);
 }
 
 .board-head h1 {
@@ -13,16 +13,16 @@
 
 .board-grid {
   display: grid;
-  gap: 16px;
+  gap: var(--space-16);
   grid-template-columns: 1fr;
 }
 
 .board-column-title {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--space-8);
   font-size: var(--text-body);
-  margin: 0 0 8px;
+  margin: 0 0 var(--space-8);
 }
 
 .board-count {
@@ -30,25 +30,25 @@
   color: var(--mint-700);
   border-radius: var(--radius-pill);
   font-size: var(--text-meta);
-  padding: 2px 8px;
+  padding: var(--space-2) var(--space-8);
 }
 
 .board-card {
-  margin-bottom: 12px;
-  padding: 12px;
+  margin-bottom: var(--space-12);
+  padding: var(--space-12);
 }
 
 .board-card-top {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 8px;
-  margin-bottom: 8px;
+  gap: var(--space-8);
+  margin-bottom: var(--space-8);
 }
 
 .board-card-items {
   font-size: var(--text-meta);
-  margin: 0 0 8px;
+  margin: 0 0 var(--space-8);
 }
 
 // The options and the customer's note sit under the dish they belong to.
@@ -60,12 +60,12 @@
 
 .board-card-phone {
   font-size: var(--text-meta);
-  margin: 0 0 12px;
+  margin: 0 0 var(--space-12);
 }
 
 .board-card-address {
   font-size: var(--text-meta);
-  margin: 0 0 4px;
+  margin: 0 0 var(--space-4);
 }
 
 .board-wait {
@@ -84,9 +84,9 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
+  gap: var(--space-8);
   border-top: 1px solid var(--line);
-  padding: 12px 0;
+  padding: var(--space-12) 0;
 }
 
 .run-stop:first-of-type {
@@ -110,14 +110,14 @@
 .run-meta {
   color: var(--ink-soft);
   font-size: var(--text-meta);
-  margin: 2px 0 0;
+  margin: var(--space-2) 0 0;
 }
 
 // Who the order is for, above where it goes.
 .board-card-name,
 .run-name {
   font-weight: 700;
-  margin: 0 0 4px;
+  margin: 0 0 var(--space-4);
 }
 
 // How long the order has waited, ticked by the board controller.

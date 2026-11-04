@@ -15,11 +15,11 @@ html {
 // Skip link — first focusable element on every page, visible on focus only.
 .skip-link {
   position: absolute;
-  inset-inline-start: 16px;
-  top: 8px;
+  inset-inline-start: var(--space-16);
+  top: var(--space-8);
   transform: translateY(-56px);
   z-index: var(--z-skip-link);
-  padding: 8px 16px;
+  padding: var(--space-8) var(--space-16);
   border-radius: var(--radius-small);
   background: var(--ink);
   color: var(--paper);
@@ -99,7 +99,7 @@ textarea {
 main.shell {
   max-width: 480px;
   margin: 0 auto;
-  padding: 16px 16px calc(var(--bottom-clearance) + 24px);
+  padding: var(--space-16) var(--space-16) calc(var(--bottom-clearance) + var(--space-24));
   min-height: 100dvh;
   background: var(--paper);
 }
@@ -117,8 +117,8 @@ main.shell {
   margin: 0 auto;
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 8px 16px;
+  gap: var(--space-8);
+  padding: var(--space-8) var(--space-16);
   color: var(--ink);
 }
 
@@ -135,39 +135,39 @@ main.shell {
 // Page titles ride the MASTER type_tokens: var(--text-title), var(--font).
 .page-title {
   font-size: var(--text-title);
-  margin: 4px 0 12px;
+  margin: var(--space-4) 0 var(--space-12);
   text-wrap: balance;
 }
 
 .section-title {
   font-size: var(--text-title);
-  margin: 4px 0 12px;
+  margin: var(--space-4) 0 var(--space-12);
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--space-8);
 }
 
 // A second section inside one card opens with the same 16px as a new card.
 .section-title:not(:first-child) {
-  margin-top: 16px;
+  margin-top: var(--space-16);
 }
 
 // Page flow: consecutive cards and greeting surfaces sit 16px apart, and so
 // does the closing row of page actions (track, back, log in).
 main.shell > :is(.card, .hero, .loyalty-card) + .card {
-  margin-top: 16px;
+  margin-top: var(--space-16);
 }
 
 .page-actions {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  margin-top: 16px;
+  gap: var(--space-8);
+  margin-top: var(--space-16);
 }
 
 .app-footer {
-  margin-top: 32px;
-  padding: 16px 4px 8px;
+  margin-top: var(--space-32);
+  padding: var(--space-16) var(--space-4) var(--space-8);
   border-top: 1px solid var(--line);
   text-align: center;
   font-size: var(--text-meta);
@@ -181,7 +181,7 @@ main.shell > :is(.card, .hero, .loyalty-card) + .card {
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
-  column-gap: 12px;
+  column-gap: var(--space-12);
 }
 
 .footer-facts span {
@@ -195,22 +195,22 @@ main.shell > :is(.card, .hero, .loyalty-card) + .card {
 
 // Item sheet keeps its pay button pinned above the tab bar — give the form room.
 body.act-item main.shell {
-  padding-bottom: calc(var(--bottom-clearance) + 190px);
+  padding-bottom: calc(var(--bottom-clearance) + var(--sheet-footer-clearance));
 }
 
 // Toasts float under the brand bar. Flat chrome: 1px border + surface,
 // no shadow (pixel_perfection).
 .toast {
   position: fixed;
-  top: calc(var(--brand-bar-height) + 16px + env(safe-area-inset-top, 0px));
+  top: calc(var(--brand-bar-height) + var(--space-16) + env(safe-area-inset-top, 0px));
   left: 50%;
   transform: translateX(-50%);
   z-index: var(--z-toast);
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: var(--space-12);
   max-width: calc(100% - 32px);
-  padding: 8px 12px 8px 16px;
+  padding: var(--space-8) var(--space-12) var(--space-8) var(--space-16);
   border: 1px solid var(--ink);
   border-radius: var(--radius-pill);
   color: var(--paper);
@@ -239,7 +239,7 @@ body.act-item main.shell {
   flex: none;
   width: 44px;
   height: 44px;
-  margin: -8px -8px;
+  margin: calc(-1 * var(--space-8)) calc(-1 * var(--space-8));
   border: 0;
   padding: 0;
   border-radius: 50%;

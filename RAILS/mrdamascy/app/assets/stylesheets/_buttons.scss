@@ -9,11 +9,11 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: var(--space-8);
   min-height: var(--tap-min);
   border: 1px solid var(--mint-700);
   border-radius: var(--radius-small);
-  padding: 8px 16px;
+  padding: var(--space-8) var(--space-16);
   background: transparent;
   color: var(--mint-700);
   font-weight: 700;
@@ -48,7 +48,7 @@
 .vipps-heart {
   display: inline-flex;
   vertical-align: -3px;
-  margin-inline-start: 2px;
+  margin-inline-start: var(--space-2);
 }
 
 .vipps-heart svg {
@@ -108,13 +108,13 @@ form:not(.button_to) > button[type="submit"],
 .auth-card > .button-vipps,
 .vipps-form > button,
 .sheet-footer .button {
-  padding: 12px 20px;
+  padding: var(--space-12) var(--space-20);
 }
 
 // Actions inside a list entry (menu card, order card) stay compact.
 .item-add,
 .order-actions .button {
-  padding: 4px 12px;
+  padding: var(--space-4) var(--space-12);
   font-size: var(--text-meta);
 }
 

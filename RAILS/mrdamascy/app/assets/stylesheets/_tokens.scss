@@ -78,9 +78,26 @@
   --transition-normal: 300ms;
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
 
+  // Spacing — the scale every padding, margin, gap and offset takes, named
+  // by its size in px. 2 and 3 are optical nudges (badge and heat-dot
+  // insets); the hairline is the 1px rules sit on.
+  --space-2: 2px;
+  --space-3: 3px;
+  --space-4: 4px;
+  --space-8: 8px;
+  --space-12: 12px;
+  --space-16: 16px;
+  --space-20: 20px;
+  --space-24: 24px;
+  --space-28: 28px;
+  --space-32: 32px;
+  --hairline: 1px;
+
   // Shell geometry: tab bar height + safe area drive bottom clearance; the
   // brand bar's content height places the sticky chips and the toasts.
   --tab-bar-height: 62px;
+  // Room under the item sheet for its pinned pay footer.
+  --sheet-footer-clearance: 190px;
   --brand-bar-height: 48px;
 
   // Layers, lowest first: sticky chips, the sheet's pay footer, the brand

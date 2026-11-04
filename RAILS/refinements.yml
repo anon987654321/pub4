@@ -5393,7 +5393,7 @@ items:
   item: Add --space-* tokens to _tokens.scss and replace the roughly 290 raw px spacing
     literals across the 14 partials; the file promises no stylesheet carries a raw
     literal.
-  status: open
+  status: done
 - id: mrdamascy-041
   app: mrdamascy
   area: design

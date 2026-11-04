@@ -6,27 +6,27 @@
 .track-eta {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--space-8);
   background: var(--mint-100);
   color: var(--mint-700);
   font-weight: 700;
   border-radius: var(--radius-pill);
-  padding: 8px 16px;
+  padding: var(--space-8) var(--space-16);
 }
 
 .timeline {
   list-style: none;
-  margin: 16px 0 8px;
+  margin: var(--space-16) 0 var(--space-8);
   position: relative;
 }
 
 .timeline::before {
   content: "";
   position: absolute;
-  inset-inline-start: 16px;
-  margin-inline-start: -1px;
-  top: 16px;
-  bottom: 16px;
+  inset-inline-start: var(--space-16);
+  margin-inline-start: calc(-1 * var(--hairline));
+  top: var(--space-16);
+  bottom: var(--space-16);
   width: 2px;
   background: var(--mint-200);
 }
@@ -35,8 +35,8 @@
   position: relative;
   display: flex;
   align-items: center;
-  gap: 16px;
-  padding: 8px 0;
+  gap: var(--space-16);
+  padding: var(--space-8) 0;
   color: var(--ink-soft);
 }
 
@@ -77,10 +77,10 @@
 .courier-line {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--space-8);
   background: var(--surface-elevated);
   border-radius: var(--radius-small);
-  padding: 12px;
+  padding: var(--space-12);
   font-size: var(--text-meta);
   font-weight: 600;
 }
@@ -89,7 +89,7 @@
   background: var(--pom-100);
   color: var(--danger);
   border-radius: var(--radius-small);
-  padding: 12px;
+  padding: var(--space-12);
   font-weight: 700;
 }
 
@@ -97,15 +97,15 @@
 .tip-choices {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
-  margin: 8px 0 4px;
+  gap: var(--space-8);
+  margin: var(--space-8) 0 var(--space-4);
 }
 
 .thanks-line {
   text-align: center;
   font-weight: 700;
   color: var(--mint-700);
-  margin-top: 16px;
+  margin-top: var(--space-16);
 }
 
 // Orders index / show cards.
@@ -113,31 +113,31 @@
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 8px;
-  margin-bottom: 8px;
+  gap: var(--space-8);
+  margin-bottom: var(--space-8);
 }
 
 .order-lines {
   font-size: var(--text-meta);
-  margin: 0 0 12px;
+  margin: 0 0 var(--space-12);
 }
 
 .order-card-foot {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: var(--space-8);
 }
 
 .order-actions {
   margin-inline-start: auto;
   display: flex;
-  gap: 8px;
+  gap: var(--space-8);
 }
 
 .order-head .state-chip,
 .order-head .badge {
-  margin-inline-end: 8px;
+  margin-inline-end: var(--space-8);
 }
 
 .order-head p {
@@ -153,8 +153,8 @@
   display: grid;
   grid-template-columns: auto 1fr auto;
   align-items: center;
-  gap: 8px;
-  padding: 8px 0;
+  gap: var(--space-8);
+  padding: var(--space-8) 0;
   border-top: 1px solid var(--line);
   font-size: var(--text-meta);
 }
@@ -164,8 +164,8 @@
 }
 
 .order-delivery {
-  margin-top: 16px;
+  margin-top: var(--space-16);
   border-top: 1px solid var(--line);
-  padding-top: 8px;
+  padding-top: var(--space-8);
   font-size: var(--text-meta);
 }

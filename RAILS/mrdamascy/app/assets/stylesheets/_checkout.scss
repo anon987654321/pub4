@@ -3,13 +3,13 @@
 // The zero-typing path: "Logg inn med Vipps" card for guests (§12). Flat,
 // mint-tinted, with the orange Vipps CTA — the fastest way through checkout.
 .vipps-login {
-  margin: 16px 0;
+  margin: var(--space-16) 0;
   text-align: center;
 }
 
 .vipps-login strong {
   display: block;
-  margin-bottom: 4px;
+  margin-bottom: var(--space-4);
 }
 
 .vipps-login strong + p {
@@ -17,16 +17,16 @@
 }
 
 .vipps-login .button {
-  margin-top: 12px;
+  margin-top: var(--space-12);
 }
 
 .login-or {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: var(--space-12);
   color: var(--ink-soft);
   font-size: var(--text-meta);
-  margin: 16px 0 0;
+  margin: var(--space-16) 0 0;
 
   &::before,
   &::after {
@@ -40,8 +40,8 @@
 .payment-option {
   display: flex;
   align-items: center;
-  gap: 12px;
-  margin: 16px 0;
+  gap: var(--space-12);
+  margin: var(--space-16) 0;
 }
 
 .payment-option-text {
@@ -62,7 +62,7 @@
 .promo-line {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--space-8);
   color: var(--mint-700);
   font-weight: 600;
   font-size: var(--text-meta);
@@ -74,15 +74,15 @@
 }
 
 .totals {
-  margin: 12px 0;
+  margin: var(--space-12) 0;
 }
 
 .checkout-subtotal {
   display: flex;
   justify-content: space-between;
-  gap: 12px;
+  gap: var(--space-12);
   margin: 0;
-  padding: 4px 0;
+  padding: var(--space-4) 0;
 }
 
 .totals-discount {
@@ -95,21 +95,21 @@
   font-size: var(--text-title);
   font-weight: 700;
   border-top: 1px solid var(--line);
-  margin-top: 8px;
-  padding-top: 12px;
+  margin-top: var(--space-8);
+  padding-top: var(--space-12);
 }
 
 .totals-note {
   color: var(--ink-soft);
   font-size: var(--text-meta);
-  margin: 8px 0 0;
+  margin: var(--space-8) 0 0;
 }
 
 .zone-feedback {
   min-height: 20px;
   font-size: var(--text-meta);
   font-weight: 600;
-  margin: 8px 0 0;
+  margin: var(--space-8) 0 0;
 }
 
 .zone-feedback:empty {
@@ -129,20 +129,20 @@
   color: var(--danger);
   font-size: var(--text-meta);
   font-weight: 600;
-  margin: 8px 0 0;
+  margin: var(--space-8) 0 0;
 }
 
 .steps-note {
   text-align: center;
   color: var(--ink-soft);
   font-size: var(--text-meta);
-  margin-top: 8px;
+  margin-top: var(--space-8);
 }
 
 // Vipps mock — mint header, orange wordmark, amount, approve/cancel.
 .vipps-mock {
   max-width: 360px;
-  margin: 32px auto;
+  margin: var(--space-32) auto;
   text-align: center;
 }
 
@@ -150,28 +150,28 @@
   background: var(--surface-elevated);
   border: 0;
   border-radius: var(--radius);
-  padding: 32px 20px;
-  margin-bottom: 16px;
+  padding: var(--space-32) var(--space-20);
+  margin-bottom: var(--space-16);
 }
 
 .vipps-head .vipps-wordmark {
   display: block;
   height: 64px;
   width: auto;
-  margin: 0 auto 12px;
+  margin: 0 auto var(--space-12);
 }
 
 .vipps-amount {
   font-size: var(--text-display);
   font-weight: 700;
-  margin: 4px 0;
+  margin: var(--space-4) 0;
 }
 
 // Mock login header — a verify line in place of the amount.
 .vipps-verify {
   font-size: var(--text-title);
   font-weight: 700;
-  margin: 4px 0;
+  margin: var(--space-4) 0;
 }
 
 // "Beløp · #id" under the amount.
@@ -186,7 +186,7 @@
 
 .vipps-cancel {
   display: inline-block;
-  margin-top: 16px;
+  margin-top: var(--space-16);
   color: var(--ink-soft);
   font-weight: 600;
 }
@@ -194,7 +194,7 @@
 .vipps-note {
   color: var(--ink-soft);
   font-size: var(--text-extra-small);
-  margin-top: 12px;
+  margin-top: var(--space-12);
 }
 
 // Stripe wordmark chips — the payment-option variant mirrors .vipps-wordmark; the
@@ -206,7 +206,7 @@
   color: var(--stripe-ink);
   border: 2px solid var(--stripe);
   border-radius: var(--radius-extra-small);
-  padding: 4px 12px;
+  padding: var(--space-4) var(--space-12);
 }
 
 .vipps-head .stripe-wordmark {
@@ -214,13 +214,13 @@
   border: 0;
   padding: 0;
   font-size: var(--text-display);
-  margin-bottom: 12px;
+  margin-bottom: var(--space-12);
 }
 
 .stripe-lock {
   display: inline-flex;
   vertical-align: -3px;
-  margin-inline-start: 2px;
+  margin-inline-start: var(--space-2);
 }
 
 .stripe-lock svg {
@@ -231,8 +231,8 @@
 dl.totals {
   display: grid;
   grid-template-columns: 1fr auto;
-  column-gap: 12px;
-  row-gap: 8px;
+  column-gap: var(--space-12);
+  row-gap: var(--space-8);
 }
 
 dl.totals dd {
@@ -247,7 +247,7 @@ dl.totals dd {
 }
 
 .checkout-lines summary > * + * {
-  margin-inline-start: 8px;
+  margin-inline-start: var(--space-8);
 }
 
 .checkout-lines .order-line {

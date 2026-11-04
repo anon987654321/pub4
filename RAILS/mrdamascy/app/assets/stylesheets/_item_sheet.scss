@@ -4,23 +4,23 @@
 .sheet-head {
   border: 0;
   border-radius: var(--radius);
-  padding: 24px 20px;
-  margin-bottom: 16px;
+  padding: var(--space-24) var(--space-20);
+  margin-bottom: var(--space-16);
 }
 
 .sheet-emoji {
   display: block;
   font-size: var(--text-display-extra-large);
   line-height: 1;
-  margin-bottom: 8px;
+  margin-bottom: var(--space-8);
 }
 
 .sheet-facts {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 8px;
-  margin: 8px 0 0;
+  gap: var(--space-8);
+  margin: var(--space-8) 0 0;
 }
 
 .sheet-description {
@@ -29,7 +29,7 @@
 
 .origin-story {
   border-inline-start: 3px solid var(--mint-300);
-  padding: 4px 0 4px 12px;
+  padding: var(--space-4) 0 var(--space-4) var(--space-12);
   color: var(--ink-soft);
   font-size: var(--text-meta);
   font-style: italic;
@@ -38,10 +38,10 @@
 .option-group legend {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--space-8);
   font-weight: 700;
   color: var(--ink);
-  margin-bottom: 8px;
+  margin-bottom: var(--space-8);
 }
 
 // The sauce cap, said in the legend beside the group's name.
@@ -53,15 +53,15 @@
 .option-chips {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: var(--space-8);
 }
 
 .option-chip {
   display: inline-flex;
   align-items: center;
   min-height: var(--tap-min);
-  gap: 8px;
-  padding: 8px 16px;
+  gap: var(--space-8);
+  padding: var(--space-8) var(--space-16);
   border-radius: var(--radius-pill);
   background: var(--surface-elevated);
   border: 1px solid var(--line);
@@ -93,7 +93,7 @@
 .quantity-stepper {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: var(--space-4);
 }
 
 .quantity-button {
@@ -115,14 +115,14 @@
   font-weight: 700;
   border: 1px solid var(--line);
   border-radius: var(--radius-small);
-  padding: 12px 4px;
+  padding: var(--space-12) var(--space-4);
 }
 
 .sheet-total {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 12px 2px;
+  padding: var(--space-12) var(--space-2);
   font-size: var(--text-body);
   font-weight: 700;
 }
@@ -136,7 +136,7 @@
   z-index: var(--z-sheet-footer);
   display: flex;
   justify-content: center;
-  padding: 12px 16px 16px;
+  padding: var(--space-12) var(--space-16) var(--space-16);
   background: var(--paper);
   border-top: 1px solid var(--line);
   pointer-events: none;
@@ -154,6 +154,6 @@
   aspect-ratio: 1 / 1;
   object-fit: cover;
   border-radius: var(--radius);
-  margin: 0 auto 12px;
+  margin: 0 auto var(--space-12);
   background: var(--mint-100);
 }

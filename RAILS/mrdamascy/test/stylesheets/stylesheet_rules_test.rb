@@ -29,8 +29,17 @@ class StylesheetRulesTest < ActiveSupport::TestCase
 
     assert_empty sources.filter_map { |name, source| name if source.match?(/\d+ms ease\b/) }, "raw motion"
     assert_empty sources.filter_map { |name, source| name if source.match?(/z-index: (?!1;)\d/) }, "raw layers"
-    assert_includes PARTIALS.fetch("_base.scss"), "top: calc(var(--brand-bar-height) + 16px"
+    assert_includes PARTIALS.fetch("_base.scss"), "top: calc(var(--brand-bar-height) + var(--space-16)"
     assert_includes PARTIALS.fetch("_menu.scss"), "top: var(--brand-bar-height);"
+  end
+
+test "spacing takes the scale, not raw pixels" do
+    spacing = /^\s*(?:padding[\w-]*|margin[\w-]*|gap|row-gap|column-gap|inset[\w-]*|top|bottom|left|right):([^;]+);/
+    raw = PARTIALS.except("_tokens.scss").flat_map do |name, source|
+      source.scan(spacing).flatten.grep(/(?<![\w.])[1-9]\d*px/).map { |value| "#{name}:#{value.strip}" }
+    end
+
+    assert_empty raw
   end
 
   test "titles balance their lines and amounts use tabular figures" do

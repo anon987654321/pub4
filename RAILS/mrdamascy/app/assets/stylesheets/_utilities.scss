@@ -5,8 +5,8 @@
   display: flex;
   flex-wrap: wrap;
   align-items: baseline;
-  column-gap: 12px;
-  row-gap: 2px;
+  column-gap: var(--space-12);
+  row-gap: var(--space-2);
   padding: 0;
   list-style: none;
 }
@@ -15,7 +15,7 @@
 .mode-icon {
   display: inline-flex;
   vertical-align: -2px;
-  margin-inline-end: 2px;
+  margin-inline-end: var(--space-2);
   color: var(--mint-700);
 }
 
@@ -28,7 +28,7 @@
   position: absolute;
   width: 1px;
   height: 1px;
-  margin: -1px;
+  margin: calc(-1 * var(--hairline));
   padding: 0;
   overflow: hidden;
   clip: rect(0 0 0 0);
@@ -40,7 +40,7 @@
 .about-credits li {
   list-style: none;
   position: relative;
-  padding: 8px 0 8px 28px;
+  padding: var(--space-8) 0 var(--space-8) var(--space-28);
   border-top: 1px solid var(--line);
   font-size: var(--text-meta);
 }
@@ -48,8 +48,8 @@
 .about-credits li::before {
   content: "✦";
   position: absolute;
-  left: 4px;
-  top: 8px;
+  left: var(--space-4);
+  top: var(--space-8);
   color: var(--mint-500);
   font-size: var(--text-meta);
 }
@@ -59,7 +59,7 @@
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 8px;
+  gap: var(--space-8);
 }
 
 .language-switch .section-title {
@@ -69,7 +69,7 @@
 // Auth card.
 .auth-card {
   max-width: 420px;
-  margin: 8px auto 0;
+  margin: var(--space-8) auto 0;
 }
 
 .auth-status {

@@ -1,7 +1,7 @@
 // Forms — roomy touch targets, mint focus ring, no default browser chrome
 // fights. Forms may keep 1px borders (space_not_lines exception).
 .field {
-  margin: 0 0 16px;
+  margin: 0 0 var(--space-16);
 }
 
 .field label,
@@ -10,7 +10,7 @@
   font-size: var(--text-meta);
   font-weight: 600;
   color: var(--ink-soft);
-  margin-bottom: 8px;
+  margin-bottom: var(--space-8);
 }
 
 input[type="text"],
@@ -23,7 +23,7 @@ textarea,
 select {
   width: 100%;
   margin: 0;
-  padding: 12px 16px;
+  padding: var(--space-12) var(--space-16);
   border: 1px solid var(--line);
   border-radius: var(--radius-small);
   background: var(--paper);
@@ -45,12 +45,12 @@ select:focus-visible {
 // The phone and code fields are the login screen's whole job: larger type.
 .auth-form input:not([type="hidden"]) {
   font-size: var(--text-title);
-  padding: 12px 16px;
+  padding: var(--space-12) var(--space-16);
   letter-spacing: 0.05em;
 }
 
 fieldset {
   border: 0;
   padding: 0;
-  margin: 0 0 16px;
+  margin: 0 0 var(--space-16);
 }
