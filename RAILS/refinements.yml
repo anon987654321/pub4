@@ -1228,7 +1228,7 @@ items:
   path: RAILS/brgen/test/controllers/community_memberships_controller_test.rb
   item: Add a controller test for join/leave covering private-community refusal, banned-user
     refusal and last-owner leave; CommunityMembershipsController has no direct test.
-  status: open
+  status: done
 - id: brgen-044
   app: brgen
   area: compose
