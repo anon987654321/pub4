@@ -117,15 +117,7 @@ class Order < ApplicationRecord
   # on a persisted one — one snapshot implementation, both paths.
   def snapshot_from_cart!(cart)
     cart.cart_items.includes(:menu_item).find_each do |line|
-      attrs = {
-        menu_item_id: line.menu_item_id,
-        name: line.menu_item.name,
-        emoji: line.menu_item.emoji,
-        quantity: line.quantity,
-        unit_price_ore: line.unit_price_ore,
-        options_text: line.options_list.join(", ").presence,
-        line_total_ore: line.line_total_ore
-      }
+      attrs = line.order_line_attributes
       new_record? ? order_items.build(attrs) : order_items.create!(attrs)
     end
     self.subtotal_ore = order_items.sum(&:line_total_ore)

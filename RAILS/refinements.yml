@@ -5777,7 +5777,7 @@ items:
   path: RAILS/mrdamascy/app/views/staff/board/_order_card.html.erb
   item: Show options_text and the line note on board cards; the kitchen sees only
     quantity and name.
-  status: open
+  status: done
 - id: mrdamascy-089
   app: mrdamascy
   area: staff

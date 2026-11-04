@@ -27,6 +27,13 @@ class CartItem < ApplicationRecord
     destroy!
   end
 
+# The frozen copy an order keeps of this line (Order#snapshot_from_cart!):
+# name, price, options and the customer's note as they were at checkout.
+def order_line_attributes
+  { menu_item_id:, name: menu_item.name, emoji: menu_item.emoji, quantity:, unit_price_ore:,
+    options_text: options_list.join(", ").presence, note: note.presence, line_total_ore: }
+end
+
   def line_total_ore
     unit_price_ore.to_i * quantity
   end

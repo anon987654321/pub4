@@ -10,7 +10,11 @@
   </p>
   <ul class="fact-list board-card-items">
     <% order.order_items.each do |line| %>
-      <li><%= line.quantity %>× <%= line.name %></li>
+      <li>
+        <%= line.quantity %>× <%= line.name %>
+        <%= tag.span line.options_text, class: "board-card-options" if line.options_text.present? %>
+        <%= tag.q line.note, class: "board-card-note" if line.note.present? %>
+      </li>
     <% end %>
   </ul>
   <% if order.address.present? && order.delivery? %>

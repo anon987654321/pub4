@@ -51,6 +51,13 @@
   margin: 0 0 8px;
 }
 
+// The options and the customer's note sit under the dish they belong to.
+.board-card-options,
+.board-card-note {
+  display: block;
+  color: var(--ink-soft);
+}
+
 .board-card-phone {
   font-size: var(--text-meta);
   margin: 0 0 12px;

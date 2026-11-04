@@ -57,4 +57,19 @@ class StaffBoardTest < ActionDispatch::IntegrationTest
     patch staff_advance_order_url(@order)
     assert_equal "ready", @order.reload.state
   end
+
+  test "the kitchen sees each line's options and the customer's note" do
+    item = seed_item!(seed_category!(@kitchen), name: "Adana Sterk Dürüm")
+    toum = seed_option!(item, name: "Toum", kind: "sauce")
+    post add_item_cart_url, params: { menu_item_id: item.id, option_ids: [toum.id], note: "Uten løk" }
+    post checkout_url, params: { mode: "pickup", phone: "90000031" }
+    order = Order.order(:id).last
+
+    staff_sign_in
+    get staff_board_url
+    card = Nokogiri::HTML(response.body).at_css("#order_card_#{order.id}")
+
+    assert_equal "Toum", card.at_css(".board-card-options")&.text
+    assert_equal "Uten løk", card.at_css(".board-card-note")&.text
+  end
 end
