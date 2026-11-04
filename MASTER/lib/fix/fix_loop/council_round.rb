@@ -175,11 +175,15 @@ module Master
             return Master::Result.err(message, category: :inconclusive)
           end
 
+          feedback = Array(value[:feedback])
+          veto_roles_answered = feedback.select { |entry| entry[:veto_role] }.map { |entry| entry[:persona].to_s }
           @bus&.publish(
             "fix_loop:hard_critique",
             files: files.size,
             issues: Array(value[:issues]).size,
             cherry_picks: Array(value[:cherry_picks]).size,
+            veto_roles_answered:,
+            security_reviewed: veto_roles_answered.any? { |name| name.casecmp?("Security") },
           )
           Master::Trace::Dmesg.status(
             "fix0",
