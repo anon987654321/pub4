@@ -1,0 +1,32 @@
+# The community rules page (pages/rules), restored from the first brgen.
+nb:
+  legal:
+    rules: Regler
+    rules_page:
+      heading: Regler
+      intro: Reglene gjelder alle, i alt du legger ut. Brudd kan føre til at innhold
+        fjernes eller at kontoen stenges.
+      forbidden_heading: Forbudte aktiviteter
+      forbidden:
+        multiple_accounts: Bruke flere e-postadresser, IP-adresser eller kontoer for å
+          omgå regler eller begrensninger.
+        url_shorteners: Bruke URL-forkortere som skjuler hvor en lenke går.
+        harvesting: Samle inn andre brukeres personopplysninger.
+        copying: Kopiere innholdet her i stor skala.
+        automated_access: Bruke tjenesten med roboter eller andre automatiske midler.
+        harm: Gjøre noe som kan skade tjenesten eller andre brukere.
+      posting_heading: Innlegg
+      posting:
+        illegal: Ikke legg ut ulovlig, støtende, skadelig, falskt eller uredelig innhold.
+        affiliate_marketing: Ikke legg ut affiliate-markedsføring.
+        wrong_category: Ikke legg ut i kategorier eller grupper som ikke passer innlegget.
+        repeats: Ikke legg ut samme eller lignende innhold flere steder, eller oftere
+          enn hver 48. time.
+        on_behalf: Ikke legg ut på vegne av andre, eller la andre legge ut for deg.
+        automated_posting: Ikke legg ut med automatiske midler; innlegg skrives av deg,
+          for hånd.
+      impersonation_heading: Etterligning
+      impersonation:
+        pretending: Det er forbudt å utgi seg for å være en annen person, bedrift eller
+          organisasjon.
+      report_hint: Ser du noe som bryter reglene, rapporter det. Les også om sikkerhet.

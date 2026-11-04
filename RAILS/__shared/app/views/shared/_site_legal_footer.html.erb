@@ -3,6 +3,7 @@
   terms_href = respond_to?(:terms_path) ? terms_path : main_app.terms_path
   cookies_href = respond_to?(:cookies_path) ? cookies_path : main_app.cookies_path
   safety_href = respond_to?(:safety_path) ? safety_path : main_app.safety_path
+  rules_href = respond_to?(:rules_path) ? rules_path : main_app.rules_path
 %>
 <footer class="site-legal">
   <%= yield :site_footer_columns %>
@@ -11,6 +12,7 @@
     <%= link_to t("legal.terms"), terms_href %>
     <%= link_to t("legal.cookies"), cookies_href %>
     <%= link_to t("legal.safety"), safety_href %>
+    <%= link_to t("legal.rules"), rules_href %>
     <button type="button" class="cookie-settings-trigger"
             data-action="click->cookie-consent#open"><%= t("legal.cookie_settings") %></button>
   </nav>

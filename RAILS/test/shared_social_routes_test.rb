@@ -32,7 +32,7 @@ class SharedSocialRoutesTest < Minitest::Test
     legal = File.read(File.join(ROOT, "__shared/config/routes/legal.rb"))
     assert_includes legal, "PagesController::PAGES", "the legal routes draw from the controller's one list"
     pages = File.read(File.join(ROOT, "__shared/app/controllers/pages_controller.rb"))
-    %w[privacy terms cookies safety].each do |page|
+    %w[privacy terms cookies safety rules].each do |page|
       assert_match(/PAGES = %w\[[^\]]*\b#{page}\b/, pages)
     end
   end

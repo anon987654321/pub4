@@ -1,0 +1,10 @@
+<%# The first brgen's community rules (2015), brought back without its legal
+    clauses. The entries are named in Shared::Rules, the words in rules.*.yml. %>
+<% content_for :title, t("legal.rules") %>
+
+<article class="legal-prose">
+  <%= tag.h1 t("legal.rules_page.heading") %>
+  <%= tag.p t("legal.rules_page.intro") %>
+  <%= rules_sections %>
+  <%= tag.p link_to(t("legal.rules_page.report_hint"), main_app.safety_path) %>
+</article>

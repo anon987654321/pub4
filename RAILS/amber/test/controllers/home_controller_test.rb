@@ -13,13 +13,14 @@ class HomeControllerTest < ActionDispatch::IntegrationTest
   end
 
   def test_legal_pages_are_public
-    %w[/privacy /terms /cookies].each do |path|
+    %w[/privacy /terms /cookies /safety /rules].each do |path|
       get path
       assert_response :success, path
       assert_includes response.body, "legal-prose"
     end
     get root_url
-    assert_includes response.body, privacy_path
+    # amber's own footer, not the shared one: safety and rules were missing here.
+    [privacy_path, safety_path, rules_path].each { |path| assert_includes response.body, %(href="#{path}") }
   end
 
   # The operator's home page, 2026-09-25: two icons in the corner, the mark

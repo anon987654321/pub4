@@ -26,6 +26,7 @@ apps:
       - "/session/new"
       pages#show:
       - "/terms"
+      - "/rules"
       - "/safety"
       - "/privacy"
       - "/cookies"
@@ -37,6 +38,8 @@ apps:
       - "/cookies"
       pages#safety:
       - "/safety"
+      pages#rules:
+      - "/rules"
       account_settings#export:
       - "/account/export"
       account_settings#show:
@@ -222,6 +225,7 @@ apps:
       - "/saved"
       pages#show:
       - "/terms"
+      - "/rules"
       - "/safety"
       - "/privacy"
       - "/cookies"
@@ -233,6 +237,8 @@ apps:
       - "/cookies"
       pages#safety:
       - "/safety"
+      pages#rules:
+      - "/rules"
       sessions#magic:
       - "/session/magic"
       sessions#new:
@@ -592,6 +598,7 @@ apps:
       - "/session/new"
       pages#show:
       - "/terms"
+      - "/rules"
       - "/safety"
       - "/privacy"
       - "/cookies"
@@ -603,6 +610,8 @@ apps:
       - "/cookies"
       pages#safety:
       - "/safety"
+      pages#rules:
+      - "/rules"
       account_settings#export:
       - "/account/export"
       account_settings#show:

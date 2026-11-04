@@ -5,9 +5,10 @@
 class PagesController < ApplicationController
   # The public pages every app serves without an account; config/routes/legal.rb
   # draws a route for each.
-  PAGES = %w[privacy terms cookies safety].freeze
+  PAGES = %w[privacy terms cookies safety rules].freeze
 
   helper Shared::Safety
+  helper Shared::Rules
 
   allow_unauthenticated_access only: :show if respond_to?(:allow_unauthenticated_access)
 

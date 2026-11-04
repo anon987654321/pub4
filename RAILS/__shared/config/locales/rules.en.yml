@@ -1,0 +1,32 @@
+# The community rules page (pages/rules), restored from the first brgen.
+en:
+  legal:
+    rules: Rules
+    rules_page:
+      heading: Rules
+      intro: These rules apply to everyone, in everything you post. Breaking them can
+        get content removed or an account closed.
+      forbidden_heading: Forbidden activities
+      forbidden:
+        multiple_accounts: Using several email addresses, IP addresses or accounts to
+          get around rules or limits.
+        url_shorteners: Using URL shorteners that hide where a link goes.
+        harvesting: Collecting other users' personal information.
+        copying: Copying the content here at scale.
+        automated_access: Using the service through bots or other automated means.
+        harm: Doing anything that could harm the service or other users.
+      posting_heading: Posting
+      posting:
+        illegal: Don't post illegal, offensive, harmful, false or fraudulent content.
+        affiliate_marketing: Don't post affiliate marketing.
+        wrong_category: Don't post in categories or groups that don't fit the post.
+        repeats: Don't post the same or similar content in several places, or more
+          often than once every 48 hours.
+        on_behalf: Don't post on behalf of others, or have others post for you.
+        automated_posting: Don't post by automated means; posts are written by you, by
+          hand.
+      impersonation_heading: Impersonation
+      impersonation:
+        pretending: Pretending to be another person, business or organisation is forbidden.
+      report_hint: If you see something that breaks the rules, report it. Read about safety
+        too.
