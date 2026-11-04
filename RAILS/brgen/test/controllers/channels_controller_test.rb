@@ -83,5 +83,13 @@ class ChannelsControllerTest < ActionDispatch::IntegrationTest
       assert_response :success
       assert_includes response.body, "hei fra byen"
     end
+
+    test "a seated reader gets exactly one composer" do
+      get channel_path("brgen")
+      get channel_path("brgen")
+
+      assert_response :success
+      assert_equal 1, response.body.scan('id="new_message"').size
+    end
   end
 end

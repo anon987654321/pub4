@@ -942,7 +942,7 @@ items:
   item: Delete the inline duplicate composer form in channels/show; it renders channels/_composer
     and then a second identical form with the same id='new_message', so signed-in
     readers see two composers and duplicate DOM ids.
-  status: open
+  status: done
 - id: brgen-008
   app: brgen
   area: comments
