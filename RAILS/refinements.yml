@@ -4952,7 +4952,7 @@ items:
   path: RAILS/master/script/bundle_size.sh
   item: Make bundle_size.sh fail CI past a gzip budget for three.face.module.js (514
     KB raw), face_ascii.js and face_vision.bundle.js; it only prints sizes.
-  status: open
+  status: done
 - id: master-026
   app: master
   area: pwa

@@ -1,0 +1,8 @@
+# Gzip byte budgets for the bundles the build scripts write. A build that
+# goes over fails in script/bundle_size.sh, and test/bundle_budget_test.rb
+# fails CI for a committed bundle that is over. Raise a budget on purpose, in
+# the commit that grows the bundle, never to make a red build green unread.
+three.face.module.js: 135000
+face_ascii.js: 28000
+face_vision.bundle.js: 24000
+face.modules.bundle.js: 10500
