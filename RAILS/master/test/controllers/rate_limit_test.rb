@@ -32,4 +32,13 @@ class RateLimitTest < ActionDispatch::IntegrationTest
     end
     assert_equal ApplicationController::WEB_RATE_LIMIT_DEFAULTS.keys.map(&:to_s).sort, declared.keys.sort
   end
+
+  test "chat research counts against the write budget" do
+    limit, = ApplicationController.web_rate_limit(:write)
+    Rails.cache.write("master:rl:web:write:127.0.0.1", limit, raw: true)
+
+    get "/chat/research"
+
+    assert_response :too_many_requests
+  end
 end

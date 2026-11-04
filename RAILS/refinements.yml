@@ -5008,7 +5008,7 @@ items:
   path: RAILS/master/app/controllers/application_controller.rb
   item: Rate-limit chat/research like enhance and photo; it calls the model and is
     in no limit list.
-  status: open
+  status: done
 - id: master-033
   app: master
   area: security
