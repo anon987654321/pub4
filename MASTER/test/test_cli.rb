@@ -210,6 +210,26 @@ class TestCLI < Minitest::Test
     end
   end
 
+  def test_council_crit_does_not_pass_without_returned_security_evidence
+    events = []
+    bus = Object.new
+    bus.define_singleton_method(:publish) { |event, **details| events << [event, details] }
+    deliberation = Object.new
+    deliberation.define_singleton_method(:review_pre_ship) do |_artifact, context:|
+      Master::Result.ok([{ persona: "Rhea", feedback: "looks good", role: "Reviewer" }])
+    end
+
+    Master::CLI::CouncilCrit.stub(:diff_artifact, "diff") do
+      result = Master::CLI::CouncilCrit.run(root: "/tmp/master", deliberation:, bus:)
+
+      assert result.err?
+      assert_equal :inconclusive, result.category
+      assert_includes result.message, "Security reviewer did not complete"
+      assert_equal "council:inconclusive", events.last.first
+      refute events.any? { |event, _details| event == "council:pass" }
+    end
+  end
+
   def test_council_crit_does_not_call_unavailable_reviewers_a_veto
     events = []
     bus = Object.new
