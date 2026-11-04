@@ -31,9 +31,11 @@ class Dating::LikesController < Dating::BaseController
   # people who have not seen you.
   def index
     @likes = Dating::Like.waiting_on(Current.user)
-                         .includes(liker: :dating_profile)
+                         .includes(:dating_prompt, liker: { dating_profile: { photos_attachments: :blob } })
                          .order(created_at: :desc)
                          .limit(50)
+    # One read for the Block/Unblock choice on every card, not one per card.
+    @blocked_ids = Current.user.blocked_user_ids.to_set
   end
 
   private

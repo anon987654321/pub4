@@ -103,6 +103,20 @@ class DatingLikesTest < ActionDispatch::IntegrationTest
                  "a list that keeps showing people you already matched with is one nobody opens twice"
   end
 
+  test "a who-liked-you card shows the photo, the age after the name, and report and block" do
+    Dating::Like.create!(liker: @them, likee: @me)
+
+    sign_in_as(@me)
+    in_dating
+    get dating.likes_path
+
+    assert_response :success
+    assert_select ".like-card img.photo-thumb[alt=?]", @them.dating_profile.name
+    assert_select ".like-card .like-age", text: ", 30"
+    assert_select ".like-card details.swipe-overflow form[action=?]", main_app.block_user_path(@them)
+    assert_select ".like-card details.swipe-overflow form[action*='report']"
+  end
+
   test "someone you passed on does not come back in who-liked-you" do
     passed = user_with_profile("passed")
     Dating::Like.create!(liker: passed, likee: @me)

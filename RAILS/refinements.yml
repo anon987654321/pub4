@@ -1486,7 +1486,7 @@ items:
   item: Show a photo thumbnail (photos preloaded) and the age with a separator on
     'who liked you' cards, and add the same report/block overflow the deck card has;
     the page shows only a bare name.
-  status: open
+  status: done
 - id: brgen-075
   app: brgen
   area: dating

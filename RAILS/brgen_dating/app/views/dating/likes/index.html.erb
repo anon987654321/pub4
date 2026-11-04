@@ -11,10 +11,14 @@
   <ul class="like-list" role="list">
     <% @likes.each do |like| %>
       <% profile = like.liker.dating_profile %>
+      <% name = profile&.name || like.liker.display_name %>
       <li class="like-card">
+        <% if profile&.photos&.attached? %>
+          <%= lazy_image_tag profile.photos.first, alt: name, class: "photo-thumb" %>
+        <% end %>
+        <%# The age follows the name as it does on the deck card, comma and all. %>
         <p>
-          <%= tag.strong profile&.name || like.liker.display_name %>
-          <% if profile&.age %><%= profile.age %><% end %>
+          <%= tag.strong name %><%= tag.span(", #{profile.age}", class: "like-age") if profile&.age %>
         </p>
 
         <%# The comment is the whole point of the Hinge interaction: it says
@@ -33,6 +37,21 @@
           <%= button_to t("dating.pass"), dislikes_path(user_id: like.liker_id),
                 method: :post, class: "button button-ghost button-small" %>
         </div>
+        <%# The same report and block the deck card offers. %>
+        <details class="swipe-overflow">
+          <summary aria-label="<%= t("dating.more") %>"><%= icon :more, size: 18 %></summary>
+          <div class="swipe-overflow-menu">
+            <%= render "shared/report_button", target: like.liker, reason: nil %>
+            <% if @blocked_ids.include?(like.liker_id) %>
+              <%# destructive: no-confirm-ok — reversible — the button becomes Block again in place %>
+              <%= button_to t("block.unblock"), main_app.unblock_user_path(like.liker), method: :delete,
+                    class: "button button-ghost button-small" %>
+            <% else %>
+              <%= button_to t("block.block"), main_app.block_user_path(like.liker), method: :post,
+                    class: "button button-ghost button-small" %>
+            <% end %>
+          </div>
+        </details>
       </li>
     <% end %>
   </ul>
