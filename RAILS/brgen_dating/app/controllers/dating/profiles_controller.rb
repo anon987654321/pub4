@@ -69,9 +69,16 @@ class Dating::ProfilesController < Dating::BaseController
     end
     return true if removed_ids.empty? && accepted.empty?
 
+    replace_photos(removed_ids, accepted)
+    true
+  end
+
+  # A verification vouched for the face in the old photos. New photos need a
+  # new one; clearing verified_at also drops the location ping on commit.
+  def replace_photos(removed_ids, accepted)
     kept = @profile.photos_attachments.includes(:blob).reject { |attachment| removed_ids.include?(attachment.id) }
     @profile.photos = kept.map(&:blob) + accepted
-    true
+    @profile.verified_at = nil
   end
 
   # A direct upload arrives as a signed blob id and a plain form post as a file.

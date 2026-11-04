@@ -7,7 +7,6 @@ class Dating::PathCrossingsController < Dating::BaseController
              by: -> { Current.user&.id ? "u#{Current.user.id}" : request.remote_ip }
 
   def index
-    Dating::LocationPing.where("expires_at <= ?", Time.current).delete_all
     profile = current_dating_profile
     @location_enabled = profile&.visible? && profile&.location_discovery_enabled? && profile&.verified_at.present?
     @crossings = []
@@ -46,7 +45,7 @@ class Dating::PathCrossingsController < Dating::BaseController
     latitude = Float(location[:latitude], exception: false)
     longitude = Float(location[:longitude], exception: false)
     unless valid_coordinate?(latitude, -90..90) && valid_coordinate?(longitude, -180..180)
-      render json: { error: t("dating.location_invalid", default: "Location was not valid.") },
+      render json: { error: t("dating.location_invalid") },
              status: :unprocessable_entity
       return
     end
@@ -57,7 +56,7 @@ class Dating::PathCrossingsController < Dating::BaseController
     ).call
     head :no_content
   rescue ActionController::ParameterMissing
-    render json: { error: t("dating.location_invalid", default: "Location was not valid.") },
+    render json: { error: t("dating.location_invalid") },
            status: :unprocessable_entity
   end
 

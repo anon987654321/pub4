@@ -112,6 +112,11 @@ production:
     queue: bulk
     schedule: every hour at minute 20
 
+  dating_path_crossing_sweep:
+    class: Dating::PathCrossingSweepJob
+    queue: bulk
+    schedule: every 15 minutes
+
   share_draft_cleanup:
     class: ShareDraftCleanupJob
     queue: bulk

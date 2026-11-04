@@ -1369,7 +1369,7 @@ items:
   item: Move the seven hard-coded English status strings in dating_location_controller.js
     (permission wait, denied, missing token, 429, saved, failed) into data-*-value
     attributes from nb/en keys in the path crossings view.
-  status: open
+  status: done
 - id: brgen-062
   app: brgen
   area: dating
@@ -1424,7 +1424,7 @@ items:
   item: Move the expired LocationPing delete_all out of the PathCrossingsController#index
     GET (and out of every recorder call) into a scheduled sweep job, so a page read
     is not a table-wide write.
-  status: open
+  status: done
 - id: brgen-068
   app: brgen
   area: dating
@@ -1433,7 +1433,7 @@ items:
   item: Clear verified_at (and the location ping) when the profile's photo set changes
     in ProfilesController#assign_photos, so a verification approved for one face does
     not carry over to new photos.
-  status: open
+  status: done
 - id: brgen-069
   app: brgen
   area: dating
@@ -1442,7 +1442,7 @@ items:
   item: 'Delete the unused Dating::Matchmaking service: nothing calls it, and its
     potential_matches skips oriented_for and block filtering, so wiring it up later
     would leak profiles the deck hides.'
-  status: open
+  status: done
 - id: brgen-070
   app: brgen
   area: dating
@@ -1503,7 +1503,7 @@ items:
   item: 'Render crossing times as t(''dating.crossed_ago'', time: time_ago_in_words(...))
     inside a <time datetime> element; the bare time_ago_in_words reads ''5 minutes''
     with no ''ago'' in either locale.'
-  status: open
+  status: done
 - id: brgen-077
   app: brgen
   area: dating
@@ -1522,7 +1522,7 @@ items:
   item: Add a rate_limit to VerificationsController#create and a note field on the
     reviewer's reject button (the controller and reject! accept note:, but the queue
     has no way to enter one), so a rejected user learns why.
-  status: open
+  status: done
 - id: brgen-079
   app: brgen
   area: dating
@@ -1530,7 +1530,7 @@ items:
   path: RAILS/brgen_dating/config/locales/nb.yml
   item: Add a nb/en dating.location_invalid key; PathCrossingsController falls back
     to the English default 'Location was not valid.' on the Norwegian site.
-  status: open
+  status: done
 - id: brgen-080
   app: brgen
   area: dating
@@ -1538,7 +1538,7 @@ items:
   path: RAILS/brgen_dating/test/models/dating/profile_test.rb
   item: 'Add a test for Dating::PromptsController: create beyond MAX_PER_PROFILE is
     refused with the error flash, and destroy cannot remove another user''s prompt.'
-  status: open
+  status: done
 - id: brgen-081
   app: brgen
   area: dating

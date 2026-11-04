@@ -75,6 +75,22 @@ class Dating::PathCrossingRecorderTest < ActiveSupport::TestCase
     ).call
 
     assert_empty crossings
-    assert_not Dating::LocationPing.exists?(user_id: @first_user.id)
+  end
+
+  # The sweep, not a reader, deletes what has expired.
+  test "the sweep job removes expired pings and fortnight-old crossings" do
+    now = Time.current
+    Dating::LocationPing.create!(city: @city, user: @first_user, latitude: 60.392, longitude: 5.323,
+                                 expires_at: now - 1.second)
+    Dating::PathCrossingRecorder.new(user: @first_user, profile: @first_profile, latitude: 60.3921, longitude: 5.3225,
+                                     now: now - 15.days).call
+    Dating::PathCrossingRecorder.new(user: @second_user, profile: @second_profile, latitude: 60.3932,
+                                     longitude: 5.3242, now: now - 15.days + 30.seconds).call
+    assert Dating::PathCrossing.exists?
+
+    Dating::PathCrossingSweepJob.perform_now(now:)
+
+    assert_not Dating::LocationPing.where(expires_at: ..now).exists?
+    assert_not Dating::PathCrossing.exists?
   end
 end

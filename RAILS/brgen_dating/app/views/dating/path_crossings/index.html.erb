@@ -16,7 +16,15 @@
   <% if @location_enabled %>
     <section class="dating-discover-panel" aria-labelledby="crossed-paths-locate-heading"
              data-controller="dating-location"
-             data-dating-location-url-value="<%= locate_path_crossings_path %>">
+             data-dating-location-url-value="<%= locate_path_crossings_path %>"
+             data-dating-location-unsupported-value="<%= t("dating.location_status.unsupported") %>"
+             data-dating-location-waiting-value="<%= t("dating.location_status.waiting") %>"
+             data-dating-location-denied-value="<%= t("dating.location_status.denied") %>"
+             data-dating-location-token-missing-value="<%= t("dating.location_status.token_missing") %>"
+             data-dating-location-too-soon-value="<%= t("dating.location_status.too_soon") %>"
+             data-dating-location-refused-value="<%= t("dating.location_status.refused") %>"
+             data-dating-location-saved-value="<%= t("dating.location_status.saved") %>"
+             data-dating-location-failed-value="<%= t("dating.location_status.failed") %>">
       <h2 id="crossed-paths-locate-heading"><%= t("dating.path_crossings_check_in") %></h2>
       <p><%= t("dating.path_crossings_check_in_hint") %></p>
       <button type="button" class="button button-primary" data-action="dating-location#locate">
@@ -37,7 +45,9 @@
             <% end %>
             <div> <%# scan: intentional — the crossing card has a photo column and one text/action column %>
               <h2><%= profile.name %></h2>
-              <p class="meta-facts"><span><%= neighborhood_names[crossing.neighborhood_id] || t("dating.path_crossings_approximate_area") %></span><span><%= time_ago_in_words(crossing.crossed_at) %></span></p>
+              <% area = neighborhood_names[crossing.neighborhood_id] || t("dating.path_crossings_approximate_area") %>
+              <% ago = t("dating.crossed_ago", time: time_ago_in_words(crossing.crossed_at)) %>
+              <%= tag.p safe_join([ tag.span(area), time_tag(crossing.crossed_at, ago) ]), class: "meta-facts" %>
               <%= button_to t("dating.like"), likes_path, params: { user_id: profile.user_id }, method: :post, class: "button button-primary button-small" %>
             </div>
           </article>

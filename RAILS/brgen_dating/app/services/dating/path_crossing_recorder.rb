@@ -18,9 +18,6 @@ class Dating::PathCrossingRecorder
     city_id = @profile.city_id || ActsAsTenant.current_tenant&.id
     return [] unless city_id
 
-    Dating::LocationPing.where("expires_at <= ?", @now).delete_all
-    Dating::PathCrossing.where("crossed_at < ?", @now - 14.days).delete_all
-
     ping = {
       city_id: city_id,
       user_id: @user.id,

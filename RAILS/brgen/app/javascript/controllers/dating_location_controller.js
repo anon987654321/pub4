@@ -1,31 +1,30 @@
 import { Controller } from "@hotwired/stimulus"
 
+// Every status line comes from the page's locale (data-*-value attributes
+// filled from dating.location_status.*), so the nb page does not answer in
+// English once the button is pressed.
 export default class extends Controller {
   static targets = ["status"]
-  static values = { url: String }
+
+  static values = {
+    url: String, unsupported: String, waiting: String, denied: String, tokenMissing: String,
+    tooSoon: String, refused: String, saved: String, failed: String
+  }
 
   locate() {
-    if (!("geolocation" in navigator)) {
-      this.statusTarget.textContent = "This browser does not provide location access."
-      return
-    }
+    if (!("geolocation" in navigator)) return this.#say(this.unsupportedValue)
 
-    this.statusTarget.textContent = "Waiting for your permission…"
+    this.#say(this.waitingValue)
     navigator.geolocation.getCurrentPosition(
       (position) => this.submitLocation(position),
-      () => {
-        this.statusTarget.textContent = "Location was not shared. Check your browser permission and try again."
-      },
+      () => this.#say(this.deniedValue),
       { enableHighAccuracy: false, maximumAge: 30000, timeout: 10000 }
     )
   }
 
   async submitLocation(position) {
     const token = document.querySelector('meta[name="csrf-token"]')?.content
-    if (!token) {
-      this.statusTarget.textContent = "The secure request token is missing. Reload this page and try again."
-      return
-    }
+    if (!token) return this.#say(this.tokenMissingValue)
 
     try {
       const response = await fetch(this.urlValue, {
@@ -43,17 +42,16 @@ export default class extends Controller {
           }
         })
       })
-      if (!response.ok) {
-        this.statusTarget.textContent = response.status === 429
-          ? "You have checked recently. Try again in a few minutes."
-          : "No location was saved. Check your profile visibility and verification status."
-        return
-      }
+      if (!response.ok) return this.#say(response.status === 429 ? this.tooSoonValue : this.refusedValue)
 
-      this.statusTarget.textContent = "Location shared approximately for five minutes. Refreshing the recent crossings…"
+      this.#say(this.savedValue)
       window.location.reload()
     } catch {
-      this.statusTarget.textContent = "The location request failed. Nothing was confirmed as saved."
+      this.#say(this.failedValue)
     }
+  }
+
+  #say(text) {
+    this.statusTarget.textContent = text
   }
 }

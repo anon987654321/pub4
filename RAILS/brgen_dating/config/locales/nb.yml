@@ -9,7 +9,26 @@
 #
 # Keys the host already carries are NOT copied here. Use them.
 nb:
+  activerecord:
+    errors:
+      models:
+        dating/prompt:
+          attributes:
+            base:
+              too_many_prompts: "En profil svarer på høyst tre spørsmål. Fjern ett før du legger til et nytt."
   dating:
+    verify_reject_note: "Hvorfor (vises til personen)"
+    crossed_ago: "for %{time} siden"
+    location_status:
+      unsupported: "Denne nettleseren gir ikke tilgang til posisjon."
+      waiting: "Venter på tillatelsen din…"
+      denied: "Posisjonen ble ikke delt. Sjekk tillatelsen i nettleseren og prøv igjen."
+      token_missing: "Sikkerhetsnøkkelen mangler. Last inn siden på nytt og prøv igjen."
+      too_soon: "Du sjekket nettopp. Prøv igjen om noen minutter."
+      refused: "Ingen posisjon ble lagret. Sjekk at profilen er synlig og verifisert."
+      saved: "Posisjonen er delt omtrentlig i fem minutter. Henter nylige krysninger…"
+      failed: "Forespørselen feilet. Ingenting ble bekreftet lagret."
+    location_invalid: "Posisjonen var ikke gyldig."
     announce_liked: "Du likte %{name}"
     announce_passed: "Gikk videre"
     home_blurb: "Møt folk i nærheten. Sveip for å like eller gå videre."
