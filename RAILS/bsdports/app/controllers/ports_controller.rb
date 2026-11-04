@@ -48,15 +48,7 @@ class PortsController < ApplicationController
   def show
     @watching = authenticated? && @port.watches.exists?(user: Current.user)
     @port.record_activity!("PortViewed", source_vertical: "bsdports") unless passive_request?
-    # Comments, advisories and version history are rows that never touch the
-    # port, so each one's newest change is in the key beside the viewer's watch.
-    # A bare Time expands to whole seconds in an ETag; :usec keeps the change.
-    return unless stale?(etag: [
-      @port.cache_key_with_version, @watching,
-      @port.comments.maximum(:updated_at)&.to_fs(:usec), @port.comments.count,
-      @port.security_advisories.maximum(:updated_at)&.to_fs(:usec),
-      @port.port_updates.maximum(:updated_at)&.to_fs(:usec)
-    ])
+    return unless stale?(etag: [ @port.cache_key_with_version, @watching, *Port.related_freshness(@port.id) ])
 
     @updates = @port.port_updates.order(committed_at: :desc).limit(10)
     @dependencies = @port.dependencies.includes(:depends_on)
@@ -172,18 +164,11 @@ class PortsController < ApplicationController
     roots.includes(:user, replies: :user).flat_map { |root| [ root, *root.replies ] }
   end
 
-  # What pkg_info says about this port on this host. nil means it could not be
-  # asked (CI, test, a host without pkg_info) and the view says unknown rather
-  # than printing a placeholder inside "installed (%{info})". A non-zero exit
-  # means not installed; its message is not installation info.
+  # Unknown (nil) where pkg_info cannot be asked: CI and test.
   def local_pkg_info
     return if ENV["CI"] == "1" || Rails.env.test?
 
-    out, status = Open3.capture2e("pkg_info", "-q", @port.name)
-    status.success? ? out.strip : ""
-  rescue SystemCallError => e
-    Rails.logger.info("pkg_info unavailable: #{e.class}")
-    nil
+    Ports::LocalPackage.info(@port.name)
   end
 
   def nvd_operator?

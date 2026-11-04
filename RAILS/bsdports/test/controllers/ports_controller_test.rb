@@ -151,6 +151,18 @@ class PortsControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
   end
 
+  # The ETag ran four MAX/COUNT queries on every view, cache hit or not.
+  def test_the_port_page_etag_reads_related_rows_in_one_query
+    port = seed_port
+    aggregates = []
+    count = ->(*, payload) { aggregates << payload[:sql] if payload[:sql].match?(/\b(MAX|COUNT)\(/i) }
+    ActiveSupport::Notifications.subscribed(count, "sql.active_record") do
+      get port_path(port), headers: { "If-None-Match" => %("unrelated") }
+    end
+    freshness = aggregates.grep(/comments|port_updates|security_advisories/)
+    assert_equal 1, freshness.size, freshness.join("\n")
+  end
+
   def test_the_html_index_is_not_cached_for_everyone
     get root_url
     assert_response :success

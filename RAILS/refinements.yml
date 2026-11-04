@@ -4397,7 +4397,7 @@ items:
   path: RAILS/bsdports/app/controllers/ports_controller.rb
   item: 'Collapse the four MAX/COUNT queries in PortsController#show''s ETag into
     one aggregate or a touch: true chain on comments/advisories/updates.'
-  status: open
+  status: done
 - id: bsdports-024
   app: bsdports
   area: performance
@@ -4414,7 +4414,7 @@ items:
   path: RAILS/bsdports/app/controllers/ports_controller.rb
   item: Skip the Open3 pkg_info shell-out on production web requests (or cache it
     per port for a few minutes); it forks a process per port view.
-  status: open
+  status: done
 - id: bsdports-026
   app: bsdports
   area: performance

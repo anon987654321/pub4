@@ -95,6 +95,32 @@ class Port < ApplicationRecord
   }
   scope :semantic_search, ->(q) { search(q) } # stub for sqlite-vec embeddings on description (DG02)
 
+  # Comments, advisories and version history are rows that never touch the
+  # port, so the port page's ETag carries each one's newest change. One query,
+  # not four; the stored timestamps keep their microseconds.
+  def self.related_freshness(id)
+    where(id:).pick(
+      per_port(Comment, :updated_at), per_port(Comment, :id, :count),
+      newest_advisory, per_port(PortUpdate, :updated_at)
+    )
+  end
+
+  # A correlated subquery: one aggregate over this port's rows in another table.
+  def self.per_port(model, column, aggregate = :maximum)
+    table = model.arel_table
+    query = table.project(table[column].public_send(aggregate))
+    Arel::Nodes::Grouping.new(query.where(table[:port_id].eq(arel_table[:id])))
+  end
+
+  def self.newest_advisory
+    advisories = SecurityAdvisory.arel_table
+    links = SecurityAdvisoryPort.arel_table
+    query = advisories.project(advisories[:updated_at].maximum)
+                      .join(links).on(links[:security_advisory_id].eq(advisories[:id]))
+    Arel::Nodes::Grouping.new(query.where(links[:port_id].eq(arel_table[:id])))
+  end
+  private_class_method :per_port, :newest_advisory
+
   # "12-devel-py-foo": the id finds the row and the pkgpath makes the URL
   # readable. A pkgpath alone cannot be the param: it holds slashes, the same
   # pkgpath exists once per platform, and hyphens inside it (devel/py-foo)
