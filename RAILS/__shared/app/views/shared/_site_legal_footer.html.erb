@@ -22,6 +22,4 @@
     <%= link_to t("legal.changelog"), main_app.changelog_path %>
   </p>
   <%= render "shared/affiliate_disclosure" %>
-  <% if respond_to?(:email_subscriptions_path) && current_page?(main_app.root_path) %>
-  <% end %>
 </footer>

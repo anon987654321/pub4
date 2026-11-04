@@ -6000,7 +6000,7 @@ items:
   path: RAILS/__shared/app/views/shared/_site_legal_footer.html.erb
   item: Delete the empty `if email_subscriptions_path` block at the end of the legal
     footer.
-  status: open
+  status: done
 - id: shared-010
   app: shared
   area: design
