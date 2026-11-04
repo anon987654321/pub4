@@ -335,7 +335,14 @@ turbo-frame {
   color: var(--text-secondary);
   font-size: var(--text-extra-small);
 }
-.data-state--stale { border-color: var(--status-stale-border); color: var(--status-stale-text); }
+// .data-state has border 0, so a border colour alone marked nothing: the
+// stale state gets its own rule on the inline-start edge and bolder text.
+.data-state--stale {
+  padding-inline-start: var(--space-2);
+  border-inline-start: 2px solid var(--status-stale-border);
+  color: var(--status-stale-text);
+  font-weight: var(--weight-bold);
+}
 .ports-purpose {
   max-width: 58ch;
   font-size: var(--text-large);

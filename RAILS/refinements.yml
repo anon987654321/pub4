@@ -4592,7 +4592,7 @@ items:
   path: RAILS/bsdports/app/assets/stylesheets/application.scss
   item: Give .data-state--stale a visible marker (left rule or 'stale' word weight)
     since its border-color is set on an element with border 0 and does nothing.
-  status: open
+  status: done
 - id: bsdports-048
   app: bsdports
   area: ui
