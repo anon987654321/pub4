@@ -23,32 +23,6 @@ kbd { padding: var(--space-0-5) 4px; border: 1px solid var(--border); border-bot
 // ============================================================ module: bsdports_components
 // BSDPorts stylesheet module; loaded by application.scss in cascade order.
 
-// The dependency graph is an inline SVG on the port page.
-.dep-graph {
-  display: block;
-  width: 100%;
-  height: auto;
-  margin-block-start: var(--space-4);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-small);
-  background: var(--surface);
-  color: var(--text);
-}
-
-.dep-graph line {
-  stroke: var(--border);
-}
-
-.dep-graph circle {
-  fill: var(--surface-elevated);
-  stroke: var(--text-secondary);
-}
-
-.dep-graph text {
-  fill: var(--text);
-  font-family: var(--font);
-}
-
 // ============================================================ /module: bsdports_components
 
 // ============================================================ shared chrome
@@ -65,61 +39,7 @@ nav[data-pwa-primary-nav] {
   padding-inline-start: calc(var(--brand-mark-inline) + var(--space-2, 0.5rem));
 }
 
-nav[data-pwa-primary-nav] a[aria-current] {
-  color: var(--accent);
-  font-weight: var(--weight-bold);
-  text-decoration: underline;
-  text-decoration-color: var(--accent);
-  text-decoration-thickness: 2px;
-  text-underline-offset: 0.25em;
-}
-
 @include meta.load-css("shell_widgets");
-
-// The jOx logo and the yep search are product pens: their geometry is the
-// pen's own, and only the palette is this dialect's.
-.jox-logo {
-  display: flex;
-  position: relative;
-  min-height: 56px;
-  margin: 8px 0 16px;
-}
-
-.jox-logo .frames div {
-  height: 50px;
-  width: 20px;
-  position: absolute;
-  opacity: 0;
-}
-
-.jox-logo .frames div:nth-of-type(1) {
-  top: 8px;
-  left: 4px;
-}
-
-.jox-logo .frames div:nth-of-type(2) {
-  top: 0px;
-  left: 16px;
-}
-
-.jox-logo .frames div:nth-of-type(3) {
-  top: -0px;
-  left: 24px;
-}
-
-.jox-logo .type {
-  height: 19px;
-  width: 116px;
-  position: relative;
-  top: 16px;
-  left: 84px;
-  transform: scale(1.4);
-  color: var(--text);
-  font-family: var(--font);
-  font-size: var(--text-small);
-  font-weight: var(--weight-bold);
-  letter-spacing: var(--tracking-wide);
-}
 
 @include meta.load-css("auth_form");
 
@@ -314,7 +234,6 @@ article pre {
   overflow-x: auto;
   padding: var(--space-3);
   border: 0;
-  border: 0;
   background: var(--surface-elevated);
 }
 
@@ -366,32 +285,6 @@ header {
   max-width: 660px;
   display: flex;
   justify-content: flex-end;
-
-  .tabs {
-    display: flex;
-    margin-top: var(--space-4);
-    color: var(--text-secondary);
-  border: 0;
-    font-family: var(--font);
-    font-size: var(--text-small);
-
-    p {
-      padding: 0 var(--space-1) var(--space-2);
-      margin-inline-end: var(--space-6);
-
-      &.active {
-        color: var(--text);
-        border: 0;
-        text-decoration: underline;
-        text-underline-offset: 0.18em;
-        font-weight: var(--weight-bold);
-
-        &::before {
-          content: "* ";
-        }
-      }
-    }
-  }
 }
 
 .search-form {
@@ -479,7 +372,6 @@ turbo-frame {
   margin-block-start: var(--space-6);
   padding: var(--space-8) var(--space-4);
   border: 0;
-  border: 0;
   color: var(--text-secondary);
   text-align: center;
 }
@@ -533,7 +425,6 @@ article dd + dt {
 
 .category-list .chip {
   padding: var(--space-1) var(--space-2);
-  border: 0;
   border: 0;
   font-size: var(--text-extra-small);
   color: var(--text-secondary);
@@ -709,9 +600,17 @@ article > nav {
   padding-block: var(--space-3);
 }
 
+// The dependency graph is an inline SVG on the port page.
 .dep-graph {
   display: block;
+  width: 100%;
+  height: auto;
   max-width: none;
+  margin-block-start: var(--space-4);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-small);
+  background: var(--surface);
+  color: var(--text);
   font-family: var(--font);
 }
 

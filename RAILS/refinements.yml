@@ -4584,7 +4584,7 @@ items:
   path: RAILS/bsdports/app/assets/stylesheets/application.scss
   item: Delete the dead .jox-logo and header .tabs rules; no bsdports view renders
     either class.
-  status: open
+  status: done
 - id: bsdports-047
   app: bsdports
   area: ui
@@ -4600,7 +4600,7 @@ items:
   path: RAILS/bsdports/app/assets/stylesheets/application.scss
   item: 'Remove the duplicated border: 0 declarations in article pre, .empty and .category-list
     .chip.'
-  status: open
+  status: done
 - id: bsdports-049
   app: bsdports
   area: ui
@@ -4608,7 +4608,7 @@ items:
   path: RAILS/bsdports/app/assets/stylesheets/application.scss
   item: Remove the duplicated .dep-graph rule blocks (lines 27-50 and 712-738) so
     one definition owns the graph's font and colours.
-  status: open
+  status: done
 - id: bsdports-050
   app: bsdports
   area: ui
@@ -4616,7 +4616,7 @@ items:
   path: RAILS/bsdports/app/assets/stylesheets/application.scss
   item: Merge the two nav[data-pwa-primary-nav] a[aria-current] rules, which disagree
     on colour (accent vs text) and underline offset.
-  status: open
+  status: done
 - id: bsdports-051
   app: bsdports
   area: ui
