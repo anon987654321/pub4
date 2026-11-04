@@ -32,6 +32,16 @@ class CartsController < ApplicationController
     end
   end
 
+  # "Yalla igjen" on the menu: the whole last order back in the cart with
+  # one post.
+  def reorder
+    order = current_user&.orders&.find_by(id: params[:order_id])
+    return redirect_to(root_path, alert: t("flash.not_found")) unless order
+
+    left_out = order.reorder_into!(current_cart)
+    redirect_to cart_path, notice: left_out.zero? ? t("flash.reordered") : t("flash.reordered_partly")
+  end
+
   # Qty stepper on the cart page; 0 or less removes the line.
   def update_item
     line = current_cart.cart_items.find(params[:line_id])

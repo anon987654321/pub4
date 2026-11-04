@@ -27,9 +27,7 @@
         <% end %>
       </ul>
     </div>
-    <% first_line = @last_order.order_items.first %>
-    <%= link_to t("menu.reorder_cta"),
-          (first_line.menu_item_id ? menu_item_path(first_line.menu_item_id) : root_path),
+    <%= button_to t("menu.reorder_cta"), reorder_cart_path, params: { order_id: @last_order.id },
           class: "button button-reorder" %>
   </section>
 <% end %>

@@ -21,6 +21,7 @@ Rails.application.routes.draw do
 
   resource :cart, only: [:show] do
     post :add_item, controller: "carts"
+    post :reorder, controller: "carts"
     patch "items/:line_id", action: :update_item, controller: "carts", as: :update_item
     delete "items/:line_id", action: :remove_item, controller: "carts", as: :remove_item
   end

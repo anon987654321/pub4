@@ -154,6 +154,23 @@ class Order < ApplicationRecord
     self
   end
 
+  # "Yalla igjen": every line of this order back into a cart, with the
+  # options it had (matched by name, as the snapshot keeps them) and its
+  # note, at today's prices. A dish off the menu or whose options changed
+  # is left out; answers how many lines could not come back.
+  def reorder_into!(cart)
+    order_items.count do |line|
+      item = MenuItem.find_by(id: line.menu_item_id)
+      next true unless item
+
+      options = ItemOption.where(menu_item_id: item.id, name: line.options_text.to_s.split(", ")).pluck(:id)
+      cart.add_item!(item, line.quantity, option_ids: options, note: line.note)
+      false
+    rescue Cart::InvalidLine
+      true
+    end
+  end
+
   # One stamp per delivered order — the Sahtein card's whole economy.
   def award_stamp!
     return false unless user

@@ -435,6 +435,7 @@ nb:
     tip_thanks: Tusen takk for drikkepengene!
     review_thanks: Takk! Det betyr alt for et lite kjøkken
     reordered: Alt fra sist ligger i kurven
+    reordered_partly: "Noen retter fra sist er ikke på menyen i dag — resten ligger i kurven"
     forbidden: Du har ikke tilgang hit
     line_invalid: Det valget finnes ikke på denne retten — maks to sauser
     dismiss: Lukk

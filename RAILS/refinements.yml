@@ -5547,7 +5547,7 @@ items:
   path: RAILS/mrdamascy/app/views/menu/show.html.erb
   item: Make "Yalla igjen" re-add the whole last order to the cart with one POST instead
     of linking to the first line's item sheet.
-  status: open
+  status: done
 - id: mrdamascy-060
   app: mrdamascy
   area: orders

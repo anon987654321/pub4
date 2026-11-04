@@ -435,6 +435,7 @@ en:
     tip_thanks: Thank you so much for the tip!
     review_thanks: Thank you! It means everything to a small kitchen
     reordered: Everything from last time is in your cart
+    reordered_partly: "Some dishes from last time are off the menu today — the rest are in your cart"
     forbidden: You don't have access here
     line_invalid: That choice is not offered with this dish — two sauces at most
     dismiss: Dismiss
