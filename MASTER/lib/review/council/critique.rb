@@ -68,6 +68,7 @@ module Master
         end
 
         def deliberate(panel, payload)
+          required_veto_roles = @mode[:preset_key] == "general_critique" ? ["Security"] : []
           Tribunal.new(
             agent: @agent,
             event_bus: @bus,
@@ -78,6 +79,7 @@ module Master
             personas: panel,
             context: build_context,
             image: payload[:visual_image],
+            required_veto_roles:,
           )
         end
 
