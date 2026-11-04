@@ -140,6 +140,34 @@ class TestCouncilDeadline < Minitest::Test
     assert_equal :timeout, result.category
     assert_match(/quorum not reached \(2\/6\)/, result.message)
   end
+  def test_a_quorate_but_expired_council_is_still_inconclusive
+    events = []
+    bus = Object.new
+    bus.define_singleton_method(:publish) { |event, payload = nil, **keywords| events << [event, (payload || {}).merge(keywords)] }
+    agent = Object.new
+    count = 0
+    lock = Mutex.new
+    agent.define_singleton_method(:ask) do |_prompt, **|
+      n = lock.synchronize { count += 1 }
+      n <= 3 ? CouncilAnswer.json : sleep(30)
+    end
+    personas = Array.new(6) { |i| Persona.new(name: "P#{i}", role: "r", bias: "b", prompt: "p") }
+    delib = Master::Review::Council::Deliberation.new(personas:, agent:, event_bus: bus, judge_enabled: false)
+    delib.define_singleton_method(:panel_blocked?) { false }
+
+    result = Master.stub(:llm_reachable?, true) do
+      Master::Review::Council::Deliberation.stub(:reachable_for?, true) { Clock.within(1) { delib.review("x = 1") } }
+    end
+
+    assert result.err?, "a quorum cannot turn an expired review into a pass"
+    assert_equal :timeout, result.category
+    event = events.find { |name, _payload| name == :council_timeout }
+    refute_nil event
+    assert_equal 3, event.last[:completed]
+    assert_equal 6, event.last[:total]
+    assert_equal :reached, event.last[:quorum]
+  end
+
   def test_the_heartbeat_names_the_phase_and_the_council_progress
     pulse = Master::Fix::RunPulse.new(max_passes: 8, clock: -> { 100.0 }, load: -> { 0.5 })
     pulse.observe("fix_loop:pass_start", { pass: 1, file_count: 10 })
