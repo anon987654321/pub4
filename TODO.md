@@ -1,5 +1,10 @@
 # pub4 outstanding work
 
+- [ ] * Move generated `snapshot_*.md` out of the root into an ignored build directory or a release artifact.
+- [ ] * Move the five top-level `brgen_*` engines under `RAILS/brgen/engines/`.
+- [ ] * Merge `master` and `master_web` into one app.
+- [ ] * Move the loose root scripts (`OPERATOR.sh`, `_net.sh`, `backup_priv.sh`, `emergency_cpu.sh`, `sync.rb`, `ptr_openbsd_amsterdam.rb`, `relayd_prune_keypairs.rb`) into `bin/`, rewritten in Ruby where they are zsh.
+- [ ] * One test command for the whole repo that runs each tree's suite with the right Ruby.
 This is the single carry-forward register, not a planning substitute. Its
 existing entries are inherited work, not permission to defer a relevant task:
 when an authorised request overlaps an entry, execute it now and remove the
@@ -1164,6 +1169,9 @@ that need the semantic census above before any move. Asterisked rows first.
 ### Repository root
 
 - [ ] Fold `TREE_CONTRACTS.md` into each tree's own README.
+- [ ] Remove the root `redeploy` and `tmp` entries or ignore them.
+- [ ] Keep `VERSION` only if something reads it.
+- [ ] Split this file into `backlog.yml` per tree plus a short human index.
 
 ### MASTER
 
@@ -1222,6 +1230,7 @@ that need the semantic census above before any move. Asterisked rows first.
 
 - [ ] Move `photograph.rb`, `subprocess.rb` and `output_paths.rb` into `lib/`.
 - [ ] Merge `agent-guidance` and `docs` into the README.
+- [ ] Decide whether `replicate` belongs in STUDIO or MASTER.
 - [ ] One CLI entry for dilla and postpro.
 
 ### Cross-tree
@@ -1231,6 +1240,7 @@ that need the semantic census above before any move. Asterisked rows first.
 - [ ] One place for generated artefacts, ignored by git.
 - [ ] Delete exact-duplicate files beyond the necessary `.keep` placeholders.
 - [ ] Measure and ratchet tracked file counts per tree downwards.
+- [ ] Each tree keeps one README with a three-line purpose at the top.
 - [ ] Move every generator's output path into one manifest.
 - [ ] Remove the snapshot pre-push step once snapshots are release artefacts.
 
