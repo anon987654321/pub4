@@ -147,6 +147,9 @@ en:
     light_fabrics: "Light fabrics"
   empty:
     no_posts_yet: "No posts yet"
+    no_feed_posts: "Nothing in your feed yet"
+    no_feed_posts_body: "Follow people from the community and their posts land here."
+    find_people: "Find people in the community"
     guest_post: "Share an #ootd thought above — guests can post without an account."
     first_post: Write the first post
     no_items: "No wardrobe items yet"

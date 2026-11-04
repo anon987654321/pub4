@@ -365,7 +365,7 @@ items:
   path: RAILS/amber/app/views/posts/feed.html.erb
   item: Render feed posts in a ul.post-card-list like posts#index; posts#feed renders
     posts as bare siblings.
-  status: open
+  status: done
 - id: amber-045
   app: amber
   area: markup
@@ -815,7 +815,7 @@ items:
   path: RAILS/amber/app/views/posts/feed.html.erb
   item: Add an empty state to the personal feed (posts#feed) for users who follow
     no one, pointing to discover people.
-  status: open
+  status: done
 - id: amber-101
   app: amber
   area: ux

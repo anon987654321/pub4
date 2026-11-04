@@ -146,6 +146,9 @@ nb:
     light_fabrics: "Lette stoffer"
   empty:
     no_posts_yet: "Ingen innlegg ennå"
+    no_feed_posts: "Ingenting i feeden ennå"
+    no_feed_posts_body: "Følg folk fra fellesskapet, så havner innleggene deres her."
+    find_people: "Finn folk i fellesskapet"
     guest_post: "Del en #ootd-tanke over — gjester kan poste uten konto."
     first_post: Skriv det første innlegget
     no_items: "Ingen plagg ennå"
