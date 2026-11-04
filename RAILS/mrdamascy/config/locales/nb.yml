@@ -165,6 +165,7 @@ nb:
     stripe_row: Kort
     stripe_note: Visa, Mastercard, Apple Pay — trygg betaling hos Stripe
     paying: Sender deg til betaling …
+    stripe_cta_total: Betal %{total} med kort
     stripe_cta: Betal med kort
     promo_auto: '%{code} lagt inn automatisk'
     subtotal: Delsum
@@ -186,6 +187,7 @@ nb:
     postcode: Postnummer
     sist_brukt: Sist brukt
     totals_note: Rabatter og gratis levering legges inn automatisk.
+    vipps_cta_total: Betal %{total} med Vipps
     vipps_cta: Betal med Vipps
     login_row: Spar 30 sekunder
     login_note: Logg inn med Vipps — vi fyller ut navn, nummer og adresse.

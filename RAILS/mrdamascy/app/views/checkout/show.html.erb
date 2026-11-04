@@ -127,13 +127,17 @@
       from the submitted value (f.submit would print the value instead).
       No script, no card fields here — Stripe hosts the card entry on its
       own PCI-scoped page. %>
+<%# The amount rides on the button once it is settled: pickup, or a
+    postcode the zone lookup knows. Before that a total would leave out
+    the delivery fee. %>
+<% total_known = @mode == "pickup" || @zone.present? %>
   <%= button_tag type: :submit, name: "payment_method", value: "vipps",
         class: "button-vipps", data: { turbo_submits_with: t("checkout.paying") } do %>
-    <%= t("checkout.vipps_cta") %>
+    <%= total_known ? t("checkout.vipps_cta_total", total: money(@total_ore)) : t("checkout.vipps_cta") %>
   <% end %>
   <%= button_tag type: :submit, name: "payment_method", value: "stripe",
         class: "button-stripe", data: { turbo_submits_with: t("checkout.paying") } do %>
-    <%= t("checkout.stripe_cta") %>
+    <%= total_known ? t("checkout.stripe_cta_total", total: money(@total_ore)) : t("checkout.stripe_cta") %>
   <% end %>
   <%= tag.p t("checkout.steps_note"), class: "steps-note" %>
 <% end %>

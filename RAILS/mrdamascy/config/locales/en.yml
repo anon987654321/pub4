@@ -165,6 +165,7 @@ en:
     stripe_row: Card
     stripe_note: Visa, Mastercard, Apple Pay — secure payment via Stripe
     paying: Taking you to payment …
+    stripe_cta_total: Pay %{total} by card
     stripe_cta: Pay by card
     promo_auto: '%{code} applied automatically'
     subtotal: Subtotal
@@ -186,6 +187,7 @@ en:
     postcode: Postcode
     sist_brukt: Last used
     totals_note: Discounts and free delivery apply automatically.
+    vipps_cta_total: Pay %{total} with Vipps
     vipps_cta: Pay with Vipps
     login_row: Save 30 seconds
     login_note: Sign in with Vipps — we fill in name, number and address.

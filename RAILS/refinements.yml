@@ -5288,7 +5288,7 @@ items:
   path: RAILS/mrdamascy/app/views/checkout/show.html.erb
   item: Put the payable total in both pay buttons ("Betal 287 kr med Vipps") so the
     amount is confirmed at the moment of the tap.
-  status: open
+  status: done
 - id: mrdamascy-029
   app: mrdamascy
   area: checkout
