@@ -1,0 +1,11 @@
+<%# scope: :comment names the field comment[content]; CommentsController
+    reads params[:comment] and answers 422 to a bare content field. %>
+<%= form_with url: port_comments_path(port), scope: :comment, id: "port_comment_form", data: { turbo: true } do |f| %>
+  <div class="field" data-controller="character-counter" data-character-counter-countdown-value="true">
+    <%= f.label :content, t("ports.write_comment"), class: "visually-hidden" %>
+    <%= f.text_area :content, rows: 3, maxlength: 5000, placeholder: t("comments.placeholder"),
+                                data: { character_counter_target: "input" } %>
+    <span class="char-counter" data-character-counter-target="counter" aria-live="polite"></span>
+  </div>
+  <%= tag.p f.submit(t("comments.submit")) %>
+<% end %>

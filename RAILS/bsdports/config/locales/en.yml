@@ -43,6 +43,10 @@ en:
     empty_title: "No notifications yet"
     empty_body: "Updates will appear here."
   ports:
+    comments_heading: "Comments"
+    comments_none: "No comments yet."
+    comments_sign_in: "Sign in to comment"
+    write_comment: "Write a comment"
     comment_on: "Comment on %{name}"
     search_hint: "Search names, exact pkgpaths, maintainers, dependencies and security notes. Press / or ⌘K to focus search."
     search_placeholder: "Search name or category/pkgpath…"

@@ -4207,7 +4207,7 @@ items:
   path: RAILS/bsdports/app/views/comments/create.turbo_stream.erb
   item: Name the comment textarea with a <label> (visually hidden) in the turbo-stream
     replacement form; it relies on aria-label from the placeholder string.
-  status: open
+  status: done
 - id: bsdports-002
   app: bsdports
   area: accessibility
@@ -4258,7 +4258,7 @@ items:
   item: 'Render the comment thread and comment form on the port page; the controller
     loads @comments and @comment and create.turbo_stream appends to #port_comments,
     but show.html.erb never draws either, so comments are unreachable.'
-  status: open
+  status: done
 - id: bsdports-008
   app: bsdports
   area: bug
@@ -4561,7 +4561,7 @@ items:
   path: RAILS/bsdports/test/controllers/ports_controller_test.rb
   item: Add a test that the port page renders the comment list and the form for a
     signed-in user.
-  status: open
+  status: done
 - id: bsdports-045
   app: bsdports
   area: tests

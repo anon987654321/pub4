@@ -43,6 +43,10 @@ nb:
     empty_title: "Ingen varsler ennå"
     empty_body: "Oppdateringer vises her."
   ports:
+    comments_heading: "Kommentarer"
+    comments_none: "Ingen kommentarer ennå."
+    comments_sign_in: "Logg inn for å kommentere"
+    write_comment: "Skriv en kommentar"
     comment_on: "Kommenter %{name}"
     search_hint: "Søk i navn, eksakte pkgpaths, maintainere, avhengigheter og sikkerhetsnotater. Trykk / eller ⌘K for å fokusere søk."
     search_placeholder: "Søk navn eller category/pkgpath…"

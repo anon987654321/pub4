@@ -54,8 +54,7 @@ class PortsController < ApplicationController
     @dependencies = @port.dependencies.includes(:depends_on)
     @deps = @port.depends_on.includes(:category)
     @rdeps = @port.reverse_deps.includes(:category).limit(20)
-    @comments = @port.comments.roots.includes(:user, replies: :user)
-    @comment = Comment.new
+    @comments = comment_thread
     @advisories = @port.security_advisories.recent
     @maintainer = @port.maintainer || Maintainer.find_by(name: @port[:maintainer])
     @dependency_tree = Dependency.tree_for(@port)
@@ -126,6 +125,12 @@ class PortsController < ApplicationController
   end
 
   private
+
+  # Each root followed by its replies, in the order the thread reads.
+  def comment_thread
+    roots = @port.comments.roots
+    roots.includes(:user, replies: :user).flat_map { |root| [ root, *root.replies ] }
+  end
 
   # What pkg_info says about this port on this host. nil means it could not be
   # asked (CI, test, a host without pkg_info) and the view says unknown rather
