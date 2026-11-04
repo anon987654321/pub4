@@ -118,7 +118,7 @@ class TestCouncilDeadline < Minitest::Test
     def veto? = !!veto_role
   end
 
-  def test_a_council_past_its_budget_returns_what_answered_and_says_so
+  def test_a_council_past_its_budget_cannot_report_a_sub_quorum_as_completed
     agent = Object.new
     count = 0
     lock = Mutex.new
@@ -128,22 +128,18 @@ class TestCouncilDeadline < Minitest::Test
     end
     personas = Array.new(6) { |i| Persona.new(name: "P#{i}", role: "r", bias: "b", prompt: "p") }
     delib = Master::Review::Council::Deliberation.new(personas:, agent:, judge_enabled: false)
-    lines = []
 
     started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
-    result = Master::Trace::Dmesg.stub(:status, ->(unit, msg, **) { lines << "#{unit}: #{msg}" }) do
-      Master.stub(:llm_reachable?, true) do
-        Master::Review::Council::Deliberation.stub(:reachable_for?, true) { Clock.within(1) { delib.review("x = 1") } }
-      end
+    result = Master.stub(:llm_reachable?, true) do
+      Master::Review::Council::Deliberation.stub(:reachable_for?, true) { Clock.within(1) { delib.review("x = 1") } }
     end
     took = Process.clock_gettime(Process::CLOCK_MONOTONIC) - started
 
     assert_operator took, :<, 8, "the council waited for its slow personas"
-    assert result.ok?, result.respond_to?(:message) ? result.message : result.inspect
-    assert_equal 2, result.value!.size
-    assert_includes lines, "council0: skipped, deadline 1s (2 of 6 personas answered)"
+    assert result.err?, "two answers must not satisfy a three-persona quorum"
+    assert_equal :timeout, result.category
+    assert_match(/quorum not reached \(2\/6\)/, result.message)
   end
-
   def test_the_heartbeat_names_the_phase_and_the_council_progress
     pulse = Master::Fix::RunPulse.new(max_passes: 8, clock: -> { 100.0 }, load: -> { 0.5 })
     pulse.observe("fix_loop:pass_start", { pass: 1, file_count: 10 })
