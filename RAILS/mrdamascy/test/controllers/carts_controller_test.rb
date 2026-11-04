@@ -146,6 +146,14 @@ class CartsControllerTest < ActionDispatch::IntegrationTest
     assert_equal "20", sheet.at_css("form.sheet-form")["data-item-sheet-max-value"]
   end
 
+  test "a quick-add replaces the toast instead of stacking another" do
+    customer_sign_in
+    post add_item_cart_url, params: { menu_item_id: @item.id }, as: :turbo_stream
+
+    assert_match(/<turbo-stream action="update" target="toasts">/, response.body)
+    assert_no_match(/action="append"[^>]*targets="main"/, response.body)
+  end
+
   test "an empty cart invites you back to the menu" do
     customer_sign_in
 

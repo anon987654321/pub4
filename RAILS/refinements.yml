@@ -5398,7 +5398,7 @@ items:
   path: RAILS/mrdamascy/app/controllers/carts_controller.rb
   item: Replace the existing toast instead of appending another on each quick-add,
     so rapid adds do not stack toasts.
-  status: open
+  status: done
 - id: mrdamascy-042
   app: mrdamascy
   area: design

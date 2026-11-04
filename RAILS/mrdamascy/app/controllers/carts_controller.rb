@@ -89,8 +89,8 @@ class CartsController < ApplicationController
   # - shared/_cart_bar renders its own root with dom id "cart_bar" — replaced
   #   when present, appended to <body> when the first item just made it exist;
   # - the tab badge is the layout's span#cart_count;
-  # - shared/_toast renders flash messages — appended into <main> (it renders
-  #   no wrapper id of its own).
+  # - shared/_toast renders flash messages into the layout's div#toasts,
+  #   whose content each stream replaces.
   def cart_streams(bar_appeared: false)
     bar_locals = { cart_count: current_cart.total_quantity, cart_total_ore: current_cart.subtotal_ore }
     streams = []
@@ -100,7 +100,7 @@ class CartsController < ApplicationController
       streams << turbo_stream.replace("cart_bar", partial: "shared/cart_bar", locals: bar_locals)
     end
     streams << cart_badge_stream
-    streams << turbo_stream.append(nil, targets: "main", partial: "shared/toast")
+    streams << turbo_stream.update("toasts", partial: "shared/toast")
     streams
   end
 

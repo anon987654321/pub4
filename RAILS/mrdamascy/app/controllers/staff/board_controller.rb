@@ -85,8 +85,8 @@ class Staff::BoardController < ApplicationController
 
   # Card contract: every board card renders with dom id "order_card_<id>"
   # (staff/board/_order_card). A card that left the board (picked_up after
-  # ready) is removed; the toast is the shared flash partial, appended into
-  # <main> like the layout does.
+  # ready) is removed; the toast is the shared flash partial, replacing
+  # whatever the layout's div#toasts held.
   def board_card_streams
     if @order.state.in?(BOARD_STATES)
       [turbo_stream.replace(
@@ -98,6 +98,6 @@ class Staff::BoardController < ApplicationController
   end
 
   def board_toast_stream
-    turbo_stream.append(nil, targets: "main", partial: "shared/toast")
+    turbo_stream.update("toasts", partial: "shared/toast")
   end
 end

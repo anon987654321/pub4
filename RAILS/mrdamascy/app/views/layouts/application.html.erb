@@ -41,7 +41,8 @@
     </header>
 
     <main class="shell" id="main-content">
-      <%= render "shared/toast" %>
+      <%# One toast slot: streams replace its content, so rapid adds never stack. %>
+      <%= tag.div render("shared/toast"), id: "toasts" %>
       <%= yield %>
 
       <footer class="app-footer">
