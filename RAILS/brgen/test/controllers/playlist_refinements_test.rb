@@ -140,6 +140,21 @@ class PlaylistRefinementsTest < ActionDispatch::IntegrationTest
     assert_select "[data-playlist-player-color-value=?]", "#00d4ff"
   end
 
+  test "the embed may be framed by any site while the playlist page stays same-origin" do
+    list = Playlist::Playlist.create!(name: "Kveld #{SecureRandom.hex(3)}", user: @owner, public_access: true)
+    host! "radio.brgen.no"
+
+    get playlist.embed_playlist_path(list)
+    assert_nil response.headers["X-Frame-Options"]
+    policy = response.headers["Content-Security-Policy-Report-Only"] || response.headers["Content-Security-Policy"]
+    assert_includes policy, "frame-ancestors *"
+
+    get playlist.playlist_path(list)
+    assert_equal "SAMEORIGIN", response.headers["X-Frame-Options"]
+    policy = response.headers["Content-Security-Policy-Report-Only"] || response.headers["Content-Security-Policy"]
+    assert_includes policy, "frame-ancestors 'self'"
+  end
+
   test "the hosted track form names sources and privacy in the locale" do
     sign_in_as(@owner)
 

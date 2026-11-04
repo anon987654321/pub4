@@ -2902,7 +2902,7 @@ items:
   item: Override X-Frame-Options and the frame-ancestors CSP for playlists#embed only;
     the global SAMEORIGIN header and frame_ancestors :self mean the copyable iframe
     snippet on the playlist page cannot load on any other site.
-  status: open
+  status: done
 - id: brgen-242
   app: brgen
   area: playlist

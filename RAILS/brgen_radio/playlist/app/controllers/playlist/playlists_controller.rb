@@ -9,6 +9,9 @@ class Playlist::PlaylistsController < Playlist::BaseController
   before_action :set_playlist, only: %i[show embed analytics edit update destroy]
   before_action :authorize_owner_or_editor, only: %i[edit update destroy]
   before_action :authorize_analytics_owner, only: :analytics
+  # The embed is the page the playlist hands out as an iframe snippet, so any
+  # site may frame it; every other page keeps the app-wide frame_ancestors :self.
+  content_security_policy(only: :embed) { |policy| policy.frame_ancestors "*" }
 
   def index
     tracks = local_discovery_tracks
@@ -50,6 +53,7 @@ class Playlist::PlaylistsController < Playlist::BaseController
       compact: params[:compact] == "1",
       hide_branding: params[:hide_branding] == "1"
     }
+    response.headers.delete("X-Frame-Options")
     render layout: false
   end
 
