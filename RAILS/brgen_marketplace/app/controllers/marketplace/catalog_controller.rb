@@ -110,7 +110,9 @@ module Marketplace
     def catalog_image_url(listing)
       return unless listing.photos.attached?
 
-      url_for(listing.photos.first)
+      # The engine is isolated: its url_for has no Active Storage helpers, and
+      # url_for(attachment) raised for every listing with a photo.
+      main_app.rails_blob_url(listing.photos.first, host: request.host, protocol: request.protocol)
     end
 
     def amber_handoff_url(listing)

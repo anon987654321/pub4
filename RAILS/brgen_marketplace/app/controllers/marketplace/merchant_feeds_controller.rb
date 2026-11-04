@@ -40,21 +40,23 @@ module Marketplace
       xml.target!
     end
 
+    # Builder writes a namespaced element with tag!("g:name"); xml["g"] is not a
+    # namespace there but a String, so every request raised before this.
     def product(xml, listing)
       xml.item do
-        xml["g"].id(listing.id)
-        xml["g"].title(feed_title(listing))
-        xml["g"].description(feed_description(listing))
-        xml["g"].link(listing_url(listing))
+        xml.tag!("g:id", listing.id)
+        xml.tag!("g:title", feed_title(listing))
+        xml.tag!("g:description", feed_description(listing))
+        xml.tag!("g:link", listing_url(listing))
         if (photo = listing.photos.first)
-          xml["g"].image_link(rails_blob_url(photo, host: request.host, protocol: request.protocol))
+          xml.tag!("g:image_link", main_app.rails_blob_url(photo, host: request.host, protocol: request.protocol))
         end
-        xml["g"].availability(listing.buyable? ? "in_stock" : "out_of_stock")
-        xml["g"].price("#{format("%.2f", listing.price_cents.to_i / 100.0)} #{listing.currency.presence || "NOK"}")
-        xml["g"].condition(condition_for(listing))
-        xml["g"].product_type(listing.category&.name.to_s) if listing.category&.name.present?
+        xml.tag!("g:availability", listing.buyable? ? "in_stock" : "out_of_stock")
+        xml.tag!("g:price", "#{format("%.2f", listing.price_cents.to_i / 100.0)} #{listing.currency.presence || "NOK"}")
+        xml.tag!("g:condition", condition_for(listing))
+        xml.tag!("g:product_type", listing.category&.name.to_s) if listing.category&.name.present?
         if listing.variants.loaded? && listing.variants.any?
-          xml["g"].item_group_id("listing-#{listing.id}")
+          xml.tag!("g:item_group_id", "listing-#{listing.id}")
         end
       end
     end
