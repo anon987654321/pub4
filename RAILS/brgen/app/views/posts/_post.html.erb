@@ -20,7 +20,12 @@
   <%# The labels inside are translated, so the locale is in the key: without it
       the first visitor's language was served to every later one. %>
   <% priority = local_assigns[:priority] == true %>
-  <% cache [I18n.locale, post, post.voted_by?(Current.user), reposted, quote, priority] do %>
+  <%# Whether anyone is reading is in the key as well as their vote: voted_by?
+      is nil both for a reader who has not voted and for no reader, and those
+      two get different vote rails. The author and community are in it so a
+      rename reaches cached cards. %>
+  <% cache [I18n.locale, post, post.user, post.community, Current.user.present?,
+            post.voted_by?(Current.user), reposted, quote, priority] do %>
     <% post_actions = capture do %>
       <%= link_to post_path(post, anchor: "comments-section"),
             class: "feed-action",
@@ -69,9 +74,12 @@
           <%= link_to t("post.view"), post_path(post) %>
           <%= form_with url: post_repost_path(post), method: :post, class: "feed-quote-form",
                         data: { viewer_state: "quote" } do %>
+            <%# The limit is printed rather than counted down: a counter is a
+                Stimulus instance per card, which FrontPageWeightTest budgets. %>
             <%= text_area_tag :comment, quote, maxlength: Repost::COMMENT_MAX, required: true,
                   rows: 2, placeholder: t("post.quote_placeholder"),
-                  aria: { label: t("post.quote") } %>
+                  aria: { label: t("post.quote"), describedby: "#{dom_id(post)}-quote-limit" } %>
+            <%= tag.small t("post.quote_limit", count: Repost::COMMENT_MAX), id: "#{dom_id(post)}-quote-limit" %>
             <%= submit_tag t("post.quote") %>
           <% end %>
         </div>
@@ -98,15 +106,23 @@
       <% if post.images.attached? || post.image.attached? %>
         <div class="post-images" data-controller="post-gallery">
           <% if post.images.attached? %>
+            <%# Each photo is told apart by its place in the set, and the first
+                says how many more follow, since the rest sit off to the side. %>
+            <% total = post.images.size %>
             <% post.images.each_with_index do |image, image_index| %>
               <% priority_image = priority && image_index.zero? %>
+              <% alt = post.title %>
+              <% alt = t("post.photo_of", number: image_index + 1, total:, title: post.title) if total > 1 %>
               <%= link_to rails_blob_path(image, disposition: "inline"),
                     data: { gallery_item: true, action: "click->post-gallery#open" },
-                    aria: { label: post.title } do %>
-                <%= image_tag image.variant(resize_to_limit: [800, 800]), alt: post.title,
+                    aria: { label: alt } do %>
+                <%= image_tag image.variant(resize_to_limit: [800, 800]), alt:,
                       loading: (priority_image ? "eager" : "lazy"),
                       fetchpriority: (priority_image ? "high" : "auto"),
                       decoding: "async", class: "post-image" %>
+                <% if image_index.zero? && total > 1 %>
+                  <%= tag.span "+#{total - 1}", class: "post-image-more", aria: { hidden: true } %>
+                <% end %>
               <% end %>
             <% end %>
           <% else %>
@@ -131,10 +147,12 @@
           post: post,
           name: post.author_name,
           handle: (post.community ? "@#{post.community.slug}" : nil),
-          time: time_ago_in_words(post.created_at),
+          time: time_ago(post.created_at),
           title: post.title,
           content: post.content,
           url: post.attributed? ? post_path(post) : nil,
+          author_url: (user_path(post.user) if post.attributed?),
+          article_id: nil,
           media: post_media.presence,
           show_votes: true,
           vote_path: post_vote_path(post),

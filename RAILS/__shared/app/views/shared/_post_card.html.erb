@@ -3,9 +3,11 @@
 <% handle = local_assigns[:handle] %>
 <% title = local_assigns.key?(:title) ? local_assigns[:title] : post_title_text(post) %>
 <% content = local_assigns.key?(:content) ? local_assigns[:content] : post_body_text(post) %>
-<% time = local_assigns[:time] || (post.created_at ? time_ago_in_words(post.created_at) : nil) %>
+<% time = local_assigns[:time] || time_ago(post.created_at) %>
 <% url = local_assigns[:url] %>
-<% author_url = local_assigns.key?(:author_url) ? local_assigns[:author_url] : url %>
+<%# The name links to the author, never to the post: a caller with a profile
+    to offer passes author_url, and without one the name is plain text. %>
+<% author_url = local_assigns[:author_url] %>
 <% post_url = local_assigns.key?(:post_url) ? local_assigns[:post_url] : url %>
 <% if url.nil? && post.persisted? && respond_to?(:post_path) %><% url = post_path(post) %><% end %>
 <% meta = local_assigns[:meta] %>
@@ -20,27 +22,40 @@
 <% body_plain = strip_tags(content.to_s).squish %>
 <% derived_title = strip_tags(title.to_s).squish.presence || body_plain.truncate(88, separator: " ") %>
 <% more_label = local_assigns.fetch(:more_label, t("post.read_more")) %>
+<%# One element per id. The id is the frame's when the card is framed, here or
+    by the caller, which passes article_id: nil. %>
+<% article_id = local_assigns.fetch(:article_id) { dom_id(post) unless frame && post.persisted? } %>
 <% vote_rail = capture do %>
   <%= render "shared/post_vote_rail",
         post: post, vote_path: vote_path, vote_score: vote_score,
         upvoted: upvoted, downvoted: downvoted %>
 <% end %>
 <% card = capture do %>
-    <article id="<%= dom_id(post) %>" class="feed-card post-reading-card">
+    <%= tag.article id: article_id, class: "feed-card post-reading-card" do %>
       <div class="post-reading-layout"><%= vote_rail if show_votes %><div class="post-reading-main post-reading-main--card">
-        <header class="feed-card-header feed-card-byline"><span class="feed-card-name"><%= url.present? ? link_to(name, author_url) : name %></span><% if handle.present? %><span class="feed-card-handle"><%= handle %></span><% end %><% if time.present? %><span class="feed-card-time"><%= time %></span><% end %></header>
+        <%# The byline is a flex row, so the line breaks here render as nothing. %>
+        <%= tag.header class: "feed-card-header feed-card-byline" do %>
+          <%= tag.span(author_url.present? ? link_to(name, author_url) : name, class: "feed-card-name") %>
+          <%= tag.span handle, class: "feed-card-handle" if handle.present? %>
+          <% if time.present? && post.created_at %>
+            <%= tag.time time, class: "feed-card-time", datetime: post.created_at.iso8601,
+                               title: l(post.created_at, format: :long) %>
+          <% elsif time.present? %>
+            <%= tag.span time, class: "feed-card-time" %>
+          <% end %>
+        <% end %>
         <% if derived_title.present? %><h2 class="feed-card-text post-reading-title"><%= post_url.present? ? link_to(derived_title, post_url) : derived_title %></h2><% end %>
         <% if content.present? %>
           <div class="post-reading-preview">
             <%= tag.div emojify(content), class: "feed-card-body post-reading-body-preview" %>
             <% if post_url.present? && body_plain.length > 260 %>
-              <%= link_to "…", post_url, class: "post-reading-more", aria: { label: more_label }, title: more_label %>
+              <%= link_to more_label, post_url, class: "post-reading-more" %>
             <% end %>
           </div>
         <% end %>
         <% if meta.present? %><div class="feed-card-meta"><%= meta %></div><% end %><% if media.present? %><div class="feed-card-media"><%= media %></div><% end %>
         <% if actions.present? %><div class="feed-card-actions post-reading-actions"><%= actions %></div><% elsif local_assigns[:record].present? %><%= render "shared/action_bar", record: local_assigns[:record], reply_path: local_assigns[:reply_path], repost_path: local_assigns[:repost_path], reposted: local_assigns.fetch(:reposted, false), repost_count: local_assigns.fetch(:repost_count, 0), liked: local_assigns.fetch(:liked, false), like_count: local_assigns.fetch(:like_count, 0), comment_count: local_assigns.fetch(:comment_count, 0), view_count: local_assigns[:view_count], share_url: local_assigns[:share_url] || url %><% end %>
       </div></div>
-    </article>
+    <% end %>
 <% end %>
 <% if frame && post.persisted? %><%= turbo_frame_tag dom_id(post), target: "_top" do %><%= card %><% end %><% else %><%= card %><% end %>

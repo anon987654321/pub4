@@ -15,7 +15,9 @@ class PostsControllerTest < ActionDispatch::IntegrationTest
     get posts_url
 
     assert_response :success
-    assert_select "article#post_#{post_record.id}.feed-card.post-reading-card", 1
+    # The id is the frame's; the article inside carries none, so it is not twice.
+    assert_select "turbo-frame#post_#{post_record.id} > article.feed-card.post-reading-card", 1
+    assert_select "[id=post_#{post_record.id}]", 1
     assert_select "#post_#{post_record.id} .post-reading-layout", 1
     assert_select "#post_#{post_record.id} .post-vote-rail", 1
   end
@@ -182,6 +184,6 @@ class PostsControllerTest < ActionDispatch::IntegrationTest
     get posts_url
 
     assert_response :success
-    assert_select "article#post_#{theirs.id}", 0
+    assert_select "#post_#{theirs.id}", 0
   end
 end

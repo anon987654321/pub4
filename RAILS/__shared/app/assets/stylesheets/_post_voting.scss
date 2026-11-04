@@ -63,6 +63,9 @@
     flex: 0 1 auto;
     min-inline-size: auto;
   }
+  .feed-card.post-reading-card .feed-card-actions > .feed-action {
+    min-inline-size: var(--tap-min);
+  }
   .feed-card.post-reading-card .feed-card-actions .feed-action {
     justify-content: flex-start;
     padding-block: 8px;

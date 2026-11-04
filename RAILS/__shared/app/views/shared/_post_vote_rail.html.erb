@@ -20,6 +20,11 @@
           aria: { label: t("post.downvote"), pressed: downvoted } do %>
       <%= render "shared/feed_icon", name: "downvote" %>
     <% end %>
+  <% elsif vote_path.present? && respond_to?(:new_session_path) %>
+    <%# A reader who cannot vote yet is offered the way to: the score is the
+        sign-in link, named for what signing in is for here. %>
+    <%= link_to vote_score, new_session_path, class: "post-vote-score post-vote-score--static",
+          data: { post_score: dom_id(post) }, aria: { label: t("post.sign_in_to_vote", score: vote_score) } %>
   <% else %>
     <span class="post-vote-score post-vote-score--static" data-post-score="<%= dom_id(post) %>"><%= vote_score %></span>
   <% end %>

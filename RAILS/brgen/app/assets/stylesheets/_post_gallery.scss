@@ -15,6 +15,7 @@
 }
 
 .post-images > a {
+  position: relative;
   display: block;
   flex: 0 0 min(82%, 32rem);
   min-width: 0;
@@ -28,6 +29,18 @@
   max-height: min(34rem, 72svh);
   object-fit: cover;
   border-radius: var(--radius-medium, 0.5rem);
+}
+
+/* "+3" on the first photo: the rest of the set sits off to the side. */
+.post-image-more {
+  position: absolute;
+  inset-block-end: var(--space-2);
+  inset-inline-end: var(--space-2);
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-pill);
+  background: var(--surface);
+  color: var(--text);
+  font-size: var(--text-small);
 }
 
 @media (prefers-reduced-motion: reduce) {

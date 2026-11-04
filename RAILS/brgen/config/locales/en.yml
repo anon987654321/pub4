@@ -738,6 +738,8 @@ en:
             menu_item:
               unavailable: is unavailable
   post:
+    photo_of: "Photo %{number} of %{total}: %{title}"
+    quote_limit: "Up to %{count} characters"
     submit: Post
     repost: Repost
     repost_notification: "%{user} reposted your post"

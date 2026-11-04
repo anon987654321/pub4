@@ -624,6 +624,12 @@ textarea { min-height: 120px; resize: vertical; line-height: var(--leading-loose
     min-width: auto;
   }
 
+  /* Packed left, an icon-only action is as wide as its icon and padding,
+     42px; the tap floor holds here as it does on the phone. */
+  .feed-card-actions > .feed-action {
+    min-width: var(--tap-min);
+  }
+
   .feed-action {
     justify-content: flex-start;
     padding-block: 8px;

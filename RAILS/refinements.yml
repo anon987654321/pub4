@@ -3049,7 +3049,7 @@ items:
   path: RAILS/__shared/app/views/shared/_post_card.html.erb
   item: 'Remove the duplicate id: the card''s turbo-frame and the article inside it
     both carry dom_id(post), which is invalid HTML and confuses Turbo stream targeting.'
-  status: open
+  status: done
 - id: brgen-258
   app: brgen
   area: post-card
@@ -3057,7 +3057,7 @@ items:
   path: RAILS/__shared/app/views/shared/_post_card.html.erb
   item: Replace the bare '…' read-more link with a visible word ('Les mer') so it
     is a readable target, not a single glyph.
-  status: open
+  status: done
 - id: brgen-259
   app: brgen
   area: post-card
@@ -3065,7 +3065,7 @@ items:
   path: RAILS/__shared/app/views/shared/_post_card.html.erb
   item: Render the card time as <time datetime title> with the full date on hover,
     like comments already do.
-  status: open
+  status: done
 - id: brgen-260
   app: brgen
   area: post-card
@@ -3073,7 +3073,7 @@ items:
   path: RAILS/__shared/app/views/shared/_post_card.html.erb
   item: Link the author name to the author's profile; author_url defaults to the post
     URL, so tapping a name opens the post.
-  status: open
+  status: done
 - id: brgen-261
   app: brgen
   area: post-card
@@ -3081,7 +3081,7 @@ items:
   path: RAILS/__shared/app/views/shared/_post_vote_rail.html.erb
   item: Offer signed-out readers a sign-in link from the static vote score instead
     of a dead number.
-  status: open
+  status: done
 - id: brgen-262
   app: brgen
   area: post-card
@@ -3089,7 +3089,7 @@ items:
   path: RAILS/brgen/app/assets/stylesheets/_brgen_feed_posts.scss
   item: Raise .feed-action to the 44px tap minimum (--tap-min); padding 8px 12px around
     an 18px icon gives about 34px.
-  status: open
+  status: done
 - id: brgen-263
   app: brgen
   area: post-card
@@ -3097,7 +3097,7 @@ items:
   path: RAILS/brgen/app/views/posts/_post.html.erb
   item: 'Give gallery images distinct alt text (''Photo 2 of 4: <title>'') instead
     of repeating the post title on every image.'
-  status: open
+  status: done
 - id: brgen-264
   app: brgen
   area: post-card
@@ -3106,7 +3106,7 @@ items:
   item: 'Add viewer presence to the card cache key: voted_by? is nil both for a non-voter
     and for no viewer, so a card cached for a crawler can serve a signed-in reader
     a vote rail without buttons.'
-  status: open
+  status: done
 - id: brgen-265
   app: brgen
   area: post-card
@@ -3114,7 +3114,7 @@ items:
   path: RAILS/brgen/app/views/posts/_post.html.erb
   item: Add the author's and community's cache_key to the card cache key so a renamed
     user or community does not keep its old name on cached cards.
-  status: open
+  status: done
 - id: brgen-266
   app: brgen
   area: post-card
@@ -3130,7 +3130,7 @@ items:
   path: RAILS/brgen/app/views/posts/_post.html.erb
   item: Use time_ago ('for 5 minutter siden') on cards as posts#show does; cards print
     a bare 'omtrent 1 time' without 'siden'.
-  status: open
+  status: done
 - id: brgen-268
   app: brgen
   area: post-card
@@ -3164,7 +3164,7 @@ items:
   path: RAILS/brgen/app/views/posts/_post.html.erb
   item: Add a character counter to the quote textarea in the card's more menu; it
     has maxlength Repost::COMMENT_MAX but no visible limit.
-  status: open
+  status: done
 - id: brgen-272
   app: brgen
   area: post-card
@@ -3172,7 +3172,7 @@ items:
   path: RAILS/brgen/app/views/posts/_post.html.erb
   item: Show a '+N' count on the first image when a post has more images than the
     card shows, so a gallery is discoverable.
-  status: open
+  status: done
 - id: brgen-273
   app: brgen
   area: post-card

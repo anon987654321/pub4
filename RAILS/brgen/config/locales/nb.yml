@@ -743,6 +743,8 @@ nb:
             menu_item:
               unavailable: er utsolgt
   post:
+    photo_of: "Bilde %{number} av %{total}: %{title}"
+    quote_limit: "Opptil %{count} tegn"
     # "Post" is the noun for mail in Norwegian; the button publishes.
     submit: Publiser
     repost: Del igjen

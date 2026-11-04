@@ -1,6 +1,7 @@
 ---
 en:
   post:
+    sign_in_to_vote: "Score %{score}. Sign in to vote"
     read_more: Read full post
     embed: Copy embed code
     voting: Post voting
