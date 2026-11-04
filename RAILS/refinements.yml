@@ -5434,7 +5434,7 @@ items:
   path: RAILS/mrdamascy/public/404.html
   item: 'Restyle 404.html and 500.html with the app''s tokens: they use a system font
     stack, a box-shadow and a 24px radius the token file forbids.'
-  status: open
+  status: done
 - id: mrdamascy-046
   app: mrdamascy
   area: i18n

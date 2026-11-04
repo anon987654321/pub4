@@ -4,24 +4,39 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>404 — Mr. Damascy</title>
+    <!-- Static, so it cannot load the app's stylesheet: the tokens it uses
+         are copied from _tokens.scss (test/controllers/error_pages_test.rb
+         keeps them equal). Flat: no shadow, radii from the token scale. -->
     <style>
-      body { margin:0; min-height:100dvh; display:grid; place-items:center; background:#F3FBF7;
-             font-family:-apple-system,"Segoe UI",Roboto,"Noto Sans",sans-serif; color:#2E3033; }
-      .card { background:#fff; border-radius:24px; padding:48px 40px; max-width:420px; margin:24px;
-              box-shadow:0 10px 30px rgba(46,48,51,.08); text-align:center; }
-      h1 { font-size:56px; margin:0 0 8px; }
-      .star { color:#FDC72E; }
-      p { color:#6C7076; line-height:1.5; }
-      a { display:inline-block; margin-top:16px; background:#3A9A7B; color:#fff; text-decoration:none;
-          padding:14px 28px; border-radius:16px; font-weight:600; }
+      :root {
+        --bg-page: #e4f6ee;
+        --paper: #ffffff;
+        --ink: #2e3033;
+        --ink-soft: #6c7076;
+        --mint-700: #276b55;
+        --gold: #fdc72e;
+        --radius: 16px;
+        --radius-small: 12px;
+        --text-display: clamp(40px, 6vw, 88px);
+        --font: "Helvetica Neue Pro", "Helvetica Neue", Arial, sans-serif;
+      }
+      body { margin: 0; min-height: 100dvh; display: grid; place-items: center; background: var(--bg-page);
+             font-family: var(--font); color: var(--ink); }
+      main { background: var(--paper); border-radius: var(--radius); padding: 48px 32px; max-width: 420px;
+             margin: 24px; text-align: center; }
+      h1 { font-size: var(--text-display); margin: 0 0 8px; }
+      .star { color: var(--gold); }
+      p { color: var(--ink-soft); line-height: 1.5; }
+      a { display: inline-block; margin-top: 16px; background: var(--mint-700); color: var(--paper);
+          text-decoration: none; padding: 12px 24px; border-radius: var(--radius-small); font-weight: 700; }
     </style>
   </head>
   <body>
-    <div class="card">
-      <div class="star">✳</div>
+    <main>
+      <div class="star" aria-hidden="true">✳</div>
       <h1>404</h1>
       <p>Denne siden er tilsynelatende spist opp. Yalla tilbake til menyen — shawarmaen venter.</p>
       <a href="/">Til menyen</a>
-    </div>
+    </main>
   </body>
 </html>
