@@ -3500,7 +3500,7 @@ items:
   path: RAILS/brgen/app/controllers/search_controller.rb
   item: Add a rate limit to SearchController#index, which is open to guests and runs
     LIKE scans across eight tables on every keystroke request.
-  status: open
+  status: done
 - id: brgen-315
   app: brgen
   area: search

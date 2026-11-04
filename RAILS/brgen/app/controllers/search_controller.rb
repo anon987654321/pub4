@@ -12,6 +12,11 @@ class SearchController < ApplicationController
 
   allow_unauthenticated_access only: :index
 
+  # Open to guests, and every request runs LIKE scans across eight tables; the
+  # palette sends one per keystroke, so a script could hold the database on it.
+  SEARCHES_PER_MINUTE = 120
+  rate_limit to: SEARCHES_PER_MINUTE, within: 1.minute, only: :index, name: "search"
+
   def index
     @query = live_search_query
     # A committed search only: a full-page /search?q= visit is someone who
