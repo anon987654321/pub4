@@ -1,3 +1,5 @@
+<%# Out of the index: the address is a secret token. %>
+<% content_for :head, robots_meta(index: false) %>
 <%# A section: the application layout already provides <main id="main-content">. %>
 <section class="form-wrap">
   <h1><%= t("email_preferences.title") %></h1>

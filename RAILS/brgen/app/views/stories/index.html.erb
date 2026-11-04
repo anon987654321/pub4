@@ -1,4 +1,6 @@
 <% content_for :title, t("stories.title") %>
+<%# Out of the index: stories are gone in a day. %>
+<% content_for :head, robots_meta(index: false) %>
 
 <div class="page-header">
   <%= tag.h1 t("stories.title") %>

@@ -15,6 +15,9 @@ class EmailSubscription < ApplicationRecord
     format: { with: URI::MailTo::EMAIL_REGEXP }
 
   scope :confirmed, -> { where(confirmed: true) }
+
+  # The subscription for an address; normalizes makes the lookup case-blind.
+  def self.for_email(address) = find_by(email: address)
   scope :marketing_opted_in, -> { confirmed.where(agreed_to_marketing: true) }
   scope :delivery_eligible, -> {
     marketing_opted_in.where.not(

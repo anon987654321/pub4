@@ -1,0 +1,5 @@
+<%# brgen's own account links, rendered by the shared account page. Email
+    preferences live behind the subscription's token, so the link is there only
+    when this address has a subscription. %>
+<% subscription = EmailSubscription.for_email(Current.user.email_address) %>
+<%= tag.li link_to(t("email_preferences.title"), email_subscription_path(token: subscription.token)) if subscription %>

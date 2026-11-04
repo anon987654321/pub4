@@ -78,4 +78,13 @@ class SurfaceRefinementsTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_select "main", 1
   end
+
+  test "the account page links email preferences when the address subscribes" do
+    subscription = EmailSubscription.create!(email: @viewer.email_address)
+    sign_in_as(@viewer)
+
+    get account_path
+    assert_response :success
+    assert_select ".account-settings a[href=?]", email_subscription_path(token: subscription.token)
+  end
 end

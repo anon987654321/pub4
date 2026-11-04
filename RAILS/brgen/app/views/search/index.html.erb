@@ -1,4 +1,6 @@
 <% content_for :title, t("nav.search") %>
+<%# Out of the index: a results page is a query, not a page of its own. %>
+<% content_for :head, robots_meta(index: false) %>
 
 <header class="page-header">
   <%= tag.h1 t("search.title") %>

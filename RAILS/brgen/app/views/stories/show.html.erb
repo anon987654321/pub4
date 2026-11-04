@@ -1,4 +1,6 @@
 <% content_for :title, t("stories.by", user: @story.user.display_name) %>
+<%# Out of the index: a story is gone in a day. %>
+<% content_for :head, robots_meta(index: false) %>
 
 <article class="story-viewer" aria-label="<%= t("stories.by", user: @story.user.display_name) %>">
   <%# The viewer's only heading was the h2 seen-count near the bottom, so the

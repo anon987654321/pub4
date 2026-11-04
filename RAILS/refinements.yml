@@ -3659,7 +3659,7 @@ items:
   size: S
   path: RAILS/__shared/app/views/account_settings/show.html.erb
   item: Link email preferences from the account page.
-  status: open
+  status: done
 - id: brgen-335
   app: brgen
   area: settings
@@ -3697,7 +3697,7 @@ items:
   item: Call the unused Shared::SeoKit#robots_meta (it has no caller) from the layout
     via content_for :robots, and set noindex on search results, stories and tokenised
     email-preference pages.
-  status: open
+  status: done
 - id: brgen-340
   app: brgen
   area: stories
