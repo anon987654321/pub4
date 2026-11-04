@@ -29,7 +29,7 @@ module Master
           message = result.message.to_s
           vetoed_by = message.match(/\Acouncil: veto from ([^\n]+)/i)&.captures&.first
           if vetoed_by
-            bus&.publish("council:veto", vetoed_by:, message: message[0, 500])
+            bus&.publish("council:veto", vetoed_by:, veto_exercised: true, security_veto_exercised: vetoed_by.casecmp?("Security"), message: message[0, 500])
           else
             bus&.publish(
               "council:inconclusive",
@@ -57,6 +57,8 @@ module Master
           jurors: feedback.size,
           veto_roles_answered:,
           security_reviewed: true,
+          veto_exercised: false,
+          security_veto_exercised: false,
         )
         Master::Result.ok(summary)
       # Programming defects must escape this boundary. Converting a missing
