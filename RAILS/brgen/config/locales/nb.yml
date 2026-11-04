@@ -906,6 +906,7 @@ nb:
     km_away: "%{count} km unna"
   posts:
     link_copied: Lenken er kopiert
+    confirm_delete: Slette dette innlegget?
     community_label: Fellesskap
     title_label: Tittel
     anywhere_in: "Hvor som helst i %{city}"

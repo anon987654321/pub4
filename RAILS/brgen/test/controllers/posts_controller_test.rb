@@ -88,6 +88,24 @@ class PostsControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to post_url(created)
   end
 
+  test "show offers Edit and Delete to the post's author only" do
+    owner = User.create!(email_address: "post-own-#{SecureRandom.hex(4)}@example.com", password: "password12345")
+    other = User.create!(email_address: "post-oth-#{SecureRandom.hex(4)}@example.com", password: "password12345")
+    post = Post.create!(user: owner, title: "Mitt innlegg", content: "body", city: brgen_city)
+    host! "brgen.no"
+
+    post session_url, params: { email_address: other.email_address, password: "password12345" }
+    get post_url(post)
+    assert_select "a[href=?]", edit_post_path(post), 0
+    assert_select "form[action=?] input[name=_method][value=delete]", post_path(post), 0
+    delete session_url
+
+    post session_url, params: { email_address: owner.email_address, password: "password12345" }
+    get post_url(post)
+    assert_select "a[href=?]", edit_post_path(post), text: I18n.t("actions.edit")
+    assert_select "form[action=?][data-turbo-confirm] input[name=_method][value=delete]", post_path(post)
+  end
+
   test "show answers markdown for AI and ActivityPub clients" do
     user = User.create!(email_address: "post-md-#{SecureRandom.hex(4)}@example.com", password: "password12345")
     post = Post.create!(user:, title: "Markdown fixture", content: "A body paragraph.", city: brgen_city)

@@ -900,6 +900,7 @@ en:
     km_away: "%{count} km away"
   posts:
     link_copied: Link copied
+    confirm_delete: Delete this post?
     community_label: Community
     title_label: Title
     anywhere_in: "Anywhere in %{city}"

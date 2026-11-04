@@ -3256,7 +3256,7 @@ items:
   path: RAILS/brgen/app/views/posts/show.html.erb
   item: Add Edit and Delete controls for the post's owner; no brgen view links to
     edit_post_path or a delete button.
-  status: open
+  status: done
 - id: brgen-284
   app: brgen
   area: post-show

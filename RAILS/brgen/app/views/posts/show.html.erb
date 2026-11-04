@@ -105,6 +105,11 @@
                   class: "button button-ghost" %>
           <% end %>
           <%= render "shared/report_button", target: @post, reason: nil %>
+          <% if Current.user == @post.user %>
+            <%= link_to t("actions.edit"), edit_post_path(@post), class: "button button-ghost" %>
+            <%= button_to t("actions.delete"), post_path(@post), method: :delete,
+                  class: "button button-ghost", form: { data: { turbo_confirm: t("posts.confirm_delete") } } %>
+          <% end %>
         <% end %>
       </div>
     </div>
