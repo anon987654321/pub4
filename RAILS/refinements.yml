@@ -1598,7 +1598,7 @@ items:
   path: RAILS/brgen/app/controllers/event_rsvps_controller.rb
   item: Wrap the capacity check and rsvps.create!/update! in event.with_lock so two
     simultaneous 'going' presses cannot both pass full? and overbook a capped event.
-  status: open
+  status: done
 - id: brgen-088
   app: brgen
   area: events

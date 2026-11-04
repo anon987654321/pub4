@@ -123,4 +123,39 @@ class EventsControllerTest < ActionDispatch::IntegrationTest
     get event_path(@event.slug)
     assert_response :success
   end
+
+  # Two "going" presses at once each read places_left 1 and both took the last
+  # seat. The capacity check now runs inside event.with_lock, so the second one
+  # waits for the first to write and then sees the event full.
+  module LockProbe
+    def with_lock(*args, &block)
+      super(*args) do
+        Thread.current[:rsvp_in_lock] = true
+        block.call
+      ensure
+        Thread.current[:rsvp_in_lock] = false
+      end
+    end
+
+    def full?
+      Thread.current[:rsvp_full_checks]&.push(Thread.current[:rsvp_in_lock] == true)
+      super
+    end
+  end
+  Event.prepend(LockProbe)
+
+  test "the capacity check runs under the event's row lock" do
+    @event.update!(capacity: 2)
+    sign_in_as(@attendee)
+    Thread.current[:rsvp_full_checks] = []
+
+    post rsvp_event_path(@event, status: "going")
+
+    checks = Thread.current[:rsvp_full_checks]
+    refute_empty checks, "going must check capacity"
+    assert checks.all?, "full? ran outside event.with_lock, so two presses can overbook"
+    assert_equal 1, @event.reload.going_count
+  ensure
+    Thread.current[:rsvp_full_checks] = nil
+  end
 end

@@ -18,25 +18,12 @@ class EventRsvpsController < ApplicationController
     status = params[:status].to_s
     return head :unprocessable_entity unless EventRsvp::STATUSES.include?(status)
 
-    rsvp = event.rsvps.find_by(user_id: Current.user.id)
-
-    if rsvp&.status == status
-      rsvp.destroy
-    elsif rsvp
-      # full? used to run only on insert, so "interested" → "going" walked
-      # onto a sold-out event.
-      if status == "going" && rsvp.status != "going" && event.reload.full?
-        redirect_back fallback_location: event_path(event), alert: t("flash.event_full")
-        return
-      end
-      rsvp.update!(status: status)
-    else
-      # A full event still takes "interested" — the waiting list is the point.
-      if status == "going" && event.reload.full?
-        redirect_back fallback_location: event_path(event), alert: t("flash.event_full")
-        return
-      end
-      event.rsvps.create!(user: Current.user, status: status)
+    # The capacity check and the write share one lock on the event row: two
+    # "going" presses at once each read places_left 1 and both took the seat.
+    full = event.with_lock { answer(event, status) == :full }
+    if full
+      redirect_back fallback_location: event_path(event), alert: t("flash.event_full")
+      return
     end
 
     @event = event.reload
@@ -44,5 +31,22 @@ class EventRsvpsController < ApplicationController
       format.turbo_stream
       format.html { redirect_back fallback_location: event_path(@event) }
     end
+  end
+
+  private
+
+  # Pressing the status you already hold withdraws it. A full event still takes
+  # "interested" (the waiting list is the point), and "interested" → "going" is
+  # checked too, since full? once ran only on insert.
+  def answer(event, status)
+    rsvp = event.rsvps.find_by(user_id: Current.user.id)
+    if rsvp&.status == status
+      rsvp.destroy
+      return
+    end
+    return :full if status == "going" && rsvp&.status != "going" && event.full?
+
+    rsvp ? rsvp.update!(status:) : event.rsvps.create!(user: Current.user, status:)
+    nil
   end
 end
