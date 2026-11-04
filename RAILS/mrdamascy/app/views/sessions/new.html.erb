@@ -24,6 +24,7 @@
       <div class="field">
         <%= label_tag :phone, t("auth.phone") %>
         <%= telephone_field_tag :phone, params[:phone],
+              required: true,
               inputmode: "numeric",
               autocomplete: "tel-national",
               placeholder: t("auth.phone_placeholder") %>
@@ -40,6 +41,7 @@
       <div class="field">
         <%= label_tag :code, t("auth.code") %>
         <%= text_field_tag :code, nil,
+              required: true, maxlength: 4, pattern: "[0-9]{4}",
               inputmode: "numeric",
               autocomplete: "one-time-code",
               placeholder: t("auth.code_placeholder") %>

@@ -5137,7 +5137,7 @@ items:
   path: RAILS/mrdamascy/app/views/sessions/new.html.erb
   item: Add required to the phone field and maxlength=4 with pattern="[0-9]{4}" to
     the code field.
-  status: open
+  status: done
 - id: mrdamascy-011
   app: mrdamascy
   area: auth
