@@ -199,6 +199,7 @@
 }
 
 .composer-body .tiptap_button:hover { background: var(--hover); }
+.composer-body .tiptap_button[aria-pressed="true"] { background: var(--hover); }
 
 /* The "attach my area" opt-in, selected by what it is rather than by a class
    the markup has to carry. :has() is the reason this is possible at all — a

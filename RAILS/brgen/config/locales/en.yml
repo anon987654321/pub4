@@ -890,6 +890,7 @@ en:
   posts:
     link_copied: Link copied
     community_label: Community
+    title_label: Title
     anywhere_in: "Anywhere in %{city}"
     body_label: Body
     score: Post score
@@ -1903,6 +1904,8 @@ en:
     partner_program_created: Partner program created.
     program_updated: Program updated.
     posted: Posted.
+    post_updated: Post updated.
+    post_deleted: Post deleted.
     shared_into_draft: Shared into a draft.
     draft_failed: Could not create draft.
     content_unavailable: That content is no longer available.

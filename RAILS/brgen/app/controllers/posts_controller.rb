@@ -2,6 +2,7 @@
 
 class PostsController < ApplicationController
   include Shared::FindableBySlug
+  include PostComposeChoices
   # Flood protection on content creation (Rails 8 built-in), per-user or per-IP.
   # `name:` is what keeps this and the sustained limit below separate — unnamed,
   # both build the cache key ["rate-limit", controller_path, nil, by] and share a
@@ -77,6 +78,7 @@ class PostsController < ApplicationController
       title: params[:title].to_s.strip.presence,
       content: [ shared_text.presence, shared_url.presence ].compact.join("\n\n")
     )
+    load_compose_choices
   end
 
   def create
@@ -87,7 +89,7 @@ class PostsController < ApplicationController
     end
 
     @post = Post.new(post_params.except(:nearby))
-    @neighborhoods = Neighborhood.where(city_id: ActsAsTenant.current_tenant&.id).order(:name)
+
     @post.user = Current.user
     @post.anonymous = true if Current.user.guest? || ActiveModel::Type::Boolean.new.cast(post_params[:anonymous])
     stamp_nearby!
@@ -117,22 +119,29 @@ class PostsController < ApplicationController
       PostproJob.perform_later(@post.to_gid.to_s, preset) if preset && @post.image.attached?
       redirect_to @post, notice: t("flash.posted")
     else
-      @neighborhoods = Neighborhood.where(city_id: ActsAsTenant.current_tenant&.id).order(:name)
+      load_compose_choices
       render :new, status: :unprocessable_entity
     end
   end
 
-  def edit; end
-
-  def update
-    return render :edit, status: :unprocessable_entity unless @post.update(post_params)
-
-    redirect_to @post
+  def edit
+    load_compose_choices
   end
 
+  def update
+    unless @post.update(post_params)
+      load_compose_choices
+      return render :edit, status: :unprocessable_entity
+    end
+
+    redirect_to @post, notice: t("flash.post_updated")
+  end
+
+  # Back to the page the author deleted from, unless that page was the post
+  # itself, which no longer exists.
   def destroy
     @post.destroy
-    redirect_to posts_path
+    redirect_to after_destroy_path, notice: t("flash.post_deleted")
   end
 
   def share

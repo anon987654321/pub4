@@ -63,11 +63,7 @@
             attaches to it on the right. These were stacked, which read as two
             unrelated toolbars and cost a row of height on a phone. %>
         <div class="composer-toolbar">
-          <div class="tiptap_toolbar" data-tiptap-editor-target="toolbar">
-            <button type="button" class="tiptap_button" data-action="mousedown->tiptap-editor#bold" title="<%= t("compose.bold") %>"><b>B</b></button>
-            <button type="button" class="tiptap_button" data-action="mousedown->tiptap-editor#italic" title="<%= t("compose.italic") %>"><i>i</i></button>
-            <button type="button" class="tiptap_button" data-action="mousedown->tiptap-editor#bulletList" title="<%= t("compose.bullet_list") %>">•</button>
-          </div>
+          <%= render "shared/tiptap_toolbar", hidden: false %>
           <div class="compose-actions">
             <%# Each of these wraps its input in a <label>, which normally names it —
                 but the label's only content is an aria-hidden icon, so the

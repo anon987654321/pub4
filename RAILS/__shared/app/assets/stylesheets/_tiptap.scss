@@ -100,4 +100,6 @@
 }
 
 .tiptap_button:hover { color: var(--text); background: var(--hover); }
+/* A mark that is on where the caret is reads as pressed. */
+.tiptap_button[aria-pressed="true"] { color: var(--text); background: var(--hover); }
 

@@ -1236,7 +1236,7 @@ items:
   path: RAILS/__shared/app/views/comments/_form_fields.html.erb
   item: 'Make tiptap toolbar buttons keyboard-operable: they bind mousedown only,
     so Enter and Space (which fire click) do nothing.'
-  status: open
+  status: done
 - id: brgen-045
   app: brgen
   area: compose
@@ -1267,7 +1267,7 @@ items:
   path: RAILS/__shared/frontend/tiptap_editor_controller.js
   item: Give tiptap toolbar buttons aria-label and aria-pressed reflecting the editor's
     active marks, instead of title plus a 'B'/'i' glyph.
-  status: open
+  status: done
 - id: brgen-049
   app: brgen
   area: compose
@@ -1283,21 +1283,21 @@ items:
   path: RAILS/brgen/app/controllers/posts_controller.rb
   item: Assign @neighborhoods in posts#new; only create sets it, so the neighborhood
     field never appears on a fresh form.
-  status: open
+  status: done
 - id: brgen-051
   app: brgen
   area: compose
   size: S
   path: RAILS/brgen/app/views/posts/edit.html.erb
   item: Apply the same postable filter to the community select on the edit form.
-  status: open
+  status: done
 - id: brgen-052
   app: brgen
   area: compose
   size: S
   path: RAILS/brgen/app/views/posts/edit.html.erb
   item: Fix the edit form's title placeholder, which reads t('playlist.title').
-  status: open
+  status: done
 - id: brgen-053
   app: brgen
   area: compose
@@ -1313,7 +1313,7 @@ items:
   path: RAILS/brgen/app/views/posts/new.html.erb
   item: Give the title field a translated label (t('posts.title_label')) instead of
     f.label :title's model attribute default.
-  status: open
+  status: done
 - id: brgen-055
   app: brgen
   area: compose
@@ -1321,7 +1321,7 @@ items:
   path: RAILS/brgen/app/views/posts/new.html.erb
   item: Limit the community select on the new-post form to communities postable_by?(Current.user)
     instead of Community.order(:name).
-  status: open
+  status: done
 - id: brgen-056
   app: brgen
   area: compose
@@ -1329,7 +1329,7 @@ items:
   path: RAILS/brgen/app/views/posts/new.html.erb
   item: Align the content maxlength (10000 in views) with Post's 40_000 validation
     and count stripped text the way the comment form does.
-  status: open
+  status: done
 - id: brgen-057
   app: brgen
   area: compose
@@ -3188,7 +3188,7 @@ items:
   path: RAILS/brgen/app/controllers/posts_controller.rb
   item: Flash a notice after update and destroy, and redirect destroy back to where
     the author came from rather than /posts.
-  status: open
+  status: done
 - id: brgen-275
   app: brgen
   area: post-show

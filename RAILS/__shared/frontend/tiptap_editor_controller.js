@@ -74,7 +74,9 @@ export default class extends Controller {
             "data-placeholder": this.fieldTarget.getAttribute("placeholder") || ""
           }
         },
-        onUpdate: ({ editor }) => this._sync(editor)
+        onUpdate: ({ editor }) => this._sync(editor),
+        // Every transaction, so a mark toggled at an empty caret shows too.
+        onTransaction: ({ editor }) => this._reflect(editor)
       })
 
       // Tiptap is live: hide the raw textarea, reveal editor + toolbar.
@@ -117,6 +119,19 @@ export default class extends Controller {
     // Let feed-compose (title sync) and autogrow react as if typed.
     this.fieldTarget.dispatchEvent(new Event("input", { bubbles: true }))
   }
+
+  // Each toolbar button says whether its mark is on where the caret is.
+  _reflect(editor) {
+    if (!this.hasToolbarTarget) return
+
+    this.toolbarTarget.querySelectorAll("[data-tiptap-editor-mark]").forEach((button) => {
+      button.setAttribute("aria-pressed", String(editor.isActive(button.dataset.tiptapEditorMark)))
+    })
+  }
+
+  // mousedown would move focus to the button and out of the editor; held, the
+  // selection stays where the writer left it and the click applies to it.
+  hold(e) { e.preventDefault() }
 
   bold(e) { e.preventDefault(); this.editor?.chain().focus().toggleBold().run() }
   italic(e) { e.preventDefault(); this.editor?.chain().focus().toggleItalic().run() }

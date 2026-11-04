@@ -8,11 +8,12 @@
     <%= render "shared/errors", object: @post %>
     <div class="field">
       <%= f.label :community_id, t("posts.community_optional") %>
-      <%= f.collection_select :community_id, Community.order(:name), :id, :name, { include_blank: t("posts.no_community") } %>
+      <%= f.collection_select :community_id, @postable_communities, :id, :name,
+            { include_blank: t("posts.no_community") } %>
     </div>
     <div class="field">
-      <%= f.label :title %>
-      <%= f.text_field :title, placeholder: t("playlist.title"), autofocus: true, required: true %>
+      <%= f.label :title, t("posts.title_label") %>
+      <%= f.text_field :title, autofocus: true, required: true %>
     </div>
     <div class="field">
       <%= f.label :content, t("posts.body_optional") %>
@@ -20,14 +21,10 @@
   <%# The stored value is already Tiptap's HTML — posts/new has mounted an editor
       since it shipped — so editing a post showed the author raw "<p>" tags in a
       textarea and invited them to save it back. %>
-  <%= f.text_area :content, placeholder: t("post.text_optional"), rows: 5, maxlength: 10000,
+  <%= f.text_area :content, placeholder: t("post.text_optional"), rows: 5, maxlength: @content_maxlength,
         data: { character_counter_target: "input", tiptap_editor_target: "field" } %>
   <div class="tiptap_mount" data-tiptap-editor-target="mount" hidden></div>
-  <div class="tiptap_toolbar" data-tiptap-editor-target="toolbar" hidden>
-    <button type="button" class="tiptap_button" data-action="mousedown->tiptap-editor#bold" title="<%= t("compose.bold") %>"><strong>B</strong></button>
-    <button type="button" class="tiptap_button" data-action="mousedown->tiptap-editor#italic" title="<%= t("compose.italic") %>"><em>i</em></button>
-    <button type="button" class="tiptap_button" data-action="mousedown->tiptap-editor#bulletList" title="<%= t("compose.bullet_list") %>">&bull;</button>
-  </div>
+  <%= render "shared/tiptap_toolbar" %>
   <span class="char-counter" data-character-counter-target="counter" aria-live="polite"></span>
 </div>
     </div>

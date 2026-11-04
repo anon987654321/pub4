@@ -8,7 +8,8 @@
     "test:stimulus": "node --test test/stimulus_components_runtime_contract.test.mjs",
     "test:radio": "node --test test/radio_brgen_tunnel.test.mjs",
     "test:image": "node --test test/image_compression.test.mjs",
-    "test:feed": "node --test test/feed_updates_controller.test.mjs"
+    "test:feed": "node --test test/feed_updates_controller.test.mjs",
+    "test:tiptap": "node --test test/tiptap_editor_controller.test.mjs"
   },
   "devDependencies": {
     "esbuild": "0.28.1",

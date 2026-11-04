@@ -1,0 +1,18 @@
+<%# The formatting toolbar every tiptap-editor surface shares; it was nine
+    pasted copies. Each button is named by aria-label (the glyph is decoration)
+    and carries aria-pressed, which the controller keeps in step with the
+    editor's active marks. mousedown is held so the editor keeps its selection;
+    the command itself runs on click, which Enter and Space also fire. %>
+<%= tag.div class: "tiptap_toolbar", hidden: local_assigns.fetch(:hidden, true),
+            data: { tiptap_editor_target: "toolbar" } do %>
+  <%= tag.button tag.strong("B", aria: { hidden: true }),
+        type: "button", class: "tiptap_button", aria: { label: t("compose.bold"), pressed: false },
+        data: { action: "mousedown->tiptap-editor#hold click->tiptap-editor#bold", tiptap_editor_mark: "bold" } %>
+  <%= tag.button tag.em("i", aria: { hidden: true }),
+        type: "button", class: "tiptap_button", aria: { label: t("compose.italic"), pressed: false },
+        data: { action: "mousedown->tiptap-editor#hold click->tiptap-editor#italic", tiptap_editor_mark: "italic" } %>
+  <%= tag.button tag.span("•", aria: { hidden: true }),
+        type: "button", class: "tiptap_button", aria: { label: t("compose.bullet_list"), pressed: false },
+        data: { action: "mousedown->tiptap-editor#hold click->tiptap-editor#bulletList",
+                tiptap_editor_mark: "bulletList" } %>
+<% end %>

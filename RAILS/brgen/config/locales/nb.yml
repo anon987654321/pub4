@@ -896,6 +896,7 @@ nb:
   posts:
     link_copied: Lenken er kopiert
     community_label: Fellesskap
+    title_label: Tittel
     anywhere_in: "Hvor som helst i %{city}"
     body_label: Tekst
     score: Poengsum
@@ -1913,6 +1914,8 @@ nb:
     partner_program_created: Partnerprogrammet er opprettet.
     program_updated: Programmet er oppdatert.
     posted: Publisert.
+    post_updated: Innlegget er oppdatert.
+    post_deleted: Innlegget er slettet.
     shared_into_draft: Delt inn i et utkast.
     draft_failed: Kunne ikke opprette utkast.
     content_unavailable: Innholdet er ikke tilgjengelig lenger.
