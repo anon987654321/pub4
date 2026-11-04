@@ -100,4 +100,11 @@ class MessageEditTest < ActiveSupport::TestCase
     assert_includes ids, kept.id
     refute_includes ids, gone.id
   end
+  # Saving the same words changed nothing, so the line must not read "edited".
+  test "an edit to the same words does not mark the message edited" do
+    m = sent_message(content: "Uendret")
+
+    m.edit!("Uendret")
+    refute m.reload.edited?
+  end
 end

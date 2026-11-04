@@ -86,7 +86,8 @@ class MessagesController < ApplicationController
     message = @conversation.messages.find(params[:id])
     return head :forbidden unless message.editable_by?(Current.user)
 
-    message.edit!(params.require(:message).permit(:content)[:content])
+    return refuse_invalid(message) unless message.edit(params.require(:message).permit(:content)[:content])
+
     respond_to do |format|
       format.turbo_stream { render :update }
       format.html { redirect_to conversation_path(@conversation) }
@@ -100,11 +101,13 @@ class MessagesController < ApplicationController
     message = @conversation.messages.visible.unexpired.find(params[:id])
     return head(:forbidden) unless message.forwardable?
 
-    target = Conversation.for_user(Current.user).find(params[:target_conversation_id])
+    target = forward_target
     # The block that holds in create holds here too: a forward is a message into target.
     return refuse_blocked if target.blocked_between?(Current.user)
 
-    message.forward_copy(into: target, sender: Current.user).save!
+    copy = message.forward_copy(into: target, sender: Current.user)
+    return refuse_invalid(copy) unless copy.save
+
     redirect_to conversation_path(target), notice: t("flash.message_forwarded")
   end
 
@@ -212,6 +215,20 @@ class MessagesController < ApplicationController
       format.html { redirect_to conversation_path(@conversation), alert: t("flash.messaging_blocked") }
     end
   end
+
+  # A blank edit or a copy that will not save is the sender's to fix, so they
+  # are told why on the thread rather than shown an error page.
+  def refuse_invalid(record)
+    respond_to do |format|
+      format.turbo_stream { head :unprocessable_entity }
+      format.html do
+        reason = record.errors.full_messages
+        redirect_to conversation_path(@conversation), alert: reason.to_sentence
+      end
+    end
+  end
+
+  def forward_target = Conversation.for_user(Current.user).find(params[:target_conversation_id])
 
   # Web push and, for the iOS shell, APNs: a message is not a Notification row,
   # so NativePushJob never fired for one and a chat never reached a phone. Same

@@ -3628,7 +3628,7 @@ items:
   path: RAILS/brgen_messenger/app/controllers/messages_controller.rb
   item: Rate-limit messages#forward; it writes a message into another thread with
     no limit, while create is limited twice.
-  status: open
+  status: done
 - id: brgen-331
   app: brgen
   area: security
@@ -3636,7 +3636,7 @@ items:
   path: RAILS/brgen_messenger/app/controllers/messages_controller.rb
   item: Answer a blank or invalid message edit with 422 instead of letting Message#edit!'s
     update! raise RecordInvalid into a 500.
-  status: open
+  status: done
 - id: brgen-332
   app: brgen
   area: security
@@ -3644,7 +3644,7 @@ items:
   path: RAILS/brgen_messenger/app/controllers/messages_controller.rb
   item: Return 422 with a message instead of a 500 when forward_copy(...).save! fails
     in messages#forward.
-  status: open
+  status: done
 - id: brgen-333
   app: brgen
   area: security
@@ -3652,7 +3652,7 @@ items:
   path: RAILS/brgen_messenger/app/models/message.rb
   item: Skip setting edited_at when the edited content equals the original, so a no-op
     save does not mark a line as edited.
-  status: open
+  status: done
 - id: brgen-334
   app: brgen
   area: settings

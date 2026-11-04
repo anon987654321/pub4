@@ -171,4 +171,29 @@ class MessageForwardTest < ActionDispatch::IntegrationTest
     reply.validate
     assert_empty reply.errors[:parent_id], "a parent in the same thread is still a reply"
   end
+  # A copy that will not save, here an original whose words are gone without it
+  # being unsent, and a blank edit both raised RecordInvalid into an error page.
+  # The sender is sent back to the thread with the reason instead.
+  test "a forward whose copy cannot be saved returns to the thread with the reason" do
+    @message.update_columns(content: "")
+    sign_in_as(@user)
+
+    assert_no_difference -> { @target.messages.count } do
+      post forward_conversation_message_path(@source, @message), params: { target_conversation_id: @target.id }
+    end
+    assert_redirected_to conversation_path(@source)
+    assert flash[:alert].present?
+  end
+
+  test "a blank edit returns to the thread with the reason and keeps the words" do
+    mine = say(@source, @user, "Rett meg")
+    sign_in_as(@user)
+
+    patch conversation_message_path(@source, mine), params: { message: { content: "" } }
+
+    assert_redirected_to conversation_path(@source)
+    assert flash[:alert].present?
+    assert_equal "Rett meg", mine.reload.content
+    refute mine.edited?
+  end
 end

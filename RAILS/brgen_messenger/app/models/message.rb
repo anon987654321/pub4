@@ -118,8 +118,15 @@ class Message < ApplicationRecord
     user.present? && user.id == sender_id && !deleted?
   end
 
+  # Saving the same words is not an edit, so the line is not marked edited.
+  def edit(new_content)
+    return true if new_content == content
+
+    update(content: new_content, edited_at: Time.current)
+  end
+
   def edit!(new_content)
-    update!(content: new_content, edited_at: Time.current)
+    edit(new_content) || raise(ActiveRecord::RecordInvalid, self)
   end
 
   # The row stays, the body goes: a hard delete leaves a hole in a thread and
