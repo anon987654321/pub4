@@ -4130,7 +4130,7 @@ items:
   item: Render an actual video_tag player on episodes/show instead of the tv_video
     card inside a tv-player wrapper that has no video target, and move the hard-coded
     'Episode' in the title and h1 to t('tv.episode_line').
-  status: open
+  status: done
 - id: brgen-390
   app: brgen
   area: tv

@@ -1,14 +1,25 @@
-<% content_for :title, "#{@show.title} - Episode #{@episode.number}" %>
+<% episode_line = t("tv.episode_line", number: @episode.number, title: @episode.title) %>
+<% content_for :title, "#{@show.title} — #{episode_line}" %>
 
 <div class="page-header">
-  <h1><%= @show.title %> — Episode <%= @episode.number %></h1>
-  <%= tag.h2 @episode.title %>
+  <%= tag.h1 "#{@show.title} — #{episode_line}" %>
 </div>
 
-<% if @video %>
-  <div class="video-player" data-controller="tv-player">
-    <%= render "tv/videos/tv_video", tv_video: @video %>
+<%# The episode page is where the episode is watched: the video itself, with
+    the tv-player target its controls and watch-time binding read, rather than
+    a card linking somewhere else. %>
+<% if @video&.video_file&.attached? %>
+  <% source = main_app.url_for(@video.video_file) %>
+  <div class="tv-media" data-controller="tv-player">
+    <%= tag.video src: source, controls: true, preload: "metadata",
+                  class: "video-player #{tv_media_image_classes(@video.video_file)}",
+                  aria: { label: episode_line }, data: { tv_player_target: "video" } do %>
+      <%# Shown only where the browser cannot play the file itself. %>
+      <a href="<%= source %>"><%= t("actions.open") %></a>
+    <% end %>
   </div>
+<% elsif @video %>
+  <%= render "tv/videos/tv_video", tv_video: @video %>
 <% else %>
   <%= render "shared/empty_state",
         title: t("empty.video_coming_soon"),

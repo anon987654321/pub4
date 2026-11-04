@@ -64,6 +64,22 @@ class TvShowsAndNotesTest < ActionDispatch::IntegrationTest
     assert_match I18n.t("empty.video_coming_soon"), response.body
   end
 
+  # The episode page wrapped the video card in a tv-player with no video
+  # target, so nothing played there, and its headings said "Episode" in English.
+  test "an episode with a video file plays it in the page, titled through the locale" do
+    @video.video_file.attach(io: File.open(file_fixture("tiny.mp4")), filename: "tiny.mp4", content_type: "video/mp4")
+    show = Tv::Show.create!(channel: @channel, title: "Byliv", description: "Om byen", slug: "byliv", published: true)
+    Tv::Episode.create!(show:, number: 3, title: "Tredje", video: @video)
+    host! "tv.brgen.no"
+
+    get tv.episode_channel_show_path(@channel, show, number: 3)
+
+    assert_response :success
+    line = I18n.t("tv.episode_line", number: 3, title: "Tredje")
+    assert_select "[data-controller=tv-player] video[controls][data-tv-player-target=video][aria-label=?]", line
+    assert_select "h1", text: "Byliv — #{line}"
+  end
+
   test "a note posts as Current.user, and an empty one is refused rather than a 500" do
     sign_in_as(@viewer)
 
