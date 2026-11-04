@@ -2734,7 +2734,7 @@ items:
     (marketplace-checkout-KIND-ID), because a retry after a quantity change or failed
     payment reuses the key with different params and Stripe answers with an idempotency
     error or the old expired session.
-  status: open
+  status: done
 - id: brgen-224
   app: brgen
   area: payments
@@ -2742,7 +2742,7 @@ items:
   path: RAILS/brgen/app/services/marketplace/payments/stripe_checkout.rb
   item: Pass locale (nb or en from I18n.locale) to the Stripe Checkout Session so
     a Norwegian buyer is not shown an auto-detected English payment page.
-  status: open
+  status: done
 - id: brgen-225
   app: brgen
   area: payments

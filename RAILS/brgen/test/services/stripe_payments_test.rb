@@ -68,4 +68,41 @@ class StripePaymentsTest < ActiveSupport::TestCase
       end
     end
   end
+
+  # A payable that answers what start! reads, and records the session it gets.
+  class FakeOrder < Struct.new(:id, :total_cents, :payment_reference, keyword_init: true)
+    def startable? = true
+    def payment_currency = "NOK"
+    def payment_description = "Sykkel"
+    def mark_payment_pending!(provider:, reference:) = self.payment_reference = reference
+  end
+
+  def start_capturing(order)
+    seen = nil
+    Marketplace::Payments::StripeClient.stub(:post, lambda { |_url, form, idempotency_key:|
+      seen = { form:, idempotency_key: }
+      { "id" => "cs_#{SecureRandom.hex(3)}", "url" => "https://checkout.stripe.com/c/pay/x" }
+    }) do
+      Marketplace::Payments::StripeCheckout.start!(order:, success_url: "https://brgen.no/ok",
+                                                           cancel_url: "https://brgen.no/no")
+    end
+    seen
+  end
+
+  # Keyed on the order alone, a retry after a total change or a failed payment
+  # reused the key with different params, which Stripe refuses.
+  test "checkout keys each attempt and each total apart, and a buyer in nb pays in nb" do
+    ENV["STRIPE_SECRET_KEY"] = "sk_test_local"
+    order = FakeOrder.new(id: 7, total_cents: 2000)
+
+    first = I18n.with_locale(:nb) { start_capturing(order) }
+    assert_equal "nb", first[:form]["locale"]
+
+    order.total_cents = 3000
+    retried = I18n.with_locale(:en) { start_capturing(order) }
+    assert_equal "en", retried[:form]["locale"]
+
+    refute_equal first[:idempotency_key], retried[:idempotency_key]
+    assert_includes retried[:idempotency_key], "3000"
+  end
 end
