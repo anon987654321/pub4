@@ -1,5 +1,6 @@
 import { publishVisual } from "pub4/visual_field"
 import { AudioEngine } from "radio_brgen_audio"
+import { initialTrackIndex, OPENING_TRACK_ID } from "radio_brgen_audio"
 import { VisualEngine, MODES } from "radio_brgen_visual"
 export { initialTrackIndex } from "radio_brgen_audio"
 
@@ -13,11 +14,16 @@ export class RadioBrgen {
     this.isStarted = false
     this.isMobile = window.innerWidth < 768 || "ontouchstart" in window
     this._boundHandlers = []
+    // The tunnel owns the queue and its start: the legacy opener when it is in
+    // the list, otherwise the first ordered item — never a random pick, so a
+    // single-track queue and a curated set both open the same way every load.
+    this.tracks = options.tracks ?? []
+    this.currentTrack = initialTrackIndex(this.tracks, OPENING_TRACK_ID)
     this.audioEngine = new AudioEngine({
       iframe: options.youtubePlayer,
       trackDisplay: options.trackDisplay,
       sourceCredit: options.sourceCredit,
-      tracks: options.tracks
+      tracks: this.tracks
     })
     this.visualEngine = new VisualEngine(this.canvas)
 

@@ -130,4 +130,5 @@ float ringShape(float th, float i, float t) {
   if ((uBass + uMid + uHigh) / 3.0 > 0.5) r += cos(th * 4.0) * 6.0;
   return r;
 }
-`
+`;
+
