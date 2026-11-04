@@ -230,6 +230,10 @@ module Master
           explicit_downcased = explicit.map(&:downcase)
           required = @personas.select { |persona| explicit_downcased.include?(persona.name.to_s.downcase) }
           active |= required
+          canonical_explicit = explicit.map do |name|
+            persona = required.find { |candidate| candidate.name.to_s.casecmp?(name) }
+            persona ? persona.name.to_s : name
+          end
 
           veto_roles = active.select { |persona| veto_role?(persona) }
           ordered_veto_roles = veto_roles.each_with_index.sort_by do |persona, index|
@@ -238,7 +242,7 @@ module Master
           end.map(&:first)
           ordered = ordered_veto_roles + (active - ordered_veto_roles)
 
-          @required_veto_role_names = (veto_roles.map { |persona| persona.name.to_s } + explicit).uniq
+          @required_veto_role_names = (veto_roles.map { |persona| persona.name.to_s } + canonical_explicit).uniq
           configured_names = @personas.map { |persona| persona.name.to_s.downcase }
           veto_names = @personas.select { |persona| veto_role?(persona) }.map { |persona| persona.name.to_s.downcase }
           @veto_role_configuration_errors = explicit.reject do |name|
