@@ -4225,7 +4225,7 @@ items:
   path: RAILS/bsdports/app/views/maintainers/show.html.erb
   item: Give the maintainer page port list role=list and aria-label as the ports index
     does; it is a bare ul#ports.
-  status: open
+  status: done
 - id: bsdports-004
   app: bsdports
   area: accessibility
@@ -4345,7 +4345,7 @@ items:
   path: RAILS/bsdports/app/views/maintainers/show.html.erb
   item: Rename id="ports" on the maintainer page; the same id is the ports turbo-frame
     on the index, and reflex/sentinel code targets ids.
-  status: open
+  status: done
 - id: bsdports-018
   app: bsdports
   area: markup

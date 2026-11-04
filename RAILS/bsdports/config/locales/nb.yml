@@ -43,6 +43,7 @@ nb:
     empty_title: "Ingen varsler ennå"
     empty_body: "Oppdateringer vises her."
   maintainers:
+    ports_label: "Porter vedlikeholdt av %{name}"
     meta_description: "%{name} vedlikeholder %{ports} i OpenBSD-porttreet."
     email_obfuscated: "%{user} (at) %{domain}"
   ports:

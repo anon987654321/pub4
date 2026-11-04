@@ -7,7 +7,9 @@
     <%= tag.p obfuscated_email(@maintainer.email) %>
   <% end %>
 </header>
-<ul id="ports" class="port-list">
+<%# Not id="ports": that id is the ports index turbo-frame. %>
+<ul id="maintainer-ports" role="list" class="port-list"
+    aria-label="<%= t("maintainers.ports_label", name: @maintainer.name) %>">
   <% @ports.each do |port| %>
     <%= render "ports/row", port: %>
   <% end %>

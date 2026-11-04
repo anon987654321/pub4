@@ -43,6 +43,7 @@ en:
     empty_title: "No notifications yet"
     empty_body: "Updates will appear here."
   maintainers:
+    ports_label: "Ports maintained by %{name}"
     meta_description: "%{name} maintains %{ports} in the OpenBSD ports tree."
     email_obfuscated: "%{user} (at) %{domain}"
   ports:
