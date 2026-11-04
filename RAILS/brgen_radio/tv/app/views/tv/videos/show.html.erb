@@ -24,7 +24,11 @@
     <%# data-tv-player-target="video" was never declared on any page, so the
         controller's play/pause binding — and with it the wake lock — had never
         run. It is required for watch-time reporting, and fixes that too. %>
-    <%= video_tag main_app.url_for(@video.video_file), controls: true, class: "video-player #{tv_media_image_classes(@video.video_file)}", data: { tv_player_target: "video" } %>
+    <%# preload=metadata fetches the length and first frame, not the film, and
+        the poster is the thumbnail's poster variant, shown until play. %>
+    <% poster = main_app.url_for(@video.media_variant(:thumbnail, :poster)) if @video.thumbnail.attached? %>
+    <%= video_tag main_app.url_for(@video.video_file), controls: true, preload: "metadata", poster:,
+          class: "video-player #{tv_media_image_classes(@video.video_file)}", data: { tv_player_target: "video" } %>
   </div>
 <% elsif @video.thumbnail.attached? %>
   <div class="tv-media">
