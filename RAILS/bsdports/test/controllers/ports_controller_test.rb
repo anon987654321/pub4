@@ -61,7 +61,7 @@ class PortsControllerTest < ActionDispatch::IntegrationTest
     get port_url(git)
     assert_response :success
     assert_select "dd span.data-state.data-state--stale", text: /#{Regexp.escape(I18n.t("ports.stale", count: 400))}\z/
-    assert_select "section[aria-label=?] ul[role=tree][aria-label=?] li[role=treeitem]",
+    assert_select "section[aria-label=?] ul[aria-label=?] li a",
                   I18n.t("ports.tree_heading"), I18n.t("ports.tree_heading")
     assert_select "details.dep-graph-panel > summary", text: I18n.t("ports.graph_heading")
     assert_select "svg.dep-graph line.dep-graph-edge", 1

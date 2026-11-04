@@ -1,29 +1,24 @@
 <%# locals: (tree:, heading: nil) %>
+<%# Plain nested lists: role=tree promised arrow-key handling and
+    aria-expanded that nothing provided, and the nested role=group lists had
+    no parent treeitem relationship. Each node links to its port page. %>
 <% if tree.any? %>
+  <% list = capture do %>
+    <%= tag.ul aria: { label: heading.presence } do %>
+      <% tree.each do |node| %>
+        <li>
+          <%= node[:param] ? link_to(node[:label], port_path(node[:param])) : node[:label] %>
+          <%= render "ports/dependency_tree", tree: node[:children] if node[:children].any? %>
+        </li>
+      <% end %>
+    <% end %>
+  <% end %>
   <% if heading.present? %>
     <%= tag.section aria: { label: heading } do %>
       <%= tag.h2 heading %>
-      <%= tag.ul role: "tree", aria: { label: heading } do %>
-        <% tree.each do |node| %>
-          <li role="treeitem" aria-label="<%= node[:label] %>">
-            <%= node[:label] %>
-            <% if node[:children].any? %>
-              <%= render "ports/dependency_tree", tree: node[:children] %>
-            <% end %>
-          </li>
-        <% end %>
-      <% end %>
+      <%= list %>
     <% end %>
   <% else %>
-    <ul role="group">
-      <% tree.each do |node| %>
-        <li role="treeitem" aria-label="<%= node[:label] %>">
-          <%= node[:label] %>
-          <% if node[:children].any? %>
-            <%= render "ports/dependency_tree", tree: node[:children] %>
-          <% end %>
-        </li>
-      <% end %>
-    </ul>
+    <%= list %>
   <% end %>
 <% end %>

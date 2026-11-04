@@ -101,7 +101,8 @@ class DependencyTest < ActiveSupport::TestCase
     Dependency.create!(port: @git, depends_on: @gettext, dep_type: "build")
     node = Dependency.tree_for(@git).first
 
-    assert_equal %i[id label pkgpath children].sort, node.keys.sort
+    assert_equal %i[id label pkgpath param children].sort, node.keys.sort
+    assert_equal @gettext.to_param, node[:param]
     assert_equal "devel/gettext", node[:pkgpath]
   end
 end

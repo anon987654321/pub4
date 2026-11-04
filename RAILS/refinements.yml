@@ -4245,7 +4245,7 @@ items:
   item: 'Give the dependency tree real tree semantics or drop the roles: role=tree
     needs aria-expanded/keyboard handling, and nested role=group lists are missing
     their parent treeitem relationship; plain nested ul is the honest markup.'
-  status: open
+  status: done
 - id: bsdports-006
   app: bsdports
   area: accessibility
@@ -4673,7 +4673,7 @@ items:
   path: RAILS/bsdports/app/views/ports/_dependency_tree.html.erb
   item: Link nodes in the dependency tree to their port pages; today node labels are
     plain text.
-  status: open
+  status: done
 - id: bsdports-058
   app: bsdports
   area: ux
