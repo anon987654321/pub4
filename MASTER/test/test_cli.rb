@@ -166,6 +166,22 @@ class TestCLI < Minitest::Test
     end
   end
 
+  def test_council_crit_fails_closed_without_the_security_gated_entrypoint
+    deliberation = Object.new
+    deliberation.define_singleton_method(:review) do |_artifact, context:|
+      Master::Result.ok([{ persona: "Rhea", feedback: context, role: "Reviewer" }])
+    end
+
+    Master::CLI::CouncilCrit.stub(:diff_artifact, "diff") do
+      result = Master::CLI::CouncilCrit.run(root: "/tmp/master", deliberation:)
+
+      assert result.err?
+      assert_equal :infrastructure, result.category
+      assert_includes result.message, "Security-gated pre-ship review unavailable"
+    end
+  end
+
+
   def test_council_crit_publishes_a_real_veto_and_preserves_error
     events = []
     bus = Object.new
@@ -252,8 +268,8 @@ class TestCLI < Minitest::Test
 
   def test_council_crit_runner_uses_container_dependencies
     deliberation = Object.new
-    deliberation.define_singleton_method(:review) do |_artifact, context:|
-      Master::Result.ok([{ persona: "Rhea", feedback: context, role: "Reviewer" }])
+    deliberation.define_singleton_method(:review_pre_ship) do |_artifact, context:|
+      Master::Result.ok([{ persona: "Security", feedback: context, role: "Security Review", veto_role: true }])
     end
     bus = Object.new
     bus.define_singleton_method(:publish) { |_event, **_details| }
