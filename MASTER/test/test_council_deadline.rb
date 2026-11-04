@@ -168,6 +168,30 @@ class TestCouncilDeadline < Minitest::Test
     assert_equal :reached, event.last[:quorum]
   end
 
+  def test_deadline_during_judge_synthesis_does_not_return_a_pass
+    agent = Object.new
+    count = 0
+    lock = Mutex.new
+    agent.define_singleton_method(:ask) do |_prompt, **|
+      n = lock.synchronize { count += 1 }
+      n <= 3 ? CouncilAnswer.json : sleep(1.1)
+    end
+    personas = Array.new(3) { |i| Persona.new(name: "P#{i}", role: "r", bias: "b", prompt: "p") }
+    delib = Master::Review::Council::Deliberation.new(personas:, agent:)
+
+    started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+    result = Master::Review::Council::Deliberation.stub(:reachable_for?, true) do
+      delib.stub(:panel_blocked?, false) { Clock.within(1) { delib.review("x = 1") } }
+    end
+    elapsed = Process.clock_gettime(Process::CLOCK_MONOTONIC) - started
+
+    assert_operator elapsed, :<, 5
+    assert_equal 4, count, "the fourth call should be the judge synthesis"
+    assert result.err?, "judge synthesis expiry must not return a completed council"
+    assert_equal :timeout, result.category
+    assert_match(/council: incomplete, deadline/, result.message)
+  end
+
   def test_the_heartbeat_names_the_phase_and_the_council_progress
     pulse = Master::Fix::RunPulse.new(max_passes: 8, clock: -> { 100.0 }, load: -> { 0.5 })
     pulse.observe("fix_loop:pass_start", { pass: 1, file_count: 10 })
