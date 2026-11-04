@@ -703,3 +703,371 @@ fallback and device evidence are named.
   endpoint first. The fallback policy and regression tests have been updated;
   run the focused routing suite and the full MASTER check runner before
   treating the change as verified.
+
+## Open from the 2026-11-04 session — blockers and their candidate fixes
+
+The operator asked for these on 2026-11-04 after a MASTER launch on vm23
+pushed swap from 217 MB to 60 MB free and brgen.no timed out until the process
+was killed. They are candidates, not commitments. Asterisked rows are the
+recommended first ten.
+
+### vm23 memory (1 GB RAM, swap near full)
+
+- [ ] * Upgrade vm23 to 2 GB at the provider (operator action).
+- [ ] Add a second 1 GB swap file as a stopgap (`swapctl -a`).
+- [ ] * Run amber, bsdports and brgen jobs in-process, as mrdamascy does; retire the `*_jobs` services (~250 MB).
+- [ ] Or fold all four apps' jobs into one shared worker process.
+- [ ] Tune Falcon to one worker and fewer threads per app.
+- [ ] Set `RUBY_GC_HEAP_GROWTH_FACTOR` and malloc arena limits per app.
+- [ ] Measure YJIT's memory cost per app; enable it only where it pays.
+- [ ] Nightly cron restart to reclaim fragmented heaps.
+- [ ] Per-service `login.conf` datasize caps so one app cannot sink the box.
+- [ ] Serve bsdports as pre-rendered static HTML through httpd.
+- [ ] Serve mrd.brgen.no's demo pages statically; keep checkout dynamic.
+- [ ] Move the `master` web control plane off vm23.
+- [ ] Move amber to its own small VM.
+- [ ] * Precompile assets on the Mac and ship them; no asset build on vm23.
+- [ ] * Vendor gems on the Mac for OpenBSD/amd64; no `bundle install` compiles on vm23.
+- [ ] Cache built native gems (nokogiri and others) and reuse the `.so` files.
+- [ ] Stop each app's web server during its own deploy rather than run two copies.
+- [ ] * vps-deploy memory gate: refuse to start with under 400 MB swap free.
+- [ ] Report memory pressure to brgen's internal status page.
+- [ ] Smaller SQLite cache sizes per database.
+- [ ] Drop unused middleware and engines per app in production.
+- [ ] Trim production Gemfile groups.
+- [ ] Lazy-load heavy engines (marketplace, dating) on first route hit.
+- [ ] Record per-app RSS after boot as a ratchet in OPENBSD tests.
+
+### Redeploy safety
+
+- [ ] Deploy one app per day with a memory check before and after.
+- [ ] * Build a deploy artifact on the Mac (code, gems, assets); vm23 only unpacks and restarts.
+- [ ] Blue-green on disk: unpack beside the live copy, swap a symlink.
+- [ ] Rehearse with `OPENBSD/bin/rehearse` before every deploy.
+- [ ] Watchdog that aborts a deploy when swap drops under 150 MB.
+- [ ] Deploy at the lowest-traffic hour.
+- [ ] One-command rollback: symlink back and restart.
+- [ ] vps-deploy stops and restarts the matching `*_jobs` service itself.
+- [ ] Post-deploy smoke test over every route-manifest page.
+- [ ] Expose the running commit at `/internal/version` per app.
+
+### Permission and classifier blocks
+
+- [ ] Allow `zsh OPENBSD/lib/ssh_vm23.sh *` in `~/.claude/settings.json`.
+- [ ] * Narrow wrapper `OPENBSD/bin/vm23-service <app> stop|start`, allowed alone.
+- [ ] Record the standing vm23 authority in `MASTER/data/operator_seams.yml`.
+- [ ] Wrap routine remote operations as `operator` subcommands.
+- [ ] Prepare one-off remote commands for the operator to run with `! ssh ...`.
+
+### MASTER's one-session lock
+
+- [ ] * `bin/master --status`: lock holder, mode, idle time.
+- [ ] Release the lock after N idle minutes; the session keeps running.
+- [ ] * Headless runs queue behind an interactive session instead of exiting 75.
+- [ ] Headless runs submit their goal to the running session over the bridge.
+- [ ] One lock scope per checkout.
+- [ ] `/handoff` releases the lock cleanly.
+- [ ] Name the holder's mode and last activity in the refusal message.
+
+### MASTER working TODO.md unattended (first pass)
+
+- [ ] * Split this file into one YAML entry per item: id, scope, size, acceptance check.
+- [ ] * Give each item a machine-checkable "done when" command.
+- [ ] One item per run; queue the next only after a green check.
+- [ ] Rank items by size and certainty; take the smallest verifiable first.
+- [ ] Verify-only mode: run the named checks and report without editing.
+- [ ] Receipt per item: commands, output digests, PASS/FAIL/NOT_RUN.
+- [ ] * Second-key review of each MASTER commit before push.
+- [ ] * Strong model for edits, cheap models only for triage.
+- [ ] Per-run spend and wall-clock caps with a clean stop.
+- [ ] Golden fixtures as MASTER's own regression suite.
+- [ ] Proposal mode writing patches to `.master/proposals/` for review.
+- [ ] Success rate per item type; grant autonomy only where it lands reliably.
+- [ ] Every refusal records its reason in `swallowed_errors.jsonl`.
+- [ ] Read other writers' recent commits before editing.
+- [ ] Nightly launchd run on the Mac, one item, morning summary.
+- [ ] Stall alarm: two minutes without output stops and reports.
+
+### MASTER on vm23 (only if wanted later)
+
+- [ ] Git identity or deploy key for `dev`.
+- [ ] Separate working checkout, not the deploy tree.
+- [ ] `.master/` owned by one user and group, `ug+rw`.
+- [ ] `ulimit -d`, `nice 20` and a swap watchdog around every run.
+- [ ] Quitting the screen kills the whole process group.
+- [ ] Verify-only on vm23; never edits.
+- [ ] Prefer a cheap Linux cloud worker over the production box.
+
+### Shared checkout and push races
+
+- [ ] Give GLM its own clone; push-only into main.
+- [ ] `push_only.rb` as the only push path for every agent.
+- [ ] Pre-commit refusal to stage files with another writer's uncommitted edits.
+- [ ] Per-tree edit lock naming the agent.
+- [ ] `.master/agents_active.yml`: each agent's current scope.
+- [ ] commit-msg hook enforcing `commit_format.yml`.
+- [ ] Decide GLM's voice opt-in revert; lock the answer with a test.
+- [ ] Daily review of non-Claude commits against the Laws.
+
+### Failing RAILS contracts
+
+- [ ] Fix `child_margin` findings file by file.
+- [ ] CSS weight: cut unused selectors by coverage before raising a budget.
+- [ ] Re-run `integrity_locale` after the mrdamascy README change.
+- [ ] Split the longest files and methods named by the length ratchets.
+- [ ] Triage `scale_lint`, `social_frontpage`, `maps_engine_wiring`, `generated_asset_check`, `link_converter`, `layout_check_enforcement`.
+- [ ] `db:test:prepare` before each RAILS suite.
+- [ ] Nightly RAILS suite with posted deltas.
+
+### Markup cleanup, phase 3 remainder
+
+- [ ] Convert marketplace listing, messenger thread, `posts/new`, amber feed header, amber post page, login wrappers.
+- [ ] Replace `button-small`, `cluster`, `mt-8`, `text-sm`, `link-inherit` with element and role selectors.
+- [ ] Lint presentational class names in ERB.
+- [ ] Lint `div` chains deeper than three.
+- [ ] Recapture and diff against the 196-shot baseline after each view.
+
+### Product decisions (operator)
+
+- [ ] Distance: district names instead of kilometres (recommended), or rounded client-side, or detail page only.
+- [ ] Expiring posts: per-post opt-in, or hide from feeds but keep on profile, or stories only.
+- [ ] Voice: restore on-by-default with a per-user opt-out.
+
+### GIF to MP4
+
+- [ ] Convert in the browser with WebCodecs at upload.
+- [ ] Or batch-convert on the Mac.
+- [ ] Or Solid Queue in-process, ffmpeg one at a time.
+- [ ] Or a niced, capped cron sweep.
+- [ ] Or serve GIFs lazily with a poster frame and tap to play.
+
+### Hooks and visibility
+
+- [ ] * requested-vs-done hook recognises `push_only.rb` and `operator vps deploy` inside scripts.
+- [ ] * It counts only the current user message's requests, and accepts a pure question.
+- [ ] One `/internal/status` page: deploy commit, memory, swap, jobs, errors.
+- [ ] Push notification when vm23 swap drops under 150 MB.
+- [ ] Weekly digest: landed, failed, waiting on the operator.
+- [ ] "Blocked on the operator" list kept current in `operator_seams.yml`.
+
+## Open from the 2026-11-04 session — /fix that does what Claude does, unattended
+
+Goal: /fix takes this file and the backlogs and finishes items without a
+person, at the standard a supervised Claude session meets. Existing pieces to
+build on, not duplicate: `Mission`, `Supervisor`, `TaskSteward`,
+`TaskContract`, `OutcomeLearning`, `RepairMemory`, `RunBudget`, `RunPulse`,
+`Transaction`, `Checkpoint`. Asterisked rows come first.
+
+### Work intake
+
+- [ ] * `MASTER/data/backlog.yml` generated from this file: id, tree, scope paths, size, risk, acceptance command, operator-only flag.
+- [ ] * Each item becomes a `Mission` with a `TaskContract`; the steward wakes it until done or refused.
+- [ ] Parse inline unresolved-marker comments into the same backlog with source anchors.
+- [ ] Pull failing contract names from the last RAILS and MASTER runs into the backlog.
+- [ ] Classify items: verify, mechanical, design, product decision, operator-only. /fix never takes the last two.
+- [ ] Split items larger than one commit into child missions before starting.
+- [ ] Dedupe against `git log` subjects so landed work is not redone.
+- [ ] Remove the TODO.md entry in the same commit that lands its evidence.
+
+### Planning like a session
+
+- [ ] * Plan stage: read the files the item names, write a short plan with expected diff size and checks, then act.
+- [ ] Explore stage with read-only tools (grep, file reads, route manifest) before any edit.
+- [ ] Ask "does this already exist?" by searching for the named feature before building.
+- [ ] Prefer the smallest change that meets the acceptance check.
+- [ ] Re-plan once on failure with the failure output attached; refuse after the second.
+- [ ] Carry a scratch notes file per mission across wakes.
+
+### Tools /fix needs that Claude uses
+
+- [ ] * Tool loop: read, grep, edit-by-exact-string, write, run-command, with a command allowlist from `law_runtime.yml`.
+- [ ] Exact-string edits with uniqueness checks instead of whole-file rewrites.
+- [ ] Run focused tests (`ruby -Ilib -Itest <file>`) and the app's `bin/rails test <file>` with the known env.
+- [ ] Ferrum screenshots plus overlay diffs for visual items.
+- [ ] Route manifest regeneration and locale contract checks as tools.
+- [ ] `operator lint --changed-lines` as a tool, run before every commit.
+- [ ] Temp-index commit helper for files another writer has touched.
+- [ ] `push_only.rb` as the only push tool.
+- [ ] Read-only ssh probes to vm23 (status, memory) through a fixed command list.
+
+### Verification and honesty
+
+- [ ] * No commit without a green acceptance command captured in the receipt.
+- [ ] Receipts state PASS, FAIL, NOT_RUN or INCONCLUSIVE per check, never inferred.
+- [ ] Run the touched tree's focused suite before and after; refuse on new failures.
+- [ ] Visual items require a before/after screenshot pair.
+- [ ] Independent verifier model reads the diff and the receipt, not the plan.
+- [ ] Mutation spot-check: revert the fix and confirm the test fails.
+- [ ] Re-run flaky failures alone before blaming the change.
+- [ ] Record unrun checks as debt in the backlog, not as passes.
+
+### Model use
+
+- [ ] * Route edits to the strongest available model; triage and summaries to cheap ones.
+- [ ] Measure land rate per model per item class; route by measured rate.
+- [ ] Cache each prompt's context pack so retries cost less.
+- [ ] Hard spend cap per mission and per night.
+- [ ] Fall back to verify-only when no strong model is available.
+- [ ] Keep `RepairMemory` declines so the same finding is not re-sent.
+
+### Safety and boundaries
+
+- [ ] Never touch `soul.yml` or `laws.yml`; write guard already exists, extend its tests to the new tools.
+- [ ] Never stage other writers' uncommitted hunks.
+- [ ] Never restart services or deploy; deploy stays an operator seam.
+- [ ] Memory guard on the Mac: one /fix, at most two suites, per the 8 GB limit.
+- [ ] Refuse items that touch money, auth or private data without operator review.
+- [ ] Every run happens in a lock that names itself and expires.
+- [ ] Roll back the mission's commits as one unit on operator request.
+
+### Coexisting with other writers
+
+- [ ] Fetch and rebase-by-tree before each commit; skip if origin already carries the tree.
+- [ ] Detect a busy tree (uncommitted edits by others) and pick an item in another tree.
+- [ ] Publish the active mission to `.master/agents_active.yml`.
+- [ ] Respect GLM's in-flight scope; never edit the same file within an hour of its commit.
+
+### Long-running operation
+
+- [ ] * launchd job on the Mac: nightly window, one mission at a time, stops at a spend or time cap.
+- [ ] `Supervisor` resumes a mission after crash from its `Checkpoint`.
+- [ ] Stall alarm after two minutes without progress; stop and record why.
+- [ ] Stream progress live (`RunPulse`): % complete and ETA per mission and per night.
+- [ ] Morning summary: landed commits, refusals with reasons, items waiting on the operator.
+- [ ] Push notification on failure or when an operator decision blocks progress.
+
+### Learning
+
+- [ ] `OutcomeLearning` per item class: what landed, what was refused, why.
+- [ ] Store operator corrections as rules in `project_context.yml` and load them each run.
+- [ ] Turn every operator rejection into a regression fixture.
+- [ ] Weekly self-review: lowest land-rate classes become /fix's own backlog items.
+- [ ] Compare /fix's commits against Claude's on the same item class and close the gap.
+
+### Proving it
+
+- [ ] Golden backlog: twenty past items with known good commits; /fix replays them and is scored.
+- [ ] Start with verify-only items; promote to mechanical, then design, by measured rate.
+- [ ] Shadow mode: /fix proposes, Claude or the operator lands, and the diff is scored.
+- [ ] Publish the score per class in the morning summary.
+- [ ] Unattended autonomy per class only after ten consecutive clean lands.
+
+## Open from the 2026-11-04 session — MASTER's CLI, web, voice, face and manner
+
+Candidates the operator asked for. Build on what exists: dmesg-style output,
+`lib/cli/face/` (ASCII contours, mouth, pose, motion, transcriber), rb-edge-tts
+with voice rotation and the dilla fx rack, `RAILS/master` face page,
+`turn_router`, `attention_context`, `context_layers`. Asterisked rows first.
+
+### CLI
+
+- [ ] * Result first: every reply opens with the outcome in one line, detail after.
+- [ ] * Live status line: mission, step, % complete, ETA, spend, model.
+- [ ] Collapse tool output by default; `/expand <n>` opens one block.
+- [ ] Colour only for state (ok, warn, fail); everything else plain, `NO_COLOR` honoured.
+- [ ] Width-aware wrapping at the terminal's measure, 72 columns minimum.
+- [ ] `/status` shows lock holder, running missions, vm23 health, last push.
+- [ ] `/undo` reverts the last MASTER commit in one step.
+- [ ] `/why` explains the last decision with the Law and evidence it used.
+- [ ] Tab completion for commands, paths, Law ids and mission ids.
+- [ ] History search (ctrl-r) across sessions.
+- [ ] Multi-line input with a clear send key.
+- [ ] Paste detection: large pastes become an attachment, not a prompt.
+- [ ] Esc queues the new message after the current step, never cancels silently.
+- [ ] Progress for long commands streams failures as they land.
+- [ ] Errors say what failed, why, and the next command to try.
+- [ ] Every command has `--help` with one real example.
+- [ ] Startup under one second with `--fast`; full boot reports what it skipped.
+- [ ] `/diff` shows the working changes of the current mission.
+- [ ] Session resume shows the last three turns and the open mission.
+- [ ] Quiet mode for scripts: JSON only, no face, no TTS.
+- [ ] Measure and ratchet time-to-first-token in the CLI.
+
+### Web UI (RAILS/master)
+
+- [ ] * One page: conversation, face, mission list, live log; no navigation needed for daily use.
+- [ ] * Live mission board over Turbo Streams: queued, running, landed, refused.
+- [ ] Morning summary page with landed commits and operator decisions as buttons.
+- [ ] Approve or reject a proposal from the browser; the decision feeds `OutcomeLearning`.
+- [ ] Diff viewer with syntax colour and per-hunk accept.
+- [ ] Screenshot before/after slider for visual missions.
+- [ ] vm23 health panel: memory, swap, per-app status, deployed commit.
+- [ ] Mobile layout first; works one-handed on a phone.
+- [ ] Push notifications for decisions and failures (PWA).
+- [ ] Keyboard shortcuts matching the CLI commands.
+- [ ] Dark and light from the system setting; Swiss sans and mono only.
+- [ ] Offline read of the last summary.
+- [ ] Accessible: focus order, labels, reduced motion respected by the face.
+- [ ] Session list with search and resume.
+- [ ] Spend chart per day and per model.
+- [ ] Auth by passkey; the page holds no secrets.
+
+### TTS
+
+- [ ] * Speak the result line only by default; full text on request.
+- [ ] * Interruptible: speaking stops the moment the operator types or talks.
+- [ ] Stream synthesis sentence by sentence to cut latency.
+- [ ] Cache synthesized phrases that repeat (status words, greetings).
+- [ ] Read code, paths and hashes as short spoken forms ("commit e5ee").
+- [ ] Never speak secrets, tokens or long numbers.
+- [ ] Prosody from content: lower pitch for failures, brighter for lands.
+- [ ] Norwegian voice for Norwegian text, detected per sentence.
+- [ ] Volume and speed per context (night quieter, summaries faster).
+- [ ] Loudness normalised to one target so voices don't jump.
+- [ ] Optional dilla bed under long summaries, ducked under speech.
+- [ ] Earcons: short distinct sounds for land, fail, decision needed.
+- [ ] Measure and ratchet time-to-first-audio.
+- [ ] Local fallback voice when edge TTS is unreachable.
+- [ ] Voice on by default; per-channel opt-out, never opt-in.
+
+### Face
+
+- [ ] * Lip sync from the TTS phoneme timing, not amplitude alone.
+- [ ] * Expression follows state: thinking, working, success, failure, waiting on the operator.
+- [ ] Gaze towards the area of the screen being talked about.
+- [ ] Idle motion: breathing and blinks with natural random timing.
+- [ ] Attention cue when a decision is needed.
+- [ ] One renderer for CLI and web; the ASCII contract stays the single source.
+- [ ] Frame budget: drop detail before dropping frames.
+- [ ] Respect reduced motion: still face with expression changes only.
+- [ ] Resize cleanly from 40 to 200 columns.
+- [ ] Face snapshot tests per expression in CLI and web.
+- [ ] Mouth shapes for Norwegian vowels.
+- [ ] Listening pose while the operator speaks.
+- [ ] Optional microphone level drives a listening nod.
+
+### Conversation
+
+- [ ] * Answer the question asked before anything else.
+- [ ] * One clarifying question at most, only when the answer changes the work.
+- [ ] Remember the operator's standing rules from `project_context.yml` and apply them silently.
+- [ ] Never repeat facts the operator already knows; refer to them instead.
+- [ ] Short by default; offer depth rather than dump it.
+- [ ] Recommend one option when there is a choice, with the reason.
+- [ ] Admit uncertainty with what would resolve it.
+- [ ] Correct its own earlier mistakes plainly and early.
+- [ ] Track open threads across the session and close them.
+- [ ] Recognise "status?", "go", "keep going" and similar as complete instructions.
+- [ ] Mid-task messages queue, not cancel.
+- [ ] Summarise long work as result, evidence, next step.
+- [ ] Speak Norwegian when spoken to in Norwegian.
+- [ ] Never quote the operator back verbatim in config or replies.
+- [ ] Handle interruptions without losing the current mission.
+- [ ] Turn evaluation: replay twenty past conversations and score answers against what the operator wanted.
+
+### Social intelligence
+
+- [ ] * Read urgency and frustration from wording; respond shorter and act faster.
+- [ ] * Notice repeated complaints ("stop asking me") and fix the cause, not the symptom.
+- [ ] Know who is who: the operator, Ragnhild for amber, the Bergen crew; pronouns as stated.
+- [ ] Credit other writers' work accurately and critique it fairly.
+- [ ] Ask before outward-facing actions; never ask for routine ones the operator has granted.
+- [ ] Celebrate lands briefly; never over-praise.
+- [ ] Tone matched to time of day and the operator's energy.
+- [ ] Bad news first, with the fix attached.
+- [ ] Keep promises: anything "I'll do" becomes a tracked mission.
+- [ ] Notice when the operator goes quiet mid-task and leave a resumable summary.
+- [ ] Respect the operator's taste rules (flat brutalist, no serifs, no artist names in dilla).
+- [ ] Learn preferences from accepted vs rejected proposals.
+- [ ] Never guess pronouns; use the stated ones or they/them.
+- [ ] Weekly reflection: what annoyed the operator this week and what changed because of it.
