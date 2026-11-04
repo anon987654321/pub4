@@ -87,6 +87,19 @@ class FediverseSignatureTest < ActiveSupport::TestCase
     refute verify(request)
   end
 
+  # A Digest header is a list of algorithm=value pairs; the value only means
+  # something under the algorithm it is labelled with.
+  test "the digest counts only under its SHA-256 label, in a list or alone" do
+    sha = Base64.strict_encode64(OpenSSL::Digest::SHA256.digest(@body))
+    md5 = Base64.strict_encode64(OpenSSL::Digest::MD5.digest(@body))
+
+    assert Fediverse::Signature.digest_matches?("SHA-256=#{sha}", @body)
+    assert Fediverse::Signature.digest_matches?("MD5=#{md5}, SHA-256=#{sha}", @body)
+    refute Fediverse::Signature.digest_matches?("MD5=#{sha}", @body)
+    refute Fediverse::Signature.digest_matches?("SHA-256=#{sha}, SHA-256=#{md5}", @body)
+    refute Fediverse::Signature.digest_matches?("", @body)
+  end
+
   test "parse reads the comma-separated signature parameters" do
     parsed = Fediverse::Signature.parse('keyId="abc",algorithm="rsa-sha256",headers="date",signature="xyz"')
 

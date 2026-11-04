@@ -89,13 +89,16 @@ module Fediverse
     end
 
     # The Digest header is what ties the signature to this body. Without
-    # checking it, a signed request can carry any payload at all.
+    # checking it, a signed request can carry any payload at all. It is a
+    # comma-separated list of algorithm=value pairs (RFC 3230); only a SHA-256
+    # entry counts, and every SHA-256 entry must match.
     def digest_matches?(header, body)
-      return false if header.blank?
-
       expected = Base64.strict_encode64(OpenSSL::Digest::SHA256.digest(body.to_s))
-      provided = header.to_s.split("=", 2).last
-      ActiveSupport::SecurityUtils.secure_compare(provided.to_s, expected)
+      provided = header.to_s.split(",").filter_map do |entry|
+        algorithm, value = entry.strip.split("=", 2)
+        value if algorithm.to_s.casecmp?("SHA-256")
+      end
+      provided.any? && provided.all? { |value| ActiveSupport::SecurityUtils.secure_compare(value, expected) }
     end
 
     def header_line(header, request)

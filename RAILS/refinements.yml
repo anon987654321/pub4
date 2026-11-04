@@ -1731,7 +1731,7 @@ items:
   item: Make digest_matches? parse a comma-separated Digest header and require the
     SHA-256= algorithm label; it currently splits on the first '=' only and ignores
     the algorithm name.
-  status: open
+  status: done
 - id: brgen-103
   app: brgen
   area: fediverse
