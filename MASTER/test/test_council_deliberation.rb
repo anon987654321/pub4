@@ -192,6 +192,39 @@ class TestCouncilDeliberation < Minitest::Test
     assert_match(/Maintainer/, missing.message)
   end
 
+  def test_capacity_omission_fails_before_any_reviewer_call
+    personas = [
+      Persona.new(name: "Maintainer", role: "Maintainer", bias: "Sustainability", prompt: "maintain", veto_role: true),
+      Persona.new(name: "Reliability", role: "Reliability", bias: "Resilience", prompt: "reliable", veto_role: true),
+      Persona.new(name: "Security", role: "Security", bias: "Safety", prompt: "secure", veto_role: true),
+    ]
+    calls = []
+    agent = Object.new
+    agent.define_singleton_method(:ask) { |prompt, **| calls << prompt; CouncilAnswer.json }
+    events = []
+    bus = Object.new
+    bus.define_singleton_method(:publish) { |event, payload = nil, **keywords| events << [event, (payload || {}).merge(keywords)] }
+    delib = Master::Review::Council::Deliberation.new(personas:, agent:, event_bus: bus, judge_enabled: false)
+    policy = Object.new
+    policy.define_singleton_method(:council_target) { |current:, **| [current, 2].min }
+    delib.instance_variable_set(:@availability, policy)
+    delib.define_singleton_method(:panel_blocked?) { false }
+    delib.define_singleton_method(:local_floor_available?) { false }
+    delib.define_singleton_method(:cloud_floor_available?) { true }
+
+    result = Master::Review::Council::Deliberation.stub(:local_posture?, false) do
+      delib.review("a proposed change")
+    end
+
+    assert result.err?
+    assert_equal :inconclusive, result.category
+    assert_match(/omitted by panel capacity: Maintainer/, result.message)
+    assert_empty calls, "the panel must fail before spending a call it cannot complete"
+    event = events.find { |name, _payload| name == :council_veto_capacity_missing }
+    refute_nil event
+    assert_equal ["Maintainer"], event.last[:omitted]
+  end
+
   def test_pre_ship_review_requires_security_even_when_the_supplied_panel_omits_it
     personas = Array.new(3) { |i| Persona.new(name: "P#{i}", role: "Reviewer", bias: "Review", prompt: "review") }
     delib = Master::Review::Council::Deliberation.new(personas:, agent: StubAgent.new, judge_enabled: false)
