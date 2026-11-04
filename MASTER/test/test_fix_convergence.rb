@@ -1555,6 +1555,58 @@ end
     previous.nil? ? ENV.delete("MASTER_FIX_HARD_CRITIQUE") : ENV["MASTER_FIX_HARD_CRITIQUE"] = previous
   end
 
+  def test_hard_critique_inconclusive_evidence_is_not_reported_as_completed
+    critique = Object.new
+    critique.define_singleton_method(:run) do
+      Master::Result.ok(status: :inconclusive, reason: "all probes are inconclusive", issues: [], cherry_picks: [])
+    end
+    round = Master::Fix::FixLoop::CouncilRound.new(agent: Object.new, root: @root, bus: @bus)
+
+    result = Master::Review::Council::Critique.stub(:new, ->(**_options) { critique }) do
+      round.send(:critique, [File.join(@root, "dummy.yml")])
+    end
+
+    assert_predicate result, :err?
+    assert_equal :inconclusive, result.category
+    event = @bus.events.find { |row| row[:event] == "fix_loop:hard_critique_inconclusive" }
+    refute_nil event
+    assert_equal "all probes are inconclusive", event[:payload][:reason]
+    refute_includes @bus.names, "fix_loop:hard_critique"
+  end
+
+  def test_hard_critique_records_a_real_veto_separately_from_inconclusive
+    critique = Object.new
+    critique.define_singleton_method(:run) do
+      Master::Result.err("council: veto from Security\ncritical finding", category: :validation)
+    end
+    round = Master::Fix::FixLoop::CouncilRound.new(agent: Object.new, root: @root, bus: @bus)
+
+    result = Master::Review::Council::Critique.stub(:new, ->(**_options) { critique }) do
+      round.send(:critique, [File.join(@root, "dummy.yml")])
+    end
+
+    assert_predicate result, :err?
+    event = @bus.events.find { |row| row[:event] == "fix_loop:hard_critique_veto" }
+    refute_nil event
+    assert_equal "Security", event[:payload][:vetoed_by]
+    refute_includes @bus.names, "fix_loop:hard_critique_inconclusive"
+    refute_includes @bus.names, "fix_loop:hard_critique"
+  end
+
+  def test_skipped_council_pass_records_the_reason
+    round = Master::Fix::FixLoop::CouncilRound.new(agent: Object.new, root: @root, bus: @bus)
+    round.define_singleton_method(:council_enabled?) { false }
+
+    round.run(files: [File.join(@root, "dummy.yml")], pass: 3, deadline: Time.now + 60)
+
+    event = @bus.events.find { |row| row[:event] == "fix_loop:council_skipped" }
+    refute_nil event
+    assert_equal 3, event[:payload][:pass]
+    assert_equal "source_findings", event[:payload][:trigger]
+    assert_equal :disabled, event[:payload][:reason]
+  end
+
+
   def test_council_result_is_passed_into_the_repair_stage
     findings = { feedback: [], cherry_picks: ["dummy.yml line 1: tighten the boundary"] }
     council = Object.new
