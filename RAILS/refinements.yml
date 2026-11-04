@@ -872,7 +872,7 @@ items:
   item: Render the profile's recent items with the shared items/_item card (or a figure)
     instead of a bare link with an image and a <p>, so profile and wardrobe look the
     same.
-  status: open
+  status: done
 - id: amber-108
   app: amber
   area: ux

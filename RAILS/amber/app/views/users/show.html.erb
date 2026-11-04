@@ -23,15 +23,22 @@
 <% elsif @items.empty? %>
   <%= render "shared/empty_state", title: t("empty.no_items"), action: { label: t("home.browse_demo"), path: demo_wardrobe_path } %>
 <% end %>
+<%# The card the wardrobe and the demo draw, without the owner's wear, joy and
+    edit buttons: a bare link with an image and a <p> looked like neither. %>
 <div class="item-grid">
   <% @items.each do |item| %>
-    <%= link_to item_path(item) do %>
+    <%= tag.article class: "item-card", id: dom_id(item) do %>
       <% if item.photos.attached? %>
-        <%= responsive_image_tag item.photos.first, alt: item.title, preset: :card, sizes: "(max-width: 768px) 50vw, 240px" %>
+        <%= responsive_image_tag item.photos.first, alt: item.title, preset: :card,
+                                                    sizes: "(max-width: 768px) 50vw, 240px", class: "item-photo" %>
       <% else %>
-        <%= tag.span item.category, class: "item-placeholder" %>
+        <%= tag.div item.category.to_s.first, class: "item-photo item-photo--placeholder", aria: { hidden: true } %>
       <% end %>
-      <%= tag.p item.title %>
+      <%= link_to item.title, item_path(item), class: "item-title" %>
+      <p class="item-meta">
+        <%= tag.span item_category_label(item.category) %>
+        <%= tag.span item.color if item.color.present? %>
+      </p>
     <% end %>
   <% end %>
 </div>

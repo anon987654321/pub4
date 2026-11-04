@@ -56,4 +56,19 @@ class UsersProfileTest < ActionDispatch::IntegrationTest
     robots = Rails.public_path.join("robots.txt").read
     assert_no_match %r{^Disallow: /users}, robots
   end
+
+  # Recent pieces were a bare link around an image and a <p>, unlike any card
+  # in the wardrobe or the demo.
+  test "recent pieces render as wardrobe cards without owner actions" do
+    item = @owner.items.create!(title: "Wool coat", category: "Outerwear", color: "navy")
+    post session_path, params: { email_address: @owner.email_address, password: "password" }
+
+    get user_path(@owner)
+    assert_select ".item-grid article.item-card##{ActionView::RecordIdentifier.dom_id(item)}" do
+      assert_select ".item-photo--placeholder", text: "O"
+      assert_select "a.item-title[href=?]", item_path(item), text: "Wool coat"
+      assert_select ".item-meta span", text: "navy"
+      assert_select "form", 0
+    end
+  end
 end
