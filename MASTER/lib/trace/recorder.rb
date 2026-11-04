@@ -111,7 +111,8 @@ module Master
         # instead of breaking the Rails service by forcing 0700; the per-trace
         # directory and files remain owner-private.
         expected_mode = shared_state ? MasterPaths.private_dir_mode(path, 0o700) : 0o700
-        File.chmod(expected_mode, path) if (stat.mode & 0o7777) != expected_mode
+        # chmod is the owner's alone; a directory someone else owns is checked below.
+        File.chmod(expected_mode, path) if File.owned?(path) && (stat.mode & 0o7777) != expected_mode
         current = File.lstat(path)
         unsafe_mask = shared_state ? 0o0007 : 0o0077
         raise IOError, "trace storage directory permissions must be private" unless

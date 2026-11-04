@@ -177,6 +177,35 @@ class TestTraceRecorderStorage < Minitest::Test
     end
   end
 
+  # vm23: the master app runs as master and MASTER/.master is dev's, 0770, in
+  # master's group. chmod raised EPERM there and the agent container never booted.
+  def test_shared_state_directory_owned_by_someone_else_is_used_as_it_is
+    Dir.mktmpdir("trace-storage-other-owner") do |root|
+      state = File.join(root, ".master")
+      Dir.mkdir(state)
+      File.chmod(0o770, state)
+
+      as_another_owner_of(state) { recorder(root) }
+
+      assert_equal 0o770, File.stat(state).mode & 0o7777
+      assert_equal 0o700, File.stat(trace_directory(root)).mode & 0o777
+    end
+  end
+
+  # File.owned? is false for path, and chmod of it raises EPERM as the kernel does.
+  def as_another_owner_of(path)
+    real = %i[owned? chmod].to_h { |name| [name, File.method(name)] }
+    File.define_singleton_method(:owned?) { |target| target == path ? false : real[:owned?].call(target) }
+    File.define_singleton_method(:chmod) do |mode, *targets|
+      raise Errno::EPERM, path if targets.include?(path)
+
+      real[:chmod].call(mode, *targets)
+    end
+    yield
+  ensure
+    real.each { |name, method| File.define_singleton_method(name, method) }
+  end
+
   # Same policy as Log.prepare_directory: an existing directory the owner can
   # repair is tightened to 0700 before any trace is written into it, whether
   # it was merely readable or group/world-writable.
