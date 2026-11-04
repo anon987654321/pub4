@@ -37,10 +37,28 @@ class RateLimitNamingTest < Minitest::Test
     ].sort
   end
 
-  # A rate_limit call and its continuation line, which is where `with:` usually
-  # sits in this codebase.
+  # A rate_limit call and its continuation lines, which is where `with:` usually
+  # sits in this codebase. A line continues the call only after a trailing comma:
+  # "any indented line" swallowed the next rate_limit in an unbroken block, so two
+  # limits counted as one and CommentsController passed with neither named.
   def rate_limit_calls(src)
-    src.scan(/^[ \t]*rate_limit\b[^\n]*(?:\n[ \t]+[^\n]*)*/)
+    src.scan(/^[ \t]*rate_limit\b(?:[^\n]*,[ \t]*\n)*[^\n]*/)
+  end
+
+  def test_consecutive_calls_are_counted_apart
+    src = <<~RUBY
+      class CommentsController
+        rate_limit to: 10, within: 1.minute, only: :create,
+          by: -> { request.remote_ip }
+        rate_limit to: 40, within: 3.minutes, only: :create
+        before_action :require_user
+      end
+    RUBY
+
+    calls = rate_limit_calls(src)
+    assert_equal 2, calls.size
+    assert_includes calls.first, "by:"
+    refute_includes calls.last, "before_action"
   end
 
   def unnamed_pairs
