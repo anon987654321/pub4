@@ -2656,6 +2656,13 @@ body[data-surface="luxury"] .commerce-handoff-note {
     grid-template-columns: minmax(12rem, .6fr) minmax(0, 1.4fr);
     gap: clamp(24px, 5vw, 64px);
   }
+
+  // Mirrored for the even looks, whose title moves to the second column. The
+  // rule above outranks .amber-look:nth-child(even), so without this the title
+  // landed in the narrow column and "Coffee" broke as "Coff / ee".
+  body[data-surface="luxury"] .amber-look:nth-child(even) {
+    grid-template-columns: minmax(0, 1.4fr) minmax(12rem, .6fr);
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
