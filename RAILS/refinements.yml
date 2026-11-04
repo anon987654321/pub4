@@ -37,7 +37,7 @@ items:
   path: RAILS/amber/app/views/shared/_feed_compose.html.erb
   item: Give the tiptap toolbar buttons aria-label and aria-pressed instead of only
     title, across feed compose, posts/new and creator profile form.
-  status: open
+  status: done
 - id: amber-005
   app: amber
   area: accessibility
@@ -567,7 +567,7 @@ items:
   path: RAILS/amber/test/controllers/home_controller_test.rb
   item: Add a test that the dashboard renders with a planned outfit this week (guards
     the :day date format).
-  status: open
+  status: done
 - id: amber-070
   app: amber
   area: tests
@@ -4626,7 +4626,7 @@ items:
   path: RAILS/bsdports/app/views/categories/index.html.erb
   item: Remove the shared/pager under categories and maintainers live search, or the
     infinite sentinel, so each list has one pagination mechanism.
-  status: open
+  status: done
 - id: bsdports-052
   app: bsdports
   area: ui
