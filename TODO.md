@@ -1164,12 +1164,7 @@ that need the semantic census above before any move. Asterisked rows first.
 
 ### Repository root
 
-- [ ] * Move generated `snapshot_*.md` out of the root into an ignored build directory or a release artifact.
-- [ ] * One agent entry file (`AGENTS.md`); `CLAUDE.md`, `GEMINI.md` and `GLM.md` become one-line pointers or symlinks.
 - [ ] Fold `TREE_CONTRACTS.md` into each tree's own README.
-- [ ] Remove the root `redeploy` and `tmp` entries or ignore them.
-- [ ] Keep `VERSION` only if something reads it.
-- [ ] Split this file into `backlog.yml` per tree plus a short human index.
 
 ### MASTER
 
@@ -1195,8 +1190,6 @@ that need the semantic census above before any move. Asterisked rows first.
 
 ### RAILS
 
-- [ ] * Move the five top-level `brgen_*` engines under `RAILS/brgen/engines/`.
-- [ ] * Merge `master` and `master_web` into one app.
 - [ ] Replace the `_*.sh` root scripts with one Ruby `bin/rails-ops` tool.
 - [ ] Delete `__other` after checking every reference.
 - [ ] Merge `apps.yml` and `apps.horizon.yml`.
@@ -1219,7 +1212,6 @@ that need the semantic census above before any move. Asterisked rows first.
 
 ### OPENBSD
 
-- [ ] * Move the loose root scripts (`OPERATOR.sh`, `_net.sh`, `backup_priv.sh`, `emergency_cpu.sh`, `sync.rb`, `ptr_openbsd_amsterdam.rb`, `relayd_prune_keypairs.rb`) into `bin/`, rewritten in Ruby where they are zsh.
 - [ ] * Mirror the box: `etc/`, `usr/`, `var/`, `home/` hold only what is installed; everything else moves to `bin/` or `lib/`.
 - [ ] Merge `deploy_inventory.json` and `vm_resource.yml` into `data/`.
 - [ ] Merge `RUNBOOK.md`, `README.md` and `CLAUDE.md` into one README.
@@ -1231,18 +1223,15 @@ that need the semantic census above before any move. Asterisked rows first.
 
 - [ ] Move `photograph.rb`, `subprocess.rb` and `output_paths.rb` into `lib/`.
 - [ ] Merge `agent-guidance` and `docs` into the README.
-- [ ] Decide whether `replicate` belongs in STUDIO or MASTER.
 - [ ] One CLI entry for dilla and postpro.
 
 ### Cross-tree
 
-- [ ] * One test command for the whole repo that runs each tree's suite with the right Ruby.
 - [ ] One Ruby version across trees and vm23 (3.4 vs 4.0 still diverge).
 - [ ] One lint configuration at the root.
 - [ ] One place for generated artefacts, ignored by git.
 - [ ] Delete exact-duplicate files beyond the necessary `.keep` placeholders.
 - [ ] Measure and ratchet tracked file counts per tree downwards.
-- [ ] Each tree keeps one README with a three-line purpose at the top.
 - [ ] Move every generator's output path into one manifest.
 - [ ] Remove the snapshot pre-push step once snapshots are release artefacts.
 
