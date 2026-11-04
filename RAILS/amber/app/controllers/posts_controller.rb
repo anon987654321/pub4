@@ -50,7 +50,7 @@ class PostsController < ApplicationController
   def destroy
     @post.record_activity!("AmberPostRemoved", source_vertical: "amber")
     @post.destroy!
-    redirect_to posts_path
+    redirect_to posts_path, notice: t("flash.post_deleted")
   end
 
   def like

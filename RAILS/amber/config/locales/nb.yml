@@ -1026,6 +1026,7 @@ nb:
     joy_analysis_ai: "Gledesanalysen er gjort med AI."
     comment_not_yours: Du kan bare slette dine egne kommentarer.
     posted: Publisert.
+    post_deleted: "Innlegget er slettet."
     posted_anonymously: Publisert anonymt.
     wear_once_note: "Bruk det én gang før du bestemmer deg."
     item_moved: "%{title} er flyttet til %{state}."

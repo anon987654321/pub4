@@ -226,7 +226,8 @@ items:
   item: 'Fix the analytics chips that call t(''wardrobe.chip_total'', count: '''')
     with an empty count, which picks the wrong plural form; render the number through
     the translation.'
-  status: open
+  status: invalid
+  note: "wardrobe.chip_total/chip_active/chip_never_worn have no one/other forms, so count: '' cannot pick a wrong plural; the empty count only leaves a stray space before the label beside the animated number."
 - id: amber-028
   app: amber
   area: i18n
@@ -605,7 +606,7 @@ items:
   path: RAILS/amber/app/controllers/posts_controller.rb
   item: Add a flash notice (with undo where possible) after deleting a post; destroy
     redirects silently.
-  status: open
+  status: done
 - id: amber-075
   app: amber
   area: ux
