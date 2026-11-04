@@ -11,6 +11,7 @@ require_relative "live/first_screen"
 require_relative "source/dialect_purity"
 require_relative "source/payment_honesty"
 require_relative "source/affiliate_honesty"
+require_relative "source/persuasion_honesty"
 require_relative "source/content_honesty"
 
 require_relative "source/content_for_yield"
@@ -39,6 +40,7 @@ module Deploy
       FirstScreenCheck,
       PaymentHonestyCheck,
       AffiliateHonestyCheck,
+      PersuasionHonestyCheck,
       ContentHonestyCheck,
       ContentForYieldCheck,
       UserFlowCheck,
