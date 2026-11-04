@@ -1,6 +1,9 @@
 <%# scope: :comment names the field comment[content]; CommentsController
     reads params[:comment] and answers 422 to a bare content field. %>
-<%= form_with url: port_comments_path(port), scope: :comment, id: "port_comment_form", data: { turbo: true } do |f| %>
+<% comment = local_assigns[:comment] || Comment.new %>
+<%= form_with model: comment, url: port_comments_path(port), scope: :comment, id: "port_comment_form",
+              data: { turbo: true } do |f| %>
+  <%= render "shared/errors", object: comment %>
   <div class="field" data-controller="character-counter" data-character-counter-countdown-value="true">
     <%= f.label :content, t("ports.write_comment"), class: "visually-hidden" %>
     <%= f.text_area :content, rows: 3, maxlength: 5000, placeholder: t("comments.placeholder"),

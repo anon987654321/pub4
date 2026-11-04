@@ -4648,7 +4648,7 @@ items:
   path: RAILS/bsdports/app/controllers/comments_controller.rb
   item: Render shared/errors in the comment form on failed create via turbo_stream
     instead of a full-page comments/new render.
-  status: open
+  status: done
 - id: bsdports-055
   app: bsdports
   area: ux

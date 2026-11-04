@@ -27,7 +27,7 @@ class CommentsController < ApplicationController
         format.html { redirect_to @port }
       end
     else
-      render :new, status: :unprocessable_entity
+      render_invalid_comment
     end
   end
 
@@ -53,6 +53,19 @@ class CommentsController < ApplicationController
   end
 
   private
+
+  # The form on the port page shows its own errors; only a no-JS post needs
+  # the separate comments/new page.
+  def render_invalid_comment
+    respond_to do |format|
+      format.turbo_stream do
+        locals = { port: @port, comment: @comment }
+        form = turbo_stream.replace("port_comment_form", partial: "comments/form", locals:)
+        render turbo_stream: form, status: :unprocessable_entity
+      end
+      format.html { render :new, status: :unprocessable_entity }
+    end
+  end
 
   def set_port = @port = Port.from_param(params[:port_id])
   def comment_params = params.require(:comment).permit(:content)
