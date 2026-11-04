@@ -152,6 +152,8 @@ module Master
           active = active_personas(personas, required_veto_roles:)
           configuration_error = veto_role_configuration_error
           return configuration_error if configuration_error
+          capacity_error = veto_role_capacity_error
+          return capacity_error if capacity_error
           if active.empty? || !Deliberation.reachable_for?(@agent)
             return unconvened("council: no personas, or no provider reached", :validation, Gap.new(horizon: :never, cost_to_check: :minutes))
           end
@@ -271,6 +273,23 @@ module Master
           @bus&.publish(:council_veto_configuration_missing, required: @required_veto_role_names, invalid: errors)
           Result.err(
             "council: required veto reviewer is not configured as a veto role: #{errors.join(", ")}",
+            category: :inconclusive,
+          )
+        end
+
+        def veto_role_capacity_error
+          omitted = Array(@omitted_veto_role_names)
+          return if omitted.empty?
+
+          available = @required_veto_role_names - omitted
+          @bus&.publish(
+            :council_veto_capacity_missing,
+            required: @required_veto_role_names,
+            available:,
+            omitted:,
+          )
+          Result.err(
+            "council: required veto reviewer(s) omitted by panel capacity: #{omitted.join(", ")}",
             category: :inconclusive,
           )
         end
