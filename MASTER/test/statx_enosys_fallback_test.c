@@ -134,9 +134,38 @@ same_basic_stat(const struct statx *actual, const struct stat *expected)
         actual->stx_ctime.tv_nsec == expected->st_ctim.tv_nsec;
 }
 
+static int
+launch_with_statx_denied(char **command, int denied_errno)
+{
+    if (install_statx_filter(denied_errno) < 0) {
+        if (errno == EPERM || errno == EACCES || errno == ENOSYS) {
+            fprintf(stderr, "SKIP: seccomp filter unavailable: %s\\n", strerror(errno));
+            return 77;
+        }
+        perror("install seccomp filter");
+        return 1;
+    }
+
+    errno = 0;
+    if (syscall(__NR_statx, AT_FDCWD, ".", 0, STATX_BASIC_STATS, &(struct statx){0}) != -1 ||
+        errno != denied_errno) {
+        fprintf(stderr, "FAIL: filter did not deny statx with %s\\n", strerror(denied_errno));
+        return 1;
+    }
+
+    execv(command[0], command);
+    perror("exec Ruby under statx filter");
+    return 1;
+}
+
 int
 main(int argc, char **argv)
 {
+    if (argc >= 4 && strcmp(argv[1], "--exec") == 0) {
+        int denied_errno = strcmp(argv[2], "EPERM") == 0 ? EPERM : ENOSYS;
+        return launch_with_statx_denied(&argv[3], denied_errno);
+    }
+
     int denied_errno = argc > 1 && strcmp(argv[1], "EPERM") == 0 ? EPERM : ENOSYS;
     char path[] = "/tmp/statx-fallback-XXXXXX";
     char link_path[sizeof(path) + 8];
