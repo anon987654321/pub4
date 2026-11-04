@@ -3,6 +3,7 @@
 class Playlist::PlaylistsController < Playlist::BaseController
   include Shared::FindableBySlug
   include Playlist::OwnerVisibility
+  include Playlist::WaveformComments
   allow_unauthenticated_access only: %i[index show embed]
   before_action :require_user_session, only: %i[new create analytics]
   before_action :set_playlist, only: %i[show embed analytics edit update destroy]
@@ -21,11 +22,7 @@ class Playlist::PlaylistsController < Playlist::BaseController
 
     @tracks = playlist_tracks
     @dilla_sketches = @playlist.dilla_sketches.recent.includes(:user)
-    # Group per-track timestamp comments for the waveform
-    @track_comments = @tracks.each_with_object({}) do |pt, h|
-      tr = pt.track
-      h[tr.id] = tr.timestamped_comments.chronological.map { |c| { time: (c.timestamp_seconds || 0).to_f, text: c.body } }
-    end
+    @track_comments = waveform_comments_for(@tracks.map(&:track))
     active = @tracks.first&.track
     @comments = active ? (@track_comments[active.id] || []) : []
   end
@@ -48,7 +45,7 @@ class Playlist::PlaylistsController < Playlist::BaseController
   def embed
     @tracks = playlist_tracks
     @embed_options = {
-      color: params[:color] || "#00d4ff",
+      color: embed_color,
       show_artwork: params[:show_artwork] != "0",
       compact: params[:compact] == "1",
       hide_branding: params[:hide_branding] == "1"
@@ -111,7 +108,15 @@ class Playlist::PlaylistsController < Playlist::BaseController
   end
 
   def playlist_tracks
-    @playlist.playlist_tracks.joins(:track).merge(Playlist::Track.unexpired).includes(:track)
+    @playlist.playlist_tracks.joins(:track).merge(Playlist::Track.unexpired)
+             .includes(track: [ { audio_file_attachment: :blob }, { artwork_attachment: :blob } ])
+  end
+
+  # The canvas fillStyle wants a CSS colour; the embed links pass bare hex
+  # (color=ff0000), and anything else falls back to the default.
+  def embed_color
+    hex = params[:color].to_s.delete_prefix("#")
+    hex.match?(/\A(?:\h{3}|\h{6})\z/) ? "##{hex}" : "#00d4ff"
   end
 
   def authorize_owner_or_editor

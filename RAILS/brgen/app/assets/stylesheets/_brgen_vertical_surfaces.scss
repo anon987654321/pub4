@@ -1293,12 +1293,19 @@ body.vertical-playlist .playlist-details {
   font-size: var(--text-small);
 }
 
+/* A button, so seeking to a comment is a control; it keeps the row's look. */
 .playlist-comment {
   display: flex;
   gap: 12px;
+  inline-size: 100%;
   padding: 8px 0;
-  cursor: pointer;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
   font-size: var(--text-small);
+  text-align: start;
+  cursor: pointer;
 }
 
 .playlist-comment .time {

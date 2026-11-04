@@ -27,6 +27,13 @@
   data-playlist-player-hide-branding-value="<%= !!local_assigns[:hide_branding] %>"
   data-playlist-player-untitled-label-value="<%= t("playlist.untitled") %>"
   data-playlist-player-unknown-artist-label-value="<%= t("playlist.unknown_artist") %>"
+  data-playlist-player-play-label-value="<%= t("playlist.play") %>"
+  data-playlist-player-pause-label-value="<%= t("playlist.pause") %>"
+  data-playlist-player-open-label-value="<%= t("playlist.open_embed") %>"
+  data-playlist-player-comment-at-label-value="<%= t("playlist.comment_at") %>"
+  data-playlist-player-comment-prompt-label-value="<%= t("playlist.comment_at_time") %>"
+  data-playlist-player-position-label-value="<%= t("playlist.scrub_position") %>"
+  data-playlist-player-fallback-title-label-value="<%= t("playlist.media_fallback_title") %>"
 >
   <% unless local_assigns[:embedded] %>
 <header class="playlist-top">
@@ -59,7 +66,7 @@
       aria-label="<%= t("playlist.waveform") %>"
     ></canvas>
 
-    <div class="playlist-now-playing <%= local_assigns[:compact] ? 'is-compact' : '' %>">
+    <div class="playlist-now-playing <%= local_assigns[:compact] ? 'is-compact' : '' %>" aria-live="polite">
       <h2 class="playlist-now-playing-title" data-playlist-player-target="title" itemprop="track"><%= active&.title || t("playlist.select_track") %></h2>
       <p class="playlist-now-playing-artist" data-playlist-player-target="artist"><%= active&.artist.presence || t("playlist.unknown_artist") %></p>
       <p class="playlist-now-playing-meta">
@@ -94,7 +101,7 @@
       tabindex="0"
       aria-label="<%= t("playlist.seek") %>"
       aria-valuemin="0"
-      aria-valuemax="100"
+      aria-valuemax="0"
       aria-valuenow="0"
     >
       <div class="playlist-scrub-fill" data-playlist-player-target="scrubFill"></div>

@@ -10,7 +10,7 @@
       comments: @comments.map { |c| { time: (c.timestamp_seconds || 0).to_f, text: c.body } },
       track_comments: { @track.id => @comments.map { |c| { time: (c.timestamp_seconds || 0).to_f, text: c.body } } } %>
 
-<% if authenticated? %>
+<% if authenticated? && @track.user_id == Current.user.id %>
   <section class="playlist-admin" aria-label="<%= t("aria.track_management") %>">
     <div class="cluster">
       <%= link_to t("actions.edit"), edit_hosted_track_path(@track), class: "button button-ghost button-small" %>

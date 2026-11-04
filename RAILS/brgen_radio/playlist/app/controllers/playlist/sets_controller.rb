@@ -7,6 +7,7 @@
 class Playlist::SetsController < ApplicationController
   include Shared::LiveSearchable
   include Playlist::OwnerVisibility
+  include Playlist::WaveformComments
 
   before_action :require_user_session, only: %i[new create]
   before_action :set_set, only: %i[show edit update destroy]
@@ -42,9 +43,7 @@ class Playlist::SetsController < ApplicationController
     @tracks = @set_tracks.map(&:track)
     @dilla_sketches = @set.dilla_sketches.recent.includes(:user)
     # Prepare full waveform player + per-track timestamp comments on collection
-    @track_comments = @tracks.each_with_object({}) do |tr, h|
-      h[tr.id] = tr.timestamped_comments.chronological.map { |c| { time: (c.timestamp_seconds || 0).to_f, text: c.body } }
-    end
+    @track_comments = waveform_comments_for(@tracks)
     @comments = @tracks.first ? (@track_comments[@tracks.first.id] || []) : []
   end
 

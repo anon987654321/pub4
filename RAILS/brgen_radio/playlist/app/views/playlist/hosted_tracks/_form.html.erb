@@ -18,7 +18,9 @@
 
   <div class="field">
     <%= form.label :source_type %>
-    <%= form.select :source_type, Playlist::Track::SOURCE_TYPES.map { |t| [t.humanize, t] }, include_blank: true %>
+    <%= form.select :source_type,
+          Playlist::Track::SOURCE_TYPES.map { |type| [t("playlist.source_types.#{type}"), type] },
+          include_blank: true %>
   </div>
 
   <div class="field">
@@ -28,7 +30,7 @@
 
   <div class="field">
     <%= form.label :privacy %>
-    <%= form.select :privacy, Playlist::Track::PRIVACY_LEVELS.map { |p| [p.humanize, p] } %>
+    <%= form.select :privacy, Playlist::Track::PRIVACY_LEVELS.map { |level| [t("playlist.privacy.#{level}"), level] } %>
   </div>
 
   <div class="field">

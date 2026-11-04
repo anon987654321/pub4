@@ -10,6 +10,22 @@
 # Keys the host already carries are NOT copied here. Use them.
 en:
   playlist:
+    pause: "Pause"
+    open_embed: "Open"
+    comment_at: "Comment at %{time}"
+    scrub_position: "%{current} of %{total}"
+    media_fallback_title: "Bergen playlist"
+    tracks_not_uploaded:
+      one: "%{count} file was not uploaded: %{files}"
+      other: "%{count} files were not uploaded: %{files}"
+    source_types:
+      upload: "Upload"
+      youtube: "YouTube"
+      spotify: "Spotify"
+      soundcloud: "SoundCloud"
+      whyp: "Whyp"
+      direct: "Direct link"
+      dilla: "Dilla"
     home_eyebrow: "Bergen audio"
     home_heading: "Hear what the city is making"
     home_blurb: "Discover local tracks, sets and sounds. Upload a track and give people one link to hear it."

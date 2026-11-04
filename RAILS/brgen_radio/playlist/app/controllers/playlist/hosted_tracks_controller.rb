@@ -25,13 +25,9 @@ class Playlist::HostedTracksController < Playlist::BaseController
   def create
     files = Array(params.dig(:track, :audio_file)).compact
     if files.size > 1
-      created = files.map do |file|
-        t = Playlist::Track.new(track_params.except(:audio_file))
-        t.user = Current.user if t.respond_to?(:user=)
-        t.audio_file.attach(file)
-        t.save ? t : nil
-      end.compact
-      redirect_to hosted_tracks_path, notice: t("playlist.tracks_uploaded", count: created.size)
+      saved, failed = files.map { |file| [ file, build_upload(file) ] }.partition { |_file, track| track.save }
+      flash[:alert] = upload_failures(failed) if failed.any?
+      redirect_to hosted_tracks_path, notice: t("playlist.tracks_uploaded", count: saved.size)
     else
       @track = Playlist::Track.new(track_params.except(:audio_file))
       @track.user = Current.user if @track.respond_to?(:user=)
@@ -50,10 +46,16 @@ class Playlist::HostedTracksController < Playlist::BaseController
   end
 
   def update
-    if params.dig(:track, :audio_file).present?
-      @track.replace_audio!(params[:track][:audio_file], actor: Current.user)
+    @track.assign_attributes(track_params.except(:audio_file))
+    return render :edit, status: :unprocessable_entity unless @track.valid?
+
+    # Validated first and written together: a rejected title used to have
+    # already swapped the audio and left an audio_version row behind.
+    replacement = params.dig(:track, :audio_file).presence
+    Playlist::Track.transaction do
+      @track.replace_audio!(replacement, actor: Current.user) if replacement
+      @track.save!
     end
-    return render :edit, status: :unprocessable_entity unless @track.update(track_params.except(:audio_file))
 
     redirect_to hosted_track_path(@track), notice: t("playlist.track_updated")
   end
@@ -78,6 +80,23 @@ class Playlist::HostedTracksController < Playlist::BaseController
     # Anything not named public is private, so a stray value hides the track.
     else Current.user && @track.user_id == Current.user.id
     end
+  end
+
+  def build_upload(file)
+    track = Playlist::Track.new(track_params.except(:audio_file))
+    track.user = Current.user
+    track.audio_file.attach(file)
+    track
+  end
+
+  # Names each file that did not save and why, so a bulk upload never drops
+  # one in silence.
+  def upload_failures(failed)
+    reasons = failed.map do |file, track|
+      name = file.try(:original_filename) || file.to_s
+      "#{name}: #{track.errors.full_messages.to_sentence}"
+    end
+    t("playlist.tracks_not_uploaded", count: failed.size, files: reasons.join("; "))
   end
 
   def track_params

@@ -2854,7 +2854,7 @@ items:
   item: 'Report failed files in the bulk hosted-track upload: create drops a failed
     save without saying so, so the notice should name the files that did not save
     and why, not just the success count.'
-  status: open
+  status: done
 - id: brgen-237
   app: brgen
   area: playlist
@@ -2863,7 +2863,7 @@ items:
   item: Run replace_audio! and the metadata update in one transaction in HostedTracksController#update,
     after validation passes, so a failed title validation stops replacing the audio
     file and leaving behind an orphan audio_version row.
-  status: open
+  status: done
 - id: brgen-238
   app: brgen
   area: playlist
@@ -2874,7 +2874,7 @@ items:
     de-dupes, but ListensController creates a row and bumps plays_count on every POST;
     also refuse tracks that are not visible_to?(Current.user), so private tracks cannot
     be play-counted by id.
-  status: open
+  status: done
 - id: brgen-239
   app: brgen
   area: playlist
@@ -2884,7 +2884,7 @@ items:
     in PlaylistsController#playlist_tracks, the way SetsController#show already does;
     _player calls attached? and url_for per queue row and show runs one comments query
     per track.
-  status: open
+  status: done
 - id: brgen-240
   app: brgen
   area: playlist
@@ -2893,7 +2893,7 @@ items:
   item: Accept the embed color parameter only as a 3- or 6-digit hex and prefix '#',
     because the 'embed_red' example link passes color=ff0000, which canvas fillStyle
     rejects without a '#', so the waveform falls back to black.
-  status: open
+  status: done
 - id: brgen-241
   app: brgen
   area: playlist
@@ -2911,7 +2911,7 @@ items:
   item: Replace the per-track tr.timestamped_comments query in SetsController#show
     with one grouped Playlist::TimestampedComment.where(track_id:) load, which removes
     the N+1 on every set page.
-  status: open
+  status: done
 - id: brgen-243
   app: brgen
   area: playlist
@@ -2921,7 +2921,7 @@ items:
     like ''1:23 av 4:05'' on the scrub slider inside #tick; the comment claims #tick
     keeps aria-valuenow honest but it never writes it, so screen readers always hear
     0 of 100.'
-  status: open
+  status: done
 - id: brgen-244
   app: brgen
   area: playlist
@@ -2930,7 +2930,7 @@ items:
   item: 'Register nexttrack and previoustrack Media Session handlers mapped to next()/previous(),
     so lock-screen and headphone skip buttons work; #setupMediaSession only wires
     play/pause/seek even though the controller now has a queue with previous/next.'
-  status: open
+  status: done
 - id: brgen-245
   app: brgen
   area: playlist
@@ -2940,7 +2940,7 @@ items:
     'Comment at this time...' and the 'brgen playlist' Media Session fallback into
     Stimulus values fed from t() keys, so the Norwegian page stops switching to English
     after the first click.
-  status: open
+  status: done
 - id: brgen-246
   app: brgen
   area: playlist
@@ -2959,7 +2959,7 @@ items:
   item: 'Record a listen on each track load rather than once per controller connect:
     the play listener uses { once: true } and reads trackIdValue, so tracks two to
     N reached via the queue, next() or auto-advance are never counted.'
-  status: open
+  status: done
 - id: brgen-248
   app: brgen
   area: playlist
@@ -2988,7 +2988,7 @@ items:
   item: Translate source_type and privacy option labels through t('playlist.source_types.*')
     and the existing playlist.privacy.* keys instead of String#humanize, which shows
     English 'Youtube', 'Direct', 'Private' on the nb form.
-  status: open
+  status: done
 - id: brgen-251
   app: brgen
   area: playlist
@@ -2997,7 +2997,7 @@ items:
   item: Show the Edit and Delete buttons on hosted_tracks/show only to the track owner
     (@track.user_id == Current.user.id); every signed-in visitor sees them now and
     gets a not-authorized redirect when they click.
-  status: open
+  status: done
 - id: brgen-252
   app: brgen
   area: playlist
@@ -3015,7 +3015,7 @@ items:
   item: Compare @party.host_id with Current.user&.id in listening_parties/show instead
     of @party.host == Current.user; host is not preloaded, so under strict_loading_by_default
     the read raises outside development.
-  status: open
+  status: done
 - id: brgen-254
   app: brgen
   area: playlist
@@ -3024,7 +3024,7 @@ items:
   item: 'Render timestamped comments in #refreshCommentsList and _comments.html.erb
     as button elements, not clickable divs, so seeking to a comment is reachable by
     keyboard and announced as a control.'
-  status: open
+  status: done
 - id: brgen-255
   app: brgen
   area: playlist
@@ -3032,7 +3032,7 @@ items:
   path: RAILS/brgen_radio/playlist/app/views/playlist/playlists/_player.html.erb
   item: Mark the now-playing title and artist region with aria-live='polite' so a
     track change from the queue, the transport bar or auto-advance is announced.
-  status: open
+  status: done
 - id: brgen-256
   app: brgen
   area: playlist

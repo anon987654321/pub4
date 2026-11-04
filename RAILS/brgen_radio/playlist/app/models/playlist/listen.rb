@@ -12,6 +12,17 @@ class Playlist::Listen < ApplicationRecord
 
   after_create :increment_plays
 
+  REPLAY_WINDOW = 30.minutes
+
+  # One play per listener per track per window: a replay or a reload inside it
+  # is not counted again. True when a play was recorded.
+  def self.record(user:, track:)
+    return false if where(user:, track:, created_at: REPLAY_WINDOW.ago..).exists?
+
+    create!(user:, track:)
+    true
+  end
+
   private
   def increment_plays
     # One UPDATE across every playlist holding the track. update_counters reads

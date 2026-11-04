@@ -21,7 +21,15 @@ export default class extends Controller {
     compact: { type: Boolean, default: false },
     hideBranding: { type: Boolean, default: false },
     untitledLabel: String,
-    unknownArtistLabel: String
+    unknownArtistLabel: String,
+    // Every word the player writes after the first click, in the page's locale.
+    playLabel: { type: String, default: "Play" },
+    pauseLabel: { type: String, default: "Pause" },
+    openLabel: { type: String, default: "Open" },
+    commentAtLabel: { type: String, default: "Comment at %{time}" },
+    commentPromptLabel: { type: String, default: "Comment at this time…" },
+    positionLabel: { type: String, default: "%{current} of %{total}" },
+    fallbackTitleLabel: { type: String, default: "brgen playlist" }
   }
 
   #resizeWaveform
@@ -36,7 +44,7 @@ export default class extends Controller {
       this.audioTarget.addEventListener("timeupdate", () => this.#tick())
       this.audioTarget.addEventListener("loadedmetadata", () => this.#tick())
       this.audioTarget.addEventListener("ended", () => this.#onEnded())
-      this.audioTarget.addEventListener("play", () => this.#recordListenOnce(), { once: true })
+      this.audioTarget.addEventListener("play", () => this.#recordListen())
     }
     this.#setupMediaSession()
 
@@ -192,7 +200,8 @@ export default class extends Controller {
     this.pendingCommentTime = this.audioTarget.currentTime ?? 0
     this.commentFormTarget.hidden = false
     this.commentInputTarget.focus()
-    this.commentInputTarget.placeholder = `Comment at ${this.#formatTime(this.pendingCommentTime)}`
+    const at = this.#formatTime(this.pendingCommentTime)
+    this.commentInputTarget.placeholder = this.commentAtLabelValue.replace("%{time}", at)
   }
 
   submitComment() {
@@ -217,7 +226,7 @@ export default class extends Controller {
     if (this.hasCommentFormTarget) {
       this.commentFormTarget.hidden = true
       this.commentInputTarget.value = ''
-      this.commentInputTarget.placeholder = 'Comment at this time...'
+      this.commentInputTarget.placeholder = this.commentPromptLabelValue
     }
     this.pendingCommentTime = null
   }
@@ -285,7 +294,7 @@ export default class extends Controller {
 
   // Media Session: lock-screen / headphone / car controls + now-playing metadata.
   // Table stakes for audio on a phone — the player was fully custom but never
-  // registered with the OS. Auto-advance means no explicit next/prev handlers.
+  // registered with the OS. Skip buttons walk the same queue as the transport bar.
   #setupMediaSession() {
     if (!("mediaSession" in navigator) || !this.hasAudioTarget) return
     const audio = this.audioTarget
@@ -295,6 +304,8 @@ export default class extends Controller {
       seekbackward: (d) => { audio.currentTime = Math.max(0, audio.currentTime - (d.seekOffset || 10)) },
       seekforward: (d) => { audio.currentTime = Math.min(audio.duration || 0, audio.currentTime + (d.seekOffset || 10)) },
       seekto: (d) => { if (d.seekTime != null) audio.currentTime = d.seekTime },
+      nexttrack: () => this.next(),
+      previoustrack: () => this.previous(),
     }
     for (const [action, fn] of Object.entries(handlers)) {
       try { navigator.mediaSession.setActionHandler(action, fn) } catch (e) { /* unsupported */ }
@@ -307,7 +318,7 @@ export default class extends Controller {
   #updateMediaMetadata() {
     if (!("mediaSession" in navigator) || !window.MediaMetadata) return
     navigator.mediaSession.metadata = new window.MediaMetadata({
-      title: this.titleValue || "brgen playlist",
+      title: this.titleValue || this.fallbackTitleLabelValue,
       artist: this.artistValue || "brgen",
       album: "brgen",
       artwork: this.artworkValue ? [{ src: this.artworkValue, sizes: "512x512", type: "image/jpeg" }] : [],
@@ -323,8 +334,18 @@ export default class extends Controller {
     if (this.hasCurrentTimeTarget) this.currentTimeTarget.textContent = this.#formatTime(current)
     if (this.hasDurationTarget) this.durationTarget.textContent = this.#formatTime(duration)
     if (this.hasScrubFillTarget) this.scrubFillTarget.style.width = `${ratio * 100}%`
+    if (this.hasScrubTarget) this.#syncScrubValue(current, duration)
     this.#drawWaveform(ratio)
     this.#syncPlayButton()
+  }
+
+  // The slider speaks seconds, so a screen reader hears where the needle is.
+  #syncScrubValue(current, duration) {
+    const total = Number.isFinite(duration) ? duration : 0
+    this.scrubTarget.setAttribute("aria-valuemax", String(Math.round(total)))
+    this.scrubTarget.setAttribute("aria-valuenow", String(Math.round(current)))
+    const text = this.positionLabelValue.replace("%{current}", this.#formatTime(current))
+    this.scrubTarget.setAttribute("aria-valuetext", text.replace("%{total}", this.#formatTime(total)))
   }
 
   #onEnded() {
@@ -347,12 +368,12 @@ export default class extends Controller {
     if (!this.hasPlayBtnTarget) return
     if (this.hasEmbedTarget && !this.embedTarget.hidden) {
       this.playBtnTarget.setAttribute("aria-pressed", "false")
-      this.playBtnTarget.textContent = "Open"
+      this.playBtnTarget.textContent = this.openLabelValue
       return
     }
     const paused = !this.hasAudioTarget || this.audioTarget.paused
     this.playBtnTarget.setAttribute("aria-pressed", paused ? "false" : "true")
-    this.playBtnTarget.textContent = paused ? "Play" : "Pause"
+    this.playBtnTarget.textContent = paused ? this.playLabelValue : this.pauseLabelValue
   }
 
   #drawWaveform(progress = 0) {
@@ -424,10 +445,13 @@ export default class extends Controller {
     return `${min}:${String(sec).padStart(2, "0")}`
   }
 
-  #recordListenOnce() {
-    // Count a listen on play (server de-dupes per listener/duration via model)
+  // One listen per track loaded, not per page: the queue, next() and
+  // auto-advance all change trackIdValue, and a replay inside the server's
+  // window is not counted twice.
+  #recordListen() {
     const trackId = this.trackIdValue
-    if (!trackId) return
+    if (!trackId || trackId === this.listenedTrackId) return
+    this.listenedTrackId = trackId
     const token = document.querySelector('meta[name="csrf-token"]')?.content
     fetch("/listens", {
       method: "POST",
@@ -447,12 +471,14 @@ export default class extends Controller {
     Array.from(list.querySelectorAll(".playlist-comment")).forEach(el => el.remove())
     const h3 = list.querySelector("h3")
     ;(this.commentsValue || []).forEach(c => {
-      const div = document.createElement("div")
-      div.className = "playlist-comment"
-      div.dataset.time = c.time ?? 0
-      div.setAttribute("data-action", "click->playlist-player#seekToComment")
-      div.innerHTML = `<span class="time">${this.#formatTime(c.time || 0)}</span> <span class="text">${(c.text || "").replace(/</g,"&lt;")}</span>`
-      list.appendChild(div)
+      const button = document.createElement("button")
+      button.type = "button"
+      button.className = "playlist-comment"
+      button.dataset.time = c.time ?? 0
+      button.setAttribute("data-action", "click->playlist-player#seekToComment")
+      const text = (c.text || "").replace(/</g, "&lt;")
+      button.innerHTML = `<span class="time">${this.#formatTime(c.time || 0)}</span> <span class="text">${text}</span>`
+      list.appendChild(button)
     })
   }
 }
