@@ -229,6 +229,12 @@ affiliate_honesty:
   pass: "Affiliate honesty check passed."
   covered_by: layout_suite
 
+persuasion_honesty:
+  require: lib/source/persuasion_honesty
+  class: Deploy::PersuasionHonestyCheck
+  pass: "Persuasion honesty check passed."
+  covered_by: layout_suite
+
 content_honesty:
   require: lib/source/content_honesty
   class: Deploy::ContentHonestyCheck
