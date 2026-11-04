@@ -114,6 +114,23 @@ class PortsControllerTest < ActionDispatch::IntegrationTest
     assert_equal I18n.t("flash.review_issues", issues: issues), flash[:notice]
   end
 
+  # The result came back only as a flash after a redirect, away from the button.
+  def test_the_review_result_lands_beside_the_button
+    port = seed_port
+    port.platform.update!(tree_path: "/does/not/exist")
+    email = "rev-inline-#{SecureRandom.hex(4)}@bsdports.test"
+    User.strict_loading(false).create!(email_address: email, password: "password")
+    post session_path, params: { email_address: email, password: "password" }
+
+    get port_path(port)
+    assert_select "p#port-review-result[role=status]"
+
+    post review_port_path(port), as: :turbo_stream
+    assert_response :success
+    assert_select "turbo-stream[action=update][target=port-review-result] template",
+                  text: /#{Regexp.escape(I18n.t("flash.review_issue.missing_homepage"))}/
+  end
+
   def test_a_port_page_revalidates_until_a_comment_or_the_viewer_changes
     port = seed_port
     get port_path(port)

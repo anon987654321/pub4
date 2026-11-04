@@ -128,6 +128,7 @@
       sign-in, so a guest gets the sign-in link instead of the button. %>
   <% if authenticated? %>
     <%= button_to t("ports.run_master_review"), review_port_path(@port), method: :post %>
+    <%= tag.p id: "port-review-result", role: "status", class: "data-state" %>
   <% else %>
     <%= tag.p link_to(t("ports.sign_in_to_review"), new_session_path) %>
   <% end %>

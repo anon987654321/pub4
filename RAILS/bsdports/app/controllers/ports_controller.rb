@@ -100,17 +100,7 @@ class PortsController < ApplicationController
 
   def review
     result = Ports::Review.call(port: @port)
-
-    issue_labels = result.issues.map { |issue| t(issue, scope: "flash.review_issue", default: issue.to_s.humanize) }
-    notice = if issue_labels.any?
-      t("flash.review_issues", issues: issue_labels.join(", "))
-    elsif result.source_status == :unavailable
-      t("flash.review_source_unavailable")
-    elsif result.source_status == :missing
-      t("flash.review_source_missing")
-    else
-      t("flash.review_clean")
-    end
+    notice = review_notice(result)
 
     @port.record_activity!(
       "PortReviewed",
@@ -121,10 +111,31 @@ class PortsController < ApplicationController
         source_path: result.source_path
       }
     )
-    redirect_to @port, notice: notice
+    # In place on the page, beside the button; a redirect left the result as
+    # a flash at the top, away from where the review was asked for.
+    respond_to do |format|
+      format.turbo_stream { render turbo_stream: turbo_stream.update("port-review-result", notice) }
+      format.html { redirect_to @port, notice: }
+    end
   end
 
   private
+
+  def issue_labels(issues)
+    labels = issues.map(&:to_s).index_with(&:humanize)
+    labels.map { |key, fallback| t(key, scope: "flash.review_issue", default: fallback) }.join(", ")
+  end
+
+  def review_notice(result)
+    issues = result.issues
+    return t("flash.review_issues", issues: issue_labels(issues)) if issues.any?
+
+    case result.source_status
+    when :unavailable then t("flash.review_source_unavailable")
+    when :missing then t("flash.review_source_missing")
+    else t("flash.review_clean")
+    end
+  end
 
   # Unscoped and in the default language: a shared cache keys on the URL, and
   # the language comes from the session or Accept-Language.

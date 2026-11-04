@@ -4658,7 +4658,7 @@ items:
   path: RAILS/bsdports/app/controllers/ports_controller.rb
   item: Show the MASTER review result inline on the page (a turbo_stream into the
     review section) rather than only as a flash notice after redirect.
-  status: open
+  status: done
 - id: bsdports-056
   app: bsdports
   area: ux
