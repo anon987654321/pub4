@@ -17,7 +17,9 @@ class PostsController < ApplicationController
   def show
     @comments = @post.root_comments
     @comment = Comment.new
-    @post.record_activity!("AmberPostViewed", source_vertical: "amber")
+    # A Turbo prefetch on hover or a crawler is not a reader; bsdports skips
+    # those the same way.
+    @post.record_activity!("AmberPostViewed", source_vertical: "amber") unless passive_request?
   end
 
   def new

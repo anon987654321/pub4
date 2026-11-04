@@ -419,7 +419,7 @@ items:
   path: RAILS/amber/app/controllers/posts_controller.rb
   item: Skip record_activity!('AmberPostViewed') on Turbo prefetch and passive requests,
     as bsdports does with passive_request?.
-  status: open
+  status: done
 - id: amber-052
   app: amber
   area: performance
