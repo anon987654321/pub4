@@ -1780,7 +1780,7 @@ items:
   path: RAILS/brgen/app/controllers/home_controller.rb
   item: Remember the chosen neighborhood per reader (cookie or user column) so the
     filter is not lost on the next visit.
-  status: open
+  status: done
 - id: brgen-109
   app: brgen
   area: feed

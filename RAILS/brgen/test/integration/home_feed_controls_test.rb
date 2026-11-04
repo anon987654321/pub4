@@ -53,7 +53,28 @@ class HomeFeedControlsTest < ActionDispatch::IntegrationTest
     get root_path(neighborhood_id: @neighborhood.id)
 
     assert_includes response.body, I18n.t("empty.no_neighborhood_posts")
-    assert page.at_css(%(a[href="#{root_path}"])), "no way back to the citywide feed"
+    assert page.at_css(%(a[href="#{root_path(neighborhood_id: '')}"])), "no way back to the citywide feed"
     assert_select "a", text: I18n.t("home.citywide", city: @city.name)
+  end
+
+  test "the chosen neighbourhood is remembered on the next visit until the citywide feed is chosen" do
+    elsewhere = Neighborhood.create!(city: @city, name: "Laksevåg #{SecureRandom.hex(2)}",
+                                     slug: "laksevag-#{SecureRandom.hex(3)}")
+    author = User.strict_loading(false).create!(email_address: "hood_#{SecureRandom.hex(3)}@brgen.no",
+                                                password: "password123", username: "hood_#{SecureRandom.hex(3)}",
+                                                guest: false)
+    Post.create!(user: author, title: "Fra Laksevåg", content: "Nabolagsnytt fra Laksevåg", neighborhood: elsewhere)
+
+    get root_path(neighborhood_id: @neighborhood.id)
+    get root_path
+
+    assert_equal @neighborhood.id.to_s, page.at_css("select#home-neighborhood option[selected]")&.[]("value")
+    refute_includes response.body, "Nabolagsnytt fra Laksevåg"
+
+    get root_path(neighborhood_id: "")
+    get root_path
+
+    assert_nil page.at_css("select#home-neighborhood option[selected]")
+    assert_includes response.body, "Nabolagsnytt fra Laksevåg"
   end
 end

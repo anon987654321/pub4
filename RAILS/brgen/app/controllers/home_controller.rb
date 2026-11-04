@@ -12,8 +12,8 @@ class HomeController < ApplicationController
     @local_activity = Brgen::LocalActivity.for(ActsAsTenant.current_tenant)
     @feed = params[:feed]
     scope = Brgen::HomeFeed.scope(feed: @feed, authenticated: authenticated?, sort: params[:sort])
-    @neighborhoods = Neighborhood.where(city_id: ActsAsTenant.current_tenant&.id).order(:name)
-    @neighborhood_id = @neighborhoods.where(id: params[:neighborhood_id]).pick(:id)
+    @neighborhoods = Neighborhood.in_city(ActsAsTenant.current_tenant)
+    @neighborhood_id = @neighborhoods.where(id: chosen_neighborhood_id).pick(:id)
     scope = scope.where(neighborhood_id: @neighborhood_id) if @neighborhood_id
     scope = Brgen::HomeFeed.media_only(scope) if params[:view].to_s == "media"
     # with_attached_image, or the card's `post.image.attached?` costs one
@@ -26,7 +26,16 @@ class HomeController < ApplicationController
     finish_live_search(partial: "home/live_search_results")
   end
 
-  private
+private
+
+# The neighbourhood a reader picked stays picked on their next visit. A choice
+# in the URL is remembered, an empty one forgets it, and a bare visit reads it
+# back. Kept in the session, the one cookie the cookie page already declares.
+def chosen_neighborhood_id
+  return session[:home_neighborhood_id] unless params.key?(:neighborhood_id)
+
+  session[:home_neighborhood_id] = params[:neighborhood_id].presence
+end
 
   # The high-water mark a reconnecting front page catches up from: the feed is
   # ranked, so the newest post need not be among the cards on screen.
