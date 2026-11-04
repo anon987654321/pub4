@@ -99,14 +99,10 @@ class Marketplace::CheckoutsController < Marketplace::BaseController
   # a browser coming back from a redirect proves the customer returned, not that
   # any money moved.
   def show
-    if params[:checkout_id].present?
-      checkout = Current.user.marketplace_checkouts.find_by(id: params[:checkout_id])
-      redirect_to(cart_path,
-                  notice: t("flash.marketplace.payment_recorded",
-                            status: t("flash.marketplace.payment_statuses.#{checkout&.status || 'open'}"),
-                            provider: checkout&.payment_provider || params[:provider]))
-      return
-    end
+    # Stripe's cancel_url: the buyer turned back before paying, and is told so
+    # rather than dropped silently into the cart.
+    return redirect_to(cart_path, notice: t("flash.marketplace.payment_cancelled")) if params[:cancelled].present?
+    return return_from_basket if params[:checkout_id].present?
 
     order = Current.user.marketplace_orders.find_by(id: params[:order_id])
     if order && params[:provider].present? && order.payment_status.in?(%w[pending authorized paid failed refunded])
@@ -120,6 +116,15 @@ class Marketplace::CheckoutsController < Marketplace::BaseController
   end
 
   private
+
+  # A paid basket is no longer in the cart, which then read as if the purchase
+  # had vanished; the buyer goes to their orders, where it now is.
+  def return_from_basket
+    checkout = Current.user.marketplace_checkouts.find_by(id: params[:checkout_id])
+    status = t("flash.marketplace.payment_statuses.#{checkout&.status || 'open'}")
+    notice = t("flash.marketplace.payment_recorded", status:, provider: checkout&.payment_provider || params[:provider])
+    redirect_to(checkout&.status == "paid" ? orders_path : cart_path, notice:)
+  end
 
   # Three lanes reach payment, and which one is running is decided by the
   # parameter that arrived.
@@ -185,7 +190,7 @@ class Marketplace::CheckoutsController < Marketplace::BaseController
     case provider
     when "stripe"
       Marketplace::Payments::StripeCheckout.start!(
-        order: payable, success_url: return_url(payable, "stripe"), cancel_url: cart_url,
+        order: payable, success_url: return_url(payable, "stripe"), cancel_url: checkout_url(cancelled: 1),
       )
     when "vipps"
       Marketplace::Payments::VippsCheckout.start!(

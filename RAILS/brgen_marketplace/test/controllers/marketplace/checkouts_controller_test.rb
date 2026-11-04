@@ -203,4 +203,37 @@ class Marketplace::CheckoutsControllerTest < ActionDispatch::IntegrationTest
       assert_redirected_to marketplace.order_path(first)
     end
   end
+
+  # A basket that came back paid is gone from the cart; the buyer is sent to
+  # their orders. An open one goes back to the cart with its status in words,
+  # not a missing-translation span.
+  test "a returning basket lands on the orders when paid and the cart otherwise" do
+    sign_in(@buyer)
+    address = @buyer.marketplace_addresses.create!(recipient: "Kari", line1: "Bryggen 1", postcode: "5003",
+                                                   city_name: "Bergen", country_code: "NO", default_address: true)
+    basket = @buyer.marketplace_checkouts.create!(marketplace_address: address, currency: "NOK")
+
+    get marketplace.checkout_path(checkout_id: basket.id, provider: "stripe")
+    assert_redirected_to marketplace.cart_path
+    assert_no_match(/translation missing/i, flash[:notice])
+
+    basket.update_columns(status: "paid")
+    get marketplace.checkout_path(checkout_id: basket.id, provider: "stripe")
+    assert_redirected_to marketplace.orders_path
+  end
+
+  test "Stripe's cancel returns to a notice that nothing was charged" do
+    sign_in(@buyer)
+    seen = nil
+    with_stripe_start(lambda { |order:, success_url:, cancel_url:|
+      seen = cancel_url
+      "https://checkout.stripe.com/c/pay/cs_probe"
+    }) do
+      post marketplace.checkout_path, params: { provider: "stripe", order_id: @order.id }
+    end
+
+    get seen
+    assert_redirected_to marketplace.cart_path
+    assert_equal I18n.t("flash.marketplace.payment_cancelled"), flash[:notice]
+  end
 end

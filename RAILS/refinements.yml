@@ -2771,7 +2771,7 @@ items:
     status (open, pending_payment, cancelled), because CheckoutsController#show looks
     up payment_statuses.open for a returning basket and renders a missing-translation
     span.
-  status: open
+  status: done
 - id: brgen-228
   app: brgen
   area: payments
@@ -2788,7 +2788,7 @@ items:
   item: Send a buyer returning from a paid basket to their order history (orders_path)
     with the confirmation notice instead of cart_path, which is empty after checkout
     and reads as if the purchase vanished.
-  status: open
+  status: done
 - id: brgen-230
   app: brgen
   area: payments
@@ -2807,7 +2807,7 @@ items:
   item: Give the Stripe cancel_url a distinct return (checkout_url with cancelled=1)
     and show a 'Payment cancelled, nothing was charged' notice in the cart, instead
     of returning silently to cart_url.
-  status: open
+  status: done
 - id: brgen-232
   app: brgen
   area: payments
@@ -2816,7 +2816,7 @@ items:
   item: 'Translate Checkout#payment_description''s ''%{first} + %{count} more'' through
     I18n (nb: ''og %{count} til''), since this string is shown to the buyer inside
     the Vipps app and on the Stripe page.'
-  status: open
+  status: done
 - id: brgen-233
   app: brgen
   area: payments

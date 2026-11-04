@@ -62,7 +62,8 @@ class Marketplace::Checkout < ApplicationRecord
     titles = order_lines.includes(:listing).map { |order| order.listing.title }
     return titles.first.to_s if titles.one?
 
-    "#{titles.first} + #{titles.size - 1} more"
+    # Shown to the buyer in the Vipps app and on Stripe's page, so in their language.
+    I18n.t("marketplace.payment_description_more", first: titles.first, count: titles.size - 1)
   end
 
   def mark_payment_pending!(provider:, reference:)

@@ -117,7 +117,9 @@ class MarketplaceCheckoutTest < ActiveSupport::TestCase
     assert_equal "Sykkel", checkout.reload.payment_description
 
     order_for(listing(title: "Hjelm")).update!(marketplace_checkout_id: checkout.id)
-    assert_match(/\+ 1 more/, checkout.reload.payment_description)
+    checkout.reload
+    assert_equal "Sykkel og 1 til", I18n.with_locale(:nb) { checkout.payment_description }
+    assert_equal "Sykkel and 1 more", I18n.with_locale(:en) { checkout.payment_description }
   end
 
   test "an order still pays on its own, the classifieds way" do

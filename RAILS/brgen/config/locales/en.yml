@@ -1161,6 +1161,7 @@ en:
     navigation_label: Marketplace navigation
     navigation_categories: Categories
     payment_status: Payment status
+    payment_description_more: "%{first} and %{count} more"
     buy_now_vipps: Buy with Vipps
     order_number: "Order #%{id}"
     order_for: For
@@ -1775,6 +1776,7 @@ en:
       capture_started: Capture sent to Dintero.
       capture_failed: Dintero could not capture this order.
       payment_recorded: Payment %{status} via %{provider}.
+      payment_cancelled: Payment cancelled. Nothing was charged.
       listing_saved: Listing saved.
       listing_unsaved: Listing removed from saved.
       listing_published: Listing published.
@@ -1788,6 +1790,9 @@ en:
       search_saved: Search saved.
       search_deleted: Saved search deleted.
       payment_statuses:
+        open: not completed
+        pending_payment: awaiting payment
+        cancelled: cancelled
         unpaid: unpaid
         pending: pending
         authorized: authorized

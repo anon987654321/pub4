@@ -1167,6 +1167,7 @@ nb:
     navigation_label: Markedsplassnavigasjon
     navigation_categories: Kategorier
     payment_status: Betalingsstatus
+    payment_description_more: "%{first} og %{count} til"
     buy_now_vipps: Kjøp med Vipps
     buy_now_dintero: Kjøp med Dintero
     order_number: "Ordre #%{id}"
@@ -1784,6 +1785,7 @@ nb:
       capture_started: Gjennomføring er sendt til Dintero.
       capture_failed: Dintero kunne ikke gjennomføre denne ordren.
       payment_recorded: Betaling %{status} via %{provider}.
+      payment_cancelled: Betalingen ble avbrutt. Ingenting ble trukket.
       listing_saved: Annonsen er lagret.
       listing_unsaved: Annonsen er fjernet fra lagrede.
       listing_published: Annonsen er lagt ut.
@@ -1797,6 +1799,9 @@ nb:
       search_saved: Søket er lagret.
       search_deleted: Det lagrede søket er slettet.
       payment_statuses:
+        open: ikke fullført
+        pending_payment: venter på betaling
+        cancelled: avbrutt
         unpaid: ubetalt
         pending: under behandling
         authorized: reservert
