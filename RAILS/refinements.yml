@@ -5490,7 +5490,7 @@ items:
   path: RAILS/mrdamascy/app/views/menu/show.html.erb
   item: Mark the category chip of the section in view with aria-current (scroll spy)
     so the sticky chip row shows where the reader is.
-  status: open
+  status: done
 - id: mrdamascy-053
   app: mrdamascy
   area: menu

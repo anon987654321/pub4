@@ -38,9 +38,10 @@
   </section>
 <% end %>
 
-<nav class="category-chips" aria-label="<%= t("menu.categories") %>">
+<%# category_spy marks the chip of the section in view (aria-current). %>
+<nav class="category-chips" aria-label="<%= t("menu.categories") %>" data-controller="category-spy">
   <% @categories.each do |category| %>
-    <%= link_to "#cat-#{category.slug}", class: "chip" do %>
+    <%= link_to "#cat-#{category.slug}", class: "chip", data: { category_spy_target: "chip" } do %>
       <%= tag.span category.emoji, aria: { hidden: true } %> <%= category.localized(:name) %>
     <% end %>
   <% end %>

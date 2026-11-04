@@ -15,6 +15,7 @@ import TrackController from "controllers/track_controller"
 import ToastController from "controllers/toast_controller"
 import RetryController from "controllers/retry_controller"
 import BoardController from "controllers/board_controller"
+import CategorySpyController from "controllers/category_spy_controller"
 
 application.register("item-sheet", ItemSheetController)
 application.register("cart-bar", CartBarController)
@@ -24,3 +25,4 @@ application.register("track", TrackController)
 application.register("toast", ToastController)
 application.register("retry", RetryController)
 application.register("board", BoardController)
+application.register("category-spy", CategorySpyController)

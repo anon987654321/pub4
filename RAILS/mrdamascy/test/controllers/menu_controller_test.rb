@@ -100,4 +100,12 @@ class MenuControllerTest < ActionDispatch::IntegrationTest
     card = Nokogiri::HTML(response.body).at_css(".item-card picture img.item-photo")
     assert_equal %w[56 lazy], [card["width"], card["loading"]]
   end
+
+  test "the category chips are watched for the section in view" do
+    get root_url
+    nav = Nokogiri::HTML(response.body).at_css("nav.category-chips")
+
+    assert_equal "category-spy", nav["data-controller"]
+    assert_equal "chip", nav.at_css("a.chip")["data-category-spy-target"]
+  end
 end
