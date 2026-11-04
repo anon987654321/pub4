@@ -90,7 +90,7 @@ class MenuControllerTest < ActionDispatch::IntegrationTest
     assert_equal %w[320 320 async], [img["width"], img["height"], img["decoding"]]
     srcset = picture.at_css("source[type='image/webp']")["srcset"]
     assert_match(%r{food/damaskus-kylling-shawarma-320-\h+\.webp 320w, .*-640-\h+\.webp 640w}, srcset)
-    ApplicationHelper::FOOD_PHOTOS.each_value do |photo|
+    YAML.load_file(Rails.root.join("db/food_photos.yml")).each_value do |photo|
       ApplicationHelper::FOOD_PHOTO_WIDTHS.each do |width|
         assert Rails.root.join("app/assets/images", photo.sub(".jpg", "-#{width}.webp")).file?, "#{photo} at #{width}"
       end
@@ -107,5 +107,27 @@ class MenuControllerTest < ActionDispatch::IntegrationTest
 
     assert_equal "category-spy", nav["data-controller"]
     assert_equal "chip", nav.at_css("a.chip")["data-category-spy-target"]
+  end
+
+  test "a renamed dish keeps its photo, and so do the order lines taken from it" do
+    @item.update!(name: "Damaskus Kylling Shawarma — stor")
+
+    get root_url
+    assert Nokogiri::HTML(response.body).at_css(".item-card picture img.item-photo"), "the photo follows the row"
+
+    user = customer_sign_in
+    order = seed_order!(user:, kitchen: @kitchen)
+    order.order_items.create!(menu_item: @item, name: "Gammelt navn", quantity: 1, unit_price_ore: 12_900,
+                              line_total_ore: 12_900)
+    get order_url(order)
+    assert Nokogiri::HTML(response.body).at_css(".order-line img.line-photo")
+  end
+
+  test "every seeded photo names a dish in the seeds and a file that exists" do
+    photos = YAML.load_file(Rails.root.join("db/food_photos.yml"))
+    seeds = Rails.root.join("db/seeds.rb").read
+
+    assert_empty photos.keys.reject { |name| seeds.include?(name.to_json) }
+    assert_empty photos.values.reject { |path| Rails.root.join("app/assets/images", path).file? }
   end
 end

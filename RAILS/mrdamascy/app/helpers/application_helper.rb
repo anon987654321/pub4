@@ -4,42 +4,12 @@
 # integer øre everywhere; the chip helpers map straight onto the §1/§7
 # palette (mint/gold/pom) that the stylesheet owns.
 module ApplicationHelper
-  # Food photos — one generated studio shot per seeded dish (app/assets/
-  # images/food, provenance in food/provenance.json). Keyed by the menu
-  # item's Norwegian name (the seeds are the catalog's source of truth), so
-  # no schema drift: an item without a photo keeps its emoji tile.
-  FOOD_PHOTOS = {
-    "Damaskus Kylling Shawarma" => "food/damaskus-kylling-shawarma.jpg",
-    "Beirut Lam Shawarma" => "food/beirut-lam-shawarma.jpg",
-    "Berlin Gemüse Kebap" => "food/berlin-gemuse-kebap.jpg",
-    "Adana Sterk Dürum" => "food/adana-sterk-durum.jpg",
-    "Bergen Kebab-i-Dürum" => "food/bergen-kebab-i-durum.jpg",
-    "Dubai Gatens Shawarma" => "food/dubai-gatens-shawarma.jpg",
-    "Blomkål-Pita Miznon-stil" => "food/blomkal-pita.jpg",
-    "Bursa İskender" => "food/bursa-iskender.jpg",
-    "Gaziantep Ali Nazik" => "food/gaziantep-ali-nazik.jpg",
-    "Familie Fest-Mezze" => "food/familie-fest-mezze.jpg",
-    "Stockholm Kebabpizza — helg" => "food/stockholm-kebabpizza.jpg",
-    "Sydney Snackpack HSP" => "food/sydney-snackpack-hsp.jpg",
-    "Hvitløks-Pommes" => "food/hvitloks-pommes.jpg",
-    "Halloumi-Pommes" => "food/halloumi-pommes.jpg",
-    "Kısır Bulgursal" => "food/kisir-bulgursal.jpg",
-    "Syltebolle" => "food/syltebolle.jpg",
-    "Ayran" => "food/ayran.jpg",
-    "Şalgam" => "food/salgam.jpg",
-    "Tamarind-drikk" => "food/tamarind-drikk.jpg",
-    "Jallab" => "food/jallab.jpg",
-    "Myntesitronlimonade" => "food/myntesitronlimonade.jpg",
-    "Baklava fra Gaziantep" => "food/baklava.jpg",
-    "Knefeh fra Damaskus" => "food/knefeh.jpg",
-    "Ma'moul" => "food/mamoul.jpg",
-    "Damascy Boss-boks" => "food/damascy-boss-boks.jpg"
-  }.freeze
-
-  # The item's photo asset path, or nil when the dish has none or is gone
-  # (views fall back to the emoji tile).
+  # The dish's photo asset path (menu_items.photo_path), for a dish or an
+  # order line of one; nil when it has none or is gone (views fall back to
+  # the emoji tile).
   def food_photo(item)
-    FOOD_PHOTOS[item&.name]
+    dish = item.is_a?(OrderItem) ? item.menu_item : item
+    dish&.photo_path.presence
   end
 
   # The dish's photo as a picture: WebP at 320 and 640 px for the browsers

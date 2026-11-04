@@ -2,6 +2,8 @@
 
 class OrderItem < ApplicationRecord
   belongs_to :order
+  # The dish this line was taken from, while it is still on the menu.
+  belongs_to :menu_item, optional: true
 
   validates :name, presence: true
   validates :quantity, numericality: { only_integer: true, greater_than: 0 }

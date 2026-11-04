@@ -1,0 +1,29 @@
+# Each seeded dish's studio photo (app/assets/images/food), by its Norwegian
+# name: read by db/seeds.rb and by the migration that moved photos onto
+# menu_items.photo_path. A dish keeps its photo through a rename because the
+# row stores the path; this file only seeds and backfills it.
+Damaskus Kylling Shawarma: food/damaskus-kylling-shawarma.jpg
+Beirut Lam Shawarma: food/beirut-lam-shawarma.jpg
+Berlin Gemüse Kebap: food/berlin-gemuse-kebap.jpg
+Adana Sterk Dürum: food/adana-sterk-durum.jpg
+Bergen Kebab-i-Dürum: food/bergen-kebab-i-durum.jpg
+Dubai Gatens Shawarma: food/dubai-gatens-shawarma.jpg
+Blomkål-Pita Miznon-stil: food/blomkal-pita.jpg
+Bursa İskender: food/bursa-iskender.jpg
+Gaziantep Ali Nazik: food/gaziantep-ali-nazik.jpg
+Familie Fest-Mezze: food/familie-fest-mezze.jpg
+Stockholm Kebabpizza — helg: food/stockholm-kebabpizza.jpg
+Sydney Snackpack HSP: food/sydney-snackpack-hsp.jpg
+Hvitløks-Pommes: food/hvitloks-pommes.jpg
+Halloumi-Pommes: food/halloumi-pommes.jpg
+Kısır Bulgursal: food/kisir-bulgursal.jpg
+Syltebolle: food/syltebolle.jpg
+Ayran: food/ayran.jpg
+Şalgam: food/salgam.jpg
+Tamarind-drikk: food/tamarind-drikk.jpg
+Jallab: food/jallab.jpg
+Myntesitronlimonade: food/myntesitronlimonade.jpg
+Baklava fra Gaziantep: food/baklava.jpg
+Knefeh fra Damaskus: food/knefeh.jpg
+Ma'moul: food/mamoul.jpg
+Damascy Boss-boks: food/damascy-boss-boks.jpg

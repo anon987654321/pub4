@@ -140,6 +140,7 @@ item_rows = {
 }
 
 items = {}
+photos = YAML.load_file(Rails.root.join("db/food_photos.yml"))
 item_rows.each do |slug, rows|
   rows.each_with_index do |(name, name_en, origin, heat, price_kr, emoji, badges, weight_g, description), i|
     items[name] = categories[slug].menu_items.create!(
@@ -153,7 +154,8 @@ item_rows.each do |slug, rows|
       badges: badges,
       weight_g: weight_g,
       position: i + 1,
-      available: true
+      available: true,
+      photo_path: photos[name]
     )
   end
 end

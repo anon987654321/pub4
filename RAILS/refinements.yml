@@ -5482,7 +5482,7 @@ items:
   path: RAILS/mrdamascy/app/helpers/application_helper.rb
   item: Move the name-keyed FOOD_PHOTOS map onto MenuItem (an attachment or photo_path
     column) so renaming a dish in the seeds cannot silently drop its photo.
-  status: open
+  status: done
 - id: mrdamascy-052
   app: mrdamascy
   area: menu

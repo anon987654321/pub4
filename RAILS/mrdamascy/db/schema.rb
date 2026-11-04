@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.2].define(version: 2026_11_04_160000) do
+ActiveRecord::Schema[8.2].define(version: 2026_11_04_170000) do
   create_table "cart_items", force: :cascade do |t|
     t.integer "cart_id", null: false
     t.integer "menu_item_id", null: false
@@ -117,6 +117,7 @@ ActiveRecord::Schema[8.2].define(version: 2026_11_04_160000) do
     t.boolean "available", default: true, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "photo_path"
     t.index ["available"], name: "index_menu_items_on_available"
     t.index ["menu_category_id", "position"], name: "index_menu_items_on_menu_category_id_and_position"
     t.index ["menu_category_id"], name: "index_menu_items_on_menu_category_id"

@@ -159,6 +159,9 @@ module ActiveSupport
     # count left by one test would lock the next test's sign_in out.
     setup { Rails.cache.clear }
 
+    # The seeds' dish photos, so a seeded dish carries its photo as in db/seeds.rb.
+    SEEDED_PHOTOS = YAML.load_file(Rails.root.join("db/food_photos.yml")).freeze
+
     # users.role enum (APP_SPEC §4): customer:0 staff:1 courier:2 admin:3
     ROLES = { customer: 0, staff: 1, courier: 2, admin: 3 }.freeze
 
@@ -261,7 +264,7 @@ module ActiveSupport
         badges: badges,
         weight_g: weight_g,
         position: position,
-        available: available
+        available:, photo_path: SEEDED_PHOTOS[name]
       )
     end
 
