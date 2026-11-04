@@ -18,6 +18,7 @@ const sparseField = readFileSync(join(publicDir, "face_sparse_field.js"), "utf8"
 const microInteractions = readFileSync(join(publicDir, "face_micro_interactions.js"), "utf8");
 const faceParticles = readFileSync(join(publicDir, "face_particles.js"), "utf8");
 const phosphorTrail = readFileSync(join(publicDir, "face_phosphor_trail.js"), "utf8");
+const tokens = readFileSync(join(root, "..", "..", "MASTER", "data", "tokens.yml"), "utf8");
 
 test("shared face budgets classify coarse pointers and declared reduced motion", () => {
   assert.match(faceStateSource, /mediaMatches\("\(pointer: coarse\)"\)/);
@@ -40,7 +41,7 @@ test("the primary face settles to neutral idle and wakes on pointer activity", (
   assert.match(primaryFaceFrame, /else if \(idleStill\) \{\s+head\.rotation\.set\(0, 0, -0\.021\)/);
   assert.match(primaryFaceFrame, /head\.scale\.setScalar\(1\)/);
   assert.match(primaryFaceFrame, /if \(reducedMotion\) \{\s+nodImpulse = 0/);
-  assert.match(primaryFaceFrame, /if \(motionFrozen\) State\.pulse = 0/);
+  assert.match(primaryFaceFrame, /if \(motionFrozen\) \{\s*State\.pulse = 0; State\.flash = 0; \}/);
 });
 
 test("stipple discovery accepts Group containers with point children", () => {
@@ -223,7 +224,7 @@ function loadFaceStateBudget({ coarsePointer = false, narrowViewport = false, co
 
 test("shared render budget gives coarse-pointer devices the mobile ceiling", () => {
   const bridge = loadFaceStateBudget();
-  assert.deepEqual(bridge.STILL_MODES, ["idle"]);
+  assert.deepEqual(Array.from(bridge.STILL_MODES), ["idle"]);
   assert.equal(bridge.stillAfterActivityMs, 700);
   assert.equal(bridge.isStillMode("idle"), true);
   assert.equal(bridge.isStillMode("thinking"), false);
@@ -302,7 +303,6 @@ test("stipple shares face state and obeys point and motion budgets", () => {
 });
 
 test("the swarm geometry, force constants, modes and glyph ramp live in face tokens", () => {
-  const tokens = readFileSync(join(root, "..", "..", "MASTER", "data", "tokens.yml"), "utf8");
   assert.match(tokens, /^    swarm:\s*$/m);
   assert.match(tokens, /particle_budget:\s*240/);
   assert.match(tokens, /damping:\s*0\.86/);
@@ -314,7 +314,7 @@ test("the swarm geometry, force constants, modes and glyph ramp live in face tok
   assert.match(tokens, /dial_modulation:\s*\n\s+activity:/);
   assert.match(system, /function dialAdjustments\(state = \{\}\)/);
   assert.match(system, /modulation\.turbulence/);
-  assert.match(tokens, /residual:\s*\n\s+fraction:\s*0\.18\s+\n\s+strength:\s*0\.12/);
+  assert.match(tokens, /residual:\s*\n\s+fraction:\s*0\.18\s*\n\s+strength:\s*0\.12/);
   assert.match(system, /const force = contract\.stipple_force\?\.\[mode\] \|\| contract\.stipple_force\?\.idle \|\| "none"/);
   assert.match(system, /homePositions\?\.length >= offset \+ 3/);
   assert.match(system, /rand\(i, 97\.3\) < residualFraction/);
@@ -331,7 +331,6 @@ test("the swarm geometry, force constants, modes and glyph ramp live in face tok
 });
 
 test("stipple moods come from the face contract, not a second table", () => {
-  const tokens = readFileSync(join(root, "..", "..", "MASTER", "data", "tokens.yml"), "utf8");
   assert.match(system, /MASTER_FACE_CONTRACT\?\.stipple\?\.profiles/);
   assert.doesNotMatch(system, /speaking:\s*\{ density/);
   assert.match(tokens, /depth_response:\s*\n\s+reference_distance: 5\.0/);
@@ -393,7 +392,7 @@ test("stipple module boots and builds from the canonical idle profile", () => {
       } },
       stipple_force: { idle: "residual", warning: "residual" },
       swarm: {
-        enabled: true, particle_budget: 240, damping: 0.86, cohesion_radius: 0.11, cohesion_strength: 0.045,
+        enabled: true, particle_budget: 240, damping: 0.86, size_from_depth: true, cohesion_radius: 0.11, cohesion_strength: 0.045,
         residual: { fraction: 1, strength: 0.12 },
         separation_radius: 0.035, separation_strength: 0.08, noise_scale: 0.014,
         glyph_ramp: ["·", "˙", "∘", "•", "○", "●"],
