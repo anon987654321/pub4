@@ -1,10 +1,13 @@
 # frozen_string_literal: true
 
 require "test_helper"
+require "turbo/broadcastable/test_helper"
 
 # A viewer waiting on a scheduled stream: the page says it has not started,
 # and going live or ending replaces that line for everyone on the page.
 class TvLiveStatusTest < ActionDispatch::IntegrationTest
+  include Turbo::Broadcastable::TestHelper
+
   setup do
     Brgen::CitySeed.sync! if City.table_exists?
     ActsAsTenant.current_tenant = City.find_by!(domain: "brgen.no")
@@ -24,7 +27,8 @@ class TvLiveStatusTest < ActionDispatch::IntegrationTest
     get tv.live_stream_path(@stream)
 
     assert_select status_line, text: /#{Regexp.escape(I18n.t("tv.live_streams.status_line.scheduled"))}/
-    assert_select "turbo-cable-stream-source[signed-stream-name]", 2, "the status line and the chat each subscribe"
+    names = css_select("turbo-cable-stream-source").map { |source| source["signed-stream-name"] }
+    assert_includes names, Turbo::StreamsChannel.signed_stream_name(@stream.status_stream)
   end
 
   test "going live and ending each replace the status line for the watchers" do
