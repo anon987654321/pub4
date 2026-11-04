@@ -12,9 +12,10 @@ class VippsReferenceTest < ActiveSupport::TestCase
     @buyer = User.strict_loading(false).create!(
       email_address: "vr-#{SecureRandom.hex(4)}@brgen.no", password: "password123", guest: false
     )
+    category = Marketplace::Category.create!(name: "Diverse-#{SecureRandom.hex(3)}")
     @listing = Marketplace::Listing.create!(
       user: User.create!(email_address: "vs-#{SecureRandom.hex(4)}@brgen.no", password: "password123"),
-      title: "Ting #{SecureRandom.hex(3)}", category: Marketplace::Category.create!(name: "Diverse-#{SecureRandom.hex(3)}"),
+      title: "Ting #{SecureRandom.hex(3)}", category:,
       price_cents: 20_000, status: "active", currency: "NOK"
     )
   end
