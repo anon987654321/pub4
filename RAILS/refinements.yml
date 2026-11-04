@@ -4288,7 +4288,7 @@ items:
   path: RAILS/bsdports/app/views/ports/index.html.erb
   item: 'Show the import status through a translated label instead of the raw ImportRun
     status string (''completed'', ''failed'') in ''Last import: %{status}''.'
-  status: open
+  status: done
 - id: bsdports-011
   app: bsdports
   area: copy

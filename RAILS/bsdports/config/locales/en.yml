@@ -47,6 +47,10 @@ en:
     meta_description: "%{name} maintains %{ports} in the OpenBSD ports tree."
     email_obfuscated: "%{user} (at) %{domain}"
   ports:
+    import_status:
+      running: "running"
+      succeeded: "completed"
+      failed: "failed"
     rss:
       title: "OpenBSD ports: new in the last 7 days"
       description: "Recently added or updated ports from the OpenBSD ports tree"

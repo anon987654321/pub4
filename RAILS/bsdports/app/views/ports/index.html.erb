@@ -19,7 +19,7 @@
     <p>
       <% if @last_import %>
         <%= t("ports.last_import",
-              status: @last_import.status,
+              status: t("ports.import_status.#{@last_import.status}", default: @last_import.status),
               count: @last_import.ports_count.to_i,
               when: time_ago_in_words(@last_import.started_at)) %>
       <% else %>

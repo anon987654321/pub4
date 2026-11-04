@@ -47,6 +47,10 @@ nb:
     meta_description: "%{name} vedlikeholder %{ports} i OpenBSD-porttreet."
     email_obfuscated: "%{user} (at) %{domain}"
   ports:
+    import_status:
+      running: "pågår"
+      succeeded: "fullført"
+      failed: "feilet"
     rss:
       title: "OpenBSD-porter: nye de siste 7 dagene"
       description: "Nylig lagt til eller oppdaterte porter fra OpenBSD-porttreet"
