@@ -57,6 +57,34 @@ class TestCouncilTribunal < Minitest::Test
     agent.verify
   end
 
+  def test_tribunal_forwards_mandatory_veto_roles_to_deliberation
+    requested = nil
+    deliberation = Object.new
+    deliberation.define_singleton_method(:review) do |_payload, context:, image:, required_veto_roles:|
+      requested = required_veto_roles
+      Master::Result.ok([{ persona: "Security", role: "Security Review", veto_role: true }])
+    end
+    evidence = Evidence.new(
+      artifact: "code",
+      domain: :general,
+      status: :observed,
+      observations: ["an actionable code change"],
+      anchors: ["MASTER/lib/example.rb:1"],
+    )
+
+    result = Master::Review::Council::Deliberation.stub(:new, ->(**_options) { deliberation }) do
+      Master::Review::Council::Tribunal.new(agent: Object.new).review(
+        evidence:,
+        personas: [],
+        context: "general critique",
+        required_veto_roles: ["Security"],
+      )
+    end
+
+    assert result.ok?
+    assert_equal ["Security"], requested
+  end
+
   def test_hash_evidence_is_normalized
     result = Master::Review::Council::Tribunal.new(agent: Object.new).send(
       :normalize,
