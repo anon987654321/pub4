@@ -2134,3 +2134,13 @@ nb:
     trending_videos: Populære videoer
     trending_content: Populært innhold
     recent_content: Nytt innhold
+  report_picker:
+    legend: Hva er galt?
+    details: Mer om det (valgfritt)
+    submit: Send rapport
+    reasons:
+      spam: Spam
+      abuse: Trakassering
+      scam: Svindel
+      illegal: Ulovlig innhold
+      other: Noe annet

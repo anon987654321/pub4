@@ -2489,7 +2489,7 @@ items:
   item: Replace the always-'other' report button with a small reason picker (spam,
     harassment, illegal, other plus optional details) so ModerationReport.reason and
     details carry real signal.
-  status: open
+  status: done
 - id: brgen-194
   app: brgen
   area: moderation
@@ -2497,7 +2497,7 @@ items:
   path: RAILS/brgen/app/views/shared/_report_button.html.erb
   item: Let the reporter choose a reason (spam, harassment, illegal, other) instead
     of submitting a fixed 'other'/'abuse' in one click.
-  status: open
+  status: done
 - id: brgen-195
   app: brgen
   area: moderation

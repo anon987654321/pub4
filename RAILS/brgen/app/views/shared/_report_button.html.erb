@@ -1,8 +1,25 @@
-<%# marks: data attributes from the caller; a broadcast line marks the button for
+<%# A reason picker rather than a one-click "other": the reason and the optional
+    details are what a moderator triages by. The caller's reason (a listing's
+    scam, a message's abuse) is the one preselected.
+    marks: data attributes from the caller; a broadcast line marks the picker for
     the log controller, which drops it for the author and for a visitor without an account. %>
-<%= tag.span id: "report_#{dom_id(target)}", data: local_assigns.fetch(:marks, {}) do %>
-  <%= button_to t("actions.report"), main_app.reports_path,
-      params: { target_gid: target.to_signed_global_id.to_s, reason: reason || "other" },
-      data: { turbo_stream: true },
-      aria: { label: t("a11y.report_target", type: target.class.model_name.human.downcase) } %>
+<% chosen = reason.presence || "other" %>
+<% field_id = "report_#{dom_id(target)}" %>
+<%= tag.span id: field_id, data: local_assigns.fetch(:marks, {}) do %>
+  <details class="report-picker">
+    <%= tag.summary t("actions.report") %>
+    <%= form_with url: main_app.reports_path, data: { turbo_stream: true },
+          aria: { label: t("a11y.report_target", type: target.class.model_name.human.downcase) } do |form| %>
+      <%= hidden_field_tag :target_gid, target.to_signed_global_id.to_s, id: nil %>
+      <fieldset>
+        <%= tag.legend t("report_picker.legend") %>
+        <%= render partial: "shared/report_reason", collection: ModerationReport.picker_reasons(chosen),
+                   as: :choice, locals: { chosen:, field_id: } %>
+      </fieldset>
+      <%= label_tag "#{field_id}_details", t("report_picker.details") %>
+      <%= text_area_tag :details, nil, id: "#{field_id}_details", rows: 2,
+            maxlength: ModerationReport::DETAILS_LIMIT %>
+      <%= form.submit t("report_picker.submit"), name: nil, class: "button button-small" %>
+    <% end %>
+  </details>
 <% end %>

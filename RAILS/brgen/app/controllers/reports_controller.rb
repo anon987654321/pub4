@@ -18,8 +18,9 @@ class ReportsController < ApplicationController
     @report = ModerationWorkflow.report!(
       reporter: Current.user,
       target: @target,
-      reason: params[:reason],
-      details: params[:details]
+      # A reason outside the list is no reason, not a 500 from create!.
+      reason: params[:reason].presence_in(ModerationReport::REASONS),
+      details: params[:details].to_s.first(ModerationReport::DETAILS_LIMIT).presence
     )
     notify_moderators
     respond_to do |f|

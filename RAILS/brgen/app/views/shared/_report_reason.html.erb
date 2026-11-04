@@ -1,0 +1,5 @@
+<%# One reason in shared/report_button's picker. %>
+<%= label_tag "#{field_id}_#{choice}" do %>
+  <%= radio_button_tag :reason, choice, choice == chosen, id: "#{field_id}_#{choice}" %>
+  <%= t("report_picker.reasons.#{choice}") %>
+<% end %>
