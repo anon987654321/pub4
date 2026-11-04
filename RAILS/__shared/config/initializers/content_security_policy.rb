@@ -32,6 +32,10 @@ Rails.application.configure do
     # same as no policy, with extra bytes on every response. Shared::CspReportsController
     # is the reader.
     policy.report_uri "/csp-reports"
+    # Trusted Types, reported and never enforced: it names the innerHTML sinks
+    # (link_preview, offline_page, optimistic_send) a later enforcement would
+    # break. Left out of an enforced policy, where it would break them now.
+    policy.require_trusted_types_for :script unless ENV["PUB4_CSP_ENFORCE"] == "1"
   end
 
   # Report-only stays the default: flipping enforcement on three live apps is an

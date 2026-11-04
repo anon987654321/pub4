@@ -6245,7 +6245,7 @@ items:
   path: RAILS/__shared/config/initializers/content_security_policy.rb
   item: Add require-trusted-types-for 'script' in report-only mode to surface the
     innerHTML sinks (link_preview, offline_page, optimistic_send).
-  status: open
+  status: done
 - id: shared-041
   app: shared
   area: security
