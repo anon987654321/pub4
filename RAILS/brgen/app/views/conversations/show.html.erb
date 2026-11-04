@@ -27,9 +27,9 @@
         <%= icon :chevron_left, size: 20 %>
       <% end %>
 
-      <span class="messenger-header-avatar" aria-hidden="true">
-        <%= @conversation.display_name_for(Current.user).to_s.first&.upcase || "?" %>
-      </span>
+      <%= render "conversations/person_avatar",
+                 person: (@conversation.other_participants(Current.user).first if @conversation.direct?),
+                 name: @conversation.display_name_for(Current.user), css_class: "messenger-header-avatar", size: 40 %>
 
       <div class="messenger-header-identity">
         <%# A DM's name is a person, so it opens their profile; a group's is not. %>
@@ -63,9 +63,8 @@
                 <ul class="messenger-member-list" role="list">
                   <% @conversation.participants.each do |participant| %>
                     <li role="listitem">
-                      <span class="messenger-member-avatar" aria-hidden="true">
-                        <%= participant.display_name.to_s.first&.upcase || "?" %>
-                      </span>
+                      <%= render "conversations/person_avatar", person: participant, name: participant.display_name,
+                                                                css_class: "messenger-member-avatar", size: 32 %>
                       <span class="messenger-member-name"><%= participant.display_name %></span>
                       <% if @is_group_admin || participant.id == Current.user.id %>
                         <%= button_to participant.id == Current.user.id ? t("messages.group_leave") : t("actions.remove"),

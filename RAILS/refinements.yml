@@ -2240,7 +2240,7 @@ items:
   path: RAILS/brgen/app/views/conversations/_rail_row.html.erb
   item: Use avatar_url in the conversation header, rail rows and member list instead
     of a first-letter tile; people results already show avatars.
-  status: open
+  status: done
 - id: brgen-164
   app: brgen
   area: messenger

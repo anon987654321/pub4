@@ -60,6 +60,30 @@ class MessengerViewTest < ActionDispatch::IntegrationTest
     refute_includes html, "here now"
   end
 
+  test "a DM shows the other person's identicon in its header and its rail row" do
+    line("hei")
+    sign_in_as(@user)
+
+    get conversation_path(@conversation)
+
+    assert_select "header.messenger-conversation-header img.messenger-header-avatar[src=?][alt='']", @friend.avatar_url
+    rail = "##{ActionView::RecordIdentifier.dom_id(@conversation, :rail)} img.messenger-room-avatar[src=?]"
+    assert_select rail, @friend.avatar_url
+  end
+
+  test "a group's member list shows each member's identicon" do
+    group = Conversation.create!(conversation_type: "group", name: "Gjengen", city: @city)
+    [ @user, @friend ].each { |member| group.join!(member) }
+    sign_in_as(@user)
+
+    get conversation_path(group)
+
+    [ @user, @friend ].each do |member|
+      assert_select ".messenger-member-list img.messenger-member-avatar[src=?]", member.avatar_url
+    end
+    assert_select "img.messenger-header-avatar", 0
+  end
+
   test "a DM's header name opens the other person's profile" do
     sign_in_as(@user)
     get conversation_path(@conversation)

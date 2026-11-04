@@ -12,9 +12,8 @@
   <%= link_to conversation_path(room), class: "messenger-inbox-room",
               data: { turbo_frame: "messenger-pane" },
               aria: { current: local_assigns[:current_room]&.id == room.id ? "page" : nil } do %>
-    <span class="messenger-room-avatar" aria-hidden="true">
-      <%= name.to_s.first&.upcase || "?" %>
-    </span>
+    <%= render "conversations/person_avatar", person: (room.other_participants(viewer).first if room.direct?),
+                                              name:, css_class: "messenger-room-avatar", size: 32 %>
     <span class="messenger-room-copy">
       <%= tag.span name, class: "messenger-inbox-name" %>
       <% if last %>
