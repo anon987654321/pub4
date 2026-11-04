@@ -421,7 +421,7 @@ class TestThroughInference < Minitest::Test
 
     assert_equal "review", inferred[:command]
     assert_equal "STUDIO/replicate/lora", inferred[:args]
-    assert_equal "/review STUDIO/replicate/lora",
+    assert_equal "/fix --dry-run --critique --only critique,map STUDIO/replicate/lora",
                  Master::CLI::TurnRouter.rewrite_slash("/#{inferred[:command]} #{inferred[:args]}")
   end
 

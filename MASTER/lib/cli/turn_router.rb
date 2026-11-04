@@ -168,7 +168,8 @@ module Master
         return if READ_SLASH.include?(command)
         return unless answered?(command, container)
 
-        args = PIPELINE_COMMANDS.include?(command) ? pass_command_args(value, text) : value.args.to_s
+        # Every /fix spelling takes the same target, so "through itself" names MASTER as "fix itself" does.
+        args = PIPELINE_SLASH.include?(command) ? pass_command_args(value, text) : value.args.to_s
 
         { command:, args:, confidence: conf }
       rescue StandardError => e
