@@ -5867,7 +5867,7 @@ items:
   path: RAILS/mrdamascy/test/test_helper.rb
   item: Add a locale test asserting nb.yml and en.yml have the same keys and every
     static t() key used in app/ exists.
-  status: open
+  status: done
 - id: mrdamascy-100
   app: mrdamascy
   area: tracking
