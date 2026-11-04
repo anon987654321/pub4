@@ -1,7 +1,7 @@
 diff --git a/file.c b/file.c
 --- a/file.c
 +++ b/file.c
-@@ -532,39 +532,52 @@
+@@ -531,37 +531,50 @@
  static struct rb_stat *
  stat_alloc(VALUE klass, VALUE *obj)
  {
@@ -70,7 +70,7 @@ diff --git a/file.c b/file.c
          rb_st->stat = *st;
  #endif
          rb_st->initialized = true;
-@@ -1327,29 +1340,63 @@
+@@ -1326,31 +1339,64 @@
      return (void *)io_blocking_statx(data);
  }
  
