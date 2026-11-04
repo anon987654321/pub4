@@ -423,7 +423,11 @@ article dd + dt {
   margin: 0;
 }
 
+// Chips are tap targets: the padding alone left them well under 44px.
 .category-list .chip {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--tap-min);
   padding: var(--space-1) var(--space-2);
   border: 0;
   font-size: var(--text-extra-small);
@@ -484,6 +488,12 @@ nav.sort-order {
   display: flex;
   gap: var(--space-2);
   justify-content: flex-start;
+}
+
+nav.sort-order a {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--tap-min);
 }
 
 nav.sort-order a[aria-current] {

@@ -4361,7 +4361,7 @@ items:
   size: S
   path: RAILS/bsdports/app/assets/stylesheets/application.scss
   item: Make sort chips (Name/Updated) meet the tap-min floor; they carry no min-height.
-  status: open
+  status: done
 - id: bsdports-020
   app: bsdports
   area: mobile
@@ -4369,7 +4369,7 @@ items:
   path: RAILS/bsdports/app/assets/stylesheets/application.scss
   item: Raise category chips to the tap-min height; .category-list .chip has var(--space-1)
     padding and extra-small type, well under 44px.
-  status: open
+  status: done
 - id: bsdports-021
   app: bsdports
   area: performance
