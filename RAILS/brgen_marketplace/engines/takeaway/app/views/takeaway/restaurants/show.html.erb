@@ -84,6 +84,15 @@
   </section>
 <% end %>
 
+<% if (week = @restaurant.weekly_hours).any? %>
+  <section class="store-opening-hours" aria-labelledby="opening-hours-heading">
+    <%= tag.h2 t("takeaway.opening_hours_heading"), id: "opening-hours-heading", class: "store-heading" %>
+    <dl>
+      <%= render partial: "takeaway/restaurants/opening_day", collection: week, as: :day %>
+    </dl>
+  </section>
+<% end %>
+
 <% if authenticated? && @restaurant.owner?(Current.user) %>
   <section aria-labelledby="add-menu-item-heading">
     <%= tag.h2 t("takeaway.add_menu_item"), id: "add-menu-item-heading", class: "store-heading" %>

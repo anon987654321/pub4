@@ -1,0 +1,2 @@
+<%= tag.dt t("date.day_names")[day.weekday] %>
+<%= tag.dd day.windows.any? ? day.windows.join(", ") : t("takeaway.closed_all_day") %>

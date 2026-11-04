@@ -10,6 +10,8 @@
 # Keys the host already carries are NOT copied here. Use them.
 nb:
   takeaway:
+    opening_hours_heading: "Åpningstider"
+    closed_all_day: "Stengt"
     tip_line: "Tips: %{amount}"
     position: "Posisjon"
     use_current_location: "Bruk nåværende posisjon"

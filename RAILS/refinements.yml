@@ -3864,7 +3864,7 @@ items:
   path: RAILS/brgen_marketplace/engines/takeaway/app/views/takeaway/restaurants/show.html.erb
   item: Show the restaurant's weekly opening hours on the restaurant page (OpeningHour
     rows exist, but only the card shows open or closed now).
-  status: open
+  status: done
 - id: brgen-359
   app: brgen
   area: tests

@@ -91,6 +91,19 @@ class Takeaway::Restaurant < ApplicationRecord
 
   def hours_for(wday) = opening_hours.for_weekday(wday).order(:opens_minute)
 
+  OpeningDay = Data.define(:weekday, :windows)
+  WEEK_FROM_MONDAY = [ 1, 2, 3, 4, 5, 6, 0 ].freeze
+
+  # The week as the restaurant page lists it, Monday first: every day once any
+  # hours are recorded, a day with none being a closed one; nothing at all for
+  # a restaurant that has said nothing about its hours.
+  def weekly_hours
+    by_day = opening_hours.order(:opens_minute).group_by(&:weekday)
+    return [] if by_day.empty?
+
+    WEEK_FROM_MONDAY.map { |wday| OpeningDay.new(weekday: wday, windows: by_day.fetch(wday, []).map(&:to_s)) }
+  end
+
   # Whether this kitchen carries to a coordinate. Only a stated radius
   # constrains anything: nil means the restaurant has said nothing, which is
   # not the same as "nowhere", so the answer is yes until the owner types a

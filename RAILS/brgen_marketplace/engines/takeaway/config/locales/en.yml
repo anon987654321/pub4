@@ -10,6 +10,8 @@
 # Keys the host already carries are NOT copied here. Use them.
 en:
   takeaway:
+    opening_hours_heading: "Opening hours"
+    closed_all_day: "Closed"
     tip_line: "Tip: %{amount}"
     position: "Position"
     use_current_location: "Use current location"

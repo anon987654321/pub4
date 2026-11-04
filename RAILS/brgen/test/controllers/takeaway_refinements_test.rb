@@ -133,4 +133,28 @@ class TakeawayRefinementsTest < ActionDispatch::IntegrationTest
                   text: I18n.t("takeaway.vehicle_types.walking")
     assert_select "[data-controller=current-location] button[data-action='current-location#fill']"
   end
+
+  test "the restaurant page lists its week of opening hours, Monday first" do
+    Takeaway::OpeningHour.create!(restaurant: @restaurant, weekday: 1, opens_minute: 660, closes_minute: 1320)
+    Takeaway::OpeningHour.create!(restaurant: @restaurant, weekday: 5, opens_minute: 1080, closes_minute: 1560)
+    host! "takeaway.brgen.no"
+
+    get takeaway.restaurant_path(@restaurant)
+
+    assert_select "section.store-opening-hours h2", text: I18n.t("takeaway.opening_hours_heading")
+    days = css_select("section.store-opening-hours dt").map(&:text)
+    assert_equal I18n.t("date.day_names").rotate(1), days
+    hours = css_select("section.store-opening-hours dd").map(&:text)
+    assert_equal "11:00–22:00", hours.first
+    assert_equal "18:00–02:00", hours[4]
+    assert_equal I18n.t("takeaway.closed_all_day"), hours.last
+  end
+
+  test "a restaurant with no recorded hours shows no hours section" do
+    host! "takeaway.brgen.no"
+
+    get takeaway.restaurant_path(@restaurant)
+
+    assert_select "section.store-opening-hours", count: 0
+  end
 end
