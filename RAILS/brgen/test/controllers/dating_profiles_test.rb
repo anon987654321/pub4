@@ -64,6 +64,18 @@ class DatingProfilesTest < ActionDispatch::IntegrationTest
     assert_equal 2, profile_for(@me).photos.size
   end
 
+  # Shared::MediaProcessable builds the photo variants after commit. A second
+  # job with its own symbol-valued variant list digested differently and built
+  # a duplicate set nothing ever read.
+  test "a saved photo is processed once, by the model, not by a second job" do
+    sign_in_as(@me)
+
+    patch dating.profile_path, params: { profile: { photos: [ upload ] } }
+
+    queued = enqueued_jobs.map { |job| job["job_class"] || job[:job].to_s }
+    assert_not_includes queued, "Dating::ProfileMediaJob"
+  end
+
   test "a ticked photo is removed and the others stay" do
     attach_pixel!(profile_for(@me).photos, filename: "second.png")
     photos = profile_for(@me).photos.sort_by(&:id)

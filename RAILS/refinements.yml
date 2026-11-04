@@ -1397,7 +1397,7 @@ items:
     already processes the photos variants after commit, and the job''s symbol-valued
     VARIANTS (format: :webp) digest differently from the decoded definitions, so it
     builds a duplicate set of variants that never get used.'
-  status: open
+  status: done
 - id: brgen-065
   app: brgen
   area: dating

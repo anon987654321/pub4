@@ -24,7 +24,6 @@ class Dating::ProfilesController < Dating::BaseController
   def create
     @profile = Current.user.build_dating_profile(profile_params)
     if assign_photos && @profile.save
-      enqueue_photo_processing
       redirect_to(root_path, notice: t("flash.dating.profile_created"))
     else
       @neighborhoods = available_neighborhoods
@@ -35,7 +34,6 @@ class Dating::ProfilesController < Dating::BaseController
   def update
     @profile.assign_attributes(profile_params)
     if assign_photos && @profile.save
-      enqueue_photo_processing
       redirect_to(root_path, notice: t("flash.dating.profile_updated"))
     else
       @neighborhoods = available_neighborhoods
@@ -98,10 +96,6 @@ class Dating::ProfilesController < Dating::BaseController
     return nil unless limits[:types].any? { |prefix| type.to_s.downcase.start_with?(prefix) }
 
     blob || upload
-  end
-
-  def enqueue_photo_processing
-    Dating::ProfileMediaJob.perform_later(@profile.id) if @profile.photos.attached?
   end
 
   def available_neighborhoods
