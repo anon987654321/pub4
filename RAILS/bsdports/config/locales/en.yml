@@ -46,6 +46,9 @@ en:
     meta_description: "%{name} maintains %{ports} in the OpenBSD ports tree."
     email_obfuscated: "%{user} (at) %{domain}"
   ports:
+    rss:
+      title: "OpenBSD ports: new in the last 7 days"
+      description: "Recently added or updated ports from the OpenBSD ports tree"
     meta_description: "%{name} %{version}: %{comment}. OpenBSD %{pkgpath}."
     sign_in_to_review: "Sign in to run a MASTER review"
     sign_in_to_watch: "Sign in to watch this port"

@@ -46,6 +46,9 @@ nb:
     meta_description: "%{name} vedlikeholder %{ports} i OpenBSD-porttreet."
     email_obfuscated: "%{user} (at) %{domain}"
   ports:
+    rss:
+      title: "OpenBSD-porter: nye de siste 7 dagene"
+      description: "Nylig lagt til eller oppdaterte porter fra OpenBSD-porttreet"
     meta_description: "%{name} %{version}: %{comment}. OpenBSD %{pkgpath}."
     sign_in_to_review: "Logg inn for å kjøre en MASTER-gjennomgang"
     sign_in_to_watch: "Logg inn for å følge denne porten"

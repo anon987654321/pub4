@@ -1,10 +1,10 @@
 xml.instruct! :xml, version: "1.0"
 xml.rss version: "2.0" do
   xml.channel do
-    xml.title "OpenBSD ports - new (last 7 days)"
+    xml.title t("ports.rss.title")
     xml.link ports_url(format: :rss)
-    xml.description "Recently added or updated ports from the OpenBSD ports tree"
-    xml.language "en-us"
+    xml.description t("ports.rss.description")
+    xml.language I18n.locale.to_s
     @ports.each do |port|
       xml.item do
         xml.title [ port.name, port.version ].join("-")

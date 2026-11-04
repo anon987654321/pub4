@@ -4329,7 +4329,7 @@ items:
   path: RAILS/bsdports/app/views/ports/index.rss.builder
   item: Localize the RSS channel title, description and language; they are hardcoded
     English and 'en-us' while the app ships nb.
-  status: open
+  status: done
 - id: bsdports-016
   app: bsdports
   area: i18n
@@ -4559,7 +4559,7 @@ items:
   path: RAILS/bsdports/test/controllers/ports_controller_test.rb
   item: 'Add a controller test for the RSS feed: 7-day window, category scope, public
     cache header and valid XML.'
-  status: open
+  status: done
 - id: bsdports-044
   app: bsdports
   area: tests
