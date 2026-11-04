@@ -4,6 +4,8 @@
 # page Stripe returns to, which shows a new key once. Plain HTML; the key page
 # loads one script, the copy button.
 class ApiController < ActionController::Base
+  include RequestLocale
+
   SESSION_ID = /\Acs_[A-Za-z0-9_]{8,200}\z/
 
   # show is the same page for every visitor, so it may be cached and kept in the

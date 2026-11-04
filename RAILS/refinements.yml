@@ -4903,7 +4903,7 @@ items:
   path: RAILS/master/app/controllers/application_controller.rb
   item: 'Send Vary: Accept-Language on cacheable responses whose language comes from
     that header.'
-  status: open
+  status: done
 - id: master-020
   app: master
   area: i18n
@@ -4911,7 +4911,7 @@ items:
   path: RAILS/master/app/views/pwa/manifest.json.erb
   item: Move the manifest's name, description and shortcut labels into nb/en locale
     files.
-  status: open
+  status: done
 - id: master-021
   app: master
   area: naming
@@ -4975,7 +4975,7 @@ items:
   path: RAILS/master/public/offline.html
   item: 'Make offline.html MASTER''s page: it says "brgen — frakoblet" and uses a
     #f5f0e8 ink outside the face tokens.'
-  status: open
+  status: done
 - id: master-029
   app: master
   area: pwa

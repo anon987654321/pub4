@@ -1,6 +1,17 @@
 en:
   skip_to_content: "Skip to main content"
   skip_to_prompt: "Skip to prompt"
+  pwa:
+    name: "MASTER"
+    description: "Public MASTER chat"
+    chat: "Chat"
+    chat_description: "Open MASTER chat"
+    focus: "Focus face"
+    focus_short: "Focus"
+    focus_description: "Face-only focus mode"
+    mission: "Mission control"
+    mission_short: "Dashboard"
+    mission_description: "Runtime observability"
   dashboard:
     title: "MASTER — mission control"
     heading_chat: "chat"

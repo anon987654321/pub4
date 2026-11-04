@@ -6,6 +6,8 @@ $LOAD_PATH.unshift File.expand_path("../../../../../MASTER/lib", __FILE__)
 require "master"
 
 class ApplicationController < ActionController::Base
+  include RequestLocale
+
   allow_browser versions: :modern
 
   VISITOR_ALLOWED_TOOLS = Master::Ground::Tool::Profile.public_names.freeze
@@ -33,7 +35,6 @@ class ApplicationController < ActionController::Base
     {}
   end
 
-  before_action :set_locale
   before_action :set_html_no_store, if: -> { request.format.html? }
   after_action :set_html_no_store, if: -> { request.format.html? }
   before_action :require_container!
@@ -60,41 +61,6 @@ class ApplicationController < ActionController::Base
     elsif request.headers["Sec-Fetch-Site"].to_s == "cross-site"
       head :forbidden
     end
-  end
-
-  # nb unless the browser asks for something this app has.
-  #
-  # Set per request, not once at boot: I18n.locale is per-thread state that
-  # survives into the next request served on the same thread, so one English
-  # visitor would otherwise leave the following Norwegian one on :en.
-  def set_locale
-    I18n.locale = preferred_locale
-  end
-
-  # Accept-Language, highest q first, matched on the primary subtag so nb-NO and
-  # en-GB both land. `no` is the macrolanguage tag and several browsers still
-  # send it for Norwegian; without the alias it falls through to the default,
-  # which happens to be right today and would stop being right the moment the
-  # default changes.
-  LOCALE_ALIASES = { "no" => :nb, "nn" => :nb }.freeze
-
-  def preferred_locale
-    ranked_language_tags.each do |tag|
-      primary = tag.split("-").first
-      match = I18n.available_locales.find { |locale| locale.to_s == primary } || LOCALE_ALIASES[primary]
-      return match if match && I18n.available_locales.include?(match)
-    end
-    I18n.default_locale
-  end
-
-  def ranked_language_tags
-    request.get_header("HTTP_ACCEPT_LANGUAGE").to_s.split(",").filter_map do |part|
-      tag, quality = part.split(";q=")
-      tag = tag.to_s.strip.downcase
-      next if tag.empty? || tag == "*"
-
-      [ tag, Float(quality || 1, exception: false) || 0.0 ]
-    end.sort_by { |_, quality| -quality }.map(&:first)
   end
 
   def set_html_no_store

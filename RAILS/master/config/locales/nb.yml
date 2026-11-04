@@ -12,6 +12,17 @@
 nb:
   skip_to_content: "Hopp til hovedinnhold"
   skip_to_prompt: "Hopp til skrivefeltet"
+  pwa:
+    name: "MASTER"
+    description: "Offentlig MASTER-samtale"
+    chat: "Samtale"
+    chat_description: "Åpne MASTER-samtalen"
+    focus: "Fokus på ansiktet"
+    focus_short: "Fokus"
+    focus_description: "Bare ansiktet, uten annet"
+    mission: "Kontrollrom"
+    mission_short: "Kontrollrom"
+    mission_description: "Innsyn i hva MASTER gjør"
   dashboard:
     title: "MASTER — kontrollrom"
     heading_chat: "samtale"

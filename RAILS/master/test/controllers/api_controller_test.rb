@@ -119,4 +119,12 @@ class ApiControllerTest < ActionDispatch::IntegrationTest
     assert_select "main#main-content:not([role])"
     assert_select "link[rel='stylesheet'][href*='/assets/face-']"
   end
+
+  test "the API page follows Accept-Language and varies on it" do
+    get api_path, headers: { "HTTP_ACCEPT_LANGUAGE" => "en-GB,en;q=0.9" }
+
+    assert_select "html[lang='en']"
+    assert_select "h1", text: I18n.t("api.heading", locale: :en)
+    assert_includes response.headers["Vary"].to_s, "Accept-Language"
+  end
 end

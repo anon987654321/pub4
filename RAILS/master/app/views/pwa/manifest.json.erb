@@ -7,9 +7,10 @@
   The colour is emitted raw: ActionView HTML-escapes every template, which
   turns the JSON string's quotes into &quot; and the manifest into invalid JSON.
 %><% theme_color = Master.tokens.fetch("face_root").fetch("face_bg") %>{
-  "name": "MASTER",
-  "short_name": "MASTER",
-  "description": "Public MASTER chat",
+  "name": <%= raw t("pwa.name").to_json %>,
+  "short_name": <%= raw t("pwa.name").to_json %>,
+  "description": <%= raw t("pwa.description").to_json %>,
+  "lang": <%= raw I18n.locale.to_s.to_json %>,
   "start_url": "/",
   "scope": "/",
   "display": "fullscreen",
@@ -29,8 +30,11 @@
     { "src": "/icon.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
   ],
   "shortcuts": [
-    { "name": "Chat", "short_name": "Chat", "url": "/", "description": "Open MASTER chat" },
-    { "name": "Focus face", "short_name": "Focus", "url": "/?focus=1", "description": "Face-only focus mode" },
-    { "name": "Mission control", "short_name": "Dashboard", "url": "/dashboard", "description": "Runtime observability" }
+    { "name": <%= raw t("pwa.chat").to_json %>, "short_name": <%= raw t("pwa.chat").to_json %>,
+      "url": "/", "description": <%= raw t("pwa.chat_description").to_json %> },
+    { "name": <%= raw t("pwa.focus").to_json %>, "short_name": <%= raw t("pwa.focus_short").to_json %>,
+      "url": "/?focus=1", "description": <%= raw t("pwa.focus_description").to_json %> },
+    { "name": <%= raw t("pwa.mission").to_json %>, "short_name": <%= raw t("pwa.mission_short").to_json %>,
+      "url": "/dashboard", "description": <%= raw t("pwa.mission_description").to_json %> }
   ]
 }
