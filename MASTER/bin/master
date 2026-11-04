@@ -291,6 +291,21 @@ require "optparse"
 require "master"
 require "ops"
 
+# `bin/master --status` says who holds the control plane, without taking it:
+# a headless run refused or queued, and the only way to learn by whom was the
+# refusal itself.
+if ARGV.first == "--status"
+  holder = Master::Ops::ProcessLock.owner
+  line = if holder.empty?
+           "control plane free"
+         else
+           "held by pid=#{holder["pid"]} mode=#{holder["mode"]} host=#{holder["host"]} since=#{holder["at"]}" \
+             "#{" (stale: holder gone)" if holder["stale"]}"
+         end
+  Master::Trace::Dmesg.status("master0", line)
+  exit 0
+end
+
 $MASTER_PROCESS_LOCK = if internal_master_child
                          Master::Trace::Dmesg.status("master0", "internal child, parent owns control plane", io: $stderr)
                          nil

@@ -764,7 +764,6 @@ recommended first ten.
 
 ### MASTER's one-session lock
 
-- [ ] * `bin/master --status`: lock holder, mode, idle time.
 - [ ] Release the lock after N idle minutes; the session keeps running.
 - [ ] Headless runs submit their goal to the running session over the bridge.
 - [ ] One lock scope per checkout.
