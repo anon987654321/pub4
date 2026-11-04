@@ -1,4 +1,4 @@
-<% content_for :title, "Style evolution" %>
+<% content_for :title, t("pages.timeline") %>
 
 <header role="banner" aria-label="<%= t("wardrobe.evolution_header") %>">
   <hgroup>
@@ -57,11 +57,11 @@
     <ol class="style-timeline" role="list">
       <% @timeline[:wear_events].each do |event| %>
         <li role="listitem">
-          <time datetime="<%= event[:worn_on] %>"><%= event[:worn_on] %></time>
+          <%= tag.time l(event[:worn_on].to_date), datetime: event[:worn_on].to_date.iso8601 %>
           <p>
             <%= link_to event[:item_title], item_path(event[:item_id]) %>
             <% if event[:outfit_title].present? %>
-              in <%= event[:outfit_title] %>
+              <%= t("wardrobe.worn_in", outfit: event[:outfit_title]) %>
             <% end %>
           </p>
           <% if event[:life_phase].present? %>

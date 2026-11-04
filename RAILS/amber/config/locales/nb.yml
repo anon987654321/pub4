@@ -238,6 +238,7 @@ nb:
     go_feed: "Stil-feed"
     retry: "Prøv igjen"
   wardrobe:
+    worn_in: "i %{outfit}"
     talk_to_master: "Snakk med MASTER"
     occasion_map: "Anledningskart"
     closet_intelligence: "Garderobe-intelligens"

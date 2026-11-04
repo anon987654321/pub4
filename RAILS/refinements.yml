@@ -235,14 +235,14 @@ items:
   path: RAILS/amber/app/views/wardrobe_items/timeline.html.erb
   item: Translate the hardcoded 'in' between item and outfit title in the wear history,
     and format worn_on with l(date) instead of the raw ISO string.
-  status: open
+  status: done
 - id: amber-029
   app: amber
   area: i18n
   size: S
   path: RAILS/amber/app/views/wardrobe_items/timeline.html.erb
   item: Translate the hardcoded 'Style evolution' page title on the timeline.
-  status: open
+  status: done
 - id: amber-030
   app: amber
   area: i18n

@@ -239,6 +239,7 @@ en:
     go_feed: "Style feed"
     retry: "Try again"
   wardrobe:
+    worn_in: "in %{outfit}"
     talk_to_master: "Talk to MASTER"
     occasion_map: "Occasion map"
     closet_intelligence: "Closet intelligence"
