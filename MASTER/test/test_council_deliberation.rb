@@ -126,6 +126,92 @@ class TestCouncilDeliberation < Minitest::Test
     assert_match(/insufficient_credits/, result.message, "the reason tally is the actionable half")
   end
 
+  def test_quorum_uses_the_selected_panel_size_not_the_full_registry_size
+    personas = Array.new(26) { |i| Persona.new(name: "P#{i}", role: "r", bias: "b", prompt: "p") }
+    delib = Master::Review::Council::Deliberation.new(personas:, agent: StubAgent.new, judge_enabled: false)
+    delib.instance_variable_set(:@panel_size, 4)
+
+    result = delib.send(:quorum_error, [{ persona: "P0" }])
+
+    assert result.err?
+    assert_match(/quorum not reached \(1\/4\)/, result.message)
+  end
+
+  def test_missing_security_response_blocks_a_quorum_of_other_reviewers
+    personas = [
+      Persona.new(name: "Security", role: "Security", bias: "Safety", prompt: "strict", veto_role: true),
+      *Array.new(3) { |i| Persona.new(name: "P#{i}", role: "Reviewer", bias: "Review", prompt: "review") },
+    ]
+    agent = Object.new
+    agent.define_singleton_method(:ask) do |prompt, **|
+      raise "security reviewer unavailable" if prompt.include?("You are Security")
+
+      CouncilAnswer.json
+    end
+    delib = Master::Review::Council::Deliberation.new(
+      personas:, agent:, judge_enabled: false, mode: :sequential
+    )
+
+    result = Master.stub(:any_api_key_present?, true) do
+      Master::Review::Council::Deliberation.stub(:reachable_for?, true) do
+        delib.stub(:panel_blocked?, false) { delib.review("a proposed change") }
+      end
+    end
+
+    assert result.err?
+    assert_equal :inconclusive, result.category
+    assert_match(/required veto reviewer\(s\) did not answer: Security/, result.message)
+  end
+
+  def test_capacity_reduction_preserves_canonical_veto_order_and_records_omissions
+    personas = [
+      Persona.new(name: "Maintainer", role: "Maintainer", bias: "Sustainability", prompt: "maintain", veto_role: true),
+      Persona.new(name: "Observer", role: "Reviewer", bias: "Review", prompt: "observe"),
+      Persona.new(name: "Reliability", role: "Reliability", bias: "Resilience", prompt: "reliable", veto_role: true),
+      Persona.new(name: "Security", role: "Security", bias: "Safety", prompt: "secure", veto_role: true),
+    ]
+    delib = Master::Review::Council::Deliberation.new(personas:, agent: StubAgent.new, judge_enabled: false)
+    policy = Object.new
+    policy.define_singleton_method(:council_target) { |current:, **| [current, 2].min }
+    delib.instance_variable_set(:@availability, policy)
+    delib.define_singleton_method(:panel_blocked?) { false }
+    delib.define_singleton_method(:local_floor_available?) { false }
+    delib.define_singleton_method(:cloud_floor_available?) { true }
+
+    selected = Master::Review::Council::Deliberation.stub(:local_posture?, false) do
+      delib.send(:active_personas, nil)
+    end
+
+    assert_equal %w[Security Reliability], selected.map(&:name)
+    assert_equal ["Maintainer"], delib.instance_variable_get(:@omitted_veto_role_names)
+    missing = delib.send(
+      :required_veto_response_error,
+      [{ persona: "Security" }, { persona: "Reliability" }],
+    )
+    assert missing.err?
+    assert_match(/Maintainer/, missing.message)
+  end
+
+  def test_pre_ship_review_requires_security_even_when_the_supplied_panel_omits_it
+    personas = Array.new(3) { |i| Persona.new(name: "P#{i}", role: "Reviewer", bias: "Review", prompt: "review") }
+    delib = Master::Review::Council::Deliberation.new(personas:, agent: StubAgent.new, judge_enabled: false)
+    policy = Object.new
+    policy.define_singleton_method(:council_target) { |current:, **| current }
+    delib.instance_variable_set(:@availability, policy)
+    delib.define_singleton_method(:panel_blocked?) { false }
+    delib.define_singleton_method(:local_floor_available?) { false }
+    delib.define_singleton_method(:cloud_floor_available?) { true }
+
+    result = Master::Review::Council::Deliberation.stub(:local_posture?, false) do
+      delib.review_pre_ship("change")
+    end
+
+    assert result.err?
+    assert_equal :inconclusive, result.category
+    assert_match(/Security/, result.message)
+  end
+
+
   # The defect this fixes: four personas each bought the same refusal, and the
   # run then reported on everything else as though nothing were missing.
   # Sequential mode makes the count deterministic — the parallel case cannot
