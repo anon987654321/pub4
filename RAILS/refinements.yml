@@ -1607,7 +1607,7 @@ items:
   item: Add an 'add to calendar' .ics download on the event page (format.ics on EventsController#show
     with DTSTART/DTEND/LOCATION, STATUS:CANCELLED when cancelled); no calendar export
     exists anywhere in the app.
-  status: open
+  status: done
 - id: brgen-089
   app: brgen
   area: events
@@ -1662,7 +1662,7 @@ items:
     in event_params but no field sets it unless a Place is picked) and a neighbourhood
     filter on the index, which already honours params[:neighborhood_id] with no UI
     to reach it.
-  status: open
+  status: done
 - id: brgen-095
   app: brgen
   area: events

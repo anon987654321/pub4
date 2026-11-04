@@ -10,6 +10,7 @@ class EventsController < ApplicationController
   before_action :require_real_user, only: %i[new create edit update destroy cancel]
   before_action :set_event, only: %i[show edit update destroy cancel]
   before_action :authorize_organiser, only: %i[edit update destroy cancel]
+  helper_method :neighborhood_choices
 
   def index
     scope = Event.upcoming.includes(:user, :place, :neighborhood).with_attached_cover
@@ -26,6 +27,7 @@ class EventsController < ApplicationController
 
   def show
     raise ActiveRecord::RecordNotFound unless @event.readable_by?(Current.user)
+    return send_calendar if request.format.ics?
     return if redirect_id_to_slug(@event)
 
     @rsvp = @event.rsvp_for(Current.user)
@@ -76,6 +78,16 @@ class EventsController < ApplicationController
   private
 
   COMMENTS_PER_PAGE = 20
+
+  # The city's neighbourhoods, for the form's select and the index filter.
+  def neighborhood_choices
+    @neighborhood_choices ||= Neighborhood.in_city(ActsAsTenant.current_tenant)
+  end
+
+  def send_calendar
+    ics = EventCalendar.new(@event, url: event_url(@event), host: request.host).to_ics
+    send_data ics, type: :ics, disposition: "attachment", filename: "#{@event.to_param}.ics"
+  end
 
   # The newest page of comments, shown oldest first: comments/create appends a
   # new one at the bottom, so the list has to read downwards to the latest.

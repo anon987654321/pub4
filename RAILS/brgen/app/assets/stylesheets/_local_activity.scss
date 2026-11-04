@@ -5,6 +5,7 @@
 
 // ============================================================ module: local_activity
 .home-neighborhood-filter,
+.neighborhood-filter,
 .local-activity {
   display: flex;
   align-items: center;
@@ -14,6 +15,7 @@
 }
 
 .home-neighborhood-filter label,
+.neighborhood-filter label,
 .local-activity-heading h2 {
   margin: 0;
   font-size: var(--text-small, 0.875rem);
@@ -21,7 +23,8 @@
   line-height: 1.35;
 }
 
-.home-neighborhood-filter select {
+.home-neighborhood-filter select,
+.neighborhood-filter select {
   min-width: 10rem;
   max-width: 100%;
 }

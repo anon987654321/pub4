@@ -328,6 +328,9 @@ nb:
     nobody_yet: Ingen har svart ennå.
     free: Gratis
     tickets: Billetter
+    add_to_calendar: Legg til i kalender
+    neighborhood_filter: Bydel
+    all_neighborhoods: Hele byen
     on_the_map: Vis på kartet
     happening_now: Skjer nå
     cancelled: Avlyst
@@ -370,6 +373,9 @@ nb:
       ends_at: Slutter (valgfritt)
       place: Sted fra kartet
       no_place: Ikke et registrert sted
+      neighborhood: Bydel
+      no_neighborhood: Ingen bestemt bydel
+      neighborhood_hint: Fylles inn fra stedet hvis du velger et sted fra kartet.
       venue_name: Stedsnavn
       address: Adresse
       description: Beskrivelse

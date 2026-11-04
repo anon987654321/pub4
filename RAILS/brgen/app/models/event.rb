@@ -67,8 +67,11 @@ class Event < ApplicationRecord
 
   def cancelled? = status == "cancelled"
 
+  # A cancelled event stays readable: the cancellation notice links to it, and
+  # its calendar file has to say CANCELLED to the people who imported it.
+  # Only a draft is the organiser's alone.
   def readable_by?(user)
-    status == "published" || (user.present? && user.id == user_id)
+    status != "draft" || (user.present? && user.id == user_id)
   end
   def free? = price_cents.to_i.zero?
   def price_display = free? ? nil : Shared::MoneyDisplay.format(price_cents, currency)

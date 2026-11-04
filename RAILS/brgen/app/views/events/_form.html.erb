@@ -29,6 +29,15 @@
           { include_blank: t("events.form.no_place") } %>
   </p>
 
+<% if neighborhood_choices.any? %>
+  <p>
+    <%= f.label :neighborhood_id, t("events.form.neighborhood") %>
+    <%= f.collection_select :neighborhood_id, neighborhood_choices, :id, :name,
+          { include_blank: t("events.form.no_neighborhood") }, aria: { describedby: "event_neighborhood_hint" } %>
+    <%= tag.small t("events.form.neighborhood_hint"), id: "event_neighborhood_hint", class: "form-help" %>
+  </p>
+<% end %>
+
   <p>
     <%= f.label :venue_name, t("events.form.venue_name") %>
     <%= f.text_field :venue_name %>

@@ -102,4 +102,47 @@ class EventsPageTest < ActionDispatch::IntegrationTest
     refute_includes body, "Kommentar-22-slutt"
     assert_select "nav.pager a[rel=next][href*=?]", "comments_page=2"
   end
+
+  test "the event page links an .ics file that carries the time, place and status" do
+    @event.update!(ends_at: @event.starts_at + 2.hours, address: "Bryggen 1, Bergen", description: "Ta med; stol")
+
+    get event_path(@event)
+    assert_select "a[href=?][download]", event_path(@event, format: :ics),
+                  text: I18n.t("events.add_to_calendar", locale: :nb)
+
+    get event_path(@event, format: :ics)
+    assert_response :success
+    assert_equal "text/calendar", response.media_type
+    body = response.body
+    assert_includes body, "DTSTART:#{@event.starts_at.utc.strftime('%Y%m%dT%H%M%SZ')}\r\n"
+    assert_includes body, "DTEND:#{@event.ends_at.utc.strftime('%Y%m%dT%H%M%SZ')}\r\n"
+    assert_includes body, "LOCATION:Bryggen\\, Bryggen 1\\, Bergen\r\n"
+    assert_includes body, "DESCRIPTION:Ta med\\; stol\r\n"
+    assert_includes body, "STATUS:CONFIRMED\r\n"
+
+    @event.cancel!
+    get event_path(@event, format: :ics)
+    assert_includes response.body, "STATUS:CANCELLED\r\n"
+  end
+
+  test "the form sets a neighbourhood and the index filters by one" do
+    nordnes = Neighborhood.create!(city: @city, name: "Nordnes", slug: "nordnes-#{SecureRandom.hex(2)}")
+    sandviken = Neighborhood.create!(city: @city, name: "Sandviken", slug: "sandviken-#{SecureRandom.hex(2)}")
+    sign_in_as(@organiser)
+
+    get new_event_path
+    assert_select "select#event_neighborhood_id[aria-describedby='event_neighborhood_hint'] option[value=?]",
+                  nordnes.id.to_s
+
+    post events_path, params: { event: { title: "Nabofest", starts_at: 3.days.from_now, venue_name: "Hagen",
+                                         neighborhood_id: nordnes.id } }
+    assert_equal nordnes.id, Event.find_by!(title: "Nabofest").neighborhood_id
+    Event.create!(user: @organiser, title: "Sandvikfest", starts_at: 4.days.from_now, venue_name: "Kaien",
+                  neighborhood: sandviken)
+
+    get events_path(neighborhood_id: nordnes.id)
+    assert_select "form.neighborhood-filter select#events-neighborhood option[selected][value=?]", nordnes.id.to_s
+    assert_includes response.body, "Nabofest"
+    refute_includes response.body, "Sandvikfest"
+  end
 end

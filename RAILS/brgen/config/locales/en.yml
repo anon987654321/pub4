@@ -323,6 +323,9 @@ en:
     nobody_yet: Nobody has answered yet.
     free: Free
     tickets: Tickets
+    add_to_calendar: Add to calendar
+    neighborhood_filter: Neighbourhood
+    all_neighborhoods: The whole city
     on_the_map: Show on the map
     happening_now: Happening now
     cancelled: Cancelled
@@ -365,6 +368,9 @@ en:
       ends_at: Ends (optional)
       place: Place from the map
       no_place: Not a listed place
+      neighborhood: Neighbourhood
+      no_neighborhood: No particular neighbourhood
+      neighborhood_hint: Filled in from the place if you pick one from the map.
       venue_name: Venue name
       address: Address
       description: Description

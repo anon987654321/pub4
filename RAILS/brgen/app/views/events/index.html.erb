@@ -13,6 +13,20 @@
       label: t("search.events_label"),
       frame_id: "brgen-events" %>
 
+<%# The index already filters by neighborhood_id; this is the way to ask for it.
+    Choosing one applies it; the button is for a browser without JavaScript. %>
+<% if neighborhood_choices.any? %>
+  <%= form_with url: events_path, method: :get, class: "neighborhood-filter",
+        data: { controller: "auto-submit", auto_submit_delay_value: 0 } do |form| %>
+    <%= form.label :neighborhood_id, t("events.neighborhood_filter"), for: "events-neighborhood" %>
+    <%= form.select :neighborhood_id,
+          options_from_collection_for_select(neighborhood_choices, :id, :name, params[:neighborhood_id]),
+          { include_blank: t("events.all_neighborhoods") },
+          id: "events-neighborhood", data: { action: "change->auto-submit#submit" } %>
+    <noscript><%= form.submit t("actions.apply"), name: nil, class: "button button-ghost" %></noscript>
+  <% end %>
+<% end %>
+
 <%# The h2 the past section already had. Without it the page ran h1 -> h3
     (the event cards) -> h2, so anyone navigating by heading met the section
     structure inverted. role="region" is dropped from both: a <section> with an
