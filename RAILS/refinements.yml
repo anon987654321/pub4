@@ -2013,7 +2013,7 @@ items:
   path: RAILS/brgen_marketplace/app/controllers/marketplace/addresses_controller.rb
   item: Send a buyer who reached the address page from checkout back to the cart after
     saving an address (return_to param), instead of redirect_back to the address page.
-  status: open
+  status: done
 - id: brgen-137
   app: brgen
   area: marketplace
@@ -2075,7 +2075,7 @@ items:
   item: 'Fix the address form scope: the view posts marketplace_address[...] but AddressesController#address_params
     requires :address, so every address saved from the page is rejected; align them
     and add a test that submits the rendered form.'
-  status: open
+  status: done
 - id: brgen-144
   app: brgen
   area: marketplace
