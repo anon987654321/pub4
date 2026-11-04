@@ -1,6 +1,12 @@
 # frozen_string_literal: true
 
 class Cart < ApplicationRecord
+  # A line the menu does not offer: a foreign option id or too many sauces.
+  class InvalidLine < StandardError; end
+
+  # The item sheet's chip cap, enforced here too so the form is not the guard.
+  MAX_SAUCES = 2
+
   belongs_to :user, optional: true
   has_many :cart_items, dependent: :destroy
 
@@ -27,10 +33,8 @@ class Cart < ApplicationRecord
   def add_item!(menu_item, quantity = 1, option_ids: [], note: nil)
     quantity = Integer(quantity)
     quantity = 1 if quantity < 1
-    # Form noise guard: a no-option form can deliver [""] (or "") through the
-    # params round-trip. Blank ids carry no option, so drop them before the
-    # Integer cast instead of 500ing on a legitimate request.
-    ids = Array(option_ids).reject(&:blank?).map { |id| Integer(id) }.sort
+    ids = chosen_option_ids(option_ids)
+    options = offered_options(menu_item, ids)
     signature = ids.join(",")
 
     line = cart_items.find_by(menu_item_id: menu_item.id, option_ids: signature, note: note.presence)
@@ -39,7 +43,7 @@ class Cart < ApplicationRecord
     else
       line = cart_items.new(menu_item: menu_item, option_ids: signature, note: note.presence, quantity: quantity)
     end
-    line.unit_price_ore = menu_item.price_ore.to_i + ItemOption.where(id: ids).sum(:price_ore)
+    line.unit_price_ore = menu_item.price_ore.to_i + options.sum { |o| o.price_ore.to_i }
     line.save!
     line
   end
@@ -55,5 +59,24 @@ class Cart < ApplicationRecord
   def empty!
     cart_items.destroy_all
     self
+  end
+
+  private
+
+  # Form noise guard: a no-option form can deliver [""] (or "") through the
+  # params round-trip. Blank ids carry no option, so drop them before the
+  # Integer cast instead of 500ing on a legitimate request.
+  def chosen_option_ids(option_ids)
+    Array(option_ids).compact_blank.to_set { |id| Integer(id) }.sort
+  end
+
+  # The form is not the guard: a crafted request can name another dish's
+  # option or a third sauce, and every id it names would be priced.
+  def offered_options(menu_item, ids)
+    options = ItemOption.where(menu_item_id: menu_item.id, id: ids).to_a
+    raise InvalidLine, "option not offered with #{menu_item.name}" unless options.size == ids.size
+    raise InvalidLine, "more than #{MAX_SAUCES} sauces" if options.count { |o| o.kind == "sauce" } > MAX_SAUCES
+
+    options
   end
 end

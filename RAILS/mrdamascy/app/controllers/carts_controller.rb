@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 class CartsController < ApplicationController
+  rescue_from Cart::InvalidLine, with: :refuse_line
+
   def show
     @cart = current_cart
     @lines = @cart.cart_items.includes(:menu_item).order(:id)
@@ -64,6 +66,12 @@ class CartsController < ApplicationController
   end
 
   private
+
+  # The line was refused before anything was written; send the guest back to
+  # the dish so the sheet shows what can be picked.
+  def refuse_line
+    redirect_to menu_item_path(params[:menu_item_id]), alert: t("flash.line_invalid"), status: :see_other
+  end
 
   def quantity_param
     (params[:quantity] || params[:qty] || 1).to_i

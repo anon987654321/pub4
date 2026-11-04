@@ -412,6 +412,7 @@ en:
     review_thanks: Thank you! It means everything to a small kitchen
     reordered: Everything from last time is in your cart
     forbidden: You don't have access here
+    line_invalid: That choice is not offered with this dish — two sauces at most
     dismiss: Dismiss
     not_found: Not found — it may have been eaten.
   about:

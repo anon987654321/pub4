@@ -5174,7 +5174,7 @@ items:
   item: Validate in Cart#add_item! that every option_id belongs to the menu item and
     enforce the two-sauce cap server-side; any ItemOption id is accepted and priced
     today.
-  status: open
+  status: done
 - id: mrdamascy-016
   app: mrdamascy
   area: cart

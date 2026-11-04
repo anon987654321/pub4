@@ -37,6 +37,27 @@ class CartsControllerTest < ActionDispatch::IntegrationTest
     assert_equal 12900, line.unit_price_ore
   end
 
+  test "add_item refuses an option that belongs to another dish" do
+    user = customer_sign_in
+    other = seed_item!(@category, name: "Adana Sterk Dürüm", position: 2)
+    foreign = seed_option!(other, name: "Ekstra kjøtt", kind: "extra", price_ore: 2500)
+
+    post add_item_cart_url, params: { menu_item_id: @item.id, quantity: 1, option_ids: [foreign.id] }
+
+    assert_redirected_to menu_item_path(@item)
+    assert_empty open_cart_for(user)&.cart_items.to_a
+  end
+
+  test "add_item refuses a third sauce" do
+    user = customer_sign_in
+    sauces = 3.times.map { |n| seed_option!(@item, name: "Saus #{n}", kind: "sauce", position: n) }
+
+    post add_item_cart_url, params: { menu_item_id: @item.id, quantity: 1, option_ids: sauces.map(&:id) }
+
+    assert_redirected_to menu_item_path(@item)
+    assert_empty open_cart_for(user)&.cart_items.to_a
+  end
+
   test "update_item changes the quantity" do
     user = customer_sign_in
     post add_item_cart_url, params: { menu_item_id: @item.id, quantity: 1, option_ids: [], note: "" }

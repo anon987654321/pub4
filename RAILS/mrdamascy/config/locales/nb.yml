@@ -412,6 +412,7 @@ nb:
     review_thanks: Takk! Det betyr alt for et lite kjøkken
     reordered: Alt fra sist ligger i kurven
     forbidden: Du har ikke tilgang hit
+    line_invalid: Det valget finnes ikke på denne retten — maks to sauser
     dismiss: Lukk
     not_found: Fant den ikke — den er kanskje spist.
   about:
