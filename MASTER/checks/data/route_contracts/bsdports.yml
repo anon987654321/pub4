@@ -1,0 +1,222 @@
+---
+schema: 1
+app: bsdports
+host:
+routes:
+  "/":
+    status: 200
+    type: text/html
+    title: Ports — BSDports
+    heading: OpenBSD-porter
+    landmarks:
+    - header
+    - nav
+    - main
+    - footer
+    - form
+    forms:
+    - "/ports"
+  "/.well-known/apple-app-site-association":
+    status: 200
+    type: application/json
+  "/.well-known/assetlinks.json":
+    status: 200
+    type: application/json
+  "/account":
+    status: 302
+    type: text/html
+    location: "/session/new"
+    landmarks: []
+    forms: []
+  "/account/export":
+    status: 302
+    type: text/html
+    location: "/session/new"
+    landmarks: []
+    forms: []
+  "/categories":
+    status: 200
+    type: text/html
+    title: Kategorier — BSDports
+    heading: Kategorier
+    landmarks:
+    - header
+    - nav
+    - main
+    - footer
+    - form
+    forms:
+    - "/categories"
+  "/changelog":
+    status: 200
+    type: text/html
+    title: BSDports
+    heading: Hva har endret seg
+    landmarks:
+    - header
+    - nav
+    - main
+    - footer
+    forms: []
+  "/cookies":
+    status: 200
+    type: text/html
+    title: Informasjonskapsler — BSDports
+    heading: Informasjonskapsler på N.N.N.N
+    landmarks:
+    - header
+    - nav
+    - main
+    - footer
+    forms: []
+  "/health":
+    status: 200
+    type: application/json
+  "/internal/status":
+    status: 401
+    type: text/html
+    landmarks: []
+    forms: []
+  "/maintainers":
+    status: 200
+    type: text/html
+    title: Maintainere — BSDports
+    heading: Maintainere
+    landmarks:
+    - header
+    - nav
+    - main
+    - footer
+    - form
+    forms:
+    - "/maintainers"
+  "/manifest":
+    status: 200
+    type: application/manifest+json
+  "/offline":
+    status: 200
+    type: text/html
+    title: BSDports
+    heading: BSDports er frakoblet
+    landmarks:
+    - header
+    - nav
+    - main
+    - footer
+    forms: []
+  "/passwords/new":
+    status: 200
+    type: text/html
+    title: BSDports
+    heading: Glemt passord?
+    landmarks:
+    - header
+    - nav
+    - main
+    - footer
+    - form
+    forms:
+    - "/passwords"
+  "/ports":
+    status: 200
+    type: text/html
+    title: Ports — BSDports
+    heading: OpenBSD-porter
+    landmarks:
+    - header
+    - nav
+    - main
+    - footer
+    - form
+    forms:
+    - "/ports"
+  "/privacy":
+    status: 200
+    type: text/html
+    title: Personvern — BSDports
+    heading: Personvern hos N.N.N.N
+    landmarks:
+    - header
+    - nav
+    - main
+    - footer
+    forms: []
+  "/recede_historical_location":
+    status: 200
+    type: text/html
+    landmarks: []
+    forms: []
+  "/refresh_historical_location":
+    status: 200
+    type: text/html
+    landmarks: []
+    forms: []
+  "/resume_historical_location":
+    status: 200
+    type: text/html
+    landmarks: []
+    forms: []
+  "/safety":
+    status: 200
+    type: text/html
+    title: Sikkerhet — BSDports
+    heading: Din sikkerhet
+    landmarks:
+    - header
+    - nav
+    - main
+    - footer
+    forms: []
+  "/service-worker":
+    status: 200
+    type: application/javascript
+  "/session/magic":
+    status: 302
+    type: text/html
+    location: "/session/new"
+    landmarks: []
+    forms: []
+  "/session/new":
+    status: 200
+    type: text/html
+    title: BSDports
+    heading: Logg inn
+    landmarks:
+    - header
+    - nav
+    - main
+    - footer
+    - form
+    forms:
+    - "/session"
+  "/sitemap.xml":
+    status: 200
+    type: application/xml
+  "/sso/from_master":
+    status: 302
+    type: text/html
+    location: "/session/new"
+    landmarks: []
+    forms: []
+  "/terms":
+    status: 200
+    type: text/html
+    title: Vilkår — BSDports
+    heading: Vilkår for N.N.N.N
+    landmarks:
+    - header
+    - nav
+    - main
+    - footer
+    forms: []
+  "/two_factor_setup":
+    status: 302
+    type: text/html
+    location: "/session/new"
+    landmarks: []
+    forms: []
+  "/up":
+    status: 200
+    type: text/html
+    landmarks: []
+    forms: []
