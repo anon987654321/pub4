@@ -98,6 +98,7 @@ nb:
       payment_confirmed: "Betaling bekreftet"
       payment_confirmed_body: "Betalingen din for %{title} er bekreftet."
       on_its_way: "På vei"
+      tracking: Sporing
       delivered: "Levert"
     buy_box_heading: "Anbefalt butikktilbud"
     other_sellers_from:

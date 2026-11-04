@@ -24,34 +24,36 @@ module Marketplace
     end
 
     def reasons(listing)
-      tokens = Shared::Commerce.normalize_query(@query)
-      reasons = []
+      reasons = [ match_reason(listing) ].compact
 
-      if tokens.any?
-        title = listing.title.to_s.downcase
-        description = listing.description.to_s.downcase
-        category = listing.category&.name.to_s.downcase
-
-        if tokens.all? { |token| title.include?(token) }
-          reasons << I18n.t("marketplace.ranking_reasons.title_match", default: "Matches your search.")
-        elsif tokens.any? { |token| title.include?(token) }
-          reasons << I18n.t("marketplace.ranking_reasons.title_partial", default: "Partly matches your search.")
-        elsif tokens.any? { |token| description.include?(token) }
-          reasons << I18n.t("marketplace.ranking_reasons.description_match", default: "Matches the listing description.")
-        elsif tokens.any? { |token| category.include?(token) }
-          reasons << I18n.t("marketplace.ranking_reasons.category_match", default: "Matches the category.")
-        end
+      if preferred_category_ids.include?(listing.category_id)
+        reasons << I18n.t("marketplace.ranking_reasons.preferred_category")
       end
-
-      reasons << I18n.t("marketplace.ranking_reasons.preferred_category", default: "Similar to categories you saved.") if preferred_category_ids.include?(listing.category_id)
-      reasons << I18n.t("marketplace.ranking_reasons.fast_delivery", default: "Fast local delivery.") if listing.delivery_promise.to_i <= 1
-      reasons << I18n.t("marketplace.ranking_reasons.trusted_seller", default: "Strong seller signal.") if listing.seller_score.to_f >= 0.85
-      reasons << I18n.t("marketplace.ranking_reasons.quality_signal", default: "Strong marketplace quality signal.") if listing.ranking_score.to_f >= 0.65
+      reasons << I18n.t("marketplace.ranking_reasons.fast_delivery") if listing.delivery_promise.to_i <= 1
+      reasons << I18n.t("marketplace.ranking_reasons.trusted_seller") if listing.seller_score.to_f >= 0.85
+      reasons << I18n.t("marketplace.ranking_reasons.quality_signal") if listing.ranking_score.to_f >= 0.65
 
       reasons.first(3)
     end
 
     private
+
+    # How the listing meets the search, strongest first, or nil with no search.
+    def match_reason(listing)
+      return if tokens.empty?
+
+      title = listing.title.to_s.downcase
+      return I18n.t("marketplace.ranking_reasons.title_match") if tokens.all? { |token| title.include?(token) }
+      return I18n.t("marketplace.ranking_reasons.title_partial") if matches_any?(title)
+      return I18n.t("marketplace.ranking_reasons.description_match") if matches_any?(listing.description)
+
+      I18n.t("marketplace.ranking_reasons.category_match") if matches_any?(listing.category&.name)
+    end
+
+    def matches_any?(text)
+      text = text.to_s.downcase
+      tokens.any? { |token| text.include?(token) }
+    end
 
     attr_reader :scope, :query, :viewer
 

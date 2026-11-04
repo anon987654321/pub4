@@ -98,6 +98,7 @@ en:
       payment_confirmed: "Payment confirmed"
       payment_confirmed_body: "Your payment for %{title} is confirmed."
       on_its_way: "On its way"
+      tracking: Tracking
       delivered: "Delivered"
     buy_box_heading: "Recommended shop offer"
     other_sellers_from:

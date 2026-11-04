@@ -3,6 +3,14 @@ en:
   marketplace:
     ranking_reasons:
       label: Why this appears
+      title_match: Matches your search.
+      title_partial: Partly matches your search.
+      description_match: Matches the listing description.
+      category_match: Matches the category.
+      preferred_category: Similar to categories you saved.
+      fast_delivery: Fast local delivery.
+      trusted_seller: Strong seller signal.
+      quality_signal: Strong marketplace quality signal.
     share_to_feed: Share to BRGEN feed
     add_to_amber: Add to Amber
     seller_center:

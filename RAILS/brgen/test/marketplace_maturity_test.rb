@@ -93,6 +93,9 @@ class MarketplaceMaturityTest < ActiveSupport::TestCase
       Marketplace::Listing.where(id: [ @listing.id ]),
       query: "bicycle"
     ).reasons(@listing)
-    assert reasons.any? { |reason| reason.downcase.include?("search") }
+    # By key, not by the English word: brgen renders nb, and the reasons are
+    # translated now.
+    matched = %w[title_match title_partial].map { I18n.t("marketplace.ranking_reasons.#{_1}") }
+    assert (reasons & matched).any?, "no search-match reason in #{reasons.inspect}"
   end
 end

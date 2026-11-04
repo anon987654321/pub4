@@ -3,6 +3,14 @@ nb:
   marketplace:
     ranking_reasons:
       label: Hvorfor du ser dette
+      title_match: Passer med søket ditt.
+      title_partial: Passer delvis med søket ditt.
+      description_match: Passer med beskrivelsen av annonsen.
+      category_match: Passer med kategorien.
+      preferred_category: Ligner kategorier du har lagret.
+      fast_delivery: Rask lokal levering.
+      trusted_seller: Sterkt selgersignal.
+      quality_signal: Sterkt kvalitetssignal fra markedsplassen.
     share_to_feed: Del i BRGEN-feeden
     add_to_amber: Legg til i Amber
     seller_center:

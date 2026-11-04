@@ -195,7 +195,8 @@ class Marketplace::Order < ApplicationRecord
     metadata = { order_id: id, carrier: carrier }
     record_listing_commerce_event("MarketplaceOrderShipped", actor: seller, metadata: metadata)
     record_listing_event("shipped", user: seller, metadata: metadata)
-    detail = tracking_code.presence ? "#{listing_title} — #{carrier.presence || 'Tracking'}: #{tracking_code}" : listing_title
+    carrier_name = carrier.presence || I18n.t("marketplace.order_notification.tracking")
+    detail = tracking_code.presence ? "#{listing_title} — #{carrier_name}: #{tracking_code}" : listing_title
     deliver_notification(buyer_record, title: I18n.t("marketplace.order_notification.on_its_way"), body: detail, source: self, kind: "order")
   end
 

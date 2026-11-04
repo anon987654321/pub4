@@ -2056,7 +2056,7 @@ items:
   path: RAILS/brgen_marketplace/app/models/marketplace/order.rb
   item: 'Translate the ''Tracking'' fallback in Order#ship!''s notification body through
     I18n, so a Norwegian buyer is not told ''Tracking: ...''.'
-  status: open
+  status: done
 - id: brgen-142
   app: brgen
   area: marketplace
@@ -2066,7 +2066,7 @@ items:
     description_match, category_match, preferred_category, fast_delivery, trusted_seller,
     quality_signal); they only exist as English default: strings, so Norwegian readers
     see English badges.'
-  status: open
+  status: done
 - id: brgen-143
   app: brgen
   area: marketplace
