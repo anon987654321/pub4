@@ -2751,7 +2751,7 @@ items:
   item: Cache the Vipps access token in Rails.cache until its expires_in instead of
     fetching /accesstoken/get on every start!, and raise ProviderError with the HTTP
     status when the token call fails rather than a bare KeyError.
-  status: open
+  status: done
 - id: brgen-226
   app: brgen
   area: payments

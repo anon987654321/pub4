@@ -84,18 +84,44 @@ module Marketplace
         "brgen-#{payable.model_name.element}-#{payable.id}-#{SecureRandom.hex(4)}"
       end
 
+      # A token lives for its expires_in (about a day), so one is fetched per
+      # lifetime rather than per checkout; a minute is kept back so a token
+      # never expires between the read and the payment call. Keyed by host and
+      # client so the test and live environments never share one.
       def self.access_token
+        token_key = "vipps-epayment-token:#{api_base}:#{ENV.fetch('VIPPS_EPAYMENT_CLIENT_ID')}"
+        cached = Rails.cache.read(token_key)
+        return cached if cached
+
+        grant = fetch_access_token
+        token = grant.fetch("access_token")
+        lifetime = grant["expires_in"].to_i - 60
+        Rails.cache.write(token_key, token, expires_in: lifetime.seconds) if lifetime.positive?
+        token
+      end
+
+      # A refused token call names its status; it used to surface as a KeyError
+      # on the missing access_token, or a JSON error on an HTML error page.
+      def self.fetch_access_token
         uri = URI("#{api_base}/accesstoken/get")
+        req = token_request(uri)
+        res = Net::HTTP.start(uri.host, uri.port, use_ssl: true, open_timeout: 8, read_timeout: 15) do |http|
+          http.request(req)
+        end
+        raise ProviderError, "Vipps access token refused: HTTP #{res.code}" unless res.is_a?(Net::HTTPSuccess)
+
+        JSON.parse(res.body)
+      end
+
+      def self.token_request(uri)
         req = Net::HTTP::Post.new(uri)
         req["client_id"] = ENV.fetch("VIPPS_EPAYMENT_CLIENT_ID")
         req["client_secret"] = ENV.fetch("VIPPS_EPAYMENT_CLIENT_SECRET")
         req["Ocp-Apim-Subscription-Key"] = ENV.fetch("VIPPS_SUBSCRIPTION_KEY")
         req["Merchant-Serial-Number"] = ENV.fetch("VIPPS_MSN")
-        res = Net::HTTP.start(uri.host, uri.port, use_ssl: true, open_timeout: 8, read_timeout: 15) { |http| http.request(req) }
-        data = JSON.parse(res.body)
-        data.fetch("access_token")
+        req
       end
-      private_class_method :access_token
+      private_class_method :access_token, :fetch_access_token, :token_request
     end
   end
 end
