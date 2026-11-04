@@ -217,6 +217,7 @@ nb:
     cancel: Avbryt
     mock_note: Mock-betaling (utviklingsmodus) — ekte Stripe kobles på med STRIPE_MOCK=0.
   orders:
+    state_announcement: "Status: %{state}"
     title: Dine bestillinger
     empty_title: Ingen bestillinger ennå
     empty_body: Første wrap er ett trykk unna — og første stjerne i Sahtein-kortet.

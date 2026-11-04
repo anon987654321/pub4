@@ -49,4 +49,15 @@ class TrackPageTest < ActionDispatch::IntegrationTest
     assert_includes page.at_css(".review-given").text, "4 av 5 stjerner"
     assert_includes response.body, "Toum til himmelen"
   end
+
+  test "the page hands the tracker its status url and names the state politely" do
+    order = seed_order!(state: "preparing")
+    get track_url(order.tracking_token)
+    page = Nokogiri::HTML(response.body)
+
+    assert_equal track_status_path(order.tracking_token), page.at_css("[data-controller=track]")["data-track-url-value"]
+    status = page.at_css("[data-controller=track] [role=status]")
+    assert_equal "polite", status["aria-live"]
+    assert_equal "Status: #{I18n.t('orders.states.preparing')}", status.text
+  end
 end

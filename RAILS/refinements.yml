@@ -5094,7 +5094,7 @@ items:
   path: RAILS/mrdamascy/app/views/orders/track.html.erb
   item: Announce the new order state in a polite live region when tracking advances;
     the timeline changes silently for screen-reader users.
-  status: open
+  status: done
 - id: mrdamascy-005
   app: mrdamascy
   area: accessibility
@@ -5883,7 +5883,7 @@ items:
   path: RAILS/mrdamascy/app/javascript/controllers/track_controller.js
   item: Replace location.reload() on a state change with a Turbo replace visit so
     the page morphs in place and keeps scroll.
-  status: open
+  status: done
 - id: mrdamascy-102
   app: mrdamascy
   area: tracking
@@ -5891,7 +5891,7 @@ items:
   path: RAILS/mrdamascy/app/javascript/controllers/track_controller.js
   item: Pause tracking polls while the tab is hidden and stop them once the order
     is delivered or cancelled.
-  status: open
+  status: done
 - id: mrdamascy-103
   app: mrdamascy
   area: tracking
@@ -5899,7 +5899,7 @@ items:
   path: RAILS/mrdamascy/app/javascript/controllers/track_controller.js
   item: Pass track_status_path as a Stimulus value instead of assembling "/track/…/status"
     in JavaScript.
-  status: open
+  status: done
 - id: mrdamascy-104
   app: mrdamascy
   area: tracking

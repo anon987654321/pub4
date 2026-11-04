@@ -217,6 +217,7 @@ en:
     cancel: Cancel
     mock_note: Mock payment (development) — connect the real Stripe with STRIPE_MOCK=0.
   orders:
+    state_announcement: "Status: %{state}"
     title: Your orders
     empty_title: No orders yet
     empty_body: Your first wrap is one tap away — and your first star on the Sahtein Card.

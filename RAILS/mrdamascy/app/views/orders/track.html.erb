@@ -2,7 +2,8 @@
 
 <%# Public tracking by token (OrdersController#track provides @order).
     5-step timeline with 8-point star milestones; track_controller polls
-    /track/:token/status every 10s and reloads on state change. %>
+    track_status_path every 10s and refreshes the page in place on a state
+    change, so the polite status line below announces the new state. %>
 <% order = @order %>
 <%# A pickup order ends when the customer collects it ("Hentet"); a delivery
     order at the door. picked_up sits between ready and delivered for a
@@ -14,11 +15,13 @@
 
 <section class="track-head card"
      data-controller="track"
-     data-track-token-value="<%= order.tracking_token %>"
+     data-track-url-value="<%= track_status_path(order.tracking_token) %>"
      data-track-state-value="<%= order.state %>"
      data-track-eta-template-value="<%= t("orders.eta") %>">
 
   <h1 class="page-title"><%= t("orders.track_title") %></h1>
+  <%= tag.p t("orders.state_announcement", state: t("orders.states.#{order.state}")),
+        class: "visually-hidden", role: "status", aria: { live: "polite" } %>
   <% mode_key = order.delivery_mode == "pickup" ? "checkout.mode_pickup" : "checkout.mode_delivery" %>
   <%= tag.p "##{order.id} · #{t(mode_key)}" %>
 
