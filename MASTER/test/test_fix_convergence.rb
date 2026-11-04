@@ -1603,7 +1603,7 @@ end
     refute_nil event
     assert_equal 3, event[:payload][:pass]
     assert_equal "source_findings", event[:payload][:trigger]
-    assert_equal :disabled, event[:payload][:reason]
+    assert_equal :council_disabled, event[:payload][:reason]
   end
 
 
