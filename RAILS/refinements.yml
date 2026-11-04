@@ -5694,7 +5694,8 @@ items:
   path: RAILS/mrdamascy/config/application.rb
   item: Add Cross-Origin-Opener-Policy and a Permissions-Policy (camera=(), geolocation=(),
     payment=(self)) — mrdamascy does not load the shared security_headers initializer.
-  status: open
+  status: done
+  note: "COOP and Permissions-Policy added; payment=() kept to match relayd.conf, which overwrites the header in production."
 - id: mrdamascy-079
   app: mrdamascy
   area: security
