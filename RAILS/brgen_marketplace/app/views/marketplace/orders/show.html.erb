@@ -34,11 +34,24 @@
   </div>
 <% end %>
 
+<%# Accept and decline answer an open offer, nothing else: on a paid or
+    already-answered order they were buttons that rewrote its status. Declining
+    is final for the buyer, so it asks first. %>
+<% if @order.open_offer? %>
 <% if policy(@order).update? %>
   <div class="order-actions">
     <%= button_to t("marketplace.accept"), order_path(@order, accept: true), method: :patch, class: "button" %>
     <%= button_to t("marketplace.decline"), order_path(@order, decline: true), method: :patch,
-          class: "button button-ghost" %>
+          class: "button button-ghost", form: { data: { turbo_confirm: t("marketplace.confirm_decline") } } %>
+  </div>
+<% end %>
+<% end %>
+
+<%# A buyer whose payment has not started, or failed, is offered the way to
+    pay: the cart, where every payable order carries the pay buttons. %>
+<% if @order.buyer == Current.user && @order.startable? %>
+  <div class="order-actions">
+    <%= link_to t("marketplace.pay_now"), cart_path, class: "button button-primary" %>
   </div>
 <% end %>
 

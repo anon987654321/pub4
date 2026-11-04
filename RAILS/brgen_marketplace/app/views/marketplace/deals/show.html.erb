@@ -9,9 +9,27 @@
               class: "deal-meta deal-meta--countdown" if @deal.ends_in %>
   <% end %>
 
+  <%# What the deal is worth, shown on the deal itself: the discount, the
+      observed before price (the trailing-30-day minimum, only when the price
+      is below it, as on the card), the photo, and a way to buy. %>
   <%= tag.section class: "deal-listing" do %>
+    <% if @listing.photos.attached? %>
+      <%= responsive_image_tag @listing.photos.first, alt: @listing.title, widths: [360, 720],
+                                                      sizes: "(max-width: 768px) 100vw, 720px" %>
+    <% end %>
     <%= tag.h2 link_to(@listing.title, listing_path(@listing)) %>
-    <%= tag.p @listing.price_display %>
+    <%= tag.p @listing.price_display, class: "deal-price" %>
+    <% if @deal.discount_percent.present? %>
+      <%= tag.p t("marketplace.percent_off", percent: @deal.discount_percent.to_i),
+                class: "deal-badge deal-badge--sale" %>
+    <% end %>
+    <% if (was = @listing.omnibus_anchor_display) %>
+      <%= tag.p t("marketplace.persuasion.was_price", price: was), class: "deal-meta deal-meta--was" %>
+    <% end %>
     <%= tag.p @listing.description if @listing.description.present? %>
+    <% if @listing.buyable? && authenticated? && Current.user != @listing.user %>
+      <%= button_to t("marketplace.add_to_cart"), listing_orders_path(@listing), params: { quantity: 1 },
+                                                  class: "button button-primary" %>
+    <% end %>
   <% end %>
 <% end %>

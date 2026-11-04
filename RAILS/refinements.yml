@@ -2084,7 +2084,7 @@ items:
   item: Show the deal's discount on the deal page (percent_off and the before price),
     the listing photo and an add-to-cart button; today it shows only headline, price
     and description.
-  status: open
+  status: done
 - id: brgen-145
   app: brgen
   area: marketplace
@@ -2092,7 +2092,7 @@ items:
   path: RAILS/brgen_marketplace/app/views/marketplace/listings/_card.html.erb
   item: 'Point the card''s Offer link at listing_path(listing, anchor: ''make-offer'');
     on the index and store grids the bare #make-offer anchor jumps nowhere.'
-  status: open
+  status: done
 - id: brgen-146
   app: brgen
   area: marketplace
@@ -2127,7 +2127,7 @@ items:
   item: Show the accept and decline buttons on the order page only when @order.open_offer?,
     and ask for confirmation on decline, instead of offering both on every order the
     policy lets the seller update.
-  status: open
+  status: done
 - id: brgen-150
   app: brgen
   area: marketplace
@@ -2136,7 +2136,7 @@ items:
   item: Show a 'Pay now' action on the buyer's order page when the order is startable
     (unpaid or failed), so a failed payment has a retry path instead of a dead status
     chip.
-  status: open
+  status: done
 - id: brgen-151
   app: brgen
   area: marketplace

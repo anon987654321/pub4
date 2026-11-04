@@ -74,7 +74,9 @@
             listing_orders_path(listing),
             params: { quantity: 1 },
             class: "button button-primary deal-card-buy" %>
-      <%= link_to t("marketplace.offer"), "#make-offer", class: "deal-card-offer" %>
+      <%# The offer form lives on the listing page; a bare #make-offer on a
+          grid jumped nowhere. %>
+      <%= link_to t("marketplace.offer"), listing_path(listing, anchor: "make-offer"), class: "deal-card-offer" %>
     </div>
   <% end %>
 </article>

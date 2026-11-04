@@ -148,6 +148,8 @@ en:
     move_down: "Move down"
     any_query: Any query
     alerts_on: alerts on
+    confirm_decline: Decline this offer? The buyer is told at once.
+    pay_now: Pay now
     alerts_turn_on: Turn alerts on
     alerts_turn_off: Turn alerts off
     partner_program: Partner program
