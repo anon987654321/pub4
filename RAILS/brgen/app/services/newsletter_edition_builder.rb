@@ -115,8 +115,10 @@ class NewsletterEditionBuilder
     record.update!(deals: existing + voucher_rows)
   end
 
+  # A newsletter reaches anyone subscribed, so it carries only what a signed-out
+  # visitor could read: Post.hot alone put private-community posts in the letter.
   def fetch_posts(city_record)
-    scope = Post.hot.includes(:user, :community).with_attached_image
+    scope = Post.hot.visible_to(nil).includes(:user, :community).with_attached_image
     if city_record
       ActsAsTenant.with_tenant(city_record) { scope.limit(6).to_a }
     else

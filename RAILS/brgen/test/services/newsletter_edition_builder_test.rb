@@ -29,6 +29,20 @@ class NewsletterEditionBuilderTest < ActiveSupport::TestCase
            "expected persisted editions, got #{editions.map(&:class).uniq.inspect}")
   end
 
+  test "a private community's posts stay out of the letter" do
+    ActsAsTenant.with_tenant(@city) do
+      club = Community.create!(slug: "lukket-#{SecureRandom.hex(3)}", name: "Lukket", user: @author, privacy: "private")
+      Post.create!(user: @author, title: "Åpent innlegg", content: "For alle.")
+      Post.create!(user: @author, community: club, title: "Hemmelig innlegg", content: "Bare medlemmer.")
+    end
+
+    edition = NewsletterEditionBuilder.compose_daily!(city: @city.slug).first
+    titles = Array(edition.stories).map { |story| story["title"] || story[:title] }
+
+    assert_includes titles, "Åpent innlegg"
+    refute_includes titles, "Hemmelig innlegg"
+  end
+
   # Composing is not enough. Running the fixed builder against production put 12
   # editions in the table and logged "newsletter url skipped: ArgumentError"
   # once per story: url_for has no request to take a host from, so every link

@@ -2555,7 +2555,7 @@ items:
   item: Restrict fetch_posts to posts readable by a guest (Post.visible_to(nil) or
     public communities only); Post.hot.kept can put private-community posts into a
     mass mailing.
-  status: open
+  status: done
 - id: brgen-202
   app: brgen
   area: newsletter
