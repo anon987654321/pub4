@@ -23,6 +23,17 @@ class WriteEndpointRateLimitsTest < Minitest::Test
       declaration = source[/^\s*rate_limit\b[^\n]*\bonly: :#{action}\b[^\n]*/]
       assert declaration, "#{path} has no rate_limit on :#{action}"
       assert_match(/name: "\w+"/, declaration, "#{path}'s rate_limit is unnamed")
-    end
+    end  end
+
+  # Comments carried one unnamed burst limit on :create and one unnamed limit on
+  # :generate_summary, so both shared a counter for a signed-out commenter, and
+  # there was no sustained limit as posts and messages have.
+  def test_comments_carry_named_burst_and_sustained_limits
+    source = File.read(File.join(ROOT, "brgen/app/controllers/comments_controller.rb"))
+    declarations = source.scan(/^\s*rate_limit\b[^\n]*/)
+    assert_equal 3, declarations.size
+    declarations.each { assert_match(/name: "\w+"/, _1, "comments_controller has an unnamed rate_limit") }
+    sustained = declarations.any? { _1.include?("within: 3.minutes, only: :create") }
+    assert sustained, "comments#create has no sustained limit"
   end
 end

@@ -66,6 +66,8 @@ class CommentOwnershipTest < ActionDispatch::IntegrationTest
         delete comment_path(comment)
       end
       assert Comment.exists?(comment.id), "a comment must only be deletable by its author"
+      # Refused out loud: a redirect read as if the delete had worked.
+      assert_response :forbidden
     end
   end
 

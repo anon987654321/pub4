@@ -3562,7 +3562,7 @@ items:
   path: RAILS/brgen/app/controllers/comments_controller.rb
   item: Respond 403/404 from comments#destroy when the viewer is not the author instead
     of silently succeeding with a redirect.
-  status: open
+  status: done
 - id: brgen-323
   app: brgen
   area: security
@@ -3571,7 +3571,7 @@ items:
   item: Name the two rate_limit declarations in CommentsController (create and generate_summary);
     unnamed, they share one cache key per IP for signed-out commenters, the exact
     bug the PostsController comment describes.
-  status: open
+  status: done
 - id: brgen-324
   app: brgen
   area: security
@@ -3579,7 +3579,7 @@ items:
   path: RAILS/brgen/app/controllers/comments_controller.rb
   item: Add a sustained (3-minute) named rate limit on comments#create to match posts
     and messages, which both carry burst plus sustained.
-  status: open
+  status: done
 - id: brgen-325
   app: brgen
   area: security

@@ -2,13 +2,21 @@
 
 class CommentsController < ApplicationController
   include Shared::FindableBySlug
-  rate_limit to: 20, within: 1.minute, only: :create,
+  # Named, because unnamed limits in one controller share one counter: the key is
+  # ["rate-limit", controller_path, name, by], so every signed-out commenter's
+  # comments and summaries counted against each other. Burst plus sustained, as
+  # posts and messages carry. See RAILS/test/rate_limit_naming_test.rb.
+  rate_limit to: 20, within: 1.minute, only: :create, name: "burst",
              by: -> { Current.user&.id ? "u#{Current.user.id}" : request.remote_ip }
+  rate_limit to: 40, within: 3.minutes, only: :create, name: "sustained",
+             by: -> { Current.user&.id ? "u#{Current.user.id}" : request.remote_ip },
+             with: -> { redirect_back fallback_location: root_path, alert: t("shared.flash.rate_limited") }
   before_action :require_verified_email, only: :create
   before_action :require_real_user, only: [ :destroy, :generate_summary ]
-  rate_limit to: 5, within: 1.minute, only: :generate_summary,
+  rate_limit to: 5, within: 1.minute, only: :generate_summary, name: "summary",
              by: -> { Current.user&.id ? "u#{Current.user.id}" : request.remote_ip }
   before_action :set_commentable, only: :create
+  before_action :set_own_comment, only: :destroy
   before_action :set_summary_comment, :authorize_summary_comment, only: :generate_summary
 
   def create
@@ -30,14 +38,7 @@ class CommentsController < ApplicationController
   end
 
   def destroy
-    @comment = Comment.find(params[:id])
-    # user_id, not user. ApplicationRecord sets strict_loading_by_default in
-    # every environment, so reading `@comment.user` on a record found by id with
-    # nothing preloaded raises StrictLoadingViolationError — production included.
-    # Deleting a comment has therefore been failing for everyone, its author
-    # included, and the response is a redirect either way so nothing said so.
-    # Comparing the foreign key answers the same question without a query.
-    @comment.destroy if Current.user && @comment.user_id == Current.user.id
+    @comment.destroy
     respond_to do |format|
       format.turbo_stream
       format.html         { redirect_back fallback_location: root_path }
@@ -54,6 +55,17 @@ class CommentsController < ApplicationController
   end
 
   private
+
+  # user_id, not user. ApplicationRecord sets strict_loading_by_default in
+  # every environment, so reading `@comment.user` on a record found by id with
+  # nothing preloaded raises StrictLoadingViolationError — production included.
+  # Comparing the foreign key answers the same question without a query.
+  # Someone else's comment is refused out loud: a redirect read as if the
+  # delete had worked.
+  def set_own_comment
+    @comment = Comment.find(params[:id])
+    head :forbidden unless Current.user && @comment.user_id == Current.user.id
+  end
 
   def set_summary_comment
     @comment = Comment.includes(:user, :votes, replies: :user).find(params[:id])
