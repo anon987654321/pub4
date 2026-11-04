@@ -49,6 +49,49 @@ class TvShowsAndNotesTest < ActionDispatch::IntegrationTest
     assert_match show.title, response.body
   end
 
+  # shows/show lists each episode with its video's thumbnail and length; every
+  # one of those reads is a strict-loading raise unless the show preloads it.
+  test "a show page whose episodes carry videos renders each of them" do
+    show = Tv::Show.create!(channel: @channel, title: "Byliv", description: "Om byen", slug: "byliv", published: true)
+    second = Tv::Video.create!(channel: @channel, user: @owner, title: "Fisketorget", status: "published",
+                               published_at: Time.current, duration_seconds: 60)
+    Tv::Episode.create!(show:, number: 1, title: "Første", video: @video)
+    Tv::Episode.create!(show:, number: 2, title: "Andre", video: second)
+    host! "tv.brgen.no"
+
+    get tv.channel_show_path(@channel, show)
+
+    assert_response :success
+    assert_match "Første", response.body
+    assert_match "Andre", response.body
+  end
+
+  test "the owner takes a stream live and ends it; nobody else can" do
+    stream = Tv::LiveStream.create!(user: @owner, channel: @channel, title: "Kveldssending", status: "scheduled")
+    sign_in_as(@viewer)
+
+    patch tv.go_live_live_stream_path(stream)
+    assert_redirected_to tv.live_stream_path(stream)
+    assert_equal "scheduled", stream.reload.status
+    patch tv.end_live_live_stream_path(stream)
+    assert_equal "scheduled", stream.reload.status
+
+    sign_in_as(@owner)
+    patch tv.go_live_live_stream_path(stream)
+    assert_equal "live", stream.reload.status
+    assert stream.started_at.present?
+
+    sign_in_as(@viewer)
+    patch tv.end_live_live_stream_path(stream)
+    assert_equal "live", stream.reload.status
+
+    sign_in_as(@owner)
+    patch tv.end_live_live_stream_path(stream)
+    assert_redirected_to tv.live_stream_path(stream)
+    assert_equal "ended", stream.reload.status
+    assert stream.ended_at.present?
+  end
+
   test "an episode renders with its video, and without one it is not a dead end" do
     show = Tv::Show.create!(channel: @channel, title: "Byliv", description: "Om byen", slug: "byliv", published: true)
     Tv::Episode.create!(show:, number: 1, title: "Første", video: @video)

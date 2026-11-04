@@ -141,11 +141,30 @@ class NearbyControllerTest < ActionDispatch::IntegrationTest
     sign_in(me)
 
     get nearby_path
-    refute_includes response.body, other.display_name
+    # The list shows anon handles, never display names; the chat button's
+    # user_id is what would reach them.
+    assert_select "form input[name=user_id][value=?]", other.id.to_s, count: 0
 
     post nearby_path, params: { user_id: other.id }
     assert_redirected_to nearby_path
     assert_nil Conversation.direct_between(me, other)
+  end
+
+  test "the list holds people in range who shared a location lately, and nobody else" do
+    lat, lng = random_base_coords
+    me = located_user("lister", lat, lng)
+    near = located_user("near", lat + 0.01, lng)
+    far = located_user("far", lat + 1.0, lng)
+    stale = located_user("stale", lat, lng)
+
+    User.where(id: [ me.id, near.id, far.id ]).update_all(location_updated_at: 1.hour.ago)
+    stale.update_columns(location_updated_at: 2.days.ago)
+    sign_in(me)
+
+    get nearby_path
+
+    listed = css_select("form input[name=user_id]").map { |input| Integer(input["value"]) }
+    assert_equal [ near.id ], listed, "only the fresh, in-range person, and never the viewer"
   end
 
   test "visiting an unknown geo-room slug directly does not auto-create it" do

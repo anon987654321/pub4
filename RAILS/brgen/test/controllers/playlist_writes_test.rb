@@ -148,6 +148,48 @@ class PlaylistWritesTest < ActionDispatch::IntegrationTest
     assert_match CGI.escapeHTML(I18n.t("playlist.replace_audio_file")), response.body
   end
 
+  def hosted(privacy)
+    Playlist::Track.create!(title: "Spor #{privacy}", artist: "Bergen", user: @owner, source_type: "direct",
+                            source_url: "https://example.com/#{privacy}.mp3", privacy:)
+  end
+
+  test "someone else's hosted track can be played but not edited, changed or deleted" do
+    track = hosted("public")
+    sign_in_as(@friend)
+
+    get playlist.hosted_track_path(track)
+    assert_response :success
+
+    get playlist.edit_hosted_track_path(track)
+    assert_redirected_to playlist.hosted_tracks_path
+    patch playlist.hosted_track_path(track), params: { track: { title: "Kapret" } }
+    assert_redirected_to playlist.hosted_tracks_path
+    assert_no_difference -> { Playlist::Track.count } do
+      delete playlist.hosted_track_path(track)
+    end
+    assert_redirected_to playlist.hosted_tracks_path
+    assert_equal "Spor public", track.reload.title
+  end
+
+  test "a private hosted track is the owner's alone, while an unlisted one opens by link" do
+    private_track = hosted("private")
+    unlisted = hosted("unlisted")
+    sign_in_as(@friend)
+
+    get playlist.hosted_track_path(private_track)
+    assert_response :not_found
+    assert_no_difference -> { Playlist::Listen.count } do
+      post playlist.listens_path, params: { track_id: private_track.id }
+    end
+    assert_response :not_found
+    get playlist.hosted_track_path(unlisted)
+    assert_response :success
+
+    sign_in_as(@owner)
+    get playlist.hosted_track_path(private_track)
+    assert_response :success
+  end
+
   test "the playlist forms and the radio home render in the locale" do
     sign_in_as(@owner)
 

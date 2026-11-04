@@ -97,6 +97,46 @@ class Webhooks::VippsControllerTest < ActionDispatch::IntegrationTest
     ActsAsTenant.current_tenant = nil
   end
 
+  # A basket is one Vipps payment over several sellers' lines. AUTHORIZED has
+  # to pay every line once; the CAPTURED that follows, or a redelivery, must
+  # not pay any of them again.
+  test "an authorized basket payment pays every line in it exactly once" do
+    Brgen::CitySeed.sync! if City.table_exists?
+    ActsAsTenant.current_tenant = City.find_by!(domain: "brgen.no")
+    buyer = User.create!(email_address: "vb-#{SecureRandom.hex(4)}@brgen.no", password: "password123")
+    category = Marketplace::Category.create!(name: "B-#{SecureRandom.hex(3)}")
+    basket = Marketplace::Checkout.create!(user: buyer, status: "open")
+
+    lines = 2.times.map do |n|
+      seller = User.create!(email_address: "vbs#{n}-#{SecureRandom.hex(4)}@brgen.no", password: "password123")
+      listing = category.listings.create!(user: seller, title: "Ting #{n} #{SecureRandom.hex(3)}",
+                                          price_cents: 10_000, status: "active", currency: "NOK")
+      basket.orders.create!(buyer:, listing:, quantity: 1, price_cents: 10_000)
+    end
+    reference = Marketplace::Payments::VippsCheckout.reference_for(basket)
+    basket.mark_payment_pending!(provider: "vipps", reference:)
+
+    authorized = { reference:, name: "AUTHORIZED", success: true, occurred: Time.current.httpdate }.to_json
+    post webhooks_vipps_path, params: authorized, headers: headers_for(authorized)
+
+    assert_response :ok
+    assert_equal "paid", basket.reload.status
+    lines.each(&:reload)
+    assert_equal %w[paid paid], lines.map(&:payment_status)
+    paid_at = lines.map(&:paid_at)
+    assert paid_at.all?, "a line has no paid_at"
+
+    captured = { reference:, name: "CAPTURED", success: true, occurred: Time.current.httpdate }.to_json
+    assert_no_difference -> { Notification.count } do
+      post webhooks_vipps_path, params: captured, headers: headers_for(captured)
+      post webhooks_vipps_path, params: authorized, headers: headers_for(authorized)
+    end
+    lines.each(&:reload)
+    assert_equal paid_at, lines.map(&:paid_at)
+  ensure
+    ActsAsTenant.current_tenant = nil
+  end
+
   test "accepts a correctly signed callback" do
     payload = body
     post webhooks_vipps_path, params: payload, headers: headers_for(payload)

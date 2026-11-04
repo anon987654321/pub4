@@ -1547,7 +1547,7 @@ items:
   item: 'Add controller tests for path crossings: locate refuses an unverified or
     non-consenting profile with 403, rejects bad coordinates with 422, and index hides
     blocked people.'
-  status: open
+  status: done
 - id: brgen-082
   app: brgen
   area: delivery
@@ -1953,7 +1953,7 @@ items:
   path: RAILS/brgen/test/controllers/nearby_controller_test.rb
   item: Add nearby controller tests asserting index lists only in-range, recently-located,
     unblocked people and that create opens a request rather than an accepted DM.
-  status: open
+  status: done
 - id: brgen-130
   app: brgen
   area: maps
@@ -2779,7 +2779,7 @@ items:
   path: RAILS/brgen/test/controllers/webhooks/vipps_controller_test.rb
   item: Add a webhook test that sends a signed Vipps AUTHORIZED event for a basket
     reference and asserts every order line in the checkout becomes paid exactly once.
-  status: open
+  status: done
 - id: brgen-229
   app: brgen
   area: payments
@@ -3895,7 +3895,7 @@ items:
   item: Add request tests for hosted_tracks show/edit/destroy by a non-owner, private-track
     404, and listens POST on a private track; playlist_writes_test covers only the
     owner upload and one listen.
-  status: open
+  status: done
 - id: brgen-363
   app: brgen
   area: tests
@@ -3928,7 +3928,7 @@ items:
   item: Add tests for live stream go_live/end_live by the owner and refusal for others,
     and for a show page whose episodes have videos, so the strict-loading paths in
     shows/show and the transition guards are covered.
-  status: open
+  status: done
 - id: brgen-367
   app: brgen
   area: tests
