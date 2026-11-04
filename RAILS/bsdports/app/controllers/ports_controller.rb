@@ -14,13 +14,17 @@ class PortsController < ApplicationController
   before_action :require_nvd_operator, only: :crossref_cves
 
   def index
-    scope = Port.includes(:category)
-    scope = apply_live_search(scope, columns: %w[name comment description], vertical: "ports") if live_search_query.present?
-    scope = scope.by_category(params[:category_id]) if params[:category_id].present?
-    scope = scope.order(params[:sort] == "updated" ? "last_updated DESC" : :name)
+    scope = index_scope
 
     respond_to do |format|
-      format.html do
+      # The live search asks for a stream; finish_live_search answers it, and an
+      # html-only branch here made its second respond_to raise a format mismatch.
+      format.any(:html, :turbo_stream) do
+        if (exact = exact_pkgpath_port)
+          redirect_to exact
+          next
+        end
+
         @pagy, @ports = pagy(scope)
         @categories = Category.order(:name)
         @catalog_empty = !Port.exists?
@@ -125,6 +129,24 @@ class PortsController < ApplicationController
   end
 
   private
+
+  def index_scope
+    scope = Port.includes(:category)
+    if live_search_query.present?
+      scope = apply_live_search(scope, columns: %w[name comment description], vertical: "ports")
+    end
+    scope = scope.by_category(params[:category_id]) if params[:category_id].present?
+    scope.ordered_for(live_search_query, params[:sort])
+  end
+
+  # A submitted pkgpath names one port; a list of one is a step too many. The
+  # live search asks for a stream as the reader types and keeps its list.
+  def exact_pkgpath_port
+    return if request.format.turbo_stream? || !live_search_query.include?("/")
+
+    matches = Port.where(pkgpath: live_search_query).limit(2).to_a
+    matches.first if matches.one?
+  end
 
   # Each root followed by its replies, in the order the thread reads.
   def comment_thread

@@ -4464,7 +4464,7 @@ items:
   path: RAILS/bsdports/app/controllers/ports_controller.rb
   item: Redirect directly to the port page when the query is an exact pkgpath (devel/git)
     match.
-  status: open
+  status: done
 - id: bsdports-032
   app: bsdports
   area: search
@@ -4472,7 +4472,7 @@ items:
   path: RAILS/bsdports/app/models/port.rb
   item: Rank exact name and exact pkgpath matches first in Port.search results instead
     of falling back to name order.
-  status: open
+  status: done
 - id: bsdports-033
   app: bsdports
   area: search
@@ -4578,7 +4578,7 @@ items:
   path: RAILS/bsdports/test/reflexes
   item: Add a reflex test that page 2 of a search returns the same match set as Port.search
     page 1.
-  status: open
+  status: done
 - id: bsdports-046
   app: bsdports
   area: ui

@@ -74,6 +74,25 @@ class Port < ApplicationRecord
     related = where(predicates.join(" AND "), binds)
     ids&.any? ? related.or(where(id: ids)) : related
   }
+  # A port named or pathed exactly as typed leads; "git" listed git-annex,
+  # git-crypt and gitea before git itself.
+  scope :exact_match_first, ->(q) {
+    exact = sanitize_sql_array([ "CASE WHEN ports.name = :q OR ports.pkgpath = :q THEN 0 ELSE 1 END", { q: q.to_s } ])
+    order(Arel.sql(exact))
+  }
+  # The order the index and its later pages share: newest first on request,
+  # otherwise an exact match for the query and then by name.
+  scope :ordered_for, ->(query, sort) {
+    next order(last_updated: :desc) if sort == "updated"
+
+    (query.present? ? exact_match_first(query) : all).order(:name)
+  }
+  # The whole list the infinite-scroll pages draw from.
+  scope :listed, ->(query:, category_id:, sort:) {
+    scope = query.present? ? search(query) : all
+    scope = scope.by_category(category_id) if category_id.present?
+    scope.ordered_for(query, sort)
+  }
   scope :semantic_search, ->(q) { search(q) } # stub for sqlite-vec embeddings on description (DG02)
 
   # "12-devel-py-foo": the id finds the row and the pkgpath makes the URL

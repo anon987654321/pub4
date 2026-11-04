@@ -5,13 +5,10 @@ class PortsInfiniteScrollReflex < Shared::InfiniteScrollReflex
 
   private
 
+  # The search and order the index ran for page 1, so every page draws from
+  # one set in one order.
   def scope
-    scope = Port.includes(:category)
-    if element.dataset["q"].present?
-      term = "%#{ActiveRecord::Base.sanitize_sql_like(element.dataset["q"])}%"
-      scope = scope.where("name LIKE :q OR comment LIKE :q OR description LIKE :q", q: term)
-    end
-    scope = scope.by_category(element.dataset["categoryId"]) if element.dataset["categoryId"].present?
-    scope.order(element.dataset["sort"] == "updated" ? "last_updated DESC" : :name)
+    data = element.dataset
+    Port.includes(:category).listed(query: data["q"], category_id: data["categoryId"], sort: data["sort"])
   end
 end
