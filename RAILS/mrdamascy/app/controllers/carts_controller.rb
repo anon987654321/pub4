@@ -2,6 +2,7 @@
 
 class CartsController < ApplicationController
   rescue_from Cart::InvalidLine, with: :refuse_line
+  rescue_from Cart::SoldOut, with: :refuse_sold_out
 
   def show
     @cart = current_cart
@@ -71,6 +72,10 @@ class CartsController < ApplicationController
   # the dish so the sheet shows what can be picked.
   def refuse_line
     redirect_to menu_item_path(params[:menu_item_id]), alert: t("flash.line_invalid"), status: :see_other
+  end
+
+  def refuse_sold_out
+    redirect_to root_path, alert: t("menu.sold_out"), status: :see_other
   end
 
   def quantity_param

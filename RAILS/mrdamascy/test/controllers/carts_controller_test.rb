@@ -58,6 +58,17 @@ class CartsControllerTest < ActionDispatch::IntegrationTest
     assert_empty open_cart_for(user)&.cart_items.to_a
   end
 
+  test "add_item refuses a dish the kitchen has taken off the menu" do
+    user = customer_sign_in
+    @item.update!(available: false)
+
+    post add_item_cart_url, params: { menu_item_id: @item.id, quantity: 1 }
+
+    assert_redirected_to root_path
+    assert_equal I18n.t("menu.sold_out"), flash[:alert]
+    assert_empty open_cart_for(user)&.cart_items.to_a
+  end
+
   test "update_item changes the quantity" do
     user = customer_sign_in
     post add_item_cart_url, params: { menu_item_id: @item.id, quantity: 1, option_ids: [], note: "" }

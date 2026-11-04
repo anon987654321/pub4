@@ -5148,7 +5148,7 @@ items:
   size: S
   path: RAILS/mrdamascy/app/controllers/carts_controller.rb
   item: Refuse to add items whose MenuItem#available is false in CartsController#add_item.
-  status: open
+  status: done
 - id: mrdamascy-013
   app: mrdamascy
   area: cart

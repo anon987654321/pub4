@@ -3,6 +3,8 @@
 class Cart < ApplicationRecord
   # A line the menu does not offer: a foreign option id or too many sauces.
   class InvalidLine < StandardError; end
+  # The kitchen took the dish off today's menu after the page was drawn.
+  class SoldOut < InvalidLine; end
 
   # The item sheet's chip cap, enforced here too so the form is not the guard.
   MAX_SAUCES = 2
@@ -31,18 +33,13 @@ class Cart < ApplicationRecord
   # already in someone's basket. Identical lines (item + options + note)
   # merge by bumping quantity.
   def add_item!(menu_item, quantity = 1, option_ids: [], note: nil)
-    quantity = Integer(quantity)
-    quantity = 1 if quantity < 1
+    quantity = Integer(quantity).clamp(1..)
     ids = chosen_option_ids(option_ids)
     options = offered_options(menu_item, ids)
     signature = ids.join(",")
 
-    line = cart_items.find_by(menu_item_id: menu_item.id, option_ids: signature, note: note.presence)
-    if line
-      line.quantity += quantity
-    else
-      line = cart_items.new(menu_item: menu_item, option_ids: signature, note: note.presence, quantity: quantity)
-    end
+    line = cart_items.find_or_initialize_by(menu_item:, option_ids: signature, note: note.presence)
+    line.quantity = line.new_record? ? quantity : line.quantity + quantity
     line.unit_price_ore = menu_item.price_ore.to_i + options.sum { |o| o.price_ore.to_i }
     line.save!
     line
@@ -70,9 +67,11 @@ class Cart < ApplicationRecord
     Array(option_ids).compact_blank.to_set { |id| Integer(id) }.sort
   end
 
-  # The form is not the guard: a crafted request can name another dish's
-  # option or a third sauce, and every id it names would be priced.
+  # The form is not the guard: a crafted request can name a dish taken off
+  # the menu, another dish's option or a third sauce, and would be priced.
   def offered_options(menu_item, ids)
+    raise SoldOut, "#{menu_item.name} is not available" unless menu_item.available?
+
     options = ItemOption.where(menu_item_id: menu_item.id, id: ids).to_a
     raise InvalidLine, "option not offered with #{menu_item.name}" unless options.size == ids.size
     raise InvalidLine, "more than #{MAX_SAUCES} sauces" if options.count { |o| o.kind == "sauce" } > MAX_SAUCES
