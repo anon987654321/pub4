@@ -58,4 +58,23 @@ class TrackTipTest < ActionDispatch::IntegrationTest
     assert_equal @order.id, review.order_id
     assert_equal @order.user_id, review.user_id
   end
+
+  # Order ids are sequential; the review endpoint looked them up for anyone and
+  # redirected to the order's tracking page, token and all.
+  test "another customer's order can be neither reviewed nor traced through the review endpoint" do
+    sign_in(seed_customer!(name: "Nabo"))
+
+    assert_no_difference "Review.count" do
+      post order_review_url(@order), params: { review: { rating: 1, body: "ikke min" } }
+    end
+    assert_response :not_found
+    refute_includes response.headers["Location"].to_s, @order.tracking_token
+  end
+
+  test "a signed-out visitor is sent to sign in without the order's tracking token" do
+    post order_review_url(@order), params: { review: { rating: 5 } }
+
+    assert_redirected_to new_session_path
+    refute_includes response.headers["Location"].to_s, @order.tracking_token
+  end
 end
