@@ -167,6 +167,7 @@ module Master
 
           context = reflexion_context(context)
           @panel_size = active.size
+          @active_persona_names = active.map { |persona| persona.name.to_s }
           feedback = collect_feedback(active, code, context, image:)
 
           speak_persona_feedback(feedback) if @voice_personas
@@ -204,10 +205,13 @@ module Master
           veto_roles_answered = Array(feedback).select { |entry| entry[:veto_role] }.map { |entry| entry[:persona].to_s }
           budget = Master::Review::LLMDispatcher::PassClock.budget_s || "cancelled"
           Master::Trace::Dmesg.status("council0", "INCONCLUSIVE, deadline #{budget}s (#{feedback.size} of #{@panel_size} personas answered)")
+          answered_personas = Array(feedback).filter_map { |entry| entry[:persona]&.to_s }
+          missing_personas = Array(@active_persona_names) - answered_personas
           @bus&.publish(
             :council_timeout,
             completed: feedback.size,
             total: @panel_size,
+            missing_personas:,
             quorum: :reached,
             veto_roles_required: @required_veto_role_names,
             veto_roles_answered:,
@@ -368,7 +372,9 @@ module Master
           quorum = [MIN_QUORUM, @panel_size.to_i].min
           return if feedback.size >= quorum
 
-          @bus&.publish(:council_timeout, completed: feedback.size, total: @panel_size.to_i)
+          answered = Array(feedback).filter_map { |entry| entry[:persona]&.to_s }
+          missing = Array(@active_persona_names) - answered
+          @bus&.publish(:council_timeout, completed: feedback.size, total: @panel_size.to_i, missing_personas: missing)
           # The tally, not just the score. "quorum not reached (2/26)" sent an
           # operator into the per-persona log lines to learn that the answer
           # was "OpenRouter is out of credits" — the reasons were already
