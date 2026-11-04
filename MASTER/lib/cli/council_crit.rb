@@ -15,13 +15,16 @@ module Master
         return Master::Result.ok("critique: no changes to review") if artifact.strip.empty?
         return Master::Result.err("critique: deliberation unavailable", category: :infrastructure) unless deliberation
 
+        unless deliberation.respond_to?(:review_pre_ship)
+          return Master::Result.err(
+            "critique: explicit Security-gated pre-ship review unavailable",
+            category: :infrastructure,
+          )
+        end
+
         bus&.publish("council:start", scope:, bytes: artifact.bytesize)
         context = "pre-ship council check (#{scope})"
-        result = if deliberation.respond_to?(:review_pre_ship)
-                   deliberation.review_pre_ship(artifact, context:)
-                 else
-                   deliberation.review(artifact, context:)
-                 end
+        result = deliberation.review_pre_ship(artifact, context:)
         if result.err?
           message = result.message.to_s
           vetoed_by = message.match(/\Acouncil: veto from ([^\n]+)/i)&.captures&.first
