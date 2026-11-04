@@ -5418,7 +5418,7 @@ items:
   path: RAILS/mrdamascy/app/views/layouts/application.html.erb
   item: 'Take theme-color in the layout and manifest from the brand-bar token rather
     than the literal #FFFFFF in two places.'
-  status: open
+  status: done
 - id: mrdamascy-044
   app: mrdamascy
   area: design
@@ -5426,7 +5426,7 @@ items:
   path: RAILS/mrdamascy/app/views/layouts/application.html.erb
   item: Move the inline tab-bar SVGs and the khatam star (repeated in the hero) into
     icon partials, as shared/_mode_icon already does.
-  status: open
+  status: done
 - id: mrdamascy-045
   app: mrdamascy
   area: design

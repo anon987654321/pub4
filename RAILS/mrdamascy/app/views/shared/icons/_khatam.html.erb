@@ -1,0 +1,7 @@
+<%# Damascus khatam — the same 8-point star as the khatam clip-path in
+    _tokens.scss, filled with currentColor. Locals: size (px, default 22). %>
+<% size = local_assigns.fetch(:size, 22) %>
+<svg viewBox="0 0 24 24" width="<%= size %>" height="<%= size %>" fill="currentColor" aria-hidden="true">
+  <polygon points="12,0 14.4,6.2 20.5,3.5 17.8,9.6 24,12 17.8,14.4 20.5,20.5 14.4,17.8
+                   12,24 9.6,17.8 3.5,20.5 6.2,14.4 0,12 6.2,9.6 3.5,3.5 9.6,6.2"/>
+</svg>

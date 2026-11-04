@@ -73,6 +73,28 @@ class PwaControllerTest < ActionDispatch::IntegrationTest
     assert_equal "retry", Nokogiri::HTML(response.body).at_css(".offline-page a")["data-controller"]
   end
 
+  test "the browser chrome takes its colours from the design tokens" do
+    tokens = ApplicationHelper::DESIGN_TOKENS
+    manifest = fetch_manifest
+
+    assert_equal [tokens["--paper"], tokens["--surface-elevated"]],
+                 manifest.values_at("theme_color", "background_color")
+    get root_path
+    assert_equal tokens["--paper"], Nokogiri::HTML(response.body).at_css("meta[name=theme-color]")["content"]
+  end
+
+  test "the tab bar and hero draw their icons from shared partials" do
+    seed_kitchen!
+    get root_path
+    page = Nokogiri::HTML(response.body)
+
+    assert_equal 4, page.css(".tab-bar .tab-icon svg").size
+    assert page.at_css(".hero-rating svg polygon")
+    %w[app/views/layouts/application.html.erb app/views/menu/show.html.erb].each do |path|
+      assert_not_includes Rails.root.join(path).read, "<svg", "#{path} draws an icon inline"
+    end
+  end
+
   test "the layout links the svg icon" do
     get root_path
     assert Nokogiri::HTML(response.body).at_css(%(link[rel=icon][type="image/svg+xml"][href="/icon.svg"]))

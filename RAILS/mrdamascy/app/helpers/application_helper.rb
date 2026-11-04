@@ -58,6 +58,15 @@ module ApplicationHelper
     end
   end
 
+  # The design tokens of _tokens.scss, for the places CSS cannot reach (the
+  # theme-color meta, the web manifest), so a colour has one home.
+  DESIGN_TOKENS = Rails.root.join("app/assets/stylesheets/_tokens.scss").read
+                       .scan(/^\s*(--[\w-]+):\s*([^;]+);/).to_h.freeze
+
+  def design_token(name)
+    DESIGN_TOKENS.fetch(name)
+  end
+
   # money(1500) → "15 kr" — whole øre render without decimals; anything with
   # a remainder falls back to Norwegian comma decimals ("15,50 kr").
   def money(ore)
