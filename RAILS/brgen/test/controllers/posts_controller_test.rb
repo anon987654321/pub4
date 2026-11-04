@@ -92,6 +92,25 @@ class PostsControllerTest < ActionDispatch::IntegrationTest
     assert_equal "Original", post.reload.title
   end
 
+  test "an author cannot edit a post into a community they may not post in" do
+    author = User.create!(email_address: "post-move-#{SecureRandom.hex(4)}@example.com", password: "password12345",
+                          city: brgen_city)
+    club_owner = User.create!(email_address: "post-club-#{SecureRandom.hex(4)}@example.com", password: "password12345",
+                              city: brgen_city)
+    club = nil
+    post_record = nil
+    ActsAsTenant.with_tenant(brgen_city) do
+      club = Community.create!(user: club_owner, name: "Lukket #{SecureRandom.hex(3)}", privacy: "private")
+      post_record = Post.create!(user: author, title: "Min", content: "hei", city: brgen_city)
+    end
+
+    host! "brgen.no"
+    post session_url, params: { email_address: author.email_address, password: "password12345" }
+    patch post_url(post_record), params: { post: { community_id: club.id } }
+
+    assert_nil post_record.reload.community_id, "the post moved into a community its author cannot post in"
+  end
+
   test "a private community post is members-only, not a 404" do
     owner = User.create!(email_address: "post-priv-own-#{SecureRandom.hex(4)}@example.com", password: "password12345", city: brgen_city)
     stranger = User.create!(email_address: "post-priv-str-#{SecureRandom.hex(4)}@example.com", password: "password12345", city: brgen_city)

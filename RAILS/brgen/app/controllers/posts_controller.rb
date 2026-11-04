@@ -25,7 +25,8 @@ class PostsController < ApplicationController
   before_action :set_post,          only: [ :show, :edit, :update, :destroy ]
   before_action :authorize_owner,   only: [ :edit, :update, :destroy ]
   before_action :set_community,     only: [ :new, :create ]
-  before_action :enforce_community_posting_rules, only: :create
+  # Update too: an edit that moves a post into a community is posting there.
+  before_action :enforce_community_posting_rules, only: %i[create update]
   skip_before_action :verify_authenticity_token, only: [ :share ]
 
   def index
