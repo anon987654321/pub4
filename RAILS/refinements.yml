@@ -79,7 +79,7 @@ items:
   item: 'Add date.formats.day to amber''s nb/en locales; home/index calls l(plan.planned_date,
     format: :day) on a Date while only time.formats.day exists, so the dashboard raises
     once a plan is scheduled this week.'
-  status: open
+  status: done
 - id: amber-010
   app: amber
   area: copy
@@ -2720,7 +2720,7 @@ items:
     moving the order or checkout back to a retryable state (payment_status failed,
     checkout status open), since PAID_NAMES ignores them and a buyer who backs out
     of the Vipps app is stuck in pending forever with no way to retry.
-  status: open
+  status: done
 - id: brgen-223
   app: brgen
   area: payments
@@ -2757,7 +2757,7 @@ items:
     in VippsCheckout.start! and resolve it to Marketplace::Checkout in PaymentPaid.find_order_from_vipps_reference,
     because today a basket's checkout id is looked up as a Marketplace::Order id and
     pays the wrong row or none.
-  status: open
+  status: done
 - id: brgen-227
   app: brgen
   area: payments
@@ -3135,7 +3135,7 @@ items:
   item: Wire the feed card Share button to the existing share controller (native share
     sheet, iOS bridge, clipboard fallback) the way posts#show does, and drop the duplicate
     Copy link from the more menu.
-  status: open
+  status: done
 - id: brgen-269
   app: brgen
   area: post-card
@@ -3152,7 +3152,7 @@ items:
   item: 'Fix the feed card''s Copy link and Share buttons: they set data-clipboard-source-value,
     but @stimulus-components/clipboard reads a source target, so both throw ''Missing
     target'' and copy nothing.'
-  status: open
+  status: done
 - id: brgen-271
   app: brgen
   area: post-card
@@ -3339,7 +3339,7 @@ items:
   item: Filter users#show @posts to attributed, kept, Post.visible_to(Current.user)
     posts so a profile stops listing the person's anonymous, geo-stamped (live), moderator-removed
     and private-community posts.
-  status: open
+  status: done
 - id: brgen-295
   app: brgen
   area: privacy
@@ -3373,7 +3373,7 @@ items:
   item: Stop the quick composer forcing nearby=true for every user with stored coordinates;
     stamp_live_location! sets anonymous=true, so a signed-in author's post silently
     becomes 'anon' and is capped at 500 characters without being told.
-  status: open
+  status: done
 - id: brgen-299
   app: brgen
   area: privacy
@@ -3405,7 +3405,7 @@ items:
   path: RAILS/brgen/test/controllers/users_controller_test.rb
   item: Add a controller test asserting an anonymous post and a live post never appear
     on their author's profile page.
-  status: open
+  status: done
 - id: brgen-303
   app: brgen
   area: privacy
@@ -3600,7 +3600,7 @@ items:
   item: 'Run enforce_community_posting_rules on update too: posts#update permits community_id,
     so an author can move a post into a restricted or private community they cannot
     post in.'
-  status: open
+  status: done
 - id: brgen-328
   app: brgen
   area: security
@@ -3907,7 +3907,7 @@ items:
   path: RAILS/brgen/test/controllers/posts_controller_test.rb
   item: Add a test that posts#update refuses moving a post into a community the author
     cannot post in.
-  status: open
+  status: done
 - id: brgen-365
   app: brgen
   area: tests
@@ -5300,7 +5300,7 @@ items:
     (or permit :mode in CheckoutController#checkout_params): the form posts `mode`,
     the controller reads `delivery_mode`, so choosing pickup still places a delivery
     order.'
-  status: open
+  status: done
 - id: mrdamascy-031
   app: mrdamascy
   area: checkout
@@ -5665,7 +5665,7 @@ items:
   path: RAILS/mrdamascy/app/controllers/reviews_controller.rb
   item: Check order.user == current_user in ReviewsController#create and route reviews
     by tracking token; any signed-in user can review any order by sequential id.
-  status: open
+  status: done
 - id: mrdamascy-076
   app: mrdamascy
   area: security
@@ -5681,7 +5681,7 @@ items:
   path: RAILS/mrdamascy/app/controllers/sessions_controller.rb
   item: 'Accept MOCK_CODE "1234" only in development and test: SessionsController#create
     accepts it in every environment, so anyone can sign in as any phone number.'
-  status: open
+  status: done
 - id: mrdamascy-078
   app: mrdamascy
   area: security
@@ -5808,14 +5808,14 @@ items:
   path: RAILS/mrdamascy/test/controllers
   item: 'Add SessionsController tests: wrong code, mock code rejected in production,
     rate limit, Vipps state mismatch.'
-  status: open
+  status: done
 - id: mrdamascy-094
   app: mrdamascy
   area: tests
   size: S
   path: RAILS/mrdamascy/test/controllers
   item: Add ReviewsController tests for owner-only and one-review-per-order.
-  status: open
+  status: done
 - id: mrdamascy-095
   app: mrdamascy
   area: tests
@@ -5832,7 +5832,7 @@ items:
   item: Add a checkout test that posts the confirm form's real field names (mode radio,
     address, postcode, phone, payment_method) so form/controller parameter drift fails
     CI; every current test posts delivery_mode directly.
-  status: open
+  status: done
 - id: mrdamascy-097
   app: mrdamascy
   area: tests
