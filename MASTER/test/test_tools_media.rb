@@ -4,9 +4,12 @@ require_relative "test_helper"
 require "open3"
 require "rbconfig"
 
-# The two MASTER/tools vocab-checks are the real contract for postpro and replicate.
-# They used to be operator memory. A table that fails quiet is how unread
-# temp: and a costume --final model survive.
+# The MASTER/tools vocab-check is the real contract for postpro. It used to be
+# operator memory. A table that fails quiet is how unread temp: and a costume
+# --final model survive. Replicate's own vocab table retired with replicate.rb:
+# STUDIO/replicate/client.rb reads the live provider schema instead of a stale
+# local table, and models.yml owns the model vocabulary under its registry
+# guards.
 class TestToolsMedia < Minitest::Test
   ROOT = File.expand_path("../..", __dir__)
   POSTPRO = File.join(ROOT, "STUDIO", "postpro", "postpro.rb")
@@ -16,7 +19,6 @@ class TestToolsMedia < Minitest::Test
     files = [POSTPRO] + Dir[File.join(File.dirname(POSTPRO), "lib", "*.rb")].sort
     files.map { |path| File.read(path) }.join("\n")
   end
-  REPLICATE = File.join(ROOT, "MASTER/tools", "replicate", "replicate.rb")
 
   def test_postpro_key_readers_cover_every_declared_preset_knob
     source = postpro_source
@@ -158,25 +160,6 @@ class TestToolsMedia < Minitest::Test
       methods.key?(callee) &&
         reaches?(source, callee, target, seen + [method], methods:, calls:)
     end
-  end
-
-  # The model string is not the invariant. This pinned flux-1.1-pro-ultra and
-  # went red the day 495bb98d8 made FLUX 2 the default — a deliberate upgrade
-  # the test read as a regression, which is what a version literal in an
-  # assertion always ends up doing. What has to hold is that FINAL_MODEL names a
-  # model replicate actually knows, and vocab-check is the check that proves it:
-  # replicate.rb refuses a FINAL_MODEL with no MODEL_CAPABILITIES entry.
-  def test_replicate_vocab_check_exits_zero_and_final_model_is_known
-    out, status = run_script(REPLICATE, "vocab-check")
-    assert status.success?, "replicate vocab-check failed:\n#{out}"
-
-    source = File.read(REPLICATE)
-    final = source[/^FINAL_MODEL = "([^"]+)"/, 1]
-    assert final, "replicate must declare a FINAL_MODEL"
-    assert_includes source, %("#{final}"), "FINAL_MODEL #{final} has no entry beside it"
-    assert_includes source, '"black-forest-labs/flux-kontext-pro"'
-    assert_includes source, "input_image"
-    assert_includes source, '"raw"'
   end
 
   def run_script(script, *args)

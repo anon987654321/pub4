@@ -60,6 +60,7 @@ module Operator
       ],
       "RAILS/bsdports/bin/ci" => ["RAILS/bsdports/test/**/*_test.rb"],
       "RAILS/master/bin/ci" => ["RAILS/master/test/**/*_test.rb"],
+      "RAILS/mrdamascy/bin/ci" => ["RAILS/mrdamascy/test/**/*_test.rb"],
       # These runners construct their Node inventory from a runtime path variable
       # or invoke npm script names; the complete target glob is therefore explicit.
       "MASTER/bin/check" => ["RAILS/master/test/**/*.test.mjs"],
@@ -70,6 +71,12 @@ module Operator
       # STUDIO's Rakefile builds this path from separate File.join arguments,
       # so the source-glob reader cannot recover the directory on its own.
       "STUDIO/Rakefile" => ["STUDIO/test/*_test.rb"],
+      # package.json scripts pass the test path inside a node --test command
+      # string, so no quoted path literal survives extraction.
+      "RAILS/package.json" => [
+        "RAILS/test/image_compression.test.mjs",
+        "RAILS/test/radio_brgen_tunnel.test.mjs",
+      ],
     }.freeze
 
     # Support files named like tests. A runner loads these; nothing runs them.

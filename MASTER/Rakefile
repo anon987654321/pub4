@@ -32,6 +32,7 @@ MASTER_TEST_FILES = FileList["test/**/test_*.rb", "test/**/*_test.rb"].exclude(*
 # keeping them in the same suite prevents a parked feature from hiding red tests.
 MASTER_TEST_FILES.include("tools/test/test_*.rb")
 MASTER_TEST_FILES.include("plugins/design_calibration/test/**/*_test.rb")
+MASTER_TEST_FILES.include("plugins/tts_dsp/test/**/test_*.rb")
 
 # One process, in turn: what each parallel worker runs on its share, and the
 # fallback with MASTER_TEST_JOBS=1.
