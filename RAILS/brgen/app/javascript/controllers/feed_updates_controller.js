@@ -35,6 +35,9 @@ export default class extends Controller {
   connect() {
     this.observer = new MutationObserver(() => this.refreshChip())
     this.observer.observe(this.pendingTarget, { childList: true })
+    this.title = document.title
+    this.titleOnReturn = () => this.writeTitle(document.hidden ? this.unseen().length : 0)
+    document.addEventListener("visibilitychange", this.titleOnReturn)
     this.refreshChip()
     this.keepViewerState = this.keepViewerState.bind(this)
     document.addEventListener("turbo:before-stream-render", this.keepViewerState)
@@ -44,6 +47,10 @@ export default class extends Controller {
   disconnect() {
     this.observer?.disconnect()
     document.removeEventListener("turbo:before-stream-render", this.keepViewerState)
+    document.removeEventListener("visibilitychange", this.titleOnReturn)
+    // Only a title this wrote is put back; a page Turbo has moved on to has
+    // its own already.
+    if (document.title === this.written) document.title = this.title
     this.stopWatching?.()
   }
 
@@ -84,27 +91,65 @@ export default class extends Controller {
   // itself at zero rather than rendering an empty state, because a control that
   // says "0 new posts" is asking to be read and then ignored.
   refreshChip() {
-    const count = this.pendingTarget.children.length
+    const count = this.unseen().length
     this.chipTarget.hidden = count === 0
+    this.writeTitle(document.hidden ? count : 0)
     if (count === 0) return
 
     const label = count === 1 ? this.oneValue : this.otherValue
     this.countTarget.textContent = label.replace("%{count}", String(count))
   }
 
+  // Staged cards the feed does not already show. A catch-up after a reconnect
+  // can deliver a post the stream also carried, and counting it twice offers
+  // the reader a post they can already see.
+  unseen() {
+    return Array.from(this.pendingTarget.children).filter((card) => !this.inFeed(card))
+  }
+
+  inFeed(card) {
+    return Boolean(card.id && this.hasFeedTarget && this.feedTarget.querySelector(`[id="${card.id}"]`))
+  }
+
+  // A hidden tab says how many posts are waiting: "(3) Bergen". The title the
+  // page was rendered with comes back once the tab is looked at again.
+  writeTitle(count) {
+    this.written = count > 0 ? `(${count}) ${this.title}` : this.title
+    document.title = this.written
+  }
+
   // Oldest first, so the batch keeps the order it arrived in once it is at the
   // top of the feed. Each card is wrapped in the <li> the list is built from —
   // the same wrapper home/_live_search_results puts around the same partial.
+  //
+  // An empty feed renders an empty state and no list to prepend into, so the
+  // page is fetched again and arrives with the list built.
   show(event) {
     event?.preventDefault()
-    const staged = Array.from(this.pendingTarget.children).reverse()
+    if (!this.hasFeedTarget) return window.location.reload()
 
+    const staged = this.unseen().reverse()
+    Array.from(this.pendingTarget.children).filter((card) => this.inFeed(card)).forEach((card) => card.remove())
+
+    let first = null
     for (const card of staged) {
       const row = document.createElement("li")
       row.appendChild(card)
       this.feedTarget.prepend(row)
+      first = card
     }
     this.refreshChip()
     this.chipTarget.hidden = true
+    this.reveal(first)
+  }
+
+  // The chip that held focus is gone, so focus moves to the newest card the
+  // reader asked for, and the card is scrolled to where they can read it.
+  reveal(card) {
+    if (!card) return
+
+    card.setAttribute("tabindex", "-1")
+    card.focus({ preventScroll: true })
+    card.scrollIntoView({ block: "start" })
   }
 }

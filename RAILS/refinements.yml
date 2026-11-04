@@ -1788,7 +1788,7 @@ items:
   path: RAILS/brgen/app/javascript/controllers/feed_updates_controller.js
   item: Prefix the document title with the pending count ('(3) Bergen') while the
     tab is hidden; nothing in the tree writes document.title.
-  status: open
+  status: done
 - id: brgen-110
   app: brgen
   area: feed
@@ -1796,7 +1796,7 @@ items:
   path: RAILS/brgen/app/javascript/controllers/feed_updates_controller.js
   item: De-duplicate pending cards whose id is already in the feed (catch-up after
     reconnect can re-deliver one).
-  status: open
+  status: done
 - id: brgen-111
   app: brgen
   area: feed
@@ -1804,7 +1804,7 @@ items:
   path: RAILS/brgen/app/javascript/controllers/feed_updates_controller.js
   item: 'Handle the new-posts chip on an empty feed: with no #home-feed list there
     is no feed target, so show() throws; create the list or reload.'
-  status: open
+  status: done
 - id: brgen-112
   app: brgen
   area: feed
@@ -1820,7 +1820,7 @@ items:
   path: RAILS/brgen/app/javascript/controllers/feed_updates_controller.js
   item: Move focus to the first new card (or announce the count) after the new-posts
     chip is pressed, and scroll it into view.
-  status: open
+  status: done
 - id: brgen-114
   app: brgen
   area: feed
