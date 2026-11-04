@@ -435,6 +435,11 @@ nb:
     like: "Lik"
   pwa:
     queued: "Lagret for offline"
+    description: "Sosial mote. Del antrekk, hold orden på garderoben og kle deg sammen med folk du følger."
+    add_item: "Legg til plagg"
+    add_item_short: "Plagg"
+    new_outfit: "Opprett antrekk"
+    new_outfit_short: "Antrekk"
 
   items:
     price_in: "%{attribute} (%{unit})"

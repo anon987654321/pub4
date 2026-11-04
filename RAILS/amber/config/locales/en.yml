@@ -436,6 +436,11 @@ en:
     like: "Like"
   pwa:
     queued: "Saved for offline"
+    description: "Social fashion. Share outfits, keep a wardrobe in order and dress with people you follow."
+    add_item: "Add a garment"
+    add_item_short: "Garment"
+    new_outfit: "Create an outfit"
+    new_outfit_short: "Outfit"
 
   items:
     price_in: "%{attribute} (%{unit})"

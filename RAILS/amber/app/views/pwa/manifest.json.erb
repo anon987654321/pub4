@@ -42,22 +42,22 @@
   "start_url": "/",
   "display": "standalone",
   "scope": "/",
-  "description": "Sosial mote. Del antrekk, hold orden på garderoben og kle deg sammen med folk du følger.",
+  "description": <%= raw t("pwa.description").to_json %>,
   "theme_color": "#FFB999",
   "background_color": "#FFFFFF",
   "shortcuts": [
     {
-      "name": "Legg til plagg",
-      "short_name": "Plagg",
+      "name": <%= raw t("pwa.add_item").to_json %>,
+      "short_name": <%= raw t("pwa.add_item_short").to_json %>,
       "url": "/items/new"
     },
     {
-      "name": "Opprett antrekk",
-      "short_name": "Antrekk",
+      "name": <%= raw t("pwa.new_outfit").to_json %>,
+      "short_name": <%= raw t("pwa.new_outfit_short").to_json %>,
       "url": "/outfits/new"
     }
   ],
-  "lang": "nb",
+  "lang": <%= raw I18n.locale.to_s.to_json %>,
   "share_target": {
     "action": "/share",
     "method": "POST",

@@ -13,6 +13,20 @@ require "test_helper"
 # as anything but JavaScript is refused by the browser with a console error a
 # deploy never sees.
 class PwaServingTest < ActionDispatch::IntegrationTest
+  # The manifest was a static nb-only file, so an English install was named,
+  # described and given shortcuts in Norwegian.
+  test "the manifest speaks the language it is asked for, and the page asks in its own" do
+    get pwa_manifest_path(format: :json, locale: "en")
+    manifest = JSON.parse(response.body)
+    assert_equal "en", manifest["lang"]
+    assert_equal I18n.t("pwa.description", locale: :en), manifest["description"]
+    assert_equal [ I18n.t("pwa.add_item", locale: :en), I18n.t("pwa.new_outfit", locale: :en) ],
+                 manifest["shortcuts"].map { _1["name"] }
+
+    get root_path(locale: "en")
+    assert_select "link[rel=manifest][href=?]", pwa_manifest_path(format: :json, locale: "en")
+  end
+
   test "the manifest is served as a manifest" do
     get pwa_manifest_path(format: :json)
 
@@ -22,9 +36,8 @@ class PwaServingTest < ActionDispatch::IntegrationTest
     manifest = JSON.parse(response.body)
     assert_equal "Amber", manifest["name"], "the app name comes from pwa_app_name"
     refute_empty manifest["icons"], "an installable manifest needs an icon"
-    # The description lives in manifest.json itself; pwa.description had no
-    # other reader and went with the dead locale keys in 3c0ef5e5d.
     assert_match(/\ASosial mote\./, manifest["description"].to_s)
+    assert_equal "nb", manifest["lang"]
     assert_includes %w[standalone fullscreen minimal-ui], manifest["display"]
   end
 

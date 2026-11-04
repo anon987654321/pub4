@@ -217,7 +217,7 @@ items:
   path: RAILS/amber/app/views/pwa/manifest.json
   item: Make the PWA manifest locale-aware (an .json.erb like bsdports) instead of
     a static nb-only manifest.json.
-  status: open
+  status: done
 - id: amber-027
   app: amber
   area: i18n
