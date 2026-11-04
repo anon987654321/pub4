@@ -5166,7 +5166,7 @@ items:
   item: Stream a replacement of the changed line and the cart summary from update_item;
     cart_streams only refreshes the pay-bar, badge and toast, so the stepper leaves
     the line quantity and subtotal stale.
-  status: open
+  status: done
 - id: mrdamascy-014
   app: mrdamascy
   area: cart
@@ -5199,7 +5199,7 @@ items:
   path: RAILS/mrdamascy/app/views/carts/show.html.erb
   item: Keep a decrease control rendered at quantity 1 (acting as remove) so the stepper
     does not jump sideways when the minus button disappears.
-  status: open
+  status: done
 - id: mrdamascy-018
   app: mrdamascy
   area: cart
@@ -5224,7 +5224,7 @@ items:
   path: RAILS/mrdamascy/app/views/carts/show.html.erb
   item: Show the food photo from food_photo(item) on cart and order lines, falling
     back to the emoji, to match the menu cards.
-  status: open
+  status: done
 - id: mrdamascy-021
   app: mrdamascy
   area: cart

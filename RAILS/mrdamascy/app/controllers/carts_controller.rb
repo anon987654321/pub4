@@ -7,9 +7,7 @@ class CartsController < ApplicationController
   def show
     @cart = current_cart
     @lines = @cart.cart_items.includes(:menu_item).order(:id)
-    # The badge names the code checkout will apply, or none at all.
-    @promo = PromoApplier.call(subtotal_ore: @cart.subtotal_ore, delivery_mode: @cart.delivery_mode,
-                               user: current_user)[:promo]
+    @promo = cart_promo
   end
 
   # Quick-add from the menu (APP_SPEC §6): a Turbo Stream refreshes the cart
@@ -47,29 +45,30 @@ class CartsController < ApplicationController
       notice = t("cart.updated")
     end
 
-    respond_to do |format|
-      format.turbo_stream do
-        flash.now[:notice] = notice
-        render turbo_stream: cart_streams
-      end
-      format.html { redirect_to cart_path, notice: notice }
-    end
+    respond_with_line_change(notice)
   end
 
   def remove_item
     line = current_cart.cart_items.find(params[:line_id])
     line.destroy!
 
-    respond_to do |format|
-      format.turbo_stream do
-        flash.now[:notice] = t("flash.removed")
-        render turbo_stream: [turbo_stream.remove("cart_item_#{line.id}")] + cart_streams
-      end
-      format.html { redirect_to cart_path, notice: t("flash.removed") }
-    end
+    respond_with_line_change(t("flash.removed"), turbo_stream.remove("cart_item_#{line.id}"))
   end
 
   private
+
+  # A stepper or remove tap answers with the re-rendered lines and summary
+  # plus the shared pay-bar, badge and toast streams; no-JS clients reload
+  # the cart.
+  def respond_with_line_change(notice, *streams)
+    respond_to do |format|
+      format.turbo_stream do
+        flash.now[:notice] = notice
+        render turbo_stream: streams + [cart_contents_stream] + cart_streams
+      end
+      format.html { redirect_to cart_path, notice: }
+    end
+  end
 
   # The line was refused before anything was written; send the guest back to
   # the dish so the sheet shows what can be picked.
@@ -102,6 +101,20 @@ class CartsController < ApplicationController
     streams << cart_badge_stream
     streams << turbo_stream.update("toasts", partial: "shared/toast")
     streams
+  end
+
+  # The badge names the code checkout will apply, or none at all.
+  def cart_promo
+    PromoApplier.call(subtotal_ore: current_cart.subtotal_ore, delivery_mode: current_cart.delivery_mode,
+                      user: current_user)[:promo]
+  end
+
+  # The stepper changed a line's quantity, sum and the subtotal; the page's
+  # lines and summary are re-rendered from the cart as it now stands.
+  def cart_contents_stream
+    cart = current_cart
+    cart.cart_items.reset
+    turbo_stream.replace("cart_contents", partial: "carts/contents", locals: { cart:, promo: cart_promo })
   end
 
   def cart_badge_stream

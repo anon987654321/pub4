@@ -25,7 +25,12 @@
   <ul class="order-lines-list">
   <% order.order_items.each do |line| %>
     <li class="order-line">
-      <%= tag.span line.emoji, aria: { hidden: true } %>
+      <%# The line keeps its dish name, so the menu card's photo finds it. %>
+      <% if (photo = food_photo(line)) %>
+        <%= image_tag photo, alt: "", class: "line-photo", loading: "lazy", size: "44x44" %>
+      <% else %>
+        <%= tag.span line.emoji, aria: { hidden: true } %>
+      <% end %>
       <span>
         <%= tag.strong "#{line.quantity}× #{line.name}" %>
         <%= tag.span line.options_text, class: "line-options" if line.options_text.present? %>

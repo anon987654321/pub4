@@ -17,6 +17,15 @@
   font-size: var(--text-title);
 }
 
+// The menu card's studio shot, at the emoji tile's size.
+.line-photo {
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-small);
+  object-fit: cover;
+  background: var(--mint-100);
+}
+
 .line-body h2 {
   font-size: var(--text-body);
   margin: 0;

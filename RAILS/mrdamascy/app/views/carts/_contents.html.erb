@@ -1,0 +1,38 @@
+<%# The cart's lines and summary in one replaceable root: the stepper and
+    remove streams swap #cart_contents whole, so a line's quantity, its sum,
+    the subtotal and the promo badge never go stale, and the last removal
+    lands on the empty state. Locals: cart, promo. %>
+<div id="cart_contents">
+<% if cart.cart_items.any? %>
+  <div class="cart-lines">
+    <%= render partial: "carts/line", collection: cart.cart_items, as: :line %>
+  </div>
+
+  <section class="cart-summary card">
+    <div class="cart-subtotal">
+      <%= tag.span t("cart.subtotal") %>
+      <%= tag.strong money(cart.subtotal_ore) %>
+    </div>
+
+    <p class="promo-hint">
+      <%= tag.span promo.code, class: "badge badge-promo", aria: { hidden: true } if promo %>
+      <%= t("cart.promo_hint") %>
+    </p>
+
+    <nav class="mode-toggle" aria-label="<%= t("checkout.mode") %>">
+      <%= link_to t("checkout.mode_delivery"), checkout_path(mode: "delivery"),
+            class: "chip", aria: { current: (cart.delivery_mode != "pickup").presence } %>
+      <%= link_to t("checkout.mode_pickup"), checkout_path(mode: "pickup"),
+            class: "chip", aria: { current: (cart.delivery_mode == "pickup").presence } %>
+    </nav>
+
+    <%= link_to t("cart.vipps_cta"), checkout_path, class: "button button-vipps" %>
+    <%= tag.p t("checkout.steps_note"), class: "cart-action-note" %>
+  </section>
+<% else %>
+  <%= render "shared/empty",
+        title: t("cart.empty_title"),
+        body: t("cart.empty_body"),
+        action: { label: t("cart.empty_cta"), path: root_path } %>
+<% end %>
+</div>

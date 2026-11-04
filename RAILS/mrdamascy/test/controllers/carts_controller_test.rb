@@ -161,4 +161,51 @@ class CartsControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_match(/tom|Meny|menyen/, response.body)
   end
+
+  test "the stepper streams the changed line and the subtotal back" do
+    user = customer_sign_in
+    post add_item_cart_url, params: { menu_item_id: @item.id, quantity: 1 }
+    line = open_cart_for(user).cart_items.sole
+
+    patch update_item_cart_url(line.id), params: { quantity: 3 }, as: :turbo_stream
+
+    stream = Nokogiri::HTML(response.body).at_css(%(turbo-stream[action="replace"][target="cart_contents"]))
+    assert stream, "update_item must replace the cart contents"
+    contents = Nokogiri::HTML(stream.at_css("template").inner_html)
+    assert_equal "3", contents.at_css("#cart_item_#{line.id} .quantity-value").text
+    assert_equal "387 kr", contents.at_css("#cart_item_#{line.id} .line-sum").text
+    assert_equal "387 kr", contents.at_css(".cart-subtotal strong").text
+    get cart_url
+    assert Nokogiri::HTML(response.body).at_css("#cart_contents"), "the page carries the stream target"
+  end
+
+  test "the minus stays at one and removes the line" do
+    user = customer_sign_in
+    post add_item_cart_url, params: { menu_item_id: @item.id, quantity: 1 }
+    line = open_cart_for(user).cart_items.sole
+
+    get cart_url
+    minus = Nokogiri::HTML(response.body).at_css(%(#cart_item_#{line.id} form:first-child button.quantity-button))
+    assert_equal "−", minus&.text, "a line at one still carries its minus"
+    assert_equal I18n.t("cart.remove"), minus["aria-label"]
+    assert_equal "0", minus.ancestors("form").first.at_css(%(input[name="quantity"]))["value"]
+
+    patch update_item_cart_url(line.id), params: { quantity: 0 }, as: :turbo_stream
+    assert_empty open_cart_for(user).reload.cart_items
+    assert_match I18n.t("cart.empty_title"), response.body
+  end
+
+  test "cart and order lines show the menu card's food photo" do
+    user = customer_sign_in
+    post add_item_cart_url, params: { menu_item_id: @item.id, quantity: 1 }
+
+    get cart_url
+    assert Nokogiri::HTML(response.body).at_css("img.line-photo"), "the cart line shows the dish photo"
+
+    order = seed_order!(user:)
+    OrderItem.create!(order:, menu_item_id: @item.id, name: @item.name, emoji: @item.emoji,
+                      quantity: 1, unit_price_ore: 12_900, line_total_ore: 12_900)
+    get order_url(order)
+    assert Nokogiri::HTML(response.body).at_css(".order-line img.line-photo"), "the order line shows it too"
+  end
 end

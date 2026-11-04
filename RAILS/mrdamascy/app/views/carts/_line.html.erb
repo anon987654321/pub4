@@ -1,0 +1,36 @@
+<%# One cart line: photo or emoji, name, options, note, stepper and sum. %>
+<article id="<%= dom_id(line) %>" class="cart-line card">
+  <% if (photo = food_photo(line.menu_item)) %>
+    <%= image_tag photo, alt: "", class: "line-photo", loading: "lazy", size: "44x44" %>
+  <% else %>
+    <%= tag.span line.menu_item&.emoji, class: "line-emoji", aria: { hidden: true } %>
+  <% end %>
+  <div class="line-body">
+    <%= tag.h2 line.menu_item&.name %>
+    <% if line.options_list.any? %>
+      <%= tag.ul safe_join(line.options_list.map { |option_name| tag.li(option_name) }),
+             class: "fact-list line-options" %>
+    <% end %>
+    <%= tag.p "“#{line.note}”", class: "line-note" if line.note.present? %>
+    <div class="line-tools">
+      <%# At one the minus stays in place and removes the line, so the
+          stepper never jumps sideways. %>
+      <%= button_to "−", update_item_cart_path(line.id), method: :patch,
+            params: { quantity: line.quantity.to_i - 1 },
+            class: "quantity-button",
+            aria: { label: line.quantity.to_i > 1 ? t("cart.decrease") : t("cart.remove") } %>
+      <span class="quantity-value" aria-label="<%= t("menu.qty") %>"><%= line.quantity %></span>
+      <%= button_to "+", update_item_cart_path(line.id), method: :patch,
+            params: { quantity: line.quantity.to_i + 1 },
+            class: "quantity-button", aria: { label: t("cart.increase") } %>
+      <%= button_to t("cart.remove"), remove_item_cart_path(line.id), method: :delete,
+            class: "line-remove" %>
+    </div>
+  </div>
+  <div class="line-side">
+    <%= tag.strong money(line.line_total_ore), class: "line-sum" %>
+    <% if line.quantity.to_i > 1 %>
+      <%= tag.span "#{money(line.unit_price_ore)} × #{line.quantity}" %>
+    <% end %>
+  </div>
+</article>

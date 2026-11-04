@@ -36,10 +36,10 @@ module ApplicationHelper
     "Damascy Boss-boks" => "food/damascy-boss-boks.jpg"
   }.freeze
 
-  # The item's photo asset path, or nil when the dish has none (views fall
-  # back to the emoji tile).
+  # The item's photo asset path, or nil when the dish has none or is gone
+  # (views fall back to the emoji tile).
   def food_photo(item)
-    FOOD_PHOTOS[item.name]
+    FOOD_PHOTOS[item&.name]
   end
 
   # money(1500) → "15 kr" — whole øre render without decimals; anything with
