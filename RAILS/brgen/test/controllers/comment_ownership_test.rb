@@ -126,4 +126,32 @@ class CommentOwnershipTest < ActionDispatch::IntegrationTest
       end
     end
   end
+  # Comments could not be reported anywhere: the report button sat on posts and
+  # messages only. Another member's comment now carries it; your own does not,
+  # and neither does any comment for a visitor who has not signed in.
+  test "a signed-in member can report someone else's comment, not their own" do
+    ActsAsTenant.with_tenant(@city) do
+      author = user("reported")
+      reader = user("reporter")
+      post_record = a_post(author)
+      comment = Comment.create!(user: author, commentable: post_record, content: "a reply")
+      button = "#report_comment_#{comment.id} form[action=?]"
+
+      get post_path(post_record)
+      assert_select button, reports_path, count: 0
+
+      sign_in(author)
+      get post_path(post_record)
+      assert_select button, reports_path, count: 0
+
+      delete session_path
+      sign_in(reader)
+      get post_path(post_record)
+      assert_select button, reports_path
+
+      assert_difference -> { ModerationReport.where(reportable: comment).count }, 1 do
+        post reports_path, params: { target_gid: comment.to_signed_global_id.to_s, reason: "other" }
+      end
+    end
+  end
 end

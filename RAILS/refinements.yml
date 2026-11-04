@@ -966,7 +966,7 @@ items:
   path: RAILS/__shared/app/views/comments/_comment.html.erb
   item: Render shared/report_button in the shared comment row for signed-in non-authors;
     comments currently cannot be reported anywhere.
-  status: open
+  status: done
 - id: brgen-011
   app: brgen
   area: comments

@@ -17,7 +17,11 @@
 <% threaded = local_assigns.fetch(:threaded) { comment.respond_to?(:depth) || comment.respond_to?(:replies) } %>
 <% depth = comment.respond_to?(:depth) ? [ comment.depth.to_i, 4 ].min : 0 %>
 <% destroy_arg = local_assigns.fetch(:destroy_arg) { comment_destroy_arg(comment) } %>
-<% can_delete = (respond_to?(:authenticated?) ? authenticated? : false) && comment.user == Current.user %>
+<% signed_in = respond_to?(:authenticated?) ? authenticated? : false %>
+<% can_delete = signed_in && comment.user == Current.user %>
+<%# Reporting needs an account and an app that takes reports (brgen ships shared/report_button). %>
+<% can_report = signed_in && comment.user != Current.user &&
+                 lookup_context.exists?("report_button", ["shared"], true) %>
 <% can_interact = Current.user.present? %>
 <% root_post = comment_root_post(comment) if threaded %>
 
@@ -38,6 +42,9 @@
               method: :delete,
               data: { turbo_confirm: t("actions.confirm_delete") },
               class: "button button-ghost button-small comment-delete" %>
+      <% end %>
+      <% if can_report %>
+        <%= render "shared/report_button", target: comment, reason: nil %>
       <% end %>
     </header>
 
