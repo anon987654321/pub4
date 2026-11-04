@@ -49,12 +49,10 @@ class Fediverse::InboxesController < ApplicationController
     # other — which is the whole game.
     return head :forbidden unless claims_match?(activity, actor)
 
-    verified = Fediverse::Signature.verify(
-      request: request,
-      body: body,
-      public_key_for: ->(_key_id) { actor.public_key }
-    )
-    return head :unauthorized unless verified
+    unless signed_by?(actor, body)
+      actor = Fediverse::ActorFetcher.refetch(actor)
+      return head :unauthorized unless actor && signed_by?(actor, body)
+    end
 
     Fediverse::InboxProcessor.new(activity, actor).call
     # 202 rather than 200: the work is queued, and saying "done" for something
@@ -64,6 +62,10 @@ class Fediverse::InboxesController < ApplicationController
   end
 
   private
+
+  def signed_by?(actor, body)
+    Fediverse::Signature.verify(request:, body:, public_key_for: ->(_key_id) { actor.public_key })
+  end
 
   def parse(body)
     parsed = JSON.parse(body)

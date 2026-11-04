@@ -1722,7 +1722,7 @@ items:
   item: In ActorFetcher.upsert, require document['id'] == uri and publicKey.owner
     == uri before storing public_key_pem, and on a signature failure with a cached
     key, force one refetch to handle remote key rotation.
-  status: open
+  status: done
 - id: brgen-102
   app: brgen
   area: fediverse
