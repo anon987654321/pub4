@@ -5595,7 +5595,7 @@ items:
   path: RAILS/mrdamascy/app/views/menu/item.html.erb
   item: Give the item sheet photo width, height and decoding=async, and serve the
     food photos as sized WebP with srcset.
-  status: open
+  status: done
 - id: mrdamascy-066
   app: mrdamascy
   area: performance

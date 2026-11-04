@@ -42,6 +42,22 @@ module ApplicationHelper
     FOOD_PHOTOS[item&.name]
   end
 
+  # The dish's photo as a picture: WebP at 320 and 640 px for the browsers
+  # that take it, the JPEG otherwise. Width and height reserve its box, and
+  # decoding stays off the main thread. Nil without a photo (views fall back
+  # to the emoji tile).
+  FOOD_PHOTO_WIDTHS = [320, 640].freeze
+
+  def food_picture(item, size:, **options)
+    photo = food_photo(item) or return
+    base = photo.delete_suffix(".jpg")
+    srcset = FOOD_PHOTO_WIDTHS.map { |width| "#{image_path("#{base}-#{width}.webp")} #{width}w" }.join(", ")
+    tag.picture do
+      tag.source(type: "image/webp", srcset:, sizes: "#{size}px") +
+        image_tag(photo, alt: "", width: size, height: size, decoding: "async", **options)
+    end
+  end
+
   # money(1500) → "15 kr" — whole øre render without decimals; anything with
   # a remainder falls back to Norwegian comma decimals ("15,50 kr").
   def money(ore)

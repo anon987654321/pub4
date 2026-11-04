@@ -81,4 +81,23 @@ class MenuControllerTest < ActionDispatch::IntegrationTest
     assert_equal "polite", notice["aria-live"]
     assert_equal I18n.t("menu.sauce_limit_reached"), page.at_css("form.sheet-form")["data-item-sheet-sauce-limit-value"]
   end
+
+  test "food photos are sized WebP pictures with a reserved box" do
+    get menu_item_url(@item)
+    picture = Nokogiri::HTML(response.body).at_css(".sheet-head picture")
+    img = picture.at_css("img.sheet-photo")
+
+    assert_equal %w[320 320 async], [img["width"], img["height"], img["decoding"]]
+    srcset = picture.at_css("source[type='image/webp']")["srcset"]
+    assert_match(%r{food/damaskus-kylling-shawarma-320-\h+\.webp 320w, .*-640-\h+\.webp 640w}, srcset)
+    ApplicationHelper::FOOD_PHOTOS.each_value do |photo|
+      ApplicationHelper::FOOD_PHOTO_WIDTHS.each do |width|
+        assert Rails.root.join("app/assets/images", photo.sub(".jpg", "-#{width}.webp")).file?, "#{photo} at #{width}"
+      end
+    end
+
+    get root_url
+    card = Nokogiri::HTML(response.body).at_css(".item-card picture img.item-photo")
+    assert_equal %w[56 lazy], [card["width"], card["loading"]]
+  end
 end

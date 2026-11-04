@@ -9,8 +9,8 @@
 
 <article class="sheet" data-turbo-frame="_top">
   <header class="sheet-head">
-    <% if (photo = food_photo(item)) %>
-      <%= image_tag photo, alt: "", class: "sheet-photo" %>
+    <% if (picture = food_picture(item, size: 320, class: "sheet-photo")) %>
+      <%= picture %>
     <% else %>
       <span class="sheet-emoji" aria-hidden="true"><%= item.emoji %></span>
     <% end %>

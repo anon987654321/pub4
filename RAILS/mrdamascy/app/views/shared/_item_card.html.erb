@@ -7,8 +7,8 @@
 
 <article class="item-card card" data-turbo-frame="_top">
   <%= link_to menu_item_path(item), class: "item-card-hit" do %>
-    <% if (photo = food_photo(item)) %>
-      <%= image_tag photo, alt: "", class: "item-photo", loading: "lazy", size: "96x96" %>
+    <% if (picture = food_picture(item, size: 56, class: "item-photo", loading: "lazy")) %>
+      <%= picture %>
     <% else %>
       <span class="item-emoji" aria-hidden="true"><%= item.emoji %></span>
     <% end %>
