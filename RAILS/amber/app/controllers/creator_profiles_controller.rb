@@ -34,15 +34,25 @@ class CreatorProfilesController < ApplicationController
   end
 
   def edit
+    @showcase_candidates = showcase_candidates
   end
 
   def update
-    return render :edit, status: :unprocessable_entity unless @profile.update(creator_profile_params)
-
-    redirect_to creator_profile_path(@profile.handle), notice: t("flash.creator_profile_updated")
+    if @profile.update(creator_profile_params)
+      redirect_to creator_profile_path(@profile.handle), notice: t("flash.creator_profile_updated")
+    else
+      @showcase_candidates = showcase_candidates
+      render :edit, status: :unprocessable_entity
+    end
   end
 
   private
+
+  # What the "add to showcase" select offers: garments not already on it.
+  def showcase_candidates
+    showcased = @profile.creator_wardrobe_items.select(:item_id)
+    Current.user.items.where.not(id: showcased).order(:title)
+  end
 
   def set_own_profile
     @profile = CreatorProfile.find_by(user: Current.user) || redirect_to(new_my_creator_profile_path)

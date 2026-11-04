@@ -9,7 +9,8 @@ class LiveStreamsController < ApplicationController
     @pagy, @live_streams = pagy(
       LiveStream.publicly_visible.where(status: %w[scheduled live]).includes(:user).order(:scheduled_at, :created_at)
     )
-    @live_stream = Current.user.live_streams.build
+    # The next full hour, the time a session is most often planned for.
+    @live_stream = Current.user.live_streams.build(scheduled_at: Time.current.beginning_of_hour + 1.hour)
   end
 
   def show; end

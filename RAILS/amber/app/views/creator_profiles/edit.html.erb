@@ -25,7 +25,7 @@
 
   <%= form_with url: creator_profile_wardrobe_items_path(handle: @profile.handle), method: :post, class: "form-wrap" do |f| %>
     <%= f.label :item_id, t("home.add_item") %>
-    <%= f.collection_select :item_id, Current.user.items.order(:title), :id, :title, include_blank: true %>
+    <%= f.collection_select :item_id, @showcase_candidates, :id, :title, include_blank: true %>
     <%= f.label :caption, t("creator.caption") %>
     <%= f.text_field :caption %>
     <%= f.submit t("creator.add_showcase") %>

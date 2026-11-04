@@ -10,7 +10,10 @@
     <%= render "shared/errors", object: @live_stream if lookup_context.exists?("shared/errors", [], true) %>
     <div class="field"><%= f.label :title, t("wardrobe.session_title") %><%= f.text_field :title, required: true %></div>
     <div class="field"><%= f.label :description %><%= f.text_area :description, rows: 3 %></div>
-    <div class="field"><%= f.label :scheduled_at %><%= f.datetime_field :scheduled_at %></div>
+    <div class="field">
+      <%= f.label :scheduled_at %>
+      <%= f.datetime_field :scheduled_at, min: Time.current.beginning_of_minute %>
+    </div>
     <div class="field"><%= f.submit t("live_streams.schedule"), class: "button" %></div>
   <% end %>
 </section>

@@ -67,8 +67,7 @@
       <p><%= t("declutter.box_waited") %></p>
       <div class="items-grid">
         <% @aging_box.each do |item| %>
-          <%= render "items/item", item: item %>
-          <%= link_to t("actions.review"), review_declutter_path(item), class: "button-small" %>
+          <%= render "items/item", item:, review: true %>
         <% end %>
       </div>
     </section>
@@ -79,8 +78,7 @@
       <%= tag.h2 t("declutter.declutter_box") %>
       <div class="items-grid">
         <% @box_items.each do |item| %>
-          <%= render "items/item", item: item %>
-          <%= link_to t("actions.review"), review_declutter_path(item), class: "button-small" %>
+          <%= render "items/item", item:, review: true %>
         <% end %>
       </div>
     </section>
@@ -91,8 +89,7 @@
       <%= tag.h2 t("declutter.highest_release") %>
       <div class="items-grid">
         <% @summary[:top_candidates].each do |item| %>
-          <%= render "items/item", item: item %>
-          <%= link_to t("actions.review"), review_declutter_path(item), class: "button-small" %>
+          <%= render "items/item", item:, review: true %>
         <% end %>
       </div>
     </section>
@@ -108,8 +105,7 @@
             <%= tag.h3 t("items.pieces", count: items.size) %>
             <div class="items-grid">
               <% items.each do |item| %>
-                <%= render "items/item", item: item %>
-                <%= link_to t("actions.review"), review_declutter_path(item), class: "button-small" %>
+                <%= render "items/item", item:, review: true %>
               <% end %>
             </div>
           </article>

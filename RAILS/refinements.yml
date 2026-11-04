@@ -661,7 +661,7 @@ items:
   size: S
   path: RAILS/amber/app/views/creator_profiles/edit.html.erb
   item: Exclude already-showcased items from the 'add to showcase' select.
-  status: open
+  status: done
 - id: amber-082
   app: amber
   area: ux
@@ -677,7 +677,7 @@ items:
   path: RAILS/amber/app/views/declutter/index.html.erb
   item: Put the declutter 'Review' link inside each item card instead of as a loose
     grid child that occupies its own grid cell.
-  status: open
+  status: done
 - id: amber-084
   app: amber
   area: ux
@@ -757,7 +757,7 @@ items:
   size: S
   path: RAILS/amber/app/views/live_streams/index.html.erb
   item: Set the scheduled_at field's min to now and default it to the next full hour.
-  status: open
+  status: done
 - id: amber-094
   app: amber
   area: ux
