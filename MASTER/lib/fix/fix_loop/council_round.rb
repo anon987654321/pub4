@@ -146,6 +146,10 @@ module Master
           unless result.ok?
             message = result.message.to_s
             vetoed_by = message[/\Acouncil: veto from ([^\n]+)/i, 1]
+            known_veto = Master::Review::Council::Deliberation::VETO_PRECEDENCE.any? do |name|
+              name.casecmp?(vetoed_by.to_s)
+            end
+            vetoed_by = nil unless result.category == :validation && known_veto
             if vetoed_by
               @bus&.publish(
                 "fix_loop:hard_critique_veto",
