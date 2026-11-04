@@ -164,14 +164,8 @@ routes:
     - "/search"
     host: markedsplass.brgen.no
   "/catalog.json":
-    status: 500
-    type: text/html
-    title: 'Action Controller: Exception caught'
-    heading: NoMethodError in Marketplace::CatalogController#index
-    landmarks:
-    - header
-    - main
-    forms: []
+    status: 200
+    type: application/json
     host: markedsplass.brgen.no
   "/changelog":
     status: 200
@@ -515,14 +509,8 @@ routes:
     - "/search"
     host: dating.brgen.no
   "/merchant-feed.xml":
-    status: 500
-    type: text/html
-    title: 'Action Controller: Exception caught'
-    heading: NoMethodError in Marketplace::MerchantFeedsController#show
-    landmarks:
-    - header
-    - main
-    forms: []
+    status: 200
+    type: application/xml
     host: markedsplass.brgen.no
   "/nearby":
     status: 200
@@ -864,6 +852,19 @@ routes:
   "/robots.txt":
     status: 200
     type: text/plain
+  "/rules":
+    status: 200
+    type: text/html
+    title: Regler — Bergen
+    heading: Regler
+    landmarks:
+    - header
+    - nav
+    - main
+    - footer
+    - form
+    forms:
+    - "/search"
   "/safety":
     status: 200
     type: text/html
