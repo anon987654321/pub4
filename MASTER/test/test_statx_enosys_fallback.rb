@@ -20,8 +20,43 @@ class TestStatxEnosysFallback < Minitest::Test
                                        source, "-o", executable)
       assert status.success?, output
 
-      [[], ["EPERM"]].each do |arguments|
-        output, status = Open3.capture2e(executable, *arguments)
+      [ "ENOSYS", "EPERM" ].each do |denied_errno|
+        output, status = Open3.capture2e(executable, denied_errno)
+        skip output if status.exitstatus == 77
+        assert status.success?, output
+      end
+
+      path = File.join(directory, "ruby-statx-target")
+      link = "#{path}.link"
+      File.binwrite(path, "pub4-statx")
+      File.symlink(path, link)
+      ruby_probe = <<~'RUBY'
+        path, link = ARGV
+        file_stat = File.stat(path)
+        raise "File.stat size mismatch" unless file_stat.size == 10
+        File.open(path, "rb") do |file|
+          raise "IO#stat size mismatch" unless file.stat.size == 10
+        end
+        link_stat = File.lstat(link)
+        raise "File.lstat followed the symbolic link" unless link_stat.symlink?
+        begin
+          File.birthtime(path)
+          raise "fallback fabricated birthtime support"
+        rescue NotImplementedError
+          # A portable stat fallback cannot provide STATX_BTIME.
+        end
+        begin
+          File.stat("#{path}.missing")
+          raise "missing path unexpectedly existed"
+        rescue Errno::ENOENT
+          # Preserve the underlying filesystem error.
+        end
+        puts "PASS: patched Ruby stat/lstat/fstat fallback"
+      RUBY
+
+      [ "ENOSYS", "EPERM" ].each do |denied_errno|
+        output, status = Open3.capture2e(executable, "--exec", denied_errno,
+                                         RbConfig.ruby, "-e", ruby_probe, path, link)
         skip output if status.exitstatus == 77
         assert status.success?, output
       end
