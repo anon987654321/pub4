@@ -17,6 +17,7 @@ class Order < ApplicationRecord
 
   belongs_to :user, optional: true
   belongs_to :kitchen
+  belongs_to :cart, optional: true
   has_many :order_items, dependent: :destroy
   has_one :review, dependent: :destroy
 
@@ -116,6 +117,7 @@ class Order < ApplicationRecord
   # Builds unsaved lines on a new order (CheckoutController) and creates rows
   # on a persisted one — one snapshot implementation, both paths.
   def snapshot_from_cart!(cart)
+    self.cart = cart
     cart.cart_items.includes(:menu_item).find_each do |line|
       attrs = line.order_line_attributes
       new_record? ? order_items.build(attrs) : order_items.create!(attrs)

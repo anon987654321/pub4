@@ -11,9 +11,13 @@ class Cart < ApplicationRecord
   # One ceiling for a line, shared by the item sheet, quick-add and the
   # cart stepper.
   MAX_QUANTITY = 20
+  # How long a started checkout holds the cart, and how long a repeat post
+  # is sent on to the order it already placed.
+  CHECKOUT_WINDOW = 2.minutes
 
   belongs_to :user, optional: true
   has_many :cart_items, dependent: :destroy
+  has_many :orders, dependent: :nullify
 
   normalizes :session_key, with: ->(key) { key.to_s.strip }
 
@@ -68,6 +72,26 @@ class Cart < ApplicationRecord
       guest.reload.destroy!
     end
     self
+  end
+
+  # One checkout at a time: a conditional update only one request can win,
+  # so a double-tapped pay button cannot build two orders. A claim older
+  # than the window is a crashed request's and may be taken over.
+  def claim_checkout!
+    Cart.where(id:)
+        .where("checkout_started_at IS NULL OR checkout_started_at < ?", CHECKOUT_WINDOW.ago)
+        .update_all(checkout_started_at: Time.current) == 1
+  end
+
+  def release_checkout!
+    update_columns(checkout_started_at: nil)
+  end
+
+  # The order this cart placed moments ago and is still waiting for its
+  # payment: where a repeat post of the same confirm form belongs.
+  def unpaid_order_just_placed
+    orders.where(state: "placed", payment_state: %w[pending authorised], created_at: CHECKOUT_WINDOW.ago..)
+          .order(:id).last
   end
 
   def empty!

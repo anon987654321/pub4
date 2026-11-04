@@ -179,6 +179,7 @@ nb:
     terms_note: Ved å betale godkjenner du at maten blir spist med stor glede
     address: Adresse
     cart_summary: I kurven
+    in_progress: "Bestillingen din er allerede på vei til betaling — et øyeblikk."
     checking: Sjekker levering…
     closed: Kjøkkenet er stengt akkurat nå — vi åpner 11:00. Yalla i morgen!
     failed: Noe gikk galt i betalingen. Ingen krav — prøv igjen.

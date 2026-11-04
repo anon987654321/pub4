@@ -5241,7 +5241,7 @@ items:
   item: Make CheckoutController#create idempotent per cart (reuse a pending order
     created from the same cart within a short window) instead of building a fresh
     order on every POST.
-  status: open
+  status: done
 - id: mrdamascy-023
   app: mrdamascy
   area: checkout

@@ -15,6 +15,8 @@ class CheckoutController < ApplicationController
   # postcode in Norway is not.
   rate_limit to: 60, within: 1.minute, only: :zone, name: "zone_lookup"
 
+  around_action :hold_checkout_claim, only: :create
+
   # The one confirm screen (APP_SPEC §6/§12): prefilled address, mode toggle,
   # Vipps payment row, auto-applied promo line, totals — one "Betal med
   # Vipps" CTA. No promo field, no card fields, no tip step.
@@ -108,9 +110,7 @@ class CheckoutController < ApplicationController
       raise
     end
     @cart.empty!
-
-    redirect_to(order.vipps_url.presence || track_path(order.tracking_token),
-                allow_other_host: true, status: :see_other)
+    redirect_to_payment(order)
   end
 
   # Zone feedback for the zone_check Stimulus controller while the postcode
@@ -125,6 +125,29 @@ class CheckoutController < ApplicationController
   end
 
   private
+
+  # Idempotent per cart: a repeat post of the confirm form goes on to the
+  # order it already placed, and a post while another is still placing the
+  # order is turned back instead of building a second one.
+  def hold_checkout_claim
+    cart = current_cart
+    if cart.cart_items.empty?
+      placed = cart.unpaid_order_just_placed
+      return placed ? redirect_to_payment(placed) : yield
+    end
+    return redirect_to(cart_path, alert: t("checkout.in_progress")) unless cart.claim_checkout!
+
+    begin
+      yield
+    ensure
+      cart.release_checkout!
+    end
+  end
+
+  def redirect_to_payment(order)
+    redirect_to(order.vipps_url.presence || track_path(order.tracking_token),
+                allow_other_host: true, status: :see_other)
+  end
 
   def zone_answer(zone)
     return { ok: false, fee_ore: nil, eta: nil, name: nil, min_basket_ore: nil } unless zone
