@@ -141,4 +141,13 @@ class AccountMergerAndModerationTest < ActiveSupport::TestCase
     ModerationWorkflow.transition!(report: report, status: "not_a_status")
     assert_equal "open", report.reload.status
   end
+
+  test "a second report by the same person on the same target is the first one" do
+    post = Post.create!(title: "dup", content: "samme innlegg rapportert to ganger", user: @guest)
+    first = ModerationWorkflow.report!(reporter: @member, target: post, reason: "spam")
+
+    assert_no_difference -> { ModerationReport.count } do
+      assert_equal first, ModerationWorkflow.report!(reporter: @member, target: post, reason: "spam")
+    end
+  end
 end

@@ -21,11 +21,20 @@ class ReportsController < ApplicationController
       reason: params[:reason],
       details: params[:details]
     )
-    ModerationReportNotificationJob.perform_later(@report.id)
+    notify_moderators
     respond_to do |f|
       f.html { redirect_back fallback_location: root_path, notice: t("flash.report_submitted") }
       f.turbo_stream
       f.json { render json: { reported: true } }
     end
+  end
+
+  private
+
+  # A repeat of an open report tells the moderators nothing new.
+  def notify_moderators
+    return unless @report.previously_new_record?
+
+    ModerationReportNotificationJob.perform_later(@report.id)
   end
 end

@@ -9,7 +9,13 @@ class ModerationWorkflow
     new.transition!(report: report, status: status, decision_reason: decision_reason)
   end
 
+  # One open report per reporter and target. A second press returned a second
+  # row, which lengthened the queue and counted twice in the trust signals;
+  # it now answers with the report already waiting.
   def report!(reporter:, target:, reason:, details: nil)
+    pending = reporter && ModerationReport.find_by(user: reporter, reportable: target, status: %w[open reviewing])
+    return pending if pending
+
     ModerationReport.transaction do
       report = ModerationReport.create!(
         user: reporter,

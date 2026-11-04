@@ -2480,7 +2480,7 @@ items:
   item: Deduplicate reports in ModerationWorkflow.report! so the same reporter cannot
     file a second open report on the same target, which today inflates the queue and
     the trust signals.
-  status: open
+  status: done
 - id: brgen-193
   app: brgen
   area: moderation
@@ -2505,7 +2505,7 @@ items:
   path: RAILS/brgen/app/views/shared/_report_button.html.erb
   item: Confirm a report with 'Takk, vi ser på det' in place and disable the button
     so it cannot be filed twice.
-  status: open
+  status: done
 - id: brgen-196
   app: brgen
   area: nav
