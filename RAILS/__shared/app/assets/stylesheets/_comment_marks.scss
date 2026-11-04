@@ -1,0 +1,32 @@
+/* Marks on a comment row: a named author is a link to their profile, the
+ * post's author carries a badge in their own thread, and the age is the
+ * comment's permalink, whose target lights up for a moment on arrival.
+ * Loaded by _chat_reactions, which holds the rest of the comment chrome.
+ */
+a.comment-author {
+  text-decoration: none;
+}
+a.comment-author:hover {
+  text-decoration: underline;
+}
+.comment-op {
+  color: var(--text-secondary);
+  font-size: var(--text-small);
+  font-weight: var(--weight-bold);
+}
+.comment-permalink {
+  color: inherit;
+  text-decoration: none;
+}
+turbo-frame:target > .comment {
+  animation: comment-target 1.6s ease-out;
+}
+@keyframes comment-target {
+  from { background-color: var(--hover); }
+}
+@media (prefers-reduced-motion: reduce) {
+  turbo-frame:target > .comment {
+    animation: none;
+    background-color: var(--hover);
+  }
+}

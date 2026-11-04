@@ -4,6 +4,7 @@
  * background, which is what the rest of this design system does and what the
  * css_constitution check enforces.
  */
+@use "sass:meta";
 
 .msg_reactions {
   display: flex;
@@ -295,3 +296,5 @@ li[data-optimistic="true"] article[data-failed="true"] .send-status {
   cursor: default;
   opacity: 0.62;
 }
+
+@include meta.load-css("comment_marks");

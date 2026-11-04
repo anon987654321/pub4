@@ -165,6 +165,23 @@ class CommentsControllerTest < ActionDispatch::IntegrationTest
     end
   end
 
+  test "a comment names its author with a profile link, marks the post author, and carries a permalink" do
+    ActsAsTenant.with_tenant(@city) do
+      author = user("op-author")
+      reader = user("op-reader")
+      post_record = a_post(author)
+      own = Comment.create!(user: author, commentable: post_record, content: "fra forfatteren")
+      Comment.create!(user: reader, commentable: post_record, content: "fra en leser")
+
+      get post_path(post_record)
+
+      assert_select "a.comment-author[href=?]", user_path(author)
+      assert_select "a.comment-author[href=?]", user_path(reader)
+      assert_select ".comment-op", count: 1, text: I18n.t("comments.op_badge", locale: :nb)
+      assert_select "a.comment-permalink[href=?] time", "#comment_#{own.id}"
+    end
+  end
+
   test "a comment posted to no parent is a 404, not a 500" do
     post comments_path, params: { comment: { content: "til ingen" } }
     assert_response :not_found

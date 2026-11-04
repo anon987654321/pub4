@@ -982,7 +982,7 @@ items:
   path: RAILS/__shared/app/views/comments/_comment.html.erb
   item: 'Add a permalink (copy link to #comment_<id>) to each comment and highlight
     the target comment on arrival.'
-  status: open
+  status: done
 - id: brgen-013
   app: brgen
   area: comments
@@ -1020,14 +1020,14 @@ items:
   size: S
   path: RAILS/__shared/app/views/comments/_comment.html.erb
   item: Link comment author names to their profiles.
-  status: open
+  status: done
 - id: brgen-018
   app: brgen
   area: comments
   size: S
   path: RAILS/__shared/app/views/comments/_comment.html.erb
   item: Mark the post author's comments with an 'OP' badge.
-  status: open
+  status: done
 - id: brgen-019
   app: brgen
   area: comments

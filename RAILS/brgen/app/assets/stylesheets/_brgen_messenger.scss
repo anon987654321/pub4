@@ -659,6 +659,13 @@ body.vertical-messenger .layout > main#main-content > section.messenger-window {
   from { background-color: var(--hover); }
 }
 
+// A voice note's length, beside its player.
+.msg-voice-duration {
+  color: var(--text-secondary);
+  font-size: var(--text-extra-small);
+  font-variant-numeric: tabular-nums;
+}
+
 /* The empty state is a message, not a room. Hold it to a measure and put it
    near the top of the pane, where the first line of a conversation would be —
    dead centre of a tall column is where nothing lives. */

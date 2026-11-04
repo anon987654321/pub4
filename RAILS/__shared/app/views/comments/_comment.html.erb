@@ -34,12 +34,25 @@
         header itself, not joined by dots; the age reads "for 2 timer siden"
         and carries its full date on hover. %>
     <header>
-      <%= tag.span comment_author_name(comment), class: "comment-author" %>
+      <%# A named author links to their profile; "anon" (guest, departed) is nobody to visit. %>
+      <% author = comment_author_name(comment) %>
+      <% if author == t("chat.anon", default: "anon") %>
+        <%= tag.span author, class: "comment-author" %>
+      <% else %>
+        <%= link_to author, main_app.user_path(comment.user), class: "comment-author" %>
+      <% end %>
+      <% if root_post.present? && comment.user_id == root_post.try(:user_id) %>
+        <%= tag.span t("comments.op_badge"), class: "comment-op", title: t("comments.op_badge_title") %>
+      <% end %>
       <% if (answers = comment_reply_target(comment, local_assigns[:parent])) %>
         <%= tag.span t("comments.replying_to", name: answers), class: "comment-replying-to" %>
       <% end %>
-      <%= tag.time time_ago(comment.created_at),
-            datetime: comment.created_at.iso8601, title: l(comment.created_at, format: :long) %>
+      <%# The age is the comment's permalink: its own #comment_<id>, which
+          :target marks on arrival. %>
+      <%= link_to "##{dom_id(comment)}", class: "comment-permalink" do %>
+        <%= tag.time time_ago(comment.created_at),
+              datetime: comment.created_at.iso8601, title: l(comment.created_at, format: :long) %>
+      <% end %>
       <% if can_delete %>
         <%= button_to t("actions.delete"), destroy_arg,
               method: :delete,
