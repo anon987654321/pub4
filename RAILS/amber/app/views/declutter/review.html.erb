@@ -34,7 +34,8 @@
     <%= form_with model: @review, url: update_review_declutter_path(@item), method: :patch do |form| %>
       <div class="field">
         <%= form.label :decision %>
-        <%= form.select :decision, %w[keep wear_this_week repair sell donate release sentimental_archive], include_blank: true %>
+        <% decisions = %w[keep wear_this_week repair sell donate release sentimental_archive] %>
+        <%= form.select :decision, declutter_target_options(decisions), include_blank: true %>
       </div>
       <div class="field">
         <%= form.label :reason_kept %>
@@ -53,9 +54,9 @@
 
   <section>
     <%= tag.h2 t("declutter.move_item") %>
-    <nav role="navigation">
+    <nav aria-label="<%= t("declutter.move_item") %>">
       <% %w[keep wear_this_week repair sell donate sentimental_archive release].each do |target| %>
-        <%= button_to target.humanize, move_declutter_path(@item, target: target), method: :patch,
+        <%= button_to t("declutter.targets.#{target}"), move_declutter_path(@item, target: target), method: :patch,
               class: "button-small" %>
       <% end %>
       <%= button_to t("declutter.declutter_box"), move_declutter_path(@item, target: "declutter_box"), method: :patch, class: "button-small" %>
@@ -71,7 +72,7 @@
       </div>
       <div class="field">
         <%= form.label :note, DeclutterChallenge.human_attribute_name(:note) %>
-        <%= form.text_field :note, value: "Wear once before deciding." %>
+        <%= form.text_field :note, value: t("flash.wear_once_note") %>
       </div>
       <%= form.submit t("declutter.create_challenge"), class: "button" %>
     <% end %>

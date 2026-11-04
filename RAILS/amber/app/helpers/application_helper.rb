@@ -85,6 +85,12 @@ end
     t("items.per_wear", amount: number_to_currency(item.cost_per_wear))
   end
 
+# [label, value] pairs for a declutter decision select; String#humanize
+# only ever produced English.
+def declutter_target_options(targets)
+  targets.map { |target| [ t("declutter.targets.#{target}"), target ] }
+end
+
   def live_stream_status_label(status)
     t("live_streams.status.#{status}", default: status.to_s)
   end

@@ -578,6 +578,14 @@ nb:
     showcase: "Utstilling"
     showcase_items: "Plagg i utstillingen"
   declutter:
+    targets:
+      keep: "Behold"
+      wear_this_week: "Bruk denne uken"
+      repair: "Reparer"
+      sell: "Selg"
+      donate: "Gi bort"
+      release: "Gi slipp"
+      sentimental_archive: "Minnearkivet"
     tools_label: "Ryddeverktøy"
     ai_guide: "Ryddeveiledning"
     reason_kept: "minne, gave, sjelden, ubehagelig…"

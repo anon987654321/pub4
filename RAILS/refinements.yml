@@ -152,7 +152,7 @@ items:
   item: Translate declutter decision and move targets (keep, wear_this_week, repair,
     sell, donate, release, sentimental_archive) instead of target.humanize, and the
     select options in the review form.
-  status: open
+  status: done
 - id: amber-019
   app: amber
   area: i18n
@@ -160,7 +160,7 @@ items:
   path: RAILS/amber/app/views/declutter/review.html.erb
   item: Translate the default challenge note 'Wear once before deciding.' in the declutter
     review form.
-  status: open
+  status: done
 - id: amber-020
   app: amber
   area: i18n
@@ -299,7 +299,7 @@ items:
   path: RAILS/amber/app/views/declutter/review.html.erb
   item: Give the declutter 'Move item' nav an aria-label; it is the only unnamed nav
     on the page.
-  status: open
+  status: done
 - id: amber-037
   app: amber
   area: markup
