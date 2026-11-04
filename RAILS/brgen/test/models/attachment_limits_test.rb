@@ -32,6 +32,16 @@ class AttachmentLimitsTest < ActiveSupport::TestCase
     assert_empty attach(Post.new, :audio, "tiny.mp4", "video/mp4")
   end
 
+  # The 1 GB box stores what a hosted track or tv video is given, so these two
+  # slots are held to their families by name, with no validation of their own.
+  test "a hosted track's audio and a tv video's file refuse an image" do
+    refused = I18n.t("errors.messages.file_type_not_allowed")
+
+    assert_includes attach(Playlist::Track.new, :audio_file, "tiny.png", "image/png"), refused
+    assert_includes attach(Tv::Video.new, :video_file, "tiny.png", "image/png"), refused
+    assert_empty attach(Tv::Video.new, :video_file, "tiny.mp4", "video/mp4")
+  end
+
   test "a mixed slot holds size alone" do
     assert_empty attach(Message.new, :attachment, "tiny.png", "image/png")
   end

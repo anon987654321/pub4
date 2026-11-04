@@ -162,6 +162,10 @@ class PlaylistWritesTest < ActionDispatch::IntegrationTest
     get playlist.new_hosted_track_path
     assert_response :success
     assert_match CGI.escapeHTML(I18n.t("playlist.audio_files_bulk")), response.body
+    # The picker offers what the model takes: Shared::AttachmentLimits holds
+    # audio_file to audio and artwork to images.
+    assert_select "input[type=file][name=?][accept=?]", "track[audio_file][]", "audio/*"
+    assert_select "input[type=file][name=?][accept=?]", "track[artwork]", "image/*"
 
     get playlist.root_path
     assert_response :success

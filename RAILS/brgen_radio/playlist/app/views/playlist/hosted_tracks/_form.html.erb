@@ -40,7 +40,8 @@
 
   <div class="field">
     <%= form.label :audio_file, track.persisted? ? t("playlist.replace_audio_file") : t("playlist.audio_files_bulk") %>
-    <%= form.file_field :audio_file, direct_upload: true, data: { controller: "direct-upload" }, multiple: !track.persisted? %>
+    <%= form.file_field :audio_file, accept: "audio/*", multiple: !track.persisted?,
+          direct_upload: true, data: { controller: "direct-upload" } %>
     <% if track.persisted? && track.audio_file.attached? %>
       <small><%= t("playlist.current_file", name: track.audio_file.filename) %></small>
     <% end %>
@@ -48,7 +49,7 @@
 
   <div class="field">
     <%= form.label :artwork %>
-    <%= form.file_field :artwork, direct_upload: true, data: { controller: "direct-upload" } %>
+    <%= form.file_field :artwork, accept: "image/*", direct_upload: true, data: { controller: "direct-upload" } %>
   </div>
 
   <%= form.submit class: "button button-primary button-small" %>

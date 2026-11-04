@@ -2979,7 +2979,7 @@ items:
     and video_file on Tv::Video, since neither model has any attachment validation
     and the 1 GB VPS stores whatever it is given; add accept='audio/*' and accept='image/*'
     to the hosted-track form fields to match the tv upload forms.
-  status: open
+  status: done
 - id: brgen-250
   app: brgen
   area: playlist
