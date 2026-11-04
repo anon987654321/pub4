@@ -3936,7 +3936,7 @@ items:
   path: RAILS/brgen/test/integration/front_page_weight_test.rb
   item: Add an HTML validity check for duplicate ids on the home feed and a conversation
     page.
-  status: open
+  status: done
 - id: brgen-368
   app: brgen
   area: tests

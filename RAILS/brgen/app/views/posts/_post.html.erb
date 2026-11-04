@@ -79,8 +79,9 @@
                         data: { viewer_state: "quote" } do %>
             <%# The limit is printed rather than counted down: a counter is a
                 Stimulus instance per card, which FrontPageWeightTest budgets. %>
-            <%= text_area_tag :comment, quote, maxlength: Repost::COMMENT_MAX, required: true,
-                  rows: 2, placeholder: t("post.quote_placeholder"),
+            <%# Its own id: text_area_tag's default, "comment", repeated on every card. %>
+            <%= text_area_tag :comment, quote, id: "#{dom_id(post)}-quote", maxlength: Repost::COMMENT_MAX,
+                  required: true, rows: 2, placeholder: t("post.quote_placeholder"),
                   aria: { label: t("post.quote"), describedby: "#{dom_id(post)}-quote-limit" } %>
             <%= tag.small t("post.quote_limit", count: Repost::COMMENT_MAX), id: "#{dom_id(post)}-quote-limit" %>
             <%= submit_tag t("post.quote") %>
