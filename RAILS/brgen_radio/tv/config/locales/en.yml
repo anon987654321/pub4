@@ -19,6 +19,11 @@ en:
         live: "Live"
         ended: "Ended"
         cancelled: "Cancelled"
+      status_line:
+        scheduled: "The stream has not started yet. This page updates when it goes live."
+        live: "On air now."
+        ended: "The stream has ended."
+        cancelled: "The stream was cancelled."
       owner_heading: "Your stream"
       go_live: "Go live"
       end_live: "End stream"

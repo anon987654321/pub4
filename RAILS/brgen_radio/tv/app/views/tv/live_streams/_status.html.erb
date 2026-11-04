@@ -1,0 +1,9 @@
+<%# The stream's state and what it means for whoever is waiting. Tv::LiveStream
+    replaces it over the stream's status channel when it goes live or ends, so a
+    viewer on a scheduled stream sees it switch without reloading; only this
+    line is a live region. %>
+<% status = live_stream.status.presence || "scheduled" %>
+<%= tag.p id: "tv-live-stream-#{live_stream.id}-status", class: "live-stream-status", role: "status" do %>
+  <%= tag.span t("tv.live_streams.status.#{status}"), class: "live-badge" %>
+  <%= t("tv.live_streams.status_line.#{status}") %>
+<% end %>

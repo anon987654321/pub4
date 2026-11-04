@@ -19,6 +19,11 @@ nb:
         live: "Direkte"
         ended: "Avsluttet"
         cancelled: "Avlyst"
+      status_line:
+        scheduled: "Sendingen har ikke startet ennå. Siden oppdaterer seg når den går direkte."
+        live: "Sendes direkte nå."
+        ended: "Sendingen er over."
+        cancelled: "Sendingen er avlyst."
       owner_heading: "Strømmen din"
       go_live: "Gå direkte"
       end_live: "Avslutt strømmen"

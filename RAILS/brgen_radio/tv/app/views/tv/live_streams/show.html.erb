@@ -4,7 +4,8 @@
 <%= tag.article class: "tv-live-stream" do %>
   <%= tag.header class: "page-header" do %>
     <%= tag.h1 @live_stream.title %>
-    <%= tag.span t("tv.live_streams.status.#{@live_stream.status.presence || "scheduled"}"), class: "live-badge" %>
+    <%= turbo_stream_from @live_stream.status_stream %>
+    <%= render "tv/live_streams/status", live_stream: @live_stream %>
   <% end %>
   <%= render "shared/errors", object: @live_stream %>
 

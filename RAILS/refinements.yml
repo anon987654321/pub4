@@ -4103,7 +4103,7 @@ items:
     the show page, so viewers waiting on a scheduled stream see it switch to live
     or ended with a clear offline/ended state message instead of a stale badge until
     reload.'
-  status: open
+  status: done
 - id: brgen-387
   app: brgen
   area: tv

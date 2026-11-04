@@ -27,12 +27,25 @@ module Tv
 
     def go_live!
       update!(status: "live", started_at: Time.current)
+      broadcast_status
       record_activity!("LiveStreamStarted", actor: strict_safe(:user), source_vertical: "tv")
     end
 
     def end_live!
       update!(status: "ended", ended_at: Time.current)
+      broadcast_status
       record_activity!("LiveStreamEnded", actor: strict_safe(:user), source_vertical: "tv")
+    end
+
+    # The show page's status line subscribes here; go_live! and end_live!
+    # replace it for everyone watching.
+    def status_stream = [ self, :status ]
+
+    def broadcast_status
+      Turbo::StreamsChannel.broadcast_replace_to(
+        status_stream, target: "tv-live-stream-#{id}-status",
+        partial: "tv/live_streams/status", locals: { live_stream: self }
+      )
     end
 
     private
