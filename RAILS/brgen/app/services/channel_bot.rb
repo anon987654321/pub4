@@ -15,6 +15,9 @@ class ChannelBot
   MAX_CONTEXT = 12
   MAX_LEN = 480
   REPLY_CHANCE = 0.35 # for an unaddressed, non-question line
+  # One unprompted reply per room per window: every '?' line volunteers a bot
+  # and an LLM call, so without it one person could make the bots flood a room.
+  VOLUNTEER_COOLDOWN = 30.seconds
 
   # handle => persona. `voice` steers the LLM; `canned` is the offline fallback.
   PERSONAS = {
@@ -132,7 +135,7 @@ class ChannelBot
     return master if master && channel.conversation_type == "direct"
     return master if master && channel.group_dm? && addressed_bot(message.content, [master])
 
-    addressed_bot(message.content, bots) || volunteer(message.content, bots) if channel.channel?
+    addressed_bot(message.content, bots) || volunteer(channel, message.content, bots) if channel.channel?
   end
 
   # A bot named in the message (by @handle or bare handle) always answers.
@@ -141,11 +144,15 @@ class ChannelBot
     bots.find { |b| down.include?("@#{b.username}") || down.match?(/\b#{Regexp.escape(b.username)}\b/) }
   end
 
-  # Otherwise answer questions eagerly and other lines occasionally.
-  def self.volunteer(content, bots)
-    return bots.sample if content.to_s.include?("?")
+  # Otherwise answer questions eagerly and other lines occasionally, at most
+  # once per VOLUNTEER_COOLDOWN in a room.
+  def self.volunteer(channel, content, bots)
+    key = "channel_bot:volunteered:#{channel.id}"
+    return if Rails.cache.exist?(key)
+    return unless content.to_s.include?("?") || rand < REPLY_CHANCE
 
-    rand < REPLY_CHANCE ? bots.sample : nil
+    Rails.cache.write(key, true, expires_in: VOLUNTEER_COOLDOWN)
+    bots.sample
   end
 
   # Draft a reply via MASTER; fall back to a persona-canned line on any failure.
@@ -197,7 +204,7 @@ class ChannelBot
   end
 
   def self.generate_master(channel, message)
-    messages = channel.messages.includes(:sender).order(:created_at).last(MAX_CONTEXT)
+    messages = context_messages(channel)
     Shared::MasterMessenger.new.reply(
       messages:, sender: message.sender, message:,
       session_key: "brgen:conversation:#{channel.id}", channel: "brgen-messenger",
@@ -205,8 +212,16 @@ class ChannelBot
     ).to_s.first(MAX_LEN)
   end
 
+  # Only what the room can still read: an unsent or expired line never goes back
+  # into a prompt.
+  def self.context_messages(channel)
+    readable = channel.messages.visible
+    readable = readable.unexpired.includes(:sender)
+    readable.order(:created_at).last(MAX_CONTEXT)
+  end
+
   def self.transcript(channel)
-    channel.messages.includes(:sender).order(:created_at).last(MAX_CONTEXT).map do |m|
+    context_messages(channel).map do |m|
       "#{m.sender.channel_handle}: #{m.content}"
     end.join("\n")
   end

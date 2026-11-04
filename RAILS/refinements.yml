@@ -907,7 +907,7 @@ items:
   item: Add a per-channel bot cooldown (for example one volunteered reply per 30 seconds)
     in ChannelBot.volunteer, since every human line with a '?' triggers a bot reply
     and an LLM call, so one user can make bots flood the room.
-  status: open
+  status: done
 - id: brgen-004
   app: brgen
   area: channels
@@ -915,7 +915,7 @@ items:
   path: RAILS/brgen/app/services/channel_bot.rb
   item: Build ChannelBot.transcript and generate_master context from messages.visible.unexpired,
     so hidden or moderated messages are never fed back into the LLM prompt.
-  status: open
+  status: done
 - id: brgen-005
   app: brgen
   area: channels
