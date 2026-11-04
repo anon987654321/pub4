@@ -141,6 +141,20 @@ class HomeControllerTest < ActionDispatch::IntegrationTest
     assert_select "ul.plan-list > li.plan-row a", text: "Fredagsantrekk"
   end
 
+  # The dashboard named no place and kept its own 10/20 °C thresholds; the
+  # outfits page gave no dressing note at all. Both now say StyleAssistant's.
+  def test_the_dashboard_and_outfits_page_give_the_same_weather_advice
+    sign_in_as("dashboard-weather@example.com")
+    advice = I18n.t("home.wear_layers")
+
+    stub_weather(temp: 4.0, description: "Rainy") { get root_url }
+    assert_select ".weather-bar", text: /Bergen.*Rainy.*4.*#{Regexp.escape(advice)}/m
+    assert_select ".weather-bar svg"
+
+    stub_weather(temp: 4.0, description: "Rainy") { get outfits_url }
+    assert_includes response.body, advice
+  end
+
   def test_signed_in_dashboard_survives_an_empty_wardrobe
     sign_in_as("dashboard-empty@example.com")
 

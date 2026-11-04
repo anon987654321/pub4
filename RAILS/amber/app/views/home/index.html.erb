@@ -22,8 +22,8 @@
 <% if authenticated? %>
   <% if @weather %>
     <div class="weather-bar">
-      <%= @weather[:description] %>, <%= @weather[:temp] %>°C<% if @weather[:temp] < 10 %>,
-      <%= t("home.wear_layers") %><% elsif @weather[:temp] > 20 %>, <%= t("home.light_fabrics") %><% end %>
+      <%= icon :sun, size: 18 %>
+      <%= StyleAssistant.weather_line(@weather) %>
     </div>
   <% end %>
 

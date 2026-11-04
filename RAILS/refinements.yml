@@ -702,7 +702,7 @@ items:
   item: Show weather on the dashboard with the city name and an icon, and move the
     <10/>20 °C layering thresholds into StyleAssistant so the outfits page and dashboard
     give the same advice.
-  status: open
+  status: done
 - id: amber-087
   app: amber
   area: ux

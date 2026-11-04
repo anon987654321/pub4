@@ -49,6 +49,28 @@ class StyleAssistant
 
   COLD_C = 10
   WARM_C = 20
+
+  # The one dressing note for a forecast, which the dashboard and the outfits
+  # page both print: the dashboard had its own 10/20 thresholds in the view and
+  # the outfits page gave none.
+  # "Bergen now: Clear, 5 °C, Wear layers": the place, the forecast and the
+  # note, said the same on both pages.
+  def self.weather_line(weather, wind: false)
+    forecast = I18n.t("outfits.weather_now", description: weather[:description])
+    forecast += I18n.t("outfits.weather_temp", temp: weather[:temp].round) if weather[:temp]
+    forecast += I18n.t("outfits.weather_wind", wind: weather[:wind]) if wind && weather[:wind]
+    advice = weather_advice(weather)
+    advice ? "#{forecast}, #{I18n.t(advice)}" : forecast
+  end
+
+  def self.weather_advice(weather)
+    temp = weather && weather[:temp]
+    return if temp.nil?
+
+    if temp < COLD_C then "home.wear_layers"
+    elsif temp > WARM_C then "home.light_fabrics"
+    end
+  end
   WET = /rain|snow|shower|thunder/i
   DELICATE_SHOES = /suede|shearling|satin|silk/i
   LIGHT_MATERIALS = /linen|cotton|silk|viscose/i
