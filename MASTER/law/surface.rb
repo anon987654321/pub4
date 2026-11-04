@@ -811,7 +811,10 @@ module Master
 
             src.each_line.with_index(1) do |line, num|
               next unless line.include?("<%")
-              if line.match?(/<%[^=].*\b(?:each|map|select|where|find|create|update|destroy|save!)\b/)
+              # Only the Ruby inside a non-output tag: `<%#` comments and the page text
+              # after `%>` named "where" or "find" in prose and read as a query.
+              code = line.scan(/<%-?(?![=#])(.*?)(?:-?%>|\z)/m).flatten.join(" ")
+              if code.match?(/\b(?:each|map|select|where|find|create|update|destroy|save!)\b/)
                 findings << finding(line: num, message: "business/query logic in view — move to model/helper/component")
               end
             end
