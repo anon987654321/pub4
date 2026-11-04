@@ -92,20 +92,17 @@ class PublicErrorPagesTest < Minitest::Test
     refute_match(/(?:box-shadow|text-shadow|backdrop-filter)\s*:\s*(?!none\b)/, source)
   end
 
-  def test_shared_503_fallback_uses_brand_typography_and_all_safe_area_edges
-    source = File.read(File.join(ROOT, "__shared", "public", "503.html"))
+  # The 503 page carried its own inline palette and type; it now reads the one
+  # errors.css the 400 page and every app's error pages read, so its type,
+  # safe-area padding and focus ring come from the stylesheet tested above.
+  def test_shared_error_pages_link_the_shared_stylesheet_and_carry_no_palette_of_their_own
+    %w[400 503].each do |status|
+      source = File.read(File.join(ROOT, "__shared", "public", "#{status}.html"))
 
-    assert_includes source, MASTER_WEB_FONT
-    assert_includes source, "line-height: 1.5;"
-    assert_includes source, "0.8rem/1.25 ui-monospace"
-    assert_includes source, "min-height: 100dvh"
-    assert_match(/name="viewport" content="[^"]*viewport-fit=cover/, source)
-    %w[top right bottom left].each do |edge|
-      assert_includes source, "env(safe-area-inset-#{edge}, 0px)",
-                      "503 fallback must respect the #{edge} safe area"
+      assert_includes source, %(<link rel="stylesheet" href="/styles/errors.css">), "#{status}: must read errors.css"
+      refute_match(/<style\b/, source, "#{status}: an inline palette drifts from errors.css")
+      assert_match(/name="viewport" content="[^"]*viewport-fit=cover/, source)
+      assert_includes source, %(<p class="kicker">#{status}</p>)
     end
-    assert_includes source, "max-width: 20ch;"
-    assert_includes source, "a:focus-visible"
-    refute_match(/(?:box-shadow|text-shadow|backdrop-filter)\s*:\s*(?!none\b)/, source)
   end
 end

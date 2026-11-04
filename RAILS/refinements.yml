@@ -6055,7 +6055,7 @@ items:
   path: RAILS/__shared/public/503.html
   item: Link /styles/errors.css from 503.html as 400.html does, instead of a separate
     inline palette.
-  status: open
+  status: done
 - id: shared-017
   app: shared
   area: embeds
