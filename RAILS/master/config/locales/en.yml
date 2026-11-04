@@ -12,6 +12,8 @@ en:
     mission: "Mission control"
     mission_short: "Dashboard"
     mission_description: "Runtime observability"
+    screenshot_wide: "The MASTER face and its prompt on a desktop"
+    screenshot_narrow: "The MASTER face and its prompt on a phone"
   dashboard:
     title: "MASTER — mission control"
     heading_chat: "chat"

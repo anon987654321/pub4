@@ -23,6 +23,8 @@ nb:
     mission: "Kontrollrom"
     mission_short: "Kontrollrom"
     mission_description: "Innsyn i hva MASTER gjør"
+    screenshot_wide: "MASTER-ansiktet og skrivefeltet på en datamaskin"
+    screenshot_narrow: "MASTER-ansiktet og skrivefeltet på en telefon"
   dashboard:
     title: "MASTER — kontrollrom"
     heading_chat: "samtale"

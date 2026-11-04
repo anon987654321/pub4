@@ -47,6 +47,8 @@ module Web
     # Face sources live in public/; never treat digest output (public/assets/) as input.
     config.assets.paths << Rails.root.join("public")
     config.assets.excluded_paths << Rails.root.join("public", "assets")
+    # The PWA manifest's screenshots, digested like every other asset it names.
+    config.assets.paths << Rails.root.join("screenshots")
 
     # Configuration for the application, engines, and railties goes here.
     #

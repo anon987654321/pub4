@@ -51,4 +51,38 @@ class PwaControllerTest < ActionDispatch::IntegrationTest
     refute_match(/brgen/i, response.body)
     refute_includes response.body, "#f5f0e8"
   end
+
+  def png_size(path)
+    get path
+    assert_response :success, path
+    header = response.body.byteslice(16, 8)
+    header.unpack("NN").join("x")
+  end
+
+  test "the manifest has an id, one purpose per icon and each PNG at the size it declares" do
+    get "/manifest.json"
+    body = JSON.parse(response.body)
+
+    assert_equal "/", body["id"]
+    pngs = body["icons"].select { |icon| icon["type"] == "image/png" }
+    assert_equal %w[192x192 512x512], pngs.pluck("sizes").uniq.sort
+    pngs.each do |icon|
+      refute_includes icon["purpose"].to_s, " ", "one purpose per entry: #{icon.inspect}"
+      assert_equal icon["sizes"], png_size(icon["src"]), icon["src"]
+    end
+    %w[192x192 512x512].each do |size|
+      assert_equal %w[any maskable], pngs.select { |icon| icon["sizes"] == size }.pluck("purpose").sort
+    end
+  end
+
+  test "the manifest shows a wide and a narrow screenshot at the size each declares" do
+    get "/manifest.json"
+    shots = JSON.parse(response.body).fetch("screenshots")
+
+    assert_equal %w[narrow wide], shots.pluck("form_factor").sort
+    shots.each do |shot|
+      refute_empty shot["label"].to_s
+      assert_equal shot["sizes"], png_size(shot["src"]), shot["src"]
+    end
+  end
 end

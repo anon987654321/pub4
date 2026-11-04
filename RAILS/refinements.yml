@@ -4960,14 +4960,14 @@ items:
   path: RAILS/master/app/views/pwa/manifest.json.erb
   item: Ship real 192 and 512 px icons and split "any maskable" into separate purpose
     entries; one icon.png is declared at both sizes.
-  status: open
+  status: done
 - id: master-027
   app: master
   area: pwa
   size: S
   path: RAILS/master/app/views/pwa/manifest.json.erb
   item: Add id and screenshots to the manifest.
-  status: open
+  status: done
 - id: master-028
   app: master
   area: pwa
