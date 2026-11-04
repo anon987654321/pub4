@@ -35,7 +35,10 @@ class FrontPageWeightTest < ActionDispatch::IntegrationTest
   # a mouse the wheel, drag and edge glide that touch already had.
   # 152 from 2026-11-03: link-preview, one instance in the composer, shows the
   # player a pasted link will become before the post is published.
-  INSTANCE_BUDGET = 152
+  # 154 from 2026-11-04: draft-store and character-counter, one instance each
+  # in the composer dialog, keep a quick post across a close and show its
+  # length against the 500-character Live cap.
+  INSTANCE_BUDGET = 154
   # long-press, dropdown, clipboard x2, post-gallery.
   PER_POST_BUDGET = 5
 

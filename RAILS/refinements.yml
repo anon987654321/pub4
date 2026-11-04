@@ -1243,7 +1243,7 @@ items:
   size: S
   path: RAILS/__shared/frontend/feed_compose_controller.js
   item: Confirm before closing the composer dialog when it holds text or media.
-  status: open
+  status: done
 - id: brgen-046
   app: brgen
   area: compose
@@ -1337,7 +1337,7 @@ items:
   path: RAILS/brgen/app/views/shared/_feed_compose.html.erb
   item: Add a character counter to the quick composer; the full form has one and live
     posts are capped at 500.
-  status: open
+  status: done
 - id: brgen-058
   app: brgen
   area: compose
@@ -1345,7 +1345,7 @@ items:
   path: RAILS/brgen/app/views/shared/_feed_compose.html.erb
   item: Persist the quick composer's draft (the shared draft-store controller already
     exists) so closing the dialog or a backdrop click does not discard text.
-  status: open
+  status: done
 - id: brgen-059
   app: brgen
   area: css

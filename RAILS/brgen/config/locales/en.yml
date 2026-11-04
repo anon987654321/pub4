@@ -54,6 +54,8 @@ en:
   feed:
     post_nearby: "Post as Live nearby: anonymous, your area only, 500 characters max"
     compose_prompt: What are you up to today?
+    compose_discard: Discard this post? Attached files are not kept.
+    compose_live_limit: "characters · a Live post holds %{count}"
     compose_blank: Write something first.
     compose_title: Create post
     posting_as_guest: Anon

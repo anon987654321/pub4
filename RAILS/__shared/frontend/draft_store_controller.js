@@ -56,7 +56,7 @@ export default class extends Controller {
   snapshot() {
     const fields = {}
     this.element.querySelectorAll("input, textarea, select").forEach(field => {
-      if (!field.name || field.type === "file") return
+      if (!field.name || field.type === "file" || field.name === "authenticity_token") return
       if (field.type === "checkbox") {
         fields[field.name] = field.checked ? "1" : "0"
         return

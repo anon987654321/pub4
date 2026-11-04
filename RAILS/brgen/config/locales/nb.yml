@@ -54,6 +54,8 @@ nb:
   feed:
     post_nearby: "Del som Live i nærheten: anonymt, bare området, maks 500 tegn"
     compose_prompt: Del noe spennende nå
+    compose_discard: Forkaste innlegget? Vedlagte filer blir ikke tatt vare på.
+    compose_live_limit: "tegn · et Live-innlegg rommer %{count}"
     compose_blank: Skriv noe først.
     compose_title: Opprett innlegg
     posting_as_guest: Anon

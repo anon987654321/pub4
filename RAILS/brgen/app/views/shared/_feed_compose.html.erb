@@ -7,7 +7,8 @@
     The <dialog> carries the real form. It is in the DOM at rest (so the browser
     owns focus trapping, Esc, and the backdrop) but not rendered until
     showModal(). %>
-<div class="compose-launcher" data-controller="feed-compose">
+<div class="compose-launcher" data-controller="feed-compose"
+     data-feed-compose-discard-value="<%= t("feed.compose_discard") %>">
   <button type="button" class="compose-trigger" data-action="click->feed-compose#open">
     <% if guest? %>
       <span class="compose-avatar" aria-hidden="true">G</span>
@@ -18,9 +19,10 @@
   </button>
 
   <dialog class="composer" data-feed-compose-target="dialog"
-          data-action="click->feed-compose#backdropClose close->feed-compose#closed">
+          data-action="click->feed-compose#backdropClose cancel->feed-compose#cancel close->feed-compose#closed">
     <%= form_with model: Post.new, url: main_app.posts_path, class: "composer-form",
-          data: { controller: "form-submit", feed_compose_target: "box", pwa_offline: true, pwa_queued_text: t("pwa.queued"),
+          data: { controller: "form-submit draft-store", draft_store_key_value: "brgen-feed-compose",
+                  feed_compose_target: "box", pwa_offline: true, pwa_queued_text: t("pwa.queued"),
                   action: "submit->form-submit#lock",
                   form_submit_blank: t("feed.compose_blank") } do |f| %>
       <header class="composer-header">
@@ -44,7 +46,10 @@
         <% end %>
       </div>
 
-      <div class="composer-body" data-controller="tiptap-editor link-preview">
+      <%# draft-store on the form keeps the text across a close or a backdrop
+          click; character-counter counts what is written, with the live cap
+          beside it, since a Live post stops at 500. %>
+      <div class="composer-body" data-controller="tiptap-editor link-preview character-counter">
         <%= f.label :content, t("feed.compose_title", city: city_name), class: "visually-hidden" %>
         <%= f.hidden_field :title, data: { feed_compose_target: "title" } %>
         <%= f.text_area :content,
@@ -54,9 +59,14 @@
               data: {
                 feed_compose_target: "input",
                 tiptap_editor_target: "field",
+                character_counter_target: "input",
                 action: "input->feed-compose#syncTitle input->link-preview#scan"
               } %>
         <div class="tiptap_mount" data-tiptap-editor-target="mount" hidden></div>
+        <p class="char-counter">
+          <%= tag.span data: { character_counter_target: "counter" }, aria: { live: "polite" } %>
+          <%= tag.span t("feed.compose_live_limit", count: Post::LIVE_CONTENT_MAX) %>
+        </p>
         <%= tag.output data: { link_preview_target: "preview" },
                        aria: { live: "polite", label: t("link_preview.label") } %>
         <%# One row, two groups: what marks up the text on the left, what

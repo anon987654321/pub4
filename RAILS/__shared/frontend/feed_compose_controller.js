@@ -8,7 +8,9 @@ import { Controller } from "@hotwired/stimulus"
 export default class extends Controller {
   static targets = ["input", "title", "footer", "box", "dialog"]
   static values = {
-    expandedClass: { type: String, default: "compose-box--expanded" }
+    expandedClass: { type: String, default: "compose-box--expanded" },
+    // The question asked before a dialog holding text or media closes.
+    discard: { type: String, default: "" }
   }
 
   connect() {
@@ -43,14 +45,34 @@ export default class extends Controller {
   }
 
   close() {
-    if (this.hasDialogTarget) this.dialogTarget.close()
+    if (this.hasDialogTarget && this.mayClose()) this.dialogTarget.close()
   }
 
   // A native modal's backdrop is painted by the dialog itself, so a click on it
   // reports the dialog as the target. Anything inside the form reports that
   // instead, which is how the two are told apart without a separate overlay.
   backdropClose(event) {
-    if (event.target === this.dialogTarget) this.dialogTarget.close()
+    if (event.target === this.dialogTarget && this.mayClose()) this.dialogTarget.close()
+  }
+
+  // Esc fires cancel before the dialog closes; declining keeps it open.
+  cancel(event) {
+    if (!this.mayClose()) event.preventDefault()
+  }
+
+  // A stray tap on the backdrop or Esc should not cost a written post. The
+  // text survives in the draft store, but an attached photo or recording does
+  // not, so the writer is asked first.
+  mayClose() {
+    if (!this.holdsWork() || !this.discardValue) return true
+
+    return window.confirm(this.discardValue)
+  }
+
+  holdsWork() {
+    const text = this.hasInputTarget ? this.inputTarget.value.replace(/<[^>]+>/g, "").trim() : ""
+    const files = Array.from(this.element.querySelectorAll("input[type=file]")).some((input) => input.files?.length > 0)
+    return text.length > 0 || files
   }
 
   closed() {
