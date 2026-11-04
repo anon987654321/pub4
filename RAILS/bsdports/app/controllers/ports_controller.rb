@@ -5,6 +5,9 @@ class PortsController < ApplicationController
 
   helper_method :nvd_operator?
 
+  # Reverse dependencies listed before "show all"; a popular library has hundreds.
+  RDEPS_SHOWN = 20
+
   allow_unauthenticated_access only: %i[index show explore]
   before_action :set_port, only: %i[show explore watch unwatch crossref_cves review]
   # watch/unwatch called require_authentication inside the action body,
@@ -27,6 +30,7 @@ class PortsController < ApplicationController
 
         @pagy, @ports = pagy(scope)
         @categories = Category.order(:name)
+        @category = Category.find_by(id: params[:category_id]) if params[:category_id].present?
         @catalog_empty = !Port.exists?
         @last_import = ImportRun.recent.first if defined?(ImportRun)
         finish_live_search(partial: "ports/live_search_results")
@@ -57,9 +61,9 @@ class PortsController < ApplicationController
     @updates = @port.port_updates.order(committed_at: :desc).limit(10)
     @dependencies = @port.dependencies.includes(:depends_on)
     @deps = @port.depends_on.includes(:category)
-    @rdeps = @port.reverse_deps.includes(:category).limit(20)
+    load_reverse_deps
     @comments = comment_thread
-    @advisories = @port.security_advisories.recent
+    @advisories = advisories_worst_first
     @maintainer = @port.maintainer || Maintainer.find_by(name: @port[:maintainer])
     @dependency_tree = Dependency.tree_for(@port)
     @dependency_graph = Dependency.graph_for(@port)
@@ -146,6 +150,20 @@ class PortsController < ApplicationController
 
     matches = Port.where(pkgpath: live_search_query).limit(2).to_a
     matches.first if matches.one?
+  end
+
+  # The total is said beside a page's worth, and "show all" lifts the limit.
+  def load_reverse_deps
+    rdeps = @port.reverse_deps
+    rdeps = rdeps.includes(:category).order(:name)
+    @rdeps_count = rdeps.count
+    @rdeps = params[:rdeps] == "all" ? rdeps : rdeps.limit(RDEPS_SHOWN)
+  end
+
+  # The worst first, then the newest within each severity.
+  def advisories_worst_first
+    advisories = @port.security_advisories
+    advisories.order(severity: :desc).recent
   end
 
   # Each root followed by its replies, in the order the thread reads.

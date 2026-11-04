@@ -7,6 +7,8 @@
     <%= tag.p obfuscated_email(@maintainer.email) %>
   <% end %>
 </header>
+<%# A re-import can leave a maintainer with no ports; say so instead of an empty list. %>
+<%= tag.p t("maintainers.no_ports"), class: "data-state" if @pagy.count.zero? %>
 <%# Not id="ports": that id is the ports index turbo-frame. %>
 <ul id="maintainer-ports" role="list" class="port-list"
     aria-label="<%= t("maintainers.ports_label", name: @maintainer.name) %>">

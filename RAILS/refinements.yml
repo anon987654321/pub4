@@ -4642,7 +4642,7 @@ items:
   path: RAILS/bsdports/app/views/ports/show.html.erb
   item: Render version history as a compact old → new version row with the commit
     message beneath, instead of a fake unified-diff <pre> per update.
-  status: open
+  status: done
 - id: bsdports-054
   app: bsdports
   area: ux
@@ -4666,7 +4666,7 @@ items:
   path: RAILS/bsdports/app/views/maintainers/show.html.erb
   item: Add an empty state to the maintainer page when the maintainer has no ports
     left after a re-import.
-  status: open
+  status: done
 - id: bsdports-057
   app: bsdports
   area: ux
@@ -4698,7 +4698,7 @@ items:
   path: RAILS/bsdports/app/views/ports/_live_search_results.html.erb
   item: Show the category name and description as a header when the index is filtered
     by category_id, plus a 'clear filter' link back to all ports.
-  status: open
+  status: done
 - id: bsdports-061
   app: bsdports
   area: ux
@@ -4714,7 +4714,7 @@ items:
   path: RAILS/bsdports/app/views/ports/show.html.erb
   item: Show the total reverse-dependency count and a 'show all' link when @rdeps
     hits its limit(20); the list silently truncates today.
-  status: open
+  status: done
 - id: bsdports-063
   app: bsdports
   area: ux
@@ -4754,7 +4754,7 @@ items:
   path: RAILS/bsdports/app/views/ports/show.html.erb
   item: Translate and colour advisory severity (critical/high/medium/low) with a text
     label, and sort advisories by severity then date.
-  status: open
+  status: done
 - id: master-001
   app: master
   area: accessibility

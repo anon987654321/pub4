@@ -61,12 +61,17 @@
   <%= render "ports/dependency_tree", tree: @dependency_tree, heading: t("ports.tree_heading") %>
 
   <% if @rdeps.any? %>
-    <%= tag.h2 t("ports.required_by") %>
+    <%= tag.h2 t("ports.required_by_count", count: @rdeps_count), id: "required-by" %>
     <ul aria-label="<%= t("ports.rdeps_label") %>">
       <% @rdeps.each do |reverse| %>
         <li><%= link_to reverse.name, port_path(reverse) %></li>
       <% end %>
     </ul>
+    <%# The list stops at a page's worth; the count above is the whole. %>
+    <% if @rdeps.size < @rdeps_count %>
+      <%= tag.p link_to(t("ports.rdeps_show_all", count: @rdeps_count),
+                        port_path(@port, rdeps: "all", anchor: "required-by")) %>
+    <% end %>
   <% end %>
 
   <section aria-label="<%= t("ports.explore_section") %>">
@@ -82,13 +87,13 @@
     <ul>
       <% @updates.each do |update| %>
         <li>
-          <pre><code>--- a/<%= @port.pkgpath %>
-+++ b/<%= @port.pkgpath %>
-@@ -1 +1 @@
--<%= update.old_version %>
-+<%= update.new_version %>
-<%= update.commit_message %></code></pre>
-          <%= tag.small date_tag(update.committed_at) %>
+          <%# Two versions and a message, not a diff: the fake unified-diff block
+              made every update read as a patch. %>
+          <%= tag.p do %>
+            <%= tag.code t("ports.version_change", old: update.old_version, new: update.new_version) %>
+            <%= tag.small date_tag(update.committed_at) %>
+          <% end %>
+          <%= tag.p update.commit_message if update.commit_message.present? %>
         </li>
       <% end %>
     </ul>
@@ -106,7 +111,7 @@
           <% else %>
             <%= adv.identifier %>
           <% end %>
-          <%= tag.small adv.severity %>
+          <%= tag.small t("ports.severity.#{adv.severity}") %>
           <%= tag.small date_tag(adv.published_at) %>
         </li>
       <% end %>

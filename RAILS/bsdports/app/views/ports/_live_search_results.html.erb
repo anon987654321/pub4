@@ -1,7 +1,14 @@
 <%# The total, not the page: categories and maintainers already say how many
     matched, and the ports list said nothing. %>
 <%= tag.p t("search.results_for", count: @pagy.count, query: live_search_query) if live_search_query.present? %>
+<%# The index set no @category, so a filtered list never said what it was
+    filtered by, nor how to get back to every port. %>
 <% if @category %>
-  <p><mark><%= @category.name %></mark> — <%= @category.description %></p>
+  <header class="category-filter">
+    <%= tag.h2 t("ports.filtered_by", name: @category.name) %>
+    <%= tag.p @category.description if @category.description.present? %>
+    <% unfiltered = ports_path(q: live_search_query.presence, sort: params[:sort].presence) %>
+    <%= tag.p link_to(t("ports.clear_filter"), unfiltered) %>
+  </header>
 <% end %>
 <%= render "ports/list" %>

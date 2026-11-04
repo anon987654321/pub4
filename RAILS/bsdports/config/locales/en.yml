@@ -44,10 +44,21 @@ en:
     empty_body: "Updates will appear here."
   maintainers:
     ports_label: "Ports maintained by %{name}"
+    no_ports: "No ports list this maintainer after the latest import."
     meta_description: "%{name} maintains %{ports} in the OpenBSD ports tree."
     email_obfuscated: "%{user} (at) %{domain}"
   ports:
     copy_pkg_add: "pkg_add command"
+    required_by_count: "Required by %{count}"
+    rdeps_show_all: "Show all %{count}"
+    version_change: "%{old} → %{new}"
+    filtered_by: "Ports in %{name}"
+    clear_filter: "All ports"
+    severity:
+      critical: "Critical"
+      high: "High"
+      medium: "Medium"
+      low: "Low"
     copy_make_install: "Build from the ports tree"
     copy_pkgpath: "Port path"
     import_status:

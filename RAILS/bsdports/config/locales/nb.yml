@@ -44,10 +44,21 @@ nb:
     empty_body: "Oppdateringer vises her."
   maintainers:
     ports_label: "Porter vedlikeholdt av %{name}"
+    no_ports: "Ingen porter står på denne vedlikeholderen etter siste import."
     meta_description: "%{name} vedlikeholder %{ports} i OpenBSD-porttreet."
     email_obfuscated: "%{user} (at) %{domain}"
   ports:
     copy_pkg_add: "pkg_add-kommando"
+    required_by_count: "Kreves av %{count}"
+    rdeps_show_all: "Vis alle %{count}"
+    version_change: "%{old} → %{new}"
+    filtered_by: "Porter i %{name}"
+    clear_filter: "Alle porter"
+    severity:
+      critical: "Kritisk"
+      high: "Høy"
+      medium: "Middels"
+      low: "Lav"
     copy_make_install: "Bygg fra porttreet"
     copy_pkgpath: "Portsti"
     import_status:
