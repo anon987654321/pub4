@@ -429,6 +429,7 @@ nb:
     queued: "Lagret for offline"
 
   items:
+    price_in: "%{attribute} (%{unit})"
     save: "Lagre plagg"
     color_named: "Farge: %{color}"
     add_header_label: "Legg til plagg"

@@ -710,7 +710,7 @@ items:
   path: RAILS/amber/app/views/items/_form.html.erb
   item: Show the currency (kr) on the price input and drop step 0.01 for a whole-kroner
     wardrobe, or label it.
-  status: open
+  status: done
 - id: amber-088
   app: amber
   area: ux

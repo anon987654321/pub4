@@ -430,6 +430,7 @@ en:
     queued: "Saved for offline"
 
   items:
+    price_in: "%{attribute} (%{unit})"
     save: "Save piece"
     color_named: "Color: %{color}"
     add_header_label: "Add wardrobe item"

@@ -16,7 +16,13 @@
   <div class="field"><%= f.label :size %><%= f.text_field :size %></div>
   <div class="field"><%= f.label :material %><%= f.text_field :material %></div>
   <div class="field"><%= f.label :brand %><%= f.text_field :brand %></div>
-  <div class="field"><%= f.label :price %><%= f.number_field :price, step: "0.01", min: 0, inputmode: "decimal" %></div>
+  <%# The label names the currency the number is in; the unit is the one
+      number_to_currency prints for this locale. %>
+  <div class="field">
+    <%= f.label :price, t("items.price_in", attribute: Item.human_attribute_name(:price),
+                                            unit: t("number.currency.format.unit")) %>
+    <%= f.number_field :price, step: "0.01", min: 0, inputmode: "decimal" %>
+  </div>
   <div class="field"><%= f.label :purchase_date %><%= f.date_field :purchase_date %></div>
   <div class="field">
     <%= f.label :season %>
