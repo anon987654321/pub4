@@ -807,7 +807,7 @@ items:
   path: RAILS/amber/app/views/planned_outfits/index.html.erb
   item: Disable the planner submit and show an empty-state hint when the user has
     no outfits to plan.
-  status: open
+  status: done
 - id: amber-100
   app: amber
   area: ux

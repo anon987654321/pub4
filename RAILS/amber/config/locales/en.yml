@@ -584,6 +584,7 @@ en:
       Workout: "Workout"
       Evening: "Evening"
   planned:
+    no_outfits_body: "Make an outfit first, then plan when to wear it."
     notes: "Notes…"
     plan_it: "Plan it"
     date: "Date"

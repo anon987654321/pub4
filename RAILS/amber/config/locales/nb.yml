@@ -583,6 +583,7 @@ nb:
       Workout: "Trening"
       Evening: "Kveld"
   planned:
+    no_outfits_body: "Lag et antrekk først, så kan du planlegge når du skal bruke det."
     notes: "Notater…"
     plan_it: "Planlegg"
     date: "Dato"
