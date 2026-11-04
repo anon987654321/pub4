@@ -11,7 +11,10 @@
     page comes off `page` rather than from prev/previous, which is exactly the
     attribute that differs.
 
-    Locals: pagy (required), label (optional aria-label). %>
+    Locals: pagy (required), label (optional aria-label), param (optional:
+    the query key, for a page with two pagers; it must match the pagy
+    call's page_key). %>
+<% param = local_assigns.fetch(:param, :page) %>
 <% if pagy && pagy.pages.to_i > 1 %>
   <% previous_page = pagy.page > 1 ? pagy.page - 1 : nil %>
   <nav class="pager" aria-label="<%= local_assigns.fetch(:label, t("pagination.label")) %>">
@@ -20,7 +23,7 @@
     see it: a chevron is the whole meaning of a pager control, and "Previous"
     beside it says the same thing twice. visually-hidden rather than
     aria-label so the accessible name is still the translated string. %>
-    <%= link_to url_for(page: previous_page), class: "pager-link", rel: "prev" do %>
+    <%= link_to url_for(param => previous_page), class: "pager-link", rel: "prev" do %>
       <%= icon :chevron_left, size: 18 %>
       <span class="visually-hidden"><%= t("pagination.previous") %></span>
     <% end %>
@@ -30,7 +33,7 @@
             default: "Page %{page} of %{pages}") %>
     </span>
     <% if pagy.next %>
-    <%= link_to url_for(page: pagy.next), class: "pager-link", rel: "next" do %>
+    <%= link_to url_for(param => pagy.next), class: "pager-link", rel: "next" do %>
       <span class="visually-hidden"><%= t("pagination.next") %></span>
       <%= icon :chevron_right, size: 18 %>
     <% end %>

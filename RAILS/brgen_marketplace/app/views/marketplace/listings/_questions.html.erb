@@ -2,7 +2,7 @@
     because listings/show carries a length ceiling
     (RAILS/test/file_length_ratchet_test.rb). %>
 <div class="section-divider" id="questions">
-  <p class="section-heading--md"><%= t("marketplace.questions") %></p>
+  <%= tag.h2 t("marketplace.questions"), class: "section-heading--md" %>
   <%# Public, because a question is worth more to the buyers who never asked it
       than to the one who did. %>
   <% if questions.any? %>

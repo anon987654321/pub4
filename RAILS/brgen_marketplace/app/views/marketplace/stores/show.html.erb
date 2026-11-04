@@ -69,11 +69,17 @@
     <% end %>
   <% end %>
 
-  <div class="deal-grid" aria-label="<%= t("aria.store_listings") %>">
-    <% @listings.each do |listing| %>
-      <%= render "marketplace/listings/card", listing: listing %>
-    <% end %>
-  </div>
+  <% if @listings.any? %>
+    <div class="deal-grid" aria-label="<%= t("aria.store_listings") %>">
+      <%= render partial: "marketplace/listings/card", collection: @listings, as: :listing %>
+    </div>
+    <%= render "shared/pager", pagy: @pagy_listings, label: t("aria.store_listings"), param: :listings_page %>
+  <% else %>
+    <%= render "shared/empty_state",
+          title: t("marketplace.stores.no_listings"),
+          body: t("marketplace.stores.no_listings_body"),
+          live: false %>
+  <% end %>
 
   <% if @other_stores.present? %>
     <aside>

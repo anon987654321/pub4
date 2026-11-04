@@ -115,7 +115,8 @@
 
 <% if Current.user.present? && Current.user != @listing.user && @listing.buyable? %>
   <div id="make-offer" class="section-divider">
-    <p class="section-heading--md"><%= t("marketplace.make_offer") %></p>
+    <%# h2, not a styled p: the page's sections are its outline. %>
+    <%= tag.h2 t("marketplace.make_offer"), class: "section-heading--md" %>
     <p><%= t("marketplace.message_seller_hint") %></p>
     <div class="form-wrap form-wrap--flush">
       <% draft_key = "brgen-marketplace-order-#{@listing.to_param}-new" %>
@@ -142,12 +143,13 @@
 
 <% if Current.user.present? && Current.user == @listing.user %>
   <div class="section-divider">
-    <p class="section-heading--md"><%= t("marketplace.seller_dashboard") %></p>
+    <%= tag.h2 t("marketplace.seller_dashboard"), class: "section-heading--md" %>
     <div class="chips">
       <span class="chip"><%= t("marketplace.views", count: @listing.views_count.to_i) %></span>
       <span class="chip"><%= t("marketplace.offers") %>: <%= @listing.orders.size %></span>
       <span class="chip"><%= t("marketplace.saves", count: @listing.favorites.size) %></span>
-      <span class="chip"><%= @listing.status %></span>
+      <%= tag.span t("marketplace.listing_statuses.#{@listing.status}", default: @listing.status.to_s.humanize),
+                   class: "chip" %>
       <%= link_to t("marketplace.variants"), listing_variants_path(@listing), class: "chip" %>
     </div>
 
@@ -184,12 +186,12 @@
   </div>
 
   <div class="section-divider">
-    <p class="section-heading--md"><%= t("marketplace.offers") %></p>
+    <%= tag.h2 t("marketplace.offers"), class: "section-heading--md" %>
     <% if @listing.orders.any? %>
       <% @listing.orders.includes(:buyer).each do |order| %>
         <article>
           <%= tag.strong order.buyer&.display_name || t("chat.anon") %>
-           — <%= order.status %>
+           — <%= t("marketplace.order_statuses.#{order.status}", default: order.status.to_s.humanize) %>
           <% if order.message.present? %><%= tag.p order.message %><% end %>
           <% if order.status == "pending" %>
             <div class="cluster mt-8">

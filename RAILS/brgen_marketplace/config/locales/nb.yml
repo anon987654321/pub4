@@ -10,6 +10,14 @@
 # Keys the host already carries are NOT copied here. Use them.
 nb:
   marketplace:
+    listing_statuses:
+      active: Aktiv
+      sold: Solgt
+      reserved: Reservert
+      removed: Fjernet
+    stores:
+      no_listings: Ingenting til salgs her akkurat nå
+      no_listings_body: Butikken har ingen aktive annonser. Se innom senere, eller bla i markedsplassen.
     listing_steps_label: "Annonsesteg"
     listing_published_heading: "Annonsen er publisert."
     list_another: "Legg ut en annonse til"

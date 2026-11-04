@@ -10,6 +10,14 @@
 # Keys the host already carries are NOT copied here. Use them.
 en:
   marketplace:
+    listing_statuses:
+      active: Active
+      sold: Sold
+      reserved: Reserved
+      removed: Removed
+    stores:
+      no_listings: Nothing for sale here right now
+      no_listings_body: This shop has no live listings. Look again later, or browse the marketplace.
     listing_steps_label: "Listing steps"
     listing_published_heading: "Your listing is live."
     list_another: "List another"

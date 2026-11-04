@@ -2109,7 +2109,7 @@ items:
   path: RAILS/brgen_marketplace/app/views/marketplace/listings/show.html.erb
   item: Replace the p.section-heading--md labels for Questions, Make an offer, Seller
     dashboard and Offers with h2 headings, so the listing page has a navigable outline.
-  status: open
+  status: done
 - id: brgen-148
   app: brgen
   area: marketplace
@@ -2118,7 +2118,7 @@ items:
   item: Translate the raw order.status and @listing.status strings in the seller's
     offers list and dashboard chips through marketplace.order_statuses and a listing
     status key.
-  status: open
+  status: done
 - id: brgen-149
   app: brgen
   area: marketplace
@@ -2152,7 +2152,7 @@ items:
   path: RAILS/brgen_marketplace/app/views/marketplace/stores/show.html.erb
   item: Paginate the store page's listings instead of limit(100) with no pager, and
     show an empty state when the shop has nothing live.
-  status: open
+  status: done
 - id: brgen-153
   app: brgen
   area: messenger

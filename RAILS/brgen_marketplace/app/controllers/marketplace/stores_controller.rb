@@ -19,7 +19,9 @@ module Marketplace
     end
 
     def show
-      @listings = @store.listings.live.recent.with_attached_photos.includes(:user, :category).limit(100)
+      # Paged under its own key: the payouts above page with `page`. limit(100)
+      # cut a big shop off with no way to the rest.
+      @pagy_listings, @listings = pagy(shop_window, page_key: "listings_page")
       @other_stores = Marketplace::Store.publicly_visible.where.not(id: @store.id).limit(6)
       if Current.user&.id == @store.owner_id
         @pagy_payouts, @payouts = pagy(@store.payouts.order(created_at: :desc), limit: 20)
@@ -63,6 +65,13 @@ module Marketplace
     end
 
     private
+
+    # What the shop has live, newest first, with what its cards read.
+    def shop_window
+      live = @store.listings.live
+      newest = live.recent.with_attached_photos
+      newest.includes(:user, :category)
+    end
 
     def set_store
       @store = Marketplace::Store.publicly_visible.find_by!(slug: params[:id])
