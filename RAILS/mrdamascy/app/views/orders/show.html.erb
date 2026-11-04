@@ -4,7 +4,7 @@
 <% order = @order %>
 
 <header class="order-head">
-  <%= tag.span t("orders.states.#{order.state}"), class: "state-chip state-#{order.state}" %>
+  <%= state_chip(order) %>
   <% if order.payment_state.present? %>
     <%= tag.span t("orders.payment_state.#{order.payment_state}"), class: "badge badge-payment" %>
   <% end %>

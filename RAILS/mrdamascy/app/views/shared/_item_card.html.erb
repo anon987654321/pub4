@@ -3,14 +3,7 @@
     honesty badge, price, and either a one-tap quick-add (items without
     options) or a jump to the full item sheet. %>
 <% needs_options = item.item_options.any? %>
-<% badge_labels = {
-     "signature" => t("menu.badges.signature"),
-     "veg" => t("menu.badges.veg"),
-     "sharing" => t("menu.badges.sharing"),
-     "secret" => t("menu.badges.secret"),
-     "deal" => t("menu.badges.deal")
-   } %>
-<% badges = item.badges.to_s.split(",").map(&:strip).reject(&:blank?) & badge_labels.keys %>
+<% badges = badge_tags(item) %>
 
 <article class="item-card card" data-turbo-frame="_top">
   <%= link_to menu_item_path(item), class: "item-card-hit" do %>
@@ -22,27 +15,13 @@
     <span class="item-body">
       <%= tag.span item.localized(:name), class: "item-name" %>
       <span class="item-facts">
-        <%= tag.span t("menu.origin_chip", origin: origin_label(item.origin)), class: "badge" if item.origin.present? %>
+        <%= origin_chip(item) %>
         <% if item.weight_g.to_i.positive? %>
           <%= tag.span "#{item.weight_g} g", class: "badge badge-weight" %>
         <% end %>
-        <% if item.heat.to_i.positive? %>
-          <span class="heat heat-<%= item.heat.to_i %>">
-            <span class="visually-hidden"><%= t("menu.heat_label") %>:</span>
-            <% 3.times do |dot| %>
-              <span class="heat-dot<%= " on" if dot < item.heat.to_i %>" aria-hidden="true"></span>
-            <% end %>
-            <%= tag.span t("menu.heat.#{item.heat.to_i}"), class: "heat-label" %>
-          </span>
-        <% end %>
+        <%= heat_dots(item) %>
       </span>
-      <% if badges.any? %>
-        <span class="item-badges">
-          <% badges.each do |badge| %>
-            <%= tag.span badge_labels[badge], class: "badge badge-#{badge}" %>
-          <% end %>
-        </span>
-      <% end %>
+      <%= tag.span badges, class: "item-badges" if badges.present? %>
     </span>
   <% end %>
 

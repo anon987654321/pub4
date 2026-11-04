@@ -5474,7 +5474,7 @@ items:
   path: RAILS/mrdamascy/app/helpers/application_helper.rb
   item: 'Use heat_dots, origin_chip and state_chip from the views or delete them:
     no view calls them while the same markup is written inline in four templates.'
-  status: open
+  status: done
 - id: mrdamascy-051
   app: mrdamascy
   area: menu
@@ -5506,7 +5506,7 @@ items:
   path: RAILS/mrdamascy/app/views/shared/_item_card.html.erb
   item: Extract the badge_labels hash duplicated in shared/_item_card and menu/item
     into one helper.
-  status: open
+  status: done
 - id: mrdamascy-055
   app: mrdamascy
   area: menu

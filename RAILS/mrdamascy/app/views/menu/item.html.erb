@@ -6,14 +6,6 @@
     price — item_sheet_controller caps sauces at two and recalculates the
     sticky total live. %>
 <% item = @item %>
-<% badge_labels = {
-     "signature" => t("menu.badges.signature"),
-     "veg" => t("menu.badges.veg"),
-     "sharing" => t("menu.badges.sharing"),
-     "secret" => t("menu.badges.secret"),
-     "deal" => t("menu.badges.deal")
-   } %>
-<% badges = item.badges.to_s.split(",").map(&:strip).reject(&:blank?) & badge_labels.keys %>
 
 <article class="sheet" data-turbo-frame="_top">
   <header class="sheet-head">
@@ -29,22 +21,12 @@
       <%= tag.p other_name if other_name.present? && other_name != item.localized(:name) %>
     </hgroup>
     <p class="sheet-facts">
-      <%= tag.span t("menu.origin_chip", origin: origin_label(item.origin)), class: "badge" if item.origin.present? %>
+      <%= origin_chip(item) %>
       <% if item.weight_g.to_i.positive? %>
         <%= tag.span "#{item.weight_g} g", class: "badge badge-weight" %>
       <% end %>
-      <% if item.heat.to_i.positive? %>
-        <span class="heat heat-<%= item.heat.to_i %>">
-          <span class="visually-hidden"><%= t("menu.heat_label") %>: <%= t("menu.heat.#{item.heat.to_i}") %></span>
-          <% 3.times do |dot| %>
-            <span class="heat-dot<%= " on" if dot < item.heat.to_i %>" aria-hidden="true"></span>
-          <% end %>
-          <span class="heat-label"><%= t("menu.heat.#{item.heat.to_i}") %></span>
-        </span>
-      <% end %>
-      <% badges.each do |badge| %>
-        <%= tag.span badge_labels[badge], class: "badge badge-#{badge}" %>
-      <% end %>
+      <%= heat_dots(item) %>
+      <%= badge_tags(item) %>
     </p>
   </header>
 

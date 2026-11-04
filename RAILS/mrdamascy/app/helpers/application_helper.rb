@@ -66,35 +66,42 @@ module ApplicationHelper
     errors.to_h[field] ? { describedby: "#{field}_error", invalid: true } : {}
   end
 
-  # Three dots; lit dots take their own level colour (1 mint-500 Mild, 2 gold
-  # Middels, 3 pom Sterk!) so the scale reads at a glance.
-  # SCSS contract: .heat-dots > .heat-dot.heat-1|heat-2|heat-3 + .is-lit.
+  # Three dots, the lit ones in the level's colour (1 Mild, 2 Middels,
+  # 3 Sterk!), and the level in words — read as "Styrke: Mild". Nothing for
+  # a dish without heat. SCSS: .heat.heat-N > .heat-dot.on, .heat-label.
   def heat_dots(item)
     heat = item.heat.to_i.clamp(0, 3)
-    dots = (1..3).map do |level|
-      classes = ["heat-dot", "heat-#{level}"]
-      classes << "is-lit" if level <= heat
-      tag.span("", class: classes.join(" "))
-    end
-    label = t("menu.heat.#{heat}")
-    tag.span(safe_join(dots), class: "heat-dots", "aria-label": label, title: label)
+    return if heat.zero?
+
+    words = [tag.span("#{t('menu.heat_label')}:", class: "visually-hidden"),
+             tag.span(t("menu.heat.#{heat}"), class: "heat-label")]
+    tag.span(safe_join([words.first, *heat_dot_spans(heat), words.last]), class: "heat heat-#{heat}")
   end
 
-  # Flag-free origin chip ("Damaskus"); the two-sentence story from
-  # origins.<origin> rides along as the title tooltip.
+  def heat_dot_spans(heat)
+    Array.new(3) { |dot| tag.span(class: ["heat-dot", ("on" if dot < heat)], "aria-hidden": true) }
+  end
+
+  # Flag-free origin badge ("Fra Damaskus"), or nothing without an origin.
   def origin_chip(item)
-    origin = item.origin.to_s
-    tag.span(t("menu.origin_chip", origin: origin_label(origin)),
-             class: "chip chip-origin",
-             title: t(origin_story_key(origin)))
+    return if item.origin.blank?
+
+    tag.span(t("menu.origin_chip", origin: origin_label(item.origin)), class: "badge")
   end
 
-  # State chip colours per APP_SPEC §7: placed mint, confirmed gold,
-  # preparing gold-deep, ready mint-700, delivered ink-soft, cancelled pom.
-  # SCSS contract: .state-chip.state-<state>.
+  # The menu's own badges on a dish (signature, veg, sharing, secret, deal),
+  # one span each in their words; unknown badges are left out.
+  MENU_BADGES = %w[signature veg sharing secret deal].freeze
+
+  def badge_tags(item)
+    badges = item.badges.to_s.split(",").map(&:strip) & MENU_BADGES
+    safe_join(badges.map { |badge| tag.span(t("menu.badges.#{badge}"), class: "badge badge-#{badge}") })
+  end
+
+  # One spelling for the order list and the order page, so a state's colour
+  # cannot drift between them. SCSS: .state-chip.state-<state>.
   def state_chip(order)
-    state = order.state.to_s
-    tag.span(t("orders.states.#{state}"), class: "state-chip state-#{state}")
+    tag.span(t("orders.states.#{order.state}"), class: "state-chip state-#{order.state}")
   end
 
   # "tel_aviv" / "Tel Aviv" → "origins.tel_aviv" (APP_SPEC §10 keys).

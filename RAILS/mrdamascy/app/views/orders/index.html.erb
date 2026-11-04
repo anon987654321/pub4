@@ -9,7 +9,7 @@
     <% @orders.each do |order| %>
       <article class="card order-card">
         <header class="order-card-head">
-          <%= tag.span t("orders.states.#{order.state}"), class: "state-chip state-#{order.state}" %>
+          <%= state_chip(order) %>
           <%= tag.span "##{order.id}" %>
           <% if order.placed_at.present? %>
             <%= tag.time t("orders.placed_at", when: l(order.placed_at, format: :placed)),
