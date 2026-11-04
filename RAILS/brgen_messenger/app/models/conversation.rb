@@ -167,6 +167,10 @@ class Conversation < ApplicationRecord
     conversation_participants.exists?(user_id: user.id, role: "op")
   end
 
+  # In a group the disappearing timer is the room's, so only its ops set it:
+  # any member could otherwise switch it off for everyone.
+  def disappearing_settable_by?(user) = !group_dm? || admin?(user)
+
   # A group without an op can never be renamed or moderated again, so the last
   # one leaving hands the room to whoever has been in it longest rather than
   # being refused — refusing would trap someone in a chat they want to leave.

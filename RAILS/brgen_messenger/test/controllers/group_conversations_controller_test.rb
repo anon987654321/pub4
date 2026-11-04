@@ -136,4 +136,25 @@ test "the new-group form renders" do
   assert_response :success
   assert_includes response.body, groups_path
 end
+
+  # The disappearing timer is the room's: a member switching it off would turn
+  # it off for everyone. Only an op sets it, and only an op is offered it.
+  test "only an op sets a group's disappearing timer" do
+    group = make_group
+    group.update!(disappearing_duration: 3600)
+
+    sign_in_as(@friend)
+    get conversation_path(group)
+    assert_select "select#disappearing", 0
+    patch conversation_path(group), params: { disappearing: "off" }
+    assert_redirected_to conversation_path(group)
+    assert_equal 3600, group.reload.disappearing_duration
+
+    delete session_path
+    sign_in_as(@founder)
+    get conversation_path(group)
+    assert_select "select#disappearing", 1
+    patch conversation_path(group), params: { disappearing: "off" }
+    assert_nil group.reload.disappearing_duration
+  end
 end

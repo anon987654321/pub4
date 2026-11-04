@@ -122,6 +122,7 @@
             </section>
 
             <section class="messenger-details-section">
+              <% if @conversation.disappearing_settable_by?(Current.user) %>
               <%= form_with url: conversation_path(@conversation), method: :patch,
                     class: "disappearing-settings#{" disappearing-settings--active" if @conversation.disappearing_messages?}" do |form| %>
                 <span class="disappearing-badge" aria-hidden="true"></span>
@@ -130,6 +131,7 @@
                       Conversation::DISAPPEARING_OPTIONS.keys.map { |key| [t("messages.disappearing_options.#{key}"), key] },
                       { selected: Conversation::DISAPPEARING_OPTIONS.key(@conversation.disappearing_duration) || "off" },
                       { id: "disappearing", onchange: "this.form.requestSubmit()" } %>
+              <% end %>
               <% end %>
               <%# Said once, where the setting is: a disappearing message is a
                   courtesy between people, not a guarantee. We cannot see a

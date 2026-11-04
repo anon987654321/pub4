@@ -3620,7 +3620,7 @@ items:
   path: RAILS/brgen_messenger/app/controllers/conversations_controller.rb
   item: Make the disappearing-messages PATCH admin-only in group DMs; today any member
     can switch the timer off for everyone.
-  status: open
+  status: done
 - id: brgen-330
   app: brgen
   area: security

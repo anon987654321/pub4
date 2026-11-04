@@ -115,12 +115,8 @@ class ConversationsController < ApplicationController
     # Channel/geo rooms inherit CHANNEL_TTL. Any member can hit this PATCH
     # (join! on GET /channels/:slug puts them in for_user), and a missing
     # disappearing param maps to nil — which turns the TTL off.
-    if @conversation.channel?
-      redirect_to @conversation, alert: t("flash.channel_ttl_locked")
-      return
-    end
-    unless Conversation::DISAPPEARING_OPTIONS.key?(params[:disappearing])
-      redirect_to @conversation, alert: t("flash.settings_update_failed")
+    if (refusal = disappearing_refusal)
+      redirect_to @conversation, alert: t(refusal)
       return
     end
     duration = Conversation::DISAPPEARING_OPTIONS[params[:disappearing]]
@@ -144,6 +140,14 @@ class ConversationsController < ApplicationController
   end
 
   private
+
+  # Channel rooms keep CHANNEL_TTL; a group's timer is set by its ops.
+  def disappearing_refusal
+    return "flash.channel_ttl_locked" if @conversation.channel?
+    return "flash.settings_update_failed" unless Conversation::DISAPPEARING_OPTIONS.key?(params[:disappearing])
+
+    "flash.settings_update_failed" unless @conversation.disappearing_settable_by?(Current.user)
+  end
 
   def open_for_reader
     # Before the read is recorded: what was opened on an earlier visit goes now,
