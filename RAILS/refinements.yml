@@ -479,7 +479,7 @@ items:
   path: RAILS/amber/app/controllers/sitemaps_controller.rb
   item: Add the demo wardrobe (/demo and /demo/items/:id) and the public feed (/posts)
     to the sitemap; the demo is amber's one public catalogue and is missing.
-  status: open
+  status: done
 - id: amber-059
   app: amber
   area: seo
@@ -535,7 +535,7 @@ items:
   path: RAILS/amber/public/robots.txt
   item: 'Reconcile robots.txt Disallow: /users/ with public user profiles; either
     allow /users or noindex the page, not both silently.'
-  status: open
+  status: done
 - id: amber-066
   app: amber
   area: tests
@@ -543,7 +543,7 @@ items:
   path: RAILS/amber/test/controllers
   item: Add a users#show test asserting title, outfits section and owner-only empty-state
     actions.
-  status: open
+  status: done
 - id: amber-067
   app: amber
   area: tests
@@ -559,7 +559,7 @@ items:
   path: RAILS/amber/test/controllers
   item: Add a sitemap test asserting creator profiles, demo pages and only public
     posts are listed.
-  status: open
+  status: done
 - id: amber-069
   app: amber
   area: tests

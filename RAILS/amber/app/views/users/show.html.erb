@@ -1,5 +1,8 @@
 <% content_for :title, @user.display_name %>
 <% content_for :description, t("users.profile_description", name: @user.display_name) %>
+<%# Crawlable so a crawler reads this; a member profile stays out of the index.
+    The public, indexable page is the creator profile. %>
+<% content_for :head, robots_meta(index: false) %>
 <%= turbo_stream_from @user %>
 <header class="profile-header" aria-label="<%= t("users.profile_header") %>">
   <%= tag.h1 @user.display_name %>

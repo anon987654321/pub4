@@ -6,26 +6,39 @@ class SitemapsController < ApplicationController
   private
 
   def sitemap_entries
-    entries = [ Shared::SitemapBuilder::Entry.new(loc: root_url, changefreq: "daily", priority: "1.0") ]
+    [
+      entry(root_url, changefreq: "daily", priority: "1.0"),
+      entry(posts_url, changefreq: "daily", priority: "0.6"),
+      *demo_entries,
+      *creator_entries,
+      *post_entries,
+    ]
+  end
 
-    CreatorProfile.publicly_visible.order(updated_at: :desc).limit(2_000).each do |profile|
-      entries << Shared::SitemapBuilder::Entry.new(
-        loc: creator_profile_url(profile.handle),
-        lastmod: profile.updated_at,
-        changefreq: "weekly",
-        priority: "0.7"
-      )
+  # The demo wardrobe is amber's one public catalogue: its page and each garment.
+  def demo_entries
+    return [] unless Amber::DemoWardrobe.available?
+
+    items = Amber::DemoWardrobe.items.order(updated_at: :desc).limit(500)
+    garments = items.map do |item|
+      entry(demo_wardrobe_item_url(item), lastmod: item.updated_at, changefreq: "monthly", priority: "0.6")
     end
+    [ entry(demo_wardrobe_url, changefreq: "weekly", priority: "0.8"), *garments ]
+  end
 
-    Post.order(updated_at: :desc).limit(2_000).each do |post|
-      entries << Shared::SitemapBuilder::Entry.new(
-        loc: post_url(post),
-        lastmod: post.updated_at,
-        changefreq: "monthly",
-        priority: "0.5"
-      )
+  def creator_entries
+    CreatorProfile.publicly_visible.order(updated_at: :desc).limit(2_000).map do |profile|
+      entry(creator_profile_url(profile.handle), lastmod: profile.updated_at, changefreq: "weekly", priority: "0.7")
     end
+  end
 
-    entries
+  def post_entries
+    Post.order(updated_at: :desc).limit(2_000).map do |post|
+      entry(post_url(post), lastmod: post.updated_at, changefreq: "monthly", priority: "0.5")
+    end
+  end
+
+  def entry(loc, **attributes)
+    Shared::SitemapBuilder::Entry.new(loc:, **attributes)
   end
 end

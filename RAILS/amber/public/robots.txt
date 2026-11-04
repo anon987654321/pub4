@@ -1,4 +1,6 @@
 User-agent: *
+# /users/ is crawlable: member profiles say noindex themselves, which a
+# Disallow would hide from the crawler.
 Disallow: /items
 Disallow: /outfits
 Disallow: /planned_outfits
@@ -6,7 +8,6 @@ Disallow: /wardrobe_items
 Disallow: /connections
 Disallow: /live_streams
 Disallow: /messages
-Disallow: /users/
 Disallow: /my_creator_profile
 Disallow: /declutter
 Disallow: /ai/
