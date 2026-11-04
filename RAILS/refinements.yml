@@ -1513,7 +1513,7 @@ items:
     routes, but no view links to profile_prompts_path, so nobody can answer the three
     prompts the ranking and the Hinge-style like depend on. Add a list plus a question
     select and answer field to the profile edit page.'
-  status: open
+  status: done
 - id: brgen-078
   app: brgen
   area: dating

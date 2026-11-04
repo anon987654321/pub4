@@ -19,6 +19,13 @@ en:
   dating:
     verify_reject_note: "Why (shown to the person)"
     crossed_ago: "%{time} ago"
+    prompts_heading: "Your answers"
+    prompts_blurb:
+      one: "Answer up to %{count} question. People can like an answer and reply to it."
+      other: "Answer up to %{count} questions. People can like an answer and reply to it."
+    prompt_question: "Question"
+    prompt_answer: "Your answer"
+    add_prompt: "Add answer"
     location_status:
       unsupported: "This browser does not provide location access."
       waiting: "Waiting for your permission…"

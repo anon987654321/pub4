@@ -14,6 +14,8 @@ class Dating::ProfilesController < Dating::BaseController
 
   def edit
     @neighborhoods = available_neighborhoods
+    @prompts = @profile.prompts.ordered.to_a
+    @unanswered_questions = unanswered_questions(@prompts)
   end
 
   def new
@@ -36,7 +38,7 @@ class Dating::ProfilesController < Dating::BaseController
     if assign_photos && @profile.save
       redirect_to(root_path, notice: t("flash.dating.profile_updated"))
     else
-      @neighborhoods = available_neighborhoods
+      edit
       render(:edit, status: :unprocessable_entity)
     end
   end
@@ -46,6 +48,14 @@ class Dating::ProfilesController < Dating::BaseController
   def set_profile
     @profile = Dating::Profile.includes(:user, :neighborhood, photos_attachments: :blob).find_by(user_id: Current.user.id) ||
                redirect_to(new_profile_path)
+  end
+
+  # The question choices the prompt form offers: the ones not yet answered, as
+  # [label, key] pairs, or nil once the profile holds its three answers.
+  def unanswered_questions(prompts)
+    return if prompts.size >= Dating::Prompt::MAX_PER_PROFILE
+
+    (Dating::Prompt::QUESTIONS - prompts.map(&:question)).map { |key| [ I18n.t(key, city: Current.city_name), key ] }
   end
 
   def profile_params

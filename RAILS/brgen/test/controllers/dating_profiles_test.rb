@@ -160,4 +160,33 @@ class DatingProfilesTest < ActionDispatch::IntegrationTest
     refute_includes response.body, liked.display_name
     refute_includes response.body, passed.display_name
   end
+
+  # The prompts routes existed with no view posting to them, so nobody could
+  # answer the questions the deck and the answer-like depend on.
+  test "the edit page answers a prompt, lists it and removes it" do
+    sign_in_as(@me)
+
+    get dating.edit_profile_path
+    assert_select "form[action='#{dating.profile_prompts_path}'] select[name='prompt[question]']"
+
+    post dating.profile_prompts_path, params: { prompt: { question: "dating.prompts.q_meal", answer: "Fiskesuppe" } }
+    prompt = profile_for(@me).prompts.sole
+    get dating.edit_profile_path
+    assert_select "##{ActionView::RecordIdentifier.dom_id(prompt)}", text: /Fiskesuppe/
+    assert_select "select[name='prompt[question]'] option[value='dating.prompts.q_meal']", count: 0
+    assert_select "form[action='#{dating.profile_prompt_path(prompt)}'] input[name=_method][value=delete]"
+
+    delete dating.profile_prompt_path(prompt)
+    assert_empty profile_for(@me).prompts.reload
+  end
+
+  test "a profile with three answers is offered no form for a fourth" do
+    profile = profile_for(@me)
+    profile.prompts.create!(%w[q_meal q_song q_never].map { |q| { question: "dating.prompts.#{q}", answer: "ja" } })
+    sign_in_as(@me)
+
+    get dating.edit_profile_path
+    assert_select "##{ActionView::RecordIdentifier.dom_id(profile.prompts.first)}"
+    assert_select "select[name='prompt[question]']", count: 0
+  end
 end

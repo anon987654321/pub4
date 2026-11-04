@@ -69,3 +69,27 @@
     </div>
   <% end %>
 </div>
+
+<section class="dating-prompts" aria-labelledby="dating-prompts-heading">
+  <%= tag.h2 t("dating.prompts_heading"), id: "dating-prompts-heading" %>
+  <%= tag.p t("dating.prompts_blurb", count: Dating::Prompt::MAX_PER_PROFILE) %>
+  <% if @prompts.any? %>
+    <ul class="dating-prompt-list">
+      <%= render partial: "prompt", collection: @prompts %>
+    </ul>
+  <% end %>
+  <% if @unanswered_questions %>
+    <%= form_with(scope: :prompt, url: profile_prompts_path, class: "dating-prompt-form") do |f| %>
+      <div class="field">
+        <%= f.label :question, t("dating.prompt_question") %>
+        <%= f.select :question, @unanswered_questions, {}, required: true %>
+      </div>
+      <div class="field">
+        <%= f.label :answer, t("dating.prompt_answer") %>
+        <%= f.text_area :answer, rows: 2, maxlength: 255, required: true %>
+      </div>
+      <%= f.hidden_field :position, value: @prompts.size %>
+      <%= f.submit t("dating.add_prompt"), class: "button button-primary" %>
+    <% end %>
+  <% end %>
+</section>

@@ -19,6 +19,13 @@ nb:
   dating:
     verify_reject_note: "Hvorfor (vises til personen)"
     crossed_ago: "for %{time} siden"
+    prompts_heading: "Svarene dine"
+    prompts_blurb:
+      one: "Svar på opptil %{count} spørsmål. Folk kan like et svar og svare på det."
+      other: "Svar på opptil %{count} spørsmål. Folk kan like et svar og svare på det."
+    prompt_question: "Spørsmål"
+    prompt_answer: "Svaret ditt"
+    add_prompt: "Legg til svar"
     location_status:
       unsupported: "Denne nettleseren gir ikke tilgang til posisjon."
       waiting: "Venter på tillatelsen din…"

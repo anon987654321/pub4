@@ -1,0 +1,5 @@
+<li id="<%= dom_id(prompt) %>">
+  <%= tag.h3 prompt.question_text %>
+  <%= tag.p prompt.answer %>
+  <%= button_to t("actions.remove"), profile_prompt_path(prompt), method: :delete, class: "button" %>
+</li>
