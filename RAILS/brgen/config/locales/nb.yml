@@ -213,6 +213,7 @@ nb:
       generic: Nytt varsel
   verify:
     needed: Bekreft e-posten din før du poster — sjekk innboksen.
+    resend: Send e-posten på nytt
   tv:
     feed:
       title: Strøm

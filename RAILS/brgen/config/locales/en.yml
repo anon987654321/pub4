@@ -210,6 +210,7 @@ en:
       generic: New notification
   verify:
     needed: Confirm your email before posting — check your inbox.
+    resend: Send the email again
   tv:
     feed:
       title: Feed

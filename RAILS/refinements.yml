@@ -2706,7 +2706,7 @@ items:
   path: RAILS/brgen/app/views/layouts/application.html.erb
   item: Show a one-time 'verify your email to post' banner for unverified accounts
     instead of meeting require_verified_email at submit.
-  status: open
+  status: done
 - id: brgen-221
   app: brgen
   area: onboarding

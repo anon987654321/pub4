@@ -74,6 +74,12 @@
       <%= t("demo_mode.notice") %>
     </aside>
   <% end %>
+  <% if verify_email_banner? %>
+    <aside class="verify-email-notice" role="note">
+      <%= tag.p t("verify.needed") %>
+      <%= button_to t("verify.resend"), main_app.resend_verification_path, class: "button button-ghost button-small" %>
+    </aside>
+  <% end %>
   <div class="brgen-top-chrome" aria-hidden="true"></div>
   <%# After the skip link, not before it — the sprite is inert (aria-hidden,
       focusable="false", 0x0) so it cannot take focus either way, but the rule

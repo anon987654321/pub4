@@ -39,6 +39,17 @@ class ApplicationController < ActionController::Base
   end
   helper_method :local_return_path
 
+  # Once a session, an account that may not post yet is told so before it
+  # writes something, rather than at submit by require_verified_email.
+  def verify_email_banner?
+    user = Current.user
+    return false if user.nil? || user.guest? || session[:verify_email_banner_shown]
+    return false if user.email_verified? || verified_bankid_identity?(user)
+
+    session[:verify_email_banner_shown] = true
+  end
+  helper_method :verify_email_banner?
+
   def set_domain_context
     # City (and full branding/locale) is resolved automatically from the request's TLD/domain.
     # The city network footer links peer apexes without changing tenant context.
