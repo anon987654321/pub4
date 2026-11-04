@@ -32,7 +32,6 @@
   <%= csp_meta_tag %>
   <%# turbo_refreshes_with in Shared::ApplicationSetup provides its meta tags here. %>
   <%= yield :head %>
-  <link rel="preload" href="/icon.png" as="image">
   <link rel="icon" href="/icon.png" type="image/png">
   <link rel="apple-touch-icon" href="/icon.png">
   <%= tag.link rel: "manifest", href: pwa_manifest_path(format: :json) %>

@@ -4419,7 +4419,7 @@ items:
   path: RAILS/bsdports/app/views/layouts/application.html.erb
   item: Remove the <link rel=preload href=/icon.png as=image>; the icon is not rendered
     in the page body, so the preload competes with the stylesheet for nothing.
-  status: open
+  status: done
 - id: bsdports-027
   app: bsdports
   area: privacy
