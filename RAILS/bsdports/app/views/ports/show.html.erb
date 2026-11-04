@@ -1,4 +1,8 @@
 <% content_for :title, @port.name %>
+<%# Each port its own meta and social-card description, not the site blurb. %>
+<% content_for :description, t("ports.meta_description", name: @port.name, version: @port.version,
+                               comment: @port.comment.presence || t("ports.explore_assistant.no_comment"),
+                               pkgpath: @port.pkgpath) %>
 <article aria-label="<%= t("ports.details_label") %>">
   <header aria-label="<%= t("ports.header_label") %>">
     <h1><%= @port.name %> <%= tag.small @port.version %></h1>

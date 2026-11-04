@@ -1,4 +1,6 @@
 <% content_for :title, @maintainer.name %>
+<% content_for :description, t("maintainers.meta_description", name: @maintainer.name,
+                                                       ports: t("ports.port_count", count: @pagy.count)) %>
 <header>
   <%= tag.h1 @maintainer.name %>
   <% if @maintainer.email.present? %>

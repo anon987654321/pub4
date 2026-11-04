@@ -4502,7 +4502,7 @@ items:
   size: S
   path: RAILS/bsdports/app/views/categories/show.html.erb
   item: Set content_for :description on category pages from category.description.
-  status: open
+  status: done
 - id: bsdports-037
   app: bsdports
   area: seo
@@ -4510,7 +4510,7 @@ items:
   path: RAILS/bsdports/app/views/maintainers/show.html.erb
   item: Set content_for :title and :description on maintainer pages including the
     port count ('kn@openbsd.org — 42 ports').
-  status: open
+  status: done
 - id: bsdports-038
   app: bsdports
   area: seo
@@ -4535,7 +4535,7 @@ items:
   item: Set content_for :description on the port page from port.comment (e.g. 'git
     2.45 — distributed version control, OpenBSD devel/git'), so each port gets its
     own meta and social-card description instead of the site blurb.
-  status: open
+  status: done
 - id: bsdports-041
   app: bsdports
   area: tests

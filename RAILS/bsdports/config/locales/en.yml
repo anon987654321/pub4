@@ -43,8 +43,10 @@ en:
     empty_title: "No notifications yet"
     empty_body: "Updates will appear here."
   maintainers:
+    meta_description: "%{name} maintains %{ports} in the OpenBSD ports tree."
     email_obfuscated: "%{user} (at) %{domain}"
   ports:
+    meta_description: "%{name} %{version}: %{comment}. OpenBSD %{pkgpath}."
     sign_in_to_review: "Sign in to run a MASTER review"
     sign_in_to_watch: "Sign in to watch this port"
     comments_heading: "Comments"

@@ -43,8 +43,10 @@ nb:
     empty_title: "Ingen varsler ennå"
     empty_body: "Oppdateringer vises her."
   maintainers:
+    meta_description: "%{name} vedlikeholder %{ports} i OpenBSD-porttreet."
     email_obfuscated: "%{user} (at) %{domain}"
   ports:
+    meta_description: "%{name} %{version}: %{comment}. OpenBSD %{pkgpath}."
     sign_in_to_review: "Logg inn for å kjøre en MASTER-gjennomgang"
     sign_in_to_watch: "Logg inn for å følge denne porten"
     comments_heading: "Kommentarer"
