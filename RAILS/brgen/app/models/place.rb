@@ -19,8 +19,10 @@ class Place < ApplicationRecord
   }
 
   validates :kind, presence: true
-  validates :latitude, presence: true
-  validates :longitude, presence: true
+  # The map drops a point outside these ranges without a word, so a swapped or
+  # mistyped coordinate has to be refused when it is saved.
+  validates :latitude, presence: true, numericality: { greater_than_or_equal_to: -90, less_than_or_equal_to: 90 }
+  validates :longitude, presence: true, numericality: { greater_than_or_equal_to: -180, less_than_or_equal_to: 180 }
   validates :name, presence: true
 
   has_many :place_check_ins, dependent: :destroy

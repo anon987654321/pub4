@@ -1928,7 +1928,7 @@ items:
   item: Add numericality range validations (-90..90, -180..180) for Place latitude
     and longitude; only presence is checked, so a swapped or out-of-range coordinate
     is saved and then silently dropped by the map.
-  status: open
+  status: done
 - id: brgen-127
   app: brgen
   area: maps
