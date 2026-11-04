@@ -1,24 +1,22 @@
 # frozen_string_literal: true
 
 class PlaylistTimestampedCommentsReflex < ApplicationReflex
-  def create
+  # The player sends the comment as the reflex's argument
+  # (stimulate("PlaylistTimestampedComments#create", { track_id:, body:, timestamp: })).
+  # The element is the player itself, whose dataset carries none of these, so
+  # reading element.dataset found no track and no comment was ever saved.
+  def create(comment = {})
     return unless Current.user
 
-    params = element.dataset
-    track = Playlist::Track.find(params.track_id || params["track-id"])
+    comment = comment.to_h.stringify_keys
+    track = Playlist::Track.find_by(id: comment["track_id"])
     return unless track&.visible_to?(Current.user)
 
-    comment = track.timestamped_comments.build(
+    saved = track.timestamped_comments.build(
       user: Current.user,
-      body: params.body || params["body"],
-      timestamp_seconds: (params.timestamp || params["timestamp"]).to_f
+      body: comment["body"].to_s.strip,
+      timestamp_seconds: comment["timestamp"].to_f
     )
-
-    if comment.save
-      # broadcast handled in model after_create
-      morph :nothing
-    else
-      # handle error, perhaps cable
-    end
+    morph :nothing if saved.save
   end
 end

@@ -1,4 +1,5 @@
 import { Controller } from "@hotwired/stimulus"
+import StimulusReflex from "stimulus_reflex"
 
 export default class extends Controller {
   static targets = [
@@ -35,6 +36,8 @@ export default class extends Controller {
   #resizeWaveform
 
   connect() {
+    // submitComment calls this.stimulate, which exists only once registered.
+    StimulusReflex.register(this)
     this.playing = false
     this.peaks = this.#peaksForTrack(this.trackIdValue || "default")
     this.#resizeWaveform = this.#drawWaveform.bind(this)

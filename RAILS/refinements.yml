@@ -2950,7 +2950,7 @@ items:
     as reflex arguments the reflex reads, because submitComment calls this.stimulate
     on a controller that never registered and PlaylistTimestampedCommentsReflex reads
     element.dataset, so no timestamped comment can be posted.
-  status: open
+  status: done
 - id: brgen-247
   app: brgen
   area: playlist
