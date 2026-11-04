@@ -495,6 +495,7 @@ en:
       other: "%{count} here now"
     offline: You are offline. The message is sent when you are back online.
   comments:
+    heading_count: "Comments (%{count})"
     sort_label: Sort comments
     sort:
       best: Best

@@ -2,8 +2,9 @@
 <% content_for :description, meta_description_for(@post) %>
 <% content_for :json_ld, json_ld_for(@post, type: :article) %>
 <% content_for :og_type, "article" %>
-<% if @post.image.attached? %>
-  <% content_for :og_image, seo_image_url(@post.image) %>
+<%# A gallery post has no single image; its first photo stands for it. %>
+<% if (og_image = seo_image_url(@post.image.attached? ? @post.image : @post.images.first)) %>
+  <% content_for :og_image, og_image %>
 <% end %>
 <%= turbo_stream_from @post %>
 
@@ -18,8 +19,9 @@
         <% if @post.community %>
           <%= link_to @post.community.name, community_path(@post.community) %> ·
         <% end %>
-        <%= @post.author_name %> ·
-        <time datetime="<%= @post.created_at.iso8601 %>"><%= time_ago(@post.created_at) %></time>
+        <%= @post.attributed? ? link_to(@post.author_name, user_path(@post.user)) : @post.author_name %> ·
+        <%= tag.time time_ago(@post.created_at), datetime: @post.created_at.iso8601,
+                     title: l(@post.created_at, format: :long) %>
         <% if @post.reading_time_minutes.positive? %>
           · <%= t("posts.min_read", n: @post.reading_time_minutes) %>
         <% end %>
@@ -68,7 +70,10 @@
               <li>
                 <blockquote>
                   <%= tag.p repost.comment %>
-                  <cite><%= repost.user.display_name %></cite>
+                  <% quoter = repost.user %>
+                  <%= tag.cite quoter.guest? ? quoter.display_name : link_to(quoter.display_name, user_path(quoter)) %>
+                  <%= tag.time time_ago(repost.created_at), datetime: repost.created_at.iso8601,
+                               title: l(repost.created_at, format: :long) %>
                 </blockquote>
               </li>
             <% end %>
@@ -111,10 +116,7 @@
 <section id="comments-section" data-controller="live-comments"
          data-live-comments-since-url-value="<%= post_comments_since_path(@post) %>">
   <%= turbo_stream_from @post, :comments, data: { live_comments_target: "source" } %>
-  <h2>
-    <%= t("comments.submit") %>
-    <%= tag.strong Current.user&.guest? ? t("chat.anon") : (Current.user&.username || t("chat.anon")) %>
-  </h2>
+  <%= tag.h2 t("comments.heading_count", count: @post.comment_count) %>
   <% unless authenticated? %>
     <%= render "shared/post_auth_prompt", post: @post, sign_up_path: (respond_to?(:new_user_path) ? new_user_path : new_registration_path) %>
   <% end %>
@@ -132,7 +134,8 @@
       <% PostsController::COMMENT_SORTS.each do |sort| %>
         <%= link_to t("comments.sort.#{sort}", default: sort.capitalize),
               main_app.post_path(@post, sort: sort),
-              class: "feed-tab#{' active' if @comment_sort == sort}" %>
+              class: "feed-tab#{' active' if @comment_sort == sort}",
+              aria: { current: ("true" if @comment_sort == sort) } %>
       <% end %>
     </nav>
   <% end %>
@@ -146,7 +149,8 @@
       <div id="comments_empty"><%= render "shared/empty_state",
             title: t("empty.no_comments"),
             body: t("comments.empty_body"),
-            action: { label: t("comments.write_reply"), path: "#comments-section" } %></div>
+            action: { label: t("comments.write_reply"), path: "#comments-section" },
+            live: false %></div>
     <% end %>
   </div>
 </section>

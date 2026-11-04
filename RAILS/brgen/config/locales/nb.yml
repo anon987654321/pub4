@@ -499,6 +499,7 @@ nb:
       other: "%{count} her nå"
     offline: Du er frakoblet. Meldingen sendes når du er på nett igjen.
   comments:
+    heading_count: "Kommentarer (%{count})"
     sort_label: Sorter kommentarer
     sort:
       best: Best

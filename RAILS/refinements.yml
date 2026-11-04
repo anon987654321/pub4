@@ -3196,14 +3196,14 @@ items:
   path: RAILS/brgen/app/views/posts/show.html.erb
   item: 'Render the empty-comments state with live: false; it is page content on load,
     not a status change to announce.'
-  status: open
+  status: done
 - id: brgen-276
   app: brgen
   area: post-show
   size: S
   path: RAILS/brgen/app/views/posts/show.html.erb
   item: Show each quote's author as a profile link and its time.
-  status: open
+  status: done
 - id: brgen-277
   app: brgen
   area: post-show
@@ -3219,14 +3219,14 @@ items:
   path: RAILS/brgen/app/views/posts/show.html.erb
   item: Hide the quote form from signed-out visitors and show a sign-in prompt instead
     of a required textarea they cannot submit.
-  status: open
+  status: done
 - id: brgen-279
   app: brgen
   area: post-show
   size: S
   path: RAILS/brgen/app/views/posts/show.html.erb
   item: Add aria-current to the active comment sort link.
-  status: open
+  status: done
 - id: brgen-280
   app: brgen
   area: post-show
@@ -3234,21 +3234,21 @@ items:
   path: RAILS/brgen/app/views/posts/show.html.erb
   item: Rename the comments heading to 'Kommentarer (N)'; it reads 'Kommenter <username>'
     and repeats the submit label as a heading.
-  status: open
+  status: done
 - id: brgen-281
   app: brgen
   area: post-show
   size: S
   path: RAILS/brgen/app/views/posts/show.html.erb
   item: Give the post meta time a title with the full date, as comments do.
-  status: open
+  status: done
 - id: brgen-282
   app: brgen
   area: post-show
   size: S
   path: RAILS/brgen/app/views/posts/show.html.erb
   item: Link the author name in the post meta line to their profile when attributed.
-  status: open
+  status: done
 - id: brgen-283
   app: brgen
   area: post-show
@@ -3263,7 +3263,7 @@ items:
   size: S
   path: RAILS/brgen/app/views/posts/show.html.erb
   item: Use the first gallery image for og:image when post.image is absent.
-  status: open
+  status: done
 - id: brgen-285
   app: brgen
   area: post-show
