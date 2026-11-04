@@ -4281,7 +4281,7 @@ items:
   path: RAILS/bsdports/app/views/ports/_list.html.erb
   item: Use one date style for the last import line; the header uses time_ago_in_words
     while the empty list uses l(..., :short) for the same fact.
-  status: open
+  status: done
 - id: bsdports-010
   app: bsdports
   area: copy
