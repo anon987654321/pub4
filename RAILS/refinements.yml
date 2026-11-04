@@ -4487,7 +4487,7 @@ items:
   path: RAILS/bsdports/app/controllers/sitemaps_controller.rb
   item: Use port.last_updated (the ports-tree date) for sitemap lastmod rather than
     updated_at, which every re-import bumps for all 12k ports.
-  status: open
+  status: done
 - id: bsdports-035
   app: bsdports
   area: seo
@@ -4495,7 +4495,7 @@ items:
   path: RAILS/bsdports/app/controllers/sitemaps_controller.rb
   item: Add maintainer pages to the sitemap; maintainers#show is public and crawlable
     but SitemapsController lists only root, categories and ports.
-  status: open
+  status: done
 - id: bsdports-036
   app: bsdports
   area: seo
@@ -4543,7 +4543,7 @@ items:
   path: RAILS/bsdports/test/controllers
   item: Add a sitemap test asserting root, categories, category pages and ports are
     listed and the XML is well formed.
-  status: open
+  status: done
 - id: bsdports-042
   app: bsdports
   area: tests
