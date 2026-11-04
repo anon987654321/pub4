@@ -615,6 +615,7 @@ nb:
     showcase_items: "Plagg i utstillingen"
   declutter:
     due: "— frist %{date}"
+    confirm_leave_wardrobe: "Ta %{title} ut av den aktive garderoben?"
     score_keys:
       joy: "Glede"
       utility: "Bruk"

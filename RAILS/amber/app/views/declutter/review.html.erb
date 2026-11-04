@@ -56,9 +56,11 @@
   <section>
     <%= tag.h2 t("declutter.move_item") %>
     <nav aria-label="<%= t("declutter.move_item") %>">
+      <%# Donate and release take the garment out of the active wardrobe, so they ask first. %>
       <% %w[keep wear_this_week repair sell donate sentimental_archive release].each do |target| %>
+        <% confirm = t("declutter.confirm_leave_wardrobe", title: @item.title) if %w[donate release].include?(target) %>
         <%= button_to t("declutter.targets.#{target}"), move_declutter_path(@item, target: target), method: :patch,
-              class: "button-small" %>
+              class: "button-small", form: { data: { turbo_confirm: confirm }.compact } %>
       <% end %>
       <%= button_to t("declutter.declutter_box"), move_declutter_path(@item, target: "declutter_box"), method: :patch, class: "button-small" %>
     </nav>

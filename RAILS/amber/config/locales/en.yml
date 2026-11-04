@@ -616,6 +616,7 @@ en:
     showcase_items: "Showcase pieces"
   declutter:
     due: "— due %{date}"
+    confirm_leave_wardrobe: "Take %{title} out of your active wardrobe?"
     score_keys:
       joy: "Joy"
       utility: "Use"

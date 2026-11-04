@@ -685,7 +685,7 @@ items:
   path: RAILS/amber/app/views/declutter/review.html.erb
   item: Confirm 'release' and 'donate' moves, which take the item out of the active
     wardrobe, or offer an undo flash.
-  status: open
+  status: done
 - id: amber-085
   app: amber
   area: ux
