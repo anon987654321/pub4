@@ -31,13 +31,17 @@
        }.each do |zone, label| %>
       <div class="zone-row">
         <span class="zone-tag"><%= label %></span>
-        <button class="carousel-button" data-action="wardrobe-carousel#prev" data-wardrobe-carousel-zone-param="<%= zone %>" aria-label="<%= t("dressing_room.previous", zone: label) %>">‹</button>
+        <button type="button" class="carousel-button" data-action="wardrobe-carousel#prev"
+                data-wardrobe-carousel-zone-param="<%= zone %>"
+                aria-label="<%= t("dressing_room.previous", zone: label) %>">‹</button>
         <span class="zone-info">
           <span data-zone-label="<%= zone %>">—</span>
           <span class="zone-count" data-zone-count="<%= zone %>"></span>
           <span class="zone-why" data-zone-why="<%= zone %>"></span>
         </span>
-        <button class="carousel-button" data-action="wardrobe-carousel#next" data-wardrobe-carousel-zone-param="<%= zone %>" aria-label="<%= t("dressing_room.next", zone: label) %>">›</button>
+        <button type="button" class="carousel-button" data-action="wardrobe-carousel#next"
+                data-wardrobe-carousel-zone-param="<%= zone %>"
+                aria-label="<%= t("dressing_room.next", zone: label) %>">›</button>
       </div>
     <% end %>
   </div>

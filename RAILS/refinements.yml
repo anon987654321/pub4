@@ -370,7 +370,7 @@ items:
   size: S
   path: RAILS/amber/app/views/shared/_dressing_room.html.erb
   item: Add type="button" to the dressing room prev/next carousel buttons.
-  status: open
+  status: done
 - id: amber-046
   app: amber
   area: markup
