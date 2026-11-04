@@ -5294,7 +5294,7 @@ items:
   path: RAILS/mrdamascy/app/views/checkout/show.html.erb
   item: Disable both pay buttons on submit (data-turbo-submits-with) so a slow PSP
     redirect cannot produce two orders from a double tap.
-  status: open
+  status: done
 - id: mrdamascy-030
   app: mrdamascy
   area: checkout

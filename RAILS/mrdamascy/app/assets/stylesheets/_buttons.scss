@@ -101,6 +101,12 @@
   background: var(--stripe-button-hover);
 }
 
+// Turbo disables only the tapped pay button and marks the form aria-busy
+// while the order is created; the other lane must not take a second tap.
+.checkout-form[aria-busy="true"] button[type="submit"] {
+  pointer-events: none;
+}
+
 // The action a card or form exists for spans the column at 48px (Fitts
 // primary_action_min_px). button_to forms are excluded: their buttons sit
 // inline in rows (quantity, tips, courier stops) unless a context below says so.

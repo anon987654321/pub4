@@ -163,6 +163,7 @@ nb:
     vipps_last_used: Sist brukt
     stripe_row: Kort
     stripe_note: Visa, Mastercard, Apple Pay — trygg betaling hos Stripe
+    paying: Sender deg til betaling …
     stripe_cta: Betal med kort
     promo_auto: '%{code} lagt inn automatisk'
     subtotal: Delsum

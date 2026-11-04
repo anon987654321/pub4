@@ -163,6 +163,7 @@ en:
     vipps_last_used: Last used
     stripe_row: Card
     stripe_note: Visa, Mastercard, Apple Pay — secure payment via Stripe
+    paying: Taking you to payment …
     stripe_cta: Pay by card
     promo_auto: '%{code} applied automatically'
     subtotal: Subtotal

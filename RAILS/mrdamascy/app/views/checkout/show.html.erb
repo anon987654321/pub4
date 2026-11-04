@@ -111,11 +111,11 @@
       No script, no card fields here — Stripe hosts the card entry on its
       own PCI-scoped page. %>
   <%= button_tag type: :submit, name: "payment_method", value: "vipps",
-        class: "button-vipps" do %>
+        class: "button-vipps", data: { turbo_submits_with: t("checkout.paying") } do %>
     <%= t("checkout.vipps_cta") %>
   <% end %>
   <%= button_tag type: :submit, name: "payment_method", value: "stripe",
-        class: "button-stripe" do %>
+        class: "button-stripe", data: { turbo_submits_with: t("checkout.paying") } do %>
     <%= t("checkout.stripe_cta") %>
   <% end %>
   <%= tag.p t("checkout.steps_note"), class: "steps-note" %>
