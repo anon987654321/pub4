@@ -115,7 +115,7 @@ nb:
       other: "%{count} nye innlegg"
     show_new_posts: Vis nye
     follow_sign_in: Logg inn
-    follow_hint: " for å se innlegg fra folk du følger."
+    follow_hint_html: "%{sign_in} for å se innlegg fra folk du følger."
     local_posts: Lokale innlegg
     local_activity: Lokal aktivitet
     local_marketplace: Nytt i markedet
@@ -771,6 +771,8 @@ nb:
     no_posts: Ingen innlegg
     no_posts_search: Ingen innlegg matcher søket.
     no_posts_yet: Ingen innlegg ennå
+    no_neighborhood_posts: Ingen innlegg fra nabolaget ditt ennå
+    no_neighborhood_posts_body: Ingen har skrevet herfra ennå. Se hva resten av byen deler.
     be_first: Vær den første — gjester kan poste uten konto.
     post_to_city: Post til %{city}
     clear_search: Tøm søk

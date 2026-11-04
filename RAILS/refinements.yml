@@ -1828,7 +1828,7 @@ items:
   path: RAILS/brgen/app/views/home/_live_search_results.html.erb
   item: Turn the live-search result count line into a role=status element so the number
     of hits is announced.
-  status: open
+  status: done
 - id: brgen-115
   app: brgen
   area: feed
@@ -1836,7 +1836,7 @@ items:
   path: RAILS/brgen/app/views/home/_live_search_results.html.erb
   item: Show a 'Posts from your neighborhood' empty state with a link to citywide
     when a neighborhood filter returns nothing.
-  status: open
+  status: done
 - id: brgen-116
   app: brgen
   area: feed
@@ -1844,7 +1844,7 @@ items:
   path: RAILS/brgen/app/views/home/index.html.erb
   item: Move the Messages link out of the 'feed views' nav; it is navigation, not
     a view of the feed, and confuses the aria-label.
-  status: open
+  status: done
 - id: brgen-117
   app: brgen
   area: feed
@@ -1852,7 +1852,7 @@ items:
   path: RAILS/brgen/app/views/home/index.html.erb
   item: Auto-submit the neighborhood select on change (the shared auto-submit controller
     is already in the baseline) and keep Apply only in <noscript>.
-  status: open
+  status: done
 - id: brgen-118
   app: brgen
   area: feed
@@ -1860,7 +1860,7 @@ items:
   path: RAILS/brgen/app/views/home/index.html.erb
   item: Replace the concatenated follow hint (link + separate string) with one interpolated
     translation so nb word order is not fixed by the template.
-  status: open
+  status: done
 - id: brgen-119
   app: brgen
   area: i18n

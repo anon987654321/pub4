@@ -112,7 +112,7 @@ en:
       other: "%{count} new posts"
     show_new_posts: Show new
     follow_sign_in: Sign in
-    follow_hint: " to see posts from people you follow."
+    follow_hint_html: "%{sign_in} to see posts from people you follow."
     local_posts: Local posts
     local_activity: Local activity
     local_marketplace: New in the marketplace
@@ -765,6 +765,8 @@ en:
     no_posts: No posts
     no_posts_search: No posts match this search.
     no_posts_yet: No posts yet
+    no_neighborhood_posts: No posts from your neighbourhood yet
+    no_neighborhood_posts_body: Nobody has posted from here yet. See what the rest of the city is sharing.
     be_first: Be the first — guests can post without an account.
     post_to_city: Post to %{city}
     clear_search: Clear search

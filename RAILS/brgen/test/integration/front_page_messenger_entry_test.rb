@@ -89,8 +89,20 @@ class FrontPageMessengerEntryTest < ActionDispatch::IntegrationTest
     sign_in_as(@user)
     get root_path
 
-    nav = Nokogiri::HTML(response.body).at_css(".home-feed-views")
+    nav = Nokogiri::HTML(response.body).at_css(".home-feed-views nav")
     assert_equal I18n.t("home.feed_views", locale: :nb), nav["aria-label"]
     assert_includes nav.text, I18n.t("home.media_wall_view", locale: :nb)
+  end
+
+  # The nav is named "feed views"; the inbox is not a view of the feed, so the
+  # link sits beside the nav rather than inside it.
+  test "the messenger link is not one of the feed views" do
+    sign_in_as(@user)
+    get root_path
+
+    nav = Nokogiri::HTML(response.body).at_css(%(nav[aria-label="#{I18n.t('home.feed_views', locale: :nb)}"]))
+    refute_nil nav
+    assert_nil nav.at_css(%(a[href="#{conversations_path}"])), "the inbox is listed as a view of the feed"
+    assert entry(response.body), "the inbox link left the front page altogether"
   end
 end

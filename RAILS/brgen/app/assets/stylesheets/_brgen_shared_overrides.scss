@@ -2672,6 +2672,12 @@ body.auth-surface:not([class*="vertical-"]) .brgen-top-chrome {
   outline-offset: 2px;
 }
 
+/* The feed-views nav is one group inside the row; its links lay out as the
+   row's own, beside the messenger link that sits outside the nav. */
+.home-feed-view-group {
+  display: contents;
+}
+
 /* The three home destinations must remain reachable at narrow widths and when
    labels are translated. Wrap rather than silently hiding the final control. */
 .home-feed-views {

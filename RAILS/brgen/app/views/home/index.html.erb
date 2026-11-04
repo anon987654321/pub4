@@ -22,9 +22,14 @@
     be the City record. %>
 <% feed_city = ActsAsTenant.current_tenant %>
 
-<nav class="home-feed-views" aria-label="<%= t("home.feed_views") %>">
+<%# One row, two meanings: the nav names the views of the feed, and the
+    messenger link beside it is a way out of the feed, so it sits outside the
+    labelled nav rather than being read as a third view. %>
+<div class="home-feed-views">
+<nav class="home-feed-view-group" aria-label="<%= t("home.feed_views") %>">
   <%= link_to t("home.feed_view"), root_path(feed: params[:feed]), class: "home-feed-view#{' is-active' if params[:view].to_s != "media"}", aria: { current: ("page" if params[:view].to_s != "media") } %>
   <%= link_to t("home.media_wall_view"), root_path(feed: params[:feed], view: "media"), class: "home-feed-view#{' is-active' if params[:view].to_s == "media"}", aria: { current: ("page" if params[:view].to_s == "media") } %>
+</nav>
   <%# The way into the messenger from the front page, one tap on a phone and
       visible without the tab bar, which rests hidden. It is a link to this
       host's own inbox, not the Messenger host in the swiper: the same session,
@@ -37,21 +42,24 @@
       <span class="visually-hidden"><%= t("messages.unread_badge", count: messenger_unread_total) %></span>
     <% end %>
   <% end %>
-</nav>
+</div>
 
 <% if @neighborhoods.present? %>
-  <form class="home-neighborhood-filter" action="<%= root_path %>" method="get">
+  <form class="home-neighborhood-filter" action="<%= root_path %>" method="get"
+        data-controller="auto-submit" data-auto-submit-delay-value="0">
     <% if params[:feed].present? %><input type="hidden" name="feed" value="<%= params[:feed] %>"><% end %>
     <% if params[:sort].present? %><input type="hidden" name="sort" value="<%= params[:sort] %>"><% end %>
     <% if params[:view].present? %><input type="hidden" name="view" value="<%= params[:view] %>"><% end %>
     <label for="home-neighborhood"><%= t("home.neighborhood_filter") %></label>
-    <select id="home-neighborhood" name="neighborhood_id">
+    <select id="home-neighborhood" name="neighborhood_id" data-action="change->auto-submit#submit">
       <option value=""><%= t("home.citywide", city: city_name) %></option>
       <% @neighborhoods.each do |neighborhood| %>
         <option value="<%= neighborhood.id %>" <%= "selected" if @neighborhood_id.to_s == neighborhood.id.to_s %>><%= neighborhood.name %></option>
       <% end %>
     </select>
-    <button type="submit" class="button button-ghost"><%= t("actions.apply") %></button>
+    <%# Choosing a neighbourhood applies it; the button is for a browser
+        without JavaScript, where nothing listens for the change. %>
+    <noscript><button type="submit" class="button button-ghost"><%= t("actions.apply") %></button></noscript>
   </form>
 <% end %>
 
@@ -84,8 +92,11 @@
       sat above the thing it ordered. communities/show keeps its chips for the
       same job; root opens straight into the feed, and feed=following and
       feed=communities are still reachable by query string. %>
+  <%# The follow hint is one sentence with the link interpolated, so a
+      language orders its own words around it. %>
   <% if home_feed_following? && !authenticated? %>
-    <p class="feed-hint"><%= link_to t("home.follow_sign_in"), new_session_path %><%= t("home.follow_hint") %></p>
+    <%= tag.p t("home.follow_hint_html", sign_in: link_to(t("home.follow_sign_in"), new_session_path)),
+              class: "feed-hint" %>
   <% end %>
   <%= render "home/live_search_results" %>
 </section>

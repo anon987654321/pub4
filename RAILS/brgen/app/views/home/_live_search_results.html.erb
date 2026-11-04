@@ -1,5 +1,6 @@
+<%# A status, so the number of hits is spoken when a search updates it. %>
 <% if live_search_query.present? %>
- <p><%= t("search.results_for", count: @posts.size, query: live_search_query) %></p>
+ <%= tag.p t("search.results_for", count: @posts.size, query: live_search_query), role: "status" %>
 <% end %>
 
 <% if @posts.any? %>
@@ -45,6 +46,14 @@
    <ul role="list" class="post-feed feed_list brgen-media-wall" id="home-feed" aria-label="<%= t("home.media_wall_view") %>">
      <%= render "home/media_add_card" %>
    </ul>
+ <% elsif @neighborhood_id.present? %>
+   <%# A neighbourhood with nothing in it is not an empty city: say which, and
+       offer the citywide feed. %>
+   <%= render "shared/empty_state",
+         title: t("empty.no_neighborhood_posts"),
+         body: t("empty.no_neighborhood_posts_body"),
+         action: { label: t("home.citywide", city: city_name),
+                   path: root_path(feed: params[:feed], sort: params[:sort]) } %>
  <% elsif live_search_query.present? %>
    <%= render "shared/empty_state",
          title: t("empty.no_posts"),
