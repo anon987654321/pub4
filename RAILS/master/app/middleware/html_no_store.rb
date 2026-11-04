@@ -4,6 +4,9 @@
 class HtmlNoStore
   ASSET_PREFIX = "/assets/"
   STATIC_EXT = /\.(?:css|js|mjs|json|png|jpe?g|gif|webp|svg|ico|woff2?|map|txt)\z/i
+  # Pages that are the same for every visitor and set their own Cache-Control:
+  # the API pricing page may be revalidated and kept in the back-forward cache.
+  CACHEABLE_PAGES = %w[/api].freeze
 
   def initialize(app) = @app = app
 
@@ -25,6 +28,7 @@ class HtmlNoStore
     path = env["PATH_INFO"].to_s
     return false if path.start_with?(ASSET_PREFIX)
     return false if STATIC_EXT.match?(path)
+    return false if CACHEABLE_PAGES.include?(path)
 
     content_type = headers["Content-Type"].to_s
     return true if content_type.include?("text/html")

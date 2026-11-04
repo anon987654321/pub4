@@ -7,14 +7,14 @@
   <meta name="color-scheme" content="dark">
   <meta name="robots" content="<%= local_assigns.fetch(:robots, "index") %>">
   <%= tag.title title %>
-  <link rel="stylesheet" href="/face.css">
+  <link rel="stylesheet" href="<%= asset_path("face.css") %>">
 </head>
 <body class="mission-control" data-layout="document" data-surface="face" data-theme="dark">
   <%= link_to t("skip_to_content"), "#main-content", class: "skip-link" %>
-  <header class="page-header master-titlebar" role="banner">
+  <header class="page-header master-titlebar">
     <%= link_to tag.span(t("api.brand"), class: "brand-text"), api_path, class: "brand-mark" %>
   </header>
-  <main id="main-content" role="main">
+  <main id="main-content">
     <%= tag.p(flash[:alert], role: "alert") if flash[:alert] %>
     <%= yield %>
   </main>

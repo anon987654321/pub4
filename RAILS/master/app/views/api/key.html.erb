@@ -2,7 +2,10 @@
   <%= tag.h1 t("api.key_title") %>
   <% if @token %>
     <%= tag.p t("api.key_once") %>
-    <%= tag.pre tag.code(@token) %>
+    <%= tag.pre tag.code(@token, id: "api-token") %>
+    <%= tag.button t("api.copy_key"), type: "button", hidden: true,
+                                      data: { copy_target: "api-token", copied: t("api.copied_key") } %>
+    <%= javascript_include_tag "api_key_copy.js", defer: true, nonce: true %>
   <% else %>
     <%= tag.p t("api.key_shown", hint: @api_key.token_hint) %>
   <% end %>

@@ -7,8 +7,8 @@
     <section aria-labelledby="plan-<%= plan.key %>">
       <%= tag.h3 t("billing.plans.#{plan.key}.name"), id: "plan-#{plan.key}" %>
       <%= tag.p t("billing.plans.#{plan.key}.summary") %>
-      <%= tag.p safe_join([tag.strong(number_to_currency(plan.amount / 100, unit: "$", precision: 0)),
-                           t("api.per_month")], " ") %>
+      <% price = number_to_currency(plan.amount / 100.0, unit: plan.currency, format: "%u %n", precision: 2) %>
+      <%= tag.p safe_join([tag.strong(price), t("api.per_month")], " ") %>
       <% if plan.available? %>
         <%= button_to t("api.subscribe"), api_checkout_path, params: { plan: plan.key } %>
       <% else %>
@@ -19,7 +19,7 @@
 
   <%= tag.h2 t("api.usage_heading") %>
   <%= tag.p t("api.usage_lede") %>
-  <pre><code>curl https://ai.brgen.no/api/v1/lint \
+  <pre><code>curl <%= api_v1_lint_url %> \
   -H "Authorization: Bearer $MASTER_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{"files":[{"path":"app/models/user.rb","source":"class User\nend\n"}]}'</code></pre>
@@ -29,7 +29,7 @@
 
   <%= tag.h2 t("api.copy_review_heading") %>
   <%= tag.p t("api.copy_review_lede") %>
-  <pre><code>curl https://ai.brgen.no/api/v1/copy-review \
+  <pre><code>curl <%= api_v1_copy_review_url %> \
   -H "Authorization: Bearer $MASTER_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{"creative":{"headline":"Wool coat — NOK 149.90","body":"Wool coat from Fjord Studio. In stock.","cta":"View item","locale":"en","disclosure":"Advertisement","claims":[{"kind":"product_title","text":"Wool coat"},{"kind":"merchant","text":"Fjord Studio"},{"kind":"price","text":"NOK 149.90"},{"kind":"availability","text":"In stock"}]},"product":{"source":"tradedoubler","external_id":"td-42","title":"Wool coat","merchant":"Fjord Studio","price_cents":14990,"currency":"NOK","market":"NO","in_stock":true,"placeholder":false,"last_seen_at":"2026-11-02T12:00:00Z"},"market":"NO"}'</code></pre>

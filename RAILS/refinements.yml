@@ -4778,7 +4778,7 @@ items:
   path: RAILS/master/app/views/chat/index.html.erb
   item: Remove role="main" from <main> and role="banner" from the dashboard and API
     headers; the elements already carry those roles.
-  status: open
+  status: done
 - id: master-004
   app: master
   area: accessibility
@@ -4793,7 +4793,7 @@ items:
   size: S
   path: RAILS/master/app/views/api/key.html.erb
   item: Add a copy button and a "store it now" warning beside the one-time API token.
-  status: open
+  status: done
 - id: master-006
   app: master
   area: api
@@ -4801,7 +4801,7 @@ items:
   path: RAILS/master/app/views/api/show.html.erb
   item: Build the curl examples from the API URL helpers instead of the hard-coded
     https://ai.brgen.no.
-  status: open
+  status: done
 - id: master-007
   app: master
   area: api
@@ -4809,7 +4809,7 @@ items:
   path: RAILS/master/app/views/api/show.html.erb
   item: Format plan prices with amount / 100.0 in the plan's currency; integer division
     drops the cents and the unit is hard-coded to $.
-  status: open
+  status: done
 - id: master-008
   app: master
   area: caching
@@ -4817,7 +4817,7 @@ items:
   path: RAILS/master/app/controllers/application_controller.rb
   item: Exempt the static API pricing page from set_html_no_store so it can be cached
     and restored from the back-forward cache.
-  status: open
+  status: done
 - id: master-009
   app: master
   area: caching
@@ -4826,7 +4826,7 @@ items:
   item: Load face.css and dashboard_live.js through asset_path on the dashboard and
     API pages; the undigested /face.css (69 KB) misses immutable caching and deploy
     busting.
-  status: open
+  status: done
 - id: master-010
   app: master
   area: chat
@@ -5047,7 +5047,7 @@ items:
   path: RAILS/master/test/controllers
   item: Add tests for ApiController (show, checkout, key) and Api::StripeWebhooksController;
     no test references them.
-  status: open
+  status: done
 - id: master-038
   app: master
   area: typography

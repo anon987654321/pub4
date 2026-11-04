@@ -176,6 +176,8 @@ nb:
     limit_privacy: "Kildekode og annonsetekst vurderes i minnet. Tekst og produktfelter lagres ikke; kvitteringer for copy review beholder bare hashverdier, sammendrag av resultatet og funnkoder."
     key_title: "API-nøkkelen din"
     key_once: "Kopier den nå: den vises én gang, og bare fingeravtrykket lagres."
+    copy_key: "Kopier nøkkelen"
+    copied_key: "Kopiert"
     key_shown: >-
       Denne nøkkelen (slutter på %{hint}) er allerede vist. Er den borte, bytt den med den gamle nøkkelen, eller
       skriv til operatøren.

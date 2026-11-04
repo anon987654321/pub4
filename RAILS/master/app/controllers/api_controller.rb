@@ -1,13 +1,17 @@
 # frozen_string_literal: true
 
 # /api: what the MASTER law API does, its plans and a checkout; /api/key: the
-# page Stripe returns to, which shows a new key once. Plain HTML, no script.
+# page Stripe returns to, which shows a new key once. Plain HTML; the key page
+# loads one script, the copy button.
 class ApiController < ActionController::Base
   SESSION_ID = /\Acs_[A-Za-z0-9_]{8,200}\z/
 
-  before_action :no_store
+  # show is the same page for every visitor, so it may be cached and kept in the
+  # back-forward cache; a redirect's flash alert is one visitor's, and is not.
+  before_action :no_store, except: :show
 
   def show
+    no_store if flash[:alert]
     @plans = Shared::BillingPlan.for_app("master")
   end
 

@@ -160,6 +160,8 @@ en:
     limit_privacy: "Source and creative are judged in memory. Copy and product fields are not stored; copy-review receipts retain only input hashes, verdict summaries and finding codes."
     key_title: "Your API key"
     key_once: "Copy it now: it is shown once and only its fingerprint is kept."
+    copy_key: "Copy key"
+    copied_key: "Copied"
     key_shown: >-
       This key (ending %{hint}) has already been shown. If it is lost, rotate it with the old key, or write to the
       operator.
