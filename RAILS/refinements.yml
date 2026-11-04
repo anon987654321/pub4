@@ -87,7 +87,7 @@ items:
   path: RAILS/amber/app/views/items/_live_search_results.html.erb
   item: Label wardrobe page counters as page-only or compute them over the whole wardrobe;
     'wears on page' and 'categories' change as you scroll.
-  status: open
+  status: done
 - id: amber-011
   app: amber
   area: copy
@@ -615,7 +615,7 @@ items:
   path: RAILS/amber/app/javascript/controllers/filter_controller.js
   item: Persist the category filter in the URL and apply it server-side; filter_controller
     only hides already-loaded cards, so infinite-scroll pages appear unfiltered.
-  status: open
+  status: done
 - id: amber-076
   app: amber
   area: ux
@@ -726,7 +726,7 @@ items:
   path: RAILS/amber/app/views/items/index.html.erb
   item: Link wardrobe analytics chips (never worn, underused, in box) to the filtered
     wardrobe view.
-  status: open
+  status: done
 - id: amber-090
   app: amber
   area: ux
@@ -734,7 +734,7 @@ items:
   path: RAILS/amber/app/views/items/index.html.erb
   item: Show the number of garments archived or resurfaced in the flash after archive_seasonal/resurface_seasonal,
     and confirm before bulk archive.
-  status: open
+  status: done
 - id: amber-091
   app: amber
   area: ux

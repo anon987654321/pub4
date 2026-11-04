@@ -33,13 +33,11 @@ class ItemsController < ApplicationController
   skip_before_action :verify_authenticity_token, only: [ :share ]
 
   def index
-    scope = Current.user.items.with_photos_for_display
-    scope = apply_lifecycle_filter(scope)
-    scope = scope.recent
-    scope = apply_live_search(scope, columns: %w[title brand category color material], vertical: "wardrobe") if live_search_query.present?
-    @pagy, @items = pagy(scope)
+    read_wardrobe_filters
+    scope = wardrobe_scope
+    @pagy, @items = pagy(scope.with_photos_for_display.recent)
+    @totals = wardrobe_totals(scope)
     @analytics = WardrobeAnalytics.new(Current.user).summary
-    @lifecycle_filter = params[:lifecycle].presence || "active"
     finish_live_search(partial: "items/live_search_results")
   end
 
@@ -153,13 +151,13 @@ class ItemsController < ApplicationController
   end
 
   def archive_seasonal
-    Current.user.items.active_wardrobe.find_each(&:archive_out_of_season!)
-    redirect_to items_path, notice: t("flash.out_of_season_archived")
+    moved = Current.user.items.active_wardrobe.find_each.count(&:archive_out_of_season!)
+    redirect_to items_path, notice: t("flash.out_of_season_archived", count: moved)
   end
 
   def resurface_seasonal
-    Current.user.items.seasonal_archived.find_each(&:resurface_seasonal!)
-    redirect_to items_path, notice: t("flash.seasonal_resurfaced")
+    moved = Current.user.items.seasonal_archived.find_each.count(&:resurface_seasonal!)
+    redirect_to items_path, notice: t("flash.seasonal_resurfaced", count: moved)
   end
 
   def shopping_list
@@ -198,8 +196,28 @@ class ItemsController < ApplicationController
     require_wardrobe_view!(@item, items_path)
   end
 
-  def apply_lifecycle_filter(scope)
-    scope.merge(Item.for_lifecycle(params[:lifecycle]))
+  def read_wardrobe_filters
+    @lifecycle_filter = params[:lifecycle].presence || "active"
+    @usage_filter = params[:usage].presence_in(Item::USAGE_FILTERS.keys)
+    @category_filter = params[:category].presence
+  end
+
+  def wardrobe_scope
+    scope = Current.user.items.merge(Item.listed(lifecycle: params[:lifecycle], usage: @usage_filter,
+                                                 category: @category_filter))
+    return scope if live_search_query.blank?
+
+    apply_live_search(scope, columns: %w[title brand category color material], vertical: "wardrobe")
+  end
+
+  # The counters over the whole filtered wardrobe; summed from the loaded page
+  # they changed as infinite scroll appended more.
+  def wardrobe_totals(scope)
+    {
+      wears: scope.sum(:times_worn),
+      joy: scope.where(spark_joy: true).count,
+      categories: scope.distinct.count(:category),
+    }
   end
 
   def incoming_photos?

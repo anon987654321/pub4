@@ -88,6 +88,18 @@ class Item < ApplicationRecord
     end
   end
 
+  USAGE_FILTERS = { "never_worn" => :never_worn, "underused" => :underused }.freeze
+
+  # The wardrobe list as the index and its appended pages both filter it:
+  # lifecycle chip, usage (the analytics chips) and category. The category
+  # select only hid loaded cards, so every page infinite scroll added came
+  # in unfiltered.
+  def self.listed(lifecycle: nil, usage: nil, category: nil)
+    scope = for_lifecycle(lifecycle)
+    scope = scope.public_send(USAGE_FILTERS[usage]) if USAGE_FILTERS.key?(usage)
+    category.present? ? scope.where(category:) : scope
+  end
+
   CATEGORIES = %w[Tops Bottoms Dresses Shoes Accessories Outerwear].freeze
   SEASONS = %w[Spring Summer Autumn Winter All-Season].freeze
   MOOD_EFFECTS = %w[energising calming confident playful neutral].freeze
@@ -152,15 +164,17 @@ class Item < ApplicationRecord
     end
   end
 
+  # Each answers whether it moved the garment, so the flash can count them.
   def archive_out_of_season!
-    return unless season.present? && season != "All-Season" && season != current_season
+    return false unless season.present? && season != "All-Season" && season != current_season
+
     update!(lifecycle_state: "seasonal_archive")
   end
 
   def resurface_seasonal!
-    if lifecycle_state == "seasonal_archive" && (season == current_season || season == "All-Season")
-      update!(lifecycle_state: "active")
-    end
+    return false unless lifecycle_state == "seasonal_archive" && (season == current_season || season == "All-Season")
+
+    update!(lifecycle_state: "active")
   end
 
   def extract_dominant_color!

@@ -17,9 +17,10 @@ class ItemsInfiniteScrollReflex < Shared::InfiniteScrollReflex
   private
 
   def scope
-    scope = Current.user.items.with_photos_for_display.recent
-    scope = scope.merge(Item.for_lifecycle(element.dataset["lifecycle"])) if element.dataset["lifecycle"].present?
-    return scope unless element.dataset["q"].present?
+    data = element.dataset
+    listed = Item.listed(lifecycle: data["lifecycle"], usage: data["usage"], category: data["category"])
+    scope = Current.user.items.with_photos_for_display.recent.merge(listed)
+    return scope unless data["q"].present?
 
     term = "%#{ActiveRecord::Base.sanitize_sql_like(element.dataset["q"])}%"
     scope.where(

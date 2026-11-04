@@ -1,18 +1,22 @@
+<%# Counted over the whole filtered wardrobe, not the cards loaded so far. %>
 <div class="tag-row">
-  <span class="tag"><%= t("items.wears_on_page", count: @items.sum { |item| item.times_worn.to_i }) %></span>
-  <span class="tag"><%= t("items.joy_keepers", count: @items.count(&:spark_joy?)) %></span>
-  <span class="tag"><%= t("items.categories", count: @items.map(&:category).compact.uniq.size) %></span>
+  <%= tag.span t("items.wears_total", count: @totals[:wears].to_i), class: "tag" %>
+  <%= tag.span t("items.joy_keepers", count: @totals[:joy]), class: "tag" %>
+  <%= tag.span t("items.categories", count: @totals[:categories]), class: "tag" %>
 </div>
 
-<div class="field">
-  <label for="category-filter"><%= t("items.filter_by_category") %></label>
-  <select id="category-filter" data-action="change->filter#filter" data-filter-target="select">
-    <option value=""><%= t("items.filter_all") %></option>
-    <% amber_item_category_options.each do |label, value| %>
-      <option value="<%= value %>"><%= label %></option>
-    <% end %>
-  </select>
-</div>
+<%# A GET filter the server applies, so appended pages are filtered too. %>
+<%= form_with url: items_path, method: :get, class: "field",
+              data: { controller: "filter", turbo_frame: "_top" } do |form| %>
+  <%= hidden_field_tag :lifecycle, @lifecycle_filter %>
+  <%= hidden_field_tag :usage, @usage_filter if @usage_filter %>
+  <%= hidden_field_tag :q, live_search_query if live_search_query.present? %>
+  <%= form.label :category, t("items.filter_by_category"), for: "category-filter" %>
+  <% categories = [ [ t("items.filter_all"), "" ], *amber_item_category_options ] %>
+  <%= form.select :category, options_for_select(categories, @category_filter),
+                  {}, id: "category-filter", data: { action: "change->filter#submit" } %>
+  <noscript><%= form.submit t("items.filter_by_category"), class: "button" %></noscript>
+<% end %>
 
 <%= turbo_frame_tag "items", target: "_top" do %>
 <%# One band after every FEED_EVERY garments, never trailing the last — a band in
@@ -20,7 +24,7 @@
     grid: the band spans the row rather than sitting in it as a tile.
     ItemsInfiniteScrollReflex#after_row keeps the same rhythm on appended pages,
     counting slots from the top rather than restarting each scroll. %>
-<div class="item-grid item-grid--luxury" id="items" data-filter-target="grid">
+<div class="item-grid item-grid--luxury" id="items">
   <% @items.each_with_index do |item, index| %>
     <%= render item %>
     <% if ((index + 1) % Shared::AffiliateHelper::FEED_EVERY).zero? && index + 1 < @items.size %>
@@ -41,5 +45,6 @@
            reflex: "ItemsInfiniteScrollReflex#load_more",
            sentinel_id: "amber-items-sentinel",
            q: live_search_query,
-           lifecycle: @lifecycle_filter %>
+           lifecycle: @lifecycle_filter,
+           data: { usage: @usage_filter, category: @category_filter }.compact %>
 <% end %>

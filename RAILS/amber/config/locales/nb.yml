@@ -497,6 +497,7 @@ nb:
     openrouter_set: "OpenRouter er konfigurert — gledeanalyse og stemningsmerker bruker Gemini når det er tilgjengelig, med lokale heuristikker som reserve."
     choose_or_drop: "Velg eller slipp bilder"
     filter_by_category: "Filtrer etter kategori"
+    confirm_archive_seasonal: "Flytte alle plagg utenfor sesong til arkivet?"
     filter_all: "Alle"
     occasions_label: "Anledninger (kommaseparert)"
     mood_effect: "Humøreffekt"
@@ -523,9 +524,9 @@ nb:
       legacy: "Eldre mediestatus (poleringspipeline)"
     photo_processing_html: "<strong>Bildebehandling:</strong> opplastingene forblir knyttet til den private garderobeoppføringen din. Amber lager responsive bildevarianter, anslår en dominerende farge, bruker én valgfri poleringspassering for portrettbilder og lagrer et lokalt bildefingeravtrykk for endringskontroll. Den segmenterer ikke plagg eller fjerner bakgrunner. Sletter du plagget, fjernes vedleggene; arkivering beholder dem og kan angres."
     archiving_safer: "Arkivering er tryggere. Permanent sletting fjerner plaggoppføringen og bildene som hører til."
-    wears_on_page:
-      one: "%{count} gang brukt på denne siden"
-      other: "%{count} ganger brukt på denne siden"
+    wears_total:
+      one: "%{count} gang brukt"
+      other: "%{count} ganger brukt"
     joy_keepers: "%{count} gledesbevarere"
     categories: "%{count} kategorier"
     pieces:
@@ -1116,8 +1117,14 @@ nb:
     no_spark_joy: "Merket som at det ikke gir glede — åpne rydding når du er klar."
     marked_for_declutter: "Merket for rydding."
     worn_today: "Brukt i dag — +1."
-    out_of_season_archived: "Plagg utenfor sesong er flyttet til arkivet."
-    seasonal_resurfaced: "Sesongplagg er hentet fram igjen hvis de er i sesong."
+    out_of_season_archived:
+      zero: "Ingen plagg er utenfor sesong."
+      one: "%{count} plagg utenfor sesong er flyttet til arkivet."
+      other: "%{count} plagg utenfor sesong er flyttet til arkivet."
+    seasonal_resurfaced:
+      zero: "Ingen arkiverte plagg er i sesong ennå."
+      one: "%{count} sesongplagg er tilbake i garderoben."
+      other: "%{count} sesongplagg er tilbake i garderoben."
     live_stream_scheduled: "Direktesendingen er planlagt."
     message_sent: "Meldingen er sendt."
     connection_accepted: "Forbindelsen er godtatt."

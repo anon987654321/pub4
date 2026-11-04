@@ -498,6 +498,7 @@ en:
     openrouter_set: "OpenRouter is configured — joy analysis and mood tags use Gemini when available, with local heuristics as backup."
     choose_or_drop: "Choose or drop photos"
     filter_by_category: "Filter by category"
+    confirm_archive_seasonal: "Move every out-of-season garment to the archive?"
     filter_all: "All"
     occasions_label: "Occasions (comma-separated)"
     mood_effect: "Mood effect"
@@ -524,9 +525,9 @@ en:
       legacy: "Legacy media status (polish pipeline)"
     photo_processing_html: "<strong>Photo processing:</strong> uploads stay attached to your private wardrobe record. Amber creates responsive image variants, estimates a dominant colour, applies one optional portrait-polish pass, and records a local image fingerprint for change detection. It does not segment garments or remove backgrounds. Deleting the item removes its attachments; archiving keeps them and is reversible."
     archiving_safer: "Archiving is safer. Permanent deletion removes the item record and its attached photos."
-    wears_on_page:
-      one: "%{count} wear on this page"
-      other: "%{count} wears on this page"
+    wears_total:
+      one: "%{count} wear"
+      other: "%{count} wears"
     joy_keepers: "%{count} joy keepers"
     categories: "%{count} categories"
     pieces:
@@ -1112,8 +1113,14 @@ en:
     no_spark_joy: "Marked as not sparking joy — open declutter when ready."
     marked_for_declutter: "Marked for declutter."
     worn_today: "Worn today — +1."
-    out_of_season_archived: "Out-of-season items moved to archive."
-    seasonal_resurfaced: "Seasonal items resurfaced if in season."
+    out_of_season_archived:
+      zero: "No garment is out of season."
+      one: "%{count} out-of-season garment moved to the archive."
+      other: "%{count} out-of-season garments moved to the archive."
+    seasonal_resurfaced:
+      zero: "No archived garment is in season yet."
+      one: "%{count} seasonal garment back in the wardrobe."
+      other: "%{count} seasonal garments back in the wardrobe."
     live_stream_scheduled: "Live stream scheduled."
     message_sent: "Message sent."
     connection_accepted: "Connection accepted."
