@@ -10,7 +10,17 @@
     section's DOM once booted (canvas, controls, markers), so a Turbo page
     morph toward server HTML would tear the running map down. The guard keeps
     the section out of a morph; see map_morph_guard_controller.js. %>
-<section role="region" aria-label="<%= t("maps.aria_map") %>" data-controller="map map-morph-guard" data-map-points-value="<%= json_escape(@points_json) %>" <%= tag.attributes("data-map-center-lat-value": @map_center_lat, "data-map-center-lng-value": @map_center_lng) %> data-map-zoom-value="<%= @map_center_lat.present? && @map_center_lng.present? ? 12 : 1.5 %>" data-map-style-url-value="https://tiles.openfreemap.org/styles/positron">
+<section role="region" aria-label="<%= t("maps.aria_map") %>"
+         data-controller="map map-morph-guard"
+         data-map-points-value="<%= json_escape(@points_json) %>"
+         <%= tag.attributes("data-map-center-lat-value": @map_center_lat,
+                            "data-map-center-lng-value": @map_center_lng) %>
+         data-map-zoom-value="<%= @map_center_lat.present? && @map_center_lng.present? ? 12 : 1.5 %>"
+         data-map-style-url-value="https://tiles.openfreemap.org/styles/positron"
+         data-map-open-label-value="<%= t("maps.popup_open") %>"
+         data-map-point-label-value="<%= t("maps.point_untitled") %>"
+         data-map-kind-label-value="<%= t("maps.point_kind") %>"
+         data-map-empty-label-value="<%= t("maps.no_points") %>">
   <div id="map" class="map-canvas" data-map-target="canvas" aria-hidden="true"></div>
 
   <div class="map-hud" role="region" aria-label="<%= t("maps.hud_aria") %>">

@@ -10,6 +10,10 @@
 # Keys the host already carries are NOT copied here. Use them.
 nb:
   maps:
+    popup_open: "Åpne"
+    point_untitled: "Kartpunkt"
+    point_kind: "punkt"
+    no_points: "Ingen kartpunkter ennå."
     address: "Adresse"
     city: "By"
     coordinates: "Koordinater"

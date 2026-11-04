@@ -13,7 +13,12 @@ export default class extends Controller {
     centerLng: Number,
     zoom: Number,
     styleUrl: String,
-    points: Array
+    points: Array,
+    // The popup and list words, from the page's locale.
+    openLabel: { type: String, default: "Open" },
+    pointLabel: { type: String, default: "Map point" },
+    kindLabel: { type: String, default: "point" },
+    emptyLabel: { type: String, default: "No map points yet." }
   }
 
   connect() {
@@ -206,7 +211,7 @@ export default class extends Controller {
       type: "Feature",
       properties: {
         type: String(point.type || "resource"),
-        title: String(point.title || "Map point"),
+        title: String(point.title || this.pointLabelValue),
         subtitle: String(point.subtitle || ""),
         url: this._safeHref(point.url) || ""
       },
@@ -249,7 +254,7 @@ export default class extends Controller {
     content.className = "map-popup"
 
     const title = document.createElement("strong")
-    title.textContent = feature.properties.title || "Map point"
+    title.textContent = feature.properties.title || this.pointLabelValue
     content.append(title)
 
     if (feature.properties.subtitle) {
@@ -262,7 +267,7 @@ export default class extends Controller {
     if (href) {
       const link = document.createElement("a")
       link.href = href
-      link.textContent = "Open"
+      link.textContent = this.openLabelValue
       content.append(link)
     }
 
@@ -325,16 +330,16 @@ export default class extends Controller {
       if (href) item.href = href
 
       const label = document.createElement("span")
-      label.textContent = point.subtitle || point.type || "point"
+      label.textContent = point.subtitle || point.type || this.kindLabelValue
       const title = document.createElement("strong")
-      title.textContent = point.title || "Map point"
+      title.textContent = point.title || this.pointLabelValue
       item.append(label, title)
       fragment.append(item)
     })
 
     if (points.length === 0) {
       const empty = document.createElement("p")
-      empty.textContent = "No map points yet."
+      empty.textContent = this.emptyLabelValue
       fragment.append(empty)
     }
 

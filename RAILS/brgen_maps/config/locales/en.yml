@@ -10,6 +10,10 @@
 # Keys the host already carries are NOT copied here. Use them.
 en:
   maps:
+    popup_open: "Open"
+    point_untitled: "Map point"
+    point_kind: "point"
+    no_points: "No map points yet."
     address: "Address"
     city: "City"
     coordinates: "Coordinates"

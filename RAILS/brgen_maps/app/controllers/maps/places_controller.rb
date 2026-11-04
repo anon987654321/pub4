@@ -2,7 +2,13 @@
 
 module Maps
   class PlacesController < BaseController
+    # "Checked in recently" means recently: a visit yesterday does not stop a
+    # check-in today.
+    CHECK_IN_WINDOW = 4.hours
+
     include Shared::LiveSearchable
+
+    helper_method :place_kinds
 
     allow_unauthenticated_access only: %i[index show]
     before_action :require_user_session, only: :check_in
@@ -39,7 +45,8 @@ module Maps
       # so the "already here" flag has to follow the same identity. With
       # authenticated? it stayed false for a guest who had just checked in and
       # the page kept offering the form.
-      @checked_in = Current.user.present? && @place.place_check_ins.exists?(user: Current.user)
+      recent = @place.place_check_ins.checked_in_since(CHECK_IN_WINDOW.ago)
+      @checked_in = Current.user.present? && recent.exists?(user: Current.user)
       @nearby_places = nearby_places_for(@place)
     end
 
@@ -59,6 +66,13 @@ module Maps
 
     # The one place the list and its JSON twin decide which places match: city,
     # kind filter, then the live search.
+    # The kinds this city actually has, for the filter: across every city it
+    # offered kinds with no results here.
+    def place_kinds
+      kinds = places_in_current_city.distinct.order(:kind)
+      kinds.pluck(:kind).compact
+    end
+
     def places_scope
       scope = places_in_current_city.includes(:city, :neighborhood)
       scope = scope.where(kind: params[:kind]) if params[:kind].present?

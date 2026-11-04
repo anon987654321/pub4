@@ -7,6 +7,8 @@ class User < ApplicationRecord
   # conversation open, bots are addressed in their channel rather than privately,
   # and a scheduled-for-deletion account should not collect new threads.
   scope :messageable, -> { where(guest: false, bot: false, deleted_at: nil, deletion_scheduled_at: nil) }
+  # Shared a location at or after this time; nil (never shared) is not.
+  scope :located_since, ->(time) { where(location_updated_at: time..) }
 
   # The "message me" token. A signed_id rather than a stored invite: nothing to
   # migrate, nothing to clean up, and it cannot be guessed or edited into someone

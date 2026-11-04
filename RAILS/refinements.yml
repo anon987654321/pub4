@@ -1901,7 +1901,7 @@ items:
   path: RAILS/brgen/app/controllers/nearby_controller.rb
   item: Filter nearby_users on location_updated_at (e.g. within the last few hours)
     so people who shared a location weeks ago are not listed as nearby.
-  status: open
+  status: done
 - id: brgen-124
   app: brgen
   area: maps
@@ -1910,7 +1910,7 @@ items:
   item: Move the map popup's 'Open', 'Map point', 'point' and 'No map points yet.'
     strings out of map_controller.js into data-*-value attributes filled from nb/en
     locale keys.
-  status: open
+  status: done
 - id: brgen-125
   app: brgen
   area: maps
@@ -1945,7 +1945,7 @@ items:
   path: RAILS/brgen/app/views/nearby/widget.html.erb
   item: Replace the hard-coded '~10 km' in the nearby widget header with Conversation::GEO_ROOM_RADIUS_KM
     through an i18n key, as nearby/index already does.
-  status: open
+  status: done
 - id: brgen-129
   app: brgen
   area: maps
@@ -1970,7 +1970,7 @@ items:
   item: Bound @checked_in to a time window (e.g. checked_in_at > 4.hours.ago) so the
     'checked in recently' copy is true and a returning visitor can check in again
     on a later day.
-  status: open
+  status: done
 - id: brgen-132
   app: brgen
   area: maps
@@ -1988,7 +1988,7 @@ items:
   item: Scope the place-kind filter options to the current city (places_in_current_city.distinct.pluck(:kind))
     instead of Place.distinct across every city, which offers kinds with no results
     and runs a full-table distinct each render.
-  status: open
+  status: done
 - id: brgen-134
   app: brgen
   area: maps
@@ -2005,7 +2005,7 @@ items:
   path: RAILS/brgen_maps/app/views/maps/places/show.html.erb
   item: Remove the inline style "display:inline" from the check-in form and style
     it through a semantic class in the maps stylesheet.
-  status: open
+  status: done
 - id: brgen-136
   app: brgen
   area: marketplace

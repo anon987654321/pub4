@@ -1322,6 +1322,11 @@ body.vertical-playlist .playlist-details {
   display: inline;
   margin: 0;
 }
+
+/* The place page's check-in sits in the action row beside its links. */
+.check-in-form {
+  display: inline;
+}
 // ---- /brgen_vertical_playlist ----
 
 // ---- brgen_vertical_playlist_controls ----

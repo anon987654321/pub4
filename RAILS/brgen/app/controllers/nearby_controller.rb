@@ -119,6 +119,8 @@ class NearbyController < ApplicationController
   end
 
   NEARBY_LIMIT = 100
+  # Nearby means now: a location shared weeks ago is not where anyone is.
+  LOCATION_FRESH_FOR = 6.hours
 
   # People the viewer blocks or is blocked by, who are never listed or reachable here.
   def blocked_ids
@@ -130,7 +132,10 @@ class NearbyController < ApplicationController
   # be bounded before it gets there -- inside a dense city this was every user
   # within the radius, on a 1GB box.
   def nearby_users(lat, lng, radius)
-    candidates = User.messageable.nearby(lat, lng, radius).where.not(id: blocked_ids).limit(NEARBY_LIMIT)
+    candidates = User.messageable.located_since(LOCATION_FRESH_FOR.ago)
+    candidates = candidates.nearby(lat, lng, radius)
+    candidates = candidates.where.not(id: blocked_ids)
+    candidates = candidates.limit(NEARBY_LIMIT)
     candidates.reject { |user| user == Current.user }.filter_map do |user|
       distance = user.distance_to(lat, lng)
       next if distance.nil? || distance > radius

@@ -6,7 +6,7 @@
       <% if @located %>
         <strong>#<%= ambient_chat_room_label %></strong>
         <span aria-hidden="true">·</span>
-        ~10&nbsp;km
+        <%= t("nearby.room_radius", km: Conversation::GEO_ROOM_RADIUS_KM.to_i) %>
         <span aria-hidden="true">·</span>
         <%= Current.user.anon_handle %>
         <button type="button"

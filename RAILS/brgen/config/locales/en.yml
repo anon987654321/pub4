@@ -1657,6 +1657,7 @@ en:
     desc_maps: Maps for %{city}.
     desc_messenger: Messages for %{city}.
   nearby:
+    room_radius: "~%{km} km"
     is_nearby_html: "%{handle} is nearby"
     page_title: Nearby
     prefer_room: Prefer a room?
