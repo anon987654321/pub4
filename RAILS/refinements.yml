@@ -70,7 +70,7 @@ items:
   path: RAILS/amber/app/views/users/show.html.erb
   item: Render the user's outfits on the profile page; UsersController#show loads
     @outfits (visible-policy aware) and users/show.html.erb never uses it.
-  status: open
+  status: done
 - id: amber-009
   app: amber
   area: bug

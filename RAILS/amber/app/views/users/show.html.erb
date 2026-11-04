@@ -30,6 +30,12 @@
     <% end %>
   <% end %>
 </div>
+<%# Loaded by the controller under the same visibility policy as the items,
+    and never drawn until now; hidden when there is nothing to show. %>
+<% if @outfits.load.any? %>
+  <%= tag.h2 t("users.outfits") %>
+  <%= tag.div render(@outfits), class: "item-grid item-grid--luxury" %>
+<% end %>
 <%= tag.h2 t("users.posts") %>
 <% if @posts.any? %>
   <%= render @posts %>

@@ -641,6 +641,7 @@ en:
     profile_counts: "%{items} items, %{followers} followers, %{following} following"
     profile_header: "User profile header"
     posts: "Posts"
+    outfits: "Outfits"
     connect: "Connect"
   messages:
     title: "Messages"

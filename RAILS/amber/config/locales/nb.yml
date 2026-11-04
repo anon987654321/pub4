@@ -640,6 +640,7 @@ nb:
     profile_counts: "%{items} plagg, %{followers} følgere, %{following} følger"
     profile_header: "Topptekst for brukerprofil"
     posts: "Innlegg"
+    outfits: "Antrekk"
     connect: "Koble til"
   messages:
     title: "Meldinger"
