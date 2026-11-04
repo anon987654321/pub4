@@ -28,6 +28,10 @@ module Master
         if result.err?
           message = result.message.to_s
           vetoed_by = message.match(/\Acouncil: veto from ([^\n]+)/i)&.captures&.first
+          known_veto = Master::Review::Council::Deliberation::VETO_PRECEDENCE.any? do |name|
+            name.casecmp?(vetoed_by.to_s)
+          end
+          vetoed_by = nil unless result.category == :validation && known_veto
           if vetoed_by
             bus&.publish("council:veto", vetoed_by:, veto_exercised: true, security_veto_exercised: vetoed_by.casecmp?("Security"), message: message[0, 500])
           else
