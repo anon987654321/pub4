@@ -107,6 +107,16 @@ end
     end
   end
 
+  # A DeclutterScore value as a reader sees it: 0..1 scores as a whole
+  # percentage (not 0.437), the quadrant and the recommendation in words.
+  def declutter_score_value(key, value)
+    case key.to_sym
+    when :quadrant then t("declutter.quadrants.#{value}", default: value.to_s.humanize)
+    when :recommendation then t("declutter.targets.#{value}", default: value.to_s.humanize)
+    else value.is_a?(Numeric) ? number_to_percentage(value * 100, precision: 0) : value
+    end
+  end
+
   def live_stream_status_label(status)
     t("live_streams.status.#{status}", default: status.to_s)
   end

@@ -599,6 +599,22 @@ en:
     showcase: "Showcase"
     showcase_items: "Showcase pieces"
   declutter:
+    due: "— due %{date}"
+    score_keys:
+      joy: "Joy"
+      utility: "Use"
+      fit: "Fit"
+      duplicate_pressure: "Duplicates"
+      cost_pressure: "Cost per wear"
+      repair_pressure: "Repair need"
+      total_release_score: "Release score"
+      quadrant: "Joy and use"
+      recommendation: "Recommendation"
+    quadrants:
+      high_joy_high_use: "loved and worn"
+      high_joy_low_use: "loved, rarely worn"
+      low_joy_high_use: "worn, not loved"
+      low_joy_low_use: "neither loved nor worn"
     back_to_dashboard: "← Declutter dashboard"
     targets:
       keep: "Keep"
@@ -608,6 +624,8 @@ en:
       donate: "Donate"
       release: "Let go"
       sentimental_archive: "Sentimental archive"
+      replace_gradually: "Replace gradually"
+      declutter_box: "Declutter box"
     tools_label: "Declutter tools"
     ai_guide: "Declutter guide"
     reason_kept: "memory, gift, rare, uncomfortable…"

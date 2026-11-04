@@ -598,6 +598,22 @@ nb:
     showcase: "Utstilling"
     showcase_items: "Plagg i utstillingen"
   declutter:
+    due: "— frist %{date}"
+    score_keys:
+      joy: "Glede"
+      utility: "Bruk"
+      fit: "Passform"
+      duplicate_pressure: "Duplikater"
+      cost_pressure: "Kostnad per bruk"
+      repair_pressure: "Reparasjonsbehov"
+      total_release_score: "Kvitt-deg-med-poeng"
+      quadrant: "Glede og bruk"
+      recommendation: "Anbefaling"
+    quadrants:
+      high_joy_high_use: "elsket og brukt"
+      high_joy_low_use: "elsket, sjelden brukt"
+      low_joy_high_use: "brukt, ikke elsket"
+      low_joy_low_use: "verken elsket eller brukt"
     back_to_dashboard: "← Ryddeoversikt"
     targets:
       keep: "Behold"
@@ -607,6 +623,8 @@ nb:
       donate: "Gi bort"
       release: "Gi slipp"
       sentimental_archive: "Minnearkivet"
+      replace_gradually: "Erstatt gradvis"
+      declutter_box: "Ryddingsboks"
     tools_label: "Ryddeverktøy"
     ai_guide: "Ryddeveiledning"
     reason_kept: "minne, gave, sjelden, ubehagelig…"

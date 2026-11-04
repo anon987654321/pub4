@@ -135,7 +135,7 @@ items:
   path: RAILS/amber/app/views/declutter/index.html.erb
   item: Translate '— due' and format challenge.due_on with l() in the declutter challenge
     lists.
-  status: open
+  status: done
 - id: amber-017
   app: amber
   area: i18n
@@ -143,7 +143,7 @@ items:
   path: RAILS/amber/app/views/declutter/review.html.erb
   item: Translate declutter score keys and the joy/use matrix labels instead of key.to_s.humanize,
     and round scores to a readable percentage rather than three decimals.
-  status: open
+  status: done
 - id: amber-018
   app: amber
   area: i18n

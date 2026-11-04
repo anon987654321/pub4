@@ -22,7 +22,12 @@
         <span class="chip"><%= t("wardrobe.chip_recovered", amount: number_to_currency(@summary[:amount_recovered])) %></span>
       </div>
       <% if @summary[:matrix].present? %>
-        <p><%= t("declutter.joy_use_matrix") %> <%= @summary[:matrix].map { |k, v| "#{k.to_s.humanize}: #{v}" }.join(" · ") %></p>
+        <p>
+          <%= t("declutter.joy_use_matrix") %>
+          <% @summary[:matrix].each do |quadrant, count| %>
+            <%= tag.span "#{declutter_score_value(:quadrant, quadrant)}: #{count}" %>
+          <% end %>
+        </p>
       <% end %>
     </section>
   <% end %>
@@ -34,7 +39,7 @@
         <% @overdue_challenges.each do |challenge| %>
           <li>
             <%= link_to challenge.item.title, review_declutter_path(challenge.item) %>
-            — due <%= challenge.due_on %>
+            <%= t("declutter.due", date: l(challenge.due_on)) %>
             <%= button_to t("declutter.complete"), complete_challenge_declutter_path(challenge.item), method: :post, class: "button-small" %>
           </li>
         <% end %>
@@ -47,7 +52,10 @@
       <%= tag.h2 t("declutter.active_challenges") %>
       <ul>
         <% @active_challenges.each do |challenge| %>
-          <li><%= link_to challenge.item.title, item_path(challenge.item) %> — due <%= challenge.due_on %></li>
+          <li>
+            <%= link_to challenge.item.title, item_path(challenge.item) %>
+            <%= t("declutter.due", date: l(challenge.due_on)) %>
+          </li>
         <% end %>
       </ul>
     </section>

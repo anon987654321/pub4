@@ -13,8 +13,8 @@
       <%= tag.h2 t("declutter.score") %>
       <dl class="meta">
         <% @score.each do |key, value| %>
-          <%= tag.dt key.to_s.humanize %>
-          <%= tag.dd value.is_a?(Float) ? value.round(3) : value %>
+          <%= tag.dt t("declutter.score_keys.#{key}", default: key.to_s.humanize) %>
+          <%= tag.dd declutter_score_value(key, value) %>
         <% end %>
       </dl>
     </section>
@@ -23,7 +23,8 @@
   <% if @action.present? %>
     <section role="region" aria-label="<%= t("declutter.recommended_action") %>">
       <%= tag.h2 t("declutter.recommended_action") %>
-      <p><%= tag.strong (@action[:recommendation] || @action["recommendation"]).to_s.humanize %></p>
+      <% recommendation = @action[:recommendation] || @action["recommendation"] %>
+      <%= tag.p tag.strong(declutter_score_value(:recommendation, recommendation)) %>
       <p><%= @action[:copy] || @action["copy"] %></p>
       <p><%= t("declutter.destination") %> <%= (@action[:destination] || @action["destination"]).to_s.humanize %></p>
     </section>
