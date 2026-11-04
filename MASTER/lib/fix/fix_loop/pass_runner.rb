@@ -94,7 +94,9 @@ module Master
           @ground_truth_failures = 0
           emit_coverage = lambda do |target, pass|
             semantic = @scan_phase.semantic_full? ? "full" : "conditional/sampled"
-            abstract = @council ? "bounded clean-streak review" : "unavailable"
+            # This is an adapter inventory, not a receipt that a review ran.
+            # The council emits separate start, completion, veto and inconclusive events.
+            abstract = @council ? "configured" : "unavailable"
             visual = @visual_pass&.applicable?(target) ? "rendered" : "not-applicable"
             lexical_opportunities = @opportunity_pass&.applicable?(target) ? "bounded-tree-heuristics" : "no-universal-adapter"
             matrix_status = assessment_matrix_status
