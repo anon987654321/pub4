@@ -4689,7 +4689,7 @@ items:
   path: RAILS/bsdports/app/views/ports/_live_search_results.html.erb
   item: Show a result count ('312 ports match "python"') above the ports list as the
     categories and maintainers results already do.
-  status: open
+  status: done
 - id: bsdports-060
   app: bsdports
   area: ux

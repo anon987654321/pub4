@@ -1,3 +1,6 @@
+<%# The total, not the page: categories and maintainers already say how many
+    matched, and the ports list said nothing. %>
+<%= tag.p t("search.results_for", count: @pagy.count, query: live_search_query) if live_search_query.present? %>
 <% if @category %>
   <p><mark><%= @category.name %></mark> — <%= @category.description %></p>
 <% end %>
