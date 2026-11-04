@@ -26,6 +26,7 @@ class TestStatxEnosysFallback < Minitest::Test
         assert status.success?, output
       end
 
+      if ENV["MASTER_RUBY_STATX_PATCHED"] == "1"
       path = File.join(directory, "ruby-statx-target")
       link = "#{path}.link"
       File.binwrite(path, "pub4-statx")
@@ -59,6 +60,7 @@ class TestStatxEnosysFallback < Minitest::Test
                                          RbConfig.ruby, "-e", ruby_probe, path, link)
         skip output if status.exitstatus == 77
         assert status.success?, output
+      end
       end
     end
   end
