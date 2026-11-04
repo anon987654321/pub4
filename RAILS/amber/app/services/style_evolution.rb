@@ -46,7 +46,9 @@ class StyleEvolution
           item_title: log.item.title,
           item_id: log.item_id,
           life_phase: log.item.life_phase,
-          outfit_title: log.outfit&.title,
+          # Outfit has a name, not a title: this raised NoMethodError, and the
+          # timeline 500ed, as soon as one wear was logged with an outfit.
+          outfit_title: log.outfit&.name,
           context: log.context
         }
       end
