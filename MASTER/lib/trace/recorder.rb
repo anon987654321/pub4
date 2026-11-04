@@ -106,17 +106,22 @@ module Master
           raise IOError, "trace storage path is not a real directory"
         end
 
-        # The checkout's .master directory is deliberately shared with the
-        # service group on vm23. Apply its existing canonical permission policy
-        # instead of breaking the Rails service by forcing 0700; the per-trace
-        # directory and files remain owner-private.
-        expected_mode = shared_state ? MasterPaths.private_dir_mode(path, 0o700) : 0o700
-        # chmod is the owner's alone; a directory someone else owns is checked below.
-        File.chmod(expected_mode, path) if File.owned?(path) && (stat.mode & 0o7777) != expected_mode
-        current = File.lstat(path)
+        tighten_directory(path, stat.mode, shared_state:)
         unsafe_mask = shared_state ? 0o0007 : 0o0077
         raise IOError, "trace storage directory permissions must be private" unless
-          (current.mode & unsafe_mask).zero?
+          (File.lstat(path).mode & unsafe_mask).zero?
+      end
+
+      # The checkout's .master directory is deliberately shared with the
+      # service group on vm23. Apply its existing canonical permission policy
+      # instead of breaking the Rails service by forcing 0700; the per-trace
+      # directory and files remain owner-private. chmod is the owner's alone,
+      # so a directory someone else owns is left to the check that follows.
+      def tighten_directory(path, mode, shared_state:)
+        return unless File.owned?(path)
+
+        expected_mode = shared_state ? MasterPaths.private_dir_mode(path, 0o700) : 0o700
+        File.chmod(expected_mode, path) if (mode & 0o7777) != expected_mode
       end
 
       def append_private_line(path, line)
