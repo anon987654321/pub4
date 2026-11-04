@@ -37,10 +37,18 @@
   <%= tag.div render(@outfits), class: "item-grid item-grid--luxury" %>
 <% end %>
 <%= tag.h2 t("users.posts") %>
+<%# A list like posts#index, and only the owner is invited to write one:
+    a visitor on someone else's empty profile was asked to post. %>
 <% if @posts.any? %>
-  <%= render @posts %>
-<% else %>
+  <ul class="feed_list post-card-list" role="list">
+    <% @posts.each do |post| %>
+      <%= tag.li render(post) %>
+    <% end %>
+  </ul>
+<% elsif Current.user == @user %>
   <%= render "shared/empty_state",
         title: t("empty.no_posts_yet"),
         action: { label: t("empty.first_post"), path: new_post_path } %>
+<% else %>
+  <%= render "shared/empty_state", title: t("empty.no_posts_yet") %>
 <% end %>

@@ -386,7 +386,7 @@ items:
   path: RAILS/amber/app/views/users/show.html.erb
   item: Render profile posts inside a ul.post-card-list like posts#index, not as bare
     siblings.
-  status: open
+  status: done
 - id: amber-048
   app: amber
   area: mobile
@@ -861,7 +861,7 @@ items:
   path: RAILS/amber/app/views/users/show.html.erb
   item: Show the 'write your first post' empty-state action only on your own profile;
     other people's empty profiles currently invite the visitor to post.
-  status: open
+  status: done
 - id: amber-107
   app: amber
   area: ux
