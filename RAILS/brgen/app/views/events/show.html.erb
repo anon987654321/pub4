@@ -59,18 +59,7 @@
     </section>
   <% end %>
 
-  <section role="region" aria-label="<%= t("events.who_is_going") %>">
-    <%= tag.h2 t("events.going_count", count: @event.going_count) %>
-    <% if @attendees.any? %>
-      <ul class="attendee-list">
-        <% @attendees.each do |rsvp| %>
-          <li><%= rsvp.user.display_name %></li>
-        <% end %>
-      </ul>
-    <% else %>
-      <p><%= t("events.nobody_yet") %></p>
-    <% end %>
-  </section>
+  <%= render "events/attendees", event: @event, attendees: @attendees %>
 
   <% if @nearby.any? %>
     <section role="region" aria-label="<%= t("events.nearby") %>">

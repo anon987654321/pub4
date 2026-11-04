@@ -53,6 +53,12 @@ class Event < ApplicationRecord
     published.where("COALESCE(events.ends_at, events.starts_at) < ?", Time.current)
              .order(starts_at: :desc)
   }
+  # The index's strip of finished events. events/_event reads each card's
+  # cover and neighbourhood, which strict loading refuses to fetch per card.
+  def self.past_strip
+    cards = past.includes(:user, :neighborhood)
+    cards.with_attached_cover.limit(6)
+  end
   scope :search, ->(q) {
     needle = "%#{sanitize_sql_like(q.to_s)}%"
     where("title LIKE :q OR description LIKE :q OR venue_name LIKE :q", q: needle)
@@ -83,6 +89,14 @@ class Event < ApplicationRecord
   def full? = places_left&.zero? || false
 
   def rsvp_for(user) = user.present? ? rsvps.find_by(user_id: user.id) : nil
+
+  # The names the event page lists under "N going"; going_count says how many
+  # more there are.
+  ATTENDEE_PREVIEW = 24
+  def attendee_preview
+    going = rsvps.going
+    going.includes(:user).limit(ATTENDEE_PREVIEW)
+  end
 
   def cancel!
     update!(status: "cancelled", cancelled_at: Time.current)

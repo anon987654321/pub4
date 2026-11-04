@@ -19,7 +19,7 @@ class EventsController < ApplicationController
     # Shown as a separate strip rather than mixed in: an archive and a listing
     # answer different questions, and interleaving them is how you end up
     # scrolling past last month to find tonight.
-    @past = Event.past.includes(:user).limit(6)
+    @past = Event.past_strip
     @my_rsvps = rsvp_status_by_event_id(@events)
     finish_live_search(partial: "events/live_search_results")
   end
@@ -29,7 +29,7 @@ class EventsController < ApplicationController
     return if redirect_id_to_slug(@event)
 
     @rsvp = @event.rsvp_for(Current.user)
-    @attendees = @event.rsvps.going.includes(:user).limit(24)
+    @attendees = @event.attendee_preview
     @comments = @event.comments.includes(:user).order(created_at: :desc)
     @comment = Comment.new if Current.user.present?
     @nearby = nearby_events

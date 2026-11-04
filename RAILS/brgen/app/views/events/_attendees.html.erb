@@ -1,0 +1,14 @@
+<%# locals: event, attendees. Its own target so an RSVP refreshes the count
+    and the names with the button, not the button alone. %>
+<%= tag.section id: dom_id(event, :attendees), role: "region", aria: { label: t("events.who_is_going") } do %>
+  <%= tag.h2 t("events.going_count", count: event.going_count) %>
+  <% if attendees.any? %>
+    <%= tag.ul safe_join(attendees.map { |rsvp| tag.li(rsvp.user.display_name) }), class: "attendee-list" %>
+    <%# The list stops at Event::ATTENDEE_PREVIEW; it must not read as complete. %>
+    <% if event.going_count > attendees.size %>
+      <%= tag.p t("events.and_more", count: event.going_count - attendees.size) %>
+    <% end %>
+  <% else %>
+    <%= tag.p t("events.nobody_yet") %>
+  <% end %>
+<% end %>

@@ -1582,7 +1582,7 @@ items:
   item: Set the Event JSON-LD offer availability to https://schema.org/SoldOut when
     event.full? and add maximumAttendeeCapacity/remainingAttendeeCapacity from capacity/places_left;
     it always says InStock today.
-  status: open
+  status: done
 - id: brgen-086
   app: brgen
   area: events
@@ -1616,7 +1616,7 @@ items:
   item: Add .with_attached_cover and :neighborhood to the @past scope in EventsController#index;
     the past strip renders events/_event, which reads event.cover.attached? and event.neighborhood
     per card.
-  status: open
+  status: done
 - id: brgen-090
   app: brgen
   area: events
@@ -1643,7 +1643,7 @@ items:
   item: After an RSVP, also replace the 'N going' heading and attendee list on the
     event page in create.turbo_stream.erb (wrap them in their own dom_id target),
     since today only the button frame refreshes and the count beside it goes stale.
-  status: open
+  status: done
 - id: brgen-093
   app: brgen
   area: events
@@ -1652,7 +1652,7 @@ items:
   item: Link the capacity and price hints to their inputs with aria-describedby and
     wrap them in a form-help element; today the hint text sits loose in the <p> and
     is not announced with the field.
-  status: open
+  status: done
 - id: brgen-094
   app: brgen
   area: events
@@ -1679,7 +1679,7 @@ items:
   item: Add a visually hidden aria-live='polite' status inside the RSVP frame that
     announces the new answer (e.g. 'Du skal' / 'You are going') after a turbo-stream
     swap, so screen-reader users get confirmation that the press took.
-  status: open
+  status: done
 - id: brgen-097
   app: brgen
   area: events
@@ -1687,7 +1687,7 @@ items:
   path: RAILS/brgen/app/views/events/show.html.erb
   item: Show 'og N til' / 'and N more' under the attendee list when going_count exceeds
     the 24 loaded in @attendees, so the list does not imply it is complete.
-  status: open
+  status: done
 - id: brgen-098
   app: brgen
   area: fediverse

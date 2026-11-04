@@ -338,6 +338,10 @@ nb:
     rsvp_interested: Interessert
     rsvp_not_going: Kan ikke
     sign_in_to_rsvp: for å svare.
+    answer_withdrawn: Svaret ditt er trukket
+    and_more:
+      one: "og %{count} til"
+      other: "og %{count} til"
     empty_title: Ingenting på plakaten ennå
     empty_body: Det første arrangementet i byen kan være ditt.
     empty_search: Ingen arrangementer matchet søket.

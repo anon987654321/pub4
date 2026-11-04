@@ -262,23 +262,7 @@ module SchemaHelper
       }
     end
 
-    offer = if event.try(:free?)
-              {
-                "@type" => "Offer",
-                "price" => 0,
-                "priceCurrency" => event.try(:currency).presence || "NOK",
-                "availability" => "https://schema.org/InStock",
-                "url" => schema_url_for(event),
-              }
-            elsif event.try(:price_cents).to_i.positive?
-              {
-                "@type" => "Offer",
-                "price" => event.price_cents.to_i / 100.0,
-                "priceCurrency" => event.try(:currency).presence || "NOK",
-                "availability" => event.cancelled? ? nil : "https://schema.org/InStock",
-                "url" => schema_url_for(event),
-              }.compact
-            end
+    offer = event_offer(event)
 
     {
       "@context" => "https://schema.org",
@@ -291,12 +275,29 @@ module SchemaHelper
         event.cancelled? ? "https://schema.org/EventCancelled" : "https://schema.org/EventScheduled"
       ),
       "eventAttendanceMode" => "https://schema.org/OfflineEventAttendanceMode",
+      "maximumAttendeeCapacity" => event.try(:capacity),
+      "remainingAttendeeCapacity" => event.try(:places_left),
       "location" => location.compact,
       "image" => seo_image_url(event.try(:cover)),
       "offers" => offer,
       "organizer" => person_snippet(event.try(:user)),
       "url" => schema_url_for(event),
     }.compact
+  end
+
+  # Free or priced, the one offer an event makes. A full event is sold out
+  # whatever it costs; saying InStock sent search results to a page that turns
+  # the reader away.
+  def event_offer(event)
+    availability = event.try(:full?) ? "https://schema.org/SoldOut" : "https://schema.org/InStock"
+    currency = event.try(:currency).presence || "NOK"
+    if event.try(:free?)
+      { "@type" => "Offer", "price" => 0, "priceCurrency" => currency,
+        "availability" => availability, "url" => schema_url_for(event) }
+    elsif event.try(:price_cents).to_i.positive?
+      { "@type" => "Offer", "price" => event.price_cents.to_i / 100.0, "priceCurrency" => currency,
+        "availability" => (availability unless event.cancelled?), "url" => schema_url_for(event) }.compact
+    end
   end
 
   def video_schema(video)

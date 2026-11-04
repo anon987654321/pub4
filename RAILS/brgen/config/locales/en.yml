@@ -333,6 +333,10 @@ en:
     rsvp_going: Going
     rsvp_interested: Interested
     rsvp_not_going: Cannot make it
+    answer_withdrawn: Your answer is withdrawn
+    and_more:
+      one: "and %{count} more"
+      other: "and %{count} more"
     sign_in_to_rsvp: to answer.
     empty_title: Nothing on yet
     empty_body: The first event in the city could be yours.

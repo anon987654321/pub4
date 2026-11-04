@@ -50,14 +50,15 @@
 
   <p>
     <%= f.label :capacity, t("events.form.capacity") %>
-    <%= f.number_field :capacity, min: 1, inputmode: "numeric" %>
-    <%= t("events.form.capacity_hint") %>
+    <%= f.number_field :capacity, min: 1, inputmode: "numeric", aria: { describedby: "event_capacity_hint" } %>
+    <%= tag.small t("events.form.capacity_hint"), id: "event_capacity_hint", class: "form-help" %>
   </p>
 
   <p>
     <%= f.label :price_cents, t("events.form.price") %>
-    <%= f.number_field :price_cents, min: 0, step: 100, inputmode: "numeric" %>
-    <%= t("events.form.price_hint") %>
+    <%= f.number_field :price_cents, min: 0, step: 100, inputmode: "numeric",
+          aria: { describedby: "event_price_hint" } %>
+    <%= tag.small t("events.form.price_hint"), id: "event_price_hint", class: "form-help" %>
   </p>
 
   <p>

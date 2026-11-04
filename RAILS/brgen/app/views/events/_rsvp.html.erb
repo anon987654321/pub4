@@ -1,4 +1,4 @@
-<%# locals: event, rsvp: nil %>
+<%# locals: event, rsvp: nil, announce: false %>
 <%# Three buttons rather than one toggle, because "interested" is the majority
     answer on every event platform and collapsing it into going/not-going both
     overstates attendance and loses the reminder signal.
@@ -25,6 +25,13 @@
       <% end %>
       <% if event.full? && rsvp&.status != "going" %>
         <p><%= t("events.full_body") %></p>
+      <% end %>
+      <%# Spoken after a press, so a screen reader hears that it took. Empty on
+          the page's first render, where nothing has changed yet. %>
+      <% if local_assigns[:announce] %>
+        <% said = rsvp ? t("events.your_answer.#{rsvp.status}") : t("events.answer_withdrawn") %>
+        <%= tag.p said,
+                  class: "visually-hidden", role: "status", aria: { live: "polite" } %>
       <% end %>
     <% end %>
   <% else %>
