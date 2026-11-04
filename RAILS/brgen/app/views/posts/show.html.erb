@@ -36,6 +36,13 @@
           </a>
           <%= render "shared/photo_credit", blob: @post.image.blob %>
         </div>
+      <% elsif @post.images.attached? %>
+        <%# A gallery post keeps every photo on its own page, not only on the card. %>
+        <div class="post-images" data-controller="post-gallery">
+          <%= render partial: "posts/gallery_image", collection: @post.images,
+                locals: { post: @post, total: @post.images.size } %>
+        </div>
+        <%= render "shared/photo_credit", blob: @post.images.first.blob %>
       <% elsif @post.video.attached? %>
         <%= video_tag @post.video, controls: true, playsinline: true, preload: "metadata",
               class: "post-image post-video", aria: { label: @post.title.presence || t("posts.video") } %>

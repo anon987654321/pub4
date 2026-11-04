@@ -1,0 +1,8 @@
+<%# One photo of a gallery post on the post's page, told apart by its place in the set. %>
+<% number = gallery_image_iteration.index + 1 %>
+<% alt = total > 1 ? t("post.photo_of", number:, total:, title: post.title) : post.title %>
+<%= link_to rails_blob_path(gallery_image, disposition: "inline"),
+      data: { gallery_item: true, action: "click->post-gallery#open" }, aria: { label: alt } do %>
+  <%= image_tag gallery_image.variant(resize_to_limit: [ 1600, 1600 ]), alt:,
+        loading: (number == 1 ? "eager" : "lazy"), decoding: "async", class: "post-image" %>
+<% end %>

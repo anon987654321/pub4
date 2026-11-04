@@ -3211,7 +3211,7 @@ items:
   path: RAILS/brgen/app/views/posts/show.html.erb
   item: Render the images gallery on posts#show; only post.image is shown, so multi-image
     posts lose every photo on their own page.
-  status: open
+  status: done
 - id: brgen-278
   app: brgen
   area: post-show

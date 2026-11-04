@@ -106,6 +106,20 @@ class PostsControllerTest < ActionDispatch::IntegrationTest
     assert_select "form[action=?][data-turbo-confirm] input[name=_method][value=delete]", post_path(post)
   end
 
+  test "show renders every photo of a gallery post" do
+    user = User.create!(email_address: "post-gal-#{SecureRandom.hex(4)}@example.com", password: "password12345")
+    post = Post.new(user:, title: "Tre bilder", content: "body", city: brgen_city)
+    3.times { |i| attach_pixel!(post.images, filename: "bilde#{i}.png") }
+    post.save!
+
+    host! "brgen.no"
+    get post_url(post)
+
+    assert_response :success
+    assert_select "article .post-images[data-controller='post-gallery'] a[data-gallery-item] img.post-image", 3
+    assert_select "a[aria-label=?]", I18n.t("post.photo_of", number: 2, total: 3, title: "Tre bilder")
+  end
+
   test "show answers markdown for AI and ActivityPub clients" do
     user = User.create!(email_address: "post-md-#{SecureRandom.hex(4)}@example.com", password: "password12345")
     post = Post.create!(user:, title: "Markdown fixture", content: "A body paragraph.", city: brgen_city)
