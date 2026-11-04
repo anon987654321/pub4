@@ -9,7 +9,7 @@
 <% if @cart.cart_items.any? %>
   <div class="cart-lines">
     <% @cart.cart_items.each do |line| %>
-      <article class="cart-line card">
+      <article id="<%= dom_id(line) %>" class="cart-line card">
         <span class="line-emoji" aria-hidden="true"><%= line.menu_item&.emoji %></span>
         <div class="line-body">
           <h2><%= line.menu_item&.name %></h2>

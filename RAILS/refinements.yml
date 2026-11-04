@@ -5223,7 +5223,7 @@ items:
   path: RAILS/mrdamascy/app/views/carts/show.html.erb
   item: Give each cart line id=dom_id(line) so CartsController#remove_item's turbo_stream.remove("cart_item_<id>")
     finds its target; the articles carry no id and the row stays on screen.
-  status: open
+  status: done
 - id: mrdamascy-022
   app: mrdamascy
   area: checkout
@@ -5824,7 +5824,7 @@ items:
   path: RAILS/mrdamascy/test/controllers/carts_controller_test.rb
   item: Test that every id targeted by the cart turbo streams exists in the rendered
     cart page.
-  status: open
+  status: done
 - id: mrdamascy-096
   app: mrdamascy
   area: tests

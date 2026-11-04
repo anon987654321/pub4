@@ -105,6 +105,20 @@ class CartsControllerTest < ActionDispatch::IntegrationTest
     assert_match "ingen kortfelter", response.body  # cart.steps_note
   end
 
+  test "every id the cart streams target exists on the cart page" do
+    customer_sign_in
+    post add_item_cart_url, params: { menu_item_id: @item.id, quantity: 1 }
+    get cart_url
+    page = Nokogiri::HTML(response.body)
+    line = CartItem.sole
+
+    delete remove_item_cart_url(line.id), as: :turbo_stream
+    targets = response.body.scan(/target="([^"]+)"/).flatten.uniq
+
+    assert_includes targets, "cart_item_#{line.id}"
+    targets.each { |id| assert page.at_css("##{id}"), "the cart page has no ##{id} for its stream" }
+  end
+
   test "an empty cart invites you back to the menu" do
     customer_sign_in
 
