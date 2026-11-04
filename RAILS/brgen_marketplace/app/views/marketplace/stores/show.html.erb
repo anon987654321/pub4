@@ -75,6 +75,7 @@
     </div>
     <%= render "shared/pager", pagy: @pagy_listings, label: t("aria.store_listings"), param: :listings_page %>
   <% else %>
+    <%# empty_state: no-action-ok — a shopper has no step to take in an empty store; other stores follow %>
     <%= render "shared/empty_state",
           title: t("marketplace.stores.no_listings"),
           body: t("marketplace.stores.no_listings_body"),

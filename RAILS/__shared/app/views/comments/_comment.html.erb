@@ -36,7 +36,7 @@
     <header>
       <%# A named author links to their profile; "anon" (guest, departed) is nobody to visit. %>
       <% author = comment_author_name(comment) %>
-      <% if author == t("chat.anon", default: "anon") %>
+      <% if author == t("chat.anon") %>
         <%= tag.span author, class: "comment-author" %>
       <% else %>
         <%= link_to author, main_app.user_path(comment.user), class: "comment-author" %>

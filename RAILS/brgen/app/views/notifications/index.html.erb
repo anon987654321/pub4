@@ -1,4 +1,5 @@
 <% content_for :title, t("notifications.title") %>
+<%# empty_state: coverage-ok — both list partials render their own empty state %>
 <%# Notification#after_create_commit refreshes this page when a new one arrives. %>
 <%= turbo_stream_from Current.user, :notifications %>
 
