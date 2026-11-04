@@ -15,7 +15,14 @@ const ZONES = ["head", "top", "bottom", "shoes"]
 const DIRECTION = { head: 1, top: -1, bottom: 1, shoes: -1 }
 
 export default class extends Controller {
-  static values = { zones: Object, interval: { type: Number, default: 4200 } }
+  static values = {
+    zones: Object,
+    interval: { type: Number, default: 4200 },
+    emptyLabel: { type: String, default: "none" },
+    noGarmentLabel: { type: String, default: "—" },
+    pauseLabel: String,
+    resumeLabel: String
+  }
   static targets = ["pick", "playToggle"]
 
   connect() {
@@ -33,8 +40,7 @@ export default class extends Controller {
     this.element.addEventListener("focusin", this.stop)
     this.element.addEventListener("focusout", this.start)
 
-    if (this.reducedMotion) this.markToggle(false)
-    else this.start()
+    if (!this.reducedMotion) this.start()
   }
 
   disconnect() {
@@ -62,7 +68,6 @@ export default class extends Controller {
       }, offset)
       this.timers.set(zone, { kind: "timeout", id: handle })
     })
-    this.markToggle(true)
   }
 
   stop = () => {
@@ -71,7 +76,6 @@ export default class extends Controller {
       else window.clearTimeout(id)
     })
     this.timers.clear()
-    this.markToggle(false)
   }
 
   // The button is a hard on/off the pointer listeners must not undo.
@@ -79,6 +83,7 @@ export default class extends Controller {
     this.paused = !this.paused
     if (this.paused) this.stop()
     else this.start()
+    this.markToggle()
   }
 
   shuffle() {
@@ -100,9 +105,13 @@ export default class extends Controller {
     this.render(zone)
   }
 
-  markToggle(playing) {
-    if (!this.hasPlayToggleTarget) return
-    this.playToggleTarget.setAttribute("aria-pressed", String(!playing))
+  // The label says what a press will do: Pause while it runs, Resume once the
+  // reader has paused it. It follows the reader's choice, not a hover's
+  // momentary stop, and it is the one state the button carries; aria-pressed
+  // beside a changing label would say it twice.
+  markToggle() {
+    if (!this.hasPlayToggleTarget || !this.pauseLabelValue) return
+    this.playToggleTarget.textContent = this.paused ? this.resumeLabelValue : this.pauseLabelValue
   }
 
   render(zone) {
@@ -113,8 +122,8 @@ export default class extends Controller {
     const whyEl = this.element.querySelector(`[data-zone-why="${zone}"]`)
     const pickEl = this.element.querySelector(`[data-zone-pick="${zone}"]`)
 
-    if (nameEl) nameEl.textContent = item?.name ?? "—"
-    if (countEl) countEl.textContent = items.length ? `${this.idx[zone] + 1} / ${items.length}` : "none"
+    if (nameEl) nameEl.textContent = item?.name ?? this.noGarmentLabelValue
+    if (countEl) countEl.textContent = items.length ? `${this.idx[zone] + 1} / ${items.length}` : this.emptyLabelValue
     if (whyEl) whyEl.textContent = item?.why ?? ""
     // Empty rather than absent: the form posts a fixed four inputs and the
     // server drops the blanks, so a zone with no garment saves as three items.

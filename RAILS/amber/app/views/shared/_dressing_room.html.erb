@@ -20,7 +20,13 @@
 <div class="dressing-room"
      data-controller="wardrobe-carousel"
      data-wardrobe-carousel-zones-value="<%= zones_json %>"
-     data-wardrobe-carousel-interval-value="4200">
+     data-wardrobe-carousel-interval-value="4200"
+     <%# The words the controller writes, in the page's language: it wrote
+         "none" and the pause label in English or not at all. %>
+     data-wardrobe-carousel-empty-label-value="<%= t("dressing_room.zone_empty") %>"
+     data-wardrobe-carousel-no-garment-label-value="<%= t("dressing_room.no_garment") %>"
+     data-wardrobe-carousel-pause-label-value="<%= t("dressing_room.pause") %>"
+     data-wardrobe-carousel-resume-label-value="<%= t("dressing_room.resume") %>">
 
   <div class="zone-carousels">
     <% {
@@ -35,7 +41,7 @@
                 data-wardrobe-carousel-zone-param="<%= zone %>"
                 aria-label="<%= t("dressing_room.previous", zone: label) %>">‹</button>
         <span class="zone-info">
-          <span data-zone-label="<%= zone %>">—</span>
+          <%= tag.span t("dressing_room.no_garment"), data: { zone_label: zone } %>
           <span class="zone-count" data-zone-count="<%= zone %>"></span>
           <span class="zone-why" data-zone-why="<%= zone %>"></span>
         </span>
@@ -50,8 +56,7 @@
     <button type="button"
             class="button"
             data-action="wardrobe-carousel#toggle"
-            data-wardrobe-carousel-target="playToggle"
-            aria-pressed="false"><%= t("dressing_room.pause") %></button>
+            data-wardrobe-carousel-target="playToggle"><%= t("dressing_room.pause") %></button>
     <button type="button" class="button"
             data-action="wardrobe-carousel#shuffle"><%= t("dressing_room.shuffle") %></button>
 

@@ -68,4 +68,18 @@ class DressingRoomTest < ActionDispatch::IntegrationTest
 
     assert_redirected_to dressing_room_outfits_path
   end
+
+  # The carousel wrote "none" and "—" in English, and the pause button changed
+  # only aria-pressed, never its words, so a paused room still offered "Pause".
+  test "the dressing room hands its controller translated labels" do
+    sign_in_as("dressing-labels@example.com")
+
+    get dressing_room_outfits_path
+
+    room = css_select(".dressing-room").first
+    assert_equal I18n.t("dressing_room.zone_empty"), room["data-wardrobe-carousel-empty-label-value"]
+    assert_equal I18n.t("dressing_room.resume"), room["data-wardrobe-carousel-resume-label-value"]
+    assert_equal I18n.t("dressing_room.pause"), room["data-wardrobe-carousel-pause-label-value"]
+    assert_select "[data-wardrobe-carousel-target=playToggle]:not([aria-pressed])", text: I18n.t("dressing_room.pause")
+  end
 end

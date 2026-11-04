@@ -103,7 +103,7 @@ items:
   path: RAILS/amber/app/javascript/controllers/wardrobe_carousel_controller.js
   item: Translate the dressing-room 'none' count and the '—' placeholder in wardrobe_carousel_controller
     via data values.
-  status: open
+  status: done
 - id: amber-013
   app: amber
   area: i18n
@@ -831,7 +831,7 @@ items:
   path: RAILS/amber/app/views/shared/_dressing_room.html.erb
   item: Make the Pause button change its visible label to 'Play' when paused; only
     aria-pressed changes now.
-  status: open
+  status: done
 - id: amber-103
   app: amber
   area: ux
