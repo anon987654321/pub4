@@ -76,6 +76,29 @@ class RecentFeaturesIntegrationTest < ActionDispatch::IntegrationTest
       post follow_user_path(subject)
     end
     assert follower.following?(subject)
+
+    # A second POST is a retry or a double tap, not an unfollow.
+    assert_no_difference -> { Follow.count } do
+      post follow_user_path(subject)
+    end
+    assert follower.following?(subject)
+  end
+
+  test "following yourself is refused with a reason, not an error page" do
+    host! "brgen.no"
+    me = User.create!(
+      email_address: "self-follow-#{SecureRandom.hex(4)}@brgen.no",
+      password: "password123",
+      password_confirmation: "password123",
+      username: "self_follow_#{SecureRandom.hex(3)}"
+    )
+    sign_in_on("brgen.no", me)
+
+    assert_no_difference -> { Follow.count } do
+      post follow_user_path(me)
+    end
+    assert_response :redirect
+    assert flash[:alert].present?
   end
 
   test "a departing account cannot receive a new direct message" do

@@ -3587,7 +3587,7 @@ items:
   path: RAILS/brgen/app/controllers/follows_controller.rb
   item: Make POST /follow idempotent (create only) instead of toggling; a double tap
     or retried request currently unfollows.
-  status: open
+  status: done
 - id: brgen-326
   app: brgen
   area: security
@@ -3595,7 +3595,7 @@ items:
   path: RAILS/brgen/app/controllers/follows_controller.rb
   item: Answer a self-follow with a flash instead of the RecordInvalid 500 that Follow#no_self_follow
     plus save! produce.
-  status: open
+  status: done
 - id: brgen-327
   app: brgen
   area: security
