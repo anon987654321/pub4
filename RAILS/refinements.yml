@@ -3985,7 +3985,7 @@ items:
   item: Add a short safety notice to the buy box for private sellers (pay through
     brgen with Vipps or card, never send a deposit to a phone number, meet in public)
     with nb and en copy linking to the safety page.
-  status: open
+  status: done
 - id: brgen-374
   app: brgen
   area: trust
@@ -3994,7 +3994,7 @@ items:
   item: Add a housing-specific warning to housing listings and the housing form (do
     not pay a deposit before viewing; a deposit belongs in a depositumskonto), since
     housing has a deposit field and is the classic rental scam.
-  status: open
+  status: done
 - id: brgen-375
   app: brgen
   area: trust

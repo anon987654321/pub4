@@ -192,7 +192,12 @@
           <% elsif @kind == "housing" %>
             <%= f.fields_for :housing_detail do |hf| %>
               <div class="field"><%= hf.label :rent_cents, t("marketplace.housing_rent") %><%= hf.number_field :rent_cents, min: 0, required: true, inputmode: "numeric" %></div>
-              <div class="field"><%= hf.label :deposit_cents, t("marketplace.housing_deposit") %><%= hf.number_field :deposit_cents, min: 0, inputmode: "numeric" %></div>
+              <div class="field">
+                <%= hf.label :deposit_cents, t("marketplace.housing_deposit") %>
+                <%= hf.number_field :deposit_cents, min: 0, inputmode: "numeric",
+                      aria: { describedby: "housing_deposit_help" } %>
+                <%= tag.p t("marketplace.housing_deposit_warning"), id: "housing_deposit_help", class: "form-help" %>
+              </div>
               <div class="field"><%= hf.label :housing_type, t("marketplace.housing_type") %><%= hf.select :housing_type, Marketplace::HousingDetail::HOUSING_TYPES.map { |type| [t("marketplace.housing_types.#{type}"), type] }, include_blank: "—" %></div>
               <div class="field"><%= hf.label :rooms, t("marketplace.housing_rooms") %><%= hf.number_field :rooms, min: 0.5, step: 0.5, inputmode: "decimal" %></div>
               <div class="field"><%= hf.label :size_sqm, t("marketplace.housing_size") %><%= hf.number_field :size_sqm, min: 1, inputmode: "numeric" %></div>

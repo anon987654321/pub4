@@ -1171,6 +1171,8 @@ nb:
     navigation_label: Markedsplassnavigasjon
     navigation_categories: Kategorier
     payment_status: Betalingsstatus
+    private_seller_safety: Betal gjennom Brgen med Vipps eller kort. Send aldri depositum eller forskudd til et telefonnummer, og møt selgeren på et offentlig sted.
+    housing_deposit_warning: Ikke betal depositum før du har sett boligen. Depositum skal stå på en depositumskonto i leietakers navn, ikke betales til utleier.
     payment_description_more: "%{first} og %{count} til"
     buy_now_vipps: Kjøp med Vipps
     buy_now_dintero: Kjøp med Dintero

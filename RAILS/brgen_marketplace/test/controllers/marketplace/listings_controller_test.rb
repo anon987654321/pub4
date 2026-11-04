@@ -231,4 +231,23 @@ class Marketplace::ListingsControllerTest < ActionDispatch::IntegrationTest
       assert_select "#report_#{ActionView::RecordIdentifier.dom_id(target)} form[action=?]", main_app.reports_path
     end
   end
+
+  # A private sale and a rental are where advance-payment scams live; the buy
+  # box says how to pay safely, and a home adds the deposit rule, as does the
+  # housing form beside its deposit field.
+  test "a private listing warns how to pay and a housing listing warns about the deposit" do
+    goods = listing_for(@seller, "Brukt sofa", price_cents: 2_000)
+    home = listing_for(@seller, "Hybel på Møhlenpris", price_cents: 900_000)
+    home.update_columns(kind: "housing")
+    sign_in(@buyer)
+
+    get marketplace.listing_path(goods)
+    assert_includes response.body, I18n.t("marketplace.private_seller_safety")
+
+    get marketplace.listing_path(home)
+    assert_includes response.body, I18n.t("marketplace.housing_deposit_warning")
+
+    get marketplace.new_listing_path(kind: "housing")
+    assert_select "#housing_deposit_help", text: I18n.t("marketplace.housing_deposit_warning")
+  end
 end

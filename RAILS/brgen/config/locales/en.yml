@@ -1165,6 +1165,8 @@ en:
     navigation_label: Marketplace navigation
     navigation_categories: Categories
     payment_status: Payment status
+    private_seller_safety: Pay through Brgen with Vipps or card. Never send a deposit or advance payment to a phone number, and meet the seller in a public place.
+    housing_deposit_warning: Do not pay a deposit before you have viewed the home. A deposit belongs in a deposit account (depositumskonto) in the tenant's name, not paid to the landlord.
     payment_description_more: "%{first} and %{count} more"
     buy_now_vipps: Buy with Vipps
     order_number: "Order #%{id}"
