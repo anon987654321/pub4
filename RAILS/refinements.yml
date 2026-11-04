@@ -333,7 +333,7 @@ items:
   path: RAILS/amber/app/views/items/index.html.erb
   item: Use aria-current on the active lifecycle chip instead of the 'chip--active'
     modifier class.
-  status: open
+  status: done
 - id: amber-041
   app: amber
   area: markup

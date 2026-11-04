@@ -54,7 +54,8 @@
 
   <nav class="chips" aria-label="<%= t("wardrobe.lifecycle_filter") %>">
     <% %w[active box memory seasonal repair all].each do |key| %>
-      <%= link_to t("wardrobe.lifecycle.#{key}"), items_path(lifecycle: key), class: "chip#{" chip--active" if @lifecycle_filter == key}" %>
+      <%= link_to t("wardrobe.lifecycle.#{key}"), items_path(lifecycle: key), class: "chip",
+                  aria: { current: ("page" if @lifecycle_filter == key) } %>
     <% end %>
   </nav>
 

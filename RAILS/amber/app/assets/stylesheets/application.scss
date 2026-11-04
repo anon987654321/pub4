@@ -563,6 +563,14 @@ h2 {
   min-width: var(--tap-min);
 }
 
+// The chosen filter chip. The old chip--active class had no rule behind it,
+// so the current filter looked like the others; the state is aria-current.
+.chip[aria-current="page"] {
+  font-weight: var(--weight-bold);
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+
 .brand {
   border: 0;
 }
