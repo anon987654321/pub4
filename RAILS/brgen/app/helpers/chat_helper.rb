@@ -36,4 +36,36 @@ module ChatHelper
     escaped = escaped.gsub(/`([^`\n]+)`/) { "<code class=\"chat-code\">#{Regexp.last_match(1)}</code>" }
     escaped.html_safe
   end
+  # The typing line is one broadcast to everyone in the thread, the typer
+  # included, so the server cannot leave the viewer out. It carries one hidden
+  # line per kind of viewer instead: someone not typing reads every typer, and
+  # each typer reads the others. The typing controller shows the viewer's own.
+  def typing_lines_tag(conversation)
+    names = typing_names(conversation)
+    return "".html_safe if names.empty?
+
+    lines = [ [ nil, names.values ] ] + names.keys.map { |id| [ id, names.except(id).values ] }
+    safe_join(lines.map do |except_id, others|
+      tag.span(typing_sentence(others), hidden: true, data: { typing_target: "line", except: except_id })
+    end)
+  end
+
+  # Typer id => name as the thread shows it. A public channel names its humans
+  # by channel handle, never a username.
+  def typing_names(conversation)
+    active = conversation.typing_indicators.active
+    typers = active.includes(:user).map(&:user)
+    channel = conversation.slug.present?
+    typers.to_h { |user| [ user.id, channel ? user.channel_handle : user.display_name ] }
+  end
+
+  def typing_sentence(names)
+    return "" if names.empty?
+    return t("messages.typing_one", name: names.first) if names.one?
+
+    shown = names.first(2).join(", ")
+    return t("messages.typing_many", names: shown) if names.size == 2
+
+    t("messages.typing_many_truncated", names: shown, count: names.size - 2)
+  end
 end

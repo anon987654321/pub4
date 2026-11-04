@@ -18,11 +18,11 @@ class TypingIndicator < ApplicationRecord
       find_by!(conversation:, user:)
     end
     rec.update!(expires_at: 5.seconds.from_now)
-    Turbo::StreamsChannel.broadcast_replace_to(
+    Turbo::StreamsChannel.broadcast_update_to(
       conversation,
       target:  "typing-indicator",
       partial: "typing_indicators/indicator",
-      locals:  { conversation:, except_user: user }
+      locals:  { conversation: }
     )
     rec
   end

@@ -1,8 +1,11 @@
 # frozen_string_literal: true
 
 require "test_helper"
+require "turbo/broadcastable/test_helper"
 
 class TypingIndicatorTest < ActiveSupport::TestCase
+  include Turbo::Broadcastable::TestHelper
+
   setup do
     Brgen::CitySeed.sync! if City.table_exists?
     @city = City.find_by!(domain: "brgen.no")
@@ -38,5 +41,31 @@ class TypingIndicatorTest < ActiveSupport::TestCase
         assert_not_includes active_ids, stale.id
       end
     end
+  end
+  # The partner is who the line is for. The broadcast used to leave the typer
+  # out of a render everyone receives, so the partner read nothing, or " skriver".
+  test "set! tells the other participant who is typing and keeps the typer off their own line" do
+    partner = User.strict_loading(false).create!(
+      email_address: "typing-partner@brgen.no", password: "password123", city: @city
+    )
+    ConversationParticipant.create!(conversation: @conversation, user: partner)
+    @user.update_columns(display_name: "Kari Skriv")
+
+    streams = capture_turbo_stream_broadcasts(@conversation) do
+      TypingIndicator.set!(conversation: @conversation, user: @user)
+    end
+    stream = streams.find { |broadcast| broadcast["target"] == "typing-indicator" }
+
+    assert_equal "update", stream["action"]
+    general = stream.at_css("template span[data-typing-target=line]:not([data-except])")
+    own = stream.at_css("template span[data-except=\"#{@user.id}\"]")
+    assert_equal I18n.t("messages.typing_one", name: "Kari Skriv", locale: :nb), general.text
+    assert_equal "", own.text
+  end
+
+  test "nobody typing renders no text" do
+    html = ApplicationController.render(partial: "typing_indicators/indicator", locals: { conversation: @conversation })
+
+    assert_equal "", Nokogiri::HTML.fragment(html).text.strip
   end
 end

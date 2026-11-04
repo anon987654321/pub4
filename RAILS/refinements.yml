@@ -2402,7 +2402,7 @@ items:
     with zero typers the `typers.size <= 2` branch renders typing_many with an empty
     name list ('' skriver''); render per-viewer or pass the typer in, and render nothing
     when the list is empty.'
-  status: open
+  status: done
 - id: brgen-184
   app: brgen
   area: messenger
@@ -2410,7 +2410,7 @@ items:
   path: RAILS/brgen/app/views/typing_indicators/_indicator.html.erb
   item: Use display_name rather than username in the typing indicator; username can
     be blank.
-  status: open
+  status: done
 - id: brgen-185
   app: brgen
   area: messenger
@@ -2471,7 +2471,7 @@ items:
   item: Add a model/controller test for TypingIndicator.set! that asserts the other
     participant receives a broadcast naming the typer and that an empty typer set
     renders no text.
-  status: open
+  status: done
 - id: brgen-192
   app: brgen
   area: moderation

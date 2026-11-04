@@ -199,7 +199,8 @@
         composer scrolling away with the conversation. %>
     <div class="messenger-composer-area">
       <p id="typing-indicator" class="messenger-typing" role="status"
-         data-controller="typing" data-typing-conversation-id-value="<%= @conversation.id %>"></p>
+         data-controller="typing" data-typing-conversation-id-value="<%= @conversation.id %>"
+         data-typing-viewer-value="<%= Current.user&.id %>"></p>
 
       <% if @editing %>
         <%= form_with model: @editing, url: conversation_message_path(@conversation, @editing), method: :patch,
