@@ -131,6 +131,21 @@ class CartsControllerTest < ActionDispatch::IntegrationTest
     assert_equal "YALLA15", Nokogiri::HTML(response.body).at_css(".badge-promo")&.text
   end
 
+  test "quick-add, the stepper and the item sheet share one quantity ceiling" do
+    user = customer_sign_in
+    2.times { post add_item_cart_url, params: { menu_item_id: @item.id, quantity: 15 } }
+    line = open_cart_for(user).cart_items.sole
+    assert_equal 20, line.quantity
+
+    patch update_item_cart_url(line.id), params: { quantity: 99 }
+    assert_equal 20, line.reload.quantity
+
+    get menu_item_url(@item)
+    sheet = Nokogiri::HTML(response.body)
+    assert_equal "20", sheet.at_css("input#quantity")["max"]
+    assert_equal "20", sheet.at_css("form.sheet-form")["data-item-sheet-max-value"]
+  end
+
   test "an empty cart invites you back to the menu" do
     customer_sign_in
 

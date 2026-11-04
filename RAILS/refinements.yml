@@ -5185,7 +5185,7 @@ items:
   path: RAILS/mrdamascy/app/models/cart.rb
   item: Share one quantity ceiling between Cart#add_item! (uncapped), update_item
     (clamp 1..20) and the item sheet (max 10) through a single constant.
-  status: open
+  status: done
 - id: mrdamascy-017
   app: mrdamascy
   area: cart

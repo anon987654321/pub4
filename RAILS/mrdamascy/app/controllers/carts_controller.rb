@@ -43,7 +43,7 @@ class CartsController < ApplicationController
       line.destroy!
       notice = t("flash.removed")
     else
-      line.update!(quantity: quantity.clamp(1, 20))
+      line.update!(quantity: quantity.clamp(1, Cart::MAX_QUANTITY))
       notice = t("cart.updated")
     end
 

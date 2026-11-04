@@ -56,6 +56,7 @@
   <%= form_with url: add_item_cart_path, method: :post, class: "sheet-form",
         data: { controller: "item-sheet",
                 item_sheet_base_value: item.price_ore,
+                item_sheet_max_value: Cart::MAX_QUANTITY,
                 item_sheet_template_value: t("menu.add_with_price") } do |f| %>
 
     <%= f.hidden_field :menu_item_id, value: item.id %>
@@ -96,7 +97,7 @@
       <legend><%= t("menu.qty") %></legend>
       <div class="quantity-stepper">
         <button type="button" class="quantity-button" data-action="item-sheet#decrease" aria-label="<%= t("cart.decrease") %>">−</button>
-        <%= number_field_tag :quantity, 1, min: 1, max: 10, inputmode: "numeric",
+        <%= number_field_tag :quantity, 1, min: 1, max: Cart::MAX_QUANTITY, inputmode: "numeric",
               class: "quantity-input",
               data: { item_sheet_target: "quantity", action: "input->item-sheet#recalc" } %>
         <button type="button" class="quantity-button" data-action="item-sheet#increase" aria-label="<%= t("cart.increase") %>">+</button>

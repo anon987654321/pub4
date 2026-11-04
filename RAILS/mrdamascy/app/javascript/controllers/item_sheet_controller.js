@@ -5,7 +5,7 @@ import { Controller } from "@hotwired/stimulus"
 // priced via data-price-ore on each option; sauces/toppings are free.
 export default class extends Controller {
   static targets = ["quantity", "price", "submit", "option"]
-  static values = { base: Number, template: String }
+  static values = { base: Number, template: String, max: { type: Number, default: 20 } }
 
   connect() {
     this.recalc()
@@ -42,7 +42,7 @@ export default class extends Controller {
   }
 
   setQuantity(next) {
-    this.quantityTarget.value = Math.min(10, Math.max(1, next))
+    this.quantityTarget.value = Math.min(this.maxValue, Math.max(1, next))
     this.recalc()
   }
 
