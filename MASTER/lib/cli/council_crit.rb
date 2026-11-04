@@ -16,15 +16,36 @@ module Master
         return Master::Result.err("critique: deliberation unavailable", category: :infrastructure) unless deliberation
 
         bus&.publish("council:start", scope:, bytes: artifact.bytesize)
-        result = deliberation.review(artifact, context: "pre-ship council check (#{scope})")
+        context = "pre-ship council check (#{scope})"
+        result = if deliberation.respond_to?(:review_pre_ship)
+                   deliberation.review_pre_ship(artifact, context:)
+                 else
+                   deliberation.review(artifact, context:)
+                 end
         if result.err?
-          bus&.publish("council:veto", message: result.message.to_s[0, 500])
+          message = result.message.to_s
+          vetoed_by = message[/\\Acouncil: veto from ([^\\n]+)/i, 1]
+          if vetoed_by
+            bus&.publish("council:veto", vetoed_by:, message: message[0, 500])
+          else
+            bus&.publish(
+              "council:inconclusive",
+              category: result.category.to_s,
+              reason: message[0, 500],
+            )
+          end
           return result
         end
 
         feedback = result.value!
         summary = tribunal_summary(feedback)
-        bus&.publish("council:pass", jurors: feedback.size)
+        veto_roles_answered = feedback.select { |entry| entry[:veto_role] }.map { |entry| entry[:persona].to_s }
+        bus&.publish(
+          "council:pass",
+          jurors: feedback.size,
+          veto_roles_answered:,
+          security_reviewed: veto_roles_answered.any? { |name| name.casecmp?("Security") },
+        )
         Master::Result.ok(summary)
       # Programming defects must escape this boundary. Converting a missing
       # method or malformed type into an ordinary Result would let the pipeline
