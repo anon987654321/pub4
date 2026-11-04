@@ -1713,7 +1713,7 @@ items:
   item: Point WebFinger's profile-page link at the user's HTML profile URL rather
     than actor_uri, and add expires_in caching to webfinger and nodeinfo (nodeinfo
     runs a user COUNT on every peer poll).
-  status: open
+  status: done
 - id: brgen-101
   app: brgen
   area: fediverse

@@ -11,6 +11,10 @@ class WellKnownController < ApplicationController
   allow_unauthenticated_access
   skip_forgery_protection
 
+  # Peers poll these on every follow and every few minutes; none of it changes
+  # faster than an hour, so they may keep their copy that long.
+  DISCOVERY_TTL = 1.hour
+
   def webfinger
     resource = params[:resource].to_s
     username = resource[/\Aacct:([^@]+)@(.+)\z/, 1]
@@ -24,6 +28,7 @@ class WellKnownController < ApplicationController
     user = federated_user(username, domain)
     return head :not_found unless user
 
+    expires_in DISCOVERY_TTL, public: true
     render json: {
       subject: "acct:#{username}@#{domain}",
       aliases: [ user.actor_uri ],
@@ -35,6 +40,7 @@ class WellKnownController < ApplicationController
   end
 
   def nodeinfo_index
+    expires_in DISCOVERY_TTL, public: true
     render json: {
       links: [
         { rel: "http://nodeinfo.diaspora.software/ns/schema/2.1",
@@ -45,13 +51,14 @@ class WellKnownController < ApplicationController
 
   def nodeinfo
     city = City.find_by(domain: request.host)
+    expires_in DISCOVERY_TTL, public: true
     render json: {
       version: "2.1",
       software: { name: "brgen", version: Rails.application.config.x.brgen_version.presence || "0", repository: "https://github.com/anon987654321/pub4" },
       protocols: [ "activitypub" ],
       services: { inbound: [], outbound: [] },
       openRegistrations: true,
-      usage: { users: { total: federated_scope(city).count } },
+      usage: { users: { total: federated_user_count(city) } },
       # A city is an instance. Saying so is the honest description of what this
       # server is, and it is what makes the city partitioning legible to peers.
       metadata: { nodeName: city&.name || "brgen", nodeDescription: "A city." },
@@ -66,6 +73,11 @@ class WellKnownController < ApplicationController
 
     user = User.find_by(username: username, city_id: city.id)
     user&.federated? ? user : nil
+  end
+
+  # The COUNT once an hour per city rather than on every peer's poll.
+  def federated_user_count(city)
+    Rails.cache.fetch([ "nodeinfo:users", city&.id ], expires_in: DISCOVERY_TTL) { federated_scope(city).count }
   end
 
   def federated_scope(city)

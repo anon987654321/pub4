@@ -155,4 +155,16 @@ class FediverseTest < ActionDispatch::IntegrationTest
     assert_equal [ "activitypub" ], body["protocols"]
     assert_equal @city.name, body.dig("metadata", "nodeName")
   end
+
+  # Peers poll discovery constantly; each answer says how long it may be kept.
+  test "webfinger and nodeinfo answers are cacheable by peers" do
+    host! "brgen.no"
+
+    [ webfinger_path(resource: "acct:kari@brgen.no"), "/.well-known/nodeinfo", nodeinfo_path ].each do |path|
+      get path
+      assert_response :success
+      assert_match(/max-age=3600/, response.headers["Cache-Control"], path)
+      assert_match(/public/, response.headers["Cache-Control"], path)
+    end
+  end
 end
