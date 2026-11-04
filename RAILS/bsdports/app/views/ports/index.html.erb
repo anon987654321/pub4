@@ -1,4 +1,6 @@
 <% content_for :title, "Ports" %>
+<%# The page links the feed in its nav; readers and browsers look in the head. %>
+<% content_for :head, auto_discovery_link_tag(:rss, ports_url(format: :rss), title: t("ports.rss_link")) %>
 <%# search-hotkey was a bsdports-local controller binding / and Cmd-K on this page
     only, so the rest of the app had no search shortcut at all. Both keys are in the
     shared feed-hotkey controller now, declared once on the layout body. %>

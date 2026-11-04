@@ -4518,7 +4518,7 @@ items:
   path: RAILS/bsdports/app/views/ports/index.html.erb
   item: Advertise the RSS feed with <link rel="alternate" type="application/rss+xml">
     in the head of the ports index.
-  status: open
+  status: done
 - id: bsdports-039
   app: bsdports
   area: seo
