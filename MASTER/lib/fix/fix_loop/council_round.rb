@@ -194,7 +194,8 @@ module Master
         end
 
         def skip_reason(files:, deadline:)
-          return :disabled unless council_enabled? && hard_critique_enabled?
+          return :council_disabled unless council_enabled?
+          return :hard_critique_disabled unless hard_critique_enabled?
           return :agent_unavailable unless @agent
           return :no_files if files.empty?
           return :deadline_exhausted if Time.now >= deadline
