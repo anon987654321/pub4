@@ -24,4 +24,11 @@ class CheckoutPageTest < ActionDispatch::IntegrationTest
     assert_equal %w[stripe vipps], buttons.map { |b| b["value"] }.sort
     buttons.each { |b| assert_equal I18n.t("checkout.paying"), b["data-turbo-submits-with"] }
   end
+  test "the delivery or pickup choice is kept on the cart" do
+    get checkout_url(mode: "pickup")
+    get cart_url
+
+    pickup = Nokogiri::HTML(response.body).at_css(".mode-toggle a[href*=\"mode=pickup\"]")
+    assert_equal "true", pickup["aria-current"]
+  end
 end

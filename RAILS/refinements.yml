@@ -5202,7 +5202,7 @@ items:
   item: Persist the delivery/pickup choice on Cart#delivery_mode when the cart toggle
     is used; the toggle only links to checkout?mode= and the cart column is never
     written.
-  status: open
+  status: done
 - id: mrdamascy-019
   app: mrdamascy
   area: cart

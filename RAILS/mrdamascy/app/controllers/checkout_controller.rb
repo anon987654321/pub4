@@ -19,6 +19,7 @@ class CheckoutController < ApplicationController
   # Vipps payment row, auto-applied promo line, totals — one "Betal med
   # Vipps" CTA. No promo field, no card fields, no tip step.
   def show
+    remember_mode
     load_checkout_vars
   end
 
@@ -123,6 +124,13 @@ class CheckoutController < ApplicationController
   end
 
   private
+
+  # The cart's delivery/pickup toggle links here with ?mode=; keeping the
+  # choice on the cart lets the toggle show it when the guest goes back.
+  def remember_mode
+    mode = params[:mode].to_s
+    current_cart.update!(delivery_mode: mode) if %w[delivery pickup].include?(mode)
+  end
 
   # Honest payment failure: nothing was reserved, the cart is intact, retry
   # works. Never a fake success and never a raw 500.
