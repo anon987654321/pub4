@@ -32,7 +32,10 @@
       <div><%= tag.dt t("home.items") %><%= tag.dd @items_count %></div>
       <div><%= tag.dt t("home.spark_joy") %><%= tag.dd @joy_count %></div>
       <div><%= tag.dt t("home.never_worn") %><%= tag.dd @never_worn_count %></div>
-      <div><%= tag.dt t("home.utilisation") %><dd class="<%= @utilization_rate < 20 ? 'stat-warn' : '' %>"><%= @utilization_rate %>%</dd></div>
+      <div>
+        <%= tag.dt t("home.utilisation") %>
+        <%= tag.dd "#{@utilization_rate}%", class: ("stat-warn" if @utilization_rate < 20) %>
+      </div>
     </dl>
     <nav role="navigation" aria-label="<%= t("home.dashboard") %>">
       <%= link_to t("home.add_item"), new_item_path, class: "button button-primary" %>

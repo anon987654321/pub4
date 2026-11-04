@@ -590,7 +590,7 @@ items:
   path: RAILS/amber/app/views/home/index.html.erb
   item: Drop the empty class="" written on the utilisation dd when the rate is not
     low.
-  status: open
+  status: done
 - id: amber-073
   app: amber
   area: ui
