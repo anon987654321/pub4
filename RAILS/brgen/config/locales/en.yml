@@ -101,8 +101,6 @@ en:
     primary_nav: Primary navigation
     cities: Cities
     quick_actions: Quick actions
-    # English hosts are other cities (lsangeles.com), so the label names no host.
-    brand_home: Home
     main: Main content
     takeaway: takeaway
     marketplace: marketplace
@@ -1735,7 +1733,6 @@ en:
       general: general
   a11y:
     city_link: "%{city} (%{domain})"
-    skip_to_content: Skip to main content
     reports_header: Reports
     report: Report
     select_report: Select report %{id}

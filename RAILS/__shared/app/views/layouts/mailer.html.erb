@@ -4,9 +4,16 @@
   <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="x-apple-disable-message-reformatting">
+  <%# The mail paints its own dark ground; saying so keeps Apple Mail and
+      Outlook from inverting it a second time in dark mode. %>
+  <meta name="color-scheme" content="light dark">
+  <meta name="supported-color-schemes" content="light dark">
   <%# `||` binds tighter than `?:`, so this read as (a || b || content_for?) ? yield(:title) : "Newsletter" —
-      it always yielded :title when any source was present, discarding @edition.subject and @subject. %>
-  <title><%= @edition&.subject || @subject || (content_for?(:title) ? yield(:title) : "Newsletter") %></title>
+      it always yielded :title when any source was present, discarding @edition.subject and @subject.
+      The message's own subject comes before "Newsletter": a password-reset mail
+      was titled Newsletter. %>
+  <% fallback_title = content_for?(:title) ? yield(:title) : message.subject.presence || "Newsletter" %>
+  <title><%= @edition&.subject || @subject || fallback_title %></title>
   <%= render "layouts/mailer_styles" %>
 </head>
 <body class="mail-body">
@@ -17,7 +24,6 @@
       <%= @edition.preheader %>
     </div>
   <% end %>
-  <a class="skip-link" href="#main-content"><%= t("a11y.skip_to_content") %></a>
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" class="mail-canvas">
     <tr>
       <td align="center">

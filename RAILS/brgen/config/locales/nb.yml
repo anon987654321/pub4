@@ -105,7 +105,6 @@ nb:
     primary_nav: Hovednavigasjon
     cities: Byer
     quick_actions: Hurtighandlinger
-    brand_home: Brgen hjem
     main: Hovedinnhold
     takeaway: takeaway
     marketplace: markedsplass
@@ -1744,7 +1743,6 @@ nb:
       general: generelt
   a11y:
     city_link: "%{city} (%{domain})"
-    skip_to_content: Hopp til innholdet
     reports_header: Rapporter
     report: Rapport
     select_report: Velg rapport %{id}

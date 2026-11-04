@@ -203,8 +203,6 @@ en:
       sad: "Sad"
       angry: "Angry"
       local: "Local"
-  a11y:
-    skip_to_content: "Skip to main content"
   # Engine-owned keys. Namespaced under shared: so an app can keep its own
   # flash: block without colliding, and because the call sites say
   # t("shared.flash.…") — appended at top level they resolved to nothing at all.
@@ -271,6 +269,10 @@ en:
     dating_age: "I am at least 18. Dating is only for adults."
   mailer:
     password_reset_subject: "Reset your password"
+    password_reset_lede: "Someone asked to reset your password. Choose a new one with the button below."
+    password_reset_action: "Choose a new password"
+    password_reset_expiry: "The link expires in %{time}."
+    password_reset_ignore: "If you did not ask for this, ignore this email — your password is unchanged."
     verify_email_subject: "Confirm your email"
     sign_in_link_subject: "Sign-in link"
     sign_in_link_greeting: "Hi %{name},"

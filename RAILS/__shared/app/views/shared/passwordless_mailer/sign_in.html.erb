@@ -1,4 +1,17 @@
-<p><%= t("mailer.sign_in_link_greeting", name: @user.try(:name).presence || @user.email_address) %></p>
-<p><%= link_to t("mailer.sign_in_link_action"), @url %></p>
-<p><%= t("mailer.sign_in_link_expiry", minutes: Shared::UserAuthExtensions::MAGIC_LINK_DURATION.in_minutes.to_i) %></p>
-<p><%= t("mailer.sign_in_link_ignore") %></p>
+<% minutes = Shared::UserAuthExtensions::MAGIC_LINK_DURATION.in_minutes.to_i %>
+<% name = @user.try(:name).presence || @user.email_address %>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" class="mail-shell">
+  <tr><%= tag.td t("app.name"), class: "mail-brand" %></tr>
+  <tr>
+    <td class="mail-lede-wrap">
+      <%= tag.p t("mailer.sign_in_link_greeting", name:), class: "mail-lede" %>
+    </td>
+  </tr>
+  <tr>
+    <td class="mail-cta-wrap">
+      <%= link_to t("mailer.sign_in_link_action"), @url, class: "mail-cta" %>
+    </td>
+  </tr>
+  <tr><%= tag.td t("mailer.sign_in_link_expiry", minutes:), class: "mail-permission" %></tr>
+  <tr><%= tag.td t("mailer.sign_in_link_ignore"), class: "mail-permission" %></tr>
+</table>

@@ -201,8 +201,6 @@ nb:
       sad: "Trist"
       angry: "Sint"
       local: "Lokalt"
-  a11y:
-    skip_to_content: "Hopp til hovedinnhold"
   # Engine-owned keys. Namespaced under shared: so an app can keep its own
   # flash: block without colliding, and because the call sites say
   # t("shared.flash.…") — appended at top level they resolved to nothing at all.
@@ -274,6 +272,10 @@ nb:
     dating_age: "Jeg er minst 18 år. Dating er bare for voksne."
   mailer:
     password_reset_subject: "Tilbakestill passordet"
+    password_reset_lede: "Noen ba om å tilbakestille passordet ditt. Velg et nytt med knappen under."
+    password_reset_action: "Velg nytt passord"
+    password_reset_expiry: "Lenken utløper om %{time}."
+    password_reset_ignore: "Har du ikke bedt om dette, kan du se bort fra e-posten — passordet er uendret."
     verify_email_subject: "Bekreft e-postadressen"
     sign_in_link_subject: "Innloggingslenke"
     sign_in_link_greeting: "Hei %{name},"

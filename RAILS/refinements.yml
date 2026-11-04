@@ -6070,7 +6070,7 @@ items:
   size: S
   path: RAILS/__shared/app/views/passwords_mailer/reset.html.erb
   item: Translate the password-reset mail; its HTML and text bodies are English literals.
-  status: open
+  status: done
 - id: shared-019
   app: shared
   area: i18n
@@ -6102,7 +6102,7 @@ items:
   path: RAILS/__shared/app/views/layouts/mailer.html.erb
   item: Add color-scheme and supported-color-schemes meta tags, and remove the skip
     link from the mail layout.
-  status: open
+  status: done
 - id: shared-023
   app: shared
   area: mail
@@ -6110,7 +6110,7 @@ items:
   path: RAILS/__shared/app/views/passwords_mailer/reset.html.erb
   item: 'Wrap password-reset and sign-in mails in the .mail-shell layout with a .mail-cta
     button; they render as bare paragraphs on #050505 with default blue links.'
-  status: open
+  status: done
 - id: shared-024
   app: shared
   area: motion
@@ -6260,7 +6260,7 @@ items:
   path: RAILS/__shared/app/views/layouts/mailer.html.erb
   item: Add mailer tests for the layout (title order, preheader) and for the passwordless
     and verification mails.
-  status: open
+  status: done
 - id: shared-043
   app: shared
   area: tests

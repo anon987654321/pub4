@@ -3,10 +3,6 @@ en:
     name: "BSDports"
   skip_to_content: "Skip to main content"
   nav:
-    # Was inherited from shared/config/locales/social.*.yml, which used to
-    # define nav.brand_home for every app and therefore overrode brgen and
-    # amber's own brand strings. Stated here so shared can stop.
-    brand_home: "Home"
     # Referenced by the engine chat widget. bsdports has no messages route, so the
     # branch that shows it never renders here — but a key the view can name must
     # resolve, or it ships as a translation_missing span the day it does.
@@ -196,8 +192,6 @@ en:
     view_offer: "View offer"
     curated_offers: "Curated offers"
     today_in: "Today in %{city}"
-  a11y:
-    skip_to_content: "Skip to main content"
   # Mirrors nb.yml's flash: block.
   flash:
     cve_cross_reference_queued: "CVE cross-reference queued for background processing."
