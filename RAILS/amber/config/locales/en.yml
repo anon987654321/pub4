@@ -63,6 +63,8 @@ en:
       notes: "Notes"
   nav:
     connections: "Creators"
+    live: "Live sessions"
+    declutter: "Declutter"
     home: "Home"
     feed: "Feed"
     wardrobe: "Wardrobe"

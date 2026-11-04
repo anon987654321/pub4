@@ -167,10 +167,12 @@
       <%= link_to feed_posts_path, class: "tab-item", aria: { label: t("nav.feed"), current: current_page?(feed_posts_path) ? "page" : nil } do %>
         <%= icon :explore, size: 26 %>
       <% end %>
-      <%= link_to items_path, class: "tab-item", aria: { label: t("nav.wardrobe"), current: current_page?(items_path) ? "page" : nil } do %>
+      <%= link_to items_path, class: "tab-item",
+            aria: { label: t("nav.wardrobe"), current: nav_current(items_path, section: "items") } do %>
         <%= icon :shirt, size: 26 %>
       <% end %>
-      <%= link_to outfits_path, class: "tab-item", aria: { label: t("nav.outfits"), current: current_page?(outfits_path) ? "page" : nil } do %>
+      <% outfits_current = nav_current(outfits_path, section: "outfits", except: %w[dressing_room]) %>
+      <%= link_to outfits_path, class: "tab-item", aria: { label: t("nav.outfits"), current: outfits_current } do %>
         <%= icon :layers, size: 26 %>
       <% end %>
     <% else %>

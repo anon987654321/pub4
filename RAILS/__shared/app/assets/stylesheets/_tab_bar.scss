@@ -195,12 +195,12 @@ html.drawer-open .tab-bar-peel {
   text-decoration: none;
 }
 
-.tab-item[aria-current="page"] {
+.tab-item[aria-current] {
   color: var(--accent);
   background: var(--hover-subtle);
 }
 
-.tab-item[aria-current="page"]::after {
+.tab-item[aria-current]::after {
   content: "";
   position: absolute;
   inset-block-end: calc(4px + var(--safe-bottom));

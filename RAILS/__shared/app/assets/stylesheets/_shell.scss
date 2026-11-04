@@ -335,7 +335,7 @@ main[role="main"] {
   color: var(--text);
   text-decoration: none;
 }
-.nav-item.active {
+.nav-item[aria-current] {
   color: var(--text);
   font-weight: var(--weight-bold);
 }

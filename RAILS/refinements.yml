@@ -380,7 +380,7 @@ items:
   path: RAILS/amber/app/views/shared/_sidebar_nav.html.erb
   item: Drop the presentational 'active' class from sidebar nav items and style a[aria-current]
     instead; both carry the same state.
-  status: open
+  status: done
 - id: amber-047
   app: amber
   area: markup
@@ -405,7 +405,7 @@ items:
   item: Mark section-level aria-current in the tab bar and sidebar (items/123 under
     Wardrobe, outfits/5 under Outfits); current_page? only matches the exact index
     path.
-  status: open
+  status: done
 - id: amber-050
   app: amber
   area: performance
@@ -855,7 +855,7 @@ items:
   path: RAILS/amber/app/views/shared/_sidebar_nav.html.erb
   item: Add notifications, live sessions, declutter and connections to the signed-in
     sidebar; they are only reachable from the footer or home-only editorial nav.
-  status: open
+  status: done
 - id: amber-106
   app: amber
   area: ux

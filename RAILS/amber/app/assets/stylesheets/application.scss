@@ -2485,7 +2485,7 @@ body[data-surface="luxury"] .amber-editorial-nav a {
   letter-spacing: var(--tracking-normal);
 }
 
-body[data-surface="luxury"] .sidebar .nav-item.active {
+body[data-surface="luxury"] .sidebar .nav-item[aria-current] {
   color: var(--pub4-signal-on-light);
   font-weight: var(--weight-heavy);
   text-decoration: underline;

@@ -15,6 +15,16 @@ module ApplicationHelper
     detail: [ [ :thumb, 240 ], [ :card, 720 ] ],
   }.freeze
 
+  # aria-current for a nav link: "page" on the link's own page, "true" anywhere
+  # else in its section, so items/123 still marks Wardrobe. current_page? alone
+  # matched only the exact index path. except names actions with a link of
+  # their own (the dressing room is outfits#dressing_room).
+  def nav_current(path, section: nil, except: [])
+    return "page" if current_page?(path)
+
+    "true" if section == controller_name && except.exclude?(action_name)
+  end
+
   def amber_ai_available?
     WardrobeAi.configured?
   end

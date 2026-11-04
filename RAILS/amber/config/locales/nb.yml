@@ -62,6 +62,8 @@ nb:
       notes: "Notater"
   nav:
     connections: "Skapere"
+    live: "Livesesjoner"
+    declutter: "Rydding"
     home: "Hjem"
     feed: "Feed"
     wardrobe: "Garderobe"
