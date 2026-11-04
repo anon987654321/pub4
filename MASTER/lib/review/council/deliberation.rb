@@ -142,8 +142,8 @@ module Master
           false
         end
 
-        # The explicit pre-ship gate always requires Security, even when a
-        # caller supplied a narrower specialist persona panel.
+        # The explicit pre-ship gate always requires Security, even when
+        # availability narrows the panel used for the review.
         def review_pre_ship(code, context: nil, image: nil)
           review(code, context:, image:, required_veto_roles: ["Security"])
         end
@@ -185,6 +185,8 @@ module Master
           return deadline_result(feedback) if Master::Review::LLMDispatcher::PassClock.expired?
 
           append_judge_synthesis(feedback:, code:, context:, image:)
+          return deadline_result(feedback) if Master::Review::LLMDispatcher::PassClock.expired?
+
           publish_confidence(feedback)
           announce_substitution
           Result.ok(feedback)
