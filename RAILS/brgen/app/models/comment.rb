@@ -40,7 +40,7 @@ class Comment < ApplicationRecord
   scope :top,           -> { best }
   scope :new_first,     -> { kept.order(created_at: :desc) }
   scope :controversial, -> {
-    left_joins(:votes).group(:id)
+    kept.left_joins(:votes).group(:id)
       .having(HAS_UPVOTE_SQL)
       .having(HAS_DOWNVOTE_SQL)
       .order(CONTROVERSIAL_SQL)
@@ -62,6 +62,17 @@ class Comment < ApplicationRecord
     direct_reply_ids = Comment.where(parent_id: id).pluck(:id)
     total = direct_reply_ids.size + Comment.where(parent_id: direct_reply_ids).count
     total > LONG_THREAD_THRESHOLD
+  end
+
+  # Ids of the comments on one commentable whose thread is long, from one query.
+  # A post page asked long_thread? of every comment and reply it drew, two
+  # queries each; the comment partial asks this once per page instead.
+  def self.long_thread_ids(commentable_type, commentable_id)
+    pairs = where(commentable_type:, commentable_id:).where.not(parent_id: nil).pluck(:parent_id, :id)
+    children = pairs.group_by(&:first).transform_values { |rows| rows.map(&:last) }
+    children.filter_map do |id, kids|
+      id if kids.size + kids.sum { children.fetch(_1, []).size } > LONG_THREAD_THRESHOLD
+    end.to_set
   end
 
   def has_thread_summary?

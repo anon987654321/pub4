@@ -198,6 +198,18 @@ module Shared
       end
     end
 
+    # Whether a comment's thread is long enough for a summary. Comment#long_thread?
+    # is two queries, and a thread page asks it of every row; the ids come from
+    # one query per commentable and are kept for the rest of the render.
+    def comment_long_thread?(comment)
+      return false unless comment.respond_to?(:long_thread?)
+      return comment.long_thread? unless comment.class.respond_to?(:long_thread_ids)
+
+      @comment_long_thread_ids ||= {}
+      key = [ comment.commentable_type, comment.commentable_id ]
+      (@comment_long_thread_ids[key] ||= comment.class.long_thread_ids(*key)).include?(comment.id)
+    end
+
     # Who a reply answers, as the row shows it: "@name", or the anonymous label
     # on its own (an "@anon" would read as somebody's handle). Nil for a
     # top-level comment, and for apps whose comments do not thread.

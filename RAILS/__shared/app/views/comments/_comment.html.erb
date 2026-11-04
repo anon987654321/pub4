@@ -2,7 +2,7 @@
   Fleet comment row — brgen (threaded + AI summary) and amber (flat).
 
   Features enable by capability, not by app name:
-    - depth attribute when comment.depth exists
+    - depth attribute when comment.depth exists (or the thread passes depth:)
     - reply disclosure when a root post is resolvable and user is present
     - nested children when parent_id / replies exist
     - AI thread summary when long_thread? + generate_summary route exist
@@ -13,9 +13,12 @@
     parent        — optional, the comment this one replies to, when the
                     caller has it loaded (the thread rendering its replies)
     threaded      — force on/off replies+children (default: auto)
+    depth         — optional, this row's nesting level, passed by the thread
 %>
 <% threaded = local_assigns.fetch(:threaded) { comment.respond_to?(:depth) || comment.respond_to?(:replies) } %>
-<% depth = comment.respond_to?(:depth) ? [ comment.depth.to_i, 4 ].min : 0 %>
+<%# The thread passes depth down; Comment#depth walks the ancestors one query each. %>
+<% raw_depth = local_assigns.fetch(:depth) { comment.respond_to?(:depth) ? comment.depth.to_i : 0 } %>
+<% depth = [ raw_depth, 4 ].min %>
 <% destroy_arg = local_assigns.fetch(:destroy_arg) { comment_destroy_arg(comment) } %>
 <% signed_in = respond_to?(:authenticated?) ? authenticated? : false %>
 <% can_delete = signed_in && comment.user == Current.user %>
@@ -53,7 +56,7 @@
         a div because its output starts with <p>, which a <p> cannot contain. %>
     <div class="comment-body prose"><%= rich_text comment.content %></div>
 
-    <% if threaded && comment.respond_to?(:long_thread?) && comment.long_thread? %>
+    <% if threaded && comment_long_thread?(comment) %>
       <% if comment.respond_to?(:has_thread_summary?) && comment.has_thread_summary? %>
         <p class="thread-summary">
           <%= tag.strong t("comments.master_summary") %>
@@ -86,7 +89,7 @@
           landing as a sibling of the parent at the bottom of #comments. %>
       <div class="comment-replies" id="<%= dom_id(comment, :replies) %>">
         <% comment_children(comment).each do |reply| %>
-          <%= render "comments/comment", comment: reply, threaded: true, parent: comment %>
+          <%= render "comments/comment", comment: reply, threaded: true, parent: comment, depth: raw_depth + 1 %>
         <% end %>
       </div>
     <% end %>

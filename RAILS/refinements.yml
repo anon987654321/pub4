@@ -974,7 +974,7 @@ items:
   path: RAILS/__shared/app/views/comments/_comment.html.erb
   item: Pass depth down through the recursive comment partial instead of calling Comment#depth,
     which runs one query per ancestor per comment.
-  status: open
+  status: done
 - id: brgen-012
   app: brgen
   area: comments
@@ -1092,7 +1092,7 @@ items:
   path: RAILS/brgen/app/models/comment.rb
   item: Exclude removed comments from the controversial sort; it lacks the kept scope
     that best, top and new_first apply.
-  status: open
+  status: done
 - id: brgen-027
   app: brgen
   area: comments
@@ -1100,7 +1100,7 @@ items:
   path: RAILS/brgen/app/models/comment.rb
   item: Cache or precompute long_thread? per page; it runs two queries for every comment
     and reply rendered.
-  status: open
+  status: done
 - id: brgen-028
   app: brgen
   area: comments

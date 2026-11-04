@@ -144,6 +144,23 @@ class CommentsControllerTest < ActionDispatch::IntegrationTest
     assert_response :forbidden
   end
 
+  test "a nested thread renders without a depth or long-thread query per row" do
+    ActsAsTenant.with_tenant(@city) do
+      author = user("deep-thread")
+      post_record = a_post(author)
+      parent = Comment.create!(user: author, commentable: post_record, content: "root")
+      3.times { |i| parent = Comment.create!(user: author, commentable: post_record, content: "nivå #{i}", parent_id: parent.id) }
+
+      per_row = []
+      counter = ->(*, payload) { per_row << payload[:sql] if payload[:sql].match?(/SELECT "comments"\."parent_id" FROM|SELECT COUNT\(\*\) FROM "comments" WHERE "comments"\."parent_id"/) }
+      ActiveSupport::Notifications.subscribed(counter, "sql.active_record") { get post_path(post_record) }
+
+      assert_response :success
+      assert_select "article.comment[data-depth='3']"
+      assert_empty per_row
+    end
+  end
+
   test "a comment posted to no parent is a 404, not a 500" do
     post comments_path, params: { comment: { content: "til ingen" } }
     assert_response :not_found
