@@ -38,13 +38,17 @@ module Webhooks
       end
     end
 
-    # VippsCheckout sets reference like "brgen-order-{id}-{hex}"
+    # VippsCheckout stores the exact reference on the order or basket it charged
+    # (mark_payment_pending!), so that row is the answer. The id inside the
+    # reference is only a fallback, and it names its table: references made
+    # before 2026-11-04 said "brgen-order-{id}" for baskets too, so reading that
+    # number as an order id paid whichever unrelated order shared the id.
     def find_order_from_vipps_reference(reference)
-      if (m = reference.match(/\Abrgen-order-(\d+)/))
-        return find_order_by_id(m[1])
-      end
+      stored = find_by_payment_reference(reference)
+      return stored if stored
 
-      find_by_payment_reference(reference)
+      kind, id = reference.to_s.match(/\Abrgen-(order|checkout)-(\d+)-/)&.captures
+      kind == "checkout" ? find_checkout_by_id(id) : (find_order_by_id(id) if id)
     end
 
     # A basket and its lines share one payment_reference, so the basket is asked

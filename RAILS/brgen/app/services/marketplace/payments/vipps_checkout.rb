@@ -53,7 +53,7 @@ module Marketplace
         raise ArgumentError, "order is not payable" unless order.respond_to?(:startable?) && order.startable?
 
         token = access_token
-        reference = "brgen-order-#{order.id}-#{SecureRandom.hex(4)}"
+        reference = reference_for(order)
         payload = {
           amount: { currency: order.payment_currency, value: order.total_cents.to_i },
           paymentMethod: { type: "WALLET" },
@@ -76,6 +76,12 @@ module Marketplace
 
         order.mark_payment_pending!(provider: "vipps", reference: reference)
         data.dig("redirectUrl") || data.dig("url") || raise(ProviderError, "Vipps response missing redirectUrl")
+      end
+
+      # Names the table the id belongs to: a basket (Marketplace::Checkout) and
+      # an order share an id sequence only by accident.
+      def self.reference_for(payable)
+        "brgen-#{payable.model_name.element}-#{payable.id}-#{SecureRandom.hex(4)}"
       end
 
       def self.access_token
