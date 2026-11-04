@@ -1,45 +1,49 @@
-<%# I18n.locale is in the key because the fragment holds translated chrome and
-    Rails does not add the locale to fragment cache keys itself — without it,
-    switching language served whichever language rendered the post first. %>
-<% cache [post, Current.user&.id, post.voted_by?(Current.user), post.anonymous?, I18n.locale] do %>
-  <% post_actions = capture do %>
-    <% unless guest? %>
-      <%= render "posts/like_button", post: post %>
-      <%= render "shared/post_embed_action", post: post, url: post_url(post) %>
-    <% end %>
-    <% if post.user == Current.user && !guest? %>
-      <%= button_to t("actions.delete"), post_path(post), method: :delete,
-            class: "feed-action",
-            form_class: "feed-action-form",
-            data: { turbo_confirm: t("actions.confirm_delete") } %>
-    <% end %>
-  <% end %>
-
-  <% post_meta = capture do %>
-    <% if post.outfit %>
-      <em><%= t("post.outfit_label") %>: <%= link_to post.outfit.name, outfit_path(post.outfit) %></em>
-    <% end %>
-    <% if post.item %>
-      <em><%= t("post.item_label") %>: <%= link_to post.item.title, item_path(post.item) %></em>
-    <% end %>
-  <% end %>
-
-  <% embed = post.link_embed_record %>
-  <%= render "shared/post_card",
-        post: post,
-        name: post.author_name,
-        url: post_path(post),
-        author_url: (post.anonymous? || post.user&.guest? ? nil : user_path(post.user)),
-        post_url: post_path(post),
-        content: rich_text(post.body),
-        title: strip_tags(post.body.to_s).squish.truncate(88, separator: " "),
-        show_votes: true,
-        vote_path: post_vote_path(post),
-        vote_score: post.score,
-        upvoted: Current.user.present? && post.upvoted_by?(Current.user),
-        downvoted: Current.user.present? && post.downvoted_by?(Current.user),
-        meta: post_meta.presence,
-        media: (render("shared/link_embed", embed:) if embed),
-        actions: post_actions,
-        frame: false %>
+<%# The viewer's like, vote and delete are drawn fresh; only what every viewer
+    sees is cached: the rendered body and the link embed. Keyed on the viewer,
+    the whole card was a private copy per person per post. %>
+<% body = capture do %>
+  <% cache [post, :body] do %><%= rich_text(post.body) %><% end %>
 <% end %>
+<% embed = post.link_embed_record %>
+<% media = capture do %>
+  <% cache [post, :embed, I18n.locale] do %><%= render("shared/link_embed", embed:) %><% end %>
+<% end if embed %>
+<% post_actions = capture do %>
+  <% unless guest? %>
+    <%= render "posts/like_button", post: post %>
+    <%= render "shared/post_embed_action", post: post, url: post_url(post) %>
+  <% end %>
+  <% if post.user == Current.user && !guest? %>
+    <%= button_to t("actions.delete"), post_path(post), method: :delete,
+          class: "feed-action",
+          form_class: "feed-action-form",
+          data: { turbo_confirm: t("actions.confirm_delete") } %>
+  <% end %>
+<% end %>
+
+<% post_meta = capture do %>
+  <% if post.outfit %>
+    <em><%= t("post.outfit_label") %>: <%= link_to post.outfit.name, outfit_path(post.outfit) %></em>
+  <% end %>
+  <% if post.item %>
+    <em><%= t("post.item_label") %>: <%= link_to post.item.title, item_path(post.item) %></em>
+  <% end %>
+<% end %>
+
+<%= render "shared/post_card",
+      post: post,
+      name: post.author_name,
+      url: post_path(post),
+      author_url: (post.anonymous? || post.user&.guest? ? nil : user_path(post.user)),
+      post_url: post_path(post),
+      content: body,
+      title: strip_tags(post.body.to_s).squish.truncate(88, separator: " "),
+      show_votes: true,
+      vote_path: post_vote_path(post),
+      vote_score: post.score,
+      upvoted: Current.user.present? && post.upvoted_by?(Current.user),
+      downvoted: Current.user.present? && post.downvoted_by?(Current.user),
+      meta: post_meta.presence,
+      media: media,
+      actions: post_actions,
+      frame: false %>

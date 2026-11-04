@@ -462,7 +462,7 @@ items:
   item: Drop Current.user&.id from the post card cache key and move viewer-specific
     bits (like state, delete button) outside the cached fragment; every viewer gets
     a private copy of every card.
-  status: open
+  status: done
 - id: amber-057
   app: amber
   area: performance
