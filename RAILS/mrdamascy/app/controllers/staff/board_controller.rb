@@ -3,15 +3,12 @@
 class Staff::BoardController < ApplicationController
   # Columns Placed/Confirmed/Preparing/Ready (APP_SPEC §7); from ready the
   # board shows "—" and the courier takes over.
-  BOARD_STATES = %w[placed confirmed preparing ready].freeze
+  BOARD_STATES = Order::BOARD_STATES
 
   before_action -> { require_role!(:staff) }
 
   def show
-    @orders_by_state = Order.where(state: BOARD_STATES)
-                            .includes(:order_items)
-                            .order(:placed_at, :id)
-                            .group_by(&:state)
+    @orders_by_state = Order.board_columns
   end
 
   # One big touch target per order card: advance the kitchen state and swap

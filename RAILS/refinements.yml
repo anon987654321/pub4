@@ -5764,7 +5764,7 @@ items:
   path: RAILS/mrdamascy/app/views/staff/board/_order_card.html.erb
   item: Show each card's age (minutes since placed_at) and play a chime when a new
     order lands on the board.
-  status: open
+  status: done
 - id: mrdamascy-087
   app: mrdamascy
   area: staff
@@ -5796,7 +5796,7 @@ items:
   path: RAILS/mrdamascy/app/views/staff/board/show.html.erb
   item: Push new and advanced orders to the staff board with turbo_stream_from and
     Order broadcasts over solid_cable; the board only changes when staff tap it.
-  status: open
+  status: done
 - id: mrdamascy-091
   app: mrdamascy
   area: tests

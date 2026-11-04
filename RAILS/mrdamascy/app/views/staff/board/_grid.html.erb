@@ -1,0 +1,7 @@
+<%# The board's columns, one root (#board_grid) that Order broadcasts
+    replace whenever an order lands or moves, so counts and columns stay
+    true without a tap. Locals: orders_by_state (state => orders). %>
+<div class="board-grid" id="board_grid">
+  <%= render partial: "staff/board/column", collection: Order::BOARD_STATES, as: :state,
+             locals: { orders_by_state: } %>
+</div>

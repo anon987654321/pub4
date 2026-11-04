@@ -1,7 +1,8 @@
 <% content_for :title, t("staff.title") %>
 
 <%# Staff::BoardController#show provides @orders_by_state (grouped hash).
-    Columns per state; each card's button advances the order one step.
+    Columns per state (staff/board/_grid); each card's button advances the
+    order one step.
     Cards carry order_card_<id> DOM ids (staff/board/_order_card) so the
     advance turbo-stream can replace or remove them. %>
 <% orders_by_state = @orders_by_state.presence || {} %>
@@ -14,18 +15,9 @@
   <%= tag.p t("staff.empty"), class: "board-empty" %>
 <% end %>
 
-<div class="board-grid">
-  <% %w[placed confirmed preparing ready].each do |state| %>
-    <% column_orders = orders_by_state[state] || [] %>
-    <section class="board-column">
-      <h2 class="board-column-title">
-        <%= t("orders.states.#{state}") %>
-        <span class="board-count"><%= column_orders.size %></span>
-      </h2>
-
-      <% column_orders.each do |order| %>
-        <%= render "staff/board/order_card", order: order %>
-      <% end %>
-    </section>
-  <% end %>
-</div>
+<%# Live: Order broadcasts replace #board_grid on staff_board; the board
+    controller chimes for a newly placed order and ticks each card's age. %>
+<%= turbo_stream_from "staff_board" %>
+<%= tag.div data: { controller: "board", board_age_template_value: t("staff.age", minutes: "%{minutes}") } do %>
+  <%= render "staff/board/grid", orders_by_state: %>
+<% end %>

@@ -1,0 +1,10 @@
+<%# One board column: its state's title and count, then its cards.
+    Locals: state, orders_by_state. %>
+<% column_orders = orders_by_state[state] || [] %>
+<%= tag.section class: "board-column", data: { board_column: state } do %>
+  <h2 class="board-column-title">
+    <%= t("orders.states.#{state}") %>
+    <%= tag.span column_orders.size, class: "board-count" %>
+  </h2>
+  <%= render partial: "staff/board/order_card", collection: column_orders, as: :order %>
+<% end %>

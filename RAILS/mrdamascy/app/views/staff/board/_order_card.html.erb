@@ -1,12 +1,16 @@
 <%# One kitchen order card on the staff board. DOM contract (Task 6):
     root id "order_card_<id>" so Staff::BoardController#advance can
     turbo-stream replace or remove the card after advancing. %>
-<article class="card board-card" id="order_card_<%= order.id %>">
+<article class="card board-card" id="order_card_<%= order.id %>" data-order-id="<%= order.id %>">
   <p class="board-card-top">
     <strong>#<%= order.id %></strong>
     <%= tag.span t(order.delivery_mode == "pickup" ? "orders.mode.pickup" : "orders.mode.delivery"),
           class: "badge badge-mode" %>
     <%= tag.span money(order.total_ore) %>
+    <% if order.placed_at %>
+      <%= tag.time t("staff.age", minutes: ((Time.current - order.placed_at) / 60).floor.clamp(0..)),
+            datetime: order.placed_at.iso8601, class: "board-card-age", data: { placed_at: true } %>
+    <% end %>
   </p>
   <ul class="fact-list board-card-items">
     <% order.order_items.each do |line| %>

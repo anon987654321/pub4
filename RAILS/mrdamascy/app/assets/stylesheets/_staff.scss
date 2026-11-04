@@ -119,3 +119,9 @@
   font-weight: 700;
   margin: 0 0 4px;
 }
+
+// How long the order has waited, ticked by the board controller.
+.board-card-age {
+  color: var(--ink-soft);
+  font-size: var(--text-meta);
+}

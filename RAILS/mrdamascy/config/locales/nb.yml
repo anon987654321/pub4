@@ -336,6 +336,7 @@ nb:
     rule_two: Ti stjerner = en gratis wrap.
     rule_three: Stjernene er dine for alltid — nesten.
   staff:
+    age: "%{minutes} min siden"
     title: Kjøkkenbrettet
     subtitle: Alt som skal grilles, i én rekke
     columns:

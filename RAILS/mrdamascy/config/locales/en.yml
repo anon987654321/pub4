@@ -336,6 +336,7 @@ en:
     rule_two: Ten stars = a free wrap.
     rule_three: The stars are yours forever — almost.
   staff:
+    age: "%{minutes} min ago"
     title: Kitchen board
     subtitle: Everything to be grilled, in one row
     columns:

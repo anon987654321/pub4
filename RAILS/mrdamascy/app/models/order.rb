@@ -17,6 +17,8 @@ class Order < ApplicationRecord
   # The moves whose moment is kept (placed_at is set on create), so ETAs
   # and the board can be measured.
   TIMED_STATES = %w[confirmed ready picked_up delivered].freeze
+  # The staff board's columns; from ready the courier takes over.
+  BOARD_STATES = %w[placed confirmed preparing ready].freeze
 
   belongs_to :user, optional: true
   belongs_to :kitchen
@@ -38,9 +40,20 @@ class Order < ApplicationRecord
   before_validation :assign_tracking_token
   before_validation :set_placed_at, on: :create
 
+  # The staff board is pushed, not polled: a new order or a move redraws
+  # its grid for every open board.
+  # (One after_commit: create and update hooks naming the same method keep
+  # only the last.)
+  after_commit :refresh_board, on: %i[create update], if: -> { previously_new_record? || saved_change_to_state? }
+
   scope :recent, -> { order(placed_at: :desc, id: :desc) }
   scope :live, -> { where(state: %w[placed confirmed preparing ready picked_up]) }
   scope :for_state, ->(state) { where(state: state) }
+
+  # The board's orders by column, oldest first.
+  def self.board_columns
+    where(state: BOARD_STATES).includes(:order_items).order(:placed_at, :id).group_by(&:state)
+  end
 
   # --- State machine (plain string state + guard methods — APP_SPEC §4) ---
 
@@ -150,6 +163,13 @@ class Order < ApplicationRecord
   end
 
   private
+
+  def refresh_board
+    Turbo::StreamsChannel.broadcast_replace_to(
+      "staff_board", target: "board_grid", partial: "staff/board/grid",
+                      locals: { orders_by_state: Order.board_columns }
+    )
+  end
 
   def move_to!(next_state)
     times = TIMED_STATES.include?(next_state) ? { "#{next_state}_at" => Time.current } : {}

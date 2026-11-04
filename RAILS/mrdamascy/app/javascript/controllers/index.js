@@ -14,6 +14,7 @@ import VippsMockController from "controllers/vipps_mock_controller"
 import TrackController from "controllers/track_controller"
 import ToastController from "controllers/toast_controller"
 import RetryController from "controllers/retry_controller"
+import BoardController from "controllers/board_controller"
 
 application.register("item-sheet", ItemSheetController)
 application.register("cart-bar", CartBarController)
@@ -22,3 +23,4 @@ application.register("vipps-mock", VippsMockController)
 application.register("track", TrackController)
 application.register("toast", ToastController)
 application.register("retry", RetryController)
+application.register("board", BoardController)
