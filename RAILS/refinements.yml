@@ -742,7 +742,7 @@ items:
   path: RAILS/amber/app/views/items/show.html.erb
   item: Group the eight item-page actions into primary (Worn today, Edit) and a secondary
     menu (AI analyse, AI tag, declutter, archive).
-  status: open
+  status: done
 - id: amber-092
   app: amber
   area: ux

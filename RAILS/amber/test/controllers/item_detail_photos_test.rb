@@ -53,4 +53,18 @@ class ItemDetailPhotosTest < ActionDispatch::IntegrationTest
     assert_select ".color-swatch-row svg.color-swatch[aria-hidden=true]"
     assert_select ".color-swatch-row [style]", 0
   end
+
+  # Eight actions sat in one row. Worn today, joy and Edit stay in reach; AI
+  # analysis, tagging, the declutter review and archiving sit under More tools.
+  test "the item page leads with its everyday actions and folds the rest away" do
+    get item_path(@item)
+    nav = "nav.luxury-actions"
+    assert_select "#{nav} > form[action=?]", wear_item_path(@item)
+    assert_select "#{nav} > a[href=?]", edit_item_path(@item)
+    assert_select "#{nav} > details.wardrobe-more-tools > summary", text: I18n.t("wardrobe.more_tools")
+    [ ai_analyze_item_path(@item), ai_tag_item_path(@item), archive_item_path(@item) ].each do |path|
+      assert_select "#{nav} > details form[action=?]", path
+    end
+    assert_select "#{nav} > details a[href=?]", review_declutter_path(@item)
+  end
 end

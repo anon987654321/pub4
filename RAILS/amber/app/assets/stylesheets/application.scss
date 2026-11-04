@@ -56,6 +56,13 @@
   padding-inline: 1rem;
 }
 
+/* The secondary actions' disclosure takes the whole row, in the flex row and
+   in the two-column grid phones get. */
+.item-detail--luxury .luxury-actions > .wardrobe-more-tools {
+  flex-basis: 100%;
+  grid-column: 1 / -1;
+}
+
 .commerce-fit-list {
   margin: 0;
   padding: 0;
