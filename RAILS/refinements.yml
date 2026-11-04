@@ -495,7 +495,7 @@ items:
   path: RAILS/amber/app/views/home/index.html.erb
   item: Set a guest-facing title on the home page; guests get 'Dashboard', the signed-in
     label.
-  status: open
+  status: done
 - id: amber-061
   app: amber
   area: seo

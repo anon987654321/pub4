@@ -1,4 +1,6 @@
-<% content_for :title, t("home.dashboard") %>
+<%# "Dashboard" is the signed-in label; a guest and a crawler get the page
+    they are on, the four looks its h1 names. %>
+<% content_for :title, authenticated? ? t("home.dashboard") : t("home.looks.title") %>
 <%# The signed-out landing page is the only surface a crawler reaches first.
     Describe the demo capsule it can actually follow; the signed-in dashboard
     is private and gets nothing. %>
