@@ -4139,7 +4139,7 @@ items:
   item: 'Stop rendering ''viewers: 0'' on live_streams/show: viewer_count is never
     written, so either count presence from the stream''s Turbo/Action Cable subscribers
     or hide the line.'
-  status: open
+  status: done
 - id: brgen-391
   app: brgen
   area: tv

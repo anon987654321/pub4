@@ -189,6 +189,18 @@ class TvShowsAndNotesTest < ActionDispatch::IntegrationTest
     refute_equal I18n.t("tv.live_streams.viewers", count: 1), I18n.t("tv.live_streams.viewers", count: 2)
   end
 
+  test "a stream with no recorded viewers does not claim zero" do
+    stream = Tv::LiveStream.create!(
+      user: @owner, channel: @channel, title: "Stille sending", status: "live", viewer_count: 0
+    )
+    host! "tv.brgen.no"
+
+    get tv.live_stream_path(stream)
+
+    assert_response :success
+    assert_no_match I18n.t("tv.live_streams.viewers", count: 0), response.body
+  end
+
   test "the new live stream form says streaming is not running" do
     with_live_streaming(true) do
       sign_in_as(@owner)
