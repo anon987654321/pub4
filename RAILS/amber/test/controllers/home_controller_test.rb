@@ -126,6 +126,20 @@ class HomeControllerTest < ActionDispatch::IntegrationTest
     assert_select ".dash-stats dd", text: "50%"
   end
 
+  # The week's plan formats a Date with :day, which existed only under
+  # time.formats, so the dashboard raised as soon as anything was planned.
+  def test_signed_in_dashboard_shows_the_week_plan
+    user = sign_in_as("dashboard-plan@example.com")
+    outfit = user.outfits.create!(name: "Fredagsantrekk")
+    user.planned_outfits.create!(outfit:, planned_date: Date.current)
+
+    stub_weather { get root_url }
+
+    assert_response :success
+    assert_select ".plan-date", text: I18n.l(Date.current, format: :day)
+    assert_select ".plan-row a", text: "Fredagsantrekk"
+  end
+
   def test_signed_in_dashboard_survives_an_empty_wardrobe
     sign_in_as("dashboard-empty@example.com")
 

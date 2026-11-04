@@ -14,6 +14,7 @@ en:
   date:
     formats:
       month: "%B %Y"
+      day: "%a %-d"
   compose:
     bold: "Bold"
     italic: "Italic"
