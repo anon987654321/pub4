@@ -16,14 +16,12 @@ class UsersController < ApplicationController
     # to the fediverse that 404s in a browser is worse than not federating.
     scope = User.public_profiles.includes(:dating_profile)
     @user = scope.find_by(username: params[:id]) || scope.find(params[:id])
-    # The same preloads HomeController gives the same partial: the card reads
-    # post.image.attached?, one query per post without with_attached_image.
-    @posts = @user.posts.includes(:user, :community, :votes).with_attached_image.order(created_at: :desc).limit(20)
+    @posts = profile_posts
     @followers_count = @user.followers.count
     @following_count = @user.following.count
     @active_follow = authenticated? && Current.user.following?(@user)
     @active_block = authenticated? && Current.user != @user && Current.user.blocking?(@user)
-    @activity = ActivityEvent.visible.public_only.where(actor_id: @user.id).recent.limit(20)
+    @activity = profile_activity
     @stores = @user.marketplace_stores.active.limit(8)
     @casual_listings = @user.marketplace_listings.live.casual.limit(8)
     @restaurants = @user.takeaway_restaurants.active.limit(8)
@@ -89,6 +87,21 @@ class UsersController < ApplicationController
   end
 
   private
+
+  # Only what the profile may say this person wrote and this viewer may read:
+  # no anonymous or Live posts, nothing removed, no private community the
+  # viewer is not in. The preloads match HomeController's for the same card,
+  # which reads post.image.attached? (one query per post without them).
+  def profile_posts
+    readable = @user.posts.kept.attributed.visible_to(Current.user)
+    readable.includes(:user, :community, :votes).with_attached_image.order(created_at: :desc).limit(20)
+  end
+
+  # The same rule for the activity list, which names the person beside each post.
+  def profile_activity
+    events = ActivityEvent.visible.public_only.readable_by(Current.user).attributable
+    events.where(actor_id: @user.id).recent.limit(20)
+  end
 
   def profile_params
     params.require(:user).permit(:username, :display_name)

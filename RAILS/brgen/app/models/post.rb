@@ -121,6 +121,10 @@ class Post < ApplicationRecord
 
   # Geo-stamped Live posts (Jodel layer). Not all posts are Live.
   scope :live,   -> { where.not(latitude: nil).where.not(longitude: nil) }
+  # Posts that name their author: neither anonymous nor geo-stamped Live, the
+  # query form of #attributed?. A profile listing anything else unmasks who
+  # wrote an anonymous post.
+  scope :attributed, -> { where(anonymous: false).where("posts.latitude IS NULL OR posts.longitude IS NULL") }
   # No existence guard: a missing posts_fts raises, and Shared::LiveSearch
   # checks for the table first and falls back to LIKE, so an empty answer here
   # would only hide a broken index (raw_schema_objects_test holds this).

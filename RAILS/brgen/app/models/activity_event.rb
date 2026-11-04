@@ -16,6 +16,19 @@ class ActivityEvent < ApplicationRecord
   scope :recent, -> { order(created_at: :desc) }
   # Never surface private activity on a public profile (dating likes are private).
   scope :public_only, -> { where(visibility: "public") }
+  # A post's event follows the post as it is now: once the post is removed, or
+  # when it sits in a private community the viewer is not in, its title must
+  # not surface here either. Checked at read time because the event row is
+  # written once, at creation, and never learns of either change.
+  scope :readable_by, lambda { |viewer|
+    readable = Post.kept.visible_to(viewer).select(:id)
+    where.not(subject_type: "Post").or(where(subject_type: "Post", subject_id: readable))
+  }
+  # On a profile the event also says who wrote the post, so an anonymous or
+  # Live post's event would unmask its author.
+  scope :attributable, lambda {
+    where.not(subject_type: "Post").or(where(subject_type: "Post", subject_id: Post.attributed.select(:id)))
+  }
 
   # The verticals the activity page offers as filters, in the order shown.
   # "general" stands where "core" stood: no event was ever filed under core.

@@ -29,4 +29,25 @@ class ActivityEventsControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_select ".activity-event-list", count: 0
   end
+
+  test "removed posts and private-community posts leave the public activity feed" do
+    author = User.create!(email_address: "activity-#{SecureRandom.hex(4)}@brgen.no", password: "password123",
+                          username: "activity_#{SecureRandom.hex(3)}", city: @city)
+    club = Community.create!(slug: "klubb-#{SecureRandom.hex(3)}", name: "Klubb", user: author, city: @city,
+                             privacy: "private")
+    open_title = "Åpen #{SecureRandom.hex(3)}"
+    removed_title = "Fjernet #{SecureRandom.hex(3)}"
+    private_title = "Lukket #{SecureRandom.hex(3)}"
+    Post.create!(user: author, city: @city, title: open_title, content: "hei")
+    removed = Post.create!(user: author, city: @city, title: removed_title, content: "hei")
+    removed.update_columns(removed_at: Time.current)
+    Post.create!(user: author, city: @city, community: club, title: private_title, content: "hei")
+
+    get activity_events_path
+
+    assert_response :success
+    assert_includes response.body, open_title
+    refute_includes response.body, removed_title
+    refute_includes response.body, private_title
+  end
 end

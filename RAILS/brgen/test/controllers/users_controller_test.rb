@@ -44,6 +44,41 @@ class UsersControllerTest < ActionDispatch::IntegrationTest
     assert_equal I18n.t("shared.email_verification.signup_notice"), flash[:notice]
   end
 
+  test "a profile lists only posts that name their author and the viewer may read" do
+
+    author = User.create!(email_address: "profil-#{SecureRandom.hex(4)}@brgen.no", password: "password123",
+                          username: "profil_#{SecureRandom.hex(3)}")
+    club = Community.create!(slug: "lukket-#{SecureRandom.hex(3)}", name: "Lukket", user: User.create!(
+      email_address: "eier-#{SecureRandom.hex(4)}@brgen.no", password: "password123"
+    ), city: @city, privacy: "private")
+    titles = {
+      named: "Navngitt #{SecureRandom.hex(3)}",
+      anonymous: "Anonym #{SecureRandom.hex(3)}",
+      live: "Live #{SecureRandom.hex(3)}",
+      removed: "Fjernet #{SecureRandom.hex(3)}",
+      private: "Lukket #{SecureRandom.hex(3)}",
+    }
+    write = ->(title, community: nil, **state) do
+      Post.create!(user: author, city: @city, community:, title:, content: "hei").tap do |row|
+        row.update_columns(state) if state.any?
+      end
+    end
+
+    write.(titles[:named])
+    write.(titles[:anonymous], anonymous: true)
+    write.(titles[:live], latitude: 60.39, longitude: 5.32)
+    write.(titles[:removed], removed_at: Time.current)
+    write.(titles[:private], community: club)
+
+    get user_path(author)
+
+    assert_response :success
+    assert_includes response.body, titles[:named]
+    %i[anonymous live removed private].each do |kind|
+      refute_includes response.body, titles[kind], "the profile shows the #{kind} post"
+    end
+  end
+
   test "a deletion-pending public profile is not reachable" do
     subject = User.create!(
       email_address: "leaving-#{SecureRandom.hex(4)}@brgen.no",
