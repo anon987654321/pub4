@@ -16,7 +16,9 @@
   <% age = port.last_updated && (Date.current - port.last_updated).to_i %>
   <% if age %>
     <% stale = age > 365 %>
-    <%= tag.span t(stale ? "ports.age_stale" : "ports.age_updated", count: age),
+    <%# A machine date for the relative age, and the date itself on hover. %>
+    <%= tag.span tag.time(t(stale ? "ports.age_stale" : "ports.age_updated", count: age),
+                          datetime: port.last_updated.iso8601, title: l(port.last_updated)),
                  class: class_names("data-state", "data-state--stale": stale) %>
   <% end %>
 </li>

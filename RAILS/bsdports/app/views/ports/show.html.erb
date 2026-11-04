@@ -81,7 +81,7 @@
 -<%= update.old_version %>
 +<%= update.new_version %>
 <%= update.commit_message %></code></pre>
-          <small><%= update.committed_at&.strftime("%Y-%m-%d") %></small>
+          <%= tag.small date_tag(update.committed_at) %>
         </li>
       <% end %>
     </ul>
@@ -100,7 +100,7 @@
             <%= adv.identifier %>
           <% end %>
           <%= tag.small adv.severity %>
-          <small><%= adv.published_at&.strftime("%Y-%m-%d") %></small>
+          <%= tag.small date_tag(adv.published_at) %>
         </li>
       <% end %>
     </ul>

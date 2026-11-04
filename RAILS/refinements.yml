@@ -4337,7 +4337,7 @@ items:
   path: RAILS/bsdports/app/views/ports/show.html.erb
   item: Format version-history and advisory dates with l(date) instead of strftime('%Y-%m-%d'),
     and wrap them in <time datetime>.
-  status: open
+  status: done
 - id: bsdports-017
   app: bsdports
   area: markup
@@ -4631,7 +4631,7 @@ items:
   path: RAILS/bsdports/app/views/ports/_row.html.erb
   item: Wrap the port-row age span in <time datetime=last_updated> so the 'updated
     12d ago' text has a machine date and a hover title.
-  status: open
+  status: done
 - id: bsdports-053
   app: bsdports
   area: ui
