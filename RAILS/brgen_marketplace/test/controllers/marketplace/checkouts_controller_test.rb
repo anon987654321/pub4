@@ -141,6 +141,8 @@ class Marketplace::CheckoutsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "buy now notification uses marketplace translations" do
+    # Out of the reuse window, so buy-now creates its own order.
+    @order.update_columns(created_at: 1.hour.ago)
     sign_in(@buyer)
     with_stripe_start("https://checkout.stripe.com/c/pay/cs_probe") do
       post marketplace.checkout_path, params: { provider: "stripe", listing_id: @listing.id }
@@ -170,5 +172,35 @@ class Marketplace::CheckoutsControllerTest < ActionDispatch::IntegrationTest
     @order.reload
     assert_equal "paid", @order.payment_status
     assert_equal "paid", @order.status
+  end
+
+  # Each click used to create an order and notify the seller again.
+  test "a second buy-now click reuses the order the first one made" do
+    @order.update_columns(created_at: 1.hour.ago)
+    sign_in(@buyer)
+    with_stripe_start("https://checkout.stripe.com/c/pay/cs_probe") do
+      assert_difference -> { @listing.orders.count }, 1 do
+        2.times { post marketplace.checkout_path, params: { provider: "stripe", listing_id: @listing.id } }
+      end
+    end
+    made = @listing.orders.order(:id).last
+    assert_equal 1, Notification.where(user_id: @seller.id, source_type: made.class.name, source_id: made.id).count
+  end
+
+  # When the first click already reached the PSP, the second shows that order
+  # instead of opening a second payment session.
+  test "a buy-now click while the first is with the PSP shows that order" do
+    @order.update_columns(created_at: 1.hour.ago)
+    sign_in(@buyer)
+    with_stripe_start("https://checkout.stripe.com/c/pay/cs_probe") do
+      post marketplace.checkout_path, params: { provider: "stripe", listing_id: @listing.id }
+      first = @listing.orders.order(:id).last
+      first.update_columns(payment_status: "pending", status: "pending_payment", payment_provider: "stripe")
+
+      assert_no_difference -> { @listing.orders.count } do
+        post marketplace.checkout_path, params: { provider: "stripe", listing_id: @listing.id }
+      end
+      assert_redirected_to marketplace.order_path(first)
+    end
   end
 end

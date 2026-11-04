@@ -136,49 +136,27 @@ class Marketplace::CheckoutsController < Marketplace::BaseController
     payable_orders.presence
   end
 
-  # The buy bar's one-click order: same construction as OrdersController#create
-  # (variant-aware price, quantity 1) minus the offer framing — this is a
-  # purchase, not a negotiation. The seller still gets the order notification.
+  # The buy bar's one-click lane: Marketplace::BuyNow builds (or reuses) the
+  # order, and this answers a refusal or an order already with the PSP.
   def create_buy_now_order
-    listing = Marketplace::Listing.includes(:store).find_by(id: params[:listing_id])
-    if listing.nil? || !listing.buyable? || listing.expired? || listing.status != "active"
-      redirect_to(listing ? listing_path(listing) : cart_path, alert: t("flash.marketplace.offer_failed"))
-      return nil
-    end
-    if params[:provider].to_s == "dintero" && !Marketplace::Payments::DinteroCheckout.supported_listing?(listing)
-      redirect_to listing_path(listing), alert: t("flash.marketplace.dintero_seller_not_ready")
-      return nil
-    end
-    if listing.user_id == Current.user.id
-      redirect_to listing_path(listing), alert: t("flash.marketplace.offer_failed")
-      return nil
-    end
+    outcome = Marketplace::BuyNow.new(buyer: Current.user, listing_id: params[:listing_id],
+                                      variant_id: params[:variant_id], provider: params[:provider]).call
+    return outcome.order if outcome.order && !outcome.in_flight
 
-    variant = listing.variants.find_by(id: params[:variant_id])
-    order = listing.orders.create(
-      buyer: Current.user,
-      variant: variant,
-      price_cents: variant&.price_cents_or_listing || listing.price_cents,
-      quantity: 1,
-    )
-    unless order.persisted?
-      redirect_to listing_path(listing), alert: t("flash.marketplace.offer_failed")
-      return nil
+    answer_buy_now(outcome)
+    nil
+  end
+
+  def answer_buy_now(outcome)
+    order = outcome.order
+    if order
+      status = t("flash.marketplace.payment_statuses.#{order.payment_status}")
+      notice = t("flash.marketplace.payment_recorded", status:, provider: order.payment_provider)
+      redirect_to order_path(order), notice:
+    else
+      listing = outcome.listing
+      redirect_to(listing ? listing_path(listing) : cart_path, alert: t(outcome.refusal))
     end
-    # By id, not listing.user: the listing arrives bare-loaded and
-    # strict_loading raises on the lazy association — the same trap that hid
-    # in ModerationWorkflow#penalize_owner, caught here by this lane's test
-    # before it could reach a customer mid-payment.
-    seller = User.find_by(id: listing.user_id)
-    order.deliver_notification(
-      seller,
-      title: I18n.t("marketplace.order_notification.new_order"),
-      body: I18n.t("marketplace.order_notification.new_order_body", buyer: Current.user.display_name, title: listing.title),
-      source: order,
-      kind: "order",
-    ) if seller
-    order.record_activity!("MarketplaceOfferSent", actor: Current.user, source_vertical: "marketplace")
-    order
   end
 
   # The host itself or a subdomain of it, over https. Vipps answers from

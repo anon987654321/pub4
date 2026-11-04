@@ -2798,7 +2798,7 @@ items:
     for the same listing and variant created in the last few minutes instead of creating
     a new order on every click, so a double tap does not leave two orders and notify
     the seller twice.'
-  status: open
+  status: done
 - id: brgen-231
   app: brgen
   area: payments
