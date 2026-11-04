@@ -84,6 +84,19 @@ class ChannelsControllerTest < ActionDispatch::IntegrationTest
       assert_includes response.body, "hei fra byen"
     end
 
+    test "the channel list pluralises its message count" do
+      get channel_path("brgen")
+      conversation = Conversation.find_by!(slug: "brgen", city_id: @city.id)
+      post conversation_messages_path(conversation), params: { message: { content: "hei", message_type: "text" } }
+      count = conversation.messages.count
+      # Out of the active window, so the card shows its message total.
+      Message.where(conversation_id: conversation.id).update_all(created_at: 1.day.ago)
+
+      get channels_path
+      assert_operator count, :>, 1
+      assert_includes response.body, I18n.t("channels.messages_count", count:)
+    end
+
     test "a seated reader gets exactly one composer" do
       get channel_path("brgen")
       get channel_path("brgen")

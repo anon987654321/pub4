@@ -933,7 +933,7 @@ items:
   item: Pluralize the channel index counts with t('channels.messages', count:) and
     t('channels.active', count:) instead of concatenating a number with the singular
     'melding', which reads '12 melding' in nb.
-  status: open
+  status: done
 - id: brgen-007
   app: brgen
   area: channels
@@ -1353,14 +1353,14 @@ items:
   path: RAILS/brgen/app/assets/stylesheets/_brgen_feed_posts.scss
   item: Put the .feed-action transform transition behind prefers-reduced-motion, as
     _brgen_composer.scss already does for its motion.
-  status: open
+  status: done
 - id: brgen-060
   app: brgen
   area: css
   size: S
   path: RAILS/brgen/app/assets/stylesheets/_brgen_feed_posts.scss
   item: Remove the duplicated font-size and font-variant-numeric lines in .feed-action-count.
-  status: open
+  status: done
 - id: brgen-061
   app: brgen
   area: dating
@@ -1868,7 +1868,7 @@ items:
   path: RAILS/brgen/app/controllers/posts_controller.rb
   item: Move the English defaults in posts#share flashes ('There is nothing to share',
     'Shared draft') into nb and en locales.
-  status: open
+  status: done
 - id: brgen-120
   app: brgen
   area: i18n
@@ -1876,7 +1876,7 @@ items:
   path: RAILS/brgen/config/locales/nb.yml
   item: 'Align feed.compose_prompt: nb says ''Del noe spennende nå'' and en says ''What
     are you up to today?''; pick one meaning for both.'
-  status: open
+  status: done
 - id: brgen-121
   app: brgen
   area: maps
@@ -2513,7 +2513,7 @@ items:
   path: RAILS/brgen/app/views/shared/_mobile_chrome.html.erb
   item: Link the account page (export, 2FA, delete) from the More sheet; nothing in
     brgen's views links to it.
-  status: open
+  status: done
 - id: brgen-197
   app: brgen
   area: nav
@@ -2521,7 +2521,7 @@ items:
   path: RAILS/brgen/app/views/shared/_mobile_chrome.html.erb
   item: Recompute aria-current on the tab bar after each Turbo visit; the bar is data-turbo-permanent,
     so it keeps the first page's current item.
-  status: open
+  status: done
 - id: brgen-198
   app: brgen
   area: newsletter
@@ -2530,7 +2530,7 @@ items:
   item: Move the hidden preheader <div> from <head> into the start of <body> in the
     shared mailer layout; a div in head is invalid and many clients drop it, so the
     inbox preview falls back to the first body text.
-  status: open
+  status: done
 - id: brgen-199
   app: brgen
   area: newsletter
@@ -2539,7 +2539,7 @@ items:
   item: Build the preferences and one-click unsubscribe URLs on the subscriber's city
     domain instead of ENV APP_HOST, so a non-Bergen subscriber manages preferences
     on their own city's site.
-  status: open
+  status: done
 - id: brgen-200
   app: brgen
   area: newsletter
@@ -2548,7 +2548,7 @@ items:
   item: Render NewsletterMailer#edition inside I18n.with_locale(subscription.locale);
     the stored locale is never used, so an English subscriber gets the section titles
     in whatever locale the job runs in.
-  status: open
+  status: done
 - id: brgen-201
   app: brgen
   area: newsletter
@@ -2574,7 +2574,7 @@ items:
   item: Change the <main> wrapper in email_subscriptions/show to a <section>; the
     application layout already provides <main id='main-content'>, so the page has
     two main landmarks.
-  status: open
+  status: done
 - id: brgen-204
   app: brgen
   area: notifications
@@ -2683,7 +2683,7 @@ items:
   size: S
   path: RAILS/__shared/app/views/shared/_welcome_onboarding.html.erb
   item: Give the onboarding artwork alt=""; it repeats the title heading beside it.
-  status: open
+  status: done
 - id: brgen-218
   app: brgen
   area: onboarding
@@ -2698,7 +2698,7 @@ items:
   size: S
   path: RAILS/__shared/app/views/shared/_welcome_onboarding.html.erb
   item: Make the onboarding title an h2; the home page already has an h1.
-  status: open
+  status: done
 - id: brgen-220
   app: brgen
   area: onboarding
@@ -3455,7 +3455,7 @@ items:
   size: S
   path: RAILS/brgen/app/views/users/edit.html.erb
   item: Link to the account page from the profile edit screen.
-  status: open
+  status: done
 - id: brgen-309
   app: brgen
   area: profile
@@ -3463,21 +3463,21 @@ items:
   path: RAILS/brgen/app/views/users/show.html.erb
   item: Show the real post count; @posts is limit(20), so @posts.size caps the profile
     at '20 innlegg'.
-  status: open
+  status: done
 - id: brgen-310
   app: brgen
   area: profile
   size: S
   path: RAILS/brgen/app/views/users/show.html.erb
   item: Show the avatar on the profile header.
-  status: open
+  status: done
 - id: brgen-311
   app: brgen
   area: profile
   size: S
   path: RAILS/brgen/app/views/users/show.html.erb
   item: Show 'Medlem siden <month year>' on the profile.
-  status: open
+  status: done
 - id: brgen-312
   app: brgen
   area: profile
@@ -3492,7 +3492,7 @@ items:
   path: RAILS/brgen/app/views/users/show.html.erb
   item: Wrap the profile's posts in the feed's ul/li list markup like hashtags#show
     does.
-  status: open
+  status: done
 - id: brgen-314
   app: brgen
   area: search
@@ -3508,7 +3508,7 @@ items:
   path: RAILS/brgen/app/controllers/search_controller.rb
   item: Record a recent search only when the query is present and the user is a real
     account, not for guests.
-  status: open
+  status: done
 - id: brgen-316
   app: brgen
   area: search
@@ -3525,7 +3525,7 @@ items:
   path: RAILS/brgen/app/views/search/index.html.erb
   item: Remove the inline rescue nil around record_public_href and handle a missing
     href explicitly.
-  status: open
+  status: done
 - id: brgen-318
   app: brgen
   area: search
@@ -3540,7 +3540,7 @@ items:
   path: RAILS/brgen/app/views/search/index.html.erb
   item: Render an empty state ('Ingen treff for …') when every vertical returns nothing;
     the page currently goes blank.
-  status: open
+  status: done
 - id: brgen-320
   app: brgen
   area: search
@@ -3554,7 +3554,7 @@ items:
   size: S
   path: RAILS/brgen/app/views/search/index.html.erb
   item: Show a result count per section heading.
-  status: open
+  status: done
 - id: brgen-322
   app: brgen
   area: security
@@ -3705,7 +3705,7 @@ items:
   path: RAILS/brgen/app/controllers/stories_controller.rb
   item: Add rate_limit to StoriesController#create and StoryRepliesController#create,
     which have none, so story posting and story-reply DMs cannot be used for spam.
-  status: open
+  status: done
 - id: brgen-341
   app: brgen
   area: stories
@@ -3732,7 +3732,7 @@ items:
     the aria-label currently overrides the link content so the count and streak badges
     are invisible to screen readers, and seen vs unseen is conveyed by border colour
     only.
-  status: open
+  status: done
 - id: brgen-344
   app: brgen
   area: stories
@@ -3742,7 +3742,7 @@ items:
     instead of ad-hoc variant(resize_to_limit: ...) calls in stories/show and stories/index,
     so the pre-processed variants are actually reused, and set the ring image size
     attributes to the thumb''s 3:4 ratio rather than 240x240.'
-  status: open
+  status: done
 - id: brgen-345
   app: brgen
   area: stories
@@ -3751,7 +3751,7 @@ items:
   item: Add the shared report button to stories/show for viewers who are not the author;
     reporting is wired only on posts and messages, so an abusive story cannot be flagged
     before it expires.
-  status: open
+  status: done
 - id: brgen-346
   app: brgen
   area: stories

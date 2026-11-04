@@ -26,3 +26,5 @@
     <%= link_to t("actions.cancel"), main_app.user_path(@user), class: "button button-ghost" %>
   </div>
 <% end %>
+
+<%= tag.p link_to(t("profile.account_link"), main_app.account_path) %>

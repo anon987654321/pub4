@@ -5,6 +5,8 @@
 # point, because the story will not be.
 class StoryRepliesController < ApplicationController
   before_action :require_user_session
+  rate_limit to: 20, within: 10.minutes, only: :create, name: "story_replies",
+    with: -> { redirect_back fallback_location: stories_path, alert: t("shared.flash.rate_limited") }
 
   def create
     # alive, not find: a story that has expired is gone for every other surface,

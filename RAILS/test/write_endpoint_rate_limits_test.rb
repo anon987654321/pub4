@@ -15,6 +15,8 @@ class WriteEndpointRateLimitsTest < Minitest::Test
     "brgen/app/controllers/event_rsvps_controller.rb" => :create,
     "brgen/app/controllers/fediverse/follows_controller.rb" => :create,
     "brgen_maps/app/controllers/maps/places_controller.rb" => :check_in,
+    "brgen/app/controllers/stories_controller.rb" => :create,
+    "brgen/app/controllers/story_replies_controller.rb" => :create,
   }.freeze
 
   def test_each_write_endpoint_declares_a_named_rate_limit_for_its_action

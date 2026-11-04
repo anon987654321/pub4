@@ -16,7 +16,7 @@ class UsersController < ApplicationController
     # to the fediverse that 404s in a browser is worse than not federating.
     scope = User.public_profiles.includes(:dating_profile)
     @user = scope.find_by(username: params[:id]) || scope.find(params[:id])
-    @posts = profile_posts
+    load_posts
     @followers_count = @user.followers.count
     @following_count = @user.following.count
     @active_follow = authenticated? && Current.user.following?(@user)
@@ -92,9 +92,14 @@ class UsersController < ApplicationController
   # no anonymous or Live posts, nothing removed, no private community the
   # viewer is not in. The preloads match HomeController's for the same card,
   # which reads post.image.attached? (one query per post without them).
-  def profile_posts
-    readable = @user.posts.kept.attributed.visible_to(Current.user)
-    readable.includes(:user, :community, :votes).with_attached_image.order(created_at: :desc).limit(20)
+  # The newest twenty this viewer may read, and how many there are in full:
+  # the header counted the list, which stops at twenty.
+  def load_posts
+    readable = @user.posts.kept
+    readable = readable.attributed.visible_to(Current.user)
+    @posts_count = readable.count
+    listed = readable.includes(:user, :community, :votes).with_attached_image
+    @posts = listed.order(created_at: :desc).limit(20)
   end
 
   # The same rule for the activity list, which names the person beside each post.

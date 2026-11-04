@@ -24,7 +24,7 @@
 
   <% if @story.media.attached? %>
     <div class="story-media">
-      <%= image_tag @story.media.variant(resize_to_limit: [ 1_080, 1_920 ], format: :webp), alt: @story.caption.to_s, width: 1080, height: 1920 %>
+      <%= image_tag @story.media_variant(:media, :full), alt: @story.caption.to_s, width: 1080, height: 1920 %>
     </div>
   <% end %>
 
@@ -50,6 +50,8 @@
       <%= f.text_field :content, required: true, maxlength: 500, placeholder: t("stories.reply_placeholder") %>
       <%= f.submit t("actions.send"), class: "button button-small" %>
     <% end %>
+    <%# A story is gone in a day; reporting it must work before then. %>
+    <%= render "shared/report_button", target: @story, reason: nil %>
   <% end %>
 
   <%# The viewer list is the author's alone. Everyone else sees the count. %>

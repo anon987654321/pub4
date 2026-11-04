@@ -1,8 +1,11 @@
 # frozen_string_literal: true
 
 class StoriesController < ApplicationController
+  helper StoryRings
   allow_unauthenticated_access only: %i[index show]
   before_action :require_user_session, only: %i[new create destroy]
+  rate_limit to: 10, within: 1.hour, only: :create, name: "stories",
+    with: -> { redirect_back fallback_location: stories_path, alert: t("shared.flash.rate_limited") }
 
   def index
     @rings = Story.rings_for(Current.user)

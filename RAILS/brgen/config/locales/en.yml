@@ -284,6 +284,9 @@ en:
     own_sound: Its own sound
     allow_duets: Let people answer this
   stories:
+    ring_count: "%{count} stories"
+    ring_seen: "seen"
+    ring_unseen: "not seen"
     title: Stories
     new: New story
     post: Post
@@ -372,6 +375,9 @@ en:
       cover: Cover image
       submit: Save event
   search:
+    no_results: "No results for “%{query}”"
+    no_results_body: "Try another word, or a shorter one."
+    section_heading: "%{vertical} (%{count})"
     title: Search Brgen
     placeholder: Search posts, listings, TV, playlists…
     label: Search all verticals
@@ -911,6 +917,12 @@ en:
     min_read: "%{n} min read"
     add_photo: Add photo
   channels:
+    active_count:
+      one: "%{count} active"
+      other: "%{count} active"
+    messages_count:
+      one: "%{count} message"
+      other: "%{count} messages"
     topic: 'Topic: %{topic}'
     blurb:
       brgen: The city-wide lobby — anything goes.
@@ -929,8 +941,6 @@ en:
     intro: Public rooms%{city} — you're anonymous here. Jump in, a few local agents
       are already around.
     intro_city: " in %{name}"
-    active: active
-    message: message
     new_room: new room
   storefront:
     deliver_to: Deliver to
@@ -1734,7 +1744,12 @@ en:
     states:
       pending: asked
       accepted: following
+  share:
+    photo_title: "Shared photo"
+    video_title: "Shared video"
   flash:
+    share_nothing: "There is nothing to share."
+    share_limits: "Use up to five images and one video."
     recent_searches_cleared: Recent searches cleared.
     message_request_accepted: "Request accepted. The conversation is in your inbox."
     message_request_declined: "Request declined."
@@ -2022,6 +2037,8 @@ en:
     empty_title: Nothing here yet
     also_in_city: Communities in %{city}
   profile:
+    member_since: "Member since %{date}"
+    account_link: "Account: export, two-factor and deletion"
     activity: Recent activity
     display_name: Display name
     edit: Edit profile

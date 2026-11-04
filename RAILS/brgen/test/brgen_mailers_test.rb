@@ -53,6 +53,33 @@ class BrgenMailersTest < ActionMailer::TestCase
     assert_equal "List-Unsubscribe=One-Click", mail["List-Unsubscribe-Post"].to_s
   end
 
+  def newsletter_edition(preheader: nil)
+    NewsletterEdition.create!(
+      kind: "daily", city: "bergen", edition_date: Date.current, subject: "Bergen today",
+      preheader:, lede: "A few useful things.", sign_off: "Brgen",
+      permission_line: "You asked for these emails.", stories: [], deals: []
+    )
+  end
+
+  test "the newsletter preheader opens the body, not the head" do
+    sub = EmailSubscription.create!(email: "preheader@example.com", confirmed: true, agreed_to_marketing: true)
+    html = NewsletterMailer.edition(sub, newsletter_edition(preheader: "Tre ting i dag")).html_part.body.to_s
+
+    assert_operator html.index("Tre ting i dag"), :>, html.index("<body")
+  end
+
+  test "the newsletter renders in the subscriber's locale and links their city" do
+    Brgen::CitySeed.sync! if City.table_exists?
+    city = City.where.not(domain: "brgen.no").first
+    sub = EmailSubscription.create!(email: "abroad@example.com", confirmed: true, agreed_to_marketing: true,
+                                    locale: "en", city: city.slug)
+
+    mail = I18n.with_locale(:nb) { NewsletterMailer.edition(sub, newsletter_edition) }
+
+    assert_includes mail.html_part.body.to_s, I18n.t("email_preferences.title", locale: :en)
+    assert_includes mail.html_part.body.to_s, "https://#{city.domain}/email_subscriptions/#{sub.token}"
+  end
+
   test "verification subject is a key and both parts carry the token" do
     user = User.create!(email_address: "verify-brgen@example.com", password: "password")
     token = user.generate_email_verification!

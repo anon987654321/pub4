@@ -1,0 +1,8 @@
+<%# locals: (section:) %>
+<% vertical_name = t("activity.verticals.#{section.vertical}", default: section.vertical.to_s) %>
+<section>
+  <%= tag.h2 t("search.section_heading", vertical: vertical_name, count: section.total) %>
+  <ul>
+    <%= render partial: "search/result_row", collection: section.rows, as: :record %>
+  </ul>
+</section>

@@ -7,14 +7,16 @@
   <%# `||` binds tighter than `?:`, so this read as (a || b || content_for?) ? yield(:title) : "Newsletter" —
       it always yielded :title when any source was present, discarding @edition.subject and @subject. %>
   <title><%= @edition&.subject || @subject || (content_for?(:title) ? yield(:title) : "Newsletter") %></title>
+  <%= render "layouts/mailer_styles" %>
+</head>
+<body class="mail-body">
+  <%# The preheader is the first text in the body, which is where inbox
+      previews read it; a div inside head is invalid and clients drop it. %>
   <% if @edition&.preheader.present? %>
     <div style="display:none;max-height:0;overflow:hidden;mso-hide:all;"> <%# scan: intentional — the preheader; mail clients load no bundle %>
       <%= @edition.preheader %>
     </div>
   <% end %>
-  <%= render "layouts/mailer_styles" %>
-</head>
-<body class="mail-body">
   <a class="skip-link" href="#main-content"><%= t("a11y.skip_to_content") %></a>
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" class="mail-canvas">
     <tr>

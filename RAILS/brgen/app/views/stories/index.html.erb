@@ -13,10 +13,12 @@
   <ul class="story-rings" role="list">
     <% @rings.each do |stories| %>
       <% newest = stories.first %>
-      <li class="story-ring<%= " story-ring--seen" if newest.seen_by?(Current.user) %>">
-        <%= link_to story_path(newest), aria: { label: t("stories.open_ring", user: newest.user.display_name) } do %>
+      <% seen = newest.seen_by?(Current.user) %>
+      <% streak = @streak_days&.dig(newest.user_id).to_i %>
+      <li class="story-ring<%= " story-ring--seen" if seen %>">
+        <%= link_to story_path(newest), aria: { label: story_ring_label(stories, streak:, seen:) } do %>
           <% if newest.media.attached? %>
-            <%= image_tag newest.media.variant(resize_to_limit: [ 240, 320 ], format: :webp), alt: "", width: 240, height: 240 %>
+            <%= image_tag newest.media_variant(:media, :thumb), alt: "", width: 240, height: 320 %>
           <% end %>
           <span class="story-ring-name"><%= newest.user.display_name %></span>
           <% if stories.size > 1 %>
@@ -25,7 +27,6 @@
           <%# Days running the two of you have answered each other's stories.
               Mutual, so it appears only on a ring there is a back-and-forth
               with. %>
-          <% streak = @streak_days&.dig(newest.user_id).to_i %>
           <% if streak.positive? %>
             <span class="story-ring-streak"><%= t("stories.streak", count: streak) %></span>
           <% end %>

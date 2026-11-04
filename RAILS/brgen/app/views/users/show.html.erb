@@ -3,11 +3,13 @@
 <%= turbo_stream_from @user %>
 
 <header class="profile-header">
+  <%= image_tag @user.avatar_url, alt: "", width: 64, height: 64, class: "avatar avatar--64" %>
   <%= tag.h1 @user.display_name %>
   <p class="meta-facts">
     <span><%= t("profile.followers", count: @followers_count) %></span>
     <span><%= t("profile.following", count: @following_count) %></span>
-    <span><%= t("community.posts_count", count: @posts.size) %></span>
+    <%= tag.span t("community.posts_count", count: @posts_count) %>
+    <%= tag.span t("profile.member_since", date: l(@user.created_at.to_date, format: "%B %Y")) %>
   </p>
 
   <% if authenticated? && Current.user != @user %>
@@ -66,7 +68,9 @@
 <section>
   <%= tag.h2 t("profile.posts") %>
   <% if @posts.any? %>
-    <%= render partial: "posts/post", collection: @posts %>
+    <ul class="post-feed feed_list post-card-list" role="list">
+      <%= render partial: "users/profile_post", collection: @posts, as: :post %>
+    </ul>
   <% else %>
     <%= render "shared/empty_state",
           title: t("empty.no_posts_yet"),

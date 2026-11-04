@@ -18,8 +18,9 @@
   <div class="welcome-onboarding-card">
     <figure class="welcome-onboarding-art">
       <% if artwork_url.present? %>
+        <%# Decorative: the title beside it already says what it shows. %>
         <%= image_tag artwork_url,
-              alt: t("#{namespace}.title", city: city),
+              alt: "",
               loading: "eager",
               fetchpriority: "high",
               decoding: "async" %>
@@ -35,7 +36,8 @@
               aria-label="<%= t("onboarding.skip") %>">×</button>
 
       <p class="welcome-onboarding-label"><%= t("#{namespace}.kicker") %></p>
-      <h1 id="<%= title_id %>"><%= t("#{namespace}.title", city: city) %></h1>
+      <%# h2: the page under the dialog already has its h1. %>
+      <h2 id="<%= title_id %>"><%= t("#{namespace}.title", city: city) %></h2>
       <p id="<%= lead_id %>" class="welcome-onboarding-lead"><%= t("#{namespace}.lead", city: city) %></p>
 
       <ol class="welcome-onboarding-steps">

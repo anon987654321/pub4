@@ -18,9 +18,9 @@
             <% if room %>
               <% active = @active_counts.fetch(room.id, 0) %>
               <% if active.positive? %>
-                <span class="channel-live">● <%= active %> <%= t("channels.active") %></span>
+                <span class="channel-live">● <%= t("channels.active_count", count: active) %></span>
               <% else %>
-                <%= @message_counts.fetch(room.id, 0) %> <%= t("channels.message") %>
+                <%= t("channels.messages_count", count: @message_counts.fetch(room.id, 0)) %>
               <% end %>
             <% else %><%= t("channels.new_room") %><% end %>
           </span>

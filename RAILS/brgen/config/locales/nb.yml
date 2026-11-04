@@ -53,7 +53,7 @@ nb:
     on_source: "på"
   feed:
     post_nearby: "Del som Live i nærheten: anonymt, bare området, maks 500 tegn"
-    compose_prompt: Del noe spennende nå
+    compose_prompt: Hva skjer i dag?
     compose_discard: Forkaste innlegget? Vedlagte filer blir ikke tatt vare på.
     compose_live_limit: "tegn · et Live-innlegg rommer %{count}"
     compose_blank: Skriv noe først.
@@ -288,6 +288,9 @@ nb:
     own_sound: Sin egen lyd
     allow_duets: La andre svare på denne
   stories:
+    ring_count: "%{count} historier"
+    ring_seen: "sett"
+    ring_unseen: "ikke sett"
     title: Historier
     new: Ny historie
     post: Publiser
@@ -376,6 +379,9 @@ nb:
       cover: Bilde
       submit: Lagre arrangement
   search:
+    no_results: "Ingen treff for «%{query}»"
+    no_results_body: "Prøv et annet ord, eller et kortere."
+    section_heading: "%{vertical} (%{count})"
     title: Søk i Brgen
     placeholder: Søk innlegg, annonser, TV, spillelister…
     label: Søk i alle flater
@@ -917,6 +923,12 @@ nb:
     min_read: "%{n} min lesing"
     add_photo: Legg til bilde
   channels:
+    active_count:
+      one: "%{count} aktiv"
+      other: "%{count} aktive"
+    messages_count:
+      one: "%{count} melding"
+      other: "%{count} meldinger"
     topic: 'Emne: %{topic}'
     blurb:
       brgen: Byens felles lobby — alt er lov.
@@ -935,8 +947,6 @@ nb:
     intro: Offentlige rom%{city} — du er anonym her. Hopp inn, noen lokale agenter
       er allerede her.
     intro_city: " i %{name}"
-    active: aktive
-    message: melding
     new_room: nytt rom
   storefront:
     deliver_to: Leveres til
@@ -1743,7 +1753,12 @@ nb:
     states:
       pending: spurt
       accepted: følger
+  share:
+    photo_title: "Delt bilde"
+    video_title: "Delt video"
   flash:
+    share_nothing: "Det er ingenting å dele."
+    share_limits: "Bruk opptil fem bilder og én video."
     recent_searches_cleared: Nylige søk er tømt.
     message_request_accepted: "Forespørselen er godtatt. Samtalen ligger i innboksen din."
     message_request_declined: "Forespørselen er avslått."
@@ -2032,6 +2047,8 @@ nb:
     empty_title: Ingenting her ennå
     also_in_city: Fellesskap i %{city}
   profile:
+    member_since: "Medlem siden %{date}"
+    account_link: "Konto: eksport, tofaktor og sletting"
     activity: Nylig aktivitet
     display_name: Visningsnavn
     edit: Rediger profil

@@ -148,11 +148,11 @@ class PostsController < ApplicationController
 
   def share
     city = Current.city_record
-    return redirect_to(new_post_path, alert: t("flash.draft_failed", default: "The share could not be staged.")) unless city
+    return redirect_to(new_post_path, alert: t("flash.draft_failed")) unless city
 
     uploads = Array(params[:media]).reject(&:blank?)
     unless uploads.all? { |file| file.respond_to?(:read) && file.respond_to?(:content_type) }
-      redirect_to new_post_path, alert: t("flash.draft_failed", default: "The share could not be staged.")
+      redirect_to new_post_path, alert: t("flash.draft_failed")
       return
     end
 
@@ -161,13 +161,13 @@ class PostsController < ApplicationController
     if images.size + videos.size != uploads.size ||
        images.size > ShareDraft::MAX_IMAGES || videos.size > 1 ||
        uploads.size > ShareDraft::MAX_MEDIA
-      redirect_to new_post_path, alert: t("flash.draft_failed", default: "Use up to five images and one video.")
+      redirect_to new_post_path, alert: t("flash.share_limits")
       return
     end
 
     content = share_content
     if uploads.empty? && params[:title].blank? && content.blank?
-      redirect_to new_post_path, alert: t("flash.draft_failed", default: "There is nothing to share.")
+      redirect_to new_post_path, alert: t("flash.share_nothing")
       return
     end
 
@@ -183,10 +183,10 @@ class PostsController < ApplicationController
 
     if draft.save
       redirect_to share_draft_path(draft),
-                  notice: t("flash.shared_into_draft", default: "Shared privately. Review it before publishing.")
+                  notice: t("flash.shared_into_draft")
     else
       redirect_to new_post_path,
-                  alert: t("flash.draft_failed", default: "The share could not be staged. Nothing was published.")
+                  alert: t("flash.draft_failed")
     end
   end
 
@@ -278,8 +278,8 @@ class PostsController < ApplicationController
     return ActionController::Base.helpers.strip_tags(raw.to_s).squish.truncate(300) if raw.present?
 
     case media_kind
-    when :image then t("share.photo_title", default: "Shared photo")
-    when :video then t("share.video_title", default: "Shared video")
+    when :image then t("share.photo_title")
+    when :video then t("share.video_title")
     else "Shared draft"
     end
   end

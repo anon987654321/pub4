@@ -28,6 +28,7 @@
      class="tab-bar"
      aria-label="<%= t("nav.mobile_nav") %>"
      data-scroll-chrome-target="bar"
+     data-controller="tab-bar-current"
      data-turbo-permanent
      aria-hidden="true"
      inert>
@@ -92,6 +93,8 @@
     <%= link_to t("nav.new_community"), main_app.new_community_path %>
     <% if authenticated? %>
       <%= link_to t("nav.profile"), main_app.user_path(Current.user) %>
+      <%# Export, two-factor and deletion live here and nowhere else links it. %>
+      <%= link_to t("pages.account"), main_app.account_path %>
       <%# destructive: no-confirm-ok — reversible — signing out, and signing in again is the same click %>
       <%= link_to t("nav.sign_out"), main_app.session_path, data: { turbo_method: :delete, turbo_prefetch: false } %>
     <% else %>

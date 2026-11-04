@@ -1,0 +1,6 @@
+<%# locals: (record:) %>
+<% label = record.try(:title) || record.try(:name) || record.try(:display_name) || record.try(:username) %>
+<%# record_public_href answers nil for a record it cannot route, so the row
+    renders unlinked rather than raising. %>
+<% href = record_public_href(record) %>
+<%= tag.li(href ? link_to(label, href) : label) %>
