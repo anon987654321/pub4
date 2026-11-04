@@ -2,7 +2,7 @@
   <% if result["sparks_joy"].nil? %>
     <p><%= t("ai.analysis_unavailable") %></p>
   <% else %>
-    <%= tag.strong result["sparks_joy"] ? "Sparks joy" : "Does not spark joy" %>
+    <%= tag.strong result["sparks_joy"] ? t("ai.sparks_joy") : t("ai.no_spark_joy") %>
     <%= tag.p result["reason"] %>
     <p><%= tag.em result["suggestion"] %></p>
     <% if result["source"] %>

@@ -335,6 +335,26 @@ nb:
     today_in: "I dag i %{city}"
     curated_offers: "Utvalgte tilbud"
   ai:
+    sparks_joy: "Gir glede"
+    no_spark_joy: "Gir ikke glede"
+    style_options:
+      body_type:
+        slim: "Slank"
+        athletic: "Atletisk"
+        curvy: "Kurvete"
+        plus: "Stor størrelse"
+      lines:
+        minimal_clean_lines: "Minimalistisk, rene linjer"
+        bold_patterns_and_colors: "Kraftige mønstre og farger"
+      timeless:
+        classic_timeless_pieces: "Klassiske, tidløse plagg"
+        trendy_current_styles: "Trendy, aktuelle stiler"
+      colors:
+        neutrals_and_basics: "Nøytrale farger og basisplagg"
+        vibrant_pops_of_color: "Livlige fargeinnslag"
+      fit:
+        tailored_structured_fits: "Skreddersydd, strukturert passform"
+        loose_comfortable_layers: "Løse, komfortable lag"
     items_reviewed:
       one: "%{count} plagg vurdert"
       other: "%{count} plagg vurdert"
@@ -578,6 +598,7 @@ nb:
     showcase: "Utstilling"
     showcase_items: "Plagg i utstillingen"
   declutter:
+    back_to_dashboard: "← Ryddeoversikt"
     targets:
       keep: "Behold"
       wear_this_week: "Bruk denne uken"

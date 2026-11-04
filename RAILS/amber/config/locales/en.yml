@@ -336,6 +336,26 @@ en:
     today_in: "Today in %{city}"
     curated_offers: "Curated offers"
   ai:
+    sparks_joy: "Sparks joy"
+    no_spark_joy: "Does not spark joy"
+    style_options:
+      body_type:
+        slim: "Slim"
+        athletic: "Athletic"
+        curvy: "Curvy"
+        plus: "Plus size"
+      lines:
+        minimal_clean_lines: "Minimal, clean lines"
+        bold_patterns_and_colors: "Bold patterns and colours"
+      timeless:
+        classic_timeless_pieces: "Classic, timeless pieces"
+        trendy_current_styles: "Trendy, current styles"
+      colors:
+        neutrals_and_basics: "Neutrals and basics"
+        vibrant_pops_of_color: "Vibrant pops of colour"
+      fit:
+        tailored_structured_fits: "Tailored, structured fits"
+        loose_comfortable_layers: "Loose, comfortable layers"
     items_reviewed:
       one: "%{count} item reviewed"
       other: "%{count} items reviewed"
@@ -579,6 +599,7 @@ en:
     showcase: "Showcase"
     showcase_items: "Showcase pieces"
   declutter:
+    back_to_dashboard: "← Declutter dashboard"
     targets:
       keep: "Keep"
       wear_this_week: "Wear this week"

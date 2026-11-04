@@ -111,7 +111,7 @@ items:
   path: RAILS/amber/app/views/ai/_analysis.html.erb
   item: Translate the hardcoded 'Sparks joy'/'Does not spark joy' strings in the AI
     analysis card.
-  status: open
+  status: done
 - id: amber-014
   app: amber
   area: i18n
@@ -119,7 +119,7 @@ items:
   path: RAILS/amber/app/views/ai/occasion_map.html.erb
   item: Translate the hardcoded '← Dashboard' link on the occasion map and '← Declutter
     dashboard' on the declutter review page.
-  status: open
+  status: done
 - id: amber-015
   app: amber
   area: i18n
@@ -127,7 +127,7 @@ items:
   path: RAILS/amber/app/views/ai/style_profile.html.erb
   item: Translate the style-profile quiz option values and drop the English optgroup
     labels ('Body type', 'Preference', 'Style', 'Palette', 'Fit').
-  status: open
+  status: done
 - id: amber-016
   app: amber
   area: i18n

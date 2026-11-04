@@ -8,25 +8,30 @@
       generated id and each <label for> would point at the first. The name= is
       already overridden per question; the id has to be too, or the labels
       collide. The bare <label>s these replace were associated with nothing. %>
+  <%# The values stay the English phrases WardrobeAi reads; only the labels
+      are translated, and the one-group optgroups that repeated the question
+      in English are gone. %>
   <div class="field">
     <label for="answers_body_type"><%= t("ai.body_type") %></label>
-    <%= f.select :answers, { "Body type" => ["slim", "athletic", "curvy", "plus"] }, {}, { name: "answers[body_type]", id: "answers_body_type" } %>
+    <%= f.select :answers, style_profile_options("body_type"), {},
+                 { name: "answers[body_type]", id: "answers_body_type" } %>
   </div>
   <div class="field">
     <label for="answers_lines"><%= t("ai.lines_patterns") %></label>
-    <%= f.select :answers, { "Preference" => ["minimal clean lines", "bold patterns and colors"] }, {}, { name: "answers[lines]", id: "answers_lines" } %>
+    <%= f.select :answers, style_profile_options("lines"), {}, { name: "answers[lines]", id: "answers_lines" } %>
   </div>
   <div class="field">
     <label for="answers_timeless"><%= t("ai.timeless_trendy") %></label>
-    <%= f.select :answers, { "Style" => ["classic timeless pieces", "trendy current styles"] }, {}, { name: "answers[timeless]", id: "answers_timeless" } %>
+    <%= f.select :answers, style_profile_options("timeless"), {},
+                 { name: "answers[timeless]", id: "answers_timeless" } %>
   </div>
   <div class="field">
     <label for="answers_colors"><%= t("ai.colors") %></label>
-    <%= f.select :answers, { "Palette" => ["neutrals and basics", "vibrant pops of color"] }, {}, { name: "answers[colors]", id: "answers_colors" } %>
+    <%= f.select :answers, style_profile_options("colors"), {}, { name: "answers[colors]", id: "answers_colors" } %>
   </div>
   <div class="field">
     <label for="answers_fit"><%= t("ai.fit") %></label>
-    <%= f.select :answers, { "Fit" => ["tailored structured fits", "loose comfortable layers"] }, {}, { name: "answers[fit]", id: "answers_fit" } %>
+    <%= f.select :answers, style_profile_options("fit"), {}, { name: "answers[fit]", id: "answers_fit" } %>
   </div>
   <div class="actions"><%= f.submit t("ai.infer_master"), class: "button button-primary" %></div>
 <% end %>

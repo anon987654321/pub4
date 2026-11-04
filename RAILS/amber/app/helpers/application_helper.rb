@@ -91,6 +91,22 @@ def declutter_target_options(targets)
   targets.map { |target| [ t("declutter.targets.#{target}"), target ] }
 end
 
+  STYLE_PROFILE_ANSWERS = {
+    "body_type" => %w[slim athletic curvy plus],
+    "lines" => [ "minimal clean lines", "bold patterns and colors" ],
+    "timeless" => [ "classic timeless pieces", "trendy current styles" ],
+    "colors" => [ "neutrals and basics", "vibrant pops of color" ],
+    "fit" => [ "tailored structured fits", "loose comfortable layers" ],
+  }.freeze
+
+  # [label, value] pairs for a style-profile question. The value is the
+  # English phrase WardrobeAi reads; the label is the reader's language.
+  def style_profile_options(question)
+    STYLE_PROFILE_ANSWERS.fetch(question).map do |value|
+      [ t("ai.style_options.#{question}.#{value.parameterize(separator: '_')}"), value ]
+    end
+  end
+
   def live_stream_status_label(status)
     t("live_streams.status.#{status}", default: status.to_s)
   end
