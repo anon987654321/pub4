@@ -5716,7 +5716,7 @@ items:
   path: RAILS/mrdamascy/config/initializers/content_security_policy.rb
   item: Add a report_uri to the report-only CSP so violations are recorded before
     MRDAMASCY_CSP_ENFORCE flips on.
-  status: open
+  status: done
 - id: mrdamascy-081
   app: mrdamascy
   area: seo

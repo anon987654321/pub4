@@ -16,6 +16,9 @@ Rails.application.configure do
     policy.frame_ancestors :self
     policy.form_action    :self
     policy.base_uri       :self
+    # Violations are reported here (CspReportsController) while the policy
+    # is report-only, so enforcement flips on knowing what it would block.
+    policy.report_uri     "/csp-reports"
   end
 
   # A fresh nonce per response for the importmap's inline bootstrap script:

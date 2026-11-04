@@ -65,6 +65,9 @@ Rails.application.routes.draw do
   patch "stripe/mock/approve", to: "stripe#approve"
   post "stripe/callback", to: "stripe#callback"    # real Stripe webhook
 
+  # Content-Security-Policy violation reports (the policy's report-uri).
+  post "csp-reports", to: "csp_reports#create", as: :csp_reports
+
   # PWA
   get "manifest.json", to: "pwa#manifest", as: :pwa_manifest
   get "service-worker.js", to: "pwa#service_worker", as: :pwa_service_worker
