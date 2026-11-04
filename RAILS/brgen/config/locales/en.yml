@@ -176,13 +176,10 @@ en:
     mark_all: Mark all read
     empty_title: No notifications yet
     empty_body: Offers, orders, and local updates will appear here.
-    inbox_kicker: Brgen inbox
-    open: Open
-    mark_as_read: Mark notification as read
+    inbox_kicker: "%{city} inbox"
     read_state: read
     dismiss: Dismiss
     dismiss_label: Dismiss notification
-    aria: Notification
     unread_count:
       one: "%{count} unread"
       other: "%{count} unread"

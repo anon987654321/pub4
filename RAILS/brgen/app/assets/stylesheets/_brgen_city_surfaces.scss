@@ -378,6 +378,15 @@ body.vertical-playlist input[type="range"] {
 .notification-card {
   touch-action: pan-y;
 }
+/* One kind of notification under its heading. */
+.notification-group {
+  margin-bottom: var(--space-3);
+}
+.notification-group > h2 {
+  font-size: var(--text-base);
+  font-weight: var(--weight-heavy);
+  margin-bottom: var(--space-3);
+}
 .notification-card .notification-title-link {
   color: inherit;
   text-decoration: none;

@@ -179,13 +179,10 @@ nb:
     mark_all: Merk alle som lest
     empty_title: Ingen varsler ennå
     empty_body: Tilbud, ordrer og lokale oppdateringer vises her.
-    inbox_kicker: Brgen-innboks
-    open: Åpne
-    mark_as_read: Merk varsel som lest
+    inbox_kicker: "%{city}-innboks"
     read_state: lest
     dismiss: Fjern
     dismiss_label: Fjern varselet
-    aria: Varsel
     unread_count:
       one: "%{count} ulest"
       other: "%{count} uleste"

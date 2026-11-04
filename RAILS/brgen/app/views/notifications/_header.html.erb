@@ -1,12 +1,12 @@
 <div class="page-header">
   <hgroup>
-    <p><%= t("notifications.inbox_kicker") %></p>
-    <h1>
-      <%= t("notifications.title") %>
-      <% if @unread_count.to_i.positive? %>
-        <span class="badge"><%= t("notifications.unread_count", count: @unread_count, default: "%{count} unread") %></span>
-      <% end %>
-    </h1>
+    <%= tag.p t("notifications.inbox_kicker", city: city_name) %>
+    <%# The heading is the page's name alone; the count is its own line, read
+        after it, rather than part of what "Varsler" is called. %>
+    <%= tag.h1 t("notifications.title") %>
+    <% if @unread_count.to_i.positive? %>
+      <%= tag.p tag.span(t("notifications.unread_count", count: @unread_count), class: "badge"), role: "status" %>
+    <% end %>
   </hgroup>
 
   <% if @unread_count.to_i.positive? %>

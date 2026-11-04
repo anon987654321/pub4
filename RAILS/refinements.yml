@@ -2596,7 +2596,7 @@ items:
   path: RAILS/brgen/app/views/notifications/_grouped_list.html.erb
   item: Replace the presentational classes mb-12 and section-heading--md with semantic
     names.
-  status: open
+  status: done
 - id: brgen-207
   app: brgen
   area: notifications
@@ -2620,7 +2620,7 @@ items:
   path: RAILS/brgen/app/views/notifications/_header.html.erb
   item: Move the unread badge out of the h1 so the heading reads 'Varsler' alone,
     and announce the count separately.
-  status: open
+  status: done
 - id: brgen-210
   app: brgen
   area: notifications
@@ -2643,7 +2643,7 @@ items:
   path: RAILS/brgen/app/views/notifications/_notification_row.html.erb
   item: Wrap the notification age in <time datetime> with the full date as its title,
     as comment rows do; the row prints bare time_ago text.
-  status: open
+  status: done
 - id: brgen-213
   app: brgen
   area: notifications
@@ -2652,7 +2652,7 @@ items:
   item: Drop the duplicate 'Open' button where the title already links to the same
     href, and replace the identical aria-label on every row with aria-labelledby pointing
     at the row's title.
-  status: open
+  status: done
 - id: brgen-214
   app: brgen
   area: notifications
@@ -2660,7 +2660,7 @@ items:
   path: RAILS/brgen/app/views/notifications/_notification_row.html.erb
   item: 'Delete or fix _notification_row: it carries a redundant role=article and
     no <time>, and only the shared read reflex still renders it.'
-  status: open
+  status: done
 - id: brgen-215
   app: brgen
   area: notifications
@@ -2676,7 +2676,7 @@ items:
   path: RAILS/brgen/config/locales/nb.yml
   item: Make the kicker city-aware; 'Brgen-innboks' is hard-coded in nb while the
     app serves several cities.
-  status: open
+  status: done
 - id: brgen-217
   app: brgen
   area: onboarding
