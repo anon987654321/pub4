@@ -4156,7 +4156,7 @@ items:
   item: Give owners Go live and End stream buttons on live_streams/show for the existing
     PATCH go_live/end_live routes, and show the stream key only to the owner; no view
     links to either action today.
-  status: open
+  status: done
 - id: brgen-393
   app: brgen
   area: tv

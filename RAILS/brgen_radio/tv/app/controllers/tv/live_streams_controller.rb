@@ -14,6 +14,7 @@ module Tv
 
     def show
       @stream_chats = @live_stream.stream_chats.page_log
+      @owner_view = @live_stream.user_id == Current.user&.id
     end
 
     def new

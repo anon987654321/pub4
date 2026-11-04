@@ -113,6 +113,26 @@ class TvRefinementsTest < ActionDispatch::IntegrationTest
     assert_select ".live-badge", text: I18n.t("tv.live_streams.status.scheduled")
   end
 
+  test "the owner goes live and ends the stream from its page, and only the owner sees the key" do
+    stream = Tv::LiveStream.create!(user: @owner, channel: @channel, title: "Kveld", status: "scheduled",
+                                    stream_key: SecureRandom.hex(16))
+    sign_in_as(@viewer)
+    get tv.live_stream_path(stream)
+    assert_select "form[action=?]", tv.go_live_live_stream_path(stream), count: 0
+    refute_includes response.body, stream.stream_key
+
+    sign_in_as(@owner)
+    get tv.live_stream_path(stream)
+    assert_select ".live-stream-key", text: stream.stream_key
+    assert_select "form[action=?] input[name=_method][value=patch]", tv.go_live_live_stream_path(stream)
+
+    patch tv.go_live_live_stream_path(stream)
+    assert_equal "live", stream.reload.status
+    get tv.live_stream_path(stream)
+    assert_select "form[action=?]", tv.end_live_live_stream_path(stream)
+    assert_select "form[action=?]", tv.go_live_live_stream_path(stream), count: 0
+  end
+
   test "a chat line names its author and time, and the composer resets" do
     stream = Tv::LiveStream.create!(user: @owner, channel: @channel, title: "Kveld", status: "live")
     sign_in_as(@viewer)

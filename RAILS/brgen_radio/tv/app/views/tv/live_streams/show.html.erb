@@ -28,6 +28,28 @@
     <% end %>
   <% end %>
 
+<%# The owner's controls. go_live and end_live had routes and no button, and
+    the stream key is the owner's alone: anyone holding it can broadcast. %>
+<% if @owner_view %>
+  <%= tag.section class: "live-stream-owner", aria: { labelledby: "live-stream-owner-heading" } do %>
+    <%= tag.h2 t("tv.live_streams.owner_heading"), id: "live-stream-owner-heading" %>
+    <% if @live_stream.status == "scheduled" %>
+      <%= button_to t("tv.live_streams.go_live"), go_live_live_stream_path(@live_stream), method: :patch,
+            class: "button button-primary" %>
+    <% elsif @live_stream.status == "live" %>
+      <%= button_to t("tv.live_streams.end_live"), end_live_live_stream_path(@live_stream), method: :patch,
+            class: "button", form: { data: { turbo_confirm: t("tv.live_streams.end_live_confirm") } } %>
+    <% end %>
+    <% if @live_stream.stream_key.present? %>
+      <details>
+        <%= tag.summary t("tv.live_streams.stream_key") %>
+        <%= tag.code @live_stream.stream_key, class: "live-stream-key" %>
+        <%= tag.p t("tv.live_streams.stream_key_note") %>
+      </details>
+    <% end %>
+  <% end %>
+<% end %>
+
   <%= tag.section class: "live-stream-chat" do %>
     <%= tag.h2 t("tv.live_streams.chat") %>
     <%= turbo_stream_from "tv:live_stream:#{@live_stream.id}:entries" %>
