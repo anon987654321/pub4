@@ -31,4 +31,16 @@ class CheckoutPageTest < ActionDispatch::IntegrationTest
     pickup = Nokogiri::HTML(response.body).at_css(".mode-toggle a[href*=\"mode=pickup\"]")
     assert_equal "true", pickup["aria-current"]
   end
+
+  test "the confirm screen shows the whole bill before the tap" do
+    User.last.update!(default_postcode: "5004")
+    seed_promo!(code: "YALLA10", kind: "fixed", value: 1000)
+    section = page.at_css("section.totals")
+    totals = section.text.squish
+
+    assert_includes totals, "#{I18n.t('checkout.discount')} −10 kr"
+    assert_includes totals, "#{I18n.t('checkout.delivery_fee')} 29 kr"
+    assert_includes totals, "#{I18n.t('checkout.total')} 148 kr"
+    assert_includes totals, I18n.t("checkout.eta_delivery", eta: 20)
+  end
 end

@@ -100,6 +100,23 @@
       <%= tag.span t("checkout.subtotal") %>
       <%= tag.strong money(@subtotal_ore) %>
     </p>
+    <% if @discount_ore.positive? %>
+      <p class="checkout-subtotal totals-discount">
+        <%= tag.span t("checkout.discount") %>
+        <%= tag.strong "−#{money(@discount_ore)}" %>
+      </p>
+    <% end %>
+    <% unless @mode == "pickup" %>
+      <p class="checkout-subtotal">
+        <%= tag.span t("checkout.delivery_fee") %>
+        <%= tag.strong money(@delivery_fee_ore) %>
+      </p>
+    <% end %>
+    <p class="checkout-subtotal totals-sum">
+      <%= tag.span t("checkout.total") %>
+      <%= tag.strong money(@total_ore) %>
+    </p>
+    <%= tag.p t("checkout.eta_delivery", eta: @eta_minutes) if @eta_minutes %>
     <%= tag.p t("checkout.totals_note"), class: "totals-note" %>
   </section>
 

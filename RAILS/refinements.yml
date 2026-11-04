@@ -5278,7 +5278,7 @@ items:
     delivery fee, total, ETA) from the @discount_ore, @delivery_fee_ore, @total_ore
     and @eta_minutes the controller already computes; the view shows only the subtotal
     and a note.
-  status: open
+  status: done
 - id: mrdamascy-028
   app: mrdamascy
   area: checkout
