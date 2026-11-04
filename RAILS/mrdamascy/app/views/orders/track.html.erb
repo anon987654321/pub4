@@ -34,6 +34,7 @@
               aria: { current: ("step" if current_index == index) }, data: { state: step } do %>
           <span class="step-star" aria-hidden="true"></span>
           <%= tag.span t("orders.states.#{step}"), class: "step-label" %>
+          <%= tag.span t("orders.step_done"), class: "visually-hidden" if current_index && index < current_index %>
         <% end %>
       <% end %>
     </ol>

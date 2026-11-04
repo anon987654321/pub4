@@ -5096,7 +5096,7 @@ items:
   path: RAILS/mrdamascy/app/views/orders/track.html.erb
   item: Add visually-hidden "fullført" text to completed timeline steps; step-done
     is conveyed by colour only.
-  status: open
+  status: done
 - id: mrdamascy-006
   app: mrdamascy
   area: accessibility
