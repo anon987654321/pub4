@@ -36,7 +36,11 @@ module Master
         # nil when there is nothing to argue about or nobody to argue with, so
         # the caller can treat "no council" and "council said nothing" alike.
         def run(files:, pass:, deadline:)
-          return if !council_enabled? || @agent.nil? || files.empty? || Time.now >= deadline
+          reason = skip_reason(files:, deadline:)
+          if reason
+            @bus&.publish("fix_loop:council_skipped", pass:, trigger: "source_findings", reason:)
+            return
+          end
 
           result = critique(files.first(FILES_PER_ROUND), budget: before_fixes_budget)
           return unless result&.ok?
@@ -55,7 +59,11 @@ module Master
         # Only the first clean streak pass asks, so the next pass can confirm the
         # result without paying for the same exploratory review twice.
         def improve(files:, pass:, deadline:)
-          return if !council_enabled? || @agent.nil? || files.empty? || Time.now >= deadline
+          reason = skip_reason(files:, deadline:)
+          if reason
+            @bus&.publish("fix_loop:improvement_council_skipped", pass:, trigger: "clean_streak", reason:)
+            return
+          end
 
           selected = rotating_files(files, pass)
           result = critique(selected)
@@ -136,8 +144,20 @@ module Master
             budget:,
           ).run
           unless result.ok?
-            @bus&.publish("fix_loop:hard_critique_inconclusive", files: files.size, error: result.message.to_s[0, 180])
-            Master::Trace::Dmesg.status("fix0", "hard critique INCONCLUSIVE: #{result.message.to_s[0, 120]}")
+            message = result.message.to_s
+            vetoed_by = message[/\Acouncil: veto from ([^\n]+)/i, 1]
+            if vetoed_by
+              @bus&.publish(
+                "fix_loop:hard_critique_veto",
+                files: files.size,
+                vetoed_by:,
+                message: message[0, 180],
+              )
+              Master::Trace::Dmesg.status("fix0", "hard critique VETO by #{vetoed_by}")
+            else
+              @bus&.publish("fix_loop:hard_critique_inconclusive", files: files.size, error: message[0, 180])
+              Master::Trace::Dmesg.status("fix0", "hard critique INCONCLUSIVE: #{message[0, 120]}")
+            end
             return result
           end
 
@@ -149,7 +169,8 @@ module Master
               files: files.size,
               reason: reason[0, 180],
             )
-            message = "hard critique INCONCLUSIVE#{": #{reason}" unless reason.empty?}"
+            message = "hard critique INCONCLUSIVE"
+            message = "#{message}: #{reason}" unless reason.empty?
             Master::Trace::Dmesg.status("fix0", message[0, 160])
             return Master::Result.err(message, category: :inconclusive)
           end
@@ -169,6 +190,15 @@ module Master
           @bus&.publish("fix_loop:hard_critique_inconclusive", files: files.size, error: e.message[0, 180])
           Master::Trace::Dmesg.status("fix0", "hard critique INCONCLUSIVE: #{e.class}: #{e.message[0, 120]}")
           Master::Ground::Swallow.log(e, context: "fix_loop.council_round", event_bus: @bus)
+          nil
+        end
+
+        def skip_reason(files:, deadline:)
+          return :disabled unless council_enabled? && hard_critique_enabled?
+          return :agent_unavailable unless @agent
+          return :no_files if files.empty?
+          return :deadline_exhausted if Time.now >= deadline
+
           nil
         end
 
