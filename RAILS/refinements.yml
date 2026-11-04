@@ -1148,7 +1148,7 @@ items:
   item: Set content_for :description and :og_image (banner) on communities/show and
     replace @community.posts.count with a cached counter, so shared links get a preview
     and the header stops running a COUNT on every view.
-  status: open
+  status: done
 - id: brgen-034
   app: brgen
   area: communities

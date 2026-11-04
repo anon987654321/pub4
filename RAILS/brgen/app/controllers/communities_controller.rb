@@ -5,6 +5,7 @@ class CommunitiesController < ApplicationController
 
   before_action :require_real_user, only: %i[new create edit update destroy]
   before_action :set_community, only: %i[show edit update destroy]
+  helper_method :header_posts_count
   before_action :authorize_owner, only: %i[edit update destroy]
 
   def index
@@ -75,12 +76,16 @@ class CommunitiesController < ApplicationController
 
   private
 
+  # The pager has counted the community's kept posts already; the header
+  # reuses that unless a flair narrowed it.
+  def header_posts_count = @flair.present? ? @community.posts.kept.count : @pagy.count
+
   # `user` is preloaded because the header reads @community.user, and
   # strict_loading_by_default raises on that lazily — the page rendered for
   # guests and raised for every signed-in visitor, the same shape as the tv
   # video page.
   def set_community
-    @community = Community.includes(:user).find(params[:id])
+    @community = Community.includes(:user, banner_attachment: :blob).find(params[:id])
   end
 
   def authorize_owner

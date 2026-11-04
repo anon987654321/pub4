@@ -1,4 +1,11 @@
 <% content_for :title, @community.name %>
+<%# A shared link previews with the community's own words and banner. %>
+<% if @community.description.present? %>
+  <% content_for :description, truncate(strip_tags(@community.description), length: 160) %>
+<% end %>
+<% if (og_image = seo_image_url(@community.banner)) %>
+  <% content_for :og_image, og_image %>
+<% end %>
 <% content_for :json_ld, json_ld_script(collection_page_schema(
       name: @community.name,
       url: schema_url_for(@community),
@@ -17,7 +24,7 @@
   <%= tag.h1 @community.name %>
   <% if @community.description.present? %><%= tag.p @community.description %><% end %>
   <p>
-    <%= t("community.posts_count", count: @community.posts.kept.count) %> ·
+    <%= t("community.posts_count", count: header_posts_count) %> ·
     <%= t("community.members_count", count: @community.members_count) %>
   </p>
   <%# user_id, not user: comparing the association is a lazy read on a

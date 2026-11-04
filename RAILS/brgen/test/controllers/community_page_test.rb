@@ -75,4 +75,24 @@ class CommunityPageTest < ActionDispatch::IntegrationTest
     assert_select ".community-header p", text: /\A#{I18n.t("community.posts_count", count: 1, locale: :nb)}/
     assert_select "nav.chips a[aria-current='page']", count: 1, text: "Nyhet"
   end
+
+  test "a shared community link previews with its description and banner" do
+    @community.update!(description: "<p>Naboer som deler verktøy</p>")
+    attach_pixel!(@community.banner, filename: "banner.png")
+
+    get community_path(@community)
+
+    assert_select "meta[name=description][content=?]", "Naboer som deler verktøy"
+    assert_select "meta[property='og:image'][content*='banner.png']"
+  end
+
+  test "the header's post count is the pager's own count, not a second query" do
+    Post.create!(user: @owner, title: "kept", content: "…", community: @community)
+    counts = 0
+    counter = ->(*, payload) { counts += 1 if payload[:sql].match?(/SELECT COUNT\(\*\) FROM "posts"/) }
+    ActiveSupport::Notifications.subscribed(counter, "sql.active_record") { get community_path(@community) }
+
+    assert_select ".community-header p", text: /\A#{I18n.t("community.posts_count", count: 1, locale: :nb)}/
+    assert_equal 1, counts
+  end
 end
