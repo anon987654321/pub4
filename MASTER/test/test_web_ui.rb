@@ -128,7 +128,8 @@ class TestWebUI < Minitest::Test
   def test_authenticated_web_actions_are_rate_limited
     app_controller = File.read(File.expand_path("../../RAILS/master/app/controllers/application_controller.rb", __dir__))
 
-    assert_includes app_controller, "before_action :enforce_web_write_rate_limit, if: -> { action_in?(%i[command enhance photo post_event state]) }"
+    assert_includes app_controller, "WEB_WRITE_ACTIONS = %i[command enhance photo post_event research state].freeze"
+    assert_includes app_controller, ":enforce_web_write_rate_limit, if: -> { action_in?(WEB_WRITE_ACTIONS) }"
   end
 
   def test_message_endpoint_uses_strong_params
