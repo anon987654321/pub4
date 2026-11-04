@@ -2,15 +2,11 @@
 
 class CommunityMembershipsController < ApplicationController
   before_action :require_user_session
+  before_action :set_community, :refuse_outsider_of_private, :refuse_banned, only: :create
 
   def create
-    community = Community.find(params[:community_id])
-    if community.privacy == "private" && !community.member?(Current.user)
-      redirect_to main_app.communities_path, alert: t("flash.community.members_only")
-      return
-    end
-    Current.user.join_community!(community)
-    redirect_back fallback_location: main_app.community_path(community), notice: t("community.joined", default: "Joined.")
+    Current.user.join_community!(@community)
+    redirect_back fallback_location: main_app.community_path(@community), notice: t("community.joined")
   end
 
   def destroy
@@ -22,6 +18,25 @@ class CommunityMembershipsController < ApplicationController
       redirect_back fallback_location: back, alert: t("flash.community.last_owner_leaving")
       return
     end
-    redirect_back fallback_location: back, notice: t("community.left", default: "Left.")
+    redirect_back fallback_location: back, notice: t("community.left")
+  end
+
+  private
+
+  def set_community
+    @community = Community.find(params[:community_id])
+  end
+
+  def refuse_outsider_of_private
+    return unless @community.privacy == "private" && !@community.member?(Current.user)
+
+    redirect_to main_app.communities_path, alert: t("flash.community.members_only")
+  end
+
+  # A ban stops posting; leaving and rejoining must not lift it.
+  def refuse_banned
+    return unless @community.banned?(Current.user)
+
+    redirect_back fallback_location: main_app.community_path(@community), alert: t("community.join_banned")
   end
 end

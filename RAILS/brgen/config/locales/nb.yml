@@ -1597,6 +1597,7 @@ nb:
     confirm_delete: Slette fellesskapet?
     new_community: Nytt fellesskap
     also_in_city: Også i %{city}
+    no_description: Ingen beskrivelse ennå.
   newsletter:
     city_letter: Bybrev
     unsubscribe_link: "Meld av"
@@ -1992,6 +1993,9 @@ nb:
       one: "%{count} medlem"
       other: "%{count} medlemmer"
     new_post: Nytt innlegg i %{name}
+    joined: Du er med.
+    left: Du har forlatt fellesskapet.
+    join_banned: Du er utestengt fra dette fellesskapet.
   hashtag:
     count: "%{count} innlegg"
     empty_body: 'Ingen innlegg bruker #%{name} ennå.'

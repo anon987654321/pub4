@@ -1590,6 +1590,7 @@ en:
     confirm_delete: Delete community?
     new_community: New community
     also_in_city: Also in %{city}
+    no_description: No description yet.
   newsletter:
     city_letter: City letter
     unsubscribe_link: "Unsubscribe"
@@ -1982,6 +1983,9 @@ en:
       one: "%{count} member"
       other: "%{count} members"
     new_post: New post in %{name}
+    joined: You have joined.
+    left: You have left the community.
+    join_banned: You are banned from this community.
   hashtag:
     count: "%{count} posts"
     empty_body: 'No posts use #%{name} yet.'

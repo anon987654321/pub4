@@ -1115,7 +1115,7 @@ items:
   path: RAILS/brgen/app/controllers/community_memberships_controller.rb
   item: Refuse join in CommunityMembershipsController#create when community.banned?(Current.user);
     a banned user can rejoin a public community today.
-  status: open
+  status: done
 - id: brgen-030
   app: brgen
   area: communities
@@ -1139,7 +1139,7 @@ items:
   path: RAILS/brgen/app/views/communities/show.html.erb
   item: Show the aside's New post link only when postable_by?(Current.user), as the
     header already does.
-  status: open
+  status: done
 - id: brgen-033
   app: brgen
   area: communities
@@ -1158,7 +1158,7 @@ items:
     on @community.postable_by?(Current.user), as the main compose link already is;
     they currently offer posting to guests, banned users and non-members of restricted
     communities.
-  status: open
+  status: done
 - id: brgen-035
   app: brgen
   area: communities
@@ -1167,7 +1167,7 @@ items:
   item: Replace the hard-coded English 'No description.' in the community About aside
     with a nb/en locale key, and drop the aside's duplicate description when the header
     already shows it.
-  status: open
+  status: done
 - id: brgen-036
   app: brgen
   area: communities
@@ -1182,7 +1182,7 @@ items:
   size: S
   path: RAILS/brgen/app/views/communities/show.html.erb
   item: Replace the hard-coded English 'No description.' with a translation.
-  status: open
+  status: done
 - id: brgen-038
   app: brgen
   area: communities
@@ -1204,7 +1204,7 @@ items:
   size: S
   path: RAILS/brgen/app/views/communities/show.html.erb
   item: Add aria-current to the active flair chip.
-  status: open
+  status: done
 - id: brgen-041
   app: brgen
   area: communities
@@ -1212,7 +1212,7 @@ items:
   path: RAILS/brgen/app/views/communities/show.html.erb
   item: Count only kept posts in the header ('@community.posts.count' includes moderator-removed
     ones).
-  status: open
+  status: done
 - id: brgen-042
   app: brgen
   area: communities
@@ -1220,7 +1220,7 @@ items:
   path: RAILS/brgen/config/locales/nb.yml
   item: Add community.joined and community.left to brgen nb.yml and en.yml; CommunityMembershipsController
     falls back to the English defaults 'Joined.' and 'Left.' in both locales.
-  status: open
+  status: done
 - id: brgen-043
   app: brgen
   area: communities

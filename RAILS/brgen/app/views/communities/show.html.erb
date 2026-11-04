@@ -10,10 +10,16 @@
       [@community.name, seo_canonical_url]
     ])) %>
 
+<%# Asked once: the compose link, the empty state and the About aside all hang on it. %>
+<% can_post = @community.postable_by?(Current.user) %>
+
 <header class="community-header">
   <%= tag.h1 @community.name %>
   <% if @community.description.present? %><%= tag.p @community.description %><% end %>
-  <p><%= t("community.posts_count", count: @community.posts.count) %> · <%= t("community.members_count", count: @community.members_count) %></p>
+  <p>
+    <%= t("community.posts_count", count: @community.posts.kept.count) %> ·
+    <%= t("community.members_count", count: @community.members_count) %>
+  </p>
   <%# user_id, not user: comparing the association is a lazy read on a
       strict-loading record. Preloaded in the controller too, but the id
       comparison is what makes this page independent of that. %>
@@ -59,10 +65,10 @@
 <% if @community.flair_options.any? %>
   <nav class="chips" aria-label="<%= t("community.filter_by_flair") %>">
     <%= link_to t("community.all_flair"), community_path(@community),
-          class: "chip#{" active" if @flair.blank?}" %>
+          class: "chip#{" active" if @flair.blank?}", aria: { current: ("page" if @flair.blank?) } %>
     <% @community.flair_options.each do |flair| %>
       <%= link_to flair, community_path(@community, flair: flair),
-            class: "chip#{" active" if @flair == flair}" %>
+            class: "chip#{" active" if @flair == flair}", aria: { current: ("page" if @flair == flair) } %>
     <% end %>
   </nav>
 <% end %>
@@ -70,7 +76,7 @@
 <%# postable_by? rather than "signed in": a restricted community lets the whole
     city read and only members post, and offering a compose link that will be
     refused on submit is worse than not offering it. %>
-<% if @community.postable_by?(Current.user) %>
+<% if can_post %>
   <p><%= link_to t("community.new_post", name: @community.name), new_community_post_path(@community) %></p>
 <% elsif Current.user.present? && @community.privacy != "public" %>
   <p><%= t("community.members_only_posting") %></p>
@@ -91,10 +97,12 @@
     </nav>
   <% end %>
 <% else %>
+  <%# The compose action only for someone who may post; the Join button in the
+      header is the way in for everyone else. %>
   <%= render "shared/empty_state",
         title: t("empty.no_posts_yet"),
         body: t("empty.start_community", name: @community.name),
-        action: { label: t("nav.new_post"), path: new_community_post_path(@community) } %>
+        action: (can_post ? { label: t("nav.new_post"), path: new_community_post_path(@community) } : nil) %>
 <% end %>
 
 <% if @other_communities.present? %>
@@ -110,8 +118,9 @@
 
 <aside>
   <%= tag.h2 t("communities.about", name: @community.name) %>
-  <%= tag.p @community.description.presence || "No description." %>
-  <% if Current.user.present? %>
+  <%# The header already prints the description; this says only that there is none. %>
+  <% if @community.description.blank? %><%= tag.p t("communities.no_description") %><% end %>
+  <% if can_post %>
     <p><%= link_to t("nav.new_post"), new_community_post_path(@community) %></p>
   <% end %>
 </aside>
