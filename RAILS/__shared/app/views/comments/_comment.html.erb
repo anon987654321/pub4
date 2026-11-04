@@ -16,7 +16,7 @@
     depth         — optional, this row's nesting level, passed by the thread
 %>
 <% threaded = local_assigns.fetch(:threaded) { comment.respond_to?(:depth) || comment.respond_to?(:replies) } %>
-<%# The thread passes depth down; Comment#depth walks the ancestors one query each. %>
+<%# The thread passes depth down; Comment#depth spends a query per ancestor. %>
 <% raw_depth = local_assigns.fetch(:depth) { comment.respond_to?(:depth) ? comment.depth.to_i : 0 } %>
 <% depth = [ raw_depth, 4 ].min %>
 <% destroy_arg = local_assigns.fetch(:destroy_arg) { comment_destroy_arg(comment) } %>

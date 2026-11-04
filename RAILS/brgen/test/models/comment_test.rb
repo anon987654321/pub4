@@ -31,7 +31,7 @@ class CommentTest < ActiveSupport::TestCase
     end
     removed.update_columns(removed_at: Time.current)
 
-    ids = Comment.where(commentable: post).controversial.map(&:id)
+    ids = Comment.where(commentable: post).controversial.pluck(:id)
     assert_equal [ comment.id ], ids
   end
 

@@ -149,10 +149,14 @@ class CommentsControllerTest < ActionDispatch::IntegrationTest
       author = user("deep-thread")
       post_record = a_post(author)
       parent = Comment.create!(user: author, commentable: post_record, content: "root")
-      3.times { |i| parent = Comment.create!(user: author, commentable: post_record, content: "nivå #{i}", parent_id: parent.id) }
+      3.times do |i|
+        parent = Comment.create!(user: author, commentable: post_record, content: "nivå #{i}", parent_id: parent.id)
+      end
 
       per_row = []
-      counter = ->(*, payload) { per_row << payload[:sql] if payload[:sql].match?(/SELECT "comments"\."parent_id" FROM|SELECT COUNT\(\*\) FROM "comments" WHERE "comments"\."parent_id"/) }
+      depth_sql = /SELECT "comments"\."parent_id" FROM/
+      per_row_sql = Regexp.union(depth_sql, /SELECT COUNT\(\*\) FROM "comments" WHERE "comments"\."parent_id"/)
+      counter = ->(*, payload) { per_row << payload[:sql] if payload[:sql].match?(per_row_sql) }
       ActiveSupport::Notifications.subscribed(counter, "sql.active_record") { get post_path(post_record) }
 
       assert_response :success

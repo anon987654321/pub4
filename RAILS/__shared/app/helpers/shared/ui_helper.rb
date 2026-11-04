@@ -201,9 +201,9 @@ module Shared
     # Whether a comment's thread is long enough for a summary. Comment#long_thread?
     # is two queries, and a thread page asks it of every row; the ids come from
     # one query per commentable and are kept for the rest of the render.
+    # Only brgen's Comment threads summaries; it defines both methods.
     def comment_long_thread?(comment)
-      return false unless comment.respond_to?(:long_thread?)
-      return comment.long_thread? unless comment.class.respond_to?(:long_thread_ids)
+      return false unless comment.class.method_defined?(:long_thread?)
 
       @comment_long_thread_ids ||= {}
       key = [ comment.commentable_type, comment.commentable_id ]
