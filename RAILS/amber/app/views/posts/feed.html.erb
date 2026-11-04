@@ -1,3 +1,5 @@
+<% content_for :title, t("pages.feed") %>
+<% content_for :description, t("post.feed_description") %>
 <div class="page-header">
   <%= tag.h1 t("pages.feed") %>
   <%= link_to t("actions.new_post"), new_post_path, class: "button" %>

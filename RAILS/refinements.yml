@@ -512,14 +512,14 @@ items:
   path: RAILS/amber/app/views/posts/feed.html.erb
   item: Set content_for :title and :description on posts#index and posts#feed; both
     fall back to 'Amber'.
-  status: open
+  status: done
 - id: amber-063
   app: amber
   area: seo
   size: S
   path: RAILS/amber/app/views/posts/new.html.erb
   item: Set content_for :title on posts/new.
-  status: open
+  status: done
 - id: amber-064
   app: amber
   area: seo
@@ -527,7 +527,7 @@ items:
   path: RAILS/amber/app/views/users/show.html.erb
   item: Set content_for :title (display name) and :description on users#show; profile
     pages fall back to 'Amber'.
-  status: open
+  status: done
 - id: amber-065
   app: amber
   area: seo

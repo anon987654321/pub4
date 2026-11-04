@@ -1,3 +1,4 @@
+<% content_for :title, t("post.share_look") %>
 <%= tag.h1 t("post.share_look") %>
 <%= form_with model: @post do |f| %>
   <%= render "shared/errors", object: @post %>
