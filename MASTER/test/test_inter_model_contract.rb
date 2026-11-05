@@ -98,7 +98,8 @@ class TestInterModelContract < Minitest::Test
     valid = JSON.parse(valid_response).merge("findings" => [no_issue]).to_json
     assert Contract.validate_response(valid).fetch("ok")
 
-    invalid = JSON.parse(valid_response).merge("findings" => [no_issue, JSON.parse(valid_response)["findings"].first]).to_json
+    invalid_findings = [no_issue, JSON.parse(valid_response)["findings"].first]
+    invalid = JSON.parse(valid_response).merge("findings" => invalid_findings).to_json
     result = Contract.validate_response(invalid)
     refute result.fetch("ok")
     assert_includes result.fetch("errors"), "no_actionable_must_be_single_info_finding"
