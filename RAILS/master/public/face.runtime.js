@@ -3,7 +3,7 @@
 const FACE_RUNTIME_SOURCES = [
   "face.part1.txt?v=4d84560556",
   "face.part2.txt?v=c801eff38c",
-  "face.part3.txt?v=00a499e822",
+  "face.part3.txt?v=01005ed2e5",
   "face_speech_runtime.js?v=fa76a3002d",
   "face_speech_playback.js?v=52a9561149",
   "face.part5.txt?v=37ac73d46e"

@@ -413,13 +413,14 @@ tokens:
       chrome_muted: "var(--text-secondary)"
       chrome_focus: "var(--accent)"
       # brgen's header band (--brgen-header-bg/-ink/-muted in
-      # RAILS/brgen/app/assets/stylesheets/application.scss), which master's
+      # RAILS/brgen/app/assets/stylesheets/_section_04.scss), which master's
       # titlebar carries. brgen declares them app-locally rather than in a
       # dialect, so they are restated here; face_boot.test.mjs fails if the two
-      # disagree. ink on band 10.59:1, muted on band 7.25:1.
-      chrome_band: "#143d5b"
-      chrome_band_ink: "#f5f7fa"
-      chrome_band_muted: "#c4d0dc"
+      # disagree. brgen's header is the page ground with a hairline, not a
+      # coloured band: ink on band 15.6:1, muted on band 7.11:1.
+      chrome_band: "#000000"
+      chrome_band_ink: "#e7e9ea"
+      chrome_band_muted: "#8b98a5"
     layout:
       tap-min: 44px
       text-meta: "0.8125rem"

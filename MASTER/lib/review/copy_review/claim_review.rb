@@ -4,6 +4,13 @@ class Master::Review::CopyReview::ClaimReview
   Result = Data.define(:findings)
   PRICE_TOKEN = /(?<![\p{Alnum}])(?:(NOK|SEK|DKK|EUR|USD|GBP|kr\.?|€|\$|£)\s*)?(\d{1,6}(?:[.,]\d{2})?)(?:\s*(NOK|SEK|DKK|EUR|USD|GBP|kr\.?|€|\$|£))?(?![\p{Alnum}])/iu
   MARKET_CURRENCIES = { "NO" => "NOK", "SE" => "SEK", "DK" => "DKK" }.freeze
+  # A claim kind names what the copy says; the product record names the field
+  # that proves it. product_title is proved by the record's title.
+  PRODUCT_FIELD_FOR_KIND = { "product_title" => :title, "merchant" => :merchant, "category" => :category }.freeze
+  # Whole phrases, matched on word boundaries after diacritics are folded, so
+  # "in stock" is never read as the negative "stock" and "på lager" matches.
+  NEGATIVE_AVAILABILITY = ["out of stock", "unavailable", "sold out", "utsolgt", "ikke pa lager"].freeze
+  POSITIVE_AVAILABILITY = ["in stock", "available now", "pa lager", "tilgjengelig na"].freeze
 
   def initialize(creative:, product:)
     @creative = creative
@@ -83,12 +90,13 @@ class Master::Review::CopyReview::ClaimReview
   end
 
   def assess_text_field(kind, text, index)
-    expected = read(@product, kind.to_sym).to_s.strip
+    field = PRODUCT_FIELD_FOR_KIND.fetch(kind)
+    expected = read(@product, field).to_s.strip
     return missing_field(kind, text, index) if expected.empty?
     return mismatched_field(kind, text, index, expected) unless normalize(text) == normalize(expected)
 
     add(:claim_field_verified, :pass, "The #{kind} claim matches the current product record.",
-        claim: text, evidence: { kind:, index:, source_field: kind }, confidence: 1.0)
+        claim: text, evidence: { kind:, index:, source_field: field.to_s }, confidence: 1.0)
   end
 
   def missing_field(kind, text, index)
@@ -247,9 +255,9 @@ class Master::Review::CopyReview::ClaimReview
   end
 
   def availability_phrase(text)
-    normalized = normalize(text)
-    negative = %w[out of stock unavailable sold out utsolgt ikke pa lager].any? { |phrase| normalized.include?(phrase) }
-    positive = !negative && %w[in stock available now pa lager tilgjengelig na].any? { |phrase| normalized.include?(phrase) }
+    padded = " #{normalize(text).unicode_normalize(:nfkd).gsub(/\p{Mn}/, '')} "
+    negative = NEGATIVE_AVAILABILITY.any? { |phrase| padded.include?(" #{phrase} ") }
+    positive = !negative && POSITIVE_AVAILABILITY.any? { |phrase| padded.include?(" #{phrase} ") }
     return nil if positive == negative
 
     positive

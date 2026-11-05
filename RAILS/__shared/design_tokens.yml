@@ -354,9 +354,9 @@ face_root:
     chrome_text: var(--text)
     chrome_muted: var(--text-secondary)
     chrome_focus: var(--accent)
-    chrome_band: "#143d5b"
-    chrome_band_ink: "#f5f7fa"
-    chrome_band_muted: "#c4d0dc"
+    chrome_band: "#000000"
+    chrome_band_ink: "#e7e9ea"
+    chrome_band_muted: "#8b98a5"
   layout:
     tap-min: 44px
     text-meta: 0.8125rem

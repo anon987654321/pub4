@@ -93,9 +93,9 @@
   --chrome-text: var(--text);
   --chrome-muted: var(--text-secondary);
   --chrome-focus: var(--accent);
-  --chrome-band: #143d5b;
-  --chrome-band-ink: #f5f7fa;
-  --chrome-band-muted: #c4d0dc;
+  --chrome-band: #000000;
+  --chrome-band-ink: #e7e9ea;
+  --chrome-band-muted: #8b98a5;
   --tap-min: 44px;
   --text-meta: 0.8125rem;
   --text-title: 1.25rem;

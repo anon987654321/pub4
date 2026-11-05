@@ -563,15 +563,29 @@ test("stipple module boots and builds from the canonical idle profile", () => {
     { x: 0.8, y: 0, z: 0, zone: 0, bias: 1 },
     { x: 0.7, y: 0.03, z: 0.1, zone: 0, bias: 1 }
   ]);
-  window.MASTER_FACE_CONTRACT.stipple_force.warning = "residual";
-  api.updateSwarm(residualSystem, { mode: "warning", reducedMotion: false }, 0.05, 1);
-  window.MASTER_FACE_CONTRACT.stipple_force.warning = "none";
-  api.updateSwarm(collectiveSystem, { mode: "warning", reducedMotion: false }, 0.05, 1);
+  // The tether is proportional to the distance from home, so the first step
+  // (which starts at home) is identical for both; it acts from the second on.
+  const stepBoth = (time) => {
+    window.MASTER_FACE_CONTRACT.stipple_force.warning = "residual";
+    api.updateSwarm(residualSystem, { mode: "warning", reducedMotion: false }, 0.05, time);
+    window.MASTER_FACE_CONTRACT.stipple_force.warning = "none";
+    api.updateSwarm(collectiveSystem, { mode: "warning", reducedMotion: false }, 0.05, time);
+  };
+  stepBoth(1);
+  stepBoth(2);
+  const homeDistance = (system) => {
+    const attributes = system.geometry.attributes;
+    const position = attributes.position.array;
+    const home = system.swarm.homePositions;
+    return Array.from(position).reduce((sum, value, index) => sum + (value - home[index]) ** 2, 0);
+  };
   assert.notDeepEqual(
     Array.from(residualSystem.geometry.attributes.position.array),
     Array.from(collectiveSystem.geometry.attributes.position.array),
     "residual carriers retain a deterministic pull toward their original positions"
   );
+  assert.ok(homeDistance(residualSystem) < homeDistance(collectiveSystem),
+    "the residual tether keeps carriers nearer their original positions than the collective alone");
   window.MASTER_FACE_CONTRACT.stipple_force.warning = "residual";
   const beforeMove = Array.from(moving.geometry.attributes.position.array);
   assert.equal(api.updateSwarm(moving, { mode: "warning", reducedMotion: false }, 0.05, 1), true);

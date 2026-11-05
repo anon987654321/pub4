@@ -82,7 +82,9 @@ test("thinking star animates in calm mode but respects reduced motion and batter
   const source = readFileSync(join(publicDir, "face.part1.txt"), "utf8");
   // faceReducedMotionActive() folds State.reducedMotion together with the
   // canonical FaceState, the document-root projection and the media query.
-  assert.match(source, /v === 'thinking' && !faceReducedMotionActive\(\) && runtimeProfile\(\) !== 'battery'/);
+  // The star also stays up while a queued response is being spoken (syncThinkingStar).
+  assert.match(source, /const active = State\.mode === 'thinking' \|\| \(State\.mode === 'speaking' && queueActive\);/);
+  assert.match(source, /if \(active && !faceReducedMotionActive\(\) && runtimeProfile\(\) !== 'battery'\) startStar/);
   const reducedMotion = /function faceReducedMotionActive\(\) \{[\s\S]*?Boolean\(State\.reducedMotion\)/;
   assert.match(source, new RegExp(`${reducedMotion.source}[\\s\\S]*?prefers-reduced-motion: reduce`));
 });
@@ -377,18 +379,21 @@ test("calm profile is default and checks rich idle motion", () => {
   assert.match(part1, /if \(faceReducedMotionActive\(\)\) return false/);
   assert.match(part1, /faceReducedMotionActive\(\) \? 'battery'/);
   assert.match(part1, /rootBody\.dataset\.runtimeProfile = faceReducedMotionActive\(\) \? 'battery' : \(State\.profileOverride/);
-  assert.match(part1, /if \(v === 'thinking' && !faceReducedMotionActive\(\)/);
+  assert.match(part1, /if \(active && !faceReducedMotionActive\(\)/);
   const part3 = readFileSync(join(publicDir, "face.part3.txt"), "utf8");
   assert.match(part3, /effectiveNext = faceReducedMotionActive\(\) \? 'battery' : next/);
   assert.match(part3, /!faceReducedMotionActive\(\) && window\.ParticleKernel/);
   assert.match(part3, /function syncSemanticPools\(dtSec, reducedMotion = false\)/);
   assert.match(part3, /const reducedMotion = faceReducedMotionActive\(\)/);
-  assert.match(part3, /faceMat\.uniforms\.uTime\.value = reducedMotion \? 0 : sec/);
+  // The clock also stops while the face is idle-still (cf5b198127); motionFrozen
+  // folds reduced motion in, so reduced motion still stops every clock write.
+  assert.match(part3, /const motionFrozen = reducedMotion \|\| idleStill;/);
+  assert.match(part3, /faceMat\.uniforms\.uTime\.value = motionFrozen \? 0 : sec/);
   const clockAssignments = part3.match(/^\s*faceMat\.uniforms\.uTime\.value\s*=.*$/gm) ?? [];
   assert.ok(clockAssignments.length >= 1);
-  assert.ok(clockAssignments.every(line => /reducedMotion \? 0 :/.test(line)),
+  assert.ok(clockAssignments.every(line => /motionFrozen \? 0 :/.test(line)),
     "every primary shader clock write must stop under reduced motion");
-  assert.match(part3, /State\.idleAlphaDrift = reducedMotion \? 0\.5/);
+  assert.match(part3, /State\.idleAlphaDrift = motionFrozen \? 0\.5/);
   assert.match(part3, /State\.pulse = 0; State\.flash = 0/);
   assert.match(part3, /if \(faceReducedMotionActive\(\)\) return;/);
 });
@@ -875,7 +880,7 @@ test("voice mode arms from a real gesture and reports microphone startup truthfu
   assert.match(part5, /listenOnFirstGesture\(\);/);
   assert.match(runtime, /recognition\.onstart = \(\) => \{/);
   assert.match(runtime, /stt_start_timeout/);
-  assert.match(runtime, /mic did not start — tap again/);
+  assert.match(runtime, /waiting for microphone — check browser permission/);
 });
 
 test("TTS does not dequeue speech while the server cooldown is active", () => {
@@ -1027,7 +1032,9 @@ test("constitutional ASCII face is wired as an overlay and a fallback", () => {
   const renderer = readFileSync(join(publicDir, "face_ascii.js"), "utf8");
   const frame = readFileSync(join(publicDir, "face.part3.txt"), "utf8");
   const fallback = readFileSync(join(publicDir, "face_2d_fallback.js"), "utf8");
-  const laws = readFileSync(join(root, "..", "..", "MASTER", "data", "laws.yml"), "utf8");
+  // The face_ascii runtime contract is runtime configuration, so it lives in
+  // law_runtime.yml beside the scanner settings, not in the Law catalogue.
+  const laws = readFileSync(join(root, "..", "..", "MASTER", "data", "law_runtime.yml"), "utf8");
   const css = readFileSync(join(publicDir, "face.css"), "utf8");
 
   assert.match(faceManifest, /shell_manifest:[\s\S]*?- face_ascii\s/);
@@ -1051,7 +1058,11 @@ test("session chrome reads brgen's family tokens and band without weakening mobi
   const tokens = readFileSync(join(root, "..", "..", "MASTER", "data", "tokens.yml"), "utf8");
   const generated = readFileSync(join(railsRoot, "__shared", "design_tokens.yml"), "utf8");
   const css = readFileSync(join(publicDir, "face.css"), "utf8");
-  const brgen = readFileSync(join(railsRoot, "brgen", "app", "assets", "stylesheets", "application.scss"), "utf8");
+  // brgen declares its band in one of the partials application.scss @uses, so
+  // read every brgen stylesheet rather than naming the partial that holds it today.
+  const brgenStyles = join(railsRoot, "brgen", "app", "assets", "stylesheets");
+  const brgen = readdirSync(brgenStyles).filter((name) => name.endsWith(".scss")).sort()
+    .map((name) => readFileSync(join(brgenStyles, name), "utf8")).join("\n");
   const cssVar = (name) => `--${name.replaceAll("_", "-")}`;
 
   // The family block comes first so the face root's var() references resolve to it.
@@ -1084,8 +1095,9 @@ test("session chrome reads brgen's family tokens and band without weakening mobi
   assert.deepEqual(faceBand, { "": band.bg, "-ink": band.ink, "-muted": band.muted }, "the band drifted from brgen's");
 
   assert.match(css, /\.master-titlebar \{[^}]*background: var\(--chrome-band\); color: var\(--chrome-band-ink\);/);
-  assert.match(css, /body\.mission-control \.panel \{[^}]*border-inline-start: 0;/s);
-  assert.match(css, /body\.mission-control \.panel \{[^}]*padding-inline-start: 0;/s);
+  // The dashboard panes are sections of #mission-grid (cc17cc6d7f), not div.panel.
+  assert.match(css, /body\.mission-control #mission-grid > section \{[^}]*border-inline-start: 0;/s);
+  assert.match(css, /body\.mission-control #mission-grid > section \{[^}]*padding-inline-start: 0;/s);
 
   // The session chrome is mobile-first: the base rules carry the tap target and
   // the wider breakpoint only relaxes spacing, never the target size.
@@ -1160,7 +1172,7 @@ test("web chat records monotonic first-token, first-audio and reply-completion l
   assert.ok(part5.includes("chatTiming.firstTokenMs = Math.round(performance.now() - chatTiming.startedAt)"));
   assert.ok(part5.includes("chatTiming.completedMs = Math.round(performance.now() - chatTiming.startedAt)"));
   assert.ok(speech.includes("chatTiming.firstAudioMs = Math.round(performance.now() - chatTiming.startedAt)"));
-  assert.ok(speech.includes("chatTiming: lane === 'response' ? window.MASTER_CHAT_TIMING || null : null"));
+  assert.ok(speech.includes("const chatTiming = lane === 'response' ? window.MASTER_CHAT_TIMING || null : null"));
   assert.ok(speech.includes("const chatTiming = meta.chatTiming"));
   assert.ok(speech.includes("status: 'audio_started'"));
   assert.ok(speech.includes("meta.lane === 'response'"));
