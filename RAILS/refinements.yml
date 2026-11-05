@@ -4936,7 +4936,8 @@ items:
   path: RAILS/master/app/views/chat/index.html.erb
   item: Render the /runtime/config payload into the page rather than fetching it again
     after boot.
-  status: open
+  status: invalid
+  note: "Deliberate split, not a refetch: the page inlines RuntimeCatalog.web_boot_payload_minimal (6.6 KB) and fetches the full /runtime/config (27.7 KB measured 2026-11-05) after boot, as runtime_catalog.rb says, to keep first paint off the full catalog parse. The chat HTML is no-store, so inlining would add ~28 KB to every page load and parse on the critical path."
 - id: master-024
   app: master
   area: performance
