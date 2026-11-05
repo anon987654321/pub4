@@ -201,7 +201,7 @@ def verify_face_css
   # The face's palette values are var() references into brgen's family :root, so
   # without that block they resolve to nothing; it is checked whole.
   missing = [
-    "--x-text: #{palette.fetch('x_text')}",
+    "--c-text: #{palette.fetch('c_text')}",
     "JetBrainsMono Nerd Font",
     DesignTokens.family_tokens_block,
   ].reject { |m| body.include?(m) }

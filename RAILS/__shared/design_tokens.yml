@@ -319,23 +319,21 @@ face_root:
     signal_ink: "#080808"
     signal_on_light: "#3A3A3A"
     c_text: var(--text)
-    x_text: var(--text)
     c_accent: var(--pub4-signal)
     c_danger: var(--danger)
     c_code: oklch(81% 0 0)
   anchors:
     c_text: oklch(93% 0.025 250)
-    x_text: "#e7eeff"
     c_accent: var(--pub4-signal)
     c_danger: oklch(60% 0.14 35)
     c_code: oklch(81% 0.10 268)
-  font_mono: '"JetBrainsMono Nerd Font", "JetBrains Mono", "Cascadia Code", "Fira
-    Code", ui-monospace, monospace'
+  font_mono: '"JetBrainsMono Nerd Font", "JetBrains Mono", ui-monospace, "SFMono-Regular",
+    Menlo, Monaco, Consolas, monospace'
   font_label: '"JetBrainsMono Nerd Font", "JetBrains Mono", "Cascadia Code", "Fira
     Code", ui-monospace, monospace'
   face_bg: "#000000"
   derived:
-    face_fg: var(--x-text)
+    face_fg: var(--c-text)
     face_muted: var(--text-secondary)
     face_dim: rgb(176 176 176 / 18%)
     face_soft: rgb(176 176 176 / 7%)
@@ -360,6 +358,7 @@ face_root:
   layout:
     tap-min: 44px
     text-meta: 0.8125rem
+    text-extra-small: 0.75rem
     text-title: 1.25rem
     baseline: 4px
     measure: 60ch

@@ -13,7 +13,6 @@
     document.documentElement.style.setProperty("--ease-out", "steps(2,end)");
     document.documentElement.style.setProperty("--face-phosphor-decay", "0");
     document.documentElement.style.setProperty("--c-text", "#63c363");
-    document.documentElement.style.setProperty("--x-text", "#63c363");
     document.body.classList.add("wscons-mode");
   }
 

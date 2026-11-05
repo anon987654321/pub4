@@ -31,11 +31,11 @@ body.zen #zsh.revealed { transform: translate(-50%,0); }
   min-inline-size: var(--tap-min); min-block-size: var(--tap-min);
   border: 0; border-radius: 0; background: transparent; color: var(--chrome-muted);
 }
-#photo-button { font-family: var(--font-brand); font-size: 1.35rem; }
+#photo-button { font-family: var(--font); font-size: 1.35rem; }
 #photo-button:hover, #music-btn:hover, #spin-btn:hover { background: var(--chrome-hover); color: var(--chrome-text); }
 #photo-button:focus-visible, #music-btn:focus-visible, #spin-btn:focus-visible { outline: 2px solid var(--chrome-focus); outline-offset: -2px; }
 #music-btn::before { inset: 15px; border-radius: 0; border-color: currentColor; }
-#spin-btn { padding-inline: 8px; font-family: var(--font-brand); }
+#spin-btn { padding-inline: 8px; font-family: var(--font); }
 #zsh-status { color: var(--chrome-muted); font-size: var(--text-meta); }
 .turn-queue-status { color: var(--chrome-muted); font: 400 .72rem/1.2 var(--font-mono); white-space: nowrap; pointer-events: none; margin-inline-start: 4px; }
 body[data-queue-active="1"] .turn-queue-status { opacity: .9; }

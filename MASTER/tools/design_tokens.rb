@@ -9,7 +9,7 @@ module DesignTokens
   ROOT = File.expand_path("../..", __dir__)
   SOURCE = File.join(ROOT, "MASTER", "data", "tokens.yml")
   ARTIFACT = File.join(ROOT, "RAILS", "__shared", "design_tokens.yml")
-  FACE_ORDER = %w[c_text x_text c_accent c_danger c_code].freeze
+  FACE_ORDER = %w[c_text c_accent c_danger c_code].freeze
   DIALECT_PATH = File.join(ROOT, "RAILS", "__shared", "app", "assets", "stylesheets", "_dialect_tokens.scss")
 
   # Explicit yml-key -> css-var maps for the values that have drifted before
@@ -284,7 +284,7 @@ module DesignTokens
       # intentional projection from visual_identity, not the palette mixin's
       # separate --c-accent default. The face root is generated directly from
       # the canonical anchor and cannot leak its identity into app dialects.
-      next if %w[x_text c_accent].include?(key)
+      next if key == "c_accent"
 
       needle = "$#{key.tr('_', '-')}: #{value}"
       drifted << "#{key}=#{value}" unless scss.include?(needle)

@@ -32,7 +32,7 @@ body[data-council-persona]::after {
   font: 800 clamp(15px,3.8vw,24px)/1 var(--font-logo);
   letter-spacing: -.03em;
   text-transform: none; /* brgen wordmark is lowercase */
-  color: var(--x-text, var(--c-text));
+  color: var(--c-text);
   opacity: 1;
   pointer-events: none;
   user-select: none;

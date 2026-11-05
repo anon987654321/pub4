@@ -10,7 +10,9 @@ const chatIndex = readFileSync(join(root, "app", "views", "chat", "index.html.er
 const pwaManifest = readFileSync(join(root, "app", "views", "pwa", "manifest.json.erb"), "utf8");
 const publicDir = join(root, "public");
 const chat = readFileSync(join(publicDir, "chat.js"), "utf8");
-const faceMotion = readFileSync(join(root, "styles", "face", "40_accessibility_motion.css"), "utf8");
+// 40_accessibility_motion.css and the sources split out of it, read as one.
+const faceMotion = ["40_accessibility_motion.css", "41_print.css", "42_wscons_skin.css", "43_face_chrome.css",
+  "44_stipple_playground.css"].map((name) => readFileSync(join(root, "styles", "face", name), "utf8")).join("\n");
 const faceChrome = readFileSync(join(root, "styles", "face", "60_session_chrome.css"), "utf8");
 const faceBuilder = readFileSync(join(root, "..", "..", "MASTER", "tools", "rails", "build_face_css.rb"), "utf8");
 const faceConversation = readFileSync(join(root, "styles", "face", "30_conversation.css"), "utf8");
@@ -228,9 +230,9 @@ test("canonical theme token reaches CSS, routes and PWA manifest", () => {
   const root = faceCss.slice(rootStart, rootEnd);
   // face_root.palette reads brgen's family tokens; anchors keep the older tinted values.
   assert.match(tokens, /face_bg: "#000000"/);
-  assert.match(tokens, /palette:[\s\S]*?x_text: "var\(--text\)"/);
+  assert.doesNotMatch(tokens, /x_text/);
   assert.match(root, /--face-bg: #000000;/);
-  assert.match(root, /--x-text: var\(--text\);/);
+  assert.match(root, /--face-fg: var\(--c-text\);/);
   // raw keeps ActionView from HTML-escaping the JSON string's quotes.
   assert.match(pwaManifest, /"background_color": <%= raw theme_color\.to_json %>/);
   assert.match(pwaManifest, /"theme_color": <%= raw theme_color\.to_json %>/);

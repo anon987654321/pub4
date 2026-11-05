@@ -20,6 +20,10 @@ module MasterFaceStylesheet
     20_chrome.css
     30_conversation.css
     40_accessibility_motion.css
+    41_print.css
+    42_wscons_skin.css
+    43_face_chrome.css
+    44_stipple_playground.css
     50_ascii_face.css
     60_session_chrome.css
   ].freeze

@@ -4857,7 +4857,7 @@ items:
   size: S
   path: RAILS/master/styles/face/10_foundation.css
   item: Remove --font-brand, an alias of var(--font), and use --font directly.
-  status: open
+  status: done
 - id: master-014
   app: master
   area: design
@@ -4887,7 +4887,7 @@ items:
   size: S
   path: RAILS/master/styles/face/40_accessibility_motion.css
   item: Remove the --x-text alias; the x_ prefix was retired from the design system.
-  status: open
+  status: done
 - id: master-018
   app: master
   area: design
@@ -4895,7 +4895,7 @@ items:
   path: RAILS/master/styles/face/40_accessibility_motion.css
   item: Split 40_accessibility_motion.css by concern; it also holds the wscons skin,
     the stipple playground and print rules.
-  status: open
+  status: done
 - id: master-019
   app: master
   area: i18n
@@ -5055,14 +5055,14 @@ items:
   path: RAILS/master/styles/face/10_foundation.css
   item: Take --font-mono from the shared token instead of a six-family stack naming
     fonts MASTER never loads.
-  status: open
+  status: done
 - id: master-039
   app: master
   area: typography
   size: S
   path: RAILS/master/styles/face/40_accessibility_motion.css
   item: Raise the 10px playground text to --text-extra-small.
-  status: open
+  status: done
 - id: mrdamascy-001
   app: mrdamascy
   area: accessibility

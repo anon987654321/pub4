@@ -17,7 +17,8 @@ class VisualIdentityContractTest < Minitest::Test
   AMBER_STYLES = File.join(ROOT, "amber", "app", "assets", "stylesheets", "application.scss")
   BSDPORTS_STYLES = File.join(ROOT, "bsdports", "app", "assets", "stylesheets", "application.scss")
   BSDPORTS_LAYOUT = File.join(ROOT, "bsdports", "app", "views", "layouts", "application.html.erb")
-  FACE_MOTION = File.join(ROOT, "master", "styles", "face", "40_accessibility_motion.css")
+  # The face's motion and accessibility rules, split by concern across 40-44.
+  FACE_MOTION = Dir[File.join(ROOT, "master", "styles", "face", "4[0-4]_*.css")].sort
   SHARED_MOTION = File.join(ROOT, "__shared", "app", "assets", "stylesheets", "_interaction_craft.scss")
   # laws.yml states each Law; law_runtime.yml carries the executable requirements.
   LAW_FILES = %w[laws.yml law_runtime.yml].map { |name| File.expand_path("../../MASTER/data/#{name}", __dir__) }
@@ -120,7 +121,7 @@ class VisualIdentityContractTest < Minitest::Test
 
   def test_reduced_motion_preserves_meaning_without_perpetual_animation
     identity = Operator::MasterDesign.tokens.fetch("visual_identity")
-    face_motion = File.read(FACE_MOTION, encoding: "UTF-8")
+    face_motion = FACE_MOTION.map { |path| File.read(path, encoding: "UTF-8") }.join("\n")
     shared_motion = File.read(SHARED_MOTION, encoding: "UTF-8")
 
     assert_equal "still", identity.dig("motion", "default")

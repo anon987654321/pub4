@@ -57,11 +57,10 @@
   --pub4-signal-ink: #080808;
   --pub4-signal-on-light: #3A3A3A;
   --c-text: var(--text);
-  --x-text: var(--text);
   --c-accent: var(--pub4-signal);
   --c-danger: var(--danger);
   --c-code: oklch(81% 0 0);
-  --font-mono: "JetBrainsMono Nerd Font", "JetBrains Mono", "Cascadia Code", "Fira Code", ui-monospace, monospace;
+  --font-mono: "JetBrainsMono Nerd Font", "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, Monaco, Consolas, monospace;
   --font-label: "JetBrainsMono Nerd Font", "JetBrains Mono", "Cascadia Code", "Fira Code", ui-monospace, monospace;
   color-scheme: dark;
   --safe-top: env(safe-area-inset-top, 0px);
@@ -74,7 +73,7 @@
   --inset-b: calc(var(--chrome-inset) + var(--safe-bottom));
   --inset-l: calc(var(--chrome-inset) + var(--safe-left));
   --face-bg: #000000;
-  --face-fg: var(--x-text);
+  --face-fg: var(--c-text);
   --face-muted: var(--text-secondary);
   --face-dim: rgb(176 176 176 / 18%);
   --face-soft: rgb(176 176 176 / 7%);
@@ -98,6 +97,7 @@
   --chrome-band-muted: #8b98a5;
   --tap-min: 44px;
   --text-meta: 0.8125rem;
+  --text-extra-small: 0.75rem;
   --text-title: 1.25rem;
   --baseline: 4px;
   --measure: 60ch;
@@ -130,15 +130,14 @@
 }
 /* END:generated-face-root */
 
-/* Not a generated token. generate_face_root_css.rb owns the block above, so a
+/* Not generated tokens. generate_face_root_css.rb owns the block above, so a
    hand-added line inside it is drift the deploy check stops. The brand face is
-   the one sans family the owner set for every surface, so it reads the family
-   block's --font rather than restating the stack, the same value brgen's
-   app-root-tokens gives --font-brand. Helvetica Neue Pro is licensed per seat
-   and cannot ship as a webfont; the stack names it where it is installed and
-   falls to Helvetica Neue, then Arial, and downloads nothing. */
+   the one sans family the owner set for every surface, so rules read the
+   family block's --font directly rather than an alias of it. Helvetica Neue
+   Pro is licensed per seat and cannot ship as a webfont; the stack names it
+   where it is installed and falls to Helvetica Neue, then Arial, and
+   downloads nothing. */
 :root {
-  --font-brand: var(--font);
   /* Optical display weights sit outside the body 400/600/800 ladder. */
   --face-weight-brand: 640;
   --face-weight-display: 560;
@@ -466,7 +465,7 @@ body[data-council-persona]::after {
   font: 800 clamp(15px,3.8vw,24px)/1 var(--font-logo);
   letter-spacing: -.03em;
   text-transform: none; /* brgen wordmark is lowercase */
-  color: var(--x-text, var(--c-text));
+  color: var(--c-text);
   opacity: 1;
   pointer-events: none;
   user-select: none;
@@ -1582,7 +1581,6 @@ body[data-runtime-profile="crt"] #cognition-ecology {
 html[data-aesthetic="wscons"],
 body.wscons-mode {
   --c-text: #63c363;
-  --x-text: #63c363;
   --face-phosphor-decay: 0;
   --radius-extra-small: 0;
   --radius-small: 0;
@@ -1635,7 +1633,6 @@ body.wscons-mode #face-phosphor-trail {
 .message .msg-prompt {
   font-family: var(--font-mono);
 }
-
 
 /* Canonical interface projections. Hidden until semantic state requires them. */
 .master-task-rail {
@@ -1756,7 +1753,6 @@ body.wscons-mode #face-phosphor-trail {
   }
 }
 
-
 /* Semantic face chrome hooks. These selectors are structural only: the shared
    wordmark and microphone markup stay readable without inventing a second
    visual dialect. */
@@ -1813,7 +1809,6 @@ body[data-mode="listening"] .mic-indicator {
   .mic-indicator { transition: none; }
 }
 
-
 /* Runtime rendering mechanics only. Palette, typography and geometry are token-owned. */
 html, body {
   -webkit-font-smoothing: antialiased;
@@ -1830,7 +1825,7 @@ canvas#face { background: var(--face-bg); }
   min-block-size: 40px;
   padding: 8px 0;
   color: rgb(226 226 226 / 88%);
-  font-family: var(--font-brand);
+  font-family: var(--font);
   font-size: clamp(0.95rem, 1.5vw, 1.12rem);
   font-weight: var(--face-weight-brand);
   letter-spacing: -0.045em;
@@ -1853,7 +1848,7 @@ body[data-mode="listening"] .mic-indicator { color: #C7C7C7; }
 }
 #primer h1 {
   max-inline-size: 14ch;
-  font-family: var(--font-brand);
+  font-family: var(--font);
   font-size: clamp(2.2rem, 6.8vw, 5.6rem);
   font-weight: var(--face-weight-display);
   line-height: 0.98;
@@ -1864,7 +1859,7 @@ body[data-mode="listening"] .mic-indicator { color: #C7C7C7; }
   max-inline-size: 46ch;
   margin: 22px auto 0;
   color: rgb(189 189 189 / 78%);
-  font: 400 clamp(0.95rem, 1.6vw, 1.08rem)/1.7 var(--font-brand);
+  font: 400 clamp(0.95rem, 1.6vw, 1.08rem)/1.7 var(--font);
   text-wrap: pretty;
 }
 #primer .primer-consent {
@@ -1873,7 +1868,7 @@ body[data-mode="listening"] .mic-indicator { color: #C7C7C7; }
   /* --chrome-muted on the primer's --chrome-bg is 7.49:1; the alpha grey it
      replaces measured 4.10, under the 4.5 body-text floor. */
   color: var(--chrome-muted);
-  font: 400 0.75rem/1.6 var(--font-brand);
+  font: 400 0.75rem/1.6 var(--font);
 }
 
 #chat-shell {
@@ -1919,7 +1914,7 @@ body[data-mode="listening"] .mic-indicator { color: #C7C7C7; }
   position: fixed; z-index: 40; inset: auto 16px 64px auto;
   width: min(320px, calc(100vw - 32px)); max-height: min(72vh, 560px);
   overflow: auto; display: grid; gap: 10px; padding: 14px;
-  color: var(--x-text); background: var(--face-bg); border: 1px solid var(--chrome-border);
+  color: var(--c-text); background: var(--face-bg); border: 1px solid var(--chrome-border);
   font: 12px/1.4 var(--font-mono, ui-monospace, monospace);
 }
 .master-face-stipple-playground strong { font-size: 13px; font-weight: 700; }
@@ -1934,7 +1929,7 @@ body[data-mode="listening"] .mic-indicator { color: #C7C7C7; }
 .master-face-stipple-playground .master-stipple-status { margin: 0; color: var(--face-muted); }
 .master-face-stipple-playground .master-stipple-diagnostics {
   max-height: 180px; overflow: auto; padding: 8px; color: var(--face-muted);
-  font: inherit; font-size: 10px; white-space: pre-wrap; overflow-wrap: anywhere;
+  font: inherit; font-size: var(--text-extra-small); white-space: pre-wrap; overflow-wrap: anywhere;
 }
 @media (prefers-reduced-motion: reduce) {
   .master-face-stipple-playground, .master-face-stipple-playground * {
@@ -1992,11 +1987,11 @@ body.zen #zsh.revealed { transform: translate(-50%,0); }
   min-inline-size: var(--tap-min); min-block-size: var(--tap-min);
   border: 0; border-radius: 0; background: transparent; color: var(--chrome-muted);
 }
-#photo-button { font-family: var(--font-brand); font-size: 1.35rem; }
+#photo-button { font-family: var(--font); font-size: 1.35rem; }
 #photo-button:hover, #music-btn:hover, #spin-btn:hover { background: var(--chrome-hover); color: var(--chrome-text); }
 #photo-button:focus-visible, #music-btn:focus-visible, #spin-btn:focus-visible { outline: 2px solid var(--chrome-focus); outline-offset: -2px; }
 #music-btn::before { inset: 15px; border-radius: 0; border-color: currentColor; }
-#spin-btn { padding-inline: 8px; font-family: var(--font-brand); }
+#spin-btn { padding-inline: 8px; font-family: var(--font); }
 #zsh-status { color: var(--chrome-muted); font-size: var(--text-meta); }
 .turn-queue-status { color: var(--chrome-muted); font: 400 .72rem/1.2 var(--font-mono); white-space: nowrap; pointer-events: none; margin-inline-start: 4px; }
 body[data-queue-active="1"] .turn-queue-status { opacity: .9; }

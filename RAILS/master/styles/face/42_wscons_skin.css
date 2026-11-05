@@ -1,0 +1,33 @@
+/* wscons aesthetic — flat 80-column scrollback log (MASTER_AESTHETIC=wscons) */
+html[data-aesthetic="wscons"],
+body.wscons-mode {
+  --c-text: #63c363;
+  --face-phosphor-decay: 0;
+  --radius-extra-small: 0;
+  --radius-small: 0;
+  --radius-medium: 0;
+  --radius-large: 0;
+  --radius-pill: 0;
+}
+
+html[data-aesthetic="wscons"] body,
+body.wscons-mode {
+  font-family: var(--font-mono);
+  font-size: 16px;
+  line-height: var(--leading-body);
+  -webkit-font-smoothing: auto;
+}
+
+html[data-aesthetic="wscons"] #zsh,
+html[data-aesthetic="wscons"] #chat-log,
+body.wscons-mode #zsh,
+body.wscons-mode #chat-log {
+  max-width: 80ch;
+  border-radius: 0;
+}
+
+html[data-aesthetic="wscons"] #face-phosphor-trail,
+body.wscons-mode #face-phosphor-trail {
+  display: none !important;
+}
+

@@ -136,7 +136,7 @@ tokens:
     font_size_display: "1.75rem"
     measure_body: "66ch"
     font: '"Helvetica Neue Pro", "Helvetica Neue", Arial, sans-serif'
-    font_code: '"JetBrainsMono Nerd Font", "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, Monaco, Consolas, monospace'
+    font_code: &shared_font_code '"JetBrainsMono Nerd Font", "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, Monaco, Consolas, monospace'
     chrome_inset: "12px"
     tap_min: "44px"
     bar_height: "44px"
@@ -377,23 +377,22 @@ tokens:
       signal_ink: "#080808"
       signal_on_light: "#3A3A3A"
       c_text: "var(--text)"
-      x_text: "var(--text)"
       c_accent: "var(--pub4-signal)"
       c_danger: "var(--danger)"
       c_code: "oklch(81% 0 0)"
     anchors:
       c_text: "oklch(93% 0.025 250)"
-      x_text: "#e7eeff"
       c_accent: "var(--pub4-signal)"
       c_danger: "oklch(60% 0.14 35)"
       c_code: "oklch(81% 0.10 268)"
-    font_mono: '"JetBrainsMono Nerd Font", "JetBrains Mono", "Cascadia Code", "Fira Code", ui-monospace, monospace'
+    # The family's code stack (shared_chrome.font_code), not a face-only copy.
+    font_mono: *shared_font_code
     font_label: '"JetBrainsMono Nerd Font", "JetBrains Mono", "Cascadia Code", "Fira Code", ui-monospace, monospace'
     # A literal, not var(--bg): the views print it into <meta name="theme-color">.
     # It equals social.bg, and design_tokens_test asserts that.
     face_bg: "#000000"
     derived:
-      face_fg: "var(--x-text)"
+      face_fg: "var(--c-text)"
       face_muted: "var(--text-secondary)"
       face_dim: "rgb(176 176 176 / 18%)"
       face_soft: "rgb(176 176 176 / 7%)"
@@ -424,6 +423,9 @@ tokens:
     layout:
       tap-min: 44px
       text-meta: "0.8125rem"
+      # The smallest step of the shared type scale (__shared/_tokens.scss),
+      # which the family :root embedded ahead of this block does not carry.
+      text-extra-small: "0.75rem"
       text-title: "1.25rem"
       baseline: "4px"
       measure: "60ch"

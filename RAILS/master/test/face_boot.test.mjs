@@ -667,9 +667,44 @@ test("face.css keeps primer and prompt layering stable", () => {
   assert.match(css, /z-index:\s*var\(--z-modal\)/);
   assert.match(css, /body:not\(\.face-ready\) #zsh:not\(\.live\)/);
   // face_root.palette reads brgen's family tokens; the ground is brgen's --bg.
-  assert.match(css, /--x-text:\s*var\(--text\)/);
+  assert.match(css, /--face-fg:\s*var\(--c-text\)/);
   assert.match(css, /--face-bg:\s*#000000/);
   assert.match(css, /body\[data-runtime-profile="calm"\]/);
+});
+
+// The x_ prefix and the --font-brand alias are retired, the mono stack is the
+// family's shared code token, and the smallest text is a step of the type scale.
+test("face stylesheet uses the family tokens without aliases or a private stack", () => {
+  const css = readFileSync(join(publicDir, "face.css"), "utf8");
+  const tokens = readFileSync(join(root, "..", "..", "MASTER", "data", "tokens.yml"), "utf8");
+  const sharedCode = tokens.match(/font_code: &shared_font_code '([^']+)'/)?.[1];
+
+  assert.ok(sharedCode, "shared_chrome.font_code carries the anchor face_root.font_mono reads");
+  assert.match(tokens, /font_mono: \*shared_font_code/);
+  assert.ok(css.includes(`--font-mono: ${sharedCode};`), "--font-mono is the shared code stack");
+  assert.doesNotMatch(css, /--x-text|x_text/);
+  assert.doesNotMatch(css, /--font-brand/);
+  assert.doesNotMatch(css, /font-size:\s*10px/);
+  assert.match(css, /--text-extra-small: 0\.75rem;/);
+  assert.match(css, /\.master-stipple-diagnostics \{[^}]*font-size: var\(--text-extra-small\);/);
+});
+
+// 40_accessibility_motion.css holds accessibility and motion rules; print, the
+// wscons skin, the face chrome and the stipple playground are their own sources,
+// concatenated in the order that keeps face.css's cascade unchanged.
+test("face stylesheet sources are split by concern", () => {
+  const builder = readFileSync(join(root, "..", "..", "MASTER", "tools", "rails", "build_face_css.rb"), "utf8");
+  const styles = join(root, "styles", "face");
+  const order = ["40_accessibility_motion.css", "41_print.css", "42_wscons_skin.css",
+    "43_face_chrome.css", "44_stipple_playground.css", "50_ascii_face.css"];
+  const positions = order.map((name) => builder.indexOf(name));
+  assert.ok(positions.every((at, index) => at > 0 && (index === 0 || at > positions[index - 1])), positions.join(","));
+
+  const motion = readFileSync(join(styles, "40_accessibility_motion.css"), "utf8");
+  assert.doesNotMatch(motion, /@media print|wscons|master-face-stipple-playground/);
+  assert.match(readFileSync(join(styles, "41_print.css"), "utf8"), /^@media print/);
+  assert.match(readFileSync(join(styles, "42_wscons_skin.css"), "utf8"), /html\[data-aesthetic="wscons"\]/);
+  assert.match(readFileSync(join(styles, "44_stipple_playground.css"), "utf8"), /\.master-face-stipple-playground \{/);
 });
 
 test("MASTER web and CLI share one monospaced chat contract", () => {
