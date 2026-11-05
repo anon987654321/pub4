@@ -427,7 +427,7 @@ module Master
 
         # Candidates are independent calls against the same unchanged source, so
         # they are asked concurrently and collected in candidate order: the same
-        # prompts, the same events, the same uniq — a third of the wall time on
+        # prompts, the same events, the same uniq - a third of the wall time on
         # the generation stage. The count is UserSimulation.candidate_count (<=5),
         # and MASTER_FIX_PARALLEL_CANDIDATES=0 restores the sequential walk for a
         # lane that punishes concurrent requests (ROBUSTNESS: the escape is

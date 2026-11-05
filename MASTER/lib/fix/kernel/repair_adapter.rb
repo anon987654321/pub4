@@ -70,7 +70,7 @@ module Master
 
         # The same diligence the seven-point checklist asked for, compressed:
         # every candidate prompt repeated the list, and a model that answered it
-        # literally printed summaries extract_code then discarded — output
+        # literally printed summaries extract_code then discarded - output
         # tokens for text nobody reads. The reasoning stays mandatory; it just
         # happens silently, and only the answer format comes back.
         SEMANTIC_PASS_CHECKLIST = <<~TEXT.strip

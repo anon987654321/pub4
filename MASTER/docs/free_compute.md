@@ -135,7 +135,7 @@ Three gaps closed against the contract above; no new provider was admitted, so
 the admission gates were not exercised.
 
 - **Hosted free-tier day caps are enforced.** `openai_compatible` endpoints may
-  declare `daily_quota` (groq 14,400; cerebras 100 — the same figures their
+  declare `daily_quota` (groq 14,400; cerebras 100 - the same figures their
   blocks already stated). `Io::ModelQuota` tracks `<name>:<model>` lanes
   against their endpoint's cap, so an exhausted free tier is filtered by
   `LaneSelection` and `ComputePool` instead of being retried into 429s. An
