@@ -8,6 +8,7 @@ require "axe/matchers/be_axe_clean"
 # dating.brgen.no the way a person does and the session cookie crosses hosts.
 module CityHostSystemTest
   APEX = "brgen.no"
+  SIGN_IN_ANSWER_CEILING = 60
 
   def self.included(base)
     # Its own driver name: Capybara keeps one session per name, and a session
@@ -43,10 +44,22 @@ module CityHostSystemTest
     visit_city(nil, "/session/new")
     fill_in "email_address", with: user.email_address
     fill_in "password", with: password
+    # Turbo submits the form with fetch, and the page it lands on is no
+    # evidence: a signed-in reader can stay on /session/new. Turbo's own
+    # turbo:submit-end is, fired once the server has answered, a sign-in or a
+    # refusal alike, however long a loaded machine takes, where a fixed five
+    # seconds on the session row timed out under load. It is recorded on <html>,
+    # which a render does not replace. The ceiling is a ceiling, not a delay.
+    # The session row then tells the two answers apart.
+    execute_script(<<~JS)
+      document.documentElement.removeAttribute("data-sign-in-answered")
+      document.addEventListener("turbo:submit-end", () => {
+        document.documentElement.dataset.signInAnswered = "true"
+      }, { once: true })
+    JS
     find("input[type=submit][value='#{I18n.t("auth.sign_in")}']").click
-    # Turbo submits the form and follows the redirect in place, so the address
-    # bar is no evidence; the session row is.
-    assert wait_until { Session.exists?(user_id: user.id) }, "#{user.email_address} did not sign in"
+    assert_selector "html[data-sign-in-answered]", visible: :all, wait: SIGN_IN_ANSWER_CEILING
+    assert Session.exists?(user_id: user.id), "#{user.email_address} did not sign in"
   end
 
   # A background fetch commits after the page has moved on.
