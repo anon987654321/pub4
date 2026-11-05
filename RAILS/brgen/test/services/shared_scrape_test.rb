@@ -53,4 +53,35 @@ class SharedScrapeTest < ActiveSupport::TestCase
     refute_match(/browser_options:\s*\{[^}]*no-sandbox/m, source,
                  "untrusted pages must not run outside Chromium's sandbox")
   end
+
+  test "IPv4 and IPv6 special-purpose ranges never become scrape destinations" do
+    blocked = %w[
+      0.0.0.0
+      100.64.0.1
+      192.0.2.1
+      198.18.0.1
+      224.0.0.1
+      240.0.0.1
+      ::
+      ::1
+      ::ffff:7f00:1
+      64:ff9b:1::1
+      100::1
+      2001:db8::1
+      fc00::1
+      fe80::1
+      ff02::1
+    ]
+
+    blocked.each do |address|
+      host = address.include?(":") ? "[#{address}]" : address
+      refute Shared::Scrape.public_http_url?("https://#{host}/"), address
+    end
+  end
+
+  test "localhost suffixes remain blocked after DNS normalization" do
+    %w[localhost. service.local service.internal printer.home.arpa].each do |host|
+      refute Shared::Scrape.public_http_url?("http://#{host}/", resolver: public_resolver), host
+    end
+  end
 end
