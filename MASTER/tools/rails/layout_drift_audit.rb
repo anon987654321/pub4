@@ -172,7 +172,7 @@ module Operator
             "App-specific post-card variants reintroduce visual drift.", source: view) if view&.match?(/\bvariant\s*:/)
       end
 
-      expect("post_card.shared_markup", shared_view_path, shared_view, 'class="feed-card post-reading-card"',
+      expect("post_card.shared_markup", shared_view_path, shared_view, 'class: "feed-card post-reading-card"',
              "The shared post renderer must own the common card identity.")
       expect("post_card.vote_rail", shared_view_path, shared_view, 'render "shared/post_vote_rail"',
              "The shared post renderer must own the vote rail.")
@@ -193,9 +193,9 @@ module Operator
       end
 
       amber_css_path = "RAILS/amber/app/assets/stylesheets/application.scss"
-      expect("post_card.amber_detail_type", amber_css_path, read(amber_css_path),
-             ".post-show-reading .post-reading-title",
-             "Amber's editorial type override belongs to the full post page, not shared feed cards.")
+      restyled = read(amber_css_path).to_s.match?(/\.feed-card[^{,]*\.post-reading-title/)
+      add(restyled ? "FAIL" : "PASS", "post_card.amber_detail_type", amber_css_path,
+          "Amber must keep the shared feed card's title face; its post page h1 is visually hidden.")
     end
 
     def audit_feed_lists

@@ -52,7 +52,7 @@ checks:
   - {id: feed.compose_media,
      in: brgen/app/views/shared/_feed_compose.html.erb,
      has: ["accept: \"image/*\"", "accept: \"video/*\"", "accept: \"audio/*\""]}
-  - {id: feed.compose_nearby, in: brgen/app/views/shared/_feed_compose.html.erb, has: ["hidden_field :nearby"]}
+  - {id: feed.compose_nearby, in: brgen/app/views/shared/_feed_compose.html.erb, has: ["check_box :nearby"]}
   - {id: feed.card_frame_top, in: brgen/app/views/posts/_post.html.erb, has: ['<turbo-frame id=', 'target="_top"']}
   - {id: feed.card_vote, in: [brgen/app/views/posts/_post.html.erb, __shared/app/views/shared/_post_vote_rail.html.erb],
      has: [post_vote_path, "vote: { value: 1 }", "vote: { value: -1 }"]}

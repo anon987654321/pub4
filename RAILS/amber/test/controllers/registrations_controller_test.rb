@@ -109,11 +109,16 @@ class RegistrationsControllerTest < ActionDispatch::IntegrationTest
     end
     email = "blocked-merge-#{SecureRandom.hex(5)}@example.test"
 
-    AccountMerger.stub(:new, ->(**_kwargs) { merger }) do
+    # A hand-written stub: minitest/mock's #stub exists only once some other
+    # file has required it, so this test failed whenever it ran on its own.
+    AccountMerger.define_singleton_method(:new) { |**_kwargs| merger }
+    begin
       post registration_url, params: {
         accept_terms: "1", accept_age: "1",
         user: { email_address: email, password: "long-enough-pass", password_confirmation: "long-enough-pass" }
       }
+    ensure
+      AccountMerger.singleton_class.remove_method(:new)
     end
 
     assert_redirected_to root_path

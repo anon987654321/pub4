@@ -14,7 +14,8 @@ class VisualIdentityContractTest < Minitest::Test
   BRGEN_POSTS = File.join(ROOT, "brgen", "app", "views", "posts", "index.html.erb")
   AMBER_LAYOUT = File.join(ROOT, "amber", "app", "views", "layouts", "application.html.erb")
   AMBER_SIDEBAR = File.join(ROOT, "amber", "app", "views", "shared", "_sidebar_nav.html.erb")
-  AMBER_STYLES = File.join(ROOT, "amber", "app", "assets", "stylesheets", "application.scss")
+  AMBER_HELPER = File.join(ROOT, "amber", "app", "helpers", "application_helper.rb")
+  AMBER_STYLES =File.join(ROOT, "amber", "app", "assets", "stylesheets", "application.scss")
   BSDPORTS_STYLES = File.join(ROOT, "bsdports", "app", "assets", "stylesheets", "application.scss")
   BSDPORTS_LAYOUT = File.join(ROOT, "bsdports", "app", "views", "layouts", "application.html.erb")
   # The face's motion and accessibility rules, split by concern across 40-44.
@@ -67,9 +68,14 @@ class VisualIdentityContractTest < Minitest::Test
     sidebar = File.read(AMBER_SIDEBAR, encoding: "UTF-8")
     styles = File.read(AMBER_STYLES, encoding: "UTF-8")
 
-    assert_includes sidebar, 'aria: { current: ("page" if current_page?(items_path)) }'
-    assert_includes sidebar, 'aria: { current: ("page" if current_page?(outfits_path)) }'
-    assert_includes styles, '.sidebar .nav-item.active'
+    helper = File.read(AMBER_HELPER, encoding: "UTF-8")
+
+    # The sidebar marks its current link through nav_current, which answers
+    # "page" on the exact page and "true" anywhere else in that section.
+    assert_includes sidebar, 'aria: { current: nav_current(items_path, section: "items") }'
+    assert_includes sidebar, 'aria: { current: nav_current(outfits_path, section: "outfits"'
+    assert_includes helper, 'return "page" if current_page?(path)'
+    assert_includes styles, ".sidebar .nav-item[aria-current]"
     assert_includes styles, "color: var(--pub4-signal-on-light);"
     refute_match(/\.item-photo\s*\{[^}]*filter:/m, styles,
                  "the aesthetic must not tint garment/product photography")
@@ -105,7 +111,7 @@ class VisualIdentityContractTest < Minitest::Test
 
   def test_face_display_weight_tokens_live_outside_the_generated_root
     foundation = File.read(File.join(ROOT, "master", "styles", "face", "10_foundation.css"))
-    display = File.read(File.join(ROOT, "master", "styles", "face", "40_accessibility_motion.css"))
+    display = File.read(File.join(ROOT, "master", "styles", "face", "43_face_chrome.css"))
     compiled = File.read(FACE_COMPILED)
     generated = compiled.split("/* BEGIN:generated-face-root", 2).last.split("/* END:generated-face-root */", 2).first
 

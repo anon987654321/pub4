@@ -22,11 +22,16 @@ class SessionsControllerGuestTransferTest < ActionDispatch::IntegrationTest
       raise ActiveRecord::MigrationError, "simulated missing account_merges table"
     end
 
-    AccountMerger.stub(:new, ->(**_kwargs) { merger }) do
+    # A hand-written stub: minitest/mock's #stub exists only once some other
+    # file has required it, so this test failed whenever it ran on its own.
+    AccountMerger.define_singleton_method(:new) { |**_kwargs| merger }
+    begin
       post session_path, params: {
         email_address: member.email_address,
         password: "long-enough-password",
       }
+    ensure
+      AccountMerger.singleton_class.remove_method(:new)
     end
 
     assert_redirected_to new_session_path
