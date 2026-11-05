@@ -5,7 +5,9 @@
               aria: { label: t("messages.composer_label") },
               data: {
                 turbo: true,
-                controller: "typing-input optimistic-send",
+                controller: "typing-input optimistic-send attachment-preview",
+                attachment_preview_alt_value: t("messages.chosen_photo"),
+                attachment_preview_remove_value: t("messages.remove_photo"),
                 typing_input_url_value: conversation_typing_indicators_path(conversation),
                 optimistic_send_handle_value: Current.user&.display_name.to_s,
                 optimistic_send_pending_label_value: t("chat.sending"),
@@ -13,6 +15,8 @@
                 optimistic_send_offline_label_value: t("messages.offline"),
                 action: "keydown->typing-input#composerKeydown input->typing-input#ping turbo:submit-end->typing-input#markValue"
               } do |f| %>
+  <%# message-reply writes the same line and hidden field here when Reply is
+      pressed with JavaScript; this server copy is the ?reply_to= path. %>
   <% if reply_to %>
     <%# The referent travels in the form, so a reply is still a reply after a
         reload — and the line says what is being answered, because a reply with
@@ -20,12 +24,12 @@
 
         Above the box rather than below it: it qualifies what you are about
         to type, and it was printing after the field it qualifies. %>
-    <p class="msg-reply-context">
+    <p class="msg-reply-context" data-message-reply-line>
       <%= t("messages.replying_to", name: reply_to.sender.display_name) %>:
       <%= truncate(reply_to.content.to_s, length: 60) %>
       <%= link_to t("actions.cancel"), conversation_path(conversation) %>
     </p>
-    <%= f.hidden_field :parent_id, value: reply_to.id %>
+    <%= f.hidden_field :parent_id, value: reply_to.id, data: { message_reply_parent: true } %>
   <% end %>
 
   <%# One box: attach, record, type, send. The four were a stacked field, a
@@ -37,6 +41,8 @@
       2026-08-04 ("an input with no outline gives no target; you must see
       where to type"), and this box IS the field as far as a reader is
       concerned — the controls are inside its edge. %>
+  <%# The photo picked behind the camera icon, with a control to take it off. %>
+  <div class="messenger-composer-preview" data-attachment-preview-target="preview" aria-live="polite" hidden></div>
   <div class="messenger-composer-box">
     <%# camera, not plus: the field accepts audio/* and image/*, and the
         recorder beside it covers the audio half, so what this control adds
@@ -47,7 +53,9 @@
     <% end %>
     <%# The recorder writes into this file field and flips the type to audio, so a
         voice note goes through the same create path as a photo. %>
-    <%= f.file_field :attachment, accept: "audio/*,image/*", class: "media-input-hidden", data: { voice_recorder_target: "file" } %>
+    <%= f.file_field :attachment, accept: "audio/*,image/*", class: "media-input-hidden",
+                     data: { voice_recorder_target: "file", attachment_preview_target: "input",
+                             action: "change->attachment-preview#show" } %>
     <%= f.hidden_field :message_type, value: "text", data: { voice_recorder_target: "type" } %>
     <%# One name per attempt, kept across retries: the server answers a repeat
         with the message it already has instead of writing it twice. %>

@@ -1,0 +1,16 @@
+<%= turbo_frame_tag "messenger-pane", class: "messenger-pane" do %>
+  <% content_for :title, t("messages.group_add") %>
+
+  <div class="page-header">
+    <%= link_to t("messages.back_to_group"), conversation_path(@group), class: "button button-ghost" %>
+    <%= tag.h1 t("messages.group_add") %>
+  </div>
+
+  <%# The live search conversations#new uses; without JavaScript it is a plain
+      GET form, so the picker still works. %>
+  <%= live_search_index url: new_group_member_path(@group),
+        results_partial: "group_members/people_results",
+        placeholder: t("messages.find_people"),
+        label: t("messages.find_people"),
+        frame_id: "group-members-index" %>
+<% end %>

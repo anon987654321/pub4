@@ -2,7 +2,7 @@
 schema: 1
 apps:
   amber:
-    digest: b252fdca37be163d
+    digest: be39fe4957fd0008
     routes:
       shared/changelog#show:
       - "/changelog"
@@ -14,6 +14,8 @@ apps:
       - "/.well-known/apple-app-site-association"
       internal#status:
       - "/internal/status"
+      internal#version:
+      - "/internal/version"
       sso#from_master:
       - "/sso/from_master"
       registrations#new:
@@ -197,7 +199,7 @@ apps:
       active_storage/disk#show:
       - "/rails/active_storage/disk/:encoded_key/*filename"
   brgen:
-    digest: 789874c9a6b3709d
+    digest: 56e9434c47c9404b
     routes:
       shared/changelog#show:
       - "/changelog"
@@ -217,6 +219,8 @@ apps:
       - "/share_drafts/:id"
       internal#status:
       - "/internal/status"
+      internal#version:
+      - "/internal/version"
       sso#from_master:
       - "/sso/from_master"
       hashtags#show:
@@ -368,6 +372,8 @@ apps:
       - "/conversations/new"
       conversations#show:
       - "/conversations/:id"
+      group_members#new:
+      - "/groups/:group_id/members/new"
       group_conversations#new:
       - "/groups/new"
       partner/clicks#show:
@@ -582,7 +588,7 @@ apps:
       maps/places#show:
       - "/places/:id"
   bsdports:
-    digest: 4771de780207eb21
+    digest: 0106341fb844cbb8
     routes:
       shared/changelog#show:
       - "/changelog"
@@ -594,6 +600,8 @@ apps:
       - "/.well-known/apple-app-site-association"
       internal#status:
       - "/internal/status"
+      internal#version:
+      - "/internal/version"
       sso#from_master:
       - "/sso/from_master"
       sessions#magic:

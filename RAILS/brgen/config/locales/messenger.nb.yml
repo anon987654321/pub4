@@ -15,3 +15,14 @@ nb:
     request_decline: "Avslå"
     confirm_request_decline: >-
       Avslå forespørselen? Samtalen fjernes fra meldingene dine, og avsenderen får ikke beskjed.
+    request_report_block: "Rapporter og blokker"
+    confirm_request_report_block: >-
+      Rapportere og blokkere avsenderen? Meldingen sendes til moderatorene, hen kan ikke skrive til deg igjen,
+      og samtalen fjernes fra meldingene dine. Avsenderen får ikke beskjed.
+    request_report_details: "Rapportert fra en meldingsforespørsel."
+    group_add_person: "Legg til %{name}"
+    back_to_group: "Tilbake til gruppen"
+    chosen_photo: "Bildet du har valgt"
+    remove_photo: "Fjern bildet"
+  flash:
+    message_request_reported: "Forespørselen er rapportert, og avsenderen er blokkert."

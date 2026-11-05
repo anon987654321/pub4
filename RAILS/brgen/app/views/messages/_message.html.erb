@@ -120,10 +120,13 @@
         <%= button_to t("messages.private_message_action"), user_conversations_path(message.sender),
               method: :post, class: "msg-action", form: { data: { for: "others" } } %>
       <% else %>
-        <%= link_to t("messages.reply"), conversation_path(message.conversation, reply_to: message.id) %>
+        <%# Reply fills the composer in place (message-reply on the pane); Edit
+            swaps only the composer's frame. Both hrefs are the no-JS path. %>
+        <%= link_to t("messages.reply"), conversation_path(message.conversation, reply_to: message.id),
+                    data: { action: "message-reply#start", message_reply_id_param: message.id } %>
         <% if message.editable_by?(broadcast ? message.sender : viewer) %>
           <%= link_to t("actions.edit"), conversation_path(message.conversation, edit: message.id),
-                      data: { for: "sender" } %>
+                      data: { for: "sender", turbo_frame: "messenger_composer" } %>
         <% end %>
         <% if message.deletable_by?(broadcast ? message.sender : viewer) %>
           <%= button_to t("messages.unsend"), conversation_message_path(message.conversation, message), method: :delete,

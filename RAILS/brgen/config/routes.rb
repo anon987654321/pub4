@@ -208,7 +208,7 @@ get "i/:token" => "invites#show", as: :invite
   # a slug. Rename lives here rather than on conversations#update, which owns
   # the disappearing setting every conversation shares.
   resources :groups, only: %i[new create update], controller: "group_conversations" do
-    resources :members, only: %i[create destroy], controller: "group_members"
+    resources :members, only: %i[new create destroy], controller: "group_members"
   end
 
   # TV vertical, extracted to a mountable engine (../brgen_radio/tv). Routes now live in

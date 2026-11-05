@@ -15,3 +15,14 @@ en:
     request_decline: "Decline"
     confirm_request_decline: >-
       Decline this request? The conversation is removed from your messages and the sender is not told.
+    request_report_block: "Report and block"
+    confirm_request_report_block: >-
+      Report and block the sender? The message goes to the moderators, they cannot write to you again,
+      and the conversation is removed from your messages. The sender is not told.
+    request_report_details: "Reported from a message request."
+    group_add_person: "Add %{name}"
+    back_to_group: "Back to the group"
+    chosen_photo: "The photo you chose"
+    remove_photo: "Remove the photo"
+  flash:
+    message_request_reported: "Request reported and the sender blocked."

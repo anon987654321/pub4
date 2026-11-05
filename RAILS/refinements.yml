@@ -2160,7 +2160,7 @@ items:
   path: RAILS/__shared/frontend/conversation_log_controller.js
   item: Add a 'jump to latest' button when the log is scrolled up and new messages
     arrive.
-  status: open
+  status: done
 - id: brgen-154
   app: brgen
   area: messenger
@@ -2190,7 +2190,7 @@ items:
   size: M
   path: RAILS/brgen/app/views/conversations/_composer.html.erb
   item: Show a thumbnail and remove control for a chosen photo before sending.
-  status: open
+  status: done
 - id: brgen-158
   app: brgen
   area: messenger
@@ -2271,7 +2271,7 @@ items:
   size: S
   path: RAILS/brgen/app/views/conversations/show.html.erb
   item: Add a 'Report and block' combined action on message requests.
-  status: open
+  status: done
 - id: brgen-168
   app: brgen
   area: messenger
@@ -2279,7 +2279,7 @@ items:
   path: RAILS/brgen/app/views/conversations/show.html.erb
   item: Use the people live search for adding group members instead of an exact-username
     text field.
-  status: open
+  status: done
 - id: brgen-169
   app: brgen
   area: messenger
@@ -2293,7 +2293,7 @@ items:
   size: S
   path: RAILS/brgen/app/views/conversations/show.html.erb
   item: Autofocus the edit textarea with the cursor at the end and let Escape cancel.
-  status: open
+  status: done
 - id: brgen-171
   app: brgen
   area: messenger
@@ -2333,7 +2333,7 @@ items:
   path: RAILS/brgen/app/views/messages/_message.html.erb
   item: 'Reply and edit without a full pane reload: set parent_id and the reply line
     client-side, keeping ?reply_to as the no-JS path.'
-  status: open
+  status: done
 - id: brgen-176
   app: brgen
   area: messenger

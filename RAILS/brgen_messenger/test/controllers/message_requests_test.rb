@@ -132,4 +132,25 @@ class MessageRequestsTest < ActionDispatch::IntegrationTest
     assert_equal 5, ConversationParticipant.requests.where(user_id: targets.map(&:id)).count
     assert_equal 0, ConversationParticipant.accepted.where(user_id: targets.map(&:id)).count
   end
+
+  test "report and block declines the request, reports what the sender wrote and blocks them" do
+    sign_in_as(@stranger)
+    conversation = open_thread_with(@recipient)
+    spam = conversation.messages.create!(sender: @stranger, content: "Billig Rolex, klikk her", message_type: "text")
+
+    sign_in_as(@recipient)
+    get conversation_path(conversation)
+    assert_select "form[action=?] button", conversation_request_path(conversation, report: 1),
+                  text: I18n.t("messages.request_report_block")
+
+    assert_enqueued_with(job: ModerationReportNotificationJob) do
+      delete conversation_request_path(conversation, report: 1)
+    end
+    assert_redirected_to conversations_path(requests: 1)
+    assert_equal I18n.t("flash.message_request_reported"), flash[:notice]
+    assert_nil ConversationParticipant.find_by(conversation:, user: @recipient)
+    report = ModerationReport.find_by!(user: @recipient)
+    assert_equal [ "Message", spam.id ], [ report.reportable_type, report.reportable_id ]
+    assert @recipient.reload.blocking?(@stranger)
+  end
 end

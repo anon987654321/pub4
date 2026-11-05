@@ -26,7 +26,12 @@ export default class extends Controller {
     yesterdayLabel: { type: String, default: "Yesterday" },
     locale: { type: String, default: "en" },
     historyUrl: { type: String, default: "" },
-    olderLabel: { type: String, default: "Load earlier messages" }
+    olderLabel: { type: String, default: "Load earlier messages" },
+    // Where the "N new messages" pill goes when the page, not the log, is what
+    // scrolls: after the log it sits at the end of the thread, out of sight of
+    // a reader scrolled up. A selector for something always on screen (brgen's
+    // sticky composer area); empty keeps it after the log.
+    pillHome: { type: String, default: "" }
   }
 
   connect() {
@@ -79,6 +84,9 @@ export default class extends Controller {
       if (this.#atTail()) { this.unread = 0; this.#renderPill() }
     }
     this.element.addEventListener("scroll", this.onScroll, { passive: true })
+    // Below the wide layout the log is as tall as its lines and something
+    // around it scrolls instead, so "scrolled up" is read from any scroll.
+    document.addEventListener("scroll", this.onScroll, { passive: true, capture: true })
 
     if (this.sentinel) {
       // The window shows the newest page, so the sentinel sits above the
@@ -128,6 +136,7 @@ export default class extends Controller {
     this.historyObserver?.disconnect()
     this.historyObserver = null
     this.element.removeEventListener("scroll", this.onScroll)
+    document.removeEventListener("scroll", this.onScroll, { capture: true })
     this.element.removeEventListener("click", this.onLineTap)
     this.element.removeEventListener("keydown", this.onKeydown)
     this.pill?.remove()
@@ -145,7 +154,8 @@ export default class extends Controller {
 
   // Jump back to the newest line. Bound from the pill.
   toTail() {
-    this.element.scrollTop = this.element.scrollHeight
+    const scroller = this.#pageScrolls() ? this.#outerScroller() : this.element
+    scroller.scrollTop = scroller.scrollHeight
     this.unread = 0
     this.#renderPill()
   }
@@ -302,8 +312,32 @@ export default class extends Controller {
   }
 
   #atTail() {
+    if (this.#pageScrolls()) {
+      const box = this.element.getBoundingClientRect()
+      return box.bottom - window.innerHeight < 80
+    }
+
     const { scrollTop, scrollHeight, clientHeight } = this.element
     return scrollHeight - scrollTop - clientHeight < 80
+  }
+
+  // True when the log is not its own scroller: its overflow is visible, or it
+  // holds less than its height, so something around it carries the scroll.
+  #pageScrolls() {
+    return !this.#scrolls(this.element)
+  }
+
+  // The nearest ancestor that scrolls, or the document.
+  #outerScroller() {
+    for (let node = this.element.parentElement; node; node = node.parentElement) {
+      if (this.#scrolls(node)) return node
+    }
+    return document.scrollingElement
+  }
+
+  #scrolls(node) {
+    const overflow = getComputedStyle(node).overflowY
+    return (overflow === "auto" || overflow === "scroll") && node.scrollHeight > node.clientHeight + 1
   }
 
   #renderPill() {
@@ -314,7 +348,9 @@ export default class extends Controller {
       this.pill.type = "button"
       this.pill.className = "conversation_unread_pill"
       this.pill.addEventListener("click", () => this.toTail())
-      this.element.insertAdjacentElement("afterend", this.pill)
+      const home = this.pillHomeValue && this.#pageScrolls() ? document.querySelector(this.pillHomeValue) : null
+      if (home) home.prepend(this.pill)
+      else this.element.insertAdjacentElement("afterend", this.pill)
     }
     const n = this.unread
     const template = n === 1 ? this.unreadOneValue : this.unreadOtherValue
@@ -361,6 +397,12 @@ export default class extends Controller {
   // down while someone scrolls back through history is worse than not
   // following at all.
   #pinToNewest() {
+    // The page carries the scroll: follow the tail only from the observer,
+    // for a reader already at it, so opening a thread does not move the page.
+    if (this.#pageScrolls()) {
+      if (this.observer && this.#atTail()) this.toTail()
+      return
+    }
     if (this.#atTail() || this.element.scrollTop === 0) {
       this.element.scrollTop = this.element.scrollHeight
     }

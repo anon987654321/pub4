@@ -4,7 +4,12 @@
     for show as well as index. %>
 <section class="messenger-window" aria-label="<%= t("messages.title") %>">
   <%= render "conversations/rooms_rail" %>
-  <%= turbo_frame_tag "messenger-pane", class: "messenger-pane" do %>
+  <%# message-reply: a Reply on any line in the log fills the composer below
+      without reloading the pane; the link's ?reply_to= is the no-JS path. %>
+  <%= turbo_frame_tag "messenger-pane", class: "messenger-pane",
+        data: { controller: "message-reply",
+                message_reply_label_value: t("messages.replying_to", name: "%{name}"),
+                message_reply_cancel_value: t("actions.cancel") } do %>
     <%= turbo_stream_from @conversation %>
     <% content_for :body_attrs do %>data-push-seen="true"<% end %>
 
@@ -75,12 +80,9 @@
                     </li>
                   <% end %>
                 </ul>
-                <%= form_with url: group_members_path(@conversation), method: :post,
-                              class: "messenger-details-form" do |f| %>
-                  <%= f.label :username, t("messages.group_add") %>
-                  <%= f.text_field :username, placeholder: t("messages.username"), autocomplete: "username" %>
-                  <%= f.submit t("actions.add_one"), class: "button button-small" %>
-                <% end %>
+                <%# The people picker, not a field that wanted an exact username. %>
+                <%= link_to t("messages.group_add"), new_group_member_path(@conversation),
+                            class: "button button-small" %>
                 <% if @is_group_admin %>
                   <%= form_with model: @conversation, url: group_path(@conversation), method: :patch,
                                 class: "messenger-details-form" do |f| %>
@@ -195,7 +197,8 @@
               conversation_log_today_label_value: t("messages.today"),
               conversation_log_yesterday_label_value: t("messages.yesterday"),
               conversation_log_locale_value: I18n.locale,
-              conversation_log_older_label_value: t("messages.older")
+              conversation_log_older_label_value: t("messages.older"),
+              conversation_log_pill_home_value: ".messenger-composer-area"
             }.merge(@older_available && @messages.any? ? {
               conversation_log_history_url_value: conversation_messages_path(@conversation, before: @messages.first.id)
             } : {}) do %>
@@ -213,19 +216,28 @@
          data-controller="typing" data-typing-conversation-id-value="<%= @conversation.id %>"
          data-typing-viewer-value="<%= Current.user&.id %>"></p>
 
+      <%# The box at the foot is its own frame: Edit on a line swaps only this,
+          the edit form in place of the composer, and saving or cancelling swaps
+          the composer back, so the log above is never reloaded. %>
+      <%= turbo_frame_tag "messenger_composer", class: "messenger-composer-frame" do %>
       <% if @editing %>
+        <%# edit-box: the cursor lands at the end of the text, Escape cancels. %>
         <%= form_with model: @editing, url: conversation_message_path(@conversation, @editing), method: :patch,
-                      class: "messenger-edit-form" do |f| %>
+                      class: "messenger-edit-form",
+                      data: { controller: "edit-box", action: "keydown.esc->edit-box#cancel" } do |f| %>
           <div class="field">
             <%= f.label :content, t("messages.editing") %>
-            <%= f.text_area :content, rows: 3, value: @editing.content, aria: { describedby: "edit_window_note" } %>
+            <%= f.text_area :content, rows: 3, value: @editing.content, autofocus: true,
+                            aria: { describedby: "edit_window_note" },
+                            data: { edit_box_target: "field" } %>
           </div>
           <%# The window is the model's rule; saying when it shuts beats a refusal after it has. %>
           <%= tag.p t("messages.editable_until", time: l(@editing.created_at + Message::EDIT_WINDOW, format: "%H:%M")),
                     id: "edit_window_note", class: "form-help" %>
           <p>
             <%= f.submit t("actions.save"), class: "button button-primary" %>
-            <%= link_to t("actions.cancel"), conversation_path(@conversation), class: "button button-ghost" %>
+            <%= link_to t("actions.cancel"), conversation_path(@conversation), class: "button button-ghost",
+                        data: { edit_box_target: "cancel" } %>
           </p>
         <% end %>
       <% end %>
@@ -244,6 +256,11 @@
           <%= button_to t("messages.request_decline"), conversation_request_path(@conversation), method: :delete,
                 class: "button button-ghost button-small",
                 form: { data: { turbo_frame: "_top", turbo_confirm: t("messages.confirm_request_decline") } } %>
+          <% if @conversation.direct? %>
+            <%= button_to t("messages.request_report_block"), conversation_request_path(@conversation, report: 1),
+                  method: :delete, class: "button button-ghost button-small",
+                  form: { data: { turbo_frame: "_top", turbo_confirm: t("messages.confirm_request_report_block") } } %>
+          <% end %>
         </section>
       <%# One box at a time: the edit form above replaces the composer until saved or cancelled. %>
       <% elsif !@editing %>
@@ -251,6 +268,7 @@
                       conversation: @conversation,
                       message: @message,
                       reply_to: @reply_to %>
+      <% end %>
       <% end %>
     </div>
   <% end %>

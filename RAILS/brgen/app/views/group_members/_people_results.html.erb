@@ -1,0 +1,27 @@
+<%# One row per person who is not in the group yet, each with the button that
+    adds them. The add lands back in the thread, where the roster shows them. %>
+<ul class="people-results" role="list" id="live_search_results">
+  <% if @people.any? %>
+    <% @people.each do |person| %>
+      <li class="person-row" role="listitem">
+        <span class="person-identity">
+          <%= image_tag person.avatar_url, class: "person-avatar", alt: "", width: 40, height: 40 %>
+          <span class="person-names">
+            <%= tag.span person.display_name, class: "person-name" %>
+            <% if person.username.present? %>
+              <%= tag.span "@#{person.username}", class: "person-handle" %>
+            <% end %>
+          </span>
+        </span>
+        <%= button_to t("actions.add_one"), group_members_path(@group, user_id: person.id), method: :post,
+              class: "button person-message",
+              aria: { label: t("messages.group_add_person", name: person.display_name) },
+              form: { data: { turbo_frame: "_top" } } %>
+      </li>
+    <% end %>
+  <% else %>
+    <li class="person-row person-row--empty">
+      <%= t("messages.no_people") %>
+    </li>
+  <% end %>
+</ul>

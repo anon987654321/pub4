@@ -426,7 +426,6 @@ nb:
     private_message_action: "Send privat melding"
     no_people: "Ingen med det navnet her ennå."
     find_people: "Søk etter noen"
-    username: Brukernavn
     empty_title: Ingen samtaler ennå
     # Shadowed by shared/config/locales/social.*.yml, which loads after this
     # file and wins the merge. Kept so the key resolves if the shared engine

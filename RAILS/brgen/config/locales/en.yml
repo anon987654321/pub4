@@ -421,7 +421,6 @@ en:
     private_message_action: "Message privately"
     no_people: "Nobody by that name here yet."
     find_people: "Search for someone"
-    username: Username
     empty_title: No conversations yet
     # Shadowed by shared/config/locales/social.*.yml, which loads after this
     # file and wins the merge. Kept so the key resolves if the shared engine

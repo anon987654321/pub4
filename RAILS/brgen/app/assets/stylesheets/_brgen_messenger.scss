@@ -537,6 +537,30 @@ body.vertical-messenger .layout > main#main-content > section.messenger-window {
   background: var(--surface-elevated);
 }
 
+/* The composer's frame is a swap target, not a box: its children lay out as
+   the area's own. */
+.messenger-composer-preview {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-block-end: var(--space-2);
+}
+
+.messenger-composer-preview img {
+  inline-size: 64px;
+  block-size: 64px;
+  object-fit: cover;
+  border-radius: var(--radius-small);
+}
+
+.messenger-composer-preview[hidden] {
+  display: none;
+}
+
+.messenger-composer-frame {
+  display: contents;
+}
+
 .messenger-typing {
   min-block-size: 16px;
   margin: 0;

@@ -5,3 +5,8 @@
 <%= turbo_stream.replace dom_id(message) do %>
   <%= render "messages/message", message: message, in_channel: @conversation.channel? %>
 <% end %>
+<% if @restore_composer %>
+  <%= turbo_stream.update "messenger_composer" do %>
+    <%= render "conversations/composer", conversation: @conversation, message: Message.new, reply_to: nil %>
+  <% end %>
+<% end %>

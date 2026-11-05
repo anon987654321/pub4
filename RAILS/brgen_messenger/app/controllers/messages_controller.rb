@@ -88,6 +88,8 @@ class MessagesController < ApplicationController
 
     return refuse_invalid(message) unless message.edit(params.require(:message).permit(:content)[:content])
 
+    # The edit form stood in for the composer; the stream puts the composer back.
+    @restore_composer = true
     respond_to do |format|
       format.turbo_stream { render :update }
       format.html { redirect_to conversation_path(@conversation) }

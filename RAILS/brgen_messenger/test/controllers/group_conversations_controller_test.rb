@@ -157,4 +157,22 @@ end
     patch conversation_path(group), params: { disappearing: "off" }
     assert_nil group.reload.disappearing_duration
   end
+
+  test "members are added from a people search, not by typing an exact username" do
+    group = make_group
+    sign_in_as(@friend)
+
+    get conversation_path(group)
+    assert_select "a[href=?]", new_group_member_path(group), text: I18n.t("messages.group_add")
+    assert_select "input[name=username]", 0
+
+    get new_group_member_path(group), params: { q: "outsider" }
+    assert_response :success
+    assert_select "#live_search_results form[action=?]", group_members_path(group, user_id: @outsider.id)
+    assert_select "#live_search_results form[action=?]", group_members_path(group, user_id: @colleague.id), 0
+
+    post group_members_path(group, user_id: @outsider.id)
+    assert_redirected_to conversation_path(group)
+    assert_includes group.reload.participants, @outsider
+  end
 end
