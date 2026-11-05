@@ -129,11 +129,10 @@ module Master
         Thread.current[:master_fix_task_contract]
       end
 
-      # Refuse unplanned file creation inside the repository. Existing files
-      # remain editable without a declaration; legacy callers without a task
-      # contract retain their behavior and are not contract-verified.
+      # Refuse unplanned file creation inside the repository, including legacy
+      # callers that have no active task contract. Existing files remain editable;
+      # a missing contract is an empty declaration, never an implicit allowance.
       def new_path_refusal(path, contract: current, repo_root: nil)
-        return unless contract
 
         root = File.expand_path(
           repo_root || (defined?(Master::REPO_ROOT) ? Master::REPO_ROOT : File.expand_path("../../..", __dir__))
@@ -143,7 +142,8 @@ module Master
         return if File.exist?(absolute) || File.symlink?(absolute)
 
         relative = absolute.delete_prefix(root + File::SEPARATOR)
-        return if contract.new_paths.any? { |entry| entry.fetch("path") == relative }
+        declared = contract ? contract.new_paths : []
+        return if declared.any? { |entry| entry.fetch("path") == relative }
 
         "new tracked path #{relative} is undeclared; extend an existing owner or declare the exact path and reason in task_contract.new_paths"
       end
