@@ -1,0 +1,10 @@
+---
+nb:
+  marketplace:
+    seller_trust_label: Om selgeren
+    seller_member_since: Medlem siden %{date}
+    seller_completed_sales:
+      zero: Ingen fullførte salg ennå
+      one: Ett fullført salg
+      other: "%{count} fullførte salg"
+    seller_identity_verified: Identitet bekreftet med Vipps eller BankID

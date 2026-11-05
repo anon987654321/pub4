@@ -1,0 +1,10 @@
+---
+en:
+  marketplace:
+    seller_trust_label: About the seller
+    seller_member_since: Member since %{date}
+    seller_completed_sales:
+      zero: No completed sales yet
+      one: One completed sale
+      other: "%{count} completed sales"
+    seller_identity_verified: Identity confirmed with Vipps or BankID

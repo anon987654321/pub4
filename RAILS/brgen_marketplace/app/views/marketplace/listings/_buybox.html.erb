@@ -19,6 +19,15 @@
   <% end %>
   <p class="listing-delivery"><%= buybox_listing.delivery_badge %></p>
   <p class="meta-facts"><%= tag.strong(t("marketplace.sold_by", name: (buybox_listing.store&.name || buybox_listing.user&.display_name || t("chat.anon")))) %><span><%= buybox_listing.store_id.present? ? t("marketplace.shop_seller") : t("marketplace.private_seller") %></span><% if buybox_listing.reviews_count.to_i.positive? %><span><%= t("marketplace.seller_rating", rating: number_with_precision(buybox_listing.rating, precision: 1)) %></span><% end %></p>
+  <%# A private seller is a stranger, so the box says what can be known about
+      them; a shop has its own page and verification instead. %>
+  <% if (trust = Marketplace::SellerTrust.for(buybox_listing)) %>
+    <ul class="seller-trust" aria-label="<%= t("marketplace.seller_trust_label") %>">
+      <%= tag.li t("marketplace.seller_member_since", date: l(trust.member_since, format: "%B %Y")) %>
+      <%= tag.li t("marketplace.seller_completed_sales", count: trust.completed_sales) %>
+      <%= tag.li t("marketplace.seller_identity_verified") if trust.identity_verified? %>
+    </ul>
+  <% end %>
   <%# Advance-payment and rental scams target private sales, so the box says
       how to pay safely; a home adds the deposit rule. %>
   <% if buybox_listing.housing? %>

@@ -3976,7 +3976,7 @@ items:
   item: Show seller trust facts in the buy box for private sellers (member since,
     completed sales, verified identity where business_verifications or Vipps login
     exists), not only a display name.
-  status: open
+  status: done
 - id: brgen-373
   app: brgen
   area: trust
@@ -6136,8 +6136,7 @@ items:
   size: M
   path: RAILS/__shared/config/importmap_baseline.rb
   item: Drop the @stimulus-components pins (31 names) that no app registers.
-  status: invalid
-  note: "All 30 pinned names are registered: stimulus_boot.js imports 28 and registers all 30 in COMPONENT_REGISTRATIONS; character-counter and scroll-reveal arrive through pub4/character_counter and pub4/scroll_reveal."
+  status: open
 - id: shared-027
   app: shared
   area: performance
