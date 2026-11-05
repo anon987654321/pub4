@@ -115,7 +115,6 @@ nb:
     platform: "Plattform"
     platform_unknown: "gren og arkitektur ukjent"
     rdeps_label: "Porter som avhenger av denne pakken"
-    required_by: "Kreves av"
     requires: "Krever"
     run_master_review: "Kjør MASTER-gjennomgang"
     age_stale: "foreldet, %{count} d"

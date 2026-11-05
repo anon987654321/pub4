@@ -189,6 +189,7 @@ class LocaleContractTest < Minitest::Test
       nav.home nav.dead errors.messages.blank save
       listings.index.heading orders.show.flash.done kinds.bike
       status.open cta.buy mark_open review.issue.spam app.title nav.from_config
+      quiz.fit.loose
     ]
     sources = {
       "app/views/layouts/_nav.html.erb" => %(<%= t("nav.home") %> <%= t(:save) %>),
@@ -200,6 +201,7 @@ class LocaleContractTest < Minitest::Test
       "app/helpers/mark_helper.rb" => %(t(:"mark_\#{state}")),
       "app/services/banner.rb" => %(SCOPE = "app"\ndef t(key) = I18n.t(key, scope: SCOPE)),
       "config/menu.yml" => %(items:\n  - label: nav.from_config\n),
+      "app/helpers/quiz_helper.rb" => %(t("quiz.\#{question}.\#{answer}")),
     }
 
     assert_equal %w[nav.dead], unread_keys(keys, sources)
@@ -227,8 +229,14 @@ class LocaleContractTest < Minitest::Test
   YAML_KEY_VALUE = /:[ \t]+([a-z][a-z0-9_]*(?:\.[a-z0-9_]+)+)[ \t]*$/
   BARE_KEY_CALL = /\bt\(\s*:?["']?([a-z][a-z0-9_]*)\b(?!\.)/
   # A dotted head anywhere, or any head as the first argument of t(): "a#{x}"
-  # outside a call is a string, not a key.
-  INTERPOLATED_KEY = /["'`]([a-z][a-z0-9_]*\.[\w.]*)#\{[^}]*\}([\w.]*)|\bt\(\s*:?["']([a-z][a-z0-9_]*)#\{[^}]*\}([\w.]*)/
+  # outside a call is a string, not a key. The tail may interpolate again, as
+  # "quiz.#{question}.#{answer}" does, and each later #{} stands for a segment.
+  INTERPOLATION = /#\{[^}]*\}/
+  INTERPOLATED_TAIL = /((?:[\w.]|#{INTERPOLATION})*)/
+  INTERPOLATED_KEY = Regexp.union(
+    /["'`]([a-z][a-z0-9_]*\.[\w.]*)#{INTERPOLATION}#{INTERPOLATED_TAIL}/,
+    /\bt\(\s*:?["']([a-z][a-z0-9_]*)#{INTERPOLATION}#{INTERPOLATED_TAIL}/
+  )
   SCOPE_STRING = /(?:scope:|SCOPE\s*=)\s*:?["']?([a-z][a-z0-9_.]*)/
 
   # Three kinds of evidence: exact keys, prefixes under which any key may be
@@ -242,7 +250,8 @@ class LocaleContractTest < Minitest::Test
       text.scan(YAML_KEY_VALUE) { |(key)| literal << key } if path.end_with?(".yml")
       text.scan(BARE_KEY_CALL) { |(key)| literal << key }
       text.scan(INTERPOLATED_KEY) do |dotted, dotted_tail, called, called_tail|
-        shapes << /\A#{Regexp.escape(dotted || called)}[\w.]+#{Regexp.escape(dotted_tail || called_tail)}\z/
+        tail = (dotted_tail || called_tail).split(INTERPOLATION, -1).map { |part| Regexp.escape(part) }.join("[\\w.]+")
+        shapes << /\A#{Regexp.escape(dotted || called)}[\w.]+#{tail}\z/
       end
       text.scan(SCOPE_STRING) { |(scope)| prefixes << "#{scope}." }
       lazy = lazy_base(path)
@@ -268,6 +277,10 @@ class LocaleContractTest < Minitest::Test
     end
   end
 
+  # Every kind of source a key is read from; a feed's .builder calls t() as a
+  # view does.
+  SOURCE_GLOB = "**/*.{rb,erb,js,rake,jbuilder,builder,yml,json}"
+
   # The source that can load a unit's locale files. brgen's engines (brgen_*) mount
   # only in brgen, so brgen, each engine and shared all load into one store and any
   # of their sources can read the others' keys; shared's keys are read by all three apps.
@@ -279,9 +292,9 @@ class LocaleContractTest < Minitest::Test
             end
 
     @sources ||= {}
-    paths = trees.flat_map { |tree| Dir.glob(File.join(ROOT, tree, "**/*.{rb,erb,js,rake,jbuilder,yml,json}")) }
+    paths = trees.flat_map { |tree| Dir.glob(File.join(ROOT, tree, SOURCE_GLOB)) }
     if trees.include?("brgen")
-      paths.concat(Dir.glob(File.join(ROOT, "#{EngineRoots::GLOB}/**/*.{rb,erb,js,rake,jbuilder,yml,json}")))
+      paths.concat(Dir.glob(File.join(ROOT, EngineRoots::GLOB, SOURCE_GLOB)))
     end
     @sources[trees] ||= paths.uniq.reject { |path| path.match?(READER_SKIP) }
                                 .to_h { |path| [rel(path), File.read(path)] }

@@ -115,7 +115,6 @@ en:
     platform: "Platform"
     platform_unknown: "branch and architecture unknown"
     rdeps_label: "Ports that depend on this package"
-    required_by: "Required by"
     requires: "Requires"
     run_master_review: "Run MASTER review"
     age_stale: "stale, %{count}d"
