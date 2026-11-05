@@ -115,6 +115,22 @@ class TestReplicateClientRetry < Minitest::Test
     refute requests.any? { |request| request["Host"] == "attacker.invalid" }
   end
 
+  def test_model_pagination_rejects_a_repeated_cursor_without_a_second_request
+    client = Client.new(token: "replicate-test-secret")
+    requests = []
+    page = Struct.new(:code, :body).new(
+      "200",
+      JSON.generate("results" => [], "next" => "#{Client::BASE}/models"),
+    )
+
+    with_http_responses([page], requests) do
+      error = assert_raises(ArgumentError) { client.models }
+      assert_match(/repeated a cursor/, error.message)
+    end
+
+    assert_equal 1, requests.size
+  end
+
   def test_model_pagination_accepts_only_the_models_cursor_on_the_api_origin
     client = Client.new(token: "replicate-test-secret")
     requests = []
