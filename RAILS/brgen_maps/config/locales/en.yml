@@ -14,6 +14,7 @@ en:
     point_untitled: "Map point"
     point_kind: "point"
     no_points: "No map points yet."
+    point_list: "The points on the map"
     address: "Address"
     city: "City"
     coordinates: "Coordinates"

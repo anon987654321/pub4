@@ -1919,7 +1919,7 @@ items:
   item: Refetch points on map moveend through the bbox parameters HomeController#bbox
     already accepts, instead of embedding up to 900 points inline once and never updating
     as the reader pans.
-  status: open
+  status: done
 - id: brgen-126
   app: brgen
   area: maps
@@ -1979,7 +1979,7 @@ items:
   item: 'Give keyboard and screen-reader users a way to reach map points: canvas circle
     layers have no focus target, so render the filtered points as a visually-hidden
     or collapsible link list in the HUD.'
-  status: open
+  status: done
 - id: brgen-133
   app: brgen
   area: maps

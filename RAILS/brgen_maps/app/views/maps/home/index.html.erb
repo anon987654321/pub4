@@ -20,7 +20,8 @@
          data-map-open-label-value="<%= t("maps.popup_open") %>"
          data-map-point-label-value="<%= t("maps.point_untitled") %>"
          data-map-kind-label-value="<%= t("maps.point_kind") %>"
-         data-map-empty-label-value="<%= t("maps.no_points") %>">
+         data-map-empty-label-value="<%= t("maps.no_points") %>"
+         data-map-points-url-value="<%= request.path %>">
   <div id="map" class="map-canvas" data-map-target="canvas" aria-hidden="true"></div>
 
   <div class="map-hud" role="region" aria-label="<%= t("maps.hud_aria") %>">
@@ -32,6 +33,13 @@
       </div>
       <%= link_to t("maps.browse_list"), places_path, class: "button button-ghost button-small map-browse-link" %>
     </div>
+    <%# The canvas's circles have no focus target, so the points the map shows
+        are also a list of links here: the way in for a keyboard or a screen
+        reader. map_controller keeps it in step with the search and the view. %>
+    <details class="map-point-list">
+      <summary><%= t("maps.point_list") %> <span data-map-target="listCount"></span></summary>
+      <ul role="list" data-map-target="list"></ul>
+    </details>
     <div id="place-popup" class="map-place-popup" data-map-target="popup" hidden role="status" aria-live="polite"></div>
   </div>
   <noscript>

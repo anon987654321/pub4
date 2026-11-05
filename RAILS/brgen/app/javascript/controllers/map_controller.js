@@ -1,4 +1,5 @@
 import { Controller } from "@hotwired/stimulus"
+import { ViewPoints, renderPointList } from "controllers/map_points"
 
 const DEFAULT_STYLE = "https://tiles.openfreemap.org/styles/positron"
 const POINT_SOURCE = "brgen-map-points"
@@ -7,13 +8,16 @@ const CLUSTER_COUNT_LAYER = "brgen-map-point-cluster-count"
 const POINT_LAYER = "brgen-map-unclustered-points"
 
 export default class extends Controller {
-  static targets = ["canvas", "search", "popup"]
+  static targets = ["canvas", "search", "popup", "list", "listCount"]
   static values = {
     centerLat: Number,
     centerLng: Number,
     zoom: Number,
     styleUrl: String,
     points: Array,
+    // Where the points for a new view come from (Maps::HomeController#index
+    // as JSON, filtered by sw_lat/sw_lng/ne_lat/ne_lng).
+    pointsUrl: { type: String, default: "" },
     // The popup and list words, from the page's locale.
     openLabel: { type: String, default: "Open" },
     pointLabel: { type: String, default: "Map point" },
@@ -27,11 +31,33 @@ export default class extends Controller {
     this.map = null
     this.mapLoaded = false
     this._boundSearch = this.filterPoints.bind(this)
+    this._list(this.filteredPoints)
+    this._watchViewPoints()
     this._boot()
   }
 
   disconnect() {
+    this.viewPoints?.stop()
     this._destroy()
+  }
+
+  // The page embeds the points for the city's opening view only; as the reader
+  // pans, the points inside the new view are asked for (controllers/map_points).
+  _watchViewPoints() {
+    if (!this.pointsUrlValue) return
+
+    this.viewPoints = new ViewPoints(this.pointsUrlValue, (points) => {
+      this.points = points
+      this.filterPoints()
+    })
+  }
+
+  _list(points) {
+    if (!this.hasListTarget) return
+
+    const count = this.hasListCountTarget ? this.listCountTarget : null
+    const href = (url) => this._safeHref(url)
+    renderPointList(this.listTarget, count, points, { href, untitled: this.pointLabelValue })
   }
 
   _rootCanvas() {
@@ -97,6 +123,7 @@ export default class extends Controller {
       this.map.on("load", () => {
         this.mapLoaded = true
         this._render(this.filteredPoints)
+        this.map.on("moveend", () => this.viewPoints?.schedule(this.map.getBounds()))
       })
 
     } catch (error) {
@@ -299,9 +326,7 @@ export default class extends Controller {
   }
 
   filterPoints() {
-    if (!this.hasSearchTarget) return
-
-    const q = this.searchTarget.value.trim().toLowerCase()
+    const q = this.hasSearchTarget ? this.searchTarget.value.trim().toLowerCase() : ""
     this.filteredPoints = q ? this.points.filter(point => {
       const haystack = [point.title, point.subtitle, point.type, point.city, point.kind]
         .filter(Boolean)
@@ -309,6 +334,7 @@ export default class extends Controller {
         .toLowerCase()
       return haystack.includes(q)
     }) : this.points
+    this._list(this.filteredPoints)
 
     if (this.mapLoaded) {
       this._render(this.filteredPoints)

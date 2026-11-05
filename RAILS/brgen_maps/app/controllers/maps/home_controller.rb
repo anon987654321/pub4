@@ -8,10 +8,17 @@ module Maps
     # rather than an answer to "what is on near me".
     EVENT_HORIZON = 7.days
 
+    # JSON for the map's own refetch: as the reader pans, map_controller asks
+    # for the points inside the new view through the bbox parameters.
     def index
       points = map_points
-      @map_center_lat, @map_center_lng = map_center(points)
-      @points_json = points.to_json
+      respond_to do |format|
+        format.html do
+          @map_center_lat, @map_center_lng = map_center(points)
+          @points_json = points.to_json
+        end
+        format.json { render json: points }
+      end
     end
 
     private
