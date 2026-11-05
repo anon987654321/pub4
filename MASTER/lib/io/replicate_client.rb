@@ -39,10 +39,14 @@ module Master
         # Fetch a prediction output URL (e.g. synthesized audio) to a local path.
         def download_url(url, path)
           uri = URI(url)
-          raise "refusing non-https download url: #{url}" unless uri.scheme == "https"
+          raise "refusing non-https download url: #{url}" unless uri.is_a?(URI::HTTPS) && uri.port == 443
+          raise "refusing download URL credentials" unless uri.userinfo.nil?
           raise "refusing download from untrusted host: #{uri.host}" unless uri.host.to_s.match?(ALLOWED_DOWNLOAD_HOST)
 
-          Net::HTTP.start(uri.host, uri.port, use_ssl: true, read_timeout: 120) do |http|
+          Net::HTTP.start(
+            uri.host, uri.port, use_ssl: true,
+            open_timeout: OPEN_TIMEOUT_SECONDS, read_timeout: READ_TIMEOUT_SECONDS
+          ) do |http|
             res = http.get(uri.request_uri)
             raise "download failed #{res.code}" unless res.code.to_i.between?(200, 299)
 
@@ -137,6 +141,9 @@ module Master
 
       CONFIG_PATH = File.expand_path("~/.config/replicate/config.json").freeze
       BASE = "https://api.replicate.com/v1"
+      API_HOST = "api.replicate.com"
+      OPEN_TIMEOUT_SECONDS = 10
+      READ_TIMEOUT_SECONDS = 120
       LORA_TRAINER = "ostris/flux-dev-lora-trainer"
       TRANSIENT_STATUS = ((500..599).to_a << 429).freeze
       # replicate.delivery hosts prediction output blobs; replicate.com is the
@@ -195,7 +202,8 @@ module Master
         while uri && rows.length < remaining
           page = get(uri)
           rows.concat(Array(page["results"]))
-          uri = page["next"].to_s.empty? ? nil : URI(page["next"])
+          next_url = page["next"].to_s
+          uri = next_url.empty? ? nil : models_page_uri(next_url)
         end
         rows = rows.first(remaining)
         needle = query.to_s.strip.downcase
@@ -245,6 +253,22 @@ module Master
 
       private
 
+      def api_uri(value)
+        uri = value.is_a?(URI::Generic) ? value : URI.parse(value.to_s)
+        allowed = uri.is_a?(URI::HTTPS) && uri.host == API_HOST && uri.port == 443 &&
+                  uri.userinfo.nil? && uri.fragment.nil? && uri.path.start_with?("/v1/")
+        raise ArgumentError, "refusing URL outside the Replicate API origin" unless allowed
+
+        uri
+      end
+
+      def models_page_uri(value)
+        uri = api_uri(value)
+        raise ArgumentError, "refusing unexpected Replicate models cursor path" unless uri.path == "/v1/models"
+
+        uri
+      end
+
       def upload_binary(path, mime:)
         boundary = "ReplicateBoundary#{rand(1_000_000_000)}"
         req = Net::HTTP::Post.new(URI("#{BASE}/files"))
@@ -288,12 +312,14 @@ module Master
       end
 
       def get(uri)
+        uri = api_uri(uri)
         req = Net::HTTP::Get.new(uri)
         req["Authorization"] = "Token #{@token}"
         request(req, uri)
       end
 
       def post(uri, body)
+        uri = api_uri(uri)
         req = Net::HTTP::Post.new(uri)
         req["Authorization"] = "Token #{@token}"
         req["Content-Type"] = "application/json"
@@ -326,7 +352,11 @@ module Master
       end
 
       def attempt_request(req, uri)
-        res = Net::HTTP.start(uri.host, uri.port, use_ssl: true, read_timeout: 120) do |http|
+        uri = api_uri(uri)
+        res = Net::HTTP.start(
+          uri.host, uri.port, use_ssl: true,
+          open_timeout: OPEN_TIMEOUT_SECONDS, read_timeout: READ_TIMEOUT_SECONDS
+        ) do |http|
           http.request(req)
         end
         code = res.code.to_i
