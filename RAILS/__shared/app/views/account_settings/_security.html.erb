@@ -1,0 +1,50 @@
+<%# Sign-in email, password and the devices signed in. Each change asks for the
+    current password (Shared::AccountSecurityActions). locals: user, sessions %>
+<section aria-labelledby="account-email-heading">
+  <%= tag.h2 t("account_security.email_heading"), id: "account-email-heading" %>
+  <%= form_with url: email_account_path, method: :patch do |form| %>
+    <div class="field">
+      <%= form.label :email_address, t("account_security.new_email") %>
+      <%= form.email_field :email_address, required: true, autocomplete: "email", inputmode: "email",
+                                           value: user.email_address %>
+    </div>
+    <div class="field">
+      <%= form.label :current_password, t("account_security.current_password"), for: "email_current_password" %>
+      <%= form.password_field :current_password, id: "email_current_password", required: true,
+                                                 autocomplete: "current-password", maxlength: 72 %>
+    </div>
+    <%= form.submit t("account_security.change_email"), class: "button" %>
+  <% end %>
+</section>
+
+<section aria-labelledby="account-password-heading">
+  <%= tag.h2 t("account_security.password_heading"), id: "account-password-heading" %>
+  <%= form_with url: password_account_path, method: :patch do |form| %>
+    <div class="field">
+      <%= form.label :current_password, t("account_security.current_password"), for: "password_current_password" %>
+      <%= form.password_field :current_password, id: "password_current_password", required: true,
+                                                 autocomplete: "current-password", maxlength: 72 %>
+    </div>
+    <div class="field">
+      <%= form.label :password, t("auth.new_password") %>
+      <%= password_visibility_field form, :password, required: true, autocomplete: "new-password", maxlength: 72 %>
+    </div>
+    <div class="field">
+      <%= form.label :password_confirmation, t("auth.confirm_password") %>
+      <%= password_visibility_field form, :password_confirmation, required: true, autocomplete: "new-password",
+                                                                  maxlength: 72 %>
+    </div>
+    <%= tag.p t("account_security.password_signs_out_others") %>
+    <%= form.submit t("account_security.change_password"), class: "button" %>
+  <% end %>
+</section>
+
+<section aria-labelledby="account-sessions-heading">
+  <%= tag.h2 t("account_security.sessions_heading"), id: "account-sessions-heading" %>
+  <%= tag.ul render(partial: "account_settings/device", collection: sessions, as: :device), class: "account-sessions" %>
+  <% if sessions.size > 1 %>
+    <%# destructive: no-confirm-ok — reversible — each device signs in again with its password %>
+    <%= button_to t("account_security.sign_out_others"), other_sessions_account_path, method: :delete,
+                  class: "button" %>
+  <% end %>
+</section>

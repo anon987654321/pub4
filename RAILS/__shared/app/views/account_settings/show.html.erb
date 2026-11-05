@@ -13,6 +13,9 @@
       <%# An app adds its own rows (brgen: email preferences) through this partial. %>
       <%= render "account_settings/app_links" if lookup_context.exists?("account_settings/app_links", [], true) %>
     </ul>
+    <%= render "account_settings/security", user: Current.user, sessions: @sessions %>
+    <%# An app adds its own sections (brgen: blocked people, language) here. %>
+    <%= render "account_settings/app_sections" if lookup_context.exists?("account_settings/app_sections", [], true) %>
     <%= button_to t("account.delete"), account_path, method: :delete,
                   data: { turbo_confirm: t("account.delete_confirm") } %>
   <% end %>

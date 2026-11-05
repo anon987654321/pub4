@@ -42,6 +42,16 @@ module Shared
       changed == 1
     end
 
+    # A changed address is unconfirmed until its new owner clicks the link: the
+    # verified mark is cleared and a fresh token issued. nil where the app keeps
+    # no verification columns (bsdports).
+    def restart_email_verification!
+      return unless has_attribute?(:email_verified_at) && has_attribute?(:email_verification_token)
+
+      update_columns(email_verified_at: nil)
+      generate_email_verification!
+    end
+
     def verify_email!
       verify_email_token!(email_verification_token)
     end

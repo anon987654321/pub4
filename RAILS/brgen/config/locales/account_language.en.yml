@@ -1,0 +1,10 @@
+en:
+  account_language:
+    heading: Language
+    legend: The language Brgen uses for you
+    choices:
+      site: Follow the site
+      nb: Norsk bokmål
+      en: English
+    save: Save language
+    saved: Your language is saved.

@@ -1,0 +1,22 @@
+en:
+  account_security:
+    email_heading: Email address
+    new_email: New email address
+    current_password: Current password
+    change_email: Change email
+    email_changed: Your email address is changed. Check your inbox to confirm it.
+    email_unchanged: That is already your email address.
+    password_heading: Password
+    change_password: Change password
+    password_signs_out_others: Changing your password signs out every other device.
+    password_changed: Your password is changed, and other devices are signed out.
+    password_blank: Enter a new password.
+    wrong_password: The current password is not right.
+    sessions_heading: Signed-in devices
+    unknown_device: Unknown device
+    this_device: This device
+    sign_out_others: Sign out every other device
+    signed_out_others:
+      zero: No other device was signed in.
+      one: "%{count} other device is signed out."
+      other: "%{count} other devices are signed out."

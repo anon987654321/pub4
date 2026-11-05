@@ -1,0 +1,10 @@
+nb:
+  account_language:
+    heading: Språk
+    legend: Språket Brgen bruker for deg
+    choices:
+      site: Følg nettstedet
+      nb: Norsk bokmål
+      en: English
+    save: Lagre språk
+    saved: Språket er lagret.

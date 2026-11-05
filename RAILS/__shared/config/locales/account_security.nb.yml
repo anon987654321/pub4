@@ -1,0 +1,22 @@
+nb:
+  account_security:
+    email_heading: E-postadresse
+    new_email: Ny e-postadresse
+    current_password: Nåværende passord
+    change_email: Bytt e-post
+    email_changed: E-postadressen er endret. Sjekk innboksen for å bekrefte den.
+    email_unchanged: Det er allerede e-postadressen din.
+    password_heading: Passord
+    change_password: Bytt passord
+    password_signs_out_others: Når du bytter passord, logges alle andre enheter ut.
+    password_changed: Passordet er endret, og andre enheter er logget ut.
+    password_blank: Skriv inn et nytt passord.
+    wrong_password: Nåværende passord stemmer ikke.
+    sessions_heading: Innloggede enheter
+    unknown_device: Ukjent enhet
+    this_device: Denne enheten
+    sign_out_others: Logg ut alle andre enheter
+    signed_out_others:
+      zero: Ingen andre enheter var logget inn.
+      one: "%{count} annen enhet er logget ut."
+      other: "%{count} andre enheter er logget ut."

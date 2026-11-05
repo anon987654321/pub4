@@ -1,0 +1,5 @@
+en:
+  account_blocks:
+    heading: Blocked people
+    unblock: Unblock
+    none: You have not blocked anyone.

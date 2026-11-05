@@ -1986,10 +1986,12 @@ ActiveRecord::Schema[8.2].define(version: 2026_11_05_160000) do
     t.datetime "email_verified_at"
     t.boolean "guest", default: false, null: false
     t.decimal "latitude", precision: 10, scale: 7
+    t.string "locale"
     t.datetime "location_updated_at"
     t.decimal "longitude", precision: 10, scale: 7
     t.datetime "magic_link_expires_at"
     t.string "magic_link_token"
+    t.json "notification_preferences", default: {}, null: false
     t.string "otp_secret"
     t.string "password_digest", null: false
     t.text "persona"

@@ -4,11 +4,13 @@
 
 class AccountSettingsController < ::ApplicationController
   include Shared::AccountDeletion
+  include Shared::AccountSecurityActions
 
   before_action :require_user_session
 
   def show
     @user = Current.user
+    @sessions = @user.sessions.order(created_at: :desc)
   end
 
   def export

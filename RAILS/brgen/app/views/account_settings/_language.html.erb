@@ -1,0 +1,12 @@
+<%# The account's language: one of the shipped locales, or the site's own. %>
+<section aria-labelledby="account-language-heading">
+  <%= tag.h2 t("account_language.heading"), id: "account-language-heading" %>
+  <%= form_with url: account_language_path, method: :patch do |form| %>
+    <fieldset>
+      <%= tag.legend t("account_language.legend") %>
+      <%= render partial: "account_settings/language_choice", collection: AccountLanguagesController::CHOICES,
+                 as: :choice, locals: { form:, chosen: Current.user.locale.to_s } %>
+    </fieldset>
+    <%= form.submit t("account_language.save"), class: "button" %>
+  <% end %>
+</section>

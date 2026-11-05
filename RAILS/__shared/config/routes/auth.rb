@@ -5,6 +5,9 @@
 resource :account, only: %i[show destroy], controller: "account_settings" do
   post :cancel_deletion, on: :member
   get :export, on: :member
+  patch :email, on: :member
+  patch :password, on: :member
+  delete :other_sessions, on: :member
 end
 
 resource :two_factor_setup, only: %i[show create update], controller: "two_factor_setups"

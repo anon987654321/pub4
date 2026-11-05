@@ -1,0 +1,11 @@
+<%# Push and email per kind of notification (User::NotificationPreferences). %>
+<section aria-labelledby="account-notifications-heading">
+  <%= tag.h2 t("account_notifications.heading"), id: "account-notifications-heading" %>
+  <%= tag.p t("account_notifications.lead") %>
+  <%= form_with url: account_notification_preferences_path, method: :patch do |form| %>
+    <%= render partial: "account_settings/notification_kind",
+                 collection: User::NotificationPreferences::CHOOSABLE_KINDS,
+                 as: :kind %>
+    <%= form.submit t("account_notifications.save"), class: "button" %>
+  <% end %>
+</section>

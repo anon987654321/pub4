@@ -30,6 +30,15 @@ Rails.application.routes.draw do
   post   "communities/:community_id/join" => "community_memberships#create",  as: :join_community
   delete "communities/:community_id/join" => "community_memberships#destroy", as: :leave_community
 
+  # Push and email per kind of notification, from the account page.
+  patch "account/notifications" => "account_notification_preferences#update", as: :account_notification_preferences
+
+  # The language an account chose on its account page.
+  patch "account/language" => "account_languages#update", as: :account_language
+
+  # The welcome dialog's first step: neighbourhood and communities.
+  get "welcome" => "welcome#show", as: :welcome_start
+
   get "tags/:name" => "hashtags#show", as: :hashtag, constraints: { name: /[A-Za-z0-9_]+/ }
 
   get    "saved" => "bookmarks#index", as: :saved

@@ -74,12 +74,21 @@ class Notification < ApplicationRecord
   # page open on their device subscribes and re-fetches itself, groups and count
   # included. NotificationDeliveryJob still carries the old call and is enqueued
   # by nothing.
+  # The account page's choices (User::NotificationPreferences) decide push and
+  # email per kind; unset, push stays on and email off.
   after_create_commit do
-    if PUSHABLE_KINDS.include?(kind)
+    if PUSHABLE_KINDS.include?(kind) && user.notify_by?(:push, kind)
       Shared::WebPushJob.perform_later(notification_id: id)
       NativePushJob.perform_later(id) if Apns.configured?
     end
+    NotificationMailer.notice(self).deliver_later if emailable?
     broadcast_refresh_to(user, :notifications)
+  end
+
+  # An email goes only to a real, confirmed address that asked for this kind.
+  def emailable?
+    reader = user
+    !reader.guest? && reader.email_verified? && reader.notify_by?(:email, kind)
   end
 
   # Where tapping the push lands. Paths are built by hand rather than through

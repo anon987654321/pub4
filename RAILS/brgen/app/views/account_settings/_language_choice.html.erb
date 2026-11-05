@@ -1,0 +1,5 @@
+<%# One language on the account page; "" follows the site. locals: choice, form, chosen %>
+<%= tag.label do %>
+  <%= form.radio_button :locale, choice, checked: chosen == choice %>
+  <%= t("account_language.choices.#{choice.presence || 'site'}") %>
+<% end %>

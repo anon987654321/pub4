@@ -50,6 +50,7 @@ class User < ApplicationRecord
   include User::TvAssociations
   include User::DatingAssociations
   include User::SocialAssociations
+  include User::NotificationPreferences
   # The local side of an ActivityPub actor: identity is scoped to the user's
   # city domain, because that is already how brgen is partitioned.
   include Federatable
@@ -191,6 +192,12 @@ class User < ApplicationRecord
   def unblock!(other) = blocks_as_blocker.find_by(blocked: other)&.destroy
   def blocking?(other) = blocks_as_blocker.exists?(blocked_id: other.id)
   def blocked_user_ids = blocks_as_blocker.pluck(:blocked_id)
+
+  # The blocks the account page lists, newest first, each person loaded with it.
+  # A blocked person can live in another city, so the lookup is not tenant-scoped.
+  def blocks_for_review
+    ActsAsTenant.without_tenant { blocks_as_blocker.includes(:blocked).order(created_at: :desc).to_a }
+  end
 
   # People on neither side of a block with user, for lists that offer someone:
   # search results and the new-conversation picker.

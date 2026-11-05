@@ -1,0 +1,12 @@
+<%# The people this account blocks, each with a way to lift the block, so a
+    block can be reviewed without finding the person's profile. locals: blocks %>
+<section aria-labelledby="account-blocked-heading">
+  <%= tag.h2 t("account_blocks.heading"), id: "account-blocked-heading" %>
+  <% if blocks.any? %>
+    <%= tag.ul render(partial: "account_settings/blocked_person", collection: blocks, as: :block),
+               class: "account-blocked-people" %>
+  <% else %>
+    <%# empty_state: no-action-ok -- nobody blocked is the ordinary state; blocking starts from a profile %>
+    <%= tag.p t("account_blocks.none") %>
+  <% end %>
+</section>

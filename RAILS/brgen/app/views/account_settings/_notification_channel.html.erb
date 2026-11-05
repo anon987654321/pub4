@@ -1,0 +1,7 @@
+<%# One kind and channel box; the hidden 0 records a cleared box as a choice. locals: kind, channel %>
+<%= tag.label do %>
+  <%= hidden_field_tag "preferences[#{kind}][#{channel}]", "0", id: nil %>
+  <%= check_box_tag "preferences[#{kind}][#{channel}]", "1", Current.user.notify_by?(channel, kind),
+                    id: "preferences_#{kind}_#{channel}" %>
+  <%= t("account_notifications.channels.#{channel}") %>
+<% end %>

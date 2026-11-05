@@ -1,0 +1,5 @@
+nb:
+  account_blocks:
+    heading: Blokkerte personer
+    unblock: Opphev blokkering
+    none: Du har ikke blokkert noen.

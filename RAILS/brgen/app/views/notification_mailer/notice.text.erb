@@ -1,0 +1,9 @@
+<%= @notification.title %>
+<% if @notification.body.present? %>
+
+<%= @notification.body %>
+<% end %>
+
+<%= t("notification_mail.open") %>: <%= @open_url %>
+
+<%= t("notification_mail.preferences") %>: <%= @preferences_url %>

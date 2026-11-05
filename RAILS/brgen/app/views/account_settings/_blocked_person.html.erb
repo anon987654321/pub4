@@ -1,0 +1,6 @@
+<%# One blocked person, with the button that lifts the block. locals: block %>
+<%= tag.li do %>
+  <%= link_to block.blocked.display_name, user_path(block.blocked) %>
+  <%= button_to t("account_blocks.unblock"), unblock_user_path(block.blocked), method: :delete,
+                class: "button button-small" %>
+<% end %>

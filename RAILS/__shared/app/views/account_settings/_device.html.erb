@@ -1,0 +1,6 @@
+<%# One signed-in device on the account page. locals: device (a Session) %>
+<%= tag.li do %>
+  <%= tag.span truncate(device.user_agent.presence || t("account_security.unknown_device"), length: 80) %>
+  <%= tag.time l(device.created_at, format: :long), datetime: device.created_at.iso8601 %>
+  <%= tag.strong t("account_security.this_device") if device.id == Current.session&.id %>
+<% end %>

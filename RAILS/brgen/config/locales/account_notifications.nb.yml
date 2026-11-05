@@ -1,0 +1,17 @@
+nb:
+  account_notifications:
+    heading: Varsler
+    lead: Velg hvordan du vil høre om hver type varsel. E-post er av til du slår det på.
+    save: Lagre varsler
+    saved: Varselvalgene er lagret.
+    kinds:
+      mention: Når noen nevner deg
+      reply: Når noen svarer deg
+      message: Nye meldinger
+      follow: Nye følgere
+    channels:
+      push: Push
+      email: E-post
+  notification_mail:
+    open: Åpne i Brgen
+    preferences: Endre varselvalg

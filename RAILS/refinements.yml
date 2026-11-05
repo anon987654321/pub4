@@ -3302,7 +3302,7 @@ items:
   path: RAILS/__shared/app/views/account_settings/show.html.erb
   item: Add a 'Blocked people' list to the account page so a block can be reviewed
     and lifted without finding the person's profile.
-  status: open
+  status: done
 - id: brgen-290
   app: brgen
   area: privacy
@@ -3666,14 +3666,14 @@ items:
   size: M
   path: RAILS/__shared/app/views/account_settings/show.html.erb
   item: Add change-email and change-password to the account page.
-  status: open
+  status: done
 - id: brgen-336
   app: brgen
   area: settings
   size: M
   path: RAILS/__shared/app/views/account_settings/show.html.erb
   item: List active sessions with 'sign out other devices' on the account page.
-  status: open
+  status: done
 - id: brgen-337
   app: brgen
   area: settings
@@ -3681,14 +3681,14 @@ items:
   path: RAILS/__shared/app/views/account_settings/show.html.erb
   item: Add per-kind notification preferences (push/email per mention, reply, message,
     follow) to the account page.
-  status: open
+  status: done
 - id: brgen-338
   app: brgen
   area: settings
   size: M
   path: RAILS/__shared/app/views/account_settings/show.html.erb
   item: Add a language switch (nb/en) to the account page and remember it on the user.
-  status: open
+  status: done
 - id: brgen-339
   app: brgen
   area: shared

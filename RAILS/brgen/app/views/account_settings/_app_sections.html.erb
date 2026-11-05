@@ -1,0 +1,4 @@
+<%# brgen's own sections on the shared account page. %>
+<%= render "account_settings/blocked_people", blocks: Current.user.blocks_for_review %>
+<%= render "account_settings/language" %>
+<%= render "account_settings/notification_preferences" %>

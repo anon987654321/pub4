@@ -1,0 +1,17 @@
+en:
+  account_notifications:
+    heading: Notifications
+    lead: Choose how you hear about each kind of notification. Email stays off until you turn it on.
+    save: Save notifications
+    saved: Your notification choices are saved.
+    kinds:
+      mention: When someone mentions you
+      reply: When someone replies to you
+      message: New messages
+      follow: New followers
+    channels:
+      push: Push
+      email: Email
+  notification_mail:
+    open: Open in Brgen
+    preferences: Change notification choices

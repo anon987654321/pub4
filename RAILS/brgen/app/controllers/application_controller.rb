@@ -50,6 +50,16 @@ class ApplicationController < ActionController::Base
   end
   helper_method :verify_email_banner?
 
+  # The language of the domain the request came in on (brgen.no is nb).
+  def site_locale(result = Brgen::DomainRegistry.resolve(request.host))
+    Brgen::LocaleBridge.resolve(result.entry.locale)
+  end
+
+  def account_locale
+    chosen = Current.user&.try(:locale).presence&.to_sym
+    chosen if chosen && I18n.available_locales.include?(chosen)
+  end
+
   def set_domain_context
     # City (and full branding/locale) is resolved automatically from the request's TLD/domain.
     # The city network footer links peer apexes without changing tenant context.
@@ -63,7 +73,11 @@ class ApplicationController < ActionController::Base
     Current.subapp = result.subapp
     Current.city_record = result.city_record
 
-    I18n.locale = Brgen::LocaleBridge.resolve(result.entry.locale)
+    # The domain's language, unless the signed-in account chose one on its
+    # account page (account_languages#update).
+    I18n.locale = account_locale || site_locale(result)
+    # The page says which language it is in: the chosen one when there is one.
+    Current.locale = account_locale.to_s if account_locale
 
     # Wire ActsAsTenant if the gem is in use (for row-level city scoping on models)
     if defined?(ActsAsTenant)

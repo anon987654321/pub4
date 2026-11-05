@@ -1,0 +1,6 @@
+<%# Push and email for one kind of notification. locals: kind %>
+<fieldset>
+  <%= tag.legend t("account_notifications.kinds.#{kind}") %>
+  <%= render partial: "account_settings/notification_channel", collection: User::NotificationPreferences::CHANNELS,
+             as: :channel, locals: { kind: } %>
+</fieldset>
