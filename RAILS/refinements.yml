@@ -4084,7 +4084,7 @@ items:
   item: Add Media Session metadata (title, channel, poster) and play/pause/seek handlers
     to tv_player_controller so lock-screen and Bluetooth controls work for video,
     matching the playlist player.
-  status: open
+  status: done
 - id: brgen-385
   app: brgen
   area: tv
@@ -4174,7 +4174,7 @@ items:
   item: 'Make video note timestamps seek the player: render them as m:ss buttons that
     set currentTime on the tv-player video, and add a ''use current time'' control
     that fills the timestamp field from the playing video.'
-  status: open
+  status: done
 - id: brgen-395
   app: brgen
   area: tv
@@ -4203,7 +4203,7 @@ items:
     videos/show video_tag, and render a captions track element when a VTT attachment
     exists (new has_one_attached :captions on Tv::Video), since no tv video can carry
     subtitles today.
-  status: open
+  status: done
 - id: bsdports-001
   app: bsdports
   area: accessibility

@@ -6,13 +6,19 @@ export default class extends Controller {
     orientation: { type: String, default: "landscape" },
     autoWakeLock: Boolean,
     autoOrientation: Boolean,
-    progressUrl: String
+    progressUrl: String,
+    // What the lock screen and a Bluetooth head unit show (Media Session).
+    title: String,
+    artist: String,
+    artwork: String
   }
 
   connect() {
     this.#bindVideoEvents()
     if (this.autoWakeLockValue) this.#requestWakeLock()
     if (this.autoOrientationValue) this.#lockOrientation()
+    this.#setupMediaSession()
+    this.#bindNoteControls()
   }
 
   disconnect() {
@@ -20,6 +26,7 @@ export default class extends Controller {
     this.#unbindVideoEvents()
     this.#releaseWakeLock()
     this.#unlockOrientation()
+    if (this.boundNoteClick) document.removeEventListener("click", this.boundNoteClick)
   }
 
   async toggleFullscreen() {
@@ -63,6 +70,69 @@ export default class extends Controller {
     await this.#releaseWakeLock()
   }
 
+  // A note's time seeks the player, and "use current time" fills the note
+  // form's timestamp field from it. Listened for on the document, not bound per
+  // button: a note that arrives by broadcast, and the form a turbo-stream answer
+  // swaps in, need no wiring of their own.
+  #bindNoteControls() {
+    if (!this.hasVideoTarget) return
+    document.querySelectorAll("[data-tv-fill-timestamp]").forEach((button) => { button.hidden = false })
+
+    this.boundNoteClick = (event) => {
+      const seek = event.target.closest("[data-tv-seek-to]")
+      if (seek) {
+        this.videoTarget.currentTime = Number(seek.dataset.tvSeekTo) || 0
+        return
+      }
+
+      const fill = event.target.closest("[data-tv-fill-timestamp]")
+      if (!fill) return
+      const field = document.getElementById(fill.dataset.tvFillTimestamp)
+      if (field) field.value = Math.floor(this.videoTarget.currentTime || 0)
+    }
+    document.addEventListener("click", this.boundNoteClick)
+  }
+
+  // Media Session: lock-screen and Bluetooth controls for video, as the
+  // playlist player has for audio. Metadata is set again on play, because the
+  // playlist player in another tab may have claimed the session since.
+  #setupMediaSession() {
+    if (!("mediaSession" in navigator) || !this.hasVideoTarget) return
+    const video = this.videoTarget
+
+    const handlers = {
+      play: () => video.play(),
+      pause: () => video.pause(),
+      seekbackward: (d) => { video.currentTime = Math.max(0, video.currentTime - (d.seekOffset || 10)) },
+      seekforward: (d) => {
+        video.currentTime = Math.min(video.duration || 0, video.currentTime + (d.seekOffset || 10))
+      },
+      seekto: (d) => { if (d.seekTime != null) video.currentTime = d.seekTime }
+    }
+    for (const [action, fn] of Object.entries(handlers)) {
+      try { navigator.mediaSession.setActionHandler(action, fn) } catch (_) { /* unsupported action */ }
+    }
+
+    this.#updateMediaMetadata()
+    this.boundSessionPlay = () => {
+      this.#updateMediaMetadata()
+      navigator.mediaSession.playbackState = "playing"
+    }
+
+    this.boundSessionPause = () => { navigator.mediaSession.playbackState = "paused" }
+    video.addEventListener("play", this.boundSessionPlay)
+    video.addEventListener("pause", this.boundSessionPause)
+  }
+
+  #updateMediaMetadata() {
+    if (!window.MediaMetadata || !this.titleValue) return
+    navigator.mediaSession.metadata = new window.MediaMetadata({
+      title: this.titleValue,
+      artist: this.artistValue,
+      artwork: this.artworkValue ? [{ src: this.artworkValue, sizes: "1280x720", type: "image/webp" }] : []
+    })
+  }
+
   #bindVideoEvents() {
     if (!this.hasVideoTarget) return
     this.boundMaybeWakeLock = this.maybeWakeLock.bind(this)
@@ -92,6 +162,8 @@ export default class extends Controller {
     this.videoTarget.removeEventListener("ended", this.boundReportProgress)
     document.removeEventListener("visibilitychange", this.boundVisibilityReport)
     document.removeEventListener("fullscreenchange", this.boundFullscreenChange)
+    if (this.boundSessionPlay) this.videoTarget.removeEventListener("play", this.boundSessionPlay)
+    if (this.boundSessionPause) this.videoTarget.removeEventListener("pause", this.boundSessionPause)
   }
 
   // Report the furthest point reached, not currentTime: a viewer who watches to

@@ -85,7 +85,9 @@ class Tv::VideosController < Tv::BaseController
   # No :tv_channel_id -- the channel comes from the route and is ownership
   # checked. Permitting it let a submitted id override that check by
   # reassigning the foreign key on the built record.
-  def video_params = params.require(:video).permit(:title, :description, :video_file, :thumbnail, :preset, :allow_duets)
+  def video_params
+    params.require(:video).permit(:title, :description, :video_file, :thumbnail, :captions, :preset, :allow_duets)
+  end
 
   # A duet answers a published video that allows being answered, and inherits
   # its sound — which is what makes it a duet rather than a second clip that

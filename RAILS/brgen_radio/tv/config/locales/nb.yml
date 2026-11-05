@@ -47,6 +47,11 @@ nb:
     notes: "Notater"
     recent: "Nylig"
     share: "Del"
+    captions_track: "Undertekster"
+    captions_upload: "Undertekster (WebVTT, valgfritt)"
+    captions_hint: "En .vtt-fil. Spilleren viser den som undertekster."
+    use_current_time: "Bruk tidspunktet i videoen"
+    seek_to_note: "Spol til %{time}"
     shows_aria: "TV-serier"
     video_status:
       processing: "Behandles"

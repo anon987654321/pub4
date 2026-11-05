@@ -28,6 +28,9 @@ class Tv::Video < ApplicationRecord
           dependent: :nullify, inverse_of: :source_video
   has_one_attached :video_file
   has_one_attached :thumbnail
+  # WebVTT subtitles, read by the player as a <track>. Shared::AttachmentLimits
+  # holds the slot to text/vtt by its name.
+  has_one_attached :captions
   process_media_variants :thumbnail, variants: {
     poster: { resize_to_limit: [ 1_280, 720 ], format: :webp },
     thumb: { resize_to_limit: [ 480, 270 ], format: :webp },

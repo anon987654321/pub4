@@ -13,6 +13,9 @@
     <div class="field">
       <%= f.label :timestamp, t("tv.note_timestamp") %>
       <%= f.number_field :timestamp, min: 0, step: 1, inputmode: "numeric" %>
+      <%# A turbo-stream answer means the script runs, so the control shows. %>
+      <%= tag.button t("tv.use_current_time"), type: "button", class: "video-note-time-fill",
+                     data: { tv_fill_timestamp: "video_note_timestamp" } %>
     </div>
     <%= f.submit t("tv.save_note"), class: "button button-primary button-small" %>
   <% end %>

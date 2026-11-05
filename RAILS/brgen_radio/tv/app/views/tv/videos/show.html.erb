@@ -17,7 +17,12 @@
 
 <%# progress-url is only set for a signed-in viewer: view events belong to a
     user, so there is no row for a guest to report against. %>
+<%# title, artist and artwork are what the lock screen and a Bluetooth head
+    unit show for this video (Media Session); artist is the channel. %>
+<% poster = main_app.url_for(@video.media_variant(:thumbnail, :poster)) if @video.thumbnail.attached? %>
 <div data-controller="tv-player" data-tv-player-auto-wake-lock-value="true" data-tv-player-auto-orientation-value="true" data-tv-player-orientation-value="landscape"
+     data-tv-player-title-value="<%= @video.title %>" data-tv-player-artist-value="<%= @video.channel.name %>"
+     <% if poster %>data-tv-player-artwork-value="<%= poster %>"<% end %>
      <% if @view_event %>data-tv-player-progress-url-value="<%= video_view_event_path(@video, @view_event) %>"<% end %>>
 <% if @video.video_file.attached? %>
   <div class="tv-media">
@@ -26,9 +31,14 @@
         run. It is required for watch-time reporting, and fixes that too. %>
     <%# preload=metadata fetches the length and first frame, not the film, and
         the poster is the thumbnail's poster variant, shown until play. %>
-    <% poster = main_app.url_for(@video.media_variant(:thumbnail, :poster)) if @video.thumbnail.attached? %>
-    <%= video_tag main_app.url_for(@video.video_file), controls: true, preload: "metadata", poster:,
-          class: "video-player #{tv_media_image_classes(@video.video_file)}", data: { tv_player_target: "video" } %>
+    <%# A captions track only when the owner uploaded a WebVTT file. %>
+    <%= tag.video src: main_app.url_for(@video.video_file), controls: true, preload: "metadata", poster:,
+          class: "video-player #{tv_media_image_classes(@video.video_file)}", data: { tv_player_target: "video" } do %>
+      <% if @video.captions.attached? %>
+        <%= tag.track kind: "captions", src: main_app.url_for(@video.captions), srclang: I18n.locale,
+                      label: t("tv.captions_track"), default: true %>
+      <% end %>
+    <% end %>
   </div>
 <% elsif @video.thumbnail.attached? %>
   <div class="tv-media">
@@ -119,6 +129,10 @@
       <div class="field">
         <%= f.label :timestamp, t("tv.note_timestamp") %>
         <%= f.number_field :timestamp, min: 0, step: 1, inputmode: "numeric" %>
+        <%# Hidden until tv_player_controller connects: without the player script
+            there is no current time to read. %>
+        <%= tag.button t("tv.use_current_time"), type: "button", class: "video-note-time-fill",
+                       data: { tv_fill_timestamp: "video_note_timestamp" }, hidden: true %>
       </div>
       <%= f.submit t("tv.save_note"), class: "button button-primary button-small" %>
     <% end %>

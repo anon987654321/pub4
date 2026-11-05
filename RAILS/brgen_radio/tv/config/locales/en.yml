@@ -47,6 +47,11 @@ en:
     notes: "Notes"
     recent: "Recent"
     share: "Share"
+    captions_track: "Captions"
+    captions_upload: "Captions (WebVTT, optional)"
+    captions_hint: "A .vtt file. The player shows it as captions."
+    use_current_time: "Use the video’s current time"
+    seek_to_note: "Seek to %{time}"
     shows_aria: "TV shows"
     video_status:
       processing: "Processing"

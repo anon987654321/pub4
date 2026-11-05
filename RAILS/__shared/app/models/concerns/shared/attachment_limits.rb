@@ -11,8 +11,9 @@ module Shared
   #
   # The kind is read from the attachment's name, because the name is the only
   # thing every model already declares. A slot named for audio or video takes
-  # that family; `media`, `attachment` and `render` carry mixed files and are
-  # held to size alone; every other name is an image slot. SVG is not an image
+  # that family; `captions` takes WebVTT text and nothing else; `media`,
+  # `attachment` and `render` carry mixed files and are held to size alone;
+  # every other name is an image slot. SVG is not an image
   # type here: it is markup, and serving it back is script on this origin.
   #
   # Only a new upload is checked. A blob already stored stays valid, so a limit
@@ -34,12 +35,15 @@ module Shared
       audio: { max_bytes: Integer(ENV.fetch("RAILS_SHARED_AUDIO_MAX_BYTES", 100 * MB)), types: TIME_BASED_TYPES },
       video: { max_bytes: Integer(ENV.fetch("RAILS_SHARED_VIDEO_MAX_BYTES", 200 * MB)), types: TIME_BASED_TYPES },
       mixed: { max_bytes: Integer(ENV.fetch("RAILS_SHARED_UPLOAD_MAX_BYTES", 200 * MB)), types: [ "" ] },
+      # A subtitle file is text a <track> element reads; a megabyte is hours of it.
+      captions: { max_bytes: Integer(ENV.fetch("RAILS_SHARED_CAPTIONS_MAX_BYTES", 1 * MB)), types: %w[text/vtt] },
     }.freeze
 
     NAMED_KINDS = {
       "audio" => :audio, "audio_file" => :audio,
       "video" => :video, "video_file" => :video,
       "media" => :mixed, "attachment" => :mixed, "render" => :mixed,
+      "captions" => :captions
     }.freeze
 
     included do

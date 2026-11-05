@@ -37,4 +37,53 @@ class TvVideoPlayerTest < ActionDispatch::IntegrationTest
     assert_select "video[preload=metadata]"
     assert_select "video[poster]", 0
   end
+
+  VTT = "WEBVTT\n\n00:00.000 --> 00:01.000\nHei\n"
+
+  test "a video with a WebVTT file carries a captions track" do
+    @video.captions.attach(io: StringIO.new(VTT), filename: "hei.vtt", content_type: "text/vtt")
+
+    get tv.video_path(@video)
+
+    assert_select "video[preload=metadata] track[kind=captions][srclang=nb][default][label=?]",
+                  I18n.t("tv.captions_track")
+  end
+
+  test "a video without captions has no track" do
+    get tv.video_path(@video)
+
+    assert_select "video track", 0
+  end
+
+  test "the upload form takes a captions file and the video keeps it" do
+    sign_in_as(@owner)
+
+    get tv.new_channel_video_path(@channel)
+    assert_select "input[type=file][name='video[captions]'][accept*=vtt]"
+
+    post tv.channel_videos_path(@channel), params: { video: {
+      title: "Med tekst",
+      video_file: fixture_file_upload("tiny.mp4", "video/mp4"),
+      captions: Rack::Test::UploadedFile.new(StringIO.new(VTT), "text/vtt", original_filename: "tekst.vtt")
+    } }
+
+    video = Tv::Video.find_by!(title: "Med tekst")
+    assert video.captions.attached?, "the captions file was not kept"
+    assert_equal "text/vtt", video.captions.content_type
+  end
+
+  test "the player carries the media session's title and channel" do
+    get tv.video_path(@video)
+
+    assert_select "[data-controller=tv-player][data-tv-player-title-value=Fjellet][data-tv-player-artist-value=?]",
+                  @channel.name
+  end
+
+  private
+
+  def sign_in_as(user)
+    host! "brgen.no"
+    post session_path, params: { email_address: user.email_address, password: "password123" }
+    host! "tv.brgen.no"
+  end
 end

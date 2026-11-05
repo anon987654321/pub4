@@ -1,6 +1,17 @@
 <%# One note. Same three renderers as tv/stream_chats/_stream_chat: the page loop,
-    create.turbo_stream.erb, and Tv::VideoNote's broadcast. %>
+    create.turbo_stream.erb, and Tv::VideoNote's broadcast.
+    The time is a button that seeks the page's player (tv_player_controller
+    listens for data-tv-seek-to on the document, so a note that arrives by
+    broadcast seeks too). %>
 <article id="<%= dom_id(video_note) %>">
-  <p><% if video_note.timestamp.present? %><%= video_note.timestamp %> · <% end %><%= video_note.user&.display_name || t("chat.anon") %></p>
+  <p>
+    <% if video_note.timestamp.present? %>
+      <% minutes, seconds = video_note.timestamp.to_i.divmod(60) %>
+      <% clock = format("%d:%02d", minutes, seconds) %>
+      <%= tag.button clock, type: "button", class: "video-note-seek", data: { tv_seek_to: video_note.timestamp.to_i },
+                            aria: { label: t("tv.seek_to_note", time: clock) } %> ·
+    <% end %>
+    <%= video_note.user&.display_name || t("chat.anon") %>
+  </p>
   <%= tag.p video_note.body %>
 </article>

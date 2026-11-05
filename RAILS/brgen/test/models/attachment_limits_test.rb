@@ -42,6 +42,18 @@ class AttachmentLimitsTest < ActiveSupport::TestCase
     assert_empty attach(Tv::Video.new, :video_file, "tiny.mp4", "video/mp4")
   end
 
+  # A tv video's subtitles are WebVTT text, which an image slot refused.
+  test "a captions slot takes WebVTT and refuses anything else" do
+    video = Tv::Video.new
+    vtt = StringIO.new("WEBVTT\n\n00:00.000 --> 00:01.000\nHei\n")
+    video.captions.attach(io: vtt, filename: "hei.vtt", content_type: "text/vtt")
+    video.valid?
+    assert_empty video.errors[:captions]
+
+    refused = I18n.t("errors.messages.file_type_not_allowed")
+    assert_includes attach(Tv::Video.new, :captions, "tiny.png", "image/png"), refused
+  end
+
   test "a mixed slot holds size alone" do
     assert_empty attach(Message.new, :attachment, "tiny.png", "image/png")
   end
@@ -65,5 +77,6 @@ class AttachmentLimitsTest < ActiveSupport::TestCase
     assert_equal :audio, Shared::AttachmentLimits.kind_for(:audio_file)
     assert_equal :mixed, Shared::AttachmentLimits.kind_for(:attachment)
     assert_equal :image, Shared::AttachmentLimits.kind_for(:photos)
+    assert_equal :captions, Shared::AttachmentLimits.kind_for(:captions)
   end
 end
