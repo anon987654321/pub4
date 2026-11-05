@@ -77,16 +77,20 @@ module Shared
     # out a link, be collected, and leave it resolving to nothing for three more
     # weeks. Conversation.channels is the roster and every entry in it has a
     # slug, so slug-lessness is what separates a conversation from a room.
+    #
+    # Only brgen has conversations (the messenger engine). amber runs this job
+    # too, and ::ConversationParticipant raised NameError there on every run.
     def eligible
+      guests = ::User.where(guest: true)
+                     .where(created_at: ..RETENTION.ago)
+                     .where.missing(:sessions)
+      return guests unless defined?(::ConversationParticipant)
+
       private_threads = ::ConversationParticipant
                         .joins(:conversation)
                         .where(conversations: { slug: nil })
                         .select(:user_id)
-
-      ::User.where(guest: true)
-            .where(created_at: ..RETENTION.ago)
-            .where.missing(:sessions)
-            .where.not(id: private_threads)
+      guests.where.not(id: private_threads)
     end
 
     def remaining = eligible.count
