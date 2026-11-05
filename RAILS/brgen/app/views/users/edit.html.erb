@@ -16,9 +16,19 @@
     <%= f.text_field :display_name, autocomplete: "name" %>
   </div>
 
-  <div class="field">
+  <div class="field" data-controller="username-availability"
+       data-username-availability-url-value="<%= main_app.username_availability_users_path %>"
+       data-username-availability-current-value="<%= @user.username_was %>">
     <%= f.label :username, t("profile.username") %>
-    <%= f.text_field :username, autocomplete: "username" %>
+    <%= f.text_field :username, autocomplete: "username", required: true,
+          minlength: User::USERNAME_LENGTH.min, maxlength: User::USERNAME_LENGTH.max,
+          pattern: User::USERNAME_PATTERN,
+          aria: { describedby: "user_username_rule user_username_hint" },
+          data: { username_availability_target: "input", action: "input->username-availability#check" } %>
+    <%= tag.p t("profile.username_rule", min: User::USERNAME_LENGTH.min, max: User::USERNAME_LENGTH.max),
+          id: "user_username_rule", class: "form-help" %>
+    <%= tag.p "", id: "user_username_hint", class: "form-help", role: "status",
+          data: { username_availability_target: "hint" } %>
   </div>
 
   <div class="field">

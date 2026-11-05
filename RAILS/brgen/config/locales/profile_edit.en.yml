@@ -8,6 +8,10 @@ en:
     avatar_choose: Choose a photo
     avatar_hint: JPEG, PNG, WebP, GIF, HEIC or AVIF. The photo is cropped to a square.
     avatar_remove: Remove the photo and use the pattern again
+    username_rule: "%{min}–%{max} characters: letters a–z, digits and underscore."
+    username_available: "“%{name}” is available."
+    username_taken: "“%{name}” is taken."
+    username_invalid: "Use %{min}–%{max} characters: letters a–z, digits and underscore."
   activerecord:
     attributes:
       user:

@@ -9,6 +9,8 @@ class UsersController < ApplicationController
   skip_before_action :ensure_guest_user!, only: :create
   rate_limit to: 10, within: 10.minutes, only: :create, name: "signup",
     with: -> { redirect_to new_user_path, alert: t("shared.flash.rate_limited") }
+  # The edit form asks as the person types, after a pause; this bounds a script.
+  rate_limit to: 60, within: 1.minute, only: :username_availability, name: "username_availability"
 
   def show
     # By username as well as id, because the ActivityPub actor advertises
@@ -38,7 +40,8 @@ class UsersController < ApplicationController
   def update
     require_user_session
     @user = Current.user
-    return render :edit, status: :unprocessable_entity unless @user.update(profile_params)
+    @user.assign_attributes(profile_params)
+    return render :edit, status: :unprocessable_entity unless @user.save(context: :profile)
 
     # Removing the photo brings the identicon back; touch, so the avatar
     # address (User#avatar_url) changes and no cached photo outlives it.
@@ -47,6 +50,19 @@ class UsersController < ApplicationController
       @user.touch
     end
     redirect_to main_app.user_path(@user), notice: t("profile.updated", default: "Profile updated.")
+  end
+
+  # The edit form's live hint: whether the typed name is free for this person,
+  # as the sentence the form shows, so the rule is worded in one place.
+  def username_availability
+    require_user_session
+    return if performed?
+
+    name = params[:username].to_s.strip
+    available = Current.user.username_available?(name)
+    limits = { min: User::USERNAME_LENGTH.min, max: User::USERNAME_LENGTH.max }
+    message = t("profile.username_#{availability_key(name, available)}", name:, **limits)
+    render json: { available:, message: }
   end
 
   def new
@@ -112,6 +128,12 @@ class UsersController < ApplicationController
   def profile_activity
     events = ActivityEvent.visible.public_only.readable_by(Current.user).attributable
     events.where(actor_id: @user.id).recent.limit(20)
+  end
+
+  def availability_key(name, available)
+    return "available" if available
+
+    User.username_well_formed?(name) ? "taken" : "invalid"
   end
 
   def profile_params

@@ -175,6 +175,9 @@ resources :fediverse_follows, only: %i[index create destroy], controller: "fediv
   end
 
   resources :users, only: %i[show new create edit update] do
+    # The profile form's live hint; a collection route, so it is matched
+    # before /users/:id would read "username_availability" as an id.
+    get :username_availability, on: :collection
     member do
       post :follow, to: "follows#create"
       delete :unfollow, to: "follows#destroy"

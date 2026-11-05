@@ -60,6 +60,29 @@ class User < ApplicationRecord
     format: { with: URI::MailTo::EMAIL_REGEXP }
   validates :username, uniqueness: true, allow_nil: true
 
+  # What a person may choose as a username on the profile form: the characters
+  # a mention can name (Mention.extract reads @[a-zA-Z0-9_]+), so every chosen
+  # handle can be mentioned, at a length a profile header and an @-mention can
+  # show. Held in the :profile context only, so seeds, bots and accounts made
+  # before the rule keep saving; the form is where a name is chosen.
+  # Also the form field's pattern attribute, so the browser holds the same rule.
+  USERNAME_PATTERN = "[a-zA-Z0-9_]+"
+  USERNAME_FORMAT = /\A#{USERNAME_PATTERN}\z/
+  USERNAME_LENGTH = 3..30
+  validates :username, presence: true, length: { in: USERNAME_LENGTH }, format: { with: USERNAME_FORMAT },
+                       uniqueness: { case_sensitive: false }, on: :profile
+
+  # Whether `name` is well formed and nobody else holds it in any letter case
+  # (a mention matches case-insensitively).
+  def username_available?(name)
+    name = name.to_s
+    return false unless User.username_well_formed?(name)
+
+    !User.where.not(id:).exists?([ "LOWER(username) = ?", name.downcase ])
+  end
+
+  def self.username_well_formed?(name) = name.match?(USERNAME_FORMAT) && USERNAME_LENGTH.cover?(name.length)
+
   # A line or two under the name on the profile, not a second post.
   BIO_LENGTH = 160
   validates :bio, length: { maximum: BIO_LENGTH }
