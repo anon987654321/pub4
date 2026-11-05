@@ -138,6 +138,23 @@ class TestInterModelContract < Minitest::Test
     refute_includes raw, "The parser input has no declared size bound."
   end
 
+  def test_measurement_ledger_uses_shared_private_bounded_jsonl_writer
+    Contract.record_turn(
+      root: @root, role: "proposer", model: "test-model", outbound_schema_valid: true,
+      first_response_valid: true, accepted: true, repair_attempted: false,
+      response_hashes: ["d" * 64]
+    )
+
+    path = File.join(@root, Contract::LEDGER_RELATIVE_PATH)
+    assert File.file?(path)
+    assert File.file?("#{path}.lock")
+    assert_equal 0o600, File.stat(path).mode & 0o777
+    assert_equal 0o600, File.stat("#{path}.lock").mode & 0o777
+    assert_equal 0o700, File.stat(File.dirname(path)).mode & 0o777
+    assert_operator File.size(path), :<=, Contract::LEDGER_MAX_BYTES
+    assert_equal "measured", Contract.measure(root: @root).fetch("status")
+  end
+
   def test_wrap_prompt_includes_a_structured_request_and_response_contract
     prompt = Contract.wrap_prompt(
       "Review the source.",
