@@ -40,6 +40,24 @@ class TestToolsMedia < Minitest::Test
     assert_equal "/v1/models", request.path
   end
 
+  def test_studio_replicate_token_files_must_be_private_regular_user_files
+    Dir.mktmpdir do |directory|
+      path = File.join(directory, "env")
+      File.write(path, "REPLICATE_API_TOKEN=secret\n")
+      File.chmod(0o600, path)
+      assert Studio::ReplicateClient.private_token_file?(path)
+
+      File.chmod(0o640, path)
+      refute Studio::ReplicateClient.private_token_file?(path)
+
+      File.chmod(0o600, path)
+      target = File.join(directory, "secret")
+      File.rename(path, target)
+      File.symlink(target, path)
+      refute Studio::ReplicateClient.private_token_file?(path)
+    end
+  end
+
   def test_studio_replicate_api_requests_use_the_declared_tls_timeouts
     client = Studio::ReplicateClient.new(token: "studio-replicate-test")
     request = nil
