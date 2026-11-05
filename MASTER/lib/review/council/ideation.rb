@@ -1,15 +1,19 @@
 # frozen_string_literal: true
 
+require_relative "inter_model_contract"
+
 module Master
   module Review
     module Council
       class Ideation
         DEFAULT_CYCLES = 2
         BUDGET_SECONDS = 4 * 60
+        REQUIRED_CONSTRAINTS = %w[ROBUSTNESS SINGULARITY INTER_MODEL_CONTRACT].freeze
 
-        def initialize(agent:, event_bus: nil)
+        def initialize(agent:, event_bus: nil, root: InterModelContract::REPO_ROOT)
           @agent = agent
           @bus = event_bus
+          @root = File.expand_path(root)
         end
 
         def ideate(prompt, constraints: [], cycles: DEFAULT_CYCLES, budget_seconds: BUDGET_SECONDS)
@@ -24,6 +28,14 @@ module Master
 
           return Master::Result.err("ideation: budget expired", category: :timeout) if Time.now >= deadline
           fill_quota(prompt:, ideas:, constraints:, deadline:)
+          required = Master::Core::Proof::ALTERNATIVES_REQUIRED
+          if ideas.uniq.size < required
+            return Master::Result.err(
+              "ideation: #{ideas.uniq.size} distinct approaches; #{required} required",
+              category: :llm_failure
+            )
+          end
+
           synth_result = synthesize(prompt:, ideas:, critiques:, constraints:)
           return synth_result if synth_result.err?
 
@@ -57,56 +69,140 @@ module Master
         def brainstorm(prompt:, prior:, constraints:)
           context = prior.any? ? "Prior ideas (avoid repeating): #{prior.join('; ')}\n\n" : ""
           constraint_prefix = constraints.any? ? "Constraints: #{constraints.join(', ')}\n\n" : ""
-          system_msg = "Generate at least 8 distinct approaches. One idea per bullet (- prefix)."
-          raw = @agent.ask_once(<<~PROMPT, system: system_msg)
-          #{constraint_prefix}#{context}Generate ideas for: #{prompt}
-        PROMPT
-          raw_text = raw.to_s
-          return Master::Result.err("ideation: brainstorm failed") if raw_text.strip.empty?
+          system_msg = "Generate at least #{Master::Core::Proof::ALTERNATIVES_REQUIRED} distinct approaches. " \
+                       "Return one structured finding per approach; put the complete approach in claim and use " \
+                       "proposed_repair=none. Do not repeat a prior idea."
+          model_prompt = <<~PROMPT
+            #{constraint_prefix}#{context}Generate distinct approaches for: #{prompt}
+            Return at least #{Master::Core::Proof::ALTERNATIVES_REQUIRED} materially different candidates.
+            With prior candidates, set position to mixed and explain that the new candidates are distinct.
+          PROMPT
+          prior_findings = idea_findings(prior)
+          result = structured_exchange(
+            model_prompt, role: "proposer", task: "Generate materially distinct approaches.",
+            success_criteria: "Return at least #{Master::Core::Proof::ALTERNATIVES_REQUIRED} distinct candidates in schema-valid findings.",
+            constraints:, prior_findings:, system: system_msg
+          )
+          ideas = result.fetch("data").fetch("findings").map { |finding| finding.fetch("claim").strip }.reject(&:empty?).uniq
+          return Master::Result.err("ideation: brainstorm returned no distinct candidates", category: :llm_failure) if ideas.empty?
 
-          parsed = raw_text.scan(/^[-*]\s*(.+)/).flatten
-          parsed = [raw_text.strip] if parsed.empty?
-          Master::Result.ok(parsed)
+          Master::Result.ok(ideas)
+        rescue StandardError => e
+          report_error("brainstorm", e)
+          Master::Result.err("ideation: brainstorm failed (#{e.class})", category: :llm_failure)
         end
 
         def critique(ideas)
           list = ideas.map { |idea| "- #{idea}" }.join("\n")
-          # Adversarial, per proposal, with a verdict — a critique that only
-          # muses about the pool eliminates nothing, and the synthesis then
-          # keeps everything. Each proposal gets attacked and either survives
-          # or is rejected by name.
-          system_msg = "Attack each idea separately: state the strongest argument that it is wrong, " \
-                       "breaks existing behavior, or fights a decision already made. " \
-                       "End each with 'VERDICT: keep' or 'VERDICT: reject — <reason>'. Be direct."
-          raw = @agent.ask_once(<<~PROMPT, system: system_msg)
-          #{list}
-        PROMPT
-          raw_text = raw.to_s
-          return Master::Result.err("ideation: critique failed") if raw_text.strip.empty?
+          system_msg = "Attack every candidate separately. Return exactly one finding for each supplied candidate. " \
+                       "The finding claim must exactly repeat the candidate. Set proposed_repair to KEEP or " \
+                       "REJECT: <specific reason>. Do not omit or invent candidates."
+          model_prompt = <<~PROMPT
+            Critique each candidate independently:
+            #{list}
 
-          Master::Result.ok(raw_text.strip)
+            For each candidate, identify the strongest argument that it is wrong, breaks existing behavior,
+            or conflicts with an established decision. Preserve the exact candidate text in finding.claim.
+            Use proposed_repair=KEEP or proposed_repair=REJECT: followed by a concrete reason.
+            Return position mixed and evidence tied to the supplied candidates.
+          PROMPT
+          prior_findings = idea_findings(ideas)
+          result = structured_exchange(
+            model_prompt, role: "critic", task: "Adversarially assess each proposed approach.",
+            success_criteria: "Exactly one schema-valid, explicit keep/reject verdict for every supplied candidate.",
+            constraints: REQUIRED_CONSTRAINTS, prior_findings:, system: system_msg
+          )
+          findings = result.fetch("data").fetch("findings")
+          claims = findings.map { |finding| finding.fetch("claim").strip }
+          unless claims.size == ideas.size && claims.uniq.size == claims.size && claims.sort == ideas.sort
+            return Master::Result.err("ideation: critique did not cover the candidate set exactly", category: :llm_failure)
+          end
+
+          rendered = findings.map do |finding|
+            verdict = finding.fetch("proposed_repair").strip
+            unless verdict.match?(/\A(?:KEEP\b|REJECT\s*:)/i)
+              return Master::Result.err("ideation: critique omitted an explicit KEEP/REJECT verdict", category: :llm_failure)
+            end
+
+            "#{finding.fetch('claim')}\nVERDICT: #{verdict}"
+          end
+          Master::Result.ok(rendered.join("\n\n"))
+        rescue StandardError => e
+          report_error("critique", e)
+          Master::Result.err("ideation: critique failed (#{e.class})", category: :llm_failure)
         end
 
         def synthesize(prompt:, ideas:, critiques:, constraints:)
           constraint_prefix = constraints.any? ? "Constraints: #{constraints.join(', ')}\n\n" : ""
           list = ideas.map { |idea| "- #{idea}" }.join("\n")
           crits = critiques.join("\n\n")
-          system_msg = "Synthesize the best elements into a concrete, practical recommendation. " \
-                       "Drop every idea the critiques rejected; keep only survivors and say which. " \
-                       "Preserve innovation. Address valid critiques."
-          raw = @agent.ask_once(<<~PROMPT, system: system_msg)
-          Goal: #{prompt}
-          #{constraint_prefix}
-          Ideas:
-          #{list}
+          system_msg = "Synthesize the best elements into one concrete, practical recommendation. " \
+                       "Drop every candidate marked REJECT and retain only KEEP candidates. " \
+                       "Put the recommendation in claim and the concrete next step in proposed_repair."
+          model_prompt = <<~PROMPT
+            Goal: #{prompt}
+            #{constraint_prefix}
+            Candidates:
+            #{list}
 
-          Critiques:
-          #{crits}
-        PROMPT
-          raw_text = raw.to_s
-          return Master::Result.err("ideation: synthesis failed") if raw_text.strip.empty?
+            Critiques and explicit verdicts:
+            #{crits}
 
-          Master::Result.ok(raw_text.strip)
+            Return position mixed, cite the supplied goal and candidate/verdict set in position_evidence,
+            and return exactly one finding for the final recommendation.
+          PROMPT
+          result = structured_exchange(
+            model_prompt, role: "synthesizer", task: "Synthesize the strongest surviving approaches.",
+            success_criteria: "One actionable recommendation grounded in the supplied candidates and verdicts.",
+            constraints:, prior_findings: idea_findings(ideas), system: system_msg
+          )
+          findings = result.fetch("data").fetch("findings")
+          return Master::Result.err("ideation: synthesis must return exactly one recommendation", category: :llm_failure) unless findings.size == 1
+
+          finding = findings.first
+          final = [finding.fetch("claim").strip, finding.fetch("proposed_repair").strip]
+            .reject { |part| part.empty? || part == "none" }.join("\n\n")
+          return Master::Result.err("ideation: synthesis returned an empty recommendation", category: :llm_failure) if final.empty?
+
+          Master::Result.ok(final)
+        rescue StandardError => e
+          report_error("synthesis", e)
+          Master::Result.err("ideation: synthesis failed (#{e.class})", category: :llm_failure)
+        end
+
+        def structured_exchange(prompt, role:, task:, success_criteria:, constraints:, prior_findings:, system:)
+          law_constraints = (Array(constraints).map(&:to_s) + REQUIRED_CONSTRAINTS).reject(&:empty?).uniq
+          contract_prompt = InterModelContract.wrap_prompt(
+            prompt,
+            role:,
+            task:,
+            success_criteria:,
+            constraints: law_constraints,
+            artifact: prompt,
+            prior_findings:
+          )
+          model = @agent.model if @agent.respond_to?(:model)
+          InterModelContract.exchange(
+            prompt: contract_prompt, role:, bus: @bus, root: @root, prior_findings:, model:
+          ) do |outbound, _retrying|
+            @agent.ask_once(outbound, system:)
+          end
+        end
+
+        def idea_findings(ideas)
+          Array(ideas).each_with_index.map do |idea, index|
+            {
+              "severity" => "info",
+              "location" => "candidate #{index + 1}",
+              "evidence" => "Candidate supplied by the preceding ideation stage.",
+              "claim" => idea.to_s,
+              "proposed_repair" => "none"
+            }
+          end
+        end
+
+        def report_error(stage, error)
+          @bus&.publish("ideation:error", stage:, error_class: error.class.name)
         end
       end
     end
