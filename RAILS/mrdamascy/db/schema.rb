@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.2].define(version: 2026_11_04_170000) do
+ActiveRecord::Schema[8.2].define(version: 2026_11_05_100000) do
   create_table "cart_items", force: :cascade do |t|
     t.integer "cart_id", null: false
     t.integer "menu_item_id", null: false
@@ -82,7 +82,9 @@ ActiveRecord::Schema[8.2].define(version: 2026_11_04_170000) do
     t.datetime "awarded_at"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.integer "redeemed_order_id"
     t.index ["order_id"], name: "index_loyalty_stamps_on_order_id"
+    t.index ["redeemed_order_id"], name: "index_loyalty_stamps_on_redeemed_order_id"
     t.index ["user_id", "redeemed"], name: "index_loyalty_stamps_on_user_id_and_redeemed"
     t.index ["user_id"], name: "index_loyalty_stamps_on_user_id"
   end
@@ -234,6 +236,7 @@ ActiveRecord::Schema[8.2].define(version: 2026_11_04_170000) do
   add_foreign_key "carts", "users"
   add_foreign_key "item_options", "menu_items"
   add_foreign_key "loyalty_stamps", "orders"
+  add_foreign_key "loyalty_stamps", "orders", column: "redeemed_order_id"
   add_foreign_key "loyalty_stamps", "users"
   add_foreign_key "menu_categories", "kitchens"
   add_foreign_key "menu_items", "menu_categories"

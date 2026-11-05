@@ -154,6 +154,16 @@ class OrderTest < ActiveSupport::TestCase
     assert stamp.awarded_at.present?
   end
 
+  test "a delivered order's stamp is awarded once however often it is asked for" do
+    order = seed_order!(user: @user, kitchen: @kitchen, state: "picked_up")
+    order.deliver!
+
+    assert_no_difference "LoyaltyStamp.count" do
+      order.award_stamp!
+    end
+    assert_equal 1, @user.stamp_count
+  end
+
   # -- Tracking token -------------------------------------------------------
 
   test "tracking tokens are unique" do

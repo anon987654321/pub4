@@ -5859,7 +5859,7 @@ items:
   path: RAILS/mrdamascy/test/models/order_test.rb
   item: Test that Order#deliver! awards exactly one stamp and that the tenth stamp
     redeems as a free wrap at checkout.
-  status: open
+  status: done
 - id: mrdamascy-099
   app: mrdamascy
   area: tests

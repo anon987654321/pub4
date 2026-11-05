@@ -31,6 +31,11 @@ class User < ApplicationRecord
     loyalty_stamps.unredeemed.count
   end
 
+  # The order a free wrap spends them in.
+  def unredeemed_stamps_oldest_first
+    loyalty_stamps.unredeemed.order(:awarded_at, :id)
+  end
+
   def free_wrap_ready?
     unredeemed_stamp_count >= 9
   end

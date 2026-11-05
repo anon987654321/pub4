@@ -25,6 +25,9 @@ class Order < ApplicationRecord
   belongs_to :cart, optional: true
   has_many :order_items, dependent: :destroy
   has_one :review, dependent: :destroy
+  # The stamps this order's free wrap spent (PromoApplier's loyalty pick).
+  has_many :redeemed_stamps, class_name: "LoyaltyStamp", foreign_key: :redeemed_order_id,
+                             inverse_of: :redeemed_order, dependent: :nullify
 
   normalizes :postcode, with: ->(postcode) { postcode.to_s.gsub(/\s+/, "") }
   normalizes :phone, with: ->(phone) { phone.to_s.gsub(/\s+/, "") }
@@ -45,6 +48,9 @@ class Order < ApplicationRecord
   # (One after_commit: create and update hooks naming the same method keep
   # only the last.)
   after_commit :refresh_board, on: %i[create update], if: -> { previously_new_record? || saved_change_to_state? }
+  # A free wrap that is never paid for or never made gives its stamps back.
+  after_update :release_redeemed_stamps,
+               if: -> { saved_change_to_state?(to: "cancelled") || saved_change_to_payment_state?(to: "failed") }
 
   scope :recent, -> { order(placed_at: :desc, id: :desc) }
   scope :live, -> { where(state: %w[placed confirmed preparing ready picked_up]) }
@@ -125,7 +131,10 @@ class Order < ApplicationRecord
     self.eta_minutes = pickup? ? nil : zone&.eta_minutes
     apply_promo_result!(promo_result) if promo_result
     self.total_ore = subtotal_ore.to_i - discount_ore.to_i + delivery_fee_ore.to_i + tip_ore.to_i
-    save!
+    transaction do
+      save!
+      redeem_free_wrap_stamps! if promo_result&.dig(:source) == :loyalty
+    end
     self
   end
 
@@ -171,15 +180,35 @@ class Order < ApplicationRecord
     end
   end
 
-  # One stamp per delivered order — the Sahtein card's whole economy.
+  # One stamp per delivered order — the Sahtein card's whole economy. The
+  # order a free wrap paid for earns the tenth stamp, which is the reward
+  # itself, so it is spent with the nine before it and the card starts over.
   def award_stamp!
     return false unless user
     return false if LoyaltyStamp.exists?(order_id: id)
 
-    LoyaltyStamp.create!(user: user, order: self, awarded_at: Time.current)
+    free_wrap = redeemed_stamps.exists?
+    LoyaltyStamp.create!(user: user, order: self, awarded_at: Time.current,
+                         redeemed: free_wrap, redeemed_order: (self if free_wrap))
   end
 
   private
+
+  # The free wrap spends the nine oldest unredeemed stamps, in the order's own
+  # save. Fewer than nine left (another checkout spent them first) and the
+  # order is refused instead of giving the wrap away twice.
+  def redeem_free_wrap_stamps!
+    needed = PromoApplier::LOYALTY_STAMP_THRESHOLD
+    stamps = user.unredeemed_stamps_oldest_first
+    ids = stamps.limit(needed).pluck(:id)
+    spent = LoyaltyStamp.unredeemed.where(id: ids)
+                        .update_all(redeemed: true, redeemed_order_id: id, updated_at: Time.current)
+    raise ActiveRecord::RecordInvalid, self unless spent == needed
+  end
+
+  def release_redeemed_stamps
+    redeemed_stamps.update_all(redeemed: false, redeemed_order_id: nil, updated_at: Time.current)
+  end
 
   def refresh_board
     Turbo::StreamsChannel.broadcast_replace_to(
