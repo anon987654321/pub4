@@ -6129,7 +6129,7 @@ items:
   path: RAILS/__shared/app/views/shared/_toast.html.erb
   item: Use one toast duration token; shared toasts default to 4000 ms and mrdamascy's
     to 3500 ms.
-  status: open
+  status: done
 - id: shared-026
   app: shared
   area: performance

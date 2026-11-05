@@ -1,13 +1,16 @@
 import { Controller } from "@hotwired/stimulus"
 
-// Flash toast (§8): dismiss button + auto-dismiss after 3.5 seconds. An
-// alert (persist) stays until the reader closes it.
+// Flash toast (§8): dismiss button + auto-dismiss after the delay value. An
+// alert (persist) stays until the reader closes it. The default is the
+// family's one toast duration, 4000 ms, the delay shared/_toast and the
+// shared action controller give the shared toast, under the same
+// data-toast-delay-value name.
 export default class extends Controller {
-  static values = { persist: Boolean }
+  static values = { persist: Boolean, delay: { type: Number, default: 4000 } }
 
   connect() {
     if (this.persistValue) return
-    this.timer = setTimeout(() => this.dismiss(), 3500)
+    this.timer = setTimeout(() => this.dismiss(), this.delayValue)
   }
 
   disconnect() {
