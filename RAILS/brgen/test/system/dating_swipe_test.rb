@@ -25,6 +25,7 @@ class DatingSwipeTest < ApplicationSystemTestCase
     click_link I18n.t("dating.splash.start", locale: :nb)
 
     assert_selector "section.dating-discover-panel", visible: true, wait: 5
+    decline_optional_cookies
 
     card = find("article.swipe-card[data-user-id='#{@other.id}']")
     within(card) { find("button.swipe-action--like").click }

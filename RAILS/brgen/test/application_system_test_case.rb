@@ -70,4 +70,12 @@ class ApplicationSystemTestCase < ActionDispatch::SystemTestCase
     matcher = Axe::Matchers.be_axe_clean
     assert matcher.matches?(page), matcher.failure_message
   end
+
+  # The consent banner is fixed to the bottom of the viewport and covers what
+  # sits under it until the visitor answers, and the consent cookie is
+  # host-only, so each host asks once. A test that presses something low on the
+  # page answers it first, as a visitor must.
+  def decline_optional_cookies
+    within("#cookie-consent-banner") { click_button I18n.t("cookie_consent.reject", locale: :nb) }
+  end
 end

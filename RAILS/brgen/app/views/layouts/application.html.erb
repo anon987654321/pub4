@@ -127,8 +127,13 @@
        data-geolocation-radius-km-value="10"
        data-turbo-permanent></div>
   <% if Current.user %>
-    <%= turbo_stream_from "nearby_alerts_#{Current.user.id}" %>
-    <%= turbo_stream_from "brgen:matches:#{Current.user.id}" %>
+    <%# A soft guest not yet saved has no id: its streams were named
+        "nearby_alerts_" and "brgen:matches:", which nothing broadcasts to and
+        the cable refuses to a visitor with nobody behind the connection. %>
+    <% if Current.user.persisted? %>
+      <%= turbo_stream_from "nearby_alerts_#{Current.user.id}" %>
+      <%= turbo_stream_from "brgen:matches:#{Current.user.id}" %>
+    <% end %>
     <%# The reader's own inbox: thread rows and the unread count, replaced live
         by InboxBroadcastJob. Signed, and one per person, so it carries only
         what that person may see. %>

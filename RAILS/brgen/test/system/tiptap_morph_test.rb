@@ -18,6 +18,7 @@ class TiptapMorphTest < ApplicationSystemTestCase
     post_record = ActsAsTenant.with_tenant(city) { Post.create!(user: author, title: "Tråd", content: "…", city:) }
 
     visit post_path(post_record)
+    decline_optional_cookies
     find("#comment_form textarea, form textarea[name='comment[content]']", visible: :all).click
     editor = find(".tiptap_area[contenteditable=true]", wait: 10)
     editor.send_keys("Halvskrevet svar")
