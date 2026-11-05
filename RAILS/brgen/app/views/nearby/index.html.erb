@@ -20,11 +20,11 @@
   </article>
 
   <% if @nearby.any? %>
-    <% @nearby.each do |u, distance| %>
+    <% @nearby.each do |u, band| %>
       <article class="row-between">
         <div> <%# scan: intentional — an anonymous text block; the flex row is the layout and a name here would have no reader %>
           <%= tag.strong u.anon_handle %>
-          <p><%= t("nearby.distance_away", km: number_with_precision(distance, precision: 1)) %></p>
+          <%= tag.p t("nearby.distance_band.#{band}") %>
         </div>
         <%= button_to t("nearby.chat"), nearby_path, params: { user_id: u.id }, method: :post, class: "button button-primary button-small" %>
       </article>

@@ -91,6 +91,18 @@ class NearbyController < ApplicationController
     redirect_to conversation
   end
 
+  # How far away a stranger is, as shown: a band, never a figure. A distance to
+  # 0.1 km from three places pins a person down, so the exact value never leaves
+  # this controller, and the list is ordered by band and then by handle rather
+  # than by the exact distance it would otherwise leak through its order.
+  DISTANCE_BANDS = [ [ 1, "under_1" ], [ 2, "1_to_2" ], [ 5, "2_to_5" ] ].freeze
+
+  def self.distance_band(km)
+    DISTANCE_BANDS.find { |limit, _| km < limit }&.last || "over_5"
+  end
+
+  def self.band_rank(band) = DISTANCE_BANDS.index { _1.last == band } || DISTANCE_BANDS.size
+
   private
 
   # Why a chat with other may not open, as a flash key; nil when it may.
@@ -140,7 +152,7 @@ class NearbyController < ApplicationController
       distance = user.distance_to(lat, lng)
       next if distance.nil? || distance > radius
 
-      [ user, distance ]
-    end.sort_by(&:last)
+      [ user, self.class.distance_band(distance) ]
+    end.sort_by { |user, band| [ self.class.band_rank(band), user.anon_handle.to_s ] }
   end
 end

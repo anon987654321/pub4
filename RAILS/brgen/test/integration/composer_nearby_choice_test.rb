@@ -31,6 +31,19 @@ class ComposerNearbyChoiceTest < ActionDispatch::IntegrationTest
     refute box["checked"], "Live is ticked before the author chose it"
   end
 
+  test "the Live choice says it posts anonymously within about a kilometre, with its limit" do
+    get root_path
+
+    page = Nokogiri::HTML(response.body)
+    box = page.at_css(%(dialog input[type="checkbox"][name="post[nearby]"]))
+    label = box.ancestors("label").first
+    assert_includes label.text, "~1 km"
+    assert_includes label.text, Post::LIVE_CONTENT_MAX.to_s
+    hint = page.at_css("##{box['aria-describedby']}")
+    assert hint, "the choice has no description"
+    assert_includes hint.text, Post::LIVE_CONTENT_MAX.to_s
+  end
+
   test "a post without the box ticked keeps its author" do
     post posts_path, params: { post: { content: "Navngitt innlegg #{SecureRandom.hex(3)}", nearby: "false" } }
 

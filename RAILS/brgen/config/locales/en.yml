@@ -52,7 +52,8 @@ en:
     photo_by: "Photo by"
     on_source: "on"
   feed:
-    post_nearby: "Post as Live nearby: anonymous, your area only, 500 characters max"
+    post_nearby: "Post as anon near you (~1 km), %{count} characters max"
+    post_nearby_hint: "Your name is not shown. The post shows only the area around you, about a kilometre, and holds %{count} characters."
     compose_prompt: What are you up to today?
     compose_discard: Discard this post? Attached files are not kept.
     compose_live_limit: "characters · a Live post holds %{count}"
@@ -1712,7 +1713,11 @@ en:
     room_body: Everyone within %{km} km, one shared room, anonymous.
     join: Join
     chat: Chat
-    distance_away: "%{km} km away · anonymous"
+    distance_band:
+      under_1: Under 1 km away · anonymous
+      1_to_2: 1–2 km away · anonymous
+      2_to_5: 2–5 km away · anonymous
+      over_5: Over 5 km away · anonymous
     push_title: Someone nearby
     push_body: "%{handle} is within %{km} km — tap to chat"
     empty_located_body: Check back later — or drop a Live note while you wait.

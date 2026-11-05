@@ -52,7 +52,8 @@ nb:
     photo_by: "Foto av"
     on_source: "på"
   feed:
-    post_nearby: "Del som Live i nærheten: anonymt, bare området, maks 500 tegn"
+    post_nearby: "Del anonymt i nærheten (~1 km), maks %{count} tegn"
+    post_nearby_hint: "Navnet ditt vises ikke. Innlegget viser bare området rundt deg, omtrent én kilometer, og rommer %{count} tegn."
     compose_prompt: Hva skjer i dag?
     compose_discard: Forkaste innlegget? Vedlagte filer blir ikke tatt vare på.
     compose_live_limit: "tegn · et Live-innlegg rommer %{count}"
@@ -1720,7 +1721,11 @@ nb:
     room_body: Alle innen %{km} km, ett felles rom, anonymt.
     join: Bli med
     chat: Chat
-    distance_away: "%{km} km unna · anonym"
+    distance_band:
+      under_1: Under 1 km unna · anonym
+      1_to_2: 1–2 km unna · anonym
+      2_to_5: 2–5 km unna · anonym
+      over_5: Over 5 km unna · anonym
     push_title: Noen i nærheten
     push_body: "%{handle} er innen %{km} km — trykk for å chatte"
     empty_located_body: Kom tilbake senere — eller legg igjen en Live-notat mens du

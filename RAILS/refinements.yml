@@ -1937,7 +1937,7 @@ items:
   item: Coarsen the shown nearby distance into buckets (under 1 km, 1-2 km, 2-5 km,
     5+ km) instead of 0.1 km precision, which allows trilateration of a stranger's
     position.
-  status: open
+  status: done
 - id: brgen-128
   app: brgen
   area: maps
@@ -3385,7 +3385,7 @@ items:
   path: RAILS/brgen/app/views/shared/_feed_compose.html.erb
   item: When the nearby stamp stays, show a visible, labelled toggle in the composer
     ('Post as anon near you, ~1 km') with its 500-character limit stated.
-  status: open
+  status: done
 - id: brgen-300
   app: brgen
   area: privacy

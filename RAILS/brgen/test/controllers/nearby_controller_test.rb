@@ -167,6 +167,28 @@ class NearbyControllerTest < ActionDispatch::IntegrationTest
     assert_equal [ near.id ], listed, "only the fresh, in-range person, and never the viewer"
   end
 
+  # A distance to 0.1 km, read from three places, pins a stranger down; the list
+  # says only which band someone is in, and its order says no more than that.
+  test "the list shows a distance band, never a precise distance" do
+    lat, lng = random_base_coords
+    me = located_user("bander", lat, lng)
+    # About 0.4 km and about 3 km north of the viewer.
+    close = located_user("close", lat + 0.0035, lng)
+    middle = located_user("middle", lat + 0.027, lng)
+    User.where(id: [ me.id, close.id, middle.id ]).update_all(location_updated_at: 1.hour.ago)
+    sign_in(me)
+
+    get nearby_path(radius_km: 10)
+
+    assert_includes response.body, I18n.t("nearby.distance_band.under_1")
+    assert_includes response.body, I18n.t("nearby.distance_band.2_to_5")
+    assert_no_match(/\d+[.,]\d km/, response.body)
+    assert_equal "under_1", NearbyController.distance_band(0.4)
+    assert_equal "1_to_2", NearbyController.distance_band(1.0)
+    assert_equal "2_to_5", NearbyController.distance_band(4.99)
+    assert_equal "over_5", NearbyController.distance_band(5.0)
+  end
+
   test "visiting an unknown geo-room slug directly does not auto-create it" do
     get channel_path("nearby-999:999")
     assert_redirected_to channels_path

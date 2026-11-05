@@ -116,10 +116,14 @@
           (Post#stamp_live_location!), so this cannot be a hidden default: as one
           it turned every signed-in post anonymous under the name shown above. %>
       <% if Current.user&.latitude.present? && Current.user.longitude.present? %>
+        <%# The coordinates are rounded to two decimals (Post::LIVE_LOCATION_PRECISION),
+            about a kilometre, which is what the label promises. %>
         <label>
-          <%= f.check_box :nearby, {}, "true", "false" %>
-          <%= t("feed.post_nearby") %>
+          <%= f.check_box :nearby, { aria: { describedby: "composer-nearby-hint" } }, "true", "false" %>
+          <%= t("feed.post_nearby", count: Post::LIVE_CONTENT_MAX) %>
         </label>
+        <%= tag.p t("feed.post_nearby_hint", count: Post::LIVE_CONTENT_MAX), id: "composer-nearby-hint",
+                  class: "compose-hint" %>
       <% end %>
 
       <%= f.submit t("feed.post_action"), class: "button button-primary composer-submit" %>
