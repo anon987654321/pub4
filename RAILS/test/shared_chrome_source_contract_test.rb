@@ -74,11 +74,11 @@ class SharedChromeSourceContractTest < Minitest::Test
     assert_empty outdented
   end
 
-  # shared-046
-  def test_half_step_spacing_tokens_exist
-    { "1-5" => "0.375rem", "2-5" => "0.625rem", "3-5" => "0.875rem" }.each do |step, value|
-      assert_includes tokens, "--space-#{step}: #{value};"
-    end
+  # shared-046: the half-steps are off the 8px rhythm (tokens.yml scale.space_px),
+  # so the fix was the comment that claimed they had joined it.
+  def test_no_half_step_spacing_tokens_and_no_claim_that_they_joined_the_scale
+    refute_match(/--space-[1-9]\d*-5:/, tokens)
+    refute_includes tokens, "joined scale.space_px on"
   end
 
   # shared-047
