@@ -45,4 +45,10 @@ class NotificationUnreadBadgeTest < ActiveSupport::TestCase
     streams = capture_turbo_stream_broadcasts(@stream) { note.update!(title: "Ny tittel") }
     assert_empty streams
   end
+
+  test "the More button's copy of the badge is redrawn as well" do
+    targets = capture_turbo_stream_broadcasts(@stream) { Notification.create!(user: @reader, kind: "follow") }
+              .map { |stream| [ stream["target"], stream.at_css("template sup")&.text ] }
+    assert_equal [ [ "notifications-unread-badge", "1" ], [ "notifications-unread-badge-tab", "1" ] ], targets
+  end
 end

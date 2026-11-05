@@ -2183,7 +2183,7 @@ items:
   size: S
   path: RAILS/brgen/app/javascript/controllers/push_controller.js
   item: Prefix the tab title with the unread DM count across pages.
-  status: open
+  status: done
 - id: brgen-157
   app: brgen
   area: messenger
@@ -2391,7 +2391,7 @@ items:
   path: RAILS/brgen/app/views/shared/_mobile_chrome.html.erb
   item: Show an unread badge on the tab bar's Messages icon; only the home feed-views
     link carries one.
-  status: open
+  status: done
 - id: brgen-183
   app: brgen
   area: messenger
@@ -2668,7 +2668,7 @@ items:
   path: RAILS/brgen/app/views/shared/_mobile_chrome.html.erb
   item: Show a notifications badge on the tab bar's More button when there are unread
     notifications; the count lives only inside the closed sheet.
-  status: open
+  status: done
 - id: brgen-216
   app: brgen
   area: notifications

@@ -317,6 +317,16 @@ body[class*="vertical-"] .compose-launcher {
   background: var(--hover);
 }
 
+/* The unread counts on Messages and More: the swiper's pill, pinned to the
+   icon's top corner rather than set after a word, since a tab has none. */
+.tab-item .nav_link_badge {
+  position: absolute;
+  inset-block-start: var(--space-1);
+  inset-inline-start: 55%;
+  translate: none;
+  margin: 0;
+}
+
 .mobile-sheet-backdrop {
   position: fixed;
   inset: 0;

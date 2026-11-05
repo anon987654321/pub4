@@ -81,4 +81,18 @@ class InboxBroadcastTest < ActiveSupport::TestCase
     streams = capture_turbo_stream_broadcasts(inbox_of(@me)) { perform_enqueued_jobs(only: InboxBroadcastJob) }
     assert_empty streams
   end
+
+  test "the tab bar's Messages badge is redrawn too, under its own id, carrying the title count" do
+    say(@friend, "Ses?")
+    streams = capture_turbo_stream_broadcasts(inbox_of(@me)) { perform_enqueued_jobs(only: InboxBroadcastJob) }
+
+    tab = streams.find { |stream| stream["target"] == "messenger_unread_badge_tab" }
+    assert tab, "no redraw of the tab bar's badge"
+    assert_includes tab.to_html, ">1</sup>"
+    span = tab.at_css("template span#messenger_unread_badge_tab")
+    assert_equal "unread-title", span["data-controller"]
+    assert_equal "1", span["data-unread-title-count-value"]
+    swiper = streams.find { |stream| stream["target"] == "messenger_unread_badge" }
+    assert_nil swiper.at_css("template [data-controller]"), "only one copy keeps the title"
+  end
 end

@@ -47,4 +47,23 @@ class NotificationBadgeTest < ActionDispatch::IntegrationTest
     assert(streams.any? { |stream| stream["target"] == "notifications-unread-badge" && stream.at_css("sup").nil? })
     assert_equal 0, Notification.where(user: @reader).unread.count
   end
+
+  test "the tab bar shows unread messages on Messages and unread notifications on More" do
+    Notification.create!(user: @reader, kind: "follow")
+    friend = User.strict_loading(false).create!(email_address: "badge-friend@brgen.no", password: "password123",
+                                                username: "badgevenn", guest: false, city: @city)
+    conversation = Conversation.find_or_create_direct(@reader, friend)
+    conversation.messages.create!(sender: friend, content: "Hei", message_type: "text")
+    get root_path
+
+    assert_select %(#app-tab-bar a[href="#{conversations_path}"][aria-describedby="messenger_unread_badge_tab"]) do
+      badge = "#messenger_unread_badge_tab[data-controller=unread-title][data-unread-title-count-value=1]"
+      assert_select "#{badge} sup", text: "1"
+    end
+    assert_select %(#app-tab-bar button[aria-describedby="notifications-unread-badge-tab"]) do
+      assert_select "#notifications-unread-badge-tab sup", text: "1"
+    end
+    assert_select "#messenger_unread_badge", 1
+    assert_select "#notifications-unread-badge", 1
+  end
 end

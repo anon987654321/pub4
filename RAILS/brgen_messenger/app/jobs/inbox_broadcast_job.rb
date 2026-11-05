@@ -22,6 +22,11 @@ class InboxBroadcastJob < ApplicationJob
     "conversations/rail_row" => [ "rail_conversations", :rail ]
   }.freeze
 
+  # The unread count is drawn in two places, each with its own id: the
+  # Messenger entry in the swiper, and the tab bar's Messages icon, whose copy
+  # also carries the count the tab title shows.
+  BADGES = { "messenger_unread_badge" => false, "messenger_unread_badge_tab" => true }.freeze
+
   # moved: a new message, so the thread goes to the top of the list (a pinned
   # one stays among the pins, redrawn where it is). Otherwise the thread was
   # read, muted, pinned, edited or unsent and the row is redrawn in place.
@@ -59,10 +64,13 @@ class InboxBroadcastJob < ApplicationJob
     reader = membership.user
     draw_rows(reader, pinned: membership.pinned?, muted: membership.muted?) if membership.listed?
 
-    Turbo::StreamsChannel.broadcast_replace_to(
-      reader, :inbox, target: "messenger_unread_badge", partial: "conversations/unread_badge",
-                      locals: { count: Conversation.unread_total_for(reader) }
-    )
+    count = Conversation.unread_total_for(reader)
+    BADGES.each do |badge_id, title|
+      Turbo::StreamsChannel.broadcast_replace_to(
+        reader, :inbox, target: badge_id, partial: "conversations/unread_badge",
+                        locals: { count:, badge_id:, title: }
+      )
+    end
   end
 
   def draw_rows(reader, pinned:, muted:)

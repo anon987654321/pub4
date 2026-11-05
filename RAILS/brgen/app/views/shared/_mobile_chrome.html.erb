@@ -41,15 +41,34 @@
     <%= icon :compose, size: 26 %>
   <% end %>
   <%= render "shared/ai_nav_link", class_name: "tab-item", show_label: false %>
-  <%= link_to main_app.conversations_path, class: "tab-item", aria: { label: t("nav.messages"), current: current_page?(main_app.conversations_path) ? "page" : nil } do %>
+  <%# The badge is described rather than named: aria-label names the tab, and
+      the count InboxBroadcastJob redraws is what aria-describedby reads out. %>
+  <% inbox = Current.user && !Current.user.guest? %>
+  <%= link_to main_app.conversations_path, class: "tab-item",
+              aria: { label: t("nav.messages"), describedby: ("messenger_unread_badge_tab" if inbox),
+                      current: current_page?(main_app.conversations_path) ? "page" : nil } do %>
     <%= icon :messages, size: 26 %>
+    <% if inbox %>
+      <%= render "conversations/unread_badge",
+                 count: messenger_unread_total, badge_id: "messenger_unread_badge_tab", title: true %>
+    <% end %>
   <% end %>
   <%= link_to main_app.nearby_path, class: "tab-item", aria: { label: t("nav.nearby"), current: current_page?(main_app.nearby_path) ? "page" : nil } do %>
     <%= icon :nearby, size: 26 %>
   <% end %>
-  <button type="button" class="tab-item tab-item-button" data-action="click->bottom-sheet#toggle" data-bottom-sheet-target="trigger" aria-expanded="false" aria-label="<%= t("nav.more") %>">
+  <%# Unread notifications live in the sheet, so a closed sheet said nothing
+      about them; this copy of the badge shows on the button that opens it. %>
+  <% notified = Current.user&.persisted? %>
+  <%= tag.button type: "button", class: "tab-item tab-item-button",
+                 data: { action: "click->bottom-sheet#toggle", bottom_sheet_target: "trigger" },
+                 aria: { expanded: false, label: t("nav.more"),
+                         describedby: ("notifications-unread-badge-tab" if notified) } do %>
     <%= icon :menu, size: 26 %>
-  </button>
+    <% if notified %>
+      <%= render "notifications/unread_badge",
+                 count: Notification.unread_count_for(Current.user), badge_id: "notifications-unread-badge-tab" %>
+    <% end %>
+  <% end %>
   <%# No compose-fab: new-post expand lives in the top compose box / Post in sidebar. %>
 </nav>
 <%# Backdrop dismissal is a pointer affordance; Escape is the keyboard's

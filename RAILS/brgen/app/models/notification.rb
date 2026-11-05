@@ -41,15 +41,21 @@ class Notification < ApplicationRecord
 
   def self.unread_badge_stream(user) = [ user, :notification_badge ]
 
+  # Beside Varsler in the More sheet, and on the tab bar's More button, which is
+  # all a closed sheet shows.
+  UNREAD_BADGE_IDS = %w[notifications-unread-badge notifications-unread-badge-tab].freeze
+
   def self.broadcast_unread_badge(user_id)
     reader = User.find_by(id: user_id)
     return unless reader
 
-    Turbo::StreamsChannel.broadcast_replace_to(
-      unread_badge_stream(reader),
-      target: "notifications-unread-badge", partial: "notifications/unread_badge",
-      locals: { count: unread_count_for(reader) }
-    )
+    count = unread_count_for(reader)
+    UNREAD_BADGE_IDS.each do |badge_id|
+      Turbo::StreamsChannel.broadcast_replace_to(
+        unread_badge_stream(reader),
+        target: badge_id, partial: "notifications/unread_badge", locals: { count:, badge_id: }
+      )
+    end
   rescue StandardError => e
     Rails.logger.warn("Notification.broadcast_unread_badge #{user_id}: #{e.class}: #{e.message}")
   end
