@@ -3,6 +3,17 @@
 <%# OrdersController#show provides @order with order_items. %>
 <% order = @order %>
 
+<%# The page doubles as the printable receipt: who sold it, when, and how it
+    was paid, with the screen's chrome left off the print (_utilities.scss).
+    No VAT line: the codebase holds no VAT rates for the kitchen's sales, and
+    a "herav mva" figure must come from rates the kitchen has confirmed. %>
+<% kitchen = order.kitchen %>
+<%= tag.section class: "receipt-seller", aria: { label: t("orders.receipt_title") } do %>
+  <%= tag.strong kitchen.name %>
+  <%= tag.span kitchen.address if kitchen.address.present? %>
+  <%= tag.span t("orders.payment_lane", lane: order.payment_lane_name) %>
+<% end %>
+
 <header class="order-head">
   <%= state_chip(order) %>
   <% if order.payment_state.present? %>
@@ -76,4 +87,6 @@
     <%= link_to t("orders.track"), track_path(order.tracking_token), class: "button button-primary" %>
   <% end %>
   <%= link_to t("orders.back"), orders_path, class: "button" %>
+  <%= tag.button t("orders.print_receipt"), type: "button", class: "button", hidden: true,
+        data: { controller: "print", action: "print#print" } %>
 <% end %>

@@ -5571,7 +5571,7 @@ items:
   path: RAILS/mrdamascy/app/views/orders/show.html.erb
   item: Show the VAT share ("herav mva 15 %") on the order page and offer a printable
     receipt.
-  status: open
+  status: done
 - id: mrdamascy-063
   app: mrdamascy
   area: payments

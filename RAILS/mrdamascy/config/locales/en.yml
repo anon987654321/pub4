@@ -347,6 +347,9 @@ en:
     tip_unpaid: The tip is not charged in the app — it is not part of the payment.
     total: Total
     track: Track order
+    receipt_title: Receipt
+    payment_lane: "Payment: %{lane}"
+    print_receipt: Print receipt
     view: View
   loyalty:
     title: The Sahtein Card

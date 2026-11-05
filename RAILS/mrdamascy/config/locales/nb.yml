@@ -347,6 +347,9 @@ nb:
     tip_unpaid: Drikkegisen trekkes ikke i appen — den kommer ikke med i betalingen.
     total: Totalt
     track: Spor bestillingen
+    receipt_title: Kvittering
+    payment_lane: "Betaling: %{lane}"
+    print_receipt: Skriv ut kvittering
     view: Vis
   loyalty:
     title: Sahtein-kortet
