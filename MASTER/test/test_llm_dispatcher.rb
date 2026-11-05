@@ -922,6 +922,82 @@ class TestLLMDispatcher < Minitest::Test
     server&.close
   end
 
+  def test_replicate_poll_rejects_untrusted_urls_without_opening_a_connection
+    dispatcher, = build_dispatcher
+    prediction = { "urls" => { "get" => "https://169.254.169.254/latest/meta-data/" } }
+    result = dispatcher.send(
+      :fetch_replicate_prediction,
+      prediction,
+      headers: { "Authorization" => "Bearer secret" },
+      deadline: Process.clock_gettime(Process::CLOCK_MONOTONIC) + 30,
+    )
+
+    assert result.err?
+    assert_equal :policy, result.category
+    assert_match(/invalid polling endpoint/, result.message)
+  end
+
+  def test_replicate_poll_requires_the_exact_https_api_origin_and_prediction_path
+    dispatcher, = build_dispatcher
+    [
+      "http://api.replicate.com/v1/predictions/id",
+      "https://api.replicate.com.attacker.invalid/v1/predictions/id",
+      "https://attacker.invalid/v1/predictions/id",
+      "https://user:pass@api.replicate.com/v1/predictions/id",
+      "https://api.replicate.com/v1/models/id",
+      "https://api.replicate.com/v1/predictions/id?next=https://attacker.invalid",
+    ].each do |url|
+      assert_raises(ArgumentError) do
+        dispatcher.send(:replicate_poll_uri, "urls" => { "get" => url })
+      end
+    end
+
+    uri = dispatcher.send(
+      :replicate_poll_uri,
+      "urls" => { "get" => "https://api.replicate.com/v1/predictions/a_123-xyz" },
+    )
+    assert_equal "api.replicate.com", uri.host
+    assert_equal "/v1/predictions/a_123-xyz", uri.path
+  end
+
+  def test_replicate_poll_stops_on_a_bounded_deadline_and_returns_the_result
+    dispatcher, = build_dispatcher
+    polls = 0
+    dispatcher.define_singleton_method(:sleep) { |_seconds| }
+    dispatcher.define_singleton_method(:fetch_replicate_prediction) do |_prediction, headers:, deadline:|
+      raise "headers lost" unless headers["Authorization"] == "Bearer test"
+      raise "deadline missing" unless deadline > Process.clock_gettime(Process::CLOCK_MONOTONIC)
+
+      polls += 1
+      { "status" => "succeeded", "output" => ["bounded", " result"] }
+    end
+
+    result = dispatcher.send(
+      :replicate_output,
+      { "status" => "starting", "urls" => { "get" => "https://api.replicate.com/v1/predictions/a" } },
+      headers: { "Authorization" => "Bearer test" },
+    )
+
+    assert result.ok?
+    assert_equal "bounded result", result.value!
+    assert_equal 1, polls
+  end
+
+  def test_replicate_chat_refuses_to_send_without_an_api_token
+    dispatcher, = build_dispatcher
+    ENV.stub(:[], ->(_key) { nil }) do
+      result = dispatcher.send(
+        :send_replicate_chat,
+        "replicate:owner/model",
+        [{ role: "user", content: "hi" }],
+        sys: nil,
+      )
+
+      assert result.err?
+      assert_equal :no_api_key, result.category
+    end
+  end
+
   def test_an_http_lane_names_auth_budget_and_rate_limit_categories
     dispatcher, = build_dispatcher
     response_class = Struct.new(:code, :body, :fields) do
