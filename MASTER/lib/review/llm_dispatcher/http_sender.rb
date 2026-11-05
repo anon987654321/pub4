@@ -2,6 +2,7 @@
 
 require "json"
 require "net/http"
+require "timeout"
 require "uri"
 require_relative "../../io/provider_concurrency"
 
@@ -125,7 +126,7 @@ module Master
           return parsed if parsed.is_a?(Hash)
 
           Result.err("replicate: polling response was not an object", category: :provider_error)
-        rescue ArgumentError, URI::InvalidURIError
+        rescue ArgumentError, TypeError, URI::InvalidURIError
           Result.err("replicate: refused an invalid polling endpoint", category: :policy)
         rescue Net::OpenTimeout, Net::ReadTimeout, Timeout::Error
           Result.err("replicate: polling request timed out", category: :timeout)
@@ -134,7 +135,8 @@ module Master
         end
 
         def replicate_poll_uri(prediction)
-          value = prediction.dig("urls", "get").to_s
+          urls = prediction["urls"]
+          value = urls.is_a?(Hash) ? urls["get"].to_s : ""
           uri = URI.parse(value)
           allowed_path = %r{\\A/v1/predictions/[A-Za-z0-9_-]+\\z}
           allowed = uri.is_a?(URI::HTTPS) && uri.host == REPLICATE_API_HOST && uri.port == 443 &&
@@ -145,7 +147,8 @@ module Master
         end
 
         def replicate_headers
-          token = [ENV["REPLICATE_API_TOKEN"], ENV["REPLICATE_API_KEY"]].map(&:to_s).find { |key| !key.empty? }
+          token = [ENV["REPLICATE_API_TOKEN"], ENV["REPLICATE_API_KEY"]]
+            .map { |key| key.to_s.strip }.find { |key| !key.empty? }
           return if token.to_s.empty?
 
           { "Authorization" => "Bearer #{token}", "Prefer" => "wait=#{REPLICATE_WAIT_S}" }
