@@ -24,6 +24,8 @@ module Shared
       ::/128 ::1/128 ::ffff:0:0/96 64:ff9b:1::/48 100::/64 2001:db8::/32
       fc00::/7 fe80::/10 ff00::/8
     ].map { |range| IPAddr.new(range) }.freeze
+    NAT64_WELL_KNOWN_PREFIX = IPAddr.new("64:ff9b::/96").freeze
+    SIXTOFOUR_PREFIX = IPAddr.new("2002::/16").freeze
 
     def self.call(url, schema:, hint: nil)
       raise ArgumentError, "scrape requires a public HTTP(S) URL" unless public_http_url?(url)
@@ -87,9 +89,23 @@ module Shared
     end
 
     def self.public_address?(address)
-      BLOCKED_NETWORKS.none? do |network|
+      blocked = BLOCKED_NETWORKS.any? do |network|
         network.ipv4? == address.ipv4? && network.include?(address)
       end
+      return false if blocked
+      return true unless address.ipv6?
+
+      # IPv4 can be carried inside an IPv6 address. Validate the embedded
+      # destination too, otherwise a public-looking transition address can
+      # tunnel a private or link-local IPv4 target past the outer-range check.
+      embedded_ipv4 = if NAT64_WELL_KNOWN_PREFIX.include?(address)
+                        address.to_i & 0xffff_ffff
+                      elsif SIXTOFOUR_PREFIX.include?(address)
+                        (address.to_i >> 80) & 0xffff_ffff
+                      end
+      return true unless embedded_ipv4
+
+      public_address?(IPAddr.new(embedded_ipv4, Socket::AF_INET))
     rescue IPAddr::InvalidAddressError
       false
     end
