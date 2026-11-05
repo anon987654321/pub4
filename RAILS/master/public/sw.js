@@ -9,7 +9,9 @@ const STATIC_ASSETS = [
   OFFLINE_URL,
   '/manifest.json'
 ];
-const DYNAMIC_PREFIXES = ['/chat/', '/canvas/', '/events/', '/runtime/', '/dashboard/'];
+// /api/ answers with API keys and /pair with pairing codes and tokens: a cached
+// copy would hand them to whoever opens this browser offline.
+const DYNAMIC_PREFIXES = ['/chat/', '/canvas/', '/events/', '/runtime/', '/dashboard/', '/api/', '/pair'];
 
 self.addEventListener('install', e => {
   e.waitUntil(
@@ -40,7 +42,9 @@ self.addEventListener('fetch', e => {
   if (e.request.mode === 'navigate') {
     e.respondWith(
       fetch(e.request)
-        .catch(() => caches.match('/') || caches.match(OFFLINE_URL))
+        // caches.match resolves to undefined on a miss; a bare `||` on the
+        // promise is always truthy, so the miss must be awaited.
+        .catch(async () => (await caches.match('/')) || caches.match(OFFLINE_URL))
     );
     return;
   }

@@ -4992,7 +4992,7 @@ items:
   item: Await caches.match('/') before falling back to /offline.html; `caches.match('/')
     || caches.match(OFFLINE_URL)` returns a promise, which is always truthy, so the
     offline page is never served.
-  status: open
+  status: done
 - id: master-031
   app: master
   area: routing
@@ -5024,7 +5024,7 @@ items:
   path: RAILS/master/public/sw.js
   item: Add /api/ and /pair to the service worker's pass-through prefixes so API key
     and pairing responses are never written to Cache Storage.
-  status: open
+  status: done
 - id: master-035
   app: master
   area: semantics
@@ -5039,7 +5039,7 @@ items:
   path: RAILS/master/public/sw.js
   item: Add a node test for sw.js covering the offline fallback and the pass-through
     prefixes.
-  status: open
+  status: done
 - id: master-037
   app: master
   area: tests
