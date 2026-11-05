@@ -950,7 +950,7 @@ items:
   path: RAILS/__shared/app/helpers/shared/ui_helper.rb
   item: Use the preloaded replies from posts#show in comment_children; the helper
     re-queries, so the includes(replies:) preload is wasted.
-  status: open
+  status: done
 - id: brgen-009
   app: brgen
   area: comments
@@ -958,7 +958,7 @@ items:
   path: RAILS/__shared/app/models/concerns/shared/comment_threading.rb
   item: 'Keep a tombstone (''[slettet]'') when a comment with replies is deleted;
     dependent: :destroy wipes the whole subtree.'
-  status: open
+  status: done
 - id: brgen-010
   app: brgen
   area: comments
@@ -998,14 +998,14 @@ items:
   path: RAILS/__shared/app/views/comments/_comment.html.erb
   item: Let community moderators remove comments on their community's posts from the
     comment itself.
-  status: open
+  status: done
 - id: brgen-015
   app: brgen
   area: comments
   size: S
   path: RAILS/__shared/app/views/comments/_comment.html.erb
   item: Focus the reply editor when the Reply disclosure opens.
-  status: open
+  status: done
 - id: brgen-016
   app: brgen
   area: comments
@@ -1013,7 +1013,7 @@ items:
   path: RAILS/__shared/app/views/comments/_comment.html.erb
   item: Collapse threads deeper than the depth cap behind 'Continue thread' instead
     of flattening at depth 4.
-  status: open
+  status: done
 - id: brgen-017
   app: brgen
   area: comments
@@ -1035,7 +1035,7 @@ items:
   path: RAILS/__shared/app/views/comments/_comment.html.erb
   item: Let a reader collapse a comment and its replies with a toggle that announces
     the hidden reply count.
-  status: open
+  status: done
 - id: brgen-020
   app: brgen
   area: comments
@@ -1069,7 +1069,7 @@ items:
   path: RAILS/brgen/app/controllers/comments_controller.rb
   item: Let authors edit a comment within a short window and show an edited marker,
     matching messages.
-  status: open
+  status: done
 - id: brgen-024
   app: brgen
   area: comments
@@ -1084,7 +1084,7 @@ items:
   path: RAILS/brgen/app/javascript/controllers/live_comments_controller.js
   item: Show a 'N new comments' chip instead of appending live comments mid-read when
     the reader is scrolled up.
-  status: open
+  status: done
 - id: brgen-026
   app: brgen
   area: comments
@@ -1107,7 +1107,7 @@ items:
   size: S
   path: RAILS/brgen/app/views/comments/create.turbo_stream.erb
   item: Close the reply disclosure after a successful reply and focus the new reply.
-  status: open
+  status: done
 - id: brgen-029
   app: brgen
   area: communities

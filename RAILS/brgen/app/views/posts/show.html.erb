@@ -127,7 +127,9 @@
 <%# Comments arrive in place over [post, "comments"] (Comment#broadcast_to_thread);
     live_comments_controller keeps the writer's own copy of theirs. %>
 <section id="comments-section" data-controller="live-comments"
-         data-live-comments-since-url-value="<%= post_comments_since_path(@post) %>">
+         data-live-comments-since-url-value="<%= post_comments_since_path(@post) %>"
+         data-live-comments-chip-one-value="<%= t("comments.new_comments.one") %>"
+         data-live-comments-chip-other-value="<%= t("comments.new_comments.other") %>">
   <%= turbo_stream_from @post, :comments, data: { live_comments_target: "source" } %>
   <%= tag.h2 t("comments.heading_count", count: @post.comment_count) %>
   <% unless authenticated? %>
@@ -153,7 +155,7 @@
     </nav>
   <% end %>
 
-  <div id="comments">
+  <div id="comments" data-live-comments-target="thread">
     <% if @comments.any? %>
       <% @comments.each do |comment| %>
         <%= render "comments/comment", comment: comment %>
@@ -166,6 +168,11 @@
             live: false %></div>
     <% end %>
   </div>
+  <%# Comments that arrived while the reader was above the end of the thread
+      wait behind this (live_comments_controller). %>
+  <%= tag.button t("comments.new_comments.other", count: 0), type: "button", hidden: true,
+        class: "comments-new-chip button button-primary", aria: { live: "polite" },
+        data: { live_comments_target: "chip", action: "live-comments#showNew" } %>
   <%# Thirty threads a page: a post with hundreds of root comments loaded them all. %>
   <%= render "shared/pager", pagy: @comments_pagy, param: :comments_page %>
 </section>

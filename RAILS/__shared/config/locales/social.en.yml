@@ -47,6 +47,25 @@ en:
     write_reply: "Write a reply"
     ai_summary: "Show AI summary (via MASTER)"
     master_summary: "MASTER summary:"
+    # A deleted comment others had answered stays as this tombstone.
+    deleted: "[deleted]"
+    # Beside the age of a comment its author has changed.
+    edited: "edited"
+    # Opens the author's editor inside the edit window.
+    edit: "Edit"
+    # The collapse toggle on a threaded comment (comment_thread_controller).
+    collapse: "Collapse"
+    expand: "Show comment"
+    expand_replies:
+      one: "Show comment and %{count} reply"
+      other: "Show comment and %{count} replies"
+    hidden_replies:
+      one: "%{count} reply hidden"
+      other: "%{count} replies hidden"
+    # Replies past the depth cap fold behind this.
+    continue_thread:
+      one: "Continue thread (%{count} reply)"
+      other: "Continue thread (%{count} replies)"
 
   chat:
     # The eight strings the ambient chat widget shows while it is asking for, or

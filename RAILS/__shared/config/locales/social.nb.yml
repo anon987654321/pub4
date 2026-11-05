@@ -45,6 +45,25 @@ nb:
     write_reply: "Skriv et svar"
     ai_summary: "Vis AI-sammendrag (via MASTER)"
     master_summary: "MASTER-sammendrag:"
+    # A deleted comment others had answered stays as this tombstone.
+    deleted: "[slettet]"
+    # Beside the age of a comment its author has changed.
+    edited: "endret"
+    # Opens the author's editor inside the edit window.
+    edit: "Rediger"
+    # The collapse toggle on a threaded comment (comment_thread_controller).
+    collapse: "Skjul"
+    expand: "Vis kommentaren"
+    expand_replies:
+      one: "Vis kommentaren og %{count} svar"
+      other: "Vis kommentaren og %{count} svar"
+    hidden_replies:
+      one: "%{count} svar skjult"
+      other: "%{count} svar skjult"
+    # Replies past the depth cap fold behind this.
+    continue_thread:
+      one: "Fortsett tråden (%{count} svar)"
+      other: "Fortsett tråden (%{count} svar)"
 
   chat:
     # The eight strings the ambient chat widget shows while it is asking for, or

@@ -70,6 +70,12 @@ class Community < ApplicationRecord
     membership_for(user)&.role.in?(%w[moderator owner])
   end
 
+  # Whether user moderates (or owns) the community with this id.
+  def self.moderated_by?(community_id, user)
+    community = user && community_id && find_by(id: community_id)
+    community.present? && (community.moderator?(user) || community.owner?(user))
+  end
+
   def owner?(user)
     # The creator is the owner even before any membership row exists, so a
     # community is never left with nobody able to appoint a moderator.

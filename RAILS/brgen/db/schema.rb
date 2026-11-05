@@ -255,6 +255,8 @@ ActiveRecord::Schema[8.2].define(version: 2026_11_05_150000) do
     t.string "commentable_type", null: false
     t.text "content", null: false
     t.datetime "created_at", null: false
+    t.datetime "deleted_at"
+    t.datetime "edited_at"
     t.integer "parent_id"
     t.datetime "removed_at"
     t.datetime "summary_updated_at"

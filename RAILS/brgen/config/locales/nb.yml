@@ -523,6 +523,15 @@ nb:
     offline: Du er frakoblet. Meldingen sendes når du er på nett igjen.
   comments:
     heading_count: "Kommentarer (%{count})"
+    # Under the editor: comments/edit.html.erb, Comment::EDIT_WINDOW.
+    editable_until: Kan endres til kl. %{time}
+    # comments/_comment, for a moderator of the post's community.
+    moderator_remove: Fjern
+    moderator_remove_confirm: Fjerne kommentaren fra fellesskapet?
+    # posts/show: comments held back while the reader is above the end of the thread.
+    new_comments:
+      one: "%{count} ny kommentar"
+      other: "%{count} nye kommentarer"
     sort_label: Sorter kommentarer
     sort:
       best: Best

@@ -16,7 +16,8 @@ class Comment < ApplicationRecord
   include Shared::RichTextLength
 
   # content holds Tiptap's HTML; the maximum measures the text inside it.
-  validates :content, presence: true, length: { minimum: 1 }
+  # A tombstone has no words left to measure.
+  validates :content, presence: true, length: { minimum: 1 }, unless: :tombstoned?
   validates_rich_text_length :content, maximum: 10_000
   # A reply belongs to its parent's thread. parent_id comes from the form, and a parent
   # from another post put this reply under a thread its writer may not be able to read.
@@ -29,6 +30,12 @@ class Comment < ApplicationRecord
   # The count on every card and page showing the post. The counter cache
   # increments with SQL, so the post runs no callback of its own for it.
   after_commit :broadcast_commentable_counts, on: [ :create, :destroy ]
+
+  # Editing is bounded as messages are (Message::EDIT_WINDOW): a comment that
+  # can be rewritten hours later is one its replies may no longer answer.
+  EDIT_WINDOW = 15.minutes
+
+  before_update :stamp_edited_at
 
   BEST_SQL = Arel.sql("SUM(COALESCE(votes.value, 0)) DESC")
   CONTROVERSIAL_SQL = Arel.sql("ABS(SUM(votes.value)) ASC")
@@ -74,6 +81,26 @@ class Comment < ApplicationRecord
     long.keys.to_set
   end
 
+  def editable_by?(user)
+    user.present? && user.id == user_id && !tombstoned? && removed_at.nil? && created_at > EDIT_WINDOW.ago
+  end
+
+  def edited? = edited_at.present?
+
+  # A live comment by someone else on a community post: what a moderator of
+  # that community may take down (comments#remove).
+  def removable_by_moderator_of_thread?(user)
+    user.present? && user_id != user.id && commentable_type == "Post" && !tombstoned? && removed_at.nil?
+  end
+
+  # By key when the post is not loaded: strict loading refuses the lazy read.
+  def thread_community_id
+    return unless commentable_type == "Post"
+    return commentable&.community_id if association(:commentable).loaded?
+
+    Post.unscoped.where(id: commentable_id).pick(:community_id)
+  end
+
   def has_thread_summary?
     thread_summary.present? && summary_updated_at.present?
   end
@@ -89,6 +116,19 @@ class Comment < ApplicationRecord
     broadcast_remove_to(stream) if stream
   rescue StandardError => e
     Rails.logger.warn("Comment#broadcast_removal #{id}: #{e.class}: #{e.message}")
+  end
+
+  # A tombstone takes the comment's place on every open page; its replies stay.
+  def broadcast_tombstone
+    stream = thread_stream
+    return unless stream
+
+    Current.set(user: nil, session: nil) do
+      broadcast_replace_to(stream, target: ActionView::RecordIdentifier.dom_id(self),
+                                   partial: "comments/comment", locals: { comment: self })
+    end
+  rescue StandardError => e
+    Rails.logger.warn("Comment#broadcast_tombstone #{id}: #{e.class}: #{e.message}")
   end
 
   private
@@ -130,6 +170,11 @@ class Comment < ApplicationRecord
     return unless commentable_type == "Post"
 
     Post.unscoped.find_by(id: commentable_id)&.broadcast_live_counts
+  end
+
+  # Changed words mark the comment edited; a summary or vote does not.
+  def stamp_edited_at
+    self.edited_at = Time.current if will_save_change_to_content?
   end
 
   # By key: a lazy load of parent raises under strict loading.

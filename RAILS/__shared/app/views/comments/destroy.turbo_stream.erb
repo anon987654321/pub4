@@ -1,1 +1,6 @@
-<%= turbo_stream.remove dom_id(@comment) %>
+<%# A comment with replies stays as a tombstone (Shared::CommentThreading#discard!). %>
+<% if @comment.try(:tombstoned?) %>
+  <%= turbo_stream.replace dom_id(@comment), partial: "comments/comment", locals: { comment: @comment } %>
+<% else %>
+  <%= turbo_stream.remove dom_id(@comment) %>
+<% end %>

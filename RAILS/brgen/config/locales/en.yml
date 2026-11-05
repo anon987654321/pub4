@@ -518,6 +518,15 @@ en:
     offline: You are offline. The message is sent when you are back online.
   comments:
     heading_count: "Comments (%{count})"
+    # Under the editor: comments/edit.html.erb, Comment::EDIT_WINDOW.
+    editable_until: Can be changed until %{time}
+    # comments/_comment, for a moderator of the post's community.
+    moderator_remove: Remove
+    moderator_remove_confirm: Remove this comment from the community?
+    # posts/show: comments held back while the reader is above the end of the thread.
+    new_comments:
+      one: "%{count} new comment"
+      other: "%{count} new comments"
     sort_label: Sort comments
     sort:
       best: Best

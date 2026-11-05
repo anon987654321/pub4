@@ -1,0 +1,40 @@
+/* The comment thread's own controls (comments/_comment, posts/show): what
+   a deleted, edited, deep or collapsed comment shows, and the "N new
+   comments" button live comments wait behind. */
+
+/* Replies past the depth cap, folded behind "Continue thread". */
+.comment-continue > summary {
+  cursor: pointer;
+  color: var(--accent);
+  font-size: var(--text-small);
+  font-weight: var(--weight-bold);
+  margin-top: var(--space-2);
+}
+
+/* A deleted comment that others answered, and "endret" beside an edited one. */
+.comment-deleted,
+.comment-edited {
+  color: var(--text-secondary);
+}
+
+/* Collapses a comment and its replies (comment_thread_controller). */
+.comment-collapse {
+  padding: 0;
+  min-height: 0;
+  border: 0;
+  background: transparent;
+  color: var(--text-secondary);
+  font: inherit;
+  cursor: pointer;
+}
+
+/* Held live comments, pinned to the bottom of the view while the reader is
+   above the end of the thread. */
+.comments-new-chip {
+  position: sticky;
+  /* Above the bottom-pinned tab bar and its peel. */
+  bottom: calc(var(--tab-bar-h, 0px) + var(--space-16));
+  display: block;
+  margin-inline: auto;
+}
+.comments-new-chip[hidden] { display: none; }

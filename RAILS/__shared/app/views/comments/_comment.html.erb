@@ -18,30 +18,53 @@
 <% threaded = local_assigns.fetch(:threaded) { comment.respond_to?(:depth) || comment.respond_to?(:replies) } %>
 <%# The thread passes depth down; Comment#depth spends a query per ancestor. %>
 <% raw_depth = local_assigns.fetch(:depth) { comment.respond_to?(:depth) ? comment.depth.to_i : 0 } %>
-<% depth = [ raw_depth, 4 ].min %>
+<% depth_cap = 4 %>
+<% depth = [ raw_depth, depth_cap ].min %>
 <% destroy_arg = local_assigns.fetch(:destroy_arg) { comment_destroy_arg(comment) } %>
 <% signed_in = respond_to?(:authenticated?) ? authenticated? : false %>
-<% can_delete = signed_in && comment.user == Current.user %>
+<%# A deleted comment others had answered: no words, no author, no actions. %>
+<% tombstone = comment.try(:tombstoned?) %>
+<% can_delete = signed_in && !tombstone && comment.user == Current.user %>
 <%# Reporting needs an account and an app that takes reports (brgen ships shared/report_button). %>
-<% can_report = signed_in && comment.user != Current.user &&
+<% can_report = signed_in && !tombstone && comment.user != Current.user &&
                  lookup_context.exists?("report_button", ["shared"], true) %>
-<% can_interact = Current.user.present? %>
+<% can_interact = Current.user.present? && !tombstone %>
+<%# The author rewrites within the app's edit window (brgen's Comment#editable_by?). %>
+<% can_edit = signed_in && comment.respond_to?(:editable_by?) && comment.editable_by?(Current.user) &&
+               Rails.application.routes.named_routes.key?(:edit_comment) %>
 <% root_post = comment_root_post(comment) if threaded %>
 
 <%= turbo_frame_tag dom_id(comment) do %>
-  <article class="comment comment_item" data-depth="<%= depth %>">
+  <%# comment_thread_controller (brgen) collapses a thread and focuses a
+      reply's editor; where no such controller is registered the toggle stays
+      hidden and the disclosure works as plain HTML. %>
+  <% thread_data = if threaded
+                    { controller: "comment-thread",
+                      comment_thread_collapse_value: t("comments.collapse"),
+                      comment_thread_expand_none_value: t("comments.expand"),
+                      comment_thread_expand_one_value: t("comments.expand_replies.one"),
+                      comment_thread_expand_other_value: t("comments.expand_replies.other"),
+                      comment_thread_hidden_one_value: t("comments.hidden_replies.one"),
+                      comment_thread_hidden_other_value: t("comments.hidden_replies.other") }
+                  else
+                    {}
+                  end %>
+  <%# focus: the writer's own new reply, which Turbo focuses on arrival. %>
+  <%= tag.article class: "comment comment_item", data: { depth: depth }.merge(thread_data),
+        autofocus: (true if local_assigns[:focus]), tabindex: ("-1" if local_assigns[:focus]) do %>
     <%# Author, who a reply answers, age and delete are spaced apart by the
         header itself, not joined by dots; the age reads "for 2 timer siden"
         and carries its full date on hover. %>
     <header>
       <%# A named author links to their profile; "anon" (guest, departed) is nobody to visit. %>
-      <% author = comment_author_name(comment) %>
-      <% if author == t("chat.anon") %>
+      <% author = comment_author_name(comment) unless tombstone %>
+      <% if tombstone %>
+      <% elsif author == t("chat.anon") %>
         <%= tag.span author, class: "comment-author" %>
       <% else %>
         <%= link_to author, main_app.user_path(comment.user), class: "comment-author" %>
       <% end %>
-      <% if root_post.present? && comment.user_id == root_post.try(:user_id) %>
+      <% if !tombstone && root_post.present? && comment.user_id == root_post.try(:user_id) %>
         <%= tag.span t("comments.op_badge"), class: "comment-op", title: t("comments.op_badge_title") %>
       <% end %>
       <% if (answers = comment_reply_target(comment, local_assigns[:parent])) %>
@@ -53,25 +76,49 @@
         <%= tag.time time_ago(comment.created_at),
               datetime: comment.created_at.iso8601, title: l(comment.created_at, format: :long) %>
       <% end %>
+      <% if comment.try(:edited_at).present? && !tombstone %>
+        <%= tag.span t("comments.edited"), class: "comment-edited", title: l(comment.edited_at, format: :long) %>
+      <% end %>
+      <% if can_edit %>
+        <%= link_to t("comments.edit"), main_app.edit_comment_path(comment), class: "comment-edit" %>
+      <% end %>
       <% if can_delete %>
         <%= button_to t("actions.delete"), destroy_arg,
               method: :delete,
               data: { turbo_confirm: t("actions.confirm_delete") },
               class: "button button-ghost button-small comment-delete" %>
       <% end %>
+      <%# A community's moderators take a comment down from the comment itself
+          (brgen's CommentModerationHelper; other apps have no communities). %>
+      <% if signed_in && respond_to?(:comment_moderator?) && comment_moderator?(comment) %>
+        <%= button_to t("comments.moderator_remove"), main_app.remove_comment_path(comment),
+              method: :patch,
+              data: { turbo_confirm: t("comments.moderator_remove_confirm") },
+              class: "button button-ghost button-small comment-delete" %>
+      <% end %>
       <% if can_report %>
         <%= render "shared/report_button", target: comment, reason: nil %>
+      <% end %>
+      <% if threaded %>
+        <%= tag.button t("comments.collapse"), type: "button", class: "comment-collapse", hidden: true,
+              aria: { expanded: "true", controls: dom_id(comment, :replies) },
+              data: { comment_thread_target: "toggle", action: "comment-thread#toggle" } %>
+        <%= tag.span "", class: "visually-hidden", role: "status", data: { comment_thread_target: "status" } %>
       <% end %>
     </header>
 
     <%# Escaped output would print a literal "<p>" now that the composer is an
         editor. rich_text is the one allow-list (shared/helpers rich_text_helper);
         a div because its output starts with <p>, which a <p> cannot contain. %>
-    <div class="comment-body prose"><%= rich_text comment.content %></div>
+    <% if tombstone %>
+      <%= tag.p t("comments.deleted"), class: "comment-body comment-deleted", data: { comment_thread_target: "part" } %>
+    <% else %>
+      <%= tag.div rich_text(comment.content), class: "comment-body prose", data: { comment_thread_target: "part" } %>
+    <% end %>
 
     <% if threaded && comment_long_thread?(comment) %>
       <% if comment.respond_to?(:has_thread_summary?) && comment.has_thread_summary? %>
-        <p class="thread-summary">
+        <p class="thread-summary" data-comment-thread-target="part">
           <%= tag.strong t("comments.master_summary") %>
           <%= comment.thread_summary %>
         </p>
@@ -84,27 +131,29 @@
     <% end %>
 
     <% if threaded && can_interact && root_post.present? %>
-      <details class="comment-reply">
-        <summary class="comment-reply-toggle"><%= t("comments.reply") %></summary>
-        <%= render "comments/form",
-              comment: comment.class.new,
-              commentable: root_post,
-              parent_id: comment.id,
-              form_id: "reply_form_#{comment.id}",
-              rows: 3,
-              placeholder: t("comments.reply_placeholder"),
-              submit: t("comments.reply") %>
-      </details>
+      <%= render "comments/reply_disclosure", comment: comment, root_post: root_post %>
     <% end %>
 
     <% if threaded %>
       <%# Always present so a first reply can turbo-append here instead of
           landing as a sibling of the parent at the bottom of #comments. %>
-      <div class="comment-replies" id="<%= dom_id(comment, :replies) %>">
-        <% comment_children(comment).each do |reply| %>
-          <%= render "comments/comment", comment: reply, threaded: true, parent: comment, depth: raw_depth + 1 %>
-        <% end %>
-      </div>
+      <% children = comment_children(comment).to_a %>
+      <%# Past the depth cap a thread folds behind "Continue thread" instead of
+          flattening every further reply at the deepest indent. %>
+      <% folded = raw_depth >= depth_cap && children.any? %>
+      <% replies = tag.div(id: dom_id(comment, :replies), class: "comment-replies",
+                           data: { comment_thread_target: (folded ? "replies" : "replies part") }) do %>
+        <%= render partial: "comments/comment", collection: children, as: :comment,
+                   locals: { threaded: true, parent: comment, depth: raw_depth + 1 } %>
+      <% end %>
+      <% if folded %>
+        <details class="comment-continue" data-comment-thread-target="part">
+          <summary><%= t("comments.continue_thread", count: children.size) %></summary>
+          <%= replies %>
+        </details>
+      <% else %>
+        <%= replies %>
+      <% end %>
     <% end %>
-  </article>
+  <% end %>
 <% end %>

@@ -2,6 +2,8 @@
 
 class CommentsController < ApplicationController
   include Shared::FindableBySlug
+  # dom_id for the streams and anchors below.
+  include ActionView::RecordIdentifier
   # Named, because unnamed limits in one controller share one counter: the key is
   # ["rate-limit", controller_path, name, by], so every signed-out commenter's
   # comments and summaries counted against each other. Burst plus sustained, as
@@ -12,11 +14,14 @@ class CommentsController < ApplicationController
              by: -> { Current.user&.id ? "u#{Current.user.id}" : request.remote_ip },
              with: -> { redirect_back fallback_location: root_path, alert: t("shared.flash.rate_limited") }
   before_action :require_verified_email, only: :create
-  before_action :require_real_user, only: [ :destroy, :generate_summary ]
+  before_action :require_real_user, only: [ :edit, :update, :destroy, :remove, :generate_summary ]
   rate_limit to: 5, within: 1.minute, only: :generate_summary, name: "summary",
              by: -> { Current.user&.id ? "u#{Current.user.id}" : request.remote_ip }
   before_action :set_commentable, :refuse_banned_commenter, only: :create
   before_action :set_own_comment, only: :destroy
+  before_action :set_editable_comment, only: %i[edit update]
+  before_action :set_moderated_comment, only: :remove
+  helper_method :comment_return_path
   before_action :set_summary_comment, :authorize_summary_comment, only: :generate_summary
 
   def create
@@ -37,11 +42,42 @@ class CommentsController < ApplicationController
     end
   end
 
+  # The editor opens in the comment's own frame, as messages edit in place.
+  def edit; end
+
+  def update
+    if @comment.update(comment_params)
+      respond_to do |format|
+        format.turbo_stream do
+          render turbo_stream: turbo_stream.replace(dom_id(@comment), partial: "comments/comment",
+                                                                      locals: { comment: @comment })
+        end
+        format.html { redirect_to comment_return_path }
+      end
+    else
+      render :edit, status: :unprocessable_entity
+    end
+  end
+
+  # One with replies stays as a tombstone so the thread under it keeps its place.
   def destroy
-    @comment.destroy
+    @comment.discard!
     respond_to do |format|
       format.turbo_stream
       format.html         { redirect_back fallback_location: root_path }
+    end
+  end
+
+  # A moderator of the post's community takes the comment down from the
+  # thread. It goes through ModerationWorkflow as a resolved report, so the
+  # removal sits in the community's moderation queue with who made it, and is
+  # undone the way any resolved report is.
+  def remove
+    report = ModerationWorkflow.report!(reporter: Current.user, target: @comment, reason: "other")
+    ModerationWorkflow.transition!(report:, status: "resolved", decision_reason: "community_moderator")
+    respond_to do |format|
+      format.turbo_stream { render turbo_stream: turbo_stream.remove(dom_id(@comment)) }
+      format.html { redirect_back fallback_location: root_path }
     end
   end
 
@@ -63,8 +99,28 @@ class CommentsController < ApplicationController
   # Someone else's comment is refused out loud: a redirect read as if the
   # delete had worked.
   def set_own_comment
+    # Preloaded: a tombstone renders back in place, thread and all.
+    @comment = Comment.preload(:user, :commentable).find(params[:id])
+    head :forbidden unless Current.user && @comment.user_id == Current.user.id && !@comment.tombstoned?
+  end
+
+  # Only the author, only inside Comment::EDIT_WINDOW, never a tombstone or a
+  # removed comment. Preloaded: the comment renders back with its thread.
+  def set_editable_comment
+    @comment = Comment.preload(:user, :commentable).find(params[:id])
+    head :forbidden unless @comment.editable_by?(Current.user)
+  end
+
+  def set_moderated_comment
     @comment = Comment.find(params[:id])
-    head :forbidden unless Current.user && @comment.user_id == Current.user.id
+    allowed = @comment.removable_by_moderator_of_thread?(Current.user) &&
+              Community.moderated_by?(@comment.thread_community_id, Current.user)
+    head :forbidden unless allowed
+  end
+
+  def comment_return_path
+    thread = @comment.commentable
+    thread.is_a?(Comment) ? root_path : polymorphic_path(thread, anchor: dom_id(@comment))
   end
 
   # A failed reply goes back into its own disclosure with the typed text and

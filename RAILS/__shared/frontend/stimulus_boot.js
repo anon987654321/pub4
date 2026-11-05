@@ -24,6 +24,7 @@ import ScrollReveal from "pub4/scroll_reveal"
 import NavAutohide from "pub4/nav_autohide"
 import ActionController from "pub4/action"
 import TiptapEditor from "pub4/tiptap_editor"
+import CommentThread from "pub4/comment_thread"
 import FeedHotkey from "pub4/feed_hotkey"
 import NearbyChat from "pub4/nearby_chat"
 import OfflineFeed from "pub4/offline_feed"
@@ -114,6 +115,7 @@ export function bootPub4Stimulus(application) {
   application.register("nav-autohide", NavAutohide)
   application.register("action", ActionController)
   application.register("tiptap-editor", TiptapEditor)
+  application.register("comment-thread", CommentThread)
   application.register("feed-hotkey", FeedHotkey)
   application.register("nearby-chat", NearbyChat)
   application.register("offline-feed", OfflineFeed)

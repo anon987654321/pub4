@@ -163,11 +163,14 @@ resources :fediverse_follows, only: %i[index create destroy], controller: "fediv
   end
   patch "drafts/:id", to: "drafts#update", as: :draft
 
-  resources :comments, only: %i[create destroy] do
+  # edit/update: the author rewrites a comment within Comment::EDIT_WINDOW.
+  resources :comments, only: %i[create edit update destroy] do
     resource :vote, only: [ :create ], controller: "votes"
     resources :comments, only: [ :create ], as: :replies
     member do
       post :generate_summary
+      # A moderator of the post's community takes the comment down.
+      patch :remove
     end
   end
 

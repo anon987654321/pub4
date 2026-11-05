@@ -1,0 +1,21 @@
+<%# The author's rewrite, in the comment's own frame (comments/_comment wraps
+    each comment in turbo_frame_tag dom_id(comment)). %>
+<%= turbo_frame_tag dom_id(@comment) do %>
+  <article class="comment comment_item comment-editing">
+    <%= form_with model: @comment, url: comment_path(@comment), method: :patch,
+                  id: dom_id(@comment, :edit), class: "comment-form", data: { turbo: true } do |form| %>
+      <%= render "comments/form_fields",
+            form: form,
+            comment: @comment,
+            parent_id: nil,
+            rows: 3,
+            required: true,
+            maxlength: 10_000,
+            placeholder: t("comments.placeholder"),
+            submit: t("actions.save") %>
+    <% end %>
+    <%= tag.p t("comments.editable_until", time: l(@comment.created_at + Comment::EDIT_WINDOW, format: "%H:%M")),
+              class: "form-help" %>
+    <%= link_to t("actions.cancel"), comment_return_path, data: { turbo_frame: "_top" } %>
+  </article>
+<% end %>

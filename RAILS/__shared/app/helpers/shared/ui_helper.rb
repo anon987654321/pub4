@@ -189,6 +189,8 @@ module Shared
     end
 
     def comment_children(comment)
+      return preloaded_comment_children(comment) if preloaded_comment_replies?(comment)
+
       klass = comment.class
 
       if klass.respond_to?(:best)
@@ -204,6 +206,29 @@ module Shared
       else
         klass.none
       end
+    end
+
+    def preloaded_comment_replies?(comment)
+      comment.class.respond_to?(:best) && comment.association(:replies).loaded? &&
+        comment.association(:commentable).loaded?
+    end
+
+    # The replies posts#show already loaded (includes replies: [:user, :votes]),
+    # put in the order and through the filters the query above applies: kept,
+    # no blocked author, best first by vote total. Each reply's thread is its
+    # parent's, so the reply form reads it without a lazy load.
+    def preloaded_comment_children(comment)
+      thread = comment.commentable
+      replies = comment.replies.target.select { |reply| reply.try(:removed_at).nil? }
+      replies = replies.reject { |reply| blocked_comment_author_ids.include?(reply.user_id) }
+      replies.each { |reply| reply.association(:commentable).target = thread }
+      replies.sort_by { |reply| [ -comment_vote_total(reply), reply.created_at, reply.id ] }
+    end
+
+    def comment_vote_total(comment)
+      return 0 unless comment.respond_to?(:votes) && comment.association(:votes).loaded?
+
+      comment.votes.sum { |vote| vote.value.to_i }
     end
 
     # Whether a comment's thread is long enough for a summary. Comment#long_thread?

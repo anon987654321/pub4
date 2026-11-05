@@ -1,0 +1,20 @@
+<%#
+  The Reply disclosure under a threaded comment. Its own partial so a reply's
+  create response can put it back closed (brgen comments/create.turbo_stream).
+
+  locals:
+    comment   — the comment being answered
+    root_post — the thread the reply is posted to
+%>
+<%= tag.details class: "comment-reply", id: dom_id(comment, :reply_disclosure),
+      data: { comment_thread_target: "part", action: "toggle->comment-thread#focusReply" } do %>
+  <summary class="comment-reply-toggle"><%= t("comments.reply") %></summary>
+  <%= render "comments/form",
+        comment: comment.class.new,
+        commentable: root_post,
+        parent_id: comment.id,
+        form_id: "reply_form_#{comment.id}",
+        rows: 3,
+        placeholder: t("comments.reply_placeholder"),
+        submit: t("comments.reply") %>
+<% end %>

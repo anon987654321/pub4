@@ -19,6 +19,7 @@ pin "cable_ready"
 pin "sortablejs"
 pin "tiptap", to: "tiptap.js", preload: false
 pin "pub4/tiptap_editor", to: "tiptap_editor_controller.js"
+pin "pub4/comment_thread", to: "comment_thread_controller.js"
 pin "pub4/hotwire", to: "hotwire.js"
 pin "pub4/pwa_runtime", to: "pwa_runtime.js"
 pin "pub4/console_guard", to: "console_guard.js"

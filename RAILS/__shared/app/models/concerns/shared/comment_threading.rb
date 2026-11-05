@@ -18,5 +18,31 @@ module Shared
     end
 
     def root? = parent_id.nil?
+
+    # A comment others have answered leaves a tombstone when its author deletes
+    # it: the words and the author go, the row stays, and the replies keep their
+    # place in the thread. dependent: :destroy took the whole subtree with it.
+    # Only where the table has deleted_at (brgen); elsewhere a delete is a delete.
+    def tombstoned? = has_attribute?(:deleted_at) && deleted_at.present?
+
+    def discard!
+      return destroy_and_sweep! unless has_attribute?(:deleted_at) && replies.exists?
+
+      update_columns(deleted_at: Time.current, content: "", updated_at: Time.current)
+      try(:broadcast_tombstone)
+      self
+    end
+
+    private
+
+    # A tombstone whose last reply goes has nothing left to hold in place.
+    def destroy_and_sweep!
+      destroy!
+      return self unless parent_id && has_attribute?(:deleted_at)
+
+      parent = self.class.find_by(id: parent_id)
+      parent.discard! if parent&.tombstoned? && parent.replies.none?
+      self
+    end
   end
 end

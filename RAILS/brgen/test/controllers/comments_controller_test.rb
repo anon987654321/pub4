@@ -80,7 +80,9 @@ class CommentsControllerTest < ActionDispatch::IntegrationTest
       assert_response :success
       assert_select "turbo-stream[action='append'][target=?]", "replies_comment_#{parent.id}"
       assert_select "turbo-stream[action='append'][target='comments']", count: 0
-      assert_select "turbo-stream[action='replace'][target=?]", "reply_form_#{parent.id}"
+      # The disclosure goes back closed, carrying a fresh reply form.
+      assert_select "turbo-stream[action='replace'][target=?]", "reply_disclosure_comment_#{parent.id}"
+      assert_select "details#reply_disclosure_comment_#{parent.id}:not([open]) form#reply_form_#{parent.id}"
       assert_includes response.body, "nested reply"
     end
   end
