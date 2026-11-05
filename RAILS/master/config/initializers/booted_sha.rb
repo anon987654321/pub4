@@ -6,12 +6,14 @@ require "open3"
 # HEAD without restarting Falcon, so /health reading HEAD per request named code
 # the process was not running — and deploy.git_sha exists to answer exactly that.
 #
-# -c safe.directory because the daemon runs as `master` and the checkout belongs
-# to `dev`; HealthController#git_healthy? carries the same flag for the same reason.
+# safe.directory because the daemon runs as `master` and the checkout belongs to
+# `dev`; HealthController#git_healthy? carries the same setting for the same
+# reason. It goes through git's GIT_CONFIG_* environment rather than an
+# interpolated `-c` argument, so no argv element is built from a string.
 Rails.application.config.x.booted_sha = begin
   repo = Master::REPO_ROOT
-  out, status = Open3.capture2("git", "-c", "safe.directory=#{repo}", "-C", repo,
-                               "rev-parse", "--short", "HEAD", err: File::NULL)
+  env = { "GIT_CONFIG_COUNT" => "1", "GIT_CONFIG_KEY_0" => "safe.directory", "GIT_CONFIG_VALUE_0" => repo }
+  out, status = Open3.capture2(env, "git", "-C", repo, "rev-parse", "--short", "HEAD", err: File::NULL)
   status.success? ? out.strip.freeze : nil
 rescue SystemCallError # scan: intentional — no git binary means no provenance, and /health reports null
   nil
