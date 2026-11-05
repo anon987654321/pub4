@@ -20,6 +20,16 @@ module Deploy
       @evidence_path = evidence_path
     end
 
+    private def record_assessments(result, report)
+      report.assessments.each do |assessment|
+        evidence = assessment.evidence.empty? ? "" : " evidence=#{assessment.evidence.join(";")}"
+        result.warn(
+          "baymard_ux: #{assessment.app}/#{assessment.check_id}=#{assessment.status.upcase} " \
+          "measured=#{assessment.measured}#{evidence}",
+        )
+      end
+    end
+
     def run
       report = Master::Review::BaymardLaw.new(
         root: @root,
@@ -30,13 +40,7 @@ module Deploy
       result = CheckResult.new
       result.checked!(report.measured_count) if report.measured_count.positive?
 
-      report.assessments.each do |assessment|
-        evidence = assessment.evidence.empty? ? "" : " evidence=#{assessment.evidence.join(";")}"
-        result.warn(
-          "baymard_ux: #{assessment.app}/#{assessment.check_id}=#{assessment.status.upcase} " \
-          "measured=#{assessment.measured}#{evidence}",
-        )
-      end
+      record_assessments(result, report)
 
       report.findings.each do |finding|
         location = finding.path ? "#{finding.path}:#{finding.line}" : finding.evidence.join(", ")
