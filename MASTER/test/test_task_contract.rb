@@ -152,7 +152,6 @@ class TestTaskContract < Minitest::Test
 
   def test_missing_contract_defaults_to_existing_paths_only
     Dir.mktmpdir("task-contract-default", Master::REPO_ROOT) do |root|
-      relative = File.join(root.delete_prefix(Master::REPO_ROOT + File::SEPARATOR), "new.rb")
       path = File.join(root, "new.rb")
 
       CONTRACT.with_current(nil) do
