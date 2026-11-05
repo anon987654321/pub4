@@ -280,7 +280,9 @@ module Studio
 
         File.foreach(path) do |line|
           key, value = line.strip.sub(/\Aexport\s+/, "").split("=", 2)
-          return value.to_s.delete(%("')) if %w[REPLICATE_API_TOKEN REPLICATE_API_KEY].include?(key) && !value.to_s.empty?
+          if %w[REPLICATE_API_TOKEN REPLICATE_API_KEY].include?(key) && !value.to_s.empty?
+            return value.to_s.delete(%("'))
+          end
         end
         ""
       rescue StandardError
@@ -304,7 +306,9 @@ module Studio
         pages = 0
         while uri && rows.length < remaining
           pages += 1
-          raise ArgumentError, "Replicate models pagination exceeded #{MAX_MODEL_PAGES} pages" if pages > MAX_MODEL_PAGES
+          if pages > MAX_MODEL_PAGES
+            raise ArgumentError, "Replicate models pagination exceeded #{MAX_MODEL_PAGES} pages"
+          end
 
           cursor = uri.to_s
           raise ArgumentError, "Replicate models pagination repeated a cursor" if seen_cursors[cursor]
