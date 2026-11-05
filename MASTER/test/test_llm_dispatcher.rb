@@ -960,6 +960,41 @@ class TestLLMDispatcher < Minitest::Test
     assert_equal "/v1/predictions/a_123-xyz", uri.path
   end
 
+  def test_replicate_poll_uses_only_the_validated_api_host_with_bounded_timeouts
+    dispatcher, = build_dispatcher
+    response = Net::HTTPOK.allocate
+    response.instance_variable_set(:@code, "200")
+    response.instance_variable_set(:@body, JSON.generate("status" => "succeeded", "output" => ["ok"]))
+    response.instance_variable_set(:@read, true)
+    response.instance_variable_set(:@header, {})
+    seen = nil
+    http = Object.new
+    http.define_singleton_method(:request) do |request|
+      seen = request
+      response
+    end
+
+    Net::HTTP.stub(:start, lambda { |host, port, **options, &block|
+      assert_equal "api.replicate.com", host
+      assert_equal 443, port
+      assert_equal true, options.fetch(:use_ssl)
+      assert_operator options.fetch(:open_timeout), :<=, 5
+      assert_operator options.fetch(:read_timeout), :<=, 10
+      block.call(http)
+    }) do
+      result = dispatcher.send(
+        :fetch_replicate_prediction,
+        { "urls" => { "get" => "https://api.replicate.com/v1/predictions/a_123-xyz" } },
+        headers: { "Authorization" => "Bearer test-token" },
+        deadline: Process.clock_gettime(Process::CLOCK_MONOTONIC) + 30,
+      )
+
+      assert result.is_a?(Hash)
+      assert_equal "Bearer test-token", seen["Authorization"]
+      assert_equal "/v1/predictions/a_123-xyz", seen.path
+    end
+  end
+
   def test_replicate_poll_stops_on_a_bounded_deadline_and_returns_the_result
     dispatcher, = build_dispatcher
     polls = 0
