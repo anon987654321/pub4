@@ -40,14 +40,19 @@ class OrdersController < ApplicationController
                    updated_at: order.updated_at&.iso8601 }
   end
 
-  # Tip chips on the tracking page (0/20/40 kr); total bumps live via
-  # Order#add_tip! — tips happen after delivery, never in the flow.
+  # Tip chips on the tracking page (0/20/40 kr), behind config.x.tips. Only a
+  # delivered order takes one, and only once (Order#add_tip!); a refused tip
+  # says so instead of thanking.
   def tip
+    return head(:not_found) unless Rails.configuration.x.tips
+
     order = Order.find_by!(tracking_token: params[:token].to_s)
     amount = tip_ore_param
     order.add_tip!(amount) if amount.positive?
 
     redirect_to track_path(order.tracking_token), notice: t("orders.thanks")
+  rescue Order::InvalidTransition
+    redirect_to track_path(order.tracking_token), alert: t("orders.tip_refused")
   end
 
   private

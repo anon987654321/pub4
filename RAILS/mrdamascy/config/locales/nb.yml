@@ -308,9 +308,11 @@ nb:
     subtotal: Delsum
     tip_20: +20 kr
     tip_40: +40 kr
-    tip_line: Drikkegis
+    tip_line: Drikkegis (ikke betalt i appen)
     tip_none: Uten drikkegis
     tip_title: Drikkegis til kureren?
+    tip_refused: Drikkegis kan gis én gang, når bestillingen er levert.
+    tip_unpaid: Drikkegisen trekkes ikke i appen — den kommer ikke med i betalingen.
     total: Totalt
     track: Spor bestillingen
     view: Vis

@@ -53,15 +53,13 @@
 
 <% if order.state == "delivered" %>
   <section class="card">
-    <h2 class="section-title"><%= t("orders.tip_title") %></h2>
-    <div class="tip-choices">
-      <%= button_to t("orders.tip_none"), order_tip_path(order.tracking_token),
-            method: :post, params: { tip_ore: 0 } %>
-      <%= button_to t("orders.tip_20"), order_tip_path(order.tracking_token),
-            method: :post, params: { tip_ore: 2000 } %>
-      <%= button_to t("orders.tip_40"), order_tip_path(order.tracking_token),
-            method: :post, params: { tip_ore: 4000 } %>
-    </div>
+    <% if Rails.configuration.x.tips %>
+      <%# One tip per order: once given, its chip stays pressed and the chips
+          are spent. The tip is not charged in the app (Order#add_tip!). %>
+      <%= tag.h2 t("orders.tip_title"), class: "section-title" %>
+      <%= tag.div tip_buttons(order), class: "tip-choices" %>
+      <%= tag.p t("orders.tip_unpaid") %>
+    <% end %>
 
     <%= tag.h2 t("orders.review_title"), class: "section-title" %>
     <% review = order.review %>

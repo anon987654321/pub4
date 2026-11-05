@@ -62,7 +62,8 @@
     <dt class="totals-discount"><%= t("orders.discount") %></dt>
     <dd class="totals-discount">−<%= money(order.discount_ore) %></dd>
   <% end %>
-  <% if order.tip_ore.to_i.positive? %>
+  <% if order.tipped? %>
+    <%# Kept beside the total, not in it: the app never charged the tip. %>
     <dt><%= t("orders.tip_line") %></dt>
     <dd><%= money(order.tip_ore) %></dd>
   <% end %>

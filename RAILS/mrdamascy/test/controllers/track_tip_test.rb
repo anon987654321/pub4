@@ -3,10 +3,17 @@
 require "test_helper"
 
 # Tracking is public by token — no login required. The tip and review forms
-# appear after delivery; the tip updates the order total in øre.
+# appear after delivery. Tips sit behind config.x.tips (off by default, since
+# neither payment lane can charge one), so these tests turn it on.
 class TrackTipTest < ActionDispatch::IntegrationTest
   setup do
     @order = seed_order!(state: "delivered", delivery_mode: "delivery")
+    @tips_were = Rails.configuration.x.tips
+    Rails.configuration.x.tips = true
+  end
+
+  teardown do
+    Rails.configuration.x.tips = @tips_were
   end
 
   test "the track page is public by token and says Sahtein when delivered" do
@@ -27,12 +34,45 @@ class TrackTipTest < ActionDispatch::IntegrationTest
     assert data.key?("eta")
   end
 
-  test "a tip updates the tip and the total" do
+  test "a tip is recorded beside the total, which stays what was paid" do
     post order_tip_url(@order.tracking_token), params: { tip_ore: 2000 }
 
     assert_redirected_to track_path(@order.tracking_token)
     assert_equal 2000, @order.reload.tip_ore
-    assert_equal 15800 + 2000, @order.total_ore
+    assert_equal 15_800, @order.total_ore
+  end
+
+  test "an order takes one tip, and the chosen chip shows pressed" do
+    post order_tip_url(@order.tracking_token), params: { tip_ore: 2000 }
+    post order_tip_url(@order.tracking_token), params: { tip_ore: 4000 }
+
+    assert_redirected_to track_path(@order.tracking_token)
+    assert_equal I18n.t("orders.tip_refused"), flash[:alert]
+    assert_equal 2000, @order.reload.tip_ore
+
+    get track_url(@order.tracking_token)
+    assert_select "button[aria-pressed=true][disabled]", text: I18n.t("orders.tip_20")
+    assert_select "button[aria-pressed=false][disabled]", count: 2
+  end
+
+  test "an order not yet delivered takes no tip" do
+    on_the_way = seed_order!(state: "picked_up", delivery_mode: "delivery")
+
+    post order_tip_url(on_the_way.tracking_token), params: { tip_ore: 4000 }
+
+    assert_equal I18n.t("orders.tip_refused"), flash[:alert]
+    assert_equal 0, on_the_way.reload.tip_ore
+  end
+
+  test "with tips off the chips are gone and the endpoint takes nothing" do
+    Rails.configuration.x.tips = false
+
+    get track_url(@order.tracking_token)
+    assert_select ".tip-choices", count: 0
+
+    post order_tip_url(@order.tracking_token), params: { tip_ore: 2000 }
+    assert_response :not_found
+    assert_equal 0, @order.reload.tip_ore
   end
 
   test "the zero chip leaves the total untouched — no pressure" do

@@ -5579,7 +5579,7 @@ items:
   path: RAILS/mrdamascy/app/models/order.rb
   item: Collect tips through the payment lane (or label them as unpaid) — Order#add_tip!
     raises total_ore without any charge.
-  status: open
+  status: done
 - id: mrdamascy-064
   app: mrdamascy
   area: performance
@@ -5875,7 +5875,7 @@ items:
   path: RAILS/mrdamascy/app/controllers/orders_controller.rb
   item: Accept tips only on delivered orders, once per order, and show the chosen
     tip as pressed; POST /track/:token/tip adds unlimited tips in any state.
-  status: open
+  status: done
 - id: mrdamascy-101
   app: mrdamascy
   area: tracking

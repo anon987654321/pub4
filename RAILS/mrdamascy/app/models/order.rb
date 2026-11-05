@@ -138,15 +138,23 @@ class Order < ApplicationRecord
     self
   end
 
-  # Tips happen after delivery, on the tracking page; the total bumps live.
+  # Tips happen after delivery, on the tracking page, once per order. The
+  # payment was captured before the food left, and neither lane can charge
+  # again, so the tip is kept beside the total and never added to it:
+  # total_ore stays what the customer paid, and the order page names the tip
+  # as not paid in the app.
   def add_tip!(ore)
     amount = Integer(ore)
     raise ArgumentError, "tip must be a positive amount of øre" unless amount.positive?
+    raise InvalidTransition, "tips are taken on delivered orders only" unless state == "delivered"
+    raise InvalidTransition, "this order already has a tip" if tipped?
 
-    self.tip_ore += amount
-    self.total_ore += amount
-    save!
+    update!(tip_ore: amount)
     self
+  end
+
+  def tipped?
+    tip_ore.to_i.positive?
   end
 
   # Denormalised snapshot: order_items are frozen copies of cart_items, prices

@@ -40,6 +40,12 @@ module MrDamascy
     config.i18n.available_locales = %i[nb en]
     config.i18n.fallbacks = { nb: :en }
 
+    # Tips after delivery. Off unless MRDAMASCY_TIPS=1: both payment lanes have
+    # captured the order by the time it is delivered and neither can charge
+    # again, so a tip would be a promise the app cannot collect. With the flag
+    # on, a tip is recorded and shown as not paid in the app (Order#add_tip!).
+    config.x.tips = ENV.fetch("MRDAMASCY_TIPS", "0") == "1"
+
     # Don't generate system test files.
     config.generators.system_tests = nil
   end

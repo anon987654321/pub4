@@ -308,9 +308,11 @@ en:
     subtotal: Subtotal
     tip_20: +NOK 20
     tip_40: +NOK 40
-    tip_line: Tip
+    tip_line: Tip (not paid in the app)
     tip_none: No tip
     tip_title: Tip the courier?
+    tip_refused: A tip can be given once, after the order is delivered.
+    tip_unpaid: The tip is not charged in the app — it is not part of the payment.
     total: Total
     track: Track order
     view: View

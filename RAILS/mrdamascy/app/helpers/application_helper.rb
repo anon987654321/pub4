@@ -95,6 +95,17 @@ module ApplicationHelper
 
   # One spelling for the order list and the order page, so a state's colour
   # cannot drift between them. SCSS: .state-chip.state-<state>.
+  # The tracking page's tip chips (0/20/40 kr). An order takes one tip: once
+  # given, its chip shows pressed and every chip is spent.
+  def tip_buttons(order)
+    choices = [ [ t("orders.tip_none"), 0 ], [ t("orders.tip_20"), 2000 ], [ t("orders.tip_40"), 4000 ] ]
+    safe_join(choices.map do |label, ore|
+      button_to label, order_tip_path(order.tracking_token),
+                params: { tip_ore: ore }, disabled: order.tipped?,
+                aria: { pressed: order.tipped? && order.tip_ore == ore }
+    end)
+  end
+
   def state_chip(order)
     tag.span(t("orders.states.#{order.state}"), class: "state-chip state-#{order.state}")
   end

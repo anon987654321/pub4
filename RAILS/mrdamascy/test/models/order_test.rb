@@ -70,20 +70,26 @@ class OrderTest < ActiveSupport::TestCase
     assert_equal 1290, order.discount_ore
   end
 
-  test "add_tip! bumps tip and total, and refuses non-positive amounts" do
-    add_line(quantity: 1, price_ore: 12900)
+  # The payment is captured before delivery and no lane can charge again, so
+  # the tip is kept beside the total, never in it.
+  test "add_tip! records one tip on a delivered order and leaves the paid total alone" do
+    add_line(quantity: 1, price_ore: 12_900)
     order = Order.new(user: @user, kitchen: @kitchen, delivery_mode: "delivery",
                       address: "Nygårdsgaten 12", postcode: "5004", phone: "90000004")
     order.snapshot_from_cart!(@cart)
     order.compute_totals!(@zone)
-    assert_equal 15800, order.total_ore
+    assert_equal 15_800, order.total_ore
 
-    order.add_tip!(2000)
-    assert_equal 2000, order.reload.tip_ore
-    assert_equal 17800, order.reload.total_ore
+    assert_raises(Order::InvalidTransition) { order.add_tip!(2000) }
+    order.update!(state: "delivered")
 
     assert_raises(ArgumentError) { order.add_tip!(0) }
     assert_raises(ArgumentError) { order.add_tip!(-500) }
+    order.add_tip!(2000)
+    assert_equal 2000, order.reload.tip_ore
+    assert_equal 15_800, order.total_ore
+
+    assert_raises(Order::InvalidTransition) { order.add_tip!(4000) }
     assert_equal 2000, order.reload.tip_ore
   end
 
