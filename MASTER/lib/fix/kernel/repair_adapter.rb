@@ -68,19 +68,28 @@ module Master
         MIN_SEVERITY = :warning
         VISUAL_EXTENSIONS = %w[.css .scss .erb .html .htm .js .ts].freeze
 
+        # The same diligence the seven-point checklist asked for, compressed:
+        # every candidate prompt repeated the list, and a model that answered it
+        # literally printed summaries extract_code then discarded — output
+        # tokens for text nobody reads. The reasoning stays mandatory; it just
+        # happens silently, and only the answer format comes back.
         SEMANTIC_PASS_CHECKLIST = <<~TEXT.strip
-          Before answering, do a semantic pass:
-          - summarize what the file does in 3 lines
-          - summarize what it assumes and what can break
-          - enumerate module hierarchy, data flow, side effects, and implicit invariants
-          - list direct callers/callees and related files
-          - name the design pattern used or violated
-          - audit assumptions about nil/empty/max/unicode/concurrency/network/file-permission inputs
-          - state the inversion test: if this fix is wrong, what breaks, where, and when?
+          Before writing, reason silently through what the file assumes and what can break, the
+          callers and side effects the change touches, nil/empty/max/unicode/concurrency inputs,
+          and the inversion test (if this fix is wrong, what breaks, where, and when?).
+          Do not print that reasoning; return only the format the request asks for.
         TEXT
 
         @soul_preamble_mutex = Mutex.new
         @soul_preamble_cache = nil
+        # laws.yml orders itself most- to least-important, so the repair preamble
+        # keeps that order and stops at a declared budget instead of carrying all
+        # ~225 law practices on every candidate call (thousands of tokens repeated
+        # per violation, per candidate, per pass). The head of the file is the head
+        # of its importance order; the scanners and the apply-time gates still
+        # enforce every law deterministically, so a law left out here loses no
+        # enforcement, only advisory prose (DENSITY: what is absent cannot be wrong).
+        PREAMBLE_MAX_CHARS = Integer(ENV.fetch("MASTER_FIX_PREAMBLE_BUDGET", "12288"))
 
         class << self
           def clear_preamble_cache!
@@ -107,7 +116,21 @@ module Master
             golden = Master::Ground::Laws.new.constitution.fetch("golden_law")
             lines = ["Golden rule: #{golden}",
                       "Minimum change that eliminates the violation. Do not touch unrelated code."]
-            Master::Ground::Laws.new.laws.each { |key, value| lines << "- #{key}: #{value}" }
+            size = lines.sum(&:length)
+            truncated = false
+            Master::Ground::Laws.new.laws.each do |key, value|
+              line = "- #{key}: #{value}"
+              if size + line.length + 1 > PREAMBLE_MAX_CHARS
+                truncated = true
+                break
+              end
+
+              lines << line
+              size += line.length + 1
+            end
+            # A truncated preamble says so: an operator reading a prompt must be
+            # able to tell advisory head from the whole registry (TRUTHFUL_STATUS).
+            lines << "(law guidance continues in data/laws.yml)" if truncated
             lines.join("\n")
           rescue StandardError => e
             Master::Ground::Swallow.log(e, context: "repair_loop.golden_law")
