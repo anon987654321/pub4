@@ -45,7 +45,7 @@ module Operator
     # by the tag. Five of these were written before anything read them.
     RESERVED = "reserved:"
 
-    SKIP = %r{/(node_modules|vendor|builds|public/assets|tmp)/}
+    SKIP = %r{(?:\A|/)(node_modules|vendor|builds|public/assets|tmp)/} # on rel(path), so a /tmp/ export is read
 
     # A declaration that gives the box a size before its content arrives.
     RESERVING = /(?:aspect-ratio|contain-intrinsic-size|(?<![-\w])height)\s*:/
@@ -196,7 +196,7 @@ module Operator
         Dir.glob(File.join(RAILS_ROOT, "*/app/views/**/*.erb")) +
         EngineRoots.glob(RAILS_ROOT, "brgen", "app/views/**/*.erb") +
         Dir.glob(File.join(RAILS_ROOT, "__shared/app/views/**/*.erb"))
-      ).uniq.sort.reject { |path| path.match?(SKIP) }
+      ).uniq.sort.reject { |path| rel(path).match?(SKIP) }
     end
 
     def stylesheets
@@ -204,7 +204,7 @@ module Operator
         Dir.glob(File.join(RAILS_ROOT, "*/app/assets/stylesheets/**/*.{scss,css}")) +
         EngineRoots.glob(RAILS_ROOT, "brgen", "app/assets/stylesheets/**/*.{scss,css}") +
         Dir.glob(File.join(RAILS_ROOT, "__shared/app/assets/stylesheets/**/*.{scss,css}"))
-      ).uniq.sort.reject { |path| path.match?(SKIP) }
+      ).uniq.sort.reject { |path| rel(path).match?(SKIP) }
     end
 
     def source_lines(path) = strip_comments(File.read(path, encoding: "UTF-8")).lines

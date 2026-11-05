@@ -159,7 +159,7 @@ class ScaleLintTest < Minitest::Test
              "#{app}'s application.scss is not being read"
     end
     assert sheets.any? { |p| p.include?("/__shared/") }, "__shared's stylesheets are not being read"
-    assert_empty sheets.select { |p| p.match?(LINT::SKIP) }
+    assert_empty sheets.select { |p| LINT.rel(p).match?(LINT::SKIP) }
   end
 
   def test_generated_and_vendored_output_is_not_source

@@ -1309,7 +1309,9 @@ tokens:
         off_scale_space: 35
         # line_height 23 -> 22 and opacity 21 -> 20 measured 2026-11-03; tracking
         # 7 -> 6 when amber's luxury and post titles snapped -0.015em to -0.02em.
-        off_scale_line_height: 22
+        # line_height 22 -> 21 measured 2026-11-05, the first count taken in an
+        # export since ScaleLint stopped skipping every path under /tmp/.
+        off_scale_line_height: 21
         absolute_line_height: 0
         off_scale_radius: 19
         off_scale_font_weight: 0

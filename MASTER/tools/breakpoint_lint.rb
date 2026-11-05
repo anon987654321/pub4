@@ -39,7 +39,7 @@ module Operator
     # Generated bundles, vendored copies and precompiled artifacts are not source.
     # public/assets in particular holds pre-rename copies of files that no longer
     # exist, so scanning it reports last month's stylesheet as today's drift.
-    SKIP = %r{/(node_modules|vendor|builds|public/assets|tmp)/}
+    SKIP = %r{(?:\A|/)(node_modules|vendor|builds|public/assets|tmp)/} # on rel(path), so a /tmp/ export is read
 
     # Zero findings are permitted for both viewport-edge drift and collisions.
     # Container queries are excluded because their thresholds describe component
@@ -96,7 +96,7 @@ module Operator
 
     # Every media-query bound in the tree: [file, line, bound, pixels, spelling].
     def bounds
-      stylesheets.uniq.sort.reject { |path| path =~ SKIP }.flat_map do |path|
+      stylesheets.uniq.sort.reject { |path| rel(path).match?(SKIP) }.flat_map do |path|
         lines = source_lines(path)
         lines.each_with_index.flat_map do |line, index|
           next [] if opted_out?(lines, index)

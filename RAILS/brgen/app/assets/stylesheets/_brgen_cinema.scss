@@ -6,7 +6,7 @@ body:has(.brgen-media-wall) {
   --bg: var(--cinema-backdrop);
   --surface-elevated: var(--cinema-backdrop);
   --text: var(--on-media);
-  --text-secondary: color-mix(in srgb, var(--on-media) 70%, transparent);
+  --text-secondary: color-mix(in srgb, var(--on-media) 80%, transparent);
   background: var(--bg);
 }
 
@@ -21,7 +21,7 @@ body:has(.brgen-media-wall) {
   inset-block-end: 0;
   padding-block: var(--space-4) var(--space-2);
   padding-inline: var(--space-2);
-  background: linear-gradient(transparent, color-mix(in srgb, var(--cinema-backdrop) 85%, transparent));
+  background: linear-gradient(transparent, color-mix(in srgb, var(--cinema-backdrop) 80%, transparent));
   color: var(--on-media);
   opacity: 0;
   transition: opacity var(--transition-normal) var(--ease-out) 300ms;

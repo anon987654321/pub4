@@ -46,7 +46,7 @@ module Operator
     RAILS_ROOT = File.expand_path("../../RAILS", __dir__)
     OPT_OUT = "scale: ok"
 
-    SKIP = %r{/(node_modules|vendor|builds|public/assets|tmp)/}
+    SKIP = %r{(?:\A|/)(node_modules|vendor|builds|public/assets|tmp)/} # on rel(path), so a /tmp/ export is read
 
     # The scale rules (which properties, how a value is read, the nearest step)
     # are Master::Design::Scale's, shared with the EIGHT_PX_RHYTHM and
@@ -143,14 +143,14 @@ module Operator
         Dir.glob(File.join(RAILS_ROOT, "*/app/assets/stylesheets/**/*.{scss,css}")) +
         Dir.glob(File.join(RAILS_ROOT, "*/engines/*/app/assets/stylesheets/**/*.{scss,css}")) +
         Dir.glob(File.join(RAILS_ROOT, "__shared/app/assets/stylesheets/**/*.{scss,css}"))
-      ).uniq.sort.reject { |path| path.match?(SKIP) }
+      ).uniq.sort.reject { |path| rel(path).match?(SKIP) }
     end
 
     # face.css only. The face's :root is generated; the rest is hand-written and
     # is what this measures. chat_upload.css joins it because it paints the same
     # surface.
     def face_stylesheets
-      @face_stylesheets ||= Dir.glob(File.join(FACE, "*.css")).sort.reject { |path| path.match?(SKIP) }
+      @face_stylesheets ||= Dir.glob(File.join(FACE, "*.css")).sort.reject { |path| rel(path).match?(SKIP) }
     end
 
     def stylesheets = app_stylesheets + face_stylesheets
