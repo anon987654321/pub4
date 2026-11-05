@@ -3,6 +3,7 @@
 require_relative "test_helper"
 require "open3"
 require "rbconfig"
+require_relative "../../STUDIO/replicate/client"
 
 # The MASTER/tools vocab-check is the real contract for postpro. It used to be
 # operator memory. A table that fails quiet is how unread temp: and a costume
@@ -18,6 +19,46 @@ class TestToolsMedia < Minitest::Test
   def postpro_source
     files = [POSTPRO] + Dir[File.join(File.dirname(POSTPRO), "lib", "*.rb")].sort
     files.map { |path| File.read(path) }.join("\n")
+  end
+
+  def test_studio_replicate_pagination_rejects_external_cursor_urls
+    client = Studio::ReplicateClient.new(token: "studio-replicate-test")
+    request = nil
+    response = Struct.new(:code, :body).new(
+      "200",
+      JSON.generate("results" => [], "next" => "https://attacker.invalid/v1/models?cursor=secret"),
+    )
+    http = Object.new
+    http.define_singleton_method(:request) { |value| request = value; response }
+
+    Net::HTTP.stub(:start, ->(_host, _port, **_options, &block) { block.call(http) }) do
+      error = assert_raises(ArgumentError) { client.models }
+      assert_match(/outside the Replicate API origin/, error.message)
+    end
+
+    assert_equal "Token studio-replicate-test", request["Authorization"]
+    assert_equal "/v1/models", request.path
+  end
+
+  def test_studio_replicate_api_requests_use_the_declared_tls_timeouts
+    client = Studio::ReplicateClient.new(token: "studio-replicate-test")
+    request = nil
+    response = Struct.new(:code, :body).new("200", JSON.generate("username" => "studio"))
+    http = Object.new
+    http.define_singleton_method(:request) { |value| request = value; response }
+
+    Net::HTTP.stub(:start, lambda { |host, port, **options, &block|
+      assert_equal "api.replicate.com", host
+      assert_equal 443, port
+      assert_equal true, options.fetch(:use_ssl)
+      assert_equal Studio::ReplicateClient::OPEN_TIMEOUT_SECONDS, options.fetch(:open_timeout)
+      assert_equal Studio::ReplicateClient::READ_TIMEOUT_SECONDS, options.fetch(:read_timeout)
+      block.call(http)
+    }) do
+      assert_equal "studio", client.account_username
+    end
+
+    assert_equal "Token studio-replicate-test", request["Authorization"]
   end
 
   def test_postpro_key_readers_cover_every_declared_preset_knob
