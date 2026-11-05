@@ -7,6 +7,7 @@ require "json"
 require "open3"
 require "optparse"
 require "socket"
+require "securerandom"
 require "time"
 
 module EvidenceCapture
@@ -55,8 +56,7 @@ module EvidenceCapture
     started_wall = Time.now.utc
     started_mono = Process.clock_gettime(Process::CLOCK_MONOTONIC)
     stamp = started_wall.strftime("%Y%m%dT%H%M%SZ")
-    out_dir = File.join(root, "evidence")
-    FileUtils.mkdir_p(out_dir)
+    out_dir = evidence_directory(root)
     base = unique_base(out_dir, "#{stamp}-#{label}")
     json_path = "#{base}.json"
     log_path = "#{base}.txt"
@@ -275,12 +275,37 @@ module EvidenceCapture
     path.start_with?("#{root}/") ? path.delete_prefix("#{root}/") : path
   end
 
+  def evidence_directory(root)
+    path = File.join(root, "evidence")
+    begin
+      Dir.mkdir(path, 0o700)
+    rescue Errno::EEXIST
+      nil
+    end
+
+    stat = File.lstat(path)
+    raise ArgumentError, "evidence path must be a real directory, not a symlink" unless stat.directory? && !stat.symlink?
+    raise ArgumentError, "evidence directory must not be group/world writable" if (stat.mode & 0o022).positive?
+
+    real_root = File.realpath(root)
+    real_path = File.realpath(path)
+    unless real_path.start_with?("#{real_root}/")
+      raise ArgumentError, "evidence directory resolves outside the repository"
+    end
+
+    path
+  end
+
   def atomic_write(path, content, mode:)
-    temp = "#{path}.tmp-#{Process.pid}"
-    File.open(temp, "wb", mode) { |file| file.write(content); file.flush; file.fsync }
+    directory = File.dirname(path)
+    basename = File.basename(path)
+    temp = File.join(directory, ".#{basename}.tmp-#{Process.pid}-#{SecureRandom.hex(8)}")
+    flags = File::WRONLY | File::CREAT | File::EXCL
+    flags |= File::NOFOLLOW if File.const_defined?(:NOFOLLOW)
+    File.open(temp, flags, mode) { |file| file.write(content); file.flush; file.fsync }
     File.rename(temp, path)
   ensure
-    File.delete(temp) if temp && File.exist?(temp)
+    File.delete(temp) if temp && File.file?(temp)
   end
 
   def usage!(message)

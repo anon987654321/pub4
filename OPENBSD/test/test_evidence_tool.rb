@@ -114,6 +114,19 @@ class TestEvidenceTool < Minitest::Test
     assert_equal ["live browser unavailable on this host"], artifact.fetch("notes")
   end
 
+  def test_rejects_a_symlinked_evidence_directory
+    outside = Dir.mktmpdir("evidence-outside-")
+    File.symlink(outside, File.join(@root, "evidence"))
+
+    status, output = run_tool("symlinked-evidence", "--", RbConfig.ruby, "-e", "exit 0")
+
+    assert_equal 70, status.exitstatus, output
+    assert_match(/real directory|outside the repository/, output)
+    assert_empty Dir.children(outside)
+  ensure
+    FileUtils.remove_entry(outside) if outside && File.directory?(outside)
+  end
+
   def test_rejects_attachment_outside_repository
     outside = File.join(Dir.tmpdir, "outside-evidence-#{Process.pid}.txt")
     File.write(outside, "not part of repo")
