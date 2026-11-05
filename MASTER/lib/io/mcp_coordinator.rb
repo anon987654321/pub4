@@ -100,7 +100,7 @@ module Master
       # process into an arbitrary internal-network HTTP client.
       def local_sse_url!(value)
         uri = URI.parse(value.to_s)
-        loopback = %w[localhost 127.0.0.1 ::1].include?(uri.host.to_s.downcase)
+        loopback = %w[localhost 127.0.0.1 ::1].include?(uri.hostname.to_s.downcase)
         valid = %w[http https].include?(uri.scheme) && loopback &&
                 uri.userinfo.nil? && uri.fragment.nil? && uri.query.nil? &&
                 !uri.path.empty? && uri.path.start_with?("/")
