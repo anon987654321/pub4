@@ -40,6 +40,12 @@ class UsersController < ApplicationController
     @user = Current.user
     return render :edit, status: :unprocessable_entity unless @user.update(profile_params)
 
+    # Removing the photo brings the identicon back; touch, so the avatar
+    # address (User#avatar_url) changes and no cached photo outlives it.
+    if params.dig(:user, :remove_avatar) == "1" && @user.avatar.attached?
+      @user.avatar.purge
+      @user.touch
+    end
     redirect_to main_app.user_path(@user), notice: t("profile.updated", default: "Profile updated.")
   end
 
@@ -109,7 +115,7 @@ class UsersController < ApplicationController
   end
 
   def profile_params
-    params.require(:user).permit(:username, :display_name)
+    params.require(:user).permit(:username, :display_name, :bio, :avatar)
   end
 
   def user_params

@@ -1967,6 +1967,7 @@ ActiveRecord::Schema[8.2].define(version: 2026_11_05_160000) do
   end
 
   create_table "users", force: :cascade do |t|
+    t.text "bio"
     t.boolean "bot", default: false, null: false
     t.integer "city_id"
     t.datetime "created_at", null: false

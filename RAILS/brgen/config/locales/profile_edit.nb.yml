@@ -1,0 +1,15 @@
+nb:
+  profile:
+    bio: Om deg
+    bio_hint:
+      one: "Maks %{count} tegn. Vises under navnet ditt på profilen."
+      other: "Maks %{count} tegn. Vises under navnet ditt på profilen."
+    avatar: Profilbilde
+    avatar_choose: Velg et bilde
+    avatar_hint: JPEG, PNG, WebP, GIF, HEIC eller AVIF. Bildet beskjæres til et kvadrat.
+    avatar_remove: Fjern bildet og bruk mønsteret igjen
+  activerecord:
+    attributes:
+      user:
+        bio: Om deg
+        avatar: Profilbilde

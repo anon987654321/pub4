@@ -3424,7 +3424,7 @@ items:
   size: L
   path: RAILS/brgen/app/controllers/users_controller.rb
   item: Add a short bio column and field to users and show it on the profile.
-  status: open
+  status: done
 - id: brgen-305
   app: brgen
   area: profile
@@ -3448,7 +3448,7 @@ items:
   path: RAILS/brgen/app/views/users/edit.html.erb
   item: Add avatar upload to the profile edit form (AvatarsController exists; edit
     offers only display name and username).
-  status: open
+  status: done
 - id: brgen-308
   app: brgen
   area: profile

@@ -1,0 +1,15 @@
+en:
+  profile:
+    bio: About you
+    bio_hint:
+      one: "Up to %{count} character. Shown under your name on your profile."
+      other: "Up to %{count} characters. Shown under your name on your profile."
+    avatar: Profile photo
+    avatar_choose: Choose a photo
+    avatar_hint: JPEG, PNG, WebP, GIF, HEIC or AVIF. The photo is cropped to a square.
+    avatar_remove: Remove the photo and use the pattern again
+  activerecord:
+    attributes:
+      user:
+        bio: About you
+        avatar: Profile photo

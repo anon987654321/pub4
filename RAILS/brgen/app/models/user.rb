@@ -60,6 +60,17 @@ class User < ApplicationRecord
     format: { with: URI::MailTo::EMAIL_REGEXP }
   validates :username, uniqueness: true, allow_nil: true
 
+  # A line or two under the name on the profile, not a second post.
+  BIO_LENGTH = 160
+  validates :bio, length: { maximum: BIO_LENGTH }
+
+  # A photo the person chose, in place of the identicon. Shared::AttachmentLimits
+  # holds it to image types and the image size limit, as an image slot.
+  AVATAR_SIZE = 256
+  has_one_attached :avatar do |attachable|
+    attachable.variant :profile, resize_to_fill: [ AVATAR_SIZE, AVATAR_SIZE ]
+  end
+
   normalizes :email_address, with: ->(email_address) { email_address.strip.downcase }
 
   include Shared::GeoLocatable
@@ -104,7 +115,15 @@ class User < ApplicationRecord
   # this alongside a genuinely anonymous name (Post#author_avatar_url,
   # channel messages) must not use it -- a consistent pattern would
   # re-identify the same "anon" across posts even though the name doesn't.
-  def avatar_url = Rails.application.routes.url_helpers.avatar_user_path(self)
+  #
+  # The same address whether the person uploaded a photo or not, so no caller
+  # needs the attachment loaded; AvatarsController answers with the photo when
+  # there is one. The address carries updated_at because that answer is cached
+  # for a year, and attaching or removing a photo touches the user.
+  def avatar_url
+    path = Rails.application.routes.url_helpers.avatar_user_path(self)
+    updated_at ? "#{path}?v=#{updated_at.to_i}" : path
+  end
 
   def assured?(level)
     identity_assurances.where(level: level).where("expires_at IS NULL OR expires_at > ?", Time.current).exists?

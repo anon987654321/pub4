@@ -21,6 +21,27 @@
     <%= f.text_field :username, autocomplete: "username" %>
   </div>
 
+  <div class="field">
+    <%= f.label :bio, t("profile.bio") %>
+    <%= f.text_area :bio, rows: 3, maxlength: User::BIO_LENGTH, aria: { describedby: "user_bio_hint" } %>
+    <%= tag.p t("profile.bio_hint", count: User::BIO_LENGTH), id: "user_bio_hint", class: "form-help" %>
+  </div>
+
+  <fieldset class="field">
+    <%= tag.legend t("profile.avatar") %>
+    <%= image_tag @user.avatar_url, alt: "", width: 64, height: 64, class: "avatar avatar--64" %>
+    <%= f.label :avatar, t("profile.avatar_choose") %>
+    <%= f.file_field :avatar, accept: Shared::AttachmentLimits::IMAGE_TYPES.join(","),
+          aria: { describedby: "user_avatar_hint" } %>
+    <%= tag.p t("profile.avatar_hint"), id: "user_avatar_hint", class: "form-help" %>
+    <% if @user.avatar.attached? %>
+      <div class="field field--check">
+        <%= check_box_tag "user[remove_avatar]", "1", false, id: "user_remove_avatar" %>
+        <%= label_tag "user_remove_avatar", t("profile.avatar_remove") %>
+      </div>
+    <% end %>
+  </fieldset>
+
   <div class="cluster">
     <%= f.submit t("actions.save"), class: "button" %>
     <%= link_to t("actions.cancel"), main_app.user_path(@user), class: "button button-ghost" %>

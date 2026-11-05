@@ -5,6 +5,7 @@
 <header class="profile-header">
   <%= image_tag @user.avatar_url, alt: "", width: 64, height: 64, class: "avatar avatar--64" %>
   <%= tag.h1 @user.display_name %>
+  <%= tag.p @user.bio, class: "profile-bio" if @user.bio.present? %>
   <p class="meta-facts">
     <span><%= t("profile.followers", count: @followers_count) %></span>
     <span><%= t("profile.following", count: @following_count) %></span>
