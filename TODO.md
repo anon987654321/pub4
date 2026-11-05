@@ -746,7 +746,6 @@ recommended first ten.
 - [ ] Watchdog that aborts a deploy when swap drops under 150 MB.
 - [ ] Deploy at the lowest-traffic hour.
 - [ ] One-command rollback: symlink back and restart.
-- [ ] vps-deploy stops and restarts the matching `*_jobs` service itself.
 - [ ] Post-deploy smoke test over every route-manifest page.
 
 ### Permission and classifier blocks
