@@ -13,7 +13,7 @@ module Master
     # The direct import can reach this file before pass_runner.rb has defined
     # the class. Opening `class PassRunner` below would then fire the adapter's
     # const_missing, which loads the full convergence graph and re-enters this
-    # file with AssessmentMatrix still undefined — the NameError the direct
+    # file with AssessmentMatrix still undefined - the NameError the direct
     # import exists to avoid. Declare the same read-only stub lifecycle.rb
     # uses for the adapter itself; pass_runner.rb fills the body on real boot.
     FixLoop.send(:remove_const, :PassRunner) if FixLoop.autoload?(:PassRunner, false)
@@ -30,7 +30,7 @@ module Master
   module Fix
     class FixLoop
       class PassRunner
-        # Runtime Law × stream × surface evidence and its source receipts.
+        # Runtime Law x stream x surface evidence and its source receipts.
         # This module owns measurement bookkeeping only; scanner, visual,
         # opportunity, run journal, and convergence implementations stay in
         # their existing owners.

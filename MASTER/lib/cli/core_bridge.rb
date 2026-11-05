@@ -5,7 +5,7 @@ require_relative "../trace/effect_observer"
 
 module Master
   module CLI
-    # CoreBridge — run one coding goal through the core Fold from the CLI and web
+    # CoreBridge - run one coding goal through the core Fold from the CLI and web
     # cutover. Folds agent turns; slash commands use command_registry directly.
     #
     # Turns stream to the event bus as they happen, so the terminal and the web
@@ -27,7 +27,7 @@ module Master
 
         lines = text.lines
         first = lines.first.to_s.chomp
-        first = "#{first[0, REPORT_TURN_CHARS]}…" if first.length > REPORT_TURN_CHARS
+        first = "#{first[0, REPORT_TURN_CHARS]}..." if first.length > REPORT_TURN_CHARS
         lines.size > 1 ? "#{first} (+#{lines.size - 1} lines)" : first
       end
 
@@ -245,7 +245,7 @@ module Master
       # Core::Model speaks RubyLLM's chat shape and, left alone, calls RubyLLM
       # itself. The agent's dispatcher is the door every other call passes:
       # MASTER_MODEL, ollama, the circuit breaker, the failover hop and the cost
-      # ledger all live there, and a fold that went round it had none of them —
+      # ledger all live there, and a fold that went round it had none of them -
       # forced to a local model, it still asked OpenRouter and died on a 503.
       #
       # Every model is asked the same way: one schema, temperature 0. The fold
@@ -465,7 +465,7 @@ module Master
         end
       end
 
-      # And the Fold EXECS through World, not through Io::Shell — the same
+      # And the Fold EXECS through World, not through Io::Shell - the same
       # sentence, one verb over. Io::Shell has consulted Ground::Policy::Sandbox
       # since that check was wired in, so the hardened policy was live on the tool
       # path and absent from the constitutional one, which is the path that runs

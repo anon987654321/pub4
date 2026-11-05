@@ -9,7 +9,7 @@ module Deploy
   # The lint was written, tested by RAILS/test/scale_lint_test.rb, and reachable
   # from no check: `runner.rb --list` did not know the name, so nothing ran it and
   # its baselines in design_tokens.yml sat unchecked. That is the inert-wiring
-  # shape this tree keeps finding — a declaration with no reader — and it is why
+  # shape this tree keeps finding - a declaration with no reader - and it is why
   # off_scale_line_height drifted to 6 against a baseline of 6 without anyone
   # being told.
   #
@@ -18,7 +18,7 @@ module Deploy
   # engine, `face` is RAILS/master/public. A regression in one must not be masked
   # by a fall in the other, which a single number would allow.
   #
-  # A count over its baseline fails. A count under it is reported, not failed —
+  # A count over its baseline fails. A count under it is reported, not failed -
   # recording the new low is a deliberate edit to design_tokens.yml, the same
   # contract data_reach and spine.yml hold.
   class ScaleRatchetCheck
@@ -49,7 +49,7 @@ module Deploy
 
       # A surface with no baselines compares nothing, and a lint that read no
       # files reports zero for every kind, which is indistinguishable from clean.
-      result.inconclusive!("scale_ratchet: no baselines declared for any surface — design_tokens.yml scale.baselines is unread") if result.checks_ran.zero?
+      result.inconclusive!("scale_ratchet: no baselines declared for any surface - design_tokens.yml scale.baselines is unread") if result.checks_ran.zero?
 
       [over, under]
     end
@@ -66,11 +66,11 @@ module Deploy
       LINT.findings.first(8).each do |finding|
         step = LINT.nearest(finding)
         result.warn("scale_ratchet: #{finding.file}:#{finding.line} #{finding.kind} " \
-                    "#{finding.value}#{step ? " — nearest step #{step}" : ""}")
+                    "#{finding.value}#{step ? " - nearest step #{step}" : ""}")
       end
 
       under.each do |line|
-        result.warn("scale_ratchet: new low #{line} — record it in design_tokens.yml scale.baselines")
+        result.warn("scale_ratchet: new low #{line} - record it in design_tokens.yml scale.baselines")
       end
 
       totals = LINT::SURFACES.map { |s| "#{s} #{LINT.counts_for(s).values.sum}" }.join(", ")

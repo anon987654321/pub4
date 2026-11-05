@@ -24,14 +24,14 @@ class TestFixResidual < Minitest::Test
   def test_a_hard_check_left_red_points_the_next_run_at_the_blocker_lane
     proof = { verdict: "proof: 9 of 20", hard: %w[release], soft: %w[layout_suite] }
 
-    entry = Residual.write(target: "RAILS", scorecard: "fix partial · …", proof:, named: %w[app/a.rb])
+    entry = Residual.write(target: "RAILS", scorecard: "fix partial - ...", proof:, named: %w[app/a.rb])
 
     assert_equal "MASTER/bin/fix-here RAILS --blockers", entry["next"]
     assert_equal %w[release], Residual.read("RAILS")["hard_red"]
   end
 
   def test_the_next_run_starts_with_the_files_the_last_one_named
-    Residual.write(target: "MASTER", scorecard: "fix partial · …", proof: nil, named: %w[lib/fix/c.rb])
+    Residual.write(target: "MASTER", scorecard: "fix partial - ...", proof: nil, named: %w[lib/fix/c.rb])
 
     Master::CLI::CommandRegistry.resume_from_residual("MASTER")
 

@@ -3,7 +3,7 @@
 require "digest"
 
 module Master::Core
-  # Memory — the unified cognitive architecture.
+  # Memory - the unified cognitive architecture.
   # It separates memory into three distinct channels:
   # 1. Episodic: What happened in this session (The Trace)
   # 2. Semantic: What is known to be true (The Knowledge)
@@ -16,7 +16,7 @@ module Master::Core
     # Context budget in characters. A ~1GB OpenBSD VPS cannot hold a generous
     # transcript alongside an LLM call without the OOM-killer stepping in, so on a
     # constrained host the budget shrinks and compaction runs sooner. This is the
-    # whole of the old HostBudget the core needs — the guard rides on Memory's
+    # whole of the old HostBudget the core needs - the guard rides on Memory's
     # existing compaction, so the Fold gains no new logic. The rest of HostBudget
     # (TTS toggles, pid reaping, shell tips) is CLI accretion that dies with lib.
     GENEROUS_BUDGET = 24_000
@@ -53,7 +53,7 @@ module Master::Core
       nil
     end
 
-    # Only host_memory_mb calls it. `private` cannot reach a `def self.` — see
+    # Only host_memory_mb calls it. `private` cannot reach a `def self.` - see
     # CodeMetrics.public_method_count and the old backlog, "The fold spine had never been
     # scanned".
     private_class_method :detect_host_memory_mb

@@ -7,15 +7,15 @@ require "yaml"
 
 module Master
   module Io
-    # Reads the skills an Antigravity workspace declares — `.agents/skills/`,
+    # Reads the skills an Antigravity workspace declares - `.agents/skills/`,
     # a `skills.json` and its inherits chain, and the global and built-in roots
-    # under `~/.gemini` — so `Cli::Skills` can offer them beside MASTER's own.
+    # under `~/.gemini` - so `Cli::Skills` can offer them beside MASTER's own.
     # That is the whole surface: skills in, skill hashes out.
     #
     # It is an adapter to somebody else's on-disk format
     # (https://antigravity.google/docs/home/), not a second skills system, and
     # nothing here decides anything. The `agy` provider in `data/providers.yml`
-    # is a different subject that shares the name — that one is an LLM reached
+    # is a different subject that shares the name - that one is an LLM reached
     # by executing a binary.
     module Antigravity
       # Compiled filter regexes, or nil when any source is invalid: a filter that

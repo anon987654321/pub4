@@ -49,7 +49,7 @@ module Master
         return unless constrained?
 
         mb = total_mem_mb
-        "host0: #{mb}MB ram — /fix lib · bin/master --fast · avoid full-repo prompts"
+        "host0: #{mb}MB ram - /fix lib - bin/master --fast - avoid full-repo prompts"
       end
 
       def refuse_heavy_prompt?(text)
@@ -57,7 +57,7 @@ module Master
 
         body = text.to_s
         return heavy_repo_message if repo_wide_request?(body)
-        return "host budget: prompt too large (#{body.bytesize}B) — use /fix lib or <<" if body.bytesize > HEAVY_PROMPT_BYTES
+        return "host budget: prompt too large (#{body.bytesize}B) - use /fix lib or <<" if body.bytesize > HEAVY_PROMPT_BYTES
 
         nil
       end
@@ -74,7 +74,7 @@ module Master
 
       def heavy_repo_message
         mb = total_mem_mb || "low"
-        "host budget: full-repo analyze/autofix OOMs on #{mb}MB — use /fix lib, or bin/master --fast"
+        "host budget: full-repo analyze/autofix OOMs on #{mb}MB - use /fix lib, or bin/master --fast"
       end
 
       def suspended_ruby_pids(user: ENV["USER"])

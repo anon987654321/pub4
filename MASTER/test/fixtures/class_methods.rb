@@ -6,7 +6,7 @@
 # Core::Constitution measured 16 public methods when three are its API and the
 # other thirteen are rule factories only it calls. Every one is a class method,
 # and `private` marks a position in the instance-method stream that class
-# methods never enter — so a class written in that idiom reads as fully public
+# methods never enter - so a class written in that idiom reads as fully public
 # no matter how it is arranged. ABSTRACTION was measuring the idiom.
 #
 # private_class_method names its methods rather than marking a position, which

@@ -41,7 +41,7 @@ module Master
         number = nil
         pr_url = nil
         return Result.new(false, "GitHub delivery requires a github.com origin", nil, nil, nil) unless github_remote?
-        return Result.new(false, "GitHub delivery unavailable — install gh and authenticate with gh auth login", nil, nil, nil) unless available?
+        return Result.new(false, "GitHub delivery unavailable - install gh and authenticate with gh auth login", nil, nil, nil) unless available?
 
         pr = create_pr(branch:, base:, title:, body:)
         return pr unless pr.ok

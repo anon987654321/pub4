@@ -55,7 +55,7 @@ module Master
         lines = ["device0: #{android? ? "android" : "non-android"} #{RbConfig::CONFIG["host_cpu"]}"]
         lines << "termux0: #{termux? ? "api available" : "api unavailable"}" if android?
         capabilities.each do |cap|
-          lines << "#{cap.name}0: #{cap.state}#{cap.detail ? " — #{cap.detail}" : ""}"
+          lines << "#{cap.name}0: #{cap.state}#{cap.detail ? " - #{cap.detail}" : ""}"
         end
         lines
       end
@@ -130,7 +130,7 @@ module Master
 
       def require_android_command!(command)
         raise Error, "device: not Android/Termux" unless android?
-        raise Error, "device: #{command} unavailable — install Termux:API and termux-api" unless executable?(command)
+        raise Error, "device: #{command} unavailable - install Termux:API and termux-api" unless executable?(command)
       end
 
       def executable?(command) = Master::Io::Exec.on_path?(command)

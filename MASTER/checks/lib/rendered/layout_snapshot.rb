@@ -27,7 +27,7 @@ module Deploy
   # survives a machine change, and a diff reads "the buy bar moved up 3px and
   # lost 4px of height" instead of "8,214 pixels changed".
   #
-  # Baselines are accepted only under CHECK_SNAPSHOT_UPDATE=1 — deliberately NOT
+  # Baselines are accepted only under CHECK_SNAPSHOT_UPDATE=1 - deliberately NOT
   # under CHECK_AUTOFIX, because "make the failure go away by blessing the new
   # layout" is precisely the self-healing behaviour this check exists to remove.
   class LayoutSnapshotCheck
@@ -47,17 +47,17 @@ module Deploy
     def run
       @result = CheckResult.new
       unless GeometryProbe.available?
-        @result.inconclusive!("layout_snapshot: no Chrome/Chromium — snapshots not compared", gap: Master::Gap::NO_BROWSER)
+        @result.inconclusive!("layout_snapshot: no Chrome/Chromium - snapshots not compared", gap: Master::Gap::NO_BROWSER)
         return @result
       end
 
       surfaces = GeometryProbe.surfaces.select(&:snapshot)
       GeometryProbe.unreachable_apps(surfaces).each do |app|
-        @result.skipped_live("layout_snapshot: #{app} port closed — snapshots skipped")
+        @result.skipped_live("layout_snapshot: #{app} port closed - snapshots skipped")
       end
       live = GeometryProbe.reachable(surfaces)
       if live.empty?
-        @result.inconclusive!("layout_snapshot: no app reachable — nothing compared")
+        @result.inconclusive!("layout_snapshot: no app reachable - nothing compared")
         return @result
       end
 
@@ -71,22 +71,22 @@ module Deploy
       GeometryProbe.each_payload(live) do |surface, payload|
         if payload["error"]
           if GeometryProbe.timeout?(payload)
-            @result.incomplete!("layout_snapshot: #{surface.id} not compared — #{payload["error"]}")
+            @result.incomplete!("layout_snapshot: #{surface.id} not compared - #{payload["error"]}")
           else
-            @result.fail("layout_snapshot: #{surface.id} probe failed — #{payload["error"]}")
+            @result.fail("layout_snapshot: #{surface.id} probe failed - #{payload["error"]}")
           end
 
           next
         end
         status = payload["status"].to_i
         unless status.zero? || status.between?(200, 399)
-          @result.fail("layout_snapshot: #{surface.id} served HTTP #{status} — not snapshotting an error page")
+          @result.fail("layout_snapshot: #{surface.id} served HTTP #{status} - not snapshotting an error page")
           next
         end
 
         current = distill(payload)
         if current["elements"].size < MIN_ELEMENTS
-          @result.fail("layout_snapshot: #{surface.id} only #{current["elements"].size} stable elements — too thin to baseline",
+          @result.fail("layout_snapshot: #{surface.id} only #{current["elements"].size} stable elements - too thin to baseline",
                        severity: :soft)
           next
         end
@@ -100,7 +100,7 @@ module Deploy
 
             @result.fail(
               "layout_snapshot: #{surface.id} disagrees with #{previous.fetch(:surface)} " \
-              "for shared baseline #{rel(path)} — #{tally(diffs)}",
+              "for shared baseline #{rel(path)} - #{tally(diffs)}",
             )
           end
           next
@@ -114,7 +114,7 @@ module Deploy
 
             @result.warn("layout_snapshot: #{surface.id} baseline creation proposed (#{current["elements"].size} elements)")
           else
-            @result.fail("layout_snapshot: #{surface.id} has no committed baseline — " \
+            @result.fail("layout_snapshot: #{surface.id} has no committed baseline - " \
                          "run with CHECK_SNAPSHOT_UPDATE=1 to record #{rel(path)}", severity: :soft)
           end
           next
@@ -177,8 +177,8 @@ module Deploy
     # `#swiper-wrapper-89838f8a227d649d` fresh on every page load, so the key of
     # every element beneath a carousel changed between two runs of this check with
     # nothing touched in between. Re-recording could never converge, because the
-    # next run invents new ids again. Matched by shape — a hex run of eight or
-    # more — rather than by library name, so the next widget that does this is
+    # next run invents new ids again. Matched by shape - a hex run of eight or
+    # more - rather than by library name, so the next widget that does this is
     # already covered. No real id in this tree looks like that (#main-content,
     # #email_address, #app-tab-bar, #nav_sections).
     VOLATILE_KEY = /
@@ -191,16 +191,16 @@ module Deploy
 
     # nearby-chat-widget-tab is in that list for a reason worth stating, because
     # it is chrome rather than a feed row. Its label is the room the visitor will
-    # land in — Shared::UiHelper#ambient_chat_room_label returns "nearby" when
-    # Current.user has coordinates and the lobby channel when it does not — so
+    # land in - Shared::UiHelper#ambient_chat_room_label returns "nearby" when
+    # Current.user has coordinates and the lobby channel when it does not - so
     # the tab is 94px or 104px wide depending on visitor state, and the two
     # alternate between runs of this check. The partial's own comment records an
     # earlier fix for the same symptom, where the label was rewritten by
     # nearby_chat_controller after the frame arrived, and moving it server-side
     # stopped the visible relabel without making the width one value.
     # Excluded rather than re-recorded, because re-recording could not converge.
-    # The design question underneath — whether a tab whose width depends on
-    # whether GPS is on is the intended behaviour — is the operator's, not this
+    # The design question underneath - whether a tab whose width depends on
+    # whether GPS is on is the intended behaviour - is the operator's, not this
     # check's.
     STRUCTURAL_TAG = %w[header nav main footer aside form h1 h2 button a input select textarea].freeze
 
@@ -253,7 +253,7 @@ module Deploy
       shown = diffs.first(8)
       more = diffs.size > shown.size ? " (+#{diffs.size - shown.size} more)" : ""
       @result.fail(
-        "layout_snapshot: #{surface.id} drifted from #{rel(path)} — #{tally(diffs)} — #{shown.join("; ")}#{more}",
+        "layout_snapshot: #{surface.id} drifted from #{rel(path)} - #{tally(diffs)} - #{shown.join("; ")}#{more}",
       )
     end
 

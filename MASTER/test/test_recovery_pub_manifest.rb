@@ -10,12 +10,12 @@ class TestRecoveryPubManifest < Minitest::Test
 
   # The contract this pins is which files exist, so it is the file most able to
   # pin the wrong ones. It arrived naming two under DEPLOY/, a tree this repo
-  # renamed away — asserting them would have made a green test the reason the
+  # renamed away - asserting them would have made a green test the reason the
   # tree came back.
   def test_restore_docs_exist
     # The prose halves are gone. RESTORE_FROM_PUB.md and the three RECOVERY/
     # READMEs restated in 905 lines what the manifest below already holds as
-    # structured rows — a source, a state, and a reason per entry — and they
+    # structured rows - a source, a state, and a reason per entry - and they
     # opened by dating themselves to a layout this repo had already renamed.
     # The ledger is what the contract needs; git holds the prose.
     required = [

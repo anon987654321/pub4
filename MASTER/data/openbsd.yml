@@ -1,4 +1,4 @@
-# openbsd.yml — baseline expectations for OpenBSD daemon configs. Revalidate
+# openbsd.yml - baseline expectations for OpenBSD daemon configs. Revalidate
 # release-specific details against the deployed system's man pages. Ground::OpenbsdConfig
 # reads it, and test_openbsd_config.rb holds every known config under OPENBSD/etc to it.
 
@@ -10,7 +10,7 @@ configs:
       - "set skip on lo"
     warnings:
       - pattern: "pass all"
-        message: "Overly permissive — add interface/protocol guards"
+        message: "Overly permissive - add interface/protocol guards"
 
   nsd.conf:
     daemon: nsd
@@ -20,7 +20,7 @@ configs:
       - "zone:"
     warnings:
       - pattern: "rrl-size"
-        absent_message: "Missing RRL config — vulnerable to amplification DDoS"
+        absent_message: "Missing RRL config - vulnerable to amplification DDoS"
       - pattern: "hide-version"
         absent_message: "Consider hide-version: yes"
 
@@ -39,7 +39,7 @@ configs:
       - "match"
     warnings:
       - pattern: "match from any"
-        message: "Open relay risk — restrict to authenticated senders"
+        message: "Open relay risk - restrict to authenticated senders"
 
   relayd.conf:
     daemon: relayd
@@ -68,7 +68,7 @@ configs:
     man: sshd_config.5
     warnings:
       - pattern: "PermitRootLogin yes"
-        message: "Security risk — use PermitRootLogin prohibit-password"
+        message: "Security risk - use PermitRootLogin prohibit-password"
       - pattern: "PasswordAuthentication yes"
         message: "Consider key-only auth"
 

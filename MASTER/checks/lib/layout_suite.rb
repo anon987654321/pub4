@@ -79,7 +79,7 @@ module Deploy
       details << "#{leaf.unchecked.size} inconclusive item(s)" unless leaf.unchecked.empty?
       details << "#{leaf.live_skips} live skip(s)" if leaf.live_skips.positive?
       details << "#{leaf.errors.size} error(s)" unless leaf.errors.empty?
-      "coverage0: layout/#{name} #{leaf.outcome.to_s.upcase} — #{details.join(', ')}"
+      "coverage0: layout/#{name} #{leaf.outcome.to_s.upcase} - #{details.join(', ')}"
     end
 
     # Source checks cannot certify a rendered layout. The composed browser suite
@@ -98,7 +98,7 @@ module Deploy
       reasons << "zero rendered checks" if leaf.checks_ran.zero?
       return if reasons.empty?
 
-      aggregate.fail("layout_suite: rendered evidence is incomplete — #{reasons.join(', ')}")
+      aggregate.fail("layout_suite: rendered evidence is incomplete - #{reasons.join(', ')}")
     end
 
     # No checked! of its own: a composite measured whatever its leaves
@@ -114,7 +114,7 @@ module Deploy
 
     def run_leaves
       result = CheckResult.new
-      result.warn("coverage0: layout/RenderedSuiteCheck NOT RUN — lane=code; rendered evidence is the visual lane's") if
+      result.warn("coverage0: layout/RenderedSuiteCheck NOT RUN - lane=code; rendered evidence is the visual lane's") if
         leaves.size < LEAVES.size
       leaves.each do |klass|
         name = klass.name.split("::").last

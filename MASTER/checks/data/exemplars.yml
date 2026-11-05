@@ -1,5 +1,5 @@
 # Structural exemplars for design skill scoring (P3).
-# Not pixel clones of Newegg/Hinge/Jodel — document-order + marker grammar
+# Not pixel clones of Newegg/Hinge/Jodel - document-order + marker grammar
 # that encode "what good looks like" for each dialect.
 #
 # score: points awarded when pattern matches (max per exemplar = sum of parts)
@@ -106,7 +106,7 @@ exemplars:
       # catalogue is still a catalogue region. order_ok? fails a step it cannot
       # find, so on a checkout with no listings the marketplace rendered its
       # empty state and this required part reported the page as structurally
-      # broken — an empty database read as a defect, and the live probe has been
+      # broken - an empty database read as a defect, and the live probe has been
       # red on it. empty-state-title rather than empty-state, because the
       # wrapper class also appears in chrome that can precede the nav.
       - id: nav_before_grid
@@ -133,7 +133,7 @@ exemplars:
 # Page-level visual quality rubric (HTML structure; not pixel baseline).
 quality:
   # 100, on the operator's instruction of 2026-09-12: every Rails surface scores
-  # full marks on every design measure, no exception. All ten do today — brgen
+  # full marks on every design measure, no exception. All ten do today - brgen
   # and its six verticals, amber and bsdports, measured live.
   #
   # A target equal to the maximum means the first point lost is a failure, which

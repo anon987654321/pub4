@@ -6,7 +6,7 @@ routes:
   "/":
     status: 200
     type: text/html
-    title: Oversikt — Amber
+    title: Oversikt - Amber
     heading: Fire antrekk fra garderoben
     landmarks:
     - header
@@ -123,7 +123,7 @@ routes:
   "/cookies":
     status: 200
     type: text/html
-    title: Informasjonskapsler — Amber
+    title: Informasjonskapsler - Amber
     heading: Informasjonskapsler på N.N.N.N
     landmarks:
     - header
@@ -155,7 +155,7 @@ routes:
   "/demo":
     status: 200
     type: text/html
-    title: Demogarderobe — Amber
+    title: Demogarderobe - Amber
     heading: Demogarderobe
     landmarks:
     - header
@@ -207,7 +207,7 @@ routes:
   "/messages":
     status: 200
     type: text/html
-    title: Meldinger — Amber
+    title: Meldinger - Amber
     heading: Meldinger
     landmarks:
     - header
@@ -237,7 +237,7 @@ routes:
   "/notifications":
     status: 200
     type: text/html
-    title: Varsler — Amber
+    title: Varsler - Amber
     heading: Varsler
     landmarks:
     - header
@@ -335,7 +335,7 @@ routes:
   "/privacy":
     status: 200
     type: text/html
-    title: Personvern — Amber
+    title: Personvern - Amber
     heading: Personvern hos N.N.N.N
     landmarks:
     - header
@@ -385,7 +385,7 @@ routes:
   "/safety":
     status: 200
     type: text/html
-    title: Sikkerhet — Amber
+    title: Sikkerhet - Amber
     heading: Din sikkerhet
     landmarks:
     - header
@@ -432,7 +432,7 @@ routes:
   "/terms":
     status: 200
     type: text/html
-    title: Vilkår — Amber
+    title: Vilkår - Amber
     heading: Vilkår for N.N.N.N
     landmarks:
     - header

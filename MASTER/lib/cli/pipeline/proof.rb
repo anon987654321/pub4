@@ -36,7 +36,7 @@ module Master
         # skips it.
         PROOF_ENV = "MASTER_IN_PROOF"
 
-        # runner.rb exits 3 when no check failed and some measured nothing — off
+        # runner.rb exits 3 when no check failed and some measured nothing - off
         # the deploy host that is deploy_drift's stamps, and the rendered half
         # when Chrome or the apps are absent. A normal contribution check may
         # report that state without blocking, but /fix cannot call an unmeasured
@@ -208,7 +208,7 @@ module Master
           known = narrow_known(abs, baseline)
           tests = known && Affected.tests_for(repair_paths)
           _name, runner = tests ? affected_runner(tests) : proof_runner(abs)
-          return ["proof", "no proof command for #{shell_target(abs)} — nothing registered"] unless runner
+          return ["proof", "no proof command for #{shell_target(abs)} - nothing registered"] unless runner
 
           narrow = known && (tests || baseline.nil?)
           judge = narrow ? ->(r) { Affected.judge(r, known) } : ->(r) { Proof.judge(r, baseline) }
@@ -347,8 +347,8 @@ module Master
           shown.join("\n") unless shown.empty?
         end
 
-        # What the repair left uncommitted — mostly the observation's
-        # mechanical autofix — goes out once the proof holds, as one commit
+        # What the repair left uncommitted - mostly the observation's
+        # mechanical autofix - goes out once the proof holds, as one commit
         # scoped to the target's tree and carrying the proof's verdict. In the
         # shared checkout only the autofix's own writes go, matched by content.
         def deliver_leftovers(abs, verdict)

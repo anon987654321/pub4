@@ -4,15 +4,15 @@ require_relative "test_helper"
 
 # Which autofixes may run unattended, and which wait for a person.
 #
-# Four rules declare a transform. Three add — a lang attribute, a loading
-# attribute, a trailing comma — and a wrong one is visible in the diff it makes.
+# Four rules declare a transform. Three add - a lang attribute, a loading
+# attribute, a trailing comma - and a wrong one is visible in the diff it makes.
 # remove_immediate_dead_code takes code out, and a wrong deletion is invisible to
 # anyone who does not already know what stood there.
 #
 # The check this replaces could never refuse anything. Its thresholds were keyed
 # null_usage, abbreviation and nesting_depth, which name no rule in the catalogue
 # and no transform in the tree, so the lookup missed every time and the method
-# answered true for every rule on every run — under a backlog entry recording
+# answered true for every rule on every run - under a backlog entry recording
 # that an unattended autofix pass corrupts code.
 class TestAutofixSafetyTier < Minitest::Test
   def setup
@@ -31,7 +31,7 @@ class TestAutofixSafetyTier < Minitest::Test
   end
 
   # Confidence answers whether the rule found the thing, never whether fixing it
-  # is safe, and Fix::RepairLoop reads an absent score as 1.0 — so a threshold
+  # is safe, and Fix::RepairLoop reads an absent score as 1.0 - so a threshold
   # waves through exactly the deterministic findings nobody scored. The tier has
   # to read the transform.
   def test_perfect_confidence_does_not_buy_a_deletion

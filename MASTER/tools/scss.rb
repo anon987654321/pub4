@@ -125,7 +125,7 @@ module Operator
       parts.map(&:strip).reject(&:empty?)
     end
 
-    # The source with every comment blanked — spaces, newlines kept — so a
+    # The source with every comment blanked - spaces, newlines kept - so a
     # check that reads lines still names the right one. url(), strings and
     # interpolations are protected: `url(https://host)` and `"//"` keep their
     # slashes, and a hex or a banned colour inside prose is prose, not paint.

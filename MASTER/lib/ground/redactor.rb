@@ -258,7 +258,7 @@ module Master
         text = value.to_s
         return text if STRING_LENGTH.bind(text).call <= DMESG_MAX
 
-        "#{STRING_SLICE.bind(text).call(0, DMESG_MAX)}…"
+        "#{STRING_SLICE.bind(text).call(0, DMESG_MAX)}..."
       end
 
       def self.public_error_message

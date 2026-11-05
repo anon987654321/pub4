@@ -59,7 +59,6 @@ module Master
           TRAILING_COMMAS
           TRAILING_COMMENT
           TRANSFORM_KEYS
-          TYPOGRAPHIC_EXCELLENCE
         ].freeze
 
         Bucket = Data.define(:name, :findings)

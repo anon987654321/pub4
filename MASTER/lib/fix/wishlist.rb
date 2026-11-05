@@ -42,7 +42,7 @@ module Master
       end
 
       def call(state:, target:, run_id:)
-        return "wishlist: skipped — no model" unless @agent.respond_to?(:ask)
+        return "wishlist: skipped - no model" unless @agent.respond_to?(:ask)
 
         orientation = Master::AI::Orientation.render(root: @root, target:, depth: 2, max_entries: 80)
         base = prompt(orientation:, state:, target:, run_id:)
@@ -64,7 +64,7 @@ module Master
           target: relative(target),
           state:,
         )
-        "wishlist: drafted #{items.size}, queued #{queued} → #{LEDGER_PATH}"
+        "wishlist: drafted #{items.size}, queued #{queued} -> #{LEDGER_PATH}"
       rescue StandardError => e
         @bus&.publish("wishlist:error", error: e.message, state:, target:)
         "wishlist: #{e.class}: #{e.message}"

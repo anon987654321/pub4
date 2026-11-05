@@ -27,7 +27,7 @@ module Deploy
         # _tab_bar.html.erb was listed here and has never existed in this tree;
         # read_app_file returns "" for a missing file, so the list has been one
         # third decorative. It is gone, and missing entries now fail rather than
-        # read as an empty file — see verify_listed_partials!. _ai_nav_link and
+        # read as an empty file - see verify_listed_partials!. _ai_nav_link and
         # the layout are both reached by resolve_rendered_partials now, so the
         # list is empty rather than restating them.
         nav_partials: [],
@@ -118,7 +118,7 @@ module Deploy
     # go stale in the direction of passing: splitting brgen's layout moved the
     # mobile tab bar and its sheet into shared/_mobile_chrome, and four of the
     # five mobile-tab markers were still found in the layout while the fifth was
-    # not — a check reporting one missing label for a page that had lost none of
+    # not - a check reporting one missing label for a page that had lost none of
     # them. The blindness is the same shape as the four scanners that stopped
     # seeing 57 views when the verticals became engines.
     #
@@ -128,7 +128,7 @@ module Deploy
     # _mobile_chrome, and _mobile_chrome renders _ai_nav_link, so the AI tab sat
     # two hops out and the check reported a missing label for a tab bar that has
     # it. That is the same false negative the note above describes, one hop
-    # further along — the chrome moved, and the check followed it only as far as
+    # further along - the chrome moved, and the check followed it only as far as
     # the first move.
     #
     # It stops at two, and the bound is what keeps the check meaningful: a

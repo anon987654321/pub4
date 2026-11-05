@@ -25,10 +25,10 @@ module Master
       }.freeze
 
       MOOD_LINES = {
-        tense: "Mood: tense — error rate elevated. Be conservative; verify before asserting.",
-        weary: "Mood: weary — fatigue high. Cut non-essential elaboration; defer deep dives.",
-        curious: "Mood: curious — novelty hunger. Explore lateral framings when warranted.",
-        focused: "Mood: focused — drives at setpoint. Default depth and tier.",
+        tense: "Mood: tense - error rate elevated. Be conservative; verify before asserting.",
+        weary: "Mood: weary - fatigue high. Cut non-essential elaboration; defer deep dives.",
+        curious: "Mood: curious - novelty hunger. Explore lateral framings when warranted.",
+        focused: "Mood: focused - drives at setpoint. Default depth and tier.",
       }.freeze
 
       PHASE_LINES = {

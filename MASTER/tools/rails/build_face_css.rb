@@ -49,7 +49,7 @@ module MasterFaceStylesheet
     if check
       return true if actual == expected
 
-      warn "face_css: public/face.css differs from ordered source modules — run ruby MASTER/tools/rails/build_face_css.rb"
+      warn "face_css: public/face.css differs from ordered source modules - run ruby MASTER/tools/rails/build_face_css.rb"
       return false
     end
 

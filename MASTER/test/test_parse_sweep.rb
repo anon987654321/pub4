@@ -10,8 +10,8 @@ class TestParseSweep < Minitest::Test
   # them is a syntax error that stops MASTER booting.
   MISSING_COMMA = <<~RUBY
     HELP = [
-      "/chat quit — disconnect."
-      "/chat summarize — ask the model.",
+      "/chat quit - disconnect."
+      "/chat summarize - ask the model.",
     ].freeze
   RUBY
 

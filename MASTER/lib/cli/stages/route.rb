@@ -5,7 +5,7 @@ require_relative "../destructive_routes"
 module Master
   module CLI
     module Stages
-      # Route — attach the correct handler to the context.
+      # Route - attach the correct handler to the context.
       # :command looks up registered command. :llm uses the agent.
       class Route
         # The two words help lists. A one-letter alias ends the session on a typo
@@ -35,7 +35,7 @@ module Master
           unless cmd
             suggestion = closest_command(ctx.command)
             error_message = "unknown command: /#{ctx.command}"
-            error_message += " — did you mean /#{suggestion}?" if suggestion
+            error_message += " - did you mean /#{suggestion}?" if suggestion
             return Result.err(error_message, category: :validation)
           end
           destructive = DestructiveRoutes.destructive_command?(ctx.command)
@@ -50,7 +50,7 @@ module Master
         #
         # Before distance is measured at all, a shared stem wins: /movie and
         # /movs are spellings of /mov, not neighbours of /fix and /ios. An
-        # old suggestion paired /mov with /ios — two edits apart — because the
+        # old suggestion paired /mov with /ios - two edits apart - because the
         # bar did not scale with the word's length, and distance alone cannot
         # tell a stem from a slip.
         def closest_command(name)

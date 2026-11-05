@@ -7,22 +7,22 @@ require_relative "../../support/check_result"
 module Deploy
   # Every exemption row in the craft ledger carries a review_by date, and until
   # this check existed that date was a human obligation: nothing failed when it
-  # passed. The ledger's own header said so — "a stale_exemptions-style reader
+  # passed. The ledger's own header said so - "a stale_exemptions-style reader
   # is future work on a Ruby host". This is that reader, moved from obligation
   # to enforcement. It reads the ledger and the law files; it grants nothing
   # and skips nothing, exactly as the ledger's boundary #2 states: each Law's
   # path_exclude in data/laws.yml law_catalogue.entries decides what scanners skip.
   #
   # A row hard-fails when its review date has passed (the re-argument is
-  # overdue — re-argue it or retire the exemption), when a promised field is
+  # overdue - re-argue it or retire the exemption), when a promised field is
   # missing or its date is unparseable (an exemption without a date can never
   # expire, so it never gets re-argued), or when its law id names no
   # Law.define in any executable law file (the row documents an excuse whose
-  # law no longer exists — dead evidence). A row warns when its law id is not
+  # law no longer exists - dead evidence). A row warns when its law id is not
   # a top-level key of the canonical catalogue: AGENTS.md records that the
   # catalogue-to-executable mapping is still being reconciled through
   # LawRegistryAudit, so a catalogue absence is a known gap class, not a dead
-  # row — the marker in law/ is what enforces. A row due within thirty days
+  # row - the marker in law/ is what enforces. A row due within thirty days
   # warns, so the review lands on an operator calendar before it becomes a
   # failure. A missing ledger file is incomplete, never silently green.
   class ExemptionFreshnessCheck
@@ -52,13 +52,13 @@ module Deploy
 
       ledger = YAML.safe_load_file(@ledger_path)
       unless ledger.is_a?(Hash)
-        return result.fail("exemption_freshness: #{display(@ledger_path)} is not a mapping — schema drift")
+        return result.fail("exemption_freshness: #{display(@ledger_path)} is not a mapping - schema drift")
       end
 
       exemptions = ledger["exemptions"]
       exemptions = [] if exemptions.nil?
       unless exemptions.is_a?(Array)
-        return result.fail("exemption_freshness: ledger exemptions section is not a list — schema drift")
+        return result.fail("exemption_freshness: ledger exemptions section is not a list - schema drift")
       end
 
       return result.checked!(0) if exemptions.empty?
@@ -79,7 +79,7 @@ module Deploy
 
       missing = REQUIRED_FIELDS.reject { |field| row[field].to_s.strip.length.positive? }
       unless missing.empty?
-        result.fail("exemption_freshness: #{label} is missing #{missing.join(', ')} — an exemption without these can never be re-argued")
+        result.fail("exemption_freshness: #{label} is missing #{missing.join(', ')} - an exemption without these can never be re-argued")
         return
       end
 
@@ -91,18 +91,18 @@ module Deploy
 
       days = (due - today).to_i
       if days.negative?
-        result.fail("exemption_freshness: #{label} review was due #{due} (#{-days} days overdue) — re-argue the exemption against its law or retire it")
+        result.fail("exemption_freshness: #{label} review was due #{due} (#{-days} days overdue) - re-argue the exemption against its law or retire it")
       elsif days <= WARN_WINDOW_DAYS
-        result.warn("exemption_freshness: #{label} review due #{due} — put it on an operator calendar now")
+        result.warn("exemption_freshness: #{label} review due #{due} - put it on an operator calendar now")
       end
 
       law_id = row["law"].to_s
       unless markers.include?(law_id)
-        result.fail("exemption_freshness: #{label} names law #{law_id}, which no executable law file declares — the row documents an excuse that no longer exists")
+        result.fail("exemption_freshness: #{label} names law #{law_id}, which no executable law file declares - the row documents an excuse that no longer exists")
       end
 
       return if catalogue_keys.include?(law_id)
-        result.warn("exemption_freshness: #{label} law #{law_id} is not a catalogue key in #{display(@catalogue_path)} — a known reconciliation gap (LawRegistryAudit), the marker in law/ is what enforces")
+        result.warn("exemption_freshness: #{label} law #{law_id} is not a catalogue key in #{display(@catalogue_path)} - a known reconciliation gap (LawRegistryAudit), the marker in law/ is what enforces")
 
     end
 

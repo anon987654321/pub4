@@ -56,9 +56,9 @@ module Master
       # Kernel::ConvergenceAdapter owns convergence; this adapter repairs one batch per call.
       #
       # Fix routing (per violation severity + file size):
-      #   error tier  → council_fix   (3-reviewer veto before apply)
-      #   large file  → diff_fix      (unified diff patch; arch #5)
-      #   small file  → genetic_fix   (N candidates, rescan, best wins; arch #9)
+      #   error tier  -> council_fix   (3-reviewer veto before apply)
+      #   large file  -> diff_fix      (unified diff patch; arch #5)
+      #   small file  -> genetic_fix   (N candidates, rescan, best wins; arch #9)
       class RepairAdapter
         RATE_LIMIT_SLEEP = 10
         MAX_FIX_RETRIES = 2
@@ -143,7 +143,7 @@ module Master
           @injected_preamble = text
         end
 
-        # One pass: scan → fix each violating file once → return { fixed:, status: }.
+        # One pass: scan -> fix each violating file once -> return { fixed:, status: }.
         # External findings are used by rendered and convergence evidence, which
         # has already measured the artifact and therefore must not be rescanned
         # through a registry rule that knows nothing about that evidence.
@@ -223,7 +223,7 @@ module Master
         # Returns one outcome symbol per violation, never a bare boolean: the
         # 2026-08-19 proof run reported `fixed=0` for 33 minutes with nothing in
         # the log saying whether proposals never arrived, died in reflexion, or
-        # were rejected on re-scan — every non-apply collapsed to `false` before
+        # were rejected on re-scan - every non-apply collapsed to `false` before
         # the one line anyone reads. The tally of these symbols is that line.
         #
         # One repair, and when the verifier refuses it for a reason the model can act on, one
@@ -312,7 +312,7 @@ module Master
           commit_applied_fix(violation)
         end
 
-        # One fix, one commit, one push — before the next violation is touched.
+        # One fix, one commit, one push - before the next violation is touched.
         # The stage-end commit stays as the net for a fix whose own commit was
         # refused (a hook veto, a push that lost a race): the fix is applied, so
         # it must not be reported as though nothing landed, but it is also not

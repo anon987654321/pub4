@@ -4,7 +4,7 @@
 #
 # Fix::SelfCheck and rake constitution scanned File.join(root, "lib"). core/ sat
 # beside lib/ from 2026-07-20 to 2026-08-12, so the six files that judge every
-# effect were the only files in the tree exempt from the law they enforce — and
+# effect were the only files in the tree exempt from the law they enforce - and
 # every check stayed green throughout. The engines migration is the same defect:
 # four scanners stopped seeing 57 views and the falling lint baseline read as
 # improvement rather than blindness.
@@ -23,7 +23,7 @@ class TestScanCoverage < Minitest::Test
   end
 
   def test_every_ruby_tree_is_scanned_or_exempt_with_a_reason
-    findings = @report["findings"].map { |row| "#{row['kind']}: #{row['dir']} — #{row['message']}" }
+    findings = @report["findings"].map { |row| "#{row['kind']}: #{row['dir']} - #{row['message']}" }
 
     assert_empty findings,
                  "add the directory to scan_coverage.roots, or to scan_coverage.exempt with the " \
@@ -45,14 +45,14 @@ class TestScanCoverage < Minitest::Test
     code = File.readlines(File.expand_path("../lib/fix/self_check.rb", __dir__))
                .grep_v(/^\s*#/).join
     refute_includes code, 'File.join(@root, "lib")',
-                    "SelfCheck went back to a hardcoded lib/ — that is the original defect"
+                    "SelfCheck went back to a hardcoded lib/ - that is the original defect"
   end
 
   # Coverage that silently drops to nothing passes every "no findings" check
   # there is. Assert the floor, not just the absence of failures.
   def test_the_scan_actually_reaches_the_runtime
     assert_operator @report["covered"].values.sum, :>, 300,
-                    "the scanned roots hold #{@report['covered'].values.sum} files — " \
+                    "the scanned roots hold #{@report['covered'].values.sum} files - " \
                     "coverage collapsed, which reads as a clean check"
     assert_includes @report["covered"].keys, "lib"
   end
@@ -65,7 +65,7 @@ class TestScanCoverage < Minitest::Test
     assert_operator spine.size, :>=, 6, "the fold spine glob matched #{spine.size} files"
     spine.each do |path|
       assert roots.any? { |root| path.start_with?("#{root}/") },
-             "#{path} is outside every scanned root — the fold is exempt from its own law again"
+             "#{path} is outside every scanned root - the fold is exempt from its own law again"
     end
   end
   # bin/ held check, check, pub4 and master and appeared in neither list, and this

@@ -16,7 +16,7 @@ module Deploy
 
     # Derived, not declared. This table held playlist.<apex> for a day after
     # RADIO_SUBDOMAINS renamed the host, because a rename sweeping literal
-    # hostnames cannot see one built by interpolation — so the check autofixed the
+    # hostnames cannot see one built by interpolation - so the check autofixed the
     # inventory onto a host that 404s and then failed against its own fix.
     # BrgenVerticalSurfaces owns the reader; it is the file whose header declares
     # the "hosts must match DomainRegistry" invariant, and the lighter of the two
@@ -25,7 +25,7 @@ module Deploy
     VERTICAL_HOSTS = {
       "dating" => "#{BrgenVerticalSurfaces.registry_subdomain('DATING_SUBDOMAINS')}.#{APEX}",
       # The one translated subdomain, so it stays written out: it comes from the
-      # city row rather than a flat constant — markedsplass here, marknadsplats
+      # city row rather than a flat constant - markedsplass here, marknadsplats
       # in Stockholm. Every other vertical is the same word in every city.
       "marketplace" => "markedsplass.#{APEX}",
       "playlist" => "#{BrgenVerticalSurfaces.registry_subdomain('RADIO_SUBDOMAINS')}.#{APEX}",
@@ -85,7 +85,7 @@ module Deploy
       { id: "master/offline", view: "RAILS/master/public/offline.html", path: "/offline.html", persona: "guest" },
     ].freeze
 
-    # Guest-open bsdports catalogue paths (family completeness — CRT dialect).
+    # Guest-open bsdports catalogue paths (family completeness - CRT dialect).
     BSDPORTS_LIVE = [
       { id: "bsdports/home", path: "/", persona: "guest" },
       { id: "bsdports/ports", path: "/ports", persona: "guest" },
@@ -111,12 +111,12 @@ module Deploy
     # than no manifest: it resolves confidently and wrongly. page_simulation
     # reports this so regenerating stays a step someone takes, not one they forget.
     def stale_route_manifests
-      return ["route_manifest: manifest missing at #{MANIFEST_PATH} — run route manifest generator"] unless File.file?(MANIFEST_PATH)
+      return ["route_manifest: manifest missing at #{MANIFEST_PATH} - run route manifest generator"] unless File.file?(MANIFEST_PATH)
       (manifest["apps"] || {}).filter_map do |app, row|
         live = RouteManifest.digest(app)
         next if live == row["digest"]
 
-        "route_manifest: #{app} digest #{row['digest']} != #{live} — " \
+        "route_manifest: #{app} digest #{row['digest']} != #{live} - " \
           "run `ruby MASTER/tools/rails/generate_route_manifest.rb #{app}`"
       end
     rescue StandardError => e
@@ -157,7 +157,7 @@ module Deploy
     end
 
     # One row per host app, because the engine's view is a different page in each
-    # — and an app keeping its own copy of a shared view renders that copy, so the
+    # - and an app keeping its own copy of a shared view renders that copy, so the
     # row must grade the file Rails resolves, not the shared original underneath.
     def shared_pages
       SHARED_PAGES.flat_map do |parts, row|
@@ -186,7 +186,7 @@ module Deploy
       candidate if File.exist?(candidate)
     end
 
-    # A shared page nobody declared is a page no simulation ever loads — which is how
+    # A shared page nobody declared is a page no simulation ever loads - which is how
     # /account/export and /notifications both reached production answering 500.
     def uncovered_shared_views
       declared = SHARED_PAGES.keys + SHARED_VIEWS_WITHOUT_ROUTE
@@ -361,7 +361,7 @@ module Deploy
     def guest_open_brgen?(path, rel)
       return false if rel.match?(%r{\Aadmin/|activity_events|notifications|saved_searches|matches|profiles/edit|orders/})
       return false if path.end_with?("/edit")
-      # Nested create forms need a channel/resource id — not guest-liveable as bare paths
+      # Nested create forms need a channel/resource id - not guest-liveable as bare paths
       return false if path.include?("/channels/:slug/")
 
       return true if GUEST_AUTHORING_PATHS.include?(path)
@@ -388,7 +388,7 @@ module Deploy
         p.except(:abs_view).transform_keys(&:to_s)
       end
       File.write(path, {
-        "generated_note" => "Snapshot of Deploy::PageInventory.all — regenerate via page_simulation check",
+        "generated_note" => "Snapshot of Deploy::PageInventory.all - regenerate via page_simulation check",
         "count" => rows.size,
         "pages" => rows,
       }.to_yaml)

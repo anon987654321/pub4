@@ -6,7 +6,7 @@ module Master
     # spelling each provider uses:
     #
     #   agy          "Individual quota reached ... Resets in 165h22m49s"
-    #   claude CLI   "You've hit your session limit · resets 5pm (Europe/Oslo)"
+    #   claude CLI   "You've hit your session limit - resets 5pm (Europe/Oslo)"
     #   HTTP         "429 ... Retry-After: 30", or a bare 429
     #   ollama       "ollama unreachable at http://localhost:11434: Connection refused"
     #   expired auth "401 Unauthorized", "Please run /login"

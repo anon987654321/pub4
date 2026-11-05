@@ -12,7 +12,7 @@ module Master
       end
 
       # law/definition.rb proves ~118 rule fixtures at load, so it is required lazily
-      # by whoever first needs Law::Contract rather than eagerly at boot — the
+      # by whoever first needs Law::Contract rather than eagerly at boot - the
       # same idiom lib/ground/laws.rb and every other Law caller in this tree
       # already follows.
       def self.ensure_law!
@@ -37,7 +37,7 @@ module Master
         def require!
           return true unless enabled?
           return true if admitted?
-          raise SecurityError, "constitutional admission expired — executable law digest changed"
+          raise SecurityError, "constitutional admission expired - executable law digest changed"
         end
         def digest = @digest
       end

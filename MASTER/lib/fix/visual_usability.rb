@@ -25,7 +25,7 @@ module Master
           "#{id}: #{summary_for(id, entry)}"
         end
         [
-          "CANONICAL UNIVERSAL LAW CATALOGUE — #{rows.length} Laws from MASTER/data/laws.yml##{CATALOGUE_SECTION}.",
+          "CANONICAL UNIVERSAL LAW CATALOGUE - #{rows.length} Laws from MASTER/data/laws.yml##{CATALOGUE_SECTION}.",
           "Every listed Law must be considered for this rendered surface and its interactions. Do not filter by programming language, source file type, or whether it has a deterministic detector. Apply the same underlying invariant to implementation, prose, imagery, layout, states, and behavior. If the rendered evidence cannot establish a verdict, report INCONCLUSIVE instead of omitting the Law.",
           *rows,
         ].join("\n")
@@ -54,7 +54,7 @@ module Master
         end
         summary = "Universal requirement; use the canonical Law definition and evidence." if summary.empty?
         normalized = summary.gsub(/\s+/, " ").strip
-        normalized.length > SUMMARY_LIMIT ? "#{normalized[0, SUMMARY_LIMIT - 1]}…" : normalized
+        normalized.length > SUMMARY_LIMIT ? "#{normalized[0, SUMMARY_LIMIT - 1]}..." : normalized
       end
 
       def catalogue

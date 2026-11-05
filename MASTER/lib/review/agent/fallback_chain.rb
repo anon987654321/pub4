@@ -144,7 +144,7 @@ module Master
         # Every model was skipped before it was asked: say which and why.
         def unanswered(stage_warnings)
           skipped = stage_warnings.grep(/\Askipped /).first(3)
-          Result.err("#{["no live model available", *skipped].join("; ")} — /model list or /doctor", category: :offline)
+          Result.err("#{["no live model available", *skipped].join("; ")} - /model list or /doctor", category: :offline)
         end
 
         # Re-read the live route after a failed provider. A model may disappear

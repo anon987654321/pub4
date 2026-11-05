@@ -287,7 +287,7 @@ module Master
       def orientation_contract
         [
           "judgment: rank changes by causal leverage, not finding volume",
-          "scales: reason local → subsystem → tree → repository → production → human",
+          "scales: reason local -> subsystem -> tree -> repository -> production -> human",
           "equivalence: compare purpose, inputs, outputs, side effects and boundaries, not names",
           "uncertainty: preserve uncertain or contradicted work until a falsifier or measurement resolves it",
           "creative work: preserve identity and invariants; mutate one declared axis at a time",
@@ -298,7 +298,7 @@ module Master
       end
 
       def causality_contract
-        "causality: cause → effect → evidence; a broken handoff is a finding, not permission to guess"
+        "causality: cause -> effect -> evidence; a broken handoff is a finding, not permission to guess"
       end
 
       def falsification_questions(claim)
@@ -418,12 +418,12 @@ module Master
           intelligence contract:
           evidence: separate observation from inference; mark uncertainty instead of filling gaps
           falsification: every material claim names a counterexample and a smallest measurement
-          causality: trace cause → effect across boundaries; flag broken links before mutation
+          causality: trace cause -> effect across boundaries; flag broken links before mutation
           compression: remove semantic repetition while preserving provenance and source references
           routing: choose evidence source before choosing an answer; stale or unavailable evidence is not proof
           humility: contradicted and obsolete evidence stays visible until superseded by newer evidence
           leverage: prioritize changes whose causal reach crosses consumers, boundaries, and contracts
-          scales: local → subsystem → tree → repository → production → human
+          scales: local -> subsystem -> tree -> repository -> production -> human
           equivalence: compare declared purpose, inputs, outputs, side effects and invariants, not names
           creativity: preserve identity and invariants while changing one axis at a time
           teaching: explain the decision at its current scale before expanding outward

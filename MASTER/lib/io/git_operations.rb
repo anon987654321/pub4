@@ -6,7 +6,7 @@ require "pathname"
 
 module Master
   module Io
-    # GitOperations — git wrappers scoped to a repository root.
+    # GitOperations - git wrappers scoped to a repository root.
     class GitOperations
       # A person's yes, typed at a terminal, to committing these sacred paths once. It is the
       # guard's one exception, so `soul approve` commits through the same door as every other
@@ -103,7 +103,7 @@ module Master
         end
 
         # If a fast-forward-only push loses a race, fetch and rebase onto the
-        # remote counterpart of this branch—not @{u}, which may deliberately be
+        # remote counterpart of this branch - not @{u}, which may deliberately be
         # origin/main for a topic branch. Dirty unrelated files remain protected
         # by Git's autostash.
         def rebase_onto_push_target!
@@ -202,7 +202,7 @@ module Master
           lines = out.lines
           return out if lines.size <= limit
 
-          "#{lines.first(limit).join}… #{lines.size - limit} more lines of patch\n"
+          "#{lines.first(limit).join}... #{lines.size - limit} more lines of patch\n"
         end
 
         # Every path that differs from a commit, committed, edited or new, relative to
@@ -227,7 +227,7 @@ module Master
 
           out = from_git(out)
           lines = out.lines
-          lines.size <= limit ? out : "#{lines.first(limit).join}… #{lines.size - limit} more lines of patch\n"
+          lines.size <= limit ? out : "#{lines.first(limit).join}... #{lines.size - limit} more lines of patch\n"
         end
 
         private

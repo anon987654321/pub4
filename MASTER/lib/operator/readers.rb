@@ -14,7 +14,7 @@ module Operator
   #   hash_dig_compat.rb  merged into MASTER/test/test_helper.rb as "its only
   #                       reader". MASTER/tools/dilla/lib/music_gems.rb required it
   #                       by File.expand_path from another tree, inside a
-  #                       `rescue LoadError`, so it did not even raise — dilla
+  #                       `rescue LoadError`, so it did not even raise - dilla
   #                       rendered without coltrane for days.
   #   RepoMap             renamed on a reader count that missed a same-named
   #                       class in a different namespace.
@@ -116,7 +116,7 @@ module Operator
     def classify(line, path)
       # Prose cannot break. A constant named in the old backlog or a README is a
       # record of a decision, not a caller, and counting it as one puts every
-      # well-documented file above the threshold — which would make the number
+      # well-documented file above the threshold - which would make the number
       # at the bottom of this report useless exactly where the repo is at its
       # most careful.
       prose = path.match?(/\.(md|markdown|txt|yml|yaml|json)\z/)
@@ -135,10 +135,10 @@ module Operator
       return(prose ? :mention : :constant) if line.match?(pats[:constant])
       # A test that names the file is the tripwire that fires on delete, even
       # when nothing in the app reaches it. _search_loading has no renderer at
-      # all — its only reference is deploy_checks_contract_test asserting it is
-      # there — and reporting that as an ordinary mention is how it got deleted.
+      # all - its only reference is deploy_checks_contract_test asserting it is
+      # there - and reporting that as an ordinary mention is how it got deleted.
       # The basename only. Matching the bare word here made `def
-      # constitution(sandbox: nil)` a reference to ground/policy/sandbox.rb —
+      # constitution(sandbox: nil)` a reference to ground/policy/sandbox.rb -
       # 54 of them in MASTER's tests, all keyword arguments. A test that names
       # a file spells the filename.
       return :test if path.match?(%r{/(test|spec)/|_test\.rb\z|_spec\.rb\z}) &&

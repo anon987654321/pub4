@@ -42,7 +42,7 @@ module Deploy
     def run
       result = CheckResult.new
       unless GeometryProbe.available?
-        result.inconclusive!("accessibility_tree: no Chrome/Chromium — computed accessibility names not measured")
+        result.inconclusive!("accessibility_tree: no Chrome/Chromium - computed accessibility names not measured")
         return result
       end
 
@@ -54,7 +54,7 @@ module Deploy
 
       unreachable = GeometryProbe.unreachable_apps(surfaces)
       unreachable.each do |app|
-        result.incomplete!("accessibility_tree: #{app} is not listening — its accessibility tree was not measured")
+        result.incomplete!("accessibility_tree: #{app} is not listening - its accessibility tree was not measured")
       end
 
       live = GeometryProbe.reachable(surfaces)
@@ -70,7 +70,7 @@ module Deploy
           label = "#{surface.app}/#{surface.label}/#{surface.viewport}"
           payload = GeometryProbe.walk(cdp, surface)
           unless GeometryProbe.ok?(payload)
-            result.incomplete!("accessibility_tree: #{label} did not render — #{payload["error"] || "HTTP #{payload["status"]}"}")
+            result.incomplete!("accessibility_tree: #{label} did not render - #{payload["error"] || "HTTP #{payload["status"]}"}")
             next
           end
 
@@ -90,7 +90,7 @@ module Deploy
             "accessibility_tree: #{label} has #{unnamed.size} unnamed interactive/image node(s): #{examples}",
           )
         rescue CdpSession::Error => e
-          result.incomplete!("accessibility_tree: #{label} could not be read — #{e.class.name.split("::").last}: #{e.message}")
+          result.incomplete!("accessibility_tree: #{label} could not be read - #{e.class.name.split("::").last}: #{e.message}")
         end
       end
 

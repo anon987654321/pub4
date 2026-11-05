@@ -149,7 +149,7 @@ module Master
         end
       end
 
-      # Runtime map of fossil master.yml principles → live scan rule IDs + operations.
+      # Runtime map of fossil master.yml principles -> live scan rule IDs + operations.
       # Loaded from laws.yml#law_map; enforced by the LawMap self-test and operator map.
       class LawMap
         # Read-only lookups over `laws` by status/tag -- grouped apart

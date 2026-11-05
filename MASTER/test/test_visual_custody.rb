@@ -110,7 +110,7 @@ class TestVisualCustody < Minitest::Test
 
     refute result.ok?
     assert_includes result.message, "visual custody"
-    assert_includes result.message, "nudge: #main-content: x 0→3"
+    assert_includes result.message, "nudge: #main-content: x 0->3"
   end
 
   def test_missing_baseline_is_inconclusive_not_clean

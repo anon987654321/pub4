@@ -61,25 +61,25 @@ module Master
           sleep_interruptibly(@interval)
         end
       rescue StandardError => e
-        report("control0: stopped — #{e.class}: #{e.message}")
+        report("control0: stopped - #{e.class}: #{e.message}")
       end
 
       def cycle
         if (owner = LoopOwner.active)
-          return report("control0: waiting — #{owner.fetch("loop", "loop")} owns the execution slot")
+          return report("control0: waiting - #{owner.fetch("loop", "loop")} owns the execution slot")
         end
         unless LoopOwner.claim("control_plane")
-          return report("control0: waiting — execution slot claimed concurrently")
+          return report("control0: waiting - execution slot claimed concurrently")
         end
 
         begin
-          return report("control0: waiting — working tree is dirty") unless clean?
+          return report("control0: waiting - working tree is dirty") unless clean?
 
           fetch!
           synchronize_refs!
           deploy_if_needed!
         rescue CommandError => e
-          report("control0: failed — #{e.message}")
+          report("control0: failed - #{e.message}")
         ensure
           LoopOwner.release
         end
@@ -138,7 +138,7 @@ module Master
 
         # cycle holds the slot itself, so only a claim that is not this process's means wait.
         owner = LoopOwner.active
-        return report("control0: waiting — #{owner.fetch("loop", "loop")} owns the execution slot") if owner && !LoopOwner.own?(owner)
+        return report("control0: waiting - #{owner.fetch("loop", "loop")} owns the execution slot") if owner && !LoopOwner.own?(owner)
 
         report("control0: deploying #{short(head)} -> master brgen amber bsdports")
         _stdout, stderr, status = run_deploy("zsh", @deploy, "all")

@@ -24,11 +24,11 @@ module Master
         # sudo is not installed on OpenBSD and doas is, so a list holding one and
         # not the other guards the tool this fleet does not run and passes the one
         # it does. On vm23 `/etc/doas.conf` gives dev passwordless root, and dev is
-        # the account a terminal `bin/master` runs as — so a shell effect calling
+        # the account a terminal `bin/master` runs as - so a shell effect calling
         # `doas` is root on the next line. Io::Shell warns on it and the Governor
         # asks a human. The Governor's @auto path used to return ok for the whole
-        # dangerous tier before it reached `needs_human?` — unattended is exactly
-        # when that mattered — and now an unattended dangerous approval is gated
+        # dangerous tier before it reached `needs_human?` - unattended is exactly
+        # when that mattered - and now an unattended dangerous approval is gated
         # behind the persistent allowlist and the per-run budget in limits.yml's
         # `governor:` key, with `needs_human?` still consulted first (Fix::Governor
         # #auto_dangerous_approved?). Denying here still covers the fold's path as
@@ -199,7 +199,7 @@ module Master
         # Ground::Policy was a module holding one method, whose stated goal was
         # "reduce duplication across the *Policy modules". One of the four ever called
         # it, for one string, and the namespace those four now share expresses the
-        # grouping the helper was reaching for. Folded here — which is also what pays
+        # grouping the helper was reaching for. Folded here - which is also what pays
         # for the two lines of nesting this regroup added to each file.
         def brief
           "#{Policy.name}: deny destructive/system commands, ask for pushes/deploy/db/reset, " \

@@ -10,7 +10,7 @@ require_relative "../lib/master"
 # that it returns without doing anything.
 class SourceLoopGuardsSpec < Minitest::Test
   # Constructed with the minimum each requires. The collaborators are nil
-  # because the guard must refuse before anything touches them — if a loop
+  # because the guard must refuse before anything touches them - if a loop
   # reaches for a scanner it was never given, that is the same defect.
   GUARDED = [
     ["MASTER_HEARTBEAT", -> { Master::Fix::Heartbeat.new(root: Master::ROOT).start! }],
@@ -51,13 +51,13 @@ class SourceLoopGuardsSpec < Minitest::Test
                      "#{var} unset and #{spawned} background thread(s) started anyway"
         reached += 1
       rescue Timeout::Error
-        flunk "#{var} unset and the loop ran anyway — the guard does not stop it"
+        flunk "#{var} unset and the loop ran anyway - the guard does not stop it"
       rescue LoadError => e
         # WatchLoop builds its file watcher in initialize, and the backing gem
         # is platform-specific (rb-kqueue on BSD, rb-inotify on Linux), so it
         # cannot be constructed on a Mac at all. That is a host limitation
-        # rather than a guard failure — but it is named, not skipped silently.
-        skip_reason = "#{var}: #{e.message[0, 40]} — platform watcher gem absent on this host"
+        # rather than a guard failure - but it is named, not skipped silently.
+        skip_reason = "#{var}: #{e.message[0, 40]} - platform watcher gem absent on this host"
         warn "source_loop_guards: #{skip_reason}"
       rescue ArgumentError, NoMethodError => e
         flunk "#{var} entry point could not be called: #{e.class} #{e.message}"
@@ -65,11 +65,11 @@ class SourceLoopGuardsSpec < Minitest::Test
     end
 
     assert_operator reached, :>=, 2,
-                    "fewer than two loop guards could be exercised on this host — " \
+                    "fewer than two loop guards could be exercised on this host - " \
                     "the assertion is no longer measuring anything"
   end
 
-  # And the opt-in is a specific value, not merely presence — so `=0` or an
+  # And the opt-in is a specific value, not merely presence - so `=0` or an
   # empty string cannot start a loop by accident.
   def test_a_falsy_value_does_not_count_as_opting_in
     GUARDED.each do |var, entry|

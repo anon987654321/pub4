@@ -6,13 +6,13 @@ require "yaml"
 #
 # port_inventory exists because a file that restates the whole fleet is a second
 # inventory, and this repo has shipped the outage that follows from one drifting.
-# Its own message offers two remedies — read them from apps.yml, or register the
-# file — and until now only the second was possible: apps.yml had a *validator*
+# Its own message offers two remedies - read them from apps.yml, or register the
+# file - and until now only the second was possible: apps.yml had a *validator*
 # and no reader, so every consumer that wanted a port wrote its own map. Three
 # did, and all three were flagged on the same run.
 #
-# So this is the missing half. It is deliberately dependency-free — no
-# CheckResult, no bundle — because its callers include probes and the standalone
+# So this is the missing half. It is deliberately dependency-free - no
+# CheckResult, no bundle - because its callers include probes and the standalone
 # RAILS/test suite, which run under bare ruby outside any app bundle.
 #
 # master, MASTER's face, is an apps.yml app like the others, so `local_urls`
@@ -69,7 +69,7 @@ module Fleet
 
   # The Host header an app answers to, from apps.yml's `domain`. A probe against
   # the loopback carries no host, and production sets config.hosts, so Rails
-  # answers 403 before the app sees the path — a live check that omits this can
+  # answers 403 before the app sees the path - a live check that omits this can
   # pass in development, where the allow list is permissive, and can never pass
   # against the deployed app.
   def public_host(name)
@@ -91,7 +91,7 @@ module Fleet
     ports.transform_values { |p| "http://#{LOOPBACK}:#{p}/" }
   end
 
-  # A named map of surface → URL, where each value is a path appended to that
+  # A named map of surface -> URL, where each value is a path appended to that
   # surface's origin. Written this way so a caller states routes rather than
   # numbers: { "brgen home" => ["brgen", "/"] } and never a literal port.
   def urls(routes)

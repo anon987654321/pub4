@@ -9,7 +9,7 @@ module Deploy
   #
   # This check exists because the failure it catches was invisible to every other
   # one. On 2026-08-12 brgen.no's sitemap listed 1376 posts and 1088 of them were
-  # Latin slugs — /posts/quis-autem-eveniet-sunt-tenetur — while release,
+  # Latin slugs - /posts/quis-autem-eveniet-sunt-tenetur - while release,
   # production, layout_suite and the whole rendered_suite passed. Every check in
   # the tree was reading source, and the defect was entirely in rows. A visitor
   # saw it in one scroll; nothing we ran could.
@@ -18,7 +18,7 @@ module Deploy
   # seeders reintroducing Latin (db/seeds.rb already switched to
   # Brgen::PlausibleContent and says why). The live half is the only thing that
   # can see rows the seeders wrote before that, and it goes through the sitemap
-  # because that is the surface a search engine indexes — the exact place filler
+  # because that is the surface a search engine indexes - the exact place filler
   # does the most damage.
   class ContentHonestyCheck
     ROOT = File.expand_path("../../../..", __dir__)
@@ -69,7 +69,7 @@ module Deploy
         File.read(path).each_line.with_index do |line, i|
           next unless line.match?(FORBIDDEN_SEED_CALL)
 
-          @result.fail("content_honesty: #{rel}:#{i + 1} seeds a post from Faker::Lorem — " \
+          @result.fail("content_honesty: #{rel}:#{i + 1} seeds a post from Faker::Lorem - " \
                        "use Brgen::PlausibleContent")
         end
       end
@@ -78,9 +78,9 @@ module Deploy
 
     def live_sitemap_check
       inv = Inventory.new(root: @root).apps.find { |a| a.name == "brgen" }
-      return @result.inconclusive!("content_honesty: brgen not in inventory — sitemap not probed") unless inv
+      return @result.inconclusive!("content_honesty: brgen not in inventory - sitemap not probed") unless inv
       unless CrawlSupport.port_open?("127.0.0.1", inv.port)
-        return @result.inconclusive!("content_honesty: brgen port closed — sitemap not probed")
+        return @result.inconclusive!("content_honesty: brgen port closed - sitemap not probed")
       end
 
       res = CrawlSupport.fetch("http://127.0.0.1:#{inv.port}/sitemap.xml", host: "brgen.no", timeout: 20)
@@ -98,7 +98,7 @@ module Deploy
 
       # Named, not just counted. A bare number reads as a ratchet to lower;
       # the URLs are what someone has to go and fix.
-      @result.fail("content_honesty: #{latin.size} of #{locs.size} sitemap URLs are Faker filler — " \
+      @result.fail("content_honesty: #{latin.size} of #{locs.size} sitemap URLs are Faker filler - " \
                    "run `rails brgen:latin:rewrite APPLY=1`. First: #{latin.first(3).join(" ")}")
       @result.checked!(locs.size)
     rescue StandardError => e

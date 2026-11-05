@@ -172,7 +172,7 @@ module Operator
     Job = Struct.new(:host, :tree, :budget, :only, :tests, :since, :changes, :files, :omitted, :chosen, keyword_init: true)
 
     def header(job, sha)
-      out = +"# #{job.tree} — source snapshot for another model\n\n"
+      out = +"# #{job.tree} - source snapshot for another model\n\n"
       out << "Pack: tree=#{job.tree} git=#{sha} files=#{job.files.size} inlined=#{job.chosen.size} "
       out << "map_only=#{job.files.size - job.chosen.size} omitted=#{job.omitted.values.sum(&:size)} "
       out << "budget=#{job.budget}"
@@ -194,7 +194,7 @@ module Operator
     def explanation(tree)
       ask = "bin/operator snapshot #{tree} --only=<dir or file>"
       [
-        "One file, sized for a model's context. **Map** lists every file: name [lines] — purpose | what it declares.",
+        "One file, sized for a model's context. **Map** lists every file: name [lines] - purpose | what it declares.",
         "**Source** holds the most important files whole, in priority order (the constitution and entry points",
         "first, then the files others mention, smaller before larger, tests last) until the budget is spent.",
         "A `~` marks a file described in the map only; ask for it with",

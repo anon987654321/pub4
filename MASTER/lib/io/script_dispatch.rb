@@ -10,7 +10,7 @@ require_relative "exec"
 
 module Master
   module Io
-    # Single Open3 entrypoint for MASTER/tools/*.rb scripts (replicate, postpro, …).
+    # Single Open3 entrypoint for MASTER/tools/*.rb scripts (replicate, postpro, ...).
     module ScriptDispatch
       module_function
 

@@ -21,7 +21,7 @@ module Operator
       @results = []
     end
 
-    # The timeout is a hang guard, not a performance budget — a hung step is
+    # The timeout is a hang guard, not a performance budget - a hung step is
     # infinite, so any generous ceiling catches it equally well. Treating it as
     # a budget is how `rake test` at 247s started failing a 360s limit on any
     # machine that was also doing something else, and reported it as

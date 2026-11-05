@@ -16,7 +16,7 @@ APPS = YAML.safe_load_file(File.join(ROOT, "apps.yml")).fetch("apps").filter_map
 end.freeze
 
 def run(label, *command, chdir: ROOT, env: {})
-  puts "ci: #{label} — #{command.join(" ")}"
+  puts "ci: #{label} - #{command.join(" ")}"
   ok = system(env, *command, chdir:)
   return true if ok && $?.success?
 

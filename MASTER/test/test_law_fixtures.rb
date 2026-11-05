@@ -4,8 +4,8 @@
 # reads them.
 #
 # The common failure is a law matching a pattern adjacent to the one it
-# enforces — Time.now for a Time.zone law, an @media condition read as an
-# element width — a false *positive*: the law fires where the law is
+# enforces - Time.now for a Time.zone law, an @media condition read as an
+# element width - a false *positive*: the law fires where the law is
 # satisfied. A rule that carries the case it must not fire on cannot drift that
 # way in silence, which is why `good` matters more here than `bad`.
 #
@@ -43,7 +43,7 @@ class TestLawFixtures < Minitest::Test
       found = findings_for(law, law.good)
       next if found.empty?
 
-      "#{law.id} fired on its good example — #{found.map { |f| f[:message] }.first(2).join('; ')}"
+      "#{law.id} fired on its good example - #{found.map { |f| f[:message] }.first(2).join('; ')}"
     end
 
     assert_empty failures, failures.join("\n")
@@ -52,9 +52,9 @@ class TestLawFixtures < Minitest::Test
   # A harness that silently stops finding Laws passes forever.
   def test_the_harness_still_sees_laws
     assert_operator Master::Review::Scan::LawTree.ids.size, :>, 400,
-                    "only #{Master::Review::Scan::LawTree.ids.size} Laws defined — law/ stopped loading"
+                    "only #{Master::Review::Scan::LawTree.ids.size} Laws defined - law/ stopped loading"
     assert_operator self.class.fixtured.size, :>=, 100,
-                    "only #{self.class.fixtured.size} Laws carry examples — fixtures stopped being read"
+                    "only #{self.class.fixtured.size} Laws carry examples - fixtures stopped being read"
   end
 
   # A `check` Law with no worked example and no test that proves it. This
@@ -63,11 +63,11 @@ class TestLawFixtures < Minitest::Test
     unfixtured = Master::Review::Scan::LawTree.definitions.select { |law| law.check && law.bad.nil? && !law.proved_by }
     ceiling = Master.law("law_ratchets").fetch("fixture_debt").fetch("without_fixtures")
     assert_operator unfixtured.size, :<=, ceiling,
-      "a new check Law without bad/good fixtures — carry the worked examples, the way every Law must: " \
+      "a new check Law without bad/good fixtures - carry the worked examples, the way every Law must: " \
       "#{unfixtured.map(&:id).join(', ')}"
     return unless unfixtured.size < ceiling
 
-    puts "rule_fixture_debt: #{unfixtured.size} < ceiling #{ceiling} — record the new low in data/laws.yml law_ratchets.fixture_debt"
+    puts "rule_fixture_debt: #{unfixtured.size} < ceiling #{ceiling} - record the new low in data/laws.yml law_ratchets.fixture_debt"
   end
 
   # Comment lines are blanked before the scan and a finding keeps the line it is on, so blanking must

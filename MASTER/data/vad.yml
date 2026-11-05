@@ -1,4 +1,4 @@
-# Voice activity detection — single source for Ruby Vad and operator docs.
+# Voice activity detection - single source for Ruby Vad and operator docs.
 # Session and mic capture read these thresholds; do not duplicate in code.
 #
 # backend: auto tries Silero ONNX when model + onnxruntime exist, else energy.

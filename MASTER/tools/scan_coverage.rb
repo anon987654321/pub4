@@ -96,14 +96,14 @@ module Operator
         next if ruby_dirs.include?(dir)
 
         findings << { "kind" => "empty_root", "dir" => dir, "files" => 0,
-                      "message" => "listed as scanned but holds no Ruby — the checks that " \
+                      "message" => "listed as scanned but holds no Ruby - the checks that " \
                                    "read this root are measuring nothing" }
       end
 
       exempt.each do |dir, reason|
         unless File.directory?(File.join(MASTER, dir))
           findings << { "kind" => "stale_exemption", "dir" => dir, "files" => 0,
-                        "message" => "exempt from the scan but no longer exists — an " \
+                        "message" => "exempt from the scan but no longer exists - an " \
                                      "exemption outliving its subject is a hole in a check " \
                                      "nobody can see (soul.yml EXEMPTIONS_EXPIRE)" }
           next
@@ -112,7 +112,7 @@ module Operator
         next unless reason.to_s.strip.empty?
 
         findings << { "kind" => "unreasoned_exemption", "dir" => dir, "files" => ruby_count(dir),
-                      "message" => "exempt with no reason written down — the reason is the " \
+                      "message" => "exempt with no reason written down - the reason is the " \
                                    "part that rots, so it is the part that must be recorded" }
       end
 

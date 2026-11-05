@@ -6,7 +6,7 @@ module Master
   module CLI
     module Scan
       # Live operator surface for /scan: flushed lines, multiphase brief, durable snapshot.
-      # Survives pipe buffering and partial kills — last useful report lands on disk.
+      # Survives pipe buffering and partial kills - last useful report lands on disk.
       module Live
         module_function
 

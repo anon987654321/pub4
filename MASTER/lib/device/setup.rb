@@ -99,7 +99,7 @@ module Master
         return settle(step, entry) if step.ready.call
 
         failures = entry.fetch("failures", 0)
-        return say("#{step.name} stopped after #{failures} failures — delete #{@state_path} to try again") if failures >= MAX_FAILURES
+        return say("#{step.name} stopped after #{failures} failures - delete #{@state_path} to try again") if failures >= MAX_FAILURES
         return say("#{step.name} waits until #{Time.at(entry["retry_at"]).strftime("%H:%M")}") if @clock.call < entry.fetch("retry_at", 0)
 
         say(step.says)
@@ -117,7 +117,7 @@ module Master
 
       def failed(step, failures)
         wait = BACKOFF_S * (2**(failures - 1))
-        say("#{step.name} failed (#{failures} of #{MAX_FAILURES}), next try in #{wait / 3_600} h — #{LOG}")
+        say("#{step.name} failed (#{failures} of #{MAX_FAILURES}), next try in #{wait / 3_600} h - #{LOG}")
         write(step.name.to_s => { "state" => "failed", "failures" => failures, "retry_at" => @clock.call + wait })
       end
 

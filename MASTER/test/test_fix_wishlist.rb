@@ -49,7 +49,7 @@ class TestFixWishlist < Minitest::Test
     agent = RecordingAgent.new(reply)
     result = Master::Fix::Wishlist.new(root: @root, agent:, event_bus: @bus).call(state: "done", target: @root, run_id: "r1")
 
-    assert_equal "wishlist: drafted 3, queued 3 → .master/fix_wishlist.json", result
+    assert_equal "wishlist: drafted 3, queued 3 -> .master/fix_wishlist.json", result
     ledger = JSON.parse(File.read(File.join(@root, ".master", "fix_wishlist.json")))
     assert_equal 3, ledger.fetch("proposals").size
     assert_equal %w[queued queued queued], ledger.fetch("proposals").map { |row| row.fetch("status") }
@@ -64,7 +64,7 @@ class TestFixWishlist < Minitest::Test
     agent = RecordingAgent.new(bad)
     result = Master::Fix::Wishlist.new(root: @root, agent:).call(state: "done", target: @root, run_id: "r2")
 
-    assert_equal "wishlist: drafted 2, queued 2 → .master/fix_wishlist.json", result
+    assert_equal "wishlist: drafted 2, queued 2 -> .master/fix_wishlist.json", result
   end
 
   def test_pending_context_exposes_durable_queue_without_markdown

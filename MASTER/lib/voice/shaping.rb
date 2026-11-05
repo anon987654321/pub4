@@ -106,9 +106,9 @@ module Master
 
         stripped = body.sub(/\A\s*>+\s?/, "")
         heading = stripped.match?(/\A\s*\#{1,6}\s+/)
-        bullet = stripped.match?(/\A\s*(?:[-*+•●▪◦]|\d+[.)])\s+/)
-        stripped = stripped.sub(/\A\s*\#{1,6}\s+/, "").sub(/\A\s*(?:[-*+•●▪◦]|\d+[.)])\s+/, "")
-        stripped = "#{stripped.sub(/[\s:]+\z/, '')}." if (heading || bullet) && !stripped.match?(/[.!?…]\s*\z/)
+        bullet = stripped.match?(/\A\s*(?:[-*+\u2022●▪◦]|\d+[.)])\s+/)
+        stripped = stripped.sub(/\A\s*\#{1,6}\s+/, "").sub(/\A\s*(?:[-*+\u2022●▪◦]|\d+[.)])\s+/, "")
+        stripped = "#{stripped.sub(/[\s:]+\z/, '')}." if (heading || bullet) && !stripped.match?(/[.!?\u2026]\s*\z/)
         "#{stripped}#{ending}"
       end
 
@@ -210,13 +210,13 @@ module Master
       end
 
       def sentences(paragraph)
-        paragraph.split(/(?<=[.!?…])\s+(?=\S)/).map(&:strip).reject(&:empty?)
+        paragraph.split(/(?<=[.!?\u2026])\s+(?=\S)/).map(&:strip).reject(&:empty?)
       end
 
       def pause_after(piece, cfg)
         ms = case piece[-1]
              when "," then number(cfg, "comma_ms", 160)
-             when ";", ":", "—", "–" then number(cfg, "semicolon_ms", 260)
+             when ";", ":", "\u2014", "\u2013" then number(cfg, "semicolon_ms", 260)
              when "?", "!" then number(cfg, "question_ms", 420)
              when "." then number(cfg, "period_ms", 380)
              else number(cfg, "clause_ms", 120)
@@ -236,7 +236,7 @@ module Master
         min = number(cfg, "min_clause_chars", 28).to_i
         return [sentence] if sentence.length <= max
 
-        pieces = sentence.split(/(?<=[,;:—–])\s+/).map(&:strip).reject(&:empty?)
+        pieces = sentence.split(/(?<=[,;:\u2014\u2013])\s+/).map(&:strip).reject(&:empty?)
         merged = pieces.each_with_object([]) do |piece, out|
           if out.any? && (out.last.length < min || piece.length < min) && out.last.length + piece.length < max * 1.4
             out[-1] = "#{out.last} #{piece}"
@@ -277,7 +277,7 @@ module Master
       def split_first(sentence, limit)
         return [sentence, nil] if sentence.length <= limit
 
-        cut = sentence[0, limit + 1].rindex(/[,;:—–.!?]\s/)
+        cut = sentence[0, limit + 1].rindex(/[,;:\u2014\u2013.!?]\s/)
         cut ||= sentence[0, limit + 1].rindex(/\s(?:and|but|which|because|og|men|som|fordi)\s/i)
         return [sentence, nil] if cut.nil? || cut < limit / 3
 

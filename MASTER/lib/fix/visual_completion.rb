@@ -13,7 +13,7 @@ module Master
       # Spelled to match the law catalogue's actual IDs (data/laws.yml); see
       # VisualCustodyBlocking::OPERATOR_OWNED_RULE_IDS for why. A finding's
       # real law_id is never literally "TYPE_SCALE" or "LEADING", so this list
-      # previously could not authorize anything in those categories — the
+      # previously could not authorize anything in those categories - the
       # policy YAML's own allowed_visual_rules still names the old spellings,
       # so this correction alone does not newly authorize autofix; it makes
       # authorized_visual_rule? check against IDs a finding can actually carry.

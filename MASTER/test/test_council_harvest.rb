@@ -22,7 +22,7 @@ class TestCouncilHarvest < Minitest::Test
         files: ["RAILS/apps.yml"],
         feedback: FEEDBACK,
         ideas: { ideas: ["move notes to git", "add a notes linter"],
-                 critiques: ["VERDICT: reject — a linter adds a reader nothing needs"],
+                 critiques: ["VERDICT: reject - a linter adds a reader nothing needs"],
                  final: "move notes to git" },
         cherry: ["move notes to git"],
         root:,

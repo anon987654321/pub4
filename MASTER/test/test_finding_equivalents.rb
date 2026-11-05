@@ -13,8 +13,8 @@ class TestFindingEquivalents < Minitest::Test
   def test_a_rubocop_abc_size_merges_into_abc_size_on_the_same_line
     Dir.mktmpdir do |root|
       rows = [{ law: "ABC_SIZE", file: "a.rb", line: 3, message: "ABC size 52.1 for #call (ratchet 40)" },
-              { law: "rubocop", file: "a.rb", line: 3, message: "rubocop: Metrics/AbcSize — Assignment Branch Condition size is too high." },
-              { law: "rubocop", file: "a.rb", line: 9, message: "rubocop: Metrics/AbcSize — Assignment Branch Condition size is too high." }]
+              { law: "rubocop", file: "a.rb", line: 3, message: "rubocop: Metrics/AbcSize - Assignment Branch Condition size is too high." },
+              { law: "rubocop", file: "a.rb", line: 9, message: "rubocop: Metrics/AbcSize - Assignment Branch Condition size is too high." }]
 
       kept = resolver(root).filter_findings(rows)
 

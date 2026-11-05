@@ -35,7 +35,7 @@ class CalibrationTest < Minitest::Test
   end
 
   def test_false_negative_detection
-    # If human says fail and we force check pass logic — covered by seed bads agreeing
+    # If human says fail and we force check pass logic - covered by seed bads agreeing
     report = @cal.run
     assert report[:false_negatives].empty?, report[:false_negatives].map(&:id).inspect
   end

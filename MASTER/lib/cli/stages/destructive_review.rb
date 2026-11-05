@@ -6,7 +6,7 @@ require_relative "../../review/verdict"
 module Master
   module CLI
     module Stages
-      # DestructiveReview — pre-execute council check for destructive slash commands.
+      # DestructiveReview - pre-execute council check for destructive slash commands.
       class DestructiveReview
         def initialize(deliberation:, event_bus: nil, **_)
           @deliberation = deliberation
@@ -48,7 +48,7 @@ module Master
           return if verdict.pass?
 
           publish_blocked(ctx, verdict.reasons.join(", "))
-          Result.err("review: blocked destructive /#{ctx.command} — #{verdict.reasons.join(", ")}", category: :policy)
+          Result.err("review: blocked destructive /#{ctx.command} - #{verdict.reasons.join(", ")}", category: :policy)
         end
 
         def pre_execute?(ctx)

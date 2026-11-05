@@ -51,8 +51,8 @@ class TestCommandRegistryDispatch < Minitest::Test
   end
 
   def test_help_resolves_exit_aliases_and_normalizes_case
-    assert_match(%r{\A/exit — }, Registry.help_text("exit"))
-    assert_match(%r{\A/quit — }, Registry.help_text("/quit"))
+    assert_match(%r{\A/exit - }, Registry.help_text("exit"))
+    assert_match(%r{\A/quit - }, Registry.help_text("/quit"))
     assert_equal Registry.help_text("fix"), Registry.help_text("Fix")
   end
 

@@ -21,7 +21,7 @@ class StaticSyntaxSpec < Minitest::Test
   end
 
   # One `node --check` process per file, serially, was ~20s of process-spawn
-  # against test_helper's 30s MASTER_TEST_TIMEOUT — green on an idle machine and
+  # against test_helper's 30s MASTER_TEST_TIMEOUT - green on an idle machine and
   # red whenever anything else was running, with the failure reported as
   # "Timeout::ExitException" from inside Open3 rather than as a syntax error,
   # which reads like broken JS. The cost is spawn latency, not parsing, and it

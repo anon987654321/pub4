@@ -114,7 +114,7 @@ module Master
             height = given["height"] || given[:height]
             return { "width" => Integer(width), "height" => Integer(height) } if width && height && width.to_i.positive? && height.to_i.positive?
           end
-          match = @placement.match(/(?:^|[^0-9])(\d{2,5})\s*[x×]\s*(\d{2,5})(?:$|[^0-9])/i)
+          match = @placement.match(/(?:^|[^0-9])(\d{2,5})\s*[x\u00D7]\s*(\d{2,5})(?:$|[^0-9])/i)
           raise ArgumentError, "placement must encode WIDTHxHEIGHT or provide manifest viewport" unless match
 
           { "width" => Integer(match[1]), "height" => Integer(match[2]) }

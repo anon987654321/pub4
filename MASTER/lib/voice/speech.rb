@@ -43,7 +43,7 @@ module Master
       @selftest_mutex = Mutex.new
       @selftest_stamp = nil
       @selftest_blocker = nil
-      # One mutex per pool slot, not one global mutex — ac0146eac serialized
+      # One mutex per pool slot, not one global mutex - ac0146eac serialized
       # synthesis when TtsSupervisor pool_size was 1, so a single mutex was
       # harmless. Pool_size later defaulted to 2 ("for parallel synth"), but
       # the mutex stayed global and silently capped real concurrency at 1
@@ -193,7 +193,7 @@ module Master
 
       # The whole precondition set, asked of the worker instead of restated
       # here. bin/tts-worker also requires rb_edge_tts and faye/websocket, and
-      # listing those in a second place is how the two drift — so --selftest
+      # listing those in a second place is how the two drift - so --selftest
       # proves them by reaching its own exit. Memoised against the worker and
       # the lockfile, because the answer only changes when one of them does.
       def edge_tts_ready?
@@ -340,7 +340,7 @@ module Master
           Shaping.speakable(text)
             .gsub("```", "")
             .gsub("`", "")
-            .gsub(/[•●▪▫◦]/, ". ")
+            .gsub(/[\u2022●▪▫◦]/, ". ")
             .gsub(/[\t\r\n]+/, ". ")
             .gsub(/[*_#>\[\]{}|]/, " "),
         )
@@ -771,7 +771,7 @@ module Master
       #
       # Edge returns a bare neural voice with no shaping of its own, so every
       # decision about how MASTER sounds past the choice of mouth lives in that
-      # chain — and a chain nothing applies is a declaration with no reader, which
+      # chain - and a chain nothing applies is a declaration with no reader, which
       # is this tree's most-recorded defect.
       #
       # The original file survives any failure: no ffmpeg, a bad filter, a zero-byte

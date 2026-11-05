@@ -9,7 +9,7 @@
 #
 #   0  every step ran and passed
 #   1  a step ran and failed
-#   3  a step could not run at all — nothing is claimed about the tree
+#   3  a step could not run at all - nothing is claimed about the tree
 #
 # Usage:
 #   bin/operator premerge              # everything
@@ -194,9 +194,9 @@ end
 if blocked.any?
   # Not a pass. A step that could not run has measured nothing, and reporting
   # that as green is the failure this whole file exists to prevent.
-  puts "premerge: #{blocked.size} step(s) could not run — nothing is claimed for them"
+  puts "premerge: #{blocked.size} step(s) could not run - nothing is claimed for them"
   exit 3
 end
 
-puts "premerge: #{passed} step(s) passed — local premerge checks are green"
+puts "premerge: #{passed} step(s) passed - local premerge checks are green"
 exit 0

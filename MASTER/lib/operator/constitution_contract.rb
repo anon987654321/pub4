@@ -49,8 +49,9 @@ module Operator
       rescue StandardError => e
         issues << "laws: canonical constitution failed validation (#{e.class}: #{e.message})"
       end
-      prose = File.join(@root, "MASTER", "law", "prose.rb")
-      issues << "rules: no Bringhurst reference" unless File.file?(prose) && File.read(prose).include?("Bringhurst")
+      # The typographic Laws credit their source in the Law file that defines them.
+      laws = Dir.glob(File.join(@root, "MASTER", "law", "*.rb"))
+      issues << "rules: no Bringhurst reference" unless laws.any? { |file| File.read(file).include?("Bringhurst") }
       issues.concat(law_issues)
       issues.concat(law_catalogue_issues)
       issues.concat(tree_authority_issues)
@@ -86,7 +87,7 @@ module Operator
       report.assert_catalogue_integrity!
       []
     rescue StandardError => e
-      ["law: catalogue integrity failed — #{e.class}: #{e.message}"]
+      ["law: catalogue integrity failed - #{e.class}: #{e.message}"]
     end
 
     def tree_authority_issues

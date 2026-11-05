@@ -1,4 +1,4 @@
-# Platform/tool idioms — gh, zsh — and intent/research namespaces
+# Platform/tool idioms - gh, zsh - and intent/research namespaces
 # merged from former *_patterns.yml + repo_topic_clusters + prompt_archaeology.
 # Each top-level key is a namespace.
 ---
@@ -783,7 +783,7 @@ closings:
   - "All quiet."
   - "End of stream."
 
-# Merged from former motd.yml — rotating capability spotlight for boot dmesg (S1407).
+# Merged from former motd.yml - rotating capability spotlight for boot dmesg (S1407).
 motd:
   spots:
     - "scan: %{rule_count} rules, constitutional self-test available"
@@ -794,7 +794,7 @@ motd:
     - "core: 7-file fold spine in lib/core/"
     - "synth: say \"improvise\" and it plays, live, until you say \"stop\""
 
-# Merged from former webhooks.yml — webhook ingress: POST /ingress/webhook/:name with
+# Merged from former webhooks.yml - webhook ingress: POST /ingress/webhook/:name with
 # JSON body { "message": "..." }. Example entry:
 # - name: deploy_notify
 #   enabled: false
@@ -807,7 +807,7 @@ webhooks:
     elevated: false
     message: "shared Rails assistant turn"
 
-# Merged from former cron_jobs.yml — cron ingress jobs, trigger via
+# Merged from former cron_jobs.yml - cron ingress jobs, trigger via
 # POST /ingress/cron/:name (Bearer MASTER_INGRESS_TOKEN). Wire system crontab:
 # curl -fsS -X POST -H "Authorization: Bearer $TOKEN" https://ai.brgen.no/ingress/cron/self_test
 cron_jobs:
@@ -869,7 +869,7 @@ auth_profiles:
       priority: 10
       models: []
 
-# Merged from former cli.yml — operator-tunable CLI pacing and diagnostic limits.
+# Merged from former cli.yml - operator-tunable CLI pacing and diagnostic limits.
 cli:
   schema: 1
   idle_sleep_seconds: 60
@@ -884,7 +884,7 @@ cli:
   # Commands that run for minutes and would leave the face looking stuck; the face points to the shell for them.
   face_shell_only: ["/fix", "/scan"]
 
-# Merged from former heartbeat.yml — heartbeat jobs live here. Schedule-based
+# Merged from former heartbeat.yml - heartbeat jobs live here. Schedule-based
 # maintenance outside the heartbeat remains removed. self_test runs as the
 # auto_default standing order (after any source mutation); snapshot is
 # `bin/operator snapshot`; prune_memory and prune_undo have no command.
@@ -919,7 +919,7 @@ heartbeat:
     enabled: false
     description: Paired-workspace pulse. Replies HEARTBEAT_OK when nothing needs a nudge.
 
-# Merged from former vocabulary.yml — sacred user-spoken terms. Historical intent
+# Merged from former vocabulary.yml - sacred user-spoken terms. Historical intent
 # was for scan rules and rename tooling to refuse rewriting these, but no code
 # ever actually enforced that; kept as reference documentation of naming
 # conventions actively used across the codebase, not as an enforced policy.
@@ -933,8 +933,8 @@ operator_playbook:
     - id: relayd_master_health_up
       area: openbsd
       signal: "relayd marks master:53187 empty; HTTPS curl empty reply while local /up works"
-      action: "relayd.conf must check http \"/up\" for master (not \"/\" — face boot is slow). rc.d/master waits up to 30s for /up then rcctl restart relayd."
-      proof: "relayctl show hosts → master active; curl -fsS https://ai.brgen.no/up"
+      action: "relayd.conf must check http \"/up\" for master (not \"/\" - face boot is slow). rc.d/master waits up to 30s for /up then rcctl restart relayd."
+      proof: "relayctl show hosts -> master active; curl -fsS https://ai.brgen.no/up"
 
     - id: relayd_after_master_restart
       area: openbsd
@@ -946,7 +946,7 @@ operator_playbook:
       area: openbsd
       signal: "relayctl show hosts marks backend empty/down while curl http://127.0.0.1:PORT/up returns 200; HTTPS empty reply"
       action: "doas rcctl restart relayd after mass app restarts. Cron runs /usr/local/bin/relayd-watchdog every 5 min to auto-heal stale tables."
-      proof: "relayctl show hosts → all tables active; ruby34 OPENBSD/checks/health_check.rb"
+      proof: "relayctl show hosts -> all tables active; ruby34 OPENBSD/checks/health_check.rb"
 
     - id: resource_guard_shedding
       area: openbsd
@@ -957,7 +957,7 @@ operator_playbook:
     - id: rails_phantom_foreign_keys
       area: rails
       signal: "SQLite no such table main.listings|buyers|likers|orders|menu_items during seed or insert"
-      action: "Never use foreign_key: true alone on namespaced refs — use foreign_key: { to_table: :users } or :marketplace_listings. Run MASTER/checks/runner.rb phantom_foreign_keys."
+      action: "Never use foreign_key: true alone on namespaced refs - use foreign_key: { to_table: :users } or :marketplace_listings. Run MASTER/checks/runner.rb phantom_foreign_keys."
       proof: "ruby MASTER/checks/runner.rb phantom_foreign_keys exits 0"
 
     - id: rails_model_schema_drift
@@ -968,7 +968,7 @@ operator_playbook:
 
     - id: rails_shared_concern_dupes
       area: rails
-      signal: "no such column taggings.post_id — polymorphic taggable expected"
+      signal: "no such column taggings.post_id - polymorphic taggable expected"
       action: "Do not redeclare has_many from Shared concerns (Taggable, Votable, Reactable) on host models."
       proof: "Post model includes Shared::Taggable only once"
 
@@ -1011,7 +1011,7 @@ operator_playbook:
     - id: ship_proof_not_checkboxes
       area: process
       signal: "Backlog marked done but production gaps remain"
-      action: "Ship readiness requires bin/probe repo, per-app bin/ci, health_check.rb, and db:seed — not checkbox files. Fix executable failures only."
+      action: "Ship readiness requires bin/probe repo, per-app bin/ci, health_check.rb, and db:seed - not checkbox files. Fix executable failures only."
       proof: "bin/probe deploy; ruby OPENBSD/checks/health_check.rb on VPS"
 
     - id: post_sync_vps_proof
@@ -1023,19 +1023,19 @@ operator_playbook:
     - id: rails_rcd_canonical_names
       area: openbsd
       signal: "rcctl stop brgen_rails kills brgen on same port; duplicate rc.d scripts"
-      action: "Canonical rc.d names are bare app names (brgen, amber, …). Never rcctl stop *_rails. retire_legacy_rails_rcd in deploy scripts removes stale /etc/rc.d/*_rails."
+      action: "Canonical rc.d names are bare app names (brgen, amber, ...). Never rcctl stop *_rails. retire_legacy_rails_rcd in deploy scripts removes stale /etc/rc.d/*_rails."
       proof: "ls OPENBSD/etc/rc.d/ shows brgen not brgen_rails; grep -r '_rails' OPENBSD returns empty"
 
     - id: master_scan_bundle_exec
       area: deploy
       signal: "OPERATOR.sh --sync-configs aborts: cannot load such file -- zeitwerk"
-      action: "MASTER bin/master must run as dev via bundle34 exec (OPERATOR.sh uses su dev, not su -m — -m keeps HOME=/root). Set MASTER_SCAN_DETERMINISTIC=1 MASTER_SAFE_MODE=1."
+      action: "MASTER bin/master must run as dev via bundle34 exec (OPERATOR.sh uses su dev, not su -m - -m keeps HOME=/root). Set MASTER_SCAN_DETERMINISTIC=1 MASTER_SAFE_MODE=1."
       proof: "su dev -c 'cd MASTER && MASTER_SCAN_DETERMINISTIC=1 bundle34 exec ruby bin/master /scan OPENBSD --depth deep' exits 0"
 
     - id: relayd_csp_overwrites_rails
       area: master_web
       signal: "https://ai.brgen.no shows black screen; curl :53187 has script-src nonce but HTTPS CSP lacks nonce"
-      action: "Do not set Content-Security-Policy in relayd.conf — it replaces Rails headers and breaks nonce-gated inline boot scripts. Keep HSTS and other hardening headers in relayd; let each app own CSP."
+      action: "Do not set Content-Security-Policy in relayd.conf - it replaces Rails headers and breaks nonce-gated inline boot scripts. Keep HSTS and other hardening headers in relayd; let each app own CSP."
       proof: "curl -sI https://ai.brgen.no/ | grep -i content-security shows Rails policy with script-src nonce"
 
     - id: sass_embedded_npm_cache
@@ -1071,7 +1071,7 @@ operator_playbook:
     - id: pf_ssh_not_bruteforce
       area: openbsd
       signal: "Operator assumes SSH lockout is pf bruteforce after rapid reconnects"
-      action: "Tracked pf.conf exempts SSH (pass in quick … port 22) before bruteforce table. Bruteforce is fed by HTTP/HTTPS rate limits only. Lockouts are usually RAM/CPU saturation from parallel SSH or bin/ci — use tmux, one app CI at a time, flush bruteforce only when HTTP wedge suspected."
+      action: "Tracked pf.conf exempts SSH (pass in quick ... port 22) before bruteforce table. Bruteforce is fed by HTTP/HTTPS rate limits only. Lockouts are usually RAM/CPU saturation from parallel SSH or bin/ci - use tmux, one app CI at a time, flush bruteforce only when HTTP wedge suspected."
       proof: "grep 'port 22' OPENBSD/etc/pf.conf shows quick pass before block quick from <bruteforce>"
 
     - id: vps_one_ssh_no_parallel_ci
@@ -1083,36 +1083,36 @@ operator_playbook:
     - id: vps_ci_shared_tree_path
       area: deploy
       signal: "Importmap/RuboCop still run on VPS despite ci.rb fix; postpro resolves to /home/postpro"
-      action: "config/ci.rb requires ../../shared from app/config → /home/<app>/shared (not /home/<app>/app/shared). vps_ci.sh syncs full RAILS/__shared there plus code overlay. Set PUB4_RAILS_ROOT=/home/dev/pub4/RAILS for DeployPaths. Postpro/replicate: Operator::DeployPaths or MASTER/tools/*.rb — never Rails.root/../../postpro alone on copy-tree."
+      action: "config/ci.rb requires ../../shared from app/config -> /home/<app>/shared (not /home/<app>/app/shared). vps_ci.sh syncs full RAILS/__shared there plus code overlay. Set PUB4_RAILS_ROOT=/home/dev/pub4/RAILS for DeployPaths. Postpro/replicate: Operator::DeployPaths or MASTER/tools/*.rb - never Rails.root/../../postpro alone on copy-tree."
       proof: "grep unless vps_host /home/brgen/shared/config/ci.rb; ruby -e 'require \"operator/deploy_paths\"' under brgen app finds /home/dev/pub4/studio/postpro/postpro.rb"
 
     - id: vps_ci_lock_perms
       area: deploy
       signal: "pub4-ci-guard: EACCES on flock or EPERM deleting lock.holder"
-      action: "Lock at /var/db/pub4/ci.lock mode 644 (vps_ci pub4_ensure_ci_lock), taken with flock(2) by CiGuard and OPENBSD/bin/with-ci-lock. Opened read-only, so it does not need to be world-writable. Do not pre-create .holder as root — vps_ci removes stale holder before CI; CiGuard tolerates a holder it cannot write or delete."
+      action: "Lock at /var/db/pub4/ci.lock mode 644 (vps_ci pub4_ensure_ci_lock), taken with flock(2) by CiGuard and OPENBSD/bin/with-ci-lock. Opened read-only, so it does not need to be world-writable. Do not pre-create .holder as root - vps_ci removes stale holder before CI; CiGuard tolerates a holder it cannot write or delete."
       proof: "ls -l /var/db/pub4/ci.lock; zsh OPENBSD/bin/vps_ci.sh brgen exits 0"
 
     - id: git_shared_worktree_commit_scope
       area: process
       signal: "git commit lands unexpected files from a concurrent agent's staged changes in this same working tree (e.g. .master/snapshot.md, unrelated RAILS/ edits riding along with an intended fix)"
-      action: "git add path && git commit only commits the whole index, not just what was just staged — Grok/Codex/other agents share this exact working tree and stage things independently. Before every commit: git status -sb -- <intended files> must show ONLY those files staged. If anything else shows up staged, git reset (unstages everything, keeps the working tree) and re-add only the intended paths, then re-verify before committing."
+      action: "git add path && git commit only commits the whole index, not just what was just staged - Grok/Codex/other agents share this exact working tree and stage things independently. Before every commit: git status -sb -- <intended files> must show ONLY those files staged. If anything else shows up staged, git reset (unstages everything, keeps the working tree) and re-add only the intended paths, then re-verify before committing."
       proof: "git status -sb -- <files> immediately before commit shows no unexpected entries; git log -1 --stat after the commit lists only the intended files"
 
     - id: scanner_finding_comment_vs_code
       area: master
       signal: "rake selftest/constitution flags a pattern (e.g. HTTP/Open3 without bounded timeout, silent catch {}) that only appears in a comment, or inside a build-output copy under web/public/assets"
-      action: "Before fixing the flagged code, read the actual line: check it isn't inside a comment (strip # lines before matching) and isn't a Propshaft-fingerprinted copy under web/public/assets (already excluded via Scanner.skip_path? — reuse that check rather than hand-rolling a new exclusion list). Widen detection regexes narrowly (e.g. \\w*thr\\w*\\.join\\( for a bounded Thread/Process wait) rather than broadly, to avoid introducing new false negatives."
+      action: "Before fixing the flagged code, read the actual line: check it isn't inside a comment (strip # lines before matching) and isn't a Propshaft-fingerprinted copy under web/public/assets (already excluded via Scanner.skip_path? - reuse that check rather than hand-rolling a new exclusion list). Widen detection regexes narrowly (e.g. \\w*thr\\w*\\.join\\( for a bounded Thread/Process wait) rather than broadly, to avoid introducing new false negatives."
       proof: "rake selftest finding count drops for the specific file/law with no behavior change; rake test stays green"
 
     - id: env_isolation_list_incompleteness
       area: master_web
       signal: "a spawned subprocess (tts-worker or any Process.spawn(env, ...) child) resolves against the wrong Gemfile/Gemfile.lock despite an isolation env hash nil'ing named bundler keys"
-      action: "Process.spawn(env, ...) without unsetenv_others: true only clears the keys explicitly listed in that hash — any other bundler-adjacent var (RUBYLIB, BUNDLE_LOCKFILE, a stray marker var) passes through from the caller unfiltered. Diff the actual live env at the spawn point (Falcon's/Rails' full ENV) against the isolation list rather than assuming the named list is complete."
+      action: "Process.spawn(env, ...) without unsetenv_others: true only clears the keys explicitly listed in that hash - any other bundler-adjacent var (RUBYLIB, BUNDLE_LOCKFILE, a stray marker var) passes through from the caller unfiltered. Diff the actual live env at the spawn point (Falcon's/Rails' full ENV) against the isolation list rather than assuming the named list is complete."
       proof: "a one-time diagnostic log at the spawn point (or ps -o command= -p <spawned pid>) shows no leaked BUNDLE_*/RUBYLIB vars beyond the intended isolation set"
 
 skills_registry:
   meta:
-    source: runtime authority — edit this file directly; do not add data/skills/*.md
+    source: runtime authority - edit this file directly; do not add data/skills/*.md
     count: 21
   skills:
   - name: algorithmic-art
@@ -1193,7 +1193,7 @@ skills_registry:
     triggers:
     - "\\bmodel\\b"
     body: |-
-      The model skill switches or inspects the active model for the current session. It responds when the operator asks about the model in use or when a task clearly benefits from a different cost–capability tradeoff.
+      The model skill switches or inspects the active model for the current session. It responds when the operator asks about the model in use or when a task clearly benefits from a different cost-capability tradeoff.
 
       Use the cheapest model that still meets the task, and switch only when the tradeoff is clear. State what changed and why so later turns do not assume a heavier model than necessary.
   - name: process
@@ -1201,7 +1201,7 @@ skills_registry:
     triggers:
     - "\\bprocess\\b"
     body: |-
-      The process skill summarizes MASTER’s current operating state: what is running, what stage a workflow is in, and which subsystems are active. It is triggered on process or when the operator needs a snapshot of runtime behavior rather than repository contents.
+      The process skill summarizes MASTER's current operating state: what is running, what stage a workflow is in, and which subsystems are active. It is triggered on process or when the operator needs a snapshot of runtime behavior rather than repository contents.
 
       Keep operational output compact enough to scan in one glance. Lead with the facts that unblock the next action and omit narrative filler.
   - name: propose-tree
@@ -1284,10 +1284,10 @@ skills_registry:
 
       Prefer direct file references and current state over memory or theory. Point to the code, config, or log line that justifies the explanation.
   - name: workflow
-    description: Inferred scan → fix preview → council deliberation. Users should not
+    description: Inferred scan -> fix preview -> council deliberation. Users should not
       need a command name.
     triggers: []
     body: |-
-      The workflow skill runs MASTER’s internal pipeline when the operator asks for a full pass without naming individual steps. Phrases such as run this through MASTER, full pass, or tribunal infer scan, fix dry-run, and council deliberation in sequence.
+      The workflow skill runs MASTER's internal pipeline when the operator asks for a full pass without naming individual steps. Phrases such as run this through MASTER, full pass, or tribunal infer scan, fix dry-run, and council deliberation in sequence.
 
       No /triad or /workflow command is required unless debugging. MASTER orchestrates the stages internally; the operator only needs the natural-language trigger.

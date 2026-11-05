@@ -103,7 +103,7 @@ module Deploy
 
       Array(request_failures).each do |failure|
         url = failure[:url].to_s
-        message = "#{url} — #{failure[:error]}"
+        message = "#{url} - #{failure[:error]}"
 
         if owned_url?(surface, url) && CRITICAL_RESOURCE_TYPES.include?(failure[:resource_type].to_s)
           hard << "first-party executable request failed: #{message}"
@@ -144,7 +144,7 @@ module Deploy
     def run
       @result = CheckResult.new
       unless GeometryProbe.available?
-        @result.inconclusive!("browser_diagnostics: no Chrome/Chromium — browser runtime not measured",
+        @result.inconclusive!("browser_diagnostics: no Chrome/Chromium - browser runtime not measured",
                               gap: Master::Gap::NO_BROWSER)
         return @result
       end
@@ -158,10 +158,10 @@ module Deploy
       live = GeometryProbe.reachable(surfaces)
       live_ids = live.to_h { |surface| [surface.id, true] }
       GeometryProbe.unreachable_apps(surfaces).each do |app|
-        @result.skipped_live("browser_diagnostics: #{app} port closed — route/viewport cells skipped")
+        @result.skipped_live("browser_diagnostics: #{app} port closed - route/viewport cells skipped")
       end
       if live.empty?
-        @result.inconclusive!("browser_diagnostics: no RAILS app is reachable — nothing navigated")
+        @result.inconclusive!("browser_diagnostics: no RAILS app is reachable - nothing navigated")
         return @result
       end
 
@@ -177,7 +177,7 @@ module Deploy
       begin
         FileUtils.mkdir_p(screenshot_dir)
       rescue SystemCallError => e
-        @result.fail("browser_diagnostics: evidence delivery failed to create #{screenshot_dir} — #{e.class}: #{e.message}")
+        @result.fail("browser_diagnostics: evidence delivery failed to create #{screenshot_dir} - #{e.class}: #{e.message}")
 
         return @result
       end
@@ -211,7 +211,7 @@ module Deploy
       begin
         File.write(manifest, JSON.pretty_generate(payload) + "\n")
       rescue SystemCallError => e
-        @result.fail("browser_diagnostics: evidence delivery failed to write #{manifest} — #{e.class}: #{e.message}")
+        @result.fail("browser_diagnostics: evidence delivery failed to write #{manifest} - #{e.class}: #{e.message}")
         return @result
       end
 
@@ -251,8 +251,8 @@ module Deploy
       id = [row["app"], row["surface"], row["viewport"]].join("/")
       return @result.inconclusive!("browser_diagnostics: #{id} #{row["reason"]}") if row["status"] == "INCONCLUSIVE"
 
-      Array(row["warnings"]).each { |message| @result.fail("browser_diagnostics: #{id} — #{message}", severity: :soft) }
-      Array(row["failure_reasons"]).each { |message| @result.fail("browser_diagnostics: #{id} — #{message}") }
+      Array(row["warnings"]).each { |message| @result.fail("browser_diagnostics: #{id} - #{message}", severity: :soft) }
+      Array(row["failure_reasons"]).each { |message| @result.fail("browser_diagnostics: #{id} - #{message}") }
     end
 
     def skipped_row(surface)
@@ -264,7 +264,7 @@ module Deploy
         "status" => "SKIPPED",
         "reason" => "app port is closed",
       }.tap do |row|
-        puts "browser0: #{surface.id} SKIPPED — app port is closed"
+        puts "browser0: #{surface.id} SKIPPED - app port is closed"
       end
     end
 
@@ -322,8 +322,8 @@ module Deploy
 
       verdict[:hard].uniq!
       status_label = verdict[:hard].empty? ? "PASS" : "FAIL"
-      verdict[:soft].each { |message| @result.fail("browser_diagnostics: #{surface.id} — #{message}", severity: :soft) }
-      verdict[:hard].each { |message| @result.fail("browser_diagnostics: #{surface.id} — #{message}") }
+      verdict[:soft].each { |message| @result.fail("browser_diagnostics: #{surface.id} - #{message}", severity: :soft) }
+      verdict[:hard].each { |message| @result.fail("browser_diagnostics: #{surface.id} - #{message}") }
 
       row = {
         "app" => surface.app,
@@ -355,7 +355,7 @@ module Deploy
       print_row(surface, row)
       row
     rescue CdpSession::Error, SystemCallError => e
-      @result.inconclusive!("browser_diagnostics: #{surface.id} CDP could not complete — #{e.class}: #{e.message}")
+      @result.inconclusive!("browser_diagnostics: #{surface.id} CDP could not complete - #{e.class}: #{e.message}")
 
       row = {
         "app" => surface.app,
@@ -366,7 +366,7 @@ module Deploy
         "reason" => "#{e.class}: #{e.message}",
       }
 
-      puts "browser0: #{surface.id} INCONCLUSIVE — #{row.fetch('reason')}"
+      puts "browser0: #{surface.id} INCONCLUSIVE - #{row.fetch('reason')}"
       row
     end
 
@@ -441,7 +441,7 @@ module Deploy
       end
 
       detail += " screenshot=#{row['screenshot']}" if row["screenshot"]
-      puts "browser0: #{surface.id} #{row['status']} — #{detail}"
+      puts "browser0: #{surface.id} #{row['status']} - #{detail}"
     end
   end
 end

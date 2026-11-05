@@ -7,12 +7,12 @@
 # converges and one that oscillates.
 #
 # Measured on the session that built it: of roughly twenty findings checked,
-# five were refuted — and every one of them looked correct on a first read.
+# five were refuted - and every one of them looked correct on a first read.
 #
 # States:
-#   open     — proposed, not yet acted on
-#   landed   — done, with the commit that did it
-#   refuted  — checked and wrong, with the reason. NEVER delete a refuted row:
+#   open     - proposed, not yet acted on
+#   landed   - done, with the commit that did it
+#   refuted  - checked and wrong, with the reason. NEVER delete a refuted row:
 #              deleting it is what lets the next round propose it again.
 #
 # `id` is stable and hand-written; a generated one changes when the finder does
@@ -37,7 +37,7 @@ proposals:
     reason: >
       It is genuinely three-state. WardrobeAi#heuristic_joy branches
       `== true` / `== false` / else, and TasteRanker scores nil at 0.5 against
-      false at 0.0 — nil means "not asked yet", which is a different fact from
+      false at 0.0 - nil means "not asked yet", which is a different fact from
       "no". Collapsing it stopped a high-wear item reading as a keeper.
     refuted_by: RAILS/amber/test/services/wardrobe_ai_test.rb
 
@@ -58,7 +58,7 @@ proposals:
     claim: "affiliate_conversions and friends have six unindexed foreign keys"
     reason: >
       None of them is a foreign key. They are Tradedoubler's identifiers from
-      the feed — product_id is a string(128), program_id a string(64),
+      the feed - product_id is a string(128), program_id a string(64),
       visitor_id a string. The detector keyed on the `_id` suffix.
     refuted_by: RAILS/brgen/db/schema.rb
 
@@ -124,12 +124,12 @@ proposals:
       lib/io/shell.rb:11 has its own BLOCKLIST and consults nothing else, while
       Policy::Sandbox is the module whose header documents catching `rm -fr ~`,
       arbitrary flag ordering, `rm --recursive --force ~`, fork bombs and
-      wget-pipe-to-shell — all found by adversarial testing, all reachable from
+      wget-pipe-to-shell - all found by adversarial testing, all reachable from
       no production path. Either wire decide() into Io::Shell or fold its
       patterns into the BLOCKLIST; both change what the shell tool refuses, so
       it is an operator decision rather than a refactor.
 
-      Wired into Io::Shell#preflight_error as sandbox_error, :deny only — :ask is
+      Wired into Io::Shell#preflight_error as sandbox_error, :deny only - :ask is
       decide()'s default arm and @governor already owns approval. Two tests in
       test_runtime_hardening.rb assert the wiring rather than the policy: six denied
       commands refused through Shell#call, and `echo hello` still running.
@@ -140,7 +140,7 @@ proposals:
     claim: "memory.rb, memory_index.rb and memory_search.rb are one family wanting lib/ground/memory/"
     reason: >
       They share a word, not a kind. Memory::Search already exists in
-      lib/ground/memory/ as a mixin on the Memory class — it reads @mutex and
+      lib/ground/memory/ as a mixin on the Memory class - it reads @mutex and
       @store and does sqlite-backed hybrid recall over memory entries. MemorySearch
       is a standalone class doing keyword scoring over MemoryIndex, which indexes
       repo documents. Executing the generated plan would have moved the second on
@@ -155,24 +155,24 @@ proposals:
     landed_by: 7d95eb40e
     note: >
       Deleted rather than wired, on three findings that only appeared when someone
-      tried to wire it. Its REGISTRY names nine tools and exactly one — web_fetch —
+      tried to wire it. Its REGISTRY names nine tools and exactly one - web_fetch -
       matches a live one: file_read/file_write are inverted from read_file/write_file,
       shell_exec is zsh, git_op is git_context, and postpro/replicate/scan are no tool
       at all, while fourteen live tools have no contract. Its injection check fires
       only for :shell_exec and :git_op, names that never occur. And the guard it
-      would run is InjectionGuard in :strict mode, which is default-deny — it
+      would run is InjectionGuard in :strict mode, which is default-deny - it
       refuses clean input lacking an allowlist token, so it rejects `ls -la` and
       `git status`. Wiring it would have bricked the shell tool.
 
   - id: ground-is-a-76-file-drawer
     tree: MASTER
     state: landed
-    claim: "lib/ground holds four families — policy (5), memory (3), tool (3), map (3) — that want subdirectories"
+    claim: "lib/ground holds four families - policy (5), memory (3), tool (3), map (3) - that want subdirectories"
     landed_by: 5fb974498 e9c484630 a9b2cd4bb 1a8c02a39
     note: >
       Three regrouped and one refuted, one commit each. `cohesion lib/ground`
       reports zero families. The spine never rose: each family paid its own nesting
-      out of what the regroup exposed — a one-method parent module with a single
+      out of what the regroup exposed - a one-method parent module with a single
       caller, a dead report formatter, and principle_map.rb's duplicate
       `module Master` block, itself the residue of an earlier collapse. 38970 to
       38966, ratcheted three times.
@@ -186,14 +186,14 @@ proposals:
       Ruby files; a three-file family is cohesion's MIN_FAMILY exactly, which is
       the floor rather than a signal. Half a directory is not a drawer.
       Second, the shelf would cost 69 files and 101 constant references across a
-      tree boundary — RAILS requires check_result by relative path from four
-      different depths, 62 files deep — and the intermediate state does not build,
+      tree boundary - RAILS requires check_result by relative path from four
+      different depths, 62 files deep - and the intermediate state does not build,
       so it wants a PUB4_CROSS_TREE commit to tidy a directory that is not untidy.
       Third, this ledger row said it waits on a boundary decision. That decision was
       already made and closed on 2026-08-13, and its argument is the comment atop
       OPENBSD/lib/check_result.rb, with the old backlog recording that a
       repo-level shared kernel was considered and rejected. Revisit when a fifth
-      consumer appears, which is the trigger that entry names — not before, and not
+      consumer appears, which is the trigger that entry names - not before, and not
       for a rename.
     refuted_by: the old backlog entry check_result_is_a_shared_kernel_filed_under_deploy
 
@@ -205,7 +205,7 @@ proposals:
     note: >
       Deleted, and LocaleBridge routes those countries to :en deliberately.
       available_locales is nb and en, which is what ships. Two domains were being
-      served the wrong language outright — mlan.it and lisbon.pt resolved to :fr
+      served the wrong language outright - mlan.it and lisbon.pt resolved to :fr
       under a "nearest available Romance locale" rule, the same mistake the file's
       Polish note already recorded. Translating 1579 keys is a budget and a product
       decision; this is the refusal to pretend it had been made.
@@ -219,7 +219,7 @@ proposals:
       Worse than reported. The `.lock` inside mark_paid! read as protection and was
       none: Marketplace::Variant.lock.to_sql returns a bare SELECT on SQLite, no FOR
       UPDATE, so it locked nothing. The guard is lock! plus a re-read inside the
-      transaction — FOR UPDATE where the adapter has it, a reload where it does not,
+      transaction - FOR UPDATE where the adapter has it, a reload where it does not,
       and the reload is the half that matters because SQLite serialises writers.
 
   - id: contract-suite-loaded-in-one-process
@@ -231,7 +231,7 @@ proposals:
       check-full had already switched, with the same reasoning in its own comment;
       check-rails was the one never updated. Measured rather than assumed at the
       swap: 559 runs either way, the same two files red. The isolation is what is
-      bought, not coverage — the constant-collision and early-exit hazards are real
+      bought, not coverage - the constant-collision and early-exit hazards are real
       but were not firing.
 
   - id: runtime-check-passes-when-unavailable
@@ -245,7 +245,7 @@ proposals:
       failure; it was set in one of check-rails' two loops. The source tier, holding
       page_simulation and flow_journey, ran soft on the VPS as well as off it, and
       check-openbsd's dns_zones never set it from the box that serves the zone.
-      Also two host predicates for one fact — a hand-rolled /etc/rc.d/brgen test
+      Also two host predicates for one fact - a hand-rolled /etc/rc.d/brgen test
       beside Environment.on_vps?, which is the one that honours DEPLOY_ASSUME_VPS=1
       and can therefore be rehearsed.
 
@@ -255,10 +255,10 @@ proposals:
     claim: "found while checking the above, not in the audit"
     landed_by: 59708635b
     note: >
-      brgen's /live answers 301 with an absolute Location of http://brgen.no/…, and
+      brgen's /live answers 301 with an absolute Location of http://brgen.no/..., and
       FlowClient took it at face value: the next hop left 127.0.0.1:38182 for the
       real brgen.no on port 80, where relayd's TLS redirect reads to Net::HTTP as
-      "EOFError: end of file reached". The error is the good case — an absolute
+      "EOFError: end of file reached". The error is the good case - an absolute
       redirect that happens to succeed makes the check fetch the live site and report
       it as a local journey. Verify the instrument first: this was found while
       running the check, not while reading it.
@@ -271,8 +271,8 @@ proposals:
     note: >
       Confirmed. The root cause is worth keeping: erasure anonymises the users row
       instead of destroying it, so no dependent: :destroy in the graph ever fires
-      and every table has to be named by hand. The dating profile — bio,
-      coordinates, photographs and an identity-verification selfie — survived, along
+      and every table has to be named by hand. The dating profile - bio,
+      coordinates, photographs and an identity-verification selfie - survived, along
       with postal addresses, federated email and phone, delivery addresses, the
       newsletter subscription, and coordinates on every post, story, listing and
       event. Two guards landed with the fix, because a hand list goes stale.
@@ -284,7 +284,7 @@ proposals:
     landed_by: cc829bd71
     note: >
       Refuted where the audit aimed and confirmed one directory over. backup_priv.sh
-      — the script that actually backs anything up — sets `set -euo pipefail` on line
+      - the script that actually backs anything up - sets `set -euo pipefail` on line
       30, so its `tar | openssl` pipeline does fail the script. OPENBSD/dev/backup.sh
       is the one with the defect, and it had three: an `if [[ $? -ne 0 ]]` handler
       that set -e makes unreachable; an unset associative lookup under set -u that
@@ -301,7 +301,7 @@ proposals:
       The tree holds neither, and this row asserted both from a laptop by listing
       what the repo contains rather than what the box does. Measured on vm23:
       /home/dev/pub4/RAILS has no master.key and no .env anywhere in it, and one
-      production.sqlite3 — amber's, 4096 bytes, zero tables, untracked. The real
+      production.sqlite3 - amber's, 4096 bytes, zero tables, untracked. The real
       databases live under /home/<app>/app/storage and are not on the path the
       chmod touches. What it widens there is source code already public on GitHub.
     refuted_by: ls -ln on vm23, 2026-08-25
@@ -318,8 +318,8 @@ proposals:
       Nothing on the path is restricted. The fix is two parts: the mode
       change on vm23, and the guard in OPENBSD/bin/vps_ci.sh that keeps a deploy
       from widening it again.
-      Proven rather than inferred: as dev — uid 1000, not brgen, not in group
-      brgen — sqlite3 returned 17748 rows from brgen's users table and an email
+      Proven rather than inferred: as dev - uid 1000, not brgen, not in group
+      brgen - sqlite3 returned 17748 rows from brgen's users table and an email
       address out of it. That table carries password_digest, remember_token,
       magic_link_token, otp_secret and email_verification_token.
       The accounts that can do this are dev, amber, bsdports, johann, www, sshd,
@@ -331,7 +331,7 @@ proposals:
       entry tightened /home/dev to 710 dev:_pub4ci and left /home/<app> at 755:
       the checkout was protected and the live data was not.
       Proposed fix is chmod 750 on /home/<app>/app/storage for the three apps,
-      and the three things that could break it were checked first — relayd
+      and the three things that could break it were checked first - relayd
       declares no file root and is a pure proxy, every crontab on the box is
       root's, and vps-deploy line 126 tests -d /home/<app>/app as dev, which
       keeps working because /home/<app> and /app stay 755. Operator call: it is a

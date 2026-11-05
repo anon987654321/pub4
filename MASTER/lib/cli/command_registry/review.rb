@@ -25,7 +25,7 @@ module Master
 
       MAX_FIX_CHECK_ROUNDS = Integer(ENV.fetch("MASTER_FIX_CHECK_ROUNDS", "5"))
 
-      # /fix — the convergence lifecycle, and the only pipeline command. It
+      # /fix - the convergence lifecycle, and the only pipeline command. It
       # observes, critiques, generates and picks between repairs, applies one,
       # validates it and observes again, until the tree converges, stops
       # improving, or hands back a state only a person can settle. `--dry-run`
@@ -194,7 +194,7 @@ module Master
                 Master::Trace::Dmesg.status("trace0", trace.summary)
                 unless trace.clean?
                   details = trace.failures.first(12).join(" | ")
-                  message = "fix: execution trace failed — #{details}"
+                  message = "fix: execution trace failed - #{details}"
                   Master::Trace::Dmesg.status("trace0", message)
                   next Master::Result.err(message, category: :validation)
                 end

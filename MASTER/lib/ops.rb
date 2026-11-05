@@ -214,7 +214,7 @@ module Master
 
       # One frame of who owns the control plane, for `bin/master --status`: the
       # lock holder, its mode, how long it has held the lock, and how long the
-      # session transcript has been quiet — the last-activity signal an
+      # session transcript has been quiet - the last-activity signal an
       # operator reads before deciding to wait or to look for the holder's
       # terminal. Read-only by construction: owner() unlocks immediately when
       # the file is free, and never writes the lock. A free lock says so in as
@@ -223,13 +223,13 @@ module Master
         holder = owner(path: lock_path(root))
         lines = []
         if holder.empty?
-          lines << "master0: control plane idle — no lock holder"
+          lines << "master0: control plane idle - no lock holder"
         else
           lines << "master0: lock held by pid=#{holder["pid"]} host=#{holder["host"]} " \
                    "mode=#{holder["mode"]} since=#{holder["at"]}"
           held = duration_since(holder["at"], now:)
           lines << "master0: held for #{held}" if held
-          lines << "master0: recorded holder is gone — metadata is stale" if holder["stale"]
+          lines << "master0: recorded holder is gone - metadata is stale" if holder["stale"]
         end
 
         idle = duration_since(session_activity(root:)&.utc&.iso8601, now:)
@@ -269,7 +269,7 @@ module Master
     end
 
     # At most one *slot* loop (autofix/watch/watcher) may run at a time. The loops
-    # and their env flags are not defined here — they come from the single source,
+    # and their env flags are not defined here - they come from the single source,
     # data/budgets.yml#process, via ProcessBudget. LoopSlot is only the mutual-exclusion
     # view over the slot loops; the background heartbeat is non-slot and excluded.
     module LoopSlot
@@ -443,8 +443,8 @@ module Master
       module_function
 
       # Three long-running loops, each behind its own switch. The guard is one
-      # move — alias the real entry point, then refuse to reach it unless the
-      # environment asks for the loop — so what separates the three is data:
+      # move - alias the real entry point, then refuse to reach it unless the
+      # environment asks for the loop - so what separates the three is data:
       # the class, the entry point, and the switch.
       GUARDS = {
         "Master::Fix::Heartbeat" => [:start!, "MASTER_HEARTBEAT"],

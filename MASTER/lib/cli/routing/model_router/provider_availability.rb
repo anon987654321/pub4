@@ -10,13 +10,13 @@ module Master
     module Routing
       class ModelRouter
         # Which provider lanes are reachable right now (Grok API key, claude
-        # CLI binary, keyless web-chat, live free-tier catalog) — separate
+        # CLI binary, keyless web-chat, live free-tier catalog) - separate
         # from ModelRouter's own preference/escalation/failover logic.
         module ProviderAvailability
           # Grok/OpenRouter API when a key is present; then the agy CLI when its
           # binary exists; subscription Opus when claude binary exists; browser
           # web-chat when keyless. A configured API key leads because it is a
-          # paid, health-checked lane — the agy CLI answers "quota reached" when
+          # paid, health-checked lane - the agy CLI answers "quota reached" when
           # its subscription is spent, so prepending it made agy:auto the active
           # model and stalled every LLM-backed rule. Paid APIs stay in flattened
           # tiers for escalation.

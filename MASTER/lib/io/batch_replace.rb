@@ -20,7 +20,7 @@ module Master
 
       def call(old_str:, new_str:, dir: nil, rename_files: false)
         Master::Ground::LawHandshake::Admission.require!
-        permission = @governor.permit?(NAME, TIER, "#{old_str} → #{new_str}")
+        permission = @governor.permit?(NAME, TIER, "#{old_str} -> #{new_str}")
         return permission if permission.err?
 
         target = resolve_target(dir)
@@ -72,7 +72,7 @@ module Master
       def refused_note
         return "" if @refused.empty?
 
-        " — #{@refused.size} refused, each would introduce a finding: #{@refused.join(", ")}"
+        " - #{@refused.size} refused, each would introduce a finding: #{@refused.join(", ")}"
       end
 
       def rename_paths(target, old_string, new_string)

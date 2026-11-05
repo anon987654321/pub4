@@ -1,7 +1,7 @@
 ---
-# State — standing orders (event and manual triggers) wired through StandingOrders.
-# trigger: event  — fires when bus publishes event: key (currently tool:after)
-# trigger: manual — only runs when explicitly called via /orders or its callable
+# State - standing orders (event and manual triggers) wired through StandingOrders.
+# trigger: event  - fires when bus publishes event: key (currently tool:after)
+# trigger: manual - only runs when explicitly called via /orders or its callable
 # Every entry needs a callable: key registered in Master::Ground::Orders::Registry.
 # Runtime state (state/last_run_at/last_error) lives in .master/standing_orders_state.yml.
 
@@ -13,7 +13,7 @@
   enabled: true
 
 - name: aggressive_merge
-  description: After source writes, scan for merge/rename targets — thin siblings, *_support sprawl, low-density slugs. Rename to Rails-parameterize snake_case (Strunk-clean tokens); default merge before multiply.
+  description: After source writes, scan for merge/rename targets - thin siblings, *_support sprawl, low-density slugs. Rename to Rails-parameterize snake_case (Strunk-clean tokens); default merge before multiply.
   trigger: event
   event: "tool:after"
   filter: "write_file|str_replace|ast_edit|replace"
@@ -29,7 +29,7 @@
   exclude: "data/|test/|knowledge/"
   command: audit constitution
   callable: constitution_drift
-  # Disabled: fires a full deep-scan of lib/ on every source write — the exact
+  # Disabled: fires a full deep-scan of lib/ on every source write - the exact
   # repo-wide scan HostBudget exists to prevent from OOM-killing the 1GB VPS.
   # The per-write job belongs to Fix::WriteGuard, which judges one file
   # before it lands. What is left here is the tree-wide trend line, and it runs
@@ -54,7 +54,7 @@
   # Disabled: pushes the entire working tree to a remote host. Every other
   # callable in the registry is declared here; this one was the exception, so
   # `callable: backup` resolved to nothing. Declared now so it is reachable and
-  # visible in data/state.yml — turn it on deliberately, not by default.
+  # visible in data/state.yml - turn it on deliberately, not by default.
   enabled: false
 
 - name: restart_master_on_web_edit

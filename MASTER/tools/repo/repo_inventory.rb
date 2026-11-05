@@ -72,9 +72,9 @@ end
 
 # The root the repo has, not the root this disk has.
 #
-# A working checkout accumulates entries git was already told to forget —
+# A working checkout accumulates entries git was already told to forget -
 # .DS_Store, the check ledger the runner appends to, the four generated
-# snapshot_*.md — and Dir.children reports every one of them as a
+# snapshot_*.md - and Dir.children reports every one of them as a
 # non-canonical top-level file. That is a report nobody acts on, and it only
 # appears in the main checkout: a fresh worktree has none of them, so the
 # census reads clean exactly where nobody is working. Ask git what it ignores
@@ -126,7 +126,7 @@ def low_density_slug_entries
     stem = File.basename(path, ".rb")
     next unless slug.filler_only?(stem) || slug.fold_suffix?(stem) || slug.meaningful_tokens(stem).size < stem.split("_").size
 
-    Entry.new(path:, kind: "low_density_slug", reason: "not a dense Rails-parameterize slug — merge or rename (Flat Hierarchy)")
+    Entry.new(path:, kind: "low_density_slug", reason: "not a dense Rails-parameterize slug - merge or rename (Flat Hierarchy)")
   end
 end
 
@@ -166,7 +166,7 @@ end
 
 # The guard every other tool here carries. Without it, reading the two
 # allowlists from this file meant running the whole census and aborting, so the
-# spec that holds them to the tree could not name the constants that own them —
+# spec that holds them to the tree could not name the constants that own them -
 # and a spec reading them out of the source text as strings is the restatement
 # these lists already suffered from.
 report(ARGV) if $PROGRAM_NAME == __FILE__

@@ -49,7 +49,7 @@ module Master
 
       def zsh_replacement_line(zsh)
         replacements = Array(zsh["forbidden_commands"]).first(8).filter_map do |row|
-          "#{row["command"]} → #{row["replacement"]}" if row.is_a?(Hash)
+          "#{row["command"]} -> #{row["replacement"]}" if row.is_a?(Hash)
         end
         "Zsh replacements: #{replacements.join("; ")}." unless replacements.empty?
       end
@@ -116,7 +116,7 @@ module Master
 
       # Derived from the hash, not restating it. This returned a fixed sentence
       # for as long as it existed, so style.css.layer_order, .units_* and
-      # .forbidden described a line nothing read them for — editing any of them
+      # .forbidden described a line nothing read them for - editing any of them
       # changed nothing anywhere, which is the whole inert-config defect in one
       # method.
       def css_style_line(css)
@@ -139,14 +139,14 @@ module Master
         ratio = typography["scale_ratio"] || 1.25
         base = typography["scale_base"] || "16px"
         "Typography: #{typography["style"] || "swiss"} style; one family per surface; #{families}; " \
-          "scale #{base} × #{ratio}; leading #{typography["leading"] || 1.5}; " \
+          "scale #{base} x #{ratio}; leading #{typography["leading"] || 1.5}; " \
           "measure #{typography["measure"] || "65ch"}; left-align body."
       end
 
       # Read from the rules that enforce them, not from a second list beside
       # them. style.nielsen_heuristics restated NN/g's ten as {id, name, rule}
       # while the registry already carried nine as scored entries whose `source`
-      # names the heuristic and whose `name` is the requirement — and the prompt
+      # names the heuristic and whose `name` is the requirement - and the prompt
       # only ever emitted the labels, so the restated `rule:` text reached
       # nothing. The tenth, error prevention, is GUARD_EXPENSIVE_OPS.
       # Two spellings appear in the sources ("Heuristic #5" and "heuristic 5"),
@@ -174,7 +174,7 @@ module Master
       end
 
       def append_directives(sections, style)
-        # style.operator_directives has never existed — the operator's standing
+        # style.operator_directives has never existed - the operator's standing
         # rules are `operator_principles` at the root, already read by
         # Ground::Constitution. This read was always nil.
         append_priority(sections, "conversation_directives", style["conversation_directives"])
@@ -245,11 +245,11 @@ module Master
         forbidden = design.dig("pixel_perfection", "forbidden_css")
         return if Array(forbidden).empty?
 
-        "Forbidden CSS: #{Array(forbidden).join(', ')} — flat UI only; exceptions need a documented, scoped reason (design_rules.pixel_perfection.exception_policy)."
+        "Forbidden CSS: #{Array(forbidden).join(', ')} - flat UI only; exceptions need a documented, scoped reason (design_rules.pixel_perfection.exception_policy)."
       end
 
       # laws.yml markdown_style was codified for MASTER and the three coding
-      # agents it names, and then read by nothing — data_reach counted it as one
+      # agents it names, and then read by nothing - data_reach counted it as one
       # of the two unnamed keys that put that census over its ceiling. Every
       # session writes markdown; the aesthetic that governs it belongs in the
       # same prompt as the design thresholds, not only in a file a scan reads.
@@ -267,7 +267,7 @@ module Master
         beauty = @laws.data(:rules)["beauty"]
         return unless beauty.is_a?(Hash) && !beauty.empty?
 
-        "Aesthetic touchstones: #{beauty.keys.join(', ')} (rules.beauty) — cite these for conceptual design judgment design_laws.yml can't measure lexically."
+        "Aesthetic touchstones: #{beauty.keys.join(', ')} (rules.beauty) - cite these for conceptual design judgment design_laws.yml can't measure lexically."
       end
     end
   end

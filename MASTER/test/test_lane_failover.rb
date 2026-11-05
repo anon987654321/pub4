@@ -16,7 +16,7 @@ class TestLaneFailover < Minitest::Test
   Silence = Master::Io::LaneSilence
   Selection = Master::Io::LaneSelection
 
-  CLAUDE = "You've hit your session limit · resets 5pm (Europe/Oslo)"
+  CLAUDE = "You've hit your session limit - resets 5pm (Europe/Oslo)"
   AGY = "agy: error: Individual quota reached. Please upgrade your subscription to increase your limits. Resets in 165h22m49s."
   GROK = "Error: rate limit exceeded, try again in 20 minutes"
   HTTP429 = "HTTP 429 Too Many Requests"

@@ -239,7 +239,7 @@ seams:
     tree: STUDIO
     needs: material
     evidence: >-
-      About twenty new reference photographs per person (sharp, even daylight, 50–85 mm), a face-embedding
+      About twenty new reference photographs per person (sharp, even daylight, 50-85 mm), a face-embedding
       identity check thresholded from them, a Veo 3.1, Kling, Seedance and Wan bake-off with cost per second, and
       a look bible the operator approves. Closes when the operator accepts a render.
   - id: dilla_by_ear

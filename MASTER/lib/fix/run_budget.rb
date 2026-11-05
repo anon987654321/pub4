@@ -550,7 +550,7 @@ module Master
             @exit_reason ||= "watchdog failed #{failures} consecutive beats: #{e.class}"
             Master::Trace::Dmesg.status(
               "fix0",
-              "watchdog failed #{failures} consecutive beats — run stops: #{e.class}: #{e.message.to_s[0, 120]}",
+              "watchdog failed #{failures} consecutive beats - run stops: #{e.class}: #{e.message.to_s[0, 120]}",
             )
             break
           end

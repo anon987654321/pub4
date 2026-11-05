@@ -17,7 +17,7 @@ require_relative "../../support/css_caps_tracking"
 module Deploy
   # Every SCSS/CSS under RAILS apps + shared must pass MASTER design constitution.
   # Documented product pens are allow-listed for intentional ornament (yep search shadow, etc.).
-  # CHECK_AUTOFIX=1 → mechanical fix + remeasure until clean or stuck.
+  # CHECK_AUTOFIX=1 -> mechanical fix + remeasure until clean or stuck.
   class CssConstitutionCheck
     include CssSpacingScans
     include CssWeight
@@ -31,8 +31,8 @@ module Deploy
     # `: none` is how a stylesheet *complies* with flat_ui, so it cannot be the
     # thing that fails it. text-shadow and backdrop-filter had no exclusion at
     # all, and box-shadow's did not work: `\s*(?!none\b)` lets the `\s*`
-    # backtrack to zero width, so the lookahead runs against " none" — which is
-    # not "none" — and succeeds. `box-shadow: none` matched; only the unspaced
+    # backtrack to zero width, so the lookahead runs against " none" - which is
+    # not "none" - and succeeds. `box-shadow: none` matched; only the unspaced
     # `box-shadow:none` was ever excluded.
     #
     # The assertion has to cover the whitespace it is skipping, so it goes
@@ -44,7 +44,7 @@ module Deploy
 
     TWITTER_BLUE = /#1d9bf0|#1DA1F2/i
 
-    # A custom-property declaration is the palette's own definition — the line
+    # A custom-property declaration is the palette's own definition - the line
     # every use-site is supposed to cite. Before the 2026-10-28 one-stylesheet
     # merge those lines lived in _tokens.scss/_dialect_tokens.scss and the
     # file-name TOKEN_SOURCES exemption covered them; merged into each app's
@@ -55,7 +55,7 @@ module Deploy
 
     # Where a hex can be a colour: in a value, not in a selector. `#feed-panel`
     # spells a 4-digit hex, `canvas#face` glues one to a tag, and `#face {`
-    # opens a rule — none of them paint. A colour never continues into a word,
+    # opens a rule - none of them paint. A colour never continues into a word,
     # a colon, or a block opener, and a value inside var(--token, #hex) is the
     # token's own declared value (the same VAR_FALLBACK rationale rhythm
     # already applies), so fallbacks are stripped before the scan.
@@ -70,7 +70,7 @@ module Deploy
 # A number inside a var() fallback is the token's own declared value, not a
 # spacing literal anyone chose. `calc(var(--chrome-inset, 12px) +
 # var(--tap-min, 44px) + var(--space-1, 4px))` names three tokens and no
-# numbers, and scanning the raw declaration counted all three — so writing
+# numbers, and scanning the raw declaration counted all three - so writing
 # the compliant form scored a rhythm finding. --tap-min made it worse: 44 is
 # tap_min, it is on layout_rules.grid.allowed_spacing_px and on
 # design_tokens scale.space_px, and it is absent from the
@@ -87,15 +87,15 @@ VAR_FALLBACK = /var\(\s*--[\w-]+\s*,[^()]*\)/
     # letter_spacing.all_caps_min_em and line_height did not. Measured across
     # the 82 source stylesheets on 2026-08-09: 71 distinct font-size values
     # against max_font_sizes 8, seven font weights against max_font_weights 3,
-    # and two rival size ladders in the same tree — the token one
+    # and two rival size ladders in the same tree - the token one
     # (12/14/16/18/20) and a hardcoded 13/15/17 borrowed from x.com.
     FONT_SIZE = /(?:\A|[;{\s])font-size\s*:\s*([^;}]+)/
 
     FONT_WEIGHT = /(?:\A|[;{\s])font-weight\s*:\s*([^;}]+)/
 
     # line_height was the one typography key with no reader. The --leading-*
-    # ladder in _typography.scss is the vocabulary, so a literal — even one equal
-    # to a step — is leading that retuning the token cannot reach.
+    # ladder in _typography.scss is the vocabulary, so a literal - even one equal
+    # to a step - is leading that retuning the token cannot reach.
     LINE_HEIGHT = /(?:\A|[;{\s])line-height\s*:\s*([^;}]+)/
     TIMING = /(?:transition(?:-timing-function)?|animation)\s*:\s*([^;}]+)/
 
@@ -165,7 +165,7 @@ VAR_FALLBACK = /var\(\s*--[\w-]+\s*,[^()]*\)/
         rules
       end
     rescue StandardError => e
-      @result.inconclusive!("css_constitution: budget unreadable (#{e.class}: #{e.message}) — CSS ceilings were not measured")
+      @result.inconclusive!("css_constitution: budget unreadable (#{e.class}: #{e.message}) - CSS ceilings were not measured")
       {}
     end
 
@@ -187,11 +187,11 @@ VAR_FALLBACK = /var\(\s*--[\w-]+\s*,[^()]*\)/
           omitted = hits.size - diagnostic_limit
 
           @result.warn("css_constitution #{rule}: #{omitted} additional finding(s) omitted") if omitted.positive?
-          @result.fail("css_constitution #{rule}: #{hits.size} exceeds ceiling #{ceiling} (+#{hits.size - ceiling}) — " \
+          @result.fail("css_constitution #{rule}: #{hits.size} exceeds ceiling #{ceiling} (+#{hits.size - ceiling}) - " \
                        "fix them, or record a new ceiling with a reason")
         elsif hits.size < ceiling
           @result.warn("css_constitution #{rule}: #{hits.size}, under its #{ceiling} ceiling " \
-                       "(-#{ceiling - hits.size}) — CHECK_CSS_RATCHET=1 records the new low")
+                       "(-#{ceiling - hits.size}) - CHECK_CSS_RATCHET=1 records the new low")
           ratchet(rule, hits.size)
         else
           @result.warn("css_constitution #{rule}: at its #{ceiling} ceiling")
@@ -268,12 +268,12 @@ VAR_FALLBACK = /var\(\s*--[\w-]+\s*,[^()]*\)/
     #
     # COMMENT only matches a leading //, /* or *. This tree writes multi-line
     # block comments with plain indented continuation lines and no leading star,
-    # which is most of them — so every continuation line was counted as code.
+    # which is most of them - so every continuation line was counted as code.
     # Measured across the 81 source stylesheets: 32 comment lines carrying a px
     # value inflated the rhythm budget, 10 carrying a hex inflated magic_hex
     # (including _empty_state.scss:69, which is why a survey of "hex equal to a
     # token" reported --accent equal to a light grey), and one carrying the word
-    # !important inflated that budget by one — a comment whose subject was
+    # !important inflated that budget by one - a comment whose subject was
     # choosing specificity *instead of* !important.
     #
     # A budget that counts its own prose ratchets against documentation.
@@ -342,7 +342,7 @@ VAR_FALLBACK = /var\(\s*--[\w-]+\s*,[^()]*\)/
     end
 
     def css_files
-      # Source of truth only — never fingerprinted public/assets copies.
+      # Source of truth only - never fingerprinted public/assets copies.
       #
       # Engine stylesheet directories are globbed as well as the app's own. brgen's
       # verticals are mountable engines, and their styles live in brgen's
@@ -368,7 +368,7 @@ VAR_FALLBACK = /var\(\s*--[\w-]+\s*,[^()]*\)/
 
     # The fourth public surface. ai.brgen.no is reachable from brgen's own top
     # nav, so a visitor crosses from a gated app into an ungated one without
-    # leaving the product — and this check had never opened it, because MASTER
+    # leaving the product - and this check had never opened it, because MASTER
     # keeps its stylesheets in web/public rather than app/assets/stylesheets and
     # every glob here is shaped for a Rails app.
     #
@@ -404,7 +404,7 @@ VAR_FALLBACK = /var\(\s*--[\w-]+\s*,[^()]*\)/
 
       # Same shape as dialect_purity's rule: the mirror's own token declaration
       # is the palette, a use-site carrying the literal is drift, and prose in
-      # a comment is neither — the mirror's contrast note names the blue it
+      # a comment is neither - the mirror's contrast note names the blue it
       # keeps on :root.
       if Operator::ScssRules.without_comments(body).lines
                        .any? { |line| line.gsub(VAR_FALLBACK, "var()").gsub(TOKEN_DECLARATION_SPAN, "").match?(TWITTER_BLUE) }
@@ -444,7 +444,7 @@ VAR_FALLBACK = /var\(\s*--[\w-]+\s*,[^()]*\)/
 
     # Inside @font-face, font-weight/style/stretch are *descriptors* naming what
     # is in the file, not properties styling an element, and var() is invalid
-    # there — the browser drops the whole declaration and the face stops
+    # there - the browser drops the whole declaration and the face stops
     # matching. A bulk weight-tokenisation pass rewrote four of them on
     # 2026-08-09, including the JetBrainsMono Bold face, which would have told
     # the browser its bold file was the body weight.
@@ -455,14 +455,14 @@ VAR_FALLBACK = /var\(\s*--[\w-]+\s*,[^()]*\)/
         in_face = true if line.match?(/@font-face/)
         if in_face && line.match?(/font-(?:weight|style|stretch)\s*:\s*var\(/)
           @result.fail("css_constitution font_face: #{rel}:#{index + 1} uses var() in an @font-face " \
-                       "descriptor — it must state the weight of the file in src, not a UI token")
+                       "descriptor - it must state the weight of the file in src, not a UI token")
         end
         in_face = false if in_face && line.match?(/\A\s*\}\s*\z/)
       end
     end
 
     # Easing reached zero in the 2026-08-09 typography pass, as caps tracking did,
-    # so it is a hard check rather than a ceiling — the ceilings in css_budget.yml
+    # so it is a hard check rather than a ceiling - the ceilings in css_budget.yml
     # exist for debt that predates a reader, not for rules already clean.
     def check_easing(rel, body)
       strip_comments(body).each_line.with_index do |line, index|
@@ -474,7 +474,7 @@ VAR_FALLBACK = /var\(\s*--[\w-]+\s*,[^()]*\)/
         next unless value.match?(KEYWORD_EASING)
 
         @result.fail("css_constitution easing: #{rel}:#{index + 1} uses a keyword timing function " \
-                     "(#{value.strip}) — CINEMA_PALETTE wants a cubic-bezier; use var(--ease-out) et al")
+                     "(#{value.strip}) - CINEMA_PALETTE wants a cubic-bezier; use var(--ease-out) et al")
       end
     end
   end

@@ -26,9 +26,9 @@ payment and affiliate pages say what they do, that Stimulus controllers are
 wired to something, and that the shared engine is mounted where the apps expect
 it. A neighbouring group checks the surface schemas and the first screen of each
 page. One more reads the craft ledger:
-`exemption_freshness` holds every recorded exemption to its `review_by` date —
+`exemption_freshness` holds every recorded exemption to its `review_by` date -
 fails the row whose review has passed, fails a row whose law no executable law
-file declares, and warns when a review comes due — so an excuse recorded once
+file declares, and warns when a review comes due - so an excuse recorded once
 cannot quietly outlive its argument.
 
 Others simulate a visitor. The page simulation walks every full-page template,
@@ -92,7 +92,7 @@ CHECK_BROWSER_DIAGNOSTICS_SETTLE_MS=800 ruby MASTER/checks/runner.rb browser_dia
 
 `CHECK_BROWSER_DIAGNOSTICS_OUTPUT` overrides the artifact root, and
 `CHECK_BROWSER_DIAGNOSTICS_SETTLE_MS` bounds the post-load settling window
-(0–5000 ms). The check runs inside `rendered_suite`, which is required by `layout_suite`; there is one route inventory and one browser transport, with no separate browser framework or new runtime dependency.
+(0-5000 ms). The check runs inside `rendered_suite`, which is required by `layout_suite`; there is one route inventory and one browser transport, with no separate browser framework or new runtime dependency.
 
 A last group checks the checkers. The mutation check plants known defects and
 requires the other checks to catch them. The calibration check keeps the design
@@ -187,8 +187,8 @@ ruby MASTER/checks/runner.rb --all
 ruby MASTER/checks/runner.rb --ledger
 ```
 
-`--json` prints one JSON document instead of the dmesg lines — every named
-check's outcome, failure/warning/error lines, gaps and the summary — with the
+`--json` prints one JSON document instead of the dmesg lines - every named
+check's outcome, failure/warning/error lines, gaps and the summary - with the
 same exit codes as the prose run. It exists so harnesses and foreign runtimes
 can consume findings as data instead of parsing them back out of the log:
 

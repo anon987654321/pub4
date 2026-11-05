@@ -66,7 +66,7 @@ class TestFindingCache < Minitest::Test
     2.times do
       cache.fetch(Master::Fix::Scan::FindingCache::Subject.new("a.rb", "x = 1\n", [PureLaw.new], nil)) do
         calls << :ran
-        [{ law: :rubocop, line: 1, message: "rubocop: scan error — empty JSON stdout" }]
+        [{ law: :rubocop, line: 1, message: "rubocop: scan error - empty JSON stdout" }]
       end
     end
 

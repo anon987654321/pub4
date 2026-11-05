@@ -25,7 +25,7 @@ module Master
 
       def render(omissions)
         return "commit_guard: no omissions detected" if omissions.empty?
-        lines = omissions.map { |o| "  #{o.type} #{o.name} (was in #{o.last_seen_at}) — #{o.path}" }
+        lines = omissions.map { |o| "  #{o.type} #{o.name} (was in #{o.last_seen_at}) - #{o.path}" }
         "commit_guard: #{omissions.size} omission(s)\n#{lines.join("\n")}"
       end
 

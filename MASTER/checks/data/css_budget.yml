@@ -17,7 +17,7 @@
 # Re-measured 2026-08-09 over 92 stylesheets, up from 82. The check globbed
 # <app>/app/assets/stylesheets and brgen's five verticals are mountable engines,
 # so 10 sheets and 1406 lines of dating/marketplace/playlist/takeaway/tv CSS
-# were outside every ceiling here — the same blind spot RAILS/CLAUDE.md records
+# were outside every ceiling here - the same blind spot RAILS/CLAUDE.md records
 # for the four scanners that stopped seeing 57 views when the verticals moved.
 # The `size` rule hard-fails on `_vertical_*` sheets by name and could not open
 # one of them.
@@ -37,7 +37,7 @@
 # 89 -> 91 on 2026-08-13: brgen/_affiliate.scss in-feed tile labels. `gap: 2px`
 # between title and price, `padding: 2px 4px` on the surface chip over the
 # photo. Nearest allowed step is 4px, which doubles the hairline, or 0, which
-# deletes it. Same class as the 1px chips above — below the grid, not off it.
+# deletes it. Same class as the 1px chips above - below the grid, not off it.
 # Re-measured 2026-08-10 over 94 stylesheets, up from 92. RAILS/master joined the
 # scan: ai.brgen.no is reachable from brgen's own top nav, so a visitor crosses
 # from three gated apps into an ungated one without leaving the product, and
@@ -46,7 +46,7 @@
 #
 # important 126 -> 130, rhythm 31 -> 89, magic_hex 142 -> 150, type_scale 8 -> 10
 # and weight_ladder 0 -> 2 are that, and only that. Nothing regressed to earn
-# them. face.css's own 21 rule violations were fixed rather than absorbed —
+# them. face.css's own 21 rule violations were fixed rather than absorbed -
 # 5 keyword easings to var(--ease-out), 8 uppercase trackings to the 0.15em
 # ceiling, 21 physical left/right to their logical twins, and the accent glow on
 # #primer-title removed with the reduced-motion override that existed only to
@@ -65,7 +65,7 @@ rules:
   # 89 -> 90 (2026-08-22). One line, and it is arithmetic rather than drift:
   # RAILS/master/public/chat_upload.css:30 insets #photo-button's ::before by
   # 13px, which is exactly how an 18px drawn square centres inside a 44px tap
-  # target — (44 - 18) / 2. Both of those numbers are themselves law here
+  # target - (44 - 18) / 2. Both of those numbers are themselves law here
   # (--tap-min is 44; the square is the control's existing optics), so the only
   # spacing value that satisfies them is one this scale does not carry. Moving
   # it to 12 or 16 would decentre the square to satisfy a grid it is not on.
@@ -79,7 +79,7 @@ rules:
   # this repo's rule is restore-or-ask on visual layout rather than invent.
   #
   # So it is banked and named, not waved through. If the bar should sit on the
-  # grid, snap those four and run with CHECK_CSS_RATCHET=1 — the number goes
+  # grid, snap those four and run with CHECK_CSS_RATCHET=1 - the number goes
   # back down and this paragraph goes with it.
   # 91 -> 90. Not a snapped value: the check was counting the numbers inside
   # var() fallbacks as spacing literals, so the calc() in
@@ -117,7 +117,7 @@ rules:
   # colour. This row read 140 and had been the deploy blocker for a week on the
   # recorded reading that the remainder were hardcoded hexes whose reduction
   # would change what is painted. Enumerated: 59 of the 115 in RAILS were the
-  # fallback half of `var(--token, #hex)` — the shape this same check already
+  # fallback half of `var(--token, #hex)` - the shape this same check already
   # exempts for `rhythm` through VAR_FALLBACK, because a value inside a fallback
   # is the token's own declared value and not a literal anyone chose at the call
   # site. Every one of those tokens is declared unconditionally on :root, so the
@@ -131,7 +131,7 @@ rules:
   #
   # Recorded at the measured low rather than left loose. The 77 that remain are
   # 25 in RAILS/master/public/face.css, which this check also opens, and 52 in
-  # RAILS that are all identity or replica — the pen-allowlisted marketplace nav
+  # RAILS that are all identity or replica - the pen-allowlisted marketplace nav
   # bar's Amazon values, the vertical accent map, the categorical monogram
   # fills, the yep.com recreation, amber's wardrobe gradient, bsdports' status
   # ambers. Reducing any of those is a colour decision, not a wiring one, so
@@ -141,12 +141,12 @@ rules:
   # storefront work the operator authorised (the bol nav, the campaign palettes,
   # the catalog/commerce/listing finish, amber's late product finish) landed
   # after the 2026-09-09 measurement and never met a re-measure, so the check
-  # read red on arrival — the handoff's C1. The 146 decompose as measured:
+  # read red on arrival - the handoff's C1. The 146 decompose as measured:
   # 72 are local dialect palette definitions (--bol-*/--store-* under
   # body.vertical-marketplace, --amber-* under the luxury finish, --store-* in
   # the vertical shell), 12 carry scan: intentional (the categorical monogram
   # fills, the embed grounds), 4 are the yep.com pen, and the rest are
-  # use-sites whose values do not equal any declared token — deliberately
+  # use-sites whose values do not equal any declared token - deliberately
   # distinct palette steps, not unwired tokens. Every use-site whose value
   # exactly equalled a declared token in scope was rewired in this pass (9
   # same-file, 5 cross-file, all zero paint change); the literals below have no
@@ -160,14 +160,14 @@ rules:
   # 175 the merged file first read:
   # - 96 are custom-property declarations (--bol-*/--store-*/--amber-*/--luxury-*
   #   and the app palettes). Pre-merge those lines lived in _tokens.scss and
-  #   _dialect_tokens.scss, which TOKEN_SOURCES exempts — the definition is the
+  #   _dialect_tokens.scss, which TOKEN_SOURCES exempts - the definition is the
   #   line every use-site is supposed to cite. The tally now exempts the
   #   declaration span by shape wherever the merge put it, and a use-site
   #   sharing its line with a declaration is still counted.
   # - 8 are selector false positives the value-position scan drops: #feed-panel
   #   and #face spell 4-digit hex, and face.css's canvas selectors glue #face to
   #   a tag. None of them painted.
-  # - 6 are var(--token, #hex) fallbacks in face.css — the token's own declared
+  # - 6 are var(--token, #hex) fallbacks in face.css - the token's own declared
   #   value, the same VAR_FALLBACK rationale rhythm already applies.
   # - no_twitter_blue moves to the same line-based reading: the mirror's :root
   #   declaration is the palette, its contrast note is prose in a comment, and
@@ -186,11 +186,11 @@ rules:
   # accent map was never paired against a background at all until 2026-08-03,
   # which is where 15 of these 30 came from.
   # 30 -> 0 on 2026-08-22: the campaigns cleared every below-AA pair without
-  # a sitting ever targeting them — the vertical accent re-pairing and token
+  # a sitting ever targeting them - the vertical accent re-pairing and token
   # work did it as a side effect. Zero is now the floor, not an ambition.
   contrast_below_aa: 0
   # 65 -> 41 the same day. style.yml declares AAA; body text earns it and
-  # the remaining 41 pairs are the secondary/accent band — lifting them is a
+  # the remaining 41 pairs are the secondary/accent band - lifting them is a
   # palette decision (operator), so the band is banked, not forced.
   # 41 -> 43 on 2026-08-24, and the tree did not get worse: luxury gained a
   # light_danger token. #a7473b was already rendered on amber's light grounds
@@ -208,7 +208,7 @@ rules:
   #
   # The two new pairs are brgen_old_light.text_secondary on surface_elevated
   # (#f2f2f2) and on search_bg (#f0f0f0). At #666666 they scored 5.13 and 5.04,
-  # already inside this band — but the token did not reach a pixel, so the
+  # already inside this band - but the token did not reach a pixel, so the
   # metric could not enumerate them. Painted pairs go 84 to 88 across that one
   # change. The darkening is what made them countable.
   #
@@ -224,15 +224,15 @@ rules:
   #
   # The 37 that remain are almost all --danger, which is deliberately the one
   # non-grey token: a greyscale scheme cannot say "destructive", and light.danger
-  # on bg is 4.96 — AA, short of the 7.0 target. Forcing those to AAA means either
+  # on bg is 4.96 - AA, short of the 7.0 target. Forcing those to AAA means either
   # a darker red on every surface or dropping the semantic, and neither is a
   # contrast decision.
   #
   # 37 -> 38 on 2026-09-12, and it is accounting rather than absorption. The
   # pair that joined did not exist in this census before that morning: the check
   # was pairing marketplace_hover as a foreground against the page background,
-  # which is text nothing draws, and the pair that IS drawn — the vertical ink
-  # on that hover fill — went unmeasured. It measured 3.15 and was below AA.
+  # which is text nothing draws, and the pair that IS drawn - the vertical ink
+  # on that hover fill - went unmeasured. It measured 3.15 and was below AA.
   # Lightening the hover to #8d7e66 puts it at 4.80, so it left the below_aa
   # count (now 0, its ceiling) and entered this band.
   #
@@ -247,28 +247,28 @@ rules:
   # --weight-normal/bold/heavy. Both read their ladder out of the stylesheet
   # that declares it, so a check copy cannot drift from the tokens.
   #
-  # First measured at 154 and 61. The tree was running two type scales at once —
+  # First measured at 154 and 61. The tree was running two type scales at once -
   # this ladder's 12/14/16/18/20 and a hardcoded 13/15/17 borrowed from x.com,
-  # 89 sites deep — so the same role rendered 14px in one sheet and 15px in
+  # 89 sites deep - so the same role rendered 14px in one sheet and 15px in
   # another. The operator picked the token ladder; the 13/15/17 sites moved onto
   # it and the weight ladder was re-cut to an even 400/600/800.
   #
   # What is left in type_scale is nine deliberate one-offs, not drift: brand
   # display type in amber (60/120px), the animated marketplace logo, the offline
   # hero, the swipe placeholder glyph, and `html, body { font-size: 21px }` in
-  # _minimal.scss — that last one is the large-screen root scale, and snapping
+  # _minimal.scss - that last one is the large-screen root scale, and snapping
   # it to a step would rescale every rem in the system.
   #
   # +2 and +2 on 2026-08-10 are RAILS/master joining the scan (see the header).
-  # face.css runs a terminal type ramp — 10/11/13px status chips, monospace, on
-  # a canvas — and a 700 weight in two places. Neither reads the RAILS token
+  # face.css runs a terminal type ramp - 10/11/13px status chips, monospace, on
+  # a canvas - and a 700 weight in two places. Neither reads the RAILS token
   # ladder, because face.css has no access to it: it is served from
   # RAILS/master/public, outside the asset pipeline that defines --text-* and
   # --weight-*. Snapping the numbers alone would only hide that; the fix is a
   # shared token source, which is a decision, not a ratchet.
   # 10 -> 12 on 2026-08-21, a raise in the magic_hex-151 shape: f75050a6d
   # ("amber chrome is the Caprasimo mark") set the mark at 200px with a 40px
-  # footer variant in _brand.scss — the same deliberate-lockup class as the
+  # footer variant in _brand.scss - the same deliberate-lockup class as the
   # recorded 60/120px display type, chosen by that session's own redesign.
   # Brand display type does not read the body ladder anywhere in this tree;
   # if the mark is ever cut to the ladder, run with CHECK_CSS_RATCHET=1.
@@ -277,9 +277,9 @@ rules:
 # The legal footer carried its type system as an inline <style> element inside
 # shared/_site_legal_footer.html.erb, which all three layouts render. This check
 # reads stylesheets, so for as long as those rules lived in an ERB it could not
-# see them. Extracting them to _site_legal.scss changed nothing a reader sees —
+# see them. Extracting them to _site_legal.scss changed nothing a reader sees -
 # measured on brgen.no/privacy before and after, .legal-prose is 724.397px wide
-# and its h1 28.8px/33.12px either way — and it put five off-scale values in
+# and its h1 28.8px/33.12px either way - and it put five off-scale values in
 # front of a check for the first time: 13px, 1.6rem, 0.72rem, 0.85rem, 1.05rem.
 #
 # They are not new debt and they are not mine to snap: each one is a size
@@ -288,7 +288,7 @@ rules:
   type_scale: 5
 # 2 -> 3 on 2026-09-12, from the same extraction: `.site-legal .site-verify
 # strong { font-weight: 700 }`. The other two are MASTER's face.css. Same
-# argument as type_scale above — the value is unchanged, only newly visible.
+# argument as type_scale above - the value is unchanged, only newly visible.
   weight_ladder: 3
   # gap_over_margin and card_padding_px were config keys design_metrics
   # confirmed present and css_constitution never applied to a sheet.
@@ -317,7 +317,7 @@ rules:
 #
 # Seeded 2026-08-31 from the generated builds: brgen 203.6KB, amber 110.2KB,
 # bsdports 64.1KB, each rounded up to the next whole KB. Nothing was measured
-# as debt and nothing is being waved through — this is the first reading, and
+# as debt and nothing is being waved through - this is the first reading, and
 # what it buys is that the next change cannot add weight silently.
 #
 # It bought exactly that on 2026-09-08, and this is the record of it. brgen's
@@ -325,7 +325,7 @@ rules:
 # messenger redesign) added 6,129 bytes in one commit and took it to 208.0KB,
 # straight through this ceiling; c0a351b05 added 1,263 more and cdb0998b0 181,
 # ending at 209.4KB. The check went red and stayed red, and with it every brgen,
-# amber and bsdports deploy — amber sat on a 2026-08-29 commit and bsdports on
+# amber and bsdports deploy - amber sat on a 2026-08-29 commit and bsdports on
 # 2026-08-22 while this row was the thing in the way. Read per commit, the
 # breach is one change, not accumulated drift.
 #
@@ -340,20 +340,20 @@ rules:
 # times identically; --feed-max sat in a palette mixin and an app-root mixin
 # both; and the messenger's own new CSS repeated one hover state across six
 # controls and two list-row cells across four rows. Every cut was checked for
-# cascade order first — the merged hover list is stated at the earliest of its
+# cascade order first - the merged hover list is stated at the earliest of its
 # six so nothing moves past .messenger-rail-room[aria-current="page"].
 #
 # brgen stays at 206 and now sits AT it, with 89 bytes of room. That is not
 # comfort: the next messenger-shaped commit has to carry its own cut, and the
 # named places to look are the three PP Neue Montreal @font-face blocks (~1KB,
 # pointing at woff2 that do not exist in this app, and a licensing decision the
-# operator owns) and the 134 selectors css_coverage_lint records as unused —
+# operator owns) and the 134 selectors css_coverage_lint records as unused -
 # 153 until 2026-09-10, when that census learned to read a class value written
 # as a Ruby expression and nineteen of them turned out to be painting.
 # What is NOT waste, and was examined and left: the per-file
 # prefers-reduced-motion guards, which look redundant under _animations.scss's
 # global !important reset and are the deliberate survivors of the 4211c4ebb
-# pass — the convention is that a guard lives in the file with the animation it
+# pass - the convention is that a guard lives in the file with the animation it
 # guards, so that moving a sheet cannot orphan it; and _coverage_fills.scss,
 # which is real styling for real classes and holds undefined_class at 0.
 #
@@ -363,8 +363,8 @@ rules:
 # never rise is recorded when it falls.
 weight_kb:
   # 206 -> 207 on 2026-09-12, named rather than absorbed. 0574a3ecc added
-  # 1,598B for the two-band phone chrome — the wordmark over the nav, icons in
-  # one corner — across _nav_swiper.scss and _root.scss. That is a deliberate
+  # 1,598B for the two-band phone chrome - the wordmark over the nav, icons in
+  # one corner - across _nav_swiper.scss and _root.scss. That is a deliberate
   # design change, so cutting it would undo the work rather than pay for it.
   #
   # 210B came back the same day and are subtracted from the raise: the three

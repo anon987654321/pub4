@@ -17,7 +17,7 @@ require "cli/pipeline/pass"
 #
 # The first number is AdversarialRule, which sends a per-file prompt. The second
 # is the council: of that 390s, the two scan phases were 32s and crit0 was
-# 354.8s — 91% of a "scan" was a critique nobody asked for, and `bin/check --ladder` runs
+# 354.8s - 91% of a "scan" was a critique nobody asked for, and `bin/check --ladder` runs
 # the council reading separately anyway as the tier that owns it.
 #
 # MASTER_SCAN_DETERMINISTIC=1 turns both off and nothing else. It is opt-in, so
@@ -59,7 +59,7 @@ class TestScanDeterministicMode < Minitest::Test
   def test_the_model_backed_rules_get_the_agent_by_default
     scanner = Master::Fix::Scanner.build(root: Master::ROOT, agent: fake_agent)
 
-    refute_empty agent_backed(scanner), "no rule takes an agent — this file's premise is stale"
+    refute_empty agent_backed(scanner), "no rule takes an agent - this file's premise is stale"
     refute_empty with_agent(agent_backed(scanner)),
                  "the agent never reached the rules, so the switch below would prove nothing"
   end

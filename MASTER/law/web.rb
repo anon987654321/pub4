@@ -5,7 +5,7 @@ module Master
     module Scan
       module Laws
 
-        # Retired registry twins — each lives once, in law/:
+        # Retired registry twins - each lives once, in law/:
         #   ARIA_INTERACTIVE, BUTTON_OVER_ANCHOR, CLAMP_TYPOGRAPHY, I18N_COVERAGE
         #   MOBILE_FIRST, NO_IMPORT_SCSS
         #   NO_INLINE_STYLES
@@ -22,11 +22,11 @@ module Master
           end
         end
 
-        # SEMANTIC_ELEMENTS lives once, in law/html.rb — fixtures attached, any narrowing
+        # SEMANTIC_ELEMENTS lives once, in law/html.rb - fixtures attached, any narrowing
         # this version had learned ported there (2026-08-21 twin retirement).
 
         # IMG_ALT and LAZY_IMAGES returned from the twin batch: both judge a
-        # TAG, and law/ scans lines — the attribute-per-line spelling made
+        # TAG, and law/ scans lines - the attribute-per-line spelling made
         # every multi-line <img> a finding. tag_source flattens first.
         ::Law.define(:IMG_ALT) do
           tags %i[ACCESSIBILITY]
@@ -58,7 +58,7 @@ module Master
             #
             # `@media (prefers-reduced-motion: reduce) { * { animation: none
             # !important } }` is the recommended spelling, and it needs !important
-            # precisely because it must beat whatever the author set — dropping it
+            # precisely because it must beat whatever the author set - dropping it
             # would leave motion running for someone who asked the OS to stop it.
             # 73 of the 139 findings in this repo were that block, plus three in
             # prefers-contrast/forced-colors/print, which override for the same
@@ -74,9 +74,9 @@ module Master
             #
             # An !important that ERASES chrome is a guarantee; one that PAINTS is
             # an argument. The flat system armours its wordmark, grips and
-            # toggles with border/background/outline erased from anywhere —
+            # toggles with border/background/outline erased from anywhere -
             # converging styling to nothing cannot start the specificity war
-            # this rule exists to prevent — so erase-shaped importants
+            # this rule exists to prevent - so erase-shaped importants
             # (none/transparent/0) pass and painting ones still fire.
             erase = /(?:border|outline|background|padding|animation|transition|box-shadow|display)[\w-]*\s*:\s*(?:none|transparent|0)[^;!]*!\s*important/
             source_text = without_block_comments(without_override_media(src))
@@ -88,14 +88,14 @@ module Master
               l.match?(erase) || l.lstrip.start_with?("//") || originals[i].to_s.match?(/scan:\s*intentional\b/) ? "\n" : l
             end.join
             scan_lines(source_text, /!\s*important/,
-                       message: "!important overrides cascade — fix specificity instead")
+                       message: "!important overrides cascade - fix specificity instead")
           end
         end
 
-        # LOGICAL_PROPERTIES lives once, in law/css.rb — fixtures attached, any narrowing
+        # LOGICAL_PROPERTIES lives once, in law/css.rb - fixtures attached, any narrowing
         # this version had learned ported there (2026-08-21 twin retirement).
 
-        # META_CHARSET lives once, in law/html.rb — fixtures attached, any narrowing
+        # META_CHARSET lives once, in law/html.rb - fixtures attached, any narrowing
         # this version had learned ported there (2026-08-21 twin retirement).
 
         ::Law.define(:ARIA_LABELS) do
@@ -106,7 +106,7 @@ module Master
           check do |src, path|
             next [] unless path.include?("/app/views/")
             nameless_control_lines(src).map do |line|
-              finding(line:, message: "control has no accessible name — give it text content, aria-label, " \
+              finding(line:, message: "control has no accessible name - give it text content, aria-label, " \
                                       "aria-labelledby, or an id a <label for> points at")
             end
           end
@@ -119,7 +119,7 @@ module Master
           good %(<%# the filter is Marketplace::ListingFacets %>\n)
           check do |src, path|
             next [] unless path.include?("/app/views/")
-            scan_lines(src, /\b(TODO|FIXME|HACK)\b/, message: "unfinished marker in view — resolve before ship")
+            scan_lines(src, /\b(TODO|FIXME|HACK)\b/, message: "unfinished marker in view - resolve before ship")
           end
         end
 
@@ -133,14 +133,14 @@ module Master
             findings = scan_lines(src, /<div\s+class="(header|footer|nav|main|sidebar|article|section)"/i,
               message: "semantic landmark belongs on <header>/<nav>/<main>/<article>, not div.class")
             findings += scan_lines(src, /<div[^>]*>\s*<div[^>]*>\s*<div[^>]*>\s*<div/i,
-              message: "div nesting depth > 3 — flatten or use semantic elements")
+              message: "div nesting depth > 3 - flatten or use semantic elements")
             findings
           end
         end
 
         SIMPLE_WRAPPER_TAG_RE = %r{
           <(p|div|span|li|h[1-6]|strong|em|small|label|td|th|dt|dd|caption)(?:\s[^>]*)?>
-          \s*<%=\s*[^%<]+?\s*%>\s* # scan: intentional — matches an ERB tag, embeds none
+          \s*<%=\s*[^%<]+?\s*%>\s* # scan: intentional - matches an ERB tag, embeds none
           </\1>
         }ix.freeze
 
@@ -152,15 +152,15 @@ module Master
           check do |src, path|
             next [] unless path.include?("/app/views/")
             scan_lines(src, SIMPLE_WRAPPER_TAG_RE,
-              message: "<tag><%= … %></tag> — prefer tag.tagname(…) (e.g. tag.p t(\"hello_world\")) so the " \
+              message: "<tag><%= ... %></tag> - prefer tag.tagname(...) (e.g. tag.p t(\"hello_world\")) so the " \
                 "element and its content stay in one Ruby expression instead of splitting across ERB/HTML")
           end
         end
 
-        # BEM_IN_VIEWS lives once, in law/html.rb — fixtures attached, any narrowing
+        # BEM_IN_VIEWS lives once, in law/html.rb - fixtures attached, any narrowing
         # this version had learned ported there (2026-08-21 twin retirement).
 
-        # UTILITY_CLASS_SOUP lives once, in law/html.rb — fixtures attached, any narrowing
+        # UTILITY_CLASS_SOUP lives once, in law/html.rb - fixtures attached, any narrowing
         # this version had learned ported there (2026-08-21 twin retirement).
 
         ::Law.define(:ERB_HTML_SAFE) do
@@ -202,7 +202,7 @@ module Master
                   line = src[0...output_start].count("\n") + 1
                   findings << finding(
                     line:,
-                    message: "raw html_safe in view — prefer auto-escaped output or raw json_escape(valid_json) for script payloads",
+                    message: "raw html_safe in view - prefer auto-escaped output or raw json_escape(valid_json) for script payloads",
                   )
                 end
               end
@@ -226,7 +226,7 @@ module Master
             next [] if src.include?("single_h1: locale-branched")
             count = src.scan(/<h1\b/i).size
             next [] if count <= 1
-            [finding(line: 1, message: "#{count} <h1> tags — keep one primary heading per view")]
+            [finding(line: 1, message: "#{count} <h1> tags - keep one primary heading per view")]
           end
         end
 
@@ -238,11 +238,11 @@ module Master
           check do |src, path|
             next [] unless path.include?("/app/views/")
             scan_lines(control_source(src), /<input\s+(?![^>]*(?:type=["']hidden|aria-label|aria-labelledby|id=))/i,
-              message: "input missing label association — add <label for> or aria-label")
+              message: "input missing label association - add <label for> or aria-label")
           end
         end
 
-        # SKIP_TO_MAIN lives once, in law/html.rb — fixtures attached, any narrowing
+        # SKIP_TO_MAIN lives once, in law/html.rb - fixtures attached, any narrowing
         # this version had learned ported there (2026-08-21 twin retirement).
 
         ::Law.define(:ASYNC_STATUS) do
@@ -257,11 +257,11 @@ module Master
             # content in later, so only a turbo frame owes a status surface.
             next [] unless src.match?(/data-turbo-frame|turbo-frame/i)
             next [] if src.match?(/aria-live|role=["']status|loading|spinner|progress/i)
-            [finding(line: 1, message: "async UI without aria-live/status — expose progress within 100ms")]
+            [finding(line: 1, message: "async UI without aria-live/status - expose progress within 100ms")]
           end
         end
 
-        # NO_LONG_TRANSITION lives once, in law/css.rb — fixtures attached, any narrowing
+        # NO_LONG_TRANSITION lives once, in law/css.rb - fixtures attached, any narrowing
         # this version had learned ported there (2026-08-21 twin retirement).
 
         ::Law.define(:REDUCED_MOTION) do
@@ -274,7 +274,7 @@ module Master
             next [] unless src.match?(/@keyframes|animation\s*:/i)
             # Either direction of the query satisfies this. `reduce` turns motion off
             # for people who asked; `no-preference` never turns it on for them in the
-            # first place, which is the stronger form — motion is opt-in rather than
+            # first place, which is the stronger form - motion is opt-in rather than
             # opt-out, so a browser that reports nothing gets the still version.
             # visualizer.css wraps every animation in `no-preference` and was the last
             # REDUCED_MOTION finding in the tree: the rule was flagging the better
@@ -292,32 +292,32 @@ module Master
           check do |src, path|
             next [] unless path.include?("/app/views/")
             scan_lines(src, /\btabindex\s*=\s*["']?[1-9]/i,
-              message: "tabindex > 0 — remove or use 0/-1 with roving focus pattern")
+              message: "tabindex > 0 - remove or use 0/-1 with roving focus pattern")
           end
         end
 
         ::Law.define(:NO_JS_ERB) do
           tags %i[HOTWIRE]
-          fix "RJS and format.js — migrate to Turbo Streams"
+          fix "RJS and format.js - migrate to Turbo Streams"
           bad %(<%= render "posts/create.js.erb" %>\n)
           good %(<%= render "posts/create.turbo_stream.erb" %>\n)
           check do |src, path|
             next [] unless path.include?("/app/views/")
-            findings = scan_lines(src, /format\.js\s*\{/, message: "format.js — use format.turbo_stream")
-            findings += scan_lines(src, /\.js\.erb\b/, message: ".js.erb — replace with turbo_stream templates")
+            findings = scan_lines(src, /format\.js\s*\{/, message: "format.js - use format.turbo_stream")
+            findings += scan_lines(src, /\.js\.erb\b/, message: ".js.erb - replace with turbo_stream templates")
             findings
           end
         end
 
         ::Law.define(:DATA_REMOTE) do
           tags %i[HOTWIRE]
-          fix "rails-ujs data-remote — use Turbo native forms"
+          fix "rails-ujs data-remote - use Turbo native forms"
           bad %(<%= link_to "Slett", post_path(post), remote: true %>\n)
           good %(<%= link_to "Slett", post_path(post), data: { turbo_method: :delete } %>\n)
           check do |src, path|
             next [] unless path.include?("/app/views/")
             scan_lines(src, /data-remote\s*=|remote:\s*true/,
-              message: "data-remote/remote:true is rails-ujs — use Turbo Frame or standard form")
+              message: "data-remote/remote:true is rails-ujs - use Turbo Frame or standard form")
           end
         end
 
@@ -335,7 +335,7 @@ module Master
           check do |src, path|
             next [] unless path.include?("/app/views/")
             scan_lines(src, INPUT_GENERIC_TYPE_RE,
-              message: "type=text for specialized field — use email/url/tel/date/password input type")
+              message: "type=text for specialized field - use email/url/tel/date/password input type")
           end
         end
 
@@ -349,7 +349,7 @@ module Master
             next [] unless path.match?(/application|_minimal|_tokens|layout/i)
             next [] unless src.match?(/:hover|button|a\s*\{|\.btn/)
             next [] if src.match?(/:focus-visible|:focus\b/)
-            [finding(line: 1, message: "interactive styles without :focus-visible — keyboard users need visible focus")]
+            [finding(line: 1, message: "interactive styles without :focus-visible - keyboard users need visible focus")]
           end
         end
 

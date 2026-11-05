@@ -11,7 +11,7 @@ module Deploy
   # Is what is committed actually running?
   #
   # 2026-07-29 produced nine production faults and most of them were already
-  # understood — they had never shipped. brgen's deploys had been failing
+  # understood - they had never shipped. brgen's deploys had been failing
   # on one drifted var() fallback since 2026-07-25, so the takeaway 500 fix and
   # the tab-bar overlap fix sat in the repo, correct, for four days. Later the
   # same day two more fixes (every TV channel page 404ing, an invisible primary
@@ -48,7 +48,7 @@ module Deploy
     def run
       result = CheckResult.new
       unless git_repo?
-        result.inconclusive!("deploy_drift: not a git checkout at #{ROOT} — cannot compare deployed SHA to HEAD")
+        result.inconclusive!("deploy_drift: not a git checkout at #{ROOT} - cannot compare deployed SHA to HEAD")
         return result
       end
 
@@ -58,7 +58,7 @@ module Deploy
 
       if stamps.empty?
         result.inconclusive!(
-          "deploy_drift: no deploy stamps under #{STAMP_DIR} — this check only has something to " \
+          "deploy_drift: no deploy stamps under #{STAMP_DIR} - this check only has something to " \
           "compare on the deploy host",
           gap: Master::Gap::DEPLOY_HOST_ONLY,
         )
@@ -67,7 +67,7 @@ module Deploy
 
       head, head_status = git_capture("rev-parse", "HEAD")
       unless BoundedCommand.success?(head_status)
-        result.inconclusive!("deploy_drift: git rev-parse HEAD failed — cannot establish the comparison baseline")
+        result.inconclusive!("deploy_drift: git rev-parse HEAD failed - cannot establish the comparison baseline")
         return result
       end
 
@@ -75,7 +75,7 @@ module Deploy
       stamps.each { |app, stamp| check_app(result, app, stamp, head) }
       # Say what was compared, so the pass line is backed by a visible claim
       # rather than by the absence of failures.
-      result.warn("deploy_drift: compared #{stamps.size} app(s) against HEAD #{head[0, 9]} — #{stamps.keys.join(', ')}")
+      result.warn("deploy_drift: compared #{stamps.size} app(s) against HEAD #{head[0, 9]} - #{stamps.keys.join(', ')}")
       result
     end
 
@@ -97,14 +97,14 @@ module Deploy
       result.checked!
 
       unless known_commit?(sha)
-        result.inconclusive!("deploy_drift: #{app} deployed #{sha}, which this checkout does not contain — fetch and re-run")
+        result.inconclusive!("deploy_drift: #{app} deployed #{sha}, which this checkout does not contain - fetch and re-run")
         return
       end
 
       paths = paths_for(app)
       commits_output, commits_status = git_capture("log", "--oneline", "#{sha}..#{head}", "--", *paths)
       unless BoundedCommand.success?(commits_status)
-        result.inconclusive!("deploy_drift: git log failed for #{app} — cannot establish whether deployed #{sha} has drift")
+        result.inconclusive!("deploy_drift: git log failed for #{app} - cannot establish whether deployed #{sha} has drift")
         return
       end
 
@@ -115,7 +115,7 @@ module Deploy
       more = commits.size > 3 ? " (+#{commits.size - 3} more)" : ""
       result.fail(
         "deploy_drift: #{app} is running #{sha} but #{commits.size} commit(s) since then touch " \
-        "#{paths.join(', ')} — #{subjects.join(' | ')}#{more}",
+        "#{paths.join(', ')} - #{subjects.join(' | ')}#{more}",
       )
     end
 

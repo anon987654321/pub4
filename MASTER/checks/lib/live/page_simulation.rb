@@ -13,15 +13,15 @@ module Deploy
   # UI/UX user simulation across every full-page Rails surface.
   #
   # Two modes:
-  #   1. Source — always runs. Reads each page template and asserts UX floor
+  #   1. Source - always runs. Reads each page template and asserts UX floor
   #      (heading, empty CTAs, dead-end risk, guest auth-wall honesty, forms).
-  #   2. Live — when the app port is open. Soft-guest HTTP GET of every
+  #   2. Live - when the app port is open. Soft-guest HTTP GET of every
   #      guest-open, non-parameterised path; checks status, landmarks, and
   #      exception chrome. Auth-only pages are noted, not hard-failed, when
   #      unauthenticated.
   #
   # Personas: guest (Craigslist-style no-signup) and auth (session expected).
-  # Scope: focus triangle — brgen · amber · MASTER web.
+  # Scope: focus triangle - brgen - amber - MASTER web.
   class PageSimulationCheck
     ROOT = File.expand_path("../../../..", __dir__)
 
@@ -58,7 +58,7 @@ module Deploy
       }
 
       uncovered = PageInventory.uncovered_shared_views
-      @result.fail("page_simulation: shared view outside the inventory — #{uncovered.join(", ")}") if uncovered.any?
+      @result.fail("page_simulation: shared view outside the inventory - #{uncovered.join(", ")}") if uncovered.any?
 
       # A stale manifest resolves confidently and wrongly, which is the failure
       # the hand-maintained filename ladder had. Hard, not soft: the fix is one
@@ -77,7 +77,7 @@ module Deploy
         if open
           @result.warn("page_simulation: #{app} port #{PORTS[app]} open")
         else
-          @result.skipped_live("page_simulation: #{app} port #{PORTS[app]} closed — live surfaces skipped")
+          @result.skipped_live("page_simulation: #{app} port #{PORTS[app]} closed - live surfaces skipped")
         end
       end
 
@@ -97,7 +97,7 @@ module Deploy
       end
 
       if live_count.zero?
-        @result.warn("page_simulation: live HTTP skipped (no triangle app listening) — source checks still ran")
+        @result.warn("page_simulation: live HTTP skipped (no triangle app listening) - source checks still ran")
       else
         @result.warn("page_simulation: live HTTP on #{live_count} guest surfaces")
       end
@@ -189,13 +189,13 @@ module Deploy
       # controller answering the guest with a 302 to sign-in lands inside
       # 200..399 and passes, while one answering `head :forbidden` was a hard
       # failure for behaving correctly. Dating's verification queue is the
-      # second kind — a moderation surface whose index is `head :forbidden
+      # second kind - a moderation surface whose index is `head :forbidden
       # unless reviewer?`, so 403 is the right answer to this check's persona.
       #
       # 404 and 5xx stay hard. Those say the page is missing or broken, which is
       # what this is for.
       if [ 401, 403 ].include?(code)
-        findings << soft("HTTP #{code} — auth-only for the guest persona")
+        findings << soft("HTTP #{code} - auth-only for the guest persona")
       elsif !code.between?(200, 399)
         findings << hard("HTTP #{code} for #{url}#{page[:host] ? " Host=#{page[:host]}" : ""}")
       end
@@ -259,7 +259,7 @@ module Deploy
         body.match?(/<!DOCTYPE html>/i) # full document templates (MASTER face)
       return [] if has
 
-      [soft("#{page[:id]}: no content_for :title / h1 / pages.* title — weak page identity")]
+      [soft("#{page[:id]}: no content_for :title / h1 / pages.* title - weak page identity")]
     end
 
     def check_empty_cta(page, body)
@@ -292,7 +292,7 @@ module Deploy
       return [] if interactive
 
       # Very thin shells (turbo stream only) may still be OK
-      return [soft("#{page[:id]}: no links/buttons/forms detected — possible dead end")] unless body.match?(/render\s+@|render\s+["']/)
+      return [soft("#{page[:id]}: no links/buttons/forms detected - possible dead end")] unless body.match?(/render\s+@|render\s+["']/)
 
       []
     end
@@ -333,7 +333,7 @@ module Deploy
         next if line.include?("chrome_i18n: ok")
         next unless line.match?(HARDCODED_CTA)
 
-        findings << soft("#{page[:id]}:L#{n}: residual EN CTA chrome — use t(...)")
+        findings << soft("#{page[:id]}:L#{n}: residual EN CTA chrome - use t(...)")
       end
       findings.first(5) # cap noise per page
     end
@@ -421,8 +421,8 @@ module Deploy
           paths = grouped.map { |page| page[:path] }.uniq
 
           @result.warn(
-            "page_simulation: #{app} #{paths.size} guest page(s) need a record id and got no live probe — " \
-            "#{paths.join(", ")} — #{reason}",
+            "page_simulation: #{app} #{paths.size} guest page(s) need a record id and got no live probe - " \
+            "#{paths.join(", ")} - #{reason}",
           )
         end
       end
@@ -460,7 +460,7 @@ module Deploy
           "hard_findings=#{hard_findings} unresolved_ids=#{unresolved}",
         )
       end
-      @result.warn("page_simulation: report → #{REPORT_PATH.sub("#{ROOT}/", "")}")
+      @result.warn("page_simulation: report -> #{REPORT_PATH.sub("#{ROOT}/", "")}")
     end
   end
 end

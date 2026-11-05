@@ -6,7 +6,7 @@ require_relative "personal_permissions"
 module Master
   module Ground
     # Per-paired-subject USER.md + MEMORY.md. Injected each turn. Lives under
-    # .master/workspace/ — gitignored, never the shared project_context.yml.
+    # .master/workspace/ - gitignored, never the shared project_context.yml.
     module PersonalWorkspace
       MAX_BYTES = 4_096
       MAX_EXPORT_BYTES = 16_384

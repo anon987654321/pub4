@@ -30,7 +30,7 @@ class TestSelfEvolutionTrigger < Minitest::Test
 
     result = Master::Trace::SelfEvolutionTrigger.new(root: dir).call
 
-    assert_equal "self-evolution: dormant — set MASTER_SELF_EVOLUTION=1", result
+    assert_equal "self-evolution: dormant - set MASTER_SELF_EVOLUTION=1", result
   ensure
     ENV["MASTER_SELF_EVOLUTION"] = previous
     FileUtils.remove_entry(dir) if dir && Dir.exist?(dir)

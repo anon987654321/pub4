@@ -177,8 +177,8 @@ class VisualGhostStackContractTest < Minitest::Test
 
     focus = page_for(ghost[:focus])
     assert_includes focus, "focus registration"
-    assert_includes focus, "e30 · Δ 30.0px", "focus crops the element that moved most"
-    assert_includes focus, "at #{Stack::FOCUS_SCALE}×"
+    assert_includes focus, "e30 - Δ 30.0px", "focus crops the element that moved most"
+    assert_includes focus, "at #{Stack::FOCUS_SCALE}x"
   end
 
   def test_pages_escape_what_they_are_given

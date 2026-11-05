@@ -3,7 +3,7 @@
 module Master
   module Fix
     class FixLoop
-      # Convergence/cycle threshold readers pinned to FixLoop constants — kept separate from FixLoop's run/background-lifecycle
+      # Convergence/cycle threshold readers pinned to FixLoop constants - kept separate from FixLoop's run/background-lifecycle
       # responsibilities so NO_GOD_CLASS's public-method count reflects those
       # two concerns on their own.
       module ConvergenceConfig

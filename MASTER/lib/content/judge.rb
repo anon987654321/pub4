@@ -3,7 +3,7 @@
 module Master
   module Content
     # The judge: sends work back until it is publishable. A mechanical rubric
-    # first — measures a stranger can re-run — then, when the runtime carries
+    # first - measures a stranger can re-run - then, when the runtime carries
     # an agent, the council's critique can harden the verdict. The mechanical
     # rubric alone decides; the council only sharpens the notes.
     class Judge

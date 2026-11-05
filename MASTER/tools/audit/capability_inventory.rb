@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-# Capability inventory — the non-v115.1 "have we lost anything" check.
+# Capability inventory - the non-v115.1 "have we lost anything" check.
 #
 # Compares named surfaces in the working tree to origin/main (HEAD if that
 # ref is missing). Additions are fine. A deleted name fails.
@@ -35,7 +35,7 @@ module Operator
 
     # A rename is not a loss, and a diff of names cannot tell them apart: each
     # shows a word absent from the working tree. Recording the rename is what
-    # keeps this guard strict — a name no successor claims still fails.
+    # keeps this guard strict - a name no successor claims still fails.
     #
     # Each key is a word this surface no longer answers to, and each value is the
     # word that took its work. The reading words folded into /fix, whose
@@ -102,7 +102,7 @@ module Operator
     # Both shapes a rule declares its id in.
     #
     # This reads source text rather than asking the constitution, because it
-    # also reads older versions out of a git ref to compare — there is no
+    # also reads older versions out of a git ref to compare - there is no
     # runtime to ask for a commit that is not checked out. The cost is that a
     # refactor which changes how an id is written makes rules vanish from the
     # inventory while they keep working: folding five builders into reason_rule

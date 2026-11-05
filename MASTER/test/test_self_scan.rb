@@ -86,7 +86,7 @@ class TestSelfScan < Minitest::Test
       result = Master::Review::Scan::SelfScan.new(scanner:, root:, event_bus: bus).call(autofix: true)
 
       assert result.ok?
-      # source-assertion: ok — reading back what the fixer wrote is the only way to see it landed
+      # source-assertion: ok - reading back what the fixer wrote is the only way to see it landed
       assert_includes File.read(path), "# frozen_string_literal: true"
       assert_equal "lib/example.rb", result.value!.autofixes.first[:path]
       assert_includes bus.events.map(&:first), "scan_autofix:applied"

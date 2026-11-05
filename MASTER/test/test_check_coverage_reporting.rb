@@ -55,7 +55,7 @@ class TestCheckCoverageReporting < Minitest::Test
 
   def test_reachability_sweep_reports_failure_details_and_counts_omitted_warnings
     reachability = Master::Fix::Reachability.allocate
-    coverage = ["coverage0: layout/CssConstitutionCheck FAILED — 4 check(s), 2 failure(s)"]
+    coverage = ["coverage0: layout/CssConstitutionCheck FAILED - 4 check(s), 2 failure(s)"]
     failures = Array.new(3) { |i| "fixture failure #{i}" }
     actionable = ["css_constitution type_scale: brgen/app.scss:17 15px"]
     warnings = coverage + actionable + Array.new(26) { |i| "fixture warning #{i}" }

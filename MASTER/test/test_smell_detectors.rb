@@ -5,7 +5,7 @@ require "review/scan/law_tree"
 
 # The four detectors from the old backlog's "Rule and AST-detector backlog". Each is
 # tested the way law/ tests its own: one source it must flag, and one it must
-# not, because a detector that only fires proves nothing about what it exempts —
+# not, because a detector that only fires proves nothing about what it exempts -
 # and every exemption below is a false positive that was measured against this
 # tree before it was written down.
 class TestSmellDetectors < Minitest::Test

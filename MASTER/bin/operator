@@ -32,7 +32,7 @@ end
 
 def usage
   <<~HELP
-    operator — repo-wide operator surface
+    operator - repo-wide operator surface
 
     Usage:
       bin/operator check [--scan-only] [--only=a,b] [--tree=T] [--list] [--release]  every declared check in the repo, fixing as it goes
@@ -138,7 +138,7 @@ def ssh_base_argv
   ]
 end
 
-# Replace the process with ssh (no local retry — ConnectionAttempts covers
+# Replace the process with ssh (no local retry - ConnectionAttempts covers
 # handshake retries). Log intent before exec; the -E file records the session.
 def ssh_run(remote_cmd)
   require "fileutils"
@@ -173,7 +173,7 @@ end
 command = ARGV.shift
 case command
 when "check"
-  # The whole ladder, autofixing, in one invocation — the default way to find
+  # The whole ladder, autofixing, in one invocation - the default way to find
   # out whether this repo is conformant. The stages and the reasoning behind
   # their order live in lib/operator/check_chain.rb.
   #
@@ -328,7 +328,7 @@ when "measure"
   exit(Operator::Ratchets.ok?(rows) ? 0 : 1)
 when "lint"
   # Inheritance made mechanical. The same deterministic rules MASTER runs on
-  # itself — every lexical and AST rule plus law/, no model, no autofix — judge
+  # itself - every lexical and AST rule plus law/, no model, no autofix - judge
   # whatever files an agent touched, so claude, grok or codex can run it on a
   # diff before committing and be held to the constitution regardless of which
   # tool typed the change. Paths given are scanned as named; with none, the diff
@@ -352,7 +352,7 @@ when "lint"
   end
   exit 1
 when "land"
-  # Commit, rebase onto origin/main, re-check, push — in that order, because the
+  # Commit, rebase onto origin/main, re-check, push - in that order, because the
   # order is where it goes wrong.
   #
   # Every landing is the same five steps, and the two that get
@@ -508,7 +508,7 @@ when "visual"
   abort("visual: nothing pending for #{surface}") unless blessed
   puts "visual: #{surface} baseline now #{blessed} chrome box(es)"
 when "snapshot"
-  # Regenerates snapshot_<TREE>.md — the verbatim packs handed to another model
+  # Regenerates snapshot_<TREE>.md - the verbatim packs handed to another model
   # when it needs the whole tree rather than a summary. The generator that made
   # them was bin/snapshot, deleted with the DEPLOY tree, so the four files sat
   # stale at a commit no checkout still has and nothing could refresh them.
@@ -581,7 +581,7 @@ when "branches"
 when "memory"
   exit Operator::MemoryReview.run(ARGV, root: ROOT)
 when "laws"
-  # One law: what it says, what it spares, and what it finds — in that order.
+  # One law: what it says, what it spares, and what it finds - in that order.
   # The same word as the CLI's /laws, which lists them; this is one in full.
   #
   # It printed findings and nothing else, so the one thing a session actually
@@ -594,7 +594,7 @@ when "laws"
   # The exemption is not a field anywhere. In law/ it is a clause inside the
   # detect block with the measurement that earned it in the comment above; in
   # the registry it is an early return with the same comment. So the card prints
-  # the definition verbatim, comments included, rather than a summary of it —
+  # the definition verbatim, comments included, rather than a summary of it -
   # a summary is where an exemption goes missing.
   require "master"
   require "fix/scanner"
@@ -631,7 +631,7 @@ when "laws"
 
   # Where it is written. Every ruby file under law/ and the scan registry is
   # searched for the id, and the enclosing block plus its leading comment is the
-  # answer — that comment is where the exemption's reason lives.
+  # answer - that comment is where the exemption's reason lives.
   def definition_at(root, id, bare: true)
     Dir.glob(File.join(root, "law", "**", "*.rb")).sort.each do |path|
       lines = File.readlines(path)
@@ -651,7 +651,7 @@ when "laws"
   end
 
   # The block is the enclosing definition, so back up past the comment that
-  # explains it — and take the indent from the code, not the comment, or a
+  # explains it - and take the indent from the code, not the comment, or a
   # comment indented one step deeper runs the block on to the file's end.
   def enclosing_span(lines, index)
     first = index
@@ -671,13 +671,13 @@ when "laws"
   def clipped(body, path)
     return body.join if body.size <= 80
 
-    (body.first(80) + ["    … #{body.size - 80} more line(s); open #{path} to read the rest\n"]).join
+    (body.first(80) + ["    ... #{body.size - 80} more line(s); open #{path} to read the rest\n"]).join
   end
 
   scanner = Master::Fix::Scanner.build(root: master_root, agent: nil)
   rule = scanner.laws.find { |item| item.id.to_s.casecmp?(id) }
   if rule.nil? && declared.nil? && executable_law.nil?
-    abort("rule: nothing named #{id.inspect} — neither a declaration in data/laws.yml " \
+    abort("rule: nothing named #{id.inspect} - neither a declaration in data/laws.yml " \
           "nor one of the #{scanner.laws.size} rules the scanner loaded")
   end
 
@@ -750,7 +750,7 @@ when "laws"
 when "readers"
   # Before you believe "its only reader is X". That sentence has been wrong four
   # times in this repo and each time the grep behind it could not see the
-  # reference that mattered — most expensively hash_dig_compat.rb, whose second
+  # reference that mattered - most expensively hash_dig_compat.rb, whose second
   # reader was in another tree, built its path with File.expand_path, left the
   # extension off, and sat inside a `rescue LoadError` so the breakage warned
   # instead of raising and dilla rendered without coltrane for days.
@@ -805,7 +805,7 @@ when "hooks"
   Master::Trace::Dmesg.status("hooks0", "PUB4_SESSION keys that ledger explicitly; without it the shell is the key")
 when "test"
   # The smallest COMPLETE proof for the paths given (dirty files when none
-  # are). Complete means whole suites — a green over hand-picked tests is
+  # are). Complete means whole suites - a green over hand-picked tests is
   # unmeasured. The mapping that lived in CLAUDE.md prose and session
   # memory, made executable:
   #   MASTER/**        -> MASTER rake test (+ dogfood when law/ moved)

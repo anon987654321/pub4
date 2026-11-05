@@ -34,7 +34,7 @@ module Deploy
       ports = []
       domains = []
 
-      return @result.inconclusive!("apps_yml: apps.yml declares no apps — nothing was validated") if apps.empty?
+      return @result.inconclusive!("apps_yml: apps.yml declares no apps - nothing was validated") if apps.empty?
 
       apps.each do |name, meta|
         @result.checked!

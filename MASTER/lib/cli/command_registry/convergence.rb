@@ -13,7 +13,7 @@ module Master
       def dispatch_wishlist(_root, ctx: nil)
         Master::Convergence::Workstreams.render(arg_for(ctx), root: Master::ROOT)
       rescue StandardError => e
-        "wishlist0: failed — #{e.class}: #{e.message}"
+        "wishlist0: failed - #{e.class}: #{e.message}"
       end
 
       def dispatch_size(_root, ctx: nil)
@@ -30,7 +30,7 @@ module Master
         end
         lines.join("\n")
       rescue StandardError => e
-        "size0: failed — #{e.class}: #{e.message}"
+        "size0: failed - #{e.class}: #{e.message}"
       end
 
       def dispatch_events(_root, ctx: nil)
@@ -43,7 +43,7 @@ module Master
 
         "events0: clean#{strict && code.positive? ? ", problems found" : ""}"
       rescue StandardError => e
-        "events0: inconclusive — #{e.class}: #{e.message}"
+        "events0: inconclusive - #{e.class}: #{e.message}"
       end
 
       def dispatch_explain(_root, ctx: nil)
@@ -56,7 +56,7 @@ module Master
         return "usage: /prove [history [N]]" unless arg.empty?
         Master::Convergence::Proof.render(root: Master::REPO_ROOT)
       rescue StandardError => e
-        "prove0: failed — #{e.class}: #{e.message}"
+        "prove0: failed - #{e.class}: #{e.message}"
       end
 
       def render_proof_history(argument)

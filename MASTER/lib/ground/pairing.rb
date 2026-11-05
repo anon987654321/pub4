@@ -7,7 +7,7 @@ require "yaml"
 module Master
   module Ground
     # One-time codes before personal (messaging) tools. Store lives under
-    # .master/pairing/ — gitignored, never data/security/. Remote channels
+    # .master/pairing/ - gitignored, never data/security/. Remote channels
     # (irc/matrix) stay visitor-public until a code is redeemed.
     module Pairing
       CONFIG_PATH = Master.data_path("security.yml").freeze
@@ -17,9 +17,9 @@ module Master
       TOKEN_BYTES = 24
       DEFAULT_TTL = 600
       DEFAULT_ALLOWLIST = ".master/pairing/allowlist.yml"
-      REDEEM_NOTICE = "paired — messaging tools on. This is not operator access. Shell stays off. " \
+      REDEEM_NOTICE = "paired - messaging tools on. This is not operator access. Shell stays off. " \
                       "For a private assistant: clone pub4, bundle exec ruby bin/master, /pair issue, " \
-                      "and point the PWA at your host — not the shared public face.".freeze
+                      "and point the PWA at your host - not the shared public face.".freeze
 
       extend ::Master::Io::AtomicWrite
 
@@ -150,7 +150,7 @@ module Master
       # sees the old file or the new one and never half of one; it guarantees
       # nothing about the bytes having reached the disk. On a power loss the
       # rename can survive while the data does not, leaving an intact filename
-      # over an empty file — worse than a truncated one, because it looks fine.
+      # over an empty file - worse than a truncated one, because it looks fine.
       # The helper fsyncs the file and the directory, and cleans up on error.
       def persist(path, data)
         write_atomic(path, data.to_yaml, mode: 0o600)

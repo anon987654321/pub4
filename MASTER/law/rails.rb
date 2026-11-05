@@ -1,13 +1,13 @@
 # frozen_string_literal: true
 
-# law/rails.rb — semantic laws whose subject is the Rails application boundary.
+# law/rails.rb - semantic laws whose subject is the Rails application boundary.
 #
 # Rails is a domain here rather than a universal principle. Keeping these four
 # questions together lets /fix load one Rails-specific semantic home without
 # making the universal constitution carry framework vocabulary.
 
 Law.define(:RAILS_THIN_CONTROLLER_SEMANTIC) do
-  source "MASTER Rails architecture — thin controllers"
+  source "MASTER Rails architecture - thin controllers"
   ask "If this is a Rails controller, are actions owning business rules, multi-model orchestration, or heavy queries instead of delegating to models/services? Cite method names. If it is not a controller or is already thin, return CLEAN."
   fix "Move business rules and orchestration into focused models or services; keep controller actions responsible for boundary concerns."
   bad <<~X
@@ -32,7 +32,7 @@ Law.define(:RAILS_THIN_CONTROLLER_SEMANTIC) do
 end
 
 Law.define(:RAILS_VIEW_PURITY) do
-  source "MASTER Rails architecture — view purity"
+  source "MASTER Rails architecture - view purity"
   ask "If this is a Rails view or partial, does it contain queries, persistence, or multi-step business condition trees that belong in helpers, models, or presenters? Prefer CLEAN when it only presents assigns."
   fix "Move business logic out of the view; pass prepared assigns and use focused presentation helpers or presenters."
   bad <<~X
@@ -48,7 +48,7 @@ Law.define(:RAILS_VIEW_PURITY) do
 end
 
 Law.define(:AESTHETIC_FLAT_SEMANTIC) do
-  source "MASTER UI aesthetic — flat 8px-rhythm surfaces"
+  source "MASTER UI aesthetic - flat 8px-rhythm surfaces"
   ask "Score the UI surface for flat, pixel-precise design: reject ornamental shadow, blur, or glow; uneven spacing off an 8px rhythm; weak hierarchy; and decorative particles. Propose concrete token, spacing, and type fixes. Return CLEAN when already flat and rhythmic."
   fix "Remove ornamental depth, normalize spacing onto the 8px rhythm, strengthen hierarchy, and make decoration earn its place."
   bad <<~X
@@ -68,7 +68,7 @@ Law.define(:AESTHETIC_FLAT_SEMANTIC) do
 end
 
 Law.define(:AESTHETIC_RAMS_SEMANTIC) do
-  source "Dieter Rams — useful, understandable, unobtrusive, honest, thorough"
+  source "Dieter Rams - useful, understandable, unobtrusive, honest, thorough"
   ask "Apply useful, understandable, unobtrusive, honest, and thorough to this UI surface. Flag dishonest progress, missing empty or error states, or chrome that competes with content. Return CLEAN when the surface is solid."
   fix "Make the primary state useful and legible, represent progress and failure honestly, cover empty states, and remove chrome that competes with the content."
   bad <<~X

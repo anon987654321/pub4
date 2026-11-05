@@ -10,7 +10,7 @@ require_relative "../tools/diff_routes"
 # exact file, directory prefix, shell glob, the ../ sibling form, the
 # RAILS/master/ form, MASTER/ stripping for diff output, and specificity
 # (lib/cognition/ over lib/). The gap case is asserted as a gap, never a
-# guess — that is the tool's one honesty promise.
+# guess - that is the tool's one honesty promise.
 class TestDiffRoutes < Minitest::Test
   OWNERSHIP = {
     "README.md" => { "purpose" => "front door", "risk" => "low", "check" => "bin/check" },

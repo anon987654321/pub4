@@ -12,8 +12,8 @@ module Operator
   #
   # css_coverage_lint measures class names in both directions and never looks
   # inside a declaration, so nothing in this tree read `url()`. The audit that
-  # produced it checked `image_tag` and `asset_path` — helper calls, which fail
-  # loudly — and skipped the one reference form that fails silently. Propshaft
+  # produced it checked `image_tag` and `asset_path` - helper calls, which fail
+  # loudly - and skipped the one reference form that fails silently. Propshaft
   # warns at precompile for some of them and not others, and the warning it does
   # print is unactionable noise (`shared/public/fonts` is served by the engine's
   # static middleware, not digested by the pipeline, so those files are present
@@ -25,7 +25,7 @@ module Operator
   # means the page never blocks and no pixel visibly changes, which is why five
   # months of deploys and an asset audit did not surface it.
   #
-  #   missing_asset — a url() whose file exists in none of the roots that serve
+  #   missing_asset - a url() whose file exists in none of the roots that serve
   #     the stylesheet. Counted, not fixed: whether the answer is to add the file
   #     or drop the reference depends on why it is missing, and for the three
   #     PP Neue Montreal weights the SCSS already answers it (licensed font,
@@ -37,7 +37,7 @@ module Operator
 
     # The baseline is what is left after the one live bug this lint found was
     # fixed. amber's layout links `/lightgallery.css`, amber has no
-    # copy of its own, so it was served `shared/public/lightgallery.css` — whose
+    # copy of its own, so it was served `shared/public/lightgallery.css` - whose
     # icon font and spinner live at `../fonts/lg.*` and `../images/loading.gif`,
     # which used to exist only under another app-local public root. Verified against
     # production before and after: amber's `/fonts/lg.woff2` was 404 while
@@ -106,7 +106,7 @@ module Operator
 
     # `@each $w in (400, 600, 700)` builds three refs from one url(). Without
     # expanding it the interpolated ref resolves to nothing and reads as one
-    # missing file rather than three, or gets skipped as unresolvable — either
+    # missing file rather than three, or gets skipped as unresolvable - either
     # way the count is wrong.
     #
     # Scoped to the *enclosing* loop, by brace matching, not to any loop naming
@@ -158,7 +158,7 @@ module Operator
 
     # A root-absolute ref is a path under the root. A relative one is resolved
     # against the stylesheet when the stylesheet is itself served from public/,
-    # and by basename when the pipeline resolves it — propshaft flattens
+    # and by basename when the pipeline resolves it - propshaft flattens
     # app/assets, so `url("logo.svg")` finds it at any depth.
     def satisfied?(ref, roots)
       clean = ref.sub(/[?#].*\z/, "")
@@ -200,7 +200,7 @@ module Operator
     def body_of(path)
       raw = File.read(path, encoding: "UTF-8")
       css = path.end_with?(".erb") ? raw.scan(%r{<style[^>]*>(.*?)</style>}m).flatten.join("\n") : raw
-      # A protocol-relative url("//cdn…") is not a line comment: stripping it
+      # A protocol-relative url("//cdn...") is not a line comment: stripping it
       # swallowed the rest of the line and the next url() with it.
       css.gsub(%r{/\*.*?\*/}m, " ").gsub(%r{(?<![:"'(])//[^\n]*}, " ")
     end

@@ -10,7 +10,7 @@ require_relative "test_helper"
 # core/spec/core_smoke.rb for eleven days after core/ was folded into lib/.
 # Each was found by a person tripping over it.
 #
-# Only backticked paths that look like repo paths are checked — a path is
+# Only backticked paths that look like repo paths are checked - a path is
 # claimed here when it starts with a known tree or a known root file and carries
 # a slash or a known extension. Prose about a path ("the lib/ folder") is not a
 # citation and is not checked; neither is anything under a directory this repo
@@ -23,8 +23,8 @@ class TestDocPaths < Minitest::Test
   # a path does.
   # the old backlog is deliberately not here, and the reason is measured rather than an
   # omission. It cites 428 repo paths; 34 of them name subjects that are gone on
-  # purpose — MASTER/DEBT.md, RAILS/BLOCKERS.md, docs/SEVERANCE.md, the deleted
-  # io/lora_pipeline.rb — because a register that records what was removed has to
+  # purpose - MASTER/DEBT.md, RAILS/BLOCKERS.md, docs/SEVERANCE.md, the deleted
+  # io/lora_pipeline.rb - because a register that records what was removed has to
   # be able to say what it was. A check demanding every cited path exist would
   # need a 34-row baseline that a fresh entry breaks the same week, and would
   # turn the register's own function into a red check. Its citations go stale as
@@ -246,11 +246,11 @@ class TestDocPaths < Minitest::Test
   def test_claude_md_says_master_outranks_it
     body = File.read(File.join(REPO, "CLAUDE.md"))
 
-    # source-assertion: ok — a document has no behaviour but its text
+    # source-assertion: ok - a document has no behaviour but its text
     assert_includes body, "MASTER is Claude's #1 primary configuration"
     # It points at the soul and the Law catalogue rather than restating them.
     %w[MASTER/data/soul.yml MASTER/data/laws.yml].each do |path|
-      # source-assertion: ok — a document has no behaviour but its text
+      # source-assertion: ok - a document has no behaviour but its text
       assert_includes body, path
     end
   end
@@ -278,13 +278,13 @@ class TestDocPaths < Minitest::Test
 
     # A head that exists beside the document. MASTER/README.md writes
     # `data/laws.yml` and means MASTER's, which resolves against the repo root
-    # as a `data` tree that does not exist — so without this every citation a
+    # as a `data` tree that does not exist - so without this every citation a
     # MASTER or OPENBSD document makes of its own subdirectory is dropped before
     # it is checked.
     dir = File.dirname(@current_doc.to_s)
     return true if dir != "." && File.exist?(File.join(REPO, dir, head))
 
-    # A head that resolves nowhere is usually prose — but it is also exactly what
+    # A head that resolves nowhere is usually prose - but it is also exactly what
     # a deleted directory leaves behind, and that is when this check matters
     # most. `docs/SEVERANCE.md` was cited as a source of truth by two governing
     # documents for weeks: docs/ had been deleted, so the token was dropped as
@@ -302,13 +302,13 @@ class TestDocPaths < Minitest::Test
 
   # Per-document exemptions, each with the argument for it, in
   # MASTER/data/doc_baselines.yml under `doc_paths:`. KNOWN_ABSENT above is
-  # repo-wide and needs no reason — there is nothing to say about output/ and
-  # knowledge/ — while a path one document may cite and another may not is a
+  # repo-wide and needs no reason - there is nothing to say about output/ and
+  # knowledge/ - while a path one document may cite and another may not is a
   # judgement somebody has to defend.
   #
   # That file had no reader. `data_reach` reported `doc_baselines.yml#doc_paths`
   # as a key no code names and was right: this test carried its own list and
-  # three careful paragraphs governed nothing. The rows are still correct — a
+  # three careful paragraphs governed nothing. The rows are still correct - a
   # public key .gitignore explicitly un-ignores and has not been added yet, and
   # a worked example naming the design_laws.yml whose folding it teaches.
   BASELINE = File.expand_path("../data/doc_baselines.yml", __dir__)
@@ -326,7 +326,7 @@ class TestDocPaths < Minitest::Test
         .map { |c| c.sub(/[.,;:)]+\z/, "") }
         # `lib/builder.rb:165` cites lib/builder.rb. Without this the trailing
         # line number makes the extension unrecognisable, so the whole citation
-        # is dropped as prose — and the file:line form is how this repo's
+        # is dropped as prose - and the file:line form is how this repo's
         # documents point at code, which left the commonest citation shape
         # outside the check written to check citations.
         .map { |c| c.sub(/:\d+(?:-\d+)?\z/, "") }
@@ -347,7 +347,7 @@ class TestDocPaths < Minitest::Test
       Array(rows).filter_map do |row|
         next "#{doc}: no such document" unless File.exist?(File.join(REPO, doc))
 
-        "#{doc}: #{row["path"]} exists now — drop the exemption" if resolves?(row["path"], doc)
+        "#{doc}: #{row["path"]} exists now - drop the exemption" if resolves?(row["path"], doc)
       end
     end
 
@@ -355,7 +355,7 @@ class TestDocPaths < Minitest::Test
   end
 
   # A citation resolves from the repo root, from the document's own directory,
-  # or as the tail of a tracked path — because `bin/ci` in OPENBSD/CLAUDE.md
+  # or as the tail of a tracked path - because `bin/ci` in OPENBSD/CLAUDE.md
   # means the one in RAILS, and requiring every doc to spell full paths would
   # make the prose worse to read in order to make this test easier to write.
   def resolves?(candidate, doc)
@@ -373,7 +373,7 @@ class TestDocPaths < Minitest::Test
   # and the directory only appears after the app has run once.
   #
   # A live query rather than another allow-list entry, because an exemption whose
-  # subject no longer exists is a hole nobody can see — this one goes stale the
+  # subject no longer exists is a hole nobody can see - this one goes stale the
   # day the ignore rule does, on its own.
   #
   # From the document's own directory only, which is the reading `resolves?`
@@ -381,7 +381,7 @@ class TestDocPaths < Minitest::Test
   # that matters: `.gitignore` excludes `priv/ssh/` and then un-excludes
   # `!priv/ssh/*.pub`, but git cannot re-include a file inside an excluded
   # directory, so the root form of that public key reads as ignored while
-  # `OPENBSD/priv/ssh/…` does not. The operator's decision there is that the file
+  # `OPENBSD/priv/ssh/...` does not. The operator's decision there is that the file
   # is missing and should be added, which is a citation this check must keep.
   def generated?(candidate, doc)
     Dir.chdir(REPO) { system("git", "check-ignore", "-q", File.join(File.dirname(doc), candidate)) }
@@ -411,7 +411,7 @@ class TestDocPaths < Minitest::Test
     end
 
     assert_empty missing,
-                 "these documents cite repo paths that do not exist — fix the path or the prose:\n" +
+                 "these documents cite repo paths that do not exist - fix the path or the prose:\n" +
                  missing.map { |doc, paths| "  #{doc}\n    #{paths.join("\n    ")}" }.join("\n")
   end
 

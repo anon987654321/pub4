@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Two files carrying the same dimension eventually disagree, and the checks pick
-# different ones — a document prescribing a 16px step against design_tokens.yml's
+# different ones - a document prescribing a 16px step against design_tokens.yml's
 # 0.75rem space_small leaves no way to tell which scale governs.
 #
 # A document may mention a value. It may not prescribe one without naming where
@@ -43,7 +43,7 @@ class TestDocNumbers < Minitest::Test
     end
 
     assert_empty stale,
-                 "baseline entries that are now traceable — remove them:\n  #{stale.join("\n  ")}"
+                 "baseline entries that are now traceable - remove them:\n  #{stale.join("\n  ")}"
   end
 
   def test_every_baseline_entry_states_a_reason
@@ -59,7 +59,7 @@ class TestDocNumbers < Minitest::Test
   # nothing.
   def test_the_checker_measures_something
     assert_operator @report[:values], :>, 10,
-                    "only #{@report[:values]} token values extracted — design_tokens.yml moved or changed shape"
+                    "only #{@report[:values]} token values extracted - design_tokens.yml moved or changed shape"
     # 29 documents since the 2026-09-24 consolidation; a floor for a reader
     # that stopped reading, not a count to hold.
     assert_operator @report[:docs], :>, 20,

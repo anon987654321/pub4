@@ -24,7 +24,7 @@ module Master
         id = row["id"].to_s
         signal = row["signal"].to_s
         action = row["action"].to_s
-        "[#{id}] #{signal} → #{action}"
+        "[#{id}] #{signal} -> #{action}"
       end
 
       def self.render(area: nil)

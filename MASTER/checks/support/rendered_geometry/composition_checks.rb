@@ -44,7 +44,7 @@ module Deploy
 
         @result.fail(
           "geometry centered_prose: #{surface.id} centres #{offenders.size} block(s) past " \
-          "#{max_lines} lines — #{offenders.first(3).join('; ')} (principle=alignment)", severity: :soft
+          "#{max_lines} lines - #{offenders.first(3).join('; ')} (principle=alignment)", severity: :soft
         )
       end
 
@@ -58,7 +58,7 @@ module Deploy
         if max_sizes.positive? && sizes.size > max_sizes
           @result.fail(
             "geometry composition: #{surface.id} first screen renders #{sizes.size} type sizes > " \
-            "#{max_sizes} allowed — reduce the visual vocabulary (principle=typography)",
+            "#{max_sizes} allowed - reduce the visual vocabulary (principle=typography)",
             severity: :soft,
           )
         end
@@ -67,7 +67,7 @@ module Deploy
         body = typography["body_median_px"].to_f
         if heading.to_f.positive? && body.positive? && heading < body * 1.4
           @result.fail(
-            "geometry composition: #{surface.id} h1 is #{heading}px vs median body #{body.round(1)}px — " \
+            "geometry composition: #{surface.id} h1 is #{heading}px vs median body #{body.round(1)}px - " \
             "hierarchy is visually weak (principle=hierarchy)",
             severity: :soft,
           )
@@ -78,7 +78,7 @@ module Deploy
 
         @result.fail(
           "geometry composition: #{surface.id} has #{long_centered} long centered text block(s) " \
-          "in the first screen — prefer a readable measure and directional alignment (principle=alignment)",
+          "in the first screen - prefer a readable measure and directional alignment (principle=alignment)",
           severity: :soft,
         )
       end

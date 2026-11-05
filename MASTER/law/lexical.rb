@@ -21,7 +21,7 @@ module Master
         next [] unless matches_mode?(line, narrow:)
         next [] unless discard_body?(lines, index)
 
-        [{ line: lineno, message: "rescue discards error — log, re-raise, or return a meaningful value" }]
+        [{ line: lineno, message: "rescue discards error - log, re-raise, or return a meaningful value" }]
       end
     end
 
@@ -53,7 +53,7 @@ module Master
         return false unless discard_token?(body)
 
         # In a predicate, false IS the handling: tts_healthy? rescuing to
-        # false has absorbed the error into its answer — the health-check
+        # false has absorbed the error into its answer - the health-check
         # idiom, not a swallow. The fleet's health endpoints carried seven
         # error-severity findings for degrading gracefully. Only nil/false
         # qualify; a predicate rescuing to [] is still discarding.
@@ -83,7 +83,7 @@ module Master
     # exemption above makes. A rescue whose whole body is `next` sits in a loop
     # over members, and skipping the member IS the handling: the method's answer
     # is that this one contributed nothing. All 17 in the four trees are that
-    # shape — a census walking files, a check walking hosts — and 16 of them
+    # shape - a census walking files, a check walking hosts - and 16 of them
     # would land at error severity, so adding the token asks the fleet to
     # annotate its own idiom.
     def discard_token?(body)
@@ -130,9 +130,9 @@ module Master
       next [] if path.to_s.match?(%r{/exe/|/spec/|/bin/|/cli/session})
 
       # A program's output is its interface, and the rule is about library code.
-      # Measured over the four trees: 750 of 941 findings sat in a program — a
+      # Measured over the four trees: 750 of 941 findings sat in a program - a
       # script with a shebang, a file that runs itself under a $PROGRAM_NAME
-      # guard, a rake task, a seed file or a test — where `puts "ok: synced"` is
+      # guard, a rake task, a seed file or a test - where `puts "ok: synced"` is
       # the line the operator reads and a logger would hide it.
       next [] if src.start_with?("#!") || src.match?(PROGRAM_GUARD) || path.to_s.match?(PROGRAM_PATH)
 
@@ -144,7 +144,7 @@ module Master
         # A receiverless call only, so @bus.publish and io.puts are not debug output.
         next unless node.is_a?(Prism::CallNode) && node.receiver.nil? && node.name.to_s.match?(/^(puts|p|pp)$/)
 
-        message = "debug output: #{node.name} — use event bus or logger"
+        message = "debug output: #{node.name} - use event bus or logger"
         findings << finding(line: node.location.start_line, message:)
       end
 
@@ -170,7 +170,7 @@ module Master
     tags %i[READABILITY]
     fix "lines exceeding 120 characters"
     bad "#{"x" * 121}\n"
-    good "#{"x" * 120}\n#{"x" * 100} # scan: intentional — the marker is not the defect\n"
+    good "#{"x" * 120}\n#{"x" * 100} # scan: intentional - the marker is not the defect\n"
     check do |src, path|
       next [] if path.to_s.match?(%r{/voice/personality\.rb|/io/llm\.rb})
 
@@ -204,15 +204,15 @@ module Master
     good "  # the reasoning is in TODO.md\n  MARKERS = /TODO|FIXME|XXX/\n"
     check do |src, path|
       # The lookahead keeps TODO.md, the repo-wide backlog, from reading as a
-      # marker — see data/laws.yml `unfinished`, which learned this at :veto.
+      # marker - see data/laws.yml `unfinished`, which learned this at :veto.
       #
       # A marker inside a regex literal is a detector, which is the reason this
-      # rule already skips the directory it lives in — and detectors live outside
+      # rule already skips the directory it lives in - and detectors live outside
       # it too. Both of the tree's cases are that: personal_workspace greps a
       # MEMORY.md for the marker lines an operator left, history_valuables lists
       # the markers among the patterns worth recovering from git.
       scan_lines(without_regex_literals(src), /\b(TODO|FIXME|HACK|XXX)\b(?!\.md)/,
-                 message: "unresolved marker — resolve or delete")
+                 message: "unresolved marker - resolve or delete")
     end
   end
 
@@ -237,7 +237,7 @@ module Master
                   !lines[index - 1].to_s.match?(%r{\A\s*(?://|/\*|\*)}) && index.positive?
         next unless bare_ruby || bare_js
 
-        finding(line: index + 1, message: "skipped without a reason — say why, or fix the test")
+        finding(line: index + 1, message: "skipped without a reason - say why, or fix the test")
       end
     end
   end
@@ -258,7 +258,7 @@ module Master
         next if line.match?(%r{\A\s*(?:#|//|/?\*|<!--)})
         next unless line.match?(%r{/Users/[a-z][\w.-]*/|\b[A-Z]:[/\\](?:Users|priv|home)\b}i)
 
-        finding(line: number, message: "machine-specific path — derive it from __dir__, ENV or config")
+        finding(line: number, message: "machine-specific path - derive it from __dir__, ENV or config")
       end
     end
   end
@@ -285,7 +285,7 @@ module Master
         handled = node.exceptions
         next unless handled&.any? { |ex| ex.slice.to_s == "Exception" }
 
-        findings << finding(line: node.location.start_line, message: "catches signals — use StandardError")
+        findings << finding(line: node.location.start_line, message: "catches signals - use StandardError")
       end
       findings
     end
@@ -331,7 +331,7 @@ module Master
       # No path exemption for the scanner's own rules: a rule that returns [] on
       # error calls the file it failed on clean, so a swallow costs more in this
       # directory than anywhere else. The one exception is the rule's own test,
-      # which must spell every shape it proves — the law-conduct argument.
+      # which must spell every shape it proves - the law-conduct argument.
       next [] if path.to_s.match?(/test_silent_rescue_rule\.rb\z|test_self_test\.rb\z/)
 
       SilentRescue.scan(src, narrow: false).map { |hit| finding(line: hit[:line], message: hit[:message]) }
@@ -360,7 +360,7 @@ module Master
     good "File.delete(path) rescue nil\n"
     check do |src, path|
       scan_lines(without_law_fixtures(without_comment_lines(without_regex_literals(src))),
-                 MODIFIER_RESCUE_DISCARD, message: "modifier rescue binds nil on failure — bind a meaningful value")
+                 MODIFIER_RESCUE_DISCARD, message: "modifier rescue binds nil on failure - bind a meaningful value")
     end
   end
 
@@ -372,7 +372,7 @@ module Master
   # all 37.
   #
   # It also made severity depend on comma count. Its naked-class branch matched
-  # `rescue\s+\S+` — one token — so `rescue Errno::ESRCH` was an ERROR while the
+  # `rescue\s+\S+` - one token - so `rescue Errno::ESRCH` was an ERROR while the
   # identical `rescue Errno::ESRCH, Errno::EPERM` was only NARROW_SILENT_RESCUE's
   # warning. 8 sites carried both severities at once.
   #
@@ -412,19 +412,19 @@ module Master
 
       # `p` is a legal variable name, so a line starting `p <<` is an append to a
       # local, not a Kernel#p call. The old pattern read both the same way and
-      # flagged attention_context.rb's `p << "zoom: …"` twice — an error-severity,
+      # flagged attention_context.rb's `p << "zoom: ..."` twice - an error-severity,
       # auto_fix=true rule pointed at correct code. Anything whose next token is an
       # assignment, append or comparison operator is the variable, not the call.
       #
       # `==` and `!=` were named and `<` and `>` were not, so dilla's
-      # `p < 0.5 ? (p * 4.0) - 1.0 : 3.0 - (p * 4.0)` — the phase local of a
-      # triangle oscillator — was an error-severity finding. `p <expr>` parses as
+      # `p < 0.5 ? (p * 4.0) - 1.0 : 3.0 - (p * 4.0)` - the phase local of a
+      # triangle oscillator - was an error-severity finding. `p <expr>` parses as
       # a comparison in every case; a Kernel#p whose argument opens with `<` is
       # `p <<~HEREDOC`, which the `<<` branch already spares.
       findings = scan_lines(src, /^\s*pp?\s+(?!self\b)(?!<<|[<>]|==|!=|\|\|=|&&=|[+\-*\/%|&^]?=)/,
-        message: "p/pp debug call — remove or publish via event bus")
+        message: "p/pp debug call - remove or publish via event bus")
 
-      findings += scan_lines(src, /\$stderr\.puts\b/, message: "$stderr.puts — use @bus.publish or $stdout")
+      findings += scan_lines(src, /\$stderr\.puts\b/, message: "$stderr.puts - use @bus.publish or $stdout")
       findings
     end
   end
@@ -441,7 +441,7 @@ module Master
 
         # a wordy comment usually starts with "This is a", "Here we", "This function"
         if line.match?(/\b(?:This is a|Here we|This function|Note that)\b/i)
-          finding(line: n + 1, message: "wordy comment — omit needless words")
+          finding(line: n + 1, message: "wordy comment - omit needless words")
         end
       end
     end
@@ -451,7 +451,7 @@ module Master
     tags %i[BE_CONCISE]
     fix "trailing comment after code"
     bad "value = 1 # why one\n"
-    good "# why one\nvalue = 1\nvalue = 2 # scan: intentional — the exemption is not the defect\n"
+    good "# why one\nvalue = 1\nvalue = 2 # scan: intentional - the exemption is not the defect\n"
     check do |src, path|
       src.each_line.with_index(1).filter_map do |line, n|
         next if line.strip.start_with?("#")
@@ -460,7 +460,7 @@ module Master
         # marker's removal; it loses it when the marker was the whole of it.
         next unless without_scan_marker(line).match?(/\S\s+#\s+\S/)
 
-        finding(line: n, message: "trailing comment — promote above the line or delete")
+        finding(line: n, message: "trailing comment - promote above the line or delete")
       end
     end
   end
@@ -483,22 +483,22 @@ module Master
 
       # Time.now.utc and Time.now.to_i do not read Time.zone: one converts to UTC
       # explicitly, the other is epoch seconds. Every RAILS finding this rule
-      # produced was one of those two forms — JWT exp/iat, a tmpfile suffix, and
-      # generated_at timestamps already pinned to .utc — so the rule was reporting
+      # produced was one of those two forms - JWT exp/iat, a tmpfile suffix, and
+      # generated_at timestamps already pinned to .utc - so the rule was reporting
       # 13 rewrites that would have changed no behaviour at all.
       findings = scan_lines(src, /(?<![A-Za-z_.])Time\.now\b(?!\s*\.\s*(?:utc|to_i|to_f|to_r))/,
-                             message: "Time.now ignores Time.zone — use Time.current")
+                             message: "Time.now ignores Time.zone - use Time.current")
 
       findings += scan_lines(src, /(?<![A-Za-z_.])Date\.today\b/,
-                             message: "Date.today ignores Time.zone — use Date.current")
+                             message: "Date.today ignores Time.zone - use Date.current")
       findings += scan_lines(src, /(?<![A-Za-z_.])DateTime\.now\b/,
-                             message: "DateTime.now — use Time.current.to_datetime")
+                             message: "DateTime.now - use Time.current.to_datetime")
       findings
     end
   end
 
   # `a === b` is JavaScript's identity operator and Ruby's case-equality, and it
-  # is exactly three `=` with a space each side — which is what the divider
+  # is exactly three `=` with a space each side - which is what the divider
   # pattern below matches. 486 of this rule's 636 findings across the four trees
   # were `mode === "speaking"` and its like, three quarters of everything it
   # reported. An operand on both sides is what separates the operator from a
@@ -512,8 +512,8 @@ module Master
     bad "# --- section\n"
     good "# -- section\n"
     check do |src, path|
-      # A test carries dividers as data — a YAML fixture's `---`, an expected
-      # banner — so in a test only a comment line is read, and a section divider
+      # A test carries dividers as data - a YAML fixture's `---`, an expected
+      # banner - so in a test only a comment line is read, and a section divider
       # there is the same decoration it is in lib/.
       in_test = path.to_s.match?(%r{(^|/)(test|spec)/})
 
@@ -534,7 +534,7 @@ module Master
   FACE_ASCII_EXCEPTIONS = %r{(?:^|/)(?:MASTER/lib/cli/face(?:/|\.rb\z)|RAILS/master/public/(?:face_ascii|face_2d_fallback)\.js\z|RAILS/master/test/face_ascii\.test\.mjs\z|MASTER/test/test_cli_ascii_face\.rb\z|MASTER/test/fixtures/face_ascii_frames\.json\z|MASTER/tools/face_ascii_fixtures\.rb\z|MASTER/law/interface\.rb\z)}
 
   ::Law.define(:NO_ASCII_ART_OUTSIDE_FACE) do
-    source "Rendered-values law — ASCII art is reserved for the face itself"
+    source "Rendered-values law - ASCII art is reserved for the face itself"
     ask "Does this file add ASCII-art logos, boot banners, decorative prompt drawings, or other " \
         "typographic pictures outside the face renderer? ASCII art is forbidden everywhere except " \
         "the face itself and the fixtures that prove its rendering. Ordinary text, a real wordmark " \

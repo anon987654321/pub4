@@ -7,7 +7,7 @@ class VisualGovernorSpec < Minitest::Test
   include FaceManifestHelper
 
   ROOT = File.expand_path("..", __dir__)
-  # layouts/application.html.erb is dead for this purpose — ChatController#index
+  # layouts/application.html.erb is dead for this purpose - ChatController#index
   # renders `layout: false` (web/CLAUDE.md); chat/index.html.erb is the real page.
   ENTRYPOINT = File.join(ROOT, "..", "RAILS", "master", "app", "views", "chat", "index.html.erb")
 
@@ -19,9 +19,9 @@ class VisualGovernorSpec < Minitest::Test
   def test_entrypoint_loads_visual_governor_in_deferred_manifest_before_any_tap
     source = File.read(ENTRYPOINT)
     assert_includes shell_manifest, "visual_governor"
-    # source-assertion: ok — how the template loads face.js is a property of its text.
+    # source-assertion: ok - how the template loads face.js is a property of its text.
     refute_match(/<script[^>]+src=["'][^"']*face\.js/, source)
-    # source-assertion: ok — the same property, from both sides of the handoff.
+    # source-assertion: ok - the same property, from both sides of the handoff.
     # The layout never imports face.js itself: it hands the versioned module URL
     # to public/face_primer.js through data-face-module, and only that script
     # (running after the primer tap) calls import() on it.

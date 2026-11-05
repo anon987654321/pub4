@@ -12,8 +12,8 @@ module Master
       # The renderer supplies the depth, lighting and camera language.
       #
       # Enter on an empty line listens, Enter again stops; a typed line is sent
-      # as it is. Either way the words go through turn, which is TurnRouter —
-      # the path bin/master takes — and the reply is spoken and shown.
+      # as it is. Either way the words go through turn, which is TurnRouter -
+      # the path bin/master takes - and the reply is spoken and shown.
       class Window
         ENTER = %W[\r \n].freeze
         INTERRUPT = "\u0003"
@@ -328,7 +328,7 @@ module Master
           heard = listen
           if heard && !@closing
             if @suppress_heard
-              message = @retain_input_on_interrupt ? "listening interrupted — typed input retained" : "listening interrupted"
+              message = @retain_input_on_interrupt ? "listening interrupted - typed input retained" : "listening interrupted"
               set(:idle, [message])
             else
               answer(heard)
@@ -369,7 +369,7 @@ module Master
             @retain_input_on_interrupt = false
             show(["microphone interrupted"])
           elsif @draft.empty?
-            show(["interrupted — ready for input; Ctrl-D leaves the face"])
+            show(["interrupted - ready for input; Ctrl-D leaves the face"])
           else
             change { @draft.clear }
             show(["draft cleared"])
@@ -464,14 +464,14 @@ module Master
             return
           end
 
-          set(:listening, ["listening — say stop or type to interrupt"])
+          set(:listening, ["listening - say stop or type to interrupt"])
           nudge(:listen)
           heard = @ear.listen(
             stop: -> { @halt_ear || @closing },
             on_partial: ->(text) { @heard_at = Process.clock_gettime(Process::CLOCK_MONOTONIC); show(["heard: #{text}"]) }
           )
           if @halt_ear && @suppress_heard
-            message = @retain_input_on_interrupt ? "listening interrupted — typed input retained" : "listening interrupted"
+            message = @retain_input_on_interrupt ? "listening interrupted - typed input retained" : "listening interrupted"
             set(:idle, [message])
             return
           end
@@ -519,12 +519,12 @@ module Master
               message = if @closing
                           "voice0: speech stopped while leaving face"
                         elsif @speech_interrupted
-                          "voice0: speech interrupted — reply remains visible"
+                          "voice0: speech interrupted - reply remains visible"
                         else
                           detail = (@mouth.last_error || "audio did not play").to_s.lines.first.to_s.strip
                           detail = detail.sub(/\Avoice0:\s*/i, "")
-                          detail = "#{detail[0, 96]}…" if detail.length > 96
-                          "voice0: audio unavailable — reply remains visible as text (#{detail})"
+                          detail = "#{detail[0, 96]}..." if detail.length > 96
+                          "voice0: audio unavailable - reply remains visible as text (#{detail})"
                         end
               @speech_interrupted = false
               set(:idle, [reply, message])
@@ -544,7 +544,7 @@ module Master
           paths = Master::Io::IdeaPicture.new.write(text)
           set(:idle, ["picture0: saved #{paths[:clip]}"])
         rescue StandardError => e
-          set(:idle, ["picture0: failed — #{e.message.to_s[0, 140]}"])
+          set(:idle, ["picture0: failed - #{e.message.to_s[0, 140]}"])
         end
 
         # The turn runs beside the window so ^C can abandon it. It carries no
@@ -559,7 +559,7 @@ module Master
             Fiber[:master_face_open] = true
             @turn.call(text)
           rescue StandardError => e
-            Master::Result.err("face0: turn failed — #{e.class}: #{e.message}", category: :infrastructure)
+            Master::Result.err("face0: turn failed - #{e.class}: #{e.message}", category: :infrastructure)
           end
           # The worker is asked before the keyboard, so a turn that has already
           # answered is kept even when input has ended.
@@ -583,7 +583,7 @@ module Master
           if cooperative
             # The active Fold owns an admitted bounded transaction. Let its
             # cancellation checkpoint close that transaction before returning.
-            set(:thinking, ["cancellation requested — finishing safe step"])
+            set(:thinking, ["cancellation requested - finishing safe step"])
             worker.join
           else
             worker.kill if worker.alive?
@@ -596,9 +596,9 @@ module Master
             worker.join(1)
           end
           if @closing
-            Master::Result.err("face0: turn cancelled — leaving face", category: :timeout)
+            Master::Result.err("face0: turn cancelled - leaving face", category: :timeout)
           else
-            Master::Result.err("face0: turn interrupted — ready for input", category: :abort)
+            Master::Result.err("face0: turn interrupted - ready for input", category: :abort)
           end
         end
 
@@ -702,7 +702,7 @@ module Master
             event_bus.subscribe(pattern) { |event| bus_event(event) }
           end
         rescue StandardError => e
-          set(:idle, ["face0: event bus unavailable — #{e.message.to_s[0, 100]}"])
+          set(:idle, ["face0: event bus unavailable - #{e.message.to_s[0, 100]}"])
           []
         end
 

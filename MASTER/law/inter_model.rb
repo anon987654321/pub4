@@ -6,7 +6,7 @@
 # outbound envelope are allowed; their argument is named outbound/request.
 Law.define(:INTER_MODEL_CONTRACT) do
   path "MASTER/lib/review/council/"
-  source "MASTER/data/inter_model.yml — machine-validated peer-model exchanges"
+  source "MASTER/data/inter_model.yml - machine-validated peer-model exchanges"
   detect do |line|
     call = line.match(/@agent\.ask(?:_once)?\s*\((.*)\z/)
     call && (

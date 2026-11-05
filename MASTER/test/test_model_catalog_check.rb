@@ -29,7 +29,7 @@ class ModelCatalogCheckTest < Minitest::Test
   end
 
   # Offering the vendor's shortest id would answer "gemini-flash-lite is gone"
-  # with "use gemma-3-4b-it" — a wrong answer in the shape of a right one.
+  # with "use gemma-3-4b-it" - a wrong answer in the shape of a right one.
   # Saying nothing is the better answer.
   def test_no_plausible_successor_suggests_nothing
     assert_equal [:no_successor, nil], classify("google/gemini-flash-lite-latest")

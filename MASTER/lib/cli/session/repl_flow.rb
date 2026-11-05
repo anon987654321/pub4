@@ -239,7 +239,7 @@ module Master
       rescue StandardError => e
         @last_ok = false
         @exit_code = 2
-        text = "cmd0: /#{name} failed — #{e.class}: #{e.message}"
+        text = "cmd0: /#{name} failed - #{e.class}: #{e.message}"
         return Master::Result.err(text, category: :infrastructure) if @face_open
 
         print_terminal_output(text, mode: :error)
@@ -252,7 +252,7 @@ module Master
       end
 
       # !command runs one zsh line through the Io::Shell the model's zsh tool
-      # uses — its blocklist, sandbox, interactive refusal and governor — and
+      # uses - its blocklist, sandbox, interactive refusal and governor - and
       # costs no model call. The output joins the transcript so the next prompt
       # can refer to it. Fast mode builds no governor, so it refuses.
       def run_bang(command)
@@ -401,7 +401,7 @@ module Master
           end
         end
       rescue StandardError => e
-        terminal_puts("queue0: worker failed — #{e.class}: #{e.message}", io: $stderr)
+        terminal_puts("queue0: worker failed - #{e.class}: #{e.message}", io: $stderr)
       ensure
         restart = false
         @turn_queue_mutex.synchronize do

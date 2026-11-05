@@ -14,7 +14,7 @@ module Deploy
     # Marketplace's controllers, views and routes live in the brgen_marketplace
     # engine, a sibling of brgen, and the payment *services* stayed in the host.
     # This check kept the pre-split paths, so it failed on "missing" files that had
-    # only moved — and would have gone on failing identically had the checkout
+    # only moved - and would have gone on failing identically had the checkout
     # actually been deleted. Engine paths below; host paths for what stayed.
     ENGINE = "brgen_marketplace"
 
@@ -52,7 +52,7 @@ module Deploy
       @result = CheckResult.new
       SourceContract.require_patterns(@result, root: @rails_root, required: REQUIRED, check: "payment_honesty")
 
-      # Stripe/Vipps must raise NotConfigured when keys blank — source contract
+      # Stripe/Vipps must raise NotConfigured when keys blank - source contract
       stripe = read("brgen/app/services/marketplace/payments/stripe_checkout.rb")
       @result.fail("payment_honesty: StripeCheckout must raise NotConfigured") unless stripe.match?(/raise NotConfigured/)
       vipps = read("brgen/app/services/marketplace/payments/vipps_checkout.rb")
@@ -82,10 +82,10 @@ module Deploy
 
     def live_cart_probe
       inv = Inventory.new(root: ROOT).apps.find { |a| a.name == "brgen" }
-      return @result.inconclusive!("payment_honesty: brgen not in inventory — live cart not probed") unless inv
-      return @result.inconclusive!("payment_honesty: brgen port closed — live cart not probed") unless CrawlSupport.port_open?("127.0.0.1", inv.port)
+      return @result.inconclusive!("payment_honesty: brgen not in inventory - live cart not probed") unless inv
+      return @result.inconclusive!("payment_honesty: brgen port closed - live cart not probed") unless CrawlSupport.port_open?("127.0.0.1", inv.port)
 
-      # Guest cart should redirect to sign-in or show cart — never 500
+      # Guest cart should redirect to sign-in or show cart - never 500
       res = CrawlSupport.fetch("http://127.0.0.1:#{inv.port}/cart", host: "markedsplass.brgen.no", timeout: 12)
       code = res.code.to_i
       @result.fail("payment_honesty: cart HTTP #{code}") unless code.between?(200, 399)

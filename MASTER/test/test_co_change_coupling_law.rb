@@ -4,8 +4,8 @@ require_relative "test_helper"
 require "review/scan/law_tree"
 
 # The rule reads a co-change graph and reports files that move with peers in
-# other modules. Its whole judgement is three filters — same module, weight
-# below the threshold, and everything past the top three — so each is asserted
+# other modules. Its whole judgement is three filters - same module, weight
+# below the threshold, and everything past the top three - so each is asserted
 # in both directions here. A rule tested only for "returns an Array" passes with
 # every filter inverted.
 #
@@ -36,7 +36,7 @@ class TestCoChangeCouplingLaw < Minitest::Test
 
     assert_equal 1, found.size
     assert_includes found.first, OTHER_MODULE
-    assert_includes found.first, "(5)", "the weight is the evidence — reporting the peer without it says nothing"
+    assert_includes found.first, "(5)", "the weight is the evidence - reporting the peer without it says nothing"
   end
 
   def test_a_peer_below_the_threshold_is_not_reported

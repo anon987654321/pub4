@@ -534,12 +534,12 @@ class TestRepairLoopPolicy < Minitest::Test
   # git's diff arrives as BINARY. A non-ASCII line in it raised inside the UTF-8
   # prompt, and the refusal that followed killed every such repair unread.
   def test_reflexion_reads_a_change_beside_non_ascii_text
-    original = "# Søknad — kø\nvalue = 1\n"
+    original = "# Søknad - kø\nvalue = 1\n"
     proposed = original.sub("value = 1", "value = 2")
     prompt = build_loop(root: Dir.pwd, bus: FakeBus.new, scanner: Scanner.new, agent: ScriptedAgent.new("SAFE"))
-               .send(:reflexion_prompt, { law: "TEST_RULE", line: 2, message: "fix — me" }, original, proposed)
+               .send(:reflexion_prompt, { law: "TEST_RULE", line: 2, message: "fix - me" }, original, proposed)
 
-    assert_includes prompt, "# Søknad — kø"
+    assert_includes prompt, "# Søknad - kø"
     assert_includes prompt, "+value = 2"
   end
 
@@ -669,7 +669,7 @@ class TestRepairLoopPolicy < Minitest::Test
   # The 2026-08-19 proof run reported fixed=0 for 33 minutes and the log could
   # not say why: every non-apply collapsed to false before the one aggregate
   # line. Each outcome is a named symbol now, and a model that returns nothing
-  # is :no_proposal — a different problem from a proposal dying in review, and
+  # is :no_proposal - a different problem from a proposal dying in review, and
   # the breakdown line must say which.
   def test_a_model_that_returns_nothing_is_a_named_outcome
     Dir.mktmpdir do |root|

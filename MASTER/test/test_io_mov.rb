@@ -412,9 +412,9 @@ class TestIoMov < Minitest::Test
     end
 
     details = events.select { |event| event[:event] == "stage:mov0" }.map { |event| event[:detail] }
-    assert_includes(details, "9% — yt-dlp — Trailer")
-    assert_includes(details, "40% — yt-dlp — Trailer")
-    assert_includes(printed, "40% — yt-dlp — Trailer")
+    assert_includes(details, "9% - yt-dlp - Trailer")
+    assert_includes(details, "40% - yt-dlp - Trailer")
+    assert_includes(printed, "40% - yt-dlp - Trailer")
   end
 
   def test_progress_prints_a_line_once_per_step_and_stages_every_percent

@@ -1,7 +1,7 @@
-# Bergen brand systems — doctrine and /fix runbook
+# Bergen brand systems - doctrine and /fix runbook
 
-> **Retired 2026-10-28.** The two trees this doctrine was measured on —
-> `RAILS/__other/sommerseth/` and `RAILS/__other/alfa/` — are gone: the sites
+> **Retired 2026-10-28.** The two trees this doctrine was measured on -
+> `RAILS/__other/sommerseth/` and `RAILS/__other/alfa/` - are gone: the sites
 > were declared obsolete, and the httpd vhosts, relayd routing, SANs, DNS and
 > `apps.yml#static_exports` rows were removed with them. The doctrine stays
 > because its decisions are design decisions: the laws in `MASTER/law/brand.rb`
@@ -22,7 +22,7 @@ Everything below is what `/fix` must be able to verify and restore. The
 line-level teeth are `MASTER/law/brand.rb`; the source of truth for the
 palettes and mark parameters is `MASTER/data/tokens.yml#tokens.brand_systems`.
 
-## 1. Bergen-snittet v1 — the parametric mark system
+## 1. Bergen-snittet v1 - the parametric mark system
 
 Both marks derive from ONE construction grammar. Nothing is hand-drawn;
 paths are computed from constants. Never paste coordinate soup into a
@@ -34,16 +34,16 @@ component (law `PARAMETRIC_MARK_ONLY`).
 | STROKE      | 3.2   | shared stroke, round caps + joins         |
 | HORIZON_Y   | 38    | the ground/fjord line every mark stands on|
 | RISE        | 25    | roofline rise over its half-width         |
-| ROOF ANGLE  | ≈57.4°| atan(25/16) — shared slope constant       |
+| ROOF ANGLE  | ≈57.4°| atan(25/16) - shared slope constant       |
 | SUN_R       | 6.5   | half-disc radius (midnight sun)           |
-| DOOR_R      | 5.2   | 0.8 × SUN_R — Alfa's arch door            |
+| DOOR_R      | 5.2   | 0.8 x SUN_R - Alfa's arch door            |
 
-- **Sommerseth** — midnattssol over setertak: half-disc sun centred on the
+- **Sommerseth** - midnattssol over setertak: half-disc sun centred on the
   roofline's left foot (15, 38); roofline rises from the sun's centre to
-  apex (30, 13) and down to (45, 38); horizon 4→44.
-- **Alfa** — A-scråtak: symmetric roofline, feet (8, 38) → apex (24, 13) →
-  (40, 38); half-disc door r 5.2 centred (24, 38); horizon 4→44. The door
-  and the sun are the SAME circle parameter — sun ↔ door is the sibling
+  apex (30, 13) and down to (45, 38); horizon 4->44.
+- **Alfa** - A-scråtak: symmetric roofline, feet (8, 38) -> apex (24, 13) ->
+  (40, 38); half-disc door r 5.2 centred (24, 38); horizon 4->44. The door
+  and the sun are the SAME circle parameter - sun ↔ door is the sibling
   reveal between the two brands.
 
 Implementation contract: `src/lib/marks.ts` exports `SYS` + composed path
@@ -79,28 +79,28 @@ except none).
 
 Loaded with `next/font/google` (variable `--font-display`, `--font-body`,
 `--font-mono`). Display sizes are fluid clamps anchored at viewport width
-(`clamp(2.8rem, 7.2vw, 6.6rem)` class values — see the modules). Norwegian
+(`clamp(2.8rem, 7.2vw, 6.6rem)` class values - see the modules). Norwegian
 bokmål copy throughout, snl.no orthography (law `NORWEGIAN_COPY_BOKMAL`).
 
-## 4. Motion kit — "fully immersive, still honest"
+## 4. Motion kit - "fully immersive, still honest"
 
 Shared client kit: `src/components/motion.tsx`. Every part respects
 `prefers-reduced-motion` (returns static rendering when set).
 
-- `SmoothScroll` — Lenis (duration ≈ 1.15), rAF loop, destroyed on unmount.
-- `Reveal` — opacity 0→1, y 26→0, blur 8→0, once, stagger by delay.
-- `WordReveal` — per-word masks (`.wr-mask` overflow hidden, inner span
-  y 112%→0). **The measured trap**: `whileInView` on the clipped inner span
+- `SmoothScroll` - Lenis (duration ≈ 1.15), rAF loop, destroyed on unmount.
+- `Reveal` - opacity 0->1, y 26->0, blur 8->0, once, stagger by delay.
+- `WordReveal` - per-word masks (`.wr-mask` overflow hidden, inner span
+  y 112%->0). **The measured trap**: `whileInView` on the clipped inner span
   never fires (intersection area 0). Observe the outer unclipped wrapper
   with `useInView`, drive inner spans with `animate`
   (law `WORDMASK_OBSERVES_UNCLIPPED`).
-- `Parallax` — image 114% height in an overflow-hidden frame; y ±10% tied
+- `Parallax` - image 114% height in an overflow-hidden frame; y ±10% tied
   to `useScroll` progress of the frame.
-- `Marquee` — duplicated row, linear `translateX(0 → -50%)` loop.
-- `Counter` — animates 0→N on first view, tabular numerals.
-- `Magnetic` — spring-follow on pointer move (strength ≈ 0.28), resets on
+- `Marquee` - duplicated row, linear `translateX(0 -> -50%)` loop.
+- `Counter` - animates 0->N on first view, tabular numerals.
+- `Magnetic` - spring-follow on pointer move (strength ≈ 0.28), resets on
   leave.
-- `Cursor` — dot + trailing ring, `pointer: fine` only; every page that
+- `Cursor` - dot + trailing ring, `pointer: fine` only; every page that
   sets `cursor: none` MUST render it (law `CURSOR_NONE_REQUIRES_CURSOR`).
 
 Shared styles live in `src/app/motion.css` (bundles) / `reveal.css` (dev
@@ -109,13 +109,13 @@ preview): `.wr-mask`, `.wr-word`, `.pl-frame`, `.pl-inner`, `.mq`,
 
 ## 5. Page anatomy (both brands)
 
-Sticky nav (paper blur, hairline bottom) → hero (kicker in mono, display
-headline with signal-coloured em, lead, magnetic primary + quiet CTA) →
-full-bleed parallax figure with mono caption → hairline-ruled fact strip →
-split section (text + portrait parallax) → numbered rows (mono numeral,
-display title, muted description, arrow that translates on hover) →
-values/services columns → contact (display-size invitation + underlined
-contact rows) → hairline footer with sister-brand link.
+Sticky nav (paper blur, hairline bottom) -> hero (kicker in mono, display
+headline with signal-coloured em, lead, magnetic primary + quiet CTA) ->
+full-bleed parallax figure with mono caption -> hairline-ruled fact strip ->
+split section (text + portrait parallax) -> numbered rows (mono numeral,
+display title, muted description, arrow that translates on hover) ->
+values/services columns -> contact (display-size invitation + underlined
+contact rows) -> hairline footer with sister-brand link.
 
 Photographs are brand-generated per storefront_art (matte paper light, no
 embedded text/logos/watermarks); never stock with watermarks. Alt text in
@@ -125,29 +125,29 @@ Norwegian.
 
 The source trees are retired; this runbook now governs two cases.
 
-**RAILS/** sweeps** — `/fix RAILS` walks the brand laws that survived as
+**RAILS/** sweeps** - `/fix RAILS` walks the brand laws that survived as
 universal guardrails: `CURSOR_NONE_REQUIRES_CURSOR`,
 `NORWEGIAN_COPY_BOKMAL`, `WORDMASK_OBSERVES_UNCLIPPED` (measured at zero
 findings across the four apps). The three palette/mark laws
 (`SIGNAL_COLOR_NAMING`, `PAPER_NOT_PURE_WHITE`, `PARAMETRIC_MARK_ONLY`) are
 scoped by `laws.yml path_pattern` to brand-export trees and are silent over
-the apps — the apps' `--accent`, `#ffffff` grounds and icon path artwork are
+the apps - the apps' `--accent`, `#ffffff` grounds and icon path artwork are
 the operator-owned scheme, not drift. `/fix` must not repaint them.
 
 **A future brand-export tree** (a new static site under `RAILS/__other/`):
 
 1. Run the laws of `MASTER/law/brand.rb` plus the web laws
-   (`REDUCED_MOTION`, `MEASURE_OPTIMUM`, `CLAMP_TYPOGRAPHY`, …).
-2. Compose marks from parametric constants, never coordinate soup —
+   (`REDUCED_MOTION`, `MEASURE_OPTIMUM`, `CLAMP_TYPOGRAPHY`, ...).
+2. Compose marks from parametric constants, never coordinate soup -
    a mark component renders named parts, never literal dumps.
 3. Verify word-mask motion observes the outer, unclipped wrapper (grep for
-   `whileInView={{ y:` — zero hits allowed).
+   `whileInView={{ y:` - zero hits allowed).
 4. Verify `cursor: none` is always paired with a rendered cursor and the
    pointer:fine / reduced-motion gates.
 5. Verify every motion consumer respects `useReducedMotion`.
 6. Verify copy is bokmål and meta/mono strings use the declared mono face.
-7. Re-screenshot at 1440×900 top/mid/low/end before declaring done.
+7. Re-screenshot at 1440x900 top/mid/low/end before declaring done.
 8. Register the tree in `apps.yml` (or restore the `static_exports`
-   convention) and its relay/httpd config before first deploy — the
+   convention) and its relay/httpd config before first deploy - the
    2026-10-28 retirement of the sommerseth/alfa blocks in
    `OPENBSD/etc/{httpd,relayd,acme-client}.conf` is the shape to re-create.

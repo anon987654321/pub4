@@ -3,9 +3,9 @@
 require_relative "test_helper"
 
 # data/security.yml described a local-first, zero-listener, explicitly
-# paired, fail-closed system. Exactly one of its keys had a reader. The rest — the
+# paired, fail-closed system. Exactly one of its keys had a reader. The rest - the
 # gateway bind, the dashboard, the session trust tiers, the pairing TTL, the
-# ingress rate limit, the five tool deny patterns — read as enforced policy and
+# ingress rate limit, the five tool deny patterns - read as enforced policy and
 # enforced nothing, and the ingress limit was additionally hardcoded in the
 # controller so the file and the code could drift apart silently.
 #
@@ -13,7 +13,7 @@ require_relative "test_helper"
 # keeps that split true, in both directions: an enforced key that loses its reader
 # fails, and a planned key that grows one fails until it moves up. The readers are
 # named explicitly rather than grepped for the leaf name, because leaf names here
-# are words like "enabled", "port" and "trust" — a name grep would find those
+# are words like "enabled", "port" and "trust" - a name grep would find those
 # anywhere and call the file enforced.
 class TestSecurityDefaults < Minitest::Test
   PATH = Master.data_path("security.yml")
@@ -67,7 +67,7 @@ class TestSecurityDefaults < Minitest::Test
     READERS.each do |path, (relative, expression)|
       refute_nil defaults.dig(*path), "#{path.join(".")} is gone from #{PATH}"
       assert_includes source(relative), expression,
-                      "#{relative} no longer reads #{path.join(".")} — move the key under planned: or fix the reader"
+                      "#{relative} no longer reads #{path.join(".")} - move the key under planned: or fix the reader"
     end
   end
 
@@ -85,14 +85,14 @@ class TestSecurityDefaults < Minitest::Test
     planned = Array(defaults["planned"])
     refute_empty planned, "planned: should hold the recorded-but-unimplemented policy"
 
-    # Distinctive leaf names only — "enabled" or "port" would match half the tree.
+    # Distinctive leaf names only - "enabled" or "port" would match half the tree.
     distinctive = %w[deny_patterns require_scope channel_default health_path]
     sources = Dir.glob(File.join(Master::ROOT, "{lib,core,bin,../RAILS/master/app}", "**", "*.rb"))
 
     distinctive.each do |name|
       readers = sources.select { |path| File.read(path).include?(name) }
       assert_empty readers.map { |path| path.sub("#{Master::ROOT}/", "") },
-                   "#{name} is under planned: but now has a reader — promote it out of planned:"
+                   "#{name} is under planned: but now has a reader - promote it out of planned:"
     end
   end
 

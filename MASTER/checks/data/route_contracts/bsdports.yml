@@ -6,7 +6,7 @@ routes:
   "/":
     status: 200
     type: text/html
-    title: Ports — BSDports
+    title: Ports - BSDports
     heading: OpenBSD-porter
     landmarks:
     - header
@@ -37,7 +37,7 @@ routes:
   "/categories":
     status: 200
     type: text/html
-    title: Kategorier — BSDports
+    title: Kategorier - BSDports
     heading: Kategorier
     landmarks:
     - header
@@ -61,7 +61,7 @@ routes:
   "/cookies":
     status: 200
     type: text/html
-    title: Informasjonskapsler — BSDports
+    title: Informasjonskapsler - BSDports
     heading: Informasjonskapsler på N.N.N.N
     landmarks:
     - header
@@ -80,7 +80,7 @@ routes:
   "/maintainers":
     status: 200
     type: text/html
-    title: Maintainere — BSDports
+    title: Maintainere - BSDports
     heading: Maintainere
     landmarks:
     - header
@@ -120,7 +120,7 @@ routes:
   "/ports":
     status: 200
     type: text/html
-    title: Ports — BSDports
+    title: Ports - BSDports
     heading: OpenBSD-porter
     landmarks:
     - header
@@ -133,7 +133,7 @@ routes:
   "/privacy":
     status: 200
     type: text/html
-    title: Personvern — BSDports
+    title: Personvern - BSDports
     heading: Personvern hos N.N.N.N
     landmarks:
     - header
@@ -159,7 +159,7 @@ routes:
   "/safety":
     status: 200
     type: text/html
-    title: Sikkerhet — BSDports
+    title: Sikkerhet - BSDports
     heading: Din sikkerhet
     landmarks:
     - header
@@ -201,7 +201,7 @@ routes:
   "/terms":
     status: 200
     type: text/html
-    title: Vilkår — BSDports
+    title: Vilkår - BSDports
     heading: Vilkår for N.N.N.N
     landmarks:
     - header

@@ -8,8 +8,8 @@ require_relative "../boot/paths"
 
 module Master
   module Trace
-  # Trace — captures all bus events for the current turn into a JSONL log
-  # at .master/traces/YYYY-MM-DD.jsonl (local state, never data/ — a runtime
+  # Trace - captures all bus events for the current turn into a JSONL log
+  # at .master/traces/YYYY-MM-DD.jsonl (local state, never data/ - a runtime
   # write target inside the law tree read as config). One turn record per line.
   # /why formats the last turn.
     class Recorder

@@ -8,8 +8,8 @@ module Master
     # The one reader of YAML front matter, in two shapes.
     #
     # Five copies of this existed. Two called `parse` here; three carried
-    # /\A---\s*\n(.*?)\n---\s*\n?(.*)\z/m inline — lib/cli/skills.rb and both
-    # antigravity readers — and each answered a malformed header differently: two
+    # /\A---\s*\n(.*?)\n---\s*\n?(.*)\z/m inline - lib/cli/skills.rb and both
+    # antigravity readers - and each answered a malformed header differently: two
     # returned {} silently and the third let the exception out. One input, three
     # behaviours, decided by which reader reached the file first.
     #
@@ -27,7 +27,7 @@ module Master
       # `context` is required rather than defaulted: a swallow with no
       # caller-supplied context is the undifferentiated stream Swallow's own
       # header warns about. A header that will not parse is load-bearing every
-      # time — the caller reads a name out of it and drops the subject when it is
+      # time - the caller reads a name out of it and drops the subject when it is
       # empty, so a typo silently unregisters the thing rather than reporting it
       # broken.
       def split(raw, context:, **meta)

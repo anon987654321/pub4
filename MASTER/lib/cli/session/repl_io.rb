@@ -205,7 +205,7 @@ module Master
         @refs.session&.save!
       rescue StandardError => e
         Master::Trace::Dmesg.status(
-          "session0", "save failed — #{e.class}: #{e.message}", io: $stderr
+          "session0", "save failed - #{e.class}: #{e.message}", io: $stderr
         )
       end
 

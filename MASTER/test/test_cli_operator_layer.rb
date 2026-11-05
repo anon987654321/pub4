@@ -76,7 +76,7 @@ class TestCliOperatorLayer < Minitest::Test
 
     assert_includes source, "print_previous_question_footer"
     assert_includes source, "last_user_question(before: @last_input)"
-    assert_includes source, '"next0: your previous question — #{question}"'
+    assert_includes source, '"next0: your previous question - #{question}"'
 
     refute_includes source, "Master::Voice::Playback.speak(question)"
   end

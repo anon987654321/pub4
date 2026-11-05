@@ -4,7 +4,7 @@
 require_relative "../lib/boot/entrypoint"
 Master::Boot::Entrypoint.prepare!(root: File.expand_path("..", __dir__))
 
-# master-probe — one entrypoint for local and VPS readiness checks.
+# master-probe - one entrypoint for local and VPS readiness checks.
 # Usage:
 #   bin/probe              # quick local signal
 #   bin/probe all          # smoke + namespace + selftest + core + dogfood + ci + audit + rails check
@@ -46,7 +46,7 @@ CHECKS = {
     cmd: [RUBY, File.join(MASTER_ROOT, "bin", "smoke-web")],
     cwd: MASTER_ROOT,
   },
-  # nsaudit and dogfood each have one caller in the repo — this table — and the
+  # nsaudit and dogfood each have one caller in the repo - this table - and the
   # entry-point count keeps proposing that they fold into `check` as steps. They
   # stay separate processes. `bin/nsaudit` defines a bare top-level `ROOT`,
   # one of the 43 the tree carries, and every one of them is harmless only while
@@ -115,7 +115,7 @@ CHECKS = {
     skip_reason: "not on OpenBSD VPS (/etc/relayd.conf missing)",
   },
   "core" => {
-    desc: "Core integration smoke (Effect → Constitution → World)",
+    desc: "Core integration smoke (Effect -> Constitution -> World)",
     # -I lib because core_smoke requires "master"; nothing else puts it on the path.
     cmd: [RUBY, "-I", File.join(MASTER_ROOT, "lib"), File.join(MASTER_ROOT, "test", "test_core_smoke.rb")],
     cwd: MASTER_ROOT,

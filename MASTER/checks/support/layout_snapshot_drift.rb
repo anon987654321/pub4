@@ -6,7 +6,7 @@ module Deploy
   class LayoutSnapshotCheck
     # What a snapshot difference breaks, not only where it is.
     #
-    # A flat list in key order put "h1_count: 1 → 2" among fourteen 3px nudges,
+    # A flat list in key order put "h1_count: 1 -> 2" among fourteen 3px nudges,
     # and the failure line shows eight entries, so a collapsed hierarchy could
     # sit past the end of its own report. Every difference is filed under the
     # damage it does, the classes run most severe first, and emphasis is stated
@@ -82,7 +82,7 @@ module Deploy
       def ratio_row(label, was, now)
         return unless was && now && (now - was).abs > was * RATIO_SHIFT
 
-        ["hierarchy", "#{label} #{format('%.2f', was)} → #{format('%.2f', now)}"]
+        ["hierarchy", "#{label} #{format('%.2f', was)} -> #{format('%.2f', now)}"]
       end
 
       def heading_ratio(elements)
@@ -100,7 +100,7 @@ module Deploy
       def primary_row
         was = primary(@old)&.fetch("key", nil)
         now = primary(@new)&.fetch("key", nil)
-        ["hierarchy", "primary action #{was} → #{now}"] if was && now && was != now
+        ["hierarchy", "primary action #{was} -> #{now}"] if was && now && was != now
       end
 
       def action_ratio(elements)
@@ -119,7 +119,7 @@ module Deploy
         (@was["landmarks"] || {}).each do |mark, was|
           now = @now.dig("landmarks", mark)
 
-          rows << ["hierarchy", "landmark #{mark}: #{was} → #{now}"] if was != now
+          rows << ["hierarchy", "landmark #{mark}: #{was} -> #{now}"] if was != now
         end
         rows << landmark_order_row
         rows.compact
@@ -128,7 +128,7 @@ module Deploy
       def field_row(name, field)
         return if @was[field] == @now[field]
 
-        [name, "#{field}: #{@was[field].inspect} → #{@now[field].inspect}"]
+        [name, "#{field}: #{@was[field].inspect} -> #{@now[field].inspect}"]
       end
 
       # Reading order is top to bottom, then left to right, which is the order a
@@ -139,7 +139,7 @@ module Deploy
         common = was & now
         return if (was & common) == (now & common)
 
-        ["hierarchy", "landmark order #{(was & common).join(', ')} → #{(now & common).join(', ')}"]
+        ["hierarchy", "landmark order #{(was & common).join(', ')} -> #{(now & common).join(', ')}"]
       end
 
       def landmark_keys(elements)
@@ -162,7 +162,7 @@ module Deploy
         return if was == now
         return unless was.zero? || (now - was).abs > was * DENSITY_SHIFT
 
-        ["density", "#{label} #{was} → #{now}"]
+        ["density", "#{label} #{was} -> #{now}"]
       end
 
       # Landmarks are containers, and a container's box is the sum of what it
@@ -179,13 +179,13 @@ module Deploy
       def geometry_row(key, axes)
         was = @old_by_key[key]
         now = @new_by_key[key]
-        detail = axes.map { |axis| "#{axis} #{was.dig('rect', axis)}→#{now.dig('rect', axis)}" }.join(", ")
+        detail = axes.map { |axis| "#{axis} #{was.dig('rect', axis)}->#{now.dig('rect', axis)}" }.join(", ")
         lines = wrapped_lines(was, now)
         return ["wrap", "#{key}: #{format('%+d', lines)} line(s) (#{detail})"] if lines
 
         from = region(@old, was)
         to = region(@new, now)
-        return ["reflow", "#{key}: #{from} → #{to} (#{detail})"] if from != to
+        return ["reflow", "#{key}: #{from} -> #{to} (#{detail})"] if from != to
 
         near = axes.all? { |axis| shift(key, axis) <= TOLERANCE_PX * NUDGE_FACTOR }
         [near ? "nudge" : "reflow", "#{key}: #{detail}"]
@@ -226,7 +226,7 @@ module Deploy
         was = @old_by_key[key]
         now = @new_by_key[key]
         fields.reject { |field| was[field] == now[field] }
-              .map { |field| [name, "#{key}: #{field} #{was[field].inspect} → #{now[field].inspect}"] }
+              .map { |field| [name, "#{key}: #{field} #{was[field].inspect} -> #{now[field].inspect}"] }
       end
 
       def area(el) = el.dig("rect", "w").to_i * el.dig("rect", "h").to_i

@@ -88,7 +88,7 @@ class TestDeletedFilesAbsent < Minitest::Test
   DELETED_FILES.each do |filename|
     define_method(:"test_#{filename.tr('.', '_')}_removed") do
       refute File.exist?(File.join(DATA, filename)),
-             "#{filename} should be removed — content merged into patterns.yml"
+             "#{filename} should be removed - content merged into patterns.yml"
     end
   end
 end
@@ -170,7 +170,7 @@ class TestLawsYamlRegistry < Minitest::Test
   end
 
   # A chain nothing applies is a declaration with no reader, which is this
-  # tree's most-recorded defect — so this holds that Speech reaches for it, not
+  # tree's most-recorded defect - so this holds that Speech reaches for it, not
   # merely that voice.yml contains it.
   def test_the_post_chain_is_read_and_applied
     chain = Master::Voice::Policy.post_chain
@@ -216,7 +216,7 @@ class TestLawsYamlRegistry < Minitest::Test
   # A rotation is additive: single_voice stays the contract, every name in the
   # list has to be a voice the synthesiser knows, and an absent or single-entry
   # rotation must leave the one-voice behaviour exactly as it was. The last
-  # clause is the one worth holding — it is what lets this be reverted by
+  # clause is the one worth holding - it is what lets this be reverted by
   # deleting four lines of YAML.
   def test_voice_rotation_is_additive
     tts = Master.load_yaml(File.join(DATA, "voice.yml"))["tts"] || {}
@@ -261,7 +261,7 @@ class TestLawsYamlRegistry < Minitest::Test
     tts = voice["tts"] || {}
     # No voice name is asserted here. This test was left behind by a voice.yml
     # change three times, in both directions, shipping MASTER's suite red on
-    # origin/main each time — a check measuring a spelling while the behaviour
+    # origin/main each time - a check measuring a spelling while the behaviour
     # it stood for was right. data/voice.yml is the operator's decision and owns
     # the name; what a test can hold is that every reader agrees with it, which
     # is what the assertions below do and what actually broke each time.

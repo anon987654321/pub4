@@ -9,7 +9,7 @@ require_relative "../../io/atomic_write"
 module Master
   module Fix
     module Improve
-      # Ideation: /fix does not only close gaps it can name — it proposes what
+      # Ideation: /fix does not only close gaps it can name - it proposes what
       # to build. Ideas come from three mechanical sources, each checkable:
       # the tree's own sprawl (what the shape asks to fix), the code's repeated
       # shapes (what wants to become shared), and the wishlist personas (what a
@@ -43,13 +43,13 @@ module Master
           out = []
           Array(sprawl[:single_file_dirs]).first(3).each do |dir|
             out << Idea.new(
-              title: "Fold #{dir} into its parent — a folder for one file is a label pretending to be a structure",
+              title: "Fold #{dir} into its parent - a folder for one file is a label pretending to be a structure",
               source: "tree_sprawl.single_file_dirs", evidence: dir, kind: :restructure
             )
           end
           Array(sprawl[:name_twins]).first(2).each do |twin|
             out << Idea.new(
-              title: "Merge name twins #{File.basename(twin, '.*')}.* — one concept split across files without a reason",
+              title: "Merge name twins #{File.basename(twin, '.*')}.* - one concept split across files without a reason",
               source: "tree_sprawl.name_twins", evidence: twin, kind: :restructure
             )
           end
@@ -63,7 +63,7 @@ module Master
                          .select { |_name, paths| paths.size > 2 && !paths.first.start_with?("RAILS/") }
           repeats.first(2).map do |name, paths|
             Idea.new(
-              title: "#{name} appears #{paths.size} times across trees — extract the shared part or state why each copy differs",
+              title: "#{name} appears #{paths.size} times across trees - extract the shared part or state why each copy differs",
               source: "duplication.basename", evidence: paths.first(4).join(", "), kind: :deduplicate
             )
           end
@@ -74,7 +74,7 @@ module Master
           names = files.map { |path| File.basename(path).downcase }
           out = []
           out << Idea.new(
-            title: "No top-level ARCHITECTURE.md — a newcomer cannot see how MASTER, RAILS, OPENBSD and STUDIO relate",
+            title: "No top-level ARCHITECTURE.md - a newcomer cannot see how MASTER, RAILS, OPENBSD and STUDIO relate",
             source: "persona.newcomer", evidence: "missing docs/ARCHITECTURE.md", kind: :document
           ) unless files.any? { |path| path =~ %r{\Adocs/ARCHITECTURE\.md\z} || path =~ %r{\AARCHITECTURE\.md\z} }
           out << Idea.new(

@@ -13,7 +13,7 @@
 # It emits a plan rather than a patch. Moving code between files is not a
 # line-level edit and MASTER's autofix transforms are all line-level; a merge
 # also has to respect load order, which is a property of the tree and not of any
-# file. So this states what to do, in what order, and what to check — and a
+# file. So this states what to do, in what order, and what to check - and a
 # person or a model does the surgery.
 #
 # Two plan kinds, because two tree shapes need opposite surgery.
@@ -25,7 +25,7 @@
 #
 # REGROUP, for files that each declare their own constant: under Zeitwerk a file
 # path *is* a constant name, so Ground::SandboxPolicy and Ground::SubagentPolicy
-# cannot be merged into one policy.rb — the loader would refuse it. What they
+# cannot be merged into one policy.rb - the loader would refuse it. What they
 # want is a shelf: lib/ground/policy/sandbox.rb defining Ground::Policy::Sandbox.
 # The signal is different too. A merge needs proof the files are one concept; a
 # regroup only needs a drawer with five things of one kind in it, because the
@@ -36,7 +36,7 @@
 # render_seed / render_techno; MASTER writes sandbox_policy / workflow_policy.
 # Reading only prefixes made this tool structurally blind to MASTER's own shape:
 # it reported "nothing to merge" for lib/ground, lib/review, lib/cli and
-# lib/voice — 325 files — and the reason was the matcher, not the tree.
+# lib/voice - 325 files - and the reason was the matcher, not the tree.
 
 require "json"
 require "yaml"
@@ -47,13 +47,13 @@ module Operator
     MIN_FAMILY = 3
 
     # SMALL_FILES flags a file over 300 lines, and this tool exists to
-    # counterbalance it — its own header says so: "SMALL_FILES, NO_GOD_CLASS and
+    # counterbalance it - its own header says so: "SMALL_FILES, NO_GOD_CLASS and
     # INTEGRATED_SYSTEMS all say split further. None says these three are one
     # thing." A counterbalance with no upper bound is not a counterbalance.
     #
     # It had none. Run against STUDIO/dilla it proposed six merges producing
-    # files of 1076 to 2925 lines — up to ten times the threshold the same tree
-    # enforces — and the three dilla_* files say in their own headers that they
+    # files of 1076 to 2925 lines - up to ten times the threshold the same tree
+    # enforces - and the three dilla_* files say in their own headers that they
     # were "split out of dilla.rb". The proposal was to undo a deliberate split
     # and recreate the file, under the name of the file it came from.
     MAX_MERGED_LINES = 300
@@ -62,7 +62,7 @@ module Operator
 
     # Families keyed both ways. A file joins at most one family per kind, and a
     # single-word name (policy.rb, memory.rb) is its own prefix and suffix, so it
-    # joins the family it names — which is usually the right merge site.
+    # joins the family it names - which is usually the right merge site.
     def families(dir)
       paths = Dir.glob(File.join(dir, "*.rb"))
       %i[prefix suffix].flat_map do |kind|
@@ -79,7 +79,7 @@ module Operator
 
     # A suffix the directory already declares is a convention, not a family.
     # Rails puts *_controller.rb in app/controllers/ by rule, so grouping on it
-    # "finds" every controller an app owns — the first repo-wide run reported 64
+    # "finds" every controller an app owns - the first repo-wide run reported 64
     # families and most were exactly that: eight controllers, twenty-one
     # reflexes, six helpers, four jobs. The suffix carries no information the
     # path does not already carry, and a shelf named for the room it stands in
@@ -116,7 +116,7 @@ module Operator
     # about; it can be moved, but it cannot be poured into a sibling.
     def namespaced?(path) = File.read(path).match?(/^\s*(module|class)\s+[A-Z]/)
 
-    # The innermost declared constant — the one the file's path spells.
+    # The innermost declared constant - the one the file's path spells.
     def constant(path)
       File.read(path).scan(/^\s*(?:module|class)\s+([A-Z][\w]*)/).flatten.last
     end
@@ -238,14 +238,14 @@ module Operator
         lines: files.sum { |f| File.readlines(f).size },
         into: "#{subdir}/",
         subdirectory_exists: Dir.exist?(subdir),
-        parent: parent ? File.basename(parent) : "none — #{name}.rb must be created to hold the namespace",
+        parent: parent ? File.basename(parent) : "none - #{name}.rb must be created to hold the namespace",
         moves: members.map { |f| move_for(f, name, kind) },
         evidence: {
           external_references: external_references(files, corpus_root:),
           namespaced_members: files.filter_map { |path| constant(path) },
         },
         check: [
-          "every reference to the old constant updated — Zeitwerk resolves by path, so a stale one is a NameError at first use",
+          "every reference to the old constant updated - Zeitwerk resolves by path, so a stale one is a NameError at first use",
           "data/autoload.yml entries repointed if the file is listed there",
           "data/spine.yml#namespace_ceilings counts a new namespace",
           "no member reads a sibling at load time under its old constant",
@@ -300,7 +300,7 @@ module Operator
 
     # Families are siblings, so the read is one directory deep. Pointed at a tree
     # root such as RAILS/__shared it reads zero files, and "nothing to merge" over
-    # zero files is a blind instrument, not a clean one — so it says so and exits 2.
+    # zero files is a blind instrument, not a clean one - so it says so and exits 2.
     def run(dir, json: false)
       if Dir.glob(File.join(dir, "*.rb")).empty?
         Master::Trace::Dmesg.status("cohesion0", "#{dir} holds no .rb file; nothing was read; use --census --tree=<TREE> --list", io: $stderr)
@@ -336,7 +336,7 @@ module Operator
 
       merges = found.count { |p| p[:plan] == "merge" }
       regroups = found.size - merges
-      puts "cohesion: #{dir} — #{found.size} family/families that read as one concept " \
+      puts "cohesion: #{dir} - #{found.size} family/families that read as one concept " \
            "(#{merges} to merge, #{regroups} to regroup)"
       found.each { |plan| plan[:plan] == "merge" ? print_merge(plan) : print_regroup(plan) }
       puts(found.empty? ? "cohesion: nothing to merge" : "cohesion: run the checks in --json before touching anything")

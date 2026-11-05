@@ -130,7 +130,7 @@ module Master
             labels = Device::OwnerProfile::KEYS.first(3).map do |key|
               Device::OwnerProfile::LABELS.fetch(key)
             end
-            "ios0: onboarding started — tell me #{labels.join(", ").downcase}. You can answer naturally or skip anything."
+            "ios0: onboarding started - tell me #{labels.join(", ").downcase}. You can answer naturally or skip anything."
           else
             [
               "ios0: onboarding continues",
@@ -172,13 +172,13 @@ module Master
       def termux_checks
         [
           Check.of(:ruby, RUBY_VERSION >= "3.4", "ruby #{RUBY_VERSION}",
-                   "ruby #{RUBY_VERSION} is older than 3.4 — pkg upgrade ruby"),
+                   "ruby #{RUBY_VERSION} is older than 3.4 - pkg upgrade ruby"),
           Check.of(:build, BUILD_TOOLS.all? { |cmd| @which.call(cmd) }, "clang, make and pkg-config present",
-                   "no compiler for native gems — pkg install build-essential"),
+                   "no compiler for native gems - pkg install build-essential"),
           Check.of(:sqlite, sqlite?, "sqlite3 gem loads",
-                   "sqlite3 gem missing — cd #{home(@root)} && #{TERMUX_BUNDLE}"),
+                   "sqlite3 gem missing - cd #{home(@root)} && #{TERMUX_BUNDLE}"),
           Check.of(:termux, @which.call("termux-media-player"), "Termux:API present",
-                   "no speaker, mic or sensors — install the Termux:API app, then pkg install termux-api"),
+                   "no speaker, mic or sensors - install the Termux:API app, then pkg install termux-api"),
           Check.new(:ear, true, "#{Setup.new(env: @env).progress}; set up in the background"),
           checkout_check,
         ]
@@ -188,7 +188,7 @@ module Master
       # from a checkout there; termux-setup-storage only links it into ~/storage.
       def checkout_check
         Check.of(:checkout, !@root.start_with?("/storage/", "/sdcard/"), "checkout at #{home(@root)}",
-                 "#{@root} is shared storage, which takes no execute bit — git clone #{REPO_URL} ~/pub4")
+                 "#{@root} is shared storage, which takes no execute bit - git clone #{REPO_URL} ~/pub4")
       end
 
       # A keyless boot still answers, so the free tier is not a failure; the
@@ -198,7 +198,7 @@ module Master
         better = "set OPENROUTER_API_KEY in #{home(@env_file)}"
         better += ", or #{Master.local_model_install_hint}" if @android
         says = case name
-               when "llm7" then "no key, answering through LLM7's keyless free tier — #{better}"
+               when "llm7" then "no key, answering through LLM7's keyless free tier - #{better}"
                when "ollama" then "local ollama, no key"
                else "#{name} via #{variable}"
                end
@@ -208,7 +208,7 @@ module Master
       def git_check
         named = !@git.call("user.name").empty? && !@git.call("user.email").empty?
         Check.of(:git, named, "identity set for /commit",
-                 'no identity for /commit — git config --global user.name "Your Name"; ' \
+                 'no identity for /commit - git config --global user.name "Your Name"; ' \
                  "git config --global user.email you@example.com")
       end
 

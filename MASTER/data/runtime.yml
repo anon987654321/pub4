@@ -4,7 +4,7 @@
 # documents into this catalogue, so the pointers outlived the files by becoming
 # the file they pointed at. why_explainer.rb prints `source:` to the operator, so
 # nine of them showed a path that could never resolve. Removed rather than
-# repointed — this file is the document now, and git log holds the rest.
+# repointed - this file is the document now, and git log holds the rest.
 cognitive_spine:
   id: cognitive_runtime
   tier: core
@@ -52,7 +52,7 @@ cognitive_spine:
   - id: tiered_memory
     rule: Memory moves through canonical, episodic, semantic, compressed, and snapshot tiers
   - id: repair_pipeline
-    rule: Repair follows observe → classify → propose → sandbox → validate → merge
+    rule: Repair follows observe -> classify -> propose -> sandbox -> validate -> merge
   - id: tool_contracts
     rule: Tool contracts define inputs, outputs, permissions, retries, timeout, and validation
   - id: git_repair_memory
@@ -252,11 +252,11 @@ event_registry:
     purpose: council result ready
   - event: sound_critique_start
     target: legacy
-    purpose: sound critique panel assembling — prefer judge:*
+    purpose: sound critique panel assembling - prefer judge:*
     legacy: true
   - event: sound_critique_done
     target: legacy
-    purpose: sound critique result ready — prefer judge:*
+    purpose: sound critique result ready - prefer judge:*
     legacy: true
   rules:
   - Prefer namespace:noun over namespace:verb_noun (attention:context not attention:context_changed)
@@ -1253,7 +1253,7 @@ face_enhancements:
     tier: p1
     status: implemented
     handler: js
-    summary: Prompt vs input modality chips — photo/voice/code (ar5iv 2410.22370)
+    summary: Prompt vs input modality chips - photo/voice/code (ar5iv 2410.22370)
   - id: enh_research_placeholders
     area: web
     tier: p1
@@ -1277,7 +1277,7 @@ face_enhancements:
     tier: p2
     status: implemented
     handler: css
-    summary: Soft radial vignette overlay — depth without dimming chrome
+    summary: Soft radial vignette overlay - depth without dimming chrome
   - id: vis_warmer_phosphor
     area: face
     tier: p2
@@ -1371,7 +1371,7 @@ face_research:
     title: Human-Centered LLM-Agent User Interface (LAUI)
     arxiv: '2405.13050'
     ar5iv: https://ar5iv.labs.arxiv.org/html/2405.13050v1
-    insight: 'Agent as secretary not butler — study user needs, propose interaction schemes, separate thought/action/speech lanes, multi-modal feedback coordinated by agent.
+    insight: 'Agent as secretary not butler - study user needs, propose interaction schemes, separate thought/action/speech lanes, multi-modal feedback coordinated by agent.
 
       '
     face_hooks:
@@ -1409,7 +1409,7 @@ face_research:
   - id: flute_x_gpt
     name: DoubleBlind23408929/Flute-X-GPT
     url: https://github.com/DoubleBlind23408929/Flute-X-GPT
-    pattern: LAUI reference — real-time multi-modal tutoring, function-call HUD
+    pattern: LAUI reference - real-time multi-modal tutoring, function-call HUD
   engagement_levels:
   - id: passive
     label: idle
@@ -1429,23 +1429,23 @@ face_research:
   modalities:
   - id: prompt_text
     label: prompt
-    placeholder: ask anything — type your instruction
+    placeholder: ask anything - type your instruction
   - id: input_photo
     label: photo
     placeholder: attach a photo (+) then describe what to see
   - id: input_voice
     label: voice
-    placeholder: tap mic — speak, I'll listen
+    placeholder: tap mic - speak, I'll listen
   - id: input_code
     label: code
-    placeholder: paste code — ask for review or explain
+    placeholder: paste code - ask for review or explain
   - id: collaborative
     label: co-plan
     placeholder: what are you trying to accomplish?
   proactive_hints:
-  - 'LAUI: describe your goal — I''ll propose a workflow, not just answer'
+  - 'LAUI: describe your goal - I''ll propose a workflow, not just answer'
   - 'prompt ≠ input: type what you want; attach photo/code as separate data'
-  - mid-stream tools show in the act lane — face reacts while agents work
+  - mid-stream tools show in the act lane - face reacts while agents work
   - tap face canvas to replay last reply with viseme sync
 invariants:
   id: non_negotiable_runtime_rules
@@ -1500,7 +1500,7 @@ invariants:
   - id: tiered_memory
     rule: Memory moves through canonical, episodic, semantic, compressed, and snapshot tiers.
   - id: repair_pipeline
-    rule: Repair follows observe → classify → propose → sandbox → validate → merge.
+    rule: Repair follows observe -> classify -> propose -> sandbox -> validate -> merge.
   - id: tool_contracts
     rule: Tool contracts define inputs, outputs, permissions, retries, timeout, and validation.
   - id: git_as_repair_memory
@@ -2260,7 +2260,7 @@ repo_ecology:
   tier: core
   area: repository
   status: active
-  core_principle: A repository is semantic topology, dependency ecology, cognitive geography, architectural history, and organizational memory — not a bag of files
+  core_principle: A repository is semantic topology, dependency ecology, cognitive geography, architectural history, and organizational memory - not a bag of files
   optimize_for:
   - comprehensibility
   - semantic_coherence
@@ -2418,7 +2418,7 @@ routing_architecture:
   - Review::LLMDispatcher#send_with_cache
   confirmed_gaps:
   - id: webchat_undefined
-    issue: WebChat constant was undefined — free web-chat path dead
+    issue: WebChat constant was undefined - free web-chat path dead
     fix: lib/io/web_chat.rb Master::Io::WebChat
   - id: ferrum_config_missing
     issue: model_router dig for ferrum_web_chat block did not resolve
@@ -2477,7 +2477,7 @@ routing_architecture:
     entry: budget governor reports zero spendable balance
   - tier: C
     name: headless web-chat
-    check: MASTER_WEB_CHAT env flag — opt-in only, ToS-sensitive
+    check: MASTER_WEB_CHAT env flag - opt-in only, ToS-sensitive
   - tier: D
     name: local Ollama
     check: env-gated offline fallback
@@ -2903,14 +2903,14 @@ ui_philosophy:
   engineering_balance:
     overengineered:
     - item: generic_web_placeholder_slots
-      action: consolidated — 146 placeholder rows removed; micro_interactions.yml is canonical
+      action: consolidated - 146 placeholder rows removed; micro_interactions.yml is canonical
     - item: visual_bridge_EVENT_MAP_dupe
-      action: resolved — patterns live in topologies.yml; visual_bridge delegates to registry
+      action: resolved - patterns live in topologies.yml; visual_bridge delegates to registry
     - item: face_part_monolith_blobs
       action: modules absorb incrementally; do not split further until hot paths stable
     underengineered:
     - item: face3d_blendshape_migration
-      action: canonical render — 2D phosphor pixels on invisible 3D topology; WebGL face retired
+      action: canonical render - 2D phosphor pixels on invisible 3D topology; WebGL face retired
     - item: tts_true_streaming
       action: partial bytes shipped; full MSE playback deferred
     - item: release_check_local_ruby

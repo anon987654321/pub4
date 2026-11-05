@@ -3,7 +3,7 @@
 require_relative "test_helper"
 
 # A data file may declare its consumer with a `# reader: <constant>` header. This
-# does not force the convention on every file — a grep-based "does any code read
+# does not force the convention on every file - a grep-based "does any code read
 # this key" check could not be made precise here (46% false positive; dynamic dig
 # everywhere). It verifies the files that opt in, so a header naming a reader that
 # was later renamed or deleted fails loudly instead of rotting into the same
@@ -27,7 +27,7 @@ class TestDataReaderHeaders < Minitest::Test
       [path, reader] if reader
     end
 
-    refute_empty declared, "no data file declares a `# reader:` header — seed at least one"
+    refute_empty declared, "no data file declares a `# reader:` header - seed at least one"
 
     declared.each do |path, reader|
       next unless reader.match?(CONSTANT)

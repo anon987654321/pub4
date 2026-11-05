@@ -5,7 +5,7 @@ module Master
     module Routing
       class ModelRouter
         # Uncertainty-triggered model escalation (stronger tier when a
-        # response reads as low-confidence) — separate from ModelRouter's own
+        # response reads as low-confidence) - separate from ModelRouter's own
         # provider-availability and failover-config concerns.
         module Escalation
           def escalate?(response, threshold: DEFAULT_THRESHOLD)
@@ -18,8 +18,8 @@ module Master
 
           # One step up the chain, not a jump to the end.
           #
-          # This read a single static `escalation_tier` key — "strong" by
-          # default — so escalating from cheap skipped default entirely, and
+          # This read a single static `escalation_tier` key - "strong" by
+          # default - so escalating from cheap skipped default entirely, and
           # escalating twice asked for the same tier both times.
           # fallback_chain.rb:150 caps escalation depth at 2, which only means
           # something if the second step differs from the first; until now it
@@ -28,7 +28,7 @@ module Master
           # next_escalation_tier walks it; neither had a caller.
           #
           # The configured key stays as the fallback, for a routes entry whose
-          # tier is not in the chain — routes values are sometimes a hash rather
+          # tier is not in the chain - routes values are sometimes a hash rather
           # than a tier name, and next_escalation_tier answers nil for those.
           def stronger_model(task_type: :exploration)
             tier = next_escalation_tier(current_tier(task_type:)) ||

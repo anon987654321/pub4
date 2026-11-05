@@ -187,7 +187,7 @@ module Master
       end
 
       def punctuation_for(text)
-        text.to_s[/([.!?;:—-])\s*$/, 1].to_s
+        text.to_s[/([.!?;:\u2014-])\s*$/, 1].to_s
       end
 
       def apply(base_rate:, base_pitch:, text:, emotion: {}, style: :normal)
@@ -218,7 +218,7 @@ module Master
         return :warning if text.match?(/\b(warn|warning|careful|risk|unsafe|danger|blocked|failed|error|critical)\b/i)
         return :reveal if text.match?(/\b(the key|the point|interestingly|surprisingly|here's why|what matters)\b/i)
         return :contrast if text.match?(/\b(but|however|instead|actually|except|rather|yet|still)\b/i)
-        return :parenthetical if text.match?(/[()—–]/)
+        return :parenthetical if text.match?(/[()\u2014\u2013]/)
         return :list_item if text.match?(/\A(?:\d+[.)]|[-*])\s+/)
         return :soft_landing if index == total - 1 && text.split.length <= 8
 

@@ -63,9 +63,9 @@ class TestUnpromptedSpeech < Minitest::Test
     end
   end
 
-  # Idle nudges must stay opt-in, and opt-in means no timer at all by default —
+  # Idle nudges must stay opt-in, and opt-in means no timer at all by default -
   # not a timer that checks a flag, which is how the previous three came back.
-  # The speech timer specifically, not the first setInterval in the file — the
+  # The speech timer specifically, not the first setInterval in the file - the
   # research refill is also a timer, sits earlier, and is separately gated. An
   # assertion that could not tell them apart failed on correct code, which is a
   # checker wrong in the direction that gets it deleted.
@@ -75,9 +75,9 @@ class TestUnpromptedSpeech < Minitest::Test
     speech_timer = source.index(", NUDGE_INTERVAL_MS)")
 
     refute_nil guard, "face_loops_nudge.js no longer returns early when nudges are off"
-    refute_nil speech_timer, "the nudge speech timer is no longer recognisable — re-derive this test"
+    refute_nil speech_timer, "the nudge speech timer is no longer recognisable - re-derive this test"
     assert_operator source.index(guard), :<, speech_timer,
-      "the speech timer is created before the enabled check — the default page now wakes up to consider speaking"
+      "the speech timer is created before the enabled check - the default page now wakes up to consider speaking"
   end
 
   # The other timer in the file fetches research lines. It must be gated too, or
@@ -132,6 +132,6 @@ class TestUnpromptedSpeech < Minitest::Test
     refute_includes code, "PICKUP_LINES", "the music loop is scripting pick-up lines again"
     refute_match(/setInterval\(\s*speakPickup/, code, "the music loop speaks on a timer again")
     refute_match(/enqueueSpeech|announceTTS|MASTER_FACE\?\.speak/, code,
-                 "the music loop reaches a speech path — it is background audio, not a speaker")
+                 "the music loop reaches a speech path - it is background audio, not a speaker")
   end
 end

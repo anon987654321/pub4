@@ -8,7 +8,7 @@
 # them:
 #
 #   "every alias must resolve to a live id" is backwards. An alias IS a retired
-#   id — KISS carries long_method, god_class, nesting_depth and arity because it
+#   id - KISS carries long_method, god_class, nesting_depth and arity because it
 #   absorbed them. An alias pointing at a live law is the defect, not the
 #   reverse.
 #
@@ -44,7 +44,7 @@ module Operator
     # The two populations laws.yml declares, and no third. A hand-rolled walk
     # over every hash carrying an "id" was the first version, and it read the
     # eight check names inside AUTOMATED_CSS_ANALYSIS's `config:` as eight laws
-    # — so missing_metadata counted config keys that were never going to carry a
+    # - so missing_metadata counted config keys that were never going to carry a
     # tier, and eight_px_rhythm, a check id, collided by case with the real
     # EIGHT_PX_RHYTHM. A rule's config is its own; only the populations are laws.
     def yaml_laws
@@ -104,34 +104,34 @@ module Operator
     end
 
     # One id, two definitions, two wordings, and no way for a reader to tell
-    # which governs. FAIL_VISIBLY had three — soul said "never rescue Exception",
+    # which governs. FAIL_VISIBLY had three - soul said "never rescue Exception",
     # law/ said "catch specific errors, log context, re-raise", laws.yml said
-    # "surface errors immediately" — and each had its own detector or none.
+    # "surface errors immediately" - and each had its own detector or none.
     #
     # The rule for resolving one: whichever population holds the detector owns
     # the wording. A population that only restates it is the copy.
     #
     # There were four populations here. soul.yml was the fourth, and its laws
     # moved into law/practice.rb, so `absolute.laws` reads nil and the branch
-    # contributed an empty list to every comparison — a reader of a key that no
+    # contributed an empty list to every comparison - a reader of a key that no
     # longer exists, which reader_singularity counts and nothing else would.
     # A home is a population that DETECTS, and laws.yml mostly does not.
     #
     # This counted twenty on 2026-09-06 and one of them was a duplicate. The
     # other nineteen were the architecture: laws.yml is the catalogue, law/ and
     # the registry are the implementations, and an id necessarily appears in
-    # both. Of the nineteen, thirteen carried `detect_semantic` — a question a
+    # both. Of the nineteen, thirteen carried `detect_semantic` - a question a
     # model answers about the same rule, which is that rule's model tier and not
     # a second definition of it. FAIL_VISIBLY is the shape: the catalogue
     # declares the prompt and law/universal.rb holds the lexical detector, with
     # the same source, the same severity and the same fix, word for word.
     # Counting that asked for one of the two to be deleted, and either deletion
     # loses a tier of a kernel rule. The rest carried `detect_structural`, whose
-    # value names the structural detector that implements it — a pointer, not a
+    # value names the structural detector that implements it - a pointer, not a
     # rival.
     #
     # So the question is narrower than "two homes": does one id have two things
-    # that can fire? Measured after the change, that is zero — the twin campaign
+    # that can fire? Measured after the change, that is zero - the twin campaign
     # this row was opened for is finished, and it stands as the guard against
     # regrowth. What the old count was hiding is in statement_conflicts below.
     #
@@ -146,7 +146,7 @@ module Operator
 
     # A law with a `practice` or an `ask` cannot fire on a line: the first is a
     # rule about conduct and the second needs a model. FLAT_PIXELS is why this
-    # matters — law/practice.rb states the flat-design principle and
+    # matters - law/practice.rb states the flat-design principle and
     # surface_laws.rb detects `imageSmoothingEnabled = true`, which is the
     # principle and its one mechanical case, and law/practice.rb says so.
     def law_detectors
@@ -172,13 +172,13 @@ module Operator
     # for and could not say: not that an id lives in two files, but that the two
     # tell a reader different things. Fourteen on 2026-09-06, eleven of them a
     # catalogue `fix` carrying an older draft of the instruction its own law
-    # enforces — MEANINGFUL_NAMES said "Use domain-specific names" while the law
+    # enforces - MEANINGFUL_NAMES said "Use domain-specific names" while the law
     # said "name it after what the right-hand side already calls it".
     #
     # Resolution, and it is the same rule the duplicates check has always
     # stated: whichever population holds the detector owns the wording, so a
     # drifted catalogue `fix` is rewritten to the law's. Severity is the
-    # exception — the catalogue is the file that must carry tier and severity
+    # exception - the catalogue is the file that must carry tier and severity
     # for every rule, so the implementation follows it there.
     def statement_conflicts
       laws = loaded_laws

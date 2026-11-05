@@ -5,7 +5,7 @@ module Master
     module Scan
       class AstFixer
         # Dead-code-after-unconditional-return removal and trailing-comma
-        # insertion — both line-heuristic transforms that need to know which
+        # insertion - both line-heuristic transforms that need to know which
         # lines sit inside multi-line string/heredoc/regexp literals, so they
         # share the literal_lines memoization and the small predicate helpers
         # below. Separate concern from AstFixer's own transform dispatch.
@@ -55,7 +55,7 @@ module Master
               keep << line
               next_line = lines[index + 1].to_s
               # A trailing backslash means the statement continues on the next
-              # physical line — usually its guard: `return {...} \` + `if c`.
+              # physical line - usually its guard: `return {...} \` + `if c`.
               # Deleting that "dead" line makes the return unconditional and
               # the file still parses, so nothing downstream notices. It broke
               # RadioChop's multiple-margin check in e7a48-era history, and
@@ -70,7 +70,7 @@ module Master
           end
 
           # Line numbers (1-based) that sit inside a *multi-line* string, heredoc, command,
-          # or regexp literal. Line-heuristic transforms must skip these — shell `exit`, a
+          # or regexp literal. Line-heuristic transforms must skip these - shell `exit`, a
           # Python `raise`, or a `}` inside a heredoc are data, not Ruby code. Single-line
           # literals don't span lines, so they never confuse the heuristics and stay eligible.
           LITERAL_NODES = [

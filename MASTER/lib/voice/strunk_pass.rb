@@ -51,7 +51,7 @@ module Master
         prune_mixed(prose).gsub(/\s+/, " ").strip
       end
 
-      # Padding only — sycophancy openers, preambles, endings, hedges — with
+      # Padding only - sycophancy openers, preambles, endings, hedges - with
       # markdown, code fences and line breaks left intact. call() is the TTS
       # strip that also flattens layout into one line; brevity is what a commit
       # message, a comment or chat output can pass through without losing a code

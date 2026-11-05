@@ -114,7 +114,7 @@ module Master
 
         # ModelRouter#preferred and #fallback_chain both call score per
         # candidate, and a single turn's routing touches a dozen or more
-        # candidates — each used to re-read and re-parse the whole ndjson
+        # candidates - each used to re-read and re-parse the whole ndjson
         # log from scratch. Cached here per file mtime, so a turn pays for
         # one read no matter how many models it scores.
         def events_for(model_id)

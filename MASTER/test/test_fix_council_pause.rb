@@ -28,7 +28,7 @@ class TestFixCouncilPause < Minitest::Test
       File.write(File.join(root, "note.txt"), "one\n")
       git.call("add", "note.txt")
       git.call("commit", "-q", "-m", "base")
-      File.write(File.join(root, "note.txt"), "to — på norsk\n")
+      File.write(File.join(root, "note.txt"), "to - på norsk\n")
 
       artifact = Master::CLI::CouncilCrit.diff_artifact(root, scope: "diff")
 

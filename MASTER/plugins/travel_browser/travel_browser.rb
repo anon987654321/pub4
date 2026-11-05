@@ -319,7 +319,7 @@ module Master
       def require_ferrum!
         require "ferrum"
       rescue LoadError => e
-        raise Error, "travel_browser: ferrum is unavailable — bundle install is required: #{e.message}"
+        raise Error, "travel_browser: ferrum is unavailable - bundle install is required: #{e.message}"
       end
     end
   end

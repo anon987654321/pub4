@@ -1,23 +1,21 @@
 # frozen_string_literal: true
 
+require_relative "../content/ascii_punctuation"
+
 module Master
   module Fix
-    # The style stage of the /fix pass — the typographic law's audit half.
+    # The style stage of the /fix pass - the typographic law's audit half.
     #
     # laws.yml#typography sets the marks; Renderer#beautify sets them on the
     # way out; this audit reads the operator-facing strings that produce the
     # rest. It scans the trees that speak to a person (cli, voice, trace) for
-    # the mechanical lapses: three ASCII dots where one true ellipsis belongs,
-    # and the double-hyphen dash that stands in for an em dash in prose. Flags
+    # the mechanical lapses: a non-ASCII mark (Law ASCII_PUNCTUATION: a dash is
+    # "-", an ellipsis "..."), and the double-hyphen dash that stands in for a
+    # single hyphen in prose. Flags
     # ("--dry-run"), globs and paths are exempt by shape, so a finding is a
     # sentence that reached a person wearing the wrong mark.
     class TypographyAudit
       SCOPE = %w[lib/cli lib/voice lib/trace].freeze
-      # A word may stand directly before the dots — "waiting..." is the case
-      # that matters — but a digit, a slash or a dot on either side marks a
-      # range ("0...6"), a path or a glob ("lib/..."), and those keep their
-      # dots. Git's own range syntax ("HEAD...@{u}") keeps its dots the same way.
-      ASCII_ELLIPSIS = /(?<![.\d\/])\.{3}(?![.\d\/@])/.freeze
       PROSE_DOUBLE_DASH = /(?<=\s)--(?=\s)/.freeze
       STRING_LITERAL = /"([^"\n]{6,300})"/.freeze
       # Where a machine reads the line, the marks stay literal: fixtures that
@@ -68,7 +66,7 @@ module Master
       end
 
       def violation_kind(text)
-        return "ascii_ellipsis" if text.match?(ASCII_ELLIPSIS)
+        return "non_ascii_punctuation" if Master::Content::AsciiPunctuation.banned?(text)
         return "prose_double_dash" if text.match?(PROSE_DOUBLE_DASH)
 
         nil
@@ -81,7 +79,7 @@ module Master
           .map { |kind, count| "#{count} #{kind.tr('_', ' ')}" }
           .join(", ")
         head = "style0: #{findings.size} findings, #{counted}"
-        listed = findings.first(MAX_FINDINGS).map { |f| "#{f.file}:#{f.line} #{f.kind} — #{f.snippet}" }
+        listed = findings.first(MAX_FINDINGS).map { |f| "#{f.file}:#{f.line} #{f.kind} - #{f.snippet}" }
         ([head] + listed + (findings.size > MAX_FINDINGS ? ["style0: #{findings.size - MAX_FINDINGS} more"] : [])).join("\n")
       end
 

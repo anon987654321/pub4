@@ -51,12 +51,12 @@ module Deploy
     def run
       @result = CheckResult.new
       unless File.directory?(SHARED_FRONTEND)
-        @result.inconclusive!("cross_app: __shared/frontend is missing — shared chrome contract cannot be measured")
+        @result.inconclusive!("cross_app: __shared/frontend is missing - shared chrome contract cannot be measured")
         return @result
       end
 
       unless GeometryProbe.available?
-        @result.inconclusive!("cross_app: no Chrome/Chromium — shared chrome not compared", gap: Master::Gap::NO_BROWSER)
+        @result.inconclusive!("cross_app: no Chrome/Chromium - shared chrome not compared", gap: Master::Gap::NO_BROWSER)
         return @result
       end
 
@@ -65,7 +65,7 @@ module Deploy
                               .group_by(&:app)
                               .transform_values(&:first)
                               .values
-      GeometryProbe.unreachable_apps(surfaces).each { |app| @result.skipped_live("cross_app: #{app} port closed — skipped") }
+      GeometryProbe.unreachable_apps(surfaces).each { |app| @result.skipped_live("cross_app: #{app} port closed - skipped") }
 
       live = GeometryProbe.reachable(surfaces)
       if live.size < 2
@@ -81,7 +81,7 @@ module Deploy
             error = payload["error"] || "HTTP #{payload["status"]}"
 
             if GeometryProbe.timeout?(payload)
-              @result.incomplete!("cross_app: #{surface.app} shared chrome not compared — #{error}")
+              @result.incomplete!("cross_app: #{surface.app} shared chrome not compared - #{error}")
             else
               @result.fail("cross_app: #{surface.app} unreachable (#{error})")
             end
@@ -103,7 +103,7 @@ module Deploy
     private
 
     # Fields where the shared engine dictates one answer for every app. Nav
-    # labels and lang are deliberately excluded — those are per-app content.
+    # labels and lang are deliberately excluded - those are per-app content.
     INVARIANT = {
       "skip_href" => "the shared skip link target",
       "main_id" => "the shared main landmark id",
@@ -119,7 +119,7 @@ module Deploy
 
         detail = values.map { |app, value| "#{app}=#{value.inspect}" }.join(", ")
         @result.fail(
-          "cross_app chrome: #{description} differs between apps — #{detail}. " \
+          "cross_app chrome: #{description} differs between apps - #{detail}. " \
           "These render from __shared/frontend/layouts and must agree.",
         )
       end
@@ -133,7 +133,7 @@ module Deploy
       return if no_footer.empty? || no_footer.size == chrome.size
 
       @result.fail(
-        "cross_app chrome: #{no_footer.join(', ')} render no footer while #{(chrome.keys - no_footer).join(', ')} do — " \
+        "cross_app chrome: #{no_footer.join(', ')} render no footer while #{(chrome.keys - no_footer).join(', ')} do - " \
         "the shared footer partial is not reaching every app",
         severity: :soft,
       )
@@ -141,12 +141,12 @@ module Deploy
 
     # Two distinct questions, and conflating them produces noise:
     #
-    #   "Does every app instantiate every shared controller?" — No, and it
+    #   "Does every app instantiate every shared controller?" - No, and it
     #   should not. bsdports has no feed, so feed-compose legitimately never
     #   renders there. Asserting that is a false positive factory.
     #
     #   "Does every app instantiate the controllers the *shared layout* mounts?"
-    #   — Yes, necessarily: those come from __shared/frontend/layouts, which all
+    #   - Yes, necessarily: those come from __shared/frontend/layouts, which all
     #   three apps render. A divergence there is real drift.
     #
     # Only the second is a contract. The first is reported as an inventory
@@ -163,7 +163,7 @@ module Deploy
 
         @result.fail(
           "cross_app stimulus: #{name.inspect} is mounted by the shared layout but renders only in " \
-          "#{has.join(', ')} — missing from #{(rendered.keys - has).join(', ')}",
+          "#{has.join(', ')} - missing from #{(rendered.keys - has).join(', ')}",
           severity: :soft,
         )
       end
@@ -173,7 +173,7 @@ module Deploy
 
       @result.warn(
         "cross_app stimulus inventory: #{unused.size} shared controller(s) in __shared/frontend are not instantiated " \
-        "by any running app — #{unused.sort.join(', ')}. Not a contract violation (a controller may serve a surface " \
+        "by any running app - #{unused.sort.join(', ')}. Not a contract violation (a controller may serve a surface " \
         "not probed here), but each is dead code until some view attaches data-controller.",
       )
     end
@@ -187,7 +187,7 @@ module Deploy
          .sort
     end
 
-    # Controllers the shared layout itself mounts — these every app renders.
+    # Controllers the shared layout itself mounts - these every app renders.
     def layout_controller_names
       dir = File.join(SHARED_FRONTEND, "layouts")
       return [] unless File.directory?(dir)

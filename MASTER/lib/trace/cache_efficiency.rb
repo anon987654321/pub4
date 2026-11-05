@@ -6,7 +6,7 @@ require_relative "../io/atomic_write"
 
 module Master
   module Trace
-    # Prompt-cache hit ratio — OpenCrabs /usage card parity.
+    # Prompt-cache hit ratio - OpenCrabs /usage card parity.
     module CacheEfficiency
       extend Master::Io::AtomicWrite
       @mutex = Mutex.new

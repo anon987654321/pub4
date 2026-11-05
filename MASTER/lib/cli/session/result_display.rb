@@ -28,7 +28,7 @@ module Master
       end
 
       # One line for a one-line error; its own lines for a structured one. The
-      # fold reports as header, turn evidence and summary — flattened into a
+      # fold reports as header, turn evidence and summary - flattened into a
       # ribbon and cut mid-word, that evidence was unreadable, which is a
       # second error on top of the first.
       def print_error(err)
@@ -137,7 +137,7 @@ module Master
         question = @refs.session.last_user_question(before: @last_input)
         return if question.to_s.empty?
 
-        line = "next0: your previous question — #{question}"
+        line = "next0: your previous question - #{question}"
         Master::Trace::Dmesg.status("next0", question)
         # The question is continuity context, not a second reply. Keep it visible
         # so /fix can resume the thread without putting two utterances on the speaker.

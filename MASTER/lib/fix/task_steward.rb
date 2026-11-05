@@ -121,7 +121,7 @@ module Master
 
       def continuation_only?(record)
         goal = record["goal"].to_s.downcase.strip.split.join(" ")
-        goal = goal[0...-1] while %w[! . ? …].include?(goal[-1])
+        goal = goal[0...-1] while %w[! . ? ...].include?(goal[-1])
         intent = record.dig("operator", "intent").to_s
         intent == "continue_prior_plan" || CONTEXTLESS_GOALS.include?(goal.delete("'"))
       end

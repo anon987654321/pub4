@@ -19,7 +19,7 @@
 #     # instrument: code_lines=8 longest_method=1 public_methods=4
 #
 # and this runs the real implementations against them. The answers are declared
-# by hand and the instrument is checked against the declaration — never the
+# by hand and the instrument is checked against the declaration - never the
 # other way around, which would only prove the instrument agrees with itself.
 #
 # Point a new throwaway counter at these before trusting a number it produced.

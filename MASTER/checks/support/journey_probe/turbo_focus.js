@@ -1,5 +1,5 @@
-// Presses the first visible navigation link as a keyboard user would — focus,
-// then click — and waits for Turbo Drive's visit to finish. Reports where focus
+// Presses the first visible navigation link as a keyboard user would - focus,
+// then click - and waits for Turbo Drive's visit to finish. Reports where focus
 // landed. Turbo keeps a data-turbo-permanent element across the visit and drops
 // focus to the body when the focused element is replaced; either is a place a
 // reader can continue from. A focused element that is detached or not painted

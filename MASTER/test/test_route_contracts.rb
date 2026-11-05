@@ -25,14 +25,14 @@ class TestRouteContracts < Minitest::Test
     row = RouteContracts.describe(html_response(PAGE))
     assert_equal 200, row["status"]
     assert_equal "text/html", row["type"]
-    assert_equal "Post N · brgen", row["title"]
+    assert_equal "Post N - brgen", row["title"]
     assert_equal "Hei Bergen", row["heading"]
     assert_equal %w[header nav main form], row["landmarks"]
     assert_equal ["/posts/N/comments"], row["forms"]
   end
 
   def test_a_byte_body_records_readable_utf8_text
-    body = "<title>Kategorier — BSDports</title><h1>Åpne</h1>".b
+    body = "<title>Kategorier - BSDports</title><h1>Åpne</h1>".b
     row = RouteContracts.describe(html_response(body))
     assert_equal Encoding::UTF_8, row["title"].encoding
     refute_includes YAML.dump(row), "!binary"

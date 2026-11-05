@@ -5,10 +5,10 @@ require_relative "../../support/source_contract"
 
 module Deploy
   # Persuasion honesty: the grey patterns must stay grey. Scarcity, countdowns
-  # and price anchors may render only from measured truth — listing stock, a
-  # real ends_at, the trailing 30-day price-observation minimum — and a view
+  # and price anchors may render only from measured truth - listing stock, a
+  # real ends_at, the trailing 30-day price-observation minimum - and a view
   # must never hardcode a persuasive number. The takeaway confirm screen must
-  # render the whole bill — subtotal, delivery fee and tip inside the total —
+  # render the whole bill - subtotal, delivery fee and tip inside the total -
   # so no charge can surface after the price was believed (PERSUASION_truth_
   # bearing). Checked beside payment_honesty because the same fail-honestly
   # contract covers anything that talks a visitor into paying.
@@ -40,7 +40,7 @@ module Deploy
     # dark pattern: it renders identically for every listing, so it cannot be
     # true for every listing. Anchors, counts and deadlines come from data.
     # The takeaway order views price nothing by hand either: every krone on
-    # the bill — delivery fee included — comes from the order or the
+    # the bill - delivery fee included - comes from the order or the
     # restaurant row, so a late-chosen fee can never be quieter than the
     # price the guest believed.
     FORBIDDEN = {

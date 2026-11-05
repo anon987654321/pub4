@@ -9,7 +9,7 @@ require_relative "../../support/check_autofix"
 module Deploy
   # Width sweep instead of three fixed viewports.
   #
-  # Responsive bugs live *between* breakpoints — a grid that fits at 390 and at
+  # Responsive bugs live *between* breakpoints - a grid that fits at 390 and at
   # 1440 and spills at 480. Testing three widths structurally cannot see them.
   # This sweeps the declared width list collecting only cheap scalars per step,
   # and asserts three things:
@@ -17,14 +17,14 @@ module Deploy
   #   1. No horizontal overflow at any width, with 320px as the WCAG 1.4.10 floor.
   #   2. Layout changes happen only at declared breakpoints. The set of widths
   #      where the column count or nav variant changes is a "breakpoint
-  #      fingerprint" — small, stable, and committable. An unplanned transition
+  #      fingerprint" - small, stable, and committable. An unplanned transition
   #      appearing mid-range is a regression even when nothing looks broken.
   #   3. Reading type never shrinks as the viewport widens, and never keeps a
   #      fixed line height while its size changes.
   class ReflowCheck
     ROOT = File.expand_path("../../../..", __dir__)
 
-    # Sampled at each width — kept tiny so a 16-step sweep stays fast.
+    # Sampled at each width - kept tiny so a 16-step sweep stays fast.
     SCALARS = <<~JS
       (() => {
         const de = document.documentElement;
@@ -120,7 +120,7 @@ module Deploy
     def run
       @result = Result.new
       unless GeometryProbe.available?
-        @result.inconclusive!("reflow: no Chrome/Chromium — width sweep not run", gap: Master::Gap::NO_BROWSER)
+        @result.inconclusive!("reflow: no Chrome/Chromium - width sweep not run", gap: Master::Gap::NO_BROWSER)
         return @result
       end
 
@@ -131,7 +131,7 @@ module Deploy
       end
 
       surfaces = pick_surfaces
-      GeometryProbe.unreachable_apps(surfaces).each { |app| @result.skipped_live("reflow: #{app} port closed — skipped") }
+      GeometryProbe.unreachable_apps(surfaces).each { |app| @result.skipped_live("reflow: #{app} port closed - skipped") }
       live = GeometryProbe.reachable(surfaces)
       if live.empty?
         @result.inconclusive!("reflow: no app reachable")
@@ -144,22 +144,22 @@ module Deploy
       end
 
       # Counted per surface swept, so one surface that could not be measured does
-      # not make the ones that were count for nothing — and a sweep where every
+      # not make the ones that were count for nothing - and a sweep where every
       # width raised does not count as a sweep at all. A CDP error is a warning
       # here, so counting attempts reported an empty sweep as a pass.
       if measured.zero?
-        @result.inconclusive!("reflow: 0/#{live.size} surface(s) survived the sweep — no width was measured")
+        @result.inconclusive!("reflow: 0/#{live.size} surface(s) survived the sweep - no width was measured")
 
         return @result
       end
       if GeometryProbe.too_few_measured?(measured, live.size)
-        @result.inconclusive!("reflow: #{measured}/#{live.size} surface(s) survived the sweep — too few to " \
+        @result.inconclusive!("reflow: #{measured}/#{live.size} surface(s) survived the sweep - too few to " \
                               "call the width range clean; warm the apps and re-run")
         return @result
       end
 
       @result.checked!(measured)
-      @result.warn("reflow: swept #{widths.length} widths (#{widths.first}–#{widths.last}px) × #{measured} surface(s)")
+      @result.warn("reflow: swept #{widths.length} widths (#{widths.first}-#{widths.last}px) x #{measured} surface(s)")
       @result
     end
 
@@ -183,7 +183,7 @@ module Deploy
 
           samples[width] = cdp.evaluate(SCALARS)
         rescue CdpSession::Error => e
-          @result.warn("reflow: #{surface.app}/#{surface.label} @#{width}px — #{e.class.name.split("::").last}")
+          @result.warn("reflow: #{surface.app}/#{surface.label} @#{width}px - #{e.class.name.split("::").last}")
           next
         end
       end
@@ -208,7 +208,7 @@ module Deploy
 
       @result.fail(
         "reflow overflow: #{surface.app}/#{surface.label} scrolls horizontally at #{widths.join(', ')}px " \
-        "(worst #{worst[0]}px: #{worst[1]["scroll_width"]} > #{worst[1]["client_width"]}#{offenders.empty? ? "" : " — #{offenders.join(', ')}"}) " \
+        "(worst #{worst[0]}px: #{worst[1]["scroll_width"]} > #{worst[1]["client_width"]}#{offenders.empty? ? "" : " - #{offenders.join(', ')}"}) " \
         "principle=accessibility",
         severity:,
       )
@@ -241,7 +241,7 @@ module Deploy
         next if steps.empty?
 
         @result.fail(
-          "reflow type: #{surface.app}/#{surface.label} #{ordered.first[1]["reading"]} #{what} — " \
+          "reflow type: #{surface.app}/#{surface.label} #{ordered.first[1]["reading"]} #{what} - " \
           "#{steps.first(3).join('; ')} (principle=typography)", severity: :soft
         )
       end
@@ -268,7 +268,7 @@ module Deploy
     end
 
     # Each argument is one [width, sample] pair from the sweep.
-    def size_step(from, to) = "#{from[1]["reading_size"]}px at #{from[0]} → #{to[1]["reading_size"]}px at #{to[0]}"
+    def size_step(from, to) = "#{from[1]["reading_size"]}px at #{from[0]} -> #{to[1]["reading_size"]}px at #{to[0]}"
 
     # The fingerprint: widths at which a layout property flips. Reported as a
     # warning so it lands in the run output and can be eyeballed against the
@@ -282,29 +282,29 @@ module Deploy
         changed = %w[columns tab_bar sidebar].select { |k| a[k] != b[k] }
         next if changed.empty?
 
-        transitions << "#{w1}→#{w2}px: #{changed.map { |k| "#{k} #{a[k]}→#{b[k]}" }.join(', ')}"
+        transitions << "#{w1}->#{w2}px: #{changed.map { |k| "#{k} #{a[k]}->#{b[k]}" }.join(', ')}"
       end
 
-      # main_width is continuous, so it is not a transition — but reporting its
+      # main_width is continuous, so it is not a transition - but reporting its
       # range tells you whether the surface actually adapts or merely stretches.
       widths = ordered.map { |(_w, s)| s["main_width"].to_i }.reject(&:zero?)
-      span = widths.empty? ? "" : " [main #{widths.min}→#{widths.max}px]"
+      span = widths.empty? ? "" : " [main #{widths.min}->#{widths.max}px]"
 
       if transitions.empty?
         @result.warn(
-          "reflow fingerprint: #{surface.app}/#{surface.label} — no discrete layout transition across " \
-          "#{ordered.first[0]}–#{ordered.last[0]}px#{span}; the surface scales continuously rather than " \
+          "reflow fingerprint: #{surface.app}/#{surface.label} - no discrete layout transition across " \
+          "#{ordered.first[0]}-#{ordered.last[0]}px#{span}; the surface scales continuously rather than " \
           "switching at breakpoints",
         )
         return
       end
 
-      @result.warn("reflow fingerprint: #{surface.app}/#{surface.label}#{span} — #{transitions.join(' | ')}")
+      @result.warn("reflow fingerprint: #{surface.app}/#{surface.label}#{span} - #{transitions.join(' | ')}")
       return if transitions.size <= 4
 
       @result.fail(
         "reflow breakpoints: #{surface.app}/#{surface.label} changes layout at #{transitions.size} points " \
-        "across #{ordered.first[0]}–#{ordered.last[0]}px — more transitions than a declared breakpoint set " \
+        "across #{ordered.first[0]}-#{ordered.last[0]}px - more transitions than a declared breakpoint set " \
         "(likely content-driven reflow rather than designed breakpoints)",
         severity: :soft,
       )

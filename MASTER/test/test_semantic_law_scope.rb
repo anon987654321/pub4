@@ -120,7 +120,7 @@ class TestSemanticLawScope < Minitest::Test
   # The invariant Law::Rule#prove! already enforces on the law population, asked
   # of the other one. NEVER_BATCH_DELETE declared `shell` and could read no file
   # for it; laws.yml carried `rails`, `prose` and `erb` across 13 rows for the
-  # same reason — nothing emits them, and while the key was unread nothing said
+  # same reason - nothing emits them, and while the key was unread nothing said
   # so. Now that it is read, a phantom language aims a rule at no file at all.
   def test_semantic_population_matches_the_canonical_law_catalogue
     catalogue = Master.law_catalogue.fetch("entries").keys.map(&:upcase).sort

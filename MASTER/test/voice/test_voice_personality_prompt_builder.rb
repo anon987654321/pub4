@@ -94,7 +94,7 @@ class TestPersonalityPromptBuilder < Minitest::Test
 
     assert_includes line, "brutalist style"
     assert_includes line, "Inter"
-    assert_includes line, "scale 18px × 1.618"
+    assert_includes line, "scale 18px x 1.618"
     assert_includes line, "leading 1.35"
     assert_includes line, "measure 72ch"
   end
@@ -103,7 +103,7 @@ class TestPersonalityPromptBuilder < Minitest::Test
     line = Typographer.new.typography_style_line("families_sans" => "Inter")
 
     assert_includes line, "swiss style"
-    assert_includes line, "× 1.25"
+    assert_includes line, "x 1.25"
   end
 
   def test_zsh_reference_tables_reach_the_prompt

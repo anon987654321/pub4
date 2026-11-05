@@ -3,7 +3,7 @@
 require "securerandom"
 
 module Master::Core
-  # Core — the fold. This is the whole control flow of the agent, and it fits
+  # Core - the fold. This is the whole control flow of the agent, and it fits
   # on a screen on purpose. The model proposes an Effect; the Constitution
   # admits or blocks it; the World performs what was admitted; the Memory
   # records the outcome and the loop turns again until the model is done.
@@ -17,7 +17,7 @@ module Master::Core
     BLOCK_LIMIT = 3
 
     # observer, if given, is called once per turn with (turn:, effect:, observation:)
-    # after the outcome is recorded. It only watches — it cannot change the fold —
+    # after the outcome is recorded. It only watches - it cannot change the fold -
     # so a host (a CLI, a dashboard) can stream turns without the spine growing.
     # effect_observer receives :before and :after around every World effect. Unlike
     # the UI observer, failure to publish a lifecycle event stops the fold safely.
@@ -156,7 +156,7 @@ private
     end
 
     # The admitted half of the loop. Returns Done when the effect ends the fold
-    # and nil to take another turn — extracted from `run` so that method stays
+    # and nil to take another turn - extracted from `run` so that method stays
     # under DENSITY's 20 code lines without the fold gaining a new direct file.
     # The direct seven-file invariant and recursive core ratchet are enforced in
     # data/spine.yml. See the old backlog, "The fold spine
@@ -191,7 +191,7 @@ private
 
     # The effect goes with the checkpoint: rollback undoes what THIS effect
     # touched, and without knowing which effect failed it can only guess at the
-    # blast radius — which it used to do with a tree-wide reset.
+    # blast radius - which it used to do with a tree-wide reset.
     #
     # What rollback reports rides on the failure, because the agent's next move
     # depends on it: a write that was undone left the tree as it was, and a
@@ -252,9 +252,9 @@ private
       result = perform_effect(turn, inverse, operation: :compensation, parent_effect_id:, checkpoint_id:)
       @memory.record(inverse, result)
       if result.ok?
-        Observation.no("#{failure.message} [compensation completed: #{action.argv.join(" ")} — #{result.message}]")
+        Observation.no("#{failure.message} [compensation completed: #{action.argv.join(" ")} - #{result.message}]")
       else
-        Observation.no("#{failure.message} [compensation failed: #{action.argv.join(" ")} — #{result.message}]")
+        Observation.no("#{failure.message} [compensation failed: #{action.argv.join(" ")} - #{result.message}]")
       end
     rescue StandardError => e
       Observation.no("#{failure.message} [compensation failed: #{e.class}: #{e.message}]")

@@ -112,7 +112,7 @@ module Master
         opacity = (1.0 / members.size).clamp(OPACITY_RANGE.min, OPACITY_RANGE.max).round(3)
         layers = members.map { |c| layer(c, opacity) }
         VisualCrossPagePages.overlay(
-          title: "cross-page overlay · #{group[:label]}",
+          title: "cross-page overlay - #{group[:label]}",
           note: "#{members.size} pages at #{opacity} opacity, top-left aligned, 1:1 pixels. A sharp edge is shared structure; a double edge or smear is chrome that moved between pages.",
           layers:, width: layers.map { |l| l[:w] }.max, height: [layers.map { |l| l[:h] }.max, MAX_HEIGHT_PX].min
         )
@@ -125,7 +125,7 @@ module Master
         layers = [layer(desktop, PAIR_OPACITY), layer(mobile, PAIR_OPACITY)]
         text = "#{group[:label]}: desktop #{dw}x#{dh} clipped to its left #{mw}px under mobile #{mw}x#{mh}; not scaled"
         page = VisualCrossPagePages.overlay(
-          title: "viewport overlay · #{group[:label]}",
+          title: "viewport overlay - #{group[:label]}",
           note: "Desktop clipped to the mobile frame's width, not scaled, under mobile. Content the desktop shows there but mobile moved or dropped appears as a ghost.",
           layers:, width: mw, height: [[mh, dh].max, MAX_HEIGHT_PX].min
         )

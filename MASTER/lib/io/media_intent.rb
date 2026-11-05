@@ -253,7 +253,7 @@ module Master
       # The browser face carries its own loop of the same music, so a music
       # ask ships a client_action beside the speaker dispatch: a bare toggle,
       # a named artist, or an explicit stop. Empty-handed when no harmony is
-      # named — the face keeps whatever artist it was playing.
+      # named - the face keeps whatever artist it was playing.
       FACE_MUSIC_ARTISTS = {
         /\bmadlib\w*\b/i => "madlib",
         /\bfly(?:ing)?\s+lotus\b|\bflylo\b/i => "flying_lotus",
@@ -395,7 +395,7 @@ module Master
       end
 
       def postpro_capability
-        line = "postpro0: retired — the STUDIO/postpro entrypoint is not present; this intent stays unavailable until a supported processor and its tests are restored"
+        line = "postpro0: retired - the STUDIO/postpro entrypoint is not present; this intent stays unavailable until a supported processor and its tests are restored"
         Result.err(line, category: :validation)
       end
 
@@ -554,7 +554,7 @@ module Master
         result = ScriptDispatch.run(root:, tool: "dilla", arg: argv.map { |value| Shellwords.escape(value) }.join(" "))
         return result unless result.ok?
 
-        Result.ok({ log: result.value!, path: output, progression: "Blue Hour — Dilla Minor Dub Cut",
+        Result.ok({ log: result.value!, path: output, progression: "Blue Hour - Dilla Minor Dub Cut",
                     drums: "dilla_shadow_full", groove: "dilla_shadow", kit: "kit_dust", tempo_range: [92, 116] })
       end
 

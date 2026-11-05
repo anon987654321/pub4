@@ -39,7 +39,7 @@ module Master
           surfaces: SURFACES.map(&:to_s),
           statuses: (STATES + [:pending]).map(&:to_s),
           clean_passes_required: 2,
-          completion_rule: "all applicable law × stream × surface cells have two consecutive evidence-backed clean readings after the last mutation",
+          completion_rule: "all applicable law x stream x surface cells have two consecutive evidence-backed clean readings after the last mutation",
           runtime_status: "contract_only_not_measurement",
         }
       end

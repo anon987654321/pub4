@@ -5,11 +5,11 @@ require_relative "../../../lib/operator/baseline_ratchet"
 module Operator
   # A destructive control that asks nothing before it fires.
   #
-  # The third of the hand-counted audit rows that had no instrument behind it —
-  # "29 destructive links with no confirmation interstitial" — a number nothing
+  # The third of the hand-counted audit rows that had no instrument behind it -
+  # "29 destructive links with no confirmation interstitial" - a number nothing
   # committed could reproduce.
   #
-  # unconfirmed_destroy — a link or button that issues DELETE and carries no
+  # unconfirmed_destroy - a link or button that issues DELETE and carries no
   # confirmation. Rails routes destruction through the method, not the label, so
   # this reads the method: it matches `method: :delete`, `turbo_method: :delete`
   # and `data-turbo-method="delete"`, and is satisfied by `confirm:`,
@@ -20,7 +20,7 @@ module Operator
   # Two reasons a control legitimately skips the prompt: the action is reversible
   # (unfollow, unsave, leave a room you can rejoin), or the click already
   # happened inside a dialog that asked. Mark those with
-  # `<%# destructive: no-confirm-ok — <reason> %>` on the line above; the marker
+  # `<%# destructive: no-confirm-ok - <reason> %>` on the line above; the marker
   # takes a reason because "reversible" is a claim about the model, not the view.
   #
   # button_to is included. It renders a form and is the correct way to do this,
@@ -45,7 +45,7 @@ module Operator
     # the marker because the control is reversible in place: sign out, unfollow,
     # unpin, unblock, unsubscribe, unwatch, leave a community you can rejoin,
     # drop an outfit from today's plan. Two of those are moderation actions and
-    # still take the marker rather than a prompt — the bans view already argues
+    # still take the marker rather than a prompt - the bans view already argues
     # that a mod team which cannot undo its own mistakes escalates everything to
     # the owner, and the moderators list offers Make moderator on the same row.
     #
@@ -70,7 +70,7 @@ module Operator
     end
 
     # A call can wrap over several lines, so the unit is the ERB tag rather than
-    # the line — matching per line reported a confirmed control as unconfirmed
+    # the line - matching per line reported a confirmed control as unconfirmed
     # whenever the confirm: sat on the next one.
     def findings_for(path, src)
       rel = path.sub("#{RAILS_ROOT}/", "")

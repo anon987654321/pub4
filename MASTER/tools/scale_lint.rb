@@ -13,9 +13,9 @@ module Operator
   # never measured, and it drifted the way an unmeasured axis always does:
   # 539 spacing literals over 93 distinct values, and 13 distinct line-heights
   # for what is one body-text rhythm (1.5, 1.55, 1.45, 1.4, 1.3, 1.25, 1.2, 1.15,
-  # 1.6, 1.7 …), measured 2026-08-15.
+  # 1.6, 1.7 ...), measured 2026-08-15.
   #
-  # The nearest prior art is the stylelint ecosystem — `stylelint-scales`
+  # The nearest prior art is the stylelint ecosystem - `stylelint-scales`
   # (numeric scales per property, with autofix to the nearest allowed step),
   # `rhythmguard` (token-or-scale enforcement for spacing/radius/type), and
   # `stylelint-a11y`'s line-height-is-vertical-rhythmed. None of them run here:
@@ -31,7 +31,7 @@ module Operator
   #                         one that shows as "the page looks unsettled": a
   #                         paragraph at 1.45 beside one at 1.55 is a half-pixel
   #                         of drift per line that accumulates down the column.
-  #   absolute_line_height  `line-height: 28px`. It does not inherit — any child
+  #   absolute_line_height  `line-height: 28px`. It does not inherit - any child
   #                         at another font-size gets 28px anyway, which is the
   #                         defect stylelint-a11y's rule exists for, and it is
   #                         worse here because brgen's root is 18px.

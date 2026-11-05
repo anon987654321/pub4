@@ -17,11 +17,11 @@ require_relative "../../../tools/master_design"
 
 module Deploy
   # Rendered-geometry contracts: Fitts, occlusion, overflow, computed contrast,
-  # token conformance, 8px rhythm — all measured in a real browser.
+  # token conformance, 8px rhythm - all measured in a real browser.
   #
   # The check that layout_geometry was named after and did not do. That one is
   # FirstScreenCheck now, named for what it actually asserts: a skip link, a main
-  # landmark, an h1, and a tap minimum declared in SCSS — all of it text. A tap
+  # landmark, an h1, and a tap minimum declared in SCSS - all of it text. A tap
   # minimum on an element that is overlapped, clipped or overridden at this
   # breakpoint satisfies it and fails here, because here the box is measured.
   #
@@ -69,17 +69,17 @@ module Deploy
       load_design_rules
 
       unless GeometryProbe.available?
-        @result.inconclusive!("geometry: no Chrome/Chromium — rendered geometry not measured (set CHROME_PATH)", gap: Master::Gap::NO_BROWSER)
+        @result.inconclusive!("geometry: no Chrome/Chromium - rendered geometry not measured (set CHROME_PATH)", gap: Master::Gap::NO_BROWSER)
         return @result
       end
 
       surfaces = GeometryProbe.surfaces
       GeometryProbe.unreachable_apps(surfaces).each do |app|
-        @result.skipped_live("geometry: #{app} port closed — surfaces skipped")
+        @result.skipped_live("geometry: #{app} port closed - surfaces skipped")
       end
       live = GeometryProbe.reachable(surfaces)
       if live.empty?
-        @result.inconclusive!("geometry: no app reachable — nothing measured")
+        @result.inconclusive!("geometry: no app reachable - nothing measured")
         return @result
       end
 
@@ -87,9 +87,9 @@ module Deploy
       GeometryProbe.each_payload(live) do |surface, payload|
         if payload["error"]
           if GeometryProbe.timeout?(payload)
-            @result.incomplete!("geometry: #{surface.id} not measured — #{payload["error"]}")
+            @result.incomplete!("geometry: #{surface.id} not measured - #{payload["error"]}")
           else
-            @result.fail("geometry: #{surface.id} probe failed — #{payload["error"]}")
+            @result.fail("geometry: #{surface.id} probe failed - #{payload["error"]}")
           end
 
           next
@@ -101,7 +101,7 @@ module Deploy
       # What was actually measured, so a check that measured some surfaces and
       # skipped others is not reported as having measured nothing.
       @result.checked!(probed)
-      @result.warn("geometry: measured #{probed} surface×viewport cells in a real browser")
+      @result.warn("geometry: measured #{probed} surfacexviewport cells in a real browser")
       @result
     end
 
@@ -116,7 +116,7 @@ module Deploy
       # tokens.yml states the spacing grid twice, as pixel_perfection.
       # eight_px_rhythm and layout_rules.grid.allowed_spacing_px.
       # css_constitution, rhythm_lint and design_metrics read the first, so this
-      # check does too, with the grid as the fallback — the same precedence as
+      # check does too, with the grid as the fallback - the same precedence as
       # design_metrics, so one gap cannot be compliant to one check and a
       # violation to another.
       @allowed_spacing = Array(@rules.dig("pixel_perfection", "eight_px_rhythm")).map(&:to_i)
@@ -131,7 +131,7 @@ module Deploy
     def check_surface(surface, data)
       status = data["status"].to_i
       unless status.zero? || status.between?(200, 399)
-        @result.fail("geometry: #{surface.id} served HTTP #{status} at #{surface.url} — design checks skipped " \
+        @result.fail("geometry: #{surface.id} served HTTP #{status} at #{surface.url} - design checks skipped " \
                      "(a 403 host-authorization or 500 page is measurable but meaningless)")
         return
       end
@@ -163,8 +163,8 @@ module Deploy
 
     # The rendered half of design_metrics' mobile_input check, and the half that
     # can actually be complete. The source check has to infer "this is a text
-    # field" from the selector, so a rule written as `#q { … }` or one that only
-    # inherits its size is invisible to it — which is exactly how bsdports'
+    # field" from the selector, so a rule written as `#q { ... }` or one that only
+    # inherits its size is invisible to it - which is exactly how bsdports'
     # search field sat at 13.5px. Here the tag is known and the size is the one
     # the browser computed, root scaling and inheritance included.
     TEXT_INPUT_TAGS = %w[input textarea select].freeze
@@ -189,7 +189,7 @@ module Deploy
                        .map { |el| "#{el["key"]} at #{el["font_size"]}px" }
       @result.fail(
         "geometry input_zoom: #{surface.id} renders #{offenders.size} text field(s) under " \
-        "#{floor.to_i}px — #{named.join('; ')}. iOS Safari zooms the viewport on focus and does " \
+        "#{floor.to_i}px - #{named.join('; ')}. iOS Safari zooms the viewport on focus and does " \
         "not zoom back (principle=accessibility)",
       )
     end
@@ -215,7 +215,7 @@ module Deploy
         r = el["frect"]
         next false unless r
         # An element laid out by the width of the text before it is fractional
-        # by construction — a row of nav links lands at 85.5, 148.38, 201.66
+        # by construction - a row of nav links lands at 85.5, 148.38, 201.66
         # because that is where the words end, and no stylesheet chose it.
         # Resampling only shows as a seam on a box that paints an edge, so this
         # asks about block-level boxes and leaves inline runs alone.
@@ -240,7 +240,7 @@ module Deploy
 
       @result.fail(
         "geometry subpixel: #{surface.id} paints #{by_key.size} distinct component(s) on fractional " \
-        "pixels (#{offenders.size} instances) — #{named.join('; ')} (principle=pixel_perfection)",
+        "pixels (#{offenders.size} instances) - #{named.join('; ')} (principle=pixel_perfection)",
         severity: :soft,
       )
     end
@@ -269,7 +269,7 @@ module Deploy
       return if misses.empty?
 
       @result.fail(
-        "geometry alignment: #{surface.id} has #{misses.size} near-miss left edge(s) — " \
+        "geometry alignment: #{surface.id} has #{misses.size} near-miss left edge(s) - " \
         "#{misses.first(4).join('; ')}. Align them or separate them deliberately " \
         "(principle=alignment)", severity: :soft
       )
@@ -279,7 +279,7 @@ module Deploy
     # point: a target at least 24x24 CSS px is exempt no matter how close its
     # neighbour is, because a finger that lands anywhere on it still hits it.
     # Only undersized targets need clearance. Measured without that condition
-    # this reported 3283 pairs on one page — every adjacent feed action, all of
+    # this reported 3283 pairs on one page - every adjacent feed action, all of
     # them adequately sized and none of them a defect.
     WCAG_TARGET_MIN = 24.0
 
@@ -288,8 +288,8 @@ module Deploy
     end
 
     # The probe's own inline_in_text flag only catches a link whose parent is
-    # running text. It misses the commonest shape here — a link inside a card
-    # body, which is still a sentence — so the structural signal decides it: a
+    # running text. It misses the commonest shape here - a link inside a card
+    # body, which is still a sentence - so the structural signal decides it: a
     # box no taller than its own line of text has no padding of its own and is
     # therefore a text run, not a control someone sized.
     def inline_target?(el)
@@ -334,7 +334,7 @@ module Deploy
 
       @result.fail(
         "geometry target_spacing: #{surface.id} has #{crowded.size} undersized target pair(s) closer " \
-        "than #{WCAG_TARGET_MIN.to_i}px — #{crowded.first(3).join('; ')} (principle=fitts)", severity: :soft
+        "than #{WCAG_TARGET_MIN.to_i}px - #{crowded.first(3).join('; ')} (principle=fitts)", severity: :soft
       )
     end
 
@@ -432,14 +432,14 @@ module Deploy
       offenders = Array(data["overflow"]).sort_by { |o| -o["right"].to_i }.first(3)
       names =
         if offenders.empty?
-          "no single element exceeds the viewport — the spill comes from an intrinsic minimum " \
+          "no single element exceeds the viewport - the spill comes from an intrinsic minimum " \
             "(a wide table, pre block, or a flex/grid track that cannot shrink)"
         else
           offenders.map { |o| "#{o["sel"]} (right=#{o["right"]})" }.join("; ")
         end
 
       @result.fail(
-        "geometry overflow: #{surface.id} scrolls horizontally (#{scroll}px > #{client}px viewport) — #{names}",
+        "geometry overflow: #{surface.id} scrolls horizontally (#{scroll}px > #{client}px viewport) - #{names}",
         severity: :hard,
       )
       offenders.each do |o|
@@ -468,12 +468,12 @@ module Deploy
         label = el["text"].to_s.empty? ? (el["aria"] || el["tag"]) : el["text"]
 
         @result.fail(
-          "geometry touch: #{surface.id} #{key} renders #{w}×#{h} < #{@min_touch.to_i}px " \
-          "(#{group.size}×, #{label.to_s.strip[0, 30].inspect}) principle=fitts_law",
+          "geometry touch: #{surface.id} #{key} renders #{w}x#{h} < #{@min_touch.to_i}px " \
+          "(#{group.size}x, #{label.to_s.strip[0, 30].inspect}) principle=fitts_law",
           severity: sev,
         )
         @result.autofix(app: surface.app, selector: key, kind: :touch,
-                        detail: "#{surface.id}: rendered #{w}×#{h}, floor #{@min_touch.to_i}px") if sev == :hard
+                        detail: "#{surface.id}: rendered #{w}x#{h}, floor #{@min_touch.to_i}px") if sev == :hard
       end
     end
 
@@ -487,7 +487,7 @@ module Deploy
 
         @result.fail(
           "geometry occlusion: #{surface.id} #{key} centre pixel is owned by #{el["hit"].sub("blocked:", "")} " \
-          "(#{group.size}× unclickable) principle=fitts_law",
+          "(#{group.size}x unclickable) principle=fitts_law",
           severity: sev,
         )
       end
@@ -503,7 +503,7 @@ module Deploy
     # elementFromPoint at the mark's own centre returned the "front" nav link and
     # a tap on the brand navigated to front instead of home. Both elements are
     # correct in isolation, which is why neither design_contract nor
-    # visual_contract saw it — only the composed hit test does.
+    # visual_contract saw it - only the composed hit test does.
     #
     # The element's own computed position is the test, not an ancestor's: these
     # apps wrap the page in a fixed .app-shell, so "has a fixed ancestor" is true
@@ -522,9 +522,9 @@ module Deploy
         @result.fail(
           "geometry chrome occlusion: #{surface.id} #{key} is position:fixed " \
           "(#{label.to_s[0, 30].inspect}, z=#{el["z"] || "auto"}) and its centre pixel is owned by " \
-          "#{el["hit"].sub("under_chrome:", "")} — fixed chrome cannot be scrolled out from " \
+          "#{el["hit"].sub("under_chrome:", "")} - fixed chrome cannot be scrolled out from " \
           "under a blocker, so this target is dead for the life of the page " \
-          "(#{group.size}×) principle=fitts_law",
+          "(#{group.size}x) principle=fitts_law",
           severity: :hard,
         )
 
@@ -545,8 +545,8 @@ module Deploy
 
       sample = off.group_by { |g| g["gap"] }.sort_by { |_, v| -v.size }.first(3)
       @result.fail(
-        "geometry rhythm: #{surface.id} #{off.size}/#{gaps.size} rendered gaps (#{ratio}%) off the 8px scale — " \
-        "#{sample.map { |px, rows| "#{px}px×#{rows.size}" }.join(', ')} principle=rhythm",
+        "geometry rhythm: #{surface.id} #{off.size}/#{gaps.size} rendered gaps (#{ratio}%) off the 8px scale - " \
+        "#{sample.map { |px, rows| "#{px}pxx#{rows.size}" }.join(', ')} principle=rhythm",
         severity: :soft,
       )
     end

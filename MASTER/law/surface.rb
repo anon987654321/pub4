@@ -7,7 +7,7 @@ module Master
     module Scan
       module Laws
         # Surface law: pixel/UI aesthetic + Rails HTML/JS/ERB conventions.
-        # One file — views, CSS, Stimulus, touch targets, flat design.
+        # One file - views, CSS, Stimulus, touch targets, flat design.
 
         # Pixel-perfect UI/UX rules restored from master.yml aesthetics + design_laws.yml.
         # Applies to MASTER/web face, ERB views, and pub4/RAILS SCSS/HTML.
@@ -35,7 +35,7 @@ module Master
         # STIMULUS_CONTROLLER_SIZE's numbers are declared, not invented here:
         # data/laws.yml carries `detect_structural: {max_lines: 200,
         # path_pattern: "_controller\.js$"}` and this rule held both as literals,
-        # which is a declaration with no reader — the defect this repo hunts most
+        # which is a declaration with no reader - the defect this repo hunts most
         # often, sitting inside the file that declares the hunt. Read once per
         # process: laws.yml is four thousand lines and load_laws memoizes
         # nothing.
@@ -51,7 +51,7 @@ module Master
 
         ::Law.define(:NO_DECORATIVE_FX) do
           tags %i[DESIGN AESTHETIC PIXEL]
-          fix "flat UI — no blur, glow, or ornamental shadow"
+          fix "flat UI - no blur, glow, or ornamental shadow"
           ask "Does the element use shadows or glows that serve no functional purpose?"
           # Structural question: Check for 'glow' or 'shadow' in filenames or directory names
           example_path "/repo/app/assets/stylesheets/_example.scss"
@@ -66,7 +66,7 @@ module Master
             without_block_comments(src).each_line.with_index(1) do |line, num|
               next if line.strip.start_with?("//", "/*", "*")
 
-              # Allow a suppressed shadow — `none`, or an all-zero value. The old
+              # Allow a suppressed shadow - `none`, or an all-zero value. The old
               # pattern matched `0\s`, which is the first token of every real
               # shadow too: `box-shadow: 0 2px 8px rgba(0,0,0,.3)` was skipped as
               # if it were a suppression. Found by this rule's own fixture,
@@ -75,10 +75,10 @@ module Master
               next if line.match?(/text-shadow\s*:\s*(none|0(?:\s+0)*(?:\s+0)?)\s*(?:!important)?\s*;/i)
 
               if line.match?(/box-shadow\s*:/i) || line.match?(/text-shadow\s*:/i)
-                findings << finding(line: num, message: "ornamental shadow — flat UI: use border/contrast, not glow (design_rules pixel_perfection)")
+                findings << finding(line: num, message: "ornamental shadow - flat UI: use border/contrast, not glow (design_rules pixel_perfection)")
               end
               if line.match?(/filter\s*:\s*[^;]*blur\s*\(/i) || line.match?(/backdrop-filter\s*:/i)
-                findings << finding(line: num, message: "blur/backdrop-filter — forbidden decorative FX for pixel-perfect flat surfaces")
+                findings << finding(line: num, message: "blur/backdrop-filter - forbidden decorative FX for pixel-perfect flat surfaces")
               end
             end
             findings
@@ -92,7 +92,7 @@ module Master
           # layer. They were two declarations in two files until the Law systems merged.
           source "MASTER constitution (soul.yml absolute.rules)"
           practice <<~TEXT
-            Flat Design — UI and particles stay two-dimensional, uniform in size and
+            Flat Design - UI and particles stay two-dimensional, uniform in size and
             alpha, with no fake depth or parallax. Exception: pixels that collectively
             resemble a 3D model, as in face mode.
           TEXT
@@ -110,20 +110,20 @@ module Master
             if path.to_s.match?(/\.(js|ts)\z/) || File.basename(path.to_s).match?(/face/)
               src.each_line.with_index(1) do |line, num|
                 if line.match?(/imageSmoothingEnabled\s*=\s*true/i)
-                  findings << finding(line: num, message: "imageSmoothingEnabled=true — pixel field requires false (integer scale)")
+                  findings << finding(line: num, message: "imageSmoothingEnabled=true - pixel field requires false (integer scale)")
                 end
 
                 # `particle` is out of this list. bloom, scanline, vaporwave and crt
                 # name decorative effects a flat surface does not want; a particle
                 # is a rendering primitive, and this product's face is built from
-                # them — face_vision_b.js opens "MASTER particle face 2026" and
+                # them - face_vision_b.js opens "MASTER particle face 2026" and
                 # face.part1.txt says it eight times. The rule was telling MASTER's
                 # own particle face to stop calling itself one, and objecting to the
                 # physics of a named feature (radio_brgen_tunnel's particle tunnel)
                 # as though `particle.z += zDelta` were a style choice. 35 findings,
                 # none actionable.
                 if line.match?(/\b(bloom|scanline|vaporwave|crt)\b/i) && !line.strip.start_with?("//", "*", "/*")
-                  findings << finding(line: num, message: "decorative particle/CRT language — use pixel-field/semantic cell terms per design_rules")
+                  findings << finding(line: num, message: "decorative particle/CRT language - use pixel-field/semantic cell terms per design_rules")
                 end
               end
             end
@@ -133,14 +133,14 @@ module Master
         end
 
         # The doctrine is Müller-Brockmann's (Grid Systems in Graphic Design,
-        # 1981): a single spatial module, every dimension a multiple of it —
+        # 1981): a single spatial module, every dimension a multiple of it -
         # named here so the rule carries its book, not just its number.
         # Grid structure is a composition law, not a requirement that every page use CSS Grid.
         # The static pass catches only a high-signal anti-pattern; it leaves unusual
         # but legitimate overlays to the semantic review and rendered geometry checks.
         ::Law.define(:GRID_STRUCTURE) do
           tags %i[DESIGN LAYOUT]
-          fix "grid structure — shared tracks, consistent alignment and parent-owned gap"
+          fix "grid structure - shared tracks, consistent alignment and parent-owned gap"
           ask "Does the interface express repeated relationships with coherent grid or flex tracks and parent-owned gap rather than arbitrary per-child offsets and widths?"
           # Structural question: Find grid-like containers whose direct children combine absolute positioning, a fixed physical offset and a fixed wide width.
           example_path "/repo/app/assets/stylesheets/_example.scss"
@@ -165,7 +165,7 @@ module Master
               line = clean[0...match.begin(0)].count("\n") + 1
               findings << finding(
                 line:,
-                message: "grid-like direct children use absolute offsets and a fixed wide width — prefer shared grid/flex tracks and parent-owned gap",
+                message: "grid-like direct children use absolute offsets and a fixed wide width - prefer shared grid/flex tracks and parent-owned gap",
               )
             end
             findings.uniq { |item| [item[:line], item[:message]] }
@@ -178,7 +178,7 @@ module Master
         # 8px snap that repaired it turned the scale's own 1px hairline into 0px.
         ::Law.define(:EIGHT_PX_RHYTHM) do
           tags %i[DESIGN AESTHETIC]
-          fix "spacing on the declared scale (tokens.yml scale.space_px) — Müller-Brockmann grid module"
+          fix "spacing on the declared scale (tokens.yml scale.space_px) - Müller-Brockmann grid module"
           ask "Does the spacing step off the declared scale rather than follow its rhythm?"
           transform "snap_to_design_scale"
           example_path "/repo/app/assets/stylesheets/_example.scss"
@@ -201,19 +201,19 @@ module Master
         
                 scale.off_scale_lengths(Regexp.last_match[:value]).each do |step|
                   px = rules.to_px(*step.match(rules::LENGTH).captures)
-                  findings << finding(line: num, message: "#{step} #{prop} off the spacing scale — " \
+                  findings << finding(line: num, message: "#{step} #{prop} off the spacing scale - " \
                                                           "use #{scale.nearest(px).to_i}px (tokens.yml scale.space_px)")
                 end
               end
         
-              # Token *definitions* (e.g. --space-7: 1.75rem), not just call sites — a
+              # Token *definitions* (e.g. --space-7: 1.75rem), not just call sites - a
               # usage-only scan is structurally blind to a bad value baked into the
               # token itself. Reported, never snapped: a token's value is the operator's.
               line.scan(/--[\w-]*(?:space|gap)[\w-]*\s*:\s*(-?[\d.]+)(px|rem)\b/i) do |value, unit|
                 px = rules.to_px(value, unit.downcase)
                 next if px.zero? || scale.space_px.include?(px.abs.round(3))
         
-                findings << finding(line: num, message: "#{px.to_i}px spacing token off the scale — " \
+                findings << finding(line: num, message: "#{px.to_i}px spacing token off the scale - " \
                                                         "use #{scale.nearest(px).to_i}px (tokens.yml scale.space_px)")
               end
             end
@@ -246,10 +246,10 @@ module Master
                 value = Regexp.last_match[:value].strip
                 case scale.line_height_kind(value)
                 when :absolute
-                  findings << finding(line: num, message: "absolute line-height #{value} — prefer a unitless step #{steps} " \
+                  findings << finding(line: num, message: "absolute line-height #{value} - prefer a unitless step #{steps} " \
                                                           "(tokens.yml scale.line_height; ScaleLint absolute_line_height)")
                 when :off_scale
-                  findings << finding(line: num, message: "line-height #{value} off scale — use #{steps} " \
+                  findings << finding(line: num, message: "line-height #{value} off scale - use #{steps} " \
                                                           "(tokens.yml scale.line_height; RAILS ScaleLint)")
                 end
               end
@@ -260,7 +260,7 @@ module Master
 
         ::Law.define(:TOUCH_TARGET_MIN) do
           tags %i[DESIGN UX ACCESSIBILITY]
-          fix "Fitts — interactive targets ≥44px"
+          fix "Fitts - interactive targets >=44px"
           ask "Is the interactive element's hit area too small for comfortable thumb use?"
           # Structural question: Check if mobile-specific views lack minimum target constraints
           bad ".btn {\n  width: 12px;\n}\n"
@@ -301,7 +301,7 @@ module Master
 
         ::Law.define(:CHOICE_OVERLOAD) do
           tags %i[DESIGN UX]
-          fix "Hick — too many peer choices without grouping"
+          fix "Hick - too many peer choices without grouping"
           bad "<nav>#{(1..8).map { |n| "<a href=\"/#{n}\">#{n}</a>" }.join}</nav>\n"
           good "<ul>#{(1..8).map { |n| "<li>#{n}</li>" }.join}</ul>\n"
           check do |src, path|
@@ -315,7 +315,7 @@ module Master
             # A bare <ul> is not a choice surface. Hick's law is about how long it
             # takes to decide between alternatives, and a tag cloud, a search-results
             # list and "what is on in the city today" are content being browsed, not
-            # options being chosen between — advising "group or progressive
+            # options being chosen between - advising "group or progressive
             # disclosure" on search results says to hide the results. <nav> and
             # <select> are choice surfaces by definition and still count; a <ul> only
             # counts when it says it is one.
@@ -339,23 +339,23 @@ module Master
               line = src[0, src.index(chunk) || 0].count("\n") + 1
 
               if count > max
-                findings << finding(line:, message: "#{count} peer choices > #{max} (Hick) — group or progressive disclosure")
+                findings << finding(line:, message: "#{count} peer choices > #{max} (Hick) - group or progressive disclosure")
                 next
               end
 
               # A Rails `.each` loop renders exactly one static <a>/<li> in the
-              # source text regardless of runtime item count — the literal
+              # source text regardless of runtime item count - the literal
               # count above is structurally blind to the normal way Rails
               # renders a nav (found 2026-07-21: brgen's 10-item nav_swiper
               # was exactly this shape and this rule never saw it). Can't know
               # the real count statically, so this is advisory, not a hard
-              # count — skip if the block already shows a grouping signal.
+              # count - skip if the block already shows a grouping signal.
               next unless count <= 1 && chunk.match?(/<%[-=]?\s*[\w."'\[\]]+\.each(?:_with_index)?\s+do\s*\|/)
 
               next if chunk.match?(/role=["']group["']|data-controller=["'][^"']*(?:group|collapse|disclosure)/i)
               next if chunk.scan(/\.each(?:_with_index)?\s+do\s*\|/).size > 1 # already chunked into sub-groups
 
-              findings << finding(line:, message: "dynamic choice list (.each loop, real count unknown statically) with no grouping signal — verify it can't exceed #{max} peers, or add role=\"group\"/progressive disclosure (Hick)")
+              findings << finding(line:, message: "dynamic choice list (.each loop, real count unknown statically) with no grouping signal - verify it can't exceed #{max} peers, or add role=\"group\"/progressive disclosure (Hick)")
             end
             findings
           end
@@ -374,8 +374,8 @@ module Master
             next [] unless path.to_s.include?("/app/views/") || path.to_s.include?("web/")
 
             # "Dumping all options at once" needs options to dump. This fired on any
-            # view containing the word settings/options/advanced anywhere — a link
-            # label, a translation key, a URL — so a community's edit page and a
+            # view containing the word settings/options/advanced anywhere - a link
+            # label, a translation key, a URL - so a community's edit page and a
             # playlist embed page were reported as settings UI without a disclosure
             # pattern. The structural signal is a form with enough controls to be
             # worth collapsing; below that there is nothing to progressively reveal.
@@ -383,13 +383,13 @@ module Master
             next [] unless src.scan(/<(?:input|select|textarea)\b|f\.(?:text_field|select|check_box|number_field|text_area)/i).size >= 6
             next [] if src.match?(/details|disclosure|collapsed|hidden|aria-expanded|data-controller=["'][^"']*disclosure/i)
 
-            [finding(line: 1, message: "settings/advanced UI without disclosure pattern — collapse secondary controls")]
+            [finding(line: 1, message: "settings/advanced UI without disclosure pattern - collapse secondary controls")]
           end
         end
 
         ::Law.define(:WHITESPACE_RHYTHM) do
           tags %i[DESIGN AESTHETIC]
-          fix "ma — breathing room via gap/section spacing tokens"
+          fix "ma - breathing room via gap/section spacing tokens"
           bad ".card { color: red; }\n"
           good ".card { gap: var(--sp); }\n"
           check do |src, path|
@@ -404,13 +404,13 @@ module Master
             next [] unless src.match?(/^[^{}\n]*\b(section|hero|card|panel|main)\b[^{}\n]*\{/i)
             next [] if src.match?(/gap\s*:|section.*padding|padding-block|margin-block/i)
 
-            [finding(line: 1, message: "layout surface without gap/section spacing — set rhythm tokens (design_rules negative_space)")]
+            [finding(line: 1, message: "layout surface without gap/section spacing - set rhythm tokens (design_rules negative_space)")]
           end
         end
 
         ::Law.define(:TYPE_HIERARCHY) do
           tags %i[DESIGN TYPOGRAPHY]
-          fix "modular type scale — flag one-off font sizes"
+          fix "modular type scale - flag one-off font sizes"
           bad ".s1 { font-size: 11px; }\n.s2 { font-size: 12px; }\n.s3 { font-size: 13px; }\n.s4 { font-size: 14px; }\n.s5 { font-size: 15px; }\n.s6 { font-size: 16px; }\n.s7 { font-size: 17px; }\n.s8 { font-size: 18px; }\n.s9 { font-size: 19px; }\n"
           good ".s1 { font-size: 11px; }\n.s2 { font-size: 12px; }\n.s3 { font-size: 13px; }\n.s4 { font-size: 14px; }\n.s5 { font-size: 15px; }\n.s6 { font-size: 16px; }\n.s7 { font-size: 17px; }\n.s8 { font-size: 18px; }\n"
           check do |src, path|
@@ -422,7 +422,7 @@ module Master
             unique = sizes.uniq
             next [] if unique.size <= 8
 
-            [finding(line: 1, message: "#{unique.size} distinct px font sizes — prefer modular scale (Müller-Brockmann: one scale, few steps) ≤8 sizes (design_rules.type_scale)")]
+            [finding(line: 1, message: "#{unique.size} distinct px font sizes - prefer modular scale (Müller-Brockmann: one scale, few steps) <=8 sizes (design_rules.type_scale)")]
           end
         end
 
@@ -442,15 +442,15 @@ module Master
               # crude: light gray text
               next unless hex.match?(/\A([ef]{3}|[ef]{6}|ccc|ddd|eee)\z/i)
 
-              # …but light text is only low-contrast against a light background, and
+              # ...but light text is only low-contrast against a light background, and
               # this read the foreground alone. #navBar declares `background-color:
-              # #131921` and `color: #fff` on adjacent lines — white on near-black,
-              # about 17:1 — and was reported as low-contrast. Every finding here was
+              # #131921` and `color: #fff` on adjacent lines - white on near-black,
+              # about 17:1 - and was reported as low-contrast. Every finding here was
               # light-on-dark. If the enclosing block sets a dark background, the pair
               # is the high-contrast case and saying otherwise is backwards.
               next if dark_background_near?(src, num)
 
-              findings << finding(line: num, message: "low-contrast light gray text ##{hex} — use semantic token with AAA body contrast")
+              findings << finding(line: num, message: "low-contrast light gray text ##{hex} - use semantic token with AAA body contrast")
             end
             findings
           end
@@ -465,11 +465,11 @@ module Master
             next [] unless ::Master::Review::Scan::Laws.ui_path?(path)
 
             scan_lines(src, /(?:width|height|top|left|margin|padding|transform:\s*translate)\s*:\s*[\d.]+\.\d+px/i,
-              message: "fractional px — prefer integer pixels for pixel-perfect alignment")
+              message: "fractional px - prefer integer pixels for pixel-perfect alignment")
           end
         end
 
-        # Family polish (design_rules ui_polish) — ERB chrome must be i18n; titles use tokens.
+        # Family polish (design_rules ui_polish) - ERB chrome must be i18n; titles use tokens.
         ::Law.define(:ERB_HARDCODED_CHROME) do
           tags %i[DESIGN I18N RAILS VIEWS]
           fix "empty/search chrome uses t() not hardcoded English (default_locale nb)"
@@ -488,7 +488,7 @@ module Master
                  line.match?(/placeholder:\s*["']Search/)
                 findings << finding(
                   line: num,
-                  message: "hardcoded EN chrome — use t(\"empty.*\") / t(\"search.*\") " \
+                  message: "hardcoded EN chrome - use t(\"empty.*\") / t(\"search.*\") " \
                            "(design_rules.ui_polish.chrome_i18n; RAILS chrome_i18n_lint)",
                 )
               end
@@ -515,7 +515,7 @@ module Master
               if line.match?(/font-size\s*:\s*20px/i)
                 findings << finding(
                   line: num,
-                  message: "raw 20px title — use var(--text-title, 1.25rem) (design_rules.ui_polish.type_tokens)",
+                  message: "raw 20px title - use var(--text-title, 1.25rem) (design_rules.ui_polish.type_tokens)",
                 )
               end
             end
@@ -532,7 +532,7 @@ module Master
             next [] unless ::Master::Review::Scan::Laws.ui_path?(path)
 
             scan_lines(src, /<div\s+class=["'][^"']*(?:decor|ornament|spacer|filler|gradient-bg)[^"']*["']\s*>\s*<\/div>/i,
-              message: "decorative empty div — form follows function; remove or attach semantics")
+              message: "decorative empty div - form follows function; remove or attach semantics")
           end
         end
 
@@ -550,7 +550,7 @@ module Master
               classes = m[1].split(/\s+/)
               next if classes.size < 8
 
-              finding(line: num, message: "#{classes.size} classes on one node — signal/noise; move layout to SCSS")
+              finding(line: num, message: "#{classes.size} classes on one node - signal/noise; move layout to SCSS")
             end
           end
         end
@@ -565,7 +565,7 @@ module Master
 
             # An element is interactive when something activates it, not when a
             # Stimulus controller is attached to it. `data-controller` was in this
-            # list and produced 79 of the 87 findings — `<div
+            # list and produced 79 of the 87 findings - `<div
             # data-controller="character-counter">` is a wrapper that watches a
             # textarea and prints a number, with no handler and nothing to press.
             # Advising a <button> there is advice nobody can take, and eleven
@@ -580,12 +580,12 @@ module Master
             activation = /onclick|data-action="[^"]*(?<!@window|@document)\b(?:click|keydown|keyup)->/i
 
             scan_lines(src, /<(div|span)[^>]*#{activation}[^>]*>/i,
-              message: "interactive div/span — use <button> or explicit role+tabindex+keyboard handler")
+              message: "interactive div/span - use <button> or explicit role+tabindex+keyboard handler")
           end
         end
 
         ::Law.define(:AESTHETIC_MINIMALISM) do
-          source "Nielsen Heuristic #8 — aesthetic and minimalist design"
+          source "Nielsen Heuristic #8 - aesthetic and minimalist design"
           ask "Does this output contain information that does not earn its place for the current task?"
           tags %i[DESIGN AESTHETIC]
           fix "Remove redundant status, decoration, and secondary detail from the primary path."
@@ -597,7 +597,7 @@ module Master
             next [] unless ::Master::Review::Scan::Laws.ui_path?(path)
 
             scan_lines(src, /<(button|a)[^>]*>.*?<(svg|img|i)[^>]*>.*?<(span|small|badge)/im,
-              message: "control packs icon+extra chrome — prefer one signal (label or icon)")
+              message: "control packs icon+extra chrome - prefer one signal (label or icon)")
           end
         end
 
@@ -609,10 +609,10 @@ module Master
         RAMS_FIXTURES = {
           "USEFUL" => [%(<p>Coming soon</p>\n), %(<p>Bergen i kveld</p>\n)],
           "UNDERSTANDABLE" => [%(<input placeholder="Q">\n), %(<input placeholder="Søk i byen">\n)],
-          "UNOBTRUSIVE" => [%(<div class="modal">…</div>\n),
+          "UNOBTRUSIVE" => [%(<div class="modal">...</div>\n),
                             # The compliant spelling of the thing it checks: a
                             # dialog that announces itself correctly.
-                            %(<dialog aria-modal="true">…</dialog>\n)],
+                            %(<dialog aria-modal="true">...</dialog>\n)],
           "HONEST" => [%(<div class="bar">loading 100%</div>\n), %(<div class="bar">42%</div>\n)],
           "THOROUGH" => [%(<form action="/search"><input name="q"></form>\n),
                          %(<form action="/search"><input name="q"><span class="error"></span></form>\n)],
@@ -628,29 +628,29 @@ module Master
               next [] unless ::Master::Review::Scan::Laws.ui_path?(path)
               next [] unless path.to_s.include?("/app/views/") || path.to_s.include?("web/")
 
-              # Soft detectors — high-signal anti-patterns only
+              # Soft detectors - high-signal anti-patterns only
               case trait
               when "HONEST"
                 scan_lines(src, /loading.*?100%|progress.*?100%|fake[-_ ]progress/i,
-                  message: "possible dishonest progress UI — state must match system (Rams honest)")
+                  message: "possible dishonest progress UI - state must match system (Rams honest)")
               when "THOROUGH"
                 next [] unless src.match?(/<form\b/i)
                 next [] if src.match?(/error|invalid|aria-invalid|field_with_errors|empty|blank/i)
-                [finding(line: 1, message: "form without visible error/empty handling — Rams thorough")]
+                [finding(line: 1, message: "form without visible error/empty handling - Rams thorough")]
               when "UNOBTRUSIVE"
                 # ERB blanked, and aria-modal exempt. This word-matched raw lines,
-                # so it fired on `aria-modal="true"` — the attribute that makes a
+                # so it fired on `aria-modal="true"` - the attribute that makes a
                 # dialog announce itself correctly, i.e. the compliant spelling of
-                # the thing it is checking — and on ERB comments that merely say
+                # the thing it is checking - and on ERB comments that merely say
                 # "showModal()". Neither is attention-capturing chrome. What is left
                 # is markup that actually builds an overlay, which is the soft
                 # signal this was written to give.
                 scan_lines(without_erb_tags(src).gsub(/aria-modal\s*=\s*"[^"]*"/, ""),
                            /modal|overlay|popup|interstitial/i,
-                  message: "attention-capturing chrome — keep unobtrusive unless blocking is required")
+                  message: "attention-capturing chrome - keep unobtrusive unless blocking is required")
               when "UNDERSTANDABLE"
                 scan_lines(src, /placeholder=["'][^"']{1,3}["']/,
-                  message: "cryptic placeholder — labels must explain without folklore")
+                  message: "cryptic placeholder - labels must explain without folklore")
               when "USEFUL"
                 scan_lines(src, /coming soon|lorem ipsum|placeholder content/i,
                   message: "non-useful placeholder content in shipped view")
@@ -663,7 +663,7 @@ module Master
 
         ::Law.define(:HOST_CAPACITY) do
           tags %i[OPS]
-          fix "carrying capacity — avoid full-repo scan/fix in hot paths"
+          fix "carrying capacity - avoid full-repo scan/fix in hot paths"
           example_path "/repo/lib/example.rb"
           bad "scanner.scan_dir(Master::ROOT)\n"
           good "scanner.scan_dir(target_dir)\n"
@@ -671,13 +671,13 @@ module Master
             next [] unless path.to_s.include?("lib/")
 
             scan_lines(src, /scan_dir\([^)]*ROOT|fix_loop\.run\(\s*(@root|root|Master::ROOT)/,
-              message: "full-root scan/fix — scope to path; respect host carrying capacity")
+              message: "full-root scan/fix - scope to path; respect host carrying capacity")
           end
         end
 
         # Rails app surface.
 
-        # Rails app law restored from master.yml rails_conventions — lexical/structural.
+        # Rails app law restored from master.yml rails_conventions - lexical/structural.
         # Applies under RAILS/, MASTER/web app views, and any app/ tree.
 
         RAILSISH = %r{(?:/RAILS/|/app/(?:controllers|models|helpers|views|javascript|assets)/)}i.freeze
@@ -709,7 +709,7 @@ module Master
 
         ::Law.define(:THIN_CONTROLLER) do
           tags %i[RAILS ARCHITECTURE]
-          fix "thin controllers — business logic belongs in models/services"
+          fix "thin controllers - business logic belongs in models/services"
           example_path "/repo/app/controllers/example_controller.rb"
           bad %(def index\n  @posts = Post.where("created_at > ? AND city_id = ? AND published = ?", a, b, c)\nend\n)
           good "def index\n  @posts = Post.recent\nend\n"
@@ -728,12 +728,12 @@ module Master
                 j = ::Master::Review::Scan::Laws.method_body_end_line(lines, start)
                 body_len = j - start
                 if body_len > 40
-                  findings << finding(line: start + 1, message: "controller action ~#{body_len} lines — thin controllers, fat models/services (rails_conventions)")
+                  findings << finding(line: start + 1, message: "controller action ~#{body_len} lines - thin controllers, fat models/services (rails_conventions)")
                 end
                 # SQL / business in controller
                 chunk = lines[start...j].join
                 if chunk.match?(/\b(?:ActiveRecord::Base\.connection|find_by_sql|\.where\([^)]{40,})/m)
-                  findings << finding(line: start + 1, message: "query logic in controller — move to model/query object")
+                  findings << finding(line: start + 1, message: "query logic in controller - move to model/query object")
                 end
                 i = j
               else
@@ -757,7 +757,7 @@ module Master
 
             count = src.scan(/^\s*(?:before|after|around)_(?:validation|save|create|update|destroy|commit)/).size
             next [] if count <= 5
-            [finding(line: 1, message: "#{count} AR callbacks — prefer services/events over callback soup")]
+            [finding(line: 1, message: "#{count} AR callbacks - prefer services/events over callback soup")]
           end
         end
 
@@ -776,13 +776,13 @@ module Master
             max = limits.fetch("max_lines", 200).to_i
             # The declared pattern is Stimulus's own naming convention, so it is
             # narrower than the guess it replaces and finds the same four files in
-            # the fleet — measured before the change.
+            # the fleet - measured before the change.
             next [] unless path.to_s.match?(Regexp.new(limits.fetch("path_pattern", '_controller\.js$')))
             next [] unless src.match?(/Controller\s+extends|export default class/)
 
             lines = src.lines.size
             next [] if lines <= max
-            [finding(line: 1, message: "Stimulus controller #{lines} lines — split at #{max} (data/laws.yml); move targets/actions out (progressive enhancement)")]
+            [finding(line: 1, message: "Stimulus controller #{lines} lines - split at #{max} (data/laws.yml); move targets/actions out (progressive enhancement)")]
           end
         end
 
@@ -796,7 +796,7 @@ module Master
 
             next [] unless src.match?(/data-controller=/)
             next [] if src.match?(/<form\b|<a\s+href=|<button\b/i)
-            [finding(line: 1, message: "Stimulus island without form/link fallback — progressive enhancement")]
+            [finding(line: 1, message: "Stimulus island without form/link fallback - progressive enhancement")]
           end
         end
 
@@ -815,7 +815,7 @@ module Master
               # after `%>` named "where" or "find" in prose and read as a query.
               code = line.scan(/<%-?(?![=#])(.*?)(?:-?%>|\z)/m).flatten.join(" ")
               if code.match?(/\b(?:each|map|select|where|find|create|update|destroy|save!)\b/)
-                findings << finding(line: num, message: "business/query logic in view — move to model/helper/component")
+                findings << finding(line: num, message: "business/query logic in view - move to model/helper/component")
               end
             end
             findings
@@ -832,7 +832,7 @@ module Master
             next [] unless path.to_s.include?("/helpers/")
 
             next [] unless src.match?(/\b(?:ActiveRecord|ApplicationRecord|\.where\(|\.find\()/)
-            [finding(line: 1, message: "AR access in helper — helpers format only; queries belong in models")]
+            [finding(line: 1, message: "AR access in helper - helpers format only; queries belong in models")]
           end
         end
 
@@ -854,7 +854,7 @@ module Master
               max = depth if depth > max
             end
             next [] if max <= 4
-            [finding(line: 1, message: "SCSS nesting depth #{max} — flatten (modern CSS, no preprocessor bloat)")]
+            [finding(line: 1, message: "SCSS nesting depth #{max} - flatten (modern CSS, no preprocessor bloat)")]
           end
         end
 

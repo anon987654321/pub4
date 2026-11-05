@@ -34,7 +34,7 @@ class TestFaceSwarm < Minitest::Test
     assert_equal({ "fraction" => 0.18, "strength" => 0.12 }, settings.fetch("residual"))
     assert_equal "residual", settings.dig("stipple_force", "idle")
     assert_equal true, settings.fetch("size_from_depth")
-    assert_equal ["·", "˙", "∘", "•", "○", "●"], settings.fetch("glyph_ramp")
+    assert_equal [".", "˙", "∘", "*", "○", "●"], settings.fetch("glyph_ramp")
     assert_equal({ "eyes" => 1.00, "core" => 1.00, "noise" => 0.14 },
                  settings.dig("mode_multipliers", "idle"))
     assert_equal({ "eyes" => 1.35, "core" => 1.05, "noise" => 0.07 },
@@ -289,13 +289,15 @@ class TestFaceSwarm < Minitest::Test
     options = { state: :idle, rows: 12, cols: 24, t: 0.0, motion: Master::CLI::Face::Motion.new, show_laws: false }
     particle_frame = face.frame(**options)
 
-    assert_match(/[·˙∘•○●]/, particle_frame)
+    assert_match(/[.˙∘*○●]/, particle_frame)
     swarm_key = [12, 24, 20]
     assert_equal 20, Master::CLI::Face::SWARMS.fetch(swarm_key).particles.length
 
     ENV["MASTER_FACE_SWARM"] = "0"
     plain_frame = face.frame(**options)
-    refute_match(/[·˙∘•○●]/, plain_frame)
+    # "." and "*" are ASCII the plain face also draws; the rest are the swarm's own.
+    refute_match(/[˙∘○●]/, plain_frame)
+    refute_equal plain_frame, particle_frame
   ensure
     ENV["MASTER_FACE_SWARM"] = original
     ENV["MASTER_FACE_SWARM_BUDGET"] = original_budget

@@ -72,7 +72,7 @@ module Master
         Result.ok(findings: findings.map(&:to_h), assessment_evidence:)
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "fix.opportunity_pass", event_bus: @bus)
-        Result.err("convergence opportunities: INCONCLUSIVE — #{e.class}: #{e.message}", category: :inconclusive)
+        Result.err("convergence opportunities: INCONCLUSIVE - #{e.class}: #{e.message}", category: :inconclusive)
       end
 
       private

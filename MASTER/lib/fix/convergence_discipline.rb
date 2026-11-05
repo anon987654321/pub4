@@ -31,7 +31,7 @@ module Master
         8. checks: label SKIPPED vs FAILED vs crash
         9. limits/guidance: new limits keys need a reader, or stay under guidance: only
 
-        When proposing a patch, name which checklist id (A–G) you satisfied or waive with one line.
+        When proposing a patch, name which checklist id (A-G) you satisfied or waive with one line.
         Deterministic census beats LLM invention for topic lists and call graphs.
       TEXT
 

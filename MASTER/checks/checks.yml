@@ -1,5 +1,5 @@
 # The check execution registry. One row per instrument; the filename and existing
-# Check class names retain the legacy “check” term. This is not a policy catalogue:
+# Check class names retain the legacy "check" term. This is not a policy catalogue:
 # MASTER/data/laws.yml and the executable Law layers define normative criteria.
 # Rows describe how checks run, which suite covers them, and their preconditions.
 # Do not duplicate Law text or invent Law IDs/tiers here. When a normative check has
@@ -7,7 +7,7 @@
 #
 # One registry, one runner, three trees. A check's row lives here whatever tree
 # holds its implementation: `require` names the tree when the check belongs to
-# one — MASTER/lib/operator/checks for the checks that measure MASTER's own face and scan
+# one - MASTER/lib/operator/checks for the checks that measure MASTER's own face and scan
 # chain, OPENBSD/checks for the ones that measure the box (DNS, domains, the
 # port inventory), and a bare path for the RAILS checks, which are most of them.
 #
@@ -28,15 +28,15 @@
 #   env_flags   ENV name -> keyword argument, passed to .run when the var is "1"
 #   needs       preconditions the machine must satisfy for this check to measure
 #               anything. Today the only value is `browser`, which was runner.rb's
-#               hardcoded BROWSER_BACKED list — a fifth hand-maintained table of
+#               hardcoded BROWSER_BACKED list - a fifth hand-maintained table of
 #               exactly the kind this file replaced.
 #
 # There is deliberately no `cost` field, and it is not an oversight.
 #
 # A cost declared here is a number somebody typed once, and this registry exists
 # because four such tables drifted from each other. The failure a cost field is
-# meant to catch is a check that DOUBLES — constitutional_scan at 48 minutes on
-# brgen, rendered_suite at an hour on a Mac — and a declaration can never show a
+# meant to catch is a check that DOUBLES - constitutional_scan at 48 minutes on
+# brgen, rendered_suite at an hour on a Mac - and a declaration can never show a
 # doubling; only a history can. The ledger already records duration_ms per check
 # per run, so runner.rb prints each check's measured median before it starts and
 # says "unmeasured here" for the ones this machine has never run. A check whose
@@ -412,7 +412,7 @@ flow_journey:
   class: Deploy::FlowJourneyCheck
   pass: "ok: user journeys pass with postconditions"
 
-# Full-matrix UI/UX simulation: every full-page view (brgen · amber · MASTER).
+# Full-matrix UI/UX simulation: every full-page view (brgen - amber - MASTER).
 # Source always; live HTTP when triangle ports are open.
 page_simulation:
   require: lib/live/page_simulation
@@ -444,8 +444,8 @@ web_vitals_budget:
 
 # Three manifests: the icons they declare must exist and brgen's name must
 # follow the host's city. An icon
-# resolves from two public roots — the app's and the shared engine's, which
-# mounts its own ActionDispatch::Static — so a check that reads one of them
+# resolves from two public roots - the app's and the shared engine's, which
+# mounts its own ActionDispatch::Static - so a check that reads one of them
 # reports two apps as broken when they are not.
 pwa_installable:
   require: lib/source/pwa_installable

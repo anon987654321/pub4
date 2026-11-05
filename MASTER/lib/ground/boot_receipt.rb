@@ -7,7 +7,7 @@ module Master
     # What this process actually booted with, mechanically.
     #
     # boot_checks.rb proves the files parse, bin/doctor probes the host, and
-    # boot_phases.rb names the order — three readings, none of them a single
+    # boot_phases.rb names the order - three readings, none of them a single
     # answer to "what is in force right now". So a report could quote a rule
     # count from data/laws.yml while the scanner held a different registry, and
     # nothing compared them. This is the comparison: commit, constitution, the
@@ -111,7 +111,7 @@ module Master
 
       # Through the existing readers, not around them. Opening soul.yml,
       # laws.yml and providers.yml here put each of the three one over its
-      # reader ceiling, and lint:reader_singularity said so on the first run —
+      # reader ceiling, and lint:reader_singularity said so on the first run -
       # correctly. A receipt that reports what is in force must read it the way
       # the runtime does, or it reports a second parse of the same file.
       def constitution(root)
@@ -222,7 +222,7 @@ module Master
       def degraded_line(names)
         return "receipt: degraded none" if names.empty?
 
-        "receipt: degraded #{names.join(", ")} — anything above measured less than it claims"
+        "receipt: degraded #{names.join(", ")} - anything above measured less than it claims"
       end
     end
   end

@@ -113,7 +113,7 @@ module Master
 
       # Unlinking the socket without retiring its owner is how this leaked:
       # the old daemon keeps running on a path nothing can reach any more,
-      # and nothing ever collects it. Measured on vm23 2026-08-01 — 21 live
+      # and nothing ever collects it. Measured on vm23 2026-08-01 - 21 live
       # tts-workers holding 309 MB of a 1007 MB box, one more every minute.
       #
       # The trigger is that a worker is single-threaded, so one that is
@@ -158,7 +158,7 @@ module Master
       end
 
       # A worker that is synthesising cannot answer a health ping, because it is
-      # single-threaded — so a failed probe means "busy" at least as often as it
+      # single-threaded - so a failed probe means "busy" at least as often as it
       # means "dead", and synthesis can legitimately run 10-20s on this box.
       # Replacing a busy worker throws away the request it is working on and
       # forces the next one to pay a cold Ruby+Bundler+EventMachine start, which
@@ -182,7 +182,7 @@ module Master
       end
 
       # Stop the daemon this process started for `index`, if it is still around.
-      # Only ever touches a pid we spawned ourselves — never sweeps by process
+      # Only ever touches a pid we spawned ourselves - never sweeps by process
       # name, so a worker belonging to another MASTER process is left alone.
       def retire_daemon(index)
         pid = @daemon_pids.delete(index)

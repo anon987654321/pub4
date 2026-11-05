@@ -15,7 +15,7 @@ module Master
 
       # The observation /fix starts from: read the tree, repair what a rule can
       # repair mechanically, and report what is left. Pipeline::Pass calls it
-      # inside the fix lifecycle. It is not a command — a reading nobody acts on
+      # inside the fix lifecycle. It is not a command - a reading nobody acts on
       # is what /scan was, and what this architecture removed.
       #
       # on_total hears the final count, for a caller that reports it; the text
@@ -117,7 +117,7 @@ module Master
       end
 
       # "pass 1" is only a first pass when a second one follows. With no fix
-      # phase — a dry run, or --no-autofix — it reported the same counts the
+      # phase - a dry run, or --no-autofix - it reported the same counts the
       # "done" line reports four lines later, and the snapshot line under it
       # named the same two files twice. The snapshot is still written either
       # way: an interrupted scan leaving nothing behind is what it is for.

@@ -104,7 +104,7 @@ routes:
   "/activity_events":
     status: 200
     type: text/html
-    title: Aktivitet — Bergen
+    title: Aktivitet - Bergen
     heading: Aktivitet
     landmarks:
     - header
@@ -117,7 +117,7 @@ routes:
   "/addresses":
     status: 200
     type: text/html
-    title: Leveringsadresser — Bergen
+    title: Leveringsadresser - Bergen
     heading: Leveringsadresser
     landmarks:
     - header
@@ -151,7 +151,7 @@ routes:
   "/cart":
     status: 200
     type: text/html
-    title: Handlekurv — Bergen
+    title: Handlekurv - Bergen
     heading: Handlekurv
     landmarks:
     - header
@@ -183,8 +183,8 @@ routes:
   "/channels":
     status: 200
     type: text/html
-    title: Kanaler — Bergen
-    heading: Kanaler · Bergen
+    title: Kanaler - Bergen
+    heading: Kanaler - Bergen
     landmarks:
     - header
     - nav
@@ -209,7 +209,7 @@ routes:
   "/communities":
     status: 200
     type: text/html
-    title: Fellesskap — Bergen
+    title: Fellesskap - Bergen
     heading: Fellesskap
     landmarks:
     - header
@@ -229,7 +229,7 @@ routes:
   "/conversations":
     status: 200
     type: text/html
-    title: Meldinger — Bergen
+    title: Meldinger - Bergen
     heading: Meldinger
     landmarks:
     - header
@@ -242,7 +242,7 @@ routes:
   "/conversations/new":
     status: 200
     type: text/html
-    title: Ny melding — Bergen
+    title: Ny melding - Bergen
     heading: Ny melding
     landmarks:
     - header
@@ -257,7 +257,7 @@ routes:
   "/conversations/search":
     status: 200
     type: text/html
-    title: Søk i meldinger — Bergen
+    title: Søk i meldinger - Bergen
     heading: Søk i meldinger
     landmarks:
     - header
@@ -271,7 +271,7 @@ routes:
   "/cookies":
     status: 200
     type: text/html
-    title: Informasjonskapsler — Bergen
+    title: Informasjonskapsler - Bergen
     heading: Informasjonskapsler på brgen.no
     landmarks:
     - header
@@ -284,7 +284,7 @@ routes:
   "/deals":
     status: 200
     type: text/html
-    title: Tilbud — Bergen
+    title: Tilbud - Bergen
     heading: Tilbud
     landmarks:
     - header
@@ -299,7 +299,7 @@ routes:
   "/delivery_drivers":
     status: 200
     type: text/html
-    title: Budsjåfører — Bergen
+    title: Budsjåfører - Bergen
     heading: Budsjåfører
     landmarks:
     - header
@@ -313,7 +313,7 @@ routes:
   "/events":
     status: 200
     type: text/html
-    title: Hva skjer — Bergen
+    title: Hva skjer - Bergen
     heading: Hva skjer
     landmarks:
     - header
@@ -333,7 +333,7 @@ routes:
   "/fediverse_follows":
     status: 200
     type: text/html
-    title: Følger andre steder — Bergen
+    title: Følger andre steder - Bergen
     heading: Følger andre steder
     landmarks:
     - header
@@ -347,7 +347,7 @@ routes:
   "/feed":
     status: 200
     type: text/html
-    title: Strøm — Bergen
+    title: Strøm - Bergen
     heading: Strøm
     landmarks:
     - header
@@ -361,7 +361,7 @@ routes:
   "/groups/new":
     status: 200
     type: text/html
-    title: Ny gruppe — Bergen
+    title: Ny gruppe - Bergen
     heading: Ny gruppe
     landmarks:
     - header
@@ -378,7 +378,7 @@ routes:
   "/hosted_tracks":
     status: 200
     type: text/html
-    title: Hostede spor — Bergen
+    title: Hostede spor - Bergen
     heading: Hostede spor
     landmarks:
     - header
@@ -404,7 +404,7 @@ routes:
   "/likes":
     status: 200
     type: text/html
-    title: Hvem har likt deg — Bergen
+    title: Hvem har likt deg - Bergen
     heading: Hvem har likt deg
     landmarks:
     - header
@@ -421,8 +421,8 @@ routes:
   "/listings":
     status: 200
     type: text/html
-    title: Markedsplass · Bergen — Bergen
-    heading: Markedsplass · Bergen
+    title: Markedsplass - Bergen - Bergen
+    heading: Markedsplass - Bergen
     landmarks:
     - header
     - nav
@@ -461,7 +461,7 @@ routes:
   "/listings/new":
     status: 200
     type: text/html
-    title: Ny annonse — Bergen
+    title: Ny annonse - Bergen
     heading: Ny annonse
     landmarks:
     - header
@@ -477,7 +477,7 @@ routes:
   "/live_streams":
     status: 200
     type: text/html
-    title: Direktesendinger — Bergen
+    title: Direktesendinger - Bergen
     heading: Direktesendinger
     landmarks:
     - header
@@ -497,7 +497,7 @@ routes:
   "/matches":
     status: 200
     type: text/html
-    title: Matcher — Bergen
+    title: Matcher - Bergen
     heading: Matcher
     landmarks:
     - header
@@ -515,7 +515,7 @@ routes:
   "/nearby":
     status: 200
     type: text/html
-    title: I nærheten — Bergen
+    title: I nærheten - Bergen
     heading: I nærheten
     landmarks:
     - header
@@ -587,7 +587,7 @@ routes:
   "/orders":
     status: 200
     type: text/html
-    title: Dine bestillinger — Bergen
+    title: Dine bestillinger - Bergen
     heading: Dine bestillinger
     landmarks:
     - header
@@ -601,7 +601,7 @@ routes:
   "/partner/programs":
     status: 200
     type: text/html
-    title: Partnerprogrammer — Bergen
+    title: Partnerprogrammer - Bergen
     heading: Partnerprogrammer
     landmarks:
     - header
@@ -634,7 +634,7 @@ routes:
   "/path_crossings":
     status: 200
     type: text/html
-    title: Krysset spor — Bergen
+    title: Krysset spor - Bergen
     heading: Krysset spor
     landmarks:
     - header
@@ -655,7 +655,7 @@ routes:
   "/places":
     status: 200
     type: text/html
-    title: Steder — Bergen
+    title: Steder - Bergen
     heading: Steder
     landmarks:
     - header
@@ -670,7 +670,7 @@ routes:
   "/playlists":
     status: 200
     type: text/html
-    title: Spilleliste — Bergen
+    title: Spilleliste - Bergen
     heading: Radio
     landmarks:
     - header
@@ -685,7 +685,7 @@ routes:
   "/playlists/new":
     status: 200
     type: text/html
-    title: Ny spilleliste — Bergen
+    title: Ny spilleliste - Bergen
     heading: Ny spilleliste
     landmarks:
     - header
@@ -700,7 +700,7 @@ routes:
   "/posts":
     status: 200
     type: text/html
-    title: Alle innlegg — Bergen
+    title: Alle innlegg - Bergen
     heading: Alle innlegg
     landmarks:
     - header
@@ -765,7 +765,7 @@ routes:
   "/posts/new":
     status: 200
     type: text/html
-    title: Nytt innlegg — Bergen
+    title: Nytt innlegg - Bergen
     heading: Nytt innlegg
     landmarks:
     - header
@@ -782,7 +782,7 @@ routes:
   "/privacy":
     status: 200
     type: text/html
-    title: Personvern — Bergen
+    title: Personvern - Bergen
     heading: Personvern hos brgen.no
     landmarks:
     - header
@@ -826,7 +826,7 @@ routes:
   "/restaurants":
     status: 200
     type: text/html
-    title: Restauranter — Bergen
+    title: Restauranter - Bergen
     landmarks:
     - header
     - nav
@@ -855,7 +855,7 @@ routes:
   "/rules":
     status: 200
     type: text/html
-    title: Regler — Bergen
+    title: Regler - Bergen
     heading: Regler
     landmarks:
     - header
@@ -868,7 +868,7 @@ routes:
   "/safety":
     status: 200
     type: text/html
-    title: Sikkerhet — Bergen
+    title: Sikkerhet - Bergen
     heading: Din sikkerhet
     landmarks:
     - header
@@ -881,7 +881,7 @@ routes:
   "/saved":
     status: 200
     type: text/html
-    title: Lagret — Bergen
+    title: Lagret - Bergen
     heading: Lagret
     landmarks:
     - header
@@ -894,7 +894,7 @@ routes:
   "/saved_searches":
     status: 200
     type: text/html
-    title: Lagrede søk — Bergen
+    title: Lagrede søk - Bergen
     heading: Lagrede søk
     landmarks:
     - header
@@ -908,7 +908,7 @@ routes:
   "/search":
     status: 200
     type: text/html
-    title: Søk — Bergen
+    title: Søk - Bergen
     heading: Søk i Brgen
     landmarks:
     - header
@@ -947,7 +947,7 @@ routes:
   "/sets":
     status: 200
     type: text/html
-    title: Sett — Bergen
+    title: Sett - Bergen
     heading: Sett
     landmarks:
     - header
@@ -962,7 +962,7 @@ routes:
   "/sets/new":
     status: 200
     type: text/html
-    title: Nytt sett — Bergen
+    title: Nytt sett - Bergen
     heading: Nytt sett
     landmarks:
     - header
@@ -977,7 +977,7 @@ routes:
   "/shops":
     status: 200
     type: text/html
-    title: Butikker — Bergen
+    title: Butikker - Bergen
     heading: Butikker
     landmarks:
     - header
@@ -1002,7 +1002,7 @@ routes:
   "/sounds":
     status: 200
     type: text/html
-    title: Lyder — Bergen
+    title: Lyder - Bergen
     heading: Lyder
     landmarks:
     - header
@@ -1022,7 +1022,7 @@ routes:
   "/stories":
     status: 200
     type: text/html
-    title: Historier — Bergen
+    title: Historier - Bergen
     heading: Historier
     landmarks:
     - header
@@ -1035,7 +1035,7 @@ routes:
   "/stories/new":
     status: 200
     type: text/html
-    title: Ny historie — Bergen
+    title: Ny historie - Bergen
     heading: Ny historie
     landmarks:
     - header
@@ -1049,7 +1049,7 @@ routes:
   "/terms":
     status: 200
     type: text/html
-    title: Vilkår — Bergen
+    title: Vilkår - Bergen
     heading: Vilkår for brgen.no
     landmarks:
     - header
@@ -1081,7 +1081,7 @@ routes:
   "/users/new":
     status: 200
     type: text/html
-    title: Opprett konto — Bergen
+    title: Opprett konto - Bergen
     heading: Opprett konto
     landmarks:
     - header
@@ -1114,7 +1114,7 @@ routes:
   "/wishlist":
     status: 200
     type: text/html
-    title: Lagrede annonser — Bergen
+    title: Lagrede annonser - Bergen
     heading: Lagrede annonser
     landmarks:
     - header

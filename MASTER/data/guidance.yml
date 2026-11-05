@@ -3,7 +3,7 @@
 # Split out of data/limits.yml on 2026-10-31.
 
 # Read by nothing. Reference material for agents, kept
-# because it is worth reading and deleted from no-one's reach — but it does not
+# because it is worth reading and deleted from no-one's reach - but it does not
 # constrain the runtime, and a rule that constrains nothing must not sit beside
 # ones that do.
 guidance:
@@ -53,7 +53,7 @@ guidance:
     - Run focused tests and an explicit load/autoload check for the changed entrypoint
   edit_context:
     rule: TIERED_BLAST_RADIUS_READ
-    statement: Read depth scales with change radius — not every edit requires a full-corpus read.
+    statement: Read depth scales with change radius - not every edit requires a full-corpus read.
     always:
     - Full read of every file you will edit
     - Re-read from disk immediately before writing
@@ -80,7 +80,7 @@ guidance:
     forbidden:
     - Edit from grep snippets, partial reads, or conversation memory
     - Claim a fix without reading the file being changed
-    note: Pairs with llm_ergonomics — external grep/rg for reconnaissance is allowed; production edits require
+    note: Pairs with llm_ergonomics - external grep/rg for reconnaissance is allowed; production edits require
       full-file reads.
   code_principles:
     no_hardcoding:
@@ -112,7 +112,7 @@ guidance:
       statement: Pipeline stages return Master::Result. Use .ok? and .err?; propagate Err without calling
         .value!.
   scan_rules:
-    note: DEEP_SCAN_ONLY — every scan runs at deep depth. scan_profiles (cosmetic, core, …) filter the report
+    note: DEEP_SCAN_ONLY - every scan runs at deep depth. scan_profiles (cosmetic, core, ...) filter the report
       after the scan; they are not depth tiers.
     standard_depth:
     - frozen_string
@@ -140,13 +140,13 @@ guidance:
       semantic: Loads semantic questions from executable Law definitions.
       deep_caution: deep adds 2 LLM calls per file. With 90 files at 8 req/min free tier = 22+ minutes.
   frontend_protection:
-    statement: Only application.scss is protected — each app's one stylesheet, which loads the shared stack
+    statement: Only application.scss is protected - each app's one stylesheet, which loads the shared stack
       and adds no partial of its own.
     protected_files:
     - application.scss
     on_view_or_css_edit:
     - flatten divitis and use semantic landmarks
-    - bare tag targeting per laws.yml style — no BEM or utility soup in ERB
+    - bare tag targeting per laws.yml style - no BEM or utility soup in ERB
     - run Shared::FrontendAuditor on touched paths
     mailer_exempt:
     - inline styles in mailer views (email clients require them)
@@ -192,9 +192,9 @@ guidance:
     - todo.md
     - notes.md
     - changelog.md
-    slug_naming: Rails-parameterized density — snake_case, concrete tokens only, Strunk-clean; see laws.yml
+    slug_naming: Rails-parameterized density - snake_case, concrete tokens only, Strunk-clean; see laws.yml
       style.naming.paths
-    rule: Flat Hierarchy — merge thin siblings and rename misfit paths before creating files. OpenBSD-flat
+    rule: Flat Hierarchy - merge thin siblings and rename misfit paths before creating files. OpenBSD-flat
       paths, Zeitwerk-true dense slugs, Roda-tight trees.
   phases:
     discover:
@@ -292,7 +292,7 @@ guidance:
         - CLAUDE.md
         optional:
         - data/soul.yml ABSOLUTE sections
-        note: Recon and analysis — pair with llm_ergonomics; external rg allowed.
+        note: Recon and analysis - pair with llm_ergonomics; external rg allowed.
       structural_edit:
         required:
         - data/soul.yml
@@ -305,10 +305,10 @@ guidance:
       production_ops:
         required:
         - data/patterns.yml#operator_playbook
-        note: VPS friction, relayd, recovery — run bin/operator playbook when signals match.
+        note: VPS friction, relayd, recovery - run bin/operator playbook when signals match.
     mandatory_reads:
-    - See reading_tiers — CLAUDE.md first; full constitution only for structural edits.
-    playbook_command: bin/operator playbook — print codified operator lessons when signals match production friction
+    - See reading_tiers - CLAUDE.md first; full constitution only for structural edits.
+    playbook_command: bin/operator playbook - print codified operator lessons when signals match production friction
     check_standing_orders: Verify FSM state before any mutation -- UNCHANGE blocks refactoring
     scan_before_analysis: Use /fix --dry-run via MASTER for read-only analysis; use /fix for convergence and writes
     ssh_edit_pattern: Write to /tmp, run ruby /tmp/patch.rb -- never ruby -i with heredoc
@@ -477,31 +477,31 @@ guidance:
     - Is there a simpler approach that was not taken?
     - What should be relocated or transformed to a different format?
     resolution:
-      trivial: autofix immediately — no proposal, no prompt
+      trivial: autofix immediately - no proposal, no prompt
       non_trivial: propose 3 concrete options (OPTION 1/2/3 + RECOMMEND), await cherry-pick
       threshold: non-trivial if the fix spans more than one file, touches architecture, or has security
         implications
   known_issues:
     relayd_master_empty: After rcctl restart master, relayd may mark master empty until /up health passes
-      — tracked rc.d waits for local /up then restarts relayd; relayd.conf must use check http "/up" not
+      - tracked rc.d waits for local /up then restarts relayd; relayd.conf must use check http "/up" not
       "/" for master.
     relayd_stale_backend_tables: After mass app restarts relayctl may show empty/down while local /up is
-      200 — relayd-watchdog (cron */5) restarts relayd when backends are live but tables are stale.
+      200 - relayd-watchdog (cron */5) restarts relayd when backends are live but tables are stale.
     resource_guard_shedding: OPENBSD/bin/resource_guard.sh stops optional Rails apps when load/mem thresholds
-      hit unless /var/db/pub4_all_apps exists — run ksh OPENBSD/bin/start_all_apps.sh as dev, which uses the fixed root broker to create the pin.
+      hit unless /var/db/pub4_all_apps exists - run ksh OPENBSD/bin/start_all_apps.sh as dev, which uses the fixed root broker to create the pin.
     rails_phantom_fk: 'references with foreign_key: true alone creates phantom buyers/listings/likers/orders
-      tables on SQLite — always set to_table. Run ruby MASTER/checks/runner.rb phantom_foreign_keys.'
-    todo_checkbox_drift: Retired 2026-06-24 — verify ship readiness with bin/probe repo, health_check.rb,
+      tables on SQLite - always set to_table. Run ruby MASTER/checks/runner.rb phantom_foreign_keys.'
+    todo_checkbox_drift: Retired 2026-06-24 - verify ship readiness with bin/probe repo, health_check.rb,
       and per-app bin/ci instead of checkbox backlogs.
     tts_broken: Master::Voice::Speech.synthesize_bytes shells to bin/tts-worker; if edge-tts is missing
       or tts-worker crashes, speech silently falls back to espeak. Verify bin/tts-worker exists and edge-tts
       is installed (pkg_add py3-edge-tts or pip).
-    particle_swarm: Fixed 2026-06-24 — ecology canvas was z-index 0 under face (z-index 1); now z-index
+    particle_swarm: Fixed 2026-06-24 - ecology canvas was z-index 0 under face (z-index 1); now z-index
       2 with screen blend. verify trails/weather visible over face after SSE events.
     gemfile_separation: MASTER/Gemfile and RAILS/master/Gemfile are independent. Any gem used by lib/ code
       that is also called from web/ controllers must appear in both. Adding to one only causes LoadError
       in the other context.
-    tts_worker_process: Process.fork inside a Falcon fiber raises 'Closing scheduler' — EM-based gems and
+    tts_worker_process: Process.fork inside a Falcon fiber raises 'Closing scheduler' - EM-based gems and
       subprocess-heavy tools must use Open3.popen or shell out via exe/<name>-worker, never fork.
   # OpenBSD dmesg-style progress (device at bus: detail). Verbose by default.
   # ENV MASTER_DMESG accepts 0, quiet, normal, verbose, or trace.

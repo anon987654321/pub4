@@ -1,4 +1,4 @@
-# Machine-readable map for coding agents — "touching X → edit these files".
+# Machine-readable map for coding agents - "touching X -> edit these files".
 # Human mirrors: CLAUDE.md + MASTER/AGENTS.md. Read this file.
 schema: 1
 
@@ -99,7 +99,7 @@ patch_briefs:
     topic: law
     debt_tag: agent-ignore
     tests: [bin/check --profile=agent, rake lint:data_singularity]
-    note: constitutional identity — ABSOLUTE tier; override requires explicit approval
+    note: constitutional identity - ABSOLUTE tier; override requires explicit approval
   data/laws.yml:
     check: bin/check --profile=agent
     topic: law
@@ -121,7 +121,7 @@ patch_briefs:
   bin/:
     check: bin/check
     tests: [bin/check]
-    note: executable entry points — run bin/check after edits
+    note: executable entry points - run bin/check after edits
   lib/master.rb:
     check: bin/check --profile=full
     tests: [bin/check --profile=full, rake test:core]
@@ -137,7 +137,7 @@ patch_briefs:
   lib/fix/:
     check: bin/check --profile=agent
     tests: [bin/check --profile=agent]
-    note: fix/watch loops — env-gated by default
+    note: fix/watch loops - env-gated by default
   lib/io/:
     check: bin/check --profile=agent
     tests: [bin/check --profile=agent]
@@ -157,7 +157,7 @@ patch_briefs:
   lib/core/:
     check: rake test:core
     tests: [rake test:core, MASTER/bin/master core --real "dogfood noop"]
-    note: constitutional fold spine — new ability = Effect verb in world.rb
+    note: constitutional fold spine - new ability = Effect verb in world.rb
   lib/voice/speech.rb:
     check: bin/check
     topic: tts
@@ -170,7 +170,7 @@ patch_briefs:
     tests: [bin/check --profile=web, RAILS/master/test/face_boot.test.mjs]
     deploy: vps-deploy master
     playbook: master_web_single_voice_defaults
-    note: primer/WebGL guard lives here — read web/CLAUDE.md first
+    note: primer/WebGL guard lives here - read web/CLAUDE.md first
   RAILS/master/public/face.js:
     check: bin/check --profile=web
     topic: face_boot
@@ -207,24 +207,24 @@ patch_briefs:
     tests: [RAILS/master/test/face_boot.test.mjs]
     deploy: vps-deploy master
     post: cd RAILS/master && bundle exec rails assets:build_face_runtime
-    note: concatenated into face.runtime.js — never hand-edit the generated file
+    note: concatenated into face.runtime.js - never hand-edit the generated file
   RAILS/master/public/face_speech_playback.js:
     check: bin/check --profile=web
     topic: face_boot
     tests: [RAILS/master/test/face_boot.test.mjs]
     deploy: vps-deploy master
     post: cd RAILS/master && bundle exec rails assets:build_face_runtime
-    note: concatenated into face.runtime.js — never hand-edit the generated file
+    note: concatenated into face.runtime.js - never hand-edit the generated file
   RAILS/master/public/face.runtime.js:
     check: bin/check --profile=web
     topic: face_boot
     tests: [RAILS/master/test/face_boot.test.mjs]
-    note: generated — edit sources and run assets:build_face_runtime
+    note: generated - edit sources and run assets:build_face_runtime
   RAILS/master/public/three.face.module.js:
     check: bin/check --profile=web
     topic: face_boot
     tests: [bin/check --profile=web, RAILS/master/test/face_boot.test.mjs]
-    note: heavy WebGL bundle — deferred until primer tap only
+    note: heavy WebGL bundle - deferred until primer tap only
   RAILS/master/public/face.css:
     check: bin/check --profile=web
     topic: face_boot

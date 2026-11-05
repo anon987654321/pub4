@@ -20,13 +20,13 @@ Master::Ground::EnvLoader.load!
 #
 # `ok` was a boolean, so a check that could not measure anything had to lie in
 # one direction or the other, and both lies were in the file. model-quota and
-# cache-efficiency returned `ok: true, detail: "module not loaded"` — printing
+# cache-efficiency returned `ok: true, detail: "module not loaded"` - printing
 # OK for a check nobody ran, which is the green line that means nobody looked.
 # content-dedup went the other way: it raised into `ok: false`, so a crashed
 # instrument was indistinguishable from a real finding.
 #
 # `state` is :pass, :fail or :unmeasured. Unmeasured never fails the exit
-# code — an absent optional module is not a sick host — but it is printed as
+# code - an absent optional module is not a sick host - but it is printed as
 # its own word and counted in its own line, which is the whole point. The
 # check runner already works this way: "2 check(s) measured nothing, and why".
 #
@@ -104,7 +104,7 @@ def check_api_keys
     return Check.new(name: "api-keys", state: :pass, detail: present.join(", "))
   end
   # No key is not a sick host: routing falls back to the keyless browser lanes.
-  Check.new(name: "api-keys", state: :pass, detail: "keyless browser mode (web-chat:grok → chatgpt → kimi)")
+  Check.new(name: "api-keys", state: :pass, detail: "keyless browser mode (web-chat:grok -> chatgpt -> kimi)")
 end
 
 def check_tts_socket
@@ -236,7 +236,7 @@ rescue StandardError => e
 end
 
 # Named, not skipped. A host with three unmeasured checks is not the same host
-# as one with none, and the exit code cannot say so — so the line does.
+# as one with none, and the exit code cannot say so - so the line does.
 unmeasured_checks = checks.select(&:unmeasured?)
 if unmeasured_checks.any?
   Master::Trace::Dmesg.attach("doctor0", "master0", "#{unmeasured_checks.size} checks measured nothing")

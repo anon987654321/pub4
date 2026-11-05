@@ -2,7 +2,7 @@
 
 module Master
   module CLI
-    # DeliberationPrep — ideation pass before Fold on medium+ risk goals.
+    # DeliberationPrep - ideation pass before Fold on medium+ risk goals.
     module DeliberationPrep
       module_function
 

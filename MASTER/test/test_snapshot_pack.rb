@@ -101,7 +101,7 @@ end
     original = "# Reads the ledger.\nmodule Ledger\n  def read\n  end\n  def write\n  end\nend\n"
     line = Map.map_line({ path: "lib/ledger.rb", original:, minified: Pack.minify("lib/ledger.rb", original) })
 
-    assert_equal "ledger.rb [7L] — Reads the ledger. | Ledger: read write", line
+    assert_equal "ledger.rb [7L] - Reads the ledger. | Ledger: read write", line
   end
 
   def file(path, bytes, inlinable: true) = { path:, block: "x" * bytes, inlinable: }
@@ -183,9 +183,9 @@ end
     long_purpose = Array.new(20, "completeword").join(" ")
     truncated = Map.truncate_at_word(long_purpose, Map::MAP_PURPOSE)
 
-    assert truncated.end_with?("…")
+    assert truncated.end_with?("...")
     assert_includes truncated, "completeword"
-    refute_includes truncated, "completewor…"
+    refute_includes truncated, "completewor..."
 
     original = "# frozen_string_literal: true\n# Parses a stylesheet.\nmodule Example\n  def run\n  end\nend\n"
     line = Map.map_line({ path: "lib/example.rb", original:, minified: Pack.minify("lib/example.rb", original) })

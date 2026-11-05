@@ -21,7 +21,7 @@ class TestFailoverPolicy < Minitest::Test
   def test_the_policy_key_is_a_string_not_yaml_true
     policy = models_yml.fetch("fallback_policy")
 
-    assert policy.key?("on"), "fallback_policy must be keyed by the string \"on\" — a bare on: parses as true"
+    assert policy.key?("on"), "fallback_policy must be keyed by the string \"on\" - a bare on: parses as true"
     refute policy.key?(true), "fallback_policy still has a boolean key; quote it"
   end
 

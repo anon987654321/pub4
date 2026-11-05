@@ -279,7 +279,7 @@ class TestFixRunBudget < Minitest::Test
                "ending the repair to prove what it did"
 
     assert_equal [line, "fix0: #{stalled}", stopping], @said
-    assert line.start_with?("fix0: pass 2/8 run ≥16% scan0 phase scan files 812/2638 (31%) " \
+    assert line.start_with?("fix0: pass 2/8 run >=16% scan0 phase scan files 812/2638 (31%) " \
                             "run_pulse.rb fixes 1 ok 1 failed "), line
     assert_includes line, "lane claude-cli:claude-opus-5-5 last call 2412s ago"
     assert_includes line, "tokens = 342191 (342K) elapsed = 2412s (40m12s)"
@@ -554,7 +554,7 @@ class TestFixRunBudget < Minitest::Test
     pulse.observe("scan:progress", { done: 10, total: 40, path: "lib/a.rb" })
 
     line = pulse.line(elapsed: 100.0, tokens: 0, eta: "ETA unknown")
-    assert_includes line, "run ≥6%", "a quarter of pass 1 of 4"
+    assert_includes line, "run >=6%", "a quarter of pass 1 of 4"
     assert_includes line, "eta pass ~5m00s", "30 files left at 10 per 100 s"
     refute_includes line, "ETA unknown"
 

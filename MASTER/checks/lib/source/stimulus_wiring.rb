@@ -19,14 +19,14 @@ module Deploy
   #
   # Two things are checked, and the second is the one that needs care:
   #
-  #   1. Every identifier in data-controller resolves to a registration — either
-  #      an application.register("name", …) or a @stimulus-components table
+  #   1. Every identifier in data-controller resolves to a registration - either
+  #      an application.register("name", ...) or a @stimulus-components table
   #      entry in one of the boot files the app's own index.js imports
   #      (stimulus_boot.js plus whichever of _social/_brgen/_amber apply), or
   #      a file in the app's own controllers/ directory (eagerLoadControllersFrom
   #      derives the identifier from the filename).
   #
-  #   2. Every `event->identifier#method` names a method that exists — but only
+  #   2. Every `event->identifier#method` names a method that exists - but only
   #      when the identifier maps to a first-party file we can read. Vendored
   #      components are registered from node_modules-style bundles and are not
   #      introspected; claiming a missing method there would be a guess.
@@ -41,7 +41,7 @@ module Deploy
 
     # stimulus_boot.js holds what every app registers. stimulus_boot_social.js
     # (brgen + amber, not bsdports), stimulus_boot_brgen.js and
-    # stimulus_boot_amber.js hold what only some apps mount — split out so an
+    # stimulus_boot_amber.js hold what only some apps mount - split out so an
     # app that doesn't use a controller never imports its module. Each app's
     # true registration set is the union of the files its own index.js calls.
     BOOT_FILES = {
@@ -115,11 +115,11 @@ module Deploy
         result.checked!
         next if @shadowed_allowed.key?(id)
 
-        result.fail("#{app}: controller #{id.inspect} never loads — a shared boot file registers that identifier first")
+        result.fail("#{app}: controller #{id.inspect} never loads - a shared boot file registers that identifier first")
       end
 
       (@shadowed_allowed.keys - shadowed.map(&:last)).each do |id|
-        result.fail("SHADOWED_ALLOWED names #{id.inspect}, which no app controller shadows any more — delete the entry")
+        result.fail("SHADOWED_ALLOWED names #{id.inspect}, which no app controller shadows any more - delete the entry")
       end
     end
 
@@ -129,7 +129,7 @@ module Deploy
     def audit_mounts(result)
       mounted = APPS.to_h { |app| [app, mounted_identifiers(mount_sources(app))] }
 
-      # Which apps register each identifier — one for an app-owned controller,
+      # Which apps register each identifier - one for an app-owned controller,
       # up to three for a shared one, never zero (registrations comes from the
       # same boot files and app_identifiers used everywhere else in this check).
       registrations = Hash.new { |h, k| h[k] = [] }
@@ -150,9 +150,9 @@ module Deploy
       @unmounted_allowed.each_key do |id|
         apps = registrations[id]
         if apps.empty?
-          result.fail("UNMOUNTED_ALLOWED names #{id.inspect}, which nothing registers any more — delete the entry")
+          result.fail("UNMOUNTED_ALLOWED names #{id.inspect}, which nothing registers any more - delete the entry")
         elsif apps.any? { |app| mounted.fetch(app).include?(id) }
-          result.fail("UNMOUNTED_ALLOWED names #{id.inspect}, which is mounted now — delete the entry")
+          result.fail("UNMOUNTED_ALLOWED names #{id.inspect}, which is mounted now - delete the entry")
         end
       end
     end
@@ -170,7 +170,7 @@ module Deploy
         Dir.glob(File.join(@rails_root, "__shared/frontend/**/*.js"))
     end
 
-    # Identifiers registered by the boot files a given app's index.js calls —
+    # Identifiers registered by the boot files a given app's index.js calls -
     # stimulus_boot.js for every app, plus whichever of _social/_brgen/_amber
     # that app also imports.
     def shared_identifiers_for(app)
@@ -241,7 +241,7 @@ module Deploy
           source = first_party_source(app, id)
           next unless source
           # A controller that extends a vendored base inherits that base's
-          # declared values, and the base is a bundle we do not read — same
+          # declared values, and the base is a bundle we do not read - same
           # reason this check does not introspect vendored methods. Claiming a
           # missing value there would be a guess.
           next if inherits_from_vendor?(source)
@@ -276,7 +276,7 @@ module Deploy
     #
     # Engine views count too. brgen's verticals are mountable engines and their
     # views render inside brgen with brgen's registrations, so a glob that stops
-    # at app/views goes blind to them — which is what happened when maps was
+    # at app/views goes blind to them - which is what happened when maps was
     # extracted on 2026-08-12 and checks_ran fell from over 400 to 391. The
     # floor assertion in stimulus_wiring_check_test is there to catch exactly
     # that, and it did.
@@ -411,7 +411,7 @@ module Deploy
     end
 
     # data-<identifier>-target="name". A target the controller does not declare
-    # leaves hasFooTarget false and the feature silently absent — the same class
+    # leaves hasFooTarget false and the feature silently absent - the same class
     # as an undeclared value, one attribute over.
     def targets(text)
       pairs = text.scan(/data-([a-z0-9-]+)-target\s*=\s*"([^"<%]+)"/)
@@ -441,7 +441,7 @@ module Deploy
       ([ head ] + rest.map(&:capitalize)).join
     end
 
-    # Declared names inside `static values = { … }`, in either layout:
+    # Declared names inside `static values = { ... }`, in either layout:
     #
     #   static values = { key: String, title: String }          # one line
     #   static values = {                                        # or many
@@ -474,7 +474,7 @@ module Deploy
           end
 
           block = close ? source[(open + 1)...close] : ""
-          # Top-level keys only: `activeClass: { type: … }` must not contribute
+          # Top-level keys only: `activeClass: { type: ... }` must not contribute
           # "type" and "default" as declared value names.
           depth = 0
 

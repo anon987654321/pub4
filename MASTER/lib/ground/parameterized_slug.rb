@@ -4,7 +4,7 @@ require "yaml"
 
 module Master
   module Ground
-    # Rails-parameterize slug density for paths — snake_case, Strunk-clean tokens.
+    # Rails-parameterize slug density for paths - snake_case, Strunk-clean tokens.
     module ParameterizedSlug
       MAX_TOKENS = 4
       # The one vague-name list (data/vague_words.yml), here because a slug's filler is
@@ -71,16 +71,16 @@ module Master
         return unless fold_suffix?(stem)
 
         target = fold_target(stem)
-        Issue.new(action: "merge", from: stem, to: target, reason: "fold suffix sprawl — merge into #{target}")
+        Issue.new(action: "merge", from: stem, to: target, reason: "fold suffix sprawl - merge into #{target}")
       end
 
       def density_issue(stem, dense)
         if !dense.empty? && dense != stem.to_s
           Issue.new(action: "rename", from: stem, to: dense,
-                   reason: "low-density slug — rename to parameterized Strunk-clean path")
+                   reason: "low-density slug - rename to parameterized Strunk-clean path")
         elsif filler_only?(stem)
           Issue.new(action: "rename", from: stem, to: stem,
-                   reason: "filler-only slug — rename to concrete parameterized path (Strunk nouns/verbs)")
+                   reason: "filler-only slug - rename to concrete parameterized path (Strunk nouns/verbs)")
         end
       end
 
@@ -89,14 +89,14 @@ module Master
         return unless tokens.size > MAX_TOKENS && !dense.empty?
 
         Issue.new(action: "rename", from: stem, to: dense,
-                 reason: "slug exceeds #{MAX_TOKENS} tokens — compress to dense parameterized path")
+                 reason: "slug exceeds #{MAX_TOKENS} tokens - compress to dense parameterized path")
       end
 
       def suspicious_issue(stem)
         return unless stem.to_s.match?(SUSPICIOUS)
 
         Issue.new(action: "rename", from: stem, to: stem.to_s.gsub(SUSPICIOUS, "canonical"),
-                 reason: "suspicious segment — rename to honest Zeitwerk path")
+                 reason: "suspicious segment - rename to honest Zeitwerk path")
       end
 
       def path_issues(path)

@@ -5,6 +5,6 @@ register:
   verbosity: terse
   languages: [nb, en]
 boundaries:
-  never_nudge_hours: '23:00–08:00'
+  never_nudge_hours: '23:00-08:00'
   topics_off_limits_for_drafts: [politics, politikk]
   never_store: []

@@ -129,12 +129,12 @@ module Master
       # end. EOF without the zero frame means the daemon truncated mid-synthesis;
       # discard those bytes so the caller falls back to whole-file synthesis
       # instead of speaking a severed sentence. A legacy daemon ignores "stream"
-      # and answers with raw mp3, which looks like an absurd frame header —
+      # and answers with raw mp3, which looks like an absurd frame header -
       # detect that form and consume the response as raw.
       FRAME_HEADER_S = 8
       FRAME_MAX_S = 1 << 23 # 8 MiB; an Edge chunk is kilobytes
 
-      # One framed edge response, whatever consumes it — a temp file for the
+      # One framed edge response, whatever consumes it - a temp file for the
       # whole-file path, a player's stdin for live playback. on_chunk fires
       # per frame with the bytes written so far; stale_test is checked between
       # frames so an interrupted reply stops pulling audio off the wire.
@@ -237,7 +237,7 @@ module Master
       # The next frame from the wire: an integer-length body for the common
       # audio case, :clean for the zero terminator, :eof when the daemon hung
       # up without one (a truncated stream), :raw when the bytes form a legacy
-      # daemon's whole-file answer — consume_raw_response has already
+      # daemon's whole-file answer - consume_raw_response has already
       # forwarded them untouched.
       def read_frame(sock, target)
         header = read_socket_fill(sock, FRAME_HEADER_S)
@@ -253,7 +253,7 @@ module Master
         [:audio, body]
       end
 
-      # A legacy daemon ignores "stream" and answers with raw mp3 — the length
+      # A legacy daemon ignores "stream" and answers with raw mp3 - the length
       # prefix misreads as an absurd header. Forward in chunks so timeouts still
       # preserve the byte count and never replay an already-heard sentence.
       def consume_raw_response(header, sock, target)

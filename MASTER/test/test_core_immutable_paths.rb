@@ -4,7 +4,7 @@ require "minitest/autorun"
 require "master"
 
 # The agent must never rewrite the constitution it is judged by or the spine
-# that folds its effects. These pin that block — and that ordinary paths still
+# that folds its effects. These pin that block - and that ordinary paths still
 # pass, so the guard is a scalpel, not a wall.
 class ImmutablePathsTest < Minitest::Test
   IMMUTABLE = %w[lib/core.rb lib/core/ lib/ground/pledge.rb].freeze

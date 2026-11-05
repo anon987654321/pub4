@@ -210,7 +210,7 @@ module Deploy
           dimension: dim,
           current:,
           suggested:,
-          message: "False positives mention #{dim} ×#{count} — consider weight #{current}→#{suggested}",
+          message: "False positives mention #{dim} x#{count} - consider weight #{current}->#{suggested}",
         }
       end
 
@@ -220,14 +220,14 @@ module Deploy
           dimension: "quality_target",
           current: target,
           suggested: [target + 5, 95].min,
-          message: "False negatives ×#{fns.size} — consider raising quality_target #{target}→#{[target + 5, 95].min} or stronger exemplars",
+          message: "False negatives x#{fns.size} - consider raising quality_target #{target}->#{[target + 5, 95].min} or stronger exemplars",
         }
       end
 
       if fps.any? && note_counts.empty?
         suggestions << {
           dimension: nil,
-          message: "False positives ×#{fps.size}: #{fps.map(&:id).join(', ')} — review exemplar required parts",
+          message: "False positives x#{fps.size}: #{fps.map(&:id).join(', ')} - review exemplar required parts",
         }
       end
 

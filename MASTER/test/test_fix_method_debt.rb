@@ -32,13 +32,13 @@ class TestFixMethodDebt < Minitest::Test
   end
 
   def test_a_rubocop_measure_is_the_figure_before_its_limit
-    too_high = "rubocop: Metrics/AbcSize — Assignment Branch Condition size for call is too high."
+    too_high = "rubocop: Metrics/AbcSize - Assignment Branch Condition size for call is too high."
     abc = ->(measure) { row(3, "#{too_high} [#{measure}]", law: "rubocop") }
     debt = Debt.new(source: SOURCE, base_source: SOURCE, base_findings: [abc.call("<10, 25, 5> 27.39/17")])
 
     refute debt.worse?(abc.call("<12, 24, 5> 27.30/17"))
     assert debt.worse?(abc.call("<9, 27, 5> 28.9/17"))
-    assert debt.worse?(row(3, "rubocop: Metrics/MethodLength — Method has too many lines. [25/10]", law: "rubocop")),
+    assert debt.worse?(row(3, "rubocop: Metrics/MethodLength - Method has too many lines. [25/10]", law: "rubocop")),
            "another cop on the same method is a new finding"
   end
 end

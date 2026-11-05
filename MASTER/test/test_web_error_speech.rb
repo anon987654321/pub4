@@ -5,7 +5,7 @@ require "minitest/autorun"
 # A failure must not be spoken as though it were the answer.
 #
 # The face's SSE handling has two lanes and one prefix separates them.
-# face.part5.txt's onMessage branches on a chunk starting with "ERROR:" —
+# face.part5.txt's onMessage branches on a chunk starting with "ERROR:" -
 # transcript, veto tint, shake, and a short spoken "Sorry, I hit a snag."
 # Everything else is reply content: appended to `pending` and synthesised in
 # MASTER's own voice.
@@ -17,7 +17,7 @@ require "minitest/autorun"
 # #write_fallback later hands to #write_chunk.
 #
 # This spec asserts both ends. A check that pinned only the server would pass
-# while the client stopped honouring the prefix, and vice versa — and that is
+# while the client stopped honouring the prefix, and vice versa - and that is
 # the shape of a check that measures nothing.
 class ErrorSpeechSpec < Minitest::Test
   ROOT = File.expand_path("..", __dir__)
@@ -30,7 +30,7 @@ class ErrorSpeechSpec < Minitest::Test
 
   def test_the_client_still_has_an_error_lane_keyed_on_the_prefix
     assert_includes face, "raw.startsWith('ERROR:')",
-                    "the face no longer branches on the ERROR: prefix — the server's prefix now buys nothing"
+                    "the face no longer branches on the ERROR: prefix - the server's prefix now buys nothing"
   end
 
   # The point of the lane: it says something short of its own rather than

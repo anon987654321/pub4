@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-# lint:law_parity — the constitutional enforcement audit must have a real caller.
+# lint:law_parity - the constitutional enforcement audit must have a real caller.
 require_relative "../lib/master"
 require_relative "../lib/fix/law_parity"
 

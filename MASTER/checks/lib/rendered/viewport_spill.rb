@@ -15,7 +15,7 @@ module Deploy
   # margins, a fieldset whose min-width is min-content, an untemplated grid
   # column handing a file input its intrinsic width, a full bleed cancelling a
   # pad the page does not apply, and a flex item sized to its content. What they
-  # share is the symptom — a strip of the page a phone cannot reach — and that
+  # share is the symptom - a strip of the page a phone cannot reach - and that
   # is measurable, so it belongs here rather than in a review.
   #
   # An element past the edge is only a finding when nothing above it scrolls
@@ -137,7 +137,7 @@ module Deploy
         cdp.navigate("http://#{surface[:host]}#{path}", settle: 0.8)
         status = cdp.status.to_i
         unless status == 200
-          @result.fail("viewport_spill: #{surface[:host]}#{path} returned HTTP #{status} — viewport overflow was not measured at #{width}px")
+          @result.fail("viewport_spill: #{surface[:host]}#{path} returned HTTP #{status} - viewport overflow was not measured at #{width}px")
           next
         end
 
@@ -146,7 +146,7 @@ module Deploy
         if spills.empty?
           @result.checked!
         else
-          @result.fail("viewport_spill: #{surface[:host]}#{path} at #{width}px — #{spills.join('; ')}")
+          @result.fail("viewport_spill: #{surface[:host]}#{path} at #{width}px - #{spills.join('; ')}")
         end
       end
     end

@@ -3,7 +3,7 @@
 require "test_helper"
 
 # SsrfGuard is the only thing standing between a prompt-injection payload and the runtime's own internal network, and
-# its whole contract is a list of ranges — the cheapest possible thing to get
+# its whole contract is a list of ranges - the cheapest possible thing to get
 # wrong silently and the cheapest possible thing to pin.
 class SsrfGuardTest < Minitest::Test
   Guard = Master::Io::SsrfGuard

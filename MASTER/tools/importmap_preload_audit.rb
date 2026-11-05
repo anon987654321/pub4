@@ -4,7 +4,7 @@ module Operator
   # No pin may put a third-party host on the first-paint critical path.
   #
   # `pin` defaults to `preload: true`, and every preloaded pin becomes a
-  # `<link rel="modulepreload">` in the head of every page — fetched eagerly
+  # `<link rel="modulepreload">` in the head of every page - fetched eagerly
   # whether or not any code on that page imports it. Measured on live brgen.no
   # 2026-08-12: two external hosts preloaded on every request, jsDelivr and
   # ga.jspm.io, one of them for a module (morphdom) that no application code
@@ -20,7 +20,7 @@ module Operator
   # Two separate facts, because they fail differently. An external preload is a
   # render-blocking request to someone else's server on every page. An external
   # pin that is merely lazy costs nothing until something imports it, but it is
-  # still a runtime dependency on a third party — worth naming, not worth
+  # still a runtime dependency on a third party - worth naming, not worth
   # forbidding, so the allowlist is explicit and short.
   module ImportmapPreloadAudit
     EXTERNAL = %r{\A(?:https?:)?//}
@@ -35,7 +35,7 @@ module Operator
 # are vendored to shared/vendor/javascript/tiptap.js by
 # shared/script/build_tiptap.sh. The note that stood here reasoned from
 # date-fns, whose ESM build cross-references ~200 siblings by relative path
-# so no single flattened file can work — Tiptap does not have that shape.
+# so no single flattened file can work - Tiptap does not have that shape.
 # esbuild resolves the whole ProseMirror tree into one 288KB module, which
 # is pinned preload: false and fetched on first focus of a compose box, so
 # the bytes are paid by people who write rather than by everyone who reads.

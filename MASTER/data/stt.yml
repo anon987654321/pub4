@@ -1,4 +1,4 @@
-# Speech-to-text — single source for Voice::Stt and operator docs.
+# Speech-to-text - single source for Voice::Stt and operator docs.
 # Backend auto tries vosk, then whisper.cpp, else null (empty text, honest).
 
 stt:

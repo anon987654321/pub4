@@ -31,7 +31,7 @@ module Deploy
       # scores it 0%, which is a missing label set rather than a check that
       # disagrees with a human, so it is inconclusive and not also a floor failure.
       if report[:total].to_i.zero?
-        @result.inconclusive!("calibration: the labelled set is empty — agreement was computed over no cases")
+        @result.inconclusive!("calibration: the labelled set is empty - agreement was computed over no cases")
         return @result
       end
 
@@ -49,7 +49,7 @@ module Deploy
         @result.warn("calibration FP (check too harsh): #{c.id} notes=#{c.notes.join(',')}")
       end
       report[:false_negatives].each do |c|
-        @result.warn("calibration FN (check too soft): #{c.id} — human fail, check pass")
+        @result.warn("calibration FN (check too soft): #{c.id} - human fail, check pass")
       end
 
       report[:suggestions].each do |s|
@@ -59,14 +59,14 @@ module Deploy
       unless report[:pass]
         @result.fail(
           "calibration: agreement #{(report[:agreement] * 100).round(1)}% < " \
-          "floor #{(report[:floor] * 100).round(0)}% — retune weights or fix labels " \
+          "floor #{(report[:floor] * 100).round(0)}% - retune weights or fix labels " \
           "(principle=kaizen)",
         )
       end
 
       if apply?
         path = cal.apply_weights!(report)
-        @result.warn("calibration: wrote weight overrides → #{path.sub(%r{\A.*/MASTER/}, 'MASTER/')}")
+        @result.warn("calibration: wrote weight overrides -> #{path.sub(%r{\A.*/MASTER/}, 'MASTER/')}")
       end
 
       @result

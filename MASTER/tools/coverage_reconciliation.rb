@@ -14,7 +14,7 @@
 #
 # It reads checks/data/coverage_map.yml: the instruments that declare which
 # globs they see. While the map declares itself partial (complete: false) the
-# tool reports INCONCLUSIVE with the uncovered rows as information — a partial
+# tool reports INCONCLUSIVE with the uncovered rows as information - a partial
 # map that failed everything would be noise nobody routes through. When the
 # map is declared complete, an uncovered file is a failure: either the file is
 # out of scope on purpose (name it in the map's skip list, with a reason) or
@@ -109,7 +109,7 @@ module Deploy
       else
         @uncovered.first(DIAGNOSTIC_LIMIT).each { |path| @result.warn("coverage (partial map): no instrument sees #{relative(path)}") }
         @result.incomplete!(
-          "coverage_reconciliation: map declares itself partial — #{instruments.size} instruments, " \
+          "coverage_reconciliation: map declares itself partial - #{instruments.size} instruments, " \
           "#{covered.size} files covered, #{inventory.size} in inventory, #{@uncovered.size} uncovered listed as information. " \
           "Fill the map, prove each row against its instrument on a Ruby host, then set complete: true.",
         )

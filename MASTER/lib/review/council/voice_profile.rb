@@ -110,9 +110,9 @@ module Master
           case pattern.to_sym
           when :false_start
             words = text.split
-            words.empty? ? text : "#{words.first} — no, #{text}"
+            words.empty? ? text : "#{words.first} - no, #{text}"
           when :self_correcting
-            text.sub(/\b(is|are|was|were)\b/i) { |match| "#{match} — more precisely," }
+            text.sub(/\b(is|are|was|were)\b/i) { |match| "#{match} - more precisely," }
           when :pause_heavy
             text.gsub(/,\s+/, ", ... ")
           when :breathy
@@ -124,15 +124,15 @@ module Master
           when :compressed
             text.gsub(/\b(?:really|quite|very|actually)\b\s*/i, "")
           when :emphatic
-            text.sub(/\A/, "Look — ")
+            text.sub(/\A/, "Look - ")
           when :colloquial
             text.sub(/\A/, "Right, ")
           when :deliberate
             text.gsub(/,\s+/, ", ... ")
           when :beat_locked
-            text.gsub(/;\s*/, " — ")
+            text.gsub(/;\s*/, " - ")
           when :cadenced
-            text.gsub(/,\s+/, " — ")
+            text.gsub(/,\s+/, " - ")
           when :reflective
             text.sub(/\A/, "Mm. ")
           when :formal

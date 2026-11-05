@@ -53,7 +53,7 @@ class TestFixProposeTree < Minitest::Test
   def test_keeps_named_proposals_ranked_by_tree_quality_and_writes_the_report
     message = Master::Fix::ProposeTree.new(root: @root, agent: RecordingAgent.new(REPLY, [])).call(n: 2)
 
-    assert_equal "propose-tree: drafted 2, kept top 2 → runtime/proposals.md", message
+    assert_equal "propose-tree: drafted 2, kept top 2 -> runtime/proposals.md", message
     report = File.read(File.join(@root, "runtime", "proposals.md"))
     assert_operator report.index("1. short"), :<, report.index("2. long")
   end

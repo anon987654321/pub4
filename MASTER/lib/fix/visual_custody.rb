@@ -106,7 +106,7 @@ module Master
         Result.err("layout completion requires an operator decision: #{e.message}", category: :policy, gap: Master::Gap::OPERATOR_DECISION)
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "fix.visual_custody", event_bus: @bus)
-        Result.err("visual custody: INCONCLUSIVE — #{e.class}: #{e.message}", category: :inconclusive, gap: UNMEASURABLE)
+        Result.err("visual custody: INCONCLUSIVE - #{e.class}: #{e.message}", category: :inconclusive, gap: UNMEASURABLE)
       end
 
       private
@@ -204,7 +204,7 @@ module Master
         end
 
         return Result.err(
-          "visual custody: #{label} has no committed baseline — #{missing.join(" / ")}",
+          "visual custody: #{label} has no committed baseline - #{missing.join(" / ")}",
           category: :inconclusive,
           gap: Gap::OPERATOR_DECISION, # a baseline is a rendered value; seeding one is the operator's call
         ) if missing.any?
@@ -213,7 +213,7 @@ module Master
 
         @bus&.publish("fix_loop:visual_custody_blocked", label:, surfaces: failures)
         Result.err(
-          "visual custody: #{label} differs from committed baseline — #{failures.join(" / ")}",
+          "visual custody: #{label} differs from committed baseline - #{failures.join(" / ")}",
           category: :policy,
           gap: Gap::OPERATOR_DECISION, # keep the change by blessing a new baseline, or revert it
         )
@@ -230,11 +230,11 @@ module Master
       end
 
       def inconclusive(message)
-        Result.err("visual custody: INCONCLUSIVE — #{message}", category: :inconclusive, gap: UNMEASURABLE)
+        Result.err("visual custody: INCONCLUSIVE - #{message}", category: :inconclusive, gap: UNMEASURABLE)
       end
 
       def unavailable
-        Result.err("visual custody: no Chrome/Chromium — rendered baseline cannot be verified", category: :inconclusive, gap: Gap::NO_BROWSER)
+        Result.err("visual custody: no Chrome/Chromium - rendered baseline cannot be verified", category: :inconclusive, gap: Gap::NO_BROWSER)
       end
     end
   end

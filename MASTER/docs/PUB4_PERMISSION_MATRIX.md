@@ -1,10 +1,10 @@
-# The `.pub4` permission matrix — harness-only, not enforcement
+# The `.pub4` permission matrix - harness-only, not enforcement
 
 ## The decision
 
 `MASTER/.pub4` is **harness-only**. Nothing in this repository reads it. The deep
 analysis of MASTER (October 2026) found no reader for it anywhere under `lib/`,
-`tools/`, `bin/`, `checks/` or `contracts/` — the only `.pub4`-shaped strings in the
+`tools/`, `bin/`, `checks/` or `contracts/` - the only `.pub4`-shaped strings in the
 tree are unrelated paths (`~/.pub4/ssh-connections.log`, the `Pub4MobileApp.swift`
 URL notification name). The file describes a permission matrix that the external
 harness may consult; the runtime itself neither loads it nor enforces it, and this
@@ -37,7 +37,7 @@ adapters: []
 - **Do not widen it to grant yourself permission.** Editing `.pub4` grants nothing,
   because nothing reads it.
 - **If a reader is ever wanted**, it arrives together with its tests and a law
-  fixture under `law/` — same rule as any other config key in this tree: no reader,
+  fixture under `law/` - same rule as any other config key in this tree: no reader,
   no key. Until then this document is the only interpretation of record, and the
   harness contract lives outside the repo.
 

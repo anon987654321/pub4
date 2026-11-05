@@ -21,7 +21,7 @@ class TestConstantCollisions < Minitest::Test
     assert_empty collisions,
                  "two files that can be loaded into one process define the same top-level " \
                  "constant. The second assignment wins and the first file silently reads the " \
-                 "other's value — namespace one of them:\n  #{collisions.join("\n  ")}"
+                 "other's value - namespace one of them:\n  #{collisions.join("\n  ")}"
   end
 
   # A detector that has stopped finding files reports clean forever, and the
@@ -29,7 +29,7 @@ class TestConstantCollisions < Minitest::Test
   def test_the_detector_still_sees_the_tree
     assert_operator @report["scanned"], :>, 1500, "only #{@report['scanned']} Ruby files seen"
     assert_operator @report["requirable"], :>, 200,
-                    "only #{@report['requirable']} requirable files — the require_relative walk broke"
+                    "only #{@report['requirable']} requirable files - the require_relative walk broke"
   end
 
   def test_the_security_sweep_remains_in_the_requirable_set

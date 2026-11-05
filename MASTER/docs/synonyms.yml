@@ -57,7 +57,7 @@ terms:
   budget:
     preferred: budget
     meaning: A counted ceiling on residual findings for one rule (checks/data/css_budget.yml); "the number only ever ratchets down".
-    caution: A budget is not permission to add findings — it caps what remains after repair. Zero is not the goal; the ceiling is not a target to spend.
+    caution: A budget is not permission to add findings - it caps what remains after repair. Zero is not the goal; the ceiling is not a target to spend.
   pen:
     preferred: pen
     meaning: A named, deliberate exception to the spacing/type grid whose rendered intent a mechanical snap would damage.
@@ -65,7 +65,7 @@ terms:
   exemption:
     preferred: exemption
     meaning: A marker in an executable law file that excuses named paths from one Law, mapped to a reason and a review_by date in the craft ledger.
-    caution: The marker in law/ grants the excuse; the ledger row only explains it. Every exemption expires — reviews are tracked by checks/exemption_freshness.
+    caution: The marker in law/ grants the excuse; the ledger row only explains it. Every exemption expires - reviews are tracked by checks/exemption_freshness.
   ledger:
     preferred: ledger
     meaning: Provenance record for ceilings, pens and exemptions (checks/data/craft_ledger.yml); evidence, not policy.

@@ -3,8 +3,8 @@
 # A second reader of a data file is a second implementation of loading it.
 #
 # lib/trace/why_explainer.rb duplicated the rule-shard merge loop from
-# lib/boot/data_loading.rb. Both called Master.load_yaml — the copy was not bypassing
-# the helper, it was composing the result itself — so they agreed until the
+# lib/boot/data_loading.rb. Both called Master.load_yaml - the copy was not bypassing
+# the helper, it was composing the result itself - so they agreed until the
 # shards moved, and then the copy wrote {} over the real rules and emptied /why
 # for all 225 rules without failing anything.
 
@@ -47,7 +47,7 @@ class TestReaderSingularity < Minitest::Test
   # nothing passes every "no findings" assertion there is.
   def test_the_detector_finds_the_shape_it_exists_to_find
     assert_operator @report["loaded"], :>, 15,
-                    "only #{@report['loaded']} data files detected as loaded — the detector stopped reading"
+                    "only #{@report['loaded']} data files detected as loaded - the detector stopped reading"
     assert_includes Operator::ReaderSingularity.readers.fetch("laws.yml"), "MASTER/lib/boot/data_loading.rb",
                     "the detector does not see the canonical laws.yml loader"
   end
@@ -69,7 +69,7 @@ class TestReaderSingularity < Minitest::Test
       Operator::ReaderSingularity.scan(path, found)
 
       assert_includes found.keys, "laws.yml",
-                      "the detector misses a hand-built path into data/ through the shared helper — " \
+                      "the detector misses a hand-built path into data/ through the shared helper - " \
                       "which is exactly how the original defect was written"
     end
   end

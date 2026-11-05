@@ -13,7 +13,7 @@ module Deploy
     #
     # A module included back into the check, so it keeps @result and the finding
     # helpers it shares with the twenty other checks. Nothing in here builds a
-    # path from __dir__ — the design_metrics split moved a css_budget.yml path
+    # path from __dir__ - the design_metrics split moved a css_budget.yml path
     # one directory deeper and silently ran that check unbudgeted.
     module ContrastChecks
       # The check the static parser structurally cannot do: var()/oklch/color-mix
@@ -71,7 +71,7 @@ module Deploy
       # disagree in the direction that matters for a dark UI, and measured on this
       # tree they disagree completely about where the debt is: #5c586e on white is
       # 6.83 (fails AAA) but Lc 83.6 (comfortably readable), while #8a879c on
-      # #17161c is 5.16 — WCAG makes it look like a near miss — and Lc 38.3, which
+      # #17161c is 5.16 - WCAG makes it look like a near miss - and Lc 38.3, which
       # is below APCA's floor for text of any size. WCAG 2.x is symmetric and
       # perception is not: light text on a dark ground halates and reads thinner
       # than the ratio predicts.

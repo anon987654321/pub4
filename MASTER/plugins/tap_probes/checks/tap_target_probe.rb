@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-# tap_target_probe — measure every interactive element's hit size against the
+# tap_target_probe - measure every interactive element's hit size against the
 # design system's own --tap-min (44px), in a real mobile viewport over CDP.
 #
 # The 2026-08-17 debt entry found two under-minimum targets by hand; this is
@@ -40,13 +40,13 @@ JS = <<~JS
       if (r.width === 0 || r.height === 0) continue;
       const style = getComputedStyle(el);
       if (style.visibility === "hidden" || style.display === "none") continue;
-      // an element that cannot receive the tap is not a tap target — the
+      // an element that cannot receive the tap is not a tap target - the
       // theme toggle input is a pointer-events:none proxy behind its label
       if (style.pointerEvents === "none") continue;
       // visually-hidden-until-focus (skip links): the clipped box is the HIDDEN
       // state, not a tap target
       if (style.position === "absolute" && (style.clipPath !== "none" || style.clip !== "auto" || r.right < 0 || r.bottom < 0)) continue;
-      // a labelled control is tapped through its label — credit that area
+      // a labelled control is tapped through its label - credit that area
       if (el.labels && el.labels.length) {
         const lr = el.labels[0].getBoundingClientRect();
         if (lr.width >= MIN || lr.height >= MIN) continue;
@@ -84,7 +84,7 @@ Deploy::CdpSession.open do |cdp|
       bad.each { |b| puts "  #{b['w']}x#{b['h']}  #{b['sel']}  #{b['text'].inspect}" }
     end
   rescue Deploy::CdpSession::Error => e
-    puts "#{name}: probe failed (#{e.class}) — measured nothing"
+    puts "#{name}: probe failed (#{e.class}) - measured nothing"
   end
 end
 puts "tap_target_probe: #{total} undersized target(s) across #{pages.size} page(s)"

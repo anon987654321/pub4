@@ -62,7 +62,7 @@ class TestFanOpsDigest < Minitest::Test
   end
 
   def test_quiet_hours_support_overnight_ranges
-    range = "23:00–08:00"
+    range = "23:00-08:00"
     assert Master::FanOps::QuietHours.blocked?(range, Time.new(2026, 9, 28, 23, 30))
     assert Master::FanOps::QuietHours.blocked?(range, Time.new(2026, 9, 29, 7, 30))
     refute Master::FanOps::QuietHours.blocked?(range, Time.new(2026, 9, 29, 12, 0))

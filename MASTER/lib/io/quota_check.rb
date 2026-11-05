@@ -13,9 +13,9 @@ module Master
     # want three different answers:
     #
     #   :available  spend the call.
-    #   :exhausted  out of credit or over quota. Temporary — a monthly window
+    #   :exhausted  out of credit or over quota. Temporary - a monthly window
     #               rolls, a shared balance is topped up, a burst allowance
-    #               refills — so stop hammering, then re-probe on a backoff.
+    #               refills - so stop hammering, then re-probe on a backoff.
     #   :refused    the key is bad, revoked, or unauthorized. Re-probing an
     #               unauthorized key is not waiting for anything, so this one
     #               stops until a human changes the key.
@@ -26,17 +26,17 @@ module Master
     # fix: deciding at minute one that a tier does not exist.
     #
     # Trip fast, re-probe soon. The wait comes from
-    # Master::Ground::FailureTaxonomy.backoff_seconds — the same capped exponential
+    # Master::Ground::FailureTaxonomy.backoff_seconds - the same capped exponential
     # Io::ReplicateClient retries on, so there is one backoff formula in the
-    # tree — indexed by how many times the limit has been confirmed in a row.
+    # tree - indexed by how many times the limit has been confirmed in a row.
     # First confirmation waits a second, the fourth waits eight, and it caps at
     # a minute, so a long check picks the tier back up within a minute of the
     # limit lifting. A successful paid call clears the count.
     #
     # What this is NOT: a second per-model breaker. Io::ModelSkipCache
     # already parks an individual dead endpoint so failover chains route around
-    # it. This is the tier-level fact — "the semantic rules could not run, and
-    # here is why" — which no per-model cache can answer, and which is the half
+    # it. This is the tier-level fact - "the semantic rules could not run, and
+    # here is why" - which no per-model cache can answer, and which is the half
     # that otherwise reads as a clean bill of health.
     #
     # One lane out of credit closes that lane, not the others: a trip that names
@@ -61,7 +61,7 @@ module Master
       CATEGORY = :exhausted
       # The exit status a stage takes when a paid tier could not run. Third
       # state, not a failure and not a pass: MASTER/checks/runner.rb already
-      # spends 3 on "inconclusive — nothing measured", and a chain that folds
+      # spends 3 on "inconclusive - nothing measured", and a chain that folds
       # "could not run" into either of the other two is the defect this whole
       # file guards.
       INCONCLUSIVE_EXIT = 3
@@ -102,7 +102,7 @@ module Master
 
       # Record a paid call that failed for a limit, after its own failover
       # chain had its turn. Returns true when this call is the one that closed
-      # the check — the caller that gets true is the only one that needs to say
+      # the check - the caller that gets true is the only one that needs to say
       # so, which is what turns N identical persona_error lines into one.
       def trip!(source:, message:, model: nil)
         first = LOCK.synchronize do
@@ -131,7 +131,7 @@ module Master
       end
 
       # A paid call came back. The limit lifted, so drop the backoff entirely
-      # rather than decaying it — the next outage should trip fast again.
+      # rather than decaying it - the next outage should trip fast again.
       def clear!
         LOCK.synchronize do
           return false if @state == :available
@@ -174,7 +174,7 @@ module Master
 
       # A call that answered on a different provider than the one it was routed
       # to. A council that quietly changes model is not reviewing the same way
-      # twice, so the swap belongs in the record beside the verdict — and a
+      # twice, so the swap belongs in the record beside the verdict - and a
       # council that runs on a substitute is still far better than one that
       # does not run.
       def substituted(from:, to:)
@@ -277,7 +277,7 @@ module Master
       def announce
         Master::Trace::Dmesg.status(
           "quota0",
-          "#{cause_now} via #{@source} — pausing paid calls, #{recovery_now}: #{@message}",
+          "#{cause_now} via #{@source} - pausing paid calls, #{recovery_now}: #{@message}",
         )
       rescue StandardError => e
         # A standalone load has no Dmesg. The fact still has to reach someone.

@@ -40,7 +40,7 @@ module Deploy
       return replaced(label, "frame link", answer, result) if answer["error"]
 
       Array(answer["lazy"]).select { |frame| frame["missing"] }.each do |frame|
-        result.fail("journey_invariant frame: #{label} lazy frame ##{frame["id"]} loaded \"Content missing\" — " \
+        result.fail("journey_invariant frame: #{label} lazy frame ##{frame["id"]} loaded \"Content missing\" - " \
                     "its src answers without a matching <turbo-frame>")
       end
       return false unless answer["found"]
@@ -53,7 +53,7 @@ module Deploy
       where = "#{label} #{answer["href"]} into ##{answer["frame"]}"
 
       if answer["outcome"] == "missing" || answer["missing"]
-        result.fail("journey_invariant frame: #{where} showed \"Content missing\" — " \
+        result.fail("journey_invariant frame: #{where} showed \"Content missing\" - " \
                     "the response has no ##{answer["frame"]}")
       elsif !answer["same_document"]
         result.fail("journey_invariant frame: #{where} reloaded the whole page instead of the frame", severity: :soft)
@@ -70,10 +70,10 @@ module Deploy
       return false unless answer["found"]
 
       if !answer["same_document"] || answer["outcome"] == "timeout"
-        result.warn("journey_invariant focus: #{label} #{answer["href"]} was not a Turbo visit — focus not judged")
+        result.warn("journey_invariant focus: #{label} #{answer["href"]} was not a Turbo visit - focus not judged")
       elsif !answer["body"] && !(answer["connected"] && answer["painted"])
         result.fail("journey_invariant focus: #{label} after the Turbo visit to #{answer["href"]} focus sits on " \
-                    "#{answer["sel"]}, which is #{answer["connected"] ? "not painted" : "detached"} — " \
+                    "#{answer["sel"]}, which is #{answer["connected"] ? "not painted" : "detached"} - " \
                     "the next Tab starts from nowhere a reader can see", severity: :soft)
       end
       true
@@ -82,7 +82,7 @@ module Deploy
     def judge_reconnect(label, answer, result)
       unless answer["found"] && answer["scrollable"]
         why = answer["error"] || "has no scrolling conversation log"
-        result.warn("journey_invariant reconnect: #{label} #{why} — not measured")
+        result.warn("journey_invariant reconnect: #{label} #{why} - not measured")
         return false
       end
 
@@ -116,13 +116,13 @@ module Deploy
 
       if sentinel && href.nil?
         result.fail("journey_invariant noscript: #{label} loads further pages only by infinite scroll and carries " \
-                    "no rel=next link — without JavaScript the list ends at page one", severity: :soft)
+                    "no rel=next link - without JavaScript the list ends at page one", severity: :soft)
       end
       return false unless href
 
       status = follow.call(CGI.unescapeHTML(href)).to_i
       unless status.between?(200, 399)
-        result.fail("journey_invariant noscript: #{label} rel=next #{href} answers #{status} — " \
+        result.fail("journey_invariant noscript: #{label} rel=next #{href} answers #{status} - " \
                     "the pager's next page is broken")
       end
       true

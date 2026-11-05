@@ -3,7 +3,7 @@
 module Master
   module CLI
     module Stages
-      # Infer — promote natural-language messages to :command intent via data/patterns.yml (infer namespace).
+      # Infer - promote natural-language messages to :command intent via data/patterns.yml (infer namespace).
       class Infer
         PRESSURE_PATTERN = /\b(?:urgent|asap|immediately|critical|now|hurry|fast|quick(?:ly)?|emergency|sos)\b/i.freeze
 
@@ -43,7 +43,7 @@ module Master
 
         INFER_DESTRUCTIVE = %w[rebuild resync shell rollback].freeze
         CONSENT_PREFIX = /\A\s*(?:yes|do\s+it|confirm(?:ed)?|go\s+ahead|i\s+mean\s+it)\b/i.freeze
-        CONSENT_NEGATION = /\b(?:no|not|don['’]t|do\s+not|never|stop|cancel|without)\b/i.freeze
+        CONSENT_NEGATION = /\b(?:no|not|don['\u2019]t|do\s+not|never|stop|cancel|without)\b/i.freeze
         # The words Pipeline::Pass#resolve_target maps to a tree.
         TREE_ALIASES = /\A(?:rails|master|itself|self|face)\z/i.freeze
 
@@ -156,7 +156,7 @@ module Master
 
           publish_rejected(command, msg, "destructive_guard")
           Master::Result.err(
-            "infer: /#{command} requires explicit /#{command} — natural language blocked",
+            "infer: /#{command} requires explicit /#{command} - natural language blocked",
             category: :policy,
           )
         end

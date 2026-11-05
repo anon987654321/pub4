@@ -40,7 +40,7 @@ module Master
             @visual_pass.run(target:, files:, pass:)
           rescue StandardError => e
             Master::Ground::Swallow.log(e, context: "pass_runner.visual_pass", event_bus: @bus)
-            Result.err("rendered visual review: INCONCLUSIVE — #{e.class}: #{e.message}", category: :inconclusive)
+            Result.err("rendered visual review: INCONCLUSIVE - #{e.class}: #{e.message}", category: :inconclusive)
           end
 
           def run_opportunity_pass(target:, files:)
@@ -49,7 +49,7 @@ module Master
             @opportunity_pass.run(target:, files:, plan: @assessment_plan)
           rescue StandardError => e
             Master::Ground::Swallow.log(e, context: "pass_runner.opportunity_pass", event_bus: @bus)
-            Result.err("convergence opportunities: INCONCLUSIVE — #{e.class}: #{e.message}", category: :inconclusive)
+            Result.err("convergence opportunities: INCONCLUSIVE - #{e.class}: #{e.message}", category: :inconclusive)
           end
 
           def run_opportunity_stage(findings, files, pass, deadline, council: nil)

@@ -53,7 +53,7 @@ module Operator
       return line if SnapshotPack.test_path?(path)
 
       purpose = purpose_line(path, file.fetch(:original))
-      line << " — #{truncate_at_word(purpose, MAP_PURPOSE)}" if purpose
+      line << " - #{truncate_at_word(purpose, MAP_PURPOSE)}" if purpose
       shown = map_declarations(path, file.fetch(:original))
       line << " | #{shown}" unless shown.empty?
 
@@ -102,13 +102,15 @@ module Operator
       value == basename.gsub(/[^a-z0-9.]+/, "") || value == stem.gsub(/[^a-z0-9.]+/, "")
     end
 
+    ELLIPSIS = "..."
+
     def truncate_at_word(text, width)
       return text if text.length <= width
 
-      prefix = text[0, width - 1]
+      prefix = text[0, width - ELLIPSIS.length]
       boundary = prefix.rindex(/\s/)
       prefix = prefix[0...boundary] if boundary && boundary >= width / 2
-      "#{prefix.rstrip}…"
+      "#{prefix.rstrip}#{ELLIPSIS}"
     end
 
     # Language-specific summaries stay intentionally shallow: they orient the reader without

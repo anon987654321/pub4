@@ -95,8 +95,8 @@ module Master
         text.to_s.match?(COMPLETION_CLAIM)
       end
 
-      # Ground::Tool::Protocol's third requirement — a shell block offered as
-      # proof that something ran — is the one the two claim checks above cannot
+      # Ground::Tool::Protocol's third requirement - a shell block offered as
+      # proof that something ran - is the one the two claim checks above cannot
       # see, because a fence satisfies command_evidence? and so buys silence for
       # the claim beside it. Protocol owns both halves of the question, so this
       # asks it rather than restating its regexes. Both predicates must hold:

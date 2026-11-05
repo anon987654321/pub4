@@ -38,19 +38,19 @@ class TestDesignMarks < Minitest::Test
   end
 
   def test_arrow_flags_link_and_button_text_only
-    assert flagged?(:NO_TRAILING_ARROW, %(<a href="/x">Les mer →</a>), "a.html.erb")
+    assert flagged?(:NO_TRAILING_ARROW, %(<a href="/x">Les mer \u2192</a>), "a.html.erb")
     assert flagged?(:NO_TRAILING_ARROW, %(<%= link_to "Les mer ->", path %>), "a.html.erb")
-    assert flagged?(:NO_TRAILING_ARROW, %(<%= t("x") %> <span aria-hidden="true">→</span>), "a.html.erb")
+    assert flagged?(:NO_TRAILING_ARROW, %(<%= t("x") %> <span aria-hidden="true">\u2192</span>), "a.html.erb")
     refute flagged?(:NO_TRAILING_ARROW, %(<a href="/x">Les saken</a>), "a.html.erb")
-    refute flagged?(:NO_TRAILING_ARROW, %(<p>Bergen → Oslo</p>), "a.html.erb")
+    refute flagged?(:NO_TRAILING_ARROW, %(<p>Bergen \u2192 Oslo</p>), "a.html.erb")
     refute flagged?(:NO_TRAILING_ARROW, %(<%= link_to "Hjem", ->(x) { x } %>), "a.html.erb")
   end
 
   def test_dotted_meta_needs_two_separators_or_a_join
-    assert flagged?(:NO_DOT_SEPARATED_META, "<p>Bergen · 3 timer · 12 svar</p>", "a.html.erb")
-    assert flagged?(:NO_DOT_SEPARATED_META, %(<%= [a, b].compact.join(" · ") %>), "a.html.erb")
-    refute flagged?(:NO_DOT_SEPARATED_META, "<p>Bergen · Oslo</p>", "a.html.erb")
-    refute flagged?(:NO_DOT_SEPARATED_META, "<title>brgen · a · b</title>", "a.html.erb")
+    assert flagged?(:NO_DOT_SEPARATED_META, "<p>Bergen \u00B7 3 timer \u00B7 12 svar</p>", "a.html.erb")
+    assert flagged?(:NO_DOT_SEPARATED_META, %(<%= [a, b].compact.join(" \u00B7 ") %>), "a.html.erb")
+    refute flagged?(:NO_DOT_SEPARATED_META, "<p>Bergen \u00B7 Oslo</p>", "a.html.erb")
+    refute flagged?(:NO_DOT_SEPARATED_META, "<title>brgen \u00B7 a \u00B7 b</title>", "a.html.erb")
   end
 
   def test_gradient_spares_fades_masks_solids_and_bars

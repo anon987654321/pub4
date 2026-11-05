@@ -1,14 +1,14 @@
 # frozen_string_literal: true
 
-# law/html.rb — every html law, one Law.define per law.
+# law/html.rb - every html law, one Law.define per law.
 #
 # IMG_ALT and LAZY_IMAGES live once, in the registry (web_laws.rb): both
-# judge attributes of a tag, and a tag is not a line — the attribute-per-line
+# judge attributes of a tag, and a tag is not a line - the attribute-per-line
 # spelling put alt= and loading= one line below the detector, so every
 # multi-line <img> was a finding. The registry versions flatten tags first.
 
 Law.define(:ARIA_INTERACTIVE) do
-  source "WAI-ARIA (W3C) — roles for interactive elements"
+  source "WAI-ARIA (W3C) - roles for interactive elements"
   detect { |line| line.match?(/<(div|span)\s+[^>]*onclick/) }
   fix "Add role= and tabindex= for accessibility."
   bad  "<div onclick=\"go()\">"
@@ -18,7 +18,7 @@ end
 # ARIA_LABELS lives once, in the registry (web_laws.rb): its detector
 # flattens multi-line tags and honours label-wrapping before judging, and the
 # per-line duplicate here flagged every attribute-per-line control as nameless
-# — the playlist transport bar carried six labels and six findings at once.
+# - the playlist transport bar carried six labels and six findings at once.
 
 # SEMANTIC_ELEMENTS catches a div whose class is exactly a landmark name. This is
 # the other half of divitis and the more common one: a div carrying nothing at
@@ -28,19 +28,19 @@ end
 # and reached for the generic element.
 #
 # The fix is an element that says what the group is (section, article, header,
-# ul) — or nothing. A wrapper whose only job was layout disappears once the
+# ul) - or nothing. A wrapper whose only job was layout disappears once the
 # parent becomes a grid, or once the stylesheet selects its children by
 # structure.
 Law.define(:BARE_DIV_WRAPPER) do
-  source "HTML5 semantics / WCAG 1.3.1 — an element with no meaning carries none"
+  source "HTML5 semantics / WCAG 1.3.1 - an element with no meaning carries none"
   # A div grouping a dt/dd pair inside a <dl> is the HTML 5.2 idiom, not a
-  # styling wrapper — the spec added it precisely so the pair could share a
+  # styling wrapper - the spec added it precisely so the pair could share a
   # layout box.
   #
   # The marker convention applies here as well: a bare div whose line carries
-  # `scan: intentional` states its reason where the element lives — the grid
+  # `scan: intentional` states its reason where the element lives - the grid
   # column wrapper is the layout, and the text it holds is anonymous (a
-  # nickname row, a cart line) — so no semantic element would carry meaning
+  # nickname row, a cart line) - so no semantic element would carry meaning
   # the div does not.
   detect { |line| line.match?(/<div\s*>/) && !line.match?(/<div>\s*(?:<%=\s*tag\.dt|<dt)/) && !line.match?(/scan:\s*intentional\b/) }
   fix "Name the group with a semantic element, or drop the wrapper and select its children by structure."
@@ -50,7 +50,7 @@ end
 
 Law.define(:BEM_IN_VIEWS) do
   path "/app/views/"
-  source "style.yml bare_tag_targeting — no BEM in ERB"
+  source "style.yml bare_tag_targeting - no BEM in ERB"
   detect { |line| line.match?(/class=["'][^"']*__[^"']*["']/) }
   fix "Target bare tags in SCSS; remove __block__element classes from ERB."
   bad  "<div class=\"card__title\">"
@@ -58,21 +58,21 @@ Law.define(:BEM_IN_VIEWS) do
 end
 
 # One blank line separates two things. Two blank lines separate them by an
-# amount nobody agreed on, and the amount is invisible — a reader cannot tell a
+# amount nobody agreed on, and the amount is invisible - a reader cannot tell a
 # deliberate double gap from a merged patch that left one behind, so the spacing
 # stops carrying information the moment it varies.
 #
 # File-scoped because the defect is a relationship between lines: a single blank
 # line is correct, and only its neighbour makes it wrong.
 Law.define(:BLANK_LINE_RUN) do
-  source "Strunk & White I.1 — vigorous writing is concise, and so is its spacing"
+  source "Strunk & White I.1 - vigorous writing is concise, and so is its spacing"
   scope :file
   # Whitespace-only lines count as blank: a line holding two spaces looks
   # identical to an empty one and is the usual way a run of them survives.
   #
   # It reads comments because it measures whitespace, and the engine blanks a
   # comment to a bare newline to keep line numbers. That turns any two-line
-  # comment into a run this law then reports: a four-line `<%# … %>` block
+  # comment into a run this law then reports: a four-line `<%# ... %>` block
   # explaining an opt-out, with one ordinary blank line above it, was five blank
   # lines by the time the detector saw it. A spacing law that cannot see the
   # comments is measuring a file nobody wrote.
@@ -84,7 +84,7 @@ Law.define(:BLANK_LINE_RUN) do
 end
 
 Law.define(:BUTTON_OVER_ANCHOR) do
-  source "WAI-ARIA Authoring Practices — button vs link (W3C)"
+  source "WAI-ARIA Authoring Practices - button vs link (W3C)"
   detect { |line| line.match?(/<a\s+href=["']#["']/) }
   fix "Use <button>. Accessible by default."
   bad  "<a href=\"#\">Open</a>"
@@ -92,14 +92,14 @@ Law.define(:BUTTON_OVER_ANCHOR) do
 end
 
 # A class that restates its own tag adds a second name that only the
-# stylesheet reads — and the second name is the one that rots.
+# stylesheet reads - and the second name is the one that rots.
 #
 # The first version of this law believed context could always carry the
 # distinction ("main > header"), and named page-header as its bad fixture.
 # The rendered DOM refuted that on 2026-08-21: probed over CDP with all four
 # surfaces booted, .page-header's parent varies by page (main#main-content on
 # search, section.channels-index on channels), and the marketplace front page
-# lays out FOUR header species at once — page-header, composer-header,
+# lays out FOUR header species at once - page-header, composer-header,
 # marketplace-top-offers-header and the market-hero that sits as main's
 # direct child and must NOT share their styling. No context selector
 # discriminates what those prefixes discriminate; the prefix is the honest
@@ -107,14 +107,14 @@ end
 # below always allowed.
 #
 # So the law now claims only what it can defend: a class whose distinguishing
-# half is pure filler (content-, inner-, wrapper-, -area, -block…) restates
+# half is pure filler (content-, inner-, wrapper-, -area, -block...) restates
 # the tag and goes. A class whose prefix names one of several coexisting
-# species stays — that discrimination is its job.
+# species stays - that discrimination is its job.
 #
 # A section classed live-feed describes itself and stays; a section classed
 # content-section restates itself and goes.
 Law.define(:CLASS_RESTATES_TAG) do
-  source "style.yml bare_tag_targeting — the tag is already the name"
+  source "style.yml bare_tag_targeting - the tag is already the name"
   detect { |line| line.match?(/<(header|footer|nav|main|section|article|aside|form|figure|dialog|details|summary|table)\b[^>]*class=["'](?:[^"']*\s)?(?:(?:content|inner|outer|wrapper|container|box|main|site|app)-)?\1(?:-(?:content|inner|outer|wrapper|container|box|area|block))?(?:\s[^"']*)?["']/) }
   fix "Drop the filler class and select the bare tag; a prefix that names which of several coexisting elements this is may stay."
   bad  "<header class=\"content-header\">"
@@ -124,7 +124,7 @@ end
 # HTML_LANG lives once, in the registry (web_laws.rb): it reads through
 # tag_source, so an `<html` inside a comment, a string or an ERB expression
 # is prose about the tag, not the tag. This bare line regex had no such
-# filter — the tag_source family is why ARIA_LABELS and IMG_ALT retired the
+# filter - the tag_source family is why ARIA_LABELS and IMG_ALT retired the
 # same way.
 
 Law.define(:I18N_COVERAGE) do
@@ -134,17 +134,17 @@ Law.define(:I18N_COVERAGE) do
   # Element content, not attribute text. Three shapes were being read as prose
   # and none of them renders as any:
   #
-  # A `>` inside a quoted attribute closes nothing — `data-action="click->
+  # A `>` inside a quoted attribute closes nothing - `data-action="click->
   # media-picker#trigger"` made the Stimulus arrow look like a tag end, so the
   # attribute name after it counted as content and a fully translated button
   # was a finding. Quoted spans blank first.
   #
   # An ERB tag is blanked whole rather than left to look like a tag boundary.
-  # `<%= @summary[:active_items] %> active</span>` is a real finding — "active"
-  # is English on a Norwegian page — so the `%>` cannot simply be excluded; what
+  # `<%= @summary[:active_items] %> active</span>` is a real finding - "active"
+  # is English on a Norwegian page - so the `%>` cannot simply be excluded; what
   # has to go is the expression inside it, which is Ruby and not prose.
   #
-  # And an ERB comment renders nothing at all — including its continuation
+  # And an ERB comment renders nothing at all - including its continuation
   # lines, which a per-line detector cannot see past the line that opens the
   # comment. The comments are blanked before the lines are read.
   detect do |text|
@@ -169,15 +169,15 @@ end
 # guess is wrong often enough that WHATWG requires the declaration.
 #
 # Only a document can carry one. A partial has no head to put it in, so the
-# earlier detector — anything lacking the meta tag — fired on all 423 partials
+# earlier detector - anything lacking the meta tag - fired on all 423 partials
 # in RAILS and on 5 layouts, and the 423 could not have complied if they tried.
 # The guard asks whether this file is a document before asking whether it
 # declares its encoding.
 Law.define(:META_CHARSET) do
-  source "HTML Living Standard — meta charset utf-8 (WHATWG)"
+  source "HTML Living Standard - meta charset utf-8 (WHATWG)"
   scope :file
   # Both spellings count. The http-equiv form is the older one, and mail clients
-  # honour it more reliably than the HTML5 short form — so shared/layouts/mailer
+  # honour it more reliably than the HTML5 short form - so shared/layouts/mailer
   # declares its encoding that way on purpose, and a detector accepting only the
   # short form called the one correct file in the tree an error.
   detect { |text| text.match?(/<html\b|<body\b/) && !text.match?(/<meta\s+charset=|charset=["']?utf-8/i) }
@@ -196,7 +196,7 @@ end
 # tool that reads stylesheets and scripts as files walks straight past it. A tag
 # with src or href suffers none of that, so this ignores them.
 Law.define(:NO_INLINE_SCRIPT_BLOCK) do
-  source "CSP script-src / separation of concerns — assets are files"
+  source "CSP script-src / separation of concerns - assets are files"
   detect { |line| line.match?(/<script(?![^>]*\bsrc=)|<style\b(?![^>]*\bhref=)/) }
   fix "Move it to an asset file and reference it with javascript_include_tag or stylesheet_link_tag."
   bad  "<div><script>boot()</script></div>"
@@ -204,14 +204,14 @@ Law.define(:NO_INLINE_SCRIPT_BLOCK) do
 end
 
 Law.define(:NO_INLINE_STYLES) do
-  source "CSP / separation of concerns — no inline styles"
+  source "CSP / separation of concerns - no inline styles"
   # A style attribute carrying only custom properties is a data channel to
-  # the stylesheet — style="--swatch: teal" hands a value to a rule that
+  # the stylesheet - style="--swatch: teal" hands a value to a rule that
   # lives in CSS (color: var(--swatch)), which is the separation this law
   # wants. A real property inline still fires.
   #
   # The marker convention the other laws honour applies here too: a line that
-  # says `scan: intentional` carries its reason beside it — the mailer
+  # says `scan: intentional` carries its reason beside it - the mailer
   # preheader (mail clients load no bundle), AdSense's required inline
   # display on <ins>, a honeypot no stylesheet may reveal, and helpers whose
   # whole emission is one custom property the detector cannot see through
@@ -252,7 +252,7 @@ Law.define(:SPONSORED_LINK_REL) do
       next unless link.match?(/outbound[_-]click|affiliate/i) && !link.match?(/\bsponsored\b/)
 
       line = src[0...Regexp.last_match.begin(0)].count("\n") + 1
-      findings << finding(line:, message: "affiliate link without rel=\"sponsored\" — mark it as paid")
+      findings << finding(line:, message: "affiliate link without rel=\"sponsored\" - mark it as paid")
     end
     findings
   end
@@ -267,7 +267,7 @@ end
 # three apps and resolves to a different colour in each: --text-secondary in
 # brgen, --color-grey-text in amber, --text-secondary in bsdports. The built
 # stylesheets carry seven, six and four rules matching it. Two of amber's three
-# bare declarations never take effect, and two of bsdports' do not either — they
+# bare declarations never take effect, and two of bsdports' do not either - they
 # lose to a later rule of equal specificity, so the earlier ones are dead weight
 # that would come alive if anyone reordered an @use.
 #
@@ -279,12 +279,12 @@ end
 # assistive technology as well as to the stylesheet, and no second declaration
 # can quietly override them.
 Law.define(:PRESENTATIONAL_CLASS_NAME) do
-  source "CSS naming — classes name meaning, not appearance"
+  source "CSS naming - classes name meaning, not appearance"
   # The marker convention applies: a class whose word is a domain term rather
   # than a rendering decision ("seller center", the management area) states so
   # at the element instead of being renamed away from its own meaning.
   detect { |line| line.match?(/class=["'][^"']*\b(?:dim|muted|faded|bold|italic|underline|small|big|large|tiny|left|right|center|centre|red|green|blue|grey|gray|white|black)\b/) && !line.match?(/scan:\s*intentional\b/) }
-  fix "Name the role, not the rendering — or use the element that already means it (small, strong, em, time)."
+  fix "Name the role, not the rendering - or use the element that already means it (small, strong, em, time)."
   bad  "<span class=\"dim\">posted just now</span>"
   good "<small>posted just now</small>"
 end
@@ -302,12 +302,12 @@ end
 # skip link is the bypass WCAG 2.4.1 asks for.
 #
 # It belongs to the layout, which is the only file that owns the first focusable
-# element. The earlier detector — anything not mentioning a skip target — fired
+# element. The earlier detector - anything not mentioning a skip target - fired
 # on all 423 partials in RAILS, none of which can hold one, and buried the 5
 # layouts where the question is real.
 # The registry twin knew two more things, ported with its retirement: only
 # layouts own the first focusable element, and a mailer layout is not a page
-# — no viewport to skip past, no #main-content to land on; both findings
+# - no viewport to skip past, no #main-content to land on; both findings
 # this rule ever produced in RAILS were mailer layouts.
 Law.define(:SKIP_TO_MAIN) do
   path "/app/views/layouts/"
@@ -322,7 +322,7 @@ end
 # TAG_HELPER_OVER_MARKUP is retired, not moved. Its detector matched
 # `<p><%= ... %></p>` and its siblings; PREFER_TAG_HELPERS in the registry
 # (law/web.rb, SIMPLE_WRAPPER_TAG_RE) is a strict
-# superset — the same shape plus div, span, li and label, and tolerant of
+# superset - the same shape plus div, span, li and label, and tolerant of
 # attributes. Measured over 536 RAILS views: every one of this rule's 292
 # findings was also one of the registry's, so it only ever double-reported.
 #

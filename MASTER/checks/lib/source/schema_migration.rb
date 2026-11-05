@@ -19,7 +19,7 @@ module Deploy
     def run
       result = CheckResult.new
       inventory = Inventory.new(root: @root)
-      return result.inconclusive!("schema_migration: the inventory lists no apps — nothing was read") if inventory.apps.empty?
+      return result.inconclusive!("schema_migration: the inventory lists no apps - nothing was read") if inventory.apps.empty?
 
       inventory.apps.each do |app|
         app_dir = File.join(@rails_root, app.name)
@@ -66,8 +66,8 @@ module Deploy
 
     # A table name is a symbol or a quoted string, and either delimiter closes it.
     #
-    # This read /create_table\s+["':](\w+)["']/ — a colon allowed to open the name
-    # and a quote demanded to close it — so `create_table :posts`, the form every
+    # This read /create_table\s+["':](\w+)["']/ - a colon allowed to open the name
+    # and a quote demanded to close it - so `create_table :posts`, the form every
     # migration in this fleet uses, matched nothing. The scan saw 3 of 200 calls
     # and the duplicate check below had never once seen a table.
     CREATE_TABLE = /create_table\s+(?::(\w+)|"(\w+)"|'(\w+)')/
@@ -78,8 +78,8 @@ module Deploy
 
     # A second create_table is ordinary when the migration says what it expects
     # to find. Three forms say it, and all three are in use here: `if_not_exists:
-    # true` on the call, a `table_exists?` guard anywhere in the file — whether it
-    # wraps the call, returns early, or drops the table before recreating it — and
+    # true` on the call, a `table_exists?` guard anywhere in the file - whether it
+    # wraps the call, returns early, or drops the table before recreating it - and
     # a drop of that table first. Sixteen second calls exist across the fleet and
     # every one of them is guarded, which is why this check must read the guard
     # rather than count the calls.
@@ -96,7 +96,7 @@ module Deploy
     def duplicate_create_tables(app_dir, result, app_name)
       seen = {}
       Dir.glob(File.join(app_dir, "db", "migrate", "*.rb")).sort.each do |path|
-        body = read_utf8(path) # scan: intentional — two plain lines beat a .then
+        body = read_utf8(path) # scan: intentional - two plain lines beat a .then
         create_table_names(body).each do |table|
           first = seen[table]
 
@@ -107,7 +107,7 @@ module Deploy
           next if guarded_for?(body, table)
 
           result.fail("#{app_name}: unguarded second create_table #{table} in " \
-                      "#{File.basename(path)}, already created in #{first} — " \
+                      "#{File.basename(path)}, already created in #{first} - " \
                       "add if_not_exists: true or a table_exists? guard")
         end
       end

@@ -5,7 +5,7 @@ module Master
     module CommandRegistry
       module_function
 
-      # /model — show, list or switch the active model. `/model auth` connects
+      # /model - show, list or switch the active model. `/model auth` connects
       # the subscription lanes those models are served through.
       def dispatch_model(agent:, config:, metrics:, root:, ctx: nil, arg: nil)
         arg = arg || arg_for(ctx)
@@ -62,7 +62,7 @@ module Master
         width = ids.map(&:length).max.to_i
         ids.map do |id|
           label = tiers_by_id.fetch(id) { [router&.lane_label(id)].compact }.uniq.join(", ")
-          "#{id == current ? '→' : ' '} #{id.ljust(width)}  #{label}".rstrip
+          "#{id == current ? '->' : ' '} #{id.ljust(width)}  #{label}".rstrip
         end
       end
 
@@ -122,7 +122,7 @@ module Master
                    "fail=#{row[:failures]} success=#{(row[:rate] * 100).round(1)}% avg_ok=#{average}"
         end
         hidden = measured.size - 30
-        lines << "  … #{hidden} more models" if hidden.positive?
+        lines << "  ... #{hidden} more models" if hidden.positive?
         lines.join("\n")
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "command_registry.model_health")
@@ -133,7 +133,7 @@ module Master
         path = File.join(root, ".master", "trajectories", "trajectories.ndjson")
         Master::AI::Trajectory::Laboratory.render(input: path)
       rescue StandardError => e
-        "model0: lab failed — #{e.class}: #{e.message}"
+        "model0: lab failed - #{e.class}: #{e.message}"
       end
 
       def compute_models(agent:, root:)

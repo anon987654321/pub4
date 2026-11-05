@@ -5,7 +5,7 @@
 # system(), and a fresh process does not inherit Encoding.default_external. Under
 # the C locale that OPENBSD/checks/integrity_check.rb deliberately uses, reading UTF-8
 # source raised `invalid byte sequence in US-ASCII` from inside
-# domain_alignment.rb — a crash that could not happen when the same check class
+# domain_alignment.rb - a crash that could not happen when the same check class
 # ran in-process.
 require_relative "support/utf8"
 
@@ -16,15 +16,15 @@ require_relative "../lib/io/exec"
 # From the manifest, not from four hardcoded paths.
 #
 # All four moved into lib/host and lib/source, checks.yml moved with them, and
-# these four lines did not — so this file raised LoadError on
+# these four lines did not - so this file raised LoadError on
 # lib/domain_alignment before reaching its first check. Nothing in-process
 # noticed: release is one of the checks runner.rb starts with system(), so a
 # subprocess that dies on require reads as a failing check rather than a missing
 # file, and `constitutional_scan` was wired under release earlier tonight on the
 # assumption it ran at all.
 #
-# checks.yml is where a check's require lives — TREE_CONTRACTS.md calls it declared
-# once — so reading it here is what stops the next move breaking this file again.
+# checks.yml is where a check's require lives - TREE_CONTRACTS.md calls it declared
+# once - so reading it here is what stops the next move breaking this file again.
 # Keyed on the classes this file names, not on `covered_by: release`: it also
 # runs frontend_auditor, which belongs to layout_suite, so requiring its own
 # composite loaded three of the four and left the fourth undefined at line 152.
@@ -58,7 +58,7 @@ YAML.safe_load_file(manifest_path, aliases: true).then { |manifest| manifest["ch
 # RAILS/, where the apps, the shared engine and the contract tests live.
 ROOT = File.expand_path("../../RAILS", __dir__)
 APPS = %w[amber brgen bsdports].freeze
-FAILURES = [] # scan: intentional — this script's accumulator, appended to by every step below
+FAILURES = [] # scan: intentional - this script's accumulator, appended to by every step below
 STEP_TIMEOUT = Integer(ENV.fetch("RELEASE_CHECK_STEP_TIMEOUT", "180"))
 
 def command_available?(cmd)
@@ -98,13 +98,13 @@ end
 RUBY = ruby_cmd
 BUNDLE = bundle_cmd
 
-# A missing Bundler used to `exit 0` on the whole check — the exact shape
+# A missing Bundler used to `exit 0` on the whole check - the exact shape
 # CheckResult's third state exists to prevent (the old backlog:
 # rails_checks_not_wired, "release_check exits 0 when bundler is missing"). Two
 # thirds of this check needs no Bundler at all: eight plain-ruby contract tests
 # and four in-process check classes. Those still run; only the per-app dartsass
 # and importmap steps are recorded as unchecked.
-UNCHECKED = [] # scan: intentional — accumulator, as FAILURES above
+UNCHECKED = [] # scan: intentional - accumulator, as FAILURES above
 
 if BUNDLE
   APPS.each do |app|
@@ -118,7 +118,7 @@ if BUNDLE
     run("#{app} importmap", importmap_audit, chdir: dir)
   end
 else
-  UNCHECKED << "bundle not on PATH — #{APPS.size} app dartsass + importmap audit step(s) skipped " \
+  UNCHECKED << "bundle not on PATH - #{APPS.size} app dartsass + importmap audit step(s) skipped " \
                "(set BUNDLE_CMD to the intended Bundler executable)"
 end
 
@@ -152,7 +152,7 @@ BARE_SHARED_TESTS.each do |test|
     run(test, [*BUNDLE, "exec", *RUBY, test], chdir: ROOT,
         env: { "BUNDLE_GEMFILE" => File.join(ROOT, "brgen", "Gemfile") })
   else
-    UNCHECKED << "bundle not on PATH — #{test} skipped (it needs the bundle for active_support)"
+    UNCHECKED << "bundle not on PATH - #{test} skipped (it needs the bundle for active_support)"
   end
 end
 
@@ -161,7 +161,7 @@ if BUNDLE
                               *BOOTED_SHARED_TESTS.map { |test| "../#{test}" }],
       chdir: File.join(ROOT, "brgen"))
 else
-  UNCHECKED << "bundle not on PATH — #{BOOTED_SHARED_TESTS.join(", ")} skipped (they need a booted app)"
+  UNCHECKED << "bundle not on PATH - #{BOOTED_SHARED_TESTS.join(", ")} skipped (they need a booted app)"
 end
 
 [

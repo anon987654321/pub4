@@ -1,4 +1,4 @@
-# Mode prompts for Review::Modes — one file keyed by mode, was four
+# Mode prompts for Review::Modes - one file keyed by mode, was four
 # mode_<name>.yml files whose only reader interpolated the filename.
 code_agent:
   template: |

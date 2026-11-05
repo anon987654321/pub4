@@ -145,7 +145,7 @@ labels:
     human: fail
     rater: seed
 
-  # Soft example: thin but not evil — optional partial quality
+  # Soft example: thin but not evil - optional partial quality
   - id: marketplace_cart_good
     fixture: fixtures/surfaces/good_marketplace_cart.html
     surface: marketplace

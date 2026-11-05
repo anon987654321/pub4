@@ -9,14 +9,14 @@ module Operator
   #
   # Colour, space, motion, elevation and the dialect maps are all single-sourced;
   # breakpoints were the one axis that was not, and they drifted the way an
-  # unmeasured axis always does — 13 distinct widths across 58 queries, including
+  # unmeasured axis always does - 13 distinct widths across 58 queries, including
   # three spellings of one edge.
   #
   # Two kinds, because they are not the same defect:
   #
-  #   unknown_edge   — a width that is not in the token list at all. Cosmetic drift
+  #   unknown_edge   - a width that is not in the token list at all. Cosmetic drift
   #                    until two of them disagree about the same edge.
-  #   ambiguous_edge — one number used as BOTH a max bound and a min bound
+  #   ambiguous_edge - one number used as BOTH a max bound and a min bound
   #                    somewhere in the tree. At exactly that width both blocks
   #                    match, so which one wins is source order rather than intent.
   #
@@ -56,7 +56,7 @@ module Operator
       findings = scan
       counts(findings).each do |kind, count|
         baseline = BASELINES.fetch(kind)
-        note = count < baseline ? " — under baseline, lower it" : ""
+        note = count < baseline ? " - under baseline, lower it" : ""
         puts "breakpoint_lint: #{kind} #{count} (baseline #{baseline})#{note}"
       end
       findings.each { |f| puts "  #{f.file}:#{f.line} [#{f.kind}] #{f.value}" }
@@ -64,7 +64,7 @@ module Operator
       exceeded = over_baseline(findings)
       return true if exceeded.empty?
 
-      warn "breakpoint_lint: exceeds baseline — #{exceeded.join("; ")}"
+      warn "breakpoint_lint: exceeds baseline - #{exceeded.join("; ")}"
       warn "breakpoint_lint: use a MASTER tokens.viewport edge (max-width bounds are edge - 1px)"
       false
     end
@@ -82,7 +82,7 @@ module Operator
     #
     # A container query measures the element's own container, not the viewport,
     # so a card grid switching to a row at 400px of container width is a
-    # component decision that can happen at any viewport size — 400 and 600 mean
+    # component decision that can happen at any viewport size - 400 and 600 mean
     # nothing on the viewport scale and there is no edge for them to be wrong
     # against. QUERY matched them anyway, because `(min-width: 400px)` is the
     # same eight characters in both, and the lint reported two correct container
@@ -157,7 +157,7 @@ module Operator
     end
 
     # rem and em in a media query resolve against the browser's root size, which is
-    # 16px regardless of what any element sets — this is the one place `rem` is not
+    # 16px regardless of what any element sets - this is the one place `rem` is not
     # affected by brgen's 18px root.
     def to_px(value, unit)
       unit == "px" ? value.to_f : value.to_f * 16

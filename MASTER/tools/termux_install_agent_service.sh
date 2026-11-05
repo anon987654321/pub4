@@ -9,7 +9,7 @@ WAKE_RUN=$WAKE_SERVICE/run
 BOOT=$HOME/.termux/boot/start-master-services
 
 command -v sv-enable >/dev/null 2>&1 || {
-  echo 'device-agent0: termux-services missing — pkg install termux-services'
+  echo 'device-agent0: termux-services missing - pkg install termux-services'
   exit 1
 }
 test -d "$ROOT" || {

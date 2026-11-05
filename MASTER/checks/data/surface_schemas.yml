@@ -1,5 +1,5 @@
 # DOM / HTML surface schemas for layout + flow checks (P1).
-# Markers are structural patterns on rendered HTML or view source — not CSS selectors.
+# Markers are structural patterns on rendered HTML or view source - not CSS selectors.
 # severity: hard (merge block) | soft (warn unless CHECK_STRICT_SOFT=1)
 # principle: MASTER principle_map cluster id for fail messages.
 #
@@ -68,7 +68,7 @@ schemas:
         principle: affordance
       # An empty catalogue still renders the catalogue region, as the empty
       # state. Without the third alternate this hard marker reported a checkout
-      # with no listings as a page missing its product grid — the same reading
+      # with no listings as a page missing its product grid - the same reading
       # error exemplars.yml's nav_before_grid carried, and for the same reason.
       product_grid:
         pattern: 'deal-grid|deal-card|empty-state-title'

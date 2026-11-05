@@ -21,7 +21,7 @@ module Deploy
     def guarded(payload, name)
       yield payload
     rescue StandardError => e
-      warn "surface_probes: #{name} probe failed (#{e.class.name.split("::").last}) — #{e.message[0, 80]}"
+      warn "surface_probes: #{name} probe failed (#{e.class.name.split("::").last}) - #{e.message[0, 80]}"
       payload.merge("#{name}_probe_error" => e.class.name)
     end
   end

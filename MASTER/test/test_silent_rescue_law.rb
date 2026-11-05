@@ -130,7 +130,7 @@ class TestSilentRescueRule < Minitest::Test
 
     assert_empty @silent.check(code, path: "law/lexical.rb")
   end
-  # In a predicate, false IS the handling — the health-check idiom: the error
+  # In a predicate, false IS the handling - the health-check idiom: the error
   # becomes the answer. Outside one, the same false is still a discard.
   def test_a_predicate_rescuing_to_false_is_not_silent
     src = "def tts_healthy?

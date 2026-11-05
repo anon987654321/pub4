@@ -43,13 +43,13 @@ module Deploy
         warnings += warns.size
 
         errs.first(5).each do |f|
-          result.fail("auditor error [#{app}] #{f.path}: #{f.rule} — #{f.message}")
+          result.fail("auditor error [#{app}] #{f.path}: #{f.rule} - #{f.message}")
         end
         warns.first(8).each do |f|
-          result.warn("auditor warning [#{app}] #{f.path}: #{f.rule} — #{f.message}")
+          result.warn("auditor warning [#{app}] #{f.path}: #{f.rule} - #{f.message}")
         end
 
-        # Pen allow-list hits are info — surface count only
+        # Pen allow-list hits are info - surface count only
         pen_infos = infos.count { |f| f.rule == :product_pen }
         result.warn("auditor [#{app}]: #{errs.size} error(s), #{warns.size} warning(s), #{pen_infos} product pen(s) preserved") if findings.any?
       end

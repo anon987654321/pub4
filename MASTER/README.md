@@ -16,7 +16,7 @@ persists its bounded decision frames through the existing `.master/memory.yml` s
 the model receives a compact recent reasoning history on the next turn. This is deliberately
 small: better judgment should reduce machinery, not create another orchestration layer.
 
-See [Efficient checks → repair → proof](docs/efficient_repair_workflow.md) for the bounded default workflow: measure first, run the relevant composite, repair only the owning tree, and repeat the same checks.
+See [Efficient checks -> repair -> proof](docs/efficient_repair_workflow.md) for the bounded default workflow: measure first, run the relevant composite, repair only the owning tree, and repeat the same checks.
 
 ## The idea
 
@@ -38,7 +38,7 @@ receipt. `data/law_runtime.yml` retains runtime settings for scanner, veto,
 plugins and `/fix`; it does not carry a second per-Law catalogue. Executable
 definitions and detector-adapter sources share one physical home under
 `law/`; `lib/review/scan/` holds scanner machinery, registration, auditing and
-orchestration — not another Law source. Reconciliation does not prove every
+orchestration - not another Law source. Reconciliation does not prove every
 Law has a deterministic detector or that every runtime surface has been
 assessed; do not infer complete enforcement from a file or registry count.
 A break gets a refusal with a reason, never a quiet patch.
@@ -151,7 +151,7 @@ commits local. Other sessions' dirty work is never swept into a repair.
 A one-app RAILS target also enters the app's measured layout-improvement loop.
 A target that does not resolve to one app skips that loop. For repository-wide
 or exact top-level tree targets, `/fix` first runs a read-only architecture
-tournament of 30–40 grounded candidates per tree; at least 30 valid candidates
+tournament of 30-40 grounded candidates per tree; at least 30 valid candidates
 are required. The tournament runs no tests and edits nothing, and its shortlist
 guides narrow repairs rather than authorising a broad rewrite. The 90-item
 acceptance inventory in `data/ux_refinements.yml` supplies owner and proof
@@ -301,7 +301,7 @@ When recognized personal stories trigger research, the agent and guarded
 search and its permission telemetry. This is lexical minimization, not a complete
 data-loss-prevention guarantee; verify its coverage in `test_evidence_router.rb`,
 `test_agent.rb` and `test_io_tools.rb`.
-English, Bokmål and Nynorsk routing examples—including factual family mentions, explicit self-harm denials, mixed-risk statements, indirect crisis language, violence-related wording, unlabeled emotional-abuse patterns and philosophical martial-arts questions—are covered by `test/test_dialogue_rubric.rb`.
+English, Bokmål and Nynorsk routing examples - including factual family mentions, explicit self-harm denials, mixed-risk statements, indirect crisis language, violence-related wording, unlabeled emotional-abuse patterns and philosophical martial-arts questions - are covered by `test/test_dialogue_rubric.rb`.
 Research URLs are starting points: the runtime must actually consult a source
 before claiming it performed research. Topic routing is lexical assistance, not
 a clinical classifier or suicide-risk assessment. MASTER must not diagnose a
@@ -354,7 +354,7 @@ MASTER can assess a public website from observable evidence, review source when 
 
 ### Competitive landscape
 
-The space is already competitive, and product boundaries overlap: GitHub bundles CodeQL/code scanning with dependency and secret-protection capabilities; Snyk markets a platform spanning code, open-source dependencies, secrets, containers, IaC and DAST. Therefore, “one security dashboard” is not a credible differentiation by itself. The narrower hypothesis is a trusted evidence trail that connects rendered UI and accessibility findings to authorised source review, then proves the fix. This remains a hypothesis, not a demonstrated market gap. [GitHub Code Security](https://docs.github.com/en/get-started/learning-about-github/about-github-advanced-security) · [Snyk platform](https://snyk.io/platform/)
+The space is already competitive, and product boundaries overlap: GitHub bundles CodeQL/code scanning with dependency and secret-protection capabilities; Snyk markets a platform spanning code, open-source dependencies, secrets, containers, IaC and DAST. Therefore, "one security dashboard" is not a credible differentiation by itself. The narrower hypothesis is a trusted evidence trail that connects rendered UI and accessibility findings to authorised source review, then proves the fix. This remains a hypothesis, not a demonstrated market gap. [GitHub Code Security](https://docs.github.com/en/get-started/learning-about-github/about-github-advanced-security) - [Snyk platform](https://snyk.io/platform/)
 
 | Segment | Benchmarks | Established strength |
 | --- | --- | --- |

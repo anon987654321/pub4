@@ -45,7 +45,7 @@ module Deploy
         label: "marketplace_cart",
         host: "markedsplass.#{APEX}",
         path: "/cart",
-        # Guest-open cart — do not require sign-in chrome
+        # Guest-open cart - do not require sign-in chrome
         expect_body: [/Cart|Your Cart|navBar|Markedsplass|empty|offer/i],
       },
       {
@@ -59,7 +59,7 @@ module Deploy
       # "playlist_en" on radio.brgen.no, a pair that existed to prove the
       # Norwegian alias and the English name both reached the engine. The alias
       # is gone (see Brgen::DomainRegistry::RADIO_SUBDOMAINS) and, for as long
-      # as it had been declared, spilleliste.brgen.no was NXDOMAIN — so the half
+      # as it had been declared, spilleliste.brgen.no was NXDOMAIN - so the half
       # of the pair that justified the split had never once resolved.
       {
         label: "playlist",
@@ -91,7 +91,7 @@ module Deploy
         host: "messenger.#{APEX}",
         pixel_snapshot: true,
         path: "/",
-        # Guest-open messenger — inbox chrome without signup wall
+        # Guest-open messenger - inbox chrome without signup wall
         expect_body: [/conversation|Messages|messenger-compose|message/i],
       },
       # Secondary guest surfaces on the apex (not separate Hosts)

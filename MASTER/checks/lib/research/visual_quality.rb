@@ -106,7 +106,7 @@ module Deploy
 
         r = @exemplars.score(File.read(path), id)
         if r.pass?
-          @result.fail("visual_quality: bad fixture #{id} unexpectedly passed (score #{r.score}/#{r.max}) — check blind")
+          @result.fail("visual_quality: bad fixture #{id} unexpectedly passed (score #{r.score}/#{r.max}) - check blind")
         else
           @result.warn("visual_quality: bad/#{id} correctly scored #{r.score}/#{r.max} (target #{r.target})")
         end
@@ -211,7 +211,7 @@ module Deploy
       return unless res.code.to_i.between?(200, 399)
 
       res.body.to_s
-    rescue StandardError # scan: intentional — nil is the measured-nothing signal, reported downstream as the check's warning
+    rescue StandardError # scan: intentional - nil is the measured-nothing signal, reported downstream as the check's warning
       nil
     end
   end

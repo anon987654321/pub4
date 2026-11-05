@@ -11,7 +11,7 @@ module Master
     class WebBrowse
       TIER = :guarded
       NAME = "web_browse"
-      DESCRIPTION = "Render a page in headless Chrome → title, visible text and links. For JavaScript sites web_fetch cannot read."
+      DESCRIPTION = "Render a page in headless Chrome -> title, visible text and links. For JavaScript sites web_fetch cannot read."
       TIMEOUT = 30
       REQUEST_TIMEOUT = 10
       SETTLE_SECONDS = 4
@@ -327,7 +327,7 @@ module Master
           body << "\n\nPage elements: #{summary}"
         end
         if links && snapshot["links"].is_a?(Array) && !snapshot["links"].empty?
-          list = snapshot["links"].uniq { |link| link["href"] }.first(MAX_LINKS).map { |link| "- #{link["text"]} → #{link["href"]}" }
+          list = snapshot["links"].uniq { |link| link["href"] }.first(MAX_LINKS).map { |link| "- #{link["text"]} -> #{link["href"]}" }
           body << "\n\nLinks:\n#{list.join("\n")}"
         end
         if (forms = snapshot["forms"]).is_a?(Array) && !forms.empty?

@@ -10,7 +10,7 @@ module Master
       class PassRunner
         # Deterministic, no-LLM-call fixes run before the LLM stage: rubocop
         # autocorrect, AST-level autofixes, and the type/datalog findings that
-        # ride along with the same file read — separate concern from the
+        # ride along with the same file read - separate concern from the
         # LLM-driven fix pipeline.
         module FastStage
           private
@@ -214,7 +214,7 @@ module Master
 
           def report_datalog_findings(path, src, rel)
             dl = Review::Scan::DatalogEngine.from_ruby(path, src)
-            dl.rule(:BARE_RESCUE_DATALOG, :bare_rescue) { |f| "bare rescue at line #{f.args[1]} — use rescue StandardError" }
+            dl.rule(:BARE_RESCUE_DATALOG, :bare_rescue) { |f| "bare rescue at line #{f.args[1]} - use rescue StandardError" }
             findings = dl.evaluate
             findings.each { |finding| @bus&.publish("fix_loop:datalog_finding", file: rel, rule: finding.rule_id, message: finding.message) }
             Master::Trace::Dmesg.status(FAST_STAGE_UNIT, "datalog, #{rel}: #{Master::Trace::Dmesg.counted(findings.size, "finding")}") if findings.any?

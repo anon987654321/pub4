@@ -78,7 +78,7 @@ module Master
             Judge correctness, not completeness: a change that resolves some of the findings, keeps
             behaviour and introduces no defect is SAFE; the rest are left for a later pass.
 
-            VIOLATION: #{violation[:law]} line #{violation[:line]} — #{violation[:message]}
+            VIOLATION: #{violation[:law]} line #{violation[:line]} - #{violation[:message]}
             #{scale_snap_rule(violation, for_verifier: true)}
             The change, as a unified diff of the whole file:
             ```diff
@@ -101,12 +101,12 @@ module Master
         end
 
         SCALE_SNAP_FOR_VERIFIER = "A scale finding is repaired by snapping the value to the nearest token on its " \
-                                  "declared scale (a var(--…) the stylesheets define), and the visible change " \
+                                  "declared scale (a var(--...) the stylesheets define), and the visible change " \
                                   "that brings is intended: do not refuse it for altering rendering. Refuse a raw " \
                                   "literal, a token that is not the nearest step, or a change to anything else.\n"
 
         SCALE_SNAP_FOR_REPAIR = "Repair a scale finding by replacing the value with the nearest token on its " \
-                                "declared scale, a var(--…) the stylesheets define (for line-height, " \
+                                "declared scale, a var(--...) the stylesheets define (for line-height, " \
                                 "var(--leading-*)); never another raw number.\n"
 
         CALLER_LINES = 30
@@ -155,7 +155,7 @@ module Master
           lines = out.lines.drop_while { |line| !line.start_with?("@@") }
           return lines.join if lines.size <= REVIEW_DIFF_LINES
 
-          "#{lines.first(REVIEW_DIFF_LINES).join}… #{lines.size - REVIEW_DIFF_LINES} more lines of diff\n"
+          "#{lines.first(REVIEW_DIFF_LINES).join}... #{lines.size - REVIEW_DIFF_LINES} more lines of diff\n"
         end
 
         # Only SAFE approves. A reply that was neither word, a refusal, a rambling
@@ -465,7 +465,7 @@ module Master
 
           File: #{path}
           Rule: #{violation[:law]}
-          Violation: line #{violation[:line]} — #{violation[:message]}
+          Violation: line #{violation[:line]} - #{violation[:message]}
 
           #{ARCHITECTURE_PLAN_GUIDANCE}
 

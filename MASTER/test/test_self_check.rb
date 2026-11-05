@@ -44,13 +44,13 @@ class TestSelfCheck < Minitest::Test
     report = Master::Fix::SelfCheck.new(root: Master::ROOT, scanner: BrokenSelfCheckScanner.new).quick
 
     refute report.clean?
-    assert_match(/selfcheck: failed — .*inner scanner failed/, report.summary)
+    assert_match(/selfcheck: failed - .*inner scanner failed/, report.summary)
   end
 
   def test_report_summary_reflects_a_scan_failure
     report = Master::Fix::SelfCheck::Report.new(total: 0, by_rule: {}, by_severity: {}, error: "boom", findings: [])
 
     refute report.clean?
-    assert_equal "selfcheck: failed — boom", report.summary
+    assert_equal "selfcheck: failed - boom", report.summary
   end
 end

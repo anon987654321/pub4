@@ -72,7 +72,7 @@ is drafted. A future claim record should carry:
 No evidence means no factual assertion. Price, discount, stock and delivery
 claims must be tied to current feed facts and must not be embellished. A stale
 product is omitted rather than rewritten into a confident claim. Avoid words
-such as “best”, “cheapest”, “guaranteed” and “number one” unless the scope,
+such as "best", "cheapest", "guaranteed" and "number one" unless the scope,
 comparison set, date and evidence actually support them. A numeric headline is
 not automatically more truthful or more persuasive.
 
@@ -100,7 +100,7 @@ performance results or brand behaviour.
 
 ### Permission and disclosure are different controls
 
-“Permission” must never be implemented as a phrase that appears in the copy.
+"Permission" must never be implemented as a phrase that appears in the copy.
 Marketing consent is an actual subscriber/CMP or advertising-consent state, read
 from the existing permission boundary. The existing AdSense partial correctly
 renders nothing unless the configured slot and `advertising_consent?` both pass.
@@ -135,11 +135,11 @@ Example:
 ```ruby
 report = Master::Review::CopyReview.review(
   creative: {
-    headline: "Kjole – NOK 149.90",
+    headline: "Kjole - NOK 149.90",
     body: "Kjole fra Fjord Studio. På lager.",
     cta: "Se produktet",
     locale: "nb-NO",
-    disclosure: "Annonse – annonselenke",
+    disclosure: "Annonse - annonselenke",
     claims: [
       { kind: "product_title", text: "Kjole" },
       { kind: "merchant", text: "Fjord Studio" },
@@ -166,7 +166,7 @@ Law catalogue and its Ruby definitions.
 
 Before a creative experiment, define the primary metric, conversion event,
 comparison, audience/placement, sample-size rule and observation window. Report
-the result with the experiment evidence. Do not describe a design as “proven” on
+the result with the experiment evidence. Do not describe a design as "proven" on
 the basis of taste, a single anecdote or click-through rate alone.
 
 A safe implementation sequence is:

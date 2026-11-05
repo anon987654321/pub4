@@ -7,7 +7,7 @@ require_relative "../lib/master"
 require_relative "../lib/ops"
 
 # RuntimeLoopGuards.install! monkey-patches the *real* Master::Fix::Heartbeat
-# via class_eval (see lib/ops.rb) — it is not designed to
+# via class_eval (see lib/ops.rb) - it is not designed to
 # work against a test double, so this spec exercises the real class directly.
 # Guard against double-aliasing across repeated `install!` calls in one
 # process: only patch once per test process, like production boot does.

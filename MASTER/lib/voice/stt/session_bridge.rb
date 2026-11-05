@@ -4,7 +4,7 @@ module Master
   module Voice
     class Stt
       # Binds Vad events to Stt utterance lifecycle and delivers final text
-      # to a callback (typically Session → agent). Keeps modules decoupled.
+      # to a callback (typically Session -> agent). Keeps modules decoupled.
       module SessionBridge
         module_function
 

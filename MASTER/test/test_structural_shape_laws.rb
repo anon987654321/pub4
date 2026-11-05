@@ -8,8 +8,8 @@ require "prism"
 # FileLayoutLaw, CyclomaticComplexityLaw, DataClassLaw, MiddleManLaw and
 # NestingDepthLaw.
 #
-# Each is tested the way law/ tests its own — a source it must flag and a source
-# it must not — because a detector proved only to fire says nothing about what it
+# Each is tested the way law/ tests its own - a source it must flag and a source
+# it must not - because a detector proved only to fire says nothing about what it
 # spares, and every one of these has a threshold or an exemption that is the
 # whole rule.
 class TestStructuralShapeRules < Minitest::Test
@@ -19,7 +19,7 @@ class TestStructuralShapeRules < Minitest::Test
     rule.check(source, path:).map(&:message)
   end
 
-  # FILE_LAYOUT — the header and the position of the private marker.
+  # FILE_LAYOUT - the header and the position of the private marker.
 
   def test_file_layout_flags_a_missing_frozen_header
     found = flags(Laws::FileLayoutLaw.new, "class Thing\nend\n")
@@ -113,7 +113,7 @@ class TestStructuralShapeRules < Minitest::Test
     assert_empty flags(Laws::FileLayoutLaw.new, "class Thing\nend\n", path: "lib/thing.txt")
   end
 
-  # CYCLOMATIC_COMPLEXITY — one plus every branching node, per method.
+  # CYCLOMATIC_COMPLEXITY - one plus every branching node, per method.
 
   def test_cyclomatic_complexity_flags_a_method_over_the_limit
     branches = (1..10).map { |n| "  return :a#{n} if x == #{n}" }.join("\n")
@@ -133,7 +133,7 @@ class TestStructuralShapeRules < Minitest::Test
   end
 
   # Twelve terms is eleven `||` operators, so complexity is twelve. Written with
-  # ten terms first, which is nine operators and lands exactly on the limit —
+  # ten terms first, which is nine operators and lands exactly on the limit -
   # the rule was right and the test was wrong, which is the arithmetic worth
   # leaving written down.
   def test_cyclomatic_complexity_counts_boolean_operators_as_branches
@@ -144,7 +144,7 @@ class TestStructuralShapeRules < Minitest::Test
     assert_includes found.first, "complexity 12"
   end
 
-  # DATA_CLASS — accessors and nothing else.
+  # DATA_CLASS - accessors and nothing else.
 
   def test_data_class_flags_accessors_without_behaviour
     found = flags(Laws::DataClassLaw.new, <<~RUBY)
@@ -170,7 +170,7 @@ class TestStructuralShapeRules < Minitest::Test
     RUBY
   end
 
-  # A constructor and the two printing methods are not behaviour — a Struct has
+  # A constructor and the two printing methods are not behaviour - a Struct has
   # them too, which is the rule's own point.
   def test_data_class_does_not_count_initialize_or_printing_as_behaviour
     found = flags(Laws::DataClassLaw.new, <<~RUBY)
@@ -191,7 +191,7 @@ class TestStructuralShapeRules < Minitest::Test
                  "one accessor is a wrapper, not a data class"
   end
 
-  # MIDDLE_MAN — a class whose every method forwards to the same object.
+  # MIDDLE_MAN - a class whose every method forwards to the same object.
 
   def test_middle_man_flags_a_class_that_only_forwards
     found = flags(Laws::MiddleManLaw.new, <<~RUBY)
@@ -243,7 +243,7 @@ class TestStructuralShapeRules < Minitest::Test
     RUBY
   end
 
-  # NESTING_DEPTH — depth over the AST, not over the margin.
+  # NESTING_DEPTH - depth over the AST, not over the margin.
 
   def ast_flags(source)
     Laws::NestingDepthLaw.new.check_ast(Prism.parse(source).value, source, path: "lib/thing.rb").map { |f| f[:message] }

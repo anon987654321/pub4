@@ -126,7 +126,7 @@ module Master
         h = (rect["h"].to_f + FOCUS_PADDING_PX * 2).clamp(FOCUS_MIN_SIZE_PX, FOCUS_MAX_SIZE_PX)
         x = (rect["x"].to_f + rect["w"].to_f / 2.0 - w / 2.0).clamp(0, [width - w, 0].max)
         y = (rect["y"].to_f + rect["h"].to_f / 2.0 - h / 2.0).clamp(0, [height - h, 0].max)
-        { x:, y:, w:, h:, scale: FOCUS_SCALE, label: "#{focus[:key]} · Δ #{focus[:magnitude].round(1)}px" }
+        { x:, y:, w:, h:, scale: FOCUS_SCALE, label: "#{focus[:key]} - Δ #{focus[:magnitude].round(1)}px" }
       end
 
       def render_squint(surface:, state:, frames:, key:, cdp:)

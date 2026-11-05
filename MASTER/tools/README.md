@@ -32,18 +32,18 @@ boot brgen, amber, bsdports and the MASTER face, as `premerge`, as `ci` and as
 `coverage`. The same directory builds the stylesheets and the route manifest,
 crawls the apps with a browser, and holds the lints that guard Rails
 conventions. `agent_context.rb` prints the law and tree map an agent reads
-before it works — `--json` serializes the same standing context (conduct,
+before it works - `--json` serializes the same standing context (conduct,
 blocking rules, coverage, shell contract, and with `--tree` the tree map) as
 one JSON document for harnesses and session handoffs that consume data rather
 than prose. `coverage_reconciliation.rb` computes the census the repo kept
-finding by hand — files the trees hold that no instrument in
+finding by hand - files the trees hold that no instrument in
 `checks/data/coverage_map.yml` claims to see; it reports inconclusive while
 that map declares itself partial and fails on uncovered files once it is
 complete. `diff_routes.rb` answers the question before an edit rather than
 after it: given paths, a `--diff` base or `--stdin`, it prints the
 `PATH_OWNERSHIP.yml` rows that govern each path and the check each row
 declares, and exits 1 naming any path no row claims. It adds no
-path-to-check table — the ownership file stays the only one.
+path-to-check table - the ownership file stays the only one.
 `snapshot.rb` backs `bin/operator snapshot`, which writes
 one snapshot per tree for another model to read, or with `--mirror` the
 byte-exact pack. `gap_discipline.rb` checks the one chain that turns absence

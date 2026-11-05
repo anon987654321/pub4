@@ -314,7 +314,7 @@ class TestDialogueRubric < Minitest::Test
     assert_includes prompt, "112 for immediate risk from violence"
     assert_includes prompt, "DARVO"
     assert_includes prompt, "Research starting points"
-    assert_includes prompt, "UK statutory guidance — domestic abuse and coercive control"
+    assert_includes prompt, "UK statutory guidance - domestic abuse and coercive control"
   end
 
   def test_couples_therapy_research_is_only_surfaced_for_non_coercive_conflict
@@ -328,7 +328,7 @@ class TestDialogueRubric < Minitest::Test
     )
 
     assert_includes ordinary_conflict, "Couple therapy models for relationship distress"
-    assert_includes coercive_control, "UK statutory guidance — domestic abuse and coercive control"
+    assert_includes coercive_control, "UK statutory guidance - domestic abuse and coercive control"
     refute_includes coercive_control, "Couple therapy models for relationship distress"
   end
 
@@ -342,7 +342,7 @@ class TestDialogueRubric < Minitest::Test
     assert_includes prompt, "113 for immediate danger to life"
     assert_includes prompt, "112 for immediate risk from violence"
     assert_includes prompt, "NICE NG225"
-    refute_includes prompt, "Helsenorge — mental-health help"
+    refute_includes prompt, "Helsenorge - mental-health help"
   end
 
   def test_explicit_self_harm_denial_does_not_trigger_crisis_specific_sources
@@ -353,7 +353,7 @@ class TestDialogueRubric < Minitest::Test
 
     assert_includes prompt, "<master_support_practice>"
     refute_includes prompt, "NICE NG225"
-    refute_includes prompt, "Helsenorge — mental-health help"
+    refute_includes prompt, "Helsenorge - mental-health help"
   end
 
   def test_crisis_signal_ignores_common_explicit_self_harm_denials
@@ -460,7 +460,7 @@ class TestDialogueRubric < Minitest::Test
     assert_includes prompt, "Crisis and referral:"
     assert_includes prompt, "113 for immediate danger to life"
     assert_includes prompt, "NICE NG225"
-    assert_includes prompt, "Helsenorge — mental-health help"
+    assert_includes prompt, "Helsenorge - mental-health help"
   end
 
   def test_plain_bokmal_crisis_phrase_gets_norwegian_resources
@@ -471,7 +471,7 @@ class TestDialogueRubric < Minitest::Test
 
     assert_includes prompt, "Crisis and referral:"
     assert_includes prompt, "113 for immediate danger to life"
-    assert_includes prompt, "Helsenorge — mental-health help"
+    assert_includes prompt, "Helsenorge - mental-health help"
     assert_includes prompt, "NICE NG225"
   end
 
@@ -481,10 +481,10 @@ class TestDialogueRubric < Minitest::Test
       root: Master::ROOT,
     )
 
-    assert_includes prompt, "Martial arts and adult mental health — systematic review"
+    assert_includes prompt, "Martial arts and adult mental health - systematic review"
     assert_includes prompt, "Research starting points"
-    refute_includes prompt, "Helsenorge — mental-health help"
-    refute_includes prompt, "Helsenorge — violence and abuse"
+    refute_includes prompt, "Helsenorge - mental-health help"
+    refute_includes prompt, "Helsenorge - violence and abuse"
     refute_includes prompt, "NICE NG222"
   end
 
@@ -554,7 +554,7 @@ class TestDialogueRubric < Minitest::Test
     prompt = Rubric.support_prompt_for("What is the evidence for CBT?", root: Master::ROOT)
 
     assert_includes prompt, "Research starting points"
-    assert_includes prompt, "Emotion regulation interventions — umbrella review"
+    assert_includes prompt, "Emotion regulation interventions - umbrella review"
     assert_includes prompt, "American Psychological Association"
     assert_includes prompt, "arXiv/ar5iv"
     assert_includes prompt, "Use WebSearch and WebFetch when available"
@@ -573,12 +573,12 @@ class TestDialogueRubric < Minitest::Test
     )
 
     assert_includes prompt, "Large Language Models in Mental Health Care"
-    assert_includes prompt, "Large Language Models and Their Applications in Mental Health — 2026 scoping review"
-    assert_includes prompt, "Generative Large Language Models in Mental Health Care Settings — 2026 systematic review and meta-analysis"
+    assert_includes prompt, "Large Language Models and Their Applications in Mental Health - 2026 scoping review"
+    assert_includes prompt, "Generative Large Language Models in Mental Health Care Settings - 2026 systematic review and meta-analysis"
     assert_includes prompt, "doi.org/10.1007/s40501-025-00363-y"
     assert_includes prompt, "ar5iv mirror can fail or serve a truncated conversion"
     assert_includes prompt, "AI Psychotherapy Evaluation (AIPsychEval)"
-    assert_includes prompt, "Mind-Eval 2 — multi-session AI counselor benchmark"
+    assert_includes prompt, "Mind-Eval 2 - multi-session AI counselor benchmark"
     assert_includes prompt, "shared memory between sessions"
     assert_includes prompt, "Mind-Eval 2 scores are not comparable with its legacy version"
     assert_includes prompt, "Between Help and Harm"
@@ -646,7 +646,7 @@ class TestDialogueRubric < Minitest::Test
 
     assert_includes prompt, "<master_support_practice>"
     assert_includes prompt, "Martial and contemplative practice:"
-    assert_includes prompt, "Martial arts and adult mental health — systematic review"
+    assert_includes prompt, "Martial arts and adult mental health - systematic review"
     refute_includes prompt, "Couples and relationship safety:"
     refute_includes prompt, "NICE NG222"
   end
@@ -671,7 +671,7 @@ class TestDialogueRubric < Minitest::Test
     assert_includes prompt, "Do not turn non-attachment into emotional suppression"
     assert_includes prompt, "Evidence on martial arts and adult mental health is mixed"
     assert_includes prompt, "Research starting points"
-    assert_includes prompt, "Martial arts and adult mental health — systematic review"
+    assert_includes prompt, "Martial arts and adult mental health - systematic review"
   end
 
   def test_condition_specific_OCD_advice_includes_the_matching_guideline
@@ -785,7 +785,7 @@ class TestDialogueRubric < Minitest::Test
     assert_includes prompt, "Crisis and referral:"
     assert_includes prompt, "113 for immediate danger to life"
     assert_includes prompt, "NICE NG225"
-    assert_includes prompt, "Helsenorge — mental-health help"
+    assert_includes prompt, "Helsenorge - mental-health help"
   end
 
   def test_indirect_self_harm_language_routes_to_crisis_guidance
@@ -879,8 +879,8 @@ class TestDialogueRubric < Minitest::Test
 
     assert_includes prompt, "Crisis and referral:"
     assert_includes prompt, "Manipulation resistance:"
-    assert_includes prompt, "Helsenorge — mental-health help"
-    assert_includes prompt, "Helsenorge — violence and abuse"
+    assert_includes prompt, "Helsenorge - mental-health help"
+    assert_includes prompt, "Helsenorge - violence and abuse"
     assert_includes prompt, "112 for immediate risk from violence"
   end
 
@@ -893,7 +893,7 @@ class TestDialogueRubric < Minitest::Test
     assert_includes prompt, "<master_support_practice>"
     assert_includes prompt, "Practical response:"
     assert_includes prompt, "one to three high-value actions"
-    refute_includes prompt, "Helsenorge — mental-health help"
+    refute_includes prompt, "Helsenorge - mental-health help"
   end
 
   def test_nynorsk_self_worth_and_shame_phrasing_routes_to_support

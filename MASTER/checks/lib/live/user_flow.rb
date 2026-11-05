@@ -35,7 +35,7 @@ module Deploy
     # Every directory that renders a view, the three apps plus brgen's engines.
     #
     # The engine views render inside brgen and live outside brgen/app, so a
-    # brgen/app/views scan never saw the 71 vertical pages — the blind spot that
+    # brgen/app/views scan never saw the 71 vertical pages - the blind spot that
     # let the sub-apps drift. Read off disk rather than listed, because a list is
     # only correct until the next engine, and the last one cost 71 pages of
     # coverage before anybody noticed. Some engines nest inside another

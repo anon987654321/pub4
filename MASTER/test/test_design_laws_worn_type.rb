@@ -53,7 +53,7 @@ class TestDesignRulesWornType < Minitest::Test
   # it would quietly drop a legibility rule from the constitution. Named rather
   # than wired, because enforcing it means measuring rendered label sizes on the
   # map surface, which is a rendered-check change and an operator's call about
-  # what the map should look like — not something to invent inside a test.
+  # what the map should look like - not something to invent inside a test.
   #
   # When it gains a reader, delete it from here. When another key joins it, this
   # fails and says so instead of the key going quiet.
@@ -74,7 +74,7 @@ class TestDesignRulesWornType < Minitest::Test
       expected = UNREAD_PROFILE_KEYS[name]
       assert_equal expected.sort, unread.sort,
                    "worn_type.profiles.#{name}: keys with no reader in geometry_type.rb " \
-                   "changed — wire it, or add it to UNREAD_PROFILE_KEYS with why"
+                   "changed - wire it, or add it to UNREAD_PROFILE_KEYS with why"
     end
   end
 
@@ -105,7 +105,7 @@ class TestDesignRulesWornType < Minitest::Test
     assert_in_delta 0.7, micro.fetch("void_target"), 0.001
     # The six assertions above call the reader and check what it returns, which is
     # what "has a reader" means. A seventh used to assert that laws.yml mentions
-    # `Design::Thresholds.micro_typography` in its text — that passes when the
+    # `Design::Thresholds.micro_typography` in its text - that passes when the
     # method is deleted and the comment stays, and fails on a rename that broke
     # nothing. It measured a spelling.
   end

@@ -1,12 +1,12 @@
 # frozen_string_literal: true
 
 module Master::Core
-  # Proof — what has been shown, and what must be shown before `done`.
+  # Proof - what has been shown, and what must be shown before `done`.
   #
   # The seventh concept in the fold, and the first raise of `core_files` since
   # the spine was written. It came out of Memory, which was three objects wearing
   # one name: a transcript, an evidence ledger, and the risk checks. That is why
-  # it measured 16 public methods against ABSTRACTION's 10 — not an idiom this
+  # it measured 16 public methods against ABSTRACTION's 10 - not an idiom this
   # time, the way Constitution's class methods were, but the count telling the
   # truth about the design.
   #
@@ -24,7 +24,7 @@ module Master::Core
 
     # What can actually produce each kind of proof. The kind was whatever the
     # model wrote in the effect, so `exec(["true"], evidence: "test_pass")` was
-    # worth 35 points and four such calls ended the turn — the fold graded its own
+    # worth 35 points and four such calls ended the turn - the fold graded its own
     # paper. A command that does not run the tests cannot be a passing test run.
     #
     # Unmatched scores nothing rather than blocking: the fold may run whatever it
@@ -122,7 +122,7 @@ module Master::Core
     # file it had tested, then reach `done` on the strength of the earlier run.
     #
     # And each kind scores ONCE. Nothing deduplicated, so three `test_pass` tags
-    # were 105 points from a single kind of proof — the threshold exists to demand
+    # were 105 points from a single kind of proof - the threshold exists to demand
     # several independent kinds, and repetition is not independence.
     #
     # The third narrowing is not here: whether the kind is earned at all is

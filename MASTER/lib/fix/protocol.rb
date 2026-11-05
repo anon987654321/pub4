@@ -62,7 +62,7 @@ module Master
 
           0.2 ARCHITECTURE EXPLORATION
           For a requested /fix at the repository root, or an exact top-level MASTER,
-          RAILS, OPENBSD or STUDIO target, generate 30–40 materially distinct architecture
+          RAILS, OPENBSD or STUDIO target, generate 30-40 materially distinct architecture
           candidates in one structured request per eligible tree (36 by default). Require
           concrete benefits, trade-offs and risks alongside a verification and rollback plan.
           Evidence paths must have been included in the actual source excerpts and hashes;
@@ -125,8 +125,8 @@ module Master
           immediately and the eligible corpus is refreshed. This stage may
           legitimately keep nothing.
 
-          6. SCAN — FOUR INDEPENDENT ASSESSMENT STREAMS
-          The assessment unit is a Law × stream × applicable surface cell.
+          6. SCAN - FOUR INDEPENDENT ASSESSMENT STREAMS
+          The assessment unit is a Law x stream x applicable surface cell.
           Run lexical_violations, lexical_opportunities, semantic_violations,
           and semantic_opportunities independently. Lexical and semantic are
           not interchangeable: one uses deterministic evidence and relevant
@@ -221,7 +221,7 @@ module Master
           11. REPORT
           Report commands, eligible corpus and exclusions, findings before and
           after, repairs attempted/rejected, verification output and unresolved
-          findings. Include the law × four streams × surfaces matrix, evidence
+          findings. Include the law x four streams x surfaces matrix, evidence
           references, generation/iteration counts, and every INCONCLUSIVE or
           not-applicable cell with its reason. DONE requires full applicable matrix
           coverage and two consecutive clean readings after the last mutation.

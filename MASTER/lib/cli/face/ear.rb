@@ -68,8 +68,8 @@ module Master
         def missing
           return "mic0: #{PERMISSION_HINT}" unless voice_permissions_allowed?
           return (streaming? ? nil : termux_missing) if @device.android?
-          return "mic0: sox missing — type instead" unless on_path?("sox")
-          return "mic0: #{@words.describe} — type instead" unless @words.lane
+          return "mic0: sox missing - type instead" unless on_path?("sox")
+          return "mic0: #{@words.describe} - type instead" unless @words.lane
 
           nil
         end
@@ -113,7 +113,7 @@ module Master
         def termux_missing
           return if Master::Voice::Playback.which("termux-speech-to-text")
 
-          "mic0: termux-speech-to-text missing — #{HINT}; type instead"
+          "mic0: termux-speech-to-text missing - #{HINT}; type instead"
         end
 
         def on_path?(cmd) = Master::Voice::Playback.which(cmd)

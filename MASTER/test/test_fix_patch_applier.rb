@@ -38,7 +38,7 @@ class PatchApplierTest < Minitest::Test
     end
   end
 
-  # A hunk whose context does not exist must not be applied partially — and the
+  # A hunk whose context does not exist must not be applied partially - and the
   # reason has to say something. patch(1) reports a failed hunk on stdout, so
   # keeping only stderr produced Failure(reason: "") for exactly this case.
   def test_rejects_a_diff_that_does_not_match_the_source_and_says_why
@@ -73,7 +73,7 @@ class PatchApplierTest < Minitest::Test
     assert_instance_of Applier::Failure, result
   end
 
-  # "never applies blindly" — a patch that changes nothing is an error, not a
+  # "never applies blindly" - a patch that changes nothing is an error, not a
   # success with identical output, or an autofix loop would report progress forever.
   def test_rejects_a_no_op_patch
     identity = <<~DIFF

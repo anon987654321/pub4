@@ -7,7 +7,7 @@ require_relative "atomic_write"
 
 module Master
   module Io
-    # MemoryRecord — writes durable context into data/project_context.yml and
+    # MemoryRecord - writes durable context into data/project_context.yml and
     # seeds Master::Ground::Memory so semantic recall sees it immediately.
     class MemoryRecord
       include AtomicWrite

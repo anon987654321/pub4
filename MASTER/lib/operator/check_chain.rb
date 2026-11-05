@@ -30,7 +30,7 @@ module Operator
   # the tree. Five invocations, no run covering the repo, so "is the tree
   # conformant" answered for whichever quarter the last session measured.
   #
-  # Three properties the pieces lack apart — why this orchestrates, not aliases:
+  # Three properties the pieces lack apart - why this orchestrates, not aliases:
   #
   #   Attribution. Autofix has broken dilla, postpro and MASTER's own chat path,
   #   so each stage is bracketed by a snapshot of the working tree and reports
@@ -64,7 +64,7 @@ module Operator
 
     # Paths nothing writes by hand. `bin/check --ladder` has said in a comment for months
     # that scanner.rb skips `cache` but not `.cache`, so /fix descends into
-    # MASTER/tools' generated lora/**/.cache/** copies — a warning with no reader.
+    # MASTER/tools' generated lora/**/.cache/** copies - a warning with no reader.
     # This is the reader: a rewritten generated file is named, and fails the run.
     GENERATED = %r{/\.cache/|/node_modules/|/public/assets/|/app/assets/builds/|\.lock\z}
 
@@ -219,7 +219,7 @@ module Operator
                   else
                     "read-only pre-repair proof changed checkout state; visible path(s): #{details}#{more}"
                   end
-        Master::Trace::Dmesg.status("baseline0", "BLOCKED — #{message}")
+        Master::Trace::Dmesg.status("baseline0", "BLOCKED - #{message}")
         raise BaselineMutation, message
       end
 
@@ -499,12 +499,12 @@ module Operator
     # because a fix moves the numbers; sprawl runs after the ratchets because it
     # only locks in a fall that already happened; and the council runs last
     # because it is the only stage that costs money and the only one that
-    # currently cannot answer — a tier with no answer must not stand between the
+    # currently cannot answer - a tier with no answer must not stand between the
     # rest of the ladder and its verdict.
     # Narrowing by tree drops stages rather than shrinking them, because that is
     # what each stage is: the RAILS check runner has nothing to say about MASTER/tools,
     # and brgen's suite is not a MASTER session's business. Two stages stay
-    # whole under every --tree — the ratchets and the sprawl census are
+    # whole under every --tree - the ratchets and the sprawl census are
     # repo-wide measurements by definition, and both are cheap.
     def stages(scan_only:, trees: TREES)
       scope = trees == TREES ? "all four trees" : trees.join(", ")
@@ -615,7 +615,7 @@ module Operator
     # round and the cherry-pick. A second one here is a second debate.
     def council(scan_only:, trees: TREES)
       ok, body, exitstatus = check("--semantic-only", scan_only:, trees:)
-      # Exit 3 is the panel saying it reached nobody — today, four personas
+      # Exit 3 is the panel saying it reached nobody - today, four personas
       # against a provider out of credit. Straight through, so the summary
       # reports the tier as skipped and the run refuses to call itself clean.
       return [ok, body, exitstatus] unless ok
@@ -624,7 +624,7 @@ module Operator
       return [true, body + ["council: no cherry-picks to act on"], 0] if picks.empty?
       return act_on(picks, body) if council_fix?(scan_only:)
 
-      noted = picks.map { |pick| "council: pick — #{pick}" }
+      noted = picks.map { |pick| "council: pick - #{pick}" }
       [true, body + noted + ["council: #{picks.size} pick(s) recorded, none acted on here"], 0]
     end
 
@@ -721,7 +721,7 @@ module Operator
       files = Dir["test/**/test_*.rb"].sort
       abort("openbsd: no test files discovered") if files.empty?
       failed = files.reject { |f| system(RbConfig.ruby, f) }
-      abort("openbsd: \#{failed.size} of \#{files.size} file(s) failed — \#{failed.join(", ")}") if failed.any?
+      abort("openbsd: \#{failed.size} of \#{files.size} file(s) failed - \#{failed.join(", ")}") if failed.any?
     SUITE
 
     # Whole suites, not the ones the diff touches: a green over hand-picked tests
@@ -791,7 +791,7 @@ module Operator
              .merge("MASTER_PROCESS_LOCK_FD" => nil)
     end
 
-    # [ok, body, exitstatus] — the status, because 3 is a third state a boolean
+    # [ok, body, exitstatus] - the status, because 3 is a third state a boolean
     # cannot carry.
     #
     # Every stage is a child process, and that nesting stays. The process is what
@@ -950,7 +950,7 @@ module Operator
       paths
     end
 
-    # The instrument's own summary line, not the last line printed — the rule
+    # The instrument's own summary line, not the last line printed - the rule
     # tools/sweep.rb learned when design_baseline printed its verdict above its
     # detail and "last line" read a detail row as the verdict.
     def verdict(body)
@@ -967,7 +967,7 @@ module Operator
 
     # The seam to the council's own diagnosis, not invented here.
     # Deliberation#failure_reason slugs each persona's failure and quorum_error
-    # tallies them ("quorum not reached (2/26) — 24x insufficient_credits");
+    # tallies them ("quorum not reached (2/26) - 24x insufficient_credits");
     # bin/check --ladder matches that on INCONCLUSIVE and --semantic-only returns 3 rather
     # than aborting. The reason arrives in the stage's verdict line, so this only
     # reads the status, and a richer predicate later changes this method alone.

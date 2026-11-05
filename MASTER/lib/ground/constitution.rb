@@ -26,7 +26,7 @@ module Master
         @principles.map do |principle|
           detail = principle[:body].to_s.strip
           detail = principle[:description] if detail.empty?
-          "#{principle[:type]}: #{principle[:name]} — #{detail}"
+          "#{principle[:type]}: #{principle[:name]} - #{detail}"
         end
       end
 

@@ -248,7 +248,7 @@ workstreams:
   - id: master_voice_browser_dsp
     state: partial
     title: >-
-      The browser builds the declared character presets — ring-mod aeval shapes, WaveShaper acrusher bits,
+      The browser builds the declared character presets - ring-mod aeval shapes, WaveShaper acrusher bits,
       the asetrate idiom as one modulated-delay shifter
     implementation: RAILS/master/public/face_speech_runtime.js
     proof: >-
@@ -261,12 +261,12 @@ workstreams:
     proof: preset filter strings parse in both lanes; values marked author's judgement per file convention
   - id: master_fleet_panel
     state: missing
-    title: The dashboard renders the fleet — sibling health, load and the resource_guard order
+    title: The dashboard renders the fleet - sibling health, load and the resource_guard order
     implementation: RAILS/master/app/views/dashboard
     proof: dashboard fleet panel on a Ruby host
   - id: master_quota_facts
     state: missing
-    title: model_quota and cache_efficiency stop being computed and dropped — the status strip renders them
+    title: model_quota and cache_efficiency stop being computed and dropped - the status strip renders them
     implementation: RAILS/master/app/views/dashboard
     proof: dashboard status strip on a Ruby host
   - id: dilla_grammar_voicings

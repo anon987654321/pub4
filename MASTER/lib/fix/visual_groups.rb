@@ -86,7 +86,7 @@ module Master
       end
 
       def parse(text, urls: {})
-        line = text.to_s.strip.delete_prefix("[soft→hard]").strip
+        line = text.to_s.strip.delete_prefix("[soft->hard]").strip
         body = line.sub(LABELS, "")
         return if body.empty? || body.match?(SUMMARY)
 
@@ -145,7 +145,7 @@ module Master
       end
 
       def template(body)
-        body.sub(/\A[^:]*:\s*#{SURFACE.source}\s*—\s*/o, "")
+        body.sub(/\A[^:]*:\s*#{SURFACE.source}\s*-\s*/o, "")
             .gsub(URL, "<url>").gsub(SURFACE, "<surface>").gsub(/\d+(?:\.\d+)?/, "N").squeeze(" ").strip[0, 200]
       end
 

@@ -90,7 +90,7 @@ class TestVisualStress < Minitest::Test
     stress = capture("stress", "brgen/home__stress_compound/mobile",
                      "stress" => { "findings" => [finding("horizontal_overflow", "html", "page scrolls 90px sideways")], "list" => { "selector" => "main>div.feed", "count" => 1 } })
     text = VS.context([stress])
-    assert_match(/horizontal_overflow html — page scrolls 90px sideways/, text)
+    assert_match(/horizontal_overflow html - page scrolls 90px sideways/, text)
     assert_match(%r{sparse surface brgen/home/mobile: main>div\.feed holds 1 items}, text)
     assert_match(/operator visual seed/, text)
   end

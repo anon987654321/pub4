@@ -5,7 +5,7 @@ require "time"
 
 module Master
   module Fix
-    # Watcher — continuous OpenBSD load monitor.
+    # Watcher - continuous OpenBSD load monitor.
     # Polls load avg, memory, disk, master service. Publishes system:sample
     # every interval, system:warn/crit on threshold crossings.
     class Watcher
@@ -80,7 +80,7 @@ module Master
 
       # Every metric here is the same move: run a probe, parse what it printed,
       # and answer nil rather than raise. A metric the box will not report is
-      # missing, not fatal — the sample carries the nil and the guard reads it.
+      # missing, not fatal - the sample carries the nil and the guard reads it.
       def probe(name, *argv)
         out, _, status = Master::Io::Exec.capture3(*argv)
         return unless status.success?
@@ -95,7 +95,7 @@ module Master
         probe("load_avg_1m", "/sbin/sysctl", "-n", "vm.loadavg") { |out| load_average_1m(out) }
       end
 
-      # OpenBSD does not expose vm.uvmexp.free via sysctl — parse vmstat instead.
+      # OpenBSD does not expose vm.uvmexp.free via sysctl - parse vmstat instead.
       def mem_free_pct
         probe("mem_free_pct", "/usr/bin/vmstat") do |out|
           free = vmstat_free_bytes(out)

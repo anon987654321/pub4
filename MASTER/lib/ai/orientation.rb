@@ -31,7 +31,7 @@ module Master
           "MASTER orientation v#{VERSION}",
           "repo: #{repo_root}",
           "target: #{target ? relative(target, repo_root) : relative(root, repo_root)}",
-          "contract: orient → inspect → act → verify",
+          "contract: orient -> inspect -> act -> verify",
           "verification: evidence before completion",
           "intelligence: #{Master::Cognition::Intelligence.orientation_contract}",
           "trees: MASTER, RAILS, OPENBSD, STUDIO; STUDIO = canonical media production plane; MASTER/tools = reasoning and governance utilities",
@@ -91,9 +91,9 @@ module Master
           "lenses: #{LENSES.join(", ")}",
           rails,
           openbsd,
-          "evidence_ladder: source authority → executable proof → live evidence; " +
+          "evidence_ladder: source authority -> executable proof -> live evidence; " +
           "disagreement means drift to diagnose, not permission to guess",
-          "bridge: RAILS/apps.yml → OPENBSD/deploy_inventory.json → vps-deploy → rcctl → public health",
+          "bridge: RAILS/apps.yml -> OPENBSD/deploy_inventory.json -> vps-deploy -> rcctl -> public health",
           "inventory_alignment: #{inventory_alignment(repo_root)}",
           "bridge: source authority is MASTER/data/soul.yml > MASTER/data/laws.yml > executable laws/gates > tree contracts > Git history; " +
           "MASTER/checks/ is the cross-tree verification plane",
@@ -181,7 +181,7 @@ module Master
         "openbsd: deploy_identity=OPENBSD/deploy_inventory.json; " +
         "recipes=OPENBSD/data/operator.yml; runbook=OPENBSD/RUNBOOK.md; configs=OPENBSD/etc; " +
         "service_lifecycle=rcctl; privilege_boundary=doas; sandbox_model=MASTER/lib/ground/pledge.rb; " +
-        "edge=pf→relayd→loopback; " +
+        "edge=pf->relayd->loopback; " +
         "runtime=Falcon+SQLite+Solid Queue/Cache; secrets=/etc/*.env; " +
         "dns_tls=httpd/acme-client/nsd; proof=OPENBSD/bin/check-openbsd+check-vps+vps-state; " +
         "live=target host diagnostics and public health; " +
@@ -281,7 +281,7 @@ module Master
 
       def compact(text, limit = 500)
         body = text.to_s.gsub(/\s+/, " ").strip
-        body.length > limit ? "#{body[0, limit - 1]}…" : body
+        body.length > limit ? "#{body[0, limit - 1]}..." : body
       end
 
       def digest(root:)

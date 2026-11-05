@@ -1,7 +1,7 @@
 ---
 # Ceilings for lib/operator/autofix_reach.rb.
 #
-# dangling: a rule naming a transform that no code implements — a field
+# dangling: a rule naming a transform that no code implements - a field
 # promising an edit that cannot happen. It was 7 of 8, and it is 0. All seven
 # were learned_smells entries whose `autofix:` the runtime never reads at all:
 # LearnedSmellsRule declares autofix: false for itself and Finding.build is
@@ -11,7 +11,7 @@
 # 0 is the floor and it stays there. A new rule names a transform that exists or
 # it names none. The corpus now names none at all: strip_trailing_whitespace was
 # the last, on the trailing_ws smell that 2026-09-05 deleted as a strict
-# duplicate of TRAILING_WHITESPACE, and the transform itself is untouched — it is
+# duplicate of TRAILING_WHITESPACE, and the transform itself is untouched - it is
 # in AstFixer's UNIVERSAL_TRANSFORMS, applied to every file rather than triggered
 # by a rule, so nothing was lost with the claim.
 #
@@ -20,7 +20,7 @@
 # is the unfinished middle.
 #
 # 31 -> 25 on 2026-09-05. The six were PRECOMPUTE_MATH, ANALOG_WARMTH,
-# PURE_FUNCTIONS, SPECULATIVE_GENERALITY, SYSTEM_STATUS and CACHE_LLM — each a
+# PURE_FUNCTIONS, SPECULATIVE_GENERALITY, SYSTEM_STATUS and CACHE_LLM - each a
 # semantic-only detector at info severity, which SemanticLaw's info filter
 # drops, so nothing ever reported them and no fix could ever be reached. Their
 # `fix:` lines ask for film grain, a spinner and a deletion; none is mechanical
@@ -35,28 +35,28 @@
 #   TRAILING_COMMAS add_trailing_commas
 #   DEAD_CODE       remove_immediate_dead_code
 #
-# Sixteen are design judgements with no single correct edit — CQS,
+# Fifteen are design judgements with no single correct edit - CQS,
 # LAW_OF_DEMETER, SMALL_FUNCTIONS, FEW_ARGUMENTS, BE_CONCISE, SELF_EXPLAINING,
 # EXPLICIT, FAIL_FAST, DEFENSIVE_INPUT, NO_MAGIC, COST_TRANSPARENCY,
-# GRACEFUL_LOAD, ONE_SOURCE, MESSAGE_CHAIN, TYPOGRAPHY_DISCIPLINE,
-# TYPOGRAPHIC_EXCELLENCE. Splitting a query from a command, shortening a
+# GRACEFUL_LOAD, ONE_SOURCE, MESSAGE_CHAIN, TYPOGRAPHY_DISCIPLINE.
+# Splitting a query from a command, shortening a
 # method, naming a magic number or flattening a chain each has many shapes and
 # a person picks one; a machine picking for them writes a different program.
 # false is what these always meant.
 #
-# Five are mechanical in principle and unwritten in fact: EN_DASH_RANGE,
+# Four are mechanical in principle and unwritten in fact:
 # NO_UPDATE_ATTRIBUTE, QUOTE_VARIABLES, DOUBLE_BRACKET,
-# WHITESPACE_PUNCTUATION. The edit is obvious in each — an en dash for a
-# hyphen, update for update_attribute, quotes around an expansion, [[ ]] for
-# [ ] — and no transform implements any of them, so the promise was to a reader
-# who would wait forever. These are the five to write transforms for; naming
+# WHITESPACE_PUNCTUATION. The edit is obvious in each - update for
+# update_attribute, quotes around an expansion, [[ ]] for
+# [ ] - and no transform implements any of them, so the promise was to a reader
+# who would wait forever. These are the four to write transforms for; naming
 # one here without writing it is how the dangling counter above filled up.
 #
 # What this changes at runtime: MechanicalAutofix selects a file when any of
 # its findings carries a truthy autofix, so a file whose only findings are
 # judgement rules no longer gets AstFixer's universal cosmetic passes as a side
-# effect. That is the correct direction — a scan should not rewrite a file
-# because of a finding it cannot fix — and it is the one behavioural
+# effect. That is the correct direction - a scan should not rewrite a file
+# because of a finding it cannot fix - and it is the one behavioural
 # consequence of the demotion.
 dangling: 0
 bare_true: 0

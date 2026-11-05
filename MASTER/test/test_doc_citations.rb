@@ -34,7 +34,7 @@ class TestDocCitations < Minitest::Test
     # list's `core_files` in AGENTS.md.
     assert_operator @report["quotations"] + @report["citations"], :>=, 1,
                     "only #{@report['quotations']} quotation(s) and #{@report['citations']} " \
-                    "citation(s) found — the checker stopped matching"
+                    "citation(s) found - the checker stopped matching"
     assert_includes Operator::DocCitations.keys.keys, "core_files",
                     "core_files is no longer recognised as a citable key"
   end
@@ -61,7 +61,7 @@ class TestDocCitations < Minitest::Test
 
     assert_nil error
     # Against the file, not a literal. This asserted "6" and broke the day
-    # core_files was raised — a test that hardcodes the value whose citation it
+    # core_files was raised - a test that hardcodes the value whose citation it
     # is checking is itself a third copy of that value.
     assert_equal live.to_s, value
   end

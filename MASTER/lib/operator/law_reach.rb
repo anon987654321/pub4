@@ -9,7 +9,7 @@
 #
 #   ruby MASTER/tools/law_reach.rb
 #
-# The semantic prompt drops info-severity violations deliberately — they double
+# The semantic prompt drops info-severity violations deliberately - they double
 # the token cost of every file for findings nobody acts on. Reach therefore
 # measures the enforcement surface, not the severity policy.
 
@@ -95,7 +95,7 @@ module Operator
         return out.size <= limit ? 0 : 1
       end
 
-      puts "law_reach: #{all.size} Laws — #{mech.size} deterministic, #{asked.size} prompted, " \
+      puts "law_reach: #{all.size} Laws - #{mech.size} deterministic, #{asked.size} prompted, " \
            "#{conduct.size} practice, #{out.size} unreachable (ceiling #{limit})"
       out.each { |law| puts "  #{law["id"]}" }
       puts "law_reach: every executable Law has a reachable enforcement surface" if out.empty?

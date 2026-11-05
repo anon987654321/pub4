@@ -4,7 +4,7 @@ require_relative "test_helper"
 
 # STRONG_PARAMETERS closes principle_map's strong_parameters gap (detects
 # mass_assignment_risk). RAILS is clean of both failure modes today, so the
-# rule earns its place as a guard against regression rather than a backlog —
+# rule earns its place as a guard against regression rather than a backlog -
 # which makes the negative direction as important to pin as the positive one.
 class TestStrongParametersRule < Minitest::Test
   CONTROLLER = "/repo/app/controllers/users_controller.rb"

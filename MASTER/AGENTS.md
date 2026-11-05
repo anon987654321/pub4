@@ -44,7 +44,7 @@ needs rendered visual and accessibility evidence.
 The existing evidence spine is canonical. FixPlan records eligible source hashes,
 task scope, Law identity, authority, toolchain and adapter digests. The validated
 contract and its digest are carried by the existing RunJournal terminal evidence
-alongside the Law × stream × surface assessment. Transactions reject paths outside
+alongside the Law x stream x surface assessment. Transactions reject paths outside
 the captured scope, including later enlistments. Legacy callers without a contract
 remain compatible but must not be described as contract-verified. Missing proof is
 NOT_RUN or INCONCLUSIVE, never PASS; a local edit is not a delivered change.
@@ -273,7 +273,7 @@ face is open, because `RAILS/master/app/controllers/events_controller.rb` subscr
 `"**"`; published and never
 subscribed is all noise, and only subscribed and never published is worth
 reading. An env var set by nobody in `MASTER/` may be set in `RAILS/` or
-`OPENBSD/`. And before recording an orphan, ask what it is a second copy of —
+`OPENBSD/`. And before recording an orphan, ask what it is a second copy of -
 that question, not "who calls it", is what has actually paid for deletions.
 
 **Read a ratchet once, after the tree stops moving.**
@@ -284,7 +284,7 @@ the live figures from the command; a number quoted in prose is stale within a
 day.
 
 **Comments state the present-tense reason.** Dates and "used to be" belong in
-git — `NO_CHANGELOG_COMMENT` in `law/universal.rb` enforces it.
+git - `NO_CHANGELOG_COMMENT` in `law/universal.rb` enforces it.
 
 **The RAILS apps default to Norwegian.** Assert through I18n keys, never
 English literals; a hardcoded English string is a defect, not a placeholder.
@@ -331,7 +331,7 @@ loser reads the wrong tree without complaint. Name it for the script
 (147) is what weights anything; a `Rule.registry` walk drops bridge classes; a
 regex over `law/` and the rules files (what `tools/audit/law_hygiene.rb` uses) counts
 more. An unreached-file sweep must include the repo-root `bin/` and filter by no
-extension — `test/test_entrypoint_requires.rb` holds the case that broke
+extension - `test/test_entrypoint_requires.rb` holds the case that broke
 `bin/operator` for six days.
 
 ## Judging your own work
@@ -340,7 +340,7 @@ The task as given is the deliverable, but it is not the whole job. Reason about
 what the change is actually for, and say what you find.
 
 A finding is a hypothesis. Several backlog entries were stale within a day
-of being written — the price-drop alerts, the takeaway push and three map layers
+of being written - the price-drop alerts, the takeaway push and three map layers
 were all built while the file still called them open. Re-measure before working
 from one, and prefer a small measurement over a long argument.
 
@@ -350,8 +350,8 @@ Do not silently narrow the scope, and do not stop with nothing delivered because
 one part was doubtful. Scaling the work down is the operator's call.
 
 Report what happened rather than what was hoped for. If a check was skipped, say
-which. If a check reported a pass having measured nothing — several here do when
-the triangle is down — that is not a pass, and calling it one is worse than
+which. If a check reported a pass having measured nothing - several here do when
+the triangle is down - that is not a pass, and calling it one is worse than
 failing.
 
 A check certifies what it did not measure in seven ways, and each turns the
@@ -394,12 +394,12 @@ the tree first. A hash proves a change occurred; only the bytes let you put it
 back.
 
 **If you overwrote another session's work**, their commits are safe on
-`origin/main` — the damage is only in the working tree. `git checkout -- <path>`
+`origin/main` - the damage is only in the working tree. `git checkout -- <path>`
 restores from HEAD. Say what you did rather than hoping it is unnoticed.
 
 **A script that rewrites files by splice must prove every splice.** The first
 version of the campaign's rewriter computed offsets against a stale copy, and
-every splice after the first landed at shifted positions — silently corrupting
+every splice after the first landed at shifted positions - silently corrupting
 files that had looked verified a line earlier. It was caught because the
 rewriter re-read and compared, not because anything downstream did. The rule:
 re-read the current bytes immediately before each write; after writing, confirm
@@ -409,7 +409,7 @@ verification round. A rewriter that cannot do all three edits one file at a
 time by hand instead.
 
 **Never a tree-wide `git checkout -- .` inside a batch.** It ran once between
-two batches of a campaign and erased a validated, uncommitted batch whole —
+two batches of a campaign and erased a validated, uncommitted batch whole -
 no diff, no recovery, the work simply gone. Destructive restores are for a
 single named path, run deliberately, after the bytes have been copied
 somewhere outside the tree. If a batch has gone wrong past fixing, stop and
@@ -427,7 +427,7 @@ run ends as DONE, PLATEAU, BLOCKED or VALIDATION_FAILED, and only DONE claims
 the work is finished. `/fix --dry-run --critique` reads and argues without writing.
 `/scan` is the detector-only observation surface; `/fix` adds repair and verification.
 
-**That means a fix mutates the tree** — it has broken dilla and MASTER's own
+**That means a fix mutates the tree** - it has broken dilla and MASTER's own
 chat path. `--no-autofix` and `--dry-run` hold it back. Read the printed diff
 before committing, and never commit rewrites of generated caches: the scanner
 descends into them.
@@ -498,8 +498,8 @@ concept and one identity. Do not introduce Rule, Principle, Axiom, Guideline,
 Doctrine, Heuristic, Standard or Norm as alternate names for a Law.
 
 **Conduct** is what `Law.conduct` does to a law file before laws judge `law/`.
-A law necessarily contains the pattern it forbids — in its detector, its fix
-line and its bad fixture — so those are blanked, newlines kept, and the file is
+A law necessarily contains the pattern it forbids - in its detector, its fix
+line and its bad fixture - so those are blanked, newlines kept, and the file is
 read as declaration rather than as the thing it declares.
 
 **Twin.** One Law id implemented in two places. Every silent drift the
@@ -514,12 +514,12 @@ say "this finding is correct and the code is right anyway". A marker that
 suppresses nothing is worse than none: it is a standing exemption for whatever
 real finding lands on that line next.
 
-**The fold** and **the spine** are `lib/core/` — the small set of files the
+**The fold** and **the spine** are `lib/core/` - the small set of files the
 runtime is built out of, where a new top-level concept is a design change rather
 than a line-count question. `data/spine.yml` holds both invariants, and
 `rake lint:spine` fails when either moves.
 
-**Ratchet** and **census**. A *census* counts a property over the tree —
+**Ratchet** and **census**. A *census* counts a property over the tree -
 duplicate files, unread data keys, findings, readers per file. A *ratchet* is a
 census with a recorded ceiling that only ever falls, so the next regression
 cannot arrive silently. Every census here records its members beside the count,
@@ -527,7 +527,7 @@ because a ceiling that says "over by two" and cannot name the two leaves the
 next reader deriving the pair by hand.
 
 **Inconclusive** is the third check state, and the one that matters. A check that
-could not measure — no Chrome, no booted app, no deploy stamps — is neither a
+could not measure - no Chrome, no booted app, no deploy stamps - is neither a
 pass nor a failure, and reporting it as a pass is the worst failure this suite
 has: it claims the code was reviewed when nothing was read. In-process checks say
 it with `CheckResult#inconclusive!`, subprocesses with exit 3.
@@ -542,14 +542,14 @@ scan registry, deterministic, no model) and a *semantic* tier (the critique
 stage, `/fix --dry-run --critique --only critique`, which reaches a provider); the semantic one is
 currently unreachable
 and reports as skipped rather than clean. On a `laws.yml` row, `tier:` is the
-Law's category — `clean_code`, `style`, `safety` — and is what resolves a
+Law's category - `clean_code`, `style`, `safety` - and is what resolves a
 conflict between two Laws firing on one line.
 
 **The triangle** is `MASTER/bin/operator triangle`: brgen, amber, bsdports and the MASTER
 face, booted locally on the ports every check probes. Without it the live half of
 the suite passes having measured nothing.
 
-**Vertical.** One of brgen's mounted Rails engines — `RAILS/brgen_* packages/`
+**Vertical.** One of brgen's mounted Rails engines - `RAILS/brgen_* packages/`
 holds tv, dating, takeaway, playlist, marketplace and maps. Each is a named app on its own subdomain, not a section
 of brgen, and "brgen" alone means the main city app only.
 
@@ -563,14 +563,14 @@ to edit it by hand. Editing the build is a fix that survives until the next
 
 | Task | Read |
 |------|------|
-| Face boot / WebGL / primer | `data/agent_map.yml` → `topics.face_boot` |
+| Face boot / WebGL / primer | `data/agent_map.yml` -> `topics.face_boot` |
 | TTS / speech / visemes | `topics.tts` |
 | Deploy / VPS / rc.d | `topics.deploy` |
 | Persona / voice policy | `topics.persona` |
 | Law / scanners / loop | `data/laws.yml` is the canonical catalogue; `law/` and `lib/review/scan/` implement enforcement. Run `LawRegistryAudit`; do not infer full coverage from one file or registry count. |
 | Extend runtime behavior | `data/spine.yml` header and `test/test_core_no_lib_backedges.rb`. New ability in the fold = one Effect verb in `lib/core/world.rb`; new constraint = one rule in `lib/core/constitution.rb`; anything else is ordinary `lib/` and must not grow it (`rake lint:spine`) |
 | Worn type / layout checks | `data/laws.yml` `design_rules.worn_type` + `MASTER/checks/support/geometry_type.rb`. Feed is a short measure; legal/prose is 66ch. |
-| brgen city network / verticals | `RAILS/brgen/AGENTS.md` — one process, city apex + subdomain engines |
+| brgen city network / verticals | `RAILS/brgen/AGENTS.md` - one process, city apex + subdomain engines |
 
 Touch-map: `data/agent_map.yml`. Law sections live in `data/laws.yml`. Work is a sentence, or `/fix [path]`. Slash set: `/fix` `/status` `/undo` `/commit` `/model` `/android` `/ios` `/doctor` `/help` `/clear`.
 
@@ -586,7 +586,7 @@ Do not chase scan noise on unrelated patches.
 Every entry names the check that fails when its claim stops being true, or says
 why no check can hold it. This is not decoration: item 2 of this list used to be
 "rule data stays split, because each shard sits near its consumers", and that
-reason had been false since the day the shards were created — the four of them
+reason had been false since the day the shards were created - the four of them
 had one consumer between them. A conclusion does not rot loudly. A test does.
 `rake lint:do_not_touch` checks that every entry below carries one and that the
 checks it names exist.
@@ -595,36 +595,36 @@ checks it names exist.
    the rest of `lib/`. The two-spine *directory* split ended 2026-08-12
    (the record of it went with `docs/`); the dependency direction it was
    protecting did not, and is now a test rather than a folder boundary. `core_files: 7` in
-   `data/spine.yml` makes a new concept a design decision — raised from 6 on
-   2026-08-12 for `Proof`, the first raise since the spine was written. — check:
+   `data/spine.yml` makes a new concept a design decision - raised from 6 on
+   2026-08-12 for `Proof`, the first raise since the spine was written. - check:
    `test/test_core_no_lib_backedges.rb`, `rake lint:spine`
-2. `knowledge/` is local-only — do not commit without updating
-   `SearchKnowledge`. — check: `rake security_sweep`
-3. WebGL / face boot stays deferred until primer tap. — check: `rake
+2. `knowledge/` is local-only - do not commit without updating
+   `SearchKnowledge`. - check: `rake security_sweep`
+3. WebGL / face boot stays deferred until primer tap. - check: `rake
    test:web_ui`, `test/test_web_ui.rb`
-4. `RAILS/apps.horizon.yml` is agent-ignore horizon — do not implement
-   unprompted. — no check: a horizon file is a list of things deliberately not
+4. `RAILS/apps.horizon.yml` is agent-ignore horizon - do not implement
+   unprompted. - no check: a horizon file is a list of things deliberately not
    built, so there is no artefact to assert on; the failure mode is an agent
    building one, which only a reader of the diff can catch.
-5. VPS: one app CI/deploy at a time on vm23. — no check: concurrency on a remote
+5. VPS: one app CI/deploy at a time on vm23. - no check: concurrency on a remote
    host, enforced by the deploy lock on vm23 rather than by anything in this
    repo; a local check would assert against state it cannot see.
-6. Secrets in `/etc/*.env` on VPS — never commit keys or generated assets. —
+6. Secrets in `/etc/*.env` on VPS - never commit keys or generated assets. -
    check: `rake security_sweep`, `RAILS/test/tracked_secrets_test.rb`
-7. After `git pull` on vm23, run `vps-deploy` before expecting live health. — no
+7. After `git pull` on vm23, run `vps-deploy` before expecting live health. - no
    check: an ordering rule for two commands run on the VPS; nothing in the repo
    observes whether the box was deployed after its last pull.
-8. Feature truth: `RAILS/apps.yml`; operator-only work: `MASTER/data/operator_seams.yml`. —
+8. Feature truth: `RAILS/apps.yml`; operator-only work: `MASTER/data/operator_seams.yml`. -
    check: `MASTER/checks/lib/source/apps_yml.rb`
-9. Never autonomously run `vmctl console/stop/start` or kill `cu` on server4 —
-   see `OPENBSD/RUNBOOK.md`. — no check: a prohibition on an action, not a
+9. Never autonomously run `vmctl console/stop/start` or kill `cu` on server4 -
+   see `OPENBSD/RUNBOOK.md`. - no check: a prohibition on an action, not a
    property of the tree; the guard is the human-only env var in item 11.
-10. Production VM is vm23 only (`dev@brgen.no`). — no check: a deployment fact
+10. Production VM is vm23 only (`dev@brgen.no`). - no check: a deployment fact
     about the world; the repo cannot assert which host is production, only which
     one its scripts name.
 11. `I_UNDERSTAND_CONSOLE_RISK=1` and `I_UNDERSTAND_DNS_WIPE=1` are human-only
-    checks. — check: `OPENBSD/checks/vps_safety_check.rb`
-12. Dmesg every file op — see `OPENBSD/RUNBOOK.md`. — no check: a habit for the
+    checks. - check: `OPENBSD/checks/vps_safety_check.rb`
+12. Dmesg every file op - see `OPENBSD/RUNBOOK.md`. - no check: a habit for the
     operator's own audit trail, checkable only against a session transcript,
     which is not an artefact this repo keeps.
 
@@ -717,7 +717,7 @@ in `OPENBSD/CLAUDE.md`.
   2026-09-16 `codify-master-gaps` patch added `analysis_depth` (practical /
   analytical / extreme, with depth limits and time budgets) and
   `version_control` (`message_format: "v{version}: {change_summary}
-  [violations={before}→{after}]"`) to `data/laws.yml` from
+  [violations={before}->{after}]"`) to `data/laws.yml` from
   `master.yml@30dad7ead`. Nothing in the tree names a depth of analysis, so the
   first block is a declaration with no reader in a file that is `paths.immutable`;
   the second contradicts the convention every commit here follows, which is a

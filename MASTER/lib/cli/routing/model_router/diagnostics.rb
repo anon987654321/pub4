@@ -5,7 +5,7 @@ module Master
     module Routing
       class ModelRouter
         # Score reporting, provider-outcome recording, and runtime-registry
-        # lookup — separate from ModelRouter's own model-selection logic.
+        # lookup - separate from ModelRouter's own model-selection logic.
         module Diagnostics
           def score_breakdown(task_type: :exploration)
             return [] unless enabled?
@@ -37,7 +37,7 @@ module Master
           end
 
           # @capability_map is always constructed (ModelRouter#initialize), unlike
-          # @provider_health above which nothing in this codebase ever passes in —
+          # @provider_health above which nothing in this codebase ever passes in -
           # so this has no equivalent guard to fall silent behind. Until today
           # nothing called it: preferred(task_type:) already checks
           # @capability_map.best_model_for(task_type) first, but with zero

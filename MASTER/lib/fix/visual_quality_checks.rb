@@ -181,7 +181,7 @@ module Master
         log("verdict: #{problems.empty? ? "no metric worse" : "regression"} over #{measured.size} surface(s)")
         return prior if problems.empty?
 
-        Result.err("visual quality: regression — #{problems.join(" / ")}", category: :policy)
+        Result.err("visual quality: regression - #{problems.join(" / ")}", category: :policy)
       end
 
       def log(message)

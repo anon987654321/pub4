@@ -5,7 +5,7 @@ require "pathname"
 
 class ModelSingleLlmCallTest < Minitest::Test
   # Scoped to the class. At top level this was the third `ROOT` in one test
-  # process — test_no_lib_backedges.rb defines the same Pathname, and
+  # process - test_no_lib_backedges.rb defines the same Pathname, and
   # STUDIO/dilla/dilla.rb defines a String. Load order decided which won, so
   # this test passed alone and died on `undefined method 'join' for a String`
   # in the full run.

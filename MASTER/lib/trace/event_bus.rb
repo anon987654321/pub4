@@ -112,7 +112,7 @@ module Master
         ts = elapsed_ms
         # One process-wide bus. ChatService (and anything else that writes a
         # visitor's SSE from a handler) must be able to ignore another
-        # conversation's events — without this stamp, subscribe("**") and even
+        # conversation's events - without this stamp, subscribe("**") and even
         # named tool:before handlers dump visitor B's turn into visitor A's stream.
         if already_persisted
           enriched = payload

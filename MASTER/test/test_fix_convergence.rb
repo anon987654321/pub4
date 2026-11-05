@@ -1370,7 +1370,7 @@ end
     end
 
     assert_equal "proof", name
-    assert_match(/already inside a proof run/, body) # source-assertion: ok — the section proof_section returned
+    assert_match(/already inside a proof run/, body) # source-assertion: ok - the section proof_section returned
     refute ran, "the nested proof ran the suites"
   ensure
     ENV["MASTER_IN_PROOF"] = saved

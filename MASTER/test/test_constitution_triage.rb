@@ -35,7 +35,7 @@ class TestConstitutionTriage < Minitest::Test
 
     assert_empty dead,
                  "RULE_RETUNE_IDS names #{dead.size} rule(s) no registry defines: #{dead.join(', ')}. " \
-                 "An exemption for a rule that does not exist excuses nothing — drop it or fix the spelling."
+                 "An exemption for a rule that does not exist excuses nothing - drop it or fix the spelling."
   end
 
   private

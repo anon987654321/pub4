@@ -10,7 +10,7 @@ module Master
     module Improve
       # The engine /fix calls each pass. It reads the pass's own file list,
       # asks the domains for elevation opportunities, ideates, and returns the
-      # strongest findings in the exact shape the improvement stage applies —
+      # strongest findings in the exact shape the improvement stage applies -
       # one anchored, smallest-possible step per file, never a rewrite.
       #
       # /fix embodies the improvement it performs: the engine's own files are

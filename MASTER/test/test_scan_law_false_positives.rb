@@ -7,7 +7,7 @@ require_relative "test_helper"
 # /etc/* paths; STALE_NAMESPACE flags every legitimate Master::CLI::* reference
 # because \b matches before ::."
 #
-# Both are narrowed now — selfcheck went 71 → 34 on 2026-08-01. Narrowing a rule is
+# Both are narrowed now - selfcheck went 71 -> 34 on 2026-08-01. Narrowing a rule is
 # the change most likely to quietly turn it off, so each of these asserts both
 # directions: the false positive is gone AND the real violation still fires.
 class TestScanRuleFalsePositives < Minitest::Test
@@ -28,7 +28,7 @@ class TestScanRuleFalsePositives < Minitest::Test
   end
 
   # --- NO_GOD_CLASS -------------------------------------------------------
-  # The line branch counted raw AST span, charging for rationale comments —
+  # The line branch counted raw AST span, charging for rationale comments -
   # the counter DENSITY and lint:spine already retired. Core::Constitution
   # read 348 under it while holding 250 code lines, and the resulting
   # self_violation halted every /fix repair stage (2026-08-18). Both
@@ -71,7 +71,7 @@ class TestScanRuleFalsePositives < Minitest::Test
   end
 
   # --- DOUBLE_BRACKET ----------------------------------------------------
-  # [[ ]] is a keyword in zsh and bash, not in POSIX sh — telling an sh
+  # [[ ]] is a keyword in zsh and bash, not in POSIX sh - telling an sh
   # script to use it is a syntax error prescription.
   def test_double_bracket_leaves_posix_sh_alone
     sh = "#!/bin/sh
@@ -90,7 +90,7 @@ class TestScanRuleFalsePositives < Minitest::Test
   # A sourced library declares its dialect in its opening comment, and a comment
   # quoting a test is not one.
   def test_double_bracket_leaves_a_posix_sh_library_and_comments_alone
-    library = "# POSIX sh — sourced by zsh and sh callers alike.\n[ -e lock ] || : > lock\n"
+    library = "# POSIX sh - sourced by zsh and sh callers alike.\n[ -e lock ] || : > lock\n"
     assert_empty findings(:DOUBLE_BRACKET, library, path: "lib/ci_lock.sh")
     comment = "#!/usr/bin/env zsh\n# it guards on `[ -x /usr/local/bin/tool ]`\n"
     assert_empty findings(:DOUBLE_BRACKET, comment, path: "OPERATOR.sh")
@@ -204,7 +204,7 @@ class TestScanRuleFalsePositives < Minitest::Test
   # inside of depending/spending), 41 an ellipsis in prose or documented syntax,
   # 26 Ruby's exclusive range, 3 the source of the rules that detect TODO.
   #
-  # Zero real findings, at :veto — the strongest severity there is. A veto that
+  # Zero real findings, at :veto - the strongest severity there is. A veto that
   # is wrong every time does not check anything; it teaches the reader that a
   # veto is noise. Narrowed 2026-08-12 to 0 in lib/.
 
@@ -218,7 +218,7 @@ class TestScanRuleFalsePositives < Minitest::Test
       %(text + "\\n... [truncated]"\n),
       %(scan_lines(src, /\\b(TODO|FIXME|HACK|XXX)\\b/, message: "unresolved marker")\n),
       # The backlog CLAUDE.md sends every reader to. `\b` holds before the dot, so
-      # the filename read as a marker, at :veto — 59 of the 81 marker lines under
+      # the filename read as a marker, at :veto - 59 of the 81 marker lines under
       # MASTER are this and nothing else. The first line below is the real
       # failover_config one; the pin above stops a word short of what fired.
       %(# constant from lib/review and depending on its load order. See TODO.md,\n),
@@ -244,7 +244,7 @@ class TestScanRuleFalsePositives < Minitest::Test
   # Zeitwerk lays a class split across files out as `fix_loop.rb` beside
   # `fix_loop/`, and this rule read every such split as parallel hierarchies:
   # FixLoop over 12 files, ModelRouter 6, LLMDispatcher, PassRunner and AstFixer
-  # 4 each, Builder 3 — every finding it had, none actionable. The namespace
+  # 4 each, Builder 3 - every finding it had, none actionable. The namespace
   # guard it already carried cannot see them, because a part reopens
   # `class FixLoop` and never writes `FixLoop::`.
 
@@ -284,7 +284,7 @@ class TestScanRuleFalsePositives < Minitest::Test
 
   # --- veto patterns against the scanner's own sources --------------------
   # VetoPatternRule was the only rule in the population with no exemption of any
-  # kind, and it reports at :veto — the severity above error. So it read the
+  # kind, and it reports at :veto - the severity above error. So it read the
   # scanner's own rule sources as conduct where every registered twin of these
   # patterns skips that directory by name, and all four of its findings under
   # lib/ and law/ were worked examples rather than code. Only the `fires:` and
@@ -350,7 +350,7 @@ class TestScanRuleFalsePositives < Minitest::Test
   # --- learned_smells must not restate a registered rule ------------------
   # data/laws.yml's learned_smells layer re-applies raw regexes on top of the
   # registered rules. Two of the ten were copies: `long_line` produced 334
-  # findings across lib/ of which THREE were at a line no other rule reports —
+  # findings across lib/ of which THREE were at a line no other rule reports -
   # and all three were in lib/io/llm.rb, which LONG_LINE deliberately exempts, so
   # the copy was 331 duplicates plus a silent override of an exemption.
   # `debug_output` carried the same id as the registered rule, making its findings
@@ -367,7 +367,7 @@ class TestScanRuleFalsePositives < Minitest::Test
                  "the findings cannot be told apart: #{clashing.join(', ')}"
   end
 
-  # The substantive half. An id can differ and the detection still be a copy —
+  # The substantive half. An id can differ and the detection still be a copy -
   # LONG_LINE vs long_line was exactly that.
   def test_no_learned_smell_reports_what_a_registered_rule_already_reports
     source = "x = 1\n#{'a' * 130}\n"
@@ -375,7 +375,7 @@ class TestScanRuleFalsePositives < Minitest::Test
       next [] unless rule.respond_to?(:check)
 
       Array(rule.check(source, path: "lib/sample.rb")).map { |f| [f[:line], rule.id.to_s.downcase] }
-    rescue StandardError # scan: intentional — a raising rule has its own dedicated test (RaisingLaw); here it reads as no findings
+    rescue StandardError # scan: intentional - a raising rule has its own dedicated test (RaisingLaw); here it reads as no findings
       []
     end
     long = findings.select { |line, _| line == 2 }.map(&:last).uniq
@@ -392,7 +392,7 @@ class TestScanRuleFalsePositives < Minitest::Test
   # --- NO_PUTS's exemption survived a directory rename --------------------
   # It read `/now/cli` and lib/now/ was renamed to lib/cli/ in 693d2630d. The
   # exemption kept pointing at the old address, so 105 findings appeared in
-  # selfcheck's largest actionable bucket — every one in lib/cli/, 100 of them in
+  # selfcheck's largest actionable bucket - every one in lib/cli/, 100 of them in
   # lib/cli/session/, all of them decisions the rule's author had already made.
 
   def test_no_puts_still_exempts_the_cli_entry_layer
@@ -406,7 +406,7 @@ class TestScanRuleFalsePositives < Minitest::Test
 
   # A program prints for a living: its output is the interface the operator
   # reads. Each shape a program takes, and the library file beside it that
-  # still fires — a guard written as prose in a comment names no program.
+  # still fires - a guard written as prose in a comment names no program.
   def test_no_puts_spares_a_program_and_still_reads_a_library
     printed = %(  puts "ok: synced"\n)
 
@@ -421,7 +421,7 @@ class TestScanRuleFalsePositives < Minitest::Test
   end
 
   # --- veto sql_injection -------------------------------------------------
-  # Was `execute|query.*#\{`, which binds as `(execute)|(query.*#\{)` — so the
+  # Was `execute|query.*#\{`, which binds as `(execute)|(query.*#\{)` - so the
   # bare word `execute` anywhere on a line was an unconditional merge blocker.
   # 87 findings in lib/, all read, 0 real: method names (execute_job,
   # pre_execute?), the parameterized form the rule prescribes, a log line, and a
@@ -445,7 +445,7 @@ class TestScanRuleFalsePositives < Minitest::Test
   def test_veto_sql_injection_still_catches_interpolated_sql
     refute_empty findings(:veto_patterns, %(@db.execute("SELECT * FROM t WHERE id = \#{id}")\n))
     refute_empty findings(:veto_patterns, %(@db.execute_batch("DROP TABLE \#{table}")\n))
-    # A single quote inside the double-quoted SQL — the classic injection shape.
+    # A single quote inside the double-quoted SQL - the classic injection shape.
     # The old `["'][^"']*` class stopped at that quote and missed it entirely.
     refute_empty findings(:veto_patterns, %(db.query("DELETE FROM x WHERE name='\#{name}'")\n))
   end
@@ -481,7 +481,7 @@ class TestScanRuleFalsePositives < Minitest::Test
 
   # --- veto patterns and comments ------------------------------------------
   # VetoPatternRule scanned raw source, so a comment describing a shell
-  # interpolation vetoed the file that explained it — the same defect
+  # interpolation vetoed the file that explained it - the same defect
   # without_comment_lines was written for on the declarative side. It is now
   # per-pattern: unfinished declares reads_comments, because a work marker lives
   # in a comment; nothing else does.
@@ -499,7 +499,7 @@ class TestScanRuleFalsePositives < Minitest::Test
   # time, so it needed three lines and could never see two. Deleted 2026-08-12
   # after never having fired; check-then-act detection needs an AST rule and is
   # tracked in the old backlog. This asserts it is gone rather than silently dead.
-  # A newline inside a negated class — `[^`\n]*` — is the opposite: it says "stay
+  # A newline inside a negated class - `[^`\n]*` - is the opposite: it says "stay
   # on this line". Only a \n outside a character class demands one. The first
   # version of this test missed that and failed on two healthy patterns, which is
   # the instrument being wrong rather than the law.
@@ -542,8 +542,8 @@ class TestScanRuleFalsePositives < Minitest::Test
   end
 
   # --- DEBUG_OUTPUT -------------------------------------------------------
-  # `p` is a legal variable name. The rule read `p << "…"` as a Kernel#p call
-  # and flagged lib/cli/attention_context.rb twice — error severity, and
+  # `p` is a legal variable name. The rule read `p << "..."` as a Kernel#p call
+  # and flagged lib/cli/attention_context.rb twice - error severity, and
   # auto_fix=true, pointed at correct code.
 
   def test_debug_output_ignores_a_local_named_p
@@ -574,7 +574,7 @@ class TestScanRuleFalsePositives < Minitest::Test
   # EMPTY_RESCUE was deleted on 2026-08-12 as a pure duplicate: 37 findings across
   # MASTER, 0 unique to it, 8 double-reported at both :error and :warning. Deleting
   # a rule is the change most likely to quietly drop coverage, so this asserts the
-  # thing that actually matters — every `rescue` shape it used to match is still
+  # thing that actually matters - every `rescue` shape it used to match is still
   # matched by one of the two survivors, and at exactly one severity.
 
   RESCUE_SHAPES = {
@@ -588,7 +588,7 @@ class TestScanRuleFalsePositives < Minitest::Test
 
   def rescue_source(clause) = "def probe\n  work\n#{clause}  nil\nend\n"
 
-  # Asked of every registered rule, not just the two survivors — a comparison
+  # Asked of every registered rule, not just the two survivors - a comparison
   # between SILENT_RESCUE and NARROW_SILENT_RESCUE would have passed before the
   # deletion too, since those two were already disjoint. What was broken was a
   # third rule saying the same thing, so the question has to be "how many rules in
@@ -654,7 +654,7 @@ class TestScanRuleFalsePositives < Minitest::Test
   end
 
   # NO_DEBUG and TODO_FIXME exempt this directory because their patterns are
-  # code in it — `binding.pry` appears as a regex literal. SILENT_RESCUE matches
+  # code in it - `binding.pry` appears as a regex literal. SILENT_RESCUE matches
   # a line opening with `rescue`, which no regex literal does, so it has no such
   # claim and takes the whole directory out of its own reach.
   def test_the_scan_rules_directory_is_not_exempt
@@ -798,7 +798,7 @@ class TestScanRuleFalsePositives < Minitest::Test
   # so magic_number scored every number in a comment (6,318 findings, sampled
   # 100% comment prose). skip_comments in laws.yml blanks comment-only lines for
   # a content smell that asks for it. It is opt-in, because a smell can read a
-  # comment — this was written against trailing_ws, which had to see raw
+  # comment - this was written against trailing_ws, which had to see raw
   # whitespace or every comment would read as trailing space, and trailing_ws was
   # deleted 2026-09-05 as a strict duplicate of TRAILING_WHITESPACE. The property
   # is the opt-in, not that one smell, so it is asserted through a smell that
@@ -835,7 +835,7 @@ class TestScanRuleFalsePositives < Minitest::Test
 
   # Text a line carries is not the line's code: a quoted literal, a regex
   # quantifier, a trailing comment, a slice bound. Each spared, and the same
-  # number written as code beside each still fires — including the division
+  # number written as code beside each still fires - including the division
   # whose two slashes are not a regex.
   def test_magic_number_reads_code_not_the_text_code_carries
     assert_empty smell_findings("magic_number", %(run("aecho=0.8:0.32:489:0.28")\n))
@@ -865,19 +865,19 @@ class TestScanRuleFalsePositives < Minitest::Test
   # rule off by accident.
 
   def test_a_line_over_the_limit_only_because_of_its_marker_is_not_long
-    line = "#{"x" * 100} # scan: intentional — the marker is not the defect\n"
+    line = "#{"x" * 100} # scan: intentional - the marker is not the defect\n"
 
     assert_operator line.chomp.length, :>, 120, "the fixture must exceed the limit as written"
     assert_empty findings(:LONG_LINE, line)
   end
 
   def test_a_line_over_the_limit_without_its_marker_is_still_long
-    refute_empty findings(:LONG_LINE, "#{"x" * 130} # scan: intentional — still too long\n")
+    refute_empty findings(:LONG_LINE, "#{"x" * 130} # scan: intentional - still too long\n")
     refute_empty findings(:LONG_LINE, "#{"x" * 130}\n")
   end
 
   def test_a_marker_is_not_counted_as_the_trailing_comment_it_is
-    assert_empty findings(:TRAILING_COMMENT, "value = 1 # scan: intentional — deliberate\n")
+    assert_empty findings(:TRAILING_COMMENT, "value = 1 # scan: intentional - deliberate\n")
   end
 
   # The marker shares its comment with other machine directives. Reading only
@@ -892,7 +892,7 @@ class TestScanRuleFalsePositives < Minitest::Test
   # from the first `#`, is what keeps a hash inside a string literal from being
   # read as the start of the comment.
   def test_a_hash_inside_a_string_is_not_read_as_the_comment_opener
-    assert_empty findings(:TRAILING_COMMENT, %(url = "https://example.com#frag" # scan: intentional — ok\n))
+    assert_empty findings(:TRAILING_COMMENT, %(url = "https://example.com#frag" # scan: intentional - ok\n))
   end
 
   def test_an_unmarked_trailing_comment_still_fires
@@ -903,7 +903,7 @@ class TestScanRuleFalsePositives < Minitest::Test
   # The escape read `/sanitize|strip_tags/` against the whole file, so any view
   # that mentioned sanitizing in prose silenced a SECURITY rule at error
   # severity for every line in it. The one view in the fleet carrying a raw
-  # html_safe — the 2FA QR code — was silenced by the comment explaining why
+  # html_safe - the 2FA QR code - was silenced by the comment explaining why
   # sanitize is the wrong fix there, which left the rule looking honoured and
   # the marker beside it doing nothing. A call in a view lives in an ERB tag.
 
@@ -934,14 +934,14 @@ class TestScanRuleFalsePositives < Minitest::Test
   end
 
   def test_the_marker_excuses_it_and_nothing_else_does
-    raw = "<%# scan: intentional — generated SVG %>\n<%= @qr.html_safe %>\n"
+    raw = "<%# scan: intentional - generated SVG %>\n<%= @qr.html_safe %>\n"
 
     assert_empty findings(:ERB_HTML_SAFE, raw, path: VIEW)
-    refute_empty findings(:ERB_HTML_SAFE, raw.sub("scan: intentional — ", ""), path: VIEW)
+    refute_empty findings(:ERB_HTML_SAFE, raw.sub("scan: intentional - ", ""), path: VIEW)
   end
 
   def test_an_intentional_marker_does_not_excuse_later_raw_output
-    source = "<%# scan: intentional — generated SVG %>\n<%= @qr.html_safe %>\n<%= @x.html_safe %>\n"
+    source = "<%# scan: intentional - generated SVG %>\n<%= @qr.html_safe %>\n<%= @x.html_safe %>\n"
 
     findings = self.findings(:ERB_HTML_SAFE, source, path: VIEW)
     assert_equal 1, findings.size

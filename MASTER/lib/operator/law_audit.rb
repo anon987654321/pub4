@@ -29,15 +29,15 @@
 #                      what it reads is not enforcing a rule, it is describing
 #                      the codebase, and its findings are noise at scale.
 #   silent             Fires on nothing in the corpus. Either the tree obeys it
-#                      or it is aimed at something that is not there — the
+#                      or it is aimed at something that is not there - the
 #                      distinction needs a person, so this reports and does not
 #                      fail.
 #
 #   ruby MASTER/tools/law_audit.rb
 #   ruby MASTER/tools/law_audit.rb --json
 #
-# The adversarial half — steelman the rule, then ask what it fires on that it
-# should not — belongs on top of this, not instead of it. These three are free,
+# The adversarial half - steelman the rule, then ask what it fires on that it
+# should not - belongs on top of this, not instead of it. These three are free,
 # repeatable, and caught every one of the three real bugs.
 
 require "json"
@@ -57,14 +57,14 @@ module Operator
       "RAILS/__shared/app/**/*.rb",
       # Recursive, and both stylesheet homes. The non-recursive `stylesheets/*`
       # reached the partials at that one level and nothing below it, which is
-      # why six css laws — CLAMP_TYPOGRAPHY, FIXED_HEIGHT, LOGICAL_PROPERTIES,
-      # MEASURE_OPTIMUM, NO_IMPORT_SCSS, NO_LONG_TRANSITION — reported firing on
+      # why six css laws - CLAMP_TYPOGRAPHY, FIXED_HEIGHT, LOGICAL_PROPERTIES,
+      # MEASURE_OPTIMUM, NO_IMPORT_SCSS, NO_LONG_TRANSITION - reported firing on
       # nothing. A law judged against no file of its own language is untested,
       # not clean.
       "RAILS/__shared/app/assets/stylesheets/**/*.scss",
       "RAILS/__shared/frontend/**/*.scss",
       "RAILS/__shared/frontend/**/*.js",
-      # The face and the chat client — the largest hand-written JavaScript this
+      # The face and the chat client - the largest hand-written JavaScript this
       # repo owns, and the subject of two laws (FACE_POINT_IS_ONE_PIXEL,
       # NO_WEBGL_GLOW_PASS) written for these files and no others. The corpus
       # reached RAILS's Stimulus controllers and stopped, so both laws were
@@ -145,8 +145,8 @@ module Operator
 
     # law/ arrives conducted, the way the runtime reads it.
     #
-    # A law file necessarily contains the pattern it forbids — its detector, its
-    # fix sentence, its bad fixture — and FileProcessor#law_conducted neutralizes
+    # A law file necessarily contains the pattern it forbids - its detector, its
+    # fix sentence, its bad fixture - and FileProcessor#law_conducted neutralizes
     # those lines at the one read site so a law does not judge itself. This census
     # read them raw, so a law matching nothing in the tree but its own `detect`
     # line counted as having found a subject and stayed out of the silent list.
@@ -192,7 +192,7 @@ module Operator
     # "Which laws are never asked" belongs to tools/law_reach.rb, which counts
     # 57 and had counted them before this file existed. A version of it here
     # measured 67 by also counting laws whose semantic prompt is dropped while a
-    # lexical detector still enforces them — reachable laws, reported as gaps.
+    # lexical detector still enforces them - reachable laws, reported as gaps.
     # One question, one instrument; this one is about whether a rule that DOES
     # run can see its subject.
     def audit
@@ -220,17 +220,17 @@ module Operator
         puts "law_audit: every fixture survives being read as a real file"
       else
         found[:fixture_blindness].each do |f|
-          warn "law_audit: #{f[:law]} proves on \"-\" but not on #{f[:extension]} — #{f[:detail]}"
+          warn "law_audit: #{f[:law]} proves on \"-\" but not on #{f[:extension]} - #{f[:detail]}"
         end
         warn "law_audit: a fixture read whole and a file read with its comments blanked are different inputs"
       end
 
       found[:saturation].each do |r|
-        warn format("law_audit: %s fires on %d of %d applicable files (%d%%) — describing the tree, not judging it",
+        warn format("law_audit: %s fires on %d of %d applicable files (%d%%) - describing the tree, not judging it",
                     r[:law], r[:hits], r[:applicable], (r[:rate] * 100).round)
       end
 
-      puts "law_audit: #{found[:silent].size} rule(s) fired on nothing here — #{found[:silent].join(', ')}" unless found[:silent].empty?
+      puts "law_audit: #{found[:silent].size} rule(s) fired on nothing here - #{found[:silent].join(', ')}" unless found[:silent].empty?
 
       found[:fixture_blindness].empty? && found[:saturation].empty?
     end

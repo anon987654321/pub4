@@ -15,7 +15,7 @@ module Master
     module CommandRegistry
       module_function
 
-      # /pair — issue, list, revoke or redeem a pairing code.
+      # /pair - issue, list, revoke or redeem a pairing code.
       def dispatch_pair(root, ctx: nil)
         arg = arg_for(ctx).to_s.strip
         if Fiber[:master_visitor] == true
@@ -38,7 +38,7 @@ module Master
           [Master::Ground::Pairing.redeem_notice(result), result[:onboarding]].compact.join("\n")
         when /\Aissue(?:\s+(.*))?\z/
           issued = Master::Ground::Pairing.issue(root:, label: $1.to_s.strip)
-          "pair code #{issued[:code]} expires in #{issued[:expires_in]}s — redeem via /pair #{issued[:code]} or the face field"
+          "pair code #{issued[:code]} expires in #{issued[:expires_in]}s - redeem via /pair #{issued[:code]} or the face field"
         when "release"
           return "pair: local-only" unless Fiber[:master_visitor] != true
           subject = Master::Device::Agent.release_owner!(root:)
@@ -156,10 +156,10 @@ module Master
           "privacy: status | grant personal_memory | revoke personal_memory | grant microphone | grant speech_recognition | revoke microphone | revoke speech_recognition"
         end
       rescue StandardError => e
-        "privacy0: unavailable — #{e.class}: #{e.message}"
+        "privacy0: unavailable - #{e.class}: #{e.message}"
       end
 
-      # /preferences — consented, subject-scoped interaction preferences.
+      # /preferences - consented, subject-scoped interaction preferences.
       def dispatch_preferences(root, ctx: nil)
         return "preferences: local-only; visitors cannot access personal preferences" if Fiber[:master_visitor] == true
 
@@ -224,7 +224,7 @@ module Master
         when "accept"
           return "preferences: usage /preferences accept <suggestion-id>" unless args.size == 1
           candidate = preferences.accept(root:, subject:, id: args.first)
-          "preferences: accepted #{candidate.fetch("id")} — #{candidate.fetch("scope")} #{candidate.fetch("key")}=#{candidate.fetch("value")}"
+          "preferences: accepted #{candidate.fetch("id")} - #{candidate.fetch("scope")} #{candidate.fetch("key")}=#{candidate.fetch("value")}"
         when "reject"
           return "preferences: usage /preferences reject <suggestion-id>" unless args.size == 1
           preferences.reject(root:, subject:, id: args.first) ? "preferences: suggestion rejected" : "preferences: suggestion not found"
@@ -252,7 +252,7 @@ module Master
       rescue ArgumentError => e
         "preferences0: #{e.message}"
       rescue StandardError => e
-        "preferences0: unavailable — #{e.class}: #{e.message}"
+        "preferences0: unavailable - #{e.class}: #{e.message}"
       end
 
       def parse_preference_options(tokens, allowed)
@@ -301,7 +301,7 @@ module Master
           "agenda: status | import /path/to/calendar.ics | today | YYYY-MM-DD"
         end
       rescue StandardError => e
-        "agenda0: unavailable — #{e.class}: #{e.message}"
+        "agenda0: unavailable - #{e.class}: #{e.message}"
       end
 
       def render_agenda(result)
@@ -309,7 +309,7 @@ module Master
         date = result.fetch(:date).iso8601
         lines = events.map do |event|
           when_text = event.all_day ? "all day" : [event.clock, event.timezone].compact.reject(&:empty?).join(" ")
-          location = event.location.empty? ? "" : " — #{event.location}"
+          location = event.location.empty? ? "" : " - #{event.location}"
           series = event.recurring ? " (recurring series; DTSTART only)" : ""
           "#{when_text} #{event.summary}#{location}#{series}".strip
         end
@@ -379,7 +379,7 @@ module Master
         "skill0: #{e.message}"
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "cli.skill", event_bus: nil)
-        "skill0: unavailable — #{e.class}: #{e.message}"
+        "skill0: unavailable - #{e.class}: #{e.message}"
       end
 
       # /task is a local, durable personal task board. It records supplied
@@ -410,7 +410,7 @@ module Master
           title = args.join(" ")
           return "task: usage /task step <id> <step title>" if id.empty? || title.empty?
           step = tasks.call(action: "add_step", id:, step_title: title).fetch("step")
-          "task: step #{step["id"]} added to #{id} — #{step["title"]}"
+          "task: step #{step["id"]} added to #{id} - #{step["title"]}"
         when "start-step", "block-step", "verify-step"
           id = args.shift.to_s
           step_id = args.shift.to_s
@@ -419,7 +419,7 @@ module Master
           verb = { "start-step" => "start_step", "block-step" => "block_step", "verify-step" => "verify_step" }.fetch(action)
           payload = verb == "verify_step" ? { evidence: detail } : { note: detail }
           result = tasks.call(action: verb, id:, step_id:, **payload)
-          "task: #{action} #{result.fetch("step")["state"]} — #{result.fetch("step")["title"]}#{verb == "verify_step" ? " (evidence recorded; not independently authenticated)" : ""}"
+          "task: #{action} #{result.fetch("step")["state"]} - #{result.fetch("step")["title"]}#{verb == "verify_step" ? " (evidence recorded; not independently authenticated)" : ""}"
         when "block", "resume", "complete"
           id = args.shift.to_s
           detail = args.join(" ")
@@ -434,14 +434,14 @@ module Master
           return "task: usage /task update <id> title|description|priority|due_at <value>" if id.empty? || value.empty?
           return "task: update field must be title, description, priority or due_at" unless %w[title description priority due_at].include?(field)
           task = tasks.call(action: "update", id:, **{ field.to_sym => value })
-          "task: updated #{task["id"]} — #{task["title"]}"
+          "task: updated #{task["id"]} - #{task["title"]}"
         else
           "task: list | search <words> | create <title> | show <id> | step <id> <title> | start-step <id> <step-id> <note> | verify-step <id> <step-id> <evidence> | block-step <id> <step-id> <reason> | block <id> <reason> | resume <id> <note> | complete <id> <evidence> | update <id> <field> <value>"
         end
       rescue ArgumentError, Master::Ground::AssistantTasks::Error => e
         "task0: #{e.message}"
       rescue StandardError => e
-        "task0: unavailable — #{e.class}: #{e.message}"
+        "task0: unavailable - #{e.class}: #{e.message}"
       end
 
       def render_task_list(result)
@@ -486,11 +486,11 @@ module Master
             profile = tool["allowed_by_current_profile"] ? "profile" : "withheld"
             tier = tool["elevated_required"] ? "elevated" : "standard"
             enabled = tool["boot_enabled"] ? "enabled" : "disabled"
-            lines << "tool #{tool["name"]} [#{profile}, #{tier}, #{enabled}] — #{tool["description"]}"
+            lines << "tool #{tool["name"]} [#{profile}, #{tier}, #{enabled}] - #{tool["description"]}"
           end
           result.fetch("plugins").each do |plugin|
             actions = plugin.fetch("observation_actions").map { |row| row["name"] }.join(",")
-            lines << "plugin #{plugin["id"]} [#{plugin["status"]}; observations=#{actions.empty? ? "none" : actions}] — #{plugin["description"]}"
+            lines << "plugin #{plugin["id"]} [#{plugin["status"]}; observations=#{actions.empty? ? "none" : actions}] - #{plugin["description"]}"
           end
           lines << "capabilities: metadata only; registration does not prove runtime availability"
           lines.join("\n")
@@ -498,7 +498,7 @@ module Master
           query = args.join(" ")
           return "capabilities: usage /capabilities search <words>" if query.empty?
           result = Master::Ground::CapabilityCatalog.call(action: "search", query:, root:)
-          result.fetch("results").map { |row| "#{row["kind"]} #{row["name"] || row["id"]} — #{row["description"]}" }.join("\n").then { |body| body.empty? ? "capabilities: no matches" : body }
+          result.fetch("results").map { |row| "#{row["kind"]} #{row["name"] || row["id"]} - #{row["description"]}" }.join("\n").then { |body| body.empty? ? "capabilities: no matches" : body }
         when "describe"
           name = args.join(" ")
           return "capabilities: usage /capabilities describe <tool|plugin|plugin:id:action>" if name.empty?
@@ -509,12 +509,12 @@ module Master
       rescue ArgumentError => e
         "capabilities0: #{e.message}"
       rescue StandardError => e
-        "capabilities0: unavailable — #{e.class}: #{e.message}"
+        "capabilities0: unavailable - #{e.class}: #{e.message}"
       end
 
       SCREEN_NAME = /\A[\w.-]{1,40}\z/
 
-      # /screen — keep MASTER running in a GNU screen session you can leave and come back to.
+      # /screen - keep MASTER running in a GNU screen session you can leave and come back to.
       # It starts bin/master detached and names the command that reattaches; it never
       # attaches itself, because this terminal is already inside a session.
       def dispatch_screen(root, ctx: nil)
@@ -539,7 +539,7 @@ module Master
 
       def screen_running?(name) = screen_list.match?(/\d+\.#{Regexp.escape(name)}\s/)
 
-      # /deploy — canonical remote vm23 deployment. Command#review_check requires
+      # /deploy - canonical remote vm23 deployment. Command#review_check requires
       # --confirm before this handler can mutate production.
       def dispatch_deploy(_root, ctx: nil)
         target = arg_for(ctx).split(/\s+/).reject { |token| token.start_with?("--") }.first.to_s.downcase
@@ -590,10 +590,10 @@ module Master
       rescue ArgumentError => e
         "#{platform}0: #{e.message}"
       rescue StandardError => e
-        "#{platform}0: unavailable — #{e.class}: #{e.message}"
+        "#{platform}0: unavailable - #{e.class}: #{e.message}"
       end
 
-      # /wake — explicit microphone wake-word consent and status.
+      # /wake - explicit microphone wake-word consent and status.
       def dispatch_wake(root, ctx: nil)
         return "wake: local-only" if Fiber[:master_visitor] == true
         return "wake: Android/Termux only" unless Master::Device.android? && Master::Device.termux?
@@ -612,7 +612,7 @@ module Master
             phrases << "hey #{name.downcase}" unless name.empty?
           end
           wake.enable!(phrases:)
-          "wake: on — #{wake.phrases.join(", ")}"
+          "wake: on - #{wake.phrases.join(", ")}"
         when "off", "disable"
           wake.disable!
           "wake: off"
@@ -620,10 +620,10 @@ module Master
           "wake: status | on | off"
         end
       rescue StandardError => e
-        "wake0: unavailable — #{e.class}: #{e.message}"
+        "wake0: unavailable - #{e.class}: #{e.message}"
       end
 
-      # /doctor — bin/doctor's report followed by the security audit.
+      # /doctor - bin/doctor's report followed by the security audit.
       # `/doctor device` asks the hardware the host exposes through Termux:API.
       def dispatch_doctor(root, ctx: nil)
         word, rest = subcommand(ctx)

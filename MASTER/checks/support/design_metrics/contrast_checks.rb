@@ -5,9 +5,9 @@ module Deploy
     # Token contrast, and the budget that decides what to do about it.
     #
     # Split out of design_metrics.rb when that file passed its length ceiling.
-    # It is one subject across three methods — pair every declared token against
+    # It is one subject across three methods - pair every declared token against
     # the backgrounds it is actually painted on, score them WCAG and APCA, then
-    # judge the two counts against checks/data/css_budget.yml — and the maths it
+    # judge the two counts against checks/data/css_budget.yml - and the maths it
     # calls lives next door in checks/support/design_metrics/contrast.rb, which
     # was split off the same subject at the other layer.
     #
@@ -17,7 +17,7 @@ module Deploy
       # Enumerate the whole mode-matched fg/bg space per dialect instead of a
       # hand-written list of eight pairs.
       #
-      # The old list checked text/bg and text/surface only, and passed — while
+      # The old list checked text/bg and text/surface only, and passed - while
       # social.accent/bg sat at 4.37 and `color: var(--accent)` was being used as
       # a text colour in dozens of rules. Anything the author forgets to list is
       # invisible to a list.
@@ -41,10 +41,10 @@ module Deploy
         # Only measure colours something paints. Reported rather than dropped
         # quietly: a check that silently stops counting looks identical to one that
         # was fixed, and this file's own history is a warning about exactly the
-        # opposite mistake — vertical accents rendering on social chrome with
+        # opposite mistake - vertical accents rendering on social chrome with
         # nothing reporting them.
         # Both sides, not just the foreground. brgen_old_light.text/chrome_bg
-        # reported 1.26:1 — which reads as catastrophic until you notice
+        # reported 1.26:1 - which reads as catastrophic until you notice
         # --chrome-bg has no var() consumer left, so that pair measures ink on a
         # surface nothing paints. Checking only the foreground kept it, because
         # --text is read everywhere.
@@ -63,8 +63,8 @@ module Deploy
           skipped = unpainted.select { |p| p[:ratio] < 4.5 }
 
           # Name the side that has no reader, not the pair's foreground. Listing
-          # fg_key alone printed "text, accent, danger" — tokens painted all over
-          # the tree — because their *background* was the dead one, which reads as
+          # fg_key alone printed "text, accent, danger" - tokens painted all over
+          # the tree - because their *background* was the dead one, which reads as
           # though the check had lost track of the palette entirely.
           dead = unpainted.flat_map do |p|
             [p[:fg_key], p[:bg_key]].reject { |k| DesignMetrics.token_painted?(DesignMetricsCheck::RAILS, k) }
@@ -84,12 +84,12 @@ module Deploy
           detail << "overridden: #{shadowed.join(', ')}" if shadowed.any?
           @result.warn(
             "design_metrics contrast: skipped #{unpainted.size} pair(s) whose colour never reaches a pixel " \
-            "(#{skipped.size} of them below AA) — #{detail.join(' | ')}",
+            "(#{skipped.size} of them below AA) - #{detail.join(' | ')}",
           )
         end
 
         if pairs.empty?
-          @result.fail("design_metrics contrast: every token pair is unread — the palette paints nothing",
+          @result.fail("design_metrics contrast: every token pair is unread - the palette paints nothing",
                        severity: :soft)
           return
         end
@@ -99,7 +99,7 @@ module Deploy
 
         below_aa.sort_by { |p| p[:ratio] }.each do |pair|
           suggestion = DesignMetrics.suggest_contrast_fix(pair[:fg], pair[:bg], 4.5)
-          hint = suggestion ? " — #{pair[:fg_key]} #{suggestion[:hex]} would reach #{suggestion[:ratio]}" : ""
+          hint = suggestion ? " - #{pair[:fg_key]} #{suggestion[:hex]} would reach #{suggestion[:ratio]}" : ""
           @result.fail(
             "design_metrics contrast: #{pair[:label]} #{pair[:fg]} on #{pair[:bg]} = #{pair[:ratio]} < 4.5 (WCAG AA)" \
             "#{hint} principle=accessibility",
@@ -110,7 +110,7 @@ module Deploy
         if below_aaa.any?
           @result.warn(
             "design_metrics contrast: #{below_aaa.size} pair(s) between 4.5 and the design_rules AAA target " \
-            "#{normal_min} — #{below_aaa.sort_by { |p| p[:ratio] }.first(3).map { |p| "#{p[:label]}=#{p[:ratio]}" }.join(', ')}",
+            "#{normal_min} - #{below_aaa.sort_by { |p| p[:ratio] }.first(3).map { |p| "#{p[:label]}=#{p[:ratio]}" }.join(', ')}",
           )
         end
         @result.warn("design_metrics contrast: enumerated #{pairs.size} mode-matched token pairs " \
@@ -120,7 +120,7 @@ module Deploy
 
       # Soft failures are warnings unless CHECK_STRICT_SOFT is set, so 30 pairs under
       # WCAG AA sat under a green line indefinitely. A ceiling makes the number
-      # monotone without going red on arrival — the same trade constitutional_budget
+      # monotone without going red on arrival - the same trade constitutional_budget
       # and css_budget make.
       def judge_contrast_budget(below_aa, below_aaa)
         budget = contrast_budget
@@ -134,7 +134,7 @@ module Deploy
           next if ceiling.nil?
 
           if count > ceiling
-            @result.fail("design_metrics #{key}: #{count} exceeds ceiling #{ceiling} (+#{count - ceiling}) — " \
+            @result.fail("design_metrics #{key}: #{count} exceeds ceiling #{ceiling} (+#{count - ceiling}) - " \
                          "raise the contrast, or record a new ceiling with a reason")
           elsif count < ceiling
             @result.warn("design_metrics #{key}: #{count}, under its #{ceiling} ceiling (-#{ceiling - count})")
@@ -145,8 +145,8 @@ module Deploy
       end
 
       # Anchored off this file's own directory, two levels up, because the
-      # budget lives in the checks root's data/ — wherever the checks tree sits.
-      # It fails the way this kind of thing does — not an exception, a rescue
+      # budget lives in the checks root's data/ - wherever the checks tree sits.
+      # It fails the way this kind of thing does - not an exception, a rescue
       # that logs "rules unreadable" and runs the check unbudgeted, so the
       # contrast ceiling stops being enforced while the check still reports ok.
       # One RAILS-prefixed join here once read into a tree without checks/data
@@ -161,7 +161,7 @@ module Deploy
 
         rules.slice("contrast_below_aa", "contrast_below_aaa")
       rescue StandardError => e
-        @result.inconclusive!("design_metrics: contrast budget unreadable (#{e.class}: #{e.message}) — contrast ceilings were not measured")
+        @result.inconclusive!("design_metrics: contrast budget unreadable (#{e.class}: #{e.message}) - contrast ceilings were not measured")
         {}
       end
     end

@@ -104,7 +104,7 @@ module Master
       module_function
 
       def blocked?(range, now = Time.now)
-        start_time, end_time = range.to_s.split("–", 2).map { |value| value.to_s.strip }
+        start_time, end_time = range.to_s.split("-", 2).map { |value| value.to_s.strip }
         return false unless start_time&.match?(/\A\d{2}:\d{2}\z/) && end_time&.match?(/\A\d{2}:\d{2}\z/)
 
         current = now.hour * 60 + now.min

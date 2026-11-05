@@ -9,7 +9,7 @@ require_relative "quality"
 
 module Master
   module Voice
-    # Transcendent orchestrator — emotion, melody, multi-engine chain.
+    # Transcendent orchestrator - emotion, melody, multi-engine chain.
     module Transcendent
       DEFAULTS = {
         "personality" => "warm_supportive",

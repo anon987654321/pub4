@@ -163,7 +163,7 @@ module MasterVisualCapture
       puts JSON.pretty_generate(record.slice(:key, :status, :title, :screenshot, :screenshot_sha256))
     end
   rescue Deploy::CdpSession::Unavailable, Deploy::CdpSession::Error, SystemCallError => e
-    warn "visual capture: INCONCLUSIVE — #{e.class}: #{e.message}"
+    warn "visual capture: INCONCLUSIVE - #{e.class}: #{e.message}"
     exit 3
   end
 end

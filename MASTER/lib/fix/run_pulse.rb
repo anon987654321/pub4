@@ -340,7 +340,7 @@ module Master
 
         share = (100.0 * @file_done / @file_total).round
         base = @file && File.basename(@file)
-        name = base ? " #{base.length > FILE_CHARS ? "…#{base[-(FILE_CHARS - 1)..]}" : base}" : ""
+        name = base ? " #{base.length > FILE_CHARS ? "...#{base[-(FILE_CHARS - 1)..]}" : base}" : ""
         "files #{@file_done}/#{@file_total} (#{share}%)#{name}"
       end
 
@@ -353,7 +353,7 @@ module Master
         return unless @pass.positive? && @max_passes.to_i.positive?
 
         share = @file_total.positive? ? @file_done.fdiv(@file_total) : 0.0
-        "run ≥#{(100.0 * ((@pass - 1) + share) / @max_passes).floor}%"
+        "run >=#{(100.0 * ((@pass - 1) + share) / @max_passes).floor}%"
       end
 
       # RunBudget's ETA needs a finished pass; until then this pass's own file rate

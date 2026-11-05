@@ -14,7 +14,7 @@ candidates:
     tree: MASTER
     status: implemented
     spec: >
-      bin/spark and operator spark — no model. Reads creativity_lab.yml, prints one
+      bin/spark and operator spark - no model. Reads creativity_lab.yml, prints one
       random safe experiment plus tree README pointer.
     cost: S
     reversibility: high
@@ -22,42 +22,42 @@ candidates:
     tree: OPENBSD
     status: implemented
     spec: >
-      bin/deploy-story — structured vps-deploy log lines (stage=) as a timeline.
+      bin/deploy-story - structured vps-deploy log lines (stage=) as a timeline.
     cost: S
     reversibility: high
   - id: cities
     tree: RAILS
     status: implemented
     spec: >
-      RAILS/bin/cities (and MASTER/bin/cities) — owned_domains from apps.yml without Rails boot.
+      RAILS/bin/cities (and MASTER/bin/cities) - owned_domains from apps.yml without Rails boot.
     cost: S
     reversibility: high
   - id: domain_ghosts
     tree: OPENBSD
     status: implemented
     spec: >
-      domain-ghosts — available inventory names, owned/inventory skew, residual relayd Hosts.
+      domain-ghosts - available inventory names, owned/inventory skew, residual relayd Hosts.
     cost: S
     reversibility: high
   - id: tree_weight
     tree: MASTER
     status: implemented
     spec: >
-      MASTER/bin/tree-weight — tracked file counts per tree via git ls-files.
+      MASTER/bin/tree-weight - tracked file counts per tree via git ls-files.
     cost: S
     reversibility: high
   - id: law_weight
     tree: MASTER
     status: implemented
     spec: >
-      MASTER/bin/law-weight — line counts of MASTER/law/*.rb to see where law gravity sits.
+      MASTER/bin/law-weight - line counts of MASTER/law/*.rb to see where law gravity sits.
     cost: S
     reversibility: high
   - id: city_pack_api
     tree: RAILS
     status: deferred
     spec: >
-      Read-only JSON city pack for face/agent — needs apps.yml consumer + auth design.
+      Read-only JSON city pack for face/agent - needs apps.yml consumer + auth design.
     cost: M
     reversibility: high
   - id: semantic_canary

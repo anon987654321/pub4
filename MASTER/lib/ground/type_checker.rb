@@ -7,9 +7,9 @@ module Master
   # Architecture #11: constitution as a type system on the AST IR.
   # Each rule encodes a type constraint. Violations are type errors.
   # Fixes are derivable from the complement constraint.
-  # Sound and complete — no LLM, no probabilistic inference.
+  # Sound and complete - no LLM, no probabilistic inference.
   #
-  # Status: scaffolded — requires a full typed IR per supported medium.
+  # Status: scaffolded - requires a full typed IR per supported medium.
   # The Ruby path uses Prism AST nodes as the IR. Other languages TBD.
     class TypeChecker
       TypeError = Struct.new(:node, :rule, :message, :complement, keyword_init: true)

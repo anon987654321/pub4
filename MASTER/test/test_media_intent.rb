@@ -132,7 +132,7 @@ class MediaIntentTest < Minitest::Test
     words = Shellwords.split(calls.fetch(0)[:arg])
     assert_includes words, "--showcase"
     assert_includes words, "--no-video"
-    assert_equal "Blue Hour — Dilla Minor Dub Cut", result.value!.fetch(:style)
+    assert_equal "Blue Hour - Dilla Minor Dub Cut", result.value!.fetch(:style)
     assert_equal "dilla_shadow_full", result.value!.fetch(:drums)
     assert_equal "kit_dust", result.value!.fetch(:kit)
     refute_includes words, "--list"

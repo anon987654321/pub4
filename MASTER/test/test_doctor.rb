@@ -4,7 +4,7 @@ require "test_helper"
 require "open3"
 
 # bin/doctor had no test. It is the tool an operator runs first on a host that
-# is behaving oddly, and the thing it reports is a verdict per check — so the
+# is behaving oddly, and the thing it reports is a verdict per check - so the
 # verdict vocabulary is the part worth pinning.
 #
 # Driven as a subprocess rather than by loading the file: doctor is a script
@@ -31,7 +31,7 @@ class TestDoctor < Minitest::Test
 
   # The verdict is three-valued, and the third one is the reason this test
   # exists. model-quota and cache-efficiency used to answer `ok: true, detail:
-  # "module not loaded"` — OK for a check nobody ran — and content-dedup raised
+  # "module not loaded"` - OK for a check nobody ran - and content-dedup raised
   # into `ok: false`, so a broken instrument read as a real finding.
   def test_a_check_that_measured_nothing_says_so
     source = File.read(DOCTOR)

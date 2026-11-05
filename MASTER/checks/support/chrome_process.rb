@@ -10,12 +10,12 @@ module Deploy
   #
   # Split out when cdp_session.rb passed its file-length ceiling a second time.
   # The first split took the RFC 6455 half into cdp_framing.rb; this is the
-  # other seam in the same file — everything left in CdpSession speaks the
+  # other seam in the same file - everything left in CdpSession speaks the
   # DevTools Protocol to a browser that is already running, and nothing here
   # knows what CDP is.
   #
   # Timeout is spelled CdpSession::Timeout throughout. Bare `Timeout` resolves
-  # to the stdlib module, and it resolves at the moment the deadline is hit —
+  # to the stdlib module, and it resolves at the moment the deadline is hit -
   # a NameError instead of the error the caller rescues. That is the failure
   # cdp_framing.rb's own comment records from the first split.
   module ChromeProcess
@@ -81,7 +81,7 @@ module Deploy
         "--disable-features=NetworkService,TranslateUI,BackForwardCache",
         "--mute-audio",
         # --disable-gpu turns WebGL off entirely, which is right for the layout
-        # and CSS checks this session was written for — software GL is slow and
+        # and CSS checks this session was written for - software GL is slow and
         # rasterises text differently. It is wrong for a surface made of WebGL:
         # MapLibre and the MASTER face both measured as an empty canvas, so a
         # check asserting "the map draws" would have passed or failed for reasons
@@ -117,7 +117,7 @@ module Deploy
       loop do
         body = begin
           Net::HTTP.get(URI("http://127.0.0.1:#{port}/json/list"))
-        rescue StandardError # scan: intentional — one poll in the discovery loop; nil retries
+        rescue StandardError # scan: intentional - one poll in the discovery loop; nil retries
           nil
         end
 

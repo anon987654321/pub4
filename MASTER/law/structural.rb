@@ -6,7 +6,7 @@ module Master
   module Review
     module Scan
       module Laws
-        # B05 FILE_LAYOUT — Ruby file order: frozen → require → module → class → public → private.
+        # B05 FILE_LAYOUT - Ruby file order: frozen -> require -> module -> class -> public -> private.
         class FileLayoutLaw < Detector
           # The three scopes Ruby resets method visibility in, plus the file itself.
           SCOPE_NODES = [
@@ -28,7 +28,7 @@ module Master
 
           private
 
-          # A shebang has to be the first line, so the header sits under it —
+          # A shebang has to be the first line, so the header sits under it -
           # five executable tools in tools/ were reported for writing the only
           # order the kernel accepts.
           def header_finding(code)
@@ -43,8 +43,8 @@ module Master
 
           # Visibility is a property of the enclosing scope, so this reads scopes
           # rather than lines. The line-based reading called the first `def` under
-          # every `private` a violation — 261 findings across MASTER, every one of
-          # them a correctly private method — because a private section is what
+          # every `private` a violation - 261 findings across MASTER, every one of
+          # them a correctly private method - because a private section is what
           # `private` is for. What the law actually forbids is a method that is
           # still *public* below the marker, and there are two ways to write one:
           # re-open the scope with a bare `public`, or define a singleton method,
@@ -88,10 +88,10 @@ module Master
               return unless visibility == :public
 
               finding(line: node.location.start_line,
-                message: "public method #{node.name} after private marker — move above private")
+                message: "public method #{node.name} after private marker - move above private")
             elsif receiver.is_a?(Prism::SelfNode)
               finding(line: node.location.start_line,
-                message: "def self.#{node.name} below the private marker is still public — move it above")
+                message: "def self.#{node.name} below the private marker is still public - move it above")
             end
           end
 
@@ -109,11 +109,11 @@ module Master
         ::Law.define(:FILE_LAYOUT) do
           detector FileLayoutLaw
           tags %i[PROXIMITY CONVENTION]
-          fix "frozen header → requires → module/class → public → private"
+          fix "frozen header -> requires -> module/class -> public -> private"
           proved_by "test/test_structural_shape_laws.rb"
         end
 
-        # B06 EXPLICIT — implicit requires, magic coupling, method_missing without respond_to_missing?.
+        # B06 EXPLICIT - implicit requires, magic coupling, method_missing without respond_to_missing?.
         class ExplicitLaw < Detector
 
           def check(code, path:)
@@ -121,12 +121,12 @@ module Master
             findings = []
             if code.include?("method_missing") && !code.include?("respond_to_missing?")
               findings.concat(scan_lines(code, /\bmethod_missing\s*[(:]/,
-                message: "method_missing without respond_to_missing? — add respond_to_missing?"))
+                message: "method_missing without respond_to_missing? - add respond_to_missing?"))
             end
             findings.concat(scan_lines(code, /\bconst_missing\s*[(:]/,
-              message: "const_missing — prefer explicit require"))
+              message: "const_missing - prefer explicit require"))
             findings.concat(scan_lines(code, /\bautoload\s*[(:]/,
-              message: "autoload — prefer explicit require_relative"))
+              message: "autoload - prefer explicit require_relative"))
             findings
           end
 
@@ -152,7 +152,7 @@ module Master
           good %(require_relative "thing"\n)
         end
 
-        # B08 CYCLOMATIC_COMPLEXITY — methods with cyclomatic complexity > 10.
+        # B08 CYCLOMATIC_COMPLEXITY - methods with cyclomatic complexity > 10.
         class CyclomaticComplexityLaw < Detector
           MAX_CC = 10
           CC_NODES = [
@@ -171,7 +171,7 @@ module Master
 
               next if cc <= MAX_CC
               findings << finding(line: node.location.start_line,
-                message: "method #{node.name} has cyclomatic complexity #{cc} (max #{MAX_CC}) — extract branches")
+                message: "method #{node.name} has cyclomatic complexity #{cc} (max #{MAX_CC}) - extract branches")
             end
             findings
           end
@@ -192,7 +192,7 @@ module Master
           proved_by "test/test_operator_lint.rb"
         end
 
-        # B09 PATTERN_EXTRACTION — code close to a named design pattern.
+        # B09 PATTERN_EXTRACTION - code close to a named design pattern.
         class PatternExtractionLaw < Detector
           BRANCH_THRESHOLD = 3
           PIPELINE_STEP_THRESHOLD = 4
@@ -216,7 +216,7 @@ module Master
             if branch_count >= BRANCH_THRESHOLD
               finding(
                 line: node.location.start_line,
-                message: "Strategy opportunity in #{node.name}: #{branch_count} dispatch branches — " \
+                message: "Strategy opportunity in #{node.name}: #{branch_count} dispatch branches - " \
                   "extract named handlers",
               )
             elsif pipeline_step_count(method_lines) >= PIPELINE_STEP_THRESHOLD
@@ -250,7 +250,7 @@ module Master
         ::Law.define(:PATTERN_EXTRACTION) do
           detector PatternExtractionLaw
           tags %i[DESIGN OPPORTUNITY]
-          source "MASTER-native — extract recurring structure"
+          source "MASTER-native - extract recurring structure"
           ask "Is the code close to a known reusable pattern whose extraction would genuinely reduce complexity rather than add ceremony?"
           fix "Extract a pattern only when recurring structure earns the abstraction."
           bad <<~'X'
@@ -262,7 +262,7 @@ module Master
           proved_by "test/test_pattern_extraction_law.rb"
         end
 
-        # B10 DATA_CLASS — class with only attr_accessor and no real methods.
+        # B10 DATA_CLASS - class with only attr_accessor and no real methods.
         class DataClassLaw < Detector
 
           def check_ast(ast, _code, path:)
@@ -277,7 +277,7 @@ module Master
               real_defs = children.count { |n| n.is_a?(Prism::DefNode) && !%w[initialize to_s inspect].include?(n.name.to_s) }
               next unless accessor_calls >= 2 && real_defs == 0
               findings << finding(line: node.location.start_line,
-                message: "#{node.constant_path.slice} has #{accessor_calls} accessors and no behavior — " \
+                message: "#{node.constant_path.slice} has #{accessor_calls} accessors and no behavior - " \
                   "use Struct or Data.define")
             end
             findings
@@ -290,7 +290,7 @@ module Master
         ::Law.define(:DATA_CLASS) do
           detector DataClassLaw
           tags %i[SRP SOLID]
-          source "Refactoring — Data Class (Fowler)"
+          source "Refactoring - Data Class (Fowler)"
           ask "Does this class mainly hold data while behavior that belongs with that data is scattered across other modules?"
           fix "Move cohesive behavior toward the data owner or replace the holder with a meaningful domain abstraction."
           bad <<~'X'
@@ -324,7 +324,7 @@ module Master
           # md, pdf, phoenix and proof, each the single file of its constant.
           # soul.rb is the boot-floor authority reader, and the catalogue
           # retirement landed flat_law_catalogue, law_catalogue_preflight and
-          # the four *_guard files beside it — the same one file, one
+          # the four *_guard files beside it - the same one file, one
           # top-level constant shape.
           ALLOWED_ROOT_FILES = %w[
             builder.rb config_sections_guard.rb configuration_guard.rb content.rb
@@ -347,7 +347,7 @@ module Master
 
             [finding(
               line: 1,
-              message: "#{File.basename(path)} added directly to lib/ root — move it into a " \
+              message: "#{File.basename(path)} added directly to lib/ root - move it into a " \
                 "subsystem folder, or add it to LibRootDisciplineLaw::ALLOWED_ROOT_FILES if it's genuinely core",
             )]
           end
@@ -370,7 +370,7 @@ module Master
       # Each implements check_ast(ast, code, path:) for scanner integration.
       # All also implement check(code, path:) as fallback for non-Ruby files.
 
-      # B01 SMALL_FILES — files over 300 lines (detect_structural: file_silhouette).
+      # B01 SMALL_FILES - files over 300 lines (detect_structural: file_silhouette).
       #
       # The fix it names is a split at module boundaries, so it reads files that
       # have modules. A locale, a layout snapshot, a lockfile, a notebook or a
@@ -390,7 +390,7 @@ module Master
 
             count = code.lines.size
             return [] if count <= LIMIT
-            [finding(line: 1, message: "file #{count} lines (limit #{LIMIT}) — split at module boundaries",
+            [finding(line: 1, message: "file #{count} lines (limit #{LIMIT}) - split at module boundaries",
                      blast_radius: SPANS_FILES)]
           end
         end
@@ -402,7 +402,7 @@ module Master
           proved_by "test/test_scan_law_contracts.rb"
         end
 
-      # B02 SMALL_FUNCTIONS — methods over 20 lines via Prism (detect_structural: long_method).
+      # B02 SMALL_FUNCTIONS - methods over 20 lines via Prism (detect_structural: long_method).
         class SmallFunctionsLaw < Detector
           IDEAL = 10
           MAX = 20
@@ -412,7 +412,7 @@ module Master
           #
           # The span version counted comments and blank lines toward method
           # length, which contradicts this law's own description ("methods under
-          # 10 lines ideal") — that is about how much logic a method holds, not
+          # 10 lines ideal") - that is about how much logic a method holds, not
           # how well it is explained. In a codebase whose convention is a
           # paragraph of rationale above the tricky line, the effect was backwards:
           # Cli::TurnRouter.call was reported at 22 lines while containing 10 lines
@@ -432,7 +432,7 @@ module Master
 
               findings << finding(
                 line: node.location.start_line,
-                message: "method #{node.name} is #{len} code lines (max #{MAX}) — extract helpers",
+                message: "method #{node.name} is #{len} code lines (max #{MAX}) - extract helpers",
               )
             end
             findings
@@ -459,7 +459,7 @@ module Master
           proved_by "test/test_scan_law_contracts.rb"
         end
 
-      # B03 NO_GOD_CLASS — class with >10 public methods (detect_structural: god_class).
+      # B03 NO_GOD_CLASS - class with >10 public methods (detect_structural: god_class).
         class GodClassLaw < Detector
           METHOD_LIMIT = 10
           LINE_LIMIT = 300
@@ -467,7 +467,7 @@ module Master
 
           def check_ast(ast, code, path:)
             return [] unless ast
-            # A Minitest class's public methods ARE its tests — counting them
+            # A Minitest class's public methods ARE its tests - counting them
             # counts coverage as sin. SolidQueueProofTest carried 12 tests and
             # an error-severity god-class finding for it.
             return [] if path.to_s.match?(%r{/test/|/spec/|_test\.rb\z|_spec\.rb\z})
@@ -484,8 +484,8 @@ module Master
           # Every `class X` block in the file, grouped by the class it opens.
           #
           # The walk judged one AST node at a time, so a class written as a
-          # scaffold and reopened — `class Propose; end` at the top, the methods
-          # in a second block below — was measured twice at half its size, and
+          # scaffold and reopened - `class Propose; end` at the top, the methods
+          # in a second block below - was measured twice at half its size, and
           # merging those blocks made the same class breach without one method
           # being added. The rule was reading source layout rather than the
           # class, and it read it backwards: the more scattered the file, the
@@ -505,10 +505,10 @@ module Master
 
           # The message for a class that is too big, or nil for one that is not.
           # Split out of check_ast because that method was 21 code lines against
-          # DENSITY's max of 20 — the same law this file's neighbours declare.
+          # DENSITY's max of 20 - the same law this file's neighbours declare.
           #
           # Code lines, not span. The raw span charged for rationale comments, so
-          # a well-explained class breached while a stripped one passed — the
+          # a well-explained class breached while a stripped one passed - the
           # counter DENSITY and lint:spine already retired, surviving here.
           # Core::Constitution read 348 under it while holding 250 lines of code,
           # and the self_violation halted every /fix repair stage; the only
@@ -517,13 +517,13 @@ module Master
             public_defs = nodes.sum { |node| CodeMetrics.public_method_count(node) }
 
             if public_defs > METHOD_LIMIT
-              return "god class #{name} has #{public_defs} public methods (max #{METHOD_LIMIT}) — decompose"
+              return "god class #{name} has #{public_defs} public methods (max #{METHOD_LIMIT}) - decompose"
             end
 
             line_count = nodes.sum { |node| CodeMetrics.method_code_lines(node, lines) }
             return unless line_count > LINE_LIMIT
 
-            "god class #{name} is #{line_count} code lines (max #{LINE_LIMIT}) — split at responsibility boundaries"
+            "god class #{name} is #{line_count} code lines (max #{LINE_LIMIT}) - split at responsibility boundaries"
           end
         end
 
@@ -542,9 +542,9 @@ module Master
           proved_by "test/test_scan_law_contracts.rb"
         end
 
-      # B07 NESTING_DEPTH — control-flow nesting deeper than 4 levels (detect_structural: nesting_depth).
+      # B07 NESTING_DEPTH - control-flow nesting deeper than 4 levels (detect_structural: nesting_depth).
       # Counts control flow only; module/class/def are namespacing and method scope, not the
-      # LINEARITY concern — otherwise deep namespaces (Master::Review::Scan::Laws) flag every method.
+      # LINEARITY concern - otherwise deep namespaces (Master::Review::Scan::Laws) flag every method.
         class NestingDepthLaw < Detector
           MAX_DEPTH = 4
 
@@ -559,7 +559,7 @@ module Master
             return [] unless ast
             deep = []
             scan_depth(node: ast, depth: 0, violations: deep)
-            message = "nesting depth exceeds #{MAX_DEPTH} — flatten with guard clauses or extract methods"
+            message = "nesting depth exceeds #{MAX_DEPTH} - flatten with guard clauses or extract methods"
             deep.map { |line| finding(line:, message:) }
           end
 
@@ -582,7 +582,7 @@ module Master
           proved_by "test/test_structural_shape_laws.rb"
         end
 
-      # B04 CQS — method that both mutates state and returns a meaningful value.
+      # B04 CQS - method that both mutates state and returns a meaningful value.
         class CqsLaw < Detector
 
           def check_ast(ast, _code, path:)
@@ -597,7 +597,7 @@ module Master
               returns_value = body_has_explicit_return?(body)
               if mutates && returns_value && !memoized_reader?(body)
                 findings << finding(line: node.location.start_line,
-                  message: "method #{node.name} mutates state and returns a value — split into command and query")
+                  message: "method #{node.name} mutates state and returns a value - split into command and query")
               end
             end
             findings
@@ -654,11 +654,11 @@ module Master
         ::Law.define(:CQS) do
           detector CqsLaw
           tags %i[CQS CLEAN_CODE]
-          fix "command-query separation — mutate OR return, not both"
+          fix "command-query separation - mutate OR return, not both"
           proved_by "test/test_scan_law_contracts.rb"
         end
 
-      # SOLID literal proxies — data/laws.yml unit OPEN_CLOSED/LISKOV/
+      # SOLID literal proxies - data/laws.yml unit OPEN_CLOSED/LISKOV/
       # INTERFACE_SEGREGATION/DEPENDENCY_INVERSION previously had detect_semantic
       # only. These give each a same-file AST proxy; the semantic prompt still
       # carries the cases these heuristics miss.
@@ -668,7 +668,7 @@ module Master
           TYPE_PREDICATE = /\.(class|type|kind)\b/
 
           # No trailing \b. A word boundary needs a word character on one side,
-          # and `?` is not one — so `\bis_a\?\b` required a word character right
+          # and `?` is not one - so `\bis_a\?\b` required a word character right
           # after the question mark, which no call has: `is_a?(Header)` and
           # `is_a? Header` both continue with a non-word character. The clause
           # could not match any spelling of the method it names, so half of what
@@ -686,7 +686,7 @@ module Master
 
               next unless type_dispatch?(node)
               findings << finding(line: node.location.start_line,
-                message: "case dispatches on type across #{node.conditions.size} branches — new types require " \
+                message: "case dispatches on type across #{node.conditions.size} branches - new types require " \
                   "editing this switch; consider polymorphism or a lookup table")
             end
             findings
@@ -745,7 +745,7 @@ module Master
             body_text = sub_def.body&.slice.to_s.strip
             if (match = body_text.match(/\Araise\s+(NotImplementedError|NoMethodError)\b/))
               findings << finding(line: sub_def.location.start_line,
-                message: "#{sub_def.name} refuses the parent's contract (raises #{match[1]}) — " \
+                message: "#{sub_def.name} refuses the parent's contract (raises #{match[1]}) - " \
                   "use composition if substitutability fails")
             end
             sub_required = required_param_count(sub_def)
@@ -753,7 +753,7 @@ module Master
             parent_required = required_param_count(parent_def)
             if sub_required > parent_required
               findings << finding(line: sub_def.location.start_line,
-                message: "#{sub_def.name} requires #{sub_required} args, parent requires #{parent_required} — " \
+                message: "#{sub_def.name} requires #{sub_required} args, parent requires #{parent_required} - " \
                   "narrows what callers can pass, breaking substitutability")
             end
             findings
@@ -814,7 +814,7 @@ module Master
                 next unless const.match?(COLLABORATOR_SUFFIX)
                 next if params.include?(const.to_sym)
                 findings << finding(line: call.location.start_line,
-                  message: "#{const}.new hardcoded in initialize — inject as a constructor parameter instead")
+                  message: "#{const}.new hardcoded in initialize - inject as a constructor parameter instead")
               end
             end
             findings
@@ -835,7 +835,7 @@ module Master
         ::Law.define(:DEPENDENCY_INVERSION) do
           detector DependencyInversionLaw
           tags %i[SOLID DIP]
-          source "SOLID — Dependency Inversion Principle"
+          source "SOLID - Dependency Inversion Principle"
           ask "Does high-level policy directly instantiate concrete dependencies that should be replaceable?"
           fix "Depend on stable abstractions and inject concrete implementations at the boundary."
           bad <<~'X'
@@ -862,7 +862,7 @@ module Master
               users = includers[name] || []
               next if users.size < 2
               findings << finding(line: 1,
-                message: "module #{name} has #{method_count} public methods, included by #{users.size} classes — " \
+                message: "module #{name} has #{method_count} public methods, included by #{users.size} classes - " \
                   "split into smaller role-based modules")
             end
             findings
@@ -899,7 +899,7 @@ module Master
         ::Law.define(:INTERFACE_SEGREGATION) do
           detector InterfaceSegregationLaw
           tags %i[SOLID ISP]
-          source "SOLID — Interface Segregation"
+          source "SOLID - Interface Segregation"
           ask "Does an interface force implementations to stub or ignore methods they do not need?"
           fix "Split broad interfaces into focused contracts."
           bad <<~'X'
@@ -915,7 +915,7 @@ module Master
         # whose every method only forwards to one other object carries a name and
         # a file and nothing else. Callers could hold that object directly. :info,
         # because a facade that adds a boundary on purpose is the exception the
-        # reviewer decides — the law surfaces the shape, not the verdict.
+        # reviewer decides - the law surfaces the shape, not the verdict.
         class MiddleManLaw < Detector
           MIN_METHODS = 3
 
@@ -933,7 +933,7 @@ module Master
               next if receivers.any?(&:nil?) || receivers.uniq.size != 1
 
               finding(line: node.location.start_line,
-                message: "#{node.name} forwards all #{defs.size} methods to #{receivers.first} — " \
+                message: "#{node.name} forwards all #{defs.size} methods to #{receivers.first} - " \
                   "inline it, or let callers hold #{receivers.first} directly")
             end
           end
@@ -968,7 +968,7 @@ module Master
         ::Law.define(:MIDDLE_MAN) do
           detector MiddleManLaw
           tags %i[ENGINEERING_FIT ABSTRACTION]
-          source "Refactoring — Middle Man (Fowler)"
+          source "Refactoring - Middle Man (Fowler)"
           ask "Does this class mostly delegate methods to another object without adding meaningful policy?"
           fix "Remove the unnecessary middle layer or give it a real abstraction."
           bad <<~'X'

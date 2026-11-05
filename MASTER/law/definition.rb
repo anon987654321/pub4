@@ -4,17 +4,17 @@ require "digest"
 require "set"
 require_relative "../lib/law_vocabulary"
 
-# law/ — the constitution as code.
+# law/ - the constitution as code.
 #
 # A law exists only as a triple: detector + a fixture it MUST flag + a fixture
 # it MUST NOT flag. A law with no detector is documentation. A law with no bad
 # fixture is unfalsifiable. A law with no good fixture has an unmeasured
-# false-positive rate — the decorator-massacre failure mode. All three or it
+# false-positive rate - the decorator-massacre failure mode. All three or it
 # does not load. `rake dogfood` proves every law against its own fixtures and
 # then runs every law over law/ itself; both must stay clean.
 #
 # Contract: `rake dogfood` is the archaeological audit. A capability that goes
-# missing is a fixture that stops passing — nothing to compare by hand.
+# missing is a fixture that stops passing - nothing to compare by hand.
 module Law
   # laws.yml owns normative Law records and the per-Law execution catalogue.
   # Ruby files implement declared detectors and evaluators; law_runtime.yml
@@ -100,18 +100,18 @@ module Law
   end
 
   # A line-scoped detector reads code, and a comment naming a forbidden
-  # construct is prose about it, not an instance of it — "# a bare rescue"
+  # construct is prose about it, not an instance of it - "# a bare rescue"
   # became an error-severity finding when FAIL_VISIBLY moved here from the
   # yaml bridge, which had learned this once already. Comment-leading lines
   # are skipped for the file's own comment syntax; a rule whose subject IS
   # comments (WHY_NOT_WHAT, TYPOGRAPHY_DISCIPLINE) declares `reads_comments
   # true`. Fixtures prove with file "-", which has no extension and so no
-  # comment syntax — a fixture is always read whole.
+  # comment syntax - a fixture is always read whole.
   # Keyed by language rather than by extension, because an extension table here
   # is a second copy of FILE_LANGUAGE_MAP that has to agree with it and does
   # not. Adding .ksh, .ru and .mjs to that map made three more file types
   # readable and left their comments unblanked, so DOLLAR_PAREN read the prose
-  # backticks in a ksh comment — `keepenv`, `sysctl | awk` — as command
+  # backticks in a ksh comment - `keepenv`, `sysctl | awk` - as command
   # substitution. One table, and a new extension inherits its language's
   # comment syntax for free.
   LANGUAGE_COMMENT_LEADERS = {
@@ -154,7 +154,7 @@ module Law
     #
     # The reach half is proved too, because it was the half that broke:
     # NEVER_BATCH_DELETE declared `languages %i[ruby shell]` and no file can
-    # carry the language "shell" — FILE_LANGUAGE_MAP emits "zsh" — so a law
+    # carry the language "shell" - FILE_LANGUAGE_MAP emits "zsh" - so a law
     # written after a batch-delete incident could not read a single shell
     # script, and passed prove! every boot because prove! called scan directly
     # and never asked applies?. A declared language that nothing produces is a
@@ -162,8 +162,8 @@ module Law
     def prove!
       # The reach check below applies to both kinds; only the detector half is
       # skipped for a semantic rule, because proving it needs a model and this
-      # runs at boot. The fixtures are still required — Builder#build refuses
-      # without them — they are simply proved by rake rather than by require.
+      # runs at boot. The fixtures are still required - Builder#build refuses
+      # without them - they are simply proved by rake rather than by require.
       if proved_by then prove_named_test!
       elsif main_detector? then prove_fixtures!
       end
@@ -258,7 +258,7 @@ module Law
       extensions.each do |extension|
         as_file = "fixture#{extension}"
         if scan(bad, file: as_file).empty?
-          raise ArgumentError, "#{id}: bad fixture flagged on \"-\" but not on #{extension} — " \
+          raise ArgumentError, "#{id}: bad fixture flagged on \"-\" but not on #{extension} - " \
                                "considered_text blanks its subject first (set reads_comments?)"
         end
         next if scan(good, file: as_file).empty?
@@ -277,7 +277,7 @@ module Law
 
     # File-scope laws get the same two exemptions the line-scope ones have. All
     # eleven had neither, so they were blind to comment leaders and to the
-    # `scan: intentional` opt-out this framework advertises — which is how
+    # `scan: intentional` opt-out this framework advertises - which is how
     # RATE_LIMITING_MISSING fired at :error on a sixteen-line controller with no
     # actions, on the word "login" inside a comment. At :error that also checks
     # the file out of the semantic pass entirely.
@@ -291,8 +291,8 @@ module Law
     # A check reads the raw text and runs on a Scan::Detector, whose helpers it
     # shares with every detector class: `finding`, the AST walks, source
     # masking. Raw, because a check decides what a comment or a `scan:
-    # intentional` marker means for it — LONG_LINE measures a marked line with
-    # the marker removed — so blanking either first would change what it judges.
+    # intentional` marker means for it - LONG_LINE measures a marked line with
+    # the marker removed - so blanking either first would change what it judges.
     def scan_check(text, file)
       return [] if absent && text.match?(absent)
 
@@ -374,7 +374,7 @@ module Law
     # where it continues. An ERB comment is routinely six lines of prose about
     # the markup below it, and every line after the first was being read as
     # markup: I18N_COVERAGE fired on a comment explaining that a page carried no
-    # <h1>, because "<h1> at all — two <h2>s" is a `>`, English, and a `<`. The
+    # <h1>, because "<h1> at all - two <h2>s" is a `>`, English, and a `<`. The
     # rule already refused the opening line; there was no way for it to refuse
     # the rest.
     #
@@ -428,12 +428,12 @@ module Law
   # `ask` is the semantic half: a rule whose subject cannot be matched by a
   # regex states the question instead, and the model answers it. It sits beside
   # `detect` rather than in a second file because a rule is one thing and its
-  # detector kind is a property of it — the split between executable law and the policy catalogue in data/laws.yml
+  # detector kind is a property of it - the split between executable law and the policy catalogue in data/laws.yml
   # put 52 laws' detector in one file and their severity and fix text in
   # another, which is a shape no rename can make legible.
   #
   # bad/good stay required for both kinds. For `detect` they are proved by
-  # running the regex at load. For `ask` they cannot be — no model call at boot —
+  # running the regex at load. For `ask` they cannot be - no model call at boot -
   # so they are the prompt's own worked examples, carried into the question and
   # checkable offline by a task that has a model. A semantic rule with no
   # example of what it is looking for is the unfalsifiable shape this file
@@ -475,7 +475,7 @@ module Law
     # applies to a file resolved to that language, and to nothing else.
     #
     # This read `language.nil? || languages.empty? || ...`, so an unresolved
-    # file satisfied every language-scoped law — the opposite of what the
+    # file satisfied every language-scoped law - the opposite of what the
     # registry's Law#applies_to? has always answered for the same question.
     # 396 tracked files resolve to nil, and 302 of them are not source in any
     # language: .gitignore, .svg, .toml, .env, Gemfile.lock. Each was measured
@@ -483,7 +483,7 @@ module Law
     # came to ask 172 non-Ruby files for a Ruby magic comment against 4 real
     # ones.
     #
-    # The clause was protecting the other 94 — Gemfile, Rakefile, and the
+    # The clause was protecting the other 94 - Gemfile, Rakefile, and the
     # executables under bin/ whose language is in their shebang. Those are
     # resolved now rather than excused, by Master.language_for.
     def applies?(file, language)

@@ -8,23 +8,23 @@ require "timeout"
 require "time"
 
 module Master::Core
-  # World — the only thing that touches the outside. Each verb is one handler;
+  # World - the only thing that touches the outside. Each verb is one handler;
   # the set is closed (Master::Core::VERBS), so the blast radius of the agent is the
   # surface of this file and nothing else. The Constitution has already admitted
-  # whatever arrives here, so handlers do the IO plainly — their only added duty
+  # whatever arrives here, so handlers do the IO plainly - their only added duty
   # is crash-safety (writes are atomic) and honest reporting. Reversing a whole
   # effect is the Fold's job via #checkpoint/#rollback, so handlers keep no
   # second, per-write backup of their own.
   #
   # This is where the old reach/ (git, web, fs), ops/, and tools/ collapse to.
   class World
-    EXEC_TIMEOUT = 120  # seconds — max time for any subprocess call
+    EXEC_TIMEOUT = 120  # seconds - max time for any subprocess call
     TERM_GRACE = 2      # seconds a killed child gets to exit on TERM before KILL
 
     # A subprocess killed by the timeout never exited, so there is no
     # Process::Status to report. Every caller of bounded_capture2e asks
     # `.success?`, so handing back nil turned a wedged git into a
-    # NoMethodError raised from inside the fold — the one place that has to
+    # NoMethodError raised from inside the fold - the one place that has to
     # stay standing when the outside world misbehaves. This stands in for the
     # missing status: not successful, no exit code.
     TimedOutStatus = Class.new do
@@ -83,13 +83,13 @@ module Master::Core
       }
     end
 
-    # Undo one failed effect — and only what that effect touched.
+    # Undo one failed effect - and only what that effect touched.
     #
     # The Fold takes a checkpoint immediately before each effect and rolls back
     # if that single effect errored, so the blast radius that is CORRECT here is
     # one effect's worth. What this did instead was `git reset --hard HEAD`,
     # which discards every uncommitted change in the working tree, and then
-    # re-applied the checkpoint patch — a patch of tracked modifications as they
+    # re-applied the checkpoint patch - a patch of tracked modifications as they
     # stood a moment earlier.
     #
     # In this repo that is destructive. The checkout is shared: other sessions
@@ -200,7 +200,7 @@ module Master::Core
       raise ArgumentError, "argv cannot be empty" if argv.empty?
       raise ArgumentError, "argv entries must be strings" unless argv.all? { |arg| arg.is_a?(String) }
 
-      # Model-chosen env used to ride through (LD_PRELOAD, PATH, …). The
+      # Model-chosen env used to ride through (LD_PRELOAD, PATH, ...). The
       # constitution only inspects argv. Inherit nothing from the effect.
       seconds = timeout.to_i
       seconds = EXEC_TIMEOUT if seconds <= 0 || seconds > EXEC_TIMEOUT
@@ -208,7 +208,7 @@ module Master::Core
       # A name mapped to nil is UNSET in the child. Passing "ENV minus credentials"
       # would do nothing instead: spawn MERGES an env hash over the inherited
       # environment, so every dropped key would be inherited straight back.
-      # Unsetting by name is also why the toolchain needs no enumerating —
+      # Unsetting by name is also why the toolchain needs no enumerating -
       # everything not matched here arrives exactly as it did before.
       # The worker sets OpenBSD execpromises before replacing itself with argv.
       # Keep those promises off this parent: trusted operator controls retain their
@@ -229,19 +229,19 @@ module Master::Core
     # Credentials do not go into the child, because the child's output comes back.
     #
     # `env: nil` inherited the whole process environment. That was written to mean
-    # "nothing the MODEL supplied rides through", and it does mean that — but the
+    # "nothing the MODEL supplied rides through", and it does mean that - but the
     # process running the fold holds OPENROUTER_API_KEY, ANTHROPIC_API_KEY,
     # REPLICATE_API_TOKEN and the rest, and exec output becomes an Observation,
     # which Memory records, which the next turn hands back to the model. So
     # `exec(["env"])` was a supported way to read every key into the transcript.
     #
     # no_secret_rule already forbids a secret reaching a file or a note. It watches
-    # write and note only, so the exec path — the one that flows INTO the model
-    # rather than out of it — was the direction nothing covered.
+    # write and note only, so the exec path - the one that flows INTO the model
+    # rather than out of it - was the direction nothing covered.
     #
     # Removed by name rather than allowlisted by name. An allowlist is the safer
     # shape in general, but here it would have to enumerate the toolchain the fold
-    # proves its work with — PATH, HOME, GEM_*, BUNDLE_*, RBENV_*, RUBY* — and the
+    # proves its work with - PATH, HOME, GEM_*, BUNDLE_*, RBENV_*, RUBY* - and the
     # first variable it forgot would break `bundle exec rake test`, i.e. the fold's
     # ability to earn evidence at all. Credential names are the narrow, stable set;
     # the toolchain is the broad, moving one. This drops the narrow set.
@@ -376,7 +376,7 @@ module Master::Core
     # promises. Rename guarantees a reader sees the old file or the new one and
     # never half of one; it guarantees nothing about the data having reached the
     # disk. On a power loss the rename can survive while the bytes it points at
-    # do not, and the result is an intact filename over a zero-length file —
+    # do not, and the result is an intact filename over a zero-length file -
     # worse than a half-written one, because it looks fine.
     #
     # Io::AtomicWrite does the same job with Tempfile and a directory fsync.
@@ -428,7 +428,7 @@ module Master::Core
     end
 
     # Bounded subprocess call with a hard timeout, which means killing the child
-    # — not just abandoning it.
+    # - not just abandoning it.
     #
     # This used to wrap Open3.capture3 in Timeout.timeout. Timeout only unwinds
     # the *block*; the process it spawned keeps running, and Ruby then blocks at
@@ -470,7 +470,7 @@ module Master::Core
     end
 
     # TERM first so the child can clean up, KILL if it ignores that. ESRCH means
-    # it exited between the join timing out and this call — already gone.
+    # it exited between the join timing out and this call - already gone.
     def terminate(pid)
       target = -Process.getpgid(pid)
       Process.kill("TERM", target)
@@ -504,7 +504,7 @@ module Master::Core
     #
     # Two steps because the patch is a diff against HEAD: put the file back to
     # HEAD, then re-apply only this path's hunks from the checkpoint. --include
-    # is what keeps the rest of the patch — other files, other sessions' work —
+    # is what keeps the rest of the patch - other files, other sessions' work -
     # out of it.
     #
     # A path git does not know at HEAD is left exactly as it is. It could be a

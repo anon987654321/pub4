@@ -5,7 +5,7 @@ require "review/scan/law_tree"
 
 # The rule pairs each comment with the method it sits above, asks a model which
 # comments lie, and turns the answer back into findings on the comment's line.
-# The model is faked here — what is being tested is the pairing, the parsing and
+# The model is faked here - what is being tested is the pairing, the parsing and
 # the failure behaviour, none of which need a real one.
 #
 # The failure behaviour is the reason this test matters most. The rule carries a
@@ -66,7 +66,7 @@ class TestCommentDriftRule < Minitest::Test
 
   # An index the model invented must be dropped, and the real ones beside it
   # must survive. Asserted with a good index present on purpose: an answer of
-  # only "47:..." is empty either way — with the bounds check, because the pair
+  # only "47:..." is empty either way - with the bounds check, because the pair
   # is nil; without it, because the NoMethodError is swallowed by the rule's own
   # rescue and takes every finding in the file with it. Mixing the two is what
   # separates a guard from a crash.
@@ -114,7 +114,7 @@ class TestCommentDriftRule < Minitest::Test
   end
 
   # A missing binary is a capability this machine lacks, and it is the same fact
-  # on every file. It must still produce no findings — an unreachable model is
+  # on every file. It must still produce no findings - an unreachable model is
   # never evidence of a clean file.
   def test_an_absent_model_binary_yields_no_findings
     assert_empty flags(FakeAgent.new(raises: Errno::ENOENT.new("claude")))

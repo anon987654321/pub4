@@ -37,7 +37,7 @@ governor:
     dangerous: 120
   # Gates for an unattended (@auto) run's dangerous-tier approvals, read by
   # Fix::Governor. The @auto path used to return ok for the whole dangerous tier
-  # before needs_human? was consulted — lib/ground/policy/sandbox.rb names the
+  # before needs_human? was consulted - lib/ground/policy/sandbox.rb names the
   # hole. Now an unattended dangerous approval must pass one of these two gates,
   # and neither is widened by anything that runs inside a session:
   #
@@ -53,7 +53,7 @@ governor:
   auto_allowlist: []
   auto_dangerous_budget: 240
 
-# Loop/process budgets — moved from data/ops/process.yml; reader is Ops::ProcessBudget.
+# Loop/process budgets - moved from data/ops/process.yml; reader is Ops::ProcessBudget.
 process:
   defaults:
     safe_mode: true

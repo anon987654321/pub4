@@ -7,7 +7,7 @@ require "fix/structural_review"
 
 class TestThroughInference < Minitest::Test
   # --only names stages, and the names have to mean the same thing everywhere.
-  # `fix` is the convergence lifecycle — observe, repair, observe again — and
+  # `fix` is the convergence lifecycle - observe, repair, observe again - and
   # `council` is a spelling of `critique`. `scan` is not a stage: the reading is
   # how a fix starts.
   def test_only_accepts_stage_names_and_their_spellings
@@ -301,15 +301,15 @@ class TestThroughInference < Minitest::Test
       )
       result = pipe.call(target: "rails", apply: false, critique: false, aesthetic: false)
       # Strict equality: the old `end_with?("RAILS")` disjunct accepted
-      # /Users/…/GitHub/RAILS — the nonexistent sibling ../RAILS used to
-      # resolve to — so the test passed while the check scanned MASTER.
+      # /Users/.../GitHub/RAILS - the nonexistent sibling ../RAILS used to
+      # resolve to - so the test passed while the check scanned MASTER.
       assert_equal Master::RAILS_ROOT, result.target
       # dmesg-style unit id (review0), not a literal "through:" label
       assert_match(/review\d+:\s*complete/, result.render)
 
       # bin/check --ladder's spelling. Expanding the ../ against the repo root walked
       # out of the repo, and a target that does not exist falls back to
-      # scanning MASTER — the RAILS stage measured the wrong tree.
+      # scanning MASTER - the RAILS stage measured the wrong tree.
       assert_equal Master::RAILS_ROOT, pipe.send(:resolve_target, "../RAILS")
       assert_equal File.join(Master::RAILS_ROOT, "brgen"), pipe.send(:resolve_target, "../RAILS/brgen")
       assert File.exist?(pipe.send(:resolve_target, "../RAILS")), "resolved RAILS target must exist"
@@ -406,7 +406,7 @@ class TestThroughInference < Minitest::Test
     result = Master::CLI::Pipeline::Pass::Result.new(
       target: ".", mode: "balanced", sections: [], ok: true, unit: "review0", failed_stages: [],
     )
-    Master::Io::QuotaCheck.stub(:report, "SKIPPED semantic rules — exhausted") do
+    Master::Io::QuotaCheck.stub(:report, "SKIPPED semantic rules - exhausted") do
       text = result.footer
 
       assert_includes text, "review0: complete"

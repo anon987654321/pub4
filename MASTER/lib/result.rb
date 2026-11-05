@@ -2,15 +2,15 @@
 
 module Master
   class Result
-    # Functor/monad composition for Result::Err — all three are identity
-    # no-ops (an Err short-circuits the chain) — kept separate from Err's own
+    # Functor/monad composition for Result::Err - all three are identity
+    # no-ops (an Err short-circuits the chain) - kept separate from Err's own
     # value-identity and error-classification methods.
     module ErrChaining
       def map(&) = self
       def flat_map(&) = self
       def and_then(*) = self
     end
-    # Retry-policy classification for Result::Err — separate from Err's own
+    # Retry-policy classification for Result::Err - separate from Err's own
     # value-identity and monad-chaining methods.
     #
     # FallbackChain reads `permanent?` to stop retrying a model whose request was
@@ -18,7 +18,7 @@ module Master
     # sleeps through backoff it cannot cure.
     #
     # The partition is total and disjoint, and test_err_classification.rb holds
-    # it to both — a category added to CATEGORIES and to neither list here is the
+    # it to both - a category added to CATEGORIES and to neither list here is the
     # same defect returning.
     module ErrClassification
       # Worth trying again as-is, or after a wait: the failure is in the
@@ -38,10 +38,10 @@ module Master
       # :unknown is the one category that is neither, and deliberately: it is
       # what Result.err defaults to, so it means "nobody said", and answering
       # either question for it would be an invention. A caller that must decide
-      # should treat it as permanent — the safe direction is not retrying.
+      # should treat it as permanent - the safe direction is not retrying.
       def classified? = retriable? || permanent?
     end
-    # Functor/monad composition for Result::Ok (map/flat_map/and_then) — kept
+    # Functor/monad composition for Result::Ok (map/flat_map/and_then) - kept
     # separate from Ok's own value-identity methods (ok?/value!/unwrap/...).
     module OkChaining
       def map(&blk) = Result.ok(blk.call(@value))
@@ -74,15 +74,15 @@ module Master
       handler_exception: "unexpected error during handler execution",
       crash: "unexpected process failure during a fix stage",
       timeout: "operation exceeded deadline",
-      offline: "no network route to the provider — a local model can still answer",
+      offline: "no network route to the provider - a local model can still answer",
       rate_limit: "tier rate limit exceeded",
       budget: "cost limit hit",
-      exhausted: "paid provider spend limit — the tier could not run (Io::QuotaCheck)",
+      exhausted: "paid provider spend limit - the tier could not run (Io::QuotaCheck)",
       policy: "blocked by policy / kernel rule",
       shutdown: "user quit / shutdown requested",
       abort: "operation aborted",
-      skip: "nothing to do for this target (no app, no checkout) — neither failure nor success",
-      inconclusive: "evidence could not be gathered (browser, surface or reviewer unavailable) — no verdict either way",
+      skip: "nothing to do for this target (no app, no checkout) - neither failure nor success",
+      inconclusive: "evidence could not be gathered (browser, surface or reviewer unavailable) - no verdict either way",
       cancelled: "execution was cancelled; do not resume without checking the current state",
       unknown_outcome: "the operation may have run without a reliable receipt; reconcile before retrying",
       recovery_failed: "the system could not prove that recovery restored the prior state",

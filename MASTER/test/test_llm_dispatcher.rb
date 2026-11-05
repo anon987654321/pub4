@@ -43,8 +43,8 @@ class TestLLMDispatcher < Minitest::Test
   ReplyWithContent = Struct.new(:content)
   ReplyWithCost = Struct.new(:tokens, :cost, :content)
 
-  # A lane that keeps failing — quota out, a hung binary, a local model timing
-  # out — must stop being asked rather than walked again for every rule.
+  # A lane that keeps failing - quota out, a hung binary, a local model timing
+  # out - must stop being asked rather than walked again for every rule.
   def test_the_door_stops_asking_once_a_lane_stops_answering
     dispatcher, = build_dispatcher
     door = Master::Io::LaneSilence
@@ -411,7 +411,7 @@ class TestLLMDispatcher < Minitest::Test
     threads.each(&:join)
 
     assert_operator state[:max], :<=, 2, "expected at most 2 concurrent CLI calls, saw #{state[:max]}"
-    assert_operator state[:max], :>=, 2, "stub never overlapped — the probe is not measuring concurrency"
+    assert_operator state[:max], :>=, 2, "stub never overlapped - the probe is not measuring concurrency"
   end
 
   def test_agy_model_predicate
@@ -524,7 +524,7 @@ class TestLLMDispatcher < Minitest::Test
     dispatcher, = build_dispatcher
     ok_status = Struct.new(:success?).new(true)
     dispatcher.define_singleton_method(:capture3_with_timeout) do |*_a, **_k|
-      ["You've hit your session limit · resets 4:30pm (Europe/Oslo)\n", "", ok_status]
+      ["You've hit your session limit - resets 4:30pm (Europe/Oslo)\n", "", ok_status]
     end
     result = dispatcher.send(:claude_cli_call, "claude-opus-5-5", [{ role: "user", content: "fix" }], nil)
 

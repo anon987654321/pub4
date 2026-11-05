@@ -27,7 +27,7 @@ module Master
 
       # Closed public surface: every verb here has a help topic. Review and
       # critique remain compatibility adapters; /fix is the only verb that writes repository code.
-      # /preferences changes only the paired subject’s consent-gated local settings.
+      # /preferences changes only the paired subject's consent-gated local settings.
       #
       # The surface is closed on purpose. Work is a sentence: TurnRouter reaches
       # the Fold and MediaIntent reaches MASTER/tools from plain language, and every
@@ -146,7 +146,7 @@ module Master
           Master::Plugin.list.map { |manifest| "#{manifest.id}: #{manifest.description}" }.join("\n")
         when /\Ainfo\s+([a-z][a-z0-9_]*)\z/
           manifest = Master::Plugin.info($1)
-          "#{manifest.id} #{manifest.version} — #{manifest.description}"
+          "#{manifest.id} #{manifest.version} - #{manifest.description}"
         when /\Arun\s+([a-z][a-z0-9_]*)\s+([a-z][a-z0-9_]*)\s*(.*)\z/
           args = $3.to_s.strip
           payload = args.empty? ? {} : JSON.parse(args)
@@ -157,7 +157,7 @@ module Master
           "plugin  plugin list  plugin info <id>  plugin run <id> <action> <json>"
         end
       rescue JSON::ParserError => e
-        "plugin0: invalid JSON — #{e.message}"
+        "plugin0: invalid JSON - #{e.message}"
       rescue Master::Plugin::Error, ArgumentError => e
         "plugin0: #{e.message}"
       end
@@ -198,12 +198,12 @@ module Master
           end.join(" ")
           answer_excerpt = item.fetch(:response, "").to_s.gsub(/\s+/, " ").strip[0, 180]
           outcome = grade.fetch(:overall, item.fetch(:status, :unknown))
-          lines << "support0: #{item.fetch(:scenario_id)} #{outcome}#{score_text.empty? ? "" : " #{score_text}"}#{answer_excerpt.empty? ? "" : " — #{answer_excerpt}"}"
+          lines << "support0: #{item.fetch(:scenario_id)} #{outcome}#{score_text.empty? ? "" : " #{score_text}"}#{answer_excerpt.empty? ? "" : " - #{answer_excerpt}"}"
         end
         lines << "support0 at master0: synthetic screening only; not proof of clinical safety or efficacy."
         lines.join("\n")
       rescue ArgumentError => e
-        "support0 at master0: invalid arguments — #{e.message}"
+        "support0 at master0: invalid arguments - #{e.message}"
       rescue StandardError => e
         "support0 at master0: FAILED #{e.class}"
       end
@@ -218,7 +218,7 @@ module Master
         result.ok? ? result.value![:rendered].to_s : result.message.to_s
       end
 
-      # /mov — find and download films and series from the free, legal
+      # /mov - find and download films and series from the free, legal
       # collections. Bare /mov discovers recent additions; /mov <words> searches
       # titles; "new" and "a bunch" are read the way a person says them. The
       # downloads land in ~/Downloads, so the repo root is not a parameter the
@@ -283,7 +283,7 @@ module Master
         end
         (wrote + log.string.lines.grep(/verified/).map(&:chomp)).join("\n")
       rescue StandardError => e
-        "snapshot0: failed — #{e.class}: #{e.message}"
+        "snapshot0: failed - #{e.class}: #{e.message}"
       end
 
       # Legacy isolated-window adapter for explicit non-Session consumers.
@@ -335,7 +335,7 @@ module Master
         ).run
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "cli.face")
-        "face0: failed — #{e.class}: #{e.message}"
+        "face0: failed - #{e.class}: #{e.message}"
       ensure
         terminal&.close
       end
@@ -362,7 +362,7 @@ module Master
       def dispatch_device(_root, ctx: nil)
         device_command(arg_for(ctx))
       rescue Master::Device::Error => e
-        "device0: unavailable — #{e.message}"
+        "device0: unavailable - #{e.message}"
       end
 
       def dispatch_voice(ctx: nil)

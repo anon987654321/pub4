@@ -11,7 +11,7 @@ class TestCouncilDeliberation < Minitest::Test
     def veto? = !!veto_role
   end
 
-  # The check is process-wide by design — one account, one fact — so a test
+  # The check is process-wide by design - one account, one fact - so a test
   # that trips it hands the next test a closed council unless it puts it back.
   def setup = Check.reset!
   def teardown = Check.reset!
@@ -48,7 +48,7 @@ class TestCouncilDeliberation < Minitest::Test
   end
 
   # Stubbed, not inherited: review refuses without a provider key, and keys
-  # reach ENV through EnvLoader at boot — which neither tests nor bare
+  # reach ENV through EnvLoader at boot - which neither tests nor bare
   # requires run. This test failed on any shell without exported keys and
   # passed on any with them, which is an environment reading, not a test.
   def test_veto_blocks_review
@@ -247,7 +247,7 @@ class TestCouncilDeliberation < Minitest::Test
 
   # The defect this fixes: four personas each bought the same refusal, and the
   # run then reported on everything else as though nothing were missing.
-  # Sequential mode makes the count deterministic — the parallel case cannot
+  # Sequential mode makes the count deterministic - the parallel case cannot
   # recall a batch already in flight, only the batches after it.
   def test_a_spend_limit_stops_the_council_after_one_refusal
     failing = BrokeAgent.new

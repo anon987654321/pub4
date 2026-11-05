@@ -98,7 +98,7 @@ module Deploy
         principle = spec["principle"] || schema["principle"]
         note = spec["note"]
         msg = "surface_schema:#{schema_id} forbidden #{pat.inspect}"
-        msg += " — #{note}" if note
+        msg += " - #{note}" if note
         msg += " principle=#{principle}"
 
         findings << Finding.new(

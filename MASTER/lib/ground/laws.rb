@@ -4,13 +4,13 @@ module Master
   module Ground
     # Loads and exposes laws, axioms, voice, and workflow from data/*.yml.
     class Laws
-      # Pure data-accessor readers over the loaded YAML — kept in a separate
+      # Pure data-accessor readers over the loaded YAML - kept in a separate
       # module so NO_GOD_CLASS's AST-based public-method count only sees
       # Laws' own lookup/parsing methods, not this passthrough layer.
       # `workflow` (the whole limits.yml hash) and `workflow_law(key)` (a generic
       # reader for any key in it) both lived here with zero call sites, and between
       # them they made 29 unread keys in that file look reachable. Deleted with the
-      # split — see data/limits.yml. A generic accessor over a data file is how a
+      # split - see data/limits.yml. A generic accessor over a data file is how a
       # file stops having readers one can name.
       module LawAccessors
         def voice
@@ -67,7 +67,7 @@ module Master
           end
         end
       end
-      # Markdown block rendering for system-prompt injection — a rendering
+      # Markdown block rendering for system-prompt injection - a rendering
       # concern separate from Laws' own lookup/parsing responsibility.
       module LawPromptBlocks
         def kernel_block

@@ -71,11 +71,11 @@ module Deploy
 
         rounds += 1
         if dry_run?(env)
-          last.warn("check_autofix: dry-run — would patch #{applied} file(s); skip remeasure")
+          last.warn("check_autofix: dry-run - would patch #{applied} file(s); skip remeasure")
           break last
         end
 
-        last.warn("check_autofix: patched #{applied} file(s) in round #{rounds}; remeasuring…")
+        last.warn("check_autofix: patched #{applied} file(s) in round #{rounds}; remeasuring...")
         last = measure.call
         break last if last.ok?
         break last if rounds >= max_rounds(env)
@@ -84,13 +84,13 @@ module Deploy
       last
     end
 
-    # Generic measure → fix → remeasure loop for checks whose findings are not
+    # Generic measure -> fix -> remeasure loop for checks whose findings are not
     # "a pattern in this file" and so cannot use apply_failures/extract_path.
     # Browser-backed checks (geometry, reflow, keyboard) drive their own fixers
     # through this so there is still exactly one definition of the autofix
     # policy: enabled?, dry_run?, max_rounds.
     #
-    # apply: ->(result) { Integer } — number of files patched.
+    # apply: ->(result) { Integer } - number of files patched.
     def remeasure_loop(measure:, apply:, label:, env: ENV)
       last = measure.call
 
@@ -106,11 +106,11 @@ module Deploy
         end
         rounds += 1
         if dry_run?(env)
-          last.warn("#{label}: dry-run — would patch #{applied} file(s); skip remeasure")
+          last.warn("#{label}: dry-run - would patch #{applied} file(s); skip remeasure")
 
           break last
         end
-        last.warn("#{label}: patched #{applied} file(s) in round #{rounds}; remeasuring…")
+        last.warn("#{label}: patched #{applied} file(s) in round #{rounds}; remeasuring...")
         last = measure.call
         break last if last.ok?
 
@@ -145,7 +145,7 @@ module Deploy
     end
 
     def extract_path(message)
-      # "css_constitution reduced_motion: brgen/app/assets/stylesheets/foo.scss …"
+      # "css_constitution reduced_motion: brgen/app/assets/stylesheets/foo.scss ..."
       # "[CssConstitutionCheck] css_constitution flat_ui: brgen/..."
       rel = message[/(?:brgen|amber|bsdports|shared)\/[^\s:]+\.(?:scss|css|erb|js|rb)/]
       return unless rel
@@ -222,13 +222,13 @@ module Deploy
         .gsub(/filter\s*:[^;]*\bblur\([^)]*\)[^;]*;/i, "/* autofix: removed filter blur (flat UI) */")
     end
 
-    # design_rules.ui_polish.type_tokens — page titles not raw 20px
+    # design_rules.ui_polish.type_tokens - page titles not raw 20px
     def prefer_title_type_token(body)
       body.gsub(/font-size\s*:\s*20px\b/i, "font-size: var(--text-title, 1.25rem)")
     end
 
     def replace_twitter_blue(body)
-      # Social dialect indigo — not Twitter blue
+      # Social dialect indigo - not Twitter blue
       body
         .gsub(/#1d9bf0/i, "#5b4fc4")
         .gsub(/#1DA1F2/i, "#5b4fc4")
@@ -250,7 +250,7 @@ module Deploy
         .gsub(/margin-right\s*:/, "margin-inline-end:")
         .gsub(/padding-left\s*:/, "padding-inline-start:")
         .gsub(/padding-right\s*:/, "padding-inline-end:")
-        # leave bare left/right alone (positioning) — too risky
+        # leave bare left/right alone (positioning) - too risky
     end
   end
 end

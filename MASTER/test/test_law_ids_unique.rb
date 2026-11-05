@@ -29,7 +29,7 @@ class TestLawIdsUnique < Minitest::Test
 
     assert_empty dupes,
                  "two law classes share an id, so their matches double-count " \
-                 "(SINGULARITY): #{dupes.map { |id, n| "#{id}×#{n}" }.join(", ")}. " \
+                 "(SINGULARITY): #{dupes.map { |id, n| "#{id}x#{n}" }.join(", ")}. " \
                  "Give one a distinct id or delete the duplicate registration."
   end
 

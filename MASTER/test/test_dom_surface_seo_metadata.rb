@@ -9,10 +9,10 @@ class DomSurfaceSeoMetadataTest < Minitest::Test
     <!doctype html>
     <html>
       <head>
-        <title>Brgen — Bergen</title>
+        <title>Brgen - Bergen</title>
         <meta name="description" content="Bergen, right now: people, places and local life.">
         <link rel="canonical" href="https://brgen.no/">
-        <meta property="og:title" content="Brgen — Bergen">
+        <meta property="og:title" content="Brgen - Bergen">
         <meta property="og:description" content="Bergen, right now: people, places and local life.">
         <meta property="og:url" content="https://brgen.no/">
       </head>
@@ -38,7 +38,7 @@ class DomSurfaceSeoMetadataTest < Minitest::Test
   def test_valid_metadata_values_may_contain_apostrophes
     html = COMPLETE_PAGE
       .gsub("content=\"Bergen, right now: people, places and local life.\"", "content=\"Here's what is happening in Bergen.\"")
-      .sub("content=\"Brgen — Bergen\"", "content=\"Brgen's Bergen\"")
+      .sub("content=\"Brgen - Bergen\"", "content=\"Brgen's Bergen\"")
 
     assert_empty @schema.check(html, SCHEMA_ID)
   end

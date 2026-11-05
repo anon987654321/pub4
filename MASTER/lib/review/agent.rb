@@ -237,7 +237,7 @@ module Master
         )
       end
 
-      # Both single-shot doors — ask and ask_once — used to raise on the first
+      # Both single-shot doors - ask and ask_once - used to raise on the first
       # broke model. One hop to the claude_code chain head on any category a
       # retry cannot cure; the 2026-08-20 proof runs showed the error-severity
       # rules die in ask (via Attempt) after ask_once was fixed alone.
@@ -452,7 +452,7 @@ module Master
         return evidence_tool("Lovdata") if message.match?(/\b(?:lovdata|LOV-\d{4}-\d{2}-\d+(?:-\d+)?|FOR-\d{4}-\d{2}-\d+(?:-\d+)?)\b/i) ||
           (message.match?(/§\s*\d/) && message.match?(/\b[\p{L}]+(?:loven|forskriften)\b/i))
         return evidence_tool("Linguist") if message.match?(/\b(?:etymology|etymological|word origin|linguistic(?:s)?|idiom|pragmatics|register|grammar of|meaning of the word|word usage)\b/i) &&
-          message.match?(/["'“][^"'”]{1,120}["'”]|\b(?:word|phrase)\s+[\p{L}\p{N}'-]{2,80}/i)
+          message.match?(/["'\u201C][^"'\u201D]{1,120}["'\u201D]|\b(?:word|phrase)\s+[\p{L}\p{N}'-]{2,80}/i)
         return evidence_tool("CodePen") if message.match?(/codepen\.io|\bcodepen\b/i)
         return evidence_tool("Gist") if message.match?(/gist\.github\.com/i)
         return evidence_tool("YoutubeTranscript") if message.match?(%r{https?://(?:www\.)?youtube\.com/|https?://youtu\.be/})
@@ -481,7 +481,7 @@ module Master
                   elsif message.match?(/\busage\b/i) then "usage"
                   else "meaning"
                   end
-          quoted = message.match(/["'“]([^"'”]{1,120})["'”]/)&.captures&.first
+          quoted = message.match(/["'\u201C]([^"'\u201D]{1,120})["'\u201D]/)&.captures&.first
           unquoted = message.match(/\b(?:word|phrase)\s+([\p{L}\p{N}'-]{2,80})/i)&.captures&.first
           { term: quoted || unquoted.to_s, language:, focus:, limit: 4 }
         when message.match?(%r{https://codepen\.io/})

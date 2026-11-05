@@ -4,7 +4,7 @@ require_relative "test_helper"
 require_relative "../lib/voice/typography"
 
 # The cut, after laws.yml#typography: a line the terminal cannot hold ends at
-# a word's edge on one true ellipsis, and only a single unbroken token earns
+# a word's edge on one ellipsis, "...", and only a single unbroken token earns
 # the hard cut.
 class TestVoiceTypography < Minitest::Test
   Typography = Master::Voice::Typography
@@ -17,7 +17,7 @@ class TestVoiceTypography < Minitest::Test
     cut = Typography.ellipsis("err0: refused by capability: the fold would execute what the constitution refuses", 40)
 
     assert_operator cut.length, :<=, 40
-    assert_equal "err0: refused by capability: the fold…", cut
+    assert_equal "err0: refused by capability: the fold...", cut
   end
 
   def test_a_single_unbroken_token_takes_the_hard_cut
@@ -25,7 +25,7 @@ class TestVoiceTypography < Minitest::Test
     cut = Typography.ellipsis(path, 30)
 
     assert_operator cut.length, :<=, 30
-    assert cut.end_with?("…")
+    assert cut.end_with?("...")
   end
 
   def test_no_budget_means_no_cut
@@ -38,6 +38,6 @@ class TestVoiceTypography < Minitest::Test
     cut = Typography.ellipsis("one two three four five six seven eight", 12)
 
     assert_operator cut.length, :<=, 12
-    assert cut.end_with?("…")
+    assert cut.end_with?("...")
   end
 end

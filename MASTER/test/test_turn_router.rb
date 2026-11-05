@@ -125,7 +125,7 @@ class TurnRouterTest < Minitest::Test
 
   # Security: ai.brgen.no serves the open internet, and AuthTier only *labels*
   # tokenless requests "visitor" rather than rejecting them. Everything past the
-  # visitor check in TurnRouter.call can reach real capability — the Fold reaches
+  # visitor check in TurnRouter.call can reach real capability - the Fold reaches
   # Core::World#do_exec with model-chosen argv, and infer_operator_command
   # reconstructs slash commands from plain English (defeating the leading-"/"
   # block in chat_controller#message). Visitors must land on casual_reply only.

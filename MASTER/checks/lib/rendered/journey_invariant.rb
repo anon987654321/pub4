@@ -12,15 +12,15 @@ module Deploy
   # Every one of these finds a class of bug that a single-load assertion cannot
   # see, and none of them needs anything committed to compare against:
   #
-  #   idempotence  — the same URL twice must lay out identically. A surface that
+  #   idempotence  - the same URL twice must lay out identically. A surface that
   #                  fails here makes every other visual assertion flaky, so this
   #                  runs first and its failure explains the others.
-  #   back_button  — Turbo-navigate away and back must equal a fresh load. The
+  #   back_button  - Turbo-navigate away and back must equal a fresh load. The
   #                  existing system test only asserts a meta tag is absent.
-  #   no_js_parity — the landmark set must survive with JavaScript disabled.
+  #   no_js_parity - the landmark set must survive with JavaScript disabled.
   #                  That is the stimulus_progressive principle, currently
   #                  enforced by grepping views for the string "jquery".
-  #   journeys     — a frame link, focus after a Turbo visit, the no-JS pager
+  #   journeys     - a frame link, focus after a Turbo visit, the no-JS pager
   #                  and a conversation log reconnecting; see TurboJourneys.
   class JourneyInvariantCheck
     ROOT = File.expand_path("../../../..", __dir__)
@@ -33,13 +33,13 @@ module Deploy
     def run
       @result = CheckResult.new
       unless GeometryProbe.available?
-        @result.inconclusive!("journey_invariant: no Chrome/Chromium — invariants not checked", gap: Master::Gap::NO_BROWSER)
+        @result.inconclusive!("journey_invariant: no Chrome/Chromium - invariants not checked", gap: Master::Gap::NO_BROWSER)
         return @result
       end
 
       surfaces = pick_surfaces
       GeometryProbe.unreachable_apps(surfaces).each do |app|
-        @result.skipped_live("journey_invariant: #{app} port closed — skipped")
+        @result.skipped_live("journey_invariant: #{app} port closed - skipped")
       end
       live = GeometryProbe.reachable(surfaces)
       if live.empty?
@@ -73,7 +73,7 @@ module Deploy
         error = first["error"] || "HTTP #{first["status"]}"
 
         if GeometryProbe.timeout?(first)
-          @result.incomplete!("journey_invariant: #{surface.id} not measured — #{error}")
+          @result.incomplete!("journey_invariant: #{surface.id} not measured - #{error}")
         else
           @result.fail("journey_invariant: #{surface.id} unreachable (#{error})")
         end
@@ -134,7 +134,7 @@ module Deploy
         journey(name, verdict, "brgen/channel_room", TurboJourneys.measure(cdp, script))
       end
     rescue CdpSession::Error => e
-      @result.incomplete!("journey_invariant reconnect: brgen/channel_room could not be measured — #{e.class.name.split("::").last}: #{e.message}")
+      @result.incomplete!("journey_invariant reconnect: brgen/channel_room could not be measured - #{e.class.name.split("::").last}: #{e.message}")
     end
 
     def first_room_url(cdp, rooms)
@@ -151,7 +151,7 @@ module Deploy
 
         journeys["pager"] += 1 if TurboJourneys.judge_pager(label, fetch_raw(surface), @result, follow:)
       rescue StandardError => e
-        @result.inconclusive!("journey_invariant noscript: #{surface.app}/#{surface.label} fetch failed — #{e.class}: #{e.message}")
+        @result.inconclusive!("journey_invariant noscript: #{surface.app}/#{surface.label} fetch failed - #{e.class}: #{e.message}")
       end
     end
 
@@ -161,7 +161,7 @@ module Deploy
       second = GeometryProbe.walk(cdp, surface)
       unless GeometryProbe.ok?(second)
         @result.incomplete!(
-          "journey_invariant idempotence: #{surface.id} second render was not measurable — " \
+          "journey_invariant idempotence: #{surface.id} second render was not measurable - " \
           "#{second["error"] || "HTTP #{second["status"]}"}",
         )
         return
@@ -171,7 +171,7 @@ module Deploy
       return if diffs.empty?
 
       @result.fail(
-        "journey_invariant idempotence: #{surface.id} lays out differently on two consecutive loads — " \
+        "journey_invariant idempotence: #{surface.id} lays out differently on two consecutive loads - " \
         "#{diffs.first(4).join('; ')}#{diffs.size > 4 ? " (+#{diffs.size - 4})" : ""} " \
         "(nondeterministic render; every visual assertion on this surface is flaky until fixed)",
         severity: :soft,
@@ -186,7 +186,7 @@ module Deploy
         before_back = GeometryProbe.walk(cdp, other)
         unless GeometryProbe.ok?(before_back)
           @result.incomplete!(
-            "journey_invariant back_button: could not load #{other.id} before history.back — " \
+            "journey_invariant back_button: could not load #{other.id} before history.back - " \
             "#{before_back["error"] || "HTTP #{before_back["status"]}"}",
           )
 
@@ -202,14 +202,14 @@ module Deploy
 
         restored = cdp.evaluate(GeometryProbe::WALK).merge("status" => 200)
       rescue CdpSession::Error => e
-        @result.incomplete!("journey_invariant back_button: #{surface.id} could not be measured — #{e.class.name.split("::").last}: #{e.message}")
+        @result.incomplete!("journey_invariant back_button: #{surface.id} could not be measured - #{e.class.name.split("::").last}: #{e.message}")
         return
       end
 
       if restored["title"].to_s != fresh["title"].to_s
         @result.fail(
           "journey_invariant back_button: #{surface.id} restored #{restored["title"].inspect} " \
-          "but a fresh load is #{fresh["title"].inspect} — history navigation does not return the same page",
+          "but a fresh load is #{fresh["title"].inspect} - history navigation does not return the same page",
         )
         return
       end
@@ -218,7 +218,7 @@ module Deploy
       return if diffs.empty?
 
       @result.fail(
-        "journey_invariant back_button: #{surface.id} after back() differs from a fresh load — " \
+        "journey_invariant back_button: #{surface.id} after back() differs from a fresh load - " \
         "#{diffs.first(4).join('; ')} (Turbo cache restored a stale or partial view)",
         severity: :soft,
       )
@@ -234,7 +234,7 @@ module Deploy
         html = begin
           fetch_raw(surface)
         rescue StandardError => e
-          @result.incomplete!("journey_invariant no_js: #{app} parity not measured — fetch failed (#{e.class}: #{e.message})")
+          @result.incomplete!("journey_invariant no_js: #{app} parity not measured - fetch failed (#{e.class}: #{e.message})")
           next
         end
 
@@ -246,7 +246,7 @@ module Deploy
           next if pattern.match?(html)
 
           @result.fail(
-            "journey_invariant no_js: #{app} server HTML has no #{mark} landmark at #{surface.path} — " \
+            "journey_invariant no_js: #{app} server HTML has no #{mark} landmark at #{surface.path} - " \
             "present only after JavaScript runs (principle=progressive_enhancement)",
           )
         end
@@ -260,11 +260,11 @@ module Deploy
     def structural_diff(a, b)
       diffs = []
       %w[title h1_count scroll_width].each do |field|
-        diffs << "#{field} #{a[field].inspect}→#{b[field].inspect}" if a[field] != b[field]
+        diffs << "#{field} #{a[field].inspect}->#{b[field].inspect}" if a[field] != b[field]
       end
       (a["landmarks"] || {}).each do |mark, was|
         now = b.dig("landmarks", mark)
-        diffs << "landmark #{mark} #{was}→#{now}" if was != now
+        diffs << "landmark #{mark} #{was}->#{now}" if was != now
       end
 
       old = stable(a)
@@ -277,7 +277,7 @@ module Deploy
         %w[w h].each do |axis|
           was = old[key].dig("rect", axis).to_i
           now = new[key].dig("rect", axis).to_i
-          diffs << "#{key} #{axis} #{was}→#{now}" if (was - now).abs > 2
+          diffs << "#{key} #{axis} #{was}->#{now}" if (was - now).abs > 2
         end
       end
       diffs

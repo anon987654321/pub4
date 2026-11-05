@@ -5,7 +5,7 @@
 # leaving ordinary numeric conversion and explanatory prose alone.
 
 Law.define(:NO_INFINITY_TO_I) do
-  source "MASTER post-incident /fix hardening — finite convergence ranks"
+  source "MASTER post-incident /fix hardening - finite convergence ranks"
   detect do |line|
     code = line.gsub(/(['"]).*?\1/, "").sub(/#.*\z/, "")
     code.match?(
@@ -19,7 +19,7 @@ Law.define(:NO_INFINITY_TO_I) do
 end
 
 Law.define(:NO_OVERESCAPED_NONCAPTURING) do
-  source "MASTER post-incident /fix hardening — extract-then-match regex integrity"
+  source "MASTER post-incident /fix hardening - extract-then-match regex integrity"
   detect do |line|
     code = line.gsub(/(['"]).*?\1/, "")
     code.include?("\\\\(?:")

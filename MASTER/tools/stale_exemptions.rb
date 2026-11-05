@@ -3,7 +3,7 @@
 # Which `scan: intentional` markers still excuse a finding, and which excuse
 # nothing.
 #
-# `law/practice.rb` declares EXEMPTIONS_EXPIRE — an allowlist entry, baseline row
+# `law/practice.rb` declares EXEMPTIONS_EXPIRE - an allowlist entry, baseline row
 # or opt-out that outlives its subject is a hole in a check nobody can see,
 # because the thing it excuses is invisible. The tree carries 143 of these
 # markers across 90 files and nothing checked a single one. Declared conduct with
@@ -19,20 +19,20 @@
 #   ruby MASTER/tools/stale_exemptions.rb --json
 #   ruby MASTER/tools/stale_exemptions.rb --all   # list the live ones too
 #
-# The first version asked the narrower question — is there a finding *under the
-# marked line* — and answered it wrongly twice, in opposite ways. A law whose
+# The first version asked the narrower question - is there a finding *under the
+# marked line* - and answered it wrongly twice, in opposite ways. A law whose
 # subject is an absence reads the marker off the raw text through `absent`,
 # because blanking a line cannot make a missing `set -euo pipefail` present; that
 # called dilla's two shell markers stale while STRICT_MODE_ZSH's own comment
 # names one of them as the reason `absent` exists. And a registry rule can grep
-# the whole file and report at line 1 — ERB_HTML_SAFE does — so the 2FA QR code's
+# the whole file and report at line 1 - ERB_HTML_SAFE does - so the 2FA QR code's
 # exemption is attached to the QR output itself, not every output in the file.
 #
 # One limit stands, and the rule that would close it is not worth having. A
 # marker can be *named* rather than used: this repo's documentation, rule
 # fixtures and false-positive tests all contain the string. `quoted?` separates
-# them — backticked, inside a string literal, or nested inside another comment of
-# the same language — and lets exactly one through, web_rules.rb:77, which writes
+# them - backticked, inside a string literal, or nested inside another comment of
+# the same language - and lets exactly one through, web_rules.rb:77, which writes
 # `/* scan: intentional */` inside a `#` comment. A filter for a foreign opener
 # after the line's own one caught it and re-read every ERB `<%#` as nesting,
 # dropping twenty-six live markers. A disclosed false positive beats a filter
@@ -62,7 +62,7 @@ module Operator
       javascript: ["//", "/*"], css: ["//", "/*"], scss: ["//", "/*"],
       html: ["<%#", "<!--"], markdown: ["<!--"]
     }.freeze
-    CLOSERS = { "/*" => "*/", "<!--" => "-->", "<%#" => "%>" }.freeze # scan: intentional — a census of comment markers has to quote every language it reads
+    CLOSERS = { "/*" => "*/", "<!--" => "-->", "<%#" => "%>" }.freeze # scan: intentional - a census of comment markers has to quote every language it reads
     # The default for a caller that has no path to read a language from.
     ANY_OPENER = COMMENT_OPENERS.values.flatten.uniq.freeze
 
@@ -173,24 +173,24 @@ module Operator
     end
 
     # What the marker sits beside. Empty means the line is comment all the way
-    # through, which is what makes such a marker unable to excuse anything —
+    # through, which is what makes such a marker unable to excuse anything -
     # scan_lines skips the line the marker is on, and the code it was written
     # about is the next one. A line with no opener at all is inside a block
     # comment opened above it, which is the same answer.
     def code_in(line, openers) = without_marker_comment(line, openers).strip
 
     def reason_in(line)
-      line[/#{MARKER}\s*[—-]\s*(.+?)\s*(?:\*\/|%>|-->|\z)/, 1].to_s
+      line[/#{MARKER}\s*[\u2014-]\s*(.+?)\s*(?:\*\/|%>|-->|\z)/, 1].to_s
     end
 
     # The marker removed and the line kept, so every line number still points
     # where it did. This is Rule#without_scan_marker, which cannot be called from
-    # here — it is a private instance method on a rule.
+    # here - it is a private instance method on a rule.
     #
     # Through the same language-aware openers the rest of this reads, because the
-    # naive `rindex` over every opener cut `  <%# scan: … ` at the `#` and left a
+    # naive `rindex` over every opener cut `  <%# scan: ... ` at the `#` and left a
     # bare `<%` behind. That opened an ERB tag over the rest of the comment, and
-    # ERB_HTML_SAFE's guard — which looks for a sanitizing call inside a tag —
+    # ERB_HTML_SAFE's guard - which looks for a sanitizing call inside a tag -
     # then matched the word "sanitize" in the comment's second line. The 2FA
     # exemption read as stale because the strip built the thing that silenced it.
     def unmarked(text, openers = ANY_OPENER)
@@ -201,7 +201,7 @@ module Operator
     # both. The tail is the half that matters and the half this first got wrong:
     # amber's logo closes its ERB comment and carries a `<textPath>` on the same
     # line, so cutting from the opener to end-of-line deleted the markup three
-    # rules were about to flag — and the marker read as stale because the strip
+    # rules were about to flag - and the marker read as stale because the strip
     # removed its subject along with it.
     def without_marker_comment(line, openers)
       at = line.index(MARKER)
@@ -241,7 +241,7 @@ module Operator
     # question twice. A law whose subject is an absence reads the marker off the
     # raw text through `absent`, because blanking a line cannot make a missing
     # `set -euo pipefail` present. And a registry rule can grep the whole file
-    # for the marker and report at line 1 — ERB_HTML_SAFE does, so the 2FA QR
+    # for the marker and report at line 1 - ERB_HTML_SAFE does, so the 2FA QR
     # code's exemption is file-wide and sits on line 4. Both were called stale.
     #
     # A difference at a marked line belongs to that marker. A difference
@@ -288,7 +288,7 @@ module Operator
       stale, live = exemptions.partition { |exemption| !exemption.live? }
       return puts(JSON.pretty_generate(json(stale, live))) if argv.include?("--json")
 
-      puts "stale_exemptions: #{exemptions.size} markers in #{marked.size} files — #{live.size} live, #{stale.size} excusing nothing"
+      puts "stale_exemptions: #{exemptions.size} markers in #{marked.size} files - #{live.size} live, #{stale.size} excusing nothing"
       stale.sort_by(&:to_s).each do |exemption|
         puts "  #{exemption.relative}:#{exemption.line}  #{exemption.shape}"
         puts "    #{exemption.reason}" unless exemption.reason.empty?

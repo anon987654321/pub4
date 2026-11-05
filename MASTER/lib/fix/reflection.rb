@@ -27,8 +27,8 @@ module Master
       end
 
       def call(target:, state:, files:, history:, changed_paths: [], remaining_seconds: nil)
-        return result("INCONCLUSIVE", "reflection unavailable — no model") unless @agent.respond_to?(:ask)
-        return result("INCONCLUSIVE", "reflection skipped — insufficient run budget") if remaining_seconds && remaining_seconds.to_f < MIN_REMAINING_SECONDS
+        return result("INCONCLUSIVE", "reflection unavailable - no model") unless @agent.respond_to?(:ask)
+        return result("INCONCLUSIVE", "reflection skipped - insufficient run budget") if remaining_seconds && remaining_seconds.to_f < MIN_REMAINING_SECONDS
 
         orientation = Master::AI::Orientation.render(root: @root, target:, depth: 3, max_entries: 120)
         law_selection = @applicable_laws.for(path: reflection_path(target:, files:))
@@ -42,7 +42,7 @@ module Master
       rescue StandardError => e
         @bus&.publish("fix_loop:reflection_error", target:, state:, error: "#{e.class}: #{e.message}")
         Master::Trace::Dmesg.status("reflect0", "inconclusive, #{e.class}: #{e.message}")
-        result("INCONCLUSIVE", "reflection inconclusive — #{e.class}")
+        result("INCONCLUSIVE", "reflection inconclusive - #{e.class}")
       end
 
       private

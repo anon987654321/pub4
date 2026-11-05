@@ -55,7 +55,7 @@ module Deploy
       _out, status = BoundedCommand.capture2e(RbConfig.ruby, build_script, "--check", timeout: 120, chdir: ROOT)
 
       if BoundedCommand.timed_out?(status)
-        result.fail("CSS build check passed 120s and was killed — tools/build_all_css.rb --check is stuck")
+        result.fail("CSS build check passed 120s and was killed - tools/build_all_css.rb --check is stuck")
       elsif !status.success?
         result.fail("CSS build check failed (run tools/build_all_css.rb)")
       end

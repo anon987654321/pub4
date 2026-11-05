@@ -62,10 +62,10 @@ module Deploy
       details << "#{leaf.unchecked.size} inconclusive item(s)" unless leaf.unchecked.empty?
       details << "#{leaf.live_skips} live skip(s)" if leaf.live_skips.positive?
       details << "#{leaf.errors.size} error(s)" unless leaf.errors.empty?
-      "coverage0: rendered/#{name} #{leaf.outcome.to_s.upcase} — #{details.join(', ')}"
+      "coverage0: rendered/#{name} #{leaf.outcome.to_s.upcase} - #{details.join(', ')}"
     end
 
-    # No checked! of its own — merge! carries each leaf's count up, and this
+    # No checked! of its own - merge! carries each leaf's count up, and this
     # class measures nothing itself.
     def run_leaves
       result = CheckResult.new

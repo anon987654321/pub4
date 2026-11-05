@@ -45,7 +45,7 @@ module Master
             end
             findings.concat(depth_findings(code))
             findings.concat(duplicate_key_findings(code))
-            findings << finding(line: 1, message: "#{top.size} top-level configuration keys — group related settings") if top.uniq.size > TOP_LEVEL_LIMIT
+            findings << finding(line: 1, message: "#{top.size} top-level configuration keys - group related settings") if top.uniq.size > TOP_LEVEL_LIMIT
             findings
           end
 
@@ -53,7 +53,7 @@ module Master
           # indentation also grows inside a list of records, where flows.yml's
           # `steps:` puts `get:` eight spaces in and three keys deep, and a
           # block scalar's prose lines look like keys to a line regex. A
-          # one-line `{ name: …, status: … }` is a mapping too. One finding per
+          # one-line `{ name: ..., status: ... }` is a mapping too. One finding per
           # key at the limit that has keys below it, at the first of those, so
           # a list of sixty records at depth five is one shape to fix, not sixty.
           def depth_findings(code)
@@ -131,11 +131,11 @@ module Master
             data = JSON.parse(code)
             findings = []
             keys = data.is_a?(Hash) ? data.keys : []
-            findings << finding(line: 1, message: "#{keys.size} top-level configuration keys — group related settings") if keys.size > TOP_LEVEL_LIMIT
+            findings << finding(line: 1, message: "#{keys.size} top-level configuration keys - group related settings") if keys.size > TOP_LEVEL_LIMIT
             findings << finding(line: 1, message: "configuration nesting depth #{json_depth(data)} exceeds #{MAX_DEPTH}") if json_depth(data) > MAX_DEPTH
             findings
           rescue JSON::ParserError
-            [finding(line: 1, message: "invalid JSON configuration — parse before trusting config hierarchy")]
+            [finding(line: 1, message: "invalid JSON configuration - parse before trusting config hierarchy")]
           end
 
           def json_depth(value)
@@ -166,9 +166,9 @@ module Master
               [index + 1, match[2]] if match
             end
             findings = []
-            findings << finding(line: declarations.first[0], message: "#{declarations.size} top-level constants — group related classes into namespaces") if declarations.size > TOP_LEVEL_LIMIT
+            findings << finding(line: declarations.first[0], message: "#{declarations.size} top-level constants - group related classes into namespaces") if declarations.size > TOP_LEVEL_LIMIT
             shared_prefixes(declarations.map(&:last)).each do |prefix, names|
-              findings << finding(line: 1, message: "#{names.size} #{prefix}* classes appear un-namespaced — create #{prefix} namespace")
+              findings << finding(line: 1, message: "#{names.size} #{prefix}* classes appear un-namespaced - create #{prefix} namespace")
             end
             findings
           end
@@ -204,7 +204,7 @@ module Master
               count = match[1].split(",").map(&:strip).reject(&:empty?).size
               next unless count > LIMIT
 
-              finding(line: index + 1, message: "method has #{count} parameters (max #{LIMIT}) — introduce a value object or keywords",
+              finding(line: index + 1, message: "method has #{count} parameters (max #{LIMIT}) - introduce a value object or keywords",
                       blast_radius: signature_radius(lines, index))
             end
           end
@@ -230,7 +230,7 @@ module Master
               names = match[1].split(",").map { |part| part.split(/[:=]/).first.to_s.strip }
               primitive_names = names.grep(PRIMITIVE_HINTS)
               if primitive_names.size >= 4
-                finding(line: index + 1, message: "primitive obsession: #{primitive_names.join(", ")} travel together — extract a domain object")
+                finding(line: index + 1, message: "primitive obsession: #{primitive_names.join(", ")} travel together - extract a domain object")
               end
             end
           end
@@ -239,7 +239,7 @@ module Master
         ::Law.define(:PRIMITIVE_OBSESSION) do
           detector PrimitiveObsessionLaw
           tags %i[BLOATERS DOMAIN_MODELING]
-          source "Refactoring — Primitive Obsession (Fowler)"
+          source "Refactoring - Primitive Obsession (Fowler)"
           ask "Are primitives carrying domain rules that would be clearer and safer as a value object?"
           fix "Create a focused value object when the primitive has behavior or invariants."
           bad <<~'X'
@@ -272,7 +272,7 @@ module Master
                 next unless literal.is_a?(Prism::TrueNode) || literal.is_a?(Prism::FalseNode)
 
                 finding(line: def_node.location.start_line,
-                  message: "#{def_node.name}(#{opt.name} = #{literal.is_a?(Prism::TrueNode)}) — the call site passes a bare boolean; make it `#{opt.name}:`")
+                  message: "#{def_node.name}(#{opt.name} = #{literal.is_a?(Prism::TrueNode)}) - the call site passes a bare boolean; make it `#{opt.name}:`")
               end
             end
           end
@@ -292,7 +292,7 @@ module Master
         # the dependency graph.
         #
         # Two exclusions, both measured against this tree rather than guessed.
-        # Identical signatures are one interface implemented many times —
+        # Identical signatures are one interface implemented many times -
         # check_ast(ast, code, path:) is a contract, and reporting its nine
         # implementers reports the interface working. Overlapping windows over
         # the same set of signatures are one clump seen through three frames, so
@@ -317,7 +317,7 @@ module Master
               next if pairs.size < MIN_SIGNATURES || pairs.map(&:last).uniq.size == 1
 
               finding(line: pairs.map { |def_node, _names| def_node.location.start_line }.min,
-                message: "#{run.join(", ")} travel together through #{pairs.size} signatures — give them one object")
+                message: "#{run.join(", ")} travel together through #{pairs.size} signatures - give them one object")
             end
           end
 
@@ -362,7 +362,7 @@ module Master
             code.lines.each_with_index.filter_map do |line, index|
               next if line.lstrip.start_with?("#") || !line.match?(INTIMACY)
 
-              finding(line: index + 1, message: "inappropriate intimacy via reflective access — expose a real collaboration boundary")
+              finding(line: index + 1, message: "inappropriate intimacy via reflective access - expose a real collaboration boundary")
             end
           end
         end
@@ -376,7 +376,7 @@ module Master
 
         # Split from CouplerLaw 2026-07-12: laws.yml's rule_deps SRP entry already
         # referenced FEATURE_ENVY as its own id (SRP: after: [FEATURE_ENVY,
-        # god_class]) — a dangling reference, since the check previously lived
+        # god_class]) - a dangling reference, since the check previously lived
         # under COUPLER_SMELLS. This gives it a real matching id and a single
         # responsibility of its own.
         class FeatureEnvyLaw < Detector
@@ -392,7 +392,7 @@ module Master
               dominant, count = receivers.tally.max_by { |_receiver, total| total }
               local = code_only.scan(/(?:@\w|\bself\.)/).size
               if dominant && count >= 4 && count > local
-                finding(line: start_line, message: "feature envy: method talks to #{dominant} #{count} times — move behavior closer to that object")
+                finding(line: start_line, message: "feature envy: method talks to #{dominant} #{count} times - move behavior closer to that object")
               end
             end
           end
@@ -427,7 +427,7 @@ module Master
         ::Law.define(:FEATURE_ENVY) do
           detector FeatureEnvyLaw
           tags %i[COUPLING DEMETER]
-          source "Refactoring — Feature Envy (Fowler)"
+          source "Refactoring - Feature Envy (Fowler)"
           ask "Is this method more interested in another object's data than its own?"
           fix "Move the behavior toward the data it operates on or extract a suitable collaborator."
           bad <<~'X'
@@ -451,7 +451,7 @@ module Master
               defs = body.scan(/^\s*def\s+/).size
               delegates = body.scan(DELEGATE).size
               if defs.positive? && delegates >= defs && body.lines.size < 50
-                finding(line:, message: "lazy class only delegates — inline it or give it a real responsibility")
+                finding(line:, message: "lazy class only delegates - inline it or give it a real responsibility")
               end
             end
           end
@@ -464,7 +464,7 @@ module Master
         ::Law.define(:LAZY_CLASS) do
           detector LazyClassLaw
           tags %i[DISPENSABLES SRP]
-          source "Refactoring — Lazy Class (Fowler)"
+          source "Refactoring - Lazy Class (Fowler)"
           ask "Is this class too small or trivial to justify a separate abstraction boundary?"
           fix "Inline or merge it unless the boundary provides independent value."
           bad <<~'X'

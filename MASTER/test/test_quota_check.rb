@@ -2,7 +2,7 @@
 
 require_relative "test_helper"
 # Zeitwerk is told to ignore this file (data/autoload.yml), so the semantic
-# tier only exists once something requires it — the same require every other
+# tier only exists once something requires it - the same require every other
 # test of these rules makes.
 require_relative "../lib/review/scan/law_tree"
 
@@ -180,7 +180,7 @@ class TestQuotaCheck < Minitest::Test
 
   # The other half of the defect: MASTER/law's 122 rules are all lexical, so
   # every semantic rule is a model call. With the check closed they return no
-  # findings — and "no findings" is exactly what a clean file returns, which is
+  # findings - and "no findings" is exactly what a clean file returns, which is
   # how a whole tier of detection disappears into a pass.
   def test_the_semantic_tier_refuses_to_read_as_clean
     asked = []
@@ -203,7 +203,7 @@ class TestQuotaCheck < Minitest::Test
   end
 
   # A rule that reaches the model and is told "no credit" trips the tier once,
-  # not once per file — the same population that once logged 4,663 identical
+  # not once per file - the same population that once logged 4,663 identical
   # entries for one absent capability.
   def test_a_rule_hitting_the_limit_trips_the_tier_once
     broke = Class.new do

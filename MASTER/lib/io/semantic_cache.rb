@@ -120,7 +120,7 @@ module Master
       # it makes the rejection the permanent answer to that prompt. The guard
       # runs after this cache returns, so a degenerate response is served again
       # on the next identical question, trips the same detector again, and the
-      # ladder in PhantomRecovery — which counts consecutive phantoms — climbs
+      # ladder in PhantomRecovery - which counts consecutive phantoms - climbs
       # to a halt with no clean response in between to reset it. Measured on
       # vm23: the same question halted on the second and third ask while the
       # first, on a cache miss, answered correctly.

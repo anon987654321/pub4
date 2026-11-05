@@ -57,7 +57,7 @@ module Deploy
     # together.
     def check_field_collection
       unless File.file?(HOTWIRE)
-        @result.fail("web_vitals_budget: #{rel(HOTWIRE)} missing — nothing collects vitals in the field")
+        @result.fail("web_vitals_budget: #{rel(HOTWIRE)} missing - nothing collects vitals in the field")
         return
       end
 
@@ -71,7 +71,7 @@ module Deploy
         .each do |entry_type, metric|
           next if source.include?(entry_type)
 
-          @result.fail("web_vitals_budget: hotwire.js no longer observes #{entry_type} — #{metric} " \
+          @result.fail("web_vitals_budget: hotwire.js no longer observes #{entry_type} - #{metric} " \
                        "stopped being collected in the field")
         end
     end
@@ -79,27 +79,27 @@ module Deploy
     def measure_live
       # /fix --lane code opens no browser; the source half above still ran.
       if ENV["CHECK_LANE"] == "code"
-        @result.skipped_live("web_vitals_budget: code lane — paint budget not measured")
+        @result.skipped_live("web_vitals_budget: code lane - paint budget not measured")
         return
       end
 
       unless GeometryProbe.available?
-        @result.inconclusive!("web_vitals_budget: no Chrome/Chromium — LCP and CLS not measured", gap: Master::Gap::NO_BROWSER)
+        @result.inconclusive!("web_vitals_budget: no Chrome/Chromium - LCP and CLS not measured", gap: Master::Gap::NO_BROWSER)
         return
       end
 
       surfaces = selected_surfaces
       if surfaces.empty?
-        @result.inconclusive!("web_vitals_budget: no representative surfaces selected — paint budget not measured")
+        @result.inconclusive!("web_vitals_budget: no representative surfaces selected - paint budget not measured")
         return
       end
       GeometryProbe.unreachable_apps(surfaces).each do |app|
-        @result.skipped_live("web_vitals_budget: #{app} port closed — paint budget not measured")
+        @result.skipped_live("web_vitals_budget: #{app} port closed - paint budget not measured")
       end
 
       live = GeometryProbe.reachable(surfaces)
       if live.empty?
-        @result.inconclusive!("web_vitals_budget: no app reachable — paint budget not measured")
+        @result.inconclusive!("web_vitals_budget: no app reachable - paint budget not measured")
         return
       end
 

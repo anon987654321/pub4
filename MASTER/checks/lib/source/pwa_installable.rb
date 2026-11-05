@@ -12,7 +12,7 @@ module Deploy
   # file, and it resolves from two places: the app's own public/ and the shared
   # engine's, which shared/lib/shared/engine.rb:133 mounts with its own
   # ActionDispatch::Static. Looking in the app's public/ alone reports brgen and
-  # bsdports as declaring five icons and shipping two — which is wrong, and is
+  # bsdports as declaring five icons and shipping two - which is wrong, and is
   # exactly what a hand check found before reading the engine. Amber keeping its
   # own copies is the anomaly, not the other two lacking them.
   #
@@ -67,7 +67,7 @@ module Deploy
         @result.checked!
         next if source.include?(%("#{key}":))
 
-        @result.fail("pwa_installable: #{app} manifest declares no #{key} — not installable")
+        @result.fail("pwa_installable: #{app} manifest declares no #{key} - not installable")
       end
     end
 
@@ -97,7 +97,7 @@ module Deploy
     #
     # Both halves of that were learned the hard way on the first run. A single
     # regex reading src, sizes and purpose across the whole array pairs entry
-    # one's src with entry three's purpose the moment an entry omits the key —
+    # one's src with entry three's purpose the moment an entry omits the key -
     # and bsdports omits it on exactly the two icons that make it installable,
     # so the check reported the one app it should have cleared. The spec says an
     # icon with no purpose is "any", which is why omitting it is correct and why
@@ -121,7 +121,7 @@ module Deploy
         @result.checked!
         next if any.any? { |icon| icon[:sizes] == size }
 
-        @result.fail("pwa_installable: #{app} declares no #{size} icon with purpose any — " \
+        @result.fail("pwa_installable: #{app} declares no #{size} icon with purpose any - " \
                      "maskable and monochrome do not satisfy the install prompt")
       end
     end
@@ -152,7 +152,7 @@ module Deploy
       end
       source = File.read(manifest)
       unless source.include?("city_name")
-        @result.fail("pwa_installable: brgen manifest does not derive its name from city_name — " \
+        @result.fail("pwa_installable: brgen manifest does not derive its name from city_name - " \
                      "an installed app on oshlo.no would be called Bergen")
         return
       end

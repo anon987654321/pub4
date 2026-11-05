@@ -306,7 +306,7 @@ end
 
 # One JSON document per run: every check's outcome, its failure/warning/error
 # lines and gaps, and the summary. For harnesses and foreign runtimes that
-# consume findings as data instead of parsing dmesg lines — the same evidence
+# consume findings as data instead of parsing dmesg lines - the same evidence
 # the prose path prints, read from the same CheckResult objects, with the
 # same exit codes. Serialized defensively: a check whose result objects do
 # not answer the usual readers is reported as errored rather than taking the

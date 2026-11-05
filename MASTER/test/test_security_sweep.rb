@@ -7,7 +7,7 @@ require_relative "../tools/security_sweep"
 # strings across brgen and bsdports ("Glemt passord?", "Confirm password",
 # "Update your password") and both the contributor and operator check profiles
 # failed on translated UI copy. Narrowing a secret detector is exactly the change
-# that needs tests on both sides — the rule is worthless if it stops catching real
+# that needs tests on both sides - the rule is worthless if it stops catching real
 # credentials.
 class TestSecuritySweep < Minitest::Test
   def hits(line) = password_hits(line)

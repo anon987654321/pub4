@@ -61,7 +61,7 @@ module Master
         def render_clean
           lines = []
           lines << phase_line if phase_line
-          lines << "#{prefix}#{header}clean — no violations#{suffix}"
+          lines << "#{prefix}#{header}clean - no violations#{suffix}"
           lines << delta_line if delta_line
           lines << autofix_line if autofix_line
           lines.join("\n")
@@ -78,7 +78,7 @@ module Master
 
           delta = total - prior_total.to_i
           sign = delta.positive? ? "+" : ""
-          "delta: #{prior_total} → #{total} (#{sign}#{delta})"
+          "delta: #{prior_total} -> #{total} (#{sign}#{delta})"
         end
 
         def autofix_line
@@ -162,7 +162,7 @@ module Master
           end
         end
 
-        # "  web/public/face.css:28 raw hex color — use a design token, 14 files".
+        # "  web/public/face.css:28 raw hex color - use a design token, 14 files".
         # The place and the message. Confidence, a why that restated the
         # message, a genealogy that restated the rule and an impact tuple made
         # each line a pipe-separated dump no one read.
@@ -182,7 +182,7 @@ module Master
 
           head = text[0, limit]
           space = head.rindex(" ")
-          "#{(space && space > limit / 2 ? head[0, space] : head).rstrip}…"
+          "#{(space && space > limit / 2 ? head[0, space] : head).rstrip}..."
         end
 
         def omitted_count
@@ -198,7 +198,7 @@ module Master
           return if clusters.empty?
 
           summary = clusters.first(3).map do |cluster|
-            "#{cluster[:rule]}×#{cluster[:count]}#{cluster[:files] > 1 ? " in #{cluster[:files]} files" : ""}"
+            "#{cluster[:rule]}x#{cluster[:count]}#{cluster[:files] > 1 ? " in #{cluster[:files]} files" : ""}"
           end.join(" ")
           "cross-file DRY: #{summary}"
         end
@@ -228,7 +228,7 @@ module Master
         end
 
         def default_genealogy(violation)
-          [violation[:severity].to_s.upcase, violation[:law].to_s, violation[:message].to_s.split(" — ").first]
+          [violation[:severity].to_s.upcase, violation[:law].to_s, violation[:message].to_s.split(" - ").first]
         end
 
         def cross_file_duplicate_clusters

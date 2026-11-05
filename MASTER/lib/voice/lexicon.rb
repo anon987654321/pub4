@@ -6,7 +6,7 @@ module Master
   module Voice
     # Speech respellings, applied to TTS text only.
     #
-    # rb_edge_tts takes plain text — there is no SSML path through it, so there
+    # rb_edge_tts takes plain text - there is no SSML path through it, so there
     # is no <phoneme> and no lexicon the engine will honour. Respelling the
     # written form is the only pronunciation control available: the table maps
     # what is written to what should be said, and the engine pronounces the

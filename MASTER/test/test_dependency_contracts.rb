@@ -42,7 +42,7 @@ class TestDependencyContracts < Minitest::Test
       [path.sub("#{REPO}/", ""), File.read(path).strip]
     end
 
-    refute_empty pins, "no .ruby-version found — this test would pass having measured nothing"
+    refute_empty pins, "no .ruby-version found - this test would pass having measured nothing"
     assert_equal 1, pins.values.uniq.size, "the pin disagrees with itself: #{pins.inspect}"
     assert_equal ["4.0.5"], pins.values.uniq, "the repository runtime is pinned to Ruby 4.0.5"
 

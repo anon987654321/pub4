@@ -79,10 +79,10 @@ module Operator
     def next_action(name, state)
       return "" if state == "available"
       case name
-      when "model" then " — /model list"
-      when "voice" then " — /doctor"
-      when "audio" then " — /device audio"
-      else " — /doctor"
+      when "model" then " - /model list"
+      when "voice" then " - /doctor"
+      when "audio" then " - /device audio"
+      else " - /doctor"
       end
     end
   end

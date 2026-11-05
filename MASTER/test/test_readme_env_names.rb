@@ -10,7 +10,7 @@ require_relative "test_helper"
 # measured the gap, because prose cannot fail.
 #
 # Every SCREAMING_SNAKE name a tree's README prints must appear somewhere in
-# that tree's own source. Not a claim that it is an ENV var — the shape is what
+# that tree's own source. Not a claim that it is an ENV var - the shape is what
 # a reader will try to set, and a name in that shape that nothing reads is
 # either renamed or gone.
 class TestReadmeEnvNames < Minitest::Test
@@ -38,7 +38,7 @@ class TestReadmeEnvNames < Minitest::Test
     end
 
     assert_empty unread,
-                 "a README names something its tree does not read — rename the doc or restore the reader:\n  " +
+                 "a README names something its tree does not read - rename the doc or restore the reader:\n  " +
                  unread.join("\n  ")
   end
 
@@ -50,13 +50,13 @@ class TestReadmeEnvNames < Minitest::Test
       File.file?(readme) ? names(File.read(readme)).size : 0
     end
     assert_operator found, :>, 5,
-                    "the name regex stopped matching — this test passes having read nothing"
+                    "the name regex stopped matching - this test passes having read nothing"
   end
 
   private
 
   # A name can be read without being spelled. dilla builds a whole family from
-  # one interpolation — `ENV["SONITEX_#{name.to_s.upcase}"]`, six sections — so
+  # one interpolation - `ENV["SONITEX_#{name.to_s.upcase}"]`, six sections - so
   # SONITEX_MIX is read by source that contains no such literal. That was the
   # first thing this test caught, and the test was the thing that was wrong.
   #

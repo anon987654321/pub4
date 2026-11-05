@@ -127,7 +127,7 @@ class TestVoiceVad < Minitest::Test
     assert @vad.speaking
 
     # Mid-band energy: between silence_threshold and speech_threshold after
-    # mapping — use very quiet but non-zero so we stay in band or drop slowly.
+    # mapping - use very quiet but non-zero so we stay in band or drop slowly.
     # One quiet frame must not end speech (hangover required).
     @vad.process(tone(0.0001))
     advance

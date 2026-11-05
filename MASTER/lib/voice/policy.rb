@@ -113,7 +113,7 @@ module Master
       # one.
       #
       # `single_voice` stayed the contract for as long as there was one voice,
-      # and every reader still agrees with it — an empty or absent `rotation`
+      # and every reader still agrees with it - an empty or absent `rotation`
       # leaves this returning exactly that one name, so nothing downstream sees
       # a change. What it is NOT is a persona list: personas affect text only
       # (`persona_affects_text_only`), and a rotation affects only which mouth

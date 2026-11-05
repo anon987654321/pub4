@@ -22,7 +22,7 @@ module Master
         MAX_CONCURRENT = 4
         MAX_CODE_BYTES = 8_192
         TRUNCATE_MARKER = "\n... [truncated to #{MAX_CODE_BYTES} bytes for review]".freeze
-        # One deadline for the WHOLE council, not per persona or per batch —
+        # One deadline for the WHOLE council, not per persona or per batch -
         # see collect_parallel, which computes it once and hands the same
         # instant to every join_or_kill.
         #
@@ -36,7 +36,7 @@ module Master
         #
         # 600s covers roughly three batches, so around twelve personas answer
         # instead of three. Hearing all twenty-six needs ~1421s, which is a
-        # legitimate choice and a 24-minute critique per subsystem — three of
+        # legitimate choice and a 24-minute critique per subsystem - three of
         # them in a full check. The arithmetic is written down so that is an
         # informed one-line change rather than a guess.
         TOTAL_BUDGET_S = 600
@@ -89,7 +89,7 @@ module Master
 
         # The CLI-lane posture: on a dev Mac the council speaks through the
         # claude CLI, and the arithmetic above says 26 personas need ~1421s
-        # against a 600s budget — so local runs take one round of a panel
+        # against a 600s budget - so local runs take one round of a panel
         # council.yml sizes (local_panel), and vm23 hears everyone.
         # MASTER_COUNCIL_LOCAL overrides in either direction.
         def self.local_posture?
@@ -379,7 +379,7 @@ module Master
           @bus&.publish(:council_timeout, completed: feedback.size, total: @panel_size.to_i, missing_personas: missing)
           # The tally, not just the score. "quorum not reached (2/26)" sent an
           # operator into the per-persona log lines to learn that the answer
-          # was "OpenRouter is out of credits" — the reasons were already
+          # was "OpenRouter is out of credits" - the reasons were already
           # collected one layer down, and the error is where they get read.
           #
           # A spend limit gets its own category so a chain stage can branch on
@@ -430,14 +430,14 @@ module Master
         def quota_note
           Io::QuotaCheck.skipped("council") if Io::QuotaCheck.tripped?
           parts = [Io::QuotaCheck.report, Io::QuotaCheck.substitution_note].compact
-          parts.empty? ? "" : " — #{parts.join(" — ")}"
+          parts.empty? ? "" : " - #{parts.join(" - ")}"
         end
 
         def failure_summary
           tally = @persona_failures_lock.synchronize { @persona_failures.tally }
           return "" if tally.empty?
 
-          " — #{tally.sort_by { |_, count| -count }.map { |reason, count| "#{count}x #{reason}" }.join(", ")}"
+          " - #{tally.sort_by { |_, count| -count }.map { |reason, count| "#{count}x #{reason}" }.join(", ")}"
         end
 
         # A stable slug per failure class, so 24 stack-trace variants tally as
@@ -599,7 +599,7 @@ module Master
 
         # One spend limit is one fact about the account, not N facts about N
         # personas. QuotaCheck announces the first and returns false to everyone
-        # after it, so the remaining personas only add to the tally — which is
+        # after it, so the remaining personas only add to the tally - which is
         # what the operator reads anyway.
         def note_persona_failure(persona, error)
           @bus&.publish("council:persona_error", persona: persona.name, error: error.message)

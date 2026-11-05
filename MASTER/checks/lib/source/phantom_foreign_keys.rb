@@ -23,7 +23,7 @@ module Deploy
       files = Dir.glob(File.join(@root, "RAILS", "*", "db", "schema.rb"))
       # No schema.rb is not a clean tree, it is an unread one: every app keeps
       # one, so an empty glob means the path moved and this check saw nothing.
-      return result.inconclusive!("phantom_foreign_keys: no db/schema.rb under RAILS/*/ — nothing was read") if files.empty?
+      return result.inconclusive!("phantom_foreign_keys: no db/schema.rb under RAILS/*/ - nothing was read") if files.empty?
 
       files.each do |path|
         result.checked!
@@ -36,7 +36,7 @@ module Deploy
           next unless PHANTOM_TABLES.include?(to)
           next if created.include?(to)
 
-          result.fail("#{path}: add_foreign_key #{from} → #{to} (phantom — use prefixed table or to_table:)")
+          result.fail("#{path}: add_foreign_key #{from} -> #{to} (phantom - use prefixed table or to_table:)")
         end
       end
       result

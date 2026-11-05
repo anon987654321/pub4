@@ -21,14 +21,14 @@ class TestInstruments < Minitest::Test
     disagreements = @report["findings"].map { |row| "#{row['fixture']}: #{row['message']}" }
 
     assert_empty disagreements,
-                 "the counter and the fixture disagree. One of them is wrong — work out which " \
+                 "the counter and the fixture disagree. One of them is wrong - work out which " \
                  "before changing either:\n  #{disagreements.join("\n  ")}"
   end
 
   def test_there_are_answers_to_check
     assert_operator @report["fixtures"], :>=, 3, "only #{@report['fixtures']} fixtures found"
     assert_operator @report["checks"], :>=, 9,
-                    "only #{@report['checks']} declared answers checked — a fixture lost its " \
+                    "only #{@report['checks']} declared answers checked - a fixture lost its " \
                     "`# instrument:` header and is being measured against nothing"
   end
 

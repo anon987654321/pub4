@@ -52,7 +52,7 @@ module Master
 
         def user_message(law)
           case enforcement(law)
-          when :measurement then "#{law.id}: measured only — non-blocking"
+          when :measurement then "#{law.id}: measured only - non-blocking"
           when :blocking then "#{law.id}: blocking law"
           else "#{law.id}: advisory finding"
           end

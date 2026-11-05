@@ -3,15 +3,15 @@
 module Deploy
   module DesignMetrics
     # WCAG and APCA colour maths, split out of design_metrics.rb when that file
-    # crossed the 300-line limit with no ceiling recorded — the case
+    # crossed the 300-line limit with no ceiling recorded - the case
     # file_length_ratchet_test exists to catch, and the only one of its twelve
     # entries that was a genuinely new long file rather than an existing one
     # growing by a few lines.
     #
     # Plain instance methods rather than module_function, because DesignMetrics
     # `extend`s this: that turns them into public singleton methods there, so
-    # every existing caller — DesignMetrics.contrast_ratio, .apca_lc,
-    # .parse_hex, all 24 of them across five files — keeps working unchanged.
+    # every existing caller - DesignMetrics.contrast_ratio, .apca_lc,
+    # .parse_hex, all 24 of them across five files - keeps working unchanged.
     # Contrast.contrast_ratio also resolves, for a caller that wants to name
     # which half it is reaching for.
     module Contrast
@@ -56,8 +56,8 @@ module Deploy
       # WCAG 2.x is what style.yml declares and what an auditor will measure.
       #
       # It is worth measuring both because the two disagree in a way that matters
-      # here. WCAG 2.x is a ratio of two luminances and is symmetric — it gives
-      # the same answer whether the text is dark on light or light on dark — while
+      # here. WCAG 2.x is a ratio of two luminances and is symmetric - it gives
+      # the same answer whether the text is dark on light or light on dark - while
       # perceived contrast is not symmetric at all. Light text on a dark ground
       # spreads into its background (halation) and reads thinner than the ratio
       # predicts; mid-greys on light grounds read better than it predicts. A
@@ -83,7 +83,7 @@ module Deploy
         y < k[:blk_thrs] ? y + ((k[:blk_thrs] - y)**k[:blk_clmp]) : y
       end
 
-      # Lc for text `hex_txt` on background `hex_bg`. Order matters — unlike the
+      # Lc for text `hex_txt` on background `hex_bg`. Order matters - unlike the
       # WCAG ratio, swapping the arguments changes the answer.
       def apca_lc(hex_txt, hex_bg)
         txt = parse_hex(hex_txt)

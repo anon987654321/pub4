@@ -43,7 +43,7 @@ module Master
           if @guard.minor_cue?(body) || @guard.minor_cue?(mail.subject.to_s)
             @dossier.record(event.merge(event: "ESCALATE"))
             lines.concat([
-              "## #{event[:handle]} — possible minor cue",
+              "## #{event[:handle]} - possible minor cue",
               "No draft generated. Review manually; do not engage from this digest.",
               "",
             ])
@@ -53,7 +53,7 @@ module Master
           if @guard.injection?(body) || @guard.injection?(mail.subject.to_s)
             @dossier.record(event)
             lines.concat([
-              "## #{event[:handle]} — injection pattern detected",
+              "## #{event[:handle]} - injection pattern detected",
               "Dossier updated. No draft generated.",
               "",
             ])
@@ -63,7 +63,7 @@ module Master
           if off_limits?(body, mail.subject.to_s)
             @dossier.record(event)
             lines.concat([
-              "## #{event[:handle]} — off-limits topic",
+              "## #{event[:handle]} - off-limits topic",
               "No draft generated.",
               "",
             ])
@@ -73,7 +73,7 @@ module Master
           @dossier.record(event)
           if QuietHours.blocked?(@operator.dig("boundaries", "never_nudge_hours"), @now)
             lines.concat([
-              "## #{event[:handle]} (#{event[:platform]}) — #{event[:event]}",
+              "## #{event[:handle]} (#{event[:platform]}) - #{event[:event]}",
               "No draft: quiet hours are active.",
               "",
             ])
@@ -86,7 +86,7 @@ module Master
           draft = draft.to_s.gsub("{handle}", event[:handle])
           context = @dossier.context(event[:handle])
           lines.concat([
-            "## #{event[:handle]} (#{event[:platform]}) — #{event[:event]}",
+            "## #{event[:handle]} (#{event[:platform]}) - #{event[:event]}",
             "history: #{context.inspect}",
             "draft: #{draft}",
             "raw:",

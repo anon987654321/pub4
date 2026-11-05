@@ -4,7 +4,7 @@
 # The boot the operator's machine ran, in the order it ran it: master.rb's
 # zeitwerk setup, the builder chain into fix/kernel.rb, then the three legacy
 # aliases. Every managed constant starts as a pending autoload, and an alias
-# head that const_sets into one crashes in the builder chain — the phase this
+# head that const_sets into one crashes in the builder chain - the phase this
 # check runs first, because it needs only Ruby and zeitwerk. The alias
 # identity is asserted strictly wherever the fix graph's gems are installed
 # (boot_smoke's env) and reported unverified rather than failed where they
@@ -19,7 +19,7 @@ lib = File.join(root, "lib")
 begin
   require "zeitwerk"
 rescue LoadError
-  warn "kernel_autoload_smoke: zeitwerk is not available — the boot phase " \
+  warn "kernel_autoload_smoke: zeitwerk is not available - the boot phase " \
        "needs only it and stdlib; install the gem or point RUBYLIB at a checkout"
   exit 1
 end
@@ -35,7 +35,7 @@ end
 
 pending_kernel = Master::Fix.autoload?(:Kernel)
 unless pending_kernel
-  warn "kernel_autoload_smoke: Master::Fix::Kernel is not a pending autoload — " \
+  warn "kernel_autoload_smoke: Master::Fix::Kernel is not a pending autoload - " \
        "the loader setup this check guards has changed; update the check with it"
   exit 1
 end

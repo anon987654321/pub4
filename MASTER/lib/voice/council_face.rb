@@ -2,7 +2,7 @@
 
 module Master
   module Voice
-  # CouncilFace — persona → voice, blendshape bias, spatial lane for council:speech.
+  # CouncilFace - persona -> voice, blendshape bias, spatial lane for council:speech.
   # Every persona speaks in the single voice data/voice.yml locks; only the
   # blendshape bias and spatial lane differ per persona. These six entries used
   # to name :ryan literally, so a voice.yml flip silently left council:speech

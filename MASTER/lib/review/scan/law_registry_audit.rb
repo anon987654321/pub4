@@ -67,8 +67,8 @@ module Master
           # below 35 and laws.yml self_test names the threshold.
           #
           # The weighted average that stood here averaged registry coverage against
-          # a term reading `(wired + unwired) * 100 / (wired + unwired)` — 100.0 for
-          # every possible corpus — so the score floored at 55.0 and the check below
+          # a term reading `(wired + unwired) * 100 / (wired + unwired)` - 100.0 for
+          # every possible corpus - so the score floored at 55.0 and the check below
           # 35 could not fail whatever the tree did.
           def adherence_pct
             return 100.0 if yaml_laws.zero?
@@ -213,7 +213,7 @@ module Master
         # Anchored at the start as well as after a slash: a file run as the main
         # script reports the path it was invoked with, so `ruby -Itest
         # test/test_x.rb` yields a relative `test/test_x.rb` that a leading-slash
-        # pattern misses — and the exclusion then works everywhere except in the
+        # pattern misses - and the exclusion then works everywhere except in the
         # one place the test for it runs.
         TEST_DEFINED = %r{(?:\A|/)(?:test|spec)/}
 

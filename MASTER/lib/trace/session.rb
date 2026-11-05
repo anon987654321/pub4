@@ -9,13 +9,13 @@ require "set"
 module Master
   module Trace
     class Session
-      # Save/load the session's durable state to/from disk — separate from
+      # Save/load the session's durable state to/from disk - separate from
       # Session's own in-memory message/cost/snapshot tracking.
       #
       # This is `.master/session.json`, which is the CLI's transcript: one
       # process, one person, one file. Since Session grew per-conversation
       # partitions it reads and writes the :local partition explicitly rather
-      # than whichever conversation happens to be current — a web request must
+      # than whichever conversation happens to be current - a web request must
       # never be able to persist a visitor's transcript to the operator's disk,
       # and load! must not drop a visitor's turns into the operator's history.
       module Persistence
@@ -157,7 +157,7 @@ module Master
           nil
         end
       end
-      # In-memory per-path content snapshots (not persisted to disk) —
+      # In-memory per-path content snapshots (not persisted to disk) -
       # separate from Session's own message/cost/save-load concerns.
       module Snapshots
         def snapshot(path, content)
@@ -169,7 +169,7 @@ module Master
       end
 
       # Token accounting and compaction of one conversation, which ContextWindow
-      # drives — separate from Session's transcript, cost and save-load concerns.
+      # drives - separate from Session's transcript, cost and save-load concerns.
       module Compaction
         def token_est(key = nil) = @mutex.synchronize { conversation(key || current_key)[:token_est] }
 
@@ -262,7 +262,7 @@ module Master
       # the model `messages.last(41)`, so a stranger's turns became your
       # context: it could answer you with what someone else had just said, and
       # two people typing at the same time interleaved into one transcript.
-      # /chat/history is auth-gated, so the endpoint never leaked — the model
+      # /chat/history is auth-gated, so the endpoint never leaked - the model
       # did.
       #
       # Absent key means :local, which is the CLI, every test, and any caller
@@ -272,8 +272,8 @@ module Master
 
       # The fiber-local exists for the runtime path only, where the caller is
       # Agent#conversation_context several frames down and has no key to pass.
-      # Everywhere the caller does know its key — persistence pinning :local, the
-      # history endpoint, tests — it passes one, because a fiber-local set and
+      # Everywhere the caller does know its key - persistence pinning :local, the
+      # history endpoint, tests - it passes one, because a fiber-local set and
       # restored around a block is a worse way to say the same thing.
       def self.conversation_key = Fiber[:master_conversation] || LOCAL
 
@@ -356,7 +356,7 @@ module Master
       def exists? = File.exist?(@path)
 
       # Clears the caller's own conversation, not everyone's. Cost is deliberately
-      # still global — it is money spent by the process, and no visitor's /clear
+      # still global - it is money spent by the process, and no visitor's /clear
       # should zero the operator's spend.
       def clear!
         @mutex.synchronize { @conversations[current_key] = blank_conversation; @topic = nil }
@@ -386,7 +386,7 @@ module Master
 
       def summarize_message(msg)
         content = msg[:content].to_s.gsub(/\s+/, " ").strip
-        summary = content.bytesize > SUMMARY_MAX_CHARS ? "#{content.byteslice(0, SUMMARY_MAX_CHARS)}…" : content
+        summary = content.bytesize > SUMMARY_MAX_CHARS ? "#{content.byteslice(0, SUMMARY_MAX_CHARS)}..." : content
         msg.merge(content: "[summary] #{summary}", summarized: true)
       end
 

@@ -7,7 +7,7 @@ require_relative "../../lib/design/typography"
 
 module Deploy
   # Worn-type contracts. laws.yml design_rules.worn_type is the law; this module
-  # is the reader. A profile that exists only in YAML is inert — MASTER
+  # is the reader. A profile that exists only in YAML is inert - MASTER
   # test_design_rules_worn_type.rb fails if a profile name is missing here.
   module GeometryType
     RULES = File.join(File.expand_path("../../..", __dir__), "MASTER", "data", "tokens.yml")
@@ -94,8 +94,8 @@ module Deploy
 
       sample = bad.first(3).map { |r| "#{r["sel"]} #{r["ch"]}ch" }.join("; ")
       result.fail(
-        "geometry measure: #{surface.id} #{bad.size} prose run(s) outside #{min.to_i}–#{max.to_i}ch " \
-        "(profile=#{spec["name"]}) — #{sample} (principle=bringhurst)",
+        "geometry measure: #{surface.id} #{bad.size} prose run(s) outside #{min.to_i}-#{max.to_i}ch " \
+        "(profile=#{spec["name"]}) - #{sample} (principle=bringhurst)",
         severity: :soft,
       )
     end
@@ -130,7 +130,7 @@ module Deploy
         next if offenders.empty?
 
         count, names = wrap_names(offenders)
-        result.fail("geometry wrap: #{surface.id} breaks #{count} #{what} at #{surface.width}px — " \
+        result.fail("geometry wrap: #{surface.id} breaks #{count} #{what} at #{surface.width}px - " \
                     "#{names} (principle=#{principle})", severity: :soft)
       end
     end
@@ -161,7 +161,7 @@ module Deploy
       status = data["glyphs_status"].to_s
 
       if status.start_with?("unverified:")
-        result.incomplete!("geometry glyphs: #{surface.id} coverage not measured — #{status.delete_prefix("unverified:").strip}")
+        result.incomplete!("geometry glyphs: #{surface.id} coverage not measured - #{status.delete_prefix("unverified:").strip}")
         return
       end
 
@@ -170,7 +170,7 @@ module Deploy
 
       families = missing.map { |row| row["family"] }.uniq
       result.fail(
-        "geometry glyphs: #{surface.id} draws æøå from a fallback face — #{families.first(3).join(', ')} " \
+        "geometry glyphs: #{surface.id} draws æøå from a fallback face - #{families.first(3).join(', ')} " \
         "lack#{'s' if families.size == 1} them (principle=ui_polish)",
         severity: :soft,
       )
@@ -224,7 +224,7 @@ module Deploy
 
       sample = missing.first(3).map { |r| r["sel"] }.join("; ")
       result.fail(
-        "geometry tabular: #{surface.id} #{missing.size} quantity run(s) without tabular-nums — " \
+        "geometry tabular: #{surface.id} #{missing.size} quantity run(s) without tabular-nums - " \
         "#{sample} (principle=catalog_figures)",
         severity: :soft,
       )
@@ -294,7 +294,7 @@ module Deploy
 
       sample = bad.first(3).map { |r| "#{r["sel"]} marker #{r["marker_x"]} > text #{r["text_x"]}" }.join("; ")
       result.fail(
-        "geometry hanging: #{surface.id} #{bad.size} list marker(s) sit inside the measure — " \
+        "geometry hanging: #{surface.id} #{bad.size} list marker(s) sit inside the measure - " \
         "#{sample} (principle=tschichold)",
         severity: :soft,
       )
@@ -315,7 +315,7 @@ module Deploy
 
       sample = rows.first(3).map { |row| "#{row["sel"]} #{row["line_count"]} lines last/max=#{row["rag_ratio"]}" }.join("; ")
       result.fail(
-        "geometry rag: #{surface.id} has #{rows.size} long prose block(s) ending in an extremely short line — " \
+        "geometry rag: #{surface.id} has #{rows.size} long prose block(s) ending in an extremely short line - " \
         "#{sample}; rebalance copy, measure or breaks before tightening the type",
         severity: :soft,
       )

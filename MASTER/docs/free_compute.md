@@ -1,4 +1,4 @@
-# Free compute in MASTER — implementation status
+# Free compute in MASTER - implementation status
 
 Updated 2026-10-28 against the live routing code. This document separates
 implemented paths from proposals: a configured provider is not proof that it is

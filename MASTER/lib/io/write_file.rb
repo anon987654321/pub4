@@ -48,12 +48,12 @@ module Master
 
       def stale_read(path, full)
         @bus&.publish("ground_truth:stale", path: full, reason: "write_file_changed")
-        Result.err("write refused — #{path} changed since it was read; read it again", category: :policy)
+        Result.err("write refused - #{path} changed since it was read; read it again", category: :policy)
       end
 
       def unread_read(path, full)
         @bus&.publish("ground_truth:stale", path: full, reason: "write_file_read_missing_or_expired")
-        Result.err("write refused — #{path} must be read in this turn with its SHA-256 receipt before replacing it", category: :policy)
+        Result.err("write refused - #{path} must be read in this turn with its SHA-256 receipt before replacing it", category: :policy)
       end
     end
   end

@@ -40,7 +40,7 @@ module Master
         raise ArgumentError, "UX catalog must contain exactly #{EXPECTED_COUNT} records" unless rows.is_a?(Array) && rows.size == EXPECTED_COUNT
         ids = rows.map { |row| row.is_a?(Hash) ? row["id"].to_s : "" }
         expected_ids = (1..EXPECTED_COUNT).map { |number| format("UX%03d", number) }
-        raise ArgumentError, "UX catalog IDs must be the ordered UX001–UX090 sequence" unless ids == expected_ids
+        raise ArgumentError, "UX catalog IDs must be the ordered UX001-UX090 sequence" unless ids == expected_ids
         raise ArgumentError, "UX catalog expected_count disagrees" unless payload["expected_count"] == EXPECTED_COUNT
         rows.each do |row|
           %w[id area title owner_trees proof contract state].each do |field|

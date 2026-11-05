@@ -440,9 +440,9 @@ module Master
                     []
                   end
         unless sources.empty?
-          lines << "Research starting points — open the most relevant current sources and verify relevance before citing:"
+          lines << "Research starting points - open the most relevant current sources and verify relevance before citing:"
           sources.each do |source|
-            lines << "- #{source.fetch("name")}: #{source.fetch("url")} — #{source.fetch("use")}"
+            lines << "- #{source.fetch("name")}: #{source.fetch("url")} - #{source.fetch("use")}"
           end
         end
 

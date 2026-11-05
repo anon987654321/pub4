@@ -75,7 +75,7 @@ class TestSnapshotGenerator < Minitest::Test
     assert_includes source, "snapshot0: complete tree="
     assert_includes source, '"STUDIO" => "STUDIO"'
     assert_includes source, '"OPENBSD" => "snapshot_OPENBSD.md"'
-    assert_includes source, ' — git #{sha}'
+    assert_includes source, ' - git #{sha}'
     assert_includes source, 'git=#{sha}'
   end
 
@@ -197,7 +197,7 @@ class TestSnapshotGenerator < Minitest::Test
       output = File.join(dir, "snapshot_MASTER.md")
       File.write(File.join(dir, "example.rb"), "puts :ok\n")
       Master::Snapshot.new(root: dir, output:).write!
-      refute_includes File.read(output), "snapshot_MASTER.md" # source-assertion: ok — the snapshot write! just produced
+      refute_includes File.read(output), "snapshot_MASTER.md" # source-assertion: ok - the snapshot write! just produced
     end
   end
 

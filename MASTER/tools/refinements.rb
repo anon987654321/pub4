@@ -4,8 +4,8 @@
 # can already see, grouped so a session can take one group and finish it.
 #
 # This exists because a list of refinements written by hand goes stale the day
-# it is written, and because the alternative — inventing plausible-sounding
-# improvements — produces work nobody measured. Every line below comes out of
+# it is written, and because the alternative - inventing plausible-sounding
+# improvements - produces work nobody measured. Every line below comes out of
 # the same scanner the check runs.
 #
 #   ruby MASTER/tools/refinements.rb            # the groups, largest first
@@ -44,7 +44,7 @@ module Operator
       "TRAILING_COMMAS" => "add the comma to the last element of each multi-line literal",
       "TAB_CHARACTER" => "convert the tabs to spaces, whole file at a time",
       "DOLLAR_PAREN" => "replace backticks with $( ) in the shell scripts",
-      "DOUBLE_BRACKET" => "replace [ ] with [[ ]] — but read the shebang first, " \
+      "DOUBLE_BRACKET" => "replace [ ] with [[ ]] - but read the shebang first, " \
                           "because a file that declares itself POSIX sh is right as it stands",
       "STRICT_MODE_ZSH" => "add set -e and the pipefail equivalent at the top of each script",
       "NO_PUTS" => "route the output through the logger or the dmesg tag the file already uses",
@@ -59,33 +59,33 @@ module Operator
       "magic_number" => "name the number as a constant where it is used more than once",
       "NO_ABBREVIATED_IDENTIFIERS" => "spell the identifier out",
       "SMALL_FUNCTIONS" => "extract the middle of the method and name it",
-      "SMALL_FILES" => "the file is under the floor — fold it into its one caller, or leave it and record why",
-      "LAZY_CLASS" => "the class carries one method — fold it into its caller",
+      "SMALL_FILES" => "the file is under the floor - fold it into its one caller, or leave it and record why",
+      "LAZY_CLASS" => "the class carries one method - fold it into its caller",
       "FEW_ARGUMENTS" => "group the arguments that travel together into one object",
       "LONG_PARAMETER_LIST" => "same edit as FEW_ARGUMENTS",
       "FEATURE_ENVY" => "move the method to the object whose data it reads",
       "LAW_OF_DEMETER" => "ask the neighbour, not the neighbour's neighbour",
       "COUPLER_SMELLS" => "give the pair of objects one seam instead of two",
       "duplicate_code" => "name the shared shape once and call it twice",
-      "SILENT_RESCUE" => "log the swallow or let it raise — Ground::Swallow.log is the house form",
+      "SILENT_RESCUE" => "log the swallow or let it raise - Ground::Swallow.log is the house form",
       "FAIL_VISIBLY" => "report the failure where a person reads it, not into a return value",
       "NEVER_BATCH_DELETE" => "delete one named thing, or ask",
       "NO_VAR" => "use let or const",
-      "NO_GOD_CLASS" => "the class has outgrown one subject — split it along the seam it already has",
+      "NO_GOD_CLASS" => "the class has outgrown one subject - split it along the seam it already has",
       "RATE_LIMITING_MISSING" => "add rate_limit to the sensitive action",
       "MIGRATION_ADD_REFERENCE_NO_FK" => "add foreign_key: true",
       "TYPOGRAPHY_DISCIPLINE" => "use the type scale token instead of the literal size",
       "CONFIG_HIERARCHY" => "move the key to the layer that owns it",
-      "FILE_SPRAWL" => "the directory is past its file budget — group or fold",
-      "PATH_PURPOSE" => "the path does not say what the file is for — rename or move it",
-      "SIMULATION" => "do the thing or say you did not — never mime it",
+      "FILE_SPRAWL" => "the directory is past its file budget - group or fold",
+      "PATH_PURPOSE" => "the path does not say what the file is for - rename or move it",
+      "SIMULATION" => "do the thing or say you did not - never mime it",
       "COMPLETION_THEATER" => "implement it or delete it, never a placeholder",
-      "ABC_SIZE" => "the method decides too much — split at the branch",
-      "PATTERN_EXTRACTION" => "the shape repeats — give it a name",
+      "ABC_SIZE" => "the method decides too much - split at the branch",
+      "PATTERN_EXTRACTION" => "the shape repeats - give it a name",
       "NULL_BLINDNESS" => "use .nil? in Ruby and IS NULL in SQL",
       "CONTROL_CHARS" => "delete the control character",
       "SQL_INJECTION" => "parameterize the query",
-      "veto_patterns" => "a veto is not a refinement — read it before touching the file",
+      "veto_patterns" => "a veto is not a refinement - read it before touching the file",
     }.freeze
 
     class << self

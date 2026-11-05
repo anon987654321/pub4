@@ -65,7 +65,7 @@ module Master
         # what the ladder needs to mean: data/laws.yml describes discard first,
         # escalate "on second occurrence", halt "on third", and a counter that
         # only rises reaches three once and then halts every phantom for the
-        # life of the process — with gaslighting_preamble matching any reply
+        # life of the process - with gaslighting_preamble matching any reply
         # that opens "I can", "Let me" or "Sure,", which is most of them.
         reset!(scope:)
         return { action: :continue }

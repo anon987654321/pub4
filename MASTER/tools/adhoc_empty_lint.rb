@@ -25,10 +25,10 @@ module Operator
       puts "adhoc_empty_lint: #{findings.size} free-form empty line#{'s' unless findings.size == 1} " \
            "(baseline #{BASELINE})"
       findings.first(20).each { |f| puts "  #{f.file}:#{f.line}" }
-      puts "  …" if findings.size > 20
+      puts "  ..." if findings.size > 20
 
       if findings.size > BASELINE
-        warn "adhoc_empty_lint: count exceeded baseline — use shared/empty_state or mark #{OPT_OUT}"
+        warn "adhoc_empty_lint: count exceeded baseline - use shared/empty_state or mark #{OPT_OUT}"
         false
       else
         true

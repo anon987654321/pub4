@@ -201,7 +201,7 @@ module Master
         end
 
         # scan_dir answers a Result whose value is [path, Result] pairs, so the
-        # same unwrap was written three times here — twice byte for byte. It
+        # same unwrap was written three times here - twice byte for byte. It
         # answers the pairs for the outer Result and the rows for an inner one,
         # which is the same question asked at two depths.
         def rows_of(result)
@@ -217,7 +217,7 @@ module Master
 
         def validate_depth!(depth)
           return if depth == REQUIRED_DEPTH
-          raise ArgumentError, "forbidden scan depth #{depth.inspect} — deep only (DEEP_SCAN_ONLY)"
+          raise ArgumentError, "forbidden scan depth #{depth.inspect} - deep only (DEEP_SCAN_ONLY)"
         end
 
         def git_toplevel(dir)
@@ -272,7 +272,7 @@ module Master
           end
           return if failures.empty?
 
-          raise "#{label}: #{failures.size} file(s) failed measurement — #{failures.first(5).join("; ")}"
+          raise "#{label}: #{failures.size} file(s) failed measurement - #{failures.first(5).join("; ")}"
         end
 
         def skippable_validation_error?(result)
@@ -344,8 +344,8 @@ module Master
         # remove_immediate_dead_code deletes, where a wrong call is invisible to
         # anyone who does not already know what stood there.
         #
-        # Deletion waits for a person. The word is /fix, and an unattended pass —
-        # bin/check --ladder over all four governed trees — adds without deleting.
+        # Deletion waits for a person. The word is /fix, and an unattended pass -
+        # bin/check --ladder over all four governed trees - adds without deleting.
         #
         # The list is Master::Fix::Scan::AstFixer::DELETING_TRANSFORMS rather than a copy here: it
         # names methods that class defines, and the copy that stood here gated

@@ -31,10 +31,10 @@ module Master
         exclamation: ->(t) { [t.count("!"), 2].min / 2.0 },
         contrast: ->(t) { [t.scan(CONTRAST).length, 3].min / 3.0 },
         list: ->(t) { [t.scan(/,|\band\b|\bor\b/i).length, 4].min / 4.0 },
-        parenthetical: ->(t) { [t.scan(/[()\[\]]|—|–|:/).length, 2].min / 2.0 },
+        parenthetical: ->(t) { [t.scan(/[()\[\]]|\u2014|\u2013|:/).length, 2].min / 2.0 },
         short_punch: ->(t) { t.split.length.between?(1, 6) ? 1.0 : 0.0 },
         long_reflective: ->(t) { t.split.length >= 28 ? 1.0 : 0.0 },
-        ellipsis: ->(t) { t.include?("...") || t.include?("…") ? 1.0 : 0.0 },
+        ellipsis: ->(t) { t.include?("...") || t.include?("\u2026") ? 1.0 : 0.0 },
       }.freeze
 
       module_function

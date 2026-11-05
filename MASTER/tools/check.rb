@@ -56,7 +56,7 @@ module Deploy
         RubyVM::AbstractSyntaxTree.parse_file(path)
         @result.checked!
       rescue SyntaxError => e
-        @result.fail("tools parse: #{relative(path)} — #{e.message.lines.first.to_s.strip}")
+        @result.fail("tools parse: #{relative(path)} - #{e.message.lines.first.to_s.strip}")
       end
     end
 
@@ -114,7 +114,7 @@ module Deploy
       return if status.success?
 
       first = out.to_s.lines.grep_v(/^\s*from /).first.to_a.map(&:strip).reject(&:empty?)
-      @result.fail("tools load: #{relative(path)} does not boot — #{first.join(' | ')}")
+      @result.fail("tools load: #{relative(path)} does not boot - #{first.join(' | ')}")
     end
 
     def capture_with_timeout(script)

@@ -27,7 +27,7 @@ module Deploy
       def id = "#{app}/#{label}/#{viewport}"
 
       # A surface without a declared host is probed over loopback. Only brgen
-      # needs its real Host — its vertical routing keys off the subdomain, and
+      # needs its real Host - its vertical routing keys off the subdomain, and
       # Rails' development host authorization rejects vanity domains the app
       # has not allowlisted, which renders a 403 page that measures perfectly
       # and means nothing.
@@ -44,7 +44,7 @@ module Deploy
       def viewports(path = DATA) = config(path).fetch("viewports")
       def reflow_widths(path = DATA) = Array(config(path)["reflow_widths"])
 
-      # Every declared surface × viewport, brgen verticals included.
+      # Every declared surface x viewport, brgen verticals included.
       def surfaces(path = DATA, root: ROOT)
         cfg = config(path)
         vps = cfg.fetch("viewports")
@@ -79,7 +79,7 @@ module Deploy
       end
 
       # CHECK_SURFACES=brgen/core,amber narrows a run to matching app/label
-      # prefixes — for iterating on one surface without a 39-cell sweep.
+      # prefixes - for iterating on one surface without a 39-cell sweep.
       def filter(rows)
         raw = ENV["CHECK_SURFACES"].to_s.strip
         return rows if raw.empty?
@@ -167,8 +167,8 @@ module Deploy
     # after this, 20s of browser time does mean the page is wedged.
     # Net::HTTP directly rather than CrawlSupport.fetch: this warms a surface and
     # throws the response away, so it wants neither the redirect following nor
-    # the body handling the shared client does. The Host still matters — the
-    # vertical subdomains all resolve to the same port and are told apart by it —
+    # the body handling the shared client does. The Host still matters - the
+    # vertical subdomains all resolve to the same port and are told apart by it -
     # and CrawlSupport.fetch does take a host: now, if this ever needs it.
     def self.warm_surfaces(rows)
       Array(rows).map { |s| [s.host, s.port] }.uniq.each do |host, port|
@@ -211,9 +211,9 @@ module Deploy
     # Measure the page already on screen. It never navigates or clears cookies,
     # so interactive states remain part of the same page composition.
     def self.measure_current(cdp, surface, font_timeout: 3)
-      return { "error" => "chrome error page — nothing answered at #{surface.url}" } if browser_error_page?(cdp)
+      return { "error" => "chrome error page - nothing answered at #{surface.url}" } if browser_error_page?(cdp)
       unless wait_for_fonts(cdp, timeout: font_timeout)
-        return { "error" => "font readiness timeout after #{font_timeout}s — layout not measured" }
+        return { "error" => "font readiness timeout after #{font_timeout}s - layout not measured" }
       end
 
       cdp.evaluate(WALK).merge(GeometryType.probe(cdp)).merge(glyph_coverage(cdp)).merge(PaintedFonts.probe(cdp)).merge("status" => cdp.status)
@@ -223,7 +223,7 @@ module Deploy
 
     # Chrome answers a refused connection with its own page, and that page has a
     # DOM: measured on vm23 while amber and bsdports were shed, eight surfaces
-    # were graded on Chrome's "site can't be reached" — its reload and details
+    # were graded on Chrome's "site can't be reached" - its reload and details
     # buttons were reported as the app's controls, painting no state. A failed
     # navigation carries no navigation-timing status either, so `ok?` read the
     # zero as fine. The scheme is the tell.
@@ -244,7 +244,7 @@ module Deploy
     rescue CdpSession::Error => e
       {
         "glyphs_status" =>
-          "unverified: #{e.class.name.split("::").last} #{e.message.to_s[0, 80]} — fallback faces not measured",
+          "unverified: #{e.class.name.split("::").last} #{e.message.to_s[0, 80]} - fallback faces not measured",
       }
     end
 

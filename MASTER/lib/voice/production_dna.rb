@@ -22,12 +22,12 @@ module Master
                       "Soundfly, Three Examples of Dilla Swing (2016); Hein, Dilla Time (2022)",
               melodic_anticipation: "synths and bass anticipate the drums by ~100ms; bass and snare anticipations " \
                                     "of 32nd-note duration",
-              kick_instability: "10 of 13 kick notes in the measured bar fall off the metronomic grid — kicks are " \
+              kick_instability: "10 of 13 kick notes in the measured bar fall off the metronomic grid - kicks are " \
                                 "the erratic element; snare and hi-hats are the stable frame",
               hats_feel: "on-beat hats straight; upbeat hats nudged back without reaching triplet feel (Say It); " \
                          "late 16ths clustering at the end of beat two (U-Love)",
               anchors: "kicks on one and three hold the grid while everything around them drifts (U-Love)",
-              repetition: "the deviations repeat identically every bar — meticulously executed, never sloppy " \
+              repetition: "the deviations repeat identically every bar - meticulously executed, never sloppy " \
                           "(Charnas, via Hein 2022)",
             },
             # Form, not feel: the loop lengths the catalogue shows (Atwood-
@@ -41,7 +41,7 @@ module Master
           },
           lineage: {
             note: "cello lessons as a child; sampled Bach's Toccata and Fugue in D minor through Mike Hankinson's " \
-                  "synthesizer LP (The Unusual Classical Synthesizer) and Satie through The Music of Eric Satie – " \
+                  "synthesizer LP (The Unusual Classical Synthesizer) and Satie through The Music of Eric Satie - " \
                   "Velvet Gentleman; Atwood-Ferguson hears Satie, Ravel, Debussy and Poulenc in the harmony " \
                   "(Guardian, 2011); Suite for Ma Dukes recreated the melodies, harmonies and basslines of the " \
                   "samples for a 60-piece orchestra",

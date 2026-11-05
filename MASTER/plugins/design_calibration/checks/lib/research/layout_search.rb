@@ -81,7 +81,7 @@ module Deploy
 
     # The card's media slot lives in marketplace/_card_media.html.erb since the
     # component sitting (2026-08-21). A source-reading detector must follow the
-    # render or it measures the refactor as a layout regression — the page
+    # render or it measures the refactor as a layout regression - the page
     # still puts the photo first; only the file boundary moved. One level of
     # expansion is enough: the partial holds the deal-card-img marker.
     def card_source
@@ -114,7 +114,7 @@ module Deploy
 
       # Top-5 ranking for design review
       ranking.first(5).each_with_index do |c, i|
-        mark = c.id == obs.id ? " ← observed" : ""
+        mark = c.id == obs.id ? " <- observed" : ""
         @result.warn("layout_search rank ##{i + 1}: #{c.score} #{short_axes(c.axes)}#{mark}")
       end
 
@@ -137,7 +137,7 @@ module Deploy
         missing = report_hard_gaps(obs.axes, report)
         @result.fail(
           "layout_search hard floor: observed missing required axes #{missing.join(', ')} " \
-          "(MASTER catalog floor — not tradable)",
+          "(MASTER catalog floor - not tradable)",
         )
       end
 
@@ -155,7 +155,7 @@ module Deploy
 
       if rank > report[:max_rank]
         @result.fail(
-          "layout_search: observed rank ##{rank} > max_winner_rank #{report[:max_rank]} — " \
+          "layout_search: observed rank ##{rank} > max_winner_rank #{report[:max_rank]} - " \
           "winner is #{short_axes(win.axes)} (score #{win.score}); " \
           "observed #{short_axes(obs.axes)} (score #{obs_c.score}). " \
           "principle=least_resistance",

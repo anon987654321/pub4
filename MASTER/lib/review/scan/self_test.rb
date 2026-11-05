@@ -20,7 +20,7 @@ module Master
               next [] unless path.end_with?(".rb", ".sh")
               read_lines(path).each_with_index.filter_map do |line, index|
                 next unless line.match?(/^\s*rescue\s*(?:$|=>)/) || line.match?(/^\s*trap\s+.*\s+do/)
-                finding(path:, line: index + 1, message: "bare rescue/trap in OPERATOR — use explicit error handling")
+                finding(path:, line: index + 1, message: "bare rescue/trap in OPERATOR - use explicit error handling")
               end
             end
           end
@@ -98,7 +98,7 @@ module Master
                 read_text(path)
               rescue StandardError => e
                 Master::Ground::Swallow.log(e, context: "SelfTest.deploy_god_class", severity: :load_bearing)
-                next [finding(path:, line: 1, message: "unreadable deploy file — ABSTRACTION unmeasured, not clean")]
+                next [finding(path:, line: 1, message: "unreadable deploy file - ABSTRACTION unmeasured, not clean")]
               end
               code.scan(/^\s*def\s+\w+/).size > 10 ? [finding(path:, line: 1, message: "potential god class in OPERATOR rails (>10 defs)")] : []
             end
@@ -114,7 +114,7 @@ module Master
                 Master::Ground::Swallow.log(e, context: "SelfTest.deploy_small_files", severity: :load_bearing)
                 nil
               end
-              next finding(path:, line: 1, message: "unreadable deploy file — DENSITY unmeasured, not clean") if size.nil?
+              next finding(path:, line: 1, message: "unreadable deploy file - DENSITY unmeasured, not clean") if size.nil?
               next unless size > MAX_DEPLOY_FILE_BYTES
 
               finding(path:, line: 1,
@@ -232,7 +232,7 @@ module Master
           ruby_lib_paths.flat_map do |path|
             read_lines(path).each_with_index.filter_map do |line, index|
               next unless line.match?(/^\s*rescue\s*(?:$|=>)/)
-              finding(path:, line: index + 1, message: "bare rescue — use rescue StandardError")
+              finding(path:, line: index + 1, message: "bare rescue - use rescue StandardError")
             end
           end
         end
@@ -254,7 +254,7 @@ module Master
             [finding(path:, line: 1, message: "HTTP/Open3 without bounded timeout (ROBUSTNESS)")]
           rescue StandardError => e
             Master::Ground::Swallow.log(e, context: "SelfTest.timeout_scan", severity: :load_bearing)
-            [finding(path:, line: 1, message: "timeout audit could not read this file — ROBUSTNESS unmeasured, not clean")]
+            [finding(path:, line: 1, message: "timeout audit could not read this file - ROBUSTNESS unmeasured, not clean")]
           end
         end
 
@@ -266,13 +266,13 @@ module Master
             .flat_map do |path|
               read_lines(path).each_with_index.filter_map do |line, index|
                 next unless line.match?(/catch\s*\([^)]*\)\s*\{\s*\}/)
-                finding(path:, line: index + 1, message: "silent catch {} in web JS — fail visibly")
+                finding(path:, line: index + 1, message: "silent catch {} in web JS - fail visibly")
               end
             end
         end
 
         def law_integrity_findings
-          # The lifecycle is the runtime’s own contract; a fixture root has no law/ of its own.
+          # The lifecycle is the runtime's own contract; a fixture root has no law/ of its own.
           require File.join(Master::ROOT, "law", "definition") unless defined?(::Law::Definition)
           lifecycle = ::Law::Definition::LIFECYCLE_TRANSITIONS
           required = %i[proposed proven active observed trusted advisory retired]
@@ -323,7 +323,7 @@ module Master
         # a configuration namespace. doc_baselines.yml#doc_paths lists dead path
         # references per document and doc_baselines.yml#doc_numbers lists untraceable
         # numbers per document, so any document carrying both debts appears in
-        # both — as RAILS/FINAL_the old backlog now does. That is two registers agreeing
+        # both - as RAILS/FINAL_the old backlog now does. That is two registers agreeing
         # about which file has problems, not two sources of truth for one value,
         # which is what SINGULARITY exists to catch. Exempted by file rather than
         # by key: the keys are arbitrary document paths, so a key-name allowlist
@@ -370,7 +370,7 @@ module Master
 
           @malformed_yaml_findings << finding(
             path:, line: 1,
-            message: "malformed YAML in data register (#{error.class}) — SINGULARITY unmeasured, not clean"
+            message: "malformed YAML in data register (#{error.class}) - SINGULARITY unmeasured, not clean"
           )
         end
 
@@ -409,7 +409,7 @@ module Master
           return [] unless File.file?(semantics)
           body = read_text(semantics)
           return [] unless body.match?(/mouthPool\.cells|eyePool\.cells/)
-          [finding(path: semantics, line: 1, message: "face_semantics still mutates mouthPool/eyePool — use MASTER_FACE_BLEND")]
+          [finding(path: semantics, line: 1, message: "face_semantics still mutates mouthPool/eyePool - use MASTER_FACE_BLEND")]
         end
 
         def library_verify_findings
@@ -437,7 +437,7 @@ module Master
           if audit.adherence_pct < 35.0
             findings << finding(
               path: File.join(@root, "data", "laws.yml"), line: 1,
-              message: "law adherence #{audit.adherence_pct}% below 35% — wire lexical/structural adapters"
+              message: "law adherence #{audit.adherence_pct}% below 35% - wire lexical/structural adapters"
             )
           end
           findings

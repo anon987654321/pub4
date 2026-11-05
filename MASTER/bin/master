@@ -147,7 +147,7 @@ rescue OptionParser::ParseError => e
 end
 
 HELP_USAGE = <<~HELP
-  master — instruct the MASTER runtime with the whole repo in scope
+  master - instruct the MASTER runtime with the whole repo in scope
 
   Usage:
     bin/master

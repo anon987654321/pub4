@@ -266,7 +266,7 @@ module Master
           lines = plan.paths.flat_map { |path| file_diff(dir, path, originals[path]) }
           next lines.join if lines.size <= REVIEW_DIFF_LINES
 
-          "#{lines.first(REVIEW_DIFF_LINES).join}… #{lines.size - REVIEW_DIFF_LINES} more lines\n"
+          "#{lines.first(REVIEW_DIFF_LINES).join}... #{lines.size - REVIEW_DIFF_LINES} more lines\n"
         end
       end
 

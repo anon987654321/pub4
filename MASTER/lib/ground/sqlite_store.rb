@@ -5,7 +5,7 @@ require "fileutils"
 
 module Master
   module Ground
-    # Opens a SQLite DB with WAL → DELETE → :memory: fallback so a read-only
+    # Opens a SQLite DB with WAL -> DELETE -> :memory: fallback so a read-only
     # filesystem or locked WAL never crashes the store.
     #
     # The fallback suits the one includer, KnowledgeStore, a rebuildable ledger under the
@@ -36,12 +36,12 @@ module Master
         journal_ok = set_journal_mode(database, path, "WAL") || set_journal_mode(database, path, "DELETE")
         unless journal_ok
           database.close rescue SQLite3::Exception
-          sqlite_warn_once("file DB unavailable at #{path} — using :memory:")
+          sqlite_warn_once("file DB unavailable at #{path} - using :memory:")
           database = SQLite3::Database.new(":memory:")
         end
         database
       rescue SQLite3::Exception => e
-        sqlite_warn_once("#{e.message} — using :memory:")
+        sqlite_warn_once("#{e.message} - using :memory:")
         SQLite3::Database.new(":memory:")
       end
 

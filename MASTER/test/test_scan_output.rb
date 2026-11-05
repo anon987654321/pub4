@@ -72,7 +72,7 @@ class TestScanOutput < Minitest::Test
     )
     text = r2.render
     assert_includes text, "phase: pass2"
-    assert_includes text, "delta: 2 → 1"
+    assert_includes text, "delta: 2 -> 1"
     assert_includes text, "autofixed: 1 file"
   end
 
@@ -122,9 +122,9 @@ class TestScanOutput < Minitest::Test
 
     clipped = report.send(:clipped, long)
 
-    assert_operator clipped.length, :<=, Master::VIOLATION_TRUNCATE + 1
-    assert clipped.end_with?("…"), clipped
-    assert_includes long.split, clipped.delete_suffix("…").split.last, "the cut landed mid-word"
+    assert_operator clipped.length, :<=, Master::VIOLATION_TRUNCATE + "...".length
+    assert clipped.end_with?("..."), clipped
+    assert_includes long.split, clipped.delete_suffix("...").split.last, "the cut landed mid-word"
     assert_equal long, report.send(:clipped, long, limit: 500)
   end
 end

@@ -13,7 +13,7 @@
   //
   // This used to match rgba?() only. Chrome keeps oklch() in computed
   // style rather than converting it, so every oklch colour parsed as null
-  // and the caller substituted opaque black — which is how the check came
+  // and the caller substituted opaque black - which is how the check came
   // to report brgen/takeaway as "#000000 on #1a1a1a = 1.21" for text that
   // is actually a legible red. brgen's takeaway rules define their accents
   // in oklch, so every takeaway contrast finding was fictional, and
@@ -77,7 +77,7 @@
   // Runtime state classes must never reach a selector key. body carries
   // stimulus-reflex-connected / -disconnected depending on whether the
   // websocket has attached yet, and because keys are ancestor paths that
-  // one class flipped the key of every element on the page — which reads
+  // one class flipped the key of every element on the page - which reads
   // as "everything was removed and re-added" on the next comparison.
   //
   // network-/battery-/power- are the same defect one step worse: those are
@@ -85,7 +85,7 @@
   // (network_aware_controller, battery_aware_controller), so they key on
   // the machine and the moment the probe ran rather than on anything in
   // the tree. Missing them put html.network-slow into the ancestor path of
-  // every element on every page — 78 of 436 drift lines in one run were
+  // every element on every page - 78 of 436 drift lines in one run were
   // the same element reported as both removed and added. -hidden was
   // already covered by the suffix group, which is why page-hidden and
   // chrome-hidden never showed up here.
@@ -200,7 +200,7 @@
       .filter(n => n.nodeType === 3).map(n => n.textContent.trim()).join(' ').trim();
     const landmark = /^(header|nav|main|footer|aside|section|form|h1|h2|h3)$/.test(el.tagName.toLowerCase());
 
-    // WCAG 2.5.8 exempts links flowing inline inside a sentence — they
+    // WCAG 2.5.8 exempts links flowing inline inside a sentence - they
     // are not touch targets and counting them buries the real ones.
     const parentText = el.parentElement
       ? Array.from(el.parentElement.childNodes)
@@ -248,7 +248,7 @@
       else if (top.contains(el)) hit = 'ancestor';
       else {
         // Content resting under fixed/sticky chrome at scroll 0 is not
-        // unclickable — scrolling moves it out. Only a blocker in normal
+        // unclickable - scrolling moves it out. Only a blocker in normal
         // flow is a real dead zone.
         //
         // The anchor must be one the blocker has and the element does
@@ -331,7 +331,7 @@
       interactive: interactive,
       inline_in_text: inlineInText,
       visible: true,
-      // Laid out but parked outside the viewport — a closed drawer or a
+      // Laid out but parked outside the viewport - a closed drawer or a
       // carousel slide. Still a real element with real styles; just not
       // on the first screen, which callers should say out loud.
       // Both axes must intersect the viewport. bottom > 0 alone marks every
@@ -341,7 +341,7 @@
     });
   }
 
-  // Rendered vertical gaps between consecutive block siblings — the 8px
+  // Rendered vertical gaps between consecutive block siblings - the 8px
   // rhythm as laid out, not as declared in a stylesheet that may cascade
   // away or be overridden at this breakpoint.
   const gaps = [];
@@ -386,13 +386,13 @@
       // scrolling rail: a bar that splits its entries into labelled
       // role=group sections asks the reader to choose within a group, not
       // among every link at once. Reported so the check can judge the
-      // largest chunk rather than the container total — brgen groups its
+      // largest chunk rather than the container total - brgen groups its
       // eleven verticals as 4 and 7, and counting 11 credited neither.
       const chunks = [...container.querySelectorAll('[role=group]')]
         .map(g => g.querySelectorAll('a[href], button, [role=tab], [role=menuitem]').length)
         .filter(n => n > 0);
       // Where each choice goes, whether the bar is on the first screen, and
-      // whether it sits inside another bar — so two bars offering the same
+      // whether it sits inside another bar - so two bars offering the same
       // destinations can be told from one bar and its own tablist, and from
       // a closed drawer repeating the tab bar.
       const hrefs = [...new Set(choices.filter(k => k.href).map(k => k.pathname + k.search))].sort();
@@ -406,7 +406,7 @@
   // Gestalt proximity, measured correctly: the space *between an element's
   // own children* against the space between that element and the next one.
   // That is what the eye compares. Summing the element's top and bottom
-  // padding — the first version of this — asks a different question and
+  // padding - the first version of this - asks a different question and
   // answers it wrongly: a hero with 40px above and below its content and
   // 48px to the next section reported "80 > 48" and was flagged, when its
   // children sit 32px apart inside a 48px separation, which is right.
@@ -427,7 +427,7 @@
       const external = measuredGap(a, b);
       if (external < 0 || external > 128) continue;
       // The widest gap between a's own consecutive children is its
-      // internal spacing — the distance the eye reads as "same group".
+      // internal spacing - the distance the eye reads as "same group".
       const inner = Array.from(a.children).filter(laidOut);
       let internal = 0;
       for (let k = 0; k + 1 < inner.length; k++) {

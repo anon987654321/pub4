@@ -150,7 +150,7 @@ if $PROGRAM_NAME == __FILE__
 
     VisualBaselineApproval.approve(manifest_path: options[:manifest], selected: options[:surfaces], replace: options[:replace])
   rescue OptionParser::ParseError, VisualBaselineApproval::ApprovalError, JSON::ParserError, SystemCallError, Deploy::PngDiff::InvalidPng => e
-    warn "visual_baseline0: BLOCKED — #{e.class}: #{e.message}"
+    warn "visual_baseline0: BLOCKED - #{e.class}: #{e.message}"
     exit 1
   end
 end

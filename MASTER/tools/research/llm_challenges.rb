@@ -212,7 +212,7 @@ if $PROGRAM_NAME == __FILE__
     rows.each do |row|
       puts "history0: #{row[:sha][0, 12]} #{row[:subject]}"
       if row[:tests].empty?
-        puts "history0:   no test file changed — candidate for regression fixture mining"
+        puts "history0:   no test file changed - candidate for regression fixture mining"
       else
         row[:tests].each { |path| puts "history0:   #{path}" }
       end

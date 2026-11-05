@@ -4,14 +4,14 @@
 require_relative "../lib/boot/entrypoint"
 Master::Boot::Entrypoint.prepare!(root: File.expand_path("..", __dir__))
 #
-# TTS worker — runs EventMachine in isolation from Falcon Async fibers.
+# TTS worker - runs EventMachine in isolation from Falcon Async fibers.
 # Three modes:
 #   one-shot: tts-worker VOICE RATE PITCH OUT_PATH < text
 #   daemon:   tts-worker --daemon SOCKET_PATH
-#   selftest: tts-worker --selftest — exit 0 and print versions if it could speak
+#   selftest: tts-worker --selftest - exit 0 and print versions if it could speak
 #
-# Daemon protocol: one JSON request per connection — {voice,rate,pitch,text}\n
-# — followed by raw MP3 bytes back, then EOF. Single-threaded; serialised by
+# Daemon protocol: one JSON request per connection - {voice,rate,pitch,text}\n
+# - followed by raw MP3 bytes back, then EOF. Single-threaded; serialised by
 # EM reactor lifecycle.
 
 ROOT = File.expand_path("..", __dir__)
@@ -76,7 +76,7 @@ SynthRequest = Data.define(:voice, :rate, :pitch, :text)
 # publishes AAAA records and an IPv6 default route but does not carry IPv6
 # traffic, that single attempt fails with ENETUNREACH, the websocket closes
 # before any audio arrives, and synthesis writes an empty file without
-# raising — MASTER goes silent while --selftest stays green. curl and
+# raising - MASTER goes silent while --selftest stays green. curl and
 # Net::HTTP survive the same network because they fall back to IPv4.
 #
 # Only the socket address changes. Faye takes SNI and certificate
@@ -169,7 +169,7 @@ end
 STREAM_FRAME_BYTES = 8
 ZERO_FRAME = "\x00".b * STREAM_FRAME_BYTES
 
-# Wire v2, on request "stream":true — each audio chunk rb_edge_tts delivers is
+# Wire v2, on request "stream":true - each audio chunk rb_edge_tts delivers is
 # written to the client the moment it arrives, 8-byte length-prefixed, and a
 # zero-length frame closes the stream clean. The client can start playing
 # before synthesis finishes instead of waiting for save_sync to collect the
@@ -406,7 +406,7 @@ if ARGV[0] == "--daemon"
         end
       end
     rescue SystemCallError, EOFError, IOError
-      # dead socket file — safe to replace
+      # dead socket file - safe to replace
     end
   end
   File.unlink(sock_path) rescue nil
@@ -420,7 +420,7 @@ if ARGV[0] == "--daemon"
   # Unlink on exit ONLY if the path still refers to the socket this process
   # bound. An older daemon dying after a newer one has already re-bound the
   # same path would otherwise unlink the newer daemon's socket out from under
-  # it — the pool then has a live process nobody can reach until the next
+  # it - the pool then has a live process nobody can reach until the next
   # respawn, and every synthesis in between burns its full connect timeout.
   bound_ino = (File.stat(sock_path).ino rescue nil)
   cleanup = proc do
@@ -481,7 +481,7 @@ if ARGV[0] == "--daemon"
         begin
           File.open(out, "rb") { |f| IO.copy_stream(f, client) }
         rescue Errno::ENOTCONN, Errno::EPIPE, Errno::ECONNRESET
-          # client hung up before the stream finished — routine with the async job model, not a fault
+          # client hung up before the stream finished - routine with the async job model, not a fault
         end
       end
       File.unlink(out) rescue nil

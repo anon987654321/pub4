@@ -4,7 +4,7 @@ require "prism"
 require "yaml"
 
 module Master::Core
-  # Constitution — the single check. Every Effect the agent proposes folds
+  # Constitution - the single check. Every Effect the agent proposes folds
   # through the rules here before the World performs anything. This is where the
   # old council, scan, judge, biases, veto, evidence, sharp_edges, and the Guard
   # all live now: not as subsystems, but as rules over effects. One `admit`.
@@ -35,8 +35,8 @@ module Master::Core
     #
     # Without it, the only thing standing between the model and the machine was
     # safe_exec_rule's veto regex over the joined argv. Io::Shell has consulted
-    # Ground::Policy::Sandbox — an adversarial corpus covering dangerous rm in any
-    # flag order, fork bombs, curl-piped-to-shell, device truncation — since that
+    # Ground::Policy::Sandbox - an adversarial corpus covering dangerous rm in any
+    # flag order, fork bombs, curl-piped-to-shell, device truncation - since that
     # check was wired in, but the Fold does not exec through Io::Shell. It execs
     # through World. So the hardened check was live for the tool path and absent
     # from the constitutional one, which is the path that actually runs unattended.
@@ -232,7 +232,7 @@ module Master::Core
       Law.new(id: :no_secret, verbs: %i[write note exec git], judge: lambda { |effect, _memory|
         pattern = veto["secrets"]
         next Verdict::Block.new(
-          reason: "veto_pattern_config.secrets missing or invalid — effects are unjudgeable for secrets",
+          reason: "veto_pattern_config.secrets missing or invalid - effects are unjudgeable for secrets",
           by: :no_secret,
         ) unless pattern.respond_to?(:match?)
 
@@ -270,8 +270,8 @@ module Master::Core
     # The hardened shell policy, applied to the constitutional exec path.
     #
     # Blocks on a denial only. The policy answers :deny, :ask or :allow, and :ask
-    # is what it returns for anything it does not recognise — which is most real
-    # commands — so treating :ask as a refusal would stop the fold running its own
+    # is what it returns for anything it does not recognise - which is most real
+    # commands - so treating :ask as a refusal would stop the fold running its own
     # tests. Io::Shell made the same call for the same reason; this keeps the two
     # checks saying the same thing rather than inventing a second opinion.
     # The sandbox answers one of three things, and the third is new:
@@ -333,7 +333,7 @@ module Master::Core
       paths = delete_operands(argv)
       return if paths.size <= 1
 
-      "batch delete refused: #{paths.size} paths — one path at a time"
+      "batch delete refused: #{paths.size} paths - one path at a time"
     end
 
     # Five rules below share one shape: work out a reason from the effect, and
@@ -354,7 +354,7 @@ module Master::Core
       name = File.basename(path.to_s).downcase
       return unless FORBIDDEN_BASENAMES.include?(name)
 
-      "forbidden file: #{name} — deliver code, not a sidecar markdown"
+      "forbidden file: #{name} - deliver code, not a sidecar markdown"
     end
 
     def self.forbidden_file_rule
@@ -461,8 +461,8 @@ module Master::Core
     # World refuses an unscoped commit too, and that is the guarantee; this rule
     # exists so the refusal is a stated law with a reason the model can read,
     # rather than an error surfacing from the mechanism after the attempt. The
-    # index in this checkout belongs to everyone at once — other sessions, and a
-    # human — so "commit whatever is staged" is never a thing the fold means.
+    # index in this checkout belongs to everyone at once - other sessions, and a
+    # human - so "commit whatever is staged" is never a thing the fold means.
     def self.git_commit_scope_rule
       Law.new(id: :git_commit_scope, verbs: %i[git], judge: lambda { |effect, _memory|
         next nil unless effect.args[:operation].to_s.to_sym == :commit
@@ -487,7 +487,7 @@ module Master::Core
       Law.new(id: :ideation_before_write, verbs: %i[write], judge: lambda { |_effect, memory|
         next nil if memory.proof.ideation_satisfied?
 
-        Verdict::Block.new(reason: "ideation not complete — approaches/chosen must be in memory", by: :ideation_before_write)
+        Verdict::Block.new(reason: "ideation not complete - approaches/chosen must be in memory", by: :ideation_before_write)
       })
     end
 
@@ -498,7 +498,7 @@ module Master::Core
       return if Array(proof.scope[:read_paths]).include?(path.to_s)
       return if proof.scope[:asked]
 
-      "unread path #{path} — read it or ask before writing"
+      "unread path #{path} - read it or ask before writing"
     end
 
     def self.new_path_rule
@@ -543,7 +543,7 @@ module Master::Core
       raise ArgumentError, "veto pattern #{name} is invalid: #{e.message}"
     end
 
-    # The surface is load, admit, and immutable_paths_rule — which
+    # The surface is load, admit, and immutable_paths_rule - which
     # test/test_core_immutable_paths.rb builds directly. The rest are rule
     # factories `default_rules` calls and nothing else does, verified against
     # lib/, test/, tools/, bin/ and web/.
@@ -551,7 +551,7 @@ module Master::Core
     # Declared rather than merely true: `private` marks a position in the
     # instance-method stream and class methods never enter it, so this class read
     # as 16 public methods under ABSTRACTION no matter how it was arranged. That
-    # is the idiom being measured, not the surface — see the old backlog, "The fold spine
+    # is the idiom being measured, not the surface - see the old backlog, "The fold spine
     # had never been scanned". Unlike Memory, this class did not need splitting:
     # its count was the idiom, and Memory's was the design.
     private_class_method :default_rules, :immutable_hit?, :configuration_invariant_rule, :no_secret_rule, :ruby_parses_rule, :scan_clean_rule, :reason_rule,
@@ -563,8 +563,8 @@ module Master::Core
 
     # One source for paths that are constitutionally protected.
     #
-    # soul.yml owns the protected-path boundary: the files no automated writer —
-    # the Fold, /fix and its autofix, a tool write, a runtime commit — may change.
+    # soul.yml owns the protected-path boundary: the files no automated writer -
+    # the Fold, /fix and its autofix, a tool write, a runtime commit - may change.
     # A person changes them with an ordinary git commit. This class is deliberately
     # small: readers can ask for the declarations or whether one path is protected
     # without knowing how soul.yml is laid out.

@@ -6,8 +6,8 @@ require "shellwords"
 module Master
   module Ground
     # The objective ledger. An order is an objective that outlives the process:
-    # it has an owner, an authority domain (Tool::Domain), a wake — a schedule,
-    # a bus event, or every heartbeat — the command or callable that makes
+    # it has an owner, an authority domain (Tool::Domain), a wake - a schedule,
+    # a bus event, or every heartbeat - the command or callable that makes
     # progress, and a verify command whose exit decides whether it is met. What
     # each run and each check printed is its evidence, kept beside its state in
     # .master/, so a restart resumes the objective rather than forgetting it.
@@ -16,7 +16,7 @@ module Master
     # MASTER is still trying to do (MASTER/AGENTS.md, "No second record beside
     # memory").
     class StandingOrders
-      # CRUD + display for the order definitions themselves — separate from
+      # CRUD + display for the order definitions themselves - separate from
       # StandingOrders' own scheduling/event-dispatch responsibility.
       module OrderManagement
         def upsert(name:, command: nil, **fields)
@@ -294,7 +294,7 @@ module Master
       end
 
       # An order runs with nobody watching, so a command the sandbox would deny
-      # or stop to ask a person about — a hard reset, a push, doas — is refused
+      # or stop to ask a person about - a hard reset, a push, doas - is refused
       # here rather than routed. Callable orders are code, reviewed as code, and
       # never reach this.
       def unattended_refusal(command)

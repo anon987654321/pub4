@@ -8,7 +8,7 @@ module Master
         # the panel, and the constraints their solutions must satisfy.
         #
         # This is configuration, not behaviour, and at 107 lines it was a third
-        # of Critique's body — the reason the class read as a god class. Lifted
+        # of Critique's body - the reason the class read as a god class. Lifted
         # here so Critique is the orchestration and this is the data it runs on.
         # `Critique::MODES` still resolves; it aliases TABLE.
         module Modes
@@ -74,7 +74,7 @@ module Master
                 "preserve existing visual identity",
                 "use Ruby QualityFramework sound rules from Deliberation",
                 "when proposing Dilla-style timing, call Master::Voice::Dilla for swing, nudge, chord, and preset data",
-                "do not invent a second critique system inside STUDIO/dilla — perfect via MASTER commands",
+                "do not invent a second critique system inside STUDIO/dilla - perfect via MASTER commands",
               ],
             },
             dilla: {
@@ -96,7 +96,7 @@ module Master
               quality_kind: :sound,
               ideation_prompt: "Review the Dilla engine and measured mix. For EACH problem the panel " \
                                "raises, generate 3 distinct solutions (ENV knobs, bus EQ, groove density, " \
-                               "harmony locks — no producer-name modes). Then cherry-pick the single best " \
+                               "harmony locks - no producer-name modes). Then cherry-pick the single best " \
                                "fix per problem that preserves pad-forward single-style dilla character.",
               cycles_default: 2,
               start_event: :sound_critique_start,
@@ -109,7 +109,7 @@ module Master
                 "prefer a field in dilla.json over a new file",
                 "use Master::Voice::Dilla and ProductionDna for timing/DNA; use MixMetrics for evidence",
                 "multi-solution then cherry-pick is mandatory (QualityFramework general rule)",
-                "surgical changes only — no second crit engine inside STUDIO/dilla",
+                "surgical changes only - no second crit engine inside STUDIO/dilla",
               ],
             },
             # General: whatever MASTER is currently processing (usually the

@@ -15,7 +15,7 @@ class TestGitPatchEncoding < Minitest::Test
     git("add", "note.txt")
     git("commit", "-q", "-m", "base")
 
-    File.write(File.join(@dir, "note.txt"), Array.new(12) { |index| "line #{index} — på norsk\n" }.join)
+    File.write(File.join(@dir, "note.txt"), Array.new(12) { |index| "line #{index} - på norsk\n" }.join)
     @operations = Master::Io::GitOperations.new(@dir)
   end
 

@@ -31,7 +31,7 @@ class TestWebServer < Minitest::Test
   def test_openbsd_status_reports_down_when_no_process_matches
     io = StringIO.new
     Master::CLI::WebServer.openbsd_status(config: {}, host: "127.0.0.1", port: 599_99, io:)
-    assert_includes io.string, "web0: https://ai.brgen.no, down — run: doas rcctl start master"
+    assert_includes io.string, "web0: https://ai.brgen.no, down - run: doas rcctl start master"
   end
 
   def test_openbsd_status_reports_web_token_hint_when_configured

@@ -97,7 +97,7 @@ module Master
         data = parse_structured_summary(raw)
         return [structured_body(data, tier:), true] if data
 
-        ["[Context compacted — #{tier}]\n\n#{raw}", false]
+        ["[Context compacted - #{tier}]\n\n#{raw}", false]
       end
 
       def parse_structured_summary(raw)
@@ -121,7 +121,7 @@ module Master
       end
 
       def structured_body(data, tier:)
-        lines = ["[Context compacted — #{tier}; schema #{CONTEXT_SCHEMA}]"]
+        lines = ["[Context compacted - #{tier}; schema #{CONTEXT_SCHEMA}]"]
         STRUCTURED_KEYS.each do |key|
           value = data[key]
           next if value.respond_to?(:empty?) && value.empty?

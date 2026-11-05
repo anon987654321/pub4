@@ -49,7 +49,7 @@ module Master
 
           findings.map do |f|
             more = f["similar"].to_i.positive? ? " (+#{f["similar"]} like it)" : ""
-            "#{id}: #{f["kind"]} #{f["selector"]} — #{f["detail"]}#{more}"
+            "#{id}: #{f["kind"]} #{f["selector"]} - #{f["detail"]}#{more}"
           end
         end
       end
@@ -74,7 +74,7 @@ module Master
         seen.filter_map do |base, list|
           next unless list && list["count"].to_i < SPARSE_MIN
 
-          "sparse surface #{base}: #{list["selector"]} holds #{list["count"]} items (< #{SPARSE_MIN}); empty data hides layout bugs — run `MASTER/bin/operator visual seed` to load believable local content"
+          "sparse surface #{base}: #{list["selector"]} holds #{list["count"]} items (< #{SPARSE_MIN}); empty data hides layout bugs - run `MASTER/bin/operator visual seed` to load believable local content"
         end
       end
     end

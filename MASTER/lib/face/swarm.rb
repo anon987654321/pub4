@@ -125,7 +125,7 @@ module Master
 
       def glyph_for(rank, config: self.config)
         ramp = Array(config.fetch("glyph_ramp"))
-        return "•" if ramp.empty?
+        return "-" if ramp.empty?
 
         value = Float(rank)
         value = 0.5 unless value.finite?

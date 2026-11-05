@@ -16,7 +16,7 @@ require "fileutils"
 require "net/http"
 
 module Deploy
-  # Minimal Chrome DevTools Protocol client — stdlib only.
+  # Minimal Chrome DevTools Protocol client - stdlib only.
   #
   # The checks run under bare `ruby` from checks/runner.rb, but ferrum and
   # selenium only exist inside the per-app bundles. Rather than make every
@@ -103,7 +103,7 @@ module Deploy
 
     def close
       @socket&.close
-    rescue StandardError # scan: intentional — teardown; the session is ending either way
+    rescue StandardError # scan: intentional - teardown; the session is ending either way
       nil
     ensure
       reap_chrome
@@ -113,7 +113,7 @@ module Deploy
       # makes it rare; swallowing makes a leftover tmpdir a non-event.
       begin
         FileUtils.remove_entry(@profile) if @profile && File.directory?(@profile)
-      rescue StandardError # scan: intentional — teardown; the socket is closing either way
+      rescue StandardError # scan: intentional - teardown; the socket is closing either way
         nil
       end
     end
@@ -165,7 +165,7 @@ module Deploy
     #
     # Honest note on why this was added: it was written to explain the
     # .nearby-chat-widget-tab snapshot flapping between 92px and 102px, and that
-    # diagnosis was WRONG — the widths are identical in both faces. The real
+    # diagnosis was WRONG - the widths are identical in both faces. The real
     # cause is that the tab's LABEL changes after load: the server renders
     # "chat" (92px) and nearby_chat_controller#syncLabelsFromFrame rewrites it
     # to the room name, "brgen" (102px), once the frame arrives. The snapshot
@@ -191,8 +191,8 @@ module Deploy
     JS
 
     # document.fonts.ready, not document.fonts.status. `status` reads "loaded"
-    # whenever no load is *currently pending* — including before a lazily
-    # triggered load has started — so polling it returned immediately and
+    # whenever no load is *currently pending* - including before a lazily
+    # triggered load has started - so polling it returned immediately and
     # changed nothing. The promise is the actual settle signal.
     def wait_for_ready
       deadline = monotonic + @timeout
@@ -247,7 +247,7 @@ module Deploy
     end
 
     # Script that runs before any page script on every subsequent navigation.
-    # Remembered so a rebuilt connection re-installs it — otherwise a recovery
+    # Remembered so a rebuilt connection re-installs it - otherwise a recovery
     # would silently drop the determinism harness and later surfaces would be
     # measured under different conditions than earlier ones.
     def on_new_document(js)
@@ -271,7 +271,7 @@ module Deploy
     end
 
     # clip crops in Chrome, in CSS pixels, which is cheaper than encoding a full
-    # frame and cropping it afterwards — and jpeg matters when the caller is
+    # frame and cropping it afterwards - and jpeg matters when the caller is
     # taking thousands of these rather than one.
     def screenshot(path, format: "png", quality: nil, clip: nil, capture_beyond_viewport: false)
       params = { format:, captureBeyondViewport: capture_beyond_viewport }
@@ -349,7 +349,7 @@ module Deploy
       # false and Chrome suppresses focus/focusin/blur entirely. `.focus()` still
       # moves document.activeElement, which is what makes this so easy to miss:
       # the element looks focused and no event ever fires. Anything that reveals
-      # chrome on focusin — the autohiding nav bars — measured as broken, and
+      # chrome on focusin - the autohiding nav bars - measured as broken, and
       # keyboard_flow was asking a browser that could not answer.
       send_cmd("Emulation.setFocusEmulationEnabled", enabled: true)
     rescue StandardError
@@ -359,7 +359,7 @@ module Deploy
     end
 
     # A desync poisons the read stream, not the browser. Rebuilding the
-    # WebSocket to the same Chrome resyncs it and the run continues — otherwise
+    # WebSocket to the same Chrome resyncs it and the run continues - otherwise
     # one bad frame turns into every remaining surface reporting "Desync",
     # which is a wall of noise hiding a single transport hiccup.
     def send_cmd(method, **params)
@@ -386,7 +386,7 @@ module Deploy
 
       begin
         @socket&.close
-      rescue StandardError # scan: intentional — teardown; the socket is closing either way
+      rescue StandardError # scan: intentional - teardown; the socket is closing either way
         nil
       end
       @desync = false

@@ -112,7 +112,7 @@ module Master
         out, err, status = Exec.capture3(path, *argv.drop(1), timeout: PROBE_TIMEOUT)
         state = status.success? ? "OBSERVED" : "INCONCLUSIVE (exit #{status.exitstatus || status.termsig})"
         detail = [out.to_s.strip, err.to_s.strip].reject(&:empty?).join(" | ")
-        "#{label}: #{state}#{detail.empty? ? '' : " — #{detail.byteslice(0, 900)}"}"
+        "#{label}: #{state}#{detail.empty? ? '' : " - #{detail.byteslice(0, 900)}"}"
       rescue StandardError => e
         "#{label}: INCONCLUSIVE (#{e.class}: #{e.message})"
       end

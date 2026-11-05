@@ -7,7 +7,7 @@ module Deploy
   #
   # Each Brgen vertical package is an engine with `isolate_namespace`, and nested
   # engines such as Marketplace's food surface are discovered just like siblings.
-  # Isolation covers tables, routes and helpers — not constants. Nothing stops
+  # Isolation covers tables, routes and helpers - not constants. Nothing stops
   # `Dating::Match` from naming `Marketplace::Order`, and once two engines share a
   # model neither can be mounted, tested or removed alone. Packwerk exists to hold
   # this line and brings a C extension through better_html; a text read holds it
@@ -40,7 +40,7 @@ module Deploy
     def run
       result = CheckResult.new
       engines = namespaces
-      return result.inconclusive!("engine_boundaries: no isolated Brgen verticals — nothing was read") if engines.empty?
+      return result.inconclusive!("engine_boundaries: no isolated Brgen verticals - nothing was read") if engines.empty?
 
       used = []
       engines.each do |dir, own|
@@ -60,7 +60,7 @@ module Deploy
                 next
               end
 
-              result.fail("engine_boundaries: #{dir}/#{rel}:#{number} names #{other}:: — " \
+              result.fail("engine_boundaries: #{dir}/#{rel}:#{number} names #{other}:: - " \
                           "#{own} reaches into another engine; go through the host app, or " \
                           "declare the read in EXEMPT with its reason")
             end
@@ -69,7 +69,7 @@ module Deploy
       end
 
       stale_exemptions(used).each do |dir, rel, other|
-        result.fail("engine_boundaries: EXEMPT #{dir}/#{rel} => #{other} matches no reference — delete the row")
+        result.fail("engine_boundaries: EXEMPT #{dir}/#{rel} => #{other} matches no reference - delete the row")
       end
       result
     end

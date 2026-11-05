@@ -14,14 +14,14 @@ module Master
     module Scan
       # Architecture #4: deterministic AST-level autofixes for mechanical rules.
       # No LLM call, no token cost. Applied before LLM sweep on every scan cycle.
-      # Each transform is idempotent — safe to apply repeatedly.
+      # Each transform is idempotent - safe to apply repeatedly.
       #
       # This class is dispatch plus the four whitespace transforms that need no
       # knowledge of the source at all: pick the strategies whose predicate
       # matches the path, run their transforms in order, refuse any transform
       # that turns parseable Ruby into unparseable Ruby, write back. Everything
-      # that has to know something — the language's syntax, HTML/JS/CSS, or
-      # which lines sit inside multi-line literals — lives in a mixin.
+      # that has to know something - the language's syntax, HTML/JS/CSS, or
+      # which lines sit inside multi-line literals - lives in a mixin.
       class AstFixer
         JS_EXTS = %w[.js .ts .jsx .tsx].freeze
 
@@ -106,7 +106,7 @@ module Master
         end
 
         # OPENBSD/etc, /usr and /var mirror files installed verbatim on the VPS
-        # — newsyslog.conf's own header says taken verbatim from etc.tgz and
+        # - newsyslog.conf's own header says taken verbatim from etc.tgz and
         # validated before installing, and tabs are load-bearing in
         # termcap-style files like login.conf. A rewrite here breaks
         # diffability against upstream at best and a daemon at worst; on
@@ -117,7 +117,7 @@ module Master
 
         # law/*.rb fixtures are load-bearing bad inputs: SQUINT_TEST's bad
         # fixture IS four consecutive blank lines, and collapse_blank_lines
-        # "fixed" it — the fixture stopped flagging, prove! raised at load,
+        # "fixed" it - the fixture stopped flagging, prove! raised at load,
         # and a keyword-mismatch rescue turned that into half the law silently
         # missing (every id after squint_test). A file whose job is to hold the
         # forbidden pattern must never be cleaned of it, and law/
@@ -127,7 +127,7 @@ module Master
         # A line no human wrote: minified Workbox bundles run 23k chars/line,
         # while the densest hand-written file in the repo peaks at ~2.7k.
         # Rewriting a generated bundle is churn at best (it comes back on the
-        # next build) and a broken service worker at worst — one pass
+        # next build) and a broken service worker at worst - one pass
         # converted var to const across four Workbox bundles twice in one day.
         GENERATED_LINE_LENGTH = 5000
 
@@ -169,7 +169,7 @@ module Master
           STRATEGIES.select { |strategy| send(strategy.predicate) }
         end
 
-        # An explicit accumulator loop, deliberately — not reduce, not
+        # An explicit accumulator loop, deliberately - not reduce, not
         # each_with_object. The accumulator is the rewritten source, so each
         # step must produce the next value; each_with_object throws the block
         # result away and turns every transform into a no-op. A plain loop
@@ -185,7 +185,7 @@ module Master
             candidate = send(transform, current)
 
             if candidate != current && broke_syntax?(current, candidate)
-              # Transform turned valid source into unparseable source — a
+              # Transform turned valid source into unparseable source - a
               # line-heuristic misfire on a multi-line construct. Discard it
               # (and any label it recorded); keep the prior source.
               @transforms.replace(transform_labels)
@@ -198,7 +198,7 @@ module Master
         end
 
         # The net used to cover Ruby only, so a JS or CSS transform that mangled
-        # a multi-line construct had no backstop at all — the exact asymmetry
+        # a multi-line construct had no backstop at all - the exact asymmetry
         # that let add_trailing_commas rewrite every CSS `}` as `;,` in
         # production. Same shape as the Ruby check in all three languages: a
         # transform is discarded only when the source parsed BEFORE it and stops
@@ -269,7 +269,7 @@ module Master
         end
 
         # Tabs are syntax in make recipes, the delimiter in TSV, gofmt's
-        # output in Go, and convention in .conf mirrors — expanding them is a
+        # output in Go, and convention in .conf mirrors - expanding them is a
         # break, not a cleanup. dilla's demo_manifest.tsv lost its columns to
         # this on 2026-08-18.
         TAB_SIGNIFICANT_RE = /\A(?:makefile.*|.*\.(?:mk|conf|tsv|go))\z/i
@@ -336,7 +336,7 @@ module Master
           temporary_path = "#{@path}.ast_fix.#{Process.pid}.tmp"
           File.write(temporary_path, content, encoding: "UTF-8")
           # rename replaces the inode, so the original's mode must travel with
-          # the content — three executable cron scripts came back 0644 from
+          # the content - three executable cron scripts came back 0644 from
           # one pass before this line existed.
           File.chmod(File.stat(@path).mode, temporary_path) if File.exist?(@path)
 

@@ -2,7 +2,7 @@
 
 require_relative "test_helper"
 
-# Pipeline unit tests — Result-monadic chaining and deploy-check contract.
+# Pipeline unit tests - Result-monadic chaining and deploy-check contract.
 class TestPipeline < Minitest::Test
   include Master
 
@@ -268,7 +268,7 @@ class TestPipeline < Minitest::Test
   end
 
   def test_pipeline_error_does_not_mutate_outside_git_workspace
-    # In /tmp (no .git), rollback is a no-op — must not crash.
+    # In /tmp (no .git), rollback is a no-op - must not crash.
     Dir.mktmpdir do |dir|
       pipe = Master::CLI::Pipeline.new([ErrStage.new(:validation)], root: dir)
       result = pipe.call(Master::Result.ok(user_message: "hi"))

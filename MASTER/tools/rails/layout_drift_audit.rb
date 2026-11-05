@@ -69,7 +69,7 @@ module Operator
         findings.each do |finding|
           location = finding.path.to_s
           location = "#{location}:#{finding.line}" if finding.line
-          io.puts "#{finding.status.downcase}0: #{finding.code} #{location} — #{finding.message}"
+          io.puts "#{finding.status.downcase}0: #{finding.code} #{location} - #{finding.message}"
         end
         counts = summary
         io.puts "layout0: PASS=#{counts.fetch('PASS')} FAIL=#{counts.fetch('FAIL')} NOT_RUN=#{counts.fetch('NOT_RUN')}"

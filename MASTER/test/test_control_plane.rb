@@ -282,7 +282,7 @@ class ControlPlaneSpec < Minitest::Test
   end
 
   # `bin/master --status` reads the frame an operator needs before waiting on
-  # a held lock: holder, mode, held-for and last session activity. Read-only —
+  # a held lock: holder, mode, held-for and last session activity. Read-only -
   # the report must answer while the lock is held, so it never takes the lock.
   def test_status_report_names_the_holder_mode_and_held_for
     Dir.mktmpdir("master-lock-status") do |root|

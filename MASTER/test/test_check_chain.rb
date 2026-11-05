@@ -539,7 +539,7 @@ class TestCheckChain < Minitest::Test
       FileUtils.mkdir_p(dir)
       File.write(
         File.join(dir, "general_latest.md"),
-        "# council critique — general\n\n- a proposal\n- another proposal\n",
+        "# council critique - general\n\n- a proposal\n- another proposal\n",
       )
 
       assert_empty G.picks_in(dir)
@@ -631,7 +631,7 @@ class TestCheckChain < Minitest::Test
     body = ["sprawl_census: lone_dirs 53 (ceiling 53)", "  MASTER/foo.rb"]
 
     assert_equal "sprawl_census: lone_dirs 53 (ceiling 53)", G.verdict(body)
-    assert_equal "openbsd: failed — reach", G.verdict(["deploy-openbsd10: clean", "openbsd: failed — reach"])
+    assert_equal "openbsd: failed - reach", G.verdict(["deploy-openbsd10: clean", "openbsd: failed - reach"])
   end
 
   def test_internal_stage_children_do_not_receive_the_parent_lock_fd

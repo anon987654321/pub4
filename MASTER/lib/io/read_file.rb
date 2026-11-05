@@ -4,7 +4,7 @@ require "digest"
 
 module Master
   module Io
-    # ReadFile — read file contents with line-range support and undo tracking.
+    # ReadFile - read file contents with line-range support and undo tracking.
     class ReadFile
       include PathGuard
       TIER = :safe
@@ -20,7 +20,7 @@ module Master
         @cache = {}
       end
 
-      # Clear per-turn cache — called by Agent at the start of each chat turn.
+      # Clear per-turn cache - called by Agent at the start of each chat turn.
       def reset!
         @cache.clear
       end

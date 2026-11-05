@@ -36,7 +36,7 @@ module Deploy
 
         @result.fail(
           "geometry duplicate_nav: #{surface.id} shows #{pairs.size} pair(s) of navigation offering the same " \
-          "destinations — #{pairs.first(2).map { |a, b| "#{a["sel"]} and #{b["sel"]}" }.join('; ')} " \
+          "destinations - #{pairs.first(2).map { |a, b| "#{a["sel"]} and #{b["sel"]}" }.join('; ')} " \
           "(principle=consistency)", severity: :soft
         )
       end
@@ -55,7 +55,7 @@ module Deploy
         return if fields.size < 2
 
         @result.fail(
-          "geometry duplicate_search: #{surface.id} lays out #{fields.size} search fields — " \
+          "geometry duplicate_search: #{surface.id} lays out #{fields.size} search fields - " \
           "#{fields.first(3).map { |el| el["key"] }.join('; ')} (principle=consistency)", severity: :soft
         )
       end
@@ -76,7 +76,7 @@ module Deploy
 
         @result.fail(
           "geometry width_drift: #{surface.id} main holds a #{column}px column and #{drift.size} block(s) " \
-          "a few pixels off it — #{drift.first(3).map { |b| "#{b["sel"]} #{b["w"]}px" }.join('; ')} " \
+          "a few pixels off it - #{drift.first(3).map { |b| "#{b["sel"]} #{b["w"]}px" }.join('; ')} " \
           "(principle=alignment)", severity: :soft
         )
       end
@@ -101,7 +101,7 @@ module Deploy
           "#{card["sel"]} (#{card["w"]}x#{card["h"]}) holds #{controls.map { |el| el["key"] }.join(', ')}"
         end
         @result.fail(
-          "geometry lost_action: #{surface.id} has #{lost.size} large card(s) whose only action is small — " \
+          "geometry lost_action: #{surface.id} has #{lost.size} large card(s) whose only action is small - " \
           "#{named.join('; ')} (principle=fitts)", severity: :soft
         )
       end

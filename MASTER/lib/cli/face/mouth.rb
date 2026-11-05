@@ -40,11 +40,11 @@ module Master
         # still acting as hard stops. A face also needs a synthesiser: player
         # presence alone says nothing about whether Speech can produce audio.
         def missing
-          return "voice0: off here — replies stay text" unless Master::Voice::Playback.enabled?
-          return "voice0: speech synthesis unavailable — replies stay text" unless Master::Voice::Speech.available?
+          return "voice0: off here - replies stay text" unless Master::Voice::Playback.enabled?
+          return "voice0: speech synthesis unavailable - replies stay text" unless Master::Voice::Speech.available?
           return if Master::Device::Audio.available? || Master::Voice::Playback.player || direct_speech?
 
-          "voice0: no audio path — #{Ear::HINT}; replies stay text"
+          "voice0: no audio path - #{Ear::HINT}; replies stay text"
         end
 
         def available? = missing.nil?

@@ -2,7 +2,7 @@
 
 module Master
   module Io
-    # AskLlm — delegate sub-questions to the LLM agent mid-pipeline.
+    # AskLlm - delegate sub-questions to the LLM agent mid-pipeline.
     class AskLlm
       TIER = :guarded
       NAME = "ask_llm".freeze

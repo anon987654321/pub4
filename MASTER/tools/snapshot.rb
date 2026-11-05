@@ -38,7 +38,7 @@ module Operator
       tmp temp generated vendor node_modules coverage storage output outputs
       build dist renders render scratch cache three_build
     ].freeze
-    # Extension → fence language. Anything unlisted gets a bare fence.
+    # Extension -> fence language. Anything unlisted gets a bare fence.
     FENCE = {
       ".rb" => "ruby", ".rake" => "ruby", ".gemspec" => "ruby", ".ru" => "ruby",
       ".yml" => "yaml", ".yaml" => "yaml", ".json" => "json",
@@ -101,10 +101,10 @@ module Operator
 
         This document is a **transport-safe source mirror** for `#{tree}`. A tree may span multiple
         files named `snapshot_#{tree}.md` and `snapshot_#{tree}.partNNN.md`; the header states the total part count.
-        Treat every fenced block as source of truth — never as a summary.
+        Treat every fenced block as source of truth - never as a summary.
         Dotfiles, dot-directories, temporary/generated/dependency trees, and binary/media files are intentionally excluded.
 
-        ### 0. Reconstruction check — mandatory before analysis
+        ### 0. Reconstruction check - mandatory before analysis
         - Do not analyze, review, or propose fixes from one part alone.
         - Collect every part, verify that part 1/N through part N/N are present exactly once, and stop on a missing part.
         - Each included tracked text file is embedded in full exactly once across the complete part set; excluded paths and binary files are listed separately.
@@ -124,11 +124,11 @@ module Operator
 
         ### 2. Word-for-word read + cross-reference
         - Read each `## \\`path\\`` section **line by line**; do not skim or paraphrase from headings alone.
-        - **Cross-reference** symbols across files: follow requires/imports, route → controller → service
-          chains, YAML keys → Ruby readers, JS event names → subscribers, CLI commands → dispatchers.
-        - When the same name recurs in multiple places, reconcile definitions — flag drift immediately.
+        - **Cross-reference** symbols across files: follow requires/imports, route -> controller -> service
+          chains, YAML keys -> Ruby readers, JS event names -> subscribers, CLI commands -> dispatchers.
+        - When the same name recurs in multiple places, reconcile definitions - flag drift immediately.
 
-        ### 3. Deep execution traces (start → finish)
+        ### 3. Deep execution traces (start -> finish)
         - Pick critical paths (boot, request/response, scan/fix loop, deploy, TTS/chat SSE, face render)
           and trace **one complete path** from entrypoint through every hop to side effects/output.
         - For each hop record: caller, callee, inputs, branching conditions, failure modes, and what
@@ -152,12 +152,12 @@ module Operator
         ### 6. Rehydrate files locally (mirror extraction)
         To turn this `.md` back into a working tree:
 
-        1. Create a temp workspace, e.g. `mktemp -d` → `$SNAP/work`.
+        1. Create a temp workspace, e.g. `mktemp -d` -> `$SNAP/work`.
         2. For each `## \\`relative/path\\`` heading, recreate directory structure under `$SNAP/work`.
         3. Copy the fenced block body **exactly** (preserve newlines; strip only the outer fences).
         4. Every included tracked **text** file is inlined in full. Intentionally excluded paths are listed
            under **Excluded paths**; binary files are listed under **Binary files** and are not inlined.
-        5. Repeat for every sibling `snapshot_*.md` present — each extracts to its own subtree.
+        5. Repeat for every sibling `snapshot_*.md` present - each extracts to its own subtree.
         6. Verify: file count vs Tree, reconcile `Binary files` + `Omitted text files` against Tree, spot-check
            sizes, run targeted tests from the mirrored tree. A share pack is complete as a source review
            only when no required path is omitted.
@@ -170,14 +170,14 @@ module Operator
         This repository is governed by MASTER. Read the live sources in their
         declared authority order before judging or changing a governed tree:
 
-        1. `MASTER/data/soul.yml` — global identity, preservation principles,
+        1. `MASTER/data/soul.yml` - global identity, preservation principles,
            source precedence and `absolute.sacred_paths`.
-        2. `MASTER/data/laws.yml` — individual Law identities, statements,
+        2. `MASTER/data/laws.yml` - individual Law identities, statements,
            parentage and the nine invariant nodes' internal order.
-        3. `MASTER/data/laws.yml#law_catalogue` — per-Law severity, mode, lifecycle,
+        3. `MASTER/data/laws.yml#law_catalogue` - per-Law severity, mode, lifecycle,
            autofix and reach metadata. `MASTER/law/*.rb` and `MASTER/checks/` hold
            the executable definitions, detectors, gates and proof.
-        4. `MASTER/data/law_runtime.yml` — scanner, veto, plugin and `/fix` runtime
+        4. `MASTER/data/law_runtime.yml` - scanner, veto, plugin and `/fix` runtime
            configuration; it must not contain a duplicate Law catalogue.
         5. `TREE_CONTRACTS.md` and the relevant tree README/CLAUDE contract.
         6. Git history for provenance only; it never overrides live sources.
@@ -186,12 +186,12 @@ module Operator
 
         - **Ruby and zsh only.** `sed`, `awk`, `find`, `head`, `tail`, `wc`, `perl` and `python` are
           banned in scripts: the BSD variants break GNU idioms and this repo deploys to OpenBSD.
-        - **A comment states the present-tense reason.** Not what the code used to do — git holds that.
+        - **A comment states the present-tense reason.** Not what the code used to do - git holds that.
           A patch that adds a changelog comment will be rejected on that alone.
         - **The Rails apps default to Norwegian.** Assert through I18n keys, never English literals,
           and every key needs both `en.yml` and `nb.yml`.
         - **Renders are irreplaceable.** Never change a rendered-sound or graded-look default in
-          `MASTER/tools`; never alter a colour, font or layout value — the operator is a trained architect.
+          `MASTER/tools`; never alter a colour, font or layout value - the operator is a trained architect.
         - **Ratchets.** `MASTER/bin/operator measure` records ~55 numbers with ceilings. Adding a file,
           growing `lib/`, or introducing a finding moves one. A patch that moves a number must move the
           ceiling in the same patch and say what paid for it. Slack is the same defect as debt.
@@ -205,8 +205,8 @@ module Operator
         - Include at least three lines of context per hunk; a patch that does not apply cleanly is a
           patch nobody can use.
         - One patch for everything you propose, ordered so that no hunk depends on a later one.
-        - New files as `/dev/null` → `b/path` hunks; deletions the mirror image. Do not emit binary
-          diffs — name the binary file and describe the change instead.
+        - New files as `/dev/null` -> `b/path` hunks; deletions the mirror image. Do not emit binary
+          diffs - name the binary file and describe the change instead.
         - Put your assessment, your traces and your reasoning **before** the patch, never inside it.
           The patch body is code and its comments only.
         - Every change must be something you can defend in one sentence naming the rule it serves or
@@ -270,8 +270,8 @@ module Operator
       text_total = paths.size - binaries.size
       files_in_part = units.map(&:first).uniq.size
       out = String.new
-      out << "# #{tree} — source snapshot\n\n"
-      out << "Generated #{Time.now.utc.strftime('%Y-%m-%d %H:%M UTC')} — git #{sha}\n"
+      out << "# #{tree} - source snapshot\n\n"
+      out << "Generated #{Time.now.utc.strftime('%Y-%m-%d %H:%M UTC')} - git #{sha}\n"
       out << "Pack: tree=#{tree} git=#{sha} part=#{part_index}/#{part_count} text_total=#{text_total} "
       out << "fragments_total=#{source_units.size} binary=#{binaries.size} omitted=0 "
       out << "files_in_part=#{files_in_part} fragments_in_part=#{units.size} max_bytes=#{MAX_BYTES}\n\n"

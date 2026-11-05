@@ -3,7 +3,7 @@
 module Master
   module Voice
     class Renderer
-      # Text transformation/formatting helpers — separate from Renderer's
+      # Text transformation/formatting helpers - separate from Renderer's
       # own render/output-guard responsibility.
       module TextFormatting
         # Preserve authored line and paragraph boundaries. Terminals soft-wrap at
@@ -69,40 +69,20 @@ module Master
 
         def format_dmesg(line) = @p.dim(line.to_s)
 
-        # Only a standalone numeric range earns an en dash. Firing on any
-        # digit-hyphen-digit rewrote identifiers and dates too: model IDs
-        # printed as claude-opus-4–8 and dates as 2026–08–02.
+        # The operator's ASCII_PUNCTUATION Law sets every mark a person reads
+        # in ASCII, so prose leaves here as straight quotes, "-" and "...":
+        # a double hyphen between words becomes the one hyphen, and the
+        # double space after a sentence closes to one. Record lines (a "=" or
+        # a URL) carry data and keep their spacing as written.
         def beautify(text)
-          curl_apostrophes(curl_quotes(text))
-            .gsub(/\s--\s/, " — ")
-            .gsub(/(?<![\w-])(\d+)-(\d+)(?![\w-])/, "\\1–\\2")
-            .gsub("...", "…")
-            .gsub(/([.!?…])  +(?=\S)/, "\\1 ")
+          text.lines.map do |line|
+            next line if line.include?("=") || line.include?("://")
+
+            line.gsub(/\s--\s/, " - ").gsub(/([.!?])  +(?=\S)/, "\\1 ")
+          end.join
         end
 
         private
-
-        # An apostrophe between letters is a closing single quote, as Bringhurst sets it: don't becomes don’t. A
-        # line with a URL or a record keeps its straight marks.
-        def curl_apostrophes(text)
-          curled = text.lines.map do |line|
-            next line if line.include?("=") || line.include?("://")
-
-            line.gsub(/(?<=\p{L})'(?=\p{L})/, "’")
-          end
-          curled.join
-        end
-
-        # Quoted strings on record lines carry data, so typography changes only
-        # prose. Keep straight quotes in hashes, values and key=value records.
-        def curl_quotes(text)
-          lines = text.lines.map do |line|
-            next line if line.include?("=")
-
-            line.gsub(/"([^"]*?)"/) { "“#{Regexp.last_match(1)}”" }
-          end
-          lines.join
-        end
 
         def markdown_emphasis(text)
           return text unless $stdout.tty?

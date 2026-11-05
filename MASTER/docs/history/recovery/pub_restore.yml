@@ -2,7 +2,7 @@
 name: pub_restore_contract
 # source_repo and target_repo live once, in docs/history/recovery/legacy_manifest.yml,
 # which this file already names under checks.file_presence. Both keys stood here
-# too, with the same two values and no reader in either tree — a second copy that
+# too, with the same two values and no reader in either tree - a second copy that
 # could only drift. lint:data_singularity and lint:dedup both failed on the pair.
 updated: "2026-10-28"
 layout_note: >-
@@ -35,7 +35,7 @@ critical_items:
     # sparse checkout rather than by memory. bplans/ is 163 files: 25 HTML
     # pages, 30 markdown plans, four Ruby prototypes under norwegianhedge and
     # pubhealthcare, and the rest images and CSV. There is no generate.rb and
-    # no __shared/template.html.erb anywhere in that repo — `git ls-tree`
+    # no __shared/template.html.erb anywhere in that repo - `git ls-tree`
     # matches neither "generate" nor "template" at any path. The pipeline this
     # row has been waiting to restore was the pages themselves, built by hand.
     #

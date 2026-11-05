@@ -95,7 +95,7 @@ module DesignTokens
     family = shared_chrome.fetch("font")
 
     <<~CSS
-      /* Auto-synced by build_all_css.rb — social palette from design_tokens.yml */
+      /* Auto-synced by build_all_css.rb - social palette from design_tokens.yml */
       :root {
         color-scheme: dark;
         --bg: #{social.fetch("bg")};
@@ -232,7 +232,7 @@ module DesignTokens
     data = load
     accents = data.fetch("vertical_accents")
     ink = data.fetch("vertical_accent_ink")
-    lines = ["/* BEGIN:generated-vertical-accents — ruby MASTER/tools/design_tokens.rb sync_dialect_tokens */", "$vertical-accents: ("]
+    lines = ["/* BEGIN:generated-vertical-accents - ruby MASTER/tools/design_tokens.rb sync_dialect_tokens */", "$vertical-accents: ("]
     # The fourth value is the ink painted on the accent: the vertical's own, or the shared one.
     accents.each do |name, values|
       lines << "  #{name}: (#{values.fetch('accent')}, #{values.fetch('hover')}, #{values.fetch('light')}, " \
@@ -261,13 +261,13 @@ module DesignTokens
   def family_tokens_block
     root = static_tokens_css[/^:root \{\n.*?^\}\n/m] || abort("design_tokens: tokens.css has no :root")
 
-    "/* BEGIN:generated-family-tokens — the :root of RAILS/__shared/public/styles/tokens.css */\n" \
+    "/* BEGIN:generated-family-tokens - the :root of RAILS/__shared/public/styles/tokens.css */\n" \
       "#{root}/* END:generated-family-tokens */"
   end
 
   def face_root_block
     <<~CSS.strip
-      /* BEGIN:generated-face-root — ruby MASTER/tools/design_tokens.rb generate_face_root_css */
+      /* BEGIN:generated-face-root - ruby MASTER/tools/design_tokens.rb generate_face_root_css */
       #{face_root_css}
       /* END:generated-face-root */
     CSS
@@ -324,7 +324,7 @@ module DesignTokens
     expected = face_root_css
     return if actual == expected
 
-    "face.css :root drift — run: ruby MASTER/tools/design_tokens.rb generate_face_root_css"
+    "face.css :root drift - run: ruby MASTER/tools/design_tokens.rb generate_face_root_css"
   end
 
   # Every Rails app and mountable engine stylesheet participates in token

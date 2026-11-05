@@ -29,7 +29,7 @@ end
 REPO = File.expand_path("../../../..", HERE)
 MASTER = File.join(REPO, "MASTER")
 # The checks tree now lives under MASTER, and the rendered checks read this
-# sheet from there — a RAILS-prefixed join here pointed at a tree without a
+# sheet from there - a RAILS-prefixed join here pointed at a tree without a
 # checks/data at all and the writer had nowhere to land (2026-10-03, the same
 # missed retarget the css_budget readers had).
 

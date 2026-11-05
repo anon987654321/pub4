@@ -3,8 +3,8 @@
 # A "Do Not Touch" entry states a conclusion. Conclusions do not rot loudly.
 #
 # The entry defending the rule shards said they sat near their consumers. The
-# four shards had one consumer between them — `load_laws`, which concatenated
-# them back into a single hash before any scanner saw them — so the reason was
+# four shards had one consumer between them - `load_laws`, which concatenated
+# them back into a single hash before any scanner saw them - so the reason was
 # false from the day the shards were created, and stayed on the list until an
 # operator overrode it by hand in 2026-08. Had the entry named the test its own
 # reason implied, that test would have been red from the start.
@@ -23,17 +23,17 @@ class TestDoNotTouch < Minitest::Test
     findings = @report["findings"].map { |row| "entry #{row['entry']}: #{row['message']}" }
 
     assert_empty findings,
-                 "add `— check: \`rake some:task\`` or `— no check: <reason>` to the entry:\n  " \
+                 "add `- check: \`rake some:task\`` or `- no check: <reason>` to the entry:\n  " \
                  "#{findings.join("\n  ")}"
   end
 
   # A parser that stops matching entries reports every entry as compliant.
   def test_the_parser_still_finds_the_list
     assert_operator @report["entries"], :>=, 10,
-                    "only #{@report['entries']} Do Not Touch entries parsed — the heading or the " \
+                    "only #{@report['entries']} Do Not Touch entries parsed - the heading or the " \
                     "numbering changed and this lint is now checking nothing"
     assert_operator @report["rake_tasks"], :>, 15,
-                    "only #{@report['rake_tasks']} rake tasks discovered — `rake -T` failed, so " \
+                    "only #{@report['rake_tasks']} rake tasks discovered - `rake -T` failed, so " \
                     "every named task would look missing or every one would look present"
   end
 
@@ -45,9 +45,9 @@ class TestDoNotTouch < Minitest::Test
       ## Do Not Touch (unless the task requires it)
 
       1. `lib/core.rb` and `lib/core/` are the fold spine, and they must not
-         reach into the application half of `lib/`. — check:
+         reach into the application half of `lib/`. - check:
          `test/test_core_no_lib_backedges.rb`
-      2. Secrets live in `/etc/*.env` on the VPS. — no check: a fact about a
+      2. Secrets live in `/etc/*.env` on the VPS. - no check: a fact about a
          remote host that nothing in this repo can observe.
 
       ## Next Section
@@ -63,16 +63,16 @@ class TestDoNotTouch < Minitest::Test
 
   # Both halves must be able to fail, or the check is decorative.
   def test_a_missing_check_is_a_finding
-    assert_empty Operator::DoNotTouch.check("1", "something — check: `rake lint:spine`")
-    refute_empty Operator::DoNotTouch.check("1", "something — check: `rake lint:no_such_task`")
-    refute_empty Operator::DoNotTouch.check("1", "something — check: `test/no_such_test.rb`")
+    assert_empty Operator::DoNotTouch.check("1", "something - check: `rake lint:spine`")
+    refute_empty Operator::DoNotTouch.check("1", "something - check: `rake lint:no_such_task`")
+    refute_empty Operator::DoNotTouch.check("1", "something - check: `test/no_such_test.rb`")
   end
 
   def test_an_entry_with_no_check_and_no_reason_is_a_finding
     refute_empty Operator::DoNotTouch.check("1", "just do not touch it")
-    refute_empty Operator::DoNotTouch.check("1", "do not touch it — no check: because")
+    refute_empty Operator::DoNotTouch.check("1", "do not touch it - no check: because")
     assert_empty Operator::DoNotTouch.check(
-      "1", "do not touch it — no check: a fact about a remote host that this repo cannot observe"
+      "1", "do not touch it - no check: a fact about a remote host that this repo cannot observe"
     )
   end
 end

@@ -33,16 +33,16 @@ minor_cues:
 
 draft_templates:
   message:
-    warm: 'Hei {handle}! Så fint å høre fra deg — fortell:'
-    terse: 'Hei {handle} — ute nå, svarer straks.'
+    warm: 'Hei {handle}! Så fint å høre fra deg - fortell:'
+    terse: 'Hei {handle} - ute nå, svarer straks.'
   purchase:
-    warm: 'Takk for støtten, {handle} — håper den er verdt hvert øre.'
+    warm: 'Takk for støtten, {handle} - håper den er verdt hvert øre.'
     terse: 'Takk, {handle}!'
   renewal:
-    warm: 'Enda en måned sammen, {handle} — godt å ha deg her.'
+    warm: 'Enda en måned sammen, {handle} - godt å ha deg her.'
     terse: 'Takk for fornyelsen, {handle}.'
   tip:
-    warm: 'Wow, takk {handle} — det var generøst.'
+    warm: 'Wow, takk {handle} - det var generøst.'
     terse: 'Takk for tipset, {handle}!'
 
 caps:

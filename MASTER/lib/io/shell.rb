@@ -6,7 +6,7 @@ require "shellwords"
 
 module Master
   module Io
-    # Shell — execute zsh commands with timeout and governor approval.
+    # Shell - execute zsh commands with timeout and governor approval.
     # Three-layer defense (OpenCrabs pattern):
     #   1. Permissions blocklist: hard-blocked destructive commands
     #   2. Interactive detection: block commands that need a TTY
@@ -84,20 +84,20 @@ module Master
         Result.err(GNU_TEXT_TOOLS.refusal(names), category: :validation)
       end
 
-      # Ground::Policy::Sandbox was written from an adversarial corpus — `rm -fr ~`
+      # Ground::Policy::Sandbox was written from an adversarial corpus - `rm -fr ~`
       # in any flag order, fork bombs, curl and wget piped to a shell, truncating
-      # a raw device by redirection — and nothing but its own tests reached it.
+      # a raw device by redirection - and nothing but its own tests reached it.
       # This class carried a separate BLOCKLIST and consulted no one, so
       # the tree had two shell checks and the hardened one was not the live one.
       #
       # Only :deny. :ask is what decide() returns for anything it does not
-      # recognise, and @governor already owns approval — mapping :ask to a hard
+      # recognise, and @governor already owns approval - mapping :ask to a hard
       # error here would refuse every unremarkable command.
       def sandbox_error(command)
         verdict = Master::Ground::Policy::Sandbox.decide(command)
         return unless verdict.deny?
 
-        Result.err("sandbox denied: #{verdict.reason} — #{command}", category: :validation)
+        Result.err("sandbox denied: #{verdict.reason} - #{command}", category: :validation)
       end
 
       def batch_delete_error(command)
@@ -126,7 +126,7 @@ module Master
       def interactive_error(command)
         return unless interactive?(command)
 
-        Result.err("interactive command blocked — no TTY available: #{command}", category: :validation)
+        Result.err("interactive command blocked - no TTY available: #{command}", category: :validation)
       end
 
       def capture_output(command)

@@ -1,4 +1,4 @@
-# law_runtime.yml — runtime configuration for scanner, veto, plugin, /fix and
+# law_runtime.yml - runtime configuration for scanner, veto, plugin, /fix and
 # operator-owned execution policies. Every Law identity and its execution
 # metadata lives in laws.yml; this file contains no Law declarations.
 
@@ -17,7 +17,7 @@ markdown_style:
   applies_to: [MASTER, claude, grok, codex]
   rules:
     - fewer sections than feel necessary; cut before you add
-    - irregular composition — vary heading levels and paragraph length
+    - irregular composition - vary heading levels and paragraph length
     - negative space is structure, not waste
     - concrete over ornament; delete anything decorative
 
@@ -44,11 +44,11 @@ typography:
   source: "Robert Bringhurst, The Elements of Typographic Style"
   applies_to: [terminal, prose, cli, docs]
   rules:
-    - measure: 45-75 characters, 66 where one number must serve; a surface picks one measure and keeps it — terminal prose wraps at 72
+    - measure: 45-75 characters, 66 where one number must serve; a surface picks one measure and keeps it - terminal prose wraps at 72
     - rhythm: word space is the smallest unit of rhythm; one space between sentences; blank lines separate blocks and never pad them
     - line_breaks: break at word boundaries; a ragged edge is a shape, not a saw; a cut ends on one true ellipsis at the last boundary the budget allows
-    - punctuation: one true mark per meaning — "…" not "...", "—" for the aside, "–" for the range; straight quotes only where a machine reads the line
-    - figures: lining figures, as the machine counted them — 1.0M, 45.2s, 3 of 5; no decorative separators
+    - punctuation: one true mark per meaning - "..." not "...", "-" for the aside, "-" for the range; straight quotes only where a machine reads the line
+    - figures: lining figures, as the machine counted them - 1.0M, 45.2s, 3 of 5; no decorative separators
     - scale: two weights on a terminal, plain and dim; emphasis is structural, never louder
     - alignment: columns align only where a column exists; prose is never justified and never space-padded into a fake table
     - content_first: typography honours content; a surface that needs decoration to be read is a surface that needs editing instead
@@ -106,7 +106,7 @@ prose:
     # carries the same split, but in this tree the restrictive sense is the only
     # one present: all 11 hits were "du kan bare slette dine egne kommentarer",
     # "bare medlemmer poster", "Dating er bare for voksne". Bokmål has no other
-    # word for that "only", so deleting it inverts the sentence — the copy stops
+    # word for that "only", so deleting it inverts the sentence - the copy stops
     # saying what a reader may not do. English `just` keeps its place because
     # the merely sense does appear there; here it does not.
     leeches: [veldig, svært, ganske, nokså, temmelig, virkelig, simpelthen]
@@ -502,8 +502,8 @@ self_test:
   DENSITY: no method > long_method threshold in lib/
   KERNEL_ADHERENCE: infra_helpers.rb wiring layer present; law adherence >= 35%
   LAW_MAP: every law id named by data/laws.yml#law_map resolves to a registered
-      Law, and every covered Law names at least one. The reverse direction —
-      every registered Law traced by some law — is `rake lint:law_trace`,
+      Law, and every covered Law names at least one. The reverse direction -
+      every registered Law traced by some law - is `rake lint:law_trace`,
       a ratcheting ceiling, because it has never been zero.
   LAW_INTEGRITY: executable law lifecycle, proof metadata, universal-Law scope,
       and the derived law index remain internally consistent.
@@ -637,35 +637,35 @@ law_deps:
   DECOUPLE:
     after: [FLATTEN, LINEARITY]
 
-  # Hoist constants before merge — merged code references the hoisted constant.
+  # Hoist constants before merge - merged code references the hoisted constant.
   MERGE:
     after: [HOIST_CONSTANTS, HOIST]
 
-  # Kill dead code before defrag — defragging dead code wastes effort.
+  # Kill dead code before defrag - defragging dead code wastes effort.
   DEFRAG:
     after: [DEAD_CODE, SPECULATIVE_GENERALITY]
 
-  # Fix small-files violations before feature_envy — moving a method to
+  # Fix small-files violations before feature_envy - moving a method to
   # its right class only makes sense when both files are well-sized.
   FEATURE_ENVY:
     after: [SMALL_FILES, SMALL_FUNCTIONS]
 
-  # Remove data clumps before primitive obsession — bundling into objects
+  # Remove data clumps before primitive obsession - bundling into objects
   # subsumes the primitive check.
   PRIMITIVE_OBSESSION:
     after: [DATA_CLUMPS]
 
-  # Fix switch statements (type dispatch) after removing middle men —
+  # Fix switch statements (type dispatch) after removing middle men -
   # middle men often hide the type dispatch.
   SWITCH_STATEMENTS:
     after: [MIDDLE_MAN]
 
-  # Comment drift after all structural changes — restructured code needs
+  # Comment drift after all structural changes - restructured code needs
   # comment review, not before.
   COMMENTS_AS_DEODORANT:
     after: [DEFRAG, MERGE, FLATTEN, EXTRACT]
 
-  # Strunk Laws after all structural operations — prose quality is a
+  # Strunk Laws after all structural operations - prose quality is a
   # final-pass concern.
   OMIT_NEEDLESS:
     after: [DEFRAG, REFLOW]
@@ -678,12 +678,12 @@ law_deps:
   REFLOW:
     after: [MERGE, FLATTEN, DEFRAG]
 
-  # Bayesian/RL priors updated last — they need the post-fix violation
+  # Bayesian/RL priors updated last - they need the post-fix violation
   # counts from all other Laws.
   PATTERN_EXTRACTION:
     after: [DEFRAG, MERGE, DECOUPLE, FLATTEN]
 
-  # Scanner Law ordering — structural before style, security before polish.
+  # Scanner Law ordering - structural before style, security before polish.
   bare_rescue:
     after: [fail_visibly]
   silent_rescue:
@@ -847,7 +847,7 @@ law_map:
   # coverage; a gap closes when a real detector for that law exists.
   law_trace_ceiling: 78
   version: v110.0-restored
-  source: merged master.yml fossil → MASTER runtime law_map
+  source: merged master.yml fossil -> MASTER runtime law_map
   clusters:
     security:
     - secrets_encryption
@@ -1952,7 +1952,7 @@ law_map:
       "confidence": 0.65, "operation": "deepen", "law_ids": [], "status": "gap", "root": "bounded_load",
       "tags": ["japanese_aesthetics"], "source": "master.yml@30dad7ead"}
   
-  # The eleven root definitions the entries' root: fields reference — folded
+  # The eleven root definitions the entries' root: fields reference - folded
   # from data/principle_roots.yml (no reader of its own; the map is the reader).
   signature_moment:
     meaning: 'One distinctive, useful interaction carries the product character'
@@ -1993,7 +1993,7 @@ law_map:
       because: a reader who must verify every name reads nothing else
       in_code: POLA, convention over configuration, idiom, consistent naming
       in_prose: the word means what it usually means
-      in_visual: Jakob's law — it works the way the rest of the web works
+      in_visual: Jakob's law - it works the way the rest of the web works
   
     visible_state:
       law: the system shows what is true, including failure
@@ -2042,7 +2042,7 @@ law_map:
       because: capability, device and attention vary, and the design does not get to choose its user
       in_code: semantic markup, keyboard paths, no capability assumed
       in_prose: plain words before jargon
-      in_visual: Fitts and von Restorff — targets big enough to hit, differences big enough to see
+      in_visual: Fitts and von Restorff - targets big enough to hit, differences big enough to see
 
 # BrowserAgent shares WebBrowse's pinned-address transport. Interactions are
 # a separate authority boundary: each action below needs fresh human consent.

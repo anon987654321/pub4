@@ -16,4 +16,4 @@ if wrong.empty?
 end
 
 wrong.each { |name| puts "  #{name}" }
-abort "test_naming: #{wrong.size} file(s) use *_test.rb — MASTER's convention is test_*.rb"
+abort "test_naming: #{wrong.size} file(s) use *_test.rb - MASTER's convention is test_*.rb"

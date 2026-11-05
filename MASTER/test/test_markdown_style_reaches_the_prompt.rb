@@ -4,7 +4,7 @@ require_relative "test_helper"
 
 # data/laws.yml's markdown_style section names every agent that writes
 # markdown here; unread, each agent invents its own house style. So the test
-# that matters is not "the words appear" but "the words come from the file" — a
+# that matters is not "the words appear" but "the words come from the file" - a
 # restatement in the builder would satisfy the first and fail the second, and
 # would be the thing the section exists to prevent.
 class TestMarkdownStyleReachesThePrompt < Minitest::Test

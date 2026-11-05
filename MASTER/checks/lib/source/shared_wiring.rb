@@ -46,7 +46,7 @@ module Deploy
       result = CheckResult.new
       baseline = File.join(RAILS_ROOT, "__shared/config/importmap_baseline.rb")
       # autosave, draft-store, media-picker and feed-compose register in
-      # stimulus_boot_social.js, not stimulus_boot.js — brgen and amber
+      # stimulus_boot_social.js, not stimulus_boot.js - brgen and amber
       # mount them, bsdports does not, so they moved out of the file every
       # app imports; post-progressive is brgen's own, in stimulus_boot_brgen.js.
       # The three texts are checked together below.
@@ -95,7 +95,7 @@ module Deploy
         REQUIRED_ROUTE_FILES.each do |file|
           needle = "shared/config/routes/#{file}"
           # 970aa52d6 folded auth/email_verification/verification/billing into
-          # one loop — instance_eval(File.read("…/shared/config/routes/#{shared}.rb")).
+          # one loop - instance_eval(File.read(".../shared/config/routes/#{shared}.rb")).
           # The literal needle cannot see that spelling, so a file counts as
           # evaled when it is named whole or when the routes read the shared
           # directory through the interpolated loop and name the file's stem
@@ -143,7 +143,7 @@ module Deploy
 
         FORBIDDEN_APP_JS.each do |rel|
           path = File.join(RAILS_ROOT, app, "app/javascript", rel)
-          result.fail("#{app}: remove local #{rel} — use shared copy") if File.file?(path)
+          result.fail("#{app}: remove local #{rel} - use shared copy") if File.file?(path)
         end
       end
 

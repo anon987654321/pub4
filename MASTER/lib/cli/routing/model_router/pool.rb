@@ -11,8 +11,8 @@ module Master
     module Routing
       class ModelRouter
         # The pool: every model this machine can ask right now. A lane joins it
-        # when it can answer — a key that is set, a CLI that is signed in, a
-        # daemon or server that lists the model — and a model outside it
+        # when it can answer - a key that is set, a CLI that is signed in, a
+        # daemon or server that lists the model - and a model outside it
         # carries the one thing to do about that. OpenCrabs builds its list the
         # same way, live from each provider, so /model never offers a model
         # that answers "not found" and the chain never walks through one.
@@ -122,7 +122,7 @@ module Master
           # rather than a key: each is present or it is not. A CLI lane without
           # its binary fails with ENOENT, which the dispatcher files as a
           # retriable provider_error, so the chain slept through its backoff
-          # before walking on — 90s of a web turn on ai.brgen.no, 2026-09-15.
+          # before walking on - 90s of a web turn on ai.brgen.no, 2026-09-15.
           def binary_lane_problem(id)
             present, fix = case lane_of(id)
                            when :claude_cli then [claude_cli_available?, "install Claude Code"]

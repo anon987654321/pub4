@@ -8,7 +8,7 @@ require "fileutils"
 # Operator::Readers exists because "its only reader is X" has been wrong four times
 # in this repo, and each time the grep behind that sentence could not see the
 # one reference that mattered. So the cases here are those four, reproduced as
-# fixtures rather than described — a tool built to stop a specific mistake has
+# fixtures rather than described - a tool built to stop a specific mistake has
 # to be shown failing to catch it first.
 class TestReaders < Minitest::Test
   def with_tree
@@ -108,7 +108,7 @@ class TestReaders < Minitest::Test
     end
   end
 
-  # The file's own definition is not one of its callers — the mistake two
+  # The file's own definition is not one of its callers - the mistake two
   # orphan-scanners made in the same week, which made every private helper read
   # as dead.
   def test_the_file_does_not_count_as_its_own_reader

@@ -117,7 +117,7 @@ module Master
 
       def format_row(row)
         mark = row.ok ? "ok" : "FAIL"
-        "#{mark}  #{row.name} — #{row.detail}"
+        "#{mark}  #{row.name} - #{row.detail}"
       end
     end
   end

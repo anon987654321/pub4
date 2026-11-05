@@ -289,7 +289,7 @@ class TestCliTerminalFace < Minitest::Test
     transcript = rows_of(face.screen(24, 80, 1.0)).values.join("\\n")
 
     assert_includes transcript, "audio unavailable"
-    assert_includes transcript, "…"
+    assert_includes transcript, "..."
     refute_includes transcript, diagnostic
     assert_includes transcript, "The reply is still here."
   end

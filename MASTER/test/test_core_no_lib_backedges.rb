@@ -112,7 +112,7 @@ class NoLibBackedgesTest < Minitest::Test
   end
 
   def test_the_fold_spine_is_actually_being_looked_at
-    refute_empty CORE, "no fold-spine files found — this test would pass having measured nothing"
+    refute_empty CORE, "no fold-spine files found - this test would pass having measured nothing"
     assert_includes CORE.map { |p| p.basename.to_s }, "fold.rb"
   end
 end

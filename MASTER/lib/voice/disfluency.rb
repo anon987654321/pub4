@@ -56,11 +56,11 @@ module Master
       def eligible?(spoken, source, cfg)
         raw = source.to_s
         return false if raw.include?("`") || raw.match?(/https?:\/\//i)
-        return false if raw.lines.any? { |line| line.match?(/\A\s*(?:[-*•●▪◦]|\d+[.)])\s+/) }
+        return false if raw.lines.any? { |line| line.match?(/\A\s*(?:[-*\u2022●▪◦]|\d+[.)])\s+/) }
         return false if raw.match?(TECHNICAL)
         return false if spoken.match?(/\A\s*(?:https?:\/\/|\{\s*["']|\[\s*\{)/)
 
-        words = spoken.scan(/[\p{L}\p{N}]+(?:['’][\p{L}]+)*/u)
+        words = spoken.scan(/[\p{L}\p{N}]+(?:['\u2019][\p{L}]+)*/u)
         return false if words.size < cfg.fetch("min_words", 6).to_i
 
         # Keep the ticks within personal/conversational language. Don't make a

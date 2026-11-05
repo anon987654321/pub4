@@ -112,7 +112,7 @@ class TestTraceSupport < Minitest::Test
         Master::Voice::Playback.stub(:enqueue, ->(text, **options) { spoken << [text, options] }) do
           Master::Trace::Dmesg.with_log_voice do
             Master::Trace::Dmesg.forward(
-              "- surface0: brgen/guest_marketplace_browse PASS — 1 step(s) on markedsplass.brgen.no",
+              "- surface0: brgen/guest_marketplace_browse PASS - 1 step(s) on markedsplass.brgen.no",
               io: StringIO.new,
             )
             Master::Trace::Dmesg.forward(

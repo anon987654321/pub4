@@ -1,7 +1,7 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
-# face_loop_record — record the MASTER face speaking a wav, frame by frame.
+# face_loop_record - record the MASTER face speaking a wav, frame by frame.
 #
 #   ruby checks/face_loop_record.rb --audio ../MASTER/tts.wav \
 #        --out ../MASTER/loop.mp4 --fps 20 --clip 440,90,400,540
@@ -160,7 +160,7 @@ end
 HANN = Array.new(FFT_SIZE) { |i| 0.5 - (0.5 * Math.cos(2.0 * Math::PI * i / (FFT_SIZE - 1))) }.freeze
 
 # Per video frame: the time-domain bytes the face takes an RMS from, and the
-# frequency bytes it splits into bass, mids and highs — in the units
+# frequency bytes it splits into bass, mids and highs - in the units
 # getByteTimeDomainData and getByteFrequencyData return, because that is what
 # the face's own arithmetic assumes.
 def envelope(samples, rate, frames, fps)
@@ -198,7 +198,7 @@ samples, rate = read_wav(options[:audio])
 duration = samples.size / rate.to_f
 duration = [duration, options[:seconds]].min if options[:seconds]
 frames = (duration * options[:fps]).floor
-abort "audio is #{duration.round(2)}s — nothing to record" if frames < 2
+abort "audio is #{duration.round(2)}s - nothing to record" if frames < 2
 
 work = options[:work] || File.join(File.dirname(File.expand_path(options[:out])), "loop_frames")
 FileUtils.mkdir_p(work)
@@ -206,8 +206,8 @@ FileUtils.mkdir_p(work)
 frame_path = ->(index) { File.join(work, format("f_%05d.jpg", index)) }
 
 # Resumable, and meant to be run in chunks. A browser holding four minutes of
-# this face grows until the machine complains — the pools, ghosts and mood
-# history are all per-session — so one run takes a slice, and the next takes the
+# this face grows until the machine complains - the pools, ghosts and mood
+# history are all per-session - so one run takes a slice, and the next takes the
 # next slice in a fresh browser. A frame already on disk is never recaptured.
 from = options[:from] || 0
 to = [options[:to] || frames, frames].min
@@ -243,7 +243,7 @@ begin
     # The primer check: chat/index.html.erb returns null for a WebGL context until
     # window._primerFired, and the page exposes its own opener. face_capture_probe
     # records why this is the honest way in rather than a synthetic tap.
-    cdp.evaluate(<<~JS) # scan: intentional — a CDP recorder evaluates JavaScript by definition
+    cdp.evaluate(<<~JS) # scan: intentional - a CDP recorder evaluates JavaScript by definition
       (function(){
         var go = window.__MASTER_PRIMER_TAP__ || window.__MASTER_PRIMER_GO__;
         if (typeof go === "function") { go(); return "called"; }
@@ -257,7 +257,7 @@ begin
     ready = nil
 
     loop do
-      ready = JSON.parse(cdp.evaluate(<<~JS).to_s) # scan: intentional — a CDP recorder evaluates JavaScript by definition
+      ready = JSON.parse(cdp.evaluate(<<~JS).to_s) # scan: intentional - a CDP recorder evaluates JavaScript by definition
         JSON.stringify({
           present: !!window.MASTER_FACE,
           frames: (window.MASTER_FACE && window.MASTER_FACE.dbgFrames) || 0,
@@ -271,13 +271,13 @@ begin
 
       sleep 0.15
     end
-    abort "warn: __MASTER_RENDERER_FAILED__ — the page gave up on the renderer" if ready["failed"]
+    abort "warn: __MASTER_RENDERER_FAILED__ - the page gave up on the renderer" if ready["failed"]
     abort "warn: the face never drew (frames=#{ready['frames']}, faceMat=#{ready['mat']})" unless
       ready["present"] && ready["frames"].to_i > 2 && ready["mat"]
 
     puts "face drew #{ready['frames']} frames before capture"
 
-    installed = cdp.evaluate(<<~JS, await_promise: true) # scan: intentional — a CDP recorder evaluates JavaScript by definition
+    installed = cdp.evaluate(<<~JS, await_promise: true) # scan: intentional - a CDP recorder evaluates JavaScript by definition
       (async function(){
         const F = window.MASTER_FACE;
         const buf = new Uint8Array(await (await fetch('/loop_envelope.bin')).arrayBuffer());
@@ -349,14 +349,14 @@ begin
     substeps = [(step / SUBSTEP_MS).ceil, 1].max
 
     # A frame of face time, drawn. The oscillators are functions of t so they
-    # carry across a chunk boundary on their own, but the springs — morph,
-    # colour, the bass average — start from rest in a fresh browser, so the
+    # carry across a chunk boundary on their own, but the springs - morph,
+    # colour, the bass average - start from rest in a fresh browser, so the
     # first frames of a slice are drawn and thrown away rather than kept.
     render = lambda do |index|
       base = index * step
 
       times = (1..substeps).map { |n| (base - step + (step * n / substeps)).round(3) }
-      cdp.evaluate(<<~JS) # scan: intentional — a CDP recorder evaluates JavaScript by definition
+      cdp.evaluate(<<~JS) # scan: intentional - a CDP recorder evaluates JavaScript by definition
         (function(){
           window.__LOOP.frame = #{index};
           const F = window.MASTER_FACE;
@@ -397,7 +397,7 @@ end
 missing = (0...frames).reject { |index| File.size?(frame_path.call(index)) }
 unless missing.empty?
   # The envelope stays for the next slice; it is deleted with the last one.
-  puts "#{missing.size} frames still missing, first at #{missing.first} — rerun with --from #{missing.first}"
+  puts "#{missing.size} frames still missing, first at #{missing.first} - rerun with --from #{missing.first}"
   exit 0
 end
 FileUtils.rm_f(envelope_path)
@@ -416,4 +416,4 @@ ok = system("ffmpeg", "-y", "-loglevel", "error",
 abort "ffmpeg failed" unless ok && File.size?(options[:out])
 
 puts "wrote #{options[:out]} (#{File.size(options[:out])} bytes)"
-puts "frames kept at #{work} — delete them once the take is approved"
+puts "frames kept at #{work} - delete them once the take is approved"

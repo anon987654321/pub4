@@ -1,7 +1,7 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
-# HTTP crawl + inventory sync — optional Ferrum via --browser.
+# HTTP crawl + inventory sync - optional Ferrum via --browser.
 
 require "optparse"
 require_relative "crawl_support"
@@ -44,7 +44,7 @@ targets.each do |name, port, paths|
   host = "127.0.0.1"
   unless CrawlSupport.crawler_port_open?(host, port)
     if options[:skip_closed]
-      skips << "#{name}: port #{port} closed — skipped"
+      skips << "#{name}: port #{port} closed - skipped"
       next
     end
     failures << "#{name}: port #{port} closed"

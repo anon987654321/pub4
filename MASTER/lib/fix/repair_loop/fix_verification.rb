@@ -8,7 +8,7 @@ module Master
   module Fix
     class RepairLoop
       # Staleness/verification checks run before and after we apply a fix
-      # (fingerprint drift, missing test coverage) — separate from RepairLoop's
+      # (fingerprint drift, missing test coverage) - separate from RepairLoop's
       # own scan/prompt/apply pipeline.
       module FixVerification
         def fingerprint_matches?(violation)
@@ -124,7 +124,7 @@ module Master
           return if test_file_for(violation[:file]).any?
 
           @bus&.publish(
-            "repair_loop:fix_unverified", rule: @law.id, file: violation[:file], note: "fix unverified — add test"
+            "repair_loop:fix_unverified", rule: @law.id, file: violation[:file], note: "fix unverified - add test"
           )
         rescue StandardError => e
           Master::Ground::Swallow.log(e, context: "repair_loop.note_unverified_fix", event_bus: @bus)

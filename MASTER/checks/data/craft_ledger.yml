@@ -23,8 +23,8 @@
 # review_by dates make every exemption expire. checks/lib/source/exemption_freshness.rb
 # is that stale-exemptions reader: an overdue review is a check failure, a law
 # whose executable file has vanished is a dead row, and a review coming due
-# warns before it can block anyone. The review itself — re-arguing the excuse
-# against its law — stays a human obligation; the check only ends the part
+# warns before it can block anyone. The review itself - re-arguing the excuse
+# against its law - stays a human obligation; the check only ends the part
 # where a date could pass unnoticed.
 schema: 1
 name: craft_ledger
@@ -124,7 +124,7 @@ budget_rows:
 
 pens:
   # A pen is a named, deliberate exception to the spacing/type grid: rendered
-  # intent a mechanical snap would damage. Same boundary as everything here —
+  # intent a mechanical snap would damage. Same boundary as everything here -
   # the budget file and the scanners decide what counts; this list says why.
   - id: chat-upload-centre-inset
     rule: rhythm
@@ -132,7 +132,7 @@ pens:
     sites:
       - RAILS/master/public/chat_upload.css:30
     reason: >-
-      (44 - 18) / 2 — how an 18px drawn square centres inside a 44px tap
+      (44 - 18) / 2 - how an 18px drawn square centres inside a 44px tap
       target. Both numbers are themselves law (--tap-min is 44), so 13px is
       the only spacing value that satisfies them. First recorded in
       css_budget.yml's 2026-08-22 entry.
@@ -222,7 +222,7 @@ pending_evidence:
     surfaces: >-
       __shared welcome_onboarding; amber commerce_polish; and
       ten brgen shared partials (city_campaigns, feed_responsive_finish,
-      listing_creation, marketplace_commerce, media_feed, dating and more) —
+      listing_creation, marketplace_commerce, media_feed, dating and more) -
       the campaign report carries the full file:line list.
     evidence_owed: >-
       A rendered capture of each affected surface at a narrow and a wide

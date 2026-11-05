@@ -6,10 +6,10 @@ require_relative "../../support/geometry_probe"
 require_relative "../../support/brgen_vertical_surfaces"
 
 module Deploy
-  # Mobile journey floor — the missing peer of keyboard_flow.
+  # Mobile journey floor - the missing peer of keyboard_flow.
   #
   # reflow already sweeps widths; geometry measures boxes. This check walks a
-  # phone viewport (390×844) as a user would: landmarks, Fitts targets (44px),
+  # phone viewport (390x844) as a user would: landmarks, Fitts targets (44px),
   # no horizontal overflow, primary chrome not covering the main CTA strip,
   # and brgen vertical subapps all present in the mobile probe set.
   #
@@ -21,7 +21,7 @@ module Deploy
     TOUCH_MIN = 44
 
     # Interactive selectors that must meet the touch floor when laid out.
-    # Chrome only — not every link in the feed. MEASURE reads this list.
+    # Chrome only - not every link in the feed. MEASURE reads this list.
     CHROME_SEL = [
       ".tab-bar a",
       ".tab-bar button",
@@ -58,7 +58,7 @@ module Deploy
         document.querySelectorAll(chromeSel).forEach((el) => {
           if (!laidOut(el)) return;
           const r = el.getBoundingClientRect();
-          // Skip zero-size peels / coach that are intentionally 1×1 clipped.
+          // Skip zero-size peels / coach that are intentionally 1x1 clipped.
           if (r.width < 8 || r.height < 8) return;
           const label = (el.getAttribute('aria-label') || el.innerText || el.className || el.tagName)
             .toString().trim().slice(0, 40);
@@ -85,7 +85,7 @@ module Deploy
       })()
     JS
 
-    # Triangle + every brgen vertical root — mobile is where subapps feel alien.
+    # Triangle + every brgen vertical root - mobile is where subapps feel alien.
     PREFERRED = %w[
       brgen/core brgen/nearby brgen/marketplace brgen/marketplace_cart
       brgen/dating brgen/playlist brgen/tv brgen/takeaway brgen/maps brgen/messenger
@@ -99,7 +99,7 @@ module Deploy
     def run
       @result = CheckResult.new
       unless GeometryProbe.available?
-        @result.inconclusive!("mobile_flow: no Chrome/Chromium — phone viewport not measured", gap: Master::Gap::NO_BROWSER)
+        @result.inconclusive!("mobile_flow: no Chrome/Chromium - phone viewport not measured", gap: Master::Gap::NO_BROWSER)
         PREFERRED.each { |label| report_surface(label, :inconclusive, "Chrome/Chromium unavailable") }
         return @result
       end
@@ -107,7 +107,7 @@ module Deploy
       surfaces = pick_surfaces
       unreachable = GeometryProbe.unreachable_apps(surfaces)
       unreachable.each do |app|
-        @result.skipped_live("mobile_flow: #{app} port closed — skipped")
+        @result.skipped_live("mobile_flow: #{app} port closed - skipped")
         surfaces.select { |surface| surface.app == app }.each do |surface|
           report_surface("#{surface.app}/#{surface.label}", :skipped, "app port closed")
         end
@@ -130,7 +130,7 @@ module Deploy
 
       # Deliberately not counted as a check. It is a list read from source, and
       # counting it let the check report PASSED next to its own "Chrome navigated
-      # 0/N surfaces" line — one satisfied check standing in for the phone
+      # 0/N surfaces" line - one satisfied check standing in for the phone
       # viewport this check exists to measure. A failure above still blocks:
       # failures outrank the check count.
 
@@ -145,13 +145,13 @@ module Deploy
       # checked! only once enough surfaces were measured: a count recorded first
       # outranks the inconclusive note, and the check would pass over two pages.
       if measured.zero?
-        @result.inconclusive!("mobile_flow: Chrome navigated 0/#{live.size} surfaces (timeouts) — retry with warm Falcon")
+        @result.inconclusive!("mobile_flow: Chrome navigated 0/#{live.size} surfaces (timeouts) - retry with warm Falcon")
       elsif GeometryProbe.too_few_measured?(measured, live.size)
-        @result.inconclusive!("mobile_flow: only #{measured}/#{live.size} surfaces measured (CDP timeouts) — warm apps and re-run")
+        @result.inconclusive!("mobile_flow: only #{measured}/#{live.size} surfaces measured (CDP timeouts) - warm apps and re-run")
       else
         @result.checked!(measured)
 
-        @result.warn("mobile_flow: measured #{measured}/#{live.size} mobile surface(s) at #{PHONE.join('×')}")
+        @result.warn("mobile_flow: measured #{measured}/#{live.size} mobile surface(s) at #{PHONE.join('x')}")
       end
       @result
     end
@@ -159,7 +159,7 @@ module Deploy
     private
 
     def pick_surfaces
-      # Preferred triangle + every brgen vertical root only — a full mobile
+      # Preferred triangle + every brgen vertical root only - a full mobile
       # geometry dump (30+) exhausts the CDP session under cold Falcon boots.
       by_label = GeometryProbe.surfaces.group_by { |s| "#{s.app}/#{s.label}" }
       PREFERRED.filter_map do |key|
@@ -227,8 +227,8 @@ module Deploy
     end
 
     def report_surface(label, outcome, detail = nil)
-      line = "surface0: mobile #{label} #{outcome.to_s.upcase} at #{PHONE.join('×')}"
-      line += " — #{detail}" if detail && !detail.to_s.empty?
+      line = "surface0: mobile #{label} #{outcome.to_s.upcase} at #{PHONE.join('x')}"
+      line += " - #{detail}" if detail && !detail.to_s.empty?
       @result.warn(line)
     end
 
@@ -266,7 +266,7 @@ module Deploy
         sev = primary ? :hard : :soft
 
         @result.fail(
-          "mobile_flow: #{label} touch target #{c["label"].inspect} is #{c["w"]}×#{c["h"]} (min #{TOUCH_MIN}px)",
+          "mobile_flow: #{label} touch target #{c["label"].inspect} is #{c["w"]}x#{c["h"]} (min #{TOUCH_MIN}px)",
           severity: sev,
         )
       end

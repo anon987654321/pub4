@@ -60,9 +60,9 @@ module Deploy
       value.to_s
     end
 
-    # Yields each *innermost* `{ … }` declaration block with the 1-based line its
+    # Yields each *innermost* `{ ... }` declaration block with the 1-based line its
     # selector opens on. Nesting depth is tracked rather than assumed, because
-    # this tree writes SCSS nested inside @media and body.vertical-* wrappers —
+    # this tree writes SCSS nested inside @media and body.vertical-* wrappers -
     # and only the innermost block is a rule. Yielding enclosing blocks too would
     # let a sibling's letter-spacing vouch for an untracked uppercase rule.
     def each_declaration_block(body)

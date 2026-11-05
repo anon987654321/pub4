@@ -51,11 +51,11 @@ class TestRuns < Minitest::Test
   # goes quiet instead. Both need catching here.
   def test_the_index_still_finds_the_runners
     assert_operator @report[:tests], :>, 300,
-                    "only #{@report[:tests]} test files found — the discovery glob stopped matching"
+                    "only #{@report[:tests]} test files found - the discovery glob stopped matching"
 
     reaching = @report[:runners].reject { |_, globs| globs.empty? }
     assert_operator reaching.size, :>=, 8,
-                    "only #{reaching.size} runners carry globs — extraction is broken, not the repo"
+                    "only #{reaching.size} runners carry globs - extraction is broken, not the repo"
   end
 
   def test_who_runs_answers_for_a_known_file
@@ -115,7 +115,7 @@ class TestRuns < Minitest::Test
     assert_includes Operator::Runs.who_runs("STUDIO/test/idea_picture_test.rb"), "STUDIO/Rakefile"
   end
 
-  # What makes a file a test is the directory, not the name — three source files
+  # What makes a file a test is the directory, not the name - three source files
   # were named like tests and one of them, tools/test_naming.rb, was reported as
   # an orphan permanently. The narrowing must not turn the check off, so both
   # directions: a lint named test_naming is not a test, and a real test a

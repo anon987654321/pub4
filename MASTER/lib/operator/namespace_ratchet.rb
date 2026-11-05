@@ -2,7 +2,7 @@
 
 # Files that declare no module or class, counted, and allowed only to fall.
 #
-# MASTER/tools/dilla/lib/engine is 76 of 79 files with no namespace — 863 methods on
+# MASTER/tools/dilla/lib/engine is 76 of 79 files with no namespace - 863 methods on
 # Object. In a flat namespace a call and its definition need not share a file,
 # or live in any committed file, and nothing fails at load, because there is no
 # import to fail. A module boundary answers for free the question that tree
@@ -13,7 +13,7 @@
 #
 # Ratchets rather than demands: 863 methods is not one patch. Recording the
 # count and refusing a rise makes every new file a module and every merge
-# progress — the mechanism lint:spine uses.
+# progress - the mechanism lint:spine uses.
 
 require "yaml"
 require "json"
@@ -80,8 +80,8 @@ module Operator
     end
 
     def report(over, under)
-      over.each { |dir, count| puts "namespace_ratchet: #{dir} rose to #{count} — a new file without a module" }
-      under.each { |dir, count| puts "namespace_ratchet: #{dir} is #{count}, below its ceiling — run --ratchet" }
+      over.each { |dir, count| puts "namespace_ratchet: #{dir} rose to #{count} - a new file without a module" }
+      under.each { |dir, count| puts "namespace_ratchet: #{dir} is #{count}, below its ceiling - run --ratchet" }
       over.empty? ? 0 : 1
     end
   end

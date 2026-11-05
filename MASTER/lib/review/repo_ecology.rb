@@ -11,7 +11,7 @@ require "yaml"
 module Master
   module Review
     class RepoEcology
-      # Converts a computed scan report hash into markdown text — a separate
+      # Converts a computed scan report hash into markdown text - a separate
       # concern from RepoEcology's own file-analysis/detection responsibility.
       module ReportRendering
         def build_scan_report(records, graph)
@@ -38,13 +38,13 @@ module Master
         def render_dead_and_duplicate_sections(report)
           lines = []
           lines.concat(render_section("Dead-file candidates", report[:dead_file_candidates]) do |item|
-            "#{item[:path]} — #{item[:reason]}"
+            "#{item[:path]} - #{item[:reason]}"
           end)
           lines.concat(render_section("Dead-method candidates", report[:dead_method_candidates]) do |item|
-            "#{item[:path]}##{item[:method]} — #{item[:reason]}"
+            "#{item[:path]}##{item[:method]} - #{item[:reason]}"
           end)
           lines.concat(render_section("Duplicate basenames", report[:duplicate_basenames]) do |item|
-            "#{item[:basename]} ×#{item[:count]}: #{item[:paths].first(5).join(', ')}"
+            "#{item[:basename]} x#{item[:count]}: #{item[:paths].first(5).join(', ')}"
           end)
           lines
         end
@@ -52,10 +52,10 @@ module Master
         def render_scale_and_coupling_sections(report)
           lines = []
           lines.concat(render_section("Similar clusters", report[:similar_clusters]) do |item|
-            "#{item[:signature]} ×#{item[:count]}: #{item[:paths].first(5).join(', ')}"
+            "#{item[:signature]} x#{item[:count]}: #{item[:paths].first(5).join(', ')}"
           end)
           lines.concat(render_section("Large files", report[:large_files]) do |item|
-            "#{item[:path]} — #{item[:lines]} lines (#{item[:symbol_count]} symbols)"
+            "#{item[:path]} - #{item[:lines]} lines (#{item[:symbol_count]} symbols)"
           end)
           lines.concat(render_section("Co-change pairs (hidden coupling)", report[:co_change_pairs]) do |item|
             "#{item[:a]} ↔ #{item[:b]} (#{item[:count]} commits)"
@@ -243,7 +243,7 @@ module Master
 
       # The stem is only half the name. A Zeitwerk caller writes
       # Master::Review::Scan::CodeMetrics, which downcases to the single token
-      # `codemetrics` — the stem with its underscores gone — so a check for
+      # `codemetrics` - the stem with its underscores gone - so a check for
       # `code_metrics` finds nothing and every autoloaded file in the tree
       # reads as dead. Measured 2026-08-27: all forty candidates this produced
       # had live callers, a census that was wrong forty times out of forty.
@@ -261,7 +261,7 @@ module Master
 
       # Method-level extension of dead_file_candidates: a defined method whose
       # name never occurs as a token in any OTHER file is a dead-code
-      # candidate. Same text-reachability heuristic, finer grain — misses
+      # candidate. Same text-reachability heuristic, finer grain - misses
       # metaprogrammed/reflective calls (send, method_missing) by design;
       # those need semantic review, not a false "confirmed dead" claim.
       def dead_method_candidates(records)
@@ -280,10 +280,10 @@ module Master
         source = File.read(record.full_path, encoding: "UTF-8", invalid: :replace, undef: :replace)
         names = source.scan(/^\s*def\s+(?:self\.)?([a-z_][a-zA-Z0-9_]*[?!]?)/).flatten.uniq
         names.reject { |n| DEAD_METHOD_SKIP.include?(n.delete("?!")) }.filter_map do |name|
-          # record.tokens never include ?/! (token regex excludes punctuation) —
+          # record.tokens never include ?/! (token regex excludes punctuation) -
           # a call site like `x.done?` tokenizes to "done", not "done?".
           bare = name.delete("?!")
-          # called elsewhere in its own file — normal for private helpers
+          # called elsewhere in its own file - normal for private helpers
           next if record.tokens.count(bare) > 1
           inbound = corpus.count { |path, text| path != record.path && text.include?(bare) }
           next unless inbound.zero?

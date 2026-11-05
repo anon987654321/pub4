@@ -5,7 +5,7 @@ require_relative "test_helper"
 # The write tool could not write.
 #
 # AstEdit includes Io::AtomicWrite, which defines `write_atomic`. Both of its
-# call sites asked for `atomic_write` — the same two words the other way round —
+# call sites asked for `atomic_write` - the same two words the other way round -
 # so every rename and every insertion raised NoMethodError at the moment it was
 # about to change a file. Nothing in the suite named AstEdit, so the tool was
 # untested and the misspelling survived.
@@ -96,14 +96,14 @@ class TestAstEditWrites < Minitest::Test
 
       refute editor.call(operation: "rename_method", path:, from: "old_name", to: "Bad Name").ok?
       refute editor.call(operation: "find_method", path: "../../etc/hosts", name: "x").ok?
-      assert_equal "old_name: lines 3–5", editor.call(operation: "method_lines", path:, name: "old_name").value!
+      assert_equal "old_name: lines 3-5", editor.call(operation: "method_lines", path:, name: "old_name").value!
     end
   end
 
 # A third test used to grep ast_edit.rb for its own method names, to catch the
 # misspelling returning by another route. test_source_assertions refuses that
 # shape and is right to: a test that greps a source file passes against a body
-# of `raise`. Both tests above already fail when the method is missing — that
-# is how the bug was found — so the grep was a third opinion on a question
+# of `raise`. Both tests above already fail when the method is missing - that
+# is how the bug was found - so the grep was a third opinion on a question
 # already answered behaviourally.
 end

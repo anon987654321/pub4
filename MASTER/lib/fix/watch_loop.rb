@@ -4,7 +4,7 @@ require "set"
 
 module Master
   module Fix
-    # Architecture #7: file-watcher reactive trigger — no polling.
+    # Architecture #7: file-watcher reactive trigger - no polling.
     # Linux: inotify via rb-inotify. OpenBSD: kqueue via rb-kqueue.
     # A changed file wakes the background runner, or else starts an incremental
     # FixLoop run on that file. Repairs go through FixLoop alone, so each one has

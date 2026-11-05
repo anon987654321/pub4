@@ -35,7 +35,7 @@ module Master
         end
         lines.join("\n")
       rescue StandardError => e
-        "explain0: inconclusive — #{e.class}: #{e.message}"
+        "explain0: inconclusive - #{e.class}: #{e.message}"
       end
     end
   end

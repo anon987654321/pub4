@@ -22,7 +22,7 @@ class TestLaneSelection < Minitest::Test
   NANO = "nvidia/nemotron-3.5-lightning:free"
   DEEPSEEK = "deepseek-chat"
   AGY_REPLY = "agy: error: Individual quota reached. Please upgrade your subscription to increase your limits. Resets in 165h22m49s."
-  CLAUDE_REPLY = "You've hit your session limit · resets 5pm (Europe/Oslo)"
+  CLAUDE_REPLY = "You've hit your session limit - resets 5pm (Europe/Oslo)"
   ALL = ->(_model) { true }
   NOON = Time.utc(2026, 10, 11, 12, 0, 0).to_f
 

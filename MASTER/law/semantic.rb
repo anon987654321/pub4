@@ -89,10 +89,10 @@ module Master
           PROMPT_TEMPLATE = <<~PROMPT.freeze
           Red-team review of %<path>s.
 
-          Step 1 — Steelman (internal, do not output): write the three strongest
+          Step 1 - Steelman (internal, do not output): write the three strongest
           arguments that this code is correct and should not be changed.
 
-          Step 2 — Answer each question silently; only include findings below
+          Step 2 - Answer each question silently; only include findings below
           if they survive the steelman:
             1. What is wrong with this design that I have not spotted?
             2. What would an attacker do with this code?
@@ -102,7 +102,7 @@ module Master
             6. Is there a simpler approach that was not taken?
             7. What should be relocated or transformed to a different format?
 
-          Step 3 — Output only surviving violations.
+          Step 3 - Output only surviving violations.
           Format: ISSUE:LINE:description (one per line).
           If nothing survives, respond with exactly: CLEAN
 
@@ -166,7 +166,7 @@ module Master
         ::Law.define(:adversarial) do
           detector AdversarialLaw
           tags %i[ONE_JOB CQS GUARD_EXPENSIVE FAIL_VISIBLY COMPOSABLE]
-          fix "Red-team scan: steelman then challenge — suppresses false positives"
+          fix "Red-team scan: steelman then challenge - suppresses false positives"
           proved_by "test/test_adversarial_law.rb"
         end
 
@@ -229,7 +229,7 @@ module Master
           private
 
           # Each axiom is { prompt:, severity:, mode: }. info-tier violations stay
-          # out of the prompt — they're noise that doubles cost. info-tier
+          # out of the prompt - they're noise that doubles cost. info-tier
           # opportunities stay in: that's their whole point.
           def reload_semantic_laws!
             @laws = load_semantic_laws
@@ -249,7 +249,7 @@ module Master
           # Law#applies_to?. Law refuses a language FILE_LANGUAGE_MAP never
           # produces (Law#prove!); test_semantic_rule_scope asks the same of
           # this population, because a declared language nothing emits aims a rule
-          # at no file at all — which is how `rails`, `prose` and `erb` sat here.
+          # at no file at all - which is how `rails`, `prose` and `erb` sat here.
           # Every Law is assessed against every artifact, regardless of the file's
           # implementation language. Languages are detector implementation details,
           # not exemptions from semantic or visual review.
@@ -383,7 +383,7 @@ module Master
           def violation_block(rules)
             list = rules.map { |id, a| "#{id}: #{a[:prompt]}" }.join("\n")
             <<~BLOCK
-            VIOLATIONS — list ONLY clear breaches. Format: LAW_ID:LINE:description.
+            VIOLATIONS - list ONLY clear breaches. Format: LAW_ID:LINE:description.
             If clean, write CLEAN on its own line.
             #{list}
           BLOCK
@@ -392,7 +392,7 @@ module Master
           def opportunity_block(rules)
             list = rules.map { |id, a| "#{id}: #{a[:prompt]}" }.join("\n")
             <<~BLOCK
-            OPPORTUNITIES — list refactors only if they would simplify. Format: LAW_ID:LINE:reason.
+            OPPORTUNITIES - list refactors only if they would simplify. Format: LAW_ID:LINE:reason.
             If none, write NONE on its own line.
             #{list}
           BLOCK
@@ -565,7 +565,7 @@ module Master
               pair = pairs[pair_index]
               next unless pair
 
-              finding(line: pair[:line], message: "comment drift — #{match[2].strip}")
+              finding(line: pair[:line], message: "comment drift - #{match[2].strip}")
             end
           end
         end
@@ -573,7 +573,7 @@ module Master
         ::Law.define(:comment_drift) do
           detector CommentDriftLaw
           tags %i[SELF_EXPLAINING EXPLICIT]
-          fix "Comment claim doesn't match method body — comment is lying"
+          fix "Comment claim doesn't match method body - comment is lying"
           proved_by "test/test_comment_drift_law.rb"
         end
       end

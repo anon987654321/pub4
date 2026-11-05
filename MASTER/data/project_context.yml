@@ -1,6 +1,6 @@
 ---
 meta:
-  source: runtime authority — edit this file or use MemoryRecord; do not add data/claude/*.md
+  source: runtime authority - edit this file or use MemoryRecord; do not add data/claude/*.md
   count: 27
 entries:
 - key: personality_rb_comment_audit
@@ -11,20 +11,20 @@ entries:
     describes the code. No violations were found.
 - key: project_defrag_plan_2026_05
   name: pub4 defrag/dedup/rename plan (2026-05-07)
-  description: Multi-commit refactor plan from a sister chat — collapse duplication
+  description: Multi-commit refactor plan from a sister chat - collapse duplication
     across docs, shrink data/, flatten repo root, rename for clarity. Priority-1 (Master::Orient)
     shipped then reverted on 2026-05-20 as a useless wrapper.
   type: project
   body: |-
-    On 2026-05-20, `Master::Orient` and `/orient` were removed—the five constitutional YAMLs already appear in every system prompt via Constitution and Personality. The rest of the plan stands.
+    On 2026-05-20, `Master::Orient` and `/orient` were removed - the five constitutional YAMLs already appear in every system prompt via Constitution and Personality. The rest of the plan stands.
 
-    The 2026-05-07 proposal aimed for a single source of truth with one yml per fact and prose references only; shrinking `data/` from eleven to eight files by merging council, infer, sweep, and zsh into `patterns.yml`; flattening the repo root from twenty-six to ten entries including `__predecessors/`, `audio/`, `scripts/`, `web/`, and `memory/`; renames such as `deploy/openbsd.sh`, `state.yml`, `limits.yml`, `voice.yml`, and `style.yml`, with CONVENTIONS.md generated or deleted; and smoothing work—stash before `git reset --hard`, explicit `scope:` on `Master.build`, unified `Result`, per-stage budget in `limits.yml`, reconciled Guard and auto-approve, unified `exe/master` boot, and generalized WhyExplainer lookup-then-LLM.
+    The 2026-05-07 proposal aimed for a single source of truth with one yml per fact and prose references only; shrinking `data/` from eleven to eight files by merging council, infer, sweep, and zsh into `patterns.yml`; flattening the repo root from twenty-six to ten entries including `__predecessors/`, `audio/`, `scripts/`, `web/`, and `memory/`; renames such as `deploy/openbsd.sh`, `state.yml`, `limits.yml`, `voice.yml`, and `style.yml`, with CONVENTIONS.md generated or deleted; and smoothing work - stash before `git reset --hard`, explicit `scope:` on `Master.build`, unified `Result`, per-stage budget in `limits.yml`, reconciled Guard and auto-approve, unified `exe/master` boot, and generalized WhyExplainer lookup-then-LLM.
 
-    Priority-1 Orient work—`orient.rb`, slim AGENTS and CLAUDE, `/orient` plus subcommand, zshrc `[[ -t 0 ]]` guard—shipped then reverted as a useless wrapper. One fact equals one place; commits stay small and reversible; smoothing items remain follow-up tickets.
+    Priority-1 Orient work -`orient.rb`, slim AGENTS and CLAUDE, `/orient` plus subcommand, zshrc `[[ -t 0 ]]` guard - shipped then reverted as a useless wrapper. One fact equals one place; commits stay small and reversible; smoothing items remain follow-up tickets.
 
     2026-07 doc consolidation: top-level MASTER stubs (SOURCE_TREE, TRACE, REPLICATE, CONVENTIONS, QUICKSTART, AGENT_CONTRACT, RUNTIME_MAP, root IDENTITY.md) removed or folded into START_HERE.md. Runtime shards were merged into data/runtime.yml.
 
-    2026-07-15 tier-5 YAML pass: data/ went from 77 to 54 files. 9 genuinely dead files removed (architectures.yml, gems.yml, llm_operators.yml, rails.yml, why_command.yml, epistemics.yml, templates.yml, ui.yml, budget.yml — none had any real code consumer, despite a couple of their own header comments claiming otherwise), 13 folded into patterns.yml under namespaced top-level keys (closings, motd, webhooks, cron_jobs, violation_priors, stale_namespaces, auth_profiles, cli, heartbeat, refusal_templates, operator_playbook, skills_registry), 1 folded without a real consumer but kept as reference documentation (vocabulary.yml — its "sacred_terms" claim was never enforced by code, but documents naming conventions actively used in the codebase). Deliberately NOT folded: council.yml, state.yml, topologies.yml, tts.yml, tools.dynamic.yml, openbsd.yml — each has a specific architectural reason (see START_HERE.md's Data File Budget section). This tier-5 pass is done; remaining data/ files are either Tier 1-4 or one of these documented exceptions.
+    2026-07-15 tier-5 YAML pass: data/ went from 77 to 54 files. 9 genuinely dead files removed (architectures.yml, gems.yml, llm_operators.yml, rails.yml, why_command.yml, epistemics.yml, templates.yml, ui.yml, budget.yml - none had any real code consumer, despite a couple of their own header comments claiming otherwise), 13 folded into patterns.yml under namespaced top-level keys (closings, motd, webhooks, cron_jobs, violation_priors, stale_namespaces, auth_profiles, cli, heartbeat, refusal_templates, operator_playbook, skills_registry), 1 folded without a real consumer but kept as reference documentation (vocabulary.yml - its "sacred_terms" claim was never enforced by code, but documents naming conventions actively used in the codebase). Deliberately NOT folded: council.yml, state.yml, topologies.yml, tts.yml, tools.dynamic.yml, openbsd.yml - each has a specific architectural reason (see START_HERE.md's Data File Budget section). This tier-5 pass is done; remaining data/ files are either Tier 1-4 or one of these documented exceptions.
 - key: project_falcon_em_subprocess
   name: Falcon Async + EventMachine = subprocess pattern
   description: EM-based gems (rb-edge-tts, em-http) inside Falcon request handlers
@@ -36,7 +36,7 @@ entries:
     The pattern is a `bin/<name>-worker` script that runs EventMachine work and writes a tempfile; the controller calls `Open3.capture3`. Reference implementation: `MASTER/bin/tts-worker` and `MASTER/lib/voice/speech.rb#synthesize_edge`.
 - key: project_master
   name: MASTER project context
-  description: pub4/MASTER — constitutional AI runtime and repo-wide governance kernel
+  description: pub4/MASTER - constitutional AI runtime and repo-wide governance kernel
   type: project
   body: |-
     MASTER is the constitutional AI runtime in pure Ruby. The repository is governed as four top-level trees: MASTER, RAILS, OPENBSD and STUDIO; STUDIO owns media implementations and `MASTER/tools/` exposes compatibility symlinks.
@@ -47,12 +47,12 @@ entries:
 - key: project_master_dual_gemfile
   name: MASTER has two Gemfiles
   description: MASTER/Gemfile (CLI) and RAILS/master/Gemfile (Falcon web) are independent
-    — adding a gem to one does NOT make it available in the other
+    - adding a gem to one does NOT make it available in the other
   type: project
   body: |-
-    `MASTER/Gemfile` serves the CLI and `RAILS/master/Gemfile` serves the Falcon web tier. They are independent—adding a gem to one does not make it available in the other.
+    `MASTER/Gemfile` serves the CLI and `RAILS/master/Gemfile` serves the Falcon web tier. They are independent - adding a gem to one does not make it available in the other.
 
-    `RAILS/master/Gemfile` declares `gem "master", path: ".."`, which loads via the gemspec, not the parent Gemfile. Gems used in `MASTER/lib/` from web handlers must appear in both `MASTER/Gemfile` and `RAILS/master/Gemfile`, or in `master.gemspec` as a runtime dependency. Bundling only once leaves Falcon unable to `require` the gem—a LoadError that surfaces as a controller rescue and 503. `rb-edge-tts` exhibited this: CLI worked while `/chat/tts` failed.
+    `RAILS/master/Gemfile` declares `gem "master", path: ".."`, which loads via the gemspec, not the parent Gemfile. Gems used in `MASTER/lib/` from web handlers must appear in both `MASTER/Gemfile` and `RAILS/master/Gemfile`, or in `master.gemspec` as a runtime dependency. Bundling only once leaves Falcon unable to `require` the gem - a LoadError that surfaces as a controller rescue and 503. `rb-edge-tts` exhibited this: CLI worked while `/chat/tts` failed.
 
     When adding a dependency, edit both Gemfiles, run `bundle install` in `MASTER/` and `RAILS/master/`, and verify the gem appears in `RAILS/master/Gemfile.lock`.
 - key: project_master_seven_module_refactor
@@ -64,19 +64,19 @@ entries:
 
     Treat this entry as historical context only. Do not create, restore, or route code toward the seven-module layout unless a new architectural decision explicitly establishes it. Git history holds the old implementation and branch work.
 - key: project_master_yml_json_authority
-  name: master.yml/master.json migration is complete — soul.yml/laws.yml are sole
+  name: master.yml/master.json migration is complete - soul.yml/laws.yml are sole
     authority
   description: The predecessor master.yml/master.json drift-closing effort (started
     2026-05-05) is finished; both predecessor files are deleted. Authority chain is
-    CLAUDE.md's "Authority order" — soul.yml, then laws.yml.
+    CLAUDE.md's "Authority order" - soul.yml, then laws.yml.
   type: project
   body: |-
-    Historical: on 2026-05-05, the directive was that MASTER should implement what predecessor `master.json` (v43.0.1, November–December 2025, 130 commits) and `master.yml` (v31–v49.75, December 2025–February 2026, 668 commits) described, mined from their deleted history. That drift-closing work is done — the priority gaps listed at the time (Universal Laws ladder, Strunk & White safeguards, biases section, structural_ops taxonomy, council personas, evidence logging, beauty section, per-language templates, and the rest) now live in `soul.yml` and `laws.yml`.
+    Historical: on 2026-05-05, the directive was that MASTER should implement what predecessor `master.json` (v43.0.1, November-December 2025, 130 commits) and `master.yml` (v31-v49.75, December 2025-February 2026, 668 commits) described, mined from their deleted history. That drift-closing work is done - the priority gaps listed at the time (Universal Laws ladder, Strunk & White safeguards, biases section, structural_ops taxonomy, council personas, evidence logging, beauty section, per-language templates, and the rest) now live in `soul.yml` and `laws.yml`.
 
-    Neither predecessor file exists in the repo anymore. `soul.yml` (constitution) and `laws.yml` (scan rules + `principle_priorities`) are the sole authoritative sources — see the "Authority order" line in `CLAUDE.md`. Do not look for law in `master.yml`/`master.json`; they are gone.
+    Neither predecessor file exists in the repo anymore. `soul.yml` (constitution) and `laws.yml` (scan rules + `principle_priorities`) are the sole authoritative sources - see the "Authority order" line in `CLAUDE.md`. Do not look for law in `master.yml`/`master.json`; they are gone.
 - key: reference_grok_ui_cli_patterns
   name: Grok-inspired UI/CLI patterns (chatlog dump 2026-05-07)
-  description: Reference dump from a sister chat — StyleCoach UI prompt, htmx+SSE
+  description: Reference dump from a sister chat - StyleCoach UI prompt, htmx+SSE
     streaming, tty-prompt/tty-spinner advanced features, multi-line editor, character-stream
     LLM CLI. For MASTER's web UI and CLI polish.
   type: reference
@@ -87,19 +87,19 @@ entries:
 
     Web streaming uses htmx+SSE with `sse-connect="/stream/:id"` and `event: chunk`, plus `X-Accel-Buffering: no` and sleep `rand(0.02..0.08)`. Alternatively use chunked HTTP with `hx-swap="innerHTML"`.
 
-    CLI traits favor char-stream via ANSI `\r` over `Thinking…`, a terse happy path, subtle personality on success and failure, stateful context in SQLite or `~/.master/context.json`, a plain-ASCII spinner after 1.5s (Braille is retired from MASTER's terminal, 2026-10-12), and one-command install.
+    CLI traits favor char-stream via ANSI `\r` over `Thinking...`, a terse happy path, subtle personality on success and failure, stateful context in SQLite or `~/.master/context.json`, a plain-ASCII spinner after 1.5s (Braille is retired from MASTER's terminal, 2026-10-12), and one-command install.
 
     tty-prompt offers `select(filter:)`, `multi_select`, `expand`, `editor(syntax:, word_wrap:)`, `mask`, `slider`, and validators (`in`, `validate`, `convert`, `modify`). Theme uses bright_cyan with `❯` and `◉`. tty-spinner defaults to `:dots_9`, supports `Multi` for parallel work, and uses `hide_cursor: true`. Multi-line input uses `PROMPT.editor` with Anthropic stream char-by-char at `sleep(rand(0.008..0.035))`.
 
     MASTER already streams SSE on `POST /chat/message` and CLI via `chunk_accumulator`. Borrow Thinking cleanup, ambiguity menus, and tty `editor` for `<<` mode. StyleCoach fits as `/crit` plus a vision tool.
 - key: reference_opencrabs
   name: OpenCrabs (Rust MASTER cousin)
-  description: github.com/adolfousier/opencrabs — Rust/Ratatui TUI agent, philosophical
+  description: github.com/adolfousier/opencrabs - Rust/Ratatui TUI agent, philosophical
     cousin of MASTER. ~803 stars, MIT. Worth-stealing patterns listed with MASTER
     wiring status.
   type: reference
   body: |-
-    OpenCrabs is the Rust cousin of MASTER—[opencrabs](https://github.com/adolfousier/opencrabs) with [docs](https://docs.opencrabs.com), v0.3.47 as of June 2026, four thousand plus tests, MIT license, roughly eight hundred stars. It targets Linux, macOS, and Windows; it does not support OpenBSD or `pledge`. Architecture is TUI/CLI → Brain → Services → SQLx/SQLite → LLM providers, built with Rust, Tokio, and Ratatui.
+    OpenCrabs is the Rust cousin of MASTER - [opencrabs](https://github.com/adolfousier/opencrabs) with [docs](https://docs.opencrabs.com), v0.3.47 as of June 2026, four thousand plus tests, MIT license, roughly eight hundred stars. It targets Linux, macOS, and Windows; it does not support OpenBSD or `pledge`. Architecture is TUI/CLI -> Brain -> Services -> SQLx/SQLite -> LLM providers, built with Rust, Tokio, and Ratatui.
 
     As of 2026-06-24, MASTER wired brain-files re-read (`data/*.yml`); FTS5 BM25 memory; inline compaction via `ContextWindow`, web SSE, and daily log; `/rebuild` hot-restart; sub-agent tool exclusion (`Policy::Subagent`, `AgentPool`, swarm); typed sub-agents (`agent_taxonomy.yml`, `/btw`); hashline edits (`Io::Hashline`); RTK output filter (`/rtk`); plan pinning (`Ground::ActivePlan`); mission dashboard (`/dashboard`); phantom recovery; skills slash triggers (`CLI::Skills#trigger_for`); soft and hard compaction at 65% and 90%; per-model quota (`Io::ModelQuota`); prompt-cache card (`Trace::CacheEfficiency`, `/chat/metrics`); OpenRouter key rotation (`Io::KeyRotator`); and unified health (`bin/doctor`, `/doctor`).
 
@@ -116,30 +116,30 @@ entries:
     design-philosophy proposals as in-scope and likely approved
   type: user
   body: |-
-    The operator is an architect by training. Aesthetic, typographic, and design-philosophy proposals—even ones LLMs dismiss as fluff—are usually approved.
+    The operator is an architect by training. Aesthetic, typographic, and design-philosophy proposals - even ones LLMs dismiss as fluff - are usually approved.
 
     Surface aesthetic content from Bringhurst, Ando, Rams, wabi-sabi, ma, and kanso, plus beauty sections in YAML, without self-censoring. Treat these as engineering anchors, not disclaimers. Propose UI, prose, and config refinements actively. Do not argue that beauty or zen YAML is "not actionable."
 - key: master_design_vision
   name: MASTER design vision (pure-Ruby AI, OpenBSD-mirrored, Snohetta parametric)
-  description: Guiding vision and influences — steer every design/refactor decision
+  description: Guiding vision and influences - steer every design/refactor decision
     toward it
   type: project
   body: |-
     The operator's guiding vision for MASTER, to steer every design and refactor decision.
 
-    (a) A NEW AGE IN COMPUTING — the first pure-Ruby AI. No Python in the spine; Ruby all the way down. Influences the operator cites (to be credited in a forthcoming book): Jeremy Evans (author of Roda + Sequel, and maintainer of the OpenBSD Ruby port — the exact Ruby<->OpenBSD nexus MASTER sits on); adam12 / Adam Daniels (Roda/Sequel/Rack/Hanami minimalist-Ruby school, Gemdocs.org — the operator designed the new Gemdocs logo); DHH (Rails); J Dilla's mastering engineer Dave Cooley (craft and feel); the architecture firm Snohetta; and the wider OpenBSD / Ruby / Rails communities.
+    (a) A NEW AGE IN COMPUTING - the first pure-Ruby AI. No Python in the spine; Ruby all the way down. Influences the operator cites (to be credited in a forthcoming book): Jeremy Evans (author of Roda + Sequel, and maintainer of the OpenBSD Ruby port - the exact Ruby<->OpenBSD nexus MASTER sits on); adam12 / Adam Daniels (Roda/Sequel/Rack/Hanami minimalist-Ruby school, Gemdocs.org - the operator designed the new Gemdocs logo); DHH (Rails); J Dilla's mastering engineer Dave Cooley (craft and feel); the architecture firm Snohetta; and the wider OpenBSD / Ruby / Rails communities.
 
-    (b) OPENBSD DESIGN, MIRRORED AS CLOSELY AS POSSIBLE. Correctness and simplicity above all; secure-by-default; ruthless removal of unused code; a small closed surface; sane defaults; docs as first-class. Respect to Theo de Raadt. A future OpenBSD Rust port is planned, likely with a higher-level Ruby overlay. Concretely in MASTER: the core/ fold is an OpenBSD-style minimal kernel — a fixed 7-verb World surface (the syscall table), the immutability rule as pledge(2) (the agent cannot rewrite its own constitution or spine), the Constitution as a security check before every effect, atomic writes.
+    (b) OPENBSD DESIGN, MIRRORED AS CLOSELY AS POSSIBLE. Correctness and simplicity above all; secure-by-default; ruthless removal of unused code; a small closed surface; sane defaults; docs as first-class. Respect to Theo de Raadt. A future OpenBSD Rust port is planned, likely with a higher-level Ruby overlay. Concretely in MASTER: the core/ fold is an OpenBSD-style minimal kernel - a fixed 7-verb World surface (the syscall table), the immutability rule as pledge(2) (the agent cannot rewrite its own constitution or spine), the Constitution as a security check before every effect, atomic writes.
 
     (c) SNOHETTA-STYLE NORWEGIAN PARAMETRIC ARCHITECTURE. The operator studied architecture (in Malaysia, their father is from there) and favours timeless, well-thought-out design: one clear organizing idea, nothing decorative, form follows the idea.
 
-    HOW TO APPLY: prefer collapse over accretion — one parametric form with data-driven variants over many near-duplicate files (e.g. the four bin/check-* scripts collapsed to one bin/check --profile). Closed minimal surfaces. When in doubt, remove. Match the surrounding restraint. Craft is not accretion — the TTS voice engines were deliberately kept.
+    HOW TO APPLY: prefer collapse over accretion - one parametric form with data-driven variants over many near-duplicate files (e.g. the four bin/check-* scripts collapsed to one bin/check --profile). Closed minimal surfaces. When in doubt, remove. Match the surrounding restraint. Craft is not accretion - the TTS voice engines were deliberately kept.
 - key: bsdports_openbsd_ports_index
   name: bsdports is the official next-gen OpenBSD ports index (Solene blessing)
-  description: RAILS/bsdports — sanctioned successor to Solene Rapenne's ports index
+  description: RAILS/bsdports - sanctioned successor to Solene Rapenne's ports index
   type: project
   body: RAILS/bsdports is being built as the official next-generation OpenBSD ports
-    index — the operator has the blessing and go-ahead of Solene Rapenne (solene@,
+    index - the operator has the blessing and go-ahead of Solene Rapenne (solene@,
     former OpenBSD developer, now Qubes OS core team; blog at dataswamp.org) to create
     the next version of her ports index. Treat bsdports as a first-class, real-world
     OpenBSD-community deliverable, not a demo.
@@ -158,8 +158,8 @@ entries:
   description: User is an architect by training and primary discipline
   type: user
   body: User is an architect by training and primary discipline. Aesthetic, typographic,
-    and design-philosophy proposals — even ones that LLMs typically dismiss as garbage,
-    irrelevant, or "out of scope for code" — are usually approved by this user.
+    and design-philosophy proposals - even ones that LLMs typically dismiss as garbage,
+    irrelevant, or "out of scope for code" - are usually approved by this user.
 - key: path_guard_comment_audit
   name: path guard comment audit
   description: Audit of path_guard.rb comments for accuracy
@@ -169,12 +169,12 @@ entries:
     Index 1: Comment accurately describes that credential files are refused for both reads and writes via Core::World.secret? delegation.
     All comments are accurate.
 - key: operator_directive_memory_lands_in_master
-  name: operator directive — memory, rules, logic land in MASTER first
+  name: operator directive - memory, rules, logic land in MASTER first
   description: Durable session knowledge is written to MASTER/data/project_context.yml,
     not left in sidecar memory
   type: feedback
   body: 'Operator directive, 2026-10-03: ALWAYS write memory, rules, logic and harvested
-    findings directly into MASTER — it is the primary surface for external LLMs (Claude,
+    findings directly into MASTER - it is the primary surface for external LLMs (Claude,
     Grok, Codex et al.), so a lesson that exists only in one harness''s private memory
     is invisible to the other sessions and to the runtime. Session memory files remain
     a per-agent convenience; MASTER is the shared source of truth. Concretely: research
@@ -186,15 +186,15 @@ entries:
     2026-10-03
   type: reference
   body: 'Ideas, never frameworks (all Python). (1) SWE-Milestone: instruments must
-    measure LONGITUDINAL decay — isolated task rate can hold while sustained behavior
-    collapses (80%→38%); run past checks across evolution cycles and record the curve.
-    (2) Agent0: derive curriculum from the failure ledger — unresolved scan debts/flaky
+    measure LONGITUDINAL decay - isolated task rate can hold while sustained behavior
+    collapses (80%->38%); run past checks across evolution cycles and record the curve.
+    (2) Agent0: derive curriculum from the failure ledger - unresolved scan debts/flaky
     checks become synthesized check cases, difficulty escalating. (3) Competition: candidate
     diffs in parallel worktrees, check ladder scores them, verifier merges only the
     survivor. (4) Agent Workflow Memory: distill successful repair sequences keyed
     by failure class; consult before improvising. (5) A-MEM: memory notes auto-linked;
     a new note may rewrite an older one it contradicts. (6) MemoryBank: forgetting
-    curve — reinforcement on access, aging on silence, deletion as governed policy.
+    curve - reinforcement on access, aging on silence, deletion as governed policy.
     (7) MemSkill: a declared policy (voice.yml-shaped) decides durable vs session-local
     memory. (8) TextGrad/OPRO/EvoPrompt: evolve the council''s critique prompts, scored
     against measured scanner false-positive rate. (9) Darwin Gödel Machine: evolution
@@ -212,12 +212,12 @@ entries:
     services
   type: reference
   body: '2026-10-03. The list curates hosting/community/virtualization; relayd appears
-    once and nothing touches httpd/rc.d/swap — man pages stay the law. Adoptables:
+    once and nothing touches httpd/rc.d/swap - man pages stay the law. Adoptables:
     OpenBSD CI runners (Sourcehut builds or GitHub vmactions/openbsd-vm) take OPENBSD/
-    suites off vm23''s 1GB; bupstash — encrypted client-separated backups off the
-    box; eradman''s autoinstall site-tarball — scripted full reprovision, the pipeline''s
-    missing bottom rung; qbit/snap — sysmerge+package upgrades in one pass, lighter
-    on 1 vCPU; M:Tier binpatches/LTS — base+package security fixes without rebuild
+    suites off vm23''s 1GB; bupstash - encrypted client-separated backups off the
+    box; eradman''s autoinstall site-tarball - scripted full reprovision, the pipeline''s
+    missing bottom rung; qbit/snap - sysmerge+package upgrades in one pass, lighter
+    on 1 vCPU; M:Tier binpatches/LTS - base+package security fixes without rebuild
     cycles; snmpd (in base) with SNMP v3 for external load/swap watching (cold-TTFB
     evidence before symptoms); dmesgd.nycbug.org for peer comparison; dank-selfhosted
     and vedetta as relayd/pf reference boilerplate; upobsd for bsd.rd ritual. Anti-recommendation:
@@ -228,18 +228,18 @@ entries:
   description: CPU-qualified face instruments for postpro; relight path is parse +
     3DMM normals over the DA-V2 near-map
   type: reference
-  body: '2026-10-03. postpro has no face detection/parsing/3D fit — skin_protect (postpro.rb:1518)
+  body: '2026-10-03. postpro has no face detection/parsing/3D fit - skin_protect (postpro.rb:1518)
     is an HSV hue+saturation mask that also catches wood, brick and rust. CPU-qualified
     adoptables: YuNet/libfacedetection (pure-C ms-class detector, most Ruby-friendly
     via FFI/ONNX); RetinaFace-MobileNet0.25 (~1.7MB ONNX) for true face detection;
-    CelebAMask-HQ/BiSeNet parsing (19 classes) — grade skin only, leave eye whites/irises,
-    give relight region masks (highest value); 3DDFA_V2 (few hundred ms CPU) — the
+    CelebAMask-HQ/BiSeNet parsing (19 classes) - grade skin only, leave eye whites/irises,
+    give relight region masks (highest value); 3DDFA_V2 (few hundred ms CPU) - the
     one thing monocular depth cannot give: per-pixel face normals on the convex face
-    plane where the DA-V2 near-map is least reliable; PRNet/2D-3D FAN — standardized
-    head crops across both lora subjects before curate; ArcFace ONNX — identity-drift
+    plane where the DA-V2 near-map is least reliable; PRNet/2D-3D FAN - standardized
+    head crops across both lora subjects before curate; ArcFace ONNX - identity-drift
     guard (refuse on similarity drop) plus dataset dedupe; CodeFormer/GFPGAN ONNX
-    — pre-restore pass for degraded sources entering datasets; PSFRGAN''s pipeline
-    order (parse → per-region transform) as pure design; PPR10K corpus to fit the
+    - pre-restore pass for degraded sources entering datasets; PSFRGAN''s pipeline
+    order (parse -> per-region transform) as pure design; PPR10K corpus to fit the
     skin_protect band against real portrait pairs. Adoptable path: parse regions;
     3DMM normals light face pixels; DA-V2 near-map demoted to scene. Too heavy: DR2,
     DifFace, PULSE, MyStyle (MyStyle ≈ what the lora tree already is), GPEN/VQFR training.
@@ -249,18 +249,18 @@ entries:
   description: 12 adoptables and 5 gaps for the voice stack; edge-tts is cloud-reliant
     and that is the top gap
   type: reference
-  body: '2026-10-03. Top: rb-edge-tts is NOT local — it calls Microsoft''s endpoint;
+  body: '2026-10-03. Top: rb-edge-tts is NOT local - it calls Microsoft''s endpoint;
     a network cut silences MASTER. Adoptables: Kokoro-82M (ONNX, ~edge quality, Mac-sized)
     for genuinely offline en-US; KittenTTS (15M, <25MB) as vm23-grade rescue voice;
     eSpeak-NG as the final offline rung; KokoClone (3-10s reference) puts Johann''s
-    own voice in the rotation; Scylla''s six continuous affect axes → voice.yml entries
+    own voice in the rotation; Scylla''s six continuous affect axes -> voice.yml entries
     as affect coordinates Voice::Policy interpolates, not named-voice picks; inline
     delivery tags (<laugh>, [pause 3.2s], <|emotion|>) as a markup convention in the
     utterance stream, mapped by post_chain today and engine-agnostic tomorrow; NovaSR
-    (~52kB) upsamples 16k→48k to close the speech/bed spectral gap; ZipEnhancer/PASE
+    (~52kB) upsamples 16k->48k to close the speech/bed spectral gap; ZipEnhancer/PASE
     denoise before Speech#shaped for the mic path (the echo/"random facts" bugs came
     from there); UTMOS/DNSMOS + ECAPA2 speaker-similarity + WER round-trip through
-    a tiny ASR — the quality ratchet MASTER ships without. Gap decisions to make explicitly:
+    a tiny ASR - the quality ratchet MASTER ships without. Gap decisions to make explicitly:
     open-weight local models have NO nb-NO coverage (keep edge for nb, go local for
     en?); no cloning path; no closed audio loop (ASR+VAD around the mic). Do-not-chase:
     gTTS/pyttsx3, gateway+Redis+React duplicates, hand-rolled vocoders, latent-diffusion
@@ -268,13 +268,13 @@ entries:
 - key: reference_grain_emulation_harvest_2026_10
   name: film-grain + grading harvest (Dehancer/Nuke/Ansel/agx/Oxio sources)
   description: Sourced grain-calibration numbers, pipeline order and destroyed-vs-emulated
-    criticism — basis for postpro heavy-mode tuning
+    criticism - basis for postpro heavy-mode tuning
   type: reference
   body: '2026-10-03, prompted by postpro renders reading destroyed rather than enhanced.
     Ground truth: silver crystals are 2-8um (~5-6um fast colour neg), smaller than
-    a 4K pixel on a 35mm frame — visible grain is CLUMPS, never pixel-locked (video.stackexchange
+    a 4K pixel on a 35mm frame - visible grain is CLUMPS, never pixel-locked (video.stackexchange
     q19394). Calibration: Dehancer auto-scales grain to format with its Film Resolution
-    rule (smallest film detail can''t be smaller than grain size — grain amount must
+    rule (smallest film detail can''t be smaller than grain size - grain amount must
     COST detail); Nuke Grain node = Proportional + Base Resolution reference width
     (postpro''s GRAIN_REFERENCE_WIDTH already matches); Ansel photographic-grain =
     4px crystals at 100% zoom, log-normal, ~30 layers; agx-emulsion fits per-stock
@@ -284,7 +284,7 @@ entries:
     t175096); stacking passes forbidden (r/NukeVFX). Chroma: one correlated mono signal
     split ~0.25R/0.6G/0.15B in linear light (Oxio); independent per-channel noise
     reads CG. Destroyed-look criticism: uniform exaggerated strength, static pattern,
-    halation on everything (Fstoppers'' "cheugy" essay — halation belongs to wide-open
+    halation on everything (Fstoppers'' "cheugy" essay - halation belongs to wide-open
     speculars on specific stocks like 800T on digital). Yedlin: model quality beats
     scan plates. Repos: andre-gfx/agx-emulsion, EaryChow/AgX, darktable dtgrainjulia,
     JanLohse/spectral_film_lut, spektrafilm-rs (spectral neg->print with DIR couplers,
@@ -294,13 +294,13 @@ entries:
     (the always-grain is the only pass), vocab-check pin added.'
 - key: brgen_typography_swiss_only
   name: brgen type is Swiss sans only
-  description: Operator directive 2026-10-11 — no serifs anywhere in brgen, amber or the shared layer (amber added 2026-10-11)
+  description: Operator directive 2026-10-11 - no serifs anywhere in brgen, amber or the shared layer (amber added 2026-10-11)
   type: project
   body: |-
     brgen, RAILS/amber and RAILS/__shared set type in the Helvetica Neue Pro, Helvetica Neue, Arial sans stack (var(--font)), plus one monospace stack (var(--font-mono)) for the terminal chats. No serif, no other family. Editorial and display moments get contrast from scale and weight, never a serif. Enforced by Operator::TypographyLint (kind serif_family, scope RAILS/brgen* and RAILS/__shared, lightgallery.css excepted as vendored), by Master::Design::Pairing routing editorial and luxury to the swiss_house pairing, and by Master::Design::Typeface::HOUSE_RULE in the /fix visual critique prompt. A council proposal that adds a serif or another family is refused.
 - key: project_ascii_face_replaces_braille_2026_10
   name: the terminal face is plain ASCII, Braille is retired
-  description: Operator decision 2026-10-12 — replaces the Braille terminal face approved 2026-09-25; web and CLI render the same way
+  description: Operator decision 2026-10-12 - replaces the Braille terminal face approved 2026-09-25; web and CLI render the same way
   type: project
   body: |-
     Operator, 2026-10-12: "i dont want to use braille anymore ... it has to look better. ideally just monospaced characters", then, after seeing AndrewSink/STL-to-ASCII-Generator, "a face like that would be nice!" and "the web face should be like this too, web and cli the same". This replaces the Braille point-cloud face approved on 2026-09-25. There is no Braille toggle and no Braille code.
@@ -323,13 +323,13 @@ entries:
 
     Ruby Agent (https://github.com/stiller/ruby-agent): approved patch flow, Git checkpoint, rollback and transcript. Those primitives overlap MASTER's effect admission, scoped checkpoints and observations; no dependency is justified.
 
-    repo-bug-hunter (https://github.com/Manishmaurya89/repo-bug-hunter): valuable evaluation method—reproduce a bug with a failing test, re-run it at submit, grade against hidden regression tests, replay every step, and compare variants on paired tasks. It is Python/Docker-based and should not become a MASTER runtime dependency; adapt its test-first experimental method in Ruby if needed.
+    repo-bug-hunter (https://github.com/Manishmaurya89/repo-bug-hunter): valuable evaluation method - reproduce a bug with a failing test, re-run it at submit, grade against hidden regression tests, replay every step, and compare variants on paired tasks. It is Python/Docker-based and should not become a MASTER runtime dependency; adapt its test-first experimental method in Ruby if needed.
 
     arifOS (https://github.com/ariffazil/arifOS): its README's current-verified-state block dated 2026-10-11 reports 2 floors passing, 4 failing, 10 unmeasured, and a mismatch where a HOLD verdict was persisted as ok:true in invocation telemetry; it also says no independent external verifier is bound. This is a caution, not a condemnation: governance slogans, dashboards, and ledgers do not prove correctness unless telemetry preserves the actual verdict and independent reconstruction can verify it. Unmeasured is not pass.
 
     AXIOM-MESH (https://github.com/Zoverions/AXIOM-MESH) reinforces explicit intent, policy authority, bounded effects and portable evidence, but its Node.js/runtime stack offers no demonstrated missing capability in MASTER. HELIX-CORE (https://github.com/helixprojectai-code/HELIX-CORE) advertises a multi-layer, multi-cloud system; documentation alone did not establish a concrete mechanism MASTER needs. Kestrel Sovereign (https://github.com/KestrelSovereignAI/kestrel-sovereign) is Python-first and pre-1.0; its own README identifies plaintext saved-item/RAG chunk bodies while encryption is incomplete. Neither warrants importing a framework.
 
-    AutoDevOps AI (https://github.com/koustubh-v/AutoDevOps-AI) is a React/Node + Python service stack with Gemini and Firebase; CodeHealer (https://github.com/Deepanhp/code-healer) depends on Rails, Sidekiq, Redis, GitHub and OpenAI; both add stacks that conflict with MASTER's small pure-Ruby core. Rubyn Code (https://github.com/MatthewSuttles/rubyn-code) offers useful areas to compare—MCP, context indexing, phased plans and skills—but overlaps existing tooling and is not a reason to add its 112-skill catalog or dependency tree. The supplied iterate URL did not resolve to a README through the repository connector; no implementation claim is accepted from it. Kward, rubycode and Ocak had no repository URLs in the supplied note, so they remain unreviewed rather than guessed.
+    AutoDevOps AI (https://github.com/koustubh-v/AutoDevOps-AI) is a React/Node + Python service stack with Gemini and Firebase; CodeHealer (https://github.com/Deepanhp/code-healer) depends on Rails, Sidekiq, Redis, GitHub and OpenAI; both add stacks that conflict with MASTER's small pure-Ruby core. Rubyn Code (https://github.com/MatthewSuttles/rubyn-code) offers useful areas to compare - MCP, context indexing, phased plans and skills - but overlaps existing tooling and is not a reason to add its 112-skill catalog or dependency tree. The supplied iterate URL did not resolve to a README through the repository connector; no implementation claim is accepted from it. Kward, rubycode and Ocak had no repository URLs in the supplied note, so they remain unreviewed rather than guessed.
 
     Decision: no wholesale agent framework, new gem, multi-agent layer, cloud stack or self-modifying
     constitution. Implemented 2026-10-13: `MASTER/lib/core.rb` derives a typed reversibility

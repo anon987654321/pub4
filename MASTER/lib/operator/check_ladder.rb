@@ -4,7 +4,7 @@
 # command, not a second one.
 require_relative "../io/exec"
 
-# The scan and critique pass over all four trees — two stages of the
+# The scan and critique pass over all four trees - two stages of the
 # repo-wide chain, not the chain itself. `MASTER/bin/operator check` is the chain:
 # it runs this for the lexical and semantic tiers, then the RAILS checks, the
 # suites, the ratchets and the sprawl census, and attributes every file each
@@ -44,7 +44,7 @@ SAFE_ENV = {
   "MASTER_SCAN_DETERMINISTIC" => "1",
   # The fix re-exec after origin/main moves (fetch, rebase --autostash, exec
   # without the bundler wrapper) is a shared-checkout hazard and escapes the
-  # wrapper this file launches with — off under the check.
+  # wrapper this file launches with - off under the check.
   "MASTER_FIX_HOT_RELOAD" => "0",
   "MASTER_WATCH" => "0",
   "MASTER_WATCHER" => "0",
@@ -118,7 +118,7 @@ end
 TREE_PATHS = { "MASTER" => ".", "RAILS" => "../RAILS", "OPENBSD" => "../OPENBSD", "STUDIO" => "../STUDIO" }.freeze
 
 # Named trees when --tree is given, all four otherwise. An unknown name is
-# refused rather than silently narrowing the check to nothing — a check that
+# refused rather than silently narrowing the check to nothing - a check that
 # measures no tree and exits 0 is the failure this whole file is written against.
 named_trees = ARGV.filter_map { |arg| arg[/\A--tree=(.+)\z/, 1] }.flat_map { |value| value.split(",") }.map(&:upcase)
 unless (named_trees - TREE_PATHS.keys).empty?
@@ -206,11 +206,11 @@ def inconclusive!(message)
   # semantic tier was unavailable" and "the semantic tier was satisfied by the
   # floor". Keep the states separate.
   if message.start_with?("#{SEMANTIC_LINE} ")
-    warn "check: semantic tier INCONCLUSIVE — deterministic checklist is supplemental and does not satisfy semantic review"
+    warn "check: semantic tier INCONCLUSIVE - deterministic checklist is supplemental and does not satisfy semantic review"
   end
 
   if TIER == :semantic
-    warn "check: semantic tier reached no verdict — #{message}"
+    warn "check: semantic tier reached no verdict - #{message}"
     exit 3
   end
   abort "err: #{message}"
@@ -234,7 +234,7 @@ def capture_with_timeout(line)
       Process.kill("TERM", wait.pid)
       wait.join(10) || Process.kill("KILL", wait.pid)
       reader.join(5)
-      inconclusive! "#{line} produced no verdict in #{STAGE_TIMEOUT}s and was killed — " \
+      inconclusive! "#{line} produced no verdict in #{STAGE_TIMEOUT}s and was killed - " \
                     "#{buffer.empty? ? 'it printed nothing at all' : "it printed #{buffer.lines.length} line(s)"}. " \
                     "Nothing was measured; raise MASTER_CHECK_STAGE_TIMEOUT only if you know the stage was working."
     end
@@ -259,7 +259,7 @@ def assert_clean(*paths)
   changed, = Master::Io::Exec.capture2e("git", "diff", "--name-only", "--", *paths, chdir: REPO)
   files = changed.split("\n").reject(&:empty?)
   abort <<~ERR
-    err: #{paths.join(", ")} is not clean after the chain — #{files.length} file(s) modified:
+    err: #{paths.join(", ")} is not clean after the chain - #{files.length} file(s) modified:
     #{files.first(20).map { |f| "      #{f}" }.join("\n")}
     #{files.length > 20 ? "      ... and #{files.length - 20} more\n" : ""}
     The diff is printed above. This is the expected outcome when /fix had work to
@@ -280,8 +280,8 @@ if EXPLAIN
   exit 0
 end
 
-# Only the lexical tier writes. The diff prints for it in either mode — in
-# scan-only that is the tell that a step which promised to measure has written —
+# Only the lexical tier writes. The diff prints for it in either mode - in
+# scan-only that is the tell that a step which promised to measure has written -
 # and the clean-tree assertion belongs to full-fix alone. A semantic-only pass
 # asserts nothing about the tree, because it fails on whatever the lexical stage
 # before it just fixed.

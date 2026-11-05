@@ -30,29 +30,29 @@ module Deploy
     # Against the surfaces brgen actually paints, which are not social's.
     #
     # This paired every vertical accent with social.bg (#17161c) and
-    # social.surface_elevated (#211f28). brgen's dark theme is brgen_old_dark —
-    # brgen's :root includes brgen-old-dark-tokens, which outranks social — so the
+    # social.surface_elevated (#211f28). brgen's dark theme is brgen_old_dark -
+    # brgen's :root includes brgen-old-dark-tokens, which outranks social - so the
     # real surfaces are #000000 and #1a1a1a. Every vertical finding was measured
     # against a background the app never renders.
     #
     # It mattered in both directions. The marketplace accent read 3.92:1 on
-    # social.surface_elevated and 4.19 on the real one — still failing, so the
+    # social.surface_elevated and 4.19 on the real one - still failing, so the
     # lift was right for the wrong reason. messenger #6b7fd7 reads 4.37 on
-    # social's and 4.68 on the real one — it already passed, and was "corrected"
+    # social's and 4.68 on the real one - it already passed, and was "corrected"
     # for nothing.
     VERTICAL_SURFACE_DIALECT = "brgen_old_dark"
 
     # Vertical accents used only inside a light-theme block.
     #
-    # The comment on MODE_PREFIX above states the rule this enforces — pairing a
+    # The comment on MODE_PREFIX above states the rule this enforces - pairing a
     # light-mode foreground against a dark-mode surface invents a combination
-    # the UI never renders — and MODE_PREFIX cannot reach these, because
+    # the UI never renders - and MODE_PREFIX cannot reach these, because
     # vertical_accents carry no light_/dark_ prefix. So the mode is read from
     # the stylesheets instead of from the key.
     #
     # marketplace is the case. --vertical-marketplace-accent-hover has exactly
     # one use in the whole tree, in a rule under `:root[data-theme="light"]` in
-    # brgen's stylesheet — and design_tokens.yml says why in the note
+    # brgen's stylesheet - and design_tokens.yml says why in the note
     # above the token: the accent is a background carrying dark ink, so small
     # text in this vertical wears `hover`, and only the light theme swaps to it.
     # On its actual ground it measures 6.03:1. Paired against brgen_old_dark's
@@ -110,7 +110,7 @@ module Deploy
     end
 
     # The vertical accent ink, from the shared dialect tokens that set it. #110f19 was
-    # chosen against the accent column and measured there — "dark 5.10 to 9.94",
+    # chosen against the accent column and measured there - "dark 5.10 to 9.94",
     # which is the accent column exactly. Nobody measured it against hover.
     def vertical_accent_ink(rails_root)
       sheet = File.join(rails_root, "__shared/app/assets/stylesheets/_dialect_tokens.scss")
@@ -175,7 +175,7 @@ module Deploy
     #
     # That is what social.accent does. Every app emits `:root { --accent:
     # #897dda }` from the shared baseline and then a second `:root` further down
-    # with its own dialect — #f2f2f2 for brgen's BRGEN_OLD grayscale, #7e6e55 for
+    # with its own dialect - #f2f2f2 for brgen's BRGEN_OLD grayscale, #7e6e55 for
     # amber's luxury, #63c363 for bsdports' wscons. Same specificity, later wins,
     # so the social value is shadowed in all three. Measured: with the accent
     # "corrected" locally and production still on the old value, both computed
@@ -184,13 +184,13 @@ module Deploy
     #
     # Deliberately reads the built CSS, unlike read_custom_properties, which
     # excludes builds/ so a stale artifact cannot vote. Cascade order only exists
-    # after compilation — the SCSS says which mixins exist, not which one lands
+    # after compilation - the SCSS says which mixins exist, not which one lands
     # last in a given app. The freshness risk is real and is covered by
     # `build_all_css.rb --check` and the generated_asset check; if those are
     # skipped this reads yesterday's answer.
     #
     # Scope: plain `:root` shadowing, which is the demonstrated defect. It does
-    # not resolve @media, [data-theme], or body-class scopes — a value at a more
+    # not resolve @media, [data-theme], or body-class scopes - a value at a more
     # specific selector (body.vertical-marketplace) is treated as painting,
     # which is correct for those and conservative elsewhere.
     def winning_property_values(rails_root, prop)
@@ -212,7 +212,7 @@ css.scan(/([^{}]+)\{([^{}]*)\}/) do
   end
 end
 
-# Among bare `:root` rules only the last one is the default winner —
+# Among bare `:root` rules only the last one is the default winner -
 # but a `:root` inside @media is not a bare `:root`. It applies only
 # when its condition holds, so it cannot shadow the default, and the
 # regex above cannot tell them apart on its own: both have the
@@ -221,8 +221,8 @@ end
 # bsdports is the case. application.scss:38 sets --text-secondary to
 # #499149 and line 509 sets it to var(--text) inside
 # `@media (prefers-contrast: more)`. Reading the second as the winner
-# made this report #499149 as overridden — a colour that never reaches
-# a pixel — while a browser with default settings paints it on 45
+# made this report #499149 as overridden - a colour that never reaches
+# a pixel - while a browser with default settings paints it on 45
 # elements of the ports index. design_tokens.yml then recorded the
 # wrong value twice on the strength of that reading, most recently with
 # a note reasoning explicitly from "a later :root".
@@ -275,7 +275,7 @@ decls.compact.each { |_, v, _| values << v }
       return true if value.nil? || value.to_s.strip.empty?
 
       winning = winning_property_values(rails_root, prop)
-      # No declarations found at all (property lives outside the built sheets) —
+      # No declarations found at all (property lives outside the built sheets) -
       # do not silence a finding on the strength of a failed lookup.
       return true if winning.empty?
 
@@ -380,7 +380,7 @@ decls.compact.each { |_, v, _| values << v }
       pairs
     end
 
-    # rem/em/px → px assuming 16px root
+    # rem/em/px -> px assuming 16px root
     def to_px(value, root_px: 16.0)
       s = value.to_s.strip
 
@@ -476,7 +476,7 @@ decls.compact.each { |_, v, _| values << v }
 
         covered = paths.any? do |p|
           body = css_by_path[p]
-          # Accept min-height/width or explicit height/width ≥ Fitts floor.
+          # Accept min-height/width or explicit height/width >= Fitts floor.
           # Also treat CSS vars named --space-12+ / --touch as covered (tokenized Fitts).
           extract_box_mins(body).any? { |h| h + 0.01 >= min_px } ||
             body.match?(/--space-(1[2-9]|[2-9]\d)|--touch|min-height:\s*44px|height:\s*44px|width:\s*var\(--space-1[2-9]/i)

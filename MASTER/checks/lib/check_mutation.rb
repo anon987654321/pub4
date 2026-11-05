@@ -11,7 +11,7 @@ module Deploy
   # Tests the checks, not the apps.
   #
   # checks/data/calibration.yml already compares hand-labelled fixtures to check
-  # verdicts — a hand-fed version of this idea, capped at however many fixtures
+  # verdicts - a hand-fed version of this idea, capped at however many fixtures
   # someone was willing to label. This automates the other half: take each
   # *good* fixture, break it the way a real regression would, and assert the
   # suite notices. A mutation that survives is a hole in the check, and a check
@@ -108,7 +108,7 @@ module Deploy
       fixtures.each do |path|
         id = File.basename(path).sub(/\Agood_/, "").sub(/\.html\z/, "")
         unless known.include?(id)
-          @result.warn("check_mutation: #{File.basename(path)} has no matching surface schema #{id.inspect} — skipped")
+          @result.warn("check_mutation: #{File.basename(path)} has no matching surface schema #{id.inspect} - skipped")
           next
         end
 
@@ -116,7 +116,7 @@ module Deploy
         baseline = verdict(html, id)
         if baseline[:hard].positive?
           @result.fail(
-            "check_mutation: baseline fixture good_#{id}.html already produces #{baseline[:hard]} hard finding(s) — " \
+            "check_mutation: baseline fixture good_#{id}.html already produces #{baseline[:hard]} hard finding(s) - " \
             "a 'good' fixture the checks reject makes every mutation result meaningless",
           )
           next
@@ -167,7 +167,7 @@ module Deploy
 
         html = File.read(path)
         if hard_count(check.live_findings(page, 200, html, "fixture")).positive?
-          @result.fail("check_mutation: page_simulation already rejects good_#{id}.html — its plants measure nothing")
+          @result.fail("check_mutation: page_simulation already rejects good_#{id}.html - its plants measure nothing")
           next
         end
 
@@ -208,7 +208,7 @@ module Deploy
       check = MobileFlowCheck.new
       baseline = check.judge(CheckResult.new, "brgen", "core", MOBILE_CLEAN)
       unless baseline.failures.empty?
-        @result.fail("check_mutation: mobile_flow rejects its clean measurement — #{baseline.failures.first}")
+        @result.fail("check_mutation: mobile_flow rejects its clean measurement - #{baseline.failures.first}")
         return
       end
 
@@ -258,7 +258,7 @@ module Deploy
 
     def report(applied, inapplicable, survived)
       if applied.zero?
-        @result.fail("check_mutation: no mutation applied to any fixture — the catalogue does not match the corpus")
+        @result.fail("check_mutation: no mutation applied to any fixture - the catalogue does not match the corpus")
         return
       end
 
@@ -272,7 +272,7 @@ module Deploy
         surfaces = rows.map { |r| r[:id] }.sort.join(", ")
 
         @result.fail(
-          "check_mutation: #{mutation} survives on #{surfaces} — the suite does not detect " \
+          "check_mutation: #{mutation} survives on #{surfaces} - the suite does not detect " \
           "\"#{rows.first[:description]}\" on #{rows.size == 1 ? 'this surface' : "#{rows.size} surfaces"}",
         )
       end

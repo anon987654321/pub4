@@ -7,15 +7,15 @@ module Master
   module Io
     # Fetches a URL, returns first ~16KB of content with HTML stripped to plain text.
     # Rewrites well-known sites to the most useful underlying URL:
-    #   github.com/.../blob/...     → raw.githubusercontent.com
-    #   gist.github.com/<u>/<id>    → gist.githubusercontent.com/<u>/<id>/raw
-    #   arxiv.org/abs|pdf/<id>      → ar5iv.labs.arxiv.org/html/<id>  (full text)
-    #   codepen.io/<u>/pen/<slug>   → triple-fetch .html + .css + .js
+    #   github.com/.../blob/...     -> raw.githubusercontent.com
+    #   gist.github.com/<u>/<id>    -> gist.githubusercontent.com/<u>/<id>/raw
+    #   arxiv.org/abs|pdf/<id>      -> ar5iv.labs.arxiv.org/html/<id>  (full text)
+    #   codepen.io/<u>/pen/<slug>   -> triple-fetch .html + .css + .js
     # Pairs with web_search for two-step research. Governor-permitted.
     class WebFetch
       TIER = :guarded
       NAME = "web_fetch".freeze
-      DESCRIPTION = "Fetch a URL → plain text. Rewrites github/gist/arxiv/codepen URLs.".freeze
+      DESCRIPTION = "Fetch a URL -> plain text. Rewrites github/gist/arxiv/codepen URLs.".freeze
       TIMEOUT = 15
       MAX_BYTES = 16_000
       MAX_FULL_BYTES = 4 * 1024 * 1024

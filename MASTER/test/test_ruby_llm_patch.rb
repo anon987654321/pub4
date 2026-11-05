@@ -29,13 +29,13 @@ class TestRubyLlmPatch < Minitest::Test
   def test_the_registry_reads_as_utf8_under_an_ascii_locale
     Dir.mktmpdir do |dir|
       path = File.join(dir, "models.json")
-      File.write(path, JSON.generate([{ id: "a/b", name: "Café — model", provider: "openrouter" }]), encoding: "UTF-8")
+      File.write(path, JSON.generate([{ id: "a/b", name: "Café - model", provider: "openrouter" }]), encoding: "UTF-8")
       previous = Encoding.default_external
       silence_warnings { Encoding.default_external = Encoding::US_ASCII }
 
       models = RubyLLM::Models.new.load_from_json(path)
 
-      assert_equal "Café — model", models.find("a/b").name
+      assert_equal "Café - model", models.find("a/b").name
     ensure
       silence_warnings { Encoding.default_external = previous }
     end

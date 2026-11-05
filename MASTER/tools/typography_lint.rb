@@ -30,9 +30,9 @@ module Operator
     PROFILE_HINTS = {
       "editorial" => { measure: "66ch", leading: 1.5, text_wrap: "pretty", numbers: true },
       "legal" => { measure: "66ch", leading: 1.5, text_wrap: "pretty", numbers: true },
-      "social" => { measure: "45–55ch", leading: 1.5, text_wrap: "pretty", numbers: true },
+      "social" => { measure: "45-55ch", leading: 1.5, text_wrap: "pretty", numbers: true },
       "terminal" => { measure: "80ch", leading: 1.4, text_wrap: "stable", numbers: false },
-      "marketplace" => { measure: "45–66ch", leading: 1.5, text_wrap: "pretty", numbers: true },
+      "marketplace" => { measure: "45-66ch", leading: 1.5, text_wrap: "pretty", numbers: true },
     }.freeze
 
     SOURCES = [

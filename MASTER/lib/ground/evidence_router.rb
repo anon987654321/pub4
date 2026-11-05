@@ -29,7 +29,7 @@ module Master
       # A named site (a URL, or a bare domain) plus something to do there. File names such as
       # foo.rb or notes.md do not end in a registrable TLD, so they stay repository questions.
       SITE = %r{\bhttps?://\S+|\bwww\.\S+|\b[a-z0-9][a-z0-9-]*\.(?:com|net|org|io|co|app|shop|store|no|se|dk|de|uk|fr|nl|eu)\b}i
-      SITE_INTENT = /\b(?:go\s+to|visit|summari[sz]e|headlines?|news|today(?:['’]s)?|latest|current|find|look(?:ing)?|search|browse|check|open|read|see|show|get|buy|price|prices|cheap(?:est)?|compare|reviews?|listings?|products?|deals?|order|what'?s\s+on)\b/i
+      SITE_INTENT = /\b(?:go\s+to|visit|summari[sz]e|headlines?|news|today(?:['\u2019]s)?|latest|current|find|look(?:ing)?|search|browse|check|open|read|see|show|get|buy|price|prices|cheap(?:est)?|compare|reviews?|listings?|products?|deals?|order|what'?s\s+on)\b/i
       # A question put to MASTER about itself ("why aren't you reading TTS aloud?", "what does /fix
       # do?") is answered from this checkout, not from memory: it names the assistant and one of its
       # own parts, or a slash command.

@@ -85,7 +85,7 @@ module Master
           "Narrative alone is not proof: #{proof_of_equivalence.fetch("no_narrative_substitute")}.",
           "Existing structural checks and their bad/good fixtures:",
           *structural_checks.map { |id, row| "  #{id}: #{row.fetch("detector")}; flags #{row.fetch("positive_fixture")}; spares #{row.fetch("negative_fixture")}" },
-          *not_applicable_operations.map { |id, why| "  #{id}: not applicable — #{why}" },
+          *not_applicable_operations.map { |id, why| "  #{id}: not applicable - #{why}" },
           "",
           "Evidence priority: characterization, structural, runtime, and visual evidence outrank semantic judgment; taste alone never authorizes mutation.",
           "Check the domain smell catalog and adapter before proposing a transformation; similarity is not sameness and duplication is not automatically abstraction-worthy.",

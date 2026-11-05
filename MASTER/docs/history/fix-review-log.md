@@ -8,7 +8,7 @@ Historical authority descriptions below reflect their dated review snapshots;
 follow the live contract and configuration above when they differ.
 Checklist markers in this preserved review were historical triage notation. The live, consolidated follow-up is in root `TODO.md`; this file is provenance, not a second task list.
 
-## 2026-10-22 — Law authority, operational checks and /fix RAILS
+## 2026-10-22 - Law authority, operational checks and /fix RAILS
 
 Updated 2026-10-22. The source review began from main at 6214949c1f402d94e8d44e3e895d43eb8e3440be. Always re-read main before continuing; other sessions commit frequently.
 
@@ -58,7 +58,7 @@ One concrete Kernel boundary needs a measured decision: `MASTER/bin/master repla
 - Current CSS source still has other historical ratchet rows. Names and old measured values are clues, not current check output; confirm current code-line counts and CSSConstitutionCheck findings before choosing the next file.
 - The latest observed commit 6214949 contains a change intended to let the read-only pre-repair proof tolerate other sessions committing. This is not proof that a bounded /fix trial has completed or that repair quality is good.
 
-## P0 — prove the current RAILS state and preserve trial integrity
+## P0 - prove the current RAILS state and preserve trial integrity
 
 - Identify whether a bounded /fix trial is still running, and record its pinned starting SHA, target tree, toolchain identity, Law digest, baseline output, repair output, and terminal state. Do not use a moving branch name as the only trial identity.
 - Run MASTER/bin/operator check --scan-only --tree=RAILS on the actual checkout. Preserve the exact output for schema_migration, release, css_constitution, and rendered/visual status. Do not infer a green result from this handoff.
@@ -68,7 +68,7 @@ One concrete Kernel boundary needs a measured decision: `MASTER/bin/master repla
 
 Rationale: C1 is the reported problem that main starts red, C2 is the reported long proof cycle, and C3 is the reported repair-quality risk. These claims came from a prior handoff and were not re-measured in this source-only review. The bounded trial and its evidence answer those questions; a narrative does not.
 
-## P1 — prove write-path admission and transaction safety
+## P1 - prove write-path admission and transaction safety
 
 - Trace every write, stage, and commit path from the actual call sites before writing tests: World Effect execution, Constitution#admit, Master::Io::Base, DiffStager, Committer, Fix::Transaction, rollback/recovery, direct File.write/IO.write and FileUtils mutation paths.
 - Define the property before building the write-path audit. Core::Fold-proposed Effects must pass Master::Core::Constitution#admit before Master::Core::World performs them. Master::Io::Base, DiffStager, Fix::Transaction, Committer, and other /fix mutation sites are distinct write planes with their own guards and transaction responsibilities; they must not be assumed to be literal Core Effects.
@@ -82,7 +82,7 @@ Rationale: C1 is the reported problem that main starts red, C2 is the reported l
 
 Rationale: The central architectural property is one admission decision per Core Effect, not a simplistic replacement of all existing protection layers. Transaction, immutable-path, staging, I/O-tool and commit checks may have different jobs and operate on different APIs. The evidence must prove that each relevant write plane is governed and that the protections compose; it must not manufacture an architectural requirement that all internal writes literally call Constitution#admit.
 
-## P1 — keep DesignSweep inside the transaction boundary
+## P1 - keep DesignSweep inside the transaction boundary
 
 - Keep the standalone design command out of automatic /fix application until its write/apply phase is transaction-aware. The current standalone runner can commit each kept edit locally; a later check failure cannot undo those independent commits.
 - Design a candidate/apply split: evaluate edits in an isolated candidate representation, validate the whole result, then apply through the existing Fix::Transaction and normal Committer only after admission and verification.
@@ -93,7 +93,7 @@ A later source pass fixed one narrower acceptance defect: `DesignLoop#keep` now 
 
 Rationale: The visual sweep is useful, but its current commit semantics are not an atomic phase of /fix. Keeping it separate is more honest than saying the full lifecycle is transactional when it is not.
 
-## P2 — consolidate the Law catalogue without inventing a second authority
+## P2 - consolidate the Law catalogue without inventing a second authority
 
 - Run LawRegistryAudit and save yaml_only, law_only, registry_only, lexical_unwired, structural_unwired, semantic_only and dep_graph_gaps. Resolve each drift with an explanation backed by source and tests.
 - Audit each check/check for whether it is a policy assertion, a factual measurement, an environment precondition, or a composite. Link policy assertions to real existing Law IDs when the mapping is accurate; record unmapped normative checks as coverage gaps instead of fabricating IDs.
@@ -104,7 +104,7 @@ Rationale: The visual sweep is useful, but its current commit semantics are not 
 
 Rationale: A detector ID, a constitutional Law ID, a check ID, and a test name can all be different identifiers because they answer different questions. The goal is traceable one-source policy, not false one-to-one identity or a global class/file rename.
 
-## P2 — RAILS/CSS follow-through
+## P2 - RAILS/CSS follow-through
 
 - Confirm the component partial order and output with the existing CSS bundle and visual/source tests. The _components.scss wrapper currently includes base, forms, overlays, feedback, fields, progress_and_uploads, and content_controls in order.
 - Use the real CSS check and current source line counts to select the next oversize candidate. Do not split _surface_chrome_endgame.scss or _minimal.scss from stale historical numbers alone.
@@ -112,7 +112,7 @@ Rationale: A detector ID, a constitutional Law ID, a check ID, and a test name c
 - Run the complete release composite after source blockers are resolved. Diagnose browser evidence separately from schema/CSS source defects.
 - Centralize RailsApp detection only if a source trace confirms meaningful duplication among rails_app.rb, visual_pass, RailsProof and the RAILS/<app>/fix.yml profiles. Add tests before delegating callers.
 
-## P2 — glossary, help, and contributor polish
+## P2 - glossary, help, and contributor polish
 
 - Add a glossary-only vocabulary file outside sacred data/, clarify Law/check/proof/result-state terms, and state that the execution registry has no policy authority.
 - Make bin/operator check the one user-facing command for the ladder.
@@ -124,7 +124,7 @@ Rationale: A detector ID, a constitutional Law ID, a check ID, and a test name c
 - Measure cold-start time before setting a 200 ms version-command ratchet. A target without a baseline is aspirational, not evidence.
 - Keep commit subjects aligned with MASTER/data/commit_format.yml.
 
-## P3 — test whether self-regeneration pays for itself
+## P3 - test whether self-regeneration pays for itself
 
 - Choose the smallest grain with a stable API and clear behavior (the prior proposal names ProseMetrics, which must be verified to exist and be suitable).
 - Write a behavioral specification and independent oracle before deleting implementation. Run the deletion experiment only in a disposable copy outside the shared working tree.
@@ -150,12 +150,12 @@ Rationale: A detector ID, a constitutional Law ID, a check ID, and a test name c
 - Do not use Vercel or GitHub Actions as a substitute for local verification.
 - Do not call the repair finished until the real tests, check outputs, and bounded trial provide evidence.
 
-## 2026-10-26 — MASTER hardening follow-through
+## 2026-10-26 - MASTER hardening follow-through
 
 Updated: 2026-10-26 (Europe/Oslo; GitHub commit timestamps are UTC)  
 Reviewed base: `1ef67fe10` (external review snapshot)  
 Integration base: `0b59844318f2e5527b5d5d54328a44f433438c3c`  
-P01–P11 integration head (historical; follow-on commits are recorded below): `73a45cc7a9800808fb7658e95dc3dceacf73bd67`
+P01-P11 integration head (historical; follow-on commits are recorded below): `73a45cc7a9800808fb7658e95dc3dceacf73bd67`
 
 ## Follow-on kernel audit-log append complexity (2026-10-26)
 
@@ -228,25 +228,25 @@ The opt-in trajectory writer now derives its 25 MiB ceiling from the existing tr
 
 The new trajectory tests, like all other new tests in this continuation, remain unexecuted. See root `TODO.md` for the consolidated focused test sequence and the still-INCONCLUSIVE proof state. No full /fix run or live verification is claimed.
 
-## State of the P01–P11 tranche
+## State of the P01-P11 tranche
 
 The patch tranche and follow-up corrections are committed directly to `main` in 15 commits, touching 24 files. The branch is 15 commits ahead of the integration base and zero behind it. This is direct-to-main integration, not a pull-request merge.
 
-- **P01 — sacred paths:** the fail-closed implementation was already present on the integration base; it was retained rather than replayed.
-- **P02 — secret veto:** covers write/note/exec/git effect inputs and refuses when the configured secret pattern is absent.
-- **P03/P04 — monitors:** per-iteration watchdog and watcher recovery, including a follow-up protecting the watcher from a failed error-event publish.
-- **P05 — stranded transaction:** transaction recovery is attempted before returning an expired-budget result.
-- **P06 — provider quarantine wiring:** model outcomes are routed through the diagnostics/quarantine path.
-- **P07 — web secrets:** config directories/files use private permissions, including existing config files.
-- **P08 — TTS daemon probe:** accepts the daemon's versioned health response; the executable bit on `bin/tts-worker` was restored in a follow-up commit.
-- **P09 — dependency boot:** subprocess capture and lock acquisition are bounded; gem-store destruction is replaced by a conservative stale-store rename; private bundle environment preserves frozen mode. Pipe draining was bounded in a follow-up.
-- **P10 — law parity:** raises the audited priority ceiling and adds `tools/law_parity_check.rb` plus `rake lint:law_parity`. The `RENDERED_VALUES` gap is intentionally surfaced as a real gap; it must not be silenced without a detector or an authorized deferral.
-- **P11 — constitutional self-test:** unreadable inputs and malformed YAML become findings; release manifest loading uses safe YAML.
+- **P01 - sacred paths:** the fail-closed implementation was already present on the integration base; it was retained rather than replayed.
+- **P02 - secret veto:** covers write/note/exec/git effect inputs and refuses when the configured secret pattern is absent.
+- **P03/P04 - monitors:** per-iteration watchdog and watcher recovery, including a follow-up protecting the watcher from a failed error-event publish.
+- **P05 - stranded transaction:** transaction recovery is attempted before returning an expired-budget result.
+- **P06 - provider quarantine wiring:** model outcomes are routed through the diagnostics/quarantine path.
+- **P07 - web secrets:** config directories/files use private permissions, including existing config files.
+- **P08 - TTS daemon probe:** accepts the daemon's versioned health response; the executable bit on `bin/tts-worker` was restored in a follow-up commit.
+- **P09 - dependency boot:** subprocess capture and lock acquisition are bounded; gem-store destruction is replaced by a conservative stale-store rename; private bundle environment preserves frozen mode. Pipe draining was bounded in a follow-up.
+- **P10 - law parity:** raises the audited priority ceiling and adds `tools/law_parity_check.rb` plus `rake lint:law_parity`. The `RENDERED_VALUES` gap is intentionally surfaced as a real gap; it must not be silenced without a detector or an authorized deferral.
+- **P11 - constitutional self-test:** unreadable inputs and malformed YAML become findings; release manifest loading uses safe YAML.
 - **Additional hardening:** parity loader errors are logged and re-raised, parity is not run twice by the lint entrypoint, and generic YAML duplicate census remains outside the constitutional self-test's stated boundary.
 
 The review's exact snapshot and the integration base differed. Review line numbers and patch contexts must not be treated as proof of the current line layout; read current source and tests before extending a patch.
 
-## Verification status — do not overstate
+## Verification status - do not overstate
 
 Regression tests were added or extended in these areas: constitution, dependency manager, fix convergence/run budget, law parity, provider-quarantine wiring, self-test, watcher, web server, and TTS worker contract.
 
@@ -263,11 +263,11 @@ The latest combined commit status observed for `08c095f97cd3495269d6643bf3bc8918
 5. Verify the TTS worker's executable mode and health-probe behavior from two processes; check the socket inode as described in the review.
 6. Run `test/test_stale_bundle_sweep.rb`; verify `bin/cleanup` lists eligible stale stores in dry-run mode and removes only stores older than 30 days with `--apply`.
 
-## Outstanding review findings — reconciled against current main
+## Outstanding review findings - reconciled against current main
 
-The items below are the residual findings after the P01–P11 source changes and the 2026-11-05 reconciliation above. A source fix or authored test is not execution evidence; statuses remain NOT_RUN or INCONCLUSIVE until captured output exists.
+The items below are the residual findings after the P01-P11 source changes and the 2026-11-05 reconciliation above. A source fix or authored test is not execution evidence; statuses remain NOT_RUN or INCONCLUSIVE until captured output exists.
 
-- **Law/register truth — source state reconciled on 2026-11-05:** L4 now has stale-member and baseline-integrity detection in `lib/operator/self_findings.rb` with regression cases in `test/test_self_findings_drift.rb`; the persisted `SILENT_RESCUE` census is not refreshed or declared clean until the pinned Ruby 4.0.5 census/ratchet output is reviewed. L5 now detects direct positional prompt, heredoc, and `prompt:` call-site bypasses; Council ideation's proposer, critic, and synthesizer turns now use `InterModelContract`, with focused detector and exchange tests in `test/test_inter_model_contract.rb`. L7's `test_runtime_self_test_checks_match_laws_yml_contract` asserts exact declarative/runtime parity. L8's registry loader rejects rows without exactly one executable class/script, its regression tests cover headless rows, and the runner explicitly keeps errored checks non-successful; `CHECK_STRICT_INCONCLUSIVE` only controls inconclusive results. These source changes and tests are present, but all affected test execution remains NOT_RUN.
+- **Law/register truth - source state reconciled on 2026-11-05:** L4 now has stale-member and baseline-integrity detection in `lib/operator/self_findings.rb` with regression cases in `test/test_self_findings_drift.rb`; the persisted `SILENT_RESCUE` census is not refreshed or declared clean until the pinned Ruby 4.0.5 census/ratchet output is reviewed. L5 now detects direct positional prompt, heredoc, and `prompt:` call-site bypasses; Council ideation's proposer, critic, and synthesizer turns now use `InterModelContract`, with focused detector and exchange tests in `test/test_inter_model_contract.rb`. L7's `test_runtime_self_test_checks_match_laws_yml_contract` asserts exact declarative/runtime parity. L8's registry loader rejects rows without exactly one executable class/script, its regression tests cover headless rows, and the runner explicitly keeps errored checks non-successful; `CHECK_STRICT_INCONCLUSIVE` only controls inconclusive results. These source changes and tests are present, but all affected test execution remains NOT_RUN.
 - **Resource bounds:** an age-bounded stale-store sweep is implemented in `lib/boot/stale_bundle_sweep.rb` and wired into `bin/cleanup`; it is dry-run by default, limits scope to expected `gems.stale-*` stores, skips symlinks, and requires 30 days of age. Its regression test remains NOT_RUN. The inter-model metrics ledger now uses the shared private `Trace::Log.append_jsonl` writer, with a 5 MiB cap, locked rotation, and a size-checked reader; privacy/retention assertions were added. Those tests are also NOT_RUN. The provider-health reader already scores only the last 900 seconds, reads at most 5 MiB and 20,000 records per retained generation, merges the active and `.1` generations, and includes success recovery; `test_provider_health_cache.rb` covers bounded reads, rotation, score recovery and cache invalidation. The Fix Kernel append-head cache already rejects inode changes/truncation and revalidates the full chain whenever another writer extends the ledger; `test_fix_kernel.rb` covers a tampered prefix followed by an external append. These are source-covered, not outstanding implementation gaps; their tests remain NOT_RUN. Still open: complete the census of any other append-only writers and run all retention/cache regressions on pinned Ruby.
 - **Fix lifecycle:** R8 remains open for transaction/recovery-aware DesignRun candidate application and later-verification rollback; the definite commit-refusal reporting/restoration case is source-fixed and regression-covered, but not runtime-tested. R9 still needs truth checks for abort-on-stall, durable partial outcomes and skippable-stage deadlines. R10 still needs atomic undo-journal pruning and safe reference-aware reclamation. R11 still needs a load-bearing silent-rescue audit that preserves fatal exceptions.
 - **Providers and I/O:** provider-health recovery and bounded recent history are already source-covered (tests NOT_RUN). The legacy `LLMDispatcher` Replicate chat poll now checks for a token, accepts only the exact HTTPS `api.replicate.com:443/v1/predictions/<id>` URL, sends auth only to that host, and applies an overall 240s deadline with 5s/10s open/read timeouts; no-network regressions cover those bounds (NOT_RUN). Do not close the wider Replicate item yet: `Io::ReplicateClient` pagination/download/token-file paths still need a separate origin, permission and timeout audit. Retry jitter, process-group probe termination, broader error redaction and Gemini key transport also remain to verify (R12/R13/H5).

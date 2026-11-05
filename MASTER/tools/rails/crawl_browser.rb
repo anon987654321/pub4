@@ -1,7 +1,7 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
-# Ferrum browser crawl — element presence and light interaction checks.
+# Ferrum browser crawl - element presence and light interaction checks.
 # Run from MASTER: BUNDLE_WITH=test bundle exec ruby ../MASTER/tools/rails/crawl_browser.rb
 
 require "optparse"
@@ -19,7 +19,7 @@ def run_checks(browser, checks, label, failures)
       failures << "#{label}: missing selector #{sel.inspect}" unless sel && BrowserProbeSupport.evaluate(browser, "!!document.querySelector(#{sel.to_json})")
     when "js"
       ok = BrowserProbeSupport.evaluate(browser, "(#{check['expr']})")
-      failures << "#{label}: js check failed — #{check['expr']}" unless ok
+      failures << "#{label}: js check failed - #{check['expr']}" unless ok
     when "text_absent"
       body = BrowserProbeSupport.evaluate(browser, "document.body ? document.body.innerText : ''").to_s
       failures << "#{label}: page contains #{check['value'].inspect}" if body.include?(check["value"].to_s)
@@ -27,7 +27,7 @@ def run_checks(browser, checks, label, failures)
       failures << "#{label}: unknown browser check type #{check['type'].inspect}"
     end
   rescue StandardError => e
-    failures << "#{label}: #{check['type']} — #{e.class}: #{e.message}"
+    failures << "#{label}: #{check['type']} - #{e.class}: #{e.message}"
   end
 end
 
@@ -56,14 +56,14 @@ def crawl_target(browser, name, url, browser_spec, failures)
   begin
     browser.go_to(url)
   rescue Ferrum::TimeoutError, Ferrum::PendingConnectionsError => e
-    failures << "#{label}: navigation failed — #{e.class}: #{e.message}"
+    failures << "#{label}: navigation failed - #{e.class}: #{e.message}"
     return
   end
   sleep warmup
   run_checks(browser, browser_spec["checks"], label, failures)
   run_master_session(browser, browser_spec["session"], label, failures) if browser_spec["session"]
   fatal = BrowserProbeSupport.fatal_js_errors(browser)
-  failures << "#{label}: js errors — #{fatal.join('; ')}" unless fatal.empty?
+  failures << "#{label}: js errors - #{fatal.join('; ')}" unless fatal.empty?
 end
 
 options = { public: false, skip_closed: true, force: ENV["PROBE_FORCE_BROWSER"] == "1" }
@@ -77,18 +77,18 @@ end.parse!
 chrome = BrowserProbeSupport.chrome_path
 unless chrome || options[:force]
   reason = if RUBY_PLATFORM.include?("darwin") && !options[:force]
-             "macOS — set PROBE_FORCE_BROWSER=1 or run on VPS"
+             "macOS - set PROBE_FORCE_BROWSER=1 or run on VPS"
            else
              "no Chrome/Chromium executable"
            end
-  puts "crawl-browser: inconclusive — #{reason}"
+  puts "crawl-browser: inconclusive - #{reason}"
   exit 3
 end
 
 begin
   require "ferrum"
 rescue LoadError
-  warn "crawl-browser: ferrum not loaded — run from MASTER with BUNDLE_WITH=test bundle exec"
+  warn "crawl-browser: ferrum not loaded - run from MASTER with BUNDLE_WITH=test bundle exec"
   exit 1
 end
 
@@ -151,6 +151,6 @@ rescue Timeout::Error
   warn "crawl-browser: timeout after #{BrowserProbeSupport::MAX_PROBE_SECONDS}s"
   exit 1
 rescue Ferrum::ProcessTimeoutError, Ferrum::DeadBrowserError => e
-  warn "crawl-browser: browser unavailable — #{e.class}"
+  warn "crawl-browser: browser unavailable - #{e.class}"
   exit 3
 end

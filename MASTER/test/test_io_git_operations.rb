@@ -5,7 +5,7 @@ require "tmpdir"
 require "fileutils"
 require "open3"
 
-# GitOperations is the runtime's only git surface — status, ahead/behind, and
+# GitOperations is the runtime's only git surface - status, ahead/behind, and
 # the mutation half (add/commit/push) that autocommit and the deploy path drive.
 #
 # Every command is `git -C @root_path`, so the whole file is exercised against a
@@ -114,7 +114,7 @@ class GitOperationsTest < Minitest::Test
     assert_includes @git.changed_paths, "lib/deleted.rb"
   end
 
-  # dirty?(path) scopes to a path — a change elsewhere must not make lib/ dirty.
+  # dirty?(path) scopes to a path - a change elsewhere must not make lib/ dirty.
   def test_dirty_is_scoped_to_its_path
     write("docs/notes.md", "x\n")
 
@@ -142,7 +142,7 @@ class GitOperationsTest < Minitest::Test
     assert_equal [1, 0], @git.ahead_behind
   end
 
-  # A repository with no upstream must answer [0, 0] rather than raise — the
+  # A repository with no upstream must answer [0, 0] rather than raise - the
   # rev-list invocation fails there, and callers treat the pair as a plain number.
   def test_ahead_behind_is_zero_without_an_upstream
     solo = File.join(@tmp, "solo")

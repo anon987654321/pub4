@@ -6,7 +6,7 @@ require_relative "exec"
 
 module Master
   module Io
-    # mov — the recent streaming shelf.
+    # mov - the recent streaming shelf.
     #
     # Discovery is a curated catalog, not a scrape. Every shelf entry is a
     # post-2024 film or series that critics ranked or festivals awarded, and
@@ -20,7 +20,7 @@ module Master
     # is pulled as-is. A shelf pick resolves to an official free upload: a
     # feature-length film from a real distributor's channel when one exists,
     # otherwise that title's official trailer. Commercial streaming is
-    # DRM-protected and stays outside this tool's scope — when only the
+    # DRM-protected and stays outside this tool's scope - when only the
     # trailer is free, the report says so and names where the film streams.
     # No anonymous "full movie" re-uploads are ever touched.
     #
@@ -50,7 +50,7 @@ module Master
       MOVIE_RE = /\b(?:movies?|films?|cinema|flicks?|gems?)\b/i.freeze
       SERIES_RE = /\b(?:series|episodes?|seasons?|sitcoms?|tv\s+shows?|television)\b/i.freeze
       ACQUIRE_RE = /\b(?:grab|download|fetch|get|find|pick|pull|put|queue|i\s+wan(?:na|t)|see|watch)\b/i.freeze
-      TITLE_QUOTE_RE = /["“]([^"”]{2,120})["”]/.freeze
+      TITLE_QUOTE_RE = /["\u201C]([^"\u201D]{2,120})["\u201D]/.freeze
       URL_RE = %r{https?://\S+}i.freeze
 
       # Analysis requests name a link as material, not as a download target
@@ -287,7 +287,7 @@ module Master
 
       def parse_url_request(value, url, request)
         title = value.match(TITLE_QUOTE_RE)&.captures&.first
-        # Direct archive.org links carry the intent themselves — a pasted
+        # Direct archive.org links carry the intent themselves - a pasted
         # details page is a download request even without a spoken verb.
         return request.merge(url: url, title:) if url.match?(%r{\Ahttps?://(?:www\.)?archive\.org/}i)
         return request unless value.match?(ACQUIRE_RE) && !value.match?(/\?\s*\z/)
@@ -296,7 +296,7 @@ module Master
       end
 
       # Spoken counts: "download us two new movies please" says the number as
-      # a word, and the digit scan never saw it — the request read as three.
+      # a word, and the digit scan never saw it - the request read as three.
       def count_from(value)
         return BUNCH if value.match?(/\b(?:bunch|heap|pile|lots?|many)\b/i)
         return FEW if value.match?(/\b(?:few|some|couple)\b/i)
@@ -327,8 +327,8 @@ module Master
       end
 
       def shelf_note
-        "the shelf is post-2024 acclaimed titles only — the newest releases mostly stream " \
-          "commercially, which mov does not touch — so hand mov a direct link for anything else"
+        "the shelf is post-2024 acclaimed titles only - the newest releases mostly stream " \
+          "commercially, which mov does not touch - so hand mov a direct link for anything else"
       end
 
       # A named-but-unknown title is an honest miss, not a reason to raid some
@@ -366,7 +366,7 @@ module Master
       # rejected candidate remains visible in the final report.
       def download_queue(entries, request, bus: nil)
         requested = request.fetch(:count, FEW).to_i.clamp(1, 20)
-        head = "mov0: recent shelf — #{SHELF.size} acclaimed titles from #{SHELF_FLOOR} onward, " \
+        head = "mov0: recent shelf - #{SHELF.size} acclaimed titles from #{SHELF_FLOOR} onward, " \
                "streaming as of #{SHELF_AS_OF}; target #{requested}; destination #{downloads_dir}"
         report_status("mov0", head.delete_prefix("mov0: "))
         lines = [head]
@@ -376,7 +376,7 @@ module Master
         entries.each do |entry|
           break if saved_paths.size >= requested
 
-          stage(bus, "#{saved_paths.size + 1}/#{requested} — #{entry[:title]} (#{entry[:year]})")
+          stage(bus, "#{saved_paths.size + 1}/#{requested} - #{entry[:title]} (#{entry[:year]})")
           line = acquire_entry(entry, bus: bus)
           if line.start_with?("mov0: saved ")
             saved_paths << line
@@ -397,7 +397,7 @@ module Master
 
       # Free means free: a feature-length upload from an official distributor
       # channel, or that title's official trailer. When neither exists the
-      # honest answer names where the film streams — commercial streaming is
+      # honest answer names where the film streams - commercial streaming is
       # DRM-protected and mov does not touch it. Failure lines are prefix-free;
       # the queue reports them as "mov0: skipped ...".
       def acquire_entry(entry, bus: nil)
@@ -406,14 +406,14 @@ module Master
 
         pick = resolve_official_upload(entry)
         if pick.nil?
-          return "#{title}: no official free upload — streams on #{entry[:where]} (DRM, outside mov's scope)"
+          return "#{title}: no official free upload - streams on #{entry[:where]} (DRM, outside mov's scope)"
         end
 
         label = pick[:kind] == :full ? title : "#{title} trailer"
         line = ytdlp_download(pick[:url], label, bus: bus)
         return line.delete_prefix("mov0: ") unless line.start_with?("mov0: saved ")
 
-        pick[:kind] == :trailer ? "#{line} — official trailer; #{entry[:title]} streams on #{entry[:where]}" : line
+        pick[:kind] == :trailer ? "#{line} - official trailer; #{entry[:title]} streams on #{entry[:where]}" : line
       end
 
       def resolve_official_upload(entry)
@@ -463,7 +463,7 @@ module Master
 
       def ytdlp_download(url, label, bus: nil)
         FileUtils.mkdir_p(downloads_dir)
-        stage(bus, "yt-dlp — #{label}")
+        stage(bus, "yt-dlp - #{label}")
         out, status = Master::Io::Exec.capture2e(
           "yt-dlp", "--no-playlist", "--progress", "--newline",
           "-o", yt_output_template(label), url,
@@ -501,7 +501,7 @@ module Master
       end
 
       # Supported link hosts: the three yt-dlp lanes mov speaks natively.
-      # Anything else — DRM'd commercial streamers above all — is refused.
+      # Anything else - DRM'd commercial streamers above all - is refused.
       SUPPORTED_LINK_HOSTS = %w[youtube.com youtu.be vimeo.com archive.org].freeze
 
       def download_url(url, title: nil, bus: nil)
@@ -525,7 +525,7 @@ module Master
       # unterminated buffer.
       def yt_progress_handler(bus, label)
         buffer = +""
-        progress = Progress.new("yt-dlp — #{label}")
+        progress = Progress.new("yt-dlp - #{label}")
 
         lambda do |chunk|
           buffer << chunk.to_s
@@ -534,7 +534,7 @@ module Master
               percent = m[1].to_i
               next unless progress.stage_due?(percent)
 
-              detail = "#{percent}% — #{progress.label}"
+              detail = "#{percent}% - #{progress.label}"
               stage(bus, detail)
               report_status("mov0", detail) if progress.print_due?(percent)
             end

@@ -49,7 +49,7 @@ module Master
         return Result.err("ast_edit: method not found: #{name}", category: :validation) unless entry
 
         slice = lines[(entry[:start] - 1)..(entry[:end] - 1)].join
-        Result.ok("# #{name} (lines #{entry[:start]}–#{entry[:end]})\n#{slice}")
+        Result.ok("# #{name} (lines #{entry[:start]}-#{entry[:end]})\n#{slice}")
       end
 
       def rename_method(fp:, src:, from:, to:)
@@ -74,7 +74,7 @@ module Master
         Master::Trace::WriteTracker.current&.record(fp)
         @bus&.publish("tool:after", tool: NAME, path: fp)
         @bus&.publish("tool:ast_edit", op: "rename", from:, to:, path: fp)
-        Result.ok("renamed #{from} → #{to} in #{File.basename(fp)}")
+        Result.ok("renamed #{from} -> #{to} in #{File.basename(fp)}")
       end
 
       def add_after_method(fp:, src:, after_name:, code:)
@@ -104,7 +104,7 @@ module Master
         ranges = method_line_ranges(src)
         entry = ranges.find { |r| r[:name] == name }
         return Result.err("ast_edit: method not found: #{name}", category: :validation) unless entry
-        Result.ok("#{name}: lines #{entry[:start]}–#{entry[:end]}")
+        Result.ok("#{name}: lines #{entry[:start]}-#{entry[:end]}")
       end
 
       def method_line_ranges(src)

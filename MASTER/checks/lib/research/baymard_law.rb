@@ -57,7 +57,7 @@ module Deploy
         result.fail(detail, severity: finding.severity == "error" ? :hard : :soft)
       end
 
-      report.read_errors.each { |error| result.incomplete!("baymard_ux: source could not be measured — #{error}") }
+      report.read_errors.each { |error| result.incomplete!("baymard_ux: source could not be measured - #{error}") }
       if report.apps.empty?
         result.incomplete!("baymard_ux: no RAILS app or shared-engine source root was available")
       end

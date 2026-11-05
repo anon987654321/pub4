@@ -17,7 +17,7 @@ module Master
     # Comment-only lines, not trailing comments: blanking from an unquoted `#`
     # needs to know whether it is inside a string, and guessing wrong drops real
     # findings. This is the half that is provably safe. scan_lines itself is
-    # deliberately untouched — several laws mean to read comments.
+    # deliberately untouched - several laws mean to read comments.
     def without_comment_lines(code) = code.gsub(COMMENT_LINE) { |line| " " * line.length }
 
     # A Law spells its own forbidden shape in its `bad` and `good` fixtures,
@@ -33,7 +33,7 @@ module Master
     def without_law_fixtures(code) = code.gsub(RULE_FIXTURE_LINE) { |line| " " * line.length }
 
     # A word inside a regex literal is a token in a pattern, not an instance of
-    # itself — the distinction COMPLETION_THEATER learned for `etc` and
+    # itself - the distinction COMPLETION_THEATER learned for `etc` and
     # NO_MULTIPLE_LANGUAGES for `<%`. The lookbehind keeps a division out: `a /
     # b` has no closing delimiter, and a `)`, `]` or word character before the
     # slash means the expression is already complete.
@@ -43,7 +43,7 @@ module Master
     # The same trick for ERB output tags, and for the same reason.
     #
     # Attribute laws ask "does this tag contain alt=" as `<img\s+(?![^>]*alt=)`.
-    # `[^>]*` cannot cross a `>` — and `<%= deal.image_url %>` ends in one. So on
+    # `[^>]*` cannot cross a `>` - and `<%= deal.image_url %>` ends in one. So on
     # the ordinary Rails shape
     #
     #   <img src="<%= deal.image_url %>" alt="<%= deal.title %>">
@@ -63,9 +63,9 @@ module Master
     # Blanking ERB is half of it. The other half is that scan_lines asks the
     # question one line at a time, and these views wrap tag attributes:
     #
-    #   <input type="text" placeholder="…"
-    #          aria-label="…"
-    #          data-…-target="commentInput">
+    #   <input type="text" placeholder="..."
+    #          aria-label="..."
+    #          data-...-target="commentInput">
     #
     # Line 1 holds no aria-label and no `>`, so `[^>]*` runs to end-of-line and
     # the lookahead reports a missing label on a labelled control. Every
@@ -76,7 +76,7 @@ module Master
     # reports the line the tag opens on, and every later line keeps its number.
     # Quote-aware, because `>` is legal inside an attribute value and this repo
     # has it: `data-action="input->playlist#setVolume"` and an embed field whose
-    # value is an escaped <iframe …></iframe>. A plain [^<>]* ends the tag at
+    # value is an escaped <iframe ...></iframe>. A plain [^<>]* ends the tag at
     # that `>` and loses every attribute after it.
     MULTILINE_TAG = /<[a-zA-Z](?:"[^"]*"|'[^']*'|[^<>"'])*>/m
     def with_tags_flattened(code)
@@ -94,12 +94,12 @@ module Master
     # What an HTML attribute law should read: no ERB, one tag per line.
     def tag_source(code) = with_tags_flattened(without_erb_tags(code))
 
-    # A control wrapped in a <label> that has text is labelled — that is the
+    # A control wrapped in a <label> that has text is labelled - that is the
     # implicit association in the HTML spec, and the most common spelling of it
     # here:
     #
     #   <label class="field--check-label">
-    #     <input type="checkbox" name="…">
+    #     <input type="checkbox" name="...">
     #     <span><%= t("newsletter.marketing_consent") %></span>
     #   </label>
     #
@@ -119,8 +119,8 @@ module Master
     # the accessibility tree actually accepts.
     #
     # Asking this per line could only ever see the opening tag, so the most
-    # ordinary correct spelling in HTML — `<button>Save</button>`, where the
-    # element's own text IS its name — read as nameless. That was 39 of the 55
+    # ordinary correct spelling in HTML - `<button>Save</button>`, where the
+    # element's own text IS its name - read as nameless. That was 39 of the 55
     # ARIA_LABELS findings across this repo, against 4 genuinely nameless
     # controls. A law that reports correct markup eleven times for each real
     # defect is one people learn to scroll past.
@@ -129,9 +129,9 @@ module Master
     # the text between open and close counted for the elements that can carry
     # a name that way. <input> cannot, so it still needs an attribute.
     # CSS block comments, which without_comment_lines cannot see: it matches a
-    # leading # or //, and `/* … */` spans lines whose continuations start
-    # with prose. A rationale paragraph explaining *why* a colour was pinned —
-    # "the 4.78 above was measured against (#202020)" — was reported as a raw
+    # leading # or //, and `/* ... */` spans lines whose continuations start
+    # with prose. A rationale paragraph explaining *why* a colour was pinned -
+    # "the 4.78 above was measured against (#202020)" - was reported as a raw
     # colour needing a token, which is the same self-referential failure that
     # helper's own note describes.
     BLOCK_COMMENT = %r{/\*.*?\*/}m
@@ -139,11 +139,11 @@ module Master
 
     # `var(--token, #hex)` is the token being used, with the literal as the
     # fallback the spec asks for. Flagging it tells correct, defensive CSS to
-    # stop citing a token — the opposite of the law's own point.
+    # stop citing a token - the opposite of the law's own point.
     VAR_FALLBACK = /var\(\s*--[a-z0-9-]+\s*,[^)]*\)/i
     def without_var_fallbacks(code) = code.gsub(VAR_FALLBACK) { |v| v.gsub(/[^\n]/, " ") }
 
-    # `<%# … %>` — the ERB comment. without_comment_lines matches a leading #
+    # `<%# ... %>` - the ERB comment. without_comment_lines matches a leading #
     # or //, and an ERB comment opens with `<`, so a note explaining a colour
     # in a view was read as a colour. Third spelling of the same failure, after
     # // in JavaScript and /* */ in CSS.
@@ -154,7 +154,7 @@ module Master
     #
     # `mask-image: linear-gradient(to right, transparent 0%, #000 3%, #000 97%,
     # transparent)` fades the edges of a scroller. In a mask the alpha channel
-    # is what renders and black means "fully opaque" — the hex is doing
+    # is what renders and black means "fully opaque" - the hex is doing
     # arithmetic, and nothing themeable is being expressed. Tokenising it would
     # make a fade follow the theme, which is not a thing a fade can do.
     MASK_DECLARATION = /(?:-webkit-)?mask(?:-image)?\s*:[^;]*;/
@@ -209,7 +209,7 @@ module Master
     # must not read it.
     #
     # `cdp.evaluate(<<~JS)` in MASTER/checks/face_capture_probe.rb holds
-    # `f && f.primerFired` — correct JavaScript, and four SAFE_NAVIGATION
+    # `f && f.primerFired` - correct JavaScript, and four SAFE_NAVIGATION
     # findings telling it to use Ruby's `&.`, which JavaScript does not have.
     # the old backlog records the same shape costing more: RUBY_NUMERIC_UNDERSCORE fired
     # inside ffmpeg filter strings, where its fix writes 44_100 into
@@ -217,7 +217,7 @@ module Master
     #
     # The tag is the author's own statement about the body, and this tree makes
     # it 42 times for JS, 66 for SQL and 14 for PYTHON. RUBY is deliberately not
-    # in the list — it is Ruby and the laws should read it — and neither are
+    # in the list - it is Ruby and the laws should read it - and neither are
     # TEXT, PROMPT, MSG or MD, which are prose the prose laws are meant to see.
     #
     # Blanked to spaces with newlines kept, like every other mask here, so a
@@ -254,8 +254,8 @@ public :without_foreign_heredocs
       | <(input)\b(?:"[^"]*"|'[^']*'|[^<>"'])*>
     }mix
 
-    # `<%= t("nav.more") %>` is text — it is how nearly every label in this
-    # repo is written — so blanking all ERB before reading content made every
+    # `<%= t("nav.more") %>` is text - it is how nearly every label in this
+    # repo is written - so blanking all ERB before reading content made every
     # translated button look empty. Output tags become a placeholder and keep
     # naming their control; `<% if %>` and `<%# comment %>` render nothing and
     # are still blanked. (First draft of this law blanked all three and
@@ -284,7 +284,7 @@ end end.join
         # A hidden input is not in the accessibility tree, so it has no name
         # to give and nothing to announce. FORM_LABEL already excluded these;
         # this law did not, and every one of its four remaining findings was
-        # a hidden field — three carrying ids for a form to submit and one
+        # a hidden field - three carrying ids for a form to submit and one
         # already marked aria-hidden.
         next if m[0].match?(/type\s*=\s*["']hidden["']|aria-hidden\s*=\s*["']true["']/i)
 
@@ -302,7 +302,7 @@ end end.join
     # Does the CSS block containing `line_number` paint a dark background?
     #
     # Contrast is a relation, so a law that reads only the foreground cannot
-    # answer it. Walks back to the nearest `{` — the enclosing law — and takes
+    # answer it. Walks back to the nearest `{` - the enclosing law - and takes
     # the last background colour declared in it. Deliberately narrow: a
     # background set on a parent selector, or in a token, is not visible from
     # here, so this says "no" and the finding stands.

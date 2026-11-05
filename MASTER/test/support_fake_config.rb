@@ -4,8 +4,8 @@ module Master
   module TestSupport
     # The config object ModelRouter and Review::Agent read, with nothing on it
     # but the two fields they ask for. Four routing tests each carried their own
-    # copy — two byte-identical, two variants that differed only in whether they
-    # exposed task_type and whether model had a default — so a router that grew
+    # copy - two byte-identical, two variants that differed only in whether they
+    # exposed task_type and whether model had a default - so a router that grew
     # a third accessor would have needed the same edit four times.
     #
     # Usage:

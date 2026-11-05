@@ -25,25 +25,25 @@ module VisualSweepFixture
     id = "brgen/#{route}/#{viewport}"
 
     [
-      "#{BROWSER} #{id} — #{format(COOP, "#{route}.brgen.no")}",
+      "#{BROWSER} #{id} - #{format(COOP, "#{route}.brgen.no")}",
       "#{GEOMETRY} geometry rhythm: #{id} #{route.size}/40 rendered gaps (#{route.size * 2}%) off the 8px scale " \
-      "— 12px×5, 6px×3 principle=rhythm",
+      "- 12pxx5, 6pxx3 principle=rhythm",
       "#{GEOMETRY} geometry target_spacing: #{id} has 2 undersized target pair(s) closer than 24px " \
-      "— a.feed-action (20x18) and a.feed-action (20x18) are 3.0px apart (principle=fitts)",
+      "- a.feed-action (20x18) and a.feed-action (20x18) are 3.0px apart (principle=fitts)",
     ]
   end
 
   def broken(viewport)
     id = "brgen/communities_wiki/#{viewport}"
-    ["#{BROWSER} #{id} — document returned HTTP 404",
-     "#{BROWSER} #{id} — resource returned an error: HTTP 404 #{WIKI} (Document)"]
+    ["#{BROWSER} #{id} - document returned HTTP 404",
+     "#{BROWSER} #{id} - resource returned an error: HTTP 404 #{WIKI} (Document)"]
   end
 
   def lines
     cells = ROUTES.product(VIEWPORTS).flat_map { |route, viewport| cell(route, viewport) }
     sheet = [6, 10].map { |px| "[DesignMetricsCheck] design_metrics rhythm: #{SHEET} spacing #{px}px not in 8px scale" }
     cells + VIEWPORTS.flat_map { |viewport| broken(viewport) } + sheet +
-      ["layout_suite: rendered evidence is incomplete — 3 unapproved visual finding(s)"]
+      ["layout_suite: rendered evidence is incomplete - 3 unapproved visual finding(s)"]
   end
 
   def urls = VIEWPORTS.to_h { |viewport| ["brgen/communities_wiki/#{viewport}", WIKI] }

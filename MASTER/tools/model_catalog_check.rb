@@ -85,7 +85,7 @@ module Operator
     end
 
     def skip(json)
-      message = "model_catalog: no openrouter catalogue — run `bin/provider-catalog refresh openrouter` first"
+      message = "model_catalog: no openrouter catalogue - run `bin/provider-catalog refresh openrouter` first"
       puts(json ? JSON.generate(skipped: true, reason: message) : message)
       0
     end
@@ -117,7 +117,7 @@ module Operator
         kind, suggestion = nearest(id, live_ids_set)
         puts format("  %-22s %-42s %s", kind, id, suggestion ? "-> #{suggestion}" : "(no live successor under this vendor)")
       end
-      empty.each { |name, ids| puts "  EMPTY CHAIN #{name} — every one of its #{ids.size} models is gone" }
+      empty.each { |name, ids| puts "  EMPTY CHAIN #{name} - every one of its #{ids.size} models is gone" }
       puts(empty.empty? ? "model_catalog: every chain still has a live model" : "model_catalog: #{empty.size} chain(s) route nowhere")
     end
   end

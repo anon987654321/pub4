@@ -2,8 +2,8 @@
 
 module Master
   module Io
-    # Schema-versioned JSON ledgers under .master/ — the content board, the
-    # ideas ledger — fail closed on read. A file a hand edit or an older
+    # Schema-versioned JSON ledgers under .master/ - the content board, the
+    # ideas ledger - fail closed on read. A file a hand edit or an older
     # writer left behind must stop the reader with the file path, the schema
     # it declares and the schema this code reads: the alternative, seen in
     # Board#load before this module, was a blanket rescue to an empty board
@@ -15,7 +15,7 @@ module Master
 
       module_function
 
-      # Returns the parsed object, or nil when no file exists yet — a fresh
+      # Returns the parsed object, or nil when no file exists yet - a fresh
       # ledger is empty, not corrupt.
       def read(path, schema:)
         return unless File.file?(path)

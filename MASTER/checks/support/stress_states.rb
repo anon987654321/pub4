@@ -85,7 +85,7 @@ module Deploy
 
       pick(plan(surface, scan), pass:, count:).filter_map { |name| run_state(cdp, surface, name, scan, dir:) }
     rescue CdpSession::Error => e
-      warn "stress_states: #{surface.id} abandoned (#{e.class.name.split("::").last}) — #{e.message[0, 80]}"
+      warn "stress_states: #{surface.id} abandoned (#{e.class.name.split("::").last}) - #{e.message[0, 80]}"
       []
     ensure
       restore(cdp, surface)

@@ -86,7 +86,7 @@ visual_fleet:
 topologies:
   - id: face
     label: Cognition Mask
-    purpose: Symbolic cognition surface — brows, eyes, mouth, attention vectors, asymmetry, confidence zones
+    purpose: Symbolic cognition surface - brows, eyes, mouth, attention vectors, asymmetry, confidence zones
     renderer: face_world.js
     anchors: [brow_left, brow_right, eye_left, eye_right, mouth, jaw, crown]
     zones:   [eyes, mouth, brows, jaw, crown, attention_vector]

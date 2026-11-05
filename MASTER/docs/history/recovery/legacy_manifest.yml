@@ -144,7 +144,7 @@ active_app_decisions:
   # Decided 2026-09-06, after four months at archived_port. The fleet is three
   # apps and apps.yml is feature truth: brgen, amber, bsdports. privcam has no
   # route, no host in the domain registry, no model, no view and no line of
-  # code in any of the four trees — only this row and the ledger entry that
+  # code in any of the four trees - only this row and the ledger entry that
   # produced it. Restoring it is not a recovery task, it is starting a fourth
   # app, and that is a product decision with a moderation surface attached.
   #

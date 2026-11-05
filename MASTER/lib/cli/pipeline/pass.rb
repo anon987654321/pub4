@@ -42,7 +42,7 @@ module Master
           before, after = counts
           findings = after && before ? "#{after} finding(s), was #{before}" : "#{before || after || "?"} finding(s)"
           ["fix #{final_outcome(outcome, proof)}", "#{delivered} commit(s) delivered", findings,
-           *proof_parts(proof), "#{gaps} gap(s)"].join(" · ")
+           *proof_parts(proof), "#{gaps} gap(s)"].join(" - ")
         end
 
         # A run that reached DONE while a hard check is still red has not finished the app.
@@ -87,7 +87,7 @@ module Master
         # `fix` is the whole convergence lifecycle: it observes, repairs what the
         # reading found, and observes again, and the council argues inside the
         # repair. There is no scan stage, because a reading nobody acts on is
-        # what this architecture removes — observation is how a fix starts, not
+        # what this architecture removes - observation is how a fix starts, not
         # an operation of its own.
         #
         # Both readings keep their aesthetic half for a second reason: the RAILS
@@ -98,9 +98,9 @@ module Master
         # A writing pass ends in a proof stage: the target tree's own checks, run
         # once after the repair converges. /fix used to report convergence on
         # scanner findings while the checks could still fail, with no way to
-        # know. Per-pass proofs are refused — `bin/operator check` runs the same
+        # know. Per-pass proofs are refused - `bin/operator check` runs the same
         # instruments on its own cadence, and a checks stage inside every pass
-        # would double them and blow the pass budget — and the RAILS rendered
+        # would double them and blow the pass budget - and the RAILS rendered
         # half stays with the ladder, which already reaches the deploy host's
         # browser.
         STAGES = %w[fix critique map style].freeze
@@ -155,7 +155,7 @@ module Master
           # prints a moment later in the same terminal.
           sections = [["mode", posture_line(posture)]]
           if @unknown_stages&.any?
-            sections << ["stages", "unknown stage: #{@unknown_stages.join(", ")} — " \
+            sections << ["stages", "unknown stage: #{@unknown_stages.join(", ")} - " \
                                    "--only takes #{STAGES.join(", ")} (council is a spelling of critique)"]
           end
           if @task_contract_error && run?("fix")
@@ -174,7 +174,7 @@ module Master
         COUNCIL_OFFER = "not run during /fix; /fix --dry-run --critique convenes it on this result"
 
         # The typographic law's audit half: the marks the operator-facing
-        # strings actually wear. It reads, never writes — a mark set wrong is
+        # strings actually wear. It reads, never writes - a mark set wrong is
         # named so a repair can set it right.
         def style_section(shell)
           ["style", log_phase("style0", "typography", "path=#{shell}") do
@@ -439,8 +439,8 @@ module Master
 # Measure unless asked to write.
 #
 # This returned true, so every route into the pipeline wrote: a flag, a
-# slash command, and — the one that matters — a sentence. On 2026-09-11 a
-# greeting typed into bin/cli on vm23 ("Hei MASTER … hva er du mest stolt
+# slash command, and - the one that matters - a sentence. On 2026-09-11 a
+# greeting typed into bin/cli on vm23 ("Hei MASTER ... hva er du mest stolt
 # av i denne kodebasen?") was routed to the /fix reading with apply=yes against
 # /home/dev/pub4, which is the checkout the deploy syncs from. It scanned
 # 333 of 1109 files before it was interrupted and wrote nothing, and that
@@ -448,7 +448,7 @@ module Master
 #
 # The ladder still writes, because writing is its job: bin/check --ladder says
 # --apply in full-fix mode and --no-autofix in scan-only. Making both
-# explicit is the point — a caller that wants a write now says so, and
+# explicit is the point - a caller that wants a write now says so, and
 # nothing arrives at one by being misread.
 
 def default_apply?(*) = false
@@ -728,7 +728,7 @@ def default_apply?(*) = false
 
           reading = result.value!
           verdict = reading[:approved] ? "approved" : "not approved"
-          "swarm: #{verdict} — #{reading[:review].to_s.gsub(/\s+/, " ")[0, SWARM_EXCERPT]}"
+          "swarm: #{verdict} - #{reading[:review].to_s.gsub(/\s+/, " ")[0, SWARM_EXCERPT]}"
         rescue StandardError => e
           stage_failure("swarm", "crit0", e)
         end

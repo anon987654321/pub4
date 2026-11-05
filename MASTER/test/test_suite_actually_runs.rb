@@ -18,7 +18,7 @@ class SuiteActuallyRunsTest < Minitest::Test
   RUN_COUNT = /(\d+) runs?, \d+ assertions/
 
   def setup
-    skip "set SUITE_AUDIT=1 — one process per test file" unless ENV["SUITE_AUDIT"] == "1"
+    skip "set SUITE_AUDIT=1 - one process per test file" unless ENV["SUITE_AUDIT"] == "1"
   end
 
   # Redirected to a file rather than captured through Open3: a forked test file
@@ -59,6 +59,6 @@ class SuiteActuallyRunsTest < Minitest::Test
     silent = in_parallel(files) { |f| standalone_runs(f).to_i.positive? ? nil : f }
 
     assert_empty silent.map { |f| File.basename(f) },
-                 "these files contribute no runs when executed alone — they are loaded, not run"
+                 "these files contribute no runs when executed alone - they are loaded, not run"
   end
 end

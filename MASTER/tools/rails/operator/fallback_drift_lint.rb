@@ -160,7 +160,7 @@ module Operator
     end
 
     # brgen's verticals are mountable engines, so their stylesheets live at
-    # brgen/engines/<name>/app/assets/stylesheets — outside the first glob.
+    # brgen/engines/<name>/app/assets/stylesheets - outside the first glob.
     # A stale --text-secondary fallback sat in the playlist engine unseen
     # because of it; the same blind spot cost four other scanners 57 views
     # when the verticals moved.

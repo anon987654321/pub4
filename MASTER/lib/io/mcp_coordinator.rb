@@ -13,7 +13,7 @@ require_relative "../trace/tool_observer"
 
 module Master
   module Io
-    # McpCoordinator — manages MCP server connections and exposes
+    # McpCoordinator - manages MCP server connections and exposes
     # their tools to the agent alongside MASTER's native tools.
     class McpCoordinator
       CONFIG_PATH = "data/mcp_servers.yml".freeze

@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-# law/brand.rb — the Bergen brand-system laws, one Law.define per law.
+# law/brand.rb - the Bergen brand-system laws, one Law.define per law.
 #
 # Source of every law here is a MEASURED failure or a MEASURED decision from
 # building the Sommerseth Eiendom and Alfa Bergen sites (RAILS/__other),
@@ -9,7 +9,7 @@
 # /fix walks when it repairs that tree.
 #
 # 2026-10-28: both source sites were retired and RAILS/__other deleted. The
-# laws stay — they are design decisions, and decisions outlive their first
+# laws stay - they are design decisions, and decisions outlive their first
 # tree. SIGNAL_COLOR_NAMING, PAPER_NOT_PURE_WHITE and PARAMETRIC_MARK_ONLY are
 # scoped (their `path`) to brand-export trees, because the four
 # RAILS apps declare --accent, #ffffff and long icon paths as their own
@@ -19,7 +19,7 @@
 
 Law.define(:SIGNAL_COLOR_NAMING) do
   path %r{/mrdamascy/}
-  source "Bergen brand systems — one signal colour per identity (bob.no calibration)"
+  source "Bergen brand systems - one signal colour per identity (bob.no calibration)"
   detect { |line| line.match?(/--(accent|accent-color|secondary-color|highlight-color)\s*:/) }
   fix "Name the single signal colour --signal; no accent/secondary/highlight twins."
   bad  "--accent: #E07A00;"
@@ -28,7 +28,7 @@ end
 
 Law.define(:PAPER_NOT_PURE_WHITE) do
   path %r{/mrdamascy/}
-  source "Bergen brand systems — paper tones, not #FFF (storefront_art matte-paper rule)"
+  source "Bergen brand systems - paper tones, not #FFF (storefront_art matte-paper rule)"
   detect { |line| line.match?(/background(-color)?:\s*(#fff\b|#ffffff\b|white)\s*;/i) }
   fix "Paint page scopes with the paper token, never pure white."
   bad  "background: #FFFFFF;"
@@ -37,7 +37,7 @@ end
 
 Law.define(:PARAMETRIC_MARK_ONLY) do
   path %r{/mrdamascy/}
-  source "Bergen-snittet v1 — marks derive from a parametric source, never hand-drawn"
+  source "Bergen-snittet v1 - marks derive from a parametric source, never hand-drawn"
   detect { |line| line.match?(/d="M[\d\s.,A-Za-z-]{80,}"/) }
   fix "Compose marks from the parametric constants (src/lib/marks.ts + scripts/gen-marks.mjs); short paths, named parts."
   bad  '<path d="M4 35.5 L22.5 13.5 L41 35.5 M7 43.5 H41 M34.5 9.5 m-5.5 0 a5.5 5.5 0 1 0 11 0 a5.5 5.5 0 0 0 -11 0" />'
@@ -45,9 +45,9 @@ Law.define(:PARAMETRIC_MARK_ONLY) do
 end
 
 Law.define(:WORDMASK_OBSERVES_UNCLIPPED) do
-  source "Framer Motion + IntersectionObserver — a fully clipped element never intersects"
+  source "Framer Motion + IntersectionObserver - a fully clipped element never intersects"
   # Measured: whileInView on the masked word span (y: 112% inside its own
-  # overflow:hidden mask) reports intersection area 0 forever — the headline
+  # overflow:hidden mask) reports intersection area 0 forever - the headline
   # stayed invisible. Observe the outer, unclipped wrapper; drive the inner
   # spans with animate.
   detect { |line| line.include?("whileInView") && line.match?(/y:\s*'\d+%'/) }
@@ -57,7 +57,7 @@ Law.define(:WORDMASK_OBSERVES_UNCLIPPED) do
 end
 
 Law.define(:CURSOR_NONE_REQUIRES_CURSOR) do
-  source "Bergen brand systems — hiding the cursor is a promise to replace it"
+  source "Bergen brand systems - hiding the cursor is a promise to replace it"
   detect { |line| line.match?(/cursor:\s*none/) }
   fix "Avoid hiding the native cursor unless a replacement is rendered and gated by pointer:fine and prefers-reduced-motion; review the full component."
   bad  ".page { cursor: none; }"
@@ -65,7 +65,7 @@ Law.define(:CURSOR_NONE_REQUIRES_CURSOR) do
 end
 
 Law.define(:NORWEGIAN_COPY_BOKMAL) do
-  source "Bergen brand systems — user-facing copy in Norwegian bokmål (snl.no orthography)"
+  source "Bergen brand systems - user-facing copy in Norwegian bokmål (snl.no orthography)"
   detect { |line| line.match?(/(?:placeholder|title|description|alt)="[^"]*\b(?:the|and|with|your)\b[^"]*"/i) }
   fix "Write user-facing strings in Norwegian bokmål; å/ø/æ, snl.no orthography."
   bad  'alt="Red cabin by the fjord at dusk"'

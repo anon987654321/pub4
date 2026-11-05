@@ -620,11 +620,11 @@ end
     agent = Struct.new(:model).new("ollama:gemma3:4b")
     rows = Master::CLI::CommandRegistry.list_models(root: Master::ROOT, metrics: nil, agent:).lines
 
-    assert_equal rows.size, rows.map { |row| row.split[row.start_with?("→") ? 1 : 0] }.uniq.size
+    assert_equal rows.size, rows.map { |row| row.split[row.start_with?("->") ? 1 : 0] }.uniq.size
     # Which tiers list the model is models.yml's to say; the row names the
     # current model once, marked, with its tiers after it.
-    current = rows.find { |row| row.start_with?("→") }
-    assert_match(/\A→ ollama:gemma3:4b +\S/, current)
+    current = rows.find { |row| row.start_with?("->") }
+    assert_match(/\A-> ollama:gemma3:4b +\S/, current)
     assert_includes current.split.drop(2).join(" "), "local"
   end
 
@@ -641,7 +641,7 @@ end
     config = Struct.new(:saved) { def save! = self.saved = true }.new
 
     listing = Master::CLI::CommandRegistry.list_models(root: Master::ROOT, metrics: nil, agent:)
-    assert_match(/^→ nvidia\/nemotron-3-super-120b-a12b:free +grok_primary/, listing)
+    assert_match(/^-> nvidia\/nemotron-3-super-120b-a12b:free +grok_primary/, listing)
     assert_match(/^more with:\n  set GEMINI_API_KEY/, listing)
 
     output = Master::CLI::CommandRegistry.dispatch_model(agent:, config:, metrics: nil, root: Master::ROOT, arg: "gemini-2.5-flash")
@@ -815,7 +815,7 @@ def test_ctrl_c_at_the_prompt_raises_interrupt_for_repl_loop_to_close
     assert_raises(Interrupt) { @cli.send(:on_int) }
   end
 
-  # Every error carried "[validation] … [ship_proof_not_checkboxes] Backlog
+  # Every error carried "[validation] ... [ship_proof_not_checkboxes] Backlog
   # marked done but production gaps remain", a lesson about something else.
   def test_an_error_prints_its_message_alone
     renderer = Object.new
@@ -954,7 +954,7 @@ def test_ctrl_c_at_the_prompt_raises_interrupt_for_repl_loop_to_close
 
       out, err = capture_io { cli.send(:handle_repl_line, "/exit") }
 
-      assert_match(/session0: save failed — JSON::GeneratorError: invalid UTF-8/, out + err)
+      assert_match(/session0: save failed - JSON::GeneratorError: invalid UTF-8/, out + err)
       assert_equal "master0: closed\n", out
       refute cli.instance_variable_get(:@running)
       @renderer.verify

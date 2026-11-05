@@ -10,7 +10,7 @@ module Deploy
   # Nothing in the existing suite touches the keyboard. That matters here more
   # than usual because of a live tension in the design system: design_tokens.yml
   # defines focus_ring as "2px solid var(--accent)", while the flat_ui contract
-  # forbids box-shadow — so the ring has to come from `outline`, and an
+  # forbids box-shadow - so the ring has to come from `outline`, and an
   # `outline: none` anywhere silently removes the only focus affordance the
   # system has. This check walks the real tab order and checks that each stop
   # renders a visible ring.
@@ -91,12 +91,12 @@ module Deploy
     def run
       @result = CheckResult.new
       unless GeometryProbe.available?
-        @result.inconclusive!("keyboard_flow: no Chrome/Chromium — tab order not walked", gap: Master::Gap::NO_BROWSER)
+        @result.inconclusive!("keyboard_flow: no Chrome/Chromium - tab order not walked", gap: Master::Gap::NO_BROWSER)
         return @result
       end
 
       surfaces = pick_surfaces
-      GeometryProbe.unreachable_apps(surfaces).each { |app| @result.skipped_live("keyboard_flow: #{app} port closed — skipped") }
+      GeometryProbe.unreachable_apps(surfaces).each { |app| @result.skipped_live("keyboard_flow: #{app} port closed - skipped") }
       live = GeometryProbe.reachable(surfaces)
       if live.empty?
         @result.inconclusive!("keyboard_flow: no app reachable")
@@ -109,19 +109,19 @@ module Deploy
       end
 
       # Counted per surface walked, so one surface that could not be measured
-      # does not make the ones that were count for nothing — and a run where
+      # does not make the ones that were count for nothing - and a run where
       # every surface refused to release focus, or timed out, walked no tab order
       # at all. Both of those are warnings or unchecked preconditions rather than
       # failures, so counting attempts reported them as a pass.
       if measured.zero?
-        @result.inconclusive!("keyboard_flow: 0/#{live.size} surface(s) yielded a tab order — nothing was walked")
+        @result.inconclusive!("keyboard_flow: 0/#{live.size} surface(s) yielded a tab order - nothing was walked")
 
         return @result
       end
       # Findings from the surfaces that were walked still block; only the pass is
       # withheld, because two walked pages do not make a tab order sound.
       if GeometryProbe.too_few_measured?(measured, live.size)
-        @result.inconclusive!("keyboard_flow: walked #{measured}/#{live.size} surface(s) — too few to call " \
+        @result.inconclusive!("keyboard_flow: walked #{measured}/#{live.size} surface(s) - too few to call " \
                               "the tab order sound; warm the apps and re-run")
         return @result
       end
@@ -187,7 +187,7 @@ module Deploy
       # page with an autofocus field the blur that follows ran against the
       # autofocused element and Chrome kept focus inside the form. The walk then
       # began mid-document and wrapped, so a skip link that is genuinely tab stop
-      # #1 was reported as #16 — measured on amber /session/new, whose
+      # #1 was reported as #16 - measured on amber /session/new, whose
       # `<input autofocus id="email_address">` put `input#password` first and the
       # skip link only after the wrap. That is an artifact of where the walk
       # started, not a defect in the page, and it is exactly the assertion this
@@ -226,7 +226,7 @@ module Deploy
       end
 
       if stops.empty?
-        @result.fail("keyboard_flow: #{label} has no keyboard-reachable element in #{MAX_TABS} tabs — " \
+        @result.fail("keyboard_flow: #{label} has no keyboard-reachable element in #{MAX_TABS} tabs - " \
                      "the page cannot be operated without a mouse")
         return true
       end
@@ -291,7 +291,7 @@ module Deploy
 
     def report_flat_state(label, state, flat, total)
       @result.fail("keyboard_flow states: #{label} #{flat.size}/#{total} controls paint no #{state} state " \
-                   "(e.g. #{flat.first(2).map { |row| row["sel"] }.join(", ")}) — #{STATE_WHY.fetch(state)}",
+                   "(e.g. #{flat.first(2).map { |row| row["sel"] }.join(", ")}) - #{STATE_WHY.fetch(state)}",
                    severity: :soft)
     end
 
@@ -305,7 +305,7 @@ module Deploy
                      "(it is in the HTML but never receives focus)", severity: :soft)
       elsif index.positive?
         before = stops.first(index).map { |s| s["sel"] }.join(", ")
-        @result.fail("keyboard_flow: #{label} skip link is tab stop ##{index + 1}, not first — " \
+        @result.fail("keyboard_flow: #{label} skip link is tab stop ##{index + 1}, not first - " \
                      "reached only after #{before} (principle=accessibility)")
       end
     end
@@ -315,14 +315,14 @@ module Deploy
     def check_document_order(label, stops)
       positive = stops.select { |s| s["tabindex"].to_i.positive? }
       unless positive.empty?
-        @result.fail("keyboard_flow: #{label} uses positive tabindex on #{positive.map { |s| s["sel"] }.uniq.join(', ')} — " \
+        @result.fail("keyboard_flow: #{label} uses positive tabindex on #{positive.map { |s| s["sel"] }.uniq.join(', ')} - " \
                      "this overrides document order for the whole page", severity: :soft)
       end
 
       inversions = stops.each_cons(2).count { |a, b| b["doc_order"].to_i < a["doc_order"].to_i }
       return if inversions.zero?
 
-      @result.fail("keyboard_flow: #{label} tab order jumps backwards #{inversions}× through the document " \
+      @result.fail("keyboard_flow: #{label} tab order jumps backwards #{inversions}x through the document " \
                    "(focus order does not follow reading order)", severity: :soft)
     end
 
@@ -332,21 +332,21 @@ module Deploy
 
       sample = ringless.first(3).map { |s| "#{s["sel"]} (#{s["ring_kind"]})" }.join(", ")
       @result.fail(
-        "keyboard_flow: #{label} #{ringless.size}/#{stops.size} focus stops render no visible ring — #{sample}. " \
+        "keyboard_flow: #{label} #{ringless.size}/#{stops.size} focus stops render no visible ring - #{sample}. " \
         "design_tokens focus_ring is '2px solid', and flat_ui forbids box-shadow, so this must come from outline " \
         "(principle=accessibility)",
       )
     end
 
     # Focus that lands on something off-screen means the user is typing into a
-    # control they cannot see — a closed drawer or an unclosed modal.
+    # control they cannot see - a closed drawer or an unclosed modal.
     def check_offscreen_focus(label, stops)
       hidden = stops.select { |s| !s["onscreen"] }
       return if hidden.size < 3
 
       @result.fail(
         "keyboard_flow: #{label} #{hidden.size}/#{stops.size} tab stops are off-screen " \
-        "(e.g. #{hidden.first(2).map { |s| s["sel"] }.join(', ')}) — keyboard focus enters a hidden region",
+        "(e.g. #{hidden.first(2).map { |s| s["sel"] }.join(', ')}) - keyboard focus enters a hidden region",
         severity: :soft,
       )
     end

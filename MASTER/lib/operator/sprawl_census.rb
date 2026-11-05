@@ -69,7 +69,7 @@ module Operator
 
     # Defined below module_function: a def above it is a private instance
     # method, and the module object that counts/run call it through is not its
-    # own instance — run raised NameError on every measurement.
+    # own instance - run raised NameError on every measurement.
     module_function
 
     def base_tree_findings
@@ -91,7 +91,7 @@ module Operator
     end
 
     # A directory holding one file and no subdirectories is a namespace bought
-    # for nothing — unless a `.rb` of the same name sits beside it, which is how
+    # for nothing - unless a `.rb` of the same name sits beside it, which is how
     # Zeitwerk spells a nested constant. `RepoEcology::CoChangeGraph` can only
     # live at `repo_ecology/co_change_graph.rb`, next to `repo_ecology.rb`, so the
     # directory buys the nesting the constant already had when it was inline;
@@ -180,7 +180,7 @@ module Operator
       n = tracked.size
       return n if n.positive? && n >= corpus_floor / 2
 
-      abort("sprawl_census: read #{n} tracked files against a floor of #{corpus_floor} — " \
+      abort("sprawl_census: read #{n} tracked files against a floor of #{corpus_floor} - " \
             "the corpus collapsed, so nothing below this line measured the tree")
     end
 
@@ -211,7 +211,7 @@ module Operator
         keys.each { |key| puts "sprawl_census: #{key} #{now.fetch(key)} (ceiling #{recorded.fetch(key)})" }
         over = keys.select { |key| now.fetch(key) > recorded.fetch(key) }
         over.each do |key|
-          puts "sprawl_census: #{key} grew to #{now.fetch(key)} from #{recorded.fetch(key)} — reuse existing paths or remove an equal amount of structure"
+          puts "sprawl_census: #{key} grew to #{now.fetch(key)} from #{recorded.fetch(key)} - reuse existing paths or remove an equal amount of structure"
         end
         return over.empty? ? 0 : 1
       end
@@ -222,7 +222,7 @@ module Operator
       over = now.select { |k, v| v > recorded.fetch(k, v) }
       unless over.empty?
         over.each do |k, v|
-          puts "sprawl_census: #{k} rose to #{v} from #{recorded.fetch(k)} — reuse existing structure or remove the excess"
+          puts "sprawl_census: #{k} rose to #{v} from #{recorded.fetch(k)} - reuse existing structure or remove the excess"
         end
         return 1
       end

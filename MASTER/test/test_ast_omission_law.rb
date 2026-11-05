@@ -5,7 +5,7 @@ require "review/scan/law_tree"
 
 # The rule asks CommitGuard which symbols a file has lost since recent commits
 # and turns each answer into a finding. Its own logic is the two guard clauses,
-# that mapping, and a rescue — so the guard is injected and all four are
+# that mapping, and a rescue - so the guard is injected and all four are
 # asserted, rather than running against whatever this repository's history
 # happens to contain today.
 #

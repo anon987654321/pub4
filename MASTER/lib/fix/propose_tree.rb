@@ -36,7 +36,7 @@ module Master
         top = rank(proposals).first(KEEP_TOP)
         write_report(top, proposals.size)
         @bus&.publish("propose_tree:done", drafted: proposals.size, kept: top.size)
-        "propose-tree: drafted #{proposals.size}, kept top #{top.size} → #{OUT_PATH}"
+        "propose-tree: drafted #{proposals.size}, kept top #{top.size} -> #{OUT_PATH}"
       rescue StandardError => e
         @bus&.publish("propose_tree:error", error: e.message)
         "propose-tree: #{e.message}"
@@ -52,7 +52,7 @@ module Master
 
       def cooldown_message
         mins = ((COOLDOWN_SECS - (Time.now - File.mtime(out_file))) / 60).to_i
-        "propose-tree: cooldown — next run in #{mins}m"
+        "propose-tree: cooldown - next run in #{mins}m"
       end
 
       # Show a bounded recursive inventory, not just one directory level.
@@ -97,9 +97,9 @@ module Master
         For each proposal return a YAML map with keys: name, summary, wins, costs, sketch.
         - name: kebab-case identifier
         - summary: one line
-        - wins: 2-3 lines (pros, separated by " · ")
-        - costs: 2-3 lines (cons, separated by " · ")
-        - sketch: ASCII tree, ≤18 lines, indented with 2 spaces per level
+        - wins: 2-3 lines (pros, separated by " - ")
+        - costs: 2-3 lines (cons, separated by " - ")
+        - sketch: ASCII tree, <=18 lines, indented with 2 spaces per level
 
         Prefer a shallow, legible tree with one clear owner per concept.
         Treat ugly names, concept scatter, deep important concepts and root clutter as
@@ -175,8 +175,8 @@ module Master
 
       def write_report(top, total)
         FileUtils.mkdir_p(File.dirname(out_file))
-        body = ["# tree proposals — #{Time.now.utc.iso8601}", "",
-                "drafted: #{total} · kept top: #{top.size}", ""]
+        body = ["# tree proposals - #{Time.now.utc.iso8601}", "",
+                "drafted: #{total} - kept top: #{top.size}", ""]
         top.each_with_index do |p, i|
           body << "## #{i + 1}. #{p["name"]}" << ""
           body << p["summary"].to_s << ""

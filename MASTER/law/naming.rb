@@ -8,7 +8,7 @@ module Master
       module Laws
         ::Law.define(:PARAMETERIZED_SLUG) do
           tags %i[FLAT_HIERARCHY DRY]
-          fix "path is dense Rails-parameterize slug — Strunk-clean snake_case"
+          fix "path is dense Rails-parameterize slug - Strunk-clean snake_case"
           # A path rule: one example path cannot hold a flagged bad and a clean good.
           proved_by "test/test_parameterized_slug.rb"
           check do |_src, path|
@@ -21,8 +21,8 @@ module Master
             Master::Ground::ParameterizedSlug.path_issues(rel).map do |issue|
               target = issue.to == issue.from ? issue.to : "#{File.dirname(rel)}/#{issue.to}.rb".gsub(%r{\./}, "")
               message = case issue.action
-                        when "merge" then "Flat Hierarchy — #{issue.reason} (#{target})"
-                        else "Flat Hierarchy — #{issue.reason}#{" → #{target}" if issue.to != issue.from}"
+                        when "merge" then "Flat Hierarchy - #{issue.reason} (#{target})"
+                        else "Flat Hierarchy - #{issue.reason}#{" -> #{target}" if issue.to != issue.from}"
                         end
               finding(line: 1, message:)
             end
@@ -31,7 +31,7 @@ module Master
 
 # TYPE_IN_NAME and NUMBERED_NAME, the two naming detectors from the old backlog's
 # AST-detector backlog. AST rather than a Law line-regex because both are about
-# declarations — a method, a parameter, a local, an ivar — and a regex over raw
+# declarations - a method, a parameter, a local, an ivar - and a regex over raw
 # lines cannot tell a declaration from a mention of one in a comment.
         # A name that says what type it is says the one thing the code already
         # says. `text_str` is a String either way; the name's job was to say
@@ -63,7 +63,7 @@ module Master
             named(ast).filter_map do |line, kind, name|
               next unless flagged?(name)
 
-              finding(line:, message: "#{kind} #{name} encodes its type — name it for what it holds")
+              finding(line:, message: "#{kind} #{name} encodes its type - name it for what it holds")
             end.uniq
           end
 
@@ -102,8 +102,8 @@ module Master
         #
         # The sibling requirement is what makes this measurable rather than
         # noisy, and it was added after measuring. Without it: 15 findings, of
-        # which fet1176, fairchild670 and stc8 are the names of real hardware —
-        # an 1176 compressor, a Fairchild 670, a Coles STC-8 — and inv3 and
+        # which fet1176, fairchild670 and stc8 are the names of real hardware -
+        # an 1176 compressor, a Fairchild 670, a Coles STC-8 - and inv3 and
         # normalize_to_y1 are maths. A lone number in a name is usually a fact
         # about the world. Locals were measured and dropped for the same reason:
         # 114 findings, nearly all of them dilla and postpro, where t1 and d8 are
@@ -127,7 +127,7 @@ module Master
               siblings = by_stem[stem].map { |_stem, sibling, _line| sibling }.uniq - [name]
               next if siblings.empty?
 
-              finding(line:, message: "#{name} sits beside #{siblings.join(", ")} — the number names no difference")
+              finding(line:, message: "#{name} sits beside #{siblings.join(", ")} - the number names no difference")
             end
           end
 
@@ -159,14 +159,14 @@ module Master
           proved_by "test/test_smell_detectors.rb"
         end
 
-# FILE_SEQUENCE_NAME and FILE_VAGUE_NAME — the two filename detectors. Both are
+# FILE_SEQUENCE_NAME and FILE_VAGUE_NAME - the two filename detectors. Both are
 # about the file's own name rather than anything inside it, so neither needs an
 # AST; they read `path` and ignore `source`.
 #
 # laws.yml#beauty already asks for `meaningful_names_intention_revealing` and
 # `kanso: eliminate_essence`. Nothing enforced either on a filename, and the
 # 2026-08-31 session produced capture_final2.rb, capture_final3.rb and
-# frames_final2/ in one sitting — names that record the order they were made in
+# frames_final2/ in one sitting - names that record the order they were made in
 # and throw away the thing that actually differed (a keep-alive, then trusted
 # input).
         # A sequence word is a timestamp wearing a name. If two files differ,
@@ -186,7 +186,7 @@ module Master
 
               # The sibling requirement, borrowed from NUMBERED_NAME above, is what
               # makes this measurable rather than noisy. Without it: 5 findings,
-              # all false — upgrade_to_v1_10_generator.rb and
+              # all false - upgrade_to_v1_10_generator.rb and
               # new_framework_defaults_8_0.rb are Rails names where the version IS
               # the subject, and backup.rb is a plain noun. A sequence word only
               # lies when a sibling shares the stem and carries a different one.
@@ -197,7 +197,7 @@ module Master
               siblings = Dir.glob(File.join(File.dirname(path.to_s), "#{base}*.rb")).map { |f| File.basename(f, ".*") }
               next [] if siblings.size < 2
 
-              [finding(line: 1, message: "FILE_SEQUENCE_NAME: #{File.basename(path)} — " \
+              [finding(line: 1, message: "FILE_SEQUENCE_NAME: #{File.basename(path)} - " \
                                          "'#{hit}' says when, not what; name the difference")]
           end
         end
@@ -222,7 +222,7 @@ module Master
               hit = stem[/(?:\A|_)(#{Master::Ground::ParameterizedSlug::VAGUE_ALTERNATION})(?:_|\z)/, 1]
               next [] unless hit
 
-              [finding(line: 1, message: "FILE_VAGUE_NAME: #{File.basename(path)} — " \
+              [finding(line: 1, message: "FILE_VAGUE_NAME: #{File.basename(path)} - " \
                                          "'#{hit}' is a category; name the subject")]
           end
         end

@@ -50,7 +50,8 @@ module Master
       MAX_COMPOSITION_STATES = Integer(ENV.fetch("MASTER_VISUAL_COMPOSITION_STATES", "12"))
       MAX_FILES = 12
       SELECTOR_RE = /#[A-Za-z][\w-]*|\.[A-Za-z_][\w-]*(?:[-_][\w-]*)*/.freeze
-      TEXT_ANCHOR_RE = /\b(?:visible\s+text(?:\s+anchor)?|text\s+anchor)\s*[:=]\s*["“]([^"”\n]+)["”]/i.freeze
+      TEXT_ANCHOR_RE =
+        /\b(?:visible\s+text(?:\s+anchor)?|text\s+anchor)\s*[:=]\s*["\u201C]([^"\u201D\n]+)["\u201D]/i.freeze
       LAW_RE = /\blaws?\s*[:=]\s*([A-Z][A-Z0-9_, -]+)/i.freeze
       # Surface ids are paths, so %r{} keeps the literal slash readable.
       SURFACE_RE = %r{\bsurface\s*[:=]\s*([A-Za-z0-9_./-]+)\b}i.freeze
@@ -142,7 +143,7 @@ module Master
 
       private
 
-      def inconclusive(reason) = Result.err("rendered visual review: INCONCLUSIVE — #{reason}", category: :inconclusive)
+      def inconclusive(reason) = Result.err("rendered visual review: INCONCLUSIVE - #{reason}", category: :inconclusive)
 
       def capture_surfaces(surfaces, pass:)
         captures = []
@@ -252,7 +253,7 @@ module Master
         return findings unless picks.any? && findings.empty?
 
         Result.err(
-          "rendered visual review: INCONCLUSIVE — Council returned actionable visual picks, but none could be anchored to source evidence",
+          "rendered visual review: INCONCLUSIVE - Council returned actionable visual picks, but none could be anchored to source evidence",
           category: :inconclusive,
         )
       end
@@ -437,7 +438,7 @@ module Master
           line:,
           severity: :warning,
           confidence: 1.0, anchor: selector,
-          message: "Rendered visual refinement: #{pick} — #{surface} / #{viewport} — laws: #{laws.join(", ")}",
+          message: "Rendered visual refinement: #{pick} - #{surface} / #{viewport} - laws: #{laws.join(", ")}",
           fix: "Use the attached rendered evidence as ground truth. Make the smallest source change that materially improves the cited visual issue while preserving accessibility, semantics and responsive behavior."
         }
       rescue StandardError

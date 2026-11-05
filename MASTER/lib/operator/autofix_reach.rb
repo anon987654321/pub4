@@ -130,7 +130,7 @@ module Operator
       undetectable = found[:bare_true].reject { |b| b[:detected] }
       return if undetectable.empty?
 
-      warn "autofix_reach: #{undetectable.size} Law(s) claim autofix and nothing reports them — " \
+      warn "autofix_reach: #{undetectable.size} Law(s) claim autofix and nothing reports them - " \
            "no detector in laws.yml, law/ or the registry, or a semantic-only detector the info " \
            "filter drops: #{undetectable.map { |b| b[:Law] }.join(', ')}"
     end
@@ -140,7 +140,7 @@ module Operator
       over = []
       over << "dangling #{found[:dangling].size} > #{c['dangling']}" if found[:dangling].size > c["dangling"]
       over << "bare_true #{found[:bare_true].size} > #{c['bare_true']}" if found[:bare_true].size > c["bare_true"]
-      over.each { |line| warn "autofix_reach: exceeds baseline — #{line}" }
+      over.each { |line| warn "autofix_reach: exceeds baseline - #{line}" }
       over.empty?
     end
   end

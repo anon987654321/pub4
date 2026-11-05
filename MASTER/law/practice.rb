@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-# law/practice.rb — rules about how to work, not about what source text says.
+# law/practice.rb - rules about how to work, not about what source text says.
 #
 # These lived in data/soul.yml because Law::Builder demanded a detector and no
 # detector can exist for "sweep to convergence rather than pausing" or "one SSH
@@ -145,7 +145,7 @@ Law.define(:RTFM_FIRST) do
     read the man page or upstream reference docs before using any command,
     config file, framework, operating system, or programming language.
     Training-data assumptions about flags, syntax, and behavior are unreliable
-    — verify against the source.
+    - verify against the source.
   TEXT
   fix "read the man page or upstream reference docs before using any command, config file, framework, operating syste"
   bad  "guesses the flag from memory"
@@ -159,7 +159,7 @@ Law.define(:VERIFY_THE_INSTRUMENT) do
     Before acting on "no callers", "no findings", "0 unread", re-run without
     the filter that produced it and confirm the check can still see a
     known-positive case. Every self-inflicted break on 2026-08-10 came from a
-    check that was measuring nothing and said so as a pass — a grep whose
+    check that was measuring nothing and said so as a pass - a grep whose
     `grep -v` hid the three callers it was clearing, a source scan that
     matched the comment explaining a rule rather than the rule, and two
     baselines still granting exemptions to a deleted file.
@@ -232,7 +232,7 @@ Law.define(:EXECUTE_NOT_INSTRUCT) do
 end
 
 Law.define(:DO_THE_WORK_NOW) do
-  source "MASTER constitution — execute the authorised task, do not defer it"
+  source "MASTER constitution - execute the authorised task, do not defer it"
   practice <<~TEXT
     treat a clear user request as authority to complete every independent,
     in-scope step available now. Do not answer executable work with another
@@ -264,7 +264,7 @@ Law.define(:SCAN_SWEEP_CONVERGENCE) do
 end
 
 Law.define(:DOCUMENTATION_FOLLOWS_CODE) do
-  source "MASTER constitution — one source of truth and executable documentation"
+  source "MASTER constitution - one source of truth and executable documentation"
   ask "After a code change, are affected user documentation, interface contracts, configuration instructions and operations guidance reconciled, and have generated documents been regenerated from their canonical source?"
   practice <<~TEXT
     after every code change, reconcile the affected documentation in the same
@@ -370,7 +370,7 @@ Law.define(:NO_NEW_FILES) do
   source "MASTER constitution (soul.yml absolute.rules)"
   practice <<~TEXT
     edit the original path. No _fixed.rb, no staging copy, no new file without
-    approval — try merge or rename first on every touch. Tree-level /fix checks
+    approval - try merge or rename first on every touch. Tree-level /fix checks
     the name and ownership surface before it creates a new path.
   TEXT
   fix "edit the original path."
@@ -418,7 +418,7 @@ Law.define(:UNIVERSAL_CROSS_DISCIPLINARY_RULES) do
   practice <<~TEXT
     a rule expresses a medium-agnostic principle with a per-language adapter.
     Small parts, vertical rhythm, nesting depth and naming silhouette are one
-    law in Ruby, markup and prose — only the detector changes.
+    law in Ruby, markup and prose - only the detector changes.
   TEXT
   fix "a rule expresses a medium-agnostic principle with a per-language adapter."
   bad  "a separate naming rule per language"
@@ -440,10 +440,10 @@ end
 Law.define(:NO_ASCII_DECORATION) do
   source "MASTER constitution (soul.yml absolute.rules)"
   practice <<~TEXT
-    Strunk & White — no box-drawing or === / ### banners in code, comments,
+    Strunk & White - no box-drawing or === / ### banners in code, comments,
     docs, or CLI; content is the separator.
   TEXT
-  fix "Strunk & White — no box-drawing or === / ### banners in code, comments, docs, or CLI;"
+  fix "Strunk & White - no box-drawing or === / ### banners in code, comments, docs, or CLI;"
   bad  "=== SECTION ==="
   good "the section's first sentence"
 end
@@ -451,10 +451,10 @@ end
 Law.define(:NO_CONSECUTIVE_BLANK_LINES) do
   source "MASTER constitution (soul.yml absolute.rules)"
   practice <<~TEXT
-    Boy Scout Rule — one blank line between sections; zero between related
+    Boy Scout Rule - one blank line between sections; zero between related
     lines.
   TEXT
-  fix "Boy Scout Rule — one blank line between sections;"
+  fix "Boy Scout Rule - one blank line between sections;"
   bad  "three blank lines between methods"
   good "one"
 end
@@ -462,10 +462,10 @@ end
 Law.define(:IMPORTANCE_ORDER) do
   source "MASTER constitution (soul.yml absolute.rules)"
   practice <<~TEXT
-    Inverted Pyramid (files) — public API first, primary logic next, helpers
+    Inverted Pyramid (files) - public API first, primary logic next, helpers
     and constants last; see laws.yml style.line_order.
   TEXT
-  fix "Inverted Pyramid (files) — public API first, primary logic next, helpers and constants last;"
+  fix "Inverted Pyramid (files) - public API first, primary logic next, helpers and constants last;"
   bad  "private helpers above the public API"
   good "public API first, helpers last"
 end
@@ -473,10 +473,10 @@ end
 Law.define(:FLAT_UI) do
   source "MASTER constitution (soul.yml absolute.rules)"
   practice <<~TEXT
-    Flat Design — uniform size at rest; depth only when pixels collectively
+    Flat Design - uniform size at rest; depth only when pixels collectively
     resemble a 3D model.
   TEXT
-  fix "Flat Design — uniform size at rest;"
+  fix "Flat Design - uniform size at rest;"
   bad  "a raised card with a shadow"
   good "a flat surface with a border"
 end
@@ -484,10 +484,10 @@ end
 Law.define(:CINEMA_PALETTE) do
   source "MASTER constitution (soul.yml absolute.rules)"
   practice <<~TEXT
-    Motion Design — shadow/midtone/highlight triplets; cubic-bezier easing on
+    Motion Design - shadow/midtone/highlight triplets; cubic-bezier easing on
     every transition.
   TEXT
-  fix "Motion Design — shadow/midtone/highlight triplets;"
+  fix "Motion Design - shadow/midtone/highlight triplets;"
   bad  "one flat hue"
   good "shadow, midtone and highlight"
 end
@@ -495,10 +495,10 @@ end
 Law.define(:INVERTED_PYRAMID) do
   source "MASTER constitution (soul.yml absolute.rules)"
   practice <<~TEXT
-    Inverted Pyramid (prose) — commits, comments, and log lines lead with the
+    Inverted Pyramid (prose) - commits, comments, and log lines lead with the
     fact; context trails.
   TEXT
-  fix "Inverted Pyramid (prose) — commits, comments, and log lines lead with the fact;"
+  fix "Inverted Pyramid (prose) - commits, comments, and log lines lead with the fact;"
   bad  "context, then the fact"
   good "the fact, then context"
 end
@@ -506,9 +506,9 @@ end
 Law.define(:DEEP_SCAN_ONLY) do
   source "MASTER constitution (soul.yml absolute.rules)"
   practice <<~TEXT
-    Fixed Point — deep scan only; quick and standard depths forbidden.
+    Fixed Point - deep scan only; quick and standard depths forbidden.
   TEXT
-  fix "Fixed Point — deep scan only;"
+  fix "Fixed Point - deep scan only;"
   bad  "a quick scan"
   good "a deep scan"
 end
@@ -516,13 +516,13 @@ end
 Law.define(:FLAT_HIERARCHY) do
   source "MASTER constitution (soul.yml absolute.rules)"
   practice <<~TEXT
-    Flat Hierarchy — aggressive merge/rename on every write; paths are dense
+    Flat Hierarchy - aggressive merge/rename on every write; paths are dense
     Rails-parameterize slugs (snake_case, Strunk-clean tokens); no main, misc,
     util, helper or abbreviation filler; fold *_support into parents and
     extend an existing check rather than adding a script; lib/ depth 4 unless
     the domain warrants more.
   TEXT
-  fix "Flat Hierarchy — aggressive merge/rename on every write;"
+  fix "Flat Hierarchy - aggressive merge/rename on every write;"
   bad  "lib/misc/util_helper.rb"
   good "lib/deploy/domain_alignment.rb"
 end
@@ -530,11 +530,11 @@ end
 Law.define(:STYLE) do
   source "MASTER constitution (soul.yml absolute.rules)"
   practice <<~TEXT
-    KISS — the shortest correct form in every language. No filler, redundant
+    KISS - the shortest correct form in every language. No filler, redundant
     branches, ceremonial patterns, defensive over-engineering, or comments
     restating code.
   TEXT
-  fix "KISS — the shortest correct form in every language."
+  fix "KISS - the shortest correct form in every language."
   bad  "a defensive branch that cannot be reached"
   good "the shortest correct form"
 end
@@ -542,12 +542,12 @@ end
 Law.define(:STRUNK_WHITE) do
   source "MASTER constitution (soul.yml absolute.rules)"
   practice <<~TEXT
-    Strunk & White — active voice, needless words omitted, concrete nouns and
+    Strunk & White - active voice, needless words omitted, concrete nouns and
     verbs, one idea per sentence. Sentence case in prose, comments, logs and
     CLI; snake_case in code. No banners or bracket tags: ok: and warn:
     prefixes instead.
   TEXT
-  fix "Strunk & White — active voice, needless words omitted, concrete nouns and verbs, one idea per sentence."
+  fix "Strunk & White - active voice, needless words omitted, concrete nouns and verbs, one idea per sentence."
   bad  "the file was modified by the job"
   good "the job modified the file"
 end
@@ -555,11 +555,11 @@ end
 Law.define(:LINT_BEAUTIFY) do
   source "MASTER constitution (soul.yml absolute.rules)"
   practice <<~TEXT
-    Boy Scout Rule — touching a file obliges a full-file lint pass, not only
+    Boy Scout Rule - touching a file obliges a full-file lint pass, not only
     the edited lines. Collapse double blanks, fix spacing, and reassess every
     comment: delete what-comments, keep a one-line why only when non-obvious.
   TEXT
-  fix "Boy Scout Rule — touching a file obliges a full-file lint pass, not only the edited lines."
+  fix "Boy Scout Rule - touching a file obliges a full-file lint pass, not only the edited lines."
   bad  "lints only the edited lines"
   good "lints the whole file it touched"
 end
@@ -567,11 +567,11 @@ end
 Law.define(:MICRO_REFINEMENTS) do
   source "MASTER constitution (soul.yml absolute.rules)"
   practice <<~TEXT
-    Craft — fix tighter words, honest names, correct spacing and better glyphs
+    Craft - fix tighter words, honest names, correct spacing and better glyphs
     when seen, beyond the stated task. Apply without asking; mention only the
     non-obvious.
   TEXT
-  fix "Craft — fix tighter words, honest names, correct spacing and better glyphs when seen, beyond the stated task."
+  fix "Craft - fix tighter words, honest names, correct spacing and better glyphs when seen, beyond the stated task."
   bad  "leaves a wrong name because it is out of scope"
   good "fixes the name while it is open"
 end
@@ -579,12 +579,12 @@ end
 Law.define(:HTML_CSS_STYLE) do
   source "MASTER constitution (soul.yml absolute.rules)"
   practice <<~TEXT
-    Semantic HTML — bare selectors (nav a, main, h1) over class soup; tag
+    Semantic HTML - bare selectors (nav a, main, h1) over class soup; tag
     helpers over content_tag; omit class attributes unless brand, button or badge
     semantics require them. Structure carries meaning, classes are the last
     resort.
   TEXT
-  fix "Semantic HTML — bare selectors (nav a, main, h1) over class soup;"
+  fix "Semantic HTML - bare selectors (nav a, main, h1) over class soup;"
   bad  "div.nav-link-wrapper-inner"
   good "nav a"
 end
@@ -592,11 +592,11 @@ end
 Law.define(:MOTION_COLOR_GRADING) do
   source "MASTER constitution (soul.yml absolute.rules)"
   practice <<~TEXT
-    Motion Design — ease all motion with frame-independent delta time;
+    Motion Design - ease all motion with frame-independent delta time;
     ease-out arrivals, ease-in-out crossfades, never a linear snap. Palettes
     anchor on complements with shadow/midtone/highlight triplets.
   TEXT
-  fix "Motion Design — ease all motion with frame-independent delta time;"
+  fix "Motion Design - ease all motion with frame-independent delta time;"
   bad  "a linear snap"
   good "ease-out on arrival, frame-independent"
 end
@@ -621,11 +621,11 @@ end
 Law.define(:VOICE_TERSE_UNIX) do
   source "MASTER constitution (soul.yml absolute.rules)"
   practice <<~TEXT
-    Unix voice — one job per unit, silence on success, composable lines, no
+    Unix voice - one job per unit, silence on success, composable lines, no
     corporate filler. Operator replies use plain English with proper casing;
     kernel and dmesg stay lowercase terse.
   TEXT
-  fix "Unix voice — one job per unit, silence on success, composable lines, no corporate filler."
+  fix "Unix voice - one job per unit, silence on success, composable lines, no corporate filler."
   bad  "a summary after a successful command"
   good "silence on success"
 end

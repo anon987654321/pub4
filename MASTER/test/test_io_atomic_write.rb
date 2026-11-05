@@ -3,8 +3,8 @@
 require_relative "test_helper"
 require "tmpdir"
 
-# Every durable write in the runtime goes through AtomicWrite — standing orders
-# state, memory, findings — so a half-written file here is a corrupted runtime,
+# Every durable write in the runtime goes through AtomicWrite - standing orders
+# state, memory, findings - so a half-written file here is a corrupted runtime,
 # and the failure path must not leave a .master_atomic_ temp behind.
 class AtomicWriteTest < Minitest::Test
   Writer = Class.new { include Master::Io::AtomicWrite }
@@ -25,7 +25,7 @@ class AtomicWriteTest < Minitest::Test
   def test_binary_bytes_are_written_as_given_under_a_utf8_default_internal
     previous = Encoding.default_internal
     Encoding.default_internal = Encoding::UTF_8
-    bytes = "a — b".b
+    bytes = "a - b".b
 
     @writer.write_atomic(path, bytes)
 

@@ -200,7 +200,7 @@ FLOW_OUTPUT = <<~OUT
     code = Canary.main(%w[--local --app demo --no-smoke --budget-ms 100], root: @root, out:, shell: ->(*_) { ["", Ok.new(true)] })
     assert_equal 1, code
     text = out.string
-    assert_match(/FAIL GET demo \/gone — status 500/, text)
+    assert_match(/FAIL GET demo \/gone - status 500/, text)
     assert_match(/rollback \(manual; the canary changes nothing\)/, text)
     assert_match(/vps-deploy takes no SHA/, text)
   end

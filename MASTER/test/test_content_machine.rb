@@ -5,7 +5,7 @@ require "content"
 require "fileutils"
 
 # The content machine: a kanban whose cards cross lanes only through
-# verdicts. These tests pin the loop — a card the judge rejects goes back
+# verdicts. These tests pin the loop - a card the judge rejects goes back
 # with notes, a card the rubric admits publishes, and the board survives a
 # reload with the same state.
 class TestContentMachine < Minitest::Test

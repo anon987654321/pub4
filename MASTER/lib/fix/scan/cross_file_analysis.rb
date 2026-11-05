@@ -57,13 +57,13 @@ module Master
 
         def duplicate_function_calls(files)
           spread(files, /File\.read\(([^)\n]+)\)/, "CROSS_FILE_DRY") do |call, count|
-            "duplicate File.read(#{call}) in #{count} files — extract a shared reader"
+            "duplicate File.read(#{call}) in #{count} files - extract a shared reader"
           end
         end
 
         def duplicate_glob_patterns(files)
           spread(files, /Dir\.glob\(([^)\n]+)\)/, "CROSS_FILE_DRY") do |pattern, count|
-            "duplicate Dir.glob(#{pattern}) in #{count} files — extract shared glob helper"
+            "duplicate Dir.glob(#{pattern}) in #{count} files - extract shared glob helper"
           end
         end
 
@@ -73,7 +73,7 @@ module Master
         # not one was actionable, for three separate reasons, all fixed here:
         #
         #   MAGIC_NUMBER matches every digit 2-9 anywhere, so "literal 8 recurs
-        #   in 141 files" — array indices, loop bounds, version fragments. A
+        #   in 141 files" - array indices, loop bounds, version fragments. A
         #   single digit carries no meaning worth naming.
         #
         #   It matches four-digit years, so "literal 2026 recurs in 50 files"
@@ -104,7 +104,7 @@ module Master
           grouped.filter_map do |value, occurrences|
             next unless distinct_files(occurrences) >= MIN_FILES
 
-            build("MAGIC_NUMBER_SPREAD", "literal #{value} recurs in #{distinct_files(occurrences)} files — extract a named constant")
+            build("MAGIC_NUMBER_SPREAD", "literal #{value} recurs in #{distinct_files(occurrences)} files - extract a named constant")
           end
         end
 
@@ -147,16 +147,16 @@ module Master
           grouped.values.filter_map do |occurrences|
             next unless distinct_files(occurrences) >= MIN_FILES
 
-            build("COPY_PASTE_BLOCK", "same #{BLOCK_LINES}+ line block recurs in #{distinct_files(occurrences)} files — extract a module or template")
+            build("COPY_PASTE_BLOCK", "same #{BLOCK_LINES}+ line block recurs in #{distinct_files(occurrences)} files - extract a module or template")
           end
         end
 
         # copy_paste_blocks catches a block someone pasted verbatim; it misses
-        # the same method rewritten with different names and literals — the clone
+        # the same method rewritten with different names and literals - the clone
         # that survives a rename, which is most real DRY. Fingerprinting a def by
         # its node TYPES alone, with every identifier and literal dropped, makes
         # those two methods hash equal, so DRY fires on shared structure rather
-        # than shared spelling — and it needs no model, so it runs on a keyless
+        # than shared spelling - and it needs no model, so it runs on a keyless
         # tree where the semantic pass returns nothing.
         CLONE_RUBY = %w[.rb .rake].freeze
         CLONE_MIN_MASS = 24 # nodes in a def body; below this it is an accessor, not logic
@@ -182,7 +182,7 @@ module Master
             next if files_hit.size < CLONE_MIN_FILES
 
             names = sites.map(&:last).uniq.first(3).join(", ")
-            build("DRY", "#{sites.size} methods share one structure (#{names}) across #{files_hit.size} files — extract the shared shape")
+            build("DRY", "#{sites.size} methods share one structure (#{names}) across #{files_hit.size} files - extract the shared shape")
           end
         end
 
@@ -195,7 +195,7 @@ module Master
 
         # Node classes only, pre-order. Identifiers and literals are leaf
         # attributes on the node rather than child nodes, so they never reach
-        # the shape — which is exactly what lets a rename hash equal.
+        # the shape - which is exactly what lets a rename hash equal.
         def node_shape(node, acc = [])
           return acc unless node.is_a?(Prism::Node)
 
@@ -209,11 +209,11 @@ module Master
           namespaces = Set.new
           files.each do |path, code|
             # Anything written as a qualifier somewhere is a namespace. This
-            # codebase opens nested modules on separate lines —
+            # codebase opens nested modules on separate lines -
             #   module Master
             #     module Review
             #       module Scan
-            # — so splitting the declaration on "::" finds nothing to learn
+            # - so splitting the declaration on "::" finds nothing to learn
             # from; the evidence that Review is a namespace is that other files
             # say Master::Review::Scan when they refer into it.
             code.scan(/\b([A-Z]\w*)::/).flatten.each { |qualifier| namespaces << qualifier }
@@ -227,7 +227,7 @@ module Master
             next if stem.empty? || paths.size < MIN_FILES
             # A namespace is not a parallel hierarchy, it is a namespace. The
             # 2026-07-31 run led with "Master spans 441 class/module
-            # hierarchies" — the root module of the codebase — and under it
+            # hierarchies" - the root module of the codebase - and under it
             # Review (99), Ground (96), CLI (74) and Io (47), which are the
             # subsystem namespaces those 441 files nest inside. "Share a base or
             # collapse the parallel structure" is not something anyone can do
@@ -240,12 +240,12 @@ module Master
             # FixLoop over 12 files, ModelRouter 6, LLMDispatcher, PassRunner
             # and AstFixer 4 each, Builder 3. The namespace guard above cannot
             # see them, because a part reopens `class FixLoop` and never writes
-            # `FixLoop::`. A stem whose files sit anywhere else still fires —
+            # `FixLoop::`. A stem whose files sit anywhere else still fires -
             # that is the parallel structure the rule is for.
             next if paths.all? { |path| own_part?(stem, path) }
 
             build("PARALLEL_HIERARCHY",
-                  "#{stem} spans #{paths.size} class/module hierarchies — share a base or collapse the parallel structure",
+                  "#{stem} spans #{paths.size} class/module hierarchies - share a base or collapse the parallel structure",
                   impact_radius: { files: paths.to_a })
           end
         end
@@ -261,7 +261,7 @@ module Master
 
         def scattered_config(files)
           spread(files, /(?:ENV\.fetch|ENV\[)\(?["']([A-Z0-9_]+)["']/, "SCATTERED_CONFIG") do |key, count|
-            "ENV #{key} is read in #{count} files — consolidate config access"
+            "ENV #{key} is read in #{count} files - consolidate config access"
           end
         end
 
@@ -270,7 +270,7 @@ module Master
         #
         # This matched /\bpolicy\b/i against whole files, comments and strings
         # included, and fired at four files. On 2026-07-31 it reported "policy"
-        # across 82 files and "cache" across 73 — lib/result.rb among them,
+        # across 82 files and "cache" across 73 - lib/result.rb among them,
         # because error classification legitimately talks about policy. Seven
         # findings, seven common English words. Requiring the word to appear in
         # a declaration, a method name or a constant keeps the rule's intent
@@ -286,7 +286,7 @@ module Master
             paths = files.filter_map { |path, code| path if code.match?(matcher) }
             next if paths.uniq.size < 4 || natural_family?(paths)
 
-            build("SPRAWL", "concern #{word.inspect} recurs in #{paths.uniq.size} unrelated files — review ownership before fixing")
+            build("SPRAWL", "concern #{word.inspect} recurs in #{paths.uniq.size} unrelated files - review ownership before fixing")
           end
         end
 

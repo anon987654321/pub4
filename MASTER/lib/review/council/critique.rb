@@ -127,7 +127,7 @@ module Master
         end
 
         # Ideation used to run on the mode's canned prompt alone, blind to what
-        # the panel just found — proposals for nothing in particular, ranked
+        # the panel just found - proposals for nothing in particular, ranked
         # against complaints they never addressed. The panel's issues ARE the
         # prompt, and each wants a field to choose from: two proposals give the
         # cherry-pick nothing to reject, and twenty restatements of one idea
@@ -149,7 +149,7 @@ module Master
             #{hard}
 
             The council raised the issues below. For each one, propose
-            #{IDEAS_PER_ISSUE.first} to #{IDEAS_PER_ISSUE.last} materially different repairs — different in what
+            #{IDEAS_PER_ISSUE.first} to #{IDEAS_PER_ISSUE.last} materially different repairs - different in what
             they change, not in how they are phrased. Number each proposal and
             name the issue it repairs. The weakest are discarded, so a field of
             near-identical proposals is a field of one.

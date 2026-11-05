@@ -93,7 +93,7 @@ module Master
       alias permit? check_permit
 
       # @auto used to return ok for the whole dangerous tier before needs_human? was
-      # consulted — lib/ground/policy/sandbox.rb:24-33 names that hole, and unattended
+      # consulted - lib/ground/policy/sandbox.rb:24-33 names that hole, and unattended
       # is exactly when it matters. Two gates now stand between an unattended run and
       # a dangerous tool, and neither widens with use: the persistent allowlist of
       # exact tool names, and a per-run budget for everything else that is spent once

@@ -37,7 +37,7 @@ class TestFixProtocol < Minitest::Test
     assert_includes text, "No deterministic fixer exists"
     assert_includes text, "complete current source"
     assert_includes text, "complete current source of every direct dependency"
-    assert_includes text, "30–40 materially distinct architecture"
+    assert_includes text, "30-40 materially distinct architecture"
     assert_includes text, "at least three plans passing the deterministic quality"
     assert_includes text, "concrete benefits, trade-offs and risks"
     assert_includes text, "MASTER/data/ux_refinements.yml"
@@ -89,7 +89,7 @@ class TestFixProtocol < Minitest::Test
       assert_includes context, "OPERATING MODEL"
       assert_includes context, "feature_truth=RAILS/apps.yml"
       assert_includes context, "deploy_identity=OPENBSD/deploy_inventory.json"
-      assert_includes context, "evidence_ladder: source authority → executable proof → live evidence"
+      assert_includes context, "evidence_ladder: source authority -> executable proof -> live evidence"
       assert_includes context, "cross-tree proof law: identify the authority"
       assert_includes context, '"target": "OPENBSD"'
     end

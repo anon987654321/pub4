@@ -87,11 +87,11 @@ def runtime_check!(apps)
     next unless File.directory?(app_dir)
 
     ok, out = run!([bundle_cmd, "check"], chdir: app_dir)
-    failures << "#{name}: bundle check failed — #{out}" unless ok
+    failures << "#{name}: bundle check failed - #{out}" unless ok
 
     ok, out = run!([rails_cmd, "-S", bundle_cmd, "exec", "rails", "db:prepare"],
       chdir: app_dir, env: { "RAILS_ENV" => "test" })
-    failures << "#{name}: db:prepare failed — #{out}" unless ok
+    failures << "#{name}: db:prepare failed - #{out}" unless ok
 
     ok, out = run!([rails_cmd, "-S", bundle_cmd, "exec", "rails", "runner", DEAD_ROUTE_PROBE],
       chdir: app_dir, env: { "RAILS_ENV" => "test" })
@@ -101,7 +101,7 @@ def runtime_check!(apps)
     next unless File.executable?(ci)
 
     ok, out = run!([ci], chdir: app_dir, env: { "PUB4_CI_GUARD" => "1" })
-    failures << "#{name}: bin/ci failed — #{out.lines.first(8).join}" unless ok
+    failures << "#{name}: bin/ci failed - #{out.lines.first(8).join}" unless ok
   end
 
   if failures.any?
@@ -121,9 +121,9 @@ runtime = ARGV.include?("--runtime")
 # half never runs and "rails_runtime" is the static production check under a second
 # name. Say which half ran. A clean exit here otherwise reads as three apps booted,
 # their bundles checked, their routes proved against real controllers and their
-# bin/ci green — none of which this run touched.
+# bin/ci green - none of which this run touched.
 unless runtime
-  warn "rails_runtime: static half only — pass --runtime to boot each app " \
+  warn "rails_runtime: static half only - pass --runtime to boot each app " \
        "(bundle check, db:prepare, dead routes, bin/ci)"
 end
 

@@ -55,7 +55,7 @@ module Operator
     end
 
     def render(results, root)
-      lines = results.map { |r| "#{r.ok ? 'ok  ' : 'FAIL'} #{r.name}#{r.detail.to_s.empty? ? '' : " — #{r.detail}"}" }
+      lines = results.map { |r| "#{r.ok ? 'ok  ' : 'FAIL'} #{r.name}#{r.detail.to_s.empty? ? '' : " - #{r.detail}"}" }
       failed = results.reject(&:ok)
       lines << (failed.empty? ? "canary: #{results.size} checks passed" : "canary: #{failed.size} of #{results.size} checks FAILED")
       lines.concat(Rollback.advice(root:)) unless failed.empty?
@@ -119,7 +119,7 @@ module Operator
       def port_checks
         @apps.map do |name, cfg|
           up = @connect.call("127.0.0.1", cfg["port"])
-          Result.new(name: "port #{cfg['port']} (#{name})", ok: up, detail: up ? nil : "closed — the app is down or was shed; relayd still answers TLS")
+          Result.new(name: "port #{cfg['port']} (#{name})", ok: up, detail: up ? nil : "closed - the app is down or was shed; relayd still answers TLS")
         end
       end
 

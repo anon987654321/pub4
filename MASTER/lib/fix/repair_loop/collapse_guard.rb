@@ -30,7 +30,7 @@ module Master
         # most of the file. FULL.yml's v71.8 restored a file cut from 74KB to
         # 5KB, and three of its rule sets asked for this veto.
         ELISION = Regexp.union(
-          /(?:\.\.\.|…)\s*(?:the\s+)?(?:rest|remaining|unchanged|continued|existing|same|omitted)\b/i,
+          /(?:\.\.\.|\u2026)\s*(?:the\s+)?(?:rest|remaining|unchanged|continued|existing|same|omitted)\b/i,
           /\[(?:truncated|omitted|snip(?:ped)?)\]/i,
           /\b(?:rest|remainder) of (?:the |this )?(?:file|method|code|class|function|module|body)\b.{0,24}
             \b(?:unchanged|the same|omitted|as (?:is|before)|remains|continues)\b/ix,

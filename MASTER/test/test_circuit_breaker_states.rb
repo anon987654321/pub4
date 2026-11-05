@@ -6,7 +6,7 @@ require "ruby_llm"
 # CLAUDE_OPUS_UNIFIED_HANDOFF.md 3.2 asks for the circuit breaker's states to be
 # tested, and says to check the tree rather than assume the historical shape.
 # The tree checked: Stoplight is not required, declared or referenced anywhere,
-# so there is no NameError hazard to repair — Master::Io::CircuitBreaker is a
+# so there is no NameError hazard to repair - Master::Io::CircuitBreaker is a
 # hand-rolled replacement. What was actually missing is the half the handoff
 # names second. The two existing tests in test_runtime_hardening.rb cover the
 # rate limiter and the per-model registry; closed -> open -> half_open -> closed
@@ -20,7 +20,7 @@ class TestCircuitBreakerStates < Minitest::Test
   end
 
   # execute_with_tracking treats a failure as a config error, not a backend one,
-  # when no provider key is present — so without this the breaker never opens on
+  # when no provider key is present - so without this the breaker never opens on
   # a machine with no keys and every test below would pass for the wrong reason.
   def with_keys
     Master.stub(:any_api_key_present?, true) { yield }

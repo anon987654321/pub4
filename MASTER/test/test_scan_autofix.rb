@@ -55,7 +55,7 @@ class TestScanAutofix < Minitest::Test
   end
 
   # AstFixer used to transform and write in one call, so the only thing between a
-  # misfiring transform and the file was the transform's own judgement — and the
+  # misfiring transform and the file was the transform's own judgement - and the
   # trial run the old backlog records made three writes, two of them damage, one of which
   # `node --check` waved through. The candidate is judged before it becomes the
   # file now, by the same guard every constitutional write passes.
@@ -99,7 +99,7 @@ class TestScanAutofix < Minitest::Test
       applied = autofix.apply([[path, Master::Result.ok([finding("FROZEN_LITERAL")])]])
 
       assert_equal 1, applied.size
-      # source-assertion: ok — reading back what the fixer wrote is the only way to see it landed
+      # source-assertion: ok - reading back what the fixer wrote is the only way to see it landed
       assert_includes File.read(path), "# frozen_string_literal: true"
     end
   end
@@ -153,7 +153,7 @@ class TestScanAutofix < Minitest::Test
         ctx: { args: path },
       )
 
-      # source-assertion: ok — reading back what the fixer wrote is the only way to see it landed
+      # source-assertion: ok - reading back what the fixer wrote is the only way to see it landed
 
       assert_includes File.read(path), "# frozen_string_literal: true"
       assert_includes out, "autofixed: 1 file"
@@ -215,7 +215,7 @@ class TestScanAutofix < Minitest::Test
 
   # The old pass walked the whole tree, then fixed, then walked it again.
   # A finding must be written on the file that just produced it, before the
-  # walker moves on — otherwise the operator relocates it hours later.
+  # walker moves on - otherwise the operator relocates it hours later.
   def test_scan_dir_writes_the_fix_before_returning_the_file
     git_tmpdir do |root|
       path = File.join(root, "example.rb")
@@ -232,7 +232,7 @@ class TestScanAutofix < Minitest::Test
 
       result = scanner.scan_dir(root, autofix: true, autofix_root: root)
       assert result.ok?
-      # source-assertion: ok — reading back what the fixer wrote is the only way to see it landed
+      # source-assertion: ok - reading back what the fixer wrote is the only way to see it landed
       assert_includes File.read(path), "# frozen_string_literal: true"
       assert_equal 1, scanner.stream_autofixes.size
     end

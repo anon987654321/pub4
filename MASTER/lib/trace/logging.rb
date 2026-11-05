@@ -78,7 +78,7 @@ module Master
           units.each { |line| listeners.each { |listener| listener.call(line) } }
         rescue StandardError => e
           warn_logging_failure(e)
-          safe_line = "trace0: logging failed — #{e.class}: #{e.message}"
+          safe_line = "trace0: logging failed - #{e.class}: #{e.message}"
           begin
             @buffer.push(safe_line)
           rescue StandardError

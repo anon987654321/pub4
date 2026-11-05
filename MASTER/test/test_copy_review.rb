@@ -15,10 +15,10 @@ class TestCopyReview < Minitest::Test
       in_stock: true, placeholder: false, last_seen_at: @now - 60
     }
     @creative = {
-      headline: "Kjole – NOK 149.90",
+      headline: "Kjole - NOK 149.90",
       body: "Kjole fra Fjord Studio. På lager.",
       cta: "Se produktet", locale: "nb-NO",
-      disclosure: "Annonse – annonselenke",
+      disclosure: "Annonse - annonselenke",
       claims: [
         { kind: "product_title", text: "Kjole" },
         { kind: "merchant", text: "Fjord Studio" },
@@ -41,7 +41,7 @@ class TestCopyReview < Minitest::Test
   end
 
   def test_price_claim_must_match_integer_minor_units_and_currency
-    creative = @creative.merge(headline: "Kjole – NOK 99.00", claims: @creative[:claims].map(&:dup))
+    creative = @creative.merge(headline: "Kjole - NOK 99.00", claims: @creative[:claims].map(&:dup))
     creative[:claims][2][:text] = "NOK 99.00"
     report = review(creative:)
     assert report.fail?
@@ -99,7 +99,7 @@ class TestCopyReview < Minitest::Test
   end
 
   def test_mismatched_currency_fails
-    creative = @creative.merge(headline: "Kjole – USD 149.90", claims: @creative[:claims].map(&:dup))
+    creative = @creative.merge(headline: "Kjole - USD 149.90", claims: @creative[:claims].map(&:dup))
     creative[:claims][2][:text] = "USD 149.90"
     report = review(creative:)
     assert report.fail?

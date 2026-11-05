@@ -88,7 +88,7 @@ class VisualPassContractTest < Minitest::Test
     committer.define_singleton_method(:abort_transaction!) { Master::Result.ok(:aborted) }
     runner.instance_variable_set(:@committer, committer)
 
-    visual = Master::Result.err("rendered visual review: INCONCLUSIVE — no browser", category: :inconclusive)
+    visual = Master::Result.err("rendered visual review: INCONCLUSIVE - no browser", category: :inconclusive)
     result = runner.send(:evidence_abort_result, visual, nil)
 
     assert_equal :validation_failed, result.status

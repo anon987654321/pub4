@@ -32,6 +32,6 @@ class TestLawEvidence < Minitest::Test
       source = File.read(path)
       source.match?(/rotate_(api_key|secret|credential|web_token)/i)
     end
-    assert_equal 0, hits, "a credentials rotator appeared — give secrets_rotation a real law_id"
+    assert_equal 0, hits, "a credentials rotator appeared - give secrets_rotation a real law_id"
   end
 end

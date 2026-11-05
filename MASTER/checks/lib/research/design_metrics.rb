@@ -138,7 +138,7 @@ module Deploy
       end
     end
 
-    # ultraminimalism.color.max_palette_roles — the number of *roles* the palette
+    # ultraminimalism.color.max_palette_roles - the number of *roles* the palette
     # carries, not the number of hexes. accent/danger/success/warning/info is the
     # set that paints meaning; bg/surface/text/border are structure.
     ROLE_TOKENS = %w[accent danger success warning info].freeze
@@ -158,7 +158,7 @@ module Deploy
 
       @result.fail(
         "design_metrics palette: social dialect carries #{roles.size} colour roles " \
-        "(#{roles.join(', ')}) over max_palette_roles #{max_roles} — value and spacing " \
+        "(#{roles.join(', ')}) over max_palette_roles #{max_roles} - value and spacing " \
         "should carry what a colour is being asked to", severity: :soft
       )
     end
@@ -189,7 +189,7 @@ module Deploy
       @result.fail("design_metrics: split ratios missing/invalid") if sidebar <= 0 || (main + sidebar - 1.0).abs > 0.02
       visible = @rules.dig("ultraminimalism", "swiss_style", "visible_grid_optional")
       @result.fail("design_metrics: visible_grid_optional missing") if visible.nil?
-      @result.warn("design_metrics: design_rules loaded (touch≥#{touch}px body≥#{body_min}px)")
+      @result.warn("design_metrics: design_rules loaded (touch>=#{touch}px body>=#{body_min}px)")
     end
 
     def check_token_type_and_measure
@@ -214,7 +214,7 @@ module Deploy
 
         if ch < min_ch || ch > max_ch
           @result.fail(
-            "design_metrics measure: measure_body #{measure} outside #{min_ch}–#{max_ch}ch (principle=hierarchy)",
+            "design_metrics measure: measure_body #{measure} outside #{min_ch}-#{max_ch}ch (principle=hierarchy)",
             severity: :hard,
           )
         end
@@ -231,7 +231,7 @@ module Deploy
           @result.fail("design_metrics measure: max-width #{c}ch outside ideal range", severity: :soft)
         end
       else
-        @result.fail("design_metrics measure: no max-width …ch in marketplace/posts prose", severity: :soft)
+        @result.fail("design_metrics measure: no max-width ...ch in marketplace/posts prose", severity: :soft)
       end
     end
 
@@ -250,9 +250,9 @@ module Deploy
       css_map = TOUCH_FOCUS.to_h { |app, selector| ["#{app}/app/assets/stylesheets/application.scss", sample_css(app, selector)] }
                            .reject { |_, body| body.empty? }
 
-      # Hard: forms/buttons in brgen declare ≥44
+      # Hard: forms/buttons in brgen declare >=44
       unless DesignMetrics.extract_min_heights(sample_css("brgen", SAMPLES[:forms])).any? { |h| h + 0.01 >= min_px }
-        @result.fail("design_metrics touch: brgen form controls missing min-height ≥ #{min_px.to_i}px (principle=fitts_law)", severity: :hard)
+        @result.fail("design_metrics touch: brgen form controls missing min-height >= #{min_px.to_i}px (principle=fitts_law)", severity: :hard)
       end
 
       # Interactive coverage across product CSS
@@ -260,7 +260,7 @@ module Deploy
         next if row[:covered]
 
         @result.fail(
-          "design_metrics touch: #{row[:label]} lacks min-height ≥ #{min_px.to_i}px in #{row[:paths].join(', ')} (principle=fitts_law)",
+          "design_metrics touch: #{row[:label]} lacks min-height >= #{min_px.to_i}px in #{row[:paths].join(', ')} (principle=fitts_law)",
           severity: :hard,
         )
       end
@@ -370,7 +370,7 @@ module Deploy
 
       inventory = Inventory.new(root: ROOT).apps.find { |a| a.name == "brgen" }
       unless inventory && CrawlSupport.port_open?("127.0.0.1", inventory.port)
-        @result.skipped_live("design_metrics browser: brgen port closed — skip live hit targets")
+        @result.skipped_live("design_metrics browser: brgen port closed - skip live hit targets")
         return
       end
 
@@ -416,7 +416,7 @@ module Deploy
             next unless [h, w].min + 0.5 < min_px
 
             @result.fail(
-              "design_metrics browser: #{probe[:path]} element ~#{w.to_i}×#{h.to_i} < #{min_px}px (principle=fitts_law)",
+              "design_metrics browser: #{probe[:path]} element ~#{w.to_i}x#{h.to_i} < #{min_px}px (principle=fitts_law)",
               severity: :hard,
             )
           end

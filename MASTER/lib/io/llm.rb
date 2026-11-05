@@ -619,7 +619,7 @@ module Master
           payload = args.is_a?(Hash) ? args : JSON.parse(args.to_s)
           forward(plugin: plugin.to_s, action: action.to_s, args: payload)
         rescue JSON::ParserError => e
-          "Error: invalid observation args JSON — #{e.message}"
+          "Error: invalid observation args JSON - #{e.message}"
         end
       end
 
@@ -677,7 +677,7 @@ module Master
           payload = params.is_a?(Hash) ? params : JSON.parse(params.to_s)
           forward(name: name.to_s, params: payload, &:to_s)
         rescue JSON::ParserError => e
-          "Error: invalid params JSON — #{e.message}"
+          "Error: invalid params JSON - #{e.message}"
         end
       end
     end

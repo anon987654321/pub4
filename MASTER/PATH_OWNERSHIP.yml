@@ -1,19 +1,19 @@
 ---
 ownership:
   ../STUDIO/output_paths.rb:
-    purpose: canonical STUDIO path policy — the root shim that used to shadow it is retired (2026-11-02)
+    purpose: canonical STUDIO path policy - the root shim that used to shadow it is retired (2026-11-02)
     risk: low
     check: cd STUDIO && rake check
   ../STUDIO/subprocess.rb:
-    purpose: canonical STUDIO subprocess boundary — the root shim that used to shadow it is retired (2026-11-02)
+    purpose: canonical STUDIO subprocess boundary - the root shim that used to shadow it is retired (2026-11-02)
     risk: medium
     check: cd STUDIO && rake check
   ../STUDIO/docs/fetat/proposal.md:
-    purpose: the FETAT proposal working master — writing output, not policy
+    purpose: the FETAT proposal working master - writing output, not policy
     risk: low
     check: none (prose)
   ../RAILS/mrdamascy/:
-    purpose: the Mr. Damascy PWA — first-class RAILS app since 2026-11-02 (promoted out of the retired RAILS/__other/); deploy lane pending
+    purpose: the Mr. Damascy PWA - first-class RAILS app since 2026-11-02 (promoted out of the retired RAILS/__other/); deploy lane pending
     risk: medium
     check: cd RAILS/mrdamascy && bin/rails test
   README.md:
@@ -31,7 +31,7 @@ ownership:
     risk: low
     check: ruby OPENBSD/test/test_operator_prompt_contract.rb
   law/:
-    purpose: the constitution as code — one domain file per body of law
+    purpose: the constitution as code - one domain file per body of law
     risk: critical
     check: bin/check --profile=agent
   lib/:
@@ -43,12 +43,12 @@ ownership:
     risk: high
     check: bin/check --profile=agent
   RAILS/master/:
-    purpose: the Rails face — chat shell, TTS endpoints, WebGL face assets
+    purpose: the Rails face - chat shell, TTS endpoints, WebGL face assets
     risk: high
     check: bin/check --profile=web
   checks/:
-    purpose: checks that measure MASTER itself — its face, its assets, its own scan
-      chain — declared in MASTER/checks/checks.yml and run by that runner
+    purpose: checks that measure MASTER itself - its face, its assets, its own scan
+      chain - declared in MASTER/checks/checks.yml and run by that runner
     risk: medium
     check: ruby MASTER/checks/runner.rb master_tts master_web_assets constitutional_scan
   bin/:
@@ -76,7 +76,7 @@ ownership:
     risk: high
     check: bin/check --profile=agent
   lib/ground/:
-    purpose: constitution, config, policy, memory, schema — the schema clause
+    purpose: constitution, config, policy, memory, schema - the schema clause
       covers a typed reader whose table declares one of those four things, in
       data/ or in a frozen constant, and stops where the table's subject is
       another directory's declared purpose or where the file writes the table
@@ -108,15 +108,15 @@ ownership:
     risk: medium
     check: ruby -Ilib:test test/voice/test_speech_empty_worker.rb
   lib/core.rb:
-    purpose: fold spine entrypoint — Effect, VERBS, Verdict, Secret
+    purpose: fold spine entrypoint - Effect, VERBS, Verdict, Secret
     risk: critical
     check: rake test:core
   lib/core/:
-    purpose: constitutional fold spine — must not require the rest of lib/
+    purpose: constitutional fold spine - must not require the rest of lib/
     risk: high
     check: rake test:core
   lib/boot/:
-    purpose: paths, data, runtime setup consumed before Zeitwerk is live — each
+    purpose: paths, data, runtime setup consumed before Zeitwerk is live - each
       file declares a plain module, three of them mixed onto Master and MasterPaths
       read before Master::ROOT exists, all hand-required in load order and
       Zeitwerk-ignored, so this is not a namespace anything can live under
@@ -185,7 +185,7 @@ ownership:
     check: none
   tools/:
     purpose: repo-hygiene and verification one-offs (security sweep, inventory,
-      convergence evidence check) — distinct from bin/'s runtime entry points
+      convergence evidence check) - distinct from bin/'s runtime entry points
     risk: medium
     check: ruby -Ilib:test test/test_lifecycle_tools.rb
   tools/research/:

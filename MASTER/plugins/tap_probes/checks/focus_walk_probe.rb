@@ -1,10 +1,10 @@
 # frozen_string_literal: true
 
-# focus_walk_probe — tab through a page and demand every stop shows a ring.
+# focus_walk_probe - tab through a page and demand every stop shows a ring.
 #
 # The fleet's focus contract is _focus_ring.scss: a visible outline on
 # :focus-visible, guaranteed with the one sanctioned !important. This walks
-# that contract the way a keyboard user does — Tab, look, Tab, look — instead
+# that contract the way a keyboard user does - Tab, look, Tab, look - instead
 # of trusting that the CSS reaches every component. A stop with outline:none
 # and no border/background change is a place a keyboard user is lost.
 #
@@ -71,7 +71,7 @@ Deploy::CdpSession.open do |cdp|
 
     bad.first(8).each { |b| puts "  #{b}" }
   rescue Deploy::CdpSession::Error => e
-    puts "#{name}: probe failed (#{e.class}) — measured nothing"
+    puts "#{name}: probe failed (#{e.class}) - measured nothing"
   end
 end
 puts "focus_walk_probe: #{total_bad} ringless stop(s) across #{walked}/#{pages.size} page(s)"

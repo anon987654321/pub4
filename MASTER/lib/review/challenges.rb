@@ -69,7 +69,7 @@ module Master
         Challenge.new(
           id: :assumption_compiler,
           target: "unstated design assumptions",
-          artifact: "assumption → fixture → invariant → test",
+          artifact: "assumption -> fixture -> invariant -> test",
           directive: "Extract one hidden assumption. Compile it into a concrete fixture, one observable invariant, and one executable test. Do not accept 'the model says so' as an oracle.",
         ),
         Challenge.new(

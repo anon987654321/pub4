@@ -26,7 +26,7 @@ module Operator
       unless rules
         Master::Trace::Dmesg.status(
           "rhythm0",
-          "cannot load MASTER/data/tokens.yml — constitutional measurement unavailable",
+          "cannot load MASTER/data/tokens.yml - constitutional measurement unavailable",
           io: $stderr,
         )
         return false
@@ -36,7 +36,7 @@ module Operator
       unless allowed
         Master::Trace::Dmesg.status(
           "rhythm0",
-          "MASTER/data/tokens.yml has no tokens.scale.space_px — constitutional measurement unavailable",
+          "MASTER/data/tokens.yml has no tokens.scale.space_px - constitutional measurement unavailable",
           io: $stderr,
         )
         return false

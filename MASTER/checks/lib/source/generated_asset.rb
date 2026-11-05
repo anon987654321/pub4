@@ -10,7 +10,7 @@ module Deploy
     RAILS_ROOT = File.join(ROOT, "RAILS")
 
     # Stylesheets only. Watching app/javascript/**/*.{js,ts} here
-    # compared against application.css — but every app serves its JS through
+    # compared against application.css - but every app serves its JS through
     # importmap, unbundled, so no JS file has application.css as its build
     # artifact and no JS edit can make it stale. Touching a Stimulus controller
     # reported three apps' CSS as needing a rebuild that would change nothing.
@@ -22,7 +22,7 @@ module Deploy
     ].freeze
 
     # An app's application.css is compiled from its own stylesheets *and* the
-    # shared engine's, which is where the design tokens live — so watching only
+    # shared engine's, which is where the design tokens live - so watching only
     # the app tree let a shared change pass as fresh.
     #
     # It did. amber and bsdports shipped builds that predated
@@ -40,7 +40,7 @@ module Deploy
     def run
       result = CheckResult.new
       inventory = Inventory.new(root: ROOT)
-      return result.inconclusive!("generated_asset: the inventory lists no apps — no build was compared") if inventory.apps.empty?
+      return result.inconclusive!("generated_asset: the inventory lists no apps - no build was compared") if inventory.apps.empty?
 
       inventory.apps.each do |app|
         app_dir = File.join(RAILS_ROOT, app.name)
@@ -67,7 +67,7 @@ module Deploy
     end
 
     # Absolute paths with uncommitted changes, or nil when git cannot answer
-    # (no repo, no git binary) — in which case the mtime check stands alone
+    # (no repo, no git binary) - in which case the mtime check stands alone
     # rather than silently passing everything.
     def dirty_paths
       return @dirty_paths if defined?(@dirty_paths)
@@ -91,7 +91,7 @@ module Deploy
       return if sources.empty?
 
       unless File.file?(build)
-        result.inconclusive!("#{app_name}: generated application.css is absent — precompile assets before measuring generated output")
+        result.inconclusive!("#{app_name}: generated application.css is absent - precompile assets before measuring generated output")
         return
       end
 
@@ -104,7 +104,7 @@ module Deploy
 
         # mtime alone is not evidence. `git checkout`/`pull` rewrites every file
         # in one pass, so which of two files lands a millisecond later is write
-        # order, not an edit — this reported brgen's _channels.scss (1.3ms) and
+        # order, not an edit - this reported brgen's _channels.scss (1.3ms) and
         # _nav_swiper.scss (3.7ms) as newer than a build that in fact contained
         # both files' selectors verbatim. A source only counts as stale if it is
         # actually modified in the working tree while the build is not: that is
@@ -114,7 +114,7 @@ module Deploy
         next if dirty && !(dirty.include?(source) && !dirty.include?(build))
 
         rel = source.sub("#{app_dir}/", "").sub("#{RAILS_ROOT}/", "")
-        result.fail("#{app_name}: stale asset build — #{rel} newer than application.css")
+        result.fail("#{app_name}: stale asset build - #{rel} newer than application.css")
       end
 
       content_stale?(sources, build, result, app_name)
@@ -132,20 +132,20 @@ module Deploy
     # mtime and dirtiness miss a committed build that no longer matches its
     # sources: both files are clean and the checkout stamped them together.
     # Compare custom-property literals. Interpolated source values (`#{$bg}`)
-    # are skipped — those compile to a hex the source never spells, and
+    # are skipped - those compile to a hex the source never spells, and
     # treating that as drift is why a property-by-property check was
     # withdrawn. A literal `--radius-card: 12px` in SCSS against `16px` in
     # the build is the case this exists for.
     TOKEN_DECL = /--([\w-]+)\s*:\s*([^;}{]+)/
 
     # Hex, lengths, and unitless numbers (weights). Everything else is
-    # interpolation, calc(), a font stack, or a minified selector — the class
+    # interpolation, calc(), a font stack, or a minified selector - the class
     # that made a property-by-property check report every dialect as drift.
     SIMPLE_ATOM = /(?:#(?:[0-9a-fA-F]{3,8})|-?[\d.]+(?:px|rem|em|%|ch)?)/i
     SIMPLE_LITERAL = /\A#{SIMPLE_ATOM.source}\z/i
 
     # dart-sass answers a compile error by writing the error itself as the
-    # stylesheet — a comment and a body::before that prints it — and exits
+    # stylesheet - a comment and a body::before that prints it - and exits
     # non-zero into a build step nobody reads. The file is fresh by mtime and
     # declares no token, so the checks below all pass it; every page then
     # renders unstyled under the error text.
@@ -156,7 +156,7 @@ module Deploy
       return false unless head.match?(SASS_ERROR)
 
       result.fail("#{app_name}: application.css is a Sass error page (#{head.lines.first.strip}) " \
-                  "— fix the source and rebuild with bin/rails dartsass:build")
+                  "- fix the source and rebuild with bin/rails dartsass:build")
       true
     end
 
@@ -243,7 +243,7 @@ module Deploy
       end
 
       unless File.read(sw_build).include?("workbox:core")
-        result.warn("#{app_name}: service-worker.js is hand-rolled, not built — and is no longer in " \
+        result.warn("#{app_name}: service-worker.js is hand-rolled, not built - and is no longer in " \
                     "build_workbox.mjs's APPS, so npm run build:pwa leaves it alone")
         return
       end
@@ -252,7 +252,7 @@ module Deploy
 
       # The same correction the CSS check above already carries, and this one was
       # written without it. `git checkout` writes every file in one pass in path
-      # order, so shared/ lands after amber/, brgen/ and bsdports/ — which makes
+      # order, so shared/ lands after amber/, brgen/ and bsdports/ - which makes
       # shared/pwa/service_worker.js newer than all three builds in every fresh
       # clone and worktree, deterministically, on a commit where all four files
       # were last changed together. Measured in a clean worktree of 06ddd0b16:
@@ -267,7 +267,7 @@ module Deploy
       return if dirty && !(dirty.include?(sw_source) && !dirty.include?(sw_build))
 
       result.fail("#{app_name}: stale service-worker.js relative to shared/pwa/service_worker.js " \
-                  "— run npm run build:pwa")
+                  "- run npm run build:pwa")
     end
   end
 end

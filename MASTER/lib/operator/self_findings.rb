@@ -20,7 +20,7 @@ require_relative "../io/exec"
 # check` runs them over all four trees on every pass and records nothing.
 #
 # Lexical only, on purpose. The full check runs /scan with the semantic pass and
-# blocks on a model call — measured 2026-08-25 at 17 minutes elapsed against 4
+# blocks on a model call - measured 2026-08-25 at 17 minutes elapsed against 4
 # minutes of CPU, idle in a TLS read, on its way to a 20-minute stage timeout.
 # A number that needs a network and an API key is a number nobody has. Both
 # populations here need neither and finish in about two minutes.
@@ -42,11 +42,11 @@ module Operator
 
     # The locale trees carry the only non-English prose in the repo, which is
     # what the nb laws in law/prose.rb judge. Without them those two load,
-    # prove their fixtures, and reach no file — law that reads as enforcement
+    # prove their fixtures, and reach no file - law that reads as enforcement
     # and enforces nothing, which is the defect this repo names most often.
     # RAILS/master joined 2026-09-07, and it is the primary product's face: a Rails
     # app, the WebGL runtime's five source parts, the chat surface. 164 tracked
-    # source files that no census read — self_findings' list started at MASTER's
+    # source files that no census read - self_findings' list started at MASTER's
     # Ruby directories and web was never added, while law_audit reaches "a
     # little web JS" and measures blindness rather than findings. The laws that
     # looked silent were the tell: FOR_OF, TEMPLATE_LITERALS, ASYNC_AWAIT,
@@ -76,7 +76,7 @@ module Operator
 
     # Code we did not write and will not fix. STUDIO/dilla/.venv-demucs is
     # a Python virtualenv with pip, torch and urllib3 vendored inside it, and
-    # its JavaScript and HTML were being graded against this repo's rules —
+    # its JavaScript and HTML were being graded against this repo's rules -
     # `var headers = []` in urllib3's emscripten worker is not our debt.
     # Code we did not write, and code we did not type. A Rails app carries both:
     # public/assets is the precompiled output (1361 `var` findings in amber
@@ -146,7 +146,7 @@ module Operator
       end
     end
 
-    # A law file necessarily contains the pattern it forbids — in its detector,
+    # A law file necessarily contains the pattern it forbids - in its detector,
     # its fix line and its bad fixture. Law.scan neutralises those before a law
     # judges law/; this file called rule.scan directly and skipped it, so all 35
     # findings under law/ were laws quoting themselves. With conduct applied it
@@ -179,7 +179,7 @@ module Operator
     # inside a run.
     #
     # A census that records only an integer can say "over by twelve" and never
-    # which twelve, so the number arrives with no thread to pull — the same gap
+    # which twelve, so the number arrives with no thread to pull - the same gap
     # data_reach closed on 2026-08-31, and the reason that one could name its
     # two keys while this one could only report a delta. Sorted, so two runs of
     # an unchanged tree produce the same list and a diff means a change.
@@ -228,7 +228,7 @@ module Operator
         lang = Master.language_for(path)&.to_sym
         relative = path.delete_prefix("#{ROOT}/")
 
-        # Pre-filter rules by language to avoid O(files × rules) loop.
+        # Pre-filter rules by language to avoid O(files x rules) loop.
         # Reduces from 349k+ rule.applies? checks to ~1 per file.
         applicable = rules.select { |_, rule| !rule.semantic? && rule.applies?(path, lang) }
         applicable.each_value do |rule|
@@ -273,7 +273,7 @@ module Operator
     end
 
     # `Rule.inherited` registers every subclass in the running process, so a
-    # suite that defines one joins the population it is measuring — the trap
+    # suite that defines one joins the population it is measuring - the trap
     # law_deps.ungraphed hit first, reading two different numbers depending on
     # whether a test had defined a rule. LawRegistryAudit already owns the
     # question, so this asks it rather than carrying a second answer.
@@ -296,7 +296,7 @@ module Operator
     # both. Every key is spelled here rather than built from a prefix, because
     # data_reach reads the tree for the literal key name: one pass of
     # `"#{prefix}finding_members"` made finding_members look like a key nothing
-    # reads, which is the inert-config shape this repo hunts — introduced by the
+    # reads, which is the inert-config shape this repo hunts - introduced by the
     # reader written to serve two populations.
     KEYS = {
       "law" => { total: "findings", by_rule: "by_rule", members: "finding_members" },
@@ -316,7 +316,7 @@ module Operator
     # baseline and diffing two runs by hand.
     #
     # Absent, attribution is unavailable and the report says so rather than
-    # reporting no movement — a different claim.
+    # reporting no movement - a different claim.
     def recorded_by_rule(name = "law")
       known = recorded[KEYS.fetch(name)[:by_rule]]
       known.is_a?(Hash) ? known : {}
@@ -382,7 +382,7 @@ module Operator
     # Which rules moved since the baseline, and by how much.
     def report_drift(counts, known = recorded_by_rule)
       if known.empty?
-        puts "self_findings: no by_rule recorded with the baseline — run --ratchet at or below it to make the next rise attributable"
+        puts "self_findings: no by_rule recorded with the baseline - run --ratchet at or below it to make the next rise attributable"
         return
       end
 
@@ -399,7 +399,7 @@ module Operator
     # Which lines arrived and which left.
     def report_delta(current, known = recorded_members)
       if known.empty?
-        puts "self_findings: no members recorded — line attribution unavailable; run --ratchet to seed it"
+        puts "self_findings: no members recorded - line attribution unavailable; run --ratchet to seed it"
         return
       end
 
@@ -424,7 +424,7 @@ module Operator
 
       over = POPULATIONS.reject { |name| report(name) }
       # A census sitting exactly at its ceiling can still record its
-      # attribution, without having to fall first — the same reason data_reach
+      # attribution, without having to fall first - the same reason data_reach
       # seeds at parity. One already over cannot: a baseline containing the
       # overage would report it as known and hide exactly what is wanted.
       return record if ratchet && over.empty?
@@ -451,7 +451,7 @@ module Operator
             baseline = ceiling(name)
             next unless baseline.is_a?(Integer) && current > baseline
 
-            warn "self_findings #{name}: findings exceed baseline — #{current} > #{baseline}"
+            warn "self_findings #{name}: findings exceed baseline - #{current} > #{baseline}"
           end
         end
       end
@@ -466,7 +466,7 @@ module Operator
       true
     end
 
-    # One population's line, its ten loudest rules, and — only when it is over —
+    # One population's line, its ten loudest rules, and - only when it is over -
     # which rules moved and which lines arrived.
     def report(name)
       current = population(name)
@@ -474,17 +474,17 @@ module Operator
       puts "self_findings #{name}: #{current.size} across #{files.size} files from #{rules_behind(name)} rules"
       counts.first(10).each { |id, n| puts format("  %-26s %5d", id, n) }
       integrity_errors = baseline_integrity_errors(name)
-      integrity_errors.each { |message| warn "self_findings #{name}: inconsistent baseline — #{message}" }
+      integrity_errors.each { |message| warn "self_findings #{name}: inconsistent baseline - #{message}" }
       stale = stale_recorded_members(name)
       unless stale.empty?
-        warn "self_findings #{name}: #{stale.size} recorded member(s) stale — fresh attribution required"
+        warn "self_findings #{name}: #{stale.size} recorded member(s) stale - fresh attribution required"
         stale.first(20).each { |member| warn "  stale: #{member}" }
         return false
       end
       return false unless integrity_errors.empty?
       return true unless current.size > ceiling(name)
 
-      warn "self_findings #{name}: exceeds baseline — #{current.size} > #{ceiling(name)}"
+      warn "self_findings #{name}: exceeds baseline - #{current.size} > #{ceiling(name)}"
       report_drift(counts, recorded_by_rule(name))
       report_delta(current, recorded_members(name))
       false

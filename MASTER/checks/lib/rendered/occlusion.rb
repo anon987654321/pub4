@@ -16,7 +16,7 @@ module Deploy
   # So this asks the browser the question a finger asks. Take each control's
   # centre point, call elementFromPoint, and see what answers. The browser
   # accounts for stacking contexts, transforms, clip paths and pointer-events on
-  # its own — a decorative overlay set to pointer-events: none never answers,
+  # its own - a decorative overlay set to pointer-events: none never answers,
   # which is exactly right and is why a geometric check would have flagged it.
   #
   # An answer that is the control, inside it, or containing it is a hit. Anything
@@ -40,7 +40,7 @@ module Deploy
         // swiper has a rect beyond the scroller's edge: clipped, invisible, and
         // its "centre" lands on whatever fixed chrome happens to sit there. Six
         // surfaces reported exactly that. So intersect with every ancestor that
-        // clips, and probe the middle of what survives — which is also the
+        // clips, and probe the middle of what survives - which is also the
         // honest point for an element only half scrolled into view.
         const visibleRect = (el) => {
           let box = el.getBoundingClientRect();
@@ -69,7 +69,7 @@ module Deploy
 
           // checkVisibility rather than this element's own computed style.
           // opacity does not inherit, so a control inside a fully transparent
-          // parent computes opacity 1 and still has a rect — it is invisible and
+          // parent computes opacity 1 and still has a rect - it is invisible and
           // unpressable, and reading only its own style reported every link in
           // a collapsed panel as occluded. This asks the browser the whole
           // question, ancestors included.
@@ -96,7 +96,7 @@ module Deploy
           // page happened to be parked.
           //
           // A control with nowhere to scroll to cannot be moved, so the press is
-          // lost for good — which is the case worth failing on, and the one that
+          // lost for good - which is the case worth failing on, and the one that
           // caught the nav links under the theme toggle.
           //
           // Deliberately not "is the control pinned too": brgen's .app-shell is
@@ -138,13 +138,13 @@ module Deploy
     def run
       @result = CheckResult.new
       unless GeometryProbe.available?
-        @result.inconclusive!("occlusion: no Chrome/Chromium — nothing was pressed", gap: Master::Gap::NO_BROWSER)
+        @result.inconclusive!("occlusion: no Chrome/Chromium - nothing was pressed", gap: Master::Gap::NO_BROWSER)
         return @result
       end
 
       surfaces = GeometryProbe.surfaces
       GeometryProbe.unreachable_apps(surfaces).each do |app|
-        @result.skipped_live("occlusion: #{app} port closed — skipped")
+        @result.skipped_live("occlusion: #{app} port closed - skipped")
       end
       live = GeometryProbe.reachable(surfaces)
       if live.empty?
@@ -157,12 +157,12 @@ module Deploy
 
       # Surfaces measured, not surfaces attempted. A navigation timeout is a
       # warning here, so a run where Chrome opened and every page timed out
-      # pressed nothing at all — and counting the attempts reported that as a
+      # pressed nothing at all - and counting the attempts reported that as a
       # pass. mobile_flow already counts it this way.
       if measured.zero?
-        @result.inconclusive!("occlusion: Chrome reached 0/#{live.size} surface(s) — nothing was pressed")
+        @result.inconclusive!("occlusion: Chrome reached 0/#{live.size} surface(s) - nothing was pressed")
       elsif GeometryProbe.too_few_measured?(measured, live.size)
-        @result.inconclusive!("occlusion: Chrome reached #{measured}/#{live.size} surface(s) — too few to " \
+        @result.inconclusive!("occlusion: Chrome reached #{measured}/#{live.size} surface(s) - too few to " \
                               "call every control pressable; warm the apps and re-run")
       else
         @result.checked!(measured)
@@ -191,7 +191,7 @@ module Deploy
 
       Array(cdp.evaluate(PROBE)).each do |hit|
         @result.fail(
-          "occlusion: #{label} — #{hit["control"]}#{" (#{hit['label']})" unless hit["label"].to_s.empty?} " \
+          "occlusion: #{label} - #{hit["control"]}#{" (#{hit['label']})" unless hit["label"].to_s.empty?} " \
           "is covered by #{hit["covered_by"]} at #{hit["at"].join(",")}; a press there misses it",
         )
       end

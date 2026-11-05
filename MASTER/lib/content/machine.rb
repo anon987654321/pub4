@@ -5,10 +5,10 @@ require_relative "judge"
 
 module Master
   module Content
-    # The machine that runs the board: writer → editor → judge, looping until
-    # each card is publishable. Without an agent every role is mechanical —
+    # The machine that runs the board: writer -> editor -> judge, looping until
+    # each card is publishable. Without an agent every role is mechanical -
     # the writer drafts from the brief, the editor restructures, the judge
-    # applies the rubric — so the loop works offline and in tests; with an
+    # applies the rubric - so the loop works offline and in tests; with an
     # agent the same contracts are honored, only the hands are better.
     class Machine
       MAX_CYCLES_PER_CARD = 3

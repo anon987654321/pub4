@@ -192,12 +192,12 @@ module Master
               file["offenses"].map do |offense|
                 finding(
                   line: offense.dig("location", "line") || 1,
-                  message: "rubocop: #{offense["cop_name"]} — #{offense["message"]}",
+                  message: "rubocop: #{offense["cop_name"]} - #{offense["message"]}",
                 )
               end
             end
           rescue StandardError => e
-            [finding(line: 1, message: "rubocop: scan error — #{e.message}")]
+            [finding(line: 1, message: "rubocop: scan error - #{e.message}")]
           end
 
           def linter_name = "rubocop"
@@ -253,11 +253,11 @@ module Master
               lines = Array(smell["lines"])
               lines = [1] if lines.empty?
               lines.map do |line|
-                finding(line:, message: "reek: #{smell["smell_type"]} — #{smell["message"]}")
+                finding(line:, message: "reek: #{smell["smell_type"]} - #{smell["message"]}")
               end
             end
           rescue StandardError => e
-            [finding(line: 1, message: "reek: scan error — #{e.message}")]
+            [finding(line: 1, message: "reek: scan error - #{e.message}")]
           end
 
           def linter_name = "reek"

@@ -7,7 +7,7 @@ require "yaml"
 # refuted row keeps what makes it one: the claim it answers, the reason it was
 # wrong and the evidence that settled it. The file's header is the contract;
 # these tests hold the file to it. Deleting a refuted row is the move the
-# header forbids — it re-enters the loop as a fresh idea — so the MASTER
+# header forbids - it re-enters the loop as a fresh idea - so the MASTER
 # retirements of 2026-11-03 are pinned here by id.
 class TestProposalsLedger < Minitest::Test
   LEDGER = File.expand_path("../data/proposals.yml", __dir__)

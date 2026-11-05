@@ -249,7 +249,7 @@ module Master
 
       # All operator-facing writes share Dmesg's mutex. If an async turn writes
       # while Reline is editing the next prompt, the message lands on a row of
-      # its own and the editable line is rebuilt beneath it — zsh's own rule.
+      # its own and the editable line is rebuilt beneath it - zsh's own rule.
       # A write that used to append at the cursor printed its text after the
       # prompt glyphs, so "master$ Welcome back." read as a reply typed into
       # the shell.
@@ -443,7 +443,7 @@ module Master
       rescue NoMemoryError
         Result.err(host_oom_message, category: :infrastructure)
       # ScriptError too: a SyntaxError re-raised from Thread#value inherits
-      # ScriptError, not StandardError — StandardError-only let one unparseable
+      # ScriptError, not StandardError - StandardError-only let one unparseable
       # file in the preflight abort the whole process instead of failing a turn.
       rescue StandardError, ScriptError => e
         Result.err("turn failed: #{e.class}: #{e.message}", category: :infrastructure)
@@ -500,9 +500,9 @@ module Master
 
       def host_oom_message
         tip = Master::Ground::HostBudget.heavy_repo_message
-        "failed to allocate memory — #{tip}"
+        "failed to allocate memory - #{tip}"
       rescue StandardError
-        "failed to allocate memory — use /fix lib or bin/master --fast"
+        "failed to allocate memory - use /fix lib or bin/master --fast"
       end
 
       def budget_block_if_exceeded
@@ -511,7 +511,7 @@ module Master
         return if @refs.session.cost.to_f < max
 
         Master::Result.err(
-          "budget exceeded: ¢#{( @refs.session.cost * 100).round(2)} / ¢#{(max * 100).round(2)} — use /cost or raise budget",
+          "budget exceeded: ¢#{( @refs.session.cost * 100).round(2)} / ¢#{(max * 100).round(2)} - use /cost or raise budget",
           category: :budget,
         )
       end

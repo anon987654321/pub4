@@ -27,14 +27,14 @@ module Master
           %(<img class="#{class_name}" src="#{data_uri(path)}" alt="#{escape_html(label)}" style="opacity:#{opacity};">)
         end.join
         document("#{LAYER_CSS}.stage img.current{position:relative}",
-                 "ghost stack · #{escape_html(surface.id)} · #{escape_html(state)}",
+                 "ghost stack - #{escape_html(surface.id)} - #{escape_html(state)}",
                  %(<div class="stage">#{images}</div>))
       end
 
       def diff(surface:, state:, current:, previous:)
         css = "html,body{background:#808080}header{color:#fff}#{LAYER_CSS}.stage{background:#000}" \
               ".stage img.base{position:relative}.stage img.diff{mix-blend-mode:difference}"
-        document(css, "difference · #{escape_html(surface.id)} · #{escape_html(state)} · newer over older", <<~HTML)
+        document(css, "difference - #{escape_html(surface.id)} - #{escape_html(state)} - newer over older", <<~HTML)
           <div class="stage">
             <img class="base" src="#{data_uri(current)}" alt="current render">
             <img class="diff" src="#{data_uri(previous)}" alt="previous render">
@@ -51,8 +51,8 @@ module Master
               ".stage img{position:absolute;width:auto;height:auto;max-width:none;" \
               "left:-#{(crop[:x] * scale).round}px;top:-#{(crop[:y] * scale).round}px}" \
               ".stage img.previous{opacity:.42;mix-blend-mode:multiply}.stage img.current{opacity:.72}"
-        document(css, "focus registration · #{escape_html(surface.id)} · #{escape_html(state)}", <<~HTML)
-          <p>#{escape_html(crop[:label])} · current over previous at #{scale}×</p>
+        document(css, "focus registration - #{escape_html(surface.id)} - #{escape_html(state)}", <<~HTML)
+          <p>#{escape_html(crop[:label])} - current over previous at #{scale}x</p>
           <div class="stage">
             <img class="previous" src="#{data_uri(previous_path)}" alt="previous render focus">
             <img class="current" src="#{data_uri(current_path)}" alt="current render focus">
@@ -64,8 +64,8 @@ module Master
       def geometry(surface:, state:, rows:, width:, height:, image_path:)
         overlays = rows.each_with_index.map { |row, index| geometry_marker(row, index) }.join
         css = ".legend{margin:0 0 12px;font-size:13px}#{BASE_IMAGE_CSS}.stage svg{position:absolute;inset:0;pointer-events:none}"
-        document(css, "geometry registration · #{escape_html(surface.id)} · #{escape_html(state)}", <<~HTML)
-          <p class="legend">purple = previous box · cyan = current box · amber = movement vector</p>
+        document(css, "geometry registration - #{escape_html(surface.id)} - #{escape_html(state)}", <<~HTML)
+          <p class="legend">purple = previous box - cyan = current box - amber = movement vector</p>
           <div class="stage">
             <img src="#{data_uri(image_path)}" alt="current render">
             <svg width="#{width}" height="#{height}" viewBox="0 0 #{width} #{height}" aria-hidden="true">#{overlays}</svg>
@@ -100,7 +100,7 @@ module Master
               "linear-gradient(to bottom,rgba(17,17,17,.12) 1px,transparent 1px);background-size:#{step}px #{step}px}" \
               ".vcenter,.hcenter{position:absolute;background:rgba(220,99,92,.8);pointer-events:none}" \
               ".vcenter{top:0;bottom:0;width:1px;left:50%}.hcenter{left:0;right:0;height:1px;top:50%}"
-        document(css, "registration grid · #{escape_html(surface.id)} · #{escape_html(state)} · #{step}px", <<~HTML)
+        document(css, "registration grid - #{escape_html(surface.id)} - #{escape_html(state)} - #{step}px", <<~HTML)
           <div class="stage">
             <img src="#{data_uri(image_path)}" alt="current render">
             <div class="grid"></div><div class="vcenter"></div><div class="hcenter"></div>

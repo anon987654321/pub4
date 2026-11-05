@@ -33,7 +33,7 @@ module Master
         end
 
         # A finding reaches a reader as this object from a rule and as the plain
-        # symbol-keyed Hash scan_dir returns — the trap AGENTS.md records, where
+        # symbol-keyed Hash scan_dir returns - the trap AGENTS.md records, where
         # `f.law` raises on one and `h[:law]` works on both. #[] above is what
         # makes one subscript read either, and four readers hand-rolled the same
         # respond_to? ladder around it anyway. Two of them disagreed about to_s.

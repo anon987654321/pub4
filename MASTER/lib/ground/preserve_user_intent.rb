@@ -2,7 +2,7 @@
 
 module Master
   module Ground
-    # laws.yml preserve_user_intent — block silent behavior changes during refactors.
+    # laws.yml preserve_user_intent - block silent behavior changes during refactors.
     class PreserveUserIntent
       REFACTOR_RE = /\b(?:refactor|restructure|reorganize|extract|inline)\b/i.freeze
       APPROVAL_RE = /\b(?:behavior[_-]?change[_-]?approved|approved[_-]?behavior)\b/i.freeze

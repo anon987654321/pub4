@@ -9,7 +9,7 @@ module Master
   module Review
     # Prism-parsed symbol graph; rebuilt on write events.
     class CodeIndex
-      # Read-only query surface over the built symbol/reference graph —
+      # Read-only query surface over the built symbol/reference graph -
       # separated from CodeIndex's own build/reindex lifecycle.
       module QueryApi
         def size

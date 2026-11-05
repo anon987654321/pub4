@@ -46,7 +46,7 @@ class TestIoBatchReplace < Minitest::Test
   def test_a_guard_refusal_skips_that_file_and_names_it
     result = replace(old_str: "OldName", new_str: "NewName", blocked: ["old_name.rb"])
 
-    assert_match(/replaced in 1 file\(s\) — 1 refused/, result.value!)
+    assert_match(/replaced in 1 file\(s\) - 1 refused/, result.value!)
     assert_equal "OldName = 1\n", File.read(File.join(@root, "lib", "old_name.rb"))
   end
 

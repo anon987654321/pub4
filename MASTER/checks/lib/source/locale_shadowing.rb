@@ -32,7 +32,7 @@ module Deploy
     APPS = %w[amber brgen bsdports].freeze
     BUDGET = File.join(__dir__, "../../data/locale_shadowing.yml")
 
-    # runner.rb calls the class, not an instance — `klass.run` at runner.rb:132.
+    # runner.rb calls the class, not an instance - `klass.run` at runner.rb:132.
     # Getting this wrong does not fail loudly: the check registers, appears in
     # --list, and reports "ERRORED and blocked nothing", which is a green-ish
     # line for a check that never ran.
@@ -96,7 +96,7 @@ module Deploy
 
           rel = path.sub("#{@rails_root}/", "")
           message = "locale_shadowing #{rel}: #{empties.length} key(s) with no value " \
-                    "(#{empties.first(4).join(', ')}) — a bare key parses as nil and nil " \
+                    "(#{empties.first(4).join(', ')}) - a bare key parses as nil and nil " \
                     "REPLACES a hash in I18n's merge"
           @result.fail(message)
         end
@@ -139,11 +139,11 @@ module Deploy
         examples = shadowed.sort.first(3)
                            .map { |key| "#{key} (app #{own[key].inspect} renders, shared #{shared[key].inspect} is dead here)" }
         @result.fail("locale_shadowing #{app}: #{shadowed.size} app override(s) of shared keys exceeds ceiling #{ceiling} " \
-                     "(+#{shadowed.size - ceiling}). #{examples.join('; ')} — " \
+                     "(+#{shadowed.size - ceiling}). #{examples.join('; ')} - " \
                      "delete the app's copy to take shared's, or raise the ceiling for an override the app means")
       elsif shadowed.size < ceiling
         @result.warn("locale_shadowing #{app}: #{shadowed.size}, under its #{ceiling} ceiling " \
-                     "(-#{ceiling - shadowed.size}) — CHECK_LOCALE_RATCHET=1 records the new low")
+                     "(-#{ceiling - shadowed.size}) - CHECK_LOCALE_RATCHET=1 records the new low")
         record_low(app, shadowed.size) if CheckResult.flag?("CHECK_LOCALE_RATCHET")
       end
     end
@@ -184,7 +184,7 @@ module Deploy
 
     def read_budget
       unless File.file?(@budget)
-        @result.inconclusive!("locale_shadowing: budget missing at #{@budget} — shadowing ceilings were not measured")
+        @result.inconclusive!("locale_shadowing: budget missing at #{@budget} - shadowing ceilings were not measured")
         return {}
       end
 
@@ -192,7 +192,7 @@ module Deploy
     rescue StandardError => e
       # No budget means no ceiling. Keep the per-app loop useful for diagnostics,
       # but make the check outcome explicitly incomplete rather than clean.
-      @result.inconclusive!("locale_shadowing: budget unreadable (#{e.class}: #{e.message}) — shadowing ceilings were not measured")
+      @result.inconclusive!("locale_shadowing: budget unreadable (#{e.class}: #{e.message}) - shadowing ceilings were not measured")
       {}
     end
 

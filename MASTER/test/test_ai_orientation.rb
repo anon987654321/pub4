@@ -105,6 +105,8 @@ class TestAiOrientation < Minitest::Test
     refute_includes text, ".master"
   end
 
+  BRIDGE = "bridge: RAILS/apps.yml -> OPENBSD/deploy_inventory.json -> vps-deploy -> rcctl -> public health"
+
   def test_render_includes_cross_tree_atlas
     text = Master::AI::Orientation.render(root: @master)
 
@@ -113,12 +115,12 @@ class TestAiOrientation < Minitest::Test
     assert_includes text, "brgen:brgen.no:38182"
     assert_includes text, "deploy_identity=OPENBSD/deploy_inventory.json"
     assert_includes text, "master:ai.brgen.no:53187"
-    assert_includes text, "edge=pf→relayd→loopback"
+    assert_includes text, "edge=pf->relayd->loopback"
     assert_includes text, "design=MASTER/data/laws.yml"
     assert_includes text, "sandbox_model=MASTER/lib/ground/pledge.rb"
     assert_includes text, "lenses: authority, topology, runtime, privilege, security, design, lifecycle, resources, recovery, observability, provenance, seams"
-    assert_includes text, "evidence_ladder: source authority → executable proof → live evidence"
-    assert_includes text, "bridge: RAILS/apps.yml → OPENBSD/deploy_inventory.json → vps-deploy → rcctl → public health"
+    assert_includes text, "evidence_ladder: source authority -> executable proof -> live evidence"
+    assert_includes text, BRIDGE
     assert_includes text, "inventory_alignment: clean"
     assert_includes text, "proof=MASTER/checks/checks.yml+MASTER/bin/operator triangle+<app>/bin/ci"
     assert_includes text, "coupling=shared engine + sibling copy-tree affects every Rails app"

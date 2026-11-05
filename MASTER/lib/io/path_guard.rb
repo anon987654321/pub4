@@ -61,7 +61,7 @@ module Master
 
         rel = full.delete_prefix(@root + "/")
         if write && sacred?(rel)
-          return Result.err("sacred path — writes forbidden: #{rel}", category: :validation)
+          return Result.err("sacred path - writes forbidden: #{rel}", category: :validation)
         end
 
         Result.ok(full)

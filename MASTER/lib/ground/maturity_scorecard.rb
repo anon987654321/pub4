@@ -13,8 +13,8 @@ module Master
       PATH = File.join(Master::DATA, "maturity.yml").freeze
       # A verification has a shelf life, and this file exists to say that a
       # claim is not evidence. Thirty days is the interval over which this
-      # tree's own recorded figures have repeatedly stopped being true — whole
-      # sections of the register go stale inside a fortnight — so a row whose
+      # tree's own recorded figures have repeatedly stopped being true - whole
+      # sections of the register go stale inside a fortnight - so a row whose
       # evidence is older than a month is reported as a claim again.
       EVIDENCE_SHELF_LIFE_DAYS = 30
 

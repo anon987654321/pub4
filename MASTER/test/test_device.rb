@@ -96,6 +96,6 @@ class TestDevice < Minitest::Test
   def test_status_is_dmesg_style
     lines = Device.status_lines
     assert lines.first.start_with?("device0:")
-    refute lines.any? { |line| line.include?("|") || line.include?("·") }
+    refute lines.any? { |line| line.include?("|") || line.include?("\u00B7") }
   end
 end

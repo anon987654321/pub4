@@ -24,7 +24,7 @@ module Master
         end
       end
 
-      # After every source write, emit merge/rename targets — OpenBSD-flat, dense parameterized slugs.
+      # After every source write, emit merge/rename targets - OpenBSD-flat, dense parameterized slugs.
       class AggressiveMerge < Base
         THIN_LINES = 45
         MAX_LIB_DEPTH = 4
@@ -91,11 +91,11 @@ module Master
           lines = File.foreach(path).count
           if lines.positive? && lines <= THIN_LINES
             target = fold_target_for(path)
-            out << action(:merge, rel, target, "thin file (#{lines} lines) — fold into parent") if target
+            out << action(:merge, rel, target, "thin file (#{lines} lines) - fold into parent") if target
           end
 
           if rel.start_with?("lib/") && rel.count("/") > MAX_LIB_DEPTH
-            out << action(:flatten, rel, shallow_target(rel), "depth #{rel.count('/')} > #{MAX_LIB_DEPTH} — flatten toward lib/")
+            out << action(:flatten, rel, shallow_target(rel), "depth #{rel.count('/')} > #{MAX_LIB_DEPTH} - flatten toward lib/")
           end
           out.uniq { |row| "#{row[:action]}:#{row[:from]}:#{row[:to]}" }
         rescue StandardError => e
@@ -247,7 +247,7 @@ module Master
         end
       end
 
-      # Backup — openrsync standing order.
+      # Backup - openrsync standing order.
       class Backup < Base
         REMOTE_HOST = "s4vm23@wingman1.openbsd.amsterdam"
         REMOTE_PATH = "backup"
@@ -268,7 +268,7 @@ module Master
           out, status = Master::Io::Exec.capture2e(*cmd)
           if status.success?
             bus&.publish("backup:ok", src:)
-            Result.ok("backup: synced #{File.basename(src)} → #{REMOTE_HOST}")
+            Result.ok("backup: synced #{File.basename(src)} -> #{REMOTE_HOST}")
           else
             bus&.publish("backup:error", error: out.lines.last.to_s.strip)
             Result.err("backup: #{out.lines.last.to_s.strip}", category: :infrastructure)
@@ -320,7 +320,7 @@ module Master
           end
         end
 
-        # improved | regressed | steady — caught the moment a defect lands.
+        # improved | regressed | steady - caught the moment a defect lands.
         def publish_drift(report)
           delta = report[:delta]
           kind = if delta.negative?
@@ -387,7 +387,7 @@ module Master
       end
 
       # Maps standing-order callable: keys to Order subclasses. Decouples the yaml
-      # from class names — `callable: autocommit` is stable even if the class moves.
+      # from class names - `callable: autocommit` is stable even if the class moves.
       module Registry
         def self.lookup(key)
           table[key.to_s]

@@ -161,7 +161,7 @@ module Operator
       width = [2, count.to_s.size].max
       sha = job[:sha]
       files = job[:files].size
-      out = +"# #{job[:tree]} — source snapshot, part #{part.to_s.rjust(width, '0')} of #{count.to_s.rjust(width, '0')}\n\n"
+      out = +"# #{job[:tree]} - source snapshot, part #{part.to_s.rjust(width, '0')} of #{count.to_s.rjust(width, '0')}\n\n"
       out << "Pack: tree=#{job[:tree]} git=#{sha} part=#{part}/#{count} variant=#{job[:variant]} files=#{files} "
       out << "omitted=#{job[:omitted].values.sum(&:size)} budget=full\n\n"
       out << "#{guide(job[:tree], job[:variant], count)}\n\n"

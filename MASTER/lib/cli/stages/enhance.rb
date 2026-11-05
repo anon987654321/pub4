@@ -6,7 +6,7 @@ require "timeout"
 module Master
   module CLI
     module Stages
-      # Enhance — rewrite :llm messages for S&W clarity, info density, latent intent.
+      # Enhance - rewrite :llm messages for S&W clarity, info density, latent intent.
       # Called as a class method from ChatController and CLI before the pipeline runs.
       # Skips if ctx[:pre_enhanced] is set (web sent already-approved version).
       class Enhance
@@ -28,20 +28,20 @@ module Master
 
         Rules:
         1. Strunk & White: active voice, cut filler ("I was wondering", "please", "maybe"), omit needless words.
-        2. Surface the underlying ask — what does the user ACTUALLY want done or understood?
+        2. Surface the underlying ask - what does the user ACTUALLY want done or understood?
         3. Preserve all technical specifics: file names, line numbers, method names, error text, gem names.
         4. Add a format hint when the output shape implies but omits format ("as a diff", "list each file", "one sentence").
         5. Name the system, file, or component explicitly when implied but not stated.
         6. Keep the mood: question stays question, command stays command.
         7. Do NOT invent information. Do NOT change meaning. Do NOT add prose.
 
-        Output JSON only — no markdown, no explanation:
+        Output JSON only - no markdown, no explanation:
         {"enhanced": "<rewritten message>", "changed": true|false}
 
         Return changed:false and repeat the original verbatim if it is already tight.
       PROMPT
 
-        # Public entry point — called from controller and CLI before pipeline.
+        # Public entry point - called from controller and CLI before pipeline.
         def self.run(msg, agent:, event_bus: nil)
           new(agent:, event_bus:).call_raw(msg)
         end
@@ -52,7 +52,7 @@ module Master
           @skills = skills
         end
 
-        # Pipeline stage — skip if web already confirmed an enhanced version.
+        # Pipeline stage - skip if web already confirmed an enhanced version.
         def call(ctx)
           return Result.ok(ctx) if ctx.pre_enhanced
 

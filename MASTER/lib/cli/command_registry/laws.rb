@@ -5,7 +5,7 @@ module Master
     module CommandRegistry
       module_function
 
-      # /laws — the corpus, one line each, because the instruction every agent
+      # /laws - the corpus, one line each, because the instruction every agent
       # is given is to read the law before writing, and the only way to do that
       # was a YAML one-liner in CLAUDE.md that iterated the wrong shape for months.
       #
@@ -36,7 +36,7 @@ module Master
           kind = law_enforcement(::Law.definitions[law["id"].to_s.to_sym])
           format("%-28s %-10s %-8s %s", law["id"], law["tier"], law["severity"], kind)
         end
-        ["#{rows.size} of #{laws.size} laws — bin/operator laws <ID> for one in full", *lines].join("\n")
+        ["#{rows.size} of #{laws.size} laws - bin/operator laws <ID> for one in full", *lines].join("\n")
       end
 
       def dispatch_law_index
@@ -56,7 +56,7 @@ module Master
           "  index: valid",
         ].join("\n")
       rescue StandardError => e
-        "laws0: executable index failed — #{e.class}: #{e.message}"
+        "laws0: executable index failed - #{e.class}: #{e.message}"
       end
 
       def dispatch_law_sources(root)
@@ -80,7 +80,7 @@ module Master
           *integrity_errors.map { |error| "    #{error}" },
         ].join("\n")
       rescue StandardError => e
-        "laws0: source audit failed — #{e.class}: #{e.message}"
+        "laws0: source audit failed - #{e.class}: #{e.message}"
       end
 
       # A law absent from law/ is enforced by a scan detector in the registry;
@@ -92,7 +92,7 @@ module Master
         kind.empty? ? "declared" : kind
       end
 
-      # /why — one law explained from law/ and data/laws.yml, and from the
+      # /why - one law explained from law/ and data/laws.yml, and from the
       # model only when nothing local matches.
       def dispatch_why(agent:, root:, memory: nil, ctx: nil)
         law = arg_for(ctx)

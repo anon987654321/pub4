@@ -25,7 +25,7 @@ _master() {
     'bard:lyrical telling of what MASTER is doing, on by default'
     'reload:restart the current session in place'
     'incident:a private dated log of what happened, kept on this machine'
-    'orders:the objective ledger — the work that runs without being asked'
+    'orders:the objective ledger - the work that runs without being asked'
     'play:play the curated Blue Hour Dilla showcase or a named progression through the canonical effects rig'
     'plugin:list and invoke governed plugins'
     'pair:issue and redeem one-time pairing codes for consent-gated local access'

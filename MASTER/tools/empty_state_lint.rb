@@ -5,15 +5,15 @@ require_relative "../lib/operator/baseline_ratchet"
 module Operator
   # Empty states, in both directions.
   #
-  # missing_action — a shared/empty_state render that skips its action: local.
-  # legacy_actions — a call that still uses the removed String-based actions: API.
+  # missing_action - a shared/empty_state render that skips its action: local.
+  # legacy_actions - a call that still uses the removed String-based actions: API.
   # A rendered empty state with no next step
   # is a dead end (NO_DEAD_ENDS / rams_checklist.thorough), and 47 of 54 call
   # sites had exactly this gap when first audited 2026-07-21. Add
   # `<%# empty_state: no-action-ok %>` immediately above a call site to mark it
   # deliberately CTA-less.
   #
-  # no_empty_state — an index view that iterates a collection and renders
+  # no_empty_state - an index view that iterates a collection and renders
   # nothing at all when the collection is empty: no shared/empty_state, no
   # emptiness guard of its own. A blank page is not a designed state
   # (DEGRADE_GRACEFULLY); a first-visit user sees the product at its emptiest,
@@ -34,7 +34,7 @@ module Operator
 
     # missing_action zero since the 2026-07-31 vertical CTA pass and holds.
     # no_empty_state measured 2026-08-20, the day the scan first read engine
-    # views at all — the */app/views glob had silently excluded engines/ since
+    # views at all - the */app/views glob had silently excluded engines/ since
     # the verticals moved (the same blind spot four scanners had in the
     # engines migration).
     BASELINES = { "missing_action" => 0, "legacy_actions" => 0, "no_empty_state" => 0 }.freeze

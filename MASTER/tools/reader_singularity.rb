@@ -6,12 +6,12 @@
 # two directories from the real one in lib/boot/data_loading.rb. The two agreed
 # perfectly for as long as the shards existed. On 2026-08-12 the shards were
 # folded into laws.yml, the copy's glob matched nothing, and it assigned {} over
-# the real rules — silently emptying /why for all 225 rules. Nothing failed. The
+# the real rules - silently emptying /why for all 225 rules. Nothing failed. The
 # tests that caught it were testing /why, not the loader.
 #
 # `lint:data_singularity` already asserts one top-level key per data file. This
 # is the same idea one level out: one *reader* per data file. Note the shape of
-# the original defect — the copy called Master.load_yaml, the shared helper, so
+# the original defect - the copy called Master.load_yaml, the shared helper, so
 # "bypasses the helper" would have missed it. What made it a second
 # implementation was building the path and composing the result itself.
 #
@@ -94,7 +94,7 @@ module Operator
     # Only ever down, per file: the minimum of what is recorded and what is
     # measured. A writer that took today's counts whatever they were made a
     # --ratchet run aimed at one file's slack raise another's ceiling and
-    # launder new debt into the baseline — laws.yml 10 to 11, 2026-08-31.
+    # launder new debt into the baseline - laws.yml 10 to 11, 2026-08-31.
     # Per file, the minimum of what is recorded and what is measured.
     def self.ratchet!
       current = readers.transform_values(&:size).select { |_, count| count > 1 }.sort.to_h
@@ -118,7 +118,7 @@ if $PROGRAM_NAME == __FILE__
     # Named, not swallowed: a refusal is the ratchet holding, and the file it
     # held for is the one that just gained a reader.
     refused.each do |name, count|
-      puts "reader_singularity: held #{name} at #{lows[name]} — measured #{count}, which would have been a raise"
+      puts "reader_singularity: held #{name} at #{lows[name]} - measured #{count}, which would have been a raise"
     end
     exit 0
   end

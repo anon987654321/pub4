@@ -165,7 +165,7 @@ module Master
             "preserve silence; sounds need attack/decay/timing and must not mask speech or screen readers",
             "foreground sound is for critical state changes; midground for confirmations; background is optional",
             "prefer tiny browser-native tones/assets and graceful failure over heavy dependencies",
-            "for rendered music: pad body must read above sub; HF air and presence for kit click; crest 4–10",
+            "for rendered music: pad body must read above sub; HF air and presence for kit click; crest 4-10",
             "generate 3 solutions per issue then cherry-pick; prefer existing ENV/bus knobs over new systems",
           ].freeze,
         }.freeze

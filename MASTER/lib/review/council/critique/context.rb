@@ -10,7 +10,7 @@ module Master
         # This is prose for the model, not orchestration, and it was four
         # near-identical predicate methods plus two brief loaders inside
         # Critique. Keyed by preset_key so adding a mode is a table entry here
-        # rather than another `return … if @mode[:preset_key] == …` line.
+        # rather than another `return ... if @mode[:preset_key] == ...` line.
         class Context
           DOMAINS = {
             "ui_critique" => <<~CTX,
@@ -33,14 +33,14 @@ module Master
               Goal: best possible pad-forward single-style render.
               Evaluate spectral hierarchy (pad vs sub), HF air, presence, groove density,
               headroom/crest, curated harmony, and platform loudness.
-              Process: each persona critiques → multi-solution ideation per issue → cherry-pick best.
-              Implementation must stay inside existing engine knobs and MASTER commands — no parallel crit stack.
+              Process: each persona critiques -> multi-solution ideation per issue -> cherry-pick best.
+              Implementation must stay inside existing engine knobs and MASTER commands - no parallel crit stack.
             CTX
             "general_critique" => <<~CTX,
               Reviewing whatever MASTER just scanned or fixed -- not a fixed product
               surface, so judge each file on its own conventions rather than a
-              house style. Process: each persona critiques → multi-solution
-              ideation per issue → cherry-pick best.
+              house style. Process: each persona critiques -> multi-solution
+              ideation per issue -> cherry-pick best.
             CTX
           }.freeze
 
@@ -53,11 +53,11 @@ module Master
           # Typographer had no typography principles and the Architect had no
           # architecture ones. laws.yml#law_map held 135 of them the panel never
           # saw, and the 137 recovered from master.yml are exactly the kind a
-          # scanner cannot check and a judge can — which is why they were dropped
+          # scanner cannot check and a judge can - which is why they were dropped
           # when the only consumer left was a regex.
           PRINCIPLE_CLUSTERS = {
             "ui_critique" => %w[visual_design ux_laws typography aesthetic architecture japanese_aesthetics],
-            # Not `aesthetic` — that tag is where the visual principles live, and
+            # Not `aesthetic` - that tag is where the visual principles live, and
             # briefing a sound panel on "equal visual weight distribution" is
             # noise. The Japanese register is the one that carries timing and
             # restraint (jo_ha_kyu is literally a rhythm).
@@ -92,7 +92,7 @@ module Master
             Master::Voice::Dilla.council_brief if DILLA_BRIEF_MODES.include?(@preset_key)
           end
 
-          # House principles for this panel, as `id — meaning` lines. Silent when
+          # House principles for this panel, as `id - meaning` lines. Silent when
           # the map cannot load: a missing briefing degrades the critique, and
           # failing the whole council over it would be worse.
           def principle_brief
@@ -100,7 +100,7 @@ module Master
             all = clusters ? principles_in(clusters) : []
             return if all.empty?
 
-            lines = sample(all, clusters).map { |entry| "- #{entry.id} — #{entry.meaning.to_s.strip}" }
+            lines = sample(all, clusters).map { |entry| "- #{entry.id} - #{entry.meaning.to_s.strip}" }
             <<~BRIEF
               House principles for this panel (#{lines.size} of #{all.size}), from data/laws.yml#law_map.
               Cite the ones a change violates or satisfies by name; do not treat the list as a checklist to walk.
@@ -116,7 +116,7 @@ module Master
 
           # Round-robin across the clusters, not the first N alphabetically.
           # Sorting and truncating gave the UI panel a..c and cut `yugen` and
-          # `truth_to_materials` off the end — a cap that silently decides which
+          # `truth_to_materials` off the end - a cap that silently decides which
           # half of the alphabet the council believes in. Deterministic, because
           # a briefing that changes between runs makes two critiques
           # incomparable.

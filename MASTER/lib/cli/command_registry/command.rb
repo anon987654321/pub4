@@ -51,7 +51,7 @@ module Master
         end
 
         def review_check_notice
-          "review_check: this command has side effects and needs explicit confirmation — " \
+          "review_check: this command has side effects and needs explicit confirmation - " \
             "re-run with #{CONFIRM_FLAG} to proceed"
         end
 
