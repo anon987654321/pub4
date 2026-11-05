@@ -27,6 +27,9 @@
       is nil both for a reader who has not voted and for no reader, and those
       two get different vote rails. The author and community are in it so a
       rename reaches cached cards. %>
+  <%# The relative time is filled in after the cache, each render
+      (PostTimeHelper), so a cached card does not freeze "5 minutes". %>
+  <% card = capture do %>
   <% cache [I18n.locale, post, post.user, post.community, Current.user.present?,
             post.voted_by?(Current.user), reposted, quote, priority] do %>
     <% post_actions = capture do %>
@@ -60,12 +63,16 @@
         <%= render "shared/feed_icon", name: "repost" %>
         <span class="feed-action-count"><%= post.reposts_count.positive? ? post.reposts_count : "" %></span>
       <% end %>
-      <div class="feed-action-menu" data-controller="dropdown" data-action="click@window->dropdown#hide">
+      <%# post-menu, not the vendored dropdown: Escape closes, the first item takes
+          focus on open and the trigger gets it back on close. %>
+      <div class="feed-action-menu" data-controller="post-menu"
+           data-action="click@window->post-menu#hide keydown->post-menu#keydown">
         <button type="button" class="feed-action" aria-label="<%= t("post.more_actions") %>"
-                aria-expanded="false" data-dropdown-button data-long-press-target="trigger" data-action="click->dropdown#toggle">
+                aria-expanded="false" aria-controls="<%= dom_id(post, :actions) %>"
+                data-post-menu-target="button" data-long-press-target="trigger" data-action="click->post-menu#toggle">
           <%= render "shared/feed_icon", name: "more" %>
         </button>
-        <div class="feed-action-menu-list hidden" data-dropdown-target="menu">
+        <div class="feed-action-menu-list hidden" id="<%= dom_id(post, :actions) %>" data-post-menu-target="menu">
           <%# The vendored clipboard controller reads a `source` target, not a
               value, so these buttons threw and copied nothing; share#copy
               takes the URL as a value. %>
@@ -151,7 +158,7 @@
           post: post,
           name: post.author_name,
           handle: (post.community ? "@#{post.community.slug}" : nil),
-          time: time_ago(post.created_at),
+          time: post_time_slot,
           title: post.title,
           content: post.content,
           url: post.attributed? ? post_path(post) : nil,
@@ -167,4 +174,6 @@
           meta: (render("posts/edited_mark", at: post.edited_at) if post.edited_at),
           frame: false %>
   <% end %>
+  <% end %>
+  <%= fill_post_time(card, post.created_at) %>
 </turbo-frame>

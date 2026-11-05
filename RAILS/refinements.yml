@@ -3122,7 +3122,7 @@ items:
   path: RAILS/brgen/app/views/posts/_post.html.erb
   item: Take relative time out of the fragment cache (or refresh it client-side from
     datetime); the cached card freezes '5 minutes' until the post changes.
-  status: open
+  status: done
 - id: brgen-267
   app: brgen
   area: post-card
@@ -3147,7 +3147,7 @@ items:
   path: RAILS/brgen/app/views/posts/_post.html.erb
   item: 'Give the more-menu dropdown menu semantics: Escape to close, focus the first
     item on open, and return focus to the trigger on close.'
-  status: open
+  status: done
 - id: brgen-270
   app: brgen
   area: post-card
@@ -3958,7 +3958,7 @@ items:
   path: RAILS/brgen/test/system/public_navigation_test.rb
   item: Add a system test that the feed card Copy link writes the post URL to the
     clipboard.
-  status: open
+  status: done
 - id: brgen-371
   app: brgen
   area: trust

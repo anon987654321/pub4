@@ -109,8 +109,15 @@ export default class extends Controller {
     })
   }
 
+  // Enter on a control inside a card is that control's: a focused button or
+  // link activates itself. Opening the card's first link instead turned Enter on
+  // Copy link, vote or repost into a jump to the post page.
   #openFocused(e) {
-    const focused = document.querySelector(".hotkey-focus") || document.activeElement
+    const active = document.activeElement
+    if (active?.matches?.("a[href], button, summary, [role=button], [role=menuitem]")) return false
+
+    const focused = document.querySelector(".hotkey-focus") || active
+
     if (!focused || !focused.closest) return false
     const card = focused.closest(ITEM_SEL) || (focused.matches?.(ITEM_SEL) ? focused : null)
     if (!card) return false
