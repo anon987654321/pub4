@@ -7,8 +7,9 @@ require_relative "environment"
 # Only "yaml" itself is behind this — requiring it does not boot the Master
 # runtime, so the standalone contract above holds.
 require_relative "../operator/operator_docs"
-# Domain skew helpers live under OPENBSD; load without booting Master.
-require_relative "../../../OPENBSD/lib/domain_signals"
+# Domain skew reads the deployment data, but its reader stays inside this
+# tree: the boundary contract refuses a runtime require into OPENBSD/lib.
+require_relative "domain_signals"
 
 module Operator
   class StatusReport
