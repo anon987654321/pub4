@@ -39,7 +39,8 @@ class IdentitySpec < Minitest::Test
   def test_identity_is_injected_from_the_ruby_authority
     assert_includes identity_block, Master::Soul::IDENTITY
     assert_includes identity_block, "Core truths:"
-    assert_includes identity_block, "Constitutional precedence:"
+    assert_includes identity_block, "Source authority (highest first): soul > laws > " \
+      "executable_laws_and_gates > tree_contracts > git_history"
     assert_includes identity_block, "Profile: The exacting observer"
     assert_includes identity_block, "Use a concrete example, expose the contradiction"
   end

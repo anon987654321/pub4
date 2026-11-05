@@ -145,7 +145,8 @@ class CheckOutcomeContractTest < Minitest::Test
 
     assert_equal :errored, result.outcome
     assert result.errored?
-    assert_predicate result, :ok?, "errored is fail-open unless strict check mode is enabled"
+    refute_predicate result, :ok?, "an errored check has no verdict: ok? stays false so no " \
+      "runner or report reads a broken instrument as success (report! exits non-zero)"
   end
 
   def test_strict_inconclusive_blocks

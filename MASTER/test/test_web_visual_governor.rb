@@ -21,7 +21,14 @@ class VisualGovernorSpec < Minitest::Test
     assert_includes shell_manifest, "visual_governor"
     # source-assertion: ok — how the template loads face.js is a property of its text.
     refute_match(/<script[^>]+src=["'][^"']*face\.js/, source)
-    # source-assertion: ok — the same property, from the other side.
-    assert_includes source, 'import("<%= FaceAssets.versioned(asset_path("face.js"), "face.js") %>")'
+    # source-assertion: ok — the same property, from both sides of the handoff.
+    # The layout never imports face.js itself: it hands the versioned module URL
+    # to public/face_primer.js through data-face-module, and only that script
+    # (running after the primer tap) calls import() on it.
+    assert_includes source,
+                    'data-face-module="<%= FaceAssets.versioned(asset_path("face.js"), "face.js") %>"'
+    primer = File.read(File.join(ROOT, "..", "RAILS", "master", "public", "face_primer.js"))
+    assert_includes primer, "dataset.faceModule"
+    assert_match(/import\(FACE_MODULE\)/, primer)
   end
 end
