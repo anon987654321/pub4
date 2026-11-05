@@ -892,9 +892,9 @@ end
 
 Law.define(:LEAST_PRIVILEGE) do
   source "Saltzer & Schroeder — least privilege; OpenBSD pledge(2) and unveil(2)"
-  ask "Does a component hold broader authority than its task requires, or retain access after the phase that needed it?"
-  practice "Grant the minimum capability for the minimum duration; ambient authority is not a convenience."
-  fix "Declare the required capabilities explicitly, deny everything else, and remove access when the owning phase ends."
+  ask "Does a process, service, job, deploy phase or agent retain ambient filesystem, network, syscall, credential or tool authority beyond the exact operation that needs it?"
+  practice "Grant the minimum capability for the minimum duration. OpenBSD's pledge/unveil model is the reference: narrow the syscall and filesystem surface at the boundary, then only remove authority as execution advances."
+  fix "Name the exact files, syscalls, network destinations, identities and actions required; deny everything else; enter the narrowest viable pledge/unveil stage after setup; never widen a sealed stage; and discard temporary credentials and handles when their phase ends."
   bad <<~'X'
     client = AdminClient.new; client.delete_all
   X
@@ -929,9 +929,10 @@ Law.define(:PROACTIVE_DEFECT_AUDIT) do
 end
 
 Law.define(:FAIL_SAFE_DEFAULTS) do
-  source "Saltzer & Schroeder — fail-safe defaults"
-  ask "Does the default path permit access when no explicit rule granted it?"
-  fix "Default to denial and require an explicit grant."
+  source "Saltzer & Schroeder — fail-safe defaults; OpenBSD default-deny policy"
+  ask "Can missing, unreadable, malformed, stale or unmeasured policy state grant access, skip a safety check, or turn an error into success?"
+  practice "Absence of proof is absence of permission. Unknown state fails closed for authority and fails visibly for correctness."
+  fix "Default to denial; validate policy before applying it; treat missing or ambiguous state as BLOCKED/INCONCLUSIVE rather than success; and make recovery an explicit, bounded operation."
   bad <<~'X'
     allowed = rules[user] != false
   X
@@ -941,9 +942,10 @@ Law.define(:FAIL_SAFE_DEFAULTS) do
 end
 
 Law.define(:COMPLETE_MEDIATION) do
-  source "Saltzer & Schroeder — complete mediation"
-  ask "Is authority checked once and then trusted across later accesses whose state may have changed?"
-  fix "Re-check authority at each access boundary."
+  source "Saltzer & Schroeder — complete mediation; OpenBSD privilege boundaries"
+  ask "Does every privileged filesystem, network, process, service, data or deployment operation pass through the narrow authority check at the point of use?"
+  practice "A prior authorization is not a capability. Revalidate at every trust boundary and do not let callers bypass the fixed privileged broker."
+  fix "Mediate every access where identity, object, state or policy can change; bind authority to the exact resource and operation; and keep privileged helpers closed to arbitrary commands or caller-supplied paths."
   bad <<~'X'
     authorized = policy.allow?(user); 100.times { perform if authorized }
   X
@@ -955,8 +957,8 @@ end
 Law.define(:ECONOMY_OF_MECHANISM) do
   source "Saltzer & Schroeder — economy of mechanism; OpenBSD integrated-base discipline"
   ask "Is the trusted computing base too large, indirect, dependency-heavy or split across competing owners to inspect and verify as one small mechanism?"
-  practice "Complexity must earn its place; a small trusted core is easier to audit, secure and maintain."
-  fix "Shrink and isolate the trusted path, use established mechanisms, give each decision one owner, and remove machinery that does not improve measured correctness or security."
+  practice "Prefer a small, coherent, auditable base with one owner for each policy and mechanism. Integration reduces version skew and hidden interfaces; it does not justify merging unrelated product identities or trust domains."
+  fix "Shrink and isolate the trusted path; reuse the platform's established base mechanisms; give each decision one owner; keep privilege transitions explicit; and remove machinery that does not improve measured correctness, security or operability."
   bad <<~'X'
     def authorize; 1200 lines of mixed parsing, IO and policy; end
   X
