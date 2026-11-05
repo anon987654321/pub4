@@ -107,6 +107,7 @@ class TestAiTrajectory < Minitest::Test
       assert_equal "inspect", JSON.parse(File.readlines(path).last)["task"]
       assert_equal 0o600, File.stat(path).mode & 0o777
       assert_equal 0o600, File.stat("#{path}.lock").mode & 0o777
+      assert_equal 0o700, File.stat(File.dirname(path)).mode & 0o777
     end
   end
 
