@@ -7,7 +7,7 @@ set -euo pipefail
 
 check_libvips_security() {
   if ! command -v vips >/dev/null 2>&1; then
-    log ERROR "libvips missing — Rails Active Storage image processing cannot start safely"
+    log ERROR "libvips missing - Rails Active Storage image processing cannot start safely"
     return 1
   fi
 
@@ -82,7 +82,7 @@ setup_litestream() {
   # stays empty. Install the config for the day a replica exists; do not enable.
   # There is no rc.d/litestream template: the service was retired from boot in
   # e511ccba1 and installing a missing template would abort stage_2.
-  log INFO "litestream config only — service stays disabled"
+  log INFO "litestream config only - service stays disabled"
   mkdir -p /var/backups/litestream
   install_template etc/litestream.yml /etc/litestream.yml
 }
@@ -116,10 +116,10 @@ bootstrap_rails_app() {
   [[ -f /etc/${app}.env ]] || print -r -- "SECRET_KEY_BASE=${secret}" > /etc/${app}.env
   # root:<app> 640, not root:wheel: the rc.d script sources /etc/<app>.env at
   # runtime *as the app user* (su -l resets the environment, so the secret cannot
-  # be interpolated into daemon_flags without landing in falcon's ps(1) argv —
+  # be interpolated into daemon_flags without landing in falcon's ps(1) argv -
   # readable by any local account; see rc.d/<app> and the old backlog
   # secrets_in_process_argv). Group-<app> lets only that app (and root) read it,
-  # so a foothold in another app user — or dev, which is in wheel — can no longer
+  # so a foothold in another app user - or dev, which is in wheel - can no longer
   # read this secret at rest.
   chown root:${app} /etc/${app}.env 2>/dev/null || true
   chmod 640 /etc/${app}.env 2>/dev/null || true
@@ -134,7 +134,7 @@ bootstrap_rails_app() {
     _rc=${_rc//brgen/${app}}
     print -r -- "${_rc//38182/${port}}" > /etc/rc.d/${svc}
   fi
-  # 555, the mode brgen, amber and bsdports already carry on vm23 — see
+  # 555, the mode brgen, amber and bsdports already carry on vm23 - see
   # install_root_configs for why this repo's rc.d scripts are read-only and
   # OpenBSD's own are not. 755 here would flatten that on the next app install.
   chmod 555 /etc/rc.d/${svc}
@@ -145,7 +145,7 @@ bootstrap_rails_app() {
   typeset _c; _c=$(/usr/sbin/rcctl check ${svc})
   [[ $_c == *"${svc}(ok)"* ]] || { log ERROR "${svc} not running"; return 1 }
   typeset _http; _http=$(curl -s -o /dev/null -w "%{http_code}" --max-time 30 http://127.0.0.1:${port}/up 2>/dev/null)
-  [[ $_http == "200" ]] || log WARN "${svc} /up returned $_http — SECRET_KEY_BASE or DB may need attention"
+  [[ $_http == "200" ]] || log WARN "${svc} /up returned $_http - SECRET_KEY_BASE or DB may need attention"
   log INFO "  ${svc} live on :$port"
 }
 
@@ -171,9 +171,9 @@ configure_relayd() {
   for dom in ${(k)DOMAIN_BACKEND}; do
     [[ -f /etc/ssl/${dom}.fullchain.pem ]] || continue
     ln -sf /etc/ssl/${dom}.fullchain.pem /etc/ssl/${dom}.crt
-    # Primary domain: key is the real file, not a symlink — nothing to do.
+    # Primary domain: key is the real file, not a symlink - nothing to do.
   done
-  # Subdomains share the parent cert+key — create both symlinks so relayd
+  # Subdomains share the parent cert+key - create both symlinks so relayd
   # tls keypair finds /etc/ssl/${dom}.crt AND /etc/ssl/private/${dom}.key.
   # Skip only domains that have their own fullchain.pem (handled above).
   # Use -sf so existing .crt symlinks don't prevent missing .key from being created.
@@ -199,7 +199,7 @@ configure_relayd() {
   sleep 3
   typeset _c; _c=$(/usr/sbin/rcctl check relayd)
   [[ $_c == *"relayd(ok)"* ]] || { log ERROR "relayd not running"; exit 1 }
-  log INFO "relayd live — TLS+SNI on :443"
+  log INFO "relayd live - TLS+SNI on :443"
 }
 
 configure_dev_ssh() {

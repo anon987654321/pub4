@@ -1,4 +1,4 @@
-# POSIX sh — sourced by sh, ksh and zsh callers alike.
+# POSIX sh - sourced by sh, ksh and zsh callers alike.
 #
 # The one place the deploy path decides which Ruby it runs. OpenBSD ships Ruby
 # only as packages named by version, so the interpreter on a box is whatever

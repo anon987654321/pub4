@@ -125,7 +125,7 @@ module NokogiriOpenbsd
   def main(argv)
     force = !argv.delete("--force").nil?
     version, *targets = argv
-    usage = "usage: nokogiri-openbsd [--force] VERSION BUNDLE_DIR[:USER] [BUNDLE_DIR[:USER] …]"
+    usage = "usage: nokogiri-openbsd [--force] VERSION BUNDLE_DIR[:USER] [BUNDLE_DIR[:USER] ...]"
     abort(usage) if version.nil? || targets.empty?
     memory_guard!(force:)
 

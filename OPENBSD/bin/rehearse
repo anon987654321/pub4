@@ -60,5 +60,5 @@ CONTRACTS.each do |test|
 end
 
 failed = results.count(false)
-puts failed.zero? ? "rehearsal: all #{results.size} checks passed" : "rehearsal: #{failed} of #{results.size} failed — fix these before vps-deploy"
+puts failed.zero? ? "rehearsal: all #{results.size} checks passed" : "rehearsal: #{failed} of #{results.size} failed - fix these before vps-deploy"
 exit(failed.zero? ? 0 : 1)

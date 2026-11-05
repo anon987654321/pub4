@@ -9,8 +9,8 @@ require "open3"
 # shared checkout and the accidents CLAUDE.md calls trap one, and until now
 # nothing proved they still refuse anything. They are prose about prose: a hook
 # that stopped firing would look exactly like a tree in which nobody made the
-# mistake, and the mistakes they were written for — a cross-tree `git commit -a`,
-# a push carrying four other sessions' commits, a move that half-landed — all
+# mistake, and the mistakes they were written for - a cross-tree `git commit -a`,
+# a push carrying four other sessions' commits, a move that half-landed - all
 # happened in the week before the hooks existed, so there is no shortage of
 # evidence about what silence costs.
 #
@@ -82,7 +82,7 @@ class TestGitHooks < Minitest::Test
       path = File.join(HOOKS, hook)
 
       assert File.file?(path), "#{hook} is missing"
-      assert File.executable?(path), "#{hook} is not executable — git would skip it silently"
+      assert File.executable?(path), "#{hook} is not executable - git would skip it silently"
 
       _out, status = Open3.capture2e(RbConfig.ruby, "-c", path)
 
@@ -102,7 +102,7 @@ class TestGitHooks < Minitest::Test
     stage_two_trees
     out, status = commit("spans two trees")
 
-    refute_committed out, status, /REFUSED — this commit spans 2 trees: MASTER, RAILS/
+    refute_committed out, status, /REFUSED - this commit spans 2 trees: MASTER, RAILS/
   end
 
   def test_the_refusal_names_the_way_out
@@ -136,7 +136,7 @@ class TestGitHooks < Minitest::Test
     write("MASTER/forgotten.rb", "# never staged\n")
     out, status = commit("one tree, one file left behind")
 
-    refute_committed out, status, /REFUSED — untracked file\(s\)/
+    refute_committed out, status, /REFUSED - untracked file\(s\)/
     assert_match(/MASTER\/forgotten\.rb/, out, "the refusal should name the file it is refusing over")
     assert_match(/PUB4_UNTRACKED=1/, out)
   end
@@ -173,7 +173,7 @@ class TestGitHooks < Minitest::Test
     write("MASTER/ground/store.rb", "# moved\n")
     out, status = commit("move store")
 
-    refute_committed out, status, /REFUSED — staged deletion \+ untracked twin/
+    refute_committed out, status, /REFUSED - staged deletion \+ untracked twin/
     assert_match(/PUB4_SPLIT_MOVE=1/, out)
   end
 
@@ -185,7 +185,7 @@ class TestGitHooks < Minitest::Test
     git!("add", "MASTER/tools/.session", "MASTER/tools/beat.rb")
     out, status = commit("touch MASTER/tools")
 
-    refute_committed out, status, /REFUSED — MASTER\/tools is owned by session 'other-session'/
+    refute_committed out, status, /REFUSED - MASTER\/tools is owned by session 'other-session'/
   end
 
   def test_the_claiming_session_may_commit_master_tools
@@ -208,7 +208,7 @@ class TestGitHooks < Minitest::Test
     git!("add", "STUDIO/dilla/dilla.rb")
     out, status = commit("break the engine")
 
-    refute_committed out, status, /REFUSED — .*dilla\.rb does not parse/
+    refute_committed out, status, /REFUSED - .*dilla\.rb does not parse/
     assert_match(/PUB4_RUBY_PARSE_SKIP=1/, out)
   end
 
@@ -251,7 +251,7 @@ class TestGitHooks < Minitest::Test
     commit_executable
     out, status = commit("drop the bit")
 
-    refute_committed out, status, /REFUSED — this commit removes the execute bit from:\n\s+MASTER\/bin\/run/
+    refute_committed out, status, /REFUSED - this commit removes the execute bit from:\n\s+MASTER\/bin\/run/
     assert_match(/PUB4_MODE_CHANGE=1/, out)
   end
 
@@ -298,7 +298,7 @@ class TestGitHooks < Minitest::Test
     out, status = git("push", "origin", "main")
 
     refute status.success?, "a three-commit push was allowed:\n#{out}"
-    assert_match(/REFUSED — 3 commits would be published, not 1/, out)
+    assert_match(/REFUSED - 3 commits would be published, not 1/, out)
     assert_match(/PUB4_PUSH_ALL=1/, out)
     assert_match(/git log -p origin\/main\.\.HEAD(?m:.*)bin\/operator worktree/, out, "read, or stop sharing")
   ensure

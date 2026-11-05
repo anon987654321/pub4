@@ -1,5 +1,5 @@
 #!/bin/ksh
-# rc_pre and the post-start block below run bundle, ruby and curl — all
+# rc_pre and the post-start block below run bundle, ruby and curl - all
 # packages in /usr/local/bin. rcctl inherits its caller's PATH, and root's cron
 # PATH has no /usr/local/bin, so every one of them resolved when an operator
 # restarted master from a login shell and none of them resolved when
@@ -7,7 +7,7 @@
 # degraded: the asset check reported "bundle: not found", could not tell that
 # apart from broken assets, and took the exit-1 branch that refuses to start.
 # ai.brgen.no was down from 08:20 to 14:50 on 2026-07-31 for exactly this, and
-# again from 15:10 — twice, because the guard's restart is what triggers it.
+# again from 15:10 - twice, because the guard's restart is what triggers it.
 export PATH=/usr/local/bin:/usr/local/sbin:/usr/bin:/usr/sbin:/bin:/sbin
 PORT=53187
 [[ -r /etc/master.env ]] && . /etc/master.env
@@ -28,7 +28,7 @@ daemon="/bin/ksh"
 #
 # Frozen makes the daemon a reader. It also turns the repo's structural lock drift
 # (MASTER/Gemfile declares rb-kqueue on BSD only, and the lock is committed from a
-# Mac) from a silent rewrite into a startup error that says which gem disagrees —
+# Mac) from a silent rewrite into a startup error that says which gem disagrees -
 # which is the failure this box should have, because the rewrite was papering over
 # a lock that does not describe what is installed here.
 # rc.d cannot source the repo, so pick whichever Ruby the package manager
@@ -47,7 +47,7 @@ daemon_flags="-c 'cd /home/dev/pub4/RAILS/master && set -a && . /etc/master.env 
 #
 # This was daemon_user="dev", and dev's doas rule is nopass with no command
 # scoping, so any code execution inside the process serving ai.brgen.no was root
-# without a password — the one app on this box whose daemon_user was not its own
+# without a password - the one app on this box whose daemon_user was not its own
 # user. the old backlog has called that operator-priority since it was written, and the
 # fix it names is a dedicated user, not doas command rules, which cannot narrow
 # dev's rule (etc/doas.conf says why, above that rule).
@@ -57,13 +57,13 @@ daemon_flags="-c 'cd /home/dev/pub4/RAILS/master && set -a && . /etc/master.env 
 # getcwd(3) names an ancestor by reading it. /bin/ksh like every other
 # app user because rc.subr starts a daemon through a login shell. It reads the
 # code and gems from /home/dev/pub4 (0755, so read-only to it) and writes only
-# MASTER/.master, web/tmp and web/log, which are dev:master 2775 — setgid so new
+# MASTER/.master, web/tmp and web/log, which are dev:master 2775 - setgid so new
 # files stay group-shared with the dev CLI. /etc/master.env is root:master 0640,
 # the same shape as brgen.env and amber.env.
 #
 # Verified as master before the switch: cd, env, gems, and all three writes
 # succeed; writing repo code is refused and `doas` is refused. That second pair
-# is the whole point — a fold that cannot write code cannot hand dev something
+# is the whole point - a fold that cannot write code cannot hand dev something
 # to execute, which is the path a shared checkout would otherwise leave open.
 #
 # Note what this does NOT cover: `bin/master` run from a terminal is still dev,
@@ -203,7 +203,7 @@ rc_pre() {
   # lock says why, instead of healing it in a way nothing records.
   for _gemfile in /home/dev/pub4/RAILS/master/Gemfile /home/dev/pub4/MASTER/Gemfile; do
     (cd "${_gemfile%/Gemfile}" && BUNDLE_GEMFILE="$_gemfile" BUNDLE_WITHOUT=development:test "$_bundle" check >/dev/null 2>&1) ||
-      logger -t master "bundle check failed for $_gemfile — run vps-deploy master as dev to install"
+      logger -t master "bundle check failed for $_gemfile - run vps-deploy master as dev to install"
   done
   pkill -f "falcon.*${PORT}" 2>/dev/null
   pkill -f "ruby[0-9.]*.*${PORT}" 2>/dev/null
@@ -236,7 +236,7 @@ rc_pre() {
   # face_asset_paths.rb, so a new face module is covered the moment it is added
   # to the manifest. The hand-maintained list this replaces covered 23 of 38
   # files; the 15 it missed included particle_kernel.js, face.runtime.js and
-  # three.face.module.js — edit one of those, restart, and precompile was
+  # three.face.module.js - edit one of those, restart, and precompile was
   # silently skipped with a stale fingerprint. The tail below is the non-asset
   # inputs (stylesheet, service worker, the views themselves), which the
   # manifest does not and should not describe.
@@ -250,7 +250,7 @@ rc_pre() {
     # manifest-described asset drops out of the fingerprint, the stamp still
     # matches, and precompile is skipped with the face wrong. Fail toward the
     # expensive answer instead.
-    logger -t master "face_asset_paths.rb produced no asset list — digest would be narrowed, precompiling instead of trusting the stamp"
+    logger -t master "face_asset_paths.rb produced no asset list - digest would be narrowed, precompiling instead of trusting the stamp"
     _face_assets=""
     _force_precompile=1
   fi
@@ -268,13 +268,13 @@ rc_pre() {
   fi
   if [[ "$_skip" = "0" ]]; then
     # Stamp only on success. `|| true` swallowed a failed precompile and the
-    # stamp went down regardless — and because the skip test above is
+    # stamp went down regardless - and because the skip test above is
     # stamp-equals-digest, one failure then made every later start skip
     # precompile as well. Nothing retries until an input file changes.
     #
     # Measured 2026-08-13 on vm23: RAILS/master had no public/assets directory at
     # all, a stamp from that day's deploy, and /health reporting
-    # face_runtime_digest: null — the field the deploy-confidence playbook says
+    # face_runtime_digest: null - the field the deploy-confidence playbook says
     # to check. It stayed invisible because public/ is served undigested, so the
     # face kept working while every fingerprinted asset was missing.
     if (cd /home/dev/pub4/RAILS/master && RAILS_ENV=production "$_bundle" exec rails assets:precompile) 2>/dev/null; then
@@ -285,7 +285,7 @@ rc_pre() {
         echo "$_digest" > "$_stamp"
       fi
     else
-      logger -t master "assets:precompile failed — stamp not written, will retry next start"
+      logger -t master "assets:precompile failed - stamp not written, will retry next start"
     fi
   fi
   # Load-bearing asset check: refuse to start serving a broken face.js/manifest
@@ -309,7 +309,7 @@ rc_pre() {
           echo "$_digest" > "$_stamp"
         fi
       else
-        logger -t master "retry precompile failed — stamp not written, the check below decides the start"
+        logger -t master "retry precompile failed - stamp not written, the check below decides the start"
       fi
       _check_out=$(cd /home/dev/pub4/RAILS/master && RAILS_ENV=production "$_bundle" exec ruby "$_check" "$_check_name" 2>&1)
       _check_rc=$?
@@ -361,7 +361,7 @@ if [[ "$1" = "start" ]] || [[ "$1" = "restart" ]]; then
     if [[ "$_ping_ok" = "0" ]]; then
       logger -t master "container warmup: face page not ready after 120 tries"
     fi
-    # Warm TTS with MASTER Gemfile only — never inherit Falcon web/vendor/bundle env.
+    # Warm TTS with MASTER Gemfile only - never inherit Falcon web/vendor/bundle env.
     _tts_warm_ok=0
     if su -m dev -c 'export HOME=/home/dev; unset BUNDLE_PATH GEM_HOME GEM_PATH BUNDLE_BIN_PATH BUNDLE_WITHOUT BUNDLE_DEPLOYMENT RUBYOPT; cd /home/dev/pub4/MASTER && BUNDLE_GEMFILE=/home/dev/pub4/MASTER/Gemfile MASTER_TTS_TIMEOUT=45 '"$_bundle"' exec ruby -Ilib -e "require \"master\"; exit(Master::Voice::TtsSupervisor.ensure_daemon! ? 0 : 1)"' 2>>/var/log/daemon; then
       _l=0

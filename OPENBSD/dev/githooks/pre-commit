@@ -10,7 +10,7 @@
 # four commits another session had told its user were still local. On 2026-08-12
 # a session's debt write-up was committed by a different session under a message
 # about something else, and that session's own commit body says it was "carrying
-# a four-line path correction from another session" — it carried rather more.
+# a four-line path correction from another session" - it carried rather more.
 #
 # This hook cannot tell sessions apart. Nothing in git can: everything commits as
 # the same author, and paths do not identify a session either. What it can do is
@@ -50,7 +50,7 @@ unless left.empty?
   warn "pre-commit: leaving uncommitted: #{summary}"
   left.sort.each do |tree, files|
     files.sort.first(6).each { |file| warn "    #{file}" }
-    warn "    … and #{files.size - 6} more in #{tree}" if files.size > 6
+    warn "    ... and #{files.size - 6} more in #{tree}" if files.size > 6
   end
   warn "pre-commit: some of that may belong to another session. Read before you claim it."
 end
@@ -60,7 +60,7 @@ end
 # silently skips untracked files, so the commit records the delete and the
 # replacement stays behind on one machine. On 2026-08-21 exactly this shipped
 # a MASTER tree missing Ground::SqliteStore and a brgen card rendering a
-# partial that did not exist in git — every local suite green, the pushed
+# partial that did not exist in git - every local suite green, the pushed
 # tree broken. The pair is refused, not warned: the warning above printed
 # both files that day and was scrolled past.
 untracked = paths("ls-files", "--others", "--exclude-standard")
@@ -71,7 +71,7 @@ half_moves = deleted.filter_map do |gone|
 end
 if !half_moves.empty? && ENV["PUB4_SPLIT_MOVE"] != "1"
   warn ""
-  warn "pre-commit: REFUSED — staged deletion + untracked twin = a move that would half-land:"
+  warn "pre-commit: REFUSED - staged deletion + untracked twin = a move that would half-land:"
   half_moves.each { |gone, twin| warn "    deleting #{gone} while #{twin} is untracked" }
   warn ""
   warn "  `git add` the new path so the move lands whole, or set PUB4_SPLIT_MOVE=1"
@@ -87,7 +87,7 @@ end
 same_tree_untracked = untracked.select { |u| staged_trees.include?(tree_of(u)) }
 if !same_tree_untracked.empty? && ENV["PUB4_UNTRACKED"] != "1"
   warn ""
-  warn "pre-commit: REFUSED — untracked file(s) in the tree(s) you are committing:"
+  warn "pre-commit: REFUSED - untracked file(s) in the tree(s) you are committing:"
   same_tree_untracked.sort.first(8).each { |file| warn "    #{file}" }
   warn ""
   warn "  These will NOT ride along, and three times in two days a commit has"
@@ -104,7 +104,7 @@ if staged.any? { |path| path.start_with?("MASTER/tools/") } && File.file?(sessio
   owner = File.read(session_file).strip
   unless owner.empty? || ENV["PUB4_SESSION"].to_s == owner
     warn ""
-    warn "pre-commit: REFUSED — MASTER/tools is owned by session '#{owner}' (MASTER/tools/.session)."
+    warn "pre-commit: REFUSED - MASTER/tools is owned by session '#{owner}' (MASTER/tools/.session)."
     warn "  If you are that session: PUB4_SESSION=#{owner} git commit -- <paths>"
     warn ""
     exit 1
@@ -113,7 +113,7 @@ end
 
 if staged_trees.size > 1 && ENV["PUB4_CROSS_TREE"] != "1"
   warn ""
-  warn "pre-commit: REFUSED — this commit spans #{staged_trees.size} trees: #{staged_trees.join(', ')}"
+  warn "pre-commit: REFUSED - this commit spans #{staged_trees.size} trees: #{staged_trees.join(', ')}"
   warn ""
   warn "  In a shared checkout that is usually `git commit -a` sweeping up work that"
   warn "  is not yours. Commit path-scoped instead:"
@@ -143,7 +143,7 @@ if ENV["PUB4_RUBY_PARSE_SKIP"] != "1"
     next if status.success?
 
     warn ""
-    warn "pre-commit: REFUSED — #{path} does not parse:"
+    warn "pre-commit: REFUSED - #{path} does not parse:"
     warn "  #{out.lines.first(4).join.strip}"
     warn ""
     warn "  Fix the Ruby syntax error before committing."
@@ -162,7 +162,7 @@ lost_exec = summary.scan(/mode change 100755 => 100644 (.+)$/).flatten
 
 if !lost_exec.empty? && ENV["PUB4_MODE_CHANGE"] != "1"
   warn ""
-  warn "pre-commit: REFUSED — this commit removes the execute bit from:"
+  warn "pre-commit: REFUSED - this commit removes the execute bit from:"
   lost_exec.each { |path| warn "    #{path}" }
 
   warn ""
@@ -191,7 +191,7 @@ if committing_in_pub4
   checked = system(RbConfig.ruby, census, "--growth-only")
   unless checked
     warn ""
-    warn "pre-commit: REFUSED — tracked file/directory counts exceed MASTER/data/sprawl_census.yml."
+    warn "pre-commit: REFUSED - tracked file/directory counts exceed MASTER/data/sprawl_census.yml."
     warn "  Reuse existing paths or remove an equal amount of structure before adding more."
     warn ""
     exit 1
@@ -204,7 +204,7 @@ if committing_in_pub4 && ENV["LINT"] != "0" && ENV["LINT_SKIP"] != "1"
   ran = system(RbConfig.ruby, pub4, "lint", "--staged", "--changed-lines", chdir: master)
   if ran == false
     warn ""
-    warn "pre-commit: REFUSED — bin/operator lint found violations in the lines you staged."
+    warn "pre-commit: REFUSED - bin/operator lint found violations in the lines you staged."
     warn "  Fix them, or bypass this one commit: LINT_SKIP=1 git commit -- <paths>"
     warn ""
     exit 1
@@ -244,7 +244,7 @@ if ENV["PUB4_SKIP_BOOT_SMOKE"] != "1" && staged.any? { |path| path.start_with?(*
     verdict = status ? "boot smoke failed" : "boot smoke still running after #{BOOT_SMOKE_DEADLINE_S}s"
 
     warn ""
-    warn "pre-commit: REFUSED — #{verdict}."
+    warn "pre-commit: REFUSED - #{verdict}."
     warn "  MASTER must boot with what this commit touches in MASTER/lib, law or data."
     warn "  Bypass only this one commit: PUB4_SKIP_BOOT_SMOKE=1 git commit -- <paths>"
     warn ""

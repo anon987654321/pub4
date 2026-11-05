@@ -31,4 +31,4 @@ Dir.mktmpdir("pub4-dr") do |dir|
   abort("dr-backup: restic backup failed: #{stderr.strip.empty? ? stdout.strip : stderr.strip}") unless status.success?
 end
 
-puts "dr-backup: ok — #{db_paths.length} sqlite database(s) copied to encrypted restic repository with tag=#{tag}"
+puts "dr-backup: ok - #{db_paths.length} sqlite database(s) copied to encrypted restic repository with tag=#{tag}"

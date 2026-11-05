@@ -47,7 +47,7 @@ module TokenEcho
 
     scripts.each do |rel|
       echoes(File.read(File.join(root, rel)).scrub, rel).each do |at|
-        failures << "token echo: #{at} prints a token value — print the URL and point at /pair issue"
+        failures << "token echo: #{at} prints a token value - print the URL and point at /pair issue"
       end
     end
   end

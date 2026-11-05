@@ -1,4 +1,4 @@
-# johann@brgen.no — reads the Maildir smtpd delivers into, sends via the local
+# johann@brgen.no - reads the Maildir smtpd delivers into, sends via the local
 # OpenSMTPD socket. No passwords anywhere: there is no remote submission server
 # to authenticate to, because mutt runs on the machine that IS the mail server.
 

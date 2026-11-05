@@ -26,7 +26,7 @@ app = ARGV.shift
 abort "usage: vps-logs APP [--lines N]" if app.to_s.empty?
 
 unless Deploy::Environment.on_vps?
-  warn "vps-logs: skip — not on VPS (use: bin/operator vps logs #{app} --remote)"
+  warn "vps-logs: skip - not on VPS (use: bin/operator vps logs #{app} --remote)"
   exit 0
 end
 

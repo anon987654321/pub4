@@ -9,8 +9,8 @@ set -eo pipefail
 # Solid Queue needs its own process under Falcon and none was ever started, so
 # `perform_later` on this box meant never. Ten job classes are reached from live
 # request paths; on 2026-08-14 brgen was holding 181 unfinished jobs of which
-# 178 were MessageExpirationJob — disappearing messages that had never
-# disappeared — and amber 28.
+# 178 were MessageExpirationJob - disappearing messages that had never
+# disappeared - and amber 28.
 #
 # A resident worker does not fit, and that is measured rather than assumed. At
 # the time of writing the box had 60 MB free with 1032 MB of 1264 MB of swap in
@@ -25,7 +25,7 @@ set -eo pipefail
 # WHAT THIS DOES NOT FIX: latency. ChannelBotReplyJob is a bot answering someone
 # in a chat room, and an answer that arrives up to an hour later is not an
 # answer. That one wants a worker that stays up, which wants a bigger box. The
-# jobs this does fix are the ones where an hour costs nothing — expiring
+# jobs this does fix are the ones where an hour costs nothing - expiring
 # messages, blurhashes, media derivatives, federation, moderation notices.
 #
 # Same shape as prune-guests.sh next door: wait for quiet, bound the work, and
@@ -53,7 +53,7 @@ stamp() {
 
 # The 5-minute average. The 1-minute figure spikes on anything that starts,
 # including the boot this script is about to do, so a check reading it refuses
-# the spike it caused itself — see the header of prune-guests.sh, where that
+# the spike it caused itself - see the header of prune-guests.sh, where that
 # cost a night's work before anyone noticed.
 load_is_low() {
   ruby34 -e '
@@ -83,9 +83,9 @@ wait_for_quiet() {
 # hours ahead, which is the feature working, and 1 was a permanently failed job.
 # A number that cannot go down is not a progress report.
 #
-# due            — ready now, or scheduled for a time that has passed
-# ahead          — scheduled for later, nothing to do about it
-# failed         — gave up after its retries; needs a person, not another tick
+# due            - ready now, or scheduled for a time that has passed
+# ahead          - scheduled for later, nothing to do about it
+# failed         - gave up after its retries; needs a person, not another tick
 queue_counts() {
   su -m "$1" -c "sqlite3 /home/$1/app/storage/production_queue.sqlite3 \"
     select

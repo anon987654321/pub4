@@ -9,7 +9,7 @@ LOG=/var/log/pub4/weekly_integrity.log
 
 # root owns the schedule; root reads not one line of the checkout. Everything
 # under $ROOT is dev-writable, so sourcing lib/ci_lock.sh or running
-# integrity_check.rb as root hands root to whoever wrote there last — the same
+# integrity_check.rb as root hands root to whoever wrote there last - the same
 # escalation OPERATOR.sh refuses for config_drift_check, crontab.vm23 refuses for
 # uptime-check, and resource_guard.sh:135 records as having been reachable within
 # five minutes. root therefore does three things, all outside the checkout: makes
@@ -51,7 +51,7 @@ git fetch origin main 2>&1 || true
 
 # Both checks run, whatever the first one says. Under a bare `set -e` a failing
 # integrity check ended the script, so the public health pass was skipped on
-# exactly the week something was already wrong — and with the whole run
+# exactly the week something was already wrong - and with the whole run
 # redirected into the log, cron had no output to mail and the truncation was
 # invisible. The status line below is the report; the exit code carries it to
 # anyone who runs this by hand.

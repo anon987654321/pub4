@@ -7,7 +7,7 @@ require_relative "../bin/render_dns"
 
 # Four DNS facts were written down twice: data/dns.yml declares them, OPERATOR.sh
 # restates them as shell literals, and checks/dns_zones.rb had its own third copy
-# of two. The copies had already drifted — OPERATOR.sh's resolver list led with
+# of two. The copies had already drifted - OPERATOR.sh's resolver list led with
 # 8.8.8.8 while the check used Cloudflare and Quad9 and had written down why.
 #
 # The check now reads the policy file. OPERATOR.sh cannot: that block is sourced

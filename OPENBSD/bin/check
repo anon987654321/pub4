@@ -51,7 +51,7 @@ if profile == "full"
 end
 
 if profile == "contributor"
-  puts "deploy-check: release integrity skip — contributor profile"
+  puts "deploy-check: release integrity skip - contributor profile"
 end
 
 exit(failures.empty? ? 0 : 1)

@@ -39,7 +39,7 @@ class RestoreScriptsTest < Minitest::Test
   end
 
   # Run, not read. The config failure used to print to stdout, where the loop read
-  # it as an app name and failed later on "/home/[restore] missing…/app/storage".
+  # it as an app name and failed later on "/home/[restore] missing.../app/storage".
   def test_a_dry_run_with_no_config_fails_on_the_config
     env = { "DRY_RUN" => "1", "LITESTREAM_CONFIG" => File.join(Dir.tmpdir, "no-such-litestream.yml") }
     out, err, status = Open3.capture3(env, "zsh", File.join(ROOT, "bin", "restore_litestream.sh"))
@@ -58,7 +58,7 @@ class RestoreScriptsTest < Minitest::Test
                                       "zsh", File.join(ROOT, "bin", "restore_litestream.sh"))
 
       assert_equal 1, status.exitstatus, "the app has no storage here, so the plan must fail rather than skip"
-      assert_includes out, "FAIL ghostapp — missing /home/ghostapp/app/storage"
+      assert_includes out, "FAIL ghostapp - missing /home/ghostapp/app/storage"
     end
   end
 
@@ -89,7 +89,7 @@ class RestoreScriptsTest < Minitest::Test
     assert_includes source, "public"
   end
 
-  # public/assets is the one synced directory git does not carry — Propshaft
+  # public/assets is the one synced directory git does not carry - Propshaft
   # writes it on the box at precompile. Pruning public/ wholesale deleted the
   # running site's stylesheets, and it happened before bin/ci, so a CI failure
   # left the new code live with no assets: brgen served every page with a 404ing
@@ -97,22 +97,22 @@ class RestoreScriptsTest < Minitest::Test
   def test_vps_ci_keeps_compiled_assets_across_the_prune
     source = File.read(File.join(ROOT, "usr", "local", "libexec", "ci-sync.ksh"))
     prune = source[/for dir_rel in test app lib config bin db engines public.*?done/m]
-    assert prune, "the prune loop moved — re-read this before trusting the assertions below"
+    assert prune, "the prune loop moved - re-read this before trusting the assertions below"
     assert_includes prune, "public/assets", "the prune must special-case the one directory git does not carry"
     assert_match(/mv .*public\/assets.*assets-carry/, prune, "assets must be held aside, not deleted")
-    assert_match(/mv .*assets-carry.*public\/assets/, prune, "…and put back")
+    assert_match(/mv .*assets-carry.*public\/assets/, prune, "...and put back")
   end
 
   # /up answers before Propshaft is reached, so it cannot tell a styled site from
   # an unstyled one. The deploy asks for the stylesheet the page links, through
-  # the Host that owns it — a bare-IP request 403s on these apps, which would
+  # the Host that owns it - a bare-IP request 403s on these apps, which would
   # pass by finding no link at all.
   def test_vps_deploy_verifies_the_page_stylesheet_resolves
     source = File.read(File.join(ROOT, "bin/vps-deploy"))
     assert_includes source, "css_href", "no stylesheet verification after restart"
     # The reader is run rather than matched: what matters is the href it finds
     # on a page that links one, and nothing, not a failure, on a page that does
-    # not — under set -e a failing read ends the deploy with no stamp.
+    # not - under set -e a failing read ends the deploy with no stamp.
     reader = source[/^css_href=\$\(.*"\$RUBY" -e '([^']+)'\)$/, 1]
     assert reader, "must read the href off the rendered page"
     link = '<link rel="stylesheet" href="/assets/application-1a2b.css">'

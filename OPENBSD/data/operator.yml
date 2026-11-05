@@ -1,4 +1,4 @@
-# OPENBSD operator runtime authority — served via /orient deploy and MASTER/bin/operator.
+# OPENBSD operator runtime authority - served via /orient deploy and MASTER/bin/operator.
 # The one command and recipe catalogue; OPENBSD/README.md points here.
 
 meta:
@@ -11,7 +11,7 @@ stack:
   solid_queue: >-
     The supervisor is its own process, started by the per-app rc.d/<app>_jobs service
     (rake solid_queue:start). brgen_jobs is enabled on vm23 (2026-08-25, e511ccba1);
-    amber_jobs and bsdports_jobs are not — vm23 is 1 GB, so enabling each is an
+    amber_jobs and bsdports_jobs are not - vm23 is 1 GB, so enabling each is an
     operator decision; read the header of OPENBSD/etc/rc.d/<app>_jobs. Whatever is enabled
     must also be in pkg_scripts in OPENBSD/etc/rc.conf.local, which is what boot reads.
     SOLID_QUEUE_IN_PUMA is a Puma-plugin variable needing config/puma.rb, which no app
@@ -22,7 +22,7 @@ app_layout:
   summary: Each RAILS/<app>/ is already a full Rails 8 app (app/, config/, db/, test/).
   bootstrap: Greenfield apps use rails new once; existing apps are maintained in-tree.
   deploy_entrypoint: RAILS/<app>/<app>.sh copies the tracked tree to /home/<app>/app
-  deployed_tree: /home/<app>/app is what relayd serves — not the dev git checkout alone
+  deployed_tree: /home/<app>/app is what relayd serves - not the dev git checkout alone
   shared_engine: RAILS/__shared (pub4-shared gem)
 
 single_source_of_truth:
@@ -65,7 +65,7 @@ recipes:
     expect: identity, installed targets, dns, shell syntax, vps safety
   - want: The live VPS checks
     run: OPENBSD/bin/check-vps
-    expect: run on vm23, or with SSH and operator intent — never casually
+    expect: run on vm23, or with SSH and operator intent - never casually
   - want: Everything local, then integrity
     run: OPENBSD/bin/check --profile=full
     expect: OPENBSD/bin/check, then RAILS/test/run_all.rb, then the integrity check
@@ -83,7 +83,7 @@ recipes:
     expect: drift visible; follow deploy list
   - want: Deploy one Rails app on VPS
     run: MASTER/bin/operator vps deploy brgen --remote
-    expect: CI + restart + /up ok (serial — one app at a time)
+    expect: CI + restart + /up ok (serial - one app at a time)
   - want: Deploy MASTER web
     run: MASTER/bin/operator vps deploy master --remote
     expect: assets precompiled + master restarted

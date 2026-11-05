@@ -15,7 +15,7 @@ require_relative "../checks/config_drift_check"
 # `etc/crontab.vm23:97` has named /usr/local/bin/vps_weekly_integrity.sh for
 # weeks; the box has no such line and no such file, and the weekly integrity pass
 # has never run. Every file the check compared matched, so it said clean and meant
-# it — it was comparing the wrong thing.
+# it - it was comparing the wrong thing.
 class ConfigDriftCheckCrontabTest < Minitest::Test
   REPO = <<~CRON
     # a comment, and a blank line follow
@@ -108,7 +108,7 @@ class ConfigDriftCheckCrontabTest < Minitest::Test
     tracked = File.join(File.expand_path("..", __dir__), "etc", "crontab.vm23")
     commands = scheduled_commands(File.read(tracked))
 
-    refute_empty commands, "etc/crontab.vm23 parsed to no commands — the check would pass having measured nothing"
+    refute_empty commands, "etc/crontab.vm23 parsed to no commands - the check would pass having measured nothing"
     assert(commands.all? { |c| c.start_with?("/") }, "a parsed command is not an absolute path: #{commands.inspect}")
   end
 end

@@ -3,7 +3,7 @@
 # Usage: zsh OPENBSD/bin/vps_ci.sh brgen
 set -euo pipefail
 
-usage="usage: zsh OPENBSD/bin/vps_ci.sh APP — sync APP's copy-tree, then run its bin/ci under the CI lock"
+usage="usage: zsh OPENBSD/bin/vps_ci.sh APP - sync APP's copy-tree, then run its bin/ci under the CI lock"
 if [[ ${1:-} == -h || ${1:-} == --help ]]; then
   print -r -- "$usage"
   exit 0
@@ -16,7 +16,7 @@ app=${1:-}
 # only runs Rails app CI; an arbitrary app string must never widen its reach.
 case $app in
   brgen|amber|bsdports|mrdamascy) ;;
-  *) print -u2 "vps_ci: unknown app \"$app\" — allowed: brgen, amber, bsdports, mrdamascy"; exit 2 ;;
+  *) print -u2 "vps_ci: unknown app \"$app\" - allowed: brgen, amber, bsdports, mrdamascy"; exit 2 ;;
 esac
 
 repo=${PUB4_ROOT:-/home/dev/pub4}
@@ -35,7 +35,7 @@ command -v deploy_status >/dev/null 2>&1 || deploy_status() { :; }
 export PUB4_CI_GUARD=1
 export PUB4_RAILS_ROOT=${PUB4_RAILS_ROOT:-$repo/RAILS}
 
-# Path and safe creation live in OPENBSD/lib/ci_lock.sh — the lock moved out of
+# Path and safe creation live in OPENBSD/lib/ci_lock.sh - the lock moved out of
 # world-writable /var/tmp, where root was chmod'ing a caller-chosen, symlinkable path.
 . "${repo}/OPENBSD/lib/ci_lock.sh"
 
@@ -58,8 +58,8 @@ unaccounted_tracked_files() {
   for rel in $tracked; do
     top=${${rel#RAILS/$app/}%%/*}
     [[ -n $top ]] || continue
-    # A synced entry may be a subpath — vendor/javascript covers vendor's only
-    # tracked content — so a top-level name counts as accounted when any synced
+    # A synced entry may be a subpath - vendor/javascript covers vendor's only
+    # tracked content - so a top-level name counts as accounted when any synced
     # path is it or descends from it. Without this the check reports `vendor`,
     # which is the accounting being wrong rather than the sync.
     (( ${synced[(Ie)$top]} )) && continue
@@ -67,7 +67,7 @@ unaccounted_tracked_files() {
     # is no match, so it is safe bare; (r) yields the matched VALUE, and a search
     # that matches nothing is an unset parameter, which nounset makes fatal. This
     # aborted every deploy's CI step with "synced[(r)$top/*]: parameter not set"
-    # — the guard erroring rather than the thing it guards.
+    # - the guard erroring rather than the thing it guards.
     [[ -n ${synced[(r)$top/*]:-} ]] && continue
     (( ${kept[(Ie)$top]} )) && continue
     [[ $top == *.sh || $top == *.md ]] && continue
@@ -76,8 +76,8 @@ unaccounted_tracked_files() {
 
   local -a uniq_missing=(${(u)missing})
   (( ${#uniq_missing} )) || return 0
-  print -u2 "vps_ci: $app — tracked but neither synced nor kept local: ${uniq_missing}"
-  print -u2 "vps_ci: $app — add each to paths (bin/ci reads the copy-tree) or to kept_local with a reason"
+  print -u2 "vps_ci: $app - tracked but neither synced nor kept local: ${uniq_missing}"
+  print -u2 "vps_ci: $app - add each to paths (bin/ci reads the copy-tree) or to kept_local with a reason"
 }
 
 # Once installed, the broker runs the fixed synchronizer with the app UID,

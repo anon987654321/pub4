@@ -1,7 +1,7 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
-# render_dns.rb — every name this box answers for, from one source.
+# render_dns.rb - every name this box answers for, from one source.
 #
 #   ruby OPENBSD/bin/render_dns.rb            write zones, nsd.conf, acme-client.conf
 #   ruby OPENBSD/bin/render_dns.rb --check    exit 1 if what is on disk differs
@@ -10,7 +10,7 @@
 # ALL_DOMAINS listed 53 domains; /var/nsd/zones/master held 61 zone files;
 # nsd.conf declared 54 zones, so seven zone files reached no server and three
 # more pointed at a .signed file that did not exist. Only brgen.no had SPF, DMARC
-# or a www record. oshlo.no — live, certificated, serving real visitors — had
+# or a www record. oshlo.no - live, certificated, serving real visitors - had
 # none of the three. Every zone advertised an MX for a mail server that does not
 # exist. The zone files were last edited by hand in May and had drifted from the
 # subdomain list the apps actually route.
@@ -29,7 +29,7 @@ require "fileutils"
 
 # UTF-8 explicitly on every read. The zone files are ASCII, but OPERATOR.sh and
 # data/dns.yml carry em dashes in their comments, and vm23's cron and non-login
-# shells run with no LANG at all — so Ruby defaults external encoding to
+# shells run with no LANG at all - so Ruby defaults external encoding to
 # US-ASCII and the first regex against a comment raises "invalid byte sequence
 # in US-ASCII". Found by running --check over ssh, which is exactly the shape of
 # shell a check runs in. OPENBSD/checks/integrity_check.rb has a test pinning the same
@@ -66,7 +66,7 @@ module RenderDns
   end
 
   # City zones carry their vertical subdomains; extra zones carry none. Both get
-  # the same apex, www, CAA, SPF and mail treatment — the difference between a
+  # the same apex, www, CAA, SPF and mail treatment - the difference between a
   # city and a side project is what hangs under it, not how it is secured.
   def zones
     @zones ||= begin
@@ -97,12 +97,12 @@ module RenderDns
     lines << "@ IN A #{ip}"
 
     # www only where a certificate can cover it, which means only where there is
-    # an acme-client block — and those come from ALL_DOMAINS. The four zones that
+    # an acme-client block - and those come from ALL_DOMAINS. The four zones that
     # are not in it (the anti-gambling trio and foodielicio.us) would otherwise
     # advertise a www host pointing at a box holding no certificate for it: a name
     # that resolves and then fails TLS, which a browser reports as an attack.
     # config-drift-check flags exactly this. This said five and named bsdports.net,
-    # which has no zone at all — bsdports.org is the one with a zone, and it is in
+    # which has no zone at all - bsdports.org is the one with a zone, and it is in
     # ALL_DOMAINS, so it was never in this set.
     lines << "www IN A #{ip}" if city_zones.key?(domain)
 
@@ -120,7 +120,7 @@ module RenderDns
     policy.fetch("caa").each { |caa| lines << "@ IN CAA #{caa}" }
 
     # SPF on every zone, including the ones that send nothing. A domain with no
-    # SPF record is not neutral — it is a domain a receiver has no grounds to
+    # SPF record is not neutral - it is a domain a receiver has no grounds to
     # reject a forgery from, which is why spammers prefer them.
     lines << if mail
                %(@ IN TXT "v=spf1 ip4:#{ip} -all")
@@ -280,13 +280,13 @@ module RenderDns
       # included automatically if this option is present." Listing it as well puts
       # it in the request twice, and acme-client then compares that request
       # against the issued certificate, finds them different, and reports
-      # "domain list changed, forcing renewal" — on every single run.
+      # "domain list changed, forcing renewal" - on every single run.
       #
       # The hand-written config had the apex in the list, and the breakage was
       # invisible because the weekly job had never run (see etc/crontab.vm23).
       # Armed and left as it was, it would have re-issued nine certificates every
-      # Monday and hit Let's Encrypt's duplicate-certificate limit — five per
-      # identical name set per week — inside five weeks, with no certificate to
+      # Monday and hit Let's Encrypt's duplicate-certificate limit - five per
+      # identical name set per week - inside five weeks, with no certificate to
       # show for it.
       names = ["www.#{domain}"]
 

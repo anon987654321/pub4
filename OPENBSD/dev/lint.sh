@@ -15,7 +15,7 @@ bundle_exec() {
 
 lint_ruby() {
   local file="$1"
-  print "→ $file"
+  print "-> $file"
 
   if ! bundle_exec reek --no-color "$file" 2>/dev/null; then
     print "  reek: smells found"

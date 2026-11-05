@@ -12,8 +12,8 @@
 #   zsh OPENBSD/bin/deploy_all.sh --per-app   # also run the canonical vps-deploy once per app
 #
 # Host, login and key come from lib/ssh_vm23.sh, the one copy of them:
-# SSH_HOST is the host alone and SSH_USER the login, so `SSH_HOST=dev@…` yields
-# dev@dev@… and every ssh fails.
+# SSH_HOST is the host alone and SSH_USER the login, so `SSH_HOST=dev@...` yields
+# dev@dev@... and every ssh fails.
 set -euo pipefail
 
 # DEPLOY_ROOT is OPENBSD/, the parent of this bin/: deploy_inventory.json lives
@@ -51,7 +51,7 @@ else
   APPS=(brgen amber bsdports)
 fi
 
-log "pub4 deploy — ${#APPS[@]} apps from deploy_inventory.json"
+log "pub4 deploy - ${#APPS[@]} apps from deploy_inventory.json"
 
 log "Testing VPS connectivity..."
 vssh 'uname -a' || error "Cannot connect to ${SSH_USER}@${SSH_HOST}"
@@ -62,7 +62,7 @@ if [[ $USE_GIT_PULL == 1 ]]; then
   vssh "cd ${REMOTE_PUB4} && git pull origin main"
 else
   command -v rsync >/dev/null 2>&1 || error "rsync required when USE_GIT_PULL=0"
-  log "Rsync OPENBSD/ → ${REMOTE_PUB4}/OPENBSD/ ..."
+  log "Rsync OPENBSD/ -> ${REMOTE_PUB4}/OPENBSD/ ..."
   rsync -az --delete \
     -e "ssh ${(j: :)VM23_SSH_OPTS}" \
     "${DEPLOY_ROOT}/" "${SSH_USER}@${SSH_HOST}:${REMOTE_PUB4}/OPENBSD/" \
@@ -72,9 +72,9 @@ fi
 log "Running OpenBSD deploy stage 2 (services + Rails bootstrap from RAILS trees)..."
 if ! vssh "cd ${REMOTE_PUB4} && doas zsh OPENBSD/OPERATOR.sh --stage-2"; then
   if [[ $ALLOW_PARTIAL_DEPLOY == 1 ]]; then
-    log "WARN: OPERATOR.sh reported issues — ALLOW_PARTIAL_DEPLOY=1 set"
+    log "WARN: OPERATOR.sh reported issues - ALLOW_PARTIAL_DEPLOY=1 set"
   else
-    error "OPERATOR.sh failed — refusing false-green deploy"
+    error "OPERATOR.sh failed - refusing false-green deploy"
   fi
 fi
 
@@ -85,7 +85,7 @@ if (( run_per_app )); then
     log "  ${app}..."
     vssh "test -f ${script}" || { log "WARN: missing ${script}"; continue; }
     vssh "cd ${REMOTE_PUB4} && zsh OPENBSD/bin/vps-deploy ${app} 2>&1 | tee /tmp/${app}_deploy.log" \
-      || log "WARN: ${app} — see /tmp/${app}_deploy.log"
+      || log "WARN: ${app} - see /tmp/${app}_deploy.log"
   done
 fi
 
@@ -102,7 +102,7 @@ if [[ $RUN_REMOTE_HEALTH == 1 ]]; then
   log "Authoritative remote health check..."
   if ! vssh "cd ${REMOTE_PUB4} && $(remote_ruby OPENBSD/checks/health_check.rb --public --all-ready-apps)"; then
     [[ $ALLOW_PARTIAL_DEPLOY == 1 ]] \
-      && log "WARN: remote health failed — ALLOW_PARTIAL_DEPLOY=1 set" \
+      && log "WARN: remote health failed - ALLOW_PARTIAL_DEPLOY=1 set" \
       || error "remote health failed"
   fi
 fi

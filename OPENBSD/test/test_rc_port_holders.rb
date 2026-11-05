@@ -94,7 +94,7 @@ class RcPortHoldersTest < Minitest::Test
   def test_every_curl_probe_is_bounded
     APPS.each do |app|
       File.read(File.join(RC_D, app), encoding: "UTF-8").each_line.grep(/^\s*curl /).each do |line|
-        assert_match(/ -m \d+ /, line, "rc.d/#{app}: an unbounded curl can hang rc — #{line.strip}")
+        assert_match(/ -m \d+ /, line, "rc.d/#{app}: an unbounded curl can hang rc - #{line.strip}")
       end
     end
   end

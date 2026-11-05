@@ -4,7 +4,7 @@ set -eu
 
 case ${1:-} in
   -h|--help)
-    echo "usage: ksh OPENBSD/bin/start_all_apps.sh — start the fixed pub4 fleet and pin it against resource_guard shedding"
+    echo "usage: ksh OPENBSD/bin/start_all_apps.sh - start the fixed pub4 fleet and pin it against resource_guard shedding"
     exit 0
     ;;
   "") ;;

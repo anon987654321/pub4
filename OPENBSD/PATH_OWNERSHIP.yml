@@ -31,7 +31,7 @@ ownership:
     risk: low
     check: OPENBSD/bin/check-rails
   ../MASTER/checks/checks.yml:
-    purpose: the check registry — every RAILS and OPENBSD/checks check is declared
+    purpose: the check registry - every RAILS and OPENBSD/checks check is declared
       there and run through MASTER/checks/runner.rb
     risk: critical
     check: OPENBSD/bin/check-rails
@@ -103,8 +103,8 @@ ownership:
     risk: medium
     check: OPENBSD/bin/check
   bin/:
-    purpose: operator entry points — checks, vps-deploy, vps-state, DNS render,
-      domain_watch.rb (run weekly from etc/weekly.local), dr-pull — and the
+    purpose: operator entry points - checks, vps-deploy, vps-state, DNS render,
+      domain_watch.rb (run weekly from etc/weekly.local), dr-pull - and the
       deploy, CI, install and recovery shell they call
     risk: critical
     check: OPENBSD/bin/check-openbsd

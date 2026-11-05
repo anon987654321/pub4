@@ -3,7 +3,7 @@
 
 # Parse every shell script in this tree with the interpreter its shebang names.
 #
-# check-openbsd used to name two files by hand — vps_ci_all.sh and OPERATOR.sh —
+# check-openbsd used to name two files by hand - vps_ci_all.sh and OPERATOR.sh -
 # out of 43. The deploy path itself was not among them: bin/vps-deploy, vps_ci.sh
 # and deploy_all.sh are what a deploy actually runs, so a syntax error in any of
 # the three waited for a deploy to find it. resource_guard.sh is ksh, which a zsh
@@ -56,7 +56,7 @@ scripts.each do |path|
 end
 
 if checked.zero?
-  warn "shell_syntax: no script carried a shebang — the scan is broken, not the tree"
+  warn "shell_syntax: no script carried a shebang - the scan is broken, not the tree"
   exit 1
 end
 

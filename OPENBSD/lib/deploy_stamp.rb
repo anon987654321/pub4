@@ -33,10 +33,10 @@ module Deploy
     # object count grows, so one naming a prefix of the other is the same commit.
     def booted_mismatch(app:, booted:, stamped:)
       booted = booted.to_s
-      return "#{app} health: no deploy.git_sha — the booted build is unknown" if booted.empty?
+      return "#{app} health: no deploy.git_sha - the booted build is unknown" if booted.empty?
       return nil if stamped.nil? || booted.start_with?(stamped) || stamped.start_with?(booted)
 
-      "#{app} health: booted #{booted} but last deploy stamped #{stamped} — " \
+      "#{app} health: booted #{booted} but last deploy stamped #{stamped} - " \
         "this process runs code no deploy ran; `bin/vps-deploy #{app}` makes them one"
     end
   end

@@ -1,5 +1,5 @@
 #!/usr/bin/env zsh
-# MASTER /scan on vm23 — shares CI lock so scan + CI never overlap.
+# MASTER /scan on vm23 - shares CI lock so scan + CI never overlap.
 # Usage: zsh OPENBSD/bin/vps_master_scan.sh [scan args...]
 set -euo pipefail
 
@@ -29,7 +29,7 @@ lock=$(pub4_ensure_ci_lock)
 
 cd "$repo/MASTER"
 print "vps_master_scan: lock $lock $*"
-# Was `lockf -k "$lock" ...`. OpenBSD has no lockf(1) — it is a FreeBSD utility —
+# Was `lockf -k "$lock" ...`. OpenBSD has no lockf(1) - it is a FreeBSD utility -
 # so this line was `lockf: Command not found` on every run since it was written,
 # and the documented way to scan on vm23 has never taken the lock or run the
 # scan. bin/with-ci-lock is the same idea in the one language this box is

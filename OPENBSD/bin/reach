@@ -5,7 +5,7 @@
 # OPENBSD is the tree where a declaration and its reader live in different
 # files by design: crontab.vm23 names a path, OPERATOR.sh installs it, rc.d
 # holds the service, nsd.conf names the zone. Nothing in the tree fails when
-# those halves stop agreeing, and the failure is invisible from either side —
+# those halves stop agreeing, and the failure is invisible from either side -
 # both files are complete and correct, and the job is not scheduled.
 #
 # That has happened. test/test_tracked_crontab.rb records uptime-check.sh sitting
@@ -50,7 +50,7 @@ module Operator
 
     # A cron line is five time fields then a command. The command reaches
     # something if the tree tracks it at the path it names, or if OPERATOR.sh
-    # installs it there from somewhere else — resource_guard.sh is tracked at the
+    # installs it there from somewhere else - resource_guard.sh is tracked at the
     # OPENBSD root and installed into /usr/local/bin, which reads as missing to
     # anything that only checks the path.
     def cron_commands = scheduled_commands(read("etc", "crontab.vm23"))
@@ -153,7 +153,7 @@ module Operator
       return puts(JSON.pretty_generate(counts: counts, findings: found.map(&:to_h))) if json
 
       summary = counts.map { |k, v| "#{v} #{k}" }.join(", ")
-      puts "openbsd_reach: #{summary} — #{found.size} unreachable"
+      puts "openbsd_reach: #{summary} - #{found.size} unreachable"
       found.each { |f| puts "  #{f.check} #{f.subject}: #{f.detail}" }
       found.empty? ? 0 : 1
     end

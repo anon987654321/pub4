@@ -2,7 +2,7 @@
 # Return a core app's grown resident set to the box.
 #
 # resource_guard.sh sheds OPTIONAL="bsdports amber" under pressure and
-# restores them when it clears. It never touches CORE="master brgen", by design —
+# restores them when it clears. It never touches CORE="master brgen", by design -
 # those are the surfaces that must stay up. The consequence is that brgen's
 # worker grows and nothing ever gives the memory back.
 #
@@ -41,7 +41,7 @@ STATE=/var/db/core_reclaim_last
 # brgen only, for now, and deliberately.
 #
 # master's RSS reads 42M against 927M of address space because it is almost
-# entirely swapped out — RSS understates a swapped process, so the same ceiling
+# entirely swapped out - RSS understates a swapped process, so the same ceiling
 # would never fire for it and a VSZ ceiling would fire constantly. Restarting the
 # face also drops any open TTS socket. amber and bsdports already belong to
 # resource_guard; two jobs restarting one app is how they fight.
@@ -53,7 +53,7 @@ PORT=38182
 CEILING_MB=320
 # Swap pressure that a restart is worth answering. The box pages continuously
 # above roughly two thirds, and the first response measured 12.19s cold against
-# 0.40s warm — so this is the number a visitor feels, not a tidiness figure.
+# 0.40s warm - so this is the number a visitor feels, not a tidiness figure.
 SWAP_PCT_MAX=65
 # A restart costs a cold boot for whoever asks next, so not during a spike and
 # not more than once an hour. vm23 is 1 vCPU: load 1.0 is a busy core, not a
@@ -102,8 +102,8 @@ rss_mb=$(( rss_kb / 1024 ))
 # RSS or swap, because RSS alone could not see the case this exists for.
 #
 # The header above says it about master: RSS understates a swapped process. It
-# is just as true of brgen. Measured 2026-09-11 — brgen resident 199M against a
-# 320M ceiling, address space 877M, swap 968M/1264M — so the ceiling never
+# is just as true of brgen. Measured 2026-09-11 - brgen resident 199M against a
+# 320M ceiling, address space 877M, swap 968M/1264M - so the ceiling never
 # fired, this job never reclaimed once in twelve days, and the kernel did the
 # reclaiming instead: 21 `killed: out of swap` for brgen in one dmesg buffer,
 # one of them relayd. A ceiling that cannot fire under pressure is not a
@@ -159,7 +159,7 @@ micro() {
   print -r -- "$(( 10#${_int:-0} * 1000000 + 10#$_frac ))"
 }
 if (( $(micro "$load") > $(micro "$LOAD_MAX") )); then
-  echo "$(date '+%Y-%m-%dT%H:%M:%S') skip $APP ${rss_mb}M — load $load over $LOAD_MAX"
+  echo "$(date '+%Y-%m-%dT%H:%M:%S') skip $APP ${rss_mb}M - load $load over $LOAD_MAX"
   exit 0
 fi
 

@@ -15,7 +15,7 @@ ROOT = File.expand_path("../..", __dir__)
 STEP_TIMEOUT = Integer(ENV.fetch("DEPLOY_CHECK_TIMEOUT", "240"))
 
 unless Deploy::Environment.on_vps?
-  warn "deploy-vps: skip — not on vm23/OpenBSD VPS (set DEPLOY_ASSUME_VPS=1 only when intentionally testing)"
+  warn "deploy-vps: skip - not on vm23/OpenBSD VPS (set DEPLOY_ASSUME_VPS=1 only when intentionally testing)"
   exit 0
 end
 

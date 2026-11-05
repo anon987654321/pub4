@@ -9,7 +9,7 @@ require "open3"
 
 # vps-deploy is the entrypoint for every production deploy and had no test.
 #
-# Running it is not an option — it deploys — so this reads the source for the
+# Running it is not an option - it deploys - so this reads the source for the
 # three things it promises that a reader cannot otherwise check: that the fleet
 # it deploys is the fleet apps.yml declares, that the order which makes the pass
 # survive its own side effects is still that order, and that it refuses to run as
@@ -26,7 +26,7 @@ class VpsDeployContractTest < Minitest::Test
   end
 
   def test_the_fleet_it_deploys_is_the_fleet_apps_yml_declares
-    refute_nil deploy_all, "DEPLOY_ALL not found — the scan broke, not the script"
+    refute_nil deploy_all, "DEPLOY_ALL not found - the scan broke, not the script"
 
     assert_equal APPS.sort, deploy_all.sort
   end
@@ -78,7 +78,7 @@ class VpsDeployContractTest < Minitest::Test
   end
   def test_ci_rejects_unknown_target_before_interpolating_a_path
     guard = CI_SOURCE[/^case \$app in\n.*?^esac$/m]
-    refute_nil guard, "vps_ci app allowlist missing — arbitrary strings may reach path construction"
+    refute_nil guard, "vps_ci app allowlist missing - arbitrary strings may reach path construction"
     assert_operator CI_SOURCE.index("case $app in"), :<, CI_SOURCE.index("app_dir=/home/${app}/app")
 
     out = IO.popen(
@@ -398,7 +398,7 @@ class VpsDeployContractTest < Minitest::Test
   def test_skip_ci_takes_the_narrower_check_rather_than_no_check
     branch = SOURCE[/if \[\[ \$\{SKIP_CI:-\} == 1 \]\]; then(.*?)^else$/m]
 
-    refute_nil branch, "the SKIP_CI branch is gone — the scan broke, or the path did"
+    refute_nil branch, "the SKIP_CI branch is gone - the scan broke, or the path did"
     assert_match(%r{RAILS/\$\{app\}/\$\{app\}\.sh}, branch,
                  "SKIP_CI=1 must still run the app script, which is what reaches rails_runtime_check")
   end
@@ -415,7 +415,7 @@ class VpsDeployContractTest < Minitest::Test
   # this script holds has to be one the guard reads, live across the deploy,
   # and gone when the script exits.
   def test_the_deploy_flag_is_held_for_the_whole_deploy_and_released_on_exit
-    refute_nil flag_block, "the deploy flag block is gone — the scan broke, or the flag did"
+    refute_nil flag_block, "the deploy flag block is gone - the scan broke, or the flag did"
     guard_glob = GUARD[%r{^DEPLOY_FLAGS="(/home/dev/pub4/\.deploying\S*)"$}, 1]
     assert_includes GUARD, "for _flag in $DEPLOY_FLAGS; do", "the guard no longer loops over DEPLOY_FLAGS"
     refute_nil guard_glob, "resource_guard no longer reads a deploy flag glob"
@@ -448,7 +448,7 @@ class VpsDeployContractTest < Minitest::Test
   end
 
   def test_a_lock_records_its_owner_and_is_released_on_exit
-    refute_nil lock_block, "the lock block is gone — the scan broke, or the lock did"
+    refute_nil lock_block, "the lock block is gone - the scan broke, or the lock did"
     Dir.mktmpdir do |dir|
       out, status = lock_run(dir, body: "print -r -- $(<$lock_dir/owner)\nrelease_deploy_lock")
       pid, host, epoch = out.lines.last.split
@@ -644,7 +644,7 @@ class VpsDeployContractTest < Minitest::Test
   end
 
   def test_a_failure_after_the_stop_stamps_failed_names_the_stage_and_what_is_down
-    refute_nil finish_block, "the terminal-result block is gone — the scan broke, or the block did"
+    refute_nil finish_block, "the terminal-result block is gone - the scan broke, or the block did"
     Dir.mktmpdir do |dir|
       out, status, log = finish_run(dir, "deploy_stage=migrate; app_stopped=1; exit 1")
 

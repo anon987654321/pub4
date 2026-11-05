@@ -32,9 +32,9 @@ log() { printf '[vps_run] %s\n' "$*" }
 log "upload install script"
 scp -i "$KEY" -P "$HYP_PORT" -o StrictHostKeyChecking=accept-new "$INSTALL_SH" "${HYP}:/tmp/vps_install_all.sh"
 
-log "start install on VM (nohup — may take 30–60 min on 1GB RAM)"
+log "start install on VM (nohup - may take 30-60 min on 1GB RAM)"
 ssh -i "$KEY" -p "$HYP_PORT" -o StrictHostKeyChecking=accept-new "$HYP" \
   "scp -o StrictHostKeyChecking=accept-new ${quoted_vm}:/tmp/vps_install_all.sh && \
    ssh -o StrictHostKeyChecking=accept-new ${quoted_vm} 'chmod +x /tmp/vps_install_all.sh; nohup /tmp/vps_install_all.sh > ${quoted_log} 2>&1 & echo PID:\$!'"
 
-log "tail log: ssh jump → ssh ${quoted_vm} tail -f ${quoted_log}"
+log "tail log: ssh jump -> ssh ${quoted_vm} tail -f ${quoted_log}"

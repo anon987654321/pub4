@@ -4,7 +4,7 @@ set -eu
 
 case ${1:-} in
   -h|--help)
-    echo "usage: ksh OPENBSD/bin/resource_guard.sh — request one load-guard tick through the installed runner"
+    echo "usage: ksh OPENBSD/bin/resource_guard.sh - request one load-guard tick through the installed runner"
     exit 0
     ;;
   "") ;;

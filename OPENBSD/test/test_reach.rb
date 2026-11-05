@@ -12,7 +12,7 @@ load File.expand_path("../bin/reach", __dir__)
 #
 # Two of the three would have been wrong without this. `cron` naively wants the
 # scheduled path to be tracked, and resource_guard.sh is tracked at the OPENBSD
-# root while being scheduled at /usr/local/bin — OPERATOR.sh installs it there,
+# root while being scheduled at /usr/local/bin - OPERATOR.sh installs it there,
 # so a path-only check reports a false positive on a correct tree. `rcd` naively
 # wants a starter, and all four *_jobs workers plus irc_gateway deliberately have
 # none and say so in their own headers.
@@ -112,7 +112,7 @@ class ReachTest < Minitest::Test
 
   # The *_jobs shape: deliberately off, with the rcctl lines in its own footer.
   def test_a_service_that_declares_itself_off_by_default_reaches
-    write("etc/rc.d/thing_jobs", "#!/bin/ksh\n# Solid Queue worker. NOT enabled by default — see the footer.\n")
+    write("etc/rc.d/thing_jobs", "#!/bin/ksh\n# Solid Queue worker. NOT enabled by default - see the footer.\n")
 
     assert_empty checks("rcd")
   end

@@ -1,11 +1,11 @@
 #!/usr/bin/env zsh
-# Run ON the VPS (vm23) as dev — installs MASTER web + each Rails app deploy script.
+# Run ON the VPS (vm23) as dev - installs MASTER web + each Rails app deploy script.
 # The one bootstrap-on-box script: vps_on_vm_install.sh execs this file.
 # Usage: zsh OPENBSD/bin/vps_install_all.sh     (LOG=/path to choose the log file)
 set -euo pipefail
 
 if [[ ${1:-} == -h || ${1:-} == --help ]]; then
-  print "usage: zsh OPENBSD/bin/vps_install_all.sh — bundle and precompile MASTER, then every apps.yml app's deploy script"
+  print "usage: zsh OPENBSD/bin/vps_install_all.sh - bundle and precompile MASTER, then every apps.yml app's deploy script"
   exit 0
 fi
 
@@ -34,14 +34,14 @@ admin_service() {
   fi
 }
 
-log "pub4 install — log: $LOG"
+log "pub4 install - log: $LOG"
 # ruby, not awk, and the pattern changed with it: OpenBSD vmstat -s writes
 # "53853 pages free" and has no line matching /free memory/ at all, so the awk
 # this replaces printed an empty figure on every run it ever made.
 log "free memory: $(vmstat -s | "$RUBY" -e 'puts $stdin.read[/^\s*(\d+)\s+pages free/, 1].to_s + " pages free"' 2>/dev/null || print unknown)"
 
 # Every fallible step below logs a WARN and continues, and the script used to end
-# on `doas rcctl check master || true` — so a run that deployed nothing exited 0.
+# on `doas rcctl check master || true` - so a run that deployed nothing exited 0.
 # The failures are counted from here and the exit status carries them.
 failed=0
 
@@ -85,7 +85,7 @@ for app in $APPS; do
     failed=$((failed + 1))
     continue
   fi
-  # Scripts call doas internally; do not wrap in doas (nested doas → "Operation not permitted").
+  # Scripts call doas internally; do not wrap in doas (nested doas -> "Operation not permitted").
   if ! zsh "$script"; then
     log "WARN: ${app} deploy script failed"
     failed=$((failed + 1))
@@ -103,7 +103,7 @@ for app in $APPS; do
   admin_service check "$app" 2>/dev/null || print "not running"
 done
 if (( failed > 0 )); then
-  log "FAILED: $failed step(s) — $LOG"
+  log "FAILED: $failed step(s) - $LOG"
   exit 1
 fi
-log "finished — $LOG"
+log "finished - $LOG"

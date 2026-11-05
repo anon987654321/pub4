@@ -4,7 +4,7 @@
 #
 # The list is derived, not written here. RAILS/apps.yml is the feature truth,
 # and a copy of it in this file names whatever the fleet held on the day it was
-# typed — a fifth app ships and this keeps checking four, with nothing to say
+# typed - a fifth app ships and this keeps checking four, with nothing to say
 # so. OPENBSD/bin/uptime-check.sh answers the same question by running
 # health_check.rb, and it is not what cron gets: root would be executing a file
 # the dev user can rewrite, which is the escalation this installed copy exists
@@ -54,13 +54,13 @@ check() {
 }
 
 # Falling back is a finding, not a quiet substitution. The built-in names are
-# still checked — knowing those four are up is worth more than checking nothing —
+# still checked - knowing those four are up is worth more than checking nothing -
 # but the run exits nonzero whatever they answer, because this script cannot then
 # tell you a fifth app exists and is down. A green uptime check measuring a fleet
 # that is one deploy out of date is the failure the header at the top describes.
 targets=$(app_targets) || targets=
 if [[ -z $targets ]]; then
-  print -u2 "uptime-check: FAIL — no app list under $PUB4_ROOT, so the fleet is unknown."
+  print -u2 "uptime-check: FAIL - no app list under $PUB4_ROOT, so the fleet is unknown."
   print -u2 "uptime-check: checking the built-in names anyway; this exit code is the missing list, not them."
   targets=$FALLBACK
   fail=1

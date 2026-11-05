@@ -1,5 +1,5 @@
 #!/usr/bin/env zsh
-# watch_tests.sh — auto-run MASTER tests on lib/ or test/ file change.
+# watch_tests.sh - auto-run MASTER tests on lib/ or test/ file change.
 # Uses zsh-native patterns (ZSH_NATIVE_PATTERNS.md): no grep/awk/sed forks.
 #
 # Usage: zsh sh/watch_tests.sh [test_file]
@@ -14,7 +14,7 @@ DELAY=2
 LAST_RUN=0
 
 cd "$MASTER_ROOT"
-print "watch_tests: watching ${(j:, :)WATCH_DIRS} → $TEST_FILE"
+print "watch_tests: watching ${(j:, :)WATCH_DIRS} -> $TEST_FILE"
 print "watch_tests: press Ctrl-C to stop"
 print ""
 

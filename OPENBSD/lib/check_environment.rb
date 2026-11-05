@@ -57,9 +57,9 @@ module Deploy
       return unless Deploy::Environment.on_vps?
 
       <<~WARN
-        integrity: note — source updated in /home/dev/pub4; deployed /home/<app>/app trees are unchanged.
-        integrity: note — run: zsh OPENBSD/bin/vps-deploy <app>  (serial, one app at a time)
-        integrity: note — then: ruby OPENBSD/checks/integrity_check.rb
+        integrity: note - source updated in /home/dev/pub4; deployed /home/<app>/app trees are unchanged.
+        integrity: note - run: zsh OPENBSD/bin/vps-deploy <app>  (serial, one app at a time)
+        integrity: note - then: ruby OPENBSD/checks/integrity_check.rb
       WARN
     end
   end

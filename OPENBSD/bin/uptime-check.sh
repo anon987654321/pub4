@@ -1,5 +1,5 @@
 #!/usr/bin/env sh
-# External-style uptime checker — public HTTPS only, no vm23 tools needed.
+# External-style uptime checker - public HTTPS only, no vm23 tools needed.
 # Runs from a laptop or vm23.
 #
 # Usage:
@@ -10,7 +10,7 @@
 # Exit 0 only when every endpoint returns HTTP 2xx/3xx.
 #
 # A wrapper, not a list of URLs of its own. health_check.rb asks the same
-# question against RAILS/apps.yml, and a hardcoded copy can only go stale — it
+# question against RAILS/apps.yml, and a hardcoded copy can only go stale - it
 # would still name four domains after a fifth app ships, and nothing would
 # report that. --public-only is the scope that needs no
 # rcctl, no pfctl and no /etc/relayd.conf, which is what made this a wrapper

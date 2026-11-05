@@ -19,7 +19,7 @@
 #      was written; this script and ~/.ssh/config both used the default 22, where
 #      the host does not listen. It pings from 1ms away and refuses the port.
 #   2. The script passed the full `s4vm23@wingman1.openbsd.amsterdam`, which does
-#      not match the `Host wingman1` stanza in ~/.ssh/config — so the user, key,
+#      not match the `Host wingman1` stanza in ~/.ssh/config - so the user, key,
 #      port and host-key policy in that stanza were all bypassed.
 #   3. The destination directory did not exist. `backup/` was never created, and
 #      the account's home is empty: `total 0`.
@@ -54,7 +54,7 @@ if [[ -r $passfile ]]; then
 elif [[ -t 0 ]]; then
   pass_arg=()
 else
-  print -ru2 -- "backup_priv: no terminal and no passphrase file at $passfile — nothing backed up."
+  print -ru2 -- "backup_priv: no terminal and no passphrase file at $passfile - nothing backed up."
   print -ru2 -- "backup_priv: create it with a passphrase you also keep OFF this machine:"
   print -ru2 -- "backup_priv:   mkdir -p ~/.config/pub4 && (umask 077; printf '%s' 'YOUR PASSPHRASE' > $passfile)"
   print -ru2 -- "backup_priv: a passphrase stored only here dies with the box, and the backup with it."
@@ -64,7 +64,7 @@ fi
 # Reachability before work. Encrypting first and discovering the destination is
 # gone afterwards is how this failed quietly for months.
 if ! ssh -o ConnectTimeout=15 -o BatchMode=yes "$backup_host" true 2>/dev/null; then
-  print -ru2 -- "backup_priv: cannot reach $backup_host — check the Port line in ~/.ssh/config"
+  print -ru2 -- "backup_priv: cannot reach $backup_host - check the Port line in ~/.ssh/config"
   print -ru2 -- "backup_priv: expected wingman1.openbsd.amsterdam:31415 (OPENBSD/SSH_ACCESS.md)"
   exit 1
 fi
@@ -84,7 +84,7 @@ enc_file=$(mktemp "${stage_dir}/priv_${stamp}.XXXXXXXXXX.tar.enc") || exit 1
 chmod 600 "$enc_file"
 trap 'rm -f "$enc_file"' EXIT INT TERM
 
-# -pbkdf2 uses PBKDF2 key derivation — required on LibreSSL 3.x.
+# -pbkdf2 uses PBKDF2 key derivation - required on LibreSSL 3.x.
 print -r -- "backup_priv: encrypting ~/priv"
 tar -czf - -C ~ priv | openssl enc -aes-256-cbc -pbkdf2 "${pass_arg[@]}" -out "$enc_file"
 
@@ -115,5 +115,5 @@ ssh -o BatchMode=yes "$backup_host" "
   exit 0
 " || true
 
-print -r -- "backup_priv: ok — $name on $backup_host (${local_size} bytes)"
+print -r -- "backup_priv: ok - $name on $backup_host (${local_size} bytes)"
 print -r -- "backup_priv: decrypt with openssl enc -d -aes-256-cbc -pbkdf2 -in $name | tar -xzf -"

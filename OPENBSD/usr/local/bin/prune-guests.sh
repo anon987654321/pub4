@@ -10,7 +10,7 @@ set -eo pipefail
 #
 # WHEN. daily.local runs at the tail of /etc/daily, which starts at 01:30 and
 # has the box at load 4.12 by the time it gets there. PruneGuestUsersJob's own
-# ceiling is 3.0, so the guard correctly refused and the job did nothing — the
+# ceiling is 3.0, so the guard correctly refused and the job did nothing - the
 # schedule and the guard were fighting each other. Its own cron slot at 04:20 is
 # after daily(8) has finished and before the morning. And rather than skip a
 # whole night if 04:20 happens to be busy, this waits for the load to fall,

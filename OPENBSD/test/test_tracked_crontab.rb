@@ -21,8 +21,8 @@ require_relative "../checks/config_drift_check"
 # Measured 2026-08-18: uptime-check.sh was in crontab.vm23 and in
 # usr/local/bin/ since 2026-08-12, and was on neither the box's crontab nor its
 # filesystem. Nothing was missing from either file, so nothing read as wrong.
-# The merge loop had skipped the line — correctly, since the wrapper was not
-# installed and cron would otherwise mail root every five minutes — but
+# The merge loop had skipped the line - correctly, since the wrapper was not
+# installed and cron would otherwise mail root every five minutes - but
 # silently, so the skip taught nobody anything.
 class TrackedCrontabTest < Minitest::Test
   ROOT = File.expand_path("..", __dir__)
@@ -44,7 +44,7 @@ class TrackedCrontabTest < Minitest::Test
 
   def test_the_tracked_crontab_actually_schedules_something
     refute_empty scheduled,
-                 "no cron lines parsed out of etc/crontab.vm23 — this test would pass having measured nothing"
+                 "no cron lines parsed out of etc/crontab.vm23 - this test would pass having measured nothing"
   end
 
   # The repo may not schedule a command it does not ship. If it does, the merge
@@ -165,7 +165,7 @@ class ScheduledJobsTest < Minitest::Test
     write("brgen.no.zone.signed", "\x00\xFF not a zone")
     out, status = resign
 
-    assert_includes out, "brgen.no expires unknown — resigning"
+    assert_includes out, "brgen.no expires unknown - resigning"
     refute status.success?, "no ldns-signzone here, so the zone must count as failed: #{out}"
     assert_includes out, "FAIL 1 zone(s) not signed: brgen.no"
   end
@@ -177,7 +177,7 @@ class ScheduledJobsTest < Minitest::Test
     out, status = resign
 
     assert status.success?, out
-    assert_includes out, "all 1 zones valid — nothing to do"
+    assert_includes out, "all 1 zones valid - nothing to do"
   end
 
   def test_nsd_resign_with_no_keyed_zones_fails

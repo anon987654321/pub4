@@ -9,7 +9,7 @@ require_relative "../lib/guard_state"
 # a hang rather than a 5xx and every other check on the box passes.
 # the old backlog has carried "amber_bsdports_stop_and_stay_down" for
 # exactly this, and each occurrence was found by a person noticing amber was off
-# — including 2026-08-14, when two concurrent deploys shed both and the guard
+# - including 2026-08-14, when two concurrent deploys shed both and the guard
 # did not bring either back.
 #
 # An earlier version of this rule asked whether resource_guard.sh's restore
@@ -49,7 +49,7 @@ class TestGuardState < Minitest::Test
   end
 
   # The guard removes an entry only when its own restore path runs. A service
-  # that is listed and running therefore proves restore did not bring it back —
+  # that is listed and running therefore proves restore did not bring it back -
   # something else did, and the list is now lying about the state of the box.
   # This is the state vm23 was left in on 2026-08-14: both apps up, both still
   # listed, unchanged across three further guard ticks.
@@ -59,19 +59,19 @@ class TestGuardState < Minitest::Test
     assert_empty Deploy::GuardState.stale_entries(shed: "amber\n", running: ALL_DOWN)
   end
 
-  # The thresholds are not asserted as numbers — they are recalibrated as the box
+  # The thresholds are not asserted as numbers - they are recalibrated as the box
   # changes, and have been twice. What must hold across recalibrations is that
   # restore sits above warn, or shed and restore chase each other.
   def test_the_guard_keeps_hysteresis_between_shed_and_restore
-    # encoding: named, not inherited. Under a C locale — which is how the
-    # integrity chain invokes everything on vm23 — Ruby reads files as US-ASCII,
+    # encoding: named, not inherited. Under a C locale - which is how the
+    # integrity chain invokes everything on vm23 - Ruby reads files as US-ASCII,
     # and resource_guard.sh's comments are full of em-dashes. A bare File.read
     # passed on a Mac and raised "invalid byte sequence in US-ASCII" on the box.
     guard = File.read(File.expand_path("../usr/local/bin/resource_guard.sh", __dir__), encoding: "UTF-8")
     warn_at = guard[/^MEM_WARN=(\d+)/, 1].to_i
     restore_at = guard[/^MEM_RESTORE=(\d+)/, 1].to_i
 
-    assert_operator warn_at, :>, 0, "MEM_WARN is no longer parseable — this test is asserting nothing"
+    assert_operator warn_at, :>, 0, "MEM_WARN is no longer parseable - this test is asserting nothing"
     assert_operator restore_at, :>, warn_at,
                     "no hysteresis: the guard would shed and restore around one threshold"
   end

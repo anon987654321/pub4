@@ -7,8 +7,8 @@ require "minitest/autorun"
 # `.` sets a bare KEY=value without exporting it, so `. /etc/brgen.env && export
 # RAILS_ENV=production SECRET_KEY_BASE ...` is an allowlist nobody can see: only
 # the keys written onto that line reach the process, and a key added to the file
-# later does nothing. rc.d/brgen carries the story — VAPID_PUBLIC_KEY sat in
-# /etc/brgen.env for hours while push failed silently — and was fixed with
+# later does nothing. rc.d/brgen carries the story - VAPID_PUBLIC_KEY sat in
+# /etc/brgen.env for hours while push failed silently - and was fixed with
 # `set -a && . file && set +a`.
 #
 # The three job workers were not fixed with it, and they are where it matters
@@ -74,7 +74,7 @@ end
 # An rc.d script that runs as an app user takes the rails login class.
 #
 # rc.subr(8) and rc.d(8) on the OpenBSD target: daemon_class is read-only and
-# set by rc.subr itself — the login.conf(5) class named after the script, or
+# set by rc.subr itself - the login.conf(5) class named after the script, or
 # "daemon" when there is none. rc.d/brgen gets `brgen`, which inherits `rails`.
 # Without a `brgen_jobs` class, rc.d/brgen_jobs runs its worker under `daemon`,
 # whose openfiles-cur is 128 against the rails class's 2048.

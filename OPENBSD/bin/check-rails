@@ -24,12 +24,12 @@ failures = []
 # run has found something rather than been unlucky. CheckResult#skipped_live
 # turns into a failure under this flag instead of a warning.
 #
-# It was decided per-loop and applied to one of the two, so the source tier —
-# which holds page_simulation and flow_journey, both skipped_live callers —
+# It was decided per-loop and applied to one of the two, so the source tier -
+# which holds page_simulation and flow_journey, both skipped_live callers -
 # ran soft on the VPS as well as off it. And the host test was a second,
 # narrower one: File.exist?("/etc/rc.d/brgen") beside Environment.on_vps?'s
 # /etc/relayd.conf. Two predicates for one fact disagree the moment brgen's
-# rc.d script is renamed, and the hand-rolled one cannot be rehearsed —
+# rc.d script is renamed, and the hand-rolled one cannot be rehearsed -
 # on_vps? honours DEPLOY_ASSUME_VPS=1, which is how this gets exercised from a
 # laptop before it is trusted on the box.
 LIVE_ENV = Deploy::Environment.on_vps? ? { "CHECK_REQUIRE_LIVE" => "1" } : {}
@@ -51,7 +51,7 @@ source_checks = [
   ["schema", "schema_migration"],
   ["asset freshness", "generated_asset"],
   # Previously invoked by no runner, deploy script or CI entrypoint at all
-  # (the old backlog: rails_checks_not_wired) — they only ever ran when
+  # (the old backlog: rails_checks_not_wired) - they only ever ran when
   # someone remembered to call them by hand, which meant in practice they did
   # not run. All four are static source checks, same shape as the checks above,
   # and all four pass as of 2026-07-27.
@@ -59,10 +59,10 @@ source_checks = [
   ["stimulus adoption", "stimulus_components"],
   ["css constitution", "css_constitution"],
   ["payment honesty", "payment_honesty"],
-  # Design craft stack (P0–P5); CHECK_AUTOFIX off in CI-like checks
+  # Design craft stack (P0-P5); CHECK_AUTOFIX off in CI-like checks
   ["layout suite", "layout_suite"],
   # Second wave of the same debt entry. These four were still invoked by nothing
-  # after the 2026-07-27 pass, and the reason given for leaving them out — cost —
+  # after the 2026-07-27 pass, and the reason given for leaving them out - cost -
   # did not survive measurement: all four together run in 1.4s off the deploy
   # host, because each degrades to its source half when no app is listening.
   # deploy_drift reports INCONCLUSIVE rather than green, which is the point.
@@ -70,8 +70,8 @@ source_checks = [
   ["flow journey", "flow_journey"],
   ["check mutation", "check_mutation"],
   ["deploy drift", "deploy_drift"],
-  # Same shape as the four above: a source half that always runs — hotwire.js
-  # still observes all three vitals entry types — and a live half that reports
+  # Same shape as the four above: a source half that always runs - hotwire.js
+  # still observes all three vitals entry types - and a live half that reports
   # INCONCLUSIVE off the deploy host rather than green.
   ["web vitals budget", "web_vitals_budget"],
   # Source-only and instant: three manifests read as text. It belongs with
@@ -138,7 +138,7 @@ end
 deep = profile == "full" || %w[1 true yes on].include?(ENV["CHECK_RAILS_DEEP"].to_s.strip.downcase)
 if deep
   # CheckRunner's timeout is per-runner, and the default 240s would kill
-  # constitutional_scan a fifth of the way in — a timeout kill reads as a check
+  # constitutional_scan a fifth of the way in - a timeout kill reads as a check
   # failure, which is worse than not running it.
   deep_runner = Deploy::CheckRunner.new(
     prefix: "deploy-rails", root: ROOT,
@@ -152,7 +152,7 @@ if deep
     failures << name.tr(" ", "_") unless deep_runner.run(name, RUBY, CHECKS_RUNNER, check, env: env)
   end
 else
-  deep_checks.each { |name, _| puts "deploy-rails: #{name.ljust(18)} skip — --profile=full or CHECK_RAILS_DEEP=1" }
+  deep_checks.each { |name, _| puts "deploy-rails: #{name.ljust(18)} skip - --profile=full or CHECK_RAILS_DEEP=1" }
 end
 
 # Static family contracts (no app boot / Ruby 3.4 required).
@@ -163,7 +163,7 @@ end
 # SKIP, colliding only because they sit inside differently-named classes; and
 # several shell out to checks that call exit, so one exit anywhere ends the run
 # with Minitest reporting on whatever it had collected by then. Both failure
-# modes are silent — a wrong constant surfaces as an assertion about the wrong
+# modes are silent - a wrong constant surfaces as an assertion about the wrong
 # tree, and an early exit as a green line over a short run.
 #
 # Measured at the swap rather than assumed: 559 runs either way, the same two
@@ -171,12 +171,12 @@ end
 failures << "rails_contracts" unless runner.run("rails contracts", RUBY, "RAILS/test/run_all.rb")
 
 if profile == "contributor"
-  puts "deploy-rails: auditor            skip — contributor profile"
-  puts "deploy-rails: runtime              skip — contributor profile"
+  puts "deploy-rails: auditor            skip - contributor profile"
+  puts "deploy-rails: runtime              skip - contributor profile"
 else
   failures << "auditor" unless runner.run("auditor", RUBY, CHECKS_RUNNER, "frontend_auditor")
   if Deploy::RubyRunner.runtime_check_skipped?
-    puts "deploy-rails: runtime              skip — #{Deploy::RubyRunner.runtime_skip_reason}"
+    puts "deploy-rails: runtime              skip - #{Deploy::RubyRunner.runtime_skip_reason}"
   else
     # Called directly, not through the runner: --runtime is its own flag, and
     # the runner only forwards arguments to visual_contract.

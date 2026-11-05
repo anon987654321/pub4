@@ -47,7 +47,7 @@ module Deploy
         end
       end
 
-      # The key stays :playlist — that is the engine, and the engine keeps its
+      # The key stays :playlist - that is the engine, and the engine keeps its
       # name. The label is the host, which became radio on 2026-09-12.
       routes.fetch(:playlist).each do |label|
         next if label == "radio"
@@ -105,12 +105,12 @@ module Deploy
     #             TLS handshake failure, which a browser reports as an attack.
     #   too few   a domain relayd serves and the list omits is a city nobody can
     #             reach from the site. Five sat like that from whenever they were
-    #             issued until 2026-08-12 — stvanger.no, trndheim.no, cardff.uk,
+    #             issued until 2026-08-12 - stvanger.no, trndheim.no, cardff.uk,
     #             edinbrgh.uk and frankfrt.de all had certificates, all resolved
     #             here, and none was linked or served.
     #
     # Source, not network. relayd.conf is tracked and is what gets installed, so
-    # this holds off the deploy host and in CI — and a check that needed DNS to run
+    # this holds off the deploy host and in CI - and a check that needed DNS to run
     # would be the kind that passes having measured nothing.
     def live_domains_check(result, registry_domains, relayd_keys)
       declared = extract_constant(REGISTRY.read, "LIVE_DOMAINS")
@@ -124,11 +124,11 @@ module Deploy
       extra = declared - certified - unknown
 
       if missing.any?
-        result.fail("LIVE_DOMAINS omits #{missing.sort.join(', ')} — relayd.conf has a tls keypair " \
+        result.fail("LIVE_DOMAINS omits #{missing.sort.join(', ')} - relayd.conf has a tls keypair " \
                     "for each, so they serve and nothing links them")
       end
       if extra.any?
-        result.fail("LIVE_DOMAINS names #{extra.sort.join(', ')} with no tls keypair in relayd.conf — " \
+        result.fail("LIVE_DOMAINS names #{extra.sort.join(', ')} with no tls keypair in relayd.conf - " \
                     "the city network links a hostname that refuses TLS")
       end
 
@@ -166,13 +166,13 @@ module Deploy
       raise "missing #{name} in domain_registry.rb" unless match
 
       # reject(&:empty?), because a %w[] wrapped across lines starts with a
-      # newline and split leaves an empty first element — which then compares
+      # newline and split leaves an empty first element - which then compares
       # unequal against every real list and fails the check on formatting.
       match[1].split(/\s+/).reject(&:empty?)
     end
 
     def expected_subdomains_for(domain, marketplace_subdomain)
-      # The marketplace subdomain is the only translated one — it comes from the
+      # The marketplace subdomain is the only translated one - it comes from the
       # registry row (markedsplass, marknadsplats, marktplatz, mercato, ...).
       # Everything else is the same word in every city.
       subs = [marketplace_subdomain, *COMMON_SUBAPPS]

@@ -1,10 +1,10 @@
 #!/usr/bin/env zsh
-# NOT the disaster-recovery script — use OPENBSD/bin/dr-pull for that.
+# NOT the disaster-recovery script - use OPENBSD/bin/dr-pull for that.
 #
 # Restore Rails SQLite databases from on-disk Litestream replicas (vm23).
 # Stops app services, runs litestream restore, restarts services. It was called
 # restore_backups.sh, which is the name somebody reaches for in an actual
-# emergency, and vm23 has no litestream binary and no replicas — so the name
+# emergency, and vm23 has no litestream binary and no replicas - so the name
 # promised recovery the file cannot deliver. The name is the architecture.
 #
 # Usage (on vm23):
@@ -14,7 +14,7 @@
 #
 # Every precondition below is a hard failure, not a skip. On vm23 litestream is
 # absent and /var/backups/litestream/ is empty, so a skipping restore walked all
-# three apps, restored none of them and printed "done" — a disaster-recovery
+# three apps, restored none of them and printed "done" - a disaster-recovery
 # script that reports success is worse than one that is missing, because it is
 # read as evidence. The working backup is OPENBSD/bin/dr-pull, whose snapshots
 # live on the operator Mac; see RUNBOOK.md, "Backups".
@@ -33,7 +33,7 @@ discover_apps() {
     return
   fi
   # stderr, because stdout is the app list.
-  [[ -f $CONFIG ]] || { log "FAIL — missing litestream config: $CONFIG" >&2; exit 1; }
+  [[ -f $CONFIG ]] || { log "FAIL - missing litestream config: $CONFIG" >&2; exit 1; }
   ruby - "$CONFIG" <<'RUBY'
 require 'yaml'
 config = YAML.load_file(ARGV[0])
@@ -47,7 +47,7 @@ RUBY
 
 require_litestream() {
   whence litestream >/dev/null 2>&1 && return 0
-  log "FAIL — no litestream binary on this host, so nothing here can restore anything."
+  log "FAIL - no litestream binary on this host, so nothing here can restore anything."
   log "       litestream is not in OpenBSD ports; /var/backups/litestream/ is empty."
   log "       Restore from a dr-pull snapshot instead: ruby OPENBSD/bin/dr-pull --check"
   exit 1
@@ -58,13 +58,13 @@ restore_app() {
   local storage="/home/${app}/app/storage"
   local replica="file:///var/backups/litestream/${app}"
 
-  [[ -d $storage ]] || { log "FAIL $app — missing $storage"; exit 1 }
-  [[ -d "/var/backups/litestream/${app}" ]] || { log "FAIL $app — missing replica $replica"; exit 1 }
+  [[ -d $storage ]] || { log "FAIL $app - missing $storage"; exit 1 }
+  [[ -d "/var/backups/litestream/${app}" ]] || { log "FAIL $app - missing replica $replica"; exit 1 }
 
   local -a dbs
   dbs=("$storage"/*.sqlite3(N))
   if (( ${#dbs[@]} == 0 )); then
-    log "FAIL $app — no *.sqlite3 in $storage"
+    log "FAIL $app - no *.sqlite3 in $storage"
     exit 1
   fi
 

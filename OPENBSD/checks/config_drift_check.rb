@@ -25,7 +25,7 @@ require "digest"
 
 # Every sibling here reaches this through `require_relative "lib/utf8"`. This one
 # is the only file OPERATOR.sh installs to /usr/local/bin, and a require_relative
-# resolves beside the installed copy — so the shared file forced a whole
+# resolves beside the installed copy - so the shared file forced a whole
 # /usr/local/bin/lib/ directory onto the box to hold six lines, and an install that
 # could half-succeed. Minimal OpenBSD and CI environments default Ruby file reads to
 # US-ASCII, and this check reads UTF-8 config regardless of the operator's locale.
@@ -33,8 +33,8 @@ Encoding.default_external = Encoding::UTF_8
 
 # The repo is found, not assumed to be one level up.
 #
-# daily.local runs the INSTALLED copy at /usr/local/bin — root must not execute a
-# file the dev user can rewrite — and from there `..` is /usr/local, so a mirror
+# daily.local runs the INSTALLED copy at /usr/local/bin - root must not execute a
+# file the dev user can rewrite - and from there `..` is /usr/local, so a mirror
 # resolved relative to this file lands on /usr/local/etc and every comparison
 # finds no repo mirror. That is a check reporting "clean" while comparing
 # nothing, so the checkout is searched for rather than inferred.
@@ -97,7 +97,7 @@ EXCLUDED = %w[etc/relayd.conf etc/mail/smtpd.conf etc/litestream.yml etc/acme-cl
 # Root's crontab cannot join VERBATIM: OPERATOR.sh merges the tracked lines into
 # whatever is already there rather than overwriting the file, so a byte compare
 # would fail on every box someone has touched by hand. What is comparable
-# is the set of commands, and that is the half worth comparing — a schedule the
+# is the set of commands, and that is the half worth comparing - a schedule the
 # repo declares and the box does not run is a capability that exists only in this
 # directory.
 #
@@ -122,7 +122,7 @@ end
 
 # A machine with no doas is a machine that cannot answer, not a crash.
 # `DEPLOY_ASSUME_VPS=1` is documented in bin/check-rails as the way to exercise
-# the on-VPS path from a laptop, and on a laptop `doas` does not exist — so
+# the on-VPS path from a laptop, and on a laptop `doas` does not exist - so
 # without the rescue this check raises Errno::ENOENT where it means to report
 # nothing found.
 def doas_run(*command)
@@ -234,7 +234,7 @@ def report(drift, missing, compared, unfound, cron)
   end
 
   unfound.each { |name| warn "config-drift: #{name}: no repo mirror under #{MIRROR}" }
-  warn "config-drift: compared #{compared.size}/#{VERBATIM.size} — a check that compares nothing is not a passing check" if compared.empty?
+  warn "config-drift: compared #{compared.size}/#{VERBATIM.size} - a check that compares nothing is not a passing check" if compared.empty?
   missing.each { |name| warn "config-drift: #{name}: live file missing or unreadable on vm23" }
   drift.each do |name, detail|
     warn "config-drift: #{name}: DRIFT - the live copy differs from OPENBSD/#{name}"
@@ -263,8 +263,8 @@ def crontab_report(repo_text, live_text)
   end
 
   # Extras are scoped to /usr/local, because the repo owns only half of this file.
-  # OpenBSD ships root a crontab of its own — `/usr/bin/newsyslog` and the three
-  # `/bin/sh /etc/{daily,weekly,monthly}` lines — and OPERATOR.sh merges the pub4
+  # OpenBSD ships root a crontab of its own - `/usr/bin/newsyslog` and the three
+  # `/bin/sh /etc/{daily,weekly,monthly}` lines - and OPERATOR.sh merges the pub4
   # lines onto it rather than replacing it. Every command this repo installs lives
   # under /usr/local/bin, so anything outside it is the base system's and reporting
   # it would be four permanent false alarms.
@@ -283,7 +283,7 @@ end
 
 # Everything above is definitions; everything below runs. The split is what lets
 # test/test_config_drift_check.rb require this file and hand `crontab_report` the
-# shape it must flag and the shape it must not — without the guard, requiring the
+# shape it must flag and the shape it must not - without the guard, requiring the
 # check off-VPS exits the test process at the skip line below.
 return unless $PROGRAM_NAME == __FILE__
 

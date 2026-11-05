@@ -1,13 +1,13 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
-# dr-pull — pull-based disaster recovery, run from the operator Mac.
+# dr-pull - pull-based disaster recovery, run from the operator Mac.
 #
 # Litestream has never replicated anything (off_host_dr: the binary is not
 # installed), so until that operator decision lands, THIS is the only copy of
 # production data that leaves the box. Chosen over the alternatives priced in
-# the 2026-08-22 sitting — litestream-to-S3 (needs a bucket and a key),
-# borg/restic/tarsnap (money), scp of the raw file (torn copies under WAL) —
+# the 2026-08-22 sitting - litestream-to-S3 (needs a bucket and a key),
+# borg/restic/tarsnap (money), scp of the raw file (torn copies under WAL) -
 # because it needs nothing but the ssh access the Mac already has:
 #
 #   1. On vm23, `sqlite3 ... "VACUUM INTO ..."` writes a CONSISTENT snapshot
@@ -16,7 +16,7 @@
 #      /home/<app>/app/storage is 0750 app:app and the ssh user cannot so much
 #      as stat what is inside it.
 #   2. The snapshots stream back in one tar over ssh.
-#   3. Every pulled db must pass PRAGMA integrity_check on the Mac — a backup
+#   3. Every pulled db must pass PRAGMA integrity_check on the Mac - a backup
 #      nobody has opened is a hope, not a backup.
 #   4. The last KEEP pulls are kept; older ones rotate away.
 #   5. Uploaded files (Active Storage blobs, the two-character directories beside the
@@ -32,7 +32,7 @@
 #                    copies the newest pull to a scratch directory, checks it against
 #                    SHA256SUMS, runs integrity_check and reads the app's own tables.
 #
-# A sleeping Mac skips the window and launchd fires on next wake — last-resort
+# A sleeping Mac skips the window and launchd fires on next wake - last-resort
 # DR, honestly labeled, not a substitute for the litestream decision.
 
 require "digest"
@@ -77,11 +77,11 @@ end
 if ARGV.include?("--check")
   unless Dir.exist?(DEST)
     if ENV.key?("PUB4_DR_DIR") && !ENV.fetch("PUB4_DR_DIR").to_s.strip.empty?
-      warn "dr-pull: FAIL — configured backup directory is missing: #{DEST}"
+      warn "dr-pull: FAIL - configured backup directory is missing: #{DEST}"
       exit 1
     end
 
-    puts "dr-pull: skip — no #{DEST} on this machine"
+    puts "dr-pull: skip - no #{DEST} on this machine"
     exit 0
   end
 
@@ -99,7 +99,7 @@ if ARGV.include?("--check")
   # backups and must not become a read-through to another directory.
   landed = pulls.select { |name| !Dir.glob(File.join(DEST, name, "*.sqlite3")).empty? }.sort
   if landed.empty?
-    warn "dr-pull: FAIL — #{DEST} holds no pull with a database in it (#{pulls.size} real stamp dir(s))"
+    warn "dr-pull: FAIL - #{DEST} holds no pull with a database in it (#{pulls.size} real stamp dir(s))"
     exit 1
   end
 
@@ -107,7 +107,7 @@ if ARGV.include?("--check")
   source = File.join(DEST, newest)
   age_days = ((Time.now - File.mtime(source)) / 86_400).floor
   if age_days > STALE_AFTER_DAYS
-    warn "dr-pull: FAIL — newest pull #{newest} is #{age_days} days old, over #{STALE_AFTER_DAYS}. " \
+    warn "dr-pull: FAIL - newest pull #{newest} is #{age_days} days old, over #{STALE_AFTER_DAYS}. " \
          "Run ruby OPENBSD/bin/dr-pull and read #{DEST}/dr-pull.log for why it stopped."
     exit 1
   end
@@ -120,7 +120,7 @@ if ARGV.include?("--check")
     false
   end
   unless unsafe.empty?
-    warn "dr-pull: FAIL — newest pull contains non-regular or symlinked database path(s): #{unsafe.map { |p| File.basename(p) }.join(', ')}"
+    warn "dr-pull: FAIL - newest pull contains non-regular or symlinked database path(s): #{unsafe.map { |p| File.basename(p) }.join(', ')}"
     exit 1
   end
 
@@ -130,7 +130,7 @@ if ARGV.include?("--check")
   if has_sums
     sums_stat = File.lstat(sums_path)
     unless sums_stat.file? && !sums_stat.symlink?
-      warn "dr-pull: FAIL — SHA256SUMS is not a regular file"
+      warn "dr-pull: FAIL - SHA256SUMS is not a regular file"
       exit 1
     end
 
@@ -138,14 +138,14 @@ if ARGV.include?("--check")
       hash, name = line.split(/\s+/, 2)
       name = name.to_s.delete_prefix("*")
       unless hash.to_s.match?(/\A\h{64}\z/) && !name.empty? && File.basename(name) == name
-        warn "dr-pull: FAIL — malformed SHA256SUMS entry"
+        warn "dr-pull: FAIL - malformed SHA256SUMS entry"
         exit 1
       end
       recorded[name] = hash.downcase
     end
     missing = databases.map { |p| File.basename(p) } - recorded.keys
     unless missing.empty?
-      warn "dr-pull: FAIL — SHA256SUMS has no entry for #{missing.join(', ')}"
+      warn "dr-pull: FAIL - SHA256SUMS has no entry for #{missing.join(', ')}"
       exit 1
     end
   end
@@ -156,24 +156,24 @@ if ARGV.include?("--check")
       actual = Digest::SHA256.file(database).hexdigest
       expected = recorded.fetch(name)
       unless actual == expected
-        warn "dr-pull: FAIL — #{name} checksum mismatch (#{actual[0, 16]}… != #{expected[0, 16]}…)"
+        warn "dr-pull: FAIL - #{name} checksum mismatch (#{actual[0, 16]}... != #{expected[0, 16]}...)"
         exit 1
       end
     end
 
     output, status = Open3.capture2("sqlite3", "-readonly", database, "PRAGMA integrity_check;")
     unless status.success? && output.strip == "ok"
-      warn "dr-pull: FAIL — #{name} integrity_check failed (exit #{status.exitstatus || 'signal'}): #{output.strip[0, 120]}"
+      warn "dr-pull: FAIL - #{name} integrity_check failed (exit #{status.exitstatus || 'signal'}): #{output.strip[0, 120]}"
       exit 1
     end
   rescue SystemCallError => error
-    warn "dr-pull: FAIL — could not verify #{name}: #{error.class}: #{error.message}"
+    warn "dr-pull: FAIL - could not verify #{name}: #{error.class}: #{error.message}"
     exit 1
   end
 
   checksum_note = has_sums ? "checksum + integrity verified" : "integrity verified; legacy pull has no SHA256SUMS"
-  warn "dr-pull: WARNING — #{checksum_note}; run a fresh pull to establish remote checksum evidence" unless has_sums
-  puts "dr-pull: ok — newest pull #{newest}, #{age_days} day(s) old, #{databases.size} database(s), #{checksum_note}, #{landed.size} kept"
+  warn "dr-pull: WARNING - #{checksum_note}; run a fresh pull to establish remote checksum evidence" unless has_sums
+  puts "dr-pull: ok - newest pull #{newest}, #{age_days} day(s) old, #{databases.size} database(s), #{checksum_note}, #{landed.size} kept"
   exit 0
 end
 # --drill is the restore test. A backup command that exits 0 proves a file was
@@ -205,9 +205,9 @@ if ARGV.include?("--drill")
       if recorded.key?(name)
         ok = recorded[name] == digest
         failures << "#{name}: checksum #{digest} != recorded #{recorded[name]}" unless ok
-        puts "  #{name}  sha256 #{digest[0, 16]}…  #{ok ? 'matches the pull' : 'MISMATCH'}"
+        puts "  #{name}  sha256 #{digest[0, 16]}...  #{ok ? 'matches the pull' : 'MISMATCH'}"
       else
-        puts "  #{name}  sha256 #{digest[0, 16]}…"
+        puts "  #{name}  sha256 #{digest[0, 16]}..."
       end
 
       integrity, = Open3.capture2("sqlite3", "-readonly", db, "PRAGMA integrity_check;")
@@ -230,7 +230,7 @@ if ARGV.include?("--drill")
     warn "dr-pull --drill: FAIL\n  #{failures.join("\n  ")}"
     exit 1
   end
-  puts "dr-pull --drill: ok — #{newest} restores and reads back"
+  puts "dr-pull --drill: ok - #{newest} restores and reads back"
   exit 0
 end
 
@@ -306,13 +306,13 @@ pulled = Dir[File.join(target, "*.sqlite3")]
 abort("dr-pull: nothing pulled") if pulled.empty?
 expected = remote_sums.lines.filter_map { |l| l.split(/\s+/, 2).then { |h, n| [n.to_s.strip, h] if h&.match?(/\A\h{64}\z/) } }.to_h
 mismatched = pulled.reject { |db| expected[File.basename(db)] == Digest::SHA256.file(db).hexdigest }
-abort("dr-pull: checksum differs from vm23's for #{mismatched.map { |d| File.basename(d) }.join(', ')} — do not trust this pull") unless mismatched.empty?
+abort("dr-pull: checksum differs from vm23's for #{mismatched.map { |d| File.basename(d) }.join(', ')} - do not trust this pull") unless mismatched.empty?
 File.write(File.join(target, "SHA256SUMS"), pulled.sort.map { |db| "#{expected.fetch(File.basename(db))}  #{File.basename(db)}\n" }.join)
 bad = pulled.reject do |db|
   check, = Open3.capture2("sqlite3", db, "PRAGMA integrity_check;")
   check.strip == "ok"
 end
-abort("dr-pull: integrity_check FAILED for #{bad.join(', ')} — do not trust this pull") unless bad.empty?
+abort("dr-pull: integrity_check FAILED for #{bad.join(', ')} - do not trust this pull") unless bad.empty?
 
 # Uploaded files. Measured 2026-10-12: brgen's storage holds 390 two-character blob
 # directories (about 40 MB) beside the databases, and nothing pulled them, so a
@@ -333,7 +333,7 @@ blob_summary = APPS.filter_map do |app|
   next if data.empty? # no uploads for this app
 
   staging = File.join(DEST, "blobs", ".#{app}.new")
-  FileUtils.rm_rf(staging) # scan: intentional — retention: this script's own staging directory
+  FileUtils.rm_rf(staging) # scan: intentional - retention: this script's own staging directory
   FileUtils.mkdir_p(staging)
   IO.popen(["tar", "-C", staging, "-xf", "-"], "wb") { |io| io.write(data) }
   unless $?.success?
@@ -341,12 +341,12 @@ blob_summary = APPS.filter_map do |app|
     next
   end
   final = File.join(DEST, "blobs", app)
-  FileUtils.rm_rf(final) # scan: intentional — retention: this script's own previous blob copy, replaced whole
+  FileUtils.rm_rf(final) # scan: intentional - retention: this script's own previous blob copy, replaced whole
   FileUtils.mv(staging, final)
   "#{app} #{Dir[File.join(final, '**', '*')].count { |p| File.file?(p) }} file(s)"
 end
 
-Dir[File.join(DEST, "*")].select { |d| File.directory?(d) && File.basename(d).match?(/\A\d{8}-\d{4}\z/) }.sort[0...-KEEP].each { |d| FileUtils.rm_rf(d) } # scan: intentional — retention: this script's own pulls past KEEP
+Dir[File.join(DEST, "*")].select { |d| File.directory?(d) && File.basename(d).match?(/\A\d{8}-\d{4}\z/) }.sort[0...-KEEP].each { |d| FileUtils.rm_rf(d) } # scan: intentional - retention: this script's own pulls past KEEP
 puts "dr-pull: #{pulled.size} database(s) -> #{target}, all integrity_check ok " \
      "(#{pulled.sum { |f| File.size(f) } / 1024 / 1024}MB; keeping last #{KEEP})"
 # Tell the box a pull landed. pub4-alert watch on vm23 cannot see the Mac, so the

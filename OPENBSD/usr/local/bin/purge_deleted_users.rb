@@ -6,7 +6,7 @@
 # enqueues it), and amber holds no resident Solid Queue scheduler: drain-jobs.sh
 # only starts a worker for a queue that already has due rows, so a recurring
 # entry can never get the worker it needs to be enqueued in the first place.
-# The same trap as DeclutterHygieneJob, and the same cure — a direct
+# The same trap as DeclutterHygieneJob, and the same cure - a direct
 # `bin/rails runner` call from cron (purge-deleted-users.sh).
 #
 # The job itself is the erasure authority; this file only counts and reports.

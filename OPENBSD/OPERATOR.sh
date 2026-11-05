@@ -1,5 +1,5 @@
 #!/usr/bin/env zsh
-# OpenBSD vm23 deploy — executable script. Everything else in this tree is an exact config mirror.
+# OpenBSD vm23 deploy - executable script. Everything else in this tree is an exact config mirror.
 # Routine (on vm23): cd ~/pub4 && doas zsh OPENBSD/OPERATOR.sh
 # Installs OPENBSD/{etc,usr,var} onto /, validates pf/relayd, restarts services.
 # Rare: --first-install | --stage-1 (DNS wipe) | --stage-2 (full app bootstrap)
@@ -10,7 +10,7 @@
 #   (backs up /etc first), relayd/pf template installs when configs already match, rcctl enable/start.
 # - DESTRUCTIVE on re-run: stage_1 deletes /var/nsd/etc/* and /var/nsd/zones/master/* before
 #   regenerating signed zones. Never re-run stage_1 on a live authoritative server without backup.
-# - State tracking: STATE_FILE=/var/db/openbsd_setup.state — is_step_completed/mark_step_completed
+# - State tracking: STATE_FILE=/var/db/openbsd_setup.state - is_step_completed/mark_step_completed
 #   helpers exist for future --resume support; certificate-renewal cron must stay append-idempotent.
 # - Data preserved: Rails SQLite under /home/<app>/app/storage, ~/priv, acme certs in /etc/ssl when
 #   stage_1 is skipped. Re-running stage_2 does not drop databases.
@@ -115,7 +115,7 @@ install_tracked_crontab() {
   [[ -f $tracked ]] || { log ERROR "Missing tracked root crontab: $tracked"; return 1; }
 
   # /tmp/root_crontab.$$ was a PID-predictable name in a world-writable directory
-  # that root wrote and then fed straight to crontab(1) — the same shape as the
+  # that root wrote and then fed straight to crontab(1) - the same shape as the
   # doas.conf staging file in validate_doas.ksh, and with root's crontab as the
   # payload. A root-owned 0700 directory has no symlink for root to follow.
   # Public deploy receipts live directly in /var/db/pub4; keep root-crontab
@@ -135,7 +135,7 @@ install_tracked_crontab() {
   # carry it: it skips anything with fewer than six fields, and `PATH=...` is one.
   # That is how the single most load-bearing line in crontab.vm23 would have been
   # tracked in the repo and never installed. Rewritten rather than appended so a
-  # stale PATH on the box is corrected rather than shadowed — cron takes the last
+  # stale PATH on the box is corrected rather than shadowed - cron takes the last
   # assignment, but a reader takes the first.
   typeset cron_path
   cron_path=$(grep -m1 '^PATH=' $tracked) || cron_path=''
@@ -158,7 +158,7 @@ install_tracked_crontab() {
     # Refusing to schedule a command that is not on the box is right: cron would
     # mail root once per tick forever. Refusing silently is not. A tracked job
     # then exists in etc/crontab.vm23, is absent from the crontab, and reads as
-    # complete from both ends — nothing is missing from the file you are looking
+    # complete from both ends - nothing is missing from the file you are looking
     # at. uptime-check.sh sat in crontab.vm23 and in usr/local/bin/ from
     # 2026-08-12 until 2026-08-18 and had never been scheduled, because the run
     # that installs the wrapper at stage 1 had not happened and every earlier
@@ -241,12 +241,12 @@ install_root_configs() {
     doas_size=$(stat -f %z "$src/etc/doas.conf") || return 1
     if (( doas_size == 0 )); then
       print >> "$src/etc/doas.conf"
-      log WARN "doas.conf was empty — fixed before install"
+      log WARN "doas.conf was empty - fixed before install"
     else
       doas_last=$(dd if="$src/etc/doas.conf" bs=1 skip=$((doas_size - 1)) count=1 2>/dev/null | od -An -t x1)
       if [[ $doas_last != *0a* ]]; then
         print >> "$src/etc/doas.conf"
-        log WARN "doas.conf missing trailing newline — fixed before install"
+        log WARN "doas.conf missing trailing newline - fixed before install"
       fi
     fi
   fi
@@ -267,7 +267,7 @@ install_root_configs() {
 
   # 755 first, then 555 for the scripts this repo owns. Written the other way
   # round, the blanket loop undid the line above it two lines later, so the mode
-  # the file asks for twice — here and where master is installed — was never the
+  # the file asks for twice - here and where master is installed - was never the
   # mode it set.
   #
   # Two conventions, on purpose, and vm23 already runs both: OpenBSD's own 82
@@ -318,7 +318,7 @@ install_root_configs() {
 
   if [[ -f /etc/doas.conf ]]; then
     if ! su dev -c 'doas id' 2>/dev/null | grep -q 'uid=0(root)'; then
-      log ERROR "doas validation failed after config install — aborting (restoring previous doas.conf)"
+      log ERROR "doas validation failed after config install - aborting (restoring previous doas.conf)"
       [[ -n $doas_rollback && -f $doas_rollback ]] && cp "$doas_rollback" /etc/doas.conf
       return 1
     fi
@@ -363,7 +363,7 @@ sync_openbsd_apply() {
   # A scan bypass is a break-glass action and needs both explicit acknowledgements.
   if [[ ${SKIP_MASTER_SCAN:-0} != 0 ]]; then
     if [[ ${SKIP_MASTER_SCAN} != 1 || ${I_UNDERSTAND_FAST_DEPLOY:-0} != 1 ]]; then
-      log ERROR "SKIP_MASTER_SCAN=1 requires I_UNDERSTAND_FAST_DEPLOY=1 — refusing sync/apply"
+      log ERROR "SKIP_MASTER_SCAN=1 requires I_UNDERSTAND_FAST_DEPLOY=1 - refusing sync/apply"
       return 1
     fi
     log WARN "MASTER scan skipped by explicit fast-deploy acknowledgement"
@@ -372,14 +372,14 @@ sync_openbsd_apply() {
     typeset scan_log=$scan_log_dir/master_deploy_scan.log
     mkdir -p "$scan_log_dir" || { log ERROR "cannot create $scan_log_dir"; return 1 }
     chmod 700 "$scan_log_dir"
-    log INFO "MASTER rules scan (OPERATOR) — strict pre-apply per laws.yml (ROBUSTNESS/SINGULARITY/LINEARITY/PROXIMITY/ABSTRACTION/DENSITY + veto)"
+    log INFO "MASTER rules scan (OPERATOR) - strict pre-apply per laws.yml (ROBUSTNESS/SINGULARITY/LINEARITY/PROXIMITY/ABSTRACTION/DENSITY + veto)"
     if ! su dev -c "cd /home/dev/pub4/MASTER && MASTER_SCAN_DETERMINISTIC=1 MASTER_SAFE_MODE=1 $BUNDLE exec $RUBY bin/check --scan-only --tree=OPENBSD" 2>&1 | tee "$scan_log"; then
-      log ERROR "MASTER scan found violations — refusing sync/apply (self_violation would occur per laws.yml)"
+      log ERROR "MASTER scan found violations - refusing sync/apply (self_violation would occur per laws.yml)"
       return 1
     fi
-    log INFO "MASTER scan clean — proceeding (scan_clean + self_apply satisfied)"
+    log INFO "MASTER scan clean - proceeding (scan_clean + self_apply satisfied)"
   else
-    log ERROR "MASTER not available for scan — refusing sync/apply"
+    log ERROR "MASTER not available for scan - refusing sync/apply"
     return 1
   fi
 
@@ -391,7 +391,7 @@ sync_openbsd_apply() {
   # (In per-app: before bundle, check Gemfile etc.)
 
   # Not `|| true`. The crontab schedules /usr/local/bin/resource_guard.sh every
-  # five minutes and it is the load-shedding guard that keeps this 1GB box up —
+  # five minutes and it is the load-shedding guard that keeps this 1GB box up -
   # swallowing the install failure meant it could simply be absent, with no
   # error, while every log line still said the crontab was installed.
   # The privileged broker invokes this fixed, root-owned copy, never the live checkout.
@@ -400,7 +400,7 @@ sync_openbsd_apply() {
     return 1
   fi
   if ! install -o root -g wheel -m 555 "${SCRIPT_DIR}/checks/solid_queue_proof.rb" /usr/local/libexec/pub4/solid_queue_proof.rb; then
-    log ERROR "solid_queue_proof install failed — deploy proof would run untrusted checkout code"
+    log ERROR "solid_queue_proof install failed - deploy proof would run untrusted checkout code"
     return 1
   fi
 
@@ -410,7 +410,7 @@ sync_openbsd_apply() {
   }
 
   if ! install -o root -g wheel -m 555 "${src}/usr/local/bin/resource_guard.sh" /usr/local/bin/resource_guard.sh; then
-    log ERROR "resource_guard.sh install failed — the load guard would be absent"
+    log ERROR "resource_guard.sh install failed - the load guard would be absent"
     return 1
   fi
 
@@ -424,7 +424,7 @@ sync_openbsd_apply() {
   # executable and logs "emergency_cpu not installed" when it is not, so without
   # this line the top tier of the load guard can only ever write that line.
   if ! install -o root -g wheel -m 555 "${src}/usr/local/bin/emergency_cpu.sh" /usr/local/bin/emergency_cpu.sh; then
-    log ERROR "emergency_cpu.sh install failed — resource_guard's crisis tier would only log"
+    log ERROR "emergency_cpu.sh install failed - resource_guard's crisis tier would only log"
     return 1
   fi
   [[ -f /usr/local/bin/emergency_cpu.sh && ! -L /usr/local/bin/emergency_cpu.sh ]] || {
@@ -436,7 +436,7 @@ sync_openbsd_apply() {
   # refuses a command that is not on the box. root runs the installed copy for
   # the same reason daily.local does: the checkout is dev-writable.
   if ! install -m 755 "${SCRIPT_DIR}/bin/vps_weekly_integrity.sh" /usr/local/bin/vps_weekly_integrity.sh; then
-    log ERROR "vps_weekly_integrity.sh install failed — the weekly integrity run would go unscheduled"
+    log ERROR "vps_weekly_integrity.sh install failed - the weekly integrity run would go unscheduled"
     return 1
   fi
 
@@ -444,7 +444,7 @@ sync_openbsd_apply() {
   # so the guard is exactly as load-bearing as the install. Nothing installed it:
   # config_drift_check.rb sits under checks/ rather than under usr/local/bin/,
   # so install_root_configs never carried it, and the guard was false on every
-  # run. Live had been edited by hand to run /home/dev/pub4/OPENBSD/... instead —
+  # run. Live had been edited by hand to run /home/dev/pub4/OPENBSD/... instead -
   # root executing a file the dev user can rewrite, every morning, which is the
   # escalation the guard's own comment forbids. Deploying daily.local without
   # this would swap that for a check that silently never runs.
@@ -454,7 +454,7 @@ sync_openbsd_apply() {
   # beside the installed copy; the check sets its own encoding now, so the install
   # cannot half-succeed and the box carries no directory holding six lines.
   if ! install -m 755 "${SCRIPT_DIR}/checks/config_drift_check.rb" /usr/local/bin/config_drift_check.rb; then
-    log ERROR "config_drift_check install failed — daily.local would skip the drift check in silence"
+    log ERROR "config_drift_check install failed - daily.local would skip the drift check in silence"
     return 1
   fi
   install_tracked_crontab || return 1
@@ -466,7 +466,7 @@ sync_openbsd_apply() {
     /usr/sbin/rcctl restart $svc 2>/dev/null || /usr/sbin/rcctl start $svc 2>/dev/null \
       || log WARN "$svc restart/start failed"
   done
-  # App services: start only if /up already returns 200 — avoids Falcon crash-loops burning CPU.
+  # App services: start only if /up already returns 200 - avoids Falcon crash-loops burning CPU.
   typeset -A app_ports=(brgen 38182 amber 61352 bsdports 47312)
   typeset -a core_apps=(brgen)
   typeset -a optional_apps=(amber bsdports)
@@ -506,10 +506,10 @@ sync_openbsd_apply() {
   }
 
   # No fallback falcon: one started here would run as dev beside rc.d/master's
-  # daemon_user="master" — a second server on the same port, as the account that
+  # daemon_user="master" - a second server on the same port, as the account that
   # can become root. A slow master gets the longer wait and then fails the run.
   if ! wait_for_up 53187 master 12 5; then
-    log WARN "master slow — waiting longer for rc.d/master"
+    log WARN "master slow - waiting longer for rc.d/master"
     wait_for_up 53187 master 24 5 || return 1
   fi
   wait_for_up 38182 brgen 24 5 || return 1
@@ -526,7 +526,7 @@ source "${SCRIPT_DIR}/dev/operator_stage_2.zsh"
 trap 'cleanup' EXIT
 trap 'error_handler $? $LINENO' ERR INT TERM
 
-# These four restate facts data/dns.yml already declares — BRGEN_IP is its
+# These four restate facts data/dns.yml already declares - BRGEN_IP is its
 # nameserver.ip, HYP_IP the first of its xfr_peers, PUBLIC_RESOLVERS its
 # resolvers.public. They stay as literals because this block is sourced before
 # anything, and making it shell out to ruby to boot would put the deploy

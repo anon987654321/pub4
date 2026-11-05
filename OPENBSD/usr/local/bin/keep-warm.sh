@@ -4,7 +4,7 @@
 #
 # The box carries more than fits: measured 2026-08-17 at 918M real with 43M free
 # and swap 91% used, paging continuously at rest. OpenBSD evicts whatever is
-# idle, which on a low-traffic site is everything between visits — so the first
+# idle, which on a low-traffic site is everything between visits - so the first
 # request after a quiet spell reads its own working set back from disk. amber's
 # home measured 12.19s to first byte cold against 0.40s warm. Nearly every real
 # visitor is the cold case.
@@ -39,7 +39,7 @@ esac
 # the Ruby process resident, and going out through relayd and back would measure
 # the network as well as pay for TLS on a box that has no spare core.
 #
-# brgen and amber only, and not because of the guard's sets — amber is in
+# brgen and amber only, and not because of the guard's sets - amber is in
 # OPTIONAL="bsdports amber" and master is in CORE="master brgen", so naming the
 # guard here gets it backwards in both directions. These two are the surfaces a
 # visitor arrives on cold. bsdports is a low-traffic ports index nobody waits on,
@@ -48,7 +48,7 @@ esac
 set -A TARGETS "brgen.no 38182" "amberapp.art 61352"
 
 # A real page, not /up. The health endpoint answers from a handful of objects and
-# leaves the render path — views, the feed query, the template cache — exactly as
+# leaves the render path - views, the feed query, the template cache - exactly as
 # cold as it found it, which is the part a visitor waits for.
 for target in "${TARGETS[@]}"; do
   set -- $target
@@ -62,7 +62,7 @@ for target in "${TARGETS[@]}"; do
   code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 45 \
          -H "Host: $host" "http://127.0.0.1:$port/" 2>/dev/null || echo 000)
   elapsed=$(( $(date +%s) - start ))
-  # Only worth a log line when it was slow or it failed — a warm hit every ten
+  # Only worth a log line when it was slow or it failed - a warm hit every ten
   # minutes for a month is 4,000 lines saying nothing.
   if [[ "$code" != "200" ]] || [[ "$elapsed" -ge 3 ]]; then
     echo "$(date '+%Y-%m-%dT%H:%M:%S') $host $code in ${elapsed}s"

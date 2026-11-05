@@ -8,7 +8,7 @@ module Deploy
   #
   # This is the counterpart to `CheckResult#errored!`, and it is not optional
   # decoration next to it. Fail-open means a check that crashes stops blocking;
-  # without a record, it also stops being noticed — it reads as a quiet line in
+  # without a record, it also stops being noticed - it reads as a quiet line in
   # a long run and the tree it was supposed to guard goes unguarded for however
   # long nobody re-reads the output. arXiv 2607.07405 makes the same point about
   # its own suite: precision "must itself be audited", because in their four-check
@@ -16,21 +16,21 @@ module Deploy
   # nothing in the check's own output distinguished them.
   #
   # pub4 had no such record. Every check's history was whatever was still in a
-  # terminal scrollback, so the two failure modes this fleet has actually hit —
+  # terminal scrollback, so the two failure modes this fleet has actually hit -
   # a check that fires on every single run until people learn to skip its line
   # (the tablist warning, 2026-08), and a check that quietly measures nothing for
-  # days (layout_geometry, 2026-08-03) — were both invisible in exactly the same
+  # days (layout_geometry, 2026-08-03) - were both invisible in exactly the same
   # way: locally each run looked reasonable.
   #
   # What this can and cannot say. It records *outcomes*, so it yields fire rate,
   # error rate and inconclusive rate per check. It does not yield precision in the
-  # paper's sense — that needs ground truth about whether each block was correct,
+  # paper's sense - that needs ground truth about whether each block was correct,
   # which for this fleet lives in whether someone fixed the finding or exempted
   # the rule, and nothing here can see that. Two checks that report the same
   # numbers here can still differ in precision. So the numbers are a triage
   # order, not a verdict: they say which check to go and read, not which is wrong.
   #
-  # Local-only, append-only JSONL, one line per check per run. Never committed —
+  # Local-only, append-only JSONL, one line per check per run. Never committed -
   # it is machine-and-operator state like `.constitutional_costs.jsonl`, and a
   # committed version would conflict on every run in a shared checkout.
   class CheckLedger
@@ -75,7 +75,7 @@ module Deploy
     rescue SystemCallError => e
       # The ledger is an observer. It must never be the reason a check run dies,
       # which would make the audit mechanism itself the top source of false
-      # blocks — the failure the fail-open policy exists to prevent.
+      # blocks - the failure the fail-open policy exists to prevent.
       Kernel.warn "[checks] ledger write failed (#{e.class}): #{e.message}"
       self
     end
@@ -148,16 +148,16 @@ module Deploy
         next if r[:runs] < min_runs
 
         if r[:error_rate] >= 0.5
-          "#{r[:check]}: errored on #{r[:errored]}/#{r[:runs]} runs — it is failing open, " \
+          "#{r[:check]}: errored on #{r[:errored]}/#{r[:runs]} runs - it is failing open, " \
             "so whatever it guards is currently unguarded"
         elsif r[:fire_rate] >= 0.9
-          "#{r[:check]}: failed on #{r[:failed]}/#{r[:runs]} runs — either a standing unfixed " \
+          "#{r[:check]}: failed on #{r[:failed]}/#{r[:runs]} runs - either a standing unfixed " \
             "finding or a line people have learned to skip; read it or retire it"
         elsif r[:inconclusive] == r[:runs]
-          "#{r[:check]}: measured nothing on all #{r[:runs]} runs — its preconditions are never met here"
+          "#{r[:check]}: measured nothing on all #{r[:runs]} runs - its preconditions are never met here"
         elsif doubled?(r)
           "#{r[:check]}: #{self.class.duration(r[:earlier_ms])} -> #{self.class.duration(r[:recent_ms])} " \
-            "over the last five runs — a check that doubles becomes a check nobody runs"
+            "over the last five runs - a check that doubles becomes a check nobody runs"
         end
       end
     end
@@ -165,11 +165,11 @@ module Deploy
     def render(io = $stdout)
       rows = summary
       if rows.empty?
-        io.puts "[checks] ledger #{display_path} is empty — no runs recorded yet"
+        io.puts "[checks] ledger #{display_path} is empty - no runs recorded yet"
         return
       end
 
-      io.puts "[checks] ledger #{display_path} — #{rows.sum { |r| r[:runs] }} check-runs across #{rows.size} checks"
+      io.puts "[checks] ledger #{display_path} - #{rows.sum { |r| r[:runs] }} check-runs across #{rows.size} checks"
       io.puts format("  %-24s %5s %5s %5s %5s %5s %9s  %s",
                      "check", "runs", "pass", "fail", "inc", "err", "median", "last")
 

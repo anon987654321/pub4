@@ -192,7 +192,7 @@ if ARGV.intersect?(%w[-h --help])
 end
 
 unless Deploy::Environment.on_vps?
-  warn "vps-state: skip — not on VPS (use: bin/operator vps state --remote)"
+  warn "vps-state: skip - not on VPS (use: bin/operator vps state --remote)"
   exit 0
 end
 
@@ -200,7 +200,7 @@ apps_yml = YAML.safe_load(File.read(File.join(ROOT, "RAILS", "apps.yml")))
 ports = apps_yml.fetch("apps").reject { |_, m| m["deployed"] == false }.transform_values { |m| m.fetch("port").to_i }
 # The names come from the same read as the ports. They were a frozen
 # %w[brgen amber bsdports] twelve lines above this, which is a second fleet
-# inventory sitting beside the file that is the first one — a fourth app would
+# inventory sitting beside the file that is the first one - a fourth app would
 # have shown its port here and never its row. master is not in apps.yml because
 # it is not under /home/*/app, so it keeps the block of its own below.
 apps = ports.keys

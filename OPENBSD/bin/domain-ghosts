@@ -28,14 +28,14 @@ end
 
 puts "domain-ghosts0: inventory vs owned vs relayd"
 puts "  available (inventory):     #{s[:available].size}"
-s[:available].first(15).each { |d| puts "    · #{d}" }
-puts "    … #{s[:available].size - 15} more" if s[:available].size > 15
+s[:available].first(15).each { |d| puts "    - #{d}" }
+puts "    ... #{s[:available].size - 15} more" if s[:available].size > 15
 puts "  registered (inventory):    #{s[:registered].size}"
 puts "  owned_domains (apps.yml):  #{s[:owned].size}"
 puts "  owned missing inventory:   #{s[:owned_missing_from_inventory].size}"
-s[:owned_missing_from_inventory].each { |d| puts "    · #{d}" }
+s[:owned_missing_from_inventory].each { |d| puts "    - #{d}" }
 puts "  registered not owned:      #{s[:registered_not_owned].size}"
-s[:registered_not_owned].each { |d| puts "    · #{d}" }
+s[:registered_not_owned].each { |d| puts "    - #{d}" }
 puts "  relay Host matches:        #{s[:relay_hosts].size}"
 puts "  relay residual (odd):      #{s[:relay_residual].size}"
-s[:relay_residual].each { |d| puts "    · #{d}" }
+s[:relay_residual].each { |d| puts "    - #{d}" }

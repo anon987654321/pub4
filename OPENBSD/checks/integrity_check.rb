@@ -1,7 +1,7 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
-# OPENBSD integrity chain — production, phantom FK, frontend, relayd, domain, crawl inventory.
+# OPENBSD integrity chain - production, phantom FK, frontend, relayd, domain, crawl inventory.
 
 require "open3"
 require_relative "../lib/utf8"
@@ -36,7 +36,7 @@ def integrity_run(checks, root: INTEGRITY_ROOT, on_vps: Deploy::Environment.on_v
 
     if (reason = Deploy::CheckEnvironment.skip_reason(check, on_vps:))
       report[:skipped] << "#{check.name}: #{reason}"
-      io.puts "#{label} skip — #{reason}"
+      io.puts "#{label} skip - #{reason}"
       next
     end
 
@@ -45,7 +45,7 @@ def integrity_run(checks, root: INTEGRITY_ROOT, on_vps: Deploy::Environment.on_v
     # as skipped with its own reason, and blocks only under
     # CHECK_STRICT_INCONCLUSIVE=1, the same policy the RAILS runner applies.
     if ok == :inconclusive && !%w[1 true yes on].include?(ENV["CHECK_STRICT_INCONCLUSIVE"].to_s.downcase)
-      report[:skipped] << "#{check.name}: measured nothing — #{out.lines.first.to_s.strip}"
+      report[:skipped] << "#{check.name}: measured nothing - #{out.lines.first.to_s.strip}"
 
       io.puts "#{label} inconclusive"
     elsif ok == true
@@ -71,8 +71,8 @@ end
 return unless $PROGRAM_NAME == __FILE__
 
 report = integrity_run(Deploy::CheckEnvironment::INTEGRITY_CHECKS)
-report[:skipped].each { |line| warn "integrity: skip — #{line}" }
-report[:warnings].each { |line| warn "integrity: warn — #{line}" }
+report[:skipped].each { |line| warn "integrity: skip - #{line}" }
+report[:warnings].each { |line| warn "integrity: warn - #{line}" }
 
 if report[:failures].empty?
   puts "integrity: clean"

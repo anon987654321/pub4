@@ -33,7 +33,7 @@ SSL_DIR=${RENEW_CERTS_SSL_DIR:-/etc/ssl}
 #
 # Held-but-unconfigured names are excluded rather than attempted. There is one,
 # ai.brgen.no, which is a SAN of brgen.no rather than a domain acme-client knows
-# how to renew on its own — passing it in fails on a config lookup before a
+# how to renew on its own - passing it in fails on a config lookup before a
 # single packet leaves the box. Renewal covers exactly what is deployed, and
 # first issuance stays a deliberate act.
 typeset -a CONFIGURED HELD DOMAINS
@@ -54,7 +54,7 @@ HELD=(${HELD:#smtp})
 DOMAINS=(${HELD:*CONFIGURED})
 
 if (( ${#DOMAINS} == 0 )); then
-  print -ru2 -- "renew-certs: no held certificate matches a domain in $ACME_CONF — refusing to run"
+  print -ru2 -- "renew-certs: no held certificate matches a domain in $ACME_CONF - refusing to run"
   exit 1
 fi
 
@@ -71,14 +71,14 @@ skipped=(${HELD:|DOMAINS})
 # and did not need a challenge. Cached authorizations expire; this is the renewal
 # that quietly stops working months before anyone notices.
 if ! /usr/sbin/rcctl check httpd >/dev/null 2>&1; then
-  print -ru2 -- "renew-certs: httpd is down — starting it, http-01 challenges need port 80"
+  print -ru2 -- "renew-certs: httpd is down - starting it, http-01 challenges need port 80"
   /usr/sbin/rcctl start httpd || print -ru2 -- "renew-certs: httpd would not start; renewals needing a challenge will fail"
 fi
 
 print -r -- "renew-certs: renewing ${#DOMAINS} of ${#HELD} held certificate(s): ${DOMAINS}"
 
 # acme-client exits 0 whether it renewed or found the certificate still valid, so
-# counting successful invocations counts every domain every week — which meant
+# counting successful invocations counts every domain every week - which meant
 # the relayd restart below fired on every run. That is not free: relayd's health
 # check is `interval 120`, and after a restart brgen's table sits empty until the
 # first check passes. Measured 2026-08-12, that is roughly 20 seconds of 000 on

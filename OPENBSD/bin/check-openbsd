@@ -42,7 +42,7 @@ failures << "shell syntax" unless runner.run("shell syntax", RUBY, "OPENBSD/chec
 failures << "vps safety" unless runner.run("vps safety", RUBY, "OPENBSD/checks/vps_safety_check.rb")
 
 unless failures.empty?
-  puts "openbsd: failed — #{failures.join(", ")}"
+  puts "openbsd: failed - #{failures.join(", ")}"
   exit 1
 end
 

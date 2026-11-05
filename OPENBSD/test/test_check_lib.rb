@@ -164,7 +164,7 @@ class IntegrityRunTest < Minitest::Test
 
     report = integrity_run(checks, root: @root, on_vps: false, execute:, io: StringIO.new)
     assert_empty report[:failures]
-    assert_equal ["crawl: measured nothing — crawl: inconclusive (4 targets, 4 skipped)"], report[:skipped]
+    assert_equal ["crawl: measured nothing - crawl: inconclusive (4 targets, 4 skipped)"], report[:skipped]
 
     ENV["CHECK_STRICT_INCONCLUSIVE"] = "1"
     strict = integrity_run(checks, root: @root, on_vps: false, execute:, io: StringIO.new)

@@ -10,7 +10,7 @@ case ${1:-} in
 esac
 
 # curl is a package (/usr/local/bin/curl) and resource_guard.sh calls this from
-# root's cron, whose PATH has no /usr/local/bin — so the /up wait below could
+# root's cron, whose PATH has no /usr/local/bin - so the /up wait below could
 # only ever time out on the path that actually matters, and every crisis
 # restart logged "still down after 75s" whether or not master had come back.
 export PATH=/usr/local/bin:/usr/local/sbin:/usr/bin:/usr/sbin:/bin:/sbin
@@ -28,7 +28,7 @@ GUARD_HELPER=/usr/local/libexec/stale_ci_cleanup.ksh
 if [[ -f $GUARD_HELPER && ! -L $GUARD_HELPER ]]; then
   . "$GUARD_HELPER"
 else
-  echo "WARN: trusted stale cleanup helper missing at $GUARD_HELPER — skipping checkout-sourced cleanup" >&2
+  echo "WARN: trusted stale cleanup helper missing at $GUARD_HELPER - skipping checkout-sourced cleanup" >&2
 fi
 
 # The first N lines of stdin, in ksh, so the crisis path does not depend on
@@ -81,7 +81,7 @@ done
 # for hours, and the box reached 100% swap.
 _master_starting=0
 if pgrep -f 'rcctl start master' >/dev/null 2>&1; then
-  echo 'master start already in flight — not touching it'
+  echo 'master start already in flight - not touching it'
   _master_starting=1
 fi
 
@@ -95,7 +95,7 @@ sleep 2
 
 echo "=== restart core (master then brgen) ==="
 if [[ "$_master_starting" = "1" ]]; then
-  echo 'skipping master restart — a start is already running'
+  echo 'skipping master restart - a start is already running'
 else
   rcctl stop master 2>/dev/null || true
   sleep 1

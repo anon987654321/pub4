@@ -2,7 +2,7 @@
 # rc_pre and the post-start block run curl (a package, /usr/local/bin/curl).
 # rcctl inherits its caller PATH and root cron has no /usr/local/bin, so from
 # a cron restart the /up wait always timed out and the relayd restart behind
-# it was skipped — the app came up with an empty relayd backend table. Same
+# it was skipped - the app came up with an empty relayd backend table. Same
 # gap that refused to start master outright (see rc.d/master).
 export PATH=/usr/local/bin:/usr/local/sbin:/usr/bin:/usr/sbin:/bin:/sbin
 PORT=38182
@@ -24,14 +24,14 @@ daemon="/bin/ksh"
 # SOLID_QUEUE_IN_PUMA=true was here and is gone. In-Puma mode is a Puma plugin;
 # this app runs under Falcon and has no config/puma.rb, so no plugin ever loaded
 # and the variable was read by nothing. It was the only thing that looked like a
-# job worker and it had never started one — 1670 jobs enqueued on brgen and 0
+# job worker and it had never started one - 1670 jobs enqueued on brgen and 0
 # finished, measured 2026-08-12. rc.d/<app>_jobs is the real worker; read its
 # header before enabling it, because vm23 has 1 GB.
 #
 # RUBY_YJIT_ENABLE=0 is a decision, not a default.
 #
 # Ruby 3.4 on vm23 has YJIT built in and switched off, so today this changes
-# nothing — which is the point. YJIT reserves an executable code region and costs
+# nothing - which is the point. YJIT reserves an executable code region and costs
 # tens of megabytes per process to buy 15-30% more speed, and here the scarce
 # resource is memory rather than CPU: measured 2026-08-17 at 918M real with swap
 # 91% full and the single core 84% idle. Four Rails processes' worth of code
@@ -116,7 +116,7 @@ rc=$?
 if [[ "$1" = "start" ]] || [[ "$1" = "restart" ]]; then
   if [[ "$rc" = "0" ]]; then
     # relayd can keep routing to the old (now-dead) backend connection after a
-    # restart until it's kicked — same fix already used by MASTER's rc.d script.
+    # restart until it's kicked - same fix already used by MASTER's rc.d script.
     _i=0
     _up_ok=0
     while [[ "$_i" -lt 300 ]]; do

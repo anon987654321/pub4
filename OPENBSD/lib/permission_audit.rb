@@ -18,14 +18,14 @@ module Deploy
   module PermissionAudit
     module_function
 
-    # entries: [{ path:, mode:, owner: }] — mode as File::Stat#mode, owner as a
+    # entries: [{ path:, mode:, owner: }] - mode as File::Stat#mode, owner as a
     # user name. Returns failure lines.
     def failures(secrets:, private_dirs:, daemon_logs:, daemon_user:)
       lines = []
       (secrets + private_dirs).each do |entry|
         next unless entry[:mode].to_i.anybits?(0o007)
 
-        lines << format("permissions: %<path>s is %<mode>04o — other can reach it", path: entry[:path],
+        lines << format("permissions: %<path>s is %<mode>04o - other can reach it", path: entry[:path],
                                                                                     mode: entry[:mode] & 0o7777)
       end
       daemon_logs.each do |entry|

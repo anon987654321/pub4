@@ -16,12 +16,12 @@ done
 #
 # Weekly rather than daily because it makes one whois query per domain and the
 # registries rate-limit; and as dev rather than root because it only reads whois
-# and writes a file inside dev's own checkout — root executing a dev-owned tree
+# and writes a file inside dev's own checkout - root executing a dev-owned tree
 # is the hazard that got the doas.conf "heal" removed from relayd-watchdog.
 #
 # It exits non-zero when something is expiring, lapsed, or has changed hands, so
 # the logger line is the alert. It went in on 2026-08-12, the day a whois sweep
-# found cardff.uk and edinbrgh.uk — two of the seven cities that serve — expiring
+# found cardff.uk and edinbrgh.uk - two of the seven cities that serve - expiring
 # the next morning, denvr.us the same day, and four .uk domains that had expired
 # in June and were still inside Nominet's protected period. Every one of those
 # dates was already in OPENBSD/data/domain_inventory.yml, committed, and nothing
@@ -45,7 +45,7 @@ su dev -c "cd /home/dev/pub4 && $RUBY OPENBSD/bin/domain_watch.rb" \
 # deploy spawned pack-objects holding 266 MB on a 1 GB box; the Rails suite died
 # on SIGTERM after 18 tests and the seed step after it, and the deploy log showed
 # only "bin/rails aborted!" with no cause in it. `gc.auto 0` is set in dev's
-# checkout, so this line is not an optimisation — it is the only thing that packs
+# checkout, so this line is not an optimisation - it is the only thing that packs
 # the repo now. 51 packs and 4400 loose objects when it went in.
 #
 # As dev for the same reason domain_watch is: root repacking a dev-owned tree

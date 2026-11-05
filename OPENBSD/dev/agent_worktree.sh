@@ -1,7 +1,7 @@
 #!/bin/sh
 # agent_worktree.sh <agent-name> [base-branch]
 #
-# Give a coding agent (claude, grok, codex, …) its OWN git worktree + branch off
+# Give a coding agent (claude, grok, codex, ...) its OWN git worktree + branch off
 # the shared pub4 repo, so concurrent agents never share one working tree.
 #
 # Why: with a shared tree, `git commit -a` sweeps every agent's half-finished
@@ -38,7 +38,7 @@ if [ "${1:-}" = "finish" ]; then
   branch="$(git -C "$repo" rev-parse --abbrev-ref HEAD)"
   case "$branch" in
     main|master)
-      echo "worktree finish: on ${branch} — nothing to finish"
+      echo "worktree finish: on ${branch} - nothing to finish"
       exit 1
       ;;
   esac
@@ -78,7 +78,7 @@ git -C "$repo" fetch -q origin
 if [ "$(git -C "${dir}" rev-parse --show-toplevel 2>/dev/null)" = "${dir}" ]; then
   dirt="$(git -C "${dir}" status --porcelain 2>/dev/null)"
   if [ -n "${dirt}" ]; then
-    echo "worktree ${dir} is occupied — another session has uncommitted work in it:" >&2
+    echo "worktree ${dir} is occupied - another session has uncommitted work in it:" >&2
     echo "${dirt}" >&2
     echo "pick another name, or finish that work first" >&2
     exit 1

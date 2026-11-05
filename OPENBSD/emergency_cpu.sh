@@ -4,7 +4,7 @@ set -eu
 
 case ${1:-} in
   -h|--help)
-    echo "usage: ksh OPENBSD/emergency_cpu.sh — request the fixed installed emergency recovery"
+    echo "usage: ksh OPENBSD/emergency_cpu.sh - request the fixed installed emergency recovery"
     exit 0
     ;;
   "") ;;

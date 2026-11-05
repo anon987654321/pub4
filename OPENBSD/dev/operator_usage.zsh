@@ -4,7 +4,7 @@ set -euo pipefail
 # Sourced by the entrypoint; defines usage without executing it.
 
 usage() {
-  print -r -- "OpenBSD vm23 deploy (OPERATOR.sh). Config trees: etc/ usr/ var/ → /.
+  print -r -- "OpenBSD vm23 deploy (OPERATOR.sh). Config trees: etc/ usr/ var/ -> /.
 Usage:
   cd ~/pub4 && doas zsh OPENBSD/OPERATOR.sh
 

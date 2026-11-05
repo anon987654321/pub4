@@ -99,16 +99,16 @@ class ProjectTree
 
     data_yml = Dir.glob(File.join(repo, "MASTER", "data", "*.yml")).size
     budget = drift_or_ok(data_yml <= 40)
-    line(budget, "MASTER/data: #{data_yml} root yml — target in START_HERE 'Data File Budget'")
+    line(budget, "MASTER/data: #{data_yml} root yml - target in START_HERE 'Data File Budget'")
 
     dupes = duplicate_docs(repo)
-    line(:drift, "MASTER + OPENBSD share doc names: #{dupes.join(' ')} — same name, different scope") if dupes.any?
+    line(:drift, "MASTER + OPENBSD share doc names: #{dupes.join(' ')} - same name, different scope") if dupes.any?
 
     stray = stray_root_files(repo)
     stray.any? ? line(:noise, "repo root carries #{stray.size} loose file(s): #{stray.first(6).join(' ')}")
-                : line(:ok, "repo root is clean — no loose media or scratch files")
+                : line(:ok, "repo root is clean - no loose media or scratch files")
 
-    puts "  → Pillar views: --master-overview | --deploy-overview"
+    puts "  -> Pillar views: --master-overview | --deploy-overview"
   end
 
   def print_master_alignment
@@ -118,24 +118,24 @@ class ProjectTree
     puts "MASTER alignment (far-away, measured):"
 
     libs = subdirs(File.join(master, "lib"))
-    line(:ok, "lib/ spine: #{libs.join(' → ')}") if libs.any?
+    line(:ok, "lib/ spine: #{libs.join(' -> ')}") if libs.any?
 
     if Dir.exist?(File.join(master, "core"))
       note = Dir.exist?(File.join(master, "kernel")) ? "core/ + kernel/" : "core/ only (kernel/ was renamed to core/)"
-      line(:ok, "#{note} — two spines, permanent, not pending a cutover")
+      line(:ok, "#{note} - two spines, permanent, not pending a cutover")
     end
 
     law_files = Dir.glob(File.join(master, "law", "*.rb")).size
     line(:ok, "executable constitution: data/soul.yml + data/laws.yml + law/ (#{law_files} files)")
     data_yml = Dir.glob(File.join(master, "data", "*.yml")).size
     runtime = Dir.glob(File.join(master, "data", "runtime", "*.yml")).size
-    line(drift_or_ok(data_yml <= 40), "data/ root: #{data_yml} yml#{runtime.positive? ? " + runtime/ (#{runtime} shards)" : ''} — merge per START_HERE tiers")
+    line(drift_or_ok(data_yml <= 40), "data/ root: #{data_yml} yml#{runtime.positive? ? " + runtime/ (#{runtime} shards)" : ''} - merge per START_HERE tiers")
 
     faces = %w[tools web bin].select { |d| Dir.exist?(File.join(master, d)) }
-    line(:drift, "#{faces.join(' + ')} — #{faces.size} faces; acceptable but watch overlap") if faces.size > 1
+    line(:drift, "#{faces.join(' + ')} - #{faces.size} faces; acceptable but watch overlap") if faces.size > 1
 
-    line(:noise, ".master/ runtime (cache, tts, melodic) — local-only, never commit") if Dir.exist?(File.join(repo, ".master"))
-    puts "  → Deep dive: ruby tree.rb MASTER --master-lib"
+    line(:noise, ".master/ runtime (cache, tts, melodic) - local-only, never commit") if Dir.exist?(File.join(repo, ".master"))
+    puts "  -> Deep dive: ruby tree.rb MASTER --master-lib"
   end
 
   MARKS = { ok: "✓ SENSIBLE", drift: "⚠ DRIFT", noise: "✗ NOISE" }.freeze
@@ -165,7 +165,7 @@ class ProjectTree
   rescue StandardError => e
     # apps.yml is the fleet's feature truth. No apps reads as a tree with none,
     # which is a report about this file rather than about RAILS.
-    warn "tree: RAILS/apps.yml unreadable (#{e.class}: #{e.message.lines.first.to_s.strip}) — reporting no apps"
+    warn "tree: RAILS/apps.yml unreadable (#{e.class}: #{e.message.lines.first.to_s.strip}) - reporting no apps"
     []
   end
 
@@ -200,12 +200,12 @@ class ProjectTree
                                       "have a script#{missing.any? ? "; missing: #{missing.join(' ')}" : ''}")
 
     dupes = duplicate_docs(repo)
-    line(:drift, "MASTER + OPENBSD share doc names: #{dupes.join(' ')} — same name, different scope") if dupes.any?
+    line(:drift, "MASTER + OPENBSD share doc names: #{dupes.join(' ')} - same name, different scope") if dupes.any?
 
     horizon = File.exist?(File.join(repo, "RAILS", "apps.horizon.yml"))
-    line(:drift, "RAILS/apps.horizon.yml — agent-ignore; keep out of contributor path") if horizon
+    line(:drift, "RAILS/apps.horizon.yml - agent-ignore; keep out of contributor path") if horizon
 
-    puts "  → Checks: OPENBSD/bin/check --profile=full | check-rails --profile=contributor"
+    puts "  -> Checks: OPENBSD/bin/check --profile=full | check-rails --profile=contributor"
   end
 
   def breakdown_lib(lib_root)
@@ -225,14 +225,14 @@ class ProjectTree
         rescue SystemCallError, ArgumentError => e
           # A file this cannot read is not a small file; say which, so the count
           # is not quietly measuring what the process may open.
-          warn "tree: cannot read #{f} (#{e.class}) — not counted"
+          warn "tree: cannot read #{f} (#{e.class}) - not counted"
           false
         end
       end
 
       line = "    #{sub}/ : #{file_count} files"
       if small_file_count > 5
-        line += "  [KISS warning: #{small_file_count} tiny files — strong consolidation candidate]"
+        line += "  [KISS warning: #{small_file_count} tiny files - strong consolidation candidate]"
       elsif small_file_count > 2
         line += "  (#{small_file_count} small files)"
       end

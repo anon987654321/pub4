@@ -12,7 +12,7 @@ require_relative "../checks/installed_targets_check"
 # A check that only ever runs over this checkout and says clean proves nothing: it
 # says clean just as well with its body gutted. So each pair here plants the
 # shape the check must flag, watches it fail, and runs the committed tree for the
-# shape it must not — the house decision of 2026-08-22.
+# shape it must not - the house decision of 2026-08-22.
 class InstalledTargetsCheckFixtureTest < Minitest::Test
   CHECK = Deploy::InstalledTargetsCheck
 
@@ -98,7 +98,7 @@ class IdempotencyFixtureTest < Minitest::Test
   OPENBSD = File.expand_path("..", __dir__)
   CHECK = File.join(OPENBSD, "checks", "verify_openbsd_idempotency.rb")
   BACKUP = "backup_directory /var/nsd/zones/master nsd-zones\n"
-  DELETE = "rm -rf /var/nsd/etc/*(/) /var/nsd/zones/master/*(/)\n" # scan: intentional — fixture text, never run
+  DELETE = "rm -rf /var/nsd/etc/*(/) /var/nsd/zones/master/*(/)\n" # scan: intentional - fixture text, never run
   REST = <<~SH
     cp -R "${src}/home" "/var/backups/home"
     bin/rails db:prepare

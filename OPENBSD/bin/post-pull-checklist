@@ -9,7 +9,7 @@ post-pull: source updated at ${ROOT}
 post-pull: deployed /home/<app>/app trees are NOT updated by git pull alone.
 post-pull: never git stash to force a pull through; a stashed Gemfile.lock took master down.
 
-From your Mac (preferred — one command, waits, canary):
+From your Mac (preferred - one command, waits, canary):
   ./bin/redeploy
 
 Already on this box as dev:

@@ -13,7 +13,7 @@
 #
 # git offers no per-commit push and no way to tell sessions apart. What it does
 # offer is the list, which nobody looks at. So this stops on more than one
-# commit and prints them — author, age, subject — and makes publishing another
+# commit and prints them - author, age, subject - and makes publishing another
 # session's work a thing you say out loud:
 #
 #     PUB4_PUSH_ALL=1 git push
@@ -44,7 +44,7 @@ def commits(range)
 end
 
 # What this session committed, per post-commit. Absent, this is empty and every
-# commit stays "unknown" — a missing ledger must never read as "foreign", or the
+# commit stays "unknown" - a missing ledger must never read as "foreign", or the
 # first push from a shell without one becomes a wall of false accusations.
 def session_commits
   id = ENV["PUB4_SESSION"].to_s.strip
@@ -81,11 +81,11 @@ end
 
 if pushing.size == 1
   # Not refused, but named. Right now the single unpushed commit in this
-  # checkout is as likely to be another session's as it is to be yours — one
+  # checkout is as likely to be another session's as it is to be yours - one
   # commit is exactly where the "yours?" guess is weakest, so it gets printed
   # rather than assumed.
   sha, author, age, subject = pushing.first
-  origin = MINE.empty? ? "" : (mine?(sha) ? " — this session's" : " — NOT this session's")
+  origin = MINE.empty? ? "" : (mine?(sha) ? " - this session's" : " - NOT this session's")
   warn "pre-push: publishing #{sha} (#{author}, #{age})#{origin} #{subject[0, 62]}"
   exit 0
 end
@@ -94,7 +94,7 @@ exit 0 if pushing.empty?
 exit 0 if ENV["PUB4_PUSH_ALL"] == "1"
 
 warn ""
-warn "pre-push: REFUSED — #{pushing.size} commits would be published, not 1:"
+warn "pre-push: REFUSED - #{pushing.size} commits would be published, not 1:"
 warn ""
 pushing.each_with_index do |(sha, author, age, subject), index|
   # The ledger, when there is one, replaces the guess. "yours?" on the newest

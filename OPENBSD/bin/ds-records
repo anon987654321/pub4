@@ -18,7 +18,7 @@
 #
 # /usr/local/bin/nsd-resign rotates keys nightly and never touches either. So
 # brgen.no.ds still named key 53444 on 2026-07-31 while the zone had rotated to
-# 46221 — and a DS naming a key the zone no longer publishes is worse than no
+# 46221 - and a DS naming a key the zone no longer publishes is worse than no
 # DS at all: validating resolvers SERVFAIL the whole zone instead of falling
 # back to unsigned. The .signed zone is the only thing that follows rotation,
 # so derive from it every time and never cache the answer.
@@ -56,7 +56,7 @@ def wire_name(name)
   name.sub(/\.\z/, "").split(".").map { |l| [l.bytesize].pack("C") + l.downcase }.join + "\0"
 end
 
-# RFC 4034 Appendix B. Not a checksum of the key material alone — it runs over
+# RFC 4034 Appendix B. Not a checksum of the key material alone - it runs over
 # the whole DNSKEY RDATA including flags/protocol/algorithm.
 def key_tag(rdata)
   acc = 0
@@ -74,7 +74,7 @@ rows = []
 zones.each do |path|
   zone = File.basename(path, ".zone.signed")
 
-  # Flags 257 is the secure-entry-point bit — the KSK. The ZSK (256) is signed
+  # Flags 257 is the secure-entry-point bit - the KSK. The ZSK (256) is signed
   # over by the KSK and never appears in a DS.
   ksks = File.read(path).scan(
     /^\S+\s+\d+\s+IN\s+DNSKEY\s+(257)\s+(\d+)\s+(\d+)\s+\(?\s*([A-Za-z0-9+\/=\s]+?)\)?\s*(?:;|\n)/
