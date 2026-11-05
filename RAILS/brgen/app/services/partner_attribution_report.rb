@@ -85,8 +85,8 @@ class PartnerAttributionReport
     (views.keys | route_clicks.keys).sort.to_h do |route|
       page_views = views.fetch(route, 0)
       click_count = route_clicks.fetch(route, 0)
-      [route, { page_views:, clicks: click_count,
-                clicks_per_view: page_views.positive? ? click_count.to_f / page_views : 0.0 }]
+      [ route, { page_views:, clicks: click_count,
+                clicks_per_view: page_views.positive? ? click_count.to_f / page_views : 0.0 } ]
     end
   end
 
@@ -99,8 +99,8 @@ class PartnerAttributionReport
       matched = row.epi.present? && matched_epis.include?(row.epi)
       name = matched ? dimension_name(row.epi_parts[key], key) : nil
       currency = row.currency.presence || "unknown"
-      sums[[name || "unattributed", currency]] += BigDecimal(row.publisher_commission.to_s.presence || "0")
-    end.sort_by { |(name, currency), amount| [name, currency, amount] }.to_h
+      sums[[ name || "unattributed", currency ]] += BigDecimal(row.publisher_commission.to_s.presence || "0")
+    end.sort_by { |(name, currency), amount| [ name, currency, amount ] }.to_h
   end
 
   def clicks_by_dimension(dimension)
@@ -111,7 +111,7 @@ class PartnerAttributionReport
       value = epi_parts(row.epi)[key]
       name = dimension_name(value, key)
       counts[name || "unattributed"] += 1
-    end.sort_by { |name, count| [name, count] }.to_h
+    end.sort_by { |name, count| [ name, count ] }.to_h
   end
 
   def epi_parts(value)

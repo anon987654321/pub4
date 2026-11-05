@@ -29,7 +29,7 @@ task import_whyp_tracks: :environment do
   abort "radio: tracks.yml lists no whyp tracks" if rows.empty?
 
   urls = rows.map { |row| "https://whyp.it/tracks/#{row[:whyp_id]}?token=#{row[:whyp_token]}" }
-  credits = rows.to_h { |row| [row[:whyp_id], row.slice(:title, :artist)] }
+  credits = rows.to_h { |row| [ row[:whyp_id], row.slice(:title, :artist) ] }
   imported = Brgen::WhypRadioImporter.new(track_urls: urls, name: "radio-bergen-whyp", credits:).call
   cities = ENV.fetch("CITIES", Brgen::RadioWhypSeeder::DEFAULT_CITIES.join(",")).split(",")
   seeded = Brgen::RadioWhypSeeder.new(manifest_path: imported.manifest_path, cities:).call

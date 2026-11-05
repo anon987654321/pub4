@@ -16,7 +16,7 @@ module Apns
 
   module_function
 
-  def credentials = %i[key key_id team_id topic].to_h { |name| [name, ENV["APNS_#{name.upcase}"].to_s.presence] }
+  def credentials = %i[key key_id team_id topic].to_h { |name| [ name, ENV["APNS_#{name.upcase}"].to_s.presence ] }
 
   def configured?
     defined?(::Apnotic) && %i[key key_id team_id topic].all? { |name| credentials[name].present? } ? true : false
@@ -65,6 +65,6 @@ module Apns
     return if response.nil? || response.ok?
 
     body = response.body
-    [response.status, body.is_a?(Hash) ? body["reason"] : nil]
+    [ response.status, body.is_a?(Hash) ? body["reason"] : nil ]
   end
 end

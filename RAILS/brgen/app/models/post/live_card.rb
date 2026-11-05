@@ -87,7 +87,7 @@ class Post
       key = ActionView::RecordIdentifier.dom_id(self)
       [
         live_count_update(%([data-post-score="#{key}"]), score.to_i.to_s),
-        live_count_update(%([data-post-comment-count="#{key}"]), comments.to_i.positive? ? comments.to_s : ""),
+        live_count_update(%([data-post-comment-count="#{key}"]), comments.to_i.positive? ? comments.to_s : "")
       ].join
     end
 

@@ -45,7 +45,6 @@ class UsersControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "a profile lists only posts that name their author and the viewer may read" do
-
     author = User.create!(email_address: "profil-#{SecureRandom.hex(4)}@brgen.no", password: "password123",
                           username: "profil_#{SecureRandom.hex(3)}")
     club = Community.create!(slug: "lukket-#{SecureRandom.hex(3)}", name: "Lukket", user: User.create!(
@@ -56,7 +55,7 @@ class UsersControllerTest < ActionDispatch::IntegrationTest
       anonymous: "Anonym #{SecureRandom.hex(3)}",
       live: "Live #{SecureRandom.hex(3)}",
       removed: "Fjernet #{SecureRandom.hex(3)}",
-      private: "Lukket #{SecureRandom.hex(3)}",
+      private: "Lukket #{SecureRandom.hex(3)}"
     }
     write = ->(title, community: nil, **state) do
       Post.create!(user: author, city: @city, community:, title:, content: "hei").tap do |row|

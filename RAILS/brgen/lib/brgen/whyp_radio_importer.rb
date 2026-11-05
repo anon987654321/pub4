@@ -102,11 +102,11 @@ module Brgen
     def download_args
       [
         "yt-dlp",
-        *(track_urls.empty? ? ["--yes-playlist"] : ["--no-playlist", "--ignore-errors"]),
+        *(track_urls.empty? ? [ "--yes-playlist" ] : [ "--no-playlist", "--ignore-errors" ]),
         "--no-warnings", "--no-overwrites", "--write-info-json", "--write-thumbnail",
         "--extract-audio", "--audio-format", "mp3", "--audio-quality", "128K",
         "--output", audio_root.join("%(id)s.%(ext)s").to_s,
-        *(track_urls.presence || [collection_url]),
+        *(track_urls.presence || [ collection_url ])
       ]
     end
 
@@ -138,7 +138,7 @@ module Brgen
         "privacy" => "public",
         "purpose" => "Radio seed media",
         "generated_at" => Time.current.iso8601,
-        "rights_note" => "Imported from the operator-provided Whyp collection; verify publication rights before production redistribution.",
+        "rights_note" => "Imported from the operator-provided Whyp collection; verify publication rights before production redistribution."
       }.compact
     end
 
@@ -199,6 +199,5 @@ module Brgen
     rescue ArgumentError
       DEFAULT_TIMEOUT
     end
-
   end
 end

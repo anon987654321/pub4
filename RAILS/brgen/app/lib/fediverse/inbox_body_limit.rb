@@ -50,7 +50,7 @@ module Fediverse
       [
         status,
         { "content-type" => "text/plain; charset=utf-8", "content-length" => message.bytesize.to_s },
-        [message],
+        [ message ]
       ]
     end
 
@@ -69,7 +69,7 @@ module Fediverse
         remaining = @limit - @bytes_read
         raise BodyTooLarge if remaining.negative?
 
-        requested = requested_length.nil? ? remaining + 1 : [requested_length, remaining + 1].min
+        requested = requested_length.nil? ? remaining + 1 : [ requested_length, remaining + 1 ].min
         chunk = @input.read(requested)
         chunk = "" if chunk.nil? && requested_length.nil?
         record!(chunk)
@@ -83,13 +83,13 @@ module Fediverse
         bounded_limit = remaining + 1
         bounded = case arguments.length
         when 0
-          [bounded_limit]
+          [ bounded_limit ]
         when 1
           first = arguments.first
-          first.is_a?(Integer) ? [[first, bounded_limit].min] : [first, bounded_limit]
+          first.is_a?(Integer) ? [ [ first, bounded_limit ].min ] : [ first, bounded_limit ]
         else
-          requested = arguments[1].is_a?(Integer) ? [arguments[1], bounded_limit].min : bounded_limit
-          [arguments[0], requested, *arguments.drop(2)]
+          requested = arguments[1].is_a?(Integer) ? [ arguments[1], bounded_limit ].min : bounded_limit
+          [ arguments[0], requested, *arguments.drop(2) ]
         end
 
         record!(@input.gets(*bounded, **keywords))

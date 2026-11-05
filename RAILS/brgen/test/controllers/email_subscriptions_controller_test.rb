@@ -8,7 +8,7 @@ class EmailSubscriptionsControllerTest < ActionDispatch::IntegrationTest
   test "create requires affirmative marketing consent before saving or sending mail" do
     assert_no_difference -> { EmailSubscription.count } do
       post email_subscriptions_path, params: {
-        email_subscription: { email: "no-consent@example.test" },
+        email_subscription: { email: "no-consent@example.test" }
       }
     end
 
@@ -21,8 +21,8 @@ class EmailSubscriptionsControllerTest < ActionDispatch::IntegrationTest
       post email_subscriptions_path, params: {
         email_subscription: {
           email: "consented@example.test",
-          agreed_to_marketing: "1",
-        },
+          agreed_to_marketing: "1"
+        }
       }
     end
 
@@ -54,8 +54,8 @@ class EmailSubscriptionsControllerTest < ActionDispatch::IntegrationTest
       post email_subscriptions_path, params: {
         email_subscription: {
           email: subscription.email,
-          agreed_to_marketing: "1",
-        },
+          agreed_to_marketing: "1"
+        }
       }
     end
 

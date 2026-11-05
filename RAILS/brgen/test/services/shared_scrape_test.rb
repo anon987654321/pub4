@@ -6,7 +6,7 @@ class SharedScrapeTest < ActiveSupport::TestCase
   PUBLIC_ADDRESS = "8.8.8.8"
 
   def public_resolver
-    ->(_host) { [PUBLIC_ADDRESS] }
+    ->(_host) { [ PUBLIC_ADDRESS ] }
   end
 
   test "scrape entrypoints accept only public HTTP and HTTPS targets" do
@@ -21,15 +21,15 @@ class SharedScrapeTest < ActiveSupport::TestCase
       "http://127.0.0.1/admin",
       "http://169.254.169.254/latest/meta-data",
       "http://192.168.1.10/",
-      "http://[::1]/admin",
+      "http://[::1]/admin"
     ].each do |url|
       refute Shared::Scrape.public_http_url?(url, resolver: public_resolver), url
     end
   end
 
   test "DNS names are rejected if any answer is private or reserved" do
-    mixed = ->(_host) { [PUBLIC_ADDRESS, "10.12.0.4"] }
-    private_only = ->(_host) { ["127.0.0.1"] }
+    mixed = ->(_host) { [ PUBLIC_ADDRESS, "10.12.0.4" ] }
+    private_only = ->(_host) { [ "127.0.0.1" ] }
     empty = ->(_host) { [] }
 
     refute Shared::Scrape.public_http_url?("https://mixed.example/", resolver: mixed)
@@ -39,7 +39,7 @@ class SharedScrapeTest < ActiveSupport::TestCase
   end
 
   test "browser requests and redirects are checked by the same target policy" do
-    resolver = ->(_host) { [PUBLIC_ADDRESS] }
+    resolver = ->(_host) { [ PUBLIC_ADDRESS ] }
 
     assert Shared::Scrape.safe_request_url?("https://example.com/image.png", resolver:)
     assert Shared::Scrape.safe_request_url?("data:image/png;base64,AA==", resolver:)

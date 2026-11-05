@@ -23,9 +23,9 @@ class StripeBillingTest < ActiveSupport::TestCase
       "type" => type,
       "data" => { "object" => {
         "id" => id, "status" => status, "customer" => "cus_1", "cancel_at_period_end" => false,
-        "items" => { "data" => [{ "current_period_end" => 30.days.from_now.to_i }] },
-        "metadata" => { "plan" => "brgen_business_presence", "user_id" => @user.id.to_s },
-      } },
+        "items" => { "data" => [ { "current_period_end" => 30.days.from_now.to_i } ] },
+        "metadata" => { "plan" => "brgen_business_presence", "user_id" => @user.id.to_s }
+      } }
     }
   end
 
@@ -73,7 +73,7 @@ class StripeBillingTest < ActiveSupport::TestCase
   end
 
   def with_env(values)
-    previous = values.keys.to_h { |key| [key, ENV[key]] }
+    previous = values.keys.to_h { |key| [ key, ENV[key] ] }
     values.each { |key, value| value ? ENV[key] = value : ENV.delete(key) }
     yield
   ensure

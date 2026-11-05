@@ -14,7 +14,7 @@ class AddSlugsToContent < ActiveRecord::Migration[8.1]
     tv_videos: :title,
     takeaway_restaurants: :name,
     playlist_playlists: :name,
-    marketplace_listings: :title,
+    marketplace_listings: :title
   }.freeze
 
   def up

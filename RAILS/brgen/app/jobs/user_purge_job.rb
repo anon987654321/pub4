@@ -75,7 +75,7 @@ class UserPurgeJob < ApplicationJob
     { model: "Dating::Like", key: :liker_id },
     { model: "Dating::Like", key: :likee_id },
     { model: "Dating::Dislike", key: :disliker_id },
-    { model: "Dating::Dislike", key: :dislikee_id },
+    { model: "Dating::Dislike", key: :dislikee_id }
   ].freeze
 
   # Retained rows with personal columns to clear.
@@ -98,7 +98,7 @@ class UserPurgeJob < ApplicationJob
     { model: "Marketplace::Checkout", key: :user_id, columns: %i[marketplace_address_id] },
     # An event has a venue rather than a home, but the coordinates on one
     # somebody hosted themselves are theirs.
-    { model: "Event",                 key: :user_id, columns: %i[latitude longitude] },
+    { model: "Event",                 key: :user_id, columns: %i[latitude longitude] }
   ].freeze
 
   def perform
@@ -146,7 +146,7 @@ class UserPurgeJob < ApplicationJob
     [ "ActivityEvent", :subject_type, :subject_id ],
     [ "Reaction", :reactable_type, :reactable_id ],
     [ "Vote", :votable_type, :votable_id ],
-    [ "Shared::OutboundClick", :subject_type, :subject_id ],
+    [ "Shared::OutboundClick", :subject_type, :subject_id ]
   ].freeze
 
   # Private Messenger rows preserve their thread and reply shape, but

@@ -76,7 +76,7 @@ module Fediverse
         display_name: document["name"],
         public_key_pem: owned_key_pem(uri, document["publicKey"]),
         followers_url: document["followers"],
-        last_fetched_at: Time.current,
+        last_fetched_at: Time.current
       }
     end
 

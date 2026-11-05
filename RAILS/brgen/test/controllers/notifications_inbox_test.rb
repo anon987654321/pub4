@@ -73,7 +73,7 @@ class NotificationsInboxTest < ActionDispatch::IntegrationTest
   end
 
   test "a new notification refreshes the reader's open inbox" do
-    assert_turbo_stream_broadcasts([@user, :notifications]) do
+    assert_turbo_stream_broadcasts([ @user, :notifications ]) do
       Notification.create!(user: @user, actor: @actor, kind: "follow")
     end
   end

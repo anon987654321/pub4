@@ -5,14 +5,14 @@ class NewsletterEditionBuilder
     "Bergen morning streets after rain, people moving through ordinary city life",
     "a close editorial study of a local cafe table, newspaper, coffee and a wet window",
     "people meeting in a small city square, candid and unposed, everyday clothing",
-    "a quiet Nordic harbor detail with working boats, weather and human traces",
+    "a quiet Nordic harbor detail with working boats, weather and human traces"
   ].freeze
 
   WEEKLY_DEALS_ART_THEMES = [
     "a refined Nordic shopping street, restrained storefronts and people browsing",
     "an editorial still life of useful objects from a modern Scandinavian home",
     "a fashion-forward but everyday city weekend, garments, bags and bicycles",
-    "a considered retail table with tactile materials, paper, packaging and natural light",
+    "a considered retail table with tactile materials, paper, packaging and natural light"
   ].freeze
 
   def self.compose_daily!(city: nil)

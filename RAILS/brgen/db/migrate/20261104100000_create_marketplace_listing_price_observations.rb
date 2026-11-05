@@ -19,7 +19,7 @@ class CreateMarketplaceListingPriceObservations < ActiveRecord::Migration[8.1]
 
     add_index :marketplace_listing_price_observations, :listing_id,
       name: "index_marketplace_price_observations_on_listing"
-    add_index :marketplace_listing_price_observations, [:listing_id, :observed_at],
+    add_index :marketplace_listing_price_observations, [ :listing_id, :observed_at ],
       name: "index_marketplace_price_observations_on_listing_time"
   end
 end

@@ -63,7 +63,7 @@ module Marketplace
           # Stripe auto-detects from the browser, which put a Norwegian buyer
           # on an English page.
           "locale" => I18n.locale.to_s == "nb" ? "nb" : "en",
-          "metadata[#{payable_kind}]" => order.id.to_s,
+          "metadata[#{payable_kind}]" => order.id.to_s
         }
       end
 

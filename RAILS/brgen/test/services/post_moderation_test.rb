@@ -25,7 +25,7 @@ class PostModerationTest < ActiveSupport::TestCase
       "MODERATION_API_KEY" => ENV["MODERATION_API_KEY"],
       "GROQ_API_KEY" => ENV["GROQ_API_KEY"],
       "OPENAI_API_KEY" => ENV["OPENAI_API_KEY"],
-      "ANTHROPIC_API_KEY" => ENV["ANTHROPIC_API_KEY"],
+      "ANTHROPIC_API_KEY" => ENV["ANTHROPIC_API_KEY"]
     }
     ENV.delete("MODERATION_API_KEY")
     ENV["GROQ_API_KEY"] = "groq-test-key"

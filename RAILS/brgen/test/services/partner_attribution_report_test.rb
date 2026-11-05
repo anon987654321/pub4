@@ -86,11 +86,11 @@ class PartnerAttributionReportTest < ActiveSupport::TestCase
     assert_equal BigDecimal("12.34"), report.approved_commission_by_currency.fetch("EUR")
     assert_equal BigDecimal("1.25"), report.approved_commission_by_currency.fetch("GBP")
     assert_equal(
-      { ["bergen", "EUR"] => BigDecimal("12.34"), ["unattributed", "GBP"] => BigDecimal("1.25") },
+      { [ "bergen", "EUR" ] => BigDecimal("12.34"), [ "unattributed", "GBP" ] => BigDecimal("1.25") },
       report.approved_commission_by_dimension(:city)
     )
     assert_equal(
-      { ["marketplace", "EUR"] => BigDecimal("12.34"), ["unattributed", "GBP"] => BigDecimal("1.25") },
+      { [ "marketplace", "EUR" ] => BigDecimal("12.34"), [ "unattributed", "GBP" ] => BigDecimal("1.25") },
       report.approved_commission_by_dimension(:surface)
     )
     assert_equal({ "bergen" => 1 }, report.clicks_by_dimension(:city))
@@ -118,7 +118,7 @@ class PartnerAttributionReportTest < ActiveSupport::TestCase
       { route => { page_views: 1, clicks: 1, clicks_per_view: 1.0 } },
       report.clicks_per_view_by_route
     )
-    assert_equal({ [route, "NOK"] => BigDecimal("6.25") },
+    assert_equal({ [ route, "NOK" ] => BigDecimal("6.25") },
                  report.approved_commission_by_dimension(:route))
   end
 
@@ -138,7 +138,7 @@ class PartnerAttributionReportTest < ActiveSupport::TestCase
       epi: "city:bergen|surface:marketplace"
     )
 
-    assert_equal ["Ellos"], PartnerAttributionReport.new.silent_merchants
+    assert_equal [ "Ellos" ], PartnerAttributionReport.new.silent_merchants
   end
 
   test "a missing approved commission remains a zero rather than breaking the report" do

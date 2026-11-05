@@ -38,14 +38,14 @@ class CityTenantTest < ActiveSupport::TestCase
           content: "Private to #{city.name}"
         )
       end
-      [domain, post]
+      [ domain, post ]
     end
 
     @cities.each do |domain, city|
       ActsAsTenant.with_tenant(city) do
         visible = Post.pluck(:title)
         assert_includes visible, posts.fetch(domain).title
-        (posts.keys - [domain]).each do |other_domain|
+        (posts.keys - [ domain ]).each do |other_domain|
           refute_includes visible, posts.fetch(other_domain).title,
                           "#{domain} must not read #{other_domain}"
         end

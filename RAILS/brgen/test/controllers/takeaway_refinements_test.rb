@@ -51,7 +51,7 @@ class TakeawayRefinementsTest < ActionDispatch::IntegrationTest
 
   def place(scheduled_for: nil)
     post takeaway.restaurant_orders_path(@restaurant), params: {
-      takeaway_order: { delivery_address: "Torget 8", scheduled_for:, items: { @soup.id.to_s => "1" } }.compact,
+      takeaway_order: { delivery_address: "Torget 8", scheduled_for:, items: { @soup.id.to_s => "1" } }.compact
     }
   end
 

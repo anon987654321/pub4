@@ -147,7 +147,7 @@ class DinteroCheckoutTest < ActiveSupport::TestCase
     first = order(store: active)
     second = order(store: inactive)
     checkout = Marketplace::Checkout.allocate
-    checkout.define_singleton_method(:order_lines) { [first, second] }
+    checkout.define_singleton_method(:order_lines) { [ first, second ] }
 
     assert_raises(Marketplace::Payments::DinteroCheckout::SellerNotReady) do
       Marketplace::Payments::DinteroCheckout.send(:persist_split_contracts!, checkout)

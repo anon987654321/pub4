@@ -24,43 +24,43 @@ class ChannelBot
     "master" => {
       emoji: "▲",
       voice: "MASTER, a calm constitutional local AI. Grounded, concrete, active voice, never hedges.",
-      canned: [ "noted — what's the block you're stuck on?", "say more, I'm listening.", "the honest answer is: it depends on the neighbourhood." ],
+      canned: [ "noted — what's the block you're stuck on?", "say more, I'm listening.", "the honest answer is: it depends on the neighbourhood." ]
     },
     "echo" => {
       emoji: "◇",
       voice: "a quick, playful regular who riffs warmly on whatever people say. Keeps it light.",
-      canned: [ "ha, same energy.", "ok that's a mood.", "bold. respect." ],
+      canned: [ "ha, same energy.", "ok that's a mood.", "bold. respect." ]
     },
     "curator" => {
       emoji: "▣",
       voice: "a sharp-eyed marketplace regular who knows fair prices and spotting a good deal.",
-      canned: [ "check the seller's other listings before you commit.", "that price is negotiable, always.", "meet in a cafe, pay on pickup." ],
+      canned: [ "check the seller's other listings before you commit.", "that price is negotiable, always.", "meet in a cafe, pay on pickup." ]
     },
     "cupid" => {
       emoji: "❤",
       voice: "a warm, tactful dating-scene regular with low-key first-date ideas.",
-      canned: [ "coffee somewhere relaxed beats a long dinner for a first date.", "pick somewhere you can both talk without shouting.", "a short first date leaves room for a second." ],
+      canned: [ "coffee somewhere relaxed beats a long dinner for a first date.", "pick somewhere you can both talk without shouting.", "a short first date leaves room for a second." ]
     },
     "dj" => {
       emoji: "♪",
       voice: "a crate-digging music head who reacts to tracks and rallies listening parties.",
-      canned: [ "drop the link, let's hear it.", "that's a certified banger.", "who's starting a listening party?" ],
+      canned: [ "drop the link, let's hear it.", "that's a certified banger.", "who's starting a listening party?" ]
     },
     "critic" => {
       emoji: "▶",
       voice: "a witty TV/film regular who reacts to what's airing without spoilers.",
-      canned: [ "no spoilers, but the last episode goes hard.", "watching live or catching up?", "the pacing picks up, stick with it." ],
+      canned: [ "no spoilers, but the last episode goes hard.", "watching live or catching up?", "the pacing picks up, stick with it." ]
     },
     "foodie" => {
       emoji: "●",
       voice: "a hungry local who knows how to find a good meal in the city.",
-      canned: [ "ask what's fresh and popular with the regulars.", "anything made fresh is usually a good start.", "order early; kitchens can back up on weekends." ],
+      canned: [ "ask what's fresh and popular with the regulars.", "anything made fresh is usually a good start.", "order early; kitchens can back up on weekends." ]
     },
     "scout" => {
       emoji: "◎",
       voice: "a local map scout with directions, hidden spots and honest tips.",
-      canned: [ "start with the neighbourhood you want to explore.", "tell me what kind of place you're looking for and I'll help narrow it down.", "which part of town are you in?" ],
-    },
+      canned: [ "start with the neighbourhood you want to explore.", "tell me what kind of place you're looking for and I'll help narrow it down.", "which part of town are you in?" ]
+    }
   }.freeze
 
   # --- seating & lifecycle ------------------------------------------------
@@ -133,7 +133,7 @@ class ChannelBot
   def self.bot_for_message(channel, message, bots)
     master = bots.find { |bot| bot.username == "master" }
     return master if master && channel.conversation_type == "direct"
-    return master if master && channel.group_dm? && addressed_bot(message.content, [master])
+    return master if master && channel.group_dm? && addressed_bot(message.content, [ master ])
 
     addressed_bot(message.content, bots) || volunteer(channel, message.content, bots) if channel.channel?
   end

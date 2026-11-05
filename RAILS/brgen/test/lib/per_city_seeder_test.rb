@@ -130,7 +130,7 @@ class PerCitySeederTest < ActiveSupport::TestCase
     assert_includes Brgen::CityContent.community_slugs_for("NO", domain: "brgen.no"), "bergen"
     assert_equal %w[lokalt norge kultur mat musikk],
                  Brgen::CityContent.community_slugs_for("NO", domain: "oshlo.no")
-    assert_equal ["Lokalt", "Lokale nyheter og samtaler fra Oslo og omegn."],
+    assert_equal [ "Lokalt", "Lokale nyheter og samtaler fra Oslo og omegn." ],
                  Brgen::PlausibleContent.community("lokalt", "Oslo")
   end
 

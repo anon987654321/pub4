@@ -45,7 +45,7 @@ class PostsController < ApplicationController
 
   COMMENT_SORTS = %w[best new top controversial].freeze
   COMMENT_SORT_SCOPES = {
-    "best" => :best, "new" => :new_first, "top" => :top, "controversial" => :controversial,
+    "best" => :best, "new" => :new_first, "top" => :top, "controversial" => :controversial
   }.freeze
 
   def show
