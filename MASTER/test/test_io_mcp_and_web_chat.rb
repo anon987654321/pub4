@@ -64,6 +64,37 @@ class TestIoMcpAndWebChat < Minitest::Test
     FileUtils.rm_rf(root)
   end
 
+  def test_mcp_sse_accepts_only_loopback_endpoints_without_credentials
+    coordinator = Master::Io::McpCoordinator.new(root: Dir.tmpdir, event_bus: Bus.new([]))
+    valid = [
+      "http://127.0.0.1:8080/sse",
+      "http://localhost:8080/events",
+      "https://[::1]:8443/mcp",
+    ]
+
+    valid.each do |url|
+      assert_equal url, coordinator.send(:local_sse_url!, url)
+    end
+  end
+
+  def test_mcp_sse_rejects_remote_and_credential_bearing_urls
+    coordinator = Master::Io::McpCoordinator.new(root: Dir.tmpdir, event_bus: Bus.new([]))
+    invalid = [
+      "https://example.invalid/mcp",
+      "http://169.254.169.254/latest/meta-data",
+      "http://10.0.0.1:8080/sse",
+      "http://user:secret@127.0.0.1:8080/sse",
+      "http://127.0.0.1:8080/sse?token=secret",
+      "file:///etc/passwd",
+    ]
+
+    invalid.each do |url|
+      assert_raises(ArgumentError, url) do
+        coordinator.send(:local_sse_url!, url)
+      end
+    end
+  end
+
   def test_a_missing_config_connects_nothing_and_says_so
     coordinator = Master::Io::McpCoordinator.new(root: Dir.mktmpdir("mcp_empty_"), event_bus: Bus.new([]))
     coordinator.connect_all
