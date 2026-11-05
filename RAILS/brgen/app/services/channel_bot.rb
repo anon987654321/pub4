@@ -19,47 +19,41 @@ class ChannelBot
   # and an LLM call, so without it one person could make the bots flood a room.
   VOLUNTEER_COOLDOWN = 30.seconds
 
-  # handle => persona. `voice` steers the LLM; `canned` is the offline fallback.
+  # handle => persona. `voice` steers the LLM. The offline fallback lines live in
+  # channels.bots.<handle> per locale, so a Norwegian room is answered in Norwegian
+  # even when the model is unreachable.
   PERSONAS = {
     "master" => {
       emoji: "▲",
-      voice: "MASTER, a calm constitutional local AI. Grounded, concrete, active voice, never hedges.",
-      canned: [ "noted — what's the block you're stuck on?", "say more, I'm listening.", "the honest answer is: it depends on the neighbourhood." ]
+      voice: "MASTER, a calm constitutional local AI. Grounded, concrete, active voice, never hedges."
     },
     "echo" => {
       emoji: "◇",
-      voice: "a quick, playful regular who riffs warmly on whatever people say. Keeps it light.",
-      canned: [ "ha, same energy.", "ok that's a mood.", "bold. respect." ]
+      voice: "a quick, playful regular who riffs warmly on whatever people say. Keeps it light."
     },
     "curator" => {
       emoji: "▣",
-      voice: "a sharp-eyed marketplace regular who knows fair prices and spotting a good deal.",
-      canned: [ "check the seller's other listings before you commit.", "that price is negotiable, always.", "meet in a cafe, pay on pickup." ]
+      voice: "a sharp-eyed marketplace regular who knows fair prices and spotting a good deal."
     },
     "cupid" => {
       emoji: "❤",
-      voice: "a warm, tactful dating-scene regular with low-key first-date ideas.",
-      canned: [ "coffee somewhere relaxed beats a long dinner for a first date.", "pick somewhere you can both talk without shouting.", "a short first date leaves room for a second." ]
+      voice: "a warm, tactful dating-scene regular with low-key first-date ideas."
     },
     "dj" => {
       emoji: "♪",
-      voice: "a crate-digging music head who reacts to tracks and rallies listening parties.",
-      canned: [ "drop the link, let's hear it.", "that's a certified banger.", "who's starting a listening party?" ]
+      voice: "a crate-digging music head who reacts to tracks and rallies listening parties."
     },
     "critic" => {
       emoji: "▶",
-      voice: "a witty TV/film regular who reacts to what's airing without spoilers.",
-      canned: [ "no spoilers, but the last episode goes hard.", "watching live or catching up?", "the pacing picks up, stick with it." ]
+      voice: "a witty TV/film regular who reacts to what's airing without spoilers."
     },
     "foodie" => {
       emoji: "●",
-      voice: "a hungry local who knows how to find a good meal in the city.",
-      canned: [ "ask what's fresh and popular with the regulars.", "anything made fresh is usually a good start.", "order early; kitchens can back up on weekends." ]
+      voice: "a hungry local who knows how to find a good meal in the city."
     },
     "scout" => {
       emoji: "◎",
-      voice: "a local map scout with directions, hidden spots and honest tips.",
-      canned: [ "start with the neighbourhood you want to explore.", "tell me what kind of place you're looking for and I'll help narrow it down.", "which part of town are you in?" ]
+      voice: "a local map scout with directions, hidden spots and honest tips."
     }
   }.freeze
 
@@ -101,14 +95,18 @@ class ChannelBot
     host = bot_for(Array(spec[:bots]).first) or return
     echo = bot_for(Array(spec[:bots])[1])
 
-    channel.messages.create!(sender: host, message_type: "text",
-      content: I18n.t("channels.welcome.host", blurb: Conversation.channel_blurb(channel.slug)))
-    if echo
-      channel.messages.create!(sender: echo, message_type: "text",
-        content: I18n.t("channels.welcome.echo"))
+    # In the room's language, not the request's or the job's: a room is opened
+    # from whichever page or job reaches it first.
+    I18n.with_locale(room_locale(channel)) do
+      channel.messages.create!(sender: host, message_type: "text",
+        content: I18n.t("channels.welcome.host", blurb: Conversation.channel_blurb(channel.slug)))
+      if echo
+        channel.messages.create!(sender: echo, message_type: "text",
+          content: I18n.t("channels.welcome.echo"))
+      end
+      channel.messages.create!(sender: host, message_type: "text",
+        content: I18n.t("channels.welcome.prompt"))
     end
-    channel.messages.create!(sender: host, message_type: "text",
-      content: I18n.t("channels.welcome.prompt"))
   end
 
   # --- replying -----------------------------------------------------------
@@ -158,10 +156,27 @@ class ChannelBot
   # Draft a reply via MASTER; fall back to a persona-canned line on any failure.
   def self.draft(bot, channel, message)
     persona = PERSONAS[bot.username] or return nil
-    generate(persona, channel, message).presence || persona[:canned].sample
+    generate(persona, channel, message).presence || canned_line(bot.username, channel)
   rescue StandardError
-    persona&.dig(:canned)&.sample
+    persona && canned_line(bot.username, channel)
   end
+
+  # The language a room is spoken in: its city's, as the site resolves it for
+  # a visitor (brgen.no is nb). A room with no city takes the app default.
+  def self.room_locale(channel)
+    city_locale = channel.city&.locale
+    city_locale.present? ? Brgen::LocaleBridge.resolve(city_locale) : I18n.default_locale
+  end
+
+  LANGUAGE_NAMES = { nb: "Norwegian Bokmål", en: "English" }.freeze
+
+  def self.language_name(channel) = LANGUAGE_NAMES.fetch(room_locale(channel).to_sym, "English")
+
+  def self.canned_lines(handle, locale)
+    Array(I18n.t("channels.bots.#{handle}", locale:, default: []))
+  end
+
+  def self.canned_line(handle, channel) = canned_lines(handle, room_locale(channel)).sample
 
   def self.generate(persona, channel, message)
     return generate_master(channel, message) if persona.equal?(PERSONAS["master"])
@@ -192,15 +207,17 @@ class ChannelBot
       Reply to the latest message in ONE short, natural sentence (max 200 characters).
       Stay fully in character, be genuinely useful and local, use active voice, no
       hedging, no emoji, no quotation marks, no name prefix. Just the message.
+      Write the reply in #{language_name(channel)}, the language of this room.
     PROMPT
   end
 
   def self.master_context_for(channel)
     city = city_name_for(channel)
-    return if city.blank?
+    language = "Reply in #{language_name(channel)}, the language of this room."
+    return language if city.blank?
 
     "This public room is city-scoped to #{city}. Use that city for local context; " \
-      "do not assume another city or invent venue names, events or opening hours."
+      "do not assume another city or invent venue names, events or opening hours. #{language}"
   end
 
   def self.generate_master(channel, message)

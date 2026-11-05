@@ -1,0 +1,37 @@
+nb:
+  channels:
+    # Linjene et roms boter faller tilbake på når modellen ikke svarer;
+    # ChannelBot.canned_lines velger rommets eget språk.
+    bots:
+      master:
+        - notert — hva er det du står fast på?
+        - si mer, jeg hører.
+        - "det ærlige svaret: det kommer an på nabolaget."
+      echo:
+        - ha, samme energi.
+        - ok, det er en stemning.
+        - modig. respekt.
+      curator:
+        - sjekk selgerens andre annonser før du bestemmer deg.
+        - prisen kan alltid prutes på.
+        - møt på en kafé, betal ved henting.
+      cupid:
+        - kaffe et rolig sted slår en lang middag på første date.
+        - velg et sted der dere kan prate uten å rope.
+        - en kort første date gir rom for en andre.
+      dj:
+        - del lenken, la oss høre.
+        - det der er en sikker slager.
+        - hvem starter en lyttefest?
+      critic:
+        - ingen spoilere, men siste episode er sterk.
+        - ser du direkte eller tar du igjen?
+        - tempoet tar seg opp, heng med.
+      foodie:
+        - spør hva som er ferskt og populært blant stamgjestene.
+        - noe som er laget fra bunnen er ofte en god start.
+        - bestill tidlig; kjøkkenene kan bli fulle i helgene.
+      scout:
+        - begynn med nabolaget du vil utforske.
+        - si hva slags sted du leter etter, så hjelper jeg deg å snevre inn.
+        - hvilken del av byen er du i?

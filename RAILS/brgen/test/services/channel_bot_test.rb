@@ -52,3 +52,41 @@ class ChannelBotTest < ActiveSupport::TestCase
     assert_equal [ kept.id ], ChannelBot.context_messages(@channel).map(&:id) & [ kept.id, unsent.id, expired.id ]
   end
 end
+
+# A room speaks its city's language: the prompt asks for it, and the offline
+# fallback answers in it, so brgen.no's rooms are not answered in English.
+class ChannelBotLanguageTest < ActiveSupport::TestCase
+  setup do
+    Rails.cache.clear
+    Brgen::CitySeed.sync! if City.table_exists?
+  end
+
+  teardown do
+    Rails.cache.clear
+    ActsAsTenant.current_tenant = nil
+  end
+
+  test "a brgen.no room is prompted and answered offline in Norwegian" do
+    channel = Conversation.find_or_create_channel("brgen", city: City.find_by!(domain: "brgen.no"))
+    echo = ChannelBot.bot_for("echo")
+
+    assert_equal :nb, ChannelBot.room_locale(channel)
+    assert_includes ChannelBot.prompt_for(ChannelBot::PERSONAS.fetch("echo"), channel), "Norwegian Bokmål"
+    assert_includes ChannelBot.master_context_for(channel), "Norwegian Bokmål"
+
+    I18n.with_locale(:en) do
+      Shared::Llm.stub(:new, ->(**) { raise "offline" }) do
+        line = ChannelBot.draft(echo, channel, Message.new(content: "hei?"))
+        assert_includes I18n.t("channels.bots.echo", locale: :nb), line
+      end
+    end
+  end
+
+  test "every persona has offline lines in both shipped locales" do
+    ChannelBot::PERSONAS.each_key do |handle|
+      %i[nb en].each do |locale|
+        assert_operator ChannelBot.canned_lines(handle, locale).size, :>=, 1, "#{handle} has no #{locale} lines"
+      end
+    end
+  end
+end

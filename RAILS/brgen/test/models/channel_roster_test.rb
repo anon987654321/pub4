@@ -32,7 +32,7 @@ class ChannelRosterTest < ActiveSupport::TestCase
     refute_match(/Bergen|Fløyen|Fløibanen/, prompt)
     refute_match(/Bergen/, ChannelBot.master_context_for(channel))
     refute_match(/Bergen|Fløyen|Fløibanen/, cupid[:voice])
-    refute_match(/Bergen|Fløyen|Fløibanen/, cupid[:canned].join(" "))
+    refute_match(/Bergen|Fløyen|Fløibanen/, ChannelBot.canned_lines("cupid", :en).join(" "))
     stored_bot = User.find_by!(username: "cupid", bot: true)
     assert_equal cupid[:voice], stored_bot.persona
   end

@@ -1,0 +1,37 @@
+en:
+  channels:
+    # A room's bots fall back to these lines when the model is unreachable;
+    # ChannelBot.canned_lines picks the room's own language.
+    bots:
+      master:
+        - noted — what's the block you're stuck on?
+        - say more, I'm listening.
+        - "the honest answer is: it depends on the neighbourhood."
+      echo:
+        - ha, same energy.
+        - ok that's a mood.
+        - bold. respect.
+      curator:
+        - check the seller's other listings before you commit.
+        - that price is negotiable, always.
+        - meet in a cafe, pay on pickup.
+      cupid:
+        - coffee somewhere relaxed beats a long dinner for a first date.
+        - pick somewhere you can both talk without shouting.
+        - a short first date leaves room for a second.
+      dj:
+        - drop the link, let's hear it.
+        - that's a certified banger.
+        - who's starting a listening party?
+      critic:
+        - no spoilers, but the last episode goes hard.
+        - watching live or catching up?
+        - the pacing picks up, stick with it.
+      foodie:
+        - ask what's fresh and popular with the regulars.
+        - anything made fresh is usually a good start.
+        - order early; kitchens can back up on weekends.
+      scout:
+        - start with the neighbourhood you want to explore.
+        - tell me what kind of place you're looking for and I'll help narrow it down.
+        - which part of town are you in?

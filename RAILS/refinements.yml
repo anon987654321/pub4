@@ -924,7 +924,7 @@ items:
   item: Tell ChannelBot's prompt to reply in the room's locale (nb on brgen.no) and
     move the English-only PERSONAS canned fallback lines into channels.bots.* locale
     keys, so offline bots stop answering Norwegian rooms in English.
-  status: open
+  status: done
 - id: brgen-006
   app: brgen
   area: channels
