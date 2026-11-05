@@ -20,7 +20,7 @@ if ARGV.include?("--rescue")
   target = ARGV.include?("--output") ? ARGV[ARGV.index("--output") + 1] : nil
   preset = Postpro::Rescue.preset_for(findings)
   if target.nil?
-    PostproBootstrap.dmesg("rescue: diagnosis only — pass --output FILE to apply " \
+    PostproBootstrap.dmesg("rescue: diagnosis only - pass --output FILE to apply " \
                            "#{preset || 'a grade'}")
     exit 0
   end
@@ -46,7 +46,7 @@ end
 
 # What a set of frames says about itself: which frames are one photograph taken
 # twice, and how far each frame's exposure sits from the set's own median. Both
-# are readings, and the set is left as it was — moving a frame toward the
+# are readings, and the set is left as it was - moving a frame toward the
 # median changes the graded look, which is the operator's decision.
 if ARGV.include?("--set")
   require_relative "../frame_set"
@@ -74,11 +74,11 @@ end
 
 # Four numbers on an image, or the delta across a grade. Handled here, straight
 # after boot, because everything below this point can reach the interactive
-# prompt — and a measurement that waits for a keypress is a measurement nobody
+# prompt - and a measurement that waits for a keypress is a measurement nobody
 # puts in a script.
 #
-# Everything this file claims about putting texture back — the grain, the
-# halation, the H&D shoulder — was an assertion until something measured it.
+# Everything this file claims about putting texture back - the grain, the
+# halation, the H&D shoulder - was an assertion until something measured it.
 # `--measure FILE` reads one image; adding `--against AFTER` reads the pair and
 # says which way each number moved and whether that is the direction film
 # emulation should move it.

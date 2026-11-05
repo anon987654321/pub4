@@ -8,7 +8,7 @@ require "fileutils"
 # A real depth map, where the old ones were cues standing in for one.
 #
 # postpro.rb's aerial_depth derives far-from-near from local sharpness and
-# relight's key falls off in a geometric ramp across the frame — both are
+# relight's key falls off in a geometric ramp across the frame - both are
 # proxies named as proxies in their own comments, and a sharp cloud reads as
 # near to both. Depth Anything V2 (the small model, 25M parameters) is the
 # monocular estimator the research settled on, and its small fp16 ONNX export
@@ -18,7 +18,7 @@ require "fileutils"
 #
 # Degradation is the design: without the gem or the weights, every caller gets
 # nil and behaves as it always did, one log line quiet. The model file is
-# never committed — fetch it out of band, paths and sizes in the README.
+# never committed - fetch it out of band, paths and sizes in the README.
 module Postpro
   module Depth
     # The fp16 export of onnx-community/depth-anything-v2-small-ONNX, one file
@@ -32,8 +32,8 @@ module Postpro
     STD = [0.229, 0.224, 0.225].freeze
 
     # Depth Anything predicts inverse depth: a high reading means CLOSE. Every
-    # consumer here is named for what it receives — `near` is a map where 1.0
-    # is the viewer's side of the plane — so no caller has to remember which
+    # consumer here is named for what it receives - `near` is a map where 1.0
+    # is the viewer's side of the plane - so no caller has to remember which
     # way a raw inverse-depth tensor points.
     def self.near(image)
       key = fingerprint(image)
@@ -55,7 +55,7 @@ module Postpro
     end
 
     # Loaded once, and quietly absent when either the binding or the weights
-    # are — `nil` is the contract every caller is written against.
+    # are - `nil` is the contract every caller is written against.
     # The answer is kept either way, so an absent model costs one warning per
     # run rather than one per frame.
     def self.model
@@ -72,13 +72,13 @@ module Postpro
       require "onnxruntime"
       @model = OnnxRuntime::Model.new(ONNX_GRAPH)
     rescue LoadError, StandardError => e
-      warn "depth: estimator unavailable (#{e.message}) — postpro.rb's cues stand in"
+      warn "depth: estimator unavailable (#{e.message}) - postpro.rb's cues stand in"
     end
 
     def self.loaded? = !@model.nil?
 
     # The processor: square up on srgb 0-1, take ImageNet normalisation away
-    # off the channels, and return the CHW plane of floats — the batch axis
+    # off the channels, and return the CHW plane of floats - the batch axis
     # and the dense packing are the caller's, since Numo does both at once.
     def self.tensor(image)
       rgb = image.colourspace("srgb").resize(MODEL_EDGE.to_f / [image.width, image.height].max)

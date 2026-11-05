@@ -1,7 +1,7 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
-# dilla — the STUDIO beat engine.
+# dilla - the STUDIO beat engine.
 #
 # One Ruby file, no gems. Pure-Ruby synthesis at 44.1 kHz, a real MPC-style
 # groove stack (96 PPQN, 53-56% swing, snares early / kicks late / hats
@@ -26,8 +26,8 @@
 #   ruby dilla.rb demo-each
 #
 # Sample flip (operator-supplied, rights-cleared audio only):
-#   SAMPLE_LOOP=file SAMPLE_LOOP_VOL=0.42 SAMPLE_LOOP_WEIGHT=0.6 ruby dilla.rb …
-#   … --sample-vol 0.42 --sample-weight 0.6 --sample-slices 8
+#   SAMPLE_LOOP=file SAMPLE_LOOP_VOL=0.42 SAMPLE_LOOP_WEIGHT=0.6 ruby dilla.rb ...
+#   ... --sample-vol 0.42 --sample-weight 0.6 --sample-slices 8
 
 require "json"
 require "fileutils"
@@ -206,7 +206,7 @@ module Dilla
 
   def help_text
     <<~TEXT
-      dilla #{VERSION} — the STUDIO beat engine
+      dilla #{VERSION} - the STUDIO beat engine
       usage:
         ruby dilla.rb                            render the curated showcase
         ruby dilla.rb --list                     progressions, drum patterns, groove profiles
@@ -654,7 +654,7 @@ module Dilla
 
     # Chords anticipate the drums (~100ms in the microtiming research), bass
     # follows the harmony with its own style, melody repeats its loop with
-    # identical deviations — meticulously executed, never sloppy.
+    # identical deviations - meticulously executed, never sloppy.
     def build_melodic(plan, loop_bars, bar_count)
       voicer = Voicer.new(Dilla.theory)
       parsed = @progress["chords"].map { |sym| Dilla::ChordParser.parse(sym, Dilla.theory) }
@@ -1210,7 +1210,7 @@ module Dilla
 
   # ------------------------------------------------------------- sample flip
 
-  # Operator-supplied loop chopping: decode ≤24 s through local ffmpeg,
+  # Operator-supplied loop chopping: decode <=24 s through local ffmpeg,
   # estimate each slice's pitch classes, pick chord-aware chops, and mix them
   # under the phrase starts before the final tape stage.
   module SampleFlip
@@ -1987,7 +1987,7 @@ module Dilla
     render_video(opts, wav_path) if opts.video
 
     seconds = Process.clock_gettime(Process::CLOCK_MONOTONIC) - t0
-    log = format("dilla %s: %s — %s / %s, %.1f BPM, %d bars, seed %s, performer %s, %.1fs render, LUFS %.1f",
+    log = format("dilla %s: %s - %s / %s, %.1f BPM, %d bars, seed %s, performer %s, %.1fs render, LUFS %.1f",
                  VERSION, plan[:progression]["title"], plan[:drums], plan[:profile], plan[:bpm], bar_count,
                  rng.seed, performer["id"], seconds, lufs)
     puts log unless quiet
@@ -2087,7 +2087,7 @@ module Dilla
            "[0:a]showcqt=s=1280x360:fps=20[cq];[v][cq]vstack[out]",
            "-map", "[out]", "-map", "0:a", "-c:v", "libx264", "-preset", "veryfast",
            "-pix_fmt", "yuv420p", "-c:a", "aac", "-b:a", "192k", "-shortest", mp4)
-    puts "dilla: video → #{mp4}" if File.file?(mp4)
+    puts "dilla: video -> #{mp4}" if File.file?(mp4)
   end
 end
 
@@ -2254,7 +2254,7 @@ module Dilla
     Dilla.atomic_write(File.join(profile_dir, "features.json"), File.binread(features_path), binary: true)
 
     f = profile["features"]
-    puts format("reference %s: %s — %.1f BPM (conf %.2f), key %s, density %.1f/bar, offbeat %.2f, spread %.1f ms, swing %.2f, drums %.0f%%, harmony %.0f%%; profile → %s",
+    puts format("reference %s: %s - %.1f BPM (conf %.2f), key %s, density %.1f/bar, offbeat %.2f, spread %.1f ms, swing %.2f, drums %.0f%%, harmony %.0f%%; profile -> %s",
                 style, meta["title"], profile["target_bpm"], f["bpm_confidence"], profile.dig("analysis", "key"),
                 f["onset_density_per_bar"], f["offbeat_onset_share"], f["timing_spread_ms"], f["swing_ratio"],
                 f["drums_energy_share"] * 100, f["other_energy_share"] * 100, profile_path)
@@ -2466,7 +2466,7 @@ module Dilla
     Wav.write_16bit(wav_path, mix)
     lufs = Master.lufs_estimate(mix)
     write_quality(out_base, mix, lufs, { "drums" => mixer.rms(:drums), "sub" => mixer.rms(:sub), "bass" => mixer.rms(:bass) }, duration, { sonitex: "subtle", swing: 50.0 })
-    puts format("dilla industrial-techno: %.1f BPM, %d bars, seed %s → %s (%.1f LUFS)", opts.bpm.to_f, n_bars, rng.seed, wav_path, lufs)
+    puts format("dilla industrial-techno: %.1f BPM, %d bars, seed %s -> %s (%.1f LUFS)", opts.bpm.to_f, n_bars, rng.seed, wav_path, lufs)
   end
 end
 

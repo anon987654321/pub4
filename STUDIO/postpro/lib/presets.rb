@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
-# Physics-ordered 6-8 step chains: optical_blur → exposure/temp → film_curve
-# → chemistry → optical_effect → print → grain. One contrast mode and one
-# color temperature approach per preset — no stacking.
+# Physics-ordered 6-8 step chains: optical_blur -> exposure/temp -> film_curve
+# -> chemistry -> optical_effect -> print -> grain. One contrast mode and one
+# color temperature approach per preset - no stacking.
 
 # PRESETS is two literals merged in this order: the first half here and the
 # rest in presets_more.rb, so neither file passes the 300-line cap.
@@ -10,7 +10,7 @@ PRESETS_FIRST_HALF = {
   # The house grade, and the default: the whole analog path rather than a
   # selection from it.
   #
-  # Every other preset here is a look — a choice of some effects over others.
+  # Every other preset here is a look - a choice of some effects over others.
   # This one is the answer to "put the full treatment on it", which is what the
   # tool is for when nobody has asked for a particular film. Eighteen steps
   # against the ten of the richest preset before it.
@@ -37,21 +37,21 @@ PRESETS_FIRST_HALF = {
   # what a generated image needs.
   # Two effects are deliberately NOT in this chain, having been measured in it
   # and taken out. chromatic_aberration cost 0.0265 of texture and
-  # film_curl_vignette 0.0428 — together two thirds of the picture's
+  # film_curl_vignette 0.0428 - together two thirds of the picture's
   # micro-detail, and a vignette that dropped mean brightness by 53.8 levels.
   # Both are legitimate and both remain available to the presets that want
   # them; neither belongs in the one grade that runs when nobody chose.
   #
   # They are scaled now rather than merely excluded. When this was written the
   # taper reached only the defocus and the curve, and the paragraph above was
-  # the only thing standing between a photograph and the damage — a note is not
+  # the only thing standing between a photograph and the damage - a note is not
   # a mechanism. head[:fringe] and head[:vignette] taper on texture, so the two
   # presets that want each still get them at a strength the source can afford.
   # Keeping them out of the default is a separate decision and it stands.
   #
   # NOTHING IN THIS CHAIN SOFTENS THE PICTURE.
   #
-  # optical_blur, emulsion_defocus and vintage_lens are all out — the last one
+  # optical_blur, emulsion_defocus and vintage_lens are all out - the last one
   # took `lens:` with it, since it was that key's only reader and an unread key
   # is a --vocab-check failure. They are lens simulation, and lens simulation on
   # a frame that was already taken through a lens is invention, not emulation.
@@ -60,7 +60,7 @@ PRESETS_FIRST_HALF = {
   #
   # What is left is tone, colour and emulsion: the H&D curve, dye crosstalk,
   # coupler inhibition, adjacency, the negative's mask, the print stock, and
-  # grain. Halation stays and is not a blur — it adds light that bounced off the
+  # grain. Halation stays and is not a blur - it adds light that bounced off the
   # film base back through the emulsion, which is why it glows rather than
   # smears, and it measured at -0.0001 texture.
   #

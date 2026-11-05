@@ -41,7 +41,7 @@ rescue StandardError => e
 end
 
 # Per-stock film base density tint. Applies the FILM_BASE color at low opacity
-# so shadow areas pick up more tint than highlights — physically correct since
+# so shadow areas pick up more tint than highlights - physically correct since
 # tint is always present and highlights burn through it.
 def film_base_density(image, stock = :kodak_portra, opacity = 0.06)
   tint = FILM_BASE[stock] || [255, 255, 255]
@@ -52,7 +52,7 @@ end
 
 # C-41 integral orange mask. Colored couplers in the negative create a
 # characteristic orange base density that raises shadows toward orange-amber.
-# Reversal and B&W stocks have no mask — only applied to C41_STOCKS.
+# Reversal and B&W stocks have no mask - only applied to C41_STOCKS.
 def orange_mask(image, stock = :kodak_portra, intensity = 1.0)
   return image unless C41_STOCKS.include?(stock)
   mask = case stock
@@ -75,7 +75,7 @@ rescue StandardError => e
 end
 
 # Print film projection. Applies a print stock's H&D curve, warmth, cool-shadow
-# grading, and fine grain as a final projection stage — analogous to printing
+# grading, and fine grain as a final projection stage - analogous to printing
 # from a negative onto Kodak 2383 (or 2302 for B&W).
 def print_film(image, stock = :kodak_2383, intensity = 0.70)
   pdata = PRINT_STOCKS[stock]
@@ -88,7 +88,7 @@ def print_film(image, stock = :kodak_2383, intensity = 0.70)
   # three bands, the bandjoin made a nine-band image, and `add` raised
   # "not one band or 9 bands" straight into the rescue. cinematic, blockbuster
   # and cinema_scan have therefore never had a print stage at all. Restoring
-  # the interpretation is metadata only — the pixels are identical.
+  # the interpretation is metadata only - the pixels are identical.
   developed = image.maplut(lut).copy(interpretation: image.interpretation)
   img_f = developed.cast("float") / 255.0
   luma = developed.colourspace("b-w").cast("float") / 255.0

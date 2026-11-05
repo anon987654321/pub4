@@ -248,7 +248,7 @@ def run_random(subject = nil)
         look = heavy_mode? ? next_heavy_look(rng, looks + refused) : nil
         chain = look ? look_led_chain(rng, look:, avoid: drawn, lane:) : random_chain(rng, avoid: drawn, lane:)
         Postpro::Constitution.verify_chain!(chain:, stage_rank: random_stage_rank)
-        drew = "#{File.basename(file)} — #{look} #{random_chain_name(chain)}"
+        drew = "#{File.basename(file)} - #{look} #{random_chain_name(chain)}"
         $cli_logger.info "#{file_index + 1}/#{files.count} #{number}/#{count}: #{drew}"
 
         take = RandomTake.new(number:, look:, lane: lane || random_chain_lane(chain))

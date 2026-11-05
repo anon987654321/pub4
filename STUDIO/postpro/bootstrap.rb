@@ -12,7 +12,7 @@ module PostproBootstrap
   def self.dmesg(msg)
     elapsed = defined?(BOOT_TIME) ? " +%.3fs" % (Time.now - BOOT_TIME) : ""
     # FATAL is in this list because it was not, and the one message that uses
-    # it — libvips unavailable, on the line before `exit 1` — printed as
+    # it - libvips unavailable, on the line before `exit 1` - printed as
     # "postpro: ok: FATAL libvips unavailable".
     tag = if msg.start_with?("ERROR", "error", "FATAL", "fatal")
             "fix:"
@@ -58,7 +58,7 @@ module PostproBootstrap
     true
   rescue LoadError
     unless install_allowed?
-      dmesg "WARN ruby-vips gem missing — `rake postpro:bootstrap` installs it, " \
+      dmesg "WARN ruby-vips gem missing - `rake postpro:bootstrap` installs it, " \
             "or POSTPRO_INSTALL_DEPS=1 to allow it from here"
       return false
     end
@@ -85,7 +85,7 @@ module PostproBootstrap
     true
   rescue LoadError
     unless install_allowed?
-      dmesg "WARN tty-prompt gem missing — degraded prompt experience; " \
+      dmesg "WARN tty-prompt gem missing - degraded prompt experience; " \
             "`rake postpro:bootstrap` installs it"
       return false
     end
@@ -194,7 +194,7 @@ module PostproBootstrap
   # directory, which is wherever the operator happened to be standing. It has
   # therefore been false on every invocation, so CONFIG has always been {} and
   # all twelve `CONFIG[...]` reads in this file have always taken their
-  # fallback — including apply_camera_profile_first, which is the switch for
+  # fallback - including apply_camera_profile_first, which is the switch for
   # get_camera_profile and apply_camera_profile, fifty lines that have never
   # run. The same defect was found and fixed one screen below this, twice, and
   # left here.

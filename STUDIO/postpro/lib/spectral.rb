@@ -5,7 +5,7 @@
 # Gaussian basis calibrated so that under D65 the round-trip is identity;
 # then reweighted by I_target/I_source (Planck's law); then re-integrated
 # against CIE 1931 2° CMFs and projected to sRGB. All steps are linear, so
-# they collapse to a single 3×3 matrix at runtime — applied via recomb in
+# they collapse to a single 3x3 matrix at runtime - applied via recomb in
 # linear scrgb space.
 module Spectral
   WAVELENGTHS = (400..700).step(10).to_a.freeze
@@ -241,12 +241,12 @@ end
 #
 # Expressed as a TARGET rather than an amount, which is the whole fix. An
 # amount cannot know what it is being added to, so the same call that puts a
-# gentle toe under a crushed render turns a photograph milky — the photograph
+# gentle toe under a crushed render turns a photograph milky - the photograph
 # already had its toe and got a second one on top. A target is self-limiting:
 # reach it from below, and do nothing at all when the picture is already there.
 #
 # 0.045 of full scale, about 11/255. Chosen as a film toe rather than measured
-# from a stock, and worth saying so — STOCKS carries H&D curves but no toe
+# from a stock, and worth saying so - STOCKS carries H&D curves but no toe
 # density, so there is nothing in the table to derive this from.
 SHADOW_TOE_TARGET = 0.045
 
@@ -257,7 +257,7 @@ def shadow_lift(image, lift = SHADOW_TOE_TARGET, preserve_blacks = true)
   # `lift` is the fraction of full scale added at the darkest point, applied
   # ONCE. It used to be applied twice on the false branch (`inv_gray * lift`
   # and again in `* 255 * lift`, so 0.12 meant 0.0144) and replaced by a
-  # constant 0.8 on the true branch — which made `preserve_blacks: true` lift
+  # constant 0.8 on the true branch - which made `preserve_blacks: true` lift
   # pure black by 30.6 levels against the other branch's 5.7. The flag named
   # for preserving blacks raised them 5.4x harder than the flag that does not.
   shadow_mask = preserve_blacks ? inv_gray**2.0 : inv_gray

@@ -406,7 +406,7 @@ def main():
 
     with open(args.json, "w") as fh:
         json.dump(_plain(feats), fh, indent=1, sort_keys=True)
-    print(f"analyzer: {args.mix} → {args.json} ({feats['bpm']} BPM, {feats['harmony']['key']})")
+    print(f"analyzer: {args.mix} -> {args.json} ({feats['bpm']} BPM, {feats['harmony']['key']})")
 
 
 if __name__ == "__main__":

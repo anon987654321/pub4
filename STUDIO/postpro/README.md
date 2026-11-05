@@ -81,7 +81,7 @@ declared field must have an effect-reader contract. For each declared reader, th
 proves that the corresponding `case fx` arm passes that value into the matching effect call.
 Merely mentioning `p[:temp]` in a comment, string, disconnected expression, or neighboring
 effect arm does not satisfy the contract. It also follows executable call paths from every
-rendering entry point to `apply_finishing_grain`, then runs a tiny in-memory 8×8 probe through
+rendering entry point to `apply_finishing_grain`, then runs a tiny in-memory 8x8 probe through
 representative colour, monochrome and print presets to catch failures that table inspection
 cannot see. A problem produces a non-zero result.
 

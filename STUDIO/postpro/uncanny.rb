@@ -9,7 +9,7 @@ require "vips"
 # subsurface scattering: real skin is translucent, and light comes back from
 # below it warm and uneven. That is the tell of a generated portrait, and the
 # one layer of a photograph a grade can reach. Everything written about fixing
-# it — the grain, the halation, the H&D shoulder — is an assertion until
+# it - the grain, the halation, the H&D shoulder - is an assertion until
 # something measures it.
 #
 # Deliberately whole-image and deliberately without face detection. A metric
@@ -37,7 +37,7 @@ module Postpro
     end
 
     # A 3x3 Laplacian. High-frequency energy is what pores, vellus hair and
-    # grain all are, and what retouching and diffusion both remove — so this is
+    # grain all are, and what retouching and diffusion both remove - so this is
     # the closest single number to "how plastic is it".
     LAPLACIAN = [
       [0, -1, 0],
@@ -52,7 +52,7 @@ module Postpro
 
     def self.read(path)
       # :random, not :sequential. A sequential image may be read once,
-      # top to bottom, and this reads it four times — which surfaces as
+      # top to bottom, and this reads it four times - which surfaces as
       # "vipspng: out of order read at line 64" on the second metric, after
       # the first has already returned a plausible number.
       read_image(Vips::Image.new_from_file(path.to_s, access: :random))
@@ -95,7 +95,7 @@ module Postpro
 
     # How varied the highlights are.
     #
-    # Real skin is translucent and lit unevenly — an oily forehead throws a hard
+    # Real skin is translucent and lit unevenly - an oily forehead throws a hard
     # specular while a cheek stays matte, so the bright pixels have a spread.
     # Rendered skin returns light uniformly, so its highlights cluster. Low is
     # the tell.
@@ -122,8 +122,8 @@ module Postpro
     # from the silhouette at a glance to the pores up close. A frame recorded at
     # its own resolution carries detail in every octave, and the finest holds
     # about twice the next, so this reads near 2. An upscaled frame holds almost
-    # nothing in its finest octave — interpolation adds pixels between the
-    # recorded ones without adding detail — and heavy denoise strips it, which is
+    # nothing in its finest octave - interpolation adds pixels between the
+    # recorded ones without adding detail - and heavy denoise strips it, which is
     # the picture that looks right as a thumbnail and wrong at full size.
     #
     # On cases whose answer is known, native detail reads 1.85 to 2.0, a median
@@ -147,8 +147,8 @@ module Postpro
     # MASTER's SQUINT_TEST, in its original photographic use: squint until
     # detail disappears, and if the subject no longer separates from its
     # surroundings, the composition depends on detail a viewer will not always have.
-    # The squint is a gaussian blur a fortieth of the long edge wide — a face in a
-    # portrait survives it as a light oval and its features do not — and the
+    # The squint is a gaussian blur a fortieth of the long edge wide - a face in a
+    # portrait survives it as a light oval and its features do not - and the
     # reading is the share of the frame's tonal deviation still present after it.
     #
     # On cases whose answer is known, a bright disc on a dark field keeps 0.94 and a
@@ -216,16 +216,16 @@ module Postpro
     def self.verdict(comparison)
       lines = []
       lines << if comparison[:texture_delta] > 0
-                 format("texture rose %+.4f — grain put back micro-detail the model had smoothed away",
+                 format("texture rose %+.4f - grain put back micro-detail the model had smoothed away",
                         comparison[:texture_delta])
                else
-                 format("texture fell %+.4f — the grade removed detail rather than adding it, which is " \
+                 format("texture fell %+.4f - the grade removed detail rather than adding it, which is " \
                         "the opposite of what film grain does", comparison[:texture_delta])
                end
       lines << if comparison[:clipping_delta] <= 0
-                 format("clipping %+.4f%% — highlights roll rather than clip", comparison[:clipping_delta])
+                 format("clipping %+.4f%% - highlights roll rather than clip", comparison[:clipping_delta])
                else
-                 format("clipping %+.4f%% — the grade BLEW highlights that were intact before it",
+                 format("clipping %+.4f%% - the grade BLEW highlights that were intact before it",
                         comparison[:clipping_delta])
                end
       lines

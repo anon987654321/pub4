@@ -15,7 +15,7 @@
 # table-driven pipeline is not a crash, it is a picture that came out slightly
 # wrong and a log that says everything ran.
 #
-# No image processing and no files touched — it reads the tables.
+# No image processing and no files touched - it reads the tables.
 # What grain does this scan actually carry?
 #
 # Until this existed the only way to set STOCKS[:grain] was to choose a number
@@ -26,7 +26,7 @@
 # needs: sigma per tone, which is the scaling function, and the correlation
 # radius, which is the crystal.
 #
-# Point it at a flat frame — a sky, a wall, a grey card, a clear rebate.
+# Point it at a flat frame - a sky, a wall, a grey card, a clear rebate.
 # Structure in the picture reads as grain and inflates the answer, which is why
 # the bins are printed rather than one confident number.
 #

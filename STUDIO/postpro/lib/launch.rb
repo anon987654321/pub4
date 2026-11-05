@@ -189,7 +189,7 @@ def auto_launch
   end
 
   duration = (Time.now - start_time).round(2)
-  $cli_logger.info "Complete! #{total_processed} files → #{total_variations} masterpieces (#{duration}s)"
+  $cli_logger.info "Complete! #{total_processed} files -> #{total_variations} masterpieces (#{duration}s)"
 
   return unless REPLICATE_PRESENT && total_variations > 0
     $cli_logger.info "Tip: Run 'ruby replicate.rb' to generate more content!"

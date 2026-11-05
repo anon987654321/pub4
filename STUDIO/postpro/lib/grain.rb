@@ -6,8 +6,8 @@
 # CGF 36, 2017). Two facts follow from it, and this file had both backwards.
 #
 # The filtered indicator has VARIANCE u(1-u), so the amplitude, being a standard
-# deviation, goes as sqrt(u(1-u)). The envelope here was 4L^0.8(1-L) — the
-# variance curve used as an amplitude — which cost a highlight about three times
+# deviation, goes as sqrt(u(1-u)). The envelope here was 4L^0.8(1-L) - the
+# variance curve used as an amplitude - which cost a highlight about three times
 # the grain it should carry against a midtone, where film costs it 1.7.
 #
 # And the crystal radius and the blur it is observed through are independent.
@@ -26,13 +26,13 @@ GRAIN_CELL_BASE = 4.0
 GRAIN_SCAN_SIGMA = 0.62
 # STOCKS[:grain] times this is the stock's peak luma sigma in 8-bit levels at
 # midtone, and --fit-grain measures that same quantity off a scan. Tri-X at 25
-# reads 6.0, Portra at 15 reads 3.6, Delta 3200 at 38 reads 9.1 — the band a
+# reads 6.0, Portra at 15 reads 3.6, Delta 3200 at 38 reads 9.1 - the band a
 # 35 mm scan carries. It replaces GRAIN_AMP_SCALE = 141, a denominator in scRGB
 # whose output no instrument could interpret and no measurement could check.
 GRAIN_SIGMA_SCALE = 0.24
 # Grain is exposed in linear light and read in 8-bit levels, and the sRGB
 # transfer curve between them is steep in the shadows and flat in the
-# highlights — at sRGB 16 a level is worth twelve times the linear light it is
+# highlights - at sRGB 16 a level is worth twelve times the linear light it is
 # worth at sRGB 240. A constant linear amplitude therefore reads as four times
 # the model's grain in the blacks and a fifth of it in the whites, which is the
 # shape of a digital noise floor rather than of an emulsion.
@@ -50,14 +50,14 @@ def grain_encoding_slope(value)
   255.0 * (1.055 / 2.4) * (linear**(1.0 / 2.4 - 1.0))
 end
 # One crystal layer shadows the next, so chroma grain is correlated with luma
-# grain rather than drawn three times independently — AFGS1 signals the same
+# grain rather than drawn three times independently - AFGS1 signals the same
 # thing as a luma-to-chroma coefficient. Mixed as sqrt(1-p^2) own + p shared,
 # which is the mix that leaves the field at unit variance.
 GRAIN_CHROMA_CORRELATION = 0.35
 # Worley, not Perlin: a Worley field is a random cell tessellation, which is
 # what a halide layer is, where Perlin is a smooth gradient field, which is what
 # a cloud is. Measured on the same construction, Worley returns kurtosis 3.50
-# against Perlin's 3.05, and the heavy tail is the clumping — a scanned grain
+# against Perlin's 3.05, and the heavy tail is the clumping - a scanned grain
 # field runs 3.3 to 4, and a Gaussian is exactly 3. That is the difference
 # between grain and noise.
 #
@@ -99,7 +99,7 @@ end
 #
 # Indexed on the ENCODED gray level, not on linear light. The Boolean model's
 # u is the fraction of the frame a crystal covers, which is the developed
-# density — what a scan reads and what an 8-bit file stores. Indexing it on
+# density - what a scan reads and what an 8-bit file stores. Indexing it on
 # linear light instead reads midtone as u = 0.18, lands a third of the way up
 # a curve that peaks at 0.5, and quietly costs every midtone a quarter of its
 # grain. The noise is still ADDED in linear light, where the exposure happened.
@@ -129,7 +129,7 @@ def grain_field(width, height, radius, sublayers, seed)
   raw = layers.reduce(:+) * cluster
   anisotropic = raw * 0.55 + raw.conv(GRAIN_ANISO_KERNEL, precision: :float) * 0.45
   # Materialised once. vips is lazy, so deviate, avg and the caller's use are
-  # three passes over the same construction unless the field is held — and the
+  # three passes over the same construction unless the field is held - and the
   # construction is sixteen noise images, which is most of what grain costs.
   observed = anisotropic.gaussblur(GRAIN_SCAN_SIGMA).copy_memory
   mean, deviation = grain_field_statistics(observed)

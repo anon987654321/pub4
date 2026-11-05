@@ -1,7 +1,7 @@
-# dilla — the STUDIO beat engine
+# dilla - the STUDIO beat engine
 
 One Ruby file, no gems. `dilla.rb` synthesizes boom-bap at 44.1 kHz the way
-the catalogue says it should be made: 96 PPQN MPC feel, 53–56% swing pocket,
+the catalogue says it should be made: 96 PPQN MPC feel, 53-56% swing pocket,
 snares early / kicks late / hats forward, jazz voicings that voice-lead,
 12-bit drum grit, a 40 Hz sub gated by the kick, vinyl dust and dub throws
 over the top. The recovered chord transcriptions (Fantastic Vol 2, Donuts,
@@ -10,7 +10,7 @@ The Shining) play as first-class progressions beside the engine's own.
 ## Render
 
 ```sh
-ruby dilla.rb                          # curated showcase: Blue Hour — Dilla Minor Dub Cut
+ruby dilla.rb                          # curated showcase: Blue Hour - Dilla Minor Dub Cut
 ruby dilla.rb --list                   # progressions, drum patterns, groove profiles
 ruby dilla.rb --random --out out.wav   # random progression, random drum pattern
 ruby dilla.rb --progression 9 --drums dilla_shadow_full --profile dilla_shadow \
@@ -31,13 +31,13 @@ A render writes `<name>.wav` plus three sidecars: `.quality.json` (measured
 peak, crest, LUFS estimate, stem energy shares), `.session.json` (what was
 arranged: voicings, pattern, fills, sample plan) and `.provenance.json`
 (seed, performer, every flag). A render reproduces from its seed; without
-one the seed and performer rotate per run — deleting a take loses it for
+one the seed and performer rotate per run - deleting a take loses it for
 good, so keep what you like.
 
-## Reference — learn from a recording
+## Reference - learn from a recording
 
 ```sh
-ruby dilla.rb reference https://www.youtube.com/watch?v=… [--style j_dilla]
+ruby dilla.rb reference https://www.youtube.com/watch?v=... [--style j_dilla]
 ruby dilla.rb reference ~/crate/rights-cleared-loop.wav --no-stems
 ```
 
@@ -80,7 +80,7 @@ reference-root` answer the same policy for MASTER. `out/`, `samples/` and
 
 ## Tests
 
-`cd STUDIO && rake check test` — the dilla suite covers the CLI contract
+`cd STUDIO && rake check test` - the dilla suite covers the CLI contract
 MASTER parses, chord parsing and voice-leading, deterministic seeds, mix
 balance, the sample-flip bounds, the reference profile schema and the
 analyzer's tempo measurement. Full-catalogue renders are a session activity,

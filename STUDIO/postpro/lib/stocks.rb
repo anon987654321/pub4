@@ -42,7 +42,7 @@ STOCKS = {
   # --- 2026-07-30 ------------------------------------------------------------
   # Nine stocks, and seven of them Kodak. The table could do warm-and-forgiving
   # (Portra), cine (Vision3), saturated reversal (Velvia) and one black and
-  # white — and nothing else at all: no fast grainy B&W, no cool palette, no
+  # white - and nothing else at all: no fast grainy B&W, no cool palette, no
   # instant film, no saturated NEGATIVE as opposed to slide.
   #
   # Each new entry carries a row in all five per-stock tables below it, because
@@ -125,7 +125,7 @@ LENSES = {
   summicron: { micro_contrast: 0.50, flare: 0.04 },
 }.freeze
 
-# Per-stock R/G/B channel amplitude ratios for grain — mirrors the three
+# Per-stock R/G/B channel amplitude ratios for grain - mirrors the three
 # dye-layer sensitivities. Red layer is reference (1.00), green and blue
 # attenuated to match the stock's measured dye-cloud statistics.
 GRAIN_CHAN_SCALE = {
@@ -145,8 +145,8 @@ GRAIN_CHAN_SCALE = {
   polaroid_sx70: [1.00, 0.94, 0.88],
 }.freeze
 
-# Per-channel spatial frequency ratios for grain — red layer (σ×1.00) is coarsest,
-# blue (σ×0.72) finest, matching measured dye-cloud PSF widths per layer depth.
+# Per-channel spatial frequency ratios for grain - red layer (σx1.00) is coarsest,
+# blue (σx0.72) finest, matching measured dye-cloud PSF widths per layer depth.
 GRAIN_CHANNEL_SPATIAL = [1.00, 0.85, 0.72].freeze
 
 # Lognormal grain amplitude distribution. Silver halide crystals cluster in groups;
@@ -215,7 +215,7 @@ PUSH_RESPONSE = {
   polaroid_sx70: { g: 1.00, b: 1.00 },
 }.freeze
 
-# Stocks with integral colored couplers (C-41 process) — get orange mask treatment.
+# Stocks with integral colored couplers (C-41 process) - get orange mask treatment.
 C41_STOCKS = %i[
   kodak_portra kodak_vision3 kodak_vision3_50d kodak_vision3_500t cinestill_800t
   kodak_ektar100 fuji_pro400h
@@ -239,7 +239,7 @@ FILM_BASE = {
   ilford_delta3200: [255, 255, 255],
   kodak_ektar100: [255, 244, 224],
   fuji_pro400h: [255, 247, 233],
-  # An instant print has no film base at all — the "base" is the white receiving
+  # An instant print has no film base at all - the "base" is the white receiving
   # sheet, and what tints it is the reagent, which reads warm.
   polaroid_sx70: [255, 250, 240],
 }.freeze

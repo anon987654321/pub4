@@ -51,7 +51,7 @@ end
 def recipe_step(image, fx, params, head)
   method = fx.gsub("_professional", "")
   unless RECIPE_ALLOWED.include?(method)
-    $cli_logger.warn "recipe: #{fx} is not an allowed effect — skipped"
+    $cli_logger.warn "recipe: #{fx} is not an allowed effect - skipped"
     return image
   end
 
@@ -128,7 +128,7 @@ def describe_preset(name)
   stock = STOCKS[p[:stock]]
   [
     "#{name}: #{p[:stock]} / #{p.fetch(:temp, "?")}K / intensity #{p[:intensity]}",
-    "fx: #{p[:fx].join(" → ")}",
+    "fx: #{p[:fx].join(" -> ")}",
     stock ? "grain σ=#{stock[:grain]}" : nil,
   ].compact.join("\n")
 end
@@ -137,7 +137,7 @@ def list_presets = PRESETS.keys.map { |k| describe_preset(k) }.join("\n\n")
 def list_stocks = STOCKS.keys.join(", ")
 def list_lenses = LENSES.keys.join(", ")
 
-# CSS filter string approximating a preset — for lightweight web previews.
+# CSS filter string approximating a preset - for lightweight web previews.
 def css_filter(preset_name = :portrait)
   p = PRESETS[preset_name.to_sym] || PRESETS[:portrait]
   stock = STOCKS[p[:stock]] || {}

@@ -18,7 +18,7 @@ OPTICAL_BLUR_FLOOR = 0.12
 # inward. A disc in the middle of the picture has no physical account at all.
 #
 # Built as a distance ramp from one edge, raised to a power for the falloff and
-# added rather than blended, because fogging is additive exposure — the emulsion
+# added rather than blended, because fogging is additive exposure - the emulsion
 # receives light it should not have, and the shadows go first. That is also why
 # it lifts blacks far more visibly than highlights without any explicit masking.
 #
@@ -63,7 +63,7 @@ end
 #
 # Also recovered, and this one was already close to right, because it models a
 # real practice rather than an artefact: shoot in daylight, stop down hard,
-# print cold. Kept as it was in substance — darken, then lift blue — with the
+# print cold. Kept as it was in substance - darken, then lift blue - with the
 # random component removed so the same call gives the same result, and the blue
 # lift moved onto the shadows where moonlight actually reads.
 #
@@ -99,7 +99,7 @@ end
 # Emulsion depth defocus: each dye layer sits at a different depth in the
 # multilayer emulsion stack. Blue layer (top, nearest lens) is sharpest;
 # red (deepest) sees the most focus spread from incident + substrate-reflected
-# light. focal_plane_offset is stock-specific — cinestill_800t (remjet removed)
+# light. focal_plane_offset is stock-specific - cinestill_800t (remjet removed)
 # has the most scatter; slow daylight stocks have little.
 def emulsion_defocus(image, stock = :kodak_portra)
   data = STOCKS[stock] || STOCKS[:kodak_portra]
@@ -113,7 +113,7 @@ rescue StandardError => e
 end
 
 # Lateral + longitudinal chromatic aberration. Lateral: R/B registration shift
-# at sensor edges. Longitudinal: wavelength-dependent focus depth — blue blurs
+# at sensor edges. Longitudinal: wavelength-dependent focus depth - blue blurs
 # before the focal plane, red sharpest (as in `longitudinal_ca`).
 def chromatic_aberration(image, strength = 0.5)
   shift = [(strength * 3.0).round, 1].max
@@ -136,12 +136,12 @@ def dir_coupler(image, strength = 0.15)
   gray = image.colourspace("grey16").colourspace("srgb").cast("float")
   img_f = image.cast("float") / 255.0
   # Lateral inhibition: each dye layer's development byproducts diffuse σ≈0.8px
-  # and suppress adjacent layers — desaturates pure hues, sharpens colour edges.
+  # and suppress adjacent layers - desaturates pure hues, sharpens colour edges.
   #
   # The diffusion is on the INHIBITOR, not on the picture. It used to be on
   # both: every band of the output was built from `r_d, g_d, b_d`, the blurred
   # channels, so the whole frame was replaced by a σ=0.8 gaussian of itself and
-  # only `strength * 0.5` of the high-pass came back — about 5% at the strength
+  # only `strength * 0.5` of the high-pass came back - about 5% at the strength
   # `portrait` calls it with. On a photograph that cost 52% of the picture's
   # texture in one step, which is more than every other effect in the chain
   # combined, while the log reported spread-2.38 and looked unremarkable.
@@ -149,7 +149,7 @@ def dir_coupler(image, strength = 0.15)
   # It also inverted what the line above claims. A layer's own density is sharp;
   # what reaches it from its neighbours has diffused. Subtracting a blurred
   # neighbour from a sharp channel IS an unsharp mask, so written this way the
-  # edge effect falls out of the physics instead of being bolted on after it —
+  # edge effect falls out of the physics instead of being bolted on after it -
   # which is what "sharpens colour edges" meant.
   r_s, g_s, b_s = img_f.bandsplit
   r_d, g_d, b_d = [r_s, g_s, b_s].map { |ch| ch.gaussblur(0.8) }
@@ -258,7 +258,7 @@ rescue StandardError => e
 end
 
 # Film base density: multiplicative dye-density layer that shifts both color
-# and overall density — warmer and slightly darker than a simple tint.
+# and overall density - warmer and slightly darker than a simple tint.
 def dual_base_density(image, color = [255, 248, 235], opacity = 0.07)
   r_m, g_m, b_m = color.map { |c| c / 255.0 }
   img_f = image.cast("float") / 255.0

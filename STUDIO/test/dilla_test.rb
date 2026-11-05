@@ -165,7 +165,7 @@ class TestDillaTheory < Minitest::Test
     voiced.each_cons(2) do |a, b|
       b.each do |note|
         nearest = a.map { |n| (n - note).abs }.min
-        assert nearest <= 7, "inner voice jumped #{nearest} semitones: #{a.inspect} → #{b.inspect}"
+        assert nearest <= 7, "inner voice jumped #{nearest} semitones: #{a.inspect} -> #{b.inspect}"
       end
     end
     voiced.each do |voicing|

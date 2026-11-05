@@ -47,7 +47,7 @@ rescue StandardError => e
 end
 
 # Film curl / frame-holder vignette. Steeper radial falloff (power 8) than the
-# smooth lens vignette (power 2) — mimics the mechanical shadow of the film gate.
+# smooth lens vignette (power 2) - mimics the mechanical shadow of the film gate.
 def film_curl_vignette(image, intensity = 0.45)
   w, h = image.width, image.height
   idx = Vips::Image.xyz(w, h)
@@ -65,7 +65,7 @@ rescue StandardError => e
   $logger.error "film_curl_vignette: #{e.message}"; image
 end
 
-# Video/broadcast artifacts — composite tape and CRT display, distinct signal
+# Video/broadcast artifacts - composite tape and CRT display, distinct signal
 # path from the film-scan artifacts above (no emulsion, no optics).
 
 # VHS luma bleed: composite video's luma channel has far narrower bandwidth
@@ -85,7 +85,7 @@ rescue StandardError => e
 end
 
 # VHS chroma delay: the chroma subcarrier lags the luma signal through the tape
-# path. Decompose to luma + chroma residual (not a naive per-channel shift —
+# path. Decompose to luma + chroma residual (not a naive per-channel shift -
 # that would also drag brightness), delay chroma only, recombine.
 def vhs_chroma_delay(image, intensity = 0.40)
   r, g, b = image.cast("float").bandsplit
@@ -102,7 +102,7 @@ rescue StandardError => e
 end
 
 # VHS head-switching band: the bottom strip of an NTSC/PAL frame is where the
-# spinning tape head crosses over — a jittered, noisy band a few scanlines tall.
+# spinning tape head crosses over - a jittered, noisy band a few scanlines tall.
 def vhs_head_switch_band(image, intensity = 0.40)
   w, h = image.width, image.height
   band_h = [(h * 0.02 * (0.5 + intensity)).round, 2].max
@@ -149,7 +149,7 @@ rescue StandardError => e
 end
 
 # CRT phosphor bloom: P22 phosphor persistence glows green-dominant (human eye
-# is most sensitive there, and it decays slowest) — distinct from bloom_pro's
+# is most sensitive there, and it decays slowest) - distinct from bloom_pro's
 # neutral highlight glow.
 def crt_phosphor_bloom(image, intensity = 0.5)
   linear = image.colourspace("scrgb")
@@ -167,7 +167,7 @@ rescue StandardError => e
 end
 
 # CRT scanline response: the raster gap between phosphor lines darkens every
-# other row — a hard row-parity mask, not a continuous wave (which aliases to
+# other row - a hard row-parity mask, not a continuous wave (which aliases to
 # zero at integer pixel rows for a 2px period).
 def crt_scanlines(image, intensity = 0.35)
   w, h = image.width, image.height
@@ -179,7 +179,7 @@ rescue StandardError => e
 end
 
 # MiniDV block dropout: a digital tape read error corrupts one DCT macroblock
-# at a time — a small solid-fill rectangle, not noise.
+# at a time - a small solid-fill rectangle, not noise.
 def minidv_block_dropout(image, intensity = 0.35)
   w, h = image.width, image.height
   processed = image
@@ -198,7 +198,7 @@ rescue StandardError => e
 end
 
 # Hi8 chroma noise: analog Hi8's chroma subcarrier has a much worse SNR than
-# its luma — noise piled onto the chroma residual only, luma stays clean.
+# its luma - noise piled onto the chroma residual only, luma stays clean.
 def hi8_chroma_noise(image, intensity = 0.40)
   r, g, b = image.cast("float").bandsplit
   luma = r * 0.2126 + g * 0.7152 + b * 0.0722
@@ -212,7 +212,7 @@ rescue StandardError => e
 end
 
 # Selenium toning: silver areas in shadow zones chemically convert to selenium
-# compounds — blue-violet shift in the deepest densities, neutral in highlights.
+# compounds - blue-violet shift in the deepest densities, neutral in highlights.
 def selenium_tone(image, intensity = 0.45)
   img_f = image.cast("float") / 255.0
   luma = img_f.colourspace("b-w").cast("float") / 255.0

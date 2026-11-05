@@ -11,7 +11,7 @@ rescue StandardError => e
   $logger.error "film_shoulder: #{e.message}"; image
 end
 
-# Clarity: medium-radius unsharp on Lab L channel only — local contrast "3D pop"
+# Clarity: medium-radius unsharp on Lab L channel only - local contrast "3D pop"
 # without hue shift or color fringing.
 def clarity(image, radius = 15, intensity = 0.65)
   lab = image.colourspace("lab")
@@ -26,13 +26,13 @@ rescue StandardError => e
 end
 
 # Edge-aware noise reduction: smooth flat areas, preserve edges.
-# Approximated as luminance-masked Gaussian — clean base before film grain is added.
+# Approximated as luminance-masked Gaussian - clean base before film grain is added.
 def edge_aware_nr(image, strength = 0.60)
   blurred = image.gaussblur(1.5 + strength * 2.0)
   quick = image.gaussblur(1.5)
   # `(image - quick) + (quick - image)` is a value plus its own negation:
   # identically zero at every pixel, so the mask was always 0 and this returned
-  # a plain full-frame blur — measured bit-identical to gaussblur alone. The
+  # a plain full-frame blur - measured bit-identical to gaussblur alone. The
   # edge term wants the magnitude of the detail, which is what selective_sharpen
   # sixteen lines below was already corrected to use.
   detail = image.cast("float") - quick.cast("float")
@@ -115,10 +115,10 @@ end
 # Halation in linear (exposure) space. Bright light penetrates the emulsion,
 # reflects off the substrate's antihalation backing imperfectly, and re-exposes
 # nearby grains. Red wavelengths penetrate deepest, so the rebound glow is
-# red-orange — never neutral. Default tint matches Vision3-style stocks; Velvia
+# red-orange - never neutral. Default tint matches Vision3-style stocks; Velvia
 # antihalation is near-perfect (drop intensity), Tri-X has none (boost it).
-# Pipeline: linearize → soft-threshold highlights at L≈0.7 → wide gaussian on
-# the mono source map → tint asymmetrically (R>G>>B) → add back → re-encode.
+# Pipeline: linearize -> soft-threshold highlights at L≈0.7 -> wide gaussian on
+# the mono source map -> tint asymmetrically (R>G>>B) -> add back -> re-encode.
 # Physics-calibrated: fraction of incident energy reflected per dye layer depth.
 # Red penetrates deepest (0.92), green mid-layer (0.15), blue nearest surface (0.04).
 HALATION_TINT_VISION3 = [0.92, 0.15, 0.04].freeze
@@ -127,7 +127,7 @@ HALATION_TINT_TRI_X = [0.45, 0.45, 0.45].freeze
 HALATION_THRESHOLD = 0.7
 # Halation is an annulus. Light that gets through the emulsion reflects off the
 # rear face of the base by total internal reflection and re-enters the emulsion
-# a base-thickness away, so it re-exposes a ring around the highlight — not a
+# a base-thickness away, so it re-exposes a ring around the highlight - not a
 # halo centred on it. This summed a narrow and a wide Gaussian, which puts the
 # most returned light exactly where the highlight already is, the one place it
 # cannot land. A difference of Gaussians is the ring; the narrow lobe stays on

@@ -67,7 +67,7 @@ task :test do
 
     summary = result.summary
     detail = summary ? Studio::TestRunner.summary_line(summary) : result.reason
-    puts "studio-test0: #{result.state.to_s.upcase} #{name}#{detail ? " — #{detail}" : ""}"
+    puts "studio-test0: #{result.state.to_s.upcase} #{name}#{detail ? " - #{detail}" : ""}"
     unless result.state == :pass
       failed << name
       [output, error_output].join("\n").lines.last(12).each do |line|

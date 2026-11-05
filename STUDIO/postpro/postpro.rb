@@ -77,7 +77,7 @@ POSTPRO_USAGE = <<~TXT
     --compare                         side-by-side after a one-shot grade
     --random [--count N] [--rough]    five to ten analog variations per image
     --heavy                           start each take from a named look (noir, neon
-                                      night...); lane deal subtle→bleeding edge, at most
+                                      night...); lane deal subtle->bleeding edge, at most
                                       ten steps a take; also POSTPRO_HEAVY=1
     --watch [DIR] [--preset NAME]     grade every new photo that lands in DIR
     --auto                            grade the default globs without prompting
@@ -136,7 +136,7 @@ ENV["POSTPRO_HEAVY"] = "1" if ARGV.include?("--heavy")
 # --rescue, --set and --measure: each runs and exits straight after boot.
 require_relative "lib/early_modes"
 
-# Anchored to the tool, not to the shell's working directory — the same CWD
+# Anchored to the tool, not to the shell's working directory - the same CWD
 # defect this file already fixes for master.json and replicate.rb. A bare
 # relative path meant even a read-only --vocab-check created a log wherever the
 # operator happened to be standing.
@@ -151,7 +151,7 @@ $cli_logger = Object.new.tap do |obj|
   def obj.info(msg) = PostproBootstrap.dmesg(msg)
   # warn was missing while two call sites used it, so a bad recipe key hit
   # private Kernel#warn, raised NoMethodError, and process_file's rescue turned
-  # it into "Variation 1 failed" — naming neither the recipe nor the key, and
+  # it into "Variation 1 failed" - naming neither the recipe nor the key, and
   # producing no output files for one typo.
   def obj.warn(msg) = PostproBootstrap.dmesg("warn #{msg}")
   def obj.error(msg) = PostproBootstrap.dmesg("error #{msg}")
@@ -169,7 +169,7 @@ if BOOTSTRAP[:gems][:vips]
   # Here rather than at the top of the file: uncanny.rb opens with `require
   # "vips"`, so requiring it before the bootstrap has decided vips is present
   # would raise during load and take the whole tool down instead of degrading.
-  # The grade reads it now — shadow_lift asks where the blacks already sit, and
+  # The grade reads it now - shadow_lift asks where the blacks already sit, and
   # preset() asks how much texture and contrast the source arrived with.
   require_relative "uncanny"
 end

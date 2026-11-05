@@ -7,13 +7,13 @@
 # looks like one: tilt-shift and selenium toning and teal-orange on the same
 # frame, each at half strength, none of them agreeing about what the picture is.
 # What makes a chain read as a grade instead is that its steps belong to one
-# process — a stock, a development, a print, one way of having been damaged.
+# process - a stock, a development, a print, one way of having been damaged.
 #
 # Nobody declares those families here. They are read off the eighty-two presets,
 # each a colourist's answer to the same question: a candidate may
 # join the chain only where some preset already puts it beside everything
-# already picked. The graph is dense enough to carry it — greedy walks run five
-# to thirteen effects, median eight — so the constraint buys coherence without
+# already picked. The graph is dense enough to carry it - greedy walks run five
+# to thirteen effects, median eight - so the constraint buys coherence without
 # costing variety.
 RANDOM_CHAIN_LENGTH = (4..8)
 # Grain is not optional, ever. The argument of this whole file is that an
@@ -31,7 +31,7 @@ RANDOM_ANALOG_CORE = %w[
 
 # Grain is removed from every lane pool: `random_finish` appends the
 # always-grain once at the end, and a lane draw putting another grain earlier
-# in the chain made "grainx2" — two passes of what compositors forbid stacking
+# in the chain made "grainx2" - two passes of what compositors forbid stacking
 # ("don't mix grain on top of grain in the plate"). One grain pass, last.
 
 RANDOM_LANES = {
@@ -87,9 +87,9 @@ RANDOM_SHAPES = %w[relight aerial_depth].freeze
 
 # The wear shelf: dust, scanner noise, tape dropouts, fogged fixer, gate weave.
 #
-# Off by default, and that is the change. These may not lead — dust and hair at
+# Off by default, and that is the change. These may not lead - dust and hair at
 # 0.94 is the amateur move in a single line, the artefact becoming the picture
-# — but the deeper problem is that they are loud by construction. They read as
+# - but the deeper problem is that they are loud by construction. They read as
 # an effect where the rest of this file is trying to read as a photograph.
 # `--rough` brings them back for the runs that want a handled print, still
 # capped and still never leading. A preset is free to disagree; a preset was
@@ -192,7 +192,7 @@ end
 #
 # A chain in a random order is mush: a print stock before the film curve, a
 # vignette before the lens. Rather than declare a stage table that would drift
-# from the presets, read the presets — each one is a colourist's ordering, and
+# from the presets, read the presets - each one is a colourist's ordering, and
 # the mean normalised position of an effect across all of them is the order it
 # wants to run in. An effect no preset uses sits with the artefacts, late.
 def random_stage_rank
@@ -215,7 +215,7 @@ end
 #
 # `avoid` holds the chains this run has already drawn. A draw that overlaps one
 # of them too far is thrown back, up to a bounded number of attempts, after
-# which the least similar of them is used — a run of five pictures that are five
+# which the least similar of them is used - a run of five pictures that are five
 # versions of one picture is the other way to waste somebody's afternoon.
 def random_chain(rng = Random.new(postpro_seed), avoid: [], lane: nil)
   closest = nil
@@ -231,7 +231,7 @@ def random_chain(rng = Random.new(postpro_seed), avoid: [], lane: nil)
 end
 
 # Two chains that share optical_blur, spectral_temp and film_curve share a
-# spine, not a look — most presets carry all three. Similarity is measured over
+# spine, not a look - most presets carry all three. Similarity is measured over
 # what is distinctive, meaning the effects fewer than half the presets use, so
 # the common backbone stops reading as a resemblance.
 def random_similarity(one, two)

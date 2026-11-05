@@ -141,7 +141,7 @@ def vocab_check
   # All four output paths finish the same way, or this is two tools wearing one
   # name. Until 2026-08-12 process_file and run_random ran the finishing grain
   # and run_one_shot and run_watch did not, so the same --preset produced a
-  # different negative depending on which entry point rendered it — and the thin
+  # different negative depending on which entry point rendered it - and the thin
   # side of the split was replicate's --postpro handoff, which is the path that
   # makes the finals. Operator's call: all four grain.
   #
@@ -188,8 +188,8 @@ def vocab_check
 
   # One grain pass, at the end. A lane pool that also draws grain made
   # "grainx2" chains whose passes compounded with the halation drawn before
-  # them — the destroyed rather than emulated complaint this tree had to grow
-  # out of — so the pools are checked the way every other table is.
+  # them - the destroyed rather than emulated complaint this tree had to grow
+  # out of - so the pools are checked the way every other table is.
   grained_lanes = RANDOM_LANES.select { |_, spec| spec.fetch(:effects).include?(RANDOM_ALWAYS) }
   unless grained_lanes.empty?
     problems << "random lanes draw grain from their pools while the always-grain is appended: " \
@@ -223,7 +223,7 @@ def vocab_check
   # normal state. Saying so is the difference between a default and a setting
   # nobody can find the reader for.
   unless File.exist?(PostproBootstrap.master_config_path)
-    notes << "no #{PostproBootstrap.master_config_path} — CONFIG is empty, so jpeg_quality, variations, " \
+    notes << "no #{PostproBootstrap.master_config_path} - CONFIG is empty, so jpeg_quality, variations, " \
              "default_preset and apply_camera_profile_first all take their built-in fallbacks " \
              "(preset=house, and the camera-profile pass is ON: #{CAMERA_PROFILES.values.sum(&:size)} " \
              "bodies across #{CAMERA_PROFILES.size} vendors)"
@@ -231,8 +231,8 @@ def vocab_check
 
   # One actual pixel, through actual chains.
   #
-  # Everything above reads tables, which is why a frozen memo cache — an error
-  # raised in the first or second effect of every preset that has one — sat
+  # Everything above reads tables, which is why a frozen memo cache - an error
+  # raised in the first or second effect of every preset that has one - sat
   # here undetected while this same function printed "0 problems". A table
   # checker cannot see a runtime failure, so the checker has to run something.
   #
@@ -250,7 +250,7 @@ def vocab_check
   problems.each { |line| puts "BROKEN #{line}" }
   notes.each { |line| puts "NOTE   #{line}" }
   puts "#{PRESETS.length} presets, #{STOCKS.length} stocks, #{LENSES.length} lenses, " \
-       "#{implemented.length} effects, #{RECIPE_ALLOWED.length} recipe-allowed — " \
+       "#{implemented.length} effects, #{RECIPE_ALLOWED.length} recipe-allowed - " \
        "#{problems.length} problem(s), #{notes.length} note(s)"
   problems.length
 end
