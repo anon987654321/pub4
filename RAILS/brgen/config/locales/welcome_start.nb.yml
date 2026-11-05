@@ -1,0 +1,15 @@
+nb:
+  welcome_start:
+    title: Kom i gang
+    lead: To raske valg, så viser forsiden mer av det som er ditt. Alt kan endres senere.
+    neighborhood_heading: Velg nabolaget ditt
+    neighborhood_body: Forsiden viser innlegg fra nabolaget du velger. Du kan bytte når som helst.
+    no_neighborhoods: Denne byen har ingen nabolag ennå.
+    communities_heading: Bli med i %{goal} fellesskap
+    communities_body: Innlegg fra fellesskapene du er med i havner i feeden din.
+    no_communities: Ingen fellesskap ennå
+    no_communities_body: Start et selv, eller se hva som finnes.
+    browse_communities: Se fellesskap
+    finish: Gå til forsiden
+  onboarding:
+    first_step: Kom i gang

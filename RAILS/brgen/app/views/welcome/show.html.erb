@@ -1,0 +1,33 @@
+<% content_for :title, t("welcome_start.title") %>
+
+<section class="welcome-start">
+  <%= tag.h1 t("welcome_start.title") %>
+  <%= tag.p t("welcome_start.lead") %>
+
+  <section aria-labelledby="welcome-start-neighborhood">
+    <%= tag.h2 t("welcome_start.neighborhood_heading"), id: "welcome-start-neighborhood" %>
+    <% if @neighborhoods.any? %>
+      <%= tag.p t("welcome_start.neighborhood_body") %>
+      <%= tag.ul render(partial: "welcome/neighborhood", collection: @neighborhoods,
+                        locals: { chosen_id: @chosen_neighborhood_id }), class: "chips" %>
+    <% else %>
+      <%# empty_state: no-action-ok -- the communities below and the finish link are the way on %>
+      <%= tag.p t("welcome_start.no_neighborhoods") %>
+    <% end %>
+  </section>
+
+  <section aria-labelledby="welcome-start-communities">
+    <%= tag.h2 t("welcome_start.communities_heading", goal: WelcomeController::JOIN_GOAL),
+               id: "welcome-start-communities" %>
+    <% if @communities.any? %>
+      <%= tag.p t("welcome_start.communities_body") %>
+      <%= render partial: "welcome/community", collection: @communities, locals: { joined_ids: @joined_ids } %>
+    <% else %>
+      <%= render "shared/empty_state", title: t("welcome_start.no_communities"),
+            body: t("welcome_start.no_communities_body"),
+            action: { label: t("welcome_start.browse_communities"), path: communities_path } %>
+    <% end %>
+  </section>
+
+  <%= tag.p link_to(t("welcome_start.finish"), root_path, class: "button button-primary") %>
+</section>

@@ -1,0 +1,15 @@
+en:
+  welcome_start:
+    title: Get started
+    lead: Two quick choices, and the front page shows more of what is yours. You can change them later.
+    neighborhood_heading: Pick your neighbourhood
+    neighborhood_body: The front page shows posts from the neighbourhood you pick. Switch any time.
+    no_neighborhoods: This city has no neighbourhoods yet.
+    communities_heading: Join %{goal} communities
+    communities_body: Posts from the communities you join show up in your feed.
+    no_communities: No communities yet
+    no_communities_body: Start one yourself, or see what there is.
+    browse_communities: See communities
+    finish: Go to the front page
+  onboarding:
+    first_step: Get started

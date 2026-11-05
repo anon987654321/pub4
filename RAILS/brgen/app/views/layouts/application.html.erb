@@ -206,7 +206,8 @@
   <%# The radio's permanent audio dock, so a track keeps playing across pages. %>
   <%= render "playlist/shared/dock" if Brgen::DomainRegistry::RADIO_SUBDOMAINS.include?(request.subdomain) %>
   <% if !vertical_surface? && current_page?(main_app.root_path) %>
-    <%= render "shared/welcome_onboarding", surface: "brgen", city: city_name %>
+    <%= render "shared/welcome_onboarding", surface: "brgen", city: city_name,
+          first_step: { label: t("onboarding.first_step"), path: main_app.welcome_start_path } %>
   <% end %>
   <%= render "shared/cookie_banner" %>
   <%# after_engagement: the first screen is the page. On a phone the prompt

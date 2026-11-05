@@ -1,0 +1,2 @@
+<%# One suggested community, with Join or Leave in place. locals: community, joined_ids %>
+<%= render "communities/card", community:, joined: joined_ids.include?(community.id) %>

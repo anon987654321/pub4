@@ -5,6 +5,9 @@
   namespace = "onboarding.#{surface}"
   title_id = "welcome-onboarding-title-#{surface}"
   lead_id = "welcome-onboarding-lead-#{surface}"
+  # first_step: { label:, path: } turns the primary button into a link to an
+  # app's first real step; it still records the dialog as seen on the way.
+  first_step = local_assigns[:first_step]
 %>
 <div id="welcome-onboarding-<%= surface %>"
      class="welcome-onboarding welcome-onboarding--<%= surface %>"
@@ -56,9 +59,14 @@
         <button type="button"
                 class="welcome-onboarding-secondary"
                 data-action="welcome-onboarding#close"><%= t("onboarding.skip") %></button>
-        <button type="button"
-                class="welcome-onboarding-primary"
-                data-action="welcome-onboarding#close"><%= t("onboarding.enter") %></button>
+        <% if first_step %>
+          <%= link_to first_step.fetch(:label), first_step.fetch(:path), class: "welcome-onboarding-primary",
+                data: { action: "welcome-onboarding#remember" } %>
+        <% else %>
+          <button type="button"
+                  class="welcome-onboarding-primary"
+                  data-action="welcome-onboarding#close"><%= t("onboarding.enter") %></button>
+        <% end %>
       </div>
     </div>
   </div>

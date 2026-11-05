@@ -1,0 +1,3 @@
+<%# One neighbourhood on the first step: the home feed's own filter. locals: neighborhood, chosen_id %>
+<%= tag.li link_to(neighborhood.name, root_path(neighborhood_id: neighborhood.id), class: "chip",
+                   aria: { current: ("true" if neighborhood.id == chosen_id) }) %>

@@ -56,6 +56,12 @@ export default class extends Controller {
     this.previousFocus?.focus?.()
   }
 
+  // The first-step link: remember the dialog as seen and let the link navigate.
+  remember() {
+    try { localStorage.setItem(this.key, "1") } catch (_) {}
+    setWelcomePending(false)
+  }
+
   handleKeydown(event) {
     if (this.element.hidden) return
 

@@ -2691,7 +2691,7 @@ items:
   path: RAILS/__shared/app/views/shared/_welcome_onboarding.html.erb
   item: Give the primary onboarding button a real first step (pick your neighborhood,
     join three communities) instead of only closing.
-  status: open
+  status: done
 - id: brgen-219
   app: brgen
   area: onboarding
