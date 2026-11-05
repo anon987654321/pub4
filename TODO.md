@@ -1,6 +1,6 @@
 # pub4 — remaining work
 
-Audit snapshot: 2026-11-05, `main` at `4b57364d4935b2df9e3021dd492be32d4db4b85c`.
+Audit snapshot: 2026-11-05, `main` at `4b57364d4935b2df9e3021dd492be32d4db4b85c` (source/history baseline for this register update).
 This register replaces the previous 1,275-line, 462-checkbox carry-forward
 dump. It contains unresolved outcomes, not session notes or speculative
 architecture proposals.
