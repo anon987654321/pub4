@@ -22,10 +22,22 @@ module Studio
       end
     end
 
-    def capture3(*command, timeout:, **options)
+    # Accept both Open3's positional environment hash (used by existing callers)
+    # and the clearer env: keyword (used by the suite runner). Open3 only accepts
+    # the environment as a leading positional argument; forwarding env: through
+    # **options raises "wrong exec option symbol: env" before the child starts.
+    def capture3(*command, timeout:, env: nil, **options)
       limit = Float(timeout)
       raise ArgumentError, "timeout must be finite and positive" unless limit.finite? && limit.positive?
       raise ArgumentError, "command must not be empty" if command.empty?
+      unless env.nil? || env.is_a?(Hash)
+        raise ArgumentError, "env must be a Hash"
+      end
+      if !env.nil? && command.first.is_a?(Hash)
+        raise ArgumentError, "environment supplied both positionally and by keyword"
+      end
+
+      command.unshift(env) unless env.nil?
 
       deadline = monotonic + limit
       output = error_output = status = nil
