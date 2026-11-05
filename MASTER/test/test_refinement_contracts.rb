@@ -101,6 +101,38 @@ class TestRefinementContracts < Minitest::Test
     assert_operator census.counts.fetch("tracked_files"), :>, 0
   end
 
+  def test_growth_only_sprawl_gate_rejects_net_file_or_directory_growth
+    census = Operator::SprawlCensus
+    ceilings = census.ceilings
+    counts = census.counts.merge("tracked_files" => ceilings.fetch("tracked_files") + 1)
+    output = nil
+    result = nil
+
+    census.stub(:counts, counts) do
+      output, = capture_io { result = census.run(growth_only: true) }
+    end
+
+    assert_equal 1, result
+    assert_includes output, "tracked_files grew"
+    assert_includes output, "tracked_directories"
+  end
+
+  def test_growth_only_sprawl_gate_allows_flat_or_reduced_structure
+    census = Operator::SprawlCensus
+    ceilings = census.ceilings
+    counts = census.counts.merge(
+      "tracked_files" => ceilings.fetch("tracked_files"),
+      "tracked_directories" => ceilings.fetch("tracked_directories") - 1,
+    )
+    result = nil
+
+    census.stub(:counts, counts) do
+      capture_io { result = census.run(growth_only: true) }
+    end
+
+    assert_equal 0, result
+  end
+
   def test_sprawl_ratchet_does_not_hide_an_overage_when_another_metric_falls
     census = Operator::SprawlCensus
     ceilings = census.ceilings.merge("lone_dirs" => 20, "stutter" => 0, "vague_names" => 0)

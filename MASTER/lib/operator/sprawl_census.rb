@@ -198,7 +198,7 @@ module Operator
       File.exist?(CEILINGS) ? YAML.safe_load_file(CEILINGS) : {}
     end
 
-    def run(ratchet: false, list: false)
+    def run(ratchet: false, list: false, growth_only: false)
       check_corpus!
       now = counts
       missing = base_tree_findings
@@ -206,6 +206,16 @@ module Operator
       return 1 if missing.any?
 
       recorded = ceilings
+      if growth_only
+        keys = %w[tracked_files tracked_directories]
+        keys.each { |key| puts "sprawl_census: #{key} #{now.fetch(key)} (ceiling #{recorded.fetch(key)})" }
+        over = keys.select { |key| now.fetch(key) > recorded.fetch(key) }
+        over.each do |key|
+          puts "sprawl_census: #{key} grew to #{now.fetch(key)} from #{recorded.fetch(key)} — reuse existing paths or remove an equal amount of structure"
+        end
+        return over.empty? ? 0 : 1
+      end
+
       now.each { |k, v| puts "sprawl_census: #{k} #{v} (ceiling #{recorded.fetch(k, v)})" }
       return list_members if list
 
@@ -236,5 +246,9 @@ module Operator
 end
 
 if $PROGRAM_NAME == __FILE__
-  exit Operator::SprawlCensus.run(ratchet: ARGV.include?("--ratchet"), list: ARGV.include?("--list"))
+  exit Operator::SprawlCensus.run(
+    ratchet: ARGV.include?("--ratchet"),
+    list: ARGV.include?("--list"),
+    growth_only: ARGV.include?("--growth-only"),
+  )
 end
