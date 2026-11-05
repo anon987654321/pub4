@@ -2009,6 +2009,43 @@ module Master
           end
         end
 
+      # The front page is where a document speaks first, and 2.1.6's tracking
+      # is a repair for capitals, not a licence to open with them: a letterspaced
+      # caps headline shouts, and letterspacing the lowercase instead is 2.1.7's
+      # named offence. So the headline a reader meets first - a title page, a
+      # cover, a landing, a document H1 - is set in the text face, mixed case
+      # or true small caps. One bare token is a name (OPENBSD, LICENSE), not a
+      # headline. Section heads stay ALL_CAPS_NO_TRACKING's question. Non-cased
+      # scripts hold no \p{Lu} and so never fire.
+        FRONT_PAGE_HEADLINE = /\A\s{0,3}(?:#\s+(.+?)\s*#*\s*\z|\\(?:title|chapter)\s*\{([^}]*)\}|<h1\b[^>]*>([^<]*)<\/h1>\s*\z)/i
+        FRONT_PAGE_MARKUP = /\\[A-Za-z]+|[*_`\[\]]|&[A-Za-z]+;/
+
+        ::Law.define(:NO_SHOUTING_FRONT_PAGE) do
+          source "Operator directive 2026-11-06 - front-page headlines are never set in capitals; Bringhurst, Elements of Typographic Style 2.1.6-2.1.7 (capitals take tracking, lowercase never does)"
+          ask "Is the headline a reader meets first - title page, cover, landing or document H1 - set in full capitals?"
+          tags %i[TYPOGRAPHY]
+          fix "Set the front-page headline in the text face: mixed case, or true small caps where the face cuts them. Tracked capitals are 2.1.6's repair for labels, not the shape a front page opens with."
+          example_path "/repo/docs/example.md"
+          bad "# THE ELEMENTS OF TYPOGRAPHIC STYLE\n"
+          good "# The Elements of Typographic Style\n"
+          check do |src, path|
+            next [] unless path.to_s.match?(/\.(?:md|markdown|tex|html?|erb)\z/)
+
+            src.each_line.with_index(1).filter_map do |line, n|
+              headline = FRONT_PAGE_HEADLINE.match(line)
+              next unless headline
+
+              words = headline.captures.compact.first.to_s.gsub(FRONT_PAGE_MARKUP, " ").strip
+              next if words.empty? || words.match?(/\A\S+\z/)
+
+              upper = words.scan(/\p{Lu}/).size
+              next unless upper >= 2 && upper == words.scan(/\p{L}/).size
+
+              finding(line: n, message: "front-page headline in capitals - set it in the text face, mixed case or true small caps")
+            end
+          end
+        end
+
       # NULL_BLINDNESS lives once, in law/ (domain files) - the second
       # retired twin (see the old backlog). This block's regex matched IS NULL, the
       # correct form its own message prescribed, and needed a path exemption

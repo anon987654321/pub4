@@ -2,14 +2,17 @@
 % pub4 repository analysis - the typographic edition
 %
 % Rebuilt to obey the typographic laws it reports on:
-%   TYPOGRAPHIC_GRID   measure 66 characters, computed from the face's
+%   MEASURE_OPTIMUM    measure 66 characters, computed from the face's
 %                      own lowercase advance; leading 10.5/16; every
-%                      vertical skip a multiple of the baseline.
-%   MEASURE_OPTIMUM    running text bound to the 45-75 character measure.
-%   EN_DASH_RANGE      numeric ranges carry an en dash (53-56).
-%   TYPOGRAPHIC_EXCELLENCE   em dashes, curly quotes, no ASCII decor.
+%                      vertical skip a multiple of the baseline; running
+%                      text bound to the 45-75 character measure.
+%   ASCII_PUNCTUATION  the source holds ASCII marks only: hyphens, straight
+%                      quotes, TeX markup; the face ligates what it renders.
 %   TYPOGRAPHY_DISCIPLINE    hierarchy by weight and size, no decoration.
-%   ALL_CAPS_NO_TRACKING     display labels letterspaced 0.08 em.
+%   NO_SHOUTING_FRONT_PAGE   the front page opens in the text face -
+%                      no capitals row, letterspaced or otherwise.
+%   ALL_CAPS_NO_TRACKING     the one tracked label left is the running
+%                      head, which is not a front page.
 %   README_PROSE       no tables anywhere; the demonstration (the
 %                      colophon) sits under the final heading.
 %   PAPER_NOT_PURE_WHITE     page ground #F7F2E9, never #FFFFFF.
@@ -90,15 +93,18 @@
 % ---------- tree names ----------
 % In justified running text: small caps, unspaced, unbreakable and never
 % hyphenated (letterspacing every occurrence would wreck the even colour
-% of the line). Where a name stands as a display label~--- title page,
-% running head~--- it carries the 0.08 em tracking of ALL_CAPS_NO_TRACKING.
+% of the line). The title page carries no letterspaced caps row at all:
+% NO_SHOUTING_FRONT_PAGE sets the front-page headline in the text face,
+% and the running head is the one tracked label left (it is no front
+% page, and 2.1.6 sanctions tracking there).
 \newcommand{\treename}[1]{\mbox{\textsc{#1}}}
-% Calibrated against the render: LetterSpace 20 ~= 0.08 em here.
-\newcommand{\treelabel}[1]{\mbox{{\addfontfeatures{LetterSpace=20}\textsc{#1}}}}
-\newcommand{\mtree}{\treename{MASTER}}
-\newcommand{\rtree}{\treename{RAILS}}
-\newcommand{\stree}{\treename{STUDIO}}
-\newcommand{\otree}{\treename{OPENBSD}}
+% Lowercase input is what makes \textsc small caps: the face's smcp maps the
+% lowercase letters and leaves the capital full-size. Typed as MASTER the
+% names would come out full caps and shout through every justified line.
+\newcommand{\mtree}{\treename{Master}}
+\newcommand{\rtree}{\treename{Rails}}
+\newcommand{\stree}{\treename{Studio}}
+\newcommand{\otree}{\treename{Openbsd}}
 % file paths and commands: the italic voice, one family still
 \newcommand{\fpath}[1]{\emph{\url{#1}}}
 
@@ -144,16 +150,14 @@
 \thispagestyle{empty}
 \pagenumbering{arabic}
 \centering
-\vspace*{24mm}
-{\footnotesize\color{muted}{\addfontfeatures{LetterSpace=25}\textsc{a reading of the pub4 monorepo}}\par}
+\vspace*{28mm}
+{\footnotesize\color{muted}\itshape A reading of the pub4 monorepo\par}
 \vspace{8mm}
 {\color{signal}\rule{22mm}{0.6pt}\par}
 \vspace{11mm}
 {\Huge pub4\par}
 \vspace{6mm}
-{\large\itshape A structural analysis of the four trees\par}
-\vspace{11mm}
-{\footnotesize\color{ink}\treelabel{master}\;\textcolor{signal}{.}\;\treelabel{rails}\;\textcolor{signal}{.}\;\treelabel{studio}\;\textcolor{signal}{.}\;\treelabel{openbsd}\par}
+{\large\itshape A structural analysis of the MASTER, RAILS, STUDIO and OPENBSD trees\par}
 \vspace{15mm}
 \begin{minipage}{0.72\textwidth}
 \centering
@@ -306,23 +310,25 @@ A report that measures a repository against its laws owes the reader proof that 
 
 \emph{One family.} The document is set in EB Garamond throughout~--- roman, italic, bold and true small caps. No second family appears; hierarchy comes from size, weight and the italic voice (\fpath{TYPOGRAPHY_DISCIPLINE}).
 
-\emph{The measure.} The text block is 302.6\,pt wide, computed from the face itself: the 26 lowercase letters measure 119.2065\,pt at 10.5\,pt, and 66/26 of that is 302.6011\,pt. The running measure is therefore 66 characters~--- Bringhurst's ideal, which \fpath{TYPOGRAPHIC_GRID} and \fpath{MEASURE_OPTIMUM} encode.
+\emph{The measure.} The text block is 302.6\,pt wide, computed from the face itself: the 26 lowercase letters measure 119.2065\,pt at 10.5\,pt, and 66/26 of that is 302.6011\,pt. The running measure is therefore 66 characters~--- Bringhurst's ideal, which \fpath{MEASURE_OPTIMUM} encodes. (The older line-length law, \fpath{TYPOGRAPHIC_GRID}, retired 2026-10-30; measure lives where a reader's measure lives.)
 
 \emph{The grid.} Leading is 10.5/16, and every vertical step on every text page is a multiple of the 16\,pt baseline; section heads space 32\,pt before and 16\,pt after, subsections 16\,pt and 16\,pt. Every page closes on a baseline.
 
 \emph{The page.} 156\,\texttimes\,234\,mm~--- the 2:3 rectangle Bringhurst calls the perfect page, with head-biased margins. The laws are silent on page shape; the choice is his, offered where \mtree{} is silent.
 
-\emph{The figures.} Numerals are proportional oldstyle throughout, the way \fpath{TYPOGRAPHIC_GRID}'s own fixture line lengths are counted~--- and the way Garamond cut them.
+\emph{The figures.} Numerals are proportional oldstyle throughout~--- the way Garamond cut them, and the way a measure is counted, letters and spaces together.
 
-\emph{The dashes.} Numeric ranges carry an en dash (53--56 percent swing); thought carries an em dash; every quotation mark is curly (\fpath{EN_DASH_RANGE}, \fpath{TYPOGRAPHIC_EXCELLENCE}).
+\emph{The dashes and quotes.} The source carries ASCII punctuation only, as \fpath{ASCII_PUNCTUATION} demands: hyphens, straight quotes, TeX markup. The marks the reader sees~--- an en dash in 53--56, em dashes where a thought turns, curly quotes around every citation~--- are ligatures the face and TeX cut from that ASCII source at render time. The law governs what is written; the page still shows what a reader deserves.
 
-\emph{The names.} \fpath{ALL_CAPS_NO_TRACKING} demands tracking of all-caps labels, and the display labels carry it: on the title page and in the running head the tree names are letterspaced 0.08\,em. In justified running text \mtree, \rtree, \stree{} and \otree{} wear small caps unspaced, because letterspacing every occurrence wrecks the even colour of the justified line~--- Bringhurst's own rule, and the reason the law's \emph{label} wording fits the display case.
+\emph{The front page.} The page you opened to carries no capitals row: the kicker and the subtitle are italic in the text face, and \fpath{pub4} stands in the face's own lowercase. This obeys \fpath{NO_SHOUTING_FRONT_PAGE}, the operator's directive of 2026-11-06, whose ground is Bringhurst's: 2.1.6 letterspaces capitals because they need the repair, 2.1.7 forbids letterspacing the lowercase, and a page that opens with either has let the repair become the voice.
+
+\emph{The names.} In justified running text \mtree, \rtree, \stree{} and \otree{} wear small caps, unspaced, because letterspacing every occurrence wrecks the even colour of the justified line. The one tracked label left in the document is the running head, letterspaced 0.05\,em under \fpath{ALL_CAPS_NO_TRACKING}~--- a running head is not a front page, and 2.1.6 sanctions tracking there.
 
 \emph{No tables.} Every measurement is a sentence. \fpath{README_PROSE} bans the table; its allowance for one demonstration under the final heading is spent on this colophon.
 
 \emph{The ground.} Pages are painted \#{F7F2E9}; ink is \#{1E322D}; muted text is \#{5F6D66}~--- the Sommerseth tokens held in \fpath{MASTER/docs/visual/bergen_brand_systems.md}, in obedience to \fpath{PAPER_NOT_PURE_WHITE}. Nothing on any page is \#{FFFFFF}.
 
-\emph{One signal.} A single signal colour, \#{C97E1E}, appears once per visual unit~--- the section numerals, the title rule, the name separators on the title page (\fpath{SIGNAL_COLOR_NAMING}).
+\emph{One signal.} A single signal colour, \#{C97E1E}, appears once per visual unit~--- the section numerals and the title-page rule (\fpath{SIGNAL_COLOR_NAMING}).
 
 \emph{The prose.} The body text was swept against the leech list in \fpath{data/laws.yml} (\emph{very, rather, really, quite, pretty, somewhat, just, basically, simply}) and holds none of them; the passive voice appears only where the actor is unknown or beside the point, as Strunk's rule allows.
 

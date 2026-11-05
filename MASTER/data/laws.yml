@@ -2971,6 +2971,9 @@ law_catalogue:
     NO_SHOTGUN_SURGERY:
       definition_sources: [MASTER/law/universal.rb]
       severity: warning
+    NO_SHOUTING_FRONT_PAGE:
+      definition_sources: [MASTER/law/universal.rb]
+      severity: info
     NO_SIDE_EFFECTS:
       definition_sources: [MASTER/law/universal.rb]
       severity: info
