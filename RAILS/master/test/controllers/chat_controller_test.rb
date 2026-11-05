@@ -100,7 +100,7 @@ class ChatControllerTest < ActionDispatch::IntegrationTest
   test "message smoke ping streams sse without container" do
     Rails.application.config.x.master_container = nil
 
-    get "/chat/message", params: { message: "ping" }
+    post "/chat/message", params: { message: "ping" }
 
     assert_response :success
     assert_match %r{text/event-stream}, response.media_type.to_s
@@ -109,9 +109,17 @@ class ChatControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "message rejects empty input" do
-    get "/chat/message", params: { message: "" }
+    post "/chat/message", params: { message: "" }
 
     assert_response :bad_request
+  end
+
+  # A chat turn spends model budget, so it is not reachable by a GET a link,
+  # prefetch or crawler can make.
+  test "message does not answer GET" do
+    get "/chat/message", params: { message: "hello" }
+
+    assert_response :not_found
   end
 
   test "message post streams sse for chat turn" do

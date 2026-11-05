@@ -111,7 +111,10 @@ class DeploySmokeContractTest < Minitest::Test
     master = File.read(File.join(OPENBSD_ROOT, "etc/rc.d/master"))
     assert_includes master, "public/assets/assets"
     assert_includes master, "assets:precompile"
-    assert_includes master, "chat/message?message=ping"
+    # The container warm-up GETs the face page; a chat turn is POST only.
+    assert_includes master, %("http://127.0.0.1:${PORT}/")
+    assert_includes master, %(grep -q 'id="face"')
+    refute_includes master, "chat/message"
     refute_match(/chat\/metrics.*"model"/, master)
   end
 

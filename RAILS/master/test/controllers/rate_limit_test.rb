@@ -15,11 +15,11 @@ class RateLimitTest < ActionDispatch::IntegrationTest
   test "chat rate limit blocks after threshold" do
     limit, = ApplicationController.web_rate_limit(:chat)
     limit.times do
-      get "/chat/message", params: { message: "ping" }
+      post "/chat/message", params: { message: "ping" }
       assert_response :success, "ping #{_1} should succeed"
     end
 
-    get "/chat/message", params: { message: "ping" }
+    post "/chat/message", params: { message: "ping" }
     assert_response :too_many_requests
     assert_match(/rate limit exceeded/, response.body)
   end

@@ -50,7 +50,7 @@ class AuthTierControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "visitor can still smoke ping chat stream" do
-    get "/chat/message", params: { message: "ping" }
+    post "/chat/message", params: { message: "ping" }
 
     assert_response :success
     assert_includes response.body, "pong"

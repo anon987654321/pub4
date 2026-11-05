@@ -169,7 +169,6 @@ class TestBinScripts < Minitest::Test
   def response_for(path, headers, ready:)
     case path
     when "/up" then http(200, "ok")
-    when %r{\A/chat/message} then http(200, ready ? "pong" : "Starting up")
     when "/" then http(200, ready ? '<canvas id="face"></canvas><script>ensurePrimer()</script>' : "Starting up")
     when "/master_events.js", "/shortcut_sheet.js" then http(200, "//")
     when "/chat/metrics" then metrics(headers)

@@ -186,9 +186,10 @@ combines the assistant stream and the face runtime. Liveness is `GET /up`,
 which relayd and rc.d poll because it answers before the container boots;
 `GET /health` reports TTS, git and the container and is the deploy smoke
 check. Streaming endpoints include `POST /chat/message` (the face's
-assistant stream), `GET /chat/message` (the smoke ping rc.d and
-`bin/smoke-web` warm up with; no page script calls it), `GET /chat/metrics`
-(session metrics), and `GET /events/stream` (event bus).
+assistant stream; there is no GET route, because a turn spends model
+budget), `GET /chat/metrics` (session metrics), and `GET /events/stream`
+(event bus). rc.d and `bin/smoke-web` wait for the container by GETting
+`/` until it renders the face canvas instead of the warming page.
 
 The MASTER law API is the one paid surface: `/api` sells keys through Stripe
 Checkout (plans in `RAILS/__shared/config/plans.yml`, loaded by

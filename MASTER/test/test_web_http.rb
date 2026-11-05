@@ -102,23 +102,12 @@ class TestWebHTTP < Minitest::Test
     flunk "metrics returned invalid JSON: #{e.message}"
   end
 
-  def test_06_message_endpoint_streams_sse
+  # A chat turn spends model budget, so the message endpoint answers POST only.
+  def test_06_message_endpoint_refuses_get
     skip_unless_server
-    Net::HTTP.start("127.0.0.1", WEB_PORT, read_timeout: 15) do |http|
-      req = Net::HTTP::Get.new("/chat/message?message=ping")
-      data = ""
-      http.request(req) do |res|
-        assert_equal "200", res.code, "message endpoint should return 200"
-        assert_match "text/event-stream", res["Content-Type"].to_s,
-                     "message endpoint should stream SSE"
-        res.read_body do |chunk|
-          data += chunk
-          break if data.include?("[DONE]") || data.size > 512
-        end
-      end
-      assert_includes data, "data:", "SSE response should contain data: lines"
+    res = Net::HTTP.start("127.0.0.1", WEB_PORT, read_timeout: 15) do |http|
+      http.request(Net::HTTP::Get.new("/chat/message?message=ping"))
     end
-  rescue Net::ReadTimeout, Timeout::Error, Timeout::ExitException
-    # Server still streaming — request was accepted; slow pipeline on non-smoke input.
+    assert_equal "404", res.code, "GET /chat/message must not be routed"
   end
 end

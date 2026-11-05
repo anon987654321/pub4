@@ -5016,7 +5016,7 @@ items:
   path: RAILS/master/config/routes.rb
   item: Drop the GET chat/message route; a side-effecting, model-spending action should
     not answer GET.
-  status: open
+  status: done
 - id: master-034
   app: master
   area: security

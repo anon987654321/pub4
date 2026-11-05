@@ -341,12 +341,15 @@ if [[ "$1" = "start" ]] || [[ "$1" = "restart" ]]; then
       sleep 1
       _i=$((_i + 1))
     done
-    # Wait for MASTER container (smoke ping — metrics requires auth since tier check).
+    # Wait for the MASTER container: the face page renders the warming page
+    # until it has booted, then the face canvas. The GET also pages the face
+    # in before the deploy's page checks measure it. A chat turn is POST only,
+    # so it cannot be the probe.
     _ping_ok=0
     _j=0
     while [[ "$_j" -lt 120 ]]; do
-      curl -fsS -m 5 "http://127.0.0.1:${PORT}/chat/message?message=ping" 2>/dev/null |
-        grep -q 'pong' && { _ping_ok=1; break; }
+      curl -fsS -m 5 "http://127.0.0.1:${PORT}/" 2>/dev/null |
+        grep -q 'id="face"' && { _ping_ok=1; break; }
       sleep 2
       _j=$((_j + 1))
     done
@@ -356,7 +359,7 @@ if [[ "$1" = "start" ]] || [[ "$1" = "restart" ]]; then
       logger -t master "relayd skipped: /up not ready after restart"
     fi
     if [[ "$_ping_ok" = "0" ]]; then
-      logger -t master "container warmup: ping not ready after 240s"
+      logger -t master "container warmup: face page not ready after 120 tries"
     fi
     # Warm TTS with MASTER Gemfile only — never inherit Falcon web/vendor/bundle env.
     _tts_warm_ok=0

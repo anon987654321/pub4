@@ -6,9 +6,9 @@ Rails.application.routes.draw do
   # chatbot, a visitor spends more through chat/message than any of them costs, and each is fetched by
   # script and linked from nowhere, so no crawler finds it. enhance, photo and research count against the
   # per-IP write limit. chat/tts/phrases is public because the phrases are the face's idle lines.
+  # chat/message is POST only: a turn spends model budget, which a link, prefetch or crawler GET must not.
   get "dashboard", to: "dashboard#index"
   get "dashboard/live", to: "dashboard#live"
-  get  "chat/message",  to: "chat#message"
   post "chat/message",  to: "chat#message"
   post "chat/photo",    to: "chat#photo"
   get  "chat/tts",        to: "tts#show"

@@ -63,9 +63,9 @@ begin
   metrics = get("/chat/metrics")
   failures << "metrics should reject visitors (got #{metrics.code})" unless metrics.code == "401"
 
+  # A chat turn spends model budget, so it answers POST only.
   ping = get("/chat/message?message=ping")
-  failures << "smoke ping should return 200 (got #{ping.code})" unless ping.code == "200"
-  failures << "smoke ping missing pong" unless ping.body.to_s.include?("pong")
+  failures << "GET /chat/message should be unrouted (got #{ping.code})" unless ping.code == "404"
 
   status = get("/runtime/status")
   failures << "runtime status should return 200 (got #{status.code})" unless status.code == "200"

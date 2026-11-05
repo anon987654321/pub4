@@ -83,15 +83,18 @@ end
 
 def warm_deadline = Process.clock_gettime(Process::CLOCK_MONOTONIC) + WARM_TIMEOUT_S
 
-def bootstrap_ready?
-  res = fetch("/chat/message?message=ping", read_timeout: 12)
-  res.code.to_i == 200 && res.body.to_s.include?("pong")
-rescue StandardError
-  false
-end
-
 def face_ready?(body)
   body.to_s.include?('id="face"') && !WARMING_RE.match?(body.to_s)
+end
+
+# The face page is the readiness probe: it renders the warming page until the
+# container has booted. A chat turn spends model budget and is POST only, so
+# it cannot be the probe.
+def bootstrap_ready?
+  res = fetch("/", read_timeout: READ_TIMEOUT_S)
+  res.code.to_i == 200 && face_ready?(res.body)
+rescue StandardError
+  false
 end
 
 # Bootstrap-aware: with nothing listening at BASE this is a dev/local run without a
@@ -186,11 +189,11 @@ rescue JSON::ParserError => e
   [false, "invalid JSON: #{e.message}"]
 end
 
-checks << step("GET /chat/message ping") do
+checks << step("GET /chat/message refused") do
   res = fetch("/chat/message?message=ping", read_timeout: 12)
   code = res.code.to_i
-  ok = code == 200 && res.body.to_s.include?("pong")
-  [ok, ok ? nil : "HTTP #{code}"]
+  ok = code == 404
+  [ok, ok ? nil : "HTTP #{code} — a chat turn must answer POST only"]
 end
 
 checks << step("GET /events/stream") do
