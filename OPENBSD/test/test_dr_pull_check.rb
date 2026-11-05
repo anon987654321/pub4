@@ -30,6 +30,14 @@ class TestDrPullCheck < Minitest::Test
     FileUtils.remove_entry(@root) if @root && File.directory?(@root)
   end
 
+  def test_check_fails_when_an_explicitly_configured_destination_is_missing
+    missing = File.join(@root, "removed-backup-dir")
+    output, status = run_check("PUB4_DR_DIR" => missing)
+
+    refute status.success?
+    assert_includes output, "configured backup directory is missing"
+  end
+
   def test_check_verifies_checksum_and_sqlite_integrity
     output, status = run_check
 
@@ -88,9 +96,9 @@ class TestDrPullCheck < Minitest::Test
     File.write(File.join(@pull, "SHA256SUMS"), "#{hash}  brgen-production.sqlite3\n")
   end
 
-  def run_check
+  def run_check(overrides = {})
     Open3.capture2e(
-      { "PUB4_DR_DIR" => @root, "PUB4_DR_STALE_DAYS" => "2" },
+      { "PUB4_DR_DIR" => @root, "PUB4_DR_STALE_DAYS" => "2" }.merge(overrides),
       RbConfig.ruby, SCRIPT, "--check"
     )
   end
