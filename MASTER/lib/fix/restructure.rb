@@ -153,8 +153,12 @@ module Master
 
       def apply(plan)
         plan.writes.each do |path, content|
-          FileUtils.mkdir_p(File.dirname(full(path)))
-          File.write(full(path), content)
+          absolute = full(path)
+          refusal = TaskContract.new_path_refusal(absolute, repo_root: @root)
+          raise TaskContract::Invalid, refusal if refusal
+
+          FileUtils.mkdir_p(File.dirname(absolute))
+          File.write(absolute, content)
         end
         plan.deletes.each { |path| File.delete(full(path)) }
       end
