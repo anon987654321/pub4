@@ -9,6 +9,8 @@
     choice needs no script. %>
 
 <h1 class="page-title"><%= t("checkout.title") %></h1>
+<%# Outside the kitchen's weekly hours the order is refused on submit; say so first. %>
+<%= tag.p @closed_text, class: "checkout-closed", role: "status" if @closed_text %>
 <%# What is being paid for, folded under one line so the confirm screen
     stays one screen. %>
 <% if @subtotal_ore.positive? %>

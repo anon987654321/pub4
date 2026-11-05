@@ -35,6 +35,7 @@ class CheckoutController < ApplicationController
 
     kitchen = Kitchen.first
     return redirect_to(cart_path, alert: t("checkout.closed")) if kitchen.nil?
+    return redirect_to(cart_path, alert: closed_text(kitchen)) unless kitchen.open_at?(Time.current)
 
     # Payment lane: Vipps (default) or Stripe Checkout — the two buttons on
     # the confirm screen each submit their own payment_method value. Unknown
@@ -215,6 +216,18 @@ class CheckoutController < ApplicationController
     current_cart.update!(delivery_mode: mode) if %w[delivery pickup].include?(mode)
   end
 
+  # Outside the kitchen's hours: when it opens next, today or on a weekday.
+  def closed_text(kitchen)
+    now = Time.current
+    opens = kitchen.next_opening(now)
+    return t("checkout.closed_now") unless opens
+
+    time = opens.strftime("%H:%M")
+    return t("checkout.opens_today", time:) if opens.to_date == now.to_date
+
+    t("checkout.opens_on", day: t("checkout.weekdays.#{Kitchen::DAYS[opens.wday]}"), time:)
+  end
+
   # Honest payment failure: nothing was reserved, the cart is intact, retry
   # works. Never a fake success and never a raw 500.
   def payment_unavailable
@@ -259,5 +272,7 @@ class CheckoutController < ApplicationController
       quote.values_at(:subtotal_ore, :promo, :delivery_fee_ore, :discount_ore, :total_ore)
     @minimum_text = @zone && minimum_text(@zone, @subtotal_ore)
     @eta_minutes = @mode == "pickup" ? nil : @zone&.eta_minutes
+    kitchen = current_kitchen
+    @closed_text = closed_text(kitchen) if kitchen && !kitchen.open_at?(Time.current)
   end
 end

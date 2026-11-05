@@ -253,3 +253,10 @@ dl.totals dd {
 .checkout-lines .order-line {
   grid-template-columns: 1fr auto;
 }
+
+// Outside opening hours: said before the pay buttons, not after the tap.
+.checkout-closed {
+  border-inline-start: 3px solid var(--gold);
+  padding: var(--space-8) var(--space-12);
+  font-weight: 700;
+}

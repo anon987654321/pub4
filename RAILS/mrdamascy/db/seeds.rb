@@ -35,6 +35,8 @@ kitchen = Kitchen.create!(
   phone: "955 55 600",
   opening_hours: "Man–Fre 11–21 · Lør–Søn 14–21",
   opening_hours_en: "Mon–Fri 11am–9pm · Sat–Sun 2pm–9pm",
+  weekly_hours: %w[mon tue wed thu fri].index_with { %w[11:00 21:00] }
+                                       .merge("sat" => %w[14:00 21:00], "sun" => %w[14:00 21:00]),
   rating: 4.9
 )
 

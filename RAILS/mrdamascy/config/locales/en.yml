@@ -216,6 +216,17 @@ en:
     in_progress: "Your order is already on its way to payment — one moment."
     checking: Checking delivery…
     closed: The kitchen is closed right now — we open at 11:00. Yalla tomorrow!
+    closed_now: The kitchen is not taking orders right now.
+    opens_today: The kitchen is closed — we open today at %{time}.
+    opens_on: The kitchen is closed — we open on %{day} at %{time}.
+    weekdays:
+      mon: Monday
+      tue: Tuesday
+      wed: Wednesday
+      thu: Thursday
+      fri: Friday
+      sat: Saturday
+      sun: Sunday
     failed: Something went wrong with the payment. No hard feelings — try again.
     payment_unavailable: We couldn't start the payment — no money was reserved. Your cart is waiting, try again.
     mode: Delivery or pickup?

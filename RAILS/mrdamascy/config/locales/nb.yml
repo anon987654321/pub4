@@ -216,6 +216,17 @@ nb:
     in_progress: "Bestillingen din er allerede på vei til betaling — et øyeblikk."
     checking: Sjekker levering…
     closed: Kjøkkenet er stengt akkurat nå — vi åpner 11:00. Yalla i morgen!
+    closed_now: Kjøkkenet tar ikke imot bestillinger akkurat nå.
+    opens_today: Kjøkkenet er stengt nå — vi åpner i dag kl. %{time}.
+    opens_on: Kjøkkenet er stengt nå — vi åpner %{day} kl. %{time}.
+    weekdays:
+      mon: mandag
+      tue: tirsdag
+      wed: onsdag
+      thu: torsdag
+      fri: fredag
+      sat: lørdag
+      sun: søndag
     failed: Noe gikk galt i betalingen. Ingen krav — prøv igjen.
     payment_unavailable: Vi klarte ikke å starte betalingen — ingen penger er reservert. Kurven din venter, yalla prøv igjen.
     mode: Levering eller henting?

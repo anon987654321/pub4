@@ -5539,7 +5539,7 @@ items:
   item: Replace the free-text opening_hours string with structured per-weekday open/close
     times and refuse checkout outside them with an "opens at" message; today orders
     are accepted at any hour.
-  status: open
+  status: done
 - id: mrdamascy-059
   app: mrdamascy
   area: ordering
