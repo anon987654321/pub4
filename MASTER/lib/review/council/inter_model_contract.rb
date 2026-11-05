@@ -323,7 +323,9 @@ module Master
 
         def measure_line(root: REPO_ROOT, master_root: MASTER_ROOT)
           report = measure(root:, master_root:)
-          return "not measured; inter-model ledger has no turns; ratchet baseline pending" if report["status"] == "not_measured"
+          if report["status"] == "not_measured"
+            return "not measured; inter-model ledger has no turns; ratchet baseline pending"
+          end
           return "unreadable; inter-model metric is inconclusive" unless report["status"] == "measured"
 
           "turns=#{report.fetch('turns')} " \
