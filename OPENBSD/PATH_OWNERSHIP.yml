@@ -9,10 +9,6 @@ ownership:
     purpose: deploy front door, runbook, recipes, and agent gotchas with the standing refusals
     risk: high
     check: OPENBSD/bin/check
-  docs:
-    purpose: design notes for operator choices, such as the deploy-log rotation strategy
-    risk: low
-    check: ruby OPENBSD/test/test_path_ownership.rb
   man:
     purpose: BSD manuals for the operator surface, pub4-admin(8) and vps-deploy(8)
     risk: low

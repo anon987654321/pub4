@@ -17,7 +17,54 @@ Hands-off: local preflight → pin SHA → `tmux` session `pub4-deploy` on vm23 
 `vps-state` + public canary. Survives SSH disconnect. Logs: `/var/log/pub4/vps-deploy.log` (aggregate), `/var/log/pub4/runs/deploy-*.log` (per run), also `/home/dev/vps-deploy.log` and `vps-deploy-latest.log` symlinks.
 Attach: `tmux attach -t pub4-deploy`.
 
-Log rotation: see `OPENBSD/docs/log_rotation.md` (newsyslog is canonical).
+## Log rotation
+
+OpenBSD uses `newsyslog(8)`, not logrotate. The repository mirror is
+`OPENBSD/etc/newsyslog.conf`; install it only through a deliberate
+`OPERATOR.sh` run.
+
+| Log | count | size (KB) | when | flags |
+|---|---:|---:|---|---|
+| `/var/log/pub4/vps-deploy.log` | 12 | 512 | weekly | Z (compress) |
+| `/home/dev/vps-deploy.log` | 12 | 512 | weekly | Z |
+| Base `/var/log/messages` and other system logs | see config | | | |
+
+The count is the number of rotated siblings to keep. Size is a threshold in
+kilobytes; either size or time can trigger rotation. `$W0D0` means weekly
+on Sunday, and `Z` compresses the rotated file with gzip.
+
+Validate the mirror before installation:
+
+```sh
+doas newsyslog -nv -f OPENBSD/etc/newsyslog.conf
+```
+
+`rotate_deploy_log` in `vps-deploy` renames the aggregate log to `.1` when
+it exceeds `VPS_DEPLOY_LOG_MAX_BYTES` (default 10 MB) at deploy start. This is
+only a safety net if newsyslog has not run; it does not replace newsyslog.
+
+Per-run logs under `/var/log/pub4/runs/deploy-*.log` have unique names, so
+fixed-path newsyslog rules do not cover them. Prefer a weekly age-prune job
+that retains the last 30 days (roughly one deploy per day). A directory size
+cap that deletes oldest runs is an alternative; newsyslog filename patterns
+are not supported because it needs fixed paths.
+
+On the operator workstation, `~/.pub4/ssh-connections.log` is written by
+`MASTER/bin/operator` for each remote action. Rotate it locally with weekly
+launchd/cron or a manual size check:
+
+```sh
+# Keep roughly 5 MB
+[[ $(stat -f%z ~/.pub4/ssh-connections.log 2>/dev/null || echo 0) -gt 5000000 ]] \\
+  && mv ~/.pub4/ssh-connections.log{,.1}
+```
+
+OpenSSH `-E` also appends protocol diagnostics to that file when
+`LogLevel` is INFO or higher (`PUB4_SSH_LOG_LEVEL`).
+
+Do not install a partial `newsyslog.conf`: a partial file previously wiped
+base rules and filled `/var`. Do not send deploy logs to remote syslog until
+`/var` headroom and the privacy of receipt lines have been reviewed.
 
 Already on the box: `zsh OPENBSD/bin/redeploy`.
 

@@ -53,7 +53,7 @@ class TestGap < Minitest::Test
   def run_runner(script_row)
     Dir.mktmpdir("gap") do |dir|
       registry = File.join(dir, "checks.yml")
-      File.write(registry, YAML.dump("probe" => { "script" => "fixtures/gap/inconclusive.rb" }.merge(script_row)))
+      File.write(registry, YAML.dump("probe" => { "script" => "fixtures/gap_inconclusive.rb" }.merge(script_row)))
       out, = Open3.capture2e({ "CHECKS_FILE" => registry, "CHECK_LEDGER" => File.join(dir, "l.jsonl") },
                              RbConfig.ruby, File.join(CHECKS_DIR, "runner.rb"), "probe")
       out

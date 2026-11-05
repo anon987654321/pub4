@@ -159,7 +159,6 @@ class TestDocPaths < Minitest::Test
     MASTER/docs/ad_creative_governance.md
     MASTER/docs/visual/bergen_brand_systems.md
     MASTER/docs/visual/browserless_ad_audits.md
-    OPENBSD/docs/log_rotation.md
     RAILS/mrdamascy/APP_SPEC.md
     RAILS/mrdamascy/docs/fix-ledger.md
     RAILS/docs/INTERACTION_CAMPAIGN.md

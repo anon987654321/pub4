@@ -10,7 +10,7 @@ but the implementation is owned here.
 - `dilla/` — the Dilla engine. `dilla/dilla.rb` is the one Ruby source and
   `dilla/data/` carries its canonical music data (`dilla.json`,
   `music_theory.json`, `showcase.json`, `recovered_music.json`);
-  `dilla/analyze/` holds the analysis helper. Rendered output is replaceable:
+  `dilla/reference_analyzer.py` is the separate spectral-analysis process. Rendered output is replaceable:
   a new run may delete and replace it, and no rendered-sound default moves on
   one person's judgement.
 - `photograph.rb` and `photograph/idea_picture.rb` — the image-generation
