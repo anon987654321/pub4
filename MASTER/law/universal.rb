@@ -909,7 +909,7 @@ Law.define(:PRODUCTION_RELEASE_IS_PINNED) do
   good "CI, preflight, deployment and receipt all name the same immutable SHA."
 end
 
-
+Law.define(:LEAST_PRIVILEGE) do
   source "Saltzer & Schroeder — least privilege; OpenBSD pledge(2) and unveil(2)"
   ask "Does a process, service, job, deploy phase or agent retain ambient filesystem, network, syscall, credential or tool authority beyond the exact operation that needs it?"
   practice "Grant the minimum capability for the minimum duration. OpenBSD's pledge/unveil model is the reference: narrow the syscall and filesystem surface at the boundary, then only remove authority as execution advances."
