@@ -174,11 +174,12 @@ module Deploy
 
           next
         end
-        source_touch_check(rel, File.read(path), selector, needle && Regexp.new(needle, Regexp::IGNORECASE))
+        source_touch_check(rel:, body: File.read(path), selector:,
+                           needle: needle && Regexp.new(needle, Regexp::IGNORECASE))
       end
     end
 
-    def source_touch_check(rel, body, selector, needle)
+    def source_touch_check(rel:, body:, selector:, needle:)
       return @result.fail("first_screen: #{rel} missing #{needle.source}") if selector.nil? && !body.match?(needle)
       return if selector.nil?
 
