@@ -5,17 +5,15 @@ import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { createContext, runInContext } from "node:vm";
 
-// The inline primer script in chat/index.html.erb, run as shipped. Autostart,
-// pointerdown, click, touchend and Enter all call go(); the `fired` guard is
-// the only thing standing between a double tap and two face imports, two
-// primer dismissals and two PRIMER transitions on boot_fsm.
-const view = readFileSync(join(dirname(fileURLToPath(import.meta.url)), "..", "app", "views", "chat", "index.html.erb"), "utf8");
+// public/face_primer.js, the primer script chat/index.html.erb loads, run as
+// shipped. Autostart, pointerdown, click, touchend and Enter all call go(); the
+// `fired` guard is the only thing standing between a double tap and two face
+// imports, two primer dismissals and two PRIMER transitions on boot_fsm.
+const publicDir = join(dirname(fileURLToPath(import.meta.url)), "..", "public");
+const primerSource = readFileSync(join(publicDir, "face_primer.js"), "utf8");
 
 function primerScript() {
-  const start = view.indexOf("window.MASTER_CACHE_VERSION");
-  const end = view.indexOf("</script>", start);
-  assert.ok(start > 0 && end > start, "the primer script moved; this test reads it from the view");
-  return view.slice(start, end).replace(/"?<%=.*?%>"?/g, '"v2"');
+  return primerSource;
 }
 
 function element(id) {
@@ -46,6 +44,7 @@ function loadPrimer({ search = "" } = {}) {
   const windowListeners = {};
   const sandbox = {
     document: {
+      currentScript: { dataset: { faceModule: "/face.js?v=test" } },
       getElementById: (id) => nodes[id] || null,
       body: { classList: { add() {}, remove() {} }, dataset: {} },
     },

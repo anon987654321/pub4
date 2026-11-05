@@ -30,15 +30,16 @@ class BootFsmSpec < Minitest::Test
 
   def test_chat_index_loads_boot_fsm_before_primer_boot
     index = read("../RAILS/master/app/views/chat/index.html.erb")
+    primer = read("../RAILS/master/public/face_primer.js")
     fsm_idx = index.index('asset_path("boot_fsm.js")')
-    boot_idx = index.index("function go()")
+    boot_idx = index.index('asset_path("face_primer.js")')
 
     assert fsm_idx, "boot_fsm.js not referenced in chat index"
     assert boot_idx, "primer boot script missing"
     assert_operator fsm_idx, :<, boot_idx
-    assert_includes index, "MASTER?.boot?.transition?.('PRIMER'"
-    assert_includes index, "MASTER?.boot?.transition?.('ASSETS'"
-    assert_includes index, "MASTER?.boot?.transition?.('ERROR'"
+    assert_includes primer, "MASTER?.boot?.transition?.('PRIMER'"
+    assert_includes primer, "MASTER?.boot?.transition?.('ASSETS'"
+    assert_includes primer, "MASTER?.boot?.transition?.('ERROR'"
   end
 
   def test_container_check_signals_boot_fsm

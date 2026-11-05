@@ -37,7 +37,7 @@ class MasterWebAsciiFaceContractTest < Minitest::Test
 
     assert_equal "face_ascii.js", early.first
     assert_operator early.index("face_ascii.js"), :<, early.index("face_2d_fallback.js")
-    boot = view.index("function go()")
+    boot = view.index('asset_path("face_primer.js")')
     ascii_tag = view.index('asset_path("face_ascii.js")')
     fallback_tag = view.index('asset_path("face_2d_fallback.js")')
 

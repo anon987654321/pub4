@@ -4928,7 +4928,7 @@ items:
   path: RAILS/master/app/views/chat/index.html.erb
   item: Move the 190-line inline primer/boot script into a digested public file loaded
     with a nonce, so it is cached, linted and tested.
-  status: open
+  status: done
 - id: master-023
   app: master
   area: performance

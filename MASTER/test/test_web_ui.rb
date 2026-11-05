@@ -295,10 +295,15 @@ class TestWebUI < Minitest::Test
     index = File.read(File.expand_path("../../RAILS/master/app/views/chat/index.html.erb", __dir__))
     css = File.read(File.expand_path("../../RAILS/master/public/face.css", __dir__))
     part5 = File.read(File.expand_path("../../RAILS/master/public/face.part5.txt", __dir__))
+    # The primer's boot script lives in public/face_primer.js, which the view loads.
+    view = index
+    index += File.read(File.expand_path("../../RAILS/master/public/face_primer.js", __dir__))
+
+    assert_includes view, 'asset_path("face_primer.js")'
 
     assert_includes index, "dismissPrimer"
     assert_includes index, "revealPrompt"
-    assert_includes index, "dismissPrimer();\n        revealPrompt();"
+    assert_includes index, "dismissPrimer();\n    revealPrompt();"
     assert_includes index, "z.classList.add('live')"
     assert_includes css, "#primer"
     assert_includes css, "z-index: var(--z-modal)"

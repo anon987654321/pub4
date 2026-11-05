@@ -105,9 +105,14 @@ module Deploy
     def check_master_web!(result)
       chat_index = File.join(WEB_ROOT, "app/views/chat/index.html.erb")
       if File.file?(chat_index)
-        body = File.read(chat_index)
+        view = File.read(chat_index)
+        primer = File.join(WEB_ROOT, "public/face_primer.js")
+        # The boot script is public/face_primer.js; the view hands it the face.js URL.
+        body = view + (File.file?(primer) ? File.read(primer) : "")
         result.fail("RAILS/master chat index: missing face asset path map") unless body.include?("MASTER_ASSET_PATHS")
-        result.fail("RAILS/master chat index: missing lazy face import") unless body.match?(/import\("<%= (?:FaceAssets\.versioned\()?asset_path\("face\.js"\)/)
+        lazy_import = view.match?(/data-face-module="<%= FaceAssets\.versioned\(asset_path\("face\.js"\)/) &&
+                      body.include?("import(FACE_MODULE)")
+        result.fail("RAILS/master chat index: missing lazy face import") unless lazy_import
         result.fail("RAILS/master chat index: missing primer dismissal") unless body.include?("dismissPrimer")
 
         result.fail("RAILS/master chat index: missing prompt reveal") unless body.include?("revealPrompt")

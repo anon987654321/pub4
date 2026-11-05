@@ -15,6 +15,10 @@ const railsRoot = join(root, "..");
 // the view no longer spells their names. Read the manifest as text — Node has
 // no YAML parser and these are presence checks, not structural ones.
 const faceManifest = readFileSync(join(root, "config", "face_assets.yml"), "utf8");
+// The boot path: the view, and public/face_primer.js which it loads right after
+// #primer. Assertions about the primer script read both.
+const primerScript = readFileSync(join(publicDir, "face_primer.js"), "utf8");
+const bootShell = () => `${readFileSync(join(viewsDir, "chat", "index.html.erb"), "utf8")}\n${primerScript}`;
 
 
 
@@ -106,7 +110,7 @@ test("mobile chat viewport keeps browser zoom available", () => {
 });
 
 test("face boot defaults to automatic activation and preserves an explicit primer", () => {
-  const view = readFileSync(join(viewsDir, "chat", "index.html.erb"), "utf8");
+  const view = bootShell();
   assert.match(view, /data-primer="auto"/);
   assert.match(view, /q\.get\('primer'\)!=='1'&&document\.body\.dataset\.primer!=='keep'/);
   assert.match(view, /setTimeout\(go,0\)/);
@@ -473,14 +477,22 @@ test("boot_fsm defines deterministic boot phases before primer tap", () => {
   assert.match(fsm, /INIT.*PRIMER.*ASSETS.*FACE.*VOICE.*READY/s);
   assert.match(fsm, /master:boot-state/);
   assert.match(index, /asset_path\("boot_fsm\.js"\)/);
-  assert.ok(index.indexOf('asset_path("boot_fsm.js")') < index.indexOf("function go()"));
+  assert.ok(index.indexOf('asset_path("boot_fsm.js")') < index.indexOf('asset_path("face_primer.js")'));
 });
 
-test("chat index inline boot lazy-imports face with status hint, auto-retry, 35s watchdog", () => {
-  const index = readFileSync(join(viewsDir, "chat", "index.html.erb"), "utf8");
+test("chat index boot lazy-imports face with status hint, auto-retry, 35s watchdog", () => {
+  const index = bootShell();
   assert.match(index, /MASTER_ASSET_PATHS/);
   assert.match(index, /function loadFace/);
-  assert.match(index, /import\("<%= FaceAssets\.versioned\(asset_path\("face\.js"\), "face\.js"\) %>"\)/);
+  assert.match(index, /data-face-module="<%= FaceAssets\.versioned\(asset_path\("face\.js"\), "face\.js"\) %>"/);
+  assert.match(primerScript, /import\(FACE_MODULE\)/);
+  // A classic synchronous script: no defer, no async, no module.
+  const primerTag = /<script src="<%= asset_path\("face_primer\.js"\) %>" nonce="<%= content_security_policy_nonce %>"/;
+  assert.match(index, new RegExp(`${primerTag.source}\\n\\s+data-face-module=`));
+  assert.doesNotMatch(index, /face_primer\.js"\) %>"[^>]*\b(defer|async|type="module")/);
+  const view = readFileSync(join(viewsDir, "chat", "index.html.erb"), "utf8");
+  assert.doesNotMatch(view, /function go\(\)|function loadFace/, "the boot script is not inline any more");
+  assert.match(faceManifest, /shell_boot:\n  - boot_fsm\.js\n  - face_primer\.js/);
   assert.match(index, /dismissPrimer\(\);\n\s+revealPrompt\(\);/);
   assert.match(index, /window\.__MASTER_PRIMER_TAP__=go/);
   assert.doesNotMatch(index, /DOMContentLoaded.*armPrimer/);
@@ -562,8 +574,8 @@ test("chat index wires digested assets around lazy face boot", () => {
   assert.match(index, /asset_path\("face\.js"\)/);
   assert.match(faceManifest, /faceRuntime/);
   assert.match(index, /asset_path\("face_2d_fallback\.js"\).*defer/);
-  assert.match(index, /function zshEl/);
-  assert.doesNotMatch(index, /getElementById\('zsh'\),ui=document\.getElementById\('ui-status'\)/);
+  assert.match(primerScript, /function promptFormEl/);
+  assert.doesNotMatch(primerScript, /getElementById\('prompt-form'\),ui=document\.getElementById\('ui-status'\)/);
   assert.match(index, /asset_path\("particle_kernel\.js"\)/);
   // Deferred modules come from config/face_assets.yml#shell_manifest, rendered
   // by the view — not a literal list in the ERB.
@@ -577,8 +589,8 @@ test("chat index wires digested assets around lazy face boot", () => {
   const particleIdx = index.indexOf('asset_path("particle_kernel.js")');
   const fallbackIdx = index.indexOf('asset_path("face_2d_fallback.js")');
   const primerIdx = index.indexOf('id="primer"');
-  const bootIdx = index.indexOf("function go()");
-  assert.ok(primerIdx > 0 && bootIdx > primerIdx, "inline boot should follow primer markup");
+  const bootIdx = index.indexOf('asset_path("face_primer.js")');
+  assert.ok(primerIdx > 0 && bootIdx > primerIdx, "the boot script should follow primer markup");
   assert.ok(fallbackIdx > bootIdx, "face_2d_fallback must not block inline boot before tap wiring");
   assert.ok(particleIdx > 0 && bootIdx > 0, "particle_kernel and inline boot must be present");
 });
@@ -728,7 +740,7 @@ test("primer is a native button and the chat shell carries no presentational hoo
 
   assert.match(view, /<button id="primer" type="button"/);
   assert.doesNotMatch(view, /role="button"/);
-  assert.doesNotMatch(view, /p\.addEventListener\('keydown'/);
+  assert.doesNotMatch(primerScript, /p\.addEventListener\('keydown'/);
   assert.match(view, /<\/button>\n\s+<noscript><p id="primer-noscript"/, "noscript sits outside the button");
   assert.doesNotMatch(body, /\bzen\b|data-visual-runtime/);
   assert.match(body, /data-layout="face"/);
@@ -740,7 +752,7 @@ test("primer is a native button and the chat shell carries no presentational hoo
 });
 
 test("boot shows an indeterminate loading state, not a counter on a timer", () => {
-  const view = readFileSync(join(viewsDir, "chat", "index.html.erb"), "utf8");
+  const view = bootShell();
   const locales = ["en", "nb"].map((locale) => readFileSync(join(root, "config", "locales", `${locale}.yml`), "utf8"));
 
   assert.doesNotMatch(view, /Math\.random|progPct|showProgress/);

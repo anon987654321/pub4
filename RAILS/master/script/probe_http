@@ -31,7 +31,11 @@ failures = []
 begin
   home = get("/")
   failures << "homepage #{home.code}" unless home.code == "200"
-  body = home.body.to_s
+  # The boot path is public/face_primer.js, loaded from the homepage; its
+  # markers are checked in the file the page actually links.
+  primer_src = home.body.to_s[/src="([^"]*face_primer[^"]*)"/, 1]
+  failures << "homepage missing face_primer.js" unless primer_src
+  body = home.body.to_s + (primer_src ? get(primer_src).body.to_s : "")
   # Markers for the b357 WebGL face + deferred-boot shell (kept in sync with
   # test/controllers/chat_controller_test.rb, the authoritative homepage contract).
   %w[id="face" id="primer" tap\ to\ start MASTER_ASSET_PATHS function\ loadFace

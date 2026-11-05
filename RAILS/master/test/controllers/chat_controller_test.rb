@@ -17,18 +17,25 @@ class ChatControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_includes response.body, I18n.t("face.primer_title")
     assert_includes response.body, "MASTER_ASSET_PATHS"
-    assert_includes response.body, "function loadFace"
-    assert_includes response.body, "window.__MASTER_FACE_IMPORT__"
-    assert_includes response.body, "window._primerFired"
+    # The boot script is public/face_primer.js: digested, nonced, synchronous,
+    # and handed the digested face.js URL.
+    primer_tag = Regexp.new('<script src="/assets/face_primer-[0-9a-f]+\.js" nonce="[^"]+"\s+' \
+                            'data-face-module="/assets/face-[0-9a-f]+\.js"></script>')
+    assert_match(primer_tag, response.body)
+    primer = Rails.root.join("public/face_primer.js").read
+    assert_includes primer, "function loadFace"
+    assert_includes primer, "window.__MASTER_FACE_IMPORT__"
+    assert_includes primer, "window._primerFired"
     assert_includes response.body, "error-live"
     assert_match(%r{/assets/face-[0-9a-f]+\.js}, response.body)
     assert_match(%r{face_state-[0-9a-f]+\.js}, response.body)
     assert_match(%r{visual_bridge-[0-9a-f]+\.js}, response.body)
     assert_match(%r{chat_actions-[0-9a-f]+\.js}, response.body)
-    assert_includes response.body, "35000"
+    assert_includes primer, "35000"
+    refute_includes primer, "15000"
     refute_includes response.body, "15000"
-    assert_match(/function go\(\)\{[\s\S]*?revealPrompt/, response.body)
-    assert_match(/function go\(\)\{[\s\S]*?dismissPrimer/, response.body)
+    assert_match(/function go\(\)\{[\s\S]*?revealPrompt/, primer)
+    assert_match(/function go\(\)\{[\s\S]*?dismissPrimer/, primer)
     # TTS/voice settings UI removed — persona defaults only (c3a186a3f, reinforced 2026-07-10).
     refute_includes response.body, "voice-picker"
     refute_includes response.body, "tts-style-chips"

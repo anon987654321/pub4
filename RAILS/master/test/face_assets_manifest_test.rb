@@ -95,21 +95,24 @@ test "the view renders its ordered manifest from the yaml, not a literal list" d
   end
 
   # shell_boot is synchronous like shell_blocking but on the other side of the
-  # primer: it must exist before the inline boot script runs, and it must not
-  # sit above #primer, where a blocking script delays the tap wiring.
-  test "shell_boot is loaded synchronously between the primer and the boot script" do
-    FaceAssets.group("shell_boot").each do |name|
-      tag = %(<script src="<%= asset_path("#{name}") %>"></script>)
-      assert_includes view_source, tag, "#{name} must load synchronously"
-      assert_operator view_source.index(tag), :>, view_source.index('id="primer"')
-      assert_operator view_source.index(tag), :<, view_source.index("function go()")
+  # primer: boot_fsm.js, then face_primer.js (the boot script itself). Neither
+  # may sit above #primer, where a blocking script delays the tap wiring.
+  test "shell_boot is loaded synchronously after the primer, in manifest order" do
+    starts = FaceAssets.group("shell_boot").map do |name|
+      start = view_source.index(%(<script src="<%= asset_path("#{name}") %>"))
+      assert start, "#{name} must be loaded by the view"
+      tag = view_source[start..view_source.index("</script>", start)]
+      refute_match(/\b(defer|async)\b|type="module"/, tag, "#{name} must load synchronously")
+      assert_operator start, :>, view_source.index('id="primer"')
+      start
     end
+    assert_equal starts.sort, starts, "shell_boot loads in manifest order"
   end
 
-  # face_2d_fallback is deliberately after the inline boot script: a blocking
+  # face_2d_fallback is deliberately after the boot script: a blocking
   # script above it would delay the tap wiring the primer depends on.
-  test "face_2d_fallback still loads after the inline boot script" do
-    boot = view_source.index("function go()")
+  test "face_2d_fallback still loads after the boot script" do
+    boot = view_source.index('asset_path("face_primer.js")')
     fallback = view_source.index('asset_path("face_2d_fallback.js")')
 
     assert boot && fallback

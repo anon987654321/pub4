@@ -262,8 +262,12 @@ read.
   `javascript_include_tag` from it (`FaceAssets`), and `/etc/rc.d/master`'s
   precompile digest reads it through `script/face_asset_paths.rb`. Adding a
   face module means adding it here.
-- `app/views/chat/index.html.erb`: primer, WebGL guard, boot manifest, lazy
-  `import("face.js")`.
+- `app/views/chat/index.html.erb`: primer, WebGL guard, boot manifest; it
+  loads `public/face_primer.js` synchronously right after `#primer` and hands
+  it the digested `face.js` URL in `data-face-module`.
+- `public/face_primer.js`: the primer and boot path (`go()`, `loadFace()`,
+  the lazy `import()` of `face.js`, the watchdog). A classic synchronous
+  script, never `defer` or `async`; listed in `face_assets.yml#shell_boot`.
 - `public/face.js`: deferred face loader.
 - `public/face.part*.txt`, `public/face_speech_*.js`: the six sources
   concatenated into `face.runtime.js` at build time. Not fetched at runtime.

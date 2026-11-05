@@ -90,8 +90,13 @@ shell_blocking:
 # this file through script/face_asset_paths.rb, so an undeclared module could be
 # edited and restarted with precompile silently skipped and the stale
 # fingerprint still live.
+#
+# face_primer.js follows it: the primer and boot path, moved out of an inline
+# <script> so it is digested, cached, linted and tested. It must stay a
+# synchronous classic script right after #primer (see the view).
 shell_boot:
   - boot_fsm.js
+  - face_primer.js
 
 # Plain <script defer> tags in the shell. face_ascii.js leads: it defines
 # window.MASTER_FACE_ASCII, which the fallback below and the face runtime both draw

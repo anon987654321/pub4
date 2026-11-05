@@ -37,7 +37,10 @@ class PwaMasterContractTest < Minitest::Test
   def test_inline_boot_exceptions_are_line_scoped_and_explained
     index = read("app/views/chat/index.html.erb")
     inline_scripts = index.lines.select { |line| line.match?(/^\s*<script nonce=/) }
-    assert_equal 5, inline_scripts.size
+    # The primer/boot script is public/face_primer.js now, digested and nonced.
+    assert_equal 4, inline_scripts.size
+    primer_tag = /<script src="<%= asset_path\("face_primer\.js"\) %>" nonce="<%= content_security_policy_nonce %>"/
+    assert_match(primer_tag, index)
     assert inline_scripts.all? { |line| line.include?("scan: intentional") }
 
     inline_styles = index.lines.select { |line| line.match?(/^\s*<style nonce=/) }

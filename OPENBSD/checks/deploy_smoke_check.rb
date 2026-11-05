@@ -170,7 +170,13 @@ def check_master_web(failures)
   chat_index = File.join(master_web_root, "app/views/chat/index.html.erb")
   if File.file?(chat_index)
     chat_body = File.read(chat_index)
-    failures << "RAILS/master: chat index missing inline lazy face boot" unless chat_body.include?("function loadFace") && chat_body.include?('asset_path("face.js")')
+    primer = File.join(master_web_root, "public/face_primer.js")
+    primer_body = File.file?(primer) ? File.read(primer) : ""
+    # The boot path is public/face_primer.js, loaded synchronously by the view,
+    # which hands it the digested face.js URL.
+    lazy_boot = chat_body.include?('asset_path("face_primer.js")') && chat_body.include?('asset_path("face.js")') &&
+                primer_body.include?("function loadFace")
+    failures << "RAILS/master: chat index missing lazy face boot (face_primer.js)" unless lazy_boot
   else
     failures << "RAILS/master: missing RAILS/master/app/views/chat/index.html.erb"
   end
