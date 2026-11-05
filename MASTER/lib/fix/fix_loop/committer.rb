@@ -130,7 +130,7 @@ module Master
             transaction = @transaction
             return Result.err("no active fix transaction", category: :infrastructure) unless transaction
 
-            # As at a checkpoint, only what this pass wrote; the observation's autofix is the pipeline's.
+            # As at a checkpoint, only what this run wrote: the pass's repairs and the observation's autofix.
             paths = written_here(own_changes(owned_paths) - release_foreign(transaction))
             return finish_empty_transaction(transaction) if paths.empty?
 
@@ -190,12 +190,24 @@ module Master
         def written_here(paths)
           return paths unless @ground_truth
 
+          attest_autofix(paths)
           mine, foreign = paths.partition { |path| written_unchanged?(path) }
           unless foreign.empty?
             named = foreign.first(3).join(", ")
             Master::Trace::Dmesg.status("deliver0", "left #{foreign.size} file(s) /fix did not write: #{named}")
           end
           mine
+        end
+
+        # The observation's autofix (MechanicalAutofix's whitespace transforms on AGENTS.md, README.md,
+        # tests) wrote its files before the pass and recorded them with AutofixGuard only, so delivery
+        # named them "/fix did not write" and they were neither committed nor put back. A file still
+        # holding exactly the autofix's bytes is this run's and is attested here, so it delivers with the
+        # pass; the house lint still puts back one it refuses (put_back_refused_autofix).
+        def attest_autofix(paths)
+          files = paths.map { |path| File.expand_path(path, @root) }
+          ours = files.select { |file| AutofixGuard.still_as_written?(file) && !written_unchanged?(file) }
+          attest_written!(ours) unless ours.empty?
         end
 
         # Visual refinement may promote structural snapshots only after the

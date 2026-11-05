@@ -303,6 +303,36 @@ def test_the_end_of_a_pass_delivers_only_what_the_pass_wrote
   assert_includes out, "/fix did not write: lib/observed.rb"
 end
 
+# The observation's whitespace autofix wrote AGENTS.md and README.md before the pass and recorded
+# them with AutofixGuard only; delivery called them "/fix did not write" and left them in the tree,
+# neither committed nor put back. Still holding the autofix's bytes, they deliver with the pass.
+def test_the_observations_autofix_writes_deliver_with_the_pass
+  paths = %w[lib/ok.rb AGENTS.md]
+  committer, git = autofixed_agents_pass(paths)
+
+  out, = capture_io { committer.finish_transaction("fix: ok", owned_paths: paths) }
+
+  assert_equal paths.sort, git.commits.flat_map(&:last).sort
+  refute_includes out, "did not write"
+ensure
+  Master::Fix::AutofixGuard.reset!
+end
+
+def autofixed_agents_pass(paths)
+  write_file("lib/ok.rb", "OK = 1\n")
+  Master::Fix::AutofixGuard.reset!
+  write_file("AGENTS.md", "# Agents\n\nRead this.\n")
+  Master::Fix::AutofixGuard.note_written(File.join(@dir, "AGENTS.md"), before: "# Agents\n\n\n\nRead this.\n")
+
+  git = FakeGit.new([], paths)
+  truth = Master::Ground::Truth.new
+  committer = Master::Fix::FixLoop::Committer.new(git:, bus: FakeBus.new, root: @dir, ground_truth: truth)
+  committer.baseline!
+  committer.begin_transaction!(Master::Fix::Transaction.new(root: @dir, paths:))
+  committer.attest_written!(File.join(@dir, "lib/ok.rb"))
+  [committer, git]
+end
+
 # A rollback refused over another writer's edit ends the pass's transaction. The committer
 # kept it, and every later fix in the pass failed "transaction not active" uncommitted.
 def test_a_fix_after_the_transaction_ended_still_commits
