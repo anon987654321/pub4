@@ -238,13 +238,12 @@ class PostsController < ApplicationController
   end
 
   def post_params
-    permitted = params.require(:post).permit(:title, :content, :community_id, :neighborhood_id, :anonymous, :image, :video, :audio, :preset, :flair, :nearby, images: [])
-    # A multi-file field sends [""] when untouched; do not replace existing
-    # gallery attachments with that empty sentinel during an edit.
-    if permitted[:images].present?
-      permitted[:images] = permitted[:images].reject(&:blank?)
-      permitted.delete(:images) if permitted[:images].empty?
-    end
+    permitted = params.require(:post).permit(:title, :content, :community_id, :neighborhood_id, :anonymous, :image,
+                                             :video, :audio, :preset, :flair, :nearby,
+                                             images: [], remove_image_ids: [], image_positions: {})
+    # A multi-file field sends [""] when untouched; Post#revise adds the rest.
+    images = Array(permitted.delete(:images)).compact_blank
+    permitted[:images] = images if images.any?
     permitted
   end
 

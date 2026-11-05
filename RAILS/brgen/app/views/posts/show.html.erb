@@ -40,10 +40,11 @@
       <% elsif @post.images.attached? %>
         <%# A gallery post keeps every photo on its own page, not only on the card. %>
         <div class="post-images" data-controller="post-gallery">
-          <%= render partial: "posts/gallery_image", collection: @post.images,
-                locals: { post: @post, total: @post.images.size } %>
+          <% gallery = @post.ordered_images %>
+          <%= render partial: "posts/gallery_image", collection: gallery,
+                locals: { post: @post, total: gallery.size } %>
         </div>
-        <%= render "shared/photo_credit", blob: @post.images.first.blob %>
+        <%= render "shared/photo_credit", blob: gallery.first.blob %>
       <% elsif @post.video.attached? %>
         <%= video_tag @post.video, controls: true, playsinline: true, preload: "metadata",
               class: "post-image post-video", aria: { label: @post.title.presence || t("posts.video") } %>

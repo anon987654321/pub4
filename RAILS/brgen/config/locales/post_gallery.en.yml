@@ -1,0 +1,9 @@
+# The photo gallery on the post edit form (posts/_gallery_editor, Post::Gallery).
+en:
+  posts:
+    gallery:
+      legend: Photos
+      help: Change the numbers to reorder, or tick a box to remove a photo.
+      position: Place for photo %{number}
+      remove: Remove photo %{number}
+      add: Add photos

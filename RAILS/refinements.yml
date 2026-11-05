@@ -1305,7 +1305,7 @@ items:
   path: RAILS/brgen/app/views/posts/edit.html.erb
   item: Let the edit form manage the images gallery (add/remove/reorder); new posts
     use images[] but edit only offers the single image field.
-  status: open
+  status: done
 - id: brgen-054
   app: brgen
   area: compose

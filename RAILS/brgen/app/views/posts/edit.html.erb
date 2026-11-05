@@ -44,6 +44,7 @@
       <div class="media-preview" data-media-picker-target="preview"></div>
       <%= render "shared/preset_strip", f: f %>
     </div>
+    <%= render "posts/gallery_editor", f:, post: @post %>
     <div class="field field--check">
       <%= f.check_box :anonymous %>
       <%= f.label :anonymous, t("posts.post_anonymously") %>

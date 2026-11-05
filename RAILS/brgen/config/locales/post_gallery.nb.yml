@@ -1,0 +1,9 @@
+# The photo gallery on the post edit form (posts/_gallery_editor, Post::Gallery).
+nb:
+  posts:
+    gallery:
+      legend: Bilder
+      help: Endre tallene for å bytte rekkefølge, eller kryss av for å fjerne et bilde.
+      position: Plass for bilde %{number}
+      remove: Fjern bilde %{number}
+      add: Legg til bilder

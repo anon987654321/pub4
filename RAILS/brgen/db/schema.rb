@@ -1484,6 +1484,7 @@ ActiveRecord::Schema[8.2].define(version: 2026_11_05_160000) do
     t.integer "crossposts_count", default: 0, null: false
     t.datetime "edited_at"
     t.string "flair"
+    t.json "image_order"
     t.decimal "latitude", precision: 10, scale: 6
     t.json "link_embed"
     t.decimal "longitude", precision: 10, scale: 6

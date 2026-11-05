@@ -51,13 +51,20 @@ class Post < ApplicationRecord
   validate :neighborhood_belongs_to_current_city
 
   include LiveCard
+  include Gallery
 
   # The author's edit. A changed title or body stamps edited_at, which the card
   # and the post page show; a new image or community alone does not.
+  # An edit. The gallery is arranged apart from the text (Post::Gallery):
+  # assigning images would replace the whole set, where the edit form adds to it.
+  GALLERY_FIELDS = %i[images remove_image_ids image_positions].freeze
+
   def revise(attributes)
-    assign_attributes(attributes)
+    gallery = attributes.to_h.symbolize_keys.slice(*GALLERY_FIELDS)
+    assign_attributes(attributes.except(*GALLERY_FIELDS))
     self.edited_at = Time.current if will_save_change_to_title? || will_save_change_to_content?
-    save
+    save && arrange_gallery(add: gallery[:images], remove_ids: gallery[:remove_image_ids],
+                            positions: gallery[:image_positions].to_h)
   end
 
   def to_markdown

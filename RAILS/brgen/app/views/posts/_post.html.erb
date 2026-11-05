@@ -124,8 +124,9 @@
           <% if post.images.attached? %>
             <%# Each photo is told apart by its place in the set, and the first
                 says how many more follow, since the rest sit off to the side. %>
-            <% total = post.images.size %>
-            <% post.images.each_with_index do |image, image_index| %>
+            <% gallery = post.ordered_images %>
+            <% total = gallery.size %>
+            <% gallery.each_with_index do |image, image_index| %>
               <% priority_image = priority && image_index.zero? %>
               <% alt = post.title %>
               <% alt = t("post.photo_of", number: image_index + 1, total:, title: post.title) if total > 1 %>

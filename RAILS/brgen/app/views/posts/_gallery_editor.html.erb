@@ -1,0 +1,29 @@
+<%# locals: (f:, post:) %>
+<%# The gallery on the edit form: each photo with its place and a remove box,
+    and a field that adds more. Numbers rather than drag handles, so the order
+    can be set from a keyboard or without JavaScript (Post::Gallery). %>
+<fieldset class="field post-gallery-editor">
+  <%= tag.legend t("posts.gallery.legend") %>
+  <% images = post.ordered_images %>
+  <% if images.any? %>
+    <%= tag.p t("posts.gallery.help"), class: "form-help" %>
+    <ol class="post-gallery-list" role="list">
+      <% images.each_with_index do |image, index| %>
+        <% field_id = "post_image_positions_#{image.id}" %>
+        <li>
+          <%= image_tag image.variant(resize_to_limit: [ 160, 160 ]), loading: "lazy",
+                alt: t("post.photo_of", number: index + 1, total: images.size, title: post.title) %>
+          <%= label_tag field_id, t("posts.gallery.position", number: index + 1) %>
+          <%= number_field_tag "post[image_positions][#{image.id}]", index + 1, id: field_id,
+                min: 1, max: images.size, inputmode: "numeric" %>
+          <%= label_tag "post_remove_image_#{image.id}" do %>
+            <%= check_box_tag "post[remove_image_ids][]", image.id, false, id: "post_remove_image_#{image.id}" %>
+            <%= t("posts.gallery.remove", number: index + 1) %>
+          <% end %>
+        </li>
+      <% end %>
+    </ol>
+  <% end %>
+  <%= f.label :images, t("posts.gallery.add") %>
+  <%= f.file_field :images, multiple: true, accept: "image/*", direct_upload: true %>
+</fieldset>
