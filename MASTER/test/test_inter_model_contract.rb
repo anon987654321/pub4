@@ -6,6 +6,9 @@ require "tmpdir"
 require "fileutils"
 require_relative "../lib/master"
 require_relative "../lib/review/council/inter_model_contract"
+require_relative "../lib/review/council/ideation"
+require File.join(Master::ROOT, "law", "definition") unless defined?(::Law)
+::Law.load_all(File.join(Master::ROOT, "law")) if ::Law.definitions.empty?
 
 class TestInterModelContract < Minitest::Test
   Contract = Master::Review::Council::InterModelContract
@@ -146,4 +149,102 @@ class TestInterModelContract < Minitest::Test
     assert_includes prompt, "sha256:"
     assert_includes prompt, "RESPONSE CONTRACT (JSON ONLY"
   end
+
+  def test_inter_model_law_detects_positional_keyword_and_heredoc_bypasses
+    law = ::Law.definitions.fetch(:INTER_MODEL_CONTRACT)
+    path = "MASTER/lib/review/council/probe.rb"
+    [
+      "@agent.ask(prompt)",
+      "@agent.ask_once(<<~PROMPT, system: system_msg)",
+      "@agent.ask_once(query, prompt: query)"
+    ].each do |source|
+      refute_empty law.scan(source, file: path), "expected unwrapped call to be detected: #{source}"
+    end
+
+    [
+      "@agent.ask(outbound)",
+      "@agent.ask_once(outbound, system: system_msg)"
+    ].each do |source|
+      assert_empty law.scan(source, file: path), "wrapped request must remain clean: #{source}"
+    end
+  end
+
+  def test_council_ideation_uses_validated_protocol_for_every_model_turn
+    ideas = 15.times.map { |index| "Distinct approach #{index + 1}" }
+    brainstorm = protocol_response(
+      position: "independent",
+      findings: ideas.each_with_index.map do |idea, index|
+        protocol_finding(idea, "candidate #{index + 1}", "none")
+      end
+    )
+    critique = protocol_response(
+      position: "mixed",
+      findings: ideas.each_with_index.map do |idea, index|
+        verdict = index.zero? ? "KEEP" : "REJECT: insufficient advantage"
+        protocol_finding(idea, "candidate #{index + 1}", verdict)
+      end
+    )
+    synthesis = protocol_response(
+      position: "mixed",
+      findings: [
+        protocol_finding(
+          "Combine the strongest surviving approach with the smallest safe rollout.",
+          "final recommendation",
+          "Implement the bounded change behind the existing capability gate."
+        )
+      ]
+    )
+    responses = [brainstorm, critique, synthesis]
+    prompts = []
+    agent = Object.new
+    agent.define_singleton_method(:model) { "inter-model-test" }
+    agent.define_singleton_method(:ask_once) do |prompt, system:|
+      prompts << [prompt, system]
+      responses.shift || raise("unexpected extra ideation request")
+    end
+
+    result = Master::Review::Council::Ideation.new(agent:, root: @root).ideate(
+      "Improve the existing workflow without changing its public contract.",
+      cycles: 1
+    )
+
+    assert result.ok?, result.respond_to?(:message) ? result.message : "ideation failed"
+    value = result.value!
+    assert_equal 15, value.fetch(:ideas).size
+    assert_equal 1, value.fetch(:critiques).size
+    assert_includes value.fetch(:critiques).first, "VERDICT: KEEP"
+    assert_includes value.fetch(:final), "bounded change"
+    assert_equal 3, prompts.size
+    assert prompts.all? { |prompt, _system| prompt.include?("INTER-MODEL CONTRACT") }
+
+    ledger = Contract.measure(root: @root)
+    assert_equal "measured", ledger.fetch("status")
+    assert_equal 3, ledger.fetch("turns")
+    assert_equal 1.0, ledger.fetch("schema_compliance_rate")
+    assert_equal 1.0, ledger.fetch("first_response_schema_compliance_rate")
+  end
+
+  private
+
+  def protocol_response(position:, findings:)
+    {
+      "position" => position,
+      "position_reason" => "The supplied task and candidate set were assessed under the declared constraints.",
+      "position_evidence" => [
+        { "location" => "requested task", "evidence" => "The task and supplied candidate material are present in the bounded prompt." }
+      ],
+      "findings" => findings
+    }.to_json
+  end
+
+  def protocol_finding(claim, location, proposed_repair)
+    {
+      "severity" => "info",
+      "location" => location,
+      "evidence" => "This response is grounded in the supplied task and candidate material.",
+      "claim" => claim,
+      "proposed_repair" => proposed_repair
+    }
+  end
+
 end
