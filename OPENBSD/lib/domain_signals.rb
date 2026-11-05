@@ -37,6 +37,8 @@ module DomainSignals
     known = owned.dup
     owned.each { |d| known << "www.#{d}" }
     known << "ai.brgen.no"
+    # mrd.brgen.no: the Mr. Damascy demo, a brgen.no SAN symlinked like ai.brgen.no.
+    known << "mrd.brgen.no"
     BRGEN_VERTICALS.each { |v| known << "#{v}.brgen.no" }
     relay_residual = (relay_hosts - known).sort
 
