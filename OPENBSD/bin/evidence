@@ -120,30 +120,46 @@ module EvidenceCapture
     command_status = nil
     timed_out = false
     spawn_error = nil
+    deadline = Process.clock_gettime(Process::CLOCK_MONOTONIC) + timeout_seconds
+
     File.open(log_path, "wb", 0o600) do |log|
       begin
         Open3.popen2e(*command, pgroup: true) do |stdin, stream, waiter|
-          stdin.close
-          reader = Thread.new do
-            loop do
-              chunk = stream.readpartial(READ_SIZE)
-              log.write(chunk)
-              log.flush
-              $stderr.write(chunk)
-              $stderr.flush
+          reader = nil
+          begin
+            stdin.close
+            reader = Thread.new do
+              loop do
+                chunk = stream.readpartial(READ_SIZE)
+                log.write(chunk)
+                log.flush
+                $stderr.write(chunk)
+                $stderr.flush
+              end
+            rescue EOFError, IOError, Errno::EPIPE
+              nil
             end
-          rescue EOFError, IOError
-            nil
-          end
 
-          unless waiter.join(timeout_seconds)
-            timed_out = true
-            terminate_process_group(waiter.pid, waiter)
+            remaining = deadline - Process.clock_gettime(Process::CLOCK_MONOTONIC)
+            unless remaining.positive? && waiter.join(remaining)
+              timed_out = true
+              terminate_process_group(waiter.pid, waiter)
+            end
+
+            command_status = exit_status(waiter.value)
+            remaining = deadline - Process.clock_gettime(Process::CLOCK_MONOTONIC)
+            unless reader.join([remaining, 0.0].max)
+              timed_out = true
+              terminate_process_group(waiter.pid, waiter)
+            end
+            reader.value unless timed_out
+          ensure
+            stream.close unless stream.closed?
+            if reader&.alive?
+              reader.kill
+              reader.join(0.25)
+            end
           end
-          command_status = exit_status(waiter.value)
-          reader.join
-        ensure
-          stream.close unless stream.closed?
         end
       rescue SystemCallError => error
         spawn_error = "#{error.class}: #{error.message}"
@@ -155,19 +171,22 @@ module EvidenceCapture
     { command_exit_status: command_status, reported_exit_status: reported, timed_out: timed_out, spawn_error: spawn_error }
   end
 
+  # The leader may exit while a descendant still holds stdout/stderr open.
+  # Always signal the group again after the grace period; waiting only for the
+  # leader would leave descendants alive and make the reader join unbounded.
   def terminate_process_group(pid, waiter)
-    Process.kill("TERM", -pid)
-  rescue Errno::ESRCH
-    nil
-  ensure
-    unless waiter.join(1.5)
-      begin
-        Process.kill("KILL", -pid)
-      rescue Errno::ESRCH
-        nil
-      end
-      waiter.join
+    begin
+      Process.kill("TERM", -pid)
+    rescue Errno::ESRCH
+      nil
     end
+    waiter.join(0.25)
+    begin
+      Process.kill("KILL", -pid)
+    rescue Errno::ESRCH
+      nil
+    end
+    waiter.join(1)
   end
 
   def exit_status(status)

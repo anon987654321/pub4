@@ -57,6 +57,19 @@ class TestEvidenceTool < Minitest::Test
     assert_operator artifact.fetch("duration_seconds"), :<, 3.0
   end
 
+  def test_timeout_covers_a_descendant_that_keeps_the_output_pipe_open
+    child = "trap('TERM') {}; sleep 10"
+    parent = "Process.spawn(#{RbConfig.ruby.dump}, '-e', #{child.dump}); puts 'leader exited'; exit 0"
+
+    status, output = run_tool("orphan-pipe", "--timeout", "0.2", "--", RbConfig.ruby, "-e", parent)
+    assert_equal 124, status.exitstatus, output
+    artifact = latest_artifact("orphan-pipe")
+    assert_equal "TIMEOUT", artifact.fetch("verdict")
+    assert_equal true, artifact.fetch("timed_out")
+    assert_equal 0, artifact.fetch("command_exit_status"), "the leader exited; its descendant kept the pipe open"
+    assert_operator artifact.fetch("duration_seconds"), :<, 3.0
+  end
+
   def test_refuses_pass_override_for_nonzero_command
     status, output = run_tool("refused", "--verdict", "PASS", "--", RbConfig.ruby, "-e", "exit 1")
     assert_equal 1, status.exitstatus, output
