@@ -197,10 +197,15 @@ module Master
           payload_hash = Digest::SHA256.hexdigest(JSON.generate(payload.sort.to_h))
           key = %w[affiliateSiteId programId timeStampEvent eventId orderNumber].map { |name| payload.fetch(name) }
           {
-            "schema" => 1, "source" => source, "created_at" => @clock.call.utc.iso8601(6),
+            "schema" => 1, "source" => source, "created_at" => created_at_stamp,
             "payload_sha256" => payload_hash, "claim_key_sha256" => Digest::SHA256.hexdigest(JSON.generate(key)),
             "payload" => payload
           }
+        end
+
+        def created_at_stamp
+          moment = @clock.call.utc
+          moment.iso8601(6)
         end
 
         def write_record(record)
