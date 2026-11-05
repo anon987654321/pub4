@@ -67,6 +67,37 @@ class TestDillaCliContract < Minitest::Test
     end
   end
 
+  def test_output_overrides_cannot_write_inside_the_checkout
+    root = Studio::OutputPaths::REPOSITORY_ROOT
+    {
+      "DILLA_OUTPUT_DIR" => -> { Studio::OutputPaths.dilla_render_directory },
+      "POSTPRO_OUTPUT_DIR" => -> { Studio::OutputPaths.render_directory }
+    }.each do |name, resolve|
+      previous = ENV[name]
+      ENV[name] = File.join(root, "STUDIO", "unapproved-renders")
+
+      error = assert_raises(ArgumentError, name) { resolve.call }
+      assert_match(/resolves inside the checkout/, error.message)
+    ensure
+      previous ? ENV[name] = previous : ENV.delete(name)
+    end
+  end
+
+  def test_output_override_symlinks_are_resolved_before_the_checkout_check
+    root = Studio::OutputPaths::REPOSITORY_ROOT
+    Dir.mktmpdir("studio-output-link-") do |directory|
+      link = File.join(directory, "renders")
+      File.symlink(File.join(root, "STUDIO", "dilla"), link)
+      previous = ENV["DILLA_OUTPUT_DIR"]
+      ENV["DILLA_OUTPUT_DIR"] = link
+
+      error = assert_raises(ArgumentError) { Studio::OutputPaths.dilla_render_directory }
+      assert_match(/resolves inside the checkout/, error.message)
+    ensure
+      previous ? ENV["DILLA_OUTPUT_DIR"] = previous : ENV.delete("DILLA_OUTPUT_DIR")
+    end
+  end
+
   def test_unknown_flags_are_rejected
     _out, err, status = run_dilla("--frobnicate")
     refute status.success?

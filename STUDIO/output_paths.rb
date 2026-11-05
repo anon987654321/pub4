@@ -49,7 +49,13 @@ module Studio
 
     def directory(name, at: nil, override: nil)
       configured = override ? ENV.fetch(override, "").to_s : ""
-      return File.expand_path(configured) unless configured.empty?
+      unless configured.empty?
+        candidate = canonical_path(configured)
+        if inside_repository?(candidate)
+          raise ArgumentError, "#{override} resolves inside the checkout: #{configured}"
+        end
+        return candidate
+      end
 
       path = File.join(data_home, name)
       at ? File.join(path, at.utc.strftime("%Y-%m-%d")) : path
