@@ -1,4 +1,4 @@
-# pub4 — remaining work
+# pub4 - remaining work
 
 Audit snapshot: 2026-11-05, `main` at `4b57364d4935b2df9e3021dd492be32d4db4b85c` (source/history baseline for this register update).
 This register replaces the previous 1,275-line, 462-checkbox carry-forward
@@ -198,14 +198,14 @@ second push path or duplicate orchestration to make TODO.md machine-readable.
   after checking references, generators, links, tests and agent entrypoints.
   Preserve useful recovery/provenance records. Update sources and generators
   together; add no Markdown files.
-- [ ] **Historical hardening review.** Reconcile the remaining P01–P11
+- [ ] **Historical hardening review.** Reconcile the remaining P01-P11
   findings in `MASTER/docs/history/fix-review-log.md`. L4 stale-member
   detection/tests, L5 heredoc/keyword detection plus structured Council
   ideation, L7 declarative/runtime parity assertion, and L8 parse-time
   check-registry refusal now have source coverage on `main`; their focused
   test runs remain NOT_RUN. L4's stored census is not re-baselined until a
   pinned Ruby 4.0.5 run has reported exact member drift. Continue with the
-  genuinely open R3/R8–R13/R16–R17/H2–H8 findings. The LLMDispatcher
+  genuinely open R3/R8-R13/R16-R17/H2-H8 findings. The LLMDispatcher
   Replicate chat poll is now source-fixed for URL trust, bearer-token
   confinement and network deadlines; the separate ReplicateClient paths
   remain under review. All new provider tests are NOT_RUN. R8 now also has a

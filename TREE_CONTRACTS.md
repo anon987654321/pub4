@@ -8,7 +8,7 @@ at the repo root route here. The content moved out of the per-tree
 ## RAILS
 RAILS/README.md is the maintained long-form reference (check tables,
 rendered-check semantics, deploy blockers, subdomain map) and
-`RAILS/apps.yml` is feature truth — do not restate either in this file.
+`RAILS/apps.yml` is feature truth - do not restate either in this file.
 
 ### The deploy script layer
 
@@ -16,7 +16,7 @@ rendered-check semantics, deploy blockers, subdomain map) and
 `_deploy`, `_runtime_check`, `_service`) are libraries of sourced shell
 functions, not entrypoints. Each app's `deploy.sh` sources them; root
 `redeploy` is the operator's workstation entry; `apps.yml` is the
-canonical matrix and `apps.horizon.yml` the planned one — the two must
+canonical matrix and `apps.horizon.yml` the planned one - the two must
 not drift without a session note. An app counts as first-class when it
 has an `apps.yml` entry, a `deploy_root` and (when it reaches the VPS) a
 `deploy_script`; `mrdamascy` is first-class as of 2026-11-02 with its
@@ -28,22 +28,22 @@ deploy lane still pending.
 ruby MASTER/checks/runner.rb --all          # every registered check
 ruby MASTER/checks/runner.rb --list         # check names
 ruby MASTER/checks/runner.rb production     # one check, or a composite
-ruby RAILS/test/<name>_test.rb            # one contract test — bare ruby, no bundle
+ruby RAILS/test/<name>_test.rb            # one contract test - bare ruby, no bundle
 cd RAILS/<app> && bin/ci                  # per-app RuboCop, Brakeman, bundler-audit, tests
 cd RAILS/<app> && bin/rails test test/models/item_test.rb:42   # one app test
 MASTER/bin/operator triangle up                     # boot all 4 surfaces on the ports checks probe
 npm ci && npm run build:pwa               # rebuild the Workbox service worker
 ```
 
-`RAILS/test/*.rb` are standalone Minitest files run under bare `ruby` — they
+`RAILS/test/*.rb` are standalone Minitest files run under bare `ruby` - they
 read source as text and never boot Rails. App tests under
 `RAILS/<app>/test/` need the app bundle. Ruby 4.0.5 is pinned by
 `.ruby-version` at the repo root and in each app directory, so app commands
 resolve the same interpreter from any cwd.
 
-Which check proves the work: source change → the check that owns it
-(`runner.rb --list`); app code → that app's `bin/ci`; anything measuring
-rendered layout → `MASTER/bin/operator triangle up` first, or the live half
+Which check proves the work: source change -> the check that owns it
+(`runner.rb --list`); app code -> that app's `bin/ci`; anything measuring
+rendered layout -> `MASTER/bin/operator triangle up` first, or the live half
 silently passes having measured nothing.
 
 ### Architecture
@@ -53,7 +53,7 @@ silently passes having measured nothing.
 views, Stimulus controllers, policies and lints that all three apps share.
 Concerns come in through `Shared.concern(:Votable)`, routes through an
 `instance_eval` of `__shared/config/routes/social.rb` in each app's
-`routes.rb`. A change in `shared/` lands in three apps at once — check all
+`routes.rb`. A change in `shared/` lands in three apps at once - check all
 three before assuming a fix is local.
 
 **Shared deploys as a sibling, not a subdirectory.** The copy-tree deploy
@@ -68,7 +68,7 @@ Marketplace contains the food-ordering Takeaway engine as a nested package;
 it is exposed at `/food` on the marketplace host. Subdomain constraints in
 `brgen/config/routes.rb` via `Brgen::DomainRegistry` map `markedsplass`,
 `dating`, `tv` and the rest onto them. Messenger and the MASTER relay are
-not engines. Tooling that globs `<app>/app/**` misses engine code — four
+not engines. Tooling that globs `<app>/app/**` misses engine code - four
 scanners stopped seeing 57 views when the verticals moved, and the falling
 finding count read as improvement rather than blindness.
 
@@ -76,13 +76,13 @@ finding count read as improvement rather than blindness.
 `MASTER/checks/checks.yml` carrying its `require`, `Deploy::*` class, pass
 line, and parent composite; `runner.rb` and
 `OPENBSD/lib/check_environment.rb` both read that file by check name. Adding
-a check is one row — not a new script. Most run in-process returning a
+a check is one row - not a new script. Most run in-process returning a
 `Deploy::CheckResult`; only `release`, `rails_runtime` and `visual_contract`
 subprocess.
 
 **Source checks read text; rendered checks measure Chrome.** The
 `rendered_suite` family drives real Chrome over CDP through
-`checks/support/cdp_session.rb` — stdlib only, no ferrum/selenium, because
+`checks/support/cdp_session.rb` - stdlib only, no ferrum/selenium, because
 checks run under bare `ruby` outside any app bundle. Without Chrome they
 degrade to warnings rather than failing, so a green run does not prove a
 measurement happened.
@@ -97,10 +97,10 @@ MASTER runs on itself, and `/fix` mutates the working tree.
 - **Visual/CSS work:** read `__shared/README.md` first: the visual design
   system and the layout chrome contract every surface shares are there. Tokens
   live in `__shared/app/assets/stylesheets/_dialect_tokens.scss`; flat only,
-  no shadow/blur/glow. Most layout "bugs" here are stale deployed CSS — diff
+  no shadow/blur/glow. Most layout "bugs" here are stale deployed CSS - diff
   live against source before changing anything.
 - **Stale fragment caches:** `update_column` skips `updated_at`, so
-  `[record, …]` cache keys do not bust and a page keeps rendering the old
+  `[record, ...]` cache keys do not bust and a page keeps rendering the old
   value while the console shows the new one.
 - **`browser_diagnostics` runs through the same CDP session as the rendered
   checks.** It records console/runtime exceptions, HTTP/resource failures and
@@ -126,7 +126,7 @@ MASTER runs on itself, and `/fix` mutates the working tree.
   prepares its own sqlite from the checked-in schema. The local fleet
   (`bin/operator triangle up`) serves this checkout, so a view change shows in
   the rendered checks as soon as it is saved.
-- **Horizon features** in `RAILS/apps.horizon.yml` are `agent: ignore` — do
+- **Horizon features** in `RAILS/apps.horizon.yml` are `agent: ignore` - do
   not implement unprompted.
 
 ### Editing frontend code
@@ -176,7 +176,7 @@ viewport values in app code.
 Written 2026-07-10 after a live debugging session that traced a "tap to
 continue does nothing" bug through the full stack to a production asset
 mismatch, then on to a VPS-wide resource crisis. Read this before touching
-the boot sequence or the deploy path — it'll save you re-deriving all of it.
+the boot sequence or the deploy path - it'll save you re-deriving all of it.
 
 ### Overview
 
@@ -216,14 +216,14 @@ After deploying web changes on the VPS, restart with
 ### Boot contract (high-risk path)
 
 The chat face boot path is high-risk. The recurring regression class is:
-"tap to start does nothing" — 30+ commits across this repo's history are
+"tap to start does nothing" - 30+ commits across this repo's history are
 titled some variant of "fix primer tap/dead tap/boot," so treat any fix here
 as provisional until it survives a real-browser tap test, not just a code
 read.
 
 **Invariants:**
 - The face surface is the fullscreen UI: `#face` owns the entire dynamic
-  viewport (`100dvw` × `100dvh`) from `inset: 0`; do not reintroduce a
+  viewport (`100dvw` x `100dvh`) from `inset: 0`; do not reintroduce a
   viewport-sized stage, card, or `vh`-limited face canvas.
 - The installed PWA uses `display: fullscreen` and the document viewport
   keeps `viewport-fit=cover`; preserve safe-area insets for controls without
@@ -256,7 +256,7 @@ read.
   OS/browser narrator.
 
 **Files:**
-- `config/face_assets.yml`: **the** manifest — every face asset the shell
+- `config/face_assets.yml`: **the** manifest - every face asset the shell
   loads, grouped by load phase, order within a group being the boot contract.
   The view renders `MASTER_ASSET_PATHS` and the deferred
   `javascript_include_tag` from it (`FaceAssets`), and `/etc/rc.d/master`'s
@@ -281,12 +281,12 @@ read.
   (pinned in `script/three_build/package.json`, currently 0.184.0) and
   esbuild-bundles only the ~17 symbols `script/three_face_entry.js`
   re-exports. To change the three version, edit that package.json and re-run
-  the script — do not patch the output. The tracked bundle is the build
+  the script - do not patch the output. The tracked bundle is the build
   artifact; it is committed so the 1GB VPS never has to run npm at boot.
 
 Until 2026-07-28 a second file, `public/three.module.js`, was also tracked:
 a full unminified three r160 (Dec 2023), 53k lines, over half of everything
-tracked under `web/`. Nothing imported it — `MASTER_ASSET_PATHS.threeModule`
+tracked under `web/`. Nothing imported it - `MASTER_ASSET_PATHS.threeModule`
 points at `three.face.module.js`, and the only textual match for its name
 was a license comment inside that bundle. Deleted. If you find yourself
 adding a raw three build back, check whether the entry-point re-export list
@@ -299,13 +299,13 @@ is what you actually want to extend instead.
   replaced it)
 -
   `ruby -Ilib:test test/test_web_ui.rb --name test_public_asset_manifest_matches_source_files`
-- Manual real-browser boot test after boot changes (see below) — headless
+- Manual real-browser boot test after boot changes (see below) - headless
   CDP tools have shown false hangs in sandboxed environments in this repo's
   history, so a real browser is the trustworthy signal, not a scripted one.
 
 **Manual boot test:**
 1. Start the web app on a local port.
-2. Open the default chat URL in a real browser — and on iOS Safari when boot
+2. Open the default chat URL in a real browser - and on iOS Safari when boot
    assets change materially, because nothing in CI drives a real touch event.
 3. Confirm the page autostarts without a blocking primer, the prompt becomes
    usable, and the face starts or reports failure visibly.
@@ -318,7 +318,7 @@ is what you actually want to extend instead.
 
 ### Runtime contract (chat, face, TTS)
 Fullscreen invariant: the face surface owns the entire dynamic viewport.
-`canvas#face` and the face shell must remain edge-to-edge at `100dvw` ×
+`canvas#face` and the face shell must remain edge-to-edge at `100dvw` x
 `100dvh`; the installed PWA manifest prefers `fullscreen`. Do not
 reintroduce a viewport-sized frame, card, inset canvas, or
 `min-height: 44vh` face root. Safe-area insets belong to the chrome
@@ -346,7 +346,7 @@ files:
     face_speech_runtime.js  face_speech_playback.js
     face.part5.txt
 
-There is no `face.part4.txt` — the two speech files sit in its place, and
+There is no `face.part4.txt` - the two speech files sit in its place, and
 that is where TTS, the browser-voice default and the STT duck live. Reading
 this list as `face.part*.txt` sends you looking for that code in a part file
 that does not contain it.
@@ -405,7 +405,7 @@ quietly.
 The face's `mood` listener (the tint through `fadeColorTo`) and
 `chat_service.rb`'s `agent:mood` subscription now have a producer:
 `Homeostat#observe` publishes `agent:mood` only when the derived mood
-changes. `felt:sense` remains separate — it echoes the browser's own posted
+changes. `felt:sense` remains separate - it echoes the browser's own posted
 state.
 
 ### RESOLVED 2026-07-11: the real "dead tap" root cause was a MutationObserver loop
@@ -415,10 +415,10 @@ slow-page / infinite-loading-spinner / dead-tap triad was found and fixed:
 `public/face_state.js`'s `observe()` watched `attributes: true` on the same
 elements (`#status`, `#ui-status`, `#pipeline-stage`) whose
 `data-runtime-status` attribute its own callback writes via `applyFrom()`.
-Each write re-fired the observer → wrote again → an infinite
-mutation→observe→mutate **microtask** loop that permanently starved the main
+Each write re-fired the observer -> wrote again -> an infinite
+mutation->observe->mutate **microtask** loop that permanently starved the main
 thread. Because it's a microtask flood (not a plain `while` loop), the
-thread never yields to rendering or input — so the page load event never
+thread never yields to rendering or input - so the page load event never
 fires (spinner), and the primer's tap listeners never get a slot (dead tap).
 Fix: drop `attributes` from the observe options; `runtimeStatus` is only
 ever written by this file, so there was no external attribute change worth
@@ -434,24 +434,24 @@ Two things this exposed, both worth heeding:
   responsive; a sandbox false- hang can't produce that selective result. A raw
   "it hangs" from one load is untrustworthy; a bisect is not.
 - **The rc.d precompile-skip digest used to be incomplete.**
-  `/etc/rc.d/master`'s `_digest=$(cksum …)` named its inputs by hand, so
+  `/etc/rc.d/master`'s `_digest=$(cksum ...)` named its inputs by hand, so
   editing a face module it did not list **silently skipped precompile** on
   restart and kept the stale fingerprint live. A `face_*.js` glob later fixed
-  that for the face_-prefixed half and still left 15 of 38 uncovered — among
+  that for the face_-prefixed half and still left 15 of 38 uncovered - among
   them `particle_kernel.js`, `face.runtime.js` and `three.face.module.js`.
   Since 2026-07-28 the digest reads `config/face_assets.yml` via
   `script/face_asset_paths.rb`, so a module is covered the moment it is
-  declared. **Declare new face assets in that manifest** — not doing so is now
+  declared. **Declare new face assets in that manifest** - not doing so is now
   the only way to reproduce the old failure.
 
-### The primer → face boot sequence
+### The primer -> face boot sequence
 
 The page loads with a black `#primer` overlay ("tap to start"). Two
 independent mechanisms can dismiss it:
 
 1. An early inline `<script>` in `<head>` (`armPrimer()`) attaches
    pointerdown/click/touchend/keydown listeners as soon as the DOM is ready.
-   It's a **fallback** — if the fuller boot script below hasn't defined
+   It's a **fallback** - if the fuller boot script below hasn't defined
    `window.__MASTER_PRIMER_GO__` yet, it does a minimal dismiss itself.
 2. A later inline `<script>` (non-deferred, so it runs synchronously at
    parse time, before `DOMContentLoaded`) defines the real `go()` function,
@@ -463,14 +463,14 @@ independent mechanisms can dismiss it:
 unconditionally**, before anything WebGL-related happens. This means: if the
 overlay ever fails to disappear on tap, with *zero* visible change anywhere
 on screen (no prompt bar, no status text), the tap handlers themselves never
-ran — that's a client-side JS execution problem (browser
+ran - that's a client-side JS execution problem (browser
 extension/content-blocker silently stripping scripts, or a CSP issue), not a
 bug in this boot code. Verified during this session: a browser extension was
 silently blocking all page JS in the normal profile; incognito (which
 disables most extensions) let the primer dismiss correctly.
 
 After dismissal, `loadFace()` dynamically `import()`s the fingerprinted
-`face.js` bundle. That file is a *thin loader*, not the real renderer — it:
+`face.js` bundle. That file is a *thin loader*, not the real renderer - it:
 - imports 10 small `face_*.js` helper modules directly via
   `MASTER_ASSET_PATHS`
 - fetches the single prebuilt `face.runtime.js` and imports it as a `Blob`
@@ -480,7 +480,7 @@ After dismissal, `loadFace()` dynamically `import()`s the fingerprinted
 - feature-detects WebGL with a throwaway `<canvas>` before paying the ~1.3MB
   THREE.js parse cost; falls back to a lighter "2D mode" path otherwise, which
   is why an unresponsive face on an unusual browser isn't automatically a bug
-  — check for real WebGL support first.
+  - check for real WebGL support first.
 
 Separately, `face_deferred_loader.js` waits for the `primer:ready` event and
 loads a *second*, independent "vision" layer (`face_vision.bundle.js`,
@@ -495,18 +495,18 @@ explicit product/security decision to make those rules public.
 ### The asset-manifest footgun (bit us twice in one session)
 
 Propshaft's dev-mode `public/assets/.manifest.json`, once present, is
-consulted instead of the live filesystem — so adding a new asset without
+consulted instead of the live filesystem - so adding a new asset without
 regenerating the manifest 404s it, even though `assets:precompile` ran.
 Worse in production: the *running* Falcon process's in-memory asset state
 can go stale relative to what's actually on disk if a newer build lands
 after the process booted. A file can exist, `curl` can 200 it directly, and
-the app can still 404 trying to `asset_path()` it — until restarted.
+the app can still 404 trying to `asset_path()` it - until restarted.
 
 This is why `master`'s `rc.d` script now runs `master_web_assets_check.rb`
 as a hard, load-bearing check before starting (added 2026-07-10, one retry
 via forced `assets:precompile` before it actually refuses to start). If
 `master` won't start and the log shows "assets check failed", that's telling
-you the truth — don't work around it, find out what's actually missing.
+you the truth - don't work around it, find out what's actually missing.
 
 ### Deploy state
 
@@ -520,25 +520,25 @@ you the truth — don't work around it, find out what's actually missing.
   before restarting `relayd` (relayd can keep routing to a dead backend
   connection after a restart until kicked).
 - A `/home/dev/pub4/.deploying-<app>` lock file is touched for the duration
-  of each app's `rc_pre()` — check for it before assuming any app's asset/db
+  of each app's `rc_pre()` - check for it before assuming any app's asset/db
   state is stable if you're debugging remotely while a restart might be in
   flight.
 - **The canonical source for every `/etc/rc.d/<app>` script and
   `resource_guard.sh` is this repo** (`OPENBSD/etc/rc.d/*`,
-  `OPENBSD/bin/resource_guard.sh`) — not whatever is live on the VPS. If you
+  `OPENBSD/bin/resource_guard.sh`) - not whatever is live on the VPS. If you
   edit the live file directly (as happened during tonight's incident
   response), **mirror the change back into the repo file**, or the next sync
-  from repo → server will silently revert your fix.
+  from repo -> server will silently revert your fix.
 
 ### brgen is multi-domain, not multi-tenant-by-header
 
 `brgen`'s app serves ~20 separate city domains (`brgen.no`, `oshlo.no`,
-`lsangeles.com`, …) plus per-city vertical subdomains (`tv.*`, `dating.*`,
-`playlist.*`, `takeaway.*`, `marketplace.*` — the marketplace subdomain name
+`lsangeles.com`, ...) plus per-city vertical subdomains (`tv.*`, `dating.*`,
+`playlist.*`, `takeaway.*`, `marketplace.*` - the marketplace subdomain name
 is itself localized per country, see
 `Brgen::DomainRegistry::SUBAPP_ALIASES`).
 `Brgen::DomainRegistry.resolve(host)` is the one true way to find "which
-city, which vertical" for the current request — reuse it rather than
+city, which vertical" for the current request - reuse it rather than
 re-deriving subdomain logic, and remember a static `robots.txt`/`public/*`
 file can't vary per domain the way a routed, dynamically-rendered response
 can.
@@ -546,23 +546,23 @@ can.
 ### The VPS is genuinely small
 
 1 vCPU, ~1GB RAM, running `master`, `brgen`, `amber`, `bsdports`
-concurrently. A load average of 1.0 here means the single core is busy — not
+concurrently. A load average of 1.0 here means the single core is busy - not
 distress. `resource_guard.sh` (cron, every 5 min) sheds `amber` then
 `bsdports` under sustained pressure and restores them when it clears. It is
 armed: the pause flag `/var/db/pub4_all_apps` is absent on vm23, and this
 paragraph described the flag as paused for two months after that stopped
 being true. The operator recalibrated it twice since, each time against the
 history log rather than a guess, so read the thresholds from the script and
-never from prose — the OPENBSD section below explains which log answers
+never from prose - the OPENBSD section below explains which log answers
 which question. Restarting more than one or two of these apps back-to-back
-spikes load into the 4–7 range for a few minutes purely from cold-start
+spikes load into the 4-7 range for a few minutes purely from cold-start
 warm-up; that's expected, not a crisis, as long as swap isn't also climbing.
 
 ## OPENBSD
 
 Operator-facing docs live in `README.md` and `RUNBOOK.md`, and the recipes
 in `OPENBSD/data/operator.yml`. This section is the sharp edges that have
-burned agents in this repo — read it before touching the deploy pipeline,
+burned agents in this repo - read it before touching the deploy pipeline,
 not after.
 
 ### The fleet is four, and master is the one that gets dropped
@@ -571,7 +571,7 @@ not after.
 halting the pass on the first failure. Prefer it over four hand-typed runs.
 
 Until it existed there was no way to say "deploy everything", so the set
-lived in whoever was typing — and master is not under `/home/*/app`, so an
+lived in whoever was typing - and master is not under `/home/*/app`, so an
 operator enumerating the Rails apps does not see it and leaves it behind. A
 pull moves the checkout for everything; only a deploy makes any of it live.
 
@@ -590,7 +590,7 @@ Related, and worth knowing before you diagnose a deploy: **a shed and a
 relayd failure look nothing alike once you check.** A shed leaves 443
 answering with the app port closed. If **443** refuses in ~30 ms while sshd
 is up and the app answers on its own port from the box, the front door is
-down, not a backend — and if something you did not deploy (ai.brgen.no) is
+down, not a backend - and if something you did not deploy (ai.brgen.no) is
 down too, that is the diagnosis rather than collateral.
 
 Do not read port 80 as part of that test, but not for the reason this
@@ -598,13 +598,13 @@ section gave until 2026-08-25. It said port 80 "always refuses", that
 `relayd.conf` declares the only listener, and that "there is no HTTP
 listener to lose". That is wrong: `httpd` runs as `www` and holds `*.80`,
 and `fstat` on vm23 shows three of its processes there. relayd does declare
-exactly one relay — `listen on 0.0.0.0 port 443 tls` — but relayd is not the
+exactly one relay - `listen on 0.0.0.0 port 443 tls` - but relayd is not the
 only daemon on the box.
 
 What port 80 answers is a 301 to HTTPS, plus ACME HTTP-01 challenges out of
 `/acme`; the first server block in `/etc/httpd.conf` says so. So a request
 to 80 returns 301 whether or not a single Rails app is running, which is why
-it carries no information about a shed or a relayd failure — the same
+it carries no information about a shed or a relayd failure - the same
 conclusion the old paragraph reached from a false premise, and it is worth
 keeping the distinction because the premise has a consequence the conclusion
 does not: if port 80 ever *does* refuse, that is a real finding. Certificate
@@ -617,8 +617,8 @@ The original note is still true of the mistake that produced it:
 000, so a check written that way reports both ports refusing and looks
 exactly like the outage it is inventing.
 
-`httpd.conf`'s second server block serves `/postpro` — personal photographs
-— with no TLS and no auth, on `127.0.0.1 port 6666`. Reach it over an ssh
+`httpd.conf`'s second server block serves `/postpro` - personal photographs
+- with no TLS and no auth, on `127.0.0.1 port 6666`. Reach it over an ssh
 tunnel. It listened on `*` until pf's default deny was the only thing
 keeping it private; if anyone widens that listener again, pf becomes the
 exposure's only guard.
@@ -630,7 +630,7 @@ exposure's only guard.
 - **Default** (`SKIP_CI` unset): `vps_ci.sh <app>` syncs the repo into a CI
   mirror and runs `bin/ci` (see below) against a throwaway test DB.
 - **`SKIP_CI=1`**: skips `vps_ci.sh` and runs `RAILS/<app>/<app>.sh`, which
-  calls `deploy_tracked_app` → `rails_runtime_check`. That check bundles,
+  calls `deploy_tracked_app` -> `rails_runtime_check`. That check bundles,
   prepares the databases, precompiles assets and runs `bin/ci` inside the
   deployed `/home/<app>/app` tree. CI still runs, in a different place.
 
@@ -646,21 +646,21 @@ restart.
 `RAILS/__shared/config/ci.rb` checks several steps on `vps_host` (true when
 `PUB4_CI_GUARD=1`, `/var/db/pub4_vps` exists, or `/etc/relayd.conf` exists):
 
-- `Security: Importmap audit` and `Tests: System (a11y)` — **skipped on the
+- `Security: Importmap audit` and `Tests: System (a11y)` - **skipped on the
   VPS**, required locally. A local `bin/ci` failure in those two is real; it
   does not mean the VPS run will also fail. Both need something the box does
   not have on hand (a booted environment, a browser).
-- `Style: Ruby` (RuboCop) — **runs on the VPS too**, and this list said
+- `Style: Ruby` (RuboCop) - **runs on the VPS too**, and this list said
   otherwise until 2026-08-25. `ci.rb` carries the reason next to the step:
   vm23 is where the deploy check actually runs, so skipping it there left
   enforcement to a local `bin/ci` that nothing runs automatically. It is a
   source-text check needing no browser and no database, so the reasons the
   other two are skipped do not apply. A RuboCop failure on the box is a real
-  deploy blocker — do not read it as a local-only bucket, which is exactly
+  deploy blocker - do not read it as a local-only bucket, which is exactly
   what this file used to say.
-- `Tests: Seeds` — runs with `SKIP_BERGEN_DEMO=1` on the VPS, without it
+- `Tests: Seeds` - runs with `SKIP_BERGEN_DEMO=1` on the VPS, without it
   locally. A local seed failure about a duplicate Bergen demo email is a
-  local-DB-state artifact, not a real blocker — don't chase it.
+  local-DB-state artifact, not a real blocker - don't chase it.
 - `Setup` (`bin/setup --skip-server`, includes `db:prepare`) replays the
   full migration history. A stale local dev DB can hit a legacy FK-naming
   mismatch that only existed mid-history and was never a bug in current
@@ -708,7 +708,7 @@ that step takes about 80 minutes on one vCPU.
 ### Copy-tree sync must delete before it extracts
 
 `vps_ci.sh`'s `sync_from_repo()`/`sync_ci_rails_root()` sync the repo to
-each app's copy-tree via `tar` extraction. Tar extraction only *overlays* —
+each app's copy-tree via `tar` extraction. Tar extraction only *overlays* -
 it never deletes destination files that are absent from the source. A file
 deleted from git therefore survived indefinitely on the VPS's copy-tree
 checkout, invisibly, until something referenced it and broke at runtime.
@@ -717,24 +717,24 @@ Adding `doas rm -rf` before each `tar xf -` extraction fixed this (both in
 `sync_from_repo()`'s per-directory loop and in `sync_ci_rails_root()`). If
 you're debugging a VPS-only failure where a file "shouldn't exist anymore"
 but the error implies it does, first check whether your local `vps_ci.sh` is
-current — this exact bug reappearing (e.g. via a revert) would look like
+current - this exact bug reappearing (e.g. via a revert) would look like
 ghost files coming back from the dead.
 
 ### `rcctl check` can report "failed" while the service is still booting
 
 Falcon takes ~30-40s to fully boot under VPS load (1 vCPU, shared with other
 apps). `doas rcctl check <app>` polled a few seconds after `rcctl restart`
-can report `failed` even though the process is healthy and mid-startup —
+can report `failed` even though the process is healthy and mid-startup -
 this is not a crash. Before treating a post-deploy `rcctl check` failure as
 real:
 
-- `tail /var/log/daemon` for the app — look for a normal "Waiting for
+- `tail /var/log/daemon` for the app - look for a normal "Waiting for
   startup..." progression vs. an actual stack trace/exit.
-- `ps ax | grep <app>` — is the Falcon process actually running?
+- `ps ax | grep <app>` - is the Falcon process actually running?
 - Retry `rcctl check` after ~30s before escalating.
 
 A "completed (exit code 0)" notification from a background deploy command is
-**not** proof the deploy succeeded either — it reflects the SSH wrapper's
+**not** proof the deploy succeeded either - it reflects the SSH wrapper's
 exit, not the deployed script's outcome. Always verify independently via:
 
 1. The deploy stamp: `/var/db/pub4/last_deploy_<app>.json` (`status: "ok"`
@@ -742,7 +742,7 @@ exit, not the deployed script's outcome. Always verify independently via:
 2. `doas rcctl check <app>`.
 3. A live `curl` against the app's actual URL, not just `/up`.
 
-### `resource_guard.sh` shedding amber/bsdports — check it actually recovers
+### `resource_guard.sh` shedding amber/bsdports - check it actually recovers
 
 Under load, the VPS's `resource_guard.sh` cron sheds `amber`/`bsdports`
 (tracked in `/var/db/resource_guard_shed`). Check that file first to confirm
@@ -752,7 +752,7 @@ But do not stop there and call it self-recovering, which is what this
 section used to say. Shed and restore are separate checks and they can drift
 one way. Measured on 2026-07-29 over 916 ticks: shedding fired on 48% of
 ticks while the restore check opened on 19%, and restore only releases one
-service per tick — so amber and bsdports had been down for days, not
+service per tick - so amber and bsdports had been down for days, not
 oscillating. `MEM_RESTORE` was 20% against a median availability of 13%,
 i.e. the window sat outside the box's operating range, so that pass set 8/14
 and `LOAD_RESTORE` 2.0.
@@ -760,7 +760,7 @@ and `LOAD_RESTORE` 2.0.
 The operator recalibrated it once more since, and this paragraph said 8/14
 for a month after it stopped being true. `MEM_RESTORE` is **10**, set on
 2026-08-14 from 1550 ticks: availability had moved from p50 13 to p50 9, so
-14 had drifted back above p75 — the same condition the 2026-07-29 pass
+14 had drifted back above p75 - the same condition the 2026-07-29 pass
 existed to fix, arriving a second time from the other direction. `MEM_WARN`
 is 8 and `LOAD_RESTORE` 2.0.
 
