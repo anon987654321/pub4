@@ -1,6 +1,14 @@
 import { Controller } from "@hotwired/stimulus"
 import { mayPrompt, YIELD_EVENT } from "pub4/onboarding"
 
+// The browser's permission sheet is asked for once, in context: right after the
+// reader's first post, comment or message, when "tell me when someone answers"
+// is the obvious next thing, and never on arrival, before there is anything to
+// be told about.
+const ASKED_KEY = "pub4:push:context-asked"
+// A create that someone can answer: a post, a comment, a message.
+const ANSWERABLE = /\/(posts|comments|messages)$/
+
 export default class extends Controller {
   static values = { vapidKey: String, subscribeUrl: String, unread: Number, native: Boolean, nativeUrl: String }
 
@@ -16,6 +24,17 @@ export default class extends Controller {
     // its descendant. They now set data-push-seen and this reads it.
     this.onNavigate = () => { if (document.body.dataset.pushSeen === "true") this.clearBadge() }
     document.addEventListener("turbo:load", this.onNavigate)
+    // Heard at the start, on the document, and at the end on the form itself:
+    // a composer replaced by its own stream answer is out of the document by
+    // the time turbo:submit-end fires, and an event on a detached form reaches
+    // only the form's own listeners.
+    this.onSubmitStart = (event) => {
+      const form = event.target
+      if (!this.#answerable(form)) return
+      form.addEventListener("turbo:submit-end", (end) => { if (end.detail?.success) this.#ask() }, { once: true })
+    }
+    document.addEventListener("turbo:submit-start", this.onSubmitStart)
+    this.#wirePrompt()
 
     // The iOS shell is a WKWebView with no Push API; it registers for APNs through
     // its pub4Push bridge instead, and only when the server can send through APNs.
@@ -23,15 +42,19 @@ export default class extends Controller {
 
     if (!("serviceWorker" in navigator) || !("PushManager" in window)) return
     this.#syncBadge()
+    this.webAskable = Notification.permission === "default"
     const reg = await navigator.serviceWorker.ready
+    this.registration = reg
     const existing = await reg.pushManager.getSubscription()
     if (existing) { await this.#save(existing); return }
     if (Notification.permission === "granted") await this.#subscribe(reg)
-    if (Notification.permission === "default") this.#prompt(reg)
   }
 
   disconnect() {
     document.removeEventListener("turbo:load", this.onNavigate)
+    document.removeEventListener("turbo:submit-start", this.onSubmitStart)
+    window.removeEventListener(YIELD_EVENT, this.onYield)
+    document.removeEventListener("click", this.onPromptClick)
     if (this.onNativeToken) window.removeEventListener("pub4:native-push-token", this.onNativeToken)
   }
 
@@ -53,18 +76,9 @@ export default class extends Controller {
     this.onNativeToken = (event) => this.#saveNative(event.detail)
     window.addEventListener("pub4:native-push-token", this.onNativeToken)
 
-    const button = document.getElementById("push-enable-button")
-    if (button && mayPrompt("push")) {
-      window.addEventListener(YIELD_EVENT, () => { button.hidden = true }, { once: true })
-      window.addEventListener("pub4:native-push-status", (event) => {
-        if (event.detail?.status !== "notDetermined") return
-        button.hidden = false
-        button.addEventListener("click", () => {
-          window.webkit.messageHandlers.pub4Push.postMessage({ action: "request" })
-          button.hidden = true
-        }, { once: true })
-      }, { once: true })
-    }
+    window.addEventListener("pub4:native-push-status", (event) => {
+      this.nativeAskable = event.detail?.status === "notDetermined"
+    }, { once: true })
     window.webkit.messageHandlers.pub4Push.postMessage({ action: "status" })
   }
 
@@ -80,22 +94,51 @@ export default class extends Controller {
     })
   }
 
-  #prompt(reg) {
-    // Defer permission request to a user gesture via the "Enable notifications" button if present.
-    const button = document.getElementById("push-enable-button")
-    if (!button) return
-    // Notifications are the last onboarding request. Wait for a familiar
-    // visitor and never compete with the install prompt.
-    if (!mayPrompt("push")) return
+  // A POST whose form creates something answerable. A PATCH or a DELETE rides
+  // a POST with a _method field, and is not a first anything.
+  #answerable(form) {
+    if (!(form instanceof HTMLFormElement)) return false
+    if (form.querySelector("input[name=_method]")) return false
+    return ANSWERABLE.test(new URL(form.action, window.location.href).pathname)
+  }
 
-    const yieldToInstall = () => { button.hidden = true }
-    window.addEventListener(YIELD_EVENT, yieldToInstall, { once: true })
+  #ask() {
+    const prompt = this.#promptElement
+    if (!prompt || !prompt.hidden || !(this.webAskable || this.nativeAskable)) return
+    if (localStorage.getItem(ASKED_KEY)) return
+    // Consent first, and never on top of the install prompt.
+    if (!mayPrompt("push_context")) return
 
-    button.hidden = false
-    button.addEventListener("click", async () => {
+    prompt.hidden = false
+  }
+
+  // The prompt is data-turbo-permanent, so it outlives the redirect that
+  // usually follows the post that raised it. Its buttons are read by one
+  // delegated listener, which goes with this controller, rather than wired on
+  // an element that stays while controllers come and go.
+  #wirePrompt() {
+    this.onYield = () => { if (this.#promptElement) this.#promptElement.hidden = true }
+    window.addEventListener(YIELD_EVENT, this.onYield)
+    this.onPromptClick = async (event) => {
+      if (event.target.closest("#push-prompt [data-push-later]")) return this.#answered()
+      if (!event.target.closest("#push-prompt #push-enable-button")) return
+
+      this.#answered()
+      if (this.nativeAskable) return window.webkit.messageHandlers.pub4Push.postMessage({ action: "request" })
+
       const perm = await Notification.requestPermission()
-      if (perm === "granted") { await this.#subscribe(reg); button.hidden = true }
-    }, { once: true })
+      if (perm === "granted" && this.registration) await this.#subscribe(this.registration)
+    }
+    document.addEventListener("click", this.onPromptClick)
+  }
+
+  #answered() {
+    try { localStorage.setItem(ASKED_KEY, "1") } catch { /* private mode: asked again next time */ }
+    this.#promptElement.hidden = true
+  }
+
+  get #promptElement() {
+    return document.getElementById("push-prompt")
   }
 
   async #subscribe(reg) {

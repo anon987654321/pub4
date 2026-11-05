@@ -2714,7 +2714,7 @@ items:
   path: RAILS/brgen/app/views/layouts/application.html.erb
   item: Ask for push permission only after a first post, comment or message, from
     a contextual prompt instead of the global hidden button.
-  status: open
+  status: done
 - id: brgen-222
   app: brgen
   area: payments

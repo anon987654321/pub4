@@ -1,0 +1,4 @@
+en:
+  push:
+    context_prompt: "Do you want to hear when someone answers you?"
+    not_now: "Not now"

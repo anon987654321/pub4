@@ -149,7 +149,13 @@
          data-push-native-url-value="<%= main_app.native_push_tokens_path %>"
          data-push-unread-value="<%= unread %>"
          data-turbo-permanent></div>
-    <button id="push-enable-button" class="push-enable-button" hidden><%= t("push.enable") %></button>
+    <%# Shown by push_controller only after the reader's first post, comment or
+        message, which is when hearing about an answer is worth a permission. %>
+    <aside id="push-prompt" class="push-prompt" aria-labelledby="push-prompt-text" data-turbo-permanent hidden>
+      <%= tag.p t("push.context_prompt"), id: "push-prompt-text" %>
+      <%= tag.button t("push.enable"), type: "button", id: "push-enable-button", class: "push-enable-button" %>
+      <%= tag.button t("push.not_now"), type: "button", class: "button push-prompt-later", data: { push_later: true } %>
+    </aside>
   <% end %>
 
   <div class="app-shell" data-controller="scroll-chrome" data-scroll-chrome-storage-key-value="pub4:tab-bar:open">
