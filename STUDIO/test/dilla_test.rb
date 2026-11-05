@@ -228,12 +228,32 @@ class TestDillaRender < Minitest::Test
       assert_operator quality.fetch("peak_dbfs"), :<, 0.0
       shares = quality.fetch("stem_energy_share")
       assert_operator shares.fetch("drums"), :>=, 0.12, "drums must carry the mix"
+      provenance = JSON.parse(File.read("#{base}.provenance.json"))
+      render = provenance.fetch("render")
+      assert_equal File.size("#{base}.wav"), render.fetch("bytes")
+      assert_equal Digest::SHA256.file("#{base}.wav").hexdigest, render.fetch("sha256")
       riff, wave, channels, sample_rate, bits = read_wav_header("#{base}.wav")
       assert_equal "RIFF", riff
       assert_equal "WAVE", wave
       assert_equal 2, channels
       assert_equal 44_100, sample_rate
       assert_equal 16, bits
+    end
+  end
+
+  def test_atomic_write_keeps_the_previous_artifact_when_replacement_fails
+    Dir.mktmpdir do |dir|
+      path = File.join(dir, "take.json")
+      File.write(path, "previous")
+      original_mode = File.stat(path).mode & 0o777
+
+      File.stub(:rename, ->(*) { raise IOError, "simulated rename failure" }) do
+        assert_raises(IOError) { Dilla.atomic_write(path, "replacement") }
+      end
+
+      assert_equal "previous", File.read(path)
+      assert_equal original_mode, File.stat(path).mode & 0o777
+      refute Dir.children(dir).any? { |name| name.start_with?(".take.json.") }
     end
   end
 
