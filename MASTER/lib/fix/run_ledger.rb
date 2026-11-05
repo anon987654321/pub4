@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative "../io/lane_silence"
+
 module Master
   module Fix
     # What one /fix run has learned about its own model phase, kept in memory so
@@ -135,9 +137,15 @@ module Master
 
         # A lane failing again and again is dropped for the run, so the next file
         # does not wait out the same failure. Returns true when this call dropped it.
+        #
+        # A call LaneSilence refused during its cool-off is that cool-off working,
+        # not a new failure. Counted, two such refusals turned a five-minute pause
+        # into a drop for the run, and a /fix pinned to its one lane failed every
+        # file after it, though the lane answered again minutes later.
         def lane_failed(model)
           lane = Master::Io::LaneState.lane_of(model)
           return false if lane.empty?
+          return false if Master::Io::LaneSilence.silent?(Master::Io::LaneSilence.lane_of(model))
 
           count = @mutex.synchronize { @lane_failures[lane] += 1 }
           return false if count < LANE_FAILURES_BEFORE_DROP || Master::Io::LaneState.run_drops.key?(lane)
