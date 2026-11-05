@@ -41,7 +41,7 @@
     <details>
       <summary><%= t("playlist.embed_customize") %></summary>
       <% embed_html = %(<iframe src="#{embed_playlist_url(@playlist)}" loading="lazy" width="100%" height="520"></iframe>) %>
-      <%= render "shared/copyable", text: embed_html, label: t("playlist.embed_code") %>
+      <%= render "shared/copyable", value: embed_html, label: t("playlist.embed_code") %>
       <small>
         <%= t("playlist.embed_examples") %>:
         <%= link_to t("playlist.embed_red"), embed_playlist_url(@playlist, color: "ff0000") %>

@@ -1,5 +1,7 @@
+<%# The local is value:, not text:. Brakeman reads render(text: ...) as an inline
+    render of unescaped model data; the input's value attribute is escaped. %>
 <div data-controller="clipboard" data-clipboard-success-content-value="<%= t("actions.copied") %>">
-  <input data-clipboard-target="source" type="text" value="<%= text %>" readonly
+  <input data-clipboard-target="source" type="text" value="<%= value %>" readonly
          aria-label="<%= local_assigns.fetch(:label, t("actions.copyable_text")) %>">
   <button type="button" data-action="clipboard#copy" data-clipboard-target="button"><%= t("actions.copy") %></button>
 </div>
