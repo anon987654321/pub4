@@ -173,7 +173,7 @@ module Master
         # That holds after the pass's first repairs too: the pass's budgeted semantic reads
         # run after them, and Opus reading two files was cut as "0 files finished in 5m".
         # A repair that hangs is the file budget's to end.
-        return if scan_advancing?(now)
+        return if advancing?(now)
 
         window = finish_window
         recent = @finished.count { |at| now - at <= window }
@@ -192,6 +192,11 @@ module Master
           abort: !skippable,
         }
       end
+
+      # ModelGate waiting out a lane's cool-off or a loaded host is the run pacing itself, not a stall.
+      def advancing?(now) = scan_advancing?(now) || waiting?(now)
+
+      def waiting?(now) = !@waited_at.nil? && now - @waited_at <= finish_window
 
       def scan_advancing?(now)
         !@scan_completed_at.nil? && now - @scan_completed_at <= finish_window
@@ -231,6 +236,7 @@ module Master
         when "council:progress" then @council = [payload[:answered].to_i, payload[:total].to_i]
         when "scan:progress" then scanned(payload)
         when "scan:complete" then @scan_completed_at = @clock.call
+        when "fix_loop:model_wait" then @waited_at = @clock.call
         when "fix_loop:rule_result", "repair_loop:pass" then ruled(payload)
         when "fix_loop:skip_breakdown" then skipped(payload)
         when "repair_loop:fix_applied" then attempted { count_fix(:ok); @model_ok += 1 }

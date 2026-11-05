@@ -81,6 +81,10 @@ module Master
       # pressure prevents their tests, journals or final reports from landing.
       def disk_free_gb_for(path = @root) = disk_free_gb(path)
 
+      # The one-minute load and the warn line it is held to (load_avg_1m warn per CPU), for a caller
+      # that waits for the host rather than shedding its work. The load is nil when it cannot be read.
+      def load_pressure = [load_average, limit("load_avg_1m", "warn", DEFAULTS[:load_avg_1m][:warn]) * @cpus]
+
       private
 
       # state only ever escalates within one classify call (:ok -> :warning ->

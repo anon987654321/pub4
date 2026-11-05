@@ -134,6 +134,9 @@ module Master
         # takes off what elapsed after its journal opened (FixLoop#repair_seconds_left).
         def elapsed_seconds = @current&.elapsed_seconds || 0.0
 
+        # Wall-clock seconds the active run may still spend, or nil without one.
+        def seconds_left = @current&.seconds_left
+
         def note_law_cost(law_id, usd, tokens = 0) = @current&.note_law_cost(law_id, usd, tokens)
 
         def law_limit_exceeded?(law_id) = @current&.law_limit_exceeded?(law_id) || false
@@ -206,6 +209,8 @@ module Master
 
         [@clock.call - @started, 0.0].max
       end
+
+      def seconds_left = @started ? (@max_minutes * 60) - elapsed_seconds : nil
 
       def stop!
         watchdog = @watchdog

@@ -46,6 +46,7 @@ require_relative "../source_compile"
 require_relative "../repair_loop/file_budget"
 require_relative "../change_scope"
 require_relative "../refusals"
+require_relative "../model_gate"
 
 module Master
   module Fix
@@ -264,6 +265,7 @@ module Master
           @model_failed = false
           @model_unavailable = false
           return :model_unavailable unless @agent
+          ModelGate.before_call(@agent, resources: model_gate_resources, bus: @bus)
           start_file_budget
           source = within_file_budget(violation) { violation[:severity].to_sym == :error ? council_fix(violation) : request_fix(violation) }
           return :file_timeout if @file_timed_out
@@ -358,6 +360,8 @@ module Master
           RefusedRepair.restore(write)
           @committer.attest_written!(write.path)
         end
+
+        def model_gate_resources = @model_gate_resources ||= ResourceBudget.new(root: @root)
 
         # One refusal row for a violation or a path.
         def refuse(gate, target, reason: nil, error: nil)
