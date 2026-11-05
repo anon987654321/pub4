@@ -29,12 +29,12 @@ class HomeInfiniteScrollReflex < Shared::InfiniteScrollReflex
     if Brgen::HomeFeed.promotion_slot?(slot)
       render(
         partial: "home/vertical_promo_unit",
-        locals: { promotion: Brgen::HomeFeed.promotion_for(slot) }
+        locals: { promotion: Brgen::HomeFeed.promotion_for(slot), position: slot }
       )
     else
       render(
         partial: "shared/affiliate_feed_unit",
-        locals: { surface: "brgen" }
+        locals: { surface: "brgen", position: slot }
       )
     end
   end

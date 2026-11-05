@@ -3,4 +3,4 @@ nb:
   home:
     radio_unit:
       heading: Fra Radio Brgen
-      label: Låt fra Radio Brgen
+      label: Låt fra Radio Brgen etter innlegg %{position}

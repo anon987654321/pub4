@@ -17,12 +17,13 @@
      <li>
        <%= render "posts/post", post: post, priority: index.zero? %>
        <% if live_search_query.blank? && Brgen::HomeFeed.promotion_slot?(position) && position < @posts.size %>
-         <%= render "home/vertical_promo_unit", promotion: Brgen::HomeFeed.promotion_for(position) %>
+         <%= render "home/vertical_promo_unit", promotion: Brgen::HomeFeed.promotion_for(position), position: %>
        <% elsif ((position % Brgen::HomeFeed::AFFILIATE_EVERY).zero? && position < @posts.size) %>
-         <%= render "shared/affiliate_feed_unit", surface: "brgen", band: position / Brgen::HomeFeed::AFFILIATE_EVERY %>
+         <%= render "shared/affiliate_feed_unit", surface: "brgen",
+                                                    band: position / Brgen::HomeFeed::AFFILIATE_EVERY, position: %>
        <% elsif live_search_query.blank? && position < @posts.size &&
                 (track = Brgen::HomeFeed.radio_track_for(position)) %>
-         <%= render "home/radio_unit", track: %>
+         <%= render "home/radio_unit", track:, position: %>
        <% end %>
      </li>
    <% end %>

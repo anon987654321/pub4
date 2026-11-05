@@ -9,7 +9,10 @@
                   ["//#{current_host}/", current_host]
                 end %>
 
-<aside class="brgen-vertical-promo" data-promo="<%= slug %>" aria-label="<%= t("promo.aria_label") %>">
+<%# Named by the post it follows: the feed carries several, and each landmark
+    needs its own name. %>
+<aside class="brgen-vertical-promo" data-promo="<%= slug %>"
+       aria-label="<%= t("promo.aria_label", position: local_assigns.fetch(:position)) %>">
   <%= link_to href, class: "promo-link", data: { turbo: false } do %>
     <span class="promo-disc" aria-hidden="true">
       <span class="promo-host"><%= host %></span>

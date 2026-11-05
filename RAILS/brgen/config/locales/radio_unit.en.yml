@@ -3,4 +3,4 @@ en:
   home:
     radio_unit:
       heading: From Radio Brgen
-      label: A track from Radio Brgen
+      label: A track from Radio Brgen after post %{position}

@@ -13,8 +13,15 @@
   <% unit_classes = ["affiliate_feed_unit",
                      ("affiliate_feed_unit--brgen affiliate_feed_unit--collage" if brgen_surface),
                      ("affiliate_feed_unit--in_grid" if local_assigns[:in_grid])].compact.join(" ") %>
+  <%# A feed with several bands passes each one the post it follows, so every
+      landmark gets its own name; a lone band keeps the plain one. %>
+  <% unit_label = if local_assigns[:position]
+                    t("affiliate.feed_unit_label_after", position: local_assigns[:position])
+                  else
+                    t("affiliate.feed_unit_label")
+                  end %>
   <aside class="<%= unit_classes %>"
-         aria-label="<%= t("affiliate.feed_unit_label") %>"
+         aria-label="<%= unit_label %>"
          data-controller="parallax-tilt"
          data-parallax-tilt-drift-value="<%= brgen_surface %>"
          data-action="pointermove->parallax-tilt#move pointerleave->parallax-tilt#leave">

@@ -10,6 +10,7 @@ nb:
     placeholder_notice: Eksempeloppføring — ikke en sporet partnerlenke
     sponsored: Annonse
     feed_unit_label: Sponsede produkter
+    feed_unit_label_after: Sponsede produkter etter innlegg %{position}
     amazon_label: Amazon Associates
     amazon_shop: Se hos Amazon
     paid_link: Betalt lenke

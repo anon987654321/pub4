@@ -1,6 +1,6 @@
 nb:
   promo:
-    aria_label: Brgen-reklame
+    aria_label: Brgen-reklame etter innlegg %{position}
     radio:
       kicker: Snurr for seieren!
       title: Radio

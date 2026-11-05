@@ -1,6 +1,6 @@
 en:
   promo:
-    aria_label: Brgen promotion
+    aria_label: Brgen promotion after post %{position}
     radio:
       kicker: Spin for the win!
       title: Radio
