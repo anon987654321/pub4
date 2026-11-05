@@ -308,10 +308,33 @@ module Master
 
       def keep(number, best)
         edit = best[:edit]
-        edit.apply!
-        rebuild(edit)
+        original = edit.apply!
+        unless rebuild(edit)
+          restore(edit, original)
+          @rejected << edit.key
+          @say.call("#{edit.why}: CSS rebuild failed; the candidate was restored")
+          return round(number:, why: edit.why, outcome: :failed, after: @target[:score])
+        end
+
         after = @target[:score] + best[:gain]
-        @world.commit_file.call(edit.file, commit_message(edit, after))
+        committed = begin
+          @world.commit_file.call(edit.file, commit_message(edit, after))
+        rescue StandardError => e
+          # The commit may have reached Git before its caller failed. Keep the
+          # candidate intact and report ambiguity; restoring now could make the
+          # worktree disagree with a commit that actually landed.
+          @say.call("#{edit.why}: delivery outcome unknown (#{e.class}); inspect Git before retrying")
+          return round(number:, why: edit.why, outcome: :delivery_failed, after:)
+        end
+
+        unless committed
+          restore(edit, original)
+          @rejected << edit.key
+          @undone << "#{edit.why} (commit refused)"
+          @say.call("#{edit.why}: commit refused; the candidate was restored")
+          return round(number:, why: edit.why, outcome: :failed, after: @target[:score])
+        end
+
         merge(best[:after])
         round(number:, why: edit.why, outcome: :kept, after:)
       end
