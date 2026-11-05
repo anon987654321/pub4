@@ -26,7 +26,7 @@
     border: 0;
   }
 
-  main#main-content :is(h1, h2, h3, h4, h5, h6, .page-title, .section-title, .empty-state-title, .luxury-title, .amber-look-title, .store-heading) {
+  main#main-content :is(h1, h2, h3, h4, h5, h6, .page-title, .section-title, .empty-state-title, .item-detail-title, .amber-look-title, .store-heading) {
     font-family: var(--font);
     text-transform: none;
     font-variant-caps: normal;
@@ -42,7 +42,7 @@
   /* The only secondary display headings are product heroes. Ordinary H2-H6
      share one supporting treatment; semantic level no longer means a new type
      style at every depth. */
-  main#main-content :is(.bol-market-hero-copy h2, .store-promo-art h2, .store-heading, .luxury-title, .amber-look-title) {
+  main#main-content :is(.bol-market-hero-copy h2, .store-promo-art h2, .store-heading, .item-detail-title, .amber-look-title) {
     font-size: clamp(1.75rem, 4vw, 3rem);
     font-weight: var(--weight-heavy);
     line-height: var(--leading-tight);
@@ -100,8 +100,8 @@
     .flash, .post-show-actions, .post-show-comments, .amber-editorial-nav,
     .amber-messenger-composer, .composer-title, .radio-track-card,
     .radio-track-list, .radio-playlist-list, .playlist-queue,
-    .playlist-queue-item, .playlist-comments, .item-card, .item-card--luxury,
-    .wardrobe-card, .occasion-card, .style-phase-card, .listing-grid,
+    .playlist-queue-item, .playlist-comments, .item-card, .item-card--wardrobe,
+    .occasion-card, .style-phase-card, .listing-grid,
     .deal-card, .store-panel, .store-buybox, .newsletter-cta,
     .home-feed-view, .city-network-item, .page-header, .feed-header,
     .search_palette_panel
@@ -390,8 +390,7 @@
   .today-look,
   .today-look-pick,
   .newsletter-cta,
-  .subscribe-box,
-  .wardrobe-card {
+  .subscribe-box {
     border: 0;
     border-radius: 0;
   }
@@ -434,14 +433,15 @@
     }
 
     .amber-look,
-    .item-card--luxury,
-    .luxury-section {
+    .item-card--wardrobe,
+    .item-detail-section {
       border: 0;
       border-radius: 0;
     }
 
     .button,
     .button-small,
+    .item-card-actions :is(a, button),
     input,
     select,
     textarea {
@@ -557,11 +557,11 @@
   body[data-surface="luxury"] main#main-content :is(h1, h2, h3, h4) { text-wrap: balance; overflow-wrap: anywhere; font-kerning: normal; }
   body[data-surface="luxury"] main#main-content :is(p, li, dd) { text-wrap: pretty; }
   body[data-surface="luxury"] .page-header, body[data-surface="luxury"] .amber-page-header { min-inline-size: 0; margin-block-end: var(--space-8); }
-  body[data-surface="luxury"] .luxury-detail-grid, body[data-surface="luxury"] .item-detail-grid, body[data-surface="luxury"] .wardrobe-grid, body[data-surface="luxury"] .items-grid { min-inline-size: 0; column-gap: var(--tile-gap-row); row-gap: var(--space-8); }
-  body[data-surface="luxury"] :is(.item-card--luxury, .wardrobe-card, .style-phase-card, .occasion-card) { min-inline-size: 0; overflow-wrap: anywhere; }
-  body[data-surface="luxury"] :is(.item-card--luxury, .wardrobe-card) :is(img, picture) { display: block; inline-size: 100%; block-size: auto; }
-  body[data-surface="luxury"] .item-card--luxury .item-title, body[data-surface="luxury"] .wardrobe-card :is(h2, h3) { text-wrap: balance; overflow-wrap: anywhere; }
-  body[data-surface="luxury"] .item-card--luxury .item-meta, body[data-surface="luxury"] .commerce-fit-reasons, body[data-surface="luxury"] .shop-feed-note { text-wrap: pretty; line-height: var(--leading-normal); }
+  body[data-surface="luxury"] .item-detail-layout, body[data-surface="luxury"] .item-detail-grid, body[data-surface="luxury"] .items-grid { min-inline-size: 0; column-gap: var(--tile-gap-row); row-gap: var(--space-8); }
+  body[data-surface="luxury"] :is(.item-card--wardrobe, .style-phase-card, .occasion-card) { min-inline-size: 0; overflow-wrap: anywhere; }
+  body[data-surface="luxury"] .item-card--wardrobe :is(img, picture) { display: block; inline-size: 100%; block-size: auto; }
+  body[data-surface="luxury"] .item-card--wardrobe .item-title { text-wrap: balance; overflow-wrap: anywhere; }
+  body[data-surface="luxury"] .item-card--wardrobe .item-meta, body[data-surface="luxury"] .commerce-fit-reasons, body[data-surface="luxury"] .shop-feed-note { text-wrap: pretty; line-height: var(--leading-normal); }
   // A field keeps its outline (the shared README's one exception): borderless white on white hid every input.
   body[data-surface="luxury"] :is(.form input, .form select, .form textarea, .input) {
     min-block-size: var(--tap-min); border: 1px solid var(--luxury-border); border-radius: 0;
@@ -570,12 +570,12 @@
   body[data-surface="luxury"] :is(.form input, .form select, .form textarea, .input):focus-visible {
     outline: var(--focus-ring); outline-offset: 2px;
   }
-  body[data-surface="luxury"] .luxury-actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); }
-  body[data-surface="luxury"] .luxury-actions .button {
+  body[data-surface="luxury"] .item-detail-actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); }
+  body[data-surface="luxury"] .item-detail-actions .button {
     min-block-size: var(--tap-min);
     min-inline-size: var(--tap-min);
   }
-  body[data-surface="luxury"] .luxury-title { max-inline-size: 12ch; text-wrap: balance; overflow-wrap: anywhere; }
+  body[data-surface="luxury"] .item-detail-title { max-inline-size: 12ch; text-wrap: balance; overflow-wrap: anywhere; }
   body[data-surface="luxury"] .amber-looks { min-inline-size: 0; row-gap: var(--section-rhythm); }
   body[data-surface="luxury"] .amber-look { min-inline-size: 0; }
   body[data-surface="luxury"] .amber-look-stage { min-inline-size: 0; contain: layout paint; }
@@ -585,7 +585,7 @@
     padding-inline: max(var(--space-4), var(--page-gutter));
     padding-block-end: calc(var(--space-16) + env(safe-area-inset-bottom));
   }
-  body[data-surface="luxury"] .luxury-title {
+  body[data-surface="luxury"] .item-detail-title {
     max-inline-size: none;
     font-size: clamp(2.4rem, 12vw, 4rem);
   }
@@ -595,7 +595,7 @@
       padding-inline: 0;
       padding-block-end: calc(var(--space-12) + var(--safe-bottom));
     }
-    body[data-surface="luxury"] .luxury-title {
+    body[data-surface="luxury"] .item-detail-title {
       max-inline-size: 12ch;
       font-size: clamp(2.4rem, 5vw, 5rem);
     }

@@ -5,27 +5,27 @@
 <% content_for :description, meta_description_for(@item) if respond_to?(:meta_description_for) %>
 <% content_for :json_ld, json_ld_for(@item, type: :product) %>
 
-<article class="item-detail item-detail--luxury">
-  <div class="luxury-detail-grid">
+<article class="item-detail item-detail--wardrobe">
+  <div class="item-detail-layout">
   <% if @item.photos.attached? %>
-    <div class="luxury-photos" data-controller="lightbox">
+    <div class="item-detail-photos" data-controller="lightbox">
       <%# One photo is the garment; several are numbered, so each alt and each
           lightbox link says which one it is. %>
       <% @item.photos.each_with_index do |photo, index| %>
         <% alt, link_label = item_photo_labels(@item, index) %>
         <%= link_to url_for(photo), data: { turbo: false }, aria: { label: link_label } do %>
           <%= responsive_image_tag photo, alt:, preset: :detail, sizes: "(max-width: 768px) 100vw, 520px",
-                                          class: "item-photo luxury-photo" %>
+                                          class: "item-photo item-detail-photo" %>
         <% end %>
       <% end %>
     </div>
   <% end %>
 
-  <div class="luxury-meta">
+  <div class="item-detail-facts">
     <header aria-label="<%= t("items.header_label") %>">
       <hgroup>
         <%= tag.p [item_category_label(@item.category), @item.brand].compact_blank.join(", ") %>
-        <h1 class="luxury-title"><%= @item.title %></h1>
+        <%= tag.h1 @item.title, class: "item-detail-title" %>
       </hgroup>
       <% if @item.spark_joy? %><span class="badge"><%= t("items.sparks_joy") %></span><% end %>
       <% if @item.color.present? %>
@@ -33,7 +33,7 @@
       <% end %>
     </header>
 
-  <%= turbo_frame_tag dom_id(@item, :stats), class: "tag-row luxury-tags" do %>
+  <%= turbo_frame_tag dom_id(@item, :stats), class: "tag-row item-detail-tags" do %>
     <span class="tag"><%= t("items.wear_count", count: @item.times_worn.to_i) %></span>
     <% if @item.price? && @item.times_worn.to_i.positive? %>
       <span class="tag"><%= t("items.per_wear", amount: number_to_currency(@item.cost_per_wear || (@item.price / @item.times_worn.to_i))) %></span>
@@ -42,7 +42,7 @@
     <% if @item.analysis_status.present? %><span class="tag"><%= analysis_status_label(@item.analysis_status) %></span><% end %>
   <% end %>
 
-  <dl class="meta luxury-meta-list">
+  <dl class="meta item-detail-fact-list">
     <%= tag.dt t("items.category") %><%= tag.dd item_category_label(@item.category) %>
     <% if @item.color.present? %><%= tag.dt t("items.color") %><%= tag.dd @item.color %><% end %>
     <% if @item.size.present? %><%= tag.dt t("items.size") %><%= tag.dd @item.size %><% end %>
@@ -54,7 +54,7 @@
   </dl>
 
   <% if @item.mood_effect.present? || @item.life_phase.present? %>
-    <div class="tag-row luxury-tags">
+    <div class="tag-row item-detail-tags">
       <% if @item.mood_effect.present? %>
         <%= tag.span "#{t("items.mood")} #{mood_effect_label(@item.mood_effect)}", class: "tag" %>
       <% end %>
@@ -62,7 +62,7 @@
     </div>
   <% end %>
 
-  <section class="luxury-section">
+  <section class="item-detail-section">
     <%= tag.h2 t("items.wardrobe_intelligence") %>
     <% if amber_ai_available? %>
       <p><%= t("items.openrouter_set") %></p>
@@ -73,7 +73,8 @@
     <div id="item_<%= @item.id %>_tags"></div>
   </section>
 
-  <nav role="navigation" aria-label="<%= t("items.actions_label") %>" class="luxury-actions" data-controller="haptics">
+  <nav role="navigation" aria-label="<%= t("items.actions_label") %>" class="item-detail-actions"
+       data-controller="haptics">
     <%= button_to t("items.worn_today"), wear_item_path(@item), method: :post, class: "button",
           data: { action: "pointerdown->haptics#press" } %>
     <% if @item.spark_joy? %>
@@ -101,7 +102,7 @@
     </details>
   </nav>
 
-  <section class="luxury-section" aria-label="<%= t("items.affiliate_label") %>">
+  <section class="item-detail-section" aria-label="<%= t("items.affiliate_label") %>">
     <%= tag.h2 t("items.affiliate_link") %>
     <%# Was a hardcoded English sentence that also stood in for a disclosure. The
         real disclosure is the engine partial: it names the partner programmes that

@@ -50,17 +50,8 @@ en:
     nav:
       ai_suggest: "Outfit suggestions"
     wardrobe:
-      title: "Wardrobe"
-      add: "Add item"
       new: "Add wardrobe item"
       edit: "Edit wardrobe item"
-      untitled: "Untitled item"
-      empty: "No wardrobe items yet."
-      empty_body: "Add a photo, tag it, then plan an outfit."
-      condition: "Condition"
-      acquired: "Acquired"
-      age_days: "Age (days)"
-      notes: "Notes"
   nav:
     connections: "Creators"
     live: "Live sessions"

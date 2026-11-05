@@ -287,7 +287,7 @@ module DesignMarks
       # remains a finding even when it is large or has no tracking; proper case
       # is consistent across the levels and the page H1 carries the hierarchy.
       heading = selector.match?(/(?:\A|[\s,>])h[1-6](?=$|[\s,.:#\[])/i) ||
-                selector.match?(/\.(?:page-title|section-title|empty-state-title|luxury-title|amber-look-title|store-heading)\b/i)
+                selector.match?(/\.(?:page-title|section-title|empty-state-title|item-detail-title|amber-look-title|store-heading)\b/i)
       next true if heading
 
       next false unless body.match?(/letter-spacing\s*:\s*+(?!0(?:\.0+)?(?:px|r?em)?\s*[;}\n]|normal|inherit|initial|unset)[^;}\n]+/i)

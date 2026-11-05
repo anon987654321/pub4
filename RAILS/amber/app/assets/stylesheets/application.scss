@@ -21,44 +21,44 @@
 /* Commerce polish — recommendations read as editorial product notes, not
    shopping-app clutter. The wardrobe remains the visual subject. */
 
-.item-detail--luxury .luxury-detail-grid {
+.item-detail--wardrobe .item-detail-layout {
   gap: clamp(1.5rem, 4vw, 4rem);
 }
 
-.item-detail--luxury .luxury-meta {
+.item-detail--wardrobe .item-detail-facts {
   min-width: 0;
 }
 
-.item-detail--luxury .luxury-title {
+.item-detail--wardrobe .item-detail-title {
   max-inline-size: 11ch;
   text-wrap: balance;
 }
 
-.item-detail--luxury .luxury-tags {
+.item-detail--wardrobe .item-detail-tags {
   gap: 8px;
 }
 
-.item-detail--luxury .luxury-meta-list {
+.item-detail--wardrobe .item-detail-fact-list {
   row-gap: 8px;
 }
 
-.item-detail--luxury .luxury-section {
+.item-detail--wardrobe .item-detail-section {
   margin-block: clamp(2rem, 4vw, 3.5rem);
 }
 
-.item-detail--luxury .luxury-actions {
+.item-detail--wardrobe .item-detail-actions {
   gap: 8px;
   margin-block-start: 1.5rem;
 }
 
-.item-detail--luxury .luxury-actions .button {
+.item-detail--wardrobe .item-detail-actions .button {
   min-height: var(--tap-min);
   padding-inline: 1rem;
 }
 
 /* The secondary actions' disclosure takes the whole row, in the flex row and
    in the two-column grid phones get. */
-.item-detail--luxury .luxury-actions > .wardrobe-more-tools {
+.item-detail--wardrobe .item-detail-actions > .wardrobe-more-tools {
   flex-basis: 100%;
   grid-column: 1 / -1;
 }
@@ -123,21 +123,21 @@
 }
 
 @media (max-width: 767px) {
-  .item-detail--luxury .luxury-detail-grid {
+  .item-detail--wardrobe .item-detail-layout {
     gap: 1.5rem;
   }
 
-  .item-detail--luxury .luxury-title {
+  .item-detail--wardrobe .item-detail-title {
     max-inline-size: none;
     font-size: clamp(2rem, 11vw, 3rem);
   }
 
-  .item-detail--luxury .luxury-actions {
+  .item-detail--wardrobe .item-detail-actions {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .item-detail--luxury .luxury-actions .button {
+  .item-detail--wardrobe .item-detail-actions .button {
     width: 100%;
   }
 }
@@ -583,15 +583,13 @@ h2 {
 }
 
 /* Editorial grid: first card larger */
-.items-grid,
-.wardrobe-grid {
+.items-grid {
   display: grid;
   gap: var(--space-6);
   grid-template-columns: repeat(auto-fill, minmax(min(100%, var(--tile-min-medium)), 1fr));
 }
 
-.items-grid > :first-child,
-.wardrobe-grid > :first-child {
+.items-grid > :first-child {
   grid-column: span 1;
   grid-row: span 1;
 }
@@ -599,8 +597,7 @@ h2 {
 /* The first tile is a plain cell until there is room for a hero. One column of
    tiles has no spare axis to span, so span 2 only means anything from sm up. */
 @media (min-width: 576px) {
-  .items-grid > :first-child,
-  .wardrobe-grid > :first-child {
+  .items-grid > :first-child {
     grid-column: span 2;
     grid-row: span 2;
   }
@@ -941,7 +938,7 @@ main#main-content header > nav form {
 .danger-zone { margin-top: var(--space-8); padding-top: var(--space-6); border-top: 0; }
 .danger-zone summary { cursor: pointer; min-height: var(--tap-min); display: flex; align-items: center; }
 
-/* The base item card: space, not lines. The luxury variant is photo-first. */
+/* The base item card: space, not lines. The wardrobe variant is photo-first. */
 .item-card {
   display: flex;
   flex-direction: column;
@@ -1009,7 +1006,7 @@ main#main-content header > nav form {
 /* One screen of photograph, then the name. Uncapped, a 400x800 garment draws at
    600x1200 and pushes the title far below a 900px screen. */
 .item-detail .item-photo--detail,
-.luxury-photo {
+.item-detail-photo {
   inline-size: 100%;
   block-size: auto;
   max-block-size: calc(100dvh - var(--bar-height) - var(--space-12));
@@ -1095,15 +1092,18 @@ main#main-content header > nav form {
 .button:focus-visible,
 .button-small:focus-visible,
 .button.button-small:focus-visible,
+.item-card-actions :is(a, button):focus-visible,
 .profile-creator-link .button:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
 
 /* inline-flex so the label sits in the middle of the 44px it is given; as an
-   inline link the height grows below the text and "Sign in" hugs the top. */
+   inline link the height grows below the text and "Sign in" hugs the top. A
+   wardrobe card sizes its actions here by where they sit, not by a class. */
 .button-small,
 .button.button-small,
+.item-card-actions :is(a, button),
 .profile-creator-link .button {
   display: inline-flex;
   align-items: center;
@@ -1134,20 +1134,20 @@ main#main-content header > nav form {
 
 // ============================================================ components: luxury items
 
-/* Luxury minimalist refinements (Aesop/Toteme/Nécessaire) */
-.item-grid--luxury {
+/* A wardrobe card is photo-first: title and one meta line under the picture. */
+.item-grid--wardrobe {
   grid-template-columns: repeat(auto-fill, minmax(min(100%, var(--tile-min-extra-large)), 1fr));
   gap: var(--luxury-space-large);
 }
 
-.item-card--luxury {
+.item-card--wardrobe {
   display: flex;
   flex-direction: column;
   gap: var(--luxury-space-extra-small);
   transition: opacity var(--transition-fast) var(--ease-out);
 }
 
-.item-card--luxury .item-photo {
+.item-card--wardrobe .item-photo {
   width: 100%;
   aspect-ratio: 4 / 5; /* better for clothing than square */
   object-fit: contain;
@@ -1165,7 +1165,7 @@ main#main-content header > nav form {
   color: var(--luxury-muted);
 }
 
-.item-card--luxury .item-title {
+.item-card--wardrobe .item-title {
   font-size: var(--luxury-font-meta);
   font-weight: var(--weight-bold);
   letter-spacing: var(--luxury-letter-tight);
@@ -1176,11 +1176,11 @@ main#main-content header > nav form {
 /* Title + one meta line stay always-visible -- the image does the rest of
    the talking. The action nav overlays the photo, revealed on hover/focus,
    so the resting grid reads as pure photography. */
-.item-card--luxury .item-photo-wrap {
+.item-card--wardrobe .item-photo-wrap {
   position: relative;
 }
 
-.item-card--luxury nav {
+.item-card--wardrobe nav {
   display: flex;
   gap: var(--luxury-space-extra-small);
   flex-wrap: wrap;
@@ -1193,37 +1193,37 @@ main#main-content header > nav form {
   pointer-events: none;
 }
 
-.item-card--luxury:hover nav,
-.item-card--luxury:focus-within nav {
+.item-card--wardrobe:hover nav,
+.item-card--wardrobe:focus-within nav {
   opacity: 1;
   transform: translateY(0);
   pointer-events: auto;
 }
 
-.item-card--luxury nav .button-small {
+.item-card-actions :is(a, button) {
   background: var(--luxury-surface);
 }
 
-/* Luxury PDP */
-.luxury-detail-grid {
+/* The item page: photos beside its facts from 768px. */
+.item-detail-layout {
   display: grid;
   gap: var(--luxury-space-extra-large);
 }
 
 @media (min-width: 768px) {
-  .luxury-detail-grid {
+  .item-detail-layout {
     grid-template-columns: 1fr 1fr;
     align-items: start;
   }
 }
 
-.luxury-photos {
+.item-detail-photos {
   display: flex;
   flex-direction: column;
   gap: var(--luxury-space-medium);
 }
 
-.luxury-title {
+.item-detail-title {
   font-size: var(--luxury-font-display);
   font-weight: var(--weight-bold);
   letter-spacing: var(--luxury-letter-tight);
@@ -1231,11 +1231,11 @@ main#main-content header > nav form {
   margin: 0.25rem 0;
 }
 
-.luxury-tags {
+.item-detail-tags {
   margin: var(--luxury-space-small) 0;
 }
 
-.luxury-meta-list {
+.item-detail-fact-list {
   display: grid;
   grid-template-columns: max-content 1fr;
   gap: var(--luxury-space-extra-small) var(--luxury-space-medium);
@@ -1243,23 +1243,23 @@ main#main-content header > nav form {
   font-size: var(--luxury-font-meta);
 }
 
-.luxury-meta-list dt {
+.item-detail-fact-list dt {
   font-weight: var(--weight-bold);
   color: var(--luxury-muted);
 }
 
-.luxury-section {
+.item-detail-section {
   margin: var(--luxury-space-large) 0;
 }
 
-.luxury-actions {
+.item-detail-actions {
   display: flex;
   flex-wrap: wrap;
   gap: var(--luxury-space-small);
   margin-top: var(--luxury-space-large);
 }
 
-.luxury-actions .button {
+.item-detail-actions .button {
   padding: var(--space-2) 1.25rem;
 }
 
@@ -2212,42 +2212,7 @@ main#main-content form .field :is(
   gap: var(--space-2);
 }
 
-// Wardrobe item collection and detail.
-.wardrobe-items {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(min(100%, var(--tile-min-large)), 1fr));
-  gap: var(--space-3);
-}
-
-.wardrobe-card {
-  display: flex;
-  flex-direction: column;
-  min-inline-size: 0;
-  gap: var(--space-1);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-medium);
-  padding: var(--space-2);
-}
-
-.wardrobe-item {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-3);
-}
-
-.wardrobe-detail {
-  display: grid;
-  gap: var(--space-2);
-}
-
-.wardrobe-actions {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--space-2);
-  margin-block-start: var(--space-3);
-}
-
+// The wardrobe entry form; its list and detail pages are the items pages.
 .wardrobe-form {
   display: flex;
   flex-direction: column;
@@ -2257,7 +2222,6 @@ main#main-content form .field :is(
 
 // Single-purpose containers the markup names and nothing styled.
 .declutter-page,
-.wardrobe-items,
 .outfit-visual {
   margin-block-end: var(--space-6);
 }
@@ -2272,7 +2236,7 @@ main#main-content form .field :is(
   block-size: auto;
 }
 
-.luxury-meta {
+.item-detail-facts {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -2408,20 +2372,20 @@ main#main-content form .field :is(
 
 // ---- amber_late_product_finish ----
 /* Editorial product page: image is the primary object, metadata stays in reach on wide screens. */
-.item-detail--luxury .luxury-detail-grid {
+.item-detail--wardrobe .item-detail-layout {
   gap: clamp(2rem, 5vw, 6rem);
 }
-.item-detail--luxury .luxury-title {
+.item-detail--wardrobe .item-detail-title {
   max-inline-size: 12ch;
   font-size: clamp(2rem, 4.8vw, 4rem);
   line-height: var(--leading-none);
 }
 @media (min-width: 1024px) {
-  .item-detail--luxury .luxury-detail-grid {
+  .item-detail--wardrobe .item-detail-layout {
     grid-template-columns: minmax(0, 1.35fr) minmax(20rem, .65fr);
     align-items: start;
   }
-  .item-detail--luxury .luxury-meta {
+  .item-detail--wardrobe .item-detail-facts {
     position: sticky;
     inset-block-start: calc(var(--chrome-inset) + var(--safe-top) + var(--space-3));
     align-self: start;
@@ -2522,12 +2486,12 @@ body[data-surface="luxury"] .amber-look-title {
   color: var(--amber-ink);
 }
 
-body[data-surface="luxury"] .item-grid--luxury {
+body[data-surface="luxury"] .item-grid--wardrobe {
   grid-template-columns: repeat(auto-fill, minmax(min(100%, 190px), 1fr));
   gap: 16px;
 }
 
-body[data-surface="luxury"] .item-card--luxury {
+body[data-surface="luxury"] .item-card--wardrobe {
   gap: 8px;
   padding: 0 0 14px;
   overflow: hidden;
@@ -2536,61 +2500,61 @@ body[data-surface="luxury"] .item-card--luxury {
   background: var(--luxury-surface);
 }
 
-body[data-surface="luxury"] .item-card--luxury .item-photo-wrap {
+body[data-surface="luxury"] .item-card--wardrobe .item-photo-wrap {
   padding: 8px;
   background: var(--amber-lilac);
 }
 
-body[data-surface="luxury"] .item-card--luxury:nth-child(4n) .item-photo-wrap {
+body[data-surface="luxury"] .item-card--wardrobe:nth-child(4n) .item-photo-wrap {
   background: var(--amber-pink);
 }
 
-body[data-surface="luxury"] .item-card--luxury:nth-child(4n + 1) .item-photo-wrap {
+body[data-surface="luxury"] .item-card--wardrobe:nth-child(4n + 1) .item-photo-wrap {
   background: var(--amber-blue);
 }
 
-body[data-surface="luxury"] .item-card--luxury:nth-child(4n + 2) .item-photo-wrap {
+body[data-surface="luxury"] .item-card--wardrobe:nth-child(4n + 2) .item-photo-wrap {
   background: var(--amber-mint);
 }
 
-body[data-surface="luxury"] .item-card--luxury:nth-child(4n + 3) .item-photo-wrap {
+body[data-surface="luxury"] .item-card--wardrobe:nth-child(4n + 3) .item-photo-wrap {
   background: var(--amber-yellow);
 }
 
-body[data-surface="luxury"] .item-card--luxury .item-photo {
+body[data-surface="luxury"] .item-card--wardrobe .item-photo {
   border-radius: 12px;
   background: var(--luxury-surface);
 }
 
-body[data-surface="luxury"] .item-card--luxury .item-title,
-body[data-surface="luxury"] .item-card--luxury .item-meta,
-body[data-surface="luxury"] .item-card--luxury nav {
+body[data-surface="luxury"] .item-card--wardrobe .item-title,
+body[data-surface="luxury"] .item-card--wardrobe .item-meta,
+body[data-surface="luxury"] .item-card--wardrobe nav {
   margin-inline: 16px;
 }
 
-body[data-surface="luxury"] .item-card--luxury .item-title {
+body[data-surface="luxury"] .item-card--wardrobe .item-title {
   font-size: 14px;
   font-weight: 600;
   line-height: var(--leading-snug);
   letter-spacing: 0;
 }
 
-body[data-surface="luxury"] .item-card--luxury nav {
+body[data-surface="luxury"] .item-card--wardrobe nav {
   inset-inline: 16px;
   bottom: 12px;
 }
 
-body[data-surface="luxury"] .item-card--luxury nav .button-small {
+body[data-surface="luxury"] .item-card-actions :is(a, button) {
   background: var(--amber-pink);
   color: var(--amber-ink);
   border: 1px solid transparent;
 }
 
-body[data-surface="luxury"] .item-card--luxury nav .button-small:hover {
+body[data-surface="luxury"] .item-card-actions :is(a, button):hover {
   background: var(--amber-lilac);
 }
 
-body[data-surface="luxury"] .luxury-section {
+body[data-surface="luxury"] .item-detail-section {
   padding: 24px;
   border-radius: 24px;
   background: var(--luxury-surface);
@@ -2634,7 +2598,7 @@ body[data-surface="luxury"] .commerce-handoff-note {
 }
 
 @media (min-width: 768px) {
-  body[data-surface="luxury"] .item-grid--luxury {
+  body[data-surface="luxury"] .item-grid--wardrobe {
     grid-template-columns: repeat(auto-fill, minmax(min(100%, 210px), 1fr));
   }
 
@@ -2652,7 +2616,7 @@ body[data-surface="luxury"] .commerce-handoff-note {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  body[data-surface="luxury"] .item-card--luxury {
+  body[data-surface="luxury"] .item-card--wardrobe {
     transition: none;
   }
 }
@@ -2670,7 +2634,7 @@ body[data-surface="luxury"] {
 body[data-surface="luxury"] :is(
   main h1,
   main section > h2,
-  .luxury-title,
+  .item-detail-title,
   .amber-look-title
 ) {
   font-family: var(--font-beauty-sans);
@@ -2690,7 +2654,7 @@ body[data-surface="luxury"] main section > h2 {
   font-size: clamp(1.7rem, 3vw, 2.7rem);
 }
 
-body[data-surface="luxury"] .luxury-title {
+body[data-surface="luxury"] .item-detail-title {
   font-size: clamp(2.4rem, 5vw, 5rem);
   max-inline-size: 12ch;
 }
@@ -2699,8 +2663,8 @@ body[data-surface="luxury"] .amber-look-title {
   font-size: clamp(2.6rem, 6vw, 6rem);
 }
 
-body[data-surface="luxury"] .item-card--luxury .item-title,
-body[data-surface="luxury"] .item-card--luxury .item-meta,
+body[data-surface="luxury"] .item-card--wardrobe .item-title,
+body[data-surface="luxury"] .item-card--wardrobe .item-meta,
 body[data-surface="luxury"] .commerce-fit-source,
 body[data-surface="luxury"] .commerce-fit-reasons,
 body[data-surface="luxury"] .shop-feed-note,
@@ -2713,12 +2677,12 @@ body[data-surface="luxury"] textarea {
   font-optical-sizing: auto;
 }
 
-body[data-surface="luxury"] .item-card--luxury .item-title {
+body[data-surface="luxury"] .item-card--wardrobe .item-title {
   font-weight: 600;
   letter-spacing: 0;
 }
 
-body[data-surface="luxury"] .item-card--luxury .item-meta,
+body[data-surface="luxury"] .item-card--wardrobe .item-meta,
 body[data-surface="luxury"] .commerce-fit-reasons,
 body[data-surface="luxury"] .shop-feed-note {
   line-height: var(--leading-normal);
@@ -2729,7 +2693,7 @@ body[data-surface="luxury"] :is(
   .post-reading-body-preview,
   .commerce-handoff-note,
   .item-detail p,
-  .luxury-section > p
+  .item-detail-section > p
 ) {
   max-inline-size: 66ch;
   line-height: var(--leading-normal);

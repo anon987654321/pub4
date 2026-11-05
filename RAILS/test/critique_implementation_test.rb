@@ -167,11 +167,11 @@ class CritiqueImplementationTest < Minitest::Test
     show = read("amber/app/views/items/show.html.erb")
     css = amber_css_source
 
-    assert_includes show, 'class="luxury-detail-grid"'
-    assert_includes show, 'class="luxury-photos"'
-    assert_includes show, 'class="luxury-meta"'
-    assert_includes css, ".item-detail--luxury .luxury-detail-grid"
-    assert_includes css, ".item-detail--luxury .luxury-meta"
+    assert_includes show, 'class="item-detail-layout"'
+    assert_includes show, 'class="item-detail-photos"'
+    assert_includes show, 'class="item-detail-facts"'
+    assert_includes css, ".item-detail--wardrobe .item-detail-layout"
+    assert_includes css, ".item-detail--wardrobe .item-detail-facts"
   end
   def test_amber_flash_uses_shared_semantic_signal
     flash = read("amber/app/views/shared/_flash.html.erb")

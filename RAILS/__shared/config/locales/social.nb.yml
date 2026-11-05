@@ -207,13 +207,8 @@ nb:
   shared:
     advertisement: "Annonse"
     reported: "Rapportert"
-    view: "Vis"
     read_more: "Les mer"
     read_less: "Vis mindre"
-    back: "Tilbake"
-    edit: "Rediger"
-    delete: "Slett"
-    confirm: "Er du sikker?"
     # Norwegian marks a past span on both sides — "for … siden" — so a relative
     # time cannot be built by appending a suffix to time_ago_in_words. Fourteen
     # views did exactly that and every post page read "rundt 2 måneder ago".

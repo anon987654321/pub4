@@ -27,7 +27,8 @@ class AuthorizationMatrixTest < ActionDispatch::IntegrationTest
     [ "/items",            :get,  :redirect, :ok ],
     [ "/items/new",        :get,  :redirect, :ok ],
     [ "/outfits",          :get,  :redirect, :ok ],
-    [ "/wardrobe_items",   :get,  :redirect, :ok ],
+    # The wardrobe list hands a signed-in user over to /items; its form still renders.
+    [ "/wardrobe_items/new", :get, :redirect, :ok ],
     [ "/wardrobe_items",   :post, :redirect, :any ],
     # Writes. The checks exercise none of these, and a write is where an open
     # door actually costs something.

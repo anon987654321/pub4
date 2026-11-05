@@ -432,9 +432,9 @@ end
     amber = source.split("@mixin amber_precision", 2).last.split("@mixin bsdports", 2).first
     amber_mobile, amber_wide = amber.split("@media (min-width: 768px)", 2)
     assert_match(/body\[data-surface="luxury"\] main#main-content\s*\{[^}]*padding-inline:\s*max\(var\(--space-4\), var\(--page-gutter\)\);[^}]*padding-block-end:\s*calc\(var\(--space-16\) \+ env\(safe-area-inset-bottom\)\);/m, amber_mobile)
-    assert_match(/body\[data-surface="luxury"\] \.luxury-title\s*\{[^}]*max-inline-size:\s*none;[^}]*font-size:\s*clamp\(2\.4rem, 12vw, 4rem\);/m, amber_mobile)
+    assert_match(/body\[data-surface="luxury"\] \.item-detail-title\s*\{[^}]*max-inline-size:\s*none;[^}]*font-size:\s*clamp\(2\.4rem, 12vw, 4rem\);/m, amber_mobile)
     assert_match(/body\[data-surface="luxury"\] main#main-content\s*\{[^}]*padding-inline:\s*0;[^}]*padding-block-end:\s*calc\(var\(--space-12\) \+ var\(--safe-bottom\)\);/m, amber_wide)
-    assert_match(/body\[data-surface="luxury"\] \.luxury-title\s*\{[^}]*max-inline-size:\s*12ch;[^}]*font-size:\s*clamp\(2\.4rem, 5vw, 5rem\);/m, amber_wide)
+    assert_match(/body\[data-surface="luxury"\] \.item-detail-title\s*\{[^}]*max-inline-size:\s*12ch;[^}]*font-size:\s*clamp\(2\.4rem, 5vw, 5rem\);/m, amber_wide)
 
     bsd = source.split("@mixin bsdports", 2).last
     bsd_mobile, bsd_wide = bsd.split("@media (min-width: 768px)", 2)

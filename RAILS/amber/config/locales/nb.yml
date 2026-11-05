@@ -49,17 +49,8 @@ nb:
     nav:
       ai_suggest: "Antrekkforslag"
     wardrobe:
-      title: "Garderobe"
-      add: "Legg til plagg"
       new: "Nytt garderobeplagg"
       edit: "Rediger garderobeplagg"
-      untitled: "Uten tittel"
-      empty: "Ingen plagg i garderoben ennå."
-      empty_body: "Legg til et bilde, merk det, og planlegg et antrekk."
-      condition: "Tilstand"
-      acquired: "Anskaffet"
-      age_days: "Alder (dager)"
-      notes: "Notater"
   nav:
     connections: "Skapere"
     live: "Livesesjoner"

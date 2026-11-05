@@ -325,7 +325,7 @@ items:
   path: RAILS/amber/app/views/items/_item.html.erb
   item: Replace the 'button-small' class on item card actions with a semantic hook
     (card-actions) and size it in CSS.
-  status: open
+  status: done
 - id: amber-040
   app: amber
   area: markup
@@ -349,7 +349,7 @@ items:
   path: RAILS/amber/app/views/items/show.html.erb
   item: Rename presentational classes item-card--luxury, item-grid--luxury, luxury-*
     to semantic names (wardrobe-card, item-detail-photos, item-detail-facts).
-  status: open
+  status: done
 - id: amber-043
   app: amber
   area: markup
@@ -881,7 +881,7 @@ items:
   item: Unify or remove the legacy wardrobe_items index/show pages (wardrobe-card,
     shared.view keys), which duplicate items with a separate design and are disallowed
     in robots.
-  status: open
+  status: done
 - id: brgen-001
   app: brgen
   area: admin

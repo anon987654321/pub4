@@ -5,8 +5,12 @@ class WardrobeItemsController < ApplicationController
   before_action :set_wardrobe_item, only: %i[show edit update destroy]
   before_action :authorize!, only: %i[show edit update destroy]
 
+  # The wardrobe is the items pages. This list and the show page below drew the
+  # same garments in a design of their own, and robots.txt kept them out of
+  # search; they now hand over to the item, and the wardrobe rows (condition,
+  # acquisition date, notes) stay where they are, editable here.
   def index
-    @wardrobe_items = Current.user.wardrobe_items.includes(:item).recent.limit(100)
+    redirect_to items_path
   end
 
   def analytics
@@ -28,7 +32,7 @@ class WardrobeItemsController < ApplicationController
   end
 
   def show
-    @wardrobe_item.record_activity!("AmberWardrobeItemViewed", source_vertical: "amber")
+    redirect_to item_path(@wardrobe_item.item)
   end
 
   def new
@@ -40,7 +44,7 @@ class WardrobeItemsController < ApplicationController
 
     if @wardrobe_item.save
       @wardrobe_item.record_activity!("AmberWardrobeItemCreated", source_vertical: "amber")
-      redirect_to wardrobe_items_path, notice: t("flash.item_added")
+      redirect_to item_path(@wardrobe_item.item), notice: t("flash.item_added")
     else
       render :new, status: :unprocessable_entity
     end
@@ -53,13 +57,13 @@ class WardrobeItemsController < ApplicationController
     return render :edit, status: :unprocessable_entity unless @wardrobe_item.update(wardrobe_item_params)
 
     @wardrobe_item.record_activity!("AmberWardrobeItemUpdated", source_vertical: "amber")
-    redirect_to wardrobe_items_path, notice: t("flash.updated")
+    redirect_to item_path(@wardrobe_item.item), notice: t("flash.updated")
   end
 
   def destroy
     @wardrobe_item.record_activity!("AmberWardrobeItemRemoved", source_vertical: "amber")
     @wardrobe_item.destroy
-    redirect_to wardrobe_items_path, notice: t("flash.item_removed")
+    redirect_to items_path, notice: t("flash.item_removed")
   end
 
   private
@@ -83,7 +87,7 @@ class WardrobeItemsController < ApplicationController
     # and every path behind it failed, the owner's included.
     return if Current.user && Current.user.id == @wardrobe_item.user_id
 
-    redirect_to(wardrobe_items_path, alert: t("shared.flash.not_authorized"))
+    redirect_to(items_path, alert: t("shared.flash.not_authorized"))
   end
 
   def wardrobe_item_params

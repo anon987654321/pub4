@@ -58,7 +58,7 @@ class ItemDetailPhotosTest < ActionDispatch::IntegrationTest
   # analysis, tagging, the declutter review and archiving sit under More tools.
   test "the item page leads with its everyday actions and folds the rest away" do
     get item_path(@item)
-    nav = "nav.luxury-actions"
+    nav = "nav.item-detail-actions"
     assert_select "#{nav} > form[action=?]", wear_item_path(@item)
     assert_select "#{nav} > a[href=?]", edit_item_path(@item)
     assert_select "#{nav} > details.wardrobe-more-tools > summary", text: I18n.t("wardrobe.more_tools")

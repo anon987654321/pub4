@@ -209,13 +209,8 @@ en:
   shared:
     advertisement: "Advertisement"
     reported: "Reported"
-    view: "View"
     read_more: "Read more"
     read_less: "Read less"
-    back: "Back"
-    edit: "Edit"
-    delete: "Delete"
-    confirm: "Are you sure?"
     # See the nb file for why this is a whole phrase and not a suffix.
     time_ago: "%{time} ago"
     # Mirrors social.nb.yml's flash: block. Both files carry the same key set, and

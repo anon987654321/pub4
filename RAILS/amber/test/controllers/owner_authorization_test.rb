@@ -35,7 +35,9 @@ class OwnerAuthorizationTest < ActionDispatch::IntegrationTest
     WardrobeItem.create!(user: owner, item: item)
   end
 
-  test "the wardrobe index only shows the signed-in user's items" do
+  # The legacy wardrobe list and show pages hand over to the items pages, which
+  # draw the same garments; the wardrobe rows stay.
+  test "the wardrobe index hands over to the signed-in user's items" do
     owner = user("owner")
     stranger = user("stranger")
     mine = item_for(owner)
@@ -44,6 +46,8 @@ class OwnerAuthorizationTest < ActionDispatch::IntegrationTest
 
     get wardrobe_items_path
 
+    assert_redirected_to items_path
+    follow_redirect!
     assert_response :success
     assert_includes response.body, mine.item.title
     refute_includes response.body, theirs.item.title
@@ -58,7 +62,10 @@ class OwnerAuthorizationTest < ActionDispatch::IntegrationTest
     # of their own item by a guard that never compared anything.
     get wardrobe_item_path(wardrobe_item)
 
+    assert_redirected_to item_path(wardrobe_item.item)
+    follow_redirect!
     assert_response :success
+    assert_includes response.body, wardrobe_item.item.title
   end
 
   test "a stranger is turned away from someone else's wardrobe item" do
@@ -69,7 +76,7 @@ class OwnerAuthorizationTest < ActionDispatch::IntegrationTest
 
     get wardrobe_item_path(wardrobe_item)
 
-    assert_redirected_to wardrobe_items_path
+    assert_redirected_to items_path
   end
 
   test "a stranger cannot destroy someone else's wardrobe item" do

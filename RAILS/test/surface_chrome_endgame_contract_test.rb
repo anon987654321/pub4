@@ -40,7 +40,7 @@ class SurfaceChromeEndgameContractTest < Minitest::Test
     endpoint = stylesheet_module("amber", "amber_shared_overrides")
 
     [".feed-card {", ".amber-editorial-nav{", ".amber-messenger-composer textarea,.amber-messenger-composer select",
-     'body[data-surface="luxury"] .item-card--luxury {'].each do |selector|
+     'body[data-surface="luxury"] .item-card--wardrobe {'].each do |selector|
       assert_includes app, selector
     end
 

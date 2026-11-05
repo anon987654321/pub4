@@ -24,7 +24,7 @@
     grid: the band spans the row rather than sitting in it as a tile.
     ItemsInfiniteScrollReflex#after_row keeps the same rhythm on appended pages,
     counting slots from the top rather than restarting each scroll. %>
-<div class="item-grid item-grid--luxury" id="items">
+<div class="item-grid item-grid--wardrobe" id="items">
   <% @items.each_with_index do |item, index| %>
     <%= render item %>
     <% if ((index + 1) % Shared::AffiliateHelper::FEED_EVERY).zero? && index + 1 < @items.size %>
