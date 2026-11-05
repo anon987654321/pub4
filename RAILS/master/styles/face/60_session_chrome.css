@@ -1,7 +1,7 @@
 /* Ghostty-inspired session chrome: neutral graphite, grayscale focus and semantic contrast. */
 #chat-shell { inset-block-end: calc(76px + var(--safe-bottom) + var(--keyboard-inset, 0px)); }
 #chat-log { max-height: 36dvh; padding: 8px 18px; }
-#zsh {
+#prompt-form {
   inset-inline: auto; inset-inline-start: 50%;
   inset-block-end: calc(8px + var(--safe-bottom) + var(--keyboard-inset, 0px));
   width: calc(100dvw - 16px - var(--safe-left) - var(--safe-right));
@@ -11,31 +11,36 @@
   font: 400 1rem/1.5 var(--font-mono); touch-action: manipulation;
   transition: background-color var(--transition-fast) var(--ease-out);
 }
-body #zsh.live, body:not(.face-ready) #zsh.live { transform: translate(-50%,0); background: var(--chrome-surface); }
-body #zsh.live:focus-within, #zsh:focus-within { background: var(--chrome-surface-active); outline: 2px solid var(--chrome-focus); outline-offset: 2px; }
-body.zen #zsh { opacity: .96; pointer-events: auto; transform: translate(-50%,0); }
-body.zen.zen-hidden #zsh, body.zen[data-edge-hover="1"] #zsh { opacity: .96; pointer-events: auto; }
-body.zen #zsh.revealed { transform: translate(-50%,0); }
-#zsh .pp {
+body #prompt-form.live, body:not(.face-ready) #prompt-form.live {
+  transform: translate(-50%,0); background: var(--chrome-surface);
+}
+body #prompt-form.live:focus-within, #prompt-form:focus-within { background: var(--chrome-surface-active); outline: 2px solid var(--chrome-focus); outline-offset: 2px; }
+body[data-layout="face"] #prompt-form { opacity: .96; pointer-events: auto; transform: translate(-50%,0); }
+body[data-layout="face"].controls-hidden #prompt-form,
+body[data-layout="face"][data-edge-hover="1"] #prompt-form { opacity: .96; pointer-events: auto; }
+body[data-layout="face"] #prompt-form.revealed { transform: translate(-50%,0); }
+#prompt-form .prompt-sigil {
   display: inline-flex; align-items: center; flex: 0 1 auto; min-inline-size: 0;
   max-inline-size: min(42vw, 32ch); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
   color: var(--chrome-muted); font-weight: 400;
 }
-#zsh input, #zsh textarea {
+#prompt-form input, #prompt-form textarea {
   min-height: var(--tap-min); min-width: 0; padding: 8px 0;
   font: 400 16px/1.5 var(--font-mono); color: var(--chrome-text);
   caret-color: var(--chrome-focus); user-select: text; -webkit-user-select: text; touch-action: auto;
 }
-#zsh input::placeholder, #zsh textarea::placeholder { color: var(--chrome-muted); }
-#photo-button, #music-btn, #spin-btn {
+#prompt-form input::placeholder, #prompt-form textarea::placeholder { color: var(--chrome-muted); }
+#photo-button, #music-loop-button, #pause-speech-button {
   min-inline-size: var(--tap-min); min-block-size: var(--tap-min);
   border: 0; border-radius: 0; background: transparent; color: var(--chrome-muted);
 }
 #photo-button { font-family: var(--font); font-size: 1.35rem; }
-#photo-button:hover, #music-btn:hover, #spin-btn:hover { background: var(--chrome-hover); color: var(--chrome-text); }
-#photo-button:focus-visible, #music-btn:focus-visible, #spin-btn:focus-visible { outline: 2px solid var(--chrome-focus); outline-offset: -2px; }
-#music-btn::before { inset: 15px; border-radius: 0; border-color: currentColor; }
-#spin-btn { padding-inline: 8px; font-family: var(--font); }
+#photo-button:hover, #music-loop-button:hover, #pause-speech-button:hover {
+  background: var(--chrome-hover); color: var(--chrome-text);
+}
+#photo-button:focus-visible, #music-loop-button:focus-visible, #pause-speech-button:focus-visible { outline: 2px solid var(--chrome-focus); outline-offset: -2px; }
+#music-loop-button::before { inset: 15px; border-radius: 0; border-color: currentColor; }
+#pause-speech-button { padding-inline: 8px; font-family: var(--font); }
 #zsh-status { color: var(--chrome-muted); font-size: var(--text-meta); }
 .turn-queue-status { color: var(--chrome-muted); font: 400 .72rem/1.2 var(--font-mono); white-space: nowrap; pointer-events: none; margin-inline-start: 4px; }
 body[data-queue-active="1"] .turn-queue-status { opacity: .9; }
@@ -93,7 +98,7 @@ body.mission-control .master-titlebar { max-width: none; max-inline-size: none; 
 body.mission-control .mission-heading { max-inline-size: 80ch; margin: 0 0 1rem; }
 @media (min-width: 480px) {
   #chat-log { max-height: 40dvh; padding-inline: 24px; }
-  #zsh { width: min(920px, calc(100dvw - 32px - var(--safe-left) - var(--safe-right))); min-height: 64px; padding: 9px 12px; gap: 8px; }
+  #prompt-form { width: min(920px, calc(100dvw - 32px - var(--safe-left) - var(--safe-right))); min-height: 64px; padding: 9px 12px; gap: 8px; }
   .master-titlebar { gap: .5rem; }
   .master-titlebar .brand-mark { display: inline-flex; }
   .master-session-tab { padding-inline: .875rem; }
@@ -102,11 +107,11 @@ body.mission-control .mission-heading { max-inline-size: 80ch; margin: 0 0 1rem;
   #chat-history-panel { bottom: calc(80px + var(--safe-bottom) + var(--keyboard-inset, 0px)); }
 }
 @media (min-width: 768px) { body.mission-control #mission-grid > section { margin-block-end: 24px; } }
-@media (prefers-reduced-motion: reduce) { #zsh, .master-titlebar *, .master-session-tab, #turn-control { transition: none; scroll-behavior: auto; } }
-@media (prefers-reduced-transparency: reduce) { #zsh { background: var(--chrome-surface); } }
+@media (prefers-reduced-motion: reduce) { #prompt-form, .master-titlebar *, .master-session-tab, #turn-control { transition: none; scroll-behavior: auto; } }
+@media (prefers-reduced-transparency: reduce) { #prompt-form { background: var(--chrome-surface); } }
 @media (forced-colors: active) {
-  #zsh { background: Canvas; color: CanvasText; outline-color: CanvasText; }
-  #zsh input, #zsh textarea { color: CanvasText; }
+  #prompt-form { background: Canvas; color: CanvasText; outline-color: CanvasText; }
+  #prompt-form input, #prompt-form textarea { color: CanvasText; }
   .master-titlebar, .master-session-tab, #turn-control { color: CanvasText; }
   .master-session-tab:focus-visible, #turn-control:focus-visible { outline-color: CanvasText; }
 }

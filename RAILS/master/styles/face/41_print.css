@@ -1,5 +1,5 @@
 @media print {
-  canvas, #cognition-ecology, #primer, #zsh, .face-controls, .ui-status, #chat-history-panel, .skip-link { display: none !important; }
+  canvas, #cognition-ecology, #primer, #prompt-form, .face-controls, .ui-status, #chat-history-panel, .skip-link { display: none !important; }
   body { background: #fff; color: #000; }
   #chat-log { position: static; max-height: none; overflow: visible; opacity: 1; }
   .message { break-inside: avoid; color: #000; }

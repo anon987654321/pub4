@@ -3,13 +3,14 @@ const F_FACE_STATE = F_FACE_MINIMAL.State || window.State;
 
 (function bootstrapUltraMinimal() {
   const body = document.body;
-  if (!body.classList.contains('zen')) body.classList.add('zen');
+  // The face layout is the chat page; other pages that load this leave their chrome alone.
+  const faceLayout = () => body.dataset.layout === 'face';
 
   let startY = 0;
   document.addEventListener('touchstart', e => { startY = e.touches[0].clientY; }, { passive: true });
   document.addEventListener('touchend', e => {
     if (e.changedTouches[0].clientY - startY < -90) {
-      const zsh = document.getElementById('zsh');
+      const zsh = document.getElementById('prompt-form');
       if (zsh) zsh.classList.add('revealed');
       if (window.ParticleKernel && window.mouthPool) F_FACE_STATE.pulse = 0.7;
     }
@@ -21,23 +22,23 @@ const F_FACE_STATE = F_FACE_MINIMAL.State || window.State;
   document.addEventListener('touchend', () => delete body.dataset.edgeSwipe);
 
   document.addEventListener('mousemove', (e) => {
-    if (!body.classList.contains('zen')) return;
+    if (!faceLayout()) return;
     if (innerHeight - e.clientY < 56) body.dataset.edgeHover = '1';
     else delete body.dataset.edgeHover;
-    resetZenHide();
+    resetControlsHide();
   }, { passive: true });
 
-  let zenIdleTimer = null;
-  function resetZenHide() {
-    clearTimeout(zenIdleTimer);
-    body.classList.remove('zen-hidden');
-    zenIdleTimer = setTimeout(() => {
-      if (!body.classList.contains('zen') || body.dataset.edgeHover === '1') return;
-      body.classList.add('zen-hidden');
+  let controlsIdleTimer = null;
+  function resetControlsHide() {
+    clearTimeout(controlsIdleTimer);
+    body.classList.remove('controls-hidden');
+    controlsIdleTimer = setTimeout(() => {
+      if (!faceLayout() || body.dataset.edgeHover === '1') return;
+      body.classList.add('controls-hidden');
     }, 4500);
   }
-  ['pointerdown', 'keydown', 'touchstart'].forEach((ev) => document.addEventListener(ev, resetZenHide, { passive: true }));
-  resetZenHide();
+  ['pointerdown', 'keydown', 'touchstart'].forEach((ev) => document.addEventListener(ev, resetControlsHide, { passive: true }));
+  resetControlsHide();
 
   const cvEl = document.getElementById('face');
   if (cvEl) {
@@ -96,7 +97,7 @@ const F_FACE_STATE = F_FACE_MINIMAL.State || window.State;
   window.MASTERMinimalUI = {
     enableCam: enableCamTracking,
     revealConsole: () => {
-      const z = document.getElementById('zsh');
+      const z = document.getElementById('prompt-form');
       if (z) z.classList.add('revealed');
     },
     triggerVoice: (text) => {

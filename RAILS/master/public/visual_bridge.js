@@ -2,7 +2,7 @@
   "use strict";
 
   const status = document.getElementById("status-bar") || document.getElementById("status");
-  const input = document.getElementById("zin") || document.getElementById("input");
+  const input = document.getElementById("prompt-input") || document.getElementById("input");
   const face = document.getElementById("face") || document.getElementById("mask");
   const log = document.getElementById("chat-log");
 

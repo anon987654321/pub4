@@ -106,7 +106,7 @@ class TestBrowserUI < Minitest::Test
     pg = fresh_page
     assert pg.at_css("#primer"), "primer element missing"
     assert pg.at_css("#face"), "face canvas missing"
-    assert pg.at_css("#zsh"), "prompt shell missing"
+    assert pg.at_css("#prompt-form"), "prompt shell missing"
   end
 
   def test_02_primer_dismisses_on_tap
@@ -117,7 +117,7 @@ class TestBrowserUI < Minitest::Test
       pg.evaluate("!document.getElementById('primer')")
     end
     assert primer_gone, "primer should be removed after tap"
-    assert pg.evaluate("document.getElementById('zsh').classList.contains('live')"),
+    assert pg.evaluate("document.getElementById('prompt-form').classList.contains('live')"),
            "zsh should have live class after tap"
     assert pg.evaluate("window._primerFired === true"), "_primerFired should be true"
   end
@@ -136,8 +136,8 @@ class TestBrowserUI < Minitest::Test
     skip_if_unavailable
     pg = fresh_page
     pg.mouse.click(x: 300, y: 400)
-    assert wait_until(timeout: LOCAL_PROBE ? 10 : 25) { pg.at_css("#zin") }, "chat input did not become ready"
-    pg.at_css("#zin").focus
+    assert wait_until(timeout: LOCAL_PROBE ? 10 : 25) { pg.at_css("#prompt-input") }, "chat input did not become ready"
+    pg.at_css("#prompt-input").focus
     pg.keyboard.type("ping")
     pg.keyboard.type(:Return)
     response = ""

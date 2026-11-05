@@ -8,7 +8,7 @@
   let draftKind = "typed";
   let resumeVoiceAfterTyping = false;
 
-  const input = () => document.getElementById("zin");
+  const input = () => document.getElementById("prompt-input");
   const micState = () => document.getElementById("mic-dot");
   const transcript = () => {
     let node = document.getElementById("voice-transcript");

@@ -39,7 +39,7 @@
     }, { passive: true });
   }
 
-  const cursor = document.querySelector("#zin, #input");
+  const cursor = document.querySelector("#prompt-input, #input");
   if (cursor) {
     let primerPulse = 0;
     setInterval(() => {

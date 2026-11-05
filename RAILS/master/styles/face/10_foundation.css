@@ -93,7 +93,7 @@ body[data-focus-mode="1"] .ui-status,
 body[data-focus-mode="1"] .face-controls,
 body[data-focus-mode="1"] #chat-log,
 body[data-focus-mode="1"] #ascii-star,
-body[data-focus-mode="1"] #spin-btn {
+body[data-focus-mode="1"] #pause-speech-button {
   opacity: 0;
   pointer-events: none;
 }
@@ -114,14 +114,14 @@ body[data-focus-mode="1"] #spin-btn {
   cursor: pointer;
 }
 #photo-button:focus-visible,
-#spin-btn:focus-visible,
-#zin:focus-visible,
+#pause-speech-button:focus-visible,
+#prompt-input:focus-visible,
 .skip-link:focus-visible {
   outline: 2px solid var(--c-accent, var(--accent, #bdbdbd));
   outline-offset: 2px;
 }
 
-body[data-focus-mode="1"] #zsh {
+body[data-focus-mode="1"] #prompt-form {
   background: transparent;
 
 }

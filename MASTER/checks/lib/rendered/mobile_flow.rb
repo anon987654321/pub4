@@ -47,8 +47,9 @@ module Deploy
           const r = el.getBoundingClientRect();
           return r.width > 0 && r.height > 0;
         };
-        const main = document.querySelector('#main-content, main, [role=main], #face, #zin');
-        const skip = document.querySelector('a.skip-link, .skip-link, a[href="#main-content"], a[href="#zin"]');
+        const main = document.querySelector('#main-content, main, [role=main], #face, #prompt-input');
+        const skip = document.querySelector(
+          'a.skip-link, .skip-link, a[href="#main-content"], a[href="#prompt-input"]');
         const tabBar = document.querySelector('.tab-bar, nav.tab-bar, [data-scroll-chrome-target="bar"]');
         const overflow = de.scrollWidth > vw + 1;
         const chromeSel = '#{CHROME_SEL}';

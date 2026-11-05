@@ -214,7 +214,7 @@ module Deploy
           findings << (static_public ? soft("static page missing main landmark") : hard("missing main landmark / face root"))
         end
 
-        has_skip = body.match?(/skip-link|Skip to|#main-content|#zin|id="primer"/i)
+        has_skip = body.match?(/skip-link|Skip to|#main-content|#prompt-input|id="primer"/i)
         unless has_skip
           if static_public || (page[:app] == "master" && page[:path] != "/" && page[:path] != "/dashboard")
             findings << soft("static/utility page has no skip link")

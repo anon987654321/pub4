@@ -1074,6 +1074,10 @@ async function runMessageTurn(text) {
           spokenLen: ttsStreamSpokenLen,
         });
       }
+      // #chat-log is not a live region. A spoken reply reaches #tts-live chunk
+      // by chunk as enqueueSpeech queues it; one that is not spoken is
+      // announced once, whole, when it finishes.
+      if ((tts.muted || ttsSuppressed) && pending.trim()) announceTTS(pending.trim());
       pending = '';
       State.mode = 'idle';
       clearThinkingAloud();
@@ -1472,7 +1476,7 @@ const chatShell = document.getElementById('chat-shell');
 if (chatShell) {
   let shellPress = null;
   chatShell.addEventListener('pointerdown', (e) => {
-    if (e.target.closest('#zsh, #zin, #photo-button, input, button, a')) return;
+    if (e.target.closest('#prompt-form, #prompt-input, #photo-button, input, button, a')) return;
     shellPress = setTimeout(() => {
       cancelStream();
       window.MASTER_FACE?.ttsSkip?.();

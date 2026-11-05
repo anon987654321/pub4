@@ -42,7 +42,7 @@ function loadPrimer({ search = "" } = {}) {
   const timers = [];
   const transitions = [];
   const primer = element("primer");
-  const nodes = { primer, zsh: element("zsh"), "ui-status": element("ui-status"), "primer-title": element("primer-title") };
+  const nodes = { primer, "prompt-form": element("prompt-form"), "ui-status": element("ui-status"), "primer-title": element("primer-title") };
   const windowListeners = {};
   const sandbox = {
     document: {

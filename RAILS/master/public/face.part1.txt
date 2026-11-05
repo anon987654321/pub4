@@ -66,8 +66,8 @@ const Color = _hasWebGL ? THREE.Color : _Color;
 
 let cv = document.getElementById('face');
 const primer = document.getElementById('primer');
-const zshBar = document.getElementById('zsh');
-const zshIn = document.getElementById('zin');
+const zshBar = document.getElementById('prompt-form');
+const zshIn = document.getElementById('prompt-input');
 const ttsLive = document.getElementById('tts-live');
 const uiStatus = document.getElementById('ui-status');
 const rootBody = document.body;
@@ -272,7 +272,7 @@ function applyFocusMode(enabled, persist = true) {
   if (persist) localStorage.setItem(FOCUS_KEY, value ? '1' : '0');
   const btn = document.getElementById('focus-btn');
   if (btn) btn.setAttribute('aria-pressed', value ? 'true' : 'false');
-  const input = document.getElementById('zin');
+  const input = document.getElementById('prompt-input');
   if (value && input) input.focus();
 }
 function toggleFocusMode() {
@@ -573,7 +573,7 @@ const STAR_FRAMES = ['|', '/', '-', '\\'];
 const STAR_INTERVAL_MS = 100;
 let _starTimer = null;
 let _starIdx = 0;
-const spinBtn = document.getElementById('spin-btn');
+const spinBtn = document.getElementById('pause-speech-button');
 const themeBtn = document.getElementById('theme-btn');
 const focusBtn = document.getElementById('focus-btn');
 const fontScaleInput = document.getElementById('font-scale');

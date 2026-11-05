@@ -29,7 +29,7 @@ function setReady(isReady, detail) {
   } else if (readyMeta) {
     readyMeta.content = '0';
   }
-  const input = document.getElementById("zin");
+  const input = document.getElementById("prompt-input");
   if (input) {
     input.disabled = !isReady;
     if (!input.dataset.defaultPlaceholder) input.dataset.defaultPlaceholder = input.placeholder || "ask anything";
@@ -72,7 +72,7 @@ function ensureRetryBootButton() {
     const ui = document.getElementById("ui-status");
     if (ui) ui.textContent = checkT("retrying_boot", "retrying boot…");
   });
-  const shell = document.getElementById("zsh") || document.body;
+  const shell = document.getElementById("prompt-form") || document.body;
   shell.appendChild(btn);
   return btn;
 }

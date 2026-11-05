@@ -121,7 +121,7 @@ begin
       primerFired: !!window._primerFired,
       primerGone: !document.getElementById('primer'),
       faceSession: document.body.classList.contains('face-session'),
-      zshLive: document.getElementById('zsh').classList.contains('live'),
+      zshLive: document.getElementById('prompt-form').classList.contains('live'),
       uiStatus: (document.getElementById('ui-status') || {}).textContent || '',
       faceType: typeof window.MASTER_FACE,
       errs: window._errs || []

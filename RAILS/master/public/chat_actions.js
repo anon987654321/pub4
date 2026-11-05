@@ -1,7 +1,7 @@
 "use strict";
 
 function chatInput() {
-  return document.getElementById("zin");
+  return document.getElementById("prompt-input");
 }
 
 function csrfToken() {
@@ -50,7 +50,7 @@ function loopsMusicUrl() {
 // chat command path never reaches (the visitor check sits above MediaIntent),
 // the chip is the only way the loop answers a hand.
 function wireMusicChip() {
-  const chip = document.getElementById("music-btn");
+  const chip = document.getElementById("music-loop-button");
   if (!chip || chip._wired) return;
   chip._wired = true;
   // start() flips `playing` only after its awaits, so the paint trails the
@@ -66,7 +66,7 @@ function wireMusicChip() {
 }
 
 function syncMusicChip() {
-  const chip = document.getElementById("music-btn");
+  const chip = document.getElementById("music-loop-button");
   if (!chip) return;
   chip.setAttribute("aria-pressed", window._faceMusic?.playing?.() ? "true" : "false");
 }
@@ -507,7 +507,7 @@ if (!window.sendMessage) window.sendMessage = sendMessage;
 // all. These listeners answer only while MASTER_FACE.sendMessage is absent; the
 // runtime takes over the moment it exists, so a message is never sent twice.
 (() => {
-  const form = document.getElementById("zsh");
+  const form = document.getElementById("prompt-form");
   const input = chatInput();
   if (!form || !input) return;
   const faceOwnsSend = () => typeof window.MASTER_FACE?.sendMessage === "function";

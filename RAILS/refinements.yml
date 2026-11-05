@@ -4762,7 +4762,7 @@ items:
   path: RAILS/master/app/views/chat/index.html.erb
   item: 'Take aria-live off #chat-log (aria-relevant additions text re-announces every
     streamed token) and announce finished replies through #tts-live.'
-  status: open
+  status: done
 - id: master-002
   app: master
   area: accessibility
@@ -4770,7 +4770,7 @@ items:
   path: RAILS/master/app/views/chat/index.html.erb
   item: 'Make #primer a <button> instead of a div with role=button and hand-written
     key handlers.'
-  status: open
+  status: done
 - id: master-003
   app: master
   area: accessibility
@@ -4850,7 +4850,7 @@ items:
   path: RAILS/master/app/views/chat/index.html.erb
   item: Collapse the duplicate body attributes (data-layout, data-surface and data-visual-runtime
     are all "face") and drop the presentational "zen" class.
-  status: open
+  status: done
 - id: master-013
   app: master
   area: cleanup
@@ -4880,7 +4880,7 @@ items:
   path: RAILS/master/app/views/chat/index.html.erb
   item: Replace the random-step progress counter in the boot interval with real module-load
     progress or an indeterminate state.
-  status: open
+  status: done
 - id: master-017
   app: master
   area: design
@@ -4920,7 +4920,7 @@ items:
   item: Rename the abbreviated ids zsh, zin, pp, spin-btn and music-btn to spelled-out
     names (prompt-form, prompt-input, prompt-sigil, pause-speech-button, music-loop-button)
     across view, CSS and JS.
-  status: open
+  status: done
 - id: master-022
   app: master
   area: performance

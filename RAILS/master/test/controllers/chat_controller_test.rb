@@ -34,7 +34,7 @@ class ChatControllerTest < ActionDispatch::IntegrationTest
     refute_includes response.body, "tts-style-chips"
     refute_includes response.body, "tts-style-indicator"
     refute_includes response.body, "face-controls"
-    assert_includes response.body, "spin-btn"
+    assert_includes response.body, "pause-speech-button"
     assert_includes response.body, 'data-profile="public"'
     # #scope-row — the scope word, the pairing form and its hint — came off the
     # corners on operator request (10fabb8ae). The page must not grow it back.

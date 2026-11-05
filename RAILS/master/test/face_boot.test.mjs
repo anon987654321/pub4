@@ -120,7 +120,7 @@ test("the chat keeps the CLI's monospaced presentation; the chrome takes brgen's
 
   assert.match(css, /html, body \{[\s\S]*?font:\s*16px\/1\.5 var\(--font\)/);
   assert.match(css, /#chat-log \{[^}]*font:\s*1rem\/1\.5 var\(--font-mono\)/);
-  assert.match(css, /#zsh input, #zsh textarea \{[^}]*font:\s*400 16px\/1\.5 var\(--font-mono\)/);
+  assert.match(css, /#prompt-form input, #prompt-form textarea \{[^}]*font:\s*400 16px\/1\.5 var\(--font-mono\)/);
   assert.match(css, /--font-label:\s*"JetBrainsMono Nerd Font"/);
   assert.match(rules, /face_interface:/);
   assert.match(rules, /prompt:\s*\n\s+font: font_code/);
@@ -130,9 +130,9 @@ test("face preserves the canonical CLI prompt on narrow and wide viewports", () 
   const view = readFileSync(join(viewsDir, "chat", "index.html.erb"), "utf8");
   const sessionCss = readFileSync(join(root, "styles", "face", "60_session_chrome.css"), "utf8");
   assert.match(view, /Master::Face::Contract\.shell_prompt/);
-  assert.match(sessionCss, /#zsh \.pp\s*\{[\s\S]*?display:\s*inline-flex/);
+  assert.match(sessionCss, /#prompt-form \.prompt-sigil\s*\{[\s\S]*?display:\s*inline-flex/);
   assert.match(sessionCss, /max-inline-size:\s*min\(42vw, 32ch\)/);
-  assert.doesNotMatch(sessionCss, /#zsh \.pp \{ display: none;/);
+  assert.doesNotMatch(sessionCss, /#prompt-form \.prompt-sigil \{ display: none;/);
 });
 
 test("web lip-sync samples visemes at a finer audio-clock cadence", () => {
@@ -658,14 +658,14 @@ test("face.css carries no knob for a glow that no longer exists", () => {
   assert.doesNotMatch(css, /--face-glow-scale/);
   assert.doesNotMatch(css, /--face-particle-size/);
   assert.match(css, /--mood-accent:\s*var\(--c-accent\)/);
-  assert.doesNotMatch(css, /speaking.*#zsh \.pp.*--mood-accent/);
+  assert.doesNotMatch(css, /speaking.*#prompt-form \.prompt-sigil.*--mood-accent/);
 });
 
 test("face.css keeps primer and prompt layering stable", () => {
   const css = readFileSync(join(publicDir, "face.css"), "utf8");
   assert.match(css, /#primer/);
   assert.match(css, /z-index:\s*var\(--z-modal\)/);
-  assert.match(css, /body:not\(\.face-ready\) #zsh:not\(\.live\)/);
+  assert.match(css, /body:not\(\.face-ready\) #prompt-form:not\(\.live\)/);
   // face_root.palette reads brgen's family tokens; the ground is brgen's --bg.
   assert.match(css, /--face-fg:\s*var\(--c-text\)/);
   assert.match(css, /--face-bg:\s*#000000/);
@@ -707,6 +707,64 @@ test("face stylesheet sources are split by concern", () => {
   assert.match(readFileSync(join(styles, "44_stipple_playground.css"), "utf8"), /\.master-face-stipple-playground \{/);
 });
 
+// The finished reply is announced once; the log itself is not a live region,
+// which re-announced every streamed token.
+test("chat log is not a live region and an unspoken reply is announced once", () => {
+  const view = readFileSync(join(viewsDir, "chat", "index.html.erb"), "utf8");
+  const part5 = readFileSync(join(publicDir, "face.part5.txt"), "utf8");
+  const log = view.match(/<div id="chat-log"[^>]*>/)?.[0] ?? "";
+
+  assert.ok(log, "chat log is in the view");
+  assert.doesNotMatch(log, /aria-live|aria-relevant/);
+  assert.match(view, /<div id="tts-live" class="sr-only" aria-live="polite" aria-atomic="true">/);
+  const done = part5.slice(part5.indexOf("if (raw === '[DONE]')"), part5.indexOf("if (raw.startsWith('ERROR:'))"));
+  assert.match(done, /if \(\(tts\.muted \|\| ttsSuppressed\) && pending\.trim\(\)\) announceTTS\(pending\.trim\(\)\);\n\s+pending = '';/);
+});
+
+test("primer is a native button and the chat shell carries no presentational hooks", () => {
+  const view = readFileSync(join(viewsDir, "chat", "index.html.erb"), "utf8");
+  const minimalUi = readFileSync(join(publicDir, "face_minimal_ui.js"), "utf8");
+  const body = view.match(/<body[^>]*>/)?.[0] ?? "";
+
+  assert.match(view, /<button id="primer" type="button"/);
+  assert.doesNotMatch(view, /role="button"/);
+  assert.doesNotMatch(view, /p\.addEventListener\('keydown'/);
+  assert.match(view, /<\/button>\n\s+<noscript><p id="primer-noscript"/, "noscript sits outside the button");
+  assert.doesNotMatch(body, /\bzen\b|data-visual-runtime/);
+  assert.match(body, /data-layout="face"/);
+  assert.doesNotMatch(minimalUi, /'zen'/);
+  assert.match(minimalUi, /body\.dataset\.layout === 'face'/);
+  const css = readFileSync(join(publicDir, "face.css"), "utf8");
+  assert.doesNotMatch(css, /body\.zen|zen-hidden/);
+  assert.match(css, /body\[data-layout="face"\]\.controls-hidden \.face-controls/);
+});
+
+test("boot shows an indeterminate loading state, not a counter on a timer", () => {
+  const view = readFileSync(join(viewsDir, "chat", "index.html.erb"), "utf8");
+  const locales = ["en", "nb"].map((locale) => readFileSync(join(root, "config", "locales", `${locale}.yml`), "utf8"));
+
+  assert.doesNotMatch(view, /Math\.random|progPct|showProgress/);
+  assert.match(view, /function showLoadState\(\)\{/);
+  for (const locale of locales) assert.doesNotMatch(locale, /loading_(title|status): "[^"]*%\{n\}/);
+});
+
+test("prompt ids and classes are spelled out across view, CSS and JS", () => {
+  const view = readFileSync(join(viewsDir, "chat", "index.html.erb"), "utf8");
+  const css = readFileSync(join(publicDir, "face.css"), "utf8");
+  const runtime = partSources().join("\n");
+
+  for (const [id, element] of [["prompt-form", "form"], ["prompt-input", "textarea"],
+    ["music-loop-button", "button"], ["pause-speech-button", "button"]]) {
+    assert.match(view, new RegExp(`<${element} id="${id}"`));
+  }
+  assert.match(view, /<span class="prompt-sigil" aria-hidden="true">/);
+  assert.match(view, /href="#prompt-input" class="skip-link"/);
+  const retired = /#zsh(?![\w-])|#zin\b|id="zsh"|id="zin"|class="pp"|\.pp\b|spin-btn|music-btn|getElementById\('(zsh|zin)'\)/;
+  for (const [name, source] of [["view", view], ["face.css", css], ["runtime", runtime]]) {
+    assert.doesNotMatch(source, retired, `${name} still names a retired id`);
+  }
+});
+
 test("MASTER web and CLI share one monospaced chat contract", () => {
   const css = readFileSync(join(publicDir, "face.css"), "utf8");
   const rules = readFileSync(join(root, "..", "..", "MASTER", "data", "tokens.yml"), "utf8");
@@ -745,7 +803,7 @@ test("face.css meets MASTER design_rules typography and touch baselines", () => 
   assert.match(css, /--face-bar-height:\s*44px/);
   assert.match(css, /@media \(prefers-reduced-motion: reduce\)/);
   assert.match(css, /#chat-log[\s\S]*font:\s*1rem\/1\.5 var\(--font-mono\)/);
-  assert.match(css, /body\.face-loading #zsh:not\(\.live\)/);
+  assert.match(css, /body\.face-loading #prompt-form:not\(\.live\)/);
   assert.match(css, /body\[data-boot-state="ERROR"\] #zsh-status/);
 });
 
@@ -766,7 +824,7 @@ test("face.css does not keep a retired mood sparkline", () => {
 
 test("face prompt docks above the visual-viewport keyboard inset", () => {
   const css = readFileSync(join(publicDir, "face.css"), "utf8");
-  assert.match(css, /#zsh \{[^}]*inset-block-end:\s*var\(--keyboard-inset/s);
+  assert.match(css, /#prompt-form \{[^}]*inset-block-end:\s*var\(--keyboard-inset/s);
 });
 
 test("visual_bridge connects SSE and normalizes visual events", () => {
@@ -1137,7 +1195,7 @@ test("session chrome reads brgen's family tokens and band without weakening mobi
   // The session chrome is mobile-first: the base rules carry the tap target and
   // the wider breakpoint only relaxes spacing, never the target size.
   assert.match(css, /\.master-session-tab \{[^}]*min-inline-size: var\(--tap-min\); min-block-size: var\(--tap-min\);/);
-  const tapTargets = /#photo-button, #music-btn, #spin-btn \{[^}]*/;
+  const tapTargets = /#photo-button, #music-loop-button, #pause-speech-button \{[^}]*/;
   assert.match(css, new RegExp(`${tapTargets.source}min-inline-size: var\\(--tap-min\\); min-block-size: var\\(--tap-min\\);`));
 
   const wide =css.match(/@media \(min-width: 480px\) \{[\s\S]*?\n\}/)?.[0] ?? "";
@@ -1150,7 +1208,7 @@ test("shell chrome uses plain CLI prompt words and downloads no font", () => {
   const css = readFileSync(join(publicDir, "face.css"), "utf8");
 
   assert.doesNotMatch(view, /id="wordmark"|Contract\.wordmark|Contract\.glyph/);
-  assert.match(view, /class="pp"[^>]*><%= Master::Face::Contract\.shell_prompt %><\/span>/);
+  assert.match(view, /class="prompt-sigil"[^>]*><%= Master::Face::Contract\.shell_prompt %><\/span>/);
   assert.doesNotMatch(view, /class="sep2"|\$ <\/span>/);
   // face_root.font_mono in MASTER/data/tokens.yml leads with JetBrainsMono.
   assert.match(css, /--font-mono:\s*"JetBrainsMono Nerd Font"/);
@@ -1190,8 +1248,8 @@ test("thinking face keeps the single composer ready beneath an ASCII spinner", (
   assert.ok(css.includes('body[data-mode="thinking"] #ascii-star:not(:empty)'));
   assert.ok(css.includes('body[data-mode="speaking"][data-queue-active="1"] #ascii-star:not(:empty)'));
   assert.ok(css.includes("bottom: calc(84px + var(--safe-bottom) + var(--keyboard-inset, 0px));"));
-  assert.ok(css.includes('body[data-mode="thinking"] #zin,'));
-  assert.ok(css.includes('body[data-queue-active="1"] #zin { opacity: 1; }'));
+  assert.ok(css.includes('body[data-mode="thinking"] #prompt-input,'));
+  assert.ok(css.includes('body[data-queue-active="1"] #prompt-input { opacity: 1; }'));
   assert.ok(part5.includes("queued / paused"));
   assert.ok(part5.includes("_turnQueueRunning ? 'thinking' : ''"));
   assert.ok(part5.includes("rootBody.dataset.queuePaused = _turnQueuePaused ? '1' : '0';"));

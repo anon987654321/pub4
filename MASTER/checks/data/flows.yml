@@ -418,7 +418,7 @@ flows:
         get: /
         expect_status: [200]
         expect_any:
-          - 'id="face"|id="primer"|id="zin"|master'
+          - 'id="face"|id="primer"|id="prompt-input"|master'
       - name: dashboard
         get: /dashboard
         expect_status: [200, 302, 303]

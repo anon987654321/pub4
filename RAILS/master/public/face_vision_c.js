@@ -457,7 +457,7 @@ V.register(118, "degraded WebGL UI trigger", (ctx) => {
       V.run(83, { type: "chat:scroll", detail: { scrollTop: log.scrollTop } });
     }, { passive: true });
 
-    const zin = document.getElementById("zin") || document.getElementById("input");
+    const zin = document.getElementById("prompt-input") || document.getElementById("input");
     zin?.addEventListener("focus", () => V.run(88, { type: "zin:focus", detail: { focused: true } }));
     zin?.addEventListener("blur", () => V.run(88, { type: "zin:blur", detail: { focused: false } }));
 

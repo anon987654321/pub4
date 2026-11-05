@@ -290,11 +290,11 @@ module Operator
 
       chat_path = "RAILS/master/app/views/chat/index.html.erb"
       chat = read(chat_path)
-      expect("landmark.master_chat", chat_path, chat, 'href="#zin"',
+      expect("landmark.master_chat", chat_path, chat, 'href="#prompt-input"',
              "MASTER chat must offer a skip link to its prompt.")
       expect("landmark.master_chat_main", chat_path, chat, '<main id="chat-shell"',
              "MASTER chat must retain its named main landmark.")
-      expect("landmark.master_chat_prompt", chat_path, chat, '<textarea id="zin"',
+      expect("landmark.master_chat_prompt", chat_path, chat, '<textarea id="prompt-input"',
              "MASTER chat must retain the keyboard-accessible prompt.")
     end
   end

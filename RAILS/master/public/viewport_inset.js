@@ -1,6 +1,6 @@
 // Keyboard inset for the face prompt. Same remainder as RAILS
 // viewport_aware_controller.js: env(keyboard-inset-height) is Chromium-only
-// and stays 0 on iOS, where #zsh is position:fixed at the layout bottom.
+// and stays 0 on iOS, where #prompt-form is position:fixed at the layout bottom.
 (function () {
   "use strict";
   const KEYBOARD_MIN = 80;

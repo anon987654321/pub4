@@ -18,9 +18,9 @@ body.wscons-mode {
   -webkit-font-smoothing: auto;
 }
 
-html[data-aesthetic="wscons"] #zsh,
+html[data-aesthetic="wscons"] #prompt-form,
 html[data-aesthetic="wscons"] #chat-log,
-body.wscons-mode #zsh,
+body.wscons-mode #prompt-form,
 body.wscons-mode #chat-log {
   max-width: 80ch;
   border-radius: 0;

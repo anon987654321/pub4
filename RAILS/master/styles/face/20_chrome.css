@@ -215,6 +215,9 @@ body[data-mode="speaking"] #mic-dot {
   place-items: center;
   z-index: var(--z-modal);
   background: color-mix(in srgb, var(--face-bg) 86%, transparent);
+  border: 0;
+  color: inherit;
+  font: inherit;
   cursor: pointer;
   text-align: center;
   padding: 16px;
@@ -228,7 +231,7 @@ body[data-mode="speaking"] #mic-dot {
 
 [id="face"]:focus-visible { outline: 2px solid var(--face-fg); outline-offset: 2px; }
 
-#primer h1 {
+#primer .primer-title {
   margin: 0;
   font: 400 clamp(1.05rem,3.2vw,1.5rem)/1.5 var(--font-mono);
   letter-spacing: .01em;
@@ -236,7 +239,7 @@ body[data-mode="speaking"] #mic-dot {
   transition: transform var(--transition-fast) var(--ease-out);
 }
 
-#primer:active h1 { transform: scale(1.03); }
+#primer:active .primer-title { transform: scale(1.03); }
 #primer .primer-consent { max-width: 42ch; margin: 16px auto 0; color: var(--face-muted); font: 400 .8125rem/1.5 var(--font-mono); }
 
 /* Tap ripple */

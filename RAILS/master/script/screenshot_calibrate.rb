@@ -102,7 +102,7 @@ begin
         primerFired: !!window._primerFired,
         primerGone: !document.getElementById('primer'),
         faceSession: document.body.classList.contains('face-session'),
-        zshLive: document.getElementById('zsh')?.classList.contains('live'),
+        zshLive: document.getElementById('prompt-form')?.classList.contains('live'),
         faceType: typeof window.MASTER_FACE,
         viewport,
         faceRect: rect ? [rect.x, rect.y, rect.width, rect.height] : null,

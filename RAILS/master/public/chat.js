@@ -116,8 +116,8 @@ function trimChatLogVirtual() {
 
 // The initial transcript may already exceed the live DOM window.
 trimChatLogVirtual();
-const zsh = document.getElementById('zsh');
-const input = document.getElementById('zin');
+const zsh = document.getElementById('prompt-form');
+const input = document.getElementById('prompt-input');
 const sessionStartedAt = Date.now();
 const recentReplies = [];
 let recentReplyCursor = -1;
@@ -1033,7 +1033,7 @@ document.querySelectorAll('.tool').forEach(btn => {
         if (last && window.sendMessage) window.sendMessage(last);
         chip.remove();
       });
-      document.getElementById('zsh')?.appendChild(chip);
+      document.getElementById('prompt-form')?.appendChild(chip);
     }
     announceError(reason.includes('rate') ? chatT('rate_limited', 'slow down — rate limit') : chatT('stream_failed', 'stream failed — retry?'));
     window.MASTERVisual?.event?.('chat:retry', { topology: 'serpent', entropy: 0.5, confidence: 0.4, mode: 'retry' });

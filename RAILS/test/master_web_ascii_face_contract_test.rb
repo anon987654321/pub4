@@ -156,7 +156,8 @@ class MasterWebAsciiFaceContractTest < Minitest::Test
     refute_includes read(PUBLIC, "chat.js"), "ascii.prompt"
     refute_match(/<pre id="wordmark"/, view)
     # The web prompt shows host:path$ like the terminal, from the same contract.
-    assert_match(%r{<span class="pp" aria-hidden="true"><%= Master::Face::Contract\.shell_prompt %></span>}, view)
+    sigil = %r{<span class="prompt-sigil" aria-hidden="true"><%= Master::Face::Contract\.shell_prompt %></span>}
+    assert_match(sigil, view)
     refute_includes view, 'class="sep2"'
     tokens = read(ROOT, "MASTER", "data", "tokens.yml")
     assert_match(/user_token: "user"/, tokens)

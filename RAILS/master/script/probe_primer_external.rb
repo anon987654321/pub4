@@ -133,7 +133,7 @@ begin
           primerFormGone: document.getElementById('primer-form')?.classList.contains('gone') || false,
           primerGone: document.getElementById('primer')?.classList.contains('gone') || false,
           faceSession: document.body.classList.contains('face-session'),
-          zshLive: document.getElementById('zsh')?.classList.contains('live'),
+          zshLive: document.getElementById('prompt-form')?.classList.contains('live'),
           masterFace: typeof window.MASTER_FACE,
           primerFiredProp: window.MASTER_FACE?.primerFired,
           uiStatus: (document.getElementById('ui-status') || {}).textContent || '',

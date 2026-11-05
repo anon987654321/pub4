@@ -55,7 +55,7 @@ window._nudgeLoop = (() => {
   }
   const NUDGE_INTERVAL_MS = 45000;
   let last = 0;
-  const inputEl = () => document.getElementById('zin');
+  const inputEl = () => document.getElementById('prompt-input');
   function eligible() {
     if (!window._primerFired) return false;
     if (F_FACE_NUDGE_STATE?.sleeping) return false;

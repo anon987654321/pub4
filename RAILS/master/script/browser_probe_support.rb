@@ -71,7 +71,7 @@ module BrowserProbeSupport
       (function() {
         if (window.MASTER_CONTAINER?.ready?.() === false) {
           window.MASTER_CONTAINER_READY = true;
-          var input = document.getElementById('zin');
+          var input = document.getElementById('prompt-input');
           if (input) input.disabled = false;
         }
         window.sendMessage && window.sendMessage('ping');

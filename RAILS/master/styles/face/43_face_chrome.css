@@ -11,10 +11,10 @@
   margin-inline: auto;
   font-family: var(--font-mono);
 }
-#zsh,
-#zsh #zin,
-#zsh .pp,
-#zsh #zsh-status {
+#prompt-form,
+#prompt-form #prompt-input,
+#prompt-form .prompt-sigil,
+#prompt-form #zsh-status {
   font-family: var(--font-mono);
 }
 .message .msg-body,
@@ -234,7 +234,7 @@ body[data-mode="listening"] .mic-indicator { color: #C7C7C7; }
   padding: clamp(24px, 5vw, 64px);
   background: var(--chrome-bg);
 }
-#primer h1 {
+#primer .primer-title {
   max-inline-size: 14ch;
   font-family: var(--font);
   font-size: clamp(2.2rem, 6.8vw, 5.6rem);

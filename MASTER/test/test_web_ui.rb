@@ -302,7 +302,7 @@ class TestWebUI < Minitest::Test
     assert_includes index, "z.classList.add('live')"
     assert_includes css, "#primer"
     assert_includes css, "z-index: var(--z-modal)"
-    assert_includes css, "body:not(.face-ready) #zsh:not(.live)"
+    assert_includes css, "body:not(.face-ready) #prompt-form:not(.live)"
     assert_includes part5, "primerFired = true"
     assert_includes index, 'aria-describedby="primer-capabilities primer-consent"'
     # The consent sentence is the one thing on the primer a visitor has to be
@@ -311,7 +311,10 @@ class TestWebUI < Minitest::Test
     # the literal spelling would fail on a view that had got more correct.
     assert_localised_copy index, "face.primer_consent",
                           "Starts visuals, sound and the microphone; text remains available if graphics fail."
-    assert_includes index, "if(e.key===' '||e.key==='Enter')"
+    # The primer is a <button>, so Enter and Space activate it natively; the
+    # page-level handler covers a key pressed while focus is elsewhere.
+    assert_includes index, "if(!fired&&(e.key==='Enter'||e.key===' '))"
+    refute_includes index, "p.addEventListener('keydown'"
     assert_includes index, "fallbackUi()"
     assert_includes css, "@media (prefers-reduced-motion: reduce)"
   end
@@ -398,7 +401,7 @@ class TestWebUI < Minitest::Test
     assert_includes part5, "sw:updated"
     assert_includes index, "skip-link"
     assert_includes index, "error-live"
-    assert_includes index, "<textarea id=\"zin\""
+    assert_includes index, "<textarea id=\"prompt-input\""
     assert_localised_copy dashboard, "dashboard.panels.pressure", "context pressure"
     assert_localised_copy dashboard, "dashboard.panels.repair", "repair queue"
   end

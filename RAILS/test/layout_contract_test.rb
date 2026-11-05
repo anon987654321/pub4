@@ -313,7 +313,7 @@ class LayoutContractTest < Minitest::Test
     assert_includes body, 'data-layout="face"'
     assert_includes body, 'data-surface="face"'
     assert_includes body, "skip-link"
-    assert_includes body, 'href="#zin"'
+    assert_includes body, 'href="#prompt-input"'
     assert_includes body, "viewport-fit=cover"
   end
 

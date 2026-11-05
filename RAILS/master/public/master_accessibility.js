@@ -42,7 +42,7 @@
     if (matchMedia?.("(forced-colors: active)")?.matches) root.dataset.forcedColors = "1";
     if (matchMedia?.("(prefers-contrast: more)")?.matches) root.dataset.highContrast = "1";
 
-    const input = document.getElementById("zin");
+    const input = document.getElementById("prompt-input");
     if (input) {
       input.setAttribute("aria-describedby", "master-input-status");
       liveRegion("master-input-status");

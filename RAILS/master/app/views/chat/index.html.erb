@@ -79,15 +79,14 @@
     html, body { background: #000000; color: #efefef; } /* scan: intentional-colors — FOUC guard */
     canvas#face { display: block; position: fixed; inset: 0; width: 100%; height: 100%; background: #000; } /* scan: intentional-colors — same FOUC guard: the canvas ground exists before the stylesheet */
     #primer { background: transparent; }
-    #zsh { background: #000; }
+    #prompt-form { background: #000; }
   </style>
 </head>
-<body class="zen face-loading"
+<body class="face-loading"
       data-layout="face"
       data-surface="face"
       data-runtime-profile="boot"
       data-runtime-visible="true"
-      data-visual-runtime="face"
       data-theme="dark"
       data-profile="<%= @profile.to_s %>"
       data-aesthetic="<%= Master::Voice::Aesthetic.mode %>"
@@ -95,7 +94,7 @@
           surface whose welcome screen is the point and which wants the tap as
           the user gesture an AudioContext needs. No host asks for that today. %>
       data-primer="auto">
-  <a href="#zin" class="skip-link"><%= t("skip_to_prompt") %></a>
+  <a href="#prompt-input" class="skip-link"><%= t("skip_to_prompt") %></a>
   <%# The same wordmark the three RAILS apps carry, saying which host this is.
       Type only, fixed top-left, no chip or border — the mark is shared/_brand_mark
       there and cannot be rendered from here (MASTER/web does not mount the engine),
@@ -136,7 +135,10 @@
   <%# Small synchronous prerequisite: every deferred ecology/worker module and
       the post-primer face import may assume window.ParticleKernel exists. %>
   <script src="<%= asset_path("particle_kernel.js") %>"></script>
-  <div id="primer" role="button" aria-labelledby="primer-title" aria-describedby="primer-capabilities primer-consent" tabindex="0"
+  <%# A real button: Enter and Space activate it natively, so the only key
+      handler left is the page-level one for when focus is elsewhere. Its
+      content is phrasing content, so the title and lines are spans. %>
+  <button id="primer" type="button" aria-labelledby="primer-title" aria-describedby="primer-capabilities primer-consent"
        data-i18n-starting="<%= t("face.starting") %>"
        data-i18n-loading-title="<%= t("face.loading_title") %>"
        data-i18n-loading-status="<%= t("face.loading_status") %>"
@@ -144,16 +146,16 @@
        data-i18n-retrying="<%= t("face.retrying") %>"
        data-i18n-failed="<%= t("face.failed") %>"
        data-i18n-failed-live="<%= t("face.failed_live") %>">
-    <h1 id="primer-title"><%= t("face.primer_title") %></h1>
-    <p class="tagline" id="primer-capabilities"><%= t("face.primer_capabilities") %></p>
-    <p class="primer-consent" id="primer-consent"><%= t("face.primer_consent") %></p>
-    <noscript><p id="primer-noscript" role="alert"><%= t("face.primer_noscript") %></p></noscript>
-  </div>
+    <span class="primer-title" id="primer-title"><%= t("face.primer_title") %></span>
+    <span class="tagline" id="primer-capabilities"><%= t("face.primer_capabilities") %></span>
+    <span class="primer-consent" id="primer-consent"><%= t("face.primer_consent") %></span>
+  </button>
+  <noscript><p id="primer-noscript" role="alert"><%= t("face.primer_noscript") %></p></noscript>
   <%# The mic opens at load: face.part5 says why, and how a denied permission
       or a deliberate exit keeps it shut. %>
   <%# Boot + primer tap must run synchronously right after #primer — before ANY other
       script (including face_2d_fallback). A blocking <script src> above this line delays
-      handler wiring; early taps look dead. #zsh and #ui-status are below this block —
+      handler wiring; early taps look dead. #prompt-form and #ui-status are below this block —
       resolve them lazily in go(), not at parse time.
       See CLAUDE.md and history of "tap to start does nothing" for this high-risk path.
       Enhancements here should preserve the _primerFired guard and dbgFrames check. %>
@@ -163,7 +165,7 @@
     (function(){
       var p=document.getElementById('primer');
       var fired=false,timer=null,fallback=null,hintT=null,retryT=null,started=false,failedShown=false;
-      function zshEl(){return document.getElementById('zsh');}
+      function zshEl(){return document.getElementById('prompt-form');}
       function uiEl(){return document.getElementById('ui-status');}
       function titleEl(){return document.getElementById('primer-title');}
       function i18n(key, fallback, vars){
@@ -191,7 +193,7 @@
         if(z)z.classList.add('live');
         if(ui&&!ui.textContent)ui.textContent=i18n('starting','starting…');
         // Keyboard users: land focus in the prompt after primer dismiss.
-        var zin=document.getElementById('zin');
+        var zin=document.getElementById('prompt-input');
         if(zin){try{zin.focus({preventScroll:true});}catch(_e){try{zin.focus();}catch(__e){}}}
       }
       function boot(){
@@ -215,13 +217,13 @@
         window.MASTER?.boot?.transition?.('ERROR', { source: 'bootFailed' });
         fallbackUi();
       }
-      function showProgress(pct){
-        var n=Math.max(0,Math.min(100,Math.round(pct)));
+      // Indeterminate on purpose: nothing here can measure how far the face
+      // import has got, and a counter that climbs on a timer says it can.
+      function showLoadState(){
         var title=titleEl(),ui=uiEl();
-        if(title)title.textContent=i18n('loading-title','loading… %{n}%',{n:n});
-        if(ui){ui.dataset.bootLoading='1';ui.textContent=i18n('loading-status','loading face %{n}%',{n:n});}
+        if(title)title.textContent=i18n('loading-title','loading…');
+        if(ui){ui.dataset.bootLoading='1';ui.textContent=i18n('loading-status','loading the face…');}
       }
-      function showLoadState(){showProgress(0);}
       function fallbackUi(){
         dismissPrimer();
         revealPrompt();
@@ -278,14 +280,9 @@
         loadFace();
         if(boot())return;
         showLoadState();
-        var progPct=0;
         hintT=setTimeout(function(){var ui=uiEl();if(ui)ui.textContent=i18n('still-loading','still loading the face…');},8000);
         timer=setInterval(function(){
-          if(boot()){clearWatch();return;}
-          if(progPct<90){
-            progPct+=0.5+Math.random()*1.5;
-            showProgress(Math.min(progPct,90));
-          }
+          if(boot())clearWatch();
         },40);
         fallback=setTimeout(function(){
           var f=window.MASTER_FACE;
@@ -302,9 +299,6 @@
       if(p){
         ['pointerdown','click','touchend'].forEach(function(ev){
           p.addEventListener(ev,go,{capture:true,passive:true});
-        });
-        p.addEventListener('keydown',function(e){
-          if(e.key===' '||e.key==='Enter'){e.preventDefault();go();}
         });
       }
       addEventListener('keydown',function(e){
@@ -353,23 +347,26 @@
   <script src="<%= asset_path("face_2d_fallback.js") %>" defer></script>
   <div class="ui-status sr-only" id="ui-status" aria-live="polite" aria-atomic="true"></div>
   <div id="mood-live" aria-live="polite" aria-atomic="true" class="sr-only"></div>
-  <%# The prompt lives in main with the log it writes to: LAYOUT.md names #zin
+  <%# The prompt lives in main with the log it writes to: LAYOUT.md names #prompt-input
       the face's main landmark target, and a form outside every landmark is
       content a screen reader's landmark list cannot reach. It is a form with
       a name, not a search, so it carries no role of its own (SEMANTIC_ELEMENTS). %>
   <main id="chat-shell" aria-label="<%= t("face.chat_aria") %>">
-    <div id="chat-log" aria-live="polite" aria-relevant="additions text" tabindex="-1"></div>
-    <form id="zsh" aria-label="<%= t("face.prompt_aria") %>" autocomplete="off">
+    <%# Not a live region: streamed tokens re-announced every chunk. The
+        finished reply is announced once through #tts-live (face.part5). %>
+    <div id="chat-log" tabindex="-1"></div>
+    <form id="prompt-form" aria-label="<%= t("face.prompt_aria") %>" autocomplete="off">
       <button id="photo-button" type="button" aria-label="<%= t("face.attach_photo") %>">+</button>
       <input id="photo" type="file" accept="image/*" hidden>
-      <span class="pp" aria-hidden="true"><%= Master::Face::Contract.shell_prompt %></span>
-      <textarea id="zin" rows="1" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="send" placeholder="<%= t("face.placeholder") %>" aria-label="<%= t("face.message_aria") %>" required></textarea>
+      <span class="prompt-sigil" aria-hidden="true"><%= Master::Face::Contract.shell_prompt %></span>
+      <textarea id="prompt-input" rows="1" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="send" placeholder="<%= t("face.placeholder") %>" aria-label="<%= t("face.message_aria") %>" required></textarea>
       <span id="zsh-status" aria-live="polite" aria-atomic="true"></span>
       <span id="turn-queue-status" class="turn-queue-status" aria-live="polite" aria-atomic="true"></span>
       <button id="turn-control" class="turn-control" type="button" hidden aria-label="<%= t("face.stop_response") %>" aria-pressed="false"><%= t("face.stop") %></button>
 
-      <button id="music-btn" type="button" aria-label="<%= t("face.music_loop") %>" aria-pressed="false"></button>
-      <button id="spin-btn" type="button" aria-label="<%= t("face.pause_speech") %>"></button>
+      <button id="music-loop-button" type="button" aria-label="<%= t("face.music_loop") %>"
+              aria-pressed="false"></button>
+      <button id="pause-speech-button" type="button" aria-label="<%= t("face.pause_speech") %>"></button>
     </form>
   </main>
   <script src="<%= asset_path("container_check.js") %>" defer></script>
