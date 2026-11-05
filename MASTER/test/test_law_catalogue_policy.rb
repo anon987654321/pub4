@@ -5,11 +5,13 @@ require File.join(Master::ROOT, "law", "definition") unless defined?(::Law)
 ::Law.load_all(File.join(Master::ROOT, "law")) if ::Law.definitions.empty?
 
 # A Law's enforcement policy lives in its laws.yml law_catalogue entry:
-# severity, mode, reach, exemption, lifecycle, autofix and surfaces arrive from
-# there, and the Ruby block has no method left to declare them a second time.
+# severity, mode, languages, exemption, lifecycle, autofix and surfaces arrive
+# from there, and the Ruby block has no method left to declare them a second
+# time. The one reach the block declares is `path`, the files its subject lives
+# in, which the catalogue no longer carries.
 class TestLawCataloguePolicy < Minitest::Test
   POLICY = {
-    "severity" => "error", "mode" => "opportunity", "languages" => %w[ruby], "path_pattern" => "/lib/",
+    "severity" => "error", "mode" => "opportunity", "languages" => %w[ruby],
     "path_exclude" => %w[/test/ /spec/], "lifecycle" => "advisory", "autofix" => "never",
     "surfaces" => %w[whole_file lines]
   }.freeze
@@ -32,10 +34,11 @@ class TestLawCataloguePolicy < Minitest::Test
     end
   end
 
-  # A list of path_exclude alternatives excludes what any one of them matches.
-  def test_path_scope_and_exclusion_come_from_the_catalogue_entry
+  # A list of path_exclude alternatives excludes what any one of them matches;
+  # the scope they carve from is the block's own `path`.
+  def test_block_path_scopes_and_catalogue_path_exclude_carves
     with_catalogue_entry(:CATALOGUE_POLICY_PROBE, POLICY) do
-      law = build(:CATALOGUE_POLICY_PROBE)
+      law = build(:CATALOGUE_POLICY_PROBE) { path %r{/lib/} }
 
       assert law.applies?("/repo/lib/a.rb", "ruby")
       refute law.applies?("/repo/test/lib/a.rb", "ruby")
@@ -45,7 +48,7 @@ class TestLawCataloguePolicy < Minitest::Test
   end
 
   def test_a_law_block_cannot_declare_policy
-    declared = %i[severity mode languages path path_exclude lifecycle autofix surfaces law_scope]
+    declared = %i[severity mode languages path_exclude lifecycle autofix surfaces law_scope]
 
     assert_empty declared & Law::Builder.public_instance_methods(false), "a second source beside laws.yml"
   end
@@ -80,10 +83,30 @@ class TestLawCataloguePolicy < Minitest::Test
     end
   end
 
+  # A catalogue path no longer reaches the Law: reach is the block's.
+  def test_a_catalogue_path_is_not_read_as_reach
+    entry = { "severity" => "info", "path" => "RAILS/amber/", "path_pattern" => "/amber/" }
+    with_catalogue_entry(:CATALOGUE_PATH_PROBE, entry) do
+      law = build(:CATALOGUE_PATH_PROBE)
+
+      assert_nil law.path
+      assert law.applies?("/repo/RAILS/brgen/a.rb", "ruby")
+    end
+  end
+
+  def test_block_path_refuses_anything_but_a_string_or_regexp
+    with_catalogue_entry(:PATH_SHAPE_PROBE, "severity" => "info") do
+      error = assert_raises(ArgumentError) { build(:PATH_SHAPE_PROBE) { path :rails } }
+
+      assert_match(/path must be a String or a Regexp/, error.message)
+    end
+  end
+
   private
 
-  def build(id)
+  def build(id, &scope)
     builder = Law::Builder.new(id)
+    builder.instance_eval(&scope) if scope
     builder.source("test")
     builder.practice("keep a measurable contract")
     builder.fix("inspect and report")

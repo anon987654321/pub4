@@ -222,6 +222,7 @@ Law.define(:NAVIGATION_CONTINUITY) do
 end
 
 Law.define(:INTERACTION_PERFORMANCE) do
+  path "RAILS/"
   source "Web rendering performance — compositor-safe interaction motion"
   ask "Does frequent interaction motion stay on transform and opacity where possible, avoid layout properties such as top/width/height, and avoid permanent will-change or expensive visual effects?"
   fix "Animate transform and opacity for interaction feedback; let layout properties remain stable, and add will-change only around a measured animation boundary when it removes a real hitch."
@@ -230,6 +231,7 @@ Law.define(:INTERACTION_PERFORMANCE) do
 end
 
 Law.define(:STATE_CHOREOGRAPHY) do
+  path "RAILS/"
   source "Interaction feedback — loading, success and failure are observable states"
   ask "Does an action expose a coherent state sequence such as idle → working → success/failure, with the final state remaining understandable after motion stops? Do not rely on color, motion, or a short-lived flash as the only evidence."
   fix "Give each important action an explicit state, choreograph its transition with the shared motion tokens, and keep a static success or failure representation for reduced motion."
@@ -238,6 +240,7 @@ Law.define(:STATE_CHOREOGRAPHY) do
 end
 
 Law.define(:GESTURE_OWNERSHIP) do
+  path "RAILS/"
   source "Pointer Events and touch-action — gesture ownership"
   ask "Does a drag or swipe surface explicitly declare which pan remains with the browser and which axis belongs to the interaction? A direct-manipulation gesture must not compete silently with page scrolling, navigation gestures, or pull-to-refresh."
   fix "Declare touch-action on the gesture surface: use pan-y for horizontal swipes in a vertical page, pan-x for vertical rails, or none when the interaction deliberately owns both axes. Keep an equivalent keyboard/control path."

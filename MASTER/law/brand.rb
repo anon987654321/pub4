@@ -11,13 +11,14 @@
 # 2026-10-28: both source sites were retired and RAILS/__other deleted. The
 # laws stay — they are design decisions, and decisions outlive their first
 # tree. SIGNAL_COLOR_NAMING, PAPER_NOT_PURE_WHITE and PARAMETRIC_MARK_ONLY are
-# scoped (laws.yml path_pattern) to brand-export trees, because the four
+# scoped (their `path`) to brand-export trees, because the four
 # RAILS apps declare --accent, #ffffff and long icon paths as their own
 # measured, operator-owned identity (see RAILS/__shared dialect tokens) and
 # these three laws must not read that scheme as drift. The remaining three
 # walk RAILS/** universally: measured there, zero findings.
 
 Law.define(:SIGNAL_COLOR_NAMING) do
+  path %r{/mrdamascy/}
   source "Bergen brand systems — one signal colour per identity (bob.no calibration)"
   detect { |line| line.match?(/--(accent|accent-color|secondary-color|highlight-color)\s*:/) }
   fix "Name the single signal colour --signal; no accent/secondary/highlight twins."
@@ -26,6 +27,7 @@ Law.define(:SIGNAL_COLOR_NAMING) do
 end
 
 Law.define(:PAPER_NOT_PURE_WHITE) do
+  path %r{/mrdamascy/}
   source "Bergen brand systems — paper tones, not #FFF (storefront_art matte-paper rule)"
   detect { |line| line.match?(/background(-color)?:\s*(#fff\b|#ffffff\b|white)\s*;/i) }
   fix "Paint page scopes with the paper token, never pure white."
@@ -34,6 +36,7 @@ Law.define(:PAPER_NOT_PURE_WHITE) do
 end
 
 Law.define(:PARAMETRIC_MARK_ONLY) do
+  path %r{/mrdamascy/}
   source "Bergen-snittet v1 — marks derive from a parametric source, never hand-drawn"
   detect { |line| line.match?(/d="M[\d\s.,A-Za-z-]{80,}"/) }
   fix "Compose marks from the parametric constants (src/lib/marks.ts + scripts/gen-marks.mjs); short paths, named parts."

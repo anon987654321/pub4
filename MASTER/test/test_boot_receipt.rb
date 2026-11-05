@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "test_helper"
+require "open3"
 require "review/scan/law_tree"
 
 # MASTER-101. Nothing emitted one deterministic answer to "what is in force
@@ -109,7 +110,7 @@ class TestBootReceipt < Minitest::Test
 
     receipt = Receipt.session(root: Master::ROOT, agent:, memory:)
 
-    assert_match(/\A[0-9a-f]{12}\z/, receipt.fetch(:commit))
+    assert_equal checkout_commit, receipt.fetch(:commit)
     assert_equal 17, receipt.fetch(:memory_version)
     assert_equal "test-model", receipt.fetch(:model)
     assert_equal Receipt.digest, receipt.fetch(:constitution)
@@ -139,8 +140,19 @@ class TestBootReceipt < Minitest::Test
     refute Receipt.lines(root: Master::ROOT).any? { |line| line.start_with?("receipt: session ") }
   end
 
+  # In a checkout the receipt names HEAD; in a git archive export (where the
+  # suite is proved) there is no HEAD and it says unknown rather than guess.
   def test_the_receipt_names_the_commit_it_booted_from
-    assert_match(/\A[0-9a-f]{12}\z/, Receipt.commit(Master::ROOT))
-    assert Receipt.capabilities["git"], "the receipt is running inside a checkout"
+    commit = Receipt.commit(Master::ROOT)
+
+    assert_equal checkout_commit, commit
+    assert_match(/\A(?:[0-9a-f]{12}|unknown)\z/, commit)
+  end
+
+  private
+
+  def checkout_commit
+    out, status = Open3.capture2e("git", "-C", Master::ROOT, "rev-parse", "--short=12", "HEAD")
+    status.success? ? out.strip : "unknown"
   end
 end

@@ -98,10 +98,12 @@ module Master
       errors << "law_catalogue.missing_assessor must be inconclusive" unless catalogue["missing_assessor"] == "inconclusive"
 
       # detector_sources is retired: every Law is one Law.define, and its
-      # definition source is the file that holds its detector.
+      # definition source is the file that holds its detector. path and
+      # path_pattern are retired too: a Law's subject is its Law.define `path`,
+      # so a catalogue scope would be one no reader honours, and is refused.
       allowed_entry_fields = %w[
         universal definition_sources severity mode lifecycle autofix
-        languages surfaces path path_pattern path_exclude
+        languages surfaces path_exclude
       ]
       expected_modalities = Master::LawVocabulary::MODALITIES.map(&:to_s).sort
       declared_modalities = Array(catalogue["modalities"]).map(&:to_s).uniq.sort
@@ -189,14 +191,6 @@ module Master
           end
         end
 
-        pattern = entry["path_pattern"]
-        unless pattern.nil? || pattern.to_s.empty?
-          begin
-            Regexp.new(pattern.to_s)
-          rescue RegexpError => error
-            errors << "Law #{id} has invalid path_pattern: #{error.message}"
-          end
-        end
         Array(entry["path_exclude"]).each do |excluded_pattern|
           begin
             Regexp.new(excluded_pattern.to_s)

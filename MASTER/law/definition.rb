@@ -34,7 +34,9 @@ module Law
   end
 
   # Execution defaults and entry-specific reach are merged from the one canonical
-  # Law catalogue. Reach is part of the policy contract and is never discarded.
+  # Law catalogue: languages, surfaces and path_exclude. The catalogue retired
+  # positive path scopes (test_laws_reflow refuses them), so where a Law's
+  # subject lives is declared beside its detector, by Builder#path.
   def self.catalogue_policy(id, entry = catalogue_entry(id))
     policy = LAW_CATALOGUE.fetch("defaults", {}).merge(entry)
     raise ArgumentError, "Law #{id} has no severity in laws.yml law_catalogue" if policy["severity"].to_s.empty?
@@ -45,7 +47,6 @@ module Law
 
   def self.reach(policy)
     { languages: Array(policy["languages"]).map(&:to_s), surfaces: policy["surfaces"]&.map(&:to_sym),
-      path: policy["path_pattern"] ? Regexp.new(policy["path_pattern"]) : policy["path"],
       path_exclude: pattern(policy["path_exclude"]) }
   end
 
@@ -468,8 +469,8 @@ module Law
     include Proof
     include Reading
 
-    # `path` is a substring (catalogue `path`) or a Regexp (catalogue
-    # `path_pattern`); `path_exclude` is always a Regexp.
+    # `path` is a substring or a Regexp (Builder#path); `path_exclude` is
+    # always a Regexp (catalogue `path_exclude`).
     # A law that names no language applies everywhere. A law that names one
     # applies to a file resolved to that language, and to nothing else.
     #
@@ -618,13 +619,15 @@ module Law
 
   # Ruby declares what a Law detects and how it reads; its policy comes from
   # the catalogue entry, so the block has no method to declare severity,
-  # languages, paths, lifecycle or autofix a second time.
+  # languages, exclusions, lifecycle or autofix a second time. The one reach a
+  # block declares is `path`, the files its subject lives in, because laws.yml
+  # no longer carries one.
   class Builder
     %i[source scope absent ask practice fix bad good reads_comments].each { |a| define_method(a) { |v| @h[a] = v } }
 
     def initialize(id)
       @h = {
-        id:, scope: :line, law_scope: nil, absent: nil, detect: nil, check: nil, ask: nil, practice: nil,
+        id:, scope: :line, law_scope: nil, path: nil, absent: nil, detect: nil, check: nil, ask: nil, practice: nil,
         reads_comments: false, tags: [], example_path: nil, reads_beyond_file: false, transform: nil,
         detector: nil, proved_by: nil, source: nil, measures: nil, adapters: [], **::Law.catalogue_policy(id)
       }
@@ -663,6 +666,16 @@ module Law
 
     # The concern a Law belongs to (DESIGN, TYPOGRAPHY, ...): carried on its findings.
     def tags(*names) = @h[:tags] = names.flatten.map(&:to_sym)
+
+    # The files this Law judges: a substring of the path ("/db/migrate/") or a
+    # Regexp. A Law with none reaches every file its languages name. Before
+    # a40d93e579 this lived in the catalogue as path/path_pattern; when the
+    # catalogue dropped it, 41 Laws went repo-wide and fired on files they were
+    # never about (COMMERCE_AMBER_DOES_NOT_OWN_BRGEN on brgen's own marketplace).
+    def path(subject)
+      refuse "path must be a String or a Regexp" unless subject.is_a?(String) || subject.is_a?(Regexp)
+      @h[:path] = subject
+    end
 
     # The path its fixtures are proved at, for a detector that judges only some paths.
     def example_path(path) = @h[:example_path] = path
@@ -897,8 +910,14 @@ module Law
     end
 
     def reload(dir)
-      preflight!(dir) if File.expand_path(dir) == File.expand_path(__dir__)
       files = law_files(dir)
+      # Nothing to do when every file is as it was loaded and its Laws are still
+      # registered. Preflight re-read every law file and the catalogue on each
+      # call (0.28 s), and LawTree.find calls this once per Law, so
+      # TestLawFixtures spent 30 s per test in preflight alone and timed out.
+      return @definitions if loaded?(files)
+
+      preflight!(dir) if File.expand_path(dir) == File.expand_path(__dir__)
 
       staged = @definitions.dup
       sources = @law_sources.dup
@@ -935,6 +954,16 @@ module Law
       staged
     ensure
       Thread.current[:law_staging] = nil
+    end
+
+    def loaded?(files)
+      return false unless files.sort == @law_sources.keys.sort
+
+      files.all? do |source|
+        stat = File.stat(source)
+        @law_stamps[source] == [stat.size, stat.ino, stat.mtime.to_r] &&
+          @law_sources[source].all? { |id| @definitions.key?(id) }
+      end
     end
 
     # One flat law/: every file but this one holds Laws.

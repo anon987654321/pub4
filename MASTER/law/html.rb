@@ -49,6 +49,7 @@ Law.define(:BARE_DIV_WRAPPER) do
 end
 
 Law.define(:BEM_IN_VIEWS) do
+  path "/app/views/"
   source "style.yml bare_tag_targeting — no BEM in ERB"
   detect { |line| line.match?(/class=["'][^"']*__[^"']*["']/) }
   fix "Target bare tags in SCSS; remove __block__element classes from ERB."
@@ -127,6 +128,7 @@ end
 # same way.
 
 Law.define(:I18N_COVERAGE) do
+  path "/app/views/"
   source "Rails i18n best practice (no hardcoded strings)"
   scope :file
   # Element content, not attribute text. Three shapes were being read as prose
@@ -308,6 +310,7 @@ end
 # — no viewport to skip past, no #main-content to land on; both findings
 # this rule ever produced in RAILS were mailer layouts.
 Law.define(:SKIP_TO_MAIN) do
+  path "/app/views/layouts/"
   source "WCAG 2.4.1 Bypass Blocks / style.yml accessibility"
   scope :file
   detect { |text| text.match?(/<body\b/) && !text.match?(/skip|#main-content/) }
@@ -331,6 +334,7 @@ end
 # author remembering to.
 
 Law.define(:UTILITY_CLASS_SOUP) do
+  path "/app/views/"
   source "style.yml html.forbidden.framework_class_explosion"
   detect { |line| line.match?(/class=["'][^"']*(?:\b(?:mt|mb|ml|mr|px|py|col|row|d-flex|flex|grid|w-|h-)\b[^"']*){3,}[^"']*["']/i) }
   fix "Move layout to SCSS with bare tag targeting."

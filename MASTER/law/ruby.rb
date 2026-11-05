@@ -150,6 +150,7 @@ end
 # defect, in the constitution itself. They live once, in the registry.
 
 Law.define(:MIGRATION_ADD_REFERENCE_NO_FK) do
+  path "/db/migrate/"
   source "Rails migrations — foreign_key: true (Strong Migrations)"
   # A polymorphic reference names no single table, so it cannot carry a
   # foreign key; asking for one is asking for a migration that will not run.
@@ -160,6 +161,7 @@ Law.define(:MIGRATION_ADD_REFERENCE_NO_FK) do
 end
 
 Law.define(:MIGRATION_FIND_OR_CREATE_BY) do
+  path "/db/migrate/"
   source "Rails best practice — find_or_create_by races"
   detect { |line| line.match?(/find_or_create_by/) }
   fix "Back find_or_create_by with a unique index to prevent duplicates."
@@ -168,6 +170,7 @@ Law.define(:MIGRATION_FIND_OR_CREATE_BY) do
 end
 
 Law.define(:MIGRATION_REMOVE_COLUMN) do
+  path "/db/migrate/"
   source "Strong Migrations — safe column removal (Andrew Kane)"
   # Whether the migration documents its path is a question about the migration,
   # not about the line. amber's convert_money_to_ore does the safe thing eight
@@ -203,6 +206,7 @@ Law.define(:PERCENT_LITERAL) do
 end
 
 Law.define(:RATE_LIMITING_MISSING) do
+  path "/app/controllers/"
   source "OWASP API Security — rate limiting"
   scope :file
   # A controller that includes the shared actions module inherits its limits,
@@ -385,6 +389,7 @@ Law.define(:SINGLE_PRIVATE_SECTION) do
 end
 
 Law.define(:STRICT_LOADING_MISSING) do
+  path "/app/models/"
   source "Rails strict_loading — N+1 prevention (Rails Guides)"
   scope :file
   absent /\bstrict_loading_by_default\b/
@@ -544,6 +549,7 @@ end
 # migration file, invisible from here, and flagging every one of those would
 # cry wolf until the rule was ignored.
 Law.define(:MIGRATION_NOT_NULL_NO_DEFAULT) do
+  path "/db/migrate/"
   source "Kleppmann, DDIA — schema evolution under rolling deploy"
   detect do |line|
     line.match?(/\badd_column\b/) && line.match?(/null:\s*false/) && !line.match?(/default:\s/)

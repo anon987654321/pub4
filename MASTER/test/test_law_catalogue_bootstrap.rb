@@ -170,7 +170,7 @@ class TestLawCatalogueBootstrap < Minitest::Test
             "definition_sources" => ["MASTER/law/actual.rb"],
             "severity" => "warning",
             "mode" => "silent_pass",
-            "path_pattern" => "[",
+            "path_exclude" => "[",
             "severity_typo" => "warn",
           },
         },
@@ -181,7 +181,7 @@ class TestLawCatalogueBootstrap < Minitest::Test
       end
 
       assert_match(/Law ACTUAL_ID has invalid mode "silent_pass"/, error.message)
-      assert_match(/Law ACTUAL_ID has invalid path_pattern/, error.message)
+      assert_match(/Law ACTUAL_ID has invalid path_exclude/, error.message)
       assert_match(/law_catalogue has unknown field\(s\): unknown_registry/, error.message)
       assert_match(/Law ACTUAL_ID has unknown catalogue field\(s\): severity_typo/, error.message)
     end
@@ -234,8 +234,10 @@ class TestLawCatalogueBootstrap < Minitest::Test
     end
   end
 
-  def test_invalid_path_pattern_is_reported_before_law_definition_loading
-    Dir.mktmpdir("law-catalogue-invalid-pattern") do |root|
+  # A positive scope in the catalogue has no reader since reach moved to the
+  # Law.define `path`; preflight names it rather than letting it sit inert.
+  def test_retired_path_scope_fields_are_refused_before_law_definition_loading
+    Dir.mktmpdir("law-catalogue-retired-scope") do |root|
       law_dir = File.join(root, "MASTER", "law")
       FileUtils.mkdir_p(law_dir)
       File.write(File.join(law_dir, "live.rb"), "Law.define(:LIVE_ID) do\nend\n")
@@ -245,9 +247,8 @@ class TestLawCatalogueBootstrap < Minitest::Test
         "defaults" => { "mode" => "violation", "lifecycle" => "active", "autofix" => "review", "languages" => [] },
         "entries" => {
           "LIVE_ID" => {
-            "definition_sources" => ["MASTER/law/live.rb"],
-            "severity" => "warning",
-            "path_pattern" => "["
+            "definition_sources" => ["MASTER/law/live.rb"], "severity" => "warning",
+            "path" => "RAILS/amber/", "path_pattern" => "/db/migrate/"
           }
         }
       }
@@ -256,7 +257,7 @@ class TestLawCatalogueBootstrap < Minitest::Test
         Master::LawCataloguePreflight.validate!(law_dir:, catalogue:, repo_root: root)
       end
 
-      assert_match(/Law LIVE_ID has invalid path_pattern/, error.message)
+      assert_match(/Law LIVE_ID has unknown catalogue field\(s\): path, path_pattern/, error.message)
     end
   end
 

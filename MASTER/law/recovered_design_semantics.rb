@@ -7,6 +7,7 @@
 require "yaml"
 
 Law.define(:README_VISION) do
+  path "MASTER/README.md"
   source "pub3 master.json documentation.readme_structure.vision — project vision leads README"
   scope :file
   detect do |text|
@@ -52,6 +53,7 @@ Law.define(:HTML_HEADING_HIERARCHY) do
 end
 
 Law.define(:VISUAL_IDENTITY_SOURCE_OF_TRUTH) do
+  path "MASTER/data/tokens.yml"
   source "pub4 visual identity contract — canonical tokens, measured contrast and semantic face accent"
   scope :file
   detect do |text|
@@ -175,6 +177,7 @@ Law.define(:VISUAL_IDENTITY_SOURCE_OF_TRUTH) do
 end
 
 Law.define(:VISUAL_PARTICLE_STIPPLE_PRIMARY) do
+  path "MASTER/data/tokens.yml"
   source "pub4 primary material — greyscale particle stipple, many carriers resolving into one form"
   scope :file
 

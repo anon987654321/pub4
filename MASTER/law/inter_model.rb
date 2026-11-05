@@ -3,6 +3,7 @@
 # Detect unwrapped council calls at the call site. Runtime validation is provided
 # by the shared adapter, so this detector guards against bypassing that adapter.
 Law.define(:INTER_MODEL_CONTRACT) do
+  path "MASTER/lib/review/council/"
   source "MASTER/data/inter_model.yml — machine-validated peer-model exchanges"
   detect { |line| line.match?(/@agent\.ask(?:_once)?\(\s*prompt\b/) }
   ask <<~'ASK'.strip

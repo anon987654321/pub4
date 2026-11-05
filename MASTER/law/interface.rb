@@ -29,6 +29,7 @@ Law.define(:NO_TRANSPORT_WRAPPER_IN_SOURCE) do
 end
 
 Law.define(:CLI_TREE_TARGET_RESOLUTION) do
+  path "MASTER/lib/cli/"
   source "MASTER CLI — four-tree target addressing"
   ask "When an operator explicitly names MASTER, RAILS, OPENBSD or STUDIO, does the command resolve that target from the repository root through the canonical target resolver rather than assuming the current working directory is MASTER? Return CLEAN when every explicit sibling-tree target follows the shared resolver contract."
   fix "Resolve explicit four-tree targets from Master::REPO_ROOT through TargetResolver; never reinterpret a sibling tree relative to MASTER/lib or the current process directory."
@@ -41,6 +42,7 @@ Law.define(:CLI_TREE_TARGET_RESOLUTION) do
 end
 
 Law.define(:CLI_PROMPT_COMPOSITION) do
+  path "MASTER/lib/voice/renderer/"
   source "OpenBSD dmesg console discipline; shell line editing remains the input transport"
   ask "Does the interactive prompt remain a restrained OpenBSD-console line that shows the checkout/tree, current directory, active conversation destination, Git state, meaningful phase/error state and input token, with no Starship/powerline-style segments or decorative emphasis? Is it bounded, single-line, plain in scrollback and cheap to redraw? Return CLEAN when it follows the dmesg-first house style."
   fix "Keep one compact text line with checkout/tree-relative path, active destination, plain Git state, phase and shell token. Prefer ASCII and stable spacing; avoid badges, icon glyphs, color-coded segments, boxes and duplicated status. Cache or bound Git probes and move detail to /status, /doctor or /help."
@@ -61,6 +63,7 @@ Law.define(:CLI_PROMPT_COMPOSITION) do
 end
 
 Law.define(:OPENBSD_DMESG_CONSOLE_STYLE) do
+  path "MASTER/lib/voice/"
   source "OpenBSD dmesg — xsa/openbsd-dmesgs and Master::Trace::Dmesg"
   ask "For startup, status, progress and operational events, does CLI output follow the native console idiom: append-only, one factual event per line, a stable subsystem0: or unit0 at parent: prefix, truthful status, and useful scrollback? Look for banners, decorative panels, ASCII art outside the face, badge-like status, repeated progress chatter, and information hidden behind color alone. Conversational replies may retain plain Markdown when structure serves the content. Return CLEAN when operational output remains clear in a pipe, serial terminal and saved transcript."
   fix "Use Master::Trace::Dmesg's existing unit0: grammar for operational events; emit one concise factual line per event, order events by occurrence, keep state and recovery explicit, and preserve plain-text meaning without relying on ANSI or animation. Conversational replies may use restrained, width-aware Markdown. Do not create a second event logging format."
@@ -77,6 +80,7 @@ Law.define(:OPENBSD_DMESG_CONSOLE_STYLE) do
 end
 
 Law.define(:VOICE_FAILURES_ARE_ACTIONABLE) do
+  path "MASTER/lib/voice/"
   source "OpenBSD-style explicit failure reporting — degraded capability is state, not noise"
   ask "When synthesis, transport, or playback fails, does the runtime produce one bounded actionable state, preserve a useful last_error, and use the declared fallback chain without replaying or spawning uncontrolled work? Return CLEAN when the failure path is already explicit and bounded."
   fix "Return an explicit failure/result, retain the reason for /status or /doctor, rate-limit repeated diagnostics, and fall through only to declared voice/audio fallbacks."
@@ -96,6 +100,7 @@ Law.define(:VOICE_FAILURES_ARE_ACTIONABLE) do
 end
 
 Law.define(:CLI_ANALYZE_TARGET_ROUTING) do
+  path "MASTER/data/patterns.yml"
   source "MASTER CLI — deterministic repository analysis targets"
   scope :file
   ask "Does natural-language analysis of an explicit repository path enter the deterministic operator route instead of falling through to the model and guessing about file existence?"
@@ -121,6 +126,7 @@ Law.define(:CLI_ANALYZE_TARGET_ROUTING) do
 end
 
 Law.define(:CLI_FACE_DEDICATED_TTY) do
+  path "MASTER/lib/cli/command_registry.rb"
   source "Terminal discipline — full-screen face must not share line-editor input"
   scope :file
   ask "Does the /face command obtain an independent terminal stream instead of sharing Reline/session stdin with the full-screen face?"
@@ -159,6 +165,7 @@ Law.define(:CAPABILITY_STATUS_MUST_BE_TRUTHFUL) do
 end
 
 Law.define(:SIGNATURE_MOMENT) do
+  path "RAILS/"
   source "Interaction design — distinctive, frequent, functional moments"
   ask "Does this product surface have one deliberately distinctive interaction that users encounter often, improves the task rather than merely decorating it, matches the product's character, and remains effortless and accessible? Return CLEAN when an existing interaction already serves this role."
   fix "Choose one existing high-frequency interaction and give it immediate, restrained, distinctive feedback. Do not invent a feature solely for delight, duplicate the pattern elsewhere, or make motion or haptics the only signal."
@@ -167,6 +174,7 @@ Law.define(:SIGNATURE_MOMENT) do
 end
 
 Law.define(:DIRECT_MANIPULATION_FEEDBACK) do
+  path "RAILS/"
   source "Direct manipulation — immediate perceptual feedback"
   ask "When a user directly presses, drags, swipes, or dismisses something, does the interface acknowledge that input immediately rather than waiting for a delayed release or network result? Check pointer, keyboard, touch, visual state, and failure recovery together."
   fix "Respond at input start with a small state change, keep the gesture tied to the pointer while it moves, and retain a non-motion keyboard equivalent. Do not make the early feedback imply success before the action is actually committed."
@@ -175,6 +183,7 @@ Law.define(:DIRECT_MANIPULATION_FEEDBACK) do
 end
 
 Law.define(:WAITING_STATE_MEANING) do
+  path "RAILS/"
   source "Interaction status — useful feedback during dead time"
   ask "When a user is waiting for a meaningful result, does the surface identify what is happening or what is being prepared, rather than exposing only a generic spinner or unexplained motion? Keep the message brief, truthful, localised, and independent of animation."
   fix "Expose a short status label alongside the existing progress or skeleton state. Keep it accurate and persistent long enough to orient the user; never invent progress or use animation as the only meaning."

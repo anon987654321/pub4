@@ -222,6 +222,7 @@ module Master
   # Minitest takes the reason as skip's argument; a JavaScript .skip or xit
   # has no slot for one, so it takes the comment on the line above.
   ::Law.define(:NO_SILENT_TEST_SKIP) do
+    path %r{(?:\A|/)(?:test|spec)/}
     tags %i[COMPLETENESS]
     fix "a test skipped without saying why"
     bad "  def test_parse\n    skip\n  end\n"

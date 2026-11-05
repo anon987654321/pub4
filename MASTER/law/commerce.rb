@@ -3,6 +3,7 @@
 # Commerce ownership and evidence stay constitutional. The two product systems
 # exchange a small protocol, not each other's domain objects.
 Law.define(:COMMERCE_AMBER_DOES_NOT_OWN_BRGEN) do
+  path "RAILS/amber/"
   source "pub4 commerce boundary — BRGEN owns listings/orders; Amber owns wardrobe intelligence"
   detect { |line| line.match?(/\bMarketplace::(?:Listing|Order|Store)\b/) }
   fix "Consume the public Shared::Commerce/BRGEN catalog contract through BrgenCommerce; do not load BRGEN models."
@@ -11,6 +12,7 @@ Law.define(:COMMERCE_AMBER_DOES_NOT_OWN_BRGEN) do
 end
 
 Law.define(:COMMERCE_BRGEN_DOES_NOT_OWN_AMBER) do
+  path "RAILS/brgen_marketplace/"
   source "pub4 commerce boundary — Amber owns wardrobe intelligence; BRGEN owns transactions"
   detect { |line| line.match?(/\b(?:TasteRanker|WardrobeGap|ShopTheLook|WardrobeItem)\b/) }
   fix "Keep wardrobe ranking and wardrobe records in Amber; expose only commerce references and catalog facts across the boundary."
@@ -19,6 +21,7 @@ Law.define(:COMMERCE_BRGEN_DOES_NOT_OWN_AMBER) do
 end
 
 Law.define(:COMMERCE_EXTERNAL_SOURCES_STAY_EXPLAINABLE) do
+  path "RAILS/amber/app/services/"
   source "pub4 commerce protocol — external inventory must carry source and provenance"
   detect { |line| line.match?(/Suggestion\.new\((?![^\n]*(?:reasons|commerce_key))[^\n]*\bscore\b[^\n]*\)/) }
   fix "Use ShopTheLook::Suggestion with source, reasons, and commerce_key so a commercial recommendation is attributable and explainable."

@@ -23,7 +23,8 @@ Before planning or acting, load MASTER's canonical context:
    root relationships, the ordered nine invariant nodes, root and severity
    vocabularies, resolutions and declared enforcement contracts. Its reserved
    `law_catalogue` block owns severity, mode, lifecycle, autofix, language,
-   surface and path-reach metadata for each executable Law.
+   surface and path-exclusion metadata for each executable Law. A Law's
+   positive path scope is the `path` in its `Law.define`.
 3. At the start of every task, run
    `ruby MASTER/tools/agent_context.rb --json` and consume its current
    `conduct`, `blocking_rules`, `coverage`, `task_contract_schema`, and
@@ -33,8 +34,8 @@ Before planning or acting, load MASTER's canonical context:
    grounded in the current checkout.
 4. Read the applicable Law row in `laws.yml`. When changing executable
    behaviour or reach, also read that Law's `laws.yml#law_catalogue` entry
-   (severity, mode, lifecycle, autofix, languages, surfaces and path reach),
-   its `Law.define` implementation and bad/good fixtures (or `proved_by` test),
+   (severity, mode, lifecycle, autofix, languages, surfaces and path_exclude),
+   its `Law.define` implementation and `path` and bad/good fixtures (or `proved_by` test),
    plus the focused tests. `law_runtime.yml` is not a source of per-Law policy.
    A declared adapter or fixture does not prove that the detector ran or that
    the product is excellent.
@@ -80,7 +81,8 @@ For every Law-affecting task, inspect its normative row in `laws.yml` and its
 `laws.yml#law_catalogue` metadata when execution policy or reach is involved,
 then inspect the exact `Law.define`, bad/good fixtures or `proved_by` test.
 Verify identity, parent/root, severity, lifecycle, autofix, language, surface
-and path reach, plus actual execution evidence. Read `law_runtime.yml` only
+and path reach (`Law.define` `path`, catalogue `path_exclude`), plus actual
+execution evidence. Read `law_runtime.yml` only
 when the task changes scanner, veto, plugin or `/fix` runtime configuration.
 Never claim a Law is enforced because its name or detector is merely declared.
 
@@ -92,12 +94,15 @@ up), OPENBSD/ (deployment and vm23), and STUDIO/ (Dilla, photograph,
 Replicate). `MASTER/tools/` keeps compatibility entrypoints for STUDIO tools.
 
 `laws.yml#law_catalogue` is the single source for per-Law severity, mode,
-lifecycle, autofix, language, surface and path reach. `Law::Definition`,
+lifecycle, autofix, language, surface and path exclusion. The catalogue retired
+positive path scopes (a40d93e579); each scoped Law declares the files it
+judges with `path` in its `Law.define`, and preflight refuses a catalogue
+`path` or `path_pattern` that nothing would read. `Law::Definition`,
 `LawCataloguePreflight`, `LawRegistryAudit` and `BootReceipt` all read that
 same block. `law_runtime.yml` no longer contains a Law catalogue; it retains
 scanner, veto, plugin and `/fix` runtime configuration. Its guard rejects any
 attempt to add a duplicate `law_catalogue` there. Do not move per-Law policy
-back into runtime configuration or infer it from a detector's Ruby source.
+back into runtime configuration or infer it from a detector's other Ruby.
 
 Task entry: before a substantive edit, state intent, repository-relative
 scope, mandatory preservation dimensions, and proof. Validate programmatic

@@ -113,6 +113,7 @@ Law.define(:NO_WEBGL_GLOW_PASS) do
 end
 
 Law.define(:TACTILE_FEEDBACK) do
+  path "RAILS/"
   source "Haptic interaction feedback — optional secondary signal"
   ask "When haptic feedback is used, is it attached to a meaningful user action or threshold, fired at the start of direct manipulation when appropriate, gracefully unavailable, power-conscious, and never the only confirmation?"
   fix "Keep haptics short and optional, trigger them only for meaningful interactions, suppress them when the page is hidden or the device is power-constrained, and preserve a visible or semantic equivalent."
@@ -121,6 +122,7 @@ Law.define(:TACTILE_FEEDBACK) do
 end
 
 Law.define(:POINTER_FEEDBACK_EARLY) do
+  path "RAILS/"
   source "Pointer Events — early input acknowledgement"
   ask "Does a direct-manipulation interaction acknowledge pointer input at pointerdown or an equivalent active state instead of making a click handler carry all perceived responsiveness? Preserve keyboard and assistive-technology behavior."
   fix "Move only the immediate acknowledgement to pointerdown/active state; leave the actual command and confirmation semantics on the existing action path."
@@ -129,6 +131,7 @@ Law.define(:POINTER_FEEDBACK_EARLY) do
 end
 
 Law.define(:HAPTIC_SINGLE_SOURCE) do
+  path "RAILS/"
   source "Shared RAILS haptics controller — one tactile implementation"
   ask "Does Rails interaction code use the shared haptics implementation instead of reaching directly for navigator.vibrate, so suppression, timing and future native adapters remain one source of truth?"
   fix "Import the shared pub4/haptics controller or its pulse API. Keep raw navigator.vibrate behind that shared implementation."
