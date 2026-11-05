@@ -27,7 +27,8 @@ module Master
           end
 
           return Master::Result.err("ideation: budget expired", category: :timeout) if Time.now >= deadline
-          fill_quota(prompt:, ideas:, constraints:, deadline:)
+          quota_result = fill_quota(prompt:, ideas:, critiques:, constraints:, deadline:)
+          return quota_result if quota_result
           required = Master::Core::Proof::ALTERNATIVES_REQUIRED
           if ideas.uniq.size < required
             return Master::Result.err(
@@ -44,11 +45,21 @@ module Master
 
         private
 
-        def fill_quota(prompt:, ideas:, constraints:, deadline:)
+        def fill_quota(prompt:, ideas:, critiques:, constraints:, deadline:)
           return if ideas.uniq.size >= Master::Core::Proof::ALTERNATIVES_REQUIRED || Time.now >= deadline
 
           more = brainstorm(prompt:, prior: ideas, constraints:)
-          ideas.concat(more.value!) if more.ok?
+          return more if more.err?
+
+          additions = more.value!.uniq - ideas.uniq
+          ideas.concat(additions)
+          return if additions.empty?
+
+          critique_result = critique(additions)
+          return critique_result if critique_result.err?
+
+          critiques << critique_result.value!
+          nil
         end
 
         def run_ideation_cycle(cycle, prompt:, ideas:, critiques:, constraints:, deadline:)
@@ -69,18 +80,19 @@ module Master
         def brainstorm(prompt:, prior:, constraints:)
           context = prior.any? ? "Prior ideas (avoid repeating): #{prior.join('; ')}\n\n" : ""
           constraint_prefix = constraints.any? ? "Constraints: #{constraints.join(', ')}\n\n" : ""
-          system_msg = "Generate at least #{Master::Core::Proof::ALTERNATIVES_REQUIRED} distinct approaches. " \
+          minimum = [Master::Core::Proof::ALTERNATIVES_REQUIRED - prior.uniq.size, 1].max
+          system_msg = "Generate at least #{minimum} distinct approaches. " \
                        "Return one structured finding per approach; put the complete approach in claim and use " \
                        "proposed_repair=none. Do not repeat a prior idea."
           model_prompt = <<~PROMPT
             #{constraint_prefix}#{context}Generate distinct approaches for: #{prompt}
-            Return at least #{Master::Core::Proof::ALTERNATIVES_REQUIRED} materially different candidates.
+            Return at least #{minimum} materially different candidates.
             With prior candidates, set position to mixed and explain that the new candidates are distinct.
           PROMPT
           prior_findings = idea_findings(prior)
           result = structured_exchange(
             model_prompt, role: "proposer", task: "Generate materially distinct approaches.",
-            success_criteria: "Return at least #{Master::Core::Proof::ALTERNATIVES_REQUIRED} distinct candidates in schema-valid findings.",
+            success_criteria: "Return at least #{minimum} distinct candidates in schema-valid findings.",
             constraints:, prior_findings:, system: system_msg
           )
           ideas = result.fetch("data").fetch("findings").map { |finding| finding.fetch("claim").strip }.reject(&:empty?).uniq
