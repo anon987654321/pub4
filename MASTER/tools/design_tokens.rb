@@ -160,6 +160,22 @@ module DesignTokens
           --text-primary: var(--text);
         }
       }
+      /* Spacing, easing, the touch target and the focus ring, from shared_chrome,
+         for the pages that load no app stylesheet (errors.css). Its own block, so
+         the family slice master embeds (the first :root) stays the palette. */
+      :root {
+        --space-1: #{shared_chrome.fetch("space_extra_extra_small")};
+        --space-2: #{shared_chrome.fetch("space_extra_small")};
+        --space-3: #{shared_chrome.fetch("space_small")};
+        --space-6: #{shared_chrome.fetch("space_medium")};
+        --space-8: #{shared_chrome.fetch("space_large")};
+        --space-12: #{shared_chrome.fetch("space_extra_large")};
+        --space-16: #{shared_chrome.fetch("space_extra_extra_large")};
+        --ease-out: #{shared_chrome.fetch("ease_out")};
+        --ease-spring: #{shared_chrome.fetch("ease_spring")};
+        --tap-min: #{shared_chrome.fetch("tap_min")};
+        --focus-ring: #{shared_chrome.fetch("focus_ring")};
+      }
     CSS
   end
 

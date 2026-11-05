@@ -257,8 +257,6 @@ main[role="main"] {
   border: 0 !important;
   border-radius: 0 !important;
   background: transparent !important;
-  /* autofix: removed box-shadow (flat UI) */
-  outline: none;
   pointer-events: auto;
   z-index: 1;
   cursor: pointer;
@@ -294,7 +292,6 @@ main[role="main"] {
 .edge-grip:hover { opacity: 0.9; background: transparent !important; }
 .edge-grip:hover::after { color: var(--text); }
 .edge-grip:focus-visible {
-  outline: none;
   opacity: 0.9;
 }
 .sidebar-swiper.revealed .edge-grip-start,

@@ -6,7 +6,7 @@
   display: grid;
   place-items: center;
   padding: calc(var(--safe-top) + var(--space-4)) var(--space-4) calc(var(--safe-bottom) + var(--space-4));
-  background: var(--scrim-65);
+  background: var(--scrim-deep);
 }
 
 .welcome-onboarding[hidden] {

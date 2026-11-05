@@ -75,7 +75,7 @@
 }
 
 .composer::backdrop {
-  background: var(--scrim-55);
+  background: var(--scrim);
 }
 
 .composer-form {
@@ -330,7 +330,7 @@ body[class*="vertical-"] .compose-launcher {
 .mobile-sheet-backdrop {
   position: fixed;
   inset: 0;
-  background: var(--scrim-45);
+  background: var(--scrim);
   opacity: 0;
   pointer-events: none;
   transition: opacity var(--transition-fast) var(--ease-out);

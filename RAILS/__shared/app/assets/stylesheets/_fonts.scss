@@ -23,51 +23,8 @@
   font-display: swap;
 }
 
-/* Source Sans 3 and its monospaced companion are bundled locally under OFL-1.1. */
-@font-face {
-  font-family: "Source Sans 3";
-  src: url("/fonts/SourceSans3-Regular.woff2") format("woff2");
-  font-style: normal;
-  font-weight: 400;
-  font-display: swap;
-}
-@font-face {
-  font-family: "Source Sans 3";
-  src: url("/fonts/SourceSans3-Bold.woff2") format("woff2");
-  font-style: normal;
-  font-weight: 700;
-  font-display: swap;
-}
-@font-face {
-  font-family: "Source Code Pro";
-  src: url("/fonts/SourceCodePro-Regular.woff2") format("woff2");
-  font-style: normal;
-  font-weight: 400;
-  font-display: swap;
-}
-@font-face {
-  font-family: "Source Code Pro";
-  src: url("/fonts/SourceCodePro-Bold.woff2") format("woff2");
-  font-style: normal;
-  font-weight: 700;
-  font-display: swap;
-}
-
-/* Source Serif 4 — the family's editorial display face, variable weight and
-   its italic. Bundled for apps whose dialect reads serif headlines (amber's
-   New Yorker + Outnet mirror, operator 2026-10-28). The variable file covers
-   the 200–900 weight ladder in one download. */
-@font-face {
-  font-family: "Source Serif 4";
-  src: url("/fonts/SourceSerif4Variable.woff2") format("woff2");
-  font-weight: 200 900;
-  font-style: normal;
-  font-display: swap;
-}
-@font-face {
-  font-family: "Source Serif 4";
-  src: url("/fonts/SourceSerif4Variable-Italic.woff2") format("woff2");
-  font-weight: 200 900;
-  font-style: italic;
-  font-display: swap;
-}
+/* JetBrainsMono Nerd Font is the one bundled mono, behind --font-mono
+   (_dialect_tokens.scss, from design_tokens font_code). The static Source Sans 3
+   and Source Code Pro faces that stood here were in no font stack, and Source
+   Serif 4 was read by no dialect once amber dropped serif display type
+   (operator, 2026-10-11): declarations and files with no reader, removed. */

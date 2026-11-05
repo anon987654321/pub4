@@ -187,7 +187,7 @@ body.auth-surface {
   color: var(--text);
   font-size: var(--text-small);
   letter-spacing: -0.01em;
-  transition: background 160ms var(--ease-out), transform var(--duration-m3-short) var(--ease-m3-spring);
+  transition: background 160ms var(--ease-out), transform var(--transition-fast) var(--ease-spring);
 }
 
 .oauth-button::before,

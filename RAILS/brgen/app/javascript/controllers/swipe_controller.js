@@ -125,7 +125,7 @@ export default class extends Controller {
 
       // Commit animation offscreen
       const direction = isLike ? 1 : -1
-      card.style.transition = "transform var(--duration-m3-short) var(--ease-spring), opacity var(--transition-fast) var(--ease-out)"
+      card.style.transition = "transform var(--transition-fast) var(--ease-spring), opacity var(--transition-fast) var(--ease-out)"
       card.style.transform = `translateX(${direction * 520}px) rotate(${direction * 22}deg)`
       card.style.opacity = "0.1"
 
@@ -150,7 +150,7 @@ export default class extends Controller {
   }
 
   _springBack(card) {
-    card.style.transition = "transform var(--duration-m3-short) var(--ease-spring)"
+    card.style.transition = "transform var(--transition-fast) var(--ease-spring)"
     card.style.transform = ""
     card.style.opacity = ""
     card.classList.remove("liked", "passed")
@@ -225,7 +225,7 @@ export default class extends Controller {
     const url = isLike ? this.likeUrlValue : this.dislikeUrlValue
     const card = this.currentCard
 
-    card.style.transition = "transform var(--duration-m3-short) var(--ease-spring)"
+    card.style.transition = "transform var(--transition-fast) var(--ease-spring)"
     const dir = isLike ? 1 : -1
     card.style.transform = `translateX(${dir * 480}px) rotate(${dir * 20}deg)`
 
@@ -243,7 +243,7 @@ export default class extends Controller {
     const row = this.element.closest("[data-track-id]") || this.element
     if (row) {
       row.classList.add("liked")
-      row.style.transition = "transform var(--duration-m3-short) var(--ease-spring), opacity var(--transition-fast) var(--ease-out)"
+      row.style.transition = "transform var(--transition-fast) var(--ease-spring), opacity var(--transition-fast) var(--ease-out)"
       row.style.transform = "translateX(160px)"
       row.style.opacity = "0.1"
     }
@@ -261,7 +261,7 @@ export default class extends Controller {
       console.error("playlist queue swipe failed", err)
       if (row) {
         row.classList.remove("liked")
-        row.style.transition = "transform var(--duration-m3-short) var(--ease-spring), opacity var(--transition-fast) var(--ease-out)"
+        row.style.transition = "transform var(--transition-fast) var(--ease-spring), opacity var(--transition-fast) var(--ease-out)"
         row.style.transform = ""
         row.style.opacity = ""
       }

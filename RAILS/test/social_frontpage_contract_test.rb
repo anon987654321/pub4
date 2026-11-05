@@ -16,7 +16,7 @@ class SocialFrontpageContractTest < Minitest::Test
 
   def test_cookie_preferences_name_necessary_storage_separately
     body = File.read(COOKIE)
-    assert_includes body, "cookie-purpose--necessary"
+    assert_includes body, %(class="cookie-purpose" data-purpose="necessary")
     assert_includes File.read(EN), 'necessary:'
     assert_includes File.read(NB), 'necessary:'
   end

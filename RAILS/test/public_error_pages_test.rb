@@ -78,7 +78,16 @@ class PublicErrorPagesTest < Minitest::Test
     assert_includes source, "font-size: clamp(0.9375rem, 2.5vw, 1.25rem);"
     assert_includes source, "line-height: 1.5;"
     assert_includes source, "min-height: 100dvh;"
-    assert_includes source, "min-height: 44px;"
+    # The control height, radius and focus ring are the generated tokens, not
+    # literals typed beside them (shared-049).
+    assert_includes source, %(@import url("/styles/tokens.css");)
+    assert_includes source, "min-height: var(--tap-min);"
+    assert_includes source, "border-radius: var(--radius-extra-small);"
+    refute_match(/min-height: 44px|border-radius: 4px/, source)
+    tokens = File.read(File.join(ROOT, "__shared", "public", "styles", "tokens.css"))
+    assert_includes tokens, "--tap-min: 44px;"
+    assert_includes tokens, "--radius-extra-small: 4px;"
+    assert_includes tokens, "--focus-ring: 2px solid var(--accent, currentColor);"
     %w[top right bottom left].each do |edge|
       assert_includes source, "env(safe-area-inset-#{edge}, 0px)",
                       "shared error-page padding must respect the #{edge} safe area"
@@ -86,7 +95,7 @@ class PublicErrorPagesTest < Minitest::Test
     assert_includes source, "background: var(--bg);"
     assert_includes source, "color: var(--text);"
     assert_includes source, ":focus-visible"
-    assert_includes source, "outline: 2px solid var(--accent);"
+    assert_includes source, "outline: var(--focus-ring);"
     assert_includes source, "@media (forced-colors: active)"
     assert_includes source, "outline-color: Highlight;"
     refute_match(/(?:box-shadow|text-shadow|backdrop-filter)\s*:\s*(?!none\b)/, source)

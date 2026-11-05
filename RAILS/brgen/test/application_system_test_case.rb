@@ -72,8 +72,8 @@ class ApplicationSystemTestCase < ActionDispatch::SystemTestCase
   end
 
   # The consent banner is fixed to the bottom of the viewport and covers what
-  # sits under it until the visitor answers, and the consent cookie is
-  # host-only, so each host asks once. A test that presses something low on the
+  # sits under it until the visitor answers. The consent cookie names the city's
+  # registrable domain, so one answer covers its subdomains. A test that presses something low on the
   # page answers it first, as a visitor must.
   def decline_optional_cookies
     within("#cookie-consent-banner") { click_button I18n.t("cookie_consent.reject", locale: :nb) }

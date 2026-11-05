@@ -145,6 +145,26 @@
 
 @include meta.load-css("surface_signal");
 
+// amber's wardrobe extension set. It lived in the shared token layer behind a
+// $luxury flag every other app had to turn off; amber is the one app that reads
+// it, so it is stated here. --luxury-muted and --luxury-border are the
+// editorial inks' (below).
+@mixin amber-wardrobe-tokens {
+  --luxury-bg: #efefef;
+  --luxury-surface: #ffffff;
+  --luxury-text: #333333;
+  --luxury-space-extra-small: 0.5rem;
+  --luxury-space-small: 0.75rem;
+  --luxury-space-medium: 1.5rem;
+  --luxury-space-large: 2rem;
+  --luxury-space-extra-large: 3rem;
+  --luxury-font-display: clamp(1.953rem, 1.5rem + 2vw, 2.441rem);
+  --luxury-font-title: 1.563rem;
+  --luxury-font-meta: 0.875rem;
+  --luxury-letter-tight: -0.01em;
+  --luxury-line-relaxed: 1.6;
+}
+
 @mixin amber-light-inks {
   --text-secondary: var(--luxury-muted);
   // White paper, the operator's call on 2026-09-25: the luxury light surface
@@ -181,6 +201,7 @@
 // brgen's two light themes.
 :root {
   @include x.luxury-light-tokens;
+  @include amber-wardrobe-tokens;
   @include amber-light-inks;
   @include amber-editorial-inks;
   @include x.app-root-tokens;
@@ -231,17 +252,11 @@
   color-scheme: light;
 }
 
-#dark-toggle {
-  position: fixed;
-  opacity: 0;
-  pointer-events: none;
-}
-
 .theme-root {
   min-height: 100dvh;
 }
 
-#dark-toggle:checked ~ .theme-root {
+:root[data-theme="dark"] .theme-root {
   @include x.luxury-dark-tokens;
   @include x.app-root-tokens;
   color-scheme: dark;
@@ -723,7 +738,7 @@ h2 {
   color: var(--text-secondary);
 }
 
-.amber-compose-input:focus {
+.amber-compose-input:focus:not(:focus-visible) {
   outline: none;
 }
 

@@ -13,17 +13,3 @@
   font-weight: 200 900;
   font-display: swap;
 }
-@font-face {
-  font-family: "Source Code Pro";
-  src: url("/fonts/SourceCodeProVariable.woff2") format("woff2");
-  font-style: normal;
-  font-weight: 200 900;
-  font-display: swap;
-}
-@font-face {
-  font-family: "Source Code Pro";
-  src: url("/fonts/SourceCodeProVariableItalic.woff2") format("woff2");
-  font-style: italic;
-  font-weight: 200 900;
-  font-display: swap;
-}

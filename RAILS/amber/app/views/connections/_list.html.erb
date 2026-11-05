@@ -6,9 +6,9 @@
         <%# Who it is: their picture and their profile, not a bare name. %>
         <% avatar = other.profile&.avatar %>
         <% if avatar&.attached? %>
-          <%= image_tag avatar, alt: "", class: "avatar avatar--32", width: 32, height: 32, loading: "lazy" %>
+          <%= image_tag avatar, alt: "", class: "avatar", width: 32, height: 32, loading: "lazy" %>
         <% else %>
-          <%= tag.span other.display_name.to_s.first.to_s.upcase, class: "avatar-initials avatar--32",
+          <%= tag.span other.display_name.to_s.first.to_s.upcase, class: "avatar-initials", data: { size: 32 },
                                                                   aria: { hidden: true } %>
         <% end %>
         <%= tag.strong link_to(other.display_name, user_path(other)) %>

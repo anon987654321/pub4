@@ -64,9 +64,8 @@
         included. %>
     <%= render "shared/icon_sprite" if icon_sprite? %>
 <%# The header is two icons in the top corner, as brgen's is: the account (or
-    sign-in) link and the light/dark toggle. The toggle's input stays a
-    sibling of .theme-root, because the dark palette is written as
-    #dark-toggle:checked ~ .theme-root; the account link sits beside its label.
+    sign-in) link and the theme toggle. The dark palette is written as
+    :root[data-theme="dark"] .theme-root; the account link sits beside the toggle.
 
     Below it, amber's own Caprasimo mark, centred: large on the home page, where
     it is the first screen, and at a bar's size everywhere else. The viewBox is

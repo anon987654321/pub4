@@ -28,7 +28,7 @@ class FormAndOverlaySurfaceContractTest < Minitest::Test
     assert_includes CSS, "dialog::backdrop"
     assert_includes CSS, "[popover]"
     assert_includes CSS, "max-block-size: calc(100dvh"
-    assert_includes CSS, "var(--scrim-55)"
+    assert_includes CSS, "var(--scrim)"
   end
 
   def test_pre_push_regenerates_snapshots_before_publishing

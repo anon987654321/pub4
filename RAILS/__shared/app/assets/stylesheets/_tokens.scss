@@ -2,10 +2,10 @@
 
 // An app that states its own palette at an unlayered :root in both themes, as
 // brgen does, outranks every palette declaration below on every element, so it
-// forwards this file with ($palette: false) and ships none of them. $luxury is
-// amber's wardrobe extension set; nothing outside amber reads it.
+// forwards this file with ($palette: false) and ships none of them. The
+// --luxury-* wardrobe set lives in amber's application.scss, the one app that
+// reads it.
 $palette: true !default;
-$luxury: true !default;
 
 // The token foundation lives in the lowest cascade layer. Un-layered styles
 // beat layered ones regardless of source order, so an app palette written
@@ -74,25 +74,20 @@ $luxury: true !default;
     --text-extra-large: 1.5rem;
     /* design_tokens ui_polish.type_tokens.text_display */
     --text-extra-extra-large: 1.75rem;
-  /* One restrained editorial display slot from
-     MASTER/data/tokens.yml#tokens.visual_identity.display_size. Pixel-based
-     bounds are deliberate because Brgen roots at 18px; every screen uses this
-     single optional role instead of inventing a second display ladder. */
-  --text-display: clamp(40px, 6vw, 88px);
-  /* The gap between a page's sections, from the same reference: 64px on a
-     phone, opening to 160px on a wide screen. */
-  --section-rhythm: clamp(64px, 10vw, 160px);
+    /* One restrained editorial display slot from
+       MASTER/data/tokens.yml#tokens.visual_identity.display_size. Pixel-based
+       bounds are deliberate because Brgen roots at 18px; every screen uses this
+       single optional role instead of inventing a second display ladder. */
+    --text-display: clamp(40px, 6vw, 88px);
+    /* The gap between a page's sections, from the same reference: 64px on a
+       phone, opening to 160px on a wide screen. */
+    --section-rhythm: clamp(64px, 10vw, 160px);
     /* Every step here sits on design_laws.yml's 8px rhythm
        ([0,4,8,12,16,20,24,32,40,44,48,64,96]px) — steps 7/9/11/13/14/15 used to
        fill the scale out to a smooth 0.25rem stride (28/36/44/52/56/60px),
        none of which are on the rhythm. Removed rather than snapped to the
        nearest step, since nothing should be reaching for a step number that
        doesn't correspond to an allowed value. */
-    /* The half-steps. 6, 10 and 14px joined scale.space_px on 2026-09-02 because
-       67 of ScaleLint 97 off-scale findings sat exactly on them — the midpoints of
-       the scale own gaps. These are their tokens, in rem like the rest of the
-       ladder: spacing that stops growing when a reader raises their font size is a
-       worse answer than spacing that is 0.4px off a grid. */
     /* Ink over photos and video stills, the same in both themes: the image
        underneath, not the page, is what it sits on. */
     --on-media: #fff;
@@ -102,8 +97,16 @@ $luxury: true !default;
 
     --space-0-5: 0.125rem;  /* 2px  */
     --space-1: 0.25rem;
+    /* The half-steps. 6, 10 and 14px joined scale.space_px on 2026-09-02 because
+       67 of ScaleLint 97 off-scale findings sat exactly on them — the midpoints of
+       the scale own gaps. These are their tokens, in rem like the rest of the
+       ladder: spacing that stops growing when a reader raises their font size is a
+       worse answer than spacing that is 0.4px off a grid. */
+    --space-1-5: 0.375rem;  /* 6px  */
     --space-2: 0.5rem;
+    --space-2-5: 0.625rem;  /* 10px */
     --space-3: 0.75rem;
+    --space-3-5: 0.875rem;  /* 14px */
     --space-4: 1rem;
     --space-5: 1.25rem;
     --space-6: 1.5rem;
@@ -117,25 +120,25 @@ $luxury: true !default;
        moved between subapps of one site. --feed-max (600px) stays separate — that
        is the single-column reading measure, a different job. */
     --container-max: 1280px;
-/* The alpha ladder, from design_tokens system.opacity. Composed into colour
-   rather than typed as literals: rgb(from var(--text) r g b / var(--opacity-subtle))
-   gives a tint that tracks the theme, where rgba(255,255,255,.1) is a light
-   theme painted into a dark one. Named by density, so a surface picks a
-   weight instead of inventing a value.
+    /* The alpha ladder, from design_tokens system.opacity. Composed into colour
+       rather than typed as literals: rgb(from var(--text) r g b / var(--opacity-subtle))
+       gives a tint that tracks the theme, where rgba(255,255,255,.1) is a light
+       theme painted into a dark one. Named by density, so a surface picks a
+       weight instead of inventing a value.
 
-   --opacity-whisper is this family's own rung and is on no reference. It is
-   the tree's most-repeated density: six dialects paint --hover-subtle at 3%,
-   below the lightest tint either reference carries. A ladder that cannot name
-   the rung its own sheets use most is a ladder those sheets go on ignoring. */
---opacity-whisper: 0.03;
---opacity-hairline: 0.05;
---opacity-faint: 0.08;
---opacity-subtle: 0.1;
---opacity-soft: 0.12;
---opacity-medium: 0.2;
---opacity-half: 0.4;
---opacity-strong: 0.6;
---opacity-heavy: 0.8;
+       --opacity-whisper is this family's own rung and is on no reference. It is
+       the tree's most-repeated density: six dialects paint --hover-subtle at 3%,
+       below the lightest tint either reference carries. A ladder that cannot name
+       the rung its own sheets use most is a ladder those sheets go on ignoring. */
+    --opacity-whisper: 0.03;
+    --opacity-hairline: 0.05;
+    --opacity-faint: 0.08;
+    --opacity-subtle: 0.1;
+    --opacity-soft: 0.12;
+    --opacity-medium: 0.2;
+    --opacity-half: 0.4;
+    --opacity-strong: 0.6;
+    --opacity-heavy: 0.8;
     /* The control block, from design_tokens system. Height is --tap-min, which
        this tree has used for a 44px touch target since long before this block
        existed: 126 uses across the three apps, and design.tap_min is what each
@@ -189,14 +192,14 @@ $luxury: true !default;
     --ease-linear: cubic-bezier(0, 0, 1, 1);
     --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
     --ease-spring: cubic-bezier(0.32, 0.72, 0, 1);
-    /* Overlay scrims, one token per worn density. Five densities across one
-       product is the inconsistency made explicit rather than hidden — unifying
-       them is now a one-line-each edit, and a design decision, not archaeology. */
-    --scrim-45: rgb(0 0 0 / 0.45);
-    --scrim-50: rgb(0 0 0 / 0.5);
-    --scrim-55: rgb(0 0 0 / 0.55);
-    --scrim-65: rgb(0 0 0 / 0.65);
-    --scrim-72: rgb(0 0 0 / 0.72);
+    /* Overlay scrims: two densities, both on the opacity ladder above. --scrim
+       dims the page behind a dialog, a sheet or a toast; --scrim-deep covers the
+       whole page behind a first-run card (welcome onboarding). Five densities
+       (45, 50, 55, 65, 72) were one product disagreeing with itself, and their
+       digit-bearing names hid them from ScaleLint; 45-55 became --scrim at 0.6,
+       65-72 --scrim-deep at 0.8. */
+    --scrim: rgb(0 0 0 / var(--opacity-strong));
+    --scrim-deep: rgb(0 0 0 / var(--opacity-heavy));
     /* The ladder is one source. It was two: --z-brand lived in _layout_chrome
        and --z-chrome-toggle nowhere at all, so three tiers existed above
        --z-overlay that this list did not know about, and a reader sizing a new
@@ -214,26 +217,6 @@ $luxury: true !default;
     --z-skip: 2000;
     --color-primary: var(--text);
     --color-surface: var(--surface);
-
-    @if $luxury {
-      /* Luxury minimalist extensions (Aesop/Toteme/Nécessaire inspired) */
-      /* Warm neutrals, generous breathing room, refined for product/wardrobe UIs */
-      --luxury-bg: #efefef;
-      --luxury-surface: #ffffff;
-      --luxury-text: #333333;
-      --luxury-muted: #4d4d4d;
-      --luxury-border: #888888;
-      --luxury-space-extra-small: 0.5rem;
-      --luxury-space-small: 0.75rem;
-      --luxury-space-medium: 1.5rem;
-      --luxury-space-large: 2rem;
-      --luxury-space-extra-large: 3rem;
-      --luxury-font-display: clamp(1.953rem, 1.5rem + 2vw, 2.441rem);
-      --luxury-font-title: 1.563rem;
-      --luxury-font-meta: 0.875rem;
-      --luxury-letter-tight: -0.01em;
-      --luxury-line-relaxed: 1.6;
-    }
   }
 
   @if $palette {

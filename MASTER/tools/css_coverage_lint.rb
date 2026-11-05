@@ -328,8 +328,11 @@ module Operator
 #   dialog post-vote-frame section-title panel post-reading tile results-grid
 #   dating-intro total amber-page-header item-detail-grid site-legal-footer
 #   system-signal welcome-onboarding--amber star field_with_errors nav
-#   toast--success tooltip toggle
-    BASELINES = { "undefined_class" => 0, "unused_selector" => 110 }.freeze
+#   tooltip toggle
+#
+# 110 -> 109 (2026-11-05): .toast--success became .toast[data-variant="success"]
+# (shared-014), an attribute rule the census does not count as a class.
+    BASELINES = { "undefined_class" => 0, "unused_selector" => 109 }.freeze
 
     Finding = Struct.new(:kind, :name, :count, :example)
 
@@ -422,13 +425,11 @@ module Operator
     # layout. maplibregl-/ProseMirror-/trix- are vendor-runtime: the library
     # builds the node, our sheet styles it.
     #
-    # 2026-11-01: avatar--<n> is produced by the size map in _avatar
-    # ("avatar--24" => …, worn through size_class), and
-    # store-promo-art--<layout> by the art partial's spec.layout output — the
+    # 2026-11-01: store-promo-art--<layout> by the art partial's spec.layout output — the
     # campaign/tile/portrait rules are reached only through that composition.
     DYNAMIC_SEEDS = %w[vertical- monogram-- map-marker-- capsule-row--
                        occasion-card-- chip-- match-overlay maplibregl-
-                       ProseMirror- trix- avatar-- store-promo-art--].freeze
+                       ProseMirror- trix- store-promo-art--].freeze
     DYNAMIC_SUFFIXES = %w[-tokens].freeze
 
     def dynamic?(name)

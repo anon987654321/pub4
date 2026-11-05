@@ -1,8 +1,13 @@
-<input type="checkbox" id="dark-toggle" class="theme-toggle-input"
-  aria-label="<%= t("theme.toggle") %>"
+<%# One button that cycles the theme: system (follows the device and stores
+    nothing), light, dark, and back to system. theme_toggle_controller.js keeps
+    the label, the stored choice and html[data-theme] in step; the head
+    bootstrap (_theme_bootstrap) restores a stored choice before first paint. %>
+<% labels = { system: t("theme.system"), light: t("theme.light"), dark: t("theme.dark") } %>
+<button type="button" class="theme-toggle"
+  aria-label="<%= labels[:system] %>" title="<%= labels[:system] %>"
   data-controller="theme-toggle"
   data-theme-toggle-storage-key-value="<%= local_assigns.fetch(:storage_key, "pub4-theme") %>"
-  data-action="change->theme-toggle#persist">
-<label for="dark-toggle" class="theme-toggle" title="<%= t("theme.toggle") %>" aria-hidden="true">
+  data-theme-toggle-labels-value="<%= labels.to_json %>"
+  data-action="theme-toggle#cycle">
   <%= icon :sun, size: 20 %>
-</label>
+</button>

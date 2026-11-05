@@ -51,13 +51,17 @@ $compact-contexts: () !default;
     background var(--transition-fast) var(--ease-out),
     border-color var(--transition-fast) var(--ease-out),
     color var(--transition-fast) var(--ease-out),
-    transform var(--duration-m3-short) var(--ease-m3-spring);
+    transform var(--transition-fast) var(--ease-spring);
 }
 }
 
-.button:hover {
-  opacity: 0.88;
-  text-decoration: none;
+// A touch screen has no hover: a tap left .button:hover applied until the next
+// tap elsewhere, so a pressed button stayed dimmed.
+@media (hover: hover) {
+  .button:hover {
+    opacity: 0.88;
+    text-decoration: none;
+  }
 }
 
 .button:active {

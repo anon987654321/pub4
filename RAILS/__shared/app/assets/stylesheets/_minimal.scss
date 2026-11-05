@@ -305,11 +305,13 @@ footer {
   flex-shrink: 0;
 }
 
-.avatar--24 { width: 24px; height: 24px; }
-.avatar--32 { width: 32px; height: 32px; }
-.avatar--40 { width: 40px; height: 40px; }
-.avatar--48 { width: 48px; height: 48px; }
-.avatar--64 { width: 64px; height: 64px; }
+/* An avatar image takes its size from its width and height attributes. The
+   initials have none, so the partial names the step in data-size. */
+.avatar-initials[data-size="24"] { width: 24px; height: 24px; }
+.avatar-initials[data-size="32"] { width: 32px; height: 32px; }
+.avatar-initials[data-size="40"] { width: 40px; height: 40px; }
+.avatar-initials[data-size="48"] { width: 48px; height: 48px; }
+.avatar-initials[data-size="64"] { width: 64px; height: 64px; }
 
 .avatar-initials {
   background: var(--surface-elevated);

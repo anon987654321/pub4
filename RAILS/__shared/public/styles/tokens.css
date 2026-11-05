@@ -63,3 +63,19 @@
     --text-primary: var(--text);
   }
 }
+/* Spacing, easing, the touch target and the focus ring, from shared_chrome,
+   for the pages that load no app stylesheet (errors.css). Its own block, so
+   the family slice master embeds (the first :root) stays the palette. */
+:root {
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-12: 3rem;
+  --space-16: 4rem;
+  --ease-out: cubic-bezier(0.16,1,0.3,1);
+  --ease-spring: cubic-bezier(0.32,0.72,0,1);
+  --tap-min: 44px;
+  --focus-ring: 2px solid var(--accent, currentColor);
+}

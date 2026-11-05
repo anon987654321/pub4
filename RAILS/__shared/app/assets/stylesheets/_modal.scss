@@ -11,13 +11,13 @@
 }
 
 .dialog::backdrop {
-  background: var(--scrim-50);
+  background: var(--scrim);
 }
 
 .mobile-sheet-backdrop {
   position: fixed;
   inset: 0;
-  background: var(--scrim-45);
+  background: var(--scrim);
   opacity: 0;
   pointer-events: none;
   transition: opacity var(--transition-fast) var(--ease-out);
@@ -49,8 +49,8 @@
      goes, so closing still animates. */
   visibility: hidden;
   transition:
-    transform var(--duration-m3-short) var(--ease-spring),
-    visibility 0s linear var(--duration-m3-short);
+    transform var(--transition-fast) var(--ease-spring),
+    visibility 0s linear var(--transition-fast);
   z-index: calc(var(--z-nav) + 2);
   display: grid;
   gap: var(--space-4);
@@ -59,7 +59,7 @@
 .mobile-sheet[data-level="2"] {
   visibility: visible;
   transition:
-    transform var(--duration-m3-short) var(--ease-spring),
+    transform var(--transition-fast) var(--ease-spring),
     visibility 0s;
 }
 
@@ -87,7 +87,7 @@
 
 .mobile-sheet-links a:hover { background: var(--hover); }
 
-.cookie-purpose--necessary {
+.cookie-purpose[data-purpose="necessary"] {
   color: var(--text-secondary);
 }
 

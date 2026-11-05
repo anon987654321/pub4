@@ -23,7 +23,12 @@ export default class extends Controller {
     this.element.addEventListener("input", this.onInput)
     this.element.addEventListener("change", this.onInput)
     window.addEventListener("online", this.onOnline)
-    this.intervalId = window.setInterval(() => this.flush(), this.intervalValue)
+    // A hidden tab saves once as it is hidden, then waits: the interval runs
+    // only while the page is visible, so a backgrounded draft costs no PATCH
+    // every few seconds and no wake-ups on a phone.
+    this.onVisibility = () => (document.hidden ? this.pause() : this.resume())
+    document.addEventListener("visibilitychange", this.onVisibility)
+    if (!document.hidden) this.resume()
     this.restore()
   }
 
@@ -31,7 +36,23 @@ export default class extends Controller {
     this.element.removeEventListener("input", this.onInput)
     this.element.removeEventListener("change", this.onInput)
     window.removeEventListener("online", this.onOnline)
+    document.removeEventListener("visibilitychange", this.onVisibility)
+    this.stopInterval()
+  }
+
+  resume() {
+    if (this.intervalId) return
+    this.intervalId = window.setInterval(() => this.flush(), this.intervalValue)
+  }
+
+  pause() {
+    this.stopInterval()
+    this.flush()
+  }
+
+  stopInterval() {
     if (this.intervalId) window.clearInterval(this.intervalId)
+    this.intervalId = null
   }
 
   markDirty() {

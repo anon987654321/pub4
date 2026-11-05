@@ -2,11 +2,14 @@ import { Controller } from "@hotwired/stimulus"
 
 export default class extends Controller {
   static targets = ["form", "input", "status"]
+  // The three status lines come from the markup, in the page's language
+  // (t("status.updating_results") and the rest). A form that names none
+  // announces nothing rather than English on a Norwegian page.
   static values = {
     delay: { type: Number, default: 300 },
-    updating: { type: String, default: "Updating results…" },
-    updated: { type: String, default: "Results updated" },
-    failed: { type: String, default: "Search could not be completed" }
+    updating: String,
+    updated: String,
+    failed: String
   }
 
   connect() {
@@ -47,8 +50,12 @@ export default class extends Controller {
     action.searchParams.set("format", "turbo_stream")
     this.formTarget.action = action.pathname + action.search
     this.formTarget.setAttribute("aria-busy", "true")
-    if (this.hasStatusTarget) this.statusTarget.textContent = this.updatingValue
+    this.announce(this.updatingValue)
     this.formTarget.requestSubmit()
+  }
+
+  announce(text) {
+    if (this.hasStatusTarget && text) this.statusTarget.textContent = text
   }
 
   complete(event) {
@@ -56,9 +63,7 @@ export default class extends Controller {
 
     this.formTarget.removeAttribute("aria-busy")
     const succeeded = event.detail?.success !== false
-    if (this.hasStatusTarget) {
-      this.statusTarget.textContent = succeeded ? this.updatedValue : this.failedValue
-    }
+    this.announce(succeeded ? this.updatedValue : this.failedValue)
 
     const shell = this.element.classList.contains("search") ? this.element : this.element.closest(".search")
     if (shell) {

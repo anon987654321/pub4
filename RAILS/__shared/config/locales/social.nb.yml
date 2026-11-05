@@ -137,7 +137,9 @@ nb:
     loading_results: "Laster resultater…"
   theme:
     region: "Tema"
-    toggle: "Bytt til lyst tema"
+    system: "Tema: som enheten"
+    light: "Tema: lyst"
+    dark: "Tema: mørkt"
   master:
     title: "AI"
     open: "Åpne"
@@ -225,6 +227,8 @@ nb:
   # flash: block without colliding, and because the call sites say
   # t("shared.flash.…") — appended at top level they resolved to nothing at all.
   shared:
+    avatar:
+      alt: "Profilbilde"
     advertisement: "Annonse"
     reported: "Rapportert"
     read_more: "Les mer"

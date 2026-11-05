@@ -37,12 +37,6 @@
   margin: 0.75rem 16px;
 }
 
-.theme-toggle-input {
-  position: fixed;
-  opacity: 0;
-  pointer-events: none;
-}
-
 /* Theme control — icon only, no circular sphere/chip behind it. The padding
    is the invisible half of --tap-min: it paints nothing (no background, no
    border) and the inset compensation keeps the icon exactly where it was,
@@ -68,8 +62,6 @@
   border: none !important;
   border-radius: 0 !important;
   background: transparent !important;
-  /* autofix: removed box-shadow (flat UI) */
-  outline: none !important;
   color: var(--text);
   cursor: pointer;
   opacity: 0.75;
@@ -80,8 +72,6 @@
 .theme-toggle:focus-visible {
   background: transparent !important;
   border: none !important;
-  outline: none !important;
-  /* autofix: removed box-shadow (flat UI) */
   opacity: 1;
   text-decoration: none;
 }

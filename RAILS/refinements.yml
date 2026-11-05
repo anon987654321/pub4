@@ -5941,7 +5941,7 @@ items:
   path: RAILS/__shared/app/assets/stylesheets/_focus_ring.scss
   item: Convert the listed outline suppressors (.tab-item, .feed-action, .theme-toggle…)
     to :focus:not(:focus-visible) resets and remove their !important overrides.
-  status: open
+  status: done
 - id: shared-002
   app: shared
   area: accessibility
@@ -5971,7 +5971,7 @@ items:
   size: S
   path: RAILS/__shared/frontend/theme_toggle_controller.js
   item: Give the theme toggle a third "system" state that clears the stored choice.
-  status: open
+  status: done
 - id: shared-006
   app: shared
   area: caching
@@ -6018,7 +6018,7 @@ items:
   size: S
   path: RAILS/__shared/app/assets/stylesheets/_buttons.scss
   item: 'Wrap .button:hover in @media (hover: hover).'
-  status: open
+  status: done
 - id: shared-012
   app: shared
   area: design
@@ -6026,7 +6026,7 @@ items:
   path: RAILS/__shared/app/views/shared/_avatar.html.erb
   item: Replace the avatar--24…avatar--64 size classes with width/height attributes
     and translate the "Avatar" alt fallback.
-  status: open
+  status: done
 - id: shared-013
   app: shared
   area: design
@@ -6042,7 +6042,7 @@ items:
   path: RAILS/__shared/app/views/shared/_toast.html.erb
   item: Replace BEM double-dash modifiers (toast--success, cookie-purpose--necessary,
     avatar--40) with data attributes and plain kebab-case names.
-  status: open
+  status: done
 - id: shared-015
   app: shared
   area: design
@@ -6050,7 +6050,7 @@ items:
   path: RAILS/__shared/frontend/theme_meta.js
   item: Update meta theme-color when theme_toggle sets data-theme; theme_meta follows
     only prefers-color-scheme.
-  status: open
+  status: done
 - id: shared-016
   app: shared
   area: design
@@ -6081,7 +6081,7 @@ items:
   path: RAILS/__shared/frontend/live_search_controller.js
   item: Remove the English defaults for the status values ("Updating results…") and
     require translated values from the markup.
-  status: open
+  status: done
 - id: shared-020
   app: shared
   area: i18n
@@ -6121,7 +6121,7 @@ items:
   path: RAILS/__shared/app/assets/stylesheets/_animations.scss
   item: Fold --ease-m3-spring and --duration-m3-short into the main motion tokens;
     the overshoot spring on .button:active is not flat.
-  status: open
+  status: done
 - id: shared-025
   app: shared
   area: motion
@@ -6144,7 +6144,7 @@ items:
   path: RAILS/__shared/frontend/autosave_controller.js
   item: Pause the autosave interval while the document is hidden and flush once on
     visibilitychange.
-  status: open
+  status: done
 - id: shared-028
   app: shared
   area: performance
@@ -6168,7 +6168,7 @@ items:
   path: RAILS/__shared/frontend/cookie_consent.js
   item: 'Write the consent cookie on the registrable domain, as the session cookie
     is (domain: :all), so a choice made on brgen.no also covers its subdomains.'
-  status: open
+  status: done
 - id: shared-031
   app: shared
   area: pwa
@@ -6287,7 +6287,7 @@ items:
   path: RAILS/__shared/app/assets/stylesheets/_tokens.scss
   item: Fix the indentation of the :root block; --text-display, --section-rhythm and
     the opacity ladder are outdented.
-  status: open
+  status: done
 - id: shared-046
   app: shared
   area: tokens
@@ -6295,21 +6295,21 @@ items:
   path: RAILS/__shared/app/assets/stylesheets/_tokens.scss
   item: Declare the 6, 10 and 14 px half-step spacing tokens; the comment says they
     joined the scale but no half-step spacing tokens (1.5, 2.5, 3.5) exist.
-  status: open
+  status: done
 - id: shared-047
   app: shared
   area: tokens
   size: S
   path: RAILS/__shared/app/assets/stylesheets/_tokens.scss
   item: Reduce the five scrim tokens (--scrim-45 to --scrim-72) to two.
-  status: open
+  status: done
 - id: shared-048
   app: shared
   area: tokens
   size: S
   path: RAILS/__shared/app/assets/stylesheets/_tokens.scss
   item: Move the --luxury-* tokens from the shared token layer into amber.
-  status: open
+  status: done
 - id: shared-049
   app: shared
   area: tokens
@@ -6317,7 +6317,7 @@ items:
   path: RAILS/__shared/public/styles/tokens.css
   item: Generate spacing, easing and focus-ring tokens into public/styles/tokens.css,
     and use them in errors.css instead of its hard-coded 4px radius and 44px height.
-  status: open
+  status: done
 - id: shared-050
   app: shared
   area: typography
@@ -6325,7 +6325,7 @@ items:
   path: RAILS/__shared/app/assets/stylesheets/_fonts.scss
   item: Move the Source Serif 4 @font-face into amber's stylesheet so serif faces
     are declared only where that dialect uses them.
-  status: open
+  status: done
 - id: shared-051
   app: shared
   area: typography
@@ -6334,7 +6334,7 @@ items:
   item: Remove the static Source Sans 3 and Source Code Pro faces that duplicate the
     variable files in public/fonts/source-fonts.css; Source Sans is not in --font
     at all.
-  status: open
+  status: done
 - id: shared-052
   app: shared
   area: typography
@@ -6342,4 +6342,4 @@ items:
   path: RAILS/__shared/app/assets/stylesheets/_tokens.scss
   item: Add a --font-mono token and choose one bundled mono; JetBrains Mono Nerd Font
     and Source Code Pro are both shipped and master repeats its own stack.
-  status: open
+  status: done

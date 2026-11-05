@@ -114,7 +114,8 @@ export default class extends Controller {
   _notify(message) {
     const stack = document.querySelector(".toast-stack") || this._createToastStack()
     const toast = document.createElement("div")
-    toast.className = "toast toast--error"
+    toast.className = "toast"
+    toast.dataset.variant = "error"
     toast.setAttribute("role", "alert")
     toast.setAttribute("aria-live", "assertive")
     toast.dataset.controller = "toast"

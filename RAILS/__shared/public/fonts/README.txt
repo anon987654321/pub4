@@ -1,7 +1,6 @@
-Source Sans 3 and Source Code Pro are distributed under the SIL Open Font License 1.1.
-Original projects:
+Source Sans 3 is distributed under the SIL Open Font License 1.1.
+Original project:
 - https://github.com/adobe-fonts/source-sans
-- https://github.com/adobe-fonts/source-code-pro
 
-Upstream license texts are stored as SourceSans3-OFL.txt and SourceCodePro-OFL.txt.
+The upstream license text is stored as SourceSans3-OFL.txt.
 Font assets are self-hosted for reliable rendering without external font CDNs.

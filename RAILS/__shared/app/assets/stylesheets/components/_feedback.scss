@@ -48,8 +48,8 @@
 }
 
 /* One variant: a toast carries a confirmation, and an error stays in the page. */
-.toast--success { border-inline-start: 3px solid var(--color-success); }
-.toast--error { border-inline-start: 3px solid var(--color-danger); }
+.toast[data-variant="success"] { border-inline-start: 3px solid var(--color-success); }
+.toast[data-variant="error"] { border-inline-start: 3px solid var(--color-danger); }
 
 article {
   contain: content;
@@ -67,7 +67,7 @@ article {
 }
 
 .dialog::backdrop {
-  background: var(--scrim-50);
+  background: var(--scrim);
 }
 
 .tooltip {

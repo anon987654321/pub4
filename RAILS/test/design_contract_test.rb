@@ -261,7 +261,9 @@ def test_brgen_old_dialect_outranks_the_social_stack
                  "a general focus reset must not erase the keyboard-visible state")
 
     ring = File.read(File.join(SHARED, "app", "assets", "stylesheets", "_focus_ring.scss"), encoding: "UTF-8")
-    assert_includes ring, "outline: var(--focus-ring, 2px solid Highlight) !important;"
+    assert_includes ring, "outline: var(--focus-ring, 2px solid Highlight);"
+    # No component clears the outline, so the ring needs no !important list (shared-001).
+    refute_match(/!important\s*;/, ring)
     assert_includes ring, "outline-offset: 2px;"
   end
 

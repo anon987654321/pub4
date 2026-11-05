@@ -639,7 +639,7 @@ body.vertical-messenger .layout > main#main-content > section.messenger-window {
   resize: none;
 }
 
-.messenger-composer-field textarea:focus { outline: 0; }
+.messenger-composer-field textarea:focus:not(:focus-visible) { outline: 0; }
 
 // The counter stays. character_counter_controller counts DOWN from maxlength,
 // so it reads 500 on an empty box and 0 at the limit — and the field carries a

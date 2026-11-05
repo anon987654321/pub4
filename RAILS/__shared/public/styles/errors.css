@@ -1,3 +1,6 @@
+/* The spacing, control and focus tokens, generated from MASTER tokens. */
+@import url("/styles/tokens.css");
+
 *, *::before, *::after { box-sizing: border-box; }
 * { margin: 0; }
 
@@ -6,6 +9,7 @@ html { font-size: 16px; }
 /* The light ground every app but bsdports renders, from design_tokens.yml `light`.
    A page on another ground sets these on its own :root; bsdports does. */
 :root {
+  color-scheme: light;
   --bg: #efefef;
   --text: #333333;
   --text-secondary: #4d4d4d;
@@ -36,7 +40,7 @@ a {
 }
 
 :focus-visible {
-  outline: 2px solid var(--accent);
+  outline: var(--focus-ring);
   outline-offset: 3px;
 }
 
@@ -62,20 +66,20 @@ main {
 main article { width: min(100%, 30em); }
 main article p { font-size: 87.5%; color: var(--text-secondary); }
 main article p[lang="en"] { margin-top: 0.5rem; font-size: 0.9em; }
-main header h1 { font-size: 1.5rem; margin-bottom: 0.75rem; }
+main header h1 { font-size: 1.5rem; margin-bottom: var(--space-3); }
 
 .kicker { color: var(--text-secondary); font-size: 0.875rem; margin-bottom: 0.5rem; }
 
-.error-actions { display: flex; flex-wrap: wrap; gap: 0.75rem; margin-top: 1.25rem; justify-content: center; }
+.error-actions { display: flex; flex-wrap: wrap; gap: var(--space-3); margin-top: 1.25rem; justify-content: center; }
 
 .error-actions a,
 .error-actions button {
   display: inline-flex;
   align-items: center;
-  min-height: 44px;
-  padding: 0.5rem 1rem;
+  min-height: var(--tap-min);
+  padding: var(--space-2) 1rem;
   border: 1px solid var(--border);
-  border-radius: 4px;
+  border-radius: var(--radius-extra-small);
   text-decoration: none;
   background: transparent;
   color: inherit;

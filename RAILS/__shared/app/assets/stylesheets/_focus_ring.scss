@@ -24,39 +24,12 @@
   outline-offset: 2px;
 }
 
-/* Components that clear the outline so a mouse click does not ring, and then
- * never restore it for the keyboard. Listed explicitly because most carry
- * `outline: none !important`, which a plain :focus-visible rule cannot beat.
- * Keep this list shrinking: the right fix in each case is for the component to
- * scope its reset to `:focus:not(:focus-visible)` instead.
+/* No component clears the outline any more. The ones that did (.theme-toggle,
+ * .edge-grip, .tiptap_area, the search and compose fields, the brgen wordmark)
+ * either set nothing or reset only `:focus:not(:focus-visible)`: a mouse click
+ * stays quiet and the rule above draws the keyboard ring, with no !important
+ * list to keep in step. A new reset belongs in that same form.
  */
-.edge-grip:focus-visible,
-.brgen-logo-mark:focus-visible,
-.theme-toggle:focus-visible,
-.tiptap_area:focus-visible,
-.compose-input:focus-visible,
-.amber-compose-input:focus-visible,
-.nav-search-input:focus-visible,
-.search input:focus-visible,
-.nearby-chat-widget-tab:focus-visible,
-.nearby-chat-widget-close:focus-visible,
-.nearby-chat-widget-linkish:focus-visible,
-.tab-bar-peel:focus-visible,
-.tab-bar-coach-dismiss:focus-visible,
-.tab-bar-coach-show:focus-visible,
-.tab-item:focus-visible,
-.ai-embed-open:focus-visible,
-.comment-reply-toggle:focus-visible,
-.comment-delete:focus-visible,
-.feed-action:focus-visible,
-input:focus-visible,
-textarea:focus-visible,
-button:focus-visible,
-a:focus-visible,
-[contenteditable]:focus-visible {
-  outline: var(--focus-ring, 2px solid Highlight) !important; /* scan: intentional — paints the focus indicator the flat armor must never suppress */
-  outline-offset: 2px;
-}
 
 /* A focusable element that is visually hidden cannot show a ring, so no CSS rule
  * here can fix one — the remedy is to take it out of the tab order at the markup

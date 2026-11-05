@@ -138,7 +138,9 @@ en:
     loading_results: "Loading results…"
   theme:
     region: "Theme"
-    toggle: "Toggle light theme"
+    system: "Theme: device"
+    light: "Theme: light"
+    dark: "Theme: dark"
   master:
     title: "AI"
     open: "Open"
@@ -227,6 +229,8 @@ en:
   # flash: block without colliding, and because the call sites say
   # t("shared.flash.…") — appended at top level they resolved to nothing at all.
   shared:
+    avatar:
+      alt: "Profile picture"
     advertisement: "Advertisement"
     reported: "Reported"
     read_more: "Read more"

@@ -3,7 +3,7 @@
 <%= turbo_stream_from @user %>
 
 <header class="profile-header">
-  <%= image_tag @user.avatar_url, alt: "", width: 64, height: 64, class: "avatar avatar--64" %>
+  <%= image_tag @user.avatar_url, alt: "", width: 64, height: 64, class: "avatar" %>
   <%= tag.h1 @user.display_name %>
   <%= tag.p @user.bio, class: "profile-bio" if @user.bio.present? %>
   <p class="meta-facts">

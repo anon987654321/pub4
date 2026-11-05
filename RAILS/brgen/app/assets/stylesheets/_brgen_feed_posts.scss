@@ -107,7 +107,6 @@ input[type=text], input[type=email], input[type=password], input[type=number], i
   color: var(--text);
   font-size: var(--text-base);
   font-family: inherit;
-  outline: none;
   transition: background var(--transition-fast) var(--ease-out);
 }
 

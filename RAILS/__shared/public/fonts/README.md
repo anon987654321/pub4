@@ -10,12 +10,6 @@ Upstream: https://github.com/adobe-fonts/source-sans
 Files: `WOFF2/VF/SourceSans3VF-Upright.ttf.woff2`, `WOFF2/VF/SourceSans3VF-Italic.ttf.woff2`  
 License: `SourceSans3-OFL.txt` (SIL Open Font License 1.1).
 
-## Source Code Pro
+JetBrainsMono Nerd Font is the one bundled monospace face (`--font-mono`).
 
-Monospaced variable font for MASTER web and coding surfaces, weights 200 through 900, normal and italic.
-
-Upstream: https://github.com/adobe-fonts/source-code-pro  
-Files: `WOFF2/VF/SourceCodeVF-Upright.ttf.woff2`, `WOFF2/VF/SourceCodeVF-Italic.ttf.woff2`  
-License: `SourceCodePro-OFL.txt` (SIL Open Font License 1.1).
-
-Keep both license texts with the font binaries in source distributions and deployments.
+Keep the license text with the font binaries in source distributions and deployments.

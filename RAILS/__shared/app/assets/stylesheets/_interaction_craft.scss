@@ -3,7 +3,7 @@
 .interaction-press {
   touch-action: manipulation;
   transition:
-    transform var(--duration-m3-short) var(--ease-m3-spring),
+    transform var(--transition-fast) var(--ease-spring),
     opacity var(--transition-fast) var(--ease-out);
 }
 
@@ -36,7 +36,7 @@
 }
 
 .interaction-success[data-state="success"] .interaction-check {
-  animation: interaction-success-check var(--duration-m3-short) var(--ease-m3-spring) forwards;
+  animation: interaction-success-check var(--transition-fast) var(--ease-spring) forwards;
 }
 
 @keyframes interaction-success-check {
@@ -88,7 +88,7 @@
 }
 
 .interaction-stateful[data-interaction-state="confirmed"] {
-  animation: interaction-confirmed var(--duration-m3-short) var(--ease-m3-spring);
+  animation: interaction-confirmed var(--transition-fast) var(--ease-spring);
 }
 
 .interaction-stateful[data-interaction-state="error"] {

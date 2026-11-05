@@ -32,7 +32,7 @@ class TestRailsInteractionCraft < Minitest::Test
   def test_press_feedback_is_compositor_safe_and_touch_friendly
     css = File.read(CRAFT)
     assert_includes css, "touch-action: manipulation;"
-    assert_includes css, "transform var(--duration-m3-short)"
+    assert_includes css, "transform var(--transition-fast)"
     assert_includes css, "@media (prefers-reduced-motion: reduce)"
     assert_includes css, "stroke-dashoffset: 0;"
     refute_match(/box-shadow\s*:/, css)
@@ -42,14 +42,15 @@ class TestRailsInteractionCraft < Minitest::Test
   def test_buttons_use_early_physical_feedback_tokens
     css = File.read(BUTTONS)
     assert_includes css, "touch-action: manipulation;"
-    assert_includes css, "transform var(--duration-m3-short) var(--ease-m3-spring)"
+    # The main motion tokens; the M3 spring overshot (shared-024).
+    assert_includes css, "transform var(--transition-fast) var(--ease-spring)"
     assert_includes css, ".button:active"
   end
 
   def test_bottom_sheet_uses_shared_spring_tokens_and_pointer_capture
     css = File.read(MODAL)
     js = File.read(SHEET)
-    assert_includes css, "transform var(--duration-m3-short) var(--ease-spring)"
+    assert_includes css, "transform var(--transition-fast) var(--ease-spring)"
     assert_includes js, "setPointerCapture"
     assert_includes js, "releasePointerCapture"
   end

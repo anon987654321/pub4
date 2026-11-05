@@ -3,7 +3,7 @@
     the first letter. Decorative either way; the name beside it is the label.
     locals: person (or nil), name, css_class, size %>
 <% if person && !person.guest? && person.deleted_at.blank? %>
-  <%= image_tag person.avatar_url, alt: "", width: size, height: size, class: "#{css_class} avatar avatar--#{size}",
+  <%= image_tag person.avatar_url, alt: "", width: size, height: size, class: "#{css_class} avatar",
         aria: { hidden: true } %>
 <% else %>
   <%= tag.span name.to_s.first&.upcase || "?", class: css_class, aria: { hidden: true } %>
