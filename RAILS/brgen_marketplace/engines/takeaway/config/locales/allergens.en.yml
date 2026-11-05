@@ -1,0 +1,32 @@
+---
+en:
+  takeaway:
+    allergens_unstated: Allergens not stated. Ask the restaurant before you order.
+    allergens_none: Contains none of the 14 allergens.
+    allergens_list: "Allergens: %{list}"
+    allergens_edit: Allergens
+    allergens_save: Save allergens
+    allergens_legend: Allergens in this dish
+    allergens_help: Tick each of the 14 allergens the dish contains.
+    allergens_stated: I have checked the allergens for this dish
+    allergens_owner_note:
+      one: One dish has no allergen information. Customers see "not stated" until you fill it in.
+      other: "%{count} dishes have no allergen information. Customers see \"not stated\" until you fill it in."
+    allergen_names:
+      gluten: cereals containing gluten
+      crustaceans: crustaceans
+      eggs: eggs
+      fish: fish
+      peanuts: peanuts
+      soybeans: soybeans
+      milk: milk
+      nuts: nuts
+      celery: celery
+      mustard: mustard
+      sesame: sesame seeds
+      sulphites: sulphur dioxide and sulphites
+      lupin: lupin
+      molluscs: molluscs
+  flash:
+    takeaway:
+      allergens_saved: The allergens are saved.

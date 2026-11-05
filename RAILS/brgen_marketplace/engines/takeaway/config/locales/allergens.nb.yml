@@ -1,0 +1,32 @@
+---
+nb:
+  takeaway:
+    allergens_unstated: Allergener er ikke oppgitt. Spør restauranten før du bestiller.
+    allergens_none: Inneholder ingen av de 14 allergenene.
+    allergens_list: "Allergener: %{list}"
+    allergens_edit: Allergener
+    allergens_save: Lagre allergener
+    allergens_legend: Allergener i retten
+    allergens_help: Kryss av for hvert av de 14 allergenene retten inneholder.
+    allergens_stated: Jeg har sjekket allergenene for denne retten
+    allergens_owner_note:
+      one: Én rett mangler allergeninformasjon. Kunder ser «ikke oppgitt» til du fyller den inn.
+      other: "%{count} retter mangler allergeninformasjon. Kunder ser «ikke oppgitt» til du fyller den inn."
+    allergen_names:
+      gluten: korn med gluten
+      crustaceans: skalldyr
+      eggs: egg
+      fish: fisk
+      peanuts: peanøtter
+      soybeans: soya
+      milk: melk
+      nuts: nøtter
+      celery: selleri
+      mustard: sennep
+      sesame: sesamfrø
+      sulphites: svoveldioksid og sulfitt
+      lupin: lupin
+      molluscs: bløtdyr
+  flash:
+    takeaway:
+      allergens_saved: Allergenene er lagret.

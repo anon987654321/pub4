@@ -6,6 +6,7 @@ class Takeaway::MenuItemsController < Takeaway::BaseController
 
   def create
     attributes = item_params.to_h.symbolize_keys
+    attributes[:allergens] = Takeaway::MenuItem.allergens_from(params.fetch(:takeaway_menu_item, {}))
     category_name = attributes.delete(:menu_category_name).to_s.strip
     @item = @restaurant.menu_items.build(attributes)
 
@@ -26,6 +27,17 @@ class Takeaway::MenuItemsController < Takeaway::BaseController
     saved ?
       redirect_to(restaurant_path(@restaurant), notice: t("flash.takeaway.menu_item_added")) :
       redirect_to(restaurant_path(@restaurant), alert: @item.errors.full_messages.to_sentence)
+  end
+
+  # The kitchen states (or corrects) what a dish contains.
+  def update
+    item = @restaurant.menu_items.find(params[:id])
+    if item.update(allergens: Takeaway::MenuItem.allergens_from(params.fetch(:takeaway_menu_item, {})))
+      redirect_to restaurant_path(@restaurant, anchor: "menu"), notice: t("flash.takeaway.allergens_saved")
+    else
+      problems = item.errors.full_messages
+      redirect_to restaurant_path(@restaurant, anchor: "menu"), alert: problems.to_sentence
+    end
   end
 
   def destroy

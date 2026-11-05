@@ -6,7 +6,7 @@ Takeaway::Engine.routes.draw do
     root "restaurants#index"
     resources :restaurants do
       resource :favorite_restaurant, only: %i[create destroy]
-      resources :menu_items, only: %i[create destroy]
+      resources :menu_items, only: %i[create update destroy]
       resources :orders, only: %i[new create]
       resources :reviews, only: %i[create]
     end

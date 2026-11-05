@@ -1666,6 +1666,7 @@ ActiveRecord::Schema[8.2].define(version: 2026_11_05_160000) do
   end
 
   create_table "takeaway_menu_items", force: :cascade do |t|
+    t.text "allergens"
     t.boolean "available", default: true, null: false
     t.datetime "created_at", null: false
     t.text "description"

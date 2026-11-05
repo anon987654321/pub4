@@ -1,0 +1,21 @@
+<%# The kitchen's allergen declaration: the fourteen boxes and a box saying it
+    has checked them. Without that second box the dish stays "not stated", so
+    an untouched form never claims a dish is free of everything. %>
+<fieldset class="menu-item-allergen-fields">
+  <%= tag.legend t("takeaway.allergens_legend") %>
+  <%= tag.p t("takeaway.allergens_help"), class: "form-help" %>
+  <%= hidden_field_tag "takeaway_menu_item[allergens][]", "", id: nil %>
+  <% item.allergen_choices.each do |key, contained| %>
+    <% box_id = "allergen_#{item.id || 'new'}_#{key}" %>
+    <div class="field field--check">
+      <%= check_box_tag "takeaway_menu_item[allergens][]", key, contained, id: box_id %>
+      <%= label_tag box_id, t("takeaway.allergen_names.#{key}") %>
+    </div>
+  <% end %>
+  <% stated_id = "allergens_stated_#{item.id || 'new'}" %>
+  <div class="field field--check">
+    <%= hidden_field_tag "takeaway_menu_item[allergens_stated]", "0", id: nil %>
+    <%= check_box_tag "takeaway_menu_item[allergens_stated]", "1", item.allergens_stated?, id: stated_id %>
+    <%= label_tag stated_id, t("takeaway.allergens_stated") %>
+  </div>
+</fieldset>

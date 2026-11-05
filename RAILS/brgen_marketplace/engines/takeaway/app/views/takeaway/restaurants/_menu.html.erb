@@ -2,6 +2,12 @@
     tile, price first. Only dishes on offer reach this list. %>
 <section id="menu" aria-labelledby="menu-heading">
   <%= tag.h2 t("takeaway.menu"), id: "menu-heading", class: "store-heading" %>
+  <%# The kitchen is told which dishes still lack allergen information; the
+      diner sees "not stated" on those dishes rather than nothing. %>
+  <% if authenticated? && @restaurant.owner?(Current.user) %>
+    <% unstated = @menu_items.reject(&:allergens_stated?).size %>
+    <%= tag.p t("takeaway.allergens_owner_note", count: unstated), class: "hint", role: "note" if unstated.positive? %>
+  <% end %>
   <% if @menu_items.empty? %>
     <%= render "shared/empty_state",
           title: t("empty.no_menu"),
@@ -30,6 +36,17 @@
                   <%= tag.p item.description, class: "deal-meta deal-meta--clamp" if item.description.present? %>
                   <%= tag.span t("takeaway.vegetarian"), class: "store-badge" if item.vegetarian? %>
                   <%= tag.span t("takeaway.vegan"), class: "store-badge" if item.vegan? %>
+                  <%= render "takeaway/menu_items/allergens", item: item %>
+                  <% if authenticated? && @restaurant.owner?(Current.user) %>
+                    <details class="menu-item-allergens-edit">
+                      <summary><%= t("takeaway.allergens_edit") %></summary>
+                      <%= form_with scope: :takeaway_menu_item, method: :patch,
+                                    url: restaurant_menu_item_path(@restaurant, item) do |af| %>
+                        <%= render "takeaway/menu_items/allergen_fields", f: af, item: item %>
+                        <%= af.submit t("takeaway.allergens_save"), class: "button button-small" %>
+                      <% end %>
+                    </details>
+                  <% end %>
                   <% if Current.user.present? %>
                     <%= number_field_tag "takeaway_order[items][#{item.id}]", 0, min: 0, class: "qty-field", aria: { label: t("takeaway.qty_for", name: item.name) } %>
                   <% end %>

@@ -3786,7 +3786,7 @@ items:
   path: RAILS/brgen_marketplace/engines/takeaway/app/models/takeaway/menu_item.rb
   item: Add the 14 EU allergens as a field on menu items with a list on the menu and
     order form, which Norwegian food rules require for food sold online.
-  status: open
+  status: done
 - id: brgen-350
   app: brgen
   area: takeaway

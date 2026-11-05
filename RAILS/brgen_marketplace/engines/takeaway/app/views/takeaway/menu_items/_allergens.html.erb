@@ -1,0 +1,9 @@
+<%# What a dish contains of the fourteen allergens, as the kitchen stated it.
+    Unstated is said out loud: an empty line would read as "none". %>
+<% if !item.allergens_stated? %>
+  <%= tag.p t("takeaway.allergens_unstated"), class: "deal-meta menu-item-allergens" %>
+<% elsif item.allergen_keys.empty? %>
+  <%= tag.p t("takeaway.allergens_none"), class: "deal-meta menu-item-allergens" %>
+<% else %>
+  <%= tag.p t("takeaway.allergens_list", list: item.allergen_sentence), class: "deal-meta menu-item-allergens" %>
+<% end %>

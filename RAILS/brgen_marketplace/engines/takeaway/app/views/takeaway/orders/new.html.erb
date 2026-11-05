@@ -43,6 +43,7 @@
               <% if item.vegetarian? %> · <%= t("takeaway.vegetarian") %><% end %>
               <% if item.vegan? %> · <%= t("takeaway.vegan") %><% end %>
             </p>
+            <%= render "takeaway/menu_items/allergens", item: item %>
           </hgroup>
           <div class="field">
             <%= label_tag "takeaway_order_items_#{item.id}", t("takeaway.qty_for", name: item.name) %>

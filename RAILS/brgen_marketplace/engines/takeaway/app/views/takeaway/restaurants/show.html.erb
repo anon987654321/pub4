@@ -105,6 +105,7 @@
         <div class="field field--check"><%= f.check_box :available, checked: true %><%= f.label :available %></div>
         <div class="field field--check"><%= f.check_box :vegetarian %><%= f.label :vegetarian %></div>
         <div class="field field--check"><%= f.check_box :vegan %><%= f.label :vegan %></div>
+        <%= render "takeaway/menu_items/allergen_fields", f: f, item: Takeaway::MenuItem.new %>
         <div class="field"><%= f.submit t("takeaway.add"), class: "button button-primary button-small" %></div>
       <% end %>
     </div>
