@@ -32,7 +32,12 @@ export default class extends Controller {
     after: { type: Number, default: 0 },
     // People the reader has blocked. The city stream is rendered for nobody,
     // so their new cards arrive too and are dropped here.
-    hiddenAuthors: { type: Array, default: [] }
+    hiddenAuthors: { type: Array, default: [] },
+    // The neighbourhood the feed is filtered to (0 for the whole city) and
+    // whether it is the media wall. The stream carries the whole city, so a
+    // staged card outside either is not a new post for this feed.
+    neighborhood: { type: Number, default: 0 },
+    media: { type: Boolean, default: false }
   }
 
   connect() {
@@ -111,8 +116,12 @@ export default class extends Controller {
   }
 
   hidden(card) {
-    const author = Number(card.dataset.authorId)
-    return Boolean(author) && this.hiddenAuthorsValue.includes(author)
+    const { authorId, neighborhoodId, media } = card.dataset
+    const author = Number(authorId)
+    if (author && this.hiddenAuthorsValue.includes(author)) return true
+    if (this.neighborhoodValue && Number(neighborhoodId) !== this.neighborhoodValue) return true
+
+    return this.mediaValue && media !== "true"
   }
 
   inFeed(card) {

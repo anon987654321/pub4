@@ -1812,7 +1812,7 @@ items:
   path: RAILS/brgen/app/javascript/controllers/feed_updates_controller.js
   item: Skip pending posts that do not match the active neighborhood filter or media
     view before counting them in the chip.
-  status: open
+  status: done
 - id: brgen-113
   app: brgen
   area: feed

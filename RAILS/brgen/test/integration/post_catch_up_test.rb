@@ -47,6 +47,20 @@ class PostCatchUpTest < ActionDispatch::IntegrationTest
     assert_equal [ "post_#{first.id}", "post_#{second.id}" ], frames
   end
 
+  # The chip counts only what the reader's feed would show, so a staged card
+  # says where it is and whether it has media (feed_updates_controller#hidden).
+  test "a missed post says its neighbourhood and whether it has media" do
+    here = Neighborhood.create!(city: @city, name: "Sentrum", slug: "sentrum-innhenting")
+    text = Post.create!(user: @author, city: @city, neighborhood: here, title: "Tekst", content: "Bare ord")
+
+    get posts_since_path(after: @seen.id)
+
+    frame = streams.first.at_css("template turbo-frame")
+    assert_equal "post_#{text.id}", frame["id"]
+    assert_equal here.id.to_s, frame["data-neighborhood-id"]
+    assert_equal "false", frame["data-media"]
+  end
+
   test "missed comments land where the stream would have put them" do
     question = Comment.create!(user: @author, commentable: @seen, content: "<p>Før</p>")
     answer = Comment.create!(user: @author, commentable: @seen, content: "<p>Etter</p>", parent_id: question.id)

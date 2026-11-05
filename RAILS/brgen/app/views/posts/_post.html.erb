@@ -7,8 +7,13 @@
     census in keyboard_reachable_controls_test can read the bound move. %>
 <%# The author, for a post that names one, so the front page can keep a
     blocked person's live card out of its new-posts chip. %>
+<%# A staged card (staged: true, rendered into #feed-pending) also says its
+    neighbourhood and whether it has media, so feed_updates_controller counts
+    only what the reader's neighbourhood filter or media wall would show. %>
 <turbo-frame id="<%= dom_id(post) %>" target="_top" data-controller="long-press"
              <% if post.attributed? %>data-author-id="<%= post.user_id %>"<% end %>
+             <% if local_assigns[:staged] %>data-neighborhood-id="<%= post.neighborhood_id %>"
+             data-media="<%= post.image.attached? || post.images.attached? || post.video.attached? %>"<% end %>
              data-action="pointerdown->long-press#start pointermove->long-press#move pointerup->long-press#cancel
                           pointercancel->long-press#cancel contextmenu->long-press#context
                           click->long-press#swallow:capture">

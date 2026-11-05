@@ -163,7 +163,7 @@ class Post
       Current.set(user: nil, session: nil) do
         broadcast_prepend_to(
           self.class.city_feed_stream(city_id),
-          target: "feed-pending", partial: "posts/post", locals: { post: self }
+          target: "feed-pending", partial: "posts/post", locals: { post: self, staged: true }
         )
       end
     rescue StandardError => e

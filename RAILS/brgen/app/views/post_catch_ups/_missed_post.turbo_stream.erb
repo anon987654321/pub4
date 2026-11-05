@@ -1,1 +1,1 @@
-<%= turbo_stream.prepend "feed-pending", partial: "posts/post", locals: { post: post } %>
+<%= turbo_stream.prepend "feed-pending", partial: "posts/post", locals: { post: post, staged: true } %>
