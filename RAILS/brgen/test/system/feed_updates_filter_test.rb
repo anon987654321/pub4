@@ -32,7 +32,10 @@ class FeedUpdatesFilterTest < ApplicationSystemTestCase
   end
 
   test "the media wall counts only new posts with media" do
-    visit root_path(view: "media")
+    # neighborhood_id: blank, because the home page remembers the last filter in
+    # the session, and the test before this one chose a neighbourhood whose id
+    # the rolled-back database hands out again.
+    visit root_path(view: "media", neighborhood_id: "")
 
     stage(990_004, neighborhood: "", media: false)
     assert chip[:hidden], "a text post was counted on the media wall"
