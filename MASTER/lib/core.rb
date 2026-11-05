@@ -207,8 +207,8 @@ module Master::Core
             Reversibility.new(kind: :unknown, scope: :commit,
                               reason: "git commit requires explicit paths; the shared index is never an implicit scope")
           else
-            Reversibility.new(kind: :approval_required, scope: paths.join(", "),
-                              reason: "git commit creates durable repository history and is not automatically undone")
+            Reversibility.new(kind: :policy_gated, scope: paths.join(", "),
+                              reason: "path-scoped commit is admitted only after evidence and same-fold write ownership checks")
           end
         else
           Reversibility.new(kind: :unknown, scope: args[:operation],
