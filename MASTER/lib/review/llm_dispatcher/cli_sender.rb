@@ -6,6 +6,7 @@ require "tempfile"
 require "timeout"
 require_relative "../../io/exec"
 require_relative "claude_stream"
+require_relative "cli_usage"
 
 module Master
   module Review
@@ -15,6 +16,8 @@ module Master
       # declares (codex, grok). Each is asked one question in a subprocess and
       # answers with text.
       module CliSender
+        include CliUsage
+
         CLI_LANE_TIMEOUT_S = 300
 
         private
@@ -40,7 +43,10 @@ module Master
                                   *cli_lane_args(lane, model, prompt, reply_path),
                                   stdin_data: cli_lane_stdin(lane, prompt))
           end
-          cli_lane_result(name, out, err, status, reply_path)
+
+          result = cli_lane_result(name, out, err, status, reply_path)
+          record_estimated_cli_usage(model: "#{name}:#{model}", prompt:, reply: result.value!) if result.ok?
+          result
         rescue Timeout::Error
           Result.err("#{name}: timed out after #{PassClock.call_deadline(CLI_LANE_TIMEOUT_S)}s", category: :timeout)
         rescue StandardError => e
@@ -94,7 +100,10 @@ module Master
           agy_bin = find_agy_bin
           return Result.err("agy: no agy on PATH", category: :no_api_key) unless agy_bin
 
-          with_cli_slot { agy_cli_call(agy_bin, model_alias, messages, sys, stream, &blk) }
+          result = with_cli_slot { agy_cli_call(agy_bin, model_alias, messages, sys, stream, &blk) }
+          record_estimated_cli_usage(model: "agy:#{model_alias}", prompt: "#{sys}#{text_prompt_for(messages)}",
+                                     reply: result.value!) if result.ok?
+          result
         end
 
         def agy_cli_call(agy_bin, model_alias, messages, sys, stream, &blk)
@@ -142,7 +151,7 @@ module Master
 
           run = claude_request(model_alias, messages, **request)
           run = run.streaming(&on_text) if on_text
-          with_cli_slot { claude_execute(run) }
+          with_cli_slot { claude_execute(run, model: "claude-cli:#{model_alias}") }
         end
 
         # The images a request carries, as the content blocks `claude --print` takes on
@@ -166,14 +175,6 @@ module Master
             mime = { ".png" => "image/png", ".webp" => "image/webp", ".gif" => "image/gif" }.fetch(File.extname(path).downcase, "image/jpeg") if mime.empty?
             { type: "image", source: { type: "base64", media_type: mime, data: } }
           end
-        end
-
-        # The reply of a stream-json run: the final `result` event's text.
-        def claude_stream_reply(out)
-          event = out.lines.filter_map { |line| JSON.parse(line) rescue nil }.reverse.find { |e| e["type"] == "result" }
-          return unless event
-
-          event["is_error"] ? nil : event["result"].to_s
         end
 
         # The same reading of PATH that ModelRouter uses to keep an absent lane
@@ -215,11 +216,13 @@ module Master
         CLAUDE_CLI_LIMIT = /\A\s*(?:You've hit your \w*\s*limit|Claude (?:AI )?usage limit reached)/i
 
         def claude_cli_call(model_alias, messages, sys, image = nil)
-          claude_execute(claude_request(model_alias, messages, sys:, image:))
+          claude_execute(claude_request(model_alias, messages, sys:, image:), model: "claude-cli:#{model_alias}")
         end
 
         CLAUDE_IMAGE_FLAGS = ["--input-format", "stream-json", "--output-format", "stream-json", "--verbose"].freeze
         CLAUDE_STREAM_FLAGS = ["--output-format", "stream-json", "--verbose", "--include-partial-messages"].freeze
+        # A plain run asks for the one json result, which carries the run's usage and cost beside the reply.
+        CLAUDE_JSON_FLAGS = ["--output-format", "json"].freeze
 
         # One `claude --print` run: its arguments, its stdin, the stream reader when it streams, and whether its
         # stdout is stream-json events rather than the reply itself.
@@ -233,12 +236,13 @@ module Master
           end
         end
 
-        def claude_execute(run)
+        def claude_execute(run, model: "claude-cli")
+          run = run.with(args: run.args + CLAUDE_JSON_FLAGS, json: true) unless run.json
           out, err, status = claude_capture(run)
           return claude_cli_failure(out, err, status:) unless status.success?
 
           run.stream&.finish
-          claude_cli_reply(run.json ? claude_stream_reply(out).to_s : out, json: run.json)
+          claude_answer(out, model)
         rescue Timeout::Error
           Result.err("claude-cli: timed out after #{PassClock.call_deadline(claude_cli_timeout_s)}s", category: :timeout)
         rescue StandardError => e
