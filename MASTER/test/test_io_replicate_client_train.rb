@@ -97,6 +97,69 @@ class TestReplicateClientRetry < Minitest::Test
     assert_equal 1, requests.length, "budget refusal cannot be fixed by a timed retry"
   end
 
+  def test_model_pagination_refuses_an_external_cursor_before_sending_its_token
+    client = Client.new(token: "replicate-test-secret")
+    requests = []
+    first = Struct.new(:code, :body).new(
+      "200",
+      JSON.generate("results" => [], "next" => "https://attacker.invalid/v1/models?cursor=secret"),
+    )
+
+    with_http_responses([first], requests) do
+      error = assert_raises(ArgumentError) { client.models }
+      assert_match(/outside the Replicate API origin/, error.message)
+    end
+
+    assert_equal 1, requests.size
+    assert_equal "Bearer", requests.first["Authorization"].split(" ").first
+    refute requests.any? { |request| request["Host"] == "attacker.invalid" }
+  end
+
+  def test_model_pagination_accepts_only_the_models_cursor_on_the_api_origin
+    client = Client.new(token: "replicate-test-secret")
+    requests = []
+    pages = [
+      Struct.new(:code, :body).new(
+        "200",
+        JSON.generate(
+          "results" => [{ "owner" => "first", "name" => "model" }],
+          "next" => "https://api.replicate.com/v1/models?cursor=page-two",
+        ),
+      ),
+      Struct.new(:code, :body).new(
+        "200",
+        JSON.generate("results" => [{ "owner" => "second", "name" => "model" }], "next" => nil),
+      ),
+    ]
+
+    with_http_responses(pages, requests) { assert_equal 2, client.models.size }
+
+    assert_equal 2, requests.size
+    assert requests.all? { |request| request["Authorization"] == "Token replicate-test-secret" }
+    assert requests.all? { |request| request.path.start_with?("/v1/models") }
+  end
+
+  def test_api_request_uses_explicit_connection_and_read_timeouts
+    client = Client.new(token: "replicate-test-secret")
+    request = nil
+    response = Struct.new(:code, :body).new("200", "{}")
+    http = Object.new
+    http.define_singleton_method(:request) { |value| request = value; response }
+
+    Net::HTTP.stub(:start, lambda { |host, port, **options, &block|
+      assert_equal "api.replicate.com", host
+      assert_equal 443, port
+      assert_equal true, options.fetch(:use_ssl)
+      assert_equal Client::OPEN_TIMEOUT_SECONDS, options.fetch(:open_timeout)
+      assert_equal Client::READ_TIMEOUT_SECONDS, options.fetch(:read_timeout)
+      block.call(http)
+    }) do
+      client.account_username
+    end
+
+    assert_equal "Token replicate-test-secret", request["Authorization"]
+  end
+
   def test_get_keeps_retrying_a_transient_server_error
     client = Client.new(token: "r8_test")
     client.define_singleton_method(:sleep) { |_seconds| }
