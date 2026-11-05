@@ -461,8 +461,7 @@ def spine_movers(root)
   end
   return "  (nothing uncommitted under lib/ — the overage is already committed)\n" if rows.empty?
 
-  lines = rows.sort_by { |(_, delta, _)| -delta }
-              .map { |rel, delta, note| format("  %+5d  %s%s\n", delta, rel, note) }
+  lines = rows.sort_by { |row| -row[1] }.map { |rel, delta, note| format("  %+5d  %s%s\n", delta, rel, note) }
   "  moved by uncommitted work:\n#{lines.join}"
 rescue StandardError => e
   "  (could not attribute: #{e.class})\n"
@@ -1092,7 +1091,6 @@ namespace :ad_organ do
     ruby File.join(__dir__, "test", "test_browserless_visual_measurements.rb")
   end
 end
-
 
 namespace :ux do
   desc "Run the Baymard-informed UX audit over the RAILS source tree"
