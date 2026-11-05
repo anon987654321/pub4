@@ -170,18 +170,32 @@ class TestInterModelContract < Minitest::Test
   end
 
   def test_council_ideation_uses_validated_protocol_for_every_model_turn
-    ideas = 15.times.map { |index| "Distinct approach #{index + 1}" }
-    brainstorm = protocol_response(
+    initial_ideas = 10.times.map { |index| "Initial approach #{index + 1}" }
+    additional_ideas = 5.times.map { |index| "Additional approach #{index + 1}" }
+    initial_brainstorm = protocol_response(
       position: "independent",
-      findings: ideas.each_with_index.map do |idea, index|
+      findings: initial_ideas.each_with_index.map do |idea, index|
         protocol_finding(idea, "candidate #{index + 1}", "none")
       end
     )
-    critique = protocol_response(
+    initial_critique = protocol_response(
       position: "mixed",
-      findings: ideas.each_with_index.map do |idea, index|
+      findings: initial_ideas.each_with_index.map do |idea, index|
         verdict = index.zero? ? "KEEP" : "REJECT: insufficient advantage"
         protocol_finding(idea, "candidate #{index + 1}", verdict)
+      end
+    )
+    quota_brainstorm = protocol_response(
+      position: "mixed",
+      findings: additional_ideas.each_with_index.map do |idea, index|
+        protocol_finding(idea, "additional candidate #{index + 1}", "none")
+      end
+    )
+    quota_critique = protocol_response(
+      position: "mixed",
+      findings: additional_ideas.each_with_index.map do |idea, index|
+        verdict = index.zero? ? "KEEP" : "REJECT: insufficient advantage"
+        protocol_finding(idea, "additional candidate #{index + 1}", verdict)
       end
     )
     synthesis = protocol_response(
@@ -194,7 +208,7 @@ class TestInterModelContract < Minitest::Test
         )
       ]
     )
-    responses = [brainstorm, critique, synthesis]
+    responses = [initial_brainstorm, initial_critique, quota_brainstorm, quota_critique, synthesis]
     prompts = []
     agent = Object.new
     agent.define_singleton_method(:model) { "inter-model-test" }
@@ -211,15 +225,16 @@ class TestInterModelContract < Minitest::Test
     assert result.ok?, result.respond_to?(:message) ? result.message : "ideation failed"
     value = result.value!
     assert_equal 15, value.fetch(:ideas).size
-    assert_equal 1, value.fetch(:critiques).size
+    assert_equal 2, value.fetch(:critiques).size
     assert_includes value.fetch(:critiques).first, "VERDICT: KEEP"
+    assert_includes value.fetch(:critiques).last, "VERDICT: KEEP"
     assert_includes value.fetch(:final), "bounded change"
-    assert_equal 3, prompts.size
+    assert_equal 5, prompts.size
     assert prompts.all? { |prompt, _system| prompt.include?("INTER-MODEL CONTRACT") }
 
     ledger = Contract.measure(root: @root)
     assert_equal "measured", ledger.fetch("status")
-    assert_equal 3, ledger.fetch("turns")
+    assert_equal 5, ledger.fetch("turns")
     assert_equal 1.0, ledger.fetch("schema_compliance_rate")
     assert_equal 1.0, ledger.fetch("first_response_schema_compliance_rate")
   end
