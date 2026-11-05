@@ -7,9 +7,11 @@ module Deploy
   # Persuasion honesty: the grey patterns must stay grey. Scarcity, countdowns
   # and price anchors may render only from measured truth — listing stock, a
   # real ends_at, the trailing 30-day price-observation minimum — and a view
-  # must never hardcode a persuasive number. Checked beside payment_honesty
-  # because the same fail-honestly contract covers anything that talks a
-  # visitor into paying.
+  # must never hardcode a persuasive number. The takeaway confirm screen must
+  # render the whole bill — subtotal, delivery fee and tip inside the total —
+  # so no charge can surface after the price was believed (PERSUASION_truth_
+  # bearing). Checked beside payment_honesty because the same fail-honestly
+  # contract covers anything that talks a visitor into paying.
   class PersuasionHonestyCheck
     ROOT = File.expand_path("../../../..", __dir__)
     RAILS = File.join(ROOT, "RAILS")
@@ -28,16 +30,28 @@ module Deploy
         /persuasion\.only_n_left/,
       "brgen_marketplace/config/locales/en.yml" => /only_n_left|was_price/,
       "brgen_marketplace/config/locales/nb.yml" => /only_n_left|was_price/,
+      "brgen_marketplace/engines/takeaway/app/views/takeaway/orders/show.html.erb" =>
+        /takeaway\.subtotal|takeaway\.delivery|takeaway\.total/,
+      "brgen_marketplace/engines/takeaway/app/views/takeaway/orders/new.html.erb" =>
+        /min_order_delivery/,
     }.freeze
 
     # A persuasive number a human typed into a template is the definition of a
     # dark pattern: it renders identically for every listing, so it cannot be
     # true for every listing. Anchors, counts and deadlines come from data.
+    # The takeaway order views price nothing by hand either: every krone on
+    # the bill — delivery fee included — comes from the order or the
+    # restaurant row, so a late-chosen fee can never be quieter than the
+    # price the guest believed.
     FORBIDDEN = {
       "brgen_marketplace/app/views/marketplace/deals/_card.html.erb" =>
         /Før \d|Was \d|\d+ kr igjen|only \d+ left/i,
       "brgen_marketplace/app/views/marketplace/listings/_card.html.erb" =>
         /Før \d|Was \d|\d+ kr igjen|only \d+ left/i,
+      "brgen_marketplace/engines/takeaway/app/views/takeaway/orders/show.html.erb" =>
+        /\d+\s*(kr|NOK)|NOK\s*\d+/i,
+      "brgen_marketplace/engines/takeaway/app/views/takeaway/orders/new.html.erb" =>
+        /\d+\s*(kr|NOK)|NOK\s*\d+/i,
     }.freeze
 
     # rails_root: is what makes this check testable. A contract table is only
