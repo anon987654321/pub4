@@ -5,6 +5,8 @@
     which works on its own without JavaScript). %>
 <article id="<%= dom_id(notification) %>" class="<%= notification.read? ? "read" : "unread" %> notification-card"
          data-controller="swipe-dismiss"
+         data-swipe-dismiss-done-value="<%= t("notifications.swiped_away") %>"
+         data-swipe-dismiss-undo-value="<%= t("notifications.undo_dismiss") %>"
          data-action="pointerdown->swipe-dismiss#start pointermove->swipe-dismiss#move pointerup->swipe-dismiss#end pointercancel->swipe-dismiss#reset">
 <% if (actor = notification.shown_actor) %>
   <%= link_to main_app.user_path(actor), class: "notification-actor" do %>

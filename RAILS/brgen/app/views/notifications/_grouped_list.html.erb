@@ -4,8 +4,8 @@
     <% next if items.empty? %>
     <section class="notification-group">
       <%= tag.h2 t("notifications.kinds.#{kind}") %>
-      <% items.each do |notification| %>
-        <%= render "notifications/notification", notification: notification %>
+      <% notification_clusters(kind, items).each do |cluster| %>
+        <%= notification_cluster_card(cluster) %>
       <% end %>
     </section>
   <% end %>

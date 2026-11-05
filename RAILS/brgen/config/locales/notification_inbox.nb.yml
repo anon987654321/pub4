@@ -1,0 +1,22 @@
+nb:
+  notifications:
+    swiped_away: "Varselet er fjernet."
+    undo_dismiss: "Angre"
+    aggregate:
+      someone: "Noen"
+      show_all: "Vis alle %{count}"
+      like_post:
+        one: "%{name} og én annen likte innlegget ditt"
+        other: "%{name} og %{count} andre likte innlegget ditt"
+      like_other:
+        one: "%{name} og én annen likte det du delte"
+        other: "%{name} og %{count} andre likte det du delte"
+      reaction_post:
+        one: "%{name} og én annen reagerte på innlegget ditt"
+        other: "%{name} og %{count} andre reagerte på innlegget ditt"
+      reaction_other:
+        one: "%{name} og én annen reagerte på det du delte"
+        other: "%{name} og %{count} andre reagerte på det du delte"
+      follow:
+        one: "%{name} og én annen følger deg nå"
+        other: "%{name} og %{count} andre følger deg nå"

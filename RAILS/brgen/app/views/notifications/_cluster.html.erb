@@ -1,0 +1,18 @@
+<%# Several likes, reactions or follows on one target, as one row. The newest
+    is the one named and linked; the single rows sit behind the disclosure, each
+    with its own Mark read and Dismiss. %>
+<% newest = cluster.first %>
+<% unread = cluster.any? { |notification| !notification.read? } %>
+<article class="<%= unread ? "unread" : "read" %> notification-card notification-cluster">
+  <% headline = notification_cluster_headline(cluster) %>
+  <% if notification_href(newest).present? %>
+    <%= tag.h3 link_to(headline, open_notification_path(newest), class: "notification-title-link") %>
+  <% else %>
+    <%= tag.h3 headline %>
+  <% end %>
+  <p><time datetime="<%= newest.created_at.iso8601 %>"><%= time_ago(newest.created_at) %></time></p>
+  <details class="notification-cluster-items">
+    <%= tag.summary t("notifications.aggregate.show_all", count: cluster.size) %>
+    <%= render partial: "notifications/notification", collection: cluster, as: :notification %>
+  </details>
+</article>

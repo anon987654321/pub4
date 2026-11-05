@@ -130,4 +130,32 @@ class NotificationsPageTest < ActionDispatch::IntegrationTest
     assert_includes html, %(id="#{ActionView::RecordIdentifier.dom_id(notification)}")
     refute Rails.root.join("app/views/notifications/_notification_row.html.erb").exist?
   end
+
+  test "likes on one post and follows fold into one row each, naming the newest" do
+    people = Array.new(3) do |i|
+      User.strict_loading(false).create!(email_address: "np-fan#{i}-#{SecureRandom.hex(3)}@brgen.no",
+                                         password: "password123", username: "np_fan#{i}_#{SecureRandom.hex(3)}",
+                                         display_name: "Fan #{i}", city: @city)
+    end
+    post_a = Post.create!(user: @user, title: "Fjelltur", content: "Ulriken i dag", city: @city)
+    post_b = Post.create!(user: @user, title: "Kaffe", content: "Beste i byen", city: @city)
+    people.each_with_index do |fan, i|
+      Notification.create!(user: @user, actor: fan, kind: "like", notifiable: post_a, created_at: i.minutes.from_now)
+    end
+    Notification.create!(user: @user, actor: people.first, kind: "like", notifiable: post_b)
+    people.first(2).each_with_index do |fan, i|
+      Notification.create!(user: @user, actor: fan, kind: "follow", created_at: i.minutes.from_now)
+    end
+
+    get notifications_path
+
+    assert_select ".notification-cluster", 2
+    assert_select ".notification-cluster h3", text: I18n.t("notifications.aggregate.like_post", name: "Fan 2", count: 2)
+    assert_select ".notification-cluster h3", text: I18n.t("notifications.aggregate.follow", name: "Fan 1", count: 1)
+    assert_select ".notification-cluster summary", text: I18n.t("notifications.aggregate.show_all", count: 3)
+    assert_select ".notification-cluster details .notification-card", 5,
+                  "every single row is still there behind the disclosure"
+    assert_select ".notification-group > .notification-card:not(.notification-cluster)", 1,
+                  "the lone like on another post stays a row"
+  end
 end

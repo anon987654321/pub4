@@ -1,0 +1,22 @@
+en:
+  notifications:
+    swiped_away: "Notification removed."
+    undo_dismiss: "Undo"
+    aggregate:
+      someone: "Someone"
+      show_all: "Show all %{count}"
+      like_post:
+        one: "%{name} and one other liked your post"
+        other: "%{name} and %{count} others liked your post"
+      like_other:
+        one: "%{name} and one other liked what you shared"
+        other: "%{name} and %{count} others liked what you shared"
+      reaction_post:
+        one: "%{name} and one other reacted to your post"
+        other: "%{name} and %{count} others reacted to your post"
+      reaction_other:
+        one: "%{name} and one other reacted to what you shared"
+        other: "%{name} and %{count} others reacted to what you shared"
+      follow:
+        one: "%{name} and one other now follow you"
+        other: "%{name} and %{count} others now follow you"

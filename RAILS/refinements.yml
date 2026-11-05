@@ -2588,7 +2588,7 @@ items:
   size: M
   path: RAILS/brgen/app/javascript/controllers/swipe_dismiss_controller.js
   item: Give swipe-to-dismiss an undo toast before the row is destroyed.
-  status: open
+  status: done
 - id: brgen-206
   app: brgen
   area: notifications
@@ -2604,7 +2604,7 @@ items:
   path: RAILS/brgen/app/views/notifications/_grouped_list.html.erb
   item: Aggregate like/reaction/follow notifications per target ('Kari og 3 andre
     likte innlegget ditt').
-  status: open
+  status: done
 - id: brgen-208
   app: brgen
   area: notifications
