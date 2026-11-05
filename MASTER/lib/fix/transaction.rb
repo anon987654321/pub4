@@ -536,16 +536,18 @@ module Master
 
       def validate_task_contract_paths!(paths)
         contract = TaskContract.current
-        return unless contract
-
         repo_root = File.expand_path(outer_root)
-        uncovered = Array(paths).reject do |path|
-          full = File.expand_path(path, @root)
-          next false unless inside?(full, repo_root)
+        uncovered = if contract
+                      Array(paths).reject do |path|
+                        full = File.expand_path(path, @root)
+                        next false unless inside?(full, repo_root)
 
-          relative = Pathname.new(full).relative_path_from(Pathname.new(repo_root)).to_s
-          TaskContract.covers?(relative, scope: contract.scope)
-        end
+                        relative = Pathname.new(full).relative_path_from(Pathname.new(repo_root)).to_s
+                        TaskContract.covers?(relative, scope: contract.scope)
+                      end
+                    else
+                      []
+                    end
         unless uncovered.empty?
           raise TaskContract::Invalid,
                 "transaction paths outside task-contract scope: #{uncovered.first(5).join(", ")}"
