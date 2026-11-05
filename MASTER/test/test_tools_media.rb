@@ -40,6 +40,24 @@ class TestToolsMedia < Minitest::Test
     assert_equal "/v1/models", request.path
   end
 
+  def test_studio_replicate_pagination_rejects_a_repeated_cursor
+    client = Studio::ReplicateClient.new(token: "studio-replicate-test")
+    request_count = 0
+    page = Struct.new(:code, :body).new(
+      "200",
+      JSON.generate("results" => [], "next" => "#{Studio::ReplicateClient::BASE}/models"),
+    )
+    http = Object.new
+    http.define_singleton_method(:request) { |_value| request_count += 1; page }
+
+    Net::HTTP.stub(:start, ->(_host, _port, **_options, &block) { block.call(http) }) do
+      error = assert_raises(ArgumentError) { client.models }
+      assert_match(/repeated a cursor/, error.message)
+    end
+
+    assert_equal 1, request_count
+  end
+
   def test_studio_replicate_token_files_must_be_private_regular_user_files
     Dir.mktmpdir do |directory|
       path = File.join(directory, "env")
