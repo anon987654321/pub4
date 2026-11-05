@@ -85,9 +85,11 @@ class TestStudioReplicateClientPaths < Minitest::Test
     [
       "https://api.replicate.com/v1/models/../account",
       "https://api.replicate.com/v1/models/%2e%2e/account",
-      "https://api.replicate.com/v1/models/%2faccount"
+      "https://api.replicate.com/v1/models/%2faccount",
+      "http://api.replicate.com/v1/models",
+      "mailto:operator@example.invalid"
     ].each do |url|
-      assert_raises(ArgumentError) { @client.send(:api_uri, url) }
+      assert_raises(ArgumentError, url) { @client.send(:api_uri, url) }
     end
   end
 end

@@ -509,10 +509,10 @@ module Studio
       # long beats a blind exponential guess in both directions.
       def api_uri(value)
         uri = value.is_a?(URI::Generic) ? value : URI.parse(value.to_s)
-        safe_path = uri.path.start_with?("/v1/") &&
-                    uri.path.split("/").none? { |segment| segment == "." || segment == ".." || segment.include?("%") }
         allowed = uri.is_a?(URI::HTTPS) && uri.host == API_HOST && uri.port == 443 &&
-                  uri.userinfo.nil? && uri.fragment.nil? && safe_path
+                  uri.userinfo.nil? && uri.fragment.nil?
+        allowed &&= uri.path.start_with?("/v1/") &&
+                    uri.path.split("/").none? { |segment| segment == "." || segment == ".." || segment.include?("%") }
         raise ArgumentError, "refusing URL outside the Replicate API origin" unless allowed
 
         uri
