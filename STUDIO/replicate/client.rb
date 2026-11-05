@@ -255,16 +255,28 @@ module Studio
         token = ENV["REPLICATE_API_KEY"].to_s.strip
         return token unless token.empty?
 
-        return JSON.parse(File.read(CONFIG_PATH))["api_token"].to_s.strip if File.exist?(CONFIG_PATH)
+        if private_token_file?(CONFIG_PATH)
+          return JSON.parse(File.read(CONFIG_PATH))["api_token"].to_s.strip
+        end
 
         token_from_env_file
       rescue StandardError
         ""
       end
 
+      def self.private_token_file?(path)
+        file = File.lstat(path)
+        directory = File.lstat(File.dirname(path))
+        file.file? && !file.symlink? && file.nlink == 1 && file.uid == Process.uid &&
+          (file.mode & 0o077).zero? && directory.directory? && !directory.symlink? &&
+          directory.uid == Process.uid && (directory.mode & 0o022).zero?
+      rescue SystemCallError
+        false
+      end
+
       def self.token_from_env_file
         path = File.expand_path("~/.config/master/env")
-        return "" unless File.file?(path)
+        return "" unless private_token_file?(path)
 
         File.foreach(path) do |line|
           key, value = line.strip.sub(/\Aexport\s+/, "").split("=", 2)
