@@ -1,7 +1,10 @@
 import { publishVisual } from "pub4/visual_field"
 import { AudioEngine } from "radio_brgen_audio"
 import { initialTrackIndex, OPENING_TRACK_ID } from "radio_brgen_audio"
-import { VisualEngine, MODES } from "radio_brgen_visual"
+import { VisualEngine } from "radio_brgen_visual"
+// The ring modes live in radio_brgen_modes; radio_brgen_visual imports them
+// but does not re-export them, so asking it for MODES failed the whole module.
+import { MODES } from "radio_brgen_modes"
 export { initialTrackIndex } from "radio_brgen_audio"
 
 'use strict'

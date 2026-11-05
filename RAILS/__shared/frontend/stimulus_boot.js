@@ -131,6 +131,13 @@ export function bootPub4Stimulus(application) {
     if (component) application.register(name, component)
   })
 
+  // stimulus_reflex 3.5.5's rejected() callback reads `Debug.enabled`, a name
+  // its bundler renamed to Debug$1 everywhere else, so a refused subscription
+  // threw "Debug is not defined". brgen refuses the reflex channel to every
+  // connection with nobody behind it (ApplicationCable::Channel), so it threw
+  // for each signed-out visitor. The stray read gets the value it meant:
+  // debug logging off.
+  if (!("Debug" in globalThis)) globalThis.Debug = Object.freeze({ enabled: false })
   StimulusReflex.initialize(application, {
     applicationController: ApplicationController,
     isolate: true
