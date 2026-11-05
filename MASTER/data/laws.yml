@@ -1192,6 +1192,15 @@ REACH_non_native_tool:
     python: "Use Ruby."
     bash: "Use zsh."
 
+PERSUASION_truth_bearing:
+  parent: REACH
+  statement: >-
+    Any scarcity, urgency, social proof, reference price or default shown to a
+    user is computed from a source of truth in the database and remains true at
+    render time. A persuasive element that requires a fact to be false, hidden,
+    or louder than the fact it decorates fails this Law.
+  resolution: review
+
 # ---
 
 STEWARDSHIP:
