@@ -124,6 +124,26 @@ class DeploySmokeContractTest < Minitest::Test
     assert_includes shared, "assets:precompile"
   end
 
+  def test_sqlite_file_relocation_and_migrations_follow_a_verified_service_stop
+    deploy = read(File.join(ROOT, "_deploy.sh"))
+    stop_check = deploy.index('if pub4_rcctl check "$app_name"')
+    stop = deploy.index('pub4_rcctl stop "$app_name"')
+    stopped_check = deploy.index('if pub4_rcctl check "$app_name"', stop + 1)
+    relocate = deploy.index('migrate_sqlite_db_to_storage_if_needed "$APP_NAME" "$APP_DIR"')
+    prepare = deploy.index('db_create_migrate_as_app "$APP_NAME" "$APP_DIR"')
+
+    refute_nil stop_check
+    refute_nil stop
+    refute_nil stopped_check
+    refute_nil relocate
+    refute_nil prepare
+    assert_operator stop_check, :<, stop
+    assert_operator stop, :<, stopped_check
+    assert_operator stopped_check, :<, relocate
+    assert_operator relocate, :<, prepare
+    assert_includes deploy, "refusing database changes"
+  end
+
   def test_production_baseline_serves_precompiled_assets
     baseline = read(File.join(ROOT, "__shared/config/environments/production_baseline.rb"))
     assert_includes baseline, "config.public_file_server.enabled = true"
