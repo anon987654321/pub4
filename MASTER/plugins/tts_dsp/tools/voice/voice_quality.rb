@@ -2,8 +2,8 @@
 
 require "json"
 require "optparse"
-require_relative "../../lib/voice/transcendent"
-require_relative "../../lib/voice/quality"
+require_relative "../../../../lib/voice/transcendent"
+require_relative "../../../../lib/voice/quality"
 
 module Master
   module Voice

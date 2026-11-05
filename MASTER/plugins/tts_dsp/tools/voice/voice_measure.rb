@@ -21,7 +21,7 @@
 # --selfcheck is the instrument's own proof: a steady tone must show almost no
 # pitch movement and a swept tone a lot, and it must find a known pause.
 
-require_relative "../../lib/io/exec"
+require_relative "../../../../lib/io/exec"
 require "json"
 require "tmpdir"
 

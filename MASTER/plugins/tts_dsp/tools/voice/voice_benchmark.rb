@@ -3,11 +3,11 @@
 require "fileutils"
 require "json"
 require "time"
-require_relative "../../lib/master"
-require_relative "../../lib/voice/benchmark"
-require_relative "../../lib/trace/dmesg"
+require_relative "../../../../lib/master"
+require_relative "../../../../lib/voice/benchmark"
+require_relative "../../../../lib/trace/dmesg"
 
-root = File.expand_path("../..", __dir__)
+root = File.expand_path("../../../..", __dir__)
 out_dir = File.join(root, ".master", "voice_benchmark")
 FileUtils.mkdir_p(out_dir)
 

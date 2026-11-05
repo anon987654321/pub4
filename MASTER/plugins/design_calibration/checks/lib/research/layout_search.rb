@@ -1,27 +1,24 @@
 # frozen_string_literal: true
 
-require_relative "../../support/check_result"
+require_relative "../../../../../checks/support/check_result"
 require_relative "../../support/layout_search"
-require_relative "../../../tools/scss"
+require_relative "../../../../../tools/scss"
 
 module Deploy
   # Bounded multi-candidate layout search for marketplace.
   # Enumerates legal design axes, scores Fitts/Hick/resistance/catalog,
   # requires observed tree == winner (or top-N) and hard floors.
   class LayoutSearchCheck
-    ROOT = File.expand_path("../../../..", __dir__)
+    ROOT = File.expand_path("../../../../../..", __dir__)
     RAILS = File.join(ROOT, "RAILS")
 
     # Views live in the brgen_marketplace engine, a sibling of brgen. The
-    # marketplace component styles live in the host entrypoint: the 2026-10-28
-    # consolidation folded brgen's `_brgen_*.scss` feature partials into
-    # application.scss between `// ===== module:` banners, cascade order kept,
-    # so the check reads the `brgen_*` module sections out of that one sheet.
+    # marketplace component styles live in brgen's `_brgen_*.scss` partials,
+    # which the host entrypoint application.scss pulls in with `@use`.
     ENGINE = File.join(RAILS, "brgen_marketplace")
     CARD = File.join(ENGINE, "app/views/marketplace/listings/_card.html.erb")
     BRGEN_STYLESHEET = File.join(RAILS, "brgen/app/assets/stylesheets/application.scss")
-    MODULE_OPEN = /\A\/\/ ={5,} module: ([a-z0-9_]+)\s*\z/.freeze
-    MODULE_CLOSE = /\A\/\/ ={5,} \/module: /.freeze
+    BRGEN_USE = /^@use "(brgen_[a-z0-9_]+)"/.freeze
     # The #navBar markup is the storefront header marketplace shares with takeaway.
     NAV = File.join(RAILS, "brgen/app/views/shared/_storefront_nav_bar.html.erb")
     SEARCH = File.join(RAILS, "__shared/app/assets/stylesheets/_search_yep.scss")
@@ -71,24 +68,15 @@ module Deploy
                                         .map { |rule| "#{rule.selector} { #{rule.body} }" }.join("\n")
     end
 
-    # The card rules live in the brgen_* module sections of the merged host
-    # sheet (operator 2026-10-28): slice them out by banner, cascade order
-    # kept, so the detector reads the same cascade the page ships. Modules
-    # outside the former `_brgen_*.scss` glob (post_gallery, local_activity,
-    # vertical_promo) stay excluded, as before the merge.
+    # The card rules live in the `_brgen_*.scss` partials application.scss
+    # pulls in with `@use` (re-split from the 2026-10-28 merged sheet on
+    # 2026-11-01). Read them in @use order, so the detector sees the cascade the
+    # page ships; post_gallery, local_activity and vertical_promo stay excluded.
     def feature_css_source
-      kept = []
-      inside = false
-      File.foreach(BRGEN_STYLESHEET) do |line|
-        if (open_m = line.match(MODULE_OPEN))
-          inside = open_m[1].start_with?("brgen_")
-        elsif line.match?(MODULE_CLOSE)
-          inside = false
-        elsif inside
-          kept << line
-        end
-      end
-      kept.join
+      dir = File.dirname(BRGEN_STYLESHEET)
+      File.read(BRGEN_STYLESHEET).scan(BRGEN_USE).flatten
+          .map { |name| File.join(dir, "_#{name}.scss") }.select { |path| File.file?(path) }
+          .map { |path| File.read(path) }.join("\n")
     end
 
     # The card's media slot lives in marketplace/_card_media.html.erb since the

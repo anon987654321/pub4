@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
 require "minitest/autorun"
-require_relative "../../../checks/support/layout_search"
-require_relative "../../../checks/lib/research/layout_search"
+require_relative "../checks/support/layout_search"
+require_relative "../checks/lib/research/layout_search"
 
 # The check's own fixture pair, the way every law in MASTER carries one: a
 # tree-shape the detector must read as photo_first and one it must read as

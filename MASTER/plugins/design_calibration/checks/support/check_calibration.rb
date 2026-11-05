@@ -2,14 +2,16 @@
 
 require "yaml"
 require "fileutils"
-require_relative "exemplar_structure"
-require_relative "visual_quality"
-require_relative "dom_surface_schema"
+require_relative "../../../../checks/support/exemplar_structure"
+require_relative "../../../../checks/support/visual_quality"
+require_relative "../../../../checks/support/dom_surface_schema"
 
 module Deploy
   # Compare human labels to check scores; measure agreement; suggest weight tweaks.
   class CheckCalibration
-    ROOT = File.expand_path("..", __dir__) # RAILS/checks
+    ROOT = File.expand_path("..", __dir__) # this plugin's checks/: data and weights
+    # The exemplar fixtures stayed in MASTER/checks/fixtures when the probe was parked.
+    FIXTURES_ROOT = File.expand_path("../../../../checks", __dir__)
     DATA = File.join(ROOT, "data", "calibration.yml")
     WEIGHTS_OUT = File.join(ROOT, "data", "calibration_weights.yml")
 
@@ -21,7 +23,7 @@ module Deploy
       YAML.safe_load_file(path)
     end
 
-    def initialize(config: nil, checks_root: ROOT)
+    def initialize(config: nil, checks_root: FIXTURES_ROOT)
       @config = config || self.class.load
       @checks_root = checks_root
       @floor = @config["agreement_floor"].to_f

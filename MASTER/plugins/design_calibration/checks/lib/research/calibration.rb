@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require_relative "../../support/check_result"
+require_relative "../../../../../checks/support/check_result"
 require_relative "../../support/check_calibration"
 
 module Deploy
