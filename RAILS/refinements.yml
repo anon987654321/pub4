@@ -6136,7 +6136,8 @@ items:
   size: M
   path: RAILS/__shared/config/importmap_baseline.rb
   item: Drop the @stimulus-components pins (31 names) that no app registers.
-  status: open
+  status: invalid
+  note: "All 30 pinned names are registered: stimulus_boot.js imports 28 and registers all 30 in COMPONENT_REGISTRATIONS; character-counter and scroll-reveal arrive through pub4/character_counter and pub4/scroll_reveal."
 - id: shared-027
   app: shared
   area: performance
