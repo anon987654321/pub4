@@ -6224,7 +6224,7 @@ items:
   path: RAILS/__shared/frontend/live_search_controller.js
   item: Drop stale live-search responses (request sequence or abort) so a slower earlier
     query cannot replace newer results.
-  status: open
+  status: done
 - id: shared-038
   app: shared
   area: security
