@@ -1,6 +1,6 @@
 # pub4 — remaining work
 
-Audit snapshot: 2026-11-05, `main` at `b721a6c20bc05fb9f052d30e513677f1ced02d50`.
+Audit snapshot: 2026-11-05, `main` at `e5ed356432d9d6b0776ac79d09322345acf6752f` (source baseline before this register reconciliation).
 This register replaces the previous 1,275-line, 462-checkbox carry-forward
 dump. It contains unresolved outcomes, not session notes or speculative
 architecture proposals.
@@ -198,10 +198,14 @@ second push path or duplicate orchestration to make TODO.md machine-readable.
   after checking references, generators, links, tests and agent entrypoints.
   Preserve useful recovery/provenance records. Update sources and generators
   together; add no Markdown files.
-- [ ] **Historical hardening review.** Reconcile still-open P01–P11 findings
-  in `MASTER/docs/history/fix-review-log.md` against current code/tests.
-  Close each with evidence or retain the exact unresolved finding; do not
-  repeat already-landed fixes.
+- [ ] **Historical hardening review.** Reconcile the remaining P01–P11
+  findings in `MASTER/docs/history/fix-review-log.md`. L4 stale-member
+  detection/tests, L5 heredoc/keyword detection plus structured Council
+  ideation, L7 declarative/runtime parity assertion, and L8 parse-time
+  check-registry refusal now have source coverage on `main`; their focused
+  test runs remain NOT_RUN. L4's stored census is not re-baselined until a
+  pinned Ruby 4.0.5 run has reported exact member drift. Continue with the
+  genuinely open R3/R8–R13/R16–R17/H2–H8 findings.
 - [ ] **Local Claude hooks.** On macOS, launch a real Claude Code session and
   verify project hooks load through the `.claude` symlink.
 - [ ] **AI3 recovery.** Compare recovery manifests with recoverable historical
