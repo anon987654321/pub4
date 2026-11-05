@@ -50,6 +50,7 @@ module Master::Core
       @ideation_complete = false
       @council_pass = false
       @write_trees = []
+      @write_paths = []
       @write_lines = 0
       @read_paths = []
       @asked = false
@@ -77,7 +78,7 @@ module Master::Core
     # and done out of the reply schema, so the offer and the check ask one object.
     def scope
       { trees: @write_trees.dup, elapsed_s: Time.now - @started_at, write_lines: @write_lines,
-        read_paths: @read_paths.dup, asked: @asked, evidence: evidence_score, proved: proved?,
+        read_paths: @read_paths.dup, write_paths: @write_paths.uniq, asked: @asked, evidence: evidence_score, proved: proved?,
         answerable: answered_from_reads?, writable: ideation_satisfied?, cleared: council_cleared? }
     end
 
@@ -149,6 +150,7 @@ module Master::Core
       @generation += 1
       tree = effect.args[:path].to_s.split("/").find { |part| Constitution::REPO_TREES.include?(part) }
       @write_trees << tree if tree
+      @write_paths << effect.args[:path].to_s
       @write_lines += effect.args[:content].to_s.lines.size
     end
 
