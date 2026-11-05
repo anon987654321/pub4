@@ -296,10 +296,12 @@ class LocaleContractTest < Minitest::Test
     if trees.include?("brgen")
       paths.concat(Dir.glob(File.join(ROOT, EngineRoots::GLOB, SOURCE_GLOB)))
     end
-    @sources[trees] ||= paths.uniq.reject { |path| path.match?(READER_SKIP) }
+    @sources[trees] ||= paths.uniq.reject { |path| "/#{rel(path)}".match?(READER_SKIP) }
                                 .to_h { |path| [rel(path), File.read(path)] }
   end
 
+  # Matched against the path below ROOT, so a checkout that itself sits under a
+  # tmp/ or log/ directory (an export in /private/tmp) still has readers.
   READER_SKIP = %r{/(?:test|vendor|node_modules|tmp|log|storage|coverage)/|/public/assets/|/config/locales/}
 
   # Keys both locales declare whose %{} names differ, one line each.
