@@ -44,7 +44,7 @@ class ApplicationController < ActionController::Base
     @current_cart = Cart.for(current_user, cart_session_key)
   end
 
-  # Badge count for the tab bar + pay-bar — rendered app-wide from the layout,
+  # Badge count for the tab bar + pay-bar - rendered app-wide from the layout,
   # so the aggregation lives here, not in a view.
   def cart_count
     current_cart.cart_items.sum(:quantity)

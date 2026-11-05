@@ -4,7 +4,7 @@ require "test_helper"
 
 # brgen's copies of passwords_mailer/reset.* were deleted along with amber's;
 # both apps now render the engine's. Proven per app because view lookup is
-# per-app — a local template anywhere would silently shadow the engine again.
+# per-app - a local template anywhere would silently shadow the engine again.
 class PasswordsMailerTest < ActionMailer::TestCase
   def user
     @user ||= User.create!(email_address: "reset-brgen@example.com", password: "password")

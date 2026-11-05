@@ -18,7 +18,7 @@ module Federatable
   end
 
   # city_id rather than city: this is called on users a controller loaded with
-  # nothing preloaded, and ApplicationRecord is strict_loading by default —
+  # nothing preloaded, and ApplicationRecord is strict_loading by default -
   # reading the association here raised on every webfinger and actor fetch.
   def federated? = username.present? && !guest? && city_id.present? && deleted_at.nil? && deletion_scheduled_at.nil?
 
@@ -34,7 +34,7 @@ module Federatable
 
   # Generated on first use rather than at signup. brgen mints a real User row
   # for every cookieless visitor, and RSA-2048 keygen for each of those would be
-  # both slow and pointless — almost none of them ever federate anything.
+  # both slow and pointless - almost none of them ever federate anything.
   def signing_key
     ensure_keypair!
     OpenSSL::PKey::RSA.new(private_key)

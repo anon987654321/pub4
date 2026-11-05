@@ -49,7 +49,7 @@ Rails.application.configure do
     policy.worker_src :self, :blob
     policy.manifest_src :self
     policy.form_action :self
-    # Report-only with nowhere to report is neither blocking nor recording — the
+    # Report-only with nowhere to report is neither blocking nor recording - the
     # same as no policy, with extra bytes on every response. Shared::CspReportsController
     # is the reader.
     policy.report_uri "/csp-reports"

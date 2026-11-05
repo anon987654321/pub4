@@ -14,7 +14,7 @@
   max-width: 100%;
 }
 
-/* The teaser banner on both storefronts. Type is the whole design here — see
+/* The teaser banner on both storefronts. Type is the whole design here - see
    the views for why neither has anything permanent to photograph. Marketplace
    uses the house grotesk as an authoritative commerce face; takeaway may use
    its own campaign face. */
@@ -532,9 +532,9 @@ font-size: clamp(12px, 3vw, var(--text-small));
    whatever the animation happens to render, with no stable contrast to hold.
    Solid #14141a gives the track title 12.77:1 and the note icon 7.44:1, and
    cannot drift with the animation. */
-  color: #d8d6e0; // scan: intentional — stage type on glass, not theme text
+  color: #d8d6e0; // scan: intentional - stage type on glass, not theme text
   font-family: var(--font);
-  background: #14141a; // scan: intentional — the tunnel floor, not a theme surface
+  background: #14141a; // scan: intentional - the tunnel floor, not a theme surface
   border-radius: 0;
   padding: clamp(var(--space-1), 1vw, 0.25rem) clamp(0.5rem, 2vw, 0.75rem);
 }
@@ -684,7 +684,7 @@ font-size: clamp(12px, 3vw, var(--text-small));
 }
 
 .radio-library-item:hover {
-  background: rgba(78, 205, 196, 0.08); // scan: intentional — the tunnel's teal wash, its own stage light
+  background: rgba(78, 205, 196, 0.08); // scan: intentional - the tunnel's teal wash, its own stage light
 }
 
 .radio-library-item span {
@@ -979,15 +979,15 @@ font-size: clamp(12px, 3vw, var(--text-small));
 // ---- brgen_vertical_playlist ----
 body.vertical-playlist {
   /* The immersive dark-glass idiom: near-black panes with white-alpha
-     hairlines, worn regardless of theme — the player is a stage, not a page.
+     hairlines, worn regardless of theme - the player is a stage, not a page.
      Values defined once here; every pane and edge cites them. */
   --glass: rgba(18, 18, 18, 0.94);
   --glass-deep: rgba(8, 8, 8, 0.94);
   --edge-soft: rgba(255, 255, 255, 0.06);
   --edge: rgba(255, 255, 255, 0.08);
   --edge-strong: rgba(255, 255, 255, 0.12);
-/* Playlist — immersive vertical branding (radio tunnel). The vertical shell rules hide the core shell. */
-  /* Token-backed — vertical shell sets --accent to playlist teal */
+/* Playlist - immersive vertical branding (radio tunnel). The vertical shell rules hide the core shell. */
+  /* Token-backed - vertical shell sets --accent to playlist teal */
   --color-bg: var(--bg);
   --color-text: var(--text);
   --color-accent: var(--accent);
@@ -1144,7 +1144,7 @@ body.vertical-playlist .playlist-details {
   background: rgb(from var(--color-accent) r g b / var(--opacity-faint));
 }
 
-/* Player chrome — header, stage, queue, comments */
+/* Player chrome - header, stage, queue, comments */
 .playlist-top {
   display: flex;
   align-items: flex-start;
@@ -1236,7 +1236,7 @@ body.vertical-playlist .playlist-details {
   padding: 8px 12px;
   border: 1px solid var(--edge-strong);
   border-radius: var(--radius-small);
-  background: rgba(0, 0, 0, 0.4); // scan: intentional — pane-on-glass dimming, measured for this stage
+  background: rgba(0, 0, 0, 0.4); // scan: intentional - pane-on-glass dimming, measured for this stage
   color: inherit;
 }
 
@@ -1441,7 +1441,7 @@ body.vertical-playlist .playlist-details {
   accent-color: var(--text);
 }
 
-/* One button, two glyphs, swapped by state — see #syncPlayButton. */
+/* One button, two glyphs, swapped by state - see #syncPlayButton. */
 .playlist-transport-bar .transport-icon-pause { display: none; }
 .playlist-transport-bar .transport-button--primary.is-playing .transport-icon-play { display: none; }
 .playlist-transport-bar .transport-button--primary.is-playing .transport-icon-pause { display: inline; }
@@ -1483,7 +1483,7 @@ body.vertical-playlist .playlist-details {
 // ---- /brgen_vertical_playlist_controls ----
 
 // ---- brgen_vertical_takeaway ----
-/* Takeaway — DoorDash urgency + Foodora/Wolt restaurant discovery */
+/* Takeaway - DoorDash urgency + Foodora/Wolt restaurant discovery */
 body.vertical-takeaway {
   /* 64% resolved to #ed4c3a = 4.42 on --food-eta-bg (#202020), under the 4.5
      floor for the 14px bold .eta-badge. 66% clears it at 4.78 without leaving
@@ -1549,7 +1549,7 @@ body.vertical-takeaway .eta-badge--cancelled {
   color: var(--text-secondary);
 }
 
-/* Real progress fill (order stage / total stages) — not a looping
+/* Real progress fill (order stage / total stages) - not a looping
    animation, just the actual state rendered as width. */
 body.vertical-takeaway .order-progress {
   height: 4px;
@@ -1561,7 +1561,7 @@ body.vertical-takeaway .order-progress {
 
 body.vertical-takeaway .order-progress-fill {
   height: 100%;
-  /* The view hands progress over as a custom property — the value is data,
+  /* The view hands progress over as a custom property - the value is data,
      the rule reading it lives here. */
   width: var(--progress, 0%);
   background: var(--food-dash);
@@ -1621,7 +1621,7 @@ body.vertical-takeaway .order-status {
 }
 
 /* A shared ticket: who asked for what, and what it comes to. The name is the
-   column that matters — the whole point is that nobody has to remember whose
+   column that matters - the whole point is that nobody has to remember whose
    pizza is whose. */
 .group-lines {
   list-style: none;
@@ -1663,7 +1663,7 @@ body.vertical-takeaway .order-status {
 // ---- /brgen_vertical_takeaway ----
 
 // ---- brgen_vertical_tv ----
-/* TV — Odyssey-style cinematic watch + postpro/replicate media polish */
+/* TV - Odyssey-style cinematic watch + postpro/replicate media polish */
 body.vertical-tv {
   --tv-stage: var(--bg);
   --tv-accent: var(--accent);
@@ -1776,7 +1776,7 @@ body.vertical-tv .show-grid {
   text-decoration: underline;
 }
 
-/* Vertical feed — one video per screen.
+/* Vertical feed - one video per screen.
    Snapping is CSS, not JS: the browser already does momentum, rubber-banding
    and keyboard paging correctly, and a hand-rolled scroller gets at least one
    of the three wrong on some device. Stimulus only decides what plays. */
@@ -1930,7 +1930,7 @@ width: 100dvw;
 .live-stream-chat input[type="text"] {
   flex: 1;
   min-width: 0;
-  padding: 0.75rem; /* 12px — eight_px_rhythm; form field keeps 1px border */
+  padding: 0.75rem; /* 12px - eight_px_rhythm; form field keeps 1px border */
   border: 1px solid var(--border);
   border-radius: var(--radius-small);
   background: var(--surface-elevated);
@@ -2064,7 +2064,7 @@ body.vertical-maps .map-place-popup {
 }
 
 body.vertical-maps .map-marker span {
-  border-color: rgba(255, 255, 255, 0.9); // scan: intentional — drawn over map tiles, not theme surfaces
+  border-color: rgba(255, 255, 255, 0.9); // scan: intentional - drawn over map tiles, not theme surfaces
 }
 
 body.vertical-maps .page-header {
@@ -2085,7 +2085,7 @@ body.vertical-maps article.place dl {
   gap: 4px 1rem;
   padding: 1rem;
   border-radius: var(--radius-small);
-  background: rgba(255, 255, 255, 0.04); // scan: intentional — white-alpha lift on the maps night shell
+  background: rgba(255, 255, 255, 0.04); // scan: intentional - white-alpha lift on the maps night shell
   border: 0;
 }
 
@@ -2134,7 +2134,7 @@ body.vertical-maps .place-list {
 body.vertical-maps .place-card {
   padding: var(--space-3) 1rem;
   border-radius: var(--radius-small);
-  background: rgba(255, 255, 255, 0.04); // scan: intentional — white-alpha lift on the maps night shell
+  background: rgba(255, 255, 255, 0.04); // scan: intentional - white-alpha lift on the maps night shell
   border: 0;
 }
 
@@ -2150,14 +2150,14 @@ body.vertical-maps .place-card a {
 // ---- /brgen_vertical_maps ----
 
 // ---- brgen_vertical_messenger_threads ----
-/* Messenger — iMessage-style threads on messenger.brgen.no */
+/* Messenger - iMessage-style threads on messenger.brgen.no */
 body.vertical-messenger {
   --msg-bg: var(--bg);
   --msg-ink: var(--text);
   --msg-muted: var(--text-secondary);
   --msg-surface: var(--surface-elevated);
   --msg-border: var(--border);
-  /* Flat solid bubbles — no gradient (pixel_perfection) */
+  /* Flat solid bubbles - no gradient (pixel_perfection) */
   --msg-bubble-self: color-mix(in srgb, var(--accent) 22%, var(--surface-elevated));
   --msg-bubble-peer: var(--surface-elevated);
   --msg-accent: var(--accent);
@@ -2256,7 +2256,7 @@ body.vertical-messenger ul[aria-label="Conversations"] mark {
 /* The people picker.
 
    Unscoped, unlike everything above it. body.vertical-messenger is only set
-   when active_vertical is messenger, i.e. on the messenger subdomain — and
+   when active_vertical is messenger, i.e. on the messenger subdomain - and
    conversations are routed on the main city domain too, where none of the
    rules above apply. These are specific enough not to collide, and the picker
    has to look the same from both. */
@@ -2344,14 +2344,14 @@ body.vertical-messenger ul[aria-label="Conversations"] mark {
   min-width: 0;
 }
 
-/* The sender's state, "· sent" or "· read", shown on the viewer's own lines
+/* The sender's state, "- sent" or "- read", shown on the viewer's own lines
    only. The partial renders the same text for every viewer, so a peer's line
    must not tell the reader what their own message's state is. */
 body.vertical-messenger article[data-from="peer"] > header .read-receipt {
   display: none;
 }
 
-/* "· edited", after the timestamp. Quiet on purpose — it is provenance, not
+/* "- edited", after the timestamp. Quiet on purpose - it is provenance, not
    content, and it sits in a line the reader scans rather than reads. */
 .edited-mark {
   color: var(--text-secondary);
@@ -2391,7 +2391,7 @@ body.vertical-messenger article[data-from="peer"] > header .read-receipt {
 
 // :is(...) rather than eight repeated compound selectors: one selector, and
 // no worse either way.
-/* Space, not hairlines — elevated surface only (family "separation is space"). */
+/* Space, not hairlines - elevated surface only (family "separation is space"). */
 .feed-card:is(.listing, .deal, .store, .community, .match, .playlist, .tv, .takeaway) {
   background: var(--surface-elevated);
   border: 0;
@@ -2460,7 +2460,7 @@ body.vertical-messenger .disappearing-settings select {
   padding: 0.25rem 0.5rem;
 }
 
-/* Dot communicates the thread's disappearing state at a glance — off by
+/* Dot communicates the thread's disappearing state at a glance - off by
    default, lit in the vertical's own accent once a duration is set. */
 body.vertical-messenger .disappearing-badge {
   display: inline-block;
@@ -2476,7 +2476,7 @@ body.vertical-messenger .disappearing-settings--active .disappearing-badge {
   background: var(--msg-accent);
 }
 
-/* Per-message decay chip — same accent, dims as the thread's own fresh/
+/* Per-message decay chip - same accent, dims as the thread's own fresh/
    later/soon tiers instead of a fixed color, so urgency is read from the
    message's actual remaining lifespan (Message#expiry_urgency). */
 body.vertical-messenger .expiry-chip {
@@ -2524,7 +2524,7 @@ body.vertical-messenger #messages article[data-from="self"] {
 
 /* Disappearing-thread signature: a bubble's own border visibly erodes as it
    nears its expiry, so "this will vanish" is legible in the thread itself
-   rather than only as a timestamp in the header. Border-style only — no
+   rather than only as a timestamp in the header. Border-style only - no
    opacity/blur ornament, so read messages already delivered stay legible. */
 body.vertical-messenger #messages article[data-expiry="later"] {
   border-style: dashed;
@@ -2645,7 +2645,7 @@ body.vertical-messenger .msg-reply-context {
   font-size: var(--text-small);
 }
 
-/* Reply, edit, unsend and forward, folded away until asked for — a message
+/* Reply, edit, unsend and forward, folded away until asked for - a message
    list is long, and four controls per line would outweigh the lines. */
 body.vertical-messenger .msg-actions {
   margin-top: var(--space-1);
@@ -2668,7 +2668,7 @@ body.vertical-messenger .msg-action {
 }
 
 /* What a pasted link is, without opening it. A block link at the thread's own
-   surface tier — never an image, see LinkPreview. */
+   surface tier - never an image, see LinkPreview. */
 body.vertical-messenger .link-preview {
   display: block;
   margin-top: var(--space-2);
@@ -2710,8 +2710,8 @@ body.vertical-messenger .link-preview-body {
    (ConversationParticipant::PREFIX), humans get `Stranger #A3F1` handles, and
 lib/brgen/irc/ speaks the actual protocol on 127.0.0.1:6667. Only the
 presentation differs: the messenger thread rules style
-`body.vertical-messenger #messages article` as iMessage bubbles — max-width
-82%, alternating flex-end/flex-start, rounded with a tail — and the channel
+`body.vertical-messenger #messages article` as iMessage bubbles - max-width
+82%, alternating flex-end/flex-start, rounded with a tail - and the channel
 page would inherit that because its <ul> also carries id="messages".
 
    Alternating sides is the wrong idea for a room. It encodes "me vs them",
@@ -2745,7 +2745,7 @@ body.vertical-messenger #messages.channel-log {
    costing every row two lines. A fixed nick column is a desktop-terminal idea
    and brgen's primary surface is 390px wide.
 
-   So the base layout flows inline, `19:37 <nick> message…`, which is what a
+   So the base layout flows inline, `19:37 <nick> message...`, which is what a
    mobile IRC client does and what uses the width. A hanging indent keeps
    wrapped lines from starting under the timestamp, so the message body is
    still findable down the left edge. The aligned grid comes back in the 40rem
@@ -2769,7 +2769,7 @@ body.vertical-messenger #messages.channel-log article {
 /* A room reads by speaker, so the nick repeats on every line the way it does in
    a real client. conversation_log_controller stamps data-grouped on messages
    within 5 minutes of the same sender and shared/_chat_reactions.scss hides
-   the header for those — correct for a bubble thread, wrong for a transcript,
+   the header for those - correct for a bubble thread, wrong for a transcript,
    where it would leave orphan lines under a gutter that says nothing. */
 body.vertical-messenger #messages.channel-log article[data-grouped="true"] > header {
   display: flex;
@@ -2808,7 +2808,7 @@ body.vertical-messenger #messages.channel-log article > header time {
 /* Every message in a channel expires on the same CHANNEL_TTL (6h, and the room
    header says so once), so a per-line "disappears in about 6 hours" chip is the
    same sentence 100 times and it would break the gutter. The read receipt is a
-   DM concept — there is no "read" in a room with N lurkers. */
+   DM concept - there is no "read" in a room with N lurkers. */
 body.vertical-messenger #messages.channel-log article > header .expiry-chip,
 body.vertical-messenger #messages.channel-log article > header .read-receipt {
   display: none;
@@ -2833,7 +2833,7 @@ body.vertical-messenger #messages.channel-log article > *:not(header):not(p) {
 
 /* <nick>, and <@nick> for the ops. Only bots hold op/voice today (the roster's
    `next unless` means humans never render a mode), and data-bot is already on
-   the article — so the prefix comes from CSS rather than a per-message
+   the article - so the prefix comes from CSS rather than a per-message
    ConversationParticipant lookup, which would be an N+1 across the log. */
 body.vertical-messenger #messages.channel-log .msg-nick::before { content: "<"; }
 body.vertical-messenger #messages.channel-log .msg-nick::after { content: ">"; }
@@ -2854,7 +2854,7 @@ body.vertical-messenger #messages.channel-log article[data-bot] {
   padding-inline-start: var(--irc-hang);
 }
 
-/* Own lines: no side, no bubble — just weight, the way a client highlights you. */
+/* Own lines: no side, no bubble - just weight, the way a client highlights you. */
 body.vertical-messenger #messages.channel-log article[data-from="self"] .msg-nick {
   font-weight: var(--weight-bold);
 }
@@ -2866,7 +2866,7 @@ body.vertical-messenger #messages.channel-log article[data-expiry="soon"] > head
 }
 
 /* Topic bar: the room's blurb is what lib/brgen/irc/bridge.rb serves as TOPIC,
-   so it is the topic — set it as one line under the channel name. */
+   so it is the topic - set it as one line under the channel name. */
 body.vertical-messenger .channel-room-header h1 {
   font-family: var(--font-mono);
   font-size: var(--text-large);
@@ -2949,6 +2949,6 @@ body.vertical-messenger .roster-nick {
   }
 }
 
-/* Shell polish — profile, discovery, post detail, thread summary. */
+/* Shell polish - profile, discovery, post detail, thread summary. */
 // ---- /brgen_vertical_channel_log ----
 // ============================================================ /module: brgen_vertical_surfaces

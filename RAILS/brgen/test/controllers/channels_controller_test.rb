@@ -64,7 +64,7 @@ class ChannelsControllerTest < ActionDispatch::IntegrationTest
 
       assert_response :success
       assert_includes response.body, "channel-room"
-      assert_includes response.body, "#brgen · #{@city.name}"
+      assert_includes response.body, "#brgen - #{@city.name}"
       assert_includes response.body, "channel-log"
 
       channel = Conversation.find_by!(slug: "brgen", city_id: @city.id)

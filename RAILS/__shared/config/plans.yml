@@ -3,7 +3,7 @@
 #
 # amount is in minor units and is what the page shows: it must equal the
 # Stripe Price that price_env names, created once in the Stripe dashboard
-# (Products → Add product → recurring price) and its price_… id put in that
+# (Products -> Add product -> recurring price) and its price_... id put in that
 # ENV variable on the app's box. A plan whose ENV is unset is shown as not
 # yet available rather than offered, so nobody is sent to a checkout that
 # cannot complete.

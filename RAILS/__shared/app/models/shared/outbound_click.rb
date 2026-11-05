@@ -3,13 +3,13 @@
 module Shared
   # One recorded click on a link that leaves the site.
   #
-  # This is the denominator. Affiliate revenue is clicks × conversion × basket ×
+  # This is the denominator. Affiliate revenue is clicks x conversion x basket x
   # commission, and until this table existed the first term was unknown, so the
   # other three could not be judged: "nobody clicks" and "attribution is broken"
   # produce the same zero in a network dashboard.
   #
   # Stores a host, never a full URL. The question is which merchants get traffic,
-  # not what each visitor shops for — and the narrower record is also the one that
+  # not what each visitor shops for - and the narrower record is also the one that
   # does not become a liability.
   class OutboundClick < ApplicationRecord
     self.table_name = "outbound_clicks"
@@ -23,7 +23,7 @@ module Shared
     scope :since, ->(time) { where(created_at: time..) }
     scope :for_merchant, ->(merchant) { where(merchant:) }
 
-    # A host, or nil for anything that is not an absolute http(s) URL — a relative
+    # A host, or nil for anything that is not an absolute http(s) URL - a relative
     # path, a javascript: URI, or junk. Returning nil means "do not record",
     # which is the honest answer for a click we cannot attribute to a merchant.
     def self.host_for(url)
@@ -53,7 +53,7 @@ module Shared
       )
     end
 
-    # Clicks per merchant over a window, highest first — the report the operator
+    # Clicks per merchant over a window, highest first - the report the operator
     # actually wants before deciding whether partner marketing is worth more work.
     def self.by_merchant(since: 30.days.ago)
       since(since).group(:merchant).order(count_all: :desc).count

@@ -1,7 +1,7 @@
-// Speech / TTS runtime — concatenated into face.runtime.js by assets:build_face_runtime.
+// Speech / TTS runtime - concatenated into face.runtime.js by assets:build_face_runtime.
 // This file is where the TTS implementation lives; it used to live in
 // face.part4.txt, which was left behind as a 96-byte stub the build task never
-// read. That stub is gone — the rake task's segment list is the only place that
+// read. That stub is gone - the rake task's segment list is the only place that
 // decides what goes into face.runtime.js.
 let actx = null;
 let ambientHumGain = null;
@@ -23,7 +23,7 @@ function initAudio() {
     silentOsc.connect(silentGain);
     silentGain.connect(actx.destination);
     silentOsc.start();
-    // FA51 ambient thinking hum — 40Hz sine at 3% volume, ducked during TTS
+    // FA51 ambient thinking hum - 40Hz sine at 3% volume, ducked during TTS
     ambientHumGain = actx.createGain();
     ambientHumGain.gain.value = 0;
     const humOsc = actx.createOscillator();
@@ -140,9 +140,9 @@ const TTS_DB_NAME = 'master-tts-v1';
 const TTS_STORE = 'blobs';
 // Fallback matches data/voice.yml, and has to: a failure to load
 // MASTER_VOICE_POLICY otherwise switches the voice, its accent and its language
-// with nothing said. This literal has been wrong in both directions — Pernille
+// with nothing said. This literal has been wrong in both directions - Pernille
 // here while the policy said Osman, then Osman here while the policy said
-// Pernille — which is the two-halves bug voice.yml's own header documents.
+// Pernille - which is the two-halves bug voice.yml's own header documents.
 const TTS_DEFAULT_VOICE = window.MASTER_VOICE_POLICY?.neural || 'en-US-ChristopherNeural';
 const TTS_STREAM_LIVE_KEY = 'master:tts-stream-live';
 function ttsStreamLiveEnabled() {
@@ -330,7 +330,7 @@ function _quirkifyTts(text, opts = {}) {
     const mid = Math.max(20, Math.floor(text.length * 0.55));
     const cut = text.indexOf(' ', mid);
     if (cut > 0 && cut < text.length - 8) {
-      const fillers = ['... uh, wait — where was I? oh, right. ', '... hmm, lost my train of thought. ', '... um, sorry — anyway. '];
+      const fillers = ['... uh, wait - where was I? oh, right. ', '... hmm, lost my train of thought. ', '... um, sorry - anyway. '];
       text = text.slice(0, cut) + fillers[(r() * fillers.length) | 0] + text.slice(cut + 1);
     }
   }
@@ -348,15 +348,15 @@ function _quirkifyTts(text, opts = {}) {
   if (r() < 0.05) {
     const mid = Math.floor(text.length * 0.4);
     const cut = text.indexOf(' ', mid);
-    if (cut > 0) text = text.slice(0, cut) + ' — *cough* — ' + text.slice(cut + 1);
+    if (cut > 0) text = text.slice(0, cut) + ' - *cough* - ' + text.slice(cut + 1);
   }
   if (r() < 0.04) {
     const words = text.split(' ');
     for (let i = 0; i < words.length; i++) if (r() < 0.35 && words[i].length > 3) words[i] = words[i].split('').join("'");
-    text = words.join(' ') + " — sorry, mouth full.";
+    text = words.join(' ') + " - sorry, mouth full.";
   }
   if (r() < 0.03) {
-    text = "wait — wait. okay. okay. *breathe* — " + text.replace(/\./g, "...") + " — sorry, panicking.";
+    text = "wait - wait. okay. okay. *breathe* - " + text.replace(/\./g, "...") + " - sorry, panicking.";
   }
   if (r() < 0.18) {
     const fillers = ['uh, ', 'hmm, ', 'so, ', 'well, ', 'like, ', 'i mean, ', 'okay so, '];
@@ -417,7 +417,7 @@ function ttsURL(text, voice, style) {
   // Tell the server which lane this is. Its synthesis queue ranks by the same
   // order this file ranks playback by, so an idle nudge can no longer be
   // synthesized ahead of the reply someone is waiting on. Absent means
-  // "response" server-side, which is the safe default — an unlabelled job never
+  // "response" server-side, which is the safe default - an unlabelled job never
   // loses its place to a nudge.
   const lane = tts.meta.get(text)?.lane;
   if (lane) qs.set('lane', lane);
@@ -546,7 +546,7 @@ async function pollTTSJob(job, signal) {
   // ~3 minutes of patience, not ~26s: synthesis is a serial queue on a 1-CPU
   // VPS, so a reply behind a few other chunks legitimately takes 30-60s+.
   // Giving up early threw "tts timeout", which latched serverUnavailable and
-  // silenced every later utterance — the "it only says scanning" bug (the
+  // silenced every later utterance - the "it only says scanning" bug (the
   // pre-cached status phrases play instantly; everything real timed out).
   // Late audio is still worth having: ttsTick serializes playback anyway.
   // Poll fast while the answer is still worth feeling instant, then back off.
@@ -602,7 +602,7 @@ async function pollTTSJob(job, signal) {
 // The chain is dilla's: three resonant peaks at the vowel formants, a chorus,
 // a phaser, a band and a limiter. The server applies it with ffmpeg and hands
 // the same string to the page in MASTER_VOICE_POLICY, and until now nothing in
-// the page read it — the face had its own invented chain instead, so the web
+// the page read it - the face had its own invented chain instead, so the web
 // and the terminal were two voices sharing a name. One declaration, two
 // readers: ffmpeg on the server, these nodes here.
 //
@@ -694,12 +694,12 @@ function buildPhaser(ctx, args) {
 }
 
 // aeval, for the one shape the character presets actually write: ring
-// modulation spelled as val(0)*(A+B*sin(2*PI*t*F)) — a dry floor A plus a
+// modulation spelled as val(0)*(A+B*sin(2*PI*t*F)) - a dry floor A plus a
 // carrier of F hertz at depth B, which is exactly a GainNode whose gain
 // parameter a carrier oscillator rides. The matcher refuses every other
 // expression: aeval is a language, not a filter, and a node that guessed at
 // arithmetic would be a second voice under the preset's name. cos is accepted
-// beside sin because the two differ only in carrier phase — a quarter period
+// beside sin because the two differ only in carrier phase - a quarter period
 // of a 38-50 hertz carrier, beneath perception in the envelope.
 function buildAeval(ctx, args) {
   const raw = String(args.exprs !== undefined ? args.exprs : (args._ ? args._[0] : '') || '')
@@ -724,7 +724,7 @@ function buildAeval(ctx, args) {
 
 // acrusher as bit quantization through a WaveShaper. The `samples` hold (a
 // sample-and-true-hold at a fraction of the rate) has no honest node without a
-// worklet, so a unit asking for one is refused whole — the glitch preset, the
+// worklet, so a unit asking for one is refused whole - the glitch preset, the
 // only acrusher user, is server-only anyway through its enable=. mix reads as
 // the crushed blend against dry, which is how the server lane reads it.
 function buildAcrusher(ctx, args) {
@@ -762,7 +762,7 @@ function buildAcrusher(ctx, args) {
 
 // The asetrate/aresample/atempo idiom as one pitch shifter: two delay taps
 // swept in opposite phase by one sawtooth, crossfaded at constant power
-// (sin^2 + cos^2 = 1). The sweep is the FM the shifter lives on — the delay
+// (sin^2 + cos^2 = 1). The sweep is the FM the shifter lives on - the delay
 // line's slope sets the ratio exactly, the same arithmetic the idiom writes
 // with resampler clocks. An approximation in texture, not in ratio: ffmpeg's
 // resampler and this crossfade disagree about artifacts, not about pitch.
@@ -796,7 +796,7 @@ function buildPitchShift(ctx, ratio) {
   tap2.delayTime.value = base;
   halfPhase.connect(tap2.delayTime);
   // Windows off the same saw: tap 1 fades by sin^2 of the phase, tap 2 by
-  // cos^2 — zero exactly at each tap's own wrap, constant power in between.
+  // cos^2 - zero exactly at each tap's own wrap, constant power in between.
   const points = 1024;
   const win1 = ctx.createWaveShaper();
   const win2 = ctx.createWaveShaper();
@@ -825,7 +825,7 @@ function buildPitchShift(ctx, ratio) {
   return { input, output };
 }
 
-// The idiom must be exactly asetrate=R, aresample=S, atempo=T — contiguous,
+// The idiom must be exactly asetrate=R, aresample=S, atempo=T - contiguous,
 // and with atempo closing the arithmetic (T ~= S/R, the duration the asetrate
 // spent). Anything looser is refused whole: a rate change the node guessed at
 // would be the preset's pitch drifting from what the server speaks.
@@ -984,7 +984,7 @@ function buildChainNode(ctx, name, args) {
   if (name === 'acrusher') return buildAcrusher(ctx, args);
   if (name === 'aformat') {
     // sample_rates alone pins the working rate, which a time-domain graph
-    // already satisfies at its own clock — an exact passthrough. Any other
+    // already satisfies at its own clock - an exact passthrough. Any other
     // aformat dimension (channels, layouts, sample formats) has no node.
     const keys = Object.keys(args).filter((key) => key !== '_');
     if (keys.length !== 1 || keys[0] !== 'sample_rates') return null;
@@ -1225,7 +1225,7 @@ async function connectTTSAudio(audio, boostValue = 1.35) {
   const msrc = actx.createMediaElementSource(audio);
   const analyser = actx.createAnalyser();
   const masterGain = actx.createGain();
-  // The server's streaming path — the one TtsJob uses — hands the browser bare
+  // The server's streaming path - the one TtsJob uses - hands the browser bare
   // edge-tts, because only Speech#synthesize shapes and
   // synthesize_streaming_to_file does not. So the page is where the chain gets
   // applied for the web, and it applies the declared one rather than an
@@ -1292,7 +1292,7 @@ function finishTTSPlayback(src, continueQueue = true) {
   // Blink on finishing a thought. Humans blink at clause boundaries and just
   // after an utterance ends, and that coupling is most of what makes a blink
   // read as punctuation rather than a timer running behind the face. Skipped
-  // when the utterance was cut off — an interruption is not a completed thought.
+  // when the utterance was cut off - an interruption is not a completed thought.
   if (continueQueue) window.MASTER_ATTENTION?.cue?.('utterance_end');
   tts.visemePlan = null;
   tts.endedAt = performance.now();
@@ -1353,7 +1353,7 @@ function dropQueuedSpeech(text) {
 // Errors first, then the thing the visitor actually asked for, then filler.
 // The nudge lane used to outrank `response`, so an idle-loop line queued while
 // a reply was still waiting on synthesis was spoken *instead of* the reply,
-// first — literally answering a question with "the moon is just a really
+// first - literally answering a question with "the moon is just a really
 // committed pebble". Filler is by definition the most droppable thing here, so
 // it drains last.
 function nextQueuedSpeech() {
@@ -1371,7 +1371,7 @@ function dequeueTtsLane() {
 
 function enqueueSpeech(text, opts = {}) {
   if (tts.muted) return;
-  // Speaking counts as activity — keeps frame()'s idle drift from dissolving
+  // Speaking counts as activity - keeps frame()'s idle drift from dissolving
   // the face while a long reply is being read aloud.
   State.lastTouch = performance.now();
   emitTtsEvent('tts:anticipate', { expression: { arousal: 0.25 }, style: _nextTtsStyle(_nextTtsVoice()) });
@@ -1405,7 +1405,7 @@ function enqueueSpeech(text, opts = {}) {
   tts.lastText = decorated;
   tts.resumeTime = null;
   tts.resumeWordIndex = null;
-  // A real reply makes every queued idle line stale — nobody wants yesterday's
+  // A real reply makes every queued idle line stale - nobody wants yesterday's
   // filler read out after their answer. Reordering the lanes alone would only
   // defer them, not drop them, so the backlog would still be spoken eventually.
   if (lane === 'response' && tts.lanes.nudge.length) {

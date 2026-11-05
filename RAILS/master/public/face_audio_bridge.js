@@ -1,4 +1,4 @@
-// TTS/STT audio ducking helpers — face audio module (web_001).
+// TTS/STT audio ducking helpers - face audio module (web_001).
 (() => {
   "use strict";
 
@@ -24,8 +24,8 @@
 
   // Both branches of applySttDuck need an undo, and only the WebAudio one had
   // it: this returned early unless outputGain and actx were both present, so on
-  // the element path — AudioContext suspended, not yet created, or speech
-  // starting before connectTTSAudio runs — ducking set tts.audio.volume to
+  // the element path - AudioContext suspended, not yet created, or speech
+  // starting before connectTTSAudio runs - ducking set tts.audio.volume to
   // 0.12 and nothing ever put it back. Math.min meant it could only fall, so
   // one pass of speech recognition left the voice at 12% for the life of that
   // element, which is inaudible on a laptop speaker rather than merely quiet.

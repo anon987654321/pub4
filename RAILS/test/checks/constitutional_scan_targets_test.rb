@@ -85,7 +85,7 @@ class ConstitutionalScanTargetsTest < Minitest::Test
     assert_equal 6, check.targets.size + check.skipped.size
   end
 
-  # A path in no tree at all — OPENBSD is a target now, so the old example
+  # A path in no tree at all - OPENBSD is a target now, so the old example
   # selects one.
   def test_no_changes_means_nothing_to_scan_not_everything
     check = build(changed: ["docs/notes.md"])

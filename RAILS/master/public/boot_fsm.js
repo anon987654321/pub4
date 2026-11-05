@@ -77,7 +77,7 @@
     history.push({ from: prev, to: next, at: performance.now(), detail });
     if (history.length > 96) history.shift();
     applyDom();
-    log(`${prev} → ${next}`, detail);
+    log(`${prev} -> ${next}`, detail);
     emit(prev, detail);
     if (next === STATES.VOICE) maybeReady(detail);
     return true;

@@ -20,7 +20,7 @@ class CreateTvSoundsAndDuets < ActiveRecord::Migration[8.1]
     # most videos answer nothing.
     add_reference :tv_videos, :duet_of, null: true, foreign_key: { to_table: :tv_videos }
     # Whether this video may be answered. Default true, because a video posted
-    # to a public feed is already public — but a creator who does not want their
+    # to a public feed is already public - but a creator who does not want their
     # face beside a stranger's has to be able to say so.
     add_column :tv_videos, :allow_duets, :boolean, null: false, default: true
   end

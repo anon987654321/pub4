@@ -2,7 +2,7 @@
 
 module Api
   module V1
-    # POST /api/v1/lint {"files": [{"path": "app/models/user.rb", "source": "…"}]}
+    # POST /api/v1/lint {"files": [{"path": "app/models/user.rb", "source": "..."}]}
     # One file is one check against the key's monthly quota, counted before the
     # scan so a request that does not fit costs nothing.
     class LintController < BaseController

@@ -4,7 +4,7 @@ require "test_helper"
 
 # Marketplace::Review and Takeaway::Review both refresh their parent's average
 # rating from an after_commit that fires on destroy. A review being destroyed
-# was found by id — nothing preloaded — and ApplicationRecord is strict_loading
+# was found by id - nothing preloaded - and ApplicationRecord is strict_loading
 # by default with test and production both raising. So the parent read in the
 # callback blew up *after* the delete had committed: the review was gone and the
 # cached rating still counted it.
@@ -61,7 +61,7 @@ class RatingRefreshTest < ActiveSupport::TestCase
   end
 
   # Follow#emit_follow_created reads both sides to build the notification, and
-  # rescues StandardError into a log line — so a strict-loading violation there
+  # rescues StandardError into a log line - so a strict-loading violation there
   # does not fail loudly, it silently stops notifying.
   test "following notifies the followed user without swallowing an error" do
     ActsAsTenant.with_tenant(@city) do

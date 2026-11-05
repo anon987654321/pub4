@@ -23,7 +23,7 @@ Rails.application.configure do
   # Show full error reports.
   config.consider_all_requests_local = true
 
-  # :memory_store, not :null_store — a real cache keeps session state and the
+  # :memory_store, not :null_store - a real cache keeps session state and the
   # Vipps mock flow testable, while a per-process store keeps tests isolated.
   config.cache_store = :memory_store
 
@@ -51,7 +51,7 @@ Rails.application.configure do
 
   # Raises error for missing translations.
   # A missing key should fail a test, not render a "translation missing" span
-  # that still 200s — the checkout flow carries the warmth in its copy.
+  # that still 200s - the checkout flow carries the warmth in its copy.
   config.i18n.raise_on_missing_translations = true
 
   # Annotate rendered view with file names.

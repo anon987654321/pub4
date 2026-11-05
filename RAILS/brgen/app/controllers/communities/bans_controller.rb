@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Moderators ban; only an owner can lift someone else's ban is deliberately NOT
-# the rule here — any moderator can lift any ban, because a mod team that cannot
+# the rule here - any moderator can lift any ban, because a mod team that cannot
 # undo each other's mistakes escalates every disagreement to the owner.
 class Communities::BansController < ApplicationController
   before_action :require_user_session
@@ -50,13 +50,13 @@ class Communities::BansController < ApplicationController
   def destroy
     # includes(:user) rather than a bare find: strict_loading_by_default is on in
     # every environment, so reading ban.user off a freshly-found row to name it in
-    # the audit record would raise — after the ban had already been lifted.
+    # the audit record would raise - after the ban had already been lifted.
     ban = @community.community_bans.includes(:user).find(params[:id])
     subject = ban.user
     reason = ban.reason
     ban.destroy
 
-    # The row is gone and it held every fact about the ban — who imposed it, why,
+    # The row is gone and it held every fact about the ban - who imposed it, why,
     # and until when. This line is the only reason any of that survives being
     # lifted, so it reads the values off the record before destroy, not after.
     Shared::Audit.record!(

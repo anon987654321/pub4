@@ -3,7 +3,7 @@
 # A follow, in either direction.
 #
 # `inbound` is a remote actor following a local user; `outbound` is a local user
-# following a remote actor. One table rather than two of the same shape — the
+# following a remote actor. One table rather than two of the same shape - the
 # pair (actor, user) is the same fact either way, and only the arrow differs.
 #
 # The row exists while still pending, because Follow and Accept are separate

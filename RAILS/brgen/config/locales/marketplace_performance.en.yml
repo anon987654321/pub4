@@ -1,6 +1,6 @@
 en:
   marketplace:
-    seller_performance_window: Seller activity — last 60 days
+    seller_performance_window: Seller activity - last 60 days
     seller_purchases:
       one: "%{count} purchase"
       other: "%{count} purchases"

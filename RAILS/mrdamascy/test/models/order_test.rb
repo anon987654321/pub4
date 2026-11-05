@@ -41,9 +41,9 @@ class OrderTest < ActiveSupport::TestCase
     order.compute_totals!(@zone)
 
     assert_equal 2, order.order_items.count  # frozen snapshots of the cart lines
-    assert_equal 22700, order.subtotal_ore   # 12900 + 2 × 4900
+    assert_equal 22700, order.subtotal_ore   # 12900 + 2 x 4900
     assert_equal 2900, order.delivery_fee_ore
-    assert_equal 0, order.discount_ore       # no promo result passed — hermetic
+    assert_equal 0, order.discount_ore       # no promo result passed - hermetic
     assert_equal 25600, order.total_ore      # subtotal − discount + fee
     assert_equal 20, order.eta_minutes
   end
@@ -95,7 +95,7 @@ class OrderTest < ActiveSupport::TestCase
 
   # -- State machine --------------------------------------------------------
 
-  test "advance! walks placed → confirmed → preparing → ready" do
+  test "advance! walks placed -> confirmed -> preparing -> ready" do
     order = seed_order!(user: @user, kitchen: @kitchen)
 
     order.advance!
@@ -112,7 +112,7 @@ class OrderTest < ActiveSupport::TestCase
     refuse_transition(order, :deliver!)
 
     ready = seed_order!(user: @user, kitchen: @kitchen, state: "ready")
-    refuse_transition(ready, :advance!)  # staff stops at ready — courier takes over
+    refuse_transition(ready, :advance!)  # staff stops at ready - courier takes over
     refuse_transition(ready, :deliver!)  # deliver! requires picked_up
 
     cooking = seed_order!(user: @user, kitchen: @kitchen, state: "preparing")
@@ -207,14 +207,14 @@ class OrderTest < ActiveSupport::TestCase
 
   private
 
-  # Guards may raise or return false — both count as a refusal. What must
+  # Guards may raise or return false - both count as a refusal. What must
   # never happen is the state silently moving to an illegal value.
   def refuse_transition(order, method)
     before = order.state
     begin
       order.public_send(method)
     rescue StandardError
-      # raised guard — fine
+      # raised guard - fine
     end
     order.reload
     assert_equal before, order.state, "#{method} should be refused from #{before}"

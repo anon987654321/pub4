@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 namespace :vapid do
-  desc "Generate VAPID keys — add output to .env or credentials"
+  desc "Generate VAPID keys - add output to .env or credentials"
   task generate: :environment do
     key = Webpush.generate_key
     puts "VAPID_PUBLIC_KEY=#{key.public_key}"

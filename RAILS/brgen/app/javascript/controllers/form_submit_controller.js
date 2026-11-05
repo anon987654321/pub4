@@ -77,7 +77,7 @@ export default class extends Controller {
 
   // The feed composer has a hidden title filled from content as you type.
   // If that sync missed a keystroke, PostsController already derives the
-  // title from content — match it here so a filled box is not rejected
+  // title from content - match it here so a filled box is not rejected
   // for an empty hidden field.
   deriveTitle() {
     const title = this.element.querySelector('[name$="[title]"]')

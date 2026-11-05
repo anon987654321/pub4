@@ -44,7 +44,7 @@ module Shared
     end
 
     # Upsert on the network's own id. An importer re-running must not duplicate
-    # rows, and must refresh last_seen_at even when nothing else changed —
+    # rows, and must refresh last_seen_at even when nothing else changed -
     # that timestamp is how `fresh` distinguishes live from withdrawn.
     def self.upsert_from_feed!(source:, external_id:, **attributes)
       record = find_or_initialize_by(source:, external_id:)

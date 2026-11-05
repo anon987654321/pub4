@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-# "Message me" — one link a person can send to somebody who has no account here.
+# "Message me" - one link a person can send to somebody who has no account here.
 #
 # The whole on-ramp is this: tap the link, sign in with Vipps, land in a
 # conversation with the person who sent it. WhatsApp's equivalent is a phone
@@ -31,7 +31,7 @@ return redirect_to(root_path, alert: t("invite.expired")) if host.deleted_at.pre
 return redirect_to(root_path, alert: t("invite.expired")) if host.deletion_scheduled_at.present?
 
     # Not signed in yet: keep the token, not the resolved user, so the thing held
-    # over the sign-in round trip is the same thing that arrived — and expires on
+    # over the sign-in round trip is the same thing that arrived - and expires on
     # its own schedule rather than living in a session forever.
     unless Current.user
       session[:invite_token] = params[:token]
@@ -44,8 +44,8 @@ return redirect_to(root_path, alert: t("invite.expired")) if host.deletion_sched
   private
 
   def conversation_for(host)
-    # Your own link is not an error worth a message — you were probably testing
-    # it — so it simply takes you to your inbox.
+    # Your own link is not an error worth a message - you were probably testing
+    # it - so it simply takes you to your inbox.
     return conversations_path if host.id == Current.user.id
 
     Conversation.find_or_create_direct(Current.user, host)

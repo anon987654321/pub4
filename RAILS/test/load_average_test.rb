@@ -4,12 +4,12 @@
 #
 # PruneGuestUsersJob's ceiling read /proc/loadavg, which OpenBSD does not have.
 # It raised ENOENT into a bare rescue that returned false, so the guard answered
-# "not busy" on every tick of vm23 — and it was written the day after that job
+# "not busy" on every tick of vm23 - and it was written the day after that job
 # ran unpaced and took the whole site down. Nothing failed. Nothing logged. The
 # guard was decoration from its first commit.
 #
 # So this test does two things a code review would not. It runs the reader here,
-# on whatever this is, and demands a real number — the same call the job makes,
+# on whatever this is, and demands a real number - the same call the job makes,
 # not a mock of it. And it greps the tree for the Linux-only path, because the
 # defect was never the parsing; it was one platform's interface being used on
 # another and nobody being able to see it.
@@ -25,7 +25,7 @@ class LoadAverageTest < Minitest::Test
   def test_reads_a_real_load_average_on_this_machine
     one = Operator::LoadAverage.one
 
-    refute_nil one, "no load average on #{RUBY_PLATFORM} — the guard is blind here"
+    refute_nil one, "no load average on #{RUBY_PLATFORM} - the guard is blind here"
     assert_kind_of Float, one
     assert_operator one, :>=, 0.0
     # A 1-vCPU box under a stampede reached 10; 256 is not a load, it is a
@@ -52,7 +52,7 @@ class LoadAverageTest < Minitest::Test
     assert_equal %w[7.94 4.61 3.67], numbers.first(3)
   end
 
-  # Split so that this file is not its own first offender — the matcher covers
+  # Split so that this file is not its own first offender - the matcher covers
   # the test that runs it, which is the only way it covers everything.
   NEEDLE = "/proc/" + "loadavg"
 
@@ -62,7 +62,7 @@ class LoadAverageTest < Minitest::Test
                       .map { |n, _line| "#{path.delete_prefix("#{ROOT}/")}:#{n}" }
     end
 
-    assert_empty offenders, "#{NEEDLE} does not exist on OpenBSD — use Operator::LoadAverage"
+    assert_empty offenders, "#{NEEDLE} does not exist on OpenBSD - use Operator::LoadAverage"
   end
 
   private

@@ -49,7 +49,7 @@ self.addEventListener('fetch', e => {
     return;
   }
 
-  // Never cache digested /assets/* — stale hashes wedge primer/face boot after deploy.
+  // Never cache digested /assets/* - stale hashes wedge primer/face boot after deploy.
   if (url.pathname.startsWith('/assets/')) {
     e.respondWith(fetch(e.request));
     return;
@@ -57,7 +57,7 @@ self.addEventListener('fetch', e => {
 
   // Dynamic API/SSE endpoints: passthrough only, never cache. chat/message,
   // chat/tts/stream, and events/stream are long-lived streams that never
-  // finish in a way Cache Storage can store — cloning and caching them throws
+  // finish in a way Cache Storage can store - cloning and caching them throws
   // "Cache.put() encountered a network error" the moment the stream is
   // aborted (new message sent, reconnect, navigation). Status polls are just
   // pointless to cache.

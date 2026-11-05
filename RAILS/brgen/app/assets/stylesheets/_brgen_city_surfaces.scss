@@ -186,7 +186,7 @@ aside:not([class]) > h2 {
 .site-footer-head { margin: 0; color: var(--text); }
 .site-legal .affiliate-fine { grid-column: 1 / -1; margin: 0; }
 
-/* G · a11y floor + touch targets */
+/* G - a11y floor + touch targets */
 :where(button, .button, .feed-action, .nav-item, .nav_link, a.chip, .push-enable-button) {
   min-height: var(--tap-min);
   min-width: var(--tap-min);
@@ -200,7 +200,7 @@ time {
   font-variant-numeric: tabular-nums;
 }
 
-/* H · list perf — taller intrinsic for media cards to reduce scroll jump.
+/* H - list perf - taller intrinsic for media cards to reduce scroll jump.
    (.feed-post left with the markup that named it; the card families remain.) */
 .item-card {
   content-visibility: auto;
@@ -251,7 +251,7 @@ body.vertical-tv .tv-poster {
 body.vertical-tv .live-badge::before {
   content: "● ";
 /* No hex fallback: --danger is set by the dialect mixin at :root for every
-   dialect, with a different value in each (#e46151, #b24c3f, #a9483c, …).
+   dialect, with a different value in each (#e46151, #b24c3f, #a9483c, ...).
    #d1594a is MASTER/data/laws.yml#design_system's color_danger, a different token, so a
    literal here would drift from the dialect it sits in. */
 color: var(--danger);
@@ -268,7 +268,7 @@ body.vertical-playlist input[type="range"] {
   accent-color: var(--accent);
 }
 
-/* Shell surfaces — cart, community, flash, sidebar, empty states. */
+/* Shell surfaces - cart, community, flash, sidebar, empty states. */
 
 .marketplace-deal {
   padding: var(--space-4);
@@ -301,8 +301,8 @@ body.vertical-playlist input[type="range"] {
   border: 1px solid color-mix(in srgb, var(--danger) 28%, transparent);
 }
 
-/* The city-interconnection surfaces are the same shape as a sidebar card — a
-   heading over a list of links to things that already exist on another host —
+/* The city-interconnection surfaces are the same shape as a sidebar card - a
+   heading over a list of links to things that already exist on another host -
    so they share its treatment rather than each inventing one.
    .also-nearby is the show-page aside; .profile-verticals
    is the same list on a public profile. Grouped into the selectors below
@@ -490,9 +490,9 @@ body.vertical-playlist input[type="range"] {
 .activity-event-cta {
   margin: 0.5rem 0 0;
 }
-/* UI_REFINEMENTS surfaces — forms, empty, skeleton, motion, contrast */
+/* UI_REFINEMENTS surfaces - forms, empty, skeleton, motion, contrast */
 
-/* Forms — reserved error slot */
+/* Forms - reserved error slot */
 .field {
   display: grid;
   /* minmax(0, 1fr), not the default max-content track: a file input carries an

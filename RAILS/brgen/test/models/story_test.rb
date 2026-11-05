@@ -2,7 +2,7 @@
 
 require "test_helper"
 
-# brgen already had ephemerality, but only inside DMs — Conversation's
+# brgen already had ephemerality, but only inside DMs - Conversation's
 # disappearing_duration and Message#expires_at. There was no 24-hour story, no
 # camera-first capture, and nothing on a public surface that goes away by itself.
 class StoryTest < ActiveSupport::TestCase
@@ -107,7 +107,7 @@ test "seen ids answers for a whole ring list at once" do
   assert_empty Story.seen_ids(nil, [ seen, unseen ])
 end
 
-  test "seen is a set — viewing twice counts once" do
+  test "seen is a set - viewing twice counts once" do
     s = story
 
     assert s.view_by!(@viewer)

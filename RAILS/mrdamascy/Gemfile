@@ -16,7 +16,7 @@ gem "sqlite3", ">= 2.1"
 gem "puma", ">= 6.0"
 # Use JavaScript with ESM import maps [https://github.com/rails/importmap-rails]
 gem "importmap-rails"
-# Compiles app/assets/stylesheets/application.scss — the same build tool the
+# Compiles app/assets/stylesheets/application.scss - the same build tool the
 # amber-pattern apps carry; Propshaft serves the built file but cannot compile SCSS.
 gem "dartsass-rails", "~> 0.5.1"
 # Hotwire's SPA-like page accelerator [https://turbo.hotwired.dev]

@@ -13,7 +13,7 @@ default: &default
 # Four databases in every environment, matching production. amber and
 # bsdports declared one here and four under production:, so Solid Cache,
 # Solid Queue and Action Cable first ran against their own database on vm23
-# and nowhere else — a Solid Queue bug in either app could only appear in
+# and nowhere else - a Solid Queue bug in either app could only appear in
 # production. brgen has always declared all four everywhere; this is that
 # shape.
 development:
@@ -41,7 +41,7 @@ development:
 # was working the app when those landed.
 #
 # Rails suffixes per parallel *worker*, not per *session*, and this repo is worked
-# by several agents in one checkout — two `rails test` runs open the same file,
+# by several agents in one checkout - two `rails test` runs open the same file,
 # and with journal_mode WAL and a 5s timeout the loser gets SQLite3::BusyException
 # on every test. Unset it and nothing changes.
 test:
@@ -62,7 +62,7 @@ test:
     migrations_paths: db/cable_migrate
 
 # Production databases live in storage/, which the copy-tree deploy syncs to
-# /home/<app>/app/storage on vm23. (There is no container and no deploy.yml —
+# /home/<app>/app/storage on vm23. (There is no container and no deploy.yml -
 # this tree deploys with openrsync and rc.d on OpenBSD.)
 production:
   primary:

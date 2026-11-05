@@ -114,7 +114,7 @@ class RouteManifestInventoryTest < Minitest::Test
 
   # This used to need a hand-kept exclusion list. It does not: a view with no GET
   # route is one the manifest cannot answer, and the inventory drops it. Three
-  # views prove the rule rather than one — an error template rendered with a 403,
+  # views prove the rule rather than one - an error template rendered with a 403,
   # and two `new` views for resources routed `only: %i[create destroy]`, which
   # the retired filename ladder gave URLs to (/conversations and
   # /ports/:id/comments) that were not theirs.

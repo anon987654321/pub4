@@ -156,7 +156,7 @@ window._faceMusic = (() => {
   }
 
   // A start picks a fresh progression per artist without repeating the last
-  // one — the pack carries several cells per artist, and looping only the
+  // one - the pack carries several cells per artist, and looping only the
   // first would strand the rest as dead data.
   let lastProg = {};
   function pickProgression(art, key) {
@@ -216,7 +216,7 @@ window._faceMusic = (() => {
   }
 
   // teardown ends the scheduled pass. closeAfter is false when the caller is
-  // about to start again on the same context — the ramp still silences the
+  // about to start again on the same context - the ramp still silences the
   // outgoing pass so no two artists overlap.
   function teardown(closeAfter) {
     playing = false;

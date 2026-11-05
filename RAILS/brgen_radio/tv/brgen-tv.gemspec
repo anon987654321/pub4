@@ -6,7 +6,7 @@ Gem::Specification.new do |spec|
   spec.name = "brgen-tv"
   spec.version = Tv::VERSION
   spec.authors = [ "pub4" ]
-  spec.summary = "brgen TV vertical — mountable Rails engine (video, live streams, shows)"
+  spec.summary = "brgen TV vertical - mountable Rails engine (video, live streams, shows)"
   spec.files = Dir["{app,config,db,lib}/**/*"].select { |f| File.file?(f) }
   spec.require_paths = [ "lib" ]
   spec.add_dependency "rails", ">= 8.0"

@@ -12,8 +12,8 @@
 # personal data has to be named here or it is kept.
 #
 # It was only the users row and its sessions. A purged account still had its
-# dating profile — bio, coordinates, profile photographs and the
-# identity-verification selfie — plus its delivery addresses, its postal
+# dating profile - bio, coordinates, profile photographs and the
+# identity-verification selfie - plus its delivery addresses, its postal
 # addresses with recipient and phone, its federated email and phone number, its
 # newsletter subscription, and the coordinates attached to every post and story
 # it had written. Some of those are the most sensitive rows in the tree.
@@ -21,14 +21,14 @@
 # Three dispositions, and which one a table gets is a legal question rather
 # than a technical one:
 #
-#   destroy  — the row exists only to describe the person. A dating profile is
+#   destroy  - the row exists only to describe the person. A dating profile is
 #              not shared content; removing it collapses no thread. Attachments
 #              go with it, which is how the photographs and the selfie leave.
-#   nullify  — the row must be retained but some columns are personal. A
+#   nullify  - the row must be retained but some columns are personal. A
 #              takeaway order is a financial record the restaurant may be
 #              required to keep (Art. 17(3)(b)); the address it was delivered
 #              to is not part of that obligation.
-#   keep     — nothing personal, or retention is required outright. Named in
+#   keep     - nothing personal, or retention is required outright. Named in
 #              the contract test with a reason, so the next person adding a
 #              table has to make the same decision rather than inherit silence.
 class UserPurgeJob < ApplicationJob

@@ -24,7 +24,7 @@ class Marketplace::CheckoutsController < Marketplace::BaseController
 
   # POST /checkout  provider=stripe|vipps
   #
-  # Two shapes, deliberately. order_id pays a single listing — the classifieds
+  # Two shapes, deliberately. order_id pays a single listing - the classifieds
   # case, where an offer to a stranger is negotiated on its own. Without it the
   # whole basket is paid at once: one PSP round trip, one card charge, one
   # delivery address, however many sellers are in it.
@@ -41,7 +41,7 @@ class Marketplace::CheckoutsController < Marketplace::BaseController
 
     # Credentials-first is LANE-SCOPED. The one-click lane below CREATES an
     # order, and checking the provider afterwards left order debris behind
-    # every unconfigured click — caught by that lane's own test. The cart
+    # every unconfigured click - caught by that lane's own test. The cart
     # lanes keep the original order (four tests pin it): an empty cart is
     # reported before anything about payment providers, because "nothing to
     # pay" is the buyer's answer and "unconfigured" is the operator's.
@@ -56,8 +56,8 @@ class Marketplace::CheckoutsController < Marketplace::BaseController
       return
     end
 
-    # The cart lanes' provider check sits here — after empty-cart, before the
-    # address check — so an unconfigured PSP still fails closed with its reason
+    # The cart lanes' provider check sits here - after empty-cart, before the
+    # address check - so an unconfigured PSP still fails closed with its reason
     # instead of sending the buyer to the address form for a payment that
     # could never start.
     raise Marketplace::Payments::NotConfigured, provider.capitalize unless provider_configured?(provider)
@@ -66,7 +66,7 @@ class Marketplace::CheckoutsController < Marketplace::BaseController
     Marketplace::Payments::DinteroCheckout.ensure_sellers_ready!([ payable ]) if provider == "dintero" && !payable.is_a?(Array)
 
     payable = build_basket(payable) if payable.is_a?(Array)
-    # build_basket redirects on its own when there is no delivery address —
+    # build_basket redirects on its own when there is no delivery address -
     # without this guard that became a second redirect and a
     # DoubleRenderError, which is a 500 for a customer who had not
     # saved an address yet.
@@ -95,7 +95,7 @@ class Marketplace::CheckoutsController < Marketplace::BaseController
     redirect_to cart_path, alert: t("marketplace.checkout_errors.provider_failed", provider: provider_name(provider))
   end
 
-  # GET return from PSP. The webhook remains the source of truth for payment —
+  # GET return from PSP. The webhook remains the source of truth for payment -
   # a browser coming back from a redirect proves the customer returned, not that
   # any money moved.
   def show
@@ -130,8 +130,8 @@ class Marketplace::CheckoutsController < Marketplace::BaseController
   # parameter that arrived.
   #
   # listing_id is the ONE-CLICK lane (operator, 2026-08-22): the buy bar posts
-  # here directly and the order is created and paid in the same request —
-  # listing → Vipps app → done, one click on the site. The single-order path it
+  # here directly and the order is created and paid in the same request -
+  # listing -> Vipps app -> done, one click on the site. The single-order path it
   # joins has no address check on purpose: classifieds delivery is negotiated
   # between the parties, and Vipps carries the buyer's identity.
   def resolve_payable

@@ -4,7 +4,7 @@ require "set"
 
 # Measured on production 2026-08-12: 1071 of 1447 posts still carried
 # Faker::Lorem text, and 1088 of the 1376 post URLs in the live sitemap were
-# Latin slugs — /posts/quis-autem-eveniet-sunt-tenetur. db/seeds.rb stopped
+# Latin slugs - /posts/quis-autem-eveniet-sunt-tenetur. db/seeds.rb stopped
 # generating them some time ago (it calls Brgen::PlausibleContent, and says in a
 # comment that Latin filler in a Norwegian city feed is the single most obvious
 # tell that a feed is seeded), but the rows from the runs before that are still
@@ -13,10 +13,10 @@ require "set"
 # Rewrite rather than hide. `posts.removed_at` offers a reversible soft delete
 # and it is the wrong tool here: 1071 of 1447 is 74% of the feed, so hiding them
 # replaces a site that reads as fake with a site that reads as abandoned.
-# Nothing of value is lost by overwriting — the old text is Faker output either
-# way — so the destructive-looking option is the conservative one.
+# Nothing of value is lost by overwriting - the old text is Faker output either
+# way - so the destructive-looking option is the conservative one.
 #
-# Detection is by content, not by author. Both seeders write seed*@… addresses,
+# Detection is by content, not by author. Both seeders write seed*@... addresses,
 # but only 692 of the 195340 users match that and the Latin posts predate the
 # current scheme. The Latin itself is the only marker on every affected row.
 module BrgenLatinFiller
@@ -44,7 +44,7 @@ end
 # those posts against 201 distinct titles, so the repetition is entirely there;
 # every other city has between one and sixteen posts and is fine.
 #
-# The obvious fix — redraw every post from the widened pool — makes it worse.
+# The obvious fix - redraw every post from the widened pool - makes it worse.
 # 1376 posts over 102 titles is 13 uses each, against the 201 distinct titles
 # that exist now. The 201 includes BergenDemoSeeder's hand-curated posts, which
 # are real Bergen content and must not be overwritten.
@@ -53,7 +53,7 @@ end
 # each group is left alone, and replacements are drawn least-used-first rather
 # than at random. A hand-curated title is unique and therefore never touched,
 # without needing a list of which ones they are. Random sampling would rebuild
-# the same clustering it is meant to remove — with 102 titles and 1175 draws,
+# the same clustering it is meant to remove - with 102 titles and 1175 draws,
 # the most-drawn title lands about 20 times by chance alone.
 module BrgenTitleSpread
   module_function
@@ -179,11 +179,11 @@ namespace :brgen do
         if apply
           city_name = post.city&.name.presence || "Bergen"
           # save!, not update_column: update_column skips updated_at, and the
-          # feed and post pages are fragment-cached on [post, …]. The row would
+          # feed and post pages are fragment-cached on [post, ...]. The row would
           # change and every visitor would keep being served the Latin.
           #
           # slug is nil'd first because Sluggable#assign_slug returns early when
-          # one is present — without this the body reads Norwegian and the URL
+          # one is present - without this the body reads Norwegian and the URL
           # still says /posts/quis-autem-eveniet-sunt-tenetur.
           post.title = Brgen::PlausibleContent.post_title(city_name)
           post.content = Brgen::PlausibleContent.post_body

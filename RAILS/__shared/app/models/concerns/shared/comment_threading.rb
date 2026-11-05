@@ -3,7 +3,7 @@
 # The self-referential parent/reply/roots shape was hand-duplicated
 # identically across amber, brgen, and bsdports' Comment models. Their
 # commentable association (polymorphic vs. a fixed belongs_to :port) and
-# content length limits differ deliberately and stay per-app — only the
+# content length limits differ deliberately and stay per-app - only the
 # threading structure that was byte-for-byte identical moves here.
 module Shared
   module CommentThreading

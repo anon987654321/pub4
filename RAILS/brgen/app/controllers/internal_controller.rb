@@ -6,7 +6,7 @@ class InternalController < ApplicationController
   include Shared::BuildInfoHelper
 
   # What this process is running. The deploy stamp proves what a deploy
-  # wrote; this says what the serving process booted — the pair an operator
+  # wrote; this says what the serving process booted - the pair an operator
   # compares when a health check and the last deploy disagree.
   def version
     render json: {
@@ -32,7 +32,7 @@ class InternalController < ApplicationController
     }
   end
 
-  # MASTER tools → brgen: publish a rendered MP3 into a playlist.
+  # MASTER tools -> brgen: publish a rendered MP3 into a playlist.
   # Multipart: audio file + title + optional playlist_id / user_email
   def dilla_publish
     title = params[:title].to_s.presence || "Dilla render"

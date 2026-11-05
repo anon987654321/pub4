@@ -4,7 +4,7 @@ require "test_helper"
 
 # tv_view_events has carried watch_time_seconds and completed since the table
 # was created. videos#show wrote a row with neither, so the table recorded that
-# a signed-in user opened a page and nothing about whether they watched it —
+# a signed-in user opened a page and nothing about whether they watched it -
 # and Tv::Video.trending sorted views_count, which is incremented on that same
 # page load. These pin the signal, its clamp, and the ranking that reads it.
 class Tv::ViewEventTest < ActiveSupport::TestCase
@@ -109,7 +109,7 @@ class Tv::ViewEventTest < ActiveSupport::TestCase
   end
 
   # The ranking is the reason the column matters. Before this, trending sorted
-  # views_count — incremented on page load — so a bounce ranked like a full view.
+  # views_count - incremented on page load - so a bounce ranked like a full view.
   test "trending ranks watched-through over merely opened" do
     ActsAsTenant.with_tenant(@city) do
       bounced = video(title: "Clickbait", duration: 100)

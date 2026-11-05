@@ -2,7 +2,7 @@
 
 class Staff::BoardController < ApplicationController
   # Columns Placed/Confirmed/Preparing/Ready (APP_SPEC §7); from ready the
-  # board shows "—" and the courier takes over.
+  # board shows "-" and the courier takes over.
   BOARD_STATES = Order::BOARD_STATES
 
   before_action -> { require_role!(:staff) }
@@ -63,7 +63,7 @@ class Staff::BoardController < ApplicationController
   end
 
   # Overflow courier lane: hand a READY delivery order to Wolt Drive
-  # (white-label last-mile — APP_SPEC §5 analog for couriers). Mock mode
+  # (white-label last-mile - APP_SPEC §5 analog for couriers). Mock mode
   # assigns "Bergen Bud" instantly; real mode calls the Wolt Drive API.
   def wolt_dispatch
     @order = Order.find(params[:id])
@@ -108,7 +108,7 @@ class Staff::BoardController < ApplicationController
     false
   end
 
-  # Only ready, delivery-mode orders without a dispatch yet are eligible —
+  # Only ready, delivery-mode orders without a dispatch yet are eligible -
   # anything else is a no-op so a stale board card can never double-dispatch.
   def dispatch_wolt_safely
     return false unless @order.state == "ready" && @order.delivery? && @order.external_delivery_id.blank?

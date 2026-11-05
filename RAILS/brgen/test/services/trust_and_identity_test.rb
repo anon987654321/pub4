@@ -3,7 +3,7 @@
 require "test_helper"
 
 # The coverage-contract debt entry's exact complaint: the trust path had no
-# test that calls a method — a body of `raise` would have passed the old
+# test that calls a method - a body of `raise` would have passed the old
 # claim-checks. These call the services against real records.
 class TrustAndIdentityTest < ActiveSupport::TestCase
   setup do
@@ -29,7 +29,7 @@ class TrustAndIdentityTest < ActiveSupport::TestCase
     assert_equal 7, TrustScore.new(user: @user).call.score
   end
 
-  test "a ban outweighs a verified phone — the negative weights are real" do
+  test "a ban outweighs a verified phone - the negative weights are real" do
     TrustSignal.create!(user: @user, kind: "phone_verified", source: "test", weight: 0)
     TrustSignal.create!(user: @user, kind: "moderation_ban", source: "test", weight: 0)
     assert_equal(-180, TrustScore.new(user: @user).call.score)

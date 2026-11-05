@@ -1,4 +1,4 @@
-// Phosphor afterimage trail — captures prior frame decay (web_006).
+// Phosphor afterimage trail - captures prior frame decay (web_006).
 (() => {
   "use strict";
 

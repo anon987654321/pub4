@@ -5,7 +5,7 @@ class FollowsController < ApplicationController
 
   def create
     # The follow/unfollow routes are members of resources :users, so the
-    # followee arrives as params[:id] — not :user_id.
+    # followee arrives as params[:id] - not :user_id.
     @user = User.publicly_visible.find(params[:id])
     Current.user.follows_as_follower.find_or_create_by!(followee: @user) unless Current.user == @user
     @user.record_activity!("AmberFollowCreated", source_vertical: "amber", actor: Current.user)

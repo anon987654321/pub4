@@ -14,7 +14,7 @@ class Takeaway::GroupOrdersController < Takeaway::BaseController
     redirect_to order_path(order), notice: t("flash.takeaway.group_opened")
   end
 
-  # Anyone with the link. The token is the invitation — an order id in a link
+  # Anyone with the link. The token is the invitation - an order id in a link
   # pasted into a group chat would let somebody read the next lunch by counting.
   def show
     @order = Takeaway::Order.includes(:restaurant, order_items: %i[menu_item user]).find_by!(group_token: params[:id])
@@ -49,7 +49,7 @@ class Takeaway::GroupOrdersController < Takeaway::BaseController
 
   # Preloaded, and answered once: calculate_totals! sums order_items.target, so
   # an order found bare would total zero, and Takeaway::MenuItem reads its
-  # restaurant while validating availability — a lazy read on a strict-loading
+  # restaurant while validating availability - a lazy read on a strict-loading
   # record.
   def joinable_order
     order = Takeaway::Order.includes(:restaurant, order_items: :menu_item).find_by!(group_token: params[:id])

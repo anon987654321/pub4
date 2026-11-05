@@ -158,8 +158,8 @@ external_reference:
       token: QAuRq
 
 curated_playlist:
-  name: "Radio Bergen — Selected Crate"
-  album: "Radio Bergen — Selected Crate"
+  name: "Radio Bergen - Selected Crate"
+  album: "Radio Bergen - Selected Crate"
   source_archive: "anon987654321/pub2"
   source_revision: "ad05242c97fff1b01450434974aad628d7de8628"
   original_manifest: "mp3/playlist.json"

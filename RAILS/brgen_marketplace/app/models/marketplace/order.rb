@@ -12,7 +12,7 @@ class Marketplace::Order < ApplicationRecord
   # when the listing does have them, or the order is for "a shirt" and the
   # seller cannot pack it.
   belongs_to :variant, class_name: "Marketplace::Variant", optional: true
-  # Optional, because a per-listing offer to a stranger has no basket above it —
+  # Optional, because a per-listing offer to a stranger has no basket above it -
   # that shape is still how classifieds work here. See Marketplace::Checkout.
   has_many :returns, class_name: "Marketplace::Return", dependent: :destroy
   belongs_to :checkout, class_name: "Marketplace::Checkout",
@@ -45,7 +45,7 @@ class Marketplace::Order < ApplicationRecord
   # nothing preloaded. Walking listing.user there raised StrictLoadingViolation
   # *after* update! had committed payment_status=paid: the money was recorded,
   # neither party was notified, and Stripe got a 500 for a payment that had
-  # actually succeeded — then the retry skipped the work because the order was
+  # actually succeeded - then the retry skipped the work because the order was
   # no longer payable?. See Shared::StrictSafeAssociations.
   def seller
     return listing.user if association(:listing).loaded? && listing.association(:user).loaded?
@@ -101,13 +101,13 @@ class Marketplace::Order < ApplicationRecord
   # the transaction.
   #
   # It was outside. The webhook controller asks `payable?` and then calls this,
-  # so two deliveries of the same Stripe or Vipps event — which providers do
-  # send — both read unpaid, both enter here, and both consume stock, notify
+  # so two deliveries of the same Stripe or Vipps event - which providers do
+  # send - both read unpaid, both enter here, and both consume stock, notify
   # buyer and seller, and run partner attribution.
   #
   # The `.lock` below reads as protection and is not: on SQLite, Rails emits a
   # plain SELECT with no FOR UPDATE, so `Marketplace::Variant.lock.find_by`
-  # locks nothing whatsoever. Checked rather than assumed —
+  # locks nothing whatsoever. Checked rather than assumed -
   # `Marketplace::Variant.lock.to_sql` returns a bare SELECT.
   #
   # lock! is FOR UPDATE where the adapter has it and a reload where it does not,
@@ -138,7 +138,7 @@ class Marketplace::Order < ApplicationRecord
 
   # The payment services used to read order.listing.currency and .title
   # directly, which meant only a single-listing order could ever be paid. They
-  # now ask the payable, so a Checkout — which has no single listing — goes
+  # now ask the payable, so a Checkout - which has no single listing - goes
   # through the same guarded path rather than a second one beside it.
   def payment_currency = strict_safe_attribute(:listing, :currency).presence || "NOK"
   def payment_description = listing_title
@@ -167,7 +167,7 @@ class Marketplace::Order < ApplicationRecord
     payment_status.in?(%w[unpaid pending failed]) && status.in?(PAYABLE_STATUSES)
   end
 
-  # start! / find_payable_order. pending means a PSP session already exists —
+  # start! / find_payable_order. pending means a PSP session already exists -
   # starting another overwrote payment_reference and the first webhook missed.
   def startable?
     return false unless payment_status.in?(%w[unpaid failed])

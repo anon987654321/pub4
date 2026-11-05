@@ -5,7 +5,7 @@ module Shared
   #
   # Split out of tradedoubler.rb when that file passed its file-length ceiling.
   # The seam is what the methods touch: nothing here makes a request or reads a
-  # token — it takes a body that has already arrived and works out which of the
+  # token - it takes a body that has already arrived and works out which of the
   # three shapes TradeDoubler answers in it happens to be (official nested
   # offers, flat legacy fields, and an XML-ish variant), then reads a price, a
   # stock flag and an image out of it. The half left behind fetches, caches,
@@ -19,7 +19,7 @@ module Shared
   # Tradedoubler::Deal is qualified rather than bare: constant lookup is
   # lexical, so a module that is extended into Tradedoubler does not see
   # Tradedoubler's constants. Same lesson the CDP framing split taught, and
-  # the same failure shape if it is missed — NameError at the first call,
+  # the same failure shape if it is missed - NameError at the first call,
   # not at load.
   module TradedoublerParsing
     # Official + legacy product shapes (nested offers, flat fields, XML-ish).
@@ -67,7 +67,7 @@ module Shared
 
     # Price arrives three ways: as a hash carrying its own currency, as a bare
     # value with the currency alongside it, or only inside the offer's price
-    # history. The history fills gaps rather than overriding — a current price
+    # history. The history fills gaps rather than overriding - a current price
     # beats a historical one.
     def price_and_currency(offer, dig)
       raw = dig.call("price", "Price", "priceValue")

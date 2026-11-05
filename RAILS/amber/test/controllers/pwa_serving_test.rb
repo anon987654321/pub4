@@ -52,9 +52,9 @@ class PwaServingTest < ActionDispatch::IntegrationTest
                     "a worker that registers no listener is not a worker"
   end
 
-  # The rescue path — a failed worker render answers with a minimal installing
+  # The rescue path - a failed worker render answers with a minimal installing
   # worker rather than a 500, because a 500 leaves whatever is installed in
-  # place with no way to replace it — is NOT covered here. Proving it needs a
+  # place with no way to replace it - is NOT covered here. Proving it needs a
   # forced render failure, and the test that stood in for it grepped the
   # concern's source for "self.skipWaiting()", which proves the text exists and
   # nothing about what the server does. test_source_assertions is right to

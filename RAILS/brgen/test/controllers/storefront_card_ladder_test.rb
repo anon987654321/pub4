@@ -8,7 +8,7 @@ require "test_helper"
 # put when it ends between its headline and what it sells, and its stars last.
 #
 # The ladder is the order, not the look. A tile shows the rungs it has data for,
-# and a rung it lacks is skipped rather than faked — no reference price, shipping
+# and a rung it lacks is skipped rather than faked - no reference price, shipping
 # or delivery window is stored anywhere, so none is drawn. Price leads the title
 # because layout_search holds that as a hard floor.
 class StorefrontCardLadderTest < ActionDispatch::IntegrationTest
@@ -54,7 +54,7 @@ class StorefrontCardLadderTest < ActionDispatch::IntegrationTest
     cards.each do |card|
       rungs = rungs_in(card)
       positions = rungs.map { |rung| LADDER.index(rung) }
-      assert_equal positions.sort, positions, "#{path}: #{rungs.join(' → ')}"
+      assert_equal positions.sort, positions, "#{path}: #{rungs.join(' -> ')}"
     end
   end
 

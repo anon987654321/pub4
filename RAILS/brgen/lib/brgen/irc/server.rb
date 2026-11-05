@@ -6,7 +6,7 @@ module Brgen
   module Irc
     # The socket harness around Session. One thread reads client commands, a second
     # polls the web side and relays; a mutex serialises writes so the two never
-    # interleave a line. Each thread checks out its own ActiveRecord connection —
+    # interleave a line. Each thread checks out its own ActiveRecord connection -
     # this runs outside the request cycle.
     class Server
       def initialize(host: ENV.fetch("IRC_HOST", "127.0.0.1"),

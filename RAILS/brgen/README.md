@@ -54,12 +54,12 @@ host. The old takeaway.<apex> host still resolves, as a compatibility mount of t
 Messenger is an engine whose routes are drawn in the host, under messenger.<apex>. ai.brgen.no
 is MASTER, a separate application with its own service, and is not a vertical.
 
-**Vertical product briefs:** [Dating](../brgen_dating/README.md) ·
-[Marketplace](../brgen_marketplace/README.md) ·
-[Takeaway / food](../brgen_marketplace/engines/takeaway/README.md) ·
-[Radio](../brgen_radio/playlist/README.md) ·
-[TV](../brgen_radio/tv/README.md) ·
-[Maps](../brgen_maps/README.md) ·
+**Vertical product briefs:** [Dating](../brgen_dating/README.md) -
+[Marketplace](../brgen_marketplace/README.md) -
+[Takeaway / food](../brgen_marketplace/engines/takeaway/README.md) -
+[Radio](../brgen_radio/playlist/README.md) -
+[TV](../brgen_radio/tv/README.md) -
+[Maps](../brgen_maps/README.md) -
 [Messenger](../brgen_messenger/README.md).
 
 These briefs preserve the distinct product promises while treating the active engine,

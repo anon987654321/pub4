@@ -93,7 +93,7 @@ export default class extends Controller {
       const { commands } = this.editor
       if (!event || event.target === this.fieldTarget) commands.focus("end")
     } catch (err) {
-      // The import failed — leave the plain textarea in place. Deliberately not
+      // The import failed - leave the plain textarea in place. Deliberately not
       // retried: the textarea is fully functional, and re-requesting on every
       // focus is worse than staying plain for the rest of the visit.
       if (window.MASTER_LOG?.warn) window.MASTER_LOG.warn("tiptap_editor", err)

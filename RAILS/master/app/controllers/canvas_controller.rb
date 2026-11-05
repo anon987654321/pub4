@@ -17,7 +17,7 @@ class CanvasController < ApplicationController
     "winter" => "ecology",
   }.freeze
 
-  # GET /canvas/topology?season=summer — seasonal accent hint for the pixel
+  # GET /canvas/topology?season=summer - seasonal accent hint for the pixel
   # field (wireVisionC/D in face_vision.bundle.js). No route existed for this
   # at all; the fetch always 404'd and was silently .catch()-guarded to an
   # empty seasonal event. topologies.yml has no seasonal concept, so this

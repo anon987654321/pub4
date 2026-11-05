@@ -7,7 +7,7 @@ class Message < ApplicationRecord
   include Shared::Notifiable
   include Shared::Reactable
   belongs_to :conversation
-  # model_contract: no-inverse-ok — User collects conversations, not messages;
+  # model_contract: no-inverse-ok - User collects conversations, not messages;
   # a user's messages are always read through one.
   belongs_to :sender, class_name: "User", foreign_key: :sender_id
   has_many :message_receipts, dependent: :destroy
@@ -20,7 +20,7 @@ class Message < ApplicationRecord
   validate :parent_in_this_conversation, if: -> { parent_id.present? && will_save_change_to_parent_id? }
   has_many :replies, class_name: "Message", foreign_key: :parent_id, dependent: :nullify, inverse_of: :parent
   # Where a forwarded copy came from. :nullify, because unsending the original
-  # must not take the copy with it — the copy is the forwarder's message in
+  # must not take the copy with it - the copy is the forwarder's message in
   # someone else's thread, and it is quoting what was said, not linking to it.
   belongs_to :forwarded_from, class_name: "Message", optional: true
   has_many :forwards, class_name: "Message", foreign_key: :forwarded_from_id, dependent: :nullify, inverse_of: :forwarded_from
@@ -31,7 +31,7 @@ class Message < ApplicationRecord
   }
 
   # unless deleted?: unsend! empties the body and keeps the row, and without
-  # this the record would be permanently invalid — every later save on it, from
+  # this the record would be permanently invalid - every later save on it, from
   # a receipt or a reaction, would fail.
   #
   # An attachment is also a message. A voice note has no words in it by
@@ -115,8 +115,8 @@ class Message < ApplicationRecord
     user.present? && user.id == sender_id && !deleted? && created_at > EDIT_WINDOW.ago
   end
 
-  # Unsending has no window. A message sent to the wrong room — with a real
-  # address in it, on a hyperlocal chat — is a safety problem, not a typo.
+  # Unsending has no window. A message sent to the wrong room - with a real
+  # address in it, on a hyperlocal chat - is a safety problem, not a typo.
   def deletable_by?(user)
     user.present? && user.id == sender_id && !deleted?
   end
@@ -153,7 +153,7 @@ end
     unsend!
   end
 
-  # Urgency tier for the fading-bubble treatment in the message thread —
+  # Urgency tier for the fading-bubble treatment in the message thread -
   # derived from how much of the message's own lifespan is left, not a
   # fixed clock value, so a 5-minute channel message and a 7-day DM both
   # read as "soon" at the same relative point.

@@ -12,7 +12,7 @@ class Current < ActiveSupport::CurrentAttributes
   attribute :subapp
   attribute :user
   # Per-request memo of the viewer's reposts. The feed renders 25 cards and each
-  # asks "did I repost this?" — as an exists? per card that is the N+1
+  # asks "did I repost this?" - as an exists? per card that is the N+1
   # QueryBudgetTest exists to catch. See Repost.reposted_post_ids_for.
   attribute :reposted_post_ids
   # Quote text is user-specific output inside the cached card (the dropdown
@@ -26,7 +26,7 @@ class Current < ActiveSupport::CurrentAttributes
   # Lives here rather than only in ApplicationHelper because copy that names a
   # city is not only rendered from views: Dating::Prompt#question_text
   # interpolates it from a model, where no helper is in scope, and had no way to
-  # reach this — which is why its city prompt was the literal string "Bergen"
+  # reach this - which is why its city prompt was the literal string "Bergen"
   # for every city domain.
   def self.city_name
     city.presence ||

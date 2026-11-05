@@ -67,7 +67,7 @@ class LocaleCopyContractTest < Minitest::Test
 
   def hits
     @hits ||= nb_files.each_with_object(Hash.new { |h, k| h[k] = [] }) do |file, found|
-      data = YAML.safe_load_file(file, aliases: true) rescue next # scan: intentional — an unreadable file is locale_contract_test's finding
+      data = YAML.safe_load_file(file, aliases: true) rescue next # scan: intentional - an unreadable file is locale_contract_test's finding
       next unless data.is_a?(Hash) && data["nb"].is_a?(Hash)
 
       flat = self.class.leaves(data["nb"])

@@ -1,4 +1,4 @@
-// Perf guards — resize debounce, kernel min-delta, primer boot spawn (web_069–web_071, mi_032–mi_036).
+// Perf guards - resize debounce, kernel min-delta, primer boot spawn (web_069-web_071, mi_032-mi_036).
 (() => {
   "use strict";
 

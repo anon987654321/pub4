@@ -9,7 +9,7 @@ class PromoApplierTest < ActiveSupport::TestCase
 
   # Single adapter point for the PromoApplier contract (APP_SPEC §5):
   # call with the cart subtotal, the current delivery fee, the mode and the
-  # (optional) user — get back { promo:, discount_ore:, delivery_fee_ore: }.
+  # (optional) user - get back { promo:, discount_ore:, delivery_fee_ore: }.
   def apply(subtotal_ore:, delivery_fee_ore: 2900, mode: "delivery", user: nil)
     PromoApplier.call(subtotal_ore: subtotal_ore, delivery_fee_ore: delivery_fee_ore,
                       delivery_mode: mode, user: user)
@@ -22,7 +22,7 @@ class PromoApplierTest < ActiveSupport::TestCase
 
     result = apply(subtotal_ore: 30000, delivery_fee_ore: 2900)
 
-    # SAHTEIN10 saves 3 000 — more than YALLA25 (2 500) and GRATISLEVERING (2 900).
+    # SAHTEIN10 saves 3 000 - more than YALLA25 (2 500) and GRATISLEVERING (2 900).
     assert_equal "SAHTEIN10", result[:promo].code
     assert_equal 3000, result[:discount_ore]
     assert_equal 2900, result[:delivery_fee_ore]

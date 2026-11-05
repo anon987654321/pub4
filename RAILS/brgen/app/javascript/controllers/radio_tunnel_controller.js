@@ -49,7 +49,7 @@ export default class extends Controller {
   // drives a YouTube iframe and exposes start/stop/nextTrack with no pause and
   // no previous, so a bar here renders play, stop and next and nothing else.
   // Rendering a pause button that cannot pause is the shape removed from the
-  // feed earlier today — a control that looks live and discards the click.
+  // feed earlier today - a control that looks live and discards the click.
   play(event) {
     event?.preventDefault()
     this.#ensureStarted()
@@ -94,7 +94,7 @@ export default class extends Controller {
     if (this._fallbackTimer) window.clearTimeout(this._fallbackTimer)
     if (!this.app.isStarted) this.app.start()
     else {
-      // Already started visually but maybe muted by policy — re-assert play.
+      // Already started visually but maybe muted by policy - re-assert play.
       this.app.audioEngine?.setUserInteracted?.()
       this.app.audioEngine?.start?.()
     }

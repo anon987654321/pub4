@@ -107,7 +107,7 @@ class Marketplace::Order
     def shipment_detail(carrier, tracking_code)
       return listing_title if tracking_code.blank?
 
-      "#{listing_title} — #{carrier.presence || I18n.t('marketplace.order_notification.tracking')}: #{tracking_code}"
+      "#{listing_title} - #{carrier.presence || I18n.t('marketplace.order_notification.tracking')}: #{tracking_code}"
     end
 
     def record_delivery_events!

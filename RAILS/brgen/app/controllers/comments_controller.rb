@@ -94,7 +94,7 @@ class CommentsController < ApplicationController
 
   # user_id, not user. ApplicationRecord sets strict_loading_by_default in
   # every environment, so reading `@comment.user` on a record found by id with
-  # nothing preloaded raises StrictLoadingViolationError — production included.
+  # nothing preloaded raises StrictLoadingViolationError - production included.
   # Comparing the foreign key answers the same question without a query.
   # Someone else's comment is refused out loud: a redirect read as if the
   # delete had worked.

@@ -1,5 +1,5 @@
 <%#
-  Fleet comment row — brgen (threaded + AI summary) and amber (flat).
+  Fleet comment row - brgen (threaded + AI summary) and amber (flat).
 
   Features enable by capability, not by app name:
     - depth attribute when comment.depth exists (or the thread passes depth:)
@@ -8,12 +8,12 @@
     - AI thread summary when long_thread? + generate_summary route exist
 
   locals:
-    comment       — required
-    destroy_arg   — optional override for delete button path/model
-    parent        — optional, the comment this one replies to, when the
+    comment       - required
+    destroy_arg   - optional override for delete button path/model
+    parent        - optional, the comment this one replies to, when the
                     caller has it loaded (the thread rendering its replies)
-    threaded      — force on/off replies+children (default: auto)
-    depth         — optional, this row's nesting level, passed by the thread
+    threaded      - force on/off replies+children (default: auto)
+    depth         - optional, this row's nesting level, passed by the thread
 %>
 <% threaded = local_assigns.fetch(:threaded) { comment.respond_to?(:depth) || comment.respond_to?(:replies) } %>
 <%# The thread passes depth down; Comment#depth spends a query per ancestor. %>

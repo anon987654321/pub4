@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <%# data-theme="light" is the default, and it is written rather than left to
-    the OS — operator, 2026-08-29.
+    the OS - operator, 2026-08-29.
 
     Without it this app has no theme attribute at all, so the shared token
     sheet's `@media (prefers-color-scheme: dark)` block decides, and a reader
@@ -18,10 +18,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
   <meta name="color-scheme" content="light">
   <meta name="theme-color" content="#ffffff" data-light-color="#ffffff" data-dark-color="#000000">
-  <title><%= content_for?(:title) ? "#{yield :title} — Amber" : "Amber" %></title>
-  <meta name="description" content="<%= content_for?(:description) ? yield(:description) : "Amber — social fashion. Share outfits, keep a wardrobe, and dress with people you follow." %>">
+  <title><%= content_for?(:title) ? "#{yield :title} - Amber" : "Amber" %></title>
+  <meta name="description" content="<%= content_for?(:description) ? yield(:description) : "Amber - social fashion. Share outfits, keep a wardrobe, and dress with people you follow." %>">
   <link rel="canonical" href="<%= seo_canonical_url %>">
-  <%# The card's description is the blurb without the "Amber — " prefix the
+  <%# The card's description is the blurb without the "Amber - " prefix the
       <title> and meta description carry: a card already shows the site name on
       its own line. %>
   <%= render "shared/social_card_meta", site_name: "Amber",

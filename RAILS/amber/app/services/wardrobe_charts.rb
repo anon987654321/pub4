@@ -3,20 +3,20 @@
 # The shapes behind the analytics page's figures.
 #
 # The original Amber specification asked to "analyze your wardrobe with
-# beautiful information visualization — track usage, cost-per-wear, and
+# beautiful information visualization - track usage, cost-per-wear, and
 # underutilized items". `WardrobeAnalytics` counts; this turns those counts
 # into series a chart can draw, one figure per clause of that sentence:
 #
 #   category_mix       what the wardrobe is made of
-#   wear_distribution  usage — how often garments actually get worn
+#   wear_distribution  usage - how often garments actually get worn
 #   cost_per_wear      the garments costing the most every time they go on
-#   idle               underutilized — worn rarely, and how long ago
+#   idle               underutilized - worn rarely, and how long ago
 #
 # `share` is normalised against the maximum *within its own series*, so bar
 # lengths are comparable inside one figure and meaningless across two.
 #
 # No label here is a sentence. Every one is a database value or a numeric
-# range, and the view supplies the prose through `t()` — otherwise the charts
+# range, and the view supplies the prose through `t()` - otherwise the charts
 # would read in English on a Norwegian page.
 class WardrobeCharts
   Bar = Data.define(:key, :label, :value, :share, :item) do
@@ -34,7 +34,7 @@ class WardrobeCharts
     [ :"21_plus", 21, nil ],
   ].freeze
 
-  # Ranked figures are a shortlist, not a leaderboard — past eight rows a bar
+  # Ranked figures are a shortlist, not a leaderboard - past eight rows a bar
   # chart stops being read and starts being scrolled.
   TOP_N = 8
 
@@ -71,7 +71,7 @@ class WardrobeCharts
     end)
   end
 
-  # Worst value first — the point of cost-per-wear is to name the expensive
+  # Worst value first - the point of cost-per-wear is to name the expensive
   # garment worn twice, not to celebrate the cheap one worn daily.
   def cost_per_wear
     ranked = active.filter_map { |item| [ item, item.cost_per_wear ] if item.cost_per_wear }
@@ -132,6 +132,6 @@ class WardrobeCharts
     return low.to_s if low == high
     return "#{low}+" if high.nil?
 
-    "#{low}–#{high}"
+    "#{low}-#{high}"
   end
 end

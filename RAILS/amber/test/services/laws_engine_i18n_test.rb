@@ -21,8 +21,8 @@ class RulesEngineI18nTest < ActiveSupport::TestCase
 
     assert_equal nb.map(&:id), en.map(&:id), "the rules themselves must not depend on locale"
     assert_not_equal nb.map(&:title), en.map(&:title)
-    assert_includes en.map(&:principle), "Kintsugi — mend visibly rather than discard"
-    assert_includes nb.map(&:principle), "Kintsugi — lapp synlig framfor å kaste"
+    assert_includes en.map(&:principle), "Kintsugi - mend visibly rather than discard"
+    assert_includes nb.map(&:principle), "Kintsugi - lapp synlig framfor å kaste"
   end
 
   test "every closet tip resolves in both locales" do

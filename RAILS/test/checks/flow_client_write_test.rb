@@ -6,7 +6,7 @@ require_relative "../../../MASTER/checks/lib/live/flow_journey"
 
 # Every journey in flows.yml was a GET: 55 steps, 55 of them reads, and not one
 # flow declaring an actor. So the check proved 23 journeys do not 500 for a
-# stranger and could prove nothing about the signed-in half of the product —
+# stranger and could prove nothing about the signed-in half of the product -
 # which is the product. A suite that only reads cannot tell a working form from
 # one that renders and quietly drops what you type.
 #
@@ -162,7 +162,7 @@ end
 # The one thing the unit cases above cannot reach: a POST over a real socket,
 # through the redirect, carrying the session cookie the sign-in set. stdlib
 # TCPServer rather than a web framework, for the same reason the rendered
-# checks drive CDP by hand — these run under bare `ruby` outside any bundle.
+# checks drive CDP by hand - these run under bare `ruby` outside any bundle.
 class FlowClientOverASocketTest < Minitest::Test
   # Sign-in form -> POST /session (303) -> /items, which is only reachable
   # with the cookie the POST handed back.

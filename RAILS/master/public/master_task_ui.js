@@ -64,7 +64,7 @@
     tools.slice(-8).forEach((tool) => {
       const item = document.createElement("div");
       item.className = "master-tool";
-      item.textContent = String(tool.data?.label || tool.data?.name || "tool") + " — " + label(tool.state);
+      item.textContent = String(tool.data?.label || tool.data?.name || "tool") + " - " + label(tool.state);
       root.appendChild(item);
     });
   }

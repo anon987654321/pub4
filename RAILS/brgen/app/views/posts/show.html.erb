@@ -17,14 +17,14 @@
     <div class="post-reading-main">
       <p class="feed-post-show-meta">
         <% if @post.community %>
-          <%= link_to @post.community.name, community_path(@post.community) %> ·
+          <%= link_to @post.community.name, community_path(@post.community) %> -
         <% end %>
-        <%= @post.attributed? ? link_to(@post.author_name, user_path(@post.user)) : @post.author_name %> ·
+        <%= @post.attributed? ? link_to(@post.author_name, user_path(@post.user)) : @post.author_name %> -
         <%= tag.time time_ago(@post.created_at), datetime: @post.created_at.iso8601,
                      title: l(@post.created_at, format: :long) %>
-        <% if @post.edited_at %>· <%= render "posts/edited_mark", at: @post.edited_at %><% end %>
+        <% if @post.edited_at %> - <%= render "posts/edited_mark", at: @post.edited_at %><% end %>
         <% if @post.reading_time_minutes.positive? %>
-          · <%= t("posts.min_read", n: @post.reading_time_minutes) %>
+          - <%= t("posts.min_read", n: @post.reading_time_minutes) %>
         <% end %>
       </p>
 
@@ -106,7 +106,7 @@
         </button>
         <% if authenticated? %>
           <% if Current.user.bookmarked?(@post) %>
-            <%# destructive: no-confirm-ok — reversible — the post is saved again with one click %>
+            <%# destructive: no-confirm-ok - reversible - the post is saved again with one click %>
             <%= button_to t("bookmark.unsave"), unbookmark_post_path(@post), method: :delete,
                   class: "button button-ghost" %>
           <% else %>

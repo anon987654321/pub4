@@ -2,11 +2,11 @@
 
 # Drawn on the isolated engine, so helpers are unprefixed here (channel_path,
 # video_path) and reached as tv.channel_path from the host. The host mounts this
-# under constraints(subdomain: TV_SUBDOMAINS) — see brgen config/routes.rb.
+# under constraints(subdomain: TV_SUBDOMAINS) - see brgen config/routes.rb.
 Tv::Engine.routes.draw do
   root "home#index"
 
-  # home#index is the grid — the YouTube answer to "what is there". This is the
+  # home#index is the grid - the YouTube answer to "what is there". This is the
   # other shape: one video per screen, ranked by watch time.
   get "feed", to: "feed#index", as: :feed
 
@@ -22,7 +22,7 @@ Tv::Engine.routes.draw do
     end
   end
 
-  # The clips built on one piece of audio — a video had no audio identity, so
+  # The clips built on one piece of audio - a video had no audio identity, so
   # there was nothing to browse more of.
   resources :sounds, only: %i[index show]
 

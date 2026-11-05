@@ -36,7 +36,7 @@ Rails.application.configure do
   # :memory_store, not :null_store. StimulusReflex needs a real cache to carry
   # session state across ActionCable requests, and with :null_store it printed
   # "StimulusReflex requires caching to be enabled" on every boot and every
-  # reflex path was untestable by construction — the reflexes are shared across
+  # reflex path was untestable by construction - the reflexes are shared across
   # all three apps, so that was the whole reflex layer. A per-process memory
   # store keeps tests isolated (Rails forks parallel workers, each gets its own)
   # while letting reflex code actually run.
@@ -62,8 +62,8 @@ Rails.application.configure do
   config.action_mailer.default_url_options = { host: "localhost" }
 
   # Routes carry the same host. action_mailer.default_url_options only reaches
-  # ActionMailer; anything generating a URL through Rails.application.routes —
-  # an isolated engine's main_app proxy, a job, a runner — reads this one, and
+  # ActionMailer; anything generating a URL through Rails.application.routes -
+  # an isolated engine's main_app proxy, a job, a runner - reads this one, and
   # it was unset in every environment.
   config.after_initialize { Rails.application.routes.default_url_options = { host: "localhost" } }
 
@@ -73,7 +73,7 @@ Rails.application.configure do
   # Raises error for missing translations.
   #
   # On, since 2026-08-11. Off, a missing key renders a "translation missing" span and
-  # the page still 200s — which is how 30 shared-engine flash messages pointed at a
+  # the page still 200s - which is how 30 shared-engine flash messages pointed at a
   # key path that did not exist, and how a test comparing I18n.t(key) against
   # flash[:alert] passed with both sides equal to the same missing-translation
   # string. Comparing two lookups of a broken key is a tautology.

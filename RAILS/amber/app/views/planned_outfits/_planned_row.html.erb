@@ -4,7 +4,7 @@
     <span class="plan-date"><%= l(planned_outfit.planned_date, format: :long) %></span>
     <%= link_to planned_outfit.outfit.name, planned_outfit.outfit %>
     <% if planned_outfit.notes.present? %><%= planned_outfit.notes %><% end %>
-    <%# destructive: no-confirm-ok — reversible — this drops the outfit from the plan, not the outfit %>
+    <%# destructive: no-confirm-ok - reversible - this drops the outfit from the plan, not the outfit %>
     <%= button_to t("actions.remove"), planned_outfit_path(planned_outfit), method: :delete, class: "button-link", data: { turbo_frame: "planned-outfits" } %>
   </div>
 </li>

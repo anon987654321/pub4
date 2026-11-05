@@ -6,7 +6,7 @@
 # Before this, `shared/_affiliate_deals` called Tradedoubler directly. That made
 # TradeDoubler both "the network we happen to use" and "the way deals are read",
 # so Amazon Associates could not appear on the surface at all without editing
-# the view — and any second network would have had to be threaded through by
+# the view - and any second network would have had to be threaded through by
 # hand everywhere.
 #
 # The table is the source of truth. Views read AffiliateProduct, which every
@@ -30,7 +30,7 @@ module Shared
     class << self
       # Resolved inside Shared. Bare "Tradedoubler" would look for a top-level
       # constant that no longer exists, safe_constantize returns nil for it, and
-      # filter_map drops it — so every network would go missing in silence and
+      # filter_map drops it - so every network would go missing in silence and
       # configured_networks would report none.
       def networks = NETWORK_NAMES.filter_map { |name| "Shared::#{name}".safe_constantize }
 

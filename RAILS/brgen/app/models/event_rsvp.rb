@@ -25,7 +25,7 @@ class EventRsvp < ApplicationRecord
 
   private
 
-  # Two counters, three statuses, and a status that can move between them — a
+  # Two counters, three statuses, and a status that can move between them - a
   # counter_cache per status would drift the moment someone changed their mind
   # from going to interested, because Rails only increments on create and
   # decrements on destroy. Recounting the two the UI shows is cheap and cannot

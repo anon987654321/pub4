@@ -34,7 +34,7 @@
     <% if @profile.bio.present? %>
       <%= read_more(@profile.bio, lines: 3, more: t("dating.read_bio"), less: t("dating.show_less")) %>
     <% else %>
-      <p><%= t("dating.bio") %><br>—</p>
+      <p><%= t("dating.bio") %><br>-</p>
     <% end %>
   </article>
 </section>
@@ -45,9 +45,9 @@
         rather than characters. Bare text nodes between spans would become
         anonymous flex items and the gap would land inside a pair, not between. %>
     <p class="profile-meta">
-      <span><%= t("dating.age") %> · <%= @profile.age || "—" %></span>
-      <span><%= t("dating.gender") %> · <%= @profile.gender_label || "—" %></span>
-      <span><%= t("dating.looking_for") %> · <%= @profile.looking_for_label || "—" %></span>
+      <span><%= t("dating.age") %> - <%= @profile.age || "-" %></span>
+      <span><%= t("dating.gender") %> - <%= @profile.gender_label || "-" %></span>
+      <span><%= t("dating.looking_for") %> - <%= @profile.looking_for_label || "-" %></span>
     </p>
   </article>
 
@@ -55,14 +55,14 @@
     <p class="profile-meta">
       <span class="meta-facts">
         <span><%= t("dating.location") %></span>
-        <span><%= @profile.location.presence || "—" %></span>
+        <span><%= @profile.location.presence || "-" %></span>
         <% if @profile.neighborhood&.name.present? %>
           <span><%= t("dating.neighborhood") %></span>
           <span><%= @profile.neighborhood.name %></span>
         <% end %>
       </span>
       <span>
-        <%= t("dating.visibility") %> ·
+        <%= t("dating.visibility") %> -
         <% if @profile.visible? %>
           <span class="text-visible"><%= t("dating.visibility_visible") %></span>
         <% else %>

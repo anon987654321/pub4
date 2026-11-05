@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
 class Takeaway::Order
-  # One ticket, several people. The host is `user` — the person who opened it
-  # and the only one who can send it to the kitchen — and every line knows who
+  # One ticket, several people. The host is `user` - the person who opened it
+  # and the only one who can send it to the kitchen - and every line knows who
   # added it.
   module GroupTicket
     extend ActiveSupport::Concern
@@ -20,7 +20,7 @@ class Takeaway::Order
     def joinable? = group? && group_open? && status == "pending"
 
     # What each person owes, so the ticket can be split without anybody doing
-    # arithmetic in a chat. Delivery and tip stay the host's — splitting a fee
+    # arithmetic in a chat. Delivery and tip stay the host's - splitting a fee
     # four ways to the øre is a worse argument than paying it.
     def shares
       order_items.group_by(&:user_id).transform_values { |items| items.sum(&:subtotal_cents) }

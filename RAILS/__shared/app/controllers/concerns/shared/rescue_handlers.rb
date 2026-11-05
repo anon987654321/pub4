@@ -31,7 +31,7 @@ module Shared
     end
 
     # 422.html and 500.html are not shipped by every app, so the page is used
-    # when it exists and a bare head is the fallback — never a 200 with an error
+    # when it exists and a bare head is the fallback - never a 200 with an error
     # body, and never a missing-template 500 raised from an error handler.
     def render_http_error(status, error, **details)
       respond_to do |format|

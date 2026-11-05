@@ -7,7 +7,7 @@ require "test_helper"
 #   @comment.destroy if @comment.user == Current.user
 #
 # Same shape as blocks#destroy, on the highest-traffic destructive path in the
-# app. Nothing tested it. The failure mode is quiet in both directions — drop the
+# app. Nothing tested it. The failure mode is quiet in both directions - drop the
 # `if` and anyone deletes anything; the response is a redirect either way, so a
 # smoke test that only checks the status code passes while the guard is gone.
 #
@@ -36,7 +36,7 @@ class CommentOwnershipTest < ActionDispatch::IntegrationTest
 
   def a_post(author)
     community = Community.create!(name: "C #{SecureRandom.hex(3)}", slug: "c-#{SecureRandom.hex(4)}")
-    Post.create!(user: author, community:, title: "Thread", content: "…")
+    Post.create!(user: author, community:, title: "Thread", content: "...")
   end
 
   test "the author can delete their own comment" do
@@ -89,7 +89,7 @@ class CommentOwnershipTest < ActionDispatch::IntegrationTest
   # ever rendered the button a person would have to click to get there. That was
   # the blind spot: shared/comments/_comment builds the button's target from
   # comment_destroy_arg, which returns [commentable, comment] whenever the parent
-  # is persisted — and there is no post_comment_path. brgen's comment routes are
+  # is persisted - and there is no post_comment_path. brgen's comment routes are
   # `shallow: true`, so :destroy is a member action and lives at /comments/:id;
   # only :create is nested. The button therefore raised NoMethodError, and it
   # renders only when comment.user == Current.user, so it took signing in and
@@ -112,7 +112,7 @@ class CommentOwnershipTest < ActionDispatch::IntegrationTest
   end
 
   # The post's author is not the comment's author. Owning the thread does not
-  # confer the right to delete replies in it — if that is ever wanted it should
+  # confer the right to delete replies in it - if that is ever wanted it should
   # be an explicit moderation path, not a side effect of a widened check.
   test "the post author cannot delete a reply left on their post" do
     ActsAsTenant.with_tenant(@city) do

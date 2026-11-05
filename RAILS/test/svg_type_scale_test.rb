@@ -15,7 +15,7 @@ require_relative "engine_roots"
 # 500) had .amber-logo-mark on var(--text-xs)/var(--text-xl) while
 # .amber-logo-word stayed on px. _minimal.scss raises the root from 16px to 21px
 # at min-width 1280, so above that breakpoint the (r) grew from 12 to 15.75 user
-# units against a word fixed at 60 — the mark/word ratio moving 0.2000 -> 0.2625,
+# units against a word fixed at 60 - the mark/word ratio moving 0.2000 -> 0.2625,
 # measured in Chrome at 1400px wide. It read as a safe swap because at the
 # default root size 0.75rem is exactly 12px, so nothing moves until the viewport
 # crosses 1280.
@@ -26,7 +26,7 @@ class SvgTypeScaleTest < Minitest::Test
   ROOT = File.expand_path("..", __dir__)
 
   # Selector fragments that scope into an element carrying a viewBox. CSS cannot
-  # tell us this — the viewBox is in the markup — so the list is explicit. Add a
+  # tell us this - the viewBox is in the markup - so the list is explicit. Add a
   # row when a new SVG gets its own text styling.
   VIEWBOX_SCOPES = [
     ".amber-logo-svg",
@@ -44,7 +44,7 @@ class SvgTypeScaleTest < Minitest::Test
   # amber's logotype is the surface this test exists for, so the glob has to
   # reach the stylesheet that styles it.
   def test_stylesheets_are_actually_being_read
-    refute_empty stylesheets, "found no stylesheets to check — the glob is wrong, not the tree"
+    refute_empty stylesheets, "found no stylesheets to check - the glob is wrong, not the tree"
     logotype = stylesheets.select { |p| VIEWBOX_SCOPES.any? { |scope| File.read(p).include?(scope) } }
     assert logotype.any? { |p| p.include?("/amber/") },
            "amber's logotype rules are what this test exists for and the glob did not reach them"
@@ -61,7 +61,7 @@ class SvgTypeScaleTest < Minitest::Test
         next unless VIEWBOX_SCOPES.any? { |scope| selector.to_s.include?(scope) }
         next unless line.match?(RELATIVE_UNIT)
 
-        offenders << "#{path.delete_prefix("#{ROOT}/")}:#{index + 1} — #{line.strip}"
+        offenders << "#{path.delete_prefix("#{ROOT}/")}:#{index + 1} - #{line.strip}"
       end
     end
 
@@ -71,7 +71,7 @@ class SvgTypeScaleTest < Minitest::Test
         #{offenders.join("\n  ")}
 
       A rem here resolves against the root font-size, which _minimal.scss changes
-      at min-width 1280 — so this glyph will grow relative to the rest of the
+      at min-width 1280 - so this glyph will grow relative to the rest of the
       artwork above that width and only above it. Use px; the viewBox already
       scales the whole mark.
     MSG

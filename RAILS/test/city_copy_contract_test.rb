@@ -2,10 +2,10 @@
 
 # brgen is one app serving a different city per domain: brgen.no is Bergen,
 # oshlo.no is Oslo, lndon.uk is London. DomainRegistry resolves the host and sets
-# Current.city before any view renders, and it works — oshlo.no returns 200 with
+# Current.city before any view renders, and it works - oshlo.no returns 200 with
 # rel="canonical" pointing at itself.
 #
-# It still rendered "Bergen — Brgen", because pages.home_title was the literal
+# It still rendered "Bergen - Brgen", because pages.home_title was the literal
 # string "Bergen" in both locales. Every city in the world got Bergen's name on
 # Bergen's title, on a platform whose entire premise is that it does not.
 #
@@ -59,7 +59,7 @@ class CityCopyContractTest < Minitest::Test
 
     assert_empty offenders,
                  "locale values naming a city. brgen serves a different city per domain, so a city " \
-                 "name in copy renders on every other city too — interpolate %{city} and pass " \
+                 "name in copy renders on every other city too - interpolate %{city} and pass " \
                  "city: city_name:\n  #{offenders.join("\n  ")}"
   end
 
@@ -75,8 +75,8 @@ class CityCopyContractTest < Minitest::Test
 
   def test_layout_does_not_hardcode_bergen_or_a_brgen_title_suffix
     layout = File.read(File.join(ROOT, "app/views/layouts/application.html.erb"))
-    refute_match(/— Brgen/, layout,
-                 "the title suffix was the city leak: every host rendered 'Page — Brgen'")
+    refute_match(/\u2014 Brgen/, layout,
+                 "the title suffix was the city leak: every host rendered 'Page - Brgen'")
     refute_match(/organization_json_ld\(site_name: "Brgen"/, layout)
     refute_includes layout, "city communities across Scandinavia"
     assert_includes layout, "city_name"
@@ -95,7 +95,7 @@ class CityCopyContractTest < Minitest::Test
 
   def test_city_facing_surfaces_do_not_hardcode_the_brand
     surfaces = Dir.glob(File.join(ROOT, "app/views/{layouts,pwa}/**/*.erb"))
-    refute_empty surfaces, "found no layout/manifest surfaces — the glob has gone stale"
+    refute_empty surfaces, "found no layout/manifest surfaces - the glob has gone stale"
     surfaces.each do |path|
       body = File.read(path)
       BRAND_LEAKS.each do |pattern, why|

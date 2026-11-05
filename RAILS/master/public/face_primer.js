@@ -38,7 +38,7 @@
   function revealPrompt(){
     const z=promptFormEl(),ui=uiEl();
     if(z)z.classList.add('live');
-    if(ui&&!ui.textContent)ui.textContent=i18n('starting','starting…');
+    if(ui&&!ui.textContent)ui.textContent=i18n('starting','starting...');
     // Keyboard users: land focus in the prompt after primer dismiss.
     const zin=document.getElementById('prompt-input');
     if(zin){try{zin.focus({preventScroll:true});}catch(_e){try{zin.focus();}catch(__e){}}}
@@ -68,14 +68,14 @@
   // import has got, and a counter that climbs on a timer says it can.
   function showLoadState(){
     let title=titleEl(),ui=uiEl();
-    if(title)title.textContent=i18n('loading-title','loading…');
-    if(ui){ui.dataset.bootLoading='1';ui.textContent=i18n('loading-status','loading the face…');}
+    if(title)title.textContent=i18n('loading-title','loading...');
+    if(ui){ui.dataset.bootLoading='1';ui.textContent=i18n('loading-status','loading the face...');}
   }
   function fallbackUi(){
     dismissPrimer();
     revealPrompt();
     let ui=uiEl();
-    if(ui)ui.textContent=i18n('failed','face failed to load — reload or check console');
+    if(ui)ui.textContent=i18n('failed','face failed to load - reload or check console');
     let errLive=document.getElementById('error-live');
     if(errLive){
       errLive.textContent=i18n('failed-live',
@@ -110,7 +110,7 @@
       window.__MASTER_FACE_IMPORT__=false;
       if(retried){bootFailed();return;}
       let ui=uiEl();
-      if(ui)ui.textContent=i18n('retrying','retrying…');
+      if(ui)ui.textContent=i18n('retrying','retrying...');
       window.MASTER?.boot?.transition?.('RECOVERING', { source: 'loadFace_catch' });
       retryT=setTimeout(function(){loadFace(true);},1200);
     });
@@ -120,7 +120,7 @@
     fired=true;
     window.MASTER?.boot?.transition?.('PRIMER', { source: 'primer_tap' });
     const title=titleEl();
-    if(title)title.textContent=i18n('starting','starting…');
+    if(title)title.textContent=i18n('starting','starting...');
     window._primerFired=true;
     window.dispatchEvent(new CustomEvent('primer:ready'));
     primeAudio();
@@ -132,7 +132,7 @@
     showLoadState();
     hintT=setTimeout(function(){
       const ui=uiEl();
-      if(ui)ui.textContent=i18n('still-loading','still loading the face…');
+      if(ui)ui.textContent=i18n('still-loading','still loading the face...');
     },8000);
     timer=setInterval(function(){
       if(boot())clearWatch();
@@ -160,16 +160,16 @@
   });
   // Autostart is the default: no "launch AI" screen between the visitor and
   // the face. Embeds and ?autostart=1 already took this path, so this flips
-  // which case is the exception rather than adding a new boot route — the
+  // which case is the exception rather than adding a new boot route - the
   // one below has been the exercised path for every front-page embed.
   // ?primer=1 keeps the old overlay for debugging the gesture path itself.
   //
   // What the tap did that a page load cannot: supply the user gesture an
   // AudioContext needs. primeAudio() now runs against a page that has had no
   // interaction, so the context is created 'suspended' and ctx.resume()
-  // rejects. The listeners below resume it on the first real interaction —
+  // rejects. The listeners below resume it on the first real interaction -
   // any pointerdown or keydown, including the one that sends the first
-  // prompt — so speech works from the first reply without a screen whose
+  // prompt - so speech works from the first reply without a screen whose
   // only job was to collect a click.
   try{
     const q=new URLSearchParams(location.search||'');

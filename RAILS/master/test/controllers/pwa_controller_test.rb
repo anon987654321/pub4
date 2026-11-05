@@ -46,7 +46,7 @@ class PwaControllerTest < ActionDispatch::IntegrationTest
     get "/offline.html"
 
     assert_response :success
-    assert_select "title", text: "MASTER — frakoblet"
+    assert_select "title", text: "MASTER - frakoblet"
     assert_select "main h1", text: "MASTER"
     refute_match(/brgen/i, response.body)
     refute_includes response.body, "#f5f0e8"

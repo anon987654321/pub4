@@ -1,4 +1,4 @@
-<%# At rest this is one thin pill and nothing else — avatar, prompt, no field.
+<%# At rest this is one thin pill and nothing else - avatar, prompt, no field.
     Clicking it opens the composer as a floating dialog rather than growing the
     feed downward, which is the Facebook shape: the resting row stays the same
     height whether or not you are writing, and the writing surface gets the
@@ -77,7 +77,7 @@
         <div class="composer-toolbar">
           <%= render "shared/tiptap_toolbar", hidden: false %>
           <div class="compose-actions">
-            <%# Each of these wraps its input in a <label>, which normally names it —
+            <%# Each of these wraps its input in a <label>, which normally names it -
                 but the label's only content is an aria-hidden icon, so the
                 accessible name computes to "". title= is a tooltip, not a name.
                 The three inputs read as "unlabelled file upload" to a screen
@@ -132,7 +132,7 @@
           browser, and why the cap exists. The cap is a rule you meet at most once
           and the dialog is a writing surface, so the count moved out of the way of
           the draft; refusing a post still explains itself at the moment it
-          happens. The signed-in link stays — it is a way out of this dialog to the
+          happens. The signed-in link stays - it is a way out of this dialog to the
           full form, not commentary on it. %>
       <% unless guest? %>
         <div class="compose-hint">

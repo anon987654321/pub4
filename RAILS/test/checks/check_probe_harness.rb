@@ -5,7 +5,7 @@
 #
 # Those checks are otherwise unreachable from a bare `ruby` suite. Without Chrome
 # each one reports inconclusive and returns before any judgement runs, so a test
-# that only calls `.run` proves the precondition check and nothing else — and a
+# that only calls `.run` proves the precondition check and nothing else - and a
 # test that runs the check against a live tree and asserts "passes" proves less
 # still, because it passes equally against `return ok`.
 #
@@ -85,7 +85,7 @@ module CheckProbe
   def saved(name) = :"check_probe_original_#{name}"
 
   # The four states a check can report, asked of the result rather than re-derived
-  # from its three lists — CheckResult#outcome is the one place they are ranked.
+  # from its three lists - CheckResult#outcome is the one place they are ranked.
   def assert_inconclusive(result, matching)
     assert_equal :inconclusive, result.outcome,
                  "a check that measured nothing must not report #{result.outcome}: " \

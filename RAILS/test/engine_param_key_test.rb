@@ -4,7 +4,7 @@ require "minitest/autorun"
 require_relative "engine_roots"
 
 # `isolate_namespace Tv` strips the namespace from model_name, so
-# `form_with model: @video` posts video[title] — not tv_video[title]. Sixteen
+# `form_with model: @video` posts video[title] - not tv_video[title]. Sixteen
 # controllers across the five engines required the namespaced key their own
 # forms could not produce, so every one of those submissions answered 400
 # ParameterMissing: publishing a listing, writing a review, saving an address,
@@ -15,7 +15,7 @@ require_relative "engine_roots"
 # names were listing[title], listing[price_cents], listing[category_id].
 #
 # The namespaced key is legitimate when a form asks for it by name
-# (`form_with url: …, scope: :tv_comment`), which several do — so this asserts
+# (`form_with url: ..., scope: :tv_comment`), which several do - so this asserts
 # agreement between the two rather than banning the long key outright.
 class EngineParamKeyTest < Minitest::Test
   ROOT = File.expand_path("..", __dir__)
@@ -45,7 +45,7 @@ class EngineParamKeyTest < Minitest::Test
     offenders = ENGINES.flat_map do |engine|
       scoped = scoped_keys(engine)
       required_keys(engine).reject { |_path, key| scoped.include?(key) }
-                           .map { |path, key| "#{path}: reads :#{key}, and no form in the engine scopes to it — an isolated engine posts :#{key.sub("#{engine}_", '')}" }
+                           .map { |path, key| "#{path}: reads :#{key}, and no form in the engine scopes to it - an isolated engine posts :#{key.sub("#{engine}_", '')}" }
     end
 
     assert_empty offenders,

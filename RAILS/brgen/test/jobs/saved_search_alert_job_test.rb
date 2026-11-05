@@ -3,7 +3,7 @@
 require "test_helper"
 
 # marketplace_saved_searches shipped with a `notify` boolean, the form permitted
-# it, and the saved-searches page rendered an "alerts on" chip from it — while
+# it, and the saved-searches page rendered an "alerts on" chip from it - while
 # nothing in the tree ever ran a saved search on anyone's behalf. Ticking the box
 # changed a label. These pin the reader.
 class SavedSearchAlertJobTest < ActiveJob::TestCase

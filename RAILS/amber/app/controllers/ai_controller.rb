@@ -17,7 +17,7 @@ class AiController < ApplicationController
   # limits to one shared counter per controller (see
   # RAILS/test/rate_limit_naming_test.rb). :premium covers the actions that
   # mutate wardrobe state or compose outfits; :read covers the exploratory
-  # GETs — WriteThrottle exempts GET by design, so without this a scripted
+  # GETs - WriteThrottle exempts GET by design, so without this a scripted
   # loop over /ai/search could spend OpenRouter budget unbounded.
   rate_limit to: 10, within: 10.minutes, name: :premium,
              only: %i[suggest_outfits generate_outfit analyze_item tag_item packing_list style_profile],
@@ -109,7 +109,7 @@ class AiController < ApplicationController
   # Writes a StylePreference, not the old table-less StyleProfile: preferences
   # are the backed concept (style_preferences table, User has_many, consumed by
   # OutfitCompatibility#preference_fit). The questionnaire sets *the* aesthetic,
-  # so the previous one is replaced rather than accumulated — the table's unique
+  # so the previous one is replaced rather than accumulated - the table's unique
   # index is [user_id, kind, name], which would otherwise leave a user holding
   # several contradictory aesthetics.
   def style_profile

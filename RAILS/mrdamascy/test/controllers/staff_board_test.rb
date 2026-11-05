@@ -35,7 +35,7 @@ class StaffBoardTest < ActionDispatch::IntegrationTest
     assert_equal "placed", @order.reload.state
   end
 
-  test "staff advances placed → confirmed" do
+  test "staff advances placed -> confirmed" do
     staff_sign_in
 
     patch staff_advance_order_url(@order)

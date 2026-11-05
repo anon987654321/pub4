@@ -2,8 +2,8 @@
 
     Two forms, same outer element. An app with config.x.icon_sprite draws from
     shared/_icon_sprite; every other app keeps the paths inline exactly as before.
-    The <svg> itself is identical in both — same class, viewBox, width, height and
-    aria-hidden — so nothing selecting or measuring an icon can tell them apart.
+    The <svg> itself is identical in both - same class, viewBox, width, height and
+    aria-hidden - so nothing selecting or measuring an icon can tell them apart.
     In the sprite form the paint attributes live on the <symbol> instead, where
     they are written once rather than per instance. See _icon_sprite for why this
     is opt-in and not simply always on. %>

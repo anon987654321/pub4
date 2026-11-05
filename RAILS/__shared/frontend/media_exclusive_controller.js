@@ -10,7 +10,7 @@ import { Controller } from "@hotwired/stimulus"
 //
 // Listening on the document rather than wiring the players to each other: a
 // native <audio controls> has no controller to wire, and any future one gets
-// this for free. Capture phase is not a preference — `play` does not bubble,
+// this for free. Capture phase is not a preference - `play` does not bubble,
 // so a listener on the document only ever sees it on the way down.
 //
 // Two things are deliberately left alone. A muted element is not audible, so
@@ -22,7 +22,7 @@ import { Controller } from "@hotwired/stimulus"
 // A post's link embed (shared/_link_embed.html.erb) is the iframe this can
 // reach, because it starts here. Its facade button calls playEmbed through
 // data-action, which finds this controller on <body>, so a feed of
-// twenty-five posts pays no controller instance of its own — the per-post cost
+// twenty-five posts pays no controller instance of its own - the per-post cost
 // FrontPageWeightTest budgets. A cross-origin player cannot be paused, so
 // starting any sound puts a playing embed back to its facade, which stops it.
 //

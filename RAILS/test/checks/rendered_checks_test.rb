@@ -12,7 +12,7 @@ require_relative "../../../MASTER/checks/support/geometry_type"
 require_relative "../../../OPENBSD/lib/check_result"
 
 # Unit coverage for the pure logic behind the browser-backed checks. Nothing
-# here launches Chrome or needs a booted app — the CDP-dependent paths are
+# here launches Chrome or needs a booted app - the CDP-dependent paths are
 # exercised by running the checks themselves.
 class RenderedChecksTest < Minitest::Test
   M = Deploy::DesignMetrics
@@ -26,7 +26,7 @@ class RenderedChecksTest < Minitest::Test
 
     assert_equal 1, result.warnings.size
     assert_match(/surface0: mobile brgen\/marketplace PASS/, result.warnings.first)
-    assert_match(/390×844/, result.warnings.first)
+    assert_match(/390x844/, result.warnings.first)
   end
 
   # --- token contrast cross-product ---------------------------------------

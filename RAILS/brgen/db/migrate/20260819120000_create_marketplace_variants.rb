@@ -21,7 +21,7 @@ class CreateMarketplaceVariants < ActiveRecord::Migration[8.1]
       t.timestamps
     end
 
-    # Any number of axes, queryable — "which variants are blue" is a where, not a
+    # Any number of axes, queryable - "which variants are blue" is a where, not a
     # LIKE against a label. Two axes is what size/colour needs; the schema does
     # not have to care.
     create_table :marketplace_variant_options do |t|

@@ -84,7 +84,7 @@ def test_brgen_marketplace_header_uses_mobile_first_breakpoints
   refute_empty contract_rules, "the storefront header contract rules must still exist"
   contract_rules.each do |rule|
     refute rule.parents.any? { |parent| parent.match?(/@media[^{]*max-width/) },
-           "#{rule.selector} sits under a max-width override — compact rules are the base"
+           "#{rule.selector} sits under a max-width override - compact rules are the base"
   end
 
   assert_match(/body\.vertical-marketplace \.storefront-bol-brand \{[^}]*font-size: var\(--store-text-brand-compact\)/m, source)
@@ -287,7 +287,7 @@ def test_brgen_marketplace_badge_offsets_are_valid_css
       css = compiled_css_path(app)
       next unless File.file?(css)
 
-      # Only flag shared x- partial fingerprints — apps may have legacy exceptions.
+      # Only flag shared x- partial fingerprints - apps may have legacy exceptions.
       body = File.read(css)
       # Soft check: x-action / mobile-sheet rules should not introduce box-shadow
       if body.include?(".mobile-sheet")
@@ -311,7 +311,7 @@ def test_brgen_marketplace_badge_offsets_are_valid_css
     end
 
     assert_empty leftovers,
-                 "tap-floor literals must be var(--tap-min) — same 44px, named:\n  #{leftovers.join("\n  ")}"
+                 "tap-floor literals must be var(--tap-min) - same 44px, named:\n  #{leftovers.join("\n  ")}"
   end
 
   private

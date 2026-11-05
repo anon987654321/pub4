@@ -68,7 +68,7 @@ class ShopSmarterTest < ActionDispatch::IntegrationTest
     end
   end
 
-  # This test used to assert :no_feed_client — the feed client lived in brgen's
+  # This test used to assert :no_feed_client - the feed client lived in brgen's
   # app/services and was never loaded in amber, so a token in /etc/amber.env
   # passed the first check and then silently did nothing. The client is
   # Shared::Tradedoubler now and amber loads it, so the same token reaches

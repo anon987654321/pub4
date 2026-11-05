@@ -4,7 +4,7 @@ require "minitest/autorun"
 require "tmpdir"
 
 # rb_file_too_long / scss_file_too_long / view_too_long, as a ratchet rather than
-# three lists — the same conclusion method_length_ratchet_test.rb reaches, for the
+# three lists - the same conclusion method_length_ratchet_test.rb reaches, for the
 # same reason: a finding list is a snapshot and cannot hold a line while you work
 # down it.
 #
@@ -39,12 +39,12 @@ class FileLengthRatchetTest < Minitest::Test
   #
   # Only the .scss and .erb numbers moved, and brgen's PWA manifest left the list
   # outright: it was never over the limit on code, only on the prose above it.
-  # The .rb numbers are unchanged, which is the point of stripping per language —
+  # The .rb numbers are unchanged, which is the point of stripping per language -
   # a first pass that also treated `/*` as a Ruby comment reported four .rb files
-  # as 100–290 lines shorter, all of it real code sitting between the `/*` and
+  # as 100-290 lines shorter, all of it real code sitting between the `/*` and
   # the `*/` of a glob like `"**/*.rb"`.
   #
-  # db/seeds.rb is data rather than logic — long lists of seed rows. It is on
+  # db/seeds.rb is data rather than logic - long lists of seed rows. It is on
   # the list because splitting it is possible, not because it is obviously
   # worth doing.
   #
@@ -56,7 +56,7 @@ class FileLengthRatchetTest < Minitest::Test
   CEILINGS = {
     # 839 -> 337. The seeder was NO_GOD_CLASS's largest single finding in the
     # fleet, and it breached on length alone: two public methods and five
-    # hundred lines of literal Bergen — the users, the posts, the listings, the
+    # hundred lines of literal Bergen - the users, the posts, the listings, the
     # bios, the neighbourhoods, the places, the restaurants, the channels and
     # the Live notes. Those moved whole to bergen_demo_data.rb, included so
     # every name reads the same inside the seeder and BergenDemoSeeder::
@@ -71,8 +71,8 @@ class FileLengthRatchetTest < Minitest::Test
     # the same reason db/seeds.rb is: splitting it is possible, not obviously
     # worth doing. Splitting it further would be splitting a list of restaurants
     # from a list of neighbourhoods, which buys two files and no clarity.
-# 522 -> 442 on 2026-08-26. Token contrast and the budget that judges it —
-# check_token_contrast, judge_contrast_budget, contrast_budget — are
+# 522 -> 442 on 2026-08-26. Token contrast and the budget that judges it -
+# check_token_contrast, judge_contrast_budget, contrast_budget - are
 # design_metrics/contrast_checks.rb. One subject, and the maths it calls
 # was split off the same subject at the other layer in
 # checks/support/design_metrics/contrast.rb.
@@ -80,7 +80,7 @@ class FileLengthRatchetTest < Minitest::Test
 # The move broke something first, in the way this repo keeps finding: the
 # budget path was `File.expand_path("../../data/css_budget.yml", __dir__)`
 # and one directory deeper that resolves to checks/lib/data, which does not
-# exist. No exception — a rescue logged "rules unreadable" and ran the check
+# exist. No exception - a rescue logged "rules unreadable" and ran the check
 # unbudgeted, so the contrast ceiling stopped being enforced while the check
 # still printed ok. Caught by diffing the check's whole output before and
 # after, which is now the standard for a split in this file.
@@ -107,7 +107,7 @@ class FileLengthRatchetTest < Minitest::Test
 # selector families out of each app's one application.scss instead.
 
 # 498 -> 449 on 2026-08-26. check_contrast, apca_note and check_apca are
-# rendered_geometry/contrast_checks.rb — the one subject in this check that
+# rendered_geometry/contrast_checks.rb - the one subject in this check that
 # is colour rather than geometry, and the rendered counterpart to the
 # source-side checks split out of design_metrics the same day.
 #
@@ -115,25 +115,25 @@ class FileLengthRatchetTest < Minitest::Test
 # recording because it was not empty: subpixel and type_scale findings
 # moved by a component or two. Running it a third time with no edit between
 # moved them again, so those two checks are non-deterministic run to run
-# and the delta was not the split. The 108 contrast and apca findings —
-# the ones this file is actually responsible for — were byte-identical
+# and the delta was not the split. The 108 contrast and apca findings -
+# the ones this file is actually responsible for - were byte-identical
 # across all three runs.
 # 449 -> 422: the palette half is token_checks.rb, the same split as
-# contrast_checks and for the same reason — colour is not geometry.
+# contrast_checks and for the same reason - colour is not geometry.
 #
 # 422 -> 344 on 2026-09-09 along a seam the check already carried as a banner
 # comment: "Placement, not size. Everything else in this check asks whether an
 # element is big enough, legible enough or on the grid; these four ask whether
-# it is anywhere sensible." Those four — Hick's law on peer choices, Gestalt
+# it is anywhere sensible." Those four - Hick's law on peer choices, Gestalt
 # proximity, the phone thumb zone and the weak bottom-left of an F-pattern scan
-# — are placement_checks.rb, and they are the only checks in the check that read
+# - are placement_checks.rb, and they are the only checks in the check that read
 # ux_laws, layout_rules.reading_patterns and layout_rules.whitespace.
 #
 # It stays at 341, over the 300 rb limit, because what is left does not divide,
 # and this row is the place to say so rather than leave the next session hunting
 # a third seam. Two cuts look available and neither survives reading. By the
 # check's own principle labels, fitts_law and fitts own four of the eleven checks
-# — target size, occlusion, chrome occlusion, target spacing — so lifting the
+# - target size, occlusion, chrome occlusion, target spacing - so lifting the
 # occlusion pair out separates siblings the check itself files together, and they
 # share critical? with check_fitts. By probe field, the one clean separation is
 # the two checks that read `hit`; but frect is read by four checks across three
@@ -141,7 +141,7 @@ class FileLengthRatchetTest < Minitest::Test
 # question, and grouping by it is how a split ends up with halves nobody can
 # name. Everything left asks one thing in different units: is this box, as the
 # browser computed it, the size, position, gap or spacing design_rules states.
-# The two things in here that were not that have already gone — colour to
+# The two things in here that were not that have already gone - colour to
 # token_checks.rb, placement to placement_checks.rb. The check reaches every
 # placement check through check_layout, one call where four stood.
 #
@@ -154,7 +154,7 @@ class FileLengthRatchetTest < Minitest::Test
 # the file to 367; it and check_centered_prose ask how text sits on the screen
 # rather than whether a box is the right size, and they are composition_checks.rb.
 
-    # +6 in cf6e56a52 — an error template is not a route, so the manifest stopped
+    # +6 in cf6e56a52 - an error template is not a route, so the manifest stopped
     # being hand-edited and the inventory learned to tell the two apart.
     # page_inventory.rb left this list on 2026-09-06: 444 -> 288 when the five
     # filename ladders went and the route manifest became the only answer.
@@ -177,15 +177,15 @@ class FileLengthRatchetTest < Minitest::Test
     # cookies, navigate, status, evaluate, a computed style, a bounding rect,
     # a key press, console capture, a screenshot and a thrown JsError, before
     # and after, byte-identical.
-    # +5 in 7ed6920cd — the seeds asked for a visible profile without a photo,
+    # +5 in 7ed6920cd - the seeds asked for a visible profile without a photo,
     # which gated every deploy.
     # 477 -> 408, from 51 over: the takeaway step moved whole to
     # lib/brgen/takeaway_seed.rb, the restaurants it returns read back here.
     "brgen/db/seeds.rb" => 408,
     # user_flow.rb left this list on 2026-09-09: 308 -> 166, under the 300 rb
     # limit, so a ceiling here would only re-admit it. Its own header admitted
-    # to being two checks in one — "critical-path user flows + MASTER
-    # design/principle semantics" — and the second half is
+    # to being two checks in one - "critical-path user flows + MASTER
+    # design/principle semantics" - and the second half is
     # checks/support/user_flow_design_contracts.rb: the seven-rule contract
     # table and the four methods that read it off source text. Not one of them
     # opens a socket or asks whether an app is up, which is what everything
@@ -231,9 +231,9 @@ COMMENT_STARTS = ["#", "//", "/*", "*", "<%#"].freeze
 
   # Block comments are removed before the line rule runs, rather than the rule
   # skipping lines that *start* with a marker. COMMENT_STARTS catches the first
-  # line of a `<%# … %>` or `/* … */` block and nothing after it, because this
+  # line of a `<%# ... %>` or `/* ... */` block and nothing after it, because this
   # tree writes continuation lines as plain indented prose with no leading star.
-  # So a rule meant to spare documentation charged for all but its first line —
+  # So a rule meant to spare documentation charged for all but its first line -
   # brgen's application layout measured 317 against a 264-line body, and the way
   # to satisfy the ratchet was to delete the paragraph explaining the CSS
   # specificity race the file exists to work around.
@@ -346,7 +346,7 @@ def test_generated_schema_is_excluded_not_counted
     assert_operator code_lines(schema), :>, LIMITS["rb"],
                     "if schema.rb were short this exclusion would be pointless"
     refute_includes candidates["rb"], schema,
-                    "schema.rb is regenerated by db:migrate — a split is undone, so it is excluded"
+                    "schema.rb is regenerated by db:migrate - a split is undone, so it is excluded"
   end
 
   def test_length_is_measured_in_code_lines_not_raw
@@ -379,7 +379,7 @@ def test_generated_schema_is_excluded_not_counted
   end
 
   # Only downward. This compared for inequality, so a file that had *grown* was
-  # reported here too — under the heading "the tree is better than the ratchet
+  # reported here too - under the heading "the tree is better than the ratchet
   # records", with the instruction to lower the ceiling to match. Following that
   # on a 272-line file with a 264 ceiling would have recorded the regression as
   # the new floor and closed the failure that was telling the truth about it.
@@ -388,9 +388,9 @@ def test_generated_schema_is_excluded_not_counted
     current = oversize
     slack = CEILINGS.filter_map do |path, ceiling|
       if current[path].nil?
-        "#{path}: no longer over the limit — remove the row"
+        "#{path}: no longer over the limit - remove the row"
       elsif current[path] < ceiling
-        "#{path}: now #{current[path]}, recorded #{ceiling} — lower it"
+        "#{path}: now #{current[path]}, recorded #{ceiling} - lower it"
       end
     end
 

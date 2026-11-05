@@ -15,7 +15,7 @@
     <% @tracks.each do |track| %>
       <article>
         <h2><%= link_to track.title, hosted_track_path(track) %></h2>
-        <p><%= track.artist.presence || t("playlist.unknown_artist") %> · <%= track.duration_formatted %></p>
+        <p><%= track.artist.presence || t("playlist.unknown_artist") %> - <%= track.duration_formatted %></p>
       </article>
     <% end %>
   <% else %>

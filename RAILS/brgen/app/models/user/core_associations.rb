@@ -17,15 +17,15 @@ class User
       # dependent:, or User#destroy fails in SQLite rather than in Rails.
       #
       # message_receipts and typing_indicators both carry an FK to users and were
-      # declared only on Message and Conversation, never here — so destroying a
+      # declared only on Message and Conversation, never here - so destroying a
       # user who had ever been in a conversation raised
       # SQLite3::ConstraintException: FOREIGN KEY constraint failed, from the
       # database rather than from Rails, with no association in the model to
       # explain it.
       #
-      # That made account deletion impossible for any user with chat history —
+      # That made account deletion impossible for any user with chat history -
       # the users table carries deletion_scheduled_at and deleted_at for exactly
-      # that flow — and it is why PruneGuestUsersJob had never removed a row.
+      # that flow - and it is why PruneGuestUsersJob had never removed a row.
       # Measured 2026-08-13: guests owned 194,295 message_receipts, and the prune
       # died on the first batch that contained one.
       has_many :message_receipts, dependent: :destroy

@@ -86,7 +86,7 @@ class GeometryDetectorsTest < Minitest::Test
                             { "stack" => "Inter, sans-serif", "family" => "Inter", "covered" => true }])
 
     assert_equal 1, found.size, found.inspect
-    assert_match(/draws æøå from a fallback face — Caprasimo lacks them/, found.first)
+    assert_match(/draws æøå from a fallback face - Caprasimo lacks them/, found.first)
   end
 
   # No named face the browser has means a generic renders the stack, and a generic draws æøå.
@@ -264,7 +264,7 @@ class GeometryDetectorsTest < Minitest::Test
   def test_duplicate_search_names_two_search_fields
     found = grammar(:check_duplicate_search, [search_field("header>form>input"), search_field("main>form>input")])
 
-    assert_match(/lays out 2 search fields — header>form>input; main>form>input/, found.join)
+    assert_match(/lays out 2 search fields - header>form>input; main>form>input/, found.join)
   end
 
   # A search form's own submit button is not a second field.

@@ -11,7 +11,7 @@ module Shared
     # brgen's five verticals are MOUNTABLE ENGINES, and an engine's url_helpers
     # do not carry the host application's routes. `_nearby_chat_widget` gated on
     # a bare `respond_to?(:nearby_widget_path)`, which is false inside
-    # marketplace, dating, tv, playlist and takeaway — so on those surfaces the
+    # marketplace, dating, tv, playlist and takeaway - so on those surfaces the
     # shared widget fell through to its "no chat on this app" branch and offered
     # a link to another domain, on the same application, with the same
     # Conversation model and the same room that works on the front page. maps
@@ -44,7 +44,7 @@ module Shared
 
     # The room this visitor will land in, known at layout time.
     #
-    # The tab used to render t("chat.title") — "chat" — and
+    # The tab used to render t("chat.title") - "chat" - and
     # nearby_chat_controller#syncLabelsFromFrame then rewrote it to the room name
     # once the turbo-frame arrived. That is a visible relabel a beat after the
     # page settles, and it also made the chat tab's own width unstable: measured
@@ -86,7 +86,7 @@ module Shared
     # Opt-in per app via config.x.icon_sprite. It cannot be "has the sprite
     # partial run yet?", which is what this was first written as: Rails renders
     # the template before the layout, so a flag the layout sets arrives after
-    # every content icon has already rendered — the page inlined its feed and
+    # every content icon has already rendered - the page inlined its feed and
     # only the chrome below the sprite used it. One config value, read here and
     # by the layout, so both agree.
     def icon_sprite?
@@ -96,16 +96,17 @@ module Shared
     def icon(name, size: 18, css_class: nil)
       key = name.to_sym
       # Inlining the paths made an unknown name raise at render (missing partial).
-      # A <use href="#icon-nope"> would instead draw nothing, silently — the
+      # A <use href="#icon-nope"> would instead draw nothing, silently - the
       # failure shape this repo keeps finding. Keep it loud.
       unless ICONS.include?(key.to_s)
-        raise ArgumentError, "unknown icon #{key.inspect} — known: #{ICONS.join(', ')}"
+        raise ArgumentError, "unknown icon #{key.inspect} - known: #{ICONS.join(', ')}"
       end
 
       render(partial: "shared/icon", locals: { name: key, size:, css_class: })
     end
 
-    # autosave_controller.js falls back to English labels, so a form that omits these announces "Saving…" to nb readers.
+    # autosave_controller.js falls back to English labels, so a form that omits these
+    # announces "Saving..." to nb readers.
     def autosave_data(key:, url:)
       {
         "autosave-key-value": key,
@@ -151,7 +152,7 @@ module Shared
     # post_comment_path; brgen routes them `shallow: true`, so :destroy is a
     # member action at /comments/:id and post_comment_path does not exist. Every
     # delete button brgen rendered raised NoMethodError, and it renders only when
-    # comment.user == Current.user — so the page 500'd for the one person entitled
+    # comment.user == Current.user - so the page 500'd for the one person entitled
     # to use the button, on posts#show, while comments#destroy itself worked fine.
     #
     # Asked of the route set rather than inferred from the models, because the
@@ -159,8 +160,8 @@ module Shared
     # amber has post_comment and no comment, brgen has comment and no post_comment.
     #
     # named_routes, not respond_to?. A view does not answer respond_to? for its
-    # route helpers — it is false for post_comment_path and comment_path alike, in
-    # both apps — so a respond_to? test reads as "not nested" everywhere and is
+    # route helpers - it is false for post_comment_path and comment_path alike, in
+    # both apps - so a respond_to? test reads as "not nested" everywhere and is
     # right about brgen only by luck, while sending amber to a comment_path it
     # does not have.
     def comment_destroy_arg(comment)
@@ -288,7 +289,7 @@ module Shared
 
     # Intrinsic dimensions from the analyzed blob, so the browser reserves the
     # box before the bytes arrive (aspect-ratio is derived from the pair even
-    # under width:100% CSS). Nothing to reserve is an empty hash, not a guess —
+    # under width:100% CSS). Nothing to reserve is an empty hash, not a guess -
     # unanalyzed blobs and non-attachment sources stay dimensionless.
     def image_dimensions(source)
       meta = source.try(:metadata).presence || source.try(:blob).try(:metadata) || {}
@@ -367,15 +368,15 @@ module Shared
     #
     # The two URL hooks are the point of the parameterisation, not decoration.
     # brgen renders these inside isolated engines (marketplace, tv, takeaway and
-    # the rest are mounted engines — see brgen/README.md), so it has to resolve
+    # the rest are mounted engines - see brgen/README.md), so it has to resolve
     # every variant through main_app: engine routes do not own ActiveStorage and
     # to_model on a VariantWithRecord fails there. amber has no engines and
     # resolves through the ambient url_for, handing image_tag the variant object
     # itself rather than a string. Collapsing either side onto the other breaks
     # that app, so both stay callers' business.
     #
-    #   srcset_url — callable, variant -> URL string, used for both srcsets
-    #   img_src    — callable, largest variant -> whatever image_tag should get;
+    #   srcset_url - callable, variant -> URL string, used for both srcsets
+    #   img_src    - callable, largest variant -> whatever image_tag should get;
     #                omitted, image_tag receives the variant itself
     def responsive_picture_tag(attachment, alt:, widths:, sizes:, srcset_url:, img_src: nil, blurhash: nil, **image_options)
       widths = Array(widths).map(&:to_i).uniq.sort
@@ -413,8 +414,8 @@ module Shared
     # A localised relative time, whole. Fourteen views wrote
     # `<%= time_ago_in_words(x) %> ago`, which prints the Rails-localised span
     # and then an English word: every brgen post page read "rundt 2 måneder
-    # ago". Norwegian circumfixes the phrase ("for … siden"), so there is no
-    # suffix that fixes it — the whole string has to come from the locale.
+    # ago". Norwegian circumfixes the phrase ("for ... siden"), so there is no
+    # suffix that fixes it - the whole string has to come from the locale.
     #
     # The five i18n contract tests all passed through this. They measure page
     # titles, aria-labels, search placeholders and controller flashes; nothing

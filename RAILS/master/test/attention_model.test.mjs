@@ -41,7 +41,7 @@ function loadAttention(now = 0) {
 // thought, which is the order these intervals encode. Asserting the ordering
 // rather than a single pair states the intent, and the numbers were set by
 // measuring ten simulated minutes per mode against a 15-20/min human resting
-// rate — so they are a finding, not a preference to be nudged.
+// rate - so they are a finding, not a preference to be nudged.
 test("attention model varies blink intervals by cognitive mode", () => {
   const { attn } = loadAttention();
   const thinking = attn.policyFor("thinking", false);

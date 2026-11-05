@@ -9,11 +9,11 @@ visual_identity:
 
     '
   lineage:
-  - e pluribus unum — out of many, one readable form
+  - e pluribus unum - out of many, one readable form
   - signal as propagating state, not ornament
   - turned and unturned density as membership in the field
-  - residual — individuality survives inside the collective
-  - stillness by default — motion only when meaning moves
+  - residual - individuality survives inside the collective
+  - stillness by default - motion only when meaning moves
   signal: "#C8F55F"
   signal_ink: "#101010"
   signal_on_light: "#50630A"
@@ -567,10 +567,10 @@ face_interface:
       strength: 0.12
     size_from_depth: true
     glyph_ramp:
-    - "·"
+    - "."
     - "˙"
     - "∘"
-    - "•"
+    - "*"
     - "○"
     - "●"
     target_field:
@@ -1842,7 +1842,7 @@ ui_polish:
   - en
   chrome_i18n:
     action: 'Shell and empty/search chrome must use I18n t() keys (empty.*, search.*,
-      nav.*, auth.*). Hardcoded English "No …" titles and "Search …" placeholders
+      nav.*, auth.*). Hardcoded English "No ..." titles and "Search ..." placeholders
       are debt. Ratchet: MASTER/tools/chrome_i18n_lint.rb (CI). Opt-out: <%# chrome_i18n:
       ok %> above the line.
 
@@ -1900,13 +1900,13 @@ pwa:
       engineering afterthoughts. The apps already ship a manifest, a service worker
       and offline controllers; the budget is what is missing.
   weight:
-    ceiling_lives_in: MASTER/checks/data/, in the css_budget.yml ratchet shape — a
+    ceiling_lives_in: MASTER/checks/data/, in the css_budget.yml ratchet shape - a
       number measured from a real run that only ever ratchets down.
     baseline_source: generated application.css is deliberately untracked and rebuilt
       from the checked-in SCSS before asset checks or deployment. JS builds are also
       ignored, so budgets are measured only after an explicit source-to-build pass.
     action: Set a ceiling from a run of this tree, never from another product's published
-      figure — Pinterest's 150KB and Tinder's 20KB CSS describe their trees, not this
+      figure - Pinterest's 150KB and Tinder's 20KB CSS describe their trees, not this
       one, and a ceiling nothing measured is a wish. A budget nothing enforces is
       a comment.
   offline_first:

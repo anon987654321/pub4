@@ -33,7 +33,8 @@ nb:
   comments:
     placeholder: "Hva tenker du?"
     submit: "Kommenter"
-    reply_placeholder: "Svar…"
+    reply_placeholder: "Svar..."
+
     reply: "Svar"
     # Who a reply answers; %{name} is "@name" or the anonymous label.
     replying_to: "Svarer %{name}"
@@ -41,7 +42,8 @@ nb:
     op_badge_title: Skrev innlegget
     title: "Kommentarer"
     back: "Tilbake"
-    empty_body: "Vær den første til å svare — gjester kan kommentere uten konto."
+    empty_body: "Vær den første til å svare - gjester kan kommentere uten konto."
+
     write_reply: "Skriv et svar"
     ai_summary: "Vis AI-sammendrag (via MASTER)"
     master_summary: "MASTER-sammendrag:"
@@ -69,24 +71,33 @@ nb:
     # The eight strings the ambient chat widget shows while it is asking for, or
     # failing to get, a location. They lived only as t(..., default: "English")
     # fallbacks in the view, so amber and bsdports rendered the whole recovery
-    # path in English over an nb page — and a `default:` also suppresses
+    # path in English over an nb page - and a `default:` also suppresses
     # raise_on_missing_translations, so nothing could report it.
     nearby_tab: "nærområdet"
-    status_asking: "Spør om posisjon …"
-    status_denied: "Posisjon er blokkert — du blir i #brgen. Slå på posisjon i nettleseren for #nearby."
-    status_timeout: "Posisjonen tok for lang tid — du blir i #brgen."
-    status_unavailable: "Posisjon er ikke tilgjengelig — du blir i #brgen."
-    status_blocked: "Denne siden får ikke lese posisjon — #brgen virker fortsatt."
-    status_server: "Kunne ikke lagre posisjonen — prøv igjen."
-    status_network: "Nettverksfeil da posisjonen skulle lagres — prøv igjen."
+    status_asking: "Spør om posisjon ..."
+
+    status_denied: "Posisjon er blokkert - du blir i #brgen. Slå på posisjon i nettleseren for #nearby."
+
+    status_timeout: "Posisjonen tok for lang tid - du blir i #brgen."
+
+    status_unavailable: "Posisjon er ikke tilgjengelig - du blir i #brgen."
+
+    status_blocked: "Denne siden får ikke lese posisjon - #brgen virker fortsatt."
+
+    status_server: "Kunne ikke lagre posisjonen - prøv igjen."
+
+    status_network: "Nettverksfeil da posisjonen skulle lagres - prøv igjen."
+
     title: "chat"
     local_room: "lokalt rom"
     actions_label: "Chatthandlinger"
     open_messenger: "Åpne Messenger"
     private_messages_lead: "For private samtaler, åpne Messenger."
     close: "Lukk"
-    loading: "Laster…"
-    dm_placeholder: "Send en melding…"
+    loading: "Laster..."
+
+    dm_placeholder: "Send en melding..."
+
     message_label: "Melding"
     anon: "anon"
     open_brgen: "\u00C5pne Brgen-chat"
@@ -96,8 +107,10 @@ nb:
     open_inbox: "\u00C5pne innboksen for \u00E5 lese og sende meldinger i denne appen."
     open_messages: "\u00C5pne meldinger"
     sign_in_inbox: "Logg inn for innboks, eller chat anonymt p\u00E5 Brgen."
-    sending: "sender\u2026"
-    send_failed: "ikke sendt \u2014 trykk for \u00E5 pr\u00F8ve igjen"
+    sending: "sender..."
+
+    send_failed: "ikke sendt - trykk for \u00E5 pr\u00F8ve igjen"
+
   account:
     deletion_scheduled: "Sletting planlagt %{on}."
     cancel_deletion: "Avbryt sletting"
@@ -123,18 +136,22 @@ nb:
     two_factor_challenge_lead: "Skriv inn gjeldende kode fra autentiseringsappen din for å fullføre innloggingen."
     magic_link: "Send meg en innloggingslenke"
   status:
-    updating_results: "Oppdaterer resultater…"
+    updating_results: "Oppdaterer resultater..."
+
     results_updated: "Resultater oppdatert"
     search_failed: "Søket kunne ikke fullføres"
-    saving: "Lagrer…"
+    saving: "Lagrer..."
+
     saved: "Lagret"
     saved_locally: "Lagret lokalt"
     restored: "Gjenopprettet"
-    loading_more: "Laster mer…"
+    loading_more: "Laster mer..."
+
     load_more: "Last inn flere"
     load_more_failed: "Fikk ikke lastet flere. Trykk «Last inn flere» for å prøve igjen."
     end_of_list: "Du har nådd slutten."
-    loading_results: "Laster resultater…"
+    loading_results: "Laster resultater..."
+
   theme:
     region: "Tema"
     system: "Tema: som enheten"
@@ -172,8 +189,10 @@ nb:
     no_artifacts: "Ingenting delt ennå"
     no_artifacts_body: "Bilder, lydmeldinger og lenkeforhåndsvisninger vises her når de deles i samtalen."
     unread_count:
-      one: "%{count} ulest melding — merkes som lest når du åpner siden."
-      other: "%{count} uleste meldinger — merkes som lest når du åpner siden."
+      one: "%{count} ulest melding - merkes som lest når du åpner siden."
+
+      other: "%{count} uleste meldinger - merkes som lest når du åpner siden."
+
     empty_body: "Ny melding, og søk opp den du vil skrive til."
     connections: "Forbindelser"
   newsletter:
@@ -183,7 +202,7 @@ nb:
     subscribe: "Abonner"
     unavailable: "Nyhetsbrevet åpner når e-postrutene er satt opp for denne appen."
     affiliate_disclosure: "Noen lenker er affiliatelenker. Vi kan tjene provisjon."
-  # Plural, and separate from post: — shared/_action_bar asks for posts.share.
+  # Plural, and separate from post: - shared/_action_bar asks for posts.share.
   posts:
     share: "Del"
 
@@ -191,7 +210,8 @@ nb:
     submit: "Post"
     share_look: "Del et look"
     body_label: "Hva har du på deg?"
-    body_placeholder: "Del antrekket ditt…"
+    body_placeholder: "Del antrekket ditt..."
+
     tag_outfit: "Merk et antrekk (valgfritt)"
     tag_item: "Merk et plagg (valgfritt)"
     outfit_label: "Antrekk"
@@ -214,7 +234,8 @@ nb:
   reactions:
     aria: "Reager med %{kind}"
     chip_aria: "%{count} %{kind}"
-    chip_mine_aria: "%{count} %{kind} — fjern din"
+    chip_mine_aria: "%{count} %{kind} - fjern din"
+
     kinds:
       like: "Liker"
       love: "Elsker"
@@ -225,7 +246,7 @@ nb:
       local: "Lokalt"
   # Engine-owned keys. Namespaced under shared: so an app can keep its own
   # flash: block without colliding, and because the call sites say
-  # t("shared.flash.…") — appended at top level they resolved to nothing at all.
+  # t("shared.flash....") - appended at top level they resolved to nothing at all.
   shared:
     avatar:
       alt: "Profilbilde"
@@ -233,14 +254,14 @@ nb:
     reported: "Rapportert"
     read_more: "Les mer"
     read_less: "Vis mindre"
-    # Norwegian marks a past span on both sides — "for … siden" — so a relative
+    # Norwegian marks a past span on both sides -"for ... siden"- so a relative
     # time cannot be built by appending a suffix to time_ago_in_words. Fourteen
     # views did exactly that and every post page read "rundt 2 måneder ago".
     # Rendered through Shared::UiHelper#time_ago; %{time} is the localised span.
     time_ago: "for %{time} siden"
     # Flash messages raised by the engine's own controllers and concerns. These were
     # 30 hardcoded English strings until 2026-08-11, shown over an nb UI in all three
-    # apps at once — the shared engine was the largest single block of the 169 the
+    # apps at once - the shared engine was the largest single block of the 169 the
     # controller_flash lint counts, and the one the original hand count missed.
     flash:
       account_deletion_scheduled: "Kontoen slettes om 30 dager. Eksport sendes på e-post hvis det er satt opp."
@@ -294,13 +315,15 @@ nb:
     password_reset_lede: "Noen ba om å tilbakestille passordet ditt. Velg et nytt med knappen under."
     password_reset_action: "Velg nytt passord"
     password_reset_expiry: "Lenken utløper om %{time}."
-    password_reset_ignore: "Har du ikke bedt om dette, kan du se bort fra e-posten — passordet er uendret."
+    password_reset_ignore: "Har du ikke bedt om dette, kan du se bort fra e-posten - passordet er uendret."
+
     verify_email_subject: "Bekreft e-postadressen"
     sign_in_link_subject: "Innloggingslenke"
     sign_in_link_greeting: "Hei %{name},"
     sign_in_link_action: "Logg inn"
     sign_in_link_expiry: "Lenken virker én gang og utløper om %{minutes} minutter."
-    sign_in_link_ignore: "Har du ikke bedt om dette, kan du se bort fra e-posten — ingenting er endret."
+    sign_in_link_ignore: "Har du ikke bedt om dette, kan du se bort fra e-posten - ingenting er endret."
+
   pages:
     account: "Konto"
     two_factor: "Tofaktorautentisering"
@@ -317,7 +340,8 @@ nb:
     title: "%{app} er frakoblet"
     lead: "Vi viser det sist mellomlagrede innholdet fra denne enheten når det er tilgjengelig."
     retry: "Prøv igjen"
-    loading: "Laster mellomlagret innhold…"
+    loading: "Laster mellomlagret innhold..."
+
     empty: "Ingenting er mellomlagret ennå."
     list_label: "Liste over frakoblet innhold"
     connection_lost: "Du er frakoblet. Det som allerede vises, kan fortsatt leses."

@@ -19,7 +19,7 @@ class CheckoutDetailsTest < ActionDispatch::IntegrationTest
 
     assert_includes details.at_css("summary").text, "258 kr"
     line = details.at_css("li.order-line")
-    assert_includes line.text, "2× Damaskus Kylling Shawarma"
+    assert_includes line.text, "2x Damaskus Kylling Shawarma"
     assert_includes line.text, "Ekstra toum"
   end
 

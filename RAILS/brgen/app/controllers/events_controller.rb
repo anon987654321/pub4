@@ -2,7 +2,7 @@
 
 class EventsController < ApplicationController
   include Shared::LiveSearchable
-  # Event includes Shared::Sluggable, so to_param is the slug — the same trap
+  # Event includes Shared::Sluggable, so to_param is the slug - the same trap
   # that made every vote from a feed card 404. See VotesController.
   include Shared::FindableBySlug
 

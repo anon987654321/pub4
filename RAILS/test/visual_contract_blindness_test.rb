@@ -13,7 +13,7 @@ require_relative "../../MASTER/checks/visual_contract"
 # Two blindnesses, and both were measured from the committed manifests rather
 # than reasoned about. bsdports carried one screenshot SHA across all eight of
 # its states and amber across eight of its ten, because a vertical lives on a
-# subdomain a 127.0.0.1 crawl cannot reach — one live row covering for seventeen
+# subdomain a 127.0.0.1 crawl cannot reach - one live row covering for seventeen
 # dead ones, with every accessibility and drift number that page counted
 # eighteen times.
 #
@@ -62,7 +62,7 @@ class VisualContractBlindnessTest < Minitest::Test
   end
 
   # bsdports declares detail, advisory and dependency as three lenses on one
-  # document. That is deliberate, so it is a warning and not a finding — but
+  # document. That is deliberate, so it is a warning and not a finding - but
   # their counts are that page measured three times, which is worth saying.
   def test_three_lenses_on_one_document_are_a_warning_rather_than_a_blind_cell
     rows = [

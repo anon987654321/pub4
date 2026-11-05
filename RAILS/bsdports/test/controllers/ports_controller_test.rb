@@ -25,7 +25,7 @@ class PortsControllerTest < ActionDispatch::IntegrationTest
   end
 
   # The controller computed @catalog_empty and @last_import and the view read
-  # neither, so an unimported tree and a quiet one rendered the same page — and
+  # neither, so an unimported tree and a quiet one rendered the same page - and
   # sort=updated was reachable only by typing the query string. The strings were
   # already translated; only the markup was missing.
   def test_an_unimported_catalogue_says_so_rather_than_looking_quiet
@@ -49,7 +49,7 @@ class PortsControllerTest < ActionDispatch::IntegrationTest
     get root_url
     assert_response :success
     assert_select "span.data-state.data-state--stale", text: I18n.t("ports.age_stale", count: 400)
-    assert_not_includes response.body, "stale · 400d"
+    assert_not_includes response.body, "stale - 400d"
   end
 
   def test_a_port_page_marks_a_stale_update_and_labels_its_dependency_tree

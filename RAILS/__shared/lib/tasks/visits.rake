@@ -5,7 +5,7 @@
 # gets these tasks from this one copy.
 #
 # The read surface for Shared::VisitCount. A rake task rather than a dashboard
-# page: the question this answers — which of seven city domains anyone reaches —
+# page: the question this answers - which of seven city domains anyone reaches -
 # is asked when deciding where to spend effort, not continuously, and a page
 # would need auth, a route and a design decision to serve the same numbers.
 namespace :visits do
@@ -18,7 +18,7 @@ namespace :visits do
 
     puts "Visits since #{since} (#{days} days)"
     if by_host.empty?
-      puts "  (nothing recorded yet — Shared::VisitCounting counts successful HTML GETs)"
+      puts "  (nothing recorded yet - Shared::VisitCounting counts successful HTML GETs)"
       next
     end
 

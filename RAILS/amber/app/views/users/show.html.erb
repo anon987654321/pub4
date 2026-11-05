@@ -62,6 +62,6 @@
         title: t("empty.no_posts_yet"),
         action: { label: t("empty.first_post"), path: new_post_path } %>
 <% else %>
-  <%# empty_state: no-action-ok — a visitor cannot post on someone else's behalf %>
+  <%# empty_state: no-action-ok - a visitor cannot post on someone else's behalf %>
   <%= render "shared/empty_state", title: t("empty.no_posts_yet") %>
 <% end %>

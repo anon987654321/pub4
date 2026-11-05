@@ -2,7 +2,7 @@
 
 require "test_helper"
 
-# Ambient chat widget: without GPS → #brgen lobby inline; with GPS → geo room.
+# Ambient chat widget: without GPS -> #brgen lobby inline; with GPS -> geo room.
 # Soft guests chat without signup (Craigslist-style).
 class NearbyWidgetTest < ActionDispatch::IntegrationTest
   setup do
@@ -22,8 +22,8 @@ class NearbyWidgetTest < ActionDispatch::IntegrationTest
   end
 
   def get_widget
-    # Frame request — same path the dock uses; avoids the layout's lazy
-    # "Loading…" placeholder matching lobby assertions.
+    # Frame request - same path the dock uses; avoids the layout's lazy
+    # "Loading..." placeholder matching lobby assertions.
     get nearby_widget_path, headers: { "Turbo-Frame" => "nearby-chat-widget-frame" }
   end
 
@@ -36,7 +36,7 @@ class NearbyWidgetTest < ActionDispatch::IntegrationTest
     assert_select "form textarea, form input[type=text]"
     assert_match(/nearby-chat#locate/, response.body)
     assert_select "input[name=origin][value=widget]"
-    refute_match(/>\s*(Loading the room|Laster rommet)…?\s*</, response.body)
+    refute_match(/>\s*(Loading the room|Laster rommet)\u2026?\s*</, response.body)
   end
 
   test "the widget is reachable without signing in" do

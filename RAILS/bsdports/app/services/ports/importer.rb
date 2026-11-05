@@ -94,7 +94,7 @@ module Ports
       ports_count.zero? ? nil : imported
     end
 
-    # Names and versions only — see PackageIndexParser on why that is all the
+    # Names and versions only - see PackageIndexParser on why that is all the
     # mirror publishes. A catalogue with thin rows beats an empty page, and the
     # rows are marked "uncategorised" rather than given an invented category.
     def import_from_package_index

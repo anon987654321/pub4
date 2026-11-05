@@ -3,8 +3,8 @@
 require "minitest/autorun"
 
 # A route with a view, a controller action, and no link is a feature that exists
-# and cannot be found. amber had two — the declutter guide and the occasion map,
-# reachable only by typing the URL — while its README described the AI surface as
+# and cannot be found. amber had two - the declutter guide and the occasion map,
+# reachable only by typing the URL - while its README described the AI surface as
 # a shipped feature.
 #
 # This asserts the class rather than the two instances, so fixing one is not a

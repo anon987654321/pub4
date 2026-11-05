@@ -2,8 +2,8 @@
 // collapses to, the first-visit coach above that, and the tab items.
 //
 // Split out of _shell.scss when that file passed its length ceiling. It is a
-// component with one prefix — .tab-bar, .tab-bar-peel, .tab-bar-coach,
-// .tab-item — and 180 of that file's lines; what stays in _shell is the
+// component with one prefix - .tab-bar, .tab-bar-peel, .tab-bar-coach,
+// .tab-item - and 180 of that file's lines; what stays in _shell is the
 // page frame around it (skip link, app-shell, layout, the edge swipers).
 //
 // Loaded by _shell with @use, which emits it just ahead of the rest of that
@@ -12,7 +12,7 @@
 // selector these files share keeps its relative order.
 
 /* Progressive disclosure: bar starts closed (html.chrome-hidden). Content and
-   bottom-pinned chrome reclaim the space via --tab-bar-h → 0. The [data-theme]
+   bottom-pinned chrome reclaim the space via --tab-bar-h -> 0. The [data-theme]
    twin outranks a theme root that restates app-root-tokens: brgen's
    :root[data-theme="light"] (0-2-0) set the 44px back over html.chrome-hidden
    (0-1-1), so with the bar closed the chat tab and the install prompt still
@@ -27,7 +27,7 @@ html[data-theme].chrome-hidden {
   bottom: 0;
   inset-inline: 0;
   display: flex;
-  min-height: 54px; /* own height — not the published clearance var (zero when hidden) */
+  min-height: 54px; /* own height - not the published clearance var (zero when hidden) */
   background: var(--surface-elevated);
   z-index: var(--z-nav);
   padding-bottom: var(--safe-bottom);
@@ -40,7 +40,7 @@ html.chrome-hidden .tab-bar {
   pointer-events: none;
 }
 
-/* Peel grip — flush bottom-center when the bar is closed. 44px hit area,
+/* Peel grip - flush bottom-center when the bar is closed. 44px hit area,
    thin visual pill (edge-swiper pattern). Safe-area only (no chrome-inset). */
 .tab-bar-peel {
   position: fixed;
@@ -48,7 +48,7 @@ html.chrome-hidden .tab-bar {
   /* Centred by auto margins between zeroed inline insets, not by
      `left: 50%; transform: translateX(-50%)`. The old pair mixed a physical
      offset with a physical translate, so neither half flipped under
-     [dir="rtl"] — which _minimal.scss supports — and the auditor's
+     [dir="rtl"] - which _minimal.scss supports - and the auditor's
      logical_properties warning was pointing at a real asymmetry rather than a
      style preference. Same rendered box in LTR; measured below. */
   inset-inline: 0;
@@ -96,11 +96,11 @@ html.chrome-hidden .tab-bar {
    top of the bottom-centre peel: the geometry check measured the peel's own centre
    pixel owned by aside.sidebar on all 16 brgen mobile surfaces, first visit, with
    the drawer showing itself as the operator asked it to.
-   Withdrawing the peel while a drawer is open states what is already true — it is
-   behind an opaque panel — instead of leaving a control that is painted over,
+   Withdrawing the peel while a drawer is open states what is already true - it is
+   behind an opaque panel - instead of leaving a control that is painted over,
    still focusable, and still counted as a target. The drawer's own dismissal
    brings it back. At md and above the drawer stops short of centre and the peel
-   is reachable, so the min-width step below gives it back — the phone case is the
+   is reachable, so the min-width step below gives it back - the phone case is the
    unconditional rule and the wider screen is the enhancement, which is the
    direction MOBILE_FIRST asks for and the reason this is not a max-width. */
 html.drawer-open .tab-bar-peel {
@@ -113,7 +113,7 @@ html.drawer-open .tab-bar-peel {
   }
 }
 
-/* First-visit coach — sits just above the flush bottom peel once. */
+/* First-visit coach - sits just above the flush bottom peel once. */
 .tab-bar-coach {
   position: fixed;
   bottom: calc(var(--safe-bottom) + 2.75rem);

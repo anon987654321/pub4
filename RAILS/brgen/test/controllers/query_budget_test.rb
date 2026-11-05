@@ -8,7 +8,7 @@ require "stringio"
 # collection did it: Votable#score, #voted_by?, Post#comment_count and one
 # ActiveStorage lookup per card. None of them were caught by
 # strict_loading_by_default, because an aggregate on an association is a fresh
-# query rather than an association load — `votes.sum(:value)` goes to the
+# query rather than an association load - `votes.sum(:value)` goes to the
 # database even when :votes is already preloaded.
 #
 # A budget, not an exact count: the point is that adding a post must not add
@@ -44,7 +44,7 @@ class QueryBudgetTest < ActionDispatch::IntegrationTest
     community = Community.create!(name: "Budget #{SecureRandom.hex(3)}", slug: "budget-#{SecureRandom.hex(4)}")
 
     count.times do |i|
-      post = Post.create!(user: author, community:, title: "Budget #{i}", content: "…")
+      post = Post.create!(user: author, community:, title: "Budget #{i}", content: "...")
       Vote.create!(user: author, votable: post, value: 1)
       Comment.create!(user: author, commentable: post, content: "hi")
     end
@@ -86,7 +86,7 @@ class QueryBudgetTest < ActionDispatch::IntegrationTest
 
   # Each vertical needs rows before this can prove anything: with an empty table
   # there is nothing to repeat over, and the assertion passes for the wrong
-  # reason. Checked by reintroducing takeaway's N+1 — with no restaurants seeded
+  # reason. Checked by reintroducing takeaway's N+1 - with no restaurants seeded
   # the test stayed green, which is exactly the failure mode a coverage test
   # must not have.
   def seed_vertical_rows(count)
@@ -109,7 +109,7 @@ class QueryBudgetTest < ActionDispatch::IntegrationTest
       Place.create!(city: @city, neighborhood: hood, name: "Sted #{i}", kind: "attraction",
                     latitude: 60.39 + (i / 1000.0), longitude: 5.32)
       # active is a nullable boolean with no schema default, and the index
-      # scopes to where(active: true) — seeds without it render an empty page,
+      # scopes to where(active: true) - seeds without it render an empty page,
       # which is how the first version of this test passed while the N+1 it was
       # written for was still present.
       Takeaway::Restaurant.create!(
@@ -191,7 +191,7 @@ end
 
   # communities#show was the most expensive endpoint in the app: 816 queries and
   # a 3.5s p50 across 2,584 logged requests on 2026-08-01, worst case 110s. It
-  # had drifted from the feed controllers in two ways at once — it preloaded
+  # had drifted from the feed controllers in two ways at once - it preloaded
   # :user and :votes but not :community or the image attachment, and it
   # paginated nothing, so it rendered every post the community had ever held.
   # The count is what the missing LIMIT costs: a community holding a few hundred
@@ -200,7 +200,7 @@ end
   # Which of these two tests carries the fix is worth being exact about, because
   # it is not symmetric. The pagination test below goes red the moment pagy is
   # removed. The repeat test does NOT independently catch dropping :community or
-  # with_attached_image here — checked by reverting each — because inverse_of
+  # with_attached_image here - checked by reverting each - because inverse_of
   # already sets post.community when posts are loaded through the community, and
   # the ActiveStorage lookups stay under REPEAT_ALLOWANCE. So the preload change
   # is consistency with the sibling feeds rather than something pinned by a
@@ -249,7 +249,7 @@ end
       rendered = response.body.scan(%r{/posts/([a-z0-9][a-z0-9-]*)}).flatten.uniq.size
       assert_operator rendered, :<, 30,
                       "communities#show rendered all #{rendered} posts; it must paginate like the feeds"
-      assert_operator rendered, :>, 0, "the page rendered no posts at all — the test proves nothing"
+      assert_operator rendered, :>, 0, "the page rendered no posts at all - the test proves nothing"
       assert_match(/[?&]page=2/, response.body,
                    "paging without a link to the next page makes older posts unreachable")
     end
@@ -286,12 +286,12 @@ end
   end
 
   # Every test above this one renders as a guest, and the layout's expensive work
-  # is behind `if Current.user`. So the whole authenticated chrome — the unread
-  # badge, the turbo_stream_from subscriptions, the push controller — was outside
+  # is behind `if Current.user`. So the whole authenticated chrome - the unread
+  # badge, the turbo_stream_from subscriptions, the push controller - was outside
   # this file's reach, and an N+1 lived there undisturbed: the badge summed
   # Conversation#unread_count_for over every DM, at 2 queries each, on every
   # render of every page. Signing in is the coverage that was missing, not the
-  # assertion — reverting the fix takes the layout from 15 -> 15 queries to
+  # assertion - reverting the fix takes the layout from 15 -> 15 queries to
   # 19 -> 35, and both tests below go red.
   def sign_in(user)
     post session_path, params: { email_address: user.email_address, password: "password123" }

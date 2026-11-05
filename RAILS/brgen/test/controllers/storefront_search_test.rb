@@ -128,7 +128,7 @@ class StorefrontSearchTest < ActionDispatch::IntegrationTest
   end
 
   # One app over every city: marketplace.lsangeles.com reads English, and its
-  # header once said "Search Markedsplass" — the Bergen host word in the field
+  # header once said "Search Markedsplass" - the Bergen host word in the field
   # every Los Angeles search starts from.
   test "the storefront header names no Norwegian host on an English city" do
     host! "marketplace.lsangeles.com"

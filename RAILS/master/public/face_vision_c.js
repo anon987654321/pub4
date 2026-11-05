@@ -1,4 +1,4 @@
-// MASTER particle face 2026 — vision features 81–118 (interaction, aesthetic, a11y).
+// MASTER particle face 2026 - vision features 81-118 (interaction, aesthetic, a11y).
 (() => {
   "use strict";
 
@@ -15,7 +15,7 @@
 
   const KONAMI = ["ArrowUp", "ArrowUp", "ArrowDown", "ArrowDown", "ArrowLeft", "ArrowRight", "ArrowLeft", "ArrowRight", "b", "a"];
 
-  /* 81–95 interaction */
+  /* 81-95 interaction */
   V.register(81, "tap-hold accelerate", (ctx) => {
     const on = !!ctx.detail.accelerate;
     ctx.st.accelerate = on;
@@ -150,7 +150,7 @@
     V.spawn(2, { kind: 95, confidence: 0.9, decay: 0.02 });
   });
 
-  /* 96–108 aesthetic */
+  /* 96-108 aesthetic */
   V.register(96, "Inter 200 typography", () => {
     V.css("--face-font", '"Inter", system-ui, sans-serif');
     V.css("--face-font-weight", "200");
@@ -244,7 +244,7 @@
     return svg;
   });
 
-  /* 109–118 a11y */
+  /* 109-118 a11y */
   V.register(109, "reduced-motion constellation", (ctx) => {
     const rm = !!ctx.detail.reducedMotion;
     ctx.st.reducedMotion = rm;
@@ -530,7 +530,7 @@ V.register(118, "degraded WebGL UI trigger", (ctx) => {
       V.run(118, { type: "face:error", detail: ev.detail || {} });
     });
     window.addEventListener("webglcontextlost", () => {
-      V.run(118, { type: "webgl:lost", detail: { reason: "WebGL context lost — text mode" } });
+      V.run(118, { type: "webgl:lost", detail: { reason: "WebGL context lost - text mode" } });
     }, { passive: true });
 
     window.MASTER_FACE_VISION.shareCard = (p) => V.run(93, { type: "share", detail: p || {} });

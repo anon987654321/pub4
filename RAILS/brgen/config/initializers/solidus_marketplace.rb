@@ -32,7 +32,7 @@ end
 
 if Brgen::SolidusMarketplace.enabled? && !Brgen::SolidusMarketplace.gems_loaded?
   Rails.logger.warn(
-    "[solidus] SOLIDUS_MARKETPLACE=1 but solidus gems not loaded — " \
+    "[solidus] SOLIDUS_MARKETPLACE=1 but solidus gems not loaded - " \
     "run: SOLIDUS_MARKETPLACE=1 bundle install && bin/rails g solidus:install"
   )
 end

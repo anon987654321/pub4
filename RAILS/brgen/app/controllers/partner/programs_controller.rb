@@ -72,7 +72,7 @@ module Partner
       @program = Partner::Program.find(params[:id])
     end
 
-    # owner_id, not owner — the store arrives from a finder with nothing
+    # owner_id, not owner - the store arrives from a finder with nothing
     # preloaded, and strict_loading_by_default raises on the association read
     # before the comparison runs.
     def require_owner_of!(store)

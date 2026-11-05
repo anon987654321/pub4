@@ -20,14 +20,14 @@ export default class extends Controller {
     this.threshold = 8 // px of travel before reacting, avoids jitter at rest
 
     // Default closed (progressive disclosure). Session restore only if the
-    // visitor already opened it this tab — not across sessions.
+    // visitor already opened it this tab - not across sessions.
     this.#apply(this.#restore() !== true)
     this.#maybeShowCoach()
 
     this.onScroll = this.onScroll.bind(this)
     this.element.addEventListener("scroll", this.onScroll, { passive: true })
 
-    // Step back for the install prompt without marking the coach dismissed —
+    // Step back for the install prompt without marking the coach dismissed -
     // the visitor has not seen it, so it is still owed to them on a later visit.
     this.onYield = () => {
       if (this.coachTimer) clearTimeout(this.coachTimer)
@@ -86,7 +86,7 @@ export default class extends Controller {
       const y = this.element.scrollTop
       const dy = y - this.lastY
       if (Math.abs(dy) > this.threshold) {
-        // Scroll down → hide; scroll up → show. Stay hidden at the very top
+        // Scroll down -> hide; scroll up -> show. Stay hidden at the very top
         // until the visitor intentionally peels or scrolls back up mid-page.
         if (dy > 0 && y > this.threshold) this.#apply(true)
         else if (dy < 0) {

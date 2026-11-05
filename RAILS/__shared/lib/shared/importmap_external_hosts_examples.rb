@@ -35,7 +35,7 @@ module Shared
 
     def assert_importmap_resolves
       assert_operator resolved_imports.size, :>=, 40,
-                      "importmap resolved #{resolved_imports.size} pins — the check, not the tree"
+                      "importmap resolved #{resolved_imports.size} pins - the check, not the tree"
     end
 
     def assert_no_external_preload

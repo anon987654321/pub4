@@ -25,7 +25,7 @@
   <noscript><%= render "shared/pager", pagy: @pagy %></noscript>
 
 <% else %>
-  <%# A sold or withdrawn listing leaves the list on its own — `live` is what
+  <%# A sold or withdrawn listing leaves the list on its own - `live` is what
       every public surface reads, and a saved list that shows things nobody can
       buy is a list people stop opening. %>
   <%= render "shared/empty_state",

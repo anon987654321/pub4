@@ -10,7 +10,7 @@ pin_all_from "app/javascript/controllers", under: "controllers"
 # pin_all_from resolves a relative path against Rails.root, so the line above
 # covers brgen/app/javascript/controllers and nothing else. Each engine pushes
 # its own app/javascript onto config.assets.paths, which makes the file
-# *servable* — but importmap needs a *pin* for the module specifier to exist,
+# *servable* - but importmap needs a *pin* for the module specifier to exist,
 # and eagerLoadControllersFrom("controllers") only walks what the importmap
 # declares. So every vertical's Stimulus controller was reachable over HTTP and
 # registered nowhere.
@@ -30,7 +30,7 @@ eval(File.read(Shared::Engine.root.join("config/importmap_baseline.rb")), bindin
 
 # stimulus_boot_social.js (shared with amber, not bsdports) and
 # stimulus_boot_brgen.js (brgen only). Pinned per app rather than in
-# importmap_baseline.rb, which bsdports also evals — bsdports imports
+# importmap_baseline.rb, which bsdports also evals - bsdports imports
 # neither, so its importmap carries no pin for them.
 pin "pub4/stimulus_boot_social", to: "stimulus_boot_social.js"
 pin "pub4/stimulus_boot_brgen", to: "stimulus_boot_brgen.js"

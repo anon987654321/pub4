@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # A community's wiki. Moderators write it; whoever can read the community reads
-# it — a public community's wiki open to every visitor is a spam surface, and
+# it - a public community's wiki open to every visitor is a spam surface, and
 # the mod queue is the only tool for cleaning one, so the people who can clean it
 # are the people who can write it.
 class Communities::WikiController < ApplicationController

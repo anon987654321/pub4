@@ -83,7 +83,7 @@ class VisualCaptureDistinctnessTest < Minitest::Test
 
 # Routes that differ only after the "#" are one document, and one document
 # screenshots to one set of bytes. bsdports declares detail, advisory and
-# dependency that way against /ports/1 — deliberate, and the first version of
+# dependency that way against /ports/1 - deliberate, and the first version of
 # this check failed the whole capture on it.
 def test_fragment_only_routes_are_not_a_blind_cell
   results = [

@@ -318,7 +318,7 @@ test("the swarm geometry, force constants, modes and glyph ramp live in face tok
   assert.match(system, /const force = contract\.stipple_force\?\.\[mode\] \|\| contract\.stipple_force\?\.idle \|\| "none"/);
   assert.match(system, /homePositions\?\.length >= offset \+ 3/);
   assert.match(system, /rand\(i, 97\.3\) < residualFraction/);
-  assert.match(tokens, /glyph_ramp:\s*\["·", "˙", "∘", "•", "○", "●"\]/);
+  assert.match(tokens, /glyph_ramp:\s*\[".", "˙", "∘", "\*", "○", "●"\]/);
   assert.match(tokens, /left:\s*\{ pos: \[-0\.29, 0\.21, 0\.58\], radius: 0\.17, weight: 1\.40 \}/);
   assert.match(tokens, /right:\s*\{ pos: \[0\.29, 0\.21, 0\.58\], radius: 0\.17, weight: 1\.40 \}/);
   assert.match(system, /function swarmConfiguration\(\)/);
@@ -395,7 +395,7 @@ test("stipple module boots and builds from the canonical idle profile", () => {
         enabled: true, particle_budget: 240, damping: 0.86, size_from_depth: true, cohesion_radius: 0.11, cohesion_strength: 0.045,
         residual: { fraction: 1, strength: 0.12 },
         separation_radius: 0.035, separation_strength: 0.08, noise_scale: 0.014,
-        glyph_ramp: ["·", "˙", "∘", "•", "○", "●"],
+        glyph_ramp: [".", "˙", "∘", "*", "○", "●"],
         target_field: {
           head: { center: [0, 0.05, 0], scale: [1.18, 1.02, 0.82], weight: 1 },
           eyes: {
@@ -544,7 +544,7 @@ test("stipple module boots and builds from the canonical idle profile", () => {
   assert.equal("uPointSizeOutputMax" in stipple.material.uniforms, false);
 
   // Shared token ramp and semantic modes are visible to the runtime, not redefined here.
-  assert.equal(api.glyphForDepth(0), "·");
+  assert.equal(api.glyphForDepth(0), ".");
   assert.equal(api.glyphForDepth(1), "●");
   assert.equal(api.canonicalSwarmMode({ mode: "listening" }), "attentive");
   assert.equal(api.modeMultipliersFor({ mode: "thinking" }).noise, 0.22);

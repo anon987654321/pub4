@@ -6,8 +6,8 @@ require "test_helper"
 # lock screen or read correctly in the list.
 #
 # Shared::Notifiable dropped `kind` on its title/body branch, so every
-# transactional notification — an order advancing, a saved search matching, a
-# listing about to lapse — was written as the column default "custom", which is
+# transactional notification - an order advancing, a saved search matching, a
+# listing about to lapse - was written as the column default "custom", which is
 # not in PUSHABLE_KINDS. And Notification#title/#body were methods shadowing the
 # real columns, so the stored title rendered as "New notification" with an empty
 # body in the list, the row partial and the push payload.

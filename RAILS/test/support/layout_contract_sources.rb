@@ -5,7 +5,7 @@
 module LayoutContractSources
   include StylesheetModules
 
-  # __dir__ is RAILS/test → ROOT is RAILS/ → REPO is pub4 checkout root.
+  # __dir__ is RAILS/test -> ROOT is RAILS/ -> REPO is pub4 checkout root.
   ROOT = File.expand_path("../..", __dir__)
   REPO = File.expand_path("..", ROOT)
   SHARED = File.join(ROOT, "__shared")
@@ -40,7 +40,7 @@ module LayoutContractSources
   # already carries an h1 is a skip this cannot see. It catches what it claims.
   # A heading is written three ways in this tree and only one of them is a tag.
   #
-  # This scanned /<h([1-6])\b/ — literal markup only — while the dominant form
+  # This scanned /<h([1-6])\b/ - literal markup only - while the dominant form
   # here is `tag.h1`, so the check has been reading a fraction of the headings and
   # passing on what it could not see. posts/show, communities/index and
   # dating/home all head themselves with tag.h1 and were invisible to it.

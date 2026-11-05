@@ -5,7 +5,7 @@ require "test_helper"
 # The privileged actions that previously left no trace.
 #
 # CommunityBan carries banned_by, reason and expires_at, so every fact about a
-# ban lived on the row — and Communities::BansController#destroy deletes it. The
+# ban lived on the row - and Communities::BansController#destroy deletes it. The
 # existing "any moderator can lift any ban" test asserts the row count drops by
 # one, which is exactly the behaviour that used to erase the evidence. These
 # assert the record survives it.
@@ -56,7 +56,7 @@ class ModerationAuditTest < ActionDispatch::IntegrationTest
 
   # The reason this table exists. Lifting a ban destroys the only row that knew
   # who imposed it and why, so the audit record has to be written from values
-  # read off the row *before* destroy — a bug here loses the facts silently,
+  # read off the row *before* destroy - a bug here loses the facts silently,
   # because the redirect looks identical either way.
   test "lifting a ban preserves what the destroyed row knew" do
     ban = CommunityBan.create!(community: @community, user: @nuisance,
@@ -110,7 +110,7 @@ class ModerationAuditTest < ActionDispatch::IntegrationTest
   end
 
   # The read surface. A moderation log nobody can reach is a table, not a
-  # feature — and the lifted ban is the entry that exists nowhere else.
+  # feature - and the lifted ban is the entry that exists nowhere else.
   test "moderators read the log on the bans page" do
     ban = CommunityBan.create!(community: @community, user: @nuisance, banned_by: @owner)
     sign_in_as(@mod)

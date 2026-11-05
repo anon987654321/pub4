@@ -6,7 +6,7 @@ require_relative "../../MASTER/tools/css_coverage_lint"
 # The register has tracked unused CSS selectors since 2026-08-10 and said in its own
 # entry that no committed tool reproduces the number. This is that tool, and it
 # measures the direction nobody had: a class the markup asks for that no stylesheet
-# defines — a hook the author expected to do something.
+# defines - a hook the author expected to do something.
 class CssCoverageLintTest < Minitest::Test
   L = Operator::CssCoverageLint
   ROOT = File.expand_path("..", __dir__)
@@ -24,7 +24,7 @@ class CssCoverageLintTest < Minitest::Test
 
     L::BASELINES.each do |kind, baseline|
       assert_equal baseline, counts.fetch(kind),
-                   "#{kind} is at #{counts.fetch(kind)} against #{baseline} — lower it in css_coverage_lint.rb"
+                   "#{kind} is at #{counts.fetch(kind)} against #{baseline} - lower it in css_coverage_lint.rb"
     end
   end
 
@@ -41,7 +41,7 @@ class CssCoverageLintTest < Minitest::Test
   # block that styles the three legal pages, which are linked from every page.
   #
   # legal-nav is not in the list. 240a4e746 dropped the class from all three
-  # navs because the rule that styles them is `.legal-prose nav` — a class named
+  # navs because the rule that styles them is `.legal-prose nav` - a class named
   # by a test and by nothing else is the thing this file exists to catch, not a
   # thing for it to require.
   def test_the_legal_pages_are_styled
@@ -52,7 +52,7 @@ class CssCoverageLintTest < Minitest::Test
     refute_includes L.defined_names, "legal-eyebrow"
   end
 
-  # A BEM child whose base is defined is not a missing style — SCSS builds those names
+  # A BEM child whose base is defined is not a missing style - SCSS builds those names
   # with &__child, which no literal scan of the file can see.
   def test_a_bem_child_of_a_defined_base_is_not_missing
     assert L.base_defined?("#{L.defined_names.first}__anything")

@@ -8,7 +8,7 @@ require "minitest/autorun"
 # `if ENV["BSDPORTS_SOCIAL"] == "1"`, so on the running box (the flag is unset in
 # every /etc/*.env) nothing dispatches there and there is no live 500.
 #
-# That safety is a coupling — a gated route AND an absent table — and a coupling
+# That safety is a coupling - a gated route AND an absent table - and a coupling
 # with nothing pinning it drifts. This asserts the two halves stay in agreement:
 # while bsdports lacks the reactions table, the social routes must stay gated. The
 # day someone lands the migration, `test_the_check_matches_the_schema` flips and
@@ -40,7 +40,7 @@ class BsdportsSocialCheckTest < Minitest::Test
   def test_bsdports_has_no_social_tables_yet
     SOCIAL_TABLES.each do |t|
       refute has_table?(t),
-             "bsdports now has #{t}; update bsdports_social_check_test — the check may open"
+             "bsdports now has #{t}; update bsdports_social_check_test - the check may open"
     end
   end
 
@@ -50,7 +50,7 @@ class BsdportsSocialCheckTest < Minitest::Test
     assert social_routes_gated?,
            "bsdports/config/routes.rb must load shared/config/routes/social.rb only " \
            "inside `if ENV[\"BSDPORTS_SOCIAL\"] == \"1\"` while the reactions/notifications/" \
-           "review_cases tables are absent — ungating it 500s ReactionsController"
+           "review_cases tables are absent - ungating it 500s ReactionsController"
     refute social_routes_ungated?,
            "social.rb is instance_eval'd outside the BSDPORTS_SOCIAL guard"
   end
@@ -60,7 +60,7 @@ class BsdportsSocialCheckTest < Minitest::Test
     # this test (and the check) can be retired. Fails loudly at that transition.
     all_present = SOCIAL_TABLES.all? { |t| has_table?(t) }
     refute all_present,
-           "bsdports has all social tables now — drop the BSDPORTS_SOCIAL check in routes.rb " \
+           "bsdports has all social tables now - drop the BSDPORTS_SOCIAL check in routes.rb " \
            "and delete this test"
   end
 end

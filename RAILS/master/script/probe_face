@@ -59,11 +59,11 @@ chrome = pick_chrome
 puts "probe: #{URL}"
 puts "chrome: #{chrome || '(none)'}"
 
-skip_probe("no Chrome executable — set CHROME_PATH or use probe_http") unless chrome
+skip_probe("no Chrome executable - set CHROME_PATH or use probe_http") unless chrome
 if RUBY_PLATFORM.include?("darwin") && !FORCE
-  skip_probe("macOS headless Ferrum unreliable here — set PROBE_FORCE_BROWSER=1 to try")
+  skip_probe("macOS headless Ferrum unreliable here - set PROBE_FORCE_BROWSER=1 to try")
 end
-skip_probe("Chrome --version failed — use probe_http") unless chrome_version_ok?(chrome)
+skip_probe("Chrome --version failed - use probe_http") unless chrome_version_ok?(chrome)
 
 browser = nil
 failures = []
@@ -95,7 +95,7 @@ begin
   begin
     browser.go_to URL
   rescue Ferrum::PendingConnectionsError => e
-    puts "WARN: pending connections on load — #{e.message}"
+    puts "WARN: pending connections on load - #{e.message}"
   end
   puts "loaded, waiting #{WAIT}s..."
   sleep WAIT
@@ -144,10 +144,10 @@ begin
   puts "\n=== console log tail ==="
   puts console_msgs.last(10).join("\n") unless console_msgs.empty?
 rescue Timeout::Error => e
-  skip_probe("browser launch timeout (#{e.class}) — use probe_http")
+  skip_probe("browser launch timeout (#{e.class}) - use probe_http")
 rescue StandardError => e
   if e.class.name == "Ferrum::ProcessTimeoutError"
-    skip_probe("browser launch timeout (Ferrum) — use probe_http")
+    skip_probe("browser launch timeout (Ferrum) - use probe_http")
   end
   failures << "probe exception: #{e.class}: #{e.message}"
   puts "probe error: #{e.class}: #{e.message}"

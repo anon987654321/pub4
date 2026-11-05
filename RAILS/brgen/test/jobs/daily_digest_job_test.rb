@@ -9,7 +9,7 @@ class DailyDigestJobTest < ActiveSupport::TestCase
       kind: "daily",
       city: "bergen",
       edition_date: Date.current,
-      subject: "Bergen — today",
+      subject: "Bergen - today",
       lede: "A short list of what people are talking about.",
       stories: [],
       deals: []
@@ -41,7 +41,7 @@ class DailyDigestJobTest < ActiveSupport::TestCase
       kind: "daily",
       city: "bergen",
       edition_date: Date.current,
-      subject: "Bergen — today",
+      subject: "Bergen - today",
       lede: "A short list.",
       stories: [],
       deals: []

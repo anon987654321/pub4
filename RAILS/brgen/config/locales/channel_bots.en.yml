@@ -4,7 +4,7 @@ en:
     # ChannelBot.canned_lines picks the room's own language.
     bots:
       master:
-        - noted — what's the block you're stuck on?
+        - noted - what's the block you're stuck on?
         - say more, I'm listening.
         - "the honest answer is: it depends on the neighbourhood."
       echo:

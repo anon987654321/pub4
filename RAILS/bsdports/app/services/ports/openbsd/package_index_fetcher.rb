@@ -44,7 +44,7 @@ module Ports
       def index_url = "#{base}/#{release}/packages/#{arch}/index.txt"
 
       # Yields an IO of the index. Returns nil and logs when the mirror cannot
-      # be reached — the caller decides whether that is fatal.
+      # be reached - the caller decides whether that is fatal.
       def each_entry
         body = get(index_url)
         return nil if body.nil?
@@ -71,7 +71,7 @@ module Ports
       # hostile, hijacked, or merely misconfigured could answer
       # `Location: http://169.254.169.254/latest/meta-data/` and this process would
       # fetch it from inside the box and hand the body to the parser. `base` is
-      # operator input too — BSDPORTS_MIRROR, or a Platform row.
+      # operator input too - BSDPORTS_MIRROR, or a Platform row.
       #
       # So a redirect may move the path and may not move the host or drop TLS. That
       # is all an index mirror needs: cdn.openbsd.org redirects between paths, not
@@ -110,7 +110,7 @@ module Ports
 
         Rails.logger.error(
           "bsdports mirror #{origin.host} redirected off-host to " \
-          "#{target.scheme}://#{target.host} — refused"
+          "#{target.scheme}://#{target.host} - refused"
         )
         nil
       rescue URI::InvalidURIError, ArgumentError => e

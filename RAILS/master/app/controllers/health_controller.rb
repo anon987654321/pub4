@@ -35,7 +35,7 @@ class HealthController < ActionController::API
 
     # Capability check, not socket liveness. The daemon socket is spun up on
     # demand and can be reaped under load on the 1-vCPU host, so requiring a
-    # live socket here produced a false negative — tts reported down between
+    # live socket here produced a false negative - tts reported down between
     # syntheses while synthesis worked fine, 503'ing /health.
     #
     # It asks the worker rather than edge_tts_available?, which tests two of
@@ -122,14 +122,14 @@ class HealthController < ActionController::API
     entry = data["face.runtime.js"]
     digested = entry.is_a?(Hash) ? entry["digested_path"].to_s : ""
     digested.empty? ? nil : digested.sub(%r{\Aassets/}, "")
-  rescue StandardError # scan: intentional — the health payload omits what it cannot read; absence is the report
+  rescue StandardError # scan: intentional - the health payload omits what it cannot read; absence is the report
     nil
   end
 
   def assets_precompile_stamp
     stamp = Rails.root.join("tmp", ".assets_precompile_stamp")
     File.mtime(stamp).utc.iso8601 if File.file?(stamp)
-  rescue StandardError # scan: intentional — the health payload omits what it cannot read; absence is the report
+  rescue StandardError # scan: intentional - the health payload omits what it cannot read; absence is the report
     nil
   end
 end

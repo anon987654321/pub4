@@ -12,7 +12,7 @@ require "test_helper"
 #   return if Current.user == @community.user  # authorize_owner
 #
 # raises StrictLoadingViolationError before the comparison happens. The guard
-# does not deny access — it never runs. Every path behind it, including the
+# does not deny access - it never runs. Every path behind it, including the
 # owner's own, fails.
 #
 # Four controllers had it: communities, playlist/sets, playlist/dilla_sketches
@@ -50,7 +50,7 @@ class OwnerAuthorizationTest < ActionDispatch::IntegrationTest
       sign_in(owner)
 
       # Before the fix this raised StrictLoadingViolationError rather than
-      # rendering — the owner was locked out of their own community by a guard
+      # rendering - the owner was locked out of their own community by a guard
       # that never got as far as comparing anything.
       get edit_community_path(community)
 

@@ -7,13 +7,13 @@
       page opened at level 2 and its outline said "seen by N" rather than whose
       story it is. Hidden because the visible identity here is the author's name
       set as <strong> in the header below, and promoting that to a heading would
-      restyle it — the name is already the accessible name of the article and
+      restyle it - the name is already the accessible name of the article and
       the document title, so this states it once more where the outline reads. %>
   <h1 class="visually-hidden"><%= t("stories.by", user: @story.user.display_name) %></h1>
   <header class="story-viewer-head">
     <p>
       <%= tag.strong @story.user.display_name %>
-      ·
+      -
       <%# The countdown reads the row's own expires_at rather than re-deriving
           24 hours from created_at, so the label, the alive scope and the sweep
           cannot disagree. %>

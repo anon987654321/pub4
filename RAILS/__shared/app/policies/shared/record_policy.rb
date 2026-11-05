@@ -8,7 +8,7 @@ module Shared
     # clause made this method return true unconditionally.
     #
     # Not exploitable today: this is Pundit.policy_class, the default for a record
-    # with no policy of its own, and nothing in the three apps calls `authorize` —
+    # with no policy of its own, and nothing in the three apps calls `authorize` -
     # Pundit is used only for `policy_scope` in the marketplace listings
     # controller, and the per-record checks are hand-rolled before_actions
     # (authorize_owner, require_real_user, amber's authorize!). So this was a hole
@@ -35,7 +35,7 @@ module Shared
     private
 
     # Fail closed. This rescued StandardError and returned true, so any error
-    # reading `public?` — a missing column, a nil, a raise inside an override —
+    # reading `public?` - a missing column, a nil, a raise inside an override -
     # answered "yes, this record is public". A guard that grants access when it
     # cannot decide is not a guard. Same shape as PostModeration#approve?, which
     # rescued its way into approving 57 spam posts.

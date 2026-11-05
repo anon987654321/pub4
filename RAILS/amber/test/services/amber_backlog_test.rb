@@ -11,7 +11,7 @@ class AmberBacklogTest < Minitest::Test
   end
 
   # These pages render through I18n now, so a literal English string in the
-  # template stopped being there the moment the page was localised — the
+  # template stopped being there the moment the page was localised - the
   # assertion failed on a view that had got better, not worse. Pin the key in
   # the template and the copy in en.yml instead: the page still has to say this
   # sentence, and the check survives the next locale. Same reasoning as
@@ -52,7 +52,7 @@ class AmberBacklogTest < Minitest::Test
     assert_includes routes, "resources :messages"
     assert_includes read("app/views/connections/index.html.erb"), "connections.title"
     assert_localised "app/views/live_streams/index.html.erb", "live_streams.title", "Style sessions"
-    # Was assert_includes … "Message sent", which is the same coupling the helper
+    # Was assert_includes ... "Message sent", which is the same coupling the helper
     # above exists to remove: the flash went through I18n on 2026-08-11 and the
     # assertion failed on a controller that had got better.
     assert_localised "app/controllers/messages_controller.rb", "flash.message_sent", "Message sent."
@@ -94,7 +94,7 @@ class AmberBacklogTest < Minitest::Test
     assert_localised "app/views/wardrobe_items/analytics.html.erb", "wardrobe.coach_rules", "rules, not AI"
     # assert_localised, like the two lines above it. This read the source for the
     # literal "Generate outfit" and broke when the view became
-    # t("outfits.generate_label") — the same shape as the other two, just missed
+    # t("outfits.generate_label") - the same shape as the other two, just missed
     # when they were converted. The helper checks both halves: the view goes
     # through the key, and en.yml still says what this test says it says.
     assert_localised "app/views/outfits/index.html.erb", "outfits.generate_label", "Generate outfit"
@@ -162,7 +162,7 @@ class AmberBacklogTest < Minitest::Test
     assert_includes read("app/jobs/declutter_hygiene_job.rb"), "BOX_DAYS"
     assert_includes read("app/controllers/declutter_controller.rb"), "create_last_chance_outfit"
     # The KonMari badge, asserted through the locale rather than as a literal.
-    # This read `assert_includes … "Sparks joy"`, which pinned English into a
+    # This read `assert_includes ... "Sparks joy"`, which pinned English into a
     # default_locale: nb app -- and items.sparks_joy already existed, with a
     # Norwegian value, bypassed by the hardcoded string in the view.
     assert_includes read("app/views/items/show.html.erb"), "items.sparks_joy"

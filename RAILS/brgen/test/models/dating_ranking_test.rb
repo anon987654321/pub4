@@ -4,7 +4,7 @@ require "test_helper"
 
 # The deck was ORDER BY RANDOM(). Orientation, neighbourhood and a 20 km radius
 # filtered the pool and nothing ranked it, so someone last seen in March sat
-# beside someone online now — and every reload reshuffled, so a profile you had
+# beside someone online now - and every reload reshuffled, so a profile you had
 # just passed could not be found again.
 class DatingRankingTest < ActiveSupport::TestCase
   setup do

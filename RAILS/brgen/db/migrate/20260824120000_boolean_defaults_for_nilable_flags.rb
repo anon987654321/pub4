@@ -1,18 +1,18 @@
 # frozen_string_literal: true
 
 # Booleans that could be nil, and so were three-state columns pretending to be
-# two. Every reader of these eight already treated nil as false — `where(flag:
-# true)` skips it, `flag?` returns false for it — so this changes no behaviour.
+# two. Every reader of these eight already treated nil as false - `where(flag:
+# true)` skips it, `flag?` returns false for it - so this changes no behaviour.
 # What it removes is the third state: a row where "is this on?" has no answer,
 # and a `where.not(flag: true)` that quietly misses it.
 #
 # amber's items.spark_joy is deliberately NOT here, and was reverted after
 # being tried. It is a real three-state column: WardrobeAi#heuristic_joy
 # branches `== true` / `== false` / else, and TasteRanker scores nil at 0.5
-# against false at 0.0 — nil means "not asked yet", which is a different fact
+# against false at 0.0 - nil means "not asked yet", which is a different fact
 # from "no". Collapsing it stopped a high-wear item reading as a keeper.
 #
-# tv_view_events.completed is out for the same reason, found the same way — by
+# tv_view_events.completed is out for the same reason, found the same way - by
 # the suite. Tv::ViewEvent#record_progress! writes
 # `limit ? seconds >= limit * COMPLETION_THRESHOLD : completed`, so a video
 # with no duration leaves it nil on purpose: "we cannot know whether this was

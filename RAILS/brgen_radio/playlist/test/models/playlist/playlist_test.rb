@@ -2,7 +2,7 @@
 
 require "test_helper"
 
-# engines/playlist had no test directory at all — the only one of the five
+# engines/playlist had no test directory at all - the only one of the five
 # verticals with none, and the second largest by file count. This covers the
 # behaviour that is not Rails doing Rails: ordering and idempotence in
 # add_track!, and the tenancy of city_trending.
@@ -32,7 +32,7 @@ class Playlist::PlaylistTest < ActiveSupport::TestCase
     end
   end
 
-  # find_or_initialize_by then `return if persisted?` — so a double-add is a
+  # find_or_initialize_by then `return if persisted?` - so a double-add is a
   # no-op rather than a duplicate row, and must not inflate tracks_count either.
   test "add_track! is idempotent for the same track" do
     ActsAsTenant.with_tenant(@city) do

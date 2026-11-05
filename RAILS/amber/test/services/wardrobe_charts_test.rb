@@ -64,7 +64,7 @@ class WardrobeChartsTest < ActiveSupport::TestCase
     assert_equal 7, bars.last.value
   end
 
-  # The three inventory figures still count a boxed garment — you own it. The
+  # The three inventory figures still count a boxed garment - you own it. The
   # idle figure asks you to go wear something, so it must not.
   test "idle skips the declutter box, the inventory figures do not" do
     owner = user("charts-boxed@example.com")
@@ -94,7 +94,7 @@ class WardrobeChartsTest < ActiveSupport::TestCase
     assert_empty figures[:category_mix]
     assert_empty figures[:cost_per_wear]
     assert_empty figures[:idle]
-    # The distribution keeps its buckets — an all-zero histogram is a reading.
+    # The distribution keeps its buckets - an all-zero histogram is a reading.
     assert_equal 6, figures[:wear_distribution].size
     assert_equal [ 0.0 ], figures[:wear_distribution].map(&:share).uniq
   end

@@ -2,7 +2,7 @@
 
 # Profile the crawler pattern: every request arrives without a session cookie,
 # so every request is a different guest user. A profiler that reuses one session
-# cannot show this — it holds one guest and hits the cache from the second
+# cannot show this - it holds one guest and hits the cache from the second
 # request on, which is why the naive local numbers looked fine.
 #
 #   rails runner script/profile_cookieless.rb [path] [--runs=8]

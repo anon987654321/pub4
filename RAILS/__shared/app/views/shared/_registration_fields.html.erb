@@ -26,6 +26,6 @@
   <label>
     <%= check_box_tag :accept_terms, "1", params[:accept_terms] == "1", required: true %>
     <%= t("legal.accept_terms") %>
-    (<%= link_to t("legal.terms"), terms_path %> · <%= link_to t("legal.privacy"), privacy_path %>)
+    (<%= link_to t("legal.terms"), terms_path %> - <%= link_to t("legal.privacy"), privacy_path %>)
   </label>
 </div>

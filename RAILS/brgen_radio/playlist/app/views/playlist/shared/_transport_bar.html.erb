@@ -1,9 +1,9 @@
 <%# Bottom transport bar for the playlist surfaces.
 
     locals:
-      scope    — the Stimulus controller that owns playback on this surface,
+      scope    - the Stimulus controller that owns playback on this surface,
                  "playlist-player" (show, sets) or "radio-tunnel" (the tunnel home)
-      controls — which buttons this surface can actually honour
+      controls - which buttons this surface can actually honour
 
     Only the controls a scope supports are rendered, and that is the whole reason
     `controls` is a local rather than a fixed row. playlist-player has
@@ -21,7 +21,7 @@
 <% act = ->(name) { "click->#{scope}##{name}" } %>
 
 <%# Rests visible, retires, and comes back when the pointer reaches the bottom
-    edge — the same nav-autohide the top bar uses, with edge/zone set because a
+    edge - the same nav-autohide the top bar uses, with edge/zone set because a
     bar that has slid off-screen cannot be hovered. 6000ms on arrival so the
     controls can be found before they leave; 3000 once the reader has touched
     them. prefers-reduced-motion keeps it put. %>

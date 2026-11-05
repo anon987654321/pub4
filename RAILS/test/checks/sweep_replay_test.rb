@@ -45,7 +45,7 @@ class SweepReplayTest < Minitest::Test
     result = nil
     capture_io { result = Deploy::BrowserDiagnosticsCheck.new.replayed(ROWS, since: Time.at(0)) }
 
-    assert_includes result.failures.join("\n"), "brgen/posts_new/mobile — uncaught JavaScript exception"
+    assert_includes result.failures.join("\n"), "brgen/posts_new/mobile - uncaught JavaScript exception"
   end
 
   def test_an_edit_to_rails_is_a_new_key

@@ -12,7 +12,7 @@ html {
   -webkit-text-size-adjust: 100%;
 }
 
-// Skip link — first focusable element on every page, visible on focus only.
+// Skip link - first focusable element on every page, visible on focus only.
 .skip-link {
   position: absolute;
   inset-inline-start: var(--space-16);
@@ -85,7 +85,7 @@ textarea {
   color: inherit;
 }
 
-// MASTER shared_chrome.focus_ring — one ring, accent-colored.
+// MASTER shared_chrome.focus_ring - one ring, accent-colored.
 :focus-visible {
   outline: var(--focus-ring);
   outline-offset: 2px;
@@ -95,7 +95,7 @@ textarea {
   background: var(--mint-100);
 }
 
-// Phone shell — one white 480px column on mint paper.
+// Phone shell - one white 480px column on mint paper.
 main.shell {
   max-width: 480px;
   margin: 0 auto;
@@ -193,7 +193,7 @@ main.shell > :is(.card, .hero, .loyalty-card) + .card {
   font-weight: 700;
 }
 
-// Item sheet keeps its pay button pinned above the tab bar — give the form room.
+// Item sheet keeps its pay button pinned above the tab bar - give the form room.
 body.act-item main.shell {
   padding-bottom: calc(var(--bottom-clearance) + var(--sheet-footer-clearance));
 }
@@ -268,10 +268,10 @@ body.act-item main.shell {
   font-variant-numeric: tabular-nums;
 }
 
-// MASTER motion law: honor prefers-reduced-motion — keep every state
+// MASTER motion law: honor prefers-reduced-motion - keep every state
 // readable, drop the movement. Enumerated per animated element so no
 // !important is needed (NO_IMPORTANT law). Centering transforms on fixed
-// chrome (.toast, .cart-bar) are layout, not motion — they survive.
+// chrome (.toast, .cart-bar) are layout, not motion - they survive.
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;

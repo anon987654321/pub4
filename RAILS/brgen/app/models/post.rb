@@ -39,7 +39,7 @@ class Post < ApplicationRecord
   has_many :reposters, through: :reposts, source: :user
   # The same content in a second community, with its own comment thread. A
   # repost is the other act: it boosts into followers' timelines and belongs to
-  # no community. :nullify, because a crosspost outlives its source — the second
+  # no community. :nullify, because a crosspost outlives its source - the second
   # community's thread is that community's, not a view of somebody else's post.
   belongs_to :crossposted_from, class_name: "Post", optional: true, counter_cache: :crossposts_count
   has_many :crossposts, class_name: "Post", foreign_key: :crossposted_from_id, dependent: :nullify, inverse_of: :crossposted_from
@@ -73,7 +73,7 @@ class Post < ApplicationRecord
 
   # Federate public posts only. A post in a community is scoped to that
   # community's rules and privacy setting, and an anonymous one has no author to
-  # attribute — neither belongs in an outbox that says who wrote what.
+  # attribute - neither belongs in an outbox that says who wrote what.
   after_commit :federate_creation, on: :create
   after_commit :federate_deletion, on: :destroy
   after_commit :federate_update, on: :update
@@ -122,7 +122,7 @@ class Post < ApplicationRecord
   # infinite-scroll reflex. They carried twin case statements over the same
   # param before this, which is the two-implementations defect wearing a
   # scope: a lane added to one and not the other pages differently than it
-  # renders. A signed-out "following" falls back to hot rather than raising —
+  # renders. A signed-out "following" falls back to hot rather than raising -
   # the tab is only rendered for signed-in members, so reaching it signed out
   # is a crafted URL, not a flow.
   def self.sorted_lane(sort, viewer: nil)
@@ -159,7 +159,7 @@ class Post < ApplicationRecord
   def crosspost? = crossposted_from_id.present?
 
   # Built rather than created here: the caller saves it, and a crosspost of a
-  # crosspost points at the original — a chain would make "seen in 4 communities"
+  # crosspost points at the original - a chain would make "seen in 4 communities"
   # unanswerable without walking it.
   def build_crosspost(community:, user:)
     # strict_safe, because the post was found by slug with nothing preloaded and
@@ -186,7 +186,7 @@ class Post < ApplicationRecord
   end
 
   # Reads the counter cache column the post is already loaded with. This was
-  # comments.count, which queries even when the association is loaded — two
+  # comments.count, which queries even when the association is loaded - two
   # queries per feed post, 50 on the home page alone.
   def comment_count = comments_count
 
@@ -243,7 +243,7 @@ class Post < ApplicationRecord
 
   # Sent on destroy rather than left to expire: a follower's instance keeps its
   # copy indefinitely, so a post deleted here stays visible there forever unless
-  # we say so. The payload is built here, while the record is still in memory —
+  # we say so. The payload is built here, while the record is still in memory -
   # a job given an id would have nothing left to load.
   def federate_deletion
     return unless federatable_post?

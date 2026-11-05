@@ -77,7 +77,7 @@ body[data-face-flash="1"] canvas {
   filter: saturate(1.08) contrast(1.04);
 }
 /* Calm damps the flash-class canvas responses (operator request 2026-10-27: a
-   soothing face). The state still lands in the field — the stipples carry it —
+   soothing face). The state still lands in the field - the stipples carry it -
    but calm drops the whole-canvas contrast kicks. The profile may sit on html
    or body depending on which setter wrote it, so both are matched, each
    outranking the flash rule above it. */
@@ -285,7 +285,7 @@ body[data-face-pip="1"][data-face-pip-corner="bottom-right"] canvas {
 #zsh-wave span {
   width: 3px;
   height: 14px;
-  border-radius: 2px; /* clamps to 1.5px on this 3x4px span — the pill idiom, on scale */
+  border-radius: 2px; /* clamps to 1.5px on this 3x4px span - the pill idiom, on scale */
   background: var(--c-accent);
   transform-origin: center bottom;
   transition: height 90ms var(--ease-linear), opacity 90ms var(--ease-linear), transform 90ms var(--ease-linear);

@@ -151,7 +151,7 @@ class ApplicationController < ActionController::Base
     return unless pair_redeem_limited?
 
     response.headers["Retry-After"] = Master::Ground::Pairing.redeem_window_seconds.to_s
-    render json: { error: "too many pair attempts — wait a minute" }, status: :too_many_requests
+    render json: { error: "too many pair attempts - wait a minute" }, status: :too_many_requests
   end
 
   def set_pair_cookie(token)
@@ -169,7 +169,7 @@ class ApplicationController < ActionController::Base
   # gated so the endpoint never leaked; the model did, by answering one person
   # with what another had just said.
   #
-  # master_session cannot key this — it is the shared auth token, identical for
+  # master_session cannot key this - it is the shared auth token, identical for
   # every authenticated client and absent for visitors, so it names nobody. This
   # is its own opaque id, minted on first use and meaning nothing beyond "same
   # browser". Same attributes as the pair cookie: HttpOnly and SameSite=Strict,
@@ -277,7 +277,7 @@ class ApplicationController < ActionController::Base
     response.headers["Content-Type"] = "text/event-stream"
     response.headers["Cache-Control"] = "no-cache"
     response.headers["X-Accel-Buffering"] = "no"
-    body = ": warming\n\ndata: booting — retry in 30s\n\n"
+    body = ": warming\n\ndata: booting - retry in 30s\n\n"
     body += "data: [DONE]\n\n" unless request.path == "/events/stream"
     render plain: body, status: :ok
   end
@@ -308,11 +308,11 @@ class ApplicationController < ActionController::Base
 
   WARMING_HTML = <<~HTML.freeze
     <!DOCTYPE html><html><head><meta charset="utf-8">
-    <title>Starting up…</title>
+    <title>Starting up...</title>
     <meta http-equiv="refresh" content="5">
     <style>body{background:#000;color:#fff;font-family:sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;margin:0}
     p{opacity:.6}</style></head>
-    <body><p>Starting up, please wait…</p></body></html>
+    <body><p>Starting up, please wait...</p></body></html>
   HTML
 
   def start_ms

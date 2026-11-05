@@ -4,8 +4,8 @@ require "minitest/autorun"
 
 # UserPurgeJob anonymises the users row rather than destroying it, so that
 # threads keep their shape. The consequence is that no `dependent: :destroy`
-# anywhere in the graph fires during erasure — nothing is destroyed, so nothing
-# cascades — and every table holding personal data has to be named in the job
+# anywhere in the graph fires during erasure - nothing is destroyed, so nothing
+# cascades - and every table holding personal data has to be named in the job
 # by hand or it is simply kept.
 #
 # Which is how it went wrong. The job reached the users row and its sessions,
@@ -20,12 +20,12 @@ require "minitest/autorun"
 # schema carrying a personal-data column is classified below, with a reason.
 # Adding a table and not deciding is the failure.
 #
-# The other half of the contract — that a table classified :destroy or :nullify
-# is genuinely reached by the job — needs real models, so it lives in
+# The other half of the contract - that a table classified :destroy or :nullify
+# is genuinely reached by the job - needs real models, so it lives in
 # brgen/test/jobs/user_purge_job_test.rb where table_name can be asked rather
 # than guessed. An earlier draft of this file guessed, by pluralising a
 # constant name, and produced "marketplace_addresss" and
-# "marketplace_saved_searchs" — matching nothing, while every table happened to
+# "marketplace_saved_searchs" - matching nothing, while every table happened to
 # be covered by the exemption list, so the broken half passed in silence.
 class ErasureCoverageTest < Minitest::Test
   ROOT = File.expand_path("..", __dir__)
@@ -115,7 +115,7 @@ class ErasureCoverageTest < Minitest::Test
 
     "cities"                              => [ :not_personal, "a city's own coordinates" ],
     "places"                              => [ :not_personal, "a public place's address, with no owning user" ],
-    "fedi_actors"                         => [ :not_personal, "an actor on another server — not our account to erase" ],
+    "fedi_actors"                         => [ :not_personal, "an actor on another server - not our account to erase" ],
     "takeaway_restaurants"                => [ :not_personal, "a business address, and the business is not the user" ],
   }.freeze
 
@@ -130,7 +130,7 @@ class ErasureCoverageTest < Minitest::Test
   end
 
   def test_the_schema_is_where_this_test_looks
-    assert File.exist?(SCHEMA), "schema.rb is not here — the check is wrong, not the tree"
+    assert File.exist?(SCHEMA), "schema.rb is not here - the check is wrong, not the tree"
     refute_empty tables_with_personal_columns,
                  "no personal columns found at all, which means PERSONAL matches nothing"
   end
@@ -161,7 +161,7 @@ class ErasureCoverageTest < Minitest::Test
       #{unclassified.map { |t| "  #{t}: #{tables_with_personal_columns[t].join(', ')}" }.join("\n")}
 
       Add each to CLASSIFIED with one of #{DISPOSITIONS.join(', ')} and the
-      reason — and for :destroy or :nullify, to UserPurgeJob as well.
+      reason - and for :destroy or :nullify, to UserPurgeJob as well.
     MSG
   end
 

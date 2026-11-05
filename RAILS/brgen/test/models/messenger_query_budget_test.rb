@@ -4,7 +4,7 @@ require "test_helper"
 
 # The messenger's read paths used to scale with content: opening a room did two
 # queries per message, and listing the channels did two per room. Both are now
-# fixed-cost, and a budget is the only kind of test that keeps them that way —
+# fixed-cost, and a budget is the only kind of test that keeps them that way -
 # an assertion on the result would pass just as happily at two hundred queries.
 class MessengerQueryBudgetTest < ActiveSupport::TestCase
   setup do

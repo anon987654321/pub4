@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-# model_contract: no-validations-ok — an append-only play event. Both foreign
+# model_contract: no-validations-ok - an append-only play event. Both foreign
 # keys are required by the database and there is nothing else to promise.
 class Playlist::Listen < ApplicationRecord
   # Engine-ized Shared (tranche10)

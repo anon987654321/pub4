@@ -86,8 +86,8 @@ async function refresh() {
     document.getElementById('status').textContent = [
       `${L('labelModel', 'model')}: ${d.model}`,
       `mission: ${m.id || 'none'}`,
-      `mission state: ${m.state || 'idle'} / ${m.stage || '—'}`,
-      `effort: ${m.effort || '—'}`,
+      `mission state: ${m.state || 'idle'} / ${m.stage || '-'}`,
+      `effort: ${m.effort || '-'}`,
       `${L('labelCtx', 'ctx')}: ${d.tokens} ${L('labelTokens', 'tokens')}`,
       `${L('labelCost', 'cost')}: $${Number(d.cost || 0).toFixed(4)}`,
       `${L('labelAgentPool', 'agent pool')}: ${d.agent_pool} active`,

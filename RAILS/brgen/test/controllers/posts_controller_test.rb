@@ -45,7 +45,7 @@ class PostsControllerTest < ActionDispatch::IntegrationTest
   # Post includes CityTenantable -> acts_as_tenant :city. A request to brgen.no
   # sets ActsAsTenant.current_tenant (application_controller.rb:66-69), which
   # scopes every Post query to that city_id. A fixture built out here, with no
-  # request in flight, has no tenant and gets city_id: nil — invisible to the
+  # request in flight, has no tenant and gets city_id: nil - invisible to the
   # scoped query, so the controller 404s.
   #
   # That only bites where a City row for the host actually exists, and the two
@@ -53,7 +53,7 @@ class PostsControllerTest < ActionDispatch::IntegrationTest
   # holds 0 cities, so City.find_by(domain: "brgen.no") is nil, the tenant is
   # never set, the query is unscoped and the fixture is found. The VPS seeds 44
   # cities before running the suite, so there the tenant is real. Same code, same
-  # commit, opposite results — and the failing side was the one nobody watches.
+  # commit, opposite results - and the failing side was the one nobody watches.
   #
   # So this creates the city rather than looking it up. Finding it would leave
   # the local run on the untenanted path forever, which is the path that cannot

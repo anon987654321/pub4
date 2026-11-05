@@ -72,17 +72,17 @@ class JourneyAndCrossAppCheckTest < Minitest::Test
     found = diff(walk(elements: [element("main>button", width: 92)]),
                  walk(elements: [element("main>button", width: 101)]))
 
-    assert_includes found, "main>button w 92→101"
+    assert_includes found, "main>button w 92->101"
   end
 
   def test_a_title_that_changes_between_two_loads_is_a_finding
-    assert_includes diff(walk(title: "Brgen"), walk(title: "Bergen")), "title \"Brgen\"→\"Bergen\""
+    assert_includes diff(walk(title: "Brgen"), walk(title: "Bergen")), "title \"Brgen\"->\"Bergen\""
   end
 
   def test_a_landmark_that_disappears_between_two_loads_is_a_finding
     found = diff(walk, walk(landmarks: { "main" => true, "nav" => false }))
 
-    assert_includes found, "landmark nav true→false"
+    assert_includes found, "landmark nav true->false"
   end
 
   def test_an_element_that_vanishes_between_two_loads_is_a_finding
@@ -92,7 +92,7 @@ class JourneyAndCrossAppCheckTest < Minitest::Test
   end
 
   def test_a_second_competing_h1_between_two_loads_is_a_finding
-    assert_includes diff(walk(h1: 1), walk(h1: 2)), "h1_count 1→2"
+    assert_includes diff(walk(h1: 1), walk(h1: 2)), "h1_count 1->2"
   end
 
   # A live feed legitimately differs between two loads. Reporting that would

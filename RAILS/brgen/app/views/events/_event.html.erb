@@ -25,7 +25,7 @@
       <h3 id="event-<%= event.id %>-title"><%= link_to event.title, event_path(event) %></h3>
 
       <% if event.location_name.present? %>
-        <p><%= event.location_name %><%= " · #{event.neighborhood.name}" if event.neighborhood %></p>
+        <p><%= event.location_name %><%= " - #{event.neighborhood.name}" if event.neighborhood %></p>
       <% end %>
 
       <p class="chips">
@@ -34,7 +34,7 @@
           <span class="chip"><%= t("events.interested_count", count: event.interested_count) %></span>
         <% end %>
         <span class="chip"><%= event.free? ? t("events.free") : event.price_display %></span>
-        <%# places_left is nil when no capacity was set — "unlimited" must not
+        <%# places_left is nil when no capacity was set - "unlimited" must not
             render as "0 places left". %>
         <% if (left = event.places_left) %>
           <span class="chip"><%= t("events.places_left", count: left) %></span>

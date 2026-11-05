@@ -51,7 +51,7 @@ class Marketplace::SavedSearch < ApplicationRecord
 
   # Listings that appeared since this search last reported. Anchored to
   # created_at on a search that has never alerted, not to the beginning of time
-  # — otherwise switching alerts on mails you the entire back catalogue.
+  # - otherwise switching alerts on mails you the entire back catalogue.
   def new_matches(since: nil)
     cutoff = since || last_notified_at || created_at
     scope = Marketplace::Listing.publicly_visible.where("marketplace_listings.created_at > ?", cutoff)
@@ -65,7 +65,7 @@ class Marketplace::SavedSearch < ApplicationRecord
 
   # Listings that gained a live Deal (price reduction) matching this search
   # since the last alert. This is the missing half of the original "price-drop
-  # alerts" opportunity — new_matches only saw brand-new rows.
+  # alerts" opportunity - new_matches only saw brand-new rows.
   #
   # LiveSearch prefixes columns with the relation's table, so a Deal scope
   # cannot be asked for marketplace_listings.title. Search each table on its
@@ -115,7 +115,7 @@ class Marketplace::SavedSearch < ApplicationRecord
     deliver_notification(
       user,
       title: I18n.t(title_key, search: title, count: listings.size),
-      body: listings.first(3).map(&:title).join(" · "),
+      body: listings.first(3).map(&:title).join(" - "),
       source: self,
       # A saved search matching is exactly what the reader asked to be told
       # about, which is what makes it worth a lock screen.

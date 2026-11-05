@@ -3,10 +3,10 @@
 # What a person's posts and comments have earned in votes.
 #
 # This was `users.karma`, an integer column recomputed on every vote and
-# rendered by nothing — `karma` appeared in no view, helper or partial in any
+# rendered by nothing - `karma` appeared in no view, helper or partial in any
 # app or engine. It also paid for that invisibility: `update_karma!` ran two
 # joined SUMs and then wrote `updated_at` alongside the value, busting every
-# `cache [user, …]` fragment for the author, justified by a comment claiming
+# `cache [user, ...]` fragment for the author, justified by a comment claiming
 # "karma renders on the profile and on every post byline". It did not.
 #
 # So brgen carried two reputation stores. This is the same number in the one

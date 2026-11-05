@@ -9,7 +9,7 @@
 # 20260825120000; this is the third table with it.
 #
 # The duplicate merge is guarded, and the guard is the point. The first version of
-# this migration ran two correlated subqueries over every row unconditionally —
+# this migration ran two correlated subqueries over every row unconditionally -
 # and the pair it correlates on is exactly the pair this migration is adding an
 # index for, so each one was a full scan. Measured on vm23 before deploying:
 # 38,201 receipts and zero duplicate pairs, so that work would have scanned
@@ -40,7 +40,7 @@ class UniqueMessageReceiptPerReader < ActiveRecord::Migration[8.0]
         execute "DROP TABLE receipt_merge"
       end
     else
-      say "no duplicate message receipts — skipping the merge"
+      say "no duplicate message receipts - skipping the merge"
     end
 
     add_index :message_receipts, %i[message_id user_id], unique: true,

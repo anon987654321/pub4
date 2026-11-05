@@ -6,8 +6,8 @@ class Dating::LikesController < Dating::BaseController
   rate_limit to: 120, within: 1.hour, only: :create, name: "likes",
     with: -> { redirect_back fallback_location: root_path, alert: t("shared.flash.rate_limited") }
 
-  # A like may carry a prompt it is about and a sentence about it — the Hinge
-  # interaction — or neither, which is still a like.
+  # A like may carry a prompt it is about and a sentence about it - the Hinge
+  # interaction - or neither, which is still a like.
   def create
     # Only someone the deck could have shown: a paused or under-age profile, or
     # an account with no profile at all, is not somebody to like by id.

@@ -11,7 +11,7 @@ class Conversation
       # right shape for one record. It is the wrong shape for a list, and both callers
       # were lists: the messenger index ran it per row, and the layout summed it across
       # every DM on EVERY authenticated render of EVERY page, purely to decide a badge
-      # number — 2 queries per thread added to each pageview, on a 1GB box.
+      # number - 2 queries per thread added to each pageview, on a 1GB box.
       #
       # Same predicate, expressed once in SQL. The JOIN fans a message out per
       # participant and the user_id filter collapses it back, so each message is
@@ -29,7 +29,7 @@ class Conversation
                .visible.unexpired
       end
 
-      # DMs only — public channels are ambient and must not light the badge. Nor
+      # DMs only - public channels are ambient and must not light the badge. Nor
       # does a thread its owner muted, or a message request, which waits in
       # Requests until it is accepted.
       def unread_total_for(user)
@@ -64,7 +64,7 @@ class Conversation
     # Three queries, not two per message.
     #
     # This walked every unexpired message with find_each and did a find_or_initialize
-    # plus an update! on each one — a SELECT and often an INSERT per message, every
+    # plus an update! on each one - a SELECT and often an INSERT per message, every
     # time somebody opened a room. A channel holding a hundred messages cost two
     # hundred round trips to render, on the read path, on one vCPU.
     #
@@ -102,7 +102,7 @@ class Conversation
     # chip in each line is replaced in place, not the line, so the log's
     # new-message pill does not count it. Capped at the newest twenty, because a
     # first visit to a long thread would otherwise queue one render per message;
-    # older lines catch up on their next load. Direct and group threads only —
+    # older lines catch up on their next load. Direct and group threads only -
     # a channel shows no per-line state.
     def broadcast_read_states(message_ids)
       return if message_ids.empty? || slug.present?

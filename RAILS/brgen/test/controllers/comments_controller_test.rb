@@ -24,7 +24,7 @@ class CommentsControllerTest < ActionDispatch::IntegrationTest
   end
 
   def a_post(author)
-    Post.create!(user: author, title: "Thread", content: "…", city: @city)
+    Post.create!(user: author, title: "Thread", content: "...", city: @city)
   end
 
   test "a guest can post a comment and the stream replaces the empty state" do

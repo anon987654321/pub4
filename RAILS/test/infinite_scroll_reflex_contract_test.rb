@@ -43,7 +43,7 @@ class InfiniteScrollReflexContractTest < Minitest::Test
     # 21 on 2026-08-10. A glob that quietly stops matching reads as a clean run,
     # which is the failure mode this whole file exists to avoid.
     assert_operator reflexes.size, :>=, 21,
-                    "expected at least 21 infinite-scroll reflexes, found #{reflexes.size} — check the glob"
+                    "expected at least 21 infinite-scroll reflexes, found #{reflexes.size} - check the glob"
   end
 
   # Every reflex above declares a partial and a scope and passes all four checks
@@ -52,7 +52,7 @@ class InfiniteScrollReflexContractTest < Minitest::Test
   # is a scope, a partial and a comment that no scroll can ever call.
   #
   # ConversationsInfiniteScrollReflex was in exactly that state and read as a
-  # product question in the backlog — the messenger inbox is a rail capped at 30
+  # product question in the backlog - the messenger inbox is a rail capped at 30
   # with no sentinel anywhere, so there was no page for it to append to. Deleted.
   def test_every_reflex_is_mounted_by_a_view
     views = Dir.glob(File.join(ROOT, "{amber,brgen,bsdports,__shared}", "app", "views", "**", "*.erb")) +
@@ -79,7 +79,7 @@ class InfiniteScrollReflexContractTest < Minitest::Test
     scopeless = reflexes.reject { |path| code(path).match?(/^\s*def scope\b/) }
 
     assert_empty scopeless.map { |p| p.delete_prefix("#{ROOT}/") }.sort,
-                 "the scope is the only thing that differs between these — each must define #scope"
+                 "the scope is the only thing that differs between these - each must define #scope"
   end
 
   # The check that would actually catch a botched refactor: a declared partial
@@ -105,10 +105,10 @@ class InfiniteScrollReflexContractTest < Minitest::Test
   def test_the_shared_parent_owns_the_spine
     parent = File.read(File.join(ROOT, "__shared", "app", "reflexes", "shared", "infinite_scroll_reflex.rb"))
 
-    # Either spelling — the parent declares it inside `class << self`.
+    # Either spelling - the parent declares it inside `class << self`.
     assert_match(/def (self\.)?renders\(/, parent, "the parent must provide the `renders` declaration")
     assert_match(/def page_html/, parent, "the parent must build page_html from the declaration")
-    assert_match(/pagy\(/, parent, "the parent must paginate — that was the line copied into all 21")
+    assert_match(/pagy\(/, parent, "the parent must paginate - that was the line copied into all 21")
 
     redefiners = reflexes.select { |path| code(path).match?(/^\s*def (load_more|page_html)\b/) }
     assert_empty redefiners.map { |p| p.delete_prefix("#{ROOT}/") }.sort,

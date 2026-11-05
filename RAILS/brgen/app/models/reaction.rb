@@ -44,7 +44,7 @@ class Reaction < ApplicationRecord
 
   # A message reaction rides the conversation's own stream.
   #
-  # stream_name is per-target, which is right for a post — one page, one
+  # stream_name is per-target, which is right for a post - one page, one
   # subscription. A chat room renders 50+ messages, so per-target streams would
   # mean 50+ Turbo subscriptions per reader so a thumbs-up can appear. The
   # room is already subscribed to its conversation, so reuse it: one extra
@@ -54,7 +54,7 @@ class Reaction < ApplicationRecord
   # A generic per-target broadcast to stream_name used to run first in this method
   # and was missing all three of the things it needed: a partial (the implicit
   # to_partial_path resolved to reactions/_reaction, which does not exist), a target,
-  # and a subscriber — nothing anywhere subscribes to "brgen:reactions:…". Every
+  # and a subscriber - nothing anywhere subscribes to "brgen:reactions:...". Every
   # reaction and un-reaction enqueued a job that raised MissingTemplate into a stream
   # with no listener. Reviving it means subscribing wherever shared/_reaction_bar
   # renders, which is the 50+ subscriptions the paragraph above rules out.

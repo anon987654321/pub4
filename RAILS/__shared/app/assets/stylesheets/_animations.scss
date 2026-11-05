@@ -1,5 +1,5 @@
 // The .animate-* utility classes were deleted 2026-08-22: zero markup ever
-// applied one (css_coverage census) — the flat contract made them dead on
+// applied one (css_coverage census) - the flat contract made them dead on
 // arrival. What remains is what other sheets actually cite: slideInRight and
 // expandLayout (_components), the --delay stagger hook, and the reduced-motion
 // guarantee. The M3 spring and its 200ms duration were folded into
@@ -22,7 +22,7 @@
 
 // The one reduced-motion reset in the family. _stack.scss and _stack_brgen.scss
 // both @forward this file ahead of every component sheet, so each app bundle
-// carries it once and no component needs to restate it — thirty copies of these
+// carries it once and no component needs to restate it - thirty copies of these
 // five lines were removed on 2026-09-03 and the compiled CSS was unchanged but
 // for their absence.
 //
@@ -47,7 +47,7 @@
 // inside an entrance animation or its --delay stagger window, so below-fold
 // sections and mid-stagger cards came out blank or half-transitioned.
 //
-// `animation: none` alone is not enough — an element whose from-keyframe
+// `animation: none` alone is not enough - an element whose from-keyframe
 // starts at opacity 0 would print at its unanimated declared state, and
 // scroll-reveal's controller hides its targets inline before revealing them.
 // Forcing the visible trio beats both the keyframes and the inline styles.

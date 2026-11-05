@@ -10,7 +10,7 @@ class DeclutterController < ApplicationController
     @overdue_challenges = DeclutterChallenge.where(user: Current.user).overdue.includes(:item)
     @active_challenges = DeclutterChallenge.where(user: Current.user).active.includes(:item)
     # One load, two views of it. box_age_days reads a JSON metadata key with an
-    # updated_at fallback, so the age filter cannot be pushed into SQL — but
+    # updated_at fallback, so the age filter cannot be pushed into SQL - but
     # querying the same scope twice to do it can be.
     box = Current.user.items.declutter_box.order(updated_at: :asc).to_a
     @aging_box = box.select { |item| box_age_days(item) >= 30 }
@@ -98,7 +98,7 @@ class DeclutterController < ApplicationController
   def set_item
     # Preloaded: strict_loading_by_default is on, so #review reading
     # @item.declutter_review and #challenge reading @item.declutter_challenges
-    # both raised on a bare find — those two pages 500'd in production.
+    # both raised on a bare find - those two pages 500'd in production.
     @item = Current.user.items.includes(:declutter_review, :declutter_challenges).find(params[:id])
   end
 

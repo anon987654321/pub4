@@ -4,7 +4,7 @@ require "test_helper"
 
 # retry_on is not uniqueness. Every recurring or fan-out job here declares a
 # Solid Queue concurrency key, and the key has to compute from the job's real
-# arguments — a lambda whose arity does not match raises only when the job is
+# arguments - a lambda whose arity does not match raises only when the job is
 # enqueued in production.
 class JobConcurrencyTest < ActiveSupport::TestCase
   CASES = {

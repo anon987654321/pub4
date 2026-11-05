@@ -1,4 +1,4 @@
-// Micro-interaction bridge — ecology orbit, crown spawns, streaming nudges (web_011–web_025).
+// Micro-interaction bridge - ecology orbit, crown spawns, streaming nudges (web_011-web_025).
 (() => {
   "use strict";
 
@@ -104,7 +104,7 @@
     nanoGaze(mode);
   }
 
-  // web_011 — ecology orbit tightens with kernel attention
+  // web_011 - ecology orbit tightens with kernel attention
   setInterval(() => {
     const ecology = window.MASTEREcology;
     if (!ecology?.agents || reducedMotionActive()) return;
@@ -127,7 +127,7 @@
     });
   }, 520);
 
-  // web_012 / web_025 — memory + photo-ready crown cells
+  // web_012 / web_025 - memory + photo-ready crown cells
   window.addEventListener("master:visual", (ev) => {
     const name = String(ev.detail?.name || ev.detail?.mode || "");
     if (/memory|retriev|context|compact/.test(name)) spawnCrown(2, { valence: 0.42 });
@@ -139,7 +139,7 @@
 
   // Breathing is owned by the canonical face frame loop; do not add a second timer.
 
-  // web_014 — mouse tilt biases eye mask position
+  // web_014 - mouse tilt biases eye mask position
   if (cv) {
     cv.addEventListener("pointermove", (e) => {
       if (reducedMotionActive()) return;
@@ -156,7 +156,7 @@
     }, { passive: true });
   }
 
-  // web_015 — face edge hover peripheral arousal
+  // web_015 - face edge hover peripheral arousal
   if (cv) {
     cv.addEventListener("pointermove", (e) => {
       if (reducedMotionActive()) return;
@@ -170,7 +170,7 @@
 
   // Reduced motion removes the continuous sinusoidal scan; semantic gaze updates remain event-driven.
 
-  // web_020 — streaming nudges eye attention
+  // web_020 - streaming nudges eye attention
   window.addEventListener("chat:chunk", () => {
     boostEye(0.05);
     applyMicroPresence(st()?.mode || "speaking");
@@ -184,9 +184,9 @@
     };
   }
 
-  // web_021 — sentence-end mouthPool pressure handled in chunk wrapper above
+  // web_021 - sentence-end mouthPool pressure handled in chunk wrapper above
 
-  // web_022 — veto/pass ecology calm burst
+  // web_022 - veto/pass ecology calm burst
   window.addEventListener("chat:dmesg", (ev) => {
     const line = String(ev.detail?.line || "");
     if (!/veto|pass/i.test(line)) return;
@@ -195,12 +195,12 @@
     else mouthPressure(-0.12);
   });
 
-  // web_023 — STT start eye attention boost (augments face.part5)
+  // web_023 - STT start eye attention boost (augments face.part5)
   window.addEventListener("master:visual", (ev) => {
     if (/stt:start|listening/.test(String(ev.detail?.name || ev.detail?.mode || ""))) boostEye(0.18);
   });
 
-  // web_024 / f3d_006 — mouthDrive via blendshape bridge (replaces direct mouth mutation)
+  // web_024 / f3d_006 - mouthDrive via blendshape bridge (replaces direct mouth mutation)
   setInterval(() => {
     const state = st();
     if (!state) return;
@@ -210,13 +210,13 @@
     if (mat?.uniforms?.uJaw) mat.uniforms.uJaw.value = Math.max(mat.uniforms.uJaw.value, drive * 0.42);
   }, 48);
 
-  // mi_073 — dynamic canvas aria-label from state
+  // mi_073 - dynamic canvas aria-label from state
   setInterval(() => {
     if (!cv) return;
     const state = st();
     const mode = state?.mode || document.documentElement.dataset.masterMode || "idle";
     const conf = Number(document.documentElement.style.getPropertyValue("--master-confidence") || 0.86);
-    cv.setAttribute("aria-label", `MASTER face — ${mode}, confidence ${Math.round(conf * 100)}%`);
+    cv.setAttribute("aria-label", `MASTER face - ${mode}, confidence ${Math.round(conf * 100)}%`);
   }, 2000);
 
   window.MASTER_FACE_MICRO = Object.freeze({ boostEye, spawnCrown, mouthPressure, microExpression, nanoGaze });

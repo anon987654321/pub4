@@ -11,7 +11,7 @@ class TradedoublerTest < ActiveSupport::TestCase
   # whole table, so they assert on a clean database rather than on what they
   # created. That holds on a laptop and fails on the VPS, whose CI seeds ten
   # placeholder tradedoubler rows before the suite runs
-  # ("Affiliate: 10 placeholder product(s)") — which is why the same commit gave
+  # ("Affiliate: 10 placeholder product(s)") - which is why the same commit gave
   # 303 runs / 0 failures here and "Expected: 2, Actual: 12" there. 12 is the
   # ten seeded rows plus the two the test imported.
   #

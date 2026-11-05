@@ -34,7 +34,7 @@ class DomSurfaceSchemaTest < Minitest::Test
   end
 
   def test_order_violation_detected
-    # product grid before nav — hard order fail
+    # product grid before nav - hard order fail
     html = <<~HTML
       <main id="main-content"><div class="deal-grid deal-card"></div>
       <div id="navBar" class="search marketplace-nav-search"><input name="q"></div>
@@ -56,7 +56,7 @@ class DomSurfaceSchemaTest < Minitest::Test
 # surface whose schema forbade a sign-in prompt, and it went with /live. The
 # test is about the schema not being blind to a mutation, not about that one
 # pattern, so it mutates a surface that still exists against a rule that still
-# exists — an unlabelled button, which every surviving schema forbids.
+# exists - an unlabelled button, which every surviving schema forbids.
 def test_mutation_inject_unlabelled_button_is_caught
   good = File.read(File.join(FIXTURES, "good_brgen_home.html"))
   mutated = good.sub("</main>", "<button></button></main>")

@@ -22,7 +22,7 @@ class Vote < ApplicationRecord
   # in the same second must both count, and a read-modify-write loses one of
   # them. The database does the addition.
   #
-  # The delta is the change this save made, not the value — an up-vote flipped to
+  # The delta is the change this save made, not the value - an up-vote flipped to
   # a down-vote moves the score by -2, and saved_change_to_value gives both ends
   # of that without another query.
   def apply_score_delta
@@ -42,13 +42,13 @@ class Vote < ApplicationRecord
   end
 
   # `votable.user` was a lazy belongs_to read on a votable the controller loaded
-  # by id, and ApplicationRecord is strict_loading by default — so this raised
+  # by id, and ApplicationRecord is strict_loading by default - so this raised
   # after the vote had already been written. It was invisible for as long as
   # VotesController#find_votable 404'd before ever reaching a save (post_vote_path
   # carries a slug, and find_votable called find). Fixing the 404 exposed it.
   #
   # votable is polymorphic, so Shared::StrictSafeAssociations#strict_safe does
-  # not apply — it needs reflection.klass, which a polymorphic belongs_to has no
+  # not apply - it needs reflection.klass, which a polymorphic belongs_to has no
   # single answer for. Reading the author id off the table avoids instantiating
   # either record.
   def rescore_author

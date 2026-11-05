@@ -6,7 +6,7 @@
 // drawSemanticTerrain drew thirteen rows of stroked contour, drawAgentSpirits
 // outlined each agent with strokeRect, drawTrails and drawWeather added more
 // strokes on top. All of it was line work in the background of a face that is
-// deliberately nothing but points — "lines outside in the background, that's
+// deliberately nothing but points - "lines outside in the background, that's
 // not brutalist at all" (operator, 2026-08-27).
 //
 // The state they drew from still lives in cognition_ecology.js and is still
@@ -32,7 +32,7 @@
       ctx.fillRect((memory.x - sz * 0.5) | 0, (memory.y - sz * 0.5) | 0, sz, sz);
 
 // No constellation. This drew a stroke between every pair of memories inside
-// a radius — the particle-network effect — which is "lines in between the
+// a radius - the particle-network effect - which is "lines in between the
 // particle dots" (operator, 2026-08-27) on a surface whose whole idea is
 // that it is points and nothing else. The memories still exist and still
 // draw; what is gone is the pretence that they are connected.

@@ -6,7 +6,7 @@ module Fediverse
     module_function
 
     # Returns a FediActor or nil. Refreshes a stale record rather than trusting
-    # a cached key forever, but keeps serving the old one if the refresh fails —
+    # a cached key forever, but keeps serving the old one if the refresh fails -
     # a remote outage must not stop us verifying signatures we can already
     # verify.
     def find_or_fetch(uri)

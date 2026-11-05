@@ -6,7 +6,7 @@
 // ============================================================ module: brgen_vertical_shell
 // ============================================================ layout: vertical shell
 
-/* Vertical surfaces — x shell underneath, product chrome on top */
+/* Vertical surfaces - x shell underneath, product chrome on top */
 body[class*="vertical-"] .feed-header {
   display: none;
 }
@@ -27,7 +27,7 @@ body.vertical-takeaway {
   /* Kaufland.de's storefront system, measured from its archived home, category
      and product pages at 1440 and 400 (the owner's instruction: copy it
      exactly, then mould). The palette is its light theme; the three sizes are the
-     steps it sets that the family ladder does not carry — 13px meta, 21px section
+     steps it sets that the family ladder does not carry - 13px meta, 21px section
      headings and tile prices, 32px on the product page's price. */
   --store-ink: #3c3c3c;
   --store-ink-soft: #747474;
@@ -80,7 +80,7 @@ body[class*="vertical-"] main {
   padding-top: 0;
 }
 
-/* No surface hides the shell. Every vertical wears the front page's chrome —
+/* No surface hides the shell. Every vertical wears the front page's chrome -
    operator decision, and the whole of it. Where the product is a canvas, as on
    maps and playlist, the surface still needs a way back to the rest of the
    city: the canvas reaches every edge and the chrome sits above it, through
@@ -91,14 +91,14 @@ body[class*="vertical-"] main {
    on top of / push the brand.
 
    Skip links are left alone: a display:none element cannot receive focus, and
-   the shared .skip-link in _shell.scss hides by clipping to 1×1 with clip-path +
+   the shared .skip-link in _shell.scss hides by clipping to 1x1 with clip-path +
    opacity:0, so it still takes focus and reveals itself. */
 body.vertical-playlist .radio-header {
   display: none !important;
 }
 
 /* Brand mark sits above the tunnel canvas (z:50). Position and size are the
-   fleet default — the wordmark lands in the same place on every surface, so it
+   fleet default - the wordmark lands in the same place on every surface, so it
    reads as one product rather than a set of lookalikes. The only thing playlist
    needs is to win the stacking contest with the tunnel canvas. */
 body.vertical-playlist .brgen-logo-mark {
@@ -166,7 +166,7 @@ body[class*="vertical-"] main > section {
 }
 
 /* Today's five, and the verification queue. A picks card is a photo with a name
-   under it — the deck's card carries the whole profile, and this list is a
+   under it - the deck's card carries the whole profile, and this list is a
    shortlist, not a second deck. */
 .pick-list,
 .verify-queue {
@@ -194,7 +194,7 @@ body[class*="vertical-"] main > section {
   font-size: var(--text-small);
 }
 
-/* The gesture we asked for, stated once and plainly — a reviewer and the person
+/* The gesture we asked for, stated once and plainly - a reviewer and the person
    holding the phone have to read the same sentence. */
 .verify-pose {
   font-weight: var(--weight-bold);
@@ -240,7 +240,7 @@ body[class*="vertical-"] main > section {
   width: var(--space-3);
   height: var(--space-3);
   border-radius: var(--radius-pill);
-  border: 2px solid rgba(255, 255, 255, .82); // scan: intentional — drawn over map tiles, not theme surfaces
+  border: 2px solid rgba(255, 255, 255, .82); // scan: intentional - drawn over map tiles, not theme surfaces
   background: var(--accent);
 }
 
@@ -250,7 +250,7 @@ body[class*="vertical-"] main > section {
    literal fallback here would be a second copy of each. Inventing a third and
    fourth palette entry is a design decision, not a wiring one.
 
-   Flat throughout — no shadow, blur or glow, per the design rules. */
+   Flat throughout - no shadow, blur or glow, per the design rules. */
 .map-marker--courier span,
 .map-marker--food span {
   background: var(--color-success);
@@ -296,7 +296,7 @@ body[class*="vertical-"] main > section {
   display: grid;
   place-items: center;
   padding: var(--space-4);
-  background: rgba(2, 6, 23, .58); // scan: intentional — the match veil over map tiles, not theme surfaces
+  background: rgba(2, 6, 23, .58); // scan: intentional - the match veil over map tiles, not theme surfaces
   z-index: 120;
   animation: matchFadeIn .18s var(--ease-out) both;
 }
@@ -326,7 +326,7 @@ body[class*="vertical-"] main > section {
   margin-inline-start: var(--space-1);
 }
 
-/* Markedsplass — Kaufland.de's storefront, measured from its archived pages at
+/* Markedsplass - Kaufland.de's storefront, measured from its archived pages at
    1440 and 400. The shared storefront catalogue starts at .store-heading and the
    --store-* palette sits on body.vertical-marketplace, body.vertical-takeaway;
    what follows is what only markedsplass renders: the teaser banner, the listing

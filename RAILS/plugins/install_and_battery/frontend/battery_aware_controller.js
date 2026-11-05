@@ -6,9 +6,9 @@ import { Controller } from "@hotwired/stimulus"
 //   <body data-controller="battery-aware network-aware ...">
 //
 // Classes toggled on <html>:
-//   .battery-low       → level < threshold and not charging
-//   .battery-charging  → currently charging
-//   .page-hidden       → document.hidden === true
+//   .battery-low       -> level < threshold and not charging
+//   .battery-charging  -> currently charging
+//   .page-hidden       -> document.hidden === true
 //
 // Events:
 //   pub4:battery-change    { detail: { level, charging, low, supported } }

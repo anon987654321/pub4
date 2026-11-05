@@ -2,7 +2,7 @@
 
 # A pending order is a line in the buyer's cart, and the buyer decides how many
 # and whether it stays. OrdersController#update is the seller's side of the same
-# row — accept or decline — which is why the cart does not post there.
+# row - accept or decline - which is why the cart does not post there.
 class Marketplace::CartItemsController < Marketplace::BaseController
   before_action :require_user_session
   before_action :set_item

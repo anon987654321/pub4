@@ -13,7 +13,7 @@ class CommentTombstoneTest < ActionDispatch::IntegrationTest
 
     @author = member("tomb-author")
     @replier = member("tomb-replier")
-    @post = Post.create!(user: @author, city: @city, title: "Tråd", content: "…")
+    @post = Post.create!(user: @author, city: @city, title: "Tråd", content: "...")
     @root = Comment.create!(user: @author, commentable: @post, content: "hemmelig innhold")
     @reply = Comment.create!(user: @replier, commentable: @post, content: "et svar", parent_id: @root.id)
   end

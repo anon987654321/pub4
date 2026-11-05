@@ -34,7 +34,7 @@ Routes are drawn on `Playlist::Engine`, and brgen mounts the engine at the root 
 and dilla sketches. A playlist also has an embeddable page and an owner-only analytics page. A
 set adds a like and a `listening_party` with its party messages, and `hosted_tracks` and
 `listens` round out upload and playback. From the host, reach the helpers as
-`playlist.playlist_url(…, subdomain: "radio")`.
+`playlist.playlist_url(..., subdomain: "radio")`.
 
 The engine depends on `pub4-shared` for `User`, authentication, tenancy and the shared UI. On
 screen it uses an immersive stage with a transport bar, and it publishes the bar's height so
@@ -72,7 +72,7 @@ The focused queue-selection regression is available as `cd RAILS && npm run test
 
 The exact 35-track selection and ordering live in
 `RAILS/brgen/config/radio_bergen/tracks.yml`; filenames map to the archive-root
-files in `pub2`, not the stale `mp3/akmd-…` URLs. Audio is deliberately not
+files in `pub2`, not the stale `mp3/akmd-...` URLs. Audio is deliberately not
 committed into Git. The command below is for reference only. Do not execute it
 until the tenant-scope blocker is closed and tested locally. Distribution rights
 for every recording must also be confirmed.

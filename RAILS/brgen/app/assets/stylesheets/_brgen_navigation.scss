@@ -6,7 +6,7 @@
 // ============================================================ module: brgen_navigation
 // ============================================================ chrome: nav
 
-/* Sticky feed header — single source (accent underline + scroll fade) */
+/* Sticky feed header - single source (accent underline + scroll fade) */
 .feed-header {
   position: sticky;
   top: 0;
@@ -231,7 +231,7 @@ label.compose-action:hover { color: var(--text); }
      The ramp FINISHES where the toggle starts, completing over the 2.5rem
      before it; a ramp that begins there leaves a link half opaque under the sun
      icon, and the two read as one smudge. */
-  /* On a phone both fades are edge fades — the only thing to dissolve into is
+  /* On a phone both fades are edge fades - the only thing to dissolve into is
      the screen edge, because nothing overlaps the bar any more. */
   --nav-fade-lead: 0px;
   --nav-fade-stop: calc(100% - var(--space-4));
@@ -271,8 +271,8 @@ label.compose-action:hover { color: var(--text); }
   cursor: grabbing;
 }
 
-/* One continuous run. The Hick's-law grouping is gone — the bar is eight
-   entries, which is the size the grouping existed to buy — so the only groups
+/* One continuous run. The Hick's-law grouping is gone - the bar is eight
+   entries, which is the size the grouping existed to buy - so the only groups
    left are the verticals and, on the front page, the feed orderings. */
 .nav_swiper_group {
   display: flex;
@@ -393,18 +393,18 @@ label.compose-action:hover { color: var(--text); }
 //   drop shadows       none            pixel_perfection.forbidden_css
 //
 // Mobile first and min-width only (MASTER MOBILE_FIRST): one column until there is
-// room for two. 1280 is design_tokens viewport.xl — BreakpointLint asserts every
+// room for two. 1280 is design_tokens viewport.xl - BreakpointLint asserts every
 // media width is one of those edges, so this is not a width chosen here.
 //
 // Separation is surface, not line (the operator's "no lines at all", with one
-// exemption for form fields). The window has three real seams — rail against
-// pane, header against log, composer against log — and all three are drawn by
+// exemption for form fields). The window has three real seams - rail against
+// pane, header against log, composer against log - and all three are drawn by
 // putting chrome on --surface-elevated and content on --bg. That pair differs in
 // both themes, where --surface and --bg do not: brgen-old light sets both to
 // #ffffff, so a rail on --surface against a pane on --bg would have no seam.
 //
 // Two borders survive and each cites its rule:
-//   .messenger-composer-box   the form-field exemption — you must see where to type
-//   .messenger-details-panel  ui_polish.flat_ui — floating chrome is 1px border
+//   .messenger-composer-box   the form-field exemption - you must see where to type
+//   .messenger-details-panel  ui_polish.flat_ui - floating chrome is 1px border
 //                             plus an elevated surface, never a shadow
 // ============================================================ /module: brgen_navigation

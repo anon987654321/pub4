@@ -23,14 +23,14 @@ class ChromeI18nLintTest < Minitest::Test
 
     Operator::ChromeI18nLint::BASELINES.each do |kind, baseline|
       assert_equal baseline, counts.fetch(kind),
-                   "#{kind} is at #{counts.fetch(kind)} against a baseline of #{baseline} — " \
+                   "#{kind} is at #{counts.fetch(kind)} against a baseline of #{baseline} - " \
                    "lower the baseline in chrome_i18n_lint.rb"
     end
   end
 
   # soul.yml EXEMPTIONS_EXPIRE, made executable for the one opt-out this lint
   # owns. `chrome_i18n: ok` silences a line; when that line stops matching the
-  # rule — the string gets translated, the element is deleted, the markup moves —
+  # rule - the string gets translated, the element is deleted, the markup moves -
   # the marker stays and silences whatever occupies those lines next.
   #
   # Written after deleting FINAL_the old backlog left two MASTER baselines still granting
@@ -54,7 +54,7 @@ class ChromeI18nLintTest < Minitest::Test
         lines.each_with_index.filter_map do |line, i|
           next unless line.include?(Operator::ChromeI18nLint::OPT_OUT)
 
-          # The marker guards its own line and the next two — the same window
+          # The marker guards its own line and the next two - the same window
           # comment_or_opt_out? uses, read forwards.
           window = lines[i..[i + 2, lines.size - 1].min].join
           next if rules.any? { |re| window.match?(re) }
@@ -65,7 +65,7 @@ class ChromeI18nLintTest < Minitest::Test
     end
 
     assert_empty stale.sort,
-                 "these `#{Operator::ChromeI18nLint::OPT_OUT}` markers no longer excuse anything — " \
+                 "these `#{Operator::ChromeI18nLint::OPT_OUT}` markers no longer excuse anything - " \
                  "delete them, or they will silence whatever lands on those lines next"
   end
 
@@ -106,7 +106,7 @@ class ChromeI18nLintTest < Minitest::Test
   end
 
   def test_a_single_character_label_is_not_worth_translating
-    refute_match(Operator::ChromeI18nLint::ARIA_LABEL, %(<button aria-label="×">))
+    refute_match(Operator::ChromeI18nLint::ARIA_LABEL, %(<button aria-label="x">))
   end
 
   # brgen renders :nb, so an English toast over a Norwegian page is the most

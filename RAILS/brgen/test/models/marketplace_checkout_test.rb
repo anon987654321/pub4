@@ -3,7 +3,7 @@
 require "test_helper"
 
 # Marketplace::Order is a per-listing offer with its own payment, which is right
-# for classifieds — a bike from a stranger is negotiated, not added to a cart.
+# for classifieds - a bike from a stranger is negotiated, not added to a cart.
 # It was wrong for a shop: four things meant four payments, four PSP round trips
 # and four card charges, with nowhere to put a delivery address.
 #
@@ -63,7 +63,7 @@ class MarketplaceCheckoutTest < ActiveSupport::TestCase
     assert_equal %w[paid paid], [ first.reload.payment_status, second.reload.payment_status ]
   end
 
-  # A half-paid basket — some orders paid, some not, one card charged — is the
+  # A half-paid basket - some orders paid, some not, one card charged - is the
   # state nobody has a way to resolve. The checkout loads its own order
   # instances, so the only honest way to make one fail is to patch the method it
   # calls and put it back afterwards.

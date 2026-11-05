@@ -22,7 +22,7 @@ class ReviewsController < ApplicationController
 
   private
 
-  # Accepts both the form_with model shape (params[:review][…]) and plain
+  # Accepts both the form_with model shape (params[:review][...]) and plain
   # field names, mirroring CheckoutController#checkout_params.
   def review_attrs
     params[:review].is_a?(ActionController::Parameters) ? params.require(:review) : params

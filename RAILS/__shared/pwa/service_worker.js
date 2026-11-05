@@ -21,7 +21,7 @@ const DYNAMIC_PREFIXES = [
 ]
 
 // A person's own pages: conversations, notifications, account and sign-in.
-// They are never written to a cache, because a cache outlives the session —
+// They are never written to a cache, because a cache outlives the session -
 // the next person on a shared phone, offline, would be served them.
 const PRIVATE_PREFIXES = [
   "/conversations",
@@ -38,8 +38,8 @@ const PRIVATE_PREFIXES = [
 const isPrivatePath = path => PRIVATE_PREFIXES.some(prefix => path === prefix || path.startsWith(`${prefix}/`))
 
 // Only writing something new is worth replaying after a dead connection: a
-// post, a comment or reply, a message. Everything else — sign-in with its
-// password, payment, deleting, settings — must not wait in IndexedDB and
+// post, a comment or reply, a message. Everything else - sign-in with its
+// password, payment, deleting, settings - must not wait in IndexedDB and
 // fire later on its own.
 const REPLAYABLE_POST = /(^|\/)(posts|comments|replies|messages)$/
 

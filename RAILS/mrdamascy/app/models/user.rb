@@ -5,7 +5,7 @@ class User < ApplicationRecord
   has_many :loyalty_stamps, dependent: :destroy
   has_many :orders, dependent: :destroy
 
-  # Roles: customer/staff/courier/admin — the phone is the identity, the role
+  # Roles: customer/staff/courier/admin - the phone is the identity, the role
   # the permission (staff board, courier runs).
   enum :role, { customer: 0, staff: 1, courier: 2, admin: 3 }, default: :customer
 
@@ -14,7 +14,7 @@ class User < ApplicationRecord
 
   validates :phone, presence: true, uniqueness: true, format: { with: /\A\d{8,12}\z/ }
 
-  # The name shown in greetings ("Ahlan, Ola!") — falls back to the phone.
+  # The name shown in greetings ("Ahlan, Ola!") - falls back to the phone.
   def display_name
     name.presence || phone
   end

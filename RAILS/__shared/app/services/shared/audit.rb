@@ -6,7 +6,7 @@ module Shared
   # A service rather than a concern, because the operations worth auditing are
   # not model lifecycle events. Lifting a ban is a destroy, appointing a
   # moderator is an `update!(role:)` on a membership that updates for a dozen
-  # other reasons, and neither carries the acting moderator — `Current.user` is
+  # other reasons, and neither carries the acting moderator - `Current.user` is
   # brgen-local and this file is loaded by three apps, so reaching for it here
   # would NameError in the other two. The caller knows who acted; it passes them.
   class Audit
@@ -27,7 +27,7 @@ module Shared
       )
       true
     rescue StandardError => e
-      # An audit write must never be the reason a moderator's action fails —
+      # An audit write must never be the reason a moderator's action fails -
       # same contract as Shared::DomainEvent, and for the stronger reason: a ban
       # that could not be recorded is still a ban that should take effect. The
       # log is loud so a silently unaudited action is findable afterwards.

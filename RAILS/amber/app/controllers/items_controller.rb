@@ -8,7 +8,7 @@ class ItemsController < ApplicationController
   before_action :set_item, only: %i[show edit update destroy spark_joy clear_joy declutter wear archive restore]
   before_action :authorize!, only: %i[edit update destroy spark_joy clear_joy declutter wear archive restore]
   # show was in the set_ list but not the authorize! list, and set_item is an
-  # unscoped Item.find — so GET /items/:id returned any user's item (brand,
+  # unscoped Item.find - so GET /items/:id returned any user's item (brand,
   # price, purchase date, photos). Check on viewability rather than ownership so
   # public and follower wardrobes still browse.
   before_action :authorize_view!, only: %i[show]

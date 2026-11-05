@@ -1,4 +1,4 @@
-# Mr. Damascy locale — NB
+# Mr. Damascy locale - NB
 nb:
   time:
     formats:
@@ -22,11 +22,11 @@ nb:
     name: Mr. Damascy
     short_name: Damascy
     tagline: Fra Damaskus med kjærlighet
-    brand: Mr. Damascy — Shawarma & Kebab
+    brand: Mr. Damascy - Shawarma & Kebab
     cuisine: Shawarma & Kebab
-    description: Shawarma og kebab fra én kjøkkenedør i Bergen sentrum — bestilt og betalt med Vipps på 3 steg.
+    description: Shawarma og kebab fra én kjøkkenedør i Bergen sentrum - bestilt og betalt med Vipps på 3 steg.
     city: Bergen
-    title: Mr. Damascy — Shawarma & Kebab
+    title: Mr. Damascy - Shawarma & Kebab
     greeting: Ahlan! Sultet?
   nav:
     meny: Meny
@@ -62,7 +62,7 @@ nb:
       sulphites: svoveldioksid og sulfitter
       lupin: lupin
       molluscs: bløtdyr
-    hero_tagline: Fra Damaskus med kjærlighet — grillat i Bergen
+    hero_tagline: Fra Damaskus med kjærlighet - grillat i Bergen
     hero_rating: ⭐ %{rating}
     hero_hours: Åpent %{hours}
     hero_open_now: Åpent nå
@@ -79,28 +79,28 @@ nb:
       '1': Mild
       '2': Middels
       '3': Sterk!
-    weight_badge: '%{weight} g — kvartover-ærlig'
+    weight_badge: '%{weight} g - kvartover-ærlig'
     salatbar: Salatbar
-    salatbar_hint: Velg fritt fra salatbaren — alt er gratis, som det skal være i Bergen
+    salatbar_hint: Velg fritt fra salatbaren - alt er gratis, som det skal være i Bergen
     sauces: Sauser
     sauce_limit: "Velg opptil %{count}"
-    sauce_limit_reached: "To sauser valgt — de andre er låst til du fjerner en"
+    sauce_limit_reached: "To sauser valgt - de andre er låst til du fjerner en"
     toppings: Salatbar
     extras: Ekstra
-    max_sauces: Maks 2 sauser — gavmildheten har en grense i selve wrapen
+    max_sauces: Maks 2 sauser - gavmildheten har en grense i selve wrapen
     choose_options: Velg sauser først
     note_label: Note til kjøkkenet
     note_placeholder: Ekstra sterk? Uten løk? Vi leser alt (valgfritt)
     quantity: Antall
     add_to_cart: Legg i kurv
-    add_to_cart_price: Legg i kurv · %{price}
+    add_to_cart_price: Legg i kurv - %{price}
     back_to_menu: Tilbake til menyen
     sold_out: Ikke tilgjengelig akkurat nå
     reorder_title: Yalla igjen
-    reorder_body: Du hadde %{items} sist — samme igjen?
+    reorder_body: Du hadde %{items} sist - samme igjen?
     reorder_cta: Legg alt i kurven
     reorder_done: Alt fra sist ligger i kurven
-    add_with_price: Legg i kurv · %{price}
+    add_with_price: Legg i kurv - %{price}
     badges:
       deal: Kupp
       secret: Hemmelig meny
@@ -115,24 +115,24 @@ nb:
     qty: Antall
     reorder: Yalla igjen
     total: Totalt
-    zone_note: Vi leverer på indre øst — sjekk postnummeret i kassen.
-    delivery_facts: "Levering fra %{fee} · fram på inntil %{eta} min"
+    zone_note: Vi leverer på indre øst - sjekk postnummeret i kassen.
+    delivery_facts: "Levering fra %{fee} - fram på inntil %{eta} min"
   origins:
-    damaskus: Oppskriften fra bestefars shawarma-bod ved Souq al-Hamidiyah. Hvitløkssausen lages hver morgen — toum som dere husker den.
-    beirut: Beirut skjærer lammen tynt og gavmildt — Joseph og Jabbour lærte oss at granateple og rødløk er beste vennepar. Én bit, og du står på Corniche.
-    berlin: 'Hasir oppfant döner-sandwichen i 1971, og Mustafa gjorde køen til en institusjon. Vår versjon er full av grønnsaker — som Berlin selv: travel, varm og overraskende grønn.'
-    adana: Fra Adanas kullgriller — sterk, røykfylt og helt ærlig. Dürümzade i Istanbul lærte oss at et godt dürüm spises med begge hender og litt ærefrykt.
-    bergen: Kvartover-ærlig, salatbar med god selvtillit, middagskebab når regnet har satt inn. Emil lærte oss rene hansker og store porsjoner — Bergen lærte oss å dele dem i løpet.
-    dubai: Gatene i Dubai legger pommes frites inne i wrapen — og hvem er vi til å si nei? Sprøtt, salt og overraskende perfekt.
-    tel_aviv: Miznon gjorde blomkålen til stjernen, og vi nikket anerkjennende. Helstekt med sitron — grønnsaken får førstegangsplassen.
-    bursa: İskender har servert smør, tomatsaus og yoghurt siden 1867. Vi rører ikke arven — vi lar smøret flyte.
+    damaskus: Oppskriften fra bestefars shawarma-bod ved Souq al-Hamidiyah. Hvitløkssausen lages hver morgen - toum som dere husker den.
+    beirut: Beirut skjærer lammen tynt og gavmildt - Joseph og Jabbour lærte oss at granateple og rødløk er beste vennepar. Én bit, og du står på Corniche.
+    berlin: 'Hasir oppfant döner-sandwichen i 1971, og Mustafa gjorde køen til en institusjon. Vår versjon er full av grønnsaker - som Berlin selv: travel, varm og overraskende grønn.'
+    adana: Fra Adanas kullgriller - sterk, røykfylt og helt ærlig. Dürümzade i Istanbul lærte oss at et godt dürüm spises med begge hender og litt ærefrykt.
+    bergen: Kvartover-ærlig, salatbar med god selvtillit, middagskebab når regnet har satt inn. Emil lærte oss rene hansker og store porsjoner - Bergen lærte oss å dele dem i løpet.
+    dubai: Gatene i Dubai legger pommes frites inne i wrapen - og hvem er vi til å si nei? Sprøtt, salt og overraskende perfekt.
+    tel_aviv: Miznon gjorde blomkålen til stjernen, og vi nikket anerkjennende. Helstekt med sitron - grønnsaken får førstegangsplassen.
+    bursa: İskender har servert smør, tomatsaus og yoghurt siden 1867. Vi rører ikke arven - vi lar smøret flyte.
     gaziantep: Gaziantep er kebabens UNESCO-by. Ali Nazik med røyket aubergine, og baklava som knaser som høstløv.
-    familie: Fest-mezzeen kommer ikke fra én by — den kommer fra alle middagsbordene i Damaskus. Deles med hendene, avsluttes med «Sahtein!»
+    familie: Fest-mezzeen kommer ikke fra én by - den kommer fra alle middagsbordene i Damaskus. Deles med hendene, avsluttes med «Sahtein!»
     stockholm: Stockholm fant opp kebabpizzaen, og vi takker med respekt og ekstra ost. Lørdagsmat uten diskusjon.
-    sydney: Sent på kvelden i Sydney fins HSP — Halal Snack Pack. Pommes, kjøtt, ost og kokkens hemmelige saus. Nattmatens svar på en klem.
+    sydney: Sent på kvelden i Sydney fins HSP - Halal Snack Pack. Pommes, kjøtt, ost og kokkens hemmelige saus. Nattmatens svar på en klem.
   cart:
     title: Kurven din
-    empty_title: Kurven er tom — ennå.
+    empty_title: Kurven er tom - ennå.
     empty_body: Menyen er varm og sausene er laget. Yalla, finn noe godt.
     empty_cta: Til menyen
     item_count:
@@ -142,20 +142,20 @@ nb:
     delivery_fee: Levering
     discount: Rabatt
     total: Totalt
-    pickup_free: Henting — du henter selv, ingen leveringsgebyr
+    pickup_free: Henting - du henter selv, ingen leveringsgebyr
     mode_label: Levering eller henting?
     mode_delivery: Levering
     mode_pickup: Henting
-    promo_hint: Vi finner alltid beste rabatt for deg — ingen kodetrengsel her
+    promo_hint: Vi finner alltid beste rabatt for deg - ingen kodetrengsel her
     promo_auto: '%{code} lagt inn automatisk 🎉'
     promo_line: Rabatt (%{code})
-    steps_note: 3 steg · ingen kortfelter · trygg betaling
+    steps_note: 3 steg - ingen kortfelter - trygg betaling
     vipps_cta: Betal med Vipps
     checkout_cta: Til kassen
     continue: Handla litt mer
     remove: Fjern
     note: Note
-    bar_label: Kurv · %{count} · %{total}
+    bar_label: Kurv - %{count} - %{total}
     bar_cta: Betal
     bar_items:
       one: '%{count} vare'
@@ -163,10 +163,10 @@ nb:
     bar_title: Kurven din
     decrease: Minsk antall
     increase: Øk antall
-    empty: Kurven er tom. Yalla — menyen venter!
+    empty: Kurven er tom. Yalla - menyen venter!
     updated: Kurven er oppdatert.
   checkout:
-    title: Bare bekreft — vi gjør resten
+    title: Bare bekreft - vi gjør resten
     subtitle: Én skjerm. Ingen konto-drama. Ingen kortfelter.
     address_label: Adresse
     address_placeholder: Gate og nummer
@@ -174,7 +174,7 @@ nb:
     postcode_placeholder: '5004'
     phone_placeholder: "900 00 000"
     delivery_note: "Til budet"
-    delivery_note_placeholder: "Dørkode, etasje, ring på … (valgfritt)"
+    delivery_note_placeholder: "Dørkode, etasje, ring på ... (valgfritt)"
     name_label: "Navn"
     name_placeholder: "Så kjøkkenet og budet vet hvem maten er til"
     card_mark: "Kort"
@@ -186,9 +186,9 @@ nb:
     mode_label: Levering eller henting?
     mode_delivery: Levering
     mode_pickup: Hent selv
-    zone_checking: Sjekker postnummeret…
-    zone_ok: Klar i %{eta} min · levering %{fee}
-    zone_fail: Hmm — vi leverer ikke dit ennå. Prøv et Bergens-postnummer, eller velg henting.
+    zone_checking: Sjekker postnummeret...
+    zone_ok: Klar i %{eta} min - levering %{fee}
+    zone_fail: Hmm - vi leverer ikke dit ennå. Prøv et Bergens-postnummer, eller velg henting.
     zone_unknown: Skriv postnummer, så sjekker vi kjapt
     eta_delivery: Ca. %{eta} min til døren
     eta_pickup: Klar til henting om ca. %{eta} min
@@ -197,8 +197,8 @@ nb:
     vipps_note: 'Raskere enn Foodora: ingen kortfelter'
     vipps_last_used: Sist brukt
     stripe_row: Kort
-    stripe_note: Visa, Mastercard, Apple Pay — trygg betaling hos Stripe
-    paying: Sender deg til betaling …
+    stripe_note: Visa, Mastercard, Apple Pay - trygg betaling hos Stripe
+    paying: Sender deg til betaling ...
     stripe_cta_total: Betal %{total} med kort
     stripe_cta: Betal med kort
     promo_auto: '%{code} lagt inn automatisk'
@@ -207,18 +207,18 @@ nb:
     discount: Rabatt
     total: Totalt
     min_basket_fail: Du mangler %{amount} til minstebestillingen i %{name}
-    pickup_note: Hent på Solheimsgaten 60 (Danmarksplass) — vi starter når du har betalt
+    pickup_note: Hent på Solheimsgaten 60 (Danmarksplass) - vi starter når du har betalt
     cta: Betal med Vipps
-    steps_note: 3 steg · ingen kortfelter
+    steps_note: 3 steg - ingen kortfelter
     terms_note: Ved å betale godkjenner du at maten blir spist med stor glede
     address: Adresse
     cart_summary: I kurven
-    in_progress: "Bestillingen din er allerede på vei til betaling — et øyeblikk."
-    checking: Sjekker levering…
-    closed: Kjøkkenet er stengt akkurat nå — vi åpner 11:00. Yalla i morgen!
+    in_progress: "Bestillingen din er allerede på vei til betaling - et øyeblikk."
+    checking: Sjekker levering...
+    closed: Kjøkkenet er stengt akkurat nå - vi åpner 11:00. Yalla i morgen!
     closed_now: Kjøkkenet tar ikke imot bestillinger akkurat nå.
-    opens_today: Kjøkkenet er stengt nå — vi åpner i dag kl. %{time}.
-    opens_on: Kjøkkenet er stengt nå — vi åpner %{day} kl. %{time}.
+    opens_today: Kjøkkenet er stengt nå - vi åpner i dag kl. %{time}.
+    opens_on: Kjøkkenet er stengt nå - vi åpner %{day} kl. %{time}.
     weekdays:
       mon: mandag
       tue: tirsdag
@@ -227,8 +227,8 @@ nb:
       fri: fredag
       sat: lørdag
       sun: søndag
-    failed: Noe gikk galt i betalingen. Ingen krav — prøv igjen.
-    payment_unavailable: Vi klarte ikke å starte betalingen — ingen penger er reservert. Kurven din venter, yalla prøv igjen.
+    failed: Noe gikk galt i betalingen. Ingen krav - prøv igjen.
+    payment_unavailable: Vi klarte ikke å starte betalingen - ingen penger er reservert. Kurven din venter, yalla prøv igjen.
     mode: Levering eller henting?
     postcode: Postnummer
     sist_brukt: Sist brukt
@@ -236,37 +236,37 @@ nb:
     vipps_cta_total: Betal %{total} med Vipps
     vipps_cta: Betal med Vipps
     login_row: Spar 30 sekunder
-    login_note: Logg inn med Vipps — vi fyller ut navn, nummer og adresse.
+    login_note: Logg inn med Vipps - vi fyller ut navn, nummer og adresse.
     login_cta: Logg inn med Vipps
     login_or: eller fortsett som gjest
   vipps:
     mock_title: Vipps
-    mock_subtitle: Mock-betaling — bare dev og test
+    mock_subtitle: Mock-betaling - bare dev og test
     merchant: Mr. Damascy
     amount_label: Beløp
     approve: Godkjenn med Vipps
     cancel: Avbryt
-    processing: Godkjenner…
-    secure_note: Ingen ekte penger beveger seg her — men flyten er ekte Vipps Express
+    processing: Godkjenner...
+    secure_note: Ingen ekte penger beveger seg her - men flyten er ekte Vipps Express
     amount: Å betale
-    mock_note: Mock-betaling (utviklingsmodus) — ekte Vipps kobles på med VIPPS_MOCK=0.
-    login_mock_subtitle: Mock-innlogging — bare dev og test
+    mock_note: Mock-betaling (utviklingsmodus) - ekte Vipps kobles på med VIPPS_MOCK=0.
+    login_mock_subtitle: Mock-innlogging - bare dev og test
     login_mock_verify: Bekreft med Vipps
     login_mock_phone: Telefon
     login_mock_name: Navn (valgfritt)
     login_mock_continue: Fortsett
-    login_mock_note: Mock-innlogging (utviklingsmodus) — ekte Vipps Login kobles på med VIPPS_MOCK=0.
+    login_mock_note: Mock-innlogging (utviklingsmodus) - ekte Vipps Login kobles på med VIPPS_MOCK=0.
   stripe:
     merchant: Mr. Damascy
     amount: Å betale
     approve: 'Betal med kort'
     cancel: Avbryt
-    mock_note: Mock-betaling (utviklingsmodus) — ekte Stripe kobles på med STRIPE_MOCK=0.
+    mock_note: Mock-betaling (utviklingsmodus) - ekte Stripe kobles på med STRIPE_MOCK=0.
   orders:
     state_announcement: "Status: %{state}"
     title: Dine bestillinger
     empty_title: Ingen bestillinger ennå
-    empty_body: Første wrap er ett trykk unna — og første stjerne i Sahtein-kortet.
+    empty_body: Første wrap er ett trykk unna - og første stjerne i Sahtein-kortet.
     order_label: 'Bestilling #%{id}'
     placed_at: Bestilt %{when}
     eta_label: Ca. %{eta} min
@@ -290,12 +290,12 @@ nb:
     step_pending: Venter
     courier_line: '%{courier} henter maten din'
     courier_anonymous: Budet henter maten din om kort
-    pickup_line: Hent på Solheimsgaten 60 — si Ahlan!
+    pickup_line: Hent på Solheimsgaten 60 - si Ahlan!
     track_title: Spor bestillingen
-    track_hint: Denne siden oppdaterer seg selv — lene deg tilbake
-    thanks: Takk for handelen — Sahtein! صحتين
+    track_hint: Denne siden oppdaterer seg selv - lene deg tilbake
+    thanks: Takk for handelen - Sahtein! صحتين
     reorder: Yalla igjen
-    reorder_hint: Samme som sist — ett trykk
+    reorder_hint: Samme som sist - ett trykk
     reorder_cta: Bestill samme en gang til
     review:
       title: Hvordan var maten?
@@ -336,7 +336,7 @@ nb:
     tip_none: Uten drikkegis
     tip_title: Drikkegis til kureren?
     tip_refused: Drikkegis kan gis én gang, når bestillingen er levert.
-    tip_unpaid: Drikkegisen trekkes ikke i appen — den kommer ikke med i betalingen.
+    tip_unpaid: Drikkegisen trekkes ikke i appen - den kommer ikke med i betalingen.
     total: Totalt
     track: Spor bestillingen
     receipt_title: Kvittering
@@ -345,26 +345,26 @@ nb:
     view: Vis
   loyalty:
     title: Sahtein-kortet
-    subtitle: Samle stjerner — få en gratis wrap
+    subtitle: Samle stjerner - få en gratis wrap
     stamps_count: '%{filled} av %{total} stjerner'
     progress:
       remaining:
         one: '%{count} stjerne til en gratis wrap!'
         other: '%{count} stjerner til en gratis wrap!'
-      ready: Neste wrap er på huset — Yalla!
-    empty: Kortet ditt er tomt — første stjerne er ett måltid unna
+      ready: Neste wrap er på huset - Yalla!
+    empty: Kortet ditt er tomt - første stjerne er ett måltid unna
     rules_title: Slik funker det
     rule_1: Én stjerne per bestilling
     rule_2: 10 stjerner = en gratis wrap
-    rule_3: Ingen utløpsdato — stjernene venter på deg
-    cta: Til menyen — stjerner venter
+    rule_3: Ingen utløpsdato - stjernene venter på deg
+    cta: Til menyen - stjerner venter
     filled: '%{count} av %{total} stjerner'
     how_title: Slik fungerer Sahtein-kortet
     login_hint: Logg inn for å samle stjerner.
     ready: Du har tjent en gratis wrap! Rabatten ligger klart i kassen.
     rule_one: En stjerne per levert bestilling.
     rule_two: Ti stjerner = en gratis wrap.
-    rule_three: Stjernene er dine for alltid — nesten.
+    rule_three: Stjernene er dine for alltid - nesten.
   staff:
     age: "%{minutes} min siden"
     title: Kjøkkenbrettet
@@ -378,33 +378,33 @@ nb:
       confirm: Bekreft
       begin: Begynn
       ready: Klar!
-      none: —
+      none: "-"
     items_summary: '%{count} varer'
     mode_delivery: Levering
     mode_pickup: Henting
     call_customer: Ring %{phone}
-    empty: Ingen bestillinger her — perfekt tid for en toum-pause
+    empty: Ingen bestillinger her - perfekt tid for en toum-pause
     denied: Bare kjøkkenet har tilgang hit
-    advanced: Bestilling flyttet — yalla videre
+    advanced: Bestilling flyttet - yalla videre
     advance_confirmed: Bekreft
     advance_preparing: Begynn å lage
     advance_ready: Klar!
     awaiting_courier: Venter på kurer
     wolt_cta: Send med Wolt
-    wolt_dispatched: '%{courier} henter posen — Wolt Drive er i gang'
+    wolt_dispatched: '%{courier} henter posen - Wolt Drive er i gang'
     wolt_courier: '%{courier} henter posen'
-    wolt_failed: Klarte ikke å bestille Wolt-kurér — prøv igjen
+    wolt_failed: Klarte ikke å bestille Wolt-kurér - prøv igjen
     cannot_advance: Kan ikke flytte denne videre.
     cancel: Kanseller
     cancel_confirm: "Kansellere bestilling #%{id}?"
     cancelled: "Bestilling #%{id} er kansellert."
-    cancelled_refund_due: "Bestilling #%{id} er kansellert. %{amount} er betalt med %{lane} —
+    cancelled_refund_due: "Bestilling #%{id} er kansellert. %{amount} er betalt med %{lane} -
       refunder beløpet manuelt i %{lane}-portalen."
     cannot_cancel: Bare mottatte og bekreftede bestillinger kan kanselleres.
     refunds_title: Refunderes manuelt
-    refunds_hint: Kansellerte bestillinger som er betalt. Appen kan ikke refundere selv —
+    refunds_hint: Kansellerte bestillinger som er betalt. Appen kan ikke refundere selv -
       gjør det i betalingsportalen, og merk dem her.
-    refund_line: "#%{id} · %{amount} · %{lane}"
+    refund_line: "#%{id} - %{amount} - %{lane}"
     mark_refunded: Refundert
     refunded: "Bestilling #%{id} er merket som refundert."
     cannot_refund: Denne bestillingen venter ikke på refusjon.
@@ -414,30 +414,30 @@ nb:
     ready_for_pickup: Klar til henting
     on_the_way: På vei
     pickup_button: Hentet fra kjøkkenet
-    deliver_button: Levert — Sahtein!
+    deliver_button: Levert - Sahtein!
     address_label: Adresse
     total_label: Totalt
     eta_label: ETA
     phone_label: Telefon
-    empty: Ingen løp akkurat nå — stille gater, påbegynt Kreuzworder
+    empty: Ingen løp akkurat nå - stille gater, påbegynt Kreuzworder
     denied: Bare bud har tilgang hit
-    picked_up_flash: God tur — maten er med deg
+    picked_up_flash: God tur - maten er med deg
     delivered_flash: Levert! En stjerne til kunden, et smil til deg
-    cannot_deliver: Kan ikke levere ennå — hent først.
+    cannot_deliver: Kan ikke levere ennå - hent først.
     cannot_pickup: Ordren er ikke klar fra kjøkkenet.
     deliver: Levert
     deliver_confirm: "Merke ordre #%{id} som levert? Det avslutter løpet."
     delivered: Levert! Sahtein!
     onway_title: På vei
-    picked_up: Hentet — på vei til kunden.
+    picked_up: Hentet - på vei til kunden.
     pickup: Hentet
     ready_title: Klar til henting
   auth:
     title: Logg inn med telefonen
-    subtitle: Ingen passord — bare en kode på SMS, så er du i
+    subtitle: Ingen passord - bare en kode på SMS, så er du i
     phone_label: Telefonnummer
     phone_placeholder: 900 00 000
-    phone_hint: 8 siffer holder — norske numre, ingen landkode
+    phone_hint: 8 siffer holder - norske numre, ingen landkode
     send_code: Send kode
     send_again: Send ny kode
     code_label: Kode fra SMS
@@ -445,22 +445,22 @@ nb:
     verify: Logg inn
     code_sent: Koden er på vei 📱
     mock_code: 'Mock-SMS: koden er 1234'
-    wrong_code: Feil kode — prøv igjen, du klarer det
+    wrong_code: Feil kode - prøv igjen, du klarer det
     welcome: Ahlan, %{name}!
     logout: Logg ut
-    privacy_note: Vi bruker nummeret bare for maten — aldri for salgsroboter
-    blurb: Logg inn med telefonnummeret ditt — ingen passord, ingen krøll. Vi sender en kode.
+    privacy_note: Vi bruker nummeret bare for maten - aldri for salgsroboter
+    blurb: Logg inn med telefonnummeret ditt - ingen passord, ingen krøll. Vi sender en kode.
     code: Sms-kode
-    code_invalid: Feil kode. Prøv igjen — du klarer dette!
+    code_invalid: Feil kode. Prøv igjen - du klarer dette!
     logged_in_as: Innlogget som %{name}
     login: Logg inn
     not_authorized: Du mangler tilgang til dette.
     phone: Telefonnummer
-    phone_invalid: Telefonnummeret ser rart ut — åtte siffer, takk.
+    phone_invalid: Telefonnummeret ser rart ut - åtte siffer, takk.
     sign_in_first: Logg inn først, så ordner vi resten.
-    login_failed: Innloggingen ble avbrutt — prøv igjen.
-    too_many_attempts: Mange forsøk på kort tid — vent litt og prøv igjen.
-    sms_unavailable: Innlogging med SMS er ikke tilgjengelig ennå — logg inn med Vipps.
+    login_failed: Innloggingen ble avbrutt - prøv igjen.
+    too_many_attempts: Mange forsøk på kort tid - vent litt og prøv igjen.
+    sms_unavailable: Innlogging med SMS er ikke tilgjengelig ennå - logg inn med Vipps.
     vipps_login: Logg inn med Vipps
     or_sms: eller med SMS-kode
   flash:
@@ -468,47 +468,47 @@ nb:
     updated: Kurven er oppdatert
     removed: Fjernet fra kurven
     promo_applied: Rabatten %{code} er lagt inn automatisk 🎉
-    zone_error: Vi leverer ikke til %{postcode} ennå — prøv et Bergens-postnummer eller henting
+    zone_error: Vi leverer ikke til %{postcode} ennå - prøv et Bergens-postnummer eller henting
     min_basket: Minstebestillingen i %{name} er %{amount}
     welcome: Ahlan!
     logged_out: Vi sees! Ma'a salama 👋
     signed_in: Ahlan, %{name}!
-    order_placed: Bestillingen er i gang — godkjenn med Vipps
-    vipps_cancelled: Betalingen ble avbrutt — kurven venter på deg
+    order_placed: Bestillingen er i gang - godkjenn med Vipps
+    vipps_cancelled: Betalingen ble avbrutt - kurven venter på deg
     tip_thanks: Tusen takk for drikkepengene!
     review_thanks: Takk! Det betyr alt for et lite kjøkken
     reordered: Alt fra sist ligger i kurven
-    reordered_partly: "Noen retter fra sist er ikke på menyen i dag — resten ligger i kurven"
+    reordered_partly: "Noen retter fra sist er ikke på menyen i dag - resten ligger i kurven"
     forbidden: Du har ikke tilgang hit
-    line_invalid: Det valget finnes ikke på denne retten — maks to sauser
+    line_invalid: Det valget finnes ikke på denne retten - maks to sauser
     dismiss: Lukk
-    not_found: Fant den ikke — den er kanskje spist.
+    not_found: Fant den ikke - den er kanskje spist.
   about:
     language: Språk
     title: Fra Damaskus med kjærlighet
     story_title: Historien
-    story: Bestefar solgte shawarma ved Souq al-Hamidiyah i Damaskus — toum hver morgen, lam tynt skåret, brød fra steinovnen. I dag griller vi samme oppskrift på Danmarksplass i Bergen, med samme gjestfrihet og kortere vei til maten.
+    story: Bestefar solgte shawarma ved Souq al-Hamidiyah i Damaskus - toum hver morgen, lam tynt skåret, brød fra steinovnen. I dag griller vi samme oppskrift på Danmarksplass i Bergen, med samme gjestfrihet og kortere vei til maten.
     fair_title: Rettferdig mat, rettferdig vei
-    fair: 'Ingen Foodora mellom oss: pengene går direkte til kjøkkenet som lager maten din. Du betaler med Vipps på 3 steg — raskere enn å klikke deg gjennom åtte skjermer.'
+    fair: 'Ingen Foodora mellom oss: pengene går direkte til kjøkkenet som lager maten din. Du betaler med Vipps på 3 steg - raskere enn å klikke deg gjennom åtte skjermer.'
     world_tour_title: Verdensturné i kebab
-    world_tour_body: Menyen vår er en hyllest til kebabens store byer — fra Damaskus til Berlin, Beirut til Sydney. Én kjøkkenedør, hele verdens grillede arv.
+    world_tour_body: Menyen vår er en hyllest til kebabens store byer - fra Damaskus til Berlin, Beirut til Sydney. Én kjøkkenedør, hele verdens grillede arv.
     credits_title: Takk til de store
-    credit_damaskus: 'Damaskus — sjelen i merket: toum, tarator og knefeh fra gatene ved Souq al-Hamidiyah.'
-    credit_beirut: 'Beirut — Joseph og Jabbour: mager, smakfull lam shawarma med granateple-løk.'
-    credit_berlin: 'Berlin — Hasir (1971, döner-sandwichens oppfinner), Mustafa''s Gemüse Kebap, Rüyam og Imren Grill: grønnsaker med førstegangsplass og sauser med gavmildhet.'
-    credit_bursa: 'Bursa — İskender siden 1867: smør, tomatsaus og yoghurt i hellig rekkefølge.'
-    credit_gaziantep: 'Gaziantep — UNESCOs kebab-by: Ali Nazik og verdens beste baklava.'
-    credit_istanbul: 'Istanbul — Dürümzade: dürüm med ren gatemat-energi.'
-    credit_tel_aviv: 'Tel Aviv/NYC — Miznon: blomkål som hovedperson, stemmen til en showmann.'
-    credit_bergen: 'Bergen — Emil''s Kebab (Bergens beste ifølge BT, Wolt Awards 2023) og Bergens kebabkultur: rene hansker, kvartover, salatbar og kebabrull.'
-    credit_gdk: 'GDK — klubbkort og Boss-boks: deal-energi vi har lånt med glede.'
-    credit_stockholm: Stockholm — kebabpizzaens fødested.
-    credit_sydney: 'Sydney — HSP etter midnatt: nattmatens svar på en klem.'
-    credit_dubai: Dubai — pommes i wrapen. Enkel genialitet.
+    credit_damaskus: 'Damaskus - sjelen i merket: toum, tarator og knefeh fra gatene ved Souq al-Hamidiyah.'
+    credit_beirut: 'Beirut - Joseph og Jabbour: mager, smakfull lam shawarma med granateple-løk.'
+    credit_berlin: 'Berlin - Hasir (1971, döner-sandwichens oppfinner), Mustafa''s Gemüse Kebap, Rüyam og Imren Grill: grønnsaker med førstegangsplass og sauser med gavmildhet.'
+    credit_bursa: 'Bursa - İskender siden 1867: smør, tomatsaus og yoghurt i hellig rekkefølge.'
+    credit_gaziantep: 'Gaziantep - UNESCOs kebab-by: Ali Nazik og verdens beste baklava.'
+    credit_istanbul: 'Istanbul - Dürümzade: dürüm med ren gatemat-energi.'
+    credit_tel_aviv: 'Tel Aviv/NYC - Miznon: blomkål som hovedperson, stemmen til en showmann.'
+    credit_bergen: 'Bergen - Emil''s Kebab (Bergens beste ifølge BT, Wolt Awards 2023) og Bergens kebabkultur: rene hansker, kvartover, salatbar og kebabrull.'
+    credit_gdk: 'GDK - klubbkort og Boss-boks: deal-energi vi har lånt med glede.'
+    credit_stockholm: Stockholm - kebabpizzaens fødested.
+    credit_sydney: 'Sydney - HSP etter midnatt: nattmatens svar på en klem.'
+    credit_dubai: Dubai - pommes i wrapen. Enkel genialitet.
     vipps_security_title: Trygg betaling med Vipps
-    vipps_security: Betalingen går gjennom Vipps — vi ser aldri kortet ditt, for du trenger det aldri. Godkjenn med fingeravtrykk eller kode, ferdig.
+    vipps_security: Betalingen går gjennom Vipps - vi ser aldri kortet ditt, for du trenger det aldri. Godkjenn med fingeravtrykk eller kode, ferdig.
     salatbar_title: Salatbar-kulturen
-    salatbar_body: Bergen lærte oss salatbaren — rødkål, mais, sylteagurk, alt. Den beholder vi. Den er gratis, som den hører hjemme.
+    salatbar_body: Bergen lærte oss salatbaren - rødkål, mais, sylteagurk, alt. Den beholder vi. Den er gratis, som den hører hjemme.
     contact_title: Finn oss
     address_label: Adresse
     hours_label: Åpningstider
@@ -516,28 +516,28 @@ nb:
     back: Tilbake til menyen
     credit_adana: Adana-dürumen grilles over glør slik gatene i Istanbul krever det.
     fairness_title: Uten mellomledd
-    fairness_body: Du betaler kjøkkenet direkte med Vipps — null provisjon til mellommenn. Mer til bakeren, bøndene og kokkene.
+    fairness_body: Du betaler kjøkkenet direkte med Vipps - null provisjon til mellommenn. Mer til bakeren, bøndene og kokkene.
     orders_link: Se bestillingene dine
-    story_body: Mr. Damascy startet med bestefars shawarma-spyd ved Souq al-Hamidiyah i Damaskus. I dag spinner samme oppskrifter i Bergen — med toum laget hver morgen og brød fra bakeren neste dør.
+    story_body: Mr. Damascy startet med bestefars shawarma-spyd ved Souq al-Hamidiyah i Damaskus. I dag spinner samme oppskrifter i Bergen - med toum laget hver morgen og brød fra bakeren neste dør.
     vipps_title: Vipps på 3 steg
-    vipps_body: Velg rett, trykk «Betal med Vipps», godkjenn i Vipps-appen. Ingen kortfelter, ingen promo-koder — rabatter legges inn automatisk.
+    vipps_body: Velg rett, trykk «Betal med Vipps», godkjenn i Vipps-appen. Ingen kortfelter, ingen promo-koder - rabatter legges inn automatisk.
     worldtour_title: En verdensturné i kebab
     worldtour_intro: 'Vi har smakt oss rundt i verden og hentet det beste fra hver by:'
   offline:
     title: Du er offline
-    body: Nettet høres ut som bestefars gamle radio. Sjekk dekningen — kurven din husker vi likevel.
+    body: Nettet høres ut som bestefars gamle radio. Sjekk dekningen - kurven din husker vi likevel.
     retry: Prøv igjen
     cached_note: Sist viste meny ligger lagret på enheten
     home: Forsøk menyen når du er tilbake
   footer:
-    tagline: Fra Damaskus med kjærlighet — grillat i Bergen
+    tagline: Fra Damaskus med kjærlighet - grillat i Bergen
     made_in: Laget i Bergen med syrisk sjel og mint-fargehjerte
     links_title: Snarveier
     links_menu: Menyen
     links_loyalty: Sahtein-kortet
     links_about: Om oss
     links_track: Spor ordre
-    vipps_note: Betalt med Vipps — 3 steg, null kortfelter
-    ahlan: Ahlan wa sahlan — alle er velkomne hit
+    vipps_note: Betalt med Vipps - 3 steg, null kortfelter
+    ahlan: Ahlan wa sahlan - alle er velkomne hit
     copyright: © %{year} Mr. Damascy
-    sahtein: Laget med kjærlighet i Bergen — صحتين
+    sahtein: Laget med kjærlighet i Bergen - صحتين

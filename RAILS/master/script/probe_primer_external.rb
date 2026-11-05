@@ -71,7 +71,7 @@ begin
 
     browser.on(:console) do |msg|
       console_msgs << "[#{msg.type}] #{msg.args.map(&:value).join(' ')}"
-    # scan: intentional — a raising console hook would kill the probe loop; lost lines are acceptable
+    # scan: intentional - a raising console hook would kill the probe loop; lost lines are acceptable
     rescue StandardError
       nil
     end
@@ -89,7 +89,7 @@ begin
     begin
       Timeout.timeout(NAV_TIMEOUT) { browser.go_to(URL) }
     rescue Timeout::Error, Ferrum::TimeoutError, Ferrum::PendingConnectionsError => e
-      puts "WARN: navigation incomplete — #{e.class}"
+      puts "WARN: navigation incomplete - #{e.class}"
     end
 
     sleep 2

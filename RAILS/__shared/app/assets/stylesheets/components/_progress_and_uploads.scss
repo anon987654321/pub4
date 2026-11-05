@@ -54,8 +54,8 @@ progress::-webkit-progress-value {
 
 /* The phone shape: two tracks, with the progress bar wrapped onto a row of its
    own. `.direct-upload-progress` has no rule outside this one, so stating it here
-   is the whole of its placement. This was the other way round — three tracks in
-   the base and a max-width: 480px block cutting back to two — which also made 480
+   is the whole of its placement. This was the other way round - three tracks in
+   the base and a max-width: 480px block cutting back to two - which also made 480
    a ceiling while the inversions elsewhere in this pass made it a floor. At
    exactly 480px both matched and source order decided; breakpoint_lint calls that
    ambiguous_edge and it was the failure that caught this file. */

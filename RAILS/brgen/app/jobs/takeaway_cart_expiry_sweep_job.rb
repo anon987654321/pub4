@@ -3,7 +3,7 @@
 # Pending carts expire on a clock; this is the clock.
 #
 # `unexpired` already keeps a lapsed cart off the reader's order list the
-# moment its deadline passes, so — like the stories sweep — this job is about
+# moment its deadline passes, so - like the stories sweep - this job is about
 # the truth of the status column rather than visibility: until it runs, a
 # stale cart still reads as "pending" to the kitchen's order list and to any
 # count that trusts the column. cancel! (not update_column) so the kitchen

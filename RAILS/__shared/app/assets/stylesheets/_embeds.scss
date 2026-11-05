@@ -10,7 +10,7 @@
    desktop, with a hard max-height so it never pushes the feed below the fold. */
 .ai-embed {
   /* Bare var(--surface): _tokens.scss declares it on :root for every app, so a
-     hex fallback here can only ever be a second copy of the token's value — and
+     hex fallback here can only ever be a second copy of the token's value - and
      a copy of one half of it, since --surface is #fff light and #111 dark. */
   background: var(--surface);
 }
@@ -48,7 +48,7 @@
   display: block;
   width: 100%;
   border: 0;
-  background: #000; // scan: intentional — the MASTER face renders on black in every theme
+  background: #000; // scan: intentional - the MASTER face renders on black in every theme
   aspect-ratio: 4 / 3;
   max-block-size: min(70vh, 560px);
 
@@ -63,7 +63,7 @@
    instead of the 560px cap the in-feed variant uses. */
 .ai-embed--bare {
   margin-inline: calc(50% - 50vw);
-  background: #000; // scan: intentional — the MASTER face renders on black in every theme
+  background: #000; // scan: intentional - the MASTER face renders on black in every theme
 }
 
 .ai-embed--bare .ai-embed-frame {

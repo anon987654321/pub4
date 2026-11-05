@@ -98,7 +98,7 @@ body[data-runtime-profile="crt"] #cognition-ecology {
   opacity: 0.88;
 }
 
-/* canvas-fx overlay tier: sits above raw canvas(0/1/2), below persistent chrome(--z-chrome/10) — loading-dither(2) < council-multi-face(3) < council-persona-badge(4) */
+/* canvas-fx overlay tier: sits above raw canvas(0/1/2), below persistent chrome(--z-chrome/10) - loading-dither(2) < council-multi-face(3) < council-persona-badge(4) */
 .council-persona-badge {
   position: fixed;
   top: 12%;

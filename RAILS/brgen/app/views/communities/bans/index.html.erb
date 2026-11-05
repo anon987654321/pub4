@@ -21,7 +21,7 @@
         <%= ban.banned_by.display_name %>
         <%# Any moderator can lift any ban: a mod team that cannot undo each
             other's mistakes escalates every disagreement to the owner. %>
-        <%# destructive: no-confirm-ok — reversible — the comment above is the whole argument: a mod team undoes its own mistakes, and banning again is a click %>
+        <%# destructive: no-confirm-ok - reversible - the comment above is the whole argument: a mod team undoes its own mistakes, and banning again is a click %>
         <%= button_to t("community.lift_ban"), community_ban_path(@community, ban),
               method: :delete, class: "button button-ghost button-small" %>
       </li>
@@ -40,7 +40,7 @@
     the list the person is no longer on. %>
 <%# No class on the section or the list. The stylesheet reaches them through
     [aria-labelledby="moderation_log_heading"], which is the attribute that
-    already has to be correct for the heading to name the region — so a styled
+    already has to be correct for the heading to name the region - so a styled
     log and an announced log cannot drift apart, and there is no third name to
     keep in sync. %>
 <section aria-labelledby="moderation_log_heading">
@@ -52,7 +52,7 @@
         <li>
           <%= event.summary %>
           <%# The machine-readable time is the audited fact; the visible text is
-              the human one. <time> needs no class — it is the only one here. %>
+              the human one. <time> needs no class - it is the only one here. %>
           <time datetime="<%= event.occurred_at.iso8601 %>">
             <%= l(event.occurred_at, format: :event) %>
           </time>

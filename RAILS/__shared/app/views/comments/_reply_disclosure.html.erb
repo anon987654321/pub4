@@ -3,8 +3,8 @@
   create response can put it back closed (brgen comments/create.turbo_stream).
 
   locals:
-    comment   — the comment being answered
-    root_post — the thread the reply is posted to
+    comment   - the comment being answered
+    root_post - the thread the reply is posted to
 %>
 <%= tag.details class: "comment-reply", id: dom_id(comment, :reply_disclosure),
       data: { comment_thread_target: "part", action: "toggle->comment-thread#focusReply" } do %>

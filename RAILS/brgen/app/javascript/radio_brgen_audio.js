@@ -26,7 +26,7 @@ export function initialTrackIndex(tracks, openingTrackId) {
 }
 
 // FFT band edges as a fraction of the spectrum. 2048 bins over ~44.1kHz puts
-// bass under ~250Hz, mids to ~2kHz, highs above — the split that makes a kick
+// bass under ~250Hz, mids to ~2kHz, highs above - the split that makes a kick
 // move the ring and a hat shimmer it.
 const BAND_BASS = 0.012
 const BAND_MID = 0.09
@@ -89,7 +89,7 @@ export class AudioEngine {
       title: track.title,
       artist: track.artist || "Radio Bergen",
       // A whyp.it track names where it lives, on the lock screen too.
-      album: track.whyp_id ? "Radio Bergen · whyp.it" : "Radio Bergen",
+      album: track.whyp_id ? "Radio Bergen - whyp.it" : "Radio Bergen",
       artwork: artwork ? [{ src: artwork }] : []
     })
     navigator.mediaSession.playbackState = this.isPlaying ? "playing" : "paused"
@@ -112,7 +112,7 @@ export class AudioEngine {
 
   // Built lazily and only once. An AudioContext created before a user gesture
   // starts suspended, and MediaElementSource can only be attached to an element
-  // once — attaching per track throws InvalidStateError on the second one.
+  // once - attaching per track throws InvalidStateError on the second one.
   #ensureAnalyser() {
     if (this.analyser) return true
     try {
@@ -214,7 +214,7 @@ export class AudioEngine {
         }
       }, 1000)
       // No 'ended' event is available across the iframe boundary, so an embed
-      // still needs a timer to advance. A local track does not — it fires
+      // still needs a timer to advance. A local track does not - it fires
       // 'ended' at its real length instead of being cut at three minutes.
       this._advanceTimer = setTimeout(() => {
         if (this.isPlaying) this.nextTrack()
@@ -263,7 +263,7 @@ export class AudioEngine {
     }
 
     // Real spectrum when we are serving the file ourselves. The sine wave this
-    // replaced was not a placeholder for a missing feature — it was the only
+    // replaced was not a placeholder for a missing feature - it was the only
     // thing possible while every track was a cross-origin YouTube embed, which
     // is why the tunnel appeared to react to music it could not hear.
     if (this.analyser && this.bins) {
@@ -328,7 +328,7 @@ export class AudioEngine {
     if (!this.trackDisplay) return
     const track = this.tracks[this.currentTrack]
     if (!track) return
-    this.trackDisplay.textContent = [`${track.artist} - ${track.title}`, note].filter(Boolean).join(" · ")
+    this.trackDisplay.textContent = [`${track.artist} - ${track.title}`, note].filter(Boolean).join(" - ")
     this.#showSourceCredit(track)
   }
 
@@ -362,7 +362,7 @@ export class AudioEngine {
 // that matters is that the two surfaces of one site agree, not which end of the
 // spectrum they agree on. What is still forbidden here is what is forbidden
 // there: hue must not encode depth. Depth drives brightness, and the hue ramp is
-// a narrow warm one — ember at the far end, warm white at the near end — so the
+// a narrow warm one - ember at the far end, warm white at the near end - so the
 // tunnel reads as one lit material rather than as a rainbow.
 //
 // Both ends are existing tokens rather than invented values, which is the same
@@ -373,5 +373,5 @@ export class AudioEngine {
 // INK_ALPHA_MIN over black, so the far end reads as a dark coal, not as a
 // warning colour.
 // The operator's palette and ring modes live in radio_brgen_modes.js.
-// Far rings barely present, near rings solid — the 8%-to-full range the face
+// Far rings barely present, near rings solid - the 8%-to-full range the face
 // works in, expressed 0..1.

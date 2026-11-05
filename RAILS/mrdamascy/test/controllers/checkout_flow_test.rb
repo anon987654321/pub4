@@ -2,14 +2,14 @@
 
 require "test_helper"
 
-# The crown test (APP_SPEC §14): the whole Vipps Express journey in one go —
-# add to cart → checkout create (zone + min basket OK) → redirected to the
-# mock Vipps page with a token → approve → payment captured + order confirmed
-# → public tracking page says Sahtein! صحتين
+# The crown test (APP_SPEC §14): the whole Vipps Express journey in one go -
+# add to cart -> checkout create (zone + min basket OK) -> redirected to the
+# mock Vipps page with a token -> approve -> payment captured + order confirmed
+# -> public tracking page says Sahtein! صحتين
 class CheckoutFlowTest < ActionDispatch::IntegrationTest
   setup do
     @kitchen = seed_kitchen!
-    # The tests post 5004 (Strandgaten) — a real delivery zone one district away
+    # The tests post 5004 (Strandgaten) - a real delivery zone one district away
     # checkout actually sends, and its minimum must admit the crown's single
     # 129 kr wrap; the dedicated min-basket test below works against this too.
     @zone = seed_zone!(postcode: "5004", fee_ore: 2900, min_basket_ore: 10000, eta_minutes: 20)
@@ -128,7 +128,7 @@ class CheckoutFlowTest < ActionDispatch::IntegrationTest
     assert_equal 12900 + 2900 - 1290, order.total_ore
   end
 
-  test "the mock Vipps page answers 404 in real mode — no free captures" do
+  test "the mock Vipps page answers 404 in real mode - no free captures" do
     order = seed_order!(kitchen: @kitchen, state: "placed")
 
     ENV["VIPPS_MOCK"] = "0"
@@ -186,7 +186,7 @@ class CheckoutFlowTest < ActionDispatch::IntegrationTest
     assert_match %r{/vipps/mock}, order.vipps_url
   end
 
-  test "the mock Stripe page answers 404 in real mode — no free captures" do
+  test "the mock Stripe page answers 404 in real mode - no free captures" do
     order = seed_order!(kitchen: @kitchen, state: "placed", token: "tok-stripe-guard")
 
     ENV["STRIPE_MOCK"] = "0"

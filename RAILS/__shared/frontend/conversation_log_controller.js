@@ -5,7 +5,7 @@ import { Controller } from "@hotwired/stimulus"
 // Why this can't be done in the partial alone: Message#broadcasts_to renders
 // messages/_message inside Turbo::Streams::ActionBroadcastJob, a background
 // job with no request and therefore no Current.user. Every live-appended
-// message fell through to data-from="peer" — so your own messages appeared as
+// message fell through to data-from="peer" - so your own messages appeared as
 // though a stranger had sent them the moment they arrived over the wire, and
 // only looked right after a reload.
 //
@@ -92,7 +92,7 @@ export default class extends Controller {
       // The window shows the newest page, so the sentinel sits above the
       // first line, out of view. It enters the viewport exactly when the
       // reader has walked back to the ceiling of what is loaded, which is
-      // the whole trigger. root is the scrolling element itself — the log
+      // the whole trigger. root is the scrolling element itself - the log
       // scrolls under a fixed composer, not under the document.
       this.historyObserver = new IntersectionObserver((entries) => {
         entries.forEach((entry) => { if (entry.isIntersecting) this.loadOlder() })
@@ -102,7 +102,7 @@ export default class extends Controller {
 
     // Tap-to-reveal for the reaction picker. On a touch viewport the picker was
     // permanently visible (`@media (hover: none) { opacity: 1 }`), which put a
-    // 44px row of seven buttons under every single line — the exact cost the
+    // 44px row of seven buttons under every single line - the exact cost the
     // reactions partial says it exists to avoid. Bubbles were tall enough to
     // hide it; an IRC transcript is not.
     //
@@ -113,7 +113,7 @@ export default class extends Controller {
     // untouched for pointer and keyboard users.
     this.onLineTap = (event) => {
       if (!this.#isTouch()) return
-      // Let real controls do their job — chips, the picker itself, links.
+      // Let real controls do their job - chips, the picker itself, links.
       if (event.target.closest("button, a, input, textarea, select")) return
 
       const li = event.target.closest("li")
@@ -164,9 +164,9 @@ export default class extends Controller {
   // alone and names the next cursor in X-History-Next, so the walker here
   // stays dumb: fetch, insert at the top, re-anchor the scroll to the line the
   // reader was on, and only re-arm the sentinel when the server said there is
-  // more. The button stays a real control — the observer auto-fires it for
+  // more. The button stays a real control - the observer auto-fires it for
   // pointer scrolling, and it stays pressable for keyboard and no-observer
-  // paths — and a failed fetch leaves everything in place to press again,
+  // paths - and a failed fetch leaves everything in place to press again,
   // because a control that vanishes on error is lying about what happened.
   async loadOlder() {
     if (!this.historyUrlValue || this.loadingHistory) return
@@ -233,8 +233,8 @@ export default class extends Controller {
   // Derived here rather than in the partial for the same reason grouping is: a
   // message rendered by Turbo::Streams::ActionBroadcastJob has no idea what came
   // before it, and a thread left open across midnight has to grow a separator
-  // without a reload. Both facts are already in the DOM — every message carries
-  // its own <time datetime> — so this needs nothing from the server.
+  // without a reload. Both facts are already in the DOM - every message carries
+  // its own <time datetime> - so this needs nothing from the server.
   //
   // Separators are removed and re-derived on every pass rather than patched. The
   // list is a conversation, not a table: it is short enough that recomputing is
@@ -393,7 +393,7 @@ export default class extends Controller {
     })
   }
 
-  // Only follow the tail if the reader is already at it — yanking the view
+  // Only follow the tail if the reader is already at it - yanking the view
   // down while someone scrolls back through history is worse than not
   // following at all.
   #pinToNewest() {

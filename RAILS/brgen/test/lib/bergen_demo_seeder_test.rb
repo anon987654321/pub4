@@ -41,7 +41,7 @@ class BergenDemoSeederTest < ActiveSupport::TestCase
     assert_equal "henrik_vestland@brgen.no", user.email_address
 
     assert Comment.where(commentable: post).count >= 2
-    assert Marketplace::Listing.exists?(title: "Brukt sykkel — Bergen sentrum")
+    assert Marketplace::Listing.exists?(title: "Brukt sykkel - Bergen sentrum")
     assert Dating::Profile.joins(:user).exists?(users: { username: "emilie_floyen" })
 
     live = Post.live.where(city: @city)
@@ -117,7 +117,7 @@ class BergenDemoSeederTest < ActiveSupport::TestCase
     # each seeded post's age carries up to 45 random minutes, and the featured
     # posts added since sit within that margin of it.
     hot_order = Post.hot.where(city: @city).pluck(:title)
-    assert_operator hot_order.index("Brann på Stadion i kveld — hvor ser dere kampen?"), :<,
+    assert_operator hot_order.index("Brann på Stadion i kveld - hvor ser dere kampen?"), :<,
                     hot_order.index("Kan vi slutte å late som vi går fort i oppoverbakke?")
   end
 
@@ -138,7 +138,7 @@ class BergenDemoSeederTest < ActiveSupport::TestCase
 
     channel = Tv::Channel.find_by!(slug: "bergen-live")
     assert_equal "Bergen Live", channel.name
-    assert Tv::Video.exists?(channel: channel, title: "Open mic på Logen — høydepunkter")
+    assert Tv::Video.exists?(channel: channel, title: "Open mic på Logen - høydepunkter")
   end
 
   # The music posts carry links a reader can play. Their embeds are written

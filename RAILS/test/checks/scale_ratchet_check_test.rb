@@ -51,7 +51,7 @@ class ScaleRatchetCheckTest < Minitest::Test
   def test_the_nearest_declared_step_is_named_in_the_report
     result = check_over(OFF_SCALE, baselines(0))
 
-    assert(result.warnings.any? { |line| line.match?(/off_scale_radius 7px — nearest step 8px/) },
+    assert(result.warnings.any? { |line| line.match?(/off_scale_radius 7px - nearest step 8px/) },
            result.warnings.join(", "))
   end
 
@@ -74,7 +74,7 @@ class ScaleRatchetCheckTest < Minitest::Test
   end
 
   # A surface with no baselines compares nothing, and a lint that read no files
-  # reports zero for every kind — which is indistinguishable from clean.
+  # reports zero for every kind - which is indistinguishable from clean.
   def test_no_baselines_at_all_is_inconclusive
     result = check_over(OFF_SCALE, { "apps" => {}, "face" => {} })
 

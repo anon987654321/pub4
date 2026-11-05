@@ -18,7 +18,7 @@ export default class extends Controller {
     // the badge from a navigation event rather than from a reconnect.
     //
     // The two views that want this used to write `turbo:load->push#clearBadge`
-    // into content_for :body_attrs — which the layout never yielded, and which
+    // into content_for :body_attrs - which the layout never yielded, and which
     // could not have worked if it had: Stimulus resolves an action against the
     // element and its ancestors, and <body> is this controller's ancestor, not
     // its descendant. They now set data-push-seen and this reads it.

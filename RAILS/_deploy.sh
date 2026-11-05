@@ -1,5 +1,5 @@
 #!/usr/bin/env zsh
-# _deploy.sh — orchestrator for the copy-tree deploy pipeline. Sources every
+# _deploy.sh - orchestrator for the copy-tree deploy pipeline. Sources every
 # sibling _*.sh helper file, then exposes deploy_tracked_app as the single
 # entry point each app's <app>.sh script calls.
 #
@@ -18,7 +18,7 @@ typeset _deploy_sh_dir=${${(%):-%x}:A:h}
 . "${_deploy_sh_dir}/_runtime_check.sh"
 . "${_deploy_sh_dir}/_service.sh"
 
-# deploy_tracked_app APP_NAME — copy the app tree, install bundle/db/service, then restart.
+# deploy_tracked_app APP_NAME - copy the app tree, install bundle/db/service, then restart.
 deploy_tracked_app() {
   local app_name=${1:-$APP_NAME}
   case "$app_name" in
@@ -34,7 +34,7 @@ deploy_tracked_app() {
   }
   [[ -d $SRC_DIR ]] || { log_err "missing source tree: $SRC_DIR"; exit 1; }
 
-  log "${app_name} — deploying tracked tree → ${APP_DIR}"
+  log "${app_name} - deploying tracked tree -> ${APP_DIR}"
   deploy_status "$app_name" "sync tree"
   ${_PRIV} /usr/local/sbin/pub4-admin ensure-app "$app_name" || {
     log_err "app account/layout preparation failed for $app_name"
@@ -64,7 +64,7 @@ deploy_tracked_app() {
 
   deploy_status "$app_name" "master scan"
   if ! master_scan_dep "$app_name"; then
-    log "MASTER scan violations — aborting per laws.yml"
+    log "MASTER scan violations - aborting per laws.yml"
     deploy_status "$app_name" "master scan" "failed"
     exit 1
   fi
@@ -79,7 +79,7 @@ deploy_tracked_app() {
   deploy_status "$app_name" "bundle install"
   bundle_install_as_app "$APP_NAME" "$APP_DIR"
   log_ok "production bundle installed for ${app_name}"
-  # Both the one-time db/ → storage/ relocation and db:prepare mutate the live
+  # Both the one-time db/ -> storage/ relocation and db:prepare mutate the live
   # SQLite files. A Falcon worker can keep the source inode open and hold WAL
   # locks, so prove the service is stopped before either operation begins.
   if pub4_rcctl check "$app_name" >/dev/null 2>&1; then

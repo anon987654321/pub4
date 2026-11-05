@@ -8,7 +8,7 @@ require_relative "engine_roots"
 # A control a keyboard cannot reach, and a role that promises one.
 #
 # This exists because a hand-counted audit row read "3 div/span elements
-# carrying a click action — not focusable, not keyboard-activatable, not
+# carrying a click action - not focusable, not keyboard-activatable, not
 # announced as a control", and no committed tool reproduced it. The first move
 # on a row like that is to name the instrument rather than fix the count: an
 # unfalsifiable number is how a register row outlives its subject.
@@ -16,11 +16,11 @@ require_relative "engine_roots"
 # Written 2026-08-13. The first two attempts at it were wrong in ways worth
 # recording, because both produced a confident number:
 #
-#   1. `<div[^>]*>` stops at the first ">" — and Stimulus data-action values are
+#   1. `<div[^>]*>` stops at the first ">" - and Stimulus data-action values are
 #      full of them ("click->playlist-player#scrub"). The playlist scrubber, the
 #      one real finding, was invisible to it.
 #   2. Counting every data-action on a div reported five, of which two were
-#      `click@window` — a global listener closing a dropdown, not a control. The
+#      `click@window` - a global listener closing a dropdown, not a control. The
 #      hand audit had made that exclusion silently.
 #
 # So the matcher below respects quoted attribute values, and global listeners are
@@ -47,14 +47,14 @@ class KeyboardReachableControlsTest < Minitest::Test
   # Elements the browser makes focusable without help.
   NATIVE = %w[button a input select textarea].freeze
 
-  # Judged, not swept — which is what the register entry asks for.
+  # Judged, not swept - which is what the register entry asks for.
   #
   # bsdports' dependency tree is a static nested listing with role="tree" and
   # role="treeitem", added deliberately (apps.yml records "WCAG AAA compliance
-  # pass — ARIA tree/list roles on port surfaces" as done). Nothing about it is
+  # pass - ARIA tree/list roles on port surfaces" as done). Nothing about it is
   # interactive: no expand, no collapse, no selection, and no CSS or JS anywhere
-  # in the tree hooks those roles. Full APG tree navigation — roving tabindex,
-  # arrow keys, type-ahead — is a large amount of behaviour to add to a thing that
+  # in the tree hooks those roles. Full APG tree navigation - roving tabindex,
+  # arrow keys, type-ahead - is a large amount of behaviour to add to a thing that
   # displays labels, and dropping the roles for a plain nested list would undo
   # someone's deliberate pass. Left alone, on purpose, and named here so the next
   # reader inherits the reasoning rather than the count.
@@ -77,7 +77,7 @@ class KeyboardReachableControlsTest < Minitest::Test
   GESTURE_SURFACE_CEILING = 12
 
   # A drag is a start event and a move event bound on one element. A move with
-  # no start is a hover effect — parallax-tilt on the affiliate unit — and the
+  # no start is a hover effect - parallax-tilt on the affiliate unit - and the
   # browser taking the pan there is the right outcome.
   MOVE_EVENTS = %w[pointermove touchmove mousemove].freeze
   START_EVENTS = %w[pointerdown touchstart mousedown].freeze
@@ -340,7 +340,7 @@ class KeyboardReachableControlsTest < Minitest::Test
 
         #{surfaces.join("\n  ")}
 
-      Each new one needs a keyboard path of its own — a button, not a tabindex on
+      Each new one needs a keyboard path of its own - a button, not a tabindex on
       the container. Lower the ceiling when one goes.
     MSG
   end
@@ -366,7 +366,7 @@ class KeyboardReachableControlsTest < Minitest::Test
   end
 
   # Every view that binds a move event in a data-action, found by plain text,
-  # has to be one the tag matcher read. A helper hash — data: { action: … } — is
+  # has to be one the tag matcher read. A helper hash - data: { action: ... } - is
   # the shape it cannot see, and that file would pass here by being invisible.
   def test_the_gesture_census_includes_extracted_verticals
     assert views.any? { |path| path.include?("/brgen_dating/") }
@@ -414,6 +414,6 @@ class KeyboardReachableControlsTest < Minitest::Test
   def test_gesture_debt_names_live_surfaces
     stale = GESTURES_WITHOUT_TOUCH_ACTION.keys - undeclared_gestures
 
-    assert_empty stale, "these rows excuse a surface that is gone or now declares touch-action — delete them"
+    assert_empty stale, "these rows excuse a surface that is gone or now declares touch-action - delete them"
   end
 end

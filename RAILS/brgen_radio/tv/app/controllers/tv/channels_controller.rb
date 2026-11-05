@@ -60,14 +60,14 @@ class Tv::ChannelsController < Tv::BaseController
   # params[:slug], not params[:id]: the route declares `param: :slug`, so the
   # segment arrives under that name and params[:id] is nil. find_by!(slug: nil)
   # raises RecordNotFound every time, so every channel link on /channels 404'd
-  # — including the ones the index itself renders. The sibling IRC
+  # - including the ones the index itself renders. The sibling IRC
   # ChannelsController already reads params[:slug].
   def set_channel = (@channel = Tv::Channel.publicly_visible.find_by!(slug: params[:slug]))
   def channel_params = params.require(:channel).permit(:name, :description, :banner, :avatar)
 
   # user_id, not user: set_channel finds by slug with nothing preloaded, and
   # strict_loading_by_default raises on the association read before the
-  # comparison — so channel edit and update failed for the owner too.
+  # comparison - so channel edit and update failed for the owner too.
   def require_channel_owner!
     return if Current.user && @channel.user_id == Current.user.id
 

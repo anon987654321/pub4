@@ -40,7 +40,7 @@ class RadioBergenManifestTest < ActiveSupport::TestCase
 
   # pub4/index.html is a path inside the anon987654321/pub2 archive, which is
   # history and cannot be renamed. The rename that reached this line renamed a
-  # command — MASTER/bin/pub4 became bin/operator — and the repository is still
+  # command - MASTER/bin/pub4 became bin/operator - and the repository is still
   # pub4. A word-boundary rewrite cannot tell a live path from a cited one.
   test "archaeology lines reference pub4 index.html dig" do
     lines = Brgen::RadioBergenManifest.archaeology_lines

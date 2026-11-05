@@ -6,7 +6,7 @@ const INK_ALPHA_MIN = 0.08
 const INK_ALPHA_MAX = 0.78
 
 // One pixel per particle, so the buffer is the grid. Capping it means a phone
-// and a television draw the same tunnel and the television simply upscales it —
+// and a television draw the same tunnel and the television simply upscales it -
 // uncapped, the buffer grew with the display while the ring count stayed fixed,
 // which both thinned the image and cost 4x more to draw. Mirrors the face's
 // FACE_BUFFER_MAX_W/H.
@@ -16,14 +16,14 @@ const BUFFER_MAX_H = 640
 // Phosphor decay: dim the previous frame rather than clearing it, so particles
 // leave a trail as they approach. The trail stays in the same pass; no second
 // glow layer is introduced.
-// Postures. Named weight sets the engine eases toward, never snaps to — the
+// Postures. Named weight sets the engine eases toward, never snaps to - the
 // easing is the whole effect, because a creature that changed shape on a frame
 // boundary would read as a scene cut. Weights compose, so `dormant` still
 // swallows and still leans; it does everything more slowly and more slackly.
 const POSTURES = {
   awake: { peristalsis: 0.55, lean: 0.30, twist: 0.0016, sag: 0.0, spread: 1.0, exposure: 1.0, speedScale: 1.0 },
   dormant: { peristalsis: 0.18, lean: 0.14, twist: 0.0006, sag: 1.0, spread: 1.28, exposure: 0.55, speedScale: 0.22 },
-  // Held for a beat after an onset — the tunnel flinches open, then settles.
+  // Held for a beat after an onset - the tunnel flinches open, then settles.
   startled: { peristalsis: 0.85, lean: 0.44, twist: 0.0034, sag: 0.0, spread: 1.06, exposure: 1.18, speedScale: 1.5 }
 }
 
@@ -52,7 +52,7 @@ uniform float uHigh;
 uniform float uBeat;
 uniform float uBreath;
 // Posture. Each weight is eased on the CPU toward a named target, and they
-// compose rather than exclude — a dormant tunnel still swallows, just slower.
+// compose rather than exclude - a dormant tunnel still swallows, just slower.
 // A creature reads as alive through involuntary movement, not through a
 // repertoire of poses, so these are all things the tunnel does to itself.
 uniform float uPeristalsis;
@@ -70,7 +70,7 @@ ${RING_SHAPE_GLSL}
 
 // The lean. Two incommensurable sine pairs, so the curve never repeats on any
 // interval a viewer can learn. The far rings displace most, which bends the
-// tube into a spine — and roughly twice a minute the far end swings round into
+// tube into a spine - and roughly twice a minute the far end swings round into
 // line with the near end and the tunnel is looking down its own length at you.
 // That moment is not scheduled; it falls out of the drift, which is why it
 // lands as being watched rather than as an animation.
@@ -97,7 +97,7 @@ void main() {
   float beatKick = uBeat * (0.16 - 0.06 * near);
   float radius = uRadius * (1.0 + uBass * 0.22 + uMid * 0.08 + beatKick + shimmer) * uBreath;
 
-  // Peristalsis — a travelling constriction, keyed to z rather than to ring
+  // Peristalsis - a travelling constriction, keyed to z rather than to ring
   // index so the wave moves through the tube instead of riding along with it.
   // This is the one that turns a corridor into a throat.
   radius *= 1.0 + uPeristalsis * 0.28 * sin((z / uFov) * 9.4248 - uTime * 2.2);
@@ -129,7 +129,7 @@ void main() {
   p += vec2(skew, -skew * 0.7) * radius;
 
   p += leanAt(aRingT, uTime) * uLean * uRadius * (0.25 + 0.75 * (1.0 - near));
-  // Gravity on the far end only — the near rings hold, so the tube sags away
+  // Gravity on the far end only - the near rings hold, so the tube sags away
   // from the viewer the way a held rope does.
   p.y += uSag * (1.0 - near) * uRadius * 0.30;
 
@@ -144,7 +144,7 @@ void main() {
     0.0,
     1.0
   );
-  // One point is one pixel — the same law the MASTER face obeys
+  // One point is one pixel - the same law the MASTER face obeys
   // (FACE_POINT_IS_ONE_PIXEL). Depth is carried by brightness below, because a
   // pixel has no size to give.
   gl_PointSize = 1.0;

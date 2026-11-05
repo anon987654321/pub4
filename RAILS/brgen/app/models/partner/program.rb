@@ -3,7 +3,7 @@
 # A store's offer to the people who might sell for it.
 #
 # The rate is the whole contract. A partner decides for themselves whether it is
-# worth their effort, and competes against every other partner inside it — which
+# worth their effort, and competes against every other partner inside it - which
 # is why the merchant's cost per sale cannot drift above what they set here, no
 # matter how much volume arrives.
 class Partner::Program < ApplicationRecord

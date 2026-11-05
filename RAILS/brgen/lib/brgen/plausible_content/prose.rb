@@ -19,18 +19,18 @@ module Brgen
       # than picked whole, which is where the real multiplier is.
       #
       # Deliberately generic within Norwegian city life. "Bybanen" was in this list
-      # and is Bergen's light rail — the header above says no Bergen-only
+      # and is Bergen's light rail - the header above says no Bergen-only
       # landmarks, and it read as nonsense on oshlo.no. Same for the old title
       # asking whether to take the train to Oslo, on a site whose city is Oslo.
       NORWEGIAN_POST_TITLES = [
       # transport and getting about
       "Noen som vet når kollektivtrafikken går som normalt igjen?",
-      "Parkering i sentrum — hva gjør folk egentlig?",
+      "Parkering i sentrum - hva gjør folk egentlig?",
       "Hva er egentlig greia med parkeringsappene?",
       "Hvordan kommer man seg til flyplassen tidlig morgen?",
       "Er det noen som kjører samme vei og vil dele bil?",
       "Hvor lang tid bruker dere egentlig til jobb?",
-      "Nattbussen — går den fortsatt i helgene?",
+      "Nattbussen - går den fortsatt i helgene?",
       "Sykkelvei eller hovedvei, hva velger dere?",
       "Noen som vet hvorfor bussen aldri kommer i rushen?",
       "Er månedskort verdt det når man jobber hjemmefra halve uka?",
@@ -44,7 +44,7 @@ module Brgen
       "Hvor spiser man best fiskesuppe?",
       "Hvor får man tak i skikkelig godt brød?",
       "Noen som har prøvd den nye kaffebaren?",
-      "Beste pizza i byen — og nei, ikke kjedene",
+      "Beste pizza i byen - og nei, ikke kjedene",
       "Hvor kjøper dere fisk som ikke er frossen?",
       "Finnes det et sted som lager ordentlig suppe til lunsj?",
       "Anbefal en restaurant for en litt spesiell anledning",
@@ -59,15 +59,15 @@ module Brgen
       "Noen som har leid ut gjennom de nye plattformene?",
       "Hvor mye betaler folk i strøm nå?",
       "Anbefalinger til rørlegger i %{city}?",
-      "Elektriker som svarer på telefonen — finnes det?",
+      "Elektriker som svarer på telefonen - finnes det?",
       "Hvem har malt leiligheten selv og angret?",
       "Er det verdt å bytte til varmepumpe i en gammel leilighet?",
       "Noen som vet om ledig kontorplass?",
       "Hvordan finner man en snekker som har tid før jul?",
-      "Fukt i kjelleren — hvem ringer man først?",
+      "Fukt i kjelleren - hvem ringer man først?",
 
       # barn og familie
-      "Regnet igjen — tips til innendørs aktiviteter med barn?",
+      "Regnet igjen - tips til innendørs aktiviteter med barn?",
       "Noen erfaring med barnehagene i %{city}?",
       "Tips til bursdagsfeiring for femåring",
       "Hvilke aktiviteter finnes for barn på vinteren?",
@@ -93,7 +93,7 @@ module Brgen
       "Gode brukthandler i %{city}?",
       "Bytter bort to konsertbilletter",
       "Noen som vet hvor man selger møbler raskt?",
-      "Kjøpte brukt og angrer — hva er reglene egentlig?",
+      "Kjøpte brukt og angrer - hva er reglene egentlig?",
       "Hvor får man tak i brukt sportsutstyr til barn?",
       "Er det noen bytteringer for klær her?",
       "Hva er en fornuftig pris for en ti år gammel bil?",
@@ -112,7 +112,7 @@ module Brgen
       # tjenester og helse
       "Anbefal en tannlege som tar nye pasienter",
       "Hvor finner jeg en god frisør?",
-      "Fastlege som tar nye pasienter — noen tips?",
+      "Fastlege som tar nye pasienter - noen tips?",
       "Er det verdt å bli medlem på treningssenteret?",
       "Noen som har god erfaring med fysioterapeut her?",
       "Hvor lang er ventetiden hos optiker for tiden?",
@@ -126,8 +126,8 @@ module Brgen
       "Er det noen kontorfellesskap som ikke koster skjorta?",
 
       # dyr
-      "Fant en katt i går — noen som savner den?",
-      "Hundeluftere i nærheten — hvor går dere?",
+      "Fant en katt i går - noen som savner den?",
+      "Hundeluftere i nærheten - hvor går dere?",
       "Noen som kan anbefale en veterinær?",
       "Er det lov å ha hund med på bussen?",
 
@@ -137,13 +137,13 @@ module Brgen
       "Hvem kontakter man om en gatelykt som ikke virker?",
       "Er det noen som har fått svar fra kommunen på noe som helst?",
       "Hvor melder man fra om hull i veien?",
-      "Snømåking — hvem har egentlig ansvaret utenfor huset?",
+      "Snømåking - hvem har egentlig ansvaret utenfor huset?",
 
       # nabolag og løst og fast
       "Savner noen en blå sekk fra bussen?",
       "Er det noen som spiller fotball på tirsdager?",
       "Noen som vil være med å starte en dugnad i gata?",
-      "Nabolaget har blitt stille — hvor er alle?",
+      "Nabolaget har blitt stille - hvor er alle?",
       "Hvem andre her har bodd i samme leilighet i over ti år?",
       "Er det noen som fortsatt bruker torget?",
       "Hva savner dere mest i denne bydelen?",
@@ -157,7 +157,7 @@ module Brgen
       # a person would write because each half stands alone.
       #
       # Kept as two flat pools rather than a template with slots. A slot grammar
-      # produces sentences no one wrote and it shows — the point of this file is
+      # produces sentences no one wrote and it shows - the point of this file is
       # that the seed data does not announce itself.
       NORWEGIAN_POST_OPENERS = [
       "Har prøvd et par steder, men vil gjerne høre hva folk her mener.",
@@ -167,7 +167,7 @@ module Brgen
       "Vi er to stykker som planlegger dette.",
       "Ikke noe hastverk, men greit å ha på plass før høsten.",
       "Prisene varierer veldig, så jeg prøver å få en peiling først.",
-      "Takk til alle som svarte forrige gang — det hjalp faktisk.",
+      "Takk til alle som svarte forrige gang - det hjalp faktisk.",
       "Litt usikker på om dette er rett sted å spørre.",
       "Har bodd her i noen år nå og oppdager stadig nye steder.",
       "Dette har jeg lurt på lenge uten å komme noen vei.",
@@ -222,13 +222,13 @@ module Brgen
       ENGLISH_POST_TITLES = [
       "Anyone know when the trams are running again?",
       "Best coffee in %{city} right now?",
-      "Raining again — indoor things to do with kids?",
+      "Raining again - indoor things to do with kids?",
       "Selling a bike, where's the best place to list it?",
       "New library opening hours",
       "Plumber recommendations in %{city}?",
       "Where do you get the best soup around here?",
       "Anyone want to join a walk on Sunday?",
-      "Parking downtown — what do people actually do?",
+      "Parking downtown - what do people actually do?",
       "Flea market this weekend",
       "How long does everyone's commute actually take?",
       "Is the monthly travel pass worth it these days?",
@@ -236,7 +236,7 @@ module Brgen
       "Anyone tried the new place on the corner?",
       "Recommendations for somewhere to eat for an occasion?",
       "What's a normal deposit to pay around here now?",
-      "Electrician who answers the phone — do they exist?",
+      "Electrician who answers the phone - do they exist?",
       "What are people paying for electricity at the moment?",
       "Where do you take kids on a wet Saturday?",
       "Any beginner-friendly walking groups?",
@@ -245,10 +245,10 @@ module Brgen
       "Where do you find secondhand kit for kids?",
       "Concert recommendations this month?",
       "Anything new opening in the centre this autumn?",
-      "Dentist taking new patients — any suggestions?",
+      "Dentist taking new patients - any suggestions?",
       "Is the gym membership worth it?",
       "Best place to work on a laptop in %{city}?",
-      "Found a cat yesterday — is anyone missing one?",
+      "Found a cat yesterday - is anyone missing one?",
       "Where does electronic waste go?",
       "Who do you call about a streetlight that's out?",
       "Does anyone still use the square?",
@@ -264,7 +264,7 @@ module Brgen
       "There are two of us planning it.",
       "No rush, but good to have sorted before autumn.",
       "Prices seem to vary wildly, so I'm trying to get a sense of it first.",
-      "Thanks to everyone who answered last time — it genuinely helped.",
+      "Thanks to everyone who answered last time - it genuinely helped.",
       "Not sure this is the right place to ask, but here goes.",
       "I've lived here a few years and still keep finding new places.",
       "This has been bugging me for ages and I've got nowhere with it.",

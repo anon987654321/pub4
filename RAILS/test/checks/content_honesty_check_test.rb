@@ -7,8 +7,8 @@ require_relative "../../../MASTER/checks/lib/source/content_honesty"
 
 # Faker filler on a public surface.
 #
-# brgen's sitemap once listed 1376 posts of which 1088 were Latin slugs —
-# /posts/quis-autem-eveniet-sunt-tenetur — while release, production,
+# brgen's sitemap once listed 1376 posts of which 1088 were Latin slugs -
+# /posts/quis-autem-eveniet-sunt-tenetur - while release, production,
 # layout_suite and the whole rendered suite passed, because every one of them
 # read source and the defect was entirely in rows.
 #

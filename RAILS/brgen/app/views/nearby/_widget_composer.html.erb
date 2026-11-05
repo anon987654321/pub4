@@ -20,7 +20,7 @@
                 action: "turbo:submit-end->typing-input#markValue keydown->typing-input#composerKeydown input->typing-input#ping"
               } do |f| %>
   <%= f.text_area :content, rows: 1,
-        placeholder: t("chat.placeholder", handle: handle, default: "Message as %{handle}…"),
+        placeholder: t("chat.placeholder", handle: handle, default: "Message as %{handle}..."),
         maxlength: 500,
         autocomplete: "off",
         enterkeyhint: "send",

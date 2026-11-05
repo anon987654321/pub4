@@ -27,7 +27,7 @@ class Dating::Match < ApplicationRecord
 
   scope :active, -> { where(status: "matched") }
 
-  # Either direction: uniqueness is initiator+receiver, so A→B and B→A are
+  # Either direction: uniqueness is initiator+receiver, so A->B and B->A are
   # different rows. Mutual likes create one of those; rematch must find it.
   def self.between(user_a, user_b)
     a_id = user_a.respond_to?(:id) ? user_a.id : user_a
@@ -43,7 +43,7 @@ class Dating::Match < ApplicationRecord
   end
 
   # Called from views and from announce_match's notification path, on matches
-  # that were found by id — nothing preloaded, and ApplicationRecord is
+  # that were found by id - nothing preloaded, and ApplicationRecord is
   # strict_loading by default, so the plain association read raised. Same shape
   # as Marketplace::Order#seller and Takeaway::Order#delivery_fee.
   def other_user(user)

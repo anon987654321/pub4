@@ -7,7 +7,7 @@ class Weather
 
   # The dashboard asks for this on every authenticated render. Uncached and
   # untimed it was a synchronous round trip to open-meteo in front of amber's
-  # front page, on a 1 vCPU box — a slow upstream stalled the page and a hung
+  # front page, on a 1 vCPU box - a slow upstream stalled the page and a hung
   # one held the Falcon fibre until the socket gave up on its own.
   CACHE_KEY = "amber:weather:bergen"
   CACHE_TTL = 15.minutes

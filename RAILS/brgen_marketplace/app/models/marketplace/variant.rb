@@ -3,7 +3,7 @@
 # One buyable version of a listing: this shirt in medium, in blue.
 #
 # The listing keeps the description, the photos and the seller; the variant
-# carries what differs — price when it differs, stock always, because stock is
+# carries what differs - price when it differs, stock always, because stock is
 # the thing a shared column gets wrong. A shop with four sizes on one
 # `listings.stock` either lists the shirt four times or oversells the medium.
 class Marketplace::Variant < ApplicationRecord
@@ -54,10 +54,10 @@ class Marketplace::Variant < ApplicationRecord
     update_columns(stock: [ stock.to_i - quantity.to_i, 0 ].max, updated_at: Time.current)
   end
 
-  # "M · Blå" — what the buyer picks from, built from the option rows rather
+  # "M - Blå" - what the buyer picks from, built from the option rows rather
   # than stored, so renaming an option cannot leave a stale label behind.
   def label
     parts = options.map(&:value)
-    parts.any? ? parts.join(" · ") : sku.presence || "—"
+    parts.any? ? parts.join(" - ") : sku.presence || "-"
   end
 end

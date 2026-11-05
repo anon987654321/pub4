@@ -5,7 +5,7 @@ require "tmpdir"
 
 class DashboardControllerTest < ActionDispatch::IntegrationTest
   # Through the key, not the English literal. This app serves nb by default, so
-  # "mission control" is not what the page says — and a test that pins the
+  # "mission control" is not what the page says - and a test that pins the
   # English spelling is a test that fails on a correct translation.
   test "index renders the mission control shell" do
     get "/dashboard"

@@ -101,7 +101,7 @@ class TvSoundsAndDuetsTest < ActionDispatch::IntegrationTest
     assert_includes response.body, tv.sound_path(sound)
   end
 
-  # The sound outlives the clip it came from — the clips that use it are the
+  # The sound outlives the clip it came from - the clips that use it are the
   # reason it is still a thing.
   test "deleting the source clip leaves the sound" do
     sign_in_as(@creator)

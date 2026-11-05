@@ -15,7 +15,7 @@
   <%= tag.button tag.em("i", aria: { hidden: true }),
         type: "button", class: "tiptap_button", tabindex: -1, aria: { label: t("compose.italic"), pressed: false },
         data: { action: "mousedown->tiptap-editor#hold click->tiptap-editor#italic", tiptap_editor_mark: "italic" } %>
-  <%= tag.button tag.span("•", aria: { hidden: true }),
+  <%= tag.button tag.span("-", aria: { hidden: true }),
         type: "button", class: "tiptap_button", tabindex: -1,
         aria: { label: t("compose.bullet_list"), pressed: false },
         data: { action: "mousedown->tiptap-editor#hold click->tiptap-editor#bulletList",

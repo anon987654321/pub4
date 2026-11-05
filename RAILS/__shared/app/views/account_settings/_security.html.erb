@@ -43,7 +43,7 @@
   <%= tag.h2 t("account_security.sessions_heading"), id: "account-sessions-heading" %>
   <%= tag.ul render(partial: "account_settings/device", collection: sessions, as: :device), class: "account-sessions" %>
   <% if sessions.size > 1 %>
-    <%# destructive: no-confirm-ok — reversible — each device signs in again with its password %>
+    <%# destructive: no-confirm-ok - reversible - each device signs in again with its password %>
     <%= button_to t("account_security.sign_out_others"), other_sessions_account_path, method: :delete,
                   class: "button" %>
   <% end %>

@@ -132,19 +132,19 @@ void main(){
   if(dist2d<0.20&&dist2d>0.001)p.xy+=normalize(diff2d)*(0.20-dist2d)*0.32;
   float radial=length(p.xy);
   p.z+=sin(radial*11.0-uTime*3.8)*uBass*0.05*lm;
-  // FA18 rain — weary mood gravity drift per-seed phase
+  // FA18 rain - weary mood gravity drift per-seed phase
   p.y -= uRain * (0.5 + position.y * 0.5) * sin(seed * 6.28 + uTime * 1.8) * 0.07;
-  // FA13 ear pulse — cheek zone oscillation when listening
+  // FA13 ear pulse - cheek zone oscillation when listening
   float isEar = 1.0 - smoothstep(0.0, 0.08, abs(zone - 0.2));
   p.xy += normalize(p.xy + vec2(0.001)) * isEar * uEarPulse * sin(uTime * 9.0 + seed) * 0.022;
-  // FA08 confidence outward drift — low confidence pushes vertices out
+  // FA08 confidence outward drift - low confidence pushes vertices out
   p.xy *= 1.0 + (1.0 - uConfidence) * 0.045;
-  // FA10 send ripple — radial wave from center
+  // FA10 send ripple - radial wave from center
   if(uRipple > 0.0) {
     float rwave = sin(radial * 10.0 - uRipple * 18.0) * exp(-uRipple * 2.5) * 0.035;
     p.xy += normalize(p.xy + vec2(0.001)) * rwave;
   }
-  // FA05/FA04 vowel jaw — viseme amplitude extends jaw opening
+  // FA05/FA04 vowel jaw - viseme amplitude extends jaw opening
   float jawRgnV = smoothstep(0.0,0.15,-position.y-0.05) * smoothstep(0.0,0.18,0.30-abs(position.x));
   p.y -= uVowel * jawRgnV * 0.025;
   // Wide (E, I) stretches the lips sideways, negative (O, U) draws them in:
@@ -152,7 +152,7 @@ void main(){
   p.x += position.x * uMouthWide * jawRgnV;
   // FA29 surprised Y impulse
   p.y += uSurpriseY * smoothstep(0.0, 0.6, 0.5 + position.y * 0.8) * 0.12;
-  // FA19 veto fracture — scatter to 8 radial shards by position angle
+  // FA19 veto fracture - scatter to 8 radial shards by position angle
   if(uFracture > 0.0) {
     float ang = atan(position.y, position.x);
     float shardAng = floor(ang * 4.0 / 3.14159 + 0.5) * 3.14159 / 4.0;
@@ -171,7 +171,7 @@ void main(){
     p.xy = mix(p.xy, qTarget, qt * 0.88);
     p.z += qt * 0.02 * sin(seed * 6.2831);
   }
-  // FA20 pass bloom — brief outward radial spring then snap back
+  // FA20 pass bloom - brief outward radial spring then snap back
   if(uBloom > 0.0) p.xy += normalize(p.xy + vec2(0.001)) * uBloom * 0.30 * (1.0 - radial * 0.6);
   vec4 mv=modelViewMatrix*vec4(p,1.);
   float depth=clamp(p.z/0.82,0.,1.);
@@ -193,7 +193,7 @@ void main(){
   gl_PointSize=1.0;
   gl_Position=projectionMatrix*mv;
   // Curvature, depth and silhouette used to scale point SIZE. A pixel has no
-  // size to give, so they scale brightness instead — which is how a 1-bit image
+  // size to give, so they scale brightness instead - which is how a 1-bit image
   // has always carried form. This is now the only 3D cue, so it does the work
   // the deleted glow pass and fresnel rim were doing, without softening an edge.
   float form=0.78+curvature*0.62+depth*1.22+boundary*0.42;
@@ -215,8 +215,8 @@ void main(){
   vAlpha*=clamp(form*0.42,0.25,1.0);
   vAlpha=max(vAlpha,0.08);
   // 0.35 rather than 0.14 at the far end, and the whole term scaled past 1.
-  // Receding points were painted at a seventh of full brightness — most of a
-  // head turned even slightly — which is half of why the face read as a shadow;
+  // Receding points were painted at a seventh of full brightness - most of a
+  // head turned even slightly - which is half of why the face read as a shadow;
   // the other half is exposure, in part3. vColor is clamped in the fragment
   // shader, so the scale saturates the mid-depth points to white and leaves the
   // far ones a real gradient rather than a run to almost nothing. Depth is the
@@ -237,7 +237,7 @@ varying float vZoneVal;
 uniform float uFocusDim;
 void main(){
   // No gl_PointCoord shaping. At gl_PointSize 1.0 a point is a single fragment,
-  // so there is no interior to carve a disc out of — the mask only ever cost an
+  // so there is no interior to carve a disc out of - the mask only ever cost an
   // interpolation and rounded the one pixel it was drawing.
   float alpha=vAlpha*uFocusDim;
   float eyeRgn=smoothstep(0.30,0.50,vZoneVal)*(1.0-smoothstep(0.50,0.65,vZoneVal));
@@ -250,7 +250,7 @@ void main(){
 }`;
 
 // No edge lines. The face is points, and nothing else: operator decision
-// 2026-08-18, after a phone made the trade visible — the wire mesh is the same
+// 2026-08-18, after a phone made the trade visible - the wire mesh is the same
 // weight whatever the grid density is, so on a coarse pointer it outweighed the
 // points it was derived from and the face read as a wireframe.
 let faceGeom, faceMat, facePoints;
@@ -287,7 +287,7 @@ if (_hasWebGL && THREE) {
     // A THREE.Points sprite carries no map, so its quad is a square: without
     // alpha blending the layer draws those squares instead of points, which is
     // the large translucent squares over the face. The material default already
-    // IS normal blending — the same gap the phosphor quad above sidesteps by
+    // IS normal blending - the same gap the phosphor quad above sidesteps by
     // saying nothing, after it turned the whole screen white.
     transparent: true, depthWrite: false
   });
@@ -333,8 +333,8 @@ else window.addEventListener('DOMContentLoaded', () => { if (window.ParticleKern
 
 // COUNCIL_VOICE was here until 2026-08-13: six council personas mapped to a
 // voice name, defined and never read anywhere in the face sources. Single-voice
-// policy makes it unreachable by design — guardVoice discards its argument and
-// returns MASTER_VOICE_POLICY.neural — so it was six more copies of a voice
+// policy makes it unreachable by design - guardVoice discards its argument and
+// returns MASTER_VOICE_POLICY.neural - so it was six more copies of a voice
 // name that could only ever go stale, and had.
 
 // Pristine chrome: council personas no longer shift the face to a hue

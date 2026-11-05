@@ -81,7 +81,7 @@ class ApplicationController < ActionController::Base
 
     # Wire ActsAsTenant if the gem is in use (for row-level city scoping on models)
     if defined?(ActsAsTenant)
-      # result.city_record is already `City.find_by(domain: entry.domain)` —
+      # result.city_record is already `City.find_by(domain: entry.domain)` -
       # DomainRegistry.resolve runs exactly that. The second `City.find_by` that
       # stood here was the same query again, reachable only when the first had
       # just returned nil, so it could never return a record. It only ever cost

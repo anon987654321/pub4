@@ -33,12 +33,12 @@ function setReady(isReady, detail) {
   if (input) {
     input.disabled = !isReady;
     if (!input.dataset.defaultPlaceholder) input.dataset.defaultPlaceholder = input.placeholder || "ask anything";
-    input.placeholder = isReady ? input.dataset.defaultPlaceholder : checkT("warming_up_placeholder", "master warming up…");
+    input.placeholder = isReady ? input.dataset.defaultPlaceholder : checkT("warming_up_placeholder", "master warming up...");
   }
   const ui = document.getElementById("ui-status");
   const warming = checkT("warming_up", "master warming up");
   if (ui && !isReady) ui.textContent = warming;
-  else if (ui && isReady && (ui.textContent === warming || ui.textContent === checkT("still_starting", "master still starting…"))) {
+  else if (ui && isReady && (ui.textContent === warming || ui.textContent === checkT("still_starting", "master still starting..."))) {
     ui.textContent = "";
   }
   if (isReady && detail?.model) {
@@ -70,7 +70,7 @@ function ensureRetryBootButton() {
     window.MASTER?.boot?.transition?.("RECOVERING", { source: "retry_boot_button" });
     pollTick();
     const ui = document.getElementById("ui-status");
-    if (ui) ui.textContent = checkT("retrying_boot", "retrying boot…");
+    if (ui) ui.textContent = checkT("retrying_boot", "retrying boot...");
   });
   const shell = document.getElementById("prompt-form") || document.body;
   shell.appendChild(btn);
@@ -79,9 +79,9 @@ function ensureRetryBootButton() {
 
 function setWarmupStalled(reason) {
   const ui = document.getElementById("ui-status");
-  if (ui) ui.textContent = checkT("still_starting", "master still starting…");
+  if (ui) ui.textContent = checkT("still_starting", "master still starting...");
   const errLive = document.getElementById("error-live");
-  if (errLive) errLive.textContent = reason || checkT("warming_retry", "master warming up — retry shortly");
+  if (errLive) errLive.textContent = reason || checkT("warming_retry", "master warming up - retry shortly");
   ensureRetryBootButton();
   window.dispatchEvent(new CustomEvent("master:container-timeout", { detail: { reason } }));
 }
@@ -132,7 +132,7 @@ async function pollTick() {
   const ready = await pollStatus();
   if (ready) return;
   if (pollCount >= MAX_POLLS) {
-    setWarmupStalled(checkT("not_ready", "master did not become ready — reload or retry in a minute"));
+    setWarmupStalled(checkT("not_ready", "master did not become ready - reload or retry in a minute"));
     return;
   }
   schedulePollTick();

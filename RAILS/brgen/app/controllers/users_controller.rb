@@ -14,7 +14,7 @@ class UsersController < ApplicationController
 
   def show
     # By username as well as id, because the ActivityPub actor advertises
-    # https://<city>/users/<username> as its `url` — and a profile link handed
+    # https://<city>/users/<username> as its `url` - and a profile link handed
     # to the fediverse that 404s in a browser is worse than not federating.
     scope = User.public_profiles.includes(:dating_profile)
     @user = scope.find_by(username: params[:id]) || scope.find(params[:id])
@@ -31,7 +31,7 @@ class UsersController < ApplicationController
     @playlists = @user.playlist_playlists.public_playlists.limit(8)
   end
 
-  # Edit/update your own profile — always Current.user, never someone else's row.
+  # Edit/update your own profile - always Current.user, never someone else's row.
   def edit
     require_user_session
     @user = Current.user
@@ -83,7 +83,7 @@ class UsersController < ApplicationController
   # registration action existed. This is that missing door.
   def create
     # Honeypot: a hidden field no human ever fills. A bot that fills it gets a
-    # success-looking response and no account — cheap defence with no CAPTCHA.
+    # success-looking response and no account - cheap defence with no CAPTCHA.
     if params[:homepage].present?
       redirect_to after_authentication_url, notice: t("flash.welcome")
       return

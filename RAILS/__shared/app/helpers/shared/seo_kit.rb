@@ -87,7 +87,7 @@ module Shared
         "description" => description,
         "areaServed" => area_served,
         # compact drops this when search is false, the same way it drops a nil
-        # description — no need for a second shape. A root_url ends in a slash,
+        # description - no need for a second shape. A root_url ends in a slash,
         # so the path joins without doubling it.
         "potentialAction" => (if search
                                 {

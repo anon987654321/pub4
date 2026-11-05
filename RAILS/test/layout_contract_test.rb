@@ -12,7 +12,7 @@ class LayoutContractTest < Minitest::Test
   include LayoutContractSources
 
   # The instrument, against an answer written here rather than derived from it.
-  # Five headings in three notations, one of them commented out — if this stops
+  # Five headings in three notations, one of them commented out - if this stops
   # returning [1, 2, 3, 4] the detector has drifted and every count below it is
   # decoration. tools/instruments.rb makes the same argument for MASTER's
   # counters; this is the same idea at the size that fits in a test.
@@ -32,7 +32,7 @@ class LayoutContractTest < Minitest::Test
     views = Dir.glob(File.join(ROOT, "{amber,brgen,bsdports,__shared}", "app", "views", "**", "*.html.erb")) +
             Dir.glob(File.join(ROOT, EngineRoots::GLOB, "app", "views", "**", "*.html.erb"))
 
-    refute_empty views, "no views found — the glob stopped matching, which is blindness not cleanliness"
+    refute_empty views, "no views found - the glob stopped matching, which is blindness not cleanliness"
 
     skips = views.flat_map do |path|
       heading_levels(File.read(path)).each_cons(2).filter_map do |from, to|
@@ -59,7 +59,7 @@ class LayoutContractTest < Minitest::Test
     views = Dir.glob(File.join(ROOT, "{amber,brgen,bsdports,__shared}", "app", "views", "**", "*.erb")) +
             Dir.glob(File.join(ROOT, EngineRoots::GLOB, "app", "views", "**", "*.erb"))
 
-    refute_empty views, "no views found — the glob stopped matching, which is blindness not cleanliness"
+    refute_empty views, "no views found - the glob stopped matching, which is blindness not cleanliness"
 
     hacks = views.flat_map do |path|
       File.readlines(path).each_with_index.filter_map do |line, i|
@@ -74,7 +74,7 @@ class LayoutContractTest < Minitest::Test
     end
 
     assert_empty hacks.sort,
-                 "these &nbsp; are spacing, not typography — use a flex gap, padding, or a CSS-reserved line box"
+                 "these &nbsp; are spacing, not typography - use a flex gap, padding, or a CSS-reserved line box"
   end
 
   def test_layout_chrome_partial_exists
@@ -204,7 +204,7 @@ class LayoutContractTest < Minitest::Test
 
   def test_face_root_shares_chrome_inset_and_tap
     css = File.read(FACE_CSS)
-    # Absolute unit on purpose — a rem lands on 13.5px at brgen's 18px root.
+    # Absolute unit on purpose - a rem lands on 13.5px at brgen's 18px root.
     assert_includes css, "--chrome-inset: 12px"
     refute_match(/--chrome-inset:\s*[\d.]+rem/, css, "chrome inset must not scale with the root")
     assert_includes css, "--tap-min: 44px"
@@ -224,7 +224,7 @@ class LayoutContractTest < Minitest::Test
 
   # The measure is `--measure`, in _typography.scss, which both stacks @forward.
   # This line asked the dialect for `--measure-body`, which e2dc94299 retired as
-  # a second name for the same 66ch — declared three times and used more often
+  # a second name for the same 66ch - declared three times and used more often
   # than the real one. design_tokens.yml keeps its `measure_body` key because
   # design_metrics reads that YAML; it is not a CSS name. Asserting the retired
   # spelling in the chrome file is how a stale test invites the twin back.

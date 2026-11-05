@@ -9,7 +9,7 @@
       <% minutes, seconds = video_note.timestamp.to_i.divmod(60) %>
       <% clock = format("%d:%02d", minutes, seconds) %>
       <%= tag.button clock, type: "button", class: "video-note-seek", data: { tv_seek_to: video_note.timestamp.to_i },
-                            aria: { label: t("tv.seek_to_note", time: clock) } %> ·
+                            aria: { label: t("tv.seek_to_note", time: clock) } %> -
     <% end %>
     <%= video_note.user&.display_name || t("chat.anon") %>
   </p>

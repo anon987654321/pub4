@@ -100,7 +100,7 @@ class CartsControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
 
     assert_match "Damaskus Kylling Shawarma", response.body
-    assert_match "258 kr", response.body       # subtotal 2 × 129 kr
+    assert_match "258 kr", response.body       # subtotal 2 x 129 kr
     assert_match "Betal med Vipps", response.body
     assert_match "ingen kortfelter", response.body  # cart.steps_note
   end

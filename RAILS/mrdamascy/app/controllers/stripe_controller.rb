@@ -2,15 +2,15 @@
 
 require "active_support/security_utils"
 
-# Stripe endpoints — the second payment lane (mirrors VippsController):
+# Stripe endpoints - the second payment lane (mirrors VippsController):
 #
-#   mock     — dev/test stand-in for Stripe's hosted Checkout (mock mode only)
-#   approve  — mock payment approval → captured + confirmed → tracking
-#   callback — the REAL webhook receiver. Stripe POSTs events here
-#              (checkout.session.completed, …) and signs the body; we verify
+#   mock     - dev/test stand-in for Stripe's hosted Checkout (mock mode only)
+#   approve  - mock payment approval -> captured + confirmed -> tracking
+#   callback - the REAL webhook receiver. Stripe POSTs events here
+#              (checkout.session.completed, ...) and signs the body; we verify
 #              the HMAC signature (Stripe-Signature header) with a constant-
 #              time compare, then hand the event to StripeClient.sync_payment!
-#              — the same seam the tracking page's poll uses, so both paths
+#              - the same seam the tracking page's poll uses, so both paths
 #              converge idempotently on capture.
 #
 # The webhook is CSRF-exempt (server-to-server, no session cookie) and
@@ -42,12 +42,12 @@ class StripeController < ApplicationController
 
   # Stripe webhook: POST /stripe/callback. Body is a JSON event; we care about
   # checkout.session.completed (and let anything else answer 200 so Stripe
-  # stops retrying non-relevant events). 400 on a bad signature is NOT used —
+  # stops retrying non-relevant events). 400 on a bad signature is NOT used -
   # Stripe retries those, which is what we want for transient issues, but a
   # permanently bad secret would retry forever, so signature failures answer
   # 400 and a missing/unknown session answers 200 (nothing to converge).
   def callback
-    # Rack request IO reads once — slurp first, then verify and parse the
+    # Rack request IO reads once - slurp first, then verify and parse the
     # same buffer (the signature covers the exact bytes Stripe sent).
     payload = request.body.read.to_s
 
@@ -60,7 +60,7 @@ class StripeController < ApplicationController
     event = JSON.parse(payload)
     session_object = event.dig("data", "object") || {}
     # Only checkout-session objects carry our reference; anything else
-    # (invoices, payouts, …) answers 200 and changes nothing.
+    # (invoices, payouts, ...) answers 200 and changes nothing.
     return head :ok unless session_object["object"] == "checkout_session"
 
     token = session_object["client_reference_id"].to_s
@@ -78,7 +78,7 @@ class StripeController < ApplicationController
   private
 
   # The mock page IS the payment in mock mode; in real mode it must not
-  # answer — otherwise POST /stripe/mock/approve captures an order no PSP
+  # answer - otherwise POST /stripe/mock/approve captures an order no PSP
   # ever reserved. head :not_found halts the chain (a raised RecordNotFound
   # would be rescued application-wide instead of 404-ing).
   def refuse_in_real_mode

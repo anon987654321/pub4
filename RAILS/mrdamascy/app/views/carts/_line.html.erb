@@ -11,7 +11,7 @@
       <%= tag.ul safe_join(line.options_list.map { |option_name| tag.li(option_name) }),
              class: "fact-list line-options" %>
     <% end %>
-    <%= tag.p "“#{line.note}”", class: "line-note" if line.note.present? %>
+    <%= tag.p "\"#{line.note}\"", class: "line-note" if line.note.present? %>
     <div class="line-tools">
       <%# At one the minus stays in place and removes the line, so the
           stepper never jumps sideways. %>
@@ -30,7 +30,7 @@
   <div class="line-side">
     <%= tag.strong money(line.line_total_ore), class: "line-sum" %>
     <% if line.quantity.to_i > 1 %>
-      <%= tag.span "#{money(line.unit_price_ore)} × #{line.quantity}" %>
+      <%= tag.span "#{money(line.unit_price_ore)} x #{line.quantity}" %>
     <% end %>
   </div>
 </article>

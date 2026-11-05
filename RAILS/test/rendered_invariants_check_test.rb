@@ -11,7 +11,7 @@ require_relative "../../MASTER/checks/lib/rendered/rendered_invariants"
 # functions of that payload, so each can be handed a defect without Chrome.
 #
 # The first test is the one that matters. Without a browser this check must say
-# it measured nothing — not pass. It reported PASSED for months by filing the
+# it measured nothing - not pass. It reported PASSED for months by filing the
 # missing browser as a live skip, which the runner counts but cannot name, so
 # "measured nothing, and why" printed "exit 3, no reason given (subprocess
 # check)" for an in-process subject.

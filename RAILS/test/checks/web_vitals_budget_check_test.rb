@@ -11,8 +11,8 @@ require_relative "../../../MASTER/checks/lib/rendered/web_vitals_budget"
 #
 # The check has two halves. The source half reads hotwire.js and asserts the field
 # sampler still observes LCP, CLS and INP; the live half loads a page in Chrome and
-# judges the two paint metrics against a budget. The budget is the check — the pass
-# line is "LCP and CLS within budget" — and the source half is its blindness alarm.
+# judges the two paint metrics against a budget. The budget is the check - the pass
+# line is "LCP and CLS within budget" - and the source half is its blindness alarm.
 #
 # Counting the source half as measurement meant that on any machine without Chrome
 # the check read three strings out of a JavaScript file, measured neither metric, and
@@ -117,14 +117,14 @@ class WebVitalsBudgetCheckTest < Minitest::Test
   # is the one half that runs everywhere.
   def test_a_sampler_that_stopped_observing_a_metric_is_named_with_the_metric
     with_sampler(SAMPLER.lines.reject { |l| l.include?("first-input") }.join) do
-      assert_match(/no longer observes first-input — INP stopped being collected in the field/,
+      assert_match(/no longer observes first-input - INP stopped being collected in the field/,
                    dark.failures.join(" | "))
     end
   end
 
   def test_a_missing_hotwire_js_is_named_rather_than_read_as_a_clean_sampler
     with_const(CHECK, :HOTWIRE, "/nonexistent/hotwire.js") do
-      assert_match(/missing — nothing collects vitals in the field/, dark.failures.join(" | "))
+      assert_match(/missing - nothing collects vitals in the field/, dark.failures.join(" | "))
     end
   end
 
@@ -135,7 +135,7 @@ class WebVitalsBudgetCheckTest < Minitest::Test
 
       assert_equal :inconclusive, result.outcome,
                    "three strings found in hotwire.js are not LCP and CLS within budget"
-      assert_match(/no Chrome\/Chromium — LCP and CLS not measured/, result.unchecked.join(" | "))
+      assert_match(/no Chrome\/Chromium - LCP and CLS not measured/, result.unchecked.join(" | "))
       assert_equal 0, result.checks_ran
     end
   end
@@ -152,7 +152,7 @@ class WebVitalsBudgetCheckTest < Minitest::Test
       ) { CHECK.run }
 
       assert_equal :inconclusive, result.outcome
-      assert_match(/no app reachable — paint budget not measured/, result.unchecked.join(" | "))
+      assert_match(/no app reachable - paint budget not measured/, result.unchecked.join(" | "))
     end
   end
 

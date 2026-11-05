@@ -3,7 +3,7 @@
 # The reader for `policy.report_uri "/csp-reports"`.
 #
 # The policy was report-only with no report_uri for its whole life, so every
-# violation was neither blocked nor recorded — a header that cost bytes on every
+# violation was neither blocked nor recorded - a header that cost bytes on every
 # response and told nobody anything. Logging is the whole job: the point of
 # report-only is to find out what enforcement would break before turning it on.
 class CspReportsController < ActionController::API

@@ -27,7 +27,7 @@ class HonestyChecksTest < Minitest::Test
 
   # The smallest tree that satisfies PaymentHonestyCheck::REQUIRED and both
   # raise-site read-backs. Content is chosen to match the declared pattern and
-  # nothing else — a fixture that copied the real files would pass or fail with
+  # nothing else - a fixture that copied the real files would pass or fail with
   # the tree rather than with the check.
   PAYMENT_TREE = {
     "brgen/app/services/marketplace/payments/not_configured.rb" =>

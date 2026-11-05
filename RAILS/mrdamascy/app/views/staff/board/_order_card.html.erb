@@ -15,7 +15,7 @@
   <ul class="fact-list board-card-items">
     <% order.order_items.each do |line| %>
       <li>
-        <%= line.quantity %>× <%= line.name %>
+        <%= line.quantity %>x <%= line.name %>
         <%= tag.span line.options_text, class: "board-card-options" if line.options_text.present? %>
         <%= tag.q line.note, class: "board-card-note" if line.note.present? %>
       </li>
@@ -23,7 +23,7 @@
   </ul>
   <%= tag.p order.customer_name, class: "board-card-name" if order.customer_name.present? %>
   <% if order.address.present? && order.delivery? %>
-    <%= tag.p "#{order.address} · #{order.postcode}", class: "board-card-address" %>
+    <%= tag.p "#{order.address} - #{order.postcode}", class: "board-card-address" %>
     <%= tag.p tag.q(order.delivery_note), class: "board-card-address" if order.delivery_note.present? %>
   <% end %>
   <% if order.phone.present? %>
@@ -38,7 +38,7 @@
     <%= button_to advance_label, staff_advance_order_path(order),
           method: :patch, class: "button-primary" %>
   <% elsif order.external_delivery_id.present? %>
-    <%# Wolt Drive dispatch done — show who is carrying the bag. %>
+    <%# Wolt Drive dispatch done - show who is carrying the bag. %>
     <p class="board-wait">
       <%= render "shared/mode_icon", mode: "delivery" %>
       <%= t("staff.wolt_courier", courier: order.courier_name.presence || "Wolt") %>

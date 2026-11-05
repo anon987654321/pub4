@@ -3,7 +3,7 @@
 # Runs everyone's saved searches and tells them what turned up.
 #
 # marketplace_saved_searches shipped with a `notify` boolean, the form permitted
-# it, and the saved-searches page rendered an "alerts on" chip from it — while
+# it, and the saved-searches page rendered an "alerts on" chip from it - while
 # nothing in the tree ever ran a saved search on a user's behalf. The chip was
 # the only thing the column did. This is the reader.
 #

@@ -1,6 +1,6 @@
 # Mr. Damascy
 
-**Fra Damaskus med kjærlighet** — from Damascus with love, grilled in Bergen.
+**Fra Damaskus med kjærlighet** - from Damascus with love, grilled in Bergen.
 
 Mr. Damascy is a mobile-first ordering PWA for the real restaurant at
 **Solheimsgaten 60, 5054 Bergen (Danmarksplass)**. The kitchen serves one local
@@ -24,7 +24,7 @@ One Bergen kitchen owns the order and customer relationship. It operates the
 menu, kitchen board, courier run list, customer tracking and loyalty card.
 The PWA can be installed from the browser; it is not a separate app-store
 application. The exact screen, offline and service-worker behavior is in
-APP_SPEC.md sections 7 and 10–12.
+APP_SPEC.md sections 7 and 10-12.
 
 ## Foodora and Wolt
 

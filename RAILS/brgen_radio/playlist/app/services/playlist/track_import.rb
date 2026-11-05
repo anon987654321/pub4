@@ -60,7 +60,7 @@ module Playlist
       attributes
     end
 
-    # Hosts compared whole, never by substring — matching Shared::LinkEmbed's
+    # Hosts compared whole, never by substring - matching Shared::LinkEmbed's
     # rule, so a lookalike host (youtube.com.evil.test, notyoutube.com) files
     # as "direct" rather than as the provider it merely names.
     YOUTUBE_HOSTS = %w[youtube.com www.youtube.com m.youtube.com youtu.be].freeze

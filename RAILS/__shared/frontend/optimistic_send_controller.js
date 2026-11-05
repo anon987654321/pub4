@@ -5,13 +5,13 @@ import { Controller } from "@hotwired/stimulus"
 // Measured on the ambient chat widget before this existed: between pressing
 // send and anything at all changing on screen, 2746ms / 4859ms / 5340ms across
 // three consecutive sends. The composer kept the text, the log did not move,
-// and there was no pending state anywhere — so the correct read of the UI was
+// and there was no pending state anywhere - so the correct read of the UI was
 // "nothing happened". People retype or press send again.
 //
 // Most of that is round-trip: the message is written, then broadcast back
 // through Message#broadcasts_to, and only the broadcast paints. That is the
-// right architecture — one code path renders every message, wherever it came
-// from — but it means the sender waits for the same trip as everyone else with
+// right architecture - one code path renders every message, wherever it came
+// from - but it means the sender waits for the same trip as everyone else with
 // no local echo. This adds the echo and nothing else: the server stays the
 // single source of truth for what a message IS.
 //
@@ -21,7 +21,7 @@ import { Controller } from "@hotwired/stimulus"
 // only ever touches the log from a submit event.
 //
 // A send that did not get through stays on screen as a failed line and is
-// sent again — by a tap on it, or by itself when the connection comes back —
+// sent again - by a tap on it, or by itself when the connection comes back -
 // rather than being lost or retyped. Every attempt carries a token (the form's
 // client_token field, when it has one) that the retries share, so a send whose
 // answer was lost on the way back is recognised by the server and not written
@@ -31,9 +31,9 @@ export default class extends Controller {
   static values = {
     // Filled from the server so the placeholder matches the real thing.
     handle: { type: String, default: "" },
-    pendingLabel: { type: String, default: "sending…" },
-    failedLabel: { type: String, default: "not sent — tap to retry" },
-    offlineLabel: { type: String, default: "offline — sends when you are back" }
+    pendingLabel: { type: String, default: "sending..." },
+    failedLabel: { type: String, default: "not sent - tap to retry" },
+    offlineLabel: { type: String, default: "offline - sends when you are back" }
   }
 
   connect() {
@@ -103,7 +103,7 @@ export default class extends Controller {
     li.dataset.optimistic = "true"
     li.innerHTML = `<article data-from="self" aria-busy="true">
       <header><span class="msg-nick">${this.#escape(this.handleValue)}</span>
-      <span class="send-status">· ${this.#escape(this.pendingLabelValue)}</span></header>
+      <span class="send-status">- ${this.#escape(this.pendingLabelValue)}</span></header>
       <p></p></article>`
     li.querySelector("p").textContent = text
     log.appendChild(li)
@@ -129,7 +129,7 @@ export default class extends Controller {
       if (article) article.tabIndex = 0
       const note = this.pending.querySelector(".send-status")
       const label = offline && navigator.onLine === false ? this.offlineLabelValue : this.failedLabelValue
-      if (note) note.textContent = `· ${label}`
+      if (note) note.textContent = `- ${label}`
       const field = this.#field
       if (field && !field.value) field.value = this.sentText
       this.failed = this.pending

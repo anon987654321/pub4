@@ -13,8 +13,8 @@ module ActiveSupport
     Shared::TestDefaults.install!(self)
 
     # 1x1 transparent PNG. Several models refuse to be valid without an
-    # attachment — a dating profile may not be visible without a photo, and a
-    # story may not exist without media — so building one is setup, not the
+    # attachment - a dating profile may not be visible without a photo, and a
+    # story may not exist without media - so building one is setup, not the
     # subject of any single test. Two test files had already written this
     # constant out for themselves.
     PIXEL_PNG = Base64.decode64(
@@ -25,8 +25,8 @@ module ActiveSupport
       attachment.attach(io: StringIO.new(PIXEL_PNG), filename: filename, content_type: "image/png")
     end
 
-    # Takeaway refuses an empty order at create — has_line_items and
-    # meets_minimum_order both run on: :create — so an order has to be built
+    # Takeaway refuses an empty order at create - has_line_items and
+    # meets_minimum_order both run on: :create - so an order has to be built
     # with its line items rather than filled in afterwards. Five test files
     # created bare orders and added items on the next line, which is the shape
     # the validation exists to reject.

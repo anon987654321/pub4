@@ -41,7 +41,7 @@ module Brgen
     # tv, takeaway, maps and messenger are the same word everywhere. radio is the
     # same word in every language these cities speak, so it belongs to that second
     # group. `spilleliste` was once here as a Norwegian-language second host and was
-    # the odd one out; it also never resolved — spilleliste.brgen.no and
+    # the odd one out; it also never resolved - spilleliste.brgen.no and
     # spilleliste.oshlo.no were both NXDOMAIN, so every check pointing at it was
     # measuring nothing.
     #
@@ -57,8 +57,8 @@ module Brgen
     LOCAL_HOSTS = [ "127.0.0.1", "localhost" ].freeze
 
     # Entry.locale is the language of the city, not a promise that we ship a
-    # YAML file for it. LocaleBridge.resolve is what I18n.locale becomes —
-    # da/sv/fi/is → nb, and everything else → en. Do not add a thin locale
+    # YAML file for it. LocaleBridge.resolve is what I18n.locale becomes -
+    # da/sv/fi/is -> nb, and everything else -> en. Do not add a thin locale
     # file that is a copy of another language; that is a claim.
     ENTRIES = [
       Entry.new("brgen.no", "Bergen", "NO", :nb, "NOK", "markedsplass"),
@@ -152,7 +152,7 @@ module Brgen
 
     # The city apexes that actually serve this app. Every other ENTRIES row is a
     # domain we intend to run and have wired into OPERATOR.sh#ALL_DOMAINS, but
-    # relayd only answers for an apex whose certificate exists on disk — see
+    # relayd only answers for an apex whose certificate exists on disk - see
     # the old backlog "City vanity TLS". LIVE_DOMAINS stays deployment evidence, not
     # navigation data.
     #
@@ -164,12 +164,12 @@ module Brgen
     # certificates: acme-client had been issuing and renewing for stvanger.no,
     # trndheim.no, cardff.uk, edinbrgh.uk and frankfrt.de all along, and all five
     # resolved to 46.23.89.226. They were missing one `tls keypair` line each, so
-    # they completed the TCP connection on 443 and then refused the handshake —
+    # they completed the TCP connection on 443 and then refused the handshake -
     # which to a visitor is worse than NXDOMAIN, because a browser reports it as a
     # security failure rather than a domain that does not exist.
     #
     # The rest of ENTRIES: 33 are NXDOMAIN at their registrar and need money, not
-    # config. amstrdam.nl and dnver.us have left us — amstrdam.nl is on Cloudflare
+    # config. amstrdam.nl and dnver.us have left us - amstrdam.nl is on Cloudflare
     # and 301s to afvinklijst.nl, dnver.us has expired. denvr.us, wshingtondc.com
     # and foball.no are still registered to us at Domeneshop and delegated to
     # Domeneshop's parking nameservers rather than ns.brgen.no; those three come
@@ -243,7 +243,7 @@ module Brgen
       City.find_by(domain: entry.domain)
     # cities_table? is checked on the way in. A StatementInvalid past that point
     # is a schema fault, and swallowing it makes every city resolve to no
-    # record — which reads as an unconfigured city rather than a broken one.
+    # record - which reads as an unconfigured city rather than a broken one.
     rescue ActiveRecord::StatementInvalid => e
       Rails.logger.warn("domain_registry city lookup: #{e.class}: #{e.message}")
       nil
@@ -251,8 +251,8 @@ module Brgen
 
     # Memoised because a table cannot appear or vanish inside a running process,
     # and this ran a schema probe on every request alongside the lookup it
-    # guards. The boot-order case it exists for — the registry resolving before
-    # migrations have run — only needs answering once.
+    # guards. The boot-order case it exists for - the registry resolving before
+    # migrations have run - only needs answering once.
     def self.cities_table?
       return @cities_table if defined?(@cities_table)
 

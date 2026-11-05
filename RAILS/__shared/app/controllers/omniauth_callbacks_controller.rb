@@ -9,7 +9,7 @@ class OmniauthCallbacksController < ::ApplicationController
   allow_unauthenticated_access
   # create calls User.create! for an unrecognised uid, so a callback that gets
   # this far makes an account. Reaching it needs a real roundtrip through the
-  # provider, which is the actual barrier — this is a ceiling on the damage if
+  # provider, which is the actual barrier - this is a ceiling on the damage if
   # that assumption is ever wrong, not the thing standing in the way.
   #
   # Deliberately loose. A person signs in once; 30 a minute from one address is

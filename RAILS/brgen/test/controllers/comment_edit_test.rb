@@ -13,7 +13,7 @@ class CommentEditTest < ActionDispatch::IntegrationTest
 
     @author = member("edit-author")
     @other = member("edit-other")
-    @post = Post.create!(user: @author, city: @city, title: "Tråd", content: "…")
+    @post = Post.create!(user: @author, city: @city, title: "Tråd", content: "...")
     @comment = Comment.create!(user: @author, commentable: @post, content: "<p>skrivefeil</p>")
   end
 

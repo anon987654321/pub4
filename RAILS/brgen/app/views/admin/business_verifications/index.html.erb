@@ -29,6 +29,6 @@
   <% end %>
   <%= render "shared/pager", pagy: @pagy, label: t("business_verifications.queue_title") %>
 <% else %>
-  <%# empty_state: no-action-ok — a cleared review queue is the goal state, not a dead end %>
+  <%# empty_state: no-action-ok - a cleared review queue is the goal state, not a dead end %>
   <%= render "shared/empty_state", title: t("business_verifications.queue_empty"), body: t("business_verifications.queue_empty_body") %>
 <% end %>

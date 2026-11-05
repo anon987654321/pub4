@@ -5,13 +5,13 @@ module Shared
   #
   # ApplicationRecord sets strict_loading_by_default = true for every
   # environment. Only development downgrades a violation to a log line
-  # (development.rb sets action_on_strict_loading_violation = :log) — test and
+  # (development.rb sets action_on_strict_loading_violation = :log) - test and
   # production both *raise*, because that is Rails' default.
   #
   # That combination is a trap for state-changing methods that notify someone or
   # emit an activity event. They run `update!` first and then read an
-  # association to find the recipient. When the caller loads the record by id — a
-  # controller action, a PSP webhook, a background job — nothing is preloaded,
+  # association to find the recipient. When the caller loads the record by id - a
+  # controller action, a PSP webhook, a background job - nothing is preloaded,
   # so the read raises *after* the write has already committed. The state change
   # sticks, the notification is silently lost, and the caller gets a 500. Live
   # examples found in this codebase: Marketplace::Order#mark_paid! (a real
@@ -20,7 +20,7 @@ module Shared
   # Takeaway::Order#transition_to!, and the Tv activity emitters.
   #
   # This resolves by foreign key instead, and keeps the zero-extra-query fast
-  # path when the caller did preload. It is not a licence to skip preloading —
+  # path when the caller did preload. It is not a licence to skip preloading -
   # `includes` is still correct at the query site, and prevents the N+1 that
   # strict loading exists to catch. This is the safety net for the paths where
   # a missed notification is worse than an extra SELECT.

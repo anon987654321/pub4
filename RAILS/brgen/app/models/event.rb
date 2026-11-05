@@ -110,7 +110,7 @@ class Event < ApplicationRecord
   def upcoming? = finished_at.present? && finished_at >= Time.current
   def in_progress? = starts_at <= Time.current && finished_at >= Time.current
 
-  # nil when no capacity was set — "unlimited" is a real answer and must not
+  # nil when no capacity was set - "unlimited" is a real answer and must not
   # render as "0 places left".
   def places_left
     return nil if capacity.blank?
@@ -173,7 +173,7 @@ class Event < ApplicationRecord
   # A new time or venue reaches everyone who said they were coming, the way a
   # cancellation does; the organiser, who made the change, is not told.
   def notify_attendees_of_change
-    body = I18n.t("events.changed_body", when: I18n.l(starts_at, format: :long), where: venue_name.presence || "–")
+    body = I18n.t("events.changed_body", when: I18n.l(starts_at, format: :long), where: venue_name.presence || "-")
     others = rsvps.where.not(user_id:)
     coming = others.where(status: %w[going interested])
     coming.includes(:user).find_each do |rsvp|

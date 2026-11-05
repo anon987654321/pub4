@@ -39,7 +39,7 @@
           <% if deal && listing %>
             <%= tag.p listing.title, class: "deal-card-subtitle" %>
           <% elsif listing %>
-            <%= tag.p [listing.location, listing.category&.name].compact.join(" · "), class: "deal-meta" %>
+            <%= tag.p [listing.location, listing.category&.name].compact.join(" - "), class: "deal-meta" %>
           <% end %>
         </div>
       <% end %>

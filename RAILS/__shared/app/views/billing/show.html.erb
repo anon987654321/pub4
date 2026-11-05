@@ -20,7 +20,7 @@
         <li>
           <%= t("billing.plans.#{subscription.plan_key}.name") %>
           <% if subscription.current_period_end %>
-            — <%= t(subscription.cancel_at_period_end ? "billing.ends_on" : "billing.renews_on",
+            - <%= t(subscription.cancel_at_period_end ? "billing.ends_on" : "billing.renews_on",
                     date: l(subscription.current_period_end.to_date)) %>
           <% end %>
         </li>

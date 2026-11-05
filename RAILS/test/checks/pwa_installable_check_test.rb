@@ -10,7 +10,7 @@ require_relative "../../../MASTER/checks/lib/source/pwa_installable"
 # checkout, so its third state is that it has none: no browser, no listening app,
 # no deploy stamp, and therefore nothing it can silently decline to measure. The
 # last test holds that, because the cheap way to add a live half later is to add
-# one that skips — and a manifest check that skips is a manifest check that passes.
+# one that skips - and a manifest check that skips is a manifest check that passes.
 #
 # The trap it encodes is the icon lookup. An icon in a manifest is a path, and it
 # resolves from the app's own public/ or from the shared engine's, which mounts
@@ -83,7 +83,7 @@ class PwaInstallableCheckTest < Minitest::Test
 
   # A manifest of nothing but maskable icons installs nowhere, and the sizes
   # check is the only thing that reads purpose. An absent purpose is "any" per
-  # spec — bsdports omits it on exactly the two icons that make it installable —
+  # spec - bsdports omits it on exactly the two icons that make it installable -
   # so this plants the opposite case and expects the check to still refuse.
   def test_a_manifest_with_only_maskable_icons_at_a_required_size_is_named
     maskable = MANIFEST.sub('"sizes": "192x192", "type": "image/png"',
@@ -95,7 +95,7 @@ class PwaInstallableCheckTest < Minitest::Test
 
   def test_a_manifest_missing_a_required_key_is_named
     with_tree(manifest: MANIFEST.sub(%("start_url": "/",\n  ), "")) do
-      assert_match(/declares no start_url — not installable/, CHECK.run.failures.join(" | "))
+      assert_match(/declares no start_url - not installable/, CHECK.run.failures.join(" | "))
     end
   end
 

@@ -19,7 +19,7 @@ class Takeaway::Review < ApplicationRecord
 
   private
 
-  # Same as Marketplace::Review#refresh_listing_rating — the callback runs on
+  # Same as Marketplace::Review#refresh_listing_rating - the callback runs on
   # destroy, when the review was found by id and nothing is preloaded, and it
   # must not try to refresh a restaurant that is itself being destroyed.
   def refresh_restaurant_rating

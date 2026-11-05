@@ -7,7 +7,7 @@ require_relative "../../MASTER/checks/lib/rendered/webgl_surfaces"
 # the old backlog section 4: the rendered checks launch Chrome with --disable-gpu,
 # which turns WebGL off outright, so MapLibre and the MASTER face both measure
 # as an empty canvas. Nothing asserted that a WebGL surface ever drew, and
-# nothing could — a check built on that instrument would have passed or failed
+# nothing could - a check built on that instrument would have passed or failed
 # for reasons that had nothing to do with the map.
 class WebglSurfacesCheckTest < Minitest::Test
   ROOT = File.expand_path("..", __dir__)
@@ -30,7 +30,7 @@ class WebglSurfacesCheckTest < Minitest::Test
   end
 
   # The opt-in is per session. Every other check keeps --disable-gpu, because
-  # software GL is slow and rasterises text differently — dropping it globally
+  # software GL is slow and rasterises text differently - dropping it globally
   # would change what the layout and CSS checks measure.
   def test_swiftshader_is_opt_in_and_disable_gpu_is_the_default
     # Two files since the split: the flags are built where Chrome is launched,

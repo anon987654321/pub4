@@ -8,14 +8,14 @@ class PublicNavigationTest < ApplicationSystemTestCase
 
     # Through the keys, in whichever language the app negotiated for this
     # browser. bsdports defaults to :nb, so the English literals here asserted
-    # copy the page never renders — "OpenBSD ports" against "OpenBSD-porter".
+    # copy the page never renders - "OpenBSD ports" against "OpenBSD-porter".
     locale = find("html", visible: :all)[:lang]
     assert_selector "h1", text: I18n.t("pages.ports", locale: locale)
-    # Capybara has no `?` substitution — that is Rails' assert_select.
+    # Capybara has no `?` substitution - that is Rails' assert_select.
     assert_selector "[role='search'][aria-label='#{I18n.t("ports.search_label", locale: locale)}']"
     assert_selector "input[aria-label='#{I18n.t("search.query", locale:, default: "Search query")}']"
     # The skip link is off-screen until focused, and Selenium reports "" for a
-    # hidden node's text — read textContent rather than filtering on a string
+    # hidden node's text - read textContent rather than filtering on a string
     # the driver can never see.
     skip_link = find("a.skip-link[href='#main-content']", visible: :all)
     assert_equal I18n.t("skip_to_content", locale: locale), skip_link.text(:all).strip

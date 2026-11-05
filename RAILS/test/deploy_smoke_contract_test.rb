@@ -58,7 +58,7 @@ class DeploySmokeContractTest < Minitest::Test
         expected = "$#{app}_req" unless expected == "1"
 
         assert_equal expected, required,
-                     "#{app} #{url} must be required (1) or gated on #{WAIVERS[app] || "nothing"} — " \
+                     "#{app} #{url} must be required (1) or gated on #{WAIVERS[app] || "nothing"} - " \
                      "a hardcoded 0 is a check that cannot fail, which is how a dead app read as green"
       end
     end

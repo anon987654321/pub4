@@ -4,11 +4,12 @@
 # and answer surfaces: the kitchen's address, phone, hours and price range,
 # and every dish on today's menu with its price.
 module StructuredDataHelper
-  # The kitchen's own wording ("Man–Fre 11–21 · Lør–Søn 14–21") in
+  # The kitchen's own wording ("Man-Fre 11-21 - Lør-Søn 14-21") in
   # schema.org's ("Mo-Fr 11:00-21:00"); a span it cannot read is left out.
   SCHEMA_DAYS = { "Man" => "Mo", "Tir" => "Tu", "Ons" => "We", "Tor" => "Th", "Fre" => "Fr", "Lør" => "Sa",
                   "Søn" => "Su" }.freeze
-  HOURS_SPAN = /(\p{L}{3})–(\p{L}{3}) (\d{1,2})–(\d{1,2})/
+  # Seeds write a hyphen; a kitchen row saved before the ASCII Law may carry an en dash.
+  HOURS_SPAN = /(\p{L}{3})[-\u2013](\p{L}{3}) (\d{1,2})[-\u2013](\d{1,2})/
 
   def restaurant_json_ld(kitchen, categories)
     data = restaurant_facts(kitchen).merge(
@@ -39,7 +40,7 @@ module StructuredDataHelper
 
   def price_range(categories)
     prices = categories.flat_map(&:available_items).map(&:price_ore)
-    "#{money(prices.min)}–#{money(prices.max)}" if prices.any?
+    "#{money(prices.min)}-#{money(prices.max)}" if prices.any?
   end
 
   def menu_section(category)

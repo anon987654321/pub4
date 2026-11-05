@@ -3,7 +3,7 @@
 # The affiliate inventory tables, so amber can carry the same stock brgen does.
 #
 # All three lived only in brgen, and with them the whole read path. amber had
-# AffiliateLink — a URL an owner pastes onto one wardrobe item — and no network
+# AffiliateLink - a URL an owner pastes onto one wardrobe item - and no network
 # inventory at all, so ShopTheLook could rank saved links and nothing else, and
 # there was no in-feed affiliate surface to speak of.
 #
@@ -11,7 +11,7 @@
 # separate SQLite files and always have. Same table names on both sides, so
 # Shared::AffiliateProduct declares table_name once and serves either.
 #
-# One migration per app, which is this repo's convention — the engine declares
+# One migration per app, which is this repo's convention - the engine declares
 # config.paths["db/migrate"] but the apps do not read it. Guarded, so re-running
 # is free.
 class CreateAffiliateInventory < ActiveRecord::Migration[8.1]

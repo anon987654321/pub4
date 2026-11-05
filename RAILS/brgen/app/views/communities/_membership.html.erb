@@ -7,7 +7,7 @@
 <% if signed_in && Current.user.id != community.user_id %>
   <% form = { id: dom_id(community, :membership) } %>
   <% if joined %>
-    <%# destructive: no-confirm-ok — reversible — a community you leave is one you can rejoin; posts stay %>
+    <%# destructive: no-confirm-ok - reversible - a community you leave is one you can rejoin; posts stay %>
     <%= button_to t("community.leave"), leave_community_path(community), method: :delete, form:,
           class: "button button-ghost button-small" %>
   <% else %>

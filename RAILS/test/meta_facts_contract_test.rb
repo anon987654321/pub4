@@ -47,7 +47,7 @@ class MetaFactsContractTest < Minitest::Test
     assert_includes buybox, "condition_facts.each do |fact|"
     crossings = read("brgen_dating/app/views/dating/path_crossings/index.html.erb")
     assert_includes crossings, 'class="meta-facts"'
-    refute_includes crossings, " · <%= time_ago_in_words(crossing.crossed_at) %>"
+    refute_includes crossings, " - <%= time_ago_in_words(crossing.crossed_at) %>"
   end
 
   def test_heading_groups_and_named_preferences_use_semantic_elements
@@ -60,8 +60,8 @@ class MetaFactsContractTest < Minitest::Test
 
   def test_post_card_bylines_do_not_embed_separator_glyphs
     template = read("__shared/app/views/shared/_post_card.html.erb")
-    refute_includes template, " · <span class=\"feed-post-place\""
-    refute_includes template, 'class="feed-card-time">· '
+    refute_includes template, " - <span class=\"feed-post-place\""
+    refute_includes template, 'class="feed-card-time">- '
     # Since the 2026-11-01 canonical card, meta is its own flex row of facts.
     assert_includes template, '<% if meta.present? %><div class="feed-card-meta"><%= meta %></div><% end %>'
   end

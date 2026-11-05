@@ -2,7 +2,7 @@
 
 require "test_helper"
 
-# The dependency headings carried arrow glyphs ("Requires → dependencies"),
+# The dependency headings carried arrow glyphs ("Requires -> dependencies"),
 # which screen readers read out as "right arrow" in the middle of a heading.
 class DependencyHeadingsTest < ActionDispatch::IntegrationTest
   test "dependency headings carry no arrow glyphs" do
@@ -17,7 +17,7 @@ class DependencyHeadingsTest < ActionDispatch::IntegrationTest
       assert_response :success
       nodes = css_select("h2, section[aria-label], ul[aria-label]")
       headings = nodes.map { |node| node.text + node["aria-label"].to_s }
-      assert_empty headings.grep(/[←→]/), "#{port.name} page has arrow glyphs in a heading"
+      assert_empty headings.grep(/[\u2190\u2192]/), "#{port.name} page has arrow glyphs in a heading"
     end
   end
 end

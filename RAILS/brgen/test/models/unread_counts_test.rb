@@ -87,7 +87,7 @@ class UnreadCountsTest < ActiveSupport::TestCase
   end
 
   # The badge is DMs only. A channel is a group Conversation with a slug, and it
-  # is ambient — unread traffic there must not light the icon.
+  # is ambient - unread traffic there must not light the icon.
   test "channels are excluded from the badge total but not from counts_for" do
     dm = dm_with(@other, messages: 2)
     channel = Conversation.find_or_create_channel("brgen", city: @city)
@@ -96,7 +96,7 @@ class UnreadCountsTest < ActiveSupport::TestCase
 
     assert_equal 2, Conversation.unread_total_for(@me), "channel traffic must not reach the badge"
     assert_operator Conversation.unread_counts_for(@me).fetch(channel.id, 0), :>, 0,
-                    "counts_for is unfiltered — the caller decides what to show"
+                    "counts_for is unfiltered - the caller decides what to show"
     assert_equal dm.unread_count_for(@me), Conversation.unread_counts_for(@me).fetch(dm.id, 0)
   end
 

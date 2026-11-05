@@ -21,7 +21,7 @@
   <%= link_to post_path(post), class: "brgen-media-caption-link" do %>
     <div class="brgen-media-caption">
       <strong><%= post.title.presence || post.content.to_s.truncate(70, separator: " ") %></strong>
-      <span><%= post.author_name %> · <%= time_ago_in_words(post.created_at) %></span>
+      <span><%= post.author_name %> - <%= time_ago_in_words(post.created_at) %></span>
     </div>
   <% end %>
 </li>

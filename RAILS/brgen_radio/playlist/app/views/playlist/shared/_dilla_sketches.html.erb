@@ -14,8 +14,8 @@
         <%= tag.strong sk.name %>
 
           <%= sk.try(:style).presence || "dilla" %>
-          · <%= t("playlist.bars_count", count: sk.try(:bars).presence || 12) %>
-          · <%= t("playlist.render_statuses.#{sk.render_status || "idle"}") %>
+          - <%= t("playlist.bars_count", count: sk.try(:bars).presence || 12) %>
+          - <%= t("playlist.render_statuses.#{sk.render_status || "idle"}") %>
 
         <%= t("playlist.sketch_by", name: sk.user&.try(:display_name) || sk.user&.email || t("chat.anon")) %>
         <% if can_manage %>

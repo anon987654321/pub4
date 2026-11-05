@@ -28,12 +28,12 @@ nb:
     add_prompt: "Legg til svar"
     location_status:
       unsupported: "Denne nettleseren gir ikke tilgang til posisjon."
-      waiting: "Venter på tillatelsen din…"
+      waiting: "Venter på tillatelsen din..."
       denied: "Posisjonen ble ikke delt. Sjekk tillatelsen i nettleseren og prøv igjen."
       token_missing: "Sikkerhetsnøkkelen mangler. Last inn siden på nytt og prøv igjen."
       too_soon: "Du sjekket nettopp. Prøv igjen om noen minutter."
       refused: "Ingen posisjon ble lagret. Sjekk at profilen er synlig og verifisert."
-      saved: "Posisjonen er delt omtrentlig i fem minutter. Henter nylige krysninger…"
+      saved: "Posisjonen er delt omtrentlig i fem minutter. Henter nylige krysninger..."
       failed: "Forespørselen feilet. Ingenting ble bekreftet lagret."
     location_invalid: "Posisjonen var ikke gyldig."
     announce_liked: "Du likte %{name}"
@@ -50,7 +50,7 @@ nb:
     visibility_visible: "synlig"
     visibility_hidden: "skjult"
     visible_note: "Profilen din er synlig for andre i byen din."
-    hidden_note: "Profilen din er skjult — ingen kan se den."
+    hidden_note: "Profilen din er skjult - ingen kan se den."
     hide_profile: "Skjul profilen"
     show_profile: "Vis profilen"
     genders:

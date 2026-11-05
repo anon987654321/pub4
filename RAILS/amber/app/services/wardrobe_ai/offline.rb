@@ -3,7 +3,7 @@
 # What amber answers with when there is no model to ask.
 #
 # OPENROUTER_API_KEY is unset on most machines and on vm23 by default, so these
-# are not an edge case — they are what the wardrobe pages render most of the
+# are not an edge case - they are what the wardrobe pages render most of the
 # time, and `available?` being false has to stay a working product rather than
 # an error state. Split out of wardrobe_ai.rb when that file passed its
 # file-length ceiling, along the seam that was already there: everything here
@@ -36,7 +36,7 @@ class WardrobeAi
       end
       {
         "sparks_joy" => joy,
-        "reason" => joy ? "Worn enough or tagged current-self — treat as a keeper until you feel otherwise." : "Low wear signal and no joy mark — try once more or release.",
+        "reason" => joy ? "Worn enough or tagged current-self - treat as a keeper until you feel otherwise." : "Low wear signal and no joy mark - try once more or release.",
         "suggestion" => joy ? "Keep in active wardrobe and log wears." : "Start a wear-this-week challenge or open declutter review.",
         "source" => "heuristic",
       }
@@ -103,7 +103,7 @@ class WardrobeAi
       return [] if picks.size < 2
 
       [ {
-        "name" => [ occasion, season, "Closet combo" ].compact_blank.join(" · "),
+        "name" => [ occasion, season, "Closet combo" ].compact_blank.join(" - "),
         "items" => picks.map(&:title),
         "item_ids" => picks.map(&:id),
         "description" => "Rule-based from your active wardrobe (AI key not configured or model returned empty).",

@@ -11,7 +11,7 @@ module Shared
   #
   # `route` is controller#action rather than request.path. That is what bounds
   # the table: a path carries listing ids, city slugs and query strings, so one
-  # row per distinct path is one row per listing per day — unbounded, and it
+  # row per distinct path is one row per listing per day - unbounded, and it
   # would also record which item each visitor looked at, which is exactly the
   # personal record this avoids being.
   module VisitCounting
@@ -33,7 +33,7 @@ module Shared
       Shared::VisitCount.record(app: visit_counting_app, host: request.host, route: "#{controller_path}##{action_name}")
     rescue StandardError => e
       # Never fail a page over a counter. Reported rather than swallowed, so a
-      # table that stops recording does not look like a site nobody visits —
+      # table that stops recording does not look like a site nobody visits -
       # which is the one conclusion this table exists to prevent.
       Rails.logger.warn("[visit_count] #{e.class}: #{e.message}")
       nil
@@ -56,7 +56,7 @@ module Shared
     # The fleet's idiom, used the same way by Shared::OutboundClicksController,
     # DomainEvent and LiveSearchable. Worth knowing what it actually returns:
     # brgen and amber are both `module App`, so this is the constant "app" in
-    # every row. It does not separate the apps and does not need to — each app
+    # every row. It does not separate the apps and does not need to - each app
     # has its own SQLite database, and within brgen it is `host` that tells the
     # seven cities apart. The column is here so the schema matches
     # outbound_clicks and one model can serve both apps; override in a host app

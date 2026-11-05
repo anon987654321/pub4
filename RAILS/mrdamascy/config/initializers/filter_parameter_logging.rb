@@ -7,7 +7,7 @@
 # See the Securing Rails Applications Guide for more information:
 # https://guides.rubyonrails.org/security.html#filtering-parameters
 #
-# Phones and one-time codes are the credentials of this app — keep both out of
+# Phones and one-time codes are the credentials of this app - keep both out of
 # the logs alongside the usual password/secret family.
 Rails.application.config.filter_parameters += [
   :passw, :email, :secret, :token, :crypt, :salt, :certificate, :otp, :cvv, :cvc, :phone

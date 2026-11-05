@@ -6,16 +6,16 @@ require "test_helper"
 # each carried. Nothing covered it in either app.
 class DraftsControllerTest < ActionDispatch::IntegrationTest
   # brgen resolves city/branding from the host, and ApplicationController 404s
-  # an unknown one — the default www.example.com is not a brgen domain.
+  # an unknown one - the default www.example.com is not a brgen domain.
   setup { host! "brgen.no" }
 
   def test_update_stores_the_form_body_in_the_session_under_its_id
-    patch draft_path("post_new"), params: { title: "Half-written", body: "…" }
+    patch draft_path("post_new"), params: { title: "Half-written", body: "..." }
 
     assert_response :no_content
     draft = session[:drafts]["post_new"]
     assert_equal "Half-written", draft["title"]
-    assert_equal "…", draft["body"]
+    assert_equal "...", draft["body"]
   end
 
   # Rails' own routing/CSRF keys are not part of the user's draft; storing them

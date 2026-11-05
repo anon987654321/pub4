@@ -1,4 +1,4 @@
-/* TYPOGRAPHY.line_length: a reply is prose, 45–75ch, whatever the viewport. */
+/* TYPOGRAPHY.line_length: a reply is prose, 45-75ch, whatever the viewport. */
 .message { position:relative; max-inline-size: 66ch; margin-bottom: 8px; padding: 0; white-space: pre-wrap; overflow-wrap: anywhere; scroll-snap-align: start; animation: msgIn 220ms var(--ease-spring) both; font: 1rem/1.5 var(--font-mono); }
 .message.user,
 .message.assistant { border: 0; border-radius: 0; background: transparent; }
@@ -56,7 +56,7 @@
 html[data-model-provider] .provider-chip { opacity: .92; }
 
 body.brutalist-mode * { border-radius: 0 !important; }
-body.brutalist-mode .message { animation-timing-function: steps(3,end) !important; } /* scan: intentional — the mode must beat every message's own easing */
+body.brutalist-mode .message { animation-timing-function: steps(3,end) !important; } /* scan: intentional - the mode must beat every message's own easing */
 body[data-primer-flash="1"] canvas#face { filter: contrast(1.12) brightness(1.08); transition: filter 0ms steps(2,end); }
 
 /* Mission control uses document layout chrome (not immersive face overflow). */
@@ -225,7 +225,7 @@ body[data-tts-loading="true"] #tts-live {
   opacity: 1;
 }
 
-/* Inline status text — shows thinking/speaking inside the prompt bar */
+/* Inline status text - shows thinking/speaking inside the prompt bar */
 #zsh-status {
   font: inherit;
   text-transform: uppercase;
@@ -245,7 +245,7 @@ body[data-tts-error="true"] #zsh-status { opacity: 1; color: var(--c-danger); }
    change, so the line is printed from the attribute instead. */
 body[data-tts-blocked="1"] #zsh-status::after { content: attr(data-blocked-label); opacity: 1; }
 
-/* Cancel button — appears during thinking/speaking */
+/* Cancel button - appears during thinking/speaking */
 #pause-speech-button {
   display: none;
   background: none;
@@ -263,7 +263,7 @@ body[data-tts-blocked="1"] #zsh-status::after { content: attr(data-blocked-label
 body[data-mode="thinking"] #pause-speech-button,
 body[data-mode="speaking"] #pause-speech-button { display: block; }
 
-/* Music toggle — always present, drawn square like #photo-button. The
+/* Music toggle - always present, drawn square like #photo-button. The
    square is ::before (inset 13px in the tap floor), so the optics do not
    move; a playing state paints the square solid. */
 #music-loop-button {
@@ -290,7 +290,7 @@ body[data-mode="speaking"] #pause-speech-button { display: block; }
 #music-loop-button[aria-pressed="true"]::before {
   /* The playing state is the one signal moment on this surface: the drawn
      square turns signal as its state marker. The marker is the border, with
-     the fill left open — the signal marks meaning here, it does not paint
+     the fill left open - the signal marks meaning here, it does not paint
      the control. */
   background: transparent;
   border-color: var(--pub4-signal);
@@ -375,7 +375,7 @@ body[data-mode="thinking"] #pause-speech-button {
 /* A long silence dims the ecology; the face goes quiet rather than asking. */
 body[data-long-silence="1"] #cognition-ecology { opacity: .38; }
 
-/* #51 Disabled state during boot — hide ghost prompt until primer tap */
+/* #51 Disabled state during boot - hide ghost prompt until primer tap */
 body.face-loading #prompt-form:not(.live):not(.revealed) { opacity: 0; visibility: hidden; pointer-events: none; }
 body:not(.face-ready) #prompt-form:not(.live):not(.revealed) { opacity: .22; pointer-events: none; }
 

@@ -4,7 +4,7 @@ require "test_helper"
 require "minitest/mock"
 
 # The one-click lane: POST /checkout with listing_id creates the order and
-# starts Vipps in the same request — the whole on-site purchase is one click.
+# starts Vipps in the same request - the whole on-site purchase is one click.
 # Stubbed at the provider boundary; the refusal paths run unstubbed because
 # they are the honesty half (an unkeyed provider must refuse, not fake).
 class BuyNowVippsTest < ActionDispatch::IntegrationTest
@@ -41,7 +41,7 @@ class BuyNowVippsTest < ActionDispatch::IntegrationTest
     end
   end
 
-  test "an unkeyed Vipps refuses instead of faking — no order debris" do
+  test "an unkeyed Vipps refuses instead of faking - no order debris" do
     assert_no_difference -> { Marketplace::Order.count } do
       post "/checkout", params: { provider: "vipps", listing_id: @listing.id }
     end

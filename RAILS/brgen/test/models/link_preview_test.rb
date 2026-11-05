@@ -40,7 +40,7 @@ class LinkPreviewTest < ActiveSupport::TestCase
     assert_equal "https://example.com/x", LinkPreview.first_url_in("les https://example.com/x.")
   end
 
-  # The same article pasted into twenty rooms is one fetch, not twenty — this
+  # The same article pasted into twenty rooms is one fetch, not twenty - this
   # app should not be an amplifier pointed at whoever was linked.
   test "the same URL is one row across messages" do
     a = say("https://example.com/delt")

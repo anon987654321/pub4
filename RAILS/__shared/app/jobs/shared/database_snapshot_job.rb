@@ -6,7 +6,7 @@ module Shared
   # Point-in-time backup of the primary database, using SQLite's own VACUUM INTO
   # (a consistent, defragmented copy that doesn't lock writers out). Gzips the
   # copy and keeps the last KEEP snapshots. This is the stopgap that runs while
-  # litestream is uninstalled/unconfigured — real, restorable backups of the
+  # litestream is uninstalled/unconfigured - real, restorable backups of the
   # irreplaceable user data with no extra binary or credentials.
   #
   # Same-disk by default (accidental-delete / corruption / bad-migration recovery,
@@ -39,7 +39,7 @@ module Shared
 
     def rotate(dir)
       snapshots = Dir.glob(File.join(dir, "production-*.sqlite3.gz")).sort
-      snapshots[0...-KEEP].to_a.each { |old| File.delete(old) rescue nil } # scan: intentional — retention: this job's own snapshots past KEEP
+      snapshots[0...-KEEP].to_a.each { |old| File.delete(old) rescue nil } # scan: intentional - retention: this job's own snapshots past KEEP
     end
   end
 end

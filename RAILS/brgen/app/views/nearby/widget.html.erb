@@ -5,9 +5,9 @@
     <div class="nearby-chat-widget-mode" data-nearby-chat-target="mode">
       <% if @located %>
         <strong>#<%= ambient_chat_room_label %></strong>
-        <span aria-hidden="true">·</span>
+        <span aria-hidden="true">-</span>
         <%= t("nearby.room_radius", km: Conversation::GEO_ROOM_RADIUS_KM.to_i) %>
-        <span aria-hidden="true">·</span>
+        <span aria-hidden="true">-</span>
         <%= Current.user.anon_handle %>
         <button type="button"
                 class="nearby-chat-widget-linkish"
@@ -16,9 +16,9 @@
                 aria-label="<%= t("chat.refresh_location") %>">↻</button>
       <% else %>
         <strong>#<%= ambient_chat_room_label %></strong>
-        <span aria-hidden="true">·</span>
+        <span aria-hidden="true">-</span>
         <%= t("chat.city_lobby") %>
-        <span aria-hidden="true">·</span>
+        <span aria-hidden="true">-</span>
         <%= Current.user.channel_handle %>
         <button type="button"
                 class="nearby-chat-widget-linkish"
@@ -60,7 +60,7 @@
     <%= render "nearby/widget_composer", conversation: @conversation %>
   <% else %>
     <%# Soft guests are minted every request on brgen; this branch is recovery
-        if identity or channel create failed — never a pure loading dead end. %>
+        if identity or channel create failed - never a pure loading dead end. %>
     <div class="nearby-chat-widget-empty">
       <%= tag.strong t("chat.lobby_title") %>
       <%= tag.p t("chat.recovery_body") %>

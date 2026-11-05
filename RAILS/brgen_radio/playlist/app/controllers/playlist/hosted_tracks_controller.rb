@@ -109,7 +109,7 @@ class Playlist::HostedTracksController < Playlist::BaseController
 
   # user_id, not user. set_track finds the record with nothing preloaded, and
   # ApplicationRecord sets strict_loading_by_default in every environment, so
-  # reading the association raised before the comparison could run — the guard
+  # reading the association raised before the comparison could run - the guard
   # never denied anyone, it failed for everyone, the owner included.
   #
   # The respond_to?(:user) line above it was the tell: a defence placed against

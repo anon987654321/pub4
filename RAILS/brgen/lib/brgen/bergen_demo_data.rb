@@ -14,7 +14,7 @@ module Brgen
   #
   # Included rather than referenced, so every name reads inside the seeder
   # exactly as it did before and constant lookup goes through the ancestor
-  # chain — BergenDemoSeeder::LIVE_NOTES still resolves, which is what the
+  # chain - BergenDemoSeeder::LIVE_NOTES still resolves, which is what the
   # seeder's own test asks for.
   module BergenDemoData
     RADIO_BERGEN_PLAYLIST = "Radio Bergen"
@@ -41,7 +41,7 @@ module Brgen
     POSTS = BergenDemoPosts::POSTS
 
     LISTINGS = [
-      { user: "anders_fisketorget", title: "Brukt sykkel — Bergen sentrum", price_cents: 3_500_00, image: "bergen-bike-sale" },
+      { user: "anders_fisketorget", title: "Brukt sykkel - Bergen sentrum", price_cents: 3_500_00, image: "bergen-bike-sale" },
       { user: "marte_kode24", title: "MacBook Air M1, pent brukt", price_cents: 6_500_00, image: "bergen-macbook" },
       { user: "tor_fana", title: "IKEA sofa, hentes Fana", price_cents: 2_000_00, image: "bergen-sofa" },
       { user: "hanne_sandviken", title: "Barnevogn, god stand", price_cents: 1_800_00, image: "bergen-stroller" },
@@ -91,7 +91,7 @@ module Brgen
       },
       {
         user: "hanne_sandviken", gender: "woman", looking_for: "man", age: 32, bydel: "Sandviken",
-        bio: "Lærer, nylig separert men klar for nye starter. Barn i bildet — hvis du ikke digger det er vi ulike.",
+        bio: "Lærer, nylig separert men klar for nye starter. Barn i bildet - hvis du ikke digger det er vi ulike.",
         image: "bergen-dating-hanne"
       },
       {
@@ -161,7 +161,7 @@ module Brgen
         delivery_fee_cents: 4_900, min_order_cents: 15_000, rating: 4.6,
         menu: [
           { name: "Eggerøre med spekeskinke", description: "Søndagsbrunch-klassiker fra Nordnes.", price_cents: 16_500, image: "bergen-brunch" },
-          { name: "Kanelbolle", description: "Bakt samme morgen — best med kaffe.", price_cents: 4_500, image: "bergen-bakery" },
+          { name: "Kanelbolle", description: "Bakt samme morgen - best med kaffe.", price_cents: 4_500, image: "bergen-bakery" },
           { name: "Fiskesuppe", description: "Dagens fangst, brød og smør.", price_cents: 18_900, image: "bergen-takeaway-fiskesuppe" }
         ]
       },
@@ -194,7 +194,7 @@ module Brgen
         delivery_fee_cents: 5_500, min_order_cents: 20_000, rating: 4.7,
         menu: [
           { name: "Bergensk fiskesuppe", description: "Kremet, med reker og pynt.", price_cents: 21_500, image: "bergen-takeaway-dyvekes" },
-          { name: "Pinnekjøtt", description: "Sesong — bestill i god tid.", price_cents: 24_900, image: "bergen-takeaway-pinnekjott" },
+          { name: "Pinnekjøtt", description: "Sesong - bestill i god tid.", price_cents: 24_900, image: "bergen-takeaway-pinnekjott" },
           { name: "Rømmegrøt", description: "Med sukker og kanel.", price_cents: 9_900, image: "bergen-takeaway-colonialen" }
         ]
       }
@@ -203,10 +203,10 @@ module Brgen
     TV_CHANNELS = [
       {
         user: "live_bergenlive", name: "Bergen Live", slug: "bergen-live",
-        description: "Konsert, klubb og nattbuss — direkte fra sentrum.",
+        description: "Konsert, klubb og nattbuss - direkte fra sentrum.",
         avatar: "bergen-tv-live-avatar", banner: "bergen-tv-live-banner",
         videos: [
-          { title: "Open mic på Logen — høydepunkter", thumbnail: "bergen-logen", duration_seconds: 248, views_count: 1_240 },
+          { title: "Open mic på Logen - høydepunkter", thumbnail: "bergen-logen", duration_seconds: 248, views_count: 1_240 },
           { title: "Radio Bergen nattbuss mix", thumbnail: "bergen-radio-night", duration_seconds: 312, views_count: 890 }
         ]
       },
@@ -216,7 +216,7 @@ module Brgen
         avatar: "bergen-tv-kultur-avatar", banner: "bergen-tv-kultur-banner",
         videos: [
           { title: "Bak scenen: Bergen Filharmoniske", thumbnail: "bergen-concert-hall", duration_seconds: 420, views_count: 2_100 },
-          { title: "Pepperkakebyen — familietips", thumbnail: "bergen-pepperkakebyen", duration_seconds: 185, views_count: 3_400 }
+          { title: "Pepperkakebyen - familietips", thumbnail: "bergen-pepperkakebyen", duration_seconds: 185, views_count: 3_400 }
         ]
       },
       {
@@ -224,8 +224,8 @@ module Brgen
         description: "Linjekart, forsinkelser og reisetips for Skyss.",
         avatar: "bergen-tv-bybanen-avatar", banner: "bergen-lungegaardsvann",
         videos: [
-          { title: "Florida → Byparken på 4 min", thumbnail: "bergen-lungegaardsvann", duration_seconds: 96, views_count: 5_600 },
-          { title: "Regnvær og bybane — vinterdrift", thumbnail: "bergen-bryggen-rain", duration_seconds: 210, views_count: 1_780 }
+          { title: "Florida -> Byparken på 4 min", thumbnail: "bergen-lungegaardsvann", duration_seconds: 96, views_count: 5_600 },
+          { title: "Regnvær og bybane - vinterdrift", thumbnail: "bergen-bryggen-rain", duration_seconds: 210, views_count: 1_780 }
         ]
       }
     ].freeze
@@ -234,11 +234,11 @@ module Brgen
     LIVE_NOTES = [
       { hours_ago: 0.5, body: "Noen som har sett røyk over Damsgård? Eller bare tåke?" },
       { hours_ago: 1, body: "Ledig sitteplass på bybanen mot Fyllingsdalen, vogn 2." },
-      { hours_ago: 2, body: "Gratis kaffe på uteservering ved Torget — ta med egen kopp." },
+      { hours_ago: 2, body: "Gratis kaffe på uteservering ved Torget - ta med egen kopp." },
       { hours_ago: 3, body: "Hunden min rømte ved Nordnesparken, brun terrier, svarer på Pip." },
       { hours_ago: 4, body: "Pepperkakebyen-kø er kort akkurat nå (hverdag 14:00)." },
       { hours_ago: 5, body: "Noen som trenger et paraplylån på Bryggen? Har en ekstra." },
-      { hours_ago: 8, body: "Stille på Fløyen i kveld — nesten ingen turister." },
+      { hours_ago: 8, body: "Stille på Fløyen i kveld - nesten ingen turister." },
       { hours_ago: 12, body: "Lydsjekk: er det konsert på Logen i kveld eller bare øving?" },
       { hours_ago: 18, body: "Fisketorget lukter skikkelig godt. Anbefaler reker." },
       { hours_ago: 24, body: "Regnværsdag: beste bibliotekkroken er 2. etasje, vindu mot dammen." }

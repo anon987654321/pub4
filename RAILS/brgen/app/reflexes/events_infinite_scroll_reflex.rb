@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # The what's-on listing. `upcoming` means "has not finished", not "has not
-# started" — a three-day festival is still on during day two — and the scope
+# started" - a three-day festival is still on during day two - and the scope
 # has to agree with the controller's or page two contradicts page one.
 class EventsInfiniteScrollReflex < Shared::InfiniteScrollReflex
   renders "events/event", as: :event, wrap_in: :li

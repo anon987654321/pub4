@@ -23,7 +23,7 @@ class WoltDriveClientTest < ActiveSupport::TestCase
     )
   end
 
-  # Mock mode is the default (ENV["WOLT_DRIVE_MOCK"] != "0") — the same
+  # Mock mode is the default (ENV["WOLT_DRIVE_MOCK"] != "0") - the same
   # contract as VippsClient: the demo flow must work with zero credentials.
   test "mock request assigns a courier and stores the delivery on the order" do
     result = WoltDriveClient.request_delivery(order: @order)
@@ -51,7 +51,7 @@ class WoltDriveClientTest < ActiveSupport::TestCase
     assert_equal({ status: "created", courier: nil }, WoltDriveClient.delivery_status(delivery_id: "x"))
   end
 
-  # Step 1 of the documented Wolt Drive flow — quote before dispatch. Mock
+  # Step 1 of the documented Wolt Drive flow - quote before dispatch. Mock
   # mode answers with a plausible Bergen promise and zero credentials.
   test "mock shipment promise quotes availability, fee and eta" do
     quote = WoltDriveClient.shipment_promise(order: @order)

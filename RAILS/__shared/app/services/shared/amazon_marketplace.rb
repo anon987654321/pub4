@@ -8,7 +8,7 @@ module Shared
   # amazon.de pays nothing on amazon.co.uk, and sending a German tag to a
   # British storefront is not a rounding error, it is an untracked click. So a
   # single global AMAZON_ASSOCIATE_TAG cannot serve a network of city sites
-  # spread across countries — which is what pub4 is.
+  # spread across countries - which is what pub4 is.
   #
   # It was worse than un-tracked before this existed: SeoKit#amazon_affiliate_url
   # built bare ASIN links against amazon.COM for every city, so a Bergen or
@@ -17,8 +17,8 @@ module Shared
   #
   # Two separate facts are modelled here, because they are genuinely different:
   #
-  #   STOREFRONTS — countries where Amazon actually operates a storefront.
-  #   SERVED_BY   — countries where it does not, and which storefront serves
+  #   STOREFRONTS - countries where Amazon actually operates a storefront.
+  #   SERVED_BY   - countries where it does not, and which storefront serves
   #                 them instead. Norway, Denmark, Finland and Iceland have no
   #                 Amazon of their own; readers there buy from amazon.de or
   #                 amazon.co.uk. That is a commercial choice about shipping and
@@ -72,7 +72,7 @@ module Shared
     }.freeze
     DEFAULT_REGION = "eu-west-1"
 
-    # The one marketplace used when a request carries no country at all — a
+    # The one marketplace used when a request carries no country at all - a
     # background job, a console, a city row missing its country_code. Germany
     # rather than the US because the overwhelming majority of pub4's cities are
     # European, so it is the least-wrong default.
@@ -80,7 +80,7 @@ module Shared
 
     module_function
 
-    # Normalises whatever the caller has — a City, a country code, nil — into a
+    # Normalises whatever the caller has - a City, a country code, nil - into a
     # storefront country code. Callers pass `city.country_code`, which is a
     # validated column, but jobs and mailers do not always have a city.
     def country_for(market)
@@ -107,7 +107,7 @@ module Shared
     # Per-marketplace tracking id, from AMAZON_ASSOCIATE_TAG_<CC>.
     #
     # There is deliberately NO global fallback. A tag from the wrong marketplace
-    # does not degrade gracefully — Amazon accepts the link, drops the
+    # does not degrade gracefully - Amazon accepts the link, drops the
     # attribution, and the click looks fine while paying nothing. Returning nil
     # instead means the link is built without a tag: still a working product
     # link, honestly untracked, and visible as a gap rather than hidden as
@@ -138,7 +138,7 @@ module Shared
     end
 
     # Re-tag an existing Amazon URL for the marketplace it is already pointing
-    # at — NOT for the reader's own market. Rewriting the host would change
+    # at - NOT for the reader's own market. Rewriting the host would change
     # which storefront the product is on, and the ASIN may not exist there;
     # a dead link earns less than an untagged one.
     def retag_url(url)

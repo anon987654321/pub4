@@ -2,8 +2,8 @@
 
 # Title, site and summary for a link someone pasted. Deliberately no image.
 #
-# An image would mean either hotlinking the remote file — which tells that
-# server the IP of every reader of the thread — or proxying and storing it,
+# An image would mean either hotlinking the remote file - which tells that
+# server the IP of every reader of the thread - or proxying and storing it,
 # which is remote media hosting with the moderation and disk problems that
 # come with it. the old backlog 2.1 defers the same problem for federation; a
 # chat preview is not the place to take it on.

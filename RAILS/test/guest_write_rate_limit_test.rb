@@ -86,24 +86,24 @@ class GuestWriteRateLimitTest < Minitest::Test
 
   def test_no_guest_reachable_write_action_is_unlimited
     assert_empty gaps,
-                 "these write actions are reachable without a session and nothing limits their rate — " \
+                 "these write actions are reachable without a session and nothing limits their rate - " \
                  "add `rate_limit to:, within:, only:` to each, or authenticate the action"
   end
 
   # The instrument, not the tree. A source-text checker that stops matching
-  # reports zero gaps and reads exactly like a clean tree — which is the failure
+  # reports zero gaps and reads exactly like a clean tree - which is the failure
   # this repo has already had (RAILS checks stopped seeing 57 views when the
   # verticals moved to engines, and the falling count read as improvement).
   #
   # So: prove the detector still finds guest writes at all, and prove it still
   # finds them where they are known to be. Both numbers are floors, not equality
-  # assertions — this file must not need editing every time a controller is added.
+  # assertions - this file must not need editing every time a controller is added.
   def test_the_detector_still_finds_guest_reachable_writes
     found = controllers.sum { |path| guest_writes(File.read(path)).size }
 
     assert_operator found, :>=, 5,
                     "only #{found} guest-reachable write action(s) found across #{controllers.size} " \
-                    "controllers — the detector has stopped matching, and an empty gaps list means nothing"
+                    "controllers - the detector has stopped matching, and an empty gaps list means nothing"
   end
 
   def test_the_detector_still_reads_the_limits_that_close_the_gaps

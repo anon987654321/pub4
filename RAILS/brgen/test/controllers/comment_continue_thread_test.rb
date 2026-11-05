@@ -15,7 +15,7 @@ class CommentContinueThreadTest < ActionDispatch::IntegrationTest
     @author = User.strict_loading(false).create!(email_address: "deep-#{SecureRandom.hex(4)}@brgen.no",
                                                  username: "deep_#{SecureRandom.hex(3)}", password: "password123",
                                                  city: @city)
-    @post = Post.create!(user: @author, city: @city, title: "Dyp tråd", content: "…")
+    @post = Post.create!(user: @author, city: @city, title: "Dyp tråd", content: "...")
   end
 
   teardown { ActsAsTenant.current_tenant = nil }

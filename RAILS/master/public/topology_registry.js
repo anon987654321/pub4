@@ -2,7 +2,7 @@
 // canonical event bus. Source of truth: data/topologies.yml (SINGULARITY).
 // Runtime data is authoritative; this file owns lookup behavior and fallback
 // mechanics, not a second copy of the canonical catalog.
-// Boot snapshot — /runtime/topologies merge is canonical after first fetch.
+// Boot snapshot - /runtime/topologies merge is canonical after first fetch.
 // Renderers ask the registry which topology owns an event; visual_bridge.js
 // reflects topology changes to document.dataset.masterTopology.
 
@@ -120,8 +120,8 @@
       const res = await fetch("/runtime/topologies");
       if (!res.ok) return;
       const remote = await res.json();
-      // The rows arrive as objects — {pattern, topology, entropy, confidence,
-      // mode} — because the endpoint renders the YAML verbatim. Destructuring
+      // The rows arrive as objects - {pattern, topology, entropy, confidence,
+      // mode} - because the endpoint renders the YAML verbatim. Destructuring
       // them as [pattern, meta] left pattern undefined on every row, so
       // mergeRemoteClassifier dropped all of them at its own guard and the
       // casing fix above reached a merge that still did nothing. It already

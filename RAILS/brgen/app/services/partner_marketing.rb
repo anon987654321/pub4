@@ -44,7 +44,7 @@ module PartnerMarketing
       scope = Partner::Click.where(expires_at: now..).newest_first
       # listing_id is a column. order.listing&.store_id is a lazy read, and
       # mark_paid! is called from a PSP webhook that finds the order by id
-      # under strict_loading_by_default — the same 500 that used to fire on
+      # under strict_loading_by_default - the same 500 that used to fire on
       # listing.user after payment had already committed.
       store_id = Marketplace::Listing.where(id: order.listing_id).pick(:store_id)
       if store_id

@@ -8,7 +8,7 @@
       Outlook from inverting it a second time in dark mode. %>
   <meta name="color-scheme" content="light dark">
   <meta name="supported-color-schemes" content="light dark">
-  <%# `||` binds tighter than `?:`, so this read as (a || b || content_for?) ? yield(:title) : "Newsletter" —
+  <%# `||` binds tighter than `?:`, so this read as (a || b || content_for?) ? yield(:title) : "Newsletter" -
       it always yielded :title when any source was present, discarding @edition.subject and @subject.
       The message's own subject comes before "Newsletter": a password-reset mail
       was titled Newsletter. %>
@@ -20,7 +20,7 @@
   <%# The preheader is the first text in the body, which is where inbox
       previews read it; a div inside head is invalid and clients drop it. %>
   <% if @edition&.preheader.present? %>
-    <div style="display:none;max-height:0;overflow:hidden;mso-hide:all;"> <%# scan: intentional — the preheader; mail clients load no bundle %>
+    <div style="display:none;max-height:0;overflow:hidden;mso-hide:all;"> <%# scan: intentional - the preheader; mail clients load no bundle %>
       <%= @edition.preheader %>
     </div>
   <% end %>

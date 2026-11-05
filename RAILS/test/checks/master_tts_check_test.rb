@@ -12,7 +12,7 @@ require_relative "../../../MASTER/lib/operator/checks"
 # the check that broke on this move broke on path arithmetic, not on its checks.
 #
 # What the check itself does is read seven files and look for strings. Every one of
-# them is a wiring fact that fails silently — the espeak fallback, the bundle
+# them is a wiring fact that fails silently - the espeak fallback, the bundle
 # isolation that keeps the worker out of the web app's Gemfile, the 45-second
 # timeout in rc.d. So the check is honest about its reach only if the reader knows
 # it read source: it can say the fallback is wired and cannot say a voice came
@@ -107,7 +107,7 @@ class MasterTtsCheckTest < Minitest::Test
 
   # The pass line is "MASTER TTS check passed." and every check behind it is a
   # string in a file. Nothing here starts the worker, opens its socket or asks for
-  # a sample, so a green master_tts means the wiring is declared — not that TTS
+  # a sample, so a green master_tts means the wiring is declared - not that TTS
   # speaks. Pinned so the claim cannot quietly widen.
   def test_every_check_reads_source_so_the_pass_line_cannot_mean_tts_works
     # The class shares MASTER/lib/operator/checks.rb with checks that do shell

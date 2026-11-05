@@ -8,7 +8,7 @@ require "uri"
 
 module Shared
   # Where an app is allowed to point an HTTP request, and how it reads the
-  # answer. One rule for every app that fetches a URL someone else chose —
+  # answer. One rule for every app that fetches a URL someone else chose -
   # brgen's federation and link previews, and the post link embeds brgen and
   # amber share: an SSRF rule defined twice is one that will disagree with
   # itself, and the half that is wrong is the half nobody remembers to update.
@@ -107,7 +107,7 @@ module Shared
     # public_https? above resolves the host to validate it, and every caller then
     # handed the hostname to Net::HTTP, which resolved it again at connect time.
     # Between those two lookups an attacker controlling the DNS answer can return
-    # a public address for the check and 127.0.0.1 for the connection — classic
+    # a public address for the check and 127.0.0.1 for the connection - classic
     # rebinding, and the reason a validate-then-connect pair is not a guard. The
     # window is not theoretical: every caller fetches a URL a stranger supplied.
     #

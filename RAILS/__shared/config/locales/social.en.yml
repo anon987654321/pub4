@@ -1,4 +1,4 @@
-# Shared social chrome — loaded by the pub4-shared engine for every host app.
+# Shared social chrome - loaded by the pub4-shared engine for every host app.
 # Apps can override any key in their own config/locales.
 en:
   changelog:
@@ -35,7 +35,8 @@ en:
   comments:
     placeholder: "What do you think?"
     submit: "Comment"
-    reply_placeholder: "Reply…"
+    reply_placeholder: "Reply..."
+
     reply: "Reply"
     # Who a reply answers; %{name} is "@name" or the anonymous label.
     replying_to: "Replying to %{name}"
@@ -43,7 +44,8 @@ en:
     op_badge_title: Wrote the post
     title: "Comments"
     back: "Back"
-    empty_body: "Be the first to reply — guests can comment without an account."
+    empty_body: "Be the first to reply - guests can comment without an account."
+
     write_reply: "Write a reply"
     ai_summary: "Show AI summary (via MASTER)"
     master_summary: "MASTER summary:"
@@ -71,24 +73,33 @@ en:
     # The eight strings the ambient chat widget shows while it is asking for, or
     # failing to get, a location. They lived only as t(..., default: "English")
     # fallbacks in the view, so amber and bsdports rendered the whole recovery
-    # path in English over an nb page — and a `default:` also suppresses
+    # path in English over an nb page - and a `default:` also suppresses
     # raise_on_missing_translations, so nothing could report it.
     nearby_tab: "nearby"
-    status_asking: "Asking for location…"
-    status_denied: "Location blocked — staying in #brgen. Enable location in the browser for #nearby."
-    status_timeout: "Location timed out — staying in #brgen."
-    status_unavailable: "Location unavailable — staying in #brgen."
-    status_blocked: "This page cannot read location — #brgen still works."
-    status_server: "Could not save location — try again."
-    status_network: "Network error saving location — try again."
+    status_asking: "Asking for location..."
+
+    status_denied: "Location blocked - staying in #brgen. Enable location in the browser for #nearby."
+
+    status_timeout: "Location timed out - staying in #brgen."
+
+    status_unavailable: "Location unavailable - staying in #brgen."
+
+    status_blocked: "This page cannot read location - #brgen still works."
+
+    status_server: "Could not save location - try again."
+
+    status_network: "Network error saving location - try again."
+
     title: "chat"
     local_room: "local room"
     actions_label: "Chat actions"
     open_messenger: "Open Messenger"
     private_messages_lead: "For private conversations, open Messenger."
     close: "Close"
-    loading: "Loading…"
-    dm_placeholder: "Send a message…"
+    loading: "Loading..."
+
+    dm_placeholder: "Send a message..."
+
     message_label: "Message"
     anon: "anon"
     open_brgen: "Open Brgen chat"
@@ -97,9 +108,12 @@ en:
     lobby_body: "The city lobby works without GPS."
     open_inbox: "Open your inbox to read and send messages on this app."
     open_messages: "Open messages"
-    sign_in_inbox: "Sign in for this app\u2019s inbox, or chat anonymously on Brgen."
-    sending: "sending\u2026"
-    send_failed: "not sent \u2014 tap to retry"
+    sign_in_inbox: "Sign in for this app's inbox, or chat anonymously on Brgen."
+
+    sending: "sending..."
+
+    send_failed: "not sent - tap to retry"
+
   account:
     deletion_scheduled: "Deletion scheduled for %{on}."
     cancel_deletion: "Cancel deletion"
@@ -124,18 +138,22 @@ en:
     magic_link: "Email me a sign-in link"
   # Live regions in shared/_live_search_form and autosave_controller. bsdports had no copy of these and shipped "translation missing" into the announced values.
   status:
-    updating_results: "Updating results…"
+    updating_results: "Updating results..."
+
     results_updated: "Results updated"
     search_failed: "Search could not be completed"
-    saving: "Saving…"
+    saving: "Saving..."
+
     saved: "Saved"
     saved_locally: "Saved locally"
     restored: "Restored"
-    loading_more: "Loading more…"
+    loading_more: "Loading more..."
+
     load_more: "Load more"
     load_more_failed: "Could not load more. Press Load more to try again."
     end_of_list: "You have reached the end."
-    loading_results: "Loading results…"
+    loading_results: "Loading results..."
+
   theme:
     region: "Theme"
     system: "Theme: device"
@@ -154,7 +172,7 @@ en:
     yesterday: Yesterday
     # shared/_action_bar renders on every host app but these two keys only
     # existed in brgen's own locale, so amber shipped "translation missing" as
-    # the aria-label on its reply and share buttons — the same gap the comment
+    # the aria-label on its reply and share buttons - the same gap the comment
     # above the a11y block describes for bsdports.
     reply: "Reply"
     title: "Messages"
@@ -174,8 +192,10 @@ en:
     no_artifacts: "Nothing shared yet"
     no_artifacts_body: "Images, voice notes and link previews appear here when shared in the conversation."
     unread_count:
-      one: "%{count} unread message — marked read when you open this page."
-      other: "%{count} unread messages — marked read when you open this page."
+      one: "%{count} unread message - marked read when you open this page."
+
+      other: "%{count} unread messages - marked read when you open this page."
+
     empty_body: "New message, then search for whoever you want to write to."
     connections: "Connections"
   newsletter:
@@ -185,7 +205,7 @@ en:
     subscribe: "Subscribe"
     unavailable: "Newsletter signup opens after email routes are configured for this app."
     affiliate_disclosure: "Some links are affiliate links. We may earn a commission."
-  # Plural, and separate from post: — shared/_action_bar asks for posts.share.
+  # Plural, and separate from post: - shared/_action_bar asks for posts.share.
   posts:
     share: "Share"
 
@@ -193,7 +213,8 @@ en:
     submit: "Post"
     share_look: "Share a look"
     body_label: "What are you wearing?"
-    body_placeholder: "Share your outfit…"
+    body_placeholder: "Share your outfit..."
+
     tag_outfit: "Tag an outfit (optional)"
     tag_item: "Tag an item (optional)"
     outfit_label: "Outfit"
@@ -216,7 +237,8 @@ en:
   reactions:
     aria: "React with %{kind}"
     chip_aria: "%{count} %{kind}"
-    chip_mine_aria: "%{count} %{kind} — remove yours"
+    chip_mine_aria: "%{count} %{kind} - remove yours"
+
     kinds:
       like: "Like"
       love: "Love"
@@ -227,7 +249,7 @@ en:
       local: "Local"
   # Engine-owned keys. Namespaced under shared: so an app can keep its own
   # flash: block without colliding, and because the call sites say
-  # t("shared.flash.…") — appended at top level they resolved to nothing at all.
+  # t("shared.flash....") - appended at top level they resolved to nothing at all.
   shared:
     avatar:
       alt: "Profile picture"
@@ -291,13 +313,15 @@ en:
     password_reset_lede: "Someone asked to reset your password. Choose a new one with the button below."
     password_reset_action: "Choose a new password"
     password_reset_expiry: "The link expires in %{time}."
-    password_reset_ignore: "If you did not ask for this, ignore this email — your password is unchanged."
+    password_reset_ignore: "If you did not ask for this, ignore this email - your password is unchanged."
+
     verify_email_subject: "Confirm your email"
     sign_in_link_subject: "Sign-in link"
     sign_in_link_greeting: "Hi %{name},"
     sign_in_link_action: "Sign in"
     sign_in_link_expiry: "The link works once and expires in %{minutes} minutes."
-    sign_in_link_ignore: "If you did not ask for this, ignore this email — nothing has changed."
+    sign_in_link_ignore: "If you did not ask for this, ignore this email - nothing has changed."
+
   pages:
     account: "Account"
     two_factor: "Two-factor authentication"
@@ -305,16 +329,20 @@ en:
     query: "Search query"
     submit: "Search"
     results_for:
-      one: "%{count} result for “%{query}”"
-      other: "%{count} results for “%{query}”"
+      one: "%{count} result for \"%{query}\""
+
+      other: "%{count} results for \"%{query}\""
+
     no_exact_matches: "No exact matches. Try:"
   # The service worker's offline shell. Rendered by all three apps.
   offline:
     badge: "Offline"
     title: "%{app} is offline"
-    lead: "We’ll show the last cached items from this device when they’re available."
+    lead: "We'll show the last cached items from this device when they're available."
+
     retry: "Retry"
-    loading: "Loading cached items…"
+    loading: "Loading cached items..."
+
     empty: "No cached items yet."
     list_label: "Offline content list"
     connection_lost: "You are offline. What is already on screen stays readable."
@@ -325,7 +353,8 @@ en:
       file_type_not_allowed: "is a file type not allowed here"
   # shared/_link_embed: the player facade on a post, and the link to the provider.
   link_embed:
-    play: "Play “%{title}” from %{provider}"
+    play: "Play \"%{title}\" from %{provider}"
+
     open: "Open on %{provider} (opens in a new tab)"
 
 

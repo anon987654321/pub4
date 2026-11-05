@@ -1,11 +1,11 @@
-// State-driven gaze, fixation, and blink — replaces random idle timers in face.runtime.
+// State-driven gaze, fixation, and blink - replaces random idle timers in face.runtime.
 // The name stays: face_assets.yml, the generated runtime and every loader name this file.
 (() => {
   "use strict";
 
   // Blink intervals are the strongest single cue for "alive", and the old ones
   // sat far outside human physiology: measured over ten simulated minutes, this
-  // face blinked 5.1/min idle, 3.4 thinking, 5.9 speaking and 2.1 listening —
+  // face blinked 5.1/min idle, 3.4 thinking, 5.9 speaking and 2.1 listening -
   // one blink every 29 seconds while holding your gaze. A person who does that
   // does not read as composed, they read as dead. Humans rest at 15-20/min and
   // blink MORE while speaking, not less; the old table had that inverted.
@@ -13,7 +13,7 @@
   // The "future-human" intent in VOICE_IDLE_SIGNATURES ("composed, steady gaze,
   // still baseline, slow deliberate blink") was right and was implemented as
   // less motion, which crosses from composed into inanimate. Composure is small,
-  // smooth, economical motion — not absence of it. So amplitudes stay low and
+  // smooth, economical motion - not absence of it. So amplitudes stay low and
   // the rates come back inside human range, biased slow: idle ~14/min,
   // listening ~12, thinking ~10, speaking ~18. Operator decision 2026-08-10.
   //
@@ -60,7 +60,7 @@
   const BLINK_CLOSE_MS = 90;
   const BLINK_OPEN_MS = 160;
 
-  // Ocular drift. Between microsaccades a real eye never holds still — it wanders
+  // Ocular drift. Between microsaccades a real eye never holds still - it wanders
   // slowly and is pulled back by fixation. The old model decayed gaze to exactly
   // zero and left it there, so the face settled into perfect stillness, which is
   // the single most statue-like thing it did. This is a bounded random walk with
@@ -187,7 +187,7 @@
 
     // Ocular drift, scaled by frame time so it does not run at a different speed
     // on a 120Hz display. Weak pull toward centre keeps it bounded without ever
-    // parking there — a real eye is never exactly still, and the previous decay
+    // parking there - a real eye is never exactly still, and the previous decay
     // to zero is what made the face settle into a waxwork between movements.
     const dt = Math.min(64, Math.max(1, t - (state.lastTick || t)));
     state.lastTick = t;
@@ -227,7 +227,7 @@
 
     return {
       // Drift rides on top of the saccade so the eye is always in motion, but
-      // it is an order of magnitude smaller — this is aliveness, not fidgeting.
+      // it is an order of magnitude smaller - this is aliveness, not fidgeting.
       saccadeX: state.saccadeX + state.driftX,
       microJitter: state.microJitter,
       fixationPitch: policy.fixationPitch,

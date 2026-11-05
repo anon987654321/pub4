@@ -9,7 +9,7 @@
 # which is the moment to fix it rather than the moment it hurts.
 #
 # Posts only. Shared::Votable is included by Comment and Takeaway::Review as
-# well, and neither ranks by score — they read it one record at a time, where the
+# well, and neither ranks by score - they read it one record at a time, where the
 # aggregate is one cheap query. The concern prefers the column when a table has
 # one and falls back to the sum when it does not, so this stays a per-table
 # decision instead of a migration across every votable.
@@ -22,7 +22,7 @@ class AddScoreToPosts < ActiveRecord::Migration[8.1]
     add_index :posts, [ :score, :created_at ]
 
     # Backfill before anything reads the column, in one statement rather than a
-    # find_each — 295 rows today, and a row-at-a-time backfill is a habit that
+    # find_each - 295 rows today, and a row-at-a-time backfill is a habit that
     # stops working at the size where it matters.
     execute <<~SQL.squish
       UPDATE posts SET score = COALESCE((

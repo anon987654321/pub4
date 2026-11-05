@@ -15,7 +15,7 @@ module Playlist
     # There was an after_create_commit here broadcasting to
     # "playlist:track:<id>:comments" with no partial, no target, and no
     # turbo_stream_from anywhere in the tree. Every comment enqueued a Solid Queue
-    # job that raised MissingTemplate into a stream with no subscriber — on a
+    # job that raised MissingTemplate into a stream with no subscriber - on a
     # 1-vCPU box, per comment.
     #
     # It is removed rather than wired because a DOM append could not have worked

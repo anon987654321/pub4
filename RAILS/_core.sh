@@ -1,5 +1,5 @@
 #!/usr/bin/env zsh
-# _core.sh — privilege detection, logging, and the one command-existence
+# _core.sh - privilege detection, logging, and the one command-existence
 # check every other _*.sh file in this directory depends on.
 # Source this file; do not execute directly.
 set -euo pipefail
@@ -26,7 +26,7 @@ need_cmd() {
   done
 }
 
-# pub4_rcctl ACTION SERVICE — fixed broker only. Deploy entrypoints refuse
+# pub4_rcctl ACTION SERVICE - fixed broker only. Deploy entrypoints refuse
 # to run before the reviewed root-owned broker has been installed.
 pub4_rcctl() {
   local action=${1:-} service=${2:-}
@@ -45,7 +45,7 @@ pub4_rcctl() {
   "${_PRIV}" /usr/local/sbin/pub4-admin service "$action" "$service"
 }
 
-# deploy_status APP_NAME STEP [STATE] — single source of truth for "is a
+# deploy_status APP_NAME STEP [STATE] - single source of truth for "is a
 # deploy running right now and what step is it on." Before this, the only way
 # to tell a live deploy apart from a hung/crashed process was ps/rcctl
 # archaeology (grepping for db:schema:load, bin/ci, etc. and guessing from

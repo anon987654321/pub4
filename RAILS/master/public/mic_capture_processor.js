@@ -1,6 +1,6 @@
 // AudioWorklet that keeps the last N seconds of microphone audio.
 //
-// Smart Turn needs the waveform, and SpeechRecognition does not give one out —
+// Smart Turn needs the waveform, and SpeechRecognition does not give one out -
 // it returns text. So the mic is opened a second time, in parallel, purely to
 // keep a rolling buffer for the endpoint model.
 //

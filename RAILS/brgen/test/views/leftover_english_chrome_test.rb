@@ -47,7 +47,7 @@ class LeftoverEnglishChromeTest < ActiveSupport::TestCase
   test "playlist set card uses privacy and tracks keys" do
     source = read("brgen_radio/playlist/app/views/playlist/sets/_card.html.erb")
     refute_includes source, '"Public"'
-    refute_includes source, "tracks ·"
+    refute_includes source, "tracks -"
     assert_includes source, 't("playlist.privacy.'
   end
 

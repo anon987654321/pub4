@@ -21,7 +21,7 @@ module Shared
   # it is blind to, and divergence is the failure.
   #
   # What is left in each app is the host constant Rails resolves by bare name,
-  # plus the two strings the offline page needs — under the duplication budget
+  # plus the two strings the offline page needs - under the duplication budget
   # and genuinely different per app.
   module PwaServing
     extend ActiveSupport::Concern
@@ -70,7 +70,7 @@ module Shared
     end
 
     def offline
-      # `render partial:` with `layout:` asks for a PARTIAL layout — Rails looks
+      # `render partial:` with `layout:` asks for a PARTIAL layout - Rails looks
       # for layouts/_application, which does not exist in any of these apps, so
       # /offline answered 500. It is the page the service worker shows when the
       # visitor has no connection, which is exactly when a 500 is least useful.
@@ -83,7 +83,7 @@ module Shared
 
     # ApplicationController's allow_browser before_action calls this instance
     # method. Overridden so worker install never gets 406/422 from the
-    # modern-browser check — the fetch that installs a worker does not carry the
+    # modern-browser check - the fetch that installs a worker does not carry the
     # user agent that check reads.
     def allow_browser(*); end
 

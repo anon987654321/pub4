@@ -67,14 +67,14 @@ class PwaDesignContractTest < Minitest::Test
   # is silent: registration rejects in the browser and the page renders fine.
   #
   # `render js:` goes through verify_same_origin_request, so without
-  # skip_forgery_protection the response is 422 — which is what amber and
+  # skip_forgery_protection the response is 422 - which is what amber and
   # bsdports answered while brgen, holding the only fixed copy of the same
   # controller, answered 200. app_duplication_test could not see it, because it
   # compares files byte-for-byte and three copies stop being identical the
   # moment one is fixed.
   #
   # Asserted on the shared concern rather than in each app, since that is now the
-  # only place the behaviour exists — and asserted per app that they reach it, or
+  # only place the behaviour exists - and asserted per app that they reach it, or
   # the concern could be correct and unused.
   def test_every_app_serves_its_service_worker_through_the_shared_hardening
     concern = read(SHARED_ROOT, "app/controllers/concerns/shared/pwa_serving.rb")
@@ -147,7 +147,7 @@ class PwaDesignContractTest < Minitest::Test
   # preferred form when the app has no per-request values; dynamic manifests keep
   # ERB only where the host or locale genuinely changes the document.
   ERB_EXPRESSION = /<%=.*?%>/m
-  # `<% case vertical %>` — control flow. The document's shape then depends on
+  # `<% case vertical %>` - control flow. The document's shape then depends on
   # which branch runs, so there is nothing static to parse.
   ERB_CONTROL_FLOW = /<%[^=#]/
 
@@ -255,7 +255,7 @@ class PwaDesignContractTest < Minitest::Test
 
   # The invariant is that the primary navigation landmark has an accessible
   # name. `aria-label="Primary navigation"` was the literal proxy for it, and
-  # localising the layouts removed the literal while keeping the landmark — so
+  # localising the layouts removed the literal while keeping the landmark - so
   # the check failed on three layouts that had all got more correct. Assert the
   # landmark is named through a key that resolves to real copy; the three apps
   # do not agree on the wording (bsdports says "Home"), and never had to.

@@ -90,7 +90,7 @@ class CheckLiveAndCssBudgetTest < Minitest::Test
                  "coverage its leaves did not earn"
   end
 
-  # "0 precondition(s) missing" was the old message for this case — true, and
+  # "0 precondition(s) missing" was the old message for this case - true, and
   # useless: nothing was missing, nothing was listening.
   def test_the_reason_names_which_of_the_two_causes_it_was
     unchecked = Deploy::CheckResult.new.inconclusive!("no Chrome")

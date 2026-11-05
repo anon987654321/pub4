@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
-# The tv content pipeline. The vertical has been fully built — channels,
-# uploads, the watch-time feed, sounds, shows — and completely EMPTY, because
+# The tv content pipeline. The vertical has been fully built - channels,
+# uploads, the watch-time feed, sounds, shows - and completely EMPTY, because
 # "tv content comes from replicate" was a sentence, not a path. These two tasks
 # are the path.
 #
@@ -9,8 +9,8 @@
 #   bin/rails "tv:ingest[manifest.yml]"    # manifest -> channel + published videos
 #
 # starter_pack generates with Replicate when REPLICATE_API_TOKEN is present
-# and REFUSES with a clear sentence when it is not — never a fake success,
-# the vipps doctrine — then falls back, if TV_TEST_CARDS=1 says so out loud,
+# and REFUSES with a clear sentence when it is not - never a fake success,
+# the vipps doctrine - then falls back, if TV_TEST_CARDS=1 says so out loud,
 # to ffmpeg-drawn broadcast test cards: honest placeholder television that
 # exercises the whole player/feed/watch-time loop and says what it is on
 # every frame.
@@ -68,7 +68,7 @@ namespace :tv do
 
     if ENV["REPLICATE_API_TOKEN"].to_s.strip.empty? && ENV["REPLICATE_API_KEY"].to_s.strip.empty?
       unless ENV["TV_TEST_CARDS"] == "1"
-        abort "tv:starter_pack: no REPLICATE_API_TOKEN — real generation needs the key. " \
+        abort "tv:starter_pack: no REPLICATE_API_TOKEN - real generation needs the key. " \
               "TV_TEST_CARDS=1 generates labeled ffmpeg test cards instead (says so on every frame)."
       end
       generate_test_cards(out)
@@ -80,16 +80,16 @@ namespace :tv do
   end
 
   def generate_test_cards(out)
-    # One lavfi source per card, visually distinct — drawtext needs a
+    # One lavfi source per card, visually distinct - drawtext needs a
     # libfreetype ffmpeg and the Homebrew build ships without it, so the
     # frame is the pattern and the LABEL is the product's own title overlay.
     cards = [
-      [ "testbilde-1", "brgen tv · fargebar",     "smptehdbars=size=1280x720:rate=25", 12 ],
-      [ "testbilde-2", "brgen tv · monoskop",     "testsrc2=size=1280x720:rate=25",    10 ],
-      [ "testbilde-3", "brgen tv · rgb",          "rgbtestsrc=size=1280x720:rate=25",   8 ],
-      [ "testbilde-4", "brgen tv · gradient",     "gradients=size=1280x720:rate=25",   15 ],
-      [ "testbilde-5", "brgen tv · mandelbrot",   "mandelbrot=size=1280x720:rate=25",   9 ],
-      [ "testbilde-6", "brgen tv · livssignal",   "life=size=1280x720:rate=25:mold=10", 11 ]
+      [ "testbilde-1", "brgen tv - fargebar",     "smptehdbars=size=1280x720:rate=25", 12 ],
+      [ "testbilde-2", "brgen tv - monoskop",     "testsrc2=size=1280x720:rate=25",    10 ],
+      [ "testbilde-3", "brgen tv - rgb",          "rgbtestsrc=size=1280x720:rate=25",   8 ],
+      [ "testbilde-4", "brgen tv - gradient",     "gradients=size=1280x720:rate=25",   15 ],
+      [ "testbilde-5", "brgen tv - mandelbrot",   "mandelbrot=size=1280x720:rate=25",   9 ],
+      [ "testbilde-6", "brgen tv - livssignal",   "life=size=1280x720:rate=25:mold=10", 11 ]
     ]
     videos = cards.map do |slug, label, source, secs|
       mp4 = File.join(out, "#{slug}.mp4")
@@ -98,13 +98,13 @@ namespace :tv do
              "-f", "lavfi", "-t", secs.to_s, "-i", source,
              "-f", "lavfi", "-t", secs.to_s, "-i", "sine=frequency=440",
              "-shortest", "-pix_fmt", "yuv420p", mp4, exception: true)
-      # PNG here; the app's own MediaProcessable variants render the webp —
+      # PNG here; the app's own MediaProcessable variants render the webp -
       # this ffmpeg ships without a webp encoder, and the pipeline conversion
       # is the production path anyway.
       system("ffmpeg", "-y", "-loglevel", "error", "-i", mp4, "-vframes", "1", "-vf", "scale=1280:720", png, exception: true)
       { "title" => label, "file" => File.basename(mp4), "thumbnail" => File.basename(png),
         "duration_seconds" => secs, "status" => "published",
-        "description" => "Testbilde — ekte innhold kommer fra replicate når nøkkelen er på plass." }
+        "description" => "Testbilde - ekte innhold kommer fra replicate når nøkkelen er på plass." }
     end
     manifest = {
       "city" => ENV.fetch("TV_CITY", "brgen.no"),

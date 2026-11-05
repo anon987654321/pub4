@@ -1,4 +1,4 @@
-<%= @edition.app_name %> — <%= @edition.city_name %>
+<%= @edition.app_name %> - <%= @edition.city_name %>
 <%= @edition.edition_date %>
 
 <%= @edition.lede %>
@@ -10,7 +10,7 @@
 <% end %>
 
 <% @edition.deals.each do |deal| %>
-* <%= deal.title %> — <%= deal.merchant %>
+* <%= deal.title %> - <%= deal.merchant %>
   <%= deal.description %>
   <%= deal.url %>
 <% end %>

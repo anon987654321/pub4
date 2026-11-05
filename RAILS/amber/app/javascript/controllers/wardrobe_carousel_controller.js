@@ -3,13 +3,13 @@ import { Controller } from "@hotwired/stimulus"
 // Mix & Match Magic.
 //
 // Four zone carousels advance on their own, adjacent zones in opposite
-// directions — head and bottom forward, top and shoes backward — so the
+// directions - head and bottom forward, top and shoes backward - so the
 // combination keeps changing without the same two garments staying paired.
 // Order within a zone comes from TasteRanker server-side, so
 // index 0 is always the garment this wardrobe reaches for most.
 //
 // Autoplay stops for prefers-reduced-motion, while the tab is hidden, and
-// while the pointer or keyboard focus is inside the dressing room — a rotation
+// while the pointer or keyboard focus is inside the dressing room - a rotation
 // that moves under the cursor mid-click picks the wrong garment.
 const ZONES = ["head", "top", "bottom", "shoes"]
 const DIRECTION = { head: 1, top: -1, bottom: 1, shoes: -1 }
@@ -19,7 +19,7 @@ export default class extends Controller {
     zones: Object,
     interval: { type: Number, default: 4200 },
     emptyLabel: { type: String, default: "none" },
-    noGarmentLabel: { type: String, default: "—" },
+    noGarmentLabel: { type: String, default: "-" },
     pauseLabel: String,
     resumeLabel: String
   }
@@ -59,7 +59,7 @@ export default class extends Controller {
       if (this.timers.has(zone)) return
       if ((this.zonesValue[zone] || []).length < 2) return
       // Stagger each zone by a quarter interval so all four never flip on the
-      // same frame — the point is a shifting combination, not a slideshow.
+      // same frame - the point is a shifting combination, not a slideshow.
       const offset = (this.intervalValue / ZONES.length) * i
       const handle = window.setTimeout(() => {
         const id = window.setInterval(() => this.step(zone, DIRECTION[zone]), this.intervalValue)

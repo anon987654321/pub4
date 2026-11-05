@@ -1,7 +1,7 @@
 import { Controller } from "@hotwired/stimulus"
 
 // Records a voice note into the composer's own file field, so the message goes
-// through the same create path as a photo or a line of text — no second
+// through the same create path as a photo or a line of text - no second
 // endpoint, no upload of its own.
 //
 // messages.duration_seconds and Message#voice? shipped, the thread already

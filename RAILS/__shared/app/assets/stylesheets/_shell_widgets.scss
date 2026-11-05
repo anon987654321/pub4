@@ -22,7 +22,7 @@
 }
 
 .sidebar-card li {
-  padding: 0.75rem 0; /* 12px — eight_px_rhythm */
+  padding: 0.75rem 0; /* 12px - eight_px_rhythm */
 }
 
 /* Page-header geometry belongs to _layout_chrome.scss.
@@ -37,7 +37,7 @@
   margin: 0.75rem 16px;
 }
 
-/* Theme control — icon only, no circular sphere/chip behind it. The padding
+/* Theme control - icon only, no circular sphere/chip behind it. The padding
    is the invisible half of --tap-min: it paints nothing (no background, no
    border) and the inset compensation keeps the icon exactly where it was,
    while the corner hit area reaches 44px (probe: 20px icon, 13px input). */
@@ -49,7 +49,7 @@
      what this has to line up with is the bar, not the top of the screen.
      .brgen-logo-mark is the same --tap-min box at this same top and centres on 33;
      subtracting the padding put this one at -1.4 and centred it on 21, 12px above
-     everything beside it. The icon was there before the padding was added too — the
+     everything beside it. The icon was there before the padding was added too - the
      compensation preserved the misalignment rather than causing it. */
   top: calc(var(--chrome-inset-block) + var(--safe-top) + var(--top-band-nudge));
   inset-inline-end: calc(var(--chrome-inset) + var(--safe-right) - 12px);
@@ -76,9 +76,9 @@
   text-decoration: none;
 }
 
-// Pixel-art framing for avatars/thumbnails — hard edges, no smoothing.
+// Pixel-art framing for avatars/thumbnails - hard edges, no smoothing.
 
-/* Unread state on a notification row: weight plus a leading accent dot —
+/* Unread state on a notification row: weight plus a leading accent dot -
    two signals, so the state survives grayscale and colour-blindness alike
    (visual_contract undefined_class: read/unread had no rule anywhere). */
 article.unread .notification-title-link {

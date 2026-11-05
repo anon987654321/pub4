@@ -3,8 +3,8 @@
 require "test_helper"
 
 # The AI analysis card, occasion map, style-profile quiz and declutter review
-# printed hardcoded English: "Sparks joy", "← Dashboard", English optgroup
-# labels and option text, "← Declutter dashboard".
+# printed hardcoded English: "Sparks joy", "<- Dashboard", English optgroup
+# labels and option text, "<- Declutter dashboard".
 class AiPagesI18nTest < ActionDispatch::IntegrationTest
   setup do
     email = "ai18n-#{SecureRandom.hex(4)}@example.test"

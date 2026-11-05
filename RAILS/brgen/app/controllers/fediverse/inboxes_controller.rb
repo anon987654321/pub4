@@ -7,19 +7,19 @@
 # anyone's account, because the actor field is a string the sender chose.
 class Fediverse::InboxesController < ApplicationController
   allow_unauthenticated_access
-  # ActivityPub POSTs carry no CSRF token by design — the signature is the
+  # ActivityPub POSTs carry no CSRF token by design - the signature is the
   # authentication, and it is checked below rather than skipped along with this.
   skip_forgery_protection
 
   # The signature check is the security boundary, and it is not the first thing
   # that happens. `Fediverse::ActorFetcher.for_key_id(signature_key_id)` runs
   # before it, and that is an outbound HTTPS GET to a URL taken straight from the
-  # sender's own Signature header — so an unauthenticated POST to this endpoint
+  # sender's own Signature header - so an unauthenticated POST to this endpoint
   # makes brgen fetch a URL of the sender's choosing, and nothing here limited
   # how often. Verifying the signature first is not available as a fix: the
   # public key needed to verify it is what the fetch goes to get.
   #
-  # By IP, and generous, because legitimate federation is bursty — a popular
+  # By IP, and generous, because legitimate federation is bursty - a popular
   # post being boosted arrives as a flood of Create activities from one relay.
   # 300/minute is well above real traffic and far below useful amplification.
   # head :too_many_requests rather than a redirect: every other response on this
@@ -46,7 +46,7 @@ class Fediverse::InboxesController < ApplicationController
 
     # The signer and the claimed author must be the same account. Without this,
     # a valid signature from any actor authorises an activity attributed to any
-    # other — which is the whole game.
+    # other - which is the whole game.
     return head :forbidden unless claims_match?(activity, actor)
 
     unless signed_by?(actor, body)

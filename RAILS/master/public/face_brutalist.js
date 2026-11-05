@@ -1,4 +1,4 @@
-// Brutalist profile — raw monospace, step motion, exposed state strip (CLI + web parity).
+// Brutalist profile - raw monospace, step motion, exposed state strip (CLI + web parity).
 (() => {
   "use strict";
 

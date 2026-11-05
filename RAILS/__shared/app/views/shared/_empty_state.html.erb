@@ -1,5 +1,5 @@
 <%#
-  Shared empty state — title + body + optional CTA.
+  Shared empty state - title + body + optional CTA.
   Usage:
     render "shared/empty_state",
       title: "No posts",
@@ -15,7 +15,7 @@
   role="status"
   <% if live %>aria-live="polite"<% end %>>
   <%# An icon only where a caller has one worth drawing. This was a hardcoded ○
-      — a 12px ring above every empty state in three apps, aria-hidden because
+      - a 12px ring above every empty state in three apps, aria-hidden because
       it says nothing, which is the argument for not drawing it at all. %>
   <% if local_assigns[:icon].present? %>
     <span class="empty-state-icon" aria-hidden="true"><%= icon local_assigns[:icon], size: 24 %></span>

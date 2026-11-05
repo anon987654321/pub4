@@ -8,7 +8,7 @@ require "test_helper"
 #
 # Two things have to stay true for that to be a win rather than a bug: the paths
 # must be emitted exactly once, and every <use> on the page must resolve to a
-# <symbol> that is actually there — a dangling reference draws nothing at all and
+# <symbol> that is actually there - a dangling reference draws nothing at all and
 # raises nothing, which is the failure shape this codebase keeps producing.
 class IconSpriteTest < ActionDispatch::IntegrationTest
   setup do
@@ -24,7 +24,7 @@ class IconSpriteTest < ActionDispatch::IntegrationTest
       email_address: "sprite-#{SecureRandom.hex(4)}@brgen.no", password: "password123", city: @city
     )
     community = Community.create!(name: "Sprite #{SecureRandom.hex(3)}", slug: "sprite-#{SecureRandom.hex(4)}")
-    count.times { |i| Post.create!(user: author, community:, title: "Sprite #{i}", content: "…") }
+    count.times { |i| Post.create!(user: author, community:, title: "Sprite #{i}", content: "...") }
   end
 
   def symbol_ids(body) = body.scan(/<symbol id="icon-([a-z_]+)"/).flatten
@@ -38,7 +38,7 @@ class IconSpriteTest < ActionDispatch::IntegrationTest
 
       defined_ids = symbol_ids(response.body)
       referenced = use_refs(response.body).uniq
-      assert_operator referenced.size, :>, 0, "the page rendered no icons — this test proves nothing"
+      assert_operator referenced.size, :>, 0, "the page rendered no icons - this test proves nothing"
       assert_empty referenced - defined_ids,
                    "dangling <use> reference(s): these draw nothing and raise nothing"
     end
@@ -50,12 +50,12 @@ class IconSpriteTest < ActionDispatch::IntegrationTest
       ids = symbol_ids(response.body)
       assert_equal ids.size, ids.uniq.size, "the sprite was rendered more than once"
       assert_equal Shared::UiHelper::ICONS.sort, ids.sort,
-                   "the sprite must carry the whole set — Turbo can inject markup referencing any icon"
+                   "the sprite must carry the whole set - Turbo can inject markup referencing any icon"
     end
   end
 
   # The actual point of the change: icon bytes per post drop and stay dropped.
-  # A post still costs something — it carries five feed-action icons, so the floor
+  # A post still costs something - it carries five feed-action icons, so the floor
   # is 5 outer <svg> wrappers however thin the contents are. Measured on a 23-post
   # feed: 1730B per post inlined, 624B through the sprite, and the whole document
   # 180,906B -> 150,552B. The threshold sits between the two, not below both.
@@ -76,7 +76,7 @@ class IconSpriteTest < ActionDispatch::IntegrationTest
       growth_per_post = (large - small) / 20.0
       assert_operator growth_per_post, :<, MAX_BYTES_PER_POST,
                       "SVG grew #{growth_per_post.round}B per post (sprite measured " \
-                      "#{SPRITE_BYTES_PER_POST}B, inlining #{INLINED_BYTES_PER_POST}B) — icons are inlined again"
+                      "#{SPRITE_BYTES_PER_POST}B, inlining #{INLINED_BYTES_PER_POST}B) - icons are inlined again"
     end
   end
 

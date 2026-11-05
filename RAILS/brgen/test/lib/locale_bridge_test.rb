@@ -10,7 +10,7 @@ require "test_helper"
 # five keys each against en.yml's 1579, so eleven domains rendered five
 # translated words and 1574 English ones; they are deleted rather than kept
 # unrouted, because a locale file nothing loads is inert config. The assertions
-# that used to require :de and :fr are inverted below and say why — the
+# that used to require :de and :fr are inverted below and say why - the
 # behaviour reversed on purpose, and a test that quietly changed sides would
 # make that indistinguishable from a regression.
 class LocaleBridgeTest < ActiveSupport::TestCase
@@ -31,7 +31,7 @@ class LocaleBridgeTest < ActiveSupport::TestCase
 
   # Was :fr. mlan.it and lisbon.pt were served French chrome under a rule that
   # mapped them to "the nearest available Romance locale", which is the same
-  # mistake the Polish note records — narrowed at the time rather than dropped.
+  # mistake the Polish note records - narrowed at the time rather than dropped.
   # French on an Italian city is not nearer than English.
   test "romance languages fall back to english now that french does not ship" do
     %i[it pt fr fr-BE].each { |locale| assert_equal :en, Brgen::LocaleBridge.resolve(locale) }

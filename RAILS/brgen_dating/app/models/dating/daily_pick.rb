@@ -3,10 +3,10 @@
 # A short list for today, instead of a deck with no bottom.
 #
 # Rows rather than a computed slice, because the point of a daily list is that
-# it is the same list all day — a recomputed one shifts under the reader as
+# it is the same list all day - a recomputed one shifts under the reader as
 # people come online, which is the deck's behaviour and the thing this is meant
 # to be a break from.
-# model_contract: no-validations-ok — the (user, profile, day) key is enforced
+# model_contract: no-validations-ok - the (user, profile, day) key is enforced
 # by the database and must stay there: for_today races two tabs on purpose and
 # rescues RecordNotUnique, which a uniqueness validation would turn into a
 # RecordInvalid the rescue does not catch.

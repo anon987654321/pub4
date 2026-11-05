@@ -127,7 +127,7 @@ designer discovery, repair/recycling and travel packing.
   Keep private wardrobe data private by default; any AI analysis or creator remix must continue
   to pass through explicit visibility and consent policy.
 
-## Retired architecture — do not restore
+## Retired architecture - do not restore
 
 The old READMEs and shell installers mention Rails 8.0, Ruby 3.3, PostgreSQL, Redis, Devise,
 ActsAsTenant, Mapbox, StimulusReflex, ActionCable as the general real-time layer, Nginx and

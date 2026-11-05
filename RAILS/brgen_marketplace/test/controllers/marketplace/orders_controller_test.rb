@@ -12,7 +12,7 @@ require "test_helper"
 # PSP runs.
 class Marketplace::OrdersControllerTest < ActionDispatch::IntegrationTest
   setup do
-    # A known apex (DomainRegistry) that is also a marketplace subdomain — the
+    # A known apex (DomainRegistry) that is also a marketplace subdomain - the
     # controller 404s "Unknown host" otherwise, and .brgen.no scopes the session.
     host! "markedsplass.brgen.no"
     # The order page opens the buyer-seller conversation, and Conversation
@@ -171,7 +171,7 @@ class Marketplace::OrdersControllerTest < ActionDispatch::IntegrationTest
     assert_equal I18n.t("shared.flash.not_authorized"), flash[:alert]
   end
 
-  # Scoped to buyer_id, and a paid order stays listed — the history used to
+  # Scoped to buyer_id, and a paid order stays listed - the history used to
   # read like the cart, so a paid order vanished from it.
   test "the buyer's order history shows their orders and nobody else's" do
     pending_listing = Marketplace::Listing.create!(

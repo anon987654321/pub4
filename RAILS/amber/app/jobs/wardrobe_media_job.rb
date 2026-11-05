@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Upload pipeline: variants, dominant colour, single portrait polish, local fingerprint, sustainability.
-# Does NOT claim ML garment segmentation or background removal — one postpro portrait pass only.
+# Does NOT claim ML garment segmentation or background removal - one postpro portrait pass only.
 class WardrobeMediaJob < ApplicationJob
   queue_as :bulk
 

@@ -69,7 +69,7 @@ class DressingRoomTest < ActionDispatch::IntegrationTest
     assert_redirected_to dressing_room_outfits_path
   end
 
-  # The carousel wrote "none" and "—" in English, and the pause button changed
+  # The carousel wrote "none" and "-" in English, and the pause button changed
   # only aria-pressed, never its words, so a paused room still offered "Pause".
   test "the dressing room hands its controller translated labels" do
     sign_in_as("dressing-labels@example.com")

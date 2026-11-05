@@ -98,7 +98,7 @@ renders nothing without an advertising-consent signal and labels itself
 through `t("shared.advertisement")`; `_affiliate_feed_unit`
 (Tradedoubler/Amazon) renders the `affiliate_disclosure` partial, marks every
 outbound link `rel="noopener sponsored"`, and carries a per-link paid-link
-mark. No ad partial may hard-code a hex color — every value resolves through
+mark. No ad partial may hard-code a hex color - every value resolves through
 the token contract. The affiliate stack it binds to lives in the shared
 engine: `Shared::Tradedoubler`, `AffiliateProduct`, `AffiliateVoucher` and
 `AffiliateConversion`.

@@ -5,7 +5,7 @@ require "shared/contracts"
 Shared::Contracts.require_contract("studio")
 
 class WardrobeAi
-  # The no-model answers. See wardrobe_ai/offline.rb — most machines and vm23
+  # The no-model answers. See wardrobe_ai/offline.rb - most machines and vm23
   # by default have no OPENROUTER_API_KEY, so that path is the common one.
   include Offline
 
@@ -185,7 +185,7 @@ class WardrobeAi
     }
   end
 
-  # Local deterministic fingerprint — NOT a semantic embedding. Real pgvector embeddings are planned.
+  # Local deterministic fingerprint - NOT a semantic embedding. Real pgvector embeddings are planned.
   def fingerprint_for(item)
     text = item.embedding_text.to_s
     seed = Zlib.crc32(text)

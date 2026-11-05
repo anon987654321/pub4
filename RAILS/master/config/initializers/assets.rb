@@ -5,4 +5,4 @@
 # Version of your assets, change this if you want to expire all your assets.
 Rails.application.config.assets.version = "1.0"
 
-# See config/application.rb — public/assets is excluded from propshaft load paths.
+# See config/application.rb - public/assets is excluded from propshaft load paths.

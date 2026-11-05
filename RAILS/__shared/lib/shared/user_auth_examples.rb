@@ -3,8 +3,8 @@
 module Shared
   # The email/password half of User, which every app gets from the same shared
   # auth migrations and Shared::Authentication rather than from its own model.
-  # Each app owns the rest of its User — amber's carries the wardrobe
-  # associations, brgen's the city tenancy — so the model stays per-app and only
+  # Each app owns the rest of its User - amber's carries the wardrobe
+  # associations, brgen's the city tenancy - so the model stays per-app and only
   # the contract is shared:
   #
   #   class UserTest < ActiveSupport::TestCase

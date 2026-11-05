@@ -18,7 +18,7 @@
     <%= button_to t("actions.message"), user_conversations_path(@user), method: :post,
           class: "button button-ghost" %>
     <% if @active_block %>
-      <%# destructive: no-confirm-ok — reversible — the button becomes Block again in place %>
+      <%# destructive: no-confirm-ok - reversible - the button becomes Block again in place %>
       <%= button_to t("block.unblock"), unblock_user_path(@user), method: :delete,
             class: "button button-ghost" %>
     <% else %>
@@ -95,7 +95,7 @@
       <% @activity.each do |event| %>
         <li>
           <%= activity_event_title(event) %>
-          <span class="activity-vertical">· <%= activity_event_vertical(event) %></span>
+          <span class="activity-vertical">- <%= activity_event_vertical(event) %></span>
           <time datetime="<%= event.created_at.iso8601 %>"><%= time_ago(event.created_at) %></time>
         </li>
       <% end %>

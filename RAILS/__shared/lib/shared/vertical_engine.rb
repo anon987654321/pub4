@@ -13,7 +13,7 @@ module Shared
   # Everything is derived from the including class: `root` is the engine's own
   # root (Rails::Engine computes it from the file that opened the class, which is
   # still the engine's own lib/<name>/engine.rb), and the initializer prefix is
-  # its namespace — Dating::Engine gives "dating.view_paths", the name it had.
+  # its namespace - Dating::Engine gives "dating.view_paths", the name it had.
   module VerticalEngine
     # A vertical does not carry app/views here: views come in through the
     # view_paths initializer below, not through autoloading.
@@ -40,7 +40,7 @@ module Shared
         engine.config.autoload_paths << path.to_s if path.exist?
       end
 
-      # Unlike Shared::Engine, a vertical owns its future migrations — see the
+      # Unlike Shared::Engine, a vertical owns its future migrations - see the
       # "one migration per app" note there for why shared has no such line.
       engine.config.paths["db/migrate"] << root.join("db/migrate").to_s
 

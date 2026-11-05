@@ -36,7 +36,7 @@ class User < ApplicationRecord
   # uniqueness is global, one session follows a visitor across every city
   # domain, and stranger discovery is radius-based (Shared::GeoLocatable), not
   # city-based. Tenanting this model scoped every User read to
-  # city_id = current_tenant, and no user row ever carried a city — guests are
+  # city_id = current_tenant, and no user row ever carried a city - guests are
   # created in resume_session, which runs before set_domain_context sets the
   # tenant, and seeds run outside a request. So every lookup returned nil:
   # post.user, message.sender and User.nearby all came back empty, which read
@@ -99,8 +99,8 @@ class User < ApplicationRecord
 
   include Shared::GeoLocatable
 
-  # Public profile pages a crawler may list. Not a tenant row — city_id is
-  # only a home-city hint — so the sitemap names the city at the call site.
+  # Public profile pages a crawler may list. Not a tenant row - city_id is
+  # only a home-city hint - so the sitemap names the city at the call site.
   scope :public_profiles, -> {
     where(guest: false, deleted_at: nil, deletion_scheduled_at: nil)
       .where.not(username: [ nil, "" ])
@@ -109,7 +109,7 @@ class User < ApplicationRecord
   # The same name every city-facing surface uses, with the one difference this
   # model's shape forces: strict, not CityScoped.
   #
-  # CityScoped reads a nil city_id as global — legal for a tenanted row, and it
+  # CityScoped reads a nil city_id as global - legal for a tenanted row, and it
   # belongs in every city rather than none. Here nil is the common case, not the
   # exception: guests are created in resume_session before set_domain_context
   # sets the tenant, so most rows carry no city at all. Treating those as global
@@ -123,8 +123,8 @@ class User < ApplicationRecord
   }
 
   # Never falls through to the email address. This method shadows the users
-  # .display_name column, so the stored name was dead and every caller — the
-  # marketplace seller line, dating matches, takeaway drivers, TV comments —
+  # .display_name column, so the stored name was dead and every caller - the
+  # marketplace seller line, dating matches, takeaway drivers, TV comments -
   # rendered the local part of a real person's email on a public page instead.
   # SSO provisioning writes that column; read it.
   def display_name = guest? ? "anon" : (self[:display_name].presence || username.presence || anon_handle)
@@ -170,7 +170,7 @@ class User < ApplicationRecord
   def following?(other) = follows_as_follower.exists?(followed: other)
 
   # Posts by people you follow, plus posts they reposted. A repost that only
-  # showed on the reposter's profile would be a bookmark with extra steps — the
+  # showed on the reposter's profile would be a bookmark with extra steps - the
   # whole point is that it reaches the followers.
   def timeline_posts
     author_ids = [ id ] + follows_as_follower.pluck(:followed_id)

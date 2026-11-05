@@ -6,7 +6,7 @@
 # #{Faker::Address.city}", so brgen.no/communities listed "Kultur community for
 # Hoppeton" and "Film community for Traceeland": English on a Norwegian page,
 # about towns that do not exist. The demo and per-city seeders wrote
-# "Bergen — kultur". A source fix cannot reach rows already written; this can.
+# "Bergen - kultur". A source fix cannot reach rows already written; this can.
 #
 # Only rows still wearing a seeder's own words are touched: a description in
 # one of those two shapes, and a name that is still the capitalised slug. A
@@ -15,9 +15,12 @@
 module BrgenCommunityCopy
   module_function
 
+  # The seeder writes "Bergen - mat"; rows written before the ASCII Law carry
+  # an em dash, so both spellings are seeder copy.
   def seeded_description?(community, city_name)
     text = community.description.to_s
-    text.match?(/\A\S+ community for .+\z/) || text == "#{city_name} — #{community.slug}"
+    seeded = /\A#{Regexp.escape(city_name.to_s)} (?:-|\u2014) #{Regexp.escape(community.slug.to_s)}\z/
+    text.match?(/\A\S+ community for .+\z/) || text.match?(seeded)
   end
 
   # [name, description] to write, or nil when the row is not seeder copy.

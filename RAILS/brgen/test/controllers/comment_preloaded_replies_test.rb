@@ -14,7 +14,7 @@ class CommentPreloadedRepliesTest < ActionDispatch::IntegrationTest
     host! "brgen.no"
 
     @author = make_user("preload-author")
-    @post = Post.create!(user: @author, city: @city, title: "Tråd", content: "…")
+    @post = Post.create!(user: @author, city: @city, title: "Tråd", content: "...")
   end
 
   teardown { ActsAsTenant.current_tenant = nil }

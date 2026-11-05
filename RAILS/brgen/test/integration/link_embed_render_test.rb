@@ -52,7 +52,7 @@ class LinkEmbedRenderTest < ActionDispatch::IntegrationTest
       assert_select "figcaption a[target='_blank']", text: /ny fane/
       # Provider and author are two facts in two elements, not one dotted string.
       assert_select "figcaption small", count: 2
-      assert_no_match(/ · /, css_select("figcaption").text)
+      assert_no_match(/ \u00B7 /, css_select("figcaption").text)
     end
     assert_select "iframe[src*='youtube']", count: 0
   end
@@ -77,8 +77,8 @@ class LinkEmbedRenderTest < ActionDispatch::IntegrationTest
     assert_select "figure.link-embed", count: 0
   end
 
-  # The title reaches three places — an attribute, an aria-label and the
-  # caption — and in each it has to arrive escaped.
+  # The title reaches three places - an attribute, an aria-label and the
+  # caption - and in each it has to arrive escaped.
   test "provider text is escaped wherever it lands" do
     hostile = recorded("youtube").merge("title" => %(<img src=x onerror="alert(1)">"'), "author_name" => "<b>x</b>")
     embedded_post(AURORA, hostile)

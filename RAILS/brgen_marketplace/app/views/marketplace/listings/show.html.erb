@@ -72,7 +72,7 @@
 </div>
 
 <section class="store-pdp-description">
-  <div><%= read_more(@listing.description, lines: 6, more: t("actions.read_more"), less: t("actions.read_less")) %></div> <%# scan: intentional — read_more needs one block to clamp %>
+  <div><%= read_more(@listing.description, lines: 6, more: t("actions.read_more"), less: t("actions.read_less")) %></div> <%# scan: intentional - read_more needs one block to clamp %>
   <button class="button-share" data-controller="share"
           data-share-title-value="<%= @listing.title %>"
           data-share-url-value="<%= request.original_url %>"
@@ -131,7 +131,7 @@
           <div class="field">
             <%= f.label :variant_id, t("marketplace.choose_variant") %>
             <%= f.select :variant_id,
-                  @variants.map { |variant| [ "#{variant.label} — #{variant.price_display}", variant.id ] },
+                  @variants.map { |variant| [ "#{variant.label} - #{variant.price_display}", variant.id ] },
                   { include_blank: t("marketplace.choose_variant_blank") } %>
           </div>
         <% end %>
@@ -191,7 +191,7 @@
       <% @listing.orders.includes(:buyer).each do |order| %>
         <article>
           <%= tag.strong order.buyer&.display_name || t("chat.anon") %>
-           — <%= t("marketplace.order_statuses.#{order.status}", default: order.status.to_s.humanize) %>
+           - <%= t("marketplace.order_statuses.#{order.status}", default: order.status.to_s.humanize) %>
           <% if order.message.present? %><%= tag.p order.message %><% end %>
           <% if order.status == "pending" %>
             <div class="cluster mt-8">

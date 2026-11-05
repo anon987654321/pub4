@@ -4,13 +4,13 @@ class MessagesController < ApplicationController
   # One screen of history per request, and the same size as the thread window
   # ConversationsController#show renders, so "load earlier" and first paint
   # agree on what a page of this conversation is. The reply/edit windows are
-  # minutes; a history page is 50 lines — a thread that outgrew its window is
+  # minutes; a history page is 50 lines - a thread that outgrew its window is
   # a transcript to walk, not a wall to load.
   HISTORY_PAGE = 50
 
   # Burst and sustained, and they only work as two limits because of `name:`.
   # The cache key is ["rate-limit", controller_path, name, by], so unnamed these
-  # two shared one counter whenever `by` resolved the same way — which is every
+  # two shared one counter whenever `by` resolved the same way - which is every
   # request from a signed-out sender, where both fall back to remote_ip. One
   # request then incremented the shared count twice, the 30/minute filter ran
   # first and blocked at 15, and the 40/3-minute limit was unreachable: its TTL
@@ -34,7 +34,7 @@ class MessagesController < ApplicationController
   # The page of history above the cursor. `before` is the oldest message the
   # log already holds; the reply carries the next cursor in X-History-Next, or
   # no header when the thread has given up everything above. The body is the
-  # message partials alone — the conversation_log controller inserts them at
+  # message partials alone - the conversation_log controller inserts them at
   # the top of its own list and re-derives grouping and day breaks there, so
   # this action renders no frame, no layout and no chrome. set_conversation
   # scopes through for_user, so a reader reaches only threads they take part in.

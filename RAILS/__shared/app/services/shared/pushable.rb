@@ -49,7 +49,7 @@ module Shared
         # unsubscribe every browser on one bad key rotation, and a push
         # subscription cannot be restored from our side. Raised so the failed
         # job is visible.
-        Rails.logger&.error("[push] unauthorized — check config.x.vapid, not the subscription: #{e.message.to_s[0, 120]}")
+        Rails.logger&.error("[push] unauthorized - check config.x.vapid, not the subscription: #{e.message.to_s[0, 120]}")
         raise
       rescue StandardError => e
         # A timeout or a 5xx from a push service is that service's bad day, not

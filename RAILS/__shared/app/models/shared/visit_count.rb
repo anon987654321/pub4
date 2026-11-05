@@ -4,17 +4,17 @@ module Shared
   # Page views per host per day, as counters rather than rows.
   #
   # Shared::OutboundClick is the other half of this and was built first: it is
-  # the denominator for affiliate revenue, clicks × conversion × basket ×
+  # the denominator for affiliate revenue, clicks x conversion x basket x
   # commission. But a click rate has no meaning without the visits it came from,
-  # and nothing counted those. brgen serves seven live city domains — brgen.no,
-  # oshlo.no, stvanger.no, trndheim.no, cardff.uk, edinbrgh.uk, frankfrt.de —
+  # and nothing counted those. brgen serves seven live city domains - brgen.no,
+  # oshlo.no, stvanger.no, trndheim.no, cardff.uk, edinbrgh.uk, frankfrt.de -
   # and there was no way to say which of them anyone reaches. Every decision
   # about where to spend effort was a guess between seven options.
   #
   # A counter, not a log. One row per (app, host, route, day) incremented in
   # place, so a day of traffic on one surface is one row however many visits it
-  # holds. The alternative — a row per request, which is what an analytics
-  # product would store — puts unbounded write volume on a SQLite database on a
+  # holds. The alternative - a row per request, which is what an analytics
+  # product would store - puts unbounded write volume on a SQLite database on a
   # 1 vCPU host, to answer a question that only ever needs the total.
   #
   # Deliberately aggregate. No IP, user agent, user id, session, cookie or path
@@ -33,7 +33,7 @@ module Shared
     scope :for_host, ->(host) { where(host:) }
 
     # Obvious crawlers, so "which city has traffic" does not answer "the one the
-    # crawlers like". Read from the request and never stored — matching on a
+    # crawlers like". Read from the request and never stored - matching on a
     # handful of substrings is imprecise on purpose, because the cost of missing
     # a bot is a slightly high number and the cost of storing a user agent to
     # classify it properly is a personal-data record we do not want.
@@ -49,7 +49,7 @@ module Shared
     # One indexed upsert per view. Not buffered in memory: at the traffic these
     # domains actually have, a buffer would trade lost counts on restart and a
     # flush thread for a write that SQLite does in microseconds. Revisit if a
-    # single host passes a few views per second — the shape here does not change,
+    # single host passes a few views per second - the shape here does not change,
     # only where the increment accumulates first.
     def self.record(app:, host:, route:, day: Date.current)
       return nil if app.blank? || host.blank? || route.blank?

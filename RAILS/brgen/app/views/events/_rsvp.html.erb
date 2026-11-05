@@ -3,7 +3,7 @@
     answer on every event platform and collapsing it into going/not-going both
     overstates attendance and loses the reminder signal.
 
-    Pressing the answer you already hold withdraws it — otherwise there is no
+    Pressing the answer you already hold withdraws it - otherwise there is no
     way back out of "going" without a fourth button. %>
 <div class="rsvp-bar" role="group" aria-label="<%= t("events.rsvp") %>">
   <% if authenticated? %>
@@ -12,7 +12,7 @@
     <% else %>
       <% EventRsvp::STATUSES.each do |status| %>
         <% held = rsvp&.status == status %>
-        <%# A full event still takes "interested" — the waiting list is the point. %>
+        <%# A full event still takes "interested" - the waiting list is the point. %>
         <% blocked = status == "going" && event.full? && !held %>
         <%= button_to rsvp_event_path(event, status: status),
               method: :post,

@@ -1,6 +1,6 @@
 // Smart Turn v3: semantic endpointing from the waveform.
 //
-// The linguistic endpointer in face.part5.txt decides from the words — someone
+// The linguistic endpointer in face.part5.txt decides from the words - someone
 // who just said "og" is still going. This decides from how they sounded, which
 // is the half a transcript cannot see: pitch falling, final lengthening, the
 // difference between a pause for breath and a finished sentence.
@@ -8,10 +8,10 @@
 // It is opt-in and it is allowed to fail. Every entry point returns null rather
 // than throwing, and the caller keeps the linguistic answer when it does, so a
 // blocked microphone, an absent model or a browser without AudioWorklet costs
-// nothing but the feature. This runs entirely in the page — the VPS is not in
+// nothing but the feature. This runs entirely in the page - the VPS is not in
 // the loop, which is the point, since its latency floor is what we are avoiding.
 //
-// Cost, so it is not a surprise: ~21MB fetched once and then cached — a 12.9MB
+// Cost, so it is not a surprise: ~21MB fetched once and then cached - a 12.9MB
 // WASM runtime and an 8.3MB int8 model. That is why it is not on by default.
 //
 // Model: pipecat-ai/smart-turn-v3.2-cpu, BSD-2-Clause, a Whisper Tiny encoder
@@ -34,7 +34,7 @@ const MODEL_URL = "/models/smart-turn-v3.2-cpu.onnx";
 const WORKLET_URL = "/mic_capture_processor.js";
 
 // Above this the model says the turn ended. 0.5 is the reference threshold;
-// raised a little because the cost of the two mistakes is not symmetric — a
+// raised a little because the cost of the two mistakes is not symmetric - a
 // false "finished" cuts someone off, a false "still going" only waits.
 export const COMPLETE_THRESHOLD = 0.6;
 
@@ -180,7 +180,7 @@ export async function warmUp() {
   return Boolean(session && capture);
 }
 
-// Returns the probability the speaker has finished, or null when unavailable —
+// Returns the probability the speaker has finished, or null when unavailable -
 // never throws, because the caller has a working answer without this one.
 export async function predictEndpoint() {
   if (!smartTurnEnabled() || state.failed) return null;

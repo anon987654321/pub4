@@ -10,9 +10,9 @@ class DeployChecksContractTest < Minitest::Test
   include DeployChecksContractSources
 
   # Every check is declared once, in checks.yml. This used to be four tables that
-  # had to agree — runner.rb's CHECK_MAP (name -> file), IN_PROCESS (name ->
+  # had to agree - runner.rb's CHECK_MAP (name -> file), IN_PROCESS (name ->
   # class), SUBPROCESS_ONLY (their set difference, stored by hand) and
-  # CHECK_COVERED_BY — plus 37 shim scripts at the RAILS root whose only job was
+  # CHECK_COVERED_BY - plus 37 shim scripts at the RAILS root whose only job was
   # to require a class the runner already loaded in-process.
   def test_every_check_resolves_to_a_file
     CHECKS.each do |name, row|
@@ -82,7 +82,7 @@ class DeployChecksContractTest < Minitest::Test
     named = Dir.glob(File.join(MASTER_CHECKS, "**", "*.rb")).map { |path| File.basename(path, ".rb") }
     redundant = named.select { |name| name.end_with?("_check", "_check_logic") }
 
-    assert_empty redundant, "drop the suffix — checks/lib/<name>.rb defines Deploy::<Name>Check: #{redundant}"
+    assert_empty redundant, "drop the suffix - checks/lib/<name>.rb defines Deploy::<Name>Check: #{redundant}"
   end
 
   # Support code is not a check. Keeping it in checks/lib/ meant three files
@@ -128,7 +128,7 @@ class DeployChecksContractTest < Minitest::Test
 
     assert_empty orphans,
                  "these checks are registered in checks.yml and no script in the repo runs them, directly " \
-                 "or through their composite — wire each into a check-* entrypoint or delete it"
+                 "or through their composite - wire each into a check-* entrypoint or delete it"
   end
 
   # The deploy-time integrity chain names checks instead of pointing at scripts,

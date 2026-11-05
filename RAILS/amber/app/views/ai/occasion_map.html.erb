@@ -9,7 +9,7 @@
         <p class="occasion-warn"><%= t("pages.occasion_gap") %></p>
       <% end %>
       <% items.first(3).each do |item| %>
-        <div><%= link_to item.title, item %></div> <%# scan: intentional — an anonymous text block; the flex row is the layout and a name here would have no reader %>
+        <div><%= link_to item.title, item %></div> <%# scan: intentional - an anonymous text block; the flex row is the layout and a name here would have no reader %>
       <% end %>
     </div>
   <% end %>

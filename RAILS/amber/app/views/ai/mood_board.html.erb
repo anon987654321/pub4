@@ -19,6 +19,6 @@
 <% end %>
 <%# A description that matched nothing left the page as if it had not been asked. %>
 <% if @description.present? && @items.blank? %>
-  <%# empty_state: no-action-ok — the description form above is the next step %>
+  <%# empty_state: no-action-ok - the description form above is the next step %>
   <%= render "shared/empty_state", title: t("ai.mood_no_match"), body: t("ai.mood_no_match_body") %>
 <% end %>

@@ -5,7 +5,7 @@
 # list fills with abandoned baskets, and "pending" stops meaning anything.
 #
 # Only immediate carts get a deadline. A scheduled order is a deliberate
-# placement for a future time — expiring it on a clock would cancel orders
+# placement for a future time - expiring it on a clock would cancel orders
 # people fully intend to have, so scheduled rows keep a nil expires_at and
 # the same lifetime they always had.
 class AddExpiresAtToTakeawayOrders < ActiveRecord::Migration[8.2]

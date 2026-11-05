@@ -7,7 +7,7 @@ require_relative "../../MASTER/tools/scss"
 
 # brgen is one site. Its verticals are mountable engines, and each one's styles
 # are a body.vertical-<name> scope in brgen's stylesheet, which is exactly the
-# seam a typeface escapes through — nothing stopped a vertical declaring its own.
+# seam a typeface escapes through - nothing stopped a vertical declaring its own.
 #
 # Measured 2026-08-10, the font changed as you moved between subapps: Inter on
 # dating and maps, "SF Pro Display" on playlist (a face that appeared in one line
@@ -22,8 +22,8 @@ require_relative "../../MASTER/tools/scss"
 # Two structural causes worth stating, because both are invisible in review:
 #
 #   A palette mixin carried the typeface. dark-tokens set --font alongside the
-#   colours, so body.vertical-maps — which pins dark so the basemap and the
-#   shared widgets agree — reset the face as a side effect of setting colours.
+#   colours, so body.vertical-maps - which pins dark so the basemap and the
+#   shared widgets agree - reset the face as a side effect of setting colours.
 #
 #   An @include emits at the point of inclusion, so brgen-old-dark-tokens'
 #   `--font: Arial` outranked anything :root said before it. The app's own
@@ -62,7 +62,7 @@ class VerticalConsistencyTest < Minitest::Test
     engines = EngineRoots::ASSET_PATHS.keys
 
     refute_empty brgen_stylesheets
-    refute_empty engines, "brgen has no engines — this test is measuring nothing"
+    refute_empty engines, "brgen has no engines - this test is measuring nothing"
     engines.each do |engine|
       assert brgen_rules.any? { |_, rule| rule.full_selectors.any? { |selector| selector.include?("body.vertical-#{engine}") } },
              "no brgen rule styles body.vertical-#{engine}, so the #{engine} vertical is outside every check here"
@@ -75,7 +75,7 @@ class VerticalConsistencyTest < Minitest::Test
       next unless rule.declares?(/(?<![\w-])--font\s*:/)
       next if rule.selector.start_with?(":root")
 
-      "#{rel}:#{rule.line} — #{rule.selector}"
+      "#{rel}:#{rule.line} - #{rule.selector}"
     end
 
     assert_empty offenders, <<~MSG.strip
@@ -103,7 +103,7 @@ class VerticalConsistencyTest < Minitest::Test
         next if line.match?(allowed)
         next if faces.any? { |face| face.cover?(index + 1) }
 
-        "#{rel}:#{index + 1} — #{line.strip}"
+        "#{rel}:#{index + 1} - #{line.strip}"
       end
     end
 
@@ -128,7 +128,7 @@ class VerticalConsistencyTest < Minitest::Test
     offenders = brgen_stylesheets.flat_map do |path|
       rel = path.delete_prefix("#{ROOT}/")
       source_without_comments(path).lines.each_with_index.filter_map do |line, index|
-        "#{rel}:#{index + 1} — #{line.strip}" if line.match?(FORKED_SCALES)
+        "#{rel}:#{index + 1} - #{line.strip}" if line.match?(FORKED_SCALES)
       end
     end
 
@@ -179,14 +179,14 @@ class VerticalConsistencyTest < Minitest::Test
   # and live outside brgen/app. A check scanning brgen/app/views saw none of the
   # 71 vertical pages, and the sub-apps drifted behind a green check. The answer
   # was six engine directories written out by hand, which is correct until the
-  # seventh engine — the same blind spot, deferred. UserFlowCheck reads them off
+  # seventh engine - the same blind spot, deferred. UserFlowCheck reads them off
   # disk now, and this holds that every engine that exists is covered.
   def test_the_view_contract_covers_every_engine
     require_relative "../../MASTER/checks/lib/live/user_flow"
     on_disk = Dir.glob(File.join(ROOT, "#{EngineRoots::GLOB}/app/views"))
                  .map { |path| path.sub("#{ROOT}/", "") }
 
-    refute_empty on_disk, "brgen has no engine views — this test is measuring nothing"
+    refute_empty on_disk, "brgen has no engine views - this test is measuring nothing"
     assert_empty on_disk - Deploy::UserFlowCheck::VIEW_PATHS,
                  "an engine's views are outside the check's paths, which is how 71 pages went unscanned"
     assert_includes Deploy::UserFlowCheck::VIEW_PATHS, "amber/app/views"

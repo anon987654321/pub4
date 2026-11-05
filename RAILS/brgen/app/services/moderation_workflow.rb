@@ -66,7 +66,7 @@ class ModerationWorkflow
   # report.reportable is a lazy polymorphic read, and ApplicationRecord is
   # strict_loading by default. report! creates the report with its subject in
   # memory so that path was fine; transition! takes a report a controller
-  # loaded by id, which has nothing preloaded — so resolving a report raised
+  # loaded by id, which has nothing preloaded - so resolving a report raised
   # after update! had already written the new status. Admin::Reports#update
   # has been on that path the whole time.
   #
@@ -120,7 +120,7 @@ class ModerationWorkflow
 
   # Resolving a report takes the content down. update_columns (not update!) so a
   # legacy record with a since-tightened validation can't block the takedown, and
-  # it bumps updated_at too so the [post,…] fragment cache re-renders without it.
+  # it bumps updated_at too so the [post,...] fragment cache re-renders without it.
   def remove_content(report)
     content = subject_for(report)
     return unless content.respond_to?(:removed_at) && content.removed_at.nil?
@@ -142,8 +142,8 @@ class ModerationWorkflow
       signal.weight = TrustScore::SIGNAL_WEIGHTS.fetch("spam_report")
       # subject, not report.reportable: this metadata line was the one lazy
       # polymorphic read left behind by the strict_loading fix above, so
-      # resolving a bare-loaded report raised HERE — after update! had
-      # already written the status — the first time the new service test
+      # resolving a bare-loaded report raised HERE - after update! had
+      # already written the status - the first time the new service test
       # called the real path.
       signal.metadata = { reason: report.reason, reportable: subject&.to_global_id.to_s }.to_json
     end

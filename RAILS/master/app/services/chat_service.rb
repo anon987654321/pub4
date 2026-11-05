@@ -15,7 +15,7 @@ class ChatService
   BUS_THOUGHT_RE = /:(?:done|error|warn|crit|resolved|confidence|detected)\b/.freeze
 
   # The face's SSE contract, in face.part5.txt's onMessage: a chunk beginning
-  # with this prefix takes the error branch — written to the transcript, veto
+  # with this prefix takes the error branch - written to the transcript, veto
   # tint, shake, and a short spoken "Sorry, I hit a snag." Anything without it
   # is ordinary reply content, which is appended to `pending` and synthesised.
   #
@@ -29,7 +29,7 @@ class ChatService
   # closed under it, and ActionController::Live::ClientDisconnected is an
   # IOError subclass. The writer cancels the turn's CancellationToken first, so
   # the fold stops at its next boundary, and the raise unwinds the provider
-  # call the on_chunk block is running inside — RubyLLM's chunk callback runs
+  # call the on_chunk block is running inside - RubyLLM's chunk callback runs
   # on Faraday's streaming read, so the exception stops the read and closes the
   # provider connection at that chunk boundary.
   class ClientGone < IOError; end
@@ -296,7 +296,7 @@ conversation: nil)
     tokens = t.split(/\s+/).reject(&:empty?)
     return false if tokens.size < 8
 
-    short = tokens.count { |tok| tok.length <= 28 && tok !~ /[.!?…]/ }
+    short = tokens.count { |tok| tok.length <= 28 && tok !~ /[.!?\u2026]/ }
     times = tokens.count { |tok| tok.match?(/^\d{1,2}:\d{2}$/) }
     paths = tokens.count { |tok| tok.match?(%r{[./\\]}) }
     nums = tokens.count { |tok| tok.match?(/^\d+$/) }
@@ -452,7 +452,7 @@ conversation: nil)
     summary = event[:summary].to_s.strip
     write_json_event("compaction", { summary: summary[0, 2_000], token_est: event[:token_est] })
     bullets = summary.lines.map(&:strip).reject(&:empty?).first(8).join("; ")
-    write_json_event("dmesg", "compact0 at master0: context compacted — #{bullets}")
+    write_json_event("dmesg", "compact0 at master0: context compacted - #{bullets}")
   end
 
   def verdict_for(event)
@@ -517,7 +517,7 @@ conversation: nil)
     raise ClientGone, "chat stream closed"
   end
 
-  # Only reachable through the "**" catch-all below, gated by BUS_THOUGHT_RE —
+  # Only reachable through the "**" catch-all below, gated by BUS_THOUGHT_RE -
   # every other event name either fails that regex, is in BUS_DMESG_SKIP, or
   # already has its own direct subscribe() above that renders it a different
   # way (tool:before -> "tool", llm:request -> "model", tribunal:rendered ->

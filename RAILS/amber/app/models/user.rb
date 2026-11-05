@@ -104,7 +104,7 @@ class User < ApplicationRecord
   #
   # User is strict_loading, so materialising the association raised
   # StrictLoadingViolationError for every signed-in visitor and PostsController#feed
-  # was a 500 nobody had seen — the surface had no test until the shared affiliate
+  # was a 500 nobody had seen - the surface had no test until the shared affiliate
   # band was placed on it. `following?` and `messageable_users` above already query
   # their join tables directly for the same reason; this is the one that did not.
   #

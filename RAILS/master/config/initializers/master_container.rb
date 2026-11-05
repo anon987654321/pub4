@@ -42,7 +42,7 @@ module MasterContainerLoader
   # constants resolve by autoload on first reference. Zeitwerk autoloading is
   # not thread-safe, and the web tier arranges the one collision that matters:
   # ApplicationController names Master::Ground::Tool::Profile in its class body,
-  # which Rails evaluates on the first request — inside the window where the
+  # which Rails evaluates on the first request - inside the window where the
   # bootstrap thread is autoloading Master constants of its own. The collision
   # surfaces as `uninitialized constant Master::Ground::Tool::Profile`, and it
   # takes out any request that lands in the window, including a warming probe.

@@ -9,6 +9,6 @@ class ApplicationRecord < ActiveRecord::Base
   # associations (order_items, review, Session#user), and this checkout cannot
   # run `rails test` here to prove each site preloads first. Flip
   # strict_loading_by_default = true in the same commit that adds those
-  # includes — enabling it alone would 500 the lazy sites it is meant to guard.
+  # includes - enabling it alone would 500 the lazy sites it is meant to guard.
   # self.strict_loading_by_default = true
 end

@@ -11,12 +11,12 @@ require_relative "../../../MASTER/checks/lib/rendered/mobile_flow"
 #
 # One file because the four share one shape and one harness. Each needs Chrome
 # and a listening app, so on this machine each one's own `.run` returns after the
-# precondition check — which is why a test that calls `.run` against the real tree
+# precondition check - which is why a test that calls `.run` against the real tree
 # and asserts "passes" proves nothing: it passes equally against `return ok`.
 #
 # So each check is asked three questions. Given a measurement carrying a defect,
 # does it name the defect? Given a clean one, does it pass? And given no browser
-# or no listening app, does it say it measured nothing — rather than reporting the
+# or no listening app, does it say it measured nothing - rather than reporting the
 # green that this whole family of checks exists to prevent?
 #
 # The third question has teeth beyond the precondition check. occlusion, reflow
@@ -68,7 +68,7 @@ class BrowserFlowChecksTest < Minitest::Test
     ) { check.public_send(method) }
   end
 
-  # occlusion — does a press at this control's centre reach this control?
+  # occlusion - does a press at this control's centre reach this control?
 
   OCCLUDED = [{ "control" => "a.nav_link", "label" => "Hjem", "covered_by" => "div.theme_toggle",
                 "at" => [100, 200], "size" => [40, 40] }].freeze
@@ -99,7 +99,7 @@ class BrowserFlowChecksTest < Minitest::Test
     assert_inconclusive result, %r{reached 0/1 surface}
   end
 
-  # reflow — the width sweep. run_once, because `run` wraps the measurement in
+  # reflow - the width sweep. run_once, because `run` wraps the measurement in
   # CheckAutofix's remeasure loop, which writes to the stylesheets.
 
   def reflow_sample(scroll_width:, offenders: [])
@@ -144,14 +144,15 @@ class BrowserFlowChecksTest < Minitest::Test
   def test_reflow_names_reading_type_that_shrinks_as_the_viewport_widens
     found = reading_type_findings(reflow_type_run([18.0, 27.0], [16.0, 24.0]))
 
-    assert_match(/p\.lede gets smaller as the viewport widens — 18\.0px at 320 → 16\.0px at 390/, found.join)
+    assert_match(/p\.lede gets smaller as the viewport widens - 18\.0px at 320 -> 16\.0px at 390/, found.join)
   end
 
   # Fluid type under a px line height: each step is a fraction of a pixel, so only the narrowest width shows it.
   def test_reflow_names_a_fixed_line_height_under_fluid_type
     found = reading_type_findings(reflow_type_run([16.0, 24.0], [16.4, 24.0], [17.2, 24.0], [18.0, 24.0]))
 
-    assert_match(/fixed line height while its size changes — 16\.0px at 320 → 17\.2px at 768 under 24\.0px/, found.join)
+    expected = /fixed line height while its size changes - 16\.0px at 320 -> 17\.2px at 768 under 24\.0px/
+    assert_match(expected, found.join)
   end
 
   def test_reflow_passes_type_that_grows_with_its_leading
@@ -183,7 +184,7 @@ class BrowserFlowChecksTest < Minitest::Test
     assert_inconclusive result, %r{0/1 surface}
   end
 
-  # keyboard_flow — the tab order, walked by pressing Tab.
+  # keyboard_flow - the tab order, walked by pressing Tab.
 
   def stop(sel:, order:, href: nil, ring: true, onscreen: true)
     { "sel" => sel, "tag" => sel.split(/[.#]/).first, "href" => href, "text" => sel,
@@ -244,7 +245,7 @@ class BrowserFlowChecksTest < Minitest::Test
 
   # An autofocus field that will not give focus back makes the walk start
   # mid-document, which reads as a misplaced skip link. The check declines to
-  # measure — and when that is every surface, it has walked nothing.
+  # measure - and when that is every surface, it has walked nothing.
   def test_keyboard_flow_that_never_released_focus_is_inconclusive_not_green
     result = live_run(Deploy::KeyboardFlowCheck, surfaces: [surface(viewport: "desktop")]) do |js, _|
       js.include?("document.body.setAttribute") ? false : nil
@@ -253,7 +254,7 @@ class BrowserFlowChecksTest < Minitest::Test
     assert_inconclusive result, /would not release focus/
   end
 
-  # The walk itself — Chrome answers a refused connection with a page of its own.
+  # The walk itself - Chrome answers a refused connection with a page of its own.
 
   def test_a_chrome_error_page_is_not_a_measurement
     cdp = FakeCdp.new { |js, _| js.include?("chrome-error:") }
@@ -263,7 +264,7 @@ class BrowserFlowChecksTest < Minitest::Test
     refute PROBE.ok?(payload), "a page nothing answered must not read as measured"
   end
 
-  # keyboard_flow states — pressed, disabled and busy, each read off the page.
+  # keyboard_flow states - pressed, disabled and busy, each read off the page.
 
   STATE_ROW = { "sel" => "button.send", "rest" => "rest", "active" => "pressed",
                 "disabled" => "greyed", "busy" => "working" }.freeze
@@ -306,7 +307,7 @@ class BrowserFlowChecksTest < Minitest::Test
     assert_equal [[%([data-check-state="0"]), ["active"]], [%([data-check-state="0"]), []]], fake.forced
   end
 
-  # mobile_flow — the phone journey floor at 390x844.
+  # mobile_flow - the phone journey floor at 390x844.
 
   def mobile_measure(has_main: true, has_skip: true, overflow: false, chrome: [])
     { "has_main" => has_main, "has_skip" => has_skip, "has_tab_bar" => true, "overflow" => overflow,
@@ -330,7 +331,7 @@ class BrowserFlowChecksTest < Minitest::Test
     tiny = [{ "label" => "Logg inn", "w" => 40, "h" => 28, "min" => 28, "top" => 10, "bottom" => 38 }]
     result = mobile_run(mobile_measure(chrome: tiny))
 
-    assert_names_defect(result, /touch target "Logg inn" is 40×28 \(min 44px\)/)
+    assert_names_defect(result, /touch target "Logg inn" is 40x28 \(min 44px\)/)
   end
 
   def test_mobile_flow_passes_a_phone_surface_that_meets_the_floor

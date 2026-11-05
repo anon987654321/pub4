@@ -28,7 +28,7 @@
   <% if authenticated? %>
     <div class="cluster">
       <% if @set.likes.exists?(user: Current.user) %>
-        <%# destructive: no-confirm-ok — reversible — the button becomes Like again in place %>
+        <%# destructive: no-confirm-ok - reversible - the button becomes Like again in place %>
         <%= button_to t("actions.unlike"), set_like_path(@set), method: :delete,
               class: "button button-ghost button-small" %>
       <% else %>
@@ -69,13 +69,13 @@
       data-action="pointerdown->swipe#pointerDown pointermove->swipe#pointerMove pointerup->swipe#pointerUp pointercancel->swipe#pointerUp touchstart->swipe#pointerDown touchmove->swipe#pointerMove touchend->swipe#pointerUp"
       class="track-row"
     >
-      <div> <%# scan: intentional — an anonymous text block; the flex row is the layout and a name here would have no reader %>
+      <div> <%# scan: intentional - an anonymous text block; the flex row is the layout and a name here would have no reader %>
         <%= tag.strong set_track.track.title %>
-        <% if set_track.track.artist.present? %> — <%= set_track.track.artist %><% end %>
-         · <%= set_track.track.duration_formatted %>
+        <% if set_track.track.artist.present? %> - <%= set_track.track.artist %><% end %>
+         - <%= set_track.track.duration_formatted %>
       </div>
       <% if authenticated? && (Current.user == set_track.user || Current.user == @set.user || @set.collaborations.exists?(user: Current.user, role: %w[owner editor])) %>
-        <%# destructive: no-confirm-ok — reversible — this takes the track out of the set; the track and its audio stay %>
+        <%# destructive: no-confirm-ok - reversible - this takes the track out of the set; the track and its audio stay %>
         <%= button_to t("actions.remove"), set_track_path(@set, set_track), method: :delete, class: "button button-ghost button-small" %>
       <% end %>
     </article>

@@ -118,7 +118,7 @@
             <%# data-controller here rather than on the list: one controller per
                 anchor is what carries that anchor's merchant to the beacon. The
                 href stays the merchant URL so the Link Converter script can still
-                rewrite it — see outbound_click_controller.js. %>
+                rewrite it - see outbound_click_controller.js. %>
             <%= link_to link.merchant, link.url, rel: "sponsored noopener", target: "_blank",
                   data: { controller: "outbound-click", action: "click->outbound-click#record",
                           outbound_click_merchant_value: link.merchant,

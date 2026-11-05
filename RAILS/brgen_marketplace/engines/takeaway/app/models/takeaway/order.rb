@@ -16,7 +16,7 @@ class Takeaway::Order < ApplicationRecord
   belongs_to :restaurant, class_name: "Takeaway::Restaurant"
   # delivery_driver_id and its composite [delivery_driver_id, status] index have
   # been on this table since it was created, and Takeaway::DeliveryDriver has
-  # had the matching has_many :orders — but there was no belongs_to here and
+  # had the matching has_many :orders - but there was no belongs_to here and
   # nothing ever wrote the column, so every order went out for delivery with no
   # courier attached. See Delivery#dispatch_driver_id.
   belongs_to :delivery_driver, class_name: "Takeaway::DeliveryDriver", optional: true
@@ -36,7 +36,7 @@ class Takeaway::Order < ApplicationRecord
   CENTS_PER_KRONE = 100.0
 
   # How long an unaccepted cart stays open. The kitchen has not confirmed it,
-  # so the only thing expiring is the reader's own intent — long enough to
+  # so the only thing expiring is the reader's own intent - long enough to
   # finish deciding, short enough that "pending" keeps meaning something.
   CART_TTL_MINUTES = 45
 
@@ -74,7 +74,7 @@ class Takeaway::Order < ApplicationRecord
     items = order_items.target
     sub = items.sum { |oi| oi.unit_price_cents.to_i * oi.quantity.to_i }
     # The comment above covers order_items, but the delivery fee was still a lazy
-    # belongs_to read — so this raised on any order loaded from the database
+    # belongs_to read - so this raised on any order loaded from the database
     # rather than built in memory.
     fee = strict_safe_attribute(:restaurant, :delivery_fee_cents).to_i
     # The tip is part of what is charged, so it belongs in the total rather than
@@ -83,7 +83,7 @@ class Takeaway::Order < ApplicationRecord
   end
 
   # A new pending order with the same address and whatever is still on the
-  # menu. Tip and scheduled_for stay off — those are per-ticket decisions.
+  # menu. Tip and scheduled_for stay off - those are per-ticket decisions.
   def build_reorder
     kitchen = strict_safe(:restaurant)
     copy = kitchen.orders.build(
@@ -150,7 +150,7 @@ class Takeaway::Order < ApplicationRecord
 
   # A kitchen that states a delivery radius has said where it will carry food.
   # The only coordinate known at create time is the position the reader's
-  # browser stored via locations#update — the typed address is free text with
+  # browser stored via locations#update - the typed address is free text with
   # no geocoder, so validating the string would be theatre. Any missing fact
   # (no radius stated, no kitchen pin, no reader position) skips the check:
   # an unset fact is not a false one, and refusing orders over a number

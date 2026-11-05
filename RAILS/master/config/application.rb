@@ -61,7 +61,7 @@ module Web
     # nb is the default because ai.brgen.no is the only host relayd forwards
     # here, and it is the same Norwegian audience brgen, amber and bsdports all
     # default to nb for. ApplicationController#set_locale hands English back to a
-    # browser that asks for it — the face answers whoever reaches it, and a
+    # browser that asks for it - the face answers whoever reaches it, and a
     # Norwegian frame around an English conversation is worse than either.
     #
     # The fallback is what makes nb safe to switch on: a key nb has not got yet

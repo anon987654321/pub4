@@ -16,8 +16,8 @@
             aria: { describedby: "listing_price_help" } %>
       <%= tag.p t("marketplace.price_help"), class: "form-help", id: "listing_price_help" %>
     </div>
-    <div class="field"><%= f.label :condition, t("marketplace.condition") %><%= f.select :condition, Marketplace::Listing::CONDITIONS.map { |value| [t("marketplace.conditions.#{value}"), value] }, include_blank: "—" %></div>
-    <div class="field"><%= f.label :category_id, t("marketplace.category") %><%= f.collection_select :category_id, @categories, :id, :name, { include_blank: "—" } %></div>
+    <div class="field"><%= f.label :condition, t("marketplace.condition") %><%= f.select :condition, Marketplace::Listing::CONDITIONS.map { |value| [t("marketplace.conditions.#{value}"), value] }, include_blank: "-" %></div>
+    <div class="field"><%= f.label :category_id, t("marketplace.category") %><%= f.collection_select :category_id, @categories, :id, :name, { include_blank: "-" } %></div>
     <div class="field"><span class="field-label"><%= t("marketplace.source") %></span>
       <div class="listing-source-choice">
         <label class="listing-source-option"><%= f.radio_button :source, "person", checked: @listing.store_id.blank? %><span><%= t("marketplace.from_a_person") %></span></label>

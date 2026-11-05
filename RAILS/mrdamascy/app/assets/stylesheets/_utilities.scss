@@ -1,4 +1,4 @@
-// Facts side by side — each fact in its own element, spacing separates them
+// Facts side by side - each fact in its own element, spacing separates them
 // (no glyph strings between words). Used by reorder, cart option lists,
 // order lines and run meta.
 .fact-list {
@@ -11,7 +11,7 @@
   list-style: none;
 }
 
-// Delivery-mode icon rides body text — align to the text's visual middle.
+// Delivery-mode icon rides body text - align to the text's visual middle.
 .mode-icon {
   display: inline-flex;
   vertical-align: -2px;

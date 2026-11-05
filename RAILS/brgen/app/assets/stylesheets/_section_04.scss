@@ -13,7 +13,7 @@
 
 :root {
   // BRGEN_OLD dark was a dark-inverted port of the real 2014 desktop.css.
-  // Operator, 2026-10-28: brgen mirrors X.com — the same true-black ground the
+  // Operator, 2026-10-28: brgen mirrors X.com - the same true-black ground the
   // 2014 port already had, now with X's slate-blue greys and its one blue.
   // Every value here is re-tuned to clear the tree's own floors, which X's raw
   // palette does not: X's #71767b secondary is 4.56:1 and its #2f3336 border
@@ -31,7 +31,7 @@
   --search-bg: #202327;
   // The accent is X's one blue (#1d9bf0) with the family's black ink on it
   // (7.02:1; X's own white would be 3.16:1). Both flow from the dialect
-  // mixin's parameter now — brgen-old-dark-tokens — so the accent map stays
+  // mixin's parameter now - brgen-old-dark-tokens - so the accent map stays
   // the only thing that declares --accent on this tree, which is what the
   // vertical_accent_single_map law checks.
   // brgen is Swiss sans only (operator 2026-10-11): Helvetica Neue Pro, then
@@ -91,7 +91,7 @@
     );
   /* The active rule's colour and weight, declared here because they are this
      bar's own and nothing else in the app draws them. Operator 2026-10-28:
-     the rule follows the X.com mirror — #1d9bf0, the one blue, in both
+     the rule follows the X.com mirror - #1d9bf0, the one blue, in both
      themes. On black it is 7.02:1 and on white 3.0:1, the floor a 3px band
      needs (the light rule steps to X's hover blue #1a8cd8, 3.64:1, so the
      boundary does not sit exactly on the floor).
@@ -103,7 +103,7 @@
   --nav-rule-w: 3px;
   --nav-badge-fill: #1d9bf0;
   --nav-badge-ink: #000000;
-  /* --logo-detail: the animated mark's micro-stroke — logo art, not text. */
+  /* --logo-detail: the animated mark's micro-stroke - logo art, not text. */
   --logo-detail: 3px;
   --font-emoji: "Twemoji Mozilla", "Apple Color Emoji", "Segoe UI Emoji", sans-serif;
   /* Hue-carrying ink: the live signal and every nick keep their hue and take one
@@ -111,7 +111,7 @@
      7.0 on both grounds. 38% is 7.49:1 on #efefef at the worst hue, 78% is 9.89:1
      on #000000. */
   --hue-ink-lightness: 78%;
-  /* UI_REFINEMENTS pass — tokens, a11y floor, nav, vertical accents.
+  /* UI_REFINEMENTS pass - tokens, a11y floor, nav, vertical accents.
      Flat borders only (no box-shadow). Honors prefers-reduced-motion. */
 
   /* color-success/warning/info, ease-out/spring and transition-fast/normal come

@@ -31,13 +31,13 @@ test("every key the registry merges exists in topologies.yml", () => {
 // The bug, stated as a test: reading remote.TOPOLOGIES directly is what failed.
 test("the registry does not read remote keys in the JS constant case", () => {
 // Code only. The first draft matched the names inside the comment that
-// explains why the names are wrong — the check reading its own
+// explains why the names are wrong - the check reading its own
 // documentation, which is the same fault three separate checks in this repo
 // shipped today.
 const code = source.split("\n").filter((line) => !line.trim().startsWith("//")).join("\n");
 const direct = [...code.matchAll(/remote\.([A-Z_]{4,})/g)].map((m) => m[1]);
   assert.deepEqual(direct, [],
-                   `remote.${direct[0]} is undefined — the payload is lower_snake_case`);
+                   `remote.${direct[0]} is undefined - the payload is lower_snake_case`);
 });
 
 // remoteKey must accept either, because a future endpoint that upcases its keys

@@ -8,10 +8,10 @@ class Conversation
 
     # `bots` names the personas (see ChannelBot::PERSONAS) that hang out there.
     CHANNELS = {
-      "brgen" => { name: "#brgen",       vertical: nil,           blurb: "The city-wide lobby — anything goes.",              bots: %w[master echo] },
+      "brgen" => { name: "#brgen",       vertical: nil,           blurb: "The city-wide lobby - anything goes.",              bots: %w[master echo] },
       "marketplace" => { name: "#marketplace", vertical: "marketplace", blurb: "Buying, selling, haggling, and finds.",              bots: %w[curator echo] },
       "dating" => { name: "#dating",      vertical: "dating",      blurb: "Flirt, vent, and swap first-date ideas.",           bots: %w[cupid echo] },
-      "playlist" => { name: "#playlist",    vertical: "playlist",    blurb: "Now playing — share tracks and listening parties.", bots: %w[dj echo] },
+      "playlist" => { name: "#playlist",    vertical: "playlist",    blurb: "Now playing - share tracks and listening parties.", bots: %w[dj echo] },
       "tv" => { name: "#tv",          vertical: "tv",          blurb: "Live threads for shows and streams.",               bots: %w[critic echo] },
       "takeaway" => { name: "#takeaway",    vertical: "takeaway",    blurb: "What's good to order right now?",                   bots: %w[foodie echo] },
       "maps" => { name: "#maps",        vertical: "maps",        blurb: "Local spots, tips, and directions.",                bots: %w[scout echo] },
@@ -23,7 +23,7 @@ class Conversation
     CHANNEL_TTL = ENV.fetch("BRGEN_CHANNEL_TTL_SECONDS", (6 * 3600).to_s).to_i
 
     # A cheap "is this room alive right now" signal: distinct voices (people +
-    # bots) that spoke in the last 20 minutes. Not real-time presence — it
+    # bots) that spoke in the last 20 minutes. Not real-time presence - it
     # refreshes on load, but it's enough to steer people toward a live room.
     ACTIVE_WINDOW_SECONDS = 20 * 60
 
@@ -46,7 +46,7 @@ class Conversation
       # `includes(:city)` is load-bearing, not a query tweak: ApplicationRecord sets
       # strict_loading_by_default, and channel_title reads `city`. A tenant-less
       # room has city_id = nil, where belongs_to answers nil without ever touching
-      # the association — so the whole city-scoped path (i.e. production) raised
+      # the association - so the whole city-scoped path (i.e. production) raised
       # StrictLoadingViolationError on every room open while the tenant-less tests
       # stayed green. Preload it here, and hand `create!` the record rather than the
       # id so a freshly seeded room comes back with the target already in memory.
@@ -94,7 +94,7 @@ class Conversation
           channel
         end
       rescue ActiveRecord::RecordNotUnique
-        # Two visitors opened the same fresh city channel at once — (slug, city) is
+        # Two visitors opened the same fresh city channel at once - (slug, city) is
         # unique, so the loser adopts the winner's row.
         includes(:city).find_by!(slug: slug, city_id: city&.id)
       end
@@ -102,7 +102,7 @@ class Conversation
       # Message and active-speaker counts for a set of rooms, in one query each.
       #
       # channels#index rendered seven rooms and asked each one for recent_active_count
-      # and then messages.size — two COUNTs per room, fourteen queries to draw a list
+      # and then messages.size - two COUNTs per room, fourteen queries to draw a list
       # of seven links. Same shape as unread_counts_for, and the same fix.
       def message_counts_for(conversations)
         Message.where(conversation_id: conversations).group(:conversation_id).count
@@ -117,8 +117,8 @@ class Conversation
       end
     end
 
-    # "#takeaway · Bergen" once a room is city-scoped; plain "#takeaway" otherwise.
-    def channel_title = city ? "#{name} · #{city.name}" : name
+    # "#takeaway - Bergen" once a room is city-scoped; plain "#takeaway" otherwise.
+    def channel_title = city ? "#{name} - #{city.name}" : name
 
     def channel? = slug.present?
 

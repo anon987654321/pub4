@@ -1,17 +1,17 @@
-// Design tokens — aligned with MASTER/data/tokens.yml (pixel_perfection,
+// Design tokens - aligned with MASTER/data/tokens.yml (pixel_perfection,
 // type_tokens, ui_polish, contrast law) in the mrdamascy brand dialect:
 // white paper, mint pastels, gold accent, Damascus 8-point star motif.
 // Declared once here so no stylesheet carries a raw literal.
 :root {
-  // Surfaces — space_not_lines: cards separate by surface + gap, not borders.
+  // Surfaces - space_not_lines: cards separate by surface + gap, not borders.
   --paper: #ffffff;             // the phone column
   --brand-charcoal: #434244;    // exact ground of the restaurant-owned wordmark
   --surface-elevated: #f3fbf7;  // cards, chips, inputs on paper
   --bg-page: #e4f6ee;           // behind the column (mint-100)
 
   // Mint scale. mint-700 is the action/text tone: white on it 6.3:1, on
-  // mint-100 5.6:1 (contrast law ≥ 4.5 for text). mint-600 is a boundary/UI
-  // tone only (3.4:1) — borders, focus accents, never small text.
+  // mint-100 5.6:1 (contrast law >= 4.5 for text). mint-600 is a boundary/UI
+  // tone only (3.4:1) - borders, focus accents, never small text.
   --mint-100: #e4f6ee;
   --mint-200: #c9eddd;
   --mint-300: #a6e1cb;
@@ -25,7 +25,7 @@
   --ink-soft: #6c7076;   // 4.98:1 on white
   --line: #e6eae8;       // hairlines inside forms and chrome only
 
-  // Gold — logo-derived. Text on white uses --gold-ink, never raw gold
+  // Gold - logo-derived. Text on white uses --gold-ink, never raw gold
   // (raw gold on white is 1.6:1). Ink on --gold 8.4:1, on --gold-deep 6.3:1.
   --gold: #fdc72e;
   --gold-deep: #e8a81c;  // surfaces and icons only
@@ -34,19 +34,19 @@
   --gold-ink: #8a6a00;       // 5.07:1 on white
   --gold-ink-deep: #8a5f00;  // 4.81:1 on gold-150
 
-  // Pomegranate + danger — the one non-grey semantic.
+  // Pomegranate + danger - the one non-grey semantic.
   --pom: #c94f4f;
   --pom-100: #fbe4e4;
   --danger: #b04141;     // 5.9:1 on white, 4.7:1 on pom-100
 
-  // Vipps — brand orange for wordmarks and the mock; the button surface is
+  // Vipps - brand orange for wordmarks and the mock; the button surface is
   // darkened so white label text passes 4.5:1 (white on #ff5b24 is 3.1:1).
   --vipps: #ff5b24;
   --vipps-button: #cc4409;
   --vipps-button-hover: #b83c08;
   --vipps-ink: #c73a00;  // 5.2:1 on white
 
-  // Stripe — brand blurple for wordmarks and the mock; the button surface is
+  // Stripe - brand blurple for wordmarks and the mock; the button surface is
   // darkened so white label text passes 4.5:1 (white on #635bff is 4.0:1).
   --stripe: #635bff;
   --stripe-button: #4f45e4;
@@ -54,32 +54,32 @@
   --stripe-ink: #4f45e4;  // 5.6:1 on white
   --on-dark-dim: rgba(255, 255, 255, 0.2);
 
-  // Radii — pixel_perfection: nothing above 16px except the pill.
+  // Radii - pixel_perfection: nothing above 16px except the pill.
   --radius: 16px;        // cards (MASTER radius_card)
   --radius-small: 12px;     // controls (MASTER radius_medium)
   --radius-extra-small: 8px;      // badges
   --radius-pill: 9999px; // MASTER radius_pill
 
-  // Type — MASTER shared_chrome scale: six sizes, three weights (400/600/700).
-  --text-extra-small: 0.75rem;        // 12px — badges, tab labels
+  // Type - MASTER shared_chrome scale: six sizes, three weights (400/600/700).
+  --text-extra-small: 0.75rem;        // 12px - badges, tab labels
   --tap-min: 44px;           // tap floor (WCAG 2.5.5), shared with MASTER tap_min
-  --text-meta: 0.8125rem;    // 13px — meta, captions (MASTER font_size_meta)
-  --text-body: 1rem;         // 16px — body, buttons, inputs
-  --text-title: 1.25rem;     // 20px — page/section titles (MASTER type_tokens)
-  --text-display: clamp(40px, 6vw, 88px); // 40–88px — hero/display (MASTER font_size_display)
-  --text-display-extra-large: clamp(2.75rem, 11.5vw, 3.5rem); // star mark — CLAMP_TYPOGRAPHY
+  --text-meta: 0.8125rem;    // 13px - meta, captions (MASTER font_size_meta)
+  --text-body: 1rem;         // 16px - body, buttons, inputs
+  --text-title: 1.25rem;     // 20px - page/section titles (MASTER type_tokens)
+  --text-display: clamp(40px, 6vw, 88px); // 40-88px - hero/display (MASTER font_size_display)
+  --text-display-extra-large: clamp(2.75rem, 11.5vw, 3.5rem); // star mark - CLAMP_TYPOGRAPHY
 
   --font: "Helvetica Neue Pro", "Helvetica Neue", Arial, sans-serif;
 
-  // Focus — MASTER shared_chrome.focus_ring.
+  // Focus - MASTER shared_chrome.focus_ring.
   --focus-ring: 2px solid var(--mint-700);
 
-  // Motion — MASTER shared_chrome transitions.
+  // Motion - MASTER shared_chrome transitions.
   --transition-fast: 180ms;
   --transition-normal: 300ms;
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
 
-  // Spacing — the scale every padding, margin, gap and offset takes, named
+  // Spacing - the scale every padding, margin, gap and offset takes, named
   // by its size in px. 2 and 3 are optical nudges (badge and heat-dot
   // insets); the hairline is the 1px rules sit on.
   --space-2: 2px;
@@ -113,8 +113,8 @@
   --bottom-clearance: calc(var(--tab-bar-height) + env(safe-area-inset-bottom, 0px));
 }
 
-// Damascus 8-point star motif — two interleaved squares as a faint mint tile.
-// Subtle by design (~6% visible): the surfaces that greet — heroes, the item
+// Damascus 8-point star motif - two interleaved squares as a faint mint tile.
+// Subtle by design (~6% visible): the surfaces that greet - heroes, the item
 // sheet head, the loyalty card, the staff board header.
 .hero,
 .sheet-head,
@@ -125,7 +125,7 @@
   background-size: 84px 84px;
 }
 
-// Solid 8-point star (khatam) — timeline milestones, loyalty stamps, empties.
+// Solid 8-point star (khatam) - timeline milestones, loyalty stamps, empties.
 .step-star,
 .loyalty-star,
 .empty-star {

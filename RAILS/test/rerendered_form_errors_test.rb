@@ -8,7 +8,7 @@ require_relative "engine_roots"
 # the red border `.field_with_errors` draws, which says which field and not why.
 #
 # Measured 2026-09-13: 36 such re-renders, 6 without a message. amber's signup
-# was the worst of them — the controller saved into a local, so the view built
+# was the worst of them - the controller saved into a local, so the view built
 # a fresh User.new and a taken email came back as an empty form.
 #
 # A view passes when it, or a partial it renders by name, reads `.errors` or
@@ -54,7 +54,7 @@ class RerenderedFormErrorsTest < Minitest::Test
       end
     end
 
-    assert_operator checked, :>=, 30, "found almost no re-rendered forms — the scan is broken, not the tree"
+    assert_operator checked, :>=, 30, "found almost no re-rendered forms - the scan is broken, not the tree"
     assert_empty silent, "A form re-rendered on a failed save with no error message:\n#{silent.join("\n")}"
   end
 end

@@ -21,7 +21,7 @@
      data-synced-at="<%= (party.updated_at || Time.current).to_f %>"
      data-playing="<%= playing %>">
   <% if track %>
-    <p><%= t("playlist.now_playing") %> <%= tag.strong track.title %> — <%= track.artist %></p>
+    <p><%= t("playlist.now_playing") %> <%= tag.strong track.title %> - <%= track.artist %></p>
     <p><%= t("playlist.synced_position") %> <%= party.position_seconds %>s</p>
     <% unless src %>
       <%= tag.p t("playlist.party_no_audio") %>

@@ -1,17 +1,17 @@
 // Counts clicks on links that leave the site.
 //
 // Nothing in this fleet counted one, so every estimate of what partner marketing
-// earns was arithmetic over an unmeasured number — and in a network dashboard
+// earns was arithmetic over an unmeasured number - and in a network dashboard
 // "nobody clicks" and "attribution is broken" produce the same zero.
 //
 // sendBeacon, not fetch: the page is navigating away, and fetch is cancelled when
 // it does. The beacon is queued by the browser and survives the unload. If it is
-// unavailable the click is simply not counted — measurement must never delay or
+// unavailable the click is simply not counted - measurement must never delay or
 // swallow the navigation the visitor asked for.
 //
 // The href stays the merchant URL. Pointing it at our own host would hide it from
 // TradeDoubler's Link Converter script, which rewrites outbound anchors in the
-// browser, and would take attribution to zero — measurement that destroys the
+// browser, and would take attribution to zero - measurement that destroys the
 // thing it measures. See Shared::OutboundClicksController for the same reasoning
 // on why this is not a redirect.
 import { Controller } from "@hotwired/stimulus"
@@ -26,7 +26,7 @@ export default class extends Controller {
   }
 
   // click, not mousedown: a click that never happened is not a click, and
-  // middle-click/ctrl-click open a tab without one, which is fine — undercounting
+  // middle-click/ctrl-click open a tab without one, which is fine - undercounting
   // is honest, inventing clicks is not.
   record() {
     const url = this.urlValue || this.element.getAttribute("href")

@@ -5,7 +5,7 @@
 # let either side of a DM reorder the other's list.
 class AddPinnedAtToConversationParticipants < ActiveRecord::Migration[8.1]
   def change
-    # A timestamp, not a boolean — pinned threads order among themselves by when
+    # A timestamp, not a boolean - pinned threads order among themselves by when
     # they were pinned, and a boolean cannot say which pin is newer.
     add_column :conversation_participants, :pinned_at, :datetime
 

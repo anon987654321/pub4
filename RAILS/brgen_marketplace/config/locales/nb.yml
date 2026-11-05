@@ -46,7 +46,7 @@ nb:
     optional_video: "Valgfri kort video"
     add_short_video: "Legg til kort video"
     photo_guidance_label: "Bildetips"
-    photo_guidance: "Vis hele varen · Naturlig lys · Ta med feil og mangler · Første bilde = forside"
+    photo_guidance: "Vis hele varen - Naturlig lys - Ta med feil og mangler - Første bilde = forside"
     dismiss_guidance: "Lukk bildetips"
     more_details: "Flere detaljer"
     delivery_estimate: "Leveringsestimat"
@@ -60,10 +60,10 @@ nb:
     price_not_set: "Pris ikke satt"
     location_not_set: "Sted ikke satt"
     location_unavailable: "Posisjon er ikke tilgjengelig på denne enheten."
-    locating: "Henter nåværende posisjon…"
+    locating: "Henter nåværende posisjon..."
     location_pinned: "Nåværende koordinater er lagt til. Skriv stednavnet over."
     location_denied: "Kunne ikke lese posisjonen din. Du kan skrive den inn manuelt."
-    most_successful_photos: "De mest vellykkede annonsene har 4–6 bilder."
+    most_successful_photos: "De mest vellykkede annonsene har 4-6 bilder."
     fulfilment_methods:
       self_ship: "Selger sender"
       local_hub: "Lokalt knutepunkt"
@@ -125,16 +125,16 @@ nb:
       same_day_bergen: "I dag i Bergen"
       next_day_bergen: "I morgen i Bergen"
       next_day_west: "I morgen på Vestlandet"
-      one_to_two_days: "1–2 dager"
-      three_to_five_days: "3–5 dager"
+      one_to_two_days: "1-2 dager"
+      three_to_five_days: "3-5 dager"
       pickup_only: "Hentes"
     stripe_connect_id: "Stripe Connect-konto"
-    stripe_connect_hint: "acct_… fra Stripe Connect. Utbetalinger blir stående til dette er satt og Stripe er konfigurert."
+    stripe_connect_hint: "acct_... fra Stripe Connect. Utbetalinger blir stående til dette er satt og Stripe er konfigurert."
     payouts: Utbetalinger
     payout_release: Send utbetaling
     payout_release_confirm: Sende denne utbetalingen til den tilkoblede Stripe-kontoen?
     payout_sent: Utbetaling sendt
-    payout_not_configured: Stripe Connect er ikke satt opp — utbetalingen blir stående.
+    payout_not_configured: Stripe Connect er ikke satt opp - utbetalingen blir stående.
     payout_not_pending: Den utbetalingen venter ikke på sending.
     payout_held: Holdes til fjorten dager etter levering, uten åpen retur.
     payout_statuses:
@@ -175,7 +175,7 @@ nb:
       dintero: Dintero
     checkout_errors:
       not_configured: Betaling med %{provider} er ikke satt opp her ennå.
-      provider_failed: "%{provider} svarte ikke som ventet. Ingenting er trukket — prøv igjen om litt."
+      provider_failed: "%{provider} svarte ikke som ventet. Ingenting er trukket - prøv igjen om litt."
   activerecord:
     attributes:
       marketplace/question:

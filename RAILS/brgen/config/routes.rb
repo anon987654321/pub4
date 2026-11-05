@@ -103,12 +103,12 @@ Rails.application.routes.draw do
     # POST toggles: the action Stimulus controller only ever sends POST.
     resource :repost, only: [ :create ], controller: "reposts"
     # A crosspost is the same content in a second community, with its own
-    # comment thread — not a boost, which is what :repost above is.
+    # comment thread - not a boost, which is what :repost above is.
     resources :crossposts, only: [ :create ]
   end
 
   # ActivityPub. Each city is a separate origin with its own population, which
-  # is the same shape as two Mastodon instances — so an actor is resolved
+  # is the same shape as two Mastodon instances - so an actor is resolved
   # against the requested host, not globally.
   get ".well-known/webfinger" => "well_known#webfinger", as: :webfinger
   get ".well-known/nodeinfo" => "well_known#nodeinfo_index"
@@ -133,8 +133,8 @@ Rails.application.routes.draw do
   get "users/:id/followers" => "follow_lists#followers", as: :user_followers
   get "users/:id/following" => "follow_lists#following", as: :user_following
 
-# Following out. The inbound half — somebody on another instance following a
-# brgen account — arrives at the inbox above and needs no route of its own.
+# Following out. The inbound half - somebody on another instance following a
+# brgen account - arrives at the inbox above and needs no route of its own.
 resources :fediverse_follows, only: %i[index create destroy], controller: "fediverse/follows", param: :uri
 
   # Stories delete themselves after 24h; `alive` hides an expired one from every
@@ -210,7 +210,7 @@ get "i/:token" => "invites#show", as: :invite
     member { post :invite_master }
     # Search over the reader's own threads; ?conversation_id= narrows it to one.
     collection { get :search }
-    # index is the page of history above the cursor — the thread window renders
+    # index is the page of history above the cursor - the thread window renders
     # the newest fifty and hands the log the URL for the fifty behind them.
     # update is a bounded edit; destroy is an unsend, which keeps the row so a
     # threaded reply is not orphaned. forward writes a copy; forward_to picks where.
@@ -235,21 +235,21 @@ get "i/:token" => "invites#show", as: :invite
   # TV vertical, extracted to a mountable engine (../brgen_radio/tv). Routes now live in
   # the engine's config/routes.rb; the host mounts it under the same subdomain
   # constraint. Host references to its helpers are tv.* (see application_helper,
-  # sitemaps_controller). The pilot for the vertical-as-engine split — see README.md.
-  # Mount at the top level with constraints: as a keyword — NOT inside a
-  # `constraints(subdomain:) do … end` block. A mount nested in a constraints
+  # sitemaps_controller). The pilot for the vertical-as-engine split - see README.md.
+  # Mount at the top level with constraints: as a keyword - NOT inside a
+  # `constraints(subdomain:) do ... end` block. A mount nested in a constraints
   # block still routes, but Rails only registers the `as:` mounted-helper proxy
   # (tv.channel_url, used by application_helper and sitemaps_controller) for a
   # top-level mount. Nesting it silently drops the helper. See README.md.
   mount Tv::Engine, at: "/", as: "tv", constraints: { subdomain: TV_SUBDOMAINS }
 
   # dating vertical extracted to ../brgen_dating (mountable engine). Top-level mount with
-  # constraints: keyword — NOT a constraints(subdomain:) block, which would drop the
+  # constraints: keyword - NOT a constraints(subdomain:) block, which would drop the
   # dating.* mounted helper. See brgen/README.md.
   mount Dating::Engine, at: "/", as: "dating", constraints: { subdomain: DATING_SUBDOMAINS }
 
   # playlist vertical extracted to ../brgen_radio/playlist (mountable engine). Top-level mount with
-  # constraints: keyword — NOT a constraints(subdomain:) block, which would drop the
+  # constraints: keyword - NOT a constraints(subdomain:) block, which would drop the
   # playlist.* mounted helper. See brgen/README.md.
   mount Playlist::Engine, at: "/", as: "playlist", constraints: { subdomain: RADIO_SUBDOMAINS }
 
@@ -263,12 +263,12 @@ get "i/:token" => "invites#show", as: :invite
   mount Takeaway::Engine, at: "/", as: "takeaway", constraints: { subdomain: TAKEAWAY_SUBDOMAINS }
 
   # marketplace vertical extracted to ../brgen_marketplace (mountable engine). Top-level mount with
-  # constraints: keyword — NOT a constraints(subdomain:) block, which would drop the
+  # constraints: keyword - NOT a constraints(subdomain:) block, which would drop the
   # marketplace.* mounted helper. See brgen/README.md.
   mount Marketplace::Engine, at: "/", as: "marketplace", constraints: { subdomain: MARKETPLACE_SUBDOMAINS }
 
   # maps vertical extracted to ../brgen_maps. Place stays a host model.
-  # Top-level mount with constraints: keyword — NOT a constraints(subdomain:)
+  # Top-level mount with constraints: keyword - NOT a constraints(subdomain:)
   # block, which would drop the maps.* mounted helper. See brgen/README.md.
   mount Maps::Engine, at: "/", as: "maps", constraints: { subdomain: MAPS_SUBDOMAINS }
 
@@ -319,7 +319,7 @@ get "i/:token" => "invites#show", as: :invite
   # same visitor, and the room is the one the operator means by "live".
   #
   # A redirect rather than a deletion because the path is public and was linked
-  # from /nearby and the city home. #room handles the unlocated case already —
+  # from /nearby and the city home. #room handles the unlocated case already -
   # it sends you back to /nearby with a "turn on location" alert.
   get "live" => redirect("/nearby/room"), as: :live
   resources :channels, only: %i[index show], param: :slug

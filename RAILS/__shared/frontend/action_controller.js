@@ -14,9 +14,9 @@ export default class extends Controller {
     param: { type: String, default: "" },
     paramKey: { type: String, default: "vote[value]" },
     // shared/_action_bar's like button writes both of these, and neither was
-    // declared — so Stimulus never read them and the POST carried no subject.
+    // declared - so Stimulus never read them and the POST carried no subject.
     // Shared::ReactionsController#create opens with
-    // params.require(:target_gid), which raises ParameterMissing → 400, so
+    // params.require(:target_gid), which raises ParameterMissing -> 400, so
     // every like optimistically toggled, got rejected, and _rollback reverted
     // it. The button could not work.
     targetGid: { type: String, default: "" },

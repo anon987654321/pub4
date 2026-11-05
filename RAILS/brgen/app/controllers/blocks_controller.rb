@@ -10,7 +10,7 @@ class BlocksController < ApplicationController
   end
 
   def destroy
-    # Scoped to Current.user's own blocks — you can only lift a block you placed.
+    # Scoped to Current.user's own blocks - you can only lift a block you placed.
     Current.user.blocks_as_blocker.find_by(blocked_id: params[:user_id])&.destroy
     redirect_back fallback_location: main_app.user_path(params[:user_id]), notice: t("block.undone", default: "Unblocked.")
   end

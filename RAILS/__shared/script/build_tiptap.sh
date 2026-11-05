@@ -1,5 +1,5 @@
 #!/bin/sh
-# Builds shared/vendor/javascript/tiptap.js — one self-contained ESM module
+# Builds shared/vendor/javascript/tiptap.js - one self-contained ESM module
 # exporting Editor and StarterKit.
 #
 # Why vendored rather than pinned to a CDN: STIMULUS_COMPONENTS_BASELINE.md

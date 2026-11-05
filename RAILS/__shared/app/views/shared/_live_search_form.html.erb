@@ -1,4 +1,4 @@
-<%# Shared live-search form — Turbo Stream responses via pub4-shared.
+<%# Shared live-search form - Turbo Stream responses via pub4-shared.
     Surface: vYroQxg .search (yep.com) exact styles. %>
 <div
   class="search<%= " active" if query.to_s.strip.present? %>"
@@ -48,9 +48,9 @@
   <%# Inside .search, not beside it: the pen fuses the results into the box when
       it is active, which is what the 30px pill collapsing to a 16px rectangle
       is for. Sitting outside, the radius change had nothing to open onto. The
-      id is unchanged — live_searchable.rb replaces this node by id over Turbo
-      Stream, and a nested target replaces the same. A second form on the page — the
-      search palette over every brgen surface — names its own ids, because a
+      id is unchanged - live_searchable.rb replaces this node by id over Turbo
+      Stream, and a nested target replaces the same. A second form on the page - the
+      search palette over every brgen surface - names its own ids, because a
       stream lands on the first element carrying the id it targets. %>
   <%= tag.div id: local_assigns.fetch(:suggestions_id, "search_suggestions") do %>
     <% if local_assigns.fetch(:show_suggestions, true) && respond_to?(:search_suggestions) && search_suggestions.present? %>

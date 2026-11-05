@@ -4,7 +4,7 @@ require "minitest/autorun"
 require "yaml"
 require_relative "../../MASTER/lib/operator/checks"
 
-# The check ran four full MASTER scans — twenty-one minutes — and routed every
+# The check ran four full MASTER scans - twenty-one minutes - and routed every
 # finding to result.warn, failing only when the output matched a crash marker. It
 # could not go red on the findings it existed to measure. It now compares each
 # target against a recorded ceiling that only ratchets down.
@@ -38,7 +38,7 @@ class ConstitutionalScanBudgetTest < Minitest::Test
 
 # The other spelling of the same number. A count regex that only knows digits
 # skipped the clean line and matched the NEXT `scan: done`, which is the deep
-# pass — so a target whose aesthetic pass is clean was judged on a different
+# pass - so a target whose aesthetic pass is clean was judged on a different
 # profile than one whose aesthetic pass found something. STUDIO read 317 and
 # OPENBSD 72 against ceilings measured at 0 in the same run that printed
 # "clean".
@@ -99,7 +99,7 @@ end
 
     # The comments are the whole reason this file cannot be rewritten as a
     # block, so what to assert is that they survived. The line here looked for
-    # "# RATCHETED", which nothing in the tree writes — a marker invented by the
+    # "# RATCHETED", which nothing in the tree writes - a marker invented by the
     # assertion, failing against a rewrite that is doing its job.
     after = File.read(Deploy::ConstitutionalScanCheck::BUDGET_PATH)
     comments = original.lines.grep(/\A\s*#/).map(&:strip).reject(&:empty?)

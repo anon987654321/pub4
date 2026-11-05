@@ -49,7 +49,7 @@ class AppConfigContractTest < Minitest::Test
       end
     end
 
-    assert_operator checked, :>, 10, "parsed #{checked} recurring tasks — the scan broke, not the tree"
+    assert_operator checked, :>, 10, "parsed #{checked} recurring tasks - the scan broke, not the tree"
     assert_empty missing, "recurring tasks naming a job class no app defines"
   end
 

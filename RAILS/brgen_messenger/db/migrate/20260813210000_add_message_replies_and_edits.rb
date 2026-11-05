@@ -6,7 +6,7 @@
 # with no referent is a message nobody can follow.
 #
 # Edit and unsend: a typo currently stands forever, and a message sent to the
-# wrong room cannot be taken back — which on a hyperlocal chat with real
+# wrong room cannot be taken back - which on a hyperlocal chat with real
 # addresses in it is a safety gap, not a convenience one.
 #
 # Voice: a has_one_attached already exists for images, and a voice note is the

@@ -6,7 +6,7 @@
 # its title/name with the same parameterize + numeric-suffix logic Shared::Sluggable
 # uses at runtime (city-scoped where the table has city_id, global otherwise), then a
 # unique index is added AFTER backfill so no row trips it mid-fill. Old /posts/123
-# links keep resolving — controllers fall back to id when a slug lookup misses.
+# links keep resolving - controllers fall back to id when a slug lookup misses.
 class AddSlugsToContent < ActiveRecord::Migration[8.1]
   # table => source column for the slug base
   SOURCES = {

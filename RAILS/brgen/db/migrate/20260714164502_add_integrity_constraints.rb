@@ -4,7 +4,7 @@
 # presence:` in the models but were never enforced at the DB layer, adds
 # missing FK indexes, and deduplicates + adds unique indexes backing
 # `validates uniqueness:` checks that held only in the app (a real race
-# under concurrent requests — e.g. two taps on "like" landing at once).
+# under concurrent requests - e.g. two taps on "like" landing at once).
 class AddIntegrityConstraints < ActiveRecord::Migration[8.1]
   def up
     execute "UPDATE comments SET content = '' WHERE content IS NULL"
@@ -13,7 +13,7 @@ class AddIntegrityConstraints < ActiveRecord::Migration[8.1]
     execute "UPDATE communities SET name = 'Untitled community' WHERE name IS NULL"
     change_column_null :communities, :name, false
 
-    # hashtags.name already carries a unique index — backfill with a
+    # hashtags.name already carries a unique index - backfill with a
     # per-row-unique placeholder so the constraint doesn't collide.
     execute "UPDATE hashtags SET name = 'untitled-' || id WHERE name IS NULL"
     change_column_null :hashtags, :name, false
@@ -73,7 +73,7 @@ class AddIntegrityConstraints < ActiveRecord::Migration[8.1]
 
   private
 
-  # Keeps the earliest row for each duplicate key and deletes the rest —
+  # Keeps the earliest row for each duplicate key and deletes the rest -
   # these are rows that already violated the model's own `validates
   # uniqueness:` scope, so they represent duplicate data the app never
   # intended to allow, not real divergent user records.
@@ -91,7 +91,7 @@ class AddIntegrityConstraints < ActiveRecord::Migration[8.1]
   end
 
   # Real user accounts, unlike join-table rows, must never be deleted to
-  # resolve a uniqueness conflict — rename the later duplicate instead so a
+  # resolve a uniqueness conflict - rename the later duplicate instead so a
   # human can sort out which one is canonical.
   def rename_duplicate_usernames
     dupes = select_rows(<<~SQL.squish)

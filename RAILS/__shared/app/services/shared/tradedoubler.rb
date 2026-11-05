@@ -13,10 +13,10 @@ require_relative "tradedoubler_parsing"
 # is a no-op and every read path prefers AffiliateProduct / placeholders.
 #
 # Official Products API uses matrix URIs and requires a feed id (fid):
-#   GET https://api.tradedoubler.com/1.0/products.json;fid={id};page=1;pageSize=100?token=…
+#   GET https://api.tradedoubler.com/1.0/products.json;fid={id};page=1;pageSize=100?token=...
 # Feeds are listed via productFeeds. Bulk: productsUnlimited + lastUpdated.
 #
-# Tokens (Account → Manage tokens): PRODUCTS, VOUCHERS, CONVERSIONS. Website ID
+# Tokens (Account -> Manage tokens): PRODUCTS, VOUCHERS, CONVERSIONS. Website ID
 # for Link Converter is separate (TRADEDOUBLER_WEBSITE_ID).
 module Shared
   module Tradedoubler
@@ -93,8 +93,8 @@ module Shared
                         .limit(limit)
                         .map { |product| to_deal(product) }
       # AffiliateProduct.table_exists? is checked on the way in, so this cannot be
-      # the missing-table case. What is left is a schema fault — a column the
-      # scope names and the table has not got, a migration half-applied — and
+      # the missing-table case. What is left is a schema fault - a column the
+      # scope names and the table has not got, a migration half-applied - and
       # returning [] for that is a shop page that is quietly empty forever.
       rescue ActiveRecord::StatementInvalid => e
         Rails.logger.warn("tradedoubler deals: #{e.class}: #{e.message}")
@@ -191,7 +191,7 @@ expires_in: cache_ttl_for(:search_results)) do
         return nil unless body.is_a?(Hash)
 
         body["lastUpdatedTime"]
-      rescue StandardError # scan: intentional — an unparseable upstream value is absent, not fatal
+      rescue StandardError # scan: intentional - an unparseable upstream value is absent, not fatal
         nil
       end
 
@@ -381,7 +381,7 @@ expires_in: cache_ttl_for(:search_results)) do
         return Time.zone.at(value.to_i / 1000.0) if value.to_s.match?(/\A\d{10,}\z/)
 
         Time.zone.parse(value.to_s)
-      rescue StandardError # scan: intentional — an unparseable upstream timestamp is absent, not fatal
+      rescue StandardError # scan: intentional - an unparseable upstream timestamp is absent, not fatal
         nil
       end
     end

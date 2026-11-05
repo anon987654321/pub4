@@ -5,7 +5,7 @@ class Marketplace::OrdersController < Marketplace::BaseController
   before_action :set_listing, only: :create
   before_action :set_order, only: %i[show update capture ship deliver confirm_receipt]
 
-  # Buyer's order history — a paid order used to vanish (the cart only lists
+  # Buyer's order history - a paid order used to vanish (the cart only lists
   # pending). Scoped to Current.user's own orders.
   def index
     return index_sales if params[:side] == "sales"
@@ -35,7 +35,7 @@ class Marketplace::OrdersController < Marketplace::BaseController
     quantity = params[:quantity].to_i.positive? ? params[:quantity].to_i : 1
 
     # The variant is what is bought when the listing has any, and its price is
-    # the one to record — the listing's is the fallback for a listing with none.
+    # the one to record - the listing's is the fallback for a listing with none.
     variant = @listing.variants.find_by(id: params.dig(:order, :variant_id))
 
     @order = @listing.orders.build(

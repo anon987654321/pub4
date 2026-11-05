@@ -1,12 +1,12 @@
 // MASTER presence state: the one felt-state reader, and the store behind it.
 //
-// The felt-state string is not decoration — chat_service.rb splits it into
+// The felt-state string is not decoration - chat_service.rb splits it into
 // mood, mode, entropy, confidence, arousal, valence and hist_entropy, publishes
 // it on the bus as felt:sense, and hands it to TurnRouter as felt_sense, so it
 // reaches the reply. It has to be the same string wherever it is read.
 //
 // It was not. This file derived every field by reading back what other modules
-// had already written to the DOM — --master-entropy and --master-confidence off
+// had already written to the DOM - --master-entropy and --master-confidence off
 // the root style, masterState and pipelineStage off body.dataset. visual_bridge
 // computes all of those in emitVisualNow and dispatches them on master:visual
 // and master:emotion *before* reflectToDom writes them out, so scraping the
@@ -15,7 +15,7 @@
 // property dropped was gone by the time it was read back.
 //
 // Publishers push now. The scrape survives underneath as the fallback for any
-// field no publisher has reached yet — which is every field before the first
+// field no publisher has reached yet - which is every field before the first
 // event, and mood/mode whenever the face runtime is not up.
 (() => {
   "use strict";
@@ -43,7 +43,7 @@
   // position into mood, mode, entropy, confidence, arousal, valence and
   // hist_entropy, so the string is a wire format and a seventh field would
   // shift everything after it. Anything else the store learns belongs on
-  // snapshot(), which callers read by name — see attention below.
+  // snapshot(), which callers read by name - see attention below.
   function publish(fields = {}) {
     if (!fields || typeof fields !== "object") return;
     publishText("mood", fields.mood);
@@ -84,7 +84,7 @@
   }
 
   // The seven fields as numbers and strings, before they are formatted. Ordered
-  // published → scrape → default, per field.
+  // published -> scrape -> default, per field.
   function snapshot() {
     const st = window.MASTER_FACE?.State || {};
     const histEntropy = emotionHistoryEntropy(st.entropy ?? feltCssNumber("--master-entropy", 0.2));

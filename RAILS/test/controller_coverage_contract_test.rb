@@ -7,7 +7,7 @@ require_relative "engine_roots"
 # apps.yml claims are done. Complements model_coverage_contract_test.rb.
 #
 # Read the name carefully: this is not test coverage. Nothing here boots Rails or
-# calls a method, so every assertion passes against a body of `raise` — it checks
+# calls a method, so every assertion passes against a body of `raise` - it checks
 # that apps.yml is not claiming a controller or action that does not exist, which is
 # worth having and is all it is. The actual "does this have a test" number lives in
 # coverage_ratchet_test.rb, which records it per app and stops it falling.
@@ -158,7 +158,7 @@ class ControllerCoverageContractTest < Minitest::Test
             Dir.glob(File.join(ROOT, EngineRoots::GLOB, "app", "views", "**", "*.erb")) +
             Dir.glob(File.join(ROOT, "__shared", "app", "views", "**", "*.erb"))
 
-    refute_empty views, "no views found — the glob stopped matching, which is blindness not cleanliness"
+    refute_empty views, "no views found - the glob stopped matching, which is blindness not cleanliness"
 
     offenders = views.flat_map do |path|
       in_comment = false
@@ -179,7 +179,7 @@ class ControllerCoverageContractTest < Minitest::Test
     end
 
     assert_empty offenders.sort,
-                 "render shared/pager instead — these helpers exist in one pagy major and not the other"
+                 "render shared/pager instead - these helpers exist in one pagy major and not the other"
   end
 
   # brgen/README.md and the marketplace README both said brgen main kept "the
@@ -212,7 +212,7 @@ class ControllerCoverageContractTest < Minitest::Test
       end
       next if offending.empty?
 
-      "#{name}:#{offending.first[1] + 1} — #{offending.first[0].strip[0, 70]}"
+      "#{name}:#{offending.first[1] + 1} - #{offending.first[0].strip[0, 70]}"
     end
 
     assert_empty claims,

@@ -175,7 +175,7 @@ module Fediverse
     end
 
     # ApplicationRecord is strict_loading by default, and these run from model
-    # callbacks and background jobs where post.user is usually not preloaded —
+    # callbacks and background jobs where post.user is usually not preloaded -
     # a lazy read there raises after the post has already been written.
     def author_for(post)
       post.association(:user).loaded? ? post.user : User.find_by(id: post.user_id)

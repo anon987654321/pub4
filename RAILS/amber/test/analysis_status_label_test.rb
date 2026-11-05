@@ -9,7 +9,7 @@ require "minitest/mock"
 # worker, work waiting for a scheduled drain, and an unreadable queue status.
 #
 # Three of these need solid_queue_processes, and no app in this tree has that
-# table in its test databases — brgen has declared four test databases all along
+# table in its test databases - brgen has declared four test databases all along
 # and its queue schema has never been loaded either, because nothing in any suite
 # had touched those tables until this file. They skip with that reason rather
 # than passing vacuously, and they start running the day db:prepare loads
@@ -23,9 +23,9 @@ class AnalysisStatusLabelTest < ActionView::TestCase
       SolidQueue::Process.table_exists?
     rescue ActiveRecord::ActiveRecordError, NameError => e
       # The queue schema being absent is the case this setup is written for.
-      # Anything else — a connection this test did not expect, a renamed
-      # constant — now raises instead of arriving as a skipped assertion.
-      warn "analysis_status_label_test: queue unavailable (#{e.class}) — asserting the unknown label"
+      # Anything else - a connection this test did not expect, a renamed
+      # constant - now raises instead of arriving as a skipped assertion.
+      warn "analysis_status_label_test: queue unavailable (#{e.class}) - asserting the unknown label"
       false
     end
   end
@@ -33,7 +33,7 @@ class AnalysisStatusLabelTest < ActionView::TestCase
   teardown { Rails.cache.delete("amber:queue:worker_present") }
 
   def needs_queue_table
-    skip "solid_queue_processes is not in the test queue database — see the note above" unless @queue_ready
+    skip "solid_queue_processes is not in the test queue database - see the note above" unless @queue_ready
     SolidQueue::Process.delete_all
   end
 

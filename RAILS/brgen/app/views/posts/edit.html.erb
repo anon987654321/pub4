@@ -18,8 +18,8 @@
     <div class="field">
       <%= f.label :content, t("posts.body_optional") %>
       <div class="compose-surface" data-controller="tiptap-editor character-counter" data-character-counter-countdown-value="true">
-  <%# The stored value is already Tiptap's HTML — posts/new has mounted an editor
-      since it shipped — so editing a post showed the author raw "<p>" tags in a
+  <%# The stored value is already Tiptap's HTML - posts/new has mounted an editor
+      since it shipped - so editing a post showed the author raw "<p>" tags in a
       textarea and invited them to save it back. %>
   <%= f.text_area :content, placeholder: t("post.text_optional"), rows: 5, maxlength: @content_maxlength,
         data: { character_counter_target: "input", tiptap_editor_target: "field" } %>

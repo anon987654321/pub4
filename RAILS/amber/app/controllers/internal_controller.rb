@@ -5,7 +5,7 @@ class InternalController < ApplicationController
   include Shared::BuildInfoHelper
 
   # What this process is running. The deploy stamp proves what a deploy
-  # wrote; this says what the serving process booted — the pair an operator
+  # wrote; this says what the serving process booted - the pair an operator
   # compares when a health check and the last deploy disagree.
   def version
     render json: {

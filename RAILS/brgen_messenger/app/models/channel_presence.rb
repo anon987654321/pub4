@@ -67,7 +67,7 @@ class ChannelPresence
       value = Rails.cache.read(key(conversation))
       value.is_a?(Hash) ? value : {}
     rescue StandardError => e
-      # A presence count is never worth failing a request over — but the
+      # A presence count is never worth failing a request over - but the
       # failure is still logged (FAIL_VISIBLY): tolerated is not invisible.
       Rails.logger.debug { "channel_presence read failed: #{e.class}: #{e.message}" }
       {}

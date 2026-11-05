@@ -69,7 +69,7 @@ class Marketplace::VariantTest < ActiveSupport::TestCase
     variant = Marketplace::Variant.create!(listing: @listing, sku: "GENSER-M", options_attributes: options)
     bare = Marketplace::Variant.create!(listing: @listing, sku: "GENSER-L")
 
-    assert_equal "Blå · M", Marketplace::Variant.includes(:options).find(variant.id).label
+    assert_equal "Blå - M", Marketplace::Variant.includes(:options).find(variant.id).label
     assert_equal "GENSER-L", Marketplace::Variant.includes(:options).find(bare.id).label
   end
 end

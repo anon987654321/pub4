@@ -4,13 +4,13 @@ require "minitest/autorun"
 require_relative "engine_roots"
 
 # A DELETE that cannot be taken back asks first. Every such control in the four
-# apps already does — measured 2026-09-13, 25 confirmed of 25 — so this is a
+# apps already does - measured 2026-09-13, 25 confirmed of 25 - so this is a
 # guard on a mechanism that exists and nothing watched.
 #
 # Irreversible is read from the label's I18n key, because that is what the
 # visitor reads: a key naming delete, unsend or a permanent removal. The other
-# DELETE-method controls are toggles with an undo one tap away — unfollow,
-# unsave, unlike, unwatch, sign out, remove from a plan — and a confirmation in
+# DELETE-method controls are toggles with an undo one tap away - unfollow,
+# unsave, unlike, unwatch, sign out, remove from a plan - and a confirmation in
 # front of a toggle is friction, not safety.
 class DestructiveConfirmationTest < Minitest::Test
   ROOT = File.expand_path("..", __dir__)
@@ -47,7 +47,7 @@ class DestructiveConfirmationTest < Minitest::Test
       end
     end
 
-    assert_operator checked, :>=, 20, "the scan found almost no destructive controls — the glob or key pattern is wrong"
+    assert_operator checked, :>=, 20, "the scan found almost no destructive controls - the glob or key pattern is wrong"
     assert_empty unconfirmed, "An irreversible DELETE with no turbo_confirm:\n#{unconfirmed.join("\n")}"
   end
 end

@@ -27,7 +27,7 @@ class StimulusWiringCheckTest < Minitest::Test
     result = Deploy::StimulusWiringCheck.run
 
     assert_empty result.failures, "dead Stimulus references:\n  #{result.failures.join("\n  ")}"
-    assert_operator result.checks_ran, :>, 400, "check measured almost nothing — check the view glob"
+    assert_operator result.checks_ran, :>, 400, "check measured almost nothing - check the view glob"
   end
 
   # A check that cannot fail is not a check. These two are the exact shapes that
@@ -106,7 +106,7 @@ export default class extends Controller {}
   end
 
   # The third leg: a data-*-value the controller never declares. This is the
-  # exact shape that shipped in shared/_action_bar — the like button wrote
+  # exact shape that shipped in shared/_action_bar - the like button wrote
   # data-action-target-gid-value and data-action-kind-value, action_controller
   # declared neither, so the POST reached Shared::ReactionsController with no
   # subject, params.require(:target_gid) raised ParameterMissing, and the
@@ -119,7 +119,7 @@ export default class extends Controller {}
   end
 
   # The fourth leg: a data-*-target the controller never declares. Stimulus leaves
-  # hasFooTarget false and the feature is simply absent — the same silence as an
+  # hasFooTarget false and the feature is simply absent - the same silence as an
   # undeclared value, one attribute over.
   def test_reports_a_target_nobody_declares
     failures = with_probe(%(<div data-controller="scroll-chrome" data-scroll-chrome-target="nosuch"></div>))
@@ -132,7 +132,7 @@ export default class extends Controller {}
     assert_empty with_probe(%(<div data-controller="scroll-chrome" data-scroll-chrome-target="peel"></div>))
   end
 
-  # …and it must not fire on values that are declared, in either brace layout.
+  # ...and it must not fire on values that are declared, in either brace layout.
   def test_accepts_declared_values_written_on_one_line
     # offline_feed_controller declares `static values = { key, title, url, meta }`
     # on a single line. Anchoring the block scan on a newline made all four look
@@ -141,7 +141,7 @@ export default class extends Controller {}
   end
 
   # A controller extending a vendored base inherits that base's values, and the
-  # base is a bundle this check does not read — same rule it already applies to
+  # base is a bundle this check does not read - same rule it already applies to
   # vendored methods.
   def test_does_not_guess_at_values_inherited_from_a_vendored_base
     assert_empty with_probe(%(<div data-controller="character-counter" data-character-counter-countdown-value="true"></div>))
@@ -187,7 +187,7 @@ export default class extends Controller {}
   # An app controller named after a shared registration is never loaded, so the
   # element it was written for runs the shared component instead. clipboard is
   # in stimulus_boot.js, the file every app imports, so it shadows in all
-  # three — dropdown lives in stimulus_boot_brgen.js now (brgen only), so it
+  # three - dropdown lives in stimulus_boot_brgen.js now (brgen only), so it
   # no longer shadows a same-named controller bsdports writes for itself.
   def test_reports_an_app_controller_a_shared_registration_shadows
     failures = with_file("bsdports/app/javascript/controllers/clipboard_controller.js",
@@ -195,7 +195,7 @@ export default class extends Controller {}
       Deploy::StimulusWiringCheck.run.failures.select { |f| f.include?("never loads") }
     end
 
-    assert_equal [%(bsdports: controller "clipboard" never loads — a shared boot file registers that identifier first)], failures
+    assert_equal [%(bsdports: controller "clipboard" never loads - a shared boot file registers that identifier first)], failures
   end
 
   def test_a_shadow_exemption_fails_once_nothing_is_shadowed

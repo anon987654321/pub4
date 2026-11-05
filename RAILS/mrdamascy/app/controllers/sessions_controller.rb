@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 class SessionsController < ApplicationController
-  # Mock OTP — fixed per APP_SPEC §2/§11. No SMS gateway, no extra gem.
+  # Mock OTP - fixed per APP_SPEC §2/§11. No SMS gateway, no extra gem.
   MOCK_CODE = "1234"
 
   # A requested code is good for this long; an old one left in a shared
@@ -54,7 +54,7 @@ class SessionsController < ApplicationController
   # --- "Logg inn med Vipps" (the zero-typing path, APP_SPEC §12) -----------
   #
   # One tap on the checkout: Vipps verifies the phone, gives back the
-  # customer's name and (with the address scope) their registered address —
+  # customer's name and (with the address scope) their registered address -
   # so the confirm screen arrives prefilled and "Betal med Vipps" is the
   # only button left to press. No OTP, no forms, no card fields.
 
@@ -84,7 +84,7 @@ class SessionsController < ApplicationController
 
   # OAuth2 redirect back. Mock mode fakes the code with the phone the mock
   # page posted; real mode exchanges it for a userinfo profile. Both land on
-  # the same find-or-create → sign-in → return_to handoff.
+  # the same find-or-create -> sign-in -> return_to handoff.
   def vipps_callback
     return login_state_mismatch unless valid_login_state?
 
@@ -103,8 +103,8 @@ class SessionsController < ApplicationController
       end
       apply_login_profile!(user, profile)
     rescue ActiveRecord::RecordInvalid
-      # A phone outside our 8–12 digit rule (odd foreign numbers) is a login
-      # problem, not a 500 — send the visitor back to try the SMS route.
+      # A phone outside our 8-12 digit rule (odd foreign numbers) is a login
+      # problem, not a 500 - send the visitor back to try the SMS route.
       return login_state_mismatch
     end
 
@@ -185,7 +185,7 @@ class SessionsController < ApplicationController
     { phone: phone, name: params[:name].presence, address: nil, postcode: nil }
   end
 
-  # Real profile: code → token → userinfo (verified Vipps data). The phone
+  # Real profile: code -> token -> userinfo (verified Vipps data). The phone
   # is normalised to the 8-digit local form so the Vipps identity and the
   # OTP identity are the same customer row.
   def real_login_profile

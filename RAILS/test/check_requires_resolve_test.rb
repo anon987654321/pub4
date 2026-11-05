@@ -5,7 +5,7 @@ require "minitest/autorun"
 # Every check must be able to load itself.
 #
 # `rails_runtime` required "lib/production" for months after that file moved to
-# "lib/production" — the checks are sorted into live/rendered/source/ and a flat
+# "lib/production" - the checks are sorted into live/rendered/source/ and a flat
 # research/source and this was the one caller the move missed. It failed at
 # require time rather than at a check, so the composite reported a red check that
 # named no finding, and a red check that names no finding is the easiest kind to
@@ -20,7 +20,7 @@ class CheckRequiresResolveTest < Minitest::Test
   # `needs` moved runner.rb's hardcoded BROWSER_BACKED list into checks.yml,
   # which is the same half-landed-move risk this file already watches: a second
   # table naming the same fourteen checks drifts from the first the moment one is
-  # added. Both halves — no precondition word nothing checks, and no copy of the
+  # added. Both halves - no precondition word nothing checks, and no copy of the
   # list left behind in the runner.
   KNOWN_PRECONDITIONS = %w[browser].freeze
 
@@ -47,7 +47,7 @@ class CheckRequiresResolveTest < Minitest::Test
 
   # `require_relative "x"` resolves against the requiring file's directory, and
   # matches x.rb or a directory named x. Interpolated paths are skipped rather
-  # than guessed at — a require built from a variable is not a claim this test
+  # than guessed at - a require built from a variable is not a claim this test
   # can check, and pretending otherwise would make it fail on correct code.
   def each_relative_require
     return to_enum(:each_relative_require) unless block_given?
@@ -104,7 +104,7 @@ class CheckRequiresResolveTest < Minitest::Test
 
       # A require that names a tree resolves from the repo root, the way the
       # runner resolves it. Six checks moved to the tree they measure on
-      # 2026-09-11 — MASTER's face and scan chain, the box's DNS and ports — and
+      # 2026-09-11 - MASTER's face and scan chain, the box's DNS and ports - and
       # this read every one of them as a missing file.
       base = required.to_s.start_with?("MASTER/", "OPENBSD/", "STUDIO/") ? REPO : CHECKS
       path = File.expand_path(required.to_s, base)
@@ -121,7 +121,7 @@ class CheckRequiresResolveTest < Minitest::Test
   #
   # In a heredoc, `\\s` is what you write to get `\s` into the string. In a file
   # read verbatim it stays two characters, and `/\\s+/` in JavaScript matches a
-  # literal backslash followed by one or more letter s — which matches nothing
+  # literal backslash followed by one or more letter s - which matches nothing
   # any page contains, silently.
   #
   # walk.js carried three. The one that mattered was in classSig: the class
@@ -131,11 +131,11 @@ class CheckRequiresResolveTest < Minitest::Test
   # snapshot baseline written before the extraction compared against a key
   # format that no longer existed: 739 removals and 965 additions across 69
   # surfaces, none of which was a layout change. The other two broke the rgba
-  # fast path, which fell through to a canvas that answers correctly — slow
+  # fast path, which fell through to a canvas that answers correctly - slow
   # rather than wrong, and invisible for exactly that reason.
   #
   # There is no legitimate double backslash in any of these files today. If one
-  # is ever wanted — a regex matching a real backslash — it needs a comment here
+  # is ever wanted - a regex matching a real backslash - it needs a comment here
   # saying so, which is the point: it has to be a decision rather than residue.
   def test_no_check_javascript_carries_heredoc_escaping
     offenders = Dir.glob(File.join(CHECKS, "**", "*.js")).flat_map do |path|

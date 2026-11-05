@@ -24,7 +24,7 @@
   <%= tag.h1 @community.name %>
   <% if @community.description.present? %><%= tag.p @community.description %><% end %>
   <p>
-    <%= t("community.posts_count", count: header_posts_count) %> ·
+    <%= t("community.posts_count", count: header_posts_count) %> -
     <%= render "communities/members_count", community: @community %>
   </p>
   <%# user_id, not user: comparing the association is a lazy read on a
@@ -33,7 +33,7 @@
   <%= render "communities/membership", community: @community,
                                         joined: authenticated? && Current.user.member_of?(@community) %>
   <%# The wiki is readable by whoever can read the community, so the link is not
-      moderator-only — only writing it is. %>
+      moderator-only - only writing it is. %>
   <p class="cluster">
     <%= link_to t("wiki.heading"), community_wiki_index_path(@community), class: "button button-ghost button-small" %>
   </p>

@@ -202,7 +202,7 @@ end
 # Every outbound HTTP call in app code carries a timeout.
 #
 # Net::HTTP's defaults are sixty seconds to open and sixty to read, and the
-# convenience calls — Net::HTTP.get, get_response, post, post_form — accept no
+# convenience calls - Net::HTTP.get, get_response, post, post_form - accept no
 # timeout at all. On a one-vCPU box a feed read that hangs inside a render holds
 # a Falcon fiber and the page for two minutes. A call that opens a connection
 # (start, new, URI.open) must name read_timeout in the same file; a convenience
@@ -216,7 +216,7 @@ class OutboundHttpTimeoutTest < Minitest::Test
 
   def self.findings(source, label)
     code = source.lines.reject { |line| line.lstrip.start_with?("#") }.join
-    found = code.scan(UNBOUNDABLE).map { |(call)| "#{label}: Net::HTTP.#{call} cannot take a timeout — use Net::HTTP.start with open_timeout/read_timeout" }
+    found = code.scan(UNBOUNDABLE).map { |(call)| "#{label}: Net::HTTP.#{call} cannot take a timeout - use Net::HTTP.start with open_timeout/read_timeout" }
     found << "#{label}: opens a connection and never names read_timeout" if code.match?(OPENS) && !code.include?("read_timeout")
     found
   end

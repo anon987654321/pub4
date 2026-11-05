@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-# GENERATED PROJECTION — source: MASTER/tools/frontend_law_set.rb. Keep behavior identical.
+# GENERATED PROJECTION - source: MASTER/tools/frontend_law_set.rb. Keep behavior identical.
 unless defined?(Shared::FrontendLawSet)
 # frozen_string_literal: true
 
@@ -41,7 +41,7 @@ module Shared
     }.freeze
 
     # Product pens: outside designs this tree reproduces exactly, shadows and
-    # all — the yep.com search, the jsfiddle logo (jOxVvNE), Amazon's nav bar
+    # all - the yep.com search, the jsfiddle logo (jOxVvNE), Amazon's nav bar
     # and its animated logo. Hygiene checks leave them alone, and this is the one
     # place that says which CSS they are.
     #

@@ -8,7 +8,7 @@ module Shared
     # bsdports check their social stack behind *_SOCIAL until the migrations
     # land (see bsdports/config/routes.rb), so declaring the association there
     # made `dependent: :destroy` raise "no such table: reactions" on every
-    # destroy — deleting a bsdports comment 500'd. Degrade instead, the way
+    # destroy - deleting a bsdports comment 500'd. Degrade instead, the way
     # Shared::ActivityTrackable already does for its own missing backing table.
     #
     # const_defined? reads Zeitwerk's autoload entry, so this needs no database
@@ -19,7 +19,7 @@ module Shared
 
     # strict_loading: false, here and on every other `dependent: :destroy` in
     # these concerns. ApplicationRecord sets strict_loading_by_default, and a
-    # destroy cascade *must* load its dependents to delete them — there is no
+    # destroy cascade *must* load its dependents to delete them - there is no
     # preload that avoids it, so strict loading on such an association can only
     # ever produce a crash, never catch an N+1 worth catching. Before this,
     # destroying any reactable/votable/commentable record that had been found by

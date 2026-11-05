@@ -18,7 +18,7 @@ class ChannelBotReplyJob < ApplicationJob
   #
   # Seen in production on 2026-08-14, three attempts then "Stopped retrying".
   # It had been invisible because no Solid Queue worker runs on this box, so the
-  # job had never executed at all — the first time anything ran the queue, this
+  # job had never executed at all - the first time anything ran the queue, this
   # was waiting in it. Two faults stacked: the bots did not reply because nothing
   # ran the job, and would not have replied if it had.
   def perform(message_id)

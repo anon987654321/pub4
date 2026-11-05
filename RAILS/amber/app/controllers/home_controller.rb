@@ -28,7 +28,7 @@ class HomeController < ApplicationController
     dated = items.where(last_worn_on: window..).pluck(:id)
     @worn_this_month = (logged | dated).size
     @utilization_rate = @items_count > 0 ? (@worn_this_month * 100.0 / @items_count).round : 0
-    # `price > 0` named a column that does not exist — Item stores price_cents
+    # `price > 0` named a column that does not exist - Item stores price_cents
     # and `price` is a MoneyInOre reader, so every signed-in dashboard raised
     # SQLite3::SQLException: no such column: price.
     @worst_cpw = items.where("price_cents > 0 AND times_worn > 0")

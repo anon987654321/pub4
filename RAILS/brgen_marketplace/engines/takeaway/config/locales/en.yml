@@ -15,7 +15,7 @@ en:
     tip_line: "Tip: %{amount}"
     position: "Position"
     use_current_location: "Use current location"
-    locating: "Getting your location…"
+    locating: "Getting your location..."
     location_denied: "Could not read your location. You can enter it yourself."
     vehicle_types:
       bicycle: "Bicycle"

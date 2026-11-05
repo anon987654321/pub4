@@ -46,7 +46,7 @@ class FediverseOutboundTest < ActionDispatch::IntegrationTest
     end
     follow = FediFollow.outbound.last
     assert_equal "pending", follow.state
-    assert follow.activity_uri.present?, "the Follow id has to be kept — an Accept names it"
+    assert follow.activity_uri.present?, "the Follow id has to be kept - an Accept names it"
   end
 
   def webfinger_for(handle_host, href)

@@ -1,4 +1,4 @@
-# Sourced by the face bundle build scripts — not executable on its own.
+# Sourced by the face bundle build scripts - not executable on its own.
 #
 # Every one of them ends by printing what it just wrote, raw and gzipped. The
 # label is the artifact's own basename, so a script that renames its output

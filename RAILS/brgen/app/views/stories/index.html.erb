@@ -10,7 +10,7 @@
 </div>
 
 <% if @rings.any? %>
-  <%# A story surface is a list of people, not a list of photos — one ring per
+  <%# A story surface is a list of people, not a list of photos - one ring per
       author, newest first, people you follow before everyone else. %>
   <ul class="story-rings" role="list">
     <% @rings.each do |stories| %>

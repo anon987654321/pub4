@@ -3,11 +3,11 @@
 class SitemapsController < ApplicationController
   include Shared::Sitemapable
 
-  # One route serves every city domain and every vertical subdomain — the
+  # One route serves every city domain and every vertical subdomain - the
   # active subapp is resolved the same way the rest of the app resolves it
   # (Brgen::DomainRegistry), so this needs no per-subdomain route wiring.
   PER_MODEL_CAP = 2_000
-  # Trending is an aggregate over the whole tagging window, not a page of rows —
+  # Trending is an aggregate over the whole tagging window, not a page of rows -
   # it earns a tighter cap than the per-model one.
   HASHTAG_CAP = 200
 
@@ -24,7 +24,7 @@ class SitemapsController < ApplicationController
     when :marketplace then entries.concat(marketplace_entries, category_entries, food_entries)
     when :maps then entries.concat(maps_entries)
     when :dating, :messenger, :ai
-      # Personal profiles and private conversations are never indexed — root only.
+      # Personal profiles and private conversations are never indexed - root only.
     else
       entries.concat(posts_entries)
       entries.concat(community_entries)
@@ -59,13 +59,13 @@ class SitemapsController < ApplicationController
   end
 
   # Public profiles whose home-city hint is this city. User is not a tenant row
-  # and its in_current_city is strict about nil city_id — see the scope.
+  # and its in_current_city is strict about nil city_id - see the scope.
   # Dating/messenger stay unsitemapped.
   def user_entries
     entries_for(User.public_profiles.in_current_city, changefreq: "weekly", priority: "0.4") { |u| user_url(u) }
   end
 
-  # Hashtags are global by design — a tag is not a city's property. Which is
+  # Hashtags are global by design - a tag is not a city's property. Which is
   # also why one cache entry serves every host: trending is a JOIN + GROUP BY +
   # ORDER BY COUNT(*) over the whole tagging window, and it was recomputed on
   # every crawler hit on all 44 domains for a result none of them varied.

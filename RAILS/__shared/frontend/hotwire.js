@@ -1,4 +1,4 @@
-// Shared Hotwire baseline — Turbo Drive config, PWA shell, web-vitals sample (Rails 8 + Hotwire).
+// Shared Hotwire baseline - Turbo Drive config, PWA shell, web-vitals sample (Rails 8 + Hotwire).
 import "@hotwired/turbo-rails"
 import { bootThemeMeta } from "pub4/theme_meta"
 import { allows } from "pub4/cookie_consent"
@@ -43,7 +43,7 @@ if ("serviceWorker" in navigator) {
   register("/service-worker.js").catch(() => register("/service-worker").catch(() => {}))
 }
 
-// --- Web vitals (1% sample) — recovered from x-parity stack ---
+// --- Web vitals (1% sample) - recovered from x-parity stack ---
 const WEB_VITALS_SAMPLE_RATE = 0.01
 
 const webVitalsSampled = () => {

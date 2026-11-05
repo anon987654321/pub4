@@ -11,7 +11,7 @@ module Shared
   # It was inside brgen's `Tradedoubler` service, which is why amber earned
   # nothing: `ShopTheLook#remote_unavailable_reason` answered `:no_feed_client`
   # for every request because that constant is never loaded in amber's process,
-  # and `local_links` emitted `link.url` verbatim — no website id, no wrapping.
+  # and `local_links` emitted `link.url` verbatim - no website id, no wrapping.
   # A click that converted paid nobody unless the owner had pasted an
   # already-tracked URL themselves.
   #
@@ -40,7 +40,7 @@ module Shared
       "#{ENDPOINT}?a(#{website_id})"
     end
 
-    # Extra Publisher Information — the string TradeDoubler hands back on a
+    # Extra Publisher Information - the string TradeDoubler hands back on a
     # conversion, so a sale can be attributed to a city and a surface rather than
     # to "the website". Nil when there is nothing worth recording, so callers can
     # skip the parameter instead of sending an empty one.
@@ -95,7 +95,7 @@ module Shared
     # The verified path is the Link Converter script, because TradeDoubler serves
     # it and it rewrites outbound links itself. This method builds the deep link
     # by hand instead, and the exact Link Converter grammar is not something this
-    # repo can confirm without the vendor's current docs — a wrong shape does not
+    # repo can confirm without the vendor's current docs - a wrong shape does not
     # degrade to "unattributed", it degrades to a broken link, which is worse than
     # the problem it solves. So it requires TRADEDOUBLER_SERVER_SIDE_WRAP=1 and
     # stays a no-op until somebody has checked one live click through it.
@@ -109,8 +109,8 @@ module Shared
     # the tracking the owner pasted), and a blank URL.
     #
     # EPI is a segment, not a query parameter. Appending it with
-    # URI.encode_www_form re-encoded the parentheses in a(…)url(…) and produced
-    # `a%2812345%29=` — a link that tracks nothing and goes nowhere. Found by
+    # URI.encode_www_form re-encoded the parentheses in a(...)url(...) and produced
+    # `a%2812345%29=` - a link that tracks nothing and goes nowhere. Found by
     # running it rather than by reading it.
     def server_side_wrap_enabled?
       %w[1 true yes on].include?(ENV["TRADEDOUBLER_SERVER_SIDE_WRAP"].to_s.strip.downcase)

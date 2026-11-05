@@ -30,7 +30,7 @@ module Brgen
       # listing under the matching leaf, so the two can no longer disagree.
       LISTING_TITLES = {
       "electronics-phones" => [
-        "iPhone 14, 128 GB — pent brukt", "Samsung Galaxy S23", "iPhone 12, 64 GB",
+        "iPhone 14, 128 GB - pent brukt", "Samsung Galaxy S23", "iPhone 12, 64 GB",
         "Google Pixel 8, som ny", "Mobildeksel og lader, iPhone"
       ],
       "electronics-computers" => [
@@ -96,7 +96,7 @@ module Brgen
         "Sommerdekk med felg", "Batterilader til bil"
       ],
       "services-repair" => [
-        "Rørlegger — små jobber", "Maler tar oppdrag",
+        "Rørlegger - små jobber", "Maler tar oppdrag",
         "Datahjelp for eldre", "Sykkelreparasjon i Sandviken"
       ],
       "services-moving" => [
@@ -120,7 +120,7 @@ module Brgen
       "Lite brukt og fremdeles pent. Kvittering finnes hvis det er viktig.",
       "Noen bruksmerker som er nevnt over, ellers ingenting å bemerke.",
       "Henting i %{bydel} passer best. Kan møtes i sentrum hvis det er lettere.",
-      "Prisen er tenkt som utgangspunkt — gi et bud hvis du er interessert.",
+      "Prisen er tenkt som utgangspunkt - gi et bud hvis du er interessert.",
       "Alt originalt utstyr følger med. Røykfritt og dyrefritt hjem."
       ].freeze
 

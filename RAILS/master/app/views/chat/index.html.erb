@@ -19,7 +19,7 @@
   <link rel="icon" type="image/svg+xml" href="<%= asset_path("icon.svg") %>">
   <link rel="manifest" href="<%= pwa_manifest_path(format: :json) %>">
   <link rel="apple-touch-icon" href="<%= asset_path("icon.png") %>">
-  <script nonce="<%= content_security_policy_nonce %>"><%# scan: intentional — the pre-primer WebGL guard and asset-path bootstrap must run before face code %>
+  <script nonce="<%= content_security_policy_nonce %>"><%# scan: intentional - the pre-primer WebGL guard and asset-path bootstrap must run before face code %>
     // Deferred-boot contract, enforced at the platform level: no WebGL context may be
     // created before the primer tap. THREE.js parse + WebGL init is heavy enough
     // to wedge the main thread; if a stale or regressed asset boots it at page load, the
@@ -36,7 +36,7 @@
         return original.apply(this, arguments);
       };
     })();
-    <%# Rendered from config/face_assets.yml — the one manifest. The eager list
+    <%# Rendered from config/face_assets.yml - the one manifest. The eager list
         and the path map used to be two hand-maintained literals repeating the
         same twelve names, free to drift apart; the map is now derived. %>
     <% asset_paths = {
@@ -45,7 +45,7 @@
     }.merge(FaceAssets.singletons.to_h { |key, file| [key, FaceAssets.versioned(asset_path(file), file)] }) %>
     window.MASTER_ASSET_PATHS = <%= raw json_escape(asset_paths.to_json) %>;
   </script>
-  <script nonce="<%= content_security_policy_nonce %>"><%# scan: intentional — server-derived persona and face contract values must be published before dependent modules %>
+  <script nonce="<%= content_security_policy_nonce %>"><%# scan: intentional - server-derived persona and face contract values must be published before dependent modules %>
     <% persona = Rails.application.config.x.master_container&.[](:personality) %>
     <% profile = persona.respond_to?(:browser_profile) ? persona.browser_profile : {} %>
     window.MASTER_PERSONA = <%= raw json_escape(profile.to_json) %>;
@@ -63,7 +63,7 @@
     };
   </script>
   <link rel="preload" href="<%= asset_path("face.css") %>" as="style">
-  <%# No prefetch of face.js or THREE — on a 1-CPU VPS it competes with primer tap on the main thread. %>
+  <%# No prefetch of face.js or THREE - on a 1-CPU VPS it competes with primer tap on the main thread. %>
   <link rel="stylesheet" href="<%= asset_path("face.css") %>">
   <%# chat upload widget CSS isn't needed for the initial primer/face paint --
       defer it off the render-blocking path (inline onload= is blocked by CSP here).
@@ -71,14 +71,14 @@
       was attached never fires load again, and a preload link has no sheet to test. %>
   <link rel="preload" as="style" id="chat-upload-css" href="<%= asset_path("chat_upload.css") %>">
   <noscript><link rel="stylesheet" href="<%= asset_path("chat_upload.css") %>"></noscript>
-  <script nonce="<%= content_security_policy_nonce %>"><%# scan: intentional — the preloaded upload stylesheet needs both load and DOMContentLoaded race handling %>
+  <script nonce="<%= content_security_policy_nonce %>"><%# scan: intentional - the preloaded upload stylesheet needs both load and DOMContentLoaded race handling %>
     (function(){var f=document.getElementById('chat-upload-css');if(!f)return;
       var on=function(){f.rel='stylesheet';};
       f.addEventListener('load',on);document.addEventListener('DOMContentLoaded',on);})();
   </script>
-  <style nonce="<%= content_security_policy_nonce %>"><%# scan: intentional — the first-paint theme and canvas ground must exist before the external face stylesheet arrives %>
-    html, body { background: #000000; color: #efefef; } /* scan: intentional-colors — FOUC guard */
-    canvas#face { display: block; position: fixed; inset: 0; width: 100%; height: 100%; background: #000; } /* scan: intentional-colors — same FOUC guard: the canvas ground exists before the stylesheet */
+  <style nonce="<%= content_security_policy_nonce %>"><%# scan: intentional - the first-paint theme and canvas ground must exist before the external face stylesheet arrives %>
+    html, body { background: #000000; color: #efefef; } /* scan: intentional-colors - FOUC guard */
+    canvas#face { display: block; position: fixed; inset: 0; width: 100%; height: 100%; background: #000; } /* scan: intentional-colors - same FOUC guard: the canvas ground exists before the stylesheet */
     #primer { background: transparent; }
     #prompt-form { background: #000; }
   </style>
@@ -97,7 +97,7 @@
       data-primer="auto">
   <a href="#prompt-input" class="skip-link"><%= t("skip_to_prompt") %></a>
   <%# The same wordmark the three RAILS apps carry, saying which host this is.
-      Type only, fixed top-left, no chip or border — the mark is shared/_brand_mark
+      Type only, fixed top-left, no chip or border - the mark is shared/_brand_mark
       there and cannot be rendered from here (MASTER/web does not mount the engine),
       so it is the same markup and the same class names rather than a second design.
       <header> because it is page content that would otherwise sit outside any
@@ -154,11 +154,11 @@
   <noscript><p id="primer-noscript" role="alert"><%= t("face.primer_noscript") %></p></noscript>
   <%# The mic opens at load: face.part5 says why, and how a denied permission
       or a deliberate exit keeps it shut. %>
-  <%# Boot + primer tap must run synchronously right after #primer — before ANY other
+  <%# Boot + primer tap must run synchronously right after #primer - before ANY other
       script (including face_2d_fallback). public/face_primer.js holds it: a classic,
       synchronous script (no defer, no async), digested and cached, so its handlers are
       wired before parsing continues. A blocking <script src> above #primer delays
-      handler wiring; early taps look dead. #prompt-form and #ui-status are below this block —
+      handler wiring; early taps look dead. #prompt-form and #ui-status are below this block -
       face_primer.js resolves them lazily in go(), not at parse time.
       See TREE_CONTRACTS.md and history of "tap to start does nothing" for this high-risk path.
       Enhancements there should preserve the _primerFired guard and dbgFrames check. %>
@@ -193,14 +193,14 @@
   </main>
   <script src="<%= asset_path("container_check.js") %>" defer></script>
   <script src="<%= asset_path("face_deferred_loader.js") %>" defer></script>
-  <%# Deferred boot modules, from config/face_assets.yml#shell_manifest — order is
+  <%# Deferred boot modules, from config/face_assets.yml#shell_manifest - order is
       the boot contract. face.js (the THREE.js WebGL face) is intentionally absent:
       loadFace() imports it lazily on the primer tap (see the boot script above). %>
   <%= javascript_include_tag(*FaceAssets.group("shell_manifest"), defer: true) %>
   <script src="<%= asset_path("master_events.js") %>" defer></script>
   <script src="<%= asset_path("shortcut_sheet.js") %>" defer></script>
   <script src="<%= asset_path("viewport_inset.js") %>" defer></script>
-  <script nonce="<%= content_security_policy_nonce %>"><%# scan: intentional — runtime-config notification must be available to the face lifecycle before it settles %>
+  <script nonce="<%= content_security_policy_nonce %>"><%# scan: intentional - runtime-config notification must be available to the face lifecycle before it settles %>
     fetch('/runtime/config').then((r) => r.ok ? r.json() : null).then((cfg) => {
       if (cfg && typeof cfg === 'object') {
         window.MASTER_RUNTIME = { ...window.MASTER_RUNTIME, ...cfg };

@@ -43,13 +43,13 @@ class RawSchemaObjectsTest < Minitest::Test
   # missing from here is one that arrived unnoticed.
   KNOWN = {
     "brgen" => {
-      "posts_fts" => "fts5 index over posts.title/body — 20260528000100_create_posts_fts.rb",
+      "posts_fts" => "fts5 index over posts.title/body - 20260528000100_create_posts_fts.rb",
       "posts_ai" => "keeps posts_fts in step on insert",
       "posts_au" => "keeps posts_fts in step on update",
       "posts_ad" => "keeps posts_fts in step on delete",
     },
     "bsdports" => {
-      "ports_fts" => "fts5 index over ports.name/comment — 20260528000100_create_ports_fts.rb",
+      "ports_fts" => "fts5 index over ports.name/comment - 20260528000100_create_ports_fts.rb",
       "ports_ai" => "keeps ports_fts in step on insert",
       "ports_au" => "keeps ports_fts in step on update",
       "ports_ad" => "keeps ports_fts in step on delete",
@@ -85,7 +85,7 @@ class RawSchemaObjectsTest < Minitest::Test
     end
 
     assert_empty undeclared,
-                 "a schema object the Ruby dumper cannot write arrived without anyone saying so — " \
+                 "a schema object the Ruby dumper cannot write arrived without anyone saying so - " \
                  "add it to KNOWN with a reason, or move the app to structure.sql:\n  #{undeclared.join("\n  ")}"
   end
 
@@ -116,7 +116,7 @@ class RawSchemaObjectsTest < Minitest::Test
       next if KNOWN.fetch(app).empty?
 
       assert_equal "ruby", schema_format(app),
-                   "#{app} is on structure.sql now — its objects survive db:schema:load, so drop them from KNOWN"
+                   "#{app} is on structure.sql now - its objects survive db:schema:load, so drop them from KNOWN"
     end
   end
 
@@ -132,7 +132,7 @@ class RawSchemaObjectsTest < Minitest::Test
         next unless undumpable.include?(name)
 
         refute_includes dump, name,
-                        "#{app}/db/schema.rb mentions #{name} after all — the premise here is wrong"
+                        "#{app}/db/schema.rb mentions #{name} after all - the premise here is wrong"
       end
     end
   end
@@ -185,7 +185,7 @@ class RawSchemaObjectsTest < Minitest::Test
         assert_match(/rescue StandardError/, body, "#{relative} no longer rescues")
       when :raises
         refute_match(GUARDS, body[/scope :search.*?\}/m].to_s,
-                     "#{relative} grew a guard — say so here, because a silent empty result " \
+                     "#{relative} grew a guard - say so here, because a silent empty result " \
                      "is worse than a raise for a search box")
       end
     end

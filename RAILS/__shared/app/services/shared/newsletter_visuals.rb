@@ -44,7 +44,7 @@ module Shared
         processed = postpro_attachment(seed_attachment)
         return Hero.new(
           url: processed,
-          alt: "#{city_name} — #{theme}",
+          alt: "#{city_name} - #{theme}",
           caption: "Processed with postpro",
           source: :postpro,
         ) if processed
@@ -132,7 +132,7 @@ module Shared
 
       Artwork.new(
         url:,
-        alt: "#{city_name} — #{theme}",
+        alt: "#{city_name} - #{theme}",
         caption: "Generated with Replicate for this edition",
         source: :replicate,
       )

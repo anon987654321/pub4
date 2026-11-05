@@ -1,4 +1,4 @@
-<%# Pay-bar fixed above the tab bar: "Kurv · 3 varer · 387 kr → Betal".
+<%# Pay-bar fixed above the tab bar: "Kurv - 3 varer - 387 kr -> Betal".
     Rendered from the layout on every page (which passes cart_count and
     cart_total_ore); CartsController turbo-streams a fresh copy after
     quick-adds, and cart_bar_controller pulses it. Hidden on the
@@ -13,7 +13,7 @@
       <span class="cart-bar-title"><%= t("cart.bar_title") %></span>
       <span class="cart-bar-meta">
         <span data-cart-bar-count><%= t("cart.bar_items", count: count.to_i) %></span>
-        ·
+        -
         <span data-cart-bar-total><%= money(total_ore.to_i) %></span>
       </span>
     </span>

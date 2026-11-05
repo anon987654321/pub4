@@ -1,4 +1,4 @@
-/* BEGIN:generated-vertical-accents — ruby MASTER/tools/design_tokens.rb sync_dialect_tokens */
+/* BEGIN:generated-vertical-accents - ruby MASTER/tools/design_tokens.rb sync_dialect_tokens */
 $vertical-accents: (
   marketplace: (#2563EB, #1D4ED8, #1E40AF, #f7f6fa),
   tv: (#dc635c, #b83a33, #dc635c, #110f19),
@@ -17,19 +17,19 @@ $vertical-accent-ink: #110f19;
 // One scheme, eight values: #000 #111 #333 #4d4d4d #666 #a3a3a3 #efefef #fff.
 //
 // Every dialect below now forwards here. There were six colour mixins carrying
-// fifty distinct hex literals between them — an indigo, a warm luxury paper, a
-// 2014 greyscale port — and a surface could pin any of them, so the same
+// fifty distinct hex literals between them - an indigo, a warm luxury paper, a
+// 2014 greyscale port - and a surface could pin any of them, so the same
 // component read three ways across three apps.
 //
 // The values are not a preference; each pair was measured with
 // Deploy::DesignMetrics.contrast_ratio against the target laws.yml states,
-// wcag_2_2_aa_with_aaa_body_text — AAA for body prose, AA elsewhere, 3.0 for a
+// wcag_2_2_aa_with_aaa_body_text - AAA for body prose, AA elsewhere, 3.0 for a
 // boundary per WCAG 1.4.11:
 //
 //   text #efefef on #000 18.26:1, on #111 16.42:1     secondary #a3a3a3 8.33 / 7.49
 //   border #666 on #000 3.66:1                        accent ink #000 on #efefef 18.26:1
 //
-// #666 is the border in BOTH modes — 4.99:1 on #efefef and 3.66:1 on #000 —
+// #666 is the border in BOTH modes - 4.99:1 on #efefef and 3.66:1 on #000 -
 // which is why there is one border value rather than two.
 //
 // The panel fill is #111 and not #222: at #222 the border falls to 2.77:1 and
@@ -51,7 +51,7 @@ $vertical-accent-ink: #110f19;
   $danger: #e46151,
   // The --c-* channel is the MASTER face's, not the apps'. It keeps its chroma
   // and stays pinned to MASTER/data/tokens.yml#tokens.face_root.anchors, which the production
-  // check asserts — zeroing it here to match the greyscale broke that link and
+  // check asserts - zeroing it here to match the greyscale broke that link and
   // would have recoloured the face, a surface this scheme does not cover.
   $c-text: oklch(93% 0.025 250),
   $c-accent: oklch(78% 0.10 300),
@@ -87,13 +87,13 @@ $vertical-accent-ink: #110f19;
      so the scale needs exactly one absolute anchor to be a multiple *of*.
      Express this in var(--text-base) and it defines itself. */
   --font-size: 16px;
-  /* Absolute on purpose — ScaleLint absolute_line_height baseline = 1.
+  /* Absolute on purpose - ScaleLint absolute_line_height baseline = 1.
      Unitless 1.25 matches at 16px root, but brgen uses --text-large (~18px) and
-     would open chrome 20→22.5px. PRESERVE until measured pass. */
-  --line-height: 20px; // scale: ok — sole absolute body rhythm anchor
+     would open chrome 20->22.5px. PRESERVE until measured pass. */
+  --line-height: 20px; // scale: ok - sole absolute body rhythm anchor
   /* design_rules typography.hierarchy allows three weights and wants at least
      200 between them so a step is visible. --weight-bold was 700, which put it
-     100 from --weight-heavy — a difference you cannot see, and the reason the
+     100 from --weight-heavy - a difference you cannot see, and the reason the
      tree had drifted to seven weights hunting for one that read. 600 restores
      an even 400/600/800 ladder with a real gap at each step. */
   --weight-normal: 400;
@@ -111,7 +111,7 @@ $vertical-accent-ink: #110f19;
 --radius-card: 16px;
 --radius-large: 16px;
   --sidebar-width: 275px;
-  // --feed-max is app-root-tokens', not this mixin's, and it was in both — so
+  // --feed-max is app-root-tokens', not this mixin's, and it was in both - so
   // every :root that includes a palette and an app root emitted it twice. The
   // same category error the --font note above records: a palette is colour, and
   // a surface that pins one (body.vertical-maps pins dark) has no business
@@ -130,7 +130,7 @@ $vertical-accent-ink: #110f19;
 @mixin light-tokens(
   $bg: #ffffff,
   $surface: #efefef,
-  // tokens.yml#light carries surface_elevated #f2f2f2 — same differentiation,
+  // tokens.yml#light carries surface_elevated #f2f2f2 - same differentiation,
   // applied here so the light half does not flat-pack its cards.
   $surface-elevated: #f2f2f2,
   $search-bg: #efefef,
@@ -157,7 +157,7 @@ $vertical-accent-ink: #110f19;
 // amber kept a warm-paper dialect of its own until 2026-09-08.
 @mixin luxury-light-tokens {
   // amber's warm paper: #f0ebe3 elevated, #e6e0d8 border, a #7c6c53 accent
-  // darkened by 2 to clear APCA Lc 75.1. All of it now the one scheme — a
+  // darkened by 2 to clear APCA Lc 75.1. All of it now the one scheme - a
   // wardrobe page and a city feed are the same surface with different words on
   // them, and three palettes meant the same component read three ways.
   @include light-tokens;
@@ -171,12 +171,12 @@ $vertical-accent-ink: #110f19;
 // brgen kept a dark-inverted port of the real 2014 desktop.css until 2026-09-08.
 @mixin brgen-old-dark-tokens {
   // The 2014 desktop.css port: true neutral greyscale, zero accent hue. It was
-  // already the closest of the six to one scheme, and the scheme took its side —
+  // already the closest of the six to one scheme, and the scheme took its side -
   // #000 ground, a #111 bar, #efefef ink. Its own note argued #cfcfcf secondary
   // against an APCA 75 floor over four dark grounds; #999 on #111 is 6.63:1 WCAG
   // and the shared value, so that argument is settled here rather than per app.
   @include dark-tokens;
-  // Operator, 2026-10-28: brgen mirrors X.com — the dark accent is X's one
+  // Operator, 2026-10-28: brgen mirrors X.com - the dark accent is X's one
   // blue, with the family's black ink on it (7.02:1; X's white would be
   // 3.16:1). The blue is declared here, in the palette mixin where every
   // --accent definition belongs, so the use-sites keep citing a token and the
@@ -196,8 +196,8 @@ $vertical-accent-ink: #110f19;
 // alias over.
 @mixin app-root-tokens {
   // The typeface, declared once per app root rather than inside a palette.
-  // Every app takes this default; anything that only pins a palette — a
-  // vertical, a theme toggle — cannot change the face as a side effect.
+  // Every app takes this default; anything that only pins a palette - a
+  // vertical, a theme toggle - cannot change the face as a side effect.
   //
   // One family for every app, from MASTER/data/tokens.yml#tokens.shared_chrome.font; the
   // sync tool keeps this value equal to it.
@@ -217,7 +217,7 @@ $vertical-accent-ink: #110f19;
   // and face HUD insets all read these vars.
   // px, not rem, and deliberately. brgen sets its root to 18px (the real 2014
   // mobile.css base), so 0.75rem resolved to 13.5px and put the brand mark at
-  // (13.5, 13.5) and the nav links at 85.5 / 148.38 / 201.66 on every surface —
+  // (13.5, 13.5) and the nav links at 85.5 / 148.38 / 201.66 on every surface -
   // 60 components painting on fractional pixels, where the compositor resamples
   // the text and a 1px edge becomes two half-intensity lines. A chrome inset is
   // a fixed distance from the edge of the screen, not a multiple of the reading

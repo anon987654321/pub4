@@ -2,7 +2,7 @@
 
 require "test_helper"
 
-# Tracking is public by token — no login required. The tip and review forms
+# Tracking is public by token - no login required. The tip and review forms
 # appear after delivery. Tips sit behind config.x.tips (off by default, since
 # neither payment lane can charge one), so these tests turn it on.
 class TrackTipTest < ActionDispatch::IntegrationTest
@@ -83,9 +83,9 @@ class TrackTipTest < ActionDispatch::IntegrationTest
     assert_equal 0, @order.reload.tip_ore
   end
 
-  test "the zero chip leaves the total untouched — no pressure" do
+  test "the zero chip leaves the total untouched - no pressure" do
     # The chips are 0/20/40 kr; the 0 chip must be a safe no-op (the controller
-    # skips Order#add_tip! for 0 — the model refuses non-positive amounts).
+    # skips Order#add_tip! for 0 - the model refuses non-positive amounts).
     post order_tip_url(@order.tracking_token), params: { tip_ore: 0 }
 
     assert_includes [ 200, 302, 303 ], response.status

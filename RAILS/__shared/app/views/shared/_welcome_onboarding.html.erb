@@ -36,7 +36,7 @@
       <button type="button"
               class="welcome-onboarding-close"
               data-action="welcome-onboarding#close"
-              aria-label="<%= t("onboarding.skip") %>">×</button>
+              aria-label="<%= t("onboarding.skip") %>">x</button>
 
       <p class="welcome-onboarding-label"><%= t("#{namespace}.kicker") %></p>
       <%# h2: the page under the dialog already has its h1. %>
@@ -47,7 +47,7 @@
         <% (1..3).each do |step| %>
           <li>
             <span class="welcome-onboarding-step-number" aria-hidden="true"><%= step %></span>
-            <div> <%# scan: intentional — the ordered-list grid needs one child for each step title and explanation %>
+            <div> <%# scan: intentional - the ordered-list grid needs one child for each step title and explanation %>
               <strong><%= t("#{namespace}.steps.#{step}.title") %></strong>
               <p><%= t("#{namespace}.steps.#{step}.body", city: city) %></p>
             </div>

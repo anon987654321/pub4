@@ -1,10 +1,10 @@
-// Ultra-minimal layout primitives — x.com dark base, light via prefers-color-scheme.
+// Ultra-minimal layout primitives - x.com dark base, light via prefers-color-scheme.
 // Apps: @use "stack" as *; then add product rules in application.scss.
 
 @use "dialect_tokens" as x;
 :root { --root-scale-wide: 21px; }
 
-// Shared alias set — same 10 x.com-style names regardless of mode, just
+// Shared alias set - same 10 x.com-style names regardless of mode, just
 // re-pointed at the light or dark @include. Defined once, applied twice below.
 @mixin minimal-alias-tokens {
   --white: var(--bg);
@@ -55,7 +55,7 @@ body {
 
 /* The second anchor, and px for the same reason as --font-size: this sets the
    root that every rem in the scale multiplies. Note the consequence, because it
-   has bitten twice now — above 1280px one rem is 21px, not 16px, in amber and
+   has bitten twice now - above 1280px one rem is 21px, not 16px, in amber and
    bsdports (the two apps _stack.scss forwards this into). Any px value swapped
    for a rem token in those apps changes size at this breakpoint and nowhere
    else, which is why it reads as a no-op in a browser at default width. That is
@@ -63,7 +63,7 @@ body {
 @media (min-width: 1280px) {
   html,
   body {
-    font-size: var(--root-scale-wide, 21px); /* the large-screen rem base — snapping it to a ladder step would rescale every rem in the system */
+    font-size: var(--root-scale-wide, 21px); /* the large-screen rem base - snapping it to a ladder step would rescale every rem in the system */
     line-height: var(--leading-snug);
   }
 }
@@ -129,7 +129,7 @@ nav a:hover {
   inset-block-start: 0.75rem;
   inset-inline-start: 0.75rem;
   /* Skip-links get the scale's own top tier (design_tokens' --z-skip: 2000)
-     — was hardcoded to 1000, tying it with modals instead of outranking them. */
+     - was hardcoded to 1000, tying it with modals instead of outranking them. */
   z-index: var(--z-skip);
   padding: 0.5rem 0.75rem;
   background: var(--black);
@@ -286,7 +286,7 @@ footer {
   margin-top: 1rem;
 }
 
-/* The button family lives in _buttons.scss — the position that wins. */
+/* The button family lives in _buttons.scss - the position that wins. */
 
 .flash-alert {
   background: var(--hover-subtle);
@@ -320,12 +320,12 @@ footer {
   font-size: var(--text-extra-small);
 }
 
-/* The dating swipe deck used to live here — #swipe-stack, .swipe-card,
+/* The dating swipe deck used to live here - #swipe-stack, .swipe-card,
    .swipe-card--stack-0..15, .swipe-placeholder, .swipe-meta, .swipe-actions.
    It was dead in every app that loaded it. Dating is a brgen engine and the
    markup exists only in brgen/engines/dating/app/views/dating/home/, but
    _minimal.scss is forwarded by _stack.scss, which only amber and bsdports
-   use — brgen goes through _stack_brgen.scss, which deliberately omits it.
+   use - brgen goes through _stack_brgen.scss, which deliberately omits it.
    brgen's live copy is _dating_stack.scss, already on the rem scale
    (clamp(3rem, 14vw, 4.5rem) where this had a bare 64px).
 
@@ -357,8 +357,8 @@ footer {
 }
 
 /* Scaled down to fit a small phone, undone from xs up. A transform rather than a
-   type step is not what this would be if it were written today — scaling text
-   blurs it and makes the footer a containing block — but changing that is a
+   type step is not what this would be if it were written today - scaling text
+   blurs it and makes the footer a containing block - but changing that is a
    design decision, so the inversion keeps the value and moves only the
    condition. */
 footer {

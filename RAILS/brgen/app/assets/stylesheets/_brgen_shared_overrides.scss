@@ -24,7 +24,7 @@
   a { text-decoration: underline; }
 }
 
-/* Reduced motion — keep identity, kill ambient */
+/* Reduced motion - keep identity, kill ambient */
 @media (prefers-reduced-motion: reduce) {
   .skeleton {
     animation: none !important;
@@ -106,7 +106,7 @@
 }
 
 // Validation errors. role="alert" is already on the element; this gives the list the
-// shape of an error block without inventing a colour — --danger is the token the
+// shape of an error block without inventing a colour - --danger is the token the
 // dialects already define for it.
 .form-errors {
   margin: 0 0 var(--space-3);
@@ -127,7 +127,7 @@
 
 // ---- brgen_shared_social_surfaces ----
 /* Admin rosters are indexes, not feeds: hairline rows, tabular density,
-   no card padding — the moderation surfaces share one list pattern. */
+   no card padding - the moderation surfaces share one list pattern. */
 .ban-list > li,
 .member-list > li,
 .attendee-list > li,
@@ -251,7 +251,7 @@
 }
 
 /* The ring is the state: unseen wears the accent, seen fades to the border
-   grey — the one place the hue means "new here" on a grayscale surface. */
+   grey - the one place the hue means "new here" on a grayscale surface. */
 .story-ring img {
   border: 2px solid var(--accent);
 }
@@ -1057,7 +1057,7 @@ body.vertical-marketplace .store-buybox .price {
   body.vertical-marketplace #marketplace-listings .deal-card-img {
     grid-row: 1;
     width: 220px;
-    height: 220px; // scan: intentional — a fixed square product-photo crop frame, not a flowing text container
+    height: 220px; // scan: intentional - a fixed square product-photo crop frame, not a flowing text container
     padding: 12px;
   }
 
@@ -1158,13 +1158,13 @@ body.vertical-marketplace .storefront-bol-brand-cell {
 body.vertical-marketplace .storefront-bol-brand-cell #logoWrapper {
   flex: none;
   width: 56px;
-  height: 56px; // scan: intentional — the logo stage's drawn size, not flowing content
+  height: 56px; // scan: intentional - the logo stage's drawn size, not flowing content
   overflow: hidden;
 }
 
 body.vertical-marketplace .storefront-bol-brand-cell #logoWrapper .banner_wrapper {
   width: 100px;
-  height: 100px; // scan: intentional — the drawn stage the logo's geometry is set in
+  height: 100px; // scan: intentional - the drawn stage the logo's geometry is set in
   transform: scale(0.56);
   transform-origin: 0 0;
 }
@@ -2065,7 +2065,7 @@ html[data-theme="light"] .post-progressive-indicator.is-active {
   text-align: center;
 }
 
-/* display: grid above outranks the UA [hidden] rule, so "Publiserer…" stood on
+/* display: grid above outranks the UA [hidden] rule, so "Publiserer..." stood on
    every fresh compose form before anything was sent. Hidden means hidden. */
 .post-publishing[hidden] {
   display: none;

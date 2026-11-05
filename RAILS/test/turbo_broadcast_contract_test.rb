@@ -7,7 +7,7 @@ require_relative "engine_roots"
 # anyone sees it. `broadcast_*_later_to` enqueues a job; the job raises
 # ActionView::MissingTemplate inside Solid Queue; the page simply never updates.
 # the old backlog called this out as "several Turbo broadcasts use implicit
-# to_partial_path with no matching partial" — there were more than several, and the
+# to_partial_path with no matching partial" - there were more than several, and the
 # reasons split into two very different groups.
 #
 # This test pins both:
@@ -20,12 +20,12 @@ require_relative "engine_roots"
 #
 #   2. The Shared::* social models used to broadcast implicitly. Post, Follow, and
 #      ChatMessage were cut 2026-08-02 (no usable table in any schema, zero references).
-#      The three that remained — Reaction, Notification, ReviewCase — kept implicit
+#      The three that remained - Reaction, Notification, ReviewCase - kept implicit
 #      broadcasts into shared:reactions/notifications/review_cases, streams with no
 #      subscriber and no partial anywhere. Their tables DO exist (amber even creates
 #      ReviewCase rows), so unlike the cut trio the callbacks could actually fire and
 #      raise MissingTemplate in Solid Queue. Those three callbacks were removed 2026-08-02
-#      — the same treatment the Tv/Playlist dead broadcasts got. There is now no implicit
+#      - the same treatment the Tv/Playlist dead broadcasts got. There is now no implicit
 #      Shared::* broadcast left to tolerate; the streams are guarded below with the other
 #      removed ones, so re-adding a subscriber without a partial fails this test.
 class TurboBroadcastContractTest < Minitest::Test
@@ -41,13 +41,13 @@ class TurboBroadcastContractTest < Minitest::Test
     (parts + [plural, "_#{base}.html.erb"]).join("/")
   end
 
-  # Broadcast calls that pass no partial:. Read as whole statements — these calls
+  # Broadcast calls that pass no partial:. Read as whole statements - these calls
   # routinely span several lines, and looking at one line at a time reports every
   # multi-line call as implicit.
   def implicit_broadcasts(app)
     roots = { File.join(ROOT, app, "app/models") => nil, File.join(ROOT, "__shared/app/models") => "shared engine" }
     # Verticals extracted to mountable engines (brgen_*/app/models) carry their
-    # own models now — scan them too, or a broadcast that moves with tv/playlist
+    # own models now - scan them too, or a broadcast that moves with tv/playlist
     # would slip the net. See brgen/README.md.
     EngineRoots.glob(ROOT, app, "app/models").each { |dir| roots[dir] = "engine" }
     roots.flat_map do |root, _label|
@@ -93,13 +93,13 @@ class TurboBroadcastContractTest < Minitest::Test
       broadcasts = body.lines.reject { |l| l.strip.start_with?("#") }.select { |l| l.match?(BROADCAST) }
 
       assert_empty broadcasts,
-                   "shared/#{name}.rb broadcasts again — make it explicit (partial: + target:) " \
+                   "shared/#{name}.rb broadcasts again - make it explicit (partial: + target:) " \
                    "and add its stream a subscriber, or leave the callback out"
     end
   end
 
   # The two that were wired: both keywords, because target: matters as much as
-  # partial: — the default target is derived from the model, not from the container
+  # partial: - the default target is derived from the model, not from the container
   # the page actually renders.
   def test_the_tv_broadcasts_name_both_partial_and_target
     {
@@ -146,7 +146,7 @@ class TurboBroadcastContractTest < Minitest::Test
       "shared:reactions", "shared:notifications", "shared:review_cases"
     ].each do |stream|
       refute_match(/turbo_stream_from[^\n]*#{Regexp.escape(stream)}/, subscriptions,
-                   "#{stream} has a subscriber now — restore the broadcast it lost, with an explicit partial")
+                   "#{stream} has a subscriber now - restore the broadcast it lost, with an explicit partial")
     end
   end
 
@@ -180,7 +180,7 @@ class TurboBroadcastContractTest < Minitest::Test
   #
   # The tests above ask whether a broadcast has a partial, and whether three
   # named streams stayed unsubscribed. Neither asks the general question, and
-  # two pairs had never matched — invisible from either end alone, because one
+  # two pairs had never matched - invisible from either end alone, because one
   # end is a model and the other a view:
   #
   #   brgen:notifications:*  written on every notification create, read nowhere
@@ -198,7 +198,7 @@ class TurboBroadcastContractTest < Minitest::Test
   # models-only scan called the layout's subscription dead.
   # Wider than BROADCAST above, which names the DOM verbs. broadcast_refresh_to
   # carries a stream name too, and leaving it out made the census report amber's
-  # outfits and planned_outfits subscriptions as orphans — the instrument
+  # outfits and planned_outfits subscriptions as orphans - the instrument
   # answering for three quarters of the fleet's named streams.
   # The line names the call; the stream name may be on the next one.
   # `Turbo::StreamsChannel.broadcast_append_to(` puts its literal a line down,
@@ -212,7 +212,7 @@ class TurboBroadcastContractTest < Minitest::Test
   UNREAD_STREAMS = {
     "brgen:notifications:*" =>
       "NotificationDeliveryJob is enqueued by nothing and kept only until vm23 confirms no " \
-      "queued row names it — see the job's header. Its broadcast goes when the class does.",
+      "queued row names it - see the job's header. Its broadcast goes when the class does.",
   }.freeze
 
   def normalise(stream) = stream.gsub(/\#\{[^}]*\}/, "*")
@@ -244,7 +244,7 @@ class TurboBroadcastContractTest < Minitest::Test
 
   # ERB comments blanked first, and length-preserving so line numbers still land.
   # The note explaining why a subscription was dropped names the call it dropped,
-  # so a raw scan read the explanation as the thing — the failure mode this repo
+  # so a raw scan read the explanation as the thing - the failure mode this repo
   # has recorded four times, and it fired here on the first run.
   def without_erb_comments(source)
     source.gsub(/<%#.*?%>/m) { |match| match.gsub(/[^\n]/, " ") }
@@ -273,7 +273,7 @@ class TurboBroadcastContractTest < Minitest::Test
                  "wire the reader, or record the stream in UNREAD_STREAMS with the reason"
 
     stale = UNREAD_STREAMS.keys - unread.map { |row| row[:stream] }
-    assert_empty stale, "these are no longer written or now have a reader — drop them from UNREAD_STREAMS"
+    assert_empty stale, "these are no longer written or now have a reader - drop them from UNREAD_STREAMS"
   end
 
   def test_every_subscription_has_a_broadcaster
@@ -282,6 +282,6 @@ class TurboBroadcastContractTest < Minitest::Test
 
     assert_empty orphans.map { |row| "#{row[:at]} subscribes to #{row[:stream]}, nothing writes it" },
                  "a subscription to a stream nothing writes opens a connection per viewer and " \
-                 "delivers nothing — drop it, or write the stream"
+                 "delivers nothing - drop it, or write the stream"
   end
 end

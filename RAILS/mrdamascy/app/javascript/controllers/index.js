@@ -2,7 +2,7 @@
 // match Rails-dasherized data attributes (item_sheet_controller.js registers
 // as "item-sheet", per the brgen/amber convention).
 // The application module rides the importmap pin ("controllers/application"
-// → its digested Propshaft URL); a relative "./application" here would
+// -> its digested Propshaft URL); a relative "./application" here would
 // bypass the importmap and resolve to an undigested 404 under Propshaft,
 // silently killing every Stimulus binding in the app.
 import { application } from "controllers/application"

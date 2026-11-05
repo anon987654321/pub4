@@ -79,8 +79,8 @@
     // The buffer takes the viewport's own aspect rather than a fixed landscape
     // one. It was 640x360 / 320x180 stretched to 100vw x 100vh: on a desktop
     // window that is nearly uniform and invisible, on a phone held upright it is
-    // 1.2x across and 4.7x down, so every cell this layer draws — the agent
-    // spirits are fillRect/strokeRect — landed on the face as a tall translucent
+    // 1.2x across and 4.7x down, so every cell this layer draws - the agent
+    // spirits are fillRect/strokeRect - landed on the face as a tall translucent
     // rectangle, and the terrain grid as long stretched wires.
     const isReduced = reducedMotion;
     const budget = (isReduced || (state.width * state.height) < 400000) ? 320 * 180 : 640 * 360;

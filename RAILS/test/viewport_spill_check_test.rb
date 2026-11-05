@@ -39,13 +39,13 @@ class ViewportSpillCheckTest < Minitest::Test
   def test_a_non_success_route_is_a_finding_not_an_unmeasured_pass
     source = File.read(File.expand_path("../../MASTER/checks/lib/rendered/viewport_spill.rb", __dir__))
 
-    assert_includes source, 'returned HTTP #{status} — viewport overflow was not measured'
+    assert_includes source, 'returned HTTP #{status} - viewport overflow was not measured'
     refute_match(/next unless cdp\.status\.to_i == 200/, source)
   end
 
   # The instrument, checked against a case whose answer is known: an element
   # explicitly wider than the viewport must be reported, and the same element
-  # inside a sideways scroller must not — a chip rail is meant to run past the
+  # inside a sideways scroller must not - a chip rail is meant to run past the
   # edge, and a check that cannot tell the two apart would fail every surface.
   def test_the_probe_sees_a_spill_and_forgives_a_scroller
     skip "no Chrome" unless Deploy::CdpSession.available?

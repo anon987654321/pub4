@@ -3,7 +3,7 @@
 require "test_helper"
 
 # A typo stood forever, and a message sent to the wrong room could not be taken
-# back — which on a hyperlocal chat where people post real addresses is a safety
+# back - which on a hyperlocal chat where people post real addresses is a safety
 # gap rather than a convenience one.
 class MessageEditTest < ActiveSupport::TestCase
   setup do
@@ -74,7 +74,7 @@ class MessageEditTest < ActiveSupport::TestCase
   end
 
   # Without exempting deleted messages from the presence validation the record
-  # is permanently invalid, and every later save on it — a receipt, a reaction —
+  # is permanently invalid, and every later save on it - a receipt, a reaction -
   # would fail.
   test "an unsent message can still be saved afterwards" do
     m = sent_message

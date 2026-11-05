@@ -49,7 +49,7 @@ module Playlist
           existing = find_track(entry)
           next unless existing&.audio_file&.attached?
           next if existing.audio_file.blob.checksum == checksum
-          raise InvalidArchive, "Existing audio differs from archive for #{entry['artist']} — #{entry['title']}"
+          raise InvalidArchive, "Existing audio differs from archive for #{entry['artist']} - #{entry['title']}"
         end
 
         playlist = nil

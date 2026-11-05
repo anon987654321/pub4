@@ -4,7 +4,7 @@ require "minitest/autorun"
 
 # the old backlog, brgen_allow_unauthenticated_access_is_a_noop: in an app
 # whose User has a `guest` column, Shared::Authentication.allow_unauthenticated_access
-# does nothing, and that is deliberate — guests get a soft Current.user so the
+# does nothing, and that is deliberate - guests get a soft Current.user so the
 # product is usable without signup, and require_real_user is the identity check.
 
 # The part that was debt is that a control read as a control and returned in
@@ -36,7 +36,7 @@ class AuthNoopIsAudibleTest < Minitest::Test
   def test_the_guest_branch_still_returns_early
     assert_includes guest_branch, "return",
                     "if this stopped returning early, guests lost resume_session and the " \
-                    "soft Current.user with it — that is a behaviour change, not a cleanup"
+                    "soft Current.user with it - that is a behaviour change, not a cleanup"
   end
 
   def test_the_no_op_announces_itself_before_returning

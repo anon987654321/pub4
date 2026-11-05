@@ -5,7 +5,7 @@
     <code><%= port.pkgpath %></code>
   </p>
   <%# The category and the one-line comment are two facts, not one string with a
-      dot between them: an empty comment left "devel ·" on every seeded row. %>
+      dot between them: an empty comment left "devel -" on every seeded row. %>
   <%# On a category page every row repeated the heading above it. %>
   <% unless @category == port.category %>
     <%= tag.small link_to(port.category.name, category_path(port.category)) %>

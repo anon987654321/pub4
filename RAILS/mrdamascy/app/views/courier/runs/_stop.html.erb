@@ -6,14 +6,14 @@
     <%= tag.strong "##{order.id}" %>
     <%= tag.span order.customer_name, class: "run-name" if order.customer_name.present? %>
     <%= tag.p class: "run-address" do %>
-      <%= link_to "#{order.address} · #{order.postcode}", map_search_url(order.address, order.postcode),
+      <%= link_to "#{order.address} - #{order.postcode}", map_search_url(order.address, order.postcode),
             rel: "noopener", target: "_blank" %>
     <% end %>
     <%= tag.p tag.q(order.delivery_note), class: "run-address" if order.delivery_note.present? %>
     <%= tag.p link_to(order.phone, "tel:#{order.phone}"), class: "run-phone" if order.phone.present? %>
     <ul class="fact-list run-meta">
       <%= tag.li money(order.total_ore) %>
-      <%= safe_join(order.order_items.map { |line| tag.li("#{line.quantity}× #{line.name}") }) %>
+      <%= safe_join(order.order_items.map { |line| tag.li("#{line.quantity}x #{line.name}") }) %>
     </ul>
   </div>
   <%= action %>

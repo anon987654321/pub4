@@ -46,7 +46,7 @@ class SessionBoundariesTest < ActionDispatch::IntegrationTest
   # A guest is persisted by a write, never by a page view (ensure_guest_user! skips
   # GET and HEAD), so the visitor votes before signing in, as in guest_session_cost_test.
   def test_RI_012_authentication_rotates_session_and_survives_refresh
-    target = Post.create!(user: @user, title: "Vote target #{SecureRandom.hex(3)}", content: "…")
+    target = Post.create!(user: @user, title: "Vote target #{SecureRandom.hex(3)}", content: "...")
     post post_vote_path(target), params: { vote: { value: 1 } }
     get new_session_path
     guest_id = session[:guest_user_id]

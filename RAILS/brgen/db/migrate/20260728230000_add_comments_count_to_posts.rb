@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-# Post#comment_count called comments.count on every render — 50 of the home
+# Post#comment_count called comments.count on every render - 50 of the home
 # page's 243 queries, two per feed post. A counter cache answers it from the row
 # the post is already loaded with.
 class AddCommentsCountToPosts < ActiveRecord::Migration[8.1]

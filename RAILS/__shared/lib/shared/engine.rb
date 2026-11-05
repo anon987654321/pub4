@@ -3,7 +3,7 @@
 module Shared
   class Engine < ::Rails::Engine
     isolate_namespace Shared
-    # Use << not += — Rails 8.2 freezes path arrays during engine boot; += breaks later engines.
+    # Use << not += - Rails 8.2 freezes path arrays during engine boot; += breaks later engines.
     %w[app/models app/models/concerns app/services app/controllers app/controllers/concerns app/policies app/helpers
 app/jobs app/reflexes].each do |dir|
       config.autoload_paths << root.join(dir).to_s
@@ -17,7 +17,7 @@ app/jobs app/reflexes].each do |dir|
     # equivalents doing the real work (amber's enable_anonymous_posts creates the
     # same anonymous_post_quotas table). On 2026-08-11 a migration was added to
     # shared/db/migrate for the outbound_clicks table, ran nowhere, and the beacon
-    # that writes to it would have failed silently behind a rescue — inert config
+    # that writes to it would have failed silently behind a rescue - inert config
     # inside the framework wiring, which is this repo's own favourite defect class.
     #
     # The convention is one migration per app. `shared/db/migrate` is kept as the
@@ -46,7 +46,7 @@ app/jobs app/reflexes].each do |dir|
       end
       # ActionMailer keeps its own view-path stack, so the controller hook above
       # does not reach it. Without this, a host mailer can only render templates
-      # it carries itself — which is why every app had its own copy of
+      # it carries itself - which is why every app had its own copy of
       # passwords_mailer/reset.* and of layouts/mailer.*, and why amber and
       # bsdports were quietly rendering Rails' generated stub layout instead of
       # the engine's designed one.
@@ -83,7 +83,7 @@ app/jobs app/reflexes].each do |dir|
       end
     end
 
-    # shared/_ad_slot checks on advertising_consent?, and it is an engine partial —
+    # shared/_ad_slot checks on advertising_consent?, and it is an engine partial -
     # available to all three apps. The helper was included in brgen's
     # ApplicationController only, so placing an ad slot in amber or bsdports would
     # have raised NoMethodError and taken the page down instead of rendering

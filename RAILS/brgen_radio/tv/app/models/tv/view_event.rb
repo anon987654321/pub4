@@ -7,8 +7,8 @@ class Tv::ViewEvent < ApplicationRecord
   belongs_to :video, class_name: "Tv::Video", foreign_key: :tv_video_id, inverse_of: :view_events
 
   # A view counts as watched-through at 90%. Players rarely reach the final
-  # frame — the last timeupdate fires short of duration, and trailing silence
-  # gets skipped — so requiring 100% would mark almost nothing complete.
+  # frame - the last timeupdate fires short of duration, and trailing silence
+  # gets skipped - so requiring 100% would mark almost nothing complete.
   COMPLETION_THRESHOLD = 0.9
 
   validates :watch_time_seconds, numericality: { greater_than_or_equal_to: 0 }, allow_nil: true
@@ -18,7 +18,7 @@ class Tv::ViewEvent < ApplicationRecord
   # Fold a progress report from the player into this row.
   #
   # Monotonic: the player reports on pause, on tab hide and on unload, and those
-  # arrive out of order — a beacon queued at 0:40 can land after one sent at
+  # arrive out of order - a beacon queued at 0:40 can land after one sent at
   # 1:10. Taking the max means a late small report cannot erase real watch time.
   #
   # Clamped to the video's own duration, because seconds arrive from the client

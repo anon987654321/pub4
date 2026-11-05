@@ -2,7 +2,7 @@
 
 require "test_helper"
 # Faker is a gem, not autoloadable, and these tests touch Faker::Config before
-# any Brgen constant that requires it — without this the file passed or failed
+# any Brgen constant that requires it - without this the file passed or failed
 # depending on whether an earlier test happened to load faker first.
 require "faker"
 
@@ -62,7 +62,7 @@ class PerCitySeederTest < ActiveSupport::TestCase
   # These are Faker's locale ids, which are mostly region-tagged. An earlier
   # version of this test asserted bare tags ("nb", "de") on the theory that a
   # region tag would raise I18n::InvalidLocale inside a booted app. The tag
-  # does raise if you only set Faker::Config.locale — but the bare tag doesn't
+  # does raise if you only set Faker::Config.locale - but the bare tag doesn't
   # fail loudly either, it silently yields English data, which is how every
   # city ended up with English-sounding people. with_faker_locale admits the
   # locale to I18n for the duration instead, which is what makes the real
@@ -141,7 +141,7 @@ class PerCitySeederTest < ActiveSupport::TestCase
   test "seed_admin adopts an existing city-less admin instead of duplicating it" do
     city = City.find_by!(domain: "brgen.no")
     # Adopt the orphan if one is already there. The precondition this test needs
-    # is "a city-less admin exists", not "this test created it" — and db/seeds.rb
+    # is "a city-less admin exists", not "this test created it" - and db/seeds.rb
     # creates exactly that user, so on the VPS, whose CI seeds before running the
     # suite, the bare create! raised "Email address er allerede i bruk" and the
     # test failed for having its precondition already satisfied. Locally, with an
@@ -166,17 +166,17 @@ class PerCitySeederTest < ActiveSupport::TestCase
   end
 # A city's bank must sound like that city. These are the markers the sources
 # record, not an impression of them, and they are the half a later cleanup
-# pass would flatten first — "Ka gjør dokker" reads like a typo to anyone
+# pass would flatten first - "Ka gjør dokker" reads like a typo to anyone
 # correcting toward bokmål.
 # Case-insensitive, and wide enough to be the dialect rather than one phrase
 # from it. The first draft read /\beg\b/ case-sensitively and failed the
-# Stavanger replies, which open sentences with "Eg" — the instrument, not the
+# Stavanger replies, which open sentences with "Eg" - the instrument, not the
 # copy. Each set is several markers and the assertion needs one, so a rewrite
 # that keeps the dialect and changes the wording still passes.
 DIALECT_MARKERS = {
-    # Bergen types bokmål and speaks bergensk — the operator's correction. The
+    # Bergen types bokmål and speaks bergensk - the operator's correction. The
     # pronouns do not survive into writing; the vocabulary with no bokmål
-    # equivalent does — plus the idiom "den er brun" and the names only a
+    # equivalent does - plus the idiom "den er brun" and the names only a
     # Brann supporter writes, Bataljonen and Store Stå. A Bergen bank carrying
     # none of these is any Norwegian city.
     "brgen.no" => [ /\bboss(et)?\b/i, /\bsmau(et)?\b/i, /\bbekkalokk/i, /\bkjuagutt\b/i,

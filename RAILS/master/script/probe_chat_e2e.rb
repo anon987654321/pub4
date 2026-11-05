@@ -1,7 +1,7 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
-# Ferrum e2e — primer, face session, felt state, ping/pong chat.
+# Ferrum e2e - primer, face session, felt state, ping/pong chat.
 
 require "json"
 require "open3"
@@ -31,7 +31,7 @@ def skip_probe!(reason)
 end
 
 if RUBY_PLATFORM.include?("darwin") && !FORCE
-  skip_probe!("macOS — set PROBE_FORCE_BROWSER=1 for Ferrum")
+  skip_probe!("macOS - set PROBE_FORCE_BROWSER=1 for Ferrum")
 end
 
 chrome = BrowserProbeSupport.chrome_path
@@ -59,7 +59,7 @@ Timeout.timeout(BrowserProbeSupport::MAX_PROBE_SECONDS) do
 
   browser.on(:console) do |msg|
     console_msgs << "[#{msg.type}] #{msg.args.map(&:value).join(' ')}"
-  rescue StandardError # scan: intentional — a raising console hook would kill the probe loop; lost lines are acceptable
+  rescue StandardError # scan: intentional - a raising console hook would kill the probe loop; lost lines are acceptable
     nil
   end
 
@@ -68,7 +68,7 @@ Timeout.timeout(BrowserProbeSupport::MAX_PROBE_SECONDS) do
   begin
     browser.go_to(URL)
   rescue Ferrum::TimeoutError, Ferrum::PendingConnectionsError => e
-    puts "WARN: navigation incomplete — #{e.class}"
+    puts "WARN: navigation incomplete - #{e.class}"
   end
 
   sleep 2
@@ -156,9 +156,9 @@ Timeout.timeout(BrowserProbeSupport::MAX_PROBE_SECONDS) do
 rescue Timeout::Error
   skip_probe!("probe exceeded #{BrowserProbeSupport::MAX_PROBE_SECONDS}s")
 rescue Ferrum::ProcessTimeoutError => e
-  skip_probe!("browser launch timeout — #{e.class}")
+  skip_probe!("browser launch timeout - #{e.class}")
 rescue Ferrum::TimeoutError, Ferrum::DeadBrowserError => e
-  skip_probe!("headless blocked — #{e.class}")
+  skip_probe!("headless blocked - #{e.class}")
 ensure
   browser&.quit
 end

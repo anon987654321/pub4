@@ -46,7 +46,7 @@ module Marketplace
     end
 
     # StoresController looks up by slug (find_by!(slug: params[:id])), so path
-    # helpers must emit the slug, not the numeric id — otherwise /shops/<id> 404s.
+    # helpers must emit the slug, not the numeric id - otherwise /shops/<id> 404s.
     def to_param = slug.presence || id.to_s
 
     private

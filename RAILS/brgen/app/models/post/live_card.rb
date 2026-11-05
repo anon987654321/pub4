@@ -51,7 +51,7 @@ class Post
     end
 
     # Counts, not cards. A card carries the viewer's own vote, repost and quote,
-    # so one rendered for the stream would show every reader somebody else's — or
+    # so one rendered for the stream would show every reader somebody else's - or
     # nobody's, which takes the vote buttons away from everyone signed in. The
     # score and the comment count are the same for every reader, so only they are
     # sent, into the elements that carry them. Public because Comment calls it:
@@ -96,7 +96,7 @@ class Post
     end
 
     # An edit or a resolved link embed changes what the card says, so the card is
-    # sent whole — rendered for nobody, and marked so. feed_updates_controller
+    # sent whole - rendered for nobody, and marked so. feed_updates_controller
     # puts each reader's own vote rail, repost button and quote form back into it
     # (the elements marked data-viewer-state), so nobody's state is lost.
     # Rendered from a fresh read: the instance here may be a job's, with nothing
@@ -153,7 +153,7 @@ class Post
     end
 
     # Rendered with no Current.user, so the card carries nobody's vote, repost or
-    # quote state — on the creating request Current.user is the author, and the
+    # quote state - on the creating request Current.user is the author, and the
     # vote rail would otherwise hand every reader the author's buttons. A post
     # created a moment ago has none of the three from anyone, so this is the card
     # every reader should see at that instant.

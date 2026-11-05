@@ -4,7 +4,7 @@ require "test_helper"
 
 # The tv pages and writes that had no request test: shows, episodes, video
 # notes, comments and the live-stream pages. Video notes are the reason this
-# exists — the controller skipped Tv::BaseController, so find_by_slug_or_id was
+# exists - the controller skipped Tv::BaseController, so find_by_slug_or_id was
 # undefined and every note POST raised.
 class TvShowsAndNotesTest < ActionDispatch::IntegrationTest
   setup do
@@ -120,7 +120,7 @@ class TvShowsAndNotesTest < ActionDispatch::IntegrationTest
     assert_response :success
     line = I18n.t("tv.episode_line", number: 3, title: "Tredje")
     assert_select "[data-controller=tv-player] video[controls][data-tv-player-target=video][aria-label=?]", line
-    assert_select "h1", text: "Byliv — #{line}"
+    assert_select "h1", text: "Byliv - #{line}"
   end
 
   test "a note posts as Current.user, and an empty one is refused rather than a 500" do

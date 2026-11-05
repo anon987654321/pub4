@@ -1,4 +1,4 @@
-// MASTER particle face 2026 — vision feature registry (features 1–150).
+// MASTER particle face 2026 - vision feature registry (features 1-150).
 (() => {
   "use strict";
 

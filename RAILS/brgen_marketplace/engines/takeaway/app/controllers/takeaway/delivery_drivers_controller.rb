@@ -36,7 +36,7 @@ module Takeaway
     end
 
     def authorize_owner!
-      # user_id, not user — @delivery_driver is found by id with nothing
+      # user_id, not user - @delivery_driver is found by id with nothing
       # preloaded and strict_loading_by_default raises on the association read.
       return if Current.user && Current.user.id == @delivery_driver.user_id
 

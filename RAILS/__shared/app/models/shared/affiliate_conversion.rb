@@ -38,7 +38,7 @@ module Shared
     def approved? = [ 5, 6 ].include?(message_type_id)
     def paid? = message_type_id == 9
 
-    # Parse EPI segments city:bergen|surface:newsletter_weekly|…
+    # Parse EPI segments city:bergen|surface:newsletter_weekly|...
     def epi_parts
       epi.to_s.split("|").each_with_object({}) do |part, acc|
         key, value = part.split(":", 2)
@@ -151,7 +151,7 @@ module Shared
       return nil if value.blank?
 
       Time.zone.parse(value.to_s)
-    rescue StandardError # scan: intentional — an unparseable upstream timestamp is absent, not fatal
+    rescue StandardError # scan: intentional - an unparseable upstream timestamp is absent, not fatal
       nil
     end
   end

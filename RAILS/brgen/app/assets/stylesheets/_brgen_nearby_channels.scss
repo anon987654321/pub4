@@ -6,7 +6,7 @@
 // ============================================================ module: brgen_nearby_channels
 // ============================================================ pages: nearby and channels
 
-/* Nearby alerts — clear the flush corner chat tab (~48px) + tab-bar when open. */
+/* Nearby alerts - clear the flush corner chat tab (~48px) + tab-bar when open. */
 .nearby-alerts {
   position: fixed;
   bottom: calc(var(--tab-bar-h) + 3.5rem + var(--safe-bottom));
@@ -76,7 +76,7 @@
   border: 1px solid var(--border);
   color: var(--text-secondary);
   border-radius: var(--radius-pill);
-  padding: 0.25rem 0.75rem; /* 4px / 12px — eight_px_rhythm */
+  padding: 0.25rem 0.75rem; /* 4px / 12px - eight_px_rhythm */
   font-size: var(--text-small);
   cursor: pointer;
   transition: color var(--transition-fast) var(--ease-out), border-color var(--transition-fast) var(--ease-out);
@@ -91,7 +91,7 @@
 .hidden { display: none; }
 [hidden] { display: none; }
 
-/* Public IRC-style channels (apex /channels) — messenger chrome via body.vertical-messenger */
+/* Public IRC-style channels (apex /channels) - messenger chrome via body.vertical-messenger */
 
 .channels-index {
   max-width: var(--feed-max);

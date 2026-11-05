@@ -12,7 +12,7 @@ require_relative "../../../MASTER/checks/lib/live/page_simulation"
 #
 # It is the one check in this batch whose checks.yml row was simply wrong. It was
 # declared `needs: [browser]`, which is the runner's only signal for "this check
-# measures nothing without Chrome" — and page_simulation never opens Chrome. It
+# measures nothing without Chrome" - and page_simulation never opens Chrome. It
 # fetches over Net::HTTP through CrawlSupport. So the runner counted it among the
 # checks that "could measure" when Chrome was present and among the ones degrading
 # to warnings when it was not, and neither sentence was about this check. The row
@@ -52,7 +52,7 @@ class PageSimulationCheckTest < Minitest::Test
   # Everything the check reaches the world through: the inventory it walks, the
   # ports it probes, and the two files it writes. LiveRecordIds defaults to
   # resolving nothing, so a page listed under needing_id stays unprobed unless
-  # a test hands its own resolve: stub — the real one reads triangle's sqlite
+  # a test hands its own resolve: stub - the real one reads triangle's sqlite
   # files, which this suite must not depend on.
   def simulate(pages, live: [], needing_id: [], open: false, response: Response.new("200", LIVE_HTML),
                resolve: proc { |*, **| nil }, fetch: proc { |*, **| response })
@@ -187,13 +187,13 @@ class PageSimulationCheckTest < Minitest::Test
       warnings = result.warnings.join(" | ")
 
       assert_equal CHECK::PORTS.size, result.live_skips, "one skip per app, not one for the run"
-      CHECK::PORTS.each_key { |app| assert_match(/#{app} port \d+ closed — live surfaces skipped/, warnings) }
-      assert_match(/live HTTP skipped \(no triangle app listening\) — source checks still ran/, warnings)
+      CHECK::PORTS.each_key { |app| assert_match(/#{app} port \d+ closed - live surfaces skipped/, warnings) }
+      assert_match(/live HTTP skipped \(no triangle app listening\) - source checks still ran/, warnings)
     end
   end
 
   # A guest page whose path names a record gets no live probe, and a green live
-  # run has to say which ones — without failing a deploy that requires live.
+  # run has to say which ones - without failing a deploy that requires live.
   def test_unprobed_guest_pages_explain_why_the_record_is_not_resolvable
     Dir.mktmpdir("page-sim-view") do |root|
       row = page(root)
@@ -219,7 +219,7 @@ class PageSimulationCheckTest < Minitest::Test
 
       assert_equal :passed, result.outcome, result.failures.join(" | ")
       assert_equal 0, result.live_skips
-      assert_match(%r{brgen 1 guest page\(s\) need a record id and got no live probe — /posts/:id}, result.warnings.join(" | "))
+      assert_match(%r{brgen 1 guest page\(s\) need a record id and got no live probe - /posts/:id}, result.warnings.join(" | "))
     end
   end
 
@@ -242,7 +242,7 @@ class PageSimulationCheckTest < Minitest::Test
     guests = INVENTORY.all.select { |p| p[:persona] == "guest" }.reject { |p| INVENTORY.mailer?(p) }
 
     assert_equal guests.size, INVENTORY.guest_liveable.size + INVENTORY.guest_needing_id.size
-    refute_empty INVENTORY.guest_needing_id, "no guest page needs an id — the split measures nothing"
+    refute_empty INVENTORY.guest_needing_id, "no guest page needs an id - the split measures nothing"
   end
 
   # The row that was wrong. Nothing in this check opens a browser.

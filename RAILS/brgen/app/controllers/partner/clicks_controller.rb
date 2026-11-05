@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module Partner
-  # Public redirect: /p/:token → listing/store, recording a click for attribution.
+  # Public redirect: /p/:token -> listing/store, recording a click for attribution.
   class ClicksController < ApplicationController
     allow_unauthenticated_access only: :show
 
@@ -21,7 +21,7 @@ module Partner
       )
 
       # Both helpers return internal relative paths (Rails *_path helpers or the
-      # "/listings/:id" / "/shops/:slug" fallbacks), never another host — so the
+      # "/listings/:id" / "/shops/:slug" fallbacks), never another host - so the
       # target is always same-origin. allow_other_host: true was therefore unused
       # and read to Brakeman as an open redirect (params-derived value + off-host
       # opt-out). Dropping it keeps the same behaviour and lets Rails' default

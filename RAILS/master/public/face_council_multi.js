@@ -1,4 +1,4 @@
-// Council multi-face lanes — left/center/right persona indicators (web_007).
+// Council multi-face lanes - left/center/right persona indicators (web_007).
 (() => {
   "use strict";
 

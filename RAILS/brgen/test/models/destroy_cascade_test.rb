@@ -5,7 +5,7 @@ require "shared/destroy_cascade_examples"
 
 # ApplicationRecord sets strict_loading_by_default, and test/production both
 # raise. A `dependent: :destroy` cascade has to load its dependents in order to
-# delete them, and there is no preload that avoids that — so strict loading on
+# delete them, and there is no preload that avoids that - so strict loading on
 # such an association can only ever produce a crash, never catch an N+1 worth
 # catching. Every controller `destroy` action finds its record by id, with
 # nothing preloaded, which is exactly the shape that breaks.
@@ -37,7 +37,7 @@ class DestroyCascadeTest < ActiveSupport::TestCase
     ActsAsTenant.with_tenant(@city) do
       author = user("cascade-author")
       community = Community.create!(name: "Cascade #{SecureRandom.hex(3)}", slug: "cascade-#{SecureRandom.hex(4)}")
-      Post.create!(user: author, community:, title: "Doomed", content: "…")
+      Post.create!(user: author, community:, title: "Doomed", content: "...")
 
       assert_difference "Post.count", -1 do
         Community.find(community.id).destroy!
@@ -55,9 +55,9 @@ class DestroyCascadeTest < ActiveSupport::TestCase
   # later. `Marketplace::Review` validates that the reviewer has an accepted or
   # completed order against the listing, so **a listing with any review
   # necessarily has an order, and can therefore never be hard-destroyed.** The
-  # reviews cascade is not dead — it still fires for a listing that collected
+  # reviews cascade is not dead - it still fires for a listing that collected
   # favourites, deals or reviews-less traffic and never transacted, which is what
-  # this case now covers — but it is unreachable for anything that ever sold.
+  # this case now covers - but it is unreachable for anything that ever sold.
   # That is the intended shape: a listing that has taken money is withdrawn, not
   # deleted.
   test "destroying a listing that never transacted takes its dependents with it" do

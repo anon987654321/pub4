@@ -19,7 +19,7 @@ require "test_helper"
 #
 # Guest here means a visitor with no session at all. amber mints a soft
 # Current.user for anonymous visitors by design (Craigslist-style), so "did a
-# user object exist" is not the question — "was this identity allowed to do it"
+# user object exist" is not the question - "was this identity allowed to do it"
 # is, and that is what require_real_user decides.
 class AuthorizationMatrixTest < ActionDispatch::IntegrationTest
   # route, verb, guest outcome, signed-in outcome
@@ -58,7 +58,7 @@ class AuthorizationMatrixTest < ActionDispatch::IntegrationTest
     when :ok
       assert_response :success, "#{verb.upcase} #{route} as #{actor} should render"
     when :redirect
-      assert_response :redirect, "#{verb.upcase} #{route} as #{actor} must NOT be served — " \
+      assert_response :redirect, "#{verb.upcase} #{route} as #{actor} must NOT be served - " \
                                  "got #{response.status}. An identity check is missing or was " \
                                  "narrowed by a duplicate before_action."
     when :any

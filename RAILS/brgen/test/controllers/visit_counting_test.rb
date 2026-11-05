@@ -10,10 +10,10 @@ require "minitest/mock"
 class VisitCountingTest < ActionDispatch::IntegrationTest
   # A real browser always sends one; the integration harness does not, and
   # VisitCount.bot? treats a missing user agent as a non-person. That is the
-  # right call in production — a request with no user agent is a script — so the
+  # right call in production - a request with no user agent is a script - so the
   # test supplies one rather than the filter being loosened to accommodate it.
   # Current Chrome, because ApplicationController also runs `allow_browser
-  # versions: :modern` — Safari 17.0 is under that floor and gets a 406 before
+  # versions: :modern` - Safari 17.0 is under that floor and gets a 406 before
   # the counter is ever reached, which looks like the counter failing.
   BROWSER = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) " \
             "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"
@@ -54,7 +54,7 @@ class VisitCountingTest < ActionDispatch::IntegrationTest
     assert_equal({ "brgen.no" => 2, "oshlo.no" => 1 }, Shared::VisitCount.by_host)
   end
 
-  # Route, not path — otherwise the table grows one row per listing per day and
+  # Route, not path - otherwise the table grows one row per listing per day and
   # becomes a record of what each visitor looked at.
   def test_repeat_views_share_one_row
     3.times { browse "http://brgen.no/" }
@@ -78,7 +78,7 @@ class VisitCountingTest < ActionDispatch::IntegrationTest
 
   # A counter must never be able to take the page down with it.
   #
-  # Scoped, not a singleton_class.prepend — that version is permanent, so with a
+  # Scoped, not a singleton_class.prepend - that version is permanent, so with a
   # randomised seed every test that ran after it got the raising `record` and
   # counted nothing. The failure looked exactly like the concern not firing.
   def test_a_failing_counter_does_not_fail_the_request

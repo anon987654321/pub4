@@ -7,7 +7,7 @@ require "digest"
 require_relative "demo_media/catalog"
 
 module Shared
-  # Remote placeholder images for demo seeds (catalog → picsum) with optional postpro grading.
+  # Remote placeholder images for demo seeds (catalog -> picsum) with optional postpro grading.
   module DemoMedia
     extend self
 
@@ -76,7 +76,7 @@ catalog: nil)
         # A missing frame is a skip, never a raise: a seed failure blocks every
         # deploy, and a catalogue row can outlive its file on a partial checkout.
         unless path
-          message = "DemoMedia: #{seed} names #{entry['file']}, which is not on disk — skipped"
+          message = "DemoMedia: #{seed} names #{entry['file']}, which is not on disk - skipped"
           warn(message)
           log(message)
           return false

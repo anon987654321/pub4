@@ -3,7 +3,7 @@
 require "json"
 
 module Shared
-  # LLM rephrase pass for scraped social content — produces unique local-voice posts.
+  # LLM rephrase pass for scraped social content - produces unique local-voice posts.
   class ContentRewriter
     MODEL = ENV.fetch("REWRITE_MODEL", ENV.fetch("SCRAPE_MODEL", "google/gemini-2.0-flash-001"))
     TIMEOUT = 20

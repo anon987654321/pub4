@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Community was eight columns: city, name, slug, subdomain, description, user
-# and timestamps. No moderators, no rules, no icon, no privacy, no flair — and
+# and timestamps. No moderators, no rules, no icon, no privacy, no flair - and
 # ModerationReport/ModerationFlag/TrustScore are global, gated on a single
 # BRGEN_ADMIN_EMAIL, so there was no mod team per community and no queue per
 # community either.
@@ -18,9 +18,9 @@ class AddCommunityGovernance < ActiveRecord::Migration[8.1]
 
     change_table :communities, bulk: true do |t|
       t.text    :rules
-      # public     — anyone reads, anyone posts
-      # restricted — anyone reads, members post
-      # private    — members only, both
+      # public     - anyone reads, anyone posts
+      # restricted - anyone reads, members post
+      # private    - members only, both
       t.string  :privacy, null: false, default: "public"
       # Flair is per community and free-form, one per line, because a fixed
       # vocabulary across every community in every city is not a thing that
@@ -48,7 +48,7 @@ class AddCommunityGovernance < ActiveRecord::Migration[8.1]
 
         # Existing creators become owners. Without this every community made
         # before today has an empty moderator list and nobody who can appoint
-        # anyone — the state the last-owner validation exists to prevent.
+        # anyone - the state the last-owner validation exists to prevent.
         execute <<~SQL.squish
           UPDATE community_memberships SET role = 'owner'
           WHERE EXISTS (

@@ -1,6 +1,6 @@
 import { Controller } from "@hotwired/stimulus"
 
-// vYroQxg: $(".search input").on("focus blur") → toggle .focus on .search.
+// vYroQxg: $(".search input").on("focus blur") -> toggle .focus on .search.
 // Listened for on the shell itself (focusin/focusout bubble, focus/blur do not),
 // so a field inside it needs no wiring of its own: wrapping any search input in
 // <div class="search" data-controller="search-focus"> is the whole adoption.

@@ -6,7 +6,7 @@ namespace :affiliate do
     configured = Shared::Affiliate.configured_networks
     if configured.empty?
       warn <<~MSG
-        No affiliate network is configured — nothing imported.
+        No affiliate network is configured - nothing imported.
 
         TradeDoubler: brgen.no must be an approved publisher first, and that is
         a manual, two-step process (apply as publisher, then to each advertiser
@@ -27,9 +27,9 @@ namespace :affiliate do
     end
 
     results = Shared::Affiliate.import_all!(category: args[:category])
-    results.each { |network, written| puts "affiliate:import — #{network}: #{written} product(s) upserted" }
+    results.each { |network, written| puts "affiliate:import - #{network}: #{written} product(s) upserted" }
     vouchers = Shared::Tradedoubler.import_vouchers!
-    puts "affiliate:import — vouchers: #{vouchers}"
+    puts "affiliate:import - vouchers: #{vouchers}"
     puts "  total live product rows: #{Shared::AffiliateProduct.sellable.real.count}"
   end
 
@@ -85,15 +85,15 @@ namespace :affiliate do
   desc "Seed clearly-flagged placeholder affiliate products (no network needed)"
   task seed_placeholders: :environment do
     created = Brgen::AffiliatePlaceholders.seed!
-    puts "affiliate:seed_placeholders — #{created} placeholder row(s)."
-    puts "These are flagged placeholder: true and are excluded from .real —"
+    puts "affiliate:seed_placeholders - #{created} placeholder row(s)."
+    puts "These are flagged placeholder: true and are excluded from .real -"
     puts "they demo the surface, they are never payable inventory."
   end
 
   desc "Delete placeholder rows (run once real import works)"
   task drop_placeholders: :environment do
     deleted = Shared::AffiliateProduct.where(placeholder: true).delete_all
-    puts "affiliate:drop_placeholders — removed #{deleted} row(s)."
+    puts "affiliate:drop_placeholders - removed #{deleted} row(s)."
   end
   desc "Clicks sent vs conversions returned, and the gap between them"
   task :attribution, [ :days ] => :environment do |_, args|

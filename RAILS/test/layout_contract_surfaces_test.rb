@@ -59,7 +59,7 @@ class LayoutContractSurfacesTest < Minitest::Test
 
     controller = File.read(File.join(ROOT, "__shared/frontend/nav_autohide_controller.js"))
     assert_includes controller, "if (this.zoneValue > 0)",
-                    "the zone guard is what makes an unset zone silent — keep them described together"
+                    "the zone guard is what makes an unset zone silent - keep them described together"
   end
 
   def test_radio_actions_clear_the_persistent_navigation_band

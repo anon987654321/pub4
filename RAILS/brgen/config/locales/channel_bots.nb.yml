@@ -4,7 +4,7 @@ nb:
     # ChannelBot.canned_lines velger rommets eget språk.
     bots:
       master:
-        - notert — hva er det du står fast på?
+        - notert - hva er det du står fast på?
         - si mer, jeg hører.
         - "det ærlige svaret: det kommer an på nabolaget."
       echo:

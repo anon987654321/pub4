@@ -5,7 +5,7 @@ module Fediverse
   #
   # Everything reaching here has already had its signature checked, so the
   # sender is who they claim. What is still not true is that the sender is
-  # allowed to act on the object — a verified actor can still send a Delete for
+  # allowed to act on the object - a verified actor can still send a Delete for
   # somebody else's post, and each handler checks that separately.
   class InboxProcessor
     HANDLED = %w[Follow Undo Accept Reject Create Announce Like Delete].freeze
@@ -100,7 +100,7 @@ module Fediverse
       :unfollowed
     end
 
-    # Remote posts are not ingested in this pass — see the old backlog 2.1. The
+    # Remote posts are not ingested in this pass - see the old backlog 2.1. The
     # activity is recorded (so a redelivery is a duplicate rather than a
     # reprocess) and dropped, which is honest: pretending to accept content we
     # do not store would leave the sender believing it arrived.
@@ -135,7 +135,7 @@ module Fediverse
     # Accepts either a bare URI or an embedded object, because both are sent in
     # practice.
     # Accepts either the Follow activity's uri or the embedded object, because
-    # both shapes are sent — and matches on the actor too, so one instance cannot
+    # both shapes are sent - and matches on the actor too, so one instance cannot
     # accept another's follow.
     def outbound_follow_for(object)
       uri = object.is_a?(Hash) ? object["id"] : object

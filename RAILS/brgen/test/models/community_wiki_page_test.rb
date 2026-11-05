@@ -27,7 +27,7 @@ class CommunityWikiPageTest < ActiveSupport::TestCase
   end
 
   # revise! rather than update!, so no caller can save a page and forget the
-  # revision — a history with holes reads as if the missing edits never happened.
+  # revision - a history with holes reads as if the missing edits never happened.
   test "every edit keeps the body it replaced" do
     @page.revise!(body: "Andre utkast", user: @mod)
 

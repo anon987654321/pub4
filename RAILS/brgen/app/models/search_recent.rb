@@ -5,7 +5,7 @@
 # row to the top instead of accumulating, so the table is exactly as large as
 # the history it represents and the (user_id, query) unique index is the dedup.
 #
-# Only committed searches are recorded — a full-page /search?q= visit — never
+# Only committed searches are recorded - a full-page /search?q= visit - never
 # the palette's per-keystroke live-search streams. The palette keeps its
 # results in a turbo_stream fragment request, which is a suggestion being
 # tried, not a search having happened.

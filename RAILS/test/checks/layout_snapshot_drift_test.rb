@@ -67,17 +67,17 @@ class LayoutSnapshotDriftTest < Minitest::Test
     moved["elements"] = [moved["elements"].first.merge("rect" => { "x" => 0, "y" => 0, "w" => 390, "h" => 32 })]
     diffs = compare(snapshot, moved)
     assert_equal 1, diffs.size
-    assert_match(/h 48→32/, diffs.first, "the diff must name the old and new value, not just 'changed'")
+    assert_match(/h 48->32/, diffs.first, "the diff must name the old and new value, not just 'changed'")
   end
 
   def test_colour_change_is_reported
     recoloured = snapshot
     recoloured["elements"] = [recoloured["elements"].first.merge("color" => "#969696")]
-    assert_match(/color "#ffffff" → "#969696"/, compare(snapshot, recoloured).first)
+    assert_match(/color "#ffffff" -> "#969696"/, compare(snapshot, recoloured).first)
   end
 
   def test_lost_landmark_is_reported
-    assert_match(/landmark skip: true → false/,
+    assert_match(/landmark skip: true -> false/,
                  compare(snapshot, snapshot("landmarks" => { "main" => true, "nav" => true, "skip" => false })).first)
   end
 
@@ -101,7 +101,7 @@ class LayoutSnapshotDriftTest < Minitest::Test
     { "nav.tab-bar" => 4, "#main-content>p.lede" => 124, "#main-content>button.cancel" => 376 }.each { |key, y| moved(after, key, y:) }
     diffs = compare(page, after)
 
-    assert_equal "hierarchy: h1/body ratio 2.00 → 1.12", diffs.first
+    assert_equal "hierarchy: h1/body ratio 2.00 -> 1.12", diffs.first
     assert_match(/\Anudge: /, diffs.last)
   end
 
@@ -113,41 +113,41 @@ class LayoutSnapshotDriftTest < Minitest::Test
     diffs = compare(page, moved(page(h1_size: 17.9), "#main-content>p.lede", y: 126))
     check.send(:report, surface, diffs, "/tmp/x.json")
 
-    assert_match(/drifted from \S+ — hierarchy 1, style 1, nudge 1 — hierarchy: h1\/body ratio/, result.fails.first)
+    assert_match(/drifted from \S+ - hierarchy 1, style 1, nudge 1 - hierarchy: h1\/body ratio/, result.fails.first)
   end
 
   def test_a_line_more_of_text_is_a_wrap_not_a_move
     diffs = compare(page, moved(page, "#main-content>p.lede", h: 48))
 
-    assert_equal ["wrap: #main-content>p.lede: +1 line(s) (h 24→48)"], diffs.grep(/p\.lede/)
+    assert_equal ["wrap: #main-content>p.lede: +1 line(s) (h 24->48)"], diffs.grep(/p\.lede/)
   end
 
   def test_padding_that_is_not_a_whole_line_is_not_a_wrap
     diffs = compare(page, moved(page, "#main-content>p.lede", h: 36))
 
-    assert_equal ["reflow: #main-content>p.lede: h 24→36"], diffs.grep(/p\.lede/), "12px is half a 24px line and more than a nudge"
+    assert_equal ["reflow: #main-content>p.lede: h 24->36"], diffs.grep(/p\.lede/), "12px is half a 24px line and more than a nudge"
   end
 
   def test_crossing_into_another_landmark_is_a_reflow
     diffs = compare(page, moved(page, "#main-content>p.lede", y: 780))
 
-    assert_equal ["reflow: #main-content>p.lede: #main-content → footer.legal (y 120→780)"], diffs
+    assert_equal ["reflow: #main-content>p.lede: #main-content -> footer.legal (y 120->780)"], diffs
   end
 
   def test_a_small_move_inside_its_landmark_is_a_nudge
-    assert_equal ["nudge: #main-content>p.lede: y 120→126"], compare(page, moved(page, "#main-content>p.lede", y: 126))
+    assert_equal ["nudge: #main-content>p.lede: y 120->126"], compare(page, moved(page, "#main-content>p.lede", y: 126))
   end
 
   def test_a_shrunken_primary_action_is_a_hierarchy_change
     diffs = compare(page, page(buy: { x: 16, y: 300, w: 140, h: 44 }))
 
-    assert_includes diffs, "hierarchy: primary action size ratio 3.80 → 1.17"
+    assert_includes diffs, "hierarchy: primary action size ratio 3.80 -> 1.17"
   end
 
   def test_primary_action_contrast_is_judged_against_its_siblings
     diffs = compare(page, page(cancel_colour: "#000000"))
 
-    assert_equal "hierarchy: primary action contrast ratio 3.66 → 1.00", diffs.first
+    assert_equal "hierarchy: primary action contrast ratio 3.66 -> 1.00", diffs.first
   end
 
   def test_losing_a_third_of_the_elements_is_density
@@ -155,7 +155,7 @@ class LayoutSnapshotDriftTest < Minitest::Test
     after["elements"] = after["elements"].reject { |el| el["tag"] == "button" }
     diffs = compare(page, after)
 
-    assert_includes diffs, "density: elements 7 → 5"
+    assert_includes diffs, "density: elements 7 -> 5"
     assert_includes diffs, "density: removed: #main-content>button.buy"
   end
 
@@ -163,7 +163,7 @@ class LayoutSnapshotDriftTest < Minitest::Test
     after = moved(moved(page, "nav.tab-bar", y: 796), "footer.legal", y: 0)
     diffs = compare(page, after)
 
-    assert_equal "hierarchy: landmark order nav.tab-bar, #main-content, footer.legal → footer.legal, #main-content, nav.tab-bar",
+    assert_equal "hierarchy: landmark order nav.tab-bar, #main-content, footer.legal -> footer.legal, #main-content, nav.tab-bar",
                  diffs.first
   end
 end

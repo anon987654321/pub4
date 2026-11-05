@@ -52,8 +52,8 @@ module App
     config.x.icon_sprite = true
 
     # ports_fts and its three sync triggers exist only as raw SQL in a
-    # migration, and schema.rb cannot carry a trigger. So every schema load —
-    # bin/ci's db:test:prepare, each parallel test worker, a fresh db:prepare —
+    # migration, and schema.rb cannot carry a trigger. So every schema load -
+    # bin/ci's db:test:prepare, each parallel test worker, a fresh db:prepare -
     # reruns that idempotent migration, and search has its index wherever the
     # schema does.
     initializer "bsdports.ports_fts_on_schema_load" do

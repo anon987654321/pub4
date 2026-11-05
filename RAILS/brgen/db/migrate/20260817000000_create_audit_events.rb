@@ -16,7 +16,7 @@ class CreateAuditEvents < ActiveRecord::Migration[8.1]
       t.references :actor, foreign_key: { to_table: :users }
 
       # Plain columns, not a polymorphic association. The record an audit event
-      # names is routinely destroyed — that is the case this table exists for.
+      # names is routinely destroyed - that is the case this table exists for.
       t.string :target_type
       t.integer :target_id
 

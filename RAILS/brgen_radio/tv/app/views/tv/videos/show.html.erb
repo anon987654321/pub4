@@ -33,7 +33,7 @@
 <% if @video.video_file.attached? %>
   <div class="tv-media">
     <%# data-tv-player-target="video" was never declared on any page, so the
-        controller's play/pause binding — and with it the wake lock — had never
+        controller's play/pause binding - and with it the wake lock - had never
         run. It is required for watch-time reporting, and fixes that too. %>
     <%# preload=metadata fetches the length and first frame, not the film, and
         the poster is the thumbnail's poster variant, shown until play. %>
@@ -67,7 +67,7 @@
     <%= tag.li tag.time(time_ago(@video.published_at), datetime: @video.published_at.iso8601) if @video.published_at %>
   </ul>
 
-<%# The audio this clip is built on, and — where there is one — the clip it
+<%# The audio this clip is built on, and - where there is one - the clip it
     answers. Both are links out to more of the same thing, which is the
     whole point of giving audio an identity. %>
 <p class="video-lineage">
@@ -75,10 +75,10 @@
     <%= link_to @video.sound.title, sound_path(@video.sound) %>
   <% end %>
   <% if @video.duet_of %>
-    · <%= t("tv.duet_of") %> <%= link_to @video.duet_of.title, video_path(@video.duet_of) %>
+    - <%= t("tv.duet_of") %> <%= link_to @video.duet_of.title, video_path(@video.duet_of) %>
   <% end %>
   <% if @video.duets.any? %>
-    · <%= t("tv.duet_count", count: @video.duets.size) %>
+    - <%= t("tv.duet_count", count: @video.duets.size) %>
   <% end %>
   <% if @video.allow_duets? && Current.user&.tv_channels&.any? %>
     <%= link_to t("tv.make_a_duet"),
@@ -89,7 +89,7 @@
   <% if @video.description.present? %>
     <%= simple_format(@video.description) %>
   <% else %>
-    <%# empty_state: no-action-ok — missing description is not a dead end; channel link is below %>
+    <%# empty_state: no-action-ok - missing description is not a dead end; channel link is below %>
     <%= render "shared/empty_state", title: t("empty.no_description"), body: t("empty.no_description_body") %>
   <% end %>
 </article>
@@ -100,12 +100,12 @@
     <strong><%= link_to @video.channel.name, channel_path(@video.channel) %></strong>
     <p>
       <%= t("tv.subscribers", count: @video.channel.subscribers_count.to_i) %>
-      ·
+      -
       <%= t("tv.total_views", count: @video.channel.total_views.to_i) %>
     </p>
     <% if authenticated? && Current.user != @video.channel.user %>
       <% if @video.channel.subscriptions.exists?(user: Current.user) %>
-        <%# destructive: no-confirm-ok — reversible — the button becomes Subscribe again in place %>
+        <%# destructive: no-confirm-ok - reversible - the button becomes Subscribe again in place %>
         <%= button_to t("tv.unsubscribe"), unsubscribe_channel_path(@video.channel), method: :delete, class: "button button-ghost button-small" %>
       <% else %>
         <%= button_to t("tv.subscribe"), subscribe_channel_path(@video.channel), method: :post, class: "button button-primary button-small" %>
@@ -117,7 +117,7 @@
 <section>
   <h2><%= t("tv.notes") %></h2>
   <%# The container existed and the model broadcast to this stream, but nothing
-      subscribed — so a note from another viewer never arrived. %>
+      subscribed - so a note from another viewer never arrived. %>
   <%= turbo_stream_from "tv:video:#{@video.id}:notes" %>
   <div id="video_notes_<%= @video.id %>">
     <%= render partial: "tv/video_notes/video_note",

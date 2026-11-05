@@ -1,4 +1,4 @@
-// A phone photo arrives at 4–12 MB while every server variant is at most
+// A phone photo arrives at 4-12 MB while every server variant is at most
 // 1,200px on its long edge (Post's hero), so most of an upload was bytes the
 // server threw away after carrying them over 4G. Re-encode in the browser
 // before the direct upload, and never hand back anything larger than the

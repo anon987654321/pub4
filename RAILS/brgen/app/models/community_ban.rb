@@ -36,12 +36,12 @@ class CommunityBan < ApplicationRecord
   end
 
   # Told, with the reason and whether it ends. A ban nobody is informed of reads
-  # as the site being broken — the person keeps writing posts that vanish.
+  # as the site being broken - the person keeps writing posts that vanish.
   def tell_them
     deliver_notification(
       user,
       title: I18n.t("community.banned_notification", community: strict_safe(:community)&.name),
-      body: [ reason.presence, expiry_line ].compact.join(" — "),
+      body: [ reason.presence, expiry_line ].compact.join(" - "),
       source: strict_safe(:community),
       kind: "alert"
     )

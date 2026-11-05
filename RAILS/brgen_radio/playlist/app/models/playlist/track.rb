@@ -54,7 +54,7 @@ class Playlist::Track < ApplicationRecord
   end
 
   def duration_formatted
-    return "—" unless duration_seconds
+    return "-" unless duration_seconds
     min, sec = duration_seconds.divmod(60)
     "#{min}:%02d" % sec
   end

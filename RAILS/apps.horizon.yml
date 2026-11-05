@@ -1,4 +1,4 @@
-# Aspirational features — out of scope for agents unless explicitly requested.
+# Aspirational features - out of scope for agents unless explicitly requested.
 # Canonical active inventory: apps.yml (status: done). Do not implement horizon items by default.
 
 agent_policy: ignore
@@ -39,7 +39,7 @@ horizon:
       - { name: "SoundCloud + whyp.it-class creator surface: creator uploads, reposts, waveform comments, profiles that read as discographies", status: planned, notes: "operator call 2026-10-29: playlist positions as SoundCloud plus whyp.it; the import pipeline and the whyp.it seeding rake already exist, the creator-facing half of that positioning is the build" }
     # Fences on every row below: no mandatory commission, no dark patterns, no
     # hidden fees, and payment never buys a moderation or trust outcome. One
-    # Commerce/Billing/Entitlements domain in shared, consumed by the verticals —
+    # Commerce/Billing/Entitlements domain in shared, consumed by the verticals -
     # never a billing, promotion or subscription stack per engine.
     monetization:
       - { name: plans / subscriptions / entitlements as data (free, Pro, Business), status: done, notes: "2026-10-31: __shared/config/plans.yml, Shared::BillingSubscription kept in step by Stripe subscription webhooks, user.entitled?, /billing with checkout and the Stripe portal; brgen and amber. Offered only once STRIPE_SECRET_KEY and the plan's STRIPE_PRICE_* are set" }

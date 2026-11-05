@@ -46,7 +46,7 @@ curl -sSL --fail -o "$models/$MODEL" \
 # catching: it is small, and it would 404-as-200 all the way to the browser.
 size=$(ruby -e 'puts File.size(ARGV.fetch(0))' "$models/$MODEL")
 if [ "$size" -lt 4000000 ]; then
-  printf 'smart_turn: %s is only %s bytes — fetch failed\n' "$MODEL" "$size" >&2
+  printf 'smart_turn: %s is only %s bytes - fetch failed\n' "$MODEL" "$size" >&2
   exit 1
 fi
 

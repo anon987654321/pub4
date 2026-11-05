@@ -3,7 +3,7 @@
 require "test_helper"
 
 # Classifieds expire. Without it a marketplace fills with things sold two years
-# ago that nobody took down, and the honest listings drown in them — the failure
+# ago that nobody took down, and the honest listings drown in them - the failure
 # mode every classifieds site exists to avoid.
 class ListingExpiryTest < ActiveSupport::TestCase
   setup do
@@ -31,7 +31,7 @@ class ListingExpiryTest < ActiveSupport::TestCase
     assert_in_delta Marketplace::Listing::LIFETIME.from_now.to_i, listing.expires_at.to_i, 5
   end
 
-  # Expiry is a scope, not a state change — that is what lets an owner still see
+  # Expiry is a scope, not a state change - that is what lets an owner still see
   # and renew a lapsed listing.
   test "an expired listing leaves live but stays active for its owner" do
     fresh = listing

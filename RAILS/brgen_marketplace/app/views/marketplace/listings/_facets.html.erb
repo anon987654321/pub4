@@ -27,7 +27,7 @@
         <li role="listitem">
           <%= link_to listings_path(request.query_parameters.merge(min_price: low, max_price: high).compact),
                 class: "chip" do %>
-            <% if low && high %><%= "#{Shared::MoneyDisplay.format(low * 100)}–#{Shared::MoneyDisplay.format(high * 100)}" %>
+            <% if low && high %><%= "#{Shared::MoneyDisplay.format(low * 100)}-#{Shared::MoneyDisplay.format(high * 100)}" %>
             <% elsif high %><%= t("marketplace.under_price", price: Shared::MoneyDisplay.format(high * 100)) %>
             <% else %><%= t("marketplace.over_price", price: Shared::MoneyDisplay.format(low * 100)) %><% end %>
             <span class="listing-facet-count"><%= count %></span>

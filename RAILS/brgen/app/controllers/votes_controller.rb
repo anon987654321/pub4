@@ -37,7 +37,7 @@ class VotesController < ApplicationController
 
   def find_votable
     # Comments have no slug column at all, so find_by_slug_or_id would raise on
-    # the missing column rather than falling through — id lookup stays.
+    # the missing column rather than falling through - id lookup stays.
     if params[:post_id]
       post = find_by_slug_or_id(Post.includes(:community), params[:post_id])
       raise ActiveRecord::RecordNotFound unless post.readable_by?(Current.user)

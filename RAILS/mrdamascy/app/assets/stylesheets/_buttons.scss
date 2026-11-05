@@ -1,4 +1,4 @@
-// Buttons — flat, generous, mint-first. Vipps orange is reserved for payment
+// Buttons - flat, generous, mint-first. Vipps orange is reserved for payment
 // actions so the color always means "paying". Fitts law: every control is a
 // 44px target; the action a card or form exists for is 48px.
 // The <button> element is styled directly; a link that acts as a button
@@ -64,15 +64,15 @@
   color: var(--ink);
 }
 
-// Vipps mock approval — the state change itself is the feedback (disabled
+// Vipps mock approval - the state change itself is the feedback (disabled
 // + dimmed): stillness by default, motion only when meaning moves.
 :where(button.is-loading, .button.is-loading) {
   opacity: 0.8;
   cursor: progress;
 }
 
-// Second payment lane (operator-mandated): Stripe Checkout button — same
-// discipline as .button-vipps (darkened brand surface, white label ≥ 4.5:1).
+// Second payment lane (operator-mandated): Stripe Checkout button - same
+// discipline as .button-vipps (darkened brand surface, white label >= 4.5:1).
 .button-stripe {
   border-color: transparent;
   background: var(--stripe-button);

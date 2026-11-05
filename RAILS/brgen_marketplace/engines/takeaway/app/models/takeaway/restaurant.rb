@@ -3,8 +3,8 @@
 # Coordinates come only from the owner's form or a seed that names them. There
 # is no geocoder, so a restaurant without real coordinates has none: a pin near
 # the city centre would be published as its location, and every reader of
-# latitude — the nearby list, the near filter, courier distance and courier
-# dispatch — already handles nil, dispatch by leaving the order unassigned.
+# latitude - the nearby list, the near filter, courier distance and courier
+# dispatch - already handles nil, dispatch by leaving the order unassigned.
 class Takeaway::Restaurant < ApplicationRecord
   include CityTenantable
   include Shared::Sluggable # /restaurants/<name-slug>; from :name, unique per city
@@ -58,8 +58,8 @@ class Takeaway::Restaurant < ApplicationRecord
   scope :popular, -> { order(rating: :desc, updated_at: :desc, id: :desc) }
   scope :near, ->(lat, lng, radius_km = 5) { nearby(lat, lng, radius_km) }
 
-  # What a search engine may be told about. A demo restaurant — `demo` is set by
-  # the seeders, never by an owner's form — keeps its page but is not presented
+  # What a search engine may be told about. A demo restaurant - `demo` is set by
+  # the seeders, never by an owner's form - keeps its page but is not presented
   # as a business: no sitemap entry, no LocalBusiness, and noindex on the page.
   scope :indexable, -> { publicly_visible.where(demo: false) }
 
@@ -74,8 +74,8 @@ class Takeaway::Restaurant < ApplicationRecord
 
   def hours_known? = Takeaway::OpeningHour.exists?(restaurant_id: id)
 
-  # An order for later is still allowed while the kitchen is shut — that is
-  # most of what scheduling is for — but only for a time the kitchen is open.
+  # An order for later is still allowed while the kitchen is shut - that is
+  # most of what scheduling is for - but only for a time the kitchen is open.
   # With no hours recorded the kitchen has said nothing about when it cooks, so
   # `active` alone decides: most restaurants have no hours yet, and refusing
   # their orders would empty the vertical.
@@ -107,8 +107,8 @@ class Takeaway::Restaurant < ApplicationRecord
   # Whether this kitchen carries to a coordinate. Only a stated radius
   # constrains anything: nil means the restaurant has said nothing, which is
   # not the same as "nowhere", so the answer is yes until the owner types a
-  # number. Every input may be missing — an unset pin or a reader who never
-  # shared a position — and a missing fact does not make a refusal.
+  # number. Every input may be missing - an unset pin or a reader who never
+  # shared a position - and a missing fact does not make a refusal.
   def delivers_to?(lat, lng)
     return true if delivery_radius_km.blank?
     return false if lat.blank? || lng.blank?
@@ -123,7 +123,7 @@ class Takeaway::Restaurant < ApplicationRecord
 
   # This is the one table carrying both a `city` string column and a `city_id`.
   # CityTenantable's belongs_to shadows the column reader, so `restaurant.city`
-  # in a view renders a City object — or raises on strict loading when the
+  # in a view renders a City object - or raises on strict loading when the
   # query did not preload it. Views want the label, so name it.
   def city_label
     strict_safe_attribute(:city, :name).presence || self[:city].presence

@@ -21,7 +21,7 @@
     <% if @local_activity.track %>
       <article class="local-activity-item">
         <span><%= t("home.local_radio") %></span>
-        <%= link_to [@local_activity.track.title, @local_activity.track.artist.presence].compact.join(" · "),
+        <%= link_to [@local_activity.track.title, @local_activity.track.artist.presence].compact.join(" - "),
               Playlist::Engine.routes.url_helpers.hosted_track_url(
                 @local_activity.track, host: "radio.#{Current.domain}", protocol: "https"
               ), data: { turbo: false } %>

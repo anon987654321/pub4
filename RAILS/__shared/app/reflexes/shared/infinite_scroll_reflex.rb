@@ -16,7 +16,7 @@ module Shared
   # for markup interleaved between rows.
   #
   # `after_row` exists because the home feed had no seam that fit and overrode
-  # `page_html` instead — the one method the contract test names as re-implementing
+  # `page_html` instead - the one method the contract test names as re-implementing
   # the spine. It needed to interleave an affiliate unit every Nth row, which
   # neither of the other two seams can express, so the copy was the only way to
   # say it. A seam here says it once for all twenty-one subclasses.
@@ -111,7 +111,7 @@ module Shared
     end
 
     # Markup to append after a row, or nil for none. `slot` is the row's position
-    # in the feed as a whole, not within this page — see #slot_for.
+    # in the feed as a whole, not within this page - see #slot_for.
     def wrap_row(html, wrapper)
       return html if wrapper.nil?
 

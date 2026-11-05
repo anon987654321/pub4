@@ -66,7 +66,7 @@ production:
     queue: bulk
     schedule: every day at 3:15am
   # Weekly, and the one report that can tell "nobody clicked" from "tracking is
-  # broken" — which a network dashboard reports as the same zero.
+  # broken" - which a network dashboard reports as the same zero.
   partner_attribution_report:
     class: PartnerAttributionReportJob
     queue: bulk
@@ -97,7 +97,7 @@ production:
     schedule: every 15 minutes
 
   # Tells a seller a week before their listing lapses. Nothing is deleted or
-  # hidden by it — `live` already keeps an expired listing off public surfaces —
+  # hidden by it - `live` already keeps an expired listing off public surfaces -
   # so this is only the warning.
   listing_expiry_notices:
     class: ListingExpiryJob

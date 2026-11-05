@@ -20,13 +20,13 @@ require "time"
 #      and SHA-256 hashed email/phone for enhanced matching
 #
 # ENV:
-#   GOOGLE_ADS_CUSTOMER_ID              — 10-digit Ads customer id (no dashes)
-#   GOOGLE_ADS_CONVERSION_ACTION_ID     — UPLOAD_CLICKS conversion action id
-#   GOOGLE_ADS_ACCESS_TOKEN             — OAuth Bearer with Data Manager + Ads access
-#   GOOGLE_ENHANCED_CONVERSIONS=1      — feature flag (off by default)
+#   GOOGLE_ADS_CUSTOMER_ID              - 10-digit Ads customer id (no dashes)
+#   GOOGLE_ADS_CONVERSION_ACTION_ID     - UPLOAD_CLICKS conversion action id
+#   GOOGLE_ADS_ACCESS_TOKEN             - OAuth Bearer with Data Manager + Ads access
+#   GOOGLE_ENHANCED_CONVERSIONS=1      - feature flag (off by default)
 #
 # Optional:
-#   GOOGLE_ADS_LOGIN_CUSTOMER_ID        — MCC id if using a manager account
+#   GOOGLE_ADS_LOGIN_CUSTOMER_ID        - MCC id if using a manager account
 module GoogleEnhancedConversions
   INGEST_URL = "https://datamanager.googleapis.com/v1/events:ingest"
   NotConfigured = Class.new(StandardError)
@@ -127,7 +127,7 @@ module GoogleEnhancedConversions
 
       digits = raw.gsub(/[^\d+]/, "")
       digits = digits.sub(/\A\+/, "") # Google examples often hash digits-only; keep consistent
-      # Prefer E.164 without spaces: if Norwegian local 8-digit, caller should pass +47…
+      # Prefer E.164 without spaces: if Norwegian local 8-digit, caller should pass +47...
       normalize_and_hash(digits)
     end
 

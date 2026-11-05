@@ -5,7 +5,7 @@ require "turbo/broadcastable/test_helper"
 
 # Regression for the "chat saves 200 but nothing ever appears" bug: live delivery
 # re-renders _message inside Turbo's broadcast job, where message.conversation and
-# message.sender (belongs_to) hit :all strict-loading — dev logs, test/prod raise.
+# message.sender (belongs_to) hit :all strict-loading - dev logs, test/prod raise.
 # Message#broadcast_to_logs reloads with those associations and strict loading off,
 # so the append renders instead of dying silently.
 class MessageBroadcastTest < ActiveSupport::TestCase

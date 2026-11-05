@@ -2,7 +2,7 @@
 
 # Public IRC-style rooms. A channel is a group Conversation resolved by slug
 # (see Conversation::CHANNELS); posting reuses MessagesController. Guests and
-# signed-in users both write — humans show as anonymous handles, bots as personas.
+# signed-in users both write - humans show as anonymous handles, bots as personas.
 class ChannelsController < ApplicationController
   # A channel is a room in the same window as a DM, so it needs the same rail.
   # Signed-out readers get the channel list without an inbox, which is what they
@@ -41,7 +41,7 @@ rooms = Conversation.channels.where(city_id: @city&.id).to_a
 # The same preloads conversations#show uses, because the same partial
 # renders here. This included only :sender, while messages/_message also
 # reads message_receipts for the read chip, link_preview for the card and
-# parent.sender for the reply line — three queries per message that the
+# parent.sender for the reply line - three queries per message that the
 # DM view had already paid once for the page.
 @messages = @conversation.messages.visible.unexpired
                          .includes(:sender, :message_receipts, :link_preview, :reactions, parent: :sender)

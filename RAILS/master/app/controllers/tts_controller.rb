@@ -121,7 +121,7 @@ class TtsController < ApplicationController
   end
 
   # The job a `status` or `stream` request is allowed to see, materialized if it
-  # was still pending. nil covers all three refusals — no such job, and a pending
+  # was still pending. nil covers all three refusals - no such job, and a pending
   # job belonging to another conversation, which is a 404 rather than a 403 so a
   # caller cannot probe for job ids it does not own.
   def readable_job
@@ -156,7 +156,7 @@ class TtsController < ApplicationController
     Master::Voice::Speech.infer_style(text, fallback: Master::Voice::Speech.default_style)
   end
 
-  # relayd drops any response whose headers exceed 8 KB — no body, no status
+  # relayd drops any response whose headers exceed 8 KB - no body, no status
   # line, and nothing in its log. The client sees a bare connection close and
   # `edgeBlob` rejects, which latches `serverUnavailable` and paints
   # "tts: unavailable" over the whole session.
@@ -165,7 +165,7 @@ class TtsController < ApplicationController
   # the length of the spoken text, so short cached phrases ("Still thinking.")
   # squeaked under the limit while every real reply blew past it. Measured
   # 2026-08-01: 6 words of reply => 6,239 header bytes and the audio arrives;
-  # 10 words => 9,067 and relayd eats the response. That is the whole bug — the
+  # 10 words => 9,067 and relayd eats the response. That is the whole bug - the
   # audio itself was fine at every size, and a 1.9 MB body proxies without
   # complaint, because only headers are bounded.
   #
@@ -210,7 +210,7 @@ status: :service_unavailable) if bytes.nil? || bytes.empty?
     meta = job.meta
     if meta
       visemes = meta["viseme_plan"] || meta["viseme_hints"]
-      # The plan went out twice — once on its own and once nested inside meta —
+      # The plan went out twice - once on its own and once nested inside meta -
       # so it cost double against a budget it was already breaking. X-TTS-Visemes
       # is the one the client reads first; meta keeps everything else.
       spent = set_viseme_header("X-TTS-Visemes", visemes).to_i
@@ -232,7 +232,7 @@ status: :service_unavailable) if bytes.nil? || bytes.empty?
     )
     set_viseme_header("X-TTS-Visemes", stream[:viseme_plan] || stream[:visemes])
   rescue StandardError => e
-    # Lost visemes surface as mysterious lipsync gaps — worth a line.
+    # Lost visemes surface as mysterious lipsync gaps - worth a line.
     Master::Ground::Swallow.log(e, context: "TTS.viseme_header")
     nil
   end

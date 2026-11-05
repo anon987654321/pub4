@@ -5,13 +5,13 @@ require "rack/utils"
 require "securerandom"
 require "yaml"
 
-# AuthTier — sets master.tier for every request and runs the cookie handshake.
+# AuthTier - sets master.tier for every request and runs the cookie handshake.
 # Tiers:
-#   "authenticated" — bearer, X-Token header, master_session cookie, or first-hit ?token=
-#   "visitor"       — no token; LLM + WebSearch only (tool guard in pipeline)
+#   "authenticated" - bearer, X-Token header, master_session cookie, or first-hit ?token=
+#   "visitor"       - no token; LLM + WebSearch only (tool guard in pipeline)
 # Public paths bypass tier logic entirely (health, assets, PWA manifest).
 #
-# Handshake: a request with a matching ?token= is upgraded — server sets an
+# Handshake: a request with a matching ?token= is upgraded - server sets an
 # HttpOnly cookie and 302s to the same path with the token stripped. Subsequent
 # requests carry the cookie automatically, including EventSource, so the token
 # leaves the URL after one hop. Query strings live in proxy logs, browser
@@ -154,7 +154,7 @@ class AuthTier
   rescue Errno::ENOENT => _e
     [ {}, true ]
   rescue StandardError => e
-    warn "auth_tier: config unreadable (#{e.class}): #{e.message} — declining to seed"
+    warn "auth_tier: config unreadable (#{e.class}): #{e.message} - declining to seed"
     [ {}, false ]
   end
 

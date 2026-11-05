@@ -3,8 +3,8 @@
 module ApplicationCable
   # The Turbo streams a signed-out visitor may read: the city front page, the
   # posts index, a post's own page with its comments, and the notes under a tv
-  # video anyone may watch. Everything else — conversations, notifications, a
-  # user's inbox — is somebody's, and a connection with nobody behind it is
+  # video anyone may watch. Everything else - conversations, notifications, a
+  # user's inbox - is somebody's, and a connection with nobody behind it is
   # refused it even holding a signed name.
   module PublicStreams
     CITY_STREAMS = /\Abrgen:(?:feed|posts):\d+\z/

@@ -32,7 +32,7 @@ class DeclutterHygieneJob < ApplicationJob
       next if boxed_on > BOX_DAYS.days.ago.to_date
 
       # Deduped on the marker in metadata rather than on an English substring
-      # of the reason text — the old LIKE stopped matching the moment the copy
+      # of the reason text - the old LIKE stopped matching the moment the copy
       # was translated, which would have produced a duplicate nudge per run.
       existing = item.user.recommendations.active.where(kind: "declutter", item: item)
         .where("json_extract(metadata, '$.reason_key') = ?", REASON_KEY)

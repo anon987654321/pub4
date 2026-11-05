@@ -1,5 +1,5 @@
 <%# Vipps-app stand-in for dev/test (§6): VippsClient redirects here with
-    ?token=… in mock mode. Approving captures payment, confirms the order and
+    ?token=... in mock mode. Approving captures payment, confirms the order and
     lands on the tracking page with "Sahtein! صحتين". vipps_mock_controller
     adds a short shimmer before submitting the patch form. %>
 <% order = @order %>
@@ -9,7 +9,7 @@
     <%= image_tag "vipps/vipps-wordmark.svg", alt: "", class: "vipps-wordmark" %>
     <p class="vipps-merchant"><%= t("vipps.merchant") %></p>
     <p class="vipps-amount"><%= money(order.total_ore) %></p>
-    <%= tag.p "#{t("vipps.amount")} · ##{order.id}", class: "vipps-reference" %>
+    <%= tag.p "#{t("vipps.amount")} - ##{order.id}", class: "vipps-reference" %>
   </header>
 
   <%= form_with url: "/vipps/mock/approve", method: :patch,

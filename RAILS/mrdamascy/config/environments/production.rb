@@ -18,7 +18,7 @@ Rails.application.configure do
   config.action_controller.perform_caching = true
 
   # Serve static files and give everything outside the fingerprinted assets a
-  # short lifetime — the manifest and service worker must be able to change.
+  # short lifetime - the manifest and service worker must be able to change.
   config.public_file_server.enabled = true
   config.public_file_server.headers = { "cache-control" => "public, max-age=#{1.hour.to_i}" }
 
@@ -69,8 +69,8 @@ Rails.application.configure do
 
   # Enable locale fallbacks for I18n (makes lookups for any locale fall back to
   # the default locale when a translation cannot be found).
-  # (Set once in application.rb — do not restate.)
+  # (Set once in application.rb - do not restate.)
 
-  # Report deprecations related to Rails app code — off in production.
+  # Report deprecations related to Rails app code - off in production.
   config.active_support.report_deprecations = false
 end

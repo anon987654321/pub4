@@ -5,13 +5,13 @@ require "test_helper"
 # VippsClient contract (APP_SPEC §5):
 #
 #   Mock mode (default): init never raises, points at /vipps/mock, marks the
-#   payment authorised. sync_payment! is a no-op there — the mock approve
+#   payment authorised. sync_payment! is a no-op there - the mock approve
 #   action owns capture.
 #
 #   Real mode (VIPPS_MOCK=0): documented ePayment v1 + Login calls. The HTTP
 #   core (perform_request) is stubbed with path-keyed canned responses
-#   (VippsHttpStubbing); everything above it — auth headers, token cache,
-#   payload shape, state mapping, capture idempotency — runs for real.
+#   (VippsHttpStubbing); everything above it - auth headers, token cache,
+#   payload shape, state mapping, capture idempotency - runs for real.
 #   Missing ENV raises NotAvailable before any HTTP happens.
 class VippsClientTest < ActiveSupport::TestCase
   setup do
@@ -36,7 +36,7 @@ class VippsClientTest < ActiveSupport::TestCase
     assert_equal "authorised", @order.payment_state
   end
 
-  test "mock sync_payment! is a no-op — the mock approve action owns capture" do
+  test "mock sync_payment! is a no-op - the mock approve action owns capture" do
     @order.update!(payment_state: "authorised", vipps_order_id: "mock-tok-vipps-1")
 
     VippsClient.sync_payment!(order: @order)
@@ -154,7 +154,7 @@ class VippsClientTest < ActiveSupport::TestCase
     assert_equal "failed", @order.reload.payment_state
   end
 
-  test "sync swallows transport errors — the poll must never 500 the page" do
+  test "sync swallows transport errors - the poll must never 500 the page" do
     @order.update!(payment_state: "authorised", vipps_order_id: "mrdamascy-tok-vipps-1")
 
     ENV["VIPPS_MOCK"] = "0"

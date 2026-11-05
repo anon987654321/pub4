@@ -160,7 +160,7 @@
 
   // A viseme plan is played by face_speech_playback.js against the clock of the
   // audio it belongs to. This file used to play a second copy of it on
-  // setTimeout, guarded by `if (window.MASTER_FACE?.tts) return` — so it ran
+  // setTimeout, guarded by `if (window.MASTER_FACE?.tts) return` - so it ran
   // only when the face runtime was absent, which is exactly when every listener
   // for tts:viseme is absent too: face_semantics.js and face_vision_c.js are
   // face modules, and face_2d_fallback.js has no mouth. It emitted into an empty
@@ -243,7 +243,7 @@
       }));
       document.documentElement.dataset.councilBreath = "1";
     }
-    // phantom:retry is not a bus topic — detected, halt, occurrence and recovery are.
+    // phantom:retry is not a bus topic - detected, halt, occurrence and recovery are.
     if (/phantom:(?:detected|halt|recovery)/i.test(type)) {
       window.dispatchEvent(new CustomEvent("master:visual", { detail: { name: type, mode: "phantom", entropy: 0.9, confidence: 0.18, flinch: 1, raw: event } }));
     }
@@ -275,7 +275,7 @@
       if (!ui) return;
       const name = COUNCIL_ROTATOR[councilRotatorIdx % COUNCIL_ROTATOR.length];
       councilRotatorIdx += 1;
-      ui.textContent = `council · ${name}`;
+      ui.textContent = `council - ${name}`;
     }, 1800);
   }
 
@@ -406,7 +406,7 @@
   }
 
   // Honour the deferred-boot contract: nothing heavy (THREE.js, the cluster miner)
-  // may load at page load — only after the primer tap. Eager boot here wedged the
+  // may load at page load - only after the primer tap. Eager boot here wedged the
   // main thread before the tap could register (dead "tap to start"). _primerFired
   // is the cross-module flag the inline boot sets in go().
   function whenPrimed(run) {

@@ -5,7 +5,7 @@ require "test_helper"
 # Three "still open" lines were one surface: the courier position, event pins
 # and the story Snap-Map all stored coordinates that nothing drew.
 #
-# And the layer that *was* drawn was mislabelled — the Stimulus controller reads
+# And the layer that *was* drawn was mislabelled - the Stimulus controller reads
 # point.title/subtitle/url/type and the server sent name/kind/city, so every
 # marker on the live map said "Map point" with an Open link pointing at "#".
 class MapsLayersTest < ActionDispatch::IntegrationTest

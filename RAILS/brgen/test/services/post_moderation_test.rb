@@ -70,7 +70,7 @@ class PostModerationTest < ActiveSupport::TestCase
                     content: "Szia, meg akartam tudni az árát.", user: guest)
 
     assert PostModeration.new(post).decide.approved,
-           "if this starts failing the heuristics grew a language check — update the comment in PostModeration"
+           "if this starts failing the heuristics grew a language check - update the comment in PostModeration"
   end
 
   test "configured moderation ignores prompt injection in post text" do
@@ -112,7 +112,7 @@ class PostModerationTest < ActiveSupport::TestCase
     assert PostModeration.new(post).decide.approved
   end
 
-  # And a verified member may post links — that is the difference the rule turns on.
+  # And a verified member may post links - that is the difference the rule turns on.
   test "allows a verified member to post a link" do
     post = Post.new(title: "Konsert på lørdag",
                     content: "Billetter her: https://ticketmaster.no/event/123", user: member)
@@ -123,7 +123,7 @@ class PostModerationTest < ActiveSupport::TestCase
   # Every one of the ten short Live posts has title == content, and none is spam.
   # An earlier version of the sweep keyed on that and would have deleted all ten.
   test "allows a member post whose title and content are identical" do
-    text = "Gratis kaffe på uteservering ved Torget — ta med egen kopp."
+    text = "Gratis kaffe på uteservering ved Torget - ta med egen kopp."
     post = Post.new(title: text, content: text, user: member)
 
     assert PostModeration.new(post).decide.approved

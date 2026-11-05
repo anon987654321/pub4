@@ -4,7 +4,7 @@ require "net/http"
 require "json"
 require "uri"
 
-# Wolt Drive client — last-mile carrier for the kitchen's OWN orders
+# Wolt Drive client - last-mile carrier for the kitchen's OWN orders
 # (developer.wolt.com/docs/wolt-drive).
 #
 # Why: mrdamascy cuts Foodora out of the customer relationship, but Bergen is
@@ -13,10 +13,10 @@ require "uri"
 # It is white-label-able, so it can stay invisible to the customer.
 #
 # The documented Drive flow has two steps, and this client mirrors both:
-#   1. Availability  — POST /shipment-promises (venueful) returns whether Wolt
+#   1. Availability  - POST /shipment-promises (venueful) returns whether Wolt
 #      can carry the route, the fee and the ETA. Used by the checkout to show
 #      "Wolt overtar" only when it is actually bookable.
-#   2. Creation      — POST /deliveries books the courier; webhooks and the
+#   2. Creation      - POST /deliveries books the courier; webhooks and the
 #      tracking URL carry status from there (delivery_status polls while
 #      no webhook receiver is wired).
 #
@@ -24,11 +24,11 @@ require "uri"
 # "Restaurant Integration API" only pushes orders that were PLACED on Foodora's
 # marketplace into a merchant POS plugin (PGP-gated credentials, local rep,
 # vendor app in the loop). It would put Foodora back in the loop and pay them a
-# commission — the opposite of the mission — so it is deliberately not
+# commission - the opposite of the mission - so it is deliberately not
 # integrated here. If that ever changes, the client below is the seam to copy.
 #
 # MOCK BY DEFAULT (ENV["WOLT_DRIVE_MOCK"] != "0"): every call succeeds locally,
-# never raises, and never touches the network — the dev/test stand-in for the
+# never raises, and never touches the network - the dev/test stand-in for the
 # Wolt dispatch backend.
 #
 # REAL MODE (WOLT_DRIVE_MOCK=0) performs the documented HTTP calls below
@@ -40,13 +40,13 @@ class WoltDriveClient
   class NotAvailable < StandardError; end
 
   # Wolt Drive API root. The delivery endpoints are client-scoped:
-  # POST /v1/clients/{client_id}/shipment-promises   — availability, fee, ETA
-  # POST /v1/clients/{client_id}/deliveries          — create a delivery request
-  # GET  /v1/clients/{client_id}/deliveries/{id}     — poll a delivery
+  # POST /v1/clients/{client_id}/shipment-promises   - availability, fee, ETA
+  # POST /v1/clients/{client_id}/deliveries          - create a delivery request
+  # GET  /v1/clients/{client_id}/deliveries/{id}     - poll a delivery
   API_BASE = "https://api-developer.wolt.com/v1/clients"
 
   # Mock status lifecycle mirrors the webhook events Wolt Drive sends:
-  # created → courier_assigned → picked_up → delivered.
+  # created -> courier_assigned -> picked_up -> delivered.
   MOCK_STATUSES = %w[created courier_assigned picked_up delivered].freeze
 
   class << self
@@ -64,7 +64,7 @@ class WoltDriveClient
       end
     end
 
-    # Step 1 of the documented flow — ask whether Wolt can carry this route
+    # Step 1 of the documented flow - ask whether Wolt can carry this route
     # before the staff board offers the overflow button. Returns a Hash
     # { available:, fee_ore:, eta_minutes: }. Mock mode quotes a plausible
     # Bergen city-centre promise so the checkout can render it with zero
@@ -170,7 +170,7 @@ class WoltDriveClient
     end
 
     def pickup_location
-      # Danmarksplass, Bergen (the kitchen's corner) — real coordinates from
+      # Danmarksplass, Bergen (the kitchen's corner) - real coordinates from
       # the restaurant's Google Maps listing.
       { coordinates: { latitude: 60.3757, longitude: 5.3379 }, formatted_address: "Solheimsgaten 60, 5054 Bergen" }
     end
@@ -185,8 +185,8 @@ class WoltDriveClient
     def item_summary(order)
       {
         count: order.order_items.sum(&:quantity),
-        description: order.order_items.map { |line| "#{line.quantity}× #{line.name}" }.join(", "),
-        disclaimer: "Keep warm and flat — shawarma."
+        description: order.order_items.map { |line| "#{line.quantity}x #{line.name}" }.join(", "),
+        disclaimer: "Keep warm and flat - shawarma."
       }
     end
 

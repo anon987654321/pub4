@@ -1,4 +1,4 @@
-/* Family layout chrome — MASTER face + RAILS apps.
+/* Family layout chrome - MASTER face + RAILS apps.
    Dialects restyle color/type/radius; they must not invent a second z-scale,
    skip-link, tap floor, or main landmark pattern. See shared/LAYOUT.md. */
 
@@ -16,11 +16,11 @@
      than as a bug, which is why it survived.
      --chrome-inset stays 12px and stays px, for the reason recorded above it: a
      distance from the screen edge should not scale with the reading size. This
-     one is a different measurement — it aligns to the bar, so it follows the bar. */
+     one is a different measurement - it aligns to the bar, so it follows the bar. */
   --chrome-inset-block: var(--space-2);
   --tap-min: 44px;
   /* The nav link's box is line-height + padding (47.25px) against the fixed
-     chrome's 44px tap boxes, same top — centres 1.6px apart, which
+     chrome's 44px tap boxes, same top - centres 1.6px apart, which
      rendered_invariants reads as a band misalignment on every surface. The
      nudge drops the fixed chrome (brand mark, theme toggle) to the LINK's
      centre; moving text metrics would visibly reflow, this moves nothing. */
@@ -29,7 +29,7 @@
   /* Total block-size the fixed top band occupies: the chrome inset plus the
      nav link's 47.25px box, rounded to the next step MASTER's eight_px_rhythm
      allows. Published so overlays (the edge drawers) can start below the
-     brand mark instead of colliding with it — the first-visit reveal put
+     brand mark instead of colliding with it - the first-visit reveal put
      "Hjem" under the brgen logo. Written as a calc rather than the 56px it
      evaluates to because 56 is on RAILS' space scale but NOT on MASTER's
      rhythm allowlist; the two disagree above 48. */
@@ -63,7 +63,7 @@ body[data-layout="document"] {
   -webkit-tap-highlight-color: transparent;
 }
 
-/* Shared page header — vertical homes, indexes, auth siblings. */
+/* Shared page header - vertical homes, indexes, auth siblings. */
 .page-header {
   display: flex;
   flex-direction: column;
@@ -141,11 +141,11 @@ body[data-layout="document"] {
   max-width: var(--measure);
 }
 
-/* Touch floor — buttons and primary nav hits (geometry check also measures this).
+/* Touch floor - buttons and primary nav hits (geometry check also measures this).
    min-height alone is half a floor: Fitts is about area, and an icon-only
    control can be 44px tall and 24px wide and satisfy this rule while failing
-   the thing it exists to guarantee. The rendered check measured exactly that —
-   pagination arrows at 10x44 and a close control at 34x22 — because the CSS
+   the thing it exists to guarantee. The rendered check measured exactly that -
+   pagination arrows at 10x44 and a close control at 34x22 - because the CSS
    only ever constrained one axis. min-inline-size costs nothing on the
    full-width members, which are already wider than the floor. */
 :where(
@@ -163,7 +163,7 @@ body[data-layout="document"] {
   min-inline-size: var(--tap-min);
 }
 
-/* Main column gutters — single rule so app shells cannot re-fight each other. */
+/* Main column gutters - single rule so app shells cannot re-fight each other. */
 main#main-content,
 main[role="main"] {
   padding-inline: var(--page-gutter);
@@ -182,7 +182,7 @@ main[role="main"] {
   z-index: var(--z-toast);
 }
 
-/* shared/_flash_toasts — where a confirmation lands. Pinned above the bottom
+/* shared/_flash_toasts - where a confirmation lands. Pinned above the bottom
    chrome by the same max() .install-prompt reads, so the tab bar's peel handle
    stays pressable under it, and centred so the corner stays the chat dock's.
    The stack lets presses through; only the toast itself takes them. */
@@ -198,7 +198,7 @@ main[role="main"] {
   pointer-events: none;
 }
 
-/* The one brand mark — shared/_brand_mark, fixed top-left on every surface of
+/* The one brand mark - shared/_brand_mark, fixed top-left on every surface of
    every app. Type only: no chip, no border, no background, no shadow.
    brgen's .brgen-logo-mark is the same treatment and keeps its own selector for
    the rules that already reference it.
@@ -226,7 +226,7 @@ main[role="main"] {
      not know 110 and 120 were taken. The reasoning it carried is worth keeping:
 
      the mark outranks app chrome because it is the one element identical on
-     every surface of every app. 91 (--z-nav + 1) was not enough — _minimal
+     every surface of every app. 91 (--z-nav + 1) was not enough - _minimal
      gives every `nav` position: fixed with z-index: 100, so bsdports' own
      primary nav painted over it and elementFromPoint at the mark centre
      returned the nav. Below --z-modal and --z-toast; above any nav. */
@@ -237,7 +237,7 @@ main[role="main"] {
   /* Above app chrome, not merely above the drawer -- see --z-brand. */
   z-index: var(--z-brand);
   /* +--top-band-nudge: the nav link's box is line-height + padding (47.25px)
-     against this mark's 44px tap box, same top — so their centres sat 1.6px
+     against this mark's 44px tap box, same top - so their centres sat 1.6px
      apart and rendered_invariants read the band as misaligned on every
      surface. The nudge drops the fixed chrome to the LINK's centre, because
      moving text metrics would visibly reflow and this moves nothing else. */

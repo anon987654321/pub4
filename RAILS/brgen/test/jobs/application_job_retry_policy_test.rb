@@ -3,7 +3,7 @@
 require "test_helper"
 
 # ApplicationJob used to carry `retry_on StandardError`, so every exception a
-# job could raise — including a plain bug — was retried three times with
+# job could raise - including a plain bug - was retried three times with
 # backoff. brgen runs a real Solid Queue worker, so that was three delayed
 # copies of the same failure in production rather than one.
 class ApplicationJobRetryPolicyTest < ActiveJob::TestCase

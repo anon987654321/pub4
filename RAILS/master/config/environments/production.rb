@@ -30,7 +30,7 @@ Rails.application.configure do
   # Assume all access to the app is happening through a SSL-terminating reverse proxy.
   config.assume_ssl = true
 
-  # SSL terminated at relayd proxy layer — do not redirect internally.
+  # SSL terminated at relayd proxy layer - do not redirect internally.
   config.force_ssl = false
 
   # Skip http-to-https redirect for the default health check endpoint.

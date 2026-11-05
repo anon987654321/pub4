@@ -31,7 +31,7 @@
       </div>
       <div class="field">
         <%= f.label :looking_for, t("dating.looking_for") %>
-        <%= f.select :looking_for, Dating::Profile.looking_for_options, { include_blank: "—" } %>
+        <%= f.select :looking_for, Dating::Profile.looking_for_options, { include_blank: "-" } %>
       </div>
       <div class="field"><%= f.label :age, t("dating.age") %><%= f.number_field :age, min: 18, max: 99, required: true, inputmode: "numeric" %></div>
       <p><%= t("legal.dating_age") %></p>
@@ -39,11 +39,11 @@
 
     <details class="dating-profile-more">
       <summary><%= t("dating.more_details_optional") %></summary>
-      <div class="field"><%= f.label :gender, t("dating.gender") %><%= f.select :gender, Dating::Profile.gender_options, { include_blank: "—" } %></div>
+      <div class="field"><%= f.label :gender, t("dating.gender") %><%= f.select :gender, Dating::Profile.gender_options, { include_blank: "-" } %></div>
       <div class="field"><%= f.label :location, t("dating.location") %><%= f.text_field :location %></div>
       <div class="field">
         <%= f.label :neighborhood_id, t("dating.neighborhood") %>
-        <%= f.select :neighborhood_id, @neighborhoods.map { |n| [n.name, n.id] }, { include_blank: "—" } %>
+        <%= f.select :neighborhood_id, @neighborhoods.map { |n| [n.name, n.id] }, { include_blank: "-" } %>
       </div>
       <div class="field field--check"><%= f.check_box :visible %><%= f.label :visible, t("dating.visible_label") %></div>
       <div class="field field--check"><%= f.check_box :location_discovery_enabled %><%= f.label :location_discovery_enabled, t("dating.path_crossings_consent") %></div>

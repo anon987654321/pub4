@@ -4,7 +4,7 @@ class PostsController < ApplicationController
   include Shared::FindableBySlug
   include PostComposeChoices
   # Flood protection on content creation (Rails 8 built-in), per-user or per-IP.
-  # `name:` is what keeps this and the sustained limit below separate — unnamed,
+  # `name:` is what keeps this and the sustained limit below separate - unnamed,
   # both build the cache key ["rate-limit", controller_path, nil, by] and share a
   # counter for every signed-out request. See RAILS/test/rate_limit_naming_test.rb.
   rate_limit to: 12, within: 1.minute, only: :create, name: "burst",
@@ -60,7 +60,7 @@ class PostsController < ApplicationController
     @quote_comment = @post.quote_comment_by(Current.user)
     @crossposts = (@post.crossposted_from || @post).crossposts.includes(:community).where.not(id: @post.id)
     # Where this post can still go. Communities the reader may post in, minus
-    # the one it is already in and the ones it already reached — an option that
+    # the one it is already in and the ones it already reached - an option that
     # answers "already crossposted" is a control that does nothing.
     @crosspost_targets = crosspost_targets_for(@post)
     respond_to do |format|
@@ -258,7 +258,7 @@ class PostsController < ApplicationController
   # the surface into the front page costs nothing except the stamp, which moves
   # here.
   #
-  # Opt-in, and only offered to someone who has already shared coordinates —
+  # Opt-in, and only offered to someone who has already shared coordinates -
   # attaching a location to a post because the author happened to have GPS on
   # would be a privacy change made silently. stamp_live_location! coarsens to
   # ~1km (LIVE_LOCATION_PRECISION) so it marks an area, not a doorway.

@@ -23,7 +23,7 @@
   <%= tag.p t("orders.state_announcement", state: t("orders.states.#{order.state}")),
         class: "visually-hidden", role: "status", aria: { live: "polite" } %>
   <% mode_key = order.delivery_mode == "pickup" ? "checkout.mode_pickup" : "checkout.mode_delivery" %>
-  <%= tag.p "##{order.id} · #{t(mode_key)}" %>
+  <%= tag.p "##{order.id} - #{t(mode_key)}" %>
 
   <% if order.state == "cancelled" %>
     <p class="track-cancelled"><%= t("orders.states.cancelled") %></p>

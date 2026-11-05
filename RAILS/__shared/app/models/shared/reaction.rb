@@ -14,7 +14,7 @@ module Shared
 
     # No broadcast: nothing subscribes to shared:reactions:* and no
     # shared/reactions/_reaction partial exists, so an implicit broadcast could
-    # only raise ActionView::MissingTemplate inside Solid Queue — never update a
+    # only raise ActionView::MissingTemplate inside Solid Queue - never update a
     # page. When a subscriber and partial are added, restore this as an explicit
     # broadcast_replace_later_to(stream, partial:, target:). Pinned by
     # test/turbo_broadcast_contract_test.rb.

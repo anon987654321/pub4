@@ -3,7 +3,7 @@
 require "application_system_test_case"
 
 # posts#show subscribes to the post's own stream, and Post#broadcast_live_refresh
-# sends a refresh on every commit to it — a vote, a new comment from someone else.
+# sends a refresh on every commit to it - a vote, a new comment from someone else.
 # Refreshes morph (Shared::ApplicationSetup turbo_refreshes_with :morph), and a
 # morph rebuilds the page from server HTML, which has no editor in it: Tiptap's
 # contenteditable exists only in the browser. This drives that refresh with a
@@ -15,7 +15,7 @@ class TiptapMorphTest < ApplicationSystemTestCase
     author = User.strict_loading(false).create!(
       email_address: "tiptap-morph-#{SecureRandom.hex(4)}@brgen.no", password: "password123", city:,
     )
-    post_record = ActsAsTenant.with_tenant(city) { Post.create!(user: author, title: "Tråd", content: "…", city:) }
+    post_record = ActsAsTenant.with_tenant(city) { Post.create!(user: author, title: "Tråd", content: "...", city:) }
 
     visit post_path(post_record)
     decline_optional_cookies

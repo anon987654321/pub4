@@ -32,7 +32,7 @@ namespace :scrape do
         # Fictivize + route to subapps
         title = "#{q.capitalize} buzz: #{item['text'][0..60]}..."
         body = [ item["text"],
-                 "— scraped & fictivized from X search '#{q}' (#{item['timestamp']}, likes: #{item['likes']})" ].compact.join("\n\n")
+                 "- scraped & fictivized from X search '#{q}' (#{item['timestamp']}, likes: #{item['likes']})" ].compact.join("\n\n")
 
         # Core social (always for feed)
         post = Post.create!(

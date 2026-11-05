@@ -2,7 +2,7 @@
 
 require "test_helper"
 
-# The money path's worst failure was not "unconfigured" — it was
+# The money path's worst failure was not "unconfigured" - it was
 # MISconfigured: a production box missing one variable once took a customer
 # through a perfect-looking checkout against Vipps' test environment (order
 # marked paid, no money). api_base's decision table is that contract, and it
@@ -24,7 +24,7 @@ class VippsCheckoutConfigTest < ActiveSupport::TestCase
     Rails.instance_variable_set(:@_env, original) if original
   end
 
-  test "unconfigured is unconfigured — no key fakes readiness" do
+  test "unconfigured is unconfigured - no key fakes readiness" do
     assert_not Marketplace::Payments::VippsCheckout.configured?
     ENV["VIPPS_EPAYMENT_CLIENT_ID"] = "id"
     ENV["VIPPS_EPAYMENT_CLIENT_SECRET"] = "secret"
@@ -42,7 +42,7 @@ class VippsCheckoutConfigTest < ActiveSupport::TestCase
       end
       ENV["VIPPS_TEST_MODE"] = "1"
       assert_equal "https://apitest.vipps.no", Marketplace::Payments::VippsCheckout.api_base,
-        "deliberate test mode is allowed — it just has to say so"
+        "deliberate test mode is allowed - it just has to say so"
     end
   end
 

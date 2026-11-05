@@ -72,7 +72,7 @@ function crossPoolInfluence() {
   }
 }
 setInterval(crossPoolInfluence, 480);
-// Semantic reaction — now primarily driven by server Expression payloads
+// Semantic reaction - now primarily driven by server Expression payloads
 // (from lib/voice/expression.rb) with lightweight event-specific overrides.
 // This structure makes the remaining 50+ ideas from runtime_ui_direction.md
 // (pre-speech anticipation, style bleed, mood arc, vertical timbre, etc.)
@@ -235,7 +235,7 @@ window.addEventListener('master:visual', (ev) => {
 
   // Genuine readout: a rendered emotion patch (server Expression.emotion_for,
   // built from council risk/reversibility and the evidence verdict) drives the
-  // face directly. This is real state — not the event-name heuristics.
+  // face directly. This is real state - not the event-name heuristics.
   const emo = d.emotion || ex.emotion;
   if (emo) window.MASTER_FACE_STATE?.apply?.({ name: "clusters:emotion", ...emo });
 
@@ -356,7 +356,7 @@ window.addEventListener('tts:playback:end', (ev) => {
   if (State.mode === 'speaking') State.mode = 'idle';
   State.currentSpeechStyle = null;
   // clearViseme() lives in face.runtime.js's own closure, not exposed to this
-  // module — referencing it threw ReferenceError on every tts:playback:end
+  // module - referencing it threw ReferenceError on every tts:playback:end
   // (optional chaining only guards a null/undefined value, not an undeclared
   // identifier), so the mouth shape never relaxed to neutral between speech
   // segments. Reset State directly, mirroring face.runtime.js's clearViseme().
@@ -376,7 +376,7 @@ if (renderer) {
   if (_dbgEl) {
     const _dbgTimer = setInterval(() => {
       if (!_dbgEl.isConnected) { clearInterval(_dbgTimer); return; }
-      _dbgEl.textContent = `webgl ok · f:${F_FACE_SEM.dbgFrames ?? 0} m:${Number(F_FACE_SEM.morphCurrent ?? 0).toFixed(2)}`;
+      _dbgEl.textContent = `webgl ok - f:${F_FACE_SEM.dbgFrames ?? 0} m:${Number(F_FACE_SEM.morphCurrent ?? 0).toFixed(2)}`;
     }, 500);
     setTimeout(() => { clearInterval(_dbgTimer); _dbgEl.remove(); }, 30000);
   }

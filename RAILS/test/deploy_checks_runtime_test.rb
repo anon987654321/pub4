@@ -189,7 +189,7 @@ class DeployChecksRuntimeTest < Minitest::Test
   def test_deploy_at_aliases_are_retired
     %w[@core.sh @database.sh @deploy.sh @runtime_check.sh @scaffold.sh @service.sh @sync.sh].each do |name|
       refute File.exist?(File.join(ROOT, name)),
-             "#{name} resurrected — canonical scripts are the _*.sh files"
+             "#{name} resurrected - canonical scripts are the _*.sh files"
     end
   end
 
@@ -209,7 +209,7 @@ class DeployChecksRuntimeTest < Minitest::Test
   # has to exist.
   def test_operator_recipes_name_commands_that_exist
     recipes = YAML.safe_load_file(File.join(OPENBSD_ROOT, "data", "operator.yml"), aliases: true).fetch("recipes")
-    refute_empty recipes, "operator.yml has no recipes — the parse broke, not the tree"
+    refute_empty recipes, "operator.yml has no recipes - the parse broke, not the tree"
 
     incomplete = recipes.reject { |r| %w[want run expect].all? { |k| r[k].to_s.strip != "" } }
     assert_empty incomplete.map { |r| r["want"] }, "recipes missing want, run or expect"

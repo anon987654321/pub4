@@ -5,15 +5,15 @@ require "minitest/autorun"
 # The social models live in two layers and the rule for which one wins is real but
 # was never written down in one place:
 #
-#   * ::Reaction and ::Notification — brgen defines app-local canonical classes.
+#   * ::Reaction and ::Notification - brgen defines app-local canonical classes.
 #     Every app that does NOT is meant to fall back to Shared::Reaction /
 #     Shared::Notification. The choice is made by `defined?(::X) ? ::X : Shared::X`
 #     at three resolver sites (reaction_toggle.rb, notifications_controller.rb,
 #     notifiable.rb). A bare `Shared::Reaction.where(...)` anywhere else would pin
-#     the fallback and silently bypass brgen's canonical class — a real bug that no
+#     the fallback and silently bypass brgen's canonical class - a real bug that no
 #     boot-time error would surface, since both classes load fine.
 #
-#   * ReviewCase — no app defines ::ReviewCase, so Shared::ReviewCase IS canonical.
+#   * ReviewCase - no app defines ::ReviewCase, so Shared::ReviewCase IS canonical.
 #     Bare use of it is correct and expected; it has no app-local twin to shadow.
 #
 # This test pins that split: Shared::Reaction / Shared::Notification, used AS the
@@ -24,13 +24,13 @@ require "minitest/autorun"
 class SharedModelCanonicalizationTest < Minitest::Test
   ROOT = File.expand_path("..", __dir__)
 
-  # The model constant exactly — not ReactionToggle, not ReactionsController.
+  # The model constant exactly - not ReactionToggle, not ReactionsController.
   RESOLVED = {
     "Shared::Reaction" => /Shared::Reaction(?![A-Za-z0-9_])/,
     "Shared::Notification" => /Shared::Notification(?![A-Za-z0-9_])/,
   }.freeze
 
-  # Where the model class itself is declared — the `class Reaction` line naturally
+  # Where the model class itself is declared - the `class Reaction` line naturally
   # has no `defined?` and must not be flagged.
   DEFINITION_FILES = %w[
     __shared/app/models/shared/reaction.rb
@@ -61,7 +61,7 @@ class SharedModelCanonicalizationTest < Minitest::Test
           guard_above = i.positive? && lines[i - 1].include?("defined?")
           next if guard_here || guard_above
 
-          unguarded << "#{rel}:#{i + 1}: bare #{name} — resolve via `defined?(::#{name.split("::").last})` instead"
+          unguarded << "#{rel}:#{i + 1}: bare #{name} - resolve via `defined?(::#{name.split("::").last})` instead"
         end
       end
     end
@@ -71,7 +71,7 @@ class SharedModelCanonicalizationTest < Minitest::Test
   end
 
   def test_the_three_resolver_sites_still_exist
-    # If a refactor moves the resolver, update this list — its point is that the
+    # If a refactor moves the resolver, update this list - its point is that the
     # `defined?(::X)` decision lives in a known, small set of places, not scattered.
     {
       "__shared/app/services/shared/reaction_toggle.rb" => "defined?(::Reaction)",

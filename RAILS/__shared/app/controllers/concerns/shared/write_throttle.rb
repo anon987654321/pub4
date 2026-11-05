@@ -14,7 +14,7 @@ module Shared
   # A controller whose legitimate traffic is burstier raises its own ceiling with
   # `self.write_throttle_limit = n`; one whose callers are servers with their own
   # limit (the fediverse inbox) opts out with `skip_write_throttle`. Controllers
-  # outside ApplicationSetup — webhooks, browser report beacons — include it
+  # outside ApplicationSetup - webhooks, browser report beacons - include it
   # themselves and count by IP.
   module WriteThrottle
     extend ActiveSupport::Concern

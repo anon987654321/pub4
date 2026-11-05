@@ -12,7 +12,7 @@ class CartItem < ApplicationRecord
     option_ids.to_s.split(",").map { |id| Integer(id) }
   end
 
-  # Human list of the chosen options — the cart line and the order snapshot
+  # Human list of the chosen options - the cart line and the order snapshot
   # both render this.
   def options_list
     ItemOption.where(id: selected_option_ids).order(:position, :id).map(&:name)

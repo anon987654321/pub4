@@ -7,7 +7,7 @@
 # makes a short-video feed a place rather than a queue.
 class Tv::Sound < ApplicationRecord
   belongs_to :user
-  # The clip it came from. Nullable and nullify: the sound outlives the video —
+  # The clip it came from. Nullable and nullify: the sound outlives the video -
   # the clips that used it are the reason it is still a thing.
   belongs_to :source_video, class_name: "Tv::Video", optional: true
   has_many :videos, class_name: "Tv::Video", foreign_key: :sound_id, dependent: :nullify, inverse_of: :sound
@@ -18,7 +18,7 @@ class Tv::Sound < ApplicationRecord
   scope :popular, -> { publicly_visible.order(videos_count: :desc, id: :desc) }
 
   # Named after the clip that introduced it, which is what every app that has
-  # this does — "original sound — kari" is a name people recognise before they
+  # this does - "original sound - kari" is a name people recognise before they
   # recognise a title.
   def self.original_for(video)
     find_or_create_by!(source_video_id: video.id) do |sound|

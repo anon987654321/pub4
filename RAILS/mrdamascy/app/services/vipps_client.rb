@@ -6,43 +6,43 @@ require "uri"
 require "securerandom"
 require "base64"
 
-# Vipps client — the whole "fewer steps than Foodora" engine (APP_SPEC §5/§12).
+# Vipps client - the whole "fewer steps than Foodora" engine (APP_SPEC §5/§12).
 #
 # Two documented Vipps APIs, one client, Net::HTTP only (no gems, APP_SPEC §2):
 #
-#   ePayment API v1 — api.vipps.no/epayment/v1
-#     POST /epayment/v1/payments                 create (WEB_REDIRECT → wallet)
+#   ePayment API v1 - api.vipps.no/epayment/v1
+#     POST /epayment/v1/payments                 create (WEB_REDIRECT -> wallet)
 #     GET  /epayment/v1/payments/{reference}     poll the payment's state
 #     POST /epayment/v1/payments/{reference}/capture
 #     POST /accesstoken/get                      Bearer token, cached in-process
 #
-#   Login API (OAuth2) — api.vipps.no/access-management-1.0
+#   Login API (OAuth2) - api.vipps.no/access-management-1.0
 #     GET  /access/oauth2/auth                   "Logg inn med Vipps"
-#     POST /access/oauth2/token                  code → access token
+#     POST /access/oauth2/token                  code -> access token
 #     GET  /access/userinfo                      verified name/phone/address
 #
 # MOCK BY DEFAULT (ENV["VIPPS_MOCK"] != "0"): every call succeeds locally and
 # never raises; the "payment" happens on our own /vipps/mock approval page and
-# the "login" on /vipps/login_mock — dev/test stand-ins for the Vipps app.
+# the "login" on /vipps/login_mock - dev/test stand-ins for the Vipps app.
 #
 # REAL MODE (VIPPS_MOCK=0) performs the documented HTTP calls and raises
 # VippsClient::NotAvailable when credentials are missing or Vipps answers with
 # an error. Guarded behind mock_mode?, so mock users never touch the network.
 #
 # Payment honesty: init reserves, nothing captures until Vipps says
-# AUTHORIZED — via the webhook (POST /vipps/callback, secret-verified) or the
+# AUTHORIZED - via the webhook (POST /vipps/callback, secret-verified) or the
 # tracking page's poll sync. Both paths funnel into sync_payment!/capture.
 class VippsClient
   # Raised for real-mode wiring gaps (missing ENV, HTTP error, bad payload).
   class NotAvailable < StandardError; end
 
-  # ePayment states → what we do with them (APP_SPEC §5). Capture is
+  # ePayment states -> what we do with them (APP_SPEC §5). Capture is
   # immediate: food is made to be eaten, and Foodora captures at placement too.
   CAPTURE_ON = "AUTHORIZED"
   FAIL_ON = %w[ABORTED EXPIRED TERMINATED].freeze
 
   class << self
-    # Guards the access-token cache — one token fetch per process, not one
+    # Guards the access-token cache - one token fetch per process, not one
     # per concurrent request. A plain mutex (Mutex_m's initialize hook never
     # runs on a singleton class, so its lazily-created ivar is a trap).
     TOKEN_MUTEX = Thread::Mutex.new
@@ -53,12 +53,12 @@ class VippsClient
     # (the ePayment reference) and vipps_url, returns true.
     #
     # Mock mode points the order at our own approval page keyed by the
-    # tracking token and reports the payment authorised — the mock page's
+    # tracking token and reports the payment authorised - the mock page's
     # approve step then completes it.
     #
     # Real mode keeps payment_state "pending": money is reserved only when the
     # customer approves in the Vipps app, and capture happens on AUTHORIZED
-    # (webhook or tracking-poll sync) — never on a maybe.
+    # (webhook or tracking-poll sync) - never on a maybe.
     def init_payment(order:)
       if mock_mode?
         order.vipps_order_id = "mock-#{order.tracking_token}"
@@ -75,7 +75,7 @@ class VippsClient
     end
 
     # Persist exactly the payment columns the client owns. update_columns, not
-    # save!: the order's own validations (address, phone, …) are the checkout's
+    # save!: the order's own validations (address, phone, ...) are the checkout's
     # business, and a defensively blank phone must not block a payment write.
     def persist_payment_columns!(order)
       order.update_columns(
@@ -109,7 +109,7 @@ class VippsClient
       order
     end
 
-    # Capture a reserved payment and confirm the order (AUTHORIZED →
+    # Capture a reserved payment and confirm the order (AUTHORIZED ->
     # captured + confirmed). Mock: no-op success. Real: POST capture with
     # modificationAmount and a stable Idempotency-Key; "already captured"
     # answers count as success so replays converge.
@@ -127,7 +127,7 @@ class VippsClient
       if order.payment_state != "captured"
         attrs = { payment_state: "captured" }
         # The kitchen may already have advanced the order while Vipps was
-        # authorising — capture confirms payment, it never rewinds the kitchen.
+        # authorising - capture confirms payment, it never rewinds the kitchen.
         attrs[:state] = "confirmed" if order.state == "placed"
         order.update!(attrs)
       end
@@ -137,7 +137,7 @@ class VippsClient
     # --- Login ("Logg inn med Vipps") ----------------------------------------
 
     # Build the OAuth2 authorize URL the visitor is bounced to. Scopes give us
-    # verified phone + name + address — the reason a Vipps user never types a
+    # verified phone + name + address - the reason a Vipps user never types a
     # checkout form here (Foodora makes you type all three, every time).
     def login_authorize_url(redirect_uri:, state:, nonce:)
       scopes = %w[openid email phoneNumber address]
@@ -153,7 +153,7 @@ class VippsClient
     end
 
     # Exchange the ?code= for tokens (form-encoded, HTTP Basic client auth).
-    # Returns the raw token hash (access_token, id_token, expires_in, …).
+    # Returns the raw token hash (access_token, id_token, expires_in, ...).
     def exchange_login_code!(code:, redirect_uri:)
       headers = {
         "Content-Type" => "application/x-www-form-urlencoded",
@@ -170,7 +170,7 @@ class VippsClient
     end
 
     # Fetch the verified profile: { sub:, name:, phone_number:, email:,
-    # address: { formatted, street_address, postal_code, … } }.
+    # address: { formatted, street_address, postal_code, ... } }.
     def login_userinfo!(access_token:)
       http_get(
         "/access-management-1.0/access/userinfo",
@@ -182,7 +182,7 @@ class VippsClient
 
     # Vipps Login userinfo returns "4790000004"; our users live as 8-digit
     # Norwegian locals (SessionsController + OTP do the same). Normalising
-    # here keeps "one identity per phone" — the 47-prefixed Vipps profile
+    # here keeps "one identity per phone" - the 47-prefixed Vipps profile
     # and the OTP-typed number resolve to the same customer row.
     def login_phone(phone)
       digits = phone.to_s.gsub(/\D/, "")
@@ -209,7 +209,7 @@ class VippsClient
         userFlow: "WEB_REDIRECT",
         paymentDescription: "Mr. Damascy #{order.tracking_token}"
       }
-      # Verified phone lets Vipps preselect the customer's wallet — the tap
+      # Verified phone lets Vipps preselect the customer's wallet - the tap
       # count in the Vipps app goes from "find yourself" to "fingerprint".
       if (phone = vipps_phone(order.phone))
         payload[:customer] = { phoneNumber: phone }
@@ -228,7 +228,7 @@ class VippsClient
       true
     end
 
-    # GET /epayment/v1/payments/{reference} → "state": CREATED | AUTHORIZED |
+    # GET /epayment/v1/payments/{reference} -> "state": CREATED | AUTHORIZED |
     # ABORTED | EXPIRED | TERMINATED (capture shows in aggregate, not state).
     def payment_state(reference:)
       body = http_get(
@@ -315,7 +315,7 @@ class VippsClient
       return "localhost:3000" unless Rails.env.production?
 
       # A returnUrl of localhost in production would strand the customer
-      # outside the PWA after paying — refuse loudly instead.
+      # outside the PWA after paying - refuse loudly instead.
       raise NotAvailable, "Set Rails.application.routes.default_url_options[:host] for Vipps returnUrl"
     end
 
@@ -324,7 +324,7 @@ class VippsClient
     end
 
     # POST JSON (or form) and parse the JSON answer. 422 "already captured"
-    # on capture is a success for our purposes — handled by the caller's
+    # on capture is a success for our purposes - handled by the caller's
     # idempotency, so only network/5xx/4xx-others raise.
     def http_post(path, headers:, body:)
       perform_request(Net::HTTP::Post, path, headers, body)

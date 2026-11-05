@@ -1,16 +1,16 @@
 # frozen_string_literal: true
 
 # Picks the best discount for a basket (APP_SPEC §5): the most saving active
-# PromoCode — percent, fixed or free delivery, compared by computed saving —
+# PromoCode - percent, fixed or free delivery, compared by computed saving -
 # or the Sahtein card's 10th-stamp free wrap when the user has earned it.
 # Order#compute_totals! consumes the returned hash verbatim via
 # Order#apply_promo_result!.
 class PromoApplier
-  # ≥ 9 unredeemed stamps → the wrap is on the house; the 10th stamp IS the
+  # >= 9 unredeemed stamps -> the wrap is on the house; the 10th stamp IS the
   # reward (APP_SPEC §5, User#free_wrap_ready?).
   LOYALTY_STAMP_THRESHOLD = 9
 
-  # Spec tie-break preference: percent → fixed → free_delivery, then loyalty.
+  # Spec tie-break preference: percent -> fixed -> free_delivery, then loyalty.
   PREFERRED_ORDER = { "percent" => 0, "fixed" => 1, "free_delivery" => 2 }.freeze
 
   class << self
@@ -82,8 +82,8 @@ class PromoApplier
       { promo: nil, saving: [ price, subtotal ].min }
     end
 
-    # The cheapest wrap on the menu — matched on the category slug/name so it
-    # survives seed tweaks ("Wraps & Ruller", "wraps-ruller", …).
+    # The cheapest wrap on the menu - matched on the category slug/name so it
+    # survives seed tweaks ("Wraps & Ruller", "wraps-ruller", ...).
     def cheapest_wrap_price_ore
       MenuItem.available
               .joins(:menu_category)

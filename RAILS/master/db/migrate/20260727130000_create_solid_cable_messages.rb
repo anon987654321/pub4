@@ -6,12 +6,12 @@
 # a table that does not exist. Nothing caught it because:
 #
 #   * test env uses `adapter: test`, so the cable path is never exercised there;
-#   * and the four Ruby test files could not run at all — without a schema.rb,
+#   * and the four Ruby test files could not run at all - without a schema.rb,
 #     maintain_test_schema aborts the whole suite before the first test.
 #
 # Columns and indexes are copied from the gem's own installer template
 # (solid_cable-3.0.12 lib/generators/solid_cable/install/templates/db/cable_schema.rb)
-# rather than invented. Note `created_at` only — Solid Cable has no updated_at,
+# rather than invented. Note `created_at` only - Solid Cable has no updated_at,
 # so this deliberately does not use t.timestamps.
 #
 # cable.yml declares no `connects_to`, so Solid Cable uses the primary database

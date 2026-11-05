@@ -237,7 +237,7 @@
 }
 
 .swipe-action {
-  /* Primary action (like/pass) — rounded up to the 64px rhythm step, not
+  /* Primary action (like/pass) - rounded up to the 64px rhythm step, not
      down to 48, since ux_laws.fitts favors larger for primary actions. */
   width: var(--space-16);
   height: var(--space-16);
@@ -322,7 +322,7 @@ body.vertical-dating {
   --dating-border: var(--border);
   --dating-accent: var(--accent);
   /* The Nordic teal is a fill colour. As ink on the light surface this vertical
-     actually renders on it measures 1.77:1 — the BankID trust line, which is
+     actually renders on it measures 1.77:1 - the BankID trust line, which is
      the one label on the intro a user is meant to read carefully. Same hue,
      darkened until it clears AA: 5.62:1 on --bg. Dark mode keeps the bright
      teal, which is already 9.42:1 there. */
@@ -506,7 +506,7 @@ body.vertical-dating .hotkey-coach {
   display: block;
 }
 
-/* Progressive profile form — essentials first, optional under details. */
+/* Progressive profile form - essentials first, optional under details. */
 .dating-profile-essentials {
   border: 0;
   margin: 0 0 var(--space-4);
@@ -597,7 +597,7 @@ body.vertical-dating .swipe-card {
 }
 
 /* One strong CTA per view; ghosts stay ghosts. The old rule painted every .button
-   with the bright teal fill under the #00705c ink — teal on teal, 1.6:1, which
+   with the bright teal fill under the #00705c ink - teal on teal, 1.6:1, which
    read as disabled buttons in the deck header. The fill is now the AA ink teal
    (6.05:1 under the light ground) and dark mode's bright teal (the ink there is
    the dark ground itself, ≈4.6:1 against #16181c), so the one filled button

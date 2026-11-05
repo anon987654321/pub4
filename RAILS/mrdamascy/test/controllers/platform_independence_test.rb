@@ -2,10 +2,10 @@
 
 require "test_helper"
 
-# The mission, held as a test (README: "Foodora vs Mr. Damascy — the step
+# The mission, held as a test (README: "Foodora vs Mr. Damascy - the step
 # math" and APP_SPEC §5): the kitchen owns the whole order. No marketplace
 # middleman (Foodora, FoodBooking) is integrated anywhere, and Wolt Drive is
-# a staff-initiated overflow lane that no part of the order lifecycle needs —
+# a staff-initiated overflow lane that no part of the order lifecycle needs -
 # the kitchen's own couriers carry every bag unless a human presses the
 # overflow button. These tests keep all three claims true.
 class PlatformIndependenceTest < ActionDispatch::IntegrationTest
@@ -37,7 +37,7 @@ class PlatformIndependenceTest < ActionDispatch::IntegrationTest
 
   test "wolt drive is reachable only from the staff board's manual dispatch" do
     # No job, no recurring task, no model callback may book a courier on its
-    # own — the overflow lane is a human decision on the kitchen board.
+    # own - the overflow lane is a human decision on the kitchen board.
     callers = Dir.glob("app/**/*.rb").select do |path|
       File.read(path).include?("WoltDriveClient") &&
         !path.end_with?("services/wolt_drive_client.rb")
@@ -47,14 +47,14 @@ class PlatformIndependenceTest < ActionDispatch::IntegrationTest
 
   test "the whole order lifecycle completes with the courier platforms refusing" do
     # Make any Wolt booking explode. If the lifecycle below ever needs one,
-    # the test fails loudly — own couriers are the only required lane.
+    # the test fails loudly - own couriers are the only required lane.
     sc = WoltDriveClient.singleton_class
     sc.send(:alias_method, :orig_request_delivery, :request_delivery)
     sc.send(:define_method, :request_delivery) do |**|
-      raise WoltDriveClient::NotAvailable, "platforms refuse — the kitchen must not care"
+      raise WoltDriveClient::NotAvailable, "platforms refuse - the kitchen must not care"
     end
 
-    # 1) the customer orders and pays (mock Vipps — the only payment rail)
+    # 1) the customer orders and pays (mock Vipps - the only payment rail)
     post add_item_cart_url, params: { menu_item_id: @item.id, quantity: 1,
                                       option_ids: [], note: "" }
     assert_includes [ 200, 302, 303 ], response.status

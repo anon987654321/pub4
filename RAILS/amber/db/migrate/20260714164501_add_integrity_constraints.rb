@@ -40,7 +40,7 @@ class AddIntegrityConstraints < ActiveRecord::Migration[8.1]
 
   private
 
-  # Keeps the earliest row for each duplicate key and deletes the rest —
+  # Keeps the earliest row for each duplicate key and deletes the rest -
   # these are rows that already violated the model's own `validates
   # uniqueness:` scope, so they represent duplicate data the app never
   # intended to allow, not real divergent user records.

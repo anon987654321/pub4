@@ -14,9 +14,9 @@ activity infrastructure.
 
 ## Product briefs
 
-- [Radio / Playlist](playlist/README.md) — local audio publishing, playlists, collaboration,
+- [Radio / Playlist](playlist/README.md) - local audio publishing, playlists, collaboration,
   hosted tracks, embeddable players, listening parties, timestamped comments and expiry.
-- [TV](tv/README.md) — channels, uploaded video, shows, episodes, subscriptions, watch-time
+- [TV](tv/README.md) - channels, uploaded video, shows, episodes, subscriptions, watch-time
   discovery, video notes and the live-stream model boundary.
 
 The historical plans also mentioned a record label, creator donations, premium audio tiers,

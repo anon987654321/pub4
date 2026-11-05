@@ -1,4 +1,4 @@
-# Rails deploy matrix — canonical inventory for RAILS.
+# Rails deploy matrix - canonical inventory for RAILS.
 #
 # deploy_root: tracked tree copied to /home/<app>/app by <app>.sh
 # status: done | port | missing | planned
@@ -76,7 +76,7 @@ apps:
       experience_principles: [city_first, local_before_global, one_network_across_verticals, live_and_present, useful_over_noisy]
       vertical_architecture: "Verticals inherit Brgen identity and gain a surface dialect; they become standalone brands only when they have a distinct market and promise."
     port: 38182
-    # One Falcon process. City apexes (brgen.no, lsangeles.com, …) each carry
+    # One Falcon process. City apexes (brgen.no, lsangeles.com, ...) each carry
     # the feed at the apex and namespaced engines on subdomains
     # (dating.brgen.no, marketplace.lsangeles.com). See RAILS/brgen/AGENTS.md.
     # Not a fourth Rails app per vertical. ai.brgen.no is MASTER's face, the
@@ -211,7 +211,7 @@ apps:
         - { name: SEO / affiliate / newsletter kit (shared),                 status: done, notes: "Shared::SeoKit, json_ld, affiliate_disclosure, newsletter_cta" }
         - { name: affiliate inventory persistence (AffiliateProduct),         status: done, notes: "affiliate_products table + upsert_from_feed! + rake affiliate:{import,health,seed_placeholders,drop_placeholders}; deals read the table, not a live call per render" }
         - { name: TradeDoubler product import,                                status: done, notes: "Client uses Products matrix URI + fid, productFeeds discovery, search/unlimited modes, offers parse. Gated on TRADEDOUBLER_TOKEN. Nightly AffiliateImportJob. Live response still needs operator approval of brgen.no as publisher + programmes. Placeholders until then." }
-        - { name: TradeDoubler publisher ownership verification,              status: done, notes: "Their publisher team verifies by loading a page showing the account Site ID, plus a visible contact email and a reachable cookie policy. Site footer renders TRADEDOUBLER_SITE_ID and SITE_CONTACT_EMAIL when set — deliberately NOT gated on TRADEDOUBLER_TOKEN, which is issued after approval. /cookies already names TradeDoubler and is footer-linked. Pinned by brgen/test/helpers/publisher_verification_test.rb. OPERATOR: set both env values on vm23; SITE_CONTACT_EMAIL must be a mailbox that receives." }
+        - { name: TradeDoubler publisher ownership verification,              status: done, notes: "Their publisher team verifies by loading a page showing the account Site ID, plus a visible contact email and a reachable cookie policy. Site footer renders TRADEDOUBLER_SITE_ID and SITE_CONTACT_EMAIL when set - deliberately NOT gated on TRADEDOUBLER_TOKEN, which is issued after approval. /cookies already names TradeDoubler and is footer-linked. Pinned by brgen/test/helpers/publisher_verification_test.rb. OPERATOR: set both env values on vm23; SITE_CONTACT_EMAIL must be a mailbox that receives." }
         - { name: TradeDoubler vouchers + conversions + Link Converter,       status: done, notes: "AffiliateVoucher, AffiliateConversion, POST /webhooks/tradedoubler (fail-closed), LinkConverterSyncJob, and EPI helpers. affiliate:attribution reports approved commission by matched EPI city/surface and keeps orphaned revenue unattributed. TradeDoubler visitorId is no longer persisted; no first-party visitor cookie is added." }
         - { name: First-party partner marketing UI,                          status: done, notes: "Partner::Program/Membership/Click/Conversion + PartnerMarketing attribution + /partner/programs + /p/:token click redirect" }
         - { name: permission-marketing newsletters (Seth Godin editions),    status: done, notes: "NewsletterComposer + NewsletterVisuals + NewsletterEdition + token-authenticated email preferences; weekly deals use Affiliate + EPI + vouchers" }
@@ -224,7 +224,7 @@ apps:
         - { name: "Events (city listing, RSVP, capacity, cancellation)",    status: done, notes: "Event + EventRsvp; upcoming keeps running multi-day events; three-way RSVP because interested is the majority answer on every event platform; cancel! notifies attendees rather than deleting; emits EventCreated to the city strip" }
         - { name: "Stories (24h ephemeral media, viewer set, sweep)",        status: done, notes: "Story + StoryView; expires_at is stored so alive/label/sweep read one column; alive hides an expired story before the sweep runs; seen is a set not a log; capture=environment for camera-first; coarse area inherited from the position locations#update already stored" }
         - { name: "Tier 3 parity (basket, dating ranking, takeaway hours, messenger edit, listing expiry)", status: done, notes: "Marketplace::Checkout above the per-listing offers with addresses and fulfilment; Dating ranked_for + Hinge prompts replacing ORDER BY RANDOM(); Takeaway::OpeningHour + tips + scheduling; message reply/edit/unsend; listing expiry as a scope with renewal." }
-        - { name: ActivityPub federation (outbound half),                    status: done, notes: "WebFinger, NodeInfo, actor/outbox/followers, verified inbox, HTTP signatures, per-inbox delivery with retry. A city is the instance: every lookup resolves against the requested host. Inbound Create/Announce/Like are verified, recorded and dropped — storing remote content needs media proxying and a moderation model ModerationReport does not have.1." }
+        - { name: ActivityPub federation (outbound half),                    status: done, notes: "WebFinger, NodeInfo, actor/outbox/followers, verified inbox, HTTP signatures, per-inbox delivery with retry. A city is the instance: every lookup resolves against the requested host. Inbound Create/Announce/Like are verified, recorded and dropped - storing remote content needs media proxying and a moderation model ModerationReport does not have.1." }
         - { name: "Community governance (roles, rules, flair, privacy, per-community mod queue)", status: done, notes: "community_memberships.role member/moderator/owner with last-owner protection; owner-only appointment; restricted = whole city reads, members post; queue derived from the community posts because ModerationReport is polymorphic with no community_id" }
         - { name: "Messenger depth (pins, inbox search, forward, group threads, link previews, voice notes)", status: done, notes: "ConversationPin + Conversation::INBOX_ORDER puts pinned first; conversations#search over titles and bodies; messages#forward; group_conversations + group_members with an owner; LinkPreview + LinkPreviewFetchJob behind Shared::OutboundHttp's SSRF guard; voice_recorder Stimulus records to an attachment. Conversation.direct_between never matched before this, so every pair of users kept getting a new DM thread. Desktop messenger now uses a 56px room rail, 300px inbox, fluid thread and 360px artifact context pane." }
         - { name: "Messenger history pagination (load-earlier cursor past the 50-message window)", status: done, notes: "show fetches window+1 and only then hands the log a cursor; MessagesController#index serves HISTORY_PAGE above the cursor with X-History-Next, scoped through for_user and visible.unexpired; conversation_log_controller walks it with a scroll-anchored prepend, IntersectionObserver auto-load plus a real button, no unread-pill inflation, day breaks and grouping re-derived after each page; messages#index routed on host and messenger subdomain; locales messages.older en/nb; pinned by brgen_messenger/test/controllers/message_history_test.rb" }
@@ -240,17 +240,17 @@ apps:
         - { name: "Tv::Show", status: done, notes: "tv_shows migration + ShowsController" }
         - { name: "Tv::Episode", status: done, notes: "tv_episodes migration + belongs_to show/video" }
         - { name: video upload + Active Storage variants,                  status: done, notes: "Tv::Video video_file + thumbnail; webp poster/thumb variants via MediaProcessable" }
-        - { name: live stream infrastructure,                              status: planned, agent: ignore, notes: "BLOCKER: needs a media server (nginx-rtmp / MediaMTX / SRS) plus a delivery/transcoding path. ffmpeg is already a required OpenBSD target; what is absent is the media server and external delivery tier. Tv::Broadcast already models stream_key/go_live!/end_live! — the gap is infrastructure, not upload/model code." }
+        - { name: live stream infrastructure,                              status: planned, agent: ignore, notes: "BLOCKER: needs a media server (nginx-rtmp / MediaMTX / SRS) plus a delivery/transcoding path. ffmpeg is already a required OpenBSD target; what is absent is the media server and external delivery tier. Tv::Broadcast already models stream_key/go_live!/end_live! - the gap is infrastructure, not upload/model code." }
         - { name: VideoPublished / BroadcastScheduled events,             status: done, notes: "VideoPublished on status=published; BroadcastScheduled via tracks_activity + BroadcastStarted/Ended" }
         - { name: "Tv::Sound (reusable audio, per-sound feed)", status: done, notes: "a video carries a sound and a sound lists its videos, which is the TikTok loop; videos_count moves with update! because a counter cache does not move on update_column" }
       subapp_dating:
         - { name: "Dating::Profile (user, bio, interests)", status: done }
         - { name: "Dating::Like (user, liked_user)", status: done }
         - { name: "Dating::Dislike (user, disliked_user)", status: done }
-        - { name: "Dating::Match (Matchmaking — mutual likes)", status: done }
+        - { name: "Dating::Match (Matchmaking - mutual likes)", status: done }
         - { name: "swipe UI (Turbo Streams, Stimulus)",                     status: done }
         - { name: city + radius filter,                                     status: done, notes: "Matchmaking radius_km + neighborhood scope" }
-        - { name: match → messaging handoff,                                status: done, notes: "Dating::Match#announce_match → Conversation.find_or_create_direct" }
+        - { name: match -> messaging handoff,                                status: done, notes: "Dating::Match#announce_match -> Conversation.find_or_create_direct" }
         - { name: photos on profile,                                        status: done, notes: "has_many_attached photos, edit purge, ProfileMediaJob variants" }
         - { name: "Dating::Verification (pose photo, reviewed)", status: done, notes: "a verified badge on the swipe card; an unreviewed submission queues rather than passing itself" }
         - { name: "Dating::DailyPick", status: done, notes: "one ranked pick a day per profile, held for the day so the deck does not reshuffle under the reader" }
@@ -268,9 +268,9 @@ apps:
         - { name: "Marketplace::Review", status: done, notes: "reviews table + Marketplace::ReviewsController; buyer-order check + rating refresh" }
         - { name: schema.org Product microdata in views,                    status: done }
         - { name: "Marketplace::Order (state machine)", status: done }
-        - { name: buyer–seller Chat,                                        status: done, notes: "Conversation#create from listing show" }
+        - { name: buyer-seller Chat,                                        status: done, notes: "Conversation#create from listing show" }
         - { name: geo-localized listings,                                   status: done, notes: "listing lat/lng + GeoLocatable near scope + radius_km filter in listings#index" }
-        - { name: locale subdomain routing (markedsplass/markadur/…),      status: done, notes: "DomainRegistry aliases + routes derived from SUBAPP_ALIASES + marketplace_root_url helper" }
+        - { name: locale subdomain routing (markedsplass/markadur/...),      status: done, notes: "DomainRegistry aliases + routes derived from SUBAPP_ALIASES + marketplace_root_url helper" }
         - { name: FTS filtering,                                            status: done, notes: "live_search on listings/stores/deals + saved searches" }
         - { name: listing kinds (goods / job / housing / gig), status: done, notes: "Marketplace::Listing.kind plus JobDetail (employment type, salary range), HousingDetail (rent, deposit, rooms, available_from) and GigDetail (pay, starts_at, hours). Price is required only for goods; the index and the top-offers strip both filter by kind and default to goods. The Craigslist non-goods half is open." }
         - { name: "Marketplace::Question (public Q&A on a listing)", status: done, notes: "the seller answers in place, and an unanswered question stays visible so the next buyer sees what was asked" }
@@ -284,7 +284,7 @@ apps:
         - { name: solidus_starter_frontend storefront,                     status: planned, notes: "Amazon-like PDP/cart/checkout UI after solidus:install" }
         - { name: Solidus native marketplace features,                   status: planned, notes: "Evaluate against BRGEN seller/order domain; do not install the legacy solidus_marketplace gem." }
         - { name: Dintero split checkout,                                 status: planned, notes: "Signed callback/webhook verification, replay-safe event deliveries, seller ACTIVE payout check, Shopping draft/order/session adapter, inline per-line splits, seller capture and refund routes, and conversion tracking. Enable checkout only after Dintero staging validation." }
-        - { name: Amazon feature parity map,                               status: planned, notes: "PDP, search facets, cart, multi-seller, reviews, order history — see SOLIDUS_MARKETPLACE.md" }
+        - { name: Amazon feature parity map,                               status: planned, notes: "PDP, search facets, cart, multi-seller, reviews, order history - see SOLIDUS_MARKETPLACE.md" }
         - { name: AI recommendations,                                       status: planned, agent: ignore }
       subapp_playlist:
         - { name: "Playlist::Set (name, description, user)", status: done }
@@ -301,8 +301,8 @@ apps:
         - { name: "Takeaway::Order (user, status:string)", status: done }
         - { name: Restaurant model (geocoding),                             status: done, notes: "Takeaway::Restaurant geocode_if_needed + city anchor offsets + lat/lng index" }
         - { name: MenuItem availability state machine,                      status: done, notes: "available flag + available_for_order? + order_item menu_item_must_be_available validation" }
-        - { name: Order full state machine (placed→delivered),              status: done, notes: "Takeaway::Order TRANSITIONS pending→delivered + transition_to! + status notifications" }
-        - { name: group orders, status: done, notes: "Takeaway::GroupOrdersController — one basket several people add to, each line attributed and the total split, placed by the host" }
+        - { name: Order full state machine (placed->delivered),              status: done, notes: "Takeaway::Order TRANSITIONS pending->delivered + transition_to! + status notifications" }
+        - { name: group orders, status: done, notes: "Takeaway::GroupOrdersController - one basket several people add to, each line attributed and the total split, placed by the host" }
 
   # MASTER's own Rails app: the face, chat stream and mission control in front
   # of the MASTER runtime. It shares Brgen's aesthetics by the operator's
@@ -403,12 +403,12 @@ apps:
         - { name: closet organisation (care/storage/zoning/restraint),     status: done, notes: "ClosetOrganization service + wardrobe_items#organize; every tip names its principle and the wardrobe evidence; source=rules" }
         - { name: mix & match magic (taste-ranked carousels),              status: done, notes: "TasteRanker + outfits#dressing_room counter-rotating zone carousels + save_look; declared (StylePreference) and revealed (joy/wear/recency/phase) taste" }
         - { name: style assistant (daily look),                            status: done, notes: "StyleAssistant on home dashboard: deterministic per user+date, weather-aware, rests recent wears, persists nothing until save_look" }
-        - { name: KonMari declutter loop,                                  status: done, notes: "spark_joy/clear_joy, DeclutterScore, challenges, last-chance→Outfit, 30d box hygiene job" }
+        - { name: KonMari declutter loop,                                  status: done, notes: "spark_joy/clear_joy, DeclutterScore, challenges, last-chance->Outfit, 30d box hygiene job" }
         - { name: AI stylist with offline fallbacks,                       status: done, notes: "WardrobeAi OpenRouter when OPENROUTER_API_KEY; heuristics/rules otherwise; honest UI" }
         - { name: "Amber Premium subscriptions (monthly/yearly Stripe plans + entitlement gates)", status: done, notes: "EUR 7.99/month or EUR 69/year; Shared::Billable reads verified subscription entitlements; PremiumGate protects outfit suggestions, generated outfits, the declutter guide and packing lists. Wardrobe basics remain free; plans stay unavailable until Stripe API key, webhook secret and Price ids are configured." }
         - { name: social feed,                                             status: done, notes: "posts#index, posts#feed, posts#show with comments" }
         - { name: affiliate commerce links,                                status: done, notes: "AffiliateLink model + item show CRUD + ShopTheLook suggestions" }
-        - { name: shop smarter page,                                       status: done, notes: "items#shopping_list: gaps + duplicates-before-you-buy + every affiliate link you own, grouped by merchant, rel=nofollow noopener sponsored. Store-feed half is the 'global trends' planned item — the page says so instead of showing an empty section." }
+        - { name: shop smarter page,                                       status: done, notes: "items#shopping_list: gaps + duplicates-before-you-buy + every affiliate link you own, grouped by merchant, rel=nofollow noopener sponsored. Store-feed half is the 'global trends' planned item - the page says so instead of showing an empty section." }
         - { name: "style sessions (calendar status, not video)",           status: done, notes: "live_streams table/UI renamed honestly; no WebRTC/RTMP" }
         - { name: locale negotiation + switcher (nb/en),                   status: done, notes: "LocalizedRequest concern: ?locale= > session > Accept-Language (by q) > :nb, plus a footer switcher. available_locales had carried en since the app was built with nothing able to reach it. Rules engines (ClosetOrganization/TasteRanker/WardrobeAnalytics/WardrobeGap/DuplicateDetector) translated too." }
         - { name: structured data on public pages,                         status: done, notes: "AmberSchemaHelper: ItemList + Product on /demo and the guest home, Article on posts#show. Uses demo URLs, not /items/:id, which is behind auth. Shared schema_url_for now emits absolute URLs." }
@@ -444,7 +444,7 @@ apps:
     public: true
     features:
       core:
-        - { name: Platform (name) — OpenBSD/FreeBSD/NetBSD,                  status: done, notes: "platforms table seeded openbsd/freebsd/netbsd" }
+        - { name: Platform (name) - OpenBSD/FreeBSD/NetBSD,                  status: done, notes: "platforms table seeded openbsd/freebsd/netbsd" }
         - { name: "Category (name, platform)",                              status: done, notes: "categories.platform_id scoped slug" }
         - { name: "Port (name, summary, url, description, category, platform)", status: done, notes: "ports.platform_id + pkgpath unique per platform; comment field is OpenBSD COMMENT" }
         - { name: Dependency model,                                         status: done }
@@ -467,7 +467,7 @@ apps:
     domain: mrd.brgen.no
     brand:
       category: bergen_street_kebab_pwa
-      promise: "Fra Damaskus med kjærlighet — grilled in Bergen, ordered in three steps."
+      promise: "Fra Damaskus med kjærlighet - grilled in Bergen, ordered in three steps."
       position: "One Bergen kitchen at Danmarksplass with its own mobile-first PWA: no Foodora, no courier marketplace, no commission between the customer and the grill."
       distinctive_mechanic: "Vipps Express + Stripe two-lane checkout in three stored steps, Sahtein-kortet ten-star loyalty, and a public token-scoped tracking seam."
       voice: [warm, damascene, bergensk, honest]
@@ -479,7 +479,7 @@ apps:
     deploy_script: RAILS/mrdamascy/mrdamascy.sh
     deploy_root: RAILS/mrdamascy
     public: true
-    promoted: 2026-11-02 — moved out of the retired RAILS/__other/ junk drawer to a first-class app path (migration retained in Git history)
+    promoted: 2026-11-02 - moved out of the retired RAILS/__other/ junk drawer to a first-class app path (migration retained in Git history)
     features:
       core:
         - { name: Menu (category chips, item sheets, heat scale, quick add),     status: done, notes: "seeded single-kitchen menu; menu_controller_test" }
@@ -499,7 +499,7 @@ archived_subsystems:
     notes: "Retired from active stack; the former OPENBSD/archive/recovery/references/build_blognet.rb path is absent from pub4. The manifest records provenance, not restored app code."
 
   hjerterom:
-    recovery_source: git history — deleted 2026-08-12; databases at /var/backups/pub4/hjerterom-20260812 on vm23.
+    recovery_source: git history - deleted 2026-08-12; databases at /var/backups/pub4/hjerterom-20260812 on vm23.
     notes: >-
       Retired with baibl and blognet. All three were recorded as removed in
       the repo two months before vm23 actually lost them: the users,
@@ -509,12 +509,12 @@ archived_subsystems:
 
   aight_production_ai:
     recovery_source: MASTER/lib/io/
-    notes: Absorbed — semantic cache + scrape in MASTER io; shared Scrape service in pub4-shared.
+    notes: Absorbed - semantic cache + scrape in MASTER io; shared Scrape service in pub4-shared.
 
   ai3_assistants:
     recovery_source: MASTER/
-    notes: Absorbed — constitutional pipeline replaces pub ai3 orchestration.
+    notes: Absorbed - constitutional pipeline replaces pub ai3 orchestration.
 
   multimedia_tts:
     recovery_source: MASTER/lib/voice/
-    notes: Absorbed — MASTER voice/TTS is canonical; legacy operator scripts retired.
+    notes: Absorbed - MASTER voice/TTS is canonical; legacy operator scripts retired.

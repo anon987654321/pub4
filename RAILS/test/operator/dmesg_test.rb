@@ -11,7 +11,7 @@ class DmesgTest < Minitest::Test
   DMESG = File.expand_path("../../../MASTER/tools/rails/operator/dmesg.rb", __dir__)
 
   def test_identical_consecutive_lines_print_once_with_a_count
-    assert_equal [ "Writing a.js ×3", "Writing b.js", "Writing a.js" ],
+    assert_equal [ "Writing a.js x3", "Writing b.js", "Writing a.js" ],
                  Operator::Dmesg.collapse([ "Writing a.js\n" ] * 3 + [ "Writing b.js\n", "Writing a.js\n" ])
   end
 
@@ -109,7 +109,7 @@ class DmesgTest < Minitest::Test
     out, status = Open3.capture2(RbConfig.ruby, DMESG, "collapse", stdin_data: "Writing a\nWriting a\ndone\n")
 
     assert status.success?
-    assert_equal "Writing a ×2\ndone\n", out
+    assert_equal "Writing a x2\ndone\n", out
   end
 
   private

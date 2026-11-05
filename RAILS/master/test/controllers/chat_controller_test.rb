@@ -36,14 +36,14 @@ class ChatControllerTest < ActionDispatch::IntegrationTest
     refute_includes response.body, "15000"
     assert_match(/function go\(\)\{[\s\S]*?revealPrompt/, primer)
     assert_match(/function go\(\)\{[\s\S]*?dismissPrimer/, primer)
-    # TTS/voice settings UI removed — persona defaults only (c3a186a3f, reinforced 2026-07-10).
+    # TTS/voice settings UI removed - persona defaults only (c3a186a3f, reinforced 2026-07-10).
     refute_includes response.body, "voice-picker"
     refute_includes response.body, "tts-style-chips"
     refute_includes response.body, "tts-style-indicator"
     refute_includes response.body, "face-controls"
     assert_includes response.body, "pause-speech-button"
     assert_includes response.body, 'data-profile="public"'
-    # #scope-row — the scope word, the pairing form and its hint — came off the
+    # #scope-row - the scope word, the pairing form and its hint - came off the
     # corners on operator request (10fabb8ae). The page must not grow it back.
     refute_includes response.body, "scope-label"
     refute_includes response.body, "have a code?"
@@ -65,7 +65,7 @@ class ChatControllerTest < ActionDispatch::IntegrationTest
   # The visible pairing panel is gone; pairing is not. Redeeming still works
   # through PairControllerTest and through `/pair <code>` in the prompt
   # (test_visitor_can_redeem_a_pairing_code_in_chat below), so what is left to
-  # assert here is the profile mark — it is what decides which tools the face
+  # assert here is the profile mark - it is what decides which tools the face
   # will run, and it is the half that survived the panel.
   test "index marks the profile for a visitor and for an operator" do
     get root_path

@@ -72,7 +72,7 @@ class WardrobeItemsController < ApplicationController
     # includes(:item) because the show template opens with
     # `@wardrobe_item.item&.title`, and strict_loading_by_default raises on a
     # lazy association read in every environment. Without it this action was
-    # a 500 for everyone, owner included — found the same day as the ownership
+    # a 500 for everyone, owner included - found the same day as the ownership
     # guard below, which failed the same way one line further down.
     #
     # Preloaded here rather than avoided, unlike the guard: the page genuinely
@@ -83,7 +83,7 @@ class WardrobeItemsController < ApplicationController
   def authorize!
     # user_id, not user: @wardrobe_item comes from WardrobeItem.find(params[:id])
     # with nothing preloaded, and strict_loading_by_default raises on the
-    # association read before the comparison happens — so this guard never ran,
+    # association read before the comparison happens - so this guard never ran,
     # and every path behind it failed, the owner's included.
     return if Current.user && Current.user.id == @wardrobe_item.user_id
 

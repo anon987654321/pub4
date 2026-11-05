@@ -6,8 +6,8 @@ require "test_helper"
 # public_send inside an after_commit. That is a lazy association read, and
 # strict_loading_by_default is true in every environment (shared
 # ApplicationRecord) with production raising rather than logging. So emitting an
-# activity event for any record loaded from the database — every controller
-# update action — raised *after* the write had already committed.
+# activity event for any record loaded from the database - every controller
+# update action - raised *after* the write had already committed.
 #
 # record_activity! swallows its own failures ("activity skipped"), but the actor
 # lookup happened outside that rescue, so it propagated and turned a successful
@@ -26,7 +26,7 @@ class ActivityTrackableConcernTest < ActiveSupport::TestCase
     ActsAsTenant.current_tenant = nil
   end
 
-  # actor: :user — a straightforward belongs_to.
+  # actor: :user - a straightforward belongs_to.
   test "updating a freshly-found record resolves an association actor" do
     ActsAsTenant.with_tenant(@city) do
       created = Tv::Channel.create!(user: @owner, name: "Fjordkanalen", slug: "fjordkanalen-#{SecureRandom.hex(4)}")
@@ -44,7 +44,7 @@ class ActivityTrackableConcernTest < ActiveSupport::TestCase
     end
   end
 
-  # actor: :restaurant_owner — a plain method, not an association, and it walks
+  # actor: :restaurant_owner - a plain method, not an association, and it walks
   # a second association of its own.
   test "updating a freshly-found record resolves a method actor" do
     ActsAsTenant.with_tenant(@city) do

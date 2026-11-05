@@ -14,8 +14,8 @@ class IdentityAssurer
       verified_at: Time.current
     )
 
-    # find_or_create_by, not create!: granting the same assurance twice — a
-    # re-verification, a retried job, a second BankID round — used to write a
+    # find_or_create_by, not create!: granting the same assurance twice - a
+    # re-verification, a retried job, a second BankID round - used to write a
     # second signal, and TrustScore sums them, so the same proof counted twice.
     # The unique index on [user_id, kind, source] now refuses it outright, so
     # this would raise rather than double-count; making it idempotent is the

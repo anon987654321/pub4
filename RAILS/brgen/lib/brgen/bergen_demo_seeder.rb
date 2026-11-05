@@ -70,7 +70,7 @@ module Brgen
         name, description = Brgen::PlausibleContent.community(slug, @city.name)
         Community.find_or_create_by!(slug: slug, city: @city) do |community|
           community.name = name || slug.capitalize
-          community.description = description || "#{@city.name} — #{slug}"
+          community.description = description || "#{@city.name} - #{slug}"
           community.user = admin
         end
       end

@@ -105,7 +105,7 @@ export default class extends Controller {
       } catch (_) { /* a feed that cannot record still has to play */ }
     }
 
-    // Furthest point reached, sampled while it plays — a looping video's
+    // Furthest point reached, sampled while it plays - a looping video's
     // currentTime returns to zero, so the max is the only honest number.
     const timer = setInterval(() => {
       const state = this.events.get(item)
