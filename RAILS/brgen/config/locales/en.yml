@@ -378,8 +378,8 @@ en:
       description: Description
       capacity: Places
       capacity_hint: Leave blank for unlimited.
-      price: Price (minor units)
-      price_hint: Leave blank or 0 for free.
+      price: Price (NOK)
+      price_hint: In kroner, for example 150 or 150.50. Leave blank or 0 for free.
       external_url: Ticket link
       cover: Cover image
       submit: Save event
@@ -622,6 +622,7 @@ en:
         ends_at: "Ends"
         status: "Status"
         capacity: "Capacity"
+        price_kroner: "Price"
       message:
         content: "Message"
         message_type: "Message type"

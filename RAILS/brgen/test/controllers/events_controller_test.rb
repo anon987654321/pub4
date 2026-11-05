@@ -48,6 +48,30 @@ class EventsControllerTest < ActionDispatch::IntegrationTest
     assert_equal 1, created.going_count
   end
 
+  test "an organiser types the price in kroner and it is kept in øre" do
+    sign_in_as(@organiser)
+
+    post events_path, params: { event: { title: "Konsert", starts_at: 10.days.from_now, price_kroner: "150,50" } }
+    created = Event.order(:id).last
+    assert_equal 15_050, created.price_cents
+
+    patch event_path(created), params: { event: { price_kroner: "1 200" } }
+    assert_equal 120_000, created.reload.price_cents
+
+    patch event_path(created), params: { event: { price_kroner: "" } }
+    assert_nil created.reload.price_cents
+  end
+
+  test "a price that is not an amount is refused and shown back as typed" do
+    sign_in_as(@organiser)
+
+    assert_no_difference -> { Event.count } do
+      post events_path, params: { event: { title: "Konsert", starts_at: 10.days.from_now, price_kroner: "150kr" } }
+    end
+    assert_response :unprocessable_content
+    assert_select "input#event_price_kroner[value='150kr']"
+  end
+
   test "rsvp sets a status, and pressing it again withdraws it" do
     sign_in_as(@attendee)
 

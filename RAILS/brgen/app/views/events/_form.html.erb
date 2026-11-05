@@ -64,8 +64,10 @@
   </p>
 
   <p>
-    <%= f.label :price_cents, t("events.form.price") %>
-    <%= f.number_field :price_cents, min: 0, step: 100, inputmode: "numeric",
+    <%# Kroner, not øre: Event#price_kroner= converts, and keeps what was typed
+        when it is not an amount. %>
+    <%= f.label :price_kroner, t("events.form.price") %>
+    <%= f.text_field :price_kroner, inputmode: "decimal", autocomplete: "off",
           aria: { describedby: "event_price_hint" } %>
     <%= tag.small t("events.form.price_hint"), id: "event_price_hint", class: "form-help" %>
   </p>

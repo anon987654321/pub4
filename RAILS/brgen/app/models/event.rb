@@ -38,6 +38,7 @@ class Event < ApplicationRecord
   validates :status, inclusion: { in: STATUSES }
   validates :capacity, numericality: { greater_than: 0 }, allow_nil: true
   validate  :ends_after_it_starts
+  validate  :price_kroner_is_an_amount
 
   before_validation :inherit_place_location
   after_update_commit :notify_attendees_of_change, if: :attendee_facing_change?
@@ -74,6 +75,33 @@ class Event < ApplicationRecord
     status != "draft" || (user.present? && user.id == user_id)
   end
   def free? = price_cents.to_i.zero?
+
+  # Organisers type kroner ("150" or "150,50"); the column keeps øre. Asking
+  # for øre made 150 kr a 15000 to type with step 100, and one zero short sold
+  # the ticket for 15 kr. What was typed is kept for the form when it fails.
+  def price_kroner
+    return @price_kroner_text if defined?(@price_kroner_text)
+    return if price_cents.nil?
+
+    whole, ore = price_cents.divmod(100)
+    ore.zero? ? whole.to_s : format("%d%s%02d", whole, I18n.t("number.format.separator", default: ","), ore)
+  end
+
+  def price_kroner=(value)
+    @price_kroner_text = value.to_s.strip
+    amount = self.class.kroner_amount(@price_kroner_text)
+    self.price_cents = amount.is_a?(BigDecimal) ? (amount * 100).round.to_i : nil
+  end
+
+  # "1 500,50", "1500.5", "150" -> a decimal; "" -> nil; anything else -> :invalid.
+  def self.kroner_amount(text)
+    plain = text.to_s.gsub(/[[:space:]]/, "").sub(",", ".")
+    return if plain.empty?
+    return :invalid unless plain.match?(/\A\d+(?:\.\d{1,2})?\z/)
+
+    BigDecimal(plain)
+  end
+
   def price_display = free? ? nil : Shared::MoneyDisplay.format(price_cents, currency)
 
   def location_name = venue_name.presence || strict_safe(:place)&.name
@@ -108,6 +136,12 @@ class Event < ApplicationRecord
   end
 
   private
+
+  def price_kroner_is_an_amount
+    return unless defined?(@price_kroner_text) && self.class.kroner_amount(@price_kroner_text) == :invalid
+
+    errors.add(:price_kroner, :not_a_number)
+  end
 
   # A Place already carries verified coordinates and a name. Copying them at
   # validation keeps every event answerable on a map without making the form ask

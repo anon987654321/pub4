@@ -82,7 +82,7 @@ class EventsPageTest < ActionDispatch::IntegrationTest
 
     assert_select "input#event_capacity[aria-describedby='event_capacity_hint']"
     assert_select "small#event_capacity_hint.form-help"
-    assert_select "input#event_price_cents[aria-describedby='event_price_hint']"
+    assert_select "input#event_price_kroner[inputmode='decimal'][aria-describedby='event_price_hint']"
     assert_select "small#event_price_hint.form-help"
   end
 

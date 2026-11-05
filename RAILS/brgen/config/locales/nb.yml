@@ -383,8 +383,8 @@ nb:
       description: Beskrivelse
       capacity: Antall plasser
       capacity_hint: La stå tomt for ubegrenset.
-      price: Pris (øre)
-      price_hint: La stå tomt eller 0 for gratis.
+      price: Pris (kr)
+      price_hint: I kroner, for eksempel 150 eller 150,50. La stå tomt eller 0 for gratis.
       external_url: Billettlenke
       cover: Bilde
       submit: Lagre arrangement
@@ -619,6 +619,7 @@ nb:
         ends_at: "Slutter"
         status: "Status"
         capacity: "Kapasitet"
+        price_kroner: "Pris"
       message:
         content: "Melding"
         message_type: "Meldingstype"

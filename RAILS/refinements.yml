@@ -1670,7 +1670,7 @@ items:
   path: RAILS/brgen/app/views/events/_form.html.erb
   item: Replace the price_cents number field with a kroner field (convert to øre in
     the controller); asking organisers to type 15000 for 150 kr with step 100 is error-prone.
-  status: open
+  status: done
 - id: brgen-096
   app: brgen
   area: events

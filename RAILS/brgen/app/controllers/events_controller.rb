@@ -131,7 +131,7 @@ class EventsController < ApplicationController
     params.require(:event).permit(
       :title, :description, :starts_at, :ends_at, :venue_name, :address,
       :place_id, :neighborhood_id, :latitude, :longitude, :capacity,
-      :price_cents, :currency, :external_url, :cover
+      :price_kroner, :currency, :external_url, :cover
     )
   end
 end
