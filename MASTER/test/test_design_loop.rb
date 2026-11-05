@@ -227,6 +227,22 @@ class TestDesignLoop < Minitest::Test
     end
   end
 
+  def test_a_refused_commit_restores_the_candidate_and_is_not_reported_as_kept
+    with_sheet do |path|
+      stub_scoring do
+        world = world_for(path, committed: []).with(
+          commit_file: ->(_file, _message) { false }
+        )
+        plan = LOOP::Plan.new(surfaces: HOME_AND_FEED, root: Dir.pwd, rounds: 1, candidates: 1)
+        rounds = LOOP.new(plan:, world:).run
+
+        assert_equal :failed, rounds.first.outcome
+        assert_includes File.read(path), "padding: 4px;"
+        refute_includes File.read(path), "padding: 16px;"
+      end
+    end
+  end
+
   def test_an_edit_that_hurts_another_surface_is_undone_and_not_committed
     with_sheet do |path|
       committed = []
