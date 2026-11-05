@@ -32,10 +32,8 @@ module Master
       REVIEW_DIFF_LINES = 800
       # Paths that mean something outside the tree. OPENBSD/etc, var, usr, home
       # and dotfiles mirror the box file for file; RAILS migrations and schema
-      # are history the database has already run; MASTER/tools data and LoRA sets are
-      # read by name and trained on.
-      OFF_LIMITS = %r{\A(?:OPENBSD/(?:etc|var|usr|home|dotfiles)/|RAILS/.+/db/(?:migrate|schema)|
-                     STUDIO/replicate/lora/)}x
+      # are history the database has already run; MASTER/tools data is read by name.
+      OFF_LIMITS = %r{\A(?:OPENBSD/(?:etc|var|usr|home|dotfiles)/|RAILS/.+/db/(?:migrate|schema))}x
 
       # Master and the directory modules open nearly every file, so a search for
       # what names a moved file leaves them out or finds the whole tree.

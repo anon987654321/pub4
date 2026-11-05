@@ -8,7 +8,7 @@ require_relative "../io/quota_check"
 # model_exists?, cancel_prediction and cancel_training all rescue into
 # Ground::Swallow, and nothing required it. Under a full MASTER boot something
 # else had loaded it first; loaded standalone -- which is how MASTER/tools/replicate
-# and MASTER/tools/lora's Replicate lane use this file -- the rescue itself raised
+# uses this file -- the rescue itself raised
 # NameError. The three call sites where that lands are the ones you reach when
 # something has already gone wrong.
 require_relative "../ground/swallow"

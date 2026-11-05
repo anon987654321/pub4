@@ -5,9 +5,9 @@ require "json"
 require "time"
 # MasterPaths::ROOT rather than Master::ROOT, which is defined in lib/master.rb
 # and therefore only exists after a full runtime boot. lib/io/replicate_client.rb
-# is deliberately standalone-loadable -- MASTER/tools/preprompt and MASTER/tools/lora both
+# is deliberately standalone-loadable -- MASTER/tools/preprompt and MASTER/tools/replicate both
 # require it and nothing else -- and it calls Swallow.log in three rescue paths,
-# so on the first Replicate training for a new subject (model_exists? raises,
+# so on the first Replicate failure for a subject (model_exists? raises,
 # the rescue fires) the swallow raised NameError instead of logging. Same value,
 # no boot order.
 require_relative "../boot/paths"

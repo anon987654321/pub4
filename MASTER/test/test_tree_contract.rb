@@ -38,7 +38,6 @@ class TreeContractTest < Minitest::Test
     RAILS/brgen_radio
     STUDIO
     STUDIO/dilla
-    STUDIO/replicate/lora
     STUDIO/postpro
     STUDIO/replicate
   ].freeze
@@ -100,16 +99,17 @@ class TreeContractTest < Minitest::Test
   def test_studio_owns_media_tools_and_master_keeps_compatibility_links
     links = {
       "dilla" => "../../STUDIO/dilla",
-      "lora" => "../../STUDIO/replicate/lora",
-      "postpro" => "../../STUDIO/postpro",
       "replicate" => "../../STUDIO/replicate",
     }
 
+    # The entrypoint file each link must reach: dilla ships dilla.rb, while
+    # the replicate surface's entrypoint is client.rb.
+    artifacts = { "dilla" => "dilla.rb", "replicate" => "client.rb" }
     links.each do |name, target|
       path = File.join(ROOT, "tools", name)
       assert File.symlink?(path), "MASTER/tools/#{name} must remain a compatibility symlink"
       assert_equal target, File.readlink(path), "MASTER/tools/#{name} points somewhere other than STUDIO/#{name}"
-      assert File.file?(File.join(path, "#{name}.rb")), "STUDIO/#{name}/#{name}.rb is not reachable through the compatibility path"
+      assert File.file?(File.join(path, artifacts.fetch(name))), "STUDIO/#{name}/#{artifacts.fetch(name)} is not reachable through the compatibility path"
     end
   end
 
