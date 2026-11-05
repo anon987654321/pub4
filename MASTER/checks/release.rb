@@ -136,6 +136,7 @@ BOOTED_SHARED_TESTS, BARE_SHARED_TESTS =
 [
   "test/pwa_design_contract_test.rb",
   "test/design_contract_test.rb",
+  "test/design_contract_components_test.rb",
   "master/test/pwa_master_contract_test.rb",
   "test/shared_social_routes_test.rb",
   "test/i18n_resolution_test.rb",

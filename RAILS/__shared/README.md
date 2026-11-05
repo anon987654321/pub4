@@ -125,7 +125,9 @@ for it. The public/private target contract is tested in
 
 ```zsh
 ruby RAILS/test/layout_contract_test.rb
+ruby RAILS/test/layout_contract_surfaces_test.rb
 ruby RAILS/test/design_contract_test.rb
+ruby RAILS/test/design_contract_components_test.rb
 ruby MASTER/tools/rails/build_all_css.rb --check
 ruby MASTER/tools/rails/build_face_css.rb --check
 ruby MASTER/checks/runner.rb stimulus_components

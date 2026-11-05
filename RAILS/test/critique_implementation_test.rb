@@ -1,53 +1,11 @@
 # frozen_string_literal: true
 
 require "minitest/autorun"
-require "yaml"
 require_relative "../../MASTER/tools/scss"
-require_relative "support/stylesheet_modules"
+require_relative "support/critique_sources"
 
 class CritiqueImplementationTest < Minitest::Test
-  include StylesheetModules
-  ROOT = File.expand_path("..", __dir__)
-
-  def read(path) = File.read(File.join(ROOT, path))
-
-  def brgen_css_source
-    host = read("brgen/app/assets/stylesheets/application.scss")
-    features = Dir.glob(File.join(ROOT, "brgen/app/assets/stylesheets/_brgen_*.scss")).sort
-                 .map { |path| File.read(path, encoding: "UTF-8") }
-
-    ([host] + features).join("\n")
-  end
-
-  # The radio tunnel was split into tunnel, audio and visual modules; the
-  # contract is about the radio as a whole, so it reads all three.
-  def radio_source
-    %w[tunnel audio visual].map { |part| read("brgen/app/javascript/radio_brgen_#{part}.js") }.join("\n")
-  end
-
-  def amber_css_source
-    host = read("amber/app/assets/stylesheets/application.scss")
-    features = Dir.glob(File.join(ROOT, "amber/app/assets/stylesheets/_amber_*.scss")).sort
-                 .map { |path| File.read(path, encoding: "UTF-8") }
-
-    ([host] + features).join("\n")
-  end
-
-  # These pages render through I18n, so a literal English string stopped being
-  # in the template the moment the page was localised — the assertion failed on
-  # a view that had got better. Pin the key in the template and the copy in that
-  # app's en.yml: the control still has to say this word, and the check survives
-  # the next locale. Two assertions in this file were already rewritten for the
-  # same reason; the comments above them explain each case.
-  def en_value(app, key)
-    locale = YAML.safe_load_file(File.join(ROOT, app, "config", "locales", "en.yml")).fetch("en")
-    key.split(".").reduce(locale) { |node, segment| node.fetch(segment) }
-  end
-
-  def assert_localised(app, template, key, english)
-    assert_includes read("#{app}/app/views/#{template}"), %(t("#{key}"))
-    assert_equal english, en_value(app, key), "#{app} en.yml #{key} drifted from the copy #{template} promises"
-  end
+  include CritiqueSources
 
   def test_brgen_has_one_ranking_control_local_voice_and_accessible_actions
     layout = read("brgen/app/views/layouts/application.html.erb")
@@ -100,7 +58,8 @@ class CritiqueImplementationTest < Minitest::Test
     assert_includes post, 'post.comment_count.positive? ? post.comment_count : ""'
     assert_includes card, "feed-card-byline"
     assert_includes card, "post-reading-preview"
-    assert_includes card, 'link_to "…", post_url'
+    # A long preview ends in a translated "read more" link to the post.
+    assert_includes card, "link_to more_label, post_url"
     assert_includes css, ".post-reading-preview"
     assert_includes css, ".feed-action-count:empty"
     assert_includes feed, "AFFILIATE_EVERY = 2"
@@ -117,7 +76,8 @@ class CritiqueImplementationTest < Minitest::Test
     media = read("brgen/app/views/home/_media_card.html.erb")
 
     assert_includes feed, 'render "posts/post", post: post, priority: index.zero?'
-    assert_includes post, 'cache [I18n.locale, post, post.voted_by?(Current.user), reposted, quote, priority]'
+    assert_includes post, "cache [I18n.locale, post,"
+    assert_includes post, "post.voted_by?(Current.user), reposted, quote, priority]"
     assert_includes post, 'fetchpriority: (priority_image ? "high" : "auto")'
     assert_includes post, 'loading: (priority ? "eager" : "lazy")'
     assert_includes media, 'priority_image = local_assigns.fetch(:media_index, 0).to_i.zero?'
@@ -161,163 +121,6 @@ class CritiqueImplementationTest < Minitest::Test
     assert_includes artifact, "artifact_voice"
     assert_includes artifact, "artifact_preview"
     assert_includes artifact, "no_artifacts"
-  end
-
-  def test_amber_product_detail_uses_photo_first_editorial_geometry
-    show = read("amber/app/views/items/show.html.erb")
-    css = amber_css_source
-
-    assert_includes show, 'class="item-detail-layout"'
-    assert_includes show, 'class="item-detail-photos"'
-    assert_includes show, 'class="item-detail-facts"'
-    assert_includes css, ".item-detail--wardrobe .item-detail-layout"
-    assert_includes css, ".item-detail--wardrobe .item-detail-facts"
-  end
-  def test_amber_flash_uses_shared_semantic_signal
-    flash = read("amber/app/views/shared/_flash.html.erb")
-    signal = read("__shared/app/views/shared/_system_signal.html.erb")
-
-    assert_includes flash, 'render "shared/system_signal"'
-    assert_includes flash, 'state:, classes: ["flash", "flash--#{type}"], content:'
-    assert_includes signal, 'class: classes'
-    assert_includes signal, 'aria: { live: aria_live }'
-  end
-
-  def test_shared_yep_search_and_affiliate_pens_are_restored_from_universal_paths
-    search = read("__shared/app/assets/stylesheets/_search_yep.scss")
-    affiliate = read("__shared/app/views/shared/_affiliate_feed_unit.html.erb")
-    affiliate_css = read("__shared/app/assets/stylesheets/_affiliate_feed_unit.scss")
-    brgen_css = brgen_css_source
-
-    assert_includes search, "width: 480px;"
-    assert_includes search, "border-radius: 30px;"
-    assert_includes search, "box-shadow: none;"
-    refute_match(/box-shadow:(?!\s*none\b)/, search)
-    assert_includes affiliate, 'data-controller="parallax-tilt"'
-    assert_includes affiliate, 'data-parallax-tilt-target="tile"'
-    assert_match(/\.affiliate_feed_label\s*\{[^}]*font-size:\s*var\(--text-extra-small\);/m, affiliate_css)
-    assert_match(/\.affiliate_feed_label\s*\{[^}]*letter-spacing:\s*var\(--tracking-normal\);/m, affiliate_css)
-    assert_match(/\.affiliate_feed_label\s*\{[^}]*line-height:\s*var\(--leading-tight\);/m, affiliate_css)
-    refute_match(/\.affiliate_feed_label\s*\{[^}]*font-size:\s*9px;/m, affiliate_css)
-    assert_includes affiliate_css, "transition: transform 180ms var(--ease-out)"
-    assert_includes brgen_css, ".store-promo-art-cta"
-    assert_includes brgen_css, "background: var(--bol-blue);"
-    assert_includes brgen_css, "font-size: 14px;"
-  end
-
-  def test_yep_search_is_the_shared_rails_search_default
-    shared_stack = read("__shared/app/assets/stylesheets/_stack.scss")
-    brgen_stack = read("__shared/app/assets/stylesheets/_stack_brgen.scss")
-    amber = amber_css_source
-    bsdports = read("bsdports/app/assets/stylesheets/application.scss")
-    brgen = stylesheet_source("brgen")
-
-    assert_includes shared_stack, '@forward "search_yep";'
-    assert_includes brgen_stack, '@forward "search_yep";'
-    assert_includes amber, '@include meta.load-css("stack");'
-    assert_includes bsdports, '@include meta.load-css("stack")'
-    assert_includes brgen, '@include meta.load-css("stack_brgen")'
-  end
-
-  def test_yep_search_is_the_shared_rails_default
-    stack = read("__shared/app/assets/stylesheets/_stack.scss")
-    brgen_stack = read("__shared/app/assets/stylesheets/_stack_brgen.scss")
-    %w[amber bsdports].each do |app|
-      application = read("#{app}/app/assets/stylesheets/application.scss")
-      assert_includes application, '@include meta.load-css("stack")'
-    end
-
-    assert_includes stack, '@forward "search_yep";'
-    assert_includes brgen_stack, '@forward "search_yep";'
-  end
-
-  def test_live_search_expansion_and_keyboard_focus_follow_real_state
-    search_form = read("__shared/app/views/shared/_live_search_form.html.erb")
-    controller = read("__shared/frontend/live_search_controller.js")
-    search_css = read("__shared/app/assets/stylesheets/_search_yep.scss")
-
-    assert_includes search_form, 'class="search<%= " active" if query.to_s.strip.present? %>"'
-    assert_includes search_form, "expanded: query.to_s.strip.present?"
-    assert_includes controller, 'shell.dataset.state = "loading"'
-    assert_includes controller, 'shell.dataset.state = state'
-    assert_includes controller, 'getAttribute("aria-controls")'
-    assert_includes controller, 'const isEmpty = Boolean('
-    assert_includes controller, 'setAttribute("aria-expanded", String(expanded))'
-    assert_includes search_css, ".search:has(input:focus-visible)"
-    assert_includes search_css, '.search[data-state="loading"]'
-    assert_includes search_css, '.search[data-state="empty"]'
-    assert_includes search_css, '.search[data-state="error"]'
-  end
-
-  def test_brgen_search_palette_semantics_track_open_state
-    palette = read("brgen/app/views/shared/_search_palette.html.erb")
-    controller = read("__shared/frontend/search_palette_controller.js")
-
-    assert_includes palette, 'data-search-palette-target="trigger"'
-    assert_includes palette, 'aria-haspopup="dialog"'
-    assert_includes palette, 'aria-expanded="false"'
-    assert_includes palette, 'aria-controls="search_palette_dialog"'
-    assert_includes palette, 'id="search_palette_dialog"'
-    assert_includes controller, 'static targets = ["panel", "trigger"]'
-    assert_includes controller, 'String(this.isOpen)'
-    assert_includes controller, 'setAttribute("aria-expanded", "true")'
-    assert_includes controller, 'setAttribute("aria-expanded", "false")'
-  end
-
-  def test_radio_restores_first_party_device_tilt_contract
-    source = radio_source
-    assert_includes source, "DeviceOrientationEvent"
-    assert_includes source, "requestPermission"
-    assert_includes source, 'deviceorientation'
-    assert_includes source, "this.tilt = { x: 0, y: 0 }"
-  end
-
-  def test_brgen_radio_restores_the_original_eight_track_warp_tunnel
-    source = radio_source
-    importmap = read("brgen/config/importmap.rb")
-
-    %w[
-      9EGHwkDix78
-      jnP3tRG-LZs
-      1XJLtZJ9Ook
-      t6T-Q6HMbEo
-      zoGTC7uROZE
-      7611GgbJAbM
-      j0z_-7TfPeM
-      Fo7WoYn_FEs
-    ].each { |id| assert_includes source, id }
-
-    assert_includes source, 'title: "Microphone Master [Extended]"'
-    assert_includes source, 'const OPENING_TRACK_ID = "9EGHwkDix78"'
-    assert_includes source, "this._bindTilt = bindTilt"
-    assert_includes source, "this._bindTilt?.()"
-    assert_includes source, "DeviceOrientationEvent"
-    assert_includes source, "requestPermission"
-    assert_includes source, 'window.addEventListener("deviceorientation", this._tiltHandler, { passive: true })'
-    assert_includes source, "float warp = sin"
-    assert_includes source, "lineAngleBuf"
-    assert_includes source, "gl.drawArrays(gl.LINES"
-    assert_includes source, "preserveDrawingBuffer: false"
-    assert_includes source, "mode: " + '"radio:tunnel"'
-    refute_includes source, "radio_visualizers"
-    refute_includes source, "cycleVisualizer"
-    refute_includes source, "vizMode"
-    refute_includes importmap, 'radio_visualizers'
-    refute File.exist?(File.join(ROOT, "brgen/app/javascript/radio_visualizers.js"))
-  end
-
-  def test_yep_search_is_the_shared_rails_search_default
-    shared_stack = read("__shared/app/assets/stylesheets/_stack.scss")
-    brgen_stack = read("__shared/app/assets/stylesheets/_stack_brgen.scss")
-    amber = amber_css_source
-    bsdports = read("bsdports/app/assets/stylesheets/application.scss")
-    brgen = stylesheet_source("brgen")
-
-    assert_includes shared_stack, '@forward "search_yep";'
-    assert_includes brgen_stack, '@forward "search_yep";'
-    assert_includes amber, '@include meta.load-css("stack");'
-    assert_includes bsdports, '@include meta.load-css("stack");'
-    assert_includes brgen, '@include meta.load-css("stack_brgen");'
   end
 
   def test_shared_feed_text_uses_the_existing_leading_tokens
@@ -455,66 +258,6 @@ class CritiqueImplementationTest < Minitest::Test
     assert_includes css, "border-block-end: 1px solid var(--border)"
   end
 
-  def test_amber_post_like_uses_shared_feed_action_anatomy
-    button = read("amber/app/views/posts/_like_button.html.erb")
-    icons = read("__shared/app/views/shared/_feed_icon.html.erb")
-
-    assert_includes button, 'class: "feed-action"'
-    assert_includes button, 'aria: { label: t("post.like_count", count: post.likes_count) }'
-    assert_includes button, 'form_class: "feed-action-form"'
-    assert_includes button, 'name: "like"'
-    assert_includes button, 'post.likes_count.to_i.positive? ? post.likes_count : ""'
-    assert_includes icons, '"like" => :like'
-  end
-
-  def test_amber_post_feed_and_detail_share_the_reading_anatomy
-    feed = read("amber/app/views/posts/_post.html.erb")
-    show = read("amber/app/views/posts/show.html.erb")
-    css = amber_css_source
-
-    brgen_feed = read("brgen/app/views/posts/_post.html.erb")
-
-    # Brgen and Amber share the same feed-card anatomy and vote rail. Product
-    # identity belongs to the surrounding shell, not a second post treatment.
-    card = read("__shared/app/views/shared/_post_card.html.erb")
-    assert_includes feed, 'render "shared/post_card"'
-    assert_includes brgen_feed, 'render "shared/post_card"'
-    refute_includes feed, 'variant:'
-    refute_includes brgen_feed, 'variant:'
-    refute_includes card, "if variant == :prose"
-    refute_includes card, "post-reading-card feed-post"
-    assert_includes card, 'class="feed-card post-reading-card'
-    assert_includes card, 'class="feed-card post-reading-card"'
-    refute_includes card, "avatar_url"
-    refute_includes brgen_feed, "avatar_url:"
-    refute_includes brgen_feed, 'class: "feed-card"'
-    shared_post_css = read("__shared/app/assets/stylesheets/_post_voting.scss")
-    assert_includes shared_post_css, ".feed-card.post-reading-card {\n  margin: 0;\n  padding: var(--space-4) var(--space-3);"
-    assert_match(/@media \(min-width: 480px\) \{\s*\.feed-card\.post-reading-card \{\s*padding: var\(--space-5\) var\(--space-4\);/m, shared_post_css)
-    assert_includes shared_post_css, ".feed-card.post-reading-card .feed-card-actions {"
-    assert_match(/@media \(min-width: 640px\) \{\s*\.feed-card\.post-reading-card \.feed-card-actions \{\s*width: auto;/m, shared_post_css)
-    assert_includes shared_post_css, "border-radius: var(--radius-pill);"
-    assert_includes shared_post_css, '.feed-card.post-reading-card .feed-card-name a,'
-    assert_includes shared_post_css, "padding-block: max(0px, (var(--tap-min) - 1lh) / 2);"
-    assert_includes shared_post_css, ".feed-card.post-reading-card .feed-card-time {\n  font-variant-numeric: tabular-nums;"
-    assert_includes feed, 'class: "feed-action"'
-    assert_includes feed, 'form_class: "feed-action-form"'
-    luxury_titles = css[/body\[data-surface="luxury"\] :is\((.*?)\n\) \{/m, 1]
-    refute_nil luxury_titles, "Amber luxury heading selector should remain explicit"
-    refute_match(/\.post-reading-title/, luxury_titles, "feed cards keep the shared family title face")
-    detail_title = css[/\.post-show-reading \.post-reading-title \{([^}]*)\}/m, 1]
-    assert_match(/font-family: var\(--font-beauty-sans\)/, detail_title)
-    assert_match(/font-size: clamp\(1\.75rem, 5vw, 3\.5rem\)/, detail_title)
-    assert_includes feed, 'show_votes: true'
-    assert_includes feed, 'post_url: post_path(post)'
-    # The "…" read-more link lives in the shared card the feed renders.
-    assert_includes feed, 'render "shared/post_card"'
-    assert_includes read("__shared/app/views/shared/_post_card.html.erb"), 'link_to "…", post_url'
-    assert_includes show, 'render "shared/post_vote_rail"'
-    assert_includes show, 'class="post-show-actions feed-card-actions"'
-    assert_includes css, ".post-show-comments"
-  end
-
   def test_post_collections_use_the_shared_semantic_list_contract
     brgen_results = read("brgen/app/views/posts/_live_search_results.html.erb")
     amber_index = read("amber/app/views/posts/index.html.erb")
@@ -577,141 +320,6 @@ class CritiqueImplementationTest < Minitest::Test
                     "the playlist empty state must not be a direct child of ul"
   end
 
-  def test_amber_enum_selectors_localize_labels_and_keep_enum_values
-    helper = read("amber/app/helpers/application_helper.rb")
-    season_views = %w[outfits/index.html.erb outfits/_form.html.erb items/_form.html.erb ai/suggest_outfits.html.erb]
-    item_form = read("amber/app/views/items/_form.html.erb")
-    category_filter = read("amber/app/views/items/_live_search_results.html.erb")
-    en = YAML.safe_load_file(File.join(ROOT, "amber/config/locales/en.yml")).fetch("en")
-    nb = YAML.safe_load_file(File.join(ROOT, "amber/config/locales/nb.yml")).fetch("nb")
-
-    assert_includes helper, "def amber_enum_options(values, scope:)"
-    assert_includes helper, 'values.map do |value|'
-    assert_includes helper, '[t("#{scope}.#{key}"), value]'
-    {
-      "outfits.seasons" => {
-        "spring" => ["Spring", "Vår"], "summer" => ["Summer", "Sommer"],
-        "autumn" => ["Autumn", "Høst"], "winter" => ["Winter", "Vinter"],
-        "all_season" => ["All-season", "Hele året"]
-      },
-      "items.item_categories" => {
-        "tops" => ["Tops", "Topper"], "bottoms" => ["Bottoms", "Underdeler"],
-        "dresses" => ["Dresses", "Kjoler"], "shoes" => ["Shoes", "Sko"],
-        "accessories" => ["Accessories", "Tilbehør"], "outerwear" => ["Outerwear", "Yttertøy"]
-      },
-      "items.mood_effects" => {
-        "energising" => ["Energising", "Energigivende"], "calming" => ["Calming", "Beroligende"],
-        "confident" => ["Confident", "Selvsikker"], "playful" => ["Playful", "Leken"],
-        "neutral" => ["Neutral", "Nøytral"]
-      },
-      "items.life_phases" => {
-        "current" => ["Current", "Nåværende"], "past_self" => ["Past self", "Tidligere meg"],
-        "aspirational" => ["Aspirational", "Ønsket meg"]
-      }
-    }.each do |scope, translations|
-      en_values = scope.split(".").reduce(en) { |node, key| node.fetch(key) }
-      nb_values = scope.split(".").reduce(nb) { |node, key| node.fetch(key) }
-      translations.each do |key, (english, norwegian)|
-        assert_equal english, en_values.fetch(key), "en #{scope}.#{key}"
-        assert_equal norwegian, nb_values.fetch(key), "nb #{scope}.#{key}"
-      end
-    end
-
-    season_views.each do |view|
-      source = read("amber/app/views/#{view}")
-      assert_includes source, "amber_season_options", "#{view} should use canonical translated season options"
-      refute_match(/f\.select :season, Item::SEASONS/, source, "#{view} must not expose enum values as labels")
-    end
-    assert_includes helper, 'def amber_season_options = amber_enum_options(Item::SEASONS, scope: "outfits.seasons")'
-    assert_includes helper, 'def amber_item_category_options = amber_enum_options(Item::CATEGORIES, scope: "items.item_categories")'
-    assert_includes helper, 'def amber_mood_effect_options = amber_enum_options(Item::MOOD_EFFECTS, scope: "items.mood_effects")'
-    assert_includes helper, 'def amber_life_phase_options = amber_enum_options(Item::LIFE_PHASES, scope: "items.life_phases")'
-    assert_includes item_form, 'f.select :category, amber_item_category_options'
-    assert_includes item_form, 'f.select :mood_effect, amber_mood_effect_options'
-    assert_includes item_form, 'f.select :life_phase, amber_life_phase_options'
-    assert_includes category_filter, 'amber_item_category_options.each do |label, value|'
-    refute_includes category_filter, 'Item::CATEGORIES.each do |category|'
-  end
-  def test_amber_prioritizes_owned_clothes_and_reversible_lifecycle
-    index = read("amber/app/views/items/index.html.erb")
-    show = read("amber/app/views/items/show.html.erb")
-    form = read("amber/app/views/items/_form.html.erb")
-    outfit = read("amber/app/views/outfits/_outfit.html.erb")
-    ai = read("amber/app/views/ai/suggest_outfits.html.erb")
-
-    assert_localised "amber", "items/index.html.erb", "wardrobe.use_what_i_own", "Use what I own"
-    assert_localised "amber", "items/index.html.erb", "wardrobe.shop_gap", "Shop only for a gap"
-    # The invariant is that archiving is *reversible*, which it is: the view
-    # offers "Archive to memory" and "Restore to wardrobe" as a pair. The old
-    # assertion demanded the literal copy "Archive reversibly", which the UI has
-    # never used — so it failed while the behaviour it guards was correct.
-    assert_match(/items\.archive|Archive to memory/, show)
-    assert_match(/items\.restore|Restore to wardrobe/, show)
-    # The disclosure is t("items.photo_processing_html"), so the promised phrase
-    # lives in the locale value and never appears in the template. Asserting the
-    # English literal against the view failed on a form that renders it
-    # correctly — the same mistake as the archive assertion above, and the
-    # reason RAILS tests assert through keys rather than English.
-    assert_includes form, %(t("items.photo_processing_html"))
-    assert_includes en_value("amber", "items.photo_processing_html"), "Photo processing:"
-    assert_includes outfit, "outfit-composition"
-    assert_includes ai, %(t("ai.why_it_works"))
-    assert_includes en_value("amber", "ai.why_it_works"), "Why it works:"
-  end
-
-  def test_bsdports_exposes_operator_decisions_and_uncertainty
-    index = read("bsdports/app/views/ports/index.html.erb")
-    show = read("bsdports/app/views/ports/show.html.erb")
-    # The keyboard-first shortcut moved out of a bsdports-local
-    # search_hotkey_controller.js — which bound / and Cmd-K on the ports index and
-    # nowhere else — into the shared feed-hotkey controller registered on every
-    # layout. The claim being pinned is "/ focuses search", not which file holds it.
-    hotkey = read("__shared/frontend/feed_hotkey_controller.js")
-    layout = read("bsdports/app/views/layouts/application.html.erb")
-
-    # Through the locale, not the literal. bsdports is fully translated now, so
-    # every one of these sentences lives in ports.* in en.yml and nb.yml — and a
-    # test that greps the view for English fails precisely when the app stops
-    # shipping English to a default_locale: nb audience. The claim being pinned is
-    # that the honest copy exists and says what it says, which the key assertions
-    # below check in both languages.
-    assert_includes show, "doas pkg_add"
-    assert_localised "bsdports", "ports/index.html.erb", "ports.purpose",
-                     "Answer three questions quickly: what package is this, can this machine install it, and what does the local advisory index know?"
-    assert_localised "bsdports", "ports/show.html.erb", "ports.platform_unknown",
-                     "branch and architecture unknown"
-    assert_localised "bsdports", "ports/show.html.erb", "ports.advisories_none",
-                     "Unknown: no advisories are linked in this local index. This is not the same as a verified clean security record."
-    assert_localised "bsdports", "ports/show.html.erb", "ports.requires",
-                     "Requires → dependencies"
-
-    # The uncertainty has to survive translation, or the Norwegian reader gets a
-    # more confident product than the English one.
-    nb = YAML.safe_load_file(File.join(ROOT, "bsdports/config/locales/nb.yml")).fetch("nb")
-    assert_includes nb.dig("ports", "platform_unknown"), "ukjent"
-    assert_includes nb.dig("ports", "advisories_none"), "Ukjent"
-    assert_includes hotkey, 'e.key === "/"'
-    assert_match(/e\.key\.toLowerCase\(\) === "k"/, hotkey)
-    assert_includes layout, "feed-hotkey"
-  end
-
-  # Through the key and the locale file, not the literal in the template. The
-  # primer is localised now, so the English spelling only appears in en.yml —
-  # and an assertion on the spelling fails on a view that has got more correct.
-  # Both halves: the template must name the key, and the key must still carry
-  # what a visitor is told before they tap: what starts, and that text survives
-  # a failed canvas. The microphone starts with the rest, so nothing promises
-  # it waits.
-  def test_master_primer_names_consent_and_text_fallback
-    master = File.expand_path("../../RAILS/master", __dir__)
-    primer = File.read(File.join(master, "app/views/chat/index.html.erb"))
-    assert_includes primer, 't("face.primer_consent")'
-
-    consent = YAML.safe_load_file(File.join(master, "config/locales/en.yml"))
-                  .fetch("en").fetch("face").fetch("primer_consent")
-    assert_includes consent, "Starts visuals, sound and the microphone"
-    assert_includes consent, "text remains available if graphics fail"
-  end
   def test_brgen_horizon_matches_messenger_archive_and_has_one_premium_item
     horizon = YAML.safe_load_file(File.join(ROOT, "apps.horizon.yml"))
                    .fetch("horizon").fetch("brgen")
@@ -729,5 +337,4 @@ class CritiqueImplementationTest < Minitest::Test
     assert_includes conversation, "scope :in_archive"
     assert_includes controller, "@archive = params[:arkiv].present?"
   end
-
 end
