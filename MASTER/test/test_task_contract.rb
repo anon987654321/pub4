@@ -143,6 +143,31 @@ class TestTaskContract < Minitest::Test
     end
   end
 
+  def test_missing_contract_defaults_to_existing_paths_only
+    Dir.mktmpdir("task-contract-default", Master::REPO_ROOT) do |root|
+      relative = File.join(root.delete_prefix(Master::REPO_ROOT + File::SEPARATOR), "new.rb")
+      path = File.join(root, "new.rb")
+
+      CONTRACT.with_current(nil) do
+        assert_match(/new tracked path/, CONTRACT.new_path_refusal(path))
+        File.write(path, "existing")
+        assert_nil CONTRACT.new_path_refusal(path)
+      end
+    end
+  end
+
+  def test_transaction_rejects_new_paths_without_an_active_contract
+    Dir.mktmpdir("task-contract-default-transaction", Master::REPO_ROOT) do |root|
+      relative = File.join(root.delete_prefix(Master::REPO_ROOT + File::SEPARATOR), "new.rb")
+
+      CONTRACT.with_current(nil) do
+        assert_raises(CONTRACT::Invalid) do
+          Master::Fix::Transaction.new(root: Master::REPO_ROOT, paths: [relative])
+        end
+      end
+    end
+  end
+
   def test_transaction_rejects_undeclared_new_paths_and_accepts_declared_ones
     Dir.mktmpdir("task-contract-new-transaction", Master::REPO_ROOT) do |root|
       relative = File.join(root.delete_prefix(Master::REPO_ROOT + File::SEPARATOR), "created.rb")
