@@ -81,7 +81,7 @@ module Master::Core
       answered = (scope[:proved] || scope[:answerable]) && scope[:cleared]
       closed = [(:done unless answered), (:write unless scope[:writable])].compact
       operations = Array(scope.fetch(:git_operations, GIT_OPERATIONS)).map(&:to_s)
-      operations -= ["commit"] unless scope[:proved]
+      operations -= ["commit"] unless scope[:proved] && Array(scope[:write_paths]).any?
       schema(verbs: verbs - closed, operations:)
     end
 
@@ -133,8 +133,12 @@ module Master::Core
         - exec has no generic rollback. Add compensation only when a concrete argv inverse is
           known and its safety can be explained; after failure the Constitution re-checks it
           and asks the operator for approval.
-        - git stage and git commit need explicit operator approval because the shared index
-          and commit history have no automatic inverse.
+        - git stage needs explicit operator approval because it mutates the shared index;
+          avoid staging existing files and use a path-scoped commit after proof instead.
+        - git commit is admitted without another prompt only when every named path was
+          successfully written by this fold and the current evidence threshold is met.
+          Never include another session's or the operator's paths. A new file still needs
+          its one explicit stage approval before it can be committed.
         - unknown effect contracts are refused; policy_gated does not mean reversible
       Constraints the runtime enforces (violate them and the effect is refused):
         - never write a secret into a file or note
