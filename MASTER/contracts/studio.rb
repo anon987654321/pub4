@@ -13,6 +13,10 @@ module Contracts
       reference_root: "reference-root",
       dilla_render_directory: "dilla-render-directory",
     }.freeze
+    # Answers that do not depend on the clock, per STUDIO root and environment:
+    # each query boots dilla.rb, and one dispatch asks for reference_root
+    # several times (seconds per call on the 8 GB Mac).
+    OUTPUT_PATH_LOCK = Mutex.new
 
     module_function
 
@@ -36,6 +40,15 @@ module Contracts
     # Query STUDIO's own path authority over the executable boundary. MASTER
     # must not load STUDIO/output_paths.rb as a sibling implementation.
     def output_path(kind:, at: Time.now.utc)
+      return query_output_path(kind:, at:) if kind.to_sym == :dilla_render_directory
+
+      key = [kind.to_sym, root, ENV.to_h]
+      OUTPUT_PATH_LOCK.synchronize { output_path_cache[key] ||= query_output_path(kind:, at:) }
+    end
+
+    def output_path_cache = (@output_path_cache ||= {})
+
+    def query_output_path(kind:, at:)
       command = OUTPUT_PATH_COMMANDS.fetch(kind.to_sym) do
         raise ArgumentError, "unknown STUDIO output path kind: #{kind.inspect}"
       end
