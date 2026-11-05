@@ -79,7 +79,6 @@ nb:
       maps: Kart
       tv: TV
     vertical_badge_new: "nytt!"
-    pagination: Sidenavigasjon
     home: Hjem
     explore: Utforsk
     notifications: Varsler
@@ -877,7 +876,6 @@ nb:
   actions:
     apply: Bruk
     close: Lukk
-    load_more: Eldre innlegg
     add_one: Legg til en
     dismiss: Lukk
     sell_something: Selg noe

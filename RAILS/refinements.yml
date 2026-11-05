@@ -1197,7 +1197,7 @@ items:
   path: RAILS/brgen/app/views/communities/show.html.erb
   item: Replace the single 'Load more' page jump with the infinite-scroll sentinel
     plus noscript pager used on hashtags.
-  status: open
+  status: done
 - id: brgen-040
   app: brgen
   area: communities
@@ -1772,7 +1772,7 @@ items:
   path: RAILS/__shared/frontend/infinite_scroll_controller.js
   item: 'Add retry and timeout recovery to infinite scroll: if the reflex fails, data-loading
     stays ''true'' forever and the feed silently stops.'
-  status: open
+  status: done
 - id: brgen-108
   app: brgen
   area: feed

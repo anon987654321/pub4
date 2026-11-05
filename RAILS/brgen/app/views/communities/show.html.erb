@@ -81,19 +81,17 @@
 <% end %>
 
 <% if @posts.any? %>
-  <% @posts.each do |post| %>
-    <%= render "posts/post", post: post %>
-  <% end %>
-  <%# This page used to render every post a community had, unpaginated. Now that
-      it pages, the rest still has to be reachable — the infinite-scroll sentinel
-      the feeds use needs a reflex that knows this scope, so a plain link keeps
-      it working without JS until that exists. %>
-  <% if @pagy.next %>
-    <nav class="cluster" aria-label="<%= t("nav.pagination") %>">
-      <%= link_to t("actions.load_more"),
-                  community_path(@community, page: @pagy.next), rel: "next", class: "button button-ghost" %>
-    </nav>
-  <% end %>
+  <ul class="post-feed feed_list post-card-list" id="community-posts" role="list">
+    <%= safe_join(@posts.map { |post| tag.li(render("posts/post", post:)) }) %>
+  </ul>
+  <%# The sentinel the other feeds use, with this community's scope in
+      CommunityPostsInfiniteScrollReflex; the pager stays as the no-JS path. %>
+  <%= render "shared/infinite_scroll_sentinel",
+             pagy: @pagy,
+             reflex: "CommunityPostsInfiniteScrollReflex#load_more",
+             sentinel_id: "community-posts-sentinel",
+             data: { community_id: @community.id, flair: @flair.presence } %>
+  <noscript><%= render "shared/pager", pagy: @pagy %></noscript>
 <% else %>
   <%# The compose action only for someone who may post; the Join button in the
       header is the way in for everyone else. %>

@@ -133,6 +133,7 @@ en:
     restored: "Restored"
     loading_more: "Loading more…"
     load_more: "Load more"
+    load_more_failed: "Could not load more. Press Load more to try again."
     end_of_list: "You have reached the end."
     loading_results: "Loading results…"
   theme:

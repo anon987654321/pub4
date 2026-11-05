@@ -75,7 +75,6 @@ en:
       maps: Maps
       tv: TV
     vertical_badge_new: "new!"
-    pagination: Pagination
     home: Home
     explore: Explore
     notifications: Notifications
@@ -871,7 +870,6 @@ en:
   actions:
     apply: Apply
     close: Close
-    load_more: Older posts
     add_one: Add one
     dismiss: Dismiss
     sell_something: Sell something

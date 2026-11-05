@@ -132,6 +132,7 @@ nb:
     restored: "Gjenopprettet"
     loading_more: "Laster mer…"
     load_more: "Last inn flere"
+    load_more_failed: "Fikk ikke lastet flere. Trykk «Last inn flere» for å prøve igjen."
     end_of_list: "Du har nådd slutten."
     loading_results: "Laster resultater…"
   theme:
