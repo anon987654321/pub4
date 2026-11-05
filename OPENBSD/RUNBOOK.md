@@ -525,12 +525,14 @@ failure. Nothing is stopped before step 4.
    `MASTER/tools/boot_smoke.rb`; `OPENBSD/bin/rehearse`) and sends the box the SHA
    with `VPS_DEPLOY_PREFLIGHT_SHA`. A run typed on the box has no such word and
    runs the first three itself, on the pinned commit, detached; a failure puts the
-   checkout back where it was. Break-glass is `VPS_DEPLOY_SKIP_PREFLIGHT=1` and,
-   like the runtime-check skip, only with `I_UNDERSTAND_FAST_DEPLOY=1`.
+   checkout back where it was. The exit trap restores that ref if the session is
+   interrupted while the checkout is detached. Break-glass is
+   `VPS_DEPLOY_SKIP_PREFLIGHT=1` and, like the runtime-check skip, only with
+   `I_UNDERSTAND_FAST_DEPLOY=1`.
 4. Record `doas rcctl ls started`. This is what the exit trap restores.
 5. Choose the order. `master` leads only when every app that was started answers
    `/up` and the last `resource_guard` tick shows `mem_avail` at or above
-   `VPS_DEPLOY_MASTER_MIN_AVAIL` (10). Otherwise: brgen, amber, bsdports, master.
+   `VPS_DEPLOY_MASTER_MIN_AVAIL` (10). Otherwise: brgen, mrdamascy, amber, bsdports, master.
 6. For each target: wait until every running app answers `/up` (no CI, bundle or
    precompile on top of a Falcon boot); disk and load preflight; CI and sync;
    migrate; precompile (again after settling); restart; `/up`; stylesheet;
@@ -539,7 +541,8 @@ failure. Nothing is stopped before step 4.
    (`FLOW_APP=<app>`, HTTP only, one pass or fail line per flow).
 7. On any failure the exit trap of the top-level run restores every service from
    the step 4 list that is not running, in serving order (brgen, amber, bsdports,
-   master, then the rest), one at a time, each waiting up to
+   master, then remaining started services such as mrdamascy), one at a time,
+   each waiting up to
    `VPS_DEPLOY_RESTORE_WAIT` (240) seconds for `/up`. Each line says whether the
    deploy stopped it, `resource_guard` shed it, or it went down for another reason.
    The exit status stays the failure's, and the trap names the stage.
