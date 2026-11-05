@@ -8,6 +8,18 @@ class Message < ApplicationRecord
 
   scope :recent, -> { order(created_at: :desc) }
   scope :unread, -> { where(read_at: nil) }
+  scope :involving, ->(user) { where(sender: user).or(where(recipient: user)) }
+  scope :between, ->(user, other) { where(sender: user, recipient: other).or(where(sender: other, recipient: user)) }
+  # The newest message with each person `user` has written to or heard from:
+  # the inbox is one row per person.
+  scope :latest_per_partner, ->(user) { where(id: involving(user).group(partner_of(user)).select("MAX(messages.id)")) }
+
+  # The person on the other side of each of `user`'s messages, as SQL.
+  def self.partner_of(user)
+    Arel.sql(sanitize_sql_array([ "CASE WHEN sender_id = ? THEN recipient_id ELSE sender_id END", user.id ]))
+  end
+
+  def self.partner_ids(user) = involving(user).select(partner_of(user))
 
   after_create_commit :enqueue_master_reply, if: :master_message?
   after_create_commit :broadcast_live

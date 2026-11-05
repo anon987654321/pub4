@@ -13,21 +13,32 @@
 </header>
 
 <section class="form-wrap" aria-label="<%= t("messages.composer") %>">
-  <%= render "messages/form", message: @message, recipients: @recipients %>
+  <%= render "messages/form", message: @message, recipients: @recipients, with: @partner&.id %>
 </section>
 
-<section aria-label="<%= t("messages.title") %>">
-  <%# An ol even when empty: create.turbo_stream prepends the first message
-      into it, and removes the empty state beside it. %>
-  <%= tag.ol render(partial: "messages/message", collection: @messages, as: :message),
-             id: "message-list", class: "amber-message-list" %>
-  <% if @messages.empty? %>
-    <%= tag.div render("shared/empty_state",
-                       title: t("empty.no_messages"),
-                       body: t("messages.empty_body"),
-                       action: { label: t("messages.connections"), path: connections_path }),
-                id: "message-list-empty" %>
-  <% end %>
-</section>
+<% if @partner %>
+  <section aria-label="<%= t("messages.conversation_with", name: @partner.display_name) %>">
+    <%= tag.h2 t("messages.conversation_with", name: @partner.display_name) %>
+    <%= link_to t("messages.all_conversations"), messages_path %>
+    <%# create.turbo_stream prepends a message sent to this person here. %>
+    <%= tag.ol render(partial: "messages/message", collection: @messages, as: :message),
+               id: "message-list", class: "amber-message-list" %>
+  </section>
+<% else %>
+  <section aria-label="<%= t("messages.title") %>">
+    <%# One row per person, newest first. An ol even when empty: create.turbo_stream
+        puts the first conversation into it and removes the empty state beside it. %>
+    <%= tag.ol render(partial: "messages/conversation", collection: @conversations, as: :message,
+                      locals: { unread_from: @unread_from }),
+               id: "conversation-list", class: "amber-message-list" %>
+    <% if @conversations.empty? %>
+      <%= tag.div render("shared/empty_state",
+                         title: t("empty.no_messages"),
+                         body: t("messages.empty_body"),
+                         action: { label: t("messages.connections"), path: connections_path }),
+                  id: "message-list-empty" %>
+    <% end %>
+  </section>
+<% end %>
 
 <%= render "shared/pager", pagy: @pagy %>

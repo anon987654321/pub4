@@ -4,10 +4,17 @@ class MessagesController < ApplicationController
   before_action :require_verified_email, only: :create
   before_action :require_user_session
 
+  # One row per person, latest message first, until a row is opened: then the
+  # messages with that person alone (?with=id), the composer addressed to them.
+  # The read marking is unchanged: opening the inbox reads it, so a row's
+  # unread dot is what arrived since the last visit.
   def index
-    load_inbox
+    @partner = conversation_partner(params[:with]) if params[:with].present?
+    return redirect_to(messages_path) if params[:with].present? && @partner.nil?
+
+    @partner ? load_thread : load_conversations
     # A connection's Message link names the person; the select starts on them.
-    @message = Current.user.sent_messages.build(recipient_id: params[:recipient_id].presence)
+    @message = Current.user.sent_messages.build(recipient_id: @partner&.id || params[:recipient_id].presence)
     @master_invited = master_invited?
     # One UPDATE, not one per message. This issued a write per unread row on a
     # GET, so opening a large inbox turned a read into an unbounded write burst.
@@ -25,13 +32,16 @@ class MessagesController < ApplicationController
     @message = Current.user.sent_messages.build(message_params)
     @message.recipient = resolve_recipient(@message.recipient_id)
     if @message.recipient && @message.save
+      # The recipient's inbox row comes back with its unread dot if they have
+      # written since the viewer last opened the inbox.
+      @unread_from = Current.user.received_messages.unread.where(sender: @message.recipient).distinct.pluck(:sender_id)
       respond_to do |format|
         format.turbo_stream { render from_widget? ? :create_widget : :create }
-        format.html { redirect_to messages_path, notice: t("flash.message_sent") }
+        format.html { redirect_to messages_path(with: params[:with].presence), notice: t("flash.message_sent") }
       end
     else
       @message.errors.add(:recipient_id, :invalid) if @message.recipient.nil?
-      load_inbox
+      load_conversations
       render :index, status: :unprocessable_entity
     end
   end
@@ -69,6 +79,30 @@ class MessagesController < ApplicationController
     return master if master && master.id == id.to_i && master_invited?
 
     Current.user.messageable_users.find_by(id:)
+  end
+
+  # Someone the viewer has a message with; nobody else opens as a conversation.
+  def conversation_partner(id)
+    User.includes(:profile).where(id: Message.partner_ids(Current.user)).find_by(id:)
+  end
+
+  def load_conversations
+    latest = Message.latest_per_partner(Current.user)
+    @pagy, @conversations = pagy(latest.includes(sender: :profile, recipient: :profile).recent)
+    @unread_from = Current.user.received_messages.unread.distinct.pluck(:sender_id).to_set
+    load_counts
+  end
+
+  def load_thread
+    thread = Message.between(Current.user, @partner)
+    @pagy, @messages = pagy(thread.includes(sender: :profile, recipient: :profile).recent)
+    load_counts
+  end
+
+  def load_counts
+    @unread_count = Current.user.received_messages.unread.count
+    @recipients = Current.user.messageable_users.to_a
+    @recipients << master if master && master_invited?
   end
 
   def load_inbox

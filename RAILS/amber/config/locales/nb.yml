@@ -732,6 +732,10 @@ nb:
     invite_master: "Inviter MASTER"
     master_present: "MASTER er her"
     master_joined: "MASTER ble med i denne chatten."
+    conversation_with: "Meldinger med %{name}"
+    all_conversations: "Alle samtaler"
+    unread: "Ulest"
+    you_wrote: "Du: %{body}"
   connections:
     title: "Forbindelser"
     empty_body: "Følg skapere, og be deretter om en forbindelse for å sende melding."

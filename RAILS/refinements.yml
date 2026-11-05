@@ -783,7 +783,7 @@ items:
   path: RAILS/amber/app/views/messages/index.html.erb
   item: Group the inbox by conversation partner (one row per person, latest message
     preview, unread dot) instead of a flat chronological list of every message.
-  status: open
+  status: done
 - id: amber-097
   app: amber
   area: ux

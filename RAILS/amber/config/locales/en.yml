@@ -733,6 +733,10 @@ en:
     invite_master: "Invite MASTER"
     master_present: "MASTER is here"
     master_joined: "MASTER joined this chat."
+    conversation_with: "Messages with %{name}"
+    all_conversations: "All conversations"
+    unread: "Unread"
+    you_wrote: "You: %{body}"
   connections:
     title: "Connections"
     empty_body: "Follow creators, then request a connection to message them."

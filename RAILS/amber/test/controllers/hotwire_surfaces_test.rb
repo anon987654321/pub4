@@ -57,7 +57,9 @@ class HotwireSurfacesTest < ActionDispatch::IntegrationTest
     end
     assert_response :success
     assert_includes response.body, "hello"
-    assert_includes response.body, I18n.t("messages.to", name: @other.display_name)
+    # The inbox is one row per person, named for them; it moves to the top.
+    assert_includes response.body, %(action="prepend" target="conversation-list")
+    assert_includes response.body, ERB::Util.html_escape(@other.display_name)
   end
 
   test "accepting a connection updates the list over turbo stream" do

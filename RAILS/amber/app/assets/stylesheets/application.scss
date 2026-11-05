@@ -2349,6 +2349,19 @@ main#main-content form .field :is(
 .amber-message header{display:flex;align-items:baseline;justify-content:space-between;gap:var(--space-3);font-size:var(--text-extra-small)}
 .amber-message p{margin:var(--space-1) 0 0;white-space:pre-wrap;overflow-wrap:anywhere}
 .amber-message--mine{text-align:end}.amber-message--mine p{text-align:start;margin-inline-start:15%}
+/* The inbox: one row per person, its newest message under the name, and a dot
+   beside a name whose messages arrived since the last visit. */
+.amber-conversation{padding:var(--space-3) var(--space-4)}
+.amber-conversation header{display:flex;align-items:baseline;gap:var(--space-3);font-size:var(--text-extra-small)}
+.amber-conversation time{margin-inline-start:auto}
+.amber-conversation p{margin:var(--space-1) 0 0;overflow-wrap:anywhere;color:var(--luxury-muted)}
+.amber-conversation-unread {
+  display: inline-block;
+  inline-size: 0.5rem;
+  block-size: 0.5rem;
+  border-radius: 50%;
+  background: var(--accent);
+}
 .post-show-reading {
   max-width: 880px;
   margin-inline: auto;

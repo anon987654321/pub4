@@ -1,3 +1,15 @@
+<% recipient = @message.recipient %>
+<% thread_id = params[:with].presence %>
 <%= turbo_stream.remove "message-list-empty" %>
-<%= turbo_stream.prepend "message-list", partial: "messages/message", locals: { message: @message } %>
-<%= turbo_stream.replace "message-form", partial: "messages/form", locals: { message: Current.user.sent_messages.build, recipients: Current.user.messageable_users } %>
+<%# The inbox shows one row per person: this person's row leaves its place and
+    comes back at the top with this message. The open conversation with them,
+    when that is the page the form was on, takes the message itself. %>
+<%= turbo_stream.remove dom_id(recipient, :conversation) %>
+<%= turbo_stream.prepend "conversation-list", partial: "messages/conversation",
+                                              locals: { message: @message, unread_from: @unread_from } %>
+<% if thread_id.to_i == recipient.id %>
+  <%= turbo_stream.prepend "message-list", partial: "messages/message", locals: { message: @message } %>
+<% end %>
+<%= turbo_stream.replace "message-form", partial: "messages/form",
+                                         locals: { message: Current.user.sent_messages.build(recipient_id: thread_id),
+                                                   recipients: Current.user.messageable_users, with: thread_id } %>

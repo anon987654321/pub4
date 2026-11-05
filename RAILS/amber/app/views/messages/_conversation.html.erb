@@ -1,0 +1,18 @@
+<%# locals: message — the latest message with one person; unread_from — the
+    ids of the people whose messages to the viewer are unread. One row per
+    person; the row opens the messages with them. %>
+<% viewer_id = Current.user&.id %>
+<% mine = message.sender_id == viewer_id %>
+<% partner = mine ? message.recipient : message.sender %>
+<% unread = local_assigns.fetch(:unread_from, []).include?(partner.id) %>
+<% preview = message.body.truncate(120) %>
+<%= tag.li id: dom_id(partner, :conversation), class: "amber-conversation" do %>
+  <header>
+    <%= tag.strong link_to(partner.display_name, messages_path(with: partner.id)) %>
+    <% if unread %>
+      <%= tag.span tag.span(t("messages.unread"), class: "visually-hidden"), class: "amber-conversation-unread" %>
+    <% end %>
+    <%= tag.time time_ago(message.created_at), datetime: message.created_at.iso8601 %>
+  </header>
+  <%= tag.p mine ? t("messages.you_wrote", body: preview) : preview %>
+<% end %>
