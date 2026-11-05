@@ -144,6 +144,7 @@ module Master
       API_HOST = "api.replicate.com"
       OPEN_TIMEOUT_SECONDS = 10
       READ_TIMEOUT_SECONDS = 120
+      MAX_MODEL_PAGES = 1_000
       LORA_TRAINER = "ostris/flux-dev-lora-trainer"
       TRANSIENT_STATUS = ((500..599).to_a << 429).freeze
       # replicate.delivery hosts prediction output blobs; replicate.com is the
@@ -199,8 +200,19 @@ module Master
         remaining = [[limit.to_i, 1].max, 1_000].min
         uri = URI("#{BASE}/models")
         rows = []
+        seen_cursors = {}
+        pages = 0
         while uri && rows.length < remaining
+          pages += 1
+          raise ArgumentError, "Replicate models pagination exceeded #{MAX_MODEL_PAGES} pages" if pages > MAX_MODEL_PAGES
+
+          cursor = uri.to_s
+          raise ArgumentError, "Replicate models pagination repeated a cursor" if seen_cursors[cursor]
+
+          seen_cursors[cursor] = true
           page = get(uri)
+          raise TypeError, "Replicate models page must be an object" unless page.is_a?(Hash)
+
           rows.concat(Array(page["results"]))
           next_url = page["next"].to_s
           uri = next_url.empty? ? nil : models_page_uri(next_url)
