@@ -1,6 +1,6 @@
 # pub4 — remaining work
 
-Audit snapshot: 2026-11-05, `main` at `2a2e43ee488d6f1200d182f9533a9e4d86ed15ec`.
+Audit snapshot: 2026-11-05, `main` at `4b57364d4935b2df9e3021dd492be32d4db4b85c`.
 This register replaces the previous 1,275-line, 462-checkbox carry-forward
 dump. It contains unresolved outcomes, not session notes or speculative
 architecture proposals.
@@ -205,7 +205,9 @@ second push path or duplicate orchestration to make TODO.md machine-readable.
   check-registry refusal now have source coverage on `main`; their focused
   test runs remain NOT_RUN. L4's stored census is not re-baselined until a
   pinned Ruby 4.0.5 run has reported exact member drift. Continue with the
-  genuinely open R3/R8–R13/R16–R17/H2–H8 findings.
+  genuinely open R3/R8–R13/R16–R17/H2–H8 findings. R8 now also has a
+  definite commit-refusal rollback regression; the full transaction-aware
+  candidate/apply and later-verification recovery path remains open.
 - [ ] **Local Claude hooks.** On macOS, launch a real Claude Code session and
   verify project hooks load through the `.claude` symlink.
 - [ ] **AI3 recovery.** Compare recovery manifests with recoverable historical
