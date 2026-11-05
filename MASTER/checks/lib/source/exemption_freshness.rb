@@ -111,7 +111,8 @@ module Deploy
 
       catalogue = YAML.safe_load_file(@catalogue_path)
       catalogue.is_a?(Hash) ? catalogue.keys.compact.map(&:to_s) : []
-    rescue StandardError
+    rescue StandardError => error
+      warn("exemption_freshness: catalogue unreadable: #{error.class}")
       []
     end
 
