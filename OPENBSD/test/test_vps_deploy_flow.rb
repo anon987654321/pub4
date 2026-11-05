@@ -313,6 +313,46 @@ class VpsDeployFlowTest < Minitest::Test
                      "the preflight checkout is restored before the release advances"
   end
 
+  def test_interrupted_preflight_restores_branch_and_detached_checkouts
+    restore = SOURCE[/^restore_preflight_checkout\(\) \{.*?^\}/m]
+    refute_nil restore
+
+    with_box do |_dir, box, work, git|
+      original = git.call("rev-parse", "HEAD", chdir: box)
+      pin = push_commit(work, git, "preflight-pin")
+      git.call("fetch", "-q", "origin", chdir: box)
+
+      [
+        ["main", "", "main"],
+        [original, "--detach", "detached"],
+      ].each do |back_to, flag, expected_branch|
+        if expected_branch == "detached"
+          git.call("switch", "-q", "--detach", original, chdir: box)
+        end
+        git.call("switch", "-q", "--detach", pin, chdir: box)
+
+        out, status = zsh(<<~ZSH)
+          repo=#{box}
+          preflight_active=1
+          preflight_back_to=#{back_to}
+          preflight_back_flag=(#{flag})
+          git_as_deploy_user() { (cd "$repo" && command git "$@"); }
+          log() { print "$*" }
+          #{restore}
+          restore_preflight_checkout
+          print "HEAD=$(git_as_deploy_user rev-parse HEAD)"
+          print "BRANCH=$(git_as_deploy_user symbolic-ref -q --short HEAD || print detached)"
+          print "ACTIVE=$preflight_active"
+        ZSH
+
+        assert_equal 0, status, out
+        assert_includes out, "HEAD=#{original}"
+        assert_includes out, "BRANCH=#{expected_branch}"
+        assert_includes out, "ACTIVE=0"
+      end
+    end
+  end
+
   # the order
 
   def order_run(dir, avail:, apps_up: true, started: "brgen amber bsdports master")
