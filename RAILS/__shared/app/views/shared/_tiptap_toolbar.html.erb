@@ -2,17 +2,22 @@
     pasted copies. Each button is named by aria-label (the glyph is decoration)
     and carries aria-pressed, which the controller keeps in step with the
     editor's active marks. mousedown is held so the editor keeps its selection;
-    the command itself runs on click, which Enter and Space also fire. %>
+    the command itself runs on click, which Enter and Space also fire.
+    role=toolbar with one tab stop: Tab reaches the first button and leaves
+    past the last, and the arrow keys, Home and End move between them
+    (tiptap_editor#toolbarKey). %>
 <%= tag.div class: "tiptap_toolbar", hidden: local_assigns.fetch(:hidden, true),
-            data: { tiptap_editor_target: "toolbar" } do %>
+            role: "toolbar", aria: { label: t("tiptap.toolbar_label") },
+            data: { tiptap_editor_target: "toolbar", action: "keydown->tiptap-editor#toolbarKey" } do %>
   <%= tag.button tag.strong("B", aria: { hidden: true }),
-        type: "button", class: "tiptap_button", aria: { label: t("compose.bold"), pressed: false },
+        type: "button", class: "tiptap_button", tabindex: 0, aria: { label: t("compose.bold"), pressed: false },
         data: { action: "mousedown->tiptap-editor#hold click->tiptap-editor#bold", tiptap_editor_mark: "bold" } %>
   <%= tag.button tag.em("i", aria: { hidden: true }),
-        type: "button", class: "tiptap_button", aria: { label: t("compose.italic"), pressed: false },
+        type: "button", class: "tiptap_button", tabindex: -1, aria: { label: t("compose.italic"), pressed: false },
         data: { action: "mousedown->tiptap-editor#hold click->tiptap-editor#italic", tiptap_editor_mark: "italic" } %>
   <%= tag.button tag.span("•", aria: { hidden: true }),
-        type: "button", class: "tiptap_button", aria: { label: t("compose.bullet_list"), pressed: false },
+        type: "button", class: "tiptap_button", tabindex: -1,
+        aria: { label: t("compose.bullet_list"), pressed: false },
         data: { action: "mousedown->tiptap-editor#hold click->tiptap-editor#bulletList",
                 tiptap_editor_mark: "bulletList" } %>
 <% end %>

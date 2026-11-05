@@ -1259,7 +1259,7 @@ items:
   path: RAILS/__shared/frontend/tiptap_editor_controller.js
   item: Group the tiptap toolbar as role=toolbar with arrow-key navigation, used by
     the composer, post form and comment form.
-  status: open
+  status: done
 - id: brgen-048
   app: brgen
   area: compose

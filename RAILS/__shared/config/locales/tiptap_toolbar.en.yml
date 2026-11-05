@@ -1,0 +1,4 @@
+# The formatting toolbar's name (shared/_tiptap_toolbar, role=toolbar).
+en:
+  tiptap:
+    toolbar_label: Formatting

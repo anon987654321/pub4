@@ -38,7 +38,7 @@ export default class extends Controller {
     this.form?.addEventListener("submit", this.flush, true)
   }
 
-  async mount() {
+  async mount(event) {
     if (this.mounted) return
     this.mounted = true
     this.element.removeEventListener("focusin", this.mount)
@@ -87,8 +87,11 @@ export default class extends Controller {
       if (this.hasToolbarTarget) this.toolbarTarget.hidden = false
       // Mounting is triggered by the user focusing the textarea, and the line
       // above just hid the element they focused. Carry the caret into the editor
-      // or the next keystroke goes to a visually-hidden field.
-      this.editor.commands.focus("end")
+      // or the next keystroke goes to a visually-hidden field. A toolbar button
+      // that took focus keeps it: pulling it into the text threw a keyboard
+      // user out of the toolbar they had just tabbed to.
+      const { commands } = this.editor
+      if (!event || event.target === this.fieldTarget) commands.focus("end")
     } catch (err) {
       // The import failed — leave the plain textarea in place. Deliberately not
       // retried: the textarea is fully functional, and re-requesting on every
@@ -136,4 +139,23 @@ export default class extends Controller {
   bold(e) { e.preventDefault(); this.editor?.chain().focus().toggleBold().run() }
   italic(e) { e.preventDefault(); this.editor?.chain().focus().toggleItalic().run() }
   bulletList(e) { e.preventDefault(); this.editor?.chain().focus().toggleBulletList().run() }
+
+  // A toolbar is one tab stop (the WAI-ARIA toolbar pattern): the arrow keys,
+  // Home and End move focus between its buttons, and the one last focused is
+  // the one Tab comes back to.
+  toolbarKey(event) {
+    const moves = { ArrowRight: 1, ArrowLeft: -1, Home: "first", End: "last" }
+    const move = moves[event.key]
+    const buttons = Array.from(this.toolbarTarget.querySelectorAll("button"))
+    const current = buttons.indexOf(document.activeElement)
+    if (move === undefined || current < 0) return
+
+    event.preventDefault()
+    const last = buttons.length - 1
+    let next = (current + move + buttons.length) % buttons.length
+    if (move === "first") next = 0
+    if (move === "last") next = last
+    buttons.forEach((button, index) => { button.tabIndex = index === next ? 0 : -1 })
+    buttons[next].focus()
+  }
 }
