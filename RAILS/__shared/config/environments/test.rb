@@ -84,4 +84,10 @@ Rails.application.configure do
 
   # Raise error when a before_action's only/except options reference missing actions.
   config.action_controller.raise_on_missing_callback_actions = true
+
+  # Tests resolve assets from the load path. A deploy precompiles into
+  # public/assets, and Propshaft reads that manifest whenever it exists, so on
+  # vm23 every image added since the last release raised "not found in the load
+  # path" before the new release was precompiled.
+  config.assets.manifest_path = Rails.root.join("tmp/test-assets/.manifest.json")
 end
