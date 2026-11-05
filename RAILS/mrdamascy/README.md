@@ -83,6 +83,21 @@ recreates the menu. Stopping the demo, and removing its route, is
 `OPENBSD/RUNBOOK.md`, "Mr. Damascy demo". Do not infer production payment
 readiness from a successful mock checkout.
 
+## Allergens: the kitchen must fill these in
+
+Food sold at a distance must name the 14 EU allergens before purchase
+(matinformasjonsforskriften). The app has the mechanism, not the data: every
+dish's `menu_items.allergens` is empty until the kitchen records it, and until
+then the item sheet tells the customer the allergens are not recorded and to
+call the kitchen before ordering. Only the kitchen knows its recipes and
+suppliers, so nothing here guesses.
+
+For each dish, set a comma list of the keys in `MenuItem::ALLERGENS`
+(`gluten crustaceans eggs fish peanuts soybeans milk nuts celery mustard sesame
+sulphites lupin molluscs`), or `none` when it holds none of them, for example
+`bin/rails runner 'MenuItem.find(ID).update!(allergens: "gluten,milk")'`. An
+unknown key is refused. Change a dish's recipe, and its list with it.
+
 ## Product assets and future boundary
 
 The restaurant's original logo assets are operator-owned originals. Keep them

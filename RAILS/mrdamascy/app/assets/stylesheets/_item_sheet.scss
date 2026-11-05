@@ -35,6 +35,17 @@
   font-style: italic;
 }
 
+.sheet-allergens h2 {
+  font-size: var(--text-meta);
+  font-weight: 700;
+  margin: 0;
+}
+
+.sheet-allergens p {
+  font-size: var(--text-meta);
+  margin: var(--space-4) 0 0;
+}
+
 .option-group legend {
   display: flex;
   align-items: center;

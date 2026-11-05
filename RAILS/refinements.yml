@@ -5514,7 +5514,7 @@ items:
   path: RAILS/mrdamascy/db/schema.rb
   item: Add the 14 EU allergens to menu_items and show them on the item sheet; matinformasjonsforskriften
     requires allergen information before purchase for distance sales.
-  status: open
+  status: done
 - id: mrdamascy-056
   app: mrdamascy
   area: motion

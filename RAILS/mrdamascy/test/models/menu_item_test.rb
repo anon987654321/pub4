@@ -64,4 +64,20 @@ class MenuItemTest < ActiveSupport::TestCase
     # lowercase slugs keep that lookup working for all 12 cities.
     assert I18n.exists?("origins.#{item.origin}"), "origins.#{item.origin} must exist in locales"
   end
+
+  test "allergens take only the 14 EU keys, or none alone, and every key has both names" do
+    item = seed_item!(@category)
+
+    assert item.update(allergens: "gluten, milk")
+    assert_equal %w[gluten milk], item.listed_allergens
+    assert item.update(allergens: "none")
+    assert_empty item.listed_allergens
+    assert_not item.update(allergens: "milk,shellfish"), "an unknown key is refused"
+    assert_not item.update(allergens: "none,milk"), "none stands alone"
+
+    assert_equal 14, MenuItem::ALLERGENS.size
+    MenuItem::ALLERGENS.each do |key|
+      %i[nb en].each { |locale| assert I18n.exists?("menu.allergen_names.#{key}", locale), "#{locale} #{key}" }
+    end
+  end
 end

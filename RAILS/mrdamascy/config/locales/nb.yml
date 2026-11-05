@@ -41,6 +41,27 @@ nb:
     skip: Hopp til innholdet
   menu:
     title: Menyen
+    allergens:
+      title: Allergener
+      contains: "Inneholder %{list}."
+      none: Inneholder ingen av de 14 allergenene.
+      unknown: Allergenene er ikke registrert for denne retten ennå. Spør kjøkkenet før du bestiller.
+      unknown_call: Allergenene er ikke registrert for denne retten ennå. Ring kjøkkenet på %{phone} før du bestiller.
+    allergen_names:
+      gluten: gluten
+      crustaceans: skalldyr
+      eggs: egg
+      fish: fisk
+      peanuts: peanøtter
+      soybeans: soya
+      milk: melk
+      nuts: nøtter
+      celery: selleri
+      mustard: sennep
+      sesame: sesamfrø
+      sulphites: svoveldioksid og sulfitter
+      lupin: lupin
+      molluscs: bløtdyr
     hero_tagline: Fra Damaskus med kjærlighet — grillat i Bergen
     hero_rating: ⭐ %{rating}
     hero_hours: Åpent %{hours}

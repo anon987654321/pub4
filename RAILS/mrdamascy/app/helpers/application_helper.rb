@@ -106,6 +106,19 @@ module ApplicationHelper
     end)
   end
 
+  # What the item sheet says about the 14 allergens: the ones the dish holds,
+  # that it holds none, or, when the kitchen has not recorded it, to ask the
+  # kitchen before ordering.
+  def allergen_text(item)
+    if item.allergens_recorded?
+      names = item.listed_allergens.map { |key| t("menu.allergen_names.#{key}") }
+      return names.empty? ? t("menu.allergens.none") : t("menu.allergens.contains", list: names.join(", "))
+    end
+
+    phone = current_kitchen&.phone
+    phone.present? ? t("menu.allergens.unknown_call", phone: phone) : t("menu.allergens.unknown")
+  end
+
   def state_chip(order)
     tag.span(t("orders.states.#{order.state}"), class: "state-chip state-#{order.state}")
   end

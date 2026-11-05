@@ -36,6 +36,12 @@
     <p class="origin-story"><%= t(origin_story_key(item.origin)) %></p>
   <% end %>
 
+  <%# Allergens before purchase (matinformasjonsforskriften); see MenuItem::ALLERGENS. %>
+  <%= tag.section class: "sheet-allergens", aria: { labelledby: "allergens_title" } do %>
+    <%= tag.h2 t("menu.allergens.title"), id: "allergens_title" %>
+    <%= tag.p allergen_text(item) %>
+  <% end %>
+
   <%= form_with url: add_item_cart_path, method: :post, class: "sheet-form",
         data: { controller: "item-sheet",
                 item_sheet_base_value: item.price_ore,

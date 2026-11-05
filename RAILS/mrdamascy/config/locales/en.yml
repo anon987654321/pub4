@@ -41,6 +41,27 @@ en:
     skip: Skip to content
   menu:
     title: The Menu
+    allergens:
+      title: Allergens
+      contains: "Contains %{list}."
+      none: Contains none of the 14 allergens.
+      unknown: The allergens are not recorded for this dish yet. Ask the kitchen before you order.
+      unknown_call: The allergens are not recorded for this dish yet. Call the kitchen on %{phone} before you order.
+    allergen_names:
+      gluten: gluten
+      crustaceans: crustaceans
+      eggs: eggs
+      fish: fish
+      peanuts: peanuts
+      soybeans: soya
+      milk: milk
+      nuts: tree nuts
+      celery: celery
+      mustard: mustard
+      sesame: sesame seeds
+      sulphites: sulphur dioxide and sulphites
+      lupin: lupin
+      molluscs: molluscs
     hero_tagline: From Damascus with love — grilled in Bergen
     hero_rating: ⭐ %{rating}
     hero_hours: Open %{hours}
