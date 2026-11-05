@@ -34,11 +34,21 @@ export default class extends Controller {
       this.#hideCoachUi()
     }
     window.addEventListener(YIELD_EVENT, this.onYield)
+
+    // The bar is data-turbo-permanent, so Turbo keeps the first page's element
+    // and the aria-current it was rendered with across every visit. This
+    // controller already owns the bar, so it re-marks the tab for the page
+    // showing after each visit; a controller of its own for that cost one
+    // more Stimulus instance on every page.
+    this.markCurrentTab = () => this.#markCurrentTab()
+    document.addEventListener("turbo:load", this.markCurrentTab)
+    this.#markCurrentTab()
   }
 
   disconnect() {
     this.element.removeEventListener("scroll", this.onScroll)
     window.removeEventListener(YIELD_EVENT, this.onYield)
+    document.removeEventListener("turbo:load", this.markCurrentTab)
     if (this.coachTimer) clearTimeout(this.coachTimer)
   }
 
@@ -106,6 +116,17 @@ export default class extends Controller {
     if (!hidden) this.#hideCoachUi()
 
     this.#persist(!hidden)
+  }
+
+  #markCurrentTab() {
+    if (!this.hasBarTarget) return
+
+    const here = window.location.pathname
+    this.barTarget.querySelectorAll("a[href]").forEach((link) => {
+      const path = new URL(link.getAttribute("href"), window.location.origin).pathname
+      if (path === here) link.setAttribute("aria-current", "page")
+      else link.removeAttribute("aria-current")
+    })
   }
 
   #maybeShowCoach() {

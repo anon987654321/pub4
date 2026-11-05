@@ -60,7 +60,8 @@ class SurfaceRefinementsTest < ActionDispatch::IntegrationTest
 
     get root_path
     assert_select ".mobile-sheet-links a[href=?]", account_path
-    assert_select "nav#app-tab-bar[data-controller~=tab-bar-current]"
+    # scroll-chrome owns the bar and re-marks its current tab after each visit.
+    assert_select "[data-controller~=scroll-chrome] nav#app-tab-bar[data-scroll-chrome-target=bar]"
   end
 
   test "the onboarding dialog titles itself below the page heading, with decorative art" do
