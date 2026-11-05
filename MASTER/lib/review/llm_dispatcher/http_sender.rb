@@ -93,7 +93,9 @@ module Master
         def replicate_output(prediction, headers:)
           deadline = monotonic_now + REPLICATE_POLL_TIMEOUT_S
           REPLICATE_MAX_POLLS.times do
-            return Result.err("replicate: invalid prediction response", category: :provider_error) unless prediction.is_a?(Hash)
+            unless prediction.is_a?(Hash)
+              return Result.err("replicate: invalid prediction response", category: :provider_error)
+            end
             return Result.ok(Array(prediction["output"]).join) if prediction["status"] == "succeeded"
             if %w[failed canceled].include?(prediction["status"])
               return Result.err("replicate: #{prediction['error'] || prediction['status']}", category: :provider_error)
