@@ -1031,9 +1031,11 @@ body.vertical-playlist .playlist-reorder {
   padding-inline-start: var(--space-5);
 }
 
+/* The shell keeps scrolling here as on every other page: html and body never
+   scroll, so overflow: hidden on it left everything below the window out of
+   reach -- a long playlist's tracks, the queue and the comments. */
 body.vertical-playlist .app-shell {
   background: var(--color-bg);
-  overflow: hidden;
 }
 
 /* Playlist show / admin still readable on dark shell */
