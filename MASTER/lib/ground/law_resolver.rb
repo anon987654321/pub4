@@ -7,7 +7,7 @@ module Master
     class LawResolver
       LEGACY_ALIASES = {
         "CAPABILITY_STATUS_MUST_BE_TRUTHFUL" => "TRUTHFUL_STATUS",
-        "RENDERED_VALUES" => "OPERATOR_RENDERED"
+        "RENDERED_VALUES" => "OPERATOR_RENDERED",
       }.freeze
 
       def initialize(laws_data: nil, root: Master::ROOT)
@@ -65,7 +65,7 @@ module Master
       def node_for(id, seen = {})
         key = LEGACY_ALIASES.fetch(id.to_s.upcase, id.to_s.upcase)
         return key.downcase if @precedence_order.include?(key.downcase)
-        return nil if seen[key]
+        return if seen[key]
 
         seen[key] = true
         entry = @entries[key]
