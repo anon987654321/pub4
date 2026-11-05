@@ -57,4 +57,17 @@ class TestFixCommitMessage < Minitest::Test
       assert_empty git.commits
     end
   end
+  # A repair of three Laws ran past 72 characters, and the cut subject ended on "in" with the
+  # file gone; the body carried the checkout's absolute path and was cut mid-name at 240.
+  def test_a_many_law_repair_keeps_the_file_and_names_it_from_the_repo_root
+    file = File.join(Master::REPO_ROOT, "RAILS/brgen/app/assets/stylesheets/_brgen_core_shell.scss")
+    text = Master::Fix::CommitMessage.repair(law: "MOBILE_FIRST+NO_ASCII_LINE_ART+SMALL_FILES", file:, line: 6)
+    subject, = text.lines
+
+    assert_equal "Repair MOBILE_FIRST and 2 more in _brgen_core_shell.scss\n", subject
+    assert_includes text, "rewrote RAILS/brgen/app/assets/stylesheets/_brgen_core_shell.scss"
+    refute_includes text, Master::REPO_ROOT
+    assert_includes text.gsub("\n", " "), "MOBILE_FIRST, NO_ASCII_LINE_ART and SMALL_FILES findings"
+  end
+
 end

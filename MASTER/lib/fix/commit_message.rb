@@ -29,9 +29,29 @@ module Master
       # preserve_user_intent check reads the message, and a finding that says "extract" would read as a
       # refactor the repair never claimed.
       def repair(law:, file:, line:)
-        compose("Repair #{law} in #{File.basename(file.to_s)}",
-                what: "/fix rewrote #{file} near line #{line} to clear its #{law} finding",
+        laws = law.to_s.split("+")
+        noun = laws.size == 1 ? "finding" : "findings"
+        compose(repair_subject(laws, File.basename(file.to_s)),
+                what: "/fix rewrote #{relative(file)} near line #{line} to clear its #{listed(laws)} #{noun}",
                 why: "The change passed the scope check, the rescan, the file's tests and the reviewer")
+      end
+
+      # The file name always survives: a subject cut to 72 characters lost it and ended on "in".
+      def repair_subject(laws, name)
+        limit = Master::Ground::CommitFormat.max_chars
+        full = "Repair #{listed(laws)} in #{name}"
+        return full if full.size <= limit
+
+        short = "Repair #{laws.first} and #{laws.size - 1} more in #{name}"
+        laws.size > 1 && short.size <= limit ? short : "Repair #{name}"
+      end
+
+      def listed(laws) = laws.size <= 2 ? laws.join(" and ") : "#{laws[0..-2].join(", ")} and #{laws.last}"
+
+      # The body names the file from the repository root, not the checkout it ran in.
+      def relative(file)
+        root = defined?(Master::REPO_ROOT) ? Master::REPO_ROOT : Dir.pwd
+        File.expand_path(file.to_s).delete_prefix("#{File.expand_path(root)}/")
       end
 
       PASS_SHAPES = {
@@ -83,7 +103,7 @@ module Master
       end
 
       # Finding messages carry typographic dashes; a commit body is plain text.
-      def plain(text) = text.to_s.gsub(/\s*[\u2013\u2014]\s*/, ", ").gsub(/\s+/, " ")[0, 240]
+      def plain(text) = text.to_s.gsub(/\s*[\u2013\u2014]\s*/, ", ").gsub(/\s+/, " ")
 
       # A body reads at 72 columns, as git log shows it.
       def wrap(text) = text.scan(/\S.{0,71}(?=\s|\z)|\S+/).join("\n")
