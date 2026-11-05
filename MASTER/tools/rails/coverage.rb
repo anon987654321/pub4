@@ -61,7 +61,9 @@ apps.each do |app|
   next unless SYSTEM_TESTS
   next if ENV["PUB4_CI_GUARD"] == "1" || File.exist?("/var/db/pub4_vps")
 
-  run!(app, RbConfig.ruby, "bin/rails", "test:system", env:)
+  # Its own SimpleCov command name, so it merges with the suite's result
+  # instead of replacing it (__shared/test/coverage.rb).
+  run!(app, RbConfig.ruby, "bin/rails", "test:system", env: env.merge("PUB4_COVERAGE_PART" => "system"))
 end
 
 resultsets = apps.map { |app| File.join(COVERAGE_ROOT, app, ".resultset.json") }

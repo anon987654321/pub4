@@ -169,7 +169,9 @@ Operator::CiGuard.run! do
     # 1-vCPU VPS check (see resource_guard.sh), but must run in local/dev CI.
     # This is also where axe-core accessibility checks live (see
     # test/application_system_test_case.rb's assert_accessible).
-    step("system_test", "env FULL_COVERAGE=1 bin/rails test:system") unless vps_host
+    # PUB4_COVERAGE_PART: its own SimpleCov result, merged with rails_test's
+    # rather than replacing it (__shared/test/coverage.rb).
+    step("system_test", "env FULL_COVERAGE=1 PUB4_COVERAGE_PART=system bin/rails test:system") unless vps_host
     seed_env = vps_host ? "env RAILS_ENV=test SKIP_BERGEN_DEMO=1" : "env RAILS_ENV=test"
     # bin/rake, not bin/rails.
     #

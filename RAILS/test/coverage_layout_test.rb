@@ -21,7 +21,7 @@ class CoverageLayoutTest < Minitest::Test
     end
   RUBY
 
-  def run_in(layout_dir, app:, cwd:)
+  def run_in(layout_dir, app:, cwd:, part: nil)
     Dir.mktmpdir do |tmp|
       FileUtils.mkdir_p(File.join(tmp, "stub"))
       File.write(File.join(tmp, "stub", "simplecov.rb"), FAKE_SIMPLECOV)
@@ -29,11 +29,13 @@ class CoverageLayoutTest < Minitest::Test
       FileUtils.cp(SOURCE, File.join(tmp, "root", "__shared", "test", "coverage.rb"))
       FileUtils.mkdir_p(File.join(tmp, "root", layout_dir, "config"))
       FileUtils.touch(File.join(tmp, "root", layout_dir, "config", "application.rb"))
+
       out, err, status = Open3.capture3(
-        { "PUB4_CI_APP" => app, "PUB4_COVERAGE_PATH" => nil },
+        { "PUB4_CI_APP" => app, "PUB4_COVERAGE_PATH" => nil, "PUB4_COVERAGE_PART" => part },
         RbConfig.ruby, "-I", File.join(tmp, "stub"), File.join(tmp, "root", "__shared", "test", "coverage.rb"),
         chdir: File.join(tmp, "root", cwd)
       )
+
       [status, out.gsub(File.join(tmp, "root"), "ROOT"), err]
     end
   end
@@ -42,6 +44,13 @@ class CoverageLayoutTest < Minitest::Test
     status, out, err = run_in("brgen", app: "brgen", cwd: "brgen")
     assert status.success?, err
     assert_includes out, "command=brgen:rails"
+  end
+
+  # bin/ci's system_test run must not overwrite rails_test's result.
+  def test_a_named_part_gets_its_own_command_name
+    status, out, err = run_in("brgen", app: "brgen", cwd: "brgen", part: "system")
+    assert status.success?, err
+    assert_includes out, "command=brgen:rails:system"
   end
 
   def test_copy_tree_layout_finds_the_app_dir_named_app

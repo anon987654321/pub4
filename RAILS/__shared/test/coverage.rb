@@ -26,7 +26,12 @@ SimpleCov.coverage_path(
     File.join(rails_root, "coverage", app) :
     File.expand_path(ENV.fetch("PUB4_COVERAGE_PATH"))
 )
-SimpleCov.command_name "#{app}:rails"
+# SimpleCov keeps one result per command name, so bin/ci's system_test run,
+# under the same name as rails_test, replaced the whole suite's result with its
+# own nine tests and judged that against the app's floor. A named part keeps
+# its own result, and the two are merged.
+part = ENV["PUB4_COVERAGE_PART"].to_s.strip
+SimpleCov.command_name part.empty? ? "#{app}:rails" : "#{app}:rails:#{part}"
 
 SimpleCov.start "rails" do
   cover "#{app_dir}/app/**/*.rb"
