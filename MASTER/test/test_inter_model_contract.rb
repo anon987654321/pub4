@@ -268,7 +268,10 @@ class TestInterModelContract < Minitest::Test
       "position" => position,
       "position_reason" => "The supplied task and candidate set were assessed under the declared constraints.",
       "position_evidence" => [
-        { "location" => "requested task", "evidence" => "The task and supplied candidate material are present in the bounded prompt." }
+        {
+          "location" => "requested task",
+          "evidence" => "The task and supplied candidate material are present in the bounded prompt."
+        }
       ],
       "findings" => findings
     }.to_json
