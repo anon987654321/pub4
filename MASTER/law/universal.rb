@@ -891,7 +891,25 @@ Law.define(:EXPLICIT_TRADEOFF) do
   X
 end
 
-Law.define(:LEAST_PRIVILEGE) do
+Law.define(:PORTABILITY_IS_VERIFIED) do
+  source "OpenBSD portability discipline; explicit platform contracts"
+  ask "Is support claimed for an operating system, release, architecture or runtime that has not been exercised, or does a platform-specific assumption leak across its boundary?"
+  practice "Portability is a measured promise, not an inference from POSIX-like spelling. Keep platform-specific behavior at narrow edges and verify every named target."
+  fix "Name supported targets, isolate platform-specific interfaces behind small adapters, and run native checks on every claimed target. An unavailable target is INCONCLUSIVE, never PASS."
+  bad "It works on Linux, so the OpenBSD path is presumed correct."
+  good "OpenBSD and macOS behavior are explicit; each declared target runs its own relevant contract checks."
+end
+
+Law.define(:PRODUCTION_RELEASE_IS_PINNED) do
+  source "OpenBSD release engineering; immutable revision deployment"
+  ask "Can a moving branch reference change the code under deployment, or can a release be stamped without proof for the exact commit being deployed?"
+  practice "Resolve one immutable commit, require preflight and CI attestations to name that commit, deploy only that pin, and record the same revision in the receipt."
+  fix "Fetch once, pin the target SHA, verify ancestry and exact-SHA attestations, deploy only that SHA, and refuse a mismatch or missing required proof."
+  bad "Test one revision, then deploy the later moving branch tip."
+  good "CI, preflight, deployment and receipt all name the same immutable SHA."
+end
+
+
   source "Saltzer & Schroeder — least privilege; OpenBSD pledge(2) and unveil(2)"
   ask "Does a process, service, job, deploy phase or agent retain ambient filesystem, network, syscall, credential or tool authority beyond the exact operation that needs it?"
   practice "Grant the minimum capability for the minimum duration. OpenBSD's pledge/unveil model is the reference: narrow the syscall and filesystem surface at the boundary, then only remove authority as execution advances."
