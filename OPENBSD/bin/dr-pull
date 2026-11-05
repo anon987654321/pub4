@@ -80,27 +80,97 @@ if ARGV.include?("--check")
     exit 0
   end
 
-  pulls = Dir.children(DEST).select { |name| File.directory?(File.join(DEST, name)) && name.match?(/\A\d{8}-\d{4}\z/) }
+  pulls = Dir.children(DEST).select do |name|
+    next false unless name.match?(/\A\d{8}-\d{4}\z/)
+
+    path = File.join(DEST, name)
+    stat = File.lstat(path)
+    stat.directory? && !stat.symlink?
+  rescue SystemCallError
+    false
+  end
   # An empty stamp directory is what a failed pull leaves behind, so a pull
-  # counts only once it holds a database.
+  # counts only once it holds a database. Timestamp-shaped symlinks are not
+  # backups and must not become a read-through to another directory.
   landed = pulls.select { |name| !Dir.glob(File.join(DEST, name, "*.sqlite3")).empty? }.sort
   if landed.empty?
-    warn "dr-pull: FAIL — #{DEST} holds no pull with a database in it (#{pulls.size} stamp dir(s))"
+    warn "dr-pull: FAIL — #{DEST} holds no pull with a database in it (#{pulls.size} real stamp dir(s))"
     exit 1
   end
 
   newest = landed.last
-  age_days = ((Time.now - File.mtime(File.join(DEST, newest))) / 86_400).floor
+  source = File.join(DEST, newest)
+  age_days = ((Time.now - File.mtime(source)) / 86_400).floor
   if age_days > STALE_AFTER_DAYS
     warn "dr-pull: FAIL — newest pull #{newest} is #{age_days} days old, over #{STALE_AFTER_DAYS}. " \
-         "Run `ruby OPENBSD/bin/dr-pull` and read #{DEST}/dr-pull.log for why it stopped."
+         "Run ruby OPENBSD/bin/dr-pull and read #{DEST}/dr-pull.log for why it stopped."
     exit 1
   end
 
-  puts "dr-pull: ok — newest pull #{newest}, #{age_days} day(s) old, #{landed.size} kept"
+  databases = Dir.glob(File.join(source, "*.sqlite3")).sort
+  unsafe = databases.reject do |database|
+    stat = File.lstat(database)
+    stat.file? && !stat.symlink?
+  rescue SystemCallError
+    false
+  end
+  unless unsafe.empty?
+    warn "dr-pull: FAIL — newest pull contains non-regular or symlinked database path(s): #{unsafe.map { |p| File.basename(p) }.join(', ')}"
+    exit 1
+  end
+
+  sums_path = File.join(source, "SHA256SUMS")
+  has_sums = File.exist?(sums_path) || File.symlink?(sums_path)
+  recorded = {}
+  if has_sums
+    sums_stat = File.lstat(sums_path)
+    unless sums_stat.file? && !sums_stat.symlink?
+      warn "dr-pull: FAIL — SHA256SUMS is not a regular file"
+      exit 1
+    end
+
+    File.readlines(sums_path, chomp: true).each do |line|
+      hash, name = line.split(/\s+/, 2)
+      name = name.to_s.delete_prefix("*")
+      unless hash.to_s.match?(/\A\h{64}\z/) && !name.empty? && File.basename(name) == name
+        warn "dr-pull: FAIL — malformed SHA256SUMS entry"
+        exit 1
+      end
+      recorded[name] = hash.downcase
+    end
+    missing = databases.map { |p| File.basename(p) } - recorded.keys
+    unless missing.empty?
+      warn "dr-pull: FAIL — SHA256SUMS has no entry for #{missing.join(', ')}"
+      exit 1
+    end
+  end
+
+  databases.each do |database|
+    name = File.basename(database)
+    if has_sums
+      actual = Digest::SHA256.file(database).hexdigest
+      expected = recorded.fetch(name)
+      unless actual == expected
+        warn "dr-pull: FAIL — #{name} checksum mismatch (#{actual[0, 16]}… != #{expected[0, 16]}…)"
+        exit 1
+      end
+    end
+
+    output, status = Open3.capture2("sqlite3", "-readonly", database, "PRAGMA integrity_check;")
+    unless status.success? && output.strip == "ok"
+      warn "dr-pull: FAIL — #{name} integrity_check failed (exit #{status.exitstatus || 'signal'}): #{output.strip[0, 120]}"
+      exit 1
+    end
+  rescue SystemCallError => error
+    warn "dr-pull: FAIL — could not verify #{name}: #{error.class}: #{error.message}"
+    exit 1
+  end
+
+  checksum_note = has_sums ? "checksum + integrity verified" : "integrity verified; legacy pull has no SHA256SUMS"
+  warn "dr-pull: WARNING — #{checksum_note}; run a fresh pull to establish remote checksum evidence" unless has_sums
+  puts "dr-pull: ok — newest pull #{newest}, #{age_days} day(s) old, #{databases.size} database(s), #{checksum_note}, #{landed.size} kept"
   exit 0
 end
-
 # --drill is the restore test. A backup command that exits 0 proves a file was
 # written; this proves it can be used. The newest pull is copied into a scratch
 # directory (never DEST, never the box), its bytes are checked against the
