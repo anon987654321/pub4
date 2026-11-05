@@ -79,7 +79,7 @@ module Master
             breakdown = Hash.new(0)
             @law_order.dependency_levels(runnable).each do |group|
               break if deadline && Time.now >= deadline
-              break if circuit_open?
+              break if circuit_open? || RunBudget.stopping
               results = run_rule_group(group:, files:, pass:, rule_violations:, council:)
               fixed += tally_rule_results(results, breakdown:, pass:)
               @human_decision_required ||= results.any? { |_rule, result| result[:status] == :human_decision }

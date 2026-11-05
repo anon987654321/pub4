@@ -30,6 +30,10 @@ module Master
         def fix_batch(violations)
           results = []
           violations.uniq { |violation| violation[:file] }.each do |violation|
+            # The stall guard's stop ends the repair now: checked only at pass boundaries, a stopped
+            # run kept attempting files for 40 minutes after it said STOPPING.
+            break if RunBudget.stopping
+
             result = attempt(violation)
             results << result
             break if immediate_delivery_boundary?(result)
