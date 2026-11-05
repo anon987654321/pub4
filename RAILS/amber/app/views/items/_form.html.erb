@@ -44,6 +44,12 @@
     <%= f.label :photos %>
     <%= f.file_field :photos, multiple: true, accept: "image/*", direct_upload: true, data: { media_picker_target: "input", action: "change->media-picker#pick" } %>
     <button type="button" class="button button-ghost" data-action="click->media-picker#trigger"><%= t("items.choose_or_drop") %></button>
+    <%# The gallery picker stays; this asks a phone for its rear camera instead.
+        No name: media-picker adds each photo to the gallery input, which uploads. %>
+    <input type="file" id="item_photo_camera" accept="image/*" capture="environment" hidden
+           data-media-picker-target="camera" data-action="change->media-picker#capture">
+    <%= tag.button t("items.take_photo"), type: "button", class: "button button-ghost",
+                                          data: { action: "click->media-picker#takePhoto" } %>
     <div class="media-picker-preview" data-media-picker-target="preview"></div>
     <p><%= t("items.photo_processing_html") %></p>
   </div>

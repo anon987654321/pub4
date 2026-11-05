@@ -27,8 +27,11 @@ class SortableKeyboardContractTest < Minitest::Test
     variants = File.read(VARIANT_VIEW)
 
     assert_includes outfit, 'data-controller="outfit-sortable"'
-    assert_includes outfit, 'data-sortable-move-up-label-value='
-    assert_includes outfit, 'data-sortable-move-down-label-value='
+    # Under the outfit's own identifier: a data-sortable-* value on an
+    # outfit-sortable element names no controller, and the labels fell back to
+    # the vendor's English.
+    assert_includes outfit, "data-outfit-sortable-move-up-label-value="
+    assert_includes outfit, "data-outfit-sortable-move-down-label-value="
     assert_includes variants, 'data-controller="sortable"'
     assert_includes variants, 'data-sortable-resource-name-value="variant"'
     assert_includes variants, 'data-sortable-move-up-label-value='

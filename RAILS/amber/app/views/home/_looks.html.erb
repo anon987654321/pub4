@@ -1,17 +1,21 @@
 <%# locals: looks — Amber::HomeLooks::Look, four of them.
     Each look is a title and a track that steps from the whole outfit to one
-    garment at a time. %>
+    garment at a time, by swipe, by the arrow keys while the track has focus,
+    or by the previous and next buttons under it. %>
 <section class="amber-looks" aria-label="<%= t("home.looks.title") %>">
   <% looks.each_with_index do |look, index| %>
     <% name = look.name %>
     <% slides = look.captions(t("home.looks.whole")) %>
     <section class="amber-look" aria-labelledby="amber-look-<%= index %>">
       <h2 class="amber-look-title" id="amber-look-<%= index %>"><%= name %></h2>
-      <div class="amber-look-stage">
+      <div class="amber-look-stage" data-controller="look-track">
         <div class="amber-look-track"
+             id="amber-look-track-<%= index %>"
              tabindex="0"
              role="group"
-             aria-label="<%= t("home.looks.swipe", name: name) %>">
+             aria-label="<%= t("home.looks.swipe", name: name) %>"
+             data-look-track-target="track"
+             data-action="keydown->look-track#key">
           <% slides.each_with_index do |caption, position| %>
             <figure class="amber-look-slide">
               <figcaption>
@@ -20,6 +24,15 @@
               </figcaption>
             </figure>
           <% end %>
+        </div>
+        <%# Hidden until the controller connects: without script the buttons would do nothing. %>
+        <div class="amber-look-steps" hidden data-look-track-target="steps">
+          <%= tag.button t("home.looks.previous"), type: "button", disabled: true,
+                         aria: { controls: "amber-look-track-#{index}" },
+                         data: { look_track_target: "previous", action: "look-track#previous" } %>
+          <%= tag.button t("home.looks.next"), type: "button",
+                         aria: { controls: "amber-look-track-#{index}" },
+                         data: { look_track_target: "next", action: "look-track#next" } %>
         </div>
       </div>
     </section>

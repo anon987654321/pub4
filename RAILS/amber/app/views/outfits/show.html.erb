@@ -33,9 +33,18 @@
 
 <section>
   <%= tag.h2 t("outfits.items_section") %>
-  <div class="item-grid" data-controller="outfit-sortable" data-outfit-sortable-update-url-value="<%= reorder_outfit_path(@outfit) %>" data-sortable-move-up-label-value="<%= t("actions.move_up") %>" data-sortable-move-down-label-value="<%= t("actions.move_down") %>">
+  <%# The move labels are this controller's own values: under the sortable's
+      identifier they named nothing, and the buttons said "Move up" in English. %>
+  <div class="item-grid" data-controller="outfit-sortable"
+       data-outfit-sortable-update-url-value="<%= reorder_outfit_path(@outfit) %>"
+       data-outfit-sortable-move-up-label-value="<%= t("actions.move_up") %>"
+       data-outfit-sortable-move-down-label-value="<%= t("actions.move_down") %>"
+       data-outfit-sortable-status-id-value="outfit-order-status"
+       data-outfit-sortable-saved-label-value="<%= t("outfits.order_saved") %>"
+       data-outfit-sortable-failed-label-value="<%= t("outfits.order_failed") %>">
     <%= render @outfit.items %>
   </div>
+  <p id="outfit-order-status" role="status"></p>
 </section>
 
 <nav role="navigation" aria-label="<%= t("outfits.actions_label") %>">

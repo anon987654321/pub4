@@ -2,7 +2,7 @@ import { Controller } from "@hotwired/stimulus"
 import { compressImage, MAX_EDGE, QUALITY } from "pub4/image_compression"
 
 export default class extends Controller {
-  static targets = ["input", "preview", "filters", "presets", "guidance"]
+  static targets = ["input", "camera", "preview", "filters", "presets", "guidance"]
   static values = {
     coverLabel: { type: String, default: "Cover" },
     removeLabel: { type: String, default: "Remove" },
@@ -27,6 +27,25 @@ export default class extends Controller {
 
   trigger() {
     this.inputTarget.click()
+  }
+
+  // A phone opens its camera for the camera input (capture="environment"),
+  // which carries no name and so uploads nothing itself: each photo it takes
+  // joins the files already picked in the gallery input, which uploads them.
+  takePhoto() {
+    if (this.hasCameraTarget) this.cameraTarget.click()
+  }
+
+  async capture(event) {
+    const taken = Array.from(event?.target?.files || [])
+    if (!taken.length) return
+
+    const transfer = new DataTransfer()
+    Array.from(this.inputTarget.files || []).concat(taken).forEach((file) => transfer.items.add(file))
+    event.target.value = ""
+    this.inputTarget.files = transfer.files
+    this.#renderPreview(transfer.files)
+    await this.#compress(transfer.files)
   }
 
   async pick(event) {

@@ -13,7 +13,7 @@ items:
   path: RAILS/amber/app/views/home/_looks.html.erb
   item: Add keyboard arrow-key stepping and visible prev/next controls to the home
     look tracks; they are focusable scroll groups with no controls.
-  status: open
+  status: done
 - id: amber-002
   app: amber
   area: accessibility
@@ -62,7 +62,7 @@ items:
   size: S
   path: RAILS/amber/app/views/wardrobe_items/analytics.html.erb
   item: Respect prefers-reduced-motion in the animated-number counters on analytics.
-  status: open
+  status: done
 - id: amber-008
   app: amber
   area: bug
@@ -396,7 +396,7 @@ items:
   path: RAILS/amber/app/views/items/_form.html.erb
   item: Add capture="environment" to the item photo input so phones open the camera
     directly.
-  status: open
+  status: done
 - id: amber-049
   app: amber
   area: mobile
@@ -623,7 +623,7 @@ items:
   path: RAILS/amber/app/javascript/controllers/outfit_sortable_controller.js
   item: Give the outfit reorder a saved/failed status and revert the order on a failed
     request.
-  status: open
+  status: done
 - id: amber-077
   app: amber
   area: ux

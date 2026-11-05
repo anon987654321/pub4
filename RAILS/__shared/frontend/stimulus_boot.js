@@ -56,8 +56,17 @@ import Chartjs from "@stimulus-components/chartjs"
 import Carousel from "@stimulus-components/carousel"
 import BottomSheet from "pub4/bottom_sheet"
 
+// A counter counting up from its start is motion. Under prefers-reduced-motion
+// it keeps the number the server rendered and never runs.
+class CalmAnimatedNumber extends AnimatedNumber {
+  connect() {
+    if (window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches) return
+    super.connect()
+  }
+}
+
 const COMPONENT_REGISTRATIONS = [
-  [ "animated-number", AnimatedNumber ],
+  [ "animated-number", CalmAnimatedNumber ],
   [ "auto-submit", AutoSubmit ],
   [ "carousel", Carousel ],
   [ "chartjs", Chartjs ],

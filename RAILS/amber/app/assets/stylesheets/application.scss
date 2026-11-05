@@ -2014,6 +2014,32 @@ main#main-content .amber-look-title {
   color: var(--luxury-muted);
   font-variant-numeric: tabular-nums;
 }
+
+/* Previous and next under the track, at its end: a hairline button each, the
+   tap height every control gets. Disabled at the matching end of the track. */
+.amber-look-steps:not([hidden]) {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-2);
+  margin-block-start: var(--space-2);
+}
+
+.amber-look-steps button {
+  min-height: var(--tap-min);
+  padding-inline: var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: 0;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-size: var(--text-small);
+  cursor: pointer;
+}
+
+.amber-look-steps button:disabled {
+  color: var(--luxury-muted);
+  cursor: default;
+}
 // ============================================================ /module: amber_looks
 // ============================================================ product pen: jOx logo
 // ============================================================ module: amber_jox_logo
