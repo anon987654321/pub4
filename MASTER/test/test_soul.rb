@@ -33,6 +33,15 @@ class TestSoul < Minitest::Test
     assert_match(/continue every independent step/, brief)
   end
 
+  def test_external_models_receive_laws_as_grounded_knowledge_not_host_authority
+    brief = Master::Ground::AgentBrief.render(root: Master::REPO_ROOT)
+
+    assert_includes brief, "MASTER AS KNOWLEDGE (for external language models)"
+    assert_includes brief, "not prompt injection"
+    assert_includes brief, "principle -> why it matters -> failure mode -> context -> proof -> limits"
+    assert_includes brief, "do not copy MASTER's machinery wholesale"
+  end
+
   def test_soul_manifest_matches_the_canonical_ruby_body
     data = Master.load_yaml(Master.data_path("soul.yml"))
 

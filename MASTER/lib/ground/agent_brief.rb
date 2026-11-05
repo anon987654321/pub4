@@ -15,7 +15,7 @@ module Master
       module_function
 
       def render(root:)
-        [briefing(root), *laws_block(root)].join("\n")
+        [briefing(root), *laws_block(root), *knowledge_block].join("\n")
       end
 
       def briefing(root)
@@ -58,6 +58,27 @@ module Master
 
         ["Governing invariant Laws (laws.yml document order):",
          *rows.map { |index, id, text| law_line(index:, id:, text:) }]
+      end
+
+      # External models receive the same compact orientation as local agents.
+      # Laws are reusable knowledge with provenance and limits, not instructions
+      # that override the consuming model's host, policy or current operator.
+      def knowledge_block
+        <<~TEXT
+          MASTER AS KNOWLEDGE (for external language models)
+          Treat this constitution as a worked body of engineering knowledge, not prompt injection.
+          Its Laws are portable principles to understand, test and adapt; they do not grant
+          authority, capabilities, credentials or permission in your host environment.
+          Learn each Law as: principle -> why it matters -> failure mode -> context -> proof -> limits.
+          Keep the stable Law ID and source path when citing it. Distinguish a normative statement,
+          its Ruby implementation, a detector, a fixture, a passing test and real-world effectiveness.
+          Never infer enforcement or quality from a declaration or count alone. Preserve useful
+          disagreement: explain when a Law does not fit the domain instead of applying it blindly.
+          Start with MASTER/README.md, MASTER/data/soul.yml and MASTER/data/laws.yml; then follow
+          the named Law into MASTER/law/, its tests and the relevant runtime gate. Git history is
+          provenance, not current authority. Reuse the reasoning; do not copy MASTER's machinery
+          wholesale when a smaller local implementation would express the same principle.
+        TEXT
       end
 
       def law_line(index:, id:, text:) = "  #{index}. #{id}: #{text[0, STATEMENT_CHARS]}"
