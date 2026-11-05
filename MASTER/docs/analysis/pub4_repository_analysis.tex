@@ -1,0 +1,333 @@
+% ============================================================
+% pub4 repository analysis — the typographic edition
+%
+% Rebuilt to obey the typographic laws it reports on:
+%   TYPOGRAPHIC_GRID   measure 66 characters, computed from the face's
+%                      own lowercase advance; leading 10.5/16; every
+%                      vertical skip a multiple of the baseline.
+%   MEASURE_OPTIMUM    running text bound to the 45–75 character measure.
+%   EN_DASH_RANGE      numeric ranges carry an en dash (53–56).
+%   TYPOGRAPHIC_EXCELLENCE   em dashes, curly quotes, no ASCII decor.
+%   TYPOGRAPHY_DISCIPLINE    hierarchy by weight and size, no decoration.
+%   ALL_CAPS_NO_TRACKING     display labels letterspaced 0.08 em.
+%   README_PROSE       no tables anywhere; the demonstration (the
+%                      colophon) sits under the final heading.
+%   PAPER_NOT_PURE_WHITE     page ground #F7F2E9, never #FFFFFF.
+%   SIGNAL_COLOR_NAMING      one signal colour, once per visual unit.
+%   STRUNK_WHITE       prose swept of the leech words in laws.yml.
+%
+% One family only: EB Garamond — roman, italic, bold, true small caps,
+% proportional oldstyle figures by default.
+% Page: 156 x 234 mm, the 2:3 rectangle (Bringhurst's perfect page).
+% ============================================================
+\documentclass[oneside]{article}
+
+\usepackage{fontspec}
+\setmainfont{EBGaramond-Regular.otf}[
+  BoldFont       = EBGaramond-Bold.otf,
+  ItalicFont     = EBGaramond-Italic.otf,
+  BoldItalicFont = EBGaramond-BoldItalic.otf,
+  Ligatures      = TeX,
+  Numbers        = {OldStyle, Proportional},
+  SmallCapsFeatures = {RawFeature = +smcp},
+]
+\usepackage{microtype}
+\usepackage{xcolor}
+\usepackage{geometry}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+\usepackage{tocloft}
+\usepackage[hidelinks]{hyperref}
+\usepackage{url}
+\urlstyle{same}
+\Urlmuskip=0mu plus 1mu
+\usepackage{ragged2e}
+
+% ---------- the palette: MASTER's own Sommerseth tokens ----------
+\definecolor{paper}{HTML}{F7F2E9}   % --paper  (PAPER_NOT_PURE_WHITE)
+\definecolor{ink}{HTML}{1E322D}     % --ink    (fjord green)
+\definecolor{muted}{HTML}{5F6D66}   % --muted
+\definecolor{signal}{HTML}{C97E1E}  % --signal (one per identity)
+\definecolor{hairline}{HTML}{D8D2C4}
+
+\pagecolor{paper}
+\color{ink}
+
+% ---------- geometry: 2:3 page, measure 66 characters ----------
+% measure66 was measured in the face itself:
+%   \settowidth of the 26 lowercase letters at 10.5 pt = 119.2065 pt,
+%   so 66 characters = 66/26 x 119.2065 = 302.6011 pt.
+\geometry{
+  papersize={156mm,234mm},
+  textwidth=302.6pt,
+  textheight=512pt,      % 32 lines x 16 pt
+  top=24mm,              % bottom takes the remainder (~29 mm) — head-biased
+  marginparsep=0pt, marginparwidth=0pt,
+}
+
+% ---------- the type scale, on a 16 pt baseline ----------
+\makeatletter
+\renewcommand\normalsize{\@setfontsize\normalsize{10.5}{16}}
+\renewcommand\small{\@setfontsize\small{9.5}{16}}
+\renewcommand\footnotesize{\@setfontsize\footnotesize{8.5}{16}}
+\renewcommand\large{\@setfontsize\large{13}{32}}
+\renewcommand\Large{\@setfontsize\Large{16}{32}}
+\renewcommand\LARGE{\@setfontsize\LARGE{22}{32}}
+\renewcommand\Huge{\@setfontsize\Huge{28}{40}}
+\normalsize
+\makeatother
+
+\widowpenalty=8000
+\clubpenalty=8000
+\raggedbottom
+\emergencystretch=3em
+\tolerance=3000
+\hyphenpenalty=30
+\setlength{\parindent}{1.4em}
+\setlength{\parskip}{0pt}
+\setlength{\columnsep}{0pt}
+
+% ---------- tree names ----------
+% In justified running text: small caps, unspaced, unbreakable and never
+% hyphenated (letterspacing every occurrence would wreck the even colour
+% of the line). Where a name stands as a display label~--- title page,
+% running head~--- it carries the 0.08 em tracking of ALL_CAPS_NO_TRACKING.
+\newcommand{\treename}[1]{\mbox{\textsc{#1}}}
+% Calibrated against the render: LetterSpace 20 ~= 0.08 em here.
+\newcommand{\treelabel}[1]{\mbox{{\addfontfeatures{LetterSpace=20}\textsc{#1}}}}
+\newcommand{\mtree}{\treename{MASTER}}
+\newcommand{\rtree}{\treename{RAILS}}
+\newcommand{\stree}{\treename{STUDIO}}
+\newcommand{\otree}{\treename{OPENBSD}}
+% file paths and commands: the italic voice, one family still
+\newcommand{\fpath}[1]{\emph{\url{#1}}}
+
+% ---------- section heads: weight, not decoration ----------
+\titleformat{\section}
+  {\Large\bfseries\color{ink}}{\textcolor{signal}{\oldstylenums{\thesection}}}{0.9em}{}
+\titlespacing*{\section}{0pt}{32pt}{16pt}
+\titleformat{\subsection}
+  {\normalsize\bfseries\color{ink}}{\textcolor{signal}{\oldstylenums{\thesubsection}}}{0.9em}{}
+\titlespacing*{\subsection}{0pt}{16pt}{16pt}
+
+% ---------- contents without leader dots ----------
+\renewcommand{\cftdot}{}
+\renewcommand{\cftdotsep}{\cftnodots}
+\setlength{\cftbeforesecskip}{8pt}
+\renewcommand{\cftsecfont}{\normalfont}
+\renewcommand{\cftsecpagefont}{\normalfont}
+\renewcommand{\cfttoctitlefont}{\hfill\large\scshape}
+\renewcommand{\cftaftertoctitle}{\hfill\hfill}
+
+% ---------- running head and folio ----------
+\pagestyle{fancy}
+\fancyhf{}
+\renewcommand{\headrulewidth}{0pt}
+\fancyhead[C]{\footnotesize\color{muted}{\addfontfeatures{LetterSpace=12}\textsc{pub4}}\quad\textcolor{hairline}{|}\quad{\addfontfeatures{LetterSpace=12}\textsc{a structural analysis}}}
+\fancyfoot[C]{\footnotesize\color{muted}\oldstylenums{\thepage}}
+\fancypagestyle{plain}{\fancyhf{}\renewcommand{\headrulewidth}{0pt}\fancyfoot[C]{\footnotesize\color{muted}\oldstylenums{\thepage}}}
+
+\hypersetup{
+  pdftitle={pub4 Repository Analysis},
+  pdfauthor={Z.ai},
+  pdfsubject={A structural analysis of the MASTER, RAILS, STUDIO and OPENBSD trees of github.com/anon987654321/pub4},
+  pdfkeywords={pub4, MASTER, RAILS, STUDIO, OPENBSD, repository analysis},
+}
+
+\begin{document}
+
+% ============================================================
+% Title page — centered, restrained, paper ground
+% ============================================================
+\hypersetup{pageanchor=false}
+\begin{titlepage}
+\thispagestyle{empty}
+\pagenumbering{arabic}
+\centering
+\vspace*{24mm}
+{\footnotesize\color{muted}{\addfontfeatures{LetterSpace=25}\textsc{a reading of the pub4 monorepo}}\par}
+\vspace{8mm}
+{\color{signal}\rule{22mm}{0.6pt}\par}
+\vspace{11mm}
+{\Huge pub4\par}
+\vspace{6mm}
+{\large\itshape A structural analysis of the four trees\par}
+\vspace{11mm}
+{\footnotesize\color{ink}\treelabel{master}\;\textcolor{signal}{.}\;\treelabel{rails}\;\textcolor{signal}{.}\;\treelabel{studio}\;\textcolor{signal}{.}\;\treelabel{openbsd}\par}
+\vspace{15mm}
+\begin{minipage}{0.72\textwidth}
+\centering
+{\small\color{muted}
+Repository \fpath{github.com/anon987654321/pub4}, branch \fpath{main}\\
+head commit \fpath{b721a6c}, shallow clone, release line 1.0.3\\
+prepared November 2026\par}
+\end{minipage}
+\vfill
+\begin{minipage}{0.68\textwidth}
+\RaggedRight
+\small\itshape
+``Bringhurst's ideal measure is \textasciitilde66 characters''~--- the tree's own
+comment on \fpath{law/cosmetic.rb}, written beside the law it polices. This
+document is set so that the sentence describes the page you hold.
+\end{minipage}
+\vspace*{9mm}
+\end{titlepage}
+
+% ============================================================
+% Contents
+% ============================================================
+\thispagestyle{empty}
+\pagenumbering{roman}
+\tableofcontents
+\clearpage
+\hypersetup{pageanchor=true}
+
+% ============================================================
+% Body — folio 1
+% ============================================================
+\pagenumbering{arabic}
+
+\section{Executive summary}
+
+\textbf{pub4 is a constitution first and a codebase second: one checkout, four trees, and an executable law that outranks every agent working in any of them.} Version 1.0.3 arranges itself around a written source hierarchy; the model only proposes, and nothing touches a file until an executable law admits the change. The four trees divide cleanly by concern. \mtree{} (2,251 files) is a pure-Ruby governance runtime whose law catalogue, scanner and check registry police the other trees as well as itself. \rtree{} (3,981 files) carries five production Rails applications on one shared engine, served from a single OpenBSD host. \stree{} (71 files) owns the media tooling. \otree{} (287 files) is the deployment and operations tree for the production box vm23.
+
+Three findings stand out. First, governance here is executable, not decorative: every law ships with a detector, a fixture it must flag and a fixture it must not flag, proven at load time, and a single check registry runs across \mtree, \rtree{} and \otree. Second, the operational maturity of the \otree{} tree is unusually high for a one-person project: a default-deny packet filter, a closed-argv root broker, byte-level configuration drift checks, cross-record agreement tests, verified off-box backups with restore drills, and incident-driven comments that name the outage each guard exists for. Third, the tree is honest about its own defects in-tree: the \stree{} postpro grader (49 files) is unloadable at present because two files it requires do not exist in the repository, the DNSSEC keys have no off-box backup and no DS records are published, and the operator's Mac is the only off-host backup target.
+
+The repository reads as a coherent, production-running system with an unusual degree of internal discipline. Its weaknesses sit in known and mostly documented places: single-box concentration, an unfinished privilege-broker migration, and a media tool whose documentation overstates its current state.
+
+\section{Scope, method and repository orientation}
+
+This report is based on a shallow clone of \fpath{github.com/anon987654321/pub4}, branch \fpath{main}, head commit \fpath{b721a6c} (``Write bytes as bytes in the trace log, scan hits and dmesg''). The clone carries a single commit, so no history, tags or older branches were available. All conclusions rest on the live tree as checked out, plus what the tree says about its past.
+
+The method was read-only and ran in three layers. A filesystem scan counted files and bytes per tree and per file type. The repository's own documentation was read first, on the principle the repo declares: \fpath{README.md} and \fpath{TREE_CONTRACTS.md} at the root, then the per-tree READMEs, \fpath{RUNBOOK.md}, the \fpath{AGENTS.md} pointers and \fpath{PATH_OWNERSHIP.yml}. Four parallel source explorations then examined each tree in depth, reading representative entrypoints, configuration, tests and data files. No code ran against the applications, no tests were run, and no secrets were sought beyond what the tree documents; nothing in the checkout was modified.
+
+Two caveats bound the analysis. Anything that exists only on the production box (signed DNS zones, \fpath{/etc/<app>.env} secrets, deploy receipts) is absent from git by design and remained outside inspection. And because checks are recorded as \textsc{inconclusive} instead of \textsc{pass} when they cannot run, this report claims no verified runtime behaviour; it reports what the sources, tests and documentation assert.
+
+\section{Repository overview: one checkout, four trees}
+
+The checkout is about 79~MiB across 6,590 files. At the root sit the shared contract files that make four trees one repository: \fpath{README.md} (the tour), \fpath{TREE_CONTRACTS.md} (the one per-tree contract file), \fpath{TODO.md} (the one cross-tree backlog, where an item closes by being deleted in the commit that carries its evidence), \fpath{VERSION} (1.0.3), the workstation deploy entrypoint \fpath{redeploy}, and a set of generated agent pointers (\fpath{AGENTS.md} as the canonical entrypoint, with \fpath{CLAUDE.md}, \fpath{GEMINI.md} and \fpath{GLM.md} routing to it). A \fpath{.claude} symlink points into \fpath{STUDIO/agent-guidance}.
+
+The declared source hierarchy is \fpath{soul.yml} \textgreater{} \fpath{laws.yml} \textgreater{} executable laws and gates \textgreater{} tree contracts \textgreater{} git history. In practice \fpath{MASTER/data/soul.yml} owns global identity, preservation principles and a short list of sacred paths (\fpath{laws.yml}, \fpath{soul.yml}, \fpath{lib/soul.rb}, \fpath{lib/ground/pledge.rb} and \fpath{bin/master}) that are protected against writes by code, not by convention. Git history is explicitly provenance, never a source that overrides the live tree.
+
+Measured on the checkout, \mtree{} carries 2,251 files (15.1~MiB)~--- 1,931 Ruby files and 127 YAML files~--- and holds the constitution, runtime and instruments: the law catalogue, the scanner, \fpath{/fix}, \fpath{/review}, and the operator and agent entrypoints. \rtree{} is the largest tree at 3,981 files and 62.1~MiB, dominated by 2,295 Ruby files, 616 ERB templates, 262 JavaScript files and 101 SCSS stylesheets; it holds five production Rails applications, six vertical engines, the pub4-shared engine and the deploy tooling. \stree{} is the smallest at 71 files (0.7~MiB), mostly Ruby (54 files): Dilla, photograph, the Replicate client and the postpro film-emulation grader. \otree{} (287 files, 1.2~MiB) mirrors the production box~--- 90 Ruby files, 51 shell and ksh scripts, 57 DNS zone files and 16 configurations~--- for VPS configuration, DNS, relayd and the operator scripts.
+
+The trees interlock in specific, declared ways. \mtree's check registry (\fpath{checks/checks.yml}) registers rows from all three code trees, so one runner judges everything. \fpath{RAILS/master}, the web face of the \mtree{} system, loads the \mtree{} tree directly as a local gem. \stree's implementations are reached from \mtree{} through exactly two compatibility symlinks (\fpath{MASTER/tools/dilla} and \fpath{MASTER/tools/replicate}), and \mtree{} is forbidden from loading \stree's output-path module as a sibling; it asks the dilla entrypoint. \otree{} deploys the \rtree{} applications and byte-compares the live box against tracked mirrors of its configuration.
+
+\section{The \mtree{} tree: constitution, runtime and instruments}
+
+\mtree{} describes itself as an artificial intelligence written in pure Ruby that governs itself by law instead of by hope, and the tree is built to make that more than a slogan. The runtime inverts the usual order of model action and after-the-fact review: the model only proposes, and every proposed effect passes through a constitution whose verdicts are \textsc{block}, \textsc{request}, \textsc{allow} or \textsc{revise}. The spine that implements this (\fpath{lib/core/fold.rb} and \fpath{lib/core/constitution.rb}) is small and fixed by design; to add an ability you add an effect handler, to add a constraint you add a rule, and the spine never grows.
+
+\subsection{The law system}
+
+The normative layer has three parts. \fpath{data/soul.yml} (152 lines) owns identity and precedence, including an anti-simulation clause that forbids \emph{will}, \emph{would}, \emph{could} and \emph{might} in claims, and an evidence policy requiring content hashes, unified diffs and command output as proof. \fpath{data/laws.yml} (3,679 lines) is the one catalogue of law identities: it opens with the axiom that application is uniform and no path skips a law, defines nine constitutional invariants (truthful status, robustness, singularity, linearity, proximity, abstraction, density, operator-rendered output, and the inter-model contract), carries named principles from \textsc{kiss} and the Law of Demeter to Strunk and White, and ends with a 470-entry catalogue giving each law a severity, lifecycle, autofix policy, languages and veto patterns. The 29 files under \fpath{law/} are the executable layer: 313 \fpath{Law.define} calls whose policy is deliberately not declarable in Ruby, only in the catalogue.
+
+The load-time discipline is the strongest part. \fpath{law/definition.rb} states that a law exists only as a triple~--- a detector, a fixture it must flag, and a fixture it must not flag; all three or it fails to load. At boot, every law proves itself against its own fixtures, both as bare text and as a realistic file with an extension, and laws that depend on external evidence must name a test that exists. Lifecycle is a written state machine (proposed, proven, active, observed, trusted, advisory, retired), autofix is restricted (automatic requires a deterministic detector), and per-line opt-outs are explicit and rare. Veto patterns from the catalogue execute through the same machinery.
+
+\subsection{Checks, entrypoints and plugins}
+
+\fpath{checks/checks.yml} is the single execution registry: 65 top-level rows covering \mtree, \rtree{} and \otree, run by a runner that validates the whole registry at boot and aborts on any bad row, guards declared paths against traversal and symlink escape, and treats a missing or unrun measurement as \textsc{inconclusive}, never \textsc{pass}. The check library divides into 26 source checks (reading text), 14 rendered checks (driving Chrome over the DevTools Protocol and measuring what the browser laid out), 7 live checks against booted applications, and 3 research checks. The registry has no cost field, by design: a declaration can never show a doubling; only measured medians from a per-check ledger can.
+
+The entrypoints are \fpath{bin/master} (the one entrypoint, which on OpenBSD pledges before exec'ing any model-proposed command), \fpath{bin/operator} (repo-wide checks, status, VPS control, measurements and snapshots), \fpath{bin/check} (a profile ladder from contributor to CI), and \fpath{bin/doctor}, whose checks answer \textsc{pass}, \textsc{fail} or \textsc{unmeasured} because, as the comment says, booleans forced checks to lie in one direction or the other. Eight plugins exist: four active (\fpath{air_superiority} for defensive Wi-Fi and Bluetooth observation, \fpath{session_browser} and \fpath{social_browser} as allowlisted read-mostly browsers, \fpath{travel_browser} which stops at the booking handoff) and four parked on 2026-11-01, each with a named sponsor and an explicit revive condition instead of a silent deletion.
+
+Under \fpath{lib/}, the write path \fpath{lib/fix} (213 files) holds the \fpath{/fix} kernel with a hash-chained lifecycle journal and an \fpath{flock} execution lock, disk-backed snapshots with rollback, the restructure machinery, governor and homeostat, and around 40 visual modules. \fpath{lib/cli} (103 files) holds the command registry, slash-command dispatch, the intent router and model routing. \fpath{lib/io} (88 files) holds the governed tool adapters~--- exec, atomic write, browser agent, HTTP, research tools, a circuit breaker and MCP. \fpath{lib/review} (78 files) is the read-only assessment half: the scanner's detector, finding and datalog engine, council and swarm deliberation, the LLM dispatcher, the code index and the verdicts. \fpath{lib/voice} (58 files) carries TTS and STT, the renderer that holds the one prompt, the dialogue rubric and the narrator. \fpath{lib/ground} (55 files) is the safety substrate~--- pledge(2) and unveil(2) via Fiddle, default-deny personal permissions, an error-swallow log, the evidence router and boot receipts. \fpath{lib/trace} (29 files) holds the dmesg-style event grammar, a TracePoint object probe and a capped JSONL writer. \fpath{lib/cognition} (11 files) holds the evidence-state protocol (observation, hypothesis, falsifier, measurement) and a bounded event-bus observer with prediction, attention, affect and self-model state.
+
+The data corpus (94 YAML files) is the third constitution layer. \fpath{tokens.yml} is the single design-token authority from which other trees' assets are generated; \fpath{spine.yml} sets a lib-size ratchet where a number may fall and never rise; \fpath{models.yml} routes between LLM providers with a failover policy; \fpath{council.yml} and \fpath{personas.yml} define the deliberation voices. Code quality is high and consistent: frozen string literals, immutable \fpath{Data.define} records, fail-closed boot, and comments that record the incident and date behind every non-obvious decision. The tree audits itself: one rake task runs every law over the \fpath{law/} directory itself, and a dedicated test re-runs the whole suite per file to catch tests that load and never run.
+
+\section{The \rtree{} tree: five applications on one shared engine}
+
+\rtree{} is the largest tree (62.1~MiB, dominated by images and JavaScript alongside 2,295 Ruby files) and the one that pays the bills. Its canonical feature matrix is \fpath{RAILS/apps.yml}, which also holds ports, domains and stack versions: a Rails 8.2.0.alpha stack pinned to a specific rails/rails commit, Ruby 4.0.5, SQLite storage, Falcon as the application server (Puma for mrdamascy alone), and Solid Queue and Solid Cache for background work. Nineteen owned domains are listed, all registered through Domeneshop.
+
+brgen serves on port 38182 at brgen.no under Falcon, with 181 migrations and roughly 58,000 lines of Ruby. amber (amberapp.art) serves on 61352 with 36 migrations and about 17,000 lines. bsdports (bsdports.org) serves on 47312 with 21 migrations and about 7,100 lines. The \mtree{} face (ai.brgen.no) serves on 53187 with 4 migrations and about 7,800 lines. mrdamascy (mrd.brgen.no) is the one Puma application, on 47314 with 27 migrations and about 9,400 lines. The \fpath{__shared} engine carries no port of its own; four applications mount it by local path, and by convention it owns zero migrations while its models hold about 17,300 lines of shared code.
+
+\subsection{The shared engine and the city network}
+
+The pub4-shared engine lives in \fpath{__shared} and is loaded by local path by four of the five applications (mrdamascy deliberately mounts none of it). It owns the models everything shares~--- affiliate products, vouchers and conversions, billing plans and subscriptions, notifications, audit events, reactions and the identity set~--- twenty concerns such as strict-safe associations and activity tracking, around 45 services including the Tradedoubler and Amazon affiliate integrations, the single LLM boundary, SSRF-guarded outbound HTTP and Stripe billing, the shared views (ad slots, disclosure partials, icons, error pages), and the PWA service worker compiled into each application. One convention is enforced by a test: the engine carries no migrations; each application owns its own, because a stray shared migration once ran nowhere and the beacon failed silently.
+
+brgen is not a folder of applications but a city network. One Rails process serves every apex in \fpath{Brgen::DomainRegistry}, which defines 43 city entries with deliberately vowel-dropped domains (brgen.no, oshlo.no, lndon.uk, kbenhvn.dk, frankfrt.de and so on). The host header picks the city (through \fpath{acts_as_tenant}) and the vertical; verticals are engines mounted on subdomains and kept in sibling directories: \fpath{brgen_dating}, \fpath{brgen_maps}, \fpath{brgen_marketplace} (with a takeaway engine nested at \fpath{/food}), \fpath{brgen_messenger} and \fpath{brgen_radio}, which holds both the playlist and tv engines. The navigation contract uses the intersection of the 11 network domains and the 7 TLS-verified live domains, because the two lists drifted once and the difference shipped broken links.
+
+\subsection{Invariants, testing and deploy}
+
+Three invariants hold across the tree. Strict loading is on in every environment, so reading a lazy association off a record fetched by id raises; the workarounds are written down where they live. Money is stored as integer minor units (\o{}re), with a typed kroner field born from an incident where one missing zero listed a bicycle at a tenth of its price. The default locale is Norwegian, and tests assert through I18n key resolution in both \fpath{nb} and \fpath{en}, never through English literals; one contract test exists because a key-name comparison passed while thirty flash strings rendered \fpath{translation_missing}.
+
+Testing is contract-heavy: \fpath{RAILS/test} runs one process per file, and its 200-plus files include the ad visual contract (binding the three shared ad partials to \mtree's token contract: consent-gated rendering, disclosure labels, sponsored link marking, zero hard-coded hex colours), stack-version agreement with \fpath{apps.yml}, checks for engine boundaries and migration conventions, and suites of file-length and coverage ratchets. Deployment is a set of sourced shell libraries (\fpath{_deploy}, \fpath{_sync}, \fpath{_bundle}, \fpath{_database}, \fpath{_assets}, \fpath{_runtime_check}, \fpath{_service}) instead of entrypoints: each application's \fpath{deploy.sh} is a thin shim that refuses root, and the copy-tree layout on the box puts each application at \fpath{/home/<app>/app} with a sibling copy of the engine at \fpath{/home/<app>/shared}; syncing to the wrong one makes asset precompilation a silent no-op. Every deploy runs a \mtree{} scan gate, stops the service before migrating (the SQLite write lock hangs otherwise), and deliberately sheds amber and bsdports first and restores them last, so the outage looks like a hang, not an error.
+
+Feature depth is real instead of scaffolding: the messenger has read receipts, typing indicators, disappearing messages with sweep jobs, voice notes and people pickers; the marketplace has listings with variants, a multi-order checkout, returns with refunds, payout release windows, business verification against the Norwegian registry, and optional Solidus; the dating engine has matches, verification and daily picks; bsdports imports the ports tree with full-text search and NVD advisory sync; amber models a wardrobe with cost-per-wear and a declutter loop. Monetisation is governed instead of sprinkled: ads render nothing without a consent signal, affiliate links carry disclosure and sponsored marking, and tests pin both.
+
+\section{The \stree{} tree: media tools with an inert centrepiece}
+
+\stree{} is the smallest tree (71 files, 0.7~MiB) and owns the media implementations: Dilla, photograph, the Replicate client and the postpro grader. \mtree{} calls into these tools, but the implementation lives in this tree alone, enforced through exactly two compatibility symlinks and a contract module that resolves canonical entrypoints.
+
+\subsection{Dilla and the Replicate client}
+
+Dilla (\fpath{dilla/dilla.rb}, 2,445 lines, version 4.1.0) is a single-file, no-gem Ruby synthesiser named after the producer J Dilla. It renders boom-bap offline at 96~PPQN with a 53--56 percent swing pocket, jazz voicings with voice-leading, synthesised drum kits, vinyl noise and a mastering chain that trims to a stated loudness target, and writes 16-bit WAV files plus sidecars for quality, session and provenance (including the random seed; identical seeds produce identical files, which the tests verify by SHA-256). Its data directory carries the music-theory corpus (37 chord qualities, voice-leading constraints, Coltrane changes), eight progressions, seven drum patterns and twelve transcriptions of actual Dilla material with provenance URLs. A 413-line Python analyser measures external recordings (tempo, swing, per-stem energy, key, chord changes) and turns them into profiles the next render reads, closing a learn-from-a-recording loop that \mtree's media intent drives.
+
+The Replicate client (\fpath{replicate/client.rb}, 520 lines) is deliberately separate from \mtree's own client. It is composed from three mixins to stay under a method-count ceiling, pins the LoRA trainer to an exact version hash (a moving latest makes two trainings incomparable), restricts downloads to https hosts under replicate.com with streamed byte caps and atomic renames, and encodes an unusually careful retry policy: transient errors retry GETs and 429 POSTs only, because a POST 5xx can hide a paid create. \fpath{photograph.rb} builds on it: the still model is read from a trained LoRA manifest on disk instead of being hard-coded, and every still is graded by postpro before it is returned.
+
+\subsection{postpro: preserved but not loadable}
+
+The largest part of the tree, postpro (49 files), is a film-emulation grader built on libvips: 14 film stocks with per-channel characteristic curves, a Boolean/Poisson grain model, halation, dye-layer fading, black-body chromatic adaptation, a tonemap step with AgX as default, 82 presets and camera profiles for 121 bodies. Its constitution module is an adapter to \mtree's law catalogue, and its code enforces a 300-line-per-file cap. It is also, at present, broken: \fpath{postpro.rb} requires \fpath{../style_registry} and \fpath{../source_map}, and neither file exists anywhere in the repository or in the visible (single-commit) history, so the entrypoint fails to boot. That state is consistent with \mtree, whose tool dispatcher marks postpro and lora as retired and answers postpro intents with an explicit unavailable message, but it contradicts \stree's own README, which still documents postpro as fully operational and cites a compatibility symlink and a rake task that do not exist. The shared infrastructure around it is sound: output paths are forced outside the checkout, the subprocess helper requires a timeout and kills timed-out process groups, and the test runner refuses to accept a subprocess exit code without a real Minitest summary.
+
+The tree also carries one surprising document: \fpath{docs/fetat/proposal.md}, a 779-line consolidated citizen proposal about reorganising Norway's child-welfare service, kept explicitly as writing output instead of policy and excluded from the check surface. It is a reminder that this repository is also a personal workspace, and the proposal itself specifies prohibited uses of \mtree{} in its own domain.
+
+\section{The \otree{} tree: one production box, strongly opinionated}
+
+Production is one box, vm23, and \otree{} is everything that puts it there and keeps it honest. The tree mirrors the box layout (\fpath{etc/}, \fpath{usr/}, \fpath{var/}), keeps 45 operator scripts under \fpath{bin/}, a check library under \fpath{lib/}, 14 checks and 47 test files, and an 873-line \fpath{RUNBOOK.md} as the single operational companion. The deployment map is simple and fully declared: internet, packet filter, relayd TLS termination, then loopback application ports.
+
+The packet filter is default-deny with logging; it antispoofs, scrubs max-mss 1440, and admits exactly five ingress services (SSH 22, DNS 53, HTTP 80, HTTPS 443, SMTP 25), each rate-limited into a bruteforce table; SSH deliberately passes before the bruteforce rule so the developer can never lock himself out (\fpath{etc/pf.conf}). relayd terminates TLS on 443 with 12 keypair lines, routes by Host header to five loopback backend tables, injects HSTS and other security headers, and answers \fpath{/up} health checks per backend (\fpath{etc/relayd.conf}). NSD serves 57 generated zones; signed zones and keys live only on the box, unsigned zone sources live in git; a daily re-sign runs with exactly one KSK and one ZSK; response-rate limiting is enabled; no DS records are published yet, a documented decision (\fpath{var/nsd/}, \fpath{usr/local/bin/nsd-resign}).
+
+The privilege model is the centre of gravity. \fpath{usr/local/sbin/pub4-admin} is a 969-line fixed-path root broker with a closed argv protocol: allowlisted service actions, atomic deploy receipts, secrets, a fixed CI lock, and bounded Rails and CI task verbs; every exec path is validated root-owned, non-symlink and not group- or world-writable. No strings are evaluated, no paths come from callers. CI and sync helpers run as the application account with a wall-clock deadline and TERM-then-KILL of the whole process group. The one remaining doas rule (the dev account becomes root without a password, with a short environment allowlist) is argued in comments instead of hidden, including why \fpath{keepenv} amounts to root RCE by construction (a hostile \fpath{RUBYOPT} alone suffices) and why command scoping cannot narrow the rule while deploys escalate through root shells; the documented endgame is to finish migrating privileged paths to the broker and then remove the blanket rule. SSH allows neither root login nor passwords, caps authentication at six attempts, and offers an sftp subsystem only (\fpath{etc/ssh/sshd_config}). Service secrets live in \fpath{/etc/<app>.env} (root:app, 0640) and are sourced inside the child shell, so they never appear in \fpath{ps} argv; nothing secret is committed (\fpath{rc.d} scripts, \fpath{lib/secret_redaction.rb}).
+
+Deploys are equally defensive. \fpath{vps-deploy} (1,095 lines of zsh) allowlists its targets, re-execs through doas with a prefix environment allowlist, takes a mkdir-based lock with an inode-identity race guard, pins one commit SHA, requires CI attestation to match the pin, checks disk and swap floors, stands down background workers first, restarts with \fpath{/up} waits plus a stylesheet-actually-loads check (added after a 404 CSS passed every other probe), and restores in its exit trap every service it stopped. The nightly \fpath{dr-pull} on the operator's Mac pulls checksummed SQLite snapshots with mandatory integrity checks and a \fpath{--drill} that restores into scratch and reads them back.
+
+What makes the tree unusual is the agreement-testing discipline. \fpath{test_dns_facts_agree} pins the same facts (IPs, domains, live cities, ports) across the DNS data file, the installer, the zone generator, the NSD config and the committed zones, so drift is a test failure instead of an outage; \fpath{test_inventories_agree} does the same across \fpath{apps.yml}, the deploy inventory, vps-state and the RUNBOOK. Several guards exist as named responses to real incidents recorded in comments: five certified cities that refused TLS handshakes for months because of missing keypair lines, a cron PATH line whose absence silently failed every env-based job, and a configuration drift that stayed live for days because nothing byte-compared the box against the tree. The documented gaps are as candid as the strengths: no off-host object store, unbacked DNSSEC keys with no DS published, file- and syslog-only alerting, and the standing blanket doas rule.
+
+\section{Cross-cutting assessment}
+
+Seen as a whole, the repository demonstrates five strengths that reinforce each other. Governance is executable and self-proving: laws carry their own positive and negative fixtures, checks validate their registry at boot, and a missing measurement is \textsc{inconclusive} instead of a pass. Truthfulness is engineered instead of hoped for: tri-state results, evidence classes for claims, and checks that explicitly name what they cannot see. Cross-record agreement is enforced by tests instead of trust, which converts configuration drift into a red CI run. Documentation records why: nearly every non-obvious rule cites the incident that created it, giving the codebase an archaeology most projects lose. And scope is handled with visible restraint: parked work carries revive conditions, retired subsystems answer with explicit unavailable messages, and the backlog is one file whose items close by deletion with evidence.
+
+The weaknesses are mostly known and mostly documented, which distinguishes them from neglect. \stree{} postpro fails to boot: \fpath{postpro.rb} requires \fpath{../style_registry} and \fpath{../source_map}, which exist nowhere in the repository or its visible history~--- found during this analysis, consistent with \mtree{} marking postpro retired; the 49-file postpro tree is preserved but inert, and \fpath{RAILS} Shared::PostproProcessor and \mtree{} Contracts::Studio still reference its path. Documentation drifts inside \stree: \fpath{postpro/README.md} cites a compatibility symlink and a rake task that do not exist, and the \stree{} README says \fpath{rake check} loads every entrypoint, yet \fpath{postpro.rb} is never loaded. There is no off-host object store: \fpath{OPENBSD/RUNBOOK.md} names the operator Mac as the only off-box copy, leaving the repository one disk failure from data loss beyond the 14-pull retention window. DNSSEC keys are not backed up and no DS records are published, so the validation chain is inert and the loss of the KSK goes unrecoverable. The blanket nopass dev-to-root doas rule remains, with \fpath{doas.conf} and the RUNBOOK both saying it stays until every privileged path has migrated to the broker~--- the widest standing privilege surface. Production concentrates on one box, vm23, by design; every public service shares the host, and the deploy choreography that sheds and restores applications is the designed answer. And the Rails stack is pinned to 8.2.0.alpha: \fpath{apps.yml} pins a rails/rails commit reference, so the applications run a pre-release line and upgrades couple to the pin.
+
+Two cultural observations complete the picture. The system is built for a model-and-operator pair instead of a team: \fpath{AGENTS.md} is a generated 819-line workflow contract, agent pointers are generated files, and the law system treats the model as a proposer whose proposals must survive written gates. And the project is unusually placeful: it names its Norwegian identity, its hydropower framing and its single physical box, and its operational decisions (YJIT off for memory, one process per service, SQLite over a network database) all follow from running real software on one small machine.
+
+\section{Conclusions}
+
+pub4 is a coherent, running system, not a portfolio: one constitution, one check registry, one production box, and four trees whose boundaries are written down and enforced. \mtree{} is the intellectual centre, and its law system is implemented with a rigour (load-time self-proof, single-sourced policy, tri-state truthfulness) that bears comparison with far larger governance frameworks. \rtree{} is a genuine multi-tenant product with real feature depth, disciplined invariants and contract tests that encode hard-won incidents. \otree{} is operationally mature, with a privilege model being migrated instead of merely defended, and a testing culture that treats cross-file agreement as a security property. \stree{} is small and mostly healthy, but its centrepiece, postpro, is unloadable at present and its documentation overstates the fact.
+
+For anyone working in this repository, the entry path the tree itself prescribes is the right one: read \fpath{MASTER/AGENTS.md} for the workflow contract, then \fpath{PATH_OWNERSHIP.yml} and the relevant tree README before touching anything. Treat \textsc{inconclusive} as a measurement still owed, and expect every change to pass through the same law and check machinery this report describes. The highest-value repairs, in the tree's own order of honesty, are restoring the two missing \stree{} files so postpro either runs or is formally retired everywhere, publishing DNSSEC DS records once the keys are safely backed up off-box, completing the broker migration to narrow the doas rule, and giving the backups an off-host object store. None of these are silent debts; every one is already written down in the tree. That, more than anything else in the analysis, is the character of the project.
+
+% ============================================================
+% Colophon — the demonstration, under the final heading
+% (README_PROSE: a demonstration belongs under the final heading)
+% ============================================================
+\section*{Colophon: this document's own compliance}
+\addcontentsline{toc}{section}{Colophon: this document's own compliance}
+
+A report that measures a repository against its laws owes the reader proof that it keeps them. Each claim below is a property of this PDF, not an intention.
+
+\emph{One family.} The document is set in EB Garamond throughout~--- roman, italic, bold and true small caps. No second family appears; hierarchy comes from size, weight and the italic voice (\fpath{TYPOGRAPHY_DISCIPLINE}).
+
+\emph{The measure.} The text block is 302.6\,pt wide, computed from the face itself: the 26 lowercase letters measure 119.2065\,pt at 10.5\,pt, and 66/26 of that is 302.6011\,pt. The running measure is therefore 66 characters~--- Bringhurst's ideal, which \fpath{TYPOGRAPHIC_GRID} and \fpath{MEASURE_OPTIMUM} encode.
+
+\emph{The grid.} Leading is 10.5/16, and every vertical step on every text page is a multiple of the 16\,pt baseline; section heads space 32\,pt before and 16\,pt after, subsections 16\,pt and 16\,pt. Every page closes on a baseline.
+
+\emph{The page.} 156\,\texttimes\,234\,mm~--- the 2:3 rectangle Bringhurst calls the perfect page, with head-biased margins. The laws are silent on page shape; the choice is his, offered where \mtree{} is silent.
+
+\emph{The figures.} Numerals are proportional oldstyle throughout, the way \fpath{TYPOGRAPHIC_GRID}'s own fixture line lengths are counted~--- and the way Garamond cut them.
+
+\emph{The dashes.} Numeric ranges carry an en dash (53--56 percent swing); thought carries an em dash; every quotation mark is curly (\fpath{EN_DASH_RANGE}, \fpath{TYPOGRAPHIC_EXCELLENCE}).
+
+\emph{The names.} \fpath{ALL_CAPS_NO_TRACKING} demands tracking of all-caps labels, and the display labels carry it: on the title page and in the running head the tree names are letterspaced 0.08\,em. In justified running text \mtree, \rtree, \stree{} and \otree{} wear small caps unspaced, because letterspacing every occurrence wrecks the even colour of the justified line~--- Bringhurst's own rule, and the reason the law's \emph{label} wording fits the display case.
+
+\emph{No tables.} Every measurement is a sentence. \fpath{README_PROSE} bans the table; its allowance for one demonstration under the final heading is spent on this colophon.
+
+\emph{The ground.} Pages are painted \#{F7F2E9}; ink is \#{1E322D}; muted text is \#{5F6D66}~--- the Sommerseth tokens held in \fpath{MASTER/docs/visual/bergen_brand_systems.md}, in obedience to \fpath{PAPER_NOT_PURE_WHITE}. Nothing on any page is \#{FFFFFF}.
+
+\emph{One signal.} A single signal colour, \#{C97E1E}, appears once per visual unit~--- the section numerals, the title rule, the name separators on the title page (\fpath{SIGNAL_COLOR_NAMING}).
+
+\emph{The prose.} The body text was swept against the leech list in \fpath{data/laws.yml} (\emph{very, rather, really, quite, pretty, somewhat, just, basically, simply}) and holds none of them; the passive voice appears only where the actor is unknown or beside the point, as Strunk's rule allows.
+
+\emph{Hanging punctuation.} microtype protrudes punctuation into the margin on justified lines, so quotes and hyphens hang and the left edge stays optical.
+
+The companion audit of the new \rtree{} screenshots lives beside it, in \fpath{RAILS/docs/SCREENSHOT_LAW_ADHERENCE.md}, measured against \mtree's visual laws; this document covers the trees themselves. Where the laws say nothing~--- page shape, the Garamond face~--- Bringhurst's \emph{Elements of Typographic Style} speaks, and is cited as the source of those choices.
+
+\end{document}
