@@ -54,7 +54,7 @@
          data-label-status="<%= t("dashboard.providers.status") %>"
          data-label-open-breakers="<%= t("dashboard.providers.open_breakers") %>">
       <%# One section per panel, named by its heading. The panes stay out of the
-          live region: the poll rewrites them every few seconds, and refresh-state
+          live region: every refresh rewrites them, and refresh-state
           alone says whether the refresh worked. %>
       <% panel = lambda do |key, heading|
            tag.section(aria: { labelledby: "panel-#{key}" }) do

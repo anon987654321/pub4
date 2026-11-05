@@ -2,14 +2,58 @@ const grid = document.getElementById('mission-grid');
 const L = (key, fallback = '') => grid?.dataset[key] || fallback;
 
 // Authentication failure is terminal for this page; transient failures are
-// visible and keep retrying. A hidden tab spends no request budget.
+// visible and retry with a growing delay. A hidden tab spends no request budget.
+//
+// The bus drives the refresh: an event on /events/stream refetches the
+// panels, debounced, so the page updates when something happened rather than
+// every eight seconds whether or not it did. A slow safety poll covers a quiet
+// bus, and both the fetch and the stream back off while they fail.
 const refreshState = document.getElementById('refresh-state');
+const SAFETY_POLL_MS = 60000;
+const EVENT_DEBOUNCE_MS = 1500;
+const BACKOFF_MIN_MS = 2000;
+const BACKOFF_MAX_MS = 300000;
 let inFlight = false;
 let terminal = false;
+let failures = 0;
+let streamFailures = 0;
+let pollTimer = null;
+let eventTimer = null;
+let source = null;
+
+const backoffMs = (count) => Math.min(BACKOFF_MAX_MS, BACKOFF_MIN_MS * 2 ** Math.max(0, count - 1));
+
+function schedulePoll() {
+  clearTimeout(pollTimer);
+  if (terminal) return;
+  pollTimer = setTimeout(refresh, failures ? backoffMs(failures) : SAFETY_POLL_MS);
+}
+
+function connectStream() {
+  if (terminal || source || typeof EventSource !== 'function') return;
+  source = new EventSource('/events/stream');
+  source.onopen = () => { streamFailures = 0; };
+  source.onmessage = () => {
+    clearTimeout(eventTimer);
+    eventTimer = setTimeout(refresh, EVENT_DEBOUNCE_MS);
+  };
+
+  // EventSource retries on its own every few seconds; close it and reconnect
+  // on a growing delay instead, so a down server is not hammered.
+  source.onerror = () => {
+    source.close();
+    source = null;
+    if (terminal) return;
+    streamFailures += 1;
+    setTimeout(connectStream, backoffMs(streamFailures));
+  };
+}
 
 function closeDoor() {
   terminal = true;
-  clearInterval(timer);
+  clearTimeout(pollTimer);
+  clearTimeout(eventTimer);
+  if (source) { source.close(); source = null; }
   const note = document.createElement('p');
   note.textContent = L('i18nAuth', 'authentication required');
   grid.replaceChildren(note);
@@ -17,8 +61,10 @@ function closeDoor() {
 }
 
 async function refresh() {
-  if (terminal || inFlight || document.hidden) return;
+  if (terminal || inFlight) return;
+  if (document.hidden) { schedulePoll(); return; }
   inFlight = true;
+  let ok = false;
   try {
     const r = await fetch('/dashboard/live', {
       headers: { Accept: 'application/json' },
@@ -79,6 +125,7 @@ async function refresh() {
     }).join('\n\n') || L('i18nEmpty', '(empty)');
     document.getElementById('bus').textContent = (d.bus_events || []).slice(-12).map(e => JSON.stringify(e)).join('\n') || L('i18nQuiet', '(quiet)');
     refreshState.textContent = `${L('i18nUpdated', 'updated')}: ${new Date().toLocaleTimeString()}`;
+    ok = true;
   } catch (error) {
     const reason = error?.message ? error.message : 'network error';
     document.getElementById('status').textContent =
@@ -86,8 +133,12 @@ async function refresh() {
     refreshState.textContent = L('i18nRefreshFailed', 'live data unavailable; retrying');
   } finally {
     inFlight = false;
+    if (!terminal) {
+      failures = ok ? 0 : failures + 1;
+      schedulePoll();
+    }
   }
 }
-const timer = setInterval(() => { if (!document.hidden) refresh(); }, 8000);
 document.addEventListener('visibilitychange', () => { if (!document.hidden) refresh(); });
+connectStream();
 refresh();

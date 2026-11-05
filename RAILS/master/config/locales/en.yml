@@ -22,7 +22,7 @@ en:
     session_navigation: "Workspace"
     main_label: "Mission control"
     loading: "loading…"
-    refresh_failed: "live data unavailable; retrying in 8 s"
+    refresh_failed: "live data unavailable; retrying"
     updated: "updated"
     unavailable: "status unavailable"
     auth_required: "mission control needs the operator token"

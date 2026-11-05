@@ -4944,7 +4944,7 @@ items:
   path: RAILS/master/public/dashboard_live.js
   item: Drive the dashboard from events/stream (SSE) instead of an 8-second poll,
     and back off when it fails.
-  status: open
+  status: done
 - id: master-025
   app: master
   area: performance

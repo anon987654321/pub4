@@ -33,7 +33,7 @@ nb:
     session_navigation: "Arbeidsområder"
     main_label: "Kontrollrom"
     loading: "laster…"
-    refresh_failed: "live-data utilgjengelig; prøver igjen om 8 s"
+    refresh_failed: "live-data utilgjengelig; prøver igjen"
     updated: "oppdatert"
     unavailable: "status utilgjengelig"
     auth_required: "kontrollrommet krever operatørnøkkelen"
