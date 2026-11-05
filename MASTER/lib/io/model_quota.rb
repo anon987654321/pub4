@@ -9,11 +9,12 @@ require_relative "atomic_write"
 
 module Master
   module Io
-    # Per-model daily request budget for OpenRouter :free slugs; config is authoritative.
-    # One of three quota objects, each answering a different question: this one
-    # counts calls per free model per day; QuotaCheck says whether a paid
-    # provider still has credit (test/test_quota_check.rb); ModelSkipCache
-    # parks a model that just failed (test/test_model_skip_cache.rb).
+    # Per-model daily request budget for OpenRouter :free slugs and for hosted
+    # free-tier endpoints; config is authoritative. One of three quota objects,
+    # each answering a different question: this one counts calls per free model
+    # per day; QuotaCheck says whether a paid provider still has credit
+    # (test/test_quota_check.rb); ModelSkipCache parks a model that just failed
+    # (test/test_model_skip_cache.rb).
     module ModelQuota
       extend self
       include ::Master::Io::AtomicWrite
@@ -33,7 +34,31 @@ module Master
         raise "model quota policy unreadable: #{e.class}: #{e.message}"
       end
 
-      def trackable?(model) = FREE_RE.match?(model.to_s)
+      # Hosted free-tier endpoints (models.yml openai_compatible) declare their
+      # own day cap beside the endpoint, as "<name>:<model>" lane ids: groq
+      # 14,400/day, cerebras 100/day, the figures the endpoint blocks already
+      # state. An endpoint without a positive daily_quota stays untracked rather
+      # than guessed (TRUTHFUL_STATUS); a :free slug always answers daily_limit.
+      def hosted_name(model)
+        id = model.to_s
+        name = id.split(":", 2).first
+        return unless id.include?(":") && !name.to_s.empty?
+
+        spec = Master.models_config&.dig("openai_compatible", name)
+        name if spec.is_a?(Hash) && spec["daily_quota"].to_i.positive?
+      rescue StandardError => e
+        Master::Ground::Swallow.log(e, context: "model_quota.hosted_name", model: model.to_s)
+        nil
+      end
+
+      def daily_limit_for(model)
+        name = hosted_name(model)
+        return daily_limit unless name
+
+        Master.models_config.dig("openai_compatible", name, "daily_quota").to_i
+      end
+
+      def trackable?(model) = FREE_RE.match?(model.to_s) || !hosted_name(model).nil?
 
       def record(model)
         return unless trackable?(model)
@@ -61,13 +86,13 @@ module Master
       def over_quota?(model, day: today_key)
         return false unless trackable?(model)
 
-        count(model, day:) >= daily_limit
+        count(model, day:) >= daily_limit_for(model)
       end
 
       def remaining(model, day: today_key)
         return unless trackable?(model)
 
-        [daily_limit - count(model, day:), 0].max
+        [daily_limit_for(model) - count(model, day:), 0].max
       end
 
       def burn_rate_per_day(model, now: Time.now.utc, day: now.utc.strftime("%Y-%m-%d"))
@@ -86,7 +111,7 @@ module Master
         return unless trackable?(model)
 
         used = count(model, day:)
-        limit = daily_limit
+        limit = daily_limit_for(model)
         remaining = [limit - used, 0].max
         projected_daily = burn_rate_per_day(model, day:, now:)
         exhaustion_hours =
@@ -116,7 +141,7 @@ module Master
 
       def exhausted_models(day: today_key)
         data = load_data[day] || {}
-        data.select { |model, used| trackable?(model) && used.to_i >= daily_limit }.keys
+        data.select { |model, used| trackable?(model) && used.to_i >= daily_limit_for(model) }.keys
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "ModelQuota.exhausted_models")
         raise "model quota state unreadable: #{e.class}: #{e.message}"
@@ -127,9 +152,10 @@ module Master
         tracked = data.select { |model, _| trackable?(model) }
         {
           day:,
+          # The default (:free) limit; per-model limits ride in the forecasts.
           limit: daily_limit,
           models: tracked.transform_values(&:to_i),
-          exhausted: tracked.select { |_, used| used.to_i >= daily_limit }.keys,
+          exhausted: tracked.select { |model, used| used.to_i >= daily_limit_for(model) }.keys,
           forecasts: tracked.keys.to_h { |model| [model, forecast(model, day:)] },
         }
       end

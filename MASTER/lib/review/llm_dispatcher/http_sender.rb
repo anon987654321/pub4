@@ -46,7 +46,11 @@ module Master
         def send_hosted(selected_model, messages, sys:, temperature: nil)
           endpoint = @model_router.hosted_endpoint_for(selected_model)
           name, model = selected_model.split(":", 2)
-          headers = endpoint[:key] ? { "Authorization" => "Bearer #{endpoint[:key]}" } : {}
+          # The key is resolved at call time: the endpoint index froze the key
+          # it was built with, and a lane whose KeyRotator just rotated wants
+          # the rotated key on its very next call, not after a router rebuild.
+          key = Io::KeyRotator.active_key_for(name) || endpoint[:key]
+          headers = key ? { "Authorization" => "Bearer #{key}" } : {}
           request = lambda do
             openai_chat(endpoint[:base], model, messages, sys:, temperature:, headers:, lane: name)
           end

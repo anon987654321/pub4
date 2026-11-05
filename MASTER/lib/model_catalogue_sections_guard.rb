@@ -93,12 +93,18 @@ module Master
       compatible = data["openai_compatible"].is_a?(Hash) ? data["openai_compatible"] : {}
       compatible.each do |name, row|
         label = "models.yml openai_compatible.#{name}"
-        strict_fields(row, %w[base key_env keyless_max_concurrency concurrency_wait_seconds quota_bucket keyless],
+        strict_fields(row, %w[base key_env keyless_max_concurrency concurrency_wait_seconds quota_bucket keyless daily_quota],
                       label, errors)
         next unless row.is_a?(Hash)
 
         errors << "#{label}.base must be a non-empty URL" unless row["base"].is_a?(String) && row["base"].match?(/\Ahttps?:\/\//)
         validate_string_list(row["key_env"], "#{label}.key_env", errors, nonempty: true)
+        if row.key?("daily_quota")
+          # The hosted endpoint's declared day cap; Io::ModelQuota tracks the
+          # endpoint's lanes against it. Optional, but when declared it binds.
+          errors << "#{label}.daily_quota must be a positive integer" unless
+            row["daily_quota"].is_a?(Integer) && row["daily_quota"].positive?
+        end
         %w[keyless_max_concurrency concurrency_wait_seconds].each do |field|
           next unless row.key?(field)
 

@@ -128,3 +128,29 @@ Is it covered by routing, cooldown, privacy, and failure tests?
 A provider catalog entry alone is not a successful runtime probe. Any change to
 the pool should preserve the existing route policy, budget limits, operation
 quality floors, and evidence requirements.
+
+## Status 2026-11-06: hosted free tiers, rotation, replicate scoring
+
+Three gaps closed against the contract above; no new provider was admitted, so
+the admission gates were not exercised.
+
+- **Hosted free-tier day caps are enforced.** `openai_compatible` endpoints may
+  declare `daily_quota` (groq 14,400; cerebras 100 — the same figures their
+  blocks already stated). `Io::ModelQuota` tracks `<name>:<model>` lanes
+  against their endpoint's cap, so an exhausted free tier is filtered by
+  `LaneSelection` and `ComputePool` instead of being retried into 429s. An
+  endpoint without a documented day cap (nvidia, llm7) stays untracked rather
+  than guessed. The OpenRouter conservative-counter rule is unchanged: the
+  hosted counter counts calls, not multiplied capacity.
+- **Key rotation is per provider.** A hosted endpoint may list a second key
+  variable in its `key_env` (for example `GROQ_API_KEY_2`); `Io::KeyRotator`
+  rotates the endpoint's keys on rate-limit/quota outcomes and
+  `HttpSender#send_hosted` resolves the active key per call, so a rotation
+  takes effect on the next request. One configured key remains a full no-op,
+  and rotation still advances only on provider-stated limits, never to defeat
+  account-level boundaries.
+- **Replicate chat lanes enter the ranked pool.** `model_defs` now carries
+  score rows for every `replicate_chat` slug, so `ComputePool` ranks them from
+  declared estimates instead of zero-value defaults. They remain paid lanes
+  behind the free tail, billed per call, with no streaming and no quota
+  multiplication.
