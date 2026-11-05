@@ -41,6 +41,10 @@ class VpsDeployContractTest < Minitest::Test
     degraded = SOURCE[/^DEPLOY_ALL_DEGRADED=\(([^)]*)\)/, 1]&.split
     assert_equal "master", degraded&.last, "when the box cannot take master first, master goes last"
     assert_equal deploy_all.sort, degraded.sort
+
+    runbook = File.read(File.join(ROOT, "OPENBSD", "RUNBOOK.md"))
+    assert_includes runbook, "Otherwise: brgen, mrdamascy, amber, bsdports, master."
+    assert_includes runbook, "remaining started services such as mrdamascy"
   end
 
   def test_deploy_paths_export_openbsd_package_path
