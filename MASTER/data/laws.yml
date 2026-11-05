@@ -190,6 +190,21 @@ ROBUSTNESS_fail_safe_defaults:
   statement: "A default that fails open."
   resolution: review
 
+ROBUSTNESS_monotonic_capability_reduction:
+  parent: ROBUSTNESS
+  statement: "A later phase regains or widens authority that an earlier security boundary deliberately removed."
+  resolution: never
+
+ROBUSTNESS_bounded_operation_lifecycle:
+  parent: ROBUSTNESS
+  statement: "A timeout bounds the direct child but leaves owned descendants, inherited pipes, readers or cleanup unbounded."
+  resolution: never
+
+ROBUSTNESS_proactive_defect_audit:
+  parent: ROBUSTNESS
+  statement: "An audit stops at the reported incident or changed lines without examining the complete high-risk boundary for the same defect class."
+  resolution: review
+
 ROBUSTNESS_exemption_without_expiry:
   parent: ROBUSTNESS
   statement: "A review resolution accepted with no expiry."
@@ -1986,6 +2001,11 @@ law_catalogue:
     COMMERCE_AMBER_DOES_NOT_OWN_BRGEN:
       definition_sources: [MASTER/law/commerce.rb]
       severity: error
+    BOUNDED_OPERATION_LIFECYCLE:
+      definition_sources: [MASTER/law/universal.rb]
+      severity: error
+      lifecycle: trusted
+      autofix: never
     COMMERCE_BRGEN_DOES_NOT_OWN_AMBER:
       definition_sources: [MASTER/law/commerce.rb]
       severity: error
@@ -2547,6 +2567,11 @@ law_catalogue:
     LEAST_PRIVILEGE:
       definition_sources: [MASTER/law/universal.rb]
       severity: error
+    MONOTONIC_CAPABILITY_REDUCTION:
+      definition_sources: [MASTER/law/universal.rb]
+      severity: error
+      lifecycle: trusted
+      autofix: never
     LEVELS_OF_SCALE:
       definition_sources: [MASTER/law/universal.rb]
       severity: info
@@ -3110,6 +3135,11 @@ law_catalogue:
     PROBE_BEFORE_SHIP:
       definition_sources: [MASTER/law/practice.rb]
       severity: warn
+    PROACTIVE_DEFECT_AUDIT:
+      definition_sources: [MASTER/law/universal.rb]
+      severity: error
+      lifecycle: trusted
+      autofix: never
     PROGRAMMER_HAPPINESS:
       definition_sources: [MASTER/law/universal.rb]
       severity: info

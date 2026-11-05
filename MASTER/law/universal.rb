@@ -891,15 +891,56 @@ Law.define(:EXPLICIT_TRADEOFF) do
 end
 
 Law.define(:LEAST_PRIVILEGE) do
-  source "Saltzer & Schroeder — least privilege"
-  ask "Does a component hold broader authority than its task requires?"
-  fix "Grant exactly the required scope for exactly the required duration."
+  source "Saltzer & Schroeder — least privilege; OpenBSD pledge(2) and unveil(2)"
+  ask "Does a component hold broader authority than its task requires, or retain access after the phase that needed it?"
+  practice "Grant the minimum capability for the minimum duration; ambient authority is not a convenience."
+  fix "Declare the required capabilities explicitly, deny everything else, and remove access when the owning phase ends."
   bad <<~'X'
     client = AdminClient.new; client.delete_all
   X
   good <<~'X'
     client = UserReadClient.new
   X
+end
+
+Law.define(:MONOTONIC_CAPABILITY_REDUCTION) do
+  source "OpenBSD pledge(2) and unveil(2)"
+  ask "After a process or subsystem deliberately reduces its authority, can a later phase silently regain or widen that authority?"
+  practice "A security restriction is a one-way door: later phases may narrow the boundary further, never widen it."
+  fix "Make capability reduction monotonic. Seal filesystem visibility and syscall promises after setup; spawn a separate, explicitly scoped process when more authority is genuinely required."
+  bad <<~'X'
+    sandbox.restrict!(:read)
+    sandbox.grant!(:write)
+  X
+  good <<~'X'
+    sandbox.restrict!(:read)
+    sandbox.restrict!(:read_metadata)
+  X
+end
+
+Law.define(:BOUNDED_OPERATION_LIFECYCLE) do
+  source "OpenBSD process discipline; bounded-deadline engineering"
+  ask "Does the deadline cover the entire operation it owns, including child processes, inherited pipes, output readers and cleanup, or only the first wait?"
+  practice "A timeout ends the whole owned operation, not merely its direct child."
+  fix "Use one monotonic deadline across every wait; terminate the owned process group and stop its readers on expiry; preserve TIMEOUT as the result."
+  bad <<~'X'
+    waiter.join(timeout)
+    reader.join
+  X
+  good <<~'X'
+    deadline = monotonic + timeout
+    waiter.join([deadline - monotonic, 0].max)
+    reader.join([deadline - monotonic, 0].max)
+  X
+end
+
+Law.define(:PROACTIVE_DEFECT_AUDIT) do
+  source "OpenBSD security-audit practice"
+  ask "Does an audit stop at recently changed lines or known vulnerabilities when the same defect class can exist elsewhere in the complete high-risk boundary?"
+  practice "Audit whole trust boundaries and recurring defect classes, not only the incident that exposed them."
+  fix "Trace every entrypoint, caller, state transition and failure path in scope; validate the audit instrument against known positive and negative cases; turn confirmed defect classes into regression tests."
+  bad "Patch the reported vulnerability line and stop."
+  good "Audit the component and sibling paths for the same defect class, record what actually ran, and add a regression case."
 end
 
 Law.define(:FAIL_SAFE_DEFAULTS) do
@@ -927,9 +968,10 @@ Law.define(:COMPLETE_MEDIATION) do
 end
 
 Law.define(:ECONOMY_OF_MECHANISM) do
-  source "Saltzer & Schroeder — economy of mechanism"
-  ask "Is the security-critical path too large or branchy to inspect and verify as a small mechanism?"
-  fix "Shrink and isolate the trusted path."
+  source "Saltzer & Schroeder — economy of mechanism; OpenBSD integrated-base discipline"
+  ask "Is the trusted computing base too large, indirect, dependency-heavy or split across competing owners to inspect and verify as one small mechanism?"
+  practice "Complexity must earn its place; a small trusted core is easier to audit, secure and maintain."
+  fix "Shrink and isolate the trusted path, use established mechanisms, give each decision one owner, and remove machinery that does not improve measured correctness or security."
   bad <<~'X'
     def authorize; 1200 lines of mixed parsing, IO and policy; end
   X
