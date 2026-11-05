@@ -3484,7 +3484,7 @@ items:
   size: M
   path: RAILS/brgen/app/views/users/show.html.erb
   item: Make follower and following counts links to the respective lists.
-  status: open
+  status: done
 - id: brgen-313
   app: brgen
   area: profile

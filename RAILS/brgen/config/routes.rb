@@ -30,9 +30,6 @@ Rails.application.routes.draw do
   post   "communities/:community_id/join" => "community_memberships#create",  as: :join_community
   delete "communities/:community_id/join" => "community_memberships#destroy", as: :leave_community
 
-  # The welcome dialog's first step: neighbourhood and communities.
-  get "welcome" => "welcome#show", as: :welcome_start
-
   get "tags/:name" => "hashtags#show", as: :hashtag, constraints: { name: /[A-Za-z0-9_]+/ }
 
   get    "saved" => "bookmarks#index", as: :saved
@@ -110,7 +107,6 @@ Rails.application.routes.draw do
   # The shared inbox: one POST per instance instead of one per follower.
   post "inbox" => "fediverse/inboxes#create", as: :shared_inbox
   get  "users/:username/outbox" => "fediverse/actors#outbox",    as: :actor_outbox
-  get  "users/:username/followers" => "fediverse/actors#followers", as: :actor_followers
   post "users/:username/inbox" => "fediverse/inboxes#create",   as: :actor_inbox
   # The actor document shares its URL with the HTML profile, told apart by
   # Accept. A path constraint would not do: /users/5 is the existing profile
@@ -119,7 +115,14 @@ Rails.application.routes.draw do
   activitypub_request = lambda do |request|
     request.headers["Accept"].to_s.match?(%r{application/(activity|ld)\+json})
   end
+  get "users/:username/followers" => "fediverse/actors#followers", as: :actor_followers,
+                                      constraints: activitypub_request
   get "users/:username" => "fediverse/actors#show", as: :actor, constraints: activitypub_request
+  # A profile's follower list for a browser shares its path with the
+  # ActivityPub followers collection above, which comes first and now answers
+  # only an ActivityPub Accept; everything else reaches the HTML list.
+  get "users/:id/followers" => "follow_lists#followers", as: :user_followers
+  get "users/:id/following" => "follow_lists#following", as: :user_following
 
 # Following out. The inbound half — somebody on another instance following a
 # brgen account — arrives at the inbox above and needs no route of its own.

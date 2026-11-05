@@ -1,0 +1,7 @@
+en:
+  follow_lists:
+    followers_title: "Followers of %{name}"
+    following_title: "%{name} follows"
+    followers_empty: "Nobody follows %{name} yet"
+    following_empty: "%{name} follows nobody yet"
+    back: "Back to %{name}'s profile"

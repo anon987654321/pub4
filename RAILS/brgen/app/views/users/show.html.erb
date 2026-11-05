@@ -7,8 +7,8 @@
   <%= tag.h1 @user.display_name %>
   <%= tag.p @user.bio, class: "profile-bio" if @user.bio.present? %>
   <p class="meta-facts">
-    <span><%= t("profile.followers", count: @followers_count) %></span>
-    <span><%= t("profile.following", count: @following_count) %></span>
+    <%= link_to t("profile.followers", count: @followers_count), main_app.user_followers_path(@user) %>
+    <%= link_to t("profile.following", count: @following_count), main_app.user_following_path(@user) %>
     <%= tag.span t("community.posts_count", count: @posts_count) %>
     <%= tag.span t("profile.member_since", date: l(@user.created_at.to_date, format: "%B %Y")) %>
   </p>

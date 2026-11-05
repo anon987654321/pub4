@@ -1,0 +1,19 @@
+<% heading = t("follow_lists.#{@direction}_title", name: @user.display_name) %>
+<% content_for :title, heading %>
+<%# A list of people is not a page a search engine needs. %>
+<% content_for :head, robots_meta(index: false) %>
+
+<header class="page-header">
+  <%= tag.h1 heading %>
+  <%= tag.p link_to(t("follow_lists.back", name: @user.display_name), main_app.user_path(@user)) %>
+</header>
+
+<% if @people.any? %>
+  <ul class="people-list" role="list">
+    <%= render partial: "follow_lists/person", collection: @people %>
+  </ul>
+  <%= render "shared/pager", pagy: @pagy %>
+<% else %>
+  <%# empty_state: no-action-ok — the link back to the profile above is the next step %>
+  <%= render "shared/empty_state", title: t("follow_lists.#{@direction}_empty", name: @user.display_name) %>
+<% end %>

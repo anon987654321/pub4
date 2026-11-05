@@ -199,7 +199,7 @@ apps:
       active_storage/disk#show:
       - "/rails/active_storage/disk/:encoded_key/*filename"
   brgen:
-    digest: 660a9a719cf19098
+    digest: 6aa3b492756a82e4
     routes:
       shared/changelog#show:
       - "/changelog"
@@ -223,8 +223,6 @@ apps:
       - "/internal/version"
       sso#from_master:
       - "/sso/from_master"
-      welcome#show:
-      - "/welcome"
       hashtags#show:
       - "/tags/:name"
       bookmarks#index:
@@ -313,6 +311,10 @@ apps:
       - "/users/:username/followers"
       fediverse/actors#show:
       - "/users/:username"
+      follow_lists#followers:
+      - "/users/:id/followers"
+      follow_lists#following:
+      - "/users/:id/following"
       fediverse/follows#index:
       - "/fediverse_follows"
       stories#index:

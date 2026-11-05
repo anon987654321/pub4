@@ -1,0 +1,7 @@
+nb:
+  follow_lists:
+    followers_title: "Følgere av %{name}"
+    following_title: "%{name} følger"
+    followers_empty: "Ingen følger %{name} ennå"
+    following_empty: "%{name} følger ingen ennå"
+    back: "Tilbake til profilen til %{name}"

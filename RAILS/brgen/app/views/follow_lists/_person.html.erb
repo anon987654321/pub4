@@ -1,0 +1,6 @@
+<%# locals: (person:) %>
+<li>
+  <%= image_tag person.avatar_url, alt: "", width: 40, height: 40, class: "avatar avatar--40" %>
+  <%= link_to person.display_name, main_app.user_path(person) %>
+  <%= tag.span "@#{person.username}", class: "people-list-handle" %>
+</li>
