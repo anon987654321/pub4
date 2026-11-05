@@ -138,7 +138,7 @@ module Master
           urls = prediction["urls"]
           value = urls.is_a?(Hash) ? urls["get"].to_s : ""
           uri = URI.parse(value)
-          allowed_path = %r{\\A/v1/predictions/[A-Za-z0-9_-]+\\z}
+          allowed_path = %r{\A/v1/predictions/[A-Za-z0-9_-]+\z}
           allowed = uri.is_a?(URI::HTTPS) && uri.host == REPLICATE_API_HOST && uri.port == 443 &&
                     uri.userinfo.nil? && uri.query.nil? && uri.fragment.nil? && uri.path.match?(allowed_path)
           raise ArgumentError, "poll URL is outside the Replicate API" unless allowed
