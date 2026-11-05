@@ -170,6 +170,21 @@ class OrderTest < ActiveSupport::TestCase
     assert_equal 1, @user.stamp_count
   end
 
+  # The card's stated rule is the one the code keeps: every delivered order
+  # earns a star, whatever it cost, so the rule names no amount.
+  test "a small delivered order earns its star, and the card's rule names no minimum" do
+    order = seed_order!(user: @user, kitchen: @kitchen, state: "picked_up")
+    order.update!(subtotal_ore: 4_900, total_ore: 4_900)
+
+    assert_difference "@user.stamp_count", 1 do
+      order.deliver!
+    end
+    %i[nb en].each do |locale|
+      rule = I18n.t("loyalty.rule_one", locale:)
+      assert_no_match(/\d/, rule, "#{locale} loyalty.rule_one promises a minimum the code does not keep")
+    end
+  end
+
   # -- Tracking token -------------------------------------------------------
 
   test "tracking tokens are unique" do

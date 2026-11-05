@@ -42,7 +42,8 @@ class OrdersController < ApplicationController
 
   # Tip chips on the tracking page (0/20/40 kr), behind config.x.tips. Only a
   # delivered order takes one, and only once (Order#add_tip!); a refused tip
-  # says so instead of thanking.
+  # says so instead of thanking. A tip is thanked for as a tip; "no tip"
+  # gets the order's own thanks.
   def tip
     return head(:not_found) unless Rails.configuration.x.tips
 
@@ -50,7 +51,7 @@ class OrdersController < ApplicationController
     amount = tip_ore_param
     order.add_tip!(amount) if amount.positive?
 
-    redirect_to track_path(order.tracking_token), notice: t("orders.thanks")
+    redirect_to track_path(order.tracking_token), notice: amount.positive? ? t("flash.tip_thanks") : t("orders.thanks")
   rescue Order::InvalidTransition
     redirect_to track_path(order.tracking_token), alert: t("orders.tip_refused")
   end

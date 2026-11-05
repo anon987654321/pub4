@@ -297,14 +297,6 @@ nb:
     reorder: Yalla igjen
     reorder_hint: Samme som sist — ett trykk
     reorder_cta: Bestill samme en gang til
-    tip:
-      title: Gi budet litt ekstra kjærlighet
-      subtitle: 100 % går til budet — vi tar null
-      chip_0: 0 kr
-      chip_20: 20 kr
-      chip_40: 40 kr
-      submit: Gi drikkepenger
-      thanks: Tusen takk! Budet smiler hele veien gjennom Vågen
     review:
       title: Hvordan var maten?
       rating_label: Gi stjerner
@@ -370,7 +362,7 @@ nb:
     how_title: Slik fungerer Sahtein-kortet
     login_hint: Logg inn for å samle stjerner.
     ready: Du har tjent en gratis wrap! Rabatten ligger klart i kassen.
-    rule_one: En stjerne per bestilling over 150 kr.
+    rule_one: En stjerne per levert bestilling.
     rule_two: Ti stjerner = en gratis wrap.
     rule_three: Stjernene er dine for alltid — nesten.
   staff:

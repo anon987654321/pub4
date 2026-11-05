@@ -38,8 +38,16 @@ class TrackTipTest < ActionDispatch::IntegrationTest
     post order_tip_url(@order.tracking_token), params: { tip_ore: 2000 }
 
     assert_redirected_to track_path(@order.tracking_token)
+    assert_equal I18n.t("flash.tip_thanks"), flash[:notice]
     assert_equal 2000, @order.reload.tip_ore
     assert_equal 15_800, @order.total_ore
+  end
+
+  test "choosing no tip records none and thanks for the order, not for a tip" do
+    post order_tip_url(@order.tracking_token), params: { tip_ore: 0 }
+
+    assert_equal I18n.t("orders.thanks"), flash[:notice]
+    assert_equal 0, @order.reload.tip_ore
   end
 
   test "an order takes one tip, and the chosen chip shows pressed" do

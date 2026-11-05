@@ -297,14 +297,6 @@ en:
     reorder: Yalla igjen
     reorder_hint: The same as last time — one tap
     reorder_cta: Order the same again
-    tip:
-      title: Give your courier some extra love
-      subtitle: 100 % goes to the courier — we take zero
-      chip_0: 0 kr
-      chip_20: 20 kr
-      chip_40: 40 kr
-      submit: Give a tip
-      thanks: Thank you so much! The courier will smile all the way along the harbour
     review:
       title: How was the food?
       rating_label: Give stars
@@ -370,7 +362,7 @@ en:
     how_title: How the Sahtein Card works
     login_hint: Sign in to collect stars.
     ready: You've earned a free wrap! The discount is waiting at checkout.
-    rule_one: One star per order over NOK 150.
+    rule_one: One star per delivered order.
     rule_two: Ten stars = a free wrap.
     rule_three: The stars are yours forever — almost.
   staff:
