@@ -190,6 +190,16 @@ ROBUSTNESS_fail_safe_defaults:
   statement: "A default that fails open."
   resolution: review
 
+ROBUSTNESS_portability_is_verified:
+  parent: ROBUSTNESS
+  statement: "A platform, release, architecture or runtime is declared supported without native proof for that target, or platform-specific assumptions leak across a boundary."
+  resolution: review
+
+ROBUSTNESS_production_release_is_pinned:
+  parent: ROBUSTNESS
+  statement: "A production release moves between revisions, or the deployed revision differs from the one proved by its required attestations."
+  resolution: never
+
 ROBUSTNESS_bounded_operation_lifecycle:
   parent: ROBUSTNESS
   statement: "A timeout bounds the direct child but leaves owned descendants, inherited pipes, readers or cleanup unbounded."
@@ -3104,6 +3114,14 @@ law_catalogue:
       definition_sources: [MASTER/law/universal.rb]
       severity: error
       languages: [ruby]
+    PORTABILITY_IS_VERIFIED:
+      definition_sources: [MASTER/law/universal.rb]
+      severity: warning
+      autofix: never
+    PRODUCTION_RELEASE_IS_PINNED:
+      definition_sources: [MASTER/law/universal.rb]
+      severity: error
+      autofix: never
     PLUCK_OVER_MAP:
       definition_sources: [MASTER/law/ruby.rb]
       severity: info
