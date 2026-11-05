@@ -12,16 +12,15 @@ require_relative "../../app/services/shared/queue_failure_summary"
 class HealthChecksTest < Minitest::Test
   def test_cache_policy_exposes_explicit_ttls
     assert_equal 900, Shared::CachePolicy.ttl_for(:search_results)
-    assert_equal 86_400, Shared::CachePolicy.ttl_for(:static_page)
+    assert_raises(KeyError) { Shared::CachePolicy.ttl_for(:static_page) }
   end
 
   # A TTL nobody writes with is a number that looks like policy and is not.
   # feed_fragment and user_profile sat here with no caller in any app.
-  # static_page waits for the legal pages' HTTP caching.
   def test_every_cache_policy_ttl_has_a_reader
     rails = File.expand_path("../../..", __dir__)
     sources = Dir[File.join(rails, "*", "app", "**", "*.rb")].map { |path| File.read(path) }.join("\n")
-    keys = Shared::CachePolicy::TTL.keys - [ :static_page ]
+    keys = Shared::CachePolicy::TTL.keys
     unread = keys.reject { |key| sources.match?(/ttl_for\(:#{key}\)/) }
 
     assert_empty unread, "CachePolicy TTLs no app reads"

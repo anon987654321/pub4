@@ -3,6 +3,15 @@
 # Nonce-based CSP with a report-only escape hatch.
 # Set PUB4_CSP_ENFORCE=1 in production to enforce (default: report-only).
 Rails.application.configure do
+  embed_frame_hosts = %w[
+    https://www.youtube-nocookie.com
+    https://www.youtube.com
+    https://w.soundcloud.com
+    https://player.vimeo.com
+    https://open.spotify.com
+    https://whyp.it
+  ]
+
   config.content_security_policy_nonce_generator = ->(_request) { SecureRandom.base64(16) }
   config.content_security_policy_nonce_directives = %w[script-src]
 
@@ -20,9 +29,21 @@ Rails.application.configure do
     # the remote copy when no sync job has written a first-party one, and that is
     # the affiliate attribution path.
     policy.script_src :self, "https://link.tradedoubler.com"
-    policy.style_src :self, :https, :unsafe_inline
-    policy.connect_src :self, :https, "wss:"
-    policy.frame_src :self, :https
+    # The directives below name the hosts the repo shows a page reaching, not
+    # every HTTPS host there is. Kept on purpose:
+    #   style-src :unsafe_inline -- Turbo, the editor and the map write style
+    #     attributes, which no nonce can cover; dropping it needs a live audit
+    #     of the reports first.
+    #   connect-src "wss:" -- Action Cable on the page's own host; older Safari
+    #     does not count wss: as 'self'.
+    #   default-src, font-src and img-src :https -- not narrowed here.
+    # cdn.jsdelivr.net is post_gallery's lightgallery stylesheet.
+    policy.style_src :self, :unsafe_inline, "https://cdn.jsdelivr.net"
+    # tiles.openfreemap.org is the map style, tiles and glyphs (maps, nearby).
+    policy.connect_src :self, "wss:", "https://tiles.openfreemap.org"
+    # The players Shared::LinkEmbed::PROVIDERS builds, the radio tunnel's
+    # www.youtube.com embed, and the MASTER face (_master_embed, MASTER_WEB_URL).
+    policy.frame_src :self, *embed_frame_hosts, -> { Rails.application.config.x.master_web_url }
     # This app may be framed only by itself; MASTER has its own explicit embedding allowlist.
     policy.frame_ancestors :self
     policy.worker_src :self, :blob

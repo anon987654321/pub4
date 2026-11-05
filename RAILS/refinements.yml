@@ -5979,7 +5979,7 @@ items:
   path: RAILS/__shared/app/controllers/pages_controller.rb
   item: Give the legal pages HTTP caching (expires_in Shared::CachePolicy.ttl_for(:static_page),
     public) for signed-out readers.
-  status: open
+  status: done
 - id: shared-007
   app: shared
   area: cleanup
@@ -6240,7 +6240,7 @@ items:
   path: RAILS/__shared/config/initializers/content_security_policy.rb
   item: Narrow style-src (drop :https and :unsafe_inline for nonces) and connect-src/frame-src
     :https to the named hosts.
-  status: open
+  status: done
 - id: shared-040
   app: shared
   area: security
@@ -6255,7 +6255,7 @@ items:
   size: S
   path: RAILS/__shared/config/initializers/security_headers.rb
   item: 'Add Cross-Origin-Resource-Policy: same-origin and browsing-topics=() to Permissions-Policy.'
-  status: open
+  status: done
 - id: shared-042
   app: shared
   area: tests
