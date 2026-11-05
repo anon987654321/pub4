@@ -143,6 +143,13 @@ class TestTaskContract < Minitest::Test
     end
   end
 
+  def test_agent_prompt_explains_default_deny_new_path_policy
+    prompt = CONTRACT.prompt
+
+    assert_includes prompt, "A missing task contract is an empty new_paths declaration"
+    assert_includes prompt, "must refuse every new tracked path"
+  end
+
   def test_missing_contract_defaults_to_existing_paths_only
     Dir.mktmpdir("task-contract-default", Master::REPO_ROOT) do |root|
       relative = File.join(root.delete_prefix(Master::REPO_ROOT + File::SEPARATOR), "new.rb")
