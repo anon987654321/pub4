@@ -84,6 +84,24 @@ class TestDillaCliContract < Minitest::Test
     end
   end
 
+  def test_external_output_overrides_remain_supported
+    Dir.mktmpdir("studio-external-output-") do |directory|
+      {
+        "DILLA_OUTPUT_DIR" => -> { Studio::OutputPaths.dilla_render_directory },
+        "POSTPRO_OUTPUT_DIR" => -> { Studio::OutputPaths.render_directory }
+      }.each do |name, resolve|
+        previous = ENV[name]
+        begin
+          target = File.join(directory, name)
+          ENV[name] = target
+          assert_equal target, resolve.call
+        ensure
+          previous ? ENV[name] = previous : ENV.delete(name)
+        end
+      end
+    end
+  end
+
   def test_output_override_symlinks_are_resolved_before_the_checkout_check
     root = Studio::OutputPaths::REPOSITORY_ROOT
     Dir.mktmpdir("studio-output-link-") do |directory|
