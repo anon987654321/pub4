@@ -55,7 +55,8 @@ class TestFileRename < Minitest::Test
     assert_includes read(APP), %(@use "thing";)
     assert_includes read(DOC), "_thing.scss" # source-assertion: ok — as above
     assert_empty git("status", "--porcelain").strip
-    assert_match(/_zen_thing\.scss is _thing\.scss/, git("log", "-1", "--format=%B"))
+    renamed = /\ARename _zen_thing\.scss to _thing\.scss\s+#{PARTIAL} is now\s+_thing\.scss/
+    assert_match(renamed, git("log", "-1", "--format=%B"))
     assert_equal git("rev-parse", "HEAD").strip, git("rev-parse", "origin/main").strip
   end
 

@@ -293,7 +293,7 @@ module Master
             return if fixed.zero?
 
             @pass_progress = true
-            @committer.commit_if_dirty("fix_loop: stream-fix [pass #{pass}]", findings: found, owned_paths: files)
+            @committer.commit_if_dirty(CommitMessage.pass(:stream, pass), findings: found, owned_paths: files)
           end
 
           # Workers repair concurrently with the scan, so the original finding

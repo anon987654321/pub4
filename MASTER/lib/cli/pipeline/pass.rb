@@ -589,15 +589,12 @@ def default_apply?(*) = false
           "fix partial: #{delivered} verified commit(s) delivered; stopped: #{msg}"
         end
 
-        # Commits /fix made since head: a Fix_loop: subject and MASTER's trailer together, because
+        # Commits /fix made since head: CommitMessage's marker line and MASTER's trailer together, because
         # other writers in the shared checkout use the same trailer.
         def fix_commits_since(head)
           return 0 if head.to_s.empty?
 
-          # Committer subjects are deliberately lowercase (for example,
-          # "fix_loop: pass 1"). Git's --grep is case-sensitive unless told
-          # otherwise; the old Fix_loop spelling counted zero of those commits.
-          greps = ["--all-match", "--regexp-ignore-case", "--grep=^fix_loop:",
+          greps = ["--all-match", "--grep=^#{Master::Fix::CommitMessage::MARKER}$",
                    "--grep=#{Master::Core::World::COMMIT_TRAILER}"]
           command = ["git", "-C", @root.to_s, "rev-list", "--count", *greps, "#{head}..HEAD"]
           out, status = Master::Io::Exec.capture2e(*command)

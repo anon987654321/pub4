@@ -5,6 +5,8 @@ require_relative "test_helper"
 require "open3"
 
 class TestReliabilitySecondTranche < Minitest::Test
+  PASS_COMMIT = Master::Fix::CommitMessage.pass(:pass, 1)
+
   def test_transaction_rolls_back_only_owned_files
     Dir.mktmpdir("master-tx") do |root|
       a = File.join(root, "a.rb")
@@ -188,9 +190,9 @@ class TestReliabilitySecondTranche < Minitest::Test
       committer.begin_transaction!(tx)
       File.write(path, "two\n")
 
-      assert_equal :staged, staging { committer.commit_if_dirty("fix") }
+      assert_equal :staged, staging { committer.commit_if_dirty(PASS_COMMIT) }
       assert_empty fake_git.commits
-      result = committer.finish_transaction("fix", owned_paths: [path])
+      result = committer.finish_transaction(PASS_COMMIT, owned_paths: [path])
 
       assert result.ok?
       assert_equal 1, fake_git.commits.size
@@ -229,10 +231,10 @@ class TestReliabilitySecondTranche < Minitest::Test
       committer.baseline!
       committer.begin_transaction!(Master::Fix::Transaction.new(root:, paths: [path]))
       File.write(path, "master-change\n")
-      staging { committer.commit_if_dirty("fix") }
+      staging { committer.commit_if_dirty(PASS_COMMIT) }
       File.write(path, "human-change\n")
 
-      result = committer.finish_transaction("fix", owned_paths: [path])
+      result = committer.finish_transaction(PASS_COMMIT, owned_paths: [path])
 
       assert result.ok?, "another writer's edit no longer fails the pass"
       assert_equal "human-change\n", File.read(path)

@@ -32,6 +32,7 @@ require_relative "../wishlist"
 require_relative "../constitutional_check"
 require_relative "../../review/scan/law_health"
 require_relative "../improve"
+require_relative "../commit_message"
 
 module Master
   module Fix
@@ -343,7 +344,7 @@ module Master
         end
 
         def finish_transaction(files, pass, result)
-          delivery = @committer.finish_transaction("fix_loop: clean [pass #{pass}]", owned_paths: files)
+          delivery = @committer.finish_transaction(CommitMessage.pass(:clean, pass), owned_paths: files)
           return PassResult.new(status: :delivery_failed, consecutive_clean: 0, message: delivery.message) if delivery.err?
 
           result
@@ -360,7 +361,7 @@ module Master
         # repairs: they are delivered, and the finding is reported for a person. Ending the run here
         # threw away every verified fix of the pass and stopped the run on any one such finding.
         def deliver_pass(found, files, pass)
-          delivery = @committer.finish_transaction("fix_loop: pass #{pass}", findings: found, owned_paths: files)
+          delivery = @committer.finish_transaction(CommitMessage.pass(:pass, pass), findings: found, owned_paths: files)
           return PassResult.new(status: :delivery_failed, consecutive_clean: 0, message: delivery.message) if delivery.err?
 
           if @human_decision_required
@@ -502,7 +503,7 @@ module Master
           fixed = fast_pass(files)
           if fixed > 0
             @pass_progress = true
-            @committer.commit_if_dirty("fix_loop: fast-fix [pass #{pass}]", owned_paths: files)
+            @committer.commit_if_dirty(CommitMessage.pass(:fast, pass), owned_paths: files)
           end
           fixed
         end
@@ -559,7 +560,9 @@ module Master
           llm_fixed = llm_pass(violations: found, files:, pass:, deadline: pass_deadline, council:)
           @pass_progress = true if llm_fixed.positive?
           Master::Trace::Dmesg.status("fix0", "pass #{pass}, #{llm_fixed} of #{Master::Trace::Dmesg.counted(found.size, "violation")} fixed")
-          @committer.commit_if_dirty("fix_loop: llm-fix [pass #{pass}]", findings: found, owned_paths: files) if llm_fixed > 0
+          if llm_fixed.positive?
+            @committer.commit_if_dirty(CommitMessage.pass(:llm, pass), findings: found, owned_paths: files)
+          end
           track_recurrence(found)
           llm_fixed
         end

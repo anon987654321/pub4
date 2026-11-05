@@ -8,6 +8,7 @@ require_relative "tap_target_pad"
 require_relative "layout_score_render"
 require_relative "rails_visual_graph"
 require_relative "pass_law"
+require_relative "commit_message"
 
 module Master
   module Fix
@@ -86,10 +87,17 @@ module Master
         }
       end
 
+      def visual_message(group, path)
+        CommitMessage.compose("Repair the rendered #{group.law} cause #{group.id}",
+                              what: "/fix changed #{path.delete_prefix("#{@repo_root}/")} for #{group.member_count} " \
+                                    "rendered finding(s) with one cause",
+                              why: "The visual lane's checks accepted the change, and its resweep measures the result")
+      end
+
       def committed(group, path:, outcome:)
         return outcome unless outcome == :applied
 
-        @committer.commit_if_dirty("fix_loop: visual lane #{group.law} [#{group.id}]", owned_paths: [path])
+        @committer.commit_if_dirty(visual_message(group, path), owned_paths: [path])
         outcome
       end
 

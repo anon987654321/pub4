@@ -6,6 +6,7 @@ require_relative "restructure_sweep/context"
 require_relative "restructure_sweep/contracts"
 require_relative "transformation_plan"
 require_relative "problem_graph"
+require_relative "commit_message"
 
 module Master
   module Fix
@@ -414,7 +415,7 @@ module Master
           "Address laws #{problem.laws.join(", ")} for problem #{problem.id}.",
           "Verify the change with hostile review, parsing, eager load, boot self-test, and related tests.",
         ].join("\n\n")
-        [title, body].join("\n\n")
+        [CommitMessage.fit(title), body, CommitMessage::MARKER].join("\n\n")
       end
 
       def report(problem, plan, result)

@@ -10,6 +10,7 @@ require_relative "proof/affected"
 require_relative "proof/rails_apps"
 require_relative "../../fix/check_focus"
 require_relative "../../fix/rails_app"
+require_relative "../../fix/commit_message"
 
 module Master
   module CLI
@@ -50,10 +51,6 @@ module Master
           "STUDIO" => File.join(::Operator::CheckChain::ROOT, "STUDIO"),
         }.freeze
 
-        # Every commit this runtime delivers opens with it. A baseline outlives
-        # a move of origin/main made only of these, because a baseline taken
-        # after the pass's own commits would count their failures as old.
-        OWN_SUBJECT = "fix_loop:"
         NAMES_SHOWN = 8
         DELIVERY_PATHS_SHOWN = 40
 
@@ -117,9 +114,12 @@ module Master
 
             # This checkout is a partial clone, and a commit it lacks would be
             # fetched object by object; unknown is a reason to measure again.
+            # A baseline outlives a move of origin/main made only of /fix's own commits (CommitMessage::MARKER),
+            # because a baseline taken after the pass's own commits would count their failures as old.
             out, _err, status = Master::Io::Exec.capture3({ "GIT_NO_LAZY_FETCH" => "1" }, "git", "-C", repo, "log",
-                                                          "--format=%s", "#{kept_sha}..#{sha}", timeout: 20)
-            reading if status.success? && out.lines.all? { |subject| subject.start_with?(OWN_SUBJECT) }
+                                                          "--format=%B%x00", "#{kept_sha}..#{sha}", timeout: 20)
+            bodies = out.to_s.split("\x00").map(&:strip).reject(&:empty?)
+            reading if status.success? && bodies.all? { |body| Master::Fix::CommitMessage.own?(body) }
           end
 
           def remember(proof, sha:, reading:)
@@ -395,7 +395,11 @@ module Master
           tree = abs.delete_prefix("#{Master::REPO_ROOT}/").split("/").first
           listed = paths.first(DELIVERY_PATHS_SHOWN)
           listed << "and #{paths.size - listed.size} more" if paths.size > listed.size
-          ["#{OWN_SUBJECT} deliver #{tree}, proof held", "", verdict, "", *listed].join("\n")
+          Master::Fix::CommitMessage.compose(
+            "Deliver the autofix writes /fix proved in #{tree}",
+            what: "Commits #{paths.size} file(s) the observation's mechanical autofix wrote in #{tree}",
+            why: "The proof held after the repair: #{verdict.to_s.lines.first.to_s.strip}", details: listed
+          )
         end
 
         def baseline_line(reading)

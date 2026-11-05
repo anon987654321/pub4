@@ -47,6 +47,7 @@ require_relative "../repair_loop/file_budget"
 require_relative "../change_scope"
 require_relative "../refusals"
 require_relative "../model_gate"
+require_relative "../commit_message"
 
 module Master
   module Fix
@@ -320,7 +321,7 @@ module Master
           return :applied if @committer.nil? || stage_commit_mode?
 
           result = @committer.commit_if_dirty(
-            "fix: #{@law.id} in #{File.basename(violation[:file])}",
+            repair_message(violation),
             findings: [violation],
             owned_paths: [violation[:file]],
           )
@@ -359,6 +360,11 @@ module Master
 
           RefusedRepair.restore(write)
           @committer.attest_written!(write.path)
+        end
+
+        def repair_message(violation)
+          file = violation[:file].to_s.delete_prefix("#{@root}/")
+          CommitMessage.repair(law: @law.id, file:, line: violation[:line])
         end
 
         def model_gate_resources = @model_gate_resources ||= ResourceBudget.new(root: @root)

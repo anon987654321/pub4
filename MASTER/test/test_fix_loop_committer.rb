@@ -7,6 +7,9 @@ require "fileutils"
 # that was already dirty when the pass began, never the shared index, and never
 # a tree where an autofix left Ruby unparseable.
 class TestFixLoopCommitter < Minitest::Test
+  OK_MESSAGE = Master::Fix::CommitMessage.compose("Repair the sample", what: "A test repair",
+                                                                         why: "The committer is under test")
+
   class FakeBus
     attr_reader :events
 
@@ -74,8 +77,8 @@ class TestFixLoopCommitter < Minitest::Test
     write_file("lib/ok.rb", "FOO = {\n  a: 1,\n}.freeze\n")
     git = FakeGit.new([], ["lib/ok.rb"])
     bus = FakeBus.new
-    run_committer(git, bus, "fix: ok")
-    assert_equal [["fix: ok", ["lib/ok.rb"]]], git.commits
+    run_committer(git, bus, OK_MESSAGE)
+    assert_equal [[OK_MESSAGE, ["lib/ok.rb"]]], git.commits
     # The bus event carries counts, not workspace paths; the commit itself names the file.
     commit_event = bus.events.find { |event, _| event == "ops:commit" }
     assert_equal 1, commit_event.last[:path_count]
@@ -87,7 +90,7 @@ class TestFixLoopCommitter < Minitest::Test
     write_file("lib/bad.rb", "FOO = {.freeze\n  a: 1,\n}.freeze\n")
     git = FakeGit.new([], ["lib/bad.rb"])
     bus = FakeBus.new
-    run_committer(git, bus, "fix: bad")
+    run_committer(git, bus, OK_MESSAGE)
     assert_empty git.commits
     assert blocked?(bus)
   end
@@ -96,7 +99,7 @@ class TestFixLoopCommitter < Minitest::Test
     write_file("lib/bad2.rb", "def m\n  if x\n  end\n")
     git = FakeGit.new([], ["lib/bad2.rb"])
     bus = FakeBus.new
-    run_committer(git, bus, "fix: bad2")
+    run_committer(git, bus, OK_MESSAGE)
     assert_empty git.commits
     assert blocked?(bus)
   end
@@ -108,7 +111,7 @@ class TestFixLoopCommitter < Minitest::Test
     git = FakeGit.new([], ["lib/bad2.rb"])
     bus = FakeBus.new
 
-    out, = capture_io { run_committer(git, bus, "fix: bad") }
+    out, = capture_io { run_committer(git, bus, OK_MESSAGE) }
 
     assert blocked?(bus)
     assert_includes out, "fix0: lib/bad2.rb refused by commit: syntax, files lib/bad2.rb"
@@ -122,7 +125,7 @@ class TestFixLoopCommitter < Minitest::Test
     git = FakeGit.new([], ["data/laws.yml", "lib/ok.rb"])
     bus = FakeBus.new
 
-    out, = capture_io { run_committer(git, bus, "fix: laws") }
+    out, = capture_io { run_committer(git, bus, OK_MESSAGE) }
 
     assert_empty git.commits
     assert blocked?(bus)
@@ -133,16 +136,16 @@ class TestFixLoopCommitter < Minitest::Test
     write_file("README.md", "# hi\n")
     git = FakeGit.new([], ["README.md"])
     bus = FakeBus.new
-    run_committer(git, bus, "docs: update")
-    assert_equal [["docs: update", ["README.md"]]], git.commits
+    run_committer(git, bus, OK_MESSAGE)
+    assert_equal [[OK_MESSAGE, ["README.md"]]], git.commits
     refute blocked?(bus)
   end
 
   def test_a_path_dirty_before_the_pass_stays_out_of_the_commit
     write_file("lib/ok.rb", "OK = 1\n")
     git = FakeGit.new(["lib/theirs.rb"], ["lib/theirs.rb", "lib/ok.rb"])
-    run_committer(git, FakeBus.new, "fix: ok")
-    assert_equal [["fix: ok", ["lib/ok.rb"]]], git.commits
+    run_committer(git, FakeBus.new, OK_MESSAGE)
+    assert_equal [[OK_MESSAGE, ["lib/ok.rb"]]], git.commits
   end
 
   # Another session's unparseable half-edit must neither be committed nor block
@@ -152,8 +155,8 @@ class TestFixLoopCommitter < Minitest::Test
     write_file("lib/ok.rb", "OK = 1\n")
     git = FakeGit.new(["lib/theirs.rb"], ["lib/theirs.rb", "lib/ok.rb"])
     bus = FakeBus.new
-    run_committer(git, bus, "fix: ok")
-    assert_equal [["fix: ok", ["lib/ok.rb"]]], git.commits
+    run_committer(git, bus, OK_MESSAGE)
+    assert_equal [[OK_MESSAGE, ["lib/ok.rb"]]], git.commits
     refute blocked?(bus)
   end
 
@@ -167,9 +170,9 @@ class TestFixLoopCommitter < Minitest::Test
     ]
     committer = Master::Fix::FixLoop::Committer.new(git:, bus: FakeBus.new, root: @dir)
     committer.baseline!
-    committer.commit_if_dirty("fix_loop: llm-fix [pass 1]", findings:)
+    committer.commit_if_dirty(OK_MESSAGE, findings:)
 
-    assert_equal "fix_loop: llm-fix [pass 1]\n\nNO_PUTS lib/ok.rb:3\nLONG_LINE lib/ok.rb:9", git.commits.first.first
+    assert_equal "#{OK_MESSAGE}\n\nNO_PUTS lib/ok.rb:3\nLONG_LINE lib/ok.rb:9", git.commits.first.first
   end
 
   def test_architecture_scope_blocks_an_unowned_path
@@ -177,7 +180,7 @@ class TestFixLoopCommitter < Minitest::Test
     bus = FakeBus.new
     committer = Master::Fix::FixLoop::Committer.new(git:, bus:, root: Master::REPO_ROOT)
     committer.baseline!(scope: ["rails"])
-    committer.commit_if_dirty("fix: rails", owned_paths: [
+    committer.commit_if_dirty(OK_MESSAGE, owned_paths: [
       File.join(Master::REPO_ROOT, "RAILS/apps.yml"),
       File.join(Master::REPO_ROOT, "TODO.md"),
     ])
@@ -195,7 +198,7 @@ class TestFixLoopCommitter < Minitest::Test
     committer = Master::Fix::FixLoop::Committer.new(git:, bus:, root: Master::REPO_ROOT)
     committer.baseline!(scope: ["rails"])
     committer.commit_if_dirty(
-      "fix: rails",
+      OK_MESSAGE,
       owned_paths: [File.join(Master::REPO_ROOT, "RAILS/apps.yml"),
                     File.join(Master::REPO_ROOT, "MASTER/README.md")],
     )
@@ -216,9 +219,9 @@ class TestFixLoopCommitter < Minitest::Test
     bus = FakeBus.new
     committer = Master::Fix::FixLoop::Committer.new(git:, bus:, root: @dir)
     committer.baseline!
-    committer.commit_if_dirty("fix: ok", owned_paths: [File.join(@dir, "lib/ok.rb"), File.join(@dir, "lib/fresh.rb")])
+    committer.commit_if_dirty(OK_MESSAGE, owned_paths: [File.join(@dir, "lib/ok.rb"), File.join(@dir, "lib/fresh.rb")])
 
-    assert_equal [["fix: ok", ["lib/fresh.rb"]]], git.commits
+    assert_equal [[OK_MESSAGE, ["lib/fresh.rb"]]], git.commits
     assert committer.dirty_at_baseline?(File.join(@dir, "lib/ok.rb"))
     refute committer.dirty_at_baseline?("lib/fresh.rb")
     excluded = bus.events.find { |name, _| name == "fix_loop:baseline_dirty_excluded" }
@@ -234,7 +237,7 @@ class TestFixLoopCommitter < Minitest::Test
     bus = FakeBus.new
 
     with_push_env("each") do
-      assert_raises(RuntimeError) { run_committer(git, bus, "fix: ok") }
+      assert_raises(RuntimeError) { run_committer(git, bus, OK_MESSAGE) }
     end
     assert_equal 1, git.pushes
     assert(bus.events.any? { |event, _| event == "fix_loop:commit_error" })
@@ -250,16 +253,16 @@ def test_a_repair_the_run_wrote_itself_commits_once_attested_and_not_after_a_lat
   committer = Master::Fix::FixLoop::Committer.new(git:, bus: FakeBus.new, root: @dir, ground_truth: Master::Ground::Truth.new)
   committer.baseline!
 
-  out, = capture_io { committer.commit_if_dirty("fix: ok") }
+  out, = capture_io { committer.commit_if_dirty(OK_MESSAGE) }
   assert_empty git.commits
   assert_includes out, "/fix did not write: lib/ok.rb"
 
   committer.attest_written!(File.join(@dir, "lib/ok.rb"))
-  committer.commit_if_dirty("fix: ok")
+  committer.commit_if_dirty(OK_MESSAGE)
   assert_equal 1, git.commits.size
 
   write_file("lib/ok.rb", "OK = 2\n")
-  out, = capture_io { committer.commit_if_dirty("fix: again") }
+  out, = capture_io { committer.commit_if_dirty(OK_MESSAGE) }
   assert_equal 1, git.commits.size
   assert_includes out, "/fix did not write: lib/ok.rb"
 end
@@ -274,7 +277,7 @@ def test_a_file_fix_did_not_write_stays_out_of_its_commit
   committer.baseline!
   committer.attest_written!(File.join(@dir, "lib/ok.rb"))
 
-  capture_io { committer.commit_if_dirty("fix: ok") }
+  capture_io { committer.commit_if_dirty(OK_MESSAGE) }
   committed = git.commits.flat_map(&:last)
 
   assert_equal ["lib/ok.rb"], committed
@@ -297,7 +300,7 @@ def test_the_end_of_a_pass_delivers_only_what_the_pass_wrote
   committer.begin_transaction!(Master::Fix::Transaction.new(root: @dir, paths:))
   committer.attest_written!(File.join(@dir, "lib/ok.rb"))
 
-  out, = capture_io { committer.finish_transaction("fix: ok", owned_paths: paths) }
+  out, = capture_io { committer.finish_transaction(OK_MESSAGE, owned_paths: paths) }
 
   assert_equal ["lib/ok.rb"], git.commits.flat_map(&:last)
   assert_includes out, "/fix did not write: lib/observed.rb"
@@ -310,7 +313,7 @@ def test_the_observations_autofix_writes_deliver_with_the_pass
   paths = %w[lib/ok.rb AGENTS.md]
   committer, git = autofixed_agents_pass(paths)
 
-  out, = capture_io { committer.finish_transaction("fix: ok", owned_paths: paths) }
+  out, = capture_io { committer.finish_transaction(OK_MESSAGE, owned_paths: paths) }
 
   assert_equal paths.sort, git.commits.flat_map(&:last).sort
   refute_includes out, "did not write"
@@ -340,7 +343,7 @@ def test_a_fix_after_the_transaction_ended_still_commits
   git = FakeGit.new([], ["lib/ok.rb"])
   committer = ended_transaction_committer(git)
 
-  out, = capture_io { committer.commit_if_dirty("fix: ok") }
+  out, = capture_io { committer.commit_if_dirty(OK_MESSAGE) }
 
   assert_equal ["lib/ok.rb"], git.commits.flat_map(&:last)
   assert_includes out, "transaction ended mid-pass"
@@ -381,7 +384,7 @@ def test_an_autofix_write_the_house_lint_refuses_goes_back_and_the_repair_delive
 
   answers = [["lint0: lib/wide.rb:1, line 141 chars (max 120)"], []]
   lint = ->(*) { answers.shift || [] }
-  capture_io { Master::Fix::FixLoop::HouseLint.stub(:findings, lint) { committer.commit_if_dirty("fix: ok") } }
+  capture_io { Master::Fix::FixLoop::HouseLint.stub(:findings, lint) { committer.commit_if_dirty(OK_MESSAGE) } }
 
   assert_equal ["lib/ok.rb"], git.commits.flat_map(&:last)
   assert_equal "WIDE = 1\n", File.read(wide)
@@ -417,7 +420,7 @@ def test_a_house_lint_refusal_is_recorded_under_the_lint_gate
   Master::Fix::Refusals.begin_run!
 
   lint = ->(*) { ["lint0: lib/ok.rb:1, line 141 chars (max 120)"] }
-  out, = capture_io { Master::Fix::FixLoop::HouseLint.stub(:findings, lint) { committer.commit_if_dirty("fix: ok") } }
+  out, = capture_io { Master::Fix::FixLoop::HouseLint.stub(:findings, lint) { committer.commit_if_dirty(OK_MESSAGE) } }
 
   assert_empty git.commits
   assert_equal 1, Master::Fix::Refusals.counts[:lint]
@@ -440,7 +443,7 @@ def test_a_slow_repairs_own_write_still_commits
   committer.baseline!
   committer.attest_written!(File.join(@dir, "lib/ok.rb"))
 
-  capture_io { committer.commit_if_dirty("fix: ok") }
+  capture_io { committer.commit_if_dirty(OK_MESSAGE) }
 
   assert_equal 1, git.commits.size
 end
@@ -454,7 +457,7 @@ def test_no_publish_holds_the_commits_instead_of_pushing
   previous = ENV["MASTER_FIX_NO_PUBLISH"]
   ENV["MASTER_FIX_NO_PUBLISH"] = "1"
   begin
-    with_push_env(nil) { committer.commit_if_dirty("fix: ok") }
+    with_push_env(nil) { committer.commit_if_dirty(OK_MESSAGE) }
     git.ahead = 1
     out, = capture_io { assert_equal :held, committer.publish_pending! }
   ensure
@@ -472,7 +475,7 @@ def test_each_validated_checkpoint_pushes_by_default
   committer = Master::Fix::FixLoop::Committer.new(git:, bus: FakeBus.new, root: @dir)
   committer.baseline!
 
-  with_push_env(nil) { committer.commit_if_dirty("fix: ok") }
+  with_push_env(nil) { committer.commit_if_dirty(OK_MESSAGE) }
 
   assert_equal 1, git.commits.size
   assert_equal 1, git.pushes
@@ -483,7 +486,7 @@ def test_end_mode_defers_publication_until_the_run_publishes
   git = FakeGit.new([], ["lib/ok.rb"])
   committer = Master::Fix::FixLoop::Committer.new(git:, bus: FakeBus.new, root: @dir)
   committer.baseline!
-  with_push_env("end") { committer.commit_if_dirty("fix: ok") }
+  with_push_env("end") { committer.commit_if_dirty(OK_MESSAGE) }
 
   assert_equal 1, git.commits.size
   assert_equal 0, git.pushes
@@ -498,7 +501,7 @@ end
 def test_each_mode_pushes_every_commit
   write_file("lib/ok.rb", "OK = 1\n")
   git = FakeGit.new([], ["lib/ok.rb"])
-  with_push_env("each") { run_committer(git, FakeBus.new, "fix: ok") }
+  with_push_env("each") { run_committer(git, FakeBus.new, OK_MESSAGE) }
 
   assert_equal 1, git.pushes
 end
@@ -528,7 +531,7 @@ end
     bus = FakeBus.new
     failed = Struct.new(:success?).new(false)
 
-    Master::Io::Exec.stub(:capture3, ["", "", failed]) { run_committer(git, bus, "fix: ok") }
+    Master::Io::Exec.stub(:capture3, ["", "", failed]) { run_committer(git, bus, OK_MESSAGE) }
 
     assert_empty git.commits
     assert blocked?(bus)
@@ -562,7 +565,8 @@ end
     seen = nil
 
     out, = capture_io do
-      Master::Io::Exec.stub(:capture3, ->(*cmd, **) { seen = cmd; ["", "", passed] }) { run_committer(git, bus, "fix: ok") }
+      lint = ->(*cmd, **) { seen = cmd; ["", "", passed] }
+      Master::Io::Exec.stub(:capture3, lint) { run_committer(git, bus, OK_MESSAGE) }
     end
 
     refute_includes out, "rubocop_unavailable"
@@ -579,7 +583,7 @@ end
     bus = FakeBus.new
 
     Master::Io::Exec.stub(:capture3, ->(*) { raise "rubocop unavailable" }) do
-      run_committer(git, bus, "fix: ok")
+      run_committer(git, bus, OK_MESSAGE)
     end
 
     assert_empty git.commits
@@ -589,7 +593,7 @@ end
   def test_nothing_is_committed_without_a_baseline
     write_file("lib/ok.rb", "OK = 1\n")
     git = FakeGit.new(["lib/ok.rb"], ["lib/ok.rb"])
-    run_committer(git, FakeBus.new, "fix: ok", baseline: false)
+    run_committer(git, FakeBus.new, OK_MESSAGE, baseline: false)
     assert_empty git.commits
   end
 end

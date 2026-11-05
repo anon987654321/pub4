@@ -7,6 +7,7 @@ require "tmpdir"
 # A /fix run that committed verified fixes and then stopped short is partial success, not failure.
 class TestFixPartialOutcome < Minitest::Test
   Pass = Master::CLI::Pipeline::Pass
+  FIX_COMMIT = Master::Fix::CommitMessage.pass(:pass, 1)
 
   def outcome(ok:, msg:, delivered: 0, ending: nil) = Pass.fix_outcome(ok:, msg:, delivered:, ending:)
 
@@ -23,7 +24,7 @@ class TestFixPartialOutcome < Minitest::Test
     assert_equal :failed, outcome(ok: false, msg: "PLATEAU: no further improvement")
   end
 
-  def test_fix_delivery_counter_matches_real_lowercase_subject_and_ignores_other_writers
+  def test_fix_delivery_counter_matches_the_fix_marker_and_ignores_other_writers
     Dir.mktmpdir("fix-delivered-commits") do |root|
       git!(root, "init", "-q")
       git!(root, "config", "user.name", "Test")
@@ -35,7 +36,7 @@ class TestFixPartialOutcome < Minitest::Test
 
       File.write(File.join(root, "file.rb"), "fix\n")
       git!(root, "add", "--", "file.rb")
-      git!(root, "commit", "-q", "-m", "fix_loop: pass 1", "-m", Master::Core::World::COMMIT_TRAILER)
+      git!(root, "commit", "-q", "-m", FIX_COMMIT, "-m", Master::Core::World::COMMIT_TRAILER)
       File.write(File.join(root, "file.rb"), "other\n")
       git!(root, "add", "--", "file.rb")
       git!(root, "commit", "-q", "-m", "ordinary writer", "-m", Master::Core::World::COMMIT_TRAILER)
@@ -43,7 +44,7 @@ class TestFixPartialOutcome < Minitest::Test
       pass = Pass.allocate
       pass.instance_variable_set(:@root, root)
       assert_equal 1, pass.send(:fix_commits_since, head),
-                   "the lowercase repair-loop commit must count, but another writer's shared trailer must not"
+                   "the /fix commit must count, but another writer's shared trailer must not"
     end
   end
 

@@ -127,13 +127,13 @@ class TestProofBaseline < Minitest::Test
     Dir.mktmpdir("proof_baseline") do |repo|
       git = ->(*args) { system("git", "-C", repo, *args, out: File::NULL, err: File::NULL) || flunk("git #{args.first}") }
       git.call("init", "-q")
-      commit = lambda do |subject|
-        git.call("-c", "user.name=t", "-c", "user.email=t@t", "commit", "-q", "--allow-empty", "-m", subject)
+      commit = lambda do |message|
+        git.call("-c", "user.name=t", "-c", "user.email=t@t", "commit", "-q", "--allow-empty", "-m", message)
         `git -C #{repo} rev-parse HEAD`.strip
       end
       first = commit.call("start")
       Proof.remember("rails checks", sha: first, reading: :kept)
-      own = commit.call("#{Proof::OWN_SUBJECT} pass 1")
+      own = commit.call(Master::Fix::CommitMessage.pass(:pass, 1))
       assert_equal :kept, Proof.recall("rails checks", sha: own, repo:)
 
       other = commit.call("feat(rails): another session")
@@ -146,8 +146,9 @@ class TestProofBaseline < Minitest::Test
     message = pass.send(:delivery_message, Master::RAILS_ROOT, verdict: "proof: 10 of 20; no new failures",
                                                               paths: ["RAILS/a.rb"])
 
-    assert_equal "#{Proof::OWN_SUBJECT} deliver RAILS, proof held", message.lines.first.chomp
-    assert_includes message.lines.map(&:chomp), "proof: 10 of 20; no new failures"
+    assert_equal "Deliver the autofix writes /fix proved in RAILS", message.lines.first.chomp
+    assert_includes message, "proof: 10 of 20; no new failures"
+    assert_empty Master::Fix::CommitMessage.problems(message)
   end
 
   # A baseline suite proof runs minutes with its output captured: it speaks on

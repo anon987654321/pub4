@@ -82,7 +82,7 @@ class StreamStageTest < Minitest::Test
     # Three workers finish in any order; what matters is that all three ran.
     assert_equal %w[/repo/a.rb /repo/b.rb /repo/c.rb], @log.sort
     assert_includes streamed, ["a.rb", "LONG_METHOD"]
-    assert_equal ["fix_loop: stream-fix [pass 1]"], @committer.commits
+    assert_equal [Master::Fix::CommitMessage.pass(:stream, 1)], @committer.commits
     assert_equal true, @pass_progress
   end
 
@@ -101,7 +101,7 @@ class StreamStageTest < Minitest::Test
 
     assert_empty found
     assert_includes streamed, ["a.rb", "LONG_METHOD"]
-    assert_equal ["fix_loop: stream-fix [pass 1]"], @committer.commits
+    assert_equal [Master::Fix::CommitMessage.pass(:stream, 1)], @committer.commits
   end
 
   def test_no_repair_after_the_deadline

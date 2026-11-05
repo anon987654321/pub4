@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "pathname"
+require_relative "../commit_message"
 
 module Master
   module Fix
@@ -19,8 +20,11 @@ module Master
           inside + Array(repo_git.changed_paths).reject { |path| path.start_with?(own) }.map { |path| "../#{path}" }
         end
 
+        # Every /fix commit passes CommitMessage first: a message that breaks data/commit_format.yml raises
+        # before anything is staged.
         def commit_scoped(message, paths:)
           @lease_guard&.call
+          CommitMessage.check!(message)
           return @git.commit(message, paths:) unless repo_git && paths.any? { |path| path.start_with?("../") }
 
           repo_git.commit(message, paths: paths.map { |path| repo_relative(path) })

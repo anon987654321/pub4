@@ -7,6 +7,7 @@ require_relative "../ground/preserve_user_intent"
 require_relative "../ground/known_good"
 require_relative "../operator/ratchet_sponsor"
 require_relative "../io/exec"
+require_relative "commit_message"
 
 module Master
   module Fix
@@ -136,9 +137,14 @@ module Master
         Result.err("rename #{from} -> #{File.basename(to)} undone: #{failure}", category: :validation)
       end
 
+      def rename_message(from:, to:, edited:, reason:)
+        CommitMessage.compose("Rename #{File.basename(from)} to #{File.basename(to)}",
+                              what: "#{from} is now #{File.basename(to)}: #{reason}",
+                              why: "/fix rewrote #{edited.size} reference(s) and the proof held")
+      end
+
       def commit(from, to, edited, reason)
-        message = "refactor: #{from} is #{File.basename(to)}\n\n#{reason}\n\n" \
-                  "Renamed by /fix; #{edited.size} reference(s) rewritten, proof held."
+        message = rename_message(from:, to:, edited:, reason:)
         # Not GitOperations#commit: it `git add`s every path, and the old one
         # no longer exists; git mv has already staged its removal.
         @git.git!("add", "--", to, *edited)

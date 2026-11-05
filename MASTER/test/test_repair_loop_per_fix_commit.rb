@@ -289,7 +289,7 @@ class TestRepairLoopPerFixCommit < Minitest::Test
       assert_equal "clean\n", File.read(path)
       assert_equal [path], committer.attested
       message, findings, owned_paths = committer.calls.first
-      assert_equal "fix: TEST_RULE in sample.rb", message
+      assert_match(/\ARepair TEST_RULE in sample\.rb\n\n/, message)
       assert_equal [path], owned_paths
       assert_equal ["TEST_RULE"], findings.map { |f| f[:law] }
     end
