@@ -762,7 +762,6 @@ recommended first ten.
 - [ ] Headless runs submit their goal to the running session over the bridge.
 - [ ] One lock scope per checkout.
 - [ ] `/handoff` releases the lock cleanly.
-- [ ] Name the holder's mode and last activity in the refusal message.
 
 ### MASTER working TODO.md unattended (first pass)
 

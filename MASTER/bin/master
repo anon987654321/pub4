@@ -328,8 +328,15 @@ $MASTER_PROCESS_LOCK = if internal_master_child
                        end
 
 unless internal_master_child || $MASTER_PROCESS_LOCK
-  owner = Master::Ops::ProcessLock.owner
-  detail = owner.empty? ? "" : " pid=#{owner["pid"]} host=#{owner["host"]} mode=#{owner["mode"]} since=#{owner["at"]}"
+  holder = Master::Ops::ProcessLock.owner
+  # Mode and last activity ride along: an operator deciding whether to wait
+  # reads the holder's mode and how long the session has been quiet, not
+  # only its pid. The status report computed both; reuse it and name the
+  # lines it adds beyond the pid detail line.
+  frame = Master::Ops::ProcessLock.status_report(root: master_root)
+  frame.reject { |line| line.include?("lock held by") || line.include?("control plane idle") }
+       .each { |line| Master::Trace::Dmesg.status("master0", line.sub(/\Amaster0: /, ""), io: $stderr) }
+  detail = holder.empty? ? "" : " pid=#{holder["pid"]} host=#{holder["host"]} mode=#{holder["mode"]} since=#{holder["at"]}"
   Master::Trace::Dmesg.status("master0", "another process owns the control plane#{detail}", io: $stderr)
   exit 75
 end
