@@ -275,6 +275,7 @@ module Master
           *rows,
           "Scope paths are repository-relative. Preserve all mandatory dimensions for the selected intent.",
           "Existing paths are the default: extend the nearest owner and its existing tests before adding a tracked file.",
+          "A missing task contract is an empty new_paths declaration: automated writes may edit existing repository paths but must refuse every new tracked path unless its exact path and reason are declared in an active contract.",
           "A new tracked file needs an exact path and non-empty reason in optional new_paths, inside the task scope. A new directory needs a genuine ownership boundary; never create helpers, tests, docs, config or utility folders merely for convenience.",
           "Proof always includes baseline hashes, a path-scoped diff and a Law assessment. Add relevant tests, rendered/runtime evidence, accessibility review, citations or human review.",
           "If a required measurement is absent or a format has no verifier, report INCONCLUSIVE or NOT_RUN; do not infer PASS.",
