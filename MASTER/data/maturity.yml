@@ -49,7 +49,7 @@ subsystems:
     last_checked: '2026-09-10'
   review.council_deliberation:
     status: verified
-    meaning: /critique's persona deliberation actually reaches a quorum instead of failing every persona
+    meaning: the council's persona deliberation actually reaches a quorum instead of failing every persona
     evidence: 'commit 7e93b526e -- snapshot_artifact byte-truncated file content via String#b,
       leaving it tagged BINARY; concatenating that into every persona''s UTF-8 prompt raised
       Encoding::CompatibilityError identically for all 26, every round, until traced live.

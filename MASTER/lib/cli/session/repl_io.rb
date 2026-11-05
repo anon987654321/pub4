@@ -249,7 +249,7 @@ module Master
       end
 
       # A prompt is ready when the session is ready. Repository-wide observation
-      # belongs to an explicit /review or /fix request; continuous observation is
+      # belongs to an explicit /fix request; continuous observation is
       # an opt-in diagnostic for an operator who asks for it.
       def background_scan_enabled?
         ENV["MASTER_BACKGROUND_SCAN"] == "1" && !skip_boot_scan?

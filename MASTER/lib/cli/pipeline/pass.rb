@@ -171,7 +171,7 @@ module Master
           sections
         end
 
-        COUNCIL_OFFER = "not run during /fix; /critique convenes it on this result"
+        COUNCIL_OFFER = "not run during /fix; /fix --dry-run --critique convenes it on this result"
 
         # The typographic law's audit half: the marks the operator-facing
         # strings actually wear. It reads, never writes — a mark set wrong is
@@ -212,7 +212,7 @@ module Master
         end
 
         # `--only` names stages; without it every stage runs, which is what
-        # /review has always meant. A name that is not a stage runs nothing and
+        # a reading has always meant. A name that is not a stage runs nothing and
         # says so: silently widening a pass because a flag was misspelled is the
         # failure this flag exists to prevent, and silently narrowing one is the
         # same failure wearing the other coat.
@@ -441,7 +441,7 @@ module Master
 # This returned true, so every route into the pipeline wrote: a flag, a
 # slash command, and — the one that matters — a sentence. On 2026-09-11 a
 # greeting typed into bin/cli on vm23 ("Hei MASTER … hva er du mest stolt
-# av i denne kodebasen?") was routed to /review with apply=yes against
+# av i denne kodebasen?") was routed to the /fix reading with apply=yes against
 # /home/dev/pub4, which is the checkout the deploy syncs from. It scanned
 # 333 of 1109 files before it was interrupted and wrote nothing, and that
 # was luck rather than design.

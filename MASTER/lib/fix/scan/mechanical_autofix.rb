@@ -7,7 +7,7 @@ require_relative "../autofix_guard"
 module Master
   module Fix
     module Scan
-      # Deterministic AstFixer pass behind `/review --only scan --apply`.
+      # Deterministic AstFixer pass behind `/fix --only scan`.
       # Only runs on files that have findings whose law has auto_fix=true.
       # Idempotent; safe to re-run. Opt out with --dry-run, --no-autofix, or MASTER_SCAN_AUTOFIX=0.
       #

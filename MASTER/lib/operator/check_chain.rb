@@ -355,7 +355,7 @@ module Operator
       # Verification is measurement only. Every selected stage is scan-only;
       # a verification tail must never become a second repair pass under
       # another name. Council stays excluded because provider availability is
-      # not a source-tree proof and can be separately reported by /critique.
+      # not a source-tree proof and can be separately reported by /fix --dry-run --critique.
       only = verification_only
       return selected if only.empty?
 
@@ -604,13 +604,13 @@ module Operator
     def council_stage(scan_only:, trees:)
       Stage.new(
         name: "council",
-        purpose: "/critique and /review, then the panel's picks back through the runtime",
+        purpose: "/fix --dry-run --critique, then the panel's picks back through the runtime",
         mutates: council_fix?(scan_only:),
         run: -> { council(scan_only:, trees:) },
       )
     end
 
-    # /critique IS the council: dispatch_critique hands the path to
+    # /fix --dry-run --critique IS the council: dispatch_critique hands the path to
     # Review::Council::Critique, which runs the persona panel, the adversarial
     # round and the cherry-pick. A second one here is a second debate.
     def council(scan_only:, trees: TREES)
@@ -642,7 +642,7 @@ module Operator
       [failed.zero?, lines, failed.zero? ? 0 : 1]
     end
 
-    # The check ladder's semantic stage invokes the general /critique mode.
+    # The check ladder's semantic stage invokes the general council reading.
     # Harvests for UI, sound and other review modes are separate inputs and must
     # never become executable picks for this stage.
     def cherry_picks = picks_in(File.join(MASTER, ".master", "critiques"), mode: :general)

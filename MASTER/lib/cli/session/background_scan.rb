@@ -53,7 +53,7 @@ module Master
       # Rules that call the model (AdversarialRule, SemanticLaw, CommentDriftRule
       # — anything mixing in Rules::NeedsModel) share the one local ollama process
       # with the interactive turn. Running them here queued a plain "hey" behind
-      # 8 sequential model calls the operator never asked for — /review and /fix
+      # 8 sequential model calls the operator never asked for — /fix
       # still run the full rule set, deliberately, when a person asks for it.
       def mechanical_scanner_rules
         @refs.scanner.laws.reject { |law| law.respond_to?(:agent?) }

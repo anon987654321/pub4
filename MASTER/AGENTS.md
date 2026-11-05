@@ -307,7 +307,7 @@ file loads.** `Rules::AstOmissionRule` raises NameError cold. `require
 "review/scan/rule_dsl"` is the load that defines them.
 
 **A council pass looks exactly like a hang.** On a dev Mac the provider is the
-`claude` CLI, which buffers when stdout is not a TTY, so `/review master` sits
+`claude` CLI, which buffers when stdout is not a TTY, so `/fix --dry-run --critique master` sits
 at 0% CPU with an empty pipe for up to sixteen minutes while personas think.
 Count the `claude --print` subprocesses in `ps` before killing it.
 
@@ -424,7 +424,7 @@ the path, lets the council argue about what it found, weighs competing repairs,
 applies the strongest, validates it and reads the path again, until the tree
 converges, stops improving, or reaches a state MASTER may not settle alone. A
 run ends as DONE, PLATEAU, BLOCKED or VALIDATION_FAILED, and only DONE claims
-the work is finished. `/review` and `/critique` read and argue without writing.
+the work is finished. `/fix --dry-run --critique` reads and argues without writing.
 `/scan` is the detector-only observation surface; `/fix` adds repair and verification.
 
 **That means a fix mutates the tree** — it has broken dilla and MASTER's own
@@ -539,7 +539,7 @@ touches disk on any other path.
 
 **Tier.** Two meanings, both live. `bin/check --ladder` runs a *lexical* tier (law and the
 scan registry, deterministic, no model) and a *semantic* tier (the critique
-stage, `/review --only critique`, which reaches a provider); the semantic one is
+stage, `/fix --dry-run --critique --only critique`, which reaches a provider); the semantic one is
 currently unreachable
 and reports as skipped rather than clean. On a `laws.yml` row, `tier:` is the
 Law's category — `clean_code`, `style`, `safety` — and is what resolves a
@@ -572,7 +572,7 @@ to edit it by hand. Editing the build is a fix that survives until the next
 | Worn type / layout checks | `data/laws.yml` `design_rules.worn_type` + `MASTER/checks/support/geometry_type.rb`. Feed is a short measure; legal/prose is 66ch. |
 | brgen city network / verticals | `RAILS/brgen/AGENTS.md` — one process, city apex + subdomain engines |
 
-Touch-map: `data/agent_map.yml`. Law sections live in `data/laws.yml`. Work is a sentence, or `/review [path]`. Slash set: `/review` `/status` `/undo` `/commit` `/model` `/android` `/ios` `/doctor` `/help` `/clear`.
+Touch-map: `data/agent_map.yml`. Law sections live in `data/laws.yml`. Work is a sentence, or `/fix [path]`. Slash set: `/fix` `/status` `/undo` `/commit` `/model` `/android` `/ios` `/doctor` `/help` `/clear`.
 
 ## Checks
 

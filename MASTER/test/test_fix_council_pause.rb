@@ -18,7 +18,7 @@ class TestFixCouncilPause < Minitest::Test
   end
 
   def test_the_offer_names_the_command_that_convenes_it
-    assert_includes Master::CLI::Pipeline::Pass::COUNCIL_OFFER, "/critique"
+    assert_includes Master::CLI::Pipeline::Pass::COUNCIL_OFFER, "/fix --dry-run --critique"
   end
 
   def test_the_council_reads_a_diff_with_non_ascii_text_as_text

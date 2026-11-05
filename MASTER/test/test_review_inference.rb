@@ -33,7 +33,7 @@ class TestThroughInference < Minitest::Test
     assert_equal %w[bogus], pipeline.instance_variable_get(:@unknown_stages)
   end
 
-  # The flag parser is the other half: /review --only scan x and
+  # The flag parser is the other half: /fix --only scan x and
   # --only=scan must both leave the path alone.
   def test_the_only_flag_is_parsed_in_both_spellings
     registry = Master::CLI::CommandRegistry
@@ -413,14 +413,14 @@ class TestThroughInference < Minitest::Test
       assert_includes text, "SKIPPED semantic rules"
     end
   end
-  def test_analyze_explicit_tree_path_uses_the_review_route
+  def test_analyze_explicit_tree_path_uses_the_reading_route
     inferred = Master::CLI::TurnRouter.infer_operator_command(
       "analyze STUDIO/replicate/lora",
       container: { bus: nil, session: nil },
     )
 
-    assert_equal "review", inferred[:command]
-    assert_equal "STUDIO/replicate/lora", inferred[:args]
+    assert_equal "fix", inferred[:command]
+    assert_equal "--dry-run --critique --only critique,map STUDIO/replicate/lora", inferred[:args]
     assert_equal "/fix --dry-run --critique --only critique,map STUDIO/replicate/lora",
                  Master::CLI::TurnRouter.rewrite_slash("/#{inferred[:command]} #{inferred[:args]}")
   end

@@ -32,7 +32,7 @@ module Master
         # a beat" / a VHS look on a path then ran replicate/dilla/postpro as the
         # Falcon user and wrote under ~.
         return casual_reply(text, container:, felt_sense:, on_chunk:, image:) if visitor?
-        if text.match?(%r{\A(?:review|critique)\b}i) || text.match?(FIX_COMMAND)
+        if text.match?(FIX_COMMAND)
           return dispatch_slash(rewrite_slash("/#{text}"), container:, felt_sense:, on_turn:, cancellation:)
         end
         if deployment_intent?(text)
@@ -57,7 +57,7 @@ module Master
 
         inferred = infer_operator_command(text, container:)
         return dispatch_inferred(inferred, container:, felt_sense:, on_turn:, cancellation:) if inferred
-        return dispatch_review_pass(text, container:, felt_sense:, on_turn:, cancellation:) if full_workflow_intent?(text)
+        return dispatch_reading(text, container:, felt_sense:, on_turn:, cancellation:) if full_workflow_intent?(text)
         return casual_reply(text, container:, felt_sense:, on_chunk:, image:) if casual?(text)
 
         run_fold(text, container:, on_turn:, cancellation:)
@@ -144,33 +144,32 @@ module Master
         dispatch_slash("/#{word.downcase} #{args}".strip, container:)
       end
 
-      def dispatch_review_pass(text, container:, felt_sense: nil, on_turn: nil, cancellation: nil)
-        dispatch_inferred({ command: "review", args: pass_args_from(text), confidence: 0.9 }, container:, felt_sense:, on_turn:, cancellation:)
+      def dispatch_reading(text, container:, felt_sense: nil, on_turn: nil, cancellation: nil)
+        inferred = { command: "fix", args: reading_args(pass_args_from(text)), confidence: 0.9 }
+        dispatch_inferred(inferred, container:, felt_sense:, on_turn:, cancellation:)
       end
 
       # Two vocabularies, and they are not the same size on purpose.
       #
       # PIPELINE_COMMANDS is what a person types. There is one operation, /fix:
-      # it observes, critiques, repairs and observes again. "review" and
-      # "critique" are words for its reading half and rewrite to /fix --dry-run
-      # with the council on (READING_SLASH); /scan rewrites to /fix.
-      PIPELINE_COMMANDS = %w[review fix critique].freeze
+      # it observes, critiques, repairs and observes again; its reading half is
+      # /fix --dry-run --critique (READING_FLAGS). /scan rewrites to /fix.
+      PIPELINE_COMMANDS = %w[fix].freeze
 
       # MODEL_ALIASES is what the intent router accepts from a model, which is not
-      # ours to shrink. A model asked to name the command may answer "sweep" or
-      # "triad" — words this surface no longer offers — and the cost of not
+      # ours to shrink. A model asked to name the command may answer "sweep",
+      # "council" or "review", words no person types here, and the cost of not
       # accepting them is a request that falls silently to chat. They are read as
-      # /fix; none of them reaches the registry under its own name.
-      MODEL_ALIASES = %w[through workflow triad sweep self council].freeze
+      # /fix; the ones that do not write (READING_WORDS) as its reading half.
+      MODEL_ALIASES = %w[through workflow triad sweep self council review critique].freeze
+      READING_WORDS = %w[council review critique].freeze
       PIPELINE_WORDS = (PIPELINE_COMMANDS + MODEL_ALIASES).freeze
       FOLD_SLASH = %w[fold run].freeze
       READ_SLASH = %w[explain why laws axioms principles].freeze
-      # What a typed slash is allowed to be. Wider than the three words the surface
-      # offers, and deliberately: /scan, /sweep and /council were spellings people
-      # had learned, and a retired word that falls silently to chat is a worse
-      # answer than one that still works. They rewrite to /fix, the one command
-      # advertised.
-      PIPELINE_SLASH = %w[fix review critique council scan self workflow triad sweep through].freeze
+      # What a typed slash is allowed to be. Wider than the one word the surface
+      # offers: /scan and /sweep were spellings people had learned, and they
+      # rewrite to /fix, the one command advertised.
+      PIPELINE_SLASH = %w[fix scan self workflow triad sweep through].freeze
 
       INFER_MIN_CONFIDENCE = 0.62
 
@@ -183,14 +182,12 @@ module Master
         # Always accept through-class commands; other commands need confidence floor.
         return if !PIPELINE_WORDS.include?(command) && conf < INFER_MIN_CONFIDENCE
 
-        command = normalize_inferred_command(command, text)
+        reading = reading_intent?(command, text)
+        command = normalize_inferred_command(command)
         return if READ_SLASH.include?(command)
         return unless answered?(command, container)
 
-        # Every /fix spelling takes the same target, so "through itself" names MASTER as "fix itself" does.
-        args = PIPELINE_SLASH.include?(command) ? pass_command_args(value, text) : value.args.to_s
-
-        { command:, args:, confidence: conf }
+        { command:, args: inferred_args(command:, value:, text:, reading:), confidence: conf }
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "TurnRouter.infer_operator_command")
         nil
@@ -214,18 +211,30 @@ module Master
         value.intent == :command ? value : nil
       end
 
-      # "fix" keeps its word: rewriting it to review would lose the write.
-      # A model that says "scan" gets /fix as well, because scan was absorbed:
-      # observation is the first step of the writing lifecycle, not a separate
-      # command.
-      def normalize_inferred_command(command, text)
-        return "review" if text.match?(/--dry-run|--no-autofix|\bpreview\b/i) && !WRITING_SLASH.include?(command)
-        return "fix" if command == "scan"
-        return command if WRITING_SLASH.include?(command)
-        return "review" if PIPELINE_WORDS.include?(command)
+      # Every pipeline word becomes /fix. A model that says "scan" gets /fix as
+      # well, because scan was absorbed: observation is the first step of the
+      # writing lifecycle, not a separate command.
+      def normalize_inferred_command(command)
+        return "fix" if PIPELINE_WORDS.include?(command) || command == "scan"
 
         command
       end
+
+      # "fix" and the writing words keep the write; a word for reading, or a sentence that asks for
+      # a preview, gets /fix's reading half.
+      def reading_intent?(command, text)
+        return false if WRITING_SLASH.include?(command)
+
+        READING_WORDS.include?(command) || text.match?(/--dry-run|--no-autofix|\bpreview\b/i)
+      end
+
+      # Every /fix spelling takes the same target, so "through itself" names MASTER as "fix itself" does.
+      def inferred_args(command:, value:, text:, reading:)
+        args = PIPELINE_SLASH.include?(command) ? pass_command_args(value, text) : value.args.to_s
+        reading ? reading_args(args) : args
+      end
+
+      def reading_args(args) = [READING_FLAGS, args.to_s.strip].reject(&:empty?).join(" ")
 
       def pass_command_args(value, text)
         args = value.args.to_s
@@ -378,12 +387,9 @@ module Master
         memory
       end
 
-      # The words that read and argue without writing, and the /fix stages each
-      # selects. They were /review and /critique, two read-only adapters over the
-      # /fix pipeline; folded on 2026-11-04 so /fix is the only entry. --dry-run
-      # keeps them write-free and --critique turns the council on, which /fix
-      # leaves off when it is not writing. /council is the name people learned.
-      READING_SLASH = { "review" => "critique,map", "critique" => "critique", "council" => "critique" }.freeze
+      # /fix's reading half: --dry-run keeps it write-free and --critique turns the council on,
+      # which /fix leaves off when it is not writing; the principle map reads beside it.
+      READING_FLAGS = "--dry-run --critique --only critique,map"
 
       # The words that mean "go through the tree and change it". They are
       # spellings of /fix: a sweep with its own reading-and-repair lifecycle
@@ -394,9 +400,8 @@ module Master
         name, rest = input.sub(%r{\A/}, "").split(/\s+/, 2)
         name = name.to_s.downcase
         return input unless PIPELINE_SLASH.include?(name)
-        return ["/fix", rest.to_s.strip].reject(&:empty?).join(" ") if WRITING_SLASH.include?(name)
 
-        ["/fix --dry-run --critique --only #{READING_SLASH.fetch(name)}", rest.to_s.strip].reject(&:empty?).join(" ")
+        ["/fix", rest.to_s.strip].reject(&:empty?).join(" ")
       end
 
       def dispatch_slash(input, container:, felt_sense: nil, on_turn: nil, cancellation: nil)

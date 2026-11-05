@@ -13,8 +13,8 @@ module Master
       # `bin/operator laws <ID>` prints a card from. An argument filters by id or
       # name, so `/laws guard` narrows to the laws that govern guard clauses.
       #
-      # Read-only on purpose. The verb that enforces them is /review, and that
-      # needs --apply to write. A second verb that scans and fixes would be the
+      # Read-only on purpose. The verb that enforces them is /fix, and its
+      # --dry-run reading writes nothing. A second verb that scans and fixes would be the
       # same pipeline under another name.
       def dispatch_laws(root, ctx: nil)
         filter = arg_for(ctx).downcase

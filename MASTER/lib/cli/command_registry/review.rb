@@ -547,7 +547,7 @@ module Master
       # concatenate this into UTF-8 prompt text, and a truncation boundary
       # landing mid-character otherwise raises Encoding::CompatibilityError
       # the moment it's joined with anything not itself forced to BINARY
-      # (confirmed live: every /critique persona failing with exactly that
+      # (confirmed live: every council persona failing with exactly that
       # error, tracing back to this truncation never restoring the tag).
       def snapshot_truncate(text, byte_limit)
         text.b[0, byte_limit].force_encoding("UTF-8").scrub

@@ -145,7 +145,7 @@ module Master
 
       # Every LLM call in the tree arrives here — ideation, the council, the
       # semantic rules, the fix loop. With no provider key each one fails slowly
-      # somewhere below, so a /review pass sat at "crit0 deliberation" for ten
+      # somewhere below, so a /fix reading sat at "crit0 deliberation" for ten
       # minutes and printed nothing. One refusal, at the one door.
       #
       # format is a JSON schema a caller needs the reply to obey. The local tier

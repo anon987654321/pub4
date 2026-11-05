@@ -62,9 +62,9 @@ class TestCliCommandFlags < Minitest::Test
   end
 
   def test_spaced_only_flag_and_its_value_survive_together
-    argv = ["/review", "RAILS", "--only", "critique"]
+    argv = ["/fix", "RAILS", "--only", "critique"]
 
-    assert_equal "/review RAILS --only critique", @host.initial_message_from_argv(argv)
+    assert_equal "/fix RAILS --only critique", @host.initial_message_from_argv(argv)
   end
 
   def test_review_verbosity_flags_survive_without_option_errors

@@ -27,7 +27,7 @@ class CheckContractSpec < Minitest::Test
   end
 
   # One boot per tier per tree, because one boot does the whole tier: /scan
-  # already scans, fixes and re-scans, and /critique and /review both name the
+  # already scans, fixes and re-scans, and the council reading (SEMANTIC_LINE) is the
   # critique stage, so repeating either reruns the whole sequence.
   #
   # Asserted on the shape rather than the literal line, since the flag spellings
@@ -39,8 +39,8 @@ class CheckContractSpec < Minitest::Test
 
     assert_equal 1, lexical.scan(%r{/\w+}).size,
                  "the lexical tier boots bin/master once: /scan already fixes and re-scans"
-    assert_equal 1, semantic.scan(%r{/\w+}).size,
-                 "/critique and /review name one stage; running both runs the council twice"
+    assert_equal 1, semantic.scan(%r{SEMANTIC_LINE|/\w+}).size,
+                 "the council reading is one stage; running it twice runs the council twice"
   end
 
   # The chain ends with a clean tree, and that tree is MASTER plus whatever
@@ -71,7 +71,7 @@ class CheckContractSpec < Minitest::Test
   # /scans a directory that is not there.
   def test_check_deploy_paths_exist
     # Any flags, not one named flag, so a new flag is never read as a directory.
-    paths = check_explain.scan(%r{bin/master /\w+((?:\s+--[\w-]+)*)\s+(\S+)}).map(&:last).uniq
+    paths = check_explain.scan(%r{bin/master /\w+((?:\s+--[\w=,-]+)*)\s+(\S+)}).map(&:last).uniq
 
     assert_operator paths.size, :>=, 4, "expected the default ladder to name all four trees"
     paths.each do |relative|

@@ -100,7 +100,7 @@ spine:
   # block with a guard now, which is three lines more and one decision less
   # per line. Readable code costs lines, and this row is where that trade is
   # said out loud rather than absorbed.
-  # 38111 -> 38115 for the rename. /through is /review, named for lib/review,
+  # 38111 -> 38115 for the rename. /through is /fix; lib/review is
   # the subsystem that scans and critiques; the pipeline class is Pass, which
   # does not shadow Master::Review for any bare reference inside CLI. The four
   # lines are two vocabularies where there was one — what a person types and

@@ -99,12 +99,13 @@ TIER = if ARGV.include?("--lexical-only")
        end
 
 # One path per invocation, since /fix takes a single target, and one line per
-# tier, since one /fix already observes, repairs and observes again, and
-# /critique is the whole critique stage. Scan-only mode is `/fix --dry-run`:
-# the reading, and what a repair would take on, with nothing written.
+# tier: one /fix observes, repairs and observes again, and its council reading
+# (SEMANTIC_LINE) is the whole critique stage. Scan-only is `/fix --dry-run`.
+SEMANTIC_LINE = "/fix --dry-run --critique --only=critique"
+
 def lines_for(path)
   lexical = SCAN_ONLY ? ["/fix --dry-run #{path}"] : ["/fix #{path}"]
-  semantic = ["/critique #{path}"]
+  semantic = ["#{SEMANTIC_LINE} #{path}"]
   case TIER
   when :lexical then lexical
   when :semantic then semantic
@@ -154,7 +155,7 @@ end
 
 # A stage that could not measure did not pass.
 #
-# bin/master exits 0 when a command runs to completion, and /critique runs to
+# bin/master exits 0 when a command runs to completion, and the council reading runs to
 # completion whether or not its council answered. A green check claims the code
 # was reviewed, so when a stage says in its own output that it reached no
 # verdict, that is the verdict. MASTER/AGENTS.md states the rule under
@@ -204,7 +205,7 @@ def inconclusive!(message)
   # two different things with nearly the same operator-facing meaning: "the
   # semantic tier was unavailable" and "the semantic tier was satisfied by the
   # floor". Keep the states separate.
-  if message.start_with?("/critique ")
+  if message.start_with?("#{SEMANTIC_LINE} ")
     warn "check: semantic tier INCONCLUSIVE — deterministic checklist is supplemental and does not satisfy semantic review"
   end
 

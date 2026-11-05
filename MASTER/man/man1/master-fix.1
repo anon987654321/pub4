@@ -28,20 +28,19 @@ A plateau, human
 decision, blocked operation, validation failure, delivery failure or timeout
 is not a successful completion.
 .Pp
-.Cm /review
-and
-.Cm /critique
-are read-only views.
-They do not replace
+.Fl -dry-run
+reads without writing, and
+.Fl -critique
+convenes the council on that reading:
 .Cm /fix
-as the canonical repair lifecycle.
+is the one command.
 .Sh EXAMPLES
 .Bd -literal -offset indent
 MASTER/bin/master
 /fix
 /fix RAILS
 /fix --dry-run MASTER
-/review RAILS
+/fix --dry-run --critique RAILS
 .Ed
 .Sh SEE ALSO
 .Xr master 1 ,

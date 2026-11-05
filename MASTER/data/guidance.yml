@@ -310,7 +310,7 @@ guidance:
     - See reading_tiers — CLAUDE.md first; full constitution only for structural edits.
     playbook_command: bin/operator playbook — print codified operator lessons when signals match production friction
     check_standing_orders: Verify FSM state before any mutation -- UNCHANGE blocks refactoring
-    scan_before_analysis: Use /review via MASTER for read-only analysis; use /fix for convergence and writes
+    scan_before_analysis: Use /fix --dry-run via MASTER for read-only analysis; use /fix for convergence and writes
     ssh_edit_pattern: Write to /tmp, run ruby /tmp/patch.rb -- never ruby -i with heredoc
   corruption_prevention:
     llm_error_in_file: git checkout HEAD -- data/ && rcctl restart master -- LLM error strings silently

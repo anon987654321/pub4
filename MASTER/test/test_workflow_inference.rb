@@ -133,7 +133,7 @@ class WorkflowInferenceTest < Minitest::Test
     refute_match(/would repair/, out)
   end
 
-  # The reading (/review, now /fix --dry-run --critique --only critique,map)
+  # The reading (/fix --dry-run --critique --only critique,map)
   # is where the council is a stage of its own. Inside a writing /fix it argues
   # per repair instead, which test_fix_council covers.
   def test_the_reading_reaches_deliberation_when_critique_is_on

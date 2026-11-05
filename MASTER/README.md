@@ -124,8 +124,8 @@ add a constraint, add a rule. The spine does not grow.
 ## Fixing
 
 `/fix [path]` is MASTER's write-enabled repair and convergence operation.
-`/review` and `/critique` are read-only; explicit `--dry-run` measures and
-plans without writing. A repair reads the eligible scope and its available
+`--dry-run` measures and plans without writing, and `--critique` adds the
+council. A repair reads the eligible scope and its available
 source relationships before proposing changes. Missing or unresolved context
 blocks the affected repair rather than inviting a guess.
 

@@ -75,7 +75,7 @@ module Master
         end
 
         # limits.yml said profiles "filter the report". The walk still ran every
-        # rule, so `/review aesthetic master` spent hours on CONFIG_HIERARCHY.
+        # rule, so `/fix --dry-run aesthetic master` spent hours on CONFIG_HIERARCHY.
         # The filter is the walk: the report then describes what actually ran.
         def selected_laws
           return unless law_filter && scanner.respond_to?(:laws)

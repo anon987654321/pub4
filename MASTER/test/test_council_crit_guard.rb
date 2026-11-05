@@ -5,7 +5,7 @@ require_relative "test_helper"
 # Deliberation#review is where every council path arrives. Without a provider
 # key each persona call fails slowly and the council spends its whole budget
 # before reporting a quorum it could never reach, which reads as a hang: a
-# /review pass sat at "crit0 deliberation" for ten minutes and printed
+# /fix reading sat at "crit0 deliberation" for ten minutes and printed
 # nothing. Refusing here is the difference between that and an answer.
 class CouncilKeyGuardTest < Minitest::Test
   class LoudPersonaAgent

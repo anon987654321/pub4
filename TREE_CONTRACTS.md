@@ -88,7 +88,7 @@ degrade to warnings rather than failing, so a green run does not prove a
 measurement happened.
 
 **MASTER governs this tree.** `cd MASTER && ruby bin/check --ladder` runs
-the same `/scan → /fix → /critique → /review` chain over `RAILS/` that
+the same `/fix` and `/fix --dry-run --critique` chain over `RAILS/` that
 MASTER runs on itself, and `/fix` mutates the working tree.
 `MASTER_CHECK_SCAN_ONLY=1` for preflight.
 

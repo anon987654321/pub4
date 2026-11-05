@@ -432,17 +432,17 @@ class TestCommandRegistryDispatch < Minitest::Test
     assert_operator result.length, :<=, 170
   end
 
-  # /review and /critique were read-only adapters over /fix. They are words
-  # now, not verbs: nothing in the registry answers them, the router rewrites
-  # them to /fix, and help documents them on the /fix page.
-  def test_review_and_critique_are_spellings_of_fix_not_verbs
-    %w[review critique].each do |word|
+  # The reading half of /fix is its --dry-run --critique flags. No registry verb, router spelling or help
+  # page answers to review, critique or council, and the /fix page names the flags.
+  def test_the_reading_is_a_flag_of_fix_not_a_word
+    %w[review critique council].each do |word|
       refute built.key?(word), "#{word} is a registry verb again"
       refute_includes Registry::HELP_TOPICS.keys, word
       refute Registry.respond_to?(:"dispatch_#{word}"), "dispatch_#{word} came back"
-      assert_match(%r{\A/fix --dry-run --critique}, Master::CLI::TurnRouter.rewrite_slash("/#{word} lib"))
+      refute_includes Master::CLI::TurnRouter::PIPELINE_SLASH, word
+      refute_match(%r{/#{word}\b}, Registry.help_text("fix"))
     end
-    assert_match(%r{/review}, Registry.help_text("fix"))
+    assert_match(/--dry-run --critique/, Registry.help_text("fix"))
   end
 
   # A `*_commands` method is a table of verbs. Only control_commands exists,

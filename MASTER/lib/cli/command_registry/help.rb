@@ -21,9 +21,9 @@ module Master
             "--trace expands the redacted event payload; --normal and --quiet reduce output;",
             "MASTER_CLI_QUIET=1 silences the unit lines in the interactive CLI.",
             "--dry-run stops after the reading and says what it would take on.",
-            "/review [path] is the reading with the council and principle map, nothing",
-            "written (/fix --dry-run --critique --only critique,map); /critique and",
-            "/council are the council alone (--only critique).",
+            "--dry-run --critique --only critique,map is the reading with the council and",
+            "principle map, nothing written; --dry-run --critique --only critique is the",
+            "council alone.",
             "--intent=<content_only|content_and_structure|functional_change|redesign> pins",
             "the task contract; the default is functional_change.",
             "--only style (cosmetic, typography) runs the typographic audit alone: the",
@@ -354,8 +354,8 @@ module Master
         return help_summary if key.empty?
         return "/#{key} — leave the current MASTER session." if %w[exit quit].include?(key)
 
-        # review, critique, council, scan and the other pipeline words rewrite to
-        # /fix, so their help is the /fix page rather than "unknown command".
+        # scan and the other pipeline words rewrite to /fix, so their help is the
+        # /fix page rather than "unknown command".
         spellings = defined?(Master::CLI::TurnRouter) ? Master::CLI::TurnRouter::PIPELINE_SLASH : []
         key = "fix" if !HELP_TOPICS.key?(key) && spellings.include?(key)
         topic = HELP_TOPICS[key]
@@ -395,7 +395,7 @@ module Master
         "soul" => "constitution", "help" => "help", "exit" => "session", "quit" => "session"
       }.freeze
 
-      FIX_SUMMARY = "/fix [path] writes; /review and /critique are its reading; /help <command> shows syntax."
+      FIX_SUMMARY = "/fix [path] writes, or only reads with its flags; /help <command> shows syntax."
 
       CATEGORY_ORDER =%w[fix health session model review change interface media constitution help].freeze
 

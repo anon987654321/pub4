@@ -22,7 +22,7 @@ module Master
       # One line that repaints while a turn runs, and above it the turn as a
       # dmesg: each model call, file, command and request the turn makes, as a
       # unit attached to its parent. Routine bus events stay in the event log;
-      # one /review publishes about 28,700 of them.
+      # one /fix reading publishes about 28,700 of them.
       # The spinner may use the reserved row only while the prompt and draft
       # fit on one physical terminal row. Long drafts disable row painting rather
       # than risk cursor motion into text owned by Reline.

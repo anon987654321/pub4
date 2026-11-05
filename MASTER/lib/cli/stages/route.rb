@@ -49,7 +49,7 @@ module Master
         # commands this catches. That is a trade, not a fold.
         #
         # Before distance is measured at all, a shared stem wins: /movie and
-        # /movs are spellings of /mov, not neighbours of /review and /ios. An
+        # /movs are spellings of /mov, not neighbours of /fix and /ios. An
         # old suggestion paired /mov with /ios — two edits apart — because the
         # bar did not scale with the word's length, and distance alone cannot
         # tell a stem from a slip.

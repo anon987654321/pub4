@@ -342,7 +342,7 @@ class TestWebUI < Minitest::Test
     assert_includes chat, "_chatOnCtxFooter"
     assert_includes chat, "_chatOnPhantom"
     # /btw research and /rebuild were retired by 7c23a5ee5, which cut the slash
-    # surface to a sentence and eight verbs: work is plain language or /review.
+    # surface to a sentence and eight verbs: work is plain language or /fix.
     # Asserting a command the surface deliberately dropped tests the old design.
     # The verbs live in the CLI registry; what the page owes them is the pass-through.
     assert_includes actions, 'message.startsWith("/")'

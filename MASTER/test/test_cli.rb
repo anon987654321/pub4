@@ -334,16 +334,15 @@ class TestCLI < Minitest::Test
 
   def test_help_uses_progressive_disclosure
     summary = Master::CLI::CommandRegistry.help_text
-    review = Master::CLI::CommandRegistry.help_text("review")
     fix = Master::CLI::CommandRegistry.help_text("fix")
 
     assert_match(%r{^fix0 at master0: /fix \[path\]$}, summary)
     assert_match(/^health0 at master0: \/status \/doctor \/events$/, summary)
     assert_match(/^help0 at master0: \/help \[command\]$/, summary)
     refute_includes summary, "--dry-run"
-    # /review is a spelling of /fix now; its help is the /fix page, which names it.
-    assert_includes review, "/review [path]"
-    assert_includes review, "--only", "the stages are the detail, not the summary"
+    # The reading is /fix's flags, named on its page; /review is no command.
+    assert_includes fix, "--only", "the stages are the detail, not the summary"
+    assert_includes Master::CLI::CommandRegistry.help_text("review"), "unknown command /review"
     assert_includes fix, "--dry-run", "the flag that holds the repair back is the detail"
   end
 
@@ -692,7 +691,7 @@ end
   def test_help_names_the_closed_set
     summary = Master::CLI::CommandRegistry.help_text
 rows = summary.scan(%r{(?<=\s)/(\w+)}).flatten
-%w[review status undo commit model doctor laws why orders soul help clear].each do |name|
+%w[status undo commit model doctor laws why orders soul help clear].each do |name|
   assert_includes rows, name
 end
 assert_includes rows, "fix"
@@ -745,7 +744,7 @@ assert_empty topics - rows, "documented commands missing from the summary"
     assert_equal 0, children.kill_all, "the child must be gone"
   end
 
-# A turn printed every bus event, 28,700 lines for one /review, and then
+# A turn printed every bus event, 28,700 lines for one /fix reading, and then
 # nothing but its writes. Now it prints what the model does, as dmesg units:
 # each call, file and request attaches and reports; scan chatter stays out.
 def publish_a_call_and_a_fetch(bus)
