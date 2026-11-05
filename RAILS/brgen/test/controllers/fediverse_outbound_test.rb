@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "test_helper"
+require "minitest/mock"
 
 # The outbound half: following somebody, telling the fediverse about an edit,
 # and refusing an instance.
@@ -46,6 +47,50 @@ class FediverseOutboundTest < ActionDispatch::IntegrationTest
     follow = FediFollow.outbound.last
     assert_equal "pending", follow.state
     assert follow.activity_uri.present?, "the Follow id has to be kept — an Accept names it"
+  end
+
+  def webfinger_for(handle_host, href)
+    lambda do |url|
+      next unless url.start_with?("https://#{handle_host}/.well-known/webfinger?")
+
+      profile = { "rel" => "http://webfinger.net/rel/profile-page", "type" => "text/html",
+                  "href" => "https://#{handle_host}/@ola" }
+      actor = { "rel" => "self", "type" => "application/activity+json", "href" => href }
+      { "subject" => "acct:ola@#{handle_host}", "links" => [ profile, actor ] }
+    end
+  end
+
+  test "a handle is resolved through WebFinger and followed like its actor URL" do
+    sign_in
+
+    Fediverse::Client.stub(:get_json, webfinger_for("remote.example", @actor_uri)) do
+      assert_difference -> { FediFollow.outbound.where(fedi_actor: @actor).count }, 1 do
+        post fediverse_follows_path, params: { uri: "@ola@remote.example" }
+      end
+    end
+    assert_redirected_to fediverse_follows_path
+    assert_equal I18n.t("flash.fediverse.follow_sent"), flash[:notice]
+  end
+
+  test "a handle WebFinger cannot resolve is reported as not found" do
+    sign_in
+
+    Fediverse::Client.stub(:get_json, ->(_url) { { "links" => [] } }) do
+      assert_no_difference -> { FediFollow.outbound.count } do
+        post fediverse_follows_path, params: { uri: "ola@remote.example" }
+      end
+    end
+    assert_equal I18n.t("flash.fediverse.follow_not_found"), flash[:alert]
+  end
+
+  test "a handle on a blocked instance is refused before anything is fetched" do
+    FediBlock.create!(domain: "remote.example")
+    sign_in
+
+    Fediverse::Client.stub(:get_json, ->(url) { flunk "fetched #{url}" }) do
+      post fediverse_follows_path, params: { uri: "@ola@remote.example" }
+    end
+    assert_equal I18n.t("flash.fediverse.follow_blocked"), flash[:alert]
   end
 
   test "the remote Accept answers our own follow, and only ours" do

@@ -10,7 +10,15 @@ module Fediverse
   module FollowRemote
     module_function
 
+    # uri is an actor URL or a handle (@kari@mastodon.example), resolved
+    # through WebFinger first.
     def call(user:, uri:)
+      # A blocked instance is not asked, not even for a WebFinger lookup.
+      host = WebFinger.host_uri(uri)
+      return :blocked if host && FediBlock.blocked_uri?(host)
+
+      uri = WebFinger.resolve(uri)
+      return :not_found if uri.blank?
       return :blocked if FediBlock.blocked_uri?(uri)
 
       actor = ActorFetcher.find_or_fetch(uri)

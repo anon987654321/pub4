@@ -1788,7 +1788,7 @@ nb:
     following_title: Følger andre steder
     following_eyebrow: Fødiverset
     follow_label: Adressen deres
-    follow_help: "Lenken til kontoen, fra Mastodon eller noe annet som snakker ActivityPub."
+    follow_help: "Brukernavnet, som @kari@mastodon.example, eller lenken til kontoen, fra Mastodon eller noe annet som snakker ActivityPub."
     follow_send: Følg
     following_empty: Følger ingen ennå
     following_empty_body: "Lim inn en adresse over, så spør vi instansen deres."

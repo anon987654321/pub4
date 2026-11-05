@@ -1740,7 +1740,7 @@ items:
   item: Accept @user@domain handles in the remote-follow form by resolving them through
     WebFinger in FollowRemote; today only a full actor URL works, which few people
     know.
-  status: open
+  status: done
 - id: brgen-104
   app: brgen
   area: feed

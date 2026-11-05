@@ -10,7 +10,10 @@
 <%= form_with url: fediverse_follows_path, method: :post, class: "form-wrap" do |f| %>
   <div class="field">
     <%= f.label :uri, t("fediverse.follow_label") %>
-    <%= f.url_field :uri, required: true, placeholder: "https://mastodon.example/users/kari", inputmode: "url" %>
+    <%# A text field, not url: the handle people know (@kari@mastodon.example)
+        is no URL, and FollowRemote resolves it through WebFinger. %>
+    <%= f.text_field :uri, required: true, placeholder: "@kari@mastodon.example", autocomplete: "off",
+                     autocapitalize: "none", spellcheck: false %>
     <p class="form-help"><%= t("fediverse.follow_help") %></p>
   </div>
   <p><%= f.submit t("fediverse.follow_send"), class: "button button-primary" %></p>
