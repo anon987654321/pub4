@@ -17,7 +17,7 @@ module Master
       PLAN_KEY = :master_fix_task_contract_plan_digest
       MAX_PRESERVATION_ROWS = 256
 
-      Contract = Data.define(:schema, :intent, :scope, :preserve, :proof) do
+      Contract = Data.define(:schema, :intent, :scope, :preserve, :proof, :new_paths) do
         def to_h
           {
             "schema" => schema,
@@ -25,6 +25,7 @@ module Master
             "scope" => scope,
             "preserve" => preserve,
             "proof" => proof,
+            "new_paths" => new_paths,
           }
         end
       end
@@ -47,12 +48,13 @@ module Master
         end
         raise Invalid, "task contract must be a mapping" unless attributes.is_a?(Hash)
         input = attributes.to_h { |key, value| [key.to_s, value] }
+        schema = template(path:)
+        optional = Array(schema.fetch("optional_fields", [])).map(&:to_s)
         missing = REQUIRED - input.keys
         raise Invalid, "task contract is missing: #{missing.join(', ')}" unless missing.empty?
-        unknown = input.keys - REQUIRED
+        unknown = input.keys - REQUIRED - optional
         raise Invalid, "task contract has unknown fields: #{unknown.join(', ')}" unless unknown.empty?
 
-        schema = template(path:)
         intent = input.fetch("intent").to_s
         policy = schema.fetch("intents")[intent]
         raise Invalid, "unknown task intent: #{intent.inspect}" unless policy.is_a?(Hash)
@@ -70,6 +72,7 @@ module Master
         allowed_proof = Array(schema.fetch("proof_types")).map(&:to_s)
         unknown_proof = proof - allowed_proof
         raise Invalid, "unknown proof type(s): #{unknown_proof.join(', ')}" unless unknown_proof.empty?
+        new_paths = normalize_new_paths(input.fetch("new_paths", []), scope:, schema:)
 
         Contract.new(
           schema.fetch("schema"),
@@ -77,7 +80,37 @@ module Master
           scope.freeze,
           (preservation + required_preservation).uniq.sort.freeze,
           (proof + Array(schema.fetch("common_proof")).map(&:to_s)).uniq.sort.freeze,
+          new_paths.freeze,
         ).freeze
+      end
+
+      # New paths are exact, task-scoped and justified. Globs can cover edits
+      # to existing files; they are too broad to authorise new structure.
+      def normalize_new_paths(value, scope:, schema:)
+        raise Invalid, "task contract new_paths must be an array" unless value.is_a?(Array)
+
+        fields = Array(schema.fetch("new_path_fields", %w[path reason])).map(&:to_s)
+        rows = value.map do |row|
+          raise Invalid, "each new_paths entry must be a mapping" unless row.is_a?(Hash)
+
+          attributes = row.to_h { |key, item| [key.to_s, item] }
+          missing = fields - attributes.keys
+          unknown = attributes.keys - fields
+          raise Invalid, "new_paths entry is missing: #{missing.join(', ')}" unless missing.empty?
+          raise Invalid, "new_paths entry has unknown fields: #{unknown.join(', ')}" unless unknown.empty?
+
+          path = safe_path(attributes.fetch("path"))
+          raise Invalid, "new_paths requires an exact file path: #{path.inspect}" if path.match?(/[*?\[\]{}]/)
+          raise Invalid, "new path is outside task-contract scope: #{path}" unless covers?(path, scope:)
+          reason = attributes.fetch("reason").to_s.strip
+          raise Invalid, "new_paths reason must be non-empty: #{path}" if reason.empty?
+
+          { "path" => path.freeze, "reason" => reason.freeze }.freeze
+        end
+        duplicates = rows.map { |row| row.fetch("path") }.tally.select { |_path, count| count > 1 }.keys
+        raise Invalid, "duplicate new_paths declaration(s): #{duplicates.join(', ')}" unless duplicates.empty?
+
+        rows.freeze
       end
 
       def coerce(value, path: PATH)
@@ -93,6 +126,25 @@ module Master
       # restore their caller's contract, and exceptions never leak it to later work.
       def current
         Thread.current[:master_fix_task_contract]
+      end
+
+      # Refuse unplanned file creation inside the repository. Existing files
+      # remain editable without a declaration; legacy callers without a task
+      # contract retain their behavior and are not contract-verified.
+      def new_path_refusal(path, contract: current, repo_root: nil)
+        return unless contract
+
+        root = File.expand_path(
+          repo_root || (defined?(Master::REPO_ROOT) ? Master::REPO_ROOT : File.expand_path("../../..", __dir__))
+        )
+        absolute = File.expand_path(path.to_s, root)
+        return unless absolute.start_with?(root + File::SEPARATOR)
+        return if File.exist?(absolute) || File.symlink?(absolute)
+
+        relative = absolute.delete_prefix(root + File::SEPARATOR)
+        return if contract.new_paths.any? { |entry| entry.fetch("path") == relative }
+
+        "new tracked path #{relative} is undeclared; extend an existing owner or declare the exact path and reason in task_contract.new_paths"
       end
 
       def with_current(value)
@@ -204,6 +256,8 @@ module Master
         {
           "schema" => schema.fetch("schema"),
           "required_fields" => schema.fetch("required_fields"),
+          "optional_fields" => schema.fetch("optional_fields", []),
+          "new_path_fields" => schema.fetch("new_path_fields", %w[path reason]),
           "common_proof" => schema.fetch("common_proof"),
           "intents" => schema.fetch("intents").transform_values { |value| value.slice("description", "must_preserve") },
         }
@@ -219,6 +273,8 @@ module Master
           "Intent is explicit; choose the narrowest mode supported by the request. Do not silently promote a content edit into a redesign.",
           *rows,
           "Scope paths are repository-relative. Preserve all mandatory dimensions for the selected intent.",
+          "Existing paths are the default: extend the nearest owner and its existing tests before adding a tracked file.",
+          "A new tracked file needs an exact path and non-empty reason in optional new_paths, inside the task scope. A new directory needs a genuine ownership boundary; never create helpers, tests, docs, config or utility folders merely for convenience.",
           "Proof always includes baseline hashes, a path-scoped diff and a Law assessment. Add relevant tests, rendered/runtime evidence, accessibility review, citations or human review.",
           "If a required measurement is absent or a format has no verifier, report INCONCLUSIVE or NOT_RUN; do not infer PASS.",
           "Schema: MASTER/data/task_contract.yml.",

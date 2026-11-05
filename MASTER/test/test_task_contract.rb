@@ -93,6 +93,76 @@ class TestTaskContract < Minitest::Test
     end
   end
 
+  def test_new_paths_are_exact_justified_and_inside_scope
+    contract = CONTRACT.build(
+      intent: "functional_change",
+      scope: ["MASTER/lib/example.rb"],
+      preserve: [],
+      proof: [],
+      new_paths: [{ path: "MASTER/lib/example.rb", reason: "A separately loaded protocol adapter." }],
+    )
+
+    assert_equal [{ "path" => "MASTER/lib/example.rb", "reason" => "A separately loaded protocol adapter." }],
+                 contract.new_paths
+    assert_equal contract.new_paths, contract.to_h.fetch("new_paths")
+    assert_includes CONTRACT.agent_schema.fetch("optional_fields"), "new_paths"
+
+    assert_raises(CONTRACT::Invalid) do
+      CONTRACT.build(intent: "functional_change", scope: ["MASTER/lib/example.rb"],
+                      preserve: [], proof: [], new_paths: [{ path: "MASTER/lib/example.rb" }])
+    end
+    assert_raises(CONTRACT::Invalid) do
+      CONTRACT.build(intent: "functional_change", scope: ["MASTER/lib/**"],
+                      preserve: [], proof: [], new_paths: [{ path: "MASTER/lib/example.rb", reason: "Scoped" },
+                                                          { path: "MASTER/lib/example.rb", reason: "Duplicate" }])
+    end
+    assert_raises(CONTRACT::Invalid) do
+      CONTRACT.build(intent: "functional_change", scope: ["MASTER/lib/**"],
+                      preserve: [], proof: [], new_paths: [{ path: "MASTER/lib/new*.rb", reason: "Wildcard" }])
+    end
+    assert_raises(CONTRACT::Invalid) do
+      CONTRACT.build(intent: "functional_change", scope: ["MASTER/lib/existing.rb"],
+                      preserve: [], proof: [], new_paths: [{ path: "MASTER/lib/example.rb", reason: "Outside scope" }])
+    end
+  end
+
+  def test_new_path_refusal_only_requires_declaration_for_missing_repo_paths
+    Dir.mktmpdir("task-contract-new-path", Master::REPO_ROOT) do |root|
+      relative = File.join(root.delete_prefix(Master::REPO_ROOT + File::SEPARATOR), "new.rb")
+      path = File.join(root, "new.rb")
+      undeclared = CONTRACT.build(intent: "functional_change", scope: [relative], preserve: [], proof: [])
+      declared = CONTRACT.build(
+        intent: "functional_change", scope: [relative], preserve: [], proof: [],
+        new_paths: [{ path: relative, reason: "A distinct executable entrypoint." }],
+      )
+
+      assert_match(/new tracked path/, CONTRACT.new_path_refusal(path, contract: undeclared))
+      assert_nil CONTRACT.new_path_refusal(path, contract: declared)
+      File.write(path, "existing")
+      assert_nil CONTRACT.new_path_refusal(path, contract: undeclared)
+    end
+  end
+
+  def test_transaction_rejects_undeclared_new_paths_and_accepts_declared_ones
+    Dir.mktmpdir("task-contract-new-transaction", Master::REPO_ROOT) do |root|
+      relative = File.join(root.delete_prefix(Master::REPO_ROOT + File::SEPARATOR), "created.rb")
+      denied = CONTRACT.build(intent: "functional_change", scope: [relative], preserve: [], proof: [])
+      allowed = CONTRACT.build(
+        intent: "functional_change", scope: [relative], preserve: [], proof: [],
+        new_paths: [{ path: relative, reason: "A distinct runtime adapter." }],
+      )
+
+      CONTRACT.with_current(denied) do
+        assert_raises(CONTRACT::Invalid) { Master::Fix::Transaction.new(root:, paths: ["created.rb"]) }
+      end
+
+      CONTRACT.with_current(allowed) do
+        transaction = Master::Fix::Transaction.new(root:, paths: ["created.rb"]).begin!
+        assert transaction.rollback!.ok?
+      end
+    end
+  end
+
   def test_content_only_adds_all_mandatory_preservation_and_proof
     contract = CONTRACT.build(
       intent: "content_only",

@@ -74,6 +74,33 @@ class WriteGuardTest < Minitest::Test
     refute_predicate @guard.verdict(path:, content: "# frozen_string_literal: true\n\ndef work = 1\n"), :blocked?
   end
 
+  def test_new_repository_files_need_an_exact_task_contract_declaration
+    Dir.mktmpdir("write-guard-new-path", Master::REPO_ROOT) do |directory|
+      target = File.join(directory, "new_adapter.rb")
+      relative = target.delete_prefix(Master::REPO_ROOT + File::SEPARATOR)
+      content = "# frozen_string_literal: true\n\nVALUE = 1\n"
+      contract = Master::Fix::TaskContract
+
+      undeclared = contract.build(intent: "functional_change", scope: [relative], preserve: [], proof: [])
+      contract.with_current(undeclared) do
+        verdict = @guard.verdict(path: target, content:)
+        assert_predicate verdict, :blocked?
+        assert_match(/new tracked path/, verdict.reason)
+      end
+
+      declared = contract.build(
+        intent: "functional_change",
+        scope: [relative],
+        preserve: [],
+        proof: [],
+        new_paths: [{ path: relative, reason: "A distinct adapter with its own consumer." }],
+      )
+      contract.with_current(declared) do
+        refute_predicate @guard.verdict(path: target, content:), :blocked?
+      end
+    end
+  end
+
   # Operator decision 2026-10-28: an automated write to the laws or the soul is refused with a reason,
   # whatever its content.
   def test_an_automated_write_to_the_laws_or_the_soul_is_refused

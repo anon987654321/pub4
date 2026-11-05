@@ -157,6 +157,18 @@ module Operator
       tracked.select { |f| VAGUE.include?(File.basename(f, File.extname(f))) }.sort
     end
 
+    # Every tracked path costs maintenance, whether it is source, test, asset,
+    # fixture, documentation or configuration. Directories derive from tracked
+    # paths, so Git-empty directories do not create false structure.
+    def tracked_files = all_tracked.sort
+
+    def tracked_directories
+      @tracked_directories ||= all_tracked.flat_map do |path|
+        segments = path.split("/")
+        (1...segments.length).map { |depth| segments.first(depth).join("/") }
+      end.uniq.sort
+    end
+
     # A census that reads nothing reports nothing and passes. MASTER/tools check did
     # exactly that for the length of a worktree: VENDORED matched the absolute
     # path, every file was excluded, and it announced inconclusive rather than
@@ -173,7 +185,13 @@ module Operator
     end
 
     def counts
-      { "lone_dirs" => lone_dirs.size, "stutter" => stutter.size, "vague_names" => vague_names.size }
+      {
+        "lone_dirs" => lone_dirs.size,
+        "stutter" => stutter.size,
+        "vague_names" => vague_names.size,
+        "tracked_files" => tracked_files.size,
+        "tracked_directories" => tracked_directories.size,
+      }
     end
 
     def ceilings
@@ -192,16 +210,19 @@ module Operator
       return list_members if list
 
       over = now.select { |k, v| v > recorded.fetch(k, v) }
+      unless over.empty?
+        over.each do |k, v|
+          puts "sprawl_census: #{k} rose to #{v} from #{recorded.fetch(k)} — reuse existing structure or remove the excess"
+        end
+        return 1
+      end
+
       if ratchet && now.any? { |k, v| v < recorded.fetch(k, v) }
         merged = recorded.merge(now) { |_, old, new| [old, new].min }
         File.write(CEILINGS, merged.merge("corpus" => tracked.size).to_yaml)
         puts "sprawl_census: recorded a new low"
-        return 0
       end
-      return 0 if over.empty?
-
-      over.each { |k, v| puts "sprawl_census: #{k} rose to #{v} from #{recorded.fetch(k)} — flatten it, name it, or price the ceiling" }
-      1
+      0
     end
 
     def list_members

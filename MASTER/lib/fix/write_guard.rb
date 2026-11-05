@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "../configuration_guard"
+require_relative "task_contract"
 
 module Master
   module Fix
@@ -69,6 +70,9 @@ module Master
       def refusal(path:, content:, automated:)
         if automated && (reason = Master::Core::Constitution::Paths.write_refusal(path))
           return [:sacred_path, reason]
+        end
+        if (reason = TaskContract.new_path_refusal(path))
+          return [:new_path, reason]
         end
         if (reason = Master::Core::Constitution.forbidden_file_reason(path))
           return [:forbidden_file, reason]

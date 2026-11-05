@@ -255,8 +255,8 @@ module Operator
     end
 
     def sprawl_rows
-      %w[lone_dirs stutter vague_names].map do |kind|
-        master_row("sprawl.#{kind}", "data/sprawl_census.yml", "the shape of the tree, in all four top-level trees") do
+      %w[lone_dirs stutter vague_names tracked_files tracked_directories].map do |kind|
+        master_row("sprawl.#{kind}", "data/sprawl_census.yml", "tracked files and directories across all four governed trees") do
           require File.join(MASTER, "lib/operator/sprawl_census")
           [Operator::SprawlCensus.counts.fetch(kind), Operator::SprawlCensus.ceilings.fetch(kind),
            Array(Operator::SprawlCensus.public_send(kind))]

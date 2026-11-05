@@ -1,5 +1,7 @@
 schema: 1
 required_fields: [intent, scope, preserve, proof]
+optional_fields: [new_paths]
+new_path_fields: [path, reason]
 common_proof: [baseline_hashes, path_scoped_diff, law_assessment]
 # documentation_review (convergence.yml workstream documentation_completeness)
 # names doc-side proof for a change that moves a public contract: the diff

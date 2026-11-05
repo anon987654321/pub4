@@ -184,6 +184,21 @@ contracts with `Master::Fix::TaskContract`; the schema lives in
 run has exercised; permission observations do not prove a successful write.
 
 
+**Existing-first structure is the default.** Extend the nearest existing owner
+and its existing tests before adding a tracked path. A new file is justified
+only by a distinct responsibility, public boundary, framework/deployment
+requirement or independently maintained artifact that cannot reasonably live
+in an existing owner. Declare its exact repository-relative path and a concrete
+reason in `TaskContract.new_paths`; it must also lie inside the task scope.
+A new directory is justified only when that declared file needs a genuine
+ownership boundary. Keep additions to the minimum required. Do not split a
+method/class, add a helper, create a separate test/fixture, documentation or
+configuration file, or make a utility directory merely for convenience. Use
+existing README, test, config, asset, tool and namespace locations first.
+Report added/removed files and directories in the delivery summary.
+
+
+
 Task routing and minimum proof:
 
 - **MASTER behavior or Laws:** read the owning Law, implementation and callers;

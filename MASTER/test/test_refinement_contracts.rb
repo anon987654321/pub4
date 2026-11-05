@@ -86,6 +86,46 @@ class TestRefinementContracts < Minitest::Test
     assert_empty Operator::SprawlCensus.base_tree_findings
   end
 
+  def test_sprawl_census_counts_every_tracked_file_and_derived_directory
+    census = Operator::SprawlCensus
+    files = census.all_tracked
+    expected_directories = files.flat_map do |path|
+      parts = path.split("/")
+      (1...parts.length).map { |depth| parts.first(depth).join("/") }
+    end.uniq
+
+    assert_equal files.size, census.counts.fetch("tracked_files")
+    assert_equal expected_directories.size, census.counts.fetch("tracked_directories")
+    assert_operator census.counts.fetch("tracked_files"), :>, 0
+  end
+
+  def test_sprawl_ratchet_does_not_hide_an_overage_when_another_metric_falls
+    census = Operator::SprawlCensus
+    ceilings = {
+      "lone_dirs" => 20, "stutter" => 0, "vague_names" => 0,
+      "tracked_files" => 6614, "tracked_directories" => 847, "corpus" => 3253,
+    }
+    values = {
+      "lone_dirs" => 19, "stutter" => 0, "vague_names" => 0,
+      "tracked_files" => 6615, "tracked_directories" => 847,
+    }
+    writes = []
+    result = nil
+
+    census.stub(:counts, values) do
+      census.stub(:ceilings, ceilings) do
+        census.stub(:base_tree_findings, []) do
+          File.stub(:write, ->(*args) { writes << args }) do
+            capture_io { result = census.run(ratchet: true) }
+          end
+        end
+      end
+    end
+
+    assert_equal 1, result
+    assert_empty writes, "a lower metric must not ratchet away an overage in another metric"
+  end
+
   def test_constitution_contract_is_clean
     result = Operator::ConstitutionContract.new.check
     assert result.clean?

@@ -546,10 +546,19 @@ module Master
           relative = Pathname.new(full).relative_path_from(Pathname.new(repo_root)).to_s
           TaskContract.covers?(relative, scope: contract.scope)
         end
-        return if uncovered.empty?
+        unless uncovered.empty?
+          raise TaskContract::Invalid,
+                "transaction paths outside task-contract scope: #{uncovered.first(5).join(", ")}"
+        end
+
+        unapproved = Array(paths).filter_map do |path|
+          full = File.expand_path(path, @root)
+          TaskContract.new_path_refusal(full, contract:, repo_root:)
+        end
+        return if unapproved.empty?
 
         raise TaskContract::Invalid,
-              "transaction paths outside task-contract scope: #{uncovered.first(5).join(", ")}"
+              "transaction new paths need explicit task-contract.new_paths declarations: #{unapproved.first(3).join("; ")}"
       end
 
       def normalize(path)
