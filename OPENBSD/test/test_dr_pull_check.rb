@@ -69,10 +69,10 @@ class TestDrPullCheck < Minitest::Test
   end
 
   def test_check_does_not_follow_a_symlinked_timestamp_directory
-    FileUtils.rm_rf(@pull)
     outside = File.join(@root, "outside")
     FileUtils.mkdir_p(outside)
-    FileUtils.cp(File.join(@root, "outside.sqlite3"), File.join(outside, "brgen-production.sqlite3")) if File.file?(File.join(@root, "outside.sqlite3"))
+    FileUtils.mv(@database, File.join(outside, "brgen-production.sqlite3"))
+    FileUtils.rm_rf(@pull)
     File.symlink(outside, @pull)
 
     output, status = run_check
