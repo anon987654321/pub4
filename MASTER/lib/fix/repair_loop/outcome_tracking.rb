@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative "../autofix_guard"
+
 module Master
   module Fix
     class RepairLoop
@@ -19,7 +21,11 @@ module Master
         # documented (feedback_policy.rs, issue #236) after making the same
         # mistake. :skipped is still recorded (queryable) but excluded from
         # fix_quality's denominator entirely.
-        OUTCOMES = %i[applied commit_refused no_proposal model_failed reflexion_rejected consensus_rejected rejected out_of_scope file_timeout skip_rejected_twice skip_confidence skip_fingerprint skip_fused skip_law_budget needs_person].freeze
+        OUTCOMES = %i[
+          applied commit_refused no_proposal model_failed reflexion_rejected consensus_rejected
+          rejected out_of_scope file_timeout skip_rejected_twice skip_confidence skip_fingerprint
+          skip_fused skip_law_budget skip_protected needs_person
+        ].freeze
 
         def fix_batch(violations)
           results = []
@@ -37,21 +43,32 @@ module Master
           results.count { |r| r == :applied || r == :commit_refused }
         end
 
-        # Two refusals stand between a violation and the model, both skips so
-        # neither poisons the rule's quality score: a tuple that already failed
-        # ToolBreaker::LIMIT times against an unchanged file, and a law past its
-        # RunBudget share. What the attempt then costs is billed to its law.
+        # Three refusals stand between a violation and the model, all skips so
+        # none poisons the rule's quality score: a protected file, a tuple that
+        # already failed ToolBreaker::LIMIT times against an unchanged file, and a
+        # law past its RunBudget share. What the attempt then costs is billed to its law.
+        #
+        # The protected check is the one AutofixGuard gives the deterministic
+        # writers. Without it a model repair wrote its candidate into a protected
+        # file to test it, and RunBudget's protected-path watch stopped the run.
         def attempt(violation)
+          return :skip_protected if protected_target?(violation)
+
+          law = @law.id
           state = ToolBreaker.state_of(violation)
-          return :skip_fused if ToolBreaker.refuse?(@law.id, violation, state)
-          return :skip_law_budget if RunBudget.law_limit_exceeded?(@law.id)
+          return :skip_fused if ToolBreaker.refuse?(law, violation, state)
+          return :skip_law_budget if RunBudget.law_limit_exceeded?(law)
 
           usd, tokens = RunBudget.run_spend
           result = fix_violation(violation)
-          ToolBreaker.record(@law.id, violation, state, result)
+          ToolBreaker.record(law, violation, state, result)
           after_usd, after_tokens = RunBudget.run_spend
-          RunBudget.note_law_cost(@law.id, after_usd - usd, after_tokens - tokens)
+          RunBudget.note_law_cost(law, after_usd - usd, after_tokens - tokens)
           result
+        end
+
+        def protected_target?(violation)
+          AutofixGuard.protected_reason(File.expand_path(violation[:file].to_s, @root), root: @root)
         end
 
         def immediate_delivery_boundary?(result)
