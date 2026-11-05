@@ -63,9 +63,10 @@ class FileLengthRatchetTest < Minitest::Test
     # LIVE_NOTES still resolves through the ancestor chain. The seeder's own six
     # tests pass unchanged, which is the proof the move preserved it.
     # 337 -> 336: seed_listings and seed_live_posts each spelled the four-line
-    # city-centre fallback, and base_coordinates says it once. That paid for
-    # the line that stores a demo post's link embed, with one to spare.
-    "brgen/lib/brgen/bergen_demo_seeder.rb" => 333,
+    # city-centre fallback, and base_coordinates says it once.
+    # It left this list on 2026-11-05 at 337, four over: the Radio Bergen
+    # playlist step and the manifest reads it alone uses moved whole to
+    # bergen_demo_radio.rb, included the way bergen_demo_data.rb is.
     # The data itself, which is long because Bergen is. It is on this list for
     # the same reason db/seeds.rb is: splitting it is possible, not obviously
     # worth doing. Splitting it further would be splitting a list of restaurants
@@ -178,7 +179,9 @@ class FileLengthRatchetTest < Minitest::Test
     # and after, byte-identical.
     # +5 in 7ed6920cd — the seeds asked for a visible profile without a photo,
     # which gated every deploy.
-    "brgen/db/seeds.rb" => 426,
+    # 477 -> 408, from 51 over: the takeaway step moved whole to
+    # lib/brgen/takeaway_seed.rb, the restaurants it returns read back here.
+    "brgen/db/seeds.rb" => 408,
     # Each app's one stylesheet. The operator asked for it on 2026-09-15 — "for
     # all our rails apps id prefer we collapse all scss files into a single
     # application.scss one such file for each app" — so these three are long by
@@ -209,13 +212,14 @@ class FileLengthRatchetTest < Minitest::Test
     "__shared/app/assets/stylesheets/_minimal.scss" => 449,
     # First measured 2026-10-20, when the scan learned the sibling gems and __shared: debt that was invisible,
     # recorded so it can only fall. Split a file and lower its row; do not raise one.
+    # dintero_checkout.rb left on 2026-11-05 at 348: the payout split it
+    # freezes per line is dintero_checkout/splits.rb.
     "__shared/app/helpers/schema_helper.rb" => 343,
     "amber/app/views/layouts/application.html.erb" => 160,
     "brgen/app/assets/stylesheets/_brgen_dating.scss" => 415,
     "brgen/app/assets/stylesheets/_brgen_feed_posts.scss" => 508,
     "brgen/app/assets/stylesheets/_brgen_marketplace.scss" => 925,
     "brgen/app/assets/stylesheets/_brgen_messenger.scss" => 569,
-    "brgen/app/services/marketplace/payments/dintero_checkout.rb" => 346,
     "brgen/app/views/conversations/show.html.erb" => 151,
     "brgen/test/helpers/application_helper_test.rb" => 322,
     "brgen_marketplace/app/views/marketplace/listings/show.html.erb" => 187,
