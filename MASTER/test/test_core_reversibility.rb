@@ -137,8 +137,8 @@ class TestCoreReversibility < Minitest::Test
     assert_equal :policy_gated, E.exec(%w[ruby -v]).reversibility.kind
     assert_equal :policy_gated, E.http("https://example.com").reversibility.kind
     assert_equal :approval_required, E.git(:stage, paths: ["a.rb"]).reversibility.kind
-    assert_equal :approval_required, E.git(:commit, paths: ["a.rb"]).reversibility.kind
-    assert_predicate E.git(:commit, paths: ["a.rb"]).reversibility, :approval_required?
+    assert_equal :policy_gated, E.git(:commit, paths: ["a.rb"]).reversibility.kind
+    refute_predicate E.git(:commit, paths: ["a.rb"]).reversibility, :approval_required?
     assert_equal :unknown, E.git(:reset).reversibility.kind
   end
 
@@ -246,23 +246,42 @@ class TestCoreReversibility < Minitest::Test
     assert_match(/requires explicit paths/, verdict.reason)
   end
 
-  def test_commit_requests_approval_only_after_its_evidence_check_passes
+  def test_verified_commit_is_allowed_for_paths_written_by_the_current_fold
     memory = Master::Core::Memory.new
+    memory.record(E.write("a.rb", "A = 1"), Master::Core::Observation.ok("wrote a.rb"))
     [
       E.exec(%w[rake test], evidence: :test_pass),
       E.exec(%w[bin/check], evidence: :scan_clean),
       E.exec(%w[bin/review], evidence: :code_review),
     ].each { |effect| memory.record(effect, Master::Core::Observation.ok("verified")) }
     assert memory.proof.proved?, "fixture evidence must satisfy the commit precondition"
+    assert_includes memory.proof.scope[:write_paths], "a.rb"
 
     verdict = C.load(data_dir: DATA_DIR).admit(
       E.git(:commit, message: "add verified work", paths: ["a.rb"]),
       memory,
     )
 
-    assert_instance_of Master::Core::Verdict::Request, verdict
-    assert_equal :effect_reversibility, verdict.by
-    assert_match(/durable repository history/, verdict.reason)
+    assert_instance_of Master::Core::Verdict::Allow, verdict
+  end
+
+  def test_verified_commit_cannot_include_paths_not_written_by_the_current_fold
+    memory = Master::Core::Memory.new
+    memory.record(E.write("a.rb", "A = 1"), Master::Core::Observation.ok("wrote a.rb"))
+    [
+      E.exec(%w[rake test], evidence: :test_pass),
+      E.exec(%w[bin/check], evidence: :scan_clean),
+      E.exec(%w[bin/review], evidence: :code_review),
+    ].each { |effect| memory.record(effect, Master::Core::Observation.ok("verified")) }
+
+    verdict = C.load(data_dir: DATA_DIR).admit(
+      E.git(:commit, message: "include someone else's file", paths: %w[a.rb other.rb]),
+      memory,
+    )
+
+    assert_instance_of Master::Core::Verdict::Block, verdict
+    assert_equal :git_commit_scope, verdict.by
+    assert_match(/written by this fold/, verdict.reason)
   end
 
   def test_irreversible_git_mutation_does_not_reach_world_without_operator
