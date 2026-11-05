@@ -74,12 +74,13 @@ class TestDillaCliContract < Minitest::Test
       "POSTPRO_OUTPUT_DIR" => -> { Studio::OutputPaths.render_directory }
     }.each do |name, resolve|
       previous = ENV[name]
-      ENV[name] = File.join(root, "STUDIO", "unapproved-renders")
-
-      error = assert_raises(ArgumentError, name) { resolve.call }
-      assert_match(/resolves inside the checkout/, error.message)
-    ensure
-      previous ? ENV[name] = previous : ENV.delete(name)
+      begin
+        ENV[name] = File.join(root, "STUDIO", "unapproved-renders")
+        error = assert_raises(ArgumentError, name) { resolve.call }
+        assert_match(/resolves inside the checkout/, error.message)
+      ensure
+        previous ? ENV[name] = previous : ENV.delete(name)
+      end
     end
   end
 
@@ -89,12 +90,13 @@ class TestDillaCliContract < Minitest::Test
       link = File.join(directory, "renders")
       File.symlink(File.join(root, "STUDIO", "dilla"), link)
       previous = ENV["DILLA_OUTPUT_DIR"]
-      ENV["DILLA_OUTPUT_DIR"] = link
-
-      error = assert_raises(ArgumentError) { Studio::OutputPaths.dilla_render_directory }
-      assert_match(/resolves inside the checkout/, error.message)
-    ensure
-      previous ? ENV["DILLA_OUTPUT_DIR"] = previous : ENV.delete("DILLA_OUTPUT_DIR")
+      begin
+        ENV["DILLA_OUTPUT_DIR"] = link
+        error = assert_raises(ArgumentError) { Studio::OutputPaths.dilla_render_directory }
+        assert_match(/resolves inside the checkout/, error.message)
+      ensure
+        previous ? ENV["DILLA_OUTPUT_DIR"] = previous : ENV.delete("DILLA_OUTPUT_DIR")
+      end
     end
   end
 
