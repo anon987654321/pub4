@@ -97,7 +97,7 @@ class Order < ApplicationRecord
 
   # The address with the customer's note (door code, floor) for a courier.
   def courier_comment
-    [address, delivery_note].compact_blank.join(" — ")
+    [ address, delivery_note ].compact_blank.join(" — ")
   end
 
   # Who to ask for at the door: the name given, else the number.

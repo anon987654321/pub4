@@ -19,7 +19,7 @@ class CreateMenuItems < ActiveRecord::Migration[8.0]
 
       t.timestamps
     end
-    add_index :menu_items, [:menu_category_id, :position]
+    add_index :menu_items, [ :menu_category_id, :position ]
     add_index :menu_items, :position
     add_index :menu_items, :available
   end

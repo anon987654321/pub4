@@ -10,7 +10,7 @@ class CategorySpyControllerTest < ActiveSupport::TestCase
   test "the chip of the section in view is the current one" do
     seen = run_stimulus("category_spy", "category_spy_scroll.mjs")
 
-    assert_equal ["true", nil], seen["first"]
-    assert_equal [nil, "true"], seen["then"]
+    assert_equal [ "true", nil ], seen["first"]
+    assert_equal [ nil, "true" ], seen["then"]
   end
 end

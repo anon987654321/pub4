@@ -9,14 +9,14 @@ class MenuItemTest < ActiveSupport::TestCase
   end
 
   test "heat accepts the 0–3 scale" do
-    [0, 1, 2, 3].each do |heat|
+    [ 0, 1, 2, 3 ].each do |heat|
       item = seed_item!(@category, heat: heat)
       assert item.valid?, "heat #{heat} should be valid"
     end
   end
 
   test "heat refuses anything outside 0–3" do
-    [4, -1].each do |heat|
+    [ 4, -1 ].each do |heat|
       item = MenuItem.new(
         menu_category: @category,
         name: "Prøve-wrap",

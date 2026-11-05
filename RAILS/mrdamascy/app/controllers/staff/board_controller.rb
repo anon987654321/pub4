@@ -24,7 +24,7 @@ class Staff::BoardController < ApplicationController
         else
           flash.now[:alert] = t("staff.cannot_advance")
         end
-        render turbo_stream: [board_toast_stream] + board_card_streams
+        render turbo_stream: [ board_toast_stream ] + board_card_streams
       end
       format.html do
         if advanced
@@ -47,7 +47,7 @@ class Staff::BoardController < ApplicationController
       format.turbo_stream do
         flash.now[dispatched ? :notice : :alert] =
           dispatched ? t("staff.wolt_dispatched", courier: @courier) : t("staff.wolt_failed")
-        render turbo_stream: [board_toast_stream] + board_card_streams
+        render turbo_stream: [ board_toast_stream ] + board_card_streams
       end
       format.html do
         if dispatched
@@ -86,11 +86,11 @@ class Staff::BoardController < ApplicationController
   # whatever the layout's div#toasts held.
   def board_card_streams
     if @order.state.in?(BOARD_STATES)
-      [turbo_stream.replace(
+      [ turbo_stream.replace(
         "order_card_#{@order.id}", partial: "staff/board/order_card", locals: { order: @order }
-      )]
+      ) ]
     else
-      [turbo_stream.remove("order_card_#{@order.id}")]
+      [ turbo_stream.remove("order_card_#{@order.id}") ]
     end
   end
 

@@ -24,9 +24,9 @@ class VippsController < ApplicationController
   rescue_from ActionDispatch::Http::Parameters::ParseError do
     head :bad_request
   end
-  skip_before_action :verify_authenticity_token, only: [:callback]
+  skip_before_action :verify_authenticity_token, only: [ :callback ]
 
-  before_action :refuse_in_real_mode, only: [:mock, :approve, :login_mock]
+  before_action :refuse_in_real_mode, only: [ :mock, :approve, :login_mock ]
 
   def mock
     @order = Order.find_by!(tracking_token: params[:token].to_s)
@@ -58,7 +58,7 @@ class VippsController < ApplicationController
     end
 
     events = JSON.parse(request.body.read.to_s)
-    events = [events] if events.is_a?(Hash)
+    events = [ events ] if events.is_a?(Hash)
     Array(events).each do |event|
       order = Order.find_by(vipps_order_id: event["reference"].to_s)
       next if order.nil?

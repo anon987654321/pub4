@@ -29,7 +29,7 @@ class CheckoutFlowTest < ActionDispatch::IntegrationTest
   test "the crown: add to cart, pay with mock Vipps, confirm, track with Sahtein" do
     post add_item_cart_url, params: { menu_item_id: @item.id, quantity: 1,
                                       option_ids: [], note: "" }
-    assert_includes [200, 302, 303], response.status
+    assert_includes [ 200, 302, 303 ], response.status
 
     cart = open_cart_for(@user)
     assert_not_nil cart
@@ -92,7 +92,7 @@ class CheckoutFlowTest < ActionDispatch::IntegrationTest
     post checkout_url, params: { order: { address: "Nygårdsgaten 12", postcode: "9999",
                                           phone: "90000004", delivery_mode: "delivery" } }
 
-    assert_includes [200, 422], response.status, "zone failure should re-render, not redirect"
+    assert_includes [ 200, 422 ], response.status, "zone failure should re-render, not redirect"
     assert_equal 0, Order.count
     combined = response.body + flash.to_hash.values.map(&:to_s).join(" ")
     assert_match(/leverer ikke/, combined)  # checkout.zone_fail / flash.zone_error
@@ -108,7 +108,7 @@ class CheckoutFlowTest < ActionDispatch::IntegrationTest
     post checkout_url, params: { order: { address: "Nygårdsgaten 12", postcode: "5004",
                                           phone: "90000004", delivery_mode: "delivery" } }
 
-    assert_includes [200, 422], response.status
+    assert_includes [ 200, 422 ], response.status
     assert_equal 0, Order.count
     combined = response.body + flash.to_hash.values.map(&:to_s).join(" ")
     assert_match(/minstebestilling/i, combined)  # checkout.min_basket_fail / flash.min_basket

@@ -15,7 +15,7 @@ class TrackPageTest < ActionDispatch::IntegrationTest
     done = I18n.t("orders.step_done")
 
     marked = (0...steps.size).select { |i| steps[i].text.include?(done) }
-    assert_equal [0, 1], marked, "placed and confirmed are done; preparing is current"
+    assert_equal [ 0, 1 ], marked, "placed and confirmed are done; preparing is current"
   end
   test "a pickup order ends with collection, not delivery" do
     labels = timeline(seed_order!(state: "picked_up", delivery_mode: "pickup")).css(".step-label").map(&:text)

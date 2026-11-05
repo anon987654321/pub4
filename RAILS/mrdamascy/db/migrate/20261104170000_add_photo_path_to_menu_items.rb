@@ -10,7 +10,7 @@ class AddPhotoPathToMenuItems < ActiveRecord::Migration[8.0]
     up_only do
       photos = YAML.load_file(Rails.root.join("db/food_photos.yml"))
       photos.each do |name, path|
-        execute(sanitize_sql(["UPDATE menu_items SET photo_path = ? WHERE name = ?", path, name]))
+        execute(sanitize_sql([ "UPDATE menu_items SET photo_path = ? WHERE name = ?", path, name ]))
       end
     end
   end

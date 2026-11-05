@@ -65,7 +65,7 @@ class PwaControllerTest < ActionDispatch::IntegrationTest
     source = Rails.root.join("app/javascript/application.js").read.gsub(/^import .*\n/, "")
     seen = run_node("application_service_worker.mjs", source, "application_service_worker_visits.mjs")
 
-    assert_equal ["/service-worker.js"], seen["registered"]
+    assert_equal [ "/service-worker.js" ], seen["registered"]
   end
 
   test "the offline retry reloads the url that failed" do
@@ -77,7 +77,7 @@ class PwaControllerTest < ActionDispatch::IntegrationTest
     tokens = ApplicationHelper::DESIGN_TOKENS
     manifest = fetch_manifest
 
-    assert_equal [tokens["--paper"], tokens["--surface-elevated"]],
+    assert_equal [ tokens["--paper"], tokens["--surface-elevated"] ],
                  manifest.values_at("theme_color", "background_color")
     get root_path
     assert_equal tokens["--paper"], Nokogiri::HTML(response.body).at_css("meta[name=theme-color]")["content"]

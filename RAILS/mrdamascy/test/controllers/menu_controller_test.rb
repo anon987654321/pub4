@@ -87,7 +87,7 @@ class MenuControllerTest < ActionDispatch::IntegrationTest
     picture = Nokogiri::HTML(response.body).at_css(".sheet-head picture")
     img = picture.at_css("img.sheet-photo")
 
-    assert_equal %w[320 320 async], [img["width"], img["height"], img["decoding"]]
+    assert_equal %w[320 320 async], [ img["width"], img["height"], img["decoding"] ]
     srcset = picture.at_css("source[type='image/webp']")["srcset"]
     assert_match(%r{food/damaskus-kylling-shawarma-320-\h+\.webp 320w, .*-640-\h+\.webp 640w}, srcset)
     YAML.load_file(Rails.root.join("db/food_photos.yml")).each_value do |photo|
@@ -98,7 +98,7 @@ class MenuControllerTest < ActionDispatch::IntegrationTest
 
     get root_url
     card = Nokogiri::HTML(response.body).at_css(".item-card picture img.item-photo")
-    assert_equal %w[56 lazy], [card["width"], card["loading"]]
+    assert_equal %w[56 lazy], [ card["width"], card["loading"] ]
   end
 
   test "the category chips are watched for the section in view" do

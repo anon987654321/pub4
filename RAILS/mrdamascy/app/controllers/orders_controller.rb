@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 class OrdersController < ApplicationController
-  before_action :set_order, only: [:show]
+  before_action :set_order, only: [ :show ]
 
   # A tracking tab polls six times a minute; counted per order, not per IP,
   # so customers behind one mobile carrier address never share a budget.

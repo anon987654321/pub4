@@ -18,7 +18,7 @@ class SessionsController < ApplicationController
              with: -> { redirect_to new_session_path, alert: t("auth.too_many_attempts") }
 
   def new
-    return redirect_to(root_path, notice: t("flash.welcome")) if current_user
+    redirect_to(root_path, notice: t("flash.welcome")) if current_user
   end
 
   # Mock-SMS: the fixed code is stored in the session for #create; in

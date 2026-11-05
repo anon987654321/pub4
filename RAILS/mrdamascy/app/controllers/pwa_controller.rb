@@ -3,7 +3,7 @@
 class PwaController < ApplicationController
   # What the service worker caches on install: the offline page and the
   # brand marks it draws.
-  PRECACHE_URLS = ["/offline", "/icon-192.png", "/icon-512.png", "/logo.svg"].freeze
+  PRECACHE_URLS = [ "/offline", "/icon-192.png", "/icon-512.png", "/logo.svg" ].freeze
 
   # A browser fetches the worker script with a plain GET, which forgery
   # protection refused as cross-origin JavaScript (422), so the worker never
@@ -35,7 +35,7 @@ class PwaController < ApplicationController
   def cache_version
     marks = PRECACHE_URLS.filter_map { |url| Rails.public_path.join(url.delete_prefix("/")) }.select(&:file?)
     Digest::SHA256.hexdigest(
-      [helpers.asset_path("application.css"), helpers.asset_path("application.js"), *marks.map(&:read)].join("\n")
+      [ helpers.asset_path("application.css"), helpers.asset_path("application.js"), *marks.map(&:read) ].join("\n")
     ).first(12)
   end
 end

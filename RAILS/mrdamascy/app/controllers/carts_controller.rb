@@ -74,7 +74,7 @@ class CartsController < ApplicationController
     respond_to do |format|
       format.turbo_stream do
         flash.now[:notice] = notice
-        render turbo_stream: streams + [cart_contents_stream] + cart_streams
+        render turbo_stream: streams + [ cart_contents_stream ] + cart_streams
       end
       format.html { redirect_to cart_path, notice: }
     end

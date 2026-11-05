@@ -32,10 +32,10 @@ class SeoTest < ActionDispatch::IntegrationTest
 
     assert_equal "Restaurant", data["@type"]
     assert_equal %w[5054 Bergen], data["address"].values_at("postalCode", "addressLocality")
-    assert_equal ["Mo-Fr 11:00-21:00", "Sa-Su 14:00-21:00"], data["openingHours"]
+    assert_equal [ "Mo-Fr 11:00-21:00", "Sa-Su 14:00-21:00" ], data["openingHours"]
     assert_equal "129 kr–129 kr", data["priceRange"]
     dish = data["hasMenu"]["hasMenuSection"].first["hasMenuItem"].first
-    assert_equal [@item.name, "129.00", "NOK"], [dish["name"], *dish["offers"].values_at("price", "priceCurrency")]
+    assert_equal [ @item.name, "129.00", "NOK" ], [ dish["name"], *dish["offers"].values_at("price", "priceCurrency") ]
   end
 
   test "the hero states the zones' cheapest fee and slowest promise" do

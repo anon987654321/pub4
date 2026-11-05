@@ -153,7 +153,7 @@ class StripeClient
       body = http_post(
         "/v1/checkout/sessions",
         headers: request_headers(idempotency_key: idempotency_key(order, "init")),
-        body: URI.encode_www_form(params.map { |k, v| [k.to_s, v] })
+        body: URI.encode_www_form(params.map { |k, v| [ k.to_s, v ] })
       )
 
       order.vipps_order_id = body["id"].presence

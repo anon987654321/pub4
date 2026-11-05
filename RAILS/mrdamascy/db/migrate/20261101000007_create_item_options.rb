@@ -13,6 +13,6 @@ class CreateItemOptions < ActiveRecord::Migration[8.0]
 
       t.timestamps
     end
-    add_index :item_options, [:menu_item_id, :position]
+    add_index :item_options, [ :menu_item_id, :position ]
   end
 end

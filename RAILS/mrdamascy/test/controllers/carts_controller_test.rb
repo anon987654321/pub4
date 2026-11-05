@@ -14,9 +14,9 @@ class CartsControllerTest < ActionDispatch::IntegrationTest
     extra_meat = seed_option!(@item, name: "Ekstra kjøtt", kind: "extra", price_ore: 2500)
 
     post add_item_cart_url, params: {
-      menu_item_id: @item.id, quantity: 2, option_ids: [extra_meat.id], note: "Ekstra toum"
+      menu_item_id: @item.id, quantity: 2, option_ids: [ extra_meat.id ], note: "Ekstra toum"
     }
-    assert_includes [200, 302, 303], response.status
+    assert_includes [ 200, 302, 303 ], response.status
 
     cart = open_cart_for(user)
     assert_not_nil cart, "add_item must create the open cart for the signed-in user"
@@ -42,7 +42,7 @@ class CartsControllerTest < ActionDispatch::IntegrationTest
     other = seed_item!(@category, name: "Adana Sterk Dürüm", position: 2)
     foreign = seed_option!(other, name: "Ekstra kjøtt", kind: "extra", price_ore: 2500)
 
-    post add_item_cart_url, params: { menu_item_id: @item.id, quantity: 1, option_ids: [foreign.id] }
+    post add_item_cart_url, params: { menu_item_id: @item.id, quantity: 1, option_ids: [ foreign.id ] }
 
     assert_redirected_to menu_item_path(@item)
     assert_empty open_cart_for(user)&.cart_items.to_a

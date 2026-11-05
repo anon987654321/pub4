@@ -5,7 +5,7 @@ require "test_helper"
 # Rules the stylesheets keep, read from the partials' source: an instrument
 # of spelling, not a render (no browser here).
 class StylesheetRulesTest < ActiveSupport::TestCase
-  PARTIALS = Rails.root.glob("app/assets/stylesheets/_*.scss").to_h { |path| [path.basename.to_s, path.read] }
+  PARTIALS = Rails.root.glob("app/assets/stylesheets/_*.scss").to_h { |path| [ path.basename.to_s, path.read ] }
 
   test "hover backgrounds belong to pointers that hover" do
     lines = rules_outside("(hover: hover)").map(&:last)
@@ -55,7 +55,7 @@ test "spacing takes the scale, not raw pixels" do
 
   # Each top-level block of a partial with the media query it sits in.
   def rules_outside(media)
-    PARTIALS.flat_map { |name, source| top_level_lines(source, media).map { |line| [name, line] } }
+    PARTIALS.flat_map { |name, source| top_level_lines(source, media).map { |line| [ name, line ] } }
   end
 
   def top_level_lines(source, media)

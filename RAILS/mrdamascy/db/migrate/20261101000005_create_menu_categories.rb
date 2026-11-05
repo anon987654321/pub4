@@ -12,7 +12,7 @@ class CreateMenuCategories < ActiveRecord::Migration[8.0]
 
       t.timestamps
     end
-    add_index :menu_categories, [:kitchen_id, :position]
+    add_index :menu_categories, [ :kitchen_id, :position ]
     add_index :menu_categories, :slug, unique: true
   end
 end

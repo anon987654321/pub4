@@ -30,7 +30,7 @@ class PlatformIndependenceTest < ActionDispatch::IntegrationTest
     # a commission-taking marketplace back between the kitchen and the
     # customer. Prose that says "no Foodora" is mission copy and stays; any
     # platform HOST or client wiring must never appear in app code.
-    offenders = (Dir.glob("app/**/*.rb") + ["config/routes.rb"])
+    offenders = (Dir.glob("app/**/*.rb") + [ "config/routes.rb" ])
       .select { |path| File.read(path) =~ /foodora\.|foodbooking\.|deliveryhero|vendor\.foodora/i }
     assert_empty offenders, "a marketplace middleman crept into app code: #{offenders.inspect}"
   end
@@ -42,7 +42,7 @@ class PlatformIndependenceTest < ActionDispatch::IntegrationTest
       File.read(path).include?("WoltDriveClient") &&
         !path.end_with?("services/wolt_drive_client.rb")
     end
-    assert_equal ["app/controllers/staff/board_controller.rb"], callers.sort
+    assert_equal [ "app/controllers/staff/board_controller.rb" ], callers.sort
   end
 
   test "the whole order lifecycle completes with the courier platforms refusing" do
@@ -57,7 +57,7 @@ class PlatformIndependenceTest < ActionDispatch::IntegrationTest
     # 1) the customer orders and pays (mock Vipps — the only payment rail)
     post add_item_cart_url, params: { menu_item_id: @item.id, quantity: 1,
                                       option_ids: [], note: "" }
-    assert_includes [200, 302, 303], response.status
+    assert_includes [ 200, 302, 303 ], response.status
     post checkout_url, params: { order: { address: "Nygårdsgaten 12", postcode: "5004",
                                           phone: "90000004", delivery_mode: "delivery" } }
     order = Order.order(:id).last

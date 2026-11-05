@@ -179,7 +179,7 @@ class WoltDriveClient
       # Bergen city-centre anchor; a real build would geocode the postcode via
       # Kartverket/Bring's free address API and cache it on the order.
       { coordinates: { latitude: 60.3930, longitude: 5.3242 },
-        formatted_address: [order.address, order.postcode, "Bergen"].compact.join(", ") }
+        formatted_address: [ order.address, order.postcode, "Bergen" ].compact.join(", ") }
     end
 
     def item_summary(order)

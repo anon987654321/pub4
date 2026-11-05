@@ -22,9 +22,9 @@ class StripeController < ApplicationController
   rescue_from ActionDispatch::Http::Parameters::ParseError do
     head :bad_request
   end
-  skip_before_action :verify_authenticity_token, only: [:callback]
+  skip_before_action :verify_authenticity_token, only: [ :callback ]
 
-  before_action :refuse_in_real_mode, only: [:mock, :approve]
+  before_action :refuse_in_real_mode, only: [ :mock, :approve ]
 
   def mock
     @order = Order.find_by!(tracking_token: params[:token].to_s)

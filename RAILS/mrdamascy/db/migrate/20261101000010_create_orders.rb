@@ -28,7 +28,7 @@ class CreateOrders < ActiveRecord::Migration[8.0]
       t.timestamps
     end
     add_index :orders, :tracking_token, unique: true
-    add_index :orders, [:user_id, :state]
+    add_index :orders, [ :user_id, :state ]
     add_index :orders, :state
     add_index :orders, :payment_state
   end

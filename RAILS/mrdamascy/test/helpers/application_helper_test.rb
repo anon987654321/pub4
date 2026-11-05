@@ -24,7 +24,7 @@ class ApplicationHelperTest < ActionView::TestCase
     assert_equal t("menu.origin_chip", origin: "Damaskus"), origin.text
 
     badges = Nokogiri::HTML.fragment(badge_tags(@dish)).css("span.badge.badge-signature, span.badge.badge-veg")
-    assert_equal [t("menu.badges.signature"), t("menu.badges.veg")], badges.map(&:text)
+    assert_equal [ t("menu.badges.signature"), t("menu.badges.veg") ], badges.map(&:text)
 
     chip = Nokogiri::HTML.fragment(state_chip(Order.new(state: "ready"))).at_css("span.state-chip.state-ready")
     assert_equal t("orders.states.ready"), chip.text

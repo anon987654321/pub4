@@ -14,22 +14,22 @@ Rails.application.routes.draw do
   get "menu/:id", to: "menu#item", as: :menu_item
   get "about", to: "pages#about"
 
-  resource :session, only: [:new, :create, :destroy]
+  resource :session, only: [ :new, :create, :destroy ]
   post "session/request_code", to: "sessions#request_code"
   get "session/vipps", to: "sessions#vipps_auth", as: :session_vipps
   get "session/vipps/callback", to: "sessions#vipps_callback", as: :session_vipps_callback
 
-  resource :cart, only: [:show] do
+  resource :cart, only: [ :show ] do
     post :add_item, controller: "carts"
     post :reorder, controller: "carts"
     patch "items/:line_id", action: :update_item, controller: "carts", as: :update_item
     delete "items/:line_id", action: :remove_item, controller: "carts", as: :remove_item
   end
 
-  resource :checkout, only: [:show, :create], controller: "checkout"
+  resource :checkout, only: [ :show, :create ], controller: "checkout"
   get "checkout/zone", to: "checkout#zone"
 
-  resources :orders, only: [:index, :show]
+  resources :orders, only: [ :index, :show ]
   get "track/:token", to: "orders#track", as: :track
   get "track/:token/status", to: "orders#status", as: :track_status
   post "track/:token/tip", to: "orders#tip", as: :order_tip
@@ -44,7 +44,7 @@ Rails.application.routes.draw do
   end
 
   namespace :courier do
-    resource :runs, only: [:show]
+    resource :runs, only: [ :show ]
     patch "orders/:id/pickup", to: "runs#pickup", as: :pickup_order
     patch "orders/:id/deliver", to: "runs#deliver", as: :deliver_order
   end

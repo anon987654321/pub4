@@ -79,7 +79,7 @@ class PromoApplier
       price = cheapest_wrap_price_ore
       return nil if price.nil? || price <= 0
 
-      { promo: nil, saving: [price, subtotal].min }
+      { promo: nil, saving: [ price, subtotal ].min }
     end
 
     # The cheapest wrap on the menu — matched on the category slug/name so it

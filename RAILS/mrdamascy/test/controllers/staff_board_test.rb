@@ -11,12 +11,12 @@ class StaffBoardTest < ActionDispatch::IntegrationTest
   test "the board requires the staff role" do
     customer_sign_in
     get staff_board_url
-    assert_includes [302, 303, 401, 403], response.status
+    assert_includes [ 302, 303, 401, 403 ], response.status
   end
 
   test "anonymous visitors cannot open the board" do
     get staff_board_url
-    assert_includes [302, 303, 401, 403], response.status
+    assert_includes [ 302, 303, 401, 403 ], response.status
   end
 
   test "advancing an order requires the staff role" do
@@ -24,14 +24,14 @@ class StaffBoardTest < ActionDispatch::IntegrationTest
 
     patch staff_advance_order_url(@order)
 
-    assert_includes [302, 303, 401, 403], response.status
+    assert_includes [ 302, 303, 401, 403 ], response.status
     assert_equal "placed", @order.reload.state, "customers must not move orders"
   end
 
   test "anonymous visitors cannot advance orders" do
     patch staff_advance_order_url(@order)
 
-    assert_includes [302, 303, 401, 403], response.status
+    assert_includes [ 302, 303, 401, 403 ], response.status
     assert_equal "placed", @order.reload.state
   end
 
@@ -40,7 +40,7 @@ class StaffBoardTest < ActionDispatch::IntegrationTest
 
     patch staff_advance_order_url(@order)
 
-    assert_includes [200, 302, 303], response.status
+    assert_includes [ 200, 302, 303 ], response.status
     assert_equal "confirmed", @order.reload.state
   end
 
@@ -61,7 +61,7 @@ class StaffBoardTest < ActionDispatch::IntegrationTest
   test "the kitchen sees each line's options and the customer's note" do
     item = seed_item!(seed_category!(@kitchen), name: "Adana Sterk Dürüm")
     toum = seed_option!(item, name: "Toum", kind: "sauce")
-    post add_item_cart_url, params: { menu_item_id: item.id, option_ids: [toum.id], note: "Uten løk" }
+    post add_item_cart_url, params: { menu_item_id: item.id, option_ids: [ toum.id ], note: "Uten løk" }
     post checkout_url, params: { mode: "pickup", phone: "90000031" }
     order = Order.order(:id).last
 

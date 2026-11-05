@@ -43,6 +43,18 @@ class CiContractTest < Minitest::Test
     end
   end
 
+  # mrdamascy is standalone and keeps its own steps; it ran only the tests,
+  # so a security advisory or a style offence never stopped its deploy.
+  test "mrdamascy ci runs the static checks the shared apps run" do
+    source = read(File.join(ROOT, "mrdamascy", "config", "ci.rb"))
+
+    %w[rubocop bundler-audit brakeman db:test:prepare rails\ test].each do |token|
+      assert_includes source, token, "mrdamascy CI lost #{token}"
+    end
+    assert File.file?(File.join(ROOT, "mrdamascy", "config", "bundler-audit.yml")),
+           "mrdamascy's bundler-audit --config file is missing"
+  end
+
   test "shared ci resolves tooling from MASTER, never RAILS/tools" do
     shared = read(SHARED_CI)
 

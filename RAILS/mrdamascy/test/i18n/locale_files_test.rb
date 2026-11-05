@@ -34,9 +34,9 @@ class LocaleFilesTest < ActiveSupport::TestCase
   # A plural hash (one/other) is one key; any other hash nests.
   def flatten_keys(tree, prefix = nil)
     tree.flat_map do |name, value|
-      key = [prefix, name].compact.join(".")
+      key = [ prefix, name ].compact.join(".")
       nested = value.is_a?(Hash) && (value.keys - PLURAL_KEYS).any?
-      nested ? flatten_keys(value, key) : [key]
+      nested ? flatten_keys(value, key) : [ key ]
     end
   end
 end

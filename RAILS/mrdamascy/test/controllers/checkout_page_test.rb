@@ -48,13 +48,13 @@ class CheckoutPageTest < ActionDispatch::IntegrationTest
     User.last.update!(default_postcode: "5004")
     labels = page.css("button[name=payment_method]").map(&:text).map(&:squish)
 
-    assert_equal ["Betal 158 kr med Vipps", "Betal 158 kr med kort"], labels
+    assert_equal [ "Betal 158 kr med Vipps", "Betal 158 kr med kort" ], labels
   end
 
   test "the pay buttons leave the amount out while the delivery fee is unknown" do
     labels = page.css("button[name=payment_method]").map(&:text).map(&:squish)
 
-    assert_equal [I18n.t("checkout.vipps_cta"), I18n.t("checkout.stripe_cta")], labels
+    assert_equal [ I18n.t("checkout.vipps_cta"), I18n.t("checkout.stripe_cta") ], labels
   end
 
   test "the zone answer carries this cart's fee, total, ETA and pay labels" do

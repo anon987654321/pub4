@@ -40,7 +40,7 @@ class TrackTipTest < ActionDispatch::IntegrationTest
     # skips Order#add_tip! for 0 — the model refuses non-positive amounts).
     post order_tip_url(@order.tracking_token), params: { tip_ore: 0 }
 
-    assert_includes [200, 302, 303], response.status
+    assert_includes [ 200, 302, 303 ], response.status
     assert_equal 0, @order.reload.tip_ore
     assert_equal 15800, @order.total_ore
   end
@@ -52,7 +52,7 @@ class TrackTipTest < ActionDispatch::IntegrationTest
       post order_review_url(@order), params: { review: { rating: 5, body: "Beste toumen i Bergen" } }
     end
 
-    assert_includes [200, 302, 303], response.status
+    assert_includes [ 200, 302, 303 ], response.status
     review = Review.last
     assert_equal 5, review.rating
     assert_equal @order.id, review.order_id

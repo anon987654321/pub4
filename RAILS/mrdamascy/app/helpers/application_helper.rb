@@ -16,7 +16,7 @@ module ApplicationHelper
   # that take it, the JPEG otherwise. Width and height reserve its box, and
   # decoding stays off the main thread. Nil without a photo (views fall back
   # to the emoji tile).
-  FOOD_PHOTO_WIDTHS = [320, 640].freeze
+  FOOD_PHOTO_WIDTHS = [ 320, 640 ].freeze
 
   def food_picture(item, size:, **options)
     photo = food_photo(item) or return
@@ -68,13 +68,13 @@ module ApplicationHelper
     heat = item.heat.to_i.clamp(0, 3)
     return if heat.zero?
 
-    words = [tag.span("#{t('menu.heat_label')}:", class: "visually-hidden"),
-             tag.span(t("menu.heat.#{heat}"), class: "heat-label")]
-    tag.span(safe_join([words.first, *heat_dot_spans(heat), words.last]), class: "heat heat-#{heat}")
+    words = [ tag.span("#{t('menu.heat_label')}:", class: "visually-hidden"),
+             tag.span(t("menu.heat.#{heat}"), class: "heat-label") ]
+    tag.span(safe_join([ words.first, *heat_dot_spans(heat), words.last ]), class: "heat heat-#{heat}")
   end
 
   def heat_dot_spans(heat)
-    Array.new(3) { |dot| tag.span(class: ["heat-dot", ("on" if dot < heat)], "aria-hidden": true) }
+    Array.new(3) { |dot| tag.span(class: [ "heat-dot", ("on" if dot < heat) ], "aria-hidden": true) }
   end
 
   # Flag-free origin badge ("Fra Damaskus"), or nothing without an origin.

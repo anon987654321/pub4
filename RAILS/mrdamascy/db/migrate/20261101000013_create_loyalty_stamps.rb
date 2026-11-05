@@ -10,6 +10,6 @@ class CreateLoyaltyStamps < ActiveRecord::Migration[8.0]
 
       t.timestamps
     end
-    add_index :loyalty_stamps, [:user_id, :redeemed]
+    add_index :loyalty_stamps, [ :user_id, :redeemed ]
   end
 end

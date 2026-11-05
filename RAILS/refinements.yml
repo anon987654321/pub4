@@ -5360,7 +5360,7 @@ items:
   path: RAILS/mrdamascy/config/ci.rb
   item: Add brakeman, bundler-audit and rubocop steps to bin/ci; it runs only the
     tests.
-  status: open
+  status: done
 - id: mrdamascy-037
   app: mrdamascy
   area: design

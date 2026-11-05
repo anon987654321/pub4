@@ -48,7 +48,7 @@ class Cart < ApplicationRecord
     signature = ids.join(",")
 
     line = cart_items.find_or_initialize_by(menu_item:, option_ids: signature, note: note.presence)
-    line.quantity = [line.new_record? ? quantity : line.quantity + quantity, MAX_QUANTITY].min
+    line.quantity = [ line.new_record? ? quantity : line.quantity + quantity, MAX_QUANTITY ].min
     line.unit_price_ore = menu_item.price_ore.to_i + options.sum { |o| o.price_ore.to_i }
     line.save!
     line

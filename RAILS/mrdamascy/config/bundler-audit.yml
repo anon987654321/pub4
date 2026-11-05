@@ -1,0 +1,5 @@
+# bundler-audit's ignore list for mrdamascy (config/ci.rb passes it with
+# --config). An entry here is an argument, not a silence: write why the
+# advisory cannot reach this app, and delete the entry when that stops being true.
+ignore:
+  []

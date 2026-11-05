@@ -31,7 +31,8 @@ class ReorderTest < ActionDispatch::IntegrationTest
     assert_redirected_to cart_path
     assert_equal I18n.t("flash.reordered"), flash[:notice]
     wrap_line = open_cart_for(@user).cart_items.find_by!(menu_item: @wrap)
-    assert_equal [2, [@toum.id], "Ekstra sterk"], [wrap_line.quantity, wrap_line.selected_option_ids, wrap_line.note]
+    assert_equal [ 2, [ @toum.id ], "Ekstra sterk" ],
+                 [ wrap_line.quantity, wrap_line.selected_option_ids, wrap_line.note ]
     assert open_cart_for(@user).cart_items.exists?(menu_item: @fries)
   end
 
@@ -41,7 +42,7 @@ class ReorderTest < ActionDispatch::IntegrationTest
     post reorder_cart_url, params: { order_id: @order.id }
 
     assert_equal I18n.t("flash.reordered_partly"), flash[:notice]
-    assert_equal [@wrap.id], open_cart_for(@user).cart_items.pluck(:menu_item_id)
+    assert_equal [ @wrap.id ], open_cart_for(@user).cart_items.pluck(:menu_item_id)
   end
 
   test "another customer's order cannot be reordered" do

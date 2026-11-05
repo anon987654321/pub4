@@ -42,7 +42,7 @@ class VippsCallbackTest < ActionDispatch::IntegrationTest
 
     post vipps_callback_path,
          headers: { "Content-Type" => "application/json", "Authorization" => "sekret" },
-         body: [{ reference: "mrdamascy-tok-hook-1", state: "AUTHORIZED" }].to_json
+         body: [ { reference: "mrdamascy-tok-hook-1", state: "AUTHORIZED" } ].to_json
 
     assert_response :ok
     @order.reload
@@ -55,7 +55,7 @@ class VippsCallbackTest < ActionDispatch::IntegrationTest
   test "replayed events are idempotent" do
     ENV["VIPPS_WEBHOOK_SECRET"] = "sekret"
     vipps_real_mode!
-    event = [{ reference: "mrdamascy-tok-hook-1", state: "AUTHORIZED" }].to_json
+    event = [ { reference: "mrdamascy-tok-hook-1", state: "AUTHORIZED" } ].to_json
 
     2.times do
       post vipps_callback_path,
@@ -75,7 +75,7 @@ class VippsCallbackTest < ActionDispatch::IntegrationTest
 
     post vipps_callback_path,
          headers: { "Content-Type" => "application/json", "Authorization" => "sekret" },
-         body: [{ reference: "mrdamascy-tok-hook-1", state: "ABORTED" }].to_json
+         body: [ { reference: "mrdamascy-tok-hook-1", state: "ABORTED" } ].to_json
 
     assert_response :ok
     @order.reload
@@ -89,7 +89,7 @@ class VippsCallbackTest < ActionDispatch::IntegrationTest
 
     post vipps_callback_path,
          headers: { "Content-Type" => "application/json", "Authorization" => "sekret" },
-         body: [{ reference: "mrdamascy-who-dis", state: "AUTHORIZED" }].to_json
+         body: [ { reference: "mrdamascy-who-dis", state: "AUTHORIZED" } ].to_json
 
     assert_response :ok
     assert_equal "authorised", @order.reload.payment_state

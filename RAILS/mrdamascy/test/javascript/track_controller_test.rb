@@ -19,8 +19,8 @@ class TrackControllerTest < ActiveSupport::TestCase
   test "a new state refreshes the page in place from the status url it was given" do
     seen = run_stimulus("track", "track_stage.mjs", "track_state_change.mjs")
 
-    assert_equal ["/mat/track/abc/status"], seen["fetched"]
-    assert_equal [["https://mrdamascy.test/track/abc", "replace"]], seen["visits"]
+    assert_equal [ "/mat/track/abc/status" ], seen["fetched"]
+    assert_equal [ [ "https://mrdamascy.test/track/abc", "replace" ] ], seen["visits"]
     assert_equal 0, seen["reloads"]
   end
 end

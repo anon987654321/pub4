@@ -20,7 +20,7 @@ class GuestCartSignInTest < ActionDispatch::IntegrationTest
     post session_request_code_url, params: { phone: "90000021" }
     post session_url, params: { phone: "90000021", code: "1234" }
 
-    assert_equal [[@item.id, 2]], lines_of("90000021").pluck(:menu_item_id, :quantity)
+    assert_equal [ [ @item.id, 2 ] ], lines_of("90000021").pluck(:menu_item_id, :quantity)
     assert_equal 0, Cart.where(user_id: nil).joins(:cart_items).count
   end
 
@@ -32,7 +32,7 @@ class GuestCartSignInTest < ActionDispatch::IntegrationTest
     get session_vipps_path(to: "checkout")
     get session_vipps_callback_path, params: { state: session[:vipps_login_state], phone: user.phone }
 
-    assert_equal [[@item.id, 3]], lines_of("90000022").pluck(:menu_item_id, :quantity)
+    assert_equal [ [ @item.id, 3 ] ], lines_of("90000022").pluck(:menu_item_id, :quantity)
   end
 
   test "after signing out the browser does not get the customer's cart back" do
