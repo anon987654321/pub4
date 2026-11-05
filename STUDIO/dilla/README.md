@@ -43,7 +43,7 @@ ruby dilla.rb reference ~/crate/rights-cleared-loop.wav --no-stems
 
 The pipeline: **yt-dlp** pulls the source (URL) or the operator hands over a
 local file, **demucs** separates drums / bass / other / vocals, and the
-spectral analyzer (`analyze/reference_analyzer.py`, numpy + scipy) measures
+spectral analyzer (`reference_analyzer.py`, numpy + scipy) measures
 tempo and confidence, onset density per bar, offbeat share, micro-timing
 spread, swing ratio, per-stem energy shares, brightness, key and chord
 changes, a melody summary and 16-step kick/snare/hat grids. The profile

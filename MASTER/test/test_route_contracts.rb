@@ -19,7 +19,7 @@ class TestRouteContracts < Minitest::Test
 
   def html_response(body) = Response.new("200", { "Content-Type" => "text/html; charset=utf-8" }, body)
 
-  PAGE = File.read(File.join(__dir__, "fixtures", "route_contracts", "post_page.html"))
+  PAGE = File.read(File.join(__dir__, "fixtures", "post_page.html"))
 
   def test_a_page_records_title_heading_landmarks_and_forms_with_ids_normalised
     row = RouteContracts.describe(html_response(PAGE))

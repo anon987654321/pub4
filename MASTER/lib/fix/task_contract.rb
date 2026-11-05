@@ -19,14 +19,15 @@ module Master
 
       Contract = Data.define(:schema, :intent, :scope, :preserve, :proof, :new_paths) do
         def to_h
-          {
+          value = {
             "schema" => schema,
             "intent" => intent,
             "scope" => scope,
             "preserve" => preserve,
             "proof" => proof,
-            "new_paths" => new_paths,
           }
+          value["new_paths"] = new_paths unless new_paths.empty?
+          value
         end
       end
 

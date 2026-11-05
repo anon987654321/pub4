@@ -39,7 +39,6 @@ require "tmpdir"
 module Dilla
   ENGINE_ROOT = File.expand_path(__dir__)
   DATA_DIR = File.join(ENGINE_ROOT, "data")
-  ANALYZE_DIR = File.join(ENGINE_ROOT, "analyze")
   SCRIPT_PATH = File.expand_path(__FILE__)
   VERSION = "4.1.0"
   SAMPLE_RATE = 44_100
@@ -2315,7 +2314,7 @@ module Dilla
   end
 
   def run_analyzer(wav, stems_dir, features_path, opts)
-    script = File.join(ANALYZE_DIR, "reference_analyzer.py")
+    script = File.join(ENGINE_ROOT, "reference_analyzer.py")
     abort "dilla reference: analyzer missing: #{script}" unless File.file?(script)
     py = which("python3") or abort "dilla reference: python3 required for spectral analysis"
     cmd = [py, script, wav, "--json", features_path]

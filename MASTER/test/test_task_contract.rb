@@ -203,6 +203,7 @@ class TestTaskContract < Minitest::Test
 
     assert_equal 1, contract.to_h.fetch("schema")
     assert_equal "functional_change", contract.to_h.fetch("intent")
+    refute contract.to_h.key?("new_paths"), "empty declarations preserve the legacy contract digest shape"
     assert CONTRACT.covers?("RAILS/brgen/app/models/item.rb", scope: contract.scope)
     refute CONTRACT.covers?("RAILS/amber/app/models/item.rb", scope: contract.scope)
     assert_equal ["baseline_hashes", "law_assessment", "path_scoped_diff"],

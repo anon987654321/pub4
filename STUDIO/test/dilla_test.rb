@@ -360,7 +360,7 @@ class TestDillaReferenceProfile < Minitest::Test
       File.binwrite(wav, hdr + pcm)
       features_path = File.join(dir, "features.json")
       _o, err, status = Open3.capture3("python3",
-                                       File.expand_path("../dilla/analyze/reference_analyzer.py", __dir__),
+                                       File.expand_path("../dilla/reference_analyzer.py", __dir__),
                                        wav, "--json", features_path)
       assert status.success?, err
       text = File.read(features_path)

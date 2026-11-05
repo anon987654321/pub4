@@ -255,11 +255,20 @@ module Operator
     end
 
     def sprawl_rows
-      %w[lone_dirs stutter vague_names tracked_files tracked_directories].map do |kind|
+      require File.join(MASTER, "lib/operator/sprawl_census")
+      census = Operator::SprawlCensus
+      members = {
+        "lone_dirs" => census.lone_dirs,
+        "stutter" => census.stutter,
+        "vague_names" => census.vague_names,
+        "tracked_files" => census.tracked_files,
+        "tracked_directories" => census.tracked_directories,
+      }
+      ceilings = census.ceilings
+
+      members.map do |kind, rows|
         master_row("sprawl.#{kind}", "data/sprawl_census.yml", "tracked files and directories across all four governed trees") do
-          require File.join(MASTER, "lib/operator/sprawl_census")
-          [Operator::SprawlCensus.counts.fetch(kind), Operator::SprawlCensus.ceilings.fetch(kind),
-           Array(Operator::SprawlCensus.public_send(kind))]
+          [rows.size, ceilings.fetch(kind), rows]
         end
       end
     end
