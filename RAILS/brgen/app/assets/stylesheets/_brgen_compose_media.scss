@@ -1,0 +1,23 @@
+/* The attached media under the toolbar: a small thumbnail or the file name,
+   each with its remove control (feed_compose#renderMedia). */
+.compose-media {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin: var(--space-2) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.compose-media li {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.compose-media img {
+  width: 4rem;
+  height: 4rem;
+  object-fit: cover;
+  border-radius: var(--radius-small);
+}

@@ -1,0 +1,7 @@
+# The composer's list of attached media (shared/_feed_compose, feed_compose#renderMedia).
+nb:
+  compose:
+    media:
+      label: Vedlegg
+      photo_alt: Valgt bilde
+      remove: Fjern %{name}

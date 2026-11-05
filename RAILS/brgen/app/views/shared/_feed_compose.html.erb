@@ -8,7 +8,9 @@
     owns focus trapping, Esc, and the backdrop) but not rendered until
     showModal(). %>
 <div class="compose-launcher" data-controller="feed-compose"
-     data-feed-compose-discard-value="<%= t("feed.compose_discard") %>">
+     data-feed-compose-discard-value="<%= t("feed.compose_discard") %>"
+     data-feed-compose-remove-media-value="<%= t("compose.media.remove") %>"
+     data-feed-compose-media-alt-value="<%= t("compose.media.photo_alt") %>">
   <button type="button" class="compose-trigger" data-action="click->feed-compose#open">
     <% if guest? %>
       <span class="compose-avatar" aria-hidden="true">G</span>
@@ -102,6 +104,11 @@
             </label>
           </div>
         </div>
+        <%# What is attached, with a way to take it off (feed_compose#renderMedia).
+            Hidden until a file is chosen, so an empty list says nothing. %>
+        <%= tag.ul class: "compose-media", role: "list", hidden: true,
+                   aria: { label: t("compose.media.label"), live: "polite" },
+                   data: { feed_compose_target: "media" } %>
       </div>
 
       <%# The Live layer, folded in, and asked for. A Live post is stamped with

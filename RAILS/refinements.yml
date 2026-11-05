@@ -1251,7 +1251,7 @@ items:
   path: RAILS/__shared/frontend/feed_compose_controller.js
   item: Show a thumbnail and a remove control for media chosen in the quick composer;
     today a selected photo gives no visible sign.
-  status: open
+  status: done
 - id: brgen-047
   app: brgen
   area: compose
@@ -6136,8 +6136,7 @@ items:
   size: M
   path: RAILS/__shared/config/importmap_baseline.rb
   item: Drop the @stimulus-components pins (31 names) that no app registers.
-  status: invalid
-  note: "All 30 pinned names are registered: stimulus_boot.js imports 28 and registers all 30 in COMPONENT_REGISTRATIONS; character-counter and scroll-reveal arrive through pub4/character_counter and pub4/scroll_reveal."
+  status: open
 - id: shared-027
   app: shared
   area: performance

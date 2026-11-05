@@ -1,0 +1,7 @@
+# The composer's list of attached media (shared/_feed_compose, feed_compose#renderMedia).
+en:
+  compose:
+    media:
+      label: Attachments
+      photo_alt: Chosen photo
+      remove: Remove %{name}

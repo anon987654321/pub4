@@ -6,11 +6,15 @@ import { Controller } from "@hotwired/stimulus"
 // the writing surface floats over the feed, so the feed does not reflow when you
 // start writing. amber still expands in place, so expand/collapse stay.
 export default class extends Controller {
-  static targets = ["input", "title", "footer", "box", "dialog"]
+  static targets = ["input", "title", "footer", "box", "dialog", "media"]
   static values = {
     expandedClass: { type: String, default: "compose-box--expanded" },
     // The question asked before a dialog holding text or media closes.
-    discard: { type: String, default: "" }
+    discard: { type: String, default: "" },
+    // The media list's words, translated by the view: "Fjern %{name}" and the
+    // thumbnail's alt text.
+    removeMedia: { type: String, default: "" },
+    mediaAlt: { type: String, default: "" }
   }
 
   connect() {
@@ -25,6 +29,7 @@ export default class extends Controller {
   }
 
   disconnect() {
+    this.revokeMedia()
     if (this._onSubmitEnd) {
       this.element.removeEventListener("turbo:submit-end", this._onSubmitEnd)
     }
@@ -101,6 +106,64 @@ export default class extends Controller {
   mediaSelected(event) {
     const label = event.target.closest("label")
     if (label) label.classList.toggle("compose-action--attached", event.target.files.length > 0)
+    this.renderMedia()
+  }
+
+  // What is attached, in the media list (brgen): a thumbnail for a photo, the
+  // file name for a recording, and a control that takes each off again. The
+  // icon's attached state was the only sign, and it could not be undone short
+  // of closing the composer.
+  renderMedia() {
+    if (!this.hasMediaTarget) return
+
+    this.revokeMedia()
+    const chosen = Array.from(this.element.querySelectorAll("input[type=file]")).filter((input) => input.files?.length)
+    const items = chosen.map((input) => this.mediaItem(input))
+    this.mediaTarget.replaceChildren(...items)
+    this.mediaTarget.hidden = items.length === 0
+  }
+
+  mediaItem(input) {
+    const [file] = input.files
+    const item = document.createElement("li")
+
+    if (file.type.startsWith("image/")) {
+      const image = document.createElement("img")
+      image.src = this.mediaUrl(file)
+      image.alt = this.mediaAltValue
+      item.append(image)
+    } else {
+      const name = document.createElement("span")
+      name.textContent = file.name
+      item.append(name)
+    }
+
+    const remove = document.createElement("button")
+    remove.type = "button"
+    remove.className = "button button-ghost button-small"
+    remove.textContent = this.removeMediaValue.replace("%{name}", file.name)
+    remove.addEventListener("click", () => this.removeMedia(input))
+    item.append(remove)
+    return item
+  }
+
+  removeMedia(input) {
+    input.value = ""
+    input.dispatchEvent(new Event("change", { bubbles: true }))
+    const editable = this.element.querySelector(".tiptap_area")
+    if (editable) editable.focus()
+    else if (this.hasInputTarget) this.inputTarget.focus()
+  }
+
+  mediaUrl(file) {
+    const url = URL.createObjectURL(file)
+    this.mediaUrls = [ ...(this.mediaUrls || []), url ]
+    return url
+  }
+
+  revokeMedia() {
+    (this.mediaUrls || []).forEach((url) => URL.revokeObjectURL(url))
+    this.mediaUrls = []
   }
 
   syncTitle() {
