@@ -111,7 +111,7 @@ class TestReplicateClientRetry < Minitest::Test
     end
 
     assert_equal 1, requests.size
-    assert_equal "Bearer", requests.first["Authorization"].split(" ").first
+    assert_equal "Token", requests.first["Authorization"].split(" ").first
     refute requests.any? { |request| request["Host"] == "attacker.invalid" }
   end
 
