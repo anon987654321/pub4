@@ -13,14 +13,16 @@ module Master
 
       IN_APP = %w[.erb .scss .css].freeze
       RAILS_PATH = %r{\A(?<rails>.+/RAILS)/(?<component>[^/]+)/}
-      SKIPPED = %r{/(?:vendor|builds|node_modules|tmp)/}
+      # Matched against the path below RAILS/, so a checkout or export under /tmp/
+      # is still read; only an app's own vendor, builds, node_modules and tmp trees are skipped.
+      SKIPPED = %r{(?:\A|/)(?:vendor|builds|node_modules|tmp)/}
       COMPILER_APP = "brgen"
 
       module_function
 
       def failure(path)
         found = path.to_s.match(RAILS_PATH)
-        return if found.nil? || path.to_s.match?(SKIPPED)
+        return if found.nil? || path.to_s.delete_prefix("#{found[:rails]}/").match?(SKIPPED)
 
         ext = File.extname(path).downcase
         return script_failure(path) if ext == ".js"
@@ -52,7 +54,15 @@ module Master
         return [] unless ext == ".scss"
 
         apps = found[:component] == "__shared" ? "*" : found[:component].sub(/\Abrgen_.+\z/, "brgen")
-        Dir.glob(File.join(found[:rails], apps, "app", "assets", "stylesheets", "application.scss"))
+        entries = Dir.glob(File.join(found[:rails], apps, "app", "assets", "stylesheets", "application.scss"))
+        found[:component] == "__shared" ? entries.select { |entry| loads_shared?(entry) } : entries
+      end
+
+      # mrdamascy has its own application.scss and no pub4-shared gem, so its
+      # build never imports a shared partial and cannot judge one.
+      def loads_shared?(entry)
+        gemfile = File.join(entry.delete_suffix("/app/assets/stylesheets/application.scss"), "Gemfile")
+        File.file?(gemfile) && File.read(gemfile).match?(%r{path:\s*["']\.\./__shared["']})
       end
     end
   end

@@ -25,9 +25,14 @@ module Operator
 
     module_function
 
-    def flat_files(dir)
-      Dir.glob(File.join(ROOT, dir, "**", "*.rb"))
-         .reject { |path| path.match?(%r{/(vendor|node_modules|\.git|tmp)/}) }
+    # Matched against the repository-relative path, so a checkout or export
+    # under /tmp/ is counted; only vendor, node_modules, .git and tmp trees
+    # inside it are skipped.
+    SKIPPED = %r{(?:\A|/)(?:vendor|node_modules|\.git|tmp)/}
+
+    def flat_files(dir, root: ROOT)
+      Dir.glob(File.join(root, dir, "**", "*.rb"))
+         .reject { |path| path.delete_prefix("#{root}/").match?(SKIPPED) }
          .reject { |path| File.read(path).match?(/^\s*(module|class)\s+[A-Z]/) }
     end
 
