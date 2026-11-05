@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "json"
+require "uri"
 require "securerandom"
 require "timeout"
 require "mcp"
@@ -86,11 +87,28 @@ module Master
                               read_timeout: timeout_for(cfg),
                             )
                           when :sse
-                            MCP::Client::HTTP.new(url: cfg["url"])
+                            MCP::Client::HTTP.new(url: local_sse_url!(cfg.fetch("url")))
                           end
         return unless transport_client
 
         MCP::Client.new(transport: transport_client)
+      end
+
+      # The MCP gem owns its HTTP connection and cannot currently receive the
+      # coordinator's bounded stdio timeout. Until an explicit egress policy is
+      # available, SSE is limited to loopback; a config edit cannot turn this
+      # process into an arbitrary internal-network HTTP client.
+      def local_sse_url!(value)
+        uri = URI.parse(value.to_s)
+        loopback = %w[localhost 127.0.0.1 ::1].include?(uri.host.to_s.downcase)
+        valid = %w[http https].include?(uri.scheme) && loopback &&
+                uri.userinfo.nil? && uri.fragment.nil? && uri.query.nil? &&
+                !uri.path.empty? && uri.path.start_with?("/")
+        raise ArgumentError, "MCP SSE URL must be a loopback HTTP(S) endpoint without credentials or query" unless valid
+
+        uri.to_s
+      rescue URI::InvalidURIError
+        raise ArgumentError, "MCP SSE URL is invalid"
       end
 
       def timeout_for(cfg)
