@@ -33,6 +33,7 @@ require_relative "../repair_loop/collapse_guard"
 require_relative "../repair_loop/fix_strategies"
 require_relative "../repair_loop/fix_verification"
 require_relative "../repair_loop/outcome_tracking"
+require_relative "../repair_loop/refused_repair"
 require_relative "../visual_custody_blocking"
 require_relative "../artifact_preservation"
 require_relative "../task_contract"
@@ -336,6 +337,7 @@ module Master
         # committer records its own refusals; a :blocked with no reason on record is the
         # committer's defect, and is recorded as one rather than left as "blocked".
         def commit_refused(violation, reason = nil, error: nil)
+          put_back_refused_repair
           if reason.nil? && error.nil?
             return :commit_refused if @committer.last_refusal
 
@@ -344,6 +346,17 @@ module Master
           why = reason.to_s.strip.lines.last(3).join(" ")[0, 300]
           refuse(:commit, violation, reason: why, error:)
           :commit_refused
+        end
+
+        # A refused repair stayed in the file, uncommitted, and the next attempt and the operator
+        # inherited the model's edit. RefusedRepair says whether the file still holds only that edit.
+        def put_back_refused_repair
+          write = @applied_write
+          @applied_write = nil
+          return unless write && RefusedRepair.uncommitted?(write)
+
+          RefusedRepair.restore(write)
+          @committer.attest_written!(write.path)
         end
 
         # One refusal row for a violation or a path.
@@ -506,6 +519,7 @@ module Master
           end
 
           @committer&.attest_written!(path)
+          @applied_write = RefusedRepair::Write.new(path:, before: old_src, after: new_src)
           @bus&.publish("repair_loop:fix_applied", law: @law.id, file: path)
           FixTrace.accepted(@law.id, path)
           true

@@ -36,10 +36,9 @@ module Master
           end
           @all_skipped = results.any? && results.all? { |r| r.to_s.start_with?("skip_") }
           log_outcome_breakdown(results)
-          # A commit_refused fix is on disk but not delivered, so it counts as
-          # work the stage must still account for: llm_fixed > 0 is what sends
-          # the stage-end commit after whatever the per-fix commits could not
-          # land, and counting only :applied would strand the refused half.
+          # A commit_refused fix still counts as work the stage must account for:
+          # a refused repair is put back, but one whose push failed is committed
+          # locally, and llm_fixed > 0 is what sends the stage-end delivery after it.
           results.count { |r| r == :applied || r == :commit_refused }
         end
 

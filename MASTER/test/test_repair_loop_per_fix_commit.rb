@@ -295,10 +295,10 @@ class TestRepairLoopPerFixCommit < Minitest::Test
     end
   end
 
-  # A commit that the hook or the remote refused does not undo the fix or kill
-  # the pass: the fix is on disk, undelivered, and that is a different outcome
-  # from :applied — one the stage-end commit can still pick up.
-  def test_a_refused_commit_is_a_named_outcome_and_the_fix_stands
+  # A commit the hook or the committer refused does not kill the pass, and it does not leave the
+  # model's edit behind either: the next attempt on the file and the operator inherited it,
+  # uncommitted. The file holds what it held before the repair.
+  def test_a_refused_commit_is_a_named_outcome_and_the_file_goes_back
     Dir.mktmpdir do |root|
       path = File.join(root, "sample.rb")
       File.write(path, "violation\n")
@@ -310,8 +310,42 @@ class TestRepairLoopPerFixCommit < Minitest::Test
       outcome = loop.send(:fix_violation, violation_in(path))
 
       assert_equal :commit_refused, outcome
-      assert_equal "clean\n", File.read(path)
+      assert_equal "violation\n", File.read(path)
       assert_includes bus.events.map(&:first), "repair_loop:commit_refused"
+    end
+  end
+
+  # The house lint refusing a repair answers :blocked with its reason on record.
+  def test_a_repair_the_committer_blocks_is_put_back
+    Dir.mktmpdir do |root|
+      path = File.join(root, "sample.rb")
+      File.write(path, "violation\n")
+      committer = FakeCommitter.new
+      committer.define_singleton_method(:commit_if_dirty) { |*, **| :blocked }
+      committer.define_singleton_method(:last_refusal) { "house_lint, findings lint0: sample.rb:1" }
+      loop = build_loop(root:, bus: FakeBus.new, scanner: RecordingScanner.new, agent: FixingAgent.new, committer:)
+
+      assert_equal :commit_refused, loop.send(:fix_violation, violation_in(path))
+      assert_equal "violation\n", File.read(path)
+      assert_equal [path, path], committer.attested
+    end
+  end
+
+  # A file someone changed after the repair wrote it is theirs, and stays.
+  def test_a_refused_repair_another_writer_changed_since_is_left
+    Dir.mktmpdir do |root|
+      path = File.join(root, "sample.rb")
+      File.write(path, "violation\n")
+      committer = FakeCommitter.new
+      committer.define_singleton_method(:commit_if_dirty) do |*, **|
+        File.write(path, "someone else\n")
+        :blocked
+      end
+      committer.define_singleton_method(:last_refusal) { "rubocop" }
+      loop = build_loop(root:, bus: FakeBus.new, scanner: RecordingScanner.new, agent: FixingAgent.new, committer:)
+
+      assert_equal :commit_refused, loop.send(:fix_violation, violation_in(path))
+      assert_equal "someone else\n", File.read(path)
     end
   end
 
@@ -350,9 +384,8 @@ class TestRepairLoopPerFixCommit < Minitest::Test
     end
   end
 
-  # :commit_refused still counts as work the stage must account for — counting
-  # only :applied would strand the refused fixes with llm_fixed == 0 and no
-  # stage-end commit ever chasing them.
+  # :commit_refused still counts as work the stage must account for: a commit whose push failed is
+  # local and undelivered, and counting only :applied would leave no stage-end publish chasing it.
   def test_a_refused_commit_still_counts_toward_the_stage_commit
     Dir.mktmpdir do |root|
       path = File.join(root, "sample.rb")
