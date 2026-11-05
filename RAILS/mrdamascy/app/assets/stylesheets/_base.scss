@@ -108,8 +108,7 @@ main.shell {
   position: sticky;
   top: 0;
   z-index: var(--z-brand-bar);
-  background: var(--paper);
-  border-bottom: 1px solid var(--line);
+  background: var(--brand-charcoal);
 }
 
 .brand-link {
@@ -119,7 +118,7 @@ main.shell {
   align-items: center;
   gap: var(--space-8);
   padding: var(--space-8) var(--space-16);
-  color: var(--ink);
+  color: var(--paper);
 }
 
 .brand-logo {
@@ -128,6 +127,7 @@ main.shell {
 }
 
 .brand-name {
+  color: var(--paper);
   font-weight: 700;
   letter-spacing: 0.05em;
 }

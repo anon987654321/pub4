@@ -12,4 +12,15 @@ class BrandAssetsTest < ActiveSupport::TestCase
     assert_equal 35, logo.scan("<path").size
     assert_no_match(/\d\.\d/, logo[/ d="[^"]*"/], "path data keeps whole viewBox units")
   end
+
+  test "the original wordmark is blended into the brand bar without editing the asset" do
+    logo = Rails.public_path.join("logo.svg").read
+    tokens = Rails.root.join("app/assets/stylesheets/_tokens.scss").read
+    base = Rails.root.join("app/assets/stylesheets/_base.scss").read
+
+    assert_includes logo, 'fill="#434244"'
+    assert_match(/--brand-charcoal:\s*#434244;/, tokens)
+    assert_match(/\.brand-bar\s*\{[^}]*background:\s*var\(--brand-charcoal\)/m, base)
+    assert_match(/\.brand-link\s*\{[^}]*color:\s*var\(--paper\)/m, base)
+  end
 end

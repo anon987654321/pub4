@@ -20,6 +20,16 @@ class MenuControllerTest < ActionDispatch::IntegrationTest
     assert_match "Wraps &amp; Ruller", response.body  # HTML-escaped in the section title               # category section
   end
 
+  test "the brand bar uses the original wordmark and the restaurant name" do
+    get root_url
+
+    assert_response :success
+    assert_select "header.brand-bar a.brand-link" do
+      assert_select "img.brand-logo[src=?][alt=?]", "/logo.svg", I18n.t("app.brand")
+      assert_select "span.brand-name", text: I18n.t("app.name")
+    end
+  end
+
   test "a menu card is named by everything it shows, not the dish name alone" do
     get root_url
     card = Nokogiri::HTML(response.body).at_css("a.item-card-hit")
