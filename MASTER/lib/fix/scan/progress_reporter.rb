@@ -71,7 +71,9 @@ module Master
           file = File.join(Master::ROOT, ".master", "scan_hits.jsonl")
           FileUtils.mkdir_p(File.dirname(file))
           Master::Trace::Log.rotate(file, SCAN_HITS_MAX_BYTES)
-          File.open(file, "a") do |io|
+          # Binary append: a finding message read from a tool arrives as bytes, and with
+          # bin/master's Encoding.default_internal a text-mode write raised on its "—".
+          File.open(file, "ab") do |io|
             findings.each do |finding|
               io.puts({
                 path: path.to_s,

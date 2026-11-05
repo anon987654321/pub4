@@ -153,10 +153,12 @@ module Master
 
       # Open a private append target without following its final path component.
       # The descriptor, not the path string, is used for chmod so a replacement
-      # cannot redirect the permission change to another file.
+      # cannot redirect the permission change to another file. Bytes in, bytes out:
+      # under bin/master's Encoding.default_internal a text-mode write raised on a "—".
       def self.with_private_file(path, flags, mode:, label:)
         flags |= File::NOFOLLOW if File.const_defined?(:NOFOLLOW)
         File.open(path, flags, mode) do |file|
+          file.binmode
           verify_file_identity!(file, path, label)
           file.chmod(mode)
           verify_file_identity!(file, path, label)

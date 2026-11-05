@@ -251,12 +251,21 @@ module Master
         emit_mutex.synchronize { yield io }
       end
 
+      # A line built from tool output can arrive as bytes. Written to a text IO under
+      # bin/master's Encoding.default_internal it raised on the first non-ASCII byte.
+      def as_utf8_text(text)
+        return text unless text.encoding == Encoding::BINARY
+
+        text.dup.force_encoding(Encoding::UTF_8).scrub
+      end
+
       def emit(line, io: $stdout, force: false)
         return unless enabled? || force
 
         return if !force && quiet_in_turn?(line)
 
-        text = line.to_s.gsub(/\s+/, " ").strip
+        text = as_utf8_text(line.to_s).gsub(/\s+/, " ").strip
+
         terminal_write(io:) do |target|
           target.puts(boot_paint(text, target))
           target.flush if target.respond_to?(:flush)
