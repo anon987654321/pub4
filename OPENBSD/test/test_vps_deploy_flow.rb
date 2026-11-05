@@ -293,6 +293,26 @@ class VpsDeployFlowTest < Minitest::Test
     end
   end
 
+  def test_preflight_checkout_is_restored_on_every_exit_path
+    restore = SOURCE[/^restore_preflight_checkout\(\) \{.*?^\}/m]
+    finish = SOURCE[/^finish\(\) \{.*?^\}/m]
+    pin = SOURCE[/^deploy_refuse\(\).*?^fi$/m]
+
+    refute_nil restore, "preflight needs one named checkout-recovery operation"
+    refute_nil finish, "the failure trap must remain a single owner"
+    refute_nil pin, "the pinned preflight block must remain intact"
+    assert_includes restore, '(( preflight_active )) || return 0'
+    assert_includes restore, 'git_as_deploy_user switch -q'
+    assert_includes restore, 'preflight_active=0'
+    assert_includes finish, 'if (( preflight_active ))'
+    assert_includes finish, 'restore_preflight_checkout'
+    assert_operator SOURCE.index('preflight_active=1'), :<, SOURCE.index('switch -q --detach "$pin"'),
+                   "recovery ownership is set before the detached checkout begins"
+    assert_operator SOURCE.index('restore_preflight_checkout || deploy_refuse'), :<,
+                     SOURCE.index('git_as_deploy_user merge -q --ff-only "$pin"'),
+                     "the preflight checkout is restored before the release advances"
+  end
+
   # the order
 
   def order_run(dir, avail:, apps_up: true, started: "brgen amber bsdports master")
