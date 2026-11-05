@@ -99,6 +99,15 @@ class WriteGuardTest < Minitest::Test
     end
   end
 
+  def test_new_repository_files_are_blocked_without_an_active_task_contract
+    target = File.join(Master::ROOT, "test", "write_guard_legacy_probe_#{Process.pid}.rb")
+    Master::Fix::TaskContract.with_current(nil) do
+      verdict = @guard.verdict(path: target, content: "# frozen_string_literal: true\\n")
+      assert_predicate verdict, :blocked?
+      assert_match(/new tracked path/, verdict.reason)
+    end
+  end
+
   # Operator decision 2026-10-28: an automated write to the laws or the soul is refused with a reason,
   # whatever its content.
   def test_an_automated_write_to_the_laws_or_the_soul_is_refused
