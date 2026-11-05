@@ -159,13 +159,17 @@ class Marketplace::ListingsController < Marketplace::BaseController
 
   def set_listing = (@listing = find_by_slug_or_id(Marketplace::Listing.includes(:user, :store, :category, photos_attachments: :blob, video_attachment: :blob), params[:id]))
 
+  # The forms send kroner (price_kroner and the detail *_kroner fields). The øre
+  # fields stay permitted for callers that already post them.
   def listing_params
     params.require(:listing).permit(
-      :title, :description, :price_cents, :condition, :status, :location,
+      :title, :description, :price_kroner, :price_cents, :condition, :status, :location,
       :latitude, :longitude, :category_id, :preset, :kind, :delivery_promise, :fulfilment_method, :source, :store_id, :buy_box_key, :video, photos: [],
-      job_detail_attributes: %i[employer employment_type salary_min_cents salary_max_cents remote],
-      housing_detail_attributes: %i[rent_cents deposit_cents rooms size_sqm available_from housing_type],
-      gig_detail_attributes: %i[pay_cents starts_at hours]
+      job_detail_attributes: %i[employer employment_type salary_min_kroner salary_max_kroner
+                                salary_min_cents salary_max_cents remote],
+      housing_detail_attributes: %i[rent_kroner deposit_kroner rent_cents deposit_cents
+                                    rooms size_sqm available_from housing_type],
+      gig_detail_attributes: %i[pay_kroner pay_cents starts_at hours]
     )
   end
 

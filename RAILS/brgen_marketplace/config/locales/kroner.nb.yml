@@ -1,0 +1,6 @@
+---
+nb:
+  activerecord:
+    errors:
+      messages:
+        invalid_amount: må være et beløp i kroner, for eksempel 250 eller 250,50

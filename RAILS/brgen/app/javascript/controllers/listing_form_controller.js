@@ -49,7 +49,7 @@ export default class extends Controller {
 
   refresh() {
     const title = this.element.querySelector("[name=\"listing[title]\"]")?.value || ""
-    const price = this.element.querySelector("[name=\"listing[price_cents]\"]")?.value || ""
+    const price = this.element.querySelector("[name=\"listing[price_kroner]\"]")?.value ?? ""
     const condition = this.element.querySelector("[name=\"listing[condition]\"]")?.selectedOptions?.[0]?.textContent || ""
     const location = this.element.querySelector("[name=\"listing[location]\"]")?.value || ""
     const source = this.element.querySelector("[name=\"listing[source]\"]:checked")?.closest("label")?.innerText?.trim() || ""
@@ -175,10 +175,12 @@ export default class extends Controller {
     this.sectionTargets[this.step]?.querySelector("legend")?.focus?.()
   }
 
-  money(ore) {
-    const value = Number(ore)
-    if (!Number.isFinite(value)) return ore
-    return new Intl.NumberFormat(document.documentElement.lang || "en", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(value / 100)
+  // The field takes kroner as typed: "250", "250,50" or "1 250".
+  money(kroner) {
+    const value = Number(String(kroner).replace(/\s/g, "").replace(",", "."))
+    if (!Number.isFinite(value)) return kroner
+    const options = { minimumFractionDigits: 2, maximumFractionDigits: 2 }
+    return new Intl.NumberFormat(document.documentElement.lang || "en", options).format(value)
   }
 
   text(key, fallback) {

@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 class Marketplace::Listing < ApplicationRecord
+  include Marketplace::KronerFields
+  kroner_field :price_cents
   include CityTenantable
   include Shared::Sluggable # /listings/<title-slug>; from :title, unique per city
   include Shared::MediaProcessable

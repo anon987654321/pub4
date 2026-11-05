@@ -1313,8 +1313,8 @@ nb:
     new_listing: Ny annonse
     edit_listing: Rediger annonse
     saved_searches: Lagrede søk
-    price_ore: Pris (øre)
-    price_help: Skriv prisen i øre; for eksempel er 25000 NOK 250.
+    price_kroner: Pris (kr)
+    price_help: Skriv prisen i kroner, for eksempel 250 eller 250,50.
     post_review: Publiser anmeldelse
     send_offer: Send bud
     list_it: Legg ut
@@ -1447,16 +1447,16 @@ nb:
     kinds_label: Hva slags annonse
     job_employer: Arbeidsgiver
     job_type: Type arbeid
-    job_salary_min: "Lønn fra (øre)"
-    job_salary_max: "Lønn til (øre)"
+    job_salary_min: "Lønn fra (kr)"
+    job_salary_max: "Lønn til (kr)"
     job_remote: Kan gjøres hjemmefra
-    housing_rent: "Leie per måned (øre)"
-    housing_deposit: "Depositum (øre)"
+    housing_rent: "Leie per måned (kr)"
+    housing_deposit: "Depositum (kr)"
     housing_type: Type bolig
     housing_rooms: Rom
     housing_size: "Størrelse (m²)"
     housing_available: Ledig fra
-    gig_pay: "Betaling (øre)"
+    gig_pay: "Betaling (kr)"
     gig_starts: Starter
     gig_hours: Timer
     kinds:

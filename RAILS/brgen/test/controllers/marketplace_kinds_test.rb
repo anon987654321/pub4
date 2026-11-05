@@ -167,7 +167,7 @@ end
 
     get marketplace.new_listing_path(kind: "housing")
     assert_response :success
-    assert_includes response.body, "listing[housing_detail_attributes][rent_cents]"
+    assert_includes response.body, "listing[housing_detail_attributes][rent_kroner]"
     assert_not_includes response.body, "listing[job_detail_attributes]"
   end
 

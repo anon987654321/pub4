@@ -129,10 +129,10 @@
 
         <% if @kind == "goods" %>
           <div class="field">
-            <%= f.label :price_cents, t("marketplace.price_ore") %>
-            <%= f.number_field :price_cents, min: 0, inputmode: "numeric", required: true,
-                  data: { listing_form_target: "price" } %>
-            <p class="form-help"><%= t("marketplace.price_help") %></p>
+            <%= f.label :price_kroner, t("marketplace.price_kroner") %>
+            <%= f.text_field :price_kroner, inputmode: "decimal", required: true, autocomplete: "off",
+                  aria: { describedby: "listing_price_help" }, data: { listing_form_target: "price" } %>
+            <%= tag.p t("marketplace.price_help"), class: "form-help", id: "listing_price_help" %>
           </div>
 
           <div class="field">
@@ -185,16 +185,16 @@
             <%= f.fields_for :job_detail do |jf| %>
               <div class="field"><%= jf.label :employer, t("marketplace.job_employer") %><%= jf.text_field :employer, maxlength: 120 %></div>
               <div class="field"><%= jf.label :employment_type, t("marketplace.job_type") %><%= jf.select :employment_type, Marketplace::JobDetail::EMPLOYMENT_TYPES.map { |type| [t("marketplace.employment_types.#{type}"), type] }, include_blank: "—" %></div>
-              <div class="field"><%= jf.label :salary_min_cents, t("marketplace.job_salary_min") %><%= jf.number_field :salary_min_cents, min: 0, inputmode: "numeric" %></div>
-              <div class="field"><%= jf.label :salary_max_cents, t("marketplace.job_salary_max") %><%= jf.number_field :salary_max_cents, min: 0, inputmode: "numeric" %></div>
+              <div class="field"><%= jf.label :salary_min_kroner, t("marketplace.job_salary_min") %><%= jf.text_field :salary_min_kroner, inputmode: "decimal" %></div>
+              <div class="field"><%= jf.label :salary_max_kroner, t("marketplace.job_salary_max") %><%= jf.text_field :salary_max_kroner, inputmode: "decimal" %></div>
               <div class="field field--check"><%= jf.label :remote, t("marketplace.job_remote") %><%= jf.check_box :remote %></div>
             <% end %>
           <% elsif @kind == "housing" %>
             <%= f.fields_for :housing_detail do |hf| %>
-              <div class="field"><%= hf.label :rent_cents, t("marketplace.housing_rent") %><%= hf.number_field :rent_cents, min: 0, required: true, inputmode: "numeric" %></div>
+              <div class="field"><%= hf.label :rent_kroner, t("marketplace.housing_rent") %><%= hf.text_field :rent_kroner, required: true, inputmode: "decimal" %></div>
               <div class="field">
-                <%= hf.label :deposit_cents, t("marketplace.housing_deposit") %>
-                <%= hf.number_field :deposit_cents, min: 0, inputmode: "numeric",
+                <%= hf.label :deposit_kroner, t("marketplace.housing_deposit") %>
+                <%= hf.text_field :deposit_kroner, inputmode: "decimal", autocomplete: "off",
                       aria: { describedby: "housing_deposit_help" } %>
                 <%= tag.p t("marketplace.housing_deposit_warning"), id: "housing_deposit_help", class: "form-help" %>
               </div>
@@ -205,7 +205,7 @@
             <% end %>
           <% elsif @kind == "gig" %>
             <%= f.fields_for :gig_detail do |gf| %>
-              <div class="field"><%= gf.label :pay_cents, t("marketplace.gig_pay") %><%= gf.number_field :pay_cents, min: 0, inputmode: "numeric" %></div>
+              <div class="field"><%= gf.label :pay_kroner, t("marketplace.gig_pay") %><%= gf.text_field :pay_kroner, inputmode: "decimal" %></div>
               <div class="field"><%= gf.label :starts_at, t("marketplace.gig_starts") %><%= gf.datetime_field :starts_at %></div>
               <div class="field"><%= gf.label :hours, t("marketplace.gig_hours") %><%= gf.number_field :hours, min: 0.5, step: 0.5, inputmode: "decimal" %></div>
             <% end %>

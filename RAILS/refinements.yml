@@ -2101,7 +2101,7 @@ items:
   item: Take the listing price in kroner (accept 250 or 250,50) and convert to øre
     in the controller, replacing the price_ore field and its 'enter 25000 for NOK
     250' help; do the same for job salary, rent, deposit and gig pay fields.
-  status: open
+  status: done
 - id: brgen-147
   app: brgen
   area: marketplace

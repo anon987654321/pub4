@@ -2,6 +2,8 @@
 
 # An evening's work: a fee, a start, and how long it runs.
 class Marketplace::GigDetail < ApplicationRecord
+  include Marketplace::KronerFields
+  kroner_field :pay_cents
   belongs_to :listing, class_name: "Marketplace::Listing"
 
   validates :pay_cents, numericality: { greater_than_or_equal_to: 0 }, allow_nil: true

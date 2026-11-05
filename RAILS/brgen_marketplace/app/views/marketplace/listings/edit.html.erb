@@ -10,7 +10,12 @@
   <%= f.text_area :description, rows: 4 , data: { character_counter_target: "input" } %>
   <span class="char-counter" data-character-counter-target="counter" aria-live="polite"></span>
 </div></div>
-    <div class="field"><%= f.label :price_cents, t("marketplace.price_ore") %><%= f.number_field :price_cents, min: 0, inputmode: "numeric", required: true %><p class="form-help"><%= t("marketplace.price_help") %></p></div>
+    <div class="field">
+      <%= f.label :price_kroner, t("marketplace.price_kroner") %>
+      <%= f.text_field :price_kroner, inputmode: "decimal", required: true, autocomplete: "off",
+            aria: { describedby: "listing_price_help" } %>
+      <%= tag.p t("marketplace.price_help"), class: "form-help", id: "listing_price_help" %>
+    </div>
     <div class="field"><%= f.label :condition, t("marketplace.condition") %><%= f.select :condition, Marketplace::Listing::CONDITIONS.map { |value| [t("marketplace.conditions.#{value}"), value] }, include_blank: "—" %></div>
     <div class="field"><%= f.label :category_id, t("marketplace.category") %><%= f.collection_select :category_id, @categories, :id, :name, { include_blank: "—" } %></div>
     <div class="field"><span class="field-label"><%= t("marketplace.source") %></span>
