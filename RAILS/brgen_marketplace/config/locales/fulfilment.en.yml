@@ -1,0 +1,31 @@
+---
+en:
+  marketplace:
+    order_pay_heading: Pay for this order
+    fulfilment_heading: Delivery
+    fulfilment_status: Delivery status
+    fulfilment_statuses:
+      unfulfilled: Not sent
+      shipped: Sent
+      delivered: Delivered
+      cancelled: Cancelled
+      returned: Returned
+    order_carrier: Carrier
+    order_tracking: Tracking number
+    order_mark_shipped: Mark as sent
+    order_mark_delivered: Mark as delivered
+    order_mark_delivered_confirm: Mark this order delivered? The buyer will be asked to confirm they received it.
+    order_awaiting_receipt_seller: Waiting for the buyer to confirm receipt. The payout is created when they confirm, or 14 days after delivery if no return is open.
+    order_confirm_receipt_hint: The seller has marked this order delivered. Confirm once you have the item.
+    order_confirm_receipt: I have received it
+    order_confirm_receipt_confirm: Confirm you have received the item? The seller can then be paid.
+    order_notification:
+      confirm_receipt_body: The seller has marked %{title} as delivered. Confirm once you have it.
+      receipt_confirmed: Receipt confirmed
+      receipt_confirmed_body: Receipt of %{title} has been confirmed.
+  flash:
+    marketplace:
+      fulfilment_unavailable: That can't be done with this order right now.
+      order_shipped: The order is marked as sent.
+      order_reported_delivered: The order is marked as delivered. The buyer will be asked to confirm.
+      order_receipt_confirmed: Thanks! Receipt confirmed.

@@ -3,7 +3,7 @@
 class Marketplace::OrdersController < Marketplace::BaseController
   before_action :require_user_session
   before_action :set_listing, only: :create
-  before_action :set_order, only: %i[show update capture]
+  before_action :set_order, only: %i[show update capture ship deliver confirm_receipt]
 
   # Buyer's order history — a paid order used to vanish (the cart only lists
   # pending). Scoped to Current.user's own orders.
@@ -84,7 +84,40 @@ class Marketplace::OrdersController < Marketplace::BaseController
     redirect_to order_path(@order)
   end
 
+  # The seller says the parcel has gone, with the carrier and tracking code the
+  # buyer is sent. Sent again while it is on its way, it corrects them.
+  def ship
+    authorize @order, :update?
+    return refuse_fulfilment unless @order.shippable?
+
+    @order.ship!(carrier: params[:carrier].to_s.strip.first(60).presence,
+                 tracking_code: params[:tracking_code].to_s.strip.first(100).presence)
+    redirect_to order_path(@order), notice: t("flash.marketplace.order_shipped")
+  end
+
+  # The seller says it arrived. The buyer is asked to confirm; the shop's
+  # payout waits for that, or for Order::RECEIPT_WINDOW without an answer.
+  def deliver
+    authorize @order, :update?
+    return refuse_fulfilment unless @order.shippable?
+
+    @order.report_delivered!
+    redirect_to order_path(@order), notice: t("flash.marketplace.order_reported_delivered")
+  end
+
+  # The buyer confirms the parcel arrived, which is what releases the order to
+  # the shop's payout queue.
+  def confirm_receipt
+    authorize @order, :confirm_receipt?
+    return refuse_fulfilment unless @order.receipt_confirmable_by?(Current.user)
+
+    @order.mark_delivered!
+    redirect_to order_path(@order), notice: t("flash.marketplace.order_receipt_confirmed")
+  end
+
   private
+
+  def refuse_fulfilment = redirect_to(order_path(@order), alert: t("flash.marketplace.fulfilment_unavailable"))
 
   # The seller's list beside the buyer's: orders on their own listings,
   # filterable by status, with the pager rather than the buyer-only reflex.

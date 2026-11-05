@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "test_helper"
+require "minitest/mock"
 
 # The order page offers accept and decline only on an open offer and a way to
 # pay when payment can start; the deal page shows what the deal is worth and a
@@ -52,11 +53,13 @@ class Marketplace::OrderAndDealPagesTest < ActionDispatch::IntegrationTest
   test "a buyer whose payment failed is offered a way to pay" do
     failed = order(payment_status: "failed")
     sign_in(@buyer)
-    get marketplace.order_path(failed)
+    Marketplace::Payments::StripeCheckout.stub(:configured?, true) do
+      get marketplace.order_path(failed)
+    end
 
-    pay = page.css("a").find { _1.text.strip == I18n.t("marketplace.pay_now") }
+    pay = page.at_css("form[action='#{marketplace.checkout_path}']")
     refute_nil pay, "a failed payment has no retry path"
-    assert_equal marketplace.cart_path, pay["href"]
+    assert_equal failed.id.to_s, pay.at_css("input[name='order_id']")["value"]
   end
 
   test "the deal page shows the discount and a way to buy" do

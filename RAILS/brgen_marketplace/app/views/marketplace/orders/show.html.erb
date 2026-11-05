@@ -50,10 +50,10 @@
 <%# A buyer whose payment has not started, or failed, is offered the way to
     pay: the cart, where every payable order carries the pay buttons. %>
 <% if @order.buyer == Current.user && @order.startable? %>
-  <div class="order-actions">
-    <%= link_to t("marketplace.pay_now"), cart_path, class: "button button-primary" %>
-  </div>
+  <%= render "pay", order: @order %>
 <% end %>
+
+<%= render "fulfilment", order: @order, viewer: Current.user %>
 
 <% if @returns.present? %>
   <section class="order-returns" aria-label="<%= t("marketplace.returns") %>">

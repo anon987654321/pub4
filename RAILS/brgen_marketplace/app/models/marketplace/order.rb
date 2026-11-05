@@ -2,6 +2,7 @@
 
 class Marketplace::Order < ApplicationRecord
   include Shared::Notifiable
+  include Fulfilment
   tracks_activity created: "MarketplaceOrder", source_vertical: "marketplace", actor: :buyer
 
   belongs_to :buyer,   class_name: "User"
@@ -24,6 +25,9 @@ class Marketplace::Order < ApplicationRecord
   FULFILMENT_STATUSES = %w[unfulfilled shipped delivered cancelled returned].freeze
   PAYMENT_STATUSES = %w[unpaid pending authorized paid failed refunded].freeze
   PAYMENT_PROVIDERS = %w[stripe vipps dintero].freeze
+  # The statuses an order can still be paid from. accepted is an offer the
+  # seller said yes to; its price_cents is the price the two agreed.
+  PAYABLE_STATUSES = %w[pending pending_payment accepted].freeze
 
   validates :status, inclusion: { in: STATUSES }
   validates :fulfilment_status, inclusion: { in: FULFILMENT_STATUSES }
@@ -160,44 +164,19 @@ class Marketplace::Order < ApplicationRecord
   end
 
   def payable?
-    payment_status.in?(%w[unpaid pending failed]) && status.in?(%w[pending pending_payment])
+    payment_status.in?(%w[unpaid pending failed]) && status.in?(PAYABLE_STATUSES)
   end
 
   # start! / find_payable_order. pending means a PSP session already exists —
   # starting another overwrote payment_reference and the first webhook missed.
   def startable?
     return false unless payment_status.in?(%w[unpaid failed])
-    return false unless status.in?(%w[pending pending_payment])
+    return false unless status.in?(PAYABLE_STATUSES)
 
     listed = association(:listing).loaded? ? listing : Marketplace::Listing.find_by(id: listing_id)
     return false unless listed
 
     listed.status == "active" && !listed.expired? && listed.in_stock?
-  end
-
-  # Shipping is the seller telling the buyer where the parcel is. Notified on
-  # the transition rather than left as a status for the buyer to poll, because
-  # nobody polls an order page.
-  def ship!(tracking_code: nil, carrier: nil)
-    transitioned = false
-    with_lock do
-      already_shipped = fulfilment_status == "shipped"
-      update!(
-        fulfilment_status: "shipped",
-        tracking_code: tracking_code,
-        carrier: carrier,
-        shipped_at: Time.current
-      )
-      transitioned = !already_shipped
-    end
-    return self unless transitioned
-
-    metadata = { order_id: id, carrier: carrier }
-    record_listing_commerce_event("MarketplaceOrderShipped", actor: seller, metadata: metadata)
-    record_listing_event("shipped", user: seller, metadata: metadata)
-    carrier_name = carrier.presence || I18n.t("marketplace.order_notification.tracking")
-    detail = tracking_code.presence ? "#{listing_title} — #{carrier_name}: #{tracking_code}" : listing_title
-    deliver_notification(buyer_record, title: I18n.t("marketplace.order_notification.on_its_way"), body: detail, source: self, kind: "order")
   end
 
   # Returnable only against a shop. The right to send a purchase back is a right
@@ -243,22 +222,6 @@ class Marketplace::Order < ApplicationRecord
 
       back.update_columns(stock: back.stock.to_i + (quantity.presence || 1).to_i, updated_at: Time.current)
     end
-  end
-
-  def mark_delivered!
-    transitioned = false
-    with_lock do
-      already_delivered = fulfilment_status == "delivered"
-      update!(fulfilment_status: "delivered", delivered_at: Time.current)
-      transitioned = !already_delivered
-    end
-    return self unless transitioned
-
-    enqueue_store_payout!
-    metadata = { order_id: id }
-    record_listing_commerce_event("MarketplaceOrderDelivered", actor: buyer_record, metadata: metadata)
-    record_listing_event("delivered", user: buyer_record, metadata: metadata)
-    deliver_notification(buyer_record, title: I18n.t("marketplace.order_notification.delivered"), body: listing_title, source: self, kind: "order")
   end
 
   private

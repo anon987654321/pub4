@@ -217,8 +217,10 @@ class Marketplace::CheckoutsController < Marketplace::BaseController
     end
   end
 
+  # The basket is what the cart shows. An accepted offer is paid from its own
+  # order page (single-order lane), not swept into a basket the buyer never saw.
   def payable_orders
-    Current.user.marketplace_orders.includes(listing: :store).select(&:startable?)
+    Current.user.marketplace_orders.includes(listing: :store).select { _1.startable? && _1.status != "accepted" }
   end
 
   # Everything payable gathered under one Checkout. The address is required: a

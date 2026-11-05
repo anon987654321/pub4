@@ -1,0 +1,31 @@
+---
+nb:
+  marketplace:
+    order_pay_heading: Betal bestillingen
+    fulfilment_heading: Levering
+    fulfilment_status: Leveringsstatus
+    fulfilment_statuses:
+      unfulfilled: Ikke sendt
+      shipped: Sendt
+      delivered: Levert
+      cancelled: Kansellert
+      returned: Returnert
+    order_carrier: Fraktfirma
+    order_tracking: Sporingsnummer
+    order_mark_shipped: Merk som sendt
+    order_mark_delivered: Merk som levert
+    order_mark_delivered_confirm: Merke bestillingen som levert? Kjøperen blir bedt om å bekrefte at varen er mottatt.
+    order_awaiting_receipt_seller: Venter på at kjøperen bekrefter mottak. Utbetalingen opprettes når kjøperen bekrefter, eller 14 dager etter levering hvis ingen retur er åpnet.
+    order_confirm_receipt_hint: Selgeren har merket bestillingen som levert. Bekreft når du har fått varen.
+    order_confirm_receipt: Jeg har fått varen
+    order_confirm_receipt_confirm: Bekrefte at du har fått varen? Da kan selgeren få utbetalt pengene.
+    order_notification:
+      confirm_receipt_body: Selgeren har merket %{title} som levert. Bekreft når du har fått varen.
+      receipt_confirmed: Mottak bekreftet
+      receipt_confirmed_body: Mottaket av %{title} er bekreftet.
+  flash:
+    marketplace:
+      fulfilment_unavailable: Det kan ikke gjøres med denne bestillingen nå.
+      order_shipped: Bestillingen er merket som sendt.
+      order_reported_delivered: Bestillingen er merket som levert. Kjøperen blir bedt om å bekrefte.
+      order_receipt_confirmed: Takk! Mottaket er bekreftet.

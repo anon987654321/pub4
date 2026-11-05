@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.2].define(version: 2026_11_04_200000) do
+ActiveRecord::Schema[8.2].define(version: 2026_11_05_150000) do
   create_table "account_merges", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "guest_user_id", null: false
@@ -878,6 +878,7 @@ ActiveRecord::Schema[8.2].define(version: 2026_11_04_200000) do
     t.string "payment_status", default: "unpaid", null: false
     t.integer "price_cents"
     t.integer "quantity", default: 1, null: false
+    t.datetime "receipt_confirmed_at"
     t.datetime "shipped_at"
     t.string "status"
     t.string "tracking_code"

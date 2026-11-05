@@ -22,7 +22,14 @@ Marketplace::Engine.routes.draw do
     resources :variants, only: %i[index create update destroy]
   end
 resources :orders, only: %i[index show update] do
-  member { post :capture }
+  member do
+    post :capture
+    # The parcel: the seller says it has gone and that it arrived, the buyer
+    # confirms it did. See Marketplace::Order#report_delivered!.
+    post :ship
+    post :deliver
+    post :confirm_receipt
+  end
   # Sending it back. Offered only against a shop — see Marketplace::Return.
   resources :returns, only: %i[create update]
 end

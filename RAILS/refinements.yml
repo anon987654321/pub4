@@ -2030,7 +2030,7 @@ items:
   item: Add seller actions and routes to mark an order shipped (carrier plus tracking
     code) and delivered, calling Order#ship! and mark_delivered!, which nothing in
     the app calls today; returns and payout release both wait on delivered.
-  status: open
+  status: done
 - id: brgen-139
   app: brgen
   area: marketplace
@@ -2048,7 +2048,7 @@ items:
   item: 'Let an accepted offer be paid: allow status accepted in Order#startable?
     and payable?, and show a Pay with Vipps/Stripe action on the buyer''s order page,
     because accept! moves the order out of pending and nothing can pay it afterwards.'
-  status: open
+  status: done
 - id: brgen-141
   app: brgen
   area: marketplace

@@ -10,6 +10,10 @@ module Marketplace
       record.seller == user
     end
 
+    def confirm_receipt?
+      user.present? && record.buyer_id == user.id
+    end
+
     private
 
     def participant?

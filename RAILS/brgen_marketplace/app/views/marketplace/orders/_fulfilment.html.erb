@@ -1,0 +1,44 @@
+<%# Where the parcel is, and what each side can do about it. The seller says it
+    has gone and that it arrived; the buyer confirms it did. The shop's payout
+    waits for that confirmation, or for Order::RECEIPT_WINDOW of silence. %>
+<% if order.payment_status == "paid" %>
+  <section class="order-fulfilment" aria-labelledby="order-fulfilment-heading">
+    <%= tag.h2 t("marketplace.fulfilment_heading"), id: "order-fulfilment-heading" %>
+    <dl class="order-meta">
+      <%= tag.dt t("marketplace.fulfilment_status") %>
+      <%= tag.dd tag.span(t("marketplace.fulfilment_statuses.#{order.fulfilment_status}"), class: "chip") %>
+      <% if order.tracking_code.present? %>
+        <%= tag.dt t("marketplace.order_tracking") %>
+        <%= tag.dd [ order.carrier.presence, order.tracking_code ].compact.join(": ") %>
+      <% end %>
+    </dl>
+
+    <% if order.seller == viewer && order.shippable? %>
+      <%= form_with url: ship_order_path(order), method: :post, class: "order-ship-form" do |f| %>
+        <div class="field">
+          <%= f.label :carrier, t("marketplace.order_carrier") %>
+          <%= f.text_field :carrier, value: order.carrier, maxlength: 60, autocomplete: "off" %>
+        </div>
+        <div class="field">
+          <%= f.label :tracking_code, t("marketplace.order_tracking") %>
+          <%= f.text_field :tracking_code, value: order.tracking_code, maxlength: 100, autocomplete: "off" %>
+        </div>
+        <%= tag.p f.submit(t("marketplace.order_mark_shipped"), class: "button") %>
+      <% end %>
+      <%= button_to t("marketplace.order_mark_delivered"), deliver_order_path(order), method: :post,
+            class: "button button-ghost",
+            form: { data: { turbo_confirm: t("marketplace.order_mark_delivered_confirm") } } %>
+    <% end %>
+
+    <% if order.seller == viewer && order.awaiting_receipt? %>
+      <%= tag.p t("marketplace.order_awaiting_receipt_seller"), class: "hint" %>
+    <% end %>
+
+    <% if order.receipt_confirmable_by?(viewer) %>
+      <%= tag.p t("marketplace.order_confirm_receipt_hint") %>
+      <%= button_to t("marketplace.order_confirm_receipt"), confirm_receipt_order_path(order), method: :post,
+            class: "button button-primary",
+            form: { data: { turbo_confirm: t("marketplace.order_confirm_receipt_confirm") } } %>
+    <% end %>
+  </section>
+<% end %>

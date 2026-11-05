@@ -1,0 +1,35 @@
+<%# Paying one order, from its own page: an accepted offer is not in the cart,
+    which lists open offers, so this is the only place it can be paid from.
+    The buttons post the single-order lane (order_id) and skip Turbo, because
+    the provider answers with a redirect to its own host. %>
+<% dintero_ready = Marketplace::Payments::DinteroCheckout.configured? &&
+     Marketplace::Payments::DinteroCheckout.supported_listing?(order.listing) %>
+<% vipps_ready = Marketplace::Payments::VippsCheckout.configured? %>
+<% stripe_ready = Marketplace::Payments::StripeCheckout.configured? &&
+     !(Rails.env.production? && Marketplace::Payments::StripeCheckout.test_key?) %>
+<section class="order-pay" aria-labelledby="order-pay-heading">
+  <%= tag.h2 t("marketplace.order_pay_heading"), id: "order-pay-heading" %>
+  <% if dintero_ready || vipps_ready || stripe_ready %>
+    <div class="order-actions" role="group" aria-label="<%= t("marketplace.payment_methods") %>">
+      <% lock = { turbo: false, controller: "form-submit", action: "submit->form-submit#lock" } %>
+      <% if dintero_ready %>
+        <%= button_to t("marketplace.pay_dintero"), checkout_path, method: :post,
+              params: { provider: "dintero", order_id: order.id }, class: "button button-primary",
+              form: { data: lock } %>
+      <% end %>
+      <% if vipps_ready %>
+        <%= button_to checkout_path, method: :post, params: { provider: "vipps", order_id: order.id },
+              class: "button button-primary cart-pay-vipps", form: { data: lock } do %>
+          <%= image_tag "vipps/vipps-wordmark-on-orange.svg", alt: "", width: 59, height: 24 %>
+          <%= t("marketplace.pay_vipps") %>
+        <% end %>
+      <% end %>
+      <% if stripe_ready %>
+        <%= button_to t("marketplace.pay_stripe"), checkout_path, method: :post,
+              params: { provider: "stripe", order_id: order.id }, class: "button button-ghost", form: { data: lock } %>
+      <% end %>
+    </div>
+  <% else %>
+    <%= tag.p t("marketplace.cart_pay_unavailable"), class: "hint", role: "status" %>
+  <% end %>
+</section>

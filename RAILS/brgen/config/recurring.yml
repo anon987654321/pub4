@@ -170,6 +170,13 @@ production:
     queue: default
     schedule: every day at 3am
 
+  # A parcel the seller marked delivered and the buyer never answered counts as
+  # received after Marketplace::Order::RECEIPT_WINDOW; that creates the payout.
+  confirm_marketplace_receipts:
+    class: Marketplace::ConfirmReceiptJob
+    queue: bulk
+    schedule: every day at 3:30am
+
   # A failed link lookup is asked again after a day, a resolved one after a month.
   refresh_link_embeds:
     class: Shared::LinkEmbedRefreshJob
