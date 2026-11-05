@@ -121,15 +121,17 @@ class TestAxioms < Minitest::Test
         "SECOND_PRESERVE" => { "parent" => "STEWARDSHIP", "statement" => "second preservation contract" },
         "STEWARDSHIP" => { "root" => "stewardship", "statement" => "preserve what works" },
         "TRUTHFUL_STATUS" => { "node" => "truthful_status", "statement" => "report evidence" },
-        "SACRED_AUTHORSHIP" => { "root" => "least_authority", "statement" => "protect paths", "protected_paths" => ["data/laws.yml"] },
+        "SACRED_AUTHORSHIP" => { "root" => "least_authority", "statement" => "protect paths" },
       }.to_yaml)
       soul = File.join(data, "soul.yml")
-      File.write(soul, "references:\n  golden_law: PRESERVE_FIRST\n")
+      # Protected paths live in soul.yml; laws.yml carries no path list.
+      sacred = "absolute:\n  sacred_paths:\n    - data/laws.yml\n"
+      File.write(soul, "references:\n  golden_law: PRESERVE_FIRST\n#{sacred}")
 
       laws = Master::Ground::Laws.new(root:)
       assert_equal "PRESERVE_FIRST", laws.soul_data.fetch("references").fetch("golden_law")
 
-      File.write(soul, "references:\n  golden_law: SECOND_PRESERVE\n")
+      File.write(soul, "references:\n  golden_law: SECOND_PRESERVE\n#{sacred}")
 
       assert_equal "SECOND_PRESERVE", laws.soul_data.fetch("references").fetch("golden_law")
       assert_equal "SECOND_PRESERVE: second preservation contract", laws.constitution.fetch("golden_law")

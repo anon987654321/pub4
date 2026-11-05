@@ -194,8 +194,8 @@ module Operator
     # normative catalogue. Runtime policy is not another Law declaration source.
     def catalogue_declaration(id, root: MASTER)
       require "master"
-      data = Master.laws_document(root:)
-      Master::FlatLawCatalogue.entries(data).find { |row| row["id"].to_s.casecmp?(id.to_s) }
+      rows = Master::FlatLawCatalogue.entries(Master.laws_document(root:))
+      rows.find { |row| row["id"].to_s.casecmp?(id.to_s) } || (raise "no Laws in laws.yml under #{root}" if rows.empty?)
     end
 
     def catalogue_rows

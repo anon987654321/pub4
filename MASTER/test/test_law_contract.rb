@@ -207,8 +207,8 @@ class TestLawContract < Minitest::Test
     roots = data.fetch("law_source").fetch("governing_laws")
 
     assert_equal %w[
-      CAPABILITY_STATUS_MUST_BE_TRUTHFUL ROBUSTNESS SINGULARITY LINEARITY
-      PROXIMITY ABSTRACTION DENSITY RENDERED_VALUES INTER_MODEL_CONTRACT
+      TRUTHFUL_STATUS ROBUSTNESS SINGULARITY LINEARITY
+      PROXIMITY ABSTRACTION DENSITY OPERATOR_RENDERED INTER_MODEL_CONTRACT
     ], roots.map { |entry| entry.fetch("id") }
     assert_match(/\A[0-9a-f]{64}\z/, data.fetch("law_source").fetch("law_map_digest"))
   end

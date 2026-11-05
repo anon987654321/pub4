@@ -20,11 +20,14 @@ class TestLawInventory < Minitest::Test
     assert row.key?(:history)
   end
 
-  def test_catalogue_declaration_uses_shared_loader_across_sections
+  # laws.yml is one flat mapping of Law id to row, read through the canonical
+  # accessor. law_runtime.yml (Master.load_laws) declares no Laws, so the
+  # stub sits on Master.laws_document.
+  def test_catalogue_declaration_reads_the_flat_canonical_catalogue
     catalogue = {
-      "laws" => { "CANONICAL_LAW" => { "statement" => "Canonical entry" } },
-      "beauty" => [{ "id" => "BEAUTY_LAW", "statement" => "Beauty entry" }],
-      "anti_patterns" => { "UNSAFE_PATTERN" => { "statement" => "Pattern entry" } },
+      "CANONICAL_LAW" => { "statement" => "Canonical entry" },
+      "CANONICAL_LAW_child" => { "parent" => "CANONICAL_LAW", "statement" => "Child entry" },
+      "law_catalogue" => { "CANONICAL_LAW" => { "severity" => "error" } },
     }
     observed_root = nil
     loader = lambda do |root:|
@@ -32,20 +35,19 @@ class TestLawInventory < Minitest::Test
       catalogue
     end
 
-    Master.stub(:load_laws, loader) do
+    Master.stub(:laws_document, loader) do
       canonical = Operator::LawInventory.catalogue_declaration("canonical_law", root: "/tmp/custom-master")
-      beauty = Operator::LawInventory.catalogue_declaration("beauty_law", root: "/tmp/custom-master")
-      pattern = Operator::LawInventory.catalogue_declaration("unsafe_pattern", root: "/tmp/custom-master")
+      child = Operator::LawInventory.catalogue_declaration("canonical_law_CHILD", root: "/tmp/custom-master")
 
       assert_equal "CANONICAL_LAW", canonical.fetch("id")
-      assert_equal "BEAUTY_LAW", beauty.fetch("id")
-      assert_equal "UNSAFE_PATTERN", pattern.fetch("id")
+      assert_equal "CANONICAL_LAW_child", child.fetch("id")
+      assert_nil Operator::LawInventory.catalogue_declaration("law_catalogue", root: "/tmp/custom-master")
     end
     assert_equal "/tmp/custom-master", observed_root
   end
 
   def test_catalogue_declaration_refuses_an_empty_catalogue
-    Master.stub(:load_laws, ->(root:) { {} }) do
+    Master.stub(:laws_document, ->(root:) { {} }) do
       assert_raises(RuntimeError) do
         Operator::LawInventory.catalogue_declaration("MISSING_LAW", root: "/tmp/empty-master")
       end

@@ -776,19 +776,25 @@ module Law
     end
 
     def canonical_source
-      roots = Master.law_entries.sort_by { |entry| [entry["priority"].to_i, entry["id"].to_s] }.map do |entry|
+      law_map = Master.law("law_map")
+      {
+        "governing_laws" => governing_roots,
+        "law_map_digest" => Digest::SHA256.hexdigest(JSON.generate(law_map)),
+      }
+    end
+
+    # The roots carrying the nine invariant nodes, in the node order laws.yml declares.
+    def governing_roots
+      entries = Master.law_entries
+      roots = Master::Soul.invariant_order.filter_map { |node| entries.find { |entry| entry["node"].to_s == node } }
+      roots.each_with_index.map do |entry, index|
         {
           "id" => entry["id"].to_s,
-          "priority" => entry["priority"].to_i,
+          "priority" => index,
           "statement" => entry["statement"].to_s,
           "applies_to" => Array(entry["applies_to"]).map(&:to_s),
         }
       end
-      law_map = Master.law("law_map")
-      {
-        "governing_laws" => roots,
-        "law_map_digest" => Digest::SHA256.hexdigest(JSON.generate(law_map)),
-      }
     end
 
     def contract_digest(entries, transformation_policy, source)

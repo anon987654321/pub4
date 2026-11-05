@@ -5,9 +5,9 @@ set -eu
 # Clear macOS libmalloc diagnostics before probing candidate Rubies. These
 # variables are read before Ruby executes this script, so clearing them in
 # bin/master is too late for the interpreter probes below.
-for name in ${(k)parameters}; do
-  case "$name" in
-    MallocStackLogging*) unset "$name" ;;
+for param in ${(k)parameters}; do
+  case "$param" in
+    MallocStackLogging*) unset "$param" ;;
   esac
 done
 
