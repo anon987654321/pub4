@@ -131,6 +131,13 @@ class TestLawContract < Minitest::Test
     end
   end
 
+  def test_openbsd_release_and_portability_laws_are_canonical
+    assert Law.definitions.key?(:PORTABILITY_IS_VERIFIED)
+    assert Law.definitions.key?(:PRODUCTION_RELEASE_IS_PINNED)
+    assert Law.definitions.key?(:LEAST_PRIVILEGE)
+    assert Law.definitions.key?(:PLEDGE_STAGED)
+  end
+
   def test_contract_has_stable_machine_readable_shape
     data = JSON.parse(Law::Contract.render)
 
