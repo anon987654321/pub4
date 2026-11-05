@@ -20,7 +20,7 @@ task :check do
   out, status = Open3.capture2e(RUBY, dilla, "--list", chdir: STUDIO_ROOT)
   raise "dilla --list failed:\n#{out}" unless status.success?
 
-  %w[photograph.rb photograph/idea_picture.rb replicate/client.rb subprocess.rb].each do |entry|
+  %w[photograph.rb photograph/idea_picture.rb replicate/client.rb subprocess.rb test_runner.rb].each do |entry|
     path = File.join(STUDIO_ROOT, entry)
     raise "#{entry} is missing" unless File.file?(path)
 
@@ -30,16 +30,54 @@ task :check do
   puts "check0: studio contracts answer"
 end
 
-desc "Run the STUDIO test suite"
+desc "Run the STUDIO test suite with bounded, non-empty Minitest proof"
 task :test do
+  require_relative "subprocess"
+  require_relative "test_runner"
+
   tests = Dir[File.join(STUDIO_ROOT, "test", "*_test.rb")].sort
   abort "no studio tests found" if tests.empty?
 
-  ok = tests.all? do |path|
-    system(RUBY, path, chdir: STUDIO_ROOT, out: $stdout, err: :err)
+  timeout_s = Integer(ENV.fetch("STUDIO_TEST_TIMEOUT_S", "300"))
+  abort "STUDIO_TEST_TIMEOUT_S must be positive" unless timeout_s.positive?
+
+  failed = []
+  tests.each do |path|
+    name = path.delete_prefix("#{STUDIO_ROOT}/")
+    puts "studio-test0: #{name} starting (timeout #{timeout_s}s)"
+    result = nil
+    output = error_output = ""
+
+    begin
+      output, error_output, status = Studio::Subprocess.capture3(
+        RUBY, path,
+        timeout: timeout_s,
+        chdir: STUDIO_ROOT,
+        env: { "MT_NO_PLUGINS" => "1" }
+      )
+      result = Studio::TestRunner.classify([output, error_output].join("\\n"), status)
+    rescue Studio::Subprocess::TimeoutError => error
+      result = Studio::TestRunner::Result.new(state: :blocked, reason: error.message)
+    rescue StandardError => error
+      result = Studio::TestRunner::Result.new(
+        state: :blocked,
+        reason: "runner error: #{error.class}: #{error.message}"
+      )
+    end
+
+    summary = result.summary
+    detail = summary ? Studio::TestRunner.summary_line(summary) : result.reason
+    puts "studio-test0: #{result.state.to_s.upcase} #{name}#{detail ? " — #{detail}" : ""}"
+    unless result.state == :pass
+      failed << name
+      [output, error_output].join("\\n").lines.last(12).each do |line|
+        puts "  #{line.rstrip}"
+      end
+    end
   end
-  abort "test0: studio suite failed" unless ok
-  puts "test0: studio suite passed"
+
+  abort "test0: #{failed.size}/#{tests.size} file(s) failed or were unmeasured: #{failed.join(", ")}" if failed.any?
+  puts "test0: #{tests.size} file(s) passed with non-empty Minitest summaries"
 end
 
 task default: %i[check test]
