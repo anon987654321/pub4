@@ -3517,7 +3517,7 @@ items:
   item: Add events (Event.upcoming) and communities (Community.visible_to) to SearchController#index
     results; global search covers marketplace, tv and takeaway but not these core
     social verticals.
-  status: open
+  status: done
 - id: brgen-317
   app: brgen
   area: search
@@ -3532,7 +3532,7 @@ items:
   size: M
   path: RAILS/brgen/app/views/search/index.html.erb
   item: Show a snippet with the matched term highlighted under each post result.
-  status: open
+  status: done
 - id: brgen-319
   app: brgen
   area: search
@@ -3547,7 +3547,7 @@ items:
   size: S
   path: RAILS/brgen/app/views/search/index.html.erb
   item: Add a 'See all' link per vertical to that vertical's own search.
-  status: open
+  status: done
 - id: brgen-321
   app: brgen
   area: search

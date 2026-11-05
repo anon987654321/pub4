@@ -1,0 +1,14 @@
+en:
+  search:
+    see_all: "See all results in %{vertical}"
+    sections:
+      people: People
+      posts: Posts
+      events: Events
+      communities: Communities
+      listings: Listings
+      channels: TV channels
+      videos: Videos
+      sets: Sets
+      restaurants: Restaurants
+      places: Places

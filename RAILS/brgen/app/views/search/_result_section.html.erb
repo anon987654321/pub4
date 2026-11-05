@@ -1,8 +1,11 @@
 <%# locals: (section:) %>
-<% vertical_name = t("activity.verticals.#{section.vertical}", default: section.vertical.to_s) %>
+<% vertical_name = t("search.sections.#{section.vertical}") %>
 <section>
   <%= tag.h2 t("search.section_heading", vertical: vertical_name, count: section.total) %>
   <ul>
     <%= render partial: "search/result_row", collection: section.rows, as: :record %>
   </ul>
+  <% if (see_all = search_section_href(section.vertical, @query)) %>
+    <%= tag.p link_to(t("search.see_all", vertical: vertical_name), see_all) %>
+  <% end %>
 </section>

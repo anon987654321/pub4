@@ -1,0 +1,14 @@
+nb:
+  search:
+    see_all: "Se alle treff i %{vertical}"
+    sections:
+      people: Personer
+      posts: Innlegg
+      events: Arrangementer
+      communities: Fellesskap
+      listings: Annonser
+      channels: TV-kanaler
+      videos: Videoer
+      sets: Sett
+      restaurants: Restauranter
+      places: Steder

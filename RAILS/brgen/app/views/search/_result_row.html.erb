@@ -3,4 +3,9 @@
 <%# record_public_href answers nil for a record it cannot route, so the row
     renders unlinked rather than raising. %>
 <% href = record_public_href(record) %>
-<%= tag.li(href ? link_to(label, href) : label) %>
+<%= tag.li do %>
+  <%= href ? link_to(label, href) : label %>
+  <% if record.is_a?(Post) && (snippet = search_snippet(record.content, @query)) %>
+    <%= tag.p snippet, class: "search-result-snippet" %>
+  <% end %>
+<% end %>

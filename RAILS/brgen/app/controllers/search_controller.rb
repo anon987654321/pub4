@@ -30,6 +30,12 @@ class SearchController < ApplicationController
 
     @results[:people] = people_results
     @results[:posts] = apply_live_search(Post.kept.visible_to(Current.user), columns: %w[title content], vertical: "feed")
+    # The two core social verticals beside the feed. The same scopes their own
+    # index pages list: what has not finished yet, and no private community the
+    # reader is outside. Not .popular: its GROUP BY makes a count a hash.
+    @results[:events] = apply_live_search(Event.upcoming, columns: %w[title description venue_name], vertical: "events")
+    @results[:communities] = apply_live_search(Community.active.visible_to(Current.user), columns: %w[name description],
+                                               vertical: "communities")
     @results[:listings] = apply_live_search(
       Marketplace::Listing.publicly_visible.includes(:category),
       columns: %w[title description location],

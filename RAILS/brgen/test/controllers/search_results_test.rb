@@ -32,7 +32,7 @@ class SearchResultsTest < ActionDispatch::IntegrationTest
     get global_search_path(q: word)
 
     assert_response :success
-    heading = I18n.t("search.section_heading", vertical: I18n.t("activity.verticals.posts", default: "posts"), count: 2)
+    heading = I18n.t("search.section_heading", vertical: I18n.t("search.sections.posts"), count: 2)
     assert_select "h2", text: heading
   end
 end
