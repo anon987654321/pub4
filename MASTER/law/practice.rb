@@ -202,6 +202,10 @@ Law.define(:OPERATOR_AUTONOMY) do
   practice <<~TEXT
     when the user approves a direction, carry it through every independent,
     reversible repository change in that scope without per-file confirmation.
+    A commit is a checkpoint, not a conversational stop: after a verified,
+    path-scoped commit and push, resume the same objective and continue the next
+    independent iteration. Never ask whether to continue merely because a
+    checkpoint landed, a test passed, a file changed or one subtask finished.
     Sweep findings to convergence and make the hard choices the evidence
     supports. Git-reversible source edits, refactors and deletions are included
     when the task authorises repository cleanup. Ask only at a real boundary:
@@ -223,7 +227,9 @@ Law.define(:EXECUTE_NOT_INSTRUCT) do
     run X" when X is executable. Check stdout beats narrative completion; on
     failure, diagnose and retry rather than handing the chore back. Deliver
     every authorised, verified repair batch before moving on; commit and push
-    when requested or when the repository workflow already authorises it.
+    when requested or when the repository workflow already authorises it. A
+    commit or push is a delivery checkpoint, not the end of the task: continue
+    all remaining independent in-scope work without asking for another go-ahead.
     Do not turn unfinished executable work into a plan, proposal or backlog item.
   TEXT
   fix "Run the required proof, then commit and push each owned verified batch; report any blocked delivery."

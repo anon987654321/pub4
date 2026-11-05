@@ -263,6 +263,24 @@ as non-DONE outcomes. The detailed execution-contract migration and remaining
 proof gaps are in [Execution contracts](docs/execution-contracts.md).
 
 
+### Unattended iteration and delivery checkpoints
+
+A clear, scoped instruction authorises the agent to finish the independent work
+inside that scope; it is not a request for a sequence of plans and permission
+checks. The agent measures, repairs, verifies, commits and pushes each coherent
+checkpoint under the existing repository workflow, then resumes the same
+objective. A passing test, completed file, landed commit or successful push is
+not a reason to stop and ask whether to continue. Continue until the work is
+converged or a genuine boundary is reached.
+
+A boundary is specific: missing credentials or devices, a human product choice,
+external consent, spending, another person's agency, external publication or
+messages, destructive shared/remote state, an irreversible action outside the
+approved scope, or a material unresolved alternative. Block only that action;
+finish independent work. Never widen the task's scope or infer permission for
+production operations from permission to edit source. Report exact blockers and
+unrun proof, not a generic request to "continue".
+
 ## Debugging Ruby behavior
 
 Start with a reproducible failing test, then use the pinned Ruby debugger for

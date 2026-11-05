@@ -42,6 +42,15 @@ class TestSoul < Minitest::Test
     assert_includes brief, "do not copy MASTER's machinery wholesale"
   end
 
+  def test_unattended_work_treats_delivery_checkpoints_as_nonterminal
+    practice = File.read(File.join(Master::ROOT, "law", "practice.rb"))
+    brief = Master::Ground::AgentBrief.render(root: Master::REPO_ROOT)
+
+    assert_match(/A commit is a checkpoint, not a conversational stop/, practice)
+    assert_match(/continue the same objective/, brief)
+    assert_match(/without asking for another go-ahead/, brief)
+  end
+
   def test_soul_manifest_matches_the_canonical_ruby_body
     data = Master.load_yaml(Master.data_path("soul.yml"))
 
