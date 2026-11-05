@@ -109,4 +109,13 @@ class RcLoginClassTest < Minitest::Test
     assert_match(/:openfiles-cur=2048:/, record("rails").to_s,
                  "the rails record did not parse, so every lookup above is blind")
   end
+
+  # One supervisor process per app instead of four: see the note in each script.
+  def test_each_job_worker_runs_solid_queue_in_one_process
+    %w[brgen amber bsdports].each do |app|
+      flags = File.read(File.expand_path("../etc/rc.d/#{app}_jobs", __dir__))[/^daemon_flags=.*/]
+
+      assert_includes flags, "SOLID_QUEUE_SUPERVISOR_MODE=async", "#{app}_jobs forks a process per worker"
+    end
+  end
 end

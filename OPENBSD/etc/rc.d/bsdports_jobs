@@ -27,7 +27,11 @@ daemon="/bin/ksh"
 for _bundle in /usr/local/bin/bundle4.0 /usr/local/bin/bundle40 /usr/local/bin/bundle3.4 /usr/local/bin/bundle34 /usr/local/bin/bundle3.3 /usr/local/bin/bundle33 /usr/local/bin/bundle; do
   if [ -x "$_bundle" ]; then break; fi
 done
-daemon_flags="-c 'cd ${APP_DIR} && set -a && . /etc/bsdports.env && set +a && export RAILS_ENV=production HOME=/home/bsdports PUB4_ROOT=/home/dev/pub4 PUB4_RAILS_ROOT=/home/dev/pub4/RAILS && export BUNDLE_VERSION=system && exec ${_bundle} exec rake solid_queue:start'"
+# SOLID_QUEUE_SUPERVISOR_MODE=async runs the dispatcher and workers as threads
+# in one process, not four forked ones. vm23 has 1 GB: with the five web apps up,
+# the three forked supervisors took swap to zero on 2026-11-05. Solid Queue
+# 1.4.0 reads the variable; 1.2.4 ignores it and forks as before.
+daemon_flags="-c 'cd ${APP_DIR} && set -a && . /etc/bsdports.env && set +a && export RAILS_ENV=production SOLID_QUEUE_SUPERVISOR_MODE=async HOME=/home/bsdports PUB4_ROOT=/home/dev/pub4 PUB4_RAILS_ROOT=/home/dev/pub4/RAILS && export BUNDLE_VERSION=system && exec ${_bundle} exec rake solid_queue:start'"
 daemon_user="bsdports"
 daemon_execdir="/home/bsdports/app"
 daemon_logger="daemon.notice"
