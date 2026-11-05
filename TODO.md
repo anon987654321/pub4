@@ -1,6 +1,6 @@
 # pub4 - remaining work
 
-Audit snapshot: 2026-11-05, `main` at `4b57364d4935b2df9e3021dd492be32d4db4b85c` (source/history baseline for this register update).
+Audit snapshot: 2026-11-06, rechecked against `main` at `9c03cef500cc18b10e9acf7a7dbc49eb6fee1a6d` immediately before this register update.
 This register replaces the previous 1,275-line, 462-checkbox carry-forward
 dump. It contains unresolved outcomes, not session notes or speculative
 architecture proposals.
@@ -52,8 +52,10 @@ screenshot count or previous revision.
   regression tests. Run the updated `ruby OPENBSD/test/run_all.rb` and
   runner tests; on actual OpenBSD run `pfctl -nf /etc/pf.conf`.
 - [ ] **STUDIO full proof.** Earlier `rake check` and Dilla test
-  (17 runs, 386 assertions) passed. A strict per-file runner and regression
-  tests have since been added. Run `cd STUDIO && rake check test` on pinned
+  (17 runs, 386 assertions) passed. The strict per-file runner now forwards
+  keyword and positional subprocess environments correctly and rejects empty
+  or invalid Minitest summaries. Its new subprocess regressions are source
+  coverage, not a passing run. Run `cd STUDIO && rake check test` on pinned
   Ruby 4.0.5. Review an actual Dilla render by ear with rights-cleared local
   source and confirm the sample level leaves voice room.
 - [ ] **Generated-output freshness.** Check design-token projection and CSS;
@@ -206,11 +208,14 @@ second push path or duplicate orchestration to make TODO.md machine-readable.
   test runs remain NOT_RUN. L4's stored census is not re-baselined until a
   pinned Ruby 4.0.5 run has reported exact member drift. Continue with the
   genuinely open R3/R8-R13/R16-R17/H2-H8 findings. The LLMDispatcher
-  Replicate chat poll is now source-fixed for URL trust, bearer-token
-  confinement and network deadlines; the separate ReplicateClient paths
-  remain under review. All new provider tests are NOT_RUN. R8 now also has a
-  definite commit-refusal rollback regression; the full transaction-aware
-  candidate/apply and later-verification recovery path remains open.
+  Replicate chat poll is source-fixed for URL trust, bearer-token confinement
+  and network deadlines. STUDIO ReplicateClient now validates model, version,
+  training and prediction identifiers before URL interpolation and rejects
+  dot-segment or escaped API paths. Six focused path regressions are added
+  but NOT_RUN; transport, upload/download and provider-integration review
+  remains open. R8 also has a definite commit-refusal rollback regression;
+  the full transaction-aware candidate/apply and later-verification recovery
+  path remains open.
 - [ ] **Local Claude hooks.** On macOS, launch a real Claude Code session and
   verify project hooks load through the `.claude` symlink.
 - [ ] **AI3 recovery.** Compare recovery manifests with recoverable historical
