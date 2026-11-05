@@ -1,10 +1,10 @@
 # frozen_string_literal: true
 
 require "digest"
-require "fileutils"
 require "json"
 require "time"
 require "yaml"
+require_relative "../../trace/log"
 
 module Master
   module Review
@@ -16,6 +16,7 @@ module Master
         REPO_ROOT = File.expand_path("../../../..", __dir__).freeze
         LEDGER_RELATIVE_PATH = File.join(".master", "metrics", "inter_model.jsonl").freeze
         MAX_RESPONSE_BYTES = 32_768
+        LEDGER_MAX_BYTES = 5 * 1024 * 1024
 
         class InvalidResponse < StandardError
           attr_reader :violations
@@ -261,13 +262,9 @@ module Master
             "response_sha256" => Array(response_hashes).last(2)
           }
           path = File.join(root, LEDGER_RELATIVE_PATH)
-          FileUtils.mkdir_p(File.dirname(path), mode: 0o700)
-          File.open(path, File::WRONLY | File::APPEND | File::CREAT, 0o600) do |file|
-            file.flock(File::LOCK_EX)
-            file.write(JSON.generate(record))
-            file.write("\n")
-            file.flush
-          end
+          Master::Trace::Log.append_jsonl(
+            path, record, max_bytes: LEDGER_MAX_BYTES, mode: 0o600, directory_mode: 0o700
+          )
           true
         rescue StandardError => e
           bus&.publish(:inter_model_metric_write_failed, error_class: e.class.name)
@@ -282,7 +279,22 @@ module Master
             "ratchet" => "baseline_pending"
           } unless File.file?(path)
 
-          records = File.readlines(path, chomp: true).reject(&:empty?).map { |line| JSON.parse(line) }
+          stat = File.lstat(path)
+          unless stat.file? && !stat.symlink? && stat.nlink == 1
+            raise ArgumentError, "inter-model ledger must be a singly linked regular file"
+          end
+          raise ArgumentError, "inter-model ledger exceeds #{LEDGER_MAX_BYTES}-byte cap" if stat.size > LEDGER_MAX_BYTES
+
+          records = Master::Trace::Log.with_private_file(
+            path, File::RDONLY, mode: 0o600, label: "inter-model ledger"
+          ) do |file|
+            Master::Trace::Log.verify_file_identity!(file, path, "inter-model ledger")
+            file.each_line.filter_map do |line|
+              next if line.strip.empty?
+
+              JSON.parse(line)
+            end
+          end
           turns = records.size
           return { "status" => "not_measured", "turns" => 0, "ratchet" => "baseline_pending" } if turns.zero?
 
