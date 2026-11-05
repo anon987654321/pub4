@@ -205,7 +205,10 @@ second push path or duplicate orchestration to make TODO.md machine-readable.
   check-registry refusal now have source coverage on `main`; their focused
   test runs remain NOT_RUN. L4's stored census is not re-baselined until a
   pinned Ruby 4.0.5 run has reported exact member drift. Continue with the
-  genuinely open R3/R8–R13/R16–R17/H2–H8 findings. R8 now also has a
+  genuinely open R3/R8–R13/R16–R17/H2–H8 findings. The LLMDispatcher
+  Replicate chat poll is now source-fixed for URL trust, bearer-token
+  confinement and network deadlines; the separate ReplicateClient paths
+  remain under review. All new provider tests are NOT_RUN. R8 now also has a
   definite commit-refusal rollback regression; the full transaction-aware
   candidate/apply and later-verification recovery path remains open.
 - [ ] **Local Claude hooks.** On macOS, launch a real Claude Code session and
