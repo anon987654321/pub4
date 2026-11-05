@@ -120,6 +120,7 @@ class TestFileRepair < Minitest::Test
 
       prompt = agent.prompts.reject { |item| item.include?("Verify this proposed") }.first
       assert_includes prompt, "Every changed line must lie between line 15 and line 65 of the target"
+      assert_includes prompt, "Keep every guard the changed lines hold"
     end
   end
 

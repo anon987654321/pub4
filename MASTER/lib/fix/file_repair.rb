@@ -241,21 +241,10 @@ module Master
           Reply with ONLY a minimal unified diff for the target file (`--- a/#{File.basename(path)}` / `+++ b/#{File.basename(path)}`, @@ hunks).
           Use the complete target source to reason about method boundaries, invariants and side effects.
           Preserve all unrelated behavior and public contracts. Change only what the findings justify.
-          #{allowed_lines_note}
+          #{allowed_lines_note(nil)}
           Copy context lines exactly. Do not reformat, reorder or rename unrelated code.
           If no finding is real, reply exactly: UNCHANGED
         PROMPT
-      end
-
-      # A diff that changes a line farther than SCOPE_PAD from every finding is refused before the verifier
-      # is asked; saying so up front saves the call and the retry.
-      def allowed_lines_note
-        lines = scope_lines(nil).select(&:positive?)
-        return "" if lines.empty?
-
-        low = [lines.min - SCOPE_PAD, 1].max
-        "Every changed line must lie between line #{low} and line #{lines.max + SCOPE_PAD} of the target; " \
-          "a diff that touches a line outside that range is refused."
       end
 
       def rule_notes

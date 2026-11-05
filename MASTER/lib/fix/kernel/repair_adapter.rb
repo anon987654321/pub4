@@ -596,6 +596,7 @@ module Master
           File: #{File.basename(path)} (#{ctx[:lang]})
           Rule violated: #{violation[:law]}
           Line #{violation[:line]}: #{violation[:message]}
+          #{allowed_lines_note(violation)}
           #{ctx[:fix_line]}
           #{scale_snap_rule(violation)}
           #{visual_fix_context}

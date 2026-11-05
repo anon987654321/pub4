@@ -38,6 +38,23 @@ module Master
           nil
         end
 
+        # A proposal that changes a line farther than SCOPE_PAD from every finding is refused before the
+        # verifier is asked, and one that drops a guard is refused by it; saying both up front saves the
+        # model call and the retry. Run 2 of 2026-11-05 lost 6 of 13 proposals to the range and 5 to
+        # dropped guards (an `if` condition, a `store &&` nil check).
+        def allowed_lines_note(violation)
+          lines = scope_lines(violation).select(&:positive?)
+          return GUARD_NOTE if lines.empty?
+
+          low = [lines.min - SCOPE_PAD, 1].max
+          "Every changed line must lie between line #{low} and line #{lines.max + SCOPE_PAD} of the target; " \
+            "a change that touches a line outside that range is refused, except a short edit at a call of a " \
+            "method defined inside it.\n#{GUARD_NOTE}"
+        end
+
+        GUARD_NOTE = "Keep every guard the changed lines hold: each if/unless condition, nil check " \
+                     "(`x &&`, `&.`), early return and rescue stays, or the reviewer refuses the change as unsafe."
+
         # The lines each finding of this repair points at.
         def scope_lines(violation) = [violation[:line].to_i]
 
