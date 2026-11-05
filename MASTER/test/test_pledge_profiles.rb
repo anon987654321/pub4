@@ -93,6 +93,35 @@ class PledgeProfileTest < Minitest::Test
     assert_empty stage2 - stage1
   end
 
+  def test_openbsd_laws_are_registered_with_one_authoritative_definition
+    require File.join(Master::ROOT, "law", "definition") unless defined?(::Law)
+    ::Law.load_all(File.join(Master::ROOT, "law")) if ::Law.definitions.empty?
+
+    entries = Master.law_catalogue.fetch("entries")
+    ids = %w[MONOTONIC_CAPABILITY_REDUCTION BOUNDED_OPERATION_LIFECYCLE PROACTIVE_DEFECT_AUDIT]
+
+    ids.each do |id|
+      assert entries.key?(id), "#{id} is missing from laws.yml#law_catalogue"
+      assert_equal ["MASTER/law/universal.rb"], entries.fetch(id).fetch("definition_sources")
+      assert_equal "error", entries.fetch(id).fetch("severity")
+      assert_equal "trusted", entries.fetch(id).fetch("lifecycle")
+      assert_equal "never", entries.fetch(id).fetch("autofix")
+      assert ::Law.definitions.key?(id.to_sym), "#{id} has no executable Law definition"
+    end
+
+    assert_includes ::Law.definitions.fetch(:MONOTONIC_CAPABILITY_REDUCTION).practice, "one-way door"
+    assert_includes ::Law.definitions.fetch(:BOUNDED_OPERATION_LIFECYCLE).fix, "process group"
+    assert_includes ::Law.definitions.fetch(:PROACTIVE_DEFECT_AUDIT).practice, "whole trust boundaries"
+  end
+
+  def test_stage_two_is_a_strict_capability_reduction
+    stage1 = Master::Ground::Pledge::STAGE1_PROMISES.split
+    stage2 = Master::Ground::Pledge::STAGE2_PROMISES.split
+
+    assert_empty stage2 - stage1
+    refute_equal stage1.sort, stage2.sort, "the sealed runtime must actually remove setup-only authority"
+  end
+
   def test_unknown_profile_is_rejected
     assert_raises(KeyError) { Master::Ground::Pledge.profile(:unknown) }
   end
