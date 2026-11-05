@@ -49,4 +49,8 @@
   <% else %>
     <%= tag.p t("staff.awaiting_courier"), class: "board-wait" %>
   <% end %>
+  <% if Order::CANCELABLE.include?(order.state) %>
+    <%= button_to t("staff.cancel"), staff_cancel_order_path(order), method: :patch,
+          form: { data: { turbo_confirm: t("staff.cancel_confirm", id: order.id) } } %>
+  <% end %>
 </article>

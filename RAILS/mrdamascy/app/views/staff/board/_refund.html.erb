@@ -1,0 +1,5 @@
+<%# One order owing a manual refund. Locals: order. %>
+<%= tag.li do %>
+  <%= tag.span t("staff.refund_line", id: order.id, amount: money(order.total_ore), lane: order.payment_lane_name) %>
+  <%= button_to t("staff.mark_refunded"), staff_refunded_order_path(order), method: :patch %>
+<% end %>

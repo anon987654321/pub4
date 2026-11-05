@@ -368,6 +368,19 @@ en:
     wolt_courier: '%{courier} is picking up the bag'
     wolt_failed: Could not book a Wolt courier — try again
     cannot_advance: Can't advance this one.
+    cancel: Cancel
+    cancel_confirm: "Cancel order #%{id}?"
+    cancelled: "Order #%{id} is cancelled."
+    cancelled_refund_due: "Order #%{id} is cancelled. %{amount} was paid with %{lane} —
+      refund it by hand in the %{lane} portal."
+    cannot_cancel: Only received and confirmed orders can be cancelled.
+    refunds_title: Refund by hand
+    refunds_hint: Cancelled orders that were paid. The app cannot refund them itself —
+      do it in the payment portal, then mark them here.
+    refund_line: "#%{id} · %{amount} · %{lane}"
+    mark_refunded: Refunded
+    refunded: "Order #%{id} is marked refunded."
+    cannot_refund: This order is not waiting for a refund.
   courier:
     title: Courier runs
     subtitle: The food arrives while it's still warm

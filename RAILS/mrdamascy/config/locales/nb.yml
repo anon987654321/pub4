@@ -368,6 +368,19 @@ nb:
     wolt_courier: '%{courier} henter posen'
     wolt_failed: Klarte ikke å bestille Wolt-kurér — prøv igjen
     cannot_advance: Kan ikke flytte denne videre.
+    cancel: Kanseller
+    cancel_confirm: "Kansellere bestilling #%{id}?"
+    cancelled: "Bestilling #%{id} er kansellert."
+    cancelled_refund_due: "Bestilling #%{id} er kansellert. %{amount} er betalt med %{lane} —
+      refunder beløpet manuelt i %{lane}-portalen."
+    cannot_cancel: Bare mottatte og bekreftede bestillinger kan kanselleres.
+    refunds_title: Refunderes manuelt
+    refunds_hint: Kansellerte bestillinger som er betalt. Appen kan ikke refundere selv —
+      gjør det i betalingsportalen, og merk dem her.
+    refund_line: "#%{id} · %{amount} · %{lane}"
+    mark_refunded: Refundert
+    refunded: "Bestilling #%{id} er merket som refundert."
+    cannot_refund: Denne bestillingen venter ikke på refusjon.
   courier:
     title: Budløp
     subtitle: Maten skal frem mens den er varm

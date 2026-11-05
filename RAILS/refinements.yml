@@ -5748,7 +5748,7 @@ items:
   path: RAILS/mrdamascy/app/controllers/staff/board_controller.rb
   item: Add a cancel action for placed/confirmed orders on the staff board, with a
     PSP refund; Order#cancel! exists but nothing calls it from the UI.
-  status: open
+  status: done
 - id: mrdamascy-085
   app: mrdamascy
   area: staff

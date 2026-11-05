@@ -9,6 +9,11 @@ class Order < ApplicationRecord
   FLOW = %w[placed confirmed preparing ready picked_up delivered].freeze
   STATES = (FLOW + %w[cancelled]).freeze
   PAYMENT_STATES = %w[pending authorised captured failed].freeze
+  # Money reserved or taken: a cancelled order in one of these owes it back.
+  PAID_STATES = %w[authorised captured].freeze
+  # Neither payment client can refund, so a cancelled paid order is refunded
+  # by hand in the provider's portal: manual_due until staff mark it refunded.
+  REFUND_STATES = %w[manual_due refunded].freeze
 
   # The staff board advances only through the kitchen's states; the courier
   # owns picked_up/delivered, and cancel is mercy before the pan heats up.
@@ -34,6 +39,7 @@ class Order < ApplicationRecord
 
   validates :state, inclusion: { in: STATES }
   validates :payment_state, inclusion: { in: PAYMENT_STATES }
+  validates :refund_state, inclusion: { in: REFUND_STATES }, allow_nil: true
   validates :delivery_mode, inclusion: { in: %w[delivery pickup] }, allow_nil: true
   validates :phone, presence: true
   validates :customer_name, length: { maximum: 80 }
@@ -42,6 +48,10 @@ class Order < ApplicationRecord
 
   before_validation :assign_tracking_token
   before_validation :set_placed_at, on: :create
+  # Covers both a paid order cancelled from the board and a payment that lands
+  # after the order was cancelled (a late webhook or tracking sync).
+  before_save :owe_manual_refund,
+              if: -> { state == "cancelled" && refund_state.nil? && PAID_STATES.include?(payment_state) }
 
   # The staff board is pushed, not polled: a new order or a move redraws
   # its grid for every open board.
@@ -55,6 +65,7 @@ class Order < ApplicationRecord
   scope :recent, -> { order(placed_at: :desc, id: :desc) }
   scope :live, -> { where(state: %w[placed confirmed preparing ready picked_up]) }
   scope :for_state, ->(state) { where(state: state) }
+  scope :refunds_due, -> { where(refund_state: "manual_due").order(:updated_at, :id) }
 
   # The board's orders by column, oldest first.
   def self.board_columns
@@ -93,6 +104,23 @@ class Order < ApplicationRecord
 
     update!(state: "cancelled")
     self
+  end
+
+  def refund_due?
+    refund_state == "manual_due"
+  end
+
+  # Staff made the refund by hand in Vipps' or Stripe's portal.
+  def mark_refunded!
+    raise InvalidTransition, "order #{id} owes no refund" unless refund_due?
+
+    update!(refund_state: "refunded")
+    self
+  end
+
+  # The provider whose portal takes the manual refund.
+  def payment_lane_name
+    payment_method == "stripe" ? "Stripe" : "Vipps"
   end
 
   # The address with the customer's note (door code, floor) for a courier.
@@ -212,6 +240,10 @@ class Order < ApplicationRecord
     spent = LoyaltyStamp.unredeemed.where(id: ids)
                         .update_all(redeemed: true, redeemed_order_id: id, updated_at: Time.current)
     raise ActiveRecord::RecordInvalid, self unless spent == needed
+  end
+
+  def owe_manual_refund
+    self.refund_state = "manual_due"
   end
 
   def release_redeemed_stamps

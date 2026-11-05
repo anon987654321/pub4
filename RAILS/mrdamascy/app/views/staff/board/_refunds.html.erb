@@ -1,0 +1,10 @@
+<%# Cancelled orders that were paid and wait for a refund made by hand in the
+    payment provider's portal (Order#refund_due?). Always rendered, hidden when
+    empty, so the board's cancel answer can replace #refunds_due in place.
+    Locals: refunds. %>
+<%= tag.section id: "refunds_due", class: "card board-refunds", hidden: refunds.empty?,
+                aria: { labelledby: "refunds_due_title" } do %>
+  <%= tag.h2 t("staff.refunds_title"), id: "refunds_due_title", class: "section-title" %>
+  <%= tag.p t("staff.refunds_hint") %>
+  <%= tag.ul render(partial: "staff/board/refund", collection: refunds, as: :order), class: "fact-list" %>
+<% end %>

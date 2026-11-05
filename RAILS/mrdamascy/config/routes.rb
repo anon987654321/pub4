@@ -41,6 +41,8 @@ Rails.application.routes.draw do
     get "board", to: "board#show", as: :board
     patch "orders/:id/advance", to: "board#advance", as: :advance_order
     patch "orders/:id/wolt", to: "board#wolt_dispatch", as: :wolt_order
+    patch "orders/:id/cancel", to: "board#cancel", as: :cancel_order
+    patch "orders/:id/refunded", to: "board#refunded", as: :refunded_order
   end
 
   namespace :courier do

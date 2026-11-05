@@ -9,6 +9,32 @@ class Staff::BoardController < ApplicationController
 
   def show
     @orders_by_state = Order.board_columns
+    @refunds_due = Order.refunds_due
+  end
+
+  # Cancel a placed or confirmed order (Order#cancel!). Neither payment client
+  # can refund, so a paid order is left owing a manual refund and the toast
+  # tells staff where to make it; the refunds list keeps it until marked.
+  def cancel
+    @order = Order.find(params[:id])
+    @order.cancel!
+    if @order.refund_due?
+      respond_on_board(:alert, t("staff.cancelled_refund_due", id: @order.id, amount: helpers.money(@order.total_ore),
+                                                                lane: @order.payment_lane_name))
+    else
+      respond_on_board(:notice, t("staff.cancelled", id: @order.id))
+    end
+  rescue Order::InvalidTransition, ActiveRecord::RecordInvalid
+    respond_on_board(:alert, t("staff.cannot_cancel"))
+  end
+
+  # Staff made the manual refund in the provider's portal.
+  def refunded
+    @order = Order.find(params[:id])
+    @order.mark_refunded!
+    respond_on_board(:notice, t("staff.refunded", id: @order.id))
+  rescue Order::InvalidTransition
+    respond_on_board(:alert, t("staff.cannot_refund"))
   end
 
   # One big touch target per order card: advance the kitchen state and swap
@@ -60,6 +86,20 @@ class Staff::BoardController < ApplicationController
   end
 
   private
+
+  # Cancel and refund answer the same way: the toast, the order's card and the
+  # refunds list in place, or a redirect back to the board.
+  def respond_on_board(kind, message)
+    respond_to do |format|
+      format.turbo_stream do
+        flash.now[kind] = message
+        refunds = turbo_stream.replace("refunds_due", partial: "staff/board/refunds",
+                                                      locals: { refunds: Order.refunds_due })
+        render turbo_stream: [ board_toast_stream, refunds ] + board_card_streams
+      end
+      format.html { redirect_to staff_board_path, kind => message }
+    end
+  end
 
   def advance_order_safely
     @order.advance!
