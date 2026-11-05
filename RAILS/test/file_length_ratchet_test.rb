@@ -182,17 +182,6 @@ class FileLengthRatchetTest < Minitest::Test
     # 477 -> 408, from 51 over: the takeaway step moved whole to
     # lib/brgen/takeaway_seed.rb, the restaurants it returns read back here.
     "brgen/db/seeds.rb" => 408,
-    # Each app's one stylesheet. The operator asked for it on 2026-09-15 — "for
-    # all our rails apps id prefer we collapse all scss files into a single
-    # application.scss one such file for each app" — so these three are long by
-    # decision, and splitting them is the one fix this ratchet may not suggest.
-    # The ceilings still only fall: defragmenting a stylesheet lowers its row.
-    # 6486 -> 6479: the inline flash notice went with the markup that wore
-    # it — a notice is a toast now, so its four rules styled nothing.
-
-    # 1721 -> 1649: the home page's marquee rows, hero and guest feed went
-    # with the four-looks design.
-
     # user_flow.rb left this list on 2026-09-09: 308 -> 166, under the 300 rb
     # limit, so a ceiling here would only re-admit it. Its own header admitted
     # to being two checks in one — "critical-path user flows + MASTER
@@ -225,7 +214,20 @@ class FileLengthRatchetTest < Minitest::Test
     "brgen_marketplace/app/views/marketplace/listings/show.html.erb" => 187,
   }.freeze
 
-  COMMENT_STARTS = ["#", "//", "/*", "*", "<%#"].freeze
+# Each app's one stylesheet, long by decision. The operator's standing rule
+# (2026-09-14, restated 2026-09-15: "for all our rails apps id prefer we
+# collapse all scss files into a single application.scss one such file for
+# each app") is one application.scss per app holding every app-owned rule,
+# with no app-level partials. Splitting these is the one fix this ratchet may
+# not suggest, so they are exempt rather than ceilinged: a ceiling here would
+# fail every new rule the rule requires to land in this file. Only these two;
+# brgen keeps its partials and their ceilings.
+ONE_STYLESHEET_PER_APP = %w[
+  amber/app/assets/stylesheets/application.scss
+  bsdports/app/assets/stylesheets/application.scss
+].freeze
+
+COMMENT_STARTS = ["#", "//", "/*", "*", "<%#"].freeze
 
   # Block comments are removed before the line rule runs, rather than the rule
   # skipping lines that *start* with a marker. COMMENT_STARTS catches the first
@@ -315,7 +317,8 @@ class FileLengthRatchetTest < Minitest::Test
       limit = LIMITS.fetch(kind)
       paths.filter_map do |path|
         lines = code_lines(path)
-        [path.delete_prefix("#{ROOT}/"), lines] if lines > limit
+        rel = path.delete_prefix("#{ROOT}/")
+        [rel, lines] if lines > limit && !ONE_STYLESHEET_PER_APP.include?(rel)
       end
     end.to_h
   end
@@ -326,7 +329,17 @@ class FileLengthRatchetTest < Minitest::Test
            "engine views are missing, the blind spot that hid 57 of them"
   end
 
-  def test_generated_schema_is_excluded_not_counted
+# The exemption names real files, and only the one-stylesheet apps' entries.
+def test_one_stylesheet_exemption_names_only_the_two_app_entries
+  ONE_STYLESHEET_PER_APP.each do |rel|
+    assert File.file?(File.join(ROOT, rel)), "#{rel} is gone; drop its exemption"
+    assert_includes candidates["scss"], File.join(ROOT, rel), "#{rel} must still be scanned"
+  end
+  refute_includes oversize.keys, ONE_STYLESHEET_PER_APP.first
+  assert_empty ONE_STYLESHEET_PER_APP & CEILINGS.keys, "exempt and ceilinged at once"
+end
+
+def test_generated_schema_is_excluded_not_counted
     schema = File.join(ROOT, "brgen/db/schema.rb")
     skip "brgen/db/schema.rb absent" unless File.exist?(schema)
 
