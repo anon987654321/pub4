@@ -3778,7 +3778,7 @@ items:
   item: Let the diner cancel their own order while it is still pending (buyer branch
     in OrdersController#update, confirm dialog), since only the kitchen can move status
     today.
-  status: open
+  status: done
 - id: brgen-349
   app: brgen
   area: takeaway
@@ -3795,7 +3795,7 @@ items:
   item: Add the tip and scheduled delivery time fields to the takeaway order form;
     OrdersController permits tip_cents and scheduled_for and accepting_orders? checks
     scheduled_for, but the form sends neither.
-  status: open
+  status: done
 - id: brgen-351
   app: brgen
   area: takeaway
@@ -3813,7 +3813,7 @@ items:
   item: Replace payment_body's 'arrange payment with the restaurant' with Vipps checkout
     for takeaway orders, reusing Marketplace::Payments::VippsCheckout's payable interface
     (payment_currency, payment_description, total_cents).
-  status: open
+  status: done
 - id: brgen-353
   app: brgen
   area: takeaway
@@ -3822,7 +3822,7 @@ items:
   item: Show a running subtotal and 'X kr more to reach the minimum' line on the order
     form as quantities change, so the below_minimum error is not the first time the
     diner learns the floor.
-  status: open
+  status: done
 - id: brgen-354
   app: brgen
   area: takeaway

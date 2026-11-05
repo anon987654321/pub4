@@ -1,6 +1,11 @@
 # frozen_string_literal: true
 
 class Takeaway::OrdersController < Takeaway::BaseController
+  # What can go wrong between us and Vipps when a payment starts.
+  PAYMENT_ERRORS = [
+    Marketplace::Payments::ProviderError, Net::OpenTimeout, Net::ReadTimeout, SocketError, JSON::ParserError, KeyError
+  ].freeze
+
   # Guest checkout — no signup to place a takeaway order.
   before_action :require_user_session
   before_action :set_restaurant, only: %i[new create]
@@ -54,6 +59,7 @@ class Takeaway::OrdersController < Takeaway::BaseController
     # activity actor, and a preloaded restaurant is strict about its own user.
     @order = Takeaway::Order.includes(restaurant: :user).find(params[:id])
     return mark_delivered_by_courier if !@order.restaurant.owner?(Current.user) && @order.carried_by?(Current.user)
+    return cancel_by_diner if !@order.restaurant.owner?(Current.user) && @order.user_id == Current.user&.id
 
     if @order.restaurant.owner?(Current.user)
       target_status = params[:status].presence || @order.next_status
@@ -102,11 +108,57 @@ class Takeaway::OrdersController < Takeaway::BaseController
     redirect_to driver_page, notice: t("takeaway.marked_delivered", id: @order.id)
   end
 
+  # Pays the diner's own order with Vipps. Nothing is charged here: the diner
+  # approves in the Vipps app and the webhook records the payment.
+  def pay
+    @order = Current.user.takeaway_orders.includes(:restaurant).find(params[:id])
+    return redirect_to(order_path(@order), alert: t("flash.takeaway.payment_unavailable")) unless @order.startable?
+
+    url = Marketplace::Payments::VippsCheckout.start!(order: @order, return_url: order_url(@order))
+    return redirect_to(order_path(@order), alert: t("flash.takeaway.payment_failed")) unless vipps_url?(url)
+
+    redirect_to url, allow_other_host: true
+  rescue Marketplace::Payments::NotConfigured
+    redirect_to order_path(@order), alert: t("flash.takeaway.payment_unavailable")
+  rescue *PAYMENT_ERRORS => error
+    Rails.logger.warn("[takeaway] Vipps start for order #{@order.id}: #{error.class}: #{error.message}")
+    redirect_to order_path(@order), alert: t("flash.takeaway.payment_failed")
+  end
+
+  # The diner can do one thing to their own order: call it off while the
+  # kitchen has not yet confirmed it and nothing is paid. After that the food is
+  # being made, or the money is with Vipps, and the restaurant decides.
+  def cancel_by_diner
+    unless params[:status] == "cancelled" && @order.cancellable_by_diner?(Current.user) && @order.cancel!
+      return redirect_to(order_path(@order), alert: t("flash.takeaway.cancel_unavailable"))
+    end
+
+    @order.deliver_notification(@order.restaurant.user,
+                                title: t("takeaway.diner_cancelled_title", id: @order.id),
+                                body: t("takeaway.diner_cancelled_body", id: @order.id),
+                                source: @order, kind: "order")
+    redirect_to order_path(@order), notice: t("flash.takeaway.order_cancelled_by_diner")
+  end
+
   private
+
+  # Only Vipps' own hosts, over https: the URL comes back from Vipps' API.
+  def vipps_url?(url)
+    uri = URI.parse(url.to_s)
+    uri.is_a?(URI::HTTPS) && uri.host.present? && (uri.host == "vipps.no" || uri.host.end_with?(".vipps.no"))
+  rescue URI::InvalidURIError
+    false
+  end
+
   def set_restaurant = (@restaurant = find_by_slug_or_id(Takeaway::Restaurant, params[:restaurant_id]))
   # tip_cents and scheduled_for are the customer's, so they are permitted;
   # totals are recomputed server-side in calculate_totals! and never read from
   # the form.
-  def order_params = params.require(:takeaway_order).permit(:delivery_address, :special_instructions, :tip_cents, :scheduled_for)
+  # The form sends the tip in kroner (tip_kroner); tip_cents stays permitted
+  # for callers that already post it.
+  def order_params
+    params.require(:takeaway_order)
+          .permit(:delivery_address, :special_instructions, :tip_kroner, :tip_cents, :scheduled_for)
+  end
   def item_params = params.dig(:takeaway_order, :items) || {}
 end

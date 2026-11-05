@@ -199,7 +199,7 @@ apps:
       active_storage/disk#show:
       - "/rails/active_storage/disk/:encoded_key/*filename"
   brgen:
-    digest: 43b59d29fda9fdc5
+    digest: 69af078a0b21a514
     routes:
       shared/changelog#show:
       - "/changelog"

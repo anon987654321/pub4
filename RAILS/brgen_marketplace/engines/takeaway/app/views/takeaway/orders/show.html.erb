@@ -46,13 +46,30 @@
   <%# The tip is in the total, so it is on the bill. %>
   <%= tag.p t("takeaway.tip_line", amount: @order.tip_display) if @order.tip_cents.to_i.positive? %>
   <%= tag.strong t("takeaway.total", amount: @order.total_display) %>
+  <%= tag.p t("takeaway.payment_statuses.#{@order.payment_status}"), class: "chip" %>
 </article>
+
+<% if @order.user_id == Current.user&.id && @order.startable? && Marketplace::Payments::VippsCheckout.configured? %>
+  <section class="order-pay" aria-labelledby="takeaway-pay-heading">
+    <%= tag.h2 t("takeaway.pay_heading"), id: "takeaway-pay-heading" %>
+    <%= button_to pay_order_path(@order), method: :post, class: "button button-primary cart-pay-vipps",
+          form: { data: { turbo: false, controller: "form-submit", action: "submit->form-submit#lock" } } do %>
+      <%= image_tag "vipps/vipps-wordmark-on-orange.svg", alt: "", width: 59, height: 24 %>
+      <%= t("takeaway.pay_with_vipps") %>
+    <% end %>
+  </section>
+<% end %>
 
 <nav aria-label="<%= t("takeaway.order_actions") %>">
   <% if @order.reorderable_by?(Current.user) %>
     <%= button_to t("actions.reorder"), again_order_path(@order), method: :post, class: "button" %>
   <% end %>
   <%= link_to t("actions.all_orders"), orders_path, class: "button button-ghost" %>
+  <%# The diner may call the order off until the kitchen confirms it. %>
+  <% if @order.cancellable_by_diner?(Current.user) && !@order.restaurant.owner?(Current.user) %>
+    <%= button_to t("takeaway.cancel_order"), order_path(@order), method: :patch, params: { status: "cancelled" },
+          class: "button button-ghost", form: { data: { turbo_confirm: t("takeaway.cancel_order_confirm") } } %>
+  <% end %>
   <% if authenticated? && @order.restaurant.owner?(Current.user) && @order.advanceable? %>
     <% Takeaway::Order::TRANSITIONS.fetch(@order.status, []).each do |status| %>
       <%= button_to t("takeaway.statuses.#{status}"), order_path(@order), method: :patch, params: { status: status }, class: "button button-primary" %>

@@ -26,6 +26,7 @@ class Takeaway::Order
         attrs[:delivery_driver_id] = assigned if assigned
       end
       update!(attrs)
+      refund_cancelled_payment! if status == "cancelled"
       # `user`, `restaurant.name` and `restaurant.user` are all lazy reads, and an
       # order loaded by id (controller, driver request, job) has none of them
       # preloaded. Under strict loading — on in every environment, raising outside

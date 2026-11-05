@@ -103,7 +103,8 @@ module Webhooks
 
       if PAID_NAMES.include?(name)
         Webhooks::PaymentPaid.mark_paid!(payable, reference:)
-        Webhooks::PaymentPaid.enqueue_google_conversion(payable)
+        # The conversion job reads a marketplace order id; food is not one.
+        Webhooks::PaymentPaid.enqueue_google_conversion(payable) unless payable.is_a?(Takeaway::Order)
       elsif FAILED_NAMES.include?(name)
         payable.fail_payment!(provider: "vipps")
       end

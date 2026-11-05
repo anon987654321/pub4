@@ -1,0 +1,32 @@
+---
+nb:
+  takeaway:
+    cancel_order: Avbestill
+    cancel_order_confirm: Avbestille bestillingen? Kjøkkenet får beskjed.
+    diner_cancelled_title: "Bestilling #%{id} er avbestilt"
+    diner_cancelled_body: "Kunden avbestilte bestilling #%{id} før den ble bekreftet."
+    tip_and_time: Tips og leveringstid
+    tip_label: Tips (kr, valgfritt)
+    tip_help: Går til kjøkkenet og sjåføren. La feltet stå tomt for ingen tips.
+    scheduled_for_label: Levering til (valgfritt)
+    scheduled_for_help: La feltet stå tomt for levering så snart som mulig.
+    payment_description: "%{restaurant}, bestilling #%{id}"
+    payment_received_title: "Bestilling #%{id} er betalt"
+    payment_received_body: "Kunden betalte %{amount} med Vipps for bestilling #%{id}."
+    pay_heading: Betal bestillingen
+    pay_with_vipps: Betal med Vipps
+    payment_vipps_body: Når bestillingen er sendt, kan du betale med Vipps på bestillingssiden.
+    minimum_shortfall: "%{amount} igjen til minstebeløpet"
+    minimum_reached: Minstebeløpet er nådd.
+    payment_statuses:
+      unpaid: Ikke betalt
+      pending: Venter på Vipps
+      paid: Betalt
+      failed: Betalingen gikk ikke gjennom
+      refunded: Pengene er sendt tilbake
+  flash:
+    takeaway:
+      cancel_unavailable: Bestillingen kan ikke avbestilles nå. Kontakt restauranten.
+      order_cancelled_by_diner: Bestillingen er avbestilt.
+      payment_unavailable: Bestillingen kan ikke betales i appen nå.
+      payment_failed: Vipps svarte ikke. Ingenting er trukket; prøv igjen.

@@ -16,7 +16,16 @@
   </div>
 </article>
 
-<%= form_with model: @order, url: restaurant_orders_path(@restaurant), html: { role: "form", "aria-label": t("takeaway.place_order_from", restaurant: @restaurant.name) }, data: { controller: "form-submit", action: "submit->form-submit#lock" } do |form| %>
+<%# scope: the isolated engine names Takeaway::Order's params "order", and
+    the controller reads takeaway_order, as the menu form on the restaurant
+    page sends; without it this page's address and tip never arrived. %>
+<%= form_with model: @order, scope: :takeaway_order, url: restaurant_orders_path(@restaurant),
+              html: { role: "form", "aria-label": t("takeaway.place_order_from", restaurant: @restaurant.name) },
+              data: { controller: "form-submit takeaway-total", action: "submit->form-submit#lock",
+                  takeaway_total_minimum_cents_value: @restaurant.min_order_cents.to_i,
+                  takeaway_total_subtotal_template_value: t("takeaway.subtotal", amount: "%{amount}"),
+                  takeaway_total_shortfall_template_value: t("takeaway.minimum_shortfall", amount: "%{amount}"),
+                  takeaway_total_reached_text_value: t("takeaway.minimum_reached") } do |form| %>
   <%= render "shared/errors", object: @order %>
 
   <section role="region" aria-label="<%= t("takeaway.menu") %>">
@@ -38,7 +47,9 @@
           <div class="field">
             <%= label_tag "takeaway_order_items_#{item.id}", t("takeaway.qty_for", name: item.name) %>
             <%= number_field_tag "takeaway_order[items][#{item.id}]", @order.quantity_for(item), min: 0,
-                  id: "takeaway_order_items_#{item.id}", class: "qty-field" %>
+                  id: "takeaway_order_items_#{item.id}", class: "qty-field",
+                  data: { takeaway_total_target: "quantity", price_cents: item.price_cents.to_i,
+                          action: "input->takeaway-total#update" } %>
           </div>
         </article>
       <% end %>
@@ -49,6 +60,20 @@
             action: { label: t("takeaway.back_to_restaurant"), path: restaurant_path(@restaurant) } %>
     <% end %>
   </section>
+
+  <%# Drawn by the server for the order as it stands, redrawn by
+      takeaway-total as quantities change; one polite live region. %>
+  <% chosen = @order.order_items.sum { |line| line.unit_price_cents.to_i * line.quantity.to_i } %>
+  <% missing = @restaurant.min_order_cents.to_i - chosen %>
+  <div class="order-running-total" role="status" aria-live="polite">
+    <%= tag.p t("takeaway.subtotal", amount: Shared::MoneyDisplay.format(chosen)),
+              data: { takeaway_total_target: "subtotal" } %>
+    <% if @restaurant.min_order_cents.to_i.positive? %>
+      <% shortfall = t("takeaway.minimum_reached") %>
+      <% shortfall = t("takeaway.minimum_shortfall", amount: Shared::MoneyDisplay.format(missing)) if missing.positive? %>
+      <%= tag.p shortfall, data: { takeaway_total_target: "shortfall" } %>
+    <% end %>
+  </div>
 
   <section role="region" aria-label="<%= t("takeaway.delivery_details") %>">
     <%= tag.h2 t("takeaway.delivery_heading") %>
@@ -68,9 +93,31 @@
     </div>
   </section>
 
+  <%# The tip is the diner's to give and starts at nothing. A delivery time is
+      optional: empty means as soon as the kitchen can, and the controller
+      checks a chosen time against the opening hours. %>
+  <section role="region" aria-label="<%= t("takeaway.tip_and_time") %>">
+    <%= tag.h2 t("takeaway.tip_and_time") %>
+    <div class="field">
+      <%= form.label :tip_kroner, t("takeaway.tip_label") %>
+      <%= form.text_field :tip_kroner, value: (@order.tip_cents.to_i.positive? ? @order.tip_kroner : ""),
+            inputmode: "decimal", autocomplete: "off", aria: { describedby: "takeaway_tip_help" } %>
+      <%= tag.p t("takeaway.tip_help"), class: "form-help", id: "takeaway_tip_help" %>
+    </div>
+    <div class="field">
+      <%= form.label :scheduled_for, t("takeaway.scheduled_for_label") %>
+      <%= form.datetime_local_field :scheduled_for, min: Time.zone.now.strftime("%Y-%m-%dT%H:%M"),
+            aria: { describedby: "takeaway_scheduled_help" } %>
+      <%= tag.p t("takeaway.scheduled_for_help"), class: "form-help", id: "takeaway_scheduled_help" %>
+    </div>
+  </section>
+
   <section role="region" aria-label="<%= t("takeaway.payment_label") %>">
     <%= tag.h2 t("takeaway.payment") %>
-    <p><%= t("takeaway.payment_body") %></p>
+    <%# With Vipps configured the diner pays from the order page once it is
+        placed; without it the old arrangement stands and the page says so. %>
+    <% vipps = Marketplace::Payments::VippsCheckout.configured? %>
+    <%= tag.p vipps ? t("takeaway.payment_vipps_body") : t("takeaway.payment_body") %>
   </section>
 
   <%= form.submit t("takeaway.place_order"), class: "button button-primary" %>

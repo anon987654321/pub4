@@ -5,6 +5,10 @@ class Takeaway::Order < ApplicationRecord
   include Lifecycle
   include Delivery
   include GroupTicket
+  include Payment
+  include Marketplace::KronerFields
+  # The order form takes the tip in kroner; an empty field is no tip.
+  kroner_field :tip_cents, blank: 0
 
   tracks_activity created: "TakeawayOrderPlaced", source_vertical: "takeaway", actor: :user
 

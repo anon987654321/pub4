@@ -1,0 +1,32 @@
+---
+en:
+  takeaway:
+    cancel_order: Cancel order
+    cancel_order_confirm: Cancel this order? The kitchen will be told.
+    diner_cancelled_title: "Order #%{id} was cancelled"
+    diner_cancelled_body: "The customer cancelled order #%{id} before it was confirmed."
+    tip_and_time: Tip and delivery time
+    tip_label: Tip (NOK, optional)
+    tip_help: Goes to the kitchen and the courier. Leave it empty for no tip.
+    scheduled_for_label: Deliver at (optional)
+    scheduled_for_help: Leave it empty for delivery as soon as possible.
+    payment_description: "%{restaurant}, order #%{id}"
+    payment_received_title: "Order #%{id} is paid"
+    payment_received_body: "The customer paid %{amount} with Vipps for order #%{id}."
+    pay_heading: Pay for this order
+    pay_with_vipps: Pay with Vipps
+    payment_vipps_body: Once the order is placed, you can pay with Vipps on the order page.
+    minimum_shortfall: "%{amount} more to reach the minimum order"
+    minimum_reached: The minimum order is reached.
+    payment_statuses:
+      unpaid: Not paid
+      pending: Waiting for Vipps
+      paid: Paid
+      failed: The payment did not go through
+      refunded: The money has been returned
+  flash:
+    takeaway:
+      cancel_unavailable: This order can no longer be cancelled. Contact the restaurant.
+      order_cancelled_by_diner: The order is cancelled.
+      payment_unavailable: This order cannot be paid in the app right now.
+      payment_failed: Vipps did not answer. Nothing was charged; try again.

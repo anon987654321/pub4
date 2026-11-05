@@ -79,9 +79,12 @@ module Marketplace
       end
 
       # Names the table the id belongs to: a basket (Marketplace::Checkout) and
-      # an order share an id sequence only by accident.
+      # an order share an id sequence only by accident. A payable may name its
+      # own kind (Takeaway::Order says "takeaway"), since its model_name element
+      # is "order" too.
       def self.reference_for(payable)
-        "brgen-#{payable.model_name.element}-#{payable.id}-#{SecureRandom.hex(4)}"
+        kind = payable.try(:payment_reference_kind) || payable.model_name.element
+        "brgen-#{kind}-#{payable.id}-#{SecureRandom.hex(4)}"
       end
 
       # A token lives for its expires_in (about a day), so one is fetched per

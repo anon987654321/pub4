@@ -13,6 +13,8 @@ Takeaway::Engine.routes.draw do
     resources :delivery_drivers, only: %i[index show update]
     resources :orders, only: %i[index show update] do
       post :again, on: :member
+      # Vipps for the food; see Takeaway::Order::Payment.
+      post :pay, on: :member
       # The host opens their own ticket to the link.
       resource :group, only: :create, controller: "group_orders"
     end

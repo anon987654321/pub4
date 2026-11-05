@@ -1712,6 +1712,10 @@ ActiveRecord::Schema[8.2].define(version: 2026_11_05_160000) do
     t.datetime "expires_at"
     t.boolean "group_open", default: false, null: false
     t.string "group_token"
+    t.datetime "paid_at"
+    t.string "payment_provider"
+    t.string "payment_reference"
+    t.string "payment_status", default: "unpaid", null: false
     t.integer "restaurant_id", null: false
     t.datetime "scheduled_for"
     t.text "special_instructions"
@@ -1724,6 +1728,7 @@ ActiveRecord::Schema[8.2].define(version: 2026_11_05_160000) do
     t.index ["delivery_driver_id", "status"], name: "index_takeaway_orders_on_delivery_driver_id_and_status"
     t.index ["delivery_driver_id"], name: "index_takeaway_orders_on_delivery_driver_id"
     t.index ["group_token"], name: "index_takeaway_orders_on_group_token", unique: true
+    t.index ["payment_reference"], name: "index_takeaway_orders_on_payment_reference"
     t.index ["restaurant_id", "status", "updated_at"], name: "index_takeaway_orders_on_restaurant_id_and_status_and_updated_at"
     t.index ["restaurant_id"], name: "index_takeaway_orders_on_restaurant_id"
     t.index ["scheduled_for"], name: "index_takeaway_orders_on_scheduled_for"

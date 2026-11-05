@@ -47,8 +47,18 @@ module Webhooks
       stored = find_by_payment_reference(reference)
       return stored if stored
 
-      kind, id = reference.to_s.match(/\Abrgen-(order|checkout)-(\d+)-/)&.captures
-      kind == "checkout" ? find_checkout_by_id(id) : (find_order_by_id(id) if id)
+      kind, id = reference.to_s.match(/\Abrgen-(order|checkout|takeaway)-(\d+)-/)&.captures
+      case kind
+      when "checkout" then find_checkout_by_id(id)
+      when "takeaway" then find_takeaway_order_by_id(id)
+      when "order" then find_order_by_id(id)
+      end
+    end
+
+    # A takeaway order paid with Vipps. mark_paid! notifies the kitchen, so the
+    # restaurant arrives with it.
+    def find_takeaway_order_by_id(id)
+      Takeaway::Order.includes(:restaurant).find_by(id: id) if defined?(Takeaway::Order)
     end
 
     # A basket and its lines share one payment_reference, so the basket is asked
@@ -57,7 +67,8 @@ module Webhooks
       return if reference.blank? || !defined?(Marketplace::Order)
 
       Marketplace::Checkout.find_by(payment_reference: reference) ||
-        Marketplace::Order.includes(:buyer, listing: :user).find_by(payment_reference: reference)
+        Marketplace::Order.includes(:buyer, listing: :user).find_by(payment_reference: reference) ||
+        (Takeaway::Order.includes(:restaurant).find_by(payment_reference: reference) if defined?(Takeaway::Order))
     end
 
     # Only a payable order or basket moves to paid, so a replayed or late event
