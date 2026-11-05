@@ -6089,7 +6089,7 @@ items:
   path: RAILS/__shared/frontend/pwa_runtime.js
   item: Replace the hard-coded "Lagret for offline" fallback with a translated data
     attribute.
-  status: open
+  status: done
 - id: shared-021
   app: shared
   area: legal
@@ -6152,7 +6152,7 @@ items:
   path: RAILS/__shared/pwa/service_worker.js
   item: Enable navigation preload so the NetworkFirst page strategy does not wait
     for service-worker boot.
-  status: open
+  status: done
 - id: shared-029
   app: shared
   area: privacy
@@ -6176,7 +6176,7 @@ items:
   path: RAILS/__shared/frontend/pwa_offline_store.js
   item: Merge the two offline queues, the localStorage pwa_offline_store and the IndexedDB
     pwa_runtime, into one.
-  status: open
+  status: done
 - id: shared-032
   app: shared
   area: pwa
@@ -6184,7 +6184,7 @@ items:
   path: RAILS/__shared/frontend/pwa_runtime.js
   item: Fetch a fresh CSRF token before replaying queued forms; a 422 from a stale
     token stops replay() at the first record and blocks the queue for good.
-  status: open
+  status: done
 - id: shared-033
   app: shared
   area: pwa
@@ -6192,14 +6192,14 @@ items:
   path: RAILS/__shared/frontend/pwa_runtime.js
   item: Commit pwa_runtime.js as readable source; it is checked in minified on single
     lines.
-  status: open
+  status: done
 - id: shared-034
   app: shared
   area: pwa
   size: S
   path: RAILS/__shared/pwa/service_worker.js
   item: Re-indent the dynamic-route matcher (const path… sits at column 0).
-  status: open
+  status: done
 - id: shared-035
   app: shared
   area: pwa
@@ -6207,7 +6207,7 @@ items:
   path: RAILS/__shared/pwa/service_worker.js
   item: 'Fall back to /offline, never the cached "/", for failed navigations: "/"
     can be a signed-in home page served to the next person on the device.'
-  status: open
+  status: done
 - id: shared-036
   app: shared
   area: pwa
@@ -6216,7 +6216,7 @@ items:
   item: Store each action's URL in the notification's data; notificationclick reads
     data.actions, which showNotification never stores, so action buttons always open
     the default URL.
-  status: open
+  status: done
 - id: shared-037
   app: shared
   area: search

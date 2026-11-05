@@ -42,6 +42,8 @@ class ServiceWorkerPageCacheTest < Minitest::Test
       assert_includes built, '"/conversations"', "#{app}: rebuild with npm run build:pwa"
       assert_includes built, "clear-private-caches", "#{app}: rebuild with npm run build:pwa"
       assert_includes built, "(posts|comments|replies|messages)$", "#{app}: rebuild with npm run build:pwa"
+      assert_includes built, "navigationPreload", "#{app}: rebuild with npm run build:pwa"
+      refute_includes built, '"revision":"shell-v1"', "#{app}: the home page is precached"
     end
   end
 

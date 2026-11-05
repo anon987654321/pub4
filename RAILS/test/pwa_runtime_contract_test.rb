@@ -7,8 +7,10 @@ class PwaRuntimeContractTest < Minitest::Test
 
   def test_shared_runtime_exposes_capability_matrix_and_idempotent_queue
     source = File.read(File.join(ROOT, "__shared/frontend/pwa_runtime.js"))
-    assert_includes source, 'indexedDB.open(DB_NAME,DB_VERSION)'
-    assert_includes source, '"X-Idempotency-Key":record.id'
+    assert_includes source, "indexedDB.open(DB_NAME, DB_VERSION)"
+    assert_includes source, '"X-Idempotency-Key": record.id'
+    # Readable source, not one minified line per function (shared-033).
+    assert source.lines.all? { _1.size <= 160 }, "pwa_runtime.js carries a line over 160 characters"
     application = File.read(File.join(ROOT, "brgen/app/javascript/application.js"))
     assert_includes application, 'register("feed-prewarm"'
     assert_includes source, "navigator.mediaSession"

@@ -1,70 +1,18 @@
-// Minimal offline sync queue for POST actions issued while the network is
-// unavailable (e.g. dating_swipe_controller). Queues to localStorage and
-// replays on the next "online" event; each entry is retried once per event
-// and dropped from the queue whether it succeeds or fails (avoids an
-// infinite retry loop wedging the queue on a permanently-failing request).
-const STORAGE_KEY = "pub4:offline-sync-queue"
-const MAX_QUEUE_SIZE = 100
+// enqueueSync() for a POST made while the network is down (the dating swipe).
+// It writes into pwa_runtime's IndexedDB queue, the one offline queue, which
+// replays in order on the next "online" event with a fresh CSRF token. This
+// module kept a second, localStorage queue of its own until shared-031; the
+// runtime folds whatever a device still holds there into its own on install.
+import { enqueueRecord } from "pub4/pwa_runtime"
 
-function readQueue() {
+export async function enqueueSync({ url, method = "POST", body = {} }) {
+  const entries = Object.entries(body || {}).map(([name, value]) => ({ name, kind: "text", value: String(value) }))
   try {
-    return JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]")
-  } catch (_) {
-    return []
-  }
-}
-
-function writeQueue(queue) {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(queue))
-  } catch (_) {
-    // storage full or unavailable (private mode) -- drop silently
-  }
-}
-
-function sameOriginUrl(value) {
-  const raw = String(value ?? "").trim()
-  if (!raw) return null
-
-  try {
-    const url = new URL(raw, window.location.origin)
-    return url.origin === window.location.origin ? url.href : null
-  } catch (_) {
+    return await enqueueRecord({ url, method, entries })
+  } catch (error) {
+    // No IndexedDB (a private window in an old browser): the write is lost, as
+    // a full localStorage dropped it before.
+    console.warn("pub4 offline queue:", error)
     return null
   }
-}
-
-export async function enqueueSync(entry) {
-  const queue = readQueue()
-  queue.push({ ...entry, queuedAt: Date.now() })
-  writeQueue(queue.slice(-MAX_QUEUE_SIZE))
-}
-
-async function flushQueue() {
-  const queue = readQueue()
-  if (!queue.length) return
-  writeQueue([])
-
-  const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || ""
-  await Promise.allSettled(
-    queue.map((entry) => {
-      const url = sameOriginUrl(entry.url)
-      if (!url) return Promise.resolve()
-
-      return fetch(url, {
-        method: entry.method || "POST",
-        headers: {
-          "Content-Type": "application/x-www-form-urlencoded",
-          "X-CSRF-Token": csrfToken,
-          "Accept": "text/vnd.turbo-stream.html, text/html"
-        },
-        body: entry.body ? new URLSearchParams(entry.body) : undefined
-      })
-    })
-  )
-}
-
-if (typeof window !== "undefined") {
-  window.addEventListener("online", flushQueue)
-  if (navigator.onLine) flushQueue()
 }

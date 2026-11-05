@@ -67,6 +67,14 @@ cleanupOutdatedCaches()
 clientsClaim()
 self.skipWaiting()
 
+// Navigation preload: the browser starts a page's request while the worker
+// boots, and Workbox's strategy handler answers a navigation with
+// event.preloadResponse rather than fetching again, so NetworkFirst no longer
+// waits for a cold worker before the request even leaves.
+self.addEventListener("activate", event => {
+  if (self.registration.navigationPreload) event.waitUntil(self.registration.navigationPreload.enable())
+})
+
 // Four seconds, then the cached page or /offline: a reader on a dead train
 // connection should not stare at a blank tab for twenty. Only 200 is cached;
 // status 0 is an opaque response whose real status is hidden, so caching it
@@ -104,9 +112,9 @@ registerRoute(
     if (url.origin !== self.location.origin) return false
     if (request.mode === "navigate") return false
 
-const path = url.pathname
-if (isPrivatePath(path)) return false
-const isDynamicPath = DYNAMIC_PREFIXES.some(prefix => path.startsWith(prefix))
+    const path = url.pathname
+    if (isPrivatePath(path)) return false
+    const isDynamicPath = DYNAMIC_PREFIXES.some(prefix => path.startsWith(prefix))
     const isJson = path.includes(".json") || (request.destination === "" && request.headers.get("Accept")?.includes("application/json"))
     return isDynamicPath || isJson
   },
@@ -143,13 +151,12 @@ setCatchHandler(async ({ event, request }) => {
   // A private page that cannot load says so; it is never stood in for by
   // whatever public page happens to be cached.
   if (isPrivatePath(new URL(request.url).pathname)) return (await caches.match(OFFLINE_URL)) || Response.error()
+  // The page itself if it was cached, else /offline. Never "/": the home page
+  // can be a signed-in one, and the next person on the device would be served it.
   try {
     return await pages.handle({ event, request })
   } catch (_error) {
-    const cached =
-      (await caches.match(request)) ||
-      (await caches.match("/")) ||
-      (await caches.match(OFFLINE_URL))
+    const cached = (await caches.match(request)) || (await caches.match(OFFLINE_URL))
     if (cached) return cached
     return Response.error()
   }
@@ -162,7 +169,10 @@ self.addEventListener("message", event => {
 })
 
 self.addEventListener("install", event => {
-  event.waitUntil(caches.open(`${APP_NAME}-shell-${CACHE_VERSION}`).then(cache => cache.addAll(["/", OFFLINE_URL])))
+  // /offline only. "/" was here and in the precache manifest, fetched with the
+  // installing visitor's cookies, so a signed-in home page sat in a cache that
+  // outlives the session.
+  event.waitUntil(caches.open(`${APP_NAME}-shell-${CACHE_VERSION}`).then(cache => cache.addAll([OFFLINE_URL])))
 })
 
 self.addEventListener("periodicsync", event => {
@@ -178,14 +188,22 @@ self.addEventListener("periodicsync", event => {
   }
 })
 
+// Each action's address goes into the notification's own data, keyed by the
+// action's name: showNotification keeps only action, title and icon of an
+// action, so notificationclick has nowhere else to read it from.
+const actionTargets = actions => Object.fromEntries(
+  actions.filter(action => action?.action && action.url).map(action => [action.action, sanitizeTargetUrl(action.url)])
+)
+
 self.addEventListener("push", event => {
   const data = event.data?.json() || {}
+  const actions = Array.isArray(data.actions) ? data.actions : []
   event.waitUntil(self.registration.showNotification(data.title || APP_NAME, {
     body: data.body || "",
-    actions: data.actions || [],
+    actions: actions.map(({ action, title, icon }) => ({ action, title, icon })),
     icon: data.icon || "/icon-192.png",
     badge: data.badge || "/icon-mono-192.png",
-    data: { url: sanitizeTargetUrl(data.url || "/") },
+    data: { url: sanitizeTargetUrl(data.url || "/"), actions: actionTargets(actions) },
   }))
 })
 

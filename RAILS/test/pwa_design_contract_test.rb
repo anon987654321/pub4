@@ -43,7 +43,8 @@ class PwaDesignContractTest < Minitest::Test
     assert_includes worker, "networkTimeoutSeconds: 4"
     assert_includes worker, 'statuses: [200]'
     assert_includes worker, 'caches.match(request)'
-    assert_includes worker, 'caches.match("/")'
+    # Never the cached home page: it can be someone else's signed-in one (shared-035).
+    refute_includes worker, 'caches.match("/")'
     assert_includes worker, 'caches.match(OFFLINE_URL)'
 
     assert_includes worker, 'new BackgroundSyncPlugin(FORM_QUEUE'
@@ -118,10 +119,13 @@ class PwaDesignContractTest < Minitest::Test
   end
 
   def test_offline_replay_queue_is_bounded_and_same_origin
-    source = read(SHARED_ROOT, "frontend/pwa_offline_store.js")
+    # One queue (shared-031): pwa_offline_store.js writes into pwa_runtime's.
+    store = read(SHARED_ROOT, "frontend/pwa_offline_store.js")
+    assert_includes store, 'import { enqueueRecord } from "pub4/pwa_runtime"'
+    refute_includes store, "localStorage.setItem"
+    source = read(SHARED_ROOT, "frontend/pwa_runtime.js")
     assert_includes source, "MAX_QUEUE_SIZE = 100"
-    assert_includes source, "queue.slice(-MAX_QUEUE_SIZE)"
-    assert_includes source, "sameOriginUrl(entry.url)"
+    assert_includes source, "const url = sameOriginUrl(record.url)"
     assert_includes source, "return null"
   end
 

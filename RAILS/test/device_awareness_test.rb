@@ -60,7 +60,7 @@ class DeviceAwarenessTest < Minitest::Test
     worker = File.read(File.join(SHARED, "pwa/service_worker.js"))
     assert_includes worker, "StaleWhileRevalidate"
     assert_includes worker, "path.includes(\".json\")"
-    assert_includes worker, "actions: data.actions || []"
+    assert_includes worker, "data: { url: sanitizeTargetUrl(data.url || \"/\"), actions: actionTargets(actions) }"
     assert_includes worker, 'action === "view"'
   end
 

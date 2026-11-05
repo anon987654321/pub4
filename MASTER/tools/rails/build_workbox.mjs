@@ -59,10 +59,12 @@ try {
       // Nothing is lost by excluding them: the CacheFirst route already caches
       // assets at runtime, on demand. Apps with their own public root precache
       // those stable files; BRGEN has no app-local public root, so its generated
-      // worker precaches only / and /offline and serves shared assets on demand.
+      // worker precaches only /offline and serves shared assets on demand.
       globIgnores: ["service-worker.js", "assets/**"],
+      // /offline only. "/" was precached here and served cache-first to every
+      // navigation home: the page the installing visitor saw, signed in or not,
+      // for the next person on the device too.
       additionalManifestEntries: [
-        { url: "/", revision: "shell-v1" },
         { url: "/offline", revision: "offline-v1" },
       ],
       maximumFileSizeToCacheInBytes: 4 * 1024 * 1024,

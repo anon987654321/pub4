@@ -21,7 +21,9 @@ class PwaGeneratorContractTest < Minitest::Test
 
   test "the generator excludes digest assets from precache" do
     assert_includes source, 'globIgnores: ["service-worker.js", "assets/**"]'
-    assert_includes source, '{ url: "/", revision: "shell-v1" }'
+    # The home page is never precached: it is fetched with the installing
+    # visitor's cookies and served cache-first to whoever navigates home next.
+    refute_includes source, '{ url: "/", revision: "shell-v1" }'
     assert_includes source, '{ url: "/offline", revision: "offline-v1" }'
   end
 

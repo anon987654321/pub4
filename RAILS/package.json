@@ -5,6 +5,7 @@
     "build:pwa": "node ../MASTER/tools/rails/build_workbox.mjs",
     "test:pwa": "ruby test/pwa_design_contract_test.rb",
     "test:pwa:runtime": "node --test test/pwa_offline_store.test.mjs",
+    "test:pwa:worker": "node --test test/service_worker.test.mjs",
     "test:stimulus": "node --test test/stimulus_components_runtime_contract.test.mjs",
     "test:radio": "node --test test/radio_brgen_tunnel.test.mjs",
     "test:image": "node --test test/image_compression.test.mjs",
