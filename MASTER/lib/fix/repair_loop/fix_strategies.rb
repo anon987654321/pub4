@@ -198,7 +198,7 @@ module Master
 
         def diff_fix(violation:, src:, path:)
           count = UserSimulation.candidate_count
-          candidates = count.times.filter_map do |index|
+          rows = candidate_threads(count, violation:, event: "repair_loop:fix_error") do |index|
             prompt = candidate_prompt(
               violation:, src:, path:, style: :diff, index:,
               suffix: "Return one unified diff for this candidate only. Do not combine it with any other candidate."
@@ -222,12 +222,8 @@ module Master
               )
               nil
             end
-          rescue StandardError => e
-            action = handle_fix_exception(e, violation, event: "repair_loop:fix_error")
-            next if action == :retry
-
-            nil
-          end.uniq
+          end
+          candidates = rows.compact.uniq
 
           selected = best_candidate(candidates, path, original: src, violation:)
           return selected if selected
@@ -403,7 +399,7 @@ module Master
         def propose_candidates(violation:, src:, path:, style:, suffix: nil, event: "repair_loop:fix_error", model: nil)
           count = UserSimulation.candidate_count
           ext = File.extname(path).downcase
-          count.times.filter_map do |index|
+          rows = candidate_threads(count, violation:, event:) do |index|
             prompt = candidate_prompt(violation:, src:, path:, style:, index:, suffix:)
             # codes answers nil when no lane answers; `.first` on it raised for every file once the
             # claude lane's quota ran out, and each was logged as a fresh NoMethodError.
@@ -425,11 +421,34 @@ module Master
               approach: UserSimulation.approach(index).fetch(:name), format: style
             )
             candidate
-          rescue StandardError => e
-            Master::Ground::Swallow.log(e, context: "RepairLoop.propose_candidates", rule: @law.id)
-            handle_fix_exception(e, violation, event:)
-            nil
-          end.uniq
+          end
+          rows.compact.uniq
+        end
+
+        # Candidates are independent calls against the same unchanged source, so
+        # they are asked concurrently and collected in candidate order: the same
+        # prompts, the same events, the same uniq — a third of the wall time on
+        # the generation stage. The count is UserSimulation.candidate_count (<=5),
+        # and MASTER_FIX_PARALLEL_CANDIDATES=0 restores the sequential walk for a
+        # lane that punishes concurrent requests (ROBUSTNESS: the escape is
+        # declared and the default stays bounded either way).
+        def candidate_threads(count, violation:, event:, &block)
+          return Array.new(count) { |index| one_candidate(index, violation:, event:, &block) } if
+            ENV["MASTER_FIX_PARALLEL_CANDIDATES"] == "0"
+
+          Array.new(count) do |index|
+            Thread.new { one_candidate(index, violation:, event:, &block) }
+          end.map(&:value)
+        end
+
+        # One candidate's whole lifecycle, sequential or threaded: the per-candidate
+        # rescue the filter_map carried before, kept verbatim.
+        def one_candidate(index, violation:, event:, &block)
+          block.call(index)
+        rescue StandardError => e
+          Master::Ground::Swallow.log(e, context: "RepairLoop.propose_candidates", rule: @law.id)
+          handle_fix_exception(e, violation, event:)
+          nil
         end
 
         def candidate_fix(violation:, src:, path:, style:, suffix: nil, event: "repair_loop:fix_error", model: nil)
