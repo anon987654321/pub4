@@ -30,6 +30,18 @@ class TestDrPullCheck < Minitest::Test
     FileUtils.remove_entry(@root) if @root && File.directory?(@root)
   end
 
+  def test_check_skips_when_no_backup_destination_is_configured
+    home = File.join(@root, "no-backup-home")
+    FileUtils.mkdir_p(home)
+    output, status = Open3.capture2e(
+      { "PUB4_DR_DIR" => nil, "HOME" => home },
+      RbConfig.ruby, SCRIPT, "--check"
+    )
+
+    assert status.success?, output
+    assert_includes output, "skip"
+  end
+
   def test_check_fails_when_an_explicitly_configured_destination_is_missing
     missing = File.join(@root, "removed-backup-dir")
     output, status = run_check("PUB4_DR_DIR" => missing)
@@ -44,6 +56,16 @@ class TestDrPullCheck < Minitest::Test
     assert status.success?, output
     assert_includes output, "checksum + integrity verified"
     assert_includes output, "1 database(s)"
+  end
+
+  def test_check_keeps_legacy_pulls_without_a_checksum_manifest_integrity_verified
+    File.delete(File.join(@pull, "SHA256SUMS"))
+
+    output, status = run_check
+
+    assert status.success?, output
+    assert_includes output, "integrity verified; legacy pull has no SHA256SUMS"
+    assert_includes output, "WARNING"
   end
 
   def test_check_rejects_a_checksum_mismatch
