@@ -79,12 +79,20 @@ deploy_tracked_app() {
   deploy_status "$app_name" "bundle install"
   bundle_install_as_app "$APP_NAME" "$APP_DIR"
   log_ok "production bundle installed for ${app_name}"
+  # Both the one-time db/ → storage/ relocation and db:prepare mutate the live
+  # SQLite files. A Falcon worker can keep the source inode open and hold WAL
+  # locks, so prove the service is stopped before either operation begins.
+  if pub4_rcctl check "$app_name" >/dev/null 2>&1; then
+    pub4_rcctl stop "$app_name" || {
+      log_err "could not stop ${app_name}; refusing to move or migrate its SQLite database"
+      return 1
+    }
+    if pub4_rcctl check "$app_name" >/dev/null 2>&1; then
+      log_err "${app_name} still reports running after stop; refusing database changes"
+      return 1
+    fi
+  fi
   migrate_sqlite_db_to_storage_if_needed "$APP_NAME" "$APP_DIR"
-  # Stop the running app before touching its SQLite db: db:prepare/migrate hangs
-  # indefinitely waiting on the write lock a live Falcon worker already holds,
-  # which silently swallowed every deploy's runtime check (precompile + bin/ci)
-  # behind it -- this app_name may not have a running service yet on first deploy.
-  pub4_rcctl stop "$app_name" 2>/dev/null || true
   deploy_status "$app_name" "db migrate"
   db_create_migrate_as_app "$APP_NAME" "$APP_DIR" || { deploy_status "$app_name" "db migrate" "failed"; exit 1; }
   log_ok "database migrated for ${app_name}"
