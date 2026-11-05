@@ -37,6 +37,14 @@ class UsersController < ApplicationController
     @user = Current.user
   end
 
+  # Newest first, with the preloads HomeController uses for the same card,
+  # which reads post.image.attached? (one query per post without them).
+  # Shared with the reflex, so page two follows from page one.
+  def self.profile_page_scope(readable)
+    cards = readable.includes(:user, :community, :votes)
+    cards.with_attached_image.order(created_at: :desc)
+  end
+
   def update
     require_user_session
     @user = Current.user
@@ -110,18 +118,13 @@ class UsersController < ApplicationController
 
   private
 
-  # Only what the profile may say this person wrote and this viewer may read:
-  # no anonymous or Live posts, nothing removed, no private community the
-  # viewer is not in. The preloads match HomeController's for the same card,
-  # which reads post.image.attached? (one query per post without them).
-  # The newest twenty this viewer may read, and how many there are in full:
-  # the header counted the list, which stops at twenty.
+  # The first page of what this viewer may read (User#readable_posts_for),
+  # and how many there are in full for the header. Later pages come from
+  # ProfilePostsInfiniteScrollReflex, which pages the same scope.
   def load_posts
-    readable = @user.posts.kept
-    readable = readable.attributed.visible_to(Current.user)
+    readable = @user.readable_posts_for(Current.user)
     @posts_count = readable.count
-    listed = readable.includes(:user, :community, :votes).with_attached_image
-    @posts = listed.order(created_at: :desc).limit(20)
+    @pagy, @posts = pagy(self.class.profile_page_scope(readable))
   end
 
   # The same rule for the activity list, which names the person beside each post.

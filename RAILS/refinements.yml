@@ -3432,7 +3432,7 @@ items:
   path: RAILS/brgen/app/controllers/users_controller.rb
   item: Paginate the profile's posts with the infinite-scroll sentinel instead of
     stopping at 20.
-  status: open
+  status: done
 - id: brgen-306
   app: brgen
   area: profile

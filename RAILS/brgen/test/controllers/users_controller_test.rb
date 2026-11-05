@@ -81,16 +81,16 @@ class UsersControllerTest < ActionDispatch::IntegrationTest
   test "a profile header counts every readable post and shows avatar and join date" do
     author = User.create!(email_address: "teller-#{SecureRandom.hex(4)}@brgen.no", password: "password123",
                           username: "teller_#{SecureRandom.hex(3)}", created_at: Time.zone.local(2025, 3, 5))
-    22.times { |i| Post.create!(user: author, city: @city, title: "Innlegg #{i}", content: "hei") }
+    27.times { |i| Post.create!(user: author, city: @city, title: "Innlegg #{i}", content: "hei") }
 
     get user_path(author)
 
     assert_response :success
-    assert_select ".profile-header", text: /#{Regexp.escape(I18n.t("community.posts_count", count: 22))}/
+    assert_select ".profile-header", text: /#{Regexp.escape(I18n.t("community.posts_count", count: 27))}/
     assert_select ".profile-header img.avatar[src=?]", author.avatar_url
     member_since = I18n.t("profile.member_since", date: I18n.l(author.created_at.to_date, format: "%B %Y"))
     assert_select ".profile-header", text: /#{Regexp.escape(member_since)}/
-    assert_select "ul.post-feed > li", 20
+    assert_select "ul.post-feed > li", 25
   end
 
   test "the profile edit screen links the account page" do

@@ -153,6 +153,14 @@ class User < ApplicationRecord
     identity_assurances.where(level: level).where("expires_at IS NULL OR expires_at > ?", Time.current).exists?
   end
 
+  # Only what a profile may say this person wrote and `viewer` may read: no
+  # anonymous or Live posts, nothing removed, no private community the viewer
+  # is not in.
+  def readable_posts_for(viewer)
+    kept = posts.kept
+    kept.attributed.visible_to(viewer)
+  end
+
   def follow!(other)
     return if other == self
 

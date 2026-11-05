@@ -69,9 +69,17 @@
 <section>
   <%= tag.h2 t("profile.posts") %>
   <% if @posts.any? %>
-    <ul class="post-feed feed_list post-card-list" role="list">
+    <ul class="post-feed feed_list post-card-list" id="profile-posts" role="list">
       <%= render partial: "users/profile_post", collection: @posts, as: :post %>
     </ul>
+    <%= render "shared/infinite_scroll_sentinel",
+               pagy: @pagy,
+               reflex: "ProfilePostsInfiniteScrollReflex#load_more",
+               sentinel_id: "profile-posts-sentinel",
+               data: { user_id: @user.id } %>
+    <%# The pager is the no-JS path, as on hashtag pages: the sentinel pages
+        over ActionCable. %>
+    <noscript><%= render "shared/pager", pagy: @pagy %></noscript>
   <% else %>
     <%= render "shared/empty_state",
           title: t("empty.no_posts_yet"),
