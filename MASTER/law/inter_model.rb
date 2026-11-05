@@ -20,8 +20,13 @@ Law.define(:INTER_MODEL_CONTRACT) do
     attach a SHA-256 artifact reference, validate the returned JSON finding schema, and record a bounded metric
     without persisting raw model text? Invalid output must receive one structured rejection and one retry only.
   ASK
-  practice "Treat other models as protocol peers: explicit authority, evidence, bounded artifacts, structured disagreement, and no reciprocal persona."
-  fix "Wrap every council model request with InterModelContract and validate its returned structured findings before aggregation."
+  practice <<~'PRACTICE'.strip
+    Treat other models as protocol peers: explicit authority, evidence, bounded artifacts, structured disagreement,
+    and no reciprocal persona.
+  PRACTICE
+  fix <<~'FIX'.strip
+    Wrap every council model request with InterModelContract and validate its returned structured findings before aggregation.
+  FIX
   bad "@agent.ask(prompt)"
   good "@agent.ask(outbound)"
 end
