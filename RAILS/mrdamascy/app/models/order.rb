@@ -49,9 +49,10 @@ class Order < ApplicationRecord
   before_validation :assign_tracking_token
   before_validation :set_placed_at, on: :create
   # Covers both a paid order cancelled from the board and a payment that lands
-  # after the order was cancelled (a late webhook or tracking sync).
+  # after the order was cancelled (a late webhook or tracking sync). A 0 kr
+  # order (PaymentGateway's free settle) took nothing, so it owes nothing.
   before_save :owe_manual_refund,
-              if: -> { state == "cancelled" && refund_state.nil? && PAID_STATES.include?(payment_state) }
+              if: -> { state == "cancelled" && refund_state.nil? && PAID_STATES.include?(payment_state) && paid_for? }
 
   # The staff board is pushed, not polled: a new order or a move redraws
   # its grid for every open board.
@@ -179,6 +180,11 @@ class Order < ApplicationRecord
 
     update!(tip_ore: amount)
     self
+  end
+
+  # Money was asked for: a 0 kr order never reached a payment provider.
+  def paid_for?
+    total_ore.to_i.positive?
   end
 
   def tipped?

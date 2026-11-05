@@ -28,6 +28,30 @@ class LoyaltyCheckoutTest < ActionDispatch::IntegrationTest
     assert_equal 9, order.redeemed_stamps.count
   end
 
+  # Vipps and Stripe refuse a 0 kr payment, so a free wrap and nothing else
+  # never goes to either: it is settled at checkout and confirmed for the
+  # kitchen, with no payment page to send the customer to.
+  test "a 0 kr free-wrap order skips the payment and is confirmed at once" do
+    vipps_real_mode!
+    order = place_pickup_order
+
+    assert_redirected_to track_path(order.tracking_token)
+    assert_empty vipps_calls, "a 0 kr order reached Vipps"
+    assert_equal "captured", order.payment_state
+    assert_equal "confirmed", order.state
+    assert_nil order.vipps_url
+  ensure
+    vipps_restore_http!
+  end
+
+  test "a cancelled 0 kr order owes no refund" do
+    order = place_pickup_order
+    order.cancel!
+
+    assert_nil order.reload.refund_state
+    assert_not_includes Order.refunds_due, order
+  end
+
   test "the order after the free wrap pays full price" do
     place_pickup_order
     second = place_pickup_order

@@ -126,6 +126,20 @@ class VippsClientTest < ActiveSupport::TestCase
     assert_equal "preparing", @order.state, "capture must not rewind the kitchen"
   end
 
+  test "sync never captures a cancelled order and flags its reservation for staff" do
+    @order.update!(payment_state: "pending", vipps_order_id: "mrdamascy-tok-vipps-1", state: "cancelled")
+    vipps_real_mode!
+    VippsClient.sync_payment!(order: @order)
+    VippsClient.sync_payment!(order: @order)
+
+    refute vipps_calls.any? { |c| c[:path].end_with?("/capture") }, "a cancelled order was captured"
+    @order.reload
+    assert_equal "authorised", @order.payment_state
+    assert_equal "cancelled", @order.state
+    assert_equal "manual_due", @order.refund_state
+    assert_includes Order.refunds_due, @order
+  end
+
   test "sync marks ABORTED and EXPIRED payments failed" do
     @order.update!(payment_state: "authorised", vipps_order_id: "mrdamascy-tok-vipps-1")
 

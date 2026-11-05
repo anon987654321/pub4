@@ -85,12 +85,12 @@ class VippsClient
       )
     end
 
-    # The single reconciliation seam: look at what Vipps actually says about
-    # this order's payment and move our order to match. Idempotent — safe to
-    # call from the tracking page load, the 10 s status poll and the webhook
-    # concurrently (capture is server-side idempotent via Idempotency-Key).
-    #
-    # Mock mode: the mock approve action owns the capture; nothing to sync.
+    # The single reconciliation seam: move our order to what Vipps says about
+    # its payment. Idempotent across page load, 10 s poll and webhook (capture
+    # carries an Idempotency-Key). Mock mode: the mock approve action captures.
+    # A cancelled order is never captured, as its food will not be made. This
+    # client has no cancel call, so the reservation is kept as authorised and
+    # Order#owe_manual_refund flags it manual_due for staff to void by hand.
     def sync_payment!(order:)
       return order if mock_mode? || order.payment_state == "captured"
       return order unless order.vipps_order_id.present?
@@ -98,7 +98,7 @@ class VippsClient
       remote_state = payment_state(reference: order.vipps_order_id)
       case remote_state
       when CAPTURE_ON
-        capture_payment(order:)
+        order.state == "cancelled" ? order.update!(payment_state: "authorised") : capture_payment(order:)
       when *FAIL_ON
         order.update!(payment_state: "failed") unless order.payment_state == "failed"
       end
