@@ -160,6 +160,24 @@ class TestReplicateClientRetry < Minitest::Test
     assert_equal "Token replicate-test-secret", request["Authorization"]
   end
 
+  def test_replicate_token_files_must_be_private_regular_user_files
+    Dir.mktmpdir do |directory|
+      path = File.join(directory, "env")
+      File.write(path, "REPLICATE_API_TOKEN=secret\n")
+      File.chmod(0o600, path)
+      assert Client.private_token_file?(path)
+
+      File.chmod(0o640, path)
+      refute Client.private_token_file?(path)
+
+      File.chmod(0o600, path)
+      target = File.join(directory, "secret")
+      File.rename(path, target)
+      File.symlink(target, path)
+      refute Client.private_token_file?(path)
+    end
+  end
+
   def test_get_keeps_retrying_a_transient_server_error
     client = Client.new(token: "r8_test")
     client.define_singleton_method(:sleep) { |_seconds| }
