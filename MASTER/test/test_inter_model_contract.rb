@@ -167,6 +167,11 @@ class TestInterModelContract < Minitest::Test
     ].each do |source|
       assert_empty law.scan(source, file: path), "wrapped request must remain clean: #{source}"
     end
+
+    ideation_path = File.join(Master::ROOT, "lib", "review", "council", "ideation.rb")
+    ideation_source = File.read(ideation_path, encoding: "UTF-8")
+    assert_empty law.scan(ideation_source, file: ideation_path),
+                 "the current ideation implementation must use the validated adapter"
   end
 
   def test_council_ideation_uses_validated_protocol_for_every_model_turn
