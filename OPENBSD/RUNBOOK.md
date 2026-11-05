@@ -55,7 +55,7 @@ launchd/cron or a manual size check:
 
 ```sh
 # Keep roughly 5 MB
-[[ $(stat -f%z ~/.pub4/ssh-connections.log 2>/dev/null || echo 0) -gt 5000000 ]] \\
+[[ $(stat -f%z ~/.pub4/ssh-connections.log 2>/dev/null || echo 0) -gt 5000000 ]] \
   && mv ~/.pub4/ssh-connections.log{,.1}
 ```
 
