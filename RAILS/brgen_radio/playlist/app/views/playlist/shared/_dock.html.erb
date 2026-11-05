@@ -1,0 +1,17 @@
+<%# The radio's audio outlives a page change. data-turbo-permanent keeps this
+    element, and whatever audio element it holds, across Turbo navigation:
+    when a playing player is about to be replaced, playlist_player hands its
+    audio element here (turbo:before-render), so leaving a playlist for a set
+    or the library keeps the music going. Hidden while it holds nothing. %>
+<aside id="playlist-dock" class="playlist-dock" hidden
+       data-turbo-permanent
+       data-controller="playlist-dock"
+       data-action="playlist-dock:adopt->playlist-dock#adopt playlist-dock:release->playlist-dock#close"
+       data-playlist-dock-play-label-value="<%= t("playlist.play") %>"
+       data-playlist-dock-pause-label-value="<%= t("playlist.pause") %>"
+       aria-label="<%= t("playlist.dock_label") %>">
+  <p class="playlist-dock-title" data-playlist-dock-target="title"></p>
+  <button type="button" class="button" data-playlist-dock-target="toggle"
+          data-action="playlist-dock#toggle"><%= t("playlist.pause") %></button>
+  <button type="button" class="button" data-action="playlist-dock#close"><%= t("playlist.stop") %></button>
+</aside>

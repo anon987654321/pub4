@@ -1,6 +1,32 @@
-<% if track %>
-  <p><%= t("playlist.now_playing") %> <%= tag.strong track.title %> — <%= track.artist %></p>
-  <p><%= t("playlist.synced_position") %> <%= party.position_seconds %>s</p>
-<% else %>
-  <p><%= t("playlist.waiting_for_host") %></p>
-<% end %>
+<%# The party's shared position. Rendered by the page and by
+    Playlist::ListeningParty#sync!'s broadcast, which replaces this element by
+    its id, so the id lives here: kept outside the partial, the first replace
+    removed it and every later broadcast found nothing to replace.
+
+    party_audio_controller reads the data: the track's source, the position at
+    synced-at, and whether the host's audio is running. A party synced longer
+    ago than ListeningParty::HEARTBEAT reads as paused. %>
+<% fresh = party.updated_at.present? && party.updated_at > Playlist::ListeningParty::HEARTBEAT.ago %>
+<% playing = local_assigns.fetch(:playing, fresh) %>
+<% src = if track&.audio_file&.attached?
+           main_app.rails_blob_path(track.audio_file, only_path: true)
+         elsif track&.source_type == "direct"
+           track.source_url
+         end %>
+<div id="listening_party_sync"
+     data-party-audio-target="sync"
+     data-track-id="<%= track&.id %>"
+     data-src="<%= src %>"
+     data-position="<%= party.position_seconds.to_i %>"
+     data-synced-at="<%= (party.updated_at || Time.current).to_f %>"
+     data-playing="<%= playing %>">
+  <% if track %>
+    <p><%= t("playlist.now_playing") %> <%= tag.strong track.title %> — <%= track.artist %></p>
+    <p><%= t("playlist.synced_position") %> <%= party.position_seconds %>s</p>
+    <% unless src %>
+      <%= tag.p t("playlist.party_no_audio") %>
+    <% end %>
+  <% else %>
+    <%= tag.p t("playlist.waiting_for_host") %>
+  <% end %>
+</div>

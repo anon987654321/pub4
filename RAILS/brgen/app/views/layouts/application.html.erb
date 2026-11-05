@@ -203,6 +203,8 @@
   </div>
   </div>
   <%= render "shared/flash_toasts" %>
+  <%# The radio's permanent audio dock, so a track keeps playing across pages. %>
+  <%= render "playlist/shared/dock" if Brgen::DomainRegistry::RADIO_SUBDOMAINS.include?(request.subdomain) %>
   <% if !vertical_surface? && current_page?(main_app.root_path) %>
     <%= render "shared/welcome_onboarding", surface: "brgen", city: city_name %>
   <% end %>

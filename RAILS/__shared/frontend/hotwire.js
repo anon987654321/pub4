@@ -12,17 +12,10 @@ if (window.Turbo?.config?.drive) {
   Turbo.config.drive.progressBarDelay = 100
 }
 
-if (typeof document.startViewTransition === "function") {
-  document.addEventListener("turbo:before-render", (event) => {
-    if (document.documentElement.dataset.viewTransitions === "off") return
-
-    const render = event.detail?.render
-    if (typeof render !== "function") return
-
-    event.detail.render = (currentElement, newElement) =>
-      document.startViewTransition(() => render(currentElement, newElement))
-  })
-}
+// Turbo runs the page swap inside a view transition itself (each layout's
+// view-transition meta). Do not wrap its render in a second
+// startViewTransition: that makes the swap asynchronous to Turbo, which then
+// loses every data-turbo-permanent element on each visit.
 
 const displayModeQuery = window.matchMedia("(display-mode: standalone)")
 

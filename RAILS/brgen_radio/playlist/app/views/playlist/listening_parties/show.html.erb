@@ -13,9 +13,27 @@
   <% end %>
 </div>
 
-<div id="listening_party_sync">
+<% host = @party.host_id == Current.user&.id %>
+<%# The guest hears the host's track in step: party_audio follows the sync
+    element below. The host's own audio reports its track and position back,
+    which is what sync! broadcasts. A guest presses Listen along first,
+    because a browser plays nothing aloud before the person asks for it. %>
+<section class="listening-party-audio"
+         aria-label="<%= t("playlist.party_audio") %>"
+         data-controller="party-audio"
+         data-party-audio-host-value="<%= host %>"
+         data-party-audio-sync-url-value="<%= set_listening_party_path(@set) %>"
+         data-party-audio-queue-value="<%= @tracks.map(&:id).to_json %>"
+         data-party-audio-refused-label-value="<%= t("playlist.status_play_refused") %>"
+         data-party-audio-error-label-value="<%= t("playlist.status_load_error") %>">
+  <audio controls preload="none" data-party-audio-target="audio"></audio>
+  <% unless host %>
+    <%= tag.button t("playlist.party_listen_along"), type: "button", class: "button",
+                   data: { action: "party-audio#join", party_audio_target: "join" }, hidden: true %>
+  <% end %>
+  <p role="status" data-party-audio-target="status"></p>
   <%= render "playlist/listening_parties/sync", party: @party, track: @party.current_track %>
-</div>
+</section>
 
 <section>
   <%= tag.h2 t("playlist.queue") %>

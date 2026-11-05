@@ -5,6 +5,9 @@ module Playlist
     self.table_name = "playlist_listening_parties"
 
     STATUSES = %w[active ended].freeze
+    # The host's player reports every few seconds while it plays. A party
+    # synced longer ago than this is taken to be paused where it stopped.
+    HEARTBEAT = 20.seconds
 
     tracks_activity created: "PlaylistListeningPartyStarted", source_vertical: "playlist", actor: :host
 
@@ -28,12 +31,14 @@ module Playlist
       update!(status: "ended", current_track: nil, position_seconds: 0)
     end
 
-    def sync!(track:, position_seconds:)
-      update!(current_track: track, position_seconds: position_seconds.to_i)
+    # updated_at is set even when track and position are unchanged: it is the
+    # moment the position was true, which the guests' players count from.
+    def sync!(track:, position_seconds:, playing: true)
+      update!(current_track: track, position_seconds: position_seconds.to_i, updated_at: Time.current)
       broadcast_replace_to stream_name,
         target: "listening_party_sync",
         partial: "playlist/listening_parties/sync",
-        locals: { party: self, track: track }
+        locals: { party: self, track: track, playing: playing }
     end
 
     def stream_name = "playlist:listening_party:#{id}"

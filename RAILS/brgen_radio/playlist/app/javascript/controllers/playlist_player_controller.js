@@ -5,7 +5,7 @@ export default class extends Controller {
   static targets = [
     "audio", "waveform", "scrub", "scrubFill", "playBtn", "playIcon",
     "currentTime", "duration", "title", "artist", "artwork", "queueItem", "embed",
-    "commentForm", "commentInput", "commentsList"
+    "commentForm", "commentInput", "commentsList", "status"
   ]
 
   static values = {
@@ -30,7 +30,10 @@ export default class extends Controller {
     commentAtLabel: { type: String, default: "Comment at %{time}" },
     commentPromptLabel: { type: String, default: "Comment at this time…" },
     positionLabel: { type: String, default: "%{current} of %{total}" },
-    fallbackTitleLabel: { type: String, default: "brgen playlist" }
+    fallbackTitleLabel: { type: String, default: "brgen playlist" },
+    bufferingLabel: { type: String, default: "Buffering…" },
+    loadErrorLabel: { type: String, default: "Could not load this track." },
+    playRefusedLabel: { type: String, default: "Press play to start." }
   }
 
   #resizeWaveform
@@ -48,8 +51,27 @@ export default class extends Controller {
       this.audioTarget.addEventListener("loadedmetadata", () => this.#tick())
       this.audioTarget.addEventListener("ended", () => this.#onEnded())
       this.audioTarget.addEventListener("play", () => this.#recordListen())
+      // A dead source or a slow network used to leave the button saying Pause
+      // over silence. The status line says what is happening instead.
+      this.audioTarget.addEventListener("waiting", () => this.#setStatus(this.bufferingLabelValue))
+      // stalled also fires while enough is buffered to keep playing; only a
+      // player short of data is buffering.
+      this.audioTarget.addEventListener("stalled", () => {
+        if (this.audioTarget.readyState < 3) this.#setStatus(this.bufferingLabelValue)
+      })
+      this.audioTarget.addEventListener("canplay", () => {
+        if (this.hasStatusTarget && this.statusTarget.textContent === this.bufferingLabelValue) this.#setStatus("")
+      })
+      this.audioTarget.addEventListener("playing", () => this.#setStatus(""))
+      this.audioTarget.addEventListener("error", () => this.#onError())
+      // A source that failed while the page loaded, before this listener.
+      if (this.audioTarget.error) this.#onError()
     }
     this.#setupMediaSession()
+    // A playing track survives the page change: before Turbo swaps the page,
+    // the audio element moves into the permanent dock (playlist/shared/_dock).
+    this.boundHandOff = () => this.#handOff()
+    document.addEventListener("turbo:before-render", this.boundHandOff)
 
     if (this.hasSrcValue && this.hasAudioTarget && !this.audioTarget.src) {
       this.audioTarget.src = this.srcValue
@@ -70,13 +92,22 @@ export default class extends Controller {
 
   disconnect() {
     window.removeEventListener("resize", this.#resizeWaveform)
+    document.removeEventListener("turbo:before-render", this.boundHandOff)
+  }
+
+  #handOff() {
+    if (!this.hasAudioTarget || this.audioTarget.paused) return
+    const dock = document.getElementById("playlist-dock")
+    if (!dock) return
+    dock.dispatchEvent(new CustomEvent("playlist-dock:adopt", {
+      detail: { audio: this.audioTarget, title: this.titleValue, artist: this.artistValue }
+    }))
   }
 
   toggle() {
     if (!this.hasAudioTarget || !this.audioTarget.src) return
     if (this.audioTarget.paused) {
-      this.audioTarget.play()
-      this.playing = true
+      this.#play()
     } else {
       this.audioTarget.pause()
       this.playing = false
@@ -261,8 +292,8 @@ export default class extends Controller {
       // Carry the slider's volume across the track change; without this a
       // listener who turned it down gets full volume on the next track.
       if (typeof this.volume === "number") this.audioTarget.volume = this.volume
-      this.audioTarget.play()
-      this.playing = true
+      this.#setStatus("")
+      this.#play()
       this.#updateMediaMetadata()
     } else if (this.hasAudioTarget) {
       this.audioTarget.pause()
@@ -326,6 +357,33 @@ export default class extends Controller {
       album: "brgen",
       artwork: this.artworkValue ? [{ src: this.artworkValue, sizes: "512x512", type: "image/jpeg" }] : [],
     })
+  }
+
+  // play() returns a promise that rejects when the browser refuses autoplay
+  // or the source cannot be played. Uncaught, the button kept saying Pause.
+  #play() {
+    this.playing = true
+    // A track carried over from the last page stops when this one starts.
+    document.getElementById("playlist-dock")?.dispatchEvent(new CustomEvent("playlist-dock:release"))
+    const started = this.audioTarget.play()
+    if (!started?.catch) return
+    started.catch((error) => {
+      this.playing = false
+      this.#syncPlayButton()
+      if (error?.name === "NotAllowedError") this.#setStatus(this.playRefusedLabelValue)
+      else this.#onError()
+    })
+  }
+
+  #onError() {
+    this.playing = false
+    if (this.hasAudioTarget && !this.audioTarget.paused) this.audioTarget.pause()
+    this.#setStatus(this.loadErrorLabelValue)
+    this.#syncPlayButton()
+  }
+
+  #setStatus(text) {
+    if (this.hasStatusTarget) this.statusTarget.textContent = text
   }
 
   #tick() {

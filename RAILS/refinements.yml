@@ -2969,7 +2969,7 @@ items:
     aria-live status line (buffering, could not load track) and catch the play() promise
     rejection in toggle()/load(), so a dead source_url or an autoplay refusal stops
     leaving the button saying Pause over silence.
-  status: open
+  status: done
 - id: brgen-249
   app: brgen
   area: playlist
@@ -3006,7 +3006,7 @@ items:
   item: Give the listening party page an audio element driven by the broadcast _sync
     partial (track and position_seconds), so guests hear the host's track in step
     instead of only reading 'Now playing … 42s'.
-  status: open
+  status: done
 - id: brgen-253
   app: brgen
   area: playlist
@@ -3041,7 +3041,7 @@ items:
   item: Keep audio playing across Turbo navigation by moving the transport bar and
     its audio element into a data-turbo-permanent container in the layout, so leaving
     a playlist for a set or profile stops cutting the music.
-  status: open
+  status: done
 - id: brgen-257
   app: brgen
   area: post-card

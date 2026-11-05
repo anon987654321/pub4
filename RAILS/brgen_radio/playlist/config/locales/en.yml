@@ -11,6 +11,10 @@
 en:
   playlist:
     pause: "Pause"
+    dock_label: "Now playing, across pages"
+    status_buffering: "Buffering…"
+    status_load_error: "Could not load this track."
+    status_play_refused: "The browser did not start playback. Press Play."
     open_embed: "Open"
     comment_at: "Comment at %{time}"
     scrub_position: "%{current} of %{total}"
@@ -57,6 +61,9 @@ en:
     collaborators: "Collaborators"
     dilla_sketches: "Dilla sketches / beats"
     synced_position: "Synced position:"
+    party_audio: "Party audio"
+    party_listen_along: "Listen along"
+    party_no_audio: "This track cannot play here; it lives on another service."
     youtube_player_aria: "YouTube player"
     track_created: "Track uploaded"
     track_updated: "Track updated"

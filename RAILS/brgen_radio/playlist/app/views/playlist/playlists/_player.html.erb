@@ -34,6 +34,9 @@
   data-playlist-player-comment-prompt-label-value="<%= t("playlist.comment_at_time") %>"
   data-playlist-player-position-label-value="<%= t("playlist.scrub_position") %>"
   data-playlist-player-fallback-title-label-value="<%= t("playlist.media_fallback_title") %>"
+  data-playlist-player-buffering-label-value="<%= t("playlist.status_buffering") %>"
+  data-playlist-player-load-error-label-value="<%= t("playlist.status_load_error") %>"
+  data-playlist-player-play-refused-label-value="<%= t("playlist.status_play_refused") %>"
 >
   <% unless local_assigns[:embedded] %>
 <header class="playlist-top">
@@ -65,6 +68,11 @@
       role="img"
       aria-label="<%= t("playlist.waveform") %>"
     ></canvas>
+
+    <%# Buffering, a track that will not load, or a browser that refused to
+        start playback: said here, beside the waveform, and to a screen
+        reader, by playlist_player. %>
+    <p class="playlist-player-status" role="status" data-playlist-player-target="status"></p>
 
     <div class="playlist-now-playing <%= local_assigns[:compact] ? 'is-compact' : '' %>" aria-live="polite">
       <h2 class="playlist-now-playing-title" data-playlist-player-target="title" itemprop="track"><%= active&.title || t("playlist.select_track") %></h2>

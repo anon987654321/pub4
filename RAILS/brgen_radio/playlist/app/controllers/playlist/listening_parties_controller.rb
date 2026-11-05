@@ -29,7 +29,8 @@ class Playlist::ListeningPartiesController < Playlist::BaseController
 
     def update
       track = @set.tracks.find_by(id: params[:track_id]) if params[:track_id].present?
-      @party.sync!(track: track || @party.current_track, position_seconds: params[:position_seconds])
+      @party.sync!(track: track || @party.current_track, position_seconds: params[:position_seconds],
+                   playing: params[:playing].to_s != "false")
       head :ok
     end
 
@@ -41,7 +42,8 @@ class Playlist::ListeningPartiesController < Playlist::BaseController
     private
 
     def set_set
-      @set = Playlist::Set.includes(:listening_party, :tracks).find(params[:set_id])
+      party = { listening_party: { current_track: :audio_file_attachment } }
+      @set = Playlist::Set.includes(party, :tracks).find(params[:set_id])
       raise ActiveRecord::RecordNotFound unless set_visible_to_viewer?
     end
 

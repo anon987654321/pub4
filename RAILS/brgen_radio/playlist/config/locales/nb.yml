@@ -11,6 +11,10 @@
 nb:
   playlist:
     pause: "Pause"
+    dock_label: "Spilles nå, på tvers av sider"
+    status_buffering: "Laster inn …"
+    status_load_error: "Klarte ikke å laste sporet."
+    status_play_refused: "Nettleseren startet ikke avspillingen. Trykk Spill av."
     open_embed: "Åpne"
     comment_at: "Kommentar ved %{time}"
     scrub_position: "%{current} av %{total}"
@@ -57,6 +61,9 @@ nb:
     collaborators: "Samarbeidspartnere"
     dilla_sketches: "Dilla-skisser / beats"
     synced_position: "Synkronisert posisjon:"
+    party_audio: "Festens lyd"
+    party_listen_along: "Lytt med"
+    party_no_audio: "Dette sporet kan ikke spilles her; det ligger hos en annen tjeneste."
     youtube_player_aria: "YouTube-spiller"
     track_created: "Spor lastet opp"
     track_updated: "Spor oppdatert"

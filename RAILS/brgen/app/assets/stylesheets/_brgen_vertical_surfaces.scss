@@ -1362,6 +1362,34 @@ body.vertical-playlist .playlist-details {
   transform: translateY(100%);
 }
 
+/* The permanent dock that holds a track playing across a page change
+   (playlist/shared/_dock). It sits where the transport bar sits: a page with
+   its own player has no dock showing, and a page without one has no bar. */
+.playlist-dock:not([hidden]) {
+  position: fixed;
+  inset-inline: var(--space-4);
+  inset-block-end: calc(var(--space-4) + var(--safe-bottom));
+  max-inline-size: 30rem;
+  margin-inline: auto;
+  z-index: var(--z-toast);
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-medium);
+  background: var(--surface-elevated);
+  border: 1px solid var(--border);
+  color: var(--text);
+}
+
+.playlist-dock-title {
+  flex: 1;
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 /* A reader who asked for less motion asked for less of exactly this: the bar
    stays where it is rather than sliding more slowly. The controller already
    declines to schedule a hide under this query; this is the belt to that
