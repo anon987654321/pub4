@@ -4193,7 +4193,7 @@ items:
   item: Add a 'report video' flow (copyright takedown or abuse) on videos/show and
     hosted tracks that hides the item pending review; neither tv nor playlist has
     any report or takedown path for uploaded media.
-  status: open
+  status: done
 - id: brgen-397
   app: brgen
   area: tv

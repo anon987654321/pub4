@@ -35,7 +35,13 @@ class Playlist::Track < ApplicationRecord
 
   before_validation :default_audio_hosting_fields
 
-  scope :publicly_visible, -> { (privacy_column? ? where(privacy: "public") : all).where.not(user_id: nil).joins(:user).where(users: { deleted_at: nil, deletion_scheduled_at: nil }) }
+  # review_held_at: reported for copyright, abuse or illegal content and
+  # waiting on a moderator (ModerationWorkflow::HOLD_REASONS).
+  scope :publicly_visible, lambda {
+    shared = privacy_column? ? where(privacy: "public") : all
+    owned = shared.where.not(user_id: nil)
+    owned.joins(:user).where(review_held_at: nil, users: { deleted_at: nil, deletion_scheduled_at: nil })
+  }
   scope :unexpired, -> {
     column_names.include?("expires_at") ? where("expires_at IS NULL OR expires_at > ?", Time.current) : all
   }

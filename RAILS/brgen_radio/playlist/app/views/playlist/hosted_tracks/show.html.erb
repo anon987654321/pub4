@@ -10,6 +10,14 @@
       comments: @comments.map { |c| { time: (c.timestamp_seconds || 0).to_f, text: c.body } },
       track_comments: { @track.id => @comments.map { |c| { time: (c.timestamp_seconds || 0).to_f, text: c.body } } } %>
 
+<%# A copyright, abuse or illegal-content report hides the track from everyone
+    but its owner until a moderator decides (ModerationWorkflow::HOLD_REASONS). %>
+<% if @track.review_held_at %>
+  <%= tag.p t("playlist.track_held_for_review"), role: "status" %>
+<% elsif authenticated? && @track.user_id != Current.user.id %>
+  <%= render "shared/report_button", target: @track, reason: "copyright" %>
+<% end %>
+
 <% if authenticated? && @track.user_id == Current.user.id %>
   <section class="playlist-admin" aria-label="<%= t("aria.track_management") %>">
     <div class="cluster">

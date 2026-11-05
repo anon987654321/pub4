@@ -13,6 +13,12 @@
           data-share-title-value="<%= @video.title %>"
           data-share-url-value="<%= request.original_url %>"
           data-action="click->share#share"><%= t("tv.share") %></button>
+  <%# Copyright is preselected: on an uploaded video it is the report a rights
+      holder makes. A copyright, abuse or illegal-content report hides the
+      video until a moderator decides (ModerationWorkflow::HOLD_REASONS). %>
+  <% if authenticated? && Current.user != @video.user %>
+    <%= render "shared/report_button", target: @video, reason: "copyright" %>
+  <% end %>
 </div>
 
 <%# progress-url is only set for a signed-in viewer: view events belong to a

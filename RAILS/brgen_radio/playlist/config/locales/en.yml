@@ -11,6 +11,7 @@
 en:
   playlist:
     pause: "Pause"
+    track_held_for_review: "This track is hidden while a moderator looks at a report about it."
     dock_label: "Now playing, across pages"
     status_buffering: "Buffering…"
     status_load_error: "Could not load this track."

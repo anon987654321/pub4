@@ -1,6 +1,12 @@
 # frozen_string_literal: true
 
 class ModerationWorkflow
+  # A report for one of these on uploaded media (a tv video, a hosted track)
+  # takes it out of public view at once, pending a moderator: a copyright
+  # holder's notice or illegal content cannot wait for the queue. Dismissing
+  # the report puts it back; resolving it leaves it held, which is the takedown.
+  HOLD_REASONS = %w[copyright abuse illegal].freeze
+
   def self.report!(reporter:, target:, reason:, details: nil)
     new.report!(reporter: reporter, target: target, reason: reason, details: details)
   end
@@ -25,6 +31,7 @@ class ModerationWorkflow
         status: "open"
       )
       flag_for(report, status: "open")
+      hold_for_review(report)
       report
     end
   end
@@ -48,6 +55,7 @@ class ModerationWorkflow
         penalize_owner(report)
       when "dismissed"
         close_flags(report, status: "dismissed")
+        release_hold(report)
       end
       report
     end
@@ -69,6 +77,24 @@ class ModerationWorkflow
 
     klass = report.reportable_type.to_s.safe_constantize
     klass.respond_to?(:strict_loading) ? klass.strict_loading(false).find_by(id: report.reportable_id) : nil
+  end
+
+  def hold_for_review(report)
+    return unless HOLD_REASONS.include?(report.reason)
+
+    subject = subject_for(report)
+    return unless subject.respond_to?(:review_held_at) && subject.review_held_at.nil?
+
+    subject.update_columns(review_held_at: Time.current, updated_at: Time.current)
+  end
+
+  # Only when no other holding report on the same item is still waiting.
+  def release_hold(report)
+    subject = subject_for(report)
+    return unless subject.respond_to?(:review_held_at) && subject.review_held_at
+
+    waiting = ModerationReport.where(reportable: subject, reason: HOLD_REASONS, status: %w[open reviewing])
+    subject.update_columns(review_held_at: nil, updated_at: Time.current) unless waiting.exists?
   end
 
   def flag_for(report, status:)

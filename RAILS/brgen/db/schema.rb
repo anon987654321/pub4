@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.2].define(version: 2026_11_05_150000) do
+ActiveRecord::Schema[8.2].define(version: 2026_11_05_160000) do
   create_table "account_merges", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "guest_user_id", null: false
@@ -1463,6 +1463,7 @@ ActiveRecord::Schema[8.2].define(version: 2026_11_05_150000) do
     t.datetime "expires_at"
     t.string "genre"
     t.string "privacy", default: "private", null: false
+    t.datetime "review_held_at"
     t.string "source_type"
     t.string "source_url"
     t.string "title"
@@ -1925,6 +1926,7 @@ ActiveRecord::Schema[8.2].define(version: 2026_11_05_150000) do
     t.integer "duet_of_id"
     t.integer "duration_seconds"
     t.datetime "published_at"
+    t.datetime "review_held_at"
     t.string "slug"
     t.integer "sound_id"
     t.string "status"

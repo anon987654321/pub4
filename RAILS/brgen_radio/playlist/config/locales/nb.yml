@@ -11,6 +11,7 @@
 nb:
   playlist:
     pause: "Pause"
+    track_held_for_review: "Sporet er skjult mens en moderator ser på en rapport om det."
     dock_label: "Spilles nå, på tvers av sider"
     status_buffering: "Laster inn …"
     status_load_error: "Klarte ikke å laste sporet."
