@@ -310,10 +310,14 @@ module Master
         edit = best[:edit]
         original = edit.apply!
         unless rebuild(edit)
-          restore(edit, original)
           @rejected << edit.key
-          @say.call("#{edit.why}: CSS rebuild failed; the candidate was restored")
-          return round(number:, why: edit.why, outcome: :failed, after: @target[:score])
+          restored = restore(edit, original)
+          @say.call(
+            restored ? "#{edit.why}: CSS rebuild failed; the candidate was restored" :
+              "#{edit.why}: source was restored but its CSS rebuild also failed"
+          )
+          outcome = restored ? :failed : :delivery_failed
+          return round(number:, why: edit.why, outcome:, after: @target[:score])
         end
 
         after = @target[:score] + best[:gain]
@@ -328,11 +332,15 @@ module Master
         end
 
         unless committed
-          restore(edit, original)
           @rejected << edit.key
           @undone << "#{edit.why} (commit refused)"
-          @say.call("#{edit.why}: commit refused; the candidate was restored")
-          return round(number:, why: edit.why, outcome: :failed, after: @target[:score])
+          restored = restore(edit, original)
+          @say.call(
+            restored ? "#{edit.why}: commit refused; the candidate was restored" :
+              "#{edit.why}: commit refused; source restored but CSS rebuild failed"
+          )
+          outcome = restored ? :failed : :delivery_failed
+          return round(number:, why: edit.why, outcome:, after: @target[:score])
         end
 
         merge(best[:after])
