@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require "yaml"
 require_relative "test_helper"
 
 # Lane policy that was held twice in Ruby now has one owner in YAML: vision
@@ -29,5 +30,13 @@ class TestLanePolicyFromYaml < Minitest::Test
     assert_equal %w[DEEPSEEK_API_KEY], envs.call("deepseek-chat")
     assert_equal %w[GOOGLE_API_KEY GEMINI_API_KEY], envs.call("gemini-3.1-pro")
     assert_nil envs.call("mistral-large")
+  end
+
+  # Perplexity stays out of hosted discovery until its product and provider-specific
+  # request/response contract have been deliberately selected and tested.
+  def test_perplexity_is_not_a_routable_hosted_provider
+    config = YAML.safe_load_file(File.expand_path("../data/models.yml", __dir__))
+
+    refute_includes config.fetch("openai_compatible").keys, "perplexity"
   end
 end
