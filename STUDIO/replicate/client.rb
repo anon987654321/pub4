@@ -112,6 +112,9 @@ module Studio
           extra_input: {},
           version: nil
         )
+          owner, name, pinned = model_reference!(destination)
+          raise ArgumentError, "training destination must be owner/name without a version" if pinned
+          destination = "#{owner}/#{name}"
           create_model(destination) unless model_exists?(destination)
 
           trainings_uri, body = build_training_request(
@@ -122,7 +125,7 @@ module Studio
         end
 
         def get_training(id)
-          get(URI("#{BASE}/trainings/#{id}"))
+          get(URI("#{BASE}/trainings/#{resource_id!(id, "training id")}"))
         end
 
         # The trainer version a run will use, so a sidecar can name it. A moving
@@ -156,8 +159,9 @@ module Studio
         private
 
         def build_training_request(photos_zip_url, destination, trigger_word:, steps:, lora_rank:, webhook:, webhook_events_filter:, extra_input:, version: nil)
-          trainer_owner, trainer_name = LORA_TRAINER.split("/")
-          trainings_uri = URI("#{BASE}/models/#{trainer_owner}/#{trainer_name}/versions/#{version || trainer_version}/trainings")
+          trainer_owner, trainer_name, = model_reference!(LORA_TRAINER)
+          trainer_version_id = resource_id!(version || trainer_version, "trainer version")
+          trainings_uri = URI("#{BASE}/models/#{trainer_owner}/#{trainer_name}/versions/#{trainer_version_id}/trainings")
 
           input = {
             input_images: photos_zip_url,
@@ -185,9 +189,8 @@ module Studio
         # server-side deadline, so a stuck run stops billing even if this process
         # dies.
         def run(model_id, input, timeout: 600)
-          pinned = model_id.split(":", 2)[1]
-
-          version = pinned || latest_version(model_id)
+          owner, name, pinned = model_reference!(model_id)
+          version = pinned || latest_version("#{owner}/#{name}")
           headers = {
             "Prefer" => "wait=#{[timeout, MAX_SYNC_WAIT].min}",
             "Cancel-After" => "#{timeout.clamp(CANCEL_AFTER_RANGE)}s",
@@ -242,6 +245,8 @@ module Studio
       # API itself. Refuse to fetch a URL a compromised/odd response pointed
       # us at anywhere else.
       ALLOWED_DOWNLOAD_HOST = /\A([a-z0-9-]+\.)*replicate\.(com|delivery)\z/i.freeze
+      MODEL_REFERENCE = /\A([A-Za-z0-9][A-Za-z0-9._-]{0,127})\/([A-Za-z0-9][A-Za-z0-9._-]{0,127})(?::([A-Za-z0-9][A-Za-z0-9._-]{0,127}))?\z/.freeze
+      RESOURCE_ID = /\A[A-Za-z0-9][A-Za-z0-9_-]{0,127}\z/.freeze
 
       def initialize(token: nil)
         @token = token || self.class.load_token
@@ -345,7 +350,7 @@ module Studio
       end
 
       def model_exists?(model_id)
-        owner, name = model_id.split("/")
+        owner, name, = model_reference!(model_id)
         get(URI("#{BASE}/models/#{owner}/#{name}"))
         true
       rescue StandardError => e
@@ -356,8 +361,8 @@ module Studio
       # A LoRA destination serves FLUX.1-dev, and gpu-l40s is the smallest SKU
       # Replicate accepts that holds it; the API refuses names off its list.
       def create_model(model_id, hardware: "gpu-l40s", visibility: "private")
-        owner, name = model_id.split("/", 2)
-        raise ArgumentError, "destination must be owner/name" if owner.to_s.empty? || name.to_s.empty?
+        owner, name, pinned = model_reference!(model_id)
+        raise ArgumentError, "destination must be owner/name without a version" if pinned
 
         post(URI("#{BASE}/models"), {
           owner:,
@@ -368,6 +373,20 @@ module Studio
       end
 
       private
+
+      def model_reference!(value)
+        match = MODEL_REFERENCE.match(value.to_s)
+        raise ArgumentError, "model reference must be owner/name with an optional pinned version" unless match
+
+        match.captures
+      end
+
+      def resource_id!(value, label)
+        identifier = value.to_s
+        raise ArgumentError, "invalid Replicate #{label}" unless RESOURCE_ID.match?(identifier)
+
+        identifier
+      end
 
       def upload_binary(path, mime:)
         boundary = "ReplicateBoundary#{rand(1_000_000_000)}"
@@ -410,7 +429,7 @@ module Studio
       # the table against itself, and the drift shows up as a 422 in production
       # or, worse, as a setting silently dropped.
       def input_keys(model_id)
-        owner, name = model_id.split("/")
+        owner, name, = model_reference!(model_id)
 
         model = get(URI("#{BASE}/models/#{owner}/#{name}"))
         schema = model.dig("latest_version", "openapi_schema",
@@ -419,7 +438,7 @@ module Studio
       end
 
       def latest_version(model_id)
-        owner, name = model_id.split("/")
+        owner, name, = model_reference!(model_id)
         model = get(URI("#{BASE}/models/#{owner}/#{name}"))
         model.dig("latest_version", "id") || raise("no version for #{model_id}")
       end
@@ -490,8 +509,10 @@ module Studio
       # long beats a blind exponential guess in both directions.
       def api_uri(value)
         uri = value.is_a?(URI::Generic) ? value : URI.parse(value.to_s)
+        safe_path = uri.path.start_with?("/v1/") &&
+                    uri.path.split("/").none? { |segment| segment == "." || segment == ".." || segment.include?("%") }
         allowed = uri.is_a?(URI::HTTPS) && uri.host == API_HOST && uri.port == 443 &&
-                  uri.userinfo.nil? && uri.fragment.nil? && uri.path.start_with?("/v1/")
+                  uri.userinfo.nil? && uri.fragment.nil? && safe_path
         raise ArgumentError, "refusing URL outside the Replicate API origin" unless allowed
 
         uri
@@ -517,14 +538,16 @@ module Studio
       end
 
       def cancel_prediction(id)
-        post(URI("#{BASE}/predictions/#{id}/cancel"), {})
+        prediction_id = resource_id!(id, "prediction id")
+        post(URI("#{BASE}/predictions/#{prediction_id}/cancel"), {})
       rescue StandardError => e
         warn("replicate cancel prediction failed: #{e.class}: #{e.message}")
         nil
       end
 
       def cancel_training(id)
-        post(URI("#{BASE}/trainings/#{id}/cancel"), {})
+        training_id = resource_id!(id, "training id")
+        post(URI("#{BASE}/trainings/#{training_id}/cancel"), {})
       rescue StandardError => e
         warn("replicate cancel training failed: #{e.class}: #{e.message}")
         nil
@@ -533,6 +556,7 @@ module Studio
       # A create answered under Prefer: wait may already be finished; otherwise
       # poll the same prediction, easing off from 1s to 5s.
       def settle(pred, timeout:)
+        prediction_id = resource_id!(pred["id"], "prediction id")
         start = Time.now
         delay = 1
 
@@ -549,15 +573,16 @@ module Studio
           end
           sleep delay
           delay = [delay + 1, 5].min
-          pred = get(URI("#{BASE}/predictions/#{pred['id']}"))
+          pred = get(URI("#{BASE}/predictions/#{prediction_id}"))
         end
       end
 
       def wait_for_training(id, timeout: 3600)
+        training_id = resource_id!(id, "training id")
         start = Time.now
         delay = 5
         loop do
-          training = get(URI("#{BASE}/trainings/#{id}"))
+          training = get_training(training_id)
 
           case training["status"]
           when "succeeded" then return training
