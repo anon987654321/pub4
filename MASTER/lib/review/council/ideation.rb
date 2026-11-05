@@ -95,8 +95,15 @@ module Master
             success_criteria: "Return at least #{minimum} distinct candidates in schema-valid findings.",
             constraints:, prior_findings:, system: system_msg
           )
-          ideas = result.fetch("data").fetch("findings").map { |finding| finding.fetch("claim").strip }.reject(&:empty?).uniq
-          return Master::Result.err("ideation: brainstorm returned no distinct candidates", category: :llm_failure) if ideas.empty?
+          ideas = result.fetch("data").fetch("findings").filter_map do |finding|
+            claim = finding.fetch("claim").strip
+            claim unless claim.empty?
+          end.uniq
+          if ideas.empty?
+            return Master::Result.err(
+              "ideation: brainstorm returned no distinct candidates", category: :llm_failure
+            )
+          end
 
           Master::Result.ok(ideas)
         rescue StandardError => e
@@ -127,13 +134,17 @@ module Master
           findings = result.fetch("data").fetch("findings")
           claims = findings.map { |finding| finding.fetch("claim").strip }
           unless claims.size == ideas.size && claims.uniq.size == claims.size && claims.sort == ideas.sort
-            return Master::Result.err("ideation: critique did not cover the candidate set exactly", category: :llm_failure)
+            return Master::Result.err(
+              "ideation: critique did not cover the candidate set exactly", category: :llm_failure
+            )
           end
 
           rendered = findings.map do |finding|
             verdict = finding.fetch("proposed_repair").strip
             unless verdict.match?(/\A(?:KEEP\b|REJECT\s*:)/i)
-              return Master::Result.err("ideation: critique omitted an explicit KEEP/REJECT verdict", category: :llm_failure)
+              return Master::Result.err(
+                "ideation: critique omitted an explicit KEEP/REJECT verdict", category: :llm_failure
+              )
             end
 
             "#{finding.fetch('claim')}\nVERDICT: #{verdict}"
@@ -169,12 +180,20 @@ module Master
             constraints:, prior_findings: idea_findings(ideas), system: system_msg
           )
           findings = result.fetch("data").fetch("findings")
-          return Master::Result.err("ideation: synthesis must return exactly one recommendation", category: :llm_failure) unless findings.size == 1
+          if findings.size != 1
+            return Master::Result.err(
+              "ideation: synthesis must return exactly one recommendation", category: :llm_failure
+            )
+          end
 
           finding = findings.first
           final = [finding.fetch("claim").strip, finding.fetch("proposed_repair").strip]
             .reject { |part| part.empty? || part == "none" }.join("\n\n")
-          return Master::Result.err("ideation: synthesis returned an empty recommendation", category: :llm_failure) if final.empty?
+          if final.empty?
+            return Master::Result.err(
+              "ideation: synthesis returned an empty recommendation", category: :llm_failure
+            )
+          end
 
           Master::Result.ok(final)
         rescue StandardError => e
