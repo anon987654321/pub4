@@ -55,6 +55,16 @@ class CiContractTest < Minitest::Test
            "mrdamascy's bundler-audit --config file is missing"
   end
 
+  # The axe smoke checks and the pickup journey are browser tests; vm23 has no
+  # browser, so they run in local CI only, behind the shared CI's box test.
+  test "mrdamascy ci runs its system tests off the box" do
+    source = read(File.join(ROOT, "mrdamascy", "config", "ci.rb"))
+
+    assert_match(/step\("system_tests", .*bin\/rails test:system"\) unless vps_host/, source)
+    assert_includes source, 'ENV["PUB4_CI_GUARD"] == "1"'
+    assert File.file?(File.join(ROOT, "mrdamascy", "test", "application_system_test_case.rb"))
+  end
+
   # Every RAILS suite runs on a prepared test database, wherever its steps
   # live: brgen, amber and bsdports through the shared contract above, master
   # and mrdamascy through their own config/ci.rb. The step must also sit

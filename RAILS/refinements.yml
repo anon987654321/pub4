@@ -5126,7 +5126,7 @@ items:
   path: RAILS/mrdamascy/test
   item: Add an axe smoke check of menu, item sheet, cart, checkout and tracking to
     CI.
-  status: open
+  status: done
 - id: mrdamascy-009
   app: mrdamascy
   area: auth
@@ -5803,7 +5803,7 @@ items:
   size: M
   path: RAILS/mrdamascy/test
   item: Add a system test for menu → item sheet → cart → checkout in pickup mode.
-  status: open
+  status: done
 - id: mrdamascy-092
   app: mrdamascy
   area: tests

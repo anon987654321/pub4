@@ -14,10 +14,16 @@ ENV["BUNDLER_AUDIT_UPDATE"] ||= "1"
 audit = "bundle exec bundler-audit check --config config/bundler-audit.yml"
 audit += " --update" if ENV["BUNDLER_AUDIT_UPDATE"] == "1"
 
+# vm23, by the same test the shared CI uses: ci-run.ksh exports
+# PUB4_CI_GUARD=1. The box has no browser, so the system tests (headless
+# Chrome, axe-core) run in local CI only, as brgen's do.
+vps_host = ENV["PUB4_CI_GUARD"] == "1" || File.exist?("/var/db/pub4_vps") || File.exist?("/etc/relayd.conf")
+
 CI.run do
   step "rubocop", "bundle exec rubocop app config db/migrate test"
   step "bundler_audit", audit
   step "brakeman", "bundle exec brakeman --quiet --no-pager --exit-on-warn --exit-on-error"
   step "test_db_prepare", "env RAILS_ENV=test bin/rails db:test:prepare"
   step "tests", "env RAILS_ENV=test bin/rails test"
+  step("system_tests", "env RAILS_ENV=test bin/rails test:system") unless vps_host
 end

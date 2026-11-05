@@ -93,7 +93,7 @@
       <div class="quantity-stepper">
         <button type="button" class="quantity-button" data-action="item-sheet#decrease" aria-label="<%= t("cart.decrease") %>">−</button>
         <%= number_field_tag :quantity, 1, min: 1, max: Cart::MAX_QUANTITY, inputmode: "numeric",
-              class: "quantity-input",
+              class: "quantity-input", aria: { label: t("menu.qty") },
               data: { item_sheet_target: "quantity", action: "input->item-sheet#recalc" } %>
         <button type="button" class="quantity-button" data-action="item-sheet#increase" aria-label="<%= t("cart.increase") %>">+</button>
       </div>
