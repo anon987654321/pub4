@@ -1,0 +1,22 @@
+en:
+  moderation_queue:
+    filter_label: Show reports by status
+    filters:
+      open: Open
+      reviewing: Under review
+      resolved: Resolved
+      dismissed: Dismissed
+      all: All
+    reasons:
+      spam: Spam
+      scam: Scam
+      abuse: Harassment
+      unsafe: Unsafe
+      illegal: Illegal content
+      duplicate: Duplicate
+      other: Something else
+    statuses:
+      open: Open
+      reviewing: Under review
+      resolved: Resolved
+      dismissed: Dismissed

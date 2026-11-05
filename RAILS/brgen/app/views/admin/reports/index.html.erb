@@ -11,6 +11,8 @@
   </div>
 </div>
 
+<%= report_filter_nav(@status) %>
+
 <% if @reports.any? %>
   <div data-controller="checkbox-select-all">
     <p class="cluster">
@@ -20,10 +22,10 @@
       <article aria-label="<%= t("a11y.report") %>">
         <p class="cluster">
           <input type="checkbox" data-checkbox-select-all-target="checkbox" value="<%= report.id %>" aria-label="<%= t("a11y.select_report", id: report.id) %>">
-          <strong><%= report.reason.humanize %> · <%= report.status.humanize %></strong>
+          <%= tag.strong report_heading(report) %>
         </p>
         <p>
-          <%= report.reportable_type %>#<%= report.reportable_id %>
+          <%= report_subject(report) %>
           · <%= t("admin.reported_by", name: report.user.display_name) %>
           · <time datetime="<%= report.created_at.iso8601 %>" data-controller="timeago" data-timeago-datetime-value="<%= report.created_at.iso8601 %>" data-timeago-refresh-interval-value="60000" data-timeago-add-suffix-value="true"><%= time_ago(report.created_at) %></time>
         </p>

@@ -1,0 +1,22 @@
+nb:
+  moderation_queue:
+    filter_label: Vis rapporter etter status
+    filters:
+      open: Åpne
+      reviewing: Under vurdering
+      resolved: Løste
+      dismissed: Avviste
+      all: Alle
+    reasons:
+      spam: Spam
+      scam: Svindel
+      abuse: Trakassering
+      unsafe: Farlig
+      illegal: Ulovlig innhold
+      duplicate: Duplikat
+      other: Noe annet
+    statuses:
+      open: Åpen
+      reviewing: Under vurdering
+      resolved: Løst
+      dismissed: Avvist

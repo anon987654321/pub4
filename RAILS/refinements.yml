@@ -890,7 +890,7 @@ items:
   item: Add a status filter (open by default) to the admin reports queue, link each
     reportable to its page with a content excerpt instead of the bare 'Post#12' text,
     and translate report.reason/status instead of calling humanize.
-  status: open
+  status: done
 - id: brgen-002
   app: brgen
   area: auth
