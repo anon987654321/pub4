@@ -42,9 +42,10 @@ The commands live in one place. `data/operator.yml` is the source of the command
 recipes, so do not write another catalogue. From the repository root, the operator
 reaches the box with `MASTER/bin/operator vps state` and `MASTER/bin/operator vps
 deploy`. In this tree `bin/check` is the local check, `bin/check-vps` checks vm23,
-and `bin/vps-deploy` deploys. It deploys master, brgen, amber and bsdports in that
-order, because every deploy sheds amber and bsdports and deploying them last
-restores them in the same pass. `bin/vps_ci.sh` separately allowlists its three Rails
+and `bin/vps-deploy` deploys. It deploys master, brgen, mrdamascy, amber and bsdports in that order when
+memory and app health permit; in degraded conditions master goes last. Amber
+and bsdports remain last because each deploy sheds them, so their restoration
+stays inside the same pass. `bin/vps_ci.sh` separately allowlists its three Rails
 app targets before constructing any per-app path; it cannot be used with an arbitrary
 name as a filesystem selector. The checks that guard the pipeline sit in `checks/`,
 and the registry that runs them is `MASTER/checks/checks.yml`. Before a risky deploy,
