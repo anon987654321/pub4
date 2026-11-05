@@ -456,19 +456,24 @@ module Master::Core
       })
     end
 
-    # A commit names what it commits.
-    #
-    # World refuses an unscoped commit too, and that is the guarantee; this rule
-    # exists so the refusal is a stated law with a reason the model can read,
-    # rather than an error surfacing from the mechanism after the attempt. The
-    # index in this checkout belongs to everyone at once - other sessions, and a
-    # human - so "commit whatever is staged" is never a thing the fold means.
+    # A fold may commit only paths it successfully wrote itself. This lets a
+    # verified, path-scoped checkpoint land without a second prompt while keeping
+    # other sessions' and the operator's work outside its authority.
     def self.git_commit_scope_rule
-      Law.new(id: :git_commit_scope, verbs: %i[git], judge: lambda { |effect, _memory|
+      Law.new(id: :git_commit_scope, verbs: %i[git], judge: lambda { |effect, memory|
         next nil unless effect.args[:operation].to_s.to_sym == :commit
-        next nil if Array(effect.args[:paths]).map(&:to_s).any? { |p| !p.strip.empty? }
 
-        Verdict::Block.new(reason: "commit must name its paths; the index is shared", by: :git_commit_scope)
+        paths = Array(effect.args[:paths]).map(&:to_s).map(&:strip).reject(&:empty?).uniq
+        return Verdict::Block.new(reason: "commit must name its paths; the index is shared", by: :git_commit_scope) if paths.empty?
+
+        written = Array(memory.proof.scope[:write_paths])
+        outside = paths - written
+        next nil if outside.empty?
+
+        Verdict::Block.new(
+          reason: "commit may include only paths written by this fold; not owned here: #{outside.first(5).join(", ")}",
+          by: :git_commit_scope,
+        )
       })
     end
 
