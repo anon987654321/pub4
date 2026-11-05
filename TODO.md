@@ -1038,7 +1038,6 @@ with voice rotation and the dilla fx rack, `RAILS/master` face page,
 - [ ] Admit uncertainty with what would resolve it.
 - [ ] Correct its own earlier mistakes plainly and early.
 - [ ] Track open threads across the session and close them.
-- [ ] Recognise "status?", "go", "keep going" and similar as complete instructions.
 - [ ] Mid-task messages queue, not cancel.
 - [ ] Summarise long work as result, evidence, next step.
 - [ ] Speak Norwegian when spoken to in Norwegian.

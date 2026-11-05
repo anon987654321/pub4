@@ -239,6 +239,54 @@ class TurnRouterTest < Minitest::Test
     end
   end
 
+  # Bare words the operator types as whole instructions. "status?" ends in a
+  # question mark, which question?() would otherwise read as chat; the
+  # go-words mean continue the work. A sentence that merely contains the
+  # words stays a sentence.
+  def test_imperative_shorthands_are_whole_utterances_only
+    router = Master::CLI::TurnRouter
+
+    assert_equal "/status", router.imperative_shorthand("status")
+    assert_equal "/status", router.imperative_shorthand("status?")
+    assert_equal "/status", router.imperative_shorthand("Status.")
+    assert_equal "/fix", router.imperative_shorthand("go")
+    assert_equal "/fix", router.imperative_shorthand("go on")
+    assert_equal "/fix", router.imperative_shorthand("keep going")
+    assert_equal "/fix", router.imperative_shorthand("Keep going!")
+    assert_equal "/fix", router.imperative_shorthand("carry on")
+
+    [nil, "gone fishing", "keep going, I'll make coffee",
+     "how do I keep going?", "status of the deploy", "go away"].each do |text|
+      assert_nil router.imperative_shorthand(text), text.inspect
+    end
+  end
+
+  def test_a_status_question_dispatches_status_not_a_chat
+    ran = []
+    command = Master::CLI::CommandRegistry::Command.new { ran << :status; "status-ok" }
+    container = build_container(commands: { "status" => command })
+    Master::CLI::TurnRouter.stub(:casual_reply, ->(*, **) { flunk "status? reached casual chat" }) do
+      Master::CLI::TurnRouter.stub(:run_fold, ->(*, **) { flunk "status? reached the fold" }) do
+        result = Master::CLI::TurnRouter.call(message: "status?", container:)
+        assert result.ok?
+      end
+    end
+    assert_equal [:status], ran
+  end
+
+  def test_a_bare_go_continues_the_convergence_work
+    ran = []
+    command = Master::CLI::CommandRegistry::Command.new { ran << :fix; "fix-ok" }
+    container = build_container(commands: { "status" => command, "fix" => command })
+    Master::CLI::TurnRouter.stub(:casual_reply, ->(*, **) { flunk "keep going reached casual chat" }) do
+      Master::CLI::TurnRouter.stub(:run_fold, ->(*, **) { flunk "keep going reached the fold" }) do
+        result = Master::CLI::TurnRouter.call(message: "keep going", container:)
+        assert result.ok?
+      end
+    end
+    assert_equal [:fix], ran
+  end
+
   def test_fix_language_is_promoted_to_operator_command_not_fold
     inferred = Master::CLI::TurnRouter.infer_operator_command("fix the bug", container: build_container)
 

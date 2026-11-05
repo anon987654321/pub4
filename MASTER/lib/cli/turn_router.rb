@@ -38,6 +38,9 @@ module Master
         if deployment_intent?(text)
           return dispatch_slash("/deploy #{deployment_args(text)}".strip, container:, felt_sense:, on_turn:)
         end
+        if (shorthand = imperative_shorthand(text))
+          return dispatch_slash(shorthand, container:, felt_sense:, on_turn:, cancellation:)
+        end
 
         # bus: the media lane runs outside the pipeline stages; the stage:mov0
         # events it publishes are what move the spinner off "intake" and carry
@@ -61,6 +64,22 @@ module Master
       end
 
       def visitor? = Fiber[:master_visitor] == true
+
+      # Bare words that are complete instructions, not conversation. "status?"
+      # is /status asked as a question — question?() would otherwise read the
+      # trailing mark and hand it to chat. The go-words mean continue the
+      # work: the convergence loop a bare "fix" starts, which picks up the
+      # last run's residual focus. Matched as the whole utterance with
+      # trailing punctuation only, so a sentence that contains the words
+      # ("keep going, I'll make coffee", "gone fishing") stays a sentence.
+      # Below the visitor check, as every route to the registry is.
+      def imperative_shorthand(text)
+        value = text.to_s.strip
+        return "/status" if value.match?(/\Astatus[?.!]?\z/i)
+        return "/fix" if value.match?(/\A(?:go|go on|keep going|carry on|continue)[.!]?\z/i)
+
+        nil
+      end
 
       # Keep remote pairing possible without opening the rest of the command registry.
       def visitor_pair_redemption?(text)
