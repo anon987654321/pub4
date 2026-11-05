@@ -35,6 +35,7 @@ require "rbconfig"
 require "digest"
 require "time"
 require "tmpdir"
+require "tempfile"
 
 module Dilla
   ENGINE_ROOT = File.expand_path(__dir__)
@@ -46,6 +47,33 @@ module Dilla
   module_function
 
   # ------------------------------------------------------------------ loading
+
+  # Write beside the destination and rename only after the complete contents
+  # have reached disk. A render may replace its previous take, but readers never
+  # see a half-written WAV or sidecar when a process is interrupted.
+  def atomic_write(path, contents, binary: false)
+    destination = File.expand_path(path)
+    directory = File.dirname(destination)
+    existing = begin
+      File.lstat(destination)
+    rescue Errno::ENOENT
+      nil
+    end
+    if existing && (!existing.file? || existing.symlink?)
+      raise ArgumentError, "refusing to replace non-regular output: #{destination}"
+    end
+
+    mode = existing ? existing.mode & 0o777 : (0o666 & ~File.umask)
+    Tempfile.create([".#{File.basename(destination)}.", ".tmp"], directory) do |file|
+      file.binmode if binary
+      file.write(contents)
+      file.flush
+      file.fsync
+      file.chmod(mode)
+      File.rename(file.path, destination)
+    end
+    path
+  end
 
   def load_json(name)
     path = File.join(DATA_DIR, name)
@@ -281,7 +309,7 @@ module Dilla
       manifest << [name, p["id"], result[:seed], result[:performer], p["bpm"], result[:bpm]].join("\t")
       puts "demo-each: #{out}"
     end
-    File.write(File.join(dest, "demo_manifest.tsv"), manifest.join("\n") << "\n")
+    Dilla.atomic_write(File.join(dest, "demo_manifest.tsv"), manifest.join("\n") << "\n")
     puts "demo-each: wrote #{progressions.length} renders and demo_manifest.tsv into #{dest}"
   end
 
@@ -1764,7 +1792,7 @@ module Dilla
         i += 1
       end
       header = build_header(sample_rate, 2, 16, data.bytesize)
-      File.binwrite(path, header + data)
+      Dilla.atomic_write(path, header + data, binary: true)
       path
     end
 
@@ -2134,7 +2162,7 @@ module Dilla
       "stem_energy_share" => shares,
       "sonitex" => plan[:sonitex], "swing" => plan[:swing]
     }
-    File.write("#{base}.quality.json", JSON.pretty_generate(data))
+    Dilla.atomic_write("#{base}.quality.json", JSON.pretty_generate(data))
     data
   end
 
@@ -2148,7 +2176,7 @@ module Dilla
       "event_counts" => events.transform_values(&:length),
       "sample_flip" => sample_report
     }
-    File.write("#{base}.session.json", JSON.pretty_generate(data))
+    Dilla.atomic_write("#{base}.session.json", JSON.pretty_generate(data))
     data
   end
 
@@ -2170,9 +2198,12 @@ module Dilla
         "sample_weight" => opts.sample_weight || ENV["SAMPLE_LOOP_WEIGHT"],
         "sample_slices" => opts.sample_slices
       },
-      "render" => { "wav" => wav_path, "duration_s" => quality["duration_s"], "lufs" => quality["lufs_estimate"] }
+      "render" => {
+        "wav" => wav_path, "duration_s" => quality["duration_s"], "lufs" => quality["lufs_estimate"],
+        "bytes" => File.size(wav_path), "sha256" => Digest::SHA256.file(wav_path).hexdigest
+      }
     }
-    File.write("#{base}.provenance.json", JSON.pretty_generate(data))
+    Dilla.atomic_write("#{base}.provenance.json", JSON.pretty_generate(data))
     data
   end
 end
@@ -2218,9 +2249,9 @@ module Dilla
     profile_dir = File.join(root, "profiles", style)
     FileUtils.mkdir_p(profile_dir)
     profile_path = File.join(profile_dir, "latest_profile.json")
-    File.write(profile_path, JSON.pretty_generate(profile))
-    File.write(File.join(root, "active_style.json"), JSON.generate("style_key" => style, "updated_at" => Time.now.utc.iso8601))
-    FileUtils.cp(features_path, File.join(profile_dir, "features.json"))
+    Dilla.atomic_write(profile_path, JSON.pretty_generate(profile))
+    Dilla.atomic_write(File.join(root, "active_style.json"), JSON.generate("style_key" => style, "updated_at" => Time.now.utc.iso8601))
+    Dilla.atomic_write(File.join(profile_dir, "features.json"), File.binread(features_path), binary: true)
 
     f = profile["features"]
     puts format("reference %s: %s — %.1f BPM (conf %.2f), key %s, density %.1f/bar, offbeat %.2f, spread %.1f ms, swing %.2f, drums %.0f%%, harmony %.0f%%; profile → %s",
