@@ -4,6 +4,7 @@ require "fileutils"
 require "json"
 require "net/http"
 require "tempfile"
+require "timeout"
 require "uri"
 
 module Studio
@@ -35,7 +36,8 @@ module Studio
         # tar. A failed fetch leaves no partial file.
         def download_url(url, path, max_bytes: MAX_DOWNLOAD_BYTES)
           uri = URI(url)
-          raise "refusing non-https download url: #{url}" unless uri.scheme == "https"
+          raise "refusing non-https download url: #{url}" unless uri.is_a?(URI::HTTPS) && uri.port == 443
+          raise "refusing download URL credentials" unless uri.userinfo.nil?
           raise "refusing download from untrusted host: #{uri.host}" unless uri.host.to_s.match?(ALLOWED_DOWNLOAD_HOST)
 
           target = File.expand_path(path)
@@ -47,7 +49,10 @@ module Studio
           # status and byte-limit checks. The temporary lives beside the target
           # so the final rename is atomic on the same filesystem.
           Tempfile.create(["replicate-download-", ".part"], directory, binmode: true) do |file|
-            Net::HTTP.start(uri.host, uri.port, use_ssl: true, read_timeout: 120) do |http|
+            Net::HTTP.start(
+              uri.host, uri.port, use_ssl: true,
+              open_timeout: OPEN_TIMEOUT_SECONDS, read_timeout: READ_TIMEOUT_SECONDS
+            ) do |http|
               http.request_get(uri.request_uri) do |res|
                 raise "download failed #{res.code}" unless res.code.to_i.between?(200, 299)
                 raise "download over #{max_bytes} bytes" if res["content-length"].to_s.to_i > max_bytes
@@ -224,6 +229,10 @@ module Studio
       LORA_TRAINER_VERSION = "26dce37af90b9d997eeb970d92e47de3064d46c300504ae376c75bef6a9022d2"
       TRANSIENT_STATUS = ((500..599).to_a << 429).freeze
       MAX_DOWNLOAD_BYTES = 4 * 1024**3
+      API_HOST = "api.replicate.com"
+      OPEN_TIMEOUT_SECONDS = 10
+      READ_TIMEOUT_SECONDS = 120
+      MAX_MODEL_PAGES = 1_000
 
       # Replicate holds a sync request 60 seconds at most; Cancel-After takes
       # 5 seconds to 24 hours.
@@ -279,11 +288,22 @@ module Studio
         remaining = [[limit.to_i, 1].max, 1_000].min
         uri = URI("#{BASE}/models")
         rows = []
+        seen_cursors = {}
+        pages = 0
         while uri && rows.length < remaining
+          pages += 1
+          raise ArgumentError, "Replicate models pagination exceeded #{MAX_MODEL_PAGES} pages" if pages > MAX_MODEL_PAGES
+
+          cursor = uri.to_s
+          raise ArgumentError, "Replicate models pagination repeated a cursor" if seen_cursors[cursor]
+
+          seen_cursors[cursor] = true
           page = get(uri)
+          raise TypeError, "Replicate models page must be an object" unless page.is_a?(Hash)
 
           rows.concat(Array(page["results"]))
-          uri = page["next"].to_s.empty? ? nil : URI(page["next"])
+          next_url = page["next"].to_s
+          uri = next_url.empty? ? nil : models_page_uri(next_url)
         end
         rows = rows.first(remaining)
         needle = query.to_s.strip.downcase
@@ -389,12 +409,14 @@ module Studio
       end
 
       def get(uri)
+        uri = api_uri(uri)
         req = Net::HTTP::Get.new(uri)
         req["Authorization"] = "Token #{@token}"
         request(req, uri)
       end
 
       def post(uri, body, headers: {})
+        uri = api_uri(uri)
         req = Net::HTTP::Post.new(uri)
         req["Authorization"] = "Token #{@token}"
         req["Content-Type"] = "application/json"
@@ -431,7 +453,11 @@ module Studio
       end
 
       def attempt_request(req, uri)
-        res = Net::HTTP.start(uri.host, uri.port, use_ssl: true, read_timeout: 120) do |http|
+        uri = api_uri(uri)
+        res = Net::HTTP.start(
+          uri.host, uri.port, use_ssl: true,
+          open_timeout: OPEN_TIMEOUT_SECONDS, read_timeout: READ_TIMEOUT_SECONDS
+        ) do |http|
           http.request(req)
         end
         code = res.code.to_i
@@ -446,6 +472,22 @@ module Studio
 
       # Replicate says when a throttle clears ("resets in ~30s"); waiting that
       # long beats a blind exponential guess in both directions.
+      def api_uri(value)
+        uri = value.is_a?(URI::Generic) ? value : URI.parse(value.to_s)
+        allowed = uri.is_a?(URI::HTTPS) && uri.host == API_HOST && uri.port == 443 &&
+                  uri.userinfo.nil? && uri.fragment.nil? && uri.path.start_with?("/v1/")
+        raise ArgumentError, "refusing URL outside the Replicate API origin" unless allowed
+
+        uri
+      end
+
+      def models_page_uri(value)
+        uri = api_uri(value)
+        raise ArgumentError, "refusing unexpected Replicate models cursor path" unless uri.path == "/v1/models"
+
+        uri
+      end
+
       def retry_delay(message, attempt)
         reset = message.to_s[/resets in ~?(\d+)s/, 1]
         [reset ? reset.to_i + 1 : 2**attempt, 60].min
