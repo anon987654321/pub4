@@ -16,7 +16,7 @@ require "open3"
 require "rbconfig"
 
 module OpenBSDTestRunner
-  SUMMARY_RE = /\\A\\s*(\\d+) runs?, (\\d+) assertions?, (\\d+) failures?, (\\d+) errors?(?:, (\\d+) skips?)?\\s*\\z/
+  SUMMARY_RE = /\A\s*(\d+) runs?, (\d+) assertions?, (\d+) failures?, (\d+) errors?(?:, (\d+) skips?)?\s*\z/
 
   module_function
 
@@ -58,8 +58,8 @@ module OpenBSDTestRunner
   end
 
   def summary_line(summary)
-    "#{summary.fetch(:runs)} runs, #{summary.fetch(:assertions)} assertions, " \\
-      "#{summary.fetch(:failures)} failures, #{summary.fetch(:errors)} errors, " \\
+    "#{summary.fetch(:runs)} runs, #{summary.fetch(:assertions)} assertions, " \
+      "#{summary.fetch(:failures)} failures, #{summary.fetch(:errors)} errors, " \
       "#{summary.fetch(:skips)} skips"
   end
 end
@@ -87,7 +87,7 @@ if $PROGRAM_NAME == __FILE__
   end
 
   red = results.reject { |_, state| state == :pass }
-  puts "openbsd contracts: #{files.size} file(s), #{red.size} red" \\
+  puts "openbsd contracts: #{files.size} file(s), #{red.size} red" \
        "#{red.empty? ? "" : ": #{red.map { |path, _| File.basename(path) }.join(", ")}"}"
   exit red.size.clamp(0, 255)
 end
