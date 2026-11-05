@@ -280,4 +280,60 @@ class ControlPlaneSpec < Minitest::Test
     ENV.delete("MASTER_PROCESS_LOCK_PATH")
     FileUtils.remove_entry(dir) if dir && Dir.exist?(dir)
   end
+
+  # `bin/master --status` reads the frame an operator needs before waiting on
+  # a held lock: holder, mode, held-for and last session activity. Read-only —
+  # the report must answer while the lock is held, so it never takes the lock.
+  def test_status_report_names_the_holder_mode_and_held_for
+    Dir.mktmpdir("master-lock-status") do |root|
+      lock_dir = File.join(root, ".master")
+      FileUtils.mkdir_p(lock_dir)
+      lock = Master::Ops::ProcessLock.acquire!(path: File.join(lock_dir, "process.lock"), mode: "interactive")
+
+      lines = Master::Ops::ProcessLock.status_report(root:)
+
+      assert lines.grep(/lock held by pid=#{Process.pid}/).any?, lines.join("\n")
+      assert lines.grep(/mode=interactive/).any?, lines.join("\n")
+      assert lines.grep(/held for/).any?, lines.join("\n")
+
+      Master::Ops::ProcessLock.release(lock)
+
+      free = Master::Ops::ProcessLock.status_report(root:)
+
+      assert free.grep(/control plane idle/).any?, free.join("\n")
+    end
+  end
+
+  def test_status_report_reads_last_session_activity_from_the_transcript
+    Dir.mktmpdir("master-lock-status") do |root|
+      lock_dir = File.join(root, ".master")
+      FileUtils.mkdir_p(lock_dir)
+      transcript = File.join(lock_dir, "session.json")
+      File.write(transcript, '{"messages":[]}')
+      past = Time.now - (2 * 3600)
+      File.utime(past, past, transcript)
+
+      lines = Master::Ops::ProcessLock.status_report(root:)
+
+      assert lines.grep(/last session activity 2h/).any?, lines.join("\n")
+    end
+  end
+
+  def test_status_report_says_so_when_nothing_holds_anything
+    Dir.mktmpdir("master-lock-status") do |root|
+      lines = Master::Ops::ProcessLock.status_report(root:)
+
+      assert lines.grep(/control plane idle/).any?, lines.join("\n")
+    end
+  end
+
+  def test_held_for_durations_read_like_an_operator_reads_them
+    now = Time.utc(2026, 11, 5, 12, 0, 0)
+
+    assert_equal "45s", Master::Ops::ProcessLock.duration_since("2026-11-05T11:59:15Z", now:)
+    assert_equal "12m 0s", Master::Ops::ProcessLock.duration_since("2026-11-05T11:48:00Z", now:)
+    assert_equal "13h 0m", Master::Ops::ProcessLock.duration_since("2026-11-04T23:00:00Z", now:)
+    assert_nil Master::Ops::ProcessLock.duration_since("not-a-timestamp", now:)
+    assert_nil Master::Ops::ProcessLock.duration_since(nil, now:)
+  end
 end

@@ -211,6 +211,61 @@ module Master
       ensure
         io&.close
       end
+
+      # One frame of who owns the control plane, for `bin/master --status`: the
+      # lock holder, its mode, how long it has held the lock, and how long the
+      # session transcript has been quiet — the last-activity signal an
+      # operator reads before deciding to wait or to look for the holder's
+      # terminal. Read-only by construction: owner() unlocks immediately when
+      # the file is free, and never writes the lock. A free lock says so in as
+      # many words rather than printing an empty frame.
+      def status_report(root: Master::ROOT, now: Time.now)
+        holder = owner(path: lock_path(root))
+        lines = []
+        if holder.empty?
+          lines << "master0: control plane idle — no lock holder"
+        else
+          lines << "master0: lock held by pid=#{holder["pid"]} host=#{holder["host"]} " \
+                   "mode=#{holder["mode"]} since=#{holder["at"]}"
+          held = duration_since(holder["at"], now:)
+          lines << "master0: held for #{held}" if held
+          lines << "master0: recorded holder is gone — metadata is stale" if holder["stale"]
+        end
+
+        idle = duration_since(session_activity(root:)&.utc&.iso8601, now:)
+        lines << "master0: last session activity #{idle} ago" if idle
+        lines << "master0: no session transcript yet" if idle.nil? && !holder.empty?
+        lines
+      end
+
+      def duration_since(timestamp, now: Time.now)
+        return unless timestamp.is_a?(String) && timestamp.match?(/\A\d{4}-/)
+
+        seconds = now - Time.iso8601(timestamp)
+        return "under a second" if seconds < 1
+
+        whole = seconds.to_i
+        hours = whole / 3600
+        minutes = (whole % 3600) / 60
+        rest = whole % 60
+        case
+        when hours.positive? then "#{hours}h #{minutes}m"
+        when minutes.positive? then "#{minutes}m #{rest}s"
+        else "#{rest}s"
+        end
+      rescue ArgumentError
+        nil
+      end
+
+      # The CLI transcript is the holder's own record of what it is doing; its
+      # mtime is the honest idle signal. The lock's `since` says when the
+      # holder acquired, not when it last did anything.
+      def session_activity(root: Master::ROOT)
+        path = File.join(root, ".master", "session.json")
+        File.mtime(path) if File.readable?(path)
+      rescue StandardError
+        nil
+      end
     end
 
     # At most one *slot* loop (autofix/watch/watcher) may run at a time. The loops
