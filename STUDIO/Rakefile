@@ -55,7 +55,7 @@ task :test do
         chdir: STUDIO_ROOT,
         env: { "MT_NO_PLUGINS" => "1" }
       )
-      result = Studio::TestRunner.classify([output, error_output].join("\\n"), status)
+      result = Studio::TestRunner.classify([output, error_output].join("\n"), status)
     rescue Studio::Subprocess::TimeoutError => error
       result = Studio::TestRunner::Result.new(state: :blocked, reason: error.message)
     rescue StandardError => error
@@ -70,7 +70,7 @@ task :test do
     puts "studio-test0: #{result.state.to_s.upcase} #{name}#{detail ? " — #{detail}" : ""}"
     unless result.state == :pass
       failed << name
-      [output, error_output].join("\\n").lines.last(12).each do |line|
+      [output, error_output].join("\n").lines.last(12).each do |line|
         puts "  #{line.rstrip}"
       end
     end

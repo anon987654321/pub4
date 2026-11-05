@@ -5,7 +5,7 @@ module Studio
   # register no tests and exit successfully. This parser is shared by the
   # STUDIO Rake task and its regression tests.
   module TestRunner
-    SUMMARY_RE = /\\A\\s*(\\d+) runs?, (\\d+) assertions?, (\\d+) failures?, (\\d+) errors?(?:, (\\d+) skips?)?\\s*\\z/
+    SUMMARY_RE = /\A\s*(\d+) runs?, (\d+) assertions?, (\d+) failures?, (\d+) errors?(?:, (\d+) skips?)?\s*\z/
 
     Result = Struct.new(:state, :reason, :summary, keyword_init: true)
 
@@ -51,8 +51,8 @@ module Studio
     end
 
     def summary_line(summary)
-      "#{summary.fetch(:runs)} runs, #{summary.fetch(:assertions)} assertions, " \\
-        "#{summary.fetch(:failures)} failures, #{summary.fetch(:errors)} errors, " \\
+      "#{summary.fetch(:runs)} runs, #{summary.fetch(:assertions)} assertions, " \
+        "#{summary.fetch(:failures)} failures, #{summary.fetch(:errors)} errors, " \
         "#{summary.fetch(:skips)} skips"
     end
   end
