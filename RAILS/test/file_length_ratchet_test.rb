@@ -209,7 +209,6 @@ class FileLengthRatchetTest < Minitest::Test
     "__shared/app/assets/stylesheets/_minimal.scss" => 449,
     # First measured 2026-10-20, when the scan learned the sibling gems and __shared: debt that was invisible,
     # recorded so it can only fall. Split a file and lower its row; do not raise one.
-    "__shared/app/assets/stylesheets/_surface_chrome_endgame.scss" => 525,
     "__shared/app/helpers/schema_helper.rb" => 343,
     "amber/app/views/layouts/application.html.erb" => 160,
     "brgen/app/assets/stylesheets/_brgen_dating.scss" => 415,

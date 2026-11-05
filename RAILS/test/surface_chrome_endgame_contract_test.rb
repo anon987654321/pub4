@@ -52,7 +52,8 @@ class SurfaceChromeEndgameContractTest < Minitest::Test
   end
 
   def test_endgame_file_has_no_shadow_or_important_vetoes
-    source = source("__shared/app/assets/stylesheets/_surface_chrome_endgame.scss")
+    source = %w[_surface_chrome_endgame.scss _surface_chrome_minimal.scss]
+             .map { |name| source("__shared/app/assets/stylesheets/#{name}") }.join("\n")
     # Resetting to none is how the endpoint flattens earlier chrome; any other value is a shadow.
     refute_match(/box-shadow:(?!\s*none\b)/, source)
     refute_includes source, "!important"

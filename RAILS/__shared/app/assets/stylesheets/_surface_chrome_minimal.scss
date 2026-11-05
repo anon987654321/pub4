@@ -1,0 +1,181 @@
+// The minimalism contract the endgame mixins finish with, kept beside them
+// in _surface_chrome_endgame.scss, which includes it at the end of each app.
+
+// Shared minimalism contract: whitespace groups content; headings use
+// one dominant page title and a consistent, normal-case supporting style.
+// Form controls and focus indicators keep their functional boundaries.
+@mixin ultra_minimal {
+  main#main-content h1,
+  main#main-content .page-title,
+  main#main-content .post-reading-title {
+    max-inline-size: 40ch;
+    margin-block: 0 var(--space-5);
+    font-family: var(--font);
+    font-size: clamp(2rem, 5vw, 3.25rem);
+    font-weight: var(--weight-heavy);
+    line-height: 1.05;
+    letter-spacing: -0.035em;
+    text-transform: none;
+    font-variant-caps: normal;
+    text-wrap: balance;
+    overflow-wrap: anywhere;
+    border: 0;
+  }
+
+  main#main-content :is(h1, h2, h3, h4, h5, h6, .page-title, .section-title, .empty-state-title, .item-detail-title, .amber-look-title, .store-heading) {
+    font-family: var(--font);
+    text-transform: none;
+    font-variant-caps: normal;
+  }
+
+  main#main-content :is(h2, h3, h4, h5, h6, .section-title, .empty-state-title) {
+    font-size: var(--text-large);
+    font-weight: var(--weight-bold);
+    line-height: var(--leading-tight);
+    letter-spacing: var(--tracking-normal);
+  }
+
+  /* The only secondary display headings are product heroes. Ordinary H2-H6
+     share one supporting treatment; semantic level no longer means a new type
+     style at every depth. */
+  main#main-content :is(.bol-market-hero-copy h2, .store-promo-art h2, .store-heading, .item-detail-title, .amber-look-title) {
+    font-size: clamp(1.75rem, 4vw, 3rem);
+    font-weight: var(--weight-heavy);
+    line-height: var(--leading-tight);
+    letter-spacing: var(--tracking-tight);
+  }
+
+  main#main-content blockquote {
+    border: 0;
+    padding-inline-start: 0;
+  }
+
+  /* One field contract across every dialect: surfaces use backgrounds, never
+     input borders. Native choice/range/file/action controls retain their own
+     affordances; text fields keep a visible outline on keyboard focus. */
+  body :is(
+    input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]):not([type="submit"]):not([type="button"]):not([type="reset"]):not([type="image"]):not([type="hidden"]),
+    select, textarea
+  ) {
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+    background-color: var(--surface);
+    color: var(--text);
+    outline: none;
+  }
+
+  body :is(
+    input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]):not([type="submit"]):not([type="button"]):not([type="reset"]):not([type="image"]):not([type="hidden"]),
+    select, textarea
+  ):focus-visible {
+    border: 0;
+    outline: var(--focus-ring);
+    outline-offset: 2px;
+  }
+
+  body .search :is(
+    input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]):not([type="submit"]):not([type="button"]):not([type="reset"]):not([type="image"]):not([type="hidden"]),
+    select, textarea
+  ) {
+    background: transparent;
+    color: inherit;
+  }
+
+  #navBar .search :is(
+    input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]):not([type="submit"]):not([type="button"]):not([type="reset"]):not([type="image"]):not([type="hidden"]),
+    select, textarea
+  ) {
+    background: transparent;
+    color: inherit;
+  }
+
+  :where(
+    .card, .panel, .feed-card, .post-reading, .match,
+    .organize-tip, .brand, .amber-look, .port-row, .nested-field,
+    .flash, .post-show-actions, .post-show-comments, .amber-editorial-nav,
+    .amber-messenger-composer, .composer-title, .radio-track-card,
+    .radio-track-list, .radio-playlist-list, .playlist-queue,
+    .playlist-queue-item, .playlist-comments, .item-card, .item-card--wardrobe,
+    .occasion-card, .style-phase-card, .listing-grid,
+    .deal-card, .store-panel, .store-buybox, .newsletter-cta,
+    .home-feed-view, .city-network-item, .page-header, .feed-header,
+    .search_palette_panel
+  ) {
+    border: 0;
+  }
+
+  main#main-content > header,
+  main#main-content article > header,
+  body.wscons article > header,
+  .page-header,
+  .feed-header {
+    border: 0;
+  }
+
+  :where(
+    .radio-home-header, .radio-section-link, .radio-playlist-list,
+    .radio-track-card-art, .messenger-artifact-image, .messenger-details-panel,
+    .messenger-composer-box, .messenger-inbox, .composer, .composer-header,
+    .composer-toolbar, .affiliate_sidebar_card, .affiliate_sidebar_card--amazon,
+    .commerce-fit-suggestion, .commerce-fit-source, .today-look, .today-look-pick,
+    .zone-row, .viz-rows, .viz-row, .viz-column-label, .nearby-chat-widget-panel,
+    .nearby-chat-widget-messenger, .nearby-chat-widget-header, .nearby-chat-widget-status,
+    .nearby-chat-widget-mode, .nearby-chat-widget-log li, .nearby-chat-widget-cta,
+    .playlist-transport, .playlist-artwork, .install-panel, .empty, .empty-state,
+    .skeleton, .data-state, .tabs, .category-list .chip, .amber-footer,
+    .subscribe-box
+  ) {
+    border: 0;
+  }
+
+  body.wscons .tabs,
+  body.wscons .tabs .active {
+    border: 0;
+  }
+
+  /* Content boundaries come from placement and whitespace, not rules or boxes.
+     Interactive fields and buttons are deliberately excluded so their focus and
+     input affordances remain usable. */
+  main#main-content :where(
+    section, article, aside, nav, header, footer, fieldset, details, pre,
+    .card, .panel, .tile, .feed-card, .item-card, .port-row, .match,
+    .swipe-card, .activity-event, .install-panel, .empty-state, .data-state, .zone-row,
+    .today-look, .today-look-pick, .organize-tip, .brand, .flash, .amber-look,
+    .amber-editorial-nav, .amber-footer, .newsletter-cta, .subscribe-box,
+    .search_palette_panel, .affiliate_sidebar_card, .affiliate_sidebar_card--amazon,
+    .nearby-chat-widget-panel, .nearby-chat-widget-messenger, .nearby-chat-widget-header,
+    .nearby-chat-widget-status, .nearby-chat-widget-mode, .nearby-chat-widget-log li,
+    .nearby-chat-widget-cta, .messenger-details-panel, .messenger-inbox,
+    .messenger-composer-box, .messenger-artifact-image, .composer, .composer-header,
+    .composer-toolbar, .post-show-actions, .post-show-comments, .comment_item,
+    .radio-home-header, .radio-featured, .radio-section-header, .radio-archaeology,
+    .radio-library, .radio-library-header, .radio-library-item, .radio-track-card,
+    .radio-track-list, .radio-playlist-list, .playlist-transport, .playlist-queue,
+    .playlist-queue-item, .playlist-comments, .playlist-artwork, .radio-nav-button,
+    .storefront-utility--bol, .bol-kind-tabs, .listing-filter-group, .listing-step,
+    .listing-step-link, .listing-photo-gallery, .media-thumb, .media-thumb-rm,
+    .listing-video-field, .listing-source-option, .listing-review-card,
+    .listing-published-notice, .store-terms, .store-buybox, .deal-card,
+    .store-panel, .order-row, .cart-item, .swipe-action, .person-row,
+    .amber-messenger-composer, .composer-title, .nearby-chat-widget-log li,
+    .viz-rows, .viz-row, .viz-column-label, .zone-row, .port-list, .port-row,
+    .install-panel, .empty, .category-list .chip, .tabs, .data-state
+  ) {
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+  }
+
+  main#main-content .amber-editorial-nav a {
+    border: 0;
+    border-radius: 0;
+    text-transform: none;
+    letter-spacing: var(--tracking-normal);
+  }
+
+  body.wscons .tabs .active {
+    text-decoration: underline;
+    text-underline-offset: 0.18em;
+  }
+}

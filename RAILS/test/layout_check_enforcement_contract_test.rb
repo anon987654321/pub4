@@ -13,7 +13,8 @@ class LayoutCheckEnforcementContractTest < Minitest::Test
   LAYOUT_SUITE = File.join(ROOT, "MASTER/checks/lib/layout_suite.rb")
   CHECKS = File.join(ROOT, "MASTER/checks/checks.yml")
   MINIMAL_ENDGAME = File.join(ROOT, "RAILS/__shared/app/assets/stylesheets/_surface_chrome_endgame.scss")
-  BRGEN_OVERRIDES = File.join(ROOT, "RAILS/brgen/app/assets/stylesheets/_brgen_shared_overrides.scss")
+  MINIMAL_MIXIN = File.join(ROOT, "RAILS/__shared/app/assets/stylesheets/_surface_chrome_minimal.scss")
+  BRGEN_OVERRIDES =File.join(ROOT, "RAILS/brgen/app/assets/stylesheets/_brgen_shared_overrides.scss")
   AMBER_OVERRIDES = File.join(ROOT, "RAILS/amber/app/assets/stylesheets/_amber_shared_overrides.scss")
   BSDPORTS_APP = File.join(ROOT, "RAILS/bsdports/app/assets/stylesheets/application.scss")
 
@@ -57,7 +58,10 @@ class LayoutCheckEnforcementContractTest < Minitest::Test
   end
 
   def test_ultra_minimal_contract_is_the_last_dialect_pass
-    source = File.read(MINIMAL_ENDGAME, encoding: "UTF-8")
+    endgame = File.read(MINIMAL_ENDGAME, encoding: "UTF-8")
+    # The endgame mixins finish with ultra_minimal, which lives in its own partial.
+    assert_includes endgame, '@use "surface_chrome_minimal" as *;'
+    source = [endgame, File.read(MINIMAL_MIXIN, encoding: "UTF-8")].join("\n")
 
     assert_includes source, "@mixin ultra_minimal"
     assert_equal 3, source.scan("@include ultra_minimal;").size
@@ -78,9 +82,13 @@ class LayoutCheckEnforcementContractTest < Minitest::Test
 
     # Ultra-minimalism removes decorative rules, not functional controls or
     # visible keyboard affordances.
-    assert_includes source, "main#main-content :is(input, select, textarea)"
+    # $field is every input but the button types, so a submit input keeps
+    # its button styling (3efb3bb22b).
+    assert_includes source, 'main#main-content :is(#{$field}, select, textarea)'
     # Text fields are borderless; keyboard focus is the shared outline ring.
-    assert_includes source, ":focus-visible { border: 0; outline: var(--focus-ring); outline-offset: 2px; }"
+    focus = Regexp.escape(':is(#{$field}, select, textarea):focus-visible {') +
+            '\s*border: 0;\s*outline: var\(--focus-ring\);\s*outline-offset: 2px;\s*\}'
+    assert_match Regexp.new(focus), source
     assert_includes source, "body.wscons :is(input, select, textarea, button, .button):focus-visible"
 
     require_relative "support/stylesheet_modules"
