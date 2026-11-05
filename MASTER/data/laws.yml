@@ -190,11 +190,6 @@ ROBUSTNESS_fail_safe_defaults:
   statement: "A default that fails open."
   resolution: review
 
-ROBUSTNESS_monotonic_capability_reduction:
-  parent: ROBUSTNESS
-  statement: "A later phase regains or widens authority that an earlier security boundary deliberately removed."
-  resolution: never
-
 ROBUSTNESS_bounded_operation_lifecycle:
   parent: ROBUSTNESS
   statement: "A timeout bounds the direct child but leaves owned descendants, inherited pipes, readers or cleanup unbounded."
@@ -1920,6 +1915,11 @@ law_catalogue:
     BOUNDARY_ISOLATION:
       definition_sources: [MASTER/law/universal.rb]
       severity: warning
+    BOUNDED_OPERATION_LIFECYCLE:
+      definition_sources: [MASTER/law/universal.rb]
+      severity: error
+      lifecycle: trusted
+      autofix: never
     BROKEN_WINDOWS:
       definition_sources: [MASTER/law/universal.rb]
       severity: warning
@@ -2001,11 +2001,6 @@ law_catalogue:
     COMMERCE_AMBER_DOES_NOT_OWN_BRGEN:
       definition_sources: [MASTER/law/commerce.rb]
       severity: error
-    BOUNDED_OPERATION_LIFECYCLE:
-      definition_sources: [MASTER/law/universal.rb]
-      severity: error
-      lifecycle: trusted
-      autofix: never
     COMMERCE_BRGEN_DOES_NOT_OWN_AMBER:
       definition_sources: [MASTER/law/commerce.rb]
       severity: error
@@ -2567,11 +2562,6 @@ law_catalogue:
     LEAST_PRIVILEGE:
       definition_sources: [MASTER/law/universal.rb]
       severity: error
-    MONOTONIC_CAPABILITY_REDUCTION:
-      definition_sources: [MASTER/law/universal.rb]
-      severity: error
-      lifecycle: trusted
-      autofix: never
     LEVELS_OF_SCALE:
       definition_sources: [MASTER/law/universal.rb]
       severity: info
@@ -3132,14 +3122,14 @@ law_catalogue:
     PRIMITIVE_OBSESSION:
       definition_sources: [MASTER/law/structural_questions.rb]
       severity: info
-    PROBE_BEFORE_SHIP:
-      definition_sources: [MASTER/law/practice.rb]
-      severity: warn
     PROACTIVE_DEFECT_AUDIT:
       definition_sources: [MASTER/law/universal.rb]
       severity: error
       lifecycle: trusted
       autofix: never
+    PROBE_BEFORE_SHIP:
+      definition_sources: [MASTER/law/practice.rb]
+      severity: warn
     PROGRAMMER_HAPPINESS:
       definition_sources: [MASTER/law/universal.rb]
       severity: info

@@ -903,21 +903,6 @@ Law.define(:LEAST_PRIVILEGE) do
   X
 end
 
-Law.define(:MONOTONIC_CAPABILITY_REDUCTION) do
-  source "OpenBSD pledge(2) and unveil(2)"
-  ask "After a process or subsystem deliberately reduces its authority, can a later phase silently regain or widen that authority?"
-  practice "A security restriction is a one-way door: later phases may narrow the boundary further, never widen it."
-  fix "Make capability reduction monotonic. Seal filesystem visibility and syscall promises after setup; spawn a separate, explicitly scoped process when more authority is genuinely required."
-  bad <<~'X'
-    sandbox.restrict!(:read)
-    sandbox.grant!(:write)
-  X
-  good <<~'X'
-    sandbox.restrict!(:read)
-    sandbox.restrict!(:read_metadata)
-  X
-end
-
 Law.define(:BOUNDED_OPERATION_LIFECYCLE) do
   source "OpenBSD process discipline; bounded-deadline engineering"
   ask "Does the deadline cover the entire operation it owns, including child processes, inherited pipes, output readers and cleanup, or only the first wait?"
@@ -2276,7 +2261,7 @@ module Master
         # `pledge("stdio")` is outside this rule's reach.
         ::Law.define(:PLEDGE_STAGED) do
           tags %i[SECURITY]
-          fix "restrict the process through Ground::Pledge's stages, never a hand-written promise"
+          fix "Use Ground::Pledge's staged promises: stage 2 may only remove stage 1 authority, then lock unveil after paths are declared. Never widen a sealed stage or issue raw promises."
           bad %q(Master::Ground::Pledge.unveil("/", "r")) + "\n"
           good "Master::Ground::Pledge.stage1_boot!(root)\n"
           check do |src, path|

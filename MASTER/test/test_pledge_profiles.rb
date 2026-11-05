@@ -98,7 +98,7 @@ class PledgeProfileTest < Minitest::Test
     ::Law.load_all(File.join(Master::ROOT, "law")) if ::Law.definitions.empty?
 
     entries = Master.law_catalogue.fetch("entries")
-    ids = %w[MONOTONIC_CAPABILITY_REDUCTION BOUNDED_OPERATION_LIFECYCLE PROACTIVE_DEFECT_AUDIT]
+    ids = %w[BOUNDED_OPERATION_LIFECYCLE PROACTIVE_DEFECT_AUDIT]
 
     ids.each do |id|
       assert entries.key?(id), "#{id} is missing from laws.yml#law_catalogue"
@@ -109,7 +109,10 @@ class PledgeProfileTest < Minitest::Test
       assert ::Law.definitions.key?(id.to_sym), "#{id} has no executable Law definition"
     end
 
-    assert_includes ::Law.definitions.fetch(:MONOTONIC_CAPABILITY_REDUCTION).practice, "one-way door"
+    monotonic = ::Law.definitions.fetch(:CAPABILITY_REDUCTION_IS_MONOTONIC)
+    assert_includes monotonic.source, "pledge(2)"
+    assert_includes monotonic.practice, "one-way door"
+    assert_includes ::Law.definitions.fetch(:PLEDGE_STAGED).fix, "stage 2"
     assert_includes ::Law.definitions.fetch(:BOUNDED_OPERATION_LIFECYCLE).fix, "process group"
     assert_includes ::Law.definitions.fetch(:PROACTIVE_DEFECT_AUDIT).practice, "whole trust boundaries"
   end
