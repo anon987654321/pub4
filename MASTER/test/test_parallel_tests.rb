@@ -127,6 +127,36 @@ class TestParallelTests < Minitest::Test
     refute_includes rakefile, 'next Rake::Task[:"test:serial"].invoke if Operator::ParallelTests.jobs == 1'
   end
 
+  # The shape a real worker writes: -v prints "Name = " first, the start marker
+  # lands on the same line from stderr, the test prints, and the mark comes last.
+  def test_a_worker_whose_marker_split_its_result_line_is_complete_and_green
+    script = [
+      "$stdout.sync = true", 'print "TestOk#test_one = "', 'STDERR.puts "test-start0: TestOk#test_one"',
+      'puts "scan0: something the test printed"', 'puts "0.00 s = ."', 'puts "Finished in 0.01s"',
+      'puts "1 runs, 1 assertions, 0 failures, 0 errors, 0 skips"'
+    ].join("\n")
+
+    out = StringIO.new
+
+    assert Runner.run(%w[ok], command: ->(_files) { [RbConfig.ruby, "-e", script] }, out:), out.string
+    assert_includes out.string, "TestOk#test_one = 0.00 s = ."
+    payload = JSON.parse(File.read(File.join(Runner::LOG_DIR, "suite-report.json")))
+    assert_equal "passed", payload.fetch("workers").first.fetch("outcome")
+  end
+
+  # A class that overrides run (TestCliBootE2e) reports results with no start
+  # marker; only a start with no result is a test that never finished.
+  def test_a_result_without_a_start_marker_is_complete_and_a_start_without_a_result_is_not
+    finished = ['puts "Skipped#test_one = 0.00 s = S"', 'puts "1 runs, 0 assertions, 0 failures, 0 errors, 1 skips"']
+    crashed = ['puts "test-start0: Gone#test_two"', *finished]
+    run = lambda do |lines|
+      Runner.run(%w[x], command: ->(_files) { [RbConfig.ruby, "-e", lines.join("\n")] }, out: StringIO.new)
+    end
+
+    assert run.call(finished), "a result without a start marker read as incomplete"
+    refute run.call(crashed), "a start without a result read as complete"
+  end
+
   def test_files_are_dealt_largest_first_onto_the_lightest_worker
     buckets = Dir.mktmpdir { |dir| Runner.deal(sized_files(dir), 2).map { |bucket| bucket.map { File.basename(_1) } } }
     assert_equal [%w[a d], %w[b c]], buckets

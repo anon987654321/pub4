@@ -40,7 +40,8 @@ module Operator
 
     def self.files
       @files ||= TREES.flat_map { |tree| Dir.glob(File.join(ROOT, tree, "**", "*.rb")) }
-                      .reject { |path| path =~ SKIP }
+                      # Relative to ROOT, so a checkout in the temporary directory is still read.
+                      .reject { |path| "/#{path.delete_prefix("#{ROOT}/")}" =~ SKIP }
                       .sort
     end
 

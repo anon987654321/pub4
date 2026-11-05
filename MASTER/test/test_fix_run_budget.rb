@@ -561,4 +561,79 @@ class TestFixRunBudget < Minitest::Test
     assert_includes pulse.line(elapsed: 100.0, tokens: 0, eta: "ETA ~12m"), "ETA ~12m", "a finished pass's ETA stands"
   end
 
+  # A test that opens a /fix run and never finishes it must not leave the run's
+  # watchdog beating: minutes later its stall rule sent TERM to the test worker,
+  # which ended the suite with no Minitest summary. test_helper stops it when the
+  # test ends. The leaking method is run as a test of its own (Minitest::Test#run
+  # by name), so the guard runs exactly as it does for every test in the suite.
+  def opens_a_run_and_walks_away
+    Dir.mktmpdir { |root| Master::Fix::RunBudget.begin_run(root:, max_passes: 1) }
+  end
+
+  def test_a_run_a_test_left_open_is_stopped_when_that_test_ends
+    leaking = self.class.new(:opens_a_run_and_walks_away)
+    # Its own start marker would read to the suite runner as a test that never reported.
+    markers = ENV.delete("MASTER_TEST_START_MARKERS")
+    result = leaking.run
+    ENV["MASTER_TEST_START_MARKERS"] = markers if markers
+
+    assert result.passed?, result.failures.map(&:message).join("\n")
+    assert_nil Master::Fix::RunBudget.current, "the leaked run is still current after its test ended"
+    assert_empty Master::Fix::RunBudget.watching, "a watchdog is still beating after its test ended"
+  ensure
+    leaked = Master::Fix::RunBudget.current
+    leaked&.stop!
+    Master::Fix::RunBudget.instance_variable_set(:@current, nil) if leaked
+  end
+
+  # begin_run replaced a run that finish_run had not ended (stubbed here, as
+  # test_fix_convergence stubs it) without stopping it, so its watchdog kept
+  # beating with no reference left to it, and its stall rule later sent TERM to
+  # the process. The run it replaces is stopped first.
+  # A test that set @current to nil dropped a beating run where nothing could
+  # find it. The run stays in RunBudget.watching until stop!, so test_helper
+  # stops it when the test ends.
+  def opens_a_run_and_drops_it
+    Dir.mktmpdir { |root| Master::Fix::RunBudget.begin_run(root:, max_passes: 1) }
+    Master::Fix::RunBudget.instance_variable_set(:@current, nil)
+  end
+
+  def test_a_run_dropped_from_current_is_still_stopped_when_its_test_ends
+    dropping = self.class.new(:opens_a_run_and_drops_it)
+    # Its own start marker would read to the suite runner as a test that never reported.
+    markers = ENV.delete("MASTER_TEST_START_MARKERS")
+    result = dropping.run
+    ENV["MASTER_TEST_START_MARKERS"] = markers if markers
+
+    assert result.passed?, result.failures.map(&:message).join("\n")
+    assert_empty Master::Fix::RunBudget.watching, "the dropped run's watchdog is still beating"
+  ensure
+    Master::Fix::RunBudget.watching.each(&:stop!)
+  end
+
+  def test_a_new_run_stops_the_watchdog_of_the_run_it_replaces
+    first = nil
+
+    Budget.stub(:finish_run, ->(**) {}) do
+      first = Budget.begin_run(root: @root, max_passes: 1)
+      Budget.begin_run(root: @root, max_passes: 1)
+    end
+
+    watchdog = first.instance_variable_get(:@watchdog)
+    refute watchdog&.alive?, "the replaced run's watchdog is still beating"
+  ensure
+    Budget.current&.stop!
+    Budget.instance_variable_set(:@current, nil)
+  end
+  # The disk floor tripped while the suite ran on a nearly full disk, and a
+  # budget built without a killer sent TERM to its own test worker. Under
+  # test_helper the default killer raises instead, so the test that reached it
+  # fails by name.
+  def test_a_budget_without_a_killer_raises_instead_of_ending_the_test_worker
+    run = Budget.new(root: @root, max_passes: 1, say: ->(text) { @said << text }, poll_seconds: 0)
+
+    error = assert_raises(RuntimeError) { run.abort_run!("disk_free_gb=1.0 <= 2", force: true) }
+
+    assert_match(/RunBudget would TERM the test worker: disk_free_gb/, error.message)
+  end
 end

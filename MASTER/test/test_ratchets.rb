@@ -30,7 +30,20 @@ class TestRatchets < Minitest::Test
   # With the finding cache on: test_helper turns it off so a test counting a law's calls sees the law
   # run, and this measurement then scanned all four trees cold for over half an hour. The cache
   # replays only laws that read nothing beyond the file, so the counts are the same.
-  def self.rows = @rows ||= with_scan_cache { Operator::Ratchets.all }
+  #
+  # Once only, also when it fails. A measurement cut by the 300 s timeout left @rows unset, so each of
+  # the next nine tests started it again and was cut again: 45 minutes in one class, past the
+  # worker's 1800 s, and the suite ended with no Minitest summary. The first failure is kept and
+  # every later reader fails at once, naming it.
+  def self.rows
+    raise "ratchet measurement already failed in this process: #{@failed}" if @failed
+
+    @rows ||= with_scan_cache { Operator::Ratchets.all }
+  # Timeout's ExitException is not a StandardError, and it is the failure that cascaded.
+  rescue StandardError, Timeout::ExitException => e
+    @failed ||= "#{e.class}: #{e.message}"
+    raise
+  end
 
   def self.with_scan_cache
     previous = ENV.fetch("MASTER_SCAN_CACHE", nil)

@@ -10,7 +10,15 @@ module Operator
   module ParallelTests
     # The suite under test runs its own runner; it keeps its logs and lock apart (test_helper).
     LOG_DIR = ENV.fetch("MASTER_CHECK_LOG_DIR") { File.expand_path("../../.master/check", __dir__) }
-    RESULT_LINE = /\A\S+#\S+ = [\d.]+ s = [.FES]\s*\z/
+RESULT_LINE = /\A\S+#\S+ = [\d.]+ s = [.FES]\s*\z/
+# Minitest -v prints "Name = " before the test runs and its time and mark after;
+# test_helper's start marker lands between them, so a real worker log reads
+# "Name = test-start0: Name", any output the test printed, then "0.00 s = .".
+# RESULT_LINE matched none of those, so every worker of every suite counted 0
+# results against its summary and was reported incomplete with "missing final
+# Minitest summary", even when the summary was the last line of its log.
+SPLIT_START = /\A(\S+#\S+) = test-start0: (\S+#\S+)\s*\z/
+SPLIT_RESULT = /\A[\d.]+ s = [.FES]\s*\z/
     REPORT_START = /\AFinished in /
     SUMMARY_LINE = /\A(\d+) runs?, (\d+) assertions?, (\d+) failures?, (\d+) errors?, (\d+) skips?\s*\z/i
     DEFAULT_WORKER_TIMEOUT = 1800
@@ -177,7 +185,7 @@ module Operator
 
     def relay_once(workers, out, progress)
       workers.each do |worker|
-        fresh_lines(worker).grep(RESULT_LINE).each do |line|
+        logical_lines(fresh_lines(worker), worker).grep(RESULT_LINE).each do |line|
           out.puts line
           progress[:completed] += 1
           if progress[:every].positive? && progress[:completed] - progress[:last_emitted] >= progress[:every]
@@ -196,9 +204,30 @@ module Operator
       complete.force_encoding(Encoding::UTF_8).scrub.lines(chomp: true)
     end
 
+    # The log as two lines per test, "test-start0: Name" and "Name = 0.00 s = .", however the two
+    # streams interleaved. +state+ carries a test whose result has not arrived yet (relay_once reads
+    # the log in pieces).
+    def logical_lines(lines, state = {})
+      lines.each_with_object([]) do |line, out|
+        if (split = SPLIT_START.match(line))
+          out << "test-start0: #{split[2]}"
+          state[:pending] = split[1]
+        elsif state[:pending] && SPLIT_RESULT.match?(line)
+          out << "#{state.delete(:pending)} = #{line.strip}"
+        else
+          out << line
+        end
+      end
+    end
+
+    def log_lines(worker)
+      read = File.foreach(worker.fetch(:log), chomp: true, encoding: "UTF-8", invalid: :replace, undef: :replace)
+      logical_lines(read)
+    end
+
     def last_started_test(worker)
       last = nil
-      File.foreach(worker.fetch(:log), encoding: "UTF-8", invalid: :replace, undef: :replace) do |line|
+      log_lines(worker).each do |line|
         last = line.delete_prefix("test-start0: ").strip if line.start_with?("test-start0: ")
       end
       last
@@ -207,14 +236,14 @@ module Operator
     end
 
     def summary_data(worker)
-      result_count = 0
-      start_count = 0
+      results = []
+      starts = []
       summary = nil
 
-      File.foreach(worker.fetch(:log), encoding: "UTF-8", invalid: :replace, undef: :replace) do |raw_line|
-        line = raw_line.chomp
-        result_count += 1 if RESULT_LINE.match?(line)
-        start_count += 1 if line.start_with?("test-start0: ")
+      log_lines(worker).each do |line|
+        results << line[/\A(\S+#\S+) = /, 1] if RESULT_LINE.match?(line)
+        starts << line.delete_prefix("test-start0: ").strip if line.start_with?("test-start0: ")
+
         if (match = SUMMARY_LINE.match(line))
           summary = {
             "runs" => match[1].to_i,
@@ -226,18 +255,19 @@ module Operator
         end
       end
 
-      return unless summary && summary["runs"] == result_count
-      return if worker[:start_markers] && start_count != result_count
+      return unless summary && summary["runs"] == results.size
+      # A test that started and never reported is the crash this check exists for. The count
+      # alone also failed a class that overrides run (TestCliBootE2e) and prints no marker.
+      return if worker[:start_markers] && (starts - results).any?
 
-      summary.merge("result_lines" => result_count, "start_markers" => start_count)
+      summary.merge("result_lines" => results.size, "start_markers" => starts.size)
     rescue Errno::ENOENT
       nil
     end
 
     def worker_failures(worker)
       failures = []
-      File.foreach(worker.fetch(:log), encoding: "UTF-8", invalid: :replace, undef: :replace) do |raw_line|
-        line = raw_line.chomp
+      log_lines(worker).each do |line|
         failures << line if RESULT_LINE.match?(line) && line.match?(/ = [FE]\s*\z/)
       end
       failures

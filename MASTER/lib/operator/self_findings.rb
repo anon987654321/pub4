@@ -187,8 +187,23 @@ module Operator
       @members ||= scan_corpus
     end
 
+    # The linter Laws (rubocop, reek) answer from .master/lint_cache. Filled one
+    # file at a time, a cold cache cost a linter boot per file: in a fresh export
+    # this census ran past TestRatchets' 300 s before its first row. The scanner
+    # batches them before a walk (Scanner#prefetch_linters); so does this.
+    def prefetch_linters(rules)
+      rules.each_value do |rule|
+        next unless rule.detector && !rule.model_detector? && !rule.semantic?
+
+        # Built as Law#scan builds it (scan_detector), so the cache it fills is the one the scan reads.
+        detector = rule.detector.build(rule)
+        detector.prefetch(files)
+      end
+    end
+
     def scan_corpus
       rules = law # loads Master before the map below is read
+      prefetch_linters(rules)
       found = []
       files.each do |path|
         # The file list and the reads are two moments, and this is a shared

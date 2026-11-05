@@ -36,8 +36,18 @@ module Master
       # How long an abort waits on the committer to roll back the open pass before its TERM.
       ROLLBACK_WAIT_SECONDS = 30
 
+      WATCHING_LOCK = Mutex.new
+
       class << self
         attr_reader :current
+
+        # Every run whose watchdog is beating, current or not. A run replaced or
+        # dropped without stop! is still here, so whoever must end them all can.
+        def watching = WATCHING_LOCK.synchronize { (@watching ||= []).dup }
+
+        def watch!(run) = WATCHING_LOCK.synchronize { (@watching ||= []) << run }
+
+        def unwatch!(run) = WATCHING_LOCK.synchronize { (@watching ||= []).delete(run) }
 
         def begin_run(root:, max_passes:, bus: nil, target: nil)
           # Nested tree passes and check re-entries belong to the command's one
@@ -45,6 +55,10 @@ module Master
           return @current if (@shared_depth || 0).to_i.positive? && @current
 
           finish_run
+          # A run finish_run did not end (a raise in its report, or a stub) still has a watchdog
+          # beating; replaced unstopped, nothing could reach it again, and its stall rule later
+          # sent TERM to this process. test_fix_convergence stubbed finish_run and left one so.
+          @current&.stop!
           ToolBreaker.reset!
           RunLedger.begin_run!
           Refusals.begin_run!
@@ -183,6 +197,7 @@ module Master
 
         @last_resource_check = @started
         @watchdog = Thread.new { watch } if @poll.positive?
+        self.class.watch!(self) if @watchdog
         self
       end
 
@@ -195,6 +210,7 @@ module Master
       def stop!
         watchdog = @watchdog
         @watchdog = nil
+        self.class.unwatch!(self)
         # A stall or disk abort can be discovered by the watchdog itself.
         # Killing Thread.current here would interrupt finish!/killer before the
         # final report or hard safety stop had a chance to run.

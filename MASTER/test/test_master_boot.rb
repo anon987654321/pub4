@@ -21,8 +21,10 @@ class MasterBootTest < Minitest::Test
 
     body = Master.load_yaml(path)
     assert body.is_a?(Hash)
-    assert body.key?("CAPABILITY_STATUS_MUST_BE_TRUTHFUL")
-    assert body.key?("transformation_policy")
+    # Laws are flat records; executable ones also have a law_catalogue entry.
+    # transformation_policy is law_runtime.yml's (Master.law), not laws.yml's.
+    assert body.key?("SINGULARITY")
+    assert body.fetch("law_catalogue").fetch("entries").key?("CAPABILITY_STATUS_MUST_BE_TRUTHFUL")
   end
 
   def test_master_runtime_process_defaults_constant

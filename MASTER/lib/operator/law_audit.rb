@@ -161,7 +161,20 @@ module Operator
 
     def rates
       files = corpus_files
+      prefetch_linters(files.map(&:first))
       law.values.select(&:scannable?).filter_map { |entry| rate(entry, files) }
+    end
+
+    # The linter Laws read .master/lint_cache; cold, each file cost a rubocop or
+    # reek boot, and in a fresh export this census alone ran past TestRatchets'
+    # 300 s. Batched first, as Scanner#prefetch_linters does before a walk.
+    def prefetch_linters(paths)
+      law.each_value do |entry|
+        next unless entry.detector && !entry.model_detector? && entry.scannable?
+
+        detector = entry.detector.build(entry)
+        detector.prefetch(paths)
+      end
     end
 
     # One law's firing rate. A caller asking about one law reads this rather

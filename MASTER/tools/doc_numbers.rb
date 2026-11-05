@@ -54,7 +54,8 @@ module Operator
 
     def self.docs
       TREES.flat_map { |tree| Dir[File.join(ROOT, tree, "**", "*.md")] }
-           .reject { |path| path =~ SKIP }
+           # Relative to ROOT, so a checkout in the temporary directory is still read.
+           .reject { |path| "/#{path.delete_prefix("#{ROOT}/")}" =~ SKIP }
            .map { |path| path.sub("#{ROOT}/", "") }
            .sort
     end

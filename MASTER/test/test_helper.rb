@@ -104,6 +104,18 @@ Minitest.after_run do
   FileUtils.rm_rf(LIVE_STATE_DIR)
   FileUtils.rm_f(ENV["MASTER_FIX_RESIDUAL"])
 end
+require "fix/run_budget"
+
+# A test that wants the kill passes its own killer; every other RunBudget
+# raises where it would have sent TERM to this worker.
+module TestRunBudgetKiller
+  def initialize(*args, killer: nil, **options)
+    killer ||= ->(reason) { raise "RunBudget would TERM the test worker: #{reason}" }
+    super(*args, killer:, **options)
+  end
+end
+Master::Fix::RunBudget.prepend(TestRunBudgetKiller)
+
 Minitest::Test.class_eval do
   alias_method :run_without_timeout, :run
 
@@ -128,6 +140,36 @@ Minitest::Test.class_eval do
     failed_with(RuntimeError.new("called exit(#{e.status}) at #{origin}"))
   ensure
     watchdog&.kill
+    release_leaked_run_budget
+  end
+
+  # A test that opens a /fix run (RunBudget.begin_run) and never reaches its
+  # finish leaves the run's watchdog thread beating on a deleted tmpdir root.
+  # Minutes later its stall rule fires, abort_run! asks git about that root
+  # ("fatal: cannot change to .../T/d2026..."), and the default killer sends
+  # TERM to Process.pid: the test worker itself, mid-suite, with no Minitest
+  # summary. The run is stopped here and the test that leaked it is named.
+  #
+  # RunBudget.watching holds every beating watchdog, also a run a test dropped
+  # by setting @current to nil or replaced while finish_run was stubbed.
+  #
+  # A run's default killer is TERM to Process.pid, which in a suite is the
+  # worker. The disk floor (ResourceBudget disk_free_gb crit, 2 GB) trips on
+  # this Mac's 5 GB of free disk while three workers write tmpdirs, and a test
+  # budget built without a killer then ended its worker silently. In tests the
+  # default is a raise that names the reason (TestRunBudgetKiller, below).
+  def release_leaked_run_budget
+    return unless defined?(Master::Fix::RunBudget)
+
+    runs = Master::Fix::RunBudget.watching
+    runs |= [Master::Fix::RunBudget.current].compact
+    return if runs.empty?
+
+    STDERR.puts "test0: #{self.class}##{name} left #{runs.size} RunBudget run(s) open; stopped their watchdogs"
+    runs.each(&:stop!)
+    Master::Fix::RunBudget.instance_variable_set(:@current, nil)
+    Master::Fix::RunBudget.instance_variable_set(:@shared_depth, 0)
+    Master::Review::LLMDispatcher::PassClock.cap_calls!(nil) if defined?(Master::Review::LLMDispatcher::PassClock)
   end
 
   # A timeout that cannot land (an ensure joining worker threads) let TestRatchets run thirty

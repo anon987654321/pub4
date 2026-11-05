@@ -65,7 +65,9 @@ module Operator
     def self.ruby_files(dir)
       Dir.glob(File.join(MASTER, dir, "**", "*")).select do |path|
         next false unless File.file?(path) && !File.symlink?(path)
-        next false unless NOT_SOURCE.none? { |skip| path.include?("/#{skip}/") }
+        # Below MASTER/ only: the absolute path of an export under /tmp/ held "/tmp/" and every file went.
+        below = "/#{path.delete_prefix("#{MASTER}/")}"
+        next false unless NOT_SOURCE.none? { |skip| below.include?("/#{skip}/") }
 
         File.extname(path) == ".rb" || ruby_shebang?(path)
       end

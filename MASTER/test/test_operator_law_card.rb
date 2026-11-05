@@ -17,7 +17,9 @@ class TestOperatorLawCard < Minitest::Test
   def test_declared_law_prints_its_statement_and_constitution_digest
     out, status = card("SINGULARITY")
     assert status.success?, out
-    assert_includes out, "One source of truth"
+    # The statement laws.yml holds today, not a copy of it here: the reflow
+    # rewrote SINGULARITY's statement and this literal went stale.
+    assert_includes out, "statement, #{Master.laws_document.fetch("SINGULARITY").fetch("statement")}"
     assert_match(/constitution, \h{12}/, out)
   end
 

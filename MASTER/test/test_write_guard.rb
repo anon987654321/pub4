@@ -93,7 +93,8 @@ class WriteGuardTest < Minitest::Test
 
     assert_predicate verdict, :blocked?
     assert_match(/configuration_invariant/, verdict.reason)
-    assert_match(/required Law sections missing/, verdict.reason)
+    # FlatLawCatalogue validates first now, so the refusal names the empty catalogue.
+    assert_match(/laws.yml declares no flat laws/, verdict.reason)
     refute_match(/sacred_path/, verdict.reason)
   end
 
