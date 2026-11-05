@@ -96,19 +96,16 @@ class TestRefinementContracts < Minitest::Test
 
     assert_equal files.size, census.counts.fetch("tracked_files")
     assert_equal expected_directories.size, census.counts.fetch("tracked_directories")
+    assert_equal census.ceilings.fetch("tracked_files"), census.counts.fetch("tracked_files")
+    assert_equal census.ceilings.fetch("tracked_directories"), census.counts.fetch("tracked_directories")
     assert_operator census.counts.fetch("tracked_files"), :>, 0
   end
 
   def test_sprawl_ratchet_does_not_hide_an_overage_when_another_metric_falls
     census = Operator::SprawlCensus
-    ceilings = {
-      "lone_dirs" => 20, "stutter" => 0, "vague_names" => 0,
-      "tracked_files" => 6614, "tracked_directories" => 847, "corpus" => 3253,
-    }
-    values = {
-      "lone_dirs" => 19, "stutter" => 0, "vague_names" => 0,
-      "tracked_files" => 6615, "tracked_directories" => 847,
-    }
+    ceilings = census.ceilings.merge("lone_dirs" => 20, "stutter" => 0, "vague_names" => 0)
+    values = ceilings.slice("lone_dirs", "stutter", "vague_names", "tracked_files", "tracked_directories")
+                     .merge("lone_dirs" => 19, "tracked_files" => ceilings.fetch("tracked_files") + 1)
     writes = []
     result = nil
 
