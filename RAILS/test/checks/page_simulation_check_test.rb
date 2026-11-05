@@ -55,7 +55,7 @@ class PageSimulationCheckTest < Minitest::Test
   # a test hands its own resolve: stub — the real one reads triangle's sqlite
   # files, which this suite must not depend on.
   def simulate(pages, live: [], needing_id: [], open: false, response: Response.new("200", LIVE_HTML),
-               resolve: proc { |*, **| nil })
+               resolve: proc { |*, **| nil }, fetch: proc { |*, **| response })
     Dir.mktmpdir("page-sim") do |out|
       with_const(CHECK, :REPORT_PATH, File.join(out, "report.yml")) do
         with_const(CHECK, :SNAPSHOT_PATH, File.join(out, "inventory.yml")) do
@@ -68,8 +68,7 @@ class PageSimulationCheckTest < Minitest::Test
             stale_route_manifests: proc { |*, **| [] },
             write_snapshot!: proc { |*, **| nil }
           ) do
-            with_methods(CRAWL, port_open?: proc { |*, **| open },
-                                fetch: proc { |*, **| response }) do
+            with_methods(CRAWL, port_open?: proc { |*, **| open }, fetch: fetch) do
               with_methods(IDS, resolve: resolve) { CHECK.run }
             end
           end
@@ -133,6 +132,39 @@ class PageSimulationCheckTest < Minitest::Test
       row = page(root)
 
       assert_equal :passed, simulate([row], live: [row], open: true).outcome
+    end
+  end
+
+  # vm23 under swap: the first request to a paged-out app outlasts the 12 s
+  # budget although the page renders in a tenth of a second. The check warms each
+  # app with one unmeasured request, then measures with the full budget.
+  def test_a_cold_app_is_warmed_by_an_unmeasured_request_before_its_page_is_measured
+    Dir.mktmpdir("page-sim-view") do |root|
+      row = page(root)
+      timeouts = []
+      cold = proc do |*, timeout:, **|
+        timeouts << timeout
+        raise Net::ReadTimeout if timeouts.size == 1
+
+        Response.new("200", LIVE_HTML)
+      end
+      result = simulate([row], live: [row], open: true, fetch: cold)
+
+      assert_equal :passed, result.outcome, result.failures.join(" | ")
+      assert_equal [CHECK::WARM_TIMEOUT, 12], timeouts, "one warm-up, then the measured request at 12 s"
+      assert_match(/brgen warm-up Net::ReadTimeout \(not measured\)/, result.warnings.join(" | "))
+    end
+  end
+
+  # The warm-up hides paging, not slowness: a page still too slow once warm fails.
+  def test_a_page_slow_after_warming_still_fails
+    Dir.mktmpdir("page-sim-view") do |root|
+      row = page(root)
+      slow = proc { |*, **| raise Net::ReadTimeout }
+      result = simulate([row], live: [row], open: true, fetch: slow)
+
+      assert_equal :failed, result.outcome
+      assert_match(/page_sim live:brgen#index: Net::ReadTimeout/, result.failures.join(" | "))
     end
   end
 

@@ -28,6 +28,14 @@ module Deploy
     REPORT_PATH = File.join(ROOT, "MASTER", "checks", "data", "page_sim_report.yml")
     SNAPSHOT_PATH = File.join(ROOT, "MASTER", "checks", "data", "page_sim_inventory.yml")
 
+    # The measured request's read budget. A page slower than this is slow.
+    LIVE_TIMEOUT = 12
+    # The warm-up request's read budget. On vm23 a process that was swapped out
+    # pages back in on its first request: master's face renders in about 0.1 s
+    # but answered in up to 10 s under paging, and the 12 s budget then measured
+    # the swap, not the page. One unmeasured request per app pays that first.
+    WARM_TIMEOUT = 30
+
     # Auth surfaces where the wall is the product (sign-in / register).
     AUTH_WALL_OK = %r{/session/new|/registration/new|/passwords}
 
@@ -42,6 +50,7 @@ module Deploy
 
     def run
       @result = CheckResult.new
+      @warmed = {}
       @report = {
         "generated_at" => Time.now.utc.iso8601,
         "pages" => [],
@@ -132,7 +141,8 @@ module Deploy
     def simulate_live(page, port)
       entry = base_entry(page).merge("mode" => "live")
       url = "http://127.0.0.1:#{port}#{page[:path]}"
-      response = CrawlSupport.fetch(url, host: page[:host], accept: "text/html", timeout: 12, open_timeout: 6)
+      warm(page, url)
+      response = CrawlSupport.fetch(url, host: page[:host], accept: "text/html", timeout: LIVE_TIMEOUT, open_timeout: 6)
       code = response.code.to_i
       body = response.body.to_s
       findings = live_findings(page, code, body, url)
@@ -148,6 +158,23 @@ module Deploy
       entry["findings"] = ["#{e.class}: #{e.message}"]
       @result.fail("page_sim live:#{page[:id]}: #{e.class}: #{e.message}")
       push_entry(entry)
+    end
+
+    # Once per app, before its first measured page: GET that page, read nothing
+    # from the answer and assert nothing on it. Its time is reported, never
+    # judged, so the measured request that follows keeps the full 12 s budget
+    # and a page that is slow when warm still fails.
+    def warm(page, url)
+      @warmed ||= {}
+      return if @warmed[page[:app]]
+
+      @warmed[page[:app]] = true
+      started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+      CrawlSupport.fetch(url, host: page[:host], accept: "text/html", timeout: WARM_TIMEOUT, open_timeout: 6)
+      took = ((Process.clock_gettime(Process::CLOCK_MONOTONIC) - started) * 1000).round
+      @result.warn("page_simulation: #{page[:app]} warmed in #{took} ms (not measured)")
+    rescue StandardError => e
+      @result.warn("page_simulation: #{page[:app]} warm-up #{e.class} (not measured)")
     end
 
     public
