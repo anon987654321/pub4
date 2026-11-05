@@ -6,6 +6,7 @@ Rails.application.routes.draw do
   get ".well-known/assetlinks.json" => "rails/pwa#assetlinks", as: :pwa_assetlinks
   get ".well-known/apple-app-site-association" => "rails/pwa#apple_app_site_association", as: :pwa_apple_app_site_association
   get "internal/status" => "internal#status", as: :internal_status
+  get "internal/version" => "internal#version", as: :internal_version
   get "sso/from_master" => "sso#from_master", as: :sso_from_master
   post "share" => "items#share", as: :share_item
 

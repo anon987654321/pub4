@@ -20,6 +20,7 @@ Rails.application.routes.draw do
   # Loopback-only in practice (see InternalController's shared-secret check);
   # not subdomain-constrained since MASTER calls it directly by IP:port.
   get "internal/status" => "internal#status", as: :internal_status
+  get "internal/version" => "internal#version", as: :internal_version
   post "internal/dilla_publish" => "internal#dilla_publish", as: :internal_dilla_publish
   get "sso/from_master" => "sso#from_master", as: :sso_from_master
 

@@ -100,6 +100,21 @@ class ControllerCoverageContractTest < Minitest::Test
     assert_actions live, "create", "update", "go_live"
   end
 
+  # /internal/version says which commit the serving process booted, behind
+  # the same token as /internal/status. Pinned for every app that carries
+  # InternalController: master reports its build through /health instead, and
+  # mrdamascy has no internal surface yet.
+  def test_internal_version_endpoint_exists_on_every_token_auth_app
+    %w[brgen amber bsdports].each do |app|
+      internal = read_app(app, "app/controllers/internal_controller.rb")
+      routes = read_app(app, "config/routes.rb")
+      assert_actions internal, "version"
+      assert_includes internal, "Shared::InternalTokenAuth", "#{app} InternalController lost token auth"
+      assert_includes internal, "Shared::BuildInfoHelper", "#{app} InternalController does not resolve its revision"
+      assert_includes routes, "internal/version"
+    end
+  end
+
   def test_brgen_sso_and_internal_status
     sso = read_app("brgen", "app/controllers/sso_controller.rb")
     internal = read_app("brgen", "app/controllers/internal_controller.rb")

@@ -748,7 +748,6 @@ recommended first ten.
 - [ ] One-command rollback: symlink back and restart.
 - [ ] vps-deploy stops and restarts the matching `*_jobs` service itself.
 - [ ] Post-deploy smoke test over every route-manifest page.
-- [ ] Expose the running commit at `/internal/version` per app.
 
 ### Permission and classifier blocks
 
