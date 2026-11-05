@@ -138,7 +138,10 @@ class MapsPlacesControllerTest < ActionDispatch::IntegrationTest
 
   test "a place page lists the check-ins visitors left behind" do
     place = Place.create!(city: @city, name: "Bryggen", kind: "attraction", latitude: 60.3974, longitude: 5.3244)
-    PlaceCheckIn.create!(place: place, user: @user, note: "Solbaer i baggen", checked_in_at: Time.current)
+    # Names appear only once NAMED_CHECK_IN_DELAY has passed; a fresher
+    # check-in is counted (MapsCheckInPrivacyTest covers that half).
+    checked_in_at = Maps::PlacesController::NAMED_CHECK_IN_DELAY.ago - 1.minute
+    PlaceCheckIn.create!(place: place, user: @user, note: "Solbaer i baggen", checked_in_at:)
 
     get "/places/#{place.id}"
 
