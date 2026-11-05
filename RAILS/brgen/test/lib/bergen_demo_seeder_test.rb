@@ -111,10 +111,14 @@ class BergenDemoSeederTest < ActiveSupport::TestCase
     featured_titles = Brgen::BergenDemoData::FEATURED_POSTS.map { |row| row[:title] }
     seeded_titles = Post.where(city: @city).pluck(:title)
     assert_equal featured_titles.sort, seeded_titles.select { |title| featured_titles.include?(title) }.sort
-    # Vote weight surfaces the highest-engagement threads. The 2026-08-02 content
-    # broadening added higher-vote posts (Brann matchday, rain-day), which now lead
-    # the frontpage — the mechanism working, not a regression.
-    assert_includes hot_titles, "Brann på Stadion i kveld — hvor ser dere kampen?"
+    # Vote weight surfaces the higher-engagement thread of two the same age:
+    # the Brann matchday thread (12 hours, 18 votes) outranks the uphill one
+    # (13 hours, 7 votes). Whether Brann makes the top five was a coin toss:
+    # each seeded post's age carries up to 45 random minutes, and the featured
+    # posts added since sit within that margin of it.
+    hot_order = Post.hot.where(city: @city).pluck(:title)
+    assert_operator hot_order.index("Brann på Stadion i kveld — hvor ser dere kampen?"), :<,
+                    hot_order.index("Kan vi slutte å late som vi går fort i oppoverbakke?")
   end
 
   test "seeds bergen places takeaway and tv verticals" do

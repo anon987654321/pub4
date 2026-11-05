@@ -1477,7 +1477,7 @@ scale:
   baselines:
     apps:
       off_scale_space: 35
-      off_scale_line_height: 22
+      off_scale_line_height: 21
       absolute_line_height: 0
       off_scale_radius: 19
       off_scale_font_weight: 0
