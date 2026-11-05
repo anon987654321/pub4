@@ -25,7 +25,8 @@ Law.define(:INTER_MODEL_CONTRACT) do
     and no reciprocal persona.
   PRACTICE
   fix <<~'FIX'.strip
-    Wrap every council model request with InterModelContract and validate its returned structured findings before aggregation.
+    Wrap every council model request with InterModelContract and validate its returned structured findings
+    before aggregation.
   FIX
   bad "@agent.ask(prompt)"
   good "@agent.ask(outbound)"
