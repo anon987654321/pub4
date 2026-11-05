@@ -434,7 +434,9 @@ deploy_stage=start
 app_stopped=0
 stamp_written=0
 halted_app=
-typeset -a own_stops
+preflight_active=0
+preflight_back_to=
+typeset -a preflight_back_flag own_stops
 
 # Services the deploy needs to put back, and how it waits for them.
 #
@@ -536,9 +538,31 @@ restore_started() {
   (( $#failed == 0 ))
 }
 
+# A signal or shell exit can arrive while the box is detached for preflight.
+# Keep the original ref as explicit recovery state until it is restored.
+restore_preflight_checkout() {
+  (( preflight_active )) || return 0
+  [[ -n $preflight_back_to ]] || {
+    print -u2 "vps-deploy: preflight checkout recovery has no saved ref"
+    return 1
+  }
+  git_as_deploy_user switch -q "${preflight_back_flag[@]}" "$preflight_back_to" || {
+    print -u2 "vps-deploy: FAILED to restore checkout ref $preflight_back_to after preflight"
+    return 1
+  }
+  preflight_active=0
+  log "preflight checkout restored ref=$preflight_back_to"
+}
+
 finish() {
   local rc=$?
   trap - EXIT
+  if (( preflight_active )); then
+    restore_preflight_checkout || {
+      print -u2 "vps-deploy: checkout remains in preflight recovery state; restore ref $preflight_back_to before another deploy"
+      (( rc == 0 )) && rc=1
+    }
+  fi
   [[ -n $flag_keeper ]] && kill $flag_keeper 2>/dev/null
   rm -f -- "$deploy_flag"
   if (( rc != 0 )) && [[ $app == all ]]; then
@@ -636,16 +660,19 @@ if (( lock_owner )); then
   else
     set_stage preflight-boot
     print "vps-deploy: preflight on $pin (syntax, law files, boot smoke)"
-    back_to=$(git_as_deploy_user symbolic-ref -q --short HEAD || print -r -- "$head_before")
-    # A box left detached (a killed deploy does that) comes back to its commit, not to a branch.
-    back_flag=()
-    git_as_deploy_user symbolic-ref -q HEAD >/dev/null || back_flag=(--detach)
+    preflight_back_to=$(git_as_deploy_user symbolic-ref -q --short HEAD || print -r -- "$head_before")
+    # A box left detached comes back to its commit, not to a guessed branch.
+    preflight_back_flag=()
+    git_as_deploy_user symbolic-ref -q HEAD >/dev/null || preflight_back_flag=(--detach)
+    # Set recovery state before switching: the EXIT/HUP/INT/TERM path now owns
+    # restoration even if the signal lands immediately after the detach.
+    preflight_active=1
     git_as_deploy_user switch -q --detach "$pin" || deploy_refuse "cannot check out $pin in $repo (local changes?)"
     if ! "$RUBY" "$repo/MASTER/lib/operator/canary.rb" --no-rehearse; then
-      git_as_deploy_user switch -q "${back_flag[@]}" "$back_to" || true
-      deploy_refuse "preflight failed on $pin; the checkout is back on $back_to and the previous release is still serving"
+      restore_preflight_checkout || deploy_refuse "preflight failed on $pin and checkout restoration failed; restore $preflight_back_to before retrying"
+      deploy_refuse "preflight failed on $pin; the checkout is back on $preflight_back_to and the previous release is still serving"
     fi
-    git_as_deploy_user switch -q "${back_flag[@]}" "$back_to" || deploy_refuse "cannot return to $back_to"
+    restore_preflight_checkout || deploy_refuse "cannot return to $preflight_back_to after preflight"
   fi
   git_as_deploy_user merge -q --ff-only "$pin" || deploy_refuse "cannot fast-forward $repo to $pin"
   set_stage snapshot
