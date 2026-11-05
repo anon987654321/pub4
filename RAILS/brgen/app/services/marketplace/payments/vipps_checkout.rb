@@ -121,7 +121,8 @@ module Marketplace
         req["Merchant-Serial-Number"] = ENV.fetch("VIPPS_MSN")
         req
       end
-      private_class_method :access_token, :fetch_access_token, :token_request
+      # access_token is public: VippsRefund signs its calls with the same token.
+      private_class_method :fetch_access_token, :token_request
     end
   end
 end

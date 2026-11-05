@@ -2826,7 +2826,7 @@ items:
     POST /payments/{reference}/refund with an idempotency key), since only Dintero
     and Stripe refund today and a Vipps buyer's received return stays 'refund not
     sent' forever.
-  status: open
+  status: done
 - id: brgen-234
   app: brgen
   area: payments

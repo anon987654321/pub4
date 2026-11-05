@@ -12,7 +12,8 @@ class Marketplace::Return < ApplicationRecord
   include Shared::StrictSafeAssociations
 
   # requested -> approved|refused, approved -> received. Money is a fourth thing
-  # (refunded_at): the selected payment provider confirms it, or the row stays pending.
+  # (refunded_at): the selected payment provider confirms it, or the row stays
+  # pending. Dintero, Stripe and Vipps refund; any other provider stays pending.
   STATUSES = %w[requested approved refused received].freeze
   # Fourteen days from delivery, which is the statutory floor for a distance
   # purchase from a business in Norway.
@@ -87,6 +88,12 @@ class Marketplace::Return < ApplicationRecord
     when "stripe"
       id = Marketplace::Payments::StripeRefund.submit!(order: order)
       update!(refunded_at: Time.current, refund_reference: id)
+      order.update!(payment_status: "refunded")
+    when "vipps"
+      # One key per return: a retried receive cannot refund the parcel twice.
+      key = "brgen-return-#{self.id}-refund"
+      psp_reference = Marketplace::Payments::VippsRefund.submit!(order: order, idempotency_key: key)
+      update!(refunded_at: Time.current, refund_reference: psp_reference)
       order.update!(payment_status: "refunded")
     end
   rescue Marketplace::Payments::NotConfigured
