@@ -55,6 +55,25 @@ class CiContractTest < Minitest::Test
            "mrdamascy's bundler-audit --config file is missing"
   end
 
+  # Every RAILS suite runs on a prepared test database, wherever its steps
+  # live: brgen, amber and bsdports through the shared contract above, master
+  # and mrdamascy through their own config/ci.rb. The step must also sit
+  # before the suite's step — preparing after the run would only document the
+  # failures a missing schema produced.
+  test "every app's ci prepares the test database before its rails suite" do
+    shared = read(SHARED_CI)
+    assert_includes shared, "db:test:prepare", "shared CI never prepares the test database"
+    assert_operator shared.index("db:test:prepare"), :<, shared.index("rails test"),
+                   "shared CI prepares the test database after its suite"
+
+    %w[master mrdamascy].each do |app|
+      source = read(File.join(ROOT, app, "config", "ci.rb"))
+      assert_includes source, "db:test:prepare", "#{app}/config/ci.rb never prepares the test database"
+      assert_operator source.index("db:test:prepare"), :<, source.index("rails test"),
+                      "#{app}/config/ci.rb prepares the test database after its suite"
+    end
+  end
+
   test "shared ci resolves tooling from MASTER, never RAILS/tools" do
     shared = read(SHARED_CI)
 

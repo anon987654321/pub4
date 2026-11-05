@@ -813,7 +813,6 @@ recommended first ten.
 - [ ] Re-run `integrity_locale` after the mrdamascy README change.
 - [ ] Split the longest files and methods named by the length ratchets.
 - [ ] Triage `scale_lint`, `social_frontpage`, `maps_engine_wiring`, `generated_asset_check`, `link_converter`, `layout_check_enforcement`.
-- [ ] `db:test:prepare` before each RAILS suite.
 - [ ] Nightly RAILS suite with posted deltas.
 
 ### Markup cleanup, phase 3 remainder
