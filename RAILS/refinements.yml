@@ -5555,7 +5555,8 @@ items:
   path: RAILS/mrdamascy/app/models/order.rb
   item: 'Drop the payment_steps column and the "paid in 3 steps" badge: CheckoutController
     always writes 3, so the badge appears on every order and says nothing.'
-  status: open
+  status: invalid
+  note: "APP_SPEC.md:212 (section 12, Vipps Express) specifies this exact chip: \"`order.payment_steps` stores 3; display 'Betalte i 3 steg' chip on order.\" The constant 3 is the spec's claim of a three-step checkout, not a per-order measurement, so dropping the column and the badge would contradict APP_SPEC, which README names the implementation source of truth."
 - id: mrdamascy-061
   app: mrdamascy
   area: orders
@@ -5572,6 +5573,7 @@ items:
   item: Show the VAT share ("herav mva 15 %") on the order page and offer a printable
     receipt.
   status: done
+  note: "Printable receipt landed (seller, payment lane, print button and print stylesheet on the order page). The VAT line is left out on purpose: no VAT rate exists anywhere in the codebase, and a \"herav mva\" figure must come from rates the kitchen has confirmed."
 - id: mrdamascy-063
   app: mrdamascy
   area: payments
