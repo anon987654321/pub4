@@ -21,9 +21,14 @@ module Master
             "--trace expands the redacted event payload; --normal and --quiet reduce output;",
             "MASTER_CLI_QUIET=1 silences the unit lines in the interactive CLI.",
             "--dry-run stops after the reading and says what it would take on.",
-            "--dry-run --critique --only critique,map is the reading with the council and",
-            "principle map, nothing written; --dry-run --critique --only critique is the",
-            "council alone.",
+            "/review [path] is the reading with the council and principle map, nothing",
+            "written (/fix --dry-run --critique --only critique,map); /critique and",
+            "/council are the council alone (--only critique).",
+            "--prove — the convergence proof with its durable receipts (/fix --prove",
+            "history [N] reads the ledger); /prove is its spelling.",
+            "--explain [MASTER|RAILS|OPENBSD|STUDIO] — the measured tree topology; /explain is its spelling.",
+            "Every run ends with the wishlist: the governed workstreams and their state —",
+            "what /fix still owes the trees.",
             "--intent=<content_only|content_and_structure|functional_change|redesign> pins",
             "the task contract; the default is functional_change.",
             "--only style (cosmetic, typography) runs the typographic audit alone: the",
@@ -306,35 +311,6 @@ module Master
           detail: ["/why <law|path|scan_rule|anti_pattern|style.key> - Trace::WhyExplainer looks it",
                    "up in the constitution, architecture and path ownership, then asks the model only when nothing matches."],
         },
-        "wishlist" => {
-          summary: "the governed assistant wishlist, with an honest state per workstream",
-          detail: ["/wishlist - list the current convergence workstreams.",
-                   "/wishlist <id|word> - inspect one workstream, its implementation anchor and proof owner.",
-                   "The wishlist is non-authoritative. Constitution, code and evidence remain authoritative."],
-        },
-        "size" => {
-          summary: "measured byte, file and Ruby-line mass for the four governed trees",
-          detail: ["/size - measure MASTER, RAILS, OPENBSD and STUDIO.",
-                   "/size MASTER|RAILS|OPENBSD|STUDIO - measure one tree.",
-                   "The command reports observed mass; it never invents a health score."],
-        },
-        "explain" => {
-          summary: "explain the living four-tree architecture from the checkout",
-          detail: ["/explain - show the current PUB4 boundary and measured topology.",
-                   "/explain MASTER|RAILS|OPENBSD|STUDIO - focus on one tree.",
-                   "It reports what the checkout contains, not what an old README promised."],
-        },
-        "events" => {
-          summary: "show the existing EventBus publisher/subscriber reach census",
-          detail: ["/events - report published topics, consumers and browser listeners.",
-                   "/events strict - use the same census as a blocking check for missing publishers or consumers."],
-        },
-        "prove" => {
-          summary: "run the deterministic local PUB4 convergence proof and write a receipt",
-          detail: ["/prove - check constitution presence, four-tree topology, command discoverability, wishlist anchors and snapshot contract.",
-                   "/prove history [N] - show the most recent durable convergence receipts.",
-                   "External hardware, vm23, staging money, browser and listening evidence remains INCONCLUSIVE until actually exercised."],
-        },
         "face" => {
           summary: "a compact visual layer above the canonical working prompt",
           detail: [
@@ -379,23 +355,23 @@ module Master
       # This taxonomy feeds both the terminal overview and the web palette.
       # Keep categories here rather than duplicating a second menu in JavaScript.
       COMMAND_CATEGORIES = {
-        "fix" => "fix", "status" => "health", "doctor" => "health", "events" => "health",
+        "fix" => "fix", "status" => "health", "doctor" => "health",
         "session" => "session", "pair" => "session", "clear" => "session", "undo" => "session",
         "model" => "model", "plugin" => "model", "screen" => "session", "wake" => "model",
         "privacy" => "constitution", "preferences" => "interface", "agenda" => "session", "task" => "session", "skill" => "constitution", "capabilities" => "model",
         "laws" => "review",
-        "why" => "review", "explain" => "review", "prove" => "review",
+        "why" => "review",
         "commit" => "change", "deploy" => "change", "snapshot" => "change",
-        "orders" => "change", "wishlist" => "change",
+        "orders" => "change",
         "face" => "interface", "voice" => "interface", "narrate" => "interface", "bard" => "interface",
         "reload" => "session", "incident" => "session",
-        "size" => "interface",
         "play" => "media", "mov" => "media", "android" => "media", "ios" => "media",
         "support" => "review",
         "soul" => "constitution", "help" => "help", "exit" => "session", "quit" => "session"
       }.freeze
 
-      FIX_SUMMARY = "/fix [path] writes, or only reads with its flags; /help <command> shows syntax."
+      FIX_SUMMARY = "/fix [path] writes and ends with its wishlist;" \
+                    " /review and /critique are its reading; /help <command> shows syntax."
 
       CATEGORY_ORDER =%w[fix health session model review change interface media constitution help].freeze
 

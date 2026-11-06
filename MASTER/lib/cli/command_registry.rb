@@ -17,7 +17,9 @@ require_relative "model_benchmark"
 require_relative "command_registry/laws"
 require_relative "command_registry/host"
 require_relative "command_registry/workspace"
-require_relative "command_registry/convergence"
+require_relative "../convergence/architecture"
+require_relative "../convergence/proof"
+require_relative "../convergence/workstreams"
 require_relative "../plugin"
 
 module Master
@@ -36,15 +38,16 @@ module Master
       # test_command_registry_dispatch.rb fails on a `*_commands` table it misses.
       def build(infra:, ai:, root:)
         d = command_deps(ai:, root:, infra:)
+        droot = d[:root]
         review_verbs(d).merge(session_verbs(infra[:session], infra[:undo])).merge(
-          "status" => command(:dispatch_status, d[:root], d[:fix_loop], d[:bus], d[:git], d[:trace], d[:learnings]),
+          "status" => command(:dispatch_status, droot, d[:fix_loop], d[:bus], d[:git], d[:trace], d[:learnings]),
           "commit" => command(:dispatch_commit, ai[:agent], root, review_check: true),
           "deploy" => command(:dispatch_deploy, root, review_check: true),
-          "model" => command(:dispatch_model, d[:agent], d[:config], d[:metrics], d[:root]),
+          "model" => command(:dispatch_model, d[:agent], d[:config], d[:metrics], droot),
           "plugin" => command(:dispatch_plugin),
-          "play" => command(:dispatch_play, d[:root]),
-          "mov" => command(:dispatch_mov, d[:root]),
-          "support" => command(:dispatch_support, d[:agent], d[:root]),
+          "play" => command(:dispatch_play, droot),
+          "mov" => command(:dispatch_mov, droot),
+          "support" => command(:dispatch_support, d[:agent], droot),
           "screen" => command(:dispatch_screen, root),
           "android" => command(:dispatch_android, root),
           "ios" => command(:dispatch_ios, root),
@@ -63,13 +66,8 @@ module Master
           "reload" => Command.new { |_context| dispatch_reload },
           "incident" => Command.new { |context| dispatch_incident(context:) },
           "laws" => command(:dispatch_laws, root),
-          "snapshot" => command(:dispatch_snapshot, d[:root]),
-          "why" => command(:dispatch_why, d[:agent], d[:root], d[:memory]),
-          "wishlist" => command(:dispatch_wishlist, d[:root]),
-          "size" => command(:dispatch_size, d[:root]),
-          "explain" => command(:dispatch_explain, d[:root]),
-          "prove" => command(:dispatch_prove, d[:root]),
-          "events" => command(:dispatch_events, d[:root]),
+          "snapshot" => command(:dispatch_snapshot, droot),
+          "why" => command(:dispatch_why, d[:agent], droot, d[:memory]),
           "face" => Command.new { |ctx| dispatch_face(ctx) },
           "help" => command(:help_text, nil),
         ).merge(control_commands(ai[:standing], ai[:soul]))

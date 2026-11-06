@@ -337,7 +337,7 @@ class TestCLI < Minitest::Test
     fix = Master::CLI::CommandRegistry.help_text("fix")
 
     assert_match(%r{^fix0 at master0: /fix \[path\]$}, summary)
-    assert_match(/^health0 at master0: \/status \/doctor \/events$/, summary)
+    assert_match(/^health0 at master0: \/status \/doctor$/, summary)
     assert_match(/^help0 at master0: \/help \[command\]$/, summary)
     refute_includes summary, "--dry-run"
     # The reading is /fix's flags, named on its page; /review is no command.

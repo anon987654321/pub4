@@ -39,6 +39,21 @@ module Master
         lines.join("\n")
       end
 
+      # The durable receipt ledger, most recent first: /fix --prove history [N].
+      def history(root: Master::REPO_ROOT, argument: "")
+        limit = argument.empty? ? 10 : Integer(argument)
+        rows = Master::Convergence::Receipt.recent(root:, limit:)
+        return "prove0: no receipts" if rows.empty?
+
+        lines = rows.map do |row|
+          total = row.dig("inventory", "totals") || {}
+          "prove0: #{row["id"]} state=#{row["state"]} files=#{total["files"]} bytes=#{total["bytes"]}"
+        end
+        lines.join("\n")
+      rescue ArgumentError
+        "usage: /fix --prove history [N]"
+      end
+
       def check_constitution(root)
         soul = File.join(root, "MASTER", "data", "soul.yml")
         laws = File.join(root, "MASTER", "data", "laws.yml")
@@ -56,7 +71,7 @@ module Master
 
       def check_commands
         commands = Master::CLI::CommandRegistry::HELP_TOPICS.keys
-        required = %w[status fix laws why wishlist size explain prove events]
+        required = %w[status fix laws why]
         missing = required - commands
         missing.empty? ? pass_row("commands", "required convergence commands documented") : fail_row("commands", "missing #{missing.join(", ")}")
       rescue StandardError => e

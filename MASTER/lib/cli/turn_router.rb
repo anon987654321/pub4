@@ -165,13 +165,15 @@ module Master
       READING_WORDS = %w[council review critique].freeze
       PIPELINE_WORDS = (PIPELINE_COMMANDS + MODEL_ALIASES).freeze
       FOLD_SLASH = %w[fold run].freeze
-      READ_SLASH = %w[explain why laws].freeze
+      READ_SLASH = %w[why laws].freeze
+      # The reads that are /fix flags now; the standalone names still answer.
+      CONVERGENCE_SLASH = { "prove" => "--prove", "explain" => "--explain" }.freeze
       # What a typed slash is allowed to be. Wider than the three words the surface
       # offers, and deliberately: /scan, /sweep and /council were spellings people
       # had learned, and a retired word that falls silently to chat is a worse
       # answer than one that still works. They rewrite to /fix, the one command
       # advertised.
-      PIPELINE_SLASH = %w[fix review critique council scan self workflow triad sweep through].freeze
+      PIPELINE_SLASH = %w[fix review critique council scan self workflow triad sweep through prove explain].freeze
 
       INFER_MIN_CONFIDENCE = 0.62
 
@@ -403,7 +405,14 @@ module Master
         name = name.to_s.downcase
         return input unless PIPELINE_SLASH.include?(name)
 
-        ["/fix", rest.to_s.strip].reject(&:empty?).join(" ")
+        rewritten_pipeline(name, rest.to_s.strip)
+      end
+
+      def rewritten_pipeline(name, rest)
+        return ["/fix", rest].reject(&:empty?).join(" ") if WRITING_SLASH.include?(name)
+        return ["/fix", CONVERGENCE_SLASH.fetch(name), rest].reject(&:empty?).join(" ") if CONVERGENCE_SLASH.key?(name)
+
+        ["/fix --dry-run --critique --only #{READING_SLASH.fetch(name)}", rest].reject(&:empty?).join(" ")
       end
 
       def dispatch_slash(input, container:, felt_sense: nil, on_turn: nil, cancellation: nil)

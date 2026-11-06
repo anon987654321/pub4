@@ -33,25 +33,67 @@ module Master
       BACKLOG_REVIEW_HISTORY_BYTES = 8_000
       BACKLOG_REVIEW_MAX_CANDIDATES = 12
 
-      # /fix - the convergence lifecycle, and the only pipeline command. It
+      # The /fix reads that were standalone slash commands: --prove renders the
+      # convergence proof with its durable receipts (the record /fix itself
+      # writes) and --explain the measured four-tree topology. Neither reaches
+      # the repair pipeline.
+      CONVERGENCE_READ = /\A--(prove|explain)\b\s*(.*)\z/i.freeze
+
+      def convergence_read?(raw) = CONVERGENCE_READ.match?(raw)
+
+      def convergence_read(raw, root:)
+        read = raw.match(CONVERGENCE_READ)
+        render_convergence(mode: read[1].downcase, remainder: read[2].to_s, raw:, root:)
+      end
+
+      def render_convergence(mode:, remainder:, raw:, root:)
+        target = remainder.split(/\s+/).reject do |token|
+          token.match?(DISPATCH_FLAG) || token.match?(ONLY_FLAG) || DMESG_FLAGS.key?(token.downcase)
+        end
+        result = with_dmesg_verbosity(raw) do
+          case mode
+          when "prove"
+            render_proof(root:, target:)
+          when "explain"
+            Master::Convergence::Architecture.render(root:, target: target.join(" "))
+          end
+        end
+        result
+      rescue StandardError => e
+        "#{mode}0: failed — #{e.class}: #{e.message}"
+      end
+
+      def render_proof(root:, target:)
+        return Master::Convergence::Proof.render(root:) unless target.first == "history"
+
+        Master::Convergence::Proof.history(root:, argument: target.drop(1).join(" ").strip)
+      end
+
+      # The wishlist read that closes every run: the governed workstreams and
+      # their honest per-row state — what /fix still owes the trees.
+      def wishlist_report
+        Master::Convergence::Workstreams.render(root: Master::ROOT)
+      rescue StandardError => e
+        "wishlist0: failed — #{e.class}: #{e.message}"
+      end
+
+      # /fix — the convergence lifecycle, and the only pipeline command. It
       # observes, critiques, generates and picks between repairs, applies one,
       # validates it and observes again, until the tree converges, stops
       # improving, or hands back a state only a person can settle. `--dry-run`
       # stops after the reading; review, critique and council are spellings of
-      # that reading with the council on (TurnRouter::READING_SLASH).
+      # that reading with the council on (TurnRouter::READING_SLASH). The run
+      # ends with its wishlist: the governed workstreams and their state.
       #
       # Command-line overrides are temporary: a setting on one turn must
       # not change how the next command repairs the repository.
+
       def dispatch_fix(scanner:, fix_loop:, deliberation:, root:, bus:, ctx: nil, swarm: nil)
         raw = lane_flag_joined(arg_for(ctx).to_s.strip)
+        return convergence_read(raw, root:) if convergence_read?(raw)
         apply, critique, aesthetic, only, target = parse_pass_flags(raw)
         overrides = execution_overrides(raw)
-        previous_mode = Master::Fix::AutofixGuard.explicit_mode_override
-        previous_max_files = Master::Fix::RunLedger.max_files_override
-        previous_blockers = Master::Fix::CheckFocus.blockers?
-        previous_plan = Master::Fix::CheckFocus.plan?
-        previous_until = Master::Fix::CheckFocus.until_checks?
-        previous_lane = Master::Fix::WorkLane.current
+        previous = fix_state_before
 
         cancellation = ctx.cancellation if ctx.respond_to?(:cancellation)
         cancellation.activate! if cancellation&.respond_to?(:activate!)
@@ -69,13 +111,30 @@ module Master
             task_intent: overrides[:task_intent] || "functional_change"
           )
         ensure
-          Master::Fix::AutofixGuard.restore_mode_override(previous_mode)
-          Master::Fix::RunLedger.restore_max_files_override(previous_max_files)
-          Master::Fix::CheckFocus.restore_blockers(previous_blockers)
-          Master::Fix::CheckFocus.restore_plan(previous_plan)
-          Master::Fix::CheckFocus.restore_until_checks(previous_until)
-          Master::Fix::WorkLane.restore(previous_lane)
+          restore_fix_state(previous)
         end
+      end
+
+      # The execution state a single dispatch momentarily rewrites, and the
+      # restore of it: the next command must inherit what it found.
+      def fix_state_before
+        {
+          mode: Master::Fix::AutofixGuard.explicit_mode_override,
+          max_files: Master::Fix::RunLedger.max_files_override,
+          blockers: Master::Fix::CheckFocus.blockers?,
+          plan: Master::Fix::CheckFocus.plan?,
+          until_checks: Master::Fix::CheckFocus.until_checks?,
+          lane: Master::Fix::WorkLane.current,
+        }
+      end
+
+      def restore_fix_state(previous)
+        Master::Fix::AutofixGuard.restore_mode_override(previous[:mode])
+        Master::Fix::RunLedger.restore_max_files_override(previous[:max_files])
+        Master::Fix::CheckFocus.restore_blockers(previous[:blockers])
+        Master::Fix::CheckFocus.restore_plan(previous[:plan])
+        Master::Fix::CheckFocus.restore_until_checks(previous[:until_checks])
+        Master::Fix::WorkLane.restore(previous[:lane])
       end
 
       # The last run on this target named the files its red checks pointed at; they come first again.
@@ -401,7 +460,11 @@ module Master
                 end
                 ::Operator::CheckChain.persist_verified_baselines!(targets)
               end
-              results.join("\n")
+              rendered_run = results.join("\n")
+              # The run ends with its record: the governed wishlist, an honest
+              # state per workstream — what /fix still owes the trees. A
+              # wishlist failure is tail evidence, never a failed repair.
+              [rendered_run, wishlist_report].reject { |part| part.to_s.strip.empty? }.join("\n")
             end
           end
           return rendered unless Master::Fix::CodeWatch.requested?
