@@ -3,14 +3,23 @@
 // keeps laws.yml REACH_non_native_tool satisfied: python is on the banned
 // list and this tree must not invoke it, only preserve its data.
 // Usage: node scripts/convert_content.mjs
-import { readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, readFileSync, writeFileSync } from 'node:fs';
+import { basename, resolve } from 'node:path';
+import { BPLANS_ROOT } from './paths.mjs';
 
+const LEGACY_DIR = resolve(
+  process.env.BPLANS_LEGACY_SOURCE_DIR || resolve(BPLANS_ROOT, 'scripts', 'legacy'),
+);
+const OUTPUT_DIR = resolve(BPLANS_ROOT, 'scripts');
 const SRC = [
-  ['/home/z/my-project/scripts/bp_content_a.py', 'PLANS_A'],
-  ['/home/z/my-project/scripts/bp_content_b.py', 'PLANS_B'],
+  [resolve(LEGACY_DIR, 'bp_content_a.py'), 'PLANS_A'],
+  [resolve(LEGACY_DIR, 'bp_content_b.py'), 'PLANS_B'],
 ];
 
 for (const [path, name] of SRC) {
+  if (!existsSync(path)) {
+    throw new Error(`archived content source not found: ${path}; set BPLANS_LEGACY_SOURCE_DIR or skip this one-time conversion (plans_a.mjs and plans_b.mjs are already committed)`);
+  }
   const text = readFileSync(path, 'utf8');
   const starts = [];
   const headRe = new RegExp(`^${name}\\['(\\w+)'\\]\\s*=\\s*\\{`, 'gm');
@@ -67,11 +76,11 @@ for (const [path, name] of SRC) {
       }).join('\n');
       return `  ${k}: {\n${inner}\n  },`;
     }).join('\n');
-    return `// Ported from ${path.split('/').pop()} (data only, parsed as text).\n` +
+    return `// Ported from ${basename(path)} (data only, parsed as text).\n` +
       `export const ${varName} = {\n${body}\n};\n`;
   };
 
-  const out = `/home/z/my-project/scripts/${name.toLowerCase()}.mjs`;
+  const out = resolve(OUTPUT_DIR, `${name.toLowerCase()}.mjs`);
   writeFileSync(out, emit(plans, name));
   console.log(`${out}: ${Object.keys(plans).length} plans (${Object.keys(plans).join(', ')})`);
 }
