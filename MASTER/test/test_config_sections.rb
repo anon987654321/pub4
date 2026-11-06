@@ -108,4 +108,16 @@ class TestConfigSections < Minitest::Test
       BootChecks.send(:check_config_sections_yaml, File.join(tmp, "MASTER"))
     end
   end
+
+  # guidance.yml is prose for agents. A key there that grows a reader is an
+  # enforced setting hiding below the line.
+  # guidance.yml was retired on 2026-11-06: prose for agents is not
+  # configuration, and a key there that grows a reader would be an enforced
+  # setting below the line. The file stays gone and stays unread.
+  def test_nothing_reads_guidance
+    refute File.file?(File.join(Master::ROOT, "data", "guidance.yml")), "guidance.yml stayed retired"
+    bodies = Dir.glob(File.join(Master::ROOT, "{lib,bin}", "**", "*.rb")).map { |file| File.read(file) }
+
+    assert(bodies.none? { |body| body.include?("guidance.yml") }, "something reads guidance.yml")
+  end
 end
