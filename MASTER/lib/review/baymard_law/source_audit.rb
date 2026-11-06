@@ -21,22 +21,42 @@ module Master
 
         private
 
+        # An ERB region inside a tag breaks both tag extraction (`[^>]*>` stops at
+        # the `%>`'s `>`) and attribute parsing (quotes inside the interpolation).
+        # Mask every `<%...%>` span with same-length filler so offsets survive 1:1:
+        # tag heads then parse real attribute names, while dynamic VALUES read as
+        # present-but-unresolvable, which the rendered accessibility-tree review
+        # settles. Body probes that judge visible text keep the original content.
+        def erb_masked(content) = content.gsub(/<%.*?%>/m) { |span| "E" * span.length }
+
+        # A `>` closes a tag only when it sits outside a quoted attribute value.
+        # Stimulus runs on `data-action="input->auto-submit#submit"` — a naive
+        # `[^>]*>` cut the tag inside that value and dropped every attribute
+        # after it, so a control carrying aria-label past the arrow read as
+        # unnamed. The alternation consumes quoted values wholesale instead.
+        TAG_BODY = %r{(?>[^>"']|"[^"]*"|'[^']*')*}
+        FORM_CONTROL_TAG = /<(input|select|textarea)\b#{TAG_BODY.source}>/im
+        IMAGE_TAG = /<img\b#{TAG_BODY.source}>/im
+        META_TAG = /<meta\b#{TAG_BODY.source}>/im
+        INTERACTIVE_TAG = /<(button|a)\b(#{TAG_BODY.source})>(.*?)<\/\1\s*>/im
+        CLICKABLE_TAG = /<(div|span)\b#{TAG_BODY.source}>/im
+        LINK_TAG = /<a\b(#{TAG_BODY.source})>/im
+        FORM_HELPERS = /\b(?:form_with|form_for|fields_for|text_field|email_field|password_field|search_field|select_tag|label_tag)\b/
+
         def probe_form_control_names(records)
           controls = []
           unknown = []
           records.each do |record|
-            record.content.to_enum(:scan, /<(input|select|textarea)\b[^>]*>/im).each do
+            content = record.content
+            erb_masked(content).to_enum(:scan, FORM_CONTROL_TAG).each do
               match = Regexp.last_match
               tag = match[0]
               attrs = attributes(tag)
-              type = attrs["type"].to_s.downcase
-              next if type == "hidden"
-              next if %w[submit reset].include?(type)
-              next if type == "button" && !attrs["value"].to_s.strip.empty?
+              next if control_not_rendered_for_naming?(attrs)
 
               controls << [record, tag, match.begin(0), attrs]
             end
-            unknown << record if record.content.match?(/\b(?:form_with|form_for|fields_for|text_field|email_field|password_field|search_field|select_tag|label_tag)\b/) ||
+            unknown << record if content.match?(FORM_HELPERS) ||
               %w[.haml .slim].include?(File.extname(record.path).downcase)
           end
 
@@ -53,11 +73,23 @@ module Master
           [issues, controls.size, unknown.uniq]
         end
 
+        # Controls that never render for a reader, or that name themselves by
+        # construction, carry no accessible-name failure. A hidden control's
+        # labelled trigger button is what the reader meets.
+        def control_not_rendered_for_naming?(attrs)
+          return true if attrs.key?("hidden") || attrs["aria-hidden"].to_s.casecmp?("true")
+
+          type = attrs["type"].to_s.downcase
+          return true if type == "hidden" || %w[submit reset].include?(type)
+
+          type == "button" && !attrs["value"].to_s.strip.empty?
+        end
+
         def probe_image_alternatives(records)
           images = []
           unknown = []
           records.each do |record|
-            record.content.to_enum(:scan, /<img\b[^>]*>/im).each do
+            erb_masked(record.content).to_enum(:scan, IMAGE_TAG).each do
               match = Regexp.last_match
               images << [record, match[0], match.begin(0), attributes(match[0])]
             end
@@ -82,7 +114,7 @@ module Master
           elements = []
           unknown = []
           records.each do |record|
-            record.content.to_enum(:scan, /<(button|a)\b([^>]*)>(.*?)<\/\1\s*>/im).each do
+            record.content.to_enum(:scan, INTERACTIVE_TAG).each do
               match = Regexp.last_match
               tag_name = match[1].downcase
               attrs = attributes(match[2])
@@ -113,14 +145,19 @@ module Master
           unknown = []
           measured = 0
           records.each do |record|
+            masked = erb_masked(record.content)
             # Native links and buttons are the baseline. Their accessible names
             # and rendered keyboard behaviour are evaluated by separate checks.
-            measured += record.content.scan(/<button\b[^>]*>/im).size
-            measured += record.content.scan(/<a\b(?=[^>]*\bhref\s*=)[^>]*>/im).size
+            measured += masked.scan(/<button\b#{TAG_BODY.source}>/im).size
+            measured += masked.scan(LINK_TAG).count do |attr_text|
+              !attributes("<a#{attr_text}>")["href"].to_s.empty?
+            end
 
-            record.content.to_enum(:scan, /<(div|span)\b[^>]*(?:onclick\s*=)[^>]*>/im).each do
+            masked.to_enum(:scan, CLICKABLE_TAG).each do
               match = Regexp.last_match
               attrs = attributes(match[0])
+              next unless attrs.key?("onclick")
+
               measured += 1
               role = attrs["role"].to_s
               tab = Integer(attrs["tabindex"], exception: false)
@@ -158,7 +195,7 @@ module Master
         end
 
         def probe_mobile_viewport(records)
-          layouts = records.select { |record| record.relative.match?(%r{/app/views/layouts/}) }
+          layouts = records.select { |record| device_layout_document?(record) }
           return [[], 0, records] if layouts.empty?
 
           issues = []
@@ -171,25 +208,42 @@ module Master
             end
 
             measured += 1
-            tags = record.content.to_enum(:scan, /<meta\b[^>]*>/im).filter_map do
-              tag = Regexp.last_match[0]
-              attrs = attributes(tag)
-              [tag, attrs] if attrs["name"].to_s.casecmp?("viewport")
-            end
-            valid = tags.any? do |_tag, attrs|
-              attrs["content"].to_s.match?(/(?:\A|,)\s*width\s*=\s*device-width(?:\s*,|\z)/i)
-            end
-            next if valid
-
-            message = if tags.empty?
-                        "Application layout declares no viewport meta element."
-                      else
-                        "Viewport meta element does not declare width=device-width."
-                      end
-            offset = tags.empty? ? 0 : (record.content.index(tags.first.first) || 0)
-            issues << issue(record, offset, message)
+            audit_viewport(record, issues, unknown)
           end
           [issues, measured, unknown.uniq]
+        end
+
+        # Mailers and underscore partials shape no device viewport; only a full
+        # HTML document layout does.
+        def device_layout_document?(record)
+          record.relative.match?(%r{/app/views/layouts/}) &&
+            !File.basename(record.path).start_with?("_") &&
+            record.content.match?(%r{<\s*(?:html|head)\b}i)
+        end
+
+        def audit_viewport(record, issues, unknown)
+          content = record.content
+          tags = erb_masked(content).to_enum(:scan, META_TAG).filter_map do
+            tag = Regexp.last_match[0]
+            attrs = attributes(tag)
+            [tag, attrs] if attrs["name"].to_s.casecmp?("viewport")
+          end
+          # A layout that renders its meta through ERB (`tag.meta name: "viewport"`)
+          # has no inspectable meta element after masking. The declaration exists,
+          # but only the rendered accessibility-tree review can read it.
+          if tags.empty? && content.match?(%r{<%[^%]*\bviewport\b[^%]*%>}im)
+            unknown << record
+            return
+          end
+          return if tags.any? { |_tag, attrs| attrs["content"].to_s.match?(/(?:\A|,)\s*width\s*=\s*device-width(?:\s*,|\z)/i) }
+
+          message = if tags.empty?
+                      "Application layout declares no viewport meta element."
+                    else
+                      "Viewport meta element does not declare width=device-width."
+                    end
+          offset = tags.empty? ? 0 : (content.index(tags.first.first) || 0)
+          issues << issue(record, offset, message)
         end
 
         def named_control?(attrs, content, offset)
@@ -275,9 +329,18 @@ module Master
         end
 
         def attributes(tag)
-          tag.scan(/([a-zA-Z_:][\w:.-]*)\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]+))/).each_with_object({}) do |match, out|
+          pairs = /([a-zA-Z_:][\w:.-]*)\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]+))/
+          out = tag.scan(pairs).each_with_object({}) do |match, out|
             out[match[0].downcase] = (match[1] || match[2] || match[3]).to_s
           end
+          # Bare boolean attributes (`hidden`, `disabled`, `required`) carry no
+          # `=`. Pairs scan never sees them; scan the residue outside quoted
+          # values so words inside a value are not misread as keys.
+          residue = tag.delete_prefix("<").gsub(/"[^"]*"|'[^']*'/, " ")
+          residue.scan(/(?:\A|\s)([a-zA-Z_:][\w:.-]*)(?=[\s>\/]|\z)/).each do |(word)|
+            out[word.downcase] ||= ""
+          end
+          out
         end
 
         def issue(record, offset, message)

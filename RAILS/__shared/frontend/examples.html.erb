@@ -10,7 +10,9 @@
 
 <%# Clipboard: copy link/command/text %>
 <div data-controller="clipboard" data-clipboard-success-content-value="Copied">
-  <input data-clipboard-target="source" type="text" value="<%= local_assigns.fetch(:copy_text, request.original_url) %>" readonly>
+  <input data-clipboard-target="source" type="text"
+    value="<%= local_assigns.fetch(:copy_text, request.original_url) %>"
+    readonly aria-label="Copy source">
   <button type="button" data-action="clipboard#copy" data-clipboard-target="button">Copy</button>
 </div>
 

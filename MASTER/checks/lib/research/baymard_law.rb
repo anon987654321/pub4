@@ -1,6 +1,10 @@
 # frozen_string_literal: true
 
 require_relative "../../support/check_result"
+# The review law reads profiles and evidence through Master.load_yaml, which only
+# exists after lib/master.rb extends DataLoading. Minitest gets it from test_helper;
+# the check runner loads this file alone, so it boots the owner here.
+require_relative "../../../lib/master"
 require_relative "../../../lib/review/baymard_law"
 
 module Deploy

@@ -154,6 +154,75 @@ class TestBaymardLaw < Minitest::Test
     end
   end
 
+  # ERB interpolations inside a tag must not hide the attributes that follow:
+  # `%>` once ended tag extraction and the interior quotes broke attribute
+  # parsing, so every dynamically-sourced view failed as unnamed. The mask keeps
+  # offsets and reads dynamic values as present, leaving rendered evidence to
+  # resolve them.
+  def test_erb_interpolated_attributes_stay_inspectable
+    with_fixture do |dir, rails, profile|
+      File.write(File.join(rails, "app", "views", "demo", "index.html.erb"), <<~HTML)
+        <img loading="lazy" src="<%= edition.hero_url %>" alt="<%= edition.hero_alt %>" width="620">
+        <input type="checkbox" value="<%= report.id %>" aria-label="<%= t("a11y.report", id: report.id) %>">
+        <input id="map-search" type="search" placeholder="<%= t("search.places") %>"
+          aria-label="<%= t("search.places") %>">
+        <img src="/decorative.jpg" alt="">
+      HTML
+      File.write(File.join(rails, "app", "views", "layouts", "application.html.erb"),
+        "<html><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">" \
+        "<body><%= yield %></body></html>")
+
+      report = Master::Review::BaymardLaw.new(root: dir, apps: ["demo"], profile:).call
+      outcomes = report.assessments.to_h { |item| [item.check_id, item.status] }
+
+      assert_equal "pass", outcomes.fetch("image_alternatives")
+      assert_equal "pass", outcomes.fetch("form_control_names")
+    end
+  end
+
+  # `data-action="input->auto-submit#submit"` carries a `>` inside a quoted
+  # attribute value. The `[^>]*>` tag reader ended the tag on that arrow and
+  # dropped every attribute after it, so this very control — named with an
+  # aria-label that only the arrow hid — read as unnamed.
+  def test_quoted_arrow_inside_attribute_value_no_longer_truncates_the_tag
+    with_fixture do |dir, rails, profile|
+      File.write(File.join(rails, "app", "views", "demo", "index.html.erb"), <<~HTML)
+        <form action="/search" method="get">
+          <input type="search" name="q" placeholder="Search"
+            data-action="input->auto-submit#submit" aria-label="Search query">
+        </form>
+      HTML
+
+      File.write(File.join(rails, "app", "views", "layouts", "application.html.erb"), <<~HTML)
+        <html><meta name="viewport" content="width=device-width, initial-scale=1"><body><%= yield %></body></html>
+      HTML
+
+      report = Master::Review::BaymardLaw.new(root: dir, apps: ["demo"], profile:).call
+      outcomes = report.assessments.to_h { |item| [item.check_id, item.status] }
+
+      assert_equal "pass", outcomes.fetch("form_control_names")
+    end
+  end
+
+  # A layout that renders its viewport meta through ERB (`<%= tag.meta name: "viewport" ... %>`)
+  # has no inspectable meta element in source — that is an unknown the rendered
+  # review resolves, not a fail on a declaration the source plainly makes.
+  def test_erb_rendered_viewport_is_unknown_not_a_failed_layout
+    with_fixture do |dir, rails, profile|
+      viewport = <<~HTML
+        <html><head><%= tag.meta name: "viewport",
+          content: "width=device-width, initial-scale=1, viewport-fit=cover" %></head><body><%= yield %></body></html>
+      HTML
+      File.write(File.join(rails, "app", "views", "layouts", "application.html.erb"), viewport)
+
+      report = Master::Review::BaymardLaw.new(root: dir, apps: ["demo"], profile:).call
+      outcomes = report.assessments.to_h { |item| [item.check_id, item.status] }
+
+      assert_equal "inconclusive", outcomes.fetch("mobile_viewport")
+      assert_empty report.findings.select { |finding| finding.check_id == "mobile_viewport" }
+    end
+  end
+
   def test_good_markup_passes_source_probes_but_does_not_invent_user_testing
     with_fixture do |dir, rails, profile|
       write_good_surface(rails)
