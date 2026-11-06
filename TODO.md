@@ -106,11 +106,18 @@ second push path or duplicate orchestration to make TODO.md machine-readable.
   two surfaces per app and viewport. Expand only after measuring cost. Keep
   VoiceOver/NVDA announcement tests and human assistive-technology sessions
   separate from automated AX-tree checks.
-- [ ] **Human task evidence.** Collect privacy-reviewed, anonymised evidence
+- [ ] **Human task evidence.** BLOCKED (2026-11-06): needs real, consenting
+  participants and the operator's privacy review; no tool or agent may stand in.
+  Original row: Collect privacy-reviewed, anonymised evidence
   for navigation, search recovery, product evaluation, cart costs, guest
   checkout/recovery, mobile completion, keyboard and assistive technology.
   Never manufacture participants or observations.
-- [ ] **WebGL proof.** Verify Brgen Maps clustering in a real browser at
+- [ ] **WebGL proof.** BLOCKED for Brgen Maps (2026-11-06): no MapLibre bundle
+  is loaded at runtime (RAILS/test/marketplace_cart_contract_test.rb forbids the
+  vendor and CDN bundles), so maps.brgen.no always renders the list fallback
+  and there is no clustering to verify; needs the operator's decision to ship a
+  MapLibre bundle (and its CSP). The fallback's layout was fixed in 295b462b3c.
+  The BSDPorts half is still open. Original row: Verify Brgen Maps clustering in a real browser at
   mobile/desktop widths: cluster expansion, popups, search, cross-city links,
   keyboard/list alternative, failure fallback, context teardown and console.
   Run its focused Rails test. Verify BSDPorts' dependency graph in a real
@@ -219,7 +226,9 @@ measure is already owned by the Bymorgen item above.
   levering, også på kvelden" et al., `brgen/config/locales/nb.yml:86-88`)
   at 1:1 for size and AA contrast while there.
   Laws: `TRUTHFUL_STATUS`, `OPERATOR_RENDERED`, `PROPORTION_contrast`.
-- [ ] **BPLANS template defects.** `BPLANS/__templates/bob.html` and
+- [ ] **BPLANS template defects.** BLOCKED (2026-11-06): the row itself makes
+  the bob/bob2 retrofit the operator's decision (PRESERVE_FIRST); needs that
+  decision. Original row: `BPLANS/__templates/bob.html` and
   `bob2.html` both open with a spreadsheet-helper `<script>` block before
   `<!DOCTYPE html>` (standards-mode risk), and bob.html's print block has a
   malformed selector (`aref^="mailto:"]`). The pair also set
