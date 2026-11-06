@@ -974,7 +974,6 @@ en:
     new_room: new room
   storefront:
     deliver_to: Deliver to
-    sign_in: sign in
     account: Account
     cart: Cart
     listings: Listings

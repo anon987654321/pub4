@@ -308,11 +308,6 @@ measure is already owned by the Bymorgen item above.
   or state the unknown once, keeping the row dense. Distinct from the
   first-pass readability item; no redesign.
   Laws: `AFFORDANCE_CLARITY`, `DENSITY`, `TRUTHFUL_STATUS`.
-- [ ] **Sign-in casing.** `brgen/config/locales/nb.yml:985` declares
-  `storefront.sign_in: logg inn` while the community chrome at `:85` uses
-  "Logg inn" and bsdports matches "Logg inn". One casing for one action;
-  pick the operator's form and move the storefront key onto it.
-  Laws: `SINGULARITY_one_true_mark`, `STRUNK_WHITE`.
 - [ ] **BPLANS template defects.** `BPLANS/__templates/bob.html` and
   `bob2.html` both open with a spreadsheet-helper `<script>` block before
   `<!DOCTYPE html>` (standards-mode risk), and bob.html's print block has a

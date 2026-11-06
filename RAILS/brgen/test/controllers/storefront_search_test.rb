@@ -149,4 +149,15 @@ class StorefrontSearchTest < ActionDispatch::IntegrationTest
     assert_equal 1, page_search_fields.size
     assert_nil header_form["data-controller"]
   end
+  # The storefront header said "logg inn" while every other chrome says
+  # "Logg inn": one action, one label, so it reads the nav key.
+  test "a guest's storefront account link says sign in as the rest of the chrome does" do
+    host! "markedsplass.brgen.no"
+    get marketplace.listings_path
+
+    assert_response :success
+    label = css_select(".storefront-bol-account a.nav-block .nav-block-label").first
+    assert label, "the storefront header carries the account link"
+    assert_equal I18n.t("nav.sign_in"), label.text.strip
+  end
 end

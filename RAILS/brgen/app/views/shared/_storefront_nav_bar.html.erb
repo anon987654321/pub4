@@ -3,6 +3,7 @@
 <% deliver_to = local_assigns.fetch(:deliver_to, Current.city_record&.name.presence || Current.city_name) %>
 <% cart = local_assigns[:cart] %>
 <% variant = local_assigns.fetch(:variant, :default).to_sym %>
+<% account_label = authenticated? ? (Current.user.username.presence || t("storefront.account")) : t("nav.sign_in") %>
 
 <% if variant == :bol %>
   <div class="storefront-utility storefront-utility--bol" aria-label="<%= t("marketplace.utility.label") %>">
@@ -52,7 +53,7 @@
         <%= link_to(authenticated? ? main_app.user_path(Current.user) : main_app.new_session_path,
                     class: "nav-block nav-hover") do %>
           <%= icon :profile, size: 22 %>
-          <span class="nav-block-label"><%= authenticated? ? (Current.user.username.presence || t("storefront.account")) : t("storefront.sign_in") %></span>
+          <%= tag.span account_label, class: "nav-block-label" %>
         <% end %>
         <% if cart %>
           <%= link_to cart[:path], id: "cartLink",
@@ -94,7 +95,7 @@
         <%= link_to(authenticated? ? main_app.user_path(Current.user) : main_app.new_session_path,
                     class: "nav-block nav-hover") do %>
           <%= icon :profile, size: 22 %>
-          <span class="nav-block-label"><%= authenticated? ? (Current.user.username.presence || t("storefront.account")) : t("storefront.sign_in") %></span>
+          <%= tag.span account_label, class: "nav-block-label" %>
         <% end %>
         <% if cart %>
           <%= link_to cart[:path], id: "cartLink", aria: { label: t("storefront.cart") },

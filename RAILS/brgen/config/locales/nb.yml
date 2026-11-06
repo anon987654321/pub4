@@ -981,7 +981,6 @@ nb:
     new_room: nytt rom
   storefront:
     deliver_to: Leveres til
-    sign_in: logg inn
     account: Konto
     cart: Kurv
     listings: Annonser
