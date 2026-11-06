@@ -21,4 +21,18 @@ class LookGridMirrorTest < Minitest::Test
     refute_nil even, "even looks take the odd grid, and their titles land in the narrow column"
     assert_equal odd.split(/\s+(?=minmax)/).reverse, even.split(/\s+(?=minmax)/)
   end
+
+  def test_luxury_look_titles_keep_words_intact_at_desktop_measures
+    rule = SCSS.scan(
+      /body\\[data-surface="luxury"\\] main#main-content \.amber-look-title\\s*\\{([^}]+)\\}/m
+    ).flatten.last
+
+    refute_nil rule, "the rendered look title needs its own measurable rule"
+    assert_includes rule, "max-inline-size: none"
+    assert_includes rule, "overflow-wrap: normal"
+    assert_includes rule, "word-break: normal"
+    assert_includes rule, "hyphens: none"
+    assert_includes rule, "font-size: clamp(2.2rem, 4.5vw, 4rem)"
+  end
+
 end
