@@ -86,11 +86,13 @@ class TestRatchets < Minitest::Test
       Operator::Ratchets.stub(:name_rows, []) { Operator::Ratchets.deep_rows(rails: false) }
     end
     row = deep.find { |candidate| candidate.name == "law_trace" }
-    laws = Master.load_yaml(File.join(Operator::Ratchets::MASTER, "data", "laws.yml"))
-    recorded = laws.dig("law_map", "law_trace_ceiling")
+    # laws.yml holds the flat constitutional catalogue and no law_map; the
+    # catalogue's execution policy lives behind the transitional law_runtime.yml,
+    # which Master.law reads - the recorded ceiling is whatever that home says.
+    recorded = Master.law("law_map").fetch("law_trace_ceiling")
 
     assert_equal recorded, row.ceiling,
-                 "law_trace must use laws.yml#law_map rather than a stale presentation-layer baseline"
+                 "law_trace must use law_map rather than a stale presentation-layer baseline"
   end
 
   def test_no_ratchet_is_over_its_ceiling
