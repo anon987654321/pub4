@@ -22,6 +22,8 @@ ENV["MASTER_VISUAL_ENGINES"] = "chrome"
 ENV["MASTER_FIX_INSTRUMENT_CHECK"] = "0"
 # A test that counts a law's calls must see the law run; the finding cache has its own test.
 ENV["MASTER_SCAN_CACHE"] = "0"
+# A test that stubs an instrument must not leave its rows for a real measurement to reuse.
+ENV["MASTER_RATCHET_CACHE"] = "0"
 # A test whose narrator speaks started the bard's music bed through the speakers, mid-suite.
 ENV["MASTER_BED"] = "0"
 # The machine's own lane state graded routing tests: a real agy quota, a key in
