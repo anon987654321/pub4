@@ -1,5 +1,5 @@
 #!/usr/bin/env zsh
-# Workstation deploy entrypoint - one command, hands-off by default.
+# Workstation deploy entrypoint — one command, hands-off by default.
 #
 #   ./redeploy                 # all apps; wait until done; state + canary
 #   ./redeploy brgen           # one app

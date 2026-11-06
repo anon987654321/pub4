@@ -86,7 +86,7 @@ no "it is just a document" bypass is claimed anywhere.
   mechanism that works; recorded in the restoration report.
 - **HTML_HEADING_HIERARCHY** — h1→h2→h3 verified per file; the new blocks
   add h3 under existing h2 sections only.
-- **TYPOGRAPHY_DISCIPLINE / ASCII_PUNCTUATION** — the character audit
+- **TYPOGRAPHY_DISCIPLINE / TYPOGRAPHIC_EXCELLENCE** — the character audit
   restricts non-ASCII to the anlage's own set (Norwegian letters, guillemets,
   dashes, curly quotes, −, ₂/³, ™, ·, §, °).
 - **NO_EYEBROW_LABEL / NO_TRAILING_ARROW / NO_ASCII_LINE_ART** — checked

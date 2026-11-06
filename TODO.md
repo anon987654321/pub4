@@ -1,4 +1,4 @@
-# pub4 - remaining work
+# pub4 — remaining work
 
 Audit snapshot: 2026-11-06, rechecked against `main@40d260cab2c2b92a268e2ccbc24695fcb22cfaa3` immediately before this consolidation.
 This register replaces the previous 1,275-line, 462-checkbox carry-forward
@@ -274,14 +274,14 @@ preserve those strengths.
   after checking references, generators, links, tests and agent entrypoints.
   Preserve useful recovery/provenance records. Update sources and generators
   together; add no Markdown files.
-- [ ] **Historical hardening review.** Reconcile the remaining P01-P11
+- [ ] **Historical hardening review.** Reconcile the remaining P01–P11
   findings in `MASTER/docs/history/fix-review-log.md`. L4 stale-member
   detection/tests, L5 heredoc/keyword detection plus structured Council
   ideation, L7 declarative/runtime parity assertion, and L8 parse-time
   check-registry refusal now have source coverage on `main`; their focused
   test runs remain NOT_RUN. L4's stored census is not re-baselined until a
   pinned Ruby 4.0.5 run has reported exact member drift. Continue with the
-  genuinely open R3/R8-R13/R16-R17/H2-H8 findings. The LLMDispatcher
+  genuinely open R3/R8–R13/R16–R17/H2–H8 findings. The LLMDispatcher
   Replicate chat poll is source-fixed for URL trust, bearer-token confinement
   and network deadlines. STUDIO ReplicateClient now validates model, version,
   training and prediction identifiers before URL interpolation and rejects

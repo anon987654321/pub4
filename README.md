@@ -8,16 +8,16 @@ must satisfy.
 
 ## The four trees
 
-- `MASTER/` - the constitution, the runtime and the instruments: the Law
+- `MASTER/` — the constitution, the runtime and the instruments: the Law
   catalogue, the scanner, `/fix`, `/review`, `/critique`, and the operator and
   agent entrypoints. Start at `MASTER/README.md`; the workflow contract is
   `MASTER/AGENTS.md`.
-- `RAILS/` - the applications and their shared engine, with the deploy
+- `RAILS/` — the applications and their shared engine, with the deploy
   tooling that carries them. Start at `RAILS/README.md`.
-- `OPENBSD/` - the vm23 deployment tree: VPS configuration under `etc/`,
+- `OPENBSD/` — the vm23 deployment tree: VPS configuration under `etc/`,
   `usr/` and `var/`, DNS, relayd, and the operator scripts. Live work starts
   at `OPENBSD/RUNBOOK.md`.
-- `STUDIO/` - the media tools: Dilla, photograph and the Replicate client.
+- `STUDIO/` — the media tools: Dilla, photograph and the Replicate client.
   `STUDIO/Rakefile` is the tree's check surface.
 
 ## How to enter
@@ -47,7 +47,7 @@ catalogue. A missing or unrun measurement is INCONCLUSIVE, never PASS.
 
 `VERSION` records the release line. The FULL.yml rule corpus was retired on
 2026-11-02: it declared itself `not_a_live_config` and every one of its rows
-in `MASTER/data/law_runtime.yml` is marked covered - the constitution lives
+in `MASTER/data/law_runtime.yml` is marked covered — the constitution lives
 in `MASTER/law/` and `MASTER/data/laws.yml`. The working master of the FETAT
 proposal (a document, not policy) lives at `STUDIO/docs/fetat/proposal.md`.
 `redeploy` is the workstation deploy entrypoint.
