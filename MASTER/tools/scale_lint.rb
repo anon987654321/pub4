@@ -206,7 +206,8 @@ module Operator
     DECLARATION = Master::Design::Scale::DECLARATION
 
     def check(file, line, prop, value)
-      check_alpha(file, line, prop, value) + case prop
+      colours = off_token(prop, value).map { |literal| Finding.new(file, line, "off_token_color", literal, prop) }
+      check_alpha(file, line, prop, value) + colours + case prop
       when *SPACE_PROPS
         off_scale_lengths(value, space_px).map { |v| Finding.new(file, line, "off_scale_space", v, prop) }
       when "border-radius"
@@ -253,6 +254,43 @@ module Operator
     end
 
     def opacity = @opacity ||= scale.fetch("opacity").map { |v| Float(v) }
+
+    # stylelint-declaration-strict-value's rule, in Ruby: a colour property names a token, a
+    # keyword or a colour tokens.yml declares. A literal hex or rgb() nothing declares is drift;
+    # one that matches a declared colour is still a literal, but not a new colour.
+    COLOR_PROPS = %w[color background background-color border border-top border-right border-bottom border-left
+                     border-color outline outline-color fill stroke caret-color text-decoration-color
+                     accent-color].freeze
+    LITERAL_COLOR = /#\h{3,8}\b|rgba?\([^)]*\)/
+
+    def off_token(prop, value)
+      return [] unless COLOR_PROPS.include?(prop)
+
+      value.scan(LITERAL_COLOR).select do |literal|
+        hex = hex_of(literal)
+        hex && !palette.include?(hex)
+      end
+    end
+
+    def hex_of(literal)
+      if literal.start_with?("#")
+        digits = literal.delete_prefix("#").downcase
+        digits = digits.chars.map { |digit| digit * 2 }.join if digits.size <= 4
+        return "##{digits[0, 6]}"
+      end
+      channels = literal.scan(/[\d.]+/).first(3).map { |part| part.to_f.round.clamp(0, 255) }
+      format("#%02x%02x%02x", *channels) if channels.size == 3
+    end
+
+    def palette = @palette ||= (%w[#000000 #ffffff] + hexes(tokens)).uniq
+
+    def hexes(node)
+      case node
+      when Hash then node.values.flat_map { |value| hexes(value) }
+      when Array then node.flat_map { |value| hexes(value) }
+      else node.to_s.match?(/\A#\h{3}(?:\h{3})?\z/) ? [hex_of(node.to_s.strip)] : []
+      end
+    end
 
     # A percentage radius is a circle or a pill, not a step -- 50% and 100% are
     # shapes and the scale has nothing to say about them.
@@ -320,5 +358,30 @@ module Operator
     # and a path that resolves against the wrong one points at nothing.
     def rel(path) = path.sub("#{REPO_ROOT}/", "")
 
+    module Census
+      PROPS = %w[font-size line-height font-weight letter-spacing color background-color border-color border-radius
+                 padding margin gap box-shadow z-index].freeze
+      DECLARATION = /(?<![-\w])(?<prop>[a-z-]+)\s*:\s*(?<value>[^;{}]+)/
+      BUILD = "app/assets/builds/application.css"
+
+      module_function
+
+      # prop => number of distinct values, comments stripped and values normalised.
+      def counts(css)
+        body = css.gsub(%r{/\*.*?\*/}m, " ")
+        seen = Hash.new { |hash, key| hash[key] = {} }
+        body.scan(DECLARATION) { seen[Regexp.last_match[:prop]][normal(Regexp.last_match[:value])] = true }
+        PROPS.to_h { |prop| [prop, seen[prop].size] }
+      end
+
+      def normal(value) = value.sub(/!important/, "").strip.downcase.squeeze(" ")
+
+      # app => compiled stylesheet, for the apps whose build is present in this tree.
+      def builds(rails_root)
+        Dir.glob(File.join(rails_root, "*", BUILD)).to_h do |path|
+        [path.delete_prefix("#{rails_root}/").split("/").first, path]
+      end
+      end
+    end
   end
 end

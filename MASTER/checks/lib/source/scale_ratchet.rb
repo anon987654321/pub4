@@ -47,11 +47,54 @@ module Deploy
         end
       end
 
+      compiled(result)
+
       # A surface with no baselines compares nothing, and a lint that read no
       # files reports zero for every kind, which is indistinguishable from clean.
       result.inconclusive!("scale_ratchet: no baselines declared for any surface - design_tokens.yml scale.baselines is unread") if result.checks_ran.zero?
 
       [over, under]
+    end
+
+    CENSUS = Operator::ScaleLint::Census
+
+    # Distinct values per property in each app's compiled CSS against
+    # scale.baselines.compiled. Soft while the counts are young: they were first
+    # measured 2026-11-06 from builds that lag origin, and a hard ratchet on a
+    # number nobody has watched move would fail a deploy for a stylesheet's
+    # history rather than for drift.
+    def self.compiled(result, rails_root: LINT::RAILS_ROOT)
+      baselines = compiled_baselines
+      builds = CENSUS.builds(rails_root)
+      (baselines.keys - builds.keys).each do |app|
+        result.warn("scale_ratchet: compiled.#{app} not measured - no #{CENSUS::BUILD}")
+      end
+      builds.slice(*baselines.keys).each { |app, path| compiled_app(result, app, path, baselines.fetch(app)) }
+    end
+
+    # tokens.yml scale.baselines "compiled.<app>.<property>" rows, as app => property => baseline.
+    def self.compiled_baselines
+      rows = LINT.baselines.select { |key, _value| key.start_with?("compiled.") }
+      rows.each_with_object(Hash.new { |hash, app| hash[app] = {} }) do |(key, baseline), apps|
+        _prefix, app, prop = key.split(".", 3)
+        apps[app][prop] = baseline
+      end
+    end
+
+    def self.compiled_app(result, app, path, baselines)
+      counts = CENSUS.counts(File.read(path))
+      baselines.each { |prop, baseline| ratchet(result, "compiled.#{app}.#{prop}", [counts[prop].to_i, baseline]) }
+    end
+
+    def self.ratchet(result, name, measured)
+      count, baseline = measured
+      result.checked!
+      if count > baseline
+        over = "scale_ratchet: #{name}: #{count} (baseline #{baseline}, +#{count - baseline})"
+        return result.fail(over, severity: :soft)
+      end
+
+      result.warn("scale_ratchet: new low #{name}: #{count} (baseline #{baseline})") if count < baseline
     end
 
     def self.run

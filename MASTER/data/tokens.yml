@@ -1318,6 +1318,9 @@ tokens:
         off_scale_tracking: 6
         off_scale_opacity: 20
         off_scale_duration: 16
+        # Literal colours in colour properties that tokens.yml does not declare
+        # (ScaleLint off_token_color), first counted 2026-11-06 on origin.
+        off_token_color: 24
       face:
         off_scale_space: 17
         off_scale_radius: 0
@@ -1327,6 +1330,62 @@ tokens:
         off_scale_tracking: 12
         off_scale_opacity: 27
         off_scale_duration: 28
+        off_token_color: 10
+      # Distinct values per property in each compiled application.css (Wallace's
+      # census, Operator::CssCardinality), measured 2026-11-06 from the builds
+      # then in the shared checkout. Soft ratchet: counts may only fall.
+      compiled.amber.font-size: 40
+      compiled.amber.line-height: 15
+      compiled.amber.font-weight: 9
+      compiled.amber.letter-spacing: 13
+      compiled.amber.color: 37
+      compiled.amber.background-color: 9
+      compiled.amber.border-color: 9
+      compiled.amber.border-radius: 17
+      compiled.amber.padding: 68
+      compiled.amber.margin: 35
+      compiled.amber.gap: 40
+      compiled.amber.box-shadow: 1
+      compiled.amber.z-index: 13
+      compiled.brgen.font-size: 64
+      compiled.brgen.line-height: 18
+      compiled.brgen.font-weight: 10
+      compiled.brgen.letter-spacing: 17
+      compiled.brgen.color: 67
+      compiled.brgen.background-color: 8
+      compiled.brgen.border-color: 26
+      compiled.brgen.border-radius: 27
+      compiled.brgen.padding: 127
+      compiled.brgen.margin: 56
+      compiled.brgen.gap: 48
+      compiled.brgen.box-shadow: 1
+      compiled.brgen.z-index: 44
+      compiled.bsdports.font-size: 27
+      compiled.bsdports.line-height: 9
+      compiled.bsdports.font-weight: 7
+      compiled.bsdports.letter-spacing: 9
+      compiled.bsdports.color: 20
+      compiled.bsdports.background-color: 7
+      compiled.bsdports.border-color: 6
+      compiled.bsdports.border-radius: 12
+      compiled.bsdports.padding: 49
+      compiled.bsdports.margin: 17
+      compiled.bsdports.gap: 18
+      compiled.bsdports.box-shadow: 1
+      compiled.bsdports.z-index: 10
+      compiled.mrdamascy.font-size: 6
+      compiled.mrdamascy.line-height: 3
+      compiled.mrdamascy.font-weight: 2
+      compiled.mrdamascy.letter-spacing: 1
+      compiled.mrdamascy.color: 12
+      compiled.mrdamascy.background-color: 1
+      compiled.mrdamascy.border-color: 3
+      compiled.mrdamascy.border-radius: 5
+      compiled.mrdamascy.padding: 30
+      compiled.mrdamascy.margin: 25
+      compiled.mrdamascy.gap: 6
+      compiled.mrdamascy.box-shadow: 0
+      compiled.mrdamascy.z-index: 8
 
 
   layout_rules:
