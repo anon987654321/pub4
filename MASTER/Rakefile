@@ -891,14 +891,12 @@ end
       "authorization: operator request 2026-10-27 (chat e2c7ceca) - ideate over the planned rows; every pick stays law-gated" =>
         "one operator request authorized the whole per-app ideation batch; each ideations record is standalone and names the authorization it ran under",
       "# Split out of data/limits.yml on 2026-10-31." =>
-        "coincident provenance note for one split event: budgets, guidance and scan each carry the same date line under their own header prose",
+        "coincident provenance note for one split event: budgets and scan each carry the same date line under their own header prose",
       "auxiliary: '(?:was|were|been)'" =>
         "same detector row in both registries during the documented registry migration: the passive-voice pattern block is normative in laws.yml and consumed from law_runtime.yml",
       "banned_commands: [sed, awk, tr, cut, find, head, tail, wc, perl, python, bash]" =>
         "same detector row in both registries during the documented registry migration: the zsh ban list is normative in laws.yml and read from law_runtime.yml by Io::GnuTextTools",
-      # "strategy: highest_priority_wins" was removed rather than expired:
-      # the line now exists only in guidance.yml (the limits.yml half was
-      # split away), so it is no longer a cross-file duplicate at all.
+
       # The nineteen visual/ad law-line exemptions were removed the same way:
       # upstream collapsed the migration block, so no cross-file duplicate
       # remains for them to name.
