@@ -115,20 +115,21 @@ module Master
       def stop_interactive(pid)
         Process.kill("TERM", -pid)
         deadline = Process.clock_gettime(Process::CLOCK_MONOTONIC) + TERM_GRACE_S
+        reaped = false
         loop do
-          return true if Process.waitpid(pid, Process::WNOHANG)
+          reaped ||= !!Process.waitpid(pid, Process::WNOHANG)
           break if Process.clock_gettime(Process::CLOCK_MONOTONIC) >= deadline
 
           sleep(POLL_INTERVAL_S)
         end
         Process.kill("KILL", -pid)
-        Process.waitpid(pid)
+        Process.waitpid(pid) unless reaped
         true
       rescue Errno::ECHILD
         true
       rescue Errno::ESRCH
         begin
-          Process.waitpid(pid)
+          Process.waitpid(pid) unless reaped
         rescue Errno::ECHILD
           nil
         end
