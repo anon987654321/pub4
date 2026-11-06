@@ -7,7 +7,7 @@ schema: 1
 name: pub4_backlog
 generated_by: MASTER/tools/backlog.rb
 source: TODO.md (repository root)
-entry_count: 470
+entry_count: 469
 entries:
 - id: move-generated-snapshot-md-out-of-the-root
   text: >-
@@ -5997,18 +5997,6 @@ entries:
   tree: cross
   kind: mechanical
   size: m
-  scope_paths: []
-  done_when:
-  done_when_note: no runnable command named in the item text
-- id: keep-a-verified-free-provider-ledger-row-per
-  text: >-
-    Keep a verified free-provider ledger row per provider (limit, models,
-    keyless?, verified-on) so every free-tier fact carries its own staleness
-    signal.
-  section: model pool — free compute and never-modelless (researched 2026-11-06)
-  tree: cross
-  kind: mechanical
-  size: s
   scope_paths: []
   done_when:
   done_when_note: no runnable command named in the item text
