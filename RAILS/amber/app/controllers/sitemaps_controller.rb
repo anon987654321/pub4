@@ -3,16 +3,23 @@
 class SitemapsController < ApplicationController
   include Shared::Sitemapable
 
+  # Four thousand rows and their URL helpers rebuilt per crawler hit; an
+  # hour of staleness is far inside every changefreq here, and the host is
+  # in the key because a sitemap may only carry its own host's URLs.
+  SITEMAP_TTL = 1.hour
+
   private
 
   def sitemap_entries
-    [
-      entry(root_url, changefreq: "daily", priority: "1.0"),
-      entry(posts_url, changefreq: "daily", priority: "0.6"),
-      *demo_entries,
-      *creator_entries,
-      *post_entries,
-    ]
+    Rails.cache.fetch("sitemap/entries/#{request.host}", expires_in: SITEMAP_TTL) do
+      [
+        entry(root_url, changefreq: "daily", priority: "1.0"),
+        entry(posts_url, changefreq: "daily", priority: "0.6"),
+        *demo_entries,
+        *creator_entries,
+        *post_entries,
+      ]
+    end
   end
 
   # The demo wardrobe is amber's one public catalogue: its page and each garment.

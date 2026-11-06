@@ -10,10 +10,23 @@ class SitemapsController < ApplicationController
   # Trending is an aggregate over the whole tagging window, not a page of rows —
   # it earns a tighter cap than the per-model one.
   HASHTAG_CAP = 200
+  # The default branch alone sorts Post.hot (a julianday expression no index
+  # can serve) over up to 2,000 rows, then communities, users and listings
+  # besides - per crawler hit, on 44 domains. Half an hour of staleness is
+  # inside every changefreq below, and the host is in the key twice over:
+  # the resolved subapp differs per host and a sitemap may only carry its
+  # own host's URLs.
+  SITEMAP_TTL = 30.minutes
 
   private
 
   def sitemap_entries
+    Rails.cache.fetch("sitemap/entries/#{request.host}", expires_in: SITEMAP_TTL) do
+      build_sitemap_entries
+    end
+  end
+
+  def build_sitemap_entries
     subapp = Brgen::DomainRegistry.resolve(request.host).subapp
     entries = [ Shared::SitemapBuilder::Entry.new(loc: root_url, changefreq: "daily", priority: "1.0") ]
 
