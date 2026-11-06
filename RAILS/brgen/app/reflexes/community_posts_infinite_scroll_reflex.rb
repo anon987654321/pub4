@@ -18,7 +18,10 @@ class CommunityPostsInfiniteScrollReflex < Shared::InfiniteScrollReflex
     return Post.none unless community&.readable_by?(Current.user)
 
     posts = community.posts.hot
-    scope = posts.with_attached_image.includes(:user, :community, :votes)
+    # with_attached_images alongside image: the card partial reads both, and
+    # the profile scope's image-only preload left one attachment query per
+    # multi-image post on every appended page.
+    scope = posts.with_attached_image.with_attached_images.includes(:user, :community, :votes)
     flair = element.dataset["flair"].to_s
     flair.present? ? scope.where(flair:) : scope
   end

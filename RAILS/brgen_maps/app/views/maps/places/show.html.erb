@@ -58,14 +58,18 @@
     <% end %>
   </p>
 
-  <% if @place.restaurants.active.any? || @place.stores.active.any? %>
+  <% # The section shows at most eight of each, so read exactly that and branch
+     # on the loaded rows - any? + limit(8).each asked the database twice. %>
+  <% restaurants = @place.restaurants.active.limit(8).to_a %>
+  <% stores = @place.stores.active.limit(8).to_a %>
+  <% if restaurants.any? || stores.any? %>
     <section>
       <%= tag.h2 t("maps.at_this_place") %>
       <ul>
-        <% @place.restaurants.active.limit(8).each do |restaurant| %>
+        <% restaurants.each do |restaurant| %>
           <li><%= link_to restaurant.name, record_public_href(restaurant) %> · <%= t("nav.takeaway") %></li>
         <% end %>
-        <% @place.stores.active.limit(8).each do |store| %>
+        <% stores.each do |store| %>
           <li><%= link_to store.name, record_public_href(store) %> · <%= t("nav.marketplace") %></li>
         <% end %>
       </ul>

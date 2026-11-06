@@ -11,13 +11,14 @@ class Dating::LikesController < Dating::BaseController
   def create
     # Only someone the deck could have shown: a paused or under-age profile, or
     # an account with no profile at all, is not somebody to like by id.
-    user = Dating::Profile.visible.includes(:user).find_by!(user_id: params[:user_id]).user
+    profile = Dating::Profile.visible.includes(:user).find_by!(user_id: params[:user_id])
+    user = profile.user
     if Current.user.respond_to?(:blocking?) && (Current.user.blocking?(user) || user.blocking?(Current.user))
       redirect_back fallback_location: root_path, alert: t("shared.flash.not_authorized")
       return
     end
     like = Dating::Like.find_or_initialize_by(liker: Current.user, likee: user)
-    like.dating_prompt_id = prompt_id_for(user)
+    like.dating_prompt_id = prompt_id_for(profile)
     like.comment = params[:comment].presence
     if like.save
       redirect_back fallback_location: root_path
@@ -41,11 +42,10 @@ class Dating::LikesController < Dating::BaseController
   private
 
   # Scoped to the liked person's own prompts, so a client cannot point a like at
-  # somebody else's answer.
-  def prompt_id_for(user)
+  # somebody else's answer. Takes the profile create already loaded, instead of
+  # looking the same row up a second time on every swipe.
+  def prompt_id_for(profile)
     return nil if params[:prompt_id].blank?
-
-    profile = Dating::Profile.find_by(user_id: user.id)
     return nil unless profile
 
     Dating::Prompt.where(profile_id: profile.id, id: params[:prompt_id]).pick(:id)

@@ -42,7 +42,9 @@ class UsersController < ApplicationController
   # Shared with the reflex, so page two follows from page one.
   def self.profile_page_scope(readable)
     cards = readable.includes(:user, :community, :votes)
-    cards.with_attached_image.order(created_at: :desc)
+    # images too: the card's media block reads post.images.attached?, which
+    # an image-only preload still paid one query per post on every profile.
+    cards.with_attached_image.with_attached_images.order(created_at: :desc)
   end
 
   def update

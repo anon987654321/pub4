@@ -86,7 +86,9 @@ module Maps
     end
 
     def places_scope
-      scope = places_in_current_city.includes(:city, :neighborhood)
+      # with_attached_photo: the card partial reads place.photo.attached? per
+      # line (25 cards a page) and the live-search results do too.
+      scope = places_in_current_city.includes(:city, :neighborhood).with_attached_photo
       scope = scope.where(kind: params[:kind]) if params[:kind].present?
       return scope if live_search_query.blank?
 
