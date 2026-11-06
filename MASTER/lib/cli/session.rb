@@ -135,8 +135,10 @@ module Master
       # Reline remains the only keyboard/input owner; no alternate screen,
       # raw-key reader or second prompt is started for ordinary CLI use.
       FACE_INTRO_FRAMES = 6
-      FACE_OVERLAY_MARKER = "face0 at master0: visual layer refreshed; Reline owns input"
-      FACE_OVERLAY_PRESENT = "face0 at master0: already visible; Reline owns input"
+      # Keep the marker inside portrait Termux widths; the intro's cursor
+      # restore depends on it occupying one terminal row.
+      FACE_OVERLAY_MARKER = "face0: Reline owns input"
+      FACE_OVERLAY_PRESENT = "face0: already visible"
 
       def face_overlay_text(cols: 32, swarm_budget: nil)
         rows, fitted_cols = Master::CLI::Face::Sizing.fit(12, cols + 4, mode: "#{cols}x12")

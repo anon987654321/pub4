@@ -36,4 +36,25 @@ class TestCliFaceOnStart < Minitest::Test
     assert_operator seen.last.fetch(:t), :>, seen.first.fetch(:t)
     assert_same seen.first.fetch(:motion), seen.last.fetch(:motion)
   end
+
+  def test_terminal_face_intro_animates_at_a_portrait_termux_width
+    session = Master::CLI::Session.allocate
+    rendered = 0
+    session.define_singleton_method(:face_overlay_text) do |cols:, swarm_budget: nil|
+      rendered += 1
+      Array.new(12, "x" * cols).join("\n")
+    end
+    session.define_singleton_method(:sleep) { |_seconds| }
+    terminal = StringIO.new
+
+    Master::Trace::Dmesg.stub(:terminal_write, ->(&block) { block.call(terminal) }) do
+      TTY::Screen.stub(:height, 40) do
+        session.send(:animate_face_intro, cols: 20, terminal_cols: 40, face_rows: 12)
+      end
+    end
+
+    assert_equal Master::CLI::Session::FACE_INTRO_FRAMES, rendered
+    assert_operator Master::CLI::Session::FACE_OVERLAY_MARKER.length, :<=, 40
+  end
+
 end
