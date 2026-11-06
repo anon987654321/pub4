@@ -1068,6 +1068,25 @@ law_map:
     - yoin
     - yugen
   laws:
+    # The design-book Laws (2026-11-06): copy, markup, CSS and the rendered page.
+    design_books:
+      meaning: 'Typography, layout and reach from the design books, on copy, markup and render'
+      detects: design_book_violation
+      severity: medium
+      confidence: 0.8
+      operation: improve
+      law_ids:
+      - QUOTES_BY_LOCALE
+      - PARENTHETICAL_DASH
+      - TRUE_SYMBOLS
+      - SINGLE_SENTENCE_SPACE
+      - CHROME_COPY_CALM
+      - NUMBER_UNIT_UNBROKEN
+      - DIALECT_CONTRAST_PARITY
+      status: covered
+      root: reach
+      tags:
+      - design
     accessibility: {"meaning": "usable by people with diverse abilities", "detects": "accessibility_violation",
       "severity": "critical", "confidence": 0.9, "operation": "fix_accessibility", "law_ids": ["ARIA_INTERACTIVE",
       "ARIA_LABELS", "IMG_ALT", "FORM_LABEL", "SKIP_TO_MAIN", "HTML_LANG"], "status": "covered", "root": "reach",

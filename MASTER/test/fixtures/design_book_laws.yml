@@ -1,0 +1,155 @@
+# Cases for test/test_design_book_laws.rb, one list: per Law, the code a source detector (or a snapshot
+# adapter) must flag and the code it must pass, at the path the scanner would hand it. flags
+# says which; match, where given, is a pattern the first message must carry. source reads the
+# code from a repository file instead, with replace applied first. Typographic marks are YAML
+# escapes, so this file stays ASCII. ask, on a Law's first case, is a phrase its semantic question
+# must carry.
+- law: QUOTES_BY_LOCALE
+  path: RAILS/brgen/config/locales/nb.yml
+  flags: true
+  match: U\+00AB
+  code: |
+    nb:
+      search:
+        empty: 'Ingen treff for "%{q}"'
+- law: QUOTES_BY_LOCALE
+  path: RAILS/brgen/config/locales/en.yml
+  flags: true
+  match: U\+201C
+  code: |
+    en:
+      search:
+        empty: 'No match for "%{q}"'
+- law: QUOTES_BY_LOCALE
+  path: RAILS/brgen/config/locales/nb.yml
+  flags: false
+  code: "nb:\n  search:\n    empty: \"Ingen treff for \u00AB%{q}\u00BB\"\n"
+- law: QUOTES_BY_LOCALE
+  path: RAILS/brgen/app/views/listings/show.html.erb
+  flags: true
+  code: |
+    <p>Don't wait</p>
+- law: QUOTES_BY_LOCALE
+  path: RAILS/brgen/app/views/listings/show.html.erb
+  flags: false
+  code: |
+    <p class="lead">Ingen <%= link_to "her", root_path %></p>
+- law: QUOTES_BY_LOCALE
+  path: MASTER/lib/cli/docs/help.md
+  flags: false
+  code: |
+    Run "master scan" now.
+- law: PARENTHETICAL_DASH
+  path: RAILS/brgen/config/locales/nb.yml
+  flags: true
+  code: |
+    nb:
+      takeaway:
+        pickup: "Hent maten selv - eller bestill levering"
+- law: PARENTHETICAL_DASH
+  path: RAILS/brgen/docs/guide.md
+  flags: true
+  code: |
+    Hent selv -- eller bestill.
+- law: PARENTHETICAL_DASH
+  path: RAILS/brgen/config/locales/nb.yml
+  flags: false
+  code: "nb:\n  takeaway:\n    pickup: \"Hent selv \u2013 eller bestill\"\n"
+- law: PARENTHETICAL_DASH
+  path: RAILS/brgen/docs/guide.md
+  flags: false
+  code: |
+    | a | b |
+    |---|---|
+- law: TRUE_SYMBOLS
+  path: RAILS/brgen/config/locales/nb.yml
+  flags: true
+  match: U\+00D7
+  code: |
+    nb:
+      listing:
+        size: "120 x 60 cm"
+- law: TRUE_SYMBOLS
+  path: RAILS/brgen/config/locales/nb.yml
+  flags: true
+  code: |
+    nb:
+      footer:
+        owner: "(c) Brgen"
+- law: TRUE_SYMBOLS
+  path: RAILS/brgen/config/locales/nb.yml
+  flags: false
+  code: "nb:\n  listing:\n    size: \"120 \u00D7 60 cm\"\n"
+- law: SINGLE_SENTENCE_SPACE
+  path: RAILS/brgen/config/locales/nb.yml
+  flags: true
+  code: |
+    nb:
+      flash:
+        saved: "Lagret.  Du kan lukke vinduet."
+- law: SINGLE_SENTENCE_SPACE
+  path: RAILS/brgen/config/locales/nb.yml
+  flags: false
+  code: |
+    nb:
+      flash:
+        saved: "Lagret. Du kan lukke vinduet."
+- law: SINGLE_SENTENCE_SPACE
+  path: RAILS/brgen/app/views/listings/show.html.erb
+  flags: false
+  code: |
+    <p>Lagret.  Lukk.</p>
+- law: CHROME_COPY_CALM
+  path: RAILS/brgen/config/locales/nb.yml
+  flags: true
+  code: |
+    nb:
+      flash:
+        created: "Annonsen er publisert!"
+- law: CHROME_COPY_CALM
+  path: RAILS/brgen/config/locales/nb.yml
+  flags: false
+  code: |
+    nb:
+      flash:
+        created: "Annonsen er publisert."
+- law: CHROME_COPY_CALM
+  path: RAILS/brgen/config/locales/nb.yml
+  flags: false
+  code: |
+    nb:
+      posts:
+        example: "Hurra!"
+- law: NUMBER_UNIT_UNBROKEN
+  path: RAILS/brgen/config/locales/nb.yml
+  flags: true
+  code: |
+    nb:
+      listing:
+        distance: "%{km} km"
+- law: NUMBER_UNIT_UNBROKEN
+  path: RAILS/brgen/app/views/listings/show.html.erb
+  flags: true
+  code: |
+    <p class="price"><%= listing.price %> kr</p>
+- law: NUMBER_UNIT_UNBROKEN
+  path: RAILS/brgen/config/locales/nb.yml
+  flags: false
+  code: "nb:\n  listing:\n    distance: \"%{km}\u00A0km\"\n"
+- law: NUMBER_UNIT_UNBROKEN
+  path: MASTER/var/rendered/home.rendered.json
+  flags: true
+  code: '{"probe":"design_laws","viewports":[{"width":390,"numbers":[{"text":"1 299 kr","tops":2,"key":"p"}]}]}'
+- law: NUMBER_UNIT_UNBROKEN
+  path: MASTER/var/rendered/home.json
+  flags: false
+  code: '{"probe":"design_laws","viewports":[{"width":390,"numbers":[{"text":"1 299 kr","tops":2,"key":"p"}]}]}'
+- law: DIALECT_CONTRAST_PARITY
+  path: MASTER/data/tokens.yml
+  flags: true
+  source: MASTER/data/tokens.yml
+  replace: ['    dark_border: "#666666"', '    dark_border: "#222222"']
+- law: DIALECT_CONTRAST_PARITY
+  path: MASTER/data/tokens.yml
+  flags: false
+  source: MASTER/data/tokens.yml

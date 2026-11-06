@@ -960,6 +960,12 @@ STRUNK_WHITE_keep_related_together:
   statement: "Words that modify each other separated by intervening matter."
   resolution: review
 
+CHROME_COPY_CALM:
+  parent: STRUNK_WHITE
+  statement: "Interface copy states facts without exclamation marks."
+  severity: warning
+  resolution: review
+
 # ---
 
 BRINGHURST:
@@ -997,6 +1003,38 @@ BRINGHURST_scale:
 BRINGHURST_alignment:
   parent: BRINGHURST
   statement: "Prose justified or space-padded into a fake table."
+  resolution: review
+
+QUOTES_BY_LOCALE:
+  parent: BRINGHURST
+  statement: "Quotation marks and apostrophes in web copy are the locale's typographic marks, never straight quotes."
+  severity: warning
+  resolution: review
+
+PARENTHETICAL_DASH:
+  parent: BRINGHURST
+  statement: >
+    A dash that sets off a phrase in web copy is a spaced en dash; a hyphen
+    or a double hyphen is never a dash.
+  severity: warning
+  resolution: review
+
+TRUE_SYMBOLS:
+  parent: BRINGHURST
+  statement: "A dimension, a negative number, a copyright or a trademark in web copy uses its true symbol."
+  severity: info
+  resolution: review
+
+SINGLE_SENTENCE_SPACE:
+  parent: BRINGHURST
+  statement: "Sentences in copy are separated by one word space."
+  severity: info
+  resolution: review
+
+NUMBER_UNIT_UNBROKEN:
+  parent: BRINGHURST
+  statement: "A number and its unit, or the groups of one number, are one unbreakable word."
+  severity: warning
   resolution: review
 
 # ---
@@ -1124,6 +1162,12 @@ PROPORTION_eight_px_rhythm:
 PROPORTION_contrast:
   parent: PROPORTION
   statement: "Hierarchy that requires squinting."
+  resolution: review
+
+DIALECT_CONTRAST_PARITY:
+  parent: PROPORTION_contrast
+  statement: "Each colour role keeps the same contrast in a dialect's light and dark modes."
+  severity: warning
   resolution: review
 
 PROPORTION_hardcoded_absolute_path:
@@ -1982,6 +2026,10 @@ law_catalogue:
       definition_sources: [MASTER/law/surface.rb]
       severity: info
       languages: [html]
+    CHROME_COPY_CALM:
+      definition_sources: [MASTER/law/typesetting.rb]
+      severity: warning
+      languages: [yaml]
     CINEMA_PALETTE:
       definition_sources: [MASTER/law/practice.rb]
       severity: warn
@@ -2181,6 +2229,10 @@ law_catalogue:
     DEVICE_LIMITS:
       definition_sources: [MASTER/law/practice.rb]
       severity: warn
+    DIALECT_CONTRAST_PARITY:
+      definition_sources: [MASTER/law/brand.rb]
+      severity: warning
+      languages: [yaml]
     DIFFERENT_LAYER_DIFFERENT_ABSTRACTION:
       definition_sources: [MASTER/law/universal.rb]
       severity: warning
@@ -2903,6 +2955,22 @@ law_catalogue:
       definition_sources: [MASTER/law/html.rb]
       severity: warn
       languages: [javascript, html]
+    NUMBER_UNIT_UNBROKEN:
+      definition_sources: [MASTER/law/typesetting.rb]
+      severity: warning
+      languages: [yaml, html, markdown]
+    PARENTHETICAL_DASH:
+      definition_sources: [MASTER/law/typesetting.rb]
+      severity: warning
+      languages: [yaml, html, markdown]
+    QUOTES_BY_LOCALE:
+      definition_sources: [MASTER/law/typesetting.rb]
+      severity: warning
+      languages: [yaml, html, markdown]
+    SINGLE_SENTENCE_SPACE:
+      definition_sources: [MASTER/law/typesetting.rb]
+      severity: info
+      languages: [yaml, markdown]
     SPONSORED_LINK_REL:
       definition_sources: [MASTER/law/html.rb]
       severity: warning
@@ -3607,6 +3675,10 @@ law_catalogue:
       definition_sources: [MASTER/law/universal.rb]
       severity: info
       lifecycle: trusted
+    TRUE_SYMBOLS:
+      definition_sources: [MASTER/law/typesetting.rb]
+      severity: info
+      languages: [yaml, html, markdown]
     TYPE_HIERARCHY:
       definition_sources: [MASTER/law/surface.rb]
       severity: info

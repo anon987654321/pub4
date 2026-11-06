@@ -71,3 +71,103 @@ Law.define(:NORWEGIAN_COPY_BOKMAL) do
   bad  'alt="Red cabin by the fjord at dusk"'
   good 'alt="Rødt trehus ved fjorden i kveldslys"'
 end
+
+# DIALECT_CONTRAST_PARITY reads tokens.yml alone: each dialect's light and dark modes keep the
+# same contrast per colour role. The values stay operator-owned; the Law reports drift and the
+# operator floors of 2026-11-06 (muted 4.5:1, body text 7:1).
+require "yaml"
+require_relative "../checks/support/rendered_design"
+
+module Law
+  module DialectContrast
+    ROLES = { "text" => %w[text], "muted" => %w[muted text_secondary], "border" => %w[border],
+              "accent" => %w[accent] }.freeze
+    NAMES = ROLES.keys.freeze
+    FLOOR = { "text" => 7.0, "muted" => 4.5 }.freeze
+    DRIFT = %w[muted border].freeze
+    TWINS = [%w[brgen_old_light brgen_old_dark], %w[light social]].freeze
+
+    # One dialect's two modes, each a block of colours and the prefix its keys carry.
+    Mode = Data.define(:block, :prefix) do
+      def ratios = NAMES.to_h { |role| [role, ratio(role)] }
+
+      def ratio(role)
+        ground = DialectContrast.rgb(block["#{prefix}bg"]) or return
+        ink = ROLES.fetch(role).filter_map { |name| DialectContrast.rgb(block["#{prefix}#{name}"]) }.first or return
+        Deploy::RenderedDesign.contrast(ink, ground)
+      end
+    end
+
+    module_function
+
+    def rgb(hex) = hex.to_s[/\A#(\h{6})\z/, 1]&.then { |digits| digits.scan(/../).map(&:hex) + [1] }
+
+    def both_modes?(block) = block.is_a?(Hash) && block.key?("light_bg") && block.key?("dark_bg")
+
+    # [name, light ratios, dark ratios] for every dialect that has both modes.
+    def pairs(tokens)
+      inline = tokens.select { |_name, block| both_modes?(block) }.map do |name, block|
+        [name, Mode.new(block, "light_").ratios, Mode.new(block, "dark_").ratios]
+      end
+      inline + twins(tokens)
+    end
+
+    def twins(tokens)
+      TWINS.filter_map do |light, dark|
+        next unless tokens[light].is_a?(Hash) && tokens[dark].is_a?(Hash)
+
+        ["#{light}/#{dark}", Mode.new(tokens[light], "").ratios, Mode.new(tokens[dark], "").ratios]
+      end
+    end
+
+    def floors(name, modes)
+      FLOOR.flat_map do |role, floor|
+        modes.filter_map do |mode, ratios|
+          value = ratios[role]
+          "#{name} #{mode} #{role} is #{value}:1, under #{floor}:1" if value && value < floor
+        end
+      end
+    end
+
+    def drifts(name, modes)
+      DRIFT.filter_map do |role|
+        light, dark = modes.values.map { |ratios| ratios[role] }
+        apart = light && dark && (light - dark).abs > [light, dark].max * 0.35
+        "#{name} #{role} is #{light}:1 light and #{dark}:1 dark, more than 35% apart" if apart
+      end
+    end
+
+    def findings(src)
+      tokens = YAML.safe_load(src, aliases: true)&.fetch("tokens", nil)
+      return [] unless tokens.is_a?(Hash)
+
+      pairs(tokens).flat_map do |name, light, dark|
+        modes = { "light" => light, "dark" => dark }
+        (floors(name, modes) + drifts(name, modes)).map { |message| [name.split("/").first, message] }
+      end
+    rescue Psych::Exception # scan: intentional - a tokens file that does not parse is YAML_SYNTAX's finding
+      []
+    end
+
+    def fixture(border)
+      { "tokens" => { "luxury" => { "light_bg" => "#efefef", "light_text" => "#333333", "light_muted" => "#4d4d4d",
+                                    "light_border" => "#888888", "dark_bg" => "#000000", "dark_text" => "#efefef",
+                                    "dark_muted" => "#999999", "dark_border" => border } } }.to_yaml
+    end
+  end
+
+  Law.define(:DIALECT_CONTRAST_PARITY) do
+    source "Albers, Interaction of Color (1963); WCAG 1.4.3; operator 2026-11-06: 4.5:1 minimum, 7:1 for body text"
+    tags %i[DESIGN ACCESSIBILITY]
+    path %r{MASTER/data/tokens\.yml\z}
+    example_path "/repo/MASTER/data/tokens.yml"
+    fix "Bring the drifting role into the band in both modes: muted >= 4.5:1, text >= 7:1, borders within 35%."
+    bad DialectContrast.fixture("#222222")
+    good DialectContrast.fixture("#666666")
+    check do |src, _path|
+      DialectContrast.findings(src).map do |block, message|
+        finding(line: (src.lines.index { |line| line.match?(/\A  #{Regexp.escape(block)}:/) } || 0) + 1, message:)
+      end
+    end
+  end
+end
