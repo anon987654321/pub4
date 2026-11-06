@@ -1,6 +1,6 @@
 # pub4 - remaining work
 
-Audit snapshot: 2026-11-06, rechecked against `main` at `cf0d9831e1b1bdd60aa3e89c1bdee2a1839aec3b` immediately before this register update.
+Audit snapshot: 2026-11-06, rechecked against `main@40d260cab2c2b92a268e2ccbc24695fcb22cfaa3` immediately before this consolidation.
 This register replaces the previous 1,275-line, 462-checkbox carry-forward
 dump. It contains unresolved outcomes, not session notes or speculative
 architecture proposals.
@@ -347,3 +347,203 @@ The previous list mixed completed source changes, duplicated verification,
 historical narration and unapproved alternatives. This version retains
 unresolved outcomes and removes the false impression that every checkbox is
 a separate current task.
+
+## 8. Consolidated backlog inventory
+
+This section brings the repository's remaining tracked TODOs, backlog rows, UX acceptance work, workstream wishlist and operator-only dependencies into the single root register. It is an index as well as an action list: the structured source files remain the detailed evidence and decision records, not competing Markdown queues. Do not treat an aspirational or unpicked idea as implementation authority.
+
+The tracked repository has one TODO file: this root `TODO.md`. The cross-tree contract in `MASTER/test/test_single_backlog_contract.rb` intentionally rejects nested TODO files. Keep that contract. Do not delete the YAML ledgers below; their IDs, states, rejected alternatives and evidence contracts are consumed by MASTER and are not duplicate prose backlogs.
+
+### 8.1 RAILS refinement survey — three items still open
+
+`RAILS/refinements.yml` was surveyed on 2026-11-04: 770 rows, 755 marked done, 12 marked invalid, and 3 still open. The 12 invalid rows are historical refutations, not work to resurrect without new source evidence.
+
+- [ ] **amber-057 — Amber wordmark.** Outline the Caprasimo wordmark in `RAILS/amber/app/views/shared/_logo.html.erb` as SVG paths so it no longer needs the webfont preload on every page.
+- [ ] **shared-010 — Button sizing.** Retire `.button-small` in `RAILS/__shared/app/assets/stylesheets/_buttons.scss` in favour of the existing `$compact-contexts` contract; markup should not name a size.
+- [ ] **shared-029 — Privacy-preserving embeds.** Cache link-embed thumbnails first-party in `RAILS/__shared/app/views/shared/_link_embed.html.erb`; the provider should not be contacted on page view before the reader presses play.
+
+Close these rows in `RAILS/refinements.yml` only with the corresponding source and rendered evidence. Do not copy the 755 completed or 12 invalid rows back into the active list.
+
+### 8.2 MASTER UX acceptance matrix — 90 unverified contracts
+
+`MASTER/data/ux_refinements.yml` contains 90 unique acceptance targets (`UX001`–`UX090`); all 90 remain `acceptance_required` and none is `verified`. Work through the existing proof contract and record receipts there. A source change or a screenshot alone does not satisfy a row whose contract also requires unit, terminal, browser, visual or accessibility proof.
+
+- [ ] **Input UX001–UX015:** Immediate acknowledgement; preserve an unsent draft; intentional multiline entry; bracketed-paste safety; stable input while streaming; duplicate-submit prevention; command-history navigation; searchable history; filesystem path completion; command completion; visible interaction mode; empty-input guard; Unicode editing safety; explicit end-of-input behaviour; recovery after command exception.
+- [ ] **Terminal UX016–UX030:** Active target indicator; model/provider indicator; idle versus waiting distinction; truthful busy state; cancellation affordance; degraded-capability state; stable visual baseline; bounded status text; narrow-terminal layout; face never intercepts prompt authority; monochrome operability; no decorative banners; repository-context visibility; canonical prompt vocabulary; REPL versus system-shell distinction.
+- [ ] **Diagnostics UX031–UX045:** Outcome-first diagnostics; standard status verbs; elapsed-time reporting; actionable failure recovery; FAILED versus INCONCLUSIVE; no duplicate summaries; stable event prefixes; output navigation; precise failure location; bounded diagnostic traces; meaningful exit codes; predictable piped output; secret redaction; run identifiers; intentional quiet mode.
+- [ ] **Command help UX046–UX060:** Registry-generated completions; canonical command spellings; helpful unknown-command suggestions; explicit read/write boundary; target preview before mutation; normalized flags; dry-run semantics; clear usage errors; argument completion; copyable paths; machine-readable output schema; stdout/stderr ownership; useful command listing; risk-aware confirmation; conservative natural-language routing.
+- [ ] **Browser recovery UX061–UX075:** Scroll follows only near bottom; draft survives disconnect; reconnect does not duplicate turns; explicit stream terminal state; mobile keyboard and safe area; honest stop semantics; visible keyboard focus; accessible icon labels; status without colour; reduced-motion behaviour; forced-colours behaviour; 320px reflow; preserve conversation text shape; usable touch targets; recoverable browser errors.
+- [ ] **Visual accessibility UX076–UX090:** Consistent prompt baseline; predictable heading wrapping; long-identifier handling; tabular numerals; muted-text contrast; unclipped focus ring; remove repeated metadata; clear primary-action hierarchy; useful empty states; aligned field labels; contextual validation errors; stable loading layout; bounded animation duration; screenshot-comparison evidence; text zoom and font scaling.
+
+The row-level owner trees, proof types and receipt requirements remain in `MASTER/data/ux_refinements.yml`; the contract is tested by `MASTER/test/test_ux_refinements_contract.rb`.
+
+### 8.3 Product and platform gaps — preserve every unresolved ledger row
+
+`MASTER/data/gaps.yml` has 51 rows: 14 picked, 32 open, 4 blocked and 1 satisfied. The satisfied Dating row is intentionally not repeated as work. A picked row needs its named convergence workstream completed and evidenced. An open row is a decision candidate, not permission to build. A blocked row stays blocked until its stated prerequisite exists. Every implementation remains subject to MASTER's laws and normal /fix gates.
+
+**Brgen**
+- [ ] `brgen_ai_feed_ranking` — picked; complete `brgen_feed_ranking_deterministic`: deterministic recency plus local-engagement decay, not an opaque model.
+- [ ] `brgen_cold_start_feed` — open; consider a labelled follows-plus-city-popular feed so a new reader can see a living city.
+- [ ] `brgen_creator_monetization` — open; depends on the one shared commerce domain.
+- [ ] `brgen_activitypub_inbound` — open; remote media proxying, per-origin controls, blocklist and moderation must precede storage.
+- [ ] `brgen_recurring_events` — open; decide whether a small recurrence materialiser is warranted; external ticket links remain a valid simpler boundary.
+- [ ] `brgen_city_population_seeds` — open; use a checked-in public-data table for the 43 registry cities if the value is demonstrated.
+- [ ] `brgen_recent_searches` — picked; complete `brgen_recent_searches`: server-side per-reader recents, with the last committed searches available across devices.
+
+**Messenger**
+- [ ] `messenger_webrtc_calls` — blocked; requires an operator-approved STUN/TURN service and host capacity.
+- [ ] `messenger_notify_suppression` — open; decide how the active conversation suppresses redundant unread notifications without stale-tab claims.
+- [ ] `messenger_business_crm` — open; consider a business inbox, labels and canned replies, with money features kept on the shared commerce domain.
+
+**Marketplace**
+- [ ] `marketplace_ai_recs` — open; prefer explainable co-view or category/price-band recommendations over a model without useful data.
+- [ ] `marketplace_coupons` — open; one transparent campaign/credit ledger, not a second checkout accounting path.
+- [ ] `marketplace_contact_relay` — blocked; requires inbound mail routing and expiring per-listing addresses on vm23.
+- [ ] `marketplace_duplicates` — picked; complete `marketplace_duplicate_detection`: file a moderation report and leave the decision to a human.
+- [ ] `marketplace_liquidity` — open; measure empty categories, saved-search demand and unmet supply before advertising.
+- [ ] `marketplace_paid_boosts` — open; preserve quality-weighted organic discovery, clear sponsored labels and caps; payment never buys a trust outcome.
+- [ ] `marketplace_seller_analytics` — open; derive seller/listing analytics from existing events where possible.
+
+**Dating, Playlist and Takeaway**
+- [ ] `dating_premium_boost` — open; any premium, boost or super-like design must preserve consent, avoid dark patterns and never sell moderation or safety outcomes.
+- [ ] `playlist_creator_donations` — open; creator tips may use the shared commerce domain; do not sell an ad-free tier while there are no ads.
+- [ ] `takeaway_delivery_area` — picked; complete `takeaway_delivery_area`: validate the reader's stored position against the restaurant's stated radius, nil-safely and with an honest explanation.
+- [ ] `takeaway_cart_expiry` — picked; complete `takeaway_cart_expiry`: expire pending carts through the same state transition as manual cancellation, with notifications and a visible deadline.
+- [ ] `takeaway_pro_surface` — open; promotion, loyalty and coupons depend on shared commerce and liquidity foundations.
+
+**TV, Maps and shared commerce**
+- [ ] `tv_live_stream_infra` — blocked; requires an explicitly chosen media server and delivery/transcoding tier; the existing broadcast state machine is not proof of live streaming.
+- [ ] `maps_poi_substrate` — open; decide whether Places should become the stable shared POI service consumed by verticals.
+- [ ] `commerce_shared_domain` — open; design one shared Commerce/Ledger/Campaign/Entitlements domain for all verticals, not separate billing stacks.
+- [ ] `commerce_private_seller_verification` — open; determine a defensible, explainable proof for a private seller without an organisation number.
+- [ ] `commerce_local_ads` — open; only after liquidity is measured and the shared campaign/ledger domain exists.
+
+**Amber**
+- [ ] `amber_fashion_embeddings` — open; start with owner-tagged typed attributes, not a Postgres/pgvector migration for a personal wardrobe.
+- [ ] `amber_visual_similarity` — picked; complete `amber_similarity_right_sized`: explainable attribute matching and brute-force similarity at wardrobe scale.
+- [ ] `amber_fitting_room` — open; keep garment-on-silhouette representation honest; do not imply body measurements or fit guarantees.
+- [ ] `amber_mood_matcher` — open; use reader-declared tags or a colour-first alternative; never infer a reader's mood.
+- [ ] `amber_event_outfit_planner` — open; consider outfits against an event the reader selects, with soft formality/season/recent-wear constraints.
+- [ ] `amber_sustainable_resale` — open; release an item into the existing Marketplace rather than building a second resale surface.
+- [ ] `amber_weather_suggestions` — blocked; no weather source is currently part of the suite; do not fabricate conditions.
+- [ ] `amber_outfit_whole_score` — open; decide between explainable arithmetic and showing the combination without a score.
+- [ ] `amber_trends_designers` — open; prefer dated, curated local-designer content over scraped global trend feeds.
+- [ ] `amber_style_agents` — open; any MASTER integration must be advisory, read-only and attributed.
+
+**BSDPorts**
+- [ ] `bsdports_multi_parsers` — open; keep OpenBSD as production scope; other ports trees remain opt-in/on-demand and require an explicit need.
+- [ ] `bsdports_semantic_search` — open; evaluate SQLite FTS synonyms first; a local corpus/similarity pass must justify its cost.
+- [ ] `bsdports_knowledge_graph` — open; expose useful dependency and reverse-dependency questions from existing parsed data, not a new infrastructure graph.
+- [ ] `bsdports_package_intel` — open; consider factual freshness/maintainer signals and a vulnerability source with reliable provenance.
+
+**MASTER and STUDIO**
+- [ ] `master_fleet_health` — picked; complete `master_fleet_panel`: sibling-app health, load and resource-guard order on the dashboard.
+- [ ] `master_dead_payload_facts` — picked; complete `master_quota_facts`: show the already-computed model-quota and cache-efficiency facts.
+- [ ] `master_pair_admin_surface` — open; add an authenticated operator surface for pairing issue/list/destroy only if its permission boundary is proven.
+- [ ] `master_face_soothing` — picked; complete `master_face_breath` without adding colours or exceeding visual budgets.
+- [ ] `master_voice_dsp_lanes` — picked; complete `master_voice_browser_dsp` so browser and terminal build the same declared voice presets, with honest unsupported-node behaviour.
+- [ ] `master_voice_cooler` — picked; complete `master_voice_cooler_default` only after listening acceptance; operator taste remains the final gate.
+- [ ] `dilla_grammar_beauty` — picked; complete `dilla_grammar_voicings` additively, keeping the existing Dilla generator's current renders stable.
+- [ ] `dilla_corpus_depth` — picked; complete `dilla_corpus_measures` with sourced sample facts, measured timing and lineage; preserve unconfirmed attributions as unconfirmed.
+- [ ] `free_model_lanes` — picked; complete `free_compute_design_of_record` with dated quota/source checks and explicit gates; do not wire provider lanes merely because a free tier is listed.
+
+The complete candidate records and rejected alternatives live in `MASTER/data/ideations/*.yml`. Their `keep` verdict means a candidate survived adversarial critique; it is not blanket approval to implement. The 14 records are: `amber.yml`, `brgen.yml`, `bsdports.yml`, `creativity_lab.yml`, `dating.yml`, `maps.yml`, `marketplace.yml`, `master_surface_audit.yml`, `master_web_dilla_free.yml`, `master_web_face_voice.yml`, `messenger.yml`, `playlist.yml`, `takeaway.yml` and `tv.yml`. Consult the individual candidate and critique before selecting a direction. The Dating gap `dating_two_sided_ranked_for` is already marked satisfied in the gap ledger and is not open work.
+
+### 8.4 MASTER convergence wishlist — 42 unfinished workstreams
+
+`MASTER/convergence.yml` is the non-authoritative assistant wishlist and implementation/evidence map. It currently records 15 landed, 27 partial, 7 evidence-dependent and 8 missing workstreams (42 unresolved). These IDs are proof/ownership cross-links to the sections above, not permission to create duplicate implementations. Close each only when its named implementation and proof are real.
+
+**Evidence-dependent — 7**
+- [ ] `voice_local_first` — local-first speech ladder and real microphone proof.
+- [ ] `face_semantic_motion` — large 3D face semantic motion in a real browser and on a device.
+- [ ] `rails_product_completion` — production marketplace, authentication and media flows with staging credentials.
+- [ ] `openbsd_appliance` — vm23 deployment, restore, DNS, TLS and resource proof.
+- [ ] `dilla_music` — musical quality, authenticity and listening decisions.
+- [ ] `recovery` — off-host backup and clean-host restore drill.
+- [ ] `personal_companion` — resident voice-first phone companion on real Termux hardware.
+
+**Partial — 27**
+- [ ] `studio_provenance` — media provenance through every generation stage.
+- [ ] `security_capability_graph` — capability ownership and least-privilege graph.
+- [ ] `event_replay` — canonical event vocabulary, provenance and replay.
+- [ ] `memory_governance` — durable memory provenance, review history, contradiction and forgetting.
+- [ ] `task_scoped_prediction` — separate event-prediction streams across correlated tasks.
+- [ ] `prediction_evaluation` — walk-forward comparison of contextual prediction against shared-stream and baseline models.
+- [ ] `measured_repair_outcomes` — feed terminal /fix outcomes into the evidence-based self-model.
+- [ ] `self_model_calibration` — measure capability outcomes and confidence calibration from explicit evidence.
+- [ ] `cognition_measurement` — report workspace activity and saved-state restoration without consciousness claims.
+- [ ] `task_outcome_learning` — per-target /fix outcome prediction from hashed receipts, scored before learning.
+- [ ] `cognition_learning_benchmark` — prequential learning benchmark with no-learning ablation and constant baseline.
+- [ ] `browser_proof` — rendered geometry, accessibility and performance evidence.
+- [ ] `search_quality` — search relevance, explanations and a quality corpus.
+- [ ] `moderation_governance` — moderation evidence, appeals and audit.
+- [ ] `installation` — one-command host-aware installation and truthful doctor output.
+- [ ] `structural_craft` — measured architectural collapse/relocation with proof.
+- [ ] `unified_command_language` — one semantic command surface across CLI, web, voice and device.
+- [ ] `media_effects` — Ruby-native analogue audio and image processing.
+- [ ] `brgen_recent_searches` — server-side, cross-device recent searches.
+- [ ] `marketplace_duplicate_detection` — duplicate listing creates a moderation report; a human decides.
+- [ ] `takeaway_delivery_area` — stated delivery radius validated against the reader's stored position.
+- [ ] `takeaway_cart_expiry` — pending carts expire through the manual-cancel transition.
+- [ ] `master_face_breath` — stipple field breathes in brightness only and freezes under reduced motion.
+- [ ] `master_voice_browser_dsp` — browser builds declared character presets in parity with terminal.
+- [ ] `master_voice_cooler_default` — default voice room/doubler and optional presets; listening acceptance required.
+- [ ] `dilla_corpus_measures` — sourced Dilla timing observations recorded without silently tuning generation.
+- [ ] `free_compute_design_of_record` — dated free-compute landscape and verified quota assumptions.
+
+**Missing — 8**
+- [ ] `brgen_feed_ranking_deterministic` — deterministic recency-plus-engagement ranking in the existing Dating-style shape.
+- [ ] `amber_similarity_right_sized` — wears-well-with from typed attributes and wardrobe-scale similarity.
+- [ ] `master_fleet_panel` — dashboard renders sibling health, load and resource-guard order.
+- [ ] `master_quota_facts` — status strip renders model-quota and cache-efficiency facts.
+- [ ] `inconclusive_aging` — an INCONCLUSIVE finding that outlives its review window reopens as FAIL with its original receipt.
+- [ ] `constitution_self_budget` — the laws file has an enforced line ceiling under the ratchet-down rule.
+- [ ] `documentation_completeness` — public-contract changes carry documentation-review proof in the same task/commit.
+- [ ] `ops_alert_channel` — heartbeat failures reach one operator-owned relay with an allowlisted endpoint and secret held outside the tree.
+
+### 8.5 Operator-only and external evidence seams — 55 dependencies
+
+These items require a real person, host console, device, registrar, provider credential, rights decision, material or listening judgement. They are included here so the root register exposes the full outstanding surface; the required evidence remains specified in `MASTER/data/operator_seams.yml`. Do not pretend to complete them from source inspection or simulation.
+
+- [ ] **MASTER (17):** `android_consent_ux` (device); `android_termux_install` (device); `selfie_route_live` (provider); `browser_vision_end_to_end` (browser); `face_in_a_real_browser` (browser); `voice_by_ear` (ears); `worktree_delivery_against_github` (credential); `release_acceptance_on_an_idle_host` (idle host); `external_assessment_on_authorised_targets` (credential); `nmap_licence_boundary` (rights); `assessment_business_hypothesis` (material); `remote_branch_aliases` (credential); `assistant_calendar_or_mail_live` (credential); `messaging_channel_choice` (rights); `session_browser_post_policy` (rights); `advice_quality_human_review` (ears); `deepseek_findings_export` (material).
+- [ ] **OPENBSD (15):** `shell_init_credential_rotation` (credential); `unregistered_domains` (registrar); `watched_all_target_deploy` (console); `deploy_failure_trap_window` (console); `second_offhost_backup_and_key_recovery` (console); `dnssec_ds_at_registrars` (registrar); `monitoring_and_crontab_on_vm23` (console); `two_consecutive_deploys` (console); `syspatch_in_a_console_window` (console); `full_check_after_deploy` (console); `privilege_migration_on_vm23` (console); `manual_pages_on_openbsd` (console); `prompt_parity_on_a_live_openbsd_shell` (console); `openbsd_native_suite` (console); `csp_enforced_on_vm23` (console).
+- [ ] **RAILS (16):** `brgen_first_screen_in_chrome` (browser); `tenant_isolation_live` (browser); `messenger_journey_in_a_browser` (browser); `payments_in_provider_staging` (provider); `pwa_on_real_devices` (device); `city_registry_matches_dns_and_tls` (registrar); `journeys_in_all_three_apps` (browser); `amber_dashboard_geometry` (browser); `visual_identity_acceptance` (browser); `radio_whyp_tracks_imported` (console); `paid_plans_live` (credential); `checkout_steps_design` (material); `search_focus_shadow` (rights); `oauth_callbacks_live` (credential); `amber_outfits_on_the_real_catalogue` (material); `bsdports_lifecycle_on_openbsd` (console).
+- [ ] **STUDIO (7):** `lora_source_refresh_and_paid_training` (provider); `private_media_and_history` (rights); `person_renders_and_duet_video` (material); `dilla_by_ear` (ears); `reference_workflow_with_a_real_link` (ears); `lora_route_end_to_end` (provider); `paid_media_cost_proof` (provider).
+
+### 8.6 Aspirational horizons — visible, but not active by default
+
+`RAILS/apps.horizon.yml` explicitly sets `agent_policy: ignore`. Its 47 planned rows are product horizons, not an unattended implementation queue. The gap IDs in §8.3 are the recorded candidate path; promote an additional horizon only after an explicit product decision, adversarial review, a named workstream and normal law-gated proof.
+
+The broader horizons that need to remain visible are:
+
+- [ ] **Messenger replacement threshold:** E2EE, delivered/read receipts, multi-device sessions and voice/video calls before claiming it can replace the operator circle's current messenger.
+- [ ] **Takeaway consolidation:** decide whether food becomes a Marketplace vertical on the shared commerce rail; no parallel payment stack or migration without an explicit decision and rollback plan.
+- [ ] **Marketplace catalogue scale:** shipping rates and labels, multi-currency, dispute/chargeback handling, catalogue-scale search and independently scalable heavy surfaces; bring the shelf, product page, buy box and checkout to one coherent standard.
+- [ ] **Playlist creator surface:** creator uploads, reposts, waveform comments and discography-like profiles to support the SoundCloud/Whyp positioning; preserve import provenance and rights boundaries.
+- [ ] **Shared commerce completion:** one ledger/campaign/entitlement source, seller credits, payment abstraction (refunds, invoices, VAT, reconciliation) and a revenue dashboard beyond the existing first slices; respect the liquidity-before-ads order.
+- [ ] **Solidus/Dintero evaluation:** the planned Solidus core mount, starter storefront, native marketplace features, Dintero split checkout and Amazon feature-parity map remain staging/evaluation work. Do not replace native Marketplace flows or enable live checkout before provider staging, migrations, cutover and rollback are proved.
+- [ ] **Amber media capabilities:** real garment matting/segmentation and richer try-on capabilities remain separate from the right-sized typed-attribute work; require real assets and a measurable consumer.
+- [ ] **BSDPorts expansion:** FreeBSD/NetBSD parsers, semantic search and knowledge-graph ambitions remain subordinate to the OpenBSD-only production scope and a demonstrated reader need.
+- [ ] **Own-domain horizon:** any planned domain/host work needs an actual zone, registrar decision, ACME configuration and host proof.
+
+The authoritative feature/status detail is in `RAILS/apps.yml` and `RAILS/apps.horizon.yml`. Their planned rows are intentionally not to be confused with active implementation work.
+
+### 8.7 Creativity experiments, decisions and refutations
+
+`MASTER/data/ideations/creativity_lab.yml` records six experiments as implemented: `spark_cli`, `deploy_story`, `cities`, `domain_ghosts`, `tree_weight` and `law_weight`. Three remain deferred, not active: `city_pack_api` (no consumer/auth design), `semantic_canary` (no offline rubric/model budget) and `dilla_fixture_wav` (needs its STUDIO golden-hash pass).
+
+`MASTER/data/proposals.yml` is the refutation ledger: 13 proposals landed, 17 refuted, none open. Preserve the rejected records and their reasons; do not re-propose them as fresh work without new evidence.
+
+### 8.8 Runtime-generated wishlist — not present in the GitHub tree
+
+MASTER's `Fix::Wishlist` reads/writes the local runtime ledger `.master/fix_wishlist.json`. That ignored runtime file is not present in the tracked GitHub tree, so its current suggestions could not be inspected or merged from GitHub.
+
+- [ ] Export and review `MASTER/.master/fix_wishlist.json` from the live MASTER checkout; reconcile its still-valid entries against this root register and the convergence/gap IDs before claiming runtime-generated wishes are included.
+
+### 8.9 Separate proposals that are not repository-wide backlogs
+
+`STUDIO/docs/fetat/proposal.md` is a substantive policy/project proposal, not a software task queue. Keep its research, legal questions and implementation blueprint in that document; only promote a specific, authorised and scoped software task into this register. Do not explode the proposal into speculative checkboxes.
+
+---
+
+**Consolidation rule:** Root `TODO.md` is the only cross-tree Markdown action list. `RAILS/refinements.yml`, `MASTER/data/ux_refinements.yml`, `MASTER/data/gaps.yml`, `MASTER/convergence.yml`, `MASTER/data/operator_seams.yml`, `MASTER/data/proposals.yml`, the ideation sheets and the RAILS feature inventories remain structured owners for IDs, proof receipts, provenance, accepted/rejected reasoning and state. Update the owner and this root index together when an item is implemented or its state changes. Do not create another backlog file.
