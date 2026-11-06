@@ -422,3 +422,109 @@ Law.define(:SIGNAL_COLOR_IS_SEMANTIC) do
     }
   CSS
 end
+
+# Paragraph separation and the printed page (Bringhurst 2.3, Butterick, Tschichold). The
+# rendered half of the paragraph Law is an adapter over a design_laws snapshot.
+require_relative "../checks/support/rendered_design"
+
+module Law
+  module PageCss
+    MM = { "mm" => 1.0, "cm" => 10.0, "in" => 25.4, "pt" => 25.4 / 72, "px" => 25.4 / 96 }.freeze
+    CANON = { "top" => 1.5, "outer" => 2.0, "bottom" => 3.0 }.freeze
+    SIDES = %w[top right bottom left].freeze
+    # Which of the four sides each value of a 1-, 2-, 3- or 4-value margin shorthand sets.
+    SHORTHAND = { 1 => [0, 0, 0, 0], 2 => [0, 1, 0, 1], 3 => [0, 1, 2, 1], 4 => [0, 1, 2, 3] }.freeze
+    NONZERO = /\s*:\s*(?!0[;\s}]|0\z)[\d.]/
+    INDENT = /text-indent#{NONZERO}/
+    SPACED = /margin(?:-block(?:-start|-end)?|-top|-bottom)?#{NONZERO}/
+    PAGE = /@page\s*(:left|:right|:first)?\s*\{([^{}]*)\}/
+    MEASURE = /(?:max-)?(?:width|inline-size)\s*:\s*(\d+)ch/
+
+    module_function
+
+    def rules(src) = src.scan(/([^{}]*)\{([^{}]*)\}/).map { |selector, body| [selector.strip, body] }
+
+    def paragraph?(selector) = selector.split(",").any? { |part| part.strip.match?(/(?:\A|[\s>+~])p\z/) }
+
+    def line_at(src, offset) = src[0, offset].count("\n") + 1
+
+    def mm(value) = value.to_f * MM.fetch(value[/[a-z]+\z/].to_s, 1.0)
+
+    def margins(body)
+      values = body[/(?:\A|[;\s])margin\s*:\s*([^;}]+)/, 1].to_s.split.map { |value| mm(value) }
+      order = SHORTHAND.fetch(values.size, [])
+      SIDES.each_with_index.to_h do |side, index|
+        own = body[/margin-#{side}\s*:\s*([^;}]+)/, 1]
+        [side, own ? mm(own) : values[order[index].to_i]]
+      end
+    end
+
+    # inner, top, outer and bottom for a left or right page.
+    def faces(pseudo, body)
+      sides = margins(body)
+      inner, outer = pseudo == ":left" ? sides.values_at("right", "left") : sides.values_at("left", "right")
+      { "inner" => inner, "top" => sides["top"], "outer" => outer, "bottom" => sides["bottom"] }
+    end
+
+    def near?(value, ratio) = (value - ratio).abs <= ratio * 0.15
+
+    def canon(pseudo, body)
+      face = faces(pseudo, body)
+      return if face.values.compact.size < 4
+      ordered = face.values.each_cons(2).all? { |near, far| near < far }
+      return "@page#{pseudo} margins are not inner < top < outer < bottom" unless ordered
+
+      off = CANON.reject { |side, ratio| near?(face[side] / face["inner"], ratio) }
+      "@page#{pseudo} margins stray from 2:3:4:6 (#{off.keys.join(", ")})" if off.any?
+    end
+
+    def matches(src, pattern) = src.to_enum(:scan, pattern).map { [Regexp.last_match, Regexp.last_match.begin(0)] }
+
+    def page_findings(src)
+      pages = matches(src, PAGE).filter_map { |page, at| (message = canon(page[1], page[2])) && [message, at] }
+      wide = matches(src, MEASURE).reject { |width, _at| width[1].to_i.between?(55, 75) }
+      pages + wide.map { |width, at| ["measure #{width[1]}ch is outside 55-75ch", at] }
+    end
+
+    def both_devices(src)
+      rules = rules(src).select { |selector, _body| paragraph?(selector) || selector.match?(/\bp\s*\+\s*p\z/) }
+      indent = rules.find { |_selector, body| body.match?(INDENT) }
+      return [] unless indent && rules.any? { |_selector, body| body.match?(SPACED) }
+
+      [{ line: line_at(src, src.index(indent[1])), message: "paragraphs are indented and spaced - choose one device" }]
+    end
+
+    def paragraphs(**fields) = %w[p.a p.b].map { |key| Deploy::RenderedDesign.element(key, pid: 1, **fields) }
+  end
+
+  P = PageCss
+
+  ::Law.define(:PARAGRAPH_SEPARATION_ONE_DEVICE) do
+    source "Bringhurst 2.3.1-2.3.2; Butterick, indent or space, don't use both; Tschichold, The Form of the Book"
+    tags %i[TYPOGRAPHY]
+    snap = Deploy::RenderedDesign
+    path Regexp.union(/\.s?css\z/, snap::SNAPSHOT)
+    fix "Separate paragraphs by space (p + p { margin-block-start }) or by an indent of one en, never both; " \
+        "never indent the first."
+    bad "p { margin-block: 1.5em; text-indent: 1em; }\n"
+    good "p + p { margin-block-start: 1.5em; }\n"
+    check { |src, _path| P.both_devices(src).map { |hit| finding(**hit) } }
+    adapter(:rendered_ui, languages: %i[json], example_path: snap::EXAMPLE,
+                          bad: snap.fixture(elements: P.paragraphs(text_indent: 16, margin_block: [24, 24])),
+                          good: snap.fixture(elements: P.paragraphs(margin_block: [0, 24]))) do |text, file|
+      snap.findings(:PARAGRAPH_SEPARATION_ONE_DEVICE, text, file).map { |hit| finding(**hit) }
+    end
+  end
+
+  ::Law.define(:PRINT_PAGE_CANON) do
+    source "Tschichold, The Form of the Book (1991): the 2:3:4:6 canon from Van de Graaf and Villard; Bringhurst ch. 8"
+    tags %i[TYPOGRAPHY]
+    path %r{(?:\A|/)BPLANS/}
+    example_path "/repo/BPLANS/print.css"
+    fix "Set @page margins inner < top < outer < bottom near 2:3:4:6 (22mm 33mm 44mm 66mm), mirrored on :left, " \
+        "and the measure at 55-75ch."
+    bad "@page { margin: 20mm; }\n"
+    good "@page :right { margin: 33mm 44mm 66mm 22mm; }\n@page :left { margin: 33mm 22mm 66mm 44mm; }\n"
+    check { |src, _path| P.page_findings(src).map { |message, at| finding(line: P.line_at(src, at), message:) } }
+  end
+end

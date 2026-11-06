@@ -1083,6 +1083,12 @@ law_map:
       - CHROME_COPY_CALM
       - NUMBER_UNIT_UNBROKEN
       - DIALECT_CONTRAST_PARITY
+      - PARAGRAPH_SEPARATION_ONE_DEVICE
+      - PRINT_PAGE_CANON
+      - GESTURE_HAS_TAP_EQUIVALENT
+      - AUTO_MOTION_PAUSABLE
+      - CHART_DATA_INK
+      - ORIENTATION_UNLOCKED
       status: covered
       root: reach
       tags:

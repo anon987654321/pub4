@@ -395,3 +395,165 @@ module Master
     end
   end
 end
+
+# Gestures, motion, charts and orientation (WCAG 2.5.1/2.5.7, 2.2.2, 1.3.4; Tufte; Clark). Their
+# rendered halves are adapters over a design_laws snapshot (Deploy::RenderedDesign).
+require_relative "../checks/support/rendered_design"
+
+module Law
+  module Script
+    SNAP = Deploy::RenderedDesign
+    POINTER = /touch(?:start|move|end)|pointer(?:down|move|up)/
+    GESTURE = /["']#{POINTER}["']|#{POINTER}->|swipe/i
+    HANDLER = /\A(?:connect|disconnect|initialize|on\w*|handle\w*|\w*(?:touch|pointer|swipe|drag|start|move|end)\w*)\z/i
+
+    MOVES = /\.style\.transform|scroll(?:Left|To|By)\(|\bslide|carousel|\.next\(\)|advance\(/i
+    ENDLESS = /animation(?:-iteration-count)?\s*:[^;}]*\binfinite\b/
+    QUIET_LOOPS = /spin|load|busy|progress|pending/i
+    TIMER = /setInterval\(/
+    CHART_FAULTS = {
+      /beginAtZero:\s*false/ => "the value axis does not start at zero (lie factor)",
+      /rotate3d|matrix3d|rotate[XY]\(|perspective\(/ => "a chart drawn in perspective",
+      /(?:grid|gridLines)\s*:\s*\{[^}]*lineWidth:\s*[2-9]/ => "gridlines heavier than a hairline",
+    }.freeze
+    LOCKED = /"orientation"\s*:\s*"(?!any"|natural")|screen\.orientation\.lock\(/
+
+    module_function
+
+    METHOD = /^\s{2}(?:async\s+)?(\w+)\s*\([^)]*\)\s*\{/
+
+    # Each method's name and body, cut at the next method definition.
+    def methods_of(src)
+      starts = src.to_enum(:scan, METHOD).map { [Regexp.last_match(1), Regexp.last_match.begin(0)] }
+      starts.each_with_index.to_h { |(name, at), index| [name, src[at...(starts[index + 1]&.last || src.size)]] }
+    end
+
+    # Methods a gesture handler calls on itself that are results, not more handling.
+    def results(src)
+      bodies = methods_of(src)
+      called = bodies.select { |name, _body| name.match?(HANDLER) }.values.join.scan(/this\.(\w+)\(/).flatten.uniq
+      called.select { |name| bodies.key?(name) && !name.match?(HANDLER) }
+    end
+
+    def views(path)
+      root = path.to_s[%r{\A.*?/(?:RAILS/[^/]+|MASTER/web)(?=/)}] or return ""
+      (@views ||= {})[root] ||= Dir[File.join(root, "**/*.erb")].sum("") { |file| File.read(file) }
+    end
+
+    def tapped?(src, path:, action:)
+      controller = File.basename(path.to_s, "_controller.js").tr("_", "-")
+      wired = /(?:click|submit|keydown[\w.]*)->#{Regexp.escape(controller)}##{action}\b/
+      listened = src.match?(/addEventListener\(\s*["'](?:click|keydown)["'][^\n]*this\.#{action}\b/)
+      listened || "#{src}\n#{views(path)}".match?(wired)
+    end
+
+    def untapped(src, path)
+      return [] unless src.match?(GESTURE)
+
+      results(src).reject { |action| tapped?(src, path:, action:) }.map do |action|
+        { line: line_of(src, /this\.#{action}\(/), message: "gesture result #{action} has no tap control" }
+      end
+    end
+
+    def rendered(id) = ->(text, file) { SNAP.findings(id, text, file).map { |hit| finding(**hit) } }
+
+    def line_of(src, pattern) = src.lines.index { |line| line.match?(pattern) }.to_i + 1
+
+    def endless(src)
+      src.scan(/([^{}]*)\{([^{}]*)\}/).filter_map do |selector, body|
+        name = selector.strip
+        next unless body.match?(ENDLESS) && !name.match?(QUIET_LOOPS)
+
+        { line: line_of(src, /#{Regexp.escape(name)}\s*\{/), message: "#{name} animates forever with no pause" }
+      end
+    end
+
+    def chart_fault(line) = CHART_FAULTS.find { |pattern, _message| line.match?(pattern) }&.last
+
+    def motion(changes)
+      { "probe" => "design_laws", "motion" => { "changes" => changes, "last_change" => changes * 150 } }.to_json
+    end
+
+    def stack(*actions)
+      SNAP.fixture(elements: actions.map { |action| SNAP.element("div", attrs: { "data-action" => action }) })
+    end
+
+    def controller(*extra)
+      ["export default class extends Controller {",
+       "  connect() { this.element.addEventListener(\"touchend\", (e) => this.end(e)) }",
+       *extra, "  end(e) { if (this.dx > 60) this.like() }", "  like() { this.element.remove() }", "}", ""].join("\n")
+    end
+  end
+
+  S = Script
+
+  ::Law.define(:GESTURE_HAS_TAP_EQUIVALENT) do
+    source "WCAG 2.5.1 Pointer Gestures and 2.2 SC 2.5.7 Dragging Movements, AA; Clark, Designing for Touch"
+    tags %i[ACCESSIBILITY]
+    path Regexp.union(/_controller\.js\z/, S::SNAP::SNAPSHOT)
+    reads_beyond_file true
+    fix "Give every swipe or drag result a button calling the same method (click->stack#like); small and low is fine."
+    bad S.controller
+    good S.controller("  tap() { this.element.addEventListener(\"click\", () => this.like()) }")
+    check { |src, path| S.untapped(src, path).map { |hit| finding(**hit) } }
+    adapter(:rendered_ui, languages: %i[json], example_path: S::SNAP::EXAMPLE, bad: S.stack("touchend->stack#like"),
+                          good: S.stack("touchend->stack#like", "click->stack#like"),
+                          &S.rendered(:GESTURE_HAS_TAP_EQUIVALENT))
+  end
+
+  ::Law.define(:AUTO_MOTION_PAUSABLE) do
+    source "WCAG 2.2.2 Pause, Stop, Hide, A; visual_identity.motion.default: still"
+    tags %i[ACCESSIBILITY]
+    path Regexp.union(/\.js\z/, /\.s?css\z/, S::SNAP::SNAPSHOT)
+    fix "Hold still by default; anything that advances by itself past five seconds gets a pause button (aria-pressed)."
+    carousel = "connect() { this.timer = setInterval(() => this.track.style.transform = next(), 4000) }\n"
+    bad carousel
+    good "#{carousel}pause() { clearInterval(this.timer) }\n"
+    check do |src, _path|
+      moving = src.match?(S::TIMER) && src.match?(S::MOVES) && !src.match?(/pause|aria-pressed/i)
+      message = "content advances by itself with no pause control"
+      moving ? [finding(line: S.line_of(src, S::TIMER), message:)] : []
+    end
+    adapter(:whole_file, languages: %i[css scss], bad: ".hero-track { animation: drift 8s linear infinite; }\n",
+                         good: ".spinner { animation: spin 1s linear infinite; }\n") do |src, _file|
+      S.endless(src).map { |hit| finding(**hit) }
+    end
+    adapter(:rendered_ui, languages: %i[json], example_path: S::SNAP::EXAMPLE, bad: S.motion(40), good: S.motion(0),
+                          &S.rendered(:AUTO_MOTION_PAUSABLE))
+  end
+
+  ::Law.define(:CHART_DATA_INK) do
+    source "Tufte, The Visual Display of Quantitative Information (1983/2001): data-ink, chartjunk, lie factor"
+    tags %i[DESIGN]
+    path Regexp.union(/\.js\z/, S::SNAP::SNAPSHOT)
+    fix "Start bars at zero, drop 3D and heavy gridlines, label the data directly, share one scale across multiples."
+    bad "new Chart(el, { type: \"bar\", options: { scales: { y: { beginAtZero: false } } } })\n"
+    good "new Chart(el, { type: \"bar\", options: { scales: { y: { beginAtZero: true } } } })\n"
+    check do |src, _path|
+      next [] unless src.match?(/\bnew Chart\(|\bChart\.register\b/)
+
+      src.each_line.with_index(1).filter_map { |line, n| (message = S.chart_fault(line)) && finding(line: n, message:) }
+    end
+    tilted = S::SNAP.element("svg.chart", text: "", transform: "matrix3d(#{([1, 0, 0, 0, 0] * 3).push(1).join(", ")})")
+    flat = S::SNAP.element("svg.chart", text: "", transform: "none", perspective: "none")
+    adapter(:rendered_ui, languages: %i[json], example_path: S::SNAP::EXAMPLE, bad: S::SNAP.fixture(elements: [tilted]),
+                          good: S::SNAP.fixture(elements: [flat]), &S.rendered(:CHART_DATA_INK))
+  end
+
+  ::Law.define(:ORIENTATION_UNLOCKED) do
+    source "WCAG 1.3.4 Orientation, AA"
+    tags %i[ACCESSIBILITY]
+    path %r{manifest(?:\.json)?(?:\.erb)?\z|\.webmanifest\z|\.js\z}
+    example_path "/repo/app/views/pwa/manifest.json.erb"
+    fix "Drop the orientation key (or use any); lock only where the task needs it, noting `orientation: essential`."
+    bad "{\n  \"name\": \"brgen\",\n  \"orientation\": \"portrait\"\n}\n"
+    good "{\n  \"name\": \"brgen\",\n  \"display\": \"standalone\"\n}\n"
+    check do |src, _path|
+      next [] if src.match?(/orientation:\s*essential/)
+
+      src.each_line.with_index(1).filter_map do |line, n|
+        finding(line: n, message: "the screen orientation is locked") if line.match?(S::LOCKED)
+      end
+    end
+  end
+end

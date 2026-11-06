@@ -153,3 +153,127 @@
   path: MASTER/data/tokens.yml
   flags: false
   source: MASTER/data/tokens.yml
+- law: PARAGRAPH_SEPARATION_ONE_DEVICE
+  path: RAILS/__shared/app/assets/stylesheets/_prose.scss
+  flags: true
+  code: |
+    p { margin-block: 1.5em; text-indent: 1em; }
+- law: PARAGRAPH_SEPARATION_ONE_DEVICE
+  path: RAILS/__shared/app/assets/stylesheets/_prose.scss
+  flags: false
+  code: |
+    p { margin: 0; }
+    p + p { margin-block-start: 1.5em; }
+- law: PARAGRAPH_SEPARATION_ONE_DEVICE
+  path: MASTER/var/rendered/home.rendered.json
+  flags: true
+  code: >-
+    {"probe":"design_laws","viewports":[{"width":390,"elements":[
+    {"key":"p.a","tag":"p","pid":1,"text_indent":16,"margin_block":[24,24],"font_size":16},
+    {"key":"p.b","tag":"p","pid":1,"text_indent":16,"margin_block":[24,24],"font_size":16}]}]}
+- law: PRINT_PAGE_CANON
+  path: BPLANS/index.html
+  flags: true
+  count: 2
+  code: |
+    <style>@page { margin: 20mm; } main { max-width: 90ch; }</style>
+- law: PRINT_PAGE_CANON
+  path: RAILS/brgen/app/views/pages/print.html.erb
+  flags: false
+  code: |
+    <style>@page { margin: 20mm; }</style>
+- law: PRINT_PAGE_CANON
+  path: BPLANS/print.css
+  flags: false
+  code: |
+    @page :right { margin: 33mm 44mm 66mm 22mm; }
+    @page :left { margin: 33mm 22mm 66mm 44mm; }
+    main { max-width: 66ch; }
+- law: GESTURE_HAS_TAP_EQUIVALENT
+  path: RAILS/brgen/app/javascript/controllers/nowhere_swipe_controller.js
+  flags: true
+  match: like
+  code: |
+    export default class extends Controller {
+      connect() { this.element.addEventListener("touchend", (e) => this.end(e)) }
+      end(e) { if (this.dx > 60) this.like() }
+      like() { this.element.remove() }
+    }
+- law: GESTURE_HAS_TAP_EQUIVALENT
+  path: RAILS/brgen/app/javascript/controllers/nowhere_swipe_controller.js
+  flags: false
+  code: |
+    export default class extends Controller {
+      connect() { this.element.addEventListener("touchend", (e) => this.end(e)) }
+      tap() { this.element.addEventListener("click", () => this.like()) }
+      end(e) { if (this.dx > 60) this.like() }
+      like() { this.element.remove() }
+    }
+- law: GESTURE_HAS_TAP_EQUIVALENT
+  path: MASTER/var/rendered/home.rendered.json
+  flags: true
+  code: >-
+    {"probe":"design_laws","viewports":[{"width":390,"elements":[
+    {"key":"div.stack","attrs":{"data-action":"touchend->stack#like"}}]}]}
+- law: AUTO_MOTION_PAUSABLE
+  path: RAILS/brgen/app/javascript/controllers/hero_controller.js
+  flags: true
+  code: |
+    connect() { this.timer = setInterval(() => this.track.style.transform = next(), 4000) }
+- law: AUTO_MOTION_PAUSABLE
+  path: RAILS/brgen/app/javascript/controllers/hero_controller.js
+  flags: false
+  code: |
+    connect() { this.timer = setInterval(() => this.track.style.transform = next(), 4000) }
+    pause() { clearInterval(this.timer) }
+- law: AUTO_MOTION_PAUSABLE
+  path: RAILS/brgen/app/assets/stylesheets/_hero.scss
+  flags: true
+  code: |
+    .hero-track { animation: drift 8s linear infinite; }
+- law: AUTO_MOTION_PAUSABLE
+  path: RAILS/brgen/app/assets/stylesheets/_hero.scss
+  flags: false
+  code: |
+    .spinner { animation: spin 1s linear infinite; }
+- law: AUTO_MOTION_PAUSABLE
+  path: MASTER/var/rendered/home.rendered.json
+  flags: true
+  code: '{"probe":"design_laws","motion":{"changes":40,"last_change":5900,"pause":false}}'
+- law: CHART_DATA_INK
+  path: RAILS/brgen/app/javascript/controllers/price_chart_controller.js
+  flags: true
+  code: |
+    new Chart(el, { options: { scales: { y: { beginAtZero: false } } } })
+- law: CHART_DATA_INK
+  path: RAILS/brgen/app/javascript/controllers/price_chart_controller.js
+  flags: false
+  code: |
+    new Chart(el, { options: { scales: { y: { beginAtZero: true } } } })
+- law: CHART_DATA_INK
+  path: MASTER/var/rendered/home.rendered.json
+  flags: true
+  code: >-
+    {"probe":"design_laws","viewports":[{"width":390,"elements":[
+    {"key":"svg.chart","tag":"svg","transform":"matrix3d(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1)"}]}]}
+- law: ORIENTATION_UNLOCKED
+  path: RAILS/brgen/app/views/pwa/manifest.json.erb
+  flags: true
+  code: |
+    { "orientation": "portrait" }
+- law: ORIENTATION_UNLOCKED
+  path: RAILS/brgen/app/views/pwa/manifest.json.erb
+  flags: false
+  code: |
+    { "orientation": "any" }
+- law: ORIENTATION_UNLOCKED
+  path: RAILS/brgen/app/javascript/controllers/tv_controller.js
+  flags: true
+  code: |
+    screen.orientation.lock("landscape")
+- law: ORIENTATION_UNLOCKED
+  path: RAILS/brgen/app/javascript/controllers/tv_controller.js
+  flags: false
+  code: |
+    // orientation: essential - the camera guide
+    screen.orientation.lock("portrait")

@@ -462,6 +462,14 @@ DENSITY_no_todo_in_views:
   statement: "A TODO left in a view."
   resolution: review
 
+CHART_DATA_INK:
+  parent: DENSITY
+  statement: >
+    A chart spends its ink on data: no non-data ornament, no distorted scale,
+    and shared scales across small multiples.
+  severity: warning
+  resolution: review
+
 # ---
 
 OPERATOR_RENDERED:
@@ -1037,6 +1045,20 @@ NUMBER_UNIT_UNBROKEN:
   severity: warning
   resolution: review
 
+PARAGRAPH_SEPARATION_ONE_DEVICE:
+  parent: BRINGHURST
+  statement: >
+    Paragraphs are separated by an indent or by space, never both, and the
+    first paragraph is never indented.
+  severity: warning
+  resolution: review
+
+PRINT_PAGE_CANON:
+  parent: BRINGHURST
+  statement: "A printed BPLANS page sets its margins in classical proportion, inner smallest and foot largest."
+  severity: warning
+  resolution: review
+
 # ---
 
 RAILS_DOCTRINE:
@@ -1255,6 +1277,24 @@ REACH_non_native_tool:
     perl: "Use Ruby."
     python: "Use Ruby."
     bash: "Use zsh."
+
+GESTURE_HAS_TAP_EQUIVALENT:
+  parent: REACH
+  statement: "Every swipe, drag or path gesture has a single-tap control that does the same thing."
+  severity: warning
+  resolution: review
+
+AUTO_MOTION_PAUSABLE:
+  parent: REACH
+  statement: "Content that moves, advances or updates by itself for more than five seconds has a pause control."
+  severity: warning
+  resolution: review
+
+ORIENTATION_UNLOCKED:
+  parent: REACH
+  statement: "No app locks the screen's orientation unless the task needs it."
+  severity: warning
+  resolution: review
 
 PERSUASION_truth_bearing:
   parent: REACH
@@ -1950,6 +1990,10 @@ law_catalogue:
       definition_sources: [MASTER/law/universal.rb]
       severity: error
       languages: [ruby]
+    AUTO_MOTION_PAUSABLE:
+      definition_sources: [MASTER/law/javascript.rb]
+      severity: warning
+      languages: [javascript]
     AUTOFIX_REQUIRES_CONFIDENCE:
       definition_sources: [MASTER/law/universal.rb]
       severity: error
@@ -2019,6 +2063,10 @@ law_catalogue:
       # before the server answered, or a progress bar at 100% before the work ended, is the
       # same false ready. The detector still reads only the services.rb shape it was built on.
       languages: [ruby, javascript, html]
+    CHART_DATA_INK:
+      definition_sources: [MASTER/law/javascript.rb]
+      severity: warning
+      languages: [javascript]
     CHESTERTONS_FENCE:
       definition_sources: [MASTER/law/universal.rb]
       severity: warning
@@ -2452,6 +2500,10 @@ law_catalogue:
     GALLS_LAW:
       definition_sources: [MASTER/law/universal.rb]
       severity: info
+    GESTURE_HAS_TAP_EQUIVALENT:
+      definition_sources: [MASTER/law/javascript.rb]
+      severity: warning
+      languages: [javascript]
     GESTURE_OWNERSHIP:
       definition_sources: [MASTER/law/css.rb]
       severity: warning
@@ -2959,10 +3011,22 @@ law_catalogue:
       definition_sources: [MASTER/law/typesetting.rb]
       severity: warning
       languages: [yaml, html, markdown]
+    ORIENTATION_UNLOCKED:
+      definition_sources: [MASTER/law/javascript.rb]
+      severity: warning
+      languages: [json, html, javascript]
+    PARAGRAPH_SEPARATION_ONE_DEVICE:
+      definition_sources: [MASTER/law/css.rb]
+      severity: warning
+      languages: [css, scss]
     PARENTHETICAL_DASH:
       definition_sources: [MASTER/law/typesetting.rb]
       severity: warning
       languages: [yaml, html, markdown]
+    PRINT_PAGE_CANON:
+      definition_sources: [MASTER/law/css.rb]
+      severity: warning
+      languages: [css, scss, html]
     QUOTES_BY_LOCALE:
       definition_sources: [MASTER/law/typesetting.rb]
       severity: warning
