@@ -61,9 +61,18 @@ module Shared
 
     attr_reader :scope, :query, :columns, :vertical, :app
 
+    # data_source_exists? is a schema query, and the search controller asks
+    # ten verticals per keystroke - each one re-probed the same answer. The
+    # existence of a model's FTS table does not change while the process
+    # runs, so it is computed once per model class and remembered.
+    FTS_SCOPE_BY_MODEL = {}
+
     def fts_scope?
-      scope_model.respond_to?(:search) &&
-        scope_connection.data_source_exists?("#{scope_model.table_name}_fts")
+      model = scope_model
+      FTS_SCOPE_BY_MODEL.fetch(model) do
+        FTS_SCOPE_BY_MODEL[model] = model.respond_to?(:search) &&
+                                    scope_connection.data_source_exists?("#{model.table_name}_fts")
+      end
     rescue StandardError
       false
     end

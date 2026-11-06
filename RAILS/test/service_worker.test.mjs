@@ -76,6 +76,36 @@ test("activate turns navigation preload on", async () => {
   assert.equal(preloadEnabled, true)
 })
 
+test("activate deletes runtime caches left by earlier deploys and keeps everything else", async () => {
+  const deleted = []
+  const keys = caches.keys
+  const del = caches.delete
+  caches.keys = async () => [
+    "brgen-pages-v1",
+    "brgen-dynamic-v1",
+    "brgen-assets-v1",
+    "brgen-pages-__CACHE_VERSION__",
+    "brgen-offline-forms",
+    "workbox-precache-v2-somehash",
+  ]
+  caches.delete = async name => {
+    deleted.push(name)
+    return true
+  }
+
+  const event = extendable()
+  listeners.get("activate")(event)
+  await event.settle()
+
+  caches.keys = keys
+  caches.delete = del
+  assert.deepEqual(
+    deleted.sort(),
+    [ "brgen-assets-v1", "brgen-dynamic-v1", "brgen-pages-v1" ],
+    "the current version's caches, the forms queue and the precache survive",
+  )
+})
+
 test("a failed navigation falls back to the page or /offline, never the cached home page", async () => {
   cached.set("/", new Response("someone's signed-in home"))
   cached.set("/offline", new Response("offline"))

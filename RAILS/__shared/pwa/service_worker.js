@@ -48,6 +48,25 @@ const clearPrivateCaches = async () => {
   await Promise.all(names.filter(name => /-(pages|dynamic)-/.test(name)).map(name => caches.delete(name)))
 }
 
+// Every deploy renamed pages/dynamic/assets with a new version suffix, and
+// nothing ever deleted the old names - each device kept one full cache set
+// per deploy it had ever seen, bounded only by per-cache maxEntries. On
+// activation, drop every runtime cache that is not the current version. The
+// precache is cleanupOutdatedCaches' job, and the offline-forms queue
+// outlives deploys on purpose.
+const RUNTIME_CACHE = new RegExp(`^${APP_NAME}-(pages|dynamic|assets)-`)
+const pruneStaleRuntimeCaches = async () => {
+  const keep = new Set([
+    `${APP_NAME}-pages-${CACHE_VERSION}`,
+    `${APP_NAME}-dynamic-${CACHE_VERSION}`,
+    `${APP_NAME}-assets-${CACHE_VERSION}`,
+  ])
+  const names = await caches.keys()
+  await Promise.all(
+    names.filter(name => RUNTIME_CACHE.test(name) && !keep.has(name)).map(name => caches.delete(name)),
+  )
+}
+
 const sanitizeTargetUrl = rawUrl => {
   if (!rawUrl || typeof rawUrl !== "string") return "/"
 
@@ -73,6 +92,7 @@ self.skipWaiting()
 // waits for a cold worker before the request even leaves.
 self.addEventListener("activate", event => {
   if (self.registration.navigationPreload) event.waitUntil(self.registration.navigationPreload.enable())
+  event.waitUntil(pruneStaleRuntimeCaches())
 })
 
 // Four seconds, then the cached page or /offline: a reader on a dead train

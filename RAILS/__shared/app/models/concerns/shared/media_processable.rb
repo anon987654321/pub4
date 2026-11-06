@@ -45,6 +45,14 @@ module Shared
       media_variant_definitions.each do |attachment_name, variants|
         attachment = public_send(attachment_name)
         next unless attachment.respond_to?(:attached?) && attachment.attached?
+        # A save that never touched the attachment - a title edit, a
+        # visibility flag - re-ran vips over every declared variant inline in
+        # the request, on every update of every including model. Only bytes
+        # that changed earn processing: the attached attribute participates
+        # in dirty tracking, so saved_change_to_<name>? is the cheap answer
+        # (the same question post.rb asks of title/content). A model where
+        # the method is somehow absent keeps the old always-process shape.
+        next if attachment_changed_for_processing?(attachment_name) == false
 
         # Called on the instance, not perform_later / perform_now: nothing on
         # vm23 runs the queue, and perform_now still inherits ApplicationJob's
@@ -61,6 +69,18 @@ module Shared
           "#{error.class}: #{error.message}",
         )
       end
+    end
+
+    # nil when the answer is unavailable (no dirty-tracking method): the
+    # caller then processes, as before. false only when the save provably
+    # did not touch this attachment. Deliberately not named
+    # attachment_changed? - models with a has_one_attached :attachment get
+    # that method generated, and overriding it would change its meaning.
+    def attachment_changed_for_processing?(attachment_name)
+      method = "saved_change_to_#{attachment_name}?"
+      return unless respond_to?(method, true)
+
+      public_send(method)
     end
   end
 end

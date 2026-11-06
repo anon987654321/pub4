@@ -17,8 +17,13 @@ module Shared
 
     def sync_hashtags
       names = Hashtag.extract(try(:content).to_s + " " + try(:title).to_s)
-      tags = names.map { |name| find_or_create_hashtag(name) }
+      # The common save changes no #tag, and still paid extract, a tags read,
+      # a find-or-create SELECT per tag and a replace write. Same names, same
+      # tags: nothing to reconcile.
       previous = hashtags.to_a
+      return if names == previous.map(&:name)
+
+      tags = names.map { |name| find_or_create_hashtag(name) }
       # This line is Tagging's only writer, and it never names the class. A
       # census of models nothing writes reported Tagging as unwritten for that
       # reason — a grep for `Tagging.` or `taggings.create` finds readers only.
