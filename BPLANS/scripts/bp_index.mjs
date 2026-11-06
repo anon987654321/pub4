@@ -31,7 +31,7 @@ const LOGOS = {
   nato: 'ingen i arkivene, intet tilføyd',
   norwegianhedge: '«NORWEGIAN HEDGE»-gradientmerke (pub2), statisk',
   pubhealthcare: 'ingen i arkivene, intet tilføyd',
-  govt_bergen: '«Bergens Selvstyreparti»-gradientmerke (pub2), statisk',
+  govt_bergen: '«Bergens Selvstyreparti» satt plant i anleggets EB Garamond, uten gradient (kundens ønske, november 2026; pub2-gradientmerket er erstattet)',
 };
 const logoRows = PLANS.map(([k, t]) => `  <li>${t} — ${LOGOS[k]}</li>`).join('\n');
 
@@ -95,7 +95,9 @@ ${logoRows}
     <p>Satt i EB Garamond — variabel skrift, innbakt i dokumentet · mål 66 tegn ·
     linjeavstand 1,5 · oldtall i løpende tekst, tabelltall i tabeller · titler i
     setningscase uten versaler · papir #F7F2E9 — etter Robert Bringhurst,
-    The Elements of Typographic Style. EB Garamond utgis under SIL Open Font License.</p>
+    The Elements of Typographic Style. EB Garamond utgis under SIL Open Font License.
+    Tittelsidene og innholdslistene er redigert for tomrom og poise etter
+    Bringhurst (s. 61) og Strunk &amp; White (17. regel), november 2026.</p>
     <p>Kilde: pub4.good/BPLANS · gjenopprettet og fullført november 2026.</p>
   </footer>
 </main>

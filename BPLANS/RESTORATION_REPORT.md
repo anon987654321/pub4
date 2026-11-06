@@ -59,13 +59,49 @@ operative consequences:
   (test-pass equivalent), character/placeholder/law scan clean, and this
   report plus the docs are the review record.
 
+## Cover revision — November 2026 (Bringhurst / Strunk & White)
+
+After the restoration was verified, the front matter was revised on demand,
+following a second research pass over Bringhurst's *Elements of Typographic
+Style* and Strunk & White's *Elements of Style* (per-law notes and the full
+rule inventory: `research/bringhurst-strunk-research.md`). The revision is
+applied to the built documents by `scripts/bp_cover.mjs` (idempotent,
+expected transforms enforced) — the anlage itself is untouched.
+
+- **Title page**: the category kicker is omitted (Strunk & White, "Omit needless
+  words"; the eyebrow element goes), the wordmark is centered and trimmed for
+  poise (fractal 44→40 mm, the two remaining gradient marks 1.5→1.3 em, Nosifer
+  2.35→2.1 em), the h1 drops from 600 to roman 400 at 2.05 em with balanced
+  lines, and the header becomes a tall box (184 mm in print) with the mark near
+  the top, the title and byline near the bottom, and no rule — Bringhurst
+  p. 61: "poise consists primarily of emptiness…". The title page stands alone
+  (forced page break), and the Innhold list gets its own quiet page (no
+  hairline, row spacing .15→.45 em, no dot leaders — Bringhurst p. 35).
+  At the customer's request, govt_bergen's wordmark was replaced by a **plain
+  mark in the anlage's own EB Garamond** (1.3 em, tracked .05 em) — the pub2
+  gradient was withdrawn and the colophon records the replacement.
+- **Rhythm and margins (poise v2)**: every large vertical step sits on a larger
+  multiple of the 1.5 rem leading unit — section openings 7.5 rem in print
+  (5 units), footer 6 rem (4), contents padding 4.5 rem (3) — and the print
+  margins widen from 16/15 mm to **18/17 mm** around the unchanged 66-character
+  measure, so the added margin is pure void.
+- **No blank leaves (poise v2.1)**: `main`'s 3 rem print padding-bottom is
+  dropped in print — on syre it spilled a fully blank page before the colophon,
+  the "wad of blank leaves" Bringhurst p. 72–73 condemns. The corpus was
+  re-scanned for near-blank pages; none remain.
+- **Mechanical side** (DUAL_MODALITY): bp_check.mjs verifies that the kicker is
+  gone, that the poise v2 stylesheet and the 184 mm title-page print rule are
+  present, and that govt_bergen carries the plain mark with no gradient
+  wordmark left anywhere in the document.
+
 ## Verification results (November 2026 build)
 
 - Page size of every PDF: 442.08 × 663.12 pt (156 × 234 mm, 2:3), identical
   to the originals; EB Garamond embedded (Chromium print).
-- Page counts: syre 14 · speis 14 · ragnhild 15 · nato 14 · norwegianhedge 13
-  · pubhealthcare 14 · govt_bergen 18 (ragnhild and govt_bergen grew with the
-  imported archive material).
+- Page counts after the poise revision: syre 15 · speis 15 · ragnhild 17 ·
+  nato 16 · norwegianhedge 14 · pubhealthcare 15 · govt_bergen 20 — each plan
+  carries the standalone title page and contents page; syre reflects the
+  removed spill page and norwegianhedge re-flowed under the wider margins.
 - Budget arithmetic: verified by `scripts/bp_check.mjs` re-reading every
   output file — resultat rows (inntekt + kost = driftsresultat; + finans =
   før skatt), likviditet sums and year-to-year balance continuity for all
@@ -101,7 +137,13 @@ build does not need the optional one-time converter. When the original data
 files are available elsewhere, `BPLANS_LEGACY_SOURCE_DIR` selects their
 directory for `convert_content.mjs`.
 
-    node scripts/bp_build.mjs          # source + completion content → output HTML
+    node scripts/bp_cover.mjs          # front-matter revision (idempotent, Bringhurst/S&W)
     node scripts/bp_check.mjs          # independent verification
     node scripts/bp_index.mjs          # index.html
     node scripts/bp_print.mjs          # PDFs via Chromium
+
+`bp_build.mjs` inserts the completion content unconditionally and is safe only
+against a clean source tree (`BPLANS_SOURCE_DIR` pointed at pristine anlage
+files); the committed HTML files already carry the completion content, so the
+standing design-level sequence is `bp_cover.mjs` → `bp_check.mjs` →
+`bp_print.mjs` → `bp_index.mjs` against the built files.

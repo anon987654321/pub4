@@ -87,12 +87,31 @@ footer p{margin:0 0 .5em;text-align:left}
   figure,table{break-inside:avoid}
   footer{page-break-before:always}
 }
+/* cover revision 2026-11 — poise v2.1 (Bringhurst p. 61; Strunk & White 17) */
+header{border-bottom:0;display:flex;flex-direction:column;text-align:center;padding:7.5rem 0 0;min-height:62vh}
+header h1{font-weight:400;font-size:2.05em;line-height:1.18;margin:auto 0 0;text-wrap:balance}
+header .byline{margin-top:1.5rem}
+header .mark{margin-left:auto;margin-right:auto}
+header .mark-brand{margin:0 auto}
+.mark-plain{font-weight:400;font-size:1.3em;letter-spacing:.05em;line-height:1.2}
+nav{border-bottom:0;padding:4.5rem 0 0}
+nav h2{font-size:1.15em}
+nav li{margin:.45em 0}
+section{margin-top:6rem}
+h3{margin-top:2.25rem}
+footer{margin-top:6rem}
+@media print{
+  body{padding:18mm 17mm}
+  main{padding-bottom:0}
+  header{min-height:184mm;page-break-after:always}
+  nav{page-break-after:page}
+  section{margin-top:7.5rem}
+}
 </style>
 </head>
 <body>
 <header>
-<p class="kicker">Forretningsplan · Civic Tech</p>
-<p class="mark" style="margin:0 0 .8rem;font-size:1.5em;line-height:1.15;font-weight:800;letter-spacing:.02em;width:max-content;background:linear-gradient(45deg,  #ff8c00,  #ff0080,  #8a2be2,  #ff8c00);-webkit-background-clip:text;background-clip:text;color:transparent;print-color-adjust:exact;-webkit-print-color-adjust:exact;">Bergens Selvstyreparti</p>
+<p class="mark mark-plain">Bergens Selvstyreparti</p>
 <h1>Blockchain-basert lokalt styresett og transparent beslutningstaking</h1>
 <p class="byline">Bergen Selvstyreparti · søkt finansiering: NOK 200 000 · november 2026</p>
 </header>
@@ -447,7 +466,7 @@ footer p{margin:0 0 .5em;text-align:left}
 <p>Satt i EB Garamond — variabel skrift, innbakt i dokumentet · mål 66 tegn · linjeavstand 1,5 · oldtall i løpende tekst, tabelltall i tabeller · titler i setningscase uten versaler · papir #F7F2E9 — etter Robert Bringhurst, The Elements of Typographic Style. EB Garamond utgis under SIL Open Font License.</p>
 <p>Kilde: bplans/data/govt_bergen.json · november 2026.</p>
 <p>Gjenopprettet fra pub-, pub2- og pub3-arkivene og fullført med kundeinnsikt, salgsspor, enhetsøkonomi, milepæler, risikomatrise og tre-års budsjetter etter Innovasjon Norges vurderingskriterier · november 2026.</p>
-<p>Logo: «Bergens Selvstyreparti»-ordmerket i pub2-gradienten (#ff8c00 – #ff0080 – #8a2be2),  her i statisk gjengivelse.</p>
+<p>Logo: «Bergens Selvstyreparti» satt som tekstmerke i anleggets EB Garamond uten gradient, etter kundens ønske (november 2026); pub2-gradientmerket er erstattet.</p>
 </footer>
 </body>
 </html>

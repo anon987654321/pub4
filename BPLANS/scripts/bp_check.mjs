@@ -102,6 +102,18 @@ for (const plan of ORDER) {
     add(`font-face: ${fonts} (expected 2)`);
   }
 
+  // cover revision (November 2026): Bringhurst title page, mechanical side —
+  // kicker omitted, poise v2 stylesheet and title-page print rules present,
+  // govt_bergen's wordmark plain in the anlage's own EB Garamond
+  if (/class="kicker"/.test(body)) add('cover: kicker still present');
+  if (!body.includes('cover revision 2026-11')) add('cover: revision stylesheet missing');
+  if (!body.includes('poise v2')) add('cover: poise v2 stylesheet missing');
+  if (!body.includes('header{min-height:184mm;page-break-after:always}')) add('cover: title-page print rules missing');
+  if (plan === 'govt_bergen') {
+    if (!/class="mark mark-plain">Bergens Selvstyreparti</.test(body)) add('cover: plain party mark missing');
+    if (/background-clip:text/.test(body)) add('cover: gradient wordmark still present');
+  }
+
   // arithmetic, re-verified from the output file
   const res = body.match(/<caption>Resultatbudsjett[^<]*<\/caption>[\s\S]*?<\/table>/);
   if (res) {

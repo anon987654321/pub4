@@ -135,8 +135,11 @@ the opening page, with its provenance noted in the colophon:
   (#ff007f – #00c9ff – #ffcc00), static.
 - **norwegianhedge** — «NORWEGIAN HEDGE» gradient wordmark, pub2 generation,
   static.
-- **govt_bergen** — «Bergens Selvstyreparti» gradient wordmark, pub2
-  generation (#ff8c00 – #ff0080 – #8a2be2), static.
+- **govt_bergen** — «Bergens Selvstyreparti» set plain in the anlage's own
+  EB Garamond at the customer's request (November 2026, «use plain, same font
+  as the rest for now»); the pub2 gradient wordmark
+  (#ff8c00 – #ff0080 – #8a2be2) was withdrawn, and the colophon records the
+  replacement.
 - **ragnhild** — «Ragnhilds» wordmark set in Nosifer (SIL Open Font License),
   the dripping face from the archive's halloween versions, restored at the
   operator's request. Nosifer carries the wordmark only; every semantic
@@ -162,10 +165,15 @@ re-importer for the archived text sources; run it only when those two original
 files are available, setting `BPLANS_LEGACY_SOURCE_DIR` to their directory.
 Ordinary rebuilds start here:
 
-    node scripts/bp_build.mjs          # insert completion content, logos, colophon
+    node scripts/bp_cover.mjs          # front-matter revision (idempotent)
     node scripts/bp_check.mjs          # independent verification of the outputs
     node scripts/bp_index.mjs          # regenerate index.html
     node scripts/bp_print.mjs          # print PDFs via Chromium
+
+`bp_build.mjs` inserts the completion content unconditionally; the committed
+HTML files already carry it, so design-level regeneration runs the four steps
+above (with `BPLANS_OUT_DIR` set to the output directory) and leaves
+`bp_build.mjs` for a clean anlage tree.
 
 Source defaults to this BPLANS directory. Set `BPLANS_SOURCE_DIR` when using a
 separate clean source tree. Generated files go to the system temporary directory

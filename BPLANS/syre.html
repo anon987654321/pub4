@@ -87,12 +87,31 @@ footer p{margin:0 0 .5em;text-align:left}
   figure,table{break-inside:avoid}
   footer{page-break-before:always}
 }
+/* cover revision 2026-11 — poise v2.1 (Bringhurst p. 61; Strunk & White 17) */
+header{border-bottom:0;display:flex;flex-direction:column;text-align:center;padding:7.5rem 0 0;min-height:62vh}
+header h1{font-weight:400;font-size:2.05em;line-height:1.18;margin:auto 0 0;text-wrap:balance}
+header .byline{margin-top:1.5rem}
+header .mark{margin-left:auto;margin-right:auto}
+header .mark-brand{margin:0 auto}
+.mark-plain{font-weight:400;font-size:1.3em;letter-spacing:.05em;line-height:1.2}
+nav{border-bottom:0;padding:4.5rem 0 0}
+nav h2{font-size:1.15em}
+nav li{margin:.45em 0}
+section{margin-top:6rem}
+h3{margin-top:2.25rem}
+footer{margin-top:6rem}
+@media print{
+  body{padding:18mm 17mm}
+  main{padding-bottom:0}
+  header{min-height:184mm;page-break-after:always}
+  nav{page-break-after:page}
+  section{margin-top:7.5rem}
+}
 </style>
 </head>
 <body>
 <header>
-<p class="kicker">Forretningsplan · Environment &amp; Sustainability</p>
-<div class="mark" style="width:44mm;margin:0 0 .9rem;"><svg id="syreMark" aria-hidden="true" focusable="false" viewBox="0 0 800 400" preserveAspectRatio="xMinYMid meet" role="heading" aria-level="1">
+<div class="mark" style="width:40mm;margin:0 auto;"><svg id="syreMark" aria-hidden="true" focusable="false" viewBox="0 0 800 400" preserveAspectRatio="xMinYMid meet" role="heading" aria-level="1">
           <defs>
             <filter id="displacementFilter">
               <feTurbulence type="fractalNoise" baseFrequency="0.01" numOctaves="3" result="noise">

@@ -80,6 +80,12 @@ function fontMark(text) {
   return '<p class="mark-brand">%s</p>'.replace('%s', escapeHtml(text));
 }
 
+function plainMark(text) {
+  // Plain wordmark in the anlage's own EB Garamond — no gradient, no display
+  // font. Introduced November 2026 for govt_bergen at the customer's request.
+  return '<p class="mark mark-plain">%s</p>'.replace('%s', escapeHtml(text));
+}
+
 function escapeHtml(s) {
   return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
@@ -89,6 +95,7 @@ function logoHtml(plan) {
   if (!lg) return '';
   if (lg.kind === 'gradient') return gradientMark(lg.text, lg.gradient);
   if (lg.kind === 'font') return fontMark(lg.text);
+  if (lg.kind === 'plain') return plainMark(lg.text);
   return '<div class="mark" style="width:44mm;margin:0 0 .9rem;">'
     + staticFractal() + '</div>';
 }
