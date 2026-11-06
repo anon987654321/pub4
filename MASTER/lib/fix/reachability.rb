@@ -4,6 +4,7 @@ require "yaml"
 require_relative "fix_loop/file_collector"
 require_relative "../boot/paths"
 require_relative "work_lane"
+require_relative "rails_app"
 
 module Master
   module Fix
@@ -72,9 +73,10 @@ module Master
         names = apps.keys.map(&:to_s)
         raise "RAILS apps.yml declares no apps" if names.empty?
 
-        engine_names = names.select { |name| engine_app?(File.join(rails, name)) }
+        engine_names = names.select { |name| engine_app?(Master::Fix::RailsApp.app_dir(name, repo_root: @repo_root)) }
         names.each do |name|
-          path = File.join(rails, name)
+          # apps.yml deploy_root, not RAILS/<name>: master lives at MASTER/web.
+          path = Master::Fix::RailsApp.app_dir(name, repo_root: @repo_root)
           raise "RAILS app missing from filesystem: #{name}" unless File.directory?(path)
 
           surfaces = %w[Gemfile bin/rails bin/ci config/routes.rb]
