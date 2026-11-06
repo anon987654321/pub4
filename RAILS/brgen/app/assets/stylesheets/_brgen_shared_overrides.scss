@@ -573,10 +573,18 @@ body.vertical-marketplace .bol-market-hero-media img {
   object-fit: contain;
 }
 
-body.vertical-marketplace .bol-market-hero-media > span {
-  font-size: var(--store-text-glyph);
-  font-weight: 800;
-  color: var(--bol-blue);
+body.vertical-marketplace .bol-market-hero-media--empty {
+  min-height: clamp(12rem, 22vw, 18rem);
+}
+
+body.vertical-marketplace .bol-market-hero-empty {
+  max-width: 22ch;
+  margin: 0;
+  padding: var(--space-4);
+  color: var(--bol-muted);
+  font-size: var(--store-text-meta);
+  line-height: var(--leading-normal);
+  text-align: center;
 }
 
 body.vertical-marketplace .bol-primary {

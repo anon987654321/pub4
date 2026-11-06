@@ -1232,6 +1232,8 @@ en:
       completed: Completed
     hero_title: "Marketplace %{city}"
     hero_lede: "Things from people who live nearby. No nationwide shipping, no middlemen - just what is a few streets away."
+    hero_no_photo: "No photo added"
+    hero_no_listing: "No featured listing yet"
     expiry_notice:
       title: "%{title} expires soon"
       body: This listing leaves the marketplace in %{days} days. Renew it if you still

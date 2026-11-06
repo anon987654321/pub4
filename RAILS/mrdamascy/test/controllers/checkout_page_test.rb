@@ -121,6 +121,18 @@ class CheckoutPageTest < ActionDispatch::IntegrationTest
     assert_equal I18n.t("flash.zone_error", postcode: "9999"), error&.text
   end
 
+  test "an empty cart returns to the cart instead of offering zero-value payment" do
+    Cart.last.empty!
+
+    get checkout_url
+
+    assert_redirected_to cart_url
+    follow_redirect!
+    assert_response :success
+    assert_includes response.body, I18n.t("cart.empty_title")
+    assert_select "button[name=payment_method]", count: 0
+  end
+
   test "a pickup order needs no address" do
     post checkout_url, params: { mode: "pickup", address: "", postcode: "", phone: "90000009" }
 

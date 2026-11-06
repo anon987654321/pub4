@@ -37,11 +37,13 @@
       <%= link_to t("marketplace.kind_empty_action.#{@kind}"), new_listing_path(kind: @kind), class: "bol-primary" %>
     <% end %>
   </div>
-  <div class="bol-market-hero-media">
+  <div class="bol-market-hero-media<%= " bol-market-hero-media--empty" unless promo_photo %>">
     <% if promo_photo %>
       <%= responsive_image_tag promo_photo, alt: "", widths: [480, 800], sizes: "(max-width: 767px) 100vw, 42vw" %>
+    <% elsif promo_listing %>
+      <p class="bol-market-hero-empty"><%= t("marketplace.hero_no_photo") %></p>
     <% else %>
-      <span aria-hidden="true"><%= promo_listing&.title.to_s.first&.upcase || "B" %></span>
+      <p class="bol-market-hero-empty"><%= t("marketplace.hero_no_listing") %></p>
     <% end %>
   </div>
 </section>

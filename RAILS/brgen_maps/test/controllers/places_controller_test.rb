@@ -37,6 +37,16 @@ class MapsPlacesControllerTest < ActionDispatch::IntegrationTest
     assert_select "article.place-card h2 a[href=?]", "/places/#{place.to_param}", text: "Bryggen"
   end
 
+  test "a generic place kind does not repeat a raw label before the name" do
+    place = Place.create!(city: @city, name: "Bryggen", kind: "place", latitude: 60.3974, longitude: 5.3244)
+
+    get "/places"
+
+    assert_response :success
+    assert_select "article.place-card[aria-label=?] h2", place.name
+    assert_select "article.place-card[aria-label=?] .meta-facts span", place.name, text: "Place", count: 0
+  end
+
   test "an unmatched search answers with the empty state and a way to clear it" do
     get "/places", params: { q: "no-such-place-anywhere" }
 

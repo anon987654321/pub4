@@ -38,6 +38,17 @@ class Marketplace::ListingsControllerTest < ActionDispatch::IntegrationTest
     assert_includes response.body, Shared::MoneyDisplay.format(45_000)
   end
 
+  test "a featured listing without a photo gets a quiet, truthful media state" do
+    listing_for(@seller, "Fjellski 180", price_cents: 45_000)
+
+    get marketplace.listings_path
+
+    assert_response :success
+    assert_select ".bol-market-hero-media--empty .bol-market-hero-empty",
+                  text: I18n.t("marketplace.hero_no_photo")
+    refute_match(/<span[^>]*>F<\/span>/, response.body)
+  end
+
   test "a search narrows the grid to what matches" do
     ski = listing_for(@seller, "Freeride ski 180", price_cents: 45_000)
     sofa = listing_for(@seller, "Three-seat sofa", price_cents: 9_000)

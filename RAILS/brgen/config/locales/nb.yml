@@ -1240,6 +1240,8 @@ nb:
       completed: Fullført
     hero_title: "Markedsplass %{city}"
     hero_lede: "Ting fra folk som bor i nærheten. Ingen frakt over hele landet, ingen mellomledd - bare det som finnes noen gater unna."
+    hero_no_photo: "Bilde ikke lagt til"
+    hero_no_listing: "Ingen fremhevet annonse ennå"
     expiry_notice:
       title: "«%{title}» utløper snart"
       body: Annonsen forsvinner fra markedsplassen om %{days} dager. Forny den hvis

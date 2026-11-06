@@ -1,6 +1,6 @@
 # pub4 - remaining work
 
-Audit snapshot: 2026-11-06, rechecked against `main` at `9c03cef500cc18b10e9acf7a7dbc49eb6fee1a6d` immediately before this register update.
+Audit snapshot: 2026-11-06, rechecked against `main` at `cf0d9831e1b1bdd60aa3e89c1bdee2a1839aec3b` immediately before this register update.
 This register replaces the previous 1,275-line, 462-checkbox carry-forward
 dump. It contains unresolved outcomes, not session notes or speculative
 architecture proposals.
@@ -172,21 +172,18 @@ preserve those strengths.
   control, and leaves the next page action reachable. Preserve consent
   semantics and copy; tune only measured geometry in the shared owner.
   Laws: `REACH`, `PROPORTION_eight_px_rhythm`, `OPERATOR_RENDERED_contract`.
-- [ ] **Maps list icon and row hierarchy.** The committed desktop/mobile
-  places-list captures show the literal word `place` before repeated result
-  names. Trace the icon/font fallback that produces it; render the intended
-  icon glyph or omit the decorative mark rather than exposing a ligature
-  name. Tighten repeated row height and give place name, kind, city and
-  address a deliberate reading order. Keep the list as a fully operable
-  keyboard/screen-reader alternative to the full-bleed map.
+- [ ] **Maps list hierarchy and stale-capture verification.** The current card
+  source now omits the generic `place` kind instead of printing it as a raw
+  label; a controller regression covers that case. Run the maps test and
+  recapture desktop/mobile before closing this item. Review place name, kind,
+  city and address order, and keep the list as an operable keyboard and
+  screen-reader alternative to the full-bleed map.
   Laws: `DENSITY_aesthetic_integrity`, `BRINGHURST`, `REACH`.
-- [ ] **Marketplace hero fallback.** The listing view emits a large initial
-  letter (default `B`) when the featured listing has no photo; the desktop
-  and mobile captures show that fallback dominating an otherwise empty
-  media panel. Replace the generic monogram with a deliberate, truthful
-  no-featured-image state, and keep the media proportion useful when no
-  offer exists. When a listing/photo is available, let the real product
-  lead. Preserve the existing commerce dialect, listing data and tokens.
+- [ ] **Marketplace no-photo state verification.** The generic monogram is
+  replaced by a compact, localized no-photo/no-featured-listing message, with
+  a shorter media well and a controller regression. Run the marketplace
+  test and recapture both viewports; keep the row open until the rendered
+  hierarchy and media proportions are confirmed.
   Laws: `DENSITY_form_follows_function`, `DENSITY_aesthetic_integrity`,
   `OPERATOR_RENDERED_contract`, `VISUAL_HIERARCHY`.
 - [ ] **Amber editorial tile line breaks.** At the captured desktop width,
@@ -197,21 +194,18 @@ preserve those strengths.
   grid at 1024, 1280 and 1440 CSS px plus 390px mobile.
   Laws: `BRINGHURST_line_breaks`, `BRINGHURST_measure`,
   `PROPORTION_eight_px_rhythm`.
-- [ ] **Radio featured-track state.** The captured Radio home has a large
-  grey media block below `Utvalgt spor`, with no visible cover or state
-  explanation. Establish whether this is unloaded artwork or no selected
-  track. Render the real cover when available and an explicit, compact
-  loading/empty state otherwise; make playback controls and status agree
-  with the actual player state. Do not fabricate artwork or playback.
+- [ ] **Radio tunnel recapture.** The current playlist home now uses the full-screen
+  tunnel, an explicit tap-to-start overlay, and a live track label; the November
+  5 image appears to predate that surface. Recapture after the source change and
+  verify the first-play, no-track and reduced-motion states before deciding
+  whether an empty/loading treatment is still missing.
   Laws: `TRUTHFUL_STATUS`, `WAITING_STATE_MEANING`,
   `DENSITY_aesthetic_integrity`.
-- [ ] **Messenger empty rail.** The captured empty inbox shows repeated bare
-  `#` markers in the room rail while the main pane says there are no
-  conversations. Confirm that each marker represents a real, named room;
-  otherwise remove the inert placeholders or give populated rooms an
-  accessible name. In the genuinely empty state, keep one clear next action
-  and avoid presenting an empty navigation rail as usable content. Preserve
-  the populated desktop split-pane layout.
+- [ ] **Messenger rail recapture.** Current source strips the leading `#` and
+  renders the channel's first letter, with the full channel name available
+  to assistive technology. The November 5 screenshot predates or contradicts
+  that source. Re-run the focused view test and recapture before changing the
+  implementation again; preserve the populated split-pane layout.
   Laws: `BOUNDED_LOAD_choice_overload`, `REACH`,
   `OPERATOR_RENDERED_contract`.
 - [ ] **BSDPorts result readability, without redesign.** The desktop/mobile
@@ -224,14 +218,11 @@ preserve those strengths.
   do not cardify or re-theme the product.
   Laws: `BRINGHURST_measure`, `BRINGHURST_scale`,
   `PROPORTION_contrast`, `REACH`.
-- [ ] **Mr. Damascy empty checkout state.** The checkout capture shows `0 kr`
-  and both payment CTAs even though no cart lines are present. The controller
-  already redirects an empty-cart submission back to the cart, so this is a
-  rendered-state mismatch rather than evidence of a payment bypass. Present
-  an explicit recoverable empty-cart state and hide/disable payment actions
-  until a payable cart and a valid total exist; keep the normal one-screen
-  Vipps Express path short. Preserve the restaurant's original logo, palette
-  and mobile-first 480px shell.
+- [ ] **Mr. Damascy empty checkout verification.** The GET action now redirects an
+  empty cart to the cart's existing empty state (or resumes its just-placed
+  unpaid order), and a regression asserts no zero-value payment buttons are
+  rendered. Run the focused checkout test and recapture the empty-cart flow;
+  the normal one-screen Vipps path remains unchanged.
   Laws: `TRUTHFUL_STATUS`, `AFFORDANCE_CLARITY`, `COST_TRANSPARENCY`,
   `OPERATOR_RENDERED_contract`.
 ## 5. MASTER CLI, web, voice and face

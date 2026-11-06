@@ -22,6 +22,14 @@ class CheckoutController < ApplicationController
   # Vipps" CTA. No promo field, no card fields, no tip step.
   def show
     remember_mode
+    cart = current_cart
+    if cart.cart_items.empty?
+      placed = cart.unpaid_order_just_placed
+      return redirect_to_payment(placed) if placed
+
+      return redirect_to(cart_path, alert: t("cart.empty"))
+    end
+
     load_checkout_vars
   end
 
