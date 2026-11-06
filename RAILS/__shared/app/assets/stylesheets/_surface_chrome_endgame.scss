@@ -288,7 +288,11 @@
   }
   .page-header, .feed-header { min-inline-size: 0; }
   .page-header :is(h1, h2), .feed-header :is(h1, h2) { max-inline-size: 22ch; margin-block: 0; text-wrap: balance; }
-  main#main-content :is(h1, h2, h3, h4) { text-wrap: balance; overflow-wrap: anywhere; }
+  // break-word, not anywhere: both break a word too long for its line, but
+  // anywhere also lets a heading's min-content shrink to one letter, so a
+  // heading in a grid or flex track collapsed and broke inside its word
+  // (amber's "Bym / orge / n" at 1440, dating's "Oppda / g").
+  main#main-content :is(h1, h2, h3, h4) { text-wrap: balance; overflow-wrap: break-word; }
   main#main-content :is(p, li, dd) { text-wrap: pretty; }
   main#main-content :is(button, input, select, textarea) { box-sizing: border-box; }
   // Fields only. A submit input is a button: matched here at (1,1,1) it lost

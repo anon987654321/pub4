@@ -1972,7 +1972,15 @@ main#main-content header > nav form {
 /* Four looks, stacked, with the air between them the operator asked for
    (2026-09-25, after antigravity.google): whole screens of white, a large
    tightly tracked title, then the track. */
+/* A size container: the looks sit in the page's reading column (600px at
+   1440), so their split and their title size follow that column, not the
+   viewport. Keyed to the viewport, the two-column tile left a 12rem title
+   column for an 86px "Bymorgen", which spilled past the tile at 1440 and
+   broke as "Bym / orge / n" when anywhere-wrapping was on. A size container
+   takes no width from its content, so it says its width outright. */
 .amber-looks {
+  container-type: inline-size;
+  inline-size: 100%;
   display: flex;
   flex-direction: column;
   gap: clamp(42px, 7vw, 86px);
@@ -1983,7 +1991,7 @@ main#main-content .amber-look-title {
   margin: 0;
   max-width: none;
   text-align: center;
-  font-size: clamp(40px, 6vw, 88px);
+  font-size: clamp(40px, 13cqi, 88px);
   font-weight: var(--weight-normal);
   line-height: 1.05;
   letter-spacing: -0.03em;
@@ -2417,11 +2425,19 @@ main#main-content form .field :is(
 .post-embed-action { text-decoration: none; }
 @media (min-width: 768px){
   .amber-editorial-nav{justify-content:center}
-  .amber-look{grid-template-columns:minmax(12rem,.55fr) minmax(0,1.45fr);gap:clamp(1.5rem,5vw,5rem);min-height:min(72vh,760px);padding-block:clamp(2rem,7vw,6rem)}
+}
+@container (min-width: 720px){
+  .amber-look{
+    grid-template-columns:minmax(12rem,.55fr) minmax(0,1.45fr);
+    gap:clamp(1.5rem,5cqi,5rem);
+    min-height:min(72vh,760px);
+    padding-block:clamp(2rem,7cqi,6rem);
+  }
   .amber-look:nth-child(even){grid-template-columns:minmax(0,1.45fr) minmax(12rem,.55fr)}
   .amber-look:nth-child(even) .amber-look-title{order:2}
   .amber-look:nth-child(even) .amber-look-stage{order:1}
   .amber-look-title{max-inline-size:8ch}
+  main#main-content .amber-look-title{font-size:clamp(2rem,5cqi,88px)}
 }
 
 // ---- amber_late_product_finish ----
@@ -2656,9 +2672,14 @@ body[data-surface="luxury"] .commerce-handoff-note {
     grid-template-columns: repeat(auto-fill, minmax(min(100%, 210px), 1fr));
   }
 
+}
+
+// The two-column tile follows the looks column (container above), not the
+// viewport.
+@container (min-width: 720px) {
   body[data-surface="luxury"] .amber-look {
     grid-template-columns: minmax(12rem, .6fr) minmax(0, 1.4fr);
-    gap: clamp(24px, 5vw, 64px);
+    gap: clamp(24px, 5cqi, 64px);
   }
 
   // Mirrored for the even looks, whose title moves to the second column. The

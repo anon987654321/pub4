@@ -162,14 +162,6 @@ tokens, and original marks intact. The Mr. Damascy item sheet, empty-cart
 recovery, loyalty and offline screens already have clear, coherent states;
 preserve those strengths.
 
-- [ ] **Amber editorial tile line breaks.** At the captured desktop width,
-  `Bymorgen` breaks mid-word as `Bym / orge / n`; the mobile capture does
-  not. Correct the desktop tile's available measure, wrapping and type
-  constraint so Norwegian and English copy wrap at word boundaries without
-  clipping or shrinking the editorial hierarchy. Check the existing tile
-  grid at 1024, 1280 and 1440 CSS px plus 390px mobile.
-  Laws: `BRINGHURST_line_breaks`, `BRINGHURST_measure`,
-  `PROPORTION_eight_px_rhythm`.
 - [ ] **Radio tunnel recapture.** The current playlist home now uses the full-screen
   tunnel, an explicit tap-to-start overlay, and a live track label; the November
   5 image appears to predate that surface. Recapture after the source change and

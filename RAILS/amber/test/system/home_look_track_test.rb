@@ -30,7 +30,52 @@ class HomeLookTrackTest < ApplicationSystemTestCase
     assert wait_until { previous.disabled? }, "previous is disabled back at the start"
   end
 
+  # At 1440 "Bymorgen" broke inside the word as Bym / orge / n. A look title
+  # wraps only between words, in Norwegian and English, at each tile width.
+  BROKEN_WORDS = "[...document.querySelectorAll('.amber-look-title')].flatMap((title) => {" \
+                 " const node = title.firstChild; let start = 0;" \
+                 " return title.textContent.split(' ').filter((word) => {" \
+                 " const range = document.createRange(); range.setStart(node, start);" \
+                 " range.setEnd(node, start + word.length); start += word.length + 1;" \
+                 " return new Set([...range.getClientRects()].map((r) => Math.round(r.top))).size > 1 }) })"
+
+  SPILLED = "[...document.querySelectorAll('.amber-look-title')].filter((title) => {" \
+            " const range = document.createRange(); range.selectNodeContents(title);" \
+            " const text = range.getBoundingClientRect();" \
+            " const tile = title.closest('.amber-look').getBoundingClientRect();" \
+            " return text.left < tile.left - 1 || text.right > tile.right + 1 }).map((title) => title.textContent)"
+
+  test "a look title wraps only between words at every tile width" do
+    [ 1024, 1280, 1440 ].each do |width|
+      current_window.resize_to(width, 900)
+
+      %w[nb en].each do |locale|
+        open_home(locale)
+
+        assert_empty evaluate_script(BROKEN_WORDS), "#{locale} at #{width}px"
+        assert_empty evaluate_script(SPILLED), "#{locale} spills at #{width}px"
+      end
+    end
+    browser.execute_cdp("Emulation.setDeviceMetricsOverride",
+                                    width: 390, height: 844, deviceScaleFactor: 2, mobile: true)
+    open_home("nb")
+    assert_empty evaluate_script(BROKEN_WORDS), "nb at 390px"
+    assert_empty evaluate_script(SPILLED), "nb spills at 390px"
+  ensure
+    browser.execute_cdp("Emulation.clearDeviceMetricsOverride")
+    current_window.resize_to(1400, 1000)
+  end
+
   private
+
+  def browser = page.driver.browser
+
+  # Layout only: straight to the page, without turbo-rails' visit hook, which
+  # waits for the cable stream and times out on a loaded machine.
+  def open_home(locale)
+    browser.navigate.to("#{Capybara.current_session.server.base_url}#{root_path(locale:)}")
+    assert_selector ".amber-look-title", minimum: 4
+  end
 
   def press(track, key)
     execute_script("arguments[0].focus()", track)
