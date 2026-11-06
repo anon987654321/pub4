@@ -10,7 +10,7 @@ require "uri"
 require "yaml"
 require_relative "../../../lib/gap"
 require_relative "../../support/check_result"
-require_relative "../../support/png_diff"
+require_relative "../../support/pixel_match"
 require_relative "../../support/geometry_probe"
 require_relative "../../support/sweep_replay"
 
@@ -380,31 +380,37 @@ module Deploy
                  "reason" => "pixel baseline missing for #{surface.id}; review a capture, then promote it with MASTER/tools/approve_visual_baselines.rb" }
       end
 
-      max_ratio = self.class.pixel_diff_max_ratio
-      slug = File.basename(screenshot, ".png")
-      diff_path = File.join(screenshot_dir, "#{slug}-pixel-diff.png")
-      compared = PngDiff.compare(baseline_path: baseline, current_path: screenshot, diff_path:)
-
-      common = {
-        "baseline" => baseline,
-        "pixel_diff_count" => compared[:pixel_diff_count],
-        "pixel_diff_ratio" => compared[:pixel_diff_ratio],
-        "pixel_diff_image" => compared[:pixel_diff_image],
-        "max_ratio" => max_ratio,
-      }
-
-      if compared[:status] == :dimension_mismatch
-        common.merge("status" => "DIMENSION_MISMATCH",
-                     "reason" => "pixel baseline dimensions changed for #{surface.id}: #{compared[:baseline_dimensions].join('x')} to #{compared[:current_dimensions].join('x')}")
-      elsif compared[:pixel_diff_ratio] > max_ratio
-        common.merge("status" => "REGRESSION",
-                     "reason" => "pixel regression for #{surface.id}: #{compared[:pixel_diff_count]} changed pixels (#{(compared[:pixel_diff_ratio] * 100).round(3)}%) exceeds #{(max_ratio * 100).round(3)}% budget; diff=#{compared[:pixel_diff_image]}")
-      else
-        common.merge("status" => "COMPARED")
-      end
+      diff_path = File.join(screenshot_dir, "#{File.basename(screenshot, ".png")}-pixel-diff.png")
+      # Perceptual, as pixelmatch: a font hinted a shade differently or an anti-aliased edge is not
+      # change, and the changed pixels come back as boxes a repair has to answer to.
+      compared = PixelMatch.compare(baseline_path: baseline, current_path: screenshot, diff_path:)
+      pixel_verdict(surface, compared, max_ratio: self.class.pixel_diff_max_ratio)
+        .merge("baseline" => baseline, "max_ratio" => self.class.pixel_diff_max_ratio)
     rescue PngDiff::InvalidPng => e
       { "status" => "UNSUPPORTED", "baseline" => baseline,
         "reason" => "pixel baseline could not be compared for #{surface.id}: #{e.class}: #{e.message}" }
+    end
+
+    def pixel_verdict(surface, compared, max_ratio:)
+      common = { "pixel_diff_count" => compared[:pixel_diff_count], "pixel_diff_ratio" => compared[:pixel_diff_ratio],
+                 "pixel_diff_image" => compared[:pixel_diff_image], "pixel_diff_regions" => compared[:regions] }
+      if compared[:status] == :dimension_mismatch
+        return common.merge("status" => "DIMENSION_MISMATCH", "reason" => resized(surface, compared))
+      end
+      return common.merge("status" => "COMPARED") unless compared[:pixel_diff_ratio] > max_ratio
+
+      common.merge("status" => "REGRESSION", "reason" => regressed(surface, compared, max_ratio:))
+    end
+
+    def resized(surface, compared)
+      "pixel baseline dimensions changed for #{surface.id}: #{compared[:baseline_dimensions].join('x')} to " \
+        "#{compared[:current_dimensions].join('x')}"
+    end
+
+    def regressed(surface, compared, max_ratio:)
+      "pixel regression for #{surface.id}: #{compared[:pixel_diff_count]} changed pixels " \
+        "(#{(compared[:pixel_diff_ratio] * 100).round(3)}%) exceeds #{(max_ratio * 100).round(3)}% budget; " \
+        "diff=#{compared[:pixel_diff_image]}"
     end
 
     def capture_screenshot(cdp, path)

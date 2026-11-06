@@ -236,7 +236,7 @@ class BrowserDiagnosticsCheckTest < Minitest::Test
 
   def test_pixel_comparison_is_wired_into_route_evidence_and_never_auto_approves
     source = File.read(File.join(ROOT, "MASTER", "checks", "lib", "rendered", "browser_diagnostics.rb"))
-    assert_includes source, "PngDiff.compare"
+    assert_includes source, "PixelMatch.compare"
     refute_includes source, "CHECK_PIXEL_BASELINE_APPROVE"
     assert_includes source, "CHECK_PIXEL_BASELINE_STRICT"
     assert_includes source, "pixel_diff_ratio"

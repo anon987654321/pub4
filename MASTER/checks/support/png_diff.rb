@@ -163,6 +163,11 @@ module Deploy
       { width:, height:, channels:, raw: }
     end
 
+    # One scanline as stored (filter byte first) back to its bytes, for a reader that walks pixels.
+    def unfilter_row(scanline, previous:, channels:)
+      unfilter(scanline.getbyte(0), scanline.byteslice(1, scanline.bytesize - 1), previous, channels)
+    end
+
     def unfilter(filter, bytes, previous, bytes_per_pixel)
       raise InvalidPng, "unknown PNG row filter #{filter}" unless (0..4).cover?(filter)
 
