@@ -3,13 +3,13 @@
 require_relative "test_helper"
 require "review/scan/law_tree"
 
-# The four SOLID proxies - OpenClosedLaw, LiskovLaw, DependencyInversionLaw,
+# The four SOLID proxies — OpenClosedLaw, LiskovLaw, DependencyInversionLaw,
 # InterfaceSegregationLaw. Until now nothing named any of them, and three of
 # the four fire on nothing: measured over 2,470 Ruby files across all four
 # trees, OPEN_CLOSED found 3 and the other three found 0.
 #
 # That number has two readings and no test could tell them apart. Either the
-# tree has none of these shapes, or the detectors cannot see them - and a rule
+# tree has none of these shapes, or the detectors cannot see them — and a rule
 # that cannot see its own subject looks identical from outside to a rule with
 # nothing to report. Every test below therefore starts from a source the rule
 # MUST flag, which settles it: all four can fire, so the silence is the sample.
@@ -29,7 +29,7 @@ class TestSolidRules < Minitest::Test
     assert_empty flags(rule, source), why
   end
 
-  # OPEN_CLOSED - a case that dispatches on type has to grow a branch for every
+  # OPEN_CLOSED — a case that dispatches on type has to grow a branch for every
   # new type, which is the thing polymorphism exists to avoid.
 
   def test_open_closed_flags_a_three_branch_type_dispatch
@@ -88,7 +88,7 @@ class TestSolidRules < Minitest::Test
     RUBY
   end
 
-  # LISKOV - a subclass that refuses the parent's contract, or narrows it.
+  # LISKOV — a subclass that refuses the parent's contract, or narrows it.
 
   def test_liskov_flags_a_refused_bequest
     found = flags(Laws::LiskovLaw.new, <<~RUBY)
@@ -154,7 +154,7 @@ class TestSolidRules < Minitest::Test
     RUBY
   end
 
-  # DEPENDENCY_INVERSION - a constructor that builds its own collaborator.
+  # DEPENDENCY_INVERSION — a constructor that builds its own collaborator.
 
   def test_dependency_inversion_flags_a_hardcoded_collaborator
     found = flags(Laws::DependencyInversionLaw.new, <<~RUBY)
@@ -201,7 +201,7 @@ class TestSolidRules < Minitest::Test
     RUBY
   end
 
-  # INTERFACE_SEGREGATION - a module wide enough that its includers cannot want
+  # INTERFACE_SEGREGATION — a module wide enough that its includers cannot want
   # all of it, and enough includers to prove the point.
 
   def test_interface_segregation_flags_a_wide_module_with_two_includers
@@ -217,7 +217,7 @@ class TestSolidRules < Minitest::Test
                   "eight is the limit, not the violation"
   end
 
-  # One includer cannot show that the interface is too wide for its clients -
+  # One includer cannot show that the interface is too wide for its clients —
   # that is a big module, which is a different rule's business.
   def test_interface_segregation_spares_a_wide_module_with_one_includer
     assert_silent Laws::InterfaceSegregationLaw.new, fat_module(9, includers: 1),

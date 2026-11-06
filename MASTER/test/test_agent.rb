@@ -6,7 +6,7 @@ require_relative "test_helper"
 class TestAgent < Minitest::Test
   include Master
 
-  # Fake collaborators - just enough to construct an Agent.
+  # Fake collaborators — just enough to construct an Agent.
   FakeConfig  = Struct.new(:model, :task_type, :reasoning_mode) do
     def [](key) = respond_to?(key) ? public_send(key) : nil
   end

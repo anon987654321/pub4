@@ -15,7 +15,7 @@ require_relative "../checks/lib/source/exemption_freshness"
 
 # The rule the checks fixtures exist for: plant the defect, assert red and
 # named, remove it, assert green. Every way a ledger row can rot is planted
-# here - overdue review, vanished law, missing field, unparseable date - plus
+# here — overdue review, vanished law, missing field, unparseable date — plus
 # the two warn-only states (due soon, catalogue gap) and one test that runs the
 # check against the real craft ledger, so the ledger and the law files cannot
 # drift apart silently between campaigns.
@@ -148,7 +148,7 @@ class TestExemptionFreshnessCheck < Minitest::Test
   end
 
   # The standing guard: the shipped ledger against the shipped law files. The
-  # two exemption rows recorded by the 2026-10-25 campaign must still resolve -
+  # two exemption rows recorded by the 2026-10-25 campaign must still resolve —
   # if a law file ever renames or retires NO_INLINE_SCRIPT_BLOCK, this goes red
   # in the same rake test run that broke it.
   def test_real_craft_ledger_rows_resolve_against_real_law_files

@@ -7,7 +7,7 @@ module Deploy
     #
     # A module included back into the check, so it keeps @result, @tokens and the
     # finding helpers it shares with the other checks. Nothing in here builds a
-    # path from __dir__ - the design_metrics split moved a css_budget.yml path
+    # path from __dir__ — the design_metrics split moved a css_budget.yml path
     # one directory deeper and silently ran that check unbudgeted.
     module TokenChecks
       def check_token_conformance(surface, data)
@@ -119,7 +119,7 @@ module Deploy
       # vertical_accents as `messenger: { accent: "#6b7fd7", hover: "#5566c4" }`,
       # so a one-level each_value saw a Hash where it expected a hex and skipped
       # every vertical accent in the file. The channel pages were then reported as
-      # painting #6b7fd7 "outside MASTER/data/tokens.yml" - a colour that is declared
+      # painting #6b7fd7 "outside MASTER/data/tokens.yml" — a colour that is declared
       # in MASTER/data/tokens.yml, on the line above its own contrast measurement.
       def token_palette
         set = %w[#000000 #ffffff]

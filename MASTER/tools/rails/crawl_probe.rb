@@ -1,7 +1,7 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
-# HTTP crawl + inventory sync - optional Ferrum via --browser.
+# HTTP crawl + inventory sync — optional Ferrum via --browser.
 
 require "optparse"
 require_relative "crawl_support"

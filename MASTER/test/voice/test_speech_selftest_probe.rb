@@ -4,7 +4,7 @@ require_relative "../test_helper"
 require "digest"
 
 # Pins the gap that made `edge_tts_available?` a false positive. It answers with
-# two preconditions - the worker file is executable, EventMachine has SSL - and
+# two preconditions — the worker file is executable, EventMachine has SSL — and
 # bin/tts-worker needs two more before it can speak, rb_edge_tts and
 # faye/websocket. On a host missing either, the cheap probe said yes and
 # /health reported TTS healthy while synthesis could not start.
@@ -64,7 +64,7 @@ class TestSpeechSelftestProbe < Minitest::Test
   # the file when it re-resolves) cannot invalidate the memo.
   #
   # The mtime is moved with File.utime rather than by running the worker, and
-  # that is not laziness. Written the obvious way - run the worker, compare -
+  # that is not laziness. Written the obvious way — run the worker, compare —
   # this test passed against the mtime-keyed version it exists to reject,
   # because File.mtime(...).to_i truncates to whole seconds and the worker
   # returns in 0.3s. A test that only fails when the clock happens to roll over

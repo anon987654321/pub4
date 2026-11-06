@@ -15,7 +15,7 @@ module Deploy
   # It was called layout_geometry, which claimed something it does not do. It
   # measures no boxes. A tap minimum declared in a stylesheet says nothing about
   # whether the element carrying it is overlapped, clipped or overridden at this
-  # breakpoint - RenderedGeometryCheck is what measures that, in a browser, and
+  # breakpoint — RenderedGeometryCheck is what measures that, in a browser, and
   # its own header records that this check is the one it was named after.
   #
   # The distinction is worth the rename because the old pair invited the reading
@@ -38,8 +38,8 @@ module Deploy
     # grepped for the literal `min-height: 44px`, so the check was measuring a
     # spelling rather than a geometry and firing on files that satisfied it.
     #
-    # Accepting the token on its name alone would be the opposite mistake - a
-    # sheet that had quietly dropped to 30px would pass - so TAP_MIN_PX re-reads
+    # Accepting the token on its name alone would be the opposite mistake — a
+    # sheet that had quietly dropped to 30px would pass — so TAP_MIN_PX re-reads
     # what the token resolves to and #assert_token_floor fails if it is not 44.
     TAP_MIN = 'min-height:\s*(?:44px|var\(--tap-min\))'
 
@@ -53,7 +53,7 @@ module Deploy
     BRGEN_NAV_CSS = "brgen/app/assets/stylesheets/_brgen_navigation.scss"
     BRGEN_MARKETPLACE_CSS = "brgen/app/assets/stylesheets/_brgen_marketplace.scss"
 
-    # Map surface labels (from SURFACES / verticals) -> schema ids.
+    # Map surface labels (from SURFACES / verticals) → schema ids.
     # live_first_screen builds label as "app/label" (e.g. brgen/vertical_marketplace).
     # No /live mapping: /live redirects to /nearby/room and has no schema of its
     # own, so a mapping to one raises "unknown surface schema".
@@ -144,7 +144,7 @@ module Deploy
       body.valid_encoding? ? body : body.encode(Encoding::UTF_8, invalid: :replace, undef: :replace)
     end
 
-    # What `var(--tap-min)` is worth. Run once per check run, not per surface -
+    # What `var(--tap-min)` is worth. Run once per check run, not per surface —
     # every css_touch needle that accepts the token leans on this one number.
     def assert_token_floor
       return if @token_floor_checked
@@ -231,7 +231,7 @@ module Deploy
         end
       end
 
-      # Structural DOM surface schema (P1) - principle-tagged markers + order.
+      # Structural DOM surface schema (P1) — principle-tagged markers + order.
       raw_label = surface[:label].to_s
       schema_id = SCHEMA_FOR_LABEL[raw_label] ||
                   SCHEMA_FOR_LABEL[label] ||

@@ -13,15 +13,15 @@ module Deploy
   # UI/UX user simulation across every full-page Rails surface.
   #
   # Two modes:
-  #   1. Source - always runs. Reads each page template and asserts UX floor
+  #   1. Source — always runs. Reads each page template and asserts UX floor
   #      (heading, empty CTAs, dead-end risk, guest auth-wall honesty, forms).
-  #   2. Live - when the app port is open. Soft-guest HTTP GET of every
+  #   2. Live — when the app port is open. Soft-guest HTTP GET of every
   #      guest-open, non-parameterised path; checks status, landmarks, and
   #      exception chrome. Auth-only pages are noted, not hard-failed, when
   #      unauthenticated.
   #
   # Personas: guest (Craigslist-style no-signup) and auth (session expected).
-  # Scope: focus triangle - brgen - amber - MASTER web.
+  # Scope: focus triangle — brgen · amber · MASTER web.
   class PageSimulationCheck
     ROOT = File.expand_path("../../../..", __dir__)
 
@@ -189,7 +189,7 @@ module Deploy
       # controller answering the guest with a 302 to sign-in lands inside
       # 200..399 and passes, while one answering `head :forbidden` was a hard
       # failure for behaving correctly. Dating's verification queue is the
-      # second kind - a moderation surface whose index is `head :forbidden
+      # second kind — a moderation surface whose index is `head :forbidden
       # unless reviewer?`, so 403 is the right answer to this check's persona.
       #
       # 404 and 5xx stay hard. Those say the page is missing or broken, which is

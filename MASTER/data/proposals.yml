@@ -7,12 +7,12 @@
 # converges and one that oscillates.
 #
 # Measured on the session that built it: of roughly twenty findings checked,
-# five were refuted - and every one of them looked correct on a first read.
+# five were refuted — and every one of them looked correct on a first read.
 #
 # States:
-#   open     - proposed, not yet acted on
-#   landed   - done, with the commit that did it
-#   refuted  - checked and wrong, with the reason. NEVER delete a refuted row:
+#   open     — proposed, not yet acted on
+#   landed   — done, with the commit that did it
+#   refuted  — checked and wrong, with the reason. NEVER delete a refuted row:
 #              deleting it is what lets the next round propose it again.
 #
 # `id` is stable and hand-written; a generated one changes when the finder does

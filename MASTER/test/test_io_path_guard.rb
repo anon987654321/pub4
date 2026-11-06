@@ -115,7 +115,7 @@ class PathGuardEscapeTest < Minitest::Test
 
   def test_read_limit_is_clamped
     body = read_file.call(path: "notes.txt", limit: 1_000_000).value!
-    assert_match(/truncated, 5000 total lines/, body) # source-assertion: ok - the tool's returned text, not a source file
+    assert_match(/truncated, 5000 total lines/, body) # source-assertion: ok — the tool's returned text, not a source file
   end
 
   def test_search_files_stays_inside_the_root
@@ -140,7 +140,7 @@ end
 # GitContext#show is the one operation in that class taking no path: its argument
 # is a git ref, handed straight to `git show`. `git show <rev>:<path>` prints that
 # path's blob, so the colon form is a file read that never passes through
-# PathGuard - any tracked file, at any revision, including ones deleted since -
+# PathGuard — any tracked file, at any revision, including ones deleted since —
 # and Io::LLM::GitContext exposes it to a model. Refused at the ref.
 class GitContextShowTest < Minitest::Test
   def setup

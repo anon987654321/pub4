@@ -5,13 +5,13 @@
 # method_reach.rb answers one layer: a method no line names. That is the first
 # cut, and acting on it alone over-deletes in one direction and under-deletes in
 # the other. Deleting a dead handler orphans the helpers only it called, so the
-# census has to be re-run until it settles - and a helper called only by another
+# census has to be re-run until it settles — and a helper called only by another
 # dead method never appears in the first pass at all.
 #
 #   ruby MASTER/tools/method_graph.rb
 #
 # This is the closure. Every method is a node; every identifier in its body is
-# an edge. The roots are the names something outside `lib/` uses - bin/, test/, tools/, the Rakefile, the other three trees - plus the names `lib/`
+# an edge. The roots are the names something outside `lib/` uses — bin/, test/, tools/, the Rakefile, the other three trees — plus the names `lib/`
 # uses at file scope, where a registration lives. Anything the roots cannot
 # reach is unreachable no matter how many layers deep it sits.
 #
@@ -55,7 +55,7 @@ module Operator
 
     # A setter is written `thing.name = value` and an index `thing[key]`, so the
     # identifier scan sees `name` and nothing at all. Neither can ever be reached
-    # by name, which would report every one of them as dead - `model=`, `[]` and
+    # by name, which would report every one of them as dead — `model=`, `[]` and
     # `[]=` were in the first list for exactly that reason.
     UNCALLABLE_BY_NAME = /[=\[]/
 
@@ -70,7 +70,7 @@ module Operator
     # Comments and prose string literals dropped. Two things are kept: a short
     # lowercase literal, because that is how a symbol table names a handler, and
     # whatever sits inside an interpolation, because that is code. Blanking the
-    # whole literal blanked `"...#{role_description}..."`, which is the only call
+    # whole literal blanked `"…#{role_description}…"`, which is the only call
     # four swarm workers' role_description has.
     def code_only(line)
       return "" if line.match?(/\A\s*#/)

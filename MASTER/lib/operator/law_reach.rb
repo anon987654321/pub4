@@ -9,7 +9,7 @@
 #
 #   ruby MASTER/tools/law_reach.rb
 #
-# The semantic prompt drops info-severity violations deliberately - they double
+# The semantic prompt drops info-severity violations deliberately — they double
 # the token cost of every file for findings nobody acts on. Reach therefore
 # measures the enforcement surface, not the severity policy.
 

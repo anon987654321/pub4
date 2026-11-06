@@ -124,9 +124,9 @@ if $PROGRAM_NAME == __FILE__
   # Refuses a partial run rather than warning about one.
   #
   # The header above has said "NAME EVERY APP" since this was written, because
-  # writing the file rewrites all of it. On 2026-08-15 the obvious invocation -
+  # writing the file rewrites all of it. On 2026-08-15 the obvious invocation —
   # `generate_route_manifest.rb brgen`, straight out of the failure message that
-  # sent someone here - deleted amber and bsdports from the manifest and turned
+  # sent someone here — deleted amber and bsdports from the manifest and turned
   # one stale digest into a different, larger failure. A documented footgun is
   # still a footgun; the argument list is checkable, so it is checked.
   requested = ARGV.reject { |arg| arg == "--partial" }

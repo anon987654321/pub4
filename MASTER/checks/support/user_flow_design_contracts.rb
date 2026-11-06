@@ -6,8 +6,8 @@ require_relative "../../tools/frontend_law_set"
 module Deploy
   class UserFlowCheck
     # The MASTER design contracts, and the source reader that judges them: a
-    # table of conceptual rules - flat surfaces, Stimulus over jQuery, honest
-    # payment failure, a skip link, one h1, one accent map, a 44px buy bar -
+    # table of conceptual rules — flat surfaces, Stimulus over jQuery, honest
+    # payment failure, a skip link, one h1, one accent map, a 44px buy bar —
     # each paired with the paths and patterns that make it detectable.
     #
     # Split out of user_flow.rb, whose own header admitted to being two checks
@@ -22,7 +22,7 @@ module Deploy
     # The table is a method rather than a frozen constant for one reason: it
     # reads VIEW_PATHS, which the check class builds in its own body, and this
     # file is required before that body runs. A constant here would capture
-    # nothing - the same load-order trap as a path built from __dir__, which
+    # nothing — the same load-order trap as a path built from __dir__, which
     # broke the design_metrics split twice. Resolved at call time, it holds
     # wherever the file sits.
     module DesignContracts
@@ -47,12 +47,12 @@ module Deploy
               bsdports/app/assets/stylesheets
               __shared/app/assets/stylesheets
             ],
-            # Intentional exceptions are the documented product pens - the yep.com
-            # search, jOxVvNE, Amazon's nav bar and logo - read with their rules
+            # Intentional exceptions are the documented product pens — the yep.com
+            # search, jOxVvNE, Amazon's nav bar and logo — read with their rules
             # blanked. Flag everything else.
             # The possessive \s*+ matters: a backtracking \s* could give its
-            # whitespace back, and then (?!none\b) tested " none" - a leading
-            # space - instead of "none", so every box-shadow: none in the tree
+            # whitespace back, and then (?!none\b) tested " none" — a leading
+            # space — instead of "none", so every box-shadow: none in the tree
             # read as an ornament violation.
             forbidden: /box-shadow\s*:\s*+(?!none\b)|text-shadow\s*:|backdrop-filter\s*:|filter\s*:[^;]*\bblur\(/i,
             allow_path: Shared::FrontendLawSet::PRODUCT_PEN_FILES,
@@ -168,7 +168,7 @@ module Deploy
           @result.checked!
           abs = File.join(RAILS_ROOT, rel)
           unless File.exist?(abs)
-            # Payment files may not exist yet - warn so flow check still teaches the contract
+            # Payment files may not exist yet — warn so flow check still teaches the contract
             if contract[:id] == :fail_visibly_payments
               @result.warn("#{label}: payment paths not present yet - create honest NotConfigured stubs")
 

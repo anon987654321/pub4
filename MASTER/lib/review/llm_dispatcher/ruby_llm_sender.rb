@@ -178,16 +178,16 @@ module Master
         end
 
         # ruby_llm's registry carries a real price for every model it knows, and
-        # input and output are rarely the same number - Sonnet is $3 and $15 per
+        # input and output are rarely the same number — Sonnet is $3 and $15 per
         # million. COST_PER_TOKEN is that $15, and charging it to both directions
-        # of every model billed a free OpenRouter model - the ones KeyRotator
-        # exists to rotate - at the most expensive rate in the catalogue. The
+        # of every model billed a free OpenRouter model — the ones KeyRotator
+        # exists to rotate — at the most expensive rate in the catalogue. The
         # circuit breaker spends a dollar budget against this figure.
         #
         # A model the registry does not know keeps the flat rate. Pricing an
         # unknown model at zero would let it run until something else stopped it.
         # The registry carries no `:free` ids, so those are zero only where the
-        # provider catalog's own row says zero - never on the suffix alone.
+        # provider catalog's own row says zero — never on the suffix alone.
         def price_per_token(model, direction)
           per_million = listed_price_per_million(model, direction)
           return 0.0 if !per_million&.positive? && catalog_free?(model)

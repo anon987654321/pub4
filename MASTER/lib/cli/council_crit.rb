@@ -4,7 +4,7 @@ require_relative "../io/exec"
 
 module Master
   module CLI
-    # CouncilCrit - run the persona council on a git diff artifact (in-process).
+    # CouncilCrit — run the persona council on a git diff artifact (in-process).
     module CouncilCrit
       MAX_DIFF_BYTES = 32_000
 

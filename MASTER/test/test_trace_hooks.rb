@@ -4,7 +4,7 @@ require_relative "test_helper"
 
 # soul.yml declares seven hooks. Trace::Hooks is what fires them, and until
 # 2026-09-06 nothing called `attach`, so every one was dead on a bus already
-# carrying its trigger - scan:complete, repair_loop:fix_applied, llm:cost
+# carrying its trigger — scan:complete, repair_loop:fix_applied, llm:cost
 # and fix_loop:clean are all published by live code. soul.yml also declares
 # on_phase_transition; nothing publishes a phase event, so no subscriber feeds it.
 #
@@ -116,7 +116,7 @@ class TestTraceHooks < Minitest::Test
     assert_includes events, "hook:warning"
   end
 
-  # Once per session, not once per call above the line - a warning that repeats
+  # Once per session, not once per call above the line — a warning that repeats
   # on every token is a warning nobody reads.
   def test_the_cost_hook_does_not_fire_twice
     subject = hooks(budget_max: 10.0)
@@ -151,7 +151,7 @@ class TestTraceHooks < Minitest::Test
   end
 
   # An event soul.yml declares no hook for still announces itself on the bus,
-  # and runs no action - that is what makes the block the thing in control.
+  # and runs no action — that is what makes the block the thing in control.
   def test_an_undeclared_event_publishes_but_runs_no_action
     subject = hooks(config: [])
     subject.send(:subscribe_scan_complete)

@@ -29,7 +29,7 @@ module Master
 
       # Closed public surface: every verb here has a help topic. Review and
       # critique remain compatibility adapters; /fix is the only verb that writes repository code.
-      # /preferences changes only the paired subject's consent-gated local settings.
+      # /preferences changes only the paired subject’s consent-gated local settings.
       #
       # The surface is closed on purpose. Work is a sentence: TurnRouter reaches
       # the Fold and MediaIntent reaches MASTER/tools from plain language, and every
@@ -216,7 +216,7 @@ module Master
         result.ok? ? result.value![:rendered].to_s : result.message.to_s
       end
 
-      # /mov - find and download films and series from the free, legal
+      # /mov — find and download films and series from the free, legal
       # collections. Bare /mov discovers recent additions; /mov <words> searches
       # titles; "new" and "a bunch" are read the way a person says them. The
       # downloads land in ~/Downloads, so the repo root is not a parameter the

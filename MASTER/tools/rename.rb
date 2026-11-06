@@ -5,8 +5,8 @@
 # MASTER reads every line of this tree against 242 rules and cannot rename a
 # thing. Four rules touch names and all four are `autofix: false`, because a
 # constant rename is a file move under Zeitwerk and nothing here could perform
-# one safely. So `ZSH_BANNED` - the tools banned INSIDE a zsh command, bash among
-# them - sat in lib/io/shell.rb reading as its own opposite until a person
+# one safely. So `ZSH_BANNED` — the tools banned INSIDE a zsh command, bash among
+# them — sat in lib/io/shell.rb reading as its own opposite until a person
 # noticed, and `Master::MasterData` stuttered in the boot path for months.
 #
 #   ruby MASTER/tools/rename.rb                       # what deserves a rename
@@ -35,7 +35,7 @@ module Operator
   module Rename
     # The tree this reads. test/test_rename.rb points it at a planted repository,
     # because a renamer proved only against the tree it lives in is proved once:
-    # the fixture holds the shapes that are rare here - a constant glued to
+    # the fixture holds the shapes that are rare here — a constant glued to
     # another word, a path written as a string. Nothing else sets it.
     ROOT = ENV.fetch("RENAME_ROOT", File.expand_path("../..", __dir__))
     TREES = ENV["RENAME_ROOT"] ? ["."] : %w[MASTER OPENBSD RAILS].freeze
@@ -66,7 +66,7 @@ module Operator
     end
 
     # Parsed, not read by indentation. A regex over lines counts `class
-    # DemoThingManager` inside a heredoc - this file's own test fixture - as a
+    # DemoThingManager` inside a heredoc — this file's own test fixture — as a
     # definition, and a census that reports its own fixture teaches the reader to
     # skim it. Prism knows the difference between code and a string that looks
     # like code.
@@ -103,7 +103,7 @@ module Operator
 
     # One row per name, not per definition. A class reopened across fourteen
     # files is one rename, and a report that lists it fourteen times buries the
-    # thirty others under it - which is how a list stops being read.
+    # thirty others under it — which is how a list stops being read.
     def candidates
       found = definitions.filter_map { |definition| category_suffix(definition) || stutter(definition) }
       by_name = found.group_by { |row| [row.constant, File.dirname(row.file)] }
@@ -145,7 +145,7 @@ module Operator
 
     # Free means free of everything that resolves: a sibling in the tree, and
     # Ruby's own constants. Master::MasterData shortens to Data, which is a core
-    # class since 3.2 - a proposal that collides is worse than none, so it is
+    # class since 3.2 — a proposal that collides is worse than none, so it is
     # withheld rather than offered with a warning nobody reads.
     def free?(proposal, definition)
       return false if Object.const_defined?(proposal.to_sym)
@@ -235,7 +235,7 @@ module Operator
 
     # A rewrite this wide has to arrive as its own diff. Mixed into somebody
     # else's uncommitted work it cannot be reviewed, reverted, or told apart
-    # from it - and this checkout is shared, which is the first trap CLAUDE.md
+    # from it — and this checkout is shared, which is the first trap CLAUDE.md
     # names. The guard also bounds a mistake: the first run of test_rename.rb
     # lost its environment on the way to the child process and aimed the tool at
     # the real repository, where a dirty tree would have stopped it.

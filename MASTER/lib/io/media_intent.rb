@@ -253,7 +253,7 @@ module Master
       # The browser face carries its own loop of the same music, so a music
       # ask ships a client_action beside the speaker dispatch: a bare toggle,
       # a named artist, or an explicit stop. Empty-handed when no harmony is
-      # named - the face keeps whatever artist it was playing.
+      # named — the face keeps whatever artist it was playing.
       FACE_MUSIC_ARTISTS = {
         /\bmadlib\w*\b/i => "madlib",
         /\bfly(?:ing)?\s+lotus\b|\bflylo\b/i => "flying_lotus",

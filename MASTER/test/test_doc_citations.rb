@@ -61,7 +61,7 @@ class TestDocCitations < Minitest::Test
 
     assert_nil error
     # Against the file, not a literal. This asserted "6" and broke the day
-    # core_files was raised - a test that hardcodes the value whose citation it
+    # core_files was raised — a test that hardcodes the value whose citation it
     # is checking is itself a third copy of that value.
     assert_equal live.to_s, value
   end

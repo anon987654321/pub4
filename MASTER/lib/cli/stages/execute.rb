@@ -3,7 +3,7 @@
 module Master
   module CLI
     module Stages
-      # Execute - call the handler resolved by Route and store its output.
+      # Execute — call the handler resolved by Route and store its output.
       class Execute
         def initialize(event_bus: nil)
           @bus = event_bus
@@ -30,7 +30,7 @@ module Master
           Result.ok(ctx.merge(output:))
         # ScriptError too: a SyntaxError escaping the handler dies past every
         # StandardError rescue and aborts the process instead of failing one
-        # command - the trace0 preflight crash of 2026-10-02.
+        # command — the trace0 preflight crash of 2026-10-02.
         rescue StandardError, ScriptError => e
           @bus&.publish("command:error", command: ctx.command, error: "#{e.class}: #{e.message}")
           Result.err("execute: #{e.message}", category: :unknown)

@@ -5,7 +5,7 @@ require_relative "../tools/audit/law_hygiene"
 require_relative "../lib/operator/autofix_reach"
 require_relative "../lib/operator/law_reach"
 
-# The two checks over the law catalogue itself - tools/audit/law_hygiene.rb on
+# The two checks over the law catalogue itself — tools/audit/law_hygiene.rb on
 # its ids, aliases and metadata, Operator::AutofixReach and Operator::LawReach on
 # whether a fix promise reaches code. One file because they read one subject:
 # hygiene must not count the check names inside a law's config as laws, and
@@ -48,7 +48,7 @@ class TestRuleCatalogue < Minitest::Test
   end
 
   # Put the original method back rather than removing the override: module_function
-  # leaves one singleton copy, and removing it takes the real reader with it - the
+  # leaves one singleton copy, and removing it takes the real reader with it — the
   # live-catalogue test below then errors on whichever seed runs it second.
   def with_body(body)
     original = Operator::LawHygiene.method(:master_laws)

@@ -117,7 +117,7 @@ module Master
       end
 
       # A multi-line message keeps its lines. emit flattens whitespace by
-      # design - one fact per line means the caller owns the lines - so a
+      # design — one fact per line means the caller owns the lines — so a
       # structured report hands its lines over one by one, each attached to
       # the same unit, the way Report.print attaches prose to a command's
       # unit. The fold's evidence read as one 200-character ribbon when this
@@ -488,8 +488,8 @@ module Master
         # 2026-09-16 /fix printed some two thousand llm lines, every one of them
         # a lane failing over to the next, and no report at the end. The first
         # calls under a unit still attach, as devices do; past that the unit
-        # speaks in rollups - how many were asked, how many failed, how many
-        # lanes it walked - and a failure the chain recovered from is not news.
+        # speaks in rollups — how many were asked, how many failed, how many
+        # lanes it walked — and a failure the chain recovered from is not news.
         # Every call is still in runtime/events/activity.jsonl.
         BURST_AFTER = 3
         ROLLUP_EVERY = 25

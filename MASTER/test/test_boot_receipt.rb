@@ -71,7 +71,7 @@ class TestBootReceipt < Minitest::Test
   # the second. A clone keeps a directory; a `git worktree` checkout keeps a file
   # holding one `gitdir:` line, and CLAUDE.md's first trap tells every agent to
   # take a worktree. Four callers tested File.directory? and therefore answered
-  # "not a repository" in exactly those trees - rollback after a failed fix went
+  # "not a repository" in exactly those trees — rollback after a failed fix went
   # off, the snapshot lost its branch and sha, and this receipt reported git
   # missing while running inside git.
   def test_git_checkout_recognises_a_worktree_as_well_as_a_clone

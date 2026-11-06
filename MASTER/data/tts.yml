@@ -1,4 +1,4 @@
-# TTS policy - faithful speech is the default; expressive synthesis is opt-in.
+# TTS policy — faithful speech is the default; expressive synthesis is opt-in.
 #
 # `default_mode` selects completed-utterance synthesis for CLI Playback on macOS.
 # `fast_mode` is a separate latency policy: it keeps web speech progressive
@@ -34,7 +34,7 @@ transcendent:
   exaggeration: 0.45
   cfg_weight: 0.42
   chatterbox_device: mps
-  # A 8-15 second clean reference clip may be supplied by the operator for a
+  # A 8–15 second clean reference clip may be supplied by the operator for a
   # consistent local Chatterbox identity. Empty means no clip is assumed.
   reference_clip: ""
   replicate_model: jaaari/kokoro-82m

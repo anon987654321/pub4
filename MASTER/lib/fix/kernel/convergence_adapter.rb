@@ -81,7 +81,7 @@ module Master
       # How a run is allowed to end, and every ending says which it was. DONE is
       # the only one that claims the work is finished: the tree observed clean
       # the required number of times in a row, with the ground truth agreeing.
-      # PLATEAU is convergence without that proof - the same findings keep
+      # PLATEAU is convergence without that proof — the same findings keep
       # coming back, or the passes ran out. HUMAN_DECISION is a safe halt when a
       # proposed fix is irreversible or spans multiple files. BLOCKED is a halt
       # outside the loop's authority, and VALIDATION_FAILED is a repair the tree refused.

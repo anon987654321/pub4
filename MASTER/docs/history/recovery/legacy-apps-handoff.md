@@ -26,7 +26,7 @@ and `acme-client`.
   - Minimalistic views (semantic HTML, tag helpers, no divitis).
   - SCSS with direct element targeting (e.g., `article.post`).
   - PWA with offline caching (service workers).
-  - Competitor-inspired features (e.g., Reddit's communities, Jodel's karma).
+  - Competitor-inspired features (e.g., Reddit’s communities, Jodel’s karma).
 - **Deployment**: OpenBSD 7.7+, with `openbsd.sh` (DNSSEC, `relayd`, `httpd`, `acme-client`).
 
 ## Shared Setup (`__shared.sh`)
@@ -258,7 +258,7 @@ and `acme-client`. Configurations align with `master.json` for gem versions and 
   - Minimalistic views (semantic HTML, tag helpers, no divitis).
   - SCSS with direct element targeting (e.g., `article.post`).
   - PWA with offline caching (service workers).
-  - Competitor-inspired features (e.g., Reddit's communities, Jodel's karma).
+  - Competitor-inspired features (e.g., Reddit’s communities, Jodel’s karma).
 - **Deployment**: OpenBSD 7.7+, with `openbsd.sh` (DNSSEC, `relayd`, `httpd`, `acme-client`).
 - **Note**: `pubattorney` and `blognet` are deployed similarly but not detailed below; their setups follow the same pattern.
 
@@ -1253,7 +1253,7 @@ Copy layout from https://llmstxt.org/.
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="ARTEX: Arameisk Tekstrekonstruksjon og Oversettelse - Et forskningsprosjekt om arameiske manuskripter">
+    <meta name="description" content="ARTEX: Arameisk Tekstrekonstruksjon og Oversettelse – Et forskningsprosjekt om arameiske manuskripter">
     <title>ARTEX</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1540,7 +1540,7 @@ no additional shadows) */
             <div class="card">
               <div class="card-text">
                 <h3>Åpen metodikk</h3>
-                <p>All kode er åpen - se GitHub for mer info.</p>
+                <p>All kode er åpen – se GitHub for mer info.</p>
               </div>
               <div class="card-icon">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
@@ -1655,7 +1655,7 @@ og mørket lå over det dype hav.</p>
               <p><strong>KJV (Norsk):</strong> Og Gud kalte lyset dag,
 og mørket kalte han natt. Det ble kveld og morgen,
 den første dag.</p>
-              <p><strong>ARTEX:</strong> Lyset ble kalt dag og mørket natt - den første dagen var fullendt.</p>
+              <p><strong>ARTEX:</strong> Lyset ble kalt dag og mørket natt – den første dagen var fullendt.</p>
               <div class="verse-notes">
                 <p>Translitterasjon: la'or yom ...</p>
               </div>
@@ -1677,7 +1677,7 @@ som skiller vann fra vann."</p>
               <p class="aramaic">Va'ya'as Elaha et-haraqia,
 va'yavdel bein hamayim asher mitakhat laraqia u'vein hamayim asher me'al laraqia. Va'yehi ken.</p>
               <p><strong>KJV (Norsk):</strong> Og Gud skapte hvelvingen og skilte vannet under hvelvingen fra vannet over hvelvingen. Det ble slik.</p>
-              <p><strong>ARTEX:</strong> Hvelvingen organiserte vannmassene - slik ble universet formet.</p>
+              <p><strong>ARTEX:</strong> Hvelvingen organiserte vannmassene – slik ble universet formet.</p>
               <div class="verse-notes">
                 <p>Translitterasjon: et-haraqia ...</p>
               </div>
@@ -1688,7 +1688,7 @@ va'yavdel bein hamayim asher mitakhat laraqia u'vein hamayim asher me'al laraqia
               <p class="aramaic">Va'yiqra Elaha laraqia shamayim. Va'yehi erev va'yehi voqer, yom sheni.</p>
               <p><strong>KJV (Norsk):</strong> Og Gud kalte hvelvingen himmel. Det ble kveld og morgen,
 den andre dag.</p>
-              <p><strong>ARTEX:</strong> Himmelen ble kunngjort - en ny skapelsesdag ble innledet.</p>
+              <p><strong>ARTEX:</strong> Himmelen ble kunngjort – en ny skapelsesdag ble innledet.</p>
               <div class="verse-notes">
                 <p>Translitterasjon: laraqia shamayim ...</p>
               </div>
@@ -1699,7 +1699,7 @@ den andre dag.</p>
               <p class="aramaic">Va'yomer Elaha: Yiqavu hamayim mitakhat hashamayim el-maqom ekhad, v'tera'eh hayabasha. Va'yehi ken.</p>
               <p><strong>KJV (Norsk):</strong> Og Gud sa: "La vannet samle seg til ett sted,
 og la det tørre land komme til syne."</p>
-              <p><strong>ARTEX:</strong> Vassamlingene ble etablert, og landet trådte frem - naturens orden ble fastslått.</p>
+              <p><strong>ARTEX:</strong> Vassamlingene ble etablert, og landet trådte frem – naturens orden ble fastslått.</p>
               <div class="verse-notes">
                 <p>Translitterasjon: yiqavu hamayim ...</p>
               </div>
@@ -2018,7 +2018,7 @@ programmering eller kjønnsstudier? Vi vil gjerne høre fra deg!</p>
       </div>
       <div class="vision-statement">
         <p>Ved å forene eldgammel visdom med banebrytende KI-teknologi,
-avdekker vi de hellige tekstenes sanne essens. BAIBL representerer en ny æra innen åndelig innsikt - der presisjon møter transendens,
+avdekker vi de hellige tekstenes sanne essens. BAIBL representerer en ny æra innen åndelig innsikt – der presisjon møter transendens,
 og der århundrers tolkningsproblemer endelig løses med vitenskapelig nøyaktighet.</p>
       </div>
     </header>
@@ -2648,7 +2648,7 @@ read -p ""
 log_and_toast "Disable battery optimization..."
 echo "This ensures PounceKeys runs continuously."
 echo "1. Go to Settings > Battery > App Optimization."
-echo "2. Find PounceKeys, set to 'Don't optimize.'"
+echo "2. Find PounceKeys, set to 'Don’t optimize.'"
 echo "Press Enter after disabling..."
 read -p ""
 

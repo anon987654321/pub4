@@ -38,7 +38,7 @@ module Master
 
         def ollama_model?(model_id) = model_id.to_s.start_with?("ollama:", "ollama/")
 
-        # Local inference is free, so there is no cost to record - but the token
+        # Local inference is free, so there is no cost to record — but the token
         # counts still are, because a run's token total is how the session
         # reports what it did and a local model that answered silently would
         # read as a model that never ran.

@@ -5,8 +5,8 @@
 # type: RAILS/checks, MASTER/checks, OPENBSD/checks and MASTER/tools/check.rb require it
 # across the tree boundary and add nothing to it, so adding an outcome is a
 # change with four consumers. A repo-level lib/ means a fifth top-level tree
-# holding three files. MASTER/lib requires nothing from either sibling - it reads
-# their data and reaches STUDIO's check through `rake studio` as a subprocess -
+# holding three files. MASTER/lib requires nothing from either sibling — it reads
+# their data and reaches STUDIO's check through `rake studio` as a subprocess —
 # and a shared kernel is the thing everything ends up requiring. Revisit when a
 # fifth consumer appears.
 
@@ -21,8 +21,8 @@ module Deploy
   #
   # `ok?` is not a pass verdict: it means no hard failure or check error has
   # occurred. `outcome` distinguishes a measured pass from an inconclusive run.
-  # A check that could not run -
-  # no Chrome, no app listening, no deploy stamp, a missing gem - reported the
+  # A check that could not run —
+  # no Chrome, no app listening, no deploy stamp, a missing gem — reported the
   # same green as a check that ran and found nothing. Sixteen checks in the RAILS
   # suite take that path, which is why a green run of the whole suite meant less
   # than it looked: `deploy_drift` printed "ok: no deploy drift detected"
@@ -73,7 +73,7 @@ module Deploy
       @incomplete = false
     end
 
-    # The check itself broke - an exception escaped its own run, not a finding
+    # The check itself broke — an exception escaped its own run, not a finding
     # it made about the tree. Keep the fourth state so the report names the
     # broken instrument rather than mislabelling its crash as a tree finding.
     # A runner must still finish the remaining checks, record this outcome, and

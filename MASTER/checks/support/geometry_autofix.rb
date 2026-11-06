@@ -9,7 +9,7 @@ module Deploy
   #
   # A geometry failure names a *rendered selector*, not a source file, so
   # CheckAutofix.extract_path cannot find anything to patch. Rewriting whichever
-  # SCSS rule happens to match would be a guess - the cascade, not any single
+  # SCSS rule happens to match would be a guess — the cascade, not any single
   # declaration, produced the box. So the fix is additive and quarantined: one
   # generated block at the end of each app's application.scss, between two
   # marker comments, always reviewable as a diff and always revertable by
@@ -50,7 +50,7 @@ module Deploy
 
         # Merge, do not replace. Each round measures the page with this block
         # already applied, so a rule that WORKS produces no finding and was
-        # therefore absent from `rows` - and a plain re-render dropped it.
+        # therefore absent from `rows` — and a plain re-render dropped it.
         # Observed 2026-08-07: a round that found one new overflow rewrote the
         # fixes to that rule alone and deleted a load-bearing 44px touch fix, so
         # the next round measured the touch violation again, re-added it, and
@@ -148,7 +148,7 @@ module Deploy
 
         group.uniq { |r| r[:selector] }.sort_by { |r| r[:selector] }.each do |row|
           # A row read back from the file already holds a CSS selector.
-          # css_selector is not idempotent - it re-splits on ">" and rejoins
+          # css_selector is not idempotent — it re-splits on ">" and rejoins
           # with " > ", so a second pass turns "a > b" into "a  >  b" and the
           # file churns on every round.
           sel = row[:parsed] ? row[:selector] : css_selector(row[:selector])
@@ -196,7 +196,7 @@ module Deploy
       end
 
       apps.each do |app|
-        # A failed build can still write a truncated stylesheet - observed
+        # A failed build can still write a truncated stylesheet — observed
         # taking bsdports' application.css from 52KB to 733 bytes, which
         # unstyles the whole app. An autofixer must never leave the app worse
         # than it found it, so keep the previous bytes and put them back if the
@@ -272,7 +272,7 @@ module Deploy
     def app_port(app)
       require_relative "deploy_inventory"
       Inventory.new(root: File.expand_path("..", RAILS_ROOT)).apps.find { |a| a.name == app }&.port
-    rescue StandardError # scan: intentional - no inventory means no port; the autofix declines to guess
+    rescue StandardError # scan: intentional — no inventory means no port; the autofix declines to guess
       nil
     end
 
@@ -283,7 +283,7 @@ module Deploy
       return unless href
 
       Net::HTTP.get(URI("http://127.0.0.1:#{port}#{href}"))
-    rescue StandardError # scan: intentional - an unreachable page yields no geometry; the caller reports it
+    rescue StandardError # scan: intentional — an unreachable page yields no geometry; the caller reports it
       nil
     end
   end

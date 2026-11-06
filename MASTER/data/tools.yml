@@ -1,4 +1,4 @@
-# Tool registry - declarative metadata for built-in tools. The adapters are the
+# Tool registry — declarative metadata for built-in tools. The adapters are the
 # classes lib/builder.rb's DEFAULT_TOOL_MAP builds, which live in lib/io/; this
 # file supplies exposure, visibility and boot state. Operators tune which
 # tools a model is handed without editing code.
@@ -10,12 +10,12 @@
 # the governor rate-limits it.
 #
 # Schema:
-#   name        - adapter class name (under Master::Io)
-#   elevated    - true withholds the tool from a model until the session is elevated
-#   visitor     - true if visitors can call (visitor allow-list)
-#   default     - true to enable on boot; false leaves it off until /enable
-#   file_types  - optional list of file extensions that should activate the tool
-#   description - one-line, surfaced in tool list
+#   name        — adapter class name (under Master::Io)
+#   elevated    — true withholds the tool from a model until the session is elevated
+#   visitor     — true if visitors can call (visitor allow-list)
+#   default     — true to enable on boot; false leaves it off until /enable
+#   file_types  — optional list of file extensions that should activate the tool
+#   description — one-line, surfaced in tool list
 
 ---
 - { name: AskLlm, elevated: false, visitor: true, default: true, description: "Sub-LLM call for nested reasoning, required_context: \"A specific sub-question and optional context.\", usage_rules: [\"Use for isolated reasoning that should not pollute current context.\"], error_recovery: \"If too broad, rewrite as one concrete question.\"" }

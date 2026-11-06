@@ -4,7 +4,7 @@
 #
 # Fix::SelfCheck and rake constitution scanned File.join(root, "lib"). core/ sat
 # beside lib/ from 2026-07-20 to 2026-08-12, so the six files that judge every
-# effect were the only files in the tree exempt from the law they enforce - and
+# effect were the only files in the tree exempt from the law they enforce — and
 # every check stayed green throughout. The engines migration is the same defect:
 # four scanners stopped seeing 57 views and the falling lint baseline read as
 # improvement rather than blindness.

@@ -70,7 +70,7 @@ class WorkflowInferenceTest < Minitest::Test
   # /fix renders its lifecycle: what the tree says, what the repair did, and
   # what the tree says after. This test used to assert a "workflow:
   # deliberation" / "verdict:" shape from a design that no longer exists, and
-  # its doubles had drifted from the real interfaces - FakeFixLoop had no #run
+  # its doubles had drifted from the real interfaces — FakeFixLoop had no #run
   # and FakeDeliberation had no #agent. Both crashes were swallowed into the
   # report as prose, so the only visible symptom was this assertion.
   def test_fix_renders_observe_repair_and_observe_again

@@ -9,7 +9,7 @@ module Master
   module Voice
     class Stt
       # Batch STT via whisper.cpp CLI after the utterance ends.
-      # Soft-loads when binary + model exist. Not streaming - feed() buffers only.
+      # Soft-loads when binary + model exist. Not streaming — feed() buffers only.
       class WhisperCppBackend
         def self.try_load(config = {})
           bin = binary_path(config)

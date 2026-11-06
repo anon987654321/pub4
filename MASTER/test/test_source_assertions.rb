@@ -62,7 +62,7 @@ class TestSourceAssertions < Minitest::Test
 
   # The exception the header already names, made writable. A test that reads a
   # file the code under test just wrote is asserting an output, not grepping a
-  # source - test_scan_autofix.rb reads back the magic comment the fixer
+  # source — test_scan_autofix.rb reads back the magic comment the fixer
   # inserted, and there is no other way to see that it landed. The marker takes
   # a reason, on the line or the one above it, so the exception is a sentence
   # somebody wrote rather than a hole in the pattern.
@@ -70,7 +70,7 @@ class TestSourceAssertions < Minitest::Test
 
   # The needle has to be code, not a quoted word. `read` is one of MASTER's
   # eight verbs and `body` is a field name, so `assert_includes offered, "read"`
-  # - an assertion about a verb enum, with no file in it - counted as a source
+  # — an assertion about a verb enum, with no file in it — counted as a source
   # grep. String literals are blanked before the pattern runs.
   def self.code_of(line) = line.gsub(/"(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*'/, '""')
 

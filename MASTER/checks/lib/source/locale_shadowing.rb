@@ -32,7 +32,7 @@ module Deploy
     APPS = %w[amber brgen bsdports].freeze
     BUDGET = File.join(__dir__, "../../data/locale_shadowing.yml")
 
-    # runner.rb calls the class, not an instance - `klass.run` at runner.rb:132.
+    # runner.rb calls the class, not an instance — `klass.run` at runner.rb:132.
     # Getting this wrong does not fail loudly: the check registers, appears in
     # --list, and reports "ERRORED and blocked nothing", which is a green-ish
     # line for a check that never ran.

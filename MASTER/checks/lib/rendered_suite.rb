@@ -71,7 +71,7 @@ module Deploy
       "coverage0: rendered/#{name} #{leaf.outcome.to_s.upcase} - #{details.join(', ')}"
     end
 
-    # No checked! of its own - merge! carries each leaf's count up, and this
+    # No checked! of its own — merge! carries each leaf's count up, and this
     # class measures nothing itself.
     def run_leaves
       result = CheckResult.new

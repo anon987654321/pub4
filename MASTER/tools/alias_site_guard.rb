@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-# Alias installation - const_set/remove_const at module-open time - is the
+# Alias installation — const_set/remove_const at module-open time — is the
 # pattern behind the 2026-10-28 boot crash: a head that const_sets into a
 # pending zeitwerk autoload crashes the builder chain, and every alias file
 # needed 346da8e's remove_const guard to be safe at all. The installation

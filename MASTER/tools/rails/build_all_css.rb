@@ -121,7 +121,7 @@ def build_stale?(app_dir, out)
   return true unless File.file?(out)
 
   out_mtime = File.mtime(out)
-  # __FILE__, not RAILS_ROOT/build_all_css.rb - this script lives in tools/, so
+  # __FILE__, not RAILS_ROOT/build_all_css.rb — this script lives in tools/, so
   # that path never existed and the "script changed" branch never fired either.
   return true if File.mtime(__FILE__) > out_mtime
 
@@ -130,7 +130,7 @@ end
 
 # The app's own Ruby, not whatever is first on PATH. On a Mac with rbenv the
 # bare `bundle` resolved to system Ruby 2.6 and every app's dartsass:build
-# "skipped" with a rubygems require line - so the npx fallback was doing all
+# "skipped" with a rubygems require line — so the npx fallback was doing all
 # three builds, silently, and it is the weaker of the two paths.
 def bundle_cmd(_app_dir)
   return Operator::RubyRunner.bundle_cmd if defined?(Operator::RubyRunner)

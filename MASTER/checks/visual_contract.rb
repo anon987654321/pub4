@@ -16,12 +16,12 @@ require "yaml"
 
 # Drift past which a run blocks rather than reports. VISUAL_DRIFT_MAX_RATIO
 # overrides it; nothing set it before, so drift_max was nil and drift was purely
-# informational - the ratio was computed on every run and could never fail one.
+# informational — the ratio was computed on every run and could never fail one.
 #
 # Deliberately loose. The baseline is the previous run's screenshot, so any
 # intended change drifts once and then re-baselines to zero on the next run; a
 # tight ceiling would fire on every deliberate tweak and teach people to ignore
-# it. A quarter of the viewport changing is not a tweak - it is a stylesheet
+# it. A quarter of the viewport changing is not a tweak — it is a stylesheet
 # that failed to load or a grid that collapsed, which is the class of failure
 # worth blocking on and the one a geometry check can miss entirely.
 DEFAULT_DRIFT_MAX_RATIO = "0.25"
@@ -130,15 +130,15 @@ module VisualContractCheck
   end
 
   # Grades a capture. Extracted from the script body so the three severities are
-  # assertable without Chrome and a running app - the reason the old version
+  # assertable without Chrome and a running app — the reason the old version
   # never failed on anything was that nothing could see what it decided.
   #
-  #   hard  - blocks. A contract route answering 5xx, or drift past an explicit
+  #   hard  — blocks. A contract route answering 5xx, or drift past an explicit
   #           VISUAL_DRIFT_MAX_RATIO.
-  #   soft  - real defects whose live counts have never been measured from this
+  #   soft  — real defects whose live counts have never been measured from this
   #           tree, so they block only under strict:. Same shape as
   #           CheckResult's soft failures.
-  #   drift - reported always; a rolling baseline makes any intended change drift.
+  #   drift — reported always; a rolling baseline makes any intended change drift.
   def grade(results, strict: false, drift_max: nil)
     drift_max = normalize_drift_max(drift_max) unless drift_max.nil?
 
@@ -147,7 +147,7 @@ module VisualContractCheck
 
     results.each do |row|
       status = row[:status].to_i
-      next if status.zero? # navigation timing unavailable - nothing measured
+      next if status.zero? # navigation timing unavailable — nothing measured
       next if row[:state].to_s == "error" && status == 404 # this cell asks for a 404
       next if status < 500
 
@@ -192,7 +192,7 @@ module VisualContractCheck
   end
 
   # Two cells whose routes differ only after the "#" asked for the same
-  # document, and a screenshot of one document is the same bytes twice - a
+  # document, and a screenshot of one document is the same bytes twice — a
   # fragment moves the viewport, not the page. bsdports declares three lenses
   # that way (detail, advisory and dependency all fetch /ports/1), and calling
   # those a blind cell would be wrong: it is one document, deliberately looked
@@ -211,8 +211,8 @@ module VisualContractCheck
   end
 
   # Raised, not returned, so the caller decides the exit code. A missing driver
-  # gem or an unreachable Chrome is a precondition this machine does not meet -
-  # not a verdict about the tree - and it used to surface as an uncaught
+  # gem or an unreachable Chrome is a precondition this machine does not meet —
+  # not a verdict about the tree — and it used to surface as an uncaught
   # LoadError, which exits 1 and reads as FAILED. Wrong in both directions: it
   # blocks on nothing, and it hides that nothing was measured.
   CannotMeasure = Class.new(StandardError)
@@ -265,7 +265,7 @@ module VisualContractCheck
 end
 
 # The tests require this file to exercise grade, identical_captures and
-# validate! without a browser. Only the script run navigates anything - and
+# validate! without a browser. Only the script run navigates anything — and
 # only the script run may reach the `exit` below, which under `require` would
 # take the requiring process down with it.
 return unless $PROGRAM_NAME == __FILE__
@@ -275,7 +275,7 @@ rows = VisualContractCheck.validate!
 unless ARGV.delete("--capture")
   # Exit 3, not 0. Without --capture this run reads the matrix declaration and
   # navigates nothing: no screenshot, no status, no drift. It reported that as a
-  # clean pass under a runner line reading "Chrome present - 1 browser-backed
+  # clean pass under a runner line reading "Chrome present — 1 browser-backed
   # check(s) could measure", which is the false green this check's own
   # identical_captures check exists to catch one level down.
   #
@@ -305,8 +305,8 @@ end
 path = File.join(output, "#{app}-manifest.json")
 File.write(path, JSON.pretty_generate(generated_at: Time.now.utc.iso8601, results:) + "\n")
 
-# This used to end at `puts "ok: captured ..."` with exit 0 no matter what the
-# capture measured (the old backlog: rails_checks_not_wired -
+# This used to end at `puts "ok: captured …"` with exit 0 no matter what the
+# capture measured (the old backlog: rails_checks_not_wired —
 # "visual_contract_check computes drift/a11y counts and never exits non-zero").
 # A check that sees a 500 on the sign-in page and reports "ok" is a report.
 verdict = VisualContractCheck.grade(

@@ -37,7 +37,7 @@ class CritiqueFoldTest < Minitest::Test
       memory.proof.mark_ideation_complete!
       # Evidence is seeded rather than executed. This Fold runs against a real
       # World in a tmpdir, so a scripted `bundle exec rake test` really would be
-      # spawned there, fail, and record nothing - and ["true"], which used to
+      # spawned there, fail, and record nothing — and ["true"], which used to
       # stand in, no longer earns anything now that a kind has to name a command
       # that could produce it. The subject here is critique-before-done, so the
       # proof arrives the same way the spine test arranges it.

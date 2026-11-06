@@ -4,8 +4,8 @@
 # reads them.
 #
 # The common failure is a law matching a pattern adjacent to the one it
-# enforces - Time.now for a Time.zone law, an @media condition read as an
-# element width - a false *positive*: the law fires where the law is
+# enforces — Time.now for a Time.zone law, an @media condition read as an
+# element width — a false *positive*: the law fires where the law is
 # satisfied. A rule that carries the case it must not fire on cannot drift that
 # way in silence, which is why `good` matters more here than `bad`.
 #

@@ -15,7 +15,7 @@ module Deploy
   # margins, a fieldset whose min-width is min-content, an untemplated grid
   # column handing a file input its intrinsic width, a full bleed cancelling a
   # pad the page does not apply, and a flex item sized to its content. What they
-  # share is the symptom - a strip of the page a phone cannot reach - and that
+  # share is the symptom — a strip of the page a phone cannot reach — and that
   # is measurable, so it belongs here rather than in a review.
   #
   # An element past the edge is only a finding when nothing above it scrolls

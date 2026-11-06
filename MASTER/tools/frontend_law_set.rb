@@ -37,7 +37,7 @@ module Shared
     }.freeze
 
     # Product pens: outside designs this tree reproduces exactly, shadows and
-    # all - the yep.com search, the jsfiddle logo (jOxVvNE), Amazon's nav bar
+    # all — the yep.com search, the jsfiddle logo (jOxVvNE), Amazon's nav bar
     # and its animated logo. Hygiene checks leave them alone, and this is the one
     # place that says which CSS they are.
     #

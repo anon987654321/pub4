@@ -3,7 +3,7 @@
 module Master
   module Review
     module Scan
-    # Architecture #12: Datalog/Prolog rule engine - logical Horn clause rules.
+    # Architecture #12: Datalog/Prolog rule engine — logical Horn clause rules.
     # Violations are queries against a fact base derived from the AST.
     # Fixes derive from the complement clause. No neural network involved.
     #
@@ -24,8 +24,8 @@ module Master
         end
 
         # Body predicates accept:
-        #   :pred          - fact :pred must exist (positive)
-        #   [:not, :pred]  - fact :pred must NOT exist (negation-as-failure)
+        #   :pred          — fact :pred must exist (positive)
+        #   [:not, :pred]  — fact :pred must NOT exist (negation-as-failure)
         def rule(head_pred, *body_preds, &action)
           @rules << { head: head_pred, body: body_preds, action: }
           self
@@ -39,8 +39,8 @@ module Master
           end
         end
 
-        # Forward-chain all rules once. Evaluates all body predicates - positive and
-        # negated - and derives a finding for each positive primary-body fact that
+        # Forward-chain all rules once. Evaluates all body predicates — positive and
+        # negated — and derives a finding for each positive primary-body fact that
         # satisfies all constraints.
         def evaluate
           findings = []

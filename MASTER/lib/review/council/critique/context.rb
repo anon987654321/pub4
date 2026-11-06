@@ -10,7 +10,7 @@ module Master
         # This is prose for the model, not orchestration, and it was four
         # near-identical predicate methods plus two brief loaders inside
         # Critique. Keyed by preset_key so adding a mode is a table entry here
-        # rather than another `return ... if @mode[:preset_key] == ...` line.
+        # rather than another `return … if @mode[:preset_key] == …` line.
         class Context
           DOMAINS = {
             "ui_critique" => <<~CTX,
@@ -53,11 +53,11 @@ module Master
           # Typographer had no typography principles and the Architect had no
           # architecture ones. laws.yml#law_map held 135 of them the panel never
           # saw, and the 137 recovered from master.yml are exactly the kind a
-          # scanner cannot check and a judge can - which is why they were dropped
+          # scanner cannot check and a judge can — which is why they were dropped
           # when the only consumer left was a regex.
           PRINCIPLE_CLUSTERS = {
             "ui_critique" => %w[visual_design ux_laws typography aesthetic architecture japanese_aesthetics],
-            # Not `aesthetic` - that tag is where the visual principles live, and
+            # Not `aesthetic` — that tag is where the visual principles live, and
             # briefing a sound panel on "equal visual weight distribution" is
             # noise. The Japanese register is the one that carries timing and
             # restraint (jo_ha_kyu is literally a rhythm).
@@ -92,7 +92,7 @@ module Master
             Master::Voice::Dilla.council_brief if DILLA_BRIEF_MODES.include?(@preset_key)
           end
 
-          # House principles for this panel, as `id - meaning` lines. Silent when
+          # House principles for this panel, as `id — meaning` lines. Silent when
           # the map cannot load: a missing briefing degrades the critique, and
           # failing the whole council over it would be worse.
           def principle_brief
@@ -116,7 +116,7 @@ module Master
 
           # Round-robin across the clusters, not the first N alphabetically.
           # Sorting and truncating gave the UI panel a..c and cut `yugen` and
-          # `truth_to_materials` off the end - a cap that silently decides which
+          # `truth_to_materials` off the end — a cap that silently decides which
           # half of the alphabet the council believes in. Deterministic, because
           # a briefing that changes between runs makes two critiques
           # incomparable.

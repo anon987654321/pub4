@@ -161,7 +161,7 @@ module Master
 
         # Every node under this detector, in source order. Ten rules in
         # structural_rules.rb each carried a byte-identical private `visit` doing
-        # exactly this - the copy-paste the old backlog names as "one shared AST-walk
+        # exactly this — the copy-paste the old backlog names as "one shared AST-walk
         # helper". They call this now, and a fix to the traversal lands once.
         def walk(node, &block)
           return unless node.respond_to?(:child_nodes)
@@ -216,16 +216,16 @@ module Master
 
         # The marker is a trailing comment, and adding one lengthens the line it
         # sits on. Two rules measure exactly those two things, so exempting a
-        # line correctly used to buy a LONG_LINE and a TRAILING_COMMENT - 135
+        # line correctly used to buy a LONG_LINE and a TRAILING_COMMENT — 135
         # findings across the tree, every one of them created by an author doing
         # the right thing.
         #
         # Laws that measure the shape of a line read it without its marker. A
         # line still too long with the marker removed is still too long.
         #
-        # The marker can share its comment with other machine directives -
+        # The marker can share its comment with other machine directives —
         # `-- scan: intentional` is one
-        # comment carrying two instructions - so the exemption is the whole
+        # comment carrying two instructions — so the exemption is the whole
         # comment the marker sits in, found by walking back from the marker to
         # whichever opener began it. Walking back rather than matching forward
         # is what keeps a `#` inside a string literal from being read as the

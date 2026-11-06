@@ -116,7 +116,7 @@ module Master
 
       # Derived from the hash, not restating it. This returned a fixed sentence
       # for as long as it existed, so style.css.layer_order, .units_* and
-      # .forbidden described a line nothing read them for - editing any of them
+      # .forbidden described a line nothing read them for — editing any of them
       # changed nothing anywhere, which is the whole inert-config defect in one
       # method.
       def css_style_line(css)
@@ -146,7 +146,7 @@ module Master
       # Read from the rules that enforce them, not from a second list beside
       # them. style.nielsen_heuristics restated NN/g's ten as {id, name, rule}
       # while the registry already carried nine as scored entries whose `source`
-      # names the heuristic and whose `name` is the requirement - and the prompt
+      # names the heuristic and whose `name` is the requirement — and the prompt
       # only ever emitted the labels, so the restated `rule:` text reached
       # nothing. The tenth, error prevention, is GUARD_EXPENSIVE_OPS.
       # Two spellings appear in the sources ("Heuristic #5" and "heuristic 5"),
@@ -174,7 +174,7 @@ module Master
       end
 
       def append_directives(sections, style)
-        # style.operator_directives has never existed - the operator's standing
+        # style.operator_directives has never existed — the operator's standing
         # rules are `operator_principles` at the root, already read by
         # Ground::Constitution. This read was always nil.
         append_priority(sections, "conversation_directives", style["conversation_directives"])
@@ -249,7 +249,7 @@ module Master
       end
 
       # laws.yml markdown_style was codified for MASTER and the three coding
-      # agents it names, and then read by nothing - data_reach counted it as one
+      # agents it names, and then read by nothing — data_reach counted it as one
       # of the two unnamed keys that put that census over its ceiling. Every
       # session writes markdown; the aesthetic that governs it belongs in the
       # same prompt as the design thresholds, not only in a file a scan reads.

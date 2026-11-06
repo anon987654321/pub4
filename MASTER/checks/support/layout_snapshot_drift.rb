@@ -6,7 +6,7 @@ module Deploy
   class LayoutSnapshotCheck
     # What a snapshot difference breaks, not only where it is.
     #
-    # A flat list in key order put "h1_count: 1 -> 2" among fourteen 3px nudges,
+    # A flat list in key order put "h1_count: 1 → 2" among fourteen 3px nudges,
     # and the failure line shows eight entries, so a collapsed hierarchy could
     # sit past the end of its own report. Every difference is filed under the
     # damage it does, the classes run most severe first, and emphasis is stated

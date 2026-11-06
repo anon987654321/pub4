@@ -6,7 +6,7 @@ require "minitest/autorun"
 #
 # Blink rate is the strongest single cue a viewer reads for "alive", and on
 # 2026-08-10 this model sat far outside human range: simulated over ten minutes
-# it blinked 5.1/min idle, 3.4 thinking, 5.9 speaking and 2.1 listening - one
+# it blinked 5.1/min idle, 3.4 thinking, 5.9 speaking and 2.1 listening — one
 # blink every 29 seconds while holding the visitor's gaze. It also had the
 # speaking/listening relationship backwards; people blink MORE while speaking,
 # not less.
@@ -15,8 +15,8 @@ require "minitest/autorun"
 # SIGNATURES calls the target "composed, steady gaze, still baseline, slow
 # deliberate blink". What went wrong is that composure was implemented as *less
 # motion*, which crosses from composed into inanimate. Composure is small,
-# smooth, economical motion. So amplitudes stay low - this file does not touch
-# them - and only the rates are held inside what a calm human does.
+# smooth, economical motion. So amplitudes stay low — this file does not touch
+# them — and only the rates are held inside what a calm human does.
 #
 # Read as source rather than executed: there is no JS runtime in this suite, and
 # the numbers are declared as literals precisely so they can be checked without
@@ -25,7 +25,7 @@ class TestAttentionModel < Minitest::Test
   MODEL = File.expand_path("../../MASTER/web/public/attention_model.js", __dir__)
 
   # Resting adult blink rate is roughly 15-20/min. The floor is set below that
-  # deliberately - this face is meant to read as composed - but a rate under 8
+  # deliberately — this face is meant to read as composed — but a rate under 8
   # is a stare, and above 25 is agitation.
   HUMAN_FLOOR = 8.0
   HUMAN_CEILING = 25.0

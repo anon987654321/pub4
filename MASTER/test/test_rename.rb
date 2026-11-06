@@ -10,7 +10,7 @@ require "tmpdir"
 # A rename is the one fix here that reading the diff cannot check: the failure is
 # a reference nobody rewrote, and that looks like nothing at all until a caller
 # loads. So the fixture is a program, and the test runs it. One line of output
-# carries four properties - the constant answers to its new name, the require
+# carries four properties — the constant answers to its new name, the require
 # found the moved file, the path written as a string still points at something,
 # and the longer name that merely starts the same was left alone.
 #

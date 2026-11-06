@@ -1,9 +1,9 @@
 # frozen_string_literal: true
 
 # Exact-duplicate census over every tracked file outside generated/runtime state, whose two
-# permanent sets are explained at the exclusion. The lightgallery defect -
+# permanent sets are explained at the exclusion. The lightgallery defect —
 # one file vendored twice, diverging silently, amber shipping 404 icons for
-# months - is a CLASS, and the 2026-08-22 sitting found 65 sets of it worth
+# months — is a CLASS, and the 2026-08-22 sitting found 65 sets of it worth
 # 546KB. This counts what remains after the provable collapses so the next
 # shadow copy is a +1 against a ceiling, not a quiet arrival.
 #
@@ -28,14 +28,14 @@ module Operator
     module_function
 
     def sets
-      # Excluded: MASTER/tools - one-off census and lint copies that duplicate
+      # Excluded: MASTER/tools — one-off census and lint copies that duplicate
       # the lib homes they were extracted from; their duplicates are not a
       # shadow-copy class of the lightgallery kind.
       #
       # STUDIO is NOT excluded, and this comment once wrongly said it was:
       # 48efff385 (2026-09-25) replaced that exclusion with the MASTER/tools one
       # and left the old prose here. Two STUDIO sets therefore entered the
-      # count - `lora/<subject>/lora` (byte-identical per subject on purpose:
+      # count — `lora/<subject>/lora` (byte-identical per subject on purpose:
       # the file derives the subject from its own directory and hands over to
       # the shared toolkit) and `project/learnings/last_learn.json` (the newest
       # learning under a stable name). Both are correct by construction and are
@@ -79,7 +79,7 @@ module Operator
 
     # The members behind the count. Without them "over by two" names no pair,
     # and the next reader re-derives the whole list against an older commit by
-    # hand - the gap data_reach and self_findings both closed on 2026-08-31.
+    # hand — the gap data_reach and self_findings both closed on 2026-08-31.
     # One line per set, its paths sorted and joined, so two runs of an
     # unchanged tree produce the same list.
     def recorded_members = Array(recorded["duplicate_members"])
@@ -97,7 +97,7 @@ module Operator
     end
 
     # The prose above `duplicate_sets:` records what each past collapse cost
-    # somebody - thirty lines of it, including the warning that this tool reads
+    # somebody — thirty lines of it, including the warning that this tool reads
     # content from disk in a shared checkout. A bare to_yaml dump ate all of it
     # the first time this wrote members. Preserved, not regenerated.
     def rewritten_ceiling(count, member_list)

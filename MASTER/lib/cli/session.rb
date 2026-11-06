@@ -249,7 +249,7 @@ module Master
 
       # All operator-facing writes share Dmesg's mutex. If an async turn writes
       # while Reline is editing the next prompt, the message lands on a row of
-      # its own and the editable line is rebuilt beneath it - zsh's own rule.
+      # its own and the editable line is rebuilt beneath it — zsh's own rule.
       # A write that used to append at the cursor printed its text after the
       # prompt glyphs, so "master$ Welcome back." read as a reply typed into
       # the shell.
@@ -443,7 +443,7 @@ module Master
       rescue NoMemoryError
         Result.err(host_oom_message, category: :infrastructure)
       # ScriptError too: a SyntaxError re-raised from Thread#value inherits
-      # ScriptError, not StandardError - StandardError-only let one unparseable
+      # ScriptError, not StandardError — StandardError-only let one unparseable
       # file in the preflight abort the whole process instead of failing a turn.
       rescue StandardError, ScriptError => e
         Result.err("turn failed: #{e.class}: #{e.message}", category: :infrastructure)

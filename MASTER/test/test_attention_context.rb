@@ -2,7 +2,7 @@
 
 require_relative "test_helper"
 
-# data/attention_context.yml had exactly one reader - the schema test that
+# data/attention_context.yml had exactly one reader — the schema test that
 # checks its keys exist. The class that implements the protocol carried its own
 # copy of the vocabulary, and the two had drifted apart in both directions.
 # These tests pin the file as the single source, so the next edit to either one

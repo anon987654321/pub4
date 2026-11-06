@@ -11,7 +11,7 @@
 #   ruby MASTER/tools/audit/data_reach.rb            # list unnamed keys
 #   ruby MASTER/tools/audit/data_reach.rb --ratchet  # record a new low
 #
-# A key is NAMED when its literal appears in code outside data/ - string,
+# A key is NAMED when its literal appears in code outside data/ — string,
 # symbol or dig argument. A named key can still be dead (the name may appear
 # in a comment) and an unnamed key can still be read (a file iterated
 # generically never names its keys), so this is a census with a ceiling, not
@@ -59,7 +59,7 @@ module Operator
     # A file this cannot parse has no keys, so every key in it passed as read:
     # the census that exists to find unread declarations reported an unreadable
     # file as a clean one, twice, once per question. It cannot fix the file, so
-    # the answer is still no keys - said out loud on stderr, naming the file and
+    # the answer is still no keys — said out loud on stderr, naming the file and
     # the parse error. No file answers it today: the one that did,
     # radio_bergen_track_dossiers.yml, carried bare Ruby symbols its generator
     # forgot to stringify, and dilla writes plain YAML now.
@@ -79,7 +79,7 @@ module Operator
 
     # How a file is legitimately named without its own basename. This repo's
     # house rule is that a data file is reached through one accessor rather than
-    # opened, and `lint:reader_singularity` enforces it - so a basename-only test
+    # opened, and `lint:reader_singularity` enforces it — so a basename-only test
     # reports the discipline as the defect. Measured 2026-09-10: eight of the
     # forty-five misattributions were readers doing exactly what they are told
     # to, `Master.load_laws`, `Master::LAWS_PATH` and `@rules.data(:soul)`.
@@ -108,7 +108,7 @@ module Operator
     end
 
     # Keyed by the source text rather than by its path, so a caller that hands
-    # this a corpus of its own - every test here does - gets the same answer as
+    # this a corpus of its own — every test here does — gets the same answer as
     # the census does over the tree.
     def word_lists
       @word_lists ||= Hash.new { |memo, src| memo[src] = word_list_words(src).to_set }
@@ -222,7 +222,7 @@ module Operator
       #
       # It does NOT help a census that is already over, which cannot record
       # anything without either moving the ceiling or writing a baseline that
-      # includes the overage - and a baseline containing the two keys that are
+      # includes the overage — and a baseline containing the two keys that are
       # over would report them as known and hide exactly what is wanted. When
       # the census is over, attribution comes from diffing against the commit
       # that set the ceiling; that is how business_plan and markdown_style were

@@ -815,7 +815,7 @@ def test_ctrl_c_at_the_prompt_raises_interrupt_for_repl_loop_to_close
     assert_raises(Interrupt) { @cli.send(:on_int) }
   end
 
-  # Every error carried "[validation] ... [ship_proof_not_checkboxes] Backlog
+  # Every error carried "[validation] … [ship_proof_not_checkboxes] Backlog
   # marked done but production gaps remain", a lesson about something else.
   def test_an_error_prints_its_message_alone
     renderer = Object.new

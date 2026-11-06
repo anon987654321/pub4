@@ -38,7 +38,7 @@ module Operator
       tmp temp generated vendor node_modules coverage storage output outputs
       build dist renders render scratch cache three_build
     ].freeze
-    # Extension -> fence language. Anything unlisted gets a bare fence.
+    # Extension → fence language. Anything unlisted gets a bare fence.
     FENCE = {
       ".rb" => "ruby", ".rake" => "ruby", ".gemspec" => "ruby", ".ru" => "ruby",
       ".yml" => "yaml", ".yaml" => "yaml", ".json" => "json",

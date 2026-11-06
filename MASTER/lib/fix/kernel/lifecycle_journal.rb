@@ -143,7 +143,7 @@ module Master
           receipt
         end
 
-        # Persist the full Law x stream x surface ledger as an independent audit
+        # Persist the full Law × stream × surface ledger as an independent audit
         # artifact. Run history retains only this checksum-addressed receipt.
         def persist_assessment_report(run_id, target:, report:)
           id = run_id.to_s

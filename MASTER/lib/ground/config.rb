@@ -9,7 +9,7 @@ require_relative "../boot/paths"
 module Master
   module Ground
     class Config
-      # Typed convenience readers over Config#[] - kept in a separate module
+      # Typed convenience readers over Config#[] — kept in a separate module
       # so NO_GOD_CLASS's AST-based public-method count only sees Config's
       # own storage/persistence/validation methods, not this passthrough layer.
       module ConfigAccessors
@@ -102,7 +102,7 @@ module Master
 
       def valid? = validate.empty?
 
-      # Frozen snapshot of boot values - safe to share across threads.
+      # Frozen snapshot of boot values — safe to share across threads.
       BootConfig = Data.define(:root, :model, :web_host, :web_port, :web_public_url,
         :budget_max, :warn_at, :max_per_file, :req_max, :cache_ttl, :history_max)
 
@@ -120,8 +120,8 @@ module Master
 
       private
 
-      # The key set is open - the web tier and pairing read keys DEFAULTS never
-      # names - so an unknown key is not an error. One a letter or two away from
+      # The key set is open — the web tier and pairing read keys DEFAULTS never
+      # names — so an unknown key is not an error. One a letter or two away from
       # a default is: `budget_mx: 2` is silently ignored and the $10 default
       # spends instead.
       def misspelled_keys(settings = @mutex.synchronize { @settings })

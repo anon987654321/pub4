@@ -16,7 +16,7 @@ require_relative "../lib/operator/ratchets"
 #
 # And "stale" had no owner. chrome_i18n_lint tested that its baselines had not been
 # beaten-and-left; nothing else did, so two of that day's red tests were ceilings
-# above the real number - slack the next change grows into without failing anything.
+# above the real number — slack the next change grows into without failing anything.
 # This makes both directions the contract for every ratchet at once.
 class TestRatchets < Minitest::Test
   # Every ratchet over the whole 2871-file corpus. That is a minute of real
@@ -222,7 +222,7 @@ class TestRatchets < Minitest::Test
   #
   # Skipped when the measured trees are dirty, and that is not a loophole. This
   # assertion's advice is "lower the recorded number", which writes a permanent
-  # value from a transient measurement - and this repo's working tree is shared
+  # value from a transient measurement — and this repo's working tree is shared
   # by several sessions at once, routinely carrying 30-80 uncommitted files.
   #
   # Measured 2026-08-15: MASTER/lib came to 39,251 code lines in the shared tree
@@ -253,12 +253,12 @@ class TestRatchets < Minitest::Test
     root = Operator::Ratchets::ROOT
     out = `cd #{root.inspect} && git status --porcelain -- MASTER/lib MASTER/data RAILS 2>/dev/null`
     out.to_s.lines.map { |line| line[3..].to_s.strip }.reject(&:empty?)
-  rescue StandardError # scan: intentional - unparseable status becomes unreadable rows, which the assertion reports
+  rescue StandardError # scan: intentional — unparseable status becomes unreadable rows, which the assertion reports
     []
   end
 
   # A tool that reports nothing is not a passing tool. This is the guard against
-  # the whole file quietly going blind - the failure mode it exists to catch in
+  # the whole file quietly going blind — the failure mode it exists to catch in
   # everything else.
   def test_it_reads_something
     assert_operator readable.size, :>=, 8,
@@ -290,7 +290,7 @@ class TestRatchets < Minitest::Test
   def test_growth_counts_source_and_not_tests
     master = Operator::Ratchets.pub4_growth_rows.find { |row| row.name == "growth.master" }
 
-    assert_includes master.members, "MASTER/lib/operator/ratchets.rb", "a source file must still be counted" # source-assertion: ok - a census result, not a source file
+    assert_includes master.members, "MASTER/lib/operator/ratchets.rb", "a source file must still be counted" # source-assertion: ok — a census result, not a source file
     refute_includes master.members, "MASTER/test/test_ratchets.rb", "a test is coverage, not sprawl"
     refute_includes master.members, "MASTER/web/test/test_helper.rb", "a nested test directory is still tests"
   end

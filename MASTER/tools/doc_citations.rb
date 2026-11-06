@@ -8,14 +8,14 @@
 # Two forms are checked, and neither needs a document rewritten to adopt it:
 #
 #   1. A quotation. Documents here already write `core_files: 6` and
-#      `consecutive_raises_allowed: 2` - key and value together. When the key is a
+#      `consecutive_raises_allowed: 2` — key and value together. When the key is a
 #      distinctive numeric key that data/ defines, the value must match. Six such
 #      quotations existed when this landed and all six were correct; the point is
 #      that the seventh cannot silently stop being.
 #
 #   2. A citation, for a number quoted without its key:
 #
-#        rebaselined 38285 -> 38811 <!-- cite: data/spine.yml#spine.lib_code_ceiling -->
+#        rebaselined 38285 → 38811 <!-- cite: data/spine.yml#spine.lib_code_ceiling -->
 #
 #      The last number before the marker must equal the value at that key. A
 #      marker naming a file or key that does not resolve fails too, so a citation

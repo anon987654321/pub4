@@ -59,7 +59,7 @@ module Master
 
       # Master.load_laws, not a private re-read. This method used to load
       # laws.yml and then overwrite base["laws"] with its own copy of the
-      # shard-merge loop - a second implementation of Master.load_laws living
+      # shard-merge loop — a second implementation of Master.load_laws living
       # two directories away. When the shards were folded into laws.yml on
       # 2026-08-12 that copy started returning {} and assigning it over the real
       # rules, so /why went silent for every registry and scan rule while
@@ -122,7 +122,7 @@ module Master
 
       def soul_law(key)
         slug = key.upcase.tr("-", "_")
-        # law/ holds every Law now, so /why answers for conduct Laws too -
+        # law/ holds every Law now, so /why answers for conduct Laws too —
         # it dug soul and returned nothing for NO_COLUMN_ALIGN and FLAT_UI.
         hit = Master::Ground::Laws.new.laws[slug] or return
         base = ["constitutional law: #{slug}", "  #{hit}"].join("\n")

@@ -4,9 +4,9 @@ module Master
   module Fix
     class FixLoop
       class PassRunner
-        # Detects a pass making no real progress - exact repeat (oscillation),
+        # Detects a pass making no real progress — exact repeat (oscillation),
         # the same violation recurring across N passes (cycle), or the
-        # violation count holding flat across a window (plateau) - and
+        # violation count holding flat across a window (plateau) — and
         # triggers rollback. Separate concern from running a pass.
         module StagnationDetection
           private

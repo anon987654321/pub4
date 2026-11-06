@@ -6,7 +6,7 @@
 # What this file is: the one place that says which instrument claims which
 # part of the trees, so MASTER/tools/coverage_reconciliation.rb can compute
 # the files no instrument sees. It exists because the repo's blind spots were
-# never broken checks - they were checks whose globs drifted when the tree's
+# never broken checks — they were checks whose globs drifted when the tree's
 # shape changed, found by hand each time (57 views lost when the verticals
 # became engines; 10 stylesheets and 1,406 lines outside every ceiling; 1,513
 # more when MASTER/web joined the product).
@@ -48,7 +48,7 @@ skip:
 instruments:
   # Seed row, verified the hard way: the 2026-10-25 campaign ported this
   # check's globbing (27 fixture self-tests) and its census matched
-  # css_budget.yml's history - 94 stylesheets once the verticals and
+  # css_budget.yml's history — 94 stylesheets once the verticals and
   # MASTER/web were folded in. The glob below is that widened shape; confirm
   # it against checks/lib/source/css_constitution.rb's css_files on a Ruby
   # host before trusting the row over the source.

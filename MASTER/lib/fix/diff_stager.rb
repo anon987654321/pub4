@@ -158,7 +158,7 @@ module Master
 
       def remove_persisted(entry)
         persist_file = File.join(stage_dir, "#{entry.id}.json")
-        # Removed after apply (written) or discard (abandoned) - safe to delete.
+        # Removed after apply (written) or discard (abandoned) — safe to delete.
         File.delete(persist_file) if File.exist?(persist_file)
       rescue StandardError => e
         @bus&.publish("diff_stager:cleanup_error", error: e.message)

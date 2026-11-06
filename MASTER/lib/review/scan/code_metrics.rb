@@ -6,7 +6,7 @@ module Master
       # How this repo counts code. One implementation, because there were three.
       #
       # `rake lint:spine` and `tools/ratchets.rb` each carried their own copy of
-      # the non-blank-non-comment line count - for the same ratchet, reported in
+      # the non-blank-non-comment line count — for the same ratchet, reported in
       # the same table. `SmallFunctionsRule` carried a third for method bodies.
       # They happened to agree; nothing made them.
       #
@@ -36,7 +36,7 @@ module Master
         # module carry no implementation; the loader requires them and the file
         # would not resolve without them. Counting them made every structural
         # improvement cost two lines per file, so lint:spine and lint:cohesion
-        # pulled against each other and cohesion lost by default - three rounds
+        # pulled against each other and cohesion lost by default — three rounds
         # of regrouping were paid for by luck, then by the last orphan in lib/,
         # then by a budget raise.
         #
@@ -80,7 +80,7 @@ module Master
         # whole-line comments excluded.
         #
         # The span version counted comments toward method length, which
-        # contradicts the rule's own description - that is about how much logic a
+        # contradicts the rule's own description — that is about how much logic a
         # method holds, not how well it is explained. Cli::TurnRouter.call was
         # reported at 22 lines while holding 10 of code and 8 of comment, so the
         # only way to pass was to delete the explanation.
@@ -99,15 +99,15 @@ module Master
         # The public surface of one class or module.
         #
         # NO_GOD_CLASS is the reader, so this number decides whether a class is
-        # reported as too large - and it was read off a stop marker rather than
+        # reported as too large — and it was read off a stop marker rather than
         # off Ruby's visibility model. The walk ended at the first `private` or
         # `protected`, which is not what either keyword does:
         #
         #   * a `public` below `private` re-opens the scope, and every method
         #     after it went uncounted
         #   * `protected` was treated as end-of-class
-        #   * `def self.x` below `private` is still public - `private` moves the
-        #     instance-method default and does not reach the singleton stream -
+        #   * `def self.x` below `private` is still public — `private` moves the
+        #     instance-method default and does not reach the singleton stream —
         #     and the walk had already stopped
         #   * `private def x` and `public def x` are CallNodes wrapping the
         #     DefNode, so neither was ever counted
@@ -147,8 +147,8 @@ module Master
             @named = { instance: {}, singleton: {} }
           end
 
-          # Two passes. The named forms are retroactive - `private :foo` sits
-          # below the `def foo` it hides - so a single forward pass counts a
+          # Two passes. The named forms are retroactive — `private :foo` sits
+          # below the `def foo` it hides — so a single forward pass counts a
           # method public before it learns otherwise.
           def count
             collect_named

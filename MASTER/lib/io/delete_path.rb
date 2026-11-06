@@ -4,7 +4,7 @@ require "fileutils"
 
 module Master
   module Io
-    # DeletePath - remove a file or directory inside the workspace.
+    # DeletePath — remove a file or directory inside the workspace.
     #
     # Files are journaled through Trace::Undo before removal. A directory is
     # journaled file-by-file, so undo can recreate its contents without giving

@@ -8,7 +8,7 @@ require "socket"
 # The Redactor stood on the log and persistence paths only; the outbound
 # provider call was the path where a quoted secret actually leaves the
 # machine. The ollama lane is exercised against a real socket rather than a
-# stubbed sender, because the wiring is what is under test - a stub proves
+# stubbed sender, because the wiring is what is under test — a stub proves
 # the stub.
 class TestOutboundRedaction < Minitest::Test
   TOKEN = "sk-#{SecureRandom.alphanumeric(40)}"

@@ -36,7 +36,7 @@ class TestCliBootE2e < Minitest::Test
   end
 
   # A live daemon's inherited lock fd owns MASTER/.master/process.lock, and the
-  # booted child sees a busy flock it did nothing to earn - so each test boots
+  # booted child sees a busy flock it did nothing to earn — so each test boots
   # against its own tmpdir lock through MASTER_PROCESS_LOCK_PATH.
   def boot_env(extra = {})
     BOOT_ENV.merge("MASTER_PROCESS_LOCK_PATH" => File.join(@lock_dir, "process.lock")).merge(extra)

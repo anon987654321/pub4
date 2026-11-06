@@ -21,16 +21,16 @@ module Deploy
     #
     # A module included back into the check, like TokenChecks beside it, so it
     # keeps @rules and @result. Nothing here builds a path from __dir__ and
-    # nothing here is resolved at load time - the design_metrics split moved a
+    # nothing here is resolved at load time — the design_metrics split moved a
     # css_budget.yml path one directory deeper and silently ran that check
     # unbudgeted.
     module PlacementChecks
-      # The layout grammar asks the same kind of question - is this part where
-      # and as often as it should be - so it runs from check_layout as well.
+      # The layout grammar asks the same kind of question — is this part where
+      # and as often as it should be — so it runs from check_layout as well.
       include GrammarChecks
 
       # Placement is about *the* primary action, not every control. CRITICAL is
-      # deliberately broad - it matches any `button` - which is right for "did this
+      # deliberately broad — it matches any `button` — which is right for "did this
       # control get occluded" and wrong here, where it would flag a secondary
       # ghost button in a page header as a stranded primary CTA.
       PRIMARY_ACTION = /\b(?:button--primary|button-primary|compose-trigger|compose-submit|
@@ -43,8 +43,8 @@ module Deploy
       REPEATED_ITEM = /\[\d+\]|feed-card|\bli\.|\barticle\b|card\b/
 
       # A submit button at the end of its own form is where a person looks for it.
-      # The weak-area rule is about page-level placement - where the eye lands
-      # when it arrives - not about flow inside a form it is already reading.
+      # The weak-area rule is about page-level placement — where the eye lands
+      # when it arrives — not about flow inside a form it is already reading.
       IN_FORM = /(?:^|>)form[.\#>]|>form$/
 
       # layout_rules.touch.thumb_zone_primary_actions is bottom_center, and the
@@ -66,7 +66,7 @@ module Deploy
 
       # Hick's law: time to choose grows with the number of peer choices. The rule
       # is about what is offered at one moment, so a horizontally scrolling rail
-      # is exempt - it is progressive disclosure, which is the prescribed remedy
+      # is exempt — it is progressive disclosure, which is the prescribed remedy
       # rather than a violation of it.
       def check_choice_overload(surface, data)
         warn_at = @rules.dig("ux_laws", "hick", "nav_items_warn").to_i
@@ -76,7 +76,7 @@ module Deploy
         Array(data["groups"]).each do |group|
           # The largest chunk when the bar labels its sections, the total when it
           # does not. Hick is about peers at one decision level, and a labelled
-          # role=group is a level - the same argument the scrollable exemption
+          # role=group is a level — the same argument the scrollable exemption
           # above makes for a rail. Counting every link in a chunked bar credits
           # neither remedy and reports a number no reader ever faces.
           chunks = Array(group["chunks"]).map(&:to_i).reject(&:zero?)
@@ -93,7 +93,7 @@ module Deploy
         end
       end
 
-      # layout_rules.whitespace.internal_not_greater_than_external - the measurable
+      # layout_rules.whitespace.internal_not_greater_than_external — the measurable
       # form of Gestalt proximity. If a block's own padding is larger than the gap
       # to the next block, its insides are further apart than it is from its
       # neighbour, and the eye groups across the boundary instead of within it.
@@ -149,7 +149,7 @@ module Deploy
         )
       end
 
-      # layout_rules.reading_patterns names bottom_left the weak area - the last
+      # layout_rules.reading_patterns names bottom_left the weak area — the last
       # place an F- or Z-pattern scan reaches. A primary action parked there is
       # findable only by hunting.
       def check_scan_path(surface, elements)
@@ -187,8 +187,8 @@ module Deploy
       GROUND_SHARE = 0.6
 
       # A share of a quiet page is not weight. The heaviest box has to be at
-      # least as heavy as a twentieth of the screen painted at 21:1 - weight is
-      # area times (contrast - 1), so that is one screen's area - before its
+      # least as heavy as a twentieth of the screen painted at 21:1 — weight is
+      # area times (contrast - 1), so that is one screen's area — before its
       # share means anything; a #1a1a1a header on black is 80% of nothing.
       MIN_DOMINANT_WEIGHT_SCREENS = 1.0
 
@@ -222,8 +222,8 @@ module Deploy
       end
 
       # A secondary control that out-weighs the primary beside it asks the reader
-      # to take the other road. Weight has three axes - box size, fill contrast
-      # and font weight - and a secondary is reported only when it wins two and
+      # to take the other road. Weight has three axes — box size, fill contrast
+      # and font weight — and a secondary is reported only when it wins two and
       # loses none, so a trade (larger but paler) stays a design decision.
       def check_action_weight(surface, elements)
         buttons = elements.select { |el| el["visible"] && el["onscreen"] && el["parent"] && button_like?(el) }

@@ -138,7 +138,7 @@ module Deploy
       end
     end
 
-    # ultraminimalism.color.max_palette_roles - the number of *roles* the palette
+    # ultraminimalism.color.max_palette_roles — the number of *roles* the palette
     # carries, not the number of hexes. accent/danger/success/warning/info is the
     # set that paints meaning; bg/surface/text/border are structure.
     ROLE_TOKENS = %w[accent danger success warning info].freeze
@@ -250,7 +250,7 @@ module Deploy
       css_map = TOUCH_FOCUS.to_h { |app, selector| ["#{app}/app/assets/stylesheets/application.scss", sample_css(app, selector)] }
                            .reject { |_, body| body.empty? }
 
-      # Hard: forms/buttons in brgen declare >=44
+      # Hard: forms/buttons in brgen declare ≥44
       unless DesignMetrics.extract_min_heights(sample_css("brgen", SAMPLES[:forms])).any? { |h| h + 0.01 >= min_px }
         @result.fail("design_metrics touch: brgen form controls missing min-height >= #{min_px.to_i}px (principle=fitts_law)", severity: :hard)
       end

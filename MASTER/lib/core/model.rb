@@ -3,10 +3,10 @@
 require "json"
 
 module Master::Core
-  # Model - the entire LLM surface of the agent, reduced to one method: given the
+  # Model — the entire LLM surface of the agent, reduced to one method: given the
   # conversation Memory and the closed verb set, emit exactly one Effect. Whatever
-  # the old lib/review dispatcher did - routing, tool schemas, ReAct loops, council
-  # - collapses to "ask for the next effect and parse it." The Constitution, not
+  # the old lib/review dispatcher did — routing, tool schemas, ReAct loops, council
+  # — collapses to "ask for the next effect and parse it." The Constitution, not
   # the model, decides whether the effect happens; the Core, not the model,
   # sequences the turns. So the model stays thin and replaceable.
   #
@@ -19,7 +19,7 @@ module Master::Core
     DEFAULT_MODEL = "nvidia/nemotron-3-super-120b-a12b:free"
 
     # Built from Memory's evidence policy so the numbers the model is told match
-    # the numbers the Constitution enforces - one source, no prose drift.
+    # the numbers the Constitution enforces — one source, no prose drift.
     EVIDENCE_KINDS = Proof::SCORING.keys.join("|").freeze
     EVIDENCE_WEIGHTS = Proof::SCORING.map { |k, v| "#{k}=#{v}" }.join(", ").freeze
 

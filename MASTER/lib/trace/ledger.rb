@@ -284,7 +284,7 @@ module Master
         end
       end
 
-      # Tallies error:swallowed events per context - a spike in one context is a defect, not noise.
+      # Tallies error:swallowed events per context — a spike in one context is a defect, not noise.
       class Swallow
         LEDGER_PATH = "runtime/swallow_ledger.jsonl"
         SNAPSHOT_EVERY = 50
@@ -337,7 +337,7 @@ module Master
           line = JSON.generate(at: Time.now.utc.iso8601, total:, counts: snapshot)
           File.open(path, "a") { |io| io.write(line, "\n") }
         rescue StandardError => e
-          # Cannot route through Swallow.log - it would recurse into this stream.
+          # Cannot route through Swallow.log — it would recurse into this stream.
           Master::Trace::Dmesg.once("error0", "ledger flush failed, #{e.class}: #{e.message}")
         end
       end

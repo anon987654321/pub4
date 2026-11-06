@@ -27,7 +27,7 @@ class TestPhantomRecovery < Minitest::Test
   end
 
   # A real malfunction, not a phrasing complaint. These tests used "I'll help
-  # you with that task now." - gaslighting_preamble, now style_only - so they
+  # you with that task now." — gaslighting_preamble, now style_only — so they
   # exercised the ladder with the one detector that must never reach it.
   MALFUNCTION = "the quick brown fox jumps over the lazy dog and keeps going " * 4
 
@@ -58,7 +58,7 @@ class TestPhantomRecovery < Minitest::Test
   # and so does every phantom after that, for the life of the process.
   #
   # This is not a rare corner. gaslighting_preamble matches any reply opening
-  # "I'll", "I can", "I would", "Let me" or "Sure," - so on a live box the
+  # "I'll", "I can", "I would", "Let me" or "Sure," — so on a live box the
   # budget is spent within minutes and every turn after it returns an error.
   def test_a_clean_response_resets_the_ladder
     bus = FakeBus.new
@@ -86,8 +86,8 @@ class TestPhantomRecovery < Minitest::Test
   end
 
   # A style complaint must never spend the ladder. gaslighting_preamble matches
-  # any reply opening "I can", "I would", "Let me" or "Sure," - ordinary English
-  # - so counting it ends the conversation over phrasing.
+  # any reply opening "I can", "I would", "Let me" or "Sure," — ordinary English
+  # — so counting it ends the conversation over phrasing.
   def test_a_style_only_finding_never_escalates
     bus = FakeBus.new
     styled = "Let me take a look at that for you."

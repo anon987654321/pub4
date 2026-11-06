@@ -13,7 +13,7 @@ require "rbconfig"
 # mid-synthesis cannot answer socket_alive?'s 1s health ping. The supervisor read
 # that as death, unlinked the socket and spawned a replacement without stopping
 # the original, which then lived forever on an unreachable path. 21 workers were
-# holding 309 MB of a 1007 MB box, growing by one a minute - which both starved
+# holding 309 MB of a 1007 MB box, growing by one a minute — which both starved
 # the box into shedding amber/bsdports and forced a cold Ruby+Bundler+EventMachine
 # start on nearly every request, so speech took ~20s instead of ~2s.
 class TestTtsSupervisor < Minitest::Test
@@ -233,7 +233,7 @@ class TestTtsSupervisor < Minitest::Test
       slot = 96
       pid = stub_daemon
       Process.kill("KILL", pid)
-      # stub_daemon detaches, so a reaper thread collects it - waitpid here would
+      # stub_daemon detaches, so a reaper thread collects it — waitpid here would
       # raise ECHILD. Poll for the pid to actually disappear instead.
       50.times { break unless Sup.process_alive?(pid); sleep 0.02 }
       @pids[slot] = pid

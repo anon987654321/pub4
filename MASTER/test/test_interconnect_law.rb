@@ -13,7 +13,7 @@ require "fileutils"
 # The load-bearing case is the last one. An unparseable data file must surface
 # as a finding rather than being skipped, because a scanner that quietly drops
 # a broken constitution validates the tree against a partial one and calls it a
-# pass - which is the shape this repo has been bitten by repeatedly.
+# pass — which is the shape this repo has been bitten by repeatedly.
 class TestInterconnectRule < Minitest::Test
   def in_tree(files)
     Dir.mktmpdir do |root|
@@ -82,7 +82,7 @@ class TestInterconnectRule < Minitest::Test
   end
 
   # A named file that is not there is not a parse failure and not a phantom
-  # key - nothing can be said about it, so the rule says nothing.
+  # key — nothing can be said about it, so the rule says nothing.
   def test_a_missing_data_file_is_passed_over
     in_tree({}) do |rule, _root|
       assert_empty flags(rule, %(Master.load_yaml("absent.yml").dig("a", "b")\n))

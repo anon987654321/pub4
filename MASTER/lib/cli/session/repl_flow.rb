@@ -252,7 +252,7 @@ module Master
       end
 
       # !command runs one zsh line through the Io::Shell the model's zsh tool
-      # uses - its blocklist, sandbox, interactive refusal and governor - and
+      # uses — its blocklist, sandbox, interactive refusal and governor — and
       # costs no model call. The output joins the transcript so the next prompt
       # can refer to it. Fast mode builds no governor, so it refuses.
       def run_bang(command)

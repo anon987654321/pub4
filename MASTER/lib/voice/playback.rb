@@ -11,8 +11,8 @@ module Master
     # Plays what Speech synthesises.
     #
     # Speech returns a path to an mp3 and the CLI never opened it, so the whole
-    # Edge TTS stack - worker pool, socket daemon, the supervisor started at
-    # boot in Boot::MasterBoot - synthesised every reply into a file nobody
+    # Edge TTS stack — worker pool, socket daemon, the supervisor started at
+    # boot in Boot::MasterBoot — synthesised every reply into a file nobody
     # read. This is the reader.
     #
     # Synthesis is a network round trip, so it happens on one background worker
@@ -21,7 +21,7 @@ module Master
     # once is worse than a pause.
     module Playback
       # afplay is macOS. The deploy host has no audio hardware, so the others
-      # are for a workstation that is not a Mac, not for vm23 - see the note in
+      # are for a workstation that is not a Mac, not for vm23 — see the note in
       # Engines.synth_edge_melodic, which relies on the same absence.
       #
       # Performance never changes the synthesised signal. Prefetch only overlaps
@@ -37,8 +37,8 @@ module Master
       }.freeze
 
       # A line already waiting to be spoken, or spoken a moment ago, is not
-      # spoken again: two paths reach this door with one reply - the result
-      # display and the bridge summary - and a retried synthesis said it a
+      # spoken again: two paths reach this door with one reply — the result
+      # display and the bridge summary — and a retried synthesis said it a
       # third time. A deliberate repeat past the echo window still speaks,
       # because asking the same question twice is a thing a person does.
       ECHO_WINDOW_S = 20
@@ -388,8 +388,8 @@ end
         PreparedAudio.new(**values, path: nil)
       end
 
-      # Live streaming needs a player that reads a pipe - ffplay does, afplay
-      # cannot - the framed daemon wire, and the classic mode: Transcendent owns
+      # Live streaming needs a player that reads a pipe — ffplay does, afplay
+      # cannot — the framed daemon wire, and the classic mode: Transcendent owns
       # its whole utterance, melody and phrase rhythm included, and is never
       # piped piecemeal (MASTER_TTS_STREAM=0 turns the lane off). A profile with
       # layers mixes a second input, which a player reading one pipe cannot do.
@@ -446,9 +446,9 @@ end
       end
 
       # ffplay demuxes mp3 straight from a non-seekable stdin (-f forces the
-      # demuxer), applies the voice.yml post_chain with -af - the same chain
+      # demuxer), applies the voice.yml post_chain with -af — the same chain
       # Speech#shaped runs for the afplay path, so streaming never changes how
-      # a reply sounds - and exits on its own once stdin ends. Interrupt kills
+      # a reply sounds — and exits on its own once stdin ends. Interrupt kills
       # it the same way it kills afplay: through @playing_pid.
       def stream_cmd(player_path, player_args)
         cmd = [player_path, *player_args, "-f", "mp3"]
@@ -692,7 +692,7 @@ def decode_job(job)
         :result_queue,
       )
 
-      # One utterance whose synthesis and playback overlap - the prepare thread
+      # One utterance whose synthesis and playback overlap — the prepare thread
       # holds the player process and pours socket frames into its stdin.
       StreamingPrepared = Data.define(
         :job,
@@ -720,7 +720,7 @@ def decode_job(job)
       # Policy.single_voice_key. The tempo is the part that does not come for
       # free: with no rate or pitch passed, Speech falls back to STYLES[:calm]
       # at -6% and -20Hz, which is the policy voice read at someone else's pace.
-      # The web does not use that table - it reads default_rate and
+      # The web does not use that table — it reads default_rate and
       # default_pitch out of Policy.browser_payload and applies them in the
       # page. Passing the same two values is what makes the CLI and the web one
       # speaker rather than two that share a name.

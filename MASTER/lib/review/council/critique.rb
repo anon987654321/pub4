@@ -127,7 +127,7 @@ module Master
         end
 
         # Ideation used to run on the mode's canned prompt alone, blind to what
-        # the panel just found - proposals for nothing in particular, ranked
+        # the panel just found — proposals for nothing in particular, ranked
         # against complaints they never addressed. The panel's issues ARE the
         # prompt, and each wants a field to choose from: two proposals give the
         # cherry-pick nothing to reject, and twenty restatements of one idea

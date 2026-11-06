@@ -69,7 +69,7 @@ module Operator
 
     # Defined below module_function: a def above it is a private instance
     # method, and the module object that counts/run call it through is not its
-    # own instance - run raised NameError on every measurement.
+    # own instance — run raised NameError on every measurement.
     module_function
 
     def base_tree_findings
@@ -91,7 +91,7 @@ module Operator
     end
 
     # A directory holding one file and no subdirectories is a namespace bought
-    # for nothing - unless a `.rb` of the same name sits beside it, which is how
+    # for nothing — unless a `.rb` of the same name sits beside it, which is how
     # Zeitwerk spells a nested constant. `RepoEcology::CoChangeGraph` can only
     # live at `repo_ecology/co_change_graph.rb`, next to `repo_ecology.rb`, so the
     # directory buys the nesting the constant already had when it was inline;

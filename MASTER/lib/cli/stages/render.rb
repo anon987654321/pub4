@@ -3,7 +3,7 @@
 module Master
   module CLI
     module Stages
-      # Render - format the final output for display.
+      # Render — format the final output for display.
       class Render
         def initialize(renderer:, output_check: nil, output_guard: nil, event_bus: nil)
           @renderer = renderer

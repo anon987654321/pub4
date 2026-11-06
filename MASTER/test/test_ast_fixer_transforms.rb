@@ -40,7 +40,7 @@ class TestAstFixerTransforms < Minitest::Test
   # literal + identifier + literal.
 
   # `a && a.b !== x` is FALSE when a is null; `a?.b !== x` is TRUE
-  # (undefined !== x), so the conversion flips the guard - and the guarded
+  # (undefined !== x), so the conversion flips the guard — and the guarded
   # statement then runs against the null the && was protecting. Shipped live
   # in voice_recorder_controller.js and nearby_chat_controller.js.
   def test_optional_chaining_declines_inequality_guards
@@ -108,7 +108,7 @@ class TestAstFixerTransforms < Minitest::Test
   # CONCAT_PART stops at `(`, so a chain ending in a call matched only the
   # callee and left the arguments dangling outside the new literal:
   #
-  #   ' - c - ' + text.slice(cut + 1)  ->  ` - c - ${text.slice}`(cut + 1)
+  #   ' — c — ' + text.slice(cut + 1)  ->  ` — c — ${text.slice}`(cut + 1)
   #
   # That parses. It is a template literal invoked as a function, so it throws
   # TypeError every time the line runs, and `node --check` and every syntax check
@@ -162,7 +162,7 @@ class TestAstFixerTransforms < Minitest::Test
   # Prose about code contains code. A JSDoc continuation line reading
   # `drain queue on 'online' + SW 'sync'` is a concat chain as far as
   # CONCAT_CHAIN can tell, and converting it rewrote documentation into a
-  # template literal in a face module - a comment outliving its rule, on the
+  # template literal in a face module — a comment outliving its rule, on the
   # writer side. A comment cannot need a code fix.
   def test_lexical_js_transforms_leave_comments_alone
     result = fix("queue.js", <<~JS)
@@ -303,7 +303,7 @@ class TestAstFixerTransforms < Minitest::Test
   # `return {...} \` + `if guard` is one statement over two physical lines.
   # Deleting the guard as "immediately dead" leaves `return {...} end`, which
   # parses, so the file stays Syntax OK while the return goes unconditional.
-  # It broke RadioChop#multiple_margin twice - the second time against the
+  # It broke RadioChop#multiple_margin twice — the second time against the
   # comment narrating the first.
   def test_dead_code_keeps_a_backslash_continued_guard
     src = <<~RUBY
@@ -324,7 +324,7 @@ class TestAstFixerTransforms < Minitest::Test
   # An addition is visible in the diff it makes; a deletion is invisible to
   # anyone who does not already know what stood there. Scanner#should_autofix?
   # has said so since the safety tier was written, and AstFixer ran the deleting
-  # transform anyway - the tier covered the law-driven path and MechanicalAutofix
+  # transform anyway — the tier covered the law-driven path and MechanicalAutofix
   # went the other way, so an unattended `bin/operator check` deleted code no rule
   # had asked it to. MASTER_AUTOFIX=1 is what a person asking looks like, the same
   # signal Fix::RepairLoop reads.

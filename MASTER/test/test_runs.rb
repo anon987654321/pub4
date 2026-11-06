@@ -115,7 +115,7 @@ class TestRuns < Minitest::Test
     assert_includes Operator::Runs.who_runs("STUDIO/test/idea_picture_test.rb"), "STUDIO/Rakefile"
   end
 
-  # What makes a file a test is the directory, not the name - three source files
+  # What makes a file a test is the directory, not the name — three source files
   # were named like tests and one of them, tools/test_naming.rb, was reported as
   # an orphan permanently. The narrowing must not turn the check off, so both
   # directions: a lint named test_naming is not a test, and a real test a

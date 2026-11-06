@@ -5,28 +5,28 @@ require_relative "../../../lib/operator/baseline_ratchet"
 module Operator
   # What a model promises, measured instead of counted by hand.
   #
-  # Both numbers below sat in the old backlog as bare figures - "104
-  # associations with no inverse_of", "11 models with no validations" - with the
+  # Both numbers below sat in the old backlog as bare figures — "104
+  # associations with no inverse_of", "11 models with no validations" — with the
   # entry itself warning that no committed tool reproduces them and that "an
   # unfalsifiable number is how a register row outlives its subject". A plain
   # grep answers 569 and 48, because it cannot make the exclusions the audit made
   # by hand. This file makes them.
   #
-  # uninferrable_inverse - Rails already sets inverse_of for you. ActiveRecord's
+  # uninferrable_inverse — Rails already sets inverse_of for you. ActiveRecord's
   # automatic_inverse_of walks the reflection and finds the other side by name,
   # so the overwhelming majority of associations need nothing. It gives up in
   # specific, documented cases: an association carrying a scope, or :through, or
   # a :foreign_key that breaks the name-based guess. Those are the ones where the
   # inverse is genuinely absent, and where a parent and its loaded child become
-  # two different objects in memory - which is how a validation reads a stale
+  # two different objects in memory — which is how a validation reads a stale
   # value and how strict_loading_by_default raises on a record you already have.
   # :through is excluded: it has no single inverse to declare.
   #
-  # no_validations - a model that promises nothing. Not automatically a defect:
+  # no_validations — a model that promises nothing. Not automatically a defect:
   # join tables, reference data and models fully constrained at the database are
   # legitimately validation-free, which is exactly why this is a ratchet and not
   # a bar. It may only fall. Mark a deliberate one with
-  # `# model_contract: no-validations-ok - <reason>` and it stops counting.
+  # `# model_contract: no-validations-ok — <reason>` and it stops counting.
   #
   # Neither number is a target to drive to zero. They are numbers that cannot
   # grow without someone noticing, which is the property the register row asked
@@ -46,13 +46,13 @@ module Operator
 
     # Only falls; never raise to silence a failing run.
     #
-    # uninferrable_inverse is 0. It opened at 54 against a hand count of 104 -
+    # uninferrable_inverse is 0. It opened at 54 against a hand count of 104 —
     # half of what a grep calls a missing inverse_of is an association Rails
     # infers by itself, and reporting those is reporting Rails working. Reading
     # the whole statement rather than its first line moved 54 to 57: four
     # declared their inverse_of on a continuation line and were false positives,
     # and eight wrapped their foreign_key onto one and were never seen. All 57
-    # were then resolved - 55 by naming the inverse, two by the marker above,
+    # were then resolved — 55 by naming the inverse, two by the marker above,
     # where the other side genuinely does not exist.
     # no_validations is 0 from 9. Five gained a real validation: PrivacySetting
     # and MessageReceipt each mirror a unique index that was otherwise reached
@@ -88,7 +88,7 @@ module Operator
 
     # Rails infers the inverse unless the association is one it documents itself
     # as giving up on. Anything it can infer needs no declaration and is not a
-    # finding - reporting it would be reporting Rails working.
+    # finding — reporting it would be reporting Rails working.
     def inverse_findings(rel, src)
       lines = src.lines
       lines.each_with_index.filter_map do |line, index|
@@ -121,7 +121,7 @@ module Operator
     end
 
     # An association is one statement however many lines it takes, and reading
-    # only the first called four declared inverse_of options missing - the
+    # only the first called four declared inverse_of options missing — the
     # option had wrapped onto the continuation line.
     def wrapped_options(lines, index, options)
       while options.rstrip.end_with?(",", "\\")

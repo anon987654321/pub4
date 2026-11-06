@@ -19,7 +19,7 @@ module Master
       # LINE_HEIGHT_ON_SCALE and EIGHT_PX_RHYTHM are what a real finding's
       # law_id carries; the prior COLOR_CONTRAST/TYPE_SCALE/LEADING/
       # PIXEL_PERFECTION_RHYTHM spellings never match one, so fix_blocking_rule?
-      # silently returned false for every finding in these five categories -
+      # silently returned false for every finding in these five categories —
       # the operator-decision gate RENDERED_VALUES exists to enforce was dead
       # for exactly the findings it was written to hold.
       OPERATOR_OWNED_RULE_IDS = %w[

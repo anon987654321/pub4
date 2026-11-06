@@ -11,7 +11,7 @@ module Master
     #
     # It measured three more things until nothing turned out to call them.
     # record_latency, record_diff and record_undo were public, had no caller
-    # anywhere in the tree, and were reachable only through the bus - which
+    # anywhere in the tree, and were reachable only through the bus — which
     # subscribes one event, llm:response. So the counters they maintained never
     # moved, and `summary` reported avg_latency_ms 0, avg_diff_lines 0 and
     # rollback_rate 0.0 on every run of a system doing all three things. A

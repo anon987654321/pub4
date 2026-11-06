@@ -4,7 +4,7 @@ require "yaml"
 
 module Master
   module CLI
-    # A spatial breadcrumb - where attention is, at what zoom, doing what.
+    # A spatial breadcrumb — where attention is, at what zoom, doing what.
     #
     # The vocabulary and the rendering come from data/attention_context.yml
     # rather than from constants here. They were constants, and the two
@@ -16,7 +16,7 @@ module Master
     class AttentionContext
       DATA = File.expand_path("../../data/attention_context.yml", __dir__)
 
-      # The vocabulary, read from the file - a subject of its own, and the one
+      # The vocabulary, read from the file — a subject of its own, and the one
       # PersonalityPromptBuilder talks to: it asks for the philosophy, the
       # rendering template and both allowed lists to build the prompt section.
       # Extended rather than written into the class so a breadcrumb stays a value
@@ -30,7 +30,7 @@ module Master
         def default_act = valid_acts.first || "scout"
 
         # `complex_only` is the protocol's default visibility, so what counts as
-        # complex is everything past the first act - scouting is the resting
+        # complex is everything past the first act — scouting is the resting
         # state and does not earn a breadcrumb.
         def complex_acts = @complex_acts ||= (valid_acts - [default_act]).freeze
 

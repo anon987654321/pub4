@@ -4,7 +4,7 @@ require_relative "test_helper"
 
 # iOS 13+ splits DeviceOrientationEvent and DeviceMotionEvent permissions.
 # requestMotionPermission used to ask only for orientation, then listen for
-# motion immediately at parse time - shake-to-skip never fired on an iPhone.
+# motion immediately at parse time — shake-to-skip never fired on an iPhone.
 class TestFaceMotionPermission < Minitest::Test
   def part3
     File.read(File.join(Master::ROOT, "../MASTER/web/public/face.part3.txt"))

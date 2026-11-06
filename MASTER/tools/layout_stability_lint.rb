@@ -92,7 +92,7 @@ module Operator
     # as a line-oriented reader of ERB can honestly claim. Deliberately not a
     # parser: the question is only whether a reserving wrapper is plausibly open
     # around this tag, and being generous here costs a missed finding while
-    # being strict costs a false one - and a false one gets correct markup
+    # being strict costs a false one — and a false one gets correct markup
     # edited.
     def sized?(tag, context = nil)
       return true if tag.match?(/\bwidth\s*[:=]/) && tag.match?(/\bheight\s*[:=]/)
@@ -110,11 +110,11 @@ module Operator
     MEDIA = /<(?:img|video|iframe)\b[^>]*>|(?:(?<!responsive_)(?<!lazy_)image_tag|video_tag)\s*\(?[^%]*/
 
     # Classes that reserve the box of an image BELOW them, via a descendant
-    # selector - `.playlist-queue-art img { width: 48px; height: 48px }`.
+    # selector — `.playlist-queue-art img { width: 48px; height: 48px }`.
     #
     # This is the common shape and the first version of this lint could not see
     # it: it read the class attribute on the tag itself, and in that markup the
-    # tag carries no class at all - the reservation hangs off the wrapping span.
+    # tag carries no class at all — the reservation hangs off the wrapping span.
     # It reported a correctly sized 48x48 queue thumbnail as unreserved, which
     # is the old backlog's Scanner Convention 1 exactly: a check that reports correct
     # code gets the correct code changed.

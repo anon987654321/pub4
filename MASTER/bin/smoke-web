@@ -4,8 +4,8 @@
 require_relative "../lib/boot/entrypoint"
 Master::Boot::Entrypoint.prepare!(root: File.expand_path("..", __dir__))
 
-# smoke-web - HTTP smoke for the MASTER web face with bootstrap-aware retries.
-# Use after deploy/restart; waits for the async container boot (~90-130s on VPS).
+# smoke-web — HTTP smoke for the MASTER web face with bootstrap-aware retries.
+# Use after deploy/restart; waits for the async container boot (~90–130s on VPS).
 #
 #   bin/smoke-web
 #   MASTER_WEB_URL=https://ai.brgen.no bin/smoke-web
@@ -99,18 +99,18 @@ end
 
 # Bootstrap-aware: with nothing listening at BASE this is a dev/local run without a
 # MASTER web face up. Skip cleanly (like crawl_probe on a closed port) instead of
-# aborting the deploy check - the smoke only has meaning against a live server.
+# aborting the deploy check — the smoke only has meaning against a live server.
 def server_listening?
   fetch("/up", read_timeout: 4, open_timeout: 4)
   true
 rescue Errno::ECONNREFUSED, Errno::EHOSTUNREACH, Errno::ENETUNREACH, SocketError
   false
 rescue StandardError
-  true # reachable but erroring - let the real checks report it
+  true # reachable but erroring — let the real checks report it
 end
 
 # On the VPS (relayd present) a not-yet-listening server means Falcon is still binding
-# post-restart - fall through to the bootstrap wait/fail below rather than skip. Only a
+# post-restart — fall through to the bootstrap wait/fail below rather than skip. Only a
 # local dev machine with no server up gets the clean skip.
 ON_VPS = File.file?("/etc/relayd.conf")
 if !ON_VPS && !server_listening?

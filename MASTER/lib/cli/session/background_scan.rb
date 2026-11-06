@@ -39,7 +39,7 @@ module Master
 
       # The deep self-scan over lib/ runs 181 rules and takes north of a minute.
       # Inline it held the prompt hostage for the whole boot, so the operator sat
-      # at "scan..." with no way to type. It reports when it lands instead.
+      # at "scan…" with no way to type. It reports when it lands instead.
       def start_boot_scan
         @boot_scan_thread = Thread.new do
           # The scan is pure Ruby and holds the GVL for whole time slices, so a plain
@@ -51,9 +51,9 @@ module Master
       end
 
       # Rules that call the model (AdversarialRule, SemanticLaw, CommentDriftRule
-      # - anything mixing in Rules::NeedsModel) share the one local ollama process
+      # — anything mixing in Rules::NeedsModel) share the one local ollama process
       # with the interactive turn. Running them here queued a plain "hey" behind
-      # 8 sequential model calls the operator never asked for - /fix
+      # 8 sequential model calls the operator never asked for — /fix
       # still run the full rule set, deliberately, when a person asks for it.
       def mechanical_scanner_rules
         @refs.scanner.laws.reject { |law| law.respond_to?(:agent?) }

@@ -34,7 +34,7 @@ module Deploy
       # The deterministic tier, which is the one this check wants and had never
       # asked for. The runtime hands /scan an agent, so every file was costing a
       # model round trip: measured 2026-09-06, brgen alone took 48 minutes of
-      # wall clock against 35 seconds of CPU - idle in a TLS read, the same stall
+      # wall clock against 35 seconds of CPU — idle in a TLS read, the same stall
       # MASTER_SCAN_DETERMINISTIC was added to MASTER for. A per-app finding
       # ceiling needs no model, and a check nobody can afford to run is a check
       # nobody runs.
@@ -57,11 +57,11 @@ module Deploy
     # The budget sits with the checks whose scan it bounds. It covers the explicit
     # constitutional targets below, each with its own ceiling in RAILS' registry.
     BUDGET_PATH = File.expand_path("../../../MASTER/checks/data/constitutional_budget.yml", __dir__)
-    # `scan: done [profile: full] 410 violations | top DEAD_CODE=99 ...`
+    # `scan: done [profile: full] 410 violations | top DEAD_CODE=99 …`
     VIOLATION_LINE = /^scan\d*: done\b[^\n]*?\b(\d+) violations/
     # And the other spelling of the same number: `scan: done [profile: aesthetic]
     # clean -- no violations`. A count regex that only knows the digits skipped
-    # the clean line and matched the NEXT `scan: done`, which is the deep pass -
+    # the clean line and matched the NEXT `scan: done`, which is the deep pass —
     # so a target whose aesthetic pass is clean was judged on a different
     # profile's number than a target whose aesthetic pass found something.
     # MASTER/tools read 317 and OPENBSD 72 against ceilings measured at 0 in the same
@@ -106,7 +106,7 @@ module Deploy
     end
 
     # Compares a target's finding count against its recorded ceiling. Chasing zero
-    # is explicitly not the goal here (the old backlog, Constitution Scan Debt) - what the
+    # is explicitly not the goal here (the old backlog, Constitution Scan Debt) — what the
     # ceiling buys is that adding findings fails and lowering the number is a
     # deliberate commit, which is what routing everything to warn could not do.
     def judge_count(name, count)
@@ -163,7 +163,7 @@ module Deploy
       ../OPENBSD ../MASTER
     ].freeze
 
-    # RAILS/brgen for an app, MASTER and OPENBSD for their repository trees - the
+    # RAILS/brgen for an app, MASTER and OPENBSD for their repository trees — the
     # prefix a changed path must carry to select its target.
     def repo_prefix(target)
       relative = target.sub(%r{\A\.\./}, "")
@@ -231,7 +231,7 @@ module Deploy
 
     # A crash is not a finding count, and the private `/scan` compatibility route
     # exits 0 whether it found 0 or
-    # 410 - so the exit status says almost nothing and the count has to come out
+    # 410 — so the exit status says almost nothing and the count has to come out
     # of the output.
     #
     # Order matters: the marker grep used to run first and swept the whole
@@ -247,12 +247,12 @@ module Deploy
       end
     end
 
-    # The FIRST `scan: done` line and nothing else - the aesthetic pass, which is
+    # The FIRST `scan: done` line and nothing else — the aesthetic pass, which is
     # what every ceiling in constitutional_budget.yml was measured against. Both
     # of its spellings count: a number, or "clean -- no violations", which is
     # zero and was being read as "no count here, try the next line".
     def first_pass_count(stdout)
-      # /scan speaks as a dmesg unit, "scan0: done, ..."; "scan: done" is the
+      # /scan speaks as a dmesg unit, "scan0: done, …"; "scan: done" is the
       # spelling the recorded outputs in the tests still carry.
       line = stdout.to_s.lines.find { |l| l.match?(/\Ascan\d*: done\b/) }
       return unless line
@@ -263,7 +263,7 @@ module Deploy
     end
 
     # One scan, with a bound. Returns the output and either the exit status or
-    # :timeout - the child is killed, so a stalled scan costs SCAN_TIMEOUT_S
+    # :timeout — the child is killed, so a stalled scan costs SCAN_TIMEOUT_S
     # rather than the rest of the day.
     def bounded_scan(line)
       Open3.popen2e(SAFE_ENV, RUBY, BUNDLE, "exec", RUBY, "bin/master", chdir: MASTER) do |stdin, out, wait|
@@ -286,7 +286,7 @@ module Deploy
     end
 
     # The CLI runs the scan in the same process, but a boot that shells out
-    # leaves the child holding the pipe - TERM first, then KILL, so a process
+    # leaves the child holding the pipe — TERM first, then KILL, so a process
     # ignoring the polite one still goes.
     def kill_tree(pid)
       Process.kill("TERM", pid)
@@ -306,10 +306,10 @@ module Deploy
 
       # Per-line, not one block. The old pattern was
       # /^targets:\n(?:  \w+: \d+\n)+/, which requires the entries to sit
-      # directly under `targets:` - and every one of them is preceded by the
+      # directly under `targets:` — and every one of them is preceded by the
       # comment explaining why it moved. So the sub matched nothing, the file was
       # rewritten unchanged, and the progress line below still announced the new
-      # numbers. On 2026-08-03 it reported "brgen -> 329, amber -> 164" and left
+      # numbers. On 2026-08-03 it reported "brgen → 329, amber → 164" and left
       # 411/207 on disk. Rewriting a line at a time also keeps the comments.
       body = File.read(BUDGET_PATH)
       lowered.each do |name, count|
@@ -317,7 +317,7 @@ module Deploy
       end
       File.write(BUDGET_PATH, body)
 
-      # Never announce a write without confirming it landed - that is the exact
+      # Never announce a write without confirming it landed — that is the exact
       # failure this comment describes.
       reread = (YAML.safe_load_file(BUDGET_PATH)&.dig("targets") || {})
       missed = lowered.reject { |name, count| reread[name] == count }
@@ -474,13 +474,13 @@ module Deploy
     end
     private_class_method :check_manifest
 
-    # MASTER/web/public/assets is gitignored - precompile writes it, and only
+    # MASTER/web/public/assets is gitignored — precompile writes it, and only
     # where something has run precompile. So its absence means two different
     # things, and this reported the harsher one everywhere: on the deploy host
     # a missing manifest is a real broken deploy, but in a fresh clone or a
     # second checkout it means nobody has built assets here
     # yet. That made `production` fail on arrival in any new working copy,
-    # which is a check people learn to read past - and this one guards the
+    # which is a check people learn to read past — and this one guards the
     # face's assets.
     #
     # Inconclusive off the host, per the same rule the rendered checks follow:

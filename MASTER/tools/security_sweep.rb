@@ -19,8 +19,8 @@ SECRET_PATTERNS = [
   /(?<![a-z_])api_key\s*[:=]\s*["'][^"']{8,}["']/i,
 ].freeze
 
-# The password rule needs the value, not just a match. As a bare pattern -
-# /password\s*[:=]\s*["'][^"'\[\]]{8,}["']/i - it flagged sixteen i18n strings
+# The password rule needs the value, not just a match. As a bare pattern —
+# /password\s*[:=]\s*["'][^"'\[\]]{8,}["']/i — it flagged sixteen i18n strings
 # across three apps ("Glemt passord?", "Confirm password", "Update your
 # password"), so `bin/check --profile=contributor` and the operator profile were
 # both failing on translated UI copy. A check whose failure is always noise is a
@@ -37,7 +37,7 @@ PROSE_VALUE = /\A[A-Za-zÀ-ÿ][A-Za-zÀ-ÿ'\u2019\-]*[?.!]?\z/
 INDIRECTION = /\A(?:\$\{?[A-Za-z_]\w*\}?|%\{[^}]+\}|<%=[^%]*%>|\#\{[^}]+\})\z/
 
 def secretish_password?(value)
-  return false if value.match?(/\s/)          # "Forgot password?" - copy, not a credential
+  return false if value.match?(/\s/)          # "Forgot password?" — copy, not a credential
   return false if value.match?(PLACEHOLDERS)
   return false if value.match?(INDIRECTION)
   return false if value.match?(PROSE_VALUE) && value.length < 16
@@ -137,7 +137,7 @@ end
 
 # Guarded so test/test_security_sweep.rb can require this file and exercise the
 # password predicate directly. Without it, the only way to test the rule was to
-# run the whole sweep and read its output - which is how the rule shipped with a
+# run the whole sweep and read its output — which is how the rule shipped with a
 # sixteen-hit false-positive rate on translated UI copy.
 if $PROGRAM_NAME == __FILE__
   failures, = sweep

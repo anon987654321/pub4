@@ -3,7 +3,7 @@
 module Master
   module CLI
     class PipelineContext
-      # Class-level construction/validation helpers - separate from
+      # Class-level construction/validation helpers — separate from
       # PipelineContext's own instance-level accessor/merge API.
       module FactoryMethods
         def build(user_message:, **opts)
@@ -42,7 +42,7 @@ module Master
         end
       end
 
-  # Typed pipeline context - enforces required keys, validates types, provides accessors.
+  # Typed pipeline context — enforces required keys, validates types, provides accessors.
   # Immutable update via #merge (returns new instance). Hash-compatible via [] and #to_h.
       extend FactoryMethods
 
@@ -78,7 +78,7 @@ module Master
       MAX_OUTPUT_BYTES = 8_192
       MAX_TIMINGS = 20
 
-      # Stage prerequisite contracts - checked before each stage runs.
+      # Stage prerequisite contracts — checked before each stage runs.
       STAGE_PREREQUISITES = {
         infer: %i[user_message],
         route: %i[user_message],
@@ -94,7 +94,7 @@ module Master
         @values = hash.freeze
       end
 
-      # Read by symbol or string key - Hash-compatible subscript.
+      # Read by symbol or string key — Hash-compatible subscript.
       def [](key)
         @values[key.to_sym]
       end
@@ -109,7 +109,7 @@ module Master
       # already immutable
       def freeze = self
 
-      # Immutable update - returns a new PipelineContext merging overrides.
+      # Immutable update — returns a new PipelineContext merging overrides.
       # Accepts a Hash or another PipelineContext (e.g. when combining parallel
       # stage results), mirroring the Hash-compatible #[]/#to_h/#wrap surface.
       def merge(overrides = {})

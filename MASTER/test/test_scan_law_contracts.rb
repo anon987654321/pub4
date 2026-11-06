@@ -95,7 +95,7 @@ class TestScanLawContracts < Minitest::Test
 
   # FILE_SPRAWL judges the tree's shape: a one-file directory and a tiny file
   # are both mergeable sprawl (operator standing instruction). law/ and core/
-  # are deliberately outside its reach - one is a per-rule-file design until
+  # are deliberately outside its reach — one is a per-rule-file design until
   # the domain-file decision, the other a ratcheted invariant.
   def test_file_sprawl_flags_lone_files_and_tiny_files_but_not_core_or_law
     Dir.mktmpdir do |root|
@@ -211,7 +211,7 @@ class TestScanLawContracts < Minitest::Test
   end
 
   # NEVER_BATCH_DELETE's other three branches all ask whether the set of files
-  # is known at read time - a glob, a bare $var, a Dir[] are each unbounded by
+  # is known at read time — a glob, a bare $var, a Dir[] are each unbounded by
   # construction. The `.each { rm }` branch asked only whether there was a loop,
   # so it read a receiver spelled out in full as the same hazard. The bracket in
   # Dir[] follows a word character and is an index, not a literal.
@@ -227,10 +227,10 @@ class TestScanLawContracts < Minitest::Test
 
   def test_never_batch_delete_still_fires_on_an_unknown_set
     [
-      %(stale.each { |f| File.delete(f) }\n), # scan: intentional - the law fixture
-      %(Dir["tmp/*.log"].each { |f| File.delete(f) }\n), # scan: intentional - the law fixture
-      %(snapshots[0...-KEEP].to_a.each { |old| File.delete(old) }\n), # scan: intentional - the law fixture
-      %(Array(old).each { |f| FileUtils.rm_f(f) }\n), # scan: intentional - the law fixture
+      %(stale.each { |f| File.delete(f) }\n), # scan: intentional — the law fixture
+      %(Dir["tmp/*.log"].each { |f| File.delete(f) }\n), # scan: intentional — the law fixture
+      %(snapshots[0...-KEEP].to_a.each { |old| File.delete(old) }\n), # scan: intentional — the law fixture
+      %(Array(old).each { |f| FileUtils.rm_f(f) }\n), # scan: intentional — the law fixture
     ].each do |source|
       refute_empty law_findings("NEVER_BATCH_DELETE", source, path: "cleanup.rb"),
                    "#{source.inspect} deletes a set nothing on the line bounds"
@@ -387,7 +387,7 @@ class TestScanLawContracts < Minitest::Test
     assert_finding rule("RUNTIME_DOCS_YAML"), "# stray\n", bad, "delete data/feedback_new.md"
     assert_empty rule("RUNTIME_DOCS_YAML").check("# ok\n", path: good)
     # data/skills/README.md left the allowed list when the directory was
-    # deleted (2026-08-19) - a reborn copy is a finding now, not an exemption.
+    # deleted (2026-08-19) — a reborn copy is a finding now, not an exemption.
     assert_finding rule("RUNTIME_DOCS_YAML"), "# reborn\n",
                    File.join(Master::ROOT, "data", "skills", "README.md"), "delete data/skills/README.md"
 
@@ -404,10 +404,10 @@ class TestScanLawContracts < Minitest::Test
   end
   # The 2026-08-19 twin-drift debt closed at zero on 2026-08-21: an id that
   # lives in law/ and the registry at once is two detectors free to disagree
-  # about one rule - the exact drift UNBOUNDED_RETRY proved. Zero is held.
+  # about one rule — the exact drift UNBOUNDED_RETRY proved. Zero is held.
   #
   # Two detectors is the hazard, and a `practice` rule has none: it states a
-  # principle for the prompt and checks nothing. FLAT_PIXELS is both - the
+  # principle for the prompt and checks nothing. FLAT_PIXELS is both — the
   # design rule that binds what gets built, in law/practice.rb, and a narrow
   # detector for imageSmoothingEnabled and bloom language, in the registry.
   # Comparing every law id caught that pair and would have kept the principle

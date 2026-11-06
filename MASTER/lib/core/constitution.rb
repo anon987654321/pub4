@@ -4,7 +4,7 @@ require "prism"
 require "yaml"
 
 module Master::Core
-  # Constitution - the single check. Every Effect the agent proposes folds
+  # Constitution — the single check. Every Effect the agent proposes folds
   # through the rules here before the World performs anything. This is where the
   # old council, scan, judge, biases, veto, evidence, sharp_edges, and the Guard
   # all live now: not as subsystems, but as rules over effects. One `admit`.
@@ -35,8 +35,8 @@ module Master::Core
     #
     # Without it, the only thing standing between the model and the machine was
     # safe_exec_rule's veto regex over the joined argv. Io::Shell has consulted
-    # Ground::Policy::Sandbox - an adversarial corpus covering dangerous rm in any
-    # flag order, fork bombs, curl-piped-to-shell, device truncation - since that
+    # Ground::Policy::Sandbox — an adversarial corpus covering dangerous rm in any
+    # flag order, fork bombs, curl-piped-to-shell, device truncation — since that
     # check was wired in, but the Fold does not exec through Io::Shell. It execs
     # through World. So the hardened check was live for the tool path and absent
     # from the constitutional one, which is the path that actually runs unattended.
@@ -271,8 +271,8 @@ module Master::Core
     # The hardened shell policy, applied to the constitutional exec path.
     #
     # Blocks on a denial only. The policy answers :deny, :ask or :allow, and :ask
-    # is what it returns for anything it does not recognise - which is most real
-    # commands - so treating :ask as a refusal would stop the fold running its own
+    # is what it returns for anything it does not recognise — which is most real
+    # commands — so treating :ask as a refusal would stop the fold running its own
     # tests. Io::Shell made the same call for the same reason; this keeps the two
     # checks saying the same thing rather than inventing a second opinion.
     # The sandbox answers one of three things, and the third is new:
@@ -579,7 +579,7 @@ module Master::Core
       raise ArgumentError, "veto pattern #{name} is invalid: #{e.message}"
     end
 
-    # The surface is load, admit, and immutable_paths_rule - which
+    # The surface is load, admit, and immutable_paths_rule — which
     # test/test_core_immutable_paths.rb builds directly. The rest are rule
     # factories `default_rules` calls and nothing else does, verified against
     # lib/, test/, tools/, bin/ and web/.
@@ -587,7 +587,7 @@ module Master::Core
     # Declared rather than merely true: `private` marks a position in the
     # instance-method stream and class methods never enter it, so this class read
     # as 16 public methods under ABSTRACTION no matter how it was arranged. That
-    # is the idiom being measured, not the surface - see the old backlog, "The fold spine
+    # is the idiom being measured, not the surface — see the old backlog, "The fold spine
     # had never been scanned". Unlike Memory, this class did not need splitting:
     # its count was the idiom, and Memory's was the design.
     private_class_method :default_rules, :immutable_hit?, :configuration_invariant_rule, :no_secret_rule, :ruby_parses_rule, :scan_clean_rule, :reason_rule,
@@ -599,8 +599,8 @@ module Master::Core
 
     # One source for paths that are constitutionally protected.
     #
-    # soul.yml owns the protected-path boundary: the files no automated writer -
-    # the Fold, /fix and its autofix, a tool write, a runtime commit - may change.
+    # soul.yml owns the protected-path boundary: the files no automated writer —
+    # the Fold, /fix and its autofix, a tool write, a runtime commit — may change.
     # A person changes them with an ordinary git commit. This class is deliberately
     # small: readers can ask for the declarations or whether one path is protected
     # without knowing how soul.yml is laid out.

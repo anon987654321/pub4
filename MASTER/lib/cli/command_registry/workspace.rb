@@ -17,7 +17,7 @@ module Master
       COMMIT_USAGE = "usage: /commit <path>... --confirm - name what goes in. Other sessions " \
                      "edit this checkout, so a commit that sweeps up every change is refused."
 
-      # /commit - stage and commit the named paths, and only those, with a
+      # /commit — stage and commit the named paths, and only those, with a
       # model-written message. The checkout is shared by several sessions, so
       # `git add -u` would publish another session's half-finished work under
       # this one's message; the path list is the scope, and git enforces it

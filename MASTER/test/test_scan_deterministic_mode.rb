@@ -17,7 +17,7 @@ require "cli/pipeline/pass"
 #
 # The first number is AdversarialRule, which sends a per-file prompt. The second
 # is the council: of that 390s, the two scan phases were 32s and crit0 was
-# 354.8s - 91% of a "scan" was a critique nobody asked for, and `bin/check --ladder` runs
+# 354.8s — 91% of a "scan" was a critique nobody asked for, and `bin/check --ladder` runs
 # the council reading separately anyway as the tier that owns it.
 #
 # MASTER_SCAN_DETERMINISTIC=1 turns both off and nothing else. It is opt-in, so

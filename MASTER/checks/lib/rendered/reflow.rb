@@ -9,7 +9,7 @@ require_relative "../../support/check_autofix"
 module Deploy
   # Width sweep instead of three fixed viewports.
   #
-  # Responsive bugs live *between* breakpoints - a grid that fits at 390 and at
+  # Responsive bugs live *between* breakpoints — a grid that fits at 390 and at
   # 1440 and spills at 480. Testing three widths structurally cannot see them.
   # This sweeps the declared width list collecting only cheap scalars per step,
   # and asserts three things:
@@ -17,14 +17,14 @@ module Deploy
   #   1. No horizontal overflow at any width, with 320px as the WCAG 1.4.10 floor.
   #   2. Layout changes happen only at declared breakpoints. The set of widths
   #      where the column count or nav variant changes is a "breakpoint
-  #      fingerprint" - small, stable, and committable. An unplanned transition
+  #      fingerprint" — small, stable, and committable. An unplanned transition
   #      appearing mid-range is a regression even when nothing looks broken.
   #   3. Reading type never shrinks as the viewport widens, and never keeps a
   #      fixed line height while its size changes.
   class ReflowCheck
     ROOT = File.expand_path("../../../..", __dir__)
 
-    # Sampled at each width - kept tiny so a 16-step sweep stays fast.
+    # Sampled at each width — kept tiny so a 16-step sweep stays fast.
     SCALARS = <<~JS
       (() => {
         const de = document.documentElement;
@@ -144,7 +144,7 @@ module Deploy
       end
 
       # Counted per surface swept, so one surface that could not be measured does
-      # not make the ones that were count for nothing - and a sweep where every
+      # not make the ones that were count for nothing — and a sweep where every
       # width raised does not count as a sweep at all. A CDP error is a warning
       # here, so counting attempts reported an empty sweep as a pass.
       if measured.zero?
@@ -285,7 +285,7 @@ module Deploy
         transitions << "#{w1}->#{w2}px: #{changed.map { |k| "#{k} #{a[k]}->#{b[k]}" }.join(', ')}"
       end
 
-      # main_width is continuous, so it is not a transition - but reporting its
+      # main_width is continuous, so it is not a transition — but reporting its
       # range tells you whether the surface actually adapts or merely stretches.
       widths = ordered.map { |(_w, s)| s["main_width"].to_i }.reject(&:zero?)
       span = widths.empty? ? "" : " [main #{widths.min}->#{widths.max}px]"

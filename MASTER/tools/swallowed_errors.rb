@@ -7,7 +7,7 @@
 # header says why the severity exists: "so the next diagnostic hunt can filter
 # for :load_bearing instead of reading every line."
 #
-# No hunt ever ran. `Swallow.recent` - the reader written for exactly this - had
+# No hunt ever ran. `Swallow.recent` — the reader written for exactly this — had
 # zero callers across lib, bin, tools, test and spec; every other reference in
 # the tree is a `.log` call. The classification was being made carefully and
 # thrown into a file nobody opened.
@@ -18,7 +18,7 @@
 # and a half thousand times while every scan it belonged to reported clean.
 #
 # This runs against LOCAL runtime state, not the repo, so it is an operator
-# check rather than a CI ratchet - the log is per-machine and gitignored. That
+# check rather than a CI ratchet — the log is per-machine and gitignored. That
 # is also why it reports rather than ratchets: the right number depends on how
 # much has been run since the file was last cleared.
 #

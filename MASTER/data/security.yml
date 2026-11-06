@@ -3,7 +3,7 @@
 #
 # The file is split into enforced policy and recorded intent, and the split is
 # checked by test/test_security_defaults.rb. Before the split, exactly one key
-# here had a reader - tools.custom.require_review_for_destructive - while the
+# here had a reader — tools.custom.require_review_for_destructive — while the
 # gateway bind, the dashboard, the session trust tiers, the pairing TTL, the
 # ingress rate limit and the five tool deny patterns all read as enforced policy
 # and enforced nothing. One was worse than inert: the ingress limit was also
@@ -14,7 +14,7 @@
 # under `planned:`, and the test fails either way round.
 
 ingress:
-  # Cron/webhook triggers -> POST /ingress/cron/:name or /ingress/webhook/:name.
+  # Cron/webhook triggers → POST /ingress/cron/:name or /ingress/webhook/:name.
   # Set MASTER_INGRESS_TOKEN in env.
   # Read by MASTER/web/app/controllers/ingress_controller.rb.
   rate_limit_per_minute: 30
@@ -98,7 +98,7 @@ planned:
     port: 18800
 
   # Per-session trust tiers. There is no session-trust lookup anywhere. The trust
-  # boundary that does exist is in web/app/controllers - visitor chat cannot reach
+  # boundary that does exist is in web/app/controllers — visitor chat cannot reach
   # the Fold, closed 2026-07-27.
   sessions:
     main:
@@ -115,7 +115,7 @@ planned:
   # Risky tool-call shapes to refuse. Implementing these needs a tool-call risk
   # classifier; the one that existed (lib/cli/routing/risk_classifier.rb) was
   # deleted as an orphan on 2026-07-30 precisely because nothing called it. Do not
-  # restore it without deciding who calls it - see the old backlog.
+  # restore it without deciding who calls it — see the old backlog.
   tools:
     custom:
       enabled: true

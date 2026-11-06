@@ -38,7 +38,7 @@ module Master
       #
       # `scan(/\w+/)` turns "isn't" into "isn" and "t", and no keyword list
       # holds "why", so "why isn't the homepage realtime?" scored zero and came
-      # back :unknown - and TurnRouter#casual? reads :unknown as plain
+      # back :unknown — and TurnRouter#casual? reads :unknown as plain
       # conversation, so the question reached the chat path instead of the Fold.
       # "run the relevant tests" failed the same way: "run" belongs to no intent
       # and adding it would swallow "run master through".

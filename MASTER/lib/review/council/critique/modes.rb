@@ -8,7 +8,7 @@ module Master
         # the panel, and the constraints their solutions must satisfy.
         #
         # This is configuration, not behaviour, and at 107 lines it was a third
-        # of Critique's body - the reason the class read as a god class. Lifted
+        # of Critique's body — the reason the class read as a god class. Lifted
         # here so Critique is the orchestration and this is the data it runs on.
         # `Critique::MODES` still resolves; it aliases TABLE.
         module Modes

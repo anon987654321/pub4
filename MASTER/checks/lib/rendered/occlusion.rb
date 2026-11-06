@@ -16,7 +16,7 @@ module Deploy
   # So this asks the browser the question a finger asks. Take each control's
   # centre point, call elementFromPoint, and see what answers. The browser
   # accounts for stacking contexts, transforms, clip paths and pointer-events on
-  # its own - a decorative overlay set to pointer-events: none never answers,
+  # its own — a decorative overlay set to pointer-events: none never answers,
   # which is exactly right and is why a geometric check would have flagged it.
   #
   # An answer that is the control, inside it, or containing it is a hit. Anything
@@ -157,7 +157,7 @@ module Deploy
 
       # Surfaces measured, not surfaces attempted. A navigation timeout is a
       # warning here, so a run where Chrome opened and every page timed out
-      # pressed nothing at all - and counting the attempts reported that as a
+      # pressed nothing at all — and counting the attempts reported that as a
       # pass. mobile_flow already counts it this way.
       if measured.zero?
         @result.inconclusive!("occlusion: Chrome reached 0/#{live.size} surface(s) - nothing was pressed")

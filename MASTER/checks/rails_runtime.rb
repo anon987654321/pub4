@@ -121,7 +121,7 @@ runtime = ARGV.include?("--runtime")
 # half never runs and "rails_runtime" is the static production check under a second
 # name. Say which half ran. A clean exit here otherwise reads as three apps booted,
 # their bundles checked, their routes proved against real controllers and their
-# bin/ci green - none of which this run touched.
+# bin/ci green — none of which this run touched.
 unless runtime
   warn "rails_runtime: static half only - pass --runtime to boot each app " \
        "(bundle check, db:prepare, dead routes, bin/ci)"

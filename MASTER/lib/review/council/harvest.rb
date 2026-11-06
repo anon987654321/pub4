@@ -8,8 +8,8 @@ module Master
       # Council output used to die in the session log: four tree-wide
       # critiques ran on 2026-08-18 and the only complete deliberation
       # survived as scrollback in a scratchpad file. A verdict nobody can
-      # find later was never given. Every Critique#run now lands here -
-      # issues, proposals, challenges, picks - under .master/, which is
+      # find later was never given. Every Critique#run now lands here —
+      # issues, proposals, challenges, picks — under .master/, which is
       # local runtime state and never committed.
       module Harvest
         DIR = "critiques"

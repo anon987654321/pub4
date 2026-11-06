@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-# Browser integration test for the MASTER face shell (primer -> prompt unlock).
+# Browser integration test for the MASTER face shell (primer → prompt unlock).
 # Run: bundle exec ruby test/test_browser.rb
 #
 # Against production from a Mac/Linux host with Chrome:

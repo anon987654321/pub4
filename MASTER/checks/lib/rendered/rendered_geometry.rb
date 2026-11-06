@@ -18,11 +18,11 @@ require_relative "../../../tools/master_design"
 
 module Deploy
   # Rendered-geometry contracts: Fitts, occlusion, overflow, computed contrast,
-  # token conformance, 8px rhythm - all measured in a real browser.
+  # token conformance, 8px rhythm — all measured in a real browser.
   #
   # The check that layout_geometry was named after and did not do. That one is
   # FirstScreenCheck now, named for what it actually asserts: a skip link, a main
-  # landmark, an h1, and a tap minimum declared in SCSS - all of it text. A tap
+  # landmark, an h1, and a tap minimum declared in SCSS — all of it text. A tap
   # minimum on an element that is overlapped, clipped or overridden at this
   # breakpoint satisfies it and fails here, because here the box is measured.
   #
@@ -118,7 +118,7 @@ module Deploy
       # tokens.yml states the spacing grid twice, as pixel_perfection.
       # eight_px_rhythm and layout_rules.grid.allowed_spacing_px.
       # css_constitution, rhythm_lint and design_metrics read the first, so this
-      # check does too, with the grid as the fallback - the same precedence as
+      # check does too, with the grid as the fallback — the same precedence as
       # design_metrics, so one gap cannot be compliant to one check and a
       # violation to another.
       @allowed_spacing = Array(@rules.dig("pixel_perfection", "eight_px_rhythm")).map(&:to_i)
@@ -165,8 +165,8 @@ module Deploy
 
     # The rendered half of design_metrics' mobile_input check, and the half that
     # can actually be complete. The source check has to infer "this is a text
-    # field" from the selector, so a rule written as `#q { ... }` or one that only
-    # inherits its size is invisible to it - which is exactly how bsdports'
+    # field" from the selector, so a rule written as `#q { … }` or one that only
+    # inherits its size is invisible to it — which is exactly how bsdports'
     # search field sat at 13.5px. Here the tag is known and the size is the one
     # the browser computed, root scaling and inheritance included.
     TEXT_INPUT_TAGS = %w[input textarea select].freeze
@@ -217,7 +217,7 @@ module Deploy
         r = el["frect"]
         next false unless r
         # An element laid out by the width of the text before it is fractional
-        # by construction - a row of nav links lands at 85.5, 148.38, 201.66
+        # by construction — a row of nav links lands at 85.5, 148.38, 201.66
         # because that is where the words end, and no stylesheet chose it.
         # Resampling only shows as a seam on a box that paints an edge, so this
         # asks about block-level boxes and leaves inline runs alone.
@@ -281,7 +281,7 @@ module Deploy
     # point: a target at least 24x24 CSS px is exempt no matter how close its
     # neighbour is, because a finger that lands anywhere on it still hits it.
     # Only undersized targets need clearance. Measured without that condition
-    # this reported 3283 pairs on one page - every adjacent feed action, all of
+    # this reported 3283 pairs on one page — every adjacent feed action, all of
     # them adequately sized and none of them a defect.
     WCAG_TARGET_MIN = 24.0
 
@@ -290,8 +290,8 @@ module Deploy
     end
 
     # The probe's own inline_in_text flag only catches a link whose parent is
-    # running text. It misses the commonest shape here - a link inside a card
-    # body, which is still a sentence - so the structural signal decides it: a
+    # running text. It misses the commonest shape here — a link inside a card
+    # body, which is still a sentence — so the structural signal decides it: a
     # box no taller than its own line of text has no padding of its own and is
     # therefore a text run, not a control someone sized.
     def inline_target?(el)
@@ -505,7 +505,7 @@ module Deploy
     # elementFromPoint at the mark's own centre returned the "front" nav link and
     # a tap on the brand navigated to front instead of home. Both elements are
     # correct in isolation, which is why neither design_contract nor
-    # visual_contract saw it - only the composed hit test does.
+    # visual_contract saw it — only the composed hit test does.
     #
     # The element's own computed position is the test, not an ancestor's: these
     # apps wrap the page in a fixed .app-shell, so "has a fixed ancestor" is true

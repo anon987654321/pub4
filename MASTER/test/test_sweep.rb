@@ -57,7 +57,7 @@ class TestSweep < Minitest::Test
   end
 
   # OPENBSD and STUDIO had one probe each against MASTER's eleven, so their
-  # headings reported a repo-wide cohesion number and nothing else - a sweep
+  # headings reported a repo-wide cohesion number and nothing else — a sweep
   # that measures almost nothing still prints a clean-looking block.
   def test_every_tree_has_a_probe_of_its_own
     S::TREES.each do |tree|
@@ -99,8 +99,8 @@ class TestSweep < Minitest::Test
     end
   end
 
-  # A proposal can close over several commits - lib/ground took four, three
-  # regroups and a refutation - so this reads a list and requires every entry to
+  # A proposal can close over several commits — lib/ground took four, three
+  # regroups and a refutation — so this reads a list and requires every entry to
   # be a real sha rather than assuming one closes one.
   def test_every_landed_row_names_its_commits
     S.ledger.fetch("proposals").select { |r| r["state"] == "landed" }.each do |row|

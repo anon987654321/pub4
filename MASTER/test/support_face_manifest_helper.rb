@@ -6,7 +6,7 @@ require "yaml"
 #
 # Four specs used to scrape `javascript_include_tag(*%w[...])` and
 # `faceModulesList: %w[...]` straight out of chat/index.html.erb. Those literals
-# are gone - the view renders from the manifest - so each spec would otherwise
+# are gone — the view renders from the manifest — so each spec would otherwise
 # grow its own copy of this parsing.
 module FaceManifestHelper
   PATH = File.expand_path("../../MASTER/web/config/face_assets.yml", __dir__).freeze

@@ -3,7 +3,7 @@
 module Master
   module Voice
     class Vad
-      # Pure RMS -> [0,1] score. Always available; no native dependencies.
+      # Pure RMS → [0,1] score. Always available; no native dependencies.
       class EnergyBackend
         def initialize(config = {})
           @floor = (config[:energy_floor] || Vad::DEFAULTS[:energy_floor]).to_f

@@ -102,7 +102,7 @@ module Master
       #
       # Same shape as add_attention above: a section that names its own audience
       # and was never consulted. Its applies_to lists MASTER, claude, grok and
-      # codex - every agent that writes markdown in this repo - and nothing in
+      # codex — every agent that writes markdown in this repo — and nothing in
       # the tree named the key, so the aesthetic it declares reached no prompt
       # and each agent invented its own house style. data_reach has counted it
       # as unread since it was restored after the 2026-08 read-modify-write that
@@ -240,7 +240,7 @@ module Master
       end
 
       # Scoped to claims about the repo, because unscoped it forbade the words
-      # fiction is made of. "never use will, would, could, might - state facts
+      # fiction is made of. "never use will, would, could, might — state facts
       # only" is a rule against pretending work is done; read as a rule about
       # register it also refuses a bedtime story, a character, or a game, and
       # this face is meant to be used by people who are not debugging it.
@@ -303,7 +303,7 @@ module Master
 
       # One list called Rules, from both places that hold one.
       #
-      # soul holds the rules no detector can check - read before write, surface
+      # soul holds the rules no detector can check — read before write, surface
       # errors first, verify the instrument. law/ holds the rules a detector does
       # check, and its `fix` line is that rule's one wording. Emitting law/ here
       # is what lets soul stop restating it: FAIL_VISIBLY was written out in
@@ -324,7 +324,7 @@ module Master
       # Every rule, from the one place that holds them.
       #
       # This used to concatenate soul's absolute.rules with law/'s, because a
-      # rule about conduct could not be a Law - Builder demanded a detector and
+      # rule about conduct could not be a Law — Builder demanded a detector and
       # none exists for "one SSH session". `conduct` removed that requirement and
       # the 47 moved, so there is no second list to merge and no question about
       # which file governs.

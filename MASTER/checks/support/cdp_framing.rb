@@ -11,7 +11,7 @@ module Deploy
   # `host-resolver-rules`, which ferrum does not expose.
   #
   # Split out when cdp_session.rb passed its file-length ceiling, and the seam
-  # was already drawn - the section carried a `--- websocket framing ---`
+  # was already drawn — the section carried a `--- websocket framing ---`
   # banner. Everything above that line speaks CDP (navigate, evaluate, press,
   # screenshot); everything below speaks WebSocket and knows nothing about
   # Chrome. Two protocols in one file, and only one of them is the reason this
@@ -24,13 +24,13 @@ module Deploy
   # CdpSession::Error and ::Desync are qualified rather than bare: constant
   # lookup is lexical, so a module that is `include`d does not see the
   # including class's constants. A bare `Desync` here resolved at parse time
-  # to nothing and raised NameError from inside the frame reader - which the
+  # to nothing and raised NameError from inside the frame reader — which the
   # runner reported as a check that errored and blocked nothing, exactly as it
   # is meant to. MAX_FRAME_BYTES came with the methods that read it.
   module CdpFraming
     # No legitimate CDP message is anywhere near this large. Without the cap, a
     # desynchronised read parses arbitrary payload bytes as a 64-bit length and
-    # read_nonblock tries to allocate it - which surfaces as a NoMemoryError
+    # read_nonblock tries to allocate it — which surfaces as a NoMemoryError
     # that kills the whole runner instead of one surface.
     MAX_FRAME_BYTES = 64 * 1024 * 1024
 
@@ -126,7 +126,7 @@ module Deploy
     # Waiting for a response to *begin* and waiting for a frame already in
     # flight to *finish* are different situations. Giving up on the first is
     # fine. Giving up on the second leaves the socket parked inside a message,
-    # and every later read then parses payload bytes as a header - which is how
+    # and every later read then parses payload bytes as a header — which is how
     # a length of several exabytes gets requested and the runner dies with
     # NoMemoryError instead of one surface failing.
     #
@@ -151,8 +151,8 @@ module Deploy
 
           @desync = true if started
           # CdpSession::Timeout, not Timeout. Bare `Timeout` resolves to the
-          # stdlib module here - every sibling raise in this file qualifies the
-          # constant - and `raise <Module>` is a TypeError, so a websocket read
+          # stdlib module here — every sibling raise in this file qualifies the
+          # constant — and `raise <Module>` is a TypeError, so a websocket read
           # timeout crashed the run with "exception class/object expected"
           # instead of raising what CdpSession#send_cmd rescues. The reconnect
           # path written for exactly this transient had never run.

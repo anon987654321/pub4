@@ -198,7 +198,7 @@ module Master
           Result.ok(law_conducted(path, code))
         end
 
-        # A law file necessarily contains the pattern it forbids - detector,
+        # A law file necessarily contains the pattern it forbids — detector,
         # fix text, bad fixture. Law.conduct neutralizes those lines (keeping
         # line numbers) before law judges law/; that only covered Law.scan,
         # so every REGISTRY law read law/ raw and NULL_BLINDNESS flagged
@@ -345,7 +345,7 @@ module Master
         # 74 of the 225 declared rules reach a file only through the semantic
         # pass, and the pass ran only when the cheap passes had already found
         # something. So a file that read as clean was never asked the 74
-        # questions - and reported "0 findings", which is a claim about the whole
+        # questions — and reported "0 findings", which is a claim about the whole
         # law set rather than about the third of it that ran.
         #
         # The cost check is real: one LLM call per file is not free on a tree this

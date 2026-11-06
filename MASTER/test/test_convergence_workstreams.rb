@@ -19,7 +19,7 @@ class TestConvergenceWorkstreams < Minitest::Test
 
   # The 2026-11-03 architecture review landed as design of record: rows that
   # name where their proof will live. A row leaves missing only in the commit
-  # that adds its proof - the same signed edit a ratchet ceiling is.
+  # that adds its proof — the same signed edit a ratchet ceiling is.
   REVIEW_DESIGN_OF_RECORD = %w[
     inconclusive_aging
     constitution_self_budget

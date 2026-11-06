@@ -8,7 +8,7 @@ require_relative "../checks/lib/research/layout_search"
 # tree-shape the detector must read as photo_first and one it must read as
 # body_first. On 2026-08-21 the card_media extraction moved the deal-card-img
 # marker into a partial and the source-reading detector called the unchanged
-# page a layout regression - an instrument blinded by a refactor, found only
+# page a layout regression — an instrument blinded by a refactor, found only
 # because the check went red. This pins both the detector and the one level of
 # render expansion that fixed it.
 class LayoutSearchDetectorTest < Minitest::Test

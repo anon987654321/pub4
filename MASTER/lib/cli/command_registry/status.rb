@@ -10,7 +10,7 @@ module Master
     module CommandRegistry
       module_function
 
-      # /status - one frame of health, as dmesg lines. What is fine or does not
+      # /status — one frame of health, as dmesg lines. What is fine or does not
       # apply on this host says nothing: no "rcctl absent" on a Mac, no bundle row
       # when the bundle is satisfied, no raw bus events.
       #

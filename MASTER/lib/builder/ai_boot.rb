@@ -35,7 +35,7 @@ module Master
       swarm = lean_boot ? nil : Review::Swarm::Coordinator.new(agent:, event_bus: bus, parent_tools: tools)
       council = build_council(agent:, bus:, root:)
       # Permissive for user chat (CLI + web): Tool::Contract validates nothing,
-      # so no strict guard stands behind this one - see data/proposals.yml.
+      # so no strict guard stands behind this one — see data/proposals.yml.
       guard = Review::Security::InjectionGuard.new(mode: :permissive)
       { scanner:, lean_boot:, swarm:, council:, guard: }
     end
@@ -117,7 +117,7 @@ module Master
         # making the application disappear merely because the diagnostic is dirty.
         #
         # Never under minitest, and that is not a convenience. The law registry is
-        # a global, and a suite has test-defined rules in it - tools/ratchets.rb
+        # a global, and a suite has test-defined rules in it — tools/ratchets.rb
         # records the same thing about the selftest row, which it measures deep for
         # exactly this reason. The self-test laws themselves run identically here
         # and under `rake selftest`; only registry-backed population counts can
@@ -199,7 +199,7 @@ module Master
     # A dead background thread must remain visible.
     #
     # abort_on_exception is false on every background thread here, which is
-    # right - a watcher falling over must not take the process with it. The rescue
+    # right — a watcher falling over must not take the process with it. The rescue
     # is the other half: with report and abort both off and nothing rescuing, a
     # thread stops, its feature quietly does nothing, and a dead WatchLoop is
     # indistinguishable from a hang.
@@ -245,7 +245,7 @@ module Master
     #
     # fix_loop:clean and fix_loop:plateau both fire every time a pass settles.
     # Without the claim below each one starts a thread while the last still runs,
-    # and a fix loop that settles often - which is what a working one does - piles
+    # and a fix loop that settles often — which is what a working one does — piles
     # up threads that nothing ever joins.
     def subscribe_single_proposer(bus:, propose_tree:)
       proposing = { busy: false }

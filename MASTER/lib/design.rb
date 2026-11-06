@@ -117,7 +117,7 @@ module Master
       # personality builds one prompt line per design concern and wants the
       # whole hash, not eight separate calls. Making it private satisfies an
       # abstraction count and breaks that caller, and a private method with two
-      # callers outside the class is not an abstraction - it is an outage.
+      # callers outside the class is not an abstraction — it is an outage.
       private_class_method :dig
 
       def self.touch_min_px(root: Master::ROOT)

@@ -8,7 +8,7 @@
 #
 # steps[].count captures an integer from the body by counting regex matches;
 # assert[] then compares captures to each other or to literals. No expression
-# evaluation - {left, op, right} only, where right may name another capture.
+# evaluation — {left, op, right} only, where right may name another capture.
 
 flows:
   - id: bsdports_search_narrows
@@ -431,7 +431,7 @@ flows:
   # an actor. A read-only suite proves 23 journeys do not 500 for a stranger and
   # cannot tell a working form from one that renders and drops what you type.
   #
-  # Each one signs in, writes, and then reads the write back on a later page -
+  # Each one signs in, writes, and then reads the write back on a later page —
   # asserting the record ARRIVED, not that the POST returned a tolerable status.
   # A 302 to the index is what a successful create and a silently discarded one
   # both look like.
@@ -463,7 +463,7 @@ flows:
         expect_status: [200]
         # Landing back on /session/new means the credentials were refused and
         # every step after this would test a guest while claiming to test an
-        # account - the exact confusion this journey exists to end.
+        # account — the exact confusion this journey exists to end.
         expect_final_path: { not: /session/new }
       - name: ports
         get: /ports

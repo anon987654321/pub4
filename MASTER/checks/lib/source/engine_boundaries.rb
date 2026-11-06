@@ -7,7 +7,7 @@ module Deploy
   #
   # Each Brgen vertical package is an engine with `isolate_namespace`, and nested
   # engines such as Marketplace's food surface are discovered just like siblings.
-  # Isolation covers tables, routes and helpers - not constants. Nothing stops
+  # Isolation covers tables, routes and helpers — not constants. Nothing stops
   # `Dating::Match` from naming `Marketplace::Order`, and once two engines share a
   # model neither can be mounted, tested or removed alone. Packwerk exists to hold
   # this line and brings a C extension through better_html; a text read holds it

@@ -161,7 +161,7 @@ module Deploy
     # and Rails says so out loud when you precompile in development: "Rails will
     # not serve any changed assets until you delete public/assets/.manifest.json".
     # So a stylesheet edit plus dartsass:build changes the file on disk and
-    # nothing that a browser - or a rendered check - actually reads. On 2026-08-24
+    # nothing that a browser — or a rendered check — actually reads. On 2026-08-24
     # that cost three edit/build/measure rounds against an unchanged number while
     # the fix was already compiled in.
     #

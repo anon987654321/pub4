@@ -8,7 +8,7 @@ require_relative "../lib/fix/scan/ast_fixer"
 # (add_trailing_commas) turned valid multi-line Ruby into unparseable code and
 # the autoloop wrote it back, silently corrupting the codebase.
 class TestAstFixerSafety < Minitest::Test
-  # A multi-line method call as the last element of an array literal - the shape
+  # A multi-line method call as the last element of an array literal — the shape
   # that add_trailing_commas mangled in lib/plugins/reach.rb.
   TRICKY = <<~RUBY
     # frozen_string_literal: true
@@ -144,7 +144,7 @@ class TestAstFixerSafety < Minitest::Test
   # `= NULL` -> `IS NULL` is a SQL repair. It used to run case-insensitively over
   # every file, so it also matched JavaScript, where `= null` is assignment. It
   # rewrote web/app/views/chat/index.html.erb's boot script to `timerIS NULL`
-  # - welded, because there is no space before the `=` - leaving the face's boot
+  # — welded, because there is no space before the `=` — leaving the face's boot
   # script unparseable at five sites in one file.
   def test_leaves_javascript_null_assignment_alone
     fixer = null_fixer_for("web/app/views/chat/index.html.erb")
@@ -162,7 +162,7 @@ class TestAstFixerSafety < Minitest::Test
 
   def test_still_repairs_sql_null_comparison
     fixer = null_fixer_for("db/report.sql")
-    sql = "SELECT * FROM users WHERE deleted_at = NULL AND city_id != NULL;" # scan: intentional - the defect the fixer repairs
+    sql = "SELECT * FROM users WHERE deleted_at = NULL AND city_id != NULL;" # scan: intentional — the defect the fixer repairs
 
     out = fixer.send(:normalise_null_comparison, sql)
 
@@ -173,7 +173,7 @@ class TestAstFixerSafety < Minitest::Test
   # The line above is a Ruby string containing SQL, which is exactly the shape
   # the repair used to rewrite: SQL_LINE matched SELECT/WHERE/AND, `= NULL` was
   # present, and the file being Ruby did not stop it. So the autofixer edited
-  # this file and turned the fixture two tests up into already-correct SQL -
+  # this file and turned the fixture two tests up into already-correct SQL —
   # leaving it asserting that valid SQL is valid, and taking thirteen sibling
   # transforms down with it when the same pass rewrote apply_transforms.
   #
@@ -182,7 +182,7 @@ class TestAstFixerSafety < Minitest::Test
   def test_does_not_repair_sql_inside_a_ruby_string_literal
     fixer = null_fixer_for("test/test_ast_fixer_safety.rb")
 
-    fixture = %(    sql = "SELECT * FROM users WHERE deleted_at = NULL AND city_id != NULL;"\n) # scan: intentional - the defect the fixer repairs
+    fixture = %(    sql = "SELECT * FROM users WHERE deleted_at = NULL AND city_id != NULL;"\n) # scan: intentional — the defect the fixer repairs
 
     assert_equal fixture, fixer.send(:normalise_null_comparison, fixture)
   end

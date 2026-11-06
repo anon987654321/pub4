@@ -27,7 +27,7 @@ module Deploy
   # survives a machine change, and a diff reads "the buy bar moved up 3px and
   # lost 4px of height" instead of "8,214 pixels changed".
   #
-  # Baselines are accepted only under CHECK_SNAPSHOT_UPDATE=1 - deliberately NOT
+  # Baselines are accepted only under CHECK_SNAPSHOT_UPDATE=1 — deliberately NOT
   # under CHECK_AUTOFIX, because "make the failure go away by blessing the new
   # layout" is precisely the self-healing behaviour this check exists to remove.
   class LayoutSnapshotCheck
@@ -177,8 +177,8 @@ module Deploy
     # `#swiper-wrapper-89838f8a227d649d` fresh on every page load, so the key of
     # every element beneath a carousel changed between two runs of this check with
     # nothing touched in between. Re-recording could never converge, because the
-    # next run invents new ids again. Matched by shape - a hex run of eight or
-    # more - rather than by library name, so the next widget that does this is
+    # next run invents new ids again. Matched by shape — a hex run of eight or
+    # more — rather than by library name, so the next widget that does this is
     # already covered. No real id in this tree looks like that (#main-content,
     # #email_address, #app-tab-bar, #nav_sections).
     VOLATILE_KEY = /
@@ -191,16 +191,16 @@ module Deploy
 
     # nearby-chat-widget-tab is in that list for a reason worth stating, because
     # it is chrome rather than a feed row. Its label is the room the visitor will
-    # land in - Shared::UiHelper#ambient_chat_room_label returns "nearby" when
-    # Current.user has coordinates and the lobby channel when it does not - so
+    # land in — Shared::UiHelper#ambient_chat_room_label returns "nearby" when
+    # Current.user has coordinates and the lobby channel when it does not — so
     # the tab is 94px or 104px wide depending on visitor state, and the two
     # alternate between runs of this check. The partial's own comment records an
     # earlier fix for the same symptom, where the label was rewritten by
     # nearby_chat_controller after the frame arrived, and moving it server-side
     # stopped the visible relabel without making the width one value.
     # Excluded rather than re-recorded, because re-recording could not converge.
-    # The design question underneath - whether a tab whose width depends on
-    # whether GPS is on is the intended behaviour - is the operator's, not this
+    # The design question underneath — whether a tab whose width depends on
+    # whether GPS is on is the intended behaviour — is the operator's, not this
     # check's.
     STRUCTURAL_TAG = %w[header nav main footer aside form h1 h2 button a input select textarea].freeze
 

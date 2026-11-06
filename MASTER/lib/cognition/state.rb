@@ -278,13 +278,13 @@ module Master
       # what a state has: add a section there and its reader exists.
       #
       # Every key is present because #initialize deep-merges DEFAULT, so fetch
-      # without a fallback is the right strictness - a missing section is a bug
+      # without a fallback is the right strictness — a missing section is a bug
       # in the merge, not a case to paper over.
       DEFAULT.each_key { |section| define_method(section) { @data.fetch(section) } }
 
       # The working set is a competition, not a queue. It used to keep the twelve
       # most recent entries, so a burst of routine events evicted the surprising
-      # one that arrived before them - the opposite of what a salience score is
+      # one that arrived before them — the opposite of what a salience score is
       # for. Sorting by salience is what makes the bound mean "the twelve that
       # matter most" rather than "the twelve that happened last".
       def remember_workspace(item)

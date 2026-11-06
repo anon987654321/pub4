@@ -3,7 +3,7 @@
 module Master
   module Io
     # Shared boilerplate for mutating tools: governor permit, undo snapshot,
-    # atomic write, bus publish - or stage via diff_stager when present.
+    # atomic write, bus publish — or stage via diff_stager when present.
     # Tool classes include Base, set NAME/TIER, and call commit_write inside safely.
     module Base
       include PathGuard

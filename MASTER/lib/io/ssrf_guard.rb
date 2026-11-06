@@ -3,7 +3,7 @@ require "ipaddr"
 require "net/http"
 require "socket"
 # Without this, safe_uri?'s `uri.is_a?(URI::HTTP)` raised NameError into its own
-# blanket rescue and the guard answered false for every URL - web_fetch silently off.
+# blanket rescue and the guard answered false for every URL — web_fetch silently off.
 require "uri"
 
 module Master

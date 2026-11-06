@@ -5,7 +5,7 @@ require "operator/status_report"
 
 # `MASTER/bin/operator status` tells one session which trees hold another session's
 # uncommitted work. That line is the repo's answer to a shared checkout, so it
-# has to name the trees correctly - a mangled name reads as a tree nobody
+# has to name the trees correctly — a mangled name reads as a tree nobody
 # recognises, and the reflex is to ignore the line rather than to distrust it.
 class TestStatusReport < Minitest::Test
   def tree_of(line) = Operator::StatusReport.allocate.send(:tree_of, line)
@@ -54,8 +54,8 @@ class TestStatusReport < Minitest::Test
 
   # The bug that produced "dirty in ASTER: 1" beside a correct MASTER.
   #
-  # In porcelain the leading whitespace is DATA - an unstaged modification is
-  # " M path" - and the reader did `out.strip`, which ate that space off the
+  # In porcelain the leading whitespace is DATA — an unstaged modification is
+  # " M path" — and the reader did `out.strip`, which ate that space off the
   # FIRST line only. So the tree of whichever file sorted first lost a character
   # whenever that file was unstaged-modified, and was tallied as its own tree.
   # Intermittent, and invisible unless you happened to read the line.
@@ -65,7 +65,7 @@ class TestStatusReport < Minitest::Test
     assert_equal({ "MASTER" => 2, "RAILS" => 1 },
                  porcelain.rstrip.lines.filter_map { |line| tree_of(line) }.tally)
 
-    # The contrast, stated as fact rather than asserted of tree_of - which is not
+    # The contrast, stated as fact rather than asserted of tree_of — which is not
     # the thing at fault. strip damages the line before any parser sees it, and
     # rstrip leaves it intact. This is the whole difference the fix turns on.
     assert_equal "ASTER", tree_of(porcelain.strip.lines.first), "strip eats the leading status space"

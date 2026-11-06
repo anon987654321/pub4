@@ -14,7 +14,7 @@
 #
 # It reads checks/data/coverage_map.yml: the instruments that declare which
 # globs they see. While the map declares itself partial (complete: false) the
-# tool reports INCONCLUSIVE with the uncovered rows as information - a partial
+# tool reports INCONCLUSIVE with the uncovered rows as information — a partial
 # map that failed everything would be noise nobody routes through. When the
 # map is declared complete, an uncovered file is a failure: either the file is
 # out of scope on purpose (name it in the map's skip list, with a reason) or

@@ -4,7 +4,7 @@ require_relative "../io/media_intent"
 
 module Master
   module CLI
-    # TurnRouter - one entry for agent work: plain language -> Fold, slash -> command_registry.
+    # TurnRouter — one entry for agent work: plain language → Fold, slash → command_registry.
     module TurnRouter
       module_function
 
@@ -19,7 +19,7 @@ module Master
         end
         return dispatch_slash(rewrite_slash(text), container:, felt_sense:, on_turn:, cancellation:) if text.start_with?("/")
 
-        # Visitors (no web token - i.e. the open internet on ai.brgen.no) get the
+        # Visitors (no web token — i.e. the open internet on ai.brgen.no) get the
         # conversational path only. Everything below this line can reach real
         # capability: infer_operator_command *reconstructs* a slash command from
         # plain English, which defeats the leading-"/" block in
@@ -66,7 +66,7 @@ module Master
       def visitor? = Fiber[:master_visitor] == true
 
       # Bare words that are complete instructions, not conversation. "status?"
-      # is /status asked as a question - question?() would otherwise read the
+      # is /status asked as a question — question?() would otherwise read the
       # trailing mark and hand it to chat. The go-words mean continue the
       # work: the convergence loop a bare "fix" starts, which picks up the
       # last run's residual focus. Matched as the whole utterance with
@@ -291,12 +291,12 @@ module Master
       end
 
       # Core::Fold's constitution requires exec evidence (test_pass, scan_clean,
-      # ...) before it admits a `done` effect - right for a coding goal, but
+      # ...) before it admits a `done` effect — right for a coding goal, but
       # it means the Fold can never answer "hi" alone. Plain conversation (no
       # recognized coding-task keyword, no risk-pattern hit) skips the Fold
       # entirely and talks straight to the agent, which already carries the
       # persona system prompt, model routing, and visitor-scoped tools
-      # (AskLlm/WebSearch - see Fiber[:master_visitor] in tool_registry.rb).
+      # (AskLlm/WebSearch — see Fiber[:master_visitor] in tool_registry.rb).
       # Public-site reading belongs to the tool-capable chat agent, not the
       # coding Fold. A news request must reach Browser/WebBrowse instead of
       # proposing an HTTP effect under the plan profile, which has no network.

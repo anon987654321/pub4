@@ -1,5 +1,5 @@
-# Council personas - deliberation panel for code review decisions.
-# Each persona carries a temperature (precise 0.1 ... loose 0.5), a sharp question, and the laws it
+# Council personas — deliberation panel for code review decisions.
+# Each persona carries a temperature (precise 0.1 … loose 0.5), a sharp question, and the laws it
 # emphasizes from laws.yml. can_veto: true blocks merge unconditionally.
 # Inter-model traffic is enforced by InterModelContract: return JSON findings with evidence,
 # explicit position, and a structured repair response on schema failure.
@@ -357,7 +357,7 @@ personas:
 parameters:
   # Fraction of the council whose feedback must agree before a round counts as
   # converged. Read by Deliberation::CONVERGENCE_OVERLAP. Not a weighted
-  # majority - personas carry no weight; they carry a temperature and a veto.
+  # majority — personas carry no weight; they carry a temperature and a veto.
   # CLI-lane sizing: on a dev Mac the council speaks through the claude CLI,
   # where hearing all 26 personas needs ~1421s against the 600s budget
   # (deliberation.rb writes the arithmetic down). local_panel is the panel
@@ -366,12 +366,12 @@ parameters:
   # any host with MASTER_COUNCIL_LOCAL=0 hears the full council.
   local_panel: 7
   consensus_threshold:  0.70
-  max_iterations:       25     # oscillation halt - forces explicit human decision
+  max_iterations:       25     # oscillation halt — forces explicit human decision
   oscillation_detection: true
   veto_precedence:     [Security, Reliability, Maintainer]   # order of veto evaluation
   tie_breaker:          Maintainer                          # weighted tie -> ops perspective wins
 
-# Merged from former data/council_questions.yml - critic prompts rotated per turn.
+# Merged from former data/council_questions.yml — critic prompts rotated per turn.
 questions:
   assumptions:
     - what are we assuming that could be false?
@@ -529,7 +529,7 @@ presets:
       - lib/voice/dilla.rb
       - lib/voice/production_dna.rb
 
-# Merged from former data/prompts/council.yml - judge and juror prompt templates.
+# Merged from former data/prompts/council.yml — judge and juror prompt templates.
 prompts:
   judge: |
     You are the Council judge. Each juror below speaks for a distinct constitutional

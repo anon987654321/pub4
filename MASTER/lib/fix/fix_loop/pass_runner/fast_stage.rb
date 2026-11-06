@@ -10,7 +10,7 @@ module Master
       class PassRunner
         # Deterministic, no-LLM-call fixes run before the LLM stage: rubocop
         # autocorrect, AST-level autofixes, and the type/datalog findings that
-        # ride along with the same file read - separate concern from the
+        # ride along with the same file read — separate concern from the
         # LLM-driven fix pipeline.
         module FastStage
           private

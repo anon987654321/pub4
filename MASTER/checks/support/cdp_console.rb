@@ -10,7 +10,7 @@ module Deploy
     #
     # Measured against a page that emits every kind at once:
     #
-    #   Log.entryAdded            the browser's own messages - network failures,
+    #   Log.entryAdded            the browser's own messages — network failures,
     #                             CORS, security, deprecations. 2 of 7.
     #   Runtime.consoleAPICalled  console.log/info/warn/error called BY page
     #                             script. 4 of 7. None of them reach Log.

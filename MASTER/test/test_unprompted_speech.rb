@@ -63,9 +63,9 @@ class TestUnpromptedSpeech < Minitest::Test
     end
   end
 
-  # Idle nudges must stay opt-in, and opt-in means no timer at all by default -
+  # Idle nudges must stay opt-in, and opt-in means no timer at all by default —
   # not a timer that checks a flag, which is how the previous three came back.
-  # The speech timer specifically, not the first setInterval in the file - the
+  # The speech timer specifically, not the first setInterval in the file — the
   # research refill is also a timer, sits earlier, and is separately gated. An
   # assertion that could not tell them apart failed on correct code, which is a
   # checker wrong in the direction that gets it deleted.

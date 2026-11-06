@@ -72,7 +72,7 @@ class TestLawCoverageLaw < Minitest::Test
 
   # A bare word is not a citation of an id. `explicit` and `reek` are ordinary
   # English, and reading them out of a comment would report as covered every rule
-  # whose id happens to be a word somebody used - coverage a run did not earn.
+  # whose id happens to be a word somebody used — coverage a run did not earn.
   def test_a_bare_word_is_not_coverage
     refute_empty messages(ONE_CLASS, test_files: { "test_bulk.rb" => "# widget behaviour" })
   end

@@ -12,7 +12,7 @@ class FaceStateSpec < Minitest::Test
     File.read(File.join(ROOT, path))
   end
 
-  # layouts/application.html.erb is not the real boot page - ChatController#index
+  # layouts/application.html.erb is not the real boot page — ChatController#index
   # renders with `layout: false` (see web/CLAUDE.md), so chat/index.html.erb is
   # the single actual HTML entrypoint. face_state/visual_governor load there via
   # a Rails javascript_include_tag array, not literal <script src> tags.

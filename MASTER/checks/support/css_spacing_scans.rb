@@ -60,7 +60,7 @@ module Deploy
     end
 
     # This replaces a check that read design_rules.touch.target_min_px and
-    # failed if it was under 44 - the law measured against a constant, with no
+    # failed if it was under 44 — the law measured against a constant, with no
     # stylesheet involved. It could not have caught a single real defect: the
     # only way to fail it was to edit the rule file, and the rule file is what
     # it was quoting. What matters is whether the token the family sizes its

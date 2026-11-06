@@ -11,7 +11,7 @@
 # 24 files still define a bare top-level ROOT and that is fine: a standalone
 # script run as `ruby thing.rb` never shares an interpreter with another. What is
 # not fine is two such files both being *requirable*, which is the set this
-# checks - every file reached by `require_relative` in MASTER, OPENBSD and RAILS.
+# checks — every file reached by `require_relative` in MASTER, OPENBSD and RAILS.
 # STUDIO tool suites intentionally run in separate processes and have their own
 # per-subject isolation check because their current top-level API is not namespaced.
 #

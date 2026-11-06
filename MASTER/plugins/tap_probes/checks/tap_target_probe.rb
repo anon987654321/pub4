@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-# tap_target_probe - measure every interactive element's hit size against the
+# tap_target_probe — measure every interactive element's hit size against the
 # design system's own --tap-min (44px), in a real mobile viewport over CDP.
 #
 # The 2026-08-17 debt entry found two under-minimum targets by hand; this is

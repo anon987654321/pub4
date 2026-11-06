@@ -84,21 +84,21 @@ module Master
     def provider_config(root: ROOT) = load_yaml(File.join(root, "data", "providers.yml"))
 
     # One source for the OpenRouter default: providers.yml openrouter.default_model.
-    # It lived three times - a Master constant, providers.yml, soul negotiable -
+    # It lived three times — a Master constant, providers.yml, soul negotiable —
     # and the 2026-08-18 registry fix had to hand-edit all three in step. The
     # next withdrawn-slug swap is one yml line.
     def openrouter_default(root: ROOT)
       provider_config(root:).dig("openrouter", "default_model")
     end
 
-    # Head of models.grok_primary - the declared :free pool this runtime routes
+    # Head of models.grok_primary — the declared :free pool this runtime routes
     # first when an OpenRouter key is present.
     def free_primary_model(root: ROOT)
       Master.models_config(root:)
             .dig("models", "grok_primary")&.first&.fetch("id")
     end
 
-    # models.yml three_mirror_redundancy.pool - the three models Review::Consensus
+    # models.yml three_mirror_redundancy.pool — the three models Review::Consensus
     # asks before a critical fix ships. It held its own copy of the list with a
     # comment saying to keep the two in step by hand, which is the maintenance
     # cost lint:dedup exists to price.
@@ -183,14 +183,14 @@ module Master
       Master.models_config(root:).fetch("model_defs", {})
     end
 
-    # models.yml cli_lanes - the subscription CLIs the pool offers and the
+    # models.yml cli_lanes — the subscription CLIs the pool offers and the
     # dispatcher asks. Read here with the other models.yml accessors, because
     # a data file with a second loader is a data file with two shapes.
     def cli_lanes(root: ROOT)
       Master.models_config(root:).fetch("cli_lanes", {})
     end
 
-    # models.yml models - the routing tiers, each a list of rows carrying an id.
+    # models.yml models — the routing tiers, each a list of rows carrying an id.
     def model_tiers(root: ROOT)
       Master.models_config(root:).fetch("models", {})
     end

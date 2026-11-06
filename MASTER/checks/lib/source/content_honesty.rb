@@ -9,7 +9,7 @@ module Deploy
   #
   # This check exists because the failure it catches was invisible to every other
   # one. On 2026-08-12 brgen.no's sitemap listed 1376 posts and 1088 of them were
-  # Latin slugs - /posts/quis-autem-eveniet-sunt-tenetur - while release,
+  # Latin slugs — /posts/quis-autem-eveniet-sunt-tenetur — while release,
   # production, layout_suite and the whole rendered_suite passed. Every check in
   # the tree was reading source, and the defect was entirely in rows. A visitor
   # saw it in one scroll; nothing we ran could.
@@ -18,7 +18,7 @@ module Deploy
   # seeders reintroducing Latin (db/seeds.rb already switched to
   # Brgen::PlausibleContent and says why). The live half is the only thing that
   # can see rows the seeders wrote before that, and it goes through the sitemap
-  # because that is the surface a search engine indexes - the exact place filler
+  # because that is the surface a search engine indexes — the exact place filler
   # does the most damage.
   class ContentHonestyCheck
     ROOT = File.expand_path("../../../..", __dir__)

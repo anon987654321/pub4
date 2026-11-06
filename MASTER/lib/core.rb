@@ -1,18 +1,18 @@
 # frozen_string_literal: true
 
-# MASTER - a constitutional coding agent.
+# MASTER — a constitutional coding agent.
 #
 # The whole thing is one sentence: fold proposed effects through a constitution
-# that admits each one before it touches the world. Four concepts carry it -
-# Fold, Constitution (the check), World (the effects), Memory (the record) - and
+# that admits each one before it touches the world. Four concepts carry it —
+# Fold, Constitution (the check), World (the effects), Memory (the record) — and
 # this file holds the vocabulary they share.
 #
 # Until 2026-08-12 this was `core/master.rb`, the root of a second spine loaded
 # on its own path. It is now `lib/core.rb`, autoloaded by the same Zeitwerk
 # loader as the rest of `lib/`, which is what the path-to-constant mapping
-# already wanted: `lib/core.rb` -> `Master::Core`, `lib/core/fold.rb` ->
+# already wanted: `lib/core.rb` → `Master::Core`, `lib/core/fold.rb` →
 # `Master::Core::Fold`. The fold still depends on nothing in `lib/` outside its
-# own namespace - `test/test_core_no_lib_backedges.rb` is what holds that, and
+# own namespace — `test/test_core_no_lib_backedges.rb` is what holds that, and
 # it is the part of the two-spine split that was carrying real weight.
 module Master::Core
   # An Effect is something the agent wants to do. Nothing reaches the world
@@ -271,7 +271,7 @@ module Master::Core
   end
 
   # What the World reports after performing an Effect. The agent reacts to this,
-  # so a failure is data the model must handle - never a swallowed success.
+  # so a failure is data the model must handle — never a swallowed success.
   Observation = Data.define(:ok, :detail) do
     def self.ok(detail = nil) = new(ok: true, detail:)
     def self.no(detail) = new(ok: false, detail:)
@@ -282,7 +282,7 @@ module Master::Core
     def to_s = "#{ok ? 'ok' : 'ERR'}#{detail ? ": #{detail}" : ''}"
   end
 
-  # Secret - a value that cannot leak by accident. Every implicit stringify
+  # Secret — a value that cannot leak by accident. Every implicit stringify
   # redacts; only #expose, named loudly, reveals it. The one type-level
   # guarantee, orthogonal to the four concepts.
   class Secret

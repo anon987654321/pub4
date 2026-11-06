@@ -238,7 +238,7 @@ module Deploy
     end
 
     # A journey over a catalogue cannot distinguish "search is broken" from
-    # "nobody seeded this database" - and reporting the second as the first is
+    # "nobody seeded this database" — and reporting the second as the first is
     # how a check loses its credibility. Flows that need rows say so, and an
     # empty dataset downgrades to a warning naming the cause.
     def unseeded?(flow, captures)
@@ -329,8 +329,8 @@ module Deploy
         hops = response.redirects.empty? ? "" : " via #{response.redirects.join(' -> ')}"
 
         # `{ not: /session/new }` as well as a literal path. A successful sign-in
-        # lands wherever the app was headed - root, the stored return path, a
-        # vertical - so the only stable thing to assert is where it must NOT be.
+        # lands wherever the app was headed — root, the stored return path, a
+        # vertical — so the only stable thing to assert is where it must NOT be.
         # Equality cannot say that, and without it a refused sign-in renders 200
         # from the sign-in page and every later step tests a guest while the
         # journey's name says account.
@@ -504,7 +504,7 @@ module Deploy
       # default_host is the Host header every request carries unless a step names
       # its own. Without it a probe of the loopback identifies as nothing, and
       # production answers 403 from host authorization before the app sees the
-      # path - so these journeys passed in development, where the allow list is
+      # path — so these journeys passed in development, where the allow list is
       # permissive, and could never pass against the deployed app, which is the
       # only place they measure anything.
       def initialize(port:, host: "127.0.0.1", default_host: nil)
@@ -529,8 +529,8 @@ module Deploy
       def get(path, host: nil) = run(:get, path, nil, host)
 
       # A write, with the token the last rendered page handed us. Every journey
-      # in flows.yml was a GET, so the signed-in half of the product - the
-      # product - went unmeasured: a suite that only reads cannot tell a working
+      # in flows.yml was a GET, so the signed-in half of the product — the
+      # product — went unmeasured: a suite that only reads cannot tell a working
       # form from one that renders and drops what you type.
       def post(path, params, host: nil) = run(:post, path, params || {}, host)
 
@@ -576,7 +576,7 @@ module Deploy
       # hostname travels in the Host header, which is the shape a relative
       # redirect already had. Taking an absolute Location at face
       # value, so a 301 to http://brgen.no/nearby/room sent the next request to
-      # the real brgen.no on port 80 - relayd answers there with a TLS redirect
+      # the real brgen.no on port 80 — relayd answers there with a TLS redirect
       # that Net::HTTP reads as "EOFError: end of file reached", which is how
       # this was found. The quiet half is the worse one: every absolute redirect
       # that did not happen to fail was measuring production and reporting it as

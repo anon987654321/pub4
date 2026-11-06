@@ -126,7 +126,7 @@ class TestGapDiscipline < Minitest::Test
 
   def test_pick_of_a_candidate_from_another_gap_is_caught
     record = copy(GOOD_RECORD)
-    record["picks"][0]["winner"] = "x4" # a real candidate - of the other gap
+    record["picks"][0]["winner"] = "x4" # a real candidate — of the other gap
     write("data/ideations/app_x.yml", record)
 
     ok, out = run_check

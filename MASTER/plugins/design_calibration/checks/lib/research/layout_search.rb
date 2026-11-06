@@ -81,7 +81,7 @@ module Deploy
 
     # The card's media slot lives in marketplace/_card_media.html.erb since the
     # component sitting (2026-08-21). A source-reading detector must follow the
-    # render or it measures the refactor as a layout regression - the page
+    # render or it measures the refactor as a layout regression — the page
     # still puts the photo first; only the file boundary moved. One level of
     # expansion is enough: the partial holds the deal-card-img marker.
     def card_source

@@ -42,7 +42,7 @@ module Deploy
         return
       end
 
-      # Good fixtures must pass; bad fixtures must produce >=1 finding.
+      # Good fixtures must pass; bad fixtures must produce ≥1 finding.
       Dir.glob(File.join(FIXTURES, "good_*.html")).each do |path|
         @result.checked!
         id = File.basename(path, ".html").sub(/\Agood_/, "")
@@ -97,7 +97,7 @@ module Deploy
       return unless code.between?(200, 399)
 
       res.body.to_s
-    rescue StandardError # scan: intentional - nil is the measured-nothing signal, reported downstream as the check's warning
+    rescue StandardError # scan: intentional — nil is the measured-nothing signal, reported downstream as the check's warning
       nil
     end
   end

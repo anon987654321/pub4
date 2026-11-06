@@ -11,7 +11,7 @@ module Deploy
   # Tests the checks, not the apps.
   #
   # checks/data/calibration.yml already compares hand-labelled fixtures to check
-  # verdicts - a hand-fed version of this idea, capped at however many fixtures
+  # verdicts — a hand-fed version of this idea, capped at however many fixtures
   # someone was willing to label. This automates the other half: take each
   # *good* fixture, break it the way a real regression would, and assert the
   # suite notices. A mutation that survives is a hole in the check, and a check

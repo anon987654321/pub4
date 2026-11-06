@@ -2,7 +2,7 @@
 
 module Master
   module Voice
-  # Expression - authoritative mapping from runtime signals to TTS + face/particle expression.
+  # Expression — authoritative mapping from runtime signals to TTS + face/particle expression.
   # Single source for how council reversibility, speech register (creative vs factual),
   # Osman creative styles, entropy/pressure, and mood arc become rich parameters for
   # both edge-tts prosody and the ParticleKernel (arousal, pressure, valence, breath,
@@ -22,7 +22,7 @@ module Master
 
       module_function
 
-      # Main entry for text -> expression profile.
+      # Main entry for text → expression profile.
       # Used by Speech.synthesize and chat paths.
       def for_text(text, risk: nil, reversibility: nil)
         t = text.to_s.strip

@@ -10,8 +10,8 @@ module Operator
   #
   # The register has carried `rails_unused_css_selectors` (102 selectors with no
   # markup) since the 2026-08-10 audit, and admitted in its own entry that no
-  # committed tool reproduces the number. The opposite direction - a class an ERB
-  # template asks for that no stylesheet defines - was never measured at all, and it
+  # committed tool reproduces the number. The opposite direction — a class an ERB
+  # template asks for that no stylesheet defines — was never measured at all, and it
   # is the more interesting half: an unused selector is dead weight, while an
   # undefined class is a hook the author expected to do something. Both are the same
   # defect this repo keeps finding, a declaration with no reader, pointing opposite
@@ -21,9 +21,9 @@ module Operator
   # the bundle is what production serves: none of the reported classes has a rule in
   # brgen's, amber's or bsdports' application.css.
   #
-  #   undefined_class - used in markup, defined nowhere. Either a missing style or
+  #   undefined_class — used in markup, defined nowhere. Either a missing style or
   #     dead markup; which one is a design decision, so this counts rather than fixes.
-  #   unused_selector - defined, and no markup names it. Ratcheted with a wide
+  #   unused_selector — defined, and no markup names it. Ratcheted with a wide
   #     tolerance on purpose: class names are also composed at runtime
   #     (`"card card--#{kind}"`), so a literal search cannot prove death, which is
   #     exactly the caveat the register entry records.
@@ -33,7 +33,7 @@ module Operator
     TREES = (APPS + %w[__shared]).freeze
     OPT_OUT = "css_coverage: ok"
 
-    # Applied by JS, by the framework, or by a check - never written in a stylesheet.
+    # Applied by JS, by the framework, or by a check — never written in a stylesheet.
     #
     # The last three are styled by an inline attribute on the element, each for a
     # documented reason: the icon sprite must be width/height 0 rather than
@@ -47,7 +47,7 @@ module Operator
     # `pub4-visual-field` names the canvas the visual-field controller builds; the
     # element is styled entirely by the inline cssText the controller writes, so a
     # stylesheet rule could only fight it. `pub4-post-embed` is not this app's DOM
-    # at all - it is the class inside the <blockquote> snippet the embed action
+    # at all — it is the class inside the <blockquote> snippet the embed action
     # hands to other sites to paste.
     EXTERNAL = %w[
       hidden turbo-progress-bar translation_missing
@@ -59,42 +59,42 @@ module Operator
       network-offline pub4-visual-field pub4-post-embed
     ].to_set
 
-    # Measured 2026-08-11: undefined_class 128 reported -> 96 real -> 4 remaining.
+    # Measured 2026-08-11: undefined_class 128 reported → 96 real → 4 remaining.
     #
-    # 128 -> 96 was the instrument getting honest. It read only .scss/.css and so
+    # 128 → 96 was the instrument getting honest. It read only .scss/.css and so
     # reported every mail-* class and every legal-* class as undefined; both were wrong.
     # Email cannot load an asset bundle, so the mailer layout defines its classes in an
     # inline <style>, and brgen's _site_legal_footer carries a <style> block that styles
     # the three legal pages. Inline blocks are read now.
     #
-    # 96 -> 4 was the work: 63 classes were styled in the *_coverage_fills.scss files and
+    # 96 → 4 was the work: 63 classes were styled in the *_coverage_fills.scss files and
     # the engines' own stylesheets, token-only, and the rest were classified rather than
-    # invented for - a class that always shares its element with a styled sibling
+    # invented for — a class that always shares its element with a styled sibling
     # inherits from it, and a class that names the Stimulus controller mounted on the
     # same element is that controller's identity.
     #
-    # The 4 that remain are single-word legacy names - .inline, .post, .text, .list -
+    # The 4 that remain are single-word legacy names — .inline, .post, .text, .list —
     # each on one surface, each doing nothing. They are markup to delete rather than
     # styles to write, and deleting a class that short wants a human who can grep for it
     # in a template language a regex reads badly.
     #
     # unused_selector 266, recorded rather than chased, per the register's own caveat
     # that a literal search cannot prove a runtime-composed class name is dead.
-    # 4 -> 35 on 2026-08-16, and this raise is a report rather than a tolerance.
+    # 4 → 35 on 2026-08-16, and this raise is a report rather than a tolerance.
     #
     # The four legacy single-word names above are still four. The other 31 are
     # two whole features that have views and no stylesheet at all:
     #
-    #   events   9 classes - event-card, event-card-media, event-card-body,
+    #   events   9 classes — event-card, event-card-media, event-card-body,
     #            event-list, event-list--past, event-detail, event-hero,
     #            attendee-list, rsvp-form, rsvp-bar
-    #   stories  7 classes - story-rings, story-ring-name, story-ring-count,
+    #   stories  7 classes — story-rings, story-ring-name, story-ring-count,
     #            story-ring-nav, story-viewer, story-viewer-head, story-media,
     #            story-caption, viewer-list
     #
     # There is no _events.scss and no _stories.scss in brgen, and `event-card`
     # and `story-ring` appear in no stylesheet in the tree. Those pages render
-    # with no styling whatsoever - not mis-styled, unstyled.
+    # with no styling whatsoever — not mis-styled, unstyled.
     #
     # The rest are smaller clusters of the same kind: communities moderation
     # (ban-list, mod-queue, member-list, community-rules), plus feed-action-form,
@@ -123,7 +123,7 @@ module Operator
     #   243 -> 240  three selectors regained markup in the parallel visual
     #               sessions; the ceiling follows the tree down.
     #   275 -> 243  the instrument learned to read a class attribute that embeds
-    #               an ERB conditional - class="unit<%= " unit--wide" if wide %>"
+    #               an ERB conditional — class="unit<%= " unit--wide" if wide %>"
     #               never matched the plain pattern, so the base name and the
     #               literal inside the tag both read as dead. swiper-wrapper
     #               joined its library's other runtime classes in EXTERNAL, and
@@ -131,7 +131,7 @@ module Operator
     #               were deleted.
     #
     # undefined back to 0 (2026-08-21): the seven hooks the instrument fix
-    # surfaced are designed now - unread/read and message--unread wear weight
+    # surfaced are designed now — unread/read and message--unread wear weight
     # plus a leading accent dot, story-ring wears the accent ring that fades
     # when seen, and the default address is the accent-bordered card.
     # 240 -> 174 on 2026-08-22: 40 proven-dead rules deleted (the .animate-*
@@ -139,15 +139,15 @@ module Operator
     # .brand-wordmark, the city-home intro, legacy card/search shells), and
     # the DYNAMIC_SEEDS above stopped the census miscounting runtime-built
     # names. The 174 left are dominated by amber sheets, which belong to
-    # amber\x27s active session - recorded in SURFACES.md, not touched here.
+    # amber\x27s active session — recorded in SURFACES.md, not touched here.
     # unused_selector RAISED 174 -> 180 on 2026-08-25, and the six are named
 # because a raised baseline without a list is a number nobody can act on.
 #
 # Nine unrendered partials were deleted and took their markup with them, so
 # the CSS only they used went unreferenced: jox-logo and logo and frames from
 # _jox_logo, marketplace-subnav from _subnav, feed-tab and type from
-# _city_switcher. The two dedicated stylesheets went with their partials -
-# shared/_device_showcase.scss whole, and its two @forwards - but these six
+# _city_switcher. The two dedicated stylesheets went with their partials —
+# shared/_device_showcase.scss whole, and its two @forwards — but these six
 # live inside _root.scss, _nav.scss, _marketplace.scss and
 # _jsfiddle_chrome.scss alongside rules that are still used.
 #
@@ -159,7 +159,7 @@ module Operator
 # every pattern looked for a `class=` attribute, which is the one way a Stimulus
 # controller never applies a class.
 #
-# The 28 that stopped being reported were rules styling a state only JS produces -
+# The 28 that stopped being reported were rules styling a state only JS produces —
 # real CSS, called dead by a detector that could not see its trigger.
 #
 # The 9 that appeared are the opposite and are named here because this file's own
@@ -167,7 +167,7 @@ module Operator
 #   canvas-inverted  lazy-fade-in  lazy-loaded  luxury-product-ready
 #   queued  show  start-ack  tap-ripple  ui-inverted
 # Eight of the nine have no rule in any stylesheet and are never read back by
-# `classList.contains` or a selector, so applying them does nothing at all -
+# `classList.contains` or a selector, so applying them does nothing at all —
 # neither paint nor state another reader can see. That is a finding per site, not
 # a sweep: a missing rule and a leftover toggle look identical from here, and
 # deleting the call is wrong if the CSS was lost rather than never written.
@@ -190,8 +190,8 @@ module Operator
 #
 # 154 -> 153 (2026-09-08), and the reason is the instrument rather than the CSS.
 # `deal-cat` left the unused set. It was never unused: every one of its call
-# sites wrote `class: "deal-cat#{" active" if ...}"`, and a literal search cannot
-# read a composed class - the caveat the header above already states. The
+# sites wrote `class: "deal-cat#{" active" if …}"`, and a literal search cannot
+# read a composed class — the caveat the header above already states. The
 # marketplace filter drawer added one summary carrying a static
 # `class="deal-cat listing-filters-toggle"`, and that single literal occurrence
 # is what made a selector the tree had been using all along visible here.
@@ -200,8 +200,8 @@ module Operator
 #
 # "An unknown share of them are live selectors this check cannot see" stood here
 # as a hypothesis and is a measurement now: at least ten of the 153. Measured
-# 2026-09-10 against the running fleet - 144 pages fetched from the four apps,
-# 315 distinct class names in the returned HTML - and these ten are painted by a
+# 2026-09-10 against the running fleet — 144 pages fetched from the four apps,
+# 315 distinct class names in the returned HTML — and these ten are painted by a
 # browser right now while this file calls them dead:
 #
 #   brand-mark  brgen-logo-mark  chat-code  is-current  nav-cart--active
@@ -219,8 +219,8 @@ module Operator
 # entry above called "the obvious repair and not one" because on its own it
 # traded a false unused for a false undefined. It is one with the
 # interpolation-aware pass in front of it: ruby_class_value_lists reads a class
-# value the way Ruby does - the literal text of the string plus the literal text
-# of every string nested in its interpolations - so the three shapes named above
+# value the way Ruby does — the literal text of the string plus the literal text
+# of every string nested in its interpolations — so the three shapes named above
 # arrive whole instead of truncated at their first inner quote, and
 # attribute_lists tolerates the escaped quotes of markup written inside a Ruby
 # string. All ten are used names now, undefined_class is still 0, and no
@@ -232,7 +232,7 @@ module Operator
 # build them, and is_mine and msg_reaction_chip from the reactions row.
 #
 # What is left is still not a list of dead rules. The caveat at the top of this
-# file stands - a literal search cannot prove a runtime-composed name dead - and
+# file stands — a literal search cannot prove a runtime-composed name dead — and
 # the amber sheets that dominate the remainder belong to amber's own session.
 #
 # 124 -> 123 (2026-09-15), the instrument again. A Sass module call reads as a
@@ -247,7 +247,7 @@ module Operator
 #
 # 90 -> 89 (2026-09-16). .flash-notice went with the markup that wore it: a
 # notice is a toast now (shared/_flash_toasts), so the four sheets that styled
-# an inline notice styled nothing. .toast--error went the same way - a toast
+# an inline notice styled nothing. .toast--error went the same way — a toast
 # only ever carries a confirmation, because an alert stays in the page.
 #
 # 89 -> 112 (2026-11-01), raised with the whole list named, because a raised
@@ -261,7 +261,7 @@ module Operator
 #         brought back view shapes older than their sheets
 #   120   at 88bff6eaa (2026-10-31, before the park): +17 more of the same
 #         drift in the fleet's own commits
-#   133   after the park patch (2026-11-01): +13 - markup left for the plugins
+#   133   after the park patch (2026-11-01): +13 — markup left for the plugins
 #         while shared-sheet selectors stayed behind
 #   112   after the reconciliation below: 21 names resolved, none invented
 #
@@ -274,7 +274,7 @@ module Operator
 #   msg-action         styled by .msg-actions descendants already; named in
 #                      the group it always painted through
 #   store-promo-*      _storefront_promo.html.erb rendered nowhere and styled
-#                      only by the experiment sheet 62d893af5 deleted - the
+#                      only by the experiment sheet 62d893af5 deleted — the
 #                      unrendered partial is gone; the rendered twin
 #                      (_promotional_art) keeps its sheet whole
 #   changelog, dating-crossing, buy-box-*, field-label, listing-delivery,
@@ -298,7 +298,7 @@ module Operator
 # The 112 still over the line, each with a rule in a stylesheet and no markup
 # that names it. Long-tail single-word names (woff2, type, svg, inherit and
 # friends are attribute-value trails, not classes a template wears) sit beside
-# whole dead features - the amber stardust spark set (17 selectors, composer
+# whole dead features — the amber stardust spark set (17 selectors, composer
 # gone), the radio home grid, the vote rail, the affiliate sidebar, the
 # post-reading band. Deleting them is the owner's call, per this file's own
 # rule that dead CSS is tracked, not swept on a tool's judgement:
@@ -374,7 +374,7 @@ module Operator
     end
 
     # A class that ALWAYS shares its element with a class that IS styled inherits from
-    # it - `.channel-guest-hint dim`, `.conversation-log channel-log`, `.comment-time
+    # it — `.channel-guest-hint dim`, `.conversation-log channel-log`, `.comment-time
     # dim`. That is a naming hook, not a missing style, and reporting it asks the next
     # author to invent a rule for something already styled.
     #
@@ -388,7 +388,7 @@ module Operator
     end
 
     # A class that names a Stimulus controller mounted on the same element is that
-    # controller's identity, not a style - `class="nested-form"
+    # controller's identity, not a style — `class="nested-form"
     # data-controller="nested-form"`. Writing a rule for it would be styling an API.
     def controller_identity?(name)
       @controller_identities ||= views.flat_map do |view|
@@ -425,7 +425,7 @@ module Operator
     # layout. maplibregl-/ProseMirror-/trix- are vendor-runtime: the library
     # builds the node, our sheet styles it.
     #
-    # 2026-11-01: store-promo-art--<layout> by the art partial's spec.layout output - the
+    # 2026-11-01: store-promo-art--<layout> by the art partial's spec.layout output — the
     # campaign/tile/portrait rules are reached only through that composition.
     DYNAMIC_SEEDS = %w[vertical- monogram-- map-marker-- capsule-row--
                        occasion-card-- chip-- match-overlay maplibregl-
@@ -453,7 +453,7 @@ module Operator
           # `list.nth(` and `meta.load-css(` read as .nth and .load-css, two
           # selectors nothing could ever render.
           # A name followed by #{ is a Sass generator (.mt-#{$step} emits
-          # .mt-1...12): the literal text is neither a selector nor a name any
+          # .mt-1…12): the literal text is neither a selector nor a name any
           # template can wear, so recording it invented an unused_selector
           # called `mt-` that no stylesheet really declares.
           body.scan(/\.([a-zA-Z_][\w-]*+)(?!\()(?!\#\{)/) { |(name)| names << name }
@@ -493,7 +493,7 @@ module Operator
     end
 
     # A class list assembled into a local and worn through an unquoted ERB
-    # output - `unit_classes = ["affiliate_feed_unit", ("...--collage" if ...)]`
+    # output — `unit_classes = ["affiliate_feed_unit", ("…--collage" if …)]`
     # then class="<%= unit_classes %>". The interpolated-attribute extractor
     # reads the wearing side and finds no string to read; the ruby-class-value
     # extractor reads only class: values. This reads the assembly: the literal
@@ -542,8 +542,8 @@ module Operator
       lists
     end
 
-    # A quoted string, or a bracketed expression holding some. Anything else -
-    # a bare method call, a symbol, a local - names nothing this can read, except
+    # A quoted string, or a bracketed expression holding some. Anything else —
+    # a bare method call, a symbol, a local — names nothing this can read, except
     # class_names and token_list, whose arguments are the class list: a
     # conditional class is a string key there, `class_names("row", "row--stale":
     # stale)`, and read as a bare call its modifier looked unused.
@@ -636,7 +636,7 @@ module Operator
       end
     end
 
-    # The optional backslashes are for markup written inside a Ruby string -
+    # The optional backslashes are for markup written inside a Ruby string —
     # chat_helper re-introduces the one tag it allows as
     # `"<code class=\"chat-code\">"`, and a pattern demanding a bare quote after
     # `class=` cannot see it, so .chat-code read as dead while it wrapped every
@@ -647,7 +647,7 @@ module Operator
       end
     end
 
-    # The tag-helper array form - class: ["card", ("wide" if wide)] - holds its
+    # The tag-helper array form — class: ["card", ("wide" if wide)] — holds its
     # names as Ruby string literals, invisible to the two attribute patterns.
     def helper_array_lists(body)
       body.scan(/class:\s*\[([^\]]*)\]/m).map do |(list)|
@@ -655,16 +655,16 @@ module Operator
       end
     end
 
-    # The JavaScript files are read as views for exactly one reason - the markup
-    # exists, it is just assembled at runtime - and then every pattern above
+    # The JavaScript files are read as views for exactly one reason — the markup
+    # exists, it is just assembled at runtime — and then every pattern above
     # looked for a `class=` attribute, which is the one way a Stimulus
     # controller does NOT apply a class. `classList.toggle("x")`, `.add`,
     # `.remove`, `.replace` and a `className =` assignment were all invisible,
     # so a rule styling a state only JS can produce read as dead while the JS
     # that produces it sat in the scanned set.
     #
-    # Found when `drawer-open` - added to the root by edge_swiper so chrome that
-    # cannot be a CSS sibling of a drawer can respond to one - pushed
+    # Found when `drawer-open` — added to the root by edge_swiper so chrome that
+    # cannot be a CSS sibling of a drawer can respond to one — pushed
     # unused_selector to 181 against a ceiling of 180.
     def javascript_lists(body)
       toggled = body.scan(/classList\s*\.\s*(?:add|remove|toggle|replace|contains)\s*\(([^)]*)\)/m)
@@ -674,8 +674,8 @@ module Operator
       toggled + assigned
     end
 
-    # A class attribute that embeds an ERB conditional -
-    # class="unit<%= " unit--wide" if wide %>" - never matches the plain
+    # A class attribute that embeds an ERB conditional —
+    # class="unit<%= " unit--wide" if wide %>" — never matches the plain
     # attribute pattern (the `<` ends the value), so both the base name and the
     # literal inside the tag read as unused. The browser sees every quoted
     # fragment; count them.
@@ -702,7 +702,7 @@ module Operator
     # A helper that builds a tag builds markup, so it is a view for this purpose.
     # `password-field` and `password-toggle` are written in stimulus_form_helper,
     # `chat-code` in a gsub in chat_helper, and the sidebar link classes in
-    # ui_helper - none of them appears in any template, and all of them paint.
+    # ui_helper — none of them appears in any template, and all of them paint.
     # Widening the corpus needed ruby_class_value_lists first: without it the
     # helpers' interpolated values arrived truncated and traded a false unused
     # for a false undefined.
@@ -713,7 +713,7 @@ module Operator
 
     # Not every element is rendered by a template. optimistic_send_controller
     # builds the pending message it later marks failed, so the class naming that
-    # status appears only in JavaScript - and a scan of the views alone called
+    # status appears only in JavaScript — and a scan of the views alone called
     # the rule styling it unused, which is the opposite of true.
     #
     # Read as views because that is what they are: the markup exists, it is

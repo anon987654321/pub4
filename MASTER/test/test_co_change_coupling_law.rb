@@ -4,8 +4,8 @@ require_relative "test_helper"
 require "review/scan/law_tree"
 
 # The rule reads a co-change graph and reports files that move with peers in
-# other modules. Its whole judgement is three filters - same module, weight
-# below the threshold, and everything past the top three - so each is asserted
+# other modules. Its whole judgement is three filters — same module, weight
+# below the threshold, and everything past the top three — so each is asserted
 # in both directions here. A rule tested only for "returns an Array" passes with
 # every filter inverted.
 #

@@ -7,8 +7,8 @@ require_relative "../lib/operator/self_findings"
 
 # The third census in this tree to record a bare integer, after data_reach and
 # law_audit. self_findings was 167 against a baseline of 154 and the number
-# said nothing else, so attributing the overage meant checking out 01d5cc414 -
-# the commit that set 154 - and diffing two full runs by hand. It came to eight
+# said nothing else, so attributing the overage meant checking out 01d5cc414 —
+# the commit that set 154 — and diffing two full runs by hand. It came to eight
 # rules, led by SAFE_NAVIGATION 0 -> 4 in a probe and NO_MULTIPLE_LANGUAGES
 # 5 -> 7, and none of it needed to cost twenty minutes.
 #
@@ -59,7 +59,7 @@ class TestSelfFindingsDrift < Minitest::Test
   end
 
   # The old format is a total and nothing else. It must keep working and must
-  # say attribution is unavailable - "no rule moved" is a different claim and
+  # say attribution is unavailable — "no rule moved" is a different claim and
   # the one thing it must not make.
   def test_a_total_only_baseline_says_attribution_is_unavailable
     with_baseline({ "findings" => 154 }) do
@@ -318,7 +318,7 @@ class TestSelfFindingsDrift < Minitest::Test
 
   # The two rows must not count the same finding twice. A law reaches the
   # scanner through LawBridgeLaw and reports under its own id, so a registry
-  # census that kept those ids would move both ratchets on one fix - fifteen
+  # census that kept those ids would move both ratchets on one fix — fifteen
   # findings on the day the row was written. Asserted against the recorded
   # baseline rather than a live scan, which is a minute of measurement.
   #

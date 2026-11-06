@@ -1,7 +1,7 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
-# face_capture_probe - get the MASTER face on screen, so it can be recorded.
+# face_capture_probe — get the MASTER face on screen, so it can be recorded.
 #
 #   ruby checks/face_capture_probe.rb                    # one still
 #   ruby checks/face_capture_probe.rb --frames 200       # a sequence
@@ -24,7 +24,7 @@
 #
 # getContext returns NULL for any WebGL request before the primer tap. THREE
 # never initialises, the canvas stays empty, and a capture records the primer
-# screen - which is near-black. The view's own comment names it the deferred-boot
+# screen — which is near-black. The view's own comment names it the deferred-boot
 # contract and says to preserve it, so the recorder is what has to change.
 #
 # Two things make the tap work here where a naive attempt does not.
@@ -76,7 +76,7 @@ Deploy::CdpSession.open(webgl: true, timeout: options[:timeout]) do |cdp|
   cdp.navigate(url, settle: 0.6)
 
   state = lambda do
-    JSON.parse(cdp.evaluate(<<~JS).to_s) # scan: intentional - a CDP probe evaluates JavaScript by definition
+    JSON.parse(cdp.evaluate(<<~JS).to_s) # scan: intentional — a CDP probe evaluates JavaScript by definition
       (function(){
         // window.MASTER_FACE, not window.face. Reading the wrong global gives
         // undefined for both fields, which reads as "no renderer, no frames" --
@@ -93,7 +93,7 @@ Deploy::CdpSession.open(webgl: true, timeout: options[:timeout]) do |cdp|
       })()
     JS
   rescue StandardError => e
-    # An empty state reads as "no renderer, no frames" - the same answer a page
+    # An empty state reads as "no renderer, no frames" — the same answer a page
     # that drew nothing gives, which is the confusion the comment above records
     # one layer down. Say that the probe itself failed.
     warn "face_capture_probe: state read failed (#{e.class}: #{e.message.lines.first.to_s.strip})"
@@ -115,7 +115,7 @@ Deploy::CdpSession.open(webgl: true, timeout: options[:timeout]) do |cdp|
   # for Enter/Space keydown on #primer and on the window, and Input.dispatchKeyEvent IS
   # trusted, which matters for anything genuinely gated on user activation --
   # audio, for one -- even though WebGL here is not.
-  tapped = cdp.evaluate(<<~JS).to_s # scan: intentional - a CDP probe evaluates JavaScript by definition
+  tapped = cdp.evaluate(<<~JS).to_s # scan: intentional — a CDP probe evaluates JavaScript by definition
     (function(){
       var go = window.__MASTER_PRIMER_TAP__ || window.__MASTER_PRIMER_GO__;
       if (typeof go === "function") { go(); return "called"; }

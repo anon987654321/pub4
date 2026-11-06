@@ -12,7 +12,7 @@ module Deploy
   # file, and it resolves from two places: the app's own public/ and the shared
   # engine's, which shared/lib/shared/engine.rb:133 mounts with its own
   # ActionDispatch::Static. Looking in the app's public/ alone reports brgen and
-  # bsdports as declaring five icons and shipping two - which is wrong, and is
+  # bsdports as declaring five icons and shipping two — which is wrong, and is
   # exactly what a hand check found before reading the engine. Amber keeping its
   # own copies is the anomaly, not the other two lacking them.
   #
@@ -97,7 +97,7 @@ module Deploy
     #
     # Both halves of that were learned the hard way on the first run. A single
     # regex reading src, sizes and purpose across the whole array pairs entry
-    # one's src with entry three's purpose the moment an entry omits the key -
+    # one's src with entry three's purpose the moment an entry omits the key —
     # and bsdports omits it on exactly the two icons that make it installable,
     # so the check reported the one app it should have cleared. The spec says an
     # icon with no purpose is "any", which is why omitting it is correct and why

@@ -87,7 +87,7 @@ module Master
       end
 
       # `git show <rev>:<path>` prints that path's blob, so a colon in the ref turns a
-      # commit viewer into a file reader - any tracked file, at any revision, including
+      # commit viewer into a file reader — any tracked file, at any revision, including
       # ones deleted since. Every other operation here routes its path through
       # safe_path and is bounded by PathGuard; show takes no path argument at all, so
       # the colon form was the only way to ask it for one and nothing bounded it. This

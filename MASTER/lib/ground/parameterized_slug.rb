@@ -4,7 +4,7 @@ require "yaml"
 
 module Master
   module Ground
-    # Rails-parameterize slug density for paths - snake_case, Strunk-clean tokens.
+    # Rails-parameterize slug density for paths — snake_case, Strunk-clean tokens.
     module ParameterizedSlug
       MAX_TOKENS = 4
       # The one vague-name list (data/vague_words.yml), here because a slug's filler is

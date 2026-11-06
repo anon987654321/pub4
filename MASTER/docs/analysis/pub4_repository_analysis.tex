@@ -1,13 +1,13 @@
 % ============================================================
-% pub4 repository analysis - the typographic edition
+% pub4 repository analysis — the typographic edition
 %
 % Rebuilt to obey the typographic laws it reports on:
 %   MEASURE_OPTIMUM    measure 66 characters, computed from the face's
 %                      own lowercase advance; leading 10.5/16; every
 %                      vertical skip a multiple of the baseline; running
-%                      text bound to the 45-75 character measure.
-%   ASCII_PUNCTUATION  the source holds ASCII marks only: hyphens, straight
-%                      quotes, TeX markup; the face ligates what it renders.
+%                      text bound to the 45–75 character measure.
+%   EN_DASH_RANGE      numeric ranges carry an en dash (53–56).
+%   TYPOGRAPHIC_EXCELLENCE   em dashes, curly quotes, no ASCII decor.
 %   TYPOGRAPHY_DISCIPLINE    hierarchy by weight and size, no decoration.
 %   NO_SHOUTING_FRONT_PAGE   the front page opens in the text face -
 %                      no capitals row, letterspaced or otherwise.
@@ -19,7 +19,7 @@
 %   SIGNAL_COLOR_NAMING      one signal colour, once per visual unit.
 %   STRUNK_WHITE       prose swept of the leech words in laws.yml.
 %
-% One family only: EB Garamond - roman, italic, bold, true small caps,
+% One family only: EB Garamond — roman, italic, bold, true small caps,
 % proportional oldstyle figures by default.
 % Page: 156 x 234 mm, the 2:3 rectangle (Bringhurst's perfect page).
 % ============================================================
@@ -64,7 +64,7 @@
   papersize={156mm,234mm},
   textwidth=302.6pt,
   textheight=512pt,      % 32 lines x 16 pt
-  top=24mm,              % bottom takes the remainder (~29 mm) - head-biased
+  top=24mm,              % bottom takes the remainder (~29 mm) — head-biased
   marginparsep=0pt, marginparwidth=0pt,
 }
 
@@ -143,7 +143,7 @@
 \begin{document}
 
 % ============================================================
-% Title page - centered, restrained, paper ground
+% Title page — centered, restrained, paper ground
 % ============================================================
 \hypersetup{pageanchor=false}
 \begin{titlepage}
@@ -187,7 +187,7 @@ document is set so that the sentence describes the page you hold.
 \hypersetup{pageanchor=true}
 
 % ============================================================
-% Body - folio 1
+% Body — folio 1
 % ============================================================
 \pagenumbering{arabic}
 
@@ -300,7 +300,7 @@ pub4 is a coherent, running system, not a portfolio: one constitution, one check
 For anyone working in this repository, the entry path the tree itself prescribes is the right one: read \fpath{MASTER/AGENTS.md} for the workflow contract, then \fpath{PATH_OWNERSHIP.yml} and the relevant tree README before touching anything. Treat \textsc{inconclusive} as a measurement still owed, and expect every change to pass through the same law and check machinery this report describes. The highest-value repairs, in the tree's own order of honesty, are restoring the two missing \stree{} files so postpro either runs or is formally retired everywhere, publishing DNSSEC DS records once the keys are safely backed up off-box, completing the broker migration to narrow the doas rule, and giving the backups an off-host object store. None of these are silent debts; every one is already written down in the tree. That, more than anything else in the analysis, is the character of the project.
 
 % ============================================================
-% Colophon - the demonstration, under the final heading
+% Colophon — the demonstration, under the final heading
 % (README_PROSE: a demonstration belongs under the final heading)
 % ============================================================
 \section*{Colophon: this document's own compliance}
@@ -318,7 +318,7 @@ A report that measures a repository against its laws owes the reader proof that 
 
 \emph{The figures.} Numerals are proportional oldstyle throughout~--- the way Garamond cut them, and the way a measure is counted, letters and spaces together.
 
-\emph{The dashes and quotes.} The source carries ASCII punctuation only, as \fpath{ASCII_PUNCTUATION} demands: hyphens, straight quotes, TeX markup. The marks the reader sees~--- an en dash in 53--56, em dashes where a thought turns, curly quotes around every citation~--- are ligatures the face and TeX cut from that ASCII source at render time. The law governs what is written; the page still shows what a reader deserves.
+\emph{The dashes.} Numeric ranges carry an en dash (53--56 percent swing); thought carries an em dash; every quotation mark is curly (\fpath{EN_DASH_RANGE}, \fpath{TYPOGRAPHIC_EXCELLENCE}).
 
 \emph{The front page.} The page you opened to carries no capitals row: the kicker and the subtitle are italic in the text face, and \fpath{pub4} stands in the face's own lowercase. This obeys \fpath{NO_SHOUTING_FRONT_PAGE}, the operator's directive of 2026-11-06, whose ground is Bringhurst's: 2.1.6 letterspaces capitals because they need the repair, 2.1.7 forbids letterspacing the lowercase, and a page that opens with either has let the repair become the voice.
 

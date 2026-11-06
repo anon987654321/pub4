@@ -11,7 +11,7 @@ module Deploy
   # candidates, attack every candidate, and cherry-pick a winner with the
   # losers' reasons kept; convergence.yml carries the winner as a workstream.
   # This check is the seam between those files: it fails loudly when the
-  # chain is broken - a pick without a kept verdict, a gap with fewer
+  # chain is broken — a pick without a kept verdict, a gap with fewer
   # candidates than a real choice needs, a "picked" ledger row with no
   # workstream, a workstream name that exists nowhere.
   #

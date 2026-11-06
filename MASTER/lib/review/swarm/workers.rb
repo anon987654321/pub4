@@ -108,7 +108,7 @@ module Master
           # An unreadable reply is not an approval. This returned approved for an
           # empty object and again for a parse error, so a reviewer that answered
           # with prose, timed out into a truncated reply, or returned nothing at
-          # all printed "swarm: approved" - a security verdict nobody reached.
+          # all printed "swarm: approved" — a security verdict nobody reached.
           # Review::Consensus decides the same question and fails closed.
           def parse_result(raw)
             parsed = json_object(raw)

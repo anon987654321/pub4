@@ -2,10 +2,11 @@
 
 module Master
   module Voice
-    # Terminal micro-typography. Renderer#beautify owns the prose marks, all
-    # ASCII under Law ASCII_PUNCTUATION - the hyphen, straight quotes, the
-    # sentence space. This module owns the one mechanical courtesy those
-    # cannot reach: the cut. A line the terminal cannot hold still ends like
+    # Terminal micro-typography after Bringhurst's Elements. Renderer#beautify
+    # owns the prose marks, which a terminal prints in ASCII (operator,
+    # 2026-11-06): the hyphen, straight quotes, the sentence space. This module
+    # owns the one mechanical courtesy those cannot reach: the cut. A line the
+    # terminal cannot hold still ends like
     # a sentence ends, at a word's edge, on one ellipsis ("...") - never a
     # severed syllable, when a boundary can be had.
     module Typography
@@ -15,7 +16,7 @@ module Master
       module_function
 
       # The text, cut to the limit at a word boundary with one ellipsis. A
-      # single unbroken token - a path, an identifier - earns no boundary and
+      # single unbroken token — a path, an identifier — earns no boundary and
       # takes the hard cut instead; honesty about the limit outranks a fake
       # courtesy that would double the line.
       def ellipsis(text, limit)

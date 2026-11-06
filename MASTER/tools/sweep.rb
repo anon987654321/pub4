@@ -7,10 +7,10 @@
 # nothing calls, a backoff that never sleeps, a mailer aimed at a route that does
 # not exist, a check asserting on the word "rubocop" rather than on whether it
 # ran. No rule in data/laws.yml names any of those, because they are not
-# properties of a file - they are properties of a claim and its reader.
+# properties of a file — they are properties of a claim and its reader.
 #
 # What already existed: seven instruments that each answer one such question for
-# one population - dup_census, data_reach, reader_singularity, rule_reach,
+# one population — dup_census, data_reach, reader_singularity, rule_reach,
 # namespace_ratchet, design_baseline, cohesion. Each with its own
 # invocation, its own ceiling file, and no shared vocabulary. `MASTER/bin/operator measure`
 # aggregates the ratchets; nothing aggregates the *questions*.
@@ -25,7 +25,7 @@
 # It measures and proposes. It does not land: a ratchet can be moved
 # mechanically, a regroup cannot, and a tool that edits on its own judgement
 # lands changes no person and no WriteGuard has judged. The ledger is what makes the
-# loop convergent - see data/proposals.yml.
+# loop convergent — see data/proposals.yml.
 
 require "json"
 require "yaml"
@@ -41,7 +41,7 @@ module Operator
     TREES = %w[MASTER RAILS OPENBSD STUDIO].freeze
 
     # unit name, the tree(s) it speaks for, and how to run it. Each returns
-    # [ok, detail] - detail is the dmesg line body, ok is whether the instrument
+    # [ok, detail] — detail is the dmesg line body, ok is whether the instrument
     # is at or under its recorded low.
     Probe = Struct.new(:unit, :trees, :run, :scoped, keyword_init: true)
 
@@ -59,8 +59,8 @@ module Operator
         Probe.new(unit: "namespace", trees: %w[MASTER], run: -> { tool("namespace_ratchet.rb") }),
         Probe.new(unit: "designbase", trees: %w[RAILS], run: -> { tool("audit/design_baseline.rb") }),
 # OPENBSD's declarations and their readers live in different files by
-# design - crontab names a path, OPERATOR.sh installs it, rc.d holds the
-# service, nsd.conf names the zone - and nothing failed when a pair
+# design — crontab names a path, OPERATOR.sh installs it, rc.d holds the
+# service, nsd.conf names the zone — and nothing failed when a pair
 # stopped agreeing.
 Probe.new(unit: "obsdreach", trees: %w[OPENBSD],
           run: -> { sibling("OPENBSD", "bin/reach") }),
@@ -107,7 +107,7 @@ end
     # The last line an instrument prints is its verdict; the rest is evidence.
     # dmesg is one line per device, so the verdict attaches and the evidence
     # follows indented only when the verdict is bad.
-    # The instrument's own summary line - the one it prefixes with its name -
+    # The instrument's own summary line — the one it prefixes with its name —
 # not simply the last line printed. design_baseline emits its summary before
 # its per-app detail, so "last line" reported a detail row as the verdict and
 # hid a live violation behind it.

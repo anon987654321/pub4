@@ -9,7 +9,7 @@ require_relative "../tools/audit/data_reach"
 # two. data_reach was over by exactly that on 2026-08-31 and the number had no
 # thread to pull: identifying the pair meant checking out the commit that set
 # the ceiling and diffing two member lists by hand. They turned out to be
-# laws.yml#business_plan and laws.yml#markdown_style - the two sections
+# laws.yml#business_plan and laws.yml#markdown_style — the two sections
 # WISHLIST 67 records as clobbered by a read-modify-write and restored without
 # a reader.
 #
@@ -19,7 +19,7 @@ require_relative "../tools/audit/data_reach"
 # census itself is tested by being run, not here.
 class TestDataReachAttribution < Minitest::Test
   # A file the census cannot parse has no keys, so every key in it used to pass
-  # as read - an unread-declaration census reporting an unreadable file clean.
+  # as read — an unread-declaration census reporting an unreadable file clean.
   # The census now calls itself inconclusive and aborts on any such file.
   # No file in data/ does it today; the fixture below is written to be broken.
   def test_an_unparseable_data_file_says_so_and_yields_nothing
@@ -77,7 +77,7 @@ class TestDataReachAttribution < Minitest::Test
   end
 
   # The old format is a count and nothing else. It must keep working, and must
-  # say that attribution is unavailable rather than reporting zero arrivals -
+  # say that attribution is unavailable rather than reporting zero arrivals —
   # "nothing new" and "I cannot tell" are the two answers that must not be
   # confused.
   def test_a_count_only_ceiling_reports_no_members

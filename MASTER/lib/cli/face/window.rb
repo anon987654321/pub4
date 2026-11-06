@@ -12,8 +12,8 @@ module Master
       # The renderer supplies the depth, lighting and camera language.
       #
       # Enter on an empty line listens, Enter again stops; a typed line is sent
-      # as it is. Either way the words go through turn, which is TurnRouter -
-      # the path bin/master takes - and the reply is spoken and shown.
+      # as it is. Either way the words go through turn, which is TurnRouter —
+      # the path bin/master takes — and the reply is spoken and shown.
       class Window
         ENTER = %W[\r \n].freeze
         INTERRUPT = "\u0003"

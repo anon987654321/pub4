@@ -6,10 +6,10 @@ require_relative "../../support/geometry_probe"
 require_relative "../../support/brgen_vertical_surfaces"
 
 module Deploy
-  # Mobile journey floor - the missing peer of keyboard_flow.
+  # Mobile journey floor — the missing peer of keyboard_flow.
   #
   # reflow already sweeps widths; geometry measures boxes. This check walks a
-  # phone viewport (390x844) as a user would: landmarks, Fitts targets (44px),
+  # phone viewport (390×844) as a user would: landmarks, Fitts targets (44px),
   # no horizontal overflow, primary chrome not covering the main CTA strip,
   # and brgen vertical subapps all present in the mobile probe set.
   #
@@ -21,7 +21,7 @@ module Deploy
     TOUCH_MIN = 44
 
     # Interactive selectors that must meet the touch floor when laid out.
-    # Chrome only - not every link in the feed. MEASURE reads this list.
+    # Chrome only — not every link in the feed. MEASURE reads this list.
     CHROME_SEL = [
       ".tab-bar a",
       ".tab-bar button",
@@ -85,7 +85,7 @@ module Deploy
       })()
     JS
 
-    # Triangle + every brgen vertical root - mobile is where subapps feel alien.
+    # Triangle + every brgen vertical root — mobile is where subapps feel alien.
     PREFERRED = %w[
       brgen/core brgen/nearby brgen/marketplace brgen/marketplace_cart
       brgen/dating brgen/playlist brgen/tv brgen/takeaway brgen/maps brgen/messenger
@@ -130,7 +130,7 @@ module Deploy
 
       # Deliberately not counted as a check. It is a list read from source, and
       # counting it let the check report PASSED next to its own "Chrome navigated
-      # 0/N surfaces" line - one satisfied check standing in for the phone
+      # 0/N surfaces" line — one satisfied check standing in for the phone
       # viewport this check exists to measure. A failure above still blocks:
       # failures outrank the check count.
 
@@ -159,7 +159,7 @@ module Deploy
     private
 
     def pick_surfaces
-      # Preferred triangle + every brgen vertical root only - a full mobile
+      # Preferred triangle + every brgen vertical root only — a full mobile
       # geometry dump (30+) exhausts the CDP session under cold Falcon boots.
       by_label = GeometryProbe.surfaces.group_by { |s| "#{s.app}/#{s.label}" }
       PREFERRED.filter_map do |key|

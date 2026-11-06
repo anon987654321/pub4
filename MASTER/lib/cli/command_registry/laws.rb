@@ -5,7 +5,7 @@ module Master
     module CommandRegistry
       module_function
 
-      # /laws - the corpus, one line each, because the instruction every agent
+      # /laws — the corpus, one line each, because the instruction every agent
       # is given is to read the law before writing, and the only way to do that
       # was a YAML one-liner in CLAUDE.md that iterated the wrong shape for months.
       #
@@ -92,7 +92,7 @@ module Master
         kind.empty? ? "declared" : kind
       end
 
-      # /why - one law explained from law/ and data/laws.yml, and from the
+      # /why — one law explained from law/ and data/laws.yml, and from the
       # model only when nothing local matches.
       def dispatch_why(agent:, root:, memory: nil, ctx: nil)
         law = arg_for(ctx)

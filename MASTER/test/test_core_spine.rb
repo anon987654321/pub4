@@ -38,7 +38,7 @@ class TestKernelSpine < Minitest::Test
                            memory: Master::Core::Memory.new, max_turns: 3).run("what does notes.md say")
   end
 
-  # The hardened shell policy is injected, not required - core reaches nothing in
+  # The hardened shell policy is injected, not required — core reaches nothing in
   # lib/. These pin the seam itself: that an injected denial stops an exec, that
   # the policy's :ask default does not, and that without an injection the fold is
   # left on safe_exec_rule alone, which is what it was before.
@@ -216,14 +216,14 @@ class TestKernelSpine < Minitest::Test
     memory = Master::Core::Memory.new
     memory.record(Master::Core::Effect.write("MASTER/a.rb", "x\n" * 201), Master::Core::Observation.ok("ok"))
     # A command that can actually produce each kind. ["true"] used to stand in for
-    # all three, which PRODUCERS now scores at zero - the fixture would reach
+    # all three, which PRODUCERS now scores at zero — the fixture would reach
     # git_commit_evidence instead of the rule it is about.
     { test_pass: %w[bundle exec rake test], scan_clean: %w[bin/check],
       code_review: %w[bin/review] }.each do |kind, argv|
       memory.record(Master::Core::Effect.exec(argv, evidence: kind), Master::Core::Observation.ok("ok"))
     end
     verdict = constitution.admit(
-      # paths: because a commit now has to name what it commits - an unscoped one
+      # paths: because a commit now has to name what it commits — an unscoped one
       # is refused before two_hats ever sees it. This fixture is about the message
       # mixing two hats, so it states a scope and lets that rule do the judging.
       Master::Core::Effect.git(:commit, paths: ["MASTER/a.rb"],

@@ -106,7 +106,7 @@ class TestCognition < Minitest::Test
 
   # The defect that made everything above moot: `tick!` had one caller in the
   # tree, at boot, once. So the workspace never decayed, continuity never moved,
-  # nothing after the boot snapshot was written, and reflection could not fire -
+  # nothing after the boot snapshot was written, and reflection could not fire —
   # `ticks` stopped at 1 and `1 % REFLECT_EVERY` is not zero. The layer perceived
   # for the life of the process and thought once, before anything had happened.
   # Perception paces the loop now, so this asserts the count threshold: the first
@@ -127,7 +127,7 @@ class TestCognition < Minitest::Test
 
   # Prediction error used to be recurrence: seconds since that event last fired,
   # off an instance variable that started empty every boot. So nothing MASTER had
-  # ever seen informed what it expected. A learned transition is the difference -
+  # ever seen informed what it expected. A learned transition is the difference —
   # a pair seen repeatedly stops being surprising, and Laplace keeps the second
   # sighting of a coincidence from scoring as certainty.
   def test_a_repeated_transition_stops_being_surprising

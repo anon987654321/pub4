@@ -7,7 +7,7 @@ require_relative "../lib/trace/dmesg"
 
 # bin/master sets Encoding.default_internal to UTF-8, so a text-mode write
 # transcodes, and bytes read from a file or a tool raise on their first
-# non-ASCII byte. Both writers here met a "-" that way during /fix.
+# non-ASCII byte. Both writers here met a "—" that way during /fix.
 class TestBinaryTextWrites < Minitest::Test
   DASH = "law - finding".b
 

@@ -6,7 +6,7 @@ require_relative "test_helper"
 # name and Zeitwerk has nothing to resolve. test_scan_rule_contracts requires
 # its file for the same reason. Without this the whole case errored in setup on
 # uninitialized constant, which is a test that cannot run rather than one that
-# passes - it reported 0 assertions and read as green in a summary line.
+# passes — it reported 0 assertions and read as green in a summary line.
 require_relative "../lib/review/scan/law_tree"
 
 class TestAdversarialRule < Minitest::Test

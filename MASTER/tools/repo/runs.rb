@@ -85,8 +85,8 @@ module Operator
     GLOB = /["']([A-Za-z0-9_.\-\/*\[\]{}]*\*[A-Za-z0-9_.\-\/*\[\]{}]*\.rb)["']/
 
     # A runner naming one file outright runs it just as surely. tools/Rakefile
-    # lists test_tools_check.rb by name - deliberately, its comment says, because
-    # the glob beside it would pull in the dilla and tool suites - and a
+    # lists test_tools_check.rb by name — deliberately, its comment says, because
+    # the glob beside it would pull in the dilla and tool suites — and a
     # glob-only extractor read that as a test nothing runs. A path literal that
     # matches no test file matches nothing here, so this cannot invent coverage.
     EXACT = %r{["']((?:[A-Za-z0-9_.\-]+/)*(?:test|spec)/[A-Za-z0-9_.\-]+\.(?:rb|mjs|sh))["']}
@@ -125,7 +125,7 @@ module Operator
     # squint_test.rb read as a test (exempted by hand), MASTER/tools/test_naming.rb
     # is the lint over test names and read as an orphan test forever, and
     # lib/review/scan/self_test.rb read as a test that happened to be covered by
-    # a bin/check glob - a false positive masked by a coincidence, which is the
+    # a bin/check glob — a false positive masked by a coincidence, which is the
     # worse half. Three files, all of them source. Adding a third exemption by
     # hand was the move this replaces, because the exemptions were describing a
     # rule the directory already states.

@@ -7,9 +7,9 @@ require_relative "ratchet_cache"
 # Every ratchet in the repo, in one place, with its current value beside its
 # recorded one.
 #
-# The truth was spread across ten instruments - rake selftest, rake selfcheck,
+# The truth was spread across ten instruments — rake selftest, rake selfcheck,
 # lint:spine, four Operator::*Lint modules, checks/data/css_budget.yml,
-# coverage_ratchet_test.rb and file_length_ratchet_test.rb - each with its own
+# coverage_ratchet_test.rb and file_length_ratchet_test.rb — each with its own
 # invocation and its own idea of where the number lives. On 2026-08-11 four of
 # them were stale and were found by accident, one at a time, while doing unrelated
 # work. A register nobody can read in one pass is a register nobody reads.
@@ -30,7 +30,7 @@ require_relative "ratchet_cache"
 # file, so a session that has just moved a ceiling cannot tell whether the move
 # is its own. Every row that can enumerate its population now carries it, and it
 # carries the SAME list the count came from rather than a second reading of the
-# same census - a member list computed a second way buys a disagreement, which
+# same census — a member list computed a second way buys a disagreement, which
 # is the defect this whole file exists to catch.
 #
 # --since reads the recorded ceilings out of git rather than re-running the
@@ -80,7 +80,7 @@ module Operator
 
       # An unreadable ratchet is not a passing ratchet.
       #
-      # `state` has always had a word for `current.nil?` - "unreadable" - while
+      # `state` has always had a word for `current.nil?` — "unreadable" — while
       # `ok?` said `!over? && !slack?`, and both of those are false when there is
       # no number, so a row that could not be measured reported as fine. That is
       # the shape of every defect this file exists to catch: the instrument goes
@@ -112,7 +112,7 @@ module Operator
     end
 
     # Rules that reach no detector, and files that declare no namespace. Both
-    # recompute the current value rather than reading the recorded one twice -
+    # recompute the current value rather than reading the recorded one twice —
     # a row whose current IS its ceiling is a row that can never fail, which is
     # the shape of defect the rest of this file exists to catch.
     def master_yaml_rows
@@ -344,11 +344,11 @@ module Operator
     # pub4-wide sprawl guard: a source-file ceiling per tree, read from the same
     # spine.yml. A new file anywhere puts a tree OVER and fails; a deletion puts
     # it SLACK and also fails, so a win only lands when its ceiling is lowered to
-    # lock it - the exact discipline that keeps sprawl from regrowing into slack.
+    # lock it — the exact discipline that keeps sprawl from regrowing into slack.
     # Pure Ruby, so it stays in fast mode and runs before every commit.
     # The population is what git tracks, not what is on disk. This checkout is
     # shared and a working-tree walk charged one session for another's
-    # uncommitted files - an untracked stems render raised growth.studio against
+    # uncommitted files — an untracked stems render raised growth.studio against
     # a session that had never opened MASTER/tools. Tracking is also the honest moment
     # for this row: a file joins the tree when it is committed. entrypoint_count
     # has asked git all along, and this is the same question.
@@ -386,7 +386,7 @@ module Operator
     # Names that carry a category or repeat their namespace. The register is
     # where this belongs rather than the scanner: the detector can say a name is
     # wrong and even propose a free shorter one, and it cannot say the proposal
-    # is better - so the number is measured on every run and moved by a person.
+    # is better — so the number is measured on every run and moved by a person.
     def name_rows
       require File.join(MASTER, "tools/rename")
       rows = Operator::Rename.candidates
@@ -405,7 +405,7 @@ module Operator
 #
 # The file census counts files and the entrypoint census counts doors. This
 # counts what is behind a door, which is where command sprawl hides: adding a
-# verb costs no file and moves no ceiling. Measured 2026-09-11 at 36 names -
+# verb costs no file and moves no ceiling. Measured 2026-09-11 at 36 names —
 # and ten of them, through workflow triad sweep scan fix self critique council
 # review, are one pipeline. Five slash names resolve to two stages.
 def command_rows
@@ -457,8 +457,8 @@ end
     # been sitting at that root unseen. It still misses RAILS/deploy.sh.
     #
     # Only those two levels. An app's generated bin/rails, a tool's own bin/ and
-    # OPENBSD/usr/local/bin - a mirror of what is installed on vm23, not
-    # something anyone runs from the checkout - are not surfaces of the tree.
+    # OPENBSD/usr/local/bin — a mirror of what is installed on vm23, not
+    # something anyone runs from the checkout — are not surfaces of the tree.
     def entrypoints(tree)
       out, status = Master::Io::Exec.capture2e("git", "-C", ROOT, "ls-files", "-z", tree)
       return unless status.success?
@@ -520,7 +520,7 @@ end
       raise "Operator lint module missing for #{path}" unless mod
 
       # One scan, then grouped. The count and the member list come from the same
-      # findings, so --why can never disagree with the number beside it - and the
+      # findings, so --why can never disagree with the number beside it — and the
       # scan is the expensive half, so asking twice would also cost twice.
       findings = mod.scan
       if mod.const_defined?(:BASELINES)
@@ -540,7 +540,7 @@ end
       unreadable_row(name, relative_to_root(path), "#{e.class}: #{e.message}")
     end
 
-    # Eight lints, eight different Finding structs - file/line here, sheet/ref
+    # Eight lints, eight different Finding structs — file/line here, sheet/ref
     # there. The kind is already the row name, so what is left of the struct is
     # what identifies the member; joining it beats eight per-lint formatters.
     def describe_finding(finding)
@@ -579,7 +579,7 @@ end
 
     # Ceilings a test file owns.
 
-    # POINTED AT, NOT RE-MEASURED - and the first version of this method is why.
+    # POINTED AT, NOT RE-MEASURED — and the first version of this method is why.
     #
     # It scraped the `"path" => number` pairs out of the test and compared them
     # against File.readlines(...).size, and reported 19 entries off their ceiling.
@@ -624,7 +624,7 @@ end
     # not exist, and the seven rules it covers stayed `?` in every mode.
     #
     # That matters more than a blank column. On 2026-08-25 four RAILS ratchets
-    # were red at once and `measure` could not see any of the CSS ones - the
+    # were red at once and `measure` could not see any of the CSS ones — the
     # tool whose whole purpose is "every ratchet, current beside recorded" was
     # blind exactly where the failures were, which is how they accumulated
     # without anyone noticing they had.
@@ -653,8 +653,8 @@ end
 
     # The SUMMARY line, not the first line that happens to name the rule.
     #
-    # css_constitution prints one line per finding before its total -
-    # "rhythm: brgen/.../_canvas.scss:21 120px" - so matching any line
+    # css_constitution prints one line per finding before its total —
+    # "rhythm: brgen/.../_canvas.scss:21 120px" — so matching any line
     # mentioning the rule picked a file path and read no number from it.
     # rhythm was the one rule with findings to print, so it was the one rule
     # this got wrong, which is the shape a looser regex always has.
@@ -707,7 +707,7 @@ def deep_rows(rails: true)
                      /law_trace: (\d+)[\/ ]/, law_trace_ceiling)]
         end,
         # Deep because it scans every RAILS view and stylesheet with the full
-        # design rule set - the layout campaign's ratchet (2026-08-21).
+        # design rule set — the layout campaign's ratchet (2026-08-21).
         *(if rails
              cached("design_baseline", %w[MASTER RAILS]) do
                [shell_row("design_baseline", "MASTER", "bundle exec ruby tools/audit/design_baseline.rb",
@@ -743,7 +743,7 @@ def deep_rows(rails: true)
         suffix = "" if row.state == "at"
         row.note ? "#{line} #{suffix} #{row.note}".squeeze(" ") : "#{line}#{suffix}"
       end
-      # "Off" covers both a measured row off its ceiling and a dead row - one
+      # "Off" covers both a measured row off its ceiling and a dead row — one
       # that could not be read at all (see ok? for why the dead row counts).
       broken = rows.select do |row|
         (row.readable? && !row.ok?) || row.note.to_s.start_with?("unreadable")
@@ -759,7 +759,7 @@ def deep_rows(rails: true)
     # --why: the members behind one number.
     #
     # A prefix match, because the row names are long and the useful ones are
-    # families - `--why sprawl` answers all four at once, `--why growth.rails`
+    # families — `--why sprawl` answers all four at once, `--why growth.rails`
     # answers one. Naming nothing lists the rows that can answer, which is the
     # question a reader has before they have a row name.
     def why(rows, query)
@@ -796,7 +796,7 @@ def deep_rows(rails: true)
     # --since: what this session did to the recorded ceilings.
     #
     # The ceilings are files in git, so the delta is `git show <ref>:<path>`
-    # against the working copy - no checkout, no second census, and it works from
+    # against the working copy — no checkout, no second census, and it works from
     # a worktree. It answers about the RECORD rather than about the tree: a row
     # whose current value drifted without its ceiling moving shows as unchanged
     # here and OVER in the table above, which are two different facts and both
@@ -856,7 +856,7 @@ def deep_rows(rails: true)
     # ceiling above the real number is room the next change grows into silently.
     #
     # A row that reports note "unreadable" is instrument death, not a deferral,
-    # and it fails the run too. Deferrals - the deep-only current values - carry
+    # and it fails the run too. Deferrals — the deep-only current values — carry
     # a different note and stay out of this verdict; an "unreadable:" note is
     # the reader itself having failed (a missing file, a KeyError on a section
     # that does not exist), and skipping it is how eleven dead rows reported

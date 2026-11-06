@@ -6,7 +6,7 @@
 # carry no implementation and the file will not resolve without them.
 #
 # Master and Ground are wrappers here: each holds exactly one module, so each
-# costs two of the four. Policy is not - it holds a constant as well as the
+# costs two of the four. Policy is not — it holds a constant as well as the
 # class, which is work. That is the whole distinction, and it is why the count
 # parses rather than matching `module` at the start of a line.
 module Master

@@ -53,7 +53,7 @@ module Master
   }.freeze
 
   # A Ruby file need not end in .rb, and an extension-only map calls every one
-  # of these unknown. 94 tracked files are in that position - Gemfile, Rakefile,
+  # of these unknown. 94 tracked files are in that position — Gemfile, Rakefile,
   # and every executable under bin/ whose language lives in its shebang.
   NAMED_LANGUAGES = {
     "Gemfile" => "ruby", "Rakefile" => "ruby", "Guardfile" => "ruby",
@@ -66,7 +66,7 @@ module Master
   # One answer to "what language is this file", because two answers is how a
   # rule comes to mean different things in two engines. Rule#applies_to? asks
   # `lang && languages.include?(lang)` and Law#applies? asked
-  # `language.nil? || ...` - so an unresolved file satisfied every
+  # `language.nil? || ...` — so an unresolved file satisfied every
   # language-scoped law while satisfying no language-scoped registry rule. That
   # let .gitignore, .svg, .toml and .env be told to carry a Ruby magic comment:
   # of 176 FROZEN_STRING_LITERAL findings, 4 were on Ruby files.
@@ -127,7 +127,7 @@ module Master
 
   # NUL-byte sniff on the first 4KB. Errs on the side of "binary" so scanners
   # skip unreadable files instead of choking on them. Module function, not a
-  # File monkeypatch - core classes stay untouched (PoLA).
+  # File monkeypatch — core classes stay untouched (PoLA).
   def self.binary_file?(path)
     return false unless File.file?(path)
 
@@ -154,7 +154,7 @@ module Master
   def self.repo_root = REPO_ROOT
   # File.exist?, never File.directory?. A `git worktree` checkout carries .git as
   # a file holding a gitdir line, and CLAUDE.md tells every agent here to take
-  # one - so a directory test answers no for the trees the runtime mostly runs
+  # one — so a directory test answers no for the trees the runtime mostly runs
   # in. It disabled rollback after a failed fix, dropped the branch and sha from
   # every snapshot, and reported the boot receipt degraded on a capability the
   # process had.
@@ -226,8 +226,8 @@ module Master
   end
 
   # The one reader of data/agent_taxonomy.yml. It had three, each building the
-  # path its own way - File.join(ROOT, "data", ...), data_path, and a keyword
-  # default on AgentPool - which is the shape reader_singularity exists to catch:
+  # path its own way — File.join(ROOT, "data", ...), data_path, and a keyword
+  # default on AgentPool — which is the shape reader_singularity exists to catch:
   # they all called load_yaml, so "bypasses the helper" would have missed it.
   # Answers {} on a missing file, because every caller already reads a missing
   # taxonomy as "no declared types" and falls back to its own constants.

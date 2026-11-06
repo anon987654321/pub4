@@ -15,9 +15,9 @@ require_relative "../ground/swallow"
 
 module Master
   module Io
-    # Thin Replicate predictions client - used by the replicate_kokoro TTS engine.
+    # Thin Replicate predictions client — used by the replicate_kokoro TTS engine.
     class ReplicateClient
-      # File upload/download helpers - separate from ReplicateClient's own
+      # File upload/download helpers — separate from ReplicateClient's own
       # prediction/training/model-catalog API.
       module AssetTransfer
         def upload_file(path)
@@ -133,7 +133,7 @@ module Master
       # A spend limit. The status codes alone could not tell this apart: a
       # 402 already fell through to the plain raise and was handled correctly
       # by accident, but Replicate also answers 429 when the account is out of
-      # budget rather than merely too fast - and TRANSIENT_STATUS reads every
+      # budget rather than merely too fast — and TRANSIENT_STATUS reads every
       # 429 as a throttle, so those were retried three times with backoff to
       # buy the same refusal three times. Named so the retry loop can tell a
       # wait that will help from one that cannot.
@@ -320,7 +320,7 @@ module Master
       # GET latest_version already makes.
       #
       # replicate keeps its own MODEL_CAPABILITIES table so it can refuse an
-      # unsupported option rather than let the API ignore it - which is the right
+      # unsupported option rather than let the API ignore it — which is the right
       # call, and is also a second source of truth. When Replicate changes a
       # schema the table goes stale, the tests stay green because they only check
       # the table against itself, and the drift shows up as a 422 in production

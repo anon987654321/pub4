@@ -123,7 +123,7 @@ class WorldTest < Minitest::Test
       File.write(File.join(root, "a.rb"), "old\n")
       world.perform(E.write("a.rb", "new\n"))
       assert_equal "new\n", File.read(File.join(root, "a.rb"))
-      # No .tmp or .bak litter beside the target - the write is one atomic rename.
+      # No .tmp or .bak litter beside the target — the write is one atomic rename.
       assert_equal ["a.rb"], Dir.children(root).sort
     end
   end
@@ -301,9 +301,9 @@ class WorldTest < Minitest::Test
   # A timed-out subprocess has no Process::Status. bounded_capture2e used to
   # return nil in its place, so the moment git actually wedged, every caller
   # (git_repo?, git_has_head?, git_capture, apply_patch) raised NoMethodError
-  # on nil - from inside the fold, the one part that has to stay standing when
+  # on nil — from inside the fold, the one part that has to stay standing when
   # the outside world misbehaves.
-  # Real subprocess, real timeout - the nil status only appeared on the live
+  # Real subprocess, real timeout — the nil status only appeared on the live
   # rescue path, so a stubbed clock would not have caught it.
   def test_timeout_yields_a_failed_status_not_nil
     with_bounded_timeout(1) do |world|
@@ -381,7 +381,7 @@ class WorldTest < Minitest::Test
   end
 
   # exec output becomes an Observation, Memory records it, and the next turn hands
-  # it back to the model - so anything the child can read, the model can read.
+  # it back to the model — so anything the child can read, the model can read.
   # `env: nil` inherited the whole process environment, which on this box holds
   # OPENROUTER_API_KEY and friends, so `exec(["env"])` was a supported way to
   # print every credential into the transcript.
@@ -396,7 +396,7 @@ class WorldTest < Minitest::Test
 
       refute_includes obs.value!, "sk-should-never-be-visible", "an API key reached the child"
       refute_includes obs.value!, "aws-should-never-be-visible", "an AWS secret reached the child"
-      # The toolchain still has to work - the fold earns its evidence by running
+      # The toolchain still has to work — the fold earns its evidence by running
       # bundle/rake, so this must not become a blanket scrub of the environment.
       assert_includes obs.value!, "ordinary-and-inherited", "ordinary environment was stripped too"
     ensure
@@ -423,8 +423,8 @@ class WorldTest < Minitest::Test
     `git -C #{root} show --name-only --format= HEAD`.split("\n").map(&:strip).reject(&:empty?)
   end
 
-  # The one that matters. This checkout is shared - other sessions and a human
-  # stage things in the same index - so a bare `git commit` takes their work and
+  # The one that matters. This checkout is shared — other sessions and a human
+  # stage things in the same index — so a bare `git commit` takes their work and
   # signs the fold's message on it. CLAUDE.md forbids exactly this of agents, and
   # the fold was the agent doing it.
   def test_commit_does_not_carry_someone_elses_staged_file

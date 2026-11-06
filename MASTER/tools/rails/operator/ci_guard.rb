@@ -13,7 +13,7 @@ module Operator
     # here while OPENBSD/lib/ci_lock.sh called
     # itself "the one definition of the pub4 CI mutex path" and pointed three
     # shell scripts at /var/db/pub4/ci.lock. Two files, no mutual exclusion
-    # between them - and the half that was actually being locked was the half
+    # between them — and the half that was actually being locked was the half
     # left in world-writable /var/tmp, which is precisely what that rewrite was
     # written to fix. It moved the callers that were not locking anything.
     #
@@ -70,7 +70,7 @@ module Operator
 
     # Waits for the box to settle rather than giving up on it.
     #
-    # This exited immediately, and it runs from inside bin/ci - which vps_ci
+    # This exited immediately, and it runs from inside bin/ci — which vps_ci
     # starts *after* it has already synced the tracked tree into /home/<app>/app.
     # So a load spike did not decline to run CI, it abandoned a half-applied
     # deploy: new code live, and on 2026-08-14 no compiled assets behind it.
@@ -83,9 +83,9 @@ module Operator
     # deploy that works; one that exits is an outage plus a retry.
     #
     # Bounded, because waiting forever on a genuinely wedged box is a
-    # slower failure - and it still exits 1 at the end, so nothing downstream
+    # slower failure — and it still exits 1 at the end, so nothing downstream
     # has to learn a new outcome.
-    # Read per call, not frozen at require time - the same reason the note above
+    # Read per call, not frozen at require time — the same reason the note above
     # MAX_LOAD gives, and the reason a test can set the budget to zero and get
     # the give-up branch without sleeping for ten minutes to reach it.
     def load_wait_total_s = Integer(ENV.fetch("PUB4_CI_LOAD_WAIT", "600"))
@@ -113,7 +113,7 @@ module Operator
     # purpose: this check stands in front of CI, so treating unknown as busy
     # would make an unreadable sysctl look exactly like a permanently locked
     # box and block every deploy. The warning is the difference between failing
-    # open and not noticing - the old version returned 0.0 in silence, which
+    # open and not noticing — the old version returned 0.0 in silence, which
     # reads in the log as an idle machine.
     def current_load
       load5 = LoadAverage.five
@@ -126,7 +126,7 @@ module Operator
     def with_lock
       # /var/db/pub4 is root-owned and created by pub4_ensure_ci_lock. Making it
       # here is only for the case where it is already there, so a failure to
-      # create is not a failure to lock - open_shared reports that properly.
+      # create is not a failure to lock — open_shared reports that properly.
       # Resolved once per run: calling lock_path repeatedly would re-warn about
       # a rejected override on every use, and could disagree with itself if the
       # environment changed underneath.
@@ -157,7 +157,7 @@ module Operator
       end
     end
 
-    # Read-only, because flock(2) does not need write permission - and that is
+    # Read-only, because flock(2) does not need write permission — and that is
     # the whole reason this file no longer has to be world-writable.
     #
     # The history is worth keeping, because it is what 0o666 was for. The lock
@@ -212,7 +212,7 @@ module Operator
 
     # "busy (unknown)" is accurate and unusable: it cannot distinguish a
     # live CI run from a lock whose holder note was lost, and it gives nobody
-    # a next step. Age always exists, so it is always said - a lock held for
+    # a next step. Age always exists, so it is always said — a lock held for
     # four seconds and one held for forty minutes want different responses.
     def busy_detail(path, holder)
       note = safe_read(holder).to_s.strip

@@ -9,7 +9,7 @@ require_relative "../../io/atomic_write"
 module Master
   module Fix
     module Improve
-      # Ideation: /fix does not only close gaps it can name - it proposes what
+      # Ideation: /fix does not only close gaps it can name — it proposes what
       # to build. Ideas come from three mechanical sources, each checkable:
       # the tree's own sprawl (what the shape asks to fix), the code's repeated
       # shapes (what wants to become shared), and the wishlist personas (what a

@@ -42,7 +42,7 @@ def write_report(name, body)
 end
 
 # A tool that could not run still leaves a report, so the before-state is on disk
-# either way - but the line says WARN, because a report holding only the failure
+# either way — but the line says WARN, because a report holding only the failure
 # is not the snapshot the rest of this run assumes it took.
 def maybe_run_tool(name, *argv)
   [capture(*argv, chdir: ROOT), true]
@@ -82,7 +82,7 @@ Master::Trace::Dmesg.status(
 )
 
 if options[:apply]
-  candidates.each { |rel| File.delete(File.join(REPO, rel)) if File.file?(File.join(REPO, rel)) } # scan: intentional - each candidate was listed above and --apply names them
+  candidates.each { |rel| File.delete(File.join(REPO, rel)) if File.file?(File.join(REPO, rel)) } # scan: intentional — each candidate was listed above and --apply names them
   capture("git", "add", "-u", *candidates, chdir: REPO) unless candidates.empty?
   Master::Trace::Dmesg.status("cleanup0", "applied cleanup candidates")
 else

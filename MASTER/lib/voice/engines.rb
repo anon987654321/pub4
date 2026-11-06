@@ -8,11 +8,11 @@ require "securerandom"
 
 module Master
   module Voice
-    # Multi-engine TTS registry - mlx, chatterbox, edge_melodic, edge, say.
+    # Multi-engine TTS registry — mlx, chatterbox, edge_melodic, edge, say.
     module Engines
       # edge_melodic/edge lead the chain: they're a fast local subprocess and
       # already speak whatever data/voice.yml names (do not repeat the voice
-      # here - that is how the last two switches left the tree stale). Kokoro
+      # here — that is how the last two switches left the tree stale). Kokoro
       # is no longer forced first by `attempt?`'s always-try-on-OpenBSD check,
       # but that's a network round-trip to a third-party inference API on
       # every single phrase -- on a 1-CPU VPS with a serial synth queue, that
@@ -488,7 +488,7 @@ module Master
 
       # Returns [path, pause_ms_before] per rendered phrase. The pause used to be
       # `sleep(pause_ms / 1000.0)` right here, which spent the rest as latency in
-      # the synthesis loop and put nothing in the audio - concat_mp3 then joined
+      # the synthesis loop and put nothing in the audio — concat_mp3 then joined
       # the phrases back to back. Melody planned rests that were never audible.
       def synthesize_phrase_parts(plan, tmp_dir, voice, rate, pitch)
         parts = []
@@ -509,7 +509,7 @@ module Master
       def copy_if_synthesized(text, out_path, voice, rate, pitch)
         # Edge needs a tempo: a request with an empty rate or pitch produces
         # empty audio, and the failure costs a socket round trip plus a full
-        # one-shot subprocess boot - paid on every transcendent utterance the
+        # one-shot subprocess boot — paid on every transcendent utterance the
         # chain reaches edge with. Fail the engine before the legs; the chain
         # falls through to the same engine it always fell through to.
         return false if rate.to_s.strip.empty? || pitch.to_s.strip.empty?
@@ -571,7 +571,7 @@ module Master
         File.write(list, sequence.map { |p| "file '#{p}'" }.join("\n"))
         ok = system("ffmpeg", "-y", "-f", "concat", "-safe", "0", "-i", list, "-c", "copy", out_path,
                     out: File::NULL, err: File::NULL)
-        sequence.each { |p| File.delete(p) if File.exist?(p) } # scan: intentional - a named list of temp files this call created
+        sequence.each { |p| File.delete(p) if File.exist?(p) } # scan: intentional — a named list of temp files this call created
         File.delete(list) if File.exist?(list)
         ok && File.size?(out_path)
       end
@@ -621,7 +621,7 @@ module Master
 
       # Both ffmpeg fallbacks used to return quietly, so a host without ffmpeg
       # served un-concatenated or unconverted audio with nothing logged anywhere
-      # - correct on a Mac, degraded on the VPS, indistinguishable from working.
+      # — correct on a Mac, degraded on the VPS, indistinguishable from working.
       def report_missing_ffmpeg(where, consequence)
         Master::Ground::Swallow.log(
           RuntimeError.new("ffmpeg not on PATH - #{consequence}"),

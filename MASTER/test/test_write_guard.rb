@@ -5,8 +5,8 @@ require "tmpdir"
 require "fileutils"
 
 # The design law used to apply only when somebody typed /scan. WriteGuard puts it
-# on the write itself, on both paths - Io::Base#commit_write for the tools and an
-# injected Constitution rule for the Fold - so the question these answer is what
+# on the write itself, on both paths — Io::Base#commit_write for the tools and an
+# injected Constitution rule for the Fold — so the question these answer is what
 # a write may introduce, not what a file contains.
 class WriteGuardTest < Minitest::Test
   DIRTY = "# frozen_string_literal: true\n\ndef work\n  go\nrescue StandardError\n  nil\nend\n"

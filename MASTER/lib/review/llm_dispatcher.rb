@@ -27,7 +27,7 @@ module Master
       CACHE_WINDOW = 4
       REACT_MAX_STEPS = 8
       MS_PER_SECOND = 1000
-      # 60 was below the floor for the work the council does - not tight, but
+      # 60 was below the floor for the work the council does — not tight, but
       # unreachable. Measured 2026-07-31 on this machine, `claude --print
       # --model sonnet` against a 5KB code-review prompt (a SMALL one by council
       # standards, 120 lines and no persona system prompt):
@@ -143,7 +143,7 @@ module Master
         @tool_registry = load_tool_registry
       end
 
-      # Every LLM call in the tree arrives here - ideation, the council, the
+      # Every LLM call in the tree arrives here — ideation, the council, the
       # semantic rules, the fix loop. With no provider key each one fails slowly
       # somewhere below, so a /fix reading sat at "crit0 deliberation" for ten
       # minutes and printed nothing. One refusal, at the one door.
@@ -212,7 +212,7 @@ module Master
       def strict_pin? = Io::LaneSelection.strict_pin?(ENV) && !forced_model.nil?
 
       # One model for every lane, for one run. Set MASTER_MODEL and the router's
-      # choice is overridden at the single door every request passes through -
+      # choice is overridden at the single door every request passes through —
       # cheap, default, strong, vision, the council's personas and the fix
       # loop's consensus alike.
       #
@@ -260,7 +260,7 @@ module Master
       end
 
       # A billing or rate-limit refusal cannot succeed on an in-place retry,
-      # and :llm_call_failure is not in fallback_policy.on - classified as
+      # and :llm_call_failure is not in fallback_policy.on — classified as
       # :budget / :rate_limit, the chain and the single-shot hop walk on.
       def classified_call_failure(err)
         native_category = ruby_llm_error_category(err)
@@ -343,7 +343,7 @@ module Master
       end
 
       # The circuit breaker returns provider failures as Err(:provider_error)
-      # rather than raising, so send_with_cache's rescue never sees them - and
+      # rather than raising, so send_with_cache's rescue never sees them — and
       # :provider_error is deliberately not failover-eligible (a transient 5xx
       # wants in-place retry). Billing and rate refusals are not transient;
       # measured 2026-08-20: an out-of-credit call arrives here as
@@ -439,7 +439,7 @@ module Master
         # Prompt context routinely quotes the repository the agent runs in, and
         # a secret that reached a prompt would reach the provider verbatim.
         # Every lane branches below this point, so redacting here covers all of
-        # them. The 32+ character alphanumeric run is redacted too - a bare git
+        # them. The 32+ character alphanumeric run is redacted too — a bare git
         # SHA is the accepted collateral, the same trade the persistence path
         # already makes.
         messages = redact_outbound_messages(messages)
@@ -495,7 +495,7 @@ module Master
       # system must be part of the key: two calls can share the same message
       # text (e.g. Enhance's ask_once and the real turn's chat both receive
       # the identical user message) but mean entirely different requests
-      # under different instructions - omitting it let one call's cached
+      # under different instructions — omitting it let one call's cached
       # completion serve back as the other's answer.
       def cache_key_for(message, context, model = nil, system = nil, temperature = nil)
         parts = model ? "#{model}\n#{message}" : message

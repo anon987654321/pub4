@@ -23,7 +23,7 @@ class EvidencePolicyTest < Minitest::Test
   OK = Master::Core::Observation.ok("ok")
 
   # A command that can actually produce each kind. These fixtures used to run
-  # ["true"] for all of them, which is the forgery PRODUCERS now closes - the
+  # ["true"] for all of them, which is the forgery PRODUCERS now closes — the
   # suite was demonstrating the hole while pinning the policy around it.
   PRODUCER_ARGV = {
     test_pass: %w[bundle exec rake test],
@@ -40,7 +40,7 @@ class EvidencePolicyTest < Minitest::Test
   end
 
   # The forgery itself, pinned so it cannot come back. `true` deliberately stays
-  # literal here - this is the one place in the suite that should use it.
+  # literal here — this is the one place in the suite that should use it.
   def test_a_command_that_proves_nothing_scores_nothing
     proof = Master::Core::Proof.new(risk: :low)
     %i[test_pass scan_clean code_review].each do |kind|

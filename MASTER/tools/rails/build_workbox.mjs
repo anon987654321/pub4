@@ -47,13 +47,13 @@ try {
       //
       // `assets:precompile` runs on the deploy host, so whether this glob sees
       // anything depends on whether someone precompiled before running
-      // build:pwa - which is why it is intermittent rather than always broken.
+      // build:pwa — which is why it is intermittent rather than always broken.
       // Reproduced by putting two digested files under amber/public/assets: the
       // manifest went from 17 entries to 19 and pinned both. The next deploy
       // re-digests every one, and `install` then fails with
       // bad-precaching-response against URLs that 404. That broke the PWA on
       // radio.brgen.no, and brgen's answer was to throw the whole Workbox
-      // worker away and hand-roll a minimal one - which also cost it the offline
+      // worker away and hand-roll a minimal one — which also cost it the offline
       // form queue and periodic sync that amber and bsdports still have.
       //
       // Nothing is lost by excluding them: the CacheFirst route already caches

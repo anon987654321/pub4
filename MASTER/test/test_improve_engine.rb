@@ -5,8 +5,8 @@ require "fix/improve"
 require "fileutils"
 
 # The elevation engine: /fix improves, ideates and restructures. These tests
-# pin the engine's contract - findings in the improvement shape, ideas in the
-# ledger, proposals that name both endpoints - without touching the repo.
+# pin the engine's contract — findings in the improvement shape, ideas in the
+# ledger, proposals that name both endpoints — without touching the repo.
 class TestImproveEngine < Minitest::Test
   def setup
     @root = File.join(Dir.tmpdir, "improve_test_#{Process.pid}")

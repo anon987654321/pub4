@@ -1,10 +1,10 @@
 # frozen_string_literal: true
 
-# focus_walk_probe - tab through a page and demand every stop shows a ring.
+# focus_walk_probe — tab through a page and demand every stop shows a ring.
 #
 # The fleet's focus contract is _focus_ring.scss: a visible outline on
 # :focus-visible, guaranteed with the one sanctioned !important. This walks
-# that contract the way a keyboard user does - Tab, look, Tab, look - instead
+# that contract the way a keyboard user does — Tab, look, Tab, look — instead
 # of trusting that the CSS reaches every component. A stop with outline:none
 # and no border/background change is a place a keyboard user is lost.
 #

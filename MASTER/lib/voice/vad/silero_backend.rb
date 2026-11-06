@@ -12,7 +12,7 @@ module Master
       #   input  float32 [1, 512]
       #   state  float32 [2, 1, 128]
       #   sr     int64   scalar 16000
-      #   -> output float32 [1, 1], stateN float32 [2, 1, 128]
+      #   → output float32 [1, 1], stateN float32 [2, 1, 128]
       #
       # Some exports use 576 samples (512 + 64 context). try_load inspects the
       # model input shape when possible; otherwise defaults to 512.

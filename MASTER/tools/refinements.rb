@@ -4,8 +4,8 @@
 # can already see, grouped so a session can take one group and finish it.
 #
 # This exists because a list of refinements written by hand goes stale the day
-# it is written, and because the alternative - inventing plausible-sounding
-# improvements - produces work nobody measured. Every line below comes out of
+# it is written, and because the alternative — inventing plausible-sounding
+# improvements — produces work nobody measured. Every line below comes out of
 # the same scanner the check runs.
 #
 #   ruby MASTER/tools/refinements.rb            # the groups, largest first

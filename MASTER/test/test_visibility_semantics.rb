@@ -6,7 +6,7 @@ require "prism"
 # CodeMetrics.public_method_count is what NO_GOD_CLASS reads, and it read
 # visibility off a stop marker: the walk ended at the first `private` or
 # `protected`. Every case below is a way Ruby says "public" that the stop marker
-# could not see, and each was an undercount - so the god-class rule was reading
+# could not see, and each was an undercount — so the god-class rule was reading
 # a floor rather than a surface. Measured across MASTER's lib, law and tools:
 # 2,588 public methods before, 2,663 after, twenty classes changed, and
 # Ground::RuntimeCatalog went from 0 to 14 because every one of its methods is a
@@ -96,7 +96,7 @@ class TestVisibilitySemantics < Minitest::Test
   end
 
   # `private def x` is a CallNode wrapping the DefNode, so neither form was
-  # counted at all before - public or private.
+  # counted at all before — public or private.
   def test_inline_modifiers_reach_one_definition_each
     assert_equal 1, count(<<~RUBY)
       class Example

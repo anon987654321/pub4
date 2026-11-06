@@ -13,20 +13,20 @@ module Master
 
         # `.cache` and `scratch` (2026-08-11): `cache` was listed and `.cache`
         # was not, which bin/check --ladder already warned about in a comment rather than
-        # fixing. `scratch` is the same shape - STUDIO/dilla/.cache holds a
+        # fixing. `scratch` is the same shape — STUDIO/dilla/.cache holds a
         # demucs virtualenv, so `/scan ../STUDIO/dilla` walked 24,521 files,
         # about 5,000 of them pip's vendored copy of packaging, to reach the 36
         # Ruby files the tool is made of. Skipping both: 793 files in 38s, and
         # the findings are about dilla instead of about torch. Nothing under
         # either segment is git-tracked anywhere in this repo, so nothing under
-        # either can be authored or refactored - and /fix descends the same
+        # either can be authored or refactored — and /fix descends the same
         # tree, so an autofix pass could rewrite a vendored Python package that
         # the next `pip install` silently reverts.
         #
         # reports/ is generated output. Scanning it meant the top
         # COPY_PASTE_BLOCK findings were JSON manifests from three
         # screenshot-calibration runs, which share keys because they share a
-        # schema - and the advice attached to them was "extract a module or
+        # schema — and the advice attached to them was "extract a module or
         # template". Nothing in there is authored, so nothing can be refactored.
         #
         # Comments stay above the %w literal: inside it, every word of one is an
@@ -34,7 +34,7 @@ module Master
         #
         # .claude/ (2026-10-03): the worktrees under it are full second trees of
         # the same repo, git-tracked content included, and no scan root names
-        # them - today. One scan widened to the repo root walks 160 MB of
+        # them — today. One scan widened to the repo root walks 160 MB of
         # duplicate findings that nothing can attribute, so the whole segment is
         # off the walk for the same reason `reports` is.
         SKIP_PATH_SEGMENTS = %w[
@@ -51,14 +51,14 @@ module Master
         AGENT_WORKTREES = %w[.claude/worktrees].freeze
 
         # Spelled relative to MASTER, and matched relative to whatever root the
-        # scan was given - which are the same thing only when MASTER scans
+        # scan was given — which are the same thing only when MASTER scans
         # itself. `bin/check --ladder` and every cross-tree run pass the repo root, where
         # these paths arrive as `MASTER/web/public/face.runtime.js` and matched
         # nothing: the generated face runtime, the two bundles and the three
         # build were scanned, reported, and offered to /fix. face.runtime.js
         # opens with "do not edit by hand" and is rewritten by
         # assets:build_face_runtime, so a fix there survives until the next
-        # build and then vanishes - the same loop the db/schema.rb note below
+        # build and then vanishes — the same loop the db/schema.rb note below
         # describes. Matching the MASTER-prefixed form too makes the list mean
         # the same thing from both roots.
         # The four generated face bundles are their own constant because
@@ -130,7 +130,7 @@ module Master
 
         def under?(rel, prefix) = rel == prefix || rel.start_with?("#{prefix}/")
 
-        # A scan rooted inside the face - `/scan face` is MASTER/web/public -
+        # A scan rooted inside the face — `/scan face` is MASTER/web/public —
         # sees face.runtime.js as a bare basename that no repo-relative entry
         # matches, so the generated bundles and public/assets were walked and
         # offered to /fix. Anchoring on MASTER and on the repo as well makes the

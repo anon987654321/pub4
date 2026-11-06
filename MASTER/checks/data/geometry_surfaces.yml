@@ -3,7 +3,7 @@
 # brgen's vertical subdomains are derived from BrgenVerticalSurfaces so the
 # host list has exactly one definition. Everything else is declared here.
 #
-# `host:` is optional - omit it and the surface is probed over loopback.
+# `host:` is optional — omit it and the surface is probed over loopback.
 # Only brgen needs a real Host: its vertical routing is driven by subdomain.
 #
 # viewports: named [width, height]. `snapshot: true` opts a surface into the
@@ -23,7 +23,7 @@ snapshot_aliases:
   "bsdports/ports_index/desktop": "bsdports/home/desktop"
   "brgen/conversations/desktop": "brgen/messenger/desktop"
 
-# Width sweep for the reflow check - WCAG 1.4.10 floor through desktop.
+# Width sweep for the reflow check — WCAG 1.4.10 floor through desktop.
 # The screenshot sweep (MASTER/lib/fix/screenshot_sweep.rb) captures every page at
 # each of these widths, the set the rendered-layout backlog item names.
 sweep_widths: [320, 360, 375, 390, 430, 480, 640, 768, 1024, 1280]

@@ -9,7 +9,7 @@
 #
 #   0  every step ran and passed
 #   1  a step ran and failed
-#   3  a step could not run at all - nothing is claimed about the tree
+#   3  a step could not run at all — nothing is claimed about the tree
 #
 # Usage:
 #   bin/operator premerge              # everything

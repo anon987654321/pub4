@@ -59,7 +59,7 @@ module Deploy
     end
 
     # Optional PNG content-signal ratio (soft). Requires chunky_png.
-    # Counts pixels that are neither crushed black nor blown white - works for
+    # Counts pixels that are neither crushed black nor blown white — works for
     # dark and light UIs (text/chrome sit in the midtones).
     def png_ink_ratio(path)
       require "chunky_png"
@@ -136,7 +136,7 @@ module Deploy
     #
     # laws.yml UX_LAWS.hick says "more than 7 peer choices without progressive
     # disclosure". This file said 4, in its own copy, and counted every <button>
-    # in the document - so on markedsplass it counted 20: three tiptap toolbar
+    # in the document — so on markedsplass it counted 20: three tiptap toolbar
     # buttons inside a composer that is closed, a composer open and a composer
     # close, two tab-bar coach buttons, a menu peel, two PWA install-prompt
     # buttons, and a chat widget's own tab and close. One of the twenty is a call
@@ -151,7 +151,7 @@ module Deploy
     # actions, and subtracts the chrome it can name. A dismiss button is an
     # escape, not a choice; a toolbar inside a collapsed composer is progressive
     # disclosure, which the law explicitly exempts. The authority on what is
-    # actually visible is the geometry probe - the same split WORN_TYPE already
+    # actually visible is the geometry probe — the same split WORN_TYPE already
     # makes between what the stylesheet declares and what the visitor wears.
     CHROME = /
       close|dismiss|cancel|peel|coach|toggle|trigger|

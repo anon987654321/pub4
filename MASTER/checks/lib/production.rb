@@ -55,7 +55,7 @@ module Deploy
 
     # One check group per private method below. This was a single 83-line body
     # covering production config, routes, Solid adapters, the Gemfile, bin/ci and
-    # the deploy script - six unrelated contracts sharing one failures array and
+    # the deploy script — six unrelated contracts sharing one failures array and
     # nothing else.
     def check_app(name, metadata)
       app_dir = File.join(RAILS_ROOT, name)
@@ -242,13 +242,13 @@ module Deploy
     # Two string checks are deliberately absent, and neither would mean anything:
     #
     #   deploy_yml_text.include?("SOLID_QUEUE_IN_PUMA: true")
-    #     read config/deploy.yml - Kamal boilerplate, generator defaults intact,
+    #     read config/deploy.yml — Kamal boilerplate, generator defaults intact,
     #     servers: 192.168.0.1. Nothing in this repo deploys with Kamal; it is
     #     openrsync into /home/<app>/app and rc.d. Those files are gone.
     #
     #   rcd_text.include?("SOLID_QUEUE_IN_PUMA=true")
     #     passed on the *comment* in rc.d/<app> that records the variable's
-    #     removal - "SOLID_QUEUE_IN_PUMA=true was here and is gone". In-Puma
+    #     removal — "SOLID_QUEUE_IN_PUMA=true was here and is gone". In-Puma
     #     mode is a Puma plugin and these apps run Falcon, so the export had
     #     never started a worker. The check went green on the sentence
     #     explaining why it should have gone red.
@@ -256,7 +256,7 @@ module Deploy
     # So: comments are stripped before matching, the export must be absent
     # rather than present, and the worker rc.d that really runs the supervisor
     # has to exist and invoke it. Whether it is enabled on the box is an
-    # operator decision (vm23 is 1 GB - see the old backlog multi_app_ram); this check
+    # operator decision (vm23 is 1 GB — see the old backlog multi_app_ram); this check
     # reads the tree, so it asserts the script, not the rcctl state.
     def check_job_supervisor(app_failures, name)
       web_rcd = File.join(ROOT, "OPENBSD", "etc", "rc.d", name)
@@ -322,7 +322,7 @@ module Deploy
         # "rubocop" to come first in the file. When the directory list moved into a
         # variable so the autocorrect step and the check step could share one list,
         # the assignment landed above both rubocop lines and this failed on all
-        # three apps - while CI linted exactly the directories it asks about. And
+        # three apps — while CI linted exactly the directories it asks about. And
         # /m across a 160-line file was never evidence of adjacency: a rubocop at
         # line 20 with a directory list at line 150 satisfied it.
         #

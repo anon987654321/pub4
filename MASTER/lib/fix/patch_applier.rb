@@ -8,10 +8,10 @@ require_relative "hunk_anchor"
 module Master
   module Fix
   # Architecture #5: apply a unified diff patch to source text.
-  # Calls system `patch`(1) - available on OpenBSD base and most Linux distros.
+  # Calls system `patch`(1) — available on OpenBSD base and most Linux distros.
   # Rejects malformed or no-op patches; never applies blindly.
     class PatchApplier
-      # Files smaller than this are cheaper to rewrite in full - skip diff mode.
+      # Files smaller than this are cheaper to rewrite in full — skip diff mode.
       DIFF_THRESHOLD = 8_192
 
       Success = Struct.new(:source, keyword_init: true)
@@ -19,7 +19,7 @@ module Master
       Failure = Struct.new(:reason, :rejected, keyword_init: true)
 
       # A diff naming two files, applied to the one temp copy this class makes,
-      # is not merely wrong - patch(1) applies the first file's hunks, then
+      # is not merely wrong — patch(1) applies the first file's hunks, then
       # prompts "File to patch:" for the second and reads the answer off the
       # diff on stdin, and writes the unmatched hunks to a .rej file in whatever
       # directory the process happens to be in. Measured: the temp file came

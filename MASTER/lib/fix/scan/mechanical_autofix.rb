@@ -13,7 +13,7 @@ module Master
       #
       # This is the governed writer, and that word is the change. AstFixer used
       # to transform and write in one call, so the only thing standing between a
-      # misfiring transform and the file was the transform's own judgement - and
+      # misfiring transform and the file was the transform's own judgement — and
       # TODO.md records the trial run where one in three writes was damage, one
       # of them a template-literal rewrite that `node --check` waved through.
       # AstFixer proposes a candidate now; the same WriteGuard that judges every

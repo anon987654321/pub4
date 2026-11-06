@@ -57,7 +57,7 @@ module Deploy
       # app/assets on the asset load path, so `rake dartsass:build` compiles;
       # this list is hand-built, and without them brgen's application.scss cannot
       # resolve its vertical imports. The check did not report "brgen unchecked",
-      # it reported a Sass::CompileError - so a path list that had gone stale
+      # it reported a Sass::CompileError — so a path list that had gone stale
       # read as a broken stylesheet, and the minify check it exists to run never
       # executed for brgen at all.
       load_paths = [

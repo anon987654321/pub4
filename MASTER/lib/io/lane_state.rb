@@ -24,8 +24,8 @@ module Master
       # Every store, in the order a refusal is named.
       SOURCES = %i[dead silent parked spent daily_quota].freeze
 
-      # The lane itself is down - dead by its quota record, the hand list or this
-      # run, or silent for its cool-off - not a model that failed one call. What
+      # The lane itself is down — dead by its quota record, the hand list or this
+      # run, or silent for its cool-off — not a model that failed one call. What
       # an offline line describes, and what the dispatcher door refuses: a door
       # that refused parked models would hand callers a :no_api_key failure they
       # re-park for the full ten minutes, outliving a thirty-second park.

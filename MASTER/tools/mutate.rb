@@ -6,7 +6,7 @@
 # Candidates come from Prism's token stream, not from a regex over the text.
 # A regex reads a numbered list in a comment ("# 1. Workspace Project") and the
 # 8 in "UTF-8" as integers, and `sub` then rewrites the first one in the file
-# rather than the one in the code - so a well-documented file reported survivors
+# rather than the one in the code — so a well-documented file reported survivors
 # for mutations that changed nothing a test could see. A check whose failure is
 # always noise is a check people learn to skip.
 

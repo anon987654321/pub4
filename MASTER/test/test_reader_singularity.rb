@@ -3,8 +3,8 @@
 # A second reader of a data file is a second implementation of loading it.
 #
 # lib/trace/why_explainer.rb duplicated the rule-shard merge loop from
-# lib/boot/data_loading.rb. Both called Master.load_yaml - the copy was not bypassing
-# the helper, it was composing the result itself - so they agreed until the
+# lib/boot/data_loading.rb. Both called Master.load_yaml — the copy was not bypassing
+# the helper, it was composing the result itself — so they agreed until the
 # shards moved, and then the copy wrote {} over the real rules and emptied /why
 # for all 225 rules without failing anything.
 

@@ -4,7 +4,7 @@ require "thread"
 
 module Master
   module Review
-  # Typed child agents - replaces ad-hoc Thread.new in autoloop.
+  # Typed child agents — replaces ad-hoc Thread.new in autoloop.
   # Reads agent_types from data/agent_taxonomy.yml at boot.
     class AgentPool
       MAX_CONCURRENT = 4
@@ -12,7 +12,7 @@ module Master
       Worker = Struct.new(:type, :thread, :started_at, :tag, :tools, keyword_init: true)
 
       # `taxonomy:` is the injection point the tests use. It defaults to the one
-      # accessor rather than to a path this file builds itself - three files
+      # accessor rather than to a path this file builds itself — three files
       # spelled that path three ways, which reader_singularity counts as three
       # implementations of loading one file.
       def initialize(governor:, tools: nil, event_bus: nil, taxonomy: nil)

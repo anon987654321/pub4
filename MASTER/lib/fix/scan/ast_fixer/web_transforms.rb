@@ -92,7 +92,7 @@ module Master
           # CONCAT_CHAIN, and converting it rewrites documentation. A comment cannot need a code fix:
           # decline any match whose line is a `//` comment, a block-comment
           # opener, a `*` continuation, or sits after a whitespace-preceded `//`
-          # - the whitespace requirement keeps `http://` inside string URLs
+          # — the whitespace requirement keeps `http://` inside string URLs
           # convertible.
           def comment_context?(md)
             pre = md.pre_match
@@ -151,10 +151,10 @@ module Master
           # chain ending in a *call* matched only the callee and left the
           # argument list dangling:
           #
-          #   ' - *cough* - ' + text.slice(cut + 1)
-          #     -> ` - *cough* - ${text.slice}`(cut + 1)
+          #   ' — *cough* — ' + text.slice(cut + 1)
+          #     -> ` — *cough* — ${text.slice}`(cut + 1)
           #
-          # which is a template literal invoked as a function - a TypeError on
+          # which is a template literal invoked as a function — a TypeError on
           # every execution, and valid syntax, so it passes `node --check` and
           # every parser check. This shipped four times in `e7e48eed1` across
           # web/public/chat.js and face_speech_runtime.js and sat in the tree
@@ -174,7 +174,7 @@ module Master
           #
           # Every duplicate selector key comes back "undefined]". `node --check`
           # passes, because the result is valid JavaScript and a different
-          # program - the worst shape this transform has. It reached
+          # program — the worst shape this transform has. It reached
           # RAILS/checks/support/geometry_probe/walk.js on the trial run recorded
           # in TODO.md and a person reverted it by hand.
           TRAILING_ACCESS = ["(", "[", ".", "`"].freeze
@@ -245,7 +245,7 @@ module Master
             src.gsub(OPTIONAL_LINK) do |match|
               next match if comment_context?(Regexp.last_match)
               # `a && a.b !== x` short-circuits to FALSE on null a, but
-              # `a?.b !== x` evaluates to undefined !== x - TRUE - so the
+              # `a?.b !== x` evaluates to undefined !== x — TRUE — so the
               # conversion flips the guard and the guarded call throws on
               # exactly the input the && existed for. Two live sites shipped
               # that way on 2026-08-18. Inequality keeps its &&.

@@ -6,7 +6,7 @@ require "fileutils"
 require "open3"
 
 # the old backlog, Test coverage: no test named CommitGuard. It is the anti-omission check
-# - "did this commit quietly delete a public method?" - which is exactly the kind
+# — "did this commit quietly delete a public method?" — which is exactly the kind
 # of guard that can stop working without anyone noticing, because a guard that
 # finds nothing looks identical to a codebase with nothing wrong.
 #

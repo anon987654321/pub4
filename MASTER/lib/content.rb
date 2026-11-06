@@ -2,7 +2,7 @@
 
 module Master
   module Content
-    # The content machine - a kanban whose cards are written, edited and judged
+    # The content machine — a kanban whose cards are written, edited and judged
     # to a publishable standard before they leave the board. Grounded in the
     # runtime's own review machinery: the judge is a council, the writer and
     # editor are operators with briefs, and no card crosses a lane without the

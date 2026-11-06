@@ -10,7 +10,7 @@ module Master
     # This is the sensor behind Session: it decides speech_start and speech_end
     # from PCM frames. It does not own the mic, STT, or TTS.
     #
-    # Default backend is pure energy (RMS) with hysteresis - zero native deps,
+    # Default backend is pure energy (RMS) with hysteresis — zero native deps,
     # OpenBSD-safe, fully fixture-testable. Silero ONNX is an optional backend
     # loaded when the model and onnxruntime are present; missing pieces fall
     # back to energy without changing the public events.

@@ -7,7 +7,7 @@
 #
 # This exists because the API is guessable and every guess is wrong. On
 # 2026-08-12 one session invented `Scanner.new(root:)`, `scan_file`, and
-# `report.findings` in that order - none of which exist - and settled the
+# `report.findings` in that order — none of which exist — and settled the
 # question only by checking out a clean worktree. An LLM confabulating a
 # plausible API is not a defect you can fix in the model; it is one you make
 # cheap by leaving a worked example where it will be found.

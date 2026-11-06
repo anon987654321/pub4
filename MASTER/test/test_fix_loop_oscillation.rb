@@ -50,7 +50,7 @@ class TestFixLoopOscillation < Minitest::Test
     end
   end
 
-  # Agent with an open circuit - forces LLM pass to be skipped so
+  # Agent with an open circuit — forces LLM pass to be skipped so
   # violations never clear, making oscillation observable in two passes.
   # The breaker only reports open for this agent's own model ("stub-model"),
   # matching LlmRouter's per-model check rather than a blanket any-model one.

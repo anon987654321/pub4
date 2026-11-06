@@ -4,7 +4,7 @@
 # per app, held by a ceiling that only descends.
 #
 # The 2026-08-21 campaign took the design findings from ~1,700 to the numbers
-# in data/design_baseline.yml - part real fixes, part instruments learning what
+# in data/design_baseline.yml — part real fixes, part instruments learning what
 # they judge (a tag is not a line; a media query bound is not a text measure).
 # Without a committed tool reproducing the number, the next drift is invisible;
 # this is the reader (see css_coverage_lint for the same argument about the
@@ -125,9 +125,9 @@ module Operator
       Master::Trace::Dmesg.attach("design0", "master0", "#{total} violation(s), ceiling #{recorded_total || "unrecorded"}")
       current.sort.each { |app, count| Master::Trace::Dmesg.status("design0", "#{app}, #{count}, ceiling #{recorded.dig("apps", app) || "unrecorded"}") }
 
-      # The machine-readable verdict line, last. Two consumers match it - the
+      # The machine-readable verdict line, last. Two consumers match it — the
       # ratchet stage's /design_baseline: (\d+) violation/ and check_chain's
-      # verdict scan, which takes the last bare "name:" line - and a7a8cf4b8
+      # verdict scan, which takes the last bare "name:" line — and a7a8cf4b8
       # dropped it in favour of the dmesg detail above, leaving both reading
       # the current count as "?" and the ratchet row unreadable.
       puts "design_baseline: #{total} violation(s) (ceiling #{recorded_total || "unrecorded"})"

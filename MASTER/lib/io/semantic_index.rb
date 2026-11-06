@@ -3,7 +3,7 @@
 module Master
   module Io
     # Fuzzy semantic cache: when SemanticCache's exact-key lookup misses, return a near-hit
-    # whose prompt embedding is within a cosine threshold - ~31% of agent queries are
+    # whose prompt embedding is within a cosine threshold — ~31% of agent queries are
     # paraphrases of earlier ones. Pure Ruby over an injected embedder (Review::Embeddings);
     # degrades to a no-op with embeddings off. Refs: semantic-similarity caching.
     class SemanticIndex

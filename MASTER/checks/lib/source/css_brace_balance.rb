@@ -7,17 +7,17 @@ require_relative "../../../tools/scss"
 
 module Deploy
   # A stylesheet with one unclosed brace nests every rule behind it in the
-  # browser and silently kills them - seen ship on face.css, whose #primer stub
+  # browser and silently kills them — seen ship on face.css, whose #primer stub
   # at :1434 held every rule under EOF (chat-log's 66ch centering among them)
   # while every check read green. Nothing in the repo parsed CSS for structure:
   # the tests assert by substring, and the one lexing instrument here,
-  # ScssRules, is a rule extractor, not a validator - an unmatched `}` pops a
+  # ScssRules, is a rule extractor, not a validator — an unmatched `}` pops a
   # nil frame there and is a silent no-op.
   #
   # This check counts block braces over the lexer's structure stream, which
   # excludes braces inside strings, comments and interpolation, so the count
   # says what the browser sees. It fails on an unclosed block and on an extra
-  # close, naming file and line. Hand-authored sources only - build output has
+  # close, naming file and line. Hand-authored sources only — build output has
   # no place a balance could be repaired in.
   class CssBraceBalanceCheck
     ROOT = File.expand_path("../../../..", __dir__)

@@ -6,7 +6,7 @@ require_relative "../../face"
 module Master
   module Voice
     class Renderer
-      # Splash and prompt rendering - separate from Renderer's own
+      # Splash and prompt rendering — separate from Renderer's own
       # render/output-guard responsibility.
       #
       # The splash and operational status use the OpenBSD dmesg idiom: plain,

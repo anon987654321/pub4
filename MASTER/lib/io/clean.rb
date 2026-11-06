@@ -4,7 +4,7 @@ require_relative "exec"
 
 module Master
   module Io
-    # Clean - removes trailing whitespace, CRLF, and excess blank lines
+    # Clean — removes trailing whitespace, CRLF, and excess blank lines
     # from text files under a given path, using OPENBSD/dev/clean.sh.
     class Clean
       SCRIPT = File.expand_path("../../../OPENBSD/dev/clean.sh", __dir__).freeze

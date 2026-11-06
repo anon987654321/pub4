@@ -72,7 +72,7 @@ module Master
           FileUtils.mkdir_p(File.dirname(file))
           Master::Trace::Log.rotate(file, SCAN_HITS_MAX_BYTES)
           # Binary append: a finding message read from a tool arrives as bytes, and with
-          # bin/master's Encoding.default_internal a text-mode write raised on its "-".
+          # bin/master's Encoding.default_internal a text-mode write raised on its "—".
           File.open(file, "ab") do |io|
             findings.each do |finding|
               io.puts({
@@ -212,7 +212,7 @@ module Master
             ("top: #{top_s}" unless top_s.empty?),
             "note: partial - full report lands after pass completes",
           ].compact.join("\n")
-          # Quiet write - checkpoints already print top laws; avoid spam.
+          # Quiet write — checkpoints already print top laws; avoid spam.
           if defined?(Master::CLI::Scan::Live)
             Master::CLI::Scan::Live.snapshot!(text, root:, note: "streaming checkpoint", announce: false)
           end

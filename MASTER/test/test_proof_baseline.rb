@@ -68,7 +68,7 @@ class TestProofBaseline < Minitest::Test
     _title, body = pass.send(:proof_section, Master::RAILS_ROOT, baseline)
 
     assert_equal ["proof"], pass.instance_variable_get(:@failed_stages)
-    assert_match(/new failures: schema_migration/, body) # source-assertion: ok - the verdict line the pass printed
+    assert_match(/new failures: schema_migration/, body) # source-assertion: ok — the verdict line the pass printed
     assert_empty @delivered
   end
 
@@ -78,7 +78,7 @@ class TestProofBaseline < Minitest::Test
     held, line = Proof.judge(Reading.parse(false, after), Reading.parse(false, before))
 
     refute held
-    assert_match(/new failures: TestB#test_new/, line) # source-assertion: ok - the verdict line judge returned
+    assert_match(/new failures: TestB#test_new/, line) # source-assertion: ok — the verdict line judge returned
   end
 
   def test_a_worse_ratchet_row_refuses
@@ -87,7 +87,7 @@ class TestProofBaseline < Minitest::Test
     held, line = Proof.judge(Reading.parse(false, after), Reading.parse(false, before))
 
     refute held
-    assert_match(/worse: selftest DENSITY 2 to 3/, line) # source-assertion: ok - the verdict line judge returned
+    assert_match(/worse: selftest DENSITY 2 to 3/, line) # source-assertion: ok — the verdict line judge returned
   end
 
   def test_a_suite_that_crashed_after_the_repair_refuses
@@ -96,7 +96,7 @@ class TestProofBaseline < Minitest::Test
     held, line = Proof.judge(Reading.parse(false, crashed), Reading.parse(false, before))
 
     refute held
-    assert_match(/crashed/, line) # source-assertion: ok - the verdict line judge returned
+    assert_match(/crashed/, line) # source-assertion: ok — the verdict line judge returned
   end
 
   def test_an_unmeasurable_baseline_falls_back_to_green
@@ -108,7 +108,7 @@ class TestProofBaseline < Minitest::Test
                               crashed)
     refute red, "a red proof held against a baseline nobody could read"
     assert green
-    assert_match(/no baseline/, line) # source-assertion: ok - the verdict line judge returned
+    assert_match(/no baseline/, line) # source-assertion: ok — the verdict line judge returned
   end
 
   def test_a_baseline_is_kept_until_origin_main_moves

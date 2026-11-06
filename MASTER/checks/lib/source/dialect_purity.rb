@@ -151,7 +151,7 @@ module Deploy
       amber = app_stylesheet("amber")
       return unless amber
 
-      # soft check - luxury or brand present
+      # soft check — luxury or brand present
       @result.warn("dialect_purity: amber dialect markers weak") unless File.read(amber).match?(/luxury|brand|editorial|caprasimo|jsfiddle/i)
     end
 

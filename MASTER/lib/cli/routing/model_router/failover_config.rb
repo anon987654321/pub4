@@ -4,7 +4,7 @@ module Master
   module CLI
     module Routing
       class ModelRouter
-        # Failover retry/cooldown thresholds read from data/models.yml -
+        # Failover retry/cooldown thresholds read from data/models.yml —
         # separate from ModelRouter's own model-selection/escalation logic.
         module FailoverConfig
           def failover_max_retries

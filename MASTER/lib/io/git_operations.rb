@@ -6,7 +6,7 @@ require "pathname"
 
 module Master
   module Io
-    # GitOperations - git wrappers scoped to a repository root.
+    # GitOperations — git wrappers scoped to a repository root.
     class GitOperations
       # A person's yes, typed at a terminal, to committing these sacred paths once. It is the
       # guard's one exception, so `soul approve` commits through the same door as every other
@@ -103,7 +103,7 @@ module Master
         end
 
         # If a fast-forward-only push loses a race, fetch and rebase onto the
-        # remote counterpart of this branch - not @{u}, which may deliberately be
+        # remote counterpart of this branch—not @{u}, which may deliberately be
         # origin/main for a topic branch. Dirty unrelated files remain protected
         # by Git's autostash.
         def rebase_onto_push_target!

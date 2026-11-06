@@ -17,7 +17,7 @@ class CoreBridgeTest < Minitest::Test
   class FakeBus
     # Positional like the real Trace::EventBus. A kwargs-only publish rejects
     # Mission#emit's positional hash, and its rescue swallows the refusal
-    # silently - every mission:* event would vanish from the test bus.
+    # silently — every mission:* event would vanish from the test bus.
     attr_reader :events
     def initialize = @events = []
     def publish(name, payload = {}) = @events << [name, payload]
@@ -25,7 +25,7 @@ class CoreBridgeTest < Minitest::Test
   end
 
   # The real Constitution blocks `done` before an evidence threshold, so a
-  # completing run must first produce passing exec evidence - same as production.
+  # completing run must first produce passing exec evidence — same as production.
   #
   # The argv has to name a command Proof::PRODUCERS recognises. Declaring
   # `evidence: :test_pass` on `true` records nothing: an exec that claims an
@@ -486,7 +486,7 @@ class CoreBridgeTest < Minitest::Test
 end
 
 # The sandbox answers :deny, :ask or :allow. The bridge used to forward only
-# :deny, so :ask reached the Constitution as nil and nil means proceed - the
+# :deny, so :ask reached the Constitution as nil and nil means proceed — the
 # policy marked `git push`, a hard reset and a deploy as needing a person, and
 # the one path that runs unattended did them without asking.
 #

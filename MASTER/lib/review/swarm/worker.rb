@@ -5,7 +5,7 @@ require "json"
 module Master
   module Review
     module Swarm
-      # Base worker - receives only the context slice it needs (need-to-know).
+      # Base worker — receives only the context slice it needs (need-to-know).
       class Worker
         PREFERRED_MODEL = nil
         FALLBACK_MODEL = nil

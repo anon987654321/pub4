@@ -49,7 +49,7 @@ module Deploy
           result.warn("auditor warning [#{app}] #{f.path}: #{f.rule} - #{f.message}")
         end
 
-        # Pen allow-list hits are info - surface count only
+        # Pen allow-list hits are info — surface count only
         pen_infos = infos.count { |f| f.rule == :product_pen }
         result.warn("auditor [#{app}]: #{errs.size} error(s), #{warns.size} warning(s), #{pen_infos} product pen(s) preserved") if findings.any?
       end

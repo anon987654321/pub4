@@ -45,7 +45,7 @@ module Deploy
     # path/host probes for brgen guest-open core
     BRGEN_PROBES = [
       { label: "home", path: "/", host: "brgen.no", capabilities: %i[no_auth_wall has_main] },
-      # /live folded into /nearby/room in 76612fd0b - two hyperlocal surfaces
+      # /live folded into /nearby/room in 76612fd0b — two hyperlocal surfaces
       # where one already contained the other. It is a redirect now, so probing
       # it for live-feed markup asserted against a page that no longer renders.
       { label: "messenger", path: "/conversations", host: "brgen.no", capabilities: %i[no_auth_wall has_main messenger_compose] },

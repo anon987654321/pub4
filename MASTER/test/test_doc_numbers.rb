@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Two files carrying the same dimension eventually disagree, and the checks pick
-# different ones - a document prescribing a 16px step against design_tokens.yml's
+# different ones — a document prescribing a 16px step against design_tokens.yml's
 # 0.75rem space_small leaves no way to tell which scale governs.
 #
 # A document may mention a value. It may not prescribe one without naming where

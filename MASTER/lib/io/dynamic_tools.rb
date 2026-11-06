@@ -5,7 +5,7 @@ require "yaml"
 
 module Master
   module Io
-    # Runtime HTTP tool registry (OpenCrabs tools.toml parity) - data-driven endpoints
+    # Runtime HTTP tool registry (OpenCrabs tools.toml parity) — data-driven endpoints
     # without redeploying Ruby adapters.
     module DynamicTools
       PATHS = [

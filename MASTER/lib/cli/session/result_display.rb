@@ -28,7 +28,7 @@ module Master
       end
 
       # One line for a one-line error; its own lines for a structured one. The
-      # fold reports as header, turn evidence and summary - flattened into a
+      # fold reports as header, turn evidence and summary — flattened into a
       # ribbon and cut mid-word, that evidence was unreadable, which is a
       # second error on top of the first.
       def print_error(err)

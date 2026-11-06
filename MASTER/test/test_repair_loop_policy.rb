@@ -669,7 +669,7 @@ class TestRepairLoopPolicy < Minitest::Test
   # The 2026-08-19 proof run reported fixed=0 for 33 minutes and the log could
   # not say why: every non-apply collapsed to false before the one aggregate
   # line. Each outcome is a named symbol now, and a model that returns nothing
-  # is :no_proposal - a different problem from a proposal dying in review, and
+  # is :no_proposal — a different problem from a proposal dying in review, and
   # the breakdown line must say which.
   def test_a_model_that_returns_nothing_is_a_named_outcome
     Dir.mktmpdir do |root|

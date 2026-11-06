@@ -7,18 +7,18 @@
 #   - core_files is the real invariant. It counts lib/core.rb and lib/core/*.rb,
 #     the entrypoint beside the directory, so a glob of lib/core/ alone does not
 #     hand out a free concept. A new top-level concept in the fold is a design
-#     change, argued for here - not a line-count question, and never a file
+#     change, argued for here — not a line-count question, and never a file
 #     added because something felt long.
 #   - lib_body_ceiling is a budget with a sponsor. It may be raised, but only in
 #     a commit that names what the lines buy, and consecutive_raises_allowed
 #     caps how many raises may stand before a genuine fall earns the budget
 #     back. Raising it to absorb another change's unaccounted growth is how a
-#     ceiling stops measuring anything - a good reason is always available,
+#     ceiling stops measuring anything — a good reason is always available,
 #     which is why the number needs teeth rather than prose.
 #
 # The ceiling only falls on its own: `rake lint:spine RATCHET=1` records a new
 # low when lib/ shrinks. Raising it is a deliberate edit here. Every raise and
-# ratchet is a commit - the history reads there, not in this file.
+# ratchet is a commit — the history reads there, not in this file.
 #
 # Body lines are code lines minus Zeitwerk ceremony: a `module` whose body is
 # exactly one module or class, and its matching `end`, which map a path to a
@@ -37,7 +37,7 @@ spine:
     RAILS/__shared/lib: 2
 
   # Non-blank, non-comment lines across lib/**/*.rb, minus the Zeitwerk wrappers.
-  # Present sponsors, all the same shape - a rule that could only be judged by a
+  # Present sponsors, all the same shape — a rule that could only be judged by a
   # model now judged deterministically: cross_file_analysis's structural-clone
   # detector for DRY, MiddleManRule for the over-engineering half of
   # engineering_fit, and StrunkPass's brevity mode wired onto conversational
@@ -66,8 +66,8 @@ spine:
   # unwired files were duplicating rather than whether they were called.
   # 38148 -> 38120, and the fall cleared both standing raises.
   #
-  # Two changes landed above the ceiling after it was sponsored - 17 lines for
-  # `check --tree <TREE>` and 6 for the local model tier's check - and a third
+  # Two changes landed above the ceiling after it was sponsored — 17 lines for
+  # `check --tree <TREE>` and 6 for the local model tier's check — and a third
   # raise was not available: consecutive_raises_allowed is 2 and both were
   # spent. The cap did what it is for. It was paid out of lib/trace/metrics.rb,
   # which recorded four things and was called for one: record_latency,
@@ -80,7 +80,7 @@ spine:
   # 38120 -> 38098 on 2026-09-10, and all of it was paid by two deletions that
   # were not tidying. Io::GitHooks wrote a pre-commit hook from the boot path
   # while bin/operator hooks points core.hooksPath at OPENBSD/dev/githooks, which git
-  # honours instead - so the file it wrote could never run on a guarded tree.
+  # honours instead — so the file it wrote could never run on a guarded tree.
   # LawRegistryAudit::Report#lines and #hatch_line rendered an eight-row report
   # nothing printed; the tripwire they were credited with is the test asserting
   # both lexical sets are empty, which stays. BootReceipt#commit shed six lines
@@ -92,7 +92,7 @@ spine:
   # way to enumerate 242 rules was a YAML one-liner in CLAUDE.md that iterated
   # the wrong shape for months, so every agent told to read the law before
   # writing had no command that would show it one. Beside it, two guards that
-  # are one condition each - a strict boot that does not raise on a count the
+  # are one condition each — a strict boot that does not raise on a count the
   # test harness inflated, and an external linter that waits for its config to
   # be reconciled with the law rather than autocorrecting against it.
   # 38108 -> 38111: /rules stopped deciding two things on one line. The filter
@@ -103,14 +103,14 @@ spine:
   # 38111 -> 38115 for the rename. /through is /fix; lib/review is
   # the subsystem that scans and critiques; the pipeline class is Pass, which
   # does not shadow Master::Review for any bare reference inside CLI. The four
-  # lines are two vocabularies where there was one - what a person types and
-  # what a model may emit - plus the rename record the capability inventory
+  # lines are two vocabularies where there was one — what a person types and
+  # what a model may emit — plus the rename record the capability inventory
   # reads to tell a rename from a loss.
   # 38072 is the audit measured against its own branch; the rename landed four
   # lines it could not see. 38076 is the tree with both in it.
   # 38076 -> 38069: ruby_llm_patch.rb stopped passing four constructor keys
   # Model::Info#initialize does not read, and the constant that fed one of
-  # them. The fallback it builds is unchanged - the lines were data nothing
+  # them. The fallback it builds is unchanged — the lines were data nothing
   # consumed, which is the cheapest seven a ceiling ever buys back.
   # Three branches measured this row against three bases, and each read its own
   # subtraction from 38111. 38069 is the merged tree measured once.
@@ -119,21 +119,21 @@ spine:
   #
   # Nineteen lines are the autofix safety tier: a transform that deletes waits
   # for a person, where one that adds shows itself in the diff it makes. The
-  # method it replaces could refuse nothing - its thresholds were keyed to three
+  # method it replaces could refuse nothing — its thresholds were keyed to three
   # words naming no rule, so every lookup missed and every rule came back
   # allowed, under a backlog entry saying an unattended autofix pass corrupts
   # code.
   #
   # Seventeen are the swarm reviewer, which read an unparseable reply as an
-  # approval twice over - an empty object and a JSON::ParserError both returned
-  # approved - and printed "swarm: approved" through Pipeline::Pass for a
+  # approval twice over — an empty object and a JSON::ParserError both returned
+  # approved — and printed "swarm: approved" through Pipeline::Pass for a
   # security review nobody reached. Six of those seventeen are one JSON
   # extractor in Worker, replacing the copy each of three workers kept, which is
   # how the three came to disagree about the empty case in the first place.
   #
   # Eleven are per-model cost. COST_PER_TOKEN is $15 per million, which is Sonnet's
-  # output price, and it was charged to both directions of every model - a free
-  # OpenRouter model included - while ruby_llm's registry carries the real
+  # output price, and it was charged to both directions of every model — a free
+  # OpenRouter model included — while ruby_llm's registry carries the real
   # numbers for all 1,170 entries it knows. The circuit breaker spends a dollar
   # budget against this figure. A model the registry does not know keeps the
   # flat rate: pricing an unknown model at zero would let it run until something
@@ -145,15 +145,15 @@ spine:
   # TRAILING_COMMENT, each one created by somebody doing the right thing.
   #
   # The thirteen lines are a walk backwards. Given the marker, find the comment
-  # opener nearest before it and read the line without that whole comment -
+  # opener nearest before it and read the line without that whole comment —
   # which matters because the marker shares its comment with other directives
   # (`# rubocop:disable Lint/RescueException -- scan: intentional` is one
   # comment carrying two instructions), and because matching forward from the
   # first hash would read a `#` inside a string literal as the comment start.
   # A line still over the limit with its comment removed is still flagged.
   # 38129 -> 38175 for the cognitive loop, and the 46 lines are mostly one
-  # defect. tick! had exactly one caller in the tree - boot/master_boot.rb:40,
-  # once, at startup - so the workspace never decayed, continuity never moved,
+  # defect. tick! had exactly one caller in the tree — boot/master_boot.rb:40,
+  # once, at startup — so the workspace never decayed, continuity never moved,
   # nothing after the boot snapshot was ever written, and reflection could not
   # fire because ticks stopped at 1 and 1 % 16 is not zero. The layer perceived
   # for the life of the process and thought once, before anything happened.
@@ -182,7 +182,7 @@ spine:
   # 38197 -> 38298 for the local tier, 97 of it lib/review/llm_dispatcher/
   # ollama_sender.rb. models.yml has declared ollama: ids since the tier was
   # written and ModelRouter drops them when OLLAMA_BASE_URL is unset, but the
-  # dispatcher had no branch - provider_availability.rb says so in a comment -
+  # dispatcher had no branch — provider_availability.rb says so in a comment —
   # so an id that passed the check fell through to RubyLLM, which handed
   # ollama:llama3:latest to OpenRouter and got an error. Enabling the tier was
   # the way to break it. Not through RubyLLM: that is a registry of paid
@@ -200,11 +200,11 @@ spine:
 # so an unresolved file satisfied no language-scoped registry rule. Law#applies?
 # asked `language.nil? || ...`, so the same file satisfied every
 # language-scoped law. 396 tracked files resolve to nil under an
-# extension-only map, and 302 of them are not source in any language - which
+# extension-only map, and 302 of them are not source in any language — which
 # is how FROZEN_STRING_LITERAL came to ask .gitignore, .svg, .toml and
 # Gemfile.lock for a Ruby magic comment: 176 findings, 4 of them on Ruby.
 #
-# The clause was protecting the other 94 - Gemfile, Rakefile, config.ru and
+# The clause was protecting the other 94 — Gemfile, Rakefile, config.ru and
 # every executable under bin/ whose language lives in its shebang. Those are
 # resolved now rather than excused, so the permissive clause could go.
 #
@@ -218,7 +218,7 @@ spine:
 # GitContext#show takes no path: its argument is a git ref handed to `git show`,
 # and its sanitiser explicitly allowed `:` and `/`. `git show <rev>:<path>` prints
 # that path's blob, so the colon form was a file read of any tracked file at any
-# revision - including ones deleted since - that never passed through PathGuard,
+# revision — including ones deleted since — that never passed through PathGuard,
 # while log, blame and diff all route their path through safe_path. Io::LLM::GitContext
 # exposes this to a model, which is the difference between an odd API and a way
 # out of the root. No caller in this tree passes <rev>:<path>, so it is refused.
@@ -254,7 +254,7 @@ spine:
   # render_diff; SemanticCache#invalidate_all!; Memory::Store#
   # import_external_file; SHARED_DEADLINE. The fall is exactly the deletion.
   # 35087 -> 35123, raised (log below): the fold made legible to a small model,
-  # where gemma3:4b read one file five times and never reached done - actions
+  # where gemma3:4b read one file five times and never reached done — actions
   # recorded by their subject, the goal pinned through compaction, a STATE line,
   # repeat and failed-action guards, a schema-bound reply and a read-only answer;
   # the review footer's counts; and the shell tool and rollback reporting what
@@ -270,8 +270,8 @@ spine:
   # schema-bound model decodes into; the model ladder that climbs a local model
   # which cannot hold the fold to the next larger one, and past it to the cloud
   # lane; the terminal's y/N answer to a Request, which is the only surface that
-  # can give one; and the objective ledger - owner, domain, wake, evidence and a
-  # verify whose exit status meets the objective - with the per-domain reach
+  # can give one; and the objective ledger — owner, domain, wake, evidence and a
+  # verify whose exit status meets the objective — with the per-domain reach
   # that keeps a finance or household objective out of the coding tools. 179
   # body lines across lib/core, lib/cli, lib/ground and lib/fix.
   # 35302 -> 35425: this repair series is fully sponsored here.
@@ -348,7 +348,7 @@ pub4_source_ceilings:
   # and costs nothing here, having no extension to count.
   # 1040 -> 1044 is four test files, one per thing that had no test at all:
   # test_provider_key_wiring.rb (providers.yml naming a RubyLLM setter the
-  # installed gem has no method for - the runtime did not boot for a day),
+  # installed gem has no method for — the runtime did not boot for a day),
   # test_agy_reachability.rb (agy ids leading a fallback chain on machines with
   # no agy binary, and the four keyless assertions that passed or failed by
   # host), test_circuit_breaker_states.rb (the closed, open, half_open and
@@ -374,7 +374,7 @@ pub4_source_ceilings:
   # prompt AND that it is read rather than restated. The second half is the one
   # worth a file: a restatement in the builder would satisfy every "the words
   # appear" assertion and defeat the reason the section exists. Verified by
-  # mutation - hardcoding the four rules in the builder turns three of its eight
+  # mutation — hardcoding the four rules in the builder turns three of its eight
   # red. It folds into no existing test; nothing else here reads a laws.yml
   # section into a prompt and checks the file is the source.
   # 1046 -> 1047 is test/test_self_findings_drift.rb. Third census in this tree
@@ -432,7 +432,7 @@ pub4_source_ceilings:
   # real rather than a bug in either.
   # 1026 -> 1028 for the boot receipt: lib/ground/boot_receipt.rb and
   # test/test_boot_receipt.rb. MASTER-101 asked for one deterministic answer to
-  # "what did this process boot with", and there were three partial ones -
+  # "what did this process boot with", and there were three partial ones —
   # boot_checks.rb proves the files parse, bin/doctor probes the host,
   # boot_phases.rb names the order. None of them compares the constitution the
   # runtime loaded against the rules the scanner holds, which is the check that
@@ -533,7 +533,7 @@ pub4_source_ceilings:
   # 1038 -> 1040 is tools/rename.rb and test/test_rename.rb. MASTER reads this
   # tree against 242 rules and could not rename one thing: four rules touch
   # names, all four are autofix: false, and NOISE_NAME matches only a class
-  # whose whole name is the noise word - so ZSH_BANNED read as its own opposite
+  # whose whole name is the noise word — so ZSH_BANNED read as its own opposite
   # and Master::MasterData stuttered in the boot path, both until a person
   # noticed. The tool finds the category suffixes and the stutters, proposes the
   # shorter name where that name is free, and performs the rename as a file move
@@ -543,7 +543,7 @@ pub4_source_ceilings:
   # 1040 -> 1043 and RAILS 2372 -> 2366: six checks moved to the tree they
   # measure. master_tts, master_web_assets and constitutional_scan check
   # MASTER; dns_zones, domain_alignment and port_inventory check the box. The
-  # repo holds the same number of checks it did before - this is one move
+  # repo holds the same number of checks it did before — this is one move
   # crossing three ledgers, which is why RAILS falls by the six that MASTER
   # and OPENBSD gain.
   # 1043 -> 1045 for two files, and the count is two rather than one because a
@@ -552,8 +552,8 @@ pub4_source_ceilings:
   # the commit, not before.
   #
   # test/test_autofix_safety_tier.rb pins which transforms may run unattended.
-  # The tier it covers decides by what the transform does - a deletion waits for
-  # a person, an addition does not - and the method it replaced could refuse
+  # The tier it covers decides by what the transform does — a deletion waits for
+  # a person, an addition does not — and the method it replaced could refuse
   # nothing, so the test is the only thing standing between that and a silent
   # return to allowing everything.
   #
@@ -562,8 +562,8 @@ pub4_source_ceilings:
   # It exists so the refinement backlog is a command rather than a written list:
   # 22,417 findings is a number that is wrong the day it is copied into a file,
   # and the copy is what people then work from. It folds into nothing.
-  # self_findings.rb answers a different question - what the law finds in MASTER,
-  # at error severity, against a recorded ceiling - and carries no grouping, no
+  # self_findings.rb answers a different question — what the law finds in MASTER,
+  # at error severity, against a recorded ceiling — and carries no grouping, no
   # tree filter and no closing sentence per rule.
   #
   # 1045 -> 1046 for lib/cognition/prediction.rb, which replaces a method
@@ -578,8 +578,8 @@ pub4_source_ceilings:
   # files above. Recorded as one and corrected here: the sender was named and
   # its test was not, which is the accounting this row exists to force.
   # 1048 -> 1050 for tools/stale_exemptions.rb and its test. EXEMPTIONS_EXPIRE
-  # is declared conduct in law/practice.rb - an opt-out that outlives its
-  # subject is a hole in a check nobody can see - and 143 markers across 89
+  # is declared conduct in law/practice.rb — an opt-out that outlives its
+  # subject is a hole in a check nobody can see — and 143 markers across 89
   # files had never been checked by anything. It folds into self_findings.rb
   # only by making that census answer a second question against a modified
   # copy of every file, which is not what a ratchet over the tree as it stands
@@ -590,8 +590,8 @@ pub4_source_ceilings:
 # Command#call ends in @receiver.public_send(@method_name, ...), so a symbol
 # naming nothing fails when a person types the verb rather than when the
 # registry is built, and nothing checked it. The gap is not theoretical: five
-# live dispatchers - dispatch_commit, dispatch_pair, dispatch_doctor,
-# dispatch_rules, dispatch_tree - were deleted and restored on 2026-09-11,
+# live dispatchers — dispatch_commit, dispatch_pair, dispatch_doctor,
+# dispatch_rules, dispatch_tree — were deleted and restored on 2026-09-11,
 # because they share a file with a dead slash table and a grep for the table's
 # name says nothing about a method reached as command(:dispatch_doctor, root).
 # The suite was green the whole time.
@@ -601,14 +601,14 @@ pub4_source_ceilings:
 # nothing covered whether they can be called at all.
 # 1052 -> 1053 for test/test_ast_edit_writes.rb. AstEdit could not write: it
 # includes Io::AtomicWrite, which defines write_atomic, and both call sites
-# asked for atomic_write - the same two words reversed - so every rename and
+# asked for atomic_write — the same two words reversed — so every rename and
 # every insertion raised NoMethodError on the line that was about to change
 # the file. Nothing in the suite named AstEdit, which is why a tool whose whole
 # job is writing had been unable to write. The test covers both operations and
 # asserts that every *atomic* call in that file names a method that exists.
 # 1053 -> 1050. Three files arrived here and three left in another session
-# during the same hour - io/git_hooks.rb and review_crew/agents.rb went with
-# "a worktree is a checkout", bin/preflight was folded away - so the ceiling I
+# during the same hour — io/git_hooks.rb and review_crew/agents.rb went with
+# "a worktree is a checkout", bin/preflight was folded away — so the ceiling I
 # raised described a tree that no longer existed. This is the shared checkout
 # in one row: a ratchet is a measurement of now, not a running total of what
 # one session did.
@@ -619,7 +619,7 @@ pub4_source_ceilings:
 #
 # The tool does the mechanical half: an item naming a file makes a checkable
 # claim. 5,024 of 5,741 name no file this repo owns, 23 name only files that
-# are not in the tree, and 694 have a subject - which is the set worth reading.
+# are not in the tree, and 694 have a subject — which is the set worth reading.
 #
 # Its own first answer was wrong and that is in its comments: resolving paths
 # from the repo root alone called 198 live items stale, because most are
@@ -631,7 +631,7 @@ pub4_source_ceilings:
 #
 # Built on a hypothesis it then disproved, which is the useful part. Hand-worked
 # items had gone stale often enough that I expected a large fraction of the corpus
-# to be citing deleted files. The first run agreed - 154 stale - and the first run
+# to be citing deleted files. The first run agreed — 154 stale — and the first run
 # was wrong: the resolver only tried <tree>/<path>, so every bare basename
 # (soul.yml, help.rb) read as absent. With suffix resolution and an ambiguity case
 # the real number is 1 in 2245.
@@ -641,21 +641,21 @@ pub4_source_ceilings:
 # to read plus a wrong idea about them.
 # 1052 -> 1053 for test/test_io_dynamic_http.rb. DynamicHttp fetches a URL named
 # in data/tools.dynamic.yml, and DynamicTools::PATHS also reads
-# ~/.master/tools.dynamic.yml - so the URL is data, and the only thing between
+# ~/.master/tools.dynamic.yml — so the URL is data, and the only thing between
 # that data and a request to 169.254.169.254 is one line calling
 # SsrfGuard.safe_uri?.
 #
 # SsrfGuard has twelve tests of its own. Its only call site had none, so the
 # guard was well covered and its use was not: reorder those two lines, or drop
 # the `unless`, and all twelve still pass. Nine tests here, none of which opens a
-# socket - every case is refused before the request, which is the point. Deleting
+# socket — every case is refused before the request, which is the point. Deleting
 # the guard fails three of them.
   # 680 -> 675: five lib files nothing reached, named under lib_body_ceiling.
   # 653 -> 646: the three Trace::Snapshot files, and the four ActionCable files
   # (cable_bridge, MasterChannel, ApplicationCable channel and connection) that
   # went when /events/stream became the face's one pipe. cable.yml leaves too
   # and a drop migration arrives, which nets to zero.
-  # 715 -> 718: three new repository-source files added by this architecture pass -
+  # 715 -> 718: three new repository-source files added by this architecture pass —
   # the Bplans contract plus the Air Superiority and Social Browser plugin READMEs.
   # These are deliberate contract surfaces, not absorbed growth.
   # 718 -> 719: ratchet_sponsor.rb is the one new governed MASTER source file in this series.
@@ -709,8 +709,8 @@ pub4_source_ceilings:
   # shared/app/models/authentication.rb declared Shared::Authentication as an
   # ActiveRecord model for an `authentications` table that no migration in any of
   # the three apps creates. Its path maps to a top-level `Authentication`, which
-  # the three per-app shims used to define - they are gone now, so Zeitwerk
-  # shadowed it and never loaded it - leaving Shared::Authentication resolving to
+  # the three per-app shims used to define — they are gone now, so Zeitwerk
+  # shadowed it and never loaded it — leaving Shared::Authentication resolving to
   # the controller concern, and `.table_exists?` on a Module raising NoMethodError
   # in every OAuth callback. ExternalIdentity and IdentityProvider are the real
   # persistence and were already doing the work.
@@ -720,8 +720,8 @@ pub4_source_ceilings:
   # regression that doubles LCP ships and lands in a log line; CHECK_ADEQUACY.md
   # carries the hole as its own item 8. A check is the only thing that closes it,
   # and it folds into nothing: no existing check opens a browser to read a paint
-  # metric, and the source half it carries - that hotwire.js still observes all
-  # three entry types - is what stops the field collection dying quietly under
+  # metric, and the source half it carries — that hotwire.js still observes all
+  # three entry types — is what stops the field collection dying quietly under
   # a passing budget.
   # 2374 -> 2375 for brgen/app/javascript/controllers/feed_updates_controller.js.
   # BRGEN-105 asked for a realtime front page that does not yank the reader,
@@ -758,8 +758,8 @@ pub4_source_ceilings:
   # is how five of them forget.
   # 2372 -> 2373 for brgen/lib/brgen/bergen_demo_data.rb. One file bought, five
   # hundred code lines paid back: it is the literal Bergen the demo seeder
-  # carried inside itself - users, posts, listings, bios, neighbourhoods,
-  # places, restaurants, channels and Live notes - which made a class with two
+  # carried inside itself — users, posts, listings, bios, neighbourhoods,
+  # places, restaurants, channels and Live notes — which made a class with two
   # public methods into the largest NO_GOD_CLASS finding in the fleet at 839
   # code lines. The seeder is 337 now. This is the trade this line exists to
   # record, and it is the right way round: a data file and the code that reads
@@ -772,7 +772,7 @@ pub4_source_ceilings:
 # 2366 -> 2386, and it is three things a reader should be able to tell apart.
 #
 # Twenty files are the first test each for the twenty checks that had none, plus
-# the two harnesses they share - test/checks/check_fixture.rb, which installs a
+# the two harnesses they share — test/checks/check_fixture.rb, which installs a
 # planted tree under a check whose root is a constant fixed at load time and puts
 # the constants back after, and test/checks/check_probe_harness.rb, which answers
 # a CDP evaluate from a block so a browser check can be fed a measurement it
@@ -791,7 +791,7 @@ pub4_source_ceilings:
 # files than it claimed. This records the tree rather than adding to it.
 # 2392 -> 2391: amber/_fonts_editorial.scss left with the serif it vendored.
 # Two @font-face blocks for Libre Baskerville, serving one tagline and one
-# italic byline, and the self-hosted woff2 files they named are not on disk -
+# italic byline, and the self-hosted woff2 files they named are not on disk —
 # so the only src that could answer was cdn.jsdelivr.net, a third-party host
 # on amber every page load. Both users take var(--font) now, which is the same
 # token brgen sets, and amber renders in one family where it rendered in two.
@@ -805,8 +805,8 @@ pub4_source_ceilings:
 # Neither folds anywhere: no existing probe walks the verticals, and no
 # existing amber test asks the contrast module anything.
 # 2393 -> 2394, which is two files in and one out. The contrast probe added
-# yesterday is a check now - checks/lib/rendered/accent_contrast.rb and its
-# test - and checks/probes/accent_contrast_probe.rb went with the change
+# yesterday is a check now — checks/lib/rendered/accent_contrast.rb and its
+# test — and checks/probes/accent_contrast_probe.rb went with the change
 # rather than staying beside it, because the same JS in two files is what the
 # single registry exists to prevent. A probe is a thing somebody has to
 # remember to run, and nine contrast failures across four surfaces are what
@@ -814,7 +814,7 @@ pub4_source_ceilings:
 # 2394 -> 2392: the contrast check came back out, and this is the honest half of
 # that entry. rendered_geometry already measures contrast on every text pair it
 # can resolve, across 76 surface-viewport cells against 39, and it reports the
-# same failures - measured by reverting tv's accent ink and watching both checks
+# same failures — measured by reverting tv's accent ink and watching both checks
 # name the same element on the same surfaces. It is also strictly broader: it
 # caught the storefront cart count, which the new check walked straight past
 # because that count is a span inside an anchor rather than a control painting
@@ -823,14 +823,14 @@ pub4_source_ceilings:
 # So the nine findings were never found by a new instrument. They were found by
 # running the suite and reading its output, which nobody had done since August
 # because fifteen layout_snapshot failures were sitting on top of them. The
-# check, its test and its registry row are gone; the one genuinely new check -
-# a literal backslash in check JavaScript - stayed, folded into
+# check, its test and its registry row are gone; the one genuinely new check —
+# a literal backslash in check JavaScript — stayed, folded into
 # check_requires_resolve_test, whose subject is already half-landed moves.
 # 2392 -> 2393 for amber/test/controllers/pwa_serving_test.rb. The manifest and
 # the service worker were served by a shared concern and asked for by nothing:
 # pwa_master_contract_test greps the ERB and pwa_offline_test covers the
 # offline page, so the two content types went unmeasured. Both are
-# load-bearing and invisible in a template - a manifest served as text/html
+# load-bearing and invisible in a template — a manifest served as text/html
 # installs nothing, and a worker served as anything but JavaScript is refused
 # with a console error no deploy sees. It also pins the rescue path, which
 # answers with a minimal installing worker rather than a 500, because a 500
@@ -845,8 +845,8 @@ pub4_source_ceilings:
 # The move changes nothing a reader sees, and that was the point: measured on
 # brgen.no/privacy before and after, .legal-prose is 724.397px wide with
 # 32px 20px 64px of padding and its h1 is 28.8px/33.12px either way. The values
-# are off this tree's scales - 1.6rem, 1.62 and .12em are on no list in
-# design_tokens - and snapping them is a separate decision, because every one
+# are off this tree's scales — 1.6rem, 1.62 and .12em are on no list in
+# design_tokens — and snapping them is a separate decision, because every one
 # of those numbers is something somebody sees.
   # 2394 -> 2393, a fall. checks/data/page_sim_inventory.yml and
   # page_sim_report.yml left the index: checks/data/.gitignore already named both
@@ -862,27 +862,27 @@ pub4_source_ceilings:
   RAILS: 1981
   # 106 -> 107 is test/test_githooks.rb. dev/githooks holds the three guards
   # that are the whole defence against a shared index, and nothing tested any of
-  # them - a hook that stopped firing looks exactly like a week in which nobody
+  # them — a hook that stopped firing looks exactly like a week in which nobody
   # made the mistake. It runs all three through real git in a throwaway
   # repository, because a hook is installed behaviour: a unit test of its logic
   # would not catch a lost chmod or a core.hooksPath pointing elsewhere. It
   # folds into no existing OPENBSD test; every one of those is about the box.
   # 107 -> 108 is test/test_config_drift_check.rb. The drift check compared
   # eighteen files, found every one identical, and reported the box clean while
-  # a root cron job existed only in the repo - a check whose blind spot was
+  # a root cron job existed only in the repo — a check whose blind spot was
   # invisible precisely because it passed. The rewrite that taught it to compare
   # root's crontab as a set of commands needs a test that fails when that
   # comparison is dropped again, and no existing OPENBSD test boots a check.
   # 111 -> 110: dotfiles/mov.sh left the repo. 2,343 lines of torrent-and-
-  # transcode, the largest shell file here, and nothing to do with vm23 - the
+  # transcode, the largest shell file here, and nothing to do with vm23 — the
   # owner's dotfile, kept because moving it was framed as a growth argument
   # rather than a decision. It was also the single heaviest source of scan
   # findings in the tree, 535 of them, which is what a file nobody deploys and
   # nobody tests contributes to every census that reads the repo.
 # 110 -> 111 for test/test_rc_env_export.rb. An rc.d script that sources an env
 # file must export it: `.` sets a bare KEY=value unexported, so naming keys
-# after it is an allowlist nobody can see. rc.d/brgen carries what that cost -
-# VAPID_PUBLIC_KEY sat in /etc/brgen.env for hours while push failed silently -
+# after it is an allowlist nobody can see. rc.d/brgen carries what that cost —
+# VAPID_PUBLIC_KEY sat in /etc/brgen.env for hours while push failed silently —
 # and was fixed with `set -a`. The three job workers were not, and they are
 # where it matters most, since the classes they run want those same keys. All
 # three had it wrong on 2026-09-11, which is what a fix applied to one file of
@@ -890,7 +890,7 @@ pub4_source_ceilings:
 # those are about the box, and this is about the shape of a script.
 # 111 -> 112 for test/test_guard_thresholds_documented.rb. OPENBSD/CLAUDE.md
 # said "thresholds are now 8/14" for a month after resource_guard.sh moved
-# MEM_RESTORE from 14 to 10 on 2026-08-14 - a recalibration the script records
+# MEM_RESTORE from 14 to 10 on 2026-08-14 — a recalibration the script records
 # in full, with the 1550-tick dataset behind it. Anyone reading the doc to
 # judge whether the guard was tuned right was reading a number the running code
 # had abandoned, and this is the second time that same threshold drifted.
@@ -954,8 +954,8 @@ pub4_source_ceilings:
   # public repo URL and cannot be handed one any other way, and the generator is
   # committed because the notebook says edits belong in it.
   # 224 -> 138 is a fall, not a raise, and it is the largest one this file has
-  # recorded. dilla's engine folded from lib/engine/ into dilla.rb - 81 parts to
-  # one file, 129 ruby files to 48 - and the ceiling was never lowered to match,
+  # recorded. dilla's engine folded from lib/engine/ into dilla.rb — 81 parts to
+  # one file, 129 ruby files to 48 — and the ceiling was never lowered to match,
   # so STUDIO has been carrying 86 files of room the next change could grow into
   # without argument. That is the defect the note at the top of this file names,
   # measured rather than argued: `test_no_ratchet_is_slack` had never reported
@@ -963,7 +963,7 @@ pub4_source_ceilings:
   #
   # Recorded from a clean worktree at 1bcb58524, which is the condition that
   # assertion asks for. The next STUDIO file now fails `measure` on the day it
-  # is written and wants a named raise here - which is the point, and is what
+  # is written and wants a named raise here — which is the point, and is what
   # 224 had stopped doing.
   # 138 -> 150 for twelve, in two halves. Six predate the fold that set 138 and
   # were never accounted for: dilla/lib/sample_worth.rb, dilla/scripts/generate_tts.rb
@@ -1006,7 +1006,7 @@ pub4_source_ceilings:
   # five the sweep found dead. A catalogue of livesets is dilla's work and
   # belongs beside the three sets it was written after.
   # 148 -> 145: the trymbot skin is retired. It was one deletable file by
-  # design - the same MASTER process wearing a different host - plus its README
+  # design — the same MASTER process wearing a different host — plus its README
   # and its test, and MASTER/tools/check.rb no longer registers a subsystem that is not
   # there.
   # 145 -> 143, a fall nobody recorded. postpro/motion.rb and
@@ -1029,7 +1029,7 @@ pub4_source_ceilings:
   # growth into this migration. The merged tree currently measures above that
   # ceiling, so the unexplained remainder stays visible to the next /fix pass.
 
-# Executable files directly under each tree's own bin/ - the number CLAUDE.md's
+# Executable files directly under each tree's own bin/ — the number CLAUDE.md's
 # "two surfaces, no third" makes a claim about while nothing counted it. MASTER
 # reached 28 without a single failure, because prose in a doc is not an
 # instrument. Twelve of those overlap on "check things": check, check, ci, audit,
@@ -1049,12 +1049,12 @@ pub4_source_ceilings:
 # 28 -> 27 folds bin/test-safety away. It ran 21 hand-picked spec files from no
 # caller anywhere in the repo, 20 of them already inside `rake spec`'s FileList
 # and the 21st naming test/test_io_catalog_index.rb, which moved to
-# spec/io/ in the lib rename - so every invocation aborted, and nothing noticed
+# spec/io/ in the lib rename — so every invocation aborted, and nothing noticed
 # because nothing invoked it. Its one reader was a bin/doctor check asserting
 # the file exists, which went with it.
 #
 # 27 -> 26 folds bin/preflight away. It checked ruby, bundler, `bundle check`
-# and three API keys - each already a bin/doctor check - then `ruby -c
+# and three API keys — each already a bin/doctor check — then `ruby -c
 # lib/master.rb` and a kernel/ directory the tree has not had for some time,
 # then ran bin/ci. Its only caller anywhere was bin/probe's own table, so it was
 # doctor and ci wearing a third name, and the syntax check it added cannot fail
@@ -1069,12 +1069,12 @@ pub4_source_ceilings:
 #
 # A ceiling rather than a ban, because the proposal is the easy half. Dropping
 # a category suffix is mechanical; deciding that Shared::DillaProcessor should
-# be Shared::Dilla is not, and it should not be - that class processes dilla's
+# be Shared::Dilla is not, and it should not be — that class processes dilla's
 # output and does not stand for dilla. So this number falls by a rename or by
 # an argument written beside the name, and rises by neither.
 # Every name a person or a model can type: the CLI's closed table, the words the
 # router accepts as the pipeline, and bin/operator's subcommands. An alias is a
-# name - `through workflow triad sweep scan fix self critique council review` is
+# name — `through workflow triad sweep scan fix self critique council review` is
 # ten words for one pass, and five slash names resolve to two stages.
 #
 # Counted for the same reason files are: adding a verb costs no file, moves no
@@ -1091,7 +1091,7 @@ name_candidates: 23
 # this row went 16 to 43 without a script being written. Those 27 had always been
 # doors; the census had never opened the directory they sat in. OPENBSD's root
 # held 33 executables at that commit, so the honest count before the move was 49
-# and after it is 46 - a fall of three, because deploy_smoke_check, integrity_check
+# and after it is 46 — a fall of three, because deploy_smoke_check, integrity_check
 # and solid_queue_proof went to checks/, and a check is run by a check rather than
 # typed. Three still sit at the OPENBSD root because vm23 runs them from the
 # checkout by path: backup_priv.sh, emergency_cpu.sh and ptr_openbsd_amsterdam.rb.
@@ -1100,19 +1100,19 @@ name_candidates: 23
 # root the whole time. MASTER and STUDIO are unchanged, having nothing at theirs.
 #
 # Still only those two levels. An app's generated bin/rails, a tool's own bin/
-# and OPENBSD/usr/local/bin - a mirror of what is installed on vm23 rather than
-# anything run from the checkout - are not surfaces the tree offers.
+# and OPENBSD/usr/local/bin — a mirror of what is installed on vm23 rather than
+# anything run from the checkout — are not surfaces the tree offers.
 #
 # MASTER 26 -> 20, locked 2026-09-23. Seven doors folded by their own commits
 # since the 26 lock: audit (52b2fd940, /commit takes paths and bin tests run
 # processes), handoff, onboard, playbook, reset-costs, sync-env and
 # tts-bootstrap, each commit naming its fold and most of them unused wrappers.
-# pub4 became operator on the two-surface decision (b9daa7fd1) - a rename, not
-# a fall - and loops joined for the boot film (3959c382e). Net -6, read from
+# pub4 became operator on the two-surface decision (b9daa7fd1) — a rename, not
+# a fall — and loops joined for the boot film (3959c382e). Net -6, read from
 # the census, not from the fold count.
 #
 # OPENBSD 46 -> 45, locked 2026-09-23. 7452c9837 collapsed the deploy checks
-# into one file and bin/vps_deploy_master.sh lost its executable bit - no
+# into one file and bin/vps_deploy_master.sh lost its executable bit — no
 # caller ever typed it as a door; every one reaches it through `zsh <path>`
 # (agent_map.yml, ssh_vm23.sh), and a script run through another shell is not
 # a surface the tree offers. The only net door change since f754501d1 set the

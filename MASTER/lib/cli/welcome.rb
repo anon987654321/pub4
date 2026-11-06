@@ -8,7 +8,7 @@ module Master
   module CLI
     # The first line an interactive session prints, before the boot that takes most of twenty seconds: the time,
     # how long since the last session and what it was about, and how many commits landed since. It reads the
-    # stored session and git, so it is never the same sentence twice; the canned "hello - goal?" it replaces
+    # stored session and git, so it is never the same sentence twice; the canned "hello — goal?" it replaces
     # said the same thing to everyone. Standard library only, because it runs before the bundle is activated.
     # Session#greet_from_model then has the model greet in its own words once the runtime is up.
     module Welcome
@@ -33,7 +33,7 @@ module Master
 
       def read_session(root)
         JSON.parse(File.read(File.join(root, ".master", "session.json")))
-      rescue SystemCallError, JSON::ParserError # scan: intentional - no stored session is a first session
+      rescue SystemCallError, JSON::ParserError # scan: intentional — no stored session is a first session
         {}
       end
 
@@ -55,7 +55,7 @@ module Master
 
         out, status = Master::Io::Exec.capture2("git", "-C", root, "rev-list", "--count", since, "HEAD")
         status.success? ? out.to_i : nil
-      rescue SystemCallError # scan: intentional - no git means no count, and the line leaves it out
+      rescue SystemCallError # scan: intentional — no git means no count, and the line leaves it out
         nil
       end
     end

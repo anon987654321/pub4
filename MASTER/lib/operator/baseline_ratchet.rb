@@ -4,8 +4,8 @@ module Operator
   # The ratchet contract every *_lint in this directory implements.
   #
   # A lint scans, groups its findings by kind, and compares each count against a
-  # BASELINES entry that is allowed to fall and never to rise. Those two steps -
-  # counts and over_baseline - were written out in full eight and four times
+  # BASELINES entry that is allowed to fall and never to rise. Those two steps —
+  # counts and over_baseline — were written out in full eight and four times
   # respectively, byte-identical apart from a space inside one bracket pair. The
   # duplication was invisible in review precisely because each copy was correct.
   #

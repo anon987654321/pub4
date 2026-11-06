@@ -3,7 +3,7 @@
 module Master
   module CLI
     module Stages
-      # Intake - parse raw user message into intent + structured fields.
+      # Intake — parse raw user message into intent + structured fields.
       # Slash syntax: /command args -> intent :command.
       # Plain text -> intent :llm.
       class Intake

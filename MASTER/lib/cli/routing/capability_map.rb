@@ -3,7 +3,7 @@
 require "json"
 
 module Master::CLI::Routing
-  # CapabilityMap - empirical model performance with an optional durable store.
+  # CapabilityMap — empirical model performance with an optional durable store.
   #
   # The store is written by the caller's `write`, (path, content) -> any: the
   # fold spine requires nothing from the rest of lib/, so the atomic writer

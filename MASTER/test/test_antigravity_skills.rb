@@ -206,7 +206,7 @@ class TestAntigravitySkills < Minitest::Test
   end
 
   # A directory with no SKILL.md is not a skill, and neither is one whose
-  # frontmatter names nothing - the caller keys on :name and would register an
+  # frontmatter names nothing — the caller keys on :name and would register an
   # anonymous entry that no /skill invocation can ever reach.
   def test_skills_skips_a_directory_with_no_skill_file_and_a_nameless_one
     with_workspace do |root|

@@ -1,4 +1,4 @@
-# Platform/tool idioms - gh, zsh - and intent/research namespaces
+# Platform/tool idioms — gh, zsh — and intent/research namespaces
 # merged from former *_patterns.yml + repo_topic_clusters + prompt_archaeology.
 # Each top-level key is a namespace.
 ---
@@ -783,7 +783,7 @@ closings:
   - "All quiet."
   - "End of stream."
 
-# Merged from former motd.yml - rotating capability spotlight for boot dmesg (S1407).
+# Merged from former motd.yml — rotating capability spotlight for boot dmesg (S1407).
 motd:
   spots:
     - "scan: %{rule_count} rules, constitutional self-test available"
@@ -794,7 +794,7 @@ motd:
     - "core: 7-file fold spine in lib/core/"
     - "synth: say \"improvise\" and it plays, live, until you say \"stop\""
 
-# Merged from former webhooks.yml - webhook ingress: POST /ingress/webhook/:name with
+# Merged from former webhooks.yml — webhook ingress: POST /ingress/webhook/:name with
 # JSON body { "message": "..." }. Example entry:
 # - name: deploy_notify
 #   enabled: false
@@ -807,7 +807,7 @@ webhooks:
     elevated: false
     message: "shared Rails assistant turn"
 
-# Merged from former cron_jobs.yml - cron ingress jobs, trigger via
+# Merged from former cron_jobs.yml — cron ingress jobs, trigger via
 # POST /ingress/cron/:name (Bearer MASTER_INGRESS_TOKEN). Wire system crontab:
 # curl -fsS -X POST -H "Authorization: Bearer $TOKEN" https://ai.brgen.no/ingress/cron/self_test
 cron_jobs:
@@ -869,7 +869,7 @@ auth_profiles:
       priority: 10
       models: []
 
-# Merged from former cli.yml - operator-tunable CLI pacing and diagnostic limits.
+# Merged from former cli.yml — operator-tunable CLI pacing and diagnostic limits.
 cli:
   schema: 1
   idle_sleep_seconds: 60
@@ -884,7 +884,7 @@ cli:
   # Commands that run for minutes and would leave the face looking stuck; the face points to the shell for them.
   face_shell_only: ["/fix", "/scan"]
 
-# Merged from former heartbeat.yml - heartbeat jobs live here. Schedule-based
+# Merged from former heartbeat.yml — heartbeat jobs live here. Schedule-based
 # maintenance outside the heartbeat remains removed. self_test runs as the
 # auto_default standing order (after any source mutation); snapshot is
 # `bin/operator snapshot`; prune_memory and prune_undo have no command.
@@ -919,7 +919,7 @@ heartbeat:
     enabled: false
     description: Paired-workspace pulse. Replies HEARTBEAT_OK when nothing needs a nudge.
 
-# Merged from former vocabulary.yml - sacred user-spoken terms. Historical intent
+# Merged from former vocabulary.yml — sacred user-spoken terms. Historical intent
 # was for scan rules and rename tooling to refuse rewriting these, but no code
 # ever actually enforced that; kept as reference documentation of naming
 # conventions actively used across the codebase, not as an enforced policy.
@@ -1101,7 +1101,7 @@ operator_playbook:
     - id: scanner_finding_comment_vs_code
       area: master
       signal: "rake selftest/constitution flags a pattern (e.g. HTTP/Open3 without bounded timeout, silent catch {}) that only appears in a comment, or inside a build-output copy under web/public/assets"
-      action: "Before fixing the flagged code, read the actual line: check it isn't inside a comment (strip # lines before matching) and isn't a Propshaft-fingerprinted copy under web/public/assets (already excluded via Scanner.skip_path? - reuse that check rather than hand-rolling a new exclusion list). Widen detection regexes narrowly (e.g. \\w*thr\\w*\\.join\\( for a bounded Thread/Process wait) rather than broadly, to avoid introducing new false negatives."
+      action: "Before fixing the flagged code, read the actual line: check it isn't inside a comment (strip # lines before matching) and isn't a Propshaft-fingerprinted copy under web/public/assets (already excluded via Scanner.skip_path? — reuse that check rather than hand-rolling a new exclusion list). Widen detection regexes narrowly (e.g. \\w*thr\\w*\\.join\\( for a bounded Thread/Process wait) rather than broadly, to avoid introducing new false negatives."
       proof: "rake selftest finding count drops for the specific file/law with no behavior change; rake test stays green"
 
     - id: env_isolation_list_incompleteness

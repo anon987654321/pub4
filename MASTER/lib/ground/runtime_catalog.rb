@@ -41,8 +41,8 @@ module Master
 
         # A section is read through `load`, the one door START_HERE documents.
         # Five readers stood beside it whose whole body was `load("<own name>")`
-        # - event_registry, invariants, ui_philosophy, face3d_migration,
-        # face_research - and no caller outside their own test used one. They
+        # — event_registry, invariants, ui_philosophy, face3d_migration,
+        # face_research — and no caller outside their own test used one. They
         # were a second public surface over the same YAML, and the class carried
         # fourteen public methods because of them.
         def web_boot_payload
@@ -65,12 +65,12 @@ module Master
           }
         end
 
-        # Inline in chat shell only - keeps first paint off the ~30KB full catalog parse.
+        # Inline in chat shell only — keeps first paint off the ~30KB full catalog parse.
         def web_boot_payload_minimal
           runtime_cfg = load("runtime")
           # Keep topology loading behind the same reader used by the full payload.
           # A second load path turns one YAML source into two implementations.
-          # Path was "OPENBSD/openbsd/vm_resource.yml" - a doubled segment. The
+          # Path was "OPENBSD/openbsd/vm_resource.yml" — a doubled segment. The
           # file is at OPENBSD/vm_resource.yml, so every load printed
           # "load_yaml: No such file or directory" and fell through to {} via the
           # rescue, silently defaulting falcon_worker_budget to FALCON_COUNT
@@ -123,8 +123,8 @@ module Master
             # drifted on all five values against visual_governor.js, which is
             # now the one place the limits live. The read outlived it and
             # printed "load_yaml: No such file" on every boot and every test
-            # run. The key stays - the browser payload and
-            # test_ground_runtime_catalog both expect it - and is empty,
+            # run. The key stays — the browser payload and
+            # test_ground_runtime_catalog both expect it — and is empty,
             # because that is what the source is.
             visual: {},
             tts: Master.load_yaml(Master.data_path("tts.yml"), default: {}),

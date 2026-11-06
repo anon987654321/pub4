@@ -13,7 +13,7 @@ module Master
     # The one sanctioned way to run a subprocess. Mirrors Open3.capture{2,2e,3}
     # (same argument shapes, same return shapes) but every call carries a hard
     # time budget and, on overrun, kills the child's whole process group so a
-    # wedged command - or a grandchild it spawned - can never block the pipeline
+    # wedged command — or a grandchild it spawned — can never block the pipeline
     # forever (ROBUSTNESS: no unbounded Open3).
     #
     #   out, status      = Master::Io::Exec.capture2e("git", "status", chdir: root)

@@ -5,7 +5,7 @@ module Master
     module CommandRegistry
       module_function
 
-      # /model - show, list or switch the active model. `/model auth` connects
+      # /model — show, list or switch the active model. `/model auth` connects
       # the subscription lanes those models are served through.
       def dispatch_model(agent:, config:, metrics:, root:, ctx: nil, arg: nil)
         arg = arg || arg_for(ctx)

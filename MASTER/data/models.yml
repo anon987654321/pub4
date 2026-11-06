@@ -1,4 +1,4 @@
-# Model routing profile - Claude Code CLI (opus) primary, with automatic API/local/free fallback.
+# Model routing profile — Claude Code CLI (opus) primary, with automatic API/local/free fallback.
 
 schema: 1
 routing:
@@ -18,7 +18,7 @@ fallback_policy:
   # ModelRouter#failover_skip_categories.
   #
   # Three things were wrong with this block and all three are why it did nothing.
-  # The key was written bare as `on:`, which YAML 1.1 parses as the boolean true -
+  # The key was written bare as `on:`, which YAML 1.1 parses as the boolean true —
   # `fallback_policy["on"]` was nil and `fallback_policy[true]` held the list. It
   # had no reader at all. And its vocabulary was invented: `network_error`,
   # `refusal`, `insufficient_balance` and `quota_exceeded` are not Result
@@ -28,7 +28,7 @@ fallback_policy:
   # A rate-limited or out-of-budget model cannot succeed on an immediate retry,
   # so both belong here, and so does a model the provider does not hold.
   # `provider_error` deliberately does not: a transient 5xx is what in-place
-  # retry exists for. `retries_per_tier` was removed - the retry count has one
+  # retry exists for. `retries_per_tier` was removed — the retry count has one
   # source, `failover.max_retries` below.
   "on":
     - timeout
@@ -131,7 +131,7 @@ model_defs:
     # 2026-09-16's "hangs from inside a session" finding does not reproduce
     # (verified 2026-09-23: direct arg, piped stdin, and a detached background
     # process all returned correctly). speed and cost were still scored for
-    # that stale state - 0.70/0.60 assumed subprocess overhead and per-call
+    # that stale state — 0.70/0.60 assumed subprocess overhead and per-call
     # billing neither applies to a browser-authenticated subscription lane.
     # Re-measured: ~8s for a ~30KB prompt (comparable to gemini-2.5-flash's
     # observed per-call latency), and cost is 1.0 like claude_cli_opus below,
@@ -422,14 +422,14 @@ openrouter:
     - OPENROUTER_API_KEY_3
   # GitHub Models is NOT a lane: retired 2026-07-30 (playground, catalog,
   # inference API and BYOK all withdrawn; GitHub points at Azure AI Foundry).
-  # Recorded so no future pass adds a dead provider to a fallback chain -
+  # Recorded so no future pass adds a dead provider to a fallback chain —
   # the failure mode model_catalog_check.rb exists to catch.
   free_latest:
     - nvidia/nemotron-3-super-120b-a12b:free
 
 # Keyless free fallback via headless Chrome (ferrum gem). Auto-activates when no API keys
 # are configured; opt-in anytime with MASTER_WEB_CHAT=1 or MASTER_KEYLESS=1.
-# Selectors are best-effort - sites change often. Login cookies persist in the profile dir.
+# Selectors are best-effort — sites change often. Login cookies persist in the profile dir.
 # Models use the web-chat: prefix. ToS-sensitive: never default when paid keys exist.
 ferrum_web_chat:
   enabled_when_env: MASTER_WEB_CHAT
@@ -612,7 +612,7 @@ ollama:
 # media_providers was deleted here on 2026-08-21: nothing read it. The env
 # vars live in providers.yml replicate.env (ReplicateClient reads ENV
 # directly), the TTS slug in voice/engines.rb, and replicate carries its own
-# image models in MASTER/tools/replicate - this block was a declaration with no reader,
+# image models in MASTER/tools/replicate — this block was a declaration with no reader,
 # claiming a routing that never existed.
 
 # Free models are the floor. Among them the fastest recently-answering one goes

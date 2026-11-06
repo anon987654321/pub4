@@ -7,7 +7,7 @@ require "ruby_llm"
 # claims about something outside this repository: `ruby_llm_key` names a setter
 # on RubyLLM::Configuration, and `min_key_length` decides whether an env var
 # counts as a key at all. Both were wrong at once on 2026-08-30 and the runtime
-# did not boot: `agy` - the Antigravity CLI, which is not a RubyLLM provider -
+# did not boot: `agy` — the Antigravity CLI, which is not a RubyLLM provider —
 # declared `ruby_llm_key: agy_api_key` with `min_key_length: 0`, so the unset
 # AGY_BIN satisfied `"".length >= 0` and RubyLLM.configure raised NoMethodError
 # on every single boot. `bin/operator check` reported it as a failed lexical stage

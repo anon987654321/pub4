@@ -44,7 +44,7 @@ module Master
 
           stream = definition.mode.to_sym == :opportunity ? :lexical_opportunities : :lexical_violations
           definition.scan(code, file: path).map do |hit|
-            # A check builds the whole finding - its fix, confidence and radius - through Detector#finding.
+            # A check builds the whole finding — its fix, confidence and radius — through Detector#finding.
             next hit.detail if hit.detail
 
             Finding.build(

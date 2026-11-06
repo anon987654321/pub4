@@ -7,7 +7,7 @@ require_relative "../coverage_reconciliation"
 
 # The rule the checks README paid for: plant the defect, assert red and
 # named, remove it, assert green, and drive the tool once against a gutted
-# input. Here that means three fixtures - a file no instrument sees under a
+# input. Here that means three fixtures — a file no instrument sees under a
 # complete map (must fail), the same tree fully covered (must pass), and the
 # same gap under a map that declares itself partial (must be inconclusive,
 # never silently green).

@@ -7,25 +7,25 @@ module Operator
   # The visual decisions that are law, made measurable. Four checks, one ratchet
   # each; every ceiling only descends.
   #
-  #   low_contrast - WCAG ratios computed from the COMPILED bundles, because the
+  #   low_contrast — WCAG ratios computed from the COMPILED bundles, because the
   #     build is what production wears (shared/README.md: "read the second table
   #     before the first"). Text pairs read large_text_contrast (AA 4.5) from
   #     laws.yml; UI/accent pairs stay at WCAG non-text 3:1. AAA 7.0
-  #     (normal_text_contrast) is design_metrics' budgeted check - raising this
+  #     (normal_text_contrast) is design_metrics' budgeted check — raising this
   #     lint's floor to 7.0 floods the compiled bundles. Custom properties are
   #     resolved one var() hop within the same bundle; pairs that don't resolve
   #     to hex are skipped, not guessed.
   #
-  #   unreserved_image - an image with no width/height/aspect at the call site
+  #   unreserved_image — an image with no width/height/aspect at the call site
   #     is a layout shift waiting on the network (TEMPORAL_COUPLING). Counted
   #     per call site; reserve with size attributes or an aspect-ratio class.
   #
-  #   accent_on_prose - brgen's identity is grayscale ("the direction itself,
-  #     not a rotated hue" - brgen's :root); accent belongs to interactive and
+  #   accent_on_prose — brgen's identity is grayscale ("the direction itself,
+  #     not a rotated hue" — brgen's :root); accent belongs to interactive and
   #     state elements only. A `color: var(--accent)` under a non-interactive
   #     selector spends the one hue on body text.
   #
-  #   compose_costume - reading surfaces must not wear the writing control's
+  #   compose_costume — reading surfaces must not wear the writing control's
   #     costume (CQS). Pins the regression that shipped once: .city-today
   #     dressed as the compose pill. The strip is a card; the pill is compose's.
   module VisualContractLint
@@ -54,7 +54,7 @@ module Operator
     # to silence.
     #
     # .price is not one of the four, and the reason written here was the wrong
-    # one. It said INTERACTIVE_SELECTOR does not match .price - true, and beside
+    # one. It said INTERACTIVE_SELECTOR does not match .price — true, and beside
     # the point: accent_findings never opened the file. The glob was brgen's
     # stylesheet directory and .price's colour is at shared/_minimal.scss:474.
     #
@@ -196,8 +196,8 @@ end
     IMAGE_CALL = /(?:(?<!responsive_)(?<!lazy_)\bimage_tag[ (]|<img\b)[^\n]*/
 
     # `reserved: container` on the call line or the line above marks a site
-    # whose CONTAINER owns the box - an absolute-inset img, an aspect-ratio
-    # frame - so the call site cannot shift layout and carries no pair.
+    # whose CONTAINER owns the box — an absolute-inset img, an aspect-ratio
+    # frame — so the call site cannot shift layout and carries no pair.
     RESERVED_MARKER = "reserved: container"
 
     def image_findings
@@ -225,8 +225,8 @@ end
     # reason already; accent_findings was not.
     #
     # brgen only, and that is the rule rather than the glob. The rationale is
-    # brgen's grayscale identity - "the direction itself, not a rotated hue"
-    # (brgen's :root) - so a hue on prose spends the surface's one accent. amber's
+    # brgen's grayscale identity — "the direction itself, not a rotated hue"
+    # (brgen's :root) — so a hue on prose spends the surface's one accent. amber's
     # identity IS its warm taupe, and its `.sustainability-grade` and
     # `.weather-bar` are that identity rather than debt. Widening to amber would
     # apply brgen's rule to a surface it was never written for.
@@ -248,8 +248,8 @@ end
     # several more by bare name, with @use or meta.load-css, so a shared file
     # painting accent on prose lands in brgen while sitting outside every glob
     # this check used to have.
-    # _nearby_chat_widget.scss is one, and it is correct - the accent is on a
-    # link - but nothing here could say so.
+    # _nearby_chat_widget.scss is one, and it is correct — the accent is on a
+    # link — but nothing here could say so.
     #
     # It also has to be the bundle rather than every shared file, because the
     # rule does not govern the other two dialects. amber is luxury and bsdports
@@ -305,7 +305,7 @@ end
     # rare utilities. The zen-era button--primary BEM twins died in the same
     # pass; any new spelling is the next schism at birth.
     # button-share is its own pill (share control on marketplace/tv/nearby), not a
-    # variant of the base - in the vocabulary because it is worn and styled.
+    # variant of the base — in the vocabulary because it is worn and styled.
     BUTTON_VOCABULARY = %w[
       button button-primary button-ghost button-danger button-small button-link button-block button-share
     ].to_set
@@ -348,7 +348,7 @@ end
     #
     # This matched /radius-pill|tap-min/ under any .city-today selector, which
     # made it fire on `.city-today summary { min-height: var(--tap-min, 44px) }`
-    # - a disclosure toggle, a real control, raised to the 44px Fitts floor by
+    # — a disclosure toggle, a real control, raised to the 44px Fitts floor by
     # 01e14ffa6 ("link lists were 20px tall where the floor is 44"). Two correct
     # rules in collision: ux_laws.fitts says a control takes a real target, and
     # this said a reading surface must not dress as the writing control. The
@@ -363,7 +363,7 @@ end
       return true if body.match?(/radius-pill/)
       return false unless body.match?(/tap-min/)
 
-      # The strip itself - `.city-today` or `aside.city-today`, no descendant.
+      # The strip itself — `.city-today` or `aside.city-today`, no descendant.
       selector.strip.split(",").any? { |part| part.strip.match?(/\A[a-z]*\.city-today\z/) }
     end
   end

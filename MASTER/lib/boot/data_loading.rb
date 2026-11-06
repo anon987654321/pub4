@@ -30,7 +30,7 @@ module Master
       content
     end
 
-    # This ENOENT warning is load-bearing - keep it. A doubled path segment in
+    # This ENOENT warning is load-bearing — keep it. A doubled path segment in
     # RuntimeCatalog#web_boot_payload_minimal ("OPENBSD/openbsd/vm_resource.yml")
     # was found only because every load printed "No such file or directory"
     # before quietly defaulting. Callers for whom absence is a legitimate answer
@@ -66,7 +66,7 @@ module Master
     # A data file read from a caller's own root, falling back to the one this
     # runtime ships, and never raising at the caller. PrincipleMap and
     # MaturityScorecard each wrote this seven-line shape out, differing only in
-    # the filename and the Swallow context - the DRY detector named the pair.
+    # the filename and the Swallow context — the DRY detector named the pair.
     def load_data_yaml(root, name, fallback, context:)
       path = File.join(root, "data", name)
       path = fallback unless File.file?(path)
@@ -113,10 +113,10 @@ module Master
     # Scanners call this with whatever directory they are scanning
     # (LawRegistryAudit, SelfTest, YamlBridgeRules, Fix::Priority all pass
     # root: @root). For any root but our own, "this project has no laws.yml" is
-    # the answer, not a fault - so absence is quiet there and stays loud for
+    # the answer, not a fault — so absence is quiet there and stays loud for
     # ROOT, where a missing constitution is a real failure. Before this, every
     # scanner test against a Dir.mktmpdir root printed
-    # "load_yaml: No such file or directory ... /T/d2026.../data/laws.yml", which
+    # "load_yaml: No such file or directory ... /T/d2026…/data/laws.yml", which
     # trained readers to scroll past the one warning that has already caught a
     # genuine path bug.
     def load_laws(root: ROOT)
@@ -127,7 +127,7 @@ module Master
       runtime_path = File.join(root, "data", "law_runtime.yml")
       canonical_path = File.join(root, "data", "laws.yml")
       selected = File.file?(runtime_path) ? runtime_path : canonical_path
-      # Skip the read entirely rather than let load_yaml warn - see above.
+      # Skip the read entirely rather than let load_yaml warn — see above.
       return {} unless root == ROOT || File.exist?(selected)
 
       load_yaml(selected)

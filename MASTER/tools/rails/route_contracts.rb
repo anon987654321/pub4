@@ -3,11 +3,11 @@
 # Route contracts: what each GET route answers an anonymous visitor, recorded
 # from a running app and checked against any other running copy of it.
 #
-# This is the first piece of the pub5 acceptance harness (TODO.md, "pub5 -
+# This is the first piece of the pub5 acceptance harness (TODO.md, "pub5 —
 # Phase 0"): a port is done for an app when its contracts pass against the
-# ported app. It records only what should survive a rewrite - status,
+# ported app. It records only what should survive a rewrite — status,
 # redirect target, media type, title, first heading, landmark elements and
-# form actions - and normalises numeric ids so seeded data does not churn it.
+# form actions — and normalises numeric ids so seeded data does not churn it.
 #
 #   ruby MASTER/tools/rails/route_contracts.rb record bsdports http://127.0.0.1:3311 [--host bsdports.org]
 #   ruby MASTER/tools/rails/route_contracts.rb check  bsdports http://127.0.0.1:3311 [--host bsdports.org]

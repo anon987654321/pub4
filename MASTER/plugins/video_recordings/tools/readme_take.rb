@@ -1,7 +1,7 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
-# readme_take - the README's opening image, from the README's own words.
+# readme_take — the README's opening image, from the README's own words.
 #
 #   ruby tools/readme_take.rb              # speech, then the take
 #   ruby tools/readme_take.rb --full       # the whole README, not the highlights
@@ -21,7 +21,7 @@
 #      complains.
 #   3. ffmpeg makes loop.mp4 at 20fps and loop.gif from three seconds of it.
 #
-# The gif is what GitHub renders - its sanitizer strips <video> - and it is 12
+# The gif is what GitHub renders — its sanitizer strips <video> — and it is 12
 # colours at 8fps because a field of hard white dots is high-entropy: the same
 # three seconds at 64 colours and 12fps is 4.5MB against 1.3MB.
 
@@ -31,7 +31,7 @@ require "shellwords"
 require "tmpdir"
 require_relative "../lib/trace/dmesg"
 
-# The runtime, for Voice::Policy - the one reader of data/voice.yml.
+# The runtime, for Voice::Policy — the one reader of data/voice.yml.
 $LOAD_PATH.unshift(File.expand_path("../lib", __dir__))
 require "master"
 
@@ -74,7 +74,7 @@ SPOKEN = {
 
 # Paragraphs the file keeps and the take does not. The title is the image's own
 # caption, the closing paragraph is a list of links, and the three under "Under
-# the hood" introduce a console transcript and a Ruby snippet - read aloud they
+# the hood" introduce a console transcript and a Ruby snippet — read aloud they
 # announce something the listener is never shown.
 SILENT = [
   "Read START_HERE", "Under the hood", "Wake it with one line",
@@ -84,7 +84,7 @@ SILENT = [
 # The take, by default, is the highlights rather than the file.
 #
 # Read whole, README.md is 950 words and six and a half minutes, and the first
-# three paragraphs are about how GitHub embeds an mp4 - repository mechanics
+# three paragraphs are about how GitHub embeds an mp4 — repository mechanics
 # that mean nothing to a listener and are most of what they hear first. These
 # seven paragraphs are the ones a person who might fund this needs: what it is,
 # why the language is the moat, that it runs with nothing behind it, the size

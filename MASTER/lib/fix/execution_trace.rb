@@ -195,7 +195,7 @@ module Master
 
           content = safe_transport_unwrap(source)
           check_ruby_source(path, content)
-        # SyntaxError descends from ScriptError, not StandardError - without
+        # SyntaxError descends from ScriptError, not StandardError — without
         # naming it here the unparseable file kills the whole check instead of
         # becoming the finding this preflight exists to report.
         rescue SyntaxError, StandardError => e

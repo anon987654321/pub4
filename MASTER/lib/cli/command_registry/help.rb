@@ -350,7 +350,7 @@ module Master
       end
 
       # The surface is closed, so a name with no topic is not a documented
-      # command missing its page - it is not a command. Say which is which,
+      # command missing its page — it is not a command. Say which is which,
       # rather than leaving a reader to look for a page nobody wrote.
       def unknown_command_text(key)
         "help: unknown command /#{key} - the slash surface is #{slash_commands.size} commands " \

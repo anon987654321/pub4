@@ -12,8 +12,8 @@ module Deploy
   #   1. brgen served its LIGHT palette. :root declared the dark BRGEN_OLD tokens
   #      and had for months, but shared/_tokens.scss ends with
   #      `@media (prefers-color-scheme: light) { :root:not([data-theme=dark]) }`,
-  #      which outranks a bare :root. On any client whose OS prefers light - the
-  #      default on most installs - that block won. The app declared dark and
+  #      which outranks a bare :root. On any client whose OS prefers light — the
+  #      default on most installs — that block won. The app declared dark and
   #      served light, and both are valid CSS, so nothing reported it.
   #
   #   2. The chat tab is in a different corner on different surfaces. Two of
@@ -25,7 +25,7 @@ module Deploy
   # check here calls skipped_live when a port is closed, and a skip is a warning
   # rather than a failure unless CHECK_REQUIRE_LIVE=1. So a green run on a laptop
   # with nothing booted means nothing was measured. This check follows that
-  # convention rather than inventing a second one - but it records what it
+  # convention rather than inventing a second one — but it records what it
   # measured, so a half-blind run does not read like a real one.
   class RenderedInvariants
     # Surfaces to visit, and the theme each is expected to serve.
@@ -56,7 +56,7 @@ module Deploy
     # adding one.
     CHAT_EXCEPTIONS = {
       # The dating splash is a bare swipe surface and the widget floated over
-      # "sveip for å begynne" - see brgen's body.vertical-dating rules.
+      # "sveip for å begynne" — see brgen's body.vertical-dating rules.
       "dating.brgen.no" => :absent,
       # Lifted clear of the transport bar, whose height it reads from
       # --tab-bar-h. Sitting flush would put it under a bar that intercepts the
@@ -103,7 +103,7 @@ module Deploy
 
     # runner.rb and check_environment.rb both invoke a check as `Class.run`. This
     # check shipped with only the instance method, so it was a row in checks.yml
-    # that nothing could call - registered, listed, and never once executed. The
+    # that nothing could call — registered, listed, and never once executed. The
     # check exists to catch declarations with no reader; it was one.
     def self.run = new.run
 
@@ -143,7 +143,7 @@ module Deploy
       session.navigate("https://#{host}/", settle: 1.5)
       # A fresh profile gets the first-visit drawer reveal, which slides the
       # top bar mid-transition and turns steady-state alignment into noise.
-      # Dismiss it the way a user would - Escape is the documented gesture -
+      # Dismiss it the way a user would — Escape is the documented gesture —
       # and wait out the 300ms slide before measuring.
       if session.evaluate("!!document.querySelector('.revealed')")
         session.press("Escape")
@@ -173,12 +173,12 @@ module Deploy
     # 2026-08-24: storefronts read light, and that is a product decision, not a
     # preference) and this list did not move with them. The check reported two
     # deliberate surfaces as defects and told anyone reading to "fix" them by
-    # pinning data-theme="dark" - undoing the decision on the check's say-so.
+    # pinning data-theme="dark" — undoing the decision on the check's say-so.
     #
     # So the palette question is now asked against the page's own declaration:
     # whatever <html data-theme> says, the pixels have to agree. That is the bug
-    # this check was written for - a prefers-color-scheme block outranking a bare
-    # :root, so the served palette contradicted the declared one - and it stays
+    # this check was written for — a prefers-color-scheme block outranking a bare
+    # :root, so the served palette contradicted the declared one — and it stays
     # caught without the check holding an opinion about which surface is which.
     #
     # The product decision is still pinned, separately, by SURFACES: an accidental

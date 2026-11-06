@@ -211,7 +211,7 @@ module Deploy
       return unless res.code.to_i.between?(200, 399)
 
       res.body.to_s
-    rescue StandardError # scan: intentional - nil is the measured-nothing signal, reported downstream as the check's warning
+    rescue StandardError # scan: intentional — nil is the measured-nothing signal, reported downstream as the check's warning
       nil
     end
   end

@@ -5,8 +5,8 @@ require_relative "test_helper"
 # The read guard is name-based, so it holds for a file the agent has not read
 # yet. That makes both halves load-bearing: every name that must be refused, and
 # every name that must stay readable. The readable names are the shapes a looser
-# pattern gets wrong - `private` catches private_notes_test.rb, a bare `keys?`
-# lets api_keys.txt through - so they are pinned as firmly as the refusals.
+# pattern gets wrong — `private` catches private_notes_test.rb, a bare `keys?`
+# lets api_keys.txt through — so they are pinned as firmly as the refusals.
 class TestSecretPaths < Minitest::Test
   REFUSED = %w[
     .env .env.local .envrc master.env production.env

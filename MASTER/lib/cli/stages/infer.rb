@@ -3,7 +3,7 @@
 module Master
   module CLI
     module Stages
-      # Infer - promote natural-language messages to :command intent via data/patterns.yml (infer namespace).
+      # Infer — promote natural-language messages to :command intent via data/patterns.yml (infer namespace).
       class Infer
         PRESSURE_PATTERN = /\b(?:urgent|asap|immediately|critical|now|hurry|fast|quick(?:ly)?|emergency|sos)\b/i.freeze
 

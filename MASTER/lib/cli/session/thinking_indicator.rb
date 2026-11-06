@@ -286,9 +286,9 @@ module Master
         STAGE_EVENTS[event]
       end
 
-      # "stage:*" events name their own unit and may carry a live detail - the
+      # "stage:*" events name their own unit and may carry a live detail — the
       # media lane's download fraction, for one. The row reads "mov0 34% of
-      # 667.6MB - Title"; one_row keeps it inside the screen's width.
+      # 667.6MB — Title"; one_row keeps it inside the screen's width.
       def stage_with_detail(event, payload)
         name = event.delete_prefix("stage:")
         detail = payload[:detail].to_s.strip
@@ -297,7 +297,7 @@ module Master
 
       # What is worth saying out loud while a pass runs. A pass prints hundreds
       # of unit lines and speaking each would be a torrent; these are the ones a
-      # person waiting for it would want called out - a reading finished, a pass
+      # person waiting for it would want called out — a reading finished, a pass
       # of repairs counted, the council's verdict, the pass itself ending.
       # Spoken as they happen, so the reply at the end has only its footer left
       # to say instead of the whole log.

@@ -6,12 +6,12 @@
 # tree exempt from the law they enforce. Nobody decided that and nothing said it;
 # it fell out of a string. The 2026-08-12 merge moved the fold under `lib/` and
 # the exemption closed silently, which is the same failure in the other
-# direction - a check's coverage changing without anyone reading a number.
+# direction — a check's coverage changing without anyone reading a number.
 #
 # This file is that number. `rake lint:scan_coverage` fails when a top-level
 # directory of MASTER holds Ruby and appears in neither list, so a new tree is a
 # decision instead of an accident. `roots` is read by Fix::SelfCheck, not just by
-# the lint - a coverage manifest nothing loads is the inert-config defect this
+# the lint — a coverage manifest nothing loads is the inert-config defect this
 # repo already has enough of.
 #
 # An exemption with no subject is a hole in a check nobody can see
@@ -23,7 +23,7 @@ scan_coverage:
   - lib
   # The rules are subject to the rules. law/ arrived with 85 rules migrated out
   # of laws.yml and was classified as neither, which is the state this file
-  # exists to make impossible - 91 Ruby files that no check looked at, in the one
+  # exists to make impossible — 91 Ruby files that no check looked at, in the one
   # tree whose whole subject is what the checks look at.
   #
   # Scanned rather than exempt because it scans clean: adding it here produces no

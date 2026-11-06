@@ -9,7 +9,7 @@
 #
 # A name here is a candidate, not a corpse. Verify each with a word-boundary
 # grep across all four governed trees before deleting, and delete the transitive closure
-# rather than one layer - removing a dead handler orphans the helpers only it
+# rather than one layer — removing a dead handler orphans the helpers only it
 # called, so this has to be re-run until it settles.
 #
 # Four traps, and the first pass of this census fell into all four.
@@ -20,7 +20,7 @@
 #      new one cannot go unnoticed.
 #   2. A name inside a string is not a call. run_swallow_report read as reached
 #      because its own rescue logs "CLI.run_swallow_report". Comments and prose
-#      literals are dropped - but a short lowercase literal is kept, because that
+#      literals are dropped — but a short lowercase literal is kept, because that
 #      is how a symbol table names a handler, and it is the only thing reaching
 #      run_snapshot from heartbeat.rb.
 #   3. An endless method carries its body on the def line. Skipping the whole

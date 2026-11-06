@@ -6,7 +6,7 @@ module Master
       class PassRunner
         # The LLM-driven fix stage: orders runnable rules by dependency level,
         # dispatches each rule group (in parallel when the group's violations
-        # touch disjoint files), and tracks circuit/deadline state - separate
+        # touch disjoint files), and tracks circuit/deadline state — separate
         # concern from the deterministic FastStage pipeline.
         module LlmStage
           private

@@ -14,7 +14,7 @@ module Deploy
   # Chrome with --disable-gpu, which turns WebGL off outright, so MapLibre and
   # the MASTER face both measure as an empty canvas. A check built on that
   # instrument would pass or fail for reasons that have nothing to do with the
-  # map - the old backlog section 4 is this, and it is an instrument problem
+  # map — the old backlog section 4 is this, and it is an instrument problem
   # rather than a feature gap.
   #
   # This session opts into SwiftShader. Software GL is slow and rasterises text
@@ -25,7 +25,7 @@ module Deploy
 
     # A canvas is not proof. The assertions are: the context exists (so the
     # instrument is working at all), the drawing buffer has size, and the
-    # library's own readiness signal fired - for MapLibre, that its style is
+    # library's own readiness signal fired — for MapLibre, that its style is
     # loaded, which is false while it is still an empty canvas.
     SURFACES = [
       {
@@ -75,7 +75,7 @@ module Deploy
 
     # Read through the class rather than the constant directly: a constant in a
     # method body resolves lexically, so a subclass pointing this at a page with
-    # no canvas - which is how the test proves the check can fail - would silently
+    # no canvas — which is how the test proves the check can fail — would silently
     # measure the same surface as the parent.
     def surfaces = self.class::SURFACES
 
@@ -111,7 +111,7 @@ module Deploy
       end
 
       # Counted, so "measured nothing" and "measured and passed" are
-      # distinguishable - which is the complaint this check answers.
+      # distinguishable — which is the complaint this check answers.
       @result.checked!
     end
   end

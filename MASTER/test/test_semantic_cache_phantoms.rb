@@ -7,14 +7,14 @@ require "io/semantic_cache"
 
 # The cache runs before the phantom guard judges the response, so storing a
 # degenerate one makes it the permanent answer to that prompt: every identical
-# question replays it, trips the same detector, and PhantomRecovery's ladder -
-# which counts consecutive phantoms - reaches halt with no clean response in
+# question replays it, trips the same detector, and PhantomRecovery's ladder —
+# which counts consecutive phantoms — reaches halt with no clean response in
 # between to reset it.
 #
 # Measured on vm23 before this: the same question answered correctly on a cache
 # miss, then halted on the second and third ask.
 class TestSemanticCachePhantoms < Minitest::Test
-  # 60 characters, four times over - comfortably past "same 60-char span repeats
+  # 60 characters, four times over — comfortably past "same 60-char span repeats
   # >= 3 times" in data/laws.yml.
   SPAN = ("the quick brown fox jumps over the lazy dog and keeps going ")
   LOOPING = SPAN * 4

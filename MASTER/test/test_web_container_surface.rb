@@ -5,7 +5,7 @@ require_relative "test_helper"
 # The 2026-08-22 outage class: master_container.rb calls into web services
 # from OUTSIDE, nothing local boots the container, and a privatization that
 # every suite blessed put ai.brgen.no in a boot loop. This pins the exact
-# external surface the initializer and the TTS controller use - by reading
+# external surface the initializer and the TTS controller use — by reading
 # the initializer for its calls and asserting each is a PUBLIC singleton
 # method on the class it names, without booting Rails (TtsJob only needs a
 # Rails.root stub to load).

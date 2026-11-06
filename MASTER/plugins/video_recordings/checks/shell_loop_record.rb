@@ -1,7 +1,7 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
-# shell_loop_record - record a terminal session as a video, frame by frame.
+# shell_loop_record — record a terminal session as a video, frame by frame.
 #
 #   ruby RAILS/checks/shell_loop_record.rb --out ../MASTER/loop2.mp4 \
 #        --audio ../STUDIO/dilla/out/loop.wav --fps 20
@@ -11,7 +11,7 @@
 # Chrome's, and the audio is muxed rather than played.
 #
 # Why Chrome and not a terminal recorder. asciinema and script(1) capture a byte
-# stream with timings, and turning that into a video needs a renderer anyway -
+# stream with timings, and turning that into a video needs a renderer anyway —
 # one that reads ANSI, picks a font, and rasterises. Chrome already is that
 # renderer, it has the fonts, and it can be told exactly which rectangle to
 # photograph. The cost is that the terminal is a fiction: these lines are real
@@ -33,7 +33,7 @@ options = {
   out: File.expand_path("../../MASTER/loop2.mp4", CHECKS),
   audio: File.expand_path("../../STUDIO/dilla/out/loop.wav", CHECKS),
   fps: 20,
-  # Cropped to the boot message and the prompt, nothing else - the frame is the
+  # Cropped to the boot message and the prompt, nothing else — the frame is the
   # content, so the type reads large without scaling the video up afterwards.
   width: 700,
   height: 420,
@@ -105,7 +105,7 @@ PAGE = <<~'HTML'
 HTML
 
 # Colour by structure. `master: loop=none owner=none` becomes a label, then
-# key/value pairs - the same reading a person does, made visible.
+# key/value pairs — the same reading a person does, made visible.
 COLOUR = <<~'JS'
   window.paint = (kind, text) => {
     const esc = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;');
@@ -176,7 +176,7 @@ puts "shell_loop_record: #{rows.size} rows, ~#{total} frames at #{fps}fps"
 count = 0
 Deploy::CdpSession.open do |cdp|
   cdp.viewport(options[:width], options[:height])
-  # A file, not a data: URL - every colour in the stylesheet starts with #, which
+  # A file, not a data: URL — every colour in the stylesheet starts with #, which
   # a data: URL reads as the start of its fragment and truncates.
   page = File.join(frame_dir, "term.html")
 

@@ -1,4 +1,4 @@
-# Voice output rules - extracted from laws.yml (scan corpus stays in laws.yml).
+# Voice output rules — extracted from laws.yml (scan corpus stays in laws.yml).
 # TTS synthesis policy: Ruby (speech.rb, tts_controller) and JS (face_speech_runtime.js) read `tts`.
 # CLI playback is off until MASTER_CLI_SPEAK=1 or /voice on; the web TTS route remains independent.
 # Persona registries (personas.yml, soul.yml) affect LLM text/style only when persona_affects_text_only is true.
@@ -36,7 +36,7 @@ tts:
   # ON as of 2026-08-14. pushLiveStreamTts (face.part1.txt) pulls each finished
   # sentence off the model's stream and speaks it while the rest is still being
   # generated. With this false, nothing is spoken until the whole reply has been
-  # generated AND the whole thing synthesised - two serial waits before any
+  # generated AND the whole thing synthesised — two serial waits before any
   # sound, on a box with one CPU.
   #
   # Measured on the live box, same text, /chat/tts round trip:
@@ -529,7 +529,7 @@ tts:
   # use of audio effects". That authorization carried three flips: `doubler`
   # and `ionosphere` go on as the shipped character and the `room` opens, and
   # three new presets (ionosphere, midnight, shortwave) join the rack, each
-  # authored so BOTH lanes can build it - the browser gained ring-mod aeval,
+  # authored so BOTH lanes can build it — the browser gained ring-mod aeval,
   # WaveShaper acrusher and the asetrate/aresample/atempo pitch-shift idiom the
   # same day (recorded in data/ideations/master_web_face_voice.yml). A preset
   # whose filter string either lane cannot build whole is refused by the
@@ -859,7 +859,7 @@ voice:
   style: openbsd_dmesg
   # anti_simulation lives once, in soul.yml absolute.anti_simulation. The
   # copy that stood here was a shadow the accessor only read if soul lost
-  # the key - and it had already drifted one word from the original.
+  # the key — and it had already drifted one word from the original.
   banned_output:
     - headlines
     - section_markers
@@ -873,7 +873,7 @@ voice:
       en: ["I think that", "I believe", "will", "would", "might", "could", "perhaps", "seems", "appears"]
       nb: ["jeg tror", "jeg synes", "kanskje", "muligens", "virker som", "det kan hende", "etter min mening"]
     endings: ["as a result.", "for this reason.", "thus.", "in effect.", "accordingly."]
-    code_preambles: ["# TODO: clarify intent", "# FIXME: review edge cases", "# NOTE: performance considerations", "# HACK: temporary workaround", "# REVIEW: assess after refactor"]  # scan: intentional - the markers the prompt forbids, not markers
+    code_preambles: ["# TODO: clarify intent", "# FIXME: review edge cases", "# NOTE: performance considerations", "# HACK: temporary workaround", "# REVIEW: assess after refactor"]  # scan: intentional — the markers the prompt forbids, not markers
     apply_to: [prose, comments, documentation, strings]
     never_apply_to: [code_logic, algorithms, data_structures]
     safeguards:

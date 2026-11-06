@@ -3,7 +3,7 @@
 module Master
   module Voice
     class Renderer
-      # Text transformation/formatting helpers - separate from Renderer's
+      # Text transformation/formatting helpers — separate from Renderer's
       # own render/output-guard responsibility.
       module TextFormatting
         # Preserve authored line and paragraph boundaries. Terminals soft-wrap at
@@ -69,8 +69,8 @@ module Master
 
         def format_dmesg(line) = @p.dim(line.to_s)
 
-        # The operator's ASCII_PUNCTUATION Law sets every mark a person reads
-        # in ASCII, so prose leaves here as straight quotes, "-" and "...":
+        # The terminal prints ASCII (operator, 2026-11-06), so prose leaves
+        # here as straight quotes, "-" and "...":
         # a double hyphen between words becomes the one hyphen, and the
         # double space after a sentence closes to one. Record lines (a "=" or
         # a URL) carry data and keep their spacing as written.

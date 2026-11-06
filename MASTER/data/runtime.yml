@@ -4,7 +4,7 @@
 # documents into this catalogue, so the pointers outlived the files by becoming
 # the file they pointed at. why_explainer.rb prints `source:` to the operator, so
 # nine of them showed a path that could never resolve. Removed rather than
-# repointed - this file is the document now, and git log holds the rest.
+# repointed — this file is the document now, and git log holds the rest.
 cognitive_spine:
   id: cognitive_runtime
   tier: core

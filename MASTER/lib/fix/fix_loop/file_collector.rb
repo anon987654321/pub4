@@ -129,7 +129,7 @@ module Master
           end
         end
 
-        # Counted and published rather than quietly dropped - a fix pass that
+        # Counted and published rather than quietly dropped — a fix pass that
         # silently narrows its own input reads as "nothing left to do".
         def retain(files)
           @candidate_count = files.size

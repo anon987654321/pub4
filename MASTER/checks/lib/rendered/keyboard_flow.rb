@@ -10,7 +10,7 @@ module Deploy
   # Nothing in the existing suite touches the keyboard. That matters here more
   # than usual because of a live tension in the design system: design_tokens.yml
   # defines focus_ring as "2px solid var(--accent)", while the flat_ui contract
-  # forbids box-shadow - so the ring has to come from `outline`, and an
+  # forbids box-shadow — so the ring has to come from `outline`, and an
   # `outline: none` anywhere silently removes the only focus affordance the
   # system has. This check walks the real tab order and checks that each stop
   # renders a visible ring.
@@ -109,7 +109,7 @@ module Deploy
       end
 
       # Counted per surface walked, so one surface that could not be measured
-      # does not make the ones that were count for nothing - and a run where
+      # does not make the ones that were count for nothing — and a run where
       # every surface refused to release focus, or timed out, walked no tab order
       # at all. Both of those are warnings or unchecked preconditions rather than
       # failures, so counting attempts reported them as a pass.
@@ -187,7 +187,7 @@ module Deploy
       # page with an autofocus field the blur that follows ran against the
       # autofocused element and Chrome kept focus inside the form. The walk then
       # began mid-document and wrapped, so a skip link that is genuinely tab stop
-      # #1 was reported as #16 - measured on amber /session/new, whose
+      # #1 was reported as #16 — measured on amber /session/new, whose
       # `<input autofocus id="email_address">` put `input#password` first and the
       # skip link only after the wrap. That is an artifact of where the walk
       # started, not a defect in the page, and it is exactly the assertion this
@@ -339,7 +339,7 @@ module Deploy
     end
 
     # Focus that lands on something off-screen means the user is typing into a
-    # control they cannot see - a closed drawer or an unclosed modal.
+    # control they cannot see — a closed drawer or an unclosed modal.
     def check_offscreen_focus(label, stops)
       hidden = stops.select { |s| !s["onscreen"] }
       return if hidden.size < 3

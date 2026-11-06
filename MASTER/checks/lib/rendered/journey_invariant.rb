@@ -12,15 +12,15 @@ module Deploy
   # Every one of these finds a class of bug that a single-load assertion cannot
   # see, and none of them needs anything committed to compare against:
   #
-  #   idempotence  - the same URL twice must lay out identically. A surface that
+  #   idempotence  — the same URL twice must lay out identically. A surface that
   #                  fails here makes every other visual assertion flaky, so this
   #                  runs first and its failure explains the others.
-  #   back_button  - Turbo-navigate away and back must equal a fresh load. The
+  #   back_button  — Turbo-navigate away and back must equal a fresh load. The
   #                  existing system test only asserts a meta tag is absent.
-  #   no_js_parity - the landmark set must survive with JavaScript disabled.
+  #   no_js_parity — the landmark set must survive with JavaScript disabled.
   #                  That is the stimulus_progressive principle, currently
   #                  enforced by grepping views for the string "jquery".
-  #   journeys     - a frame link, focus after a Turbo visit, the no-JS pager
+  #   journeys     — a frame link, focus after a Turbo visit, the no-JS pager
   #                  and a conversation log reconnecting; see TurboJourneys.
   class JourneyInvariantCheck
     ROOT = File.expand_path("../../../..", __dir__)

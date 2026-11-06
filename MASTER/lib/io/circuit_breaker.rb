@@ -58,7 +58,7 @@ module Master
         record_cost(cost_estimate) if Result.wrap(result).ok?
         result
       rescue CircuitError => e
-        # Budget/circuit-open errors are not backend failures - don't penalize.
+        # Budget/circuit-open errors are not backend failures — don't penalize.
         Result.err(e.message, category: e.category)
       end
 
@@ -76,7 +76,7 @@ module Master
       rescue Timeout::Error => e
         Result.err("provider call exceeded its deadline: #{e.message}", category: :timeout)
       rescue RubyLLM::RateLimitError => e
-        # API rate limit is infrastructure noise - don't open the circuit.
+        # API rate limit is infrastructure noise — don't open the circuit.
         Result.err("rate_limit: #{e.message}", category: :rate_limit)
       rescue RubyLLM::PaymentRequiredError => e
         Result.err(e.message, category: :budget)
@@ -92,7 +92,7 @@ module Master
       rescue StandardError => e
         error_message = e.message.to_s
 
-        # Config errors aren't backend failures - don't penalize the breaker.
+        # Config errors aren't backend failures — don't penalize the breaker.
         if !Master.keyless_llm_enabled? &&
            (error_message.match?(/missing configuration/i) || !Master.any_api_key_present?)
           return Result.err(Master.no_api_key_message, category: :no_api_key)
@@ -117,7 +117,7 @@ module Master
       end
 
       def check_circuit
-        # No retry loop here - caller decides whether to retry after catching CircuitError.
+        # No retry loop here — caller decides whether to retry after catching CircuitError.
         synchronize do
           return if @state == :closed
           if @state == :open

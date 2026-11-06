@@ -5,7 +5,7 @@ module Master
     module Routing
       class ModelRouter
         # Text -> task_type classification (code_generation/refactoring/
-        # architecture/review/explanation/chitchat) - separate from
+        # architecture/review/explanation/chitchat) — separate from
         # ModelRouter's own model-selection/escalation/failover logic.
         module IntentClassification
           def classify_intent(text)

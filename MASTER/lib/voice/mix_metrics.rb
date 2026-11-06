@@ -95,7 +95,7 @@ module Master
 
         readings = {}
         # ffmpeg tags each filter instance with its position in the graph
-        # (`[Parsed_volumedetect_4 @ 0x...] mean_volume: -31.6 dB`) and prints the
+        # (`[Parsed_volumedetect_4 @ 0x…] mean_volume: -31.6 dB`) and prints the
         # summaries in reverse order at teardown, so sort by that index rather
         # than trusting the order of the lines.
         err.scan(/\[Parsed_volumedetect_(\d+)[^\]]*\]\s+(mean|max)_volume:\s*(-?[\d.]+)/) do |index, kind, value|

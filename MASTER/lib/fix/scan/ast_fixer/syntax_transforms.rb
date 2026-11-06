@@ -38,7 +38,7 @@ module Master
           # to
           #   var fired=false,timerIS NULL,fallbackIS NULL,...
           #
-          # - five sites in one file, welded to the identifier because there is no
+          # — five sites in one file, welded to the identifier because there is no
           # space before the `=`, leaving the face's boot script unparseable. An
           # autofixer that silently breaks the file it is repairing is worse than
           # one that does nothing, so this now refuses anything it cannot show is
@@ -124,7 +124,7 @@ module Master
 
           # CONST << / CONST.push later in the file means the empty literal is
           # an accumulator, and freezing it arms a FrozenError that only fires
-          # on the first append - a failure list crashes exactly when it has a
+          # on the first append — a failure list crashes exactly when it has a
           # failure to report.
           MUTATING_SENDS = /\s*(?:<<|\[[^\]]*\]\s*=|\.(?:push|append|unshift|prepend|concat|pop|shift|clear|delete|delete_if|store|update|merge!|replace|insert)\b)/
 
@@ -138,7 +138,7 @@ module Master
               next line unless line.match?(SINGLE_LINE_MUTABLE_CONST_RE)
               next line if protected_lines.include?(index + 1)
               # A leading-dot continuation below means the literal heads a
-              # method chain - .freeze there freezes a temporary the chain
+              # method chain — .freeze there freezes a temporary the chain
               # immediately replaces (OPENBSD/checks/health_check.rb CURL).
               next line if lines[index + 1]&.lstrip&.start_with?(".")
 
@@ -167,8 +167,8 @@ module Master
             out
           end
 
-          # In a Ruby file, a line that looks like SQL is a string literal - a
-          # test fixture, a query-builder argument, or documentation - and
+          # In a Ruby file, a line that looks like SQL is a string literal — a
+          # test fixture, a query-builder argument, or documentation — and
           # rewriting inside one on a line-level regex is guessing at content
           # the parser could have told us about.
           #
@@ -197,7 +197,7 @@ module Master
             return src unless shebang_idx
             # The rule is STRICT_MODE_ZSH. sh and ksh scripts written to
             # tolerate failure (cron drains, uptime checks) change behaviour
-            # under -e, and pipefail is not portable sh - the shebang, not the
+            # under -e, and pipefail is not portable sh — the shebang, not the
             # extension, says which shell this is.
             return src unless lines[shebang_idx].match?(/\bzsh\b/)
 

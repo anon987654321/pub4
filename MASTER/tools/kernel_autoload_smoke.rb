@@ -4,7 +4,7 @@
 # The boot the operator's machine ran, in the order it ran it: master.rb's
 # zeitwerk setup, the builder chain into fix/kernel.rb, then the three legacy
 # aliases. Every managed constant starts as a pending autoload, and an alias
-# head that const_sets into one crashes in the builder chain - the phase this
+# head that const_sets into one crashes in the builder chain — the phase this
 # check runs first, because it needs only Ruby and zeitwerk. The alias
 # identity is asserted strictly wherever the fix graph's gems are installed
 # (boot_smoke's env) and reported unverified rather than failed where they

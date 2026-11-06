@@ -6,7 +6,7 @@ require_relative "exec"
 
 module Master
   module Io
-    # mov - the recent streaming shelf.
+    # mov — the recent streaming shelf.
     #
     # Discovery is a curated catalog, not a scrape. Every shelf entry is a
     # post-2024 film or series that critics ranked or festivals awarded, and
@@ -20,7 +20,7 @@ module Master
     # is pulled as-is. A shelf pick resolves to an official free upload: a
     # feature-length film from a real distributor's channel when one exists,
     # otherwise that title's official trailer. Commercial streaming is
-    # DRM-protected and stays outside this tool's scope - when only the
+    # DRM-protected and stays outside this tool's scope — when only the
     # trailer is free, the report says so and names where the film streams.
     # No anonymous "full movie" re-uploads are ever touched.
     #
@@ -287,7 +287,7 @@ module Master
 
       def parse_url_request(value, url, request)
         title = value.match(TITLE_QUOTE_RE)&.captures&.first
-        # Direct archive.org links carry the intent themselves - a pasted
+        # Direct archive.org links carry the intent themselves — a pasted
         # details page is a download request even without a spoken verb.
         return request.merge(url: url, title:) if url.match?(%r{\Ahttps?://(?:www\.)?archive\.org/}i)
         return request unless value.match?(ACQUIRE_RE) && !value.match?(/\?\s*\z/)
@@ -296,7 +296,7 @@ module Master
       end
 
       # Spoken counts: "download us two new movies please" says the number as
-      # a word, and the digit scan never saw it - the request read as three.
+      # a word, and the digit scan never saw it — the request read as three.
       def count_from(value)
         return BUNCH if value.match?(/\b(?:bunch|heap|pile|lots?|many)\b/i)
         return FEW if value.match?(/\b(?:few|some|couple)\b/i)
@@ -397,7 +397,7 @@ module Master
 
       # Free means free: a feature-length upload from an official distributor
       # channel, or that title's official trailer. When neither exists the
-      # honest answer names where the film streams - commercial streaming is
+      # honest answer names where the film streams — commercial streaming is
       # DRM-protected and mov does not touch it. Failure lines are prefix-free;
       # the queue reports them as "mov0: skipped ...".
       def acquire_entry(entry, bus: nil)
@@ -501,7 +501,7 @@ module Master
       end
 
       # Supported link hosts: the three yt-dlp lanes mov speaks natively.
-      # Anything else - DRM'd commercial streamers above all - is refused.
+      # Anything else — DRM'd commercial streamers above all — is refused.
       SUPPORTED_LINK_HOSTS = %w[youtube.com youtu.be vimeo.com archive.org].freeze
 
       def download_url(url, title: nil, bus: nil)

@@ -1,11 +1,11 @@
 # frozen_string_literal: true
 
-# The diff->check router: I am about to edit these paths - which owner rows
+# The diff→check router: I am about to edit these paths — which owner rows
 # govern them, and which check does each owner declare?
 #
 # The data already exists; this tool only reads it. PATH_OWNERSHIP.yml carries
 # one row per owned path with the check that fails when the row's claim stops
-# being true, and checks/checks.yml routes execution. A second path->check
+# being true, and checks/checks.yml routes execution. A second path→check
 # table here would be exactly the kind of hand-maintained neighbour checks.yml
 # was written to retire, so there is none: the router resolves a path against
 # PATH_OWNERSHIP and prints what those rows promise. For the whole ladder use
@@ -16,7 +16,7 @@
 #   ruby MASTER/tools/diff_routes.rb --diff HEAD~1     # one commit back
 #   git diff --name-only origin/main | ruby MASTER/tools/diff_routes.rb --stdin
 #
-# A path no row claims is printed as a gap and the exit is 1 - the same
+# A path no row claims is printed as a gap and the exit is 1 — the same
 # honesty coverage_reconciliation uses: a router that shrugs at an unowned
 # path is a router that routes nothing. Add the row, or name why the path is
 # out of scope. Not registered as a check on purpose: it has zero real runs

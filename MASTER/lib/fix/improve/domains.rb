@@ -37,7 +37,7 @@ module Master
           end
         end
 
-        # --- code: the ideal is SIMPLEST_WORKS - one concept per file, methods a
+        # --- code: the ideal is SIMPLEST_WORKS — one concept per file, methods a
         # reader holds, no dead weight. ---
         def scan_code(root:, files:)
           files.filter_map do |path|
@@ -81,7 +81,7 @@ module Master
           end
         end
 
-        # --- prose: the ideal is a README a stranger can act on - a claim of
+        # --- prose: the ideal is a README a stranger can act on — a claim of
         # what this is, how to run it, and where the truth lives. ---
         def scan_prose(root:, files:)
           files.filter_map do |path|
@@ -143,7 +143,7 @@ module Master
           end
         end
 
-        # --- music: the ideal is a part the performer can read - TEMPO named,
+        # --- music: the ideal is a part the performer can read — TEMPO named,
         # dynamics marked, structure stated. Score sources (.sco/.orc/.csd) and
         # any music metadata the tree carries. ---
         def scan_music(root:, files:)

@@ -2,7 +2,7 @@
 #
 # lib/trace/why_explainer.rb held a second copy of the rule-shard merge loop,
 # two directories from the real one in lib/boot/data_loading.rb. Both used the shared
-# Master.load_yaml helper - what made the copy a second implementation was
+# Master.load_yaml helper — what made the copy a second implementation was
 # building the path and composing the result itself. They agreed perfectly until
 # the shards were folded into laws.yml on 2026-08-12, at which point the copy's
 # glob matched nothing and it assigned {} over the real rules, silently emptying
@@ -12,7 +12,7 @@
 # idea one level out: one reader per data file.
 #
 # 47 sites across 9 files already existed when this landed, so the numbers below
-# are a ratchet, not a target - the same mechanism as data/spine.yml. A file not
+# are a ratchet, not a target — the same mechanism as data/spine.yml. A file not
 # listed here may have at most one reader; a listed file may fall and never rise.
 # `ruby MASTER/tools/reader_singularity.rb --ratchet` records a new low.
 #

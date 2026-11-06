@@ -123,29 +123,29 @@ progressions:
   dual_tonal: [i9, ii7, "#vii7"]
   # Pass-3 additions (2026-10-27 research pass; each row cites its source and
   # uses only the roman vocabulary already in this file):
-  # The Time: Donut of the Heart loop - Jackson 5, All I Do Is Think of You
+  # The Time: Donut of the Heart loop — Jackson 5, All I Do Is Think of You
   # (1975), also Sweet Charles, Yes It's You. A descending-diatonic family
   # loop whose step-wise descent resists closure the way the Fantastic loops
   # do.
   j5_donut_loop: [IVmaj7, iii7, vi7, ii7]
   # Get Dis Money's sampled phrase (Hein 2022): each major sonority answered
-  # by its relative minor - the answer chord re-colours rather than cadences.
+  # by its relative minor — the answer chord re-colours rather than cadences.
   relative_answer: [Imaj7, vi7, IVmaj7, ii7]
-  # Minor key with the Dorian major fourth as the second pole of the loop -
+  # Minor key with the Dorian major fourth as the second pole of the loop —
   # Everytime (HookTheory), and Forget Me Nots' G#m7 borrowed from F-sharp
   # Dorian inside F-sharp natural minor (Hein, Memory Songs).
   dorian_four: [i9, IV9]
   # Remind Me's loop (Hein, Memory Songs): Dm -> Am11 -> Amaj9 reads as both
   # i of D minor with a flexible sixth and the pivot of A major with a
-  # flexible seventh - tonality held in suspension rather than resolved.
+  # flexible seventh — tonality held in suspension rather than resolved.
   # (vm11 follows the file's im7 precedent: lowercase degree, m-suffix.)
   flexible_sixth: [i9, vm11, Vmaj9]
-  # Climax (Fantastic Vol. 2): Emaj7 -> G#m7 -> G#maj7 - the mediant lifts by
+  # Climax (Fantastic Vol. 2): Emaj7 -> G#m7 -> G#maj7 — the mediant lifts by
   # a chromatic half step to the major-on-the-same-root sonority, a shimmer
   # inside one key rather than a modulation out of it.
   mediant_lift: [Imaj7, iii7, IIImaj7]
 
-# How the vocabulary is actually played - voicing practice the transcriptions
+# How the vocabulary is actually played — voicing practice the transcriptions
 # and the analyses name. Deliberately descriptive like families: guidance for
 # humans and the generator's interpretive layer, executable by nothing.
 voicings:

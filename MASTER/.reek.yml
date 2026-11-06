@@ -10,7 +10,7 @@
 # SMALL_FUNCTIONS and LONG_PARAMETER_LIST measure them, and two sources of one
 # number reported every breach twice.
 detectors:
-  # Module/class comments not required - naming + structure is the doc.
+  # Module/class comments not required — naming + structure is the doc.
   IrresponsibleModule:
     enabled: false
 

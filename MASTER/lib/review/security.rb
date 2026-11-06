@@ -13,7 +13,7 @@ module Master
         # name on each saying which.
         #
         # Any of these can trivially reintroduce whatever the rest of this list tries to
-        # prevent (bash -c with sed, curl piped to sh, python -c with inline code) - a token-level
+        # prevent (bash -c with sed, curl piped to sh, python -c with inline code) — a token-level
         # blocklist is a weak boundary in general, but omitting the shells/interpreters/
         # network fetchers themselves defeats the point of having one at all.
         EXECUTION_VECTORS = %w[
@@ -183,8 +183,8 @@ module Master
         PIPE_TO_SHELL_RE = /\|\s*(?:ba|z)?sh\b/i.freeze
 
         # Bare-word entries match on word boundaries; entries holding an operator or
-        # a path stay literal substrings. Plain `include?` blocked by accident -
-        # "sudo" is inside "pseudo", "halt" inside "shalt" - so `grep -rn
+        # a path stay literal substrings. Plain `include?` blocked by accident —
+        # "sudo" is inside "pseudo", "halt" inside "shalt" — so `grep -rn
         # shutdown_handler lib` was refused as dangerous. A device write is a
         # pattern: the literal "> /dev/" refused `rake test > /dev/null` too.
         BLOCK_MATCHERS = BLOCKLIST.map do |entry|

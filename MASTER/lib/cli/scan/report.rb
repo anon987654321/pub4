@@ -162,7 +162,7 @@ module Master
           end
         end
 
-        # "  web/public/face.css:28 raw hex color - use a design token, 14 files".
+        # "  web/public/face.css:28 raw hex color — use a design token, 14 files".
         # The place and the message. Confidence, a why that restated the
         # message, a genealogy that restated the rule and an impact tuple made
         # each line a pipe-separated dump no one read.

@@ -1,7 +1,7 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
-# Ferrum browser crawl - element presence and light interaction checks.
+# Ferrum browser crawl — element presence and light interaction checks.
 # Run from MASTER: BUNDLE_WITH=test bundle exec ruby ../MASTER/tools/rails/crawl_browser.rb
 
 require "optparse"

@@ -4,7 +4,7 @@ require "minitest/autorun"
 
 DOGFOOD_ROOT = File.expand_path("..", __dir__)
 require File.join(DOGFOOD_ROOT, "law", "definition")
-# The one loader for constitutional YAML - see the read below and
+# The one loader for constitutional YAML — see the read below and
 # test_yaml_registries, which asserts nothing reads those files any other way.
 $LOAD_PATH.unshift(File.join(DOGFOOD_ROOT, "lib"))
 require "master"
@@ -16,8 +16,8 @@ class DogfoodSpec < Minitest::Test
   # Failure here is the archaeological audit: a capability went missing, or a
   # detector regressed.
   #
-  # A practice law has no detector - no regex can read "one SSH session" off a
-  # file - so its fixtures are illustrative and this proof does not apply. What
+  # A practice law has no detector — no regex can read "one SSH session" off a
+  # file — so its fixtures are illustrative and this proof does not apply. What
   # still applies is that it HAS them: Builder refuses a law without a bad and a
   # good whatever its kind, because a law carrying no example of its own subject
   # is the unfalsifiable shape this file exists to reject.
@@ -52,7 +52,7 @@ class DogfoodSpec < Minitest::Test
   end
 
   # Self-application. Law files are Ruby; every ruby-scoped `detect` law runs
-  # over law/ and must find nothing (declarations and fixtures excepted -
+  # over law/ and must find nothing (declarations and fixtures excepted —
   # Law.conduct). The `check` and class Laws that joined Law.definitions when the
   # Law systems merged (VERTICAL_BREATH, LONG_LINE, SMALL_FILES, ...) find 308
   # style breaches in law/ on 2026-10-30; held out until /fix clears them, which

@@ -23,8 +23,8 @@
 # review_by dates make every exemption expire. checks/lib/source/exemption_freshness.rb
 # is that stale-exemptions reader: an overdue review is a check failure, a law
 # whose executable file has vanished is a dead row, and a review coming due
-# warns before it can block anyone. The review itself - re-arguing the excuse
-# against its law - stays a human obligation; the check only ends the part
+# warns before it can block anyone. The review itself — re-arguing the excuse
+# against its law — stays a human obligation; the check only ends the part
 # where a date could pass unnoticed.
 schema: 1
 name: craft_ledger
@@ -124,7 +124,7 @@ budget_rows:
 
 pens:
   # A pen is a named, deliberate exception to the spacing/type grid: rendered
-  # intent a mechanical snap would damage. Same boundary as everything here -
+  # intent a mechanical snap would damage. Same boundary as everything here —
   # the budget file and the scanners decide what counts; this list says why.
   - id: chat-upload-centre-inset
     rule: rhythm

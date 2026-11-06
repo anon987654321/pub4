@@ -8,7 +8,7 @@ module Master
   module Fix
     class RepairLoop
       # Staleness/verification checks run before and after we apply a fix
-      # (fingerprint drift, missing test coverage) - separate from RepairLoop's
+      # (fingerprint drift, missing test coverage) — separate from RepairLoop's
       # own scan/prompt/apply pipeline.
       module FixVerification
         def fingerprint_matches?(violation)

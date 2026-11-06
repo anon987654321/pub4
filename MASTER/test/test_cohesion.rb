@@ -37,8 +37,8 @@ class CohesionTest < Minitest::Test
     assert_equal 0, Operator::Cohesion.run(@tmp), "a shared prefix alone is naming, not cohesion"
   end
 
-  # This asserted 0 - "a file declaring a module already has the boundary a merge
-  # would be giving it" - and that reasoning is what kept the tool off MASTER's
+  # This asserted 0 — "a file declaring a module already has the boundary a merge
+  # would be giving it" — and that reasoning is what kept the tool off MASTER's
   # own tree entirely, because every file under lib/ declares one. It is half
   # right: under Zeitwerk a path IS a constant name, so those files genuinely
   # cannot be poured into each other. They can be shelved. So a namespaced family
@@ -63,7 +63,7 @@ class CohesionTest < Minitest::Test
     _, err = capture_io { status = Operator::Cohesion.run(@tmp) }
 
     assert_equal 2, status
-    assert_includes err, "nothing was read" # source-assertion: ok - stderr of the run, not a source file
+    assert_includes err, "nothing was read" # source-assertion: ok — stderr of the run, not a source file
   end
 
   def test_two_files_are_below_the_family_floor
@@ -127,7 +127,7 @@ class CohesionTest < Minitest::Test
   # Grouping on `split("_").first` alone read prefix families and nothing else.
   # dilla names families by prefix (render_seed, render_techno); MASTER names
   # them by suffix (sandbox_policy, workflow_policy). So the tool was blind to
-  # the shape of the tree it lives in - "nothing to merge" across lib/ground,
+  # the shape of the tree it lives in — "nothing to merge" across lib/ground,
   # lib/review, lib/cli and lib/voice, 325 files, and the matcher's fault.
 
   def namespaced(const) = "module Master\n  module Ground\n    class #{const}\n      def call = :x\n    end\n  end\nend\n"
@@ -244,8 +244,8 @@ end
 
 # engine_sources.rb states the contract: "constants in these files are computed
 # at load time from ones above them, and reordering silently changes their
-# values." Five of dilla's six families are not contiguous in that manifest -
-# render spans 54 foreign files - so merging moves code across other files'
+# values." Five of dilla's six families are not contiguous in that manifest —
+# render spans 54 foreign files — so merging moves code across other files'
 # load-time computation. On a beat engine the symptom is a different sound, and
 # renders are not deterministic, so it cannot be A/B'd.
 def test_a_family_scattered_through_the_manifest_is_not_mergeable
@@ -271,7 +271,7 @@ end
 
   # The counterbalance needs a bound or it is not a counterbalance. dilla's six
   # proposals produced files of 1076 to 2925 lines against a SMALL_FILES
-  # threshold of 300 - and the three dilla_* headers say they were "split out of
+  # threshold of 300 — and the three dilla_* headers say they were "split out of
   # dilla.rb", so the proposal was to undo a deliberate split and recreate the
   # file under the name of the file it came from.
   def test_a_merge_that_would_breach_small_files_is_refused

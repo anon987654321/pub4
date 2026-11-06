@@ -103,7 +103,7 @@ module Deploy
     private
 
     # Fields where the shared engine dictates one answer for every app. Nav
-    # labels and lang are deliberately excluded - those are per-app content.
+    # labels and lang are deliberately excluded — those are per-app content.
     INVARIANT = {
       "skip_href" => "the shared skip link target",
       "main_id" => "the shared main landmark id",
@@ -141,12 +141,12 @@ module Deploy
 
     # Two distinct questions, and conflating them produces noise:
     #
-    #   "Does every app instantiate every shared controller?" - No, and it
+    #   "Does every app instantiate every shared controller?" — No, and it
     #   should not. bsdports has no feed, so feed-compose legitimately never
     #   renders there. Asserting that is a false positive factory.
     #
     #   "Does every app instantiate the controllers the *shared layout* mounts?"
-    #   - Yes, necessarily: those come from __shared/frontend/layouts, which all
+    #   — Yes, necessarily: those come from __shared/frontend/layouts, which all
     #   three apps render. A divergence there is real drift.
     #
     # Only the second is a contract. The first is reported as an inventory
@@ -187,7 +187,7 @@ module Deploy
          .sort
     end
 
-    # Controllers the shared layout itself mounts - these every app renders.
+    # Controllers the shared layout itself mounts — these every app renders.
     def layout_controller_names
       dir = File.join(SHARED_FRONTEND, "layouts")
       return [] unless File.directory?(dir)

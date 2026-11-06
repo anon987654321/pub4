@@ -4,7 +4,7 @@
 #
 # MASTER keeps 17 memory classes, 830 files under knowledge/ and 1,251 under
 # .master/. Claude Code keeps its own memory directory. Nothing in lib/, tools/
-# or bin/ reads ~/.claude, and nothing writes MASTER's learnings back to it -
+# or bin/ reads ~/.claude, and nothing writes MASTER's learnings back to it —
 # two memories in one repo with no path between them.
 #
 #   ruby MASTER/tools/agent_context.rb                 # the standing context
@@ -14,7 +14,7 @@
 #
 # Designed for a UserPromptSubmit hook, so it has to be small: data/laws.yml is
 # 2,170 lines and injecting it every turn would drown the turn. Six kilobytes
-# go out - the binding half: the conduct rules that govern how to work, what the
+# go out — the binding half: the conduct rules that govern how to work, what the
 # check can actually block on, and how much of the law is unmeasured right now.
 
 require_relative "../lib/fix/protocol"
@@ -220,7 +220,7 @@ module Operator
     # handoffs that consume JSON rather than prose: the conduct rules in
     # force, the rules that can refuse a write, coverage, and the operator
     # shell contract. Every field is read from the same methods the prose
-    # mode prints - this is a serialization of one authority, never a second
+    # mode prints — this is a serialization of one authority, never a second
     # one. With --tree, the rendered tree lines ride along under "tree".
     def session_json(tree: false, tree_root: REPO_ROOT, tree_depth: TREE_DEFAULT_DEPTH, tree_max_entries: TREE_DEFAULT_MAX_ENTRIES)
       require "json"

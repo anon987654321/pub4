@@ -457,7 +457,7 @@ class TestRenderer < Minitest::Test
     text.to_s.gsub(/\e\[[0-9;]*m/, "")
   end
 
-  # A repair preview printed {"FEW_ARGUMENTS" => 28}: the renderer curled the
+  # A repair preview printed {“FEW_ARGUMENTS” => 28}: the renderer curled the
   # quotes inside a hash dump, so the line was no longer the value it reported
   # and no longer pasted back. Prose still gets the typographic pair.
   def test_prose_gets_bringhursts_apostrophe_and_one_space_after_a_period

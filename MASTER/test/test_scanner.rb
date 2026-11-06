@@ -18,7 +18,7 @@ class TestScanner < Minitest::Test
   # **kwargs, not the signature spelled out. scan_dir wraps every error from
   # scan_one in a Result it is free to ignore, so when the real method gained
   # autofix:, autofix_root: and rules:, these doubles raised ArgumentError on
-  # every file and the walk reported nothing - a stale double that reads as a
+  # every file and the walk reported nothing — a stale double that reads as a
   # tree with no files in it.
   class BoomScanner < Master::Fix::Scanner
     private

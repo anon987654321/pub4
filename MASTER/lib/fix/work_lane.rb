@@ -7,7 +7,7 @@ module Master
     module WorkLane
       # code (default): code laws only, no claim about anything rendered. visual (RAILS only): one
       # sweep grouped by cause, mechanical fixers first. all: both, as /fix ran before lanes.
-      # elevate: the improvement lane - /fix does not only repair, it improves, ideates and
+      # elevate: the improvement lane — /fix does not only repair, it improves, ideates and
       # restructures toward each domain's ideal (code, prose, visual, music) per laws.yml.
       NAMES = %i[code visual all elevate].freeze
       DEFAULT = :code
@@ -54,7 +54,7 @@ module Master
 
       def visual?(lane = current) = lane == :visual
 
-      # The elevate lane improves every tree - code, prose, visuals, music - and
+      # The elevate lane improves every tree — code, prose, visuals, music — and
       # only the visual elevation reads RAILS render surfaces.
       def elevate?(lane = current) = lane == :elevate
 

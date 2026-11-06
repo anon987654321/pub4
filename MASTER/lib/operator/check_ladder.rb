@@ -4,7 +4,7 @@
 # command, not a second one.
 require_relative "../io/exec"
 
-# The scan and critique pass over all four trees - two stages of the
+# The scan and critique pass over all four trees — two stages of the
 # repo-wide chain, not the chain itself. `MASTER/bin/operator check` is the chain:
 # it runs this for the lexical and semantic tiers, then the RAILS checks, the
 # suites, the ratchets and the sprawl census, and attributes every file each
@@ -44,7 +44,7 @@ SAFE_ENV = {
   "MASTER_SCAN_DETERMINISTIC" => "1",
   # The fix re-exec after origin/main moves (fetch, rebase --autostash, exec
   # without the bundler wrapper) is a shared-checkout hazard and escapes the
-  # wrapper this file launches with - off under the check.
+  # wrapper this file launches with — off under the check.
   "MASTER_FIX_HOT_RELOAD" => "0",
   "MASTER_WATCH" => "0",
   "MASTER_WATCHER" => "0",
@@ -118,7 +118,7 @@ end
 TREE_PATHS = { "MASTER" => ".", "RAILS" => "../RAILS", "OPENBSD" => "../OPENBSD", "STUDIO" => "../STUDIO" }.freeze
 
 # Named trees when --tree is given, all four otherwise. An unknown name is
-# refused rather than silently narrowing the check to nothing - a check that
+# refused rather than silently narrowing the check to nothing — a check that
 # measures no tree and exits 0 is the failure this whole file is written against.
 named_trees = ARGV.filter_map { |arg| arg[/\A--tree=(.+)\z/, 1] }.flat_map { |value| value.split(",") }.map(&:upcase)
 unless (named_trees - TREE_PATHS.keys).empty?
@@ -280,8 +280,8 @@ if EXPLAIN
   exit 0
 end
 
-# Only the lexical tier writes. The diff prints for it in either mode - in
-# scan-only that is the tell that a step which promised to measure has written -
+# Only the lexical tier writes. The diff prints for it in either mode — in
+# scan-only that is the tell that a step which promised to measure has written —
 # and the clean-tree assertion belongs to full-fix alone. A semantic-only pass
 # asserts nothing about the tree, because it fails on whatever the lexical stage
 # before it just fixed.

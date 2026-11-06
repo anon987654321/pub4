@@ -6,7 +6,7 @@ require "timeout"
 module Master
   module CLI
     module Stages
-      # Enhance - rewrite :llm messages for S&W clarity, info density, latent intent.
+      # Enhance — rewrite :llm messages for S&W clarity, info density, latent intent.
       # Called as a class method from ChatController and CLI before the pipeline runs.
       # Skips if ctx[:pre_enhanced] is set (web sent already-approved version).
       class Enhance
@@ -41,7 +41,7 @@ module Master
         Return changed:false and repeat the original verbatim if it is already tight.
       PROMPT
 
-        # Public entry point - called from controller and CLI before pipeline.
+        # Public entry point — called from controller and CLI before pipeline.
         def self.run(msg, agent:, event_bus: nil)
           new(agent:, event_bus:).call_raw(msg)
         end
@@ -52,7 +52,7 @@ module Master
           @skills = skills
         end
 
-        # Pipeline stage - skip if web already confirmed an enhanced version.
+        # Pipeline stage — skip if web already confirmed an enhanced version.
         def call(ctx)
           return Result.ok(ctx) if ctx.pre_enhanced
 

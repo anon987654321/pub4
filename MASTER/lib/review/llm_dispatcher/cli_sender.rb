@@ -138,7 +138,7 @@ module Master
         # At most two claude subprocesses at once, process-wide. The latency
         # table above CLAUDE_CLI_TIMEOUT_S measured it: two concurrent finish
         # together, four roughly double per-call latency for the same total
-        # throughput - and the fix loop runs rule groups in threads, so the
+        # throughput — and the fix loop runs rule groups in threads, so the
         # 2026-08-20 proof run showed CLI calls dying empty-stderr under
         # four-way contention, opening the circuit. Callers block for a slot;
         # waiting beats thrashing.
@@ -210,7 +210,7 @@ module Master
         CLAUDE_CLI_TEXT_ONLY = ["--tools", "", "--strict-mcp-config", "--settings", '{"disableAllHooks":true}'].freeze
 
         # The subscription's own limit answers on stdout and exits 0. Taken as the
-        # model's reply, "You've hit your session limit - resets 4:30pm" was proposed
+        # model's reply, "You've hit your session limit · resets 4:30pm" was proposed
         # as a fix or a verdict two hundred times in one /fix run, until someone read
         # the recordings. It is a quota, and the lane stands down like one.
         CLAUDE_CLI_LIMIT = /\A\s*(?:You've hit your \w*\s*limit|Claude (?:AI )?usage limit reached)/i

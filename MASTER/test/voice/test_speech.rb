@@ -569,7 +569,7 @@ class TestSpeech < Minitest::Test
   # Wire v2: a daemon answering "stream":true sends 8-byte length-prefixed
   # chunks and a zero-length frame. The file must hold exactly the payloads,
   # assembled as they arrived. A legacy daemon that ignores "stream" and
-  # closes whole-file is still accepted - the eof test above covers it.
+  # closes whole-file is still accepted — the eof test above covers it.
   def test_synthesize_edge_socket_assembles_framed_stream
     wire = lambda do |client|
       client.write([5].pack("Q>"))
@@ -598,7 +598,7 @@ class TestSpeech < Minitest::Test
   end
 
   # Serves one synthesized utterance to the daemon wire, whatever shape the
-  # test writes through the client. Returns [result, audio_path, wire_bytes] -
+  # test writes through the client. Returns [result, audio_path, wire_bytes] —
   # the temp audio is deleted on cleanup, so the bytes must be read here.
   def with_edge_stub_server(client_io)
     root = Dir.mktmpdir("master_tts_sock")

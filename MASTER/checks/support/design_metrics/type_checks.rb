@@ -6,8 +6,8 @@ module Deploy
     # hierarchy, the weight ladder, font families and lowercase tracking.
     #
     # Split out of design_metrics.rb when that file passed its length ceiling
-    # again. One subject - every one of these reads a font declaration out of
-    # the SCSS and judges it against laws.yml's typography section -
+    # again. One subject — every one of these reads a font declaration out of
+    # the SCSS and judges it against laws.yml's typography section —
     # and the largest of the four the check carries.
     #
     # A module included back into the check, like ContrastChecks beside it, so
@@ -16,7 +16,7 @@ module Deploy
     module TypeChecks
       # typography.accessibility.mobile_input_min_px. Not a taste rule: iOS Safari
       # zooms the viewport when a text field smaller than 16px takes focus, and it
-      # does not zoom back out. Radios and checkboxes are exempt - they carry no
+      # does not zoom back out. Radios and checkboxes are exempt — they carry no
       # text caret, so nothing triggers the zoom.
       TEXT_ENTRY = /(?:\btextarea\b|\bselect\b|contenteditable|
                       input(?!\s*\[\s*type\s*=\s*["']?(?:radio|checkbox|range|color|file|submit|button|image)))/x

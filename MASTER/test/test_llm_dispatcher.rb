@@ -43,8 +43,8 @@ class TestLLMDispatcher < Minitest::Test
   ReplyWithContent = Struct.new(:content)
   ReplyWithCost = Struct.new(:tokens, :cost, :content)
 
-  # A lane that keeps failing - quota out, a hung binary, a local model timing
-  # out - must stop being asked rather than walked again for every rule.
+  # A lane that keeps failing — quota out, a hung binary, a local model timing
+  # out — must stop being asked rather than walked again for every rule.
   def test_the_door_stops_asking_once_a_lane_stops_answering
     dispatcher, = build_dispatcher
     door = Master::Io::LaneSilence

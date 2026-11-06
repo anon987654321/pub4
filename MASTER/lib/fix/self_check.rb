@@ -6,8 +6,8 @@ module Master
     # data/scan_coverage.yml declares rather than a hardcoded lib/.
     class SelfCheck
       # The same three WriteGuard::BLOCKING refuses a write for. veto was missing
-      # here, and it is the severity above error - laws.yml#veto_patterns calls
-      # them unconditional merge blockers - so the fast check reported clean while
+      # here, and it is the severity above error — laws.yml#veto_patterns calls
+      # them unconditional merge blockers — so the fast check reported clean while
       # four vetoes stood in the tree it had read. One severity set, two
       # readers, is the shape that let them disagree.
       QUICK_SEVERITIES = %i[veto critical error].freeze
@@ -77,7 +77,7 @@ module Master
         failed_report("#{e.class}: #{e.message}")
       end
 
-      # data/scan_coverage.yml, not File.join(@root, "lib") - see Master.scan_roots.
+      # data/scan_coverage.yml, not File.join(@root, "lib") — see Master.scan_roots.
       def scan_dirs
         Master.scan_roots(root: @root)
               .map { |dir| File.join(@root, dir) }

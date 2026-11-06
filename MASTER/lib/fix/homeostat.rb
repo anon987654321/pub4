@@ -6,8 +6,8 @@ module Master
     # State vector decays toward setpoint; events shift it; readers bias routing,
     # reasoning depth, and persona mood. No external deps.
     class Homeostat
-      # Persona/routing signals derived from drive state - mood, circadian
-      # phase, model-tier bias - separate from the core drive-decay state.
+      # Persona/routing signals derived from drive state — mood, circadian
+      # phase, model-tier bias — separate from the core drive-decay state.
       module DerivedSignals
         def model_tier_bias
           return :cheap if @state[:error_rate] > 0.4 || @state[:fatigue] > 0.7
@@ -55,7 +55,7 @@ module Master
         end
       end
       # Cognitive health predicates derived from error pressure, fatigue, and
-      # energy - separate from Homeostat's own state-decay/event-observation core.
+      # energy — separate from Homeostat's own state-decay/event-observation core.
       module HealthPredicates
         def healthy? = !degraded? && !critical?
 
@@ -102,7 +102,7 @@ module Master
         idle_tick: {},
       }.freeze
 
-      # Thresholds for health predicates - cognitive error pressure + exhaustion signal.
+      # Thresholds for health predicates — cognitive error pressure + exhaustion signal.
       HEALTH_THRESHOLDS = {
         degraded: { error_rate: 0.25, fatigue: 0.6, energy: 0.35 },
         critical: { error_rate: 0.50, fatigue: 0.8, energy: 0.20 },

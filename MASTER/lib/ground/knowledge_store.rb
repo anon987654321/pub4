@@ -7,7 +7,7 @@ module Master
   module Ground
     # WAL-mode SQLite ledger for fix quality, strategy outcomes, and RSI feedback events.
     class KnowledgeStore
-      # Feedback-event storage and RSI opportunity detection - separate from
+      # Feedback-event storage and RSI opportunity detection — separate from
       # KnowledgeStore's fix-outcome and strategy-reuse concerns.
       module FeedbackEvents
         # RSI reads seven days; ninety are kept for the trend and the rest dropped on write.
@@ -46,7 +46,7 @@ module Master
             )
         end
       end
-      # Strategy-reuse tracking (trigger -> strategy -> outcome/confidence) -
+      # Strategy-reuse tracking (trigger -> strategy -> outcome/confidence) —
       # separate from KnowledgeStore's fix-outcome and feedback-event concerns.
       module StrategyOutcomes
         def record_strategy(trigger:, strategy:, outcome:)

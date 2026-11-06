@@ -154,7 +154,7 @@ module Master
       # Open a private append target without following its final path component.
       # The descriptor, not the path string, is used for chmod so a replacement
       # cannot redirect the permission change to another file. Bytes in, bytes out:
-      # under bin/master's Encoding.default_internal a text-mode write raised on a "-".
+      # under bin/master's Encoding.default_internal a text-mode write raised on a "—".
       def self.with_private_file(path, flags, mode:, label:)
         flags |= File::NOFOLLOW if File.const_defined?(:NOFOLLOW)
         File.open(path, flags, mode) do |file|
@@ -312,7 +312,7 @@ module Master
         def append(event, payload = {})
           append!(event, payload)
         rescue SystemCallError, JSON::GeneratorError, ArgumentError, IOError => e
-          # Stderr is last resort - cannot route through bus without risking recursion.
+          # Stderr is last resort — cannot route through bus without risking recursion.
           Log.warn_once([@path, e.class], "event_log: #{@path}: #{e.message}")
           nil
         end

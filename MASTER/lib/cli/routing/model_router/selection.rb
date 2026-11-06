@@ -66,7 +66,7 @@ module Master
 
           # Greetings are explicitly routed to the free tier. A locally installed
           # subscription CLI used to jump ahead of `pref`, contradicting the route
-          # table and spending the strongest lane on "hello". Keep it available as
+          # table and spending the strongest lane on “hello”. Keep it available as
           # fallback, but let the task-specific preference lead.
           # Seconds a model took when it last answered, nil when never measured.
           def latency_s(model_id) = (@compute_pool.latency_s(model_id) if @compute_pool.respond_to?(:latency_s))

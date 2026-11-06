@@ -90,7 +90,7 @@ task :constitution do
   scanner = Master::Fix::Scanner.build(root:)
   scanner.laws.reject! { |law| law.id.to_s == "ast_omission" }
   timeout = Integer(ENV.fetch("MASTER_CONSTITUTION_FILE_TIMEOUT", "4"))
-  # data/scan_coverage.yml, not File.join(root, "lib") - a path literal here is
+  # data/scan_coverage.yml, not File.join(root, "lib") — a path literal here is
   # how core/ stayed outside its own law for three weeks. rake lint:scan_coverage
   # audits the manifest; this reads it.
   paths = Master.scan_roots(root:).flat_map { |dir| Dir.glob(File.join(root, dir, Master::Fix::Scanner::SCAN_GLOB)) }
@@ -171,7 +171,7 @@ task :selfcheck do
   require "master"
   audit = Master::Review::Scan::LawRegistryAudit.new(root: __dir__).call
   # The severities named from the constant, so the banner cannot claim a set the
-  # check does not use - it read "error/critical only" for as long as veto was
+  # check does not use — it read "error/critical only" for as long as veto was
   # missing from it, which is how nobody noticed veto was missing.
   puts "selfcheck: #{audit.mechanical.size} of #{audit.yaml_laws} declared " \
        "laws active (rake lint:law_reach for what the rest need), " \
@@ -398,7 +398,7 @@ namespace :test do
   task :web do
     # Bundler.with_unbundled_env, not a hash of nils. `sh` sets a nil value to the
     # empty string rather than unsetting it, and an empty BUNDLE_GEMFILE still
-    # searches upward - from web/ that finds MASTER/Gemfile, whose lock names seven
+    # searches upward — from web/ that finds MASTER/Gemfile, whose lock names seven
     # gems web/ does not vendor. An empty BUNDLE_PATH separately overrides
     # web/.bundle/config, which says vendor/bundle. Bundler 4 also sets
     # BUNDLER_SETUP, which a child ruby loads bundler/setup from even with RUBYOPT
@@ -440,7 +440,7 @@ def spine_movers(root)
   # --porcelain reports paths from the REPO root, not from -C, so they have to be
   # joined against the toplevel. Joining them against MASTER/ instead finds no
   # file, every row filters out, and the attributor reports "nothing uncommitted"
-  # while staring at the file that moved the number - which is the failure this
+  # while staring at the file that moved the number — which is the failure this
   # whole helper exists to prevent, so it is worth the extra call.
   top = IO.popen(["git", "-C", root, "rev-parse", "--show-toplevel"], &:read).strip
   at = lambda do |rel|
@@ -550,7 +550,7 @@ task :agent_contracts do
   # into MASTER, not a fifth generated target. A hand-written door drifts
   # quietly, so its pointer contract is asserted: the canonical reads stay
   # named, the generated-block markers stay absent, and no law id from
-  # laws.yml is quoted - policy quoted here is policy forked here.
+  # laws.yml is quoted — policy quoted here is policy forked here.
   claude_path = File.join(root, "CLAUDE.md")
   abort "lint:agent_contracts: CLAUDE.md missing" unless File.file?(claude_path)
   claude = File.read(claude_path)
@@ -639,7 +639,7 @@ end
   end
 
   # Was: print proposals for one hardcoded directory and exit 0 regardless. That
-  # is a report, not a check, and it was absent from `rake audit` too - so for its
+  # is a report, not a check, and it was absent from `rake audit` too — so for its
   # whole life nothing read what it found. The census counts families across every
   # declared root against a recorded low, in the shape dup_census and
   # namespace_ceilings already use, and fails when a new one appears.
@@ -679,7 +679,7 @@ end
     #
     # The key names the unit, and the unit has changed twice. lib_ceiling counted
     # raw lines; lib_code_ceiling counted non-blank non-comment; lib_body_ceiling
-    # subtracts the lines Zeitwerk forces - a `module` wrapping exactly one module
+    # subtracts the lines Zeitwerk forces — a `module` wrapping exactly one module
     # or class, and its `end`.
     #
     # Renaming on each change is the mechanism: a stale number becomes a load
@@ -696,7 +696,7 @@ end
     ceiling = config.fetch("lib_body_ceiling")
     # Master::Review::Scan::CodeMetrics, not a copy of the counter. This task and
     # tools/ratchets.rb each carried their own, for the same ratchet, in the same
-    # table - they agreed by luck rather than by construction.
+    # table — they agreed by luck rather than by construction.
     $LOAD_PATH.unshift(File.join(__dir__, "lib"))
     require "master"
     lines = Master::Review::Scan::CodeMetrics.body_lines_in(File.join(__dir__, "lib"))
@@ -727,7 +727,7 @@ end
     #
     # spine.yml says a ceiling that rises whenever a day's work pushes against it
     # measures nothing. It was raised on 2026-07-31 and again on 2026-08-01, both
-    # times with a good reason, and a good reason will always be available - that
+    # times with a good reason, and a good reason will always be available — that
     # is the failure mode, not an accident. So the escalation is now a check:
     # past the allowance, raising is refused until lib/ has actually come down
     # and been ratcheted. The prose could be ignored; this cannot.
@@ -863,7 +863,7 @@ end
   task :dedup do
     $LOAD_PATH.unshift(File.join(__dir__, "lib"))
     require "master"
-    # ContentDedupScan sat in lib/ with zero callers since it was written -
+    # ContentDedupScan sat in lib/ with zero callers since it was written —
     # a duplicate-content scanner that was itself inert wiring. This task is
     # its reader. Cross-file exact-line matches only; within-file repeats are
     # structural YAML.
@@ -871,7 +871,7 @@ end
     # Every entry below names a duplicate this task tolerates and why; an
     # entry that stops matching is a hole in the check and fails the task
     # (EXEMPTIONS_EXPIRE). "open:" entries are known debt with a collapse
-    # recorded in the old backlog - tolerated so the check can land, never permanent.
+    # recorded in the old backlog — tolerated so the check can land, never permanent.
     # The visual/ad migration exemptions that were here are gone rather than
     # expired: the collapse they waited for has landed upstream (the law block
     # now lives in laws.yml alone, and law_runtime.yml no longer repeats it).
@@ -905,7 +905,7 @@ end
       # source. anti_simulation's forbidden list is soul.yml only now (the
       # voice.yml shadow copy was deleted), and both replicate env vars and the
       # default free model live in providers.yml alone. Verified one file each
-      # before removing - a stale exemption is a hole in this check, which is why
+      # before removing — a stale exemption is a hole in this check, which is why
       # the task fails on one rather than ignoring it.
     }
     files = Dir.chdir(__dir__) { Dir.glob("data/**/*.yml").reject { |f| f.include?("baseline") } }
@@ -921,7 +921,7 @@ end
 end
 
 # Every check this Rakefile defines runs here. The list used to name twelve of
-# nineteen, and the omissions were not a judgement - `loc_budget` was failing on
+# nineteen, and the omissions were not a judgement — `loc_budget` was failing on
 # nine of twelve subsystems while `rake audit` reported passed, because nothing
 # called it. A check defined and uncalled is a check that has stopped measuring
 # without anyone deciding it should.
@@ -978,7 +978,7 @@ end
 desc "Full audit: constitution + selftest + every lint:* check + the ratchets"
 task :audit do
   # Checks abort on stderr, which is unbuffered, and the summary goes to stdout,
-  # which is not once this is redirected to a file - so the verdict printed
+  # which is not once this is redirected to a file — so the verdict printed
   # above the check it belongs to in the first run of the new shape.
   $stdout.sync = true
   outcomes = AUDIT_CHECKS.to_h do |name|
@@ -1000,7 +1000,7 @@ task :audit do
   puts "audit: #{undefined.size} named but undefined: #{undefined.join(', ')}" if undefined.any?
   puts "audit: #{failed.size} failed: #{failed.join(', ')}" if failed.any?
   # An errored or undefined check is a hole in the coverage this run claims, so
-  # it ends the run non-zero too - otherwise the fail-open case is the quiet one.
+  # it ends the run non-zero too — otherwise the fail-open case is the quiet one.
   abort "audit: incomplete" if failed.any? || errored.any? || undefined.any?
 
   puts "audit: passed"

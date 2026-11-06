@@ -4,7 +4,7 @@ require "json"
 require_relative "../io/exec"
 require "yaml"
 require_relative "environment"
-# Only "yaml" itself is behind this - requiring it does not boot the Master
+# Only "yaml" itself is behind this — requiring it does not boot the Master
 # runtime, so the standalone contract above holds.
 require_relative "../operator/operator_docs"
 # Domain skew reads the deployment data, but its reader stays inside this
@@ -24,7 +24,7 @@ module Operator
       "bsdports" => 47_312,
     }.freeze
 
-    # `from:`, not a positional - Environment.repo_root takes a keyword. The
+    # `from:`, not a positional — Environment.repo_root takes a keyword. The
     # positional call this replaces raised ArgumentError, and never showed it:
     # MASTER/bin/operator always passes root:, so the default was never evaluated.
     def initialize(root: Environment.repo_root(from: __dir__))
@@ -61,7 +61,7 @@ module Operator
       lines << "ports:"
       payload[:ports].each { |name, state| lines << "  #{name.ljust(14)} #{state}" }
       lines << ""
-      # Domain/relay skew only when non-empty - silence is the success case
+      # Domain/relay skew only when non-empty — silence is the success case
       # (experiment 1: no separate command to remember).
       Array(payload[:domain_signals]).each { |line| lines << line }
       lines << "next: #{payload[:next_command]}"
@@ -107,7 +107,7 @@ module Operator
     # Porcelain is `XY <path>`, and <path> is not always a bare path.
     #
     # git QUOTES it whenever it holds a space or a non-ASCII byte, so a dirty
-    # `STUDIO/dilla/før.wav` was tallied under the tree `"MASTER - a quote
+    # `STUDIO/dilla/før.wav` was tallied under the tree `"MASTER — a quote
     # character in the name of a tree, in the line whose whole job is telling one
     # session which trees hold another session's work. A rename reports
     # `<old> -> <new>`, and the tree that matters is where the file landed.
@@ -127,14 +127,14 @@ module Operator
 
     # rstrip, not strip: in `git status --porcelain` the leading whitespace is
     # DATA. An unstaged modification is " M path", and strip ate that space off
-    # the first line only - so whenever the alphabetically-first dirty file was
+    # the first line only — so whenever the alphabetically-first dirty file was
     # unstaged-modified, its tree lost a character and was tallied separately.
     # That is where "dirty in ASTER: 1" and "dirty in AILS: 1" came from, beside
     # a correct MASTER and RAILS: one line short, intermittent, and depending on
     # which file happened to sort first.
     #
-    # Every other caller here is single-value plumbing - branch --show-current,
-    # rev-parse, rev-list --count - whose output carries no leading whitespace,
+    # Every other caller here is single-value plumbing — branch --show-current,
+    # rev-parse, rev-list --count — whose output carries no leading whitespace,
     # so trimming only the tail is the same answer for them and the right one here.
     def git(*args)
       out, status = Master::Io::Exec.capture2e("git", *args, chdir: @root)

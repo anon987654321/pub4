@@ -15,7 +15,7 @@ module Master
     module CommandRegistry
       module_function
 
-      # /pair - issue, list, revoke or redeem a pairing code.
+      # /pair — issue, list, revoke or redeem a pairing code.
       def dispatch_pair(root, ctx: nil)
         arg = arg_for(ctx).to_s.strip
         if Fiber[:master_visitor] == true
@@ -159,7 +159,7 @@ module Master
         "privacy0: unavailable - #{e.class}: #{e.message}"
       end
 
-      # /preferences - consented, subject-scoped interaction preferences.
+      # /preferences — consented, subject-scoped interaction preferences.
       def dispatch_preferences(root, ctx: nil)
         return "preferences: local-only; visitors cannot access personal preferences" if Fiber[:master_visitor] == true
 
@@ -514,7 +514,7 @@ module Master
 
       SCREEN_NAME = /\A[\w.-]{1,40}\z/
 
-      # /screen - keep MASTER running in a GNU screen session you can leave and come back to.
+      # /screen — keep MASTER running in a GNU screen session you can leave and come back to.
       # It starts bin/master detached and names the command that reattaches; it never
       # attaches itself, because this terminal is already inside a session.
       def dispatch_screen(root, ctx: nil)
@@ -539,7 +539,7 @@ module Master
 
       def screen_running?(name) = screen_list.match?(/\d+\.#{Regexp.escape(name)}\s/)
 
-      # /deploy - canonical remote vm23 deployment. Command#review_check requires
+      # /deploy — canonical remote vm23 deployment. Command#review_check requires
       # --confirm before this handler can mutate production.
       def dispatch_deploy(_root, ctx: nil)
         target = arg_for(ctx).split(/\s+/).reject { |token| token.start_with?("--") }.first.to_s.downcase
@@ -593,7 +593,7 @@ module Master
         "#{platform}0: unavailable - #{e.class}: #{e.message}"
       end
 
-      # /wake - explicit microphone wake-word consent and status.
+      # /wake — explicit microphone wake-word consent and status.
       def dispatch_wake(root, ctx: nil)
         return "wake: local-only" if Fiber[:master_visitor] == true
         return "wake: Android/Termux only" unless Master::Device.android? && Master::Device.termux?
@@ -623,7 +623,7 @@ module Master
         "wake0: unavailable - #{e.class}: #{e.message}"
       end
 
-      # /doctor - bin/doctor's report followed by the security audit.
+      # /doctor — bin/doctor's report followed by the security audit.
       # `/doctor device` asks the hardware the host exposes through Termux:API.
       def dispatch_doctor(root, ctx: nil)
         word, rest = subcommand(ctx)

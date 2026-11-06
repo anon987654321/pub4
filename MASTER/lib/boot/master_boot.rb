@@ -113,7 +113,7 @@ module Master
     # It also meant every session started with a cold pool, and the first
     # spoken reply paid the 2.5s daemon spawn on top of synthesis (measured
     # 2026-10-02). Warm on a thread: boot stays instant, the pool is ready by
-    # the time a reply speaks, and a failure here says nothing - the first
+    # the time a reply speaks, and a failure here says nothing — the first
     # speak re-runs ensure_daemon! and reports if it matters.
     def warm_tts_pool(root:)
       warm = Thread.new do

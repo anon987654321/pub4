@@ -54,7 +54,7 @@ class WorldRollbackTest < Minitest::Test
   end
 
   # The reason the scope exists. `git reset --hard HEAD` undid the failed write by
-  # discarding every uncommitted change in the tree - and this checkout is shared,
+  # discarding every uncommitted change in the tree — and this checkout is shared,
   # so "every uncommitted change" includes whatever another session was midway
   # through. Undoing one write must not cost someone else their work.
   def test_rollback_leaves_a_concurrent_change_to_another_file_alone
@@ -70,7 +70,7 @@ class WorldRollbackTest < Minitest::Test
 
       File.write(File.join(root, "mine.txt"), "failed-effect\n")
       # Another session, editing a different file in the same tree, after the
-      # checkpoint was taken - so this change is in no patch anywhere.
+      # checkpoint was taken — so this change is in no patch anywhere.
       File.write(File.join(root, "theirs.txt"), "their work in progress\n")
 
       observation = world.rollback(checkpoint, Master::Core::Effect.write("mine.txt", "failed-effect\n"))

@@ -8,7 +8,7 @@ require_relative "improve/engine"
 
 module Master
   module Fix
-    # The Elevation Engine - the half of /fix that does not repair: it improves,
+    # The Elevation Engine — the half of /fix that does not repair: it improves,
     # ideates and restructures. Where the scanner measures distance from the law,
     # elevation measures distance from the ideal, and closes it one anchored,
     # evidence-backed step per pass. /fix embodies what it performs: the engine is

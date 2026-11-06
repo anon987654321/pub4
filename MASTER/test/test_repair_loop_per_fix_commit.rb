@@ -2,7 +2,7 @@
 
 require_relative "test_helper"
 
-# One fix, one commit, one push - before the next violation is touched. And the
+# One fix, one commit, one push — before the next violation is touched. And the
 # two guards that keep a per-fix pipeline honest: a proposal that collapses a
 # file (the 2026-09-17 UNCHANGED corruption) never reaches the write, and a
 # fix that leaves a new violation on the lines it changed is not a repair.
@@ -85,7 +85,7 @@ class TestRepairLoopPerFixCommit < Minitest::Test
       committer:,
     )
     # The genetic strategy waits RATE_LIMIT_SLEEP between candidate attempts,
-    # which is a lane's cost, not this file's subject - a stub keeps the
+    # which is a lane's cost, not this file's subject — a stub keeps the
     # per-fix commit tests from sleeping 30s apiece.
     loop.define_singleton_method(:wait_before_retry) { |*_args| }
     loop
@@ -146,7 +146,7 @@ class TestRepairLoopPerFixCommit < Minitest::Test
   end
 
   # The 2026-09-17 RAILS run wrote the literal word UNCHANGED over a live view.
-  # The re-scan approved it, because one word holds no violations - no
+  # The re-scan approved it, because one word holds no violations — no
   # instrument downstream of the write can catch this one.
   def test_apply_rejects_a_proposal_that_collapses_the_file
     Dir.mktmpdir do |root|
@@ -200,7 +200,7 @@ class TestRepairLoopPerFixCommit < Minitest::Test
 
   # Boyscout, line-scoped: the fix touched line 1 and left a violation there
   # that the old content did not carry. The file's total did not grow, so the
-  # count check passed - this is the check that catches the swap.
+  # count check passed — this is the check that catches the swap.
   def test_apply_rejects_a_new_violation_on_a_touched_line
     Dir.mktmpdir do |root|
       path = File.join(root, "sample.rb")
