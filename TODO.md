@@ -225,6 +225,109 @@ preserve those strengths.
   the normal one-screen Vipps path remains unchanged.
   Laws: `TRUTHFUL_STATUS`, `AFFORDANCE_CLARITY`, `COST_TRANSPARENCY`,
   `OPERATOR_RENDERED_contract`.
+
+### Screenshot-led micro-refinements — second pass (2026-11-06, clone@69a0fcb)
+
+A second review of the same committed RAILS captures, using the tree's own
+vips stack for contact sheets and 1:1 crops (`scripts/analysis/make_sheets.py`,
+`make_crops.py`, `make_crops2.py`; pyvips/libvips, matching the `Vips::Image`
+usage in STUDIO/postpro and the `image_processing` Gemfiles). The first pass's
+constraints still hold: reproduce each finding in the Chrome/CDP suite before
+changing source; keep the product dialects, operator-owned palette/typefaces,
+canonical tokens and original marks intact.
+
+Suspicions refuted against source in this pass, recorded so they are not
+re-raised: the Mr. Damascy strings are clean at 1:1 in
+`mrdamascy/config/locales/nb.yml` ("Drikkegis til kureren?", "Sahtein-kortet",
+"Kjøkkenbrettet", "Bekreftet", "Alt som skal grilles, i én rekke"); Amber's
+second editorial nav item is "Antrekk" (`amber/config/locales/nb.yml:61`), not
+a garbled label; Radio's "Utvalgt spor" is spelled correctly; the floating
+bottom-right pill on brgen desktop is the existing chat affordance, not a
+misplaced sign-in control. The aliased Amber wordmark in both captures is
+motivation for amber-057 (§8.1), not a new row, and the Amber desktop tile
+measure is already owned by the Bymorgen item above.
+
+- [ ] **Stale-capture inventory.** Committed captures contradict current
+  source in at least three rendered elements. The marketplace hero price
+  prints blue and underlined, while source styles it `var(--bol-price)`
+  (#c91f2c, tabular numerals) on a plain `strong`
+  (`brgen/app/assets/stylesheets/_brgen_shared_overrides.scss:438,554` over
+  `brgen_marketplace/app/views/marketplace/listings/index.html.erb`). The
+  messenger desktop "Meldinger" heading sits on a partial-width grey box,
+  while source paints `.messenger-conversation-header` as a full-pane
+  elevated bar (`brgen/app/assets/stylesheets/_brgen_messenger.scss:363`).
+  The maps captures still show the raw kind value "place" at the page top,
+  and the fix in `brgen_maps/app/views/maps/places/_card.html.erb` covers the
+  card partial only — verify the kind select and page header at recapture.
+  Recapture every committed RAILS capture at one revision after the pending
+  items close, and record the revision beside the image so capture age is
+  readable from the file. Measure the marketplace utility strip ("Rask
+  levering, også på kvelden" et al., `brgen/config/locales/nb.yml:86-88`)
+  at 1:1 for size and AA contrast while there.
+  Laws: `TRUTHFUL_STATUS`, `OPERATOR_RENDERED`, `PROPORTION_contrast`.
+- [ ] **Maps fixed chrome scrim.** At 1:1 the maps desktop capture shows list
+  content ("Kafé Åsane", the search row) sharing a baseline with the fixed
+  white chrome and the fixed type-only brand mark
+  (`__shared/app/views/shared/_brand_mark.html.erb` documents
+  `position:fixed`, no box, no background). Measure the top inset on the
+  translucent-chrome dialects and add a scrim or reserved headroom so
+  scrolled text never collides with the brand and nav; keep the type-only
+  mark and the accessibility contract documented in that partial.
+  Laws: `PROPORTION_contrast`, `REACH`, `OPERATOR_RENDERED_contract`.
+- [ ] **Nav "nytt!" badge clearance.** The `<sup class="nav_link_badge">`
+  ("nytt!", `brgen/app/views/shared/_nav_swiper.html.erb:69`,
+  `brgen/app/assets/stylesheets/_brgen_navigation.scss:346`,
+  `translate: 0 -35%`) rides the bar's top edge at y≈0 in both chrome
+  dialects at 1440 and 390. Verify the badge keeps clear of the viewport top
+  and the safe-area inset, and that no future `overflow` rule clips it;
+  keep the sup semantics and the opens-in-new-tab aria-label.
+  Laws: `PROPORTION_eight_px_rhythm`, `POLA`, `REACH`.
+- [ ] **Dating hero action cluster.** The dating home header renders up to
+  six equal-weight actions beside the hgroup
+  (`brgen_dating/app/views/dating/home/index.html.erb:13-31`); the capture
+  shows the cluster wrapping into a ragged two-row pill mass colliding with
+  the heading block at 1440. Measure the wrap at 1280, 1440 and 390, then
+  group to one primary action plus a bounded overflow, preserving the
+  dialect's pill language and the `button_to` POST semantics for rewind.
+  Laws: `BOUNDED_LOAD_choice_overload`, `POLA_intuitive_navigation`,
+  `PROPORTION_eight_px_rhythm`.
+- [ ] **TV header alignment.** The TV home centres the hgroup but
+  right-aligns its action pair ("Strøm", "Kanaler") on desktop, while the
+  same pair centres under the blurb on mobile
+  (`brgen_radio/tv/app/views/tv/home/index.html.erb:6-18`). Confirm the
+  intended alignment per breakpoint and whether "Strøm" scans as the feed
+  link; settle on one rule rather than two.
+  Laws: `POLA_intuitive_navigation`, `DENSITY_aesthetic_integrity`.
+- [ ] **BSDPorts spare-dialect micro.** (a) The search field's dark grey
+  fill with grey placeholder reads as a disabled control in both viewports
+  (`bsdports-desktop.png`, `bsdports-mobile.png` at 1:1); measure the
+  placeholder contrast against AA and restyle inside the spare
+  white/Arial/square dialect — no cardifying, no re-theming. (b)
+  "oppdateringsalder ukjent" repeats on every result row
+  (`bsdports/config/locales/nb.yml`); show the update age only when known,
+  or state the unknown once, keeping the row dense. Distinct from the
+  first-pass readability item; no redesign.
+  Laws: `AFFORDANCE_CLARITY`, `DENSITY`, `TRUTHFUL_STATUS`.
+- [ ] **Sign-in casing.** `brgen/config/locales/nb.yml:985` declares
+  `storefront.sign_in: logg inn` while the community chrome at `:85` uses
+  "Logg inn" and bsdports matches "Logg inn". One casing for one action;
+  pick the operator's form and move the storefront key onto it.
+  Laws: `SINGULARITY_one_true_mark`, `STRUNK_WHITE`.
+- [ ] **BPLANS template defects.** `BPLANS/__templates/bob.html` and
+  `bob2.html` both open with a spreadsheet-helper `<script>` block before
+  `<!DOCTYPE html>` (standards-mode risk), and bob.html's print block has a
+  malformed selector (`aref^="mailto:"]`). The pair also set
+  `--width-content: 48rem` (≈96 characters at 16px, past the 75-character
+  ceiling) against the BPLANS contract's 66-character measure
+  (`BPLANS/README.md`, `BPLANS/syre.html:42`), carry four font weights
+  (400/500/600/700) against `BRINGHURST_scale`, use bare `:focus` instead of
+  `:focus-visible`, and set negative letter-spacing on body text. The
+  historical files stay untouched (`PRESERVE_FIRST`); `bob3.html` is the
+  corrected correspondence template built from them. Retrofit the fixes
+  into the bob/bob2 pair only as a new version on the operator's decision.
+  Laws: `BRINGHURST_measure`, `BRINGHURST_scale`, `REACH_focus_visible`,
+  `PRESERVE_FIRST`.
+
 ## 5. MASTER CLI, web, voice and face
 
 - [ ] **CLI performance and interaction.** Measure boot, first token,

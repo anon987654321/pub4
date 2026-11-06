@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="nb">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Bekreftelse av møte og dagsorden i sak 6110-4/2025">
+    <title>Bekreftelse av møte — sak 6110-4</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400..800;1,400..800&family=Source+Serif+4:ital,opsz,wght@0,8..60,200..900;1,8..60,200..900&display=swap">
+    <style>
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+
+      /* Tokens. Spacing steps sit on the tree's 8px rhythm
+         (4, 8, 12, 16, 24, 32, 48, 64 px) so the letter and the Rails
+         dialects can share a vocabulary (PROPORTION_eight_px_rhythm). */
+      :root {
+        --ink: #000; --muted: #6f6f6f; --border: #ddd; --paper: #fff;
+        --link: #005f73;              /* one link ink; the second navy is gone */
+        --text: 1rem; --text-small: 0.875rem; --text-xsmall: 0.75rem;
+        --display: 2.6rem; --title: 1.4rem; --signature: 1.05rem;
+        --leading: 1.5; --leading-title: 1.25;   /* on the declared scale */
+        --step-1: 0.25rem; --step-2: 0.5rem; --step-3: 0.75rem;
+        --step-4: 1rem; --step-6: 1.5rem; --step-8: 2rem; --step-12: 3rem;
+        --measure: min(66ch, 100% - 2 * var(--step-4));
+        --indent: 1.25rem;            /* the hanging dash, 20px on the rhythm */
+        --font-text: "Source Serif 4", Georgia, serif;
+        --font-heading: "EB Garamond", Georgia, serif;
+      }
+
+      html { font-size: 16px; }
+      body {
+        font: 400 var(--text)/var(--leading) var(--font-text);
+        color: var(--ink); background: var(--paper);
+        max-width: var(--measure); margin: 0 auto; padding: var(--step-8) var(--step-4);
+        text-rendering: optimizeLegibility;
+        hanging-punctuation: first allow-end last;
+      }
+
+      h1 {
+        font: 700 var(--display)/var(--leading-title) var(--font-heading);
+        text-align: center; margin: var(--step-6) 0 var(--step-8);
+      }
+      h2 {
+        font: 700 var(--title)/var(--leading-title) var(--font-heading);
+        margin: var(--step-8) 0 var(--step-4);
+      }
+      p { margin-bottom: var(--step-6); text-wrap: pretty; }
+
+      strong { font-weight: 700; }
+
+      /* Running text carries oldstyle figures; the case number is an
+         identifier and keeps tabular ones (BPLANS typographic contract). */
+      body { font-variant-numeric: oldstyle-nums; }
+      .case_number { font-variant-numeric: tabular-nums; }
+
+      address { margin-bottom: var(--step-6); font-style: italic; }
+      address p { margin: 0; }
+      address time.date {
+        display: block; margin-top: var(--step-3); text-align: right;
+      }
+      .case_number { margin-bottom: var(--step-6); text-align: right; }
+      .address_line, .address_indent {
+        padding-left: var(--indent);
+        text-indent: calc(-1 * var(--indent));
+      }
+      .address_line::before {
+        content: '—\00a0';
+      }
+
+      ol, ul { margin: 0 0 var(--step-6) 0; padding-left: 1.5em; }
+      li { margin-bottom: var(--step-2); text-wrap: pretty; }
+      li::marker { color: var(--ink); }
+
+      a {
+        color: var(--link); text-decoration: underline;
+        text-decoration-thickness: 1.5px; text-underline-offset: 2px;
+      }
+      a:focus { outline: 2px solid var(--link); outline-offset: 2px; }
+      a:focus:not(:focus-visible) { outline: none; }
+      a:focus-visible { outline: 2px solid var(--link); outline-offset: 2px; }
+
+      .external-icon {
+        width: 10px; height: 10px; vertical-align: super; margin-left: 0.2rem;
+      }
+
+      .signature {
+        font-style: italic; font-size: var(--signature);
+        margin-top: var(--step-6); text-align: end;
+      }
+
+      /* Valediction and signature are one unit; paged media must never
+         part them (widow control after the print contract). */
+      .signoff { break-inside: avoid; page-break-inside: avoid; }
+
+      footer {
+        margin-top: var(--step-8); padding: var(--step-4) 0;
+        border-top: 1px solid var(--border);
+        font-size: var(--text-xsmall); color: var(--muted);
+      }
+      footer p { margin: 0 0 var(--step-1); }
+      footer a { color: var(--link); }
+      footer a strong { color: var(--link); }
+      .colophon { margin-top: var(--step-2); }
+
+      @media (max-width: 480px) {
+        :root { --display: 2.1rem; --title: 1.25rem; }
+        body { padding: var(--step-4) var(--step-4); }
+      }
+
+      /* The letter carries no motion; the guard is insurance against a
+         future transition, so reduced motion never regresses (REACH). */
+      @media (prefers-reduced-motion: reduce) {
+        * { transition: none !important; scroll-behavior: auto !important; }
+      }
+
+      @media print {
+        @page { margin: 1in; }
+        :root {
+          --text: 12.6pt; --text-small: 10.8pt; --text-xsmall: 9.6pt;
+          --display: 33.6pt; --title: 16.8pt; --signature: 13.2pt;
+          --step-1: 6pt; --step-2: 9pt; --step-3: 9pt; --step-4: 12pt;
+          --step-6: 18pt; --step-8: 24pt; --step-12: 36pt;
+          --link: black;
+        }
+        body { padding: 0; }
+        p, li { widows: 3; orphans: 3; }
+        footer { border-top: none; }
+        a[target="_blank"]::after, a[href^="mailto:"]::after { content: none; }
+        h1, h2, address, .signature, ol, ul { break-inside: avoid; }
+        a:focus, a:focus-visible { outline: none; }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- bob3.html — third version of the bob correspondence pair. Built on
+         bob.html / bob2.html and refined against MASTER/data/laws.yml,
+         Bringhurst's Elements of Typographic Style and Strunk & White:
+         doctype first, no script before it; measure min(66ch, ...) per
+         BRINGHURST_measure and the BPLANS contract; two weights only (400,
+         700) per BRINGHURST_scale; leading on the declared scale (1.25,
+         1.5); no tracking on text; :focus-visible per REACH_focus_visible;
+         prefers-reduced-motion guard per REACH_reduced_motion; spacing on
+         the 8px rhythm per PROPORTION_eight_px_rhythm; oldstyle figures in
+         running text, tabular for the case number; one link ink instead of
+         two (SINGULARITY_one_true_mark); muted grey lifted to pass WCAG AA;
+         hyphenation, pretty wrapping and widow/orphan limits after
+         __shared/app/assets/stylesheets/_typography.scss. Copy follows
+         STRUNK_WHITE: active voice, positive form, no leech words
+         (veldig, ganske, temmelig), one topic per paragraph.
+         bob.html and bob2.html stay untouched (PRESERVE_FIRST). -->
+    <main id="main">
+      <article>
+        <header>
+          <h1>Bekreftelse av møte</h1>
+          <address>
+            <p class="address_line">Ragnhild Laupsa Mæhle, Nygårdsgaten 58, NO-5008 Bergen, <a href="mailto:trymmika@gmail.com" aria-label="E-post til Ragnhild">trymmika@gmail.com</a></p>
+            <p class="address_line address_indent">BOB Boligutleie AS, Postboks 1054, NO-5808 Bergen, <a href="mailto:juridisk@bob.no" aria-label="E-post til BOB">juridisk@bob.no</a></p>
+            <time class="date" datetime="2025-07-01">1. juli 2025</time>
+            <p class="case_number"><strong>Saksnummer:</strong> 6110-4/2025</p>
+          </address>
+        </header>
+
+        <p lang="nb">Jeg bekrefter møtet fredag 4. juli 2025, klokken 14:00, på Nygårdsgaten 58. Møtet gjelder oppsigelsen av leilighet 6110-4 og mine innsigelser av 26. april og 22. juni. Jeg ber dere komme forberedt, slik vi kan avslutte saken på ett møte.</p>
+
+        <p lang="nb">Tidspunktet holder fristen i brevet mitt av 22. juni, som ba om et møte innen 6. juli. Én time bør rekke. Jeg møter alene; om dere ønsker, kan Jussbuss stille som min støtte, slik jeg nevnte i forrige brev.</p>
+
+        <h2>Dagsorden</h2>
+        <ol>
+          <li>Inspeksjonsrapporten fra 26. april — leilighetens stand.</li>
+          <li>Støymålingen og politiets avvisning av støyklagen.</li>
+          <li>Bakgårdstilgangen, som <a href="https://lovdata.no/lov/1999-03-26-17/§2-2" target="_blank" aria-label="Husleieloven paragraf 2-2">§2-2</a> krever holder åpne.</li>
+          <li>Kjellerboden, det uautoriserte inngrepet og skadelistene.</li>
+          <li>Mulig forlik, og søksmålsfristen per <a href="https://lovdata.no/lov/1999-03-26-17/§9-8" target="_blank" aria-label="Husleieloven paragraf 9-8">§9-8</a>.</li>
+        </ol>
+
+        <p lang="nb">Skriv gjerne en kort bekreftelse før 3. juli. Kommer tidspunktet til å skape problemer, foreslår jeg mandag 7. juli, samme sted og samme tid.</p>
+
+        <div class="signoff">
+          <p lang="nb">Med vennlig hilsen,</p>
+          <p class="signature">Ragnhild Laupsa Mæhle, <time datetime="2025-07-01">1. juli 2025</time></p>
+        </div>
+
+        <footer>
+          <p><a href="https://www.pub.attorney" target="_blank" aria-label="Besøk PubAttorney"><strong>www.pub.attorney</strong><svg class="external-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg></a> — Rettferdighet for Ola &amp; Kari, med Norges beste AI.</p>
+          <p>Opphavsrett © 2025 PubAttorney, Kanalveien 10, NO-5068 Bergen.</p>
+          <p class="colophon">Satt i EB Garamond og Source Serif 4 · mål 66 tegn · linjeavstand 1,5 · oldtall i løpende tekst, tabelltall i saksnummer · to skriftstyrker · papir #fff · etter Bringhurst, Strunk &amp; White og MASTER/data/laws.yml.</p>
+        </footer>
+      </article>
+    </main>
+  </body>
+</html>
