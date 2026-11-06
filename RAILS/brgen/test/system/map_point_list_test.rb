@@ -77,4 +77,21 @@ class MapPointListTest < ApplicationSystemTestCase
     end
     assert_equal edges.call(".place-card").map(&:round), edges.call("main > .search").map(&:round)
   end
+
+  # The shared search pill hid every filter select, so the places list had a
+  # kind filter in its markup and no control on screen.
+  test "the places kind filter shows inside the search pill and narrows the list" do
+    city = City.find_by!(domain: "brgen.no")
+    ActsAsTenant.with_tenant(city) do
+      Place.create!(city:, name: "Kafeteket", kind: "cafe", latitude: 60.3910, longitude: 5.3310)
+    end
+    visit_city("maps", "/places")
+    decline_optional_cookies if has_css?("#cookie-consent-banner", wait: 3)
+
+    filter = find("main > .search select[name=kind]")
+    assert_operator filter.native.size.width, :>, 0
+    filter.find("option[value=cafe]").select_option
+    assert_selector ".place-card", text: "Kafeteket"
+    assert_no_selector ".place-card", text: "Bryggen"
+  end
 end

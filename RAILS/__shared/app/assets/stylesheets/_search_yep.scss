@@ -105,7 +105,30 @@
   display: none;
 }
 
-.search .search-form select,
+/* A filter select a live index passes in (maps' place kind, amber's outfit
+   filter) stays reachable: it ends the pill's row instead of vanishing, which
+   left those filters with no control at all. Number fields stay hidden. */
+.search .search-form:has(> select) {
+  display: flex;
+  align-items: center;
+}
+
+.search .search-form:has(> select) > input {
+  flex: 1 1 auto;
+}
+
+.search .search-form select {
+  flex: 0 1 auto;
+  width: auto;
+  min-inline-size: 0;
+  max-inline-size: 45%;
+  margin-inline-end: 16px;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  color: inherit;
+}
+
 .search .search-form input[type="number"] {
   display: none;
 }
