@@ -16,7 +16,7 @@ module Master
       end
 
       def initialize(config: Mobile.config, capture: Master::Io::Exec.method(:capture3),
-                     speaker: ->(cmd, text) { system(cmd, text) }, permissions: nil, root: Master::REPO_ROOT)
+                     speaker: ->(cmd, text) { system(cmd, text) }, permissions: nil, root: Master::ROOT)
         @ambient = config.fetch("ambient", {})
         @capture = capture
         @speaker = speaker
