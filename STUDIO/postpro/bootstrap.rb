@@ -12,7 +12,7 @@ module PostproBootstrap
   def self.dmesg(msg)
     elapsed = defined?(BOOT_TIME) ? " +%.3fs" % (Time.now - BOOT_TIME) : ""
     # FATAL is in this list because it was not, and the one message that uses
-    # it - libvips unavailable, on the line before `exit 1` - printed as
+    # it — libvips unavailable, on the line before `exit 1` — printed as
     # "postpro: ok: FATAL libvips unavailable".
     tag = if msg.start_with?("ERROR", "error", "FATAL", "fatal")
             "fix:"
@@ -194,7 +194,7 @@ module PostproBootstrap
   # directory, which is wherever the operator happened to be standing. It has
   # therefore been false on every invocation, so CONFIG has always been {} and
   # all twelve `CONFIG[...]` reads in this file have always taken their
-  # fallback - including apply_camera_profile_first, which is the switch for
+  # fallback — including apply_camera_profile_first, which is the switch for
   # get_camera_profile and apply_camera_profile, fifty lines that have never
   # run. The same defect was found and fixed one screen below this, twice, and
   # left here.

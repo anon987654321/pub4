@@ -5,8 +5,8 @@ def random_draw(rng, lane:)
   pool = random_pool(lane)
   target = rng.rand(random_chain_length)
   # Seeded on something that could be the subject, and that can grow. Starting
-  # from an artefact grows a chain of nothing but damage - reticulation into
-  # fixing-bath fog into gate weave - and then something has to lead it, and dust
+  # from an artefact grows a chain of nothing but damage — reticulation into
+  # fixing-bath fog into gate weave — and then something has to lead it, and dust
   # does. Starting from an effect no preset uses grows nothing at all: five of the
   # seventy-three have no affinity with anything, and seeding on one of those
   # rendered a picture whose whole grade was dual_base_density and grain. They

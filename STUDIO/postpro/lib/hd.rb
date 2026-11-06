@@ -8,7 +8,7 @@
 # It used to run on every output, which grained 57 of the 61 presets twice and
 # stood as a --vocab-check note for as long as the note has existed. Two passes
 # add in quadrature, so a stock quoted at 6.0 levels of granularity arrived at
-# 8.5 - which cost nothing while the grain was invisible and costs the whole
+# 8.5 — which cost nothing while the grain was invisible and costs the whole
 # calibration now that it is not.
 def apply_finishing_grain(image, preset_name = nil, grained: nil)
   data = PRESETS[preset_name.to_s.to_sym] || {}
@@ -41,7 +41,7 @@ def halation_tint_for(stock)
 end
 
 # Per-channel characteristic curve baked into a 256-entry LUT. Each channel
-# carries [Dmin, Dmax, pivot, gamma] - pivot is the linear midtone fulcrum
+# carries [Dmin, Dmax, pivot, gamma] — pivot is the linear midtone fulcrum
 # (≈0.18 for ISO-calibrated film), gamma is contrast, Dmin/Dmax are the
 # shadow floor and highlight ceiling in linear output. Operates in
 # linearized sRGB so middle gray maps to itself, and per-channel offset
@@ -53,14 +53,14 @@ module HD
   # This was `CACHE = {}` with a comment above it saying "NOT frozen -- this is
   # a memo table and freezing it turns every write into a FrozenError". The
   # comment was right and the code under it said `.freeze` anyway, twice, in
-  # this module and in Spectral: MASTER's IMMUTABLE rule ("mutable constant -
+  # this module and in Spectral: MASTER's IMMUTABLE rule ("mutable constant —
   # append .freeze") fires on `CACHE = {}` and cannot tell a lookup table from
   # a cache, so every autofix pass over this file put the freeze back.
   #
   # The cost was total. At the time, film_curve appeared in 46 of the 58 chains
   # and called HD.apply; spectral_temp called Spectral.adaptation_matrix. With either
   # frozen, `--preset portrait` dies on "can't modify frozen Hash" before the
-  # second effect runs - postpro could not grade a single image. --vocab-check
+  # second effect runs — postpro could not grade a single image. --vocab-check
   # does not catch it, because it reads tables and never touches a pixel: the
   # file reported 0 problems throughout.
   #
@@ -114,13 +114,13 @@ end
 # which clamps once at the end.
 $postpro_float_pipeline = false
 
-# Clamp to 0..255 and quantise to 8-bit - EXCEPT inside a preset chain.
+# Clamp to 0..255 and quantise to 8-bit — EXCEPT inside a preset chain.
 #
 # Every effect ends by calling this, so a sixteen-step chain used to round to
 # 8-bit sixteen times and, worse, clamp sixteen times. The rounding costs
 # precision; the clamping costs information that cannot be recovered. A step
 # that pushes a highlight to 260 has it cut to 255 permanently, and the next
-# step - the shoulder that exists precisely to roll that highlight back down -
+# step — the shoulder that exists precisely to roll that highlight back down —
 # receives a flat white plateau where the negative had detail.
 #
 # That is the opposite of what the thing being emulated does. The whole point of
@@ -129,8 +129,8 @@ $postpro_float_pipeline = false
 # every stage models a sensor, not a film.
 #
 # So inside a chain the values stay float and unbounded, and preset() clamps
-# once at the end. Outside a chain - a bare effect call, a recipe step, a caller
-# that hands the result straight to write_to_file - behaviour is unchanged,
+# once at the end. Outside a chain — a bare effect call, a recipe step, a caller
+# that hands the result straight to write_to_file — behaviour is unchanged,
 # because those have no later step to hand headroom to.
 def safe_cast(image, format = "uchar")
   if format == "uchar"

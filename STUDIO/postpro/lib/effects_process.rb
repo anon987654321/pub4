@@ -38,7 +38,7 @@ rescue StandardError => e
   $logger.error "cross_fade: #{e.message}"; image
 end
 
-# Infrared simulation: green channel -> bright (foliage), blue -> dark (sky).
+# Infrared simulation: green channel → bright (foliage), blue → dark (sky).
 # Heavy green mix approximates IR film's extended-red/near-IR sensitivity.
 def infrared(image, intensity = 0.8)
   r, g, b = image.cast("float").bandsplit
@@ -120,8 +120,8 @@ rescue StandardError => e
   $logger.error "kodachrome_sim: #{e.message}"; image
 end
 
-# Aged photographic print with differential dye fading. Cyan is least stable -
-# absorbs visible light, degrades fastest -> warm shift. Yellow moderate.
+# Aged photographic print with differential dye fading. Cyan is least stable —
+# absorbs visible light, degrades fastest → warm shift. Yellow moderate.
 # Magenta most stable. Contrast compression + shadow floor models paper base fog.
 def faded_print(image, age = 0.5)
   img_f = image.cast("float") / 255.0
@@ -145,7 +145,7 @@ end
 # Adjacency / Eberhard effect: developer exhaustion at bright edges creates a
 # dark inhibition band on the bright side and a slight bright band on the dark side.
 # Physically: development byproducts diffuse outward and locally suppress nearby
-# grains. Subtract a fraction of the high-pass edge signal -> local undershoot.
+# grains. Subtract a fraction of the high-pass edge signal → local undershoot.
 def adjacency_effects(image, intensity = 0.25)
   blurred = image.gaussblur(1.8)
   edge = image.cast("float") - blurred.cast("float")
@@ -175,7 +175,7 @@ rescue StandardError => e
 end
 
 # Radial lens distortion via mapim. k1 < 0 = barrel (wide-angle); k1 > 0 = pincushion.
-# First-order Brown-Conrady model - single coefficient, adequate for cinematic emulation.
+# First-order Brown-Conrady model — single coefficient, adequate for cinematic emulation.
 def lens_distortion(image, k1 = -0.12)
   w, h = image.width, image.height
   cx, cy = w / 2.0, h / 2.0
@@ -193,7 +193,7 @@ end
 
 # Bokeh highlight ring structure: out-of-focus highlights from lens element edges
 # produce an onion-ring artifact. Detected by finding the bright-disk edge and
-# adding a warm ring there. Red dominant - lens coatings transmit red more at edges.
+# adding a warm ring there. Red dominant — lens coatings transmit red more at edges.
 def bokeh_rendering(image, intensity = 0.35)
   linear = image.colourspace("scrgb")
   r, g, b = linear.bandsplit
@@ -235,7 +235,7 @@ rescue StandardError => e
   $logger.error "diffraction_blur: #{e.message}"; image
 end
 
-# Flatbed scanner CCD noise floor. Electronic in origin - independent of film grain,
+# Flatbed scanner CCD noise floor. Electronic in origin — independent of film grain,
 # lower amplitude, no spatial correlation. Adds a second fine incoherent texture.
 def scan_noise(image, intensity = 0.40)
   noise = Vips::Image.gaussnoise(image.width, image.height, sigma: 5.0 * intensity, mean: 0.0)

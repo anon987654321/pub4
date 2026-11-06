@@ -204,7 +204,7 @@ def grade_step(fx, processed, p, head, owner = "chain")
   when "dilla_phasy"          then dilla_phasy(processed, level)
   when "dilla_console_sum"    then dilla_console_sum(processed, level)
   else
-    # Was a bare `else processed` - an fx name with no arm here returned
+    # Was a bare `else processed` — an fx name with no arm here returned
     # the image untouched, and the dmesg line below then reported the
     # step as having run. A preset could be four steps short of what
     # it says it is and the log would agree with the preset.
@@ -244,7 +244,7 @@ def preset(image, name, stock: nil)
     # returned the image untouched while the log reported the step as having run,
     # so a preset could be four steps short of what it says it is and the log
     # would agree with the preset. That was fixed for the missing-arm case. It
-    # does not cover the arm that exists, runs, and changes nothing - which looks
+    # does not cover the arm that exists, runs, and changes nothing — which looks
     # identical from outside.
     before_stats = PostproExplain.snapshot(processed)
     processed = grade_step(fx, processed, p, head, "preset #{name}")
@@ -260,7 +260,7 @@ def preset(image, name, stock: nil)
   $postpro_float_pipeline = false
   safe_cast(processed)
 ensure
-  # One clamp, at the end, whatever happened in between - including a raise,
+  # One clamp, at the end, whatever happened in between — including a raise,
   # which is why this is an ensure rather than a line before the return. Leaving
   # the flag set would make every later bare effect call return unbounded float
   # to a caller expecting 8-bit.

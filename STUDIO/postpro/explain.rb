@@ -5,7 +5,7 @@
 # Off unless POSTPRO_EXPLAIN=1, because it costs two reductions per step and the
 # ordinary path should not pay for a diagnostic. When on, every fx line gains
 # the mean and spread it moved, and an effect that moved neither is named as
-# having done nothing - which is a defect this file has already had once, in the
+# having done nothing — which is a defect this file has already had once, in the
 # form of an fx name with no implementation.
 module PostproExplain
   def self.on? = ENV["POSTPRO_EXPLAIN"] == "1"
@@ -14,7 +14,7 @@ module PostproExplain
   #
   # The third was missing, and its absence is why a chain that was destroying
   # micro-detail read as healthy here. avg and deviate are both nearly blind to
-  # a gaussian blur - softening a photograph moves its mean not at all and its
+  # a gaussian blur — softening a photograph moves its mean not at all and its
   # standard deviation barely, while taking most of the high-frequency energy
   # out of it. Measured on one frame: optical_blur reported spread-0.0021, a
   # number small enough to ignore, in the same step that removed 57% of the

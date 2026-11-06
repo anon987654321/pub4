@@ -12,16 +12,16 @@ Scope: source and history in `anon987654321/pub`, `pub2`, `pub3`, and `pub4`, se
 
 ## Archaeological trail
 
-### `pub`: v12.9 / v13.3.14 - analog and cinematic post-processing
+### `pub`: v12.9 / v13.3.14 — analog and cinematic post-processing
 
 Sources:
 - [postpro.rb](https://github.com/anon987654321/pub/blob/a3185f4ec6e6a27e35eeee6718ae3afa11bf49da/postpro/postpro.rb)
 - [README.md](https://github.com/anon987654321/pub/blob/a3185f4ec6e6a27e35eeee6718ae3afa11bf49da/postpro/README.md)
 - [README2.md](https://github.com/anon987654321/pub/blob/a3185f4ec6e6a27e35eeee6718ae3afa11bf49da/postpro/README2.md)
 - [IMPLEMENTATION_COMPLETE.md](https://github.com/anon987654321/pub/blob/a3185f4ec6e6a27e35eeee6718ae3afa11bf49da/postpro/IMPLEMENTATION_COMPLETE.md)
-- [completion commit - 29 effects](https://github.com/anon987654321/pub/commit/512715ac6eddfd3100269019bb361927de371968)
+- [completion commit — 29 effects](https://github.com/anon987654321/pub/commit/512715ac6eddfd3100269019bb361927de371968)
 
-The early interface was an interactive batch tool: select professional or experimental mode, choose random treatments or a JSON recipe, match file patterns (including recursive patterns), choose 1-5 variations and 1-5 effects per variation, and see progress and aggregate statistics. It documented retry-on-failure, rotation/debug logging, RGB/RGBA handling, and finishing/polish steps. Professional mode was deliberately restrained; experimental mode admitted stronger distortion. JSON recipes could set simple intensities or effect-specific parameters such as blend modes and borders.
+The early interface was an interactive batch tool: select professional or experimental mode, choose random treatments or a JSON recipe, match file patterns (including recursive patterns), choose 1–5 variations and 1–5 effects per variation, and see progress and aggregate statistics. It documented retry-on-failure, rotation/debug logging, RGB/RGBA handling, and finishing/polish steps. Professional mode was deliberately restrained; experimental mode admitted stronger distortion. JSON recipes could set simple intensities or effect-specific parameters such as blend modes and borders.
 
 The v13.3.14 specification enumerated 29 user-facing effects. That vocabulary is preserved in `LEGACY_RESTORE.md` and `legacy_effects.rb`; equivalent present-day implementations are preferred over copying the old pixel math where a measured stock, H&D curve, grain model, or current effect is more truthful.
 
@@ -60,14 +60,14 @@ Current recovery anchors:
 - [grade_step.rb](./lib/grade_step.rb)
 - [vocab_check.rb](./lib/vocab_check.rb)
 
-The new engine preserves the original user intent but intentionally changes the mechanics: effects go through one dispatcher; source headroom and look-specific intensity are respected; calculations remain floating-point until a single final cast; random recipes must survive measured source-preservation checks; every output can carry the seed, chain and provenance; and AST-based vocabulary checks establish that recipe/preset options reach executable effect calls. Historical claims of "true randomization" do not substitute for those current proofs.
+The new engine preserves the original user intent but intentionally changes the mechanics: effects go through one dispatcher; source headroom and look-specific intensity are respected; calculations remain floating-point until a single final cast; random recipes must survive measured source-preservation checks; every output can carry the seed, chain and provenance; and AST-based vocabulary checks establish that recipe/preset options reach executable effect calls. Historical claims of “true randomization” do not substitute for those current proofs.
 
 ## The deleted 2026 photographic proposal notes
 
-The two documents that were folded into implementation - not lost to an accidental delete - are
+The two documents that were folded into implementation—not lost to an accidental delete—are
 still recoverable at their exact historical snapshot:
-- [`STUDIO/AMBITION.md` - all 168 proposals](https://github.com/anon987654321/pub4/blob/5c15297107d131eef8881241f6e84190670a2225/STUDIO/AMBITION.md)
-- [`STUDIO/PHOTOGRAPHY.md` - the four-layer photography model and refitted visual laws](https://github.com/anon987654321/pub4/blob/5c15297107d131eef8881241f6e84190670a2225/STUDIO/PHOTOGRAPHY.md)
+- [`STUDIO/AMBITION.md` — all 168 proposals](https://github.com/anon987654321/pub4/blob/5c15297107d131eef8881241f6e84190670a2225/STUDIO/AMBITION.md)
+- [`STUDIO/PHOTOGRAPHY.md` — the four-layer photography model and refitted visual laws](https://github.com/anon987654321/pub4/blob/5c15297107d131eef8881241f6e84190670a2225/STUDIO/PHOTOGRAPHY.md)
 - [The later folding/deletion commit](https://github.com/anon987654321/pub4/commit/80709c0712559031fef10fe486f530ac35b185fc), whose message says those ideas now stand beside the code that uses them.
 
 This record preserves the trail without reintroducing two competing top-level specifications.
@@ -141,4 +141,4 @@ The replacement on this branch implements the central correction: ffmpeg streams
 
 ## Verification boundary
 
-This document is a historical map, not a test receipt. Current effect reachability, pixel behaviour and CLI behaviour are established by the live `--vocab-check`, focused Postpro tests and `cd STUDIO && rake check test`. A historical commit message saying "green" is evidence about that past revision only.
+This document is a historical map, not a test receipt. Current effect reachability, pixel behaviour and CLI behaviour are established by the live `--vocab-check`, focused Postpro tests and `cd STUDIO && rake check test`. A historical commit message saying “green” is evidence about that past revision only.

@@ -18,7 +18,7 @@ end
 # ON BY DEFAULT, and set false only by someone who has a reason. It was
 # `if CONFIG["apply_camera_profile_first"]` against a CONFIG that is {} unless
 # a master.json exists, so the answer was nil on every invocation this file
-# has ever had - fifty lines of matching and matrix application that had never
+# has ever had — fifty lines of matching and matrix application that had never
 # run, aimed at a profiles directory that had never existed.
 #
 # Both halves are real now: camera_profiles.json holds 121 bodies across
@@ -26,7 +26,7 @@ end
 # kept them as decorative as the code that reads them.
 #
 # It no-ops safely on anything without EXIF Make/Model, which is every
-# generated image - so a render is unaffected and a photograph is corrected.
+# generated image — so a render is unaffected and a photograph is corrected.
 def camera_corrected(image, file)
   $postpro_stabilization_report = nil
   corrected = image

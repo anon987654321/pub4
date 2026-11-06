@@ -1,7 +1,7 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
-# dilla - the STUDIO beat engine.
+# dilla — the STUDIO beat engine.
 #
 # One Ruby file, no gems. Pure-Ruby synthesis at 44.1 kHz, a real MPC-style
 # groove stack (96 PPQN, 53-56% swing, snares early / kicks late / hats
@@ -26,8 +26,8 @@
 #   ruby dilla.rb demo-each
 #
 # Sample flip (operator-supplied, rights-cleared audio only):
-#   SAMPLE_LOOP=file SAMPLE_LOOP_VOL=0.42 SAMPLE_LOOP_WEIGHT=0.6 ruby dilla.rb ...
-#   ... --sample-vol 0.42 --sample-weight 0.6 --sample-slices 8
+#   SAMPLE_LOOP=file SAMPLE_LOOP_VOL=0.42 SAMPLE_LOOP_WEIGHT=0.6 ruby dilla.rb …
+#   … --sample-vol 0.42 --sample-weight 0.6 --sample-slices 8
 
 require "json"
 require "fileutils"
@@ -654,7 +654,7 @@ module Dilla
 
     # Chords anticipate the drums (~100ms in the microtiming research), bass
     # follows the harmony with its own style, melody repeats its loop with
-    # identical deviations - meticulously executed, never sloppy.
+    # identical deviations — meticulously executed, never sloppy.
     def build_melodic(plan, loop_bars, bar_count)
       voicer = Voicer.new(Dilla.theory)
       parsed = @progress["chords"].map { |sym| Dilla::ChordParser.parse(sym, Dilla.theory) }
@@ -1210,7 +1210,7 @@ module Dilla
 
   # ------------------------------------------------------------- sample flip
 
-  # Operator-supplied loop chopping: decode <=24 s through local ffmpeg,
+  # Operator-supplied loop chopping: decode ≤24 s through local ffmpeg,
   # estimate each slice's pitch classes, pick chord-aware chops, and mix them
   # under the phrase starts before the final tape stage.
   module SampleFlip

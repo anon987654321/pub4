@@ -3,13 +3,13 @@
 # Relighting, which is the one thing a grade can do to light and the one thing
 # this file could not do.
 #
-# A photograph fails on four layers - geometry, light, expression and optics -
+# A photograph fails on four layers — geometry, light, expression and optics —
 # and light is PARTLY fixable: gradeable as tonality, and a grade
 # cannot move a shadow to the other side of a nose. Both halves are true, and
 # the gradeable half has a standard method nobody here had written.
 #
-# Split the picture into illumination and reflectance - a heavy blur of the
-# luminance is the light, and what is left over is the surface - then put the
+# Split the picture into illumination and reflectance — a heavy blur of the
+# luminance is the light, and what is left over is the surface — then put the
 # light back differently and leave the surface alone. Because the correction
 # rides as a RATIO on all three channels, texture, grain and hue survive it
 # exactly; only the modelling moves. That is a power window, done by arithmetic
@@ -24,7 +24,7 @@ RELIGHT_SCALE = 12.0
 # full resolution: sigma 227 on a 2720 px contact sheet took 65 seconds and
 # killed a batch part way through. The field it produces is low-frequency by
 # definition, so it is built on a small copy and resized back, which costs
-# nothing the field had - this is the one place in the file where working at a
+# nothing the field had — this is the one place in the file where working at a
 # lower resolution is not an approximation.
 LOW_FREQUENCY_TILE = 256.0
 RELIGHT_FLOOR = 0.004
@@ -42,7 +42,7 @@ def relight(image, intensity = 0.5, azimuth: 135.0, shape: 1.25, throw: 0.8, dep
   deepened = (held.linear([1.0 / mean], [0])**shape).linear([mean], [0])
   # And that light swung toward a new key, renormalised so the exposure holds.
   # With a measured depth map, the key also lands the way a real key does:
-  # nearer the viewer collects more of it, far loses its share - the geometric
+  # nearer the viewer collects more of it, far loses its share — the geometric
   # ramp alone would throw light across a wall the map knows is metres back.
   ramp = relight_key(held, azimuth, throw)
   ramp = ramp * proximity_bias(depth) if depth
@@ -93,7 +93,7 @@ end
 #
 # Distance costs contrast, costs saturation and cools, because what is between
 # you and the far thing is air full of scattered skylight. Every other depth
-# cue in this file is optical - defocus, vignette, tilt - and optics is where
+# cue in this file is optical — defocus, vignette, tilt — and optics is where
 # the amateur version lives, because a blurred background reads as a filter
 # while haze reads as a room.
 #
@@ -106,7 +106,7 @@ AERIAL_DEPTH_CAP = 0.45
 # cue as a name. Straight off the acutance it covers half the frame at a mean
 # of 0.57; cubed it sits at 0.32 and lives where the detail is not. Measured
 # over the sharpest fifth of a portrait it reads 0.00 either way, so the face
-# was never at risk - what the curve buys is the middle distance.
+# was never at risk — what the curve buys is the middle distance.
 AERIAL_FALLOFF = 3.0
 
 # Aerial depth, and with a depth map, the same without the proxy.
@@ -186,7 +186,7 @@ rescue StandardError => e
   image
 end
 
-# Gentle warm color push: R+, G mild+, B-. Stays subtle - use amount <= 0.3.
+# Gentle warm color push: R+, G mild+, B-. Stays subtle — use amount ≤ 0.3.
 def warmth(image, amount = 0.2)
   image.linear(
     [1.0 + 0.30 * amount, 1.0 + 0.08 * amount, 1.0 - 0.18 * amount],

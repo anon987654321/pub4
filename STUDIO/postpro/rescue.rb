@@ -6,7 +6,7 @@ require_relative "uncanny"
 # What is wrong with this photograph, and which half of it a grade can fix.
 #
 # The ask was "make any bad photo look good", with "although I realize that's a
-# stretch" attached - and the stretch is the interesting part, because it is not
+# stretch" attached — and the stretch is the interesting part, because it is not
 # uniformly a stretch. A photograph fails on four layers, and they fail
 # independently:
 #
@@ -19,8 +19,8 @@ require_relative "uncanny"
 #                cast. THIS IS WHAT A GRADE IS FOR.
 #
 # So a rescue tool that quietly tries everything and reports success is lying
-# about three of the four. This one names what it fixed, and - the part that
-# makes it worth having - names what it cannot, so the answer can be "reshoot at
+# about three of the four. This one names what it fixed, and — the part that
+# makes it worth having — names what it cannot, so the answer can be "reshoot at
 # three metres" rather than a grade that was never going to work.
 module Postpro
   module Rescue
@@ -31,7 +31,7 @@ module Postpro
     # Above this, highlights are gone rather than compressed. A grade cannot
     # recover what was never recorded, and saying so is the whole point.
     BLOWN_CEILING = 1.0
-    # Below this the picture has no separation at all - flat, underexposed, or
+    # Below this the picture has no separation at all — flat, underexposed, or
     # shot through haze.
     FLAT_CEILING = 0.06
     # Channel means further apart than this is a cast rather than a colour.
@@ -42,12 +42,12 @@ module Postpro
     # a 12-point spread on its subject alone. The threshold was measuring "is
     # there a person in this picture".
     #
-    # 12 was not arbitrary either - it is a reasonable number for a frame of
+    # 12 was not arbitrary either — it is a reasonable number for a frame of
     # mixed content. The mistake was applying a whole-frame threshold to
     # portraits, which is what this tool is mostly pointed at.
     #
     # Set against the measured distribution of that set rather than by feel.
-    # Spreads ran 2.2, 4.9, 23.8, 27.7, 27.7, 28.2, 44.0, 58.7 - a body of
+    # Spreads ran 2.2, 4.9, 23.8, 27.7, 27.7, 28.2, 44.0, 58.7 — a body of
     # ordinary warm indoor portraits clustered in the twenties, and a clear gap
     # above them. 34 keeps the two that are genuinely cast (one shot under
     # tungsten, one with a filter already baked in) and drops the four that were
@@ -140,7 +140,7 @@ module Postpro
     end
 
     # The layers a grade cannot reach, said every time rather than only when
-    # something is detected - because their absence from a report reads as their
+    # something is detected — because their absence from a report reads as their
     # absence from the photograph, and neither is measurable here.
     OUT_OF_REACH = [
       "geometry - if this was shot at arm's length the nose is enlarged and the ears " \

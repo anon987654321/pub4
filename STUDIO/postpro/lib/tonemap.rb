@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Filmic tonemap in linear (exposure) space. ACES is the Narkowicz fit to the
-# Academy RRT+ODT - fast, photometric, the canonical "filmic" curve. Hable is
+# Academy RRT+ODT — fast, photometric, the canonical "filmic" curve. Hable is
 # Uncharted-2's S-curve, slightly more controllable shoulder, used in many
 # cinematic productions. Both per-channel; chroma drift in the shoulder is the
 # expected filmic behaviour. Exposure is applied in stops (2^EV) before the
@@ -12,7 +12,7 @@ TONEMAP_HABLE = { a: 0.15, b: 0.50, c: 0.10, d: 0.20, e: 0.02, f: 0.30, w: 1.0 }
 # Good for scenes where ACES reads too contrasty in the blacks.
 TONEMAP_HBD = { a: 6.2, b: 0.5, c: 1.7, d: 0.06 }.freeze
 # AgX (Troy Sobotka): rotate into a narrower set of primaries, log-encode,
-# run a sigmoid there, rotate back. The rotation is the point - it is what
+# run a sigmoid there, rotate back. The rotation is the point — it is what
 # stops a channel reaching clip from dragging hue with it, which is exactly
 # what the 2016 per-channel fit above does to a saturated light source.
 AGX_INSET = [[0.842401070950469, 0.042401070950469, 0.042401070950469],
@@ -25,8 +25,8 @@ AGX_MIN_EV = -12.473931188332413
 AGX_MAX_EV = 4.026068811667588
 # The published sixth-order fit to AgX's default contrast curve.
 AGX_SIGMOID = [-0.00232, 0.1191, 0.4298, -6.868, 31.96, -40.14, 15.5].freeze
-# The ACES 2 tone scale - Daniele Evo, a Michaelis-Menten curve with a flare
-# term - at SDR peak luminance. ACES 1's RRT is the fit in TONEMAP_ACES, and
+# The ACES 2 tone scale — Daniele Evo, a Michaelis-Menten curve with a flare
+# term — at SDR peak luminance. ACES 1's RRT is the fit in TONEMAP_ACES, and
 # its highlight desaturation is the "ACES look" ACES 2 was built to remove.
 #
 # The tone scale only. ACES 2 also carries chroma compression and gamut
@@ -147,7 +147,7 @@ end
 # uncanny.rb reports.
 #
 # So the subtractive steps are scaled by what the source arrived with. A flat
-# render measures near zero on both axes and gets the full grade unchanged -
+# render measures near zero on both axes and gets the full grade unchanged —
 # which the golden-grade suite pins, since `portrait` must still put texture
 # into a flat field. A photograph measures high and gets the smoothing and the
 # curve backed off, while grain, the stock's colour and the toe still apply.
@@ -157,7 +157,7 @@ end
 # photographs.
 #
 # The knees are calibrated, not guessed. Below TEXTURE_FLOOR is rescue.rb's
-# definition of "no micro-detail" - phone noise reduction, a beauty filter, or
+# definition of "no micro-detail" — phone noise reduction, a beauty filter, or
 # a diffusion model. TEXTURE_NATIVE is the low end of the nine phone photographs
 # measured here, which ran 0.015 to 0.092. The tonal pair is the same idea on
 # the contrast axis: those photographs ran 0.15 to 0.28.
@@ -168,17 +168,17 @@ TONAL_NATIVE = 0.22
 # The curve never scales to nothing: the stock has a look, and a photograph
 # that needs none of the repair should still come out graded rather than
 # untouched. Defocus does scale to nothing, because simulated lens softness is
-# not a look anyone asked for on a frame that is already sharp - it is only
+# not a look anyone asked for on a frame that is already sharp — it is only
 # ever there to give grain something to sit on.
 #
 # 0.70, raised from 0.25, because 0.25 was protecting the picture from the
 # grade rather than from damage. On a set of ordinary phone photographs the
 # taper measured them as already-good and cut the curve to a quarter, which
-# moved the mean about four levels and was invisible - the operator's report
+# moved the mean about four levels and was invisible — the operator's report
 # was that postpro had never run, and the files had in fact been graded twice.
 #
 # The confusion was mine: I conflated subtractive with damaging. A film curve
-# compresses contrast, and that compression IS the look - the shoulder, the toe,
+# compresses contrast, and that compression IS the look — the shoulder, the toe,
 # the way a highlight rolls instead of clipping. Measured on a real photograph,
 # the difference between 0.25 and 0.70 is eight points of texture (99% kept
 # against 91%, both comfortably inside the golden suite's 75% floor) and a
@@ -202,7 +202,7 @@ def source_headroom(image)
     # on one frame, together two thirds of its micro-detail.
     #
     # They were left unscaled with a note saying so, which made the note the
-    # only thing standing between a photograph and the damage - and a note is
+    # only thing standing between a photograph and the damage — and a note is
     # not a mechanism. Both are still available to the two presets each that
     # want them; those presets now get them at a strength the source can afford.
     #
@@ -223,7 +223,7 @@ end
 #
 # Correct for a step that DESTROYS what the source already has: the more the
 # picture arrived with, the less of that step it should get. Defocus is the
-# case - a sharp frame wants none of it.
+# case — a sharp frame wants none of it.
 def taper(value, floor, native, minimum)
   return 1.0 if value <= floor
   return minimum if value >= native
@@ -236,7 +236,7 @@ end
 # The curve used to go through taper() with everything else, and that was a
 # polarity error hiding behind a shared helper. taper() reduces a step as the
 # source gets richer, which is right for defocus and exactly wrong here: an H&D
-# curve does not add contrast, it compresses it - the toe and the shoulder are
+# curve does not add contrast, it compresses it — the toe and the shoulder are
 # both reductions. So tapering it upward for flat images handed the most
 # compression to the pictures with the least to spare.
 #

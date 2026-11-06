@@ -33,12 +33,12 @@ PRESETS = PRESETS_FIRST_HALF.merge({
   #
   # A cassette that has been opened, or a back that no longer seals. The leak
   # arrives from a frame edge and fogs the shadows first, so it belongs after
-  # the curve - the fog is light the emulsion received, not a grade applied to
+  # the curve — the fog is light the emulsion received, not a grade applied to
   # what it recorded.
   light_leak: { fx: %w[optical_blur spectral_temp halation film_curve light_leaks grain],
                 stock: :kodak_portra, temp: 5600, intensity: 0.85 },
 
-  # Daylight printed as moonlight. A convention rather than a process - real
+  # Daylight printed as moonlight. A convention rather than a process — real
   # moonlight is neither this blue nor this directional, and an audience reads
   # it as night because film has always shown it this way.
   day_for_night: { fx: %w[optical_blur spectral_temp film_curve day_for_night shadow_lift grain],
@@ -77,7 +77,7 @@ PRESETS = PRESETS_FIRST_HALF.merge({
   # this file can do, and there was no preset for it: every black-and-white
   # preset here bleaches, pushes, tones, solarises or otherwise intervenes.
   # print_stock: kodak_2302 is the black-and-white print film in PRINT_STOCKS,
-  # and until this preset no chain projected onto it - the table had two entries
+  # and until this preset no chain projected onto it — the table had two entries
   # and one reader.
   reportage: { fx: %w[optical_blur spectral_temp vintage_lens film_curve adjacency_effects micro_contrast print_film grain],
                stock: :ilford_hp5, temp: 5600, intensity: 0.85, lens: "summicron", print_stock: :kodak_2302 },
