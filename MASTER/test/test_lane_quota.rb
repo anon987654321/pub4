@@ -258,4 +258,60 @@ class TestLaneQuota < Minitest::Test
       refuses: ->(model) { Quota.dead?(model) },
     )
   end
+
+  # A wait a reply did not state is a guess: the canary ladders its probes
+  # 30s-1m-5m and settles at the ten-minute ceiling, each failed re-mark
+  # advancing a rung.
+  def test_the_unknown_wait_probe_ladder_climbs_each_failed_remark
+    reply = "quota reached"
+    Quota.clock = -> { @now }
+    Quota.note("a:x", reply)
+    assert_equal 30, Quota.raw["probe:a"], "a fresh guess starts at the first rung"
+
+    Quota.clock = -> { @now + 29 }
+    assert_empty Quota.due_probes, "the first rung is half a minute, not ten minutes"
+    Quota.clock = -> { @now + 30 }
+    assert_equal %w[a], Quota.due_probes
+
+    # The canary revives the lane, probes it, and the failed reply re-marks
+    # it, which advances the ladder a rung. Each re-mark lands at its own
+    # instant, and a rung falls due that many seconds after its re-mark.
+    [60, 300, 600].each_with_index do |rung, index|
+      Quota.revive("a")
+      Quota.clock = -> { @now + (index + 1) * 1000 }
+      Quota.note("a:x", reply)
+      assert_equal rung, Quota.raw["probe:a"], "the failed re-mark advances to #{rung}s"
+
+      Quota.clock = -> { @now + (index + 1) * 1000 + rung - 1 }
+      assert_empty Quota.due_probes, "rung #{rung}s holds"
+      Quota.clock = -> { @now + (index + 1) * 1000 + rung }
+      assert_equal %w[a], Quota.due_probes, "rung #{rung}s falls due"
+    end
+
+    # A further failed re-mark keeps the top rung; the ladder does not grow.
+    Quota.revive("a")
+    Quota.clock = -> { @now + 10_000 + 600 }
+    Quota.note("a:x", reply)
+    Quota.clock = -> { @now + 10_000 + 1200 }
+    assert_equal %w[a], Quota.due_probes, "the top rung repeats"
+    assert_equal 600, Quota.raw["probe:a"]
+  end
+
+  # A probe that answers retires the ladder, as does a next death that comes
+  # with a stated wait: the guesswork that earned the ladder is gone.
+  def test_the_probe_ladder_resets_on_evidence_of_life
+    reply = "quota reached"
+    Quota.note("a:x", reply)
+    assert_equal 30, Quota.raw["probe:a"], "a fresh guess starts at the first rung"
+
+    Quota.note("a:x", "quota exceeded, resets in 2h")
+    assert_nil Quota.raw["probe:a"], "a stated wait never carries probe state"
+
+    Quota.note("a:x", reply)
+    refute_nil Quota.raw["probe:a"]
+    Quota.clear_probe!("a")
+    assert_nil Quota.raw["probe:a"]
+    Quota.note("a:x", reply)
+    assert_equal 30, Quota.raw["probe:a"], "the next guess starts from the first rung again"
+  end
 end

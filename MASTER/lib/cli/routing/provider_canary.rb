@@ -70,7 +70,10 @@ module Master
             next unless model
 
             Master::Io::LaneQuota.revive(lane)
-            probe(model)
+            result = probe(model)
+            # A probe that answers retires the probe ladder, so the next
+            # guessed death starts at the first rung, not mid-ladder.
+            Master::Io::LaneQuota.clear_probe!(lane) if result[:ok]
           end
 
           return unless defined?(Master::Review::Agent) && @agent.is_a?(Master::Review::Agent)

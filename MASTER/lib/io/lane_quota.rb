@@ -26,10 +26,18 @@ module Master
       PROBE_EVERY_S = 600
       UNKNOWN_PREFIX = "unknown:"
       REASON_PREFIX = "reason:"
+      PROBE_PREFIX = "probe:"
       MANUAL_PROBE_PREFIX = "manual-probe:"
       MANUAL_REVIVED_PREFIX = "manual-revived:"
       MANUAL_PROBE_EVERY_S = 3600
       MANUAL_PROBE_KEY = :master_lane_quota_manual_probe
+      # A wait a reply did not state is a guess, so the canary ladders its
+      # probes: half a minute after the first guess, then a minute, then
+      # five, then it settles at the ten-minute ceiling. An unknown re-mark
+      # while a probe row exists is a failed canary, which advances the
+      # ladder; a probe that answers clears it, and a stated wait never
+      # touches it.
+      PROBE_LADDER_S = [30, 60, 300, PROBE_EVERY_S].freeze
       REASON_TEXT = {
         "quota" => "quota spent",
         "unreachable" => "unreachable",
@@ -92,13 +100,26 @@ module Master
         lane = quota_lane_of(model, reply)
         deadline = @clock.call + verdict.wait
         @mutex.synchronize do
-          rows = raw.merge(lane => deadline)
+          rows = raw
+          rows[lane] = deadline
           rows.delete(UNKNOWN_PREFIX + lane)
           rows[REASON_PREFIX + lane] = reason_of(verdict)
-          rows[UNKNOWN_PREFIX + lane] = deadline if verdict.unknown
+          if verdict.unknown
+            rows[UNKNOWN_PREFIX + lane] = deadline
+            past = rows[PROBE_PREFIX + lane]
+            rows[PROBE_PREFIX + lane] = past ? next_probe_step(past) : PROBE_LADDER_S.first
+          else
+            rows.delete(PROBE_PREFIX + lane)
+          end
           write(rows)
         end
         deadline
+      end
+
+      # A probe that answers retires the ladder: the next unknown death starts
+      # again at the first step, because the lane just proved it can reply.
+      def clear_probe!(lane)
+        @mutex.synchronize { write(raw.reject { |key, _| key == PROBE_PREFIX + lane.to_s }) }
       end
 
       # Why the lane died: the kind of reply, or a guessed wait for a spent one.
@@ -110,12 +131,18 @@ module Master
         end
       end
 
-      # Lanes marked dead by a guessed wait that have been dead long enough to try again.
+      # Lanes marked dead by a guessed wait that the ladder says to try again.
       def due_probes(every: PROBE_EVERY_S)
-        @mutex.synchronize { raw }.filter_map do |key, deadline|
-          next unless key.start_with?(UNKNOWN_PREFIX)
+        @mutex.synchronize do
+          rows = raw
+          now = @clock.call
+          rows.filter_map do |key, deadline|
+            next unless key.start_with?(UNKNOWN_PREFIX)
 
-          key.delete_prefix(UNKNOWN_PREFIX) if @clock.call - (deadline - UNKNOWN_WAIT_S) >= every
+            lane = key.delete_prefix(UNKNOWN_PREFIX)
+            interval = [rows[PROBE_PREFIX + lane].to_i, 1].max
+            lane if now - (deadline - UNKNOWN_WAIT_S) >= interval
+          end
         end
       end
 
@@ -131,7 +158,7 @@ module Master
           due = @mutex.synchronize do
             rows = raw
             active = rows.any? do |key, deadline|
-              next false if key.start_with?(UNKNOWN_PREFIX, REASON_PREFIX, MANUAL_PROBE_PREFIX, MANUAL_REVIVED_PREFIX)
+              next false if key.start_with?(UNKNOWN_PREFIX, REASON_PREFIX, PROBE_PREFIX, MANUAL_PROBE_PREFIX, MANUAL_REVIVED_PREFIX)
               next false unless deadline.is_a?(Numeric) && deadline > now
 
               lane.start_with?(key) || key.start_with?(lane)
@@ -167,7 +194,8 @@ module Master
       # operator-owned; its effective view drops the prefix after a successful probe.
       def revive_manual(lane)
         @mutex.synchronize do
-          write(raw.merge(MANUAL_REVIVED_PREFIX + lane.to_s => true))
+          write(raw.reject { |key, _| key == PROBE_PREFIX + lane.to_s }
+                      .merge(MANUAL_REVIVED_PREFIX + lane.to_s => true))
         end
       end
 
@@ -210,7 +238,7 @@ module Master
 
       # lane => deadline, expired rows dropped; the file is the shared truth.
       def table = raw.reject do |key, _|
-        key.start_with?(UNKNOWN_PREFIX, REASON_PREFIX, MANUAL_PROBE_PREFIX, MANUAL_REVIVED_PREFIX)
+        key.start_with?(UNKNOWN_PREFIX, REASON_PREFIX, PROBE_PREFIX, MANUAL_PROBE_PREFIX, MANUAL_REVIVED_PREFIX)
       end
 
       # The most specific live status row for a model. The OpenRouter daily
@@ -234,7 +262,8 @@ module Master
         why = rows.select { |key, reason| key.start_with?(REASON_PREFIX) && reason.is_a?(String) && live.key?(key.delete_prefix(REASON_PREFIX)) }
         metadata = rows.select do |key, value|
           (key.start_with?(MANUAL_PROBE_PREFIX) && value.is_a?(Numeric)) ||
-            (key.start_with?(MANUAL_REVIVED_PREFIX) && value == true)
+            (key.start_with?(MANUAL_REVIVED_PREFIX) && value == true) ||
+            (key.start_with?(PROBE_PREFIX) && value.is_a?(Numeric))
         end
         live.merge(why).merge(metadata)
       rescue Errno::ENOENT
@@ -275,6 +304,13 @@ module Master
       end
 
       private
+
+      # The next rung above the stored interval; a rung the file no longer
+      # holds (or an edited one) keeps the ladder at the top.
+      def next_probe_step(stored)
+        at = PROBE_LADDER_S.index(stored)
+        at ? (PROBE_LADDER_S[at + 1] || stored) : stored
+      end
 
       # Standalone: the operator reads this without booting the runtime.
       def swallow(error, context)
