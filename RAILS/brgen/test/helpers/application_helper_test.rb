@@ -406,4 +406,9 @@ class ApplicationHelperTest < ActionView::TestCase
       metadata: { "width" => 4, "height" => 3, "blurhash" => "LEHV6nWB2yk8", "analyzed" => true },
     )
   end
+  test "the AI entry counts one waiting message instead of saying new" do
+    assert_equal "1", nav_item_badge("ai")
+    assert_nil nav_item_badge("dating")
+  end
+
 end

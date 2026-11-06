@@ -118,18 +118,16 @@ def nav_label(slug) = t("nav.vertical.#{slug}")
 # nil on the apex, where the surface is the front feed.
 def nav_item_active?(slug) = slug == (active_vertical.to_s.presence || "front")
 
-  # Only this one is new, and only this one is a badge: it marks the surface that
-  # did not exist last month. Delete the key and the badge disappears with it -
-  # nothing else has to change, which is the property a "new!" needs to have,
-  # because the day it stops being true is a day nobody is looking at this file.
-  NAV_BADGED_SLUGS = %w[ai].freeze
+# The AI entry wears a "1" in the counter pill Messenger uses, as if a message were
+# waiting: the operator's call (2026-11-06), so a new surface reads as something to
+# open rather than as a "new!" label. Delete the slug and the pill disappears.
+NAV_COUNTED_SLUGS = { "ai" => "1" }.freeze
 
-  def nav_item_badge(slug)
-    return messenger_unread_badge if slug == "messenger"
-    return unless NAV_BADGED_SLUGS.include?(slug)
+def nav_item_badge(slug)
+  return messenger_unread_badge if slug == "messenger"
 
-    t("nav.vertical_badge_new", default: nil).presence
-  end
+  NAV_COUNTED_SLUGS[slug]
+end
 
   # Unread direct messages for the signed-in reader, asked of the database once
   # per request however many surfaces show it: the layout's push badge, the
@@ -140,8 +138,8 @@ def nav_item_active?(slug) = slug == (active_vertical.to_s.presence || "front")
     @messenger_unread_total ||= Conversation.unread_total_for(Current.user)
   end
 
-  # The swiper's Messenger entry wears the count when there is one, in the pill
-  # "nytt!" uses. 99+ keeps the pill from growing past its word.
+  # The swiper's Messenger entry wears the count when there is one, in the counter
+  # pill. 99+ keeps the pill from growing past its word.
   def messenger_unread_badge
     count = messenger_unread_total
     return unless count.positive?
