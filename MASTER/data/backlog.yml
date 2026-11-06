@@ -7,7 +7,7 @@ schema: 1
 name: pub4_backlog
 generated_by: MASTER/tools/backlog.rb
 source: TODO.md (repository root)
-entry_count: 169
+entry_count: 168
 entries:
 - id: master-on-pinned-ruby-4-0-5-run
   text: >-
@@ -2329,17 +2329,6 @@ entries:
   tree: cross
   kind: mechanical
   size: m
-  scope_paths: []
-  done_when:
-  done_when_note: no runnable command named in the item text
-- id: maeda-the-one-one-primary-action-per-surface
-  text: >-
-    MAEDA_THE_ONE: one primary action per surface — the check counts primary
-    CTAs on a card or form and fails a second.
-  section: simplicity-book laws (candidate batch, researched 2026-11-06)
-  tree: MASTER
-  kind: mechanical
-  size: s
   scope_paths: []
   done_when:
   done_when_note: no runnable command named in the item text
