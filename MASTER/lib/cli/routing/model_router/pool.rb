@@ -291,6 +291,7 @@ module Master
             unless path_env.empty?
               model_path = ENV[path_env].to_s
               return "set #{path_env} to a readable local GGUF file" if model_path.empty? || !File.file?(model_path) || !File.readable?(model_path)
+              return if lane["kind"] == "local"
             end
 
             signed_in = probe_value(name, wait:)

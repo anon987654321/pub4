@@ -88,7 +88,7 @@ module Master
         pid = Process.spawn(
           Master::Io::ProcessSpawn.environment,
           command, *args,
-          **Master::Io::ProcessSpawn.options(in: $stdin, out: $stdout, err: $stderr),
+          **Master::Io::ProcessSpawn.options(in: $stdin, out: $stdout, err: $stderr, pgroup: true),
         )
         deadline = Process.clock_gettime(Process::CLOCK_MONOTONIC) + timeout.to_f
         reaped = false
@@ -113,7 +113,7 @@ module Master
       end
 
       def stop_interactive(pid)
-        Process.kill("TERM", pid)
+        Process.kill("TERM", -pid)
         deadline = Process.clock_gettime(Process::CLOCK_MONOTONIC) + TERM_GRACE_S
         loop do
           return true if Process.waitpid(pid, Process::WNOHANG)
@@ -121,7 +121,7 @@ module Master
 
           sleep(POLL_INTERVAL_S)
         end
-        Process.kill("KILL", pid)
+        Process.kill("KILL", -pid)
         Process.waitpid(pid)
         true
       rescue Errno::ECHILD
