@@ -151,6 +151,89 @@ second push path or duplicate orchestration to make TODO.md machine-readable.
 - [ ] Close accepted `MASTER/data/ux_refinements.yml` rows only with their
   declared test, browser, terminal, accessibility or rendered-runtime proof.
 
+### Screenshot-led micro-refinements (reviewed 2026-11-06 at `main@3fb7dbc`)
+
+These are targeted findings from the committed RAILS desktop/mobile and
+Mr. Damascy flow captures, not proof of the current live render. Reproduce
+each in the existing Chrome/CDP suite before changing source; distinguish
+seed, consent, loading and empty states from persistent layout defects.
+Keep the product dialects, operator-owned palette/typefaces, canonical
+tokens, and original marks intact. The Mr. Damascy item sheet, empty-cart
+recovery, loyalty and offline screens already have clear, coherent states;
+preserve those strengths.
+
+- [ ] **Shared consent banner / viewport clearance.** In the first-consent
+  mobile captures across Brgen, Dating, Maps, Radio, Messenger and TV, the
+  fixed consent panel occupies a substantial part of the first viewport and
+  covers underlying page content. Compare fresh-consent with saved-consent
+  sessions at 360x800, 390x844, short landscape and 200% zoom. Keep reject,
+  manage and accept equally clear; verify the panel scrolls within the
+  available safe-area, does not cover the persistent tab bar or focused
+  control, and leaves the next page action reachable. Preserve consent
+  semantics and copy; tune only measured geometry in the shared owner.
+  Laws: `REACH`, `PROPORTION_eight_px_rhythm`, `OPERATOR_RENDERED_contract`.
+- [ ] **Maps list icon and row hierarchy.** The committed desktop/mobile
+  places-list captures show the literal word `place` before repeated result
+  names. Trace the icon/font fallback that produces it; render the intended
+  icon glyph or omit the decorative mark rather than exposing a ligature
+  name. Tighten repeated row height and give place name, kind, city and
+  address a deliberate reading order. Keep the list as a fully operable
+  keyboard/screen-reader alternative to the full-bleed map.
+  Laws: `DENSITY_aesthetic_integrity`, `BRINGHURST`, `REACH`.
+- [ ] **Marketplace hero fallback.** The listing view emits a large initial
+  letter (default `B`) when the featured listing has no photo; the desktop
+  and mobile captures show that fallback dominating an otherwise empty
+  media panel. Replace the generic monogram with a deliberate, truthful
+  no-featured-image state, and keep the media proportion useful when no
+  offer exists. When a listing/photo is available, let the real product
+  lead. Preserve the existing commerce dialect, listing data and tokens.
+  Laws: `DENSITY_form_follows_function`, `DENSITY_aesthetic_integrity`,
+  `OPERATOR_RENDERED_contract`, `VISUAL_HIERARCHY`.
+- [ ] **Amber editorial tile line breaks.** At the captured desktop width,
+  `Bymorgen` breaks mid-word as `Bym / orge / n`; the mobile capture does
+  not. Correct the desktop tile's available measure, wrapping and type
+  constraint so Norwegian and English copy wrap at word boundaries without
+  clipping or shrinking the editorial hierarchy. Check the existing tile
+  grid at 1024, 1280 and 1440 CSS px plus 390px mobile.
+  Laws: `BRINGHURST_line_breaks`, `BRINGHURST_measure`,
+  `PROPORTION_eight_px_rhythm`.
+- [ ] **Radio featured-track state.** The captured Radio home has a large
+  grey media block below `Utvalgt spor`, with no visible cover or state
+  explanation. Establish whether this is unloaded artwork or no selected
+  track. Render the real cover when available and an explicit, compact
+  loading/empty state otherwise; make playback controls and status agree
+  with the actual player state. Do not fabricate artwork or playback.
+  Laws: `TRUTHFUL_STATUS`, `WAITING_STATE_MEANING`,
+  `DENSITY_aesthetic_integrity`.
+- [ ] **Messenger empty rail.** The captured empty inbox shows repeated bare
+  `#` markers in the room rail while the main pane says there are no
+  conversations. Confirm that each marker represents a real, named room;
+  otherwise remove the inert placeholders or give populated rooms an
+  accessible name. In the genuinely empty state, keep one clear next action
+  and avoid presenting an empty navigation rail as usable content. Preserve
+  the populated desktop split-pane layout.
+  Laws: `BOUNDED_LOAD_choice_overload`, `REACH`,
+  `OPERATOR_RENDERED_contract`.
+- [ ] **BSDPorts result readability, without redesign.** The desktop/mobile
+  captures preserve the intentionally spare Google-like search surface, but
+  result names, versions, repository identifiers and update metadata read
+  very small and weakly separated at capture scale. Measure their actual
+  CSS-pixel size, contrast and line-height in Chrome; improve only the
+  information hierarchy and readable measure where evidence warrants it.
+  Keep white paper, Arial, blue links, square geometry and compact density;
+  do not cardify or re-theme the product.
+  Laws: `BRINGHURST_measure`, `BRINGHURST_scale`,
+  `PROPORTION_contrast`, `REACH`.
+- [ ] **Mr. Damascy empty checkout state.** The checkout capture shows `0 kr`
+  and both payment CTAs even though no cart lines are present. The controller
+  already redirects an empty-cart submission back to the cart, so this is a
+  rendered-state mismatch rather than evidence of a payment bypass. Present
+  an explicit recoverable empty-cart state and hide/disable payment actions
+  until a payable cart and a valid total exist; keep the normal one-screen
+  Vipps Express path short. Preserve the restaurant's original logo, palette
+  and mobile-first 480px shell.
+  Laws: `TRUTHFUL_STATUS`, `AFFORDANCE_CLARITY`, `COST_TRANSPARENCY`,
+  `OPERATOR_RENDERED_contract`.
 ## 5. MASTER CLI, web, voice and face
 
 - [ ] **CLI performance and interaction.** Measure boot, first token,
