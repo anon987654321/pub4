@@ -58,6 +58,7 @@ class DatingRewindTest < ActionDispatch::IntegrationTest
     end
     assert_redirected_to dating.root_path
   end
+
   # Up to seven equal pills beside the heading wrapped into a ragged block at
   # 1440 and broke "Oppdag" mid-word. One action shows; rewind and the rest sit
   # behind «Mer», rewind still a POST.
