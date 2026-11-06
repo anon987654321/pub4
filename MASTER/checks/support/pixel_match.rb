@@ -38,6 +38,8 @@ module Deploy
       def place(pos) = pos.divmod(width).reverse
 
       def size = [width, height]
+
+      def lines = pixels.each_slice(width).to_a
     end
 
     # The two images compared; anti-aliasing is judged in both.

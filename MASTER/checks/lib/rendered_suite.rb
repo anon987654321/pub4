@@ -10,6 +10,7 @@ require_relative "rendered/journey_invariant"
 require_relative "rendered/reflow"
 require_relative "rendered/keyboard_flow"
 require_relative "rendered/accessibility_tree"
+require_relative "rendered/state_matrix"
 require_relative "rendered/mobile_flow"
 require_relative "rendered/cross_app"
 require_relative "rendered/webgl_surfaces"
@@ -32,6 +33,7 @@ module Deploy
       ReflowCheck,
       KeyboardFlowCheck,
       AccessibilityTreeCheck,
+      StateMatrixCheck,
       MobileFlowCheck,
       JourneyInvariantCheck,
       CrossAppEquivalenceCheck,

@@ -387,6 +387,14 @@ accessibility_tree:
   pass: "ok: rendered accessibility tree exposes names for interactive controls and informative images"
   covered_by: rendered_suite
 
+# Declared component states (geometry_surfaces.yml#state_matrix), mobile first.
+state_matrix:
+  needs: [browser]
+  require: lib/rendered/state_matrix
+  class: Deploy::StateMatrixCheck
+  pass: "ok: declared component states render distinctly and inside their boxes"
+  covered_by: rendered_suite
+
 # Phone viewport journey floor (Fitts 44px, overflow, landmarks, verticals).
 mobile_flow:
   needs: [browser]

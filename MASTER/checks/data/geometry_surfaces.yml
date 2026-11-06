@@ -189,3 +189,23 @@ volatile_selectors:
   - "[data-money]"
   - ".deal-card-price"
   - ".post-meta"
+
+# State matrix (BackstopJS's scenario list, read by Deploy::StateMatrix): each
+# component is captured in its declared states and at each width, one cropped
+# shot per cell, tiled into one image per component. Cells run mobile first
+# (every state at 390, then 360 and 320, then wider, 200% zoom, en and dark)
+# and stop at cells_per_component, so a pass stays bounded. A must_differ
+# state that renders identically to default is a finding, as is a cell whose
+# component overflows its box or the viewport.
+state_matrix:
+  cells_per_component: 12
+  widths: [390, 360, 320, 768, 1024, 1440, 1920]
+  zoom: { width: 1280, factor: 2 }
+  states: [hover, focus-visible, active, disabled, loading, error, empty, long-text]
+  must_differ: [focus-visible]
+  locales: [nb, en]
+  schemes: [light, dark]
+  components:
+    - { id: brgen/core/first_action, surface: brgen/core, selector: "main :is(button, a[href])" }
+    - { id: amber/home/first_action, surface: amber/home, selector: "main :is(button, a[href])" }
+    - { id: bsdports/home/search, surface: bsdports/home, selector: "input[type=search], input[name=q]" }
