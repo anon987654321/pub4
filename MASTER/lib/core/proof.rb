@@ -44,6 +44,8 @@ module Master::Core
       profiling_data: %r{\b(?:benchmark|stackprof|ruby-prof|memory_profiler|--profile)},
     }.freeze
 
+    RISK_ORDER = %i[low medium high critical].freeze
+
     attr_reader :risk
 
     def initialize(risk: :low)
@@ -61,6 +63,15 @@ module Master::Core
       @acted = false
       @started_at = Time.now
       @generation = 0
+    end
+
+    # A resumed task may retain or escalate its risk, never downgrade it.
+    def escalate_risk!(value)
+      next_risk = value.to_s.downcase.to_sym
+      raise ArgumentError, "unknown risk: #{value}" unless RISK_ORDER.include?(next_risk)
+
+      @risk = next_risk if RISK_ORDER.index(next_risk) > RISK_ORDER.index(@risk)
+      self
     end
 
     def council_required? = %i[high critical].include?(@risk)

@@ -60,6 +60,9 @@ module Master
 
       STANDING_SEMANTICS = {
         "go ahead" => :continue_prior_plan,
+        "go on" => :continue_prior_plan,
+        "keep going" => :continue_prior_plan,
+        "carry on" => :continue_prior_plan,
         "land it" => :write_repo_changes,
         "codify" => :codify_policy,
         "wire" => :wire_existing_module,

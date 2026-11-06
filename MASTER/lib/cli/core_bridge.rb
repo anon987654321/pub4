@@ -2,6 +2,7 @@
 
 require_relative "../design/authoring"
 require_relative "../trace/effect_observer"
+require_relative "fold_risk"
 
 module Master
   module CLI
@@ -36,12 +37,21 @@ module Master
         cancellation.activate! if cancellation&.respond_to?(:activate!)
         workspace_root = workspace_root_for(root)
         lifecycle_bus = lifecycle_event_bus(bus:, requested_root: root, workspace_root:)
-        transcript = []
-        observer = build_turn_observer(transcript, root: workspace_root, bus:, on_turn:)
-
-        memory ||= Master::Core::Memory.new(risk:)
-        model ||= Master::Core::Model.new(**{ model_id:, chat: agent_chat(container, bus:) }.compact)
+        incoming_intent = Master::CLI::IntentRouter.new.classify(goal)
+        saved = Master::Fix::Mission.current(root:)
+        resume_authorised = incoming_intent == :continue_prior_plan &&
+                            (mode.nil? || mode.to_s == saved&.dig("operator", "mode")) &&
+                            resumable_repository_mission?(saved)
+        if resume_authorised
+          goal = saved.fetch("goal")
+          incoming_intent = saved.dig("operator", "intent").to_s.to_sym
+          mode = saved.dig("operator", "mode") || "repair"
+          risk = saved.dig("operator", "risk") || risk
+        end
         requested_mode = mode ? Master::Operator::Mode.for(mode) : :repair
+        delivery_authorized = Master::CLI::FoldRisk.repository_delivery_authorized?(incoming_intent, mode: requested_mode)
+        risk = :high if delivery_authorized && !%i[high critical].include?(risk.to_s.downcase.to_sym)
+
         mission = start_mission(
           goal,
           root:,
@@ -49,7 +59,21 @@ module Master
           model: model_id || model,
           mode: requested_mode,
           risk:,
-          intent: Master::CLI::IntentRouter.new.classify(goal),
+          intent: incoming_intent,
+          auto_continue: delivery_authorized,
+        )
+        memory ||= Master::Core::Memory.new(risk:)
+        memory.proof.escalate_risk!(risk)
+        if delivery_authorized
+          memory.proof.authorize_repository_delivery!(
+            root: workspace_root,
+            written_paths: mission.repository_writes(repository_root: workspace_root),
+          )
+        end
+        model ||= Master::Core::Model.new(**{ model_id:, chat: agent_chat(container, bus:) }.compact)
+        transcript = []
+        observer = build_turn_observer(
+          transcript, root: workspace_root, bus:, on_turn:, mission:, repository_delivery: delivery_authorized,
         )
         seed_continuation(memory, mission.record)
         seed_design_brief(memory, goal, mission.record, root:)
@@ -182,7 +206,16 @@ module Master
         ->(url:) { fetcher.call(url:) }
       end
 
-      def start_mission(goal, root:, bus:, model:, mode:, risk:, intent:)
+      def resumable_repository_mission?(record)
+        return false unless record && record["origin"].to_s == "fold"
+        return false unless record["auto_continue"] == true
+        return false unless %w[running waiting].include?(record["state"].to_s)
+
+        operator = record["operator"].is_a?(Hash) ? record["operator"] : {}
+        Master::CLI::FoldRisk.repository_delivery_authorized?(operator["intent"], mode: operator["mode"])
+      end
+
+      def start_mission(goal, root:, bus:, model:, mode:, risk:, intent:, auto_continue:)
         checkpoint = lambda do |id:, root:, files:|
           Master::Fix::Checkpoint.new(root:, dir: File.join(root, ".master", "checkpoints")).create(
             label: "mission-#{id}", files:,
@@ -190,7 +223,7 @@ module Master
         end
         Master::Fix::Mission.new(root:, bus:, checkpoint:).start_or_resume!(
           goal:, scope: root, model:, effort: ENV.fetch("MASTER_EFFORT", "medium"),
-          plan: Master::Ground::ActivePlan.read(root), origin: "fold", auto_continue: true,
+          plan: Master::Ground::ActivePlan.read(root), origin: "fold", auto_continue:,
           mode:, risk:, intent:
         )
       end
@@ -356,10 +389,20 @@ module Master
 
       # The Fold writes through World rather than the Io tools, so the turn's
       # WriteTracker hears of a write only from here.
-      def build_turn_observer(transcript, root:, bus:, on_turn:)
+      def build_turn_observer(transcript, root:, bus:, on_turn:, mission: nil, repository_delivery: false)
         lambda do |turn:, effect:, observation:|
           line = "#{turn}: #{effect} -> #{observation}"
           transcript << line
+          if repository_delivery && effect.verb == :write && observation.ok?
+            mission.record_repository_write!(
+              path: effect.args[:path], content: effect.args[:content], repository_root: root,
+            )
+          elsif repository_delivery && effect.verb == :git &&
+                effect.args[:operation].to_s.to_sym == :commit && observation.ok?
+            mission.record_repository_commit!(
+              expected_hashes: effect.args[:expected_hashes], repository_root: root,
+            )
+          end
           if effect.verb == :write && observation.ok?
             Master::Trace::WriteTracker.current&.record(File.expand_path(effect.args[:path].to_s, root))
           end
