@@ -7,7 +7,7 @@ schema: 1
 name: pub4_backlog
 generated_by: MASTER/tools/backlog.rb
 source: TODO.md (repository root)
-entry_count: 461
+entry_count: 471
 entries:
 - id: move-generated-snapshot-md-out-of-the-root
   text: >-
@@ -5936,6 +5936,126 @@ entries:
     pub4 — Cross-tree
   tree: cross
   kind: mechanical
+  size: s
+  scope_paths: []
+  done_when:
+  done_when_note: no runnable command named in the item text
+- id: register-kilo-and-ovhcloud-as-keyless-lanes-beside
+  text: >-
+    Register Kilo and OVHcloud as keyless lanes beside llm7 in `data/models.yml`,
+    with llm7's keyless_max_concurrency pattern and a per-row verified-on
+    date.
+  section: model pool — free compute and never-modelless (researched 2026-11-06)
+  tree: MASTER
+  kind: mechanical
+  size: s
+  scope_paths:
+  - data/models.yml
+  - models.yml
+  done_when:
+  done_when_note: no runnable command named in the item text
+- id: read-openrouter-s-remaining-free-quota-from-get
+  text: >-
+    Read OpenRouter's remaining free quota from `GET /api/v1/key` (`free_model_daily_requests`)
+    into `Io::ModelQuota` instead of forecasting the burn rate.
+  section: model pool — free compute and never-modelless (researched 2026-11-06)
+  tree: cross
+  kind: mechanical
+  size: s
+  scope_paths: []
+  done_when:
+  done_when_note: no runnable command named in the item text
+- id: adopt-openclaw-s-cooldown-contract-in-io-lanequota
+  text: >-
+    Adopt openclaw's cooldown contract in `Io::LaneQuota`: parse `Retry-After`
+    headers as exact cooldown, ladder everything else 30s-1m-5m with reset,
+    disable auth-failed profiles about ten minutes, and cap stated waits
+    at 60s before falling through.
+  section: model pool — free compute and never-modelless (researched 2026-11-06)
+  tree: cross
+  kind: mechanical
+  size: m
+  scope_paths: []
+  done_when:
+  done_when_note: no runnable command named in the item text
+- id: spread-free-load-selection-across-every-live-free
+  text: >-
+    Spread free-load selection across every live `:free` model slug from
+    `/api/v1/models`, ranked by `free_latency`, with per-model quota buckets,
+    instead of the single default slug.
+  section: model pool — free compute and never-modelless (researched 2026-11-06)
+  tree: cross
+  kind: mechanical
+  size: s
+  scope_paths: []
+  done_when:
+  done_when_note: no runnable command named in the item text
+- id: split-lane-deadlines-into-a-connect-handshake-budget
+  text: >-
+    Split lane deadlines into a connect/handshake budget (dead handshake
+    trips the circuit breaker) and a read-idle budget (a stream that keeps
+    delivering is never cut).
+  section: model pool — free compute and never-modelless (researched 2026-11-06)
+  tree: cross
+  kind: mechanical
+  size: s
+  scope_paths: []
+  done_when:
+  done_when_note: no runnable command named in the item text
+- id: flip-ollama-tier-d-to-probe-on-warm
+  text: >-
+    Flip Ollama Tier-D to probe-on warm: periodic one-token probe on `gemma3:4b`
+    recorded into quota state, 2-4K context cap and `OLLAMA_KV_CACHE_TYPE=q8_0`
+    for this 8 GB Mac, rehearsed as the final fallback-chain link.
+  section: model pool — free compute and never-modelless (researched 2026-11-06)
+  tree: cross
+  kind: mechanical
+  size: m
+  scope_paths: []
+  done_when:
+  done_when_note: no runnable command named in the item text
+- id: keep-a-verified-free-provider-ledger-row-per
+  text: >-
+    Keep a verified free-provider ledger row per provider (limit, models,
+    keyless?, verified-on) so every free-tier fact carries its own staleness
+    signal.
+  section: model pool — free compute and never-modelless (researched 2026-11-06)
+  tree: cross
+  kind: mechanical
+  size: s
+  scope_paths: []
+  done_when:
+  done_when_note: no runnable command named in the item text
+- id: maeda-the-one-one-primary-action-per-surface
+  text: >-
+    MAEDA_THE_ONE: one primary action per surface — the check counts primary
+    CTAs on a card or form and fails a second.
+  section: simplicity-book laws (candidate batch, researched 2026-11-06)
+  tree: MASTER
+  kind: mechanical
+  size: s
+  scope_paths: []
+  done_when:
+  done_when_note: no runnable command named in the item text
+- id: tufte-data-ink-ratio-erase-non-data-ink
+  text: >-
+    TUFTE_DATA_INK_RATIO: erase non-data ink — decoration-to-content ink
+    measured in CSS decoration rules and chart ink versus data ink.
+  section: simplicity-book laws (candidate batch, researched 2026-11-06)
+  tree: cross
+  kind: mechanical
+  size: s
+  scope_paths: []
+  done_when:
+  done_when_note: no runnable command named in the item text
+- id: gestalt-proximity-grouping-distance-must-be-smaller-than
+  text: >-
+    GESTALT_PROXIMITY: grouping distance must be smaller than separation
+    distance on a rendered surface (screenshot geometry pairs with the layout-refinement
+    workflow).
+  section: simplicity-book laws (candidate batch, researched 2026-11-06)
+  tree: cross
+  kind: design
   size: s
   scope_paths: []
   done_when:

@@ -547,3 +547,31 @@ MASTER's `Fix::Wishlist` reads/writes the local runtime ledger `.master/fix_wish
 ---
 
 **Consolidation rule:** Root `TODO.md` is the only cross-tree Markdown action list. `RAILS/refinements.yml`, `MASTER/data/ux_refinements.yml`, `MASTER/data/gaps.yml`, `MASTER/convergence.yml`, `MASTER/data/operator_seams.yml`, `MASTER/data/proposals.yml`, the ideation sheets and the RAILS feature inventories remain structured owners for IDs, proof receipts, provenance, accepted/rejected reasoning and state. Update the owner and this root index together when an item is implemented or its state changes. Do not create another backlog file.
+
+
+## model pool — free compute and never-modelless (researched 2026-11-06)
+
+Research against openclaw.ai (394k stars, MIT) and the free-tier landscape
+surfaced verified additions for MASTER's lanes. Verified live same-day: Kilo
+gateway (https://api.kilo.ai/api/gateway, model openrouter/free, keyless) and
+OVHcloud AI Endpoints (https://oai.endpoints.kepler.ai.cloud.ovh.net/v1,
+keyless, 2 RPM per IP per model, 20+ models). GitHub Models retired 2026-07-30;
+Gemini free tier hides its numbers; Hugging Face free monthly credits are gone.
+
+- [ ] Register Kilo and OVHcloud as keyless lanes beside llm7 in `data/models.yml`, with llm7's keyless_max_concurrency pattern and a per-row verified-on date.
+- [ ] Read OpenRouter's remaining free quota from `GET /api/v1/key` (`free_model_daily_requests`) into `Io::ModelQuota` instead of forecasting the burn rate.
+- [ ] Adopt openclaw's cooldown contract in `Io::LaneQuota`: parse `Retry-After` headers as exact cooldown, ladder everything else 30s-1m-5m with reset, disable auth-failed profiles about ten minutes, and cap stated waits at 60s before falling through.
+- [ ] Spread free-load selection across every live `:free` model slug from `/api/v1/models`, ranked by `free_latency`, with per-model quota buckets, instead of the single default slug.
+- [ ] Split lane deadlines into a connect/handshake budget (dead handshake trips the circuit breaker) and a read-idle budget (a stream that keeps delivering is never cut).
+- [ ] Flip Ollama Tier-D to probe-on warm: periodic one-token probe on `gemma3:4b` recorded into quota state, 2-4K context cap and `OLLAMA_KV_CACHE_TYPE=q8_0` for this 8 GB Mac, rehearsed as the final fallback-chain link.
+- [ ] Keep a verified free-provider ledger row per provider (limit, models, keyless?, verified-on) so every free-tier fact carries its own staleness signal.
+
+## simplicity-book laws (candidate batch, researched 2026-11-06)
+
+laws.yml already cites Rams, Strunk & White and NN/g. The uncited,
+machine-checkable simplicity canon yields a deterministic first batch; the
+rendered or task-evidence canon waits for the screenshot workflow.
+
+- [ ] MAEDA_THE_ONE: one primary action per surface — the check counts primary CTAs on a card or form and fails a second.
+- [ ] TUFTE_DATA_INK_RATIO: erase non-data ink — decoration-to-content ink measured in CSS decoration rules and chart ink versus data ink.
+- [ ] GESTALT_PROXIMITY: grouping distance must be smaller than separation distance on a rendered surface (screenshot geometry pairs with the layout-refinement workflow).
