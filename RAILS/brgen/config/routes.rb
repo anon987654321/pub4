@@ -313,6 +313,10 @@ get "i/:token" => "invites#show", as: :invite
   get "nearby/room" => "nearby#room", as: :nearby_room
   get "nearby/widget" => "nearby#widget", as: :nearby_widget
   post "nearby" => "nearby#create"
+  # Chatroulette-style random pairing: one ask, one stranger, one conversation.
+  # Guests play - the ask is the consent.
+  resources :encounters, only: %i[create destroy]
+  get "encounters/waiting" => "encounters#waiting", as: :waiting_encounters
   # /live was a Jodel-shaped feed of short anonymous posts ranked by local
   # votes. It is the ambient chat room now, per operator 2026-08-17: brgen had
   # two hyperlocal surfaces that cross-linked to each other and competed for the

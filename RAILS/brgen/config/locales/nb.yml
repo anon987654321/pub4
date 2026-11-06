@@ -145,8 +145,14 @@ nb:
     update_password_lead: Velg et nytt passord for kontoen din.
     new_password: Nytt passord
     save_password: Lagre passord
+  encounters:
+    title: Tilfeldig
+    looking: Leter etter en fremmed å prate med …
+    looking_note: Siden oppdaterer seg selv. Så snart noen andre spør, åpnes samtalen.
+    leave: Avbryt
   chat:
     anon_handle: "Fremmed #%{code}"
+    random: tilfeldig
     roster: I denne kanalen
     nearby_tab: nærheten
     loading: Laster rommet...
@@ -1971,6 +1977,8 @@ nb:
     check_in_failed: Kunne ikke sjekke inn.
     messages_rate_limited: Rolig nå - for mange meldinger. Prøv igjen om litt.
     chats_rate_limited: Rolig nå - for mange samtaler startet. Prøv igjen om litt.
+    encounters_rate_limited: Rolig nå - for mange tilfeldige møter startet. Prøv igjen om litt.
+    encounter_left: Tilfeldig møte avbrutt.
     listings_rate_limited: Rolig nå - for mange annonser. Prøv igjen om litt.
     videos_rate_limited: Rolig nå - for mange opplastinger. Prøv igjen om litt.
     location_required_for_nearby: Slå på posisjon for å bli med i chatten i nærområdet.

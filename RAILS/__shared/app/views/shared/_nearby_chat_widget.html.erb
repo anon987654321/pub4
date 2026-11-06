@@ -43,6 +43,12 @@
         <span><%= ambient_chat_is_messenger? ? t("chat.private_messages_lead") : t("chat.local_room") %></span>
       </div>
       <nav class="nearby-chat-widget-header-actions" aria-label="<%= t("chat.actions_label") %>">
+        <%# Random pairing where the host app offers it (brgen): one ask, one
+            stranger, one conversation - the widget's own voice for it. %>
+        <% if respond_to?(:encounters_path) %>
+          <%= button_to t("chat.random"), encounters_path, method: :post,
+                class: "nearby-chat-widget-messenger", form_class: "nearby-chat-widget-random" %>
+        <% end %>
         <% if messenger_href %>
           <%= link_to t("chat.open_messenger"), messenger_href,
                 class: "nearby-chat-widget-messenger", data: { turbo_frame: "_top" } %>

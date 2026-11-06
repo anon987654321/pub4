@@ -141,8 +141,14 @@ en:
     update_password_lead: Choose a new password for your account.
     new_password: New password
     save_password: Save password
+  encounters:
+    title: Random
+    looking: Looking for a stranger to talk to …
+    looking_note: This page refreshes itself. The conversation opens as soon as someone else asks.
+    leave: Leave
   chat:
     anon_handle: "Stranger #%{code}"
+    random: random
     roster: In this channel
     nearby_tab: nearby
     loading: Loading the room...
@@ -1960,6 +1966,8 @@ en:
     check_in_failed: Could not check in.
     messages_rate_limited: Slow down - too many messages. Try again shortly.
     chats_rate_limited: Slow down - too many chats started. Try again shortly.
+    encounters_rate_limited: Slow down - too many random encounters started. Try again shortly.
+    encounter_left: Random encounter left.
     listings_rate_limited: Slow down - too many listings. Try again shortly.
     videos_rate_limited: Slow down - too many uploads. Try again shortly.
     location_required_for_nearby: Enable location to join the nearby chat room.
