@@ -2,6 +2,22 @@
 
 module Master
   module Fix
+    # The simplify pin, set by `/fix --simplify`. While requested, the council
+    # inside the loop argues quality only — reuse, simplification, efficiency,
+    # altitude — and hunts no bugs: the deterministic instruments keep their
+    # findings, and the law gates keep their ceilings. Set per dispatch and
+    # cleared by the dispatch that set it, the same one-command lifetime the
+    # other execution overrides have.
+    module SimplifyPass
+      module_function
+
+      def set! = @requested = true
+
+      def clear = @requested = false
+
+      def requested? = @requested == true
+    end
+
     class FixLoop
       # The council, inside the loop. A pass that found violations asks the
       # panel what is wrong with the files those violations are in, has it
@@ -122,6 +138,26 @@ module Master
           Prefer the smallest existing primitive that can enforce the property.
         TEXT
 
+        # The simplify pin (`/fix --simplify`, Claude Code's /simplify folded
+        # into the loop): the panel argues quality only. The deterministic
+        # instruments still list what actually fails; the council spends its
+        # budget on reuse, simplification, efficiency and altitude instead of
+        # defect hunting.
+        SIMPLIFY_REVIEW = <<~TEXT.strip
+          This is the simplify critique, not a defect review. The deterministic
+          instruments own what fails; this panel hunts no bugs.
+
+          Review the target for reuse, simplification, efficiency and altitude:
+          - reuse: an existing helper, primitive, invariant or token that can own a duplicated decision
+          - simplification: branches, wrappers, layers and flags whose removal keeps behavior identical
+          - efficiency: work repeated per call, per render or per frame that could be hoisted or tightened
+          - altitude: decisions made at the wrong layer, authority that belongs beside its siblings
+
+          Every candidate must preserve behavior, accessibility and public interfaces.
+          For every actionable finding, anchor it to a repository-relative file plus a stable line or symbol.
+          Findings that add machinery, redesign a working system, or argue from taste alone are refused.
+        TEXT
+
         def council_enabled? = Master::Review::LLMDispatcher::PassClock.council_enabled?
 
         # The council ahead of the fixes is advisory: the fix stream starts within
@@ -227,18 +263,30 @@ module Master
                      else
                        []
                      end
+          deterministic = deterministic_rows(rows, relative, boundary)
+          [review_contract, deterministic.join("\n")].join("\n\n")
+        rescue StandardError => e
+          Master::Trace::Dmesg.status("fix0", "hard critique context reduced: #{e.class}: #{e.message[0, 100]}")
+          review_contract
+        end
+
+        # The evidence rows under the review contract: which files the panel
+        # reads, their boundaries and the test entrypoints that reach them.
+        def deterministic_rows(rows, relative, boundary)
           runners = load_runners(rows)
-          deterministic = [
+          [
             "target files: #{relative.join(", ")}",
             boundary.empty? ? nil : "write/runtime boundaries: #{boundary.join(", ")}",
             runners.empty? ? nil : "known test entrypoints reaching target: #{runners.join(", ")}",
             "hard critique is scoped to the files above; inspect adjacent files only when they are required to prove a dependency, authority, or runtime edge",
-            @discipline.reasoning_contract(strategy: @discipline.strategy_for(files:, findings: []), files:, findings: []),
+            @discipline.reasoning_contract(strategy: @discipline.strategy_for(files: rows, findings: []), files: rows, findings: []),
           ].compact
-          [HARD_REVIEW, deterministic.join("\n")].join("\n\n")
-        rescue StandardError => e
-          Master::Trace::Dmesg.status("fix0", "hard critique context reduced: #{e.class}: #{e.message[0, 100]}")
-          HARD_REVIEW
+        end
+
+        # The critique contract the panel reads: the full hard review by
+        # default, the quality-only simplify contract while the pin is set.
+        def review_contract
+          Master::Fix::SimplifyPass.requested? ? SIMPLIFY_REVIEW : HARD_REVIEW
         end
 
         def load_runners(files)

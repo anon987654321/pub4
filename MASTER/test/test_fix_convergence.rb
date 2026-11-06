@@ -905,7 +905,9 @@ end
         raw: "", apply: nil, critique: nil, aesthetic: false, only: nil, target: "."
       )
 
-      assert_equal "repair selected", result
+      # The run ends with its record: the governed wishlist, after the repair.
+      assert_equal true, result.start_with?("repair selected\nwishlist:")
+      refute_includes result, "wishlist0: failed"
     end
 
     assert_equal true, captured[:apply], "bare /fix must not be downgraded to preview"

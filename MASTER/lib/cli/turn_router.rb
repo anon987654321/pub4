@@ -168,12 +168,19 @@ module Master
       READ_SLASH = %w[why laws].freeze
       # The reads that are /fix flags now; the standalone names still answer.
       CONVERGENCE_SLASH = { "prove" => "--prove", "explain" => "--explain" }.freeze
-      # What a typed slash is allowed to be. Wider than the three words the surface
-      # offers, and deliberately: /scan, /sweep and /council were spellings people
-      # had learned, and a retired word that falls silently to chat is a worse
-      # answer than one that still works. They rewrite to /fix, the one command
-      # advertised.
-      PIPELINE_SLASH = %w[fix review critique council scan self workflow triad sweep through prove explain].freeze
+      # The words that pin the write run's critique: /simplify is /fix whose
+      # council argues quality only — reuse, simplification, efficiency,
+      # altitude — and hunts no bugs; the instruments keep their findings.
+      FIX_PIN_SLASH = { "simplify" => "--simplify" }.freeze
+      # fix, review and critique are the advertised verbs; the rest of the surface
+      # is wider than the three words on purpose — /scan, /sweep and /council were
+      # spellings people had learned, and a retired word that falls silently to
+      # chat is a worse answer than one that still works. They rewrite to /fix,
+      # the one command advertised.
+      PIPELINE_SLASH = (
+        %w[fix review critique council scan self workflow triad sweep through] +
+        CONVERGENCE_SLASH.keys + %w[simplify]
+      ).uniq.freeze
 
       INFER_MIN_CONFIDENCE = 0.62
 
@@ -410,9 +417,13 @@ module Master
 
       def rewritten_pipeline(name, rest)
         return ["/fix", rest].reject(&:empty?).join(" ") if WRITING_SLASH.include?(name)
-        return ["/fix", CONVERGENCE_SLASH.fetch(name), rest].reject(&:empty?).join(" ") if CONVERGENCE_SLASH.key?(name)
+        return ["/fix", pinned_flag(name), rest].reject(&:empty?).join(" ") if pinned_flag(name)
 
         ["/fix --dry-run --critique --only #{READING_SLASH.fetch(name)}", rest].reject(&:empty?).join(" ")
+      end
+
+      def pinned_flag(name)
+        CONVERGENCE_SLASH[name] || FIX_PIN_SLASH[name]
       end
 
       def dispatch_slash(input, container:, felt_sense: nil, on_turn: nil, cancellation: nil)

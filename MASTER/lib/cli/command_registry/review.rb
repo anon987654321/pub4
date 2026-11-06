@@ -3,6 +3,7 @@
 require_relative "../../review/council/critique"
 require_relative "../../fix/execution_trace"
 require_relative "../../fix/check_focus"
+require_relative "../../fix/fix_loop/council_round"
 require_relative "../../fix/work_lane"
 require_relative "../../fix/lane_preflight"
 require_relative "../pipeline/residual"
@@ -98,21 +99,30 @@ module Master
         cancellation = ctx.cancellation if ctx.respond_to?(:cancellation)
         cancellation.activate! if cancellation&.respond_to?(:activate!)
 
-        begin
-          Master::Fix::AutofixGuard.mode = overrides[:autofix_mode] if overrides[:autofix_mode]
-          Master::Fix::RunLedger.max_files = overrides[:max_files] if overrides[:max_files]
-          Master::Fix::CheckFocus.blockers! if overrides[:blockers]
-          Master::Fix::CheckFocus.plan! if overrides[:plan]
-          Master::Fix::CheckFocus.until_checks! if overrides[:until_checks]
-          Master::Fix::WorkLane.set!(overrides.fetch(:lane))
+        with_fix_overrides(overrides, previous:) do
           dispatch_fix_parsed(
             scanner:, fix_loop:, deliberation:, root:, bus:, swarm:, raw:,
             apply:, critique:, aesthetic:, only:, target:, cancellation:,
             task_intent: overrides[:task_intent] || "functional_change"
           )
-        ensure
-          restore_fix_state(previous)
         end
+      end
+
+      # The execution overrides a single dispatch sets, and what the next
+      # command inherits: set the run's mode, lane and pin, yield the run,
+      # then restore — the same one-command lifetime the simplify pin has.
+      def with_fix_overrides(overrides, previous:)
+        Master::Fix::AutofixGuard.mode = overrides[:autofix_mode] if overrides[:autofix_mode]
+        Master::Fix::RunLedger.max_files = overrides[:max_files] if overrides[:max_files]
+        Master::Fix::CheckFocus.blockers! if overrides[:blockers]
+        Master::Fix::CheckFocus.plan! if overrides[:plan]
+        Master::Fix::CheckFocus.until_checks! if overrides[:until_checks]
+        Master::Fix::WorkLane.set!(overrides.fetch(:lane))
+        Master::Fix::SimplifyPass.set! if overrides[:simplify]
+        yield
+      ensure
+        Master::Fix::SimplifyPass.clear
+        restore_fix_state(previous)
       end
 
       # The execution state a single dispatch momentarily rewrites, and the
@@ -391,6 +401,11 @@ module Master
           boundary = writes_requested ? "current-checkout" : "no-write-or-publish"
           with_dmesg_verbosity(raw, default: "trace") do
             Master::Trace::Dmesg.status("fix0", "mode=#{mode} target=#{display_target} boundary=#{boundary}")
+            next unless Master::Fix::SimplifyPass.requested?
+
+            Master::Trace::Dmesg.status(
+              "fix0", "simplify pin: council argues quality only, instruments keep their findings"
+            )
           end
           targets = fix_targets(target, root:)
           ::Operator::CheckChain.clear_verified_fix_snapshots! if writes_requested
@@ -707,9 +722,18 @@ module Master
         tokens = raw.to_s.split(/\s+/).map(&:downcase)
         lane = tokens.filter_map { |token| token[LANE_FLAG, 1] }.last ||
                (multi_tree_run?(raw) ? "elevate" : Master::Fix::WorkLane::DEFAULT.to_s)
-        overrides = { autofix_mode: nil, max_files: nil, blockers: false, lane:, plan: tokens.include?("--plan"),
-                      until_checks: tokens.include?("--until-checks"), task_intent: nil }
-        raw.to_s.split(/\s+/).each do |token|
+        {
+          autofix_mode: nil, max_files: nil, blockers: false, lane:,
+          plan: tokens.include?("--plan"), until_checks: tokens.include?("--until-checks"),
+          simplify: tokens.include?("--simplify"), task_intent: nil,
+        }.merge(flag_overrides(raw.to_s))
+      end
+
+      # The flags whose value lives in the token: autofix mode, file budget,
+      # blockers and the pinned task intent.
+      def flag_overrides(raw)
+        overrides = {}
+        raw.split(/\s+/).each do |token|
           if (match = AUTOFIX_FLAG.match(token))
             overrides[:autofix_mode] = match[1]
           elsif (match = MAX_FILES_FLAG.match(token))
