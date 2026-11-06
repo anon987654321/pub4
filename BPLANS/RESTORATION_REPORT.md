@@ -85,16 +85,23 @@ operative consequences:
 
 ## Regenerating
 
-The pipeline ships with this bundle under `scripts/` (Node.js, no Python —
-see the laws note above). The scripts' absolute paths assume the original
-working tree (`/home/z/my-project/…`, anlage in `repos/pub4/BPLANS`,
-Nosifer in `scripts/assets/`); `plans_a.mjs` and `plans_b.mjs` (the ported
-content) are included, so only the source paths need re-pointing on a new
-host. The retired Python scripts are not part of the bundle; they remain in
-the working tree under `scripts/legacy/`.
+The pipeline ships with this bundle under `scripts/`. Build, check,
+index and print tools share `scripts/paths.mjs`, so they no longer depend on
+one developer's home directory. The source tree defaults to this BPLANS
+folder (`BPLANS_SOURCE_DIR` can point at a separate clean source tree); build
+artifacts default to the operating system's temporary directory and can be
+moved with `BPLANS_OUT_DIR`. The SYRE mark and Nosifer WOFF2 font are read
+from the existing `syre.html` and `ragnhild.html` files. Chromium and
+Poppler's `pdfinfo` are discovered on the host or selected with
+`BPLANS_CHROME_BIN` and `PDFINFO_BIN`.
 
-    node scripts/convert_content.mjs   # once; .py content → plans_a/plans_b.mjs
-    node scripts/bp_build.mjs          # anlage + completion content → BPLANS/*.html
+The original Python content files are not in this repository. The converted
+`plans_a.mjs` and `plans_b.mjs` are committed build inputs, so the ordinary
+build does not need the optional one-time converter. When the original data
+files are available elsewhere, `BPLANS_LEGACY_SOURCE_DIR` selects their
+directory for `convert_content.mjs`.
+
+    node scripts/bp_build.mjs          # source + completion content → output HTML
     node scripts/bp_check.mjs          # independent verification
-    node scripts/bp_print.mjs          # PDFs via chromium headless shell
     node scripts/bp_index.mjs          # index.html
+    node scripts/bp_print.mjs          # PDFs via Chromium
