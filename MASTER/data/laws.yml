@@ -470,6 +470,14 @@ CHART_DATA_INK:
   severity: warning
   resolution: review
 
+SELF_EVIDENT_DATA_UNLABELLED:
+  parent: DENSITY
+  statement: >
+    Data whose form says what it is (an email, a phone number, a price, a
+    date) appears without a visible label.
+  severity: info
+  resolution: review
+
 # ---
 
 OPERATOR_RENDERED:
@@ -974,6 +982,12 @@ CHROME_COPY_CALM:
   severity: warning
   resolution: review
 
+ACTION_LABEL_BRIEF:
+  parent: STRUNK_WHITE
+  statement: "A button or action label is at most three words and leads with the verb."
+  severity: info
+  resolution: review
+
 # ---
 
 BRINGHURST:
@@ -1056,6 +1070,14 @@ PARAGRAPH_SEPARATION_ONE_DEVICE:
 PRINT_PAGE_CANON:
   parent: BRINGHURST
   statement: "A printed BPLANS page sets its margins in classical proportion, inner smallest and foot largest."
+  severity: warning
+  resolution: review
+
+EMPHASIS_ONE_DEVICE:
+  parent: BRINGHURST
+  statement: >
+    Emphasis uses one device at a time; bold and italic are never combined,
+    and underline is reserved for links.
   severity: warning
   resolution: review
 
@@ -1197,6 +1219,12 @@ PROPORTION_hardcoded_absolute_path:
   statement: "A machine-specific path in code."
   resolution: review
 
+ONE_PRIMARY_ACTION:
+  parent: PROPORTION
+  statement: "A view has exactly one primary action, and the eye finds it first."
+  severity: warning
+  resolution: review
+
 # ---
 
 REACH:
@@ -1293,6 +1321,30 @@ AUTO_MOTION_PAUSABLE:
 ORIENTATION_UNLOCKED:
   parent: REACH
   statement: "No app locks the screen's orientation unless the task needs it."
+  severity: warning
+  resolution: review
+
+FIELD_PURPOSE_DECLARED:
+  parent: REACH
+  statement: "A field that asks for personal data declares its purpose, so the device can fill it."
+  severity: warning
+  resolution: review
+
+AUTH_ALLOWS_PASTE:
+  parent: REACH
+  statement: "Signing in never blocks paste, password managers or one-time-code autofill, and never asks for a puzzle."
+  severity: error
+  resolution: review
+
+LABEL_IN_NAME:
+  parent: REACH
+  statement: "A control's accessible name contains its visible text."
+  severity: warning
+  resolution: review
+
+ICON_CARRIES_WORD:
+  parent: REACH
+  statement: "An icon-only control is limited to the few icons everyone reads; every other icon carries a word."
   severity: warning
   resolution: review
 
@@ -1910,6 +1962,10 @@ law_catalogue:
       severity: error
       lifecycle: trusted
       autofix: never
+    ACTION_LABEL_BRIEF:
+      definition_sources: [MASTER/law/html.rb]
+      severity: info
+      languages: [html]
     adversarial:
       definition_sources: [MASTER/law/semantic.rb]
       severity: error
@@ -1990,6 +2046,10 @@ law_catalogue:
       definition_sources: [MASTER/law/universal.rb]
       severity: error
       languages: [ruby]
+    AUTH_ALLOWS_PASTE:
+      definition_sources: [MASTER/law/html.rb]
+      severity: error
+      languages: [html]
     AUTO_MOTION_PAUSABLE:
       definition_sources: [MASTER/law/javascript.rb]
       severity: warning
@@ -2343,6 +2403,10 @@ law_catalogue:
       severity: info
       autofix: automatic
       languages: [css, scss]
+    EMPHASIS_ONE_DEVICE:
+      definition_sources: [MASTER/law/html.rb]
+      severity: warning
+      languages: [html]
     ENGINEERING_FIT:
       definition_sources: [MASTER/law/practice.rb]
       severity: warn
@@ -2419,6 +2483,10 @@ law_catalogue:
       definition_sources: [MASTER/law/universal.rb]
       severity: warning
       autofix: automatic
+    FIELD_PURPOSE_DECLARED:
+      definition_sources: [MASTER/law/html.rb]
+      severity: warning
+      languages: [html]
     FILE_LAYOUT:
       definition_sources: [MASTER/law/structural.rb]
       severity: info
@@ -2588,6 +2656,10 @@ law_catalogue:
       definition_sources: [MASTER/law/html.rb]
       severity: warn
       languages: [html]
+    ICON_CARRIES_WORD:
+      definition_sources: [MASTER/law/html.rb]
+      severity: warning
+      languages: [html]
     IDEMPOTENT:
       definition_sources: [MASTER/law/universal.rb]
       severity: info
@@ -2671,6 +2743,10 @@ law_catalogue:
     KISS:
       definition_sources: [MASTER/law/universal.rb]
       severity: warning
+    LABEL_IN_NAME:
+      definition_sources: [MASTER/law/html.rb]
+      severity: warning
+      languages: [html]
     law_coverage:
       definition_sources: [MASTER/law/meta.rb]
       severity: warning
@@ -3011,6 +3087,10 @@ law_catalogue:
       definition_sources: [MASTER/law/typesetting.rb]
       severity: warning
       languages: [yaml, html, markdown]
+    ONE_PRIMARY_ACTION:
+      definition_sources: [MASTER/law/html.rb]
+      severity: warning
+      languages: [html]
     ORIENTATION_UNLOCKED:
       definition_sources: [MASTER/law/javascript.rb]
       severity: warning
@@ -3031,6 +3111,10 @@ law_catalogue:
       definition_sources: [MASTER/law/typesetting.rb]
       severity: warning
       languages: [yaml, html, markdown]
+    SELF_EVIDENT_DATA_UNLABELLED:
+      definition_sources: [MASTER/law/html.rb]
+      severity: info
+      languages: [html]
     SINGLE_SENTENCE_SPACE:
       definition_sources: [MASTER/law/typesetting.rb]
       severity: info

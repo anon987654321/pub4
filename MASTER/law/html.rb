@@ -341,3 +341,292 @@ Law.define(:UTILITY_CLASS_SOUP) do
   bad  "<div class=\"row col mt mb\">"
   good "<div class=\"toolbar\">"
 end
+
+# The design-book Laws over markup (Butterick, Krug, Norman, WCAG 2.x). Their rendered halves
+# are adapters over a design_laws snapshot (Deploy::RenderedDesign), proved the same way.
+require_relative "../checks/support/rendered_design"
+
+module Law
+  module Markup
+    SNAP = Deploy::RenderedDesign
+    VIEWS = Regexp.union(/\.(?:html\.)?erb\z|\.html\z/, SNAP::SNAPSHOT)
+    TEMPLATES = %r{\.(?:html\.)?erb\z|\.html\z}
+    PERSONAL = /e?mail|phone|\btel|telefon|mobil|name|navn|given|family|address|adresse|street|postal|
+               postnummer|zip|city|country|username|brukernavn|password|passord|otp|one_time|cc_|card|
+               (?:\A|_)(?:kode|land|sted|gate)(?:\z|_)/xi
+    FIELD = /\b(?:text|email|telephone|phone|password|number|search|url)_field(?:_tag)?\b|<input\b/
+
+    NUMERIC = /postnummer|postal|zip|otp|one_time|(?:\A|_)kode(?:\z|_)/i
+    LABEL = /\A\s*(?:E-?post|Telefon|Tlf|Pris|Dato|Email|Phone|Price|Date)\s*:?\s*\z/i
+    SELF_EVIDENT = /<%=\s*(?:mail_to|phone_to|number_to_currency|time_tag|l)\b/
+    ACTION = /(?:button_to|\.submit|button_tag)\s*\(?\s*((?:t\(\s*)?["'][^"']+["']\)?)|
+              link_to\s*\(?\s*((?:t\(\s*)?["'][^"']+["']\)?)(?=.*class:\s*["'][^"']*\bbutton)/x
+    ICONS = %r{<svg\b.*?</svg>|<img\b[^>]*>|<i\b[^>]*></i>|<%=\s*(?:icon|inline_svg\w*|svg_tag|image_tag)\b.*?%>}m
+
+    module_function
+
+    def set_to(attribute, value) = /#{attribute}(?::|=)\s*["']#{value}/
+
+    def continues?(text) = text.rstrip.end_with?(",", "(") || (text.include?("<input") && !text.include?(">"))
+
+    # A helper call or tag that continues over the next lines, joined into one statement.
+    def statements(src, opener)
+      lines = src.lines
+      lines.each_index.select { |index| lines[index].match?(opener) }.map do |index|
+        text = lines[index].dup
+        lines[index + 1, 6].to_a.each do |more|
+          break unless continues?(text)
+
+          text << more
+        end
+        [text.gsub(/\s+/, " "), index + 1]
+      end
+    end
+
+    def field_name(text)
+      text[/_field(?:_tag)?\s*\(?\s*:?["']?(\w+)/, 1] || text[/\bname=["']([^"']+)/, 1] || text[/\bid=["']([^"']+)/, 1]
+    end
+
+    def purpose(text)
+      return if text.match?(/type=["']?(?:hidden|submit|button|checkbox|radio)/)
+
+      name = field_name(text).to_s
+      return unless name.match?(PERSONAL)
+      return "#{name} turns autocomplete off - name its purpose (error)" if text.match?(set_to("autocomplete", "off"))
+      return "#{name} asks for personal data with no autocomplete token" unless text.include?("autocomplete")
+
+      "#{name} wants inputmode numeric (info)" if name.match?(NUMERIC) && !text.match?(set_to("inputmode", "numeric"))
+    end
+
+    def words(label) = label.to_s.gsub(/%\{\w+\}|<[^>]+>/, " ").split.size
+
+    def locale_file(file)
+      YAML.safe_load_file(file, aliases: true) || {}
+    rescue Psych::Exception # scan: intentional - an unreadable locale resolves no label; YAML_SYNTAX reports it
+      {}
+    end
+
+    # t("absolute.key") read from the app's nb locale; a literal is its own label.
+    def label(raw, path)
+      key = raw[/\At\(\s*["']([\w.]+)["']/, 1] or return raw[/\A["']([^"']+)["']/, 1]
+      root = path.to_s[%r{\A.*?/(?:RAILS/[^/]+|MASTER/web)(?=/)}] or return
+      Dir[File.join(root, "config/locales/nb*.yml")].each do |file|
+        found = locale_file(file).dig("nb", *key.split("."))
+        return found if found.is_a?(String)
+      end
+      nil
+    end
+
+    def action_label(line)
+      button = line[%r{<button\b[^>]*>([^<]{2,})</button>}, 1]&.then { |text| "\"#{text.strip}\"" }
+      line.match(ACTION)&.captures&.compact&.first || button
+    end
+
+    def icon_only?(inner)
+      rest = inner.gsub(ICONS, "").gsub(/<[^>]+>/, "")
+      rest.strip.empty? && rest != inner
+    end
+
+    def icon_named?(tag)
+      SNAP::AccessLaws.icon_words.include?(SNAP::AccessLaws.normal(tag[/aria-label=["']([^"']+)/, 1]))
+    end
+
+    def rendered(id) = ->(text, file) { SNAP.findings(id, text, file).map { |hit| finding(**hit) } }
+
+    def page(*elements) = SNAP.fixture(elements:)
+
+    # One ERB output tag around a Ruby expression, for the fixtures.
+    ERB_TAG = [
+      "<%= ",
+      " %>",
+    ].freeze
+
+    def erb(code) = "#{ERB_TAG.first}#{code}#{ERB_TAG.last}\n"
+
+    def control(key, **fields) = SNAP.element(key, interactive: true, **fields)
+
+    def named(name, visible) = control("button", visible_text: visible, name:, attrs: { "aria-label" => name })
+
+    def paste_blocker(line, auth)
+      return "paste is blocked on a sign-in field" if line.match?(/\bonpaste\s*=|paste->/)
+      off = line.match?(/password/i) && line.match?(set_to("autocomplete", "off"))
+      return "password field turns autofill off" if off
+
+      "a CAPTCHA on sign-in with no alternative (warning)" if auth && line.match?(/g-recaptcha|h-captcha|captcha/i)
+    end
+
+    def name_mismatch(line)
+      norm = SNAP::AccessLaws.method(:normal)
+      tag = line.match(%r{<(button|a)\b[^>]*aria-label=["']([^"']+)["'][^>]*>([^<]+)</\1>})
+      keys = line.match(/\bt\(\s*["']([\w.]+)["']\).*aria:\s*\{\s*label:\s*t\(\s*["']([\w.]+)["']/)
+      hidden = tag && !norm.(tag[2]).include?(norm.(tag[3]))
+      return "aria-label #{tag[2].inspect} hides the visible #{tag[3].strip.inspect}" if hidden
+
+      "visible text #{keys[1]} and name #{keys[2]} are different keys" if keys && keys[1] != keys[2]
+    end
+
+    def unneeded_label(lines, index)
+      tag = lines[index].match(%r{<(dt|th|span|strong|b|label)\b([^>]*)>([^<]*)</\1>}) or return
+      return if tag[2].match?(/visually-hidden|sr-only/) || !tag[3].match?(LABEL)
+
+      follows = lines[index][tag.end(0)..].to_s + lines[index + 1].to_s
+      "#{tag[3].strip.inspect} labels data that says what it is" if follows.match?(SELF_EVIDENT)
+    end
+  end
+
+  M = Markup
+
+  ::Law.define(:FIELD_PURPOSE_DECLARED) do
+    source "WCAG 1.3.5 Identify Input Purpose, AA; Wroblewski, Web Form Design (2008); Baymard checkout research"
+    tags %i[ACCESSIBILITY]
+    path M::TEMPLATES
+    fix "Give each personal-data field its autofill token (autocomplete: \"postal-code\") and inputmode for digits."
+    bad "<%= f.text_field :postnummer %>\n"
+    good "<%= f.text_field :postnummer, autocomplete: \"postal-code\", inputmode: \"numeric\" %>\n"
+    check do |src, _path|
+      M.statements(src, M::FIELD).filter_map { |text, line| (message = M.purpose(text)) && finding(line:, message:) }
+    end
+  end
+
+  ::Law.define(:AUTH_ALLOWS_PASTE) do
+    source "WCAG 2.2 SC 3.3.8 Accessible Authentication (Minimum), AA"
+    tags %i[ACCESSIBILITY SECURITY]
+    path Regexp.union(M::TEMPLATES, /\.js\z/)
+    fix "Let password and one-time-code fields take paste and autofill (current-password, one-time-code); " \
+        "no puzzle without an alternative."
+    bad "<input type=\"password\" onpaste=\"return false\">\n"
+    good "<input type=\"password\" autocomplete=\"current-password\">\n"
+    check do |src, path|
+      auth = path.to_s.match?(/session|registration|password|login|signup|sign_in|sign_up/)
+      src.each_line.with_index(1).filter_map do |line, n|
+        (message = M.paste_blocker(line, auth)) && finding(line: n, message:)
+      end
+    end
+    adapter(:whole_file, languages: %i[javascript], bad: "el.addEventListener(\"paste\", (e) => e.preventDefault())\n",
+                         good: "el.addEventListener(\"input\", (e) => this.check(e))\n") do |src, _file|
+      blocks = src.match?(/addEventListener\(\s*["']paste["']|\.onpaste\s*=/) && src.include?("preventDefault")
+      at = src.lines.index { |line| line.include?("paste") }.to_i + 1
+      blocks ? [finding(line: at, message: "paste is prevented")] : []
+    end
+  end
+
+  ::Law.define(:ACTION_LABEL_BRIEF) do
+    source "Krug, Don't Make Me Think: omit half the words, then half again; minimalism.yml microcopy.label_max_words"
+    tags %i[BE_CONCISE]
+    path %r{\.(?:html\.)?erb\z}
+    reads_beyond_file true
+    ask "Does each button or action label lead with its verb? Rank the labels that do not and explain why; " \
+        "the model may rank and explain but a person decides."
+    practice "A model's verdict on verb-first labels is a ranked suggestion with its reason; the operator decides."
+    fix "Cut the label to three words or fewer, verb first: \"Legg i kurv\"."
+    bad "<%= button_to \"Trykk her hvis du vil legge varen i kurven\", cart_path %>\n"
+    good "<%= button_to \"Legg i kurv\", cart_path %>\n"
+    check do |src, path|
+      src.each_line.with_index(1).filter_map do |line, n|
+        count = M.words(M.label(M.action_label(line).to_s, path))
+        level = count > 5 ? "warning" : "info"
+        finding(line: n, message: "action label of #{count} words - #{level}: three, verb first") if count > 3
+      end
+    end
+  end
+
+  ::Law.define(:SELF_EVIDENT_DATA_UNLABELLED) do
+    source "Refactoring UI, labels are a last resort"
+    tags %i[DESIGN UX]
+    path %r{/app/views/(?!.*_form).*\.erb\z}
+    ask "Does this display view label data whose form already says what it is (an email, a phone number, a price, " \
+        "a date)? Rank and explain; a person decides."
+    practice "A model may rank unneeded labels and explain them; the operator decides which stay."
+    fix "Drop the visible label and keep it for assistive tech (a visually-hidden dt, or one label for the list)."
+    bad "<dt>E-post:</dt>\n<dd><%= mail_to user.email %></dd>\n"
+    good "<dd><%= mail_to user.email %></dd>\n"
+    check do |src, _path|
+      lines = src.lines
+      lines.each_index.filter_map do |index|
+        (message = M.unneeded_label(lines, index)) && finding(line: index + 1, message:)
+      end
+    end
+  end
+
+  ::Law.define(:EMPHASIS_ONE_DEVICE) do
+    source "Butterick, bold or italic sparingly, never both; underline only for links"
+    tags %i[TYPOGRAPHY]
+    path Regexp.union(M::VIEWS, /\.s?css\z/)
+    fix "Emphasise with one device: <strong> or <em>, never both; keep underline for links."
+    bad "<p><strong><em>Gratis levering</em></strong></p>\n"
+    good "<p><strong>Gratis levering</strong></p>\n"
+    nested = %r{<(?:strong|b)>\s*<(?:em|i)>|<(?:em|i)>\s*<(?:strong|b)>}
+    check do |src, _path|
+      src.each_line.with_index(1).filter_map do |line, n|
+        finding(line: n, message: "bold and italic at once") if line.match?(nested)
+      end
+    end
+    adapter(:whole_file, languages: %i[css scss], bad: ".deal { font-weight: 700; font-style: italic; }\n",
+                         good: ".deal { font-weight: 700; }\n") do |src, _file|
+      src.scan(/[^{}]*\{([^{}]*)\}/).filter_map do |(body)|
+        next unless body.match?(/font-weight:\s*(?:bold|[6-9]00)/) && body.match?(/font-style:\s*italic/)
+
+        finding(line: src[0, src.index(body)].count("\n") + 1, message: "a rule sets bold and italic at once")
+      end
+    end
+    underlined = M::SNAP.element("span.deal", decoration: "underline")
+    adapter(:rendered_ui, languages: %i[json], example_path: M::SNAP::EXAMPLE, bad: M.page(underlined),
+                          good: M.page(M::SNAP.element("span.deal")), &M.rendered(:EMPHASIS_ONE_DEVICE))
+  end
+
+  ::Law.define(:ONE_PRIMARY_ACTION) do
+    source "Refactoring UI, button hierarchy; Von Restorff (Yablonski, Laws of UX); visual_identity.composition"
+    tags %i[DESIGN UX]
+    path M::VIEWS
+    fix "Fill one action per view (button-primary); give the rest button-ghost or button-link."
+    publish = M.erb("button_to \"Publiser\", posts_path, class: \"button-primary\"")
+    bad publish + M.erb("link_to \"Del\", share_path, class: \"button-primary\"")
+    good publish + M.erb("link_to \"Del\", share_path, class: \"button-ghost\"")
+    check do |src, _path|
+      hits = src.each_line.with_index(1).select { |line, _n| line.match?(/\bbutton-primary\b/) }
+      message = "#{hits.size} primary actions in one view - one is primary"
+      hits.drop(1).map { |_line, n| finding(line: n, message:) }
+    end
+    fill = [0, 80, 200, 1]
+    adapter(:rendered_ui, languages: %i[json], example_path: M::SNAP::EXAMPLE,
+                          bad: M.page(M.control("button.a", bg: fill), M.control("button.b", bg: fill)),
+                          good: M.page(M.control("button.a", bg: fill), M.control("button.b")),
+                          &M.rendered(:ONE_PRIMARY_ACTION))
+  end
+
+  ::Law.define(:LABEL_IN_NAME) do
+    source "WCAG 2.5.3 Label in Name, A"
+    tags %i[ACCESSIBILITY]
+    path M::VIEWS
+    fix "Make the accessible name contain the visible text: drop the aria-label, or extend the words shown."
+    bad "<button aria-label=\"Send inn\">Lagre</button>\n"
+    good "<button aria-label=\"Lagre annonse\">Lagre</button>\n"
+    check do |src, _path|
+      src.each_line.with_index(1).filter_map do |line, n|
+        (message = M.name_mismatch(line)) && finding(line: n, message:)
+      end
+    end
+    adapter(:rendered_ui, languages: %i[json], example_path: M::SNAP::EXAMPLE,
+                          bad: M.page(M.named("Send inn", "Lagre")), good: M.page(M.named("Lagre annonse", "Lagre")),
+                          &M.rendered(:LABEL_IN_NAME))
+  end
+
+  ::Law.define(:ICON_CARRIES_WORD) do
+    source "Norman, signifiers; Krug; minimalism.yml law.icon_policy, words before icons"
+    tags %i[ACCESSIBILITY DESIGN]
+    path M::VIEWS
+    fix "Give the icon its word (\"Fremhev\") or use the word alone; minimalism.yml icon_words_optional may go bare."
+    bad "<button class=\"boost\"><svg viewBox=\"0 0 9 9\"><path d=\"M0 0h9\"/></svg></button>\n"
+    good "<button class=\"boost\"><svg viewBox=\"0 0 9 9\"><path d=\"M0 0h9\"/></svg> Fremhev</button>\n"
+    check do |src, _path|
+      src.each_line.with_index(1).filter_map do |line, n|
+        tag = line.match(%r{<(button|a)\b([^>]*)>(.*?)</\1>}) or next
+        finding(line: n, message: "icon-only #{tag[1]} with no word") if M.icon_only?(tag[3]) && !M.icon_named?(tag[2])
+      end
+    end
+    adapter(:rendered_ui, languages: %i[json], example_path: M::SNAP::EXAMPLE,
+                          bad: M.page(M.control("button.boost", icon: true, visible_text: "", name: "Boost")),
+                          good: M.page(M.control("button.boost", icon: true, visible_text: "Fremhev", name: "Fremhev")),
+                          &M.rendered(:ICON_CARRIES_WORD))
+  end
+end

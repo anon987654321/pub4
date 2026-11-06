@@ -6,6 +6,28 @@ law:
     max_zones: 3
   touch_target_px: 44
   icon_policy: "words before icons"
+  # The icons a control may wear without a word (ICON_CARRIES_WORD); every other icon carries one.
+  # Operator-owned: the accessible names, en and nb, that the universal glyphs answer to.
+  icon_words_optional:
+    - search
+    - close
+    - menu
+    - back
+    - play
+    - pause
+    - more
+    - share
+    - cart
+    - profile
+    - "s\u00f8k"
+    - lukk
+    - meny
+    - tilbake
+    - spill
+    - mer
+    - del
+    - handlekurv
+    - profil
   motion_policy: "state-change or information only"
   empty_state: "one truth sentence and one verb"
   large_spacing_px:

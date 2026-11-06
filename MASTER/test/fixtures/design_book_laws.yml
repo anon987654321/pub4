@@ -277,3 +277,146 @@
   code: |
     // orientation: essential - the camera guide
     screen.orientation.lock("portrait")
+- law: FIELD_PURPOSE_DECLARED
+  path: RAILS/brgen/app/views/listings/show.html.erb
+  flags: true
+  code: |
+    <%= f.text_field :postnummer %>
+- law: FIELD_PURPOSE_DECLARED
+  path: RAILS/brgen/app/views/listings/show.html.erb
+  flags: true
+  match: "off"
+  code: |
+    <%= f.email_field :email, autocomplete: "off" %>
+- law: FIELD_PURPOSE_DECLARED
+  path: RAILS/brgen/app/views/listings/show.html.erb
+  flags: false
+  code: |
+    <%= f.text_field :postnummer,
+      autocomplete: "postal-code", inputmode: "numeric" %>
+- law: FIELD_PURPOSE_DECLARED
+  path: RAILS/brgen/app/views/listings/show.html.erb
+  flags: false
+  code: |
+    <%= f.text_field :title %>
+- law: AUTH_ALLOWS_PASTE
+  path: RAILS/brgen/app/views/sessions/new.html.erb
+  flags: true
+  code: |
+    <input type="password" onpaste="return false">
+- law: AUTH_ALLOWS_PASTE
+  path: RAILS/brgen/app/views/sessions/new.html.erb
+  flags: false
+  code: |
+    <input type="password" autocomplete="current-password">
+- law: AUTH_ALLOWS_PASTE
+  path: RAILS/brgen/app/javascript/controllers/otp_controller.js
+  flags: true
+  code: |
+    el.addEventListener("paste", (e) => e.preventDefault())
+- law: ACTION_LABEL_BRIEF
+  ask: a person decides
+  path: RAILS/brgen/app/views/listings/show.html.erb
+  flags: true
+  code: |
+    <%= button_to "Trykk her hvis du vil legge varen i kurven", cart_path %>
+- law: ACTION_LABEL_BRIEF
+  path: RAILS/brgen/app/views/listings/show.html.erb
+  flags: false
+  code: |
+    <%= button_to "Legg i kurv", cart_path %>
+- law: SELF_EVIDENT_DATA_UNLABELLED
+  ask: a person decides
+  path: RAILS/brgen/app/views/profiles/show.html.erb
+  flags: true
+  code: |
+    <dt>E-post:</dt>
+    <dd><%= mail_to user.email %></dd>
+- law: SELF_EVIDENT_DATA_UNLABELLED
+  path: RAILS/brgen/app/views/profiles/show.html.erb
+  flags: false
+  code: |
+    <dt class="visually-hidden">E-post:</dt>
+    <dd><%= mail_to user.email %></dd>
+- law: SELF_EVIDENT_DATA_UNLABELLED
+  path: RAILS/brgen/app/views/profiles/_form.html.erb
+  flags: false
+  code: |
+    <dt>E-post:</dt>
+    <dd><%= mail_to user.email %></dd>
+- law: EMPHASIS_ONE_DEVICE
+  path: RAILS/brgen/app/views/listings/show.html.erb
+  flags: true
+  code: |
+    <p><strong><em>Gratis levering</em></strong></p>
+- law: EMPHASIS_ONE_DEVICE
+  path: RAILS/brgen/app/views/listings/show.html.erb
+  flags: false
+  code: |
+    <p><strong>Gratis levering</strong></p>
+- law: EMPHASIS_ONE_DEVICE
+  path: RAILS/brgen/app/assets/stylesheets/_deal.scss
+  flags: true
+  code: |
+    .deal { font-weight: 700; font-style: italic; }
+- law: EMPHASIS_ONE_DEVICE
+  path: MASTER/var/rendered/home.rendered.json
+  flags: true
+  code: >-
+    {"probe":"design_laws","viewports":[{"width":390,"elements":[
+    {"key":"span.deal","tag":"span","text":"Gratis","decoration":"underline"}]}]}
+- law: ONE_PRIMARY_ACTION
+  path: RAILS/brgen/app/views/listings/show.html.erb
+  flags: true
+  count: 1
+  code: |
+    <%= button_to "Publiser", posts_path, class: "button-primary" %>
+    <%= link_to "Del", share_path, class: "button-primary" %>
+- law: ONE_PRIMARY_ACTION
+  path: RAILS/brgen/app/views/listings/show.html.erb
+  flags: false
+  code: |
+    <%= button_to "Publiser", posts_path, class: "button-primary" %>
+    <%= link_to "Del", share_path, class: "button-ghost" %>
+- law: ONE_PRIMARY_ACTION
+  path: MASTER/var/rendered/home.rendered.json
+  flags: true
+  code: >-
+    {"probe":"design_laws","viewports":[{"width":390,"height":844,"elements":[
+    {"key":"button.a","tag":"button","interactive":true,"bg":[0,80,200,1],"ground":[255,255,255,1],"rect":{"y":16}},
+    {"key":"button.b","tag":"button","interactive":true,"bg":[0,80,200,1],"ground":[255,255,255,1],
+    "rect":{"y":64}}]}]}
+- law: LABEL_IN_NAME
+  path: RAILS/brgen/app/views/listings/show.html.erb
+  flags: true
+  code: |
+    <button aria-label="Send inn">Lagre</button>
+- law: LABEL_IN_NAME
+  path: RAILS/brgen/app/views/listings/show.html.erb
+  flags: false
+  code: |
+    <button aria-label="Lagre annonse">Lagre</button>
+- law: LABEL_IN_NAME
+  path: RAILS/brgen/app/views/listings/show.html.erb
+  flags: true
+  code: |
+    <%= button_tag t("actions.save"), aria: { label: t("actions.submit") } %>
+- law: ICON_CARRIES_WORD
+  path: RAILS/brgen/app/views/listings/show.html.erb
+  flags: true
+  code: |
+    <button class="boost"><svg viewBox="0 0 9 9"></svg></button>
+- law: ICON_CARRIES_WORD
+  path: RAILS/brgen/app/views/listings/show.html.erb
+  flags: false
+  code: |
+    <button class="boost"><svg viewBox="0 0 9 9"></svg> Fremhev</button>
+- law: ICON_CARRIES_WORD
+  path: RAILS/brgen/app/views/listings/show.html.erb
+  flags: false
+  code: |
+    <button aria-label="Lukk"><svg viewBox="0 0 9 9"></svg></button>
+- law: ICON_CARRIES_WORD
+  path: RAILS/brgen/app/views/listings/show.html.erb
+  flags: false
+  code: "<button aria-label=\"S\u00F8k\"><svg viewBox=\"0 0 9 9\"></svg></button>\n"

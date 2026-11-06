@@ -1089,6 +1089,14 @@ law_map:
       - AUTO_MOTION_PAUSABLE
       - CHART_DATA_INK
       - ORIENTATION_UNLOCKED
+      - FIELD_PURPOSE_DECLARED
+      - AUTH_ALLOWS_PASTE
+      - ACTION_LABEL_BRIEF
+      - SELF_EVIDENT_DATA_UNLABELLED
+      - EMPHASIS_ONE_DEVICE
+      - ONE_PRIMARY_ACTION
+      - LABEL_IN_NAME
+      - ICON_CARRIES_WORD
       status: covered
       root: reach
       tags:
