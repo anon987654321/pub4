@@ -558,7 +558,7 @@ OVHcloud AI Endpoints (https://oai.endpoints.kepler.ai.cloud.ovh.net/v1,
 keyless, 2 RPM per IP per model, 20+ models). GitHub Models retired 2026-07-30;
 Gemini free tier hides its numbers; Hugging Face free monthly credits are gone.
 
-- [ ] Register Kilo and OVHcloud as keyless lanes beside llm7 in `data/models.yml`, with llm7's keyless_max_concurrency pattern and a per-row verified-on date.
+- [x] Register Kilo and OVHcloud as keyless lanes beside llm7 in `data/models.yml`, with llm7's keyless_max_concurrency pattern and a per-row verified-on date. (bb188de11c)
 - [ ] Read OpenRouter's remaining free quota from `GET /api/v1/key` (`free_model_daily_requests`) into `Io::ModelQuota` instead of forecasting the burn rate.
 - [ ] Adopt openclaw's cooldown contract in `Io::LaneQuota`: parse `Retry-After` headers as exact cooldown, ladder everything else 30s-1m-5m with reset, disable auth-failed profiles about ten minutes, and cap stated waits at 60s before falling through.
 - [ ] Spread free-load selection across every live `:free` model slug from `/api/v1/models`, ranked by `free_latency`, with per-model quota buckets, instead of the single default slug.
