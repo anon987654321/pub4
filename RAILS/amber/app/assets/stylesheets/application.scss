@@ -2868,3 +2868,14 @@ body[data-surface="luxury"] .amber-editorial-nav a {
 @include endgame.amber_precision;
 @include endgame.amber;
 // ============================================================ /module: amber_shared_overrides
+
+/* A single Norwegian or English word stays whole in the editorial column.
+   The shared emergency-wrap rule serves user content; a display title gets
+   a measured type size and enough column width to keep its word intact. */
+body[data-surface="luxury"] main#main-content .amber-look-title {
+  max-inline-size: none;
+  font-size: clamp(2.2rem, 4.5vw, 4rem);
+  overflow-wrap: normal;
+  word-break: normal;
+  hyphens: none;
+}
