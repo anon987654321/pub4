@@ -74,9 +74,9 @@ module Master::Core
     SCHEMA = schema.freeze
 
     # The verbs and git operations whose preconditions hold, read off
-    # Proof#scope. No scope is no knowledge of the turn, so everything is offered.
+    # Proof#scope. Without scope, never offer a durable commit.
     def self.offer(verbs, scope)
-      return schema(verbs:) unless scope
+      return schema(verbs:, operations: GIT_OPERATIONS - ["commit"]) unless scope
 
       answered = (scope[:proved] || scope[:answerable]) && scope[:cleared]
       closed = [(:done unless answered), (:write unless scope[:writable])].compact
