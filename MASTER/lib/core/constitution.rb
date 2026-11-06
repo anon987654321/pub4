@@ -464,7 +464,7 @@ module Master::Core
         next nil unless effect.args[:operation].to_s.to_sym == :commit
 
         paths = Array(effect.args[:paths]).map(&:to_s).map(&:strip).reject(&:empty?).uniq
-        return Verdict::Block.new(reason: "commit must name its paths; the index is shared", by: :git_commit_scope) if paths.empty?
+        next Verdict::Block.new(reason: "commit must name its paths; the index is shared", by: :git_commit_scope) if paths.empty?
 
         written = Array(memory.proof.scope[:write_paths])
         outside = paths - written
