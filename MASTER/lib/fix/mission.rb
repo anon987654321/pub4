@@ -821,7 +821,7 @@ module Master
 
       def repository_relative_path(path, repository_root)
         value = path.to_s
-        return if value.empty? || value.include?("\0") || value.split(/[\\/]/).include?("..")
+        return if value.empty? || value.include?("\0") || value.split(%r{[\\/]}).include?("..")
 
         full = File.expand_path(value, repository_root)
         return unless full.start_with?(repository_root + File::SEPARATOR)
