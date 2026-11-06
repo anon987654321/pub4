@@ -70,3 +70,37 @@ class TestFixCritiquePin < Minitest::Test
     assert_includes round.send(:hard_briefing, []), "smallest deterministic check"
   end
 end
+
+# The per-run findings cap: `/fix --findings=<n>` ceilings the council's
+# improvement candidates for that dispatch; the env default stands otherwise.
+class TestFixCritiqueBudget < Minitest::Test
+  def round
+    Master::Fix::FixLoop::CouncilRound.new(agent: nil, root: Master::ROOT)
+  end
+
+  def teardown
+    Master::Fix::CritiqueBudget.clear
+  end
+
+  def test_no_cap_leaves_the_environment_default_standing
+    default = Integer(ENV.fetch("MASTER_FIX_IMPROVEMENT_FINDINGS", "4"))
+
+    assert_equal default, round.send(:critique_cap)
+  end
+
+  def test_a_spelled_cap_is_honoured_including_zero
+    Master::Fix::CritiqueBudget.set!("2")
+    assert_equal 2, round.send(:critique_cap)
+
+    Master::Fix::CritiqueBudget.set!("0")
+    assert_equal 0, round.send(:critique_cap)
+  end
+
+  def test_a_negative_or_nonnumeric_cap_falls_back_to_no_cap
+    Master::Fix::CritiqueBudget.set!("-3")
+    assert_nil Master::Fix::CritiqueBudget.cap
+
+    Master::Fix::CritiqueBudget.set!("many")
+    assert_nil Master::Fix::CritiqueBudget.cap
+  end
+end

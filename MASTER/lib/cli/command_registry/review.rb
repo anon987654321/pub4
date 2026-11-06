@@ -119,8 +119,10 @@ module Master
         Master::Fix::CheckFocus.until_checks! if overrides[:until_checks]
         Master::Fix::WorkLane.set!(overrides.fetch(:lane))
         Master::Fix::CritiquePin.set!(critique_pin_focus(overrides))
+        Master::Fix::CritiqueBudget.set!(overrides[:findings]) if overrides[:findings]
         yield
       ensure
+        Master::Fix::CritiqueBudget.clear
         Master::Fix::CritiquePin.clear
         restore_fix_state(previous)
       end
@@ -704,8 +706,12 @@ module Master
 
       # Flags read per dispatch (execution_overrides), never part of the target.
       TASK_INTENT_FLAG = /\A--intent=(\S+)\z/i
+
+      # Cap the council's improvement candidates for the run (Fix::CritiqueBudget).
+      FINDINGS_FLAG = /\A--findings=(\d+)\z/i
       DISPATCH_FLAG = Regexp.union(
-        AUTOFIX_FLAG, MAX_FILES_FLAG, BLOCKERS_FLAG, LANE_FLAG, TASK_INTENT_FLAG, /\A--until-checks\z/i
+        AUTOFIX_FLAG, MAX_FILES_FLAG, BLOCKERS_FLAG, LANE_FLAG, TASK_INTENT_FLAG,
+        FINDINGS_FLAG, /\A--until-checks\z/i
       )
 
       # Status messages are one-line operator evidence. Do not let a path label
@@ -726,7 +732,7 @@ module Master
           autofix_mode: nil, max_files: nil, blockers: false, lane:,
           plan: tokens.include?("--plan"), until_checks: tokens.include?("--until-checks"),
           simplify: tokens.include?("--simplify"), security: tokens.include?("--security"),
-          task_intent: nil,
+          findings: FINDINGS_FLAG.match(raw.to_s)&.captures&.first, task_intent: nil,
         }.merge(flag_overrides(raw.to_s))
       end
 

@@ -26,6 +26,20 @@ module Master
       def security? = @focus == :security
     end
 
+    # The per-run findings cap (`/fix --findings=<n>`): the ceiling on the
+    # council's improvement candidates for that one dispatch. nil leaves the
+    # MASTER_FIX_IMPROVEMENT_FINDINGS environment default standing; 0 asks for
+    # no council improvements at all.
+    module CritiqueBudget
+      module_function
+
+      def set!(cap) = @cap = Integer(cap, exception: false)&.then { |value| value.negative? ? nil : value }
+
+      def clear = @cap = nil
+
+      def cap = @cap
+    end
+
     class FixLoop
       # The council, inside the loop. A pass that found violations asks the
       # panel what is wrong with the files those violations are in, has it
@@ -96,7 +110,7 @@ module Master
           value = result.value!
           winners = Master::Review::Council::Critique::CherryPick.one_per_issue(value[:cherry_picks])
           repair_value = value.merge(cherry_picks: winners)
-          findings = improvement_findings(repair_value, selected).first(MAX_IMPROVEMENT_FINDINGS)
+          findings = improvement_findings(repair_value, selected).first(critique_cap)
           @bus&.publish(
             "fix_loop:improvement_council",
             pass:, files: selected.size, critiques: Array(value[:feedback]).size,
@@ -194,6 +208,13 @@ module Master
         TEXT
 
         def council_enabled? = Master::Review::LLMDispatcher::PassClock.council_enabled?
+
+        # The improvement-candidate ceiling for this run: the dispatched cap
+        # when one was spelled, the environment default otherwise.
+        def critique_cap
+          cap = Master::Fix::CritiqueBudget.cap
+          cap.nil? ? MAX_IMPROVEMENT_FINDINGS : cap
+        end
 
         # The council ahead of the fixes is advisory: the fix stream starts within
         # this many seconds whatever the panel has said.

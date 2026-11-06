@@ -33,6 +33,8 @@ module Master
             "--security — pin the council to the security critique: injection, authority, custody,",
             "bypasses and delivery, every finding naming the boundary it crosses; same instrument carve-out.",
             "/security is its spelling.",
+            "--findings=<n> — cap the council's improvement candidates for this run; --findings=0",
+            "asks for none.",
             "Every run ends with the wishlist: the governed workstreams and their state —",
             "what /fix still owes the trees.",
             "--intent=<content_only|content_and_structure|functional_change|redesign> pins",
