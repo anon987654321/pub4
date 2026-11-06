@@ -129,9 +129,9 @@ A provider catalog entry alone is not a successful runtime probe. Any change to
 the pool should preserve the existing route policy, budget limits, operation
 quality floors, and evidence requirements.
 
-## Status 2026-11-06: hosted free tiers, rotation, replicate scoring
+## Status 2026-11-06: hosted free tiers and rotation
 
-Three gaps closed against the contract above; no new provider was admitted, so
+Two gaps closed against the contract above; no new provider was admitted, so
 the admission gates were not exercised.
 
 - **Hosted free-tier day caps are enforced.** `openai_compatible` endpoints may
@@ -149,8 +149,8 @@ the admission gates were not exercised.
   takes effect on the next request. One configured key remains a full no-op,
   and rotation still advances only on provider-stated limits, never to defeat
   account-level boundaries.
-- **Replicate chat lanes enter the ranked pool.** `model_defs` now carries
-  score rows for every `replicate_chat` slug, so `ComputePool` ranks them from
-  declared estimates instead of zero-value defaults. They remain paid lanes
-  behind the free tail, billed per call, with no streaming and no quota
-  multiplication.
+- **Replicate chat lanes stay out of the ranked pool.** Score rows for the
+  `replicate_chat` slugs were proposed and withdrawn: without a `model_defs`
+  row `ComputePool#candidate` drops a lane from the ranking, so the rows would
+  have made paid per-call lanes selectable by rank for the first time
+  (test/test_compute_pool.rb holds the exclusion).

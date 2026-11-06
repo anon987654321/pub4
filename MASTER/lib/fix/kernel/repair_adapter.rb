@@ -82,13 +82,13 @@ module Master
 
         @soul_preamble_mutex = Mutex.new
         @soul_preamble_cache = nil
-        # laws.yml orders itself most- to least-important, so the repair preamble
-        # keeps that order and stops at a declared budget instead of carrying all
-        # ~225 law practices on every candidate call (thousands of tokens repeated
-        # per violation, per candidate, per pass). The head of the file is the head
-        # of its importance order; the scanners and the apply-time gates still
-        # enforce every law deterministically, so a law left out here loses no
-        # enforcement, only advisory prose (DENSITY: what is absent cannot be wrong).
+        # The repair preamble stops at a declared budget instead of carrying every
+        # law's practice on every candidate call: all 474 measured 57,583 chars
+        # (about 14K tokens) a prompt on 2026-11-06, the budget keeps 12,328. The
+        # laws come in Law.definitions' load order, not an importance order; the
+        # violated law's own text rides separately (Protocol.law_prompt), and the
+        # scanners and apply-time gates still enforce every law, so a law left out
+        # here loses advisory prose only.
         PREAMBLE_MAX_CHARS = Integer(ENV.fetch("MASTER_FIX_PREAMBLE_BUDGET", "12288"))
 
         class << self

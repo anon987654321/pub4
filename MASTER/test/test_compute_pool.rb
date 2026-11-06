@@ -137,4 +137,14 @@ class TestComputePool < Minitest::Test
     assert_equal 100.0, row[:latency_ms]
     assert_equal :available, row[:quota_state]
   end
+
+  # Replicate bills per call. Without a model_defs row ComputePool drops its lanes from the ranking, so
+  # rank-based selection never picks a paid Replicate lane; score rows for them were proposed and withdrawn.
+  def test_paid_replicate_lanes_stay_out_of_the_ranked_pool
+    pool = Master::CLI::Routing::ComputePool.new(router: Router.new, root: Master::ROOT)
+    ids = Array(pool.instance_variable_get(:@rules)["replicate_chat"]).map { |slug| "replicate:#{slug}" }
+
+    refute_empty ids
+    assert_empty pool.rank(ids)
+  end
 end

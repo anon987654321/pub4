@@ -70,9 +70,9 @@ for hours on a dirty tree.
    a router rebuild.
 
 7. **Replicate chat lanes could never rank.** `ModelRouter::Pool#replicate_models`
-   produces `replicate:<slug>` lanes, but `model_defs` held no scoring rows for
-   them, so `ComputePool` scored them at the zero-value defaults
-   (`defaults: &model_defaults`) regardless of measured latency or success.
+   produces `replicate:<slug>` lanes, but `model_defs` holds no scoring rows for
+   them, so `ComputePool#candidate` drops them from the ranking. That keeps
+   paid per-call lanes out of rank-based selection; it stays.
 
 8. **Structural multiplication that stands.** Council rounds are capped at 12
    files but "a panel over a dozen files costs minutes" (lib/fix/fix_loop/
@@ -104,9 +104,6 @@ for hours on a dirty tree.
   `key_env` list (a second var may be declared per endpoint, e.g.
   `GROQ_API_KEY_2`), and `HttpSender#send_hosted` resolves the active key at
   call time so rotation lands on the next call.
-- **Replicate scoring rows** - `model_defs` entries for every `replicate_chat`
-  slug, so ComputePool ranks those lanes from declared estimates instead of
-  zeros. They remain paid lanes behind the free tail.
 
 ## Fences left standing (deliberately)
 
