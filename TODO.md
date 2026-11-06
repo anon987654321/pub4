@@ -275,13 +275,6 @@ measure is already owned by the Bymorgen item above.
   dialect's pill language and the `button_to` POST semantics for rewind.
   Laws: `BOUNDED_LOAD_choice_overload`, `POLA_intuitive_navigation`,
   `PROPORTION_eight_px_rhythm`.
-- [ ] **TV header alignment.** The TV home centres the hgroup but
-  right-aligns its action pair ("Strøm", "Kanaler") on desktop, while the
-  same pair centres under the blurb on mobile
-  (`brgen_radio/tv/app/views/tv/home/index.html.erb:6-18`). Confirm the
-  intended alignment per breakpoint and whether "Strøm" scans as the feed
-  link; settle on one rule rather than two.
-  Laws: `POLA_intuitive_navigation`, `DENSITY_aesthetic_integrity`.
 - [ ] **BSDPorts spare-dialect micro.** (a) The search field's dark grey
   fill with grey placeholder reads as a disabled control in both viewports
   (`bsdports-desktop.png`, `bsdports-mobile.png` at 1:1); measure the

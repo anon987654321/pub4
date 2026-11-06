@@ -98,4 +98,19 @@ class SharedChromeBehaviourTest < ApplicationSystemTestCase
     probe("hideTab(false)")
     assert wait_until(7) { patches == 2 }, "the interval did not resume when the tab came back"
   end
+
+  # brgen centres its page header, and from 640px the shared header turned into
+  # a row ending flush right: the title stayed centred while TV's "Strøm" and
+  # "Kanaler" sat on the right edge, and centred again on a phone.
+  test "a desktop page header centres its actions under the title" do
+    visit_city("tv", "/")
+
+    centre = lambda do |selector|
+      evaluate_script("(r => r.left + r.width / 2)(document.querySelector(arguments[0]).getBoundingClientRect())",
+                      selector)
+    end
+    title = centre.call(".page-header h1")
+    actions = centre.call(".page-header > div")
+    assert_in_delta title, actions, 2, "the actions share the title's centre"
+  end
 end

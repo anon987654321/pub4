@@ -123,11 +123,16 @@ aside:not([class]) > h2 {
    inherits it from here. It restates what shell_widgets' slim sticky bar
    sets, because that partial loads before these rules and still serves
    bsdports as a bar. Leading is --leading-none, the law's nearest step to
-   the reference's 1.05; balance keeps a two-line title off one word. */
+   the reference's 1.05; balance keeps a two-line title off one word.
+   align-items restates the centre too: the shared header turns into a row
+   with align-items:flex-end from 640px, and only the direction was taken
+   back here, so every desktop header pushed its actions to the right edge
+   while the title stayed centred. */
 .page-header {
   position: static;
   flex-direction: column;
   justify-content: center;
+  align-items: center;
   gap: var(--space-4);
   max-width: var(--measure);
   margin: 0 auto var(--space-8);
