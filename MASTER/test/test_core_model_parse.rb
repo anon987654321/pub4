@@ -129,6 +129,16 @@ class TestModelOffer < Minitest::Test
     assert_includes operations(offered(proof)), "commit"
   end
 
+  def test_evidence_without_a_fold_owned_write_does_not_offer_commit
+    proof = Master::Core::Proof.new
+    { test_pass: %w[rake test], scan_clean: %w[bin/check], code_review: %w[bin/review] }.each do |kind, argv|
+      proof.record_evidence(Effect.exec(argv, evidence: kind), Observation.ok("ok"))
+    end
+
+    assert proof.proved?
+    refute_includes operations(offered(proof)), "commit"
+  end
+
   def test_pending_ideation_closes_write_and_high_risk_closes_done_until_council
     proof = Master::Core::Proof.new(risk: :high)
     proof.record_evidence(Effect.read("notes.md"), Observation.ok("hello"))
