@@ -34,7 +34,9 @@ export default class extends Controller {
     fetch(this.urlValue, {
       method: "POST",
       headers: { "X-CSRF-Token": this.csrf, "Accept": "text/vnd.turbo-stream.html" }
-    })
+    }).catch(() => {})
+    // A dead connection drops the ping; the next keystroke inside the window
+    // re-fires it, and an unhandled rejection must not stack up meanwhile.
   }
 
   // Enter sends; Shift+Enter keeps a newline (same as the corner dock).

@@ -9,6 +9,10 @@ export default class extends Controller {
 
   connect() {
     this.dismissed = false
+    // Eligibility is one localStorage read; asking now, not after twelve
+    // seconds, keeps the timer off every visitor the popup would refuse
+    // anyway - a dismissal is remembered for seven days.
+    if (!this.eligible()) return
     this.timer = window.setTimeout(() => this.reveal(), this.delayValue)
   }
 

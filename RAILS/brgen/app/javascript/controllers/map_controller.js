@@ -115,7 +115,10 @@ export default class extends Controller {
 
       this.map.addControl(new window.maplibregl.NavigationControl({ visualizePitch: true }), "bottom-right")
       this.map.addControl(new window.maplibregl.GeolocateControl({
-        positionOptions: { enableHighAccuracy: true },
+        // City-scale pins do not need GNSS precision; high accuracy holds the
+        // GPS radio (and the heading sensor below) open for the whole map
+        // session, which is the heaviest thing a low-end phone does here.
+        positionOptions: { enableHighAccuracy: false },
         trackUserLocation: true,
         showUserHeading: true
       }), "bottom-right")
