@@ -389,6 +389,50 @@ class TestKeylessRouting < Minitest::Test
     server&.close
   end
 
+  # OVH's listing cannot self-describe what keyless opens — whisper, TTS and
+  # stable-diffusion rows sit beside the chat models — so `allow` names the
+  # keyless ids outright; a key still opens every listed model.
+  def test_a_keyless_allow_list_selects_named_ids_until_a_key_is_set
+    rows = [
+      { "id" => "gpt-oss-120b" },
+      { "id" => "whisper-large-v3" },
+      { "id" => "Qwen3.6-27B" },
+    ]
+    server = TCPServer.new("127.0.0.1", 0)
+    body = JSON.generate("data" => rows)
+    thread = Thread.new do
+      2.times do
+        socket = server.accept
+        headers = []
+        headers << socket.gets.to_s.strip until headers.last == ""
+        socket.print("HTTP/1.1 200 OK\r\nContent-Length: #{body.bytesize}\r\nConnection: close\r\n\r\n#{body}")
+        socket.close
+      end
+    end
+    ENV.delete("MASTER_NO_POOL_PROBES")
+    spec = { "base" => "http://127.0.0.1:#{server.addr[1]}/v1", "key_env" => ["ALLOW_TEST_KEY"],
+             "keyless_max_concurrency" => 1, "quota_bucket" => "ovh",
+             "keyless" => { "allow" => %w[gpt-oss-120b Qwen3.6-27B] } }
+    build = lambda do
+      router = Master::CLI::Routing::ModelRouter.new(config: FakeConfig.new(model: Master.free_primary_model), root: Master::ROOT)
+      router.instance_variable_get(:@rules)["openai_compatible"] = { "ovh" => spec }
+      router.define_singleton_method(:start_pool_probes) { {} }
+      router
+    end
+
+    keyless = build.call
+    assert_equal %w[ovh:gpt-oss-120b ovh:Qwen3.6-27B].sort, keyless.hosted_models.sort
+    assert_nil keyless.hosted_endpoint_for("ovh:whisper-large-v3")
+
+    ENV["ALLOW_TEST_KEY"] = "sk-test"
+    keyed = build.call
+    assert_equal %w[ovh:whisper-large-v3 ovh:Qwen3.6-27B ovh:gpt-oss-120b].sort, keyed.hosted_models.sort  ensure
+    ENV.delete("ALLOW_TEST_KEY")
+    ENV["MASTER_NO_POOL_PROBES"] = "1"
+    thread&.kill
+    server&.close
+  end
+
   # A local or explicitly trusted OpenAI-compatible gateway joins the
   # existing pool only after its URL is set. The URL's host and model ids are
   # discovered through the same endpoint catalogue used by other hosted lanes.

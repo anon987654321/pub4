@@ -114,13 +114,28 @@ module Master
           errors << "#{label}.quota_bucket must be non-empty text" unless row["quota_bucket"].is_a?(String) && !row["quota_bucket"].empty?
         end
         if row.key?("keyless")
-          strict_fields(row["keyless"], %w[tier usage_based_only], "#{label}.keyless", errors)
+          strict_fields(row["keyless"], %w[tier usage_based_only isFree allow], "#{label}.keyless", errors)
           keyless = row["keyless"]
           if keyless.is_a?(Hash)
-            errors << "#{label}.keyless.tier must be non-empty text" unless keyless["tier"].is_a?(String) && !keyless["tier"].empty?
+            # tier and usage_based_only match listing fields; allow and isFree
+            # name or flag the keyless models themselves. A rule that selects
+            # through allow or isFree needs no tier; a bare field-matching rule
+            # must say which listing tier opens keyless.
+            selectors = keyless.key?("allow") || keyless.key?("isFree")
+            if keyless["tier"].nil?
+              unless selectors
+                errors << "#{label}.keyless.tier must be non-empty text unless allow or isFree selects"
+              end
+            elsif keyless["tier"].empty?
+              errors << "#{label}.keyless.tier must be non-empty text"
+            end
             if keyless.key?("usage_based_only")
               errors << "#{label}.keyless.usage_based_only must be boolean" unless [true, false].include?(keyless["usage_based_only"])
             end
+            if keyless.key?("isFree")
+              errors << "#{label}.keyless.isFree must be boolean" unless [true, false].include?(keyless["isFree"])
+            end
+            validate_string_list(keyless["allow"], "#{label}.keyless.allow", errors, nonempty: true) if keyless.key?("allow")
           end
         end
       end

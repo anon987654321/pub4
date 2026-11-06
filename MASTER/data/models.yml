@@ -545,6 +545,43 @@ openai_compatible:
   nvidia:
     base: https://integrate.api.nvidia.com/v1
     key_env: [NVIDIA_API_KEY, NVIDIA_API_KEY_2]
+  # Verified keyless 2026-11-06 from this Mac: GET /models (381 slugs,
+  # `isFree` marks 11 of them) and POST /chat/completions both answered 200
+  # with no key; kilo-auto/free routed dots-studio/dots-3-note-preview:free
+  # via AtlasCloud. An OpenRouter-style gateway, so no key opens the paid
+  # slugs and the isFree flag selects the keyless ones; ModelQuota tracks
+  # every :free slug under the same daily cap as OpenRouter's.
+  kilo:
+    base: https://api.kilo.ai/api/gateway/v1
+    key_env: [KILO_API_KEY]
+    keyless_max_concurrency: 1
+    concurrency_wait_seconds: 20
+    quota_bucket: kilo
+    keyless:
+      isFree: true
+  # Verified keyless 2026-11-06 from this Mac: GET /models (21 models) and
+  # POST /chat/completions on gpt-oss-120b both answered 200 with no token.
+  # The keyless tier is rate-limited around 2 RPM, so one lane at a time.
+  # The listing marks nothing chat-only — whisper, TTS, embeddings and
+  # stable-diffusion rows sit beside the chat models — so `allow` names the
+  # chat ids; a new OVH chat model joins the lane by adding its id here.
+  ovh:
+    base: https://oai.endpoints.kepler.ai.cloud.ovh.net/v1
+    key_env: [OVH_AI_ENDPOINTS_TOKEN]
+    keyless_max_concurrency: 1
+    concurrency_wait_seconds: 30
+    quota_bucket: ovh
+    keyless:
+      allow:
+        - gpt-oss-120b
+        - gpt-oss-20b
+        - Meta-Llama-3_3-70B-Instruct
+        - Mistral-Small-3.2-24B-Instruct-2506
+        - Qwen2.5-VL-72B-Instruct
+        - Qwen3.5-9B
+        - Qwen3.5-397B-A17B
+        - Qwen3.6-27B
+        - Qwen3.8-27B
 
 # Language models Replicate hosts, asked as replicate:<owner>/<name> with
 # REPLICATE_API_TOKEN. Paid per call, so they sit behind the free lanes.

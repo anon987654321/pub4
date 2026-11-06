@@ -9,7 +9,9 @@ module Master
         # Hosted OpenAI-compatible endpoints, models.yml `openai_compatible`:
         # each lists its models at <base>/models, and they become
         # "<name>:<model>" lanes. With none of its key_env set, an endpoint
-        # offers only the models its `keyless` rule selects: LLM7 answers
+        # offers only the models its `keyless` rule selects: fields matched
+        # against the listing (`tier`, `isFree`, ...) or an explicit `allow`
+        # list of ids when the listing cannot self-describe (OVH). LLM7 answers
         # GLM-5.3-Flash without a key and refuses gpt-5.5 with a 401, and the
         # listing says which is which.
         module HostedEndpoints
@@ -98,7 +100,18 @@ module Master
             headers = key ? { "Authorization" => "Bearer #{key}" } : {}
             body = get_json("#{spec["base"].chomp("/")}/models", headers:, timeout: HOSTED_TIMEOUT_S)
             rows = Array(JSON.parse(body.to_s)["data"]).select { |row| row.fetch("model_type", "chat") == "chat" }
-            rows = rows.select { |row| Hash(spec["keyless"]).all? { |field, want| row[field] == want } } unless key
+            unless key
+              keyless = spec["keyless"].is_a?(Hash) ? spec["keyless"] : {}
+              # `allow` names the keyless model ids outright, for endpoints whose
+              # listing cannot self-describe what a keyless key opens (OVH lists
+              # its whisper/TTS/image rows beside the chat models it serves).
+              allow = Array(keyless["allow"]).map(&:to_s)
+              rules = keyless.reject { |field, _| field == "allow" }
+              rows = rows.select do |row|
+                (allow.empty? || allow.include?(row["id"].to_s)) &&
+                  rules.all? { |field, want| row[field] == want }
+              end
+            end
             rows.filter_map { |row| row["id"] }
           rescue StandardError => e
             Master::Ground::Swallow.log(e, context: "model_router.hosted", endpoint: spec["base"])
