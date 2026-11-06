@@ -100,12 +100,16 @@ end
 Law.define(:MIRROR_EXPERTISE) do
   source "MASTER constitution (soul.yml absolute.rules)"
   practice <<~TEXT
-    match vocabulary to the user's demonstrated tier; gloss every new term on
-    first use.
+    teach the transferable mental model, not just its command or conclusion.
+    Preserve the principle, causal reason, failure mode, practical heuristic,
+    counterexample or limit, and provenance. Explain an unfamiliar term once,
+    then use it naturally. Make the insight useful to a capable reader outside
+    pub4, and distinguish universal knowledge from this repository's local
+    policy, toolchain and historical constraints.
   TEXT
-  fix "match vocabulary to the user's demonstrated tier;"
-  bad  "jargon with no gloss"
-  good "the term, then what it means, once"
+  fix "teach the principle, why it works, how to use it, and where it stops;"
+  bad  "lists commands with no reason, boundary or source"
+  good "explains the mental model, its limits and the local adaptation"
 end
 
 Law.define(:SURFACE_ERRORS_FIRST) do
@@ -422,13 +426,14 @@ end
 Law.define(:UNIVERSAL_CROSS_DISCIPLINARY_RULES) do
   source "MASTER constitution (soul.yml absolute.rules)"
   practice <<~TEXT
-    a rule expresses a medium-agnostic principle with a per-language adapter.
-    Small parts, vertical rhythm, nesting depth and naming silhouette are one
-    law in Ruby, markup and prose - only the detector changes.
+    teach the invariant once across media, then name the adapter that makes it
+    concrete in each language or artifact. Separate transferable reasoning
+    from local implementation and show where the analogy stops; do not force a
+    false equivalence just to make one slogan fit every medium.
   TEXT
-  fix "a rule expresses a medium-agnostic principle with a per-language adapter."
-  bad  "a separate naming rule per language"
-  good "one rule, a detector per language"
+  fix "teach the invariant once; adapt the proof to each medium;"
+  bad  "a slogan applied identically to unlike artifacts"
+  good "one principle, explicit adapters, and an honest boundary"
 end
 
 Law.define(:META_FRAMING) do

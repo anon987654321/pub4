@@ -14,6 +14,17 @@ class WhyExplainerTest < Minitest::Test
     assert_includes out, "executable law: NO_VAR"
   end
 
+  def test_explain_law_includes_practice_and_good_bad_examples
+    out = explainer.explain("MIRROR_EXPERTISE")
+
+    assert_includes out, "law: MIRROR_EXPERTISE"
+    assert_includes out, "executable law: MIRROR_EXPERTISE"
+    assert_includes out, "practice: teach the transferable mental model"
+    assert_includes out, "bad example:"
+    assert_includes out, "good example:"
+    refute_includes out, "\\n  statement:", "the explanation should use real line breaks"
+  end
+
   def test_explain_law
     out = explainer.explain("ROBUSTNESS")
     assert_includes out, "law: ROBUSTNESS"

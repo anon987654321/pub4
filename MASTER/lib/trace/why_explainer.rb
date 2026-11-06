@@ -88,6 +88,8 @@ module Master
           ("  practice: #{hit.practice}" if hit.practice),
           ("  ask: #{hit.ask}" if hit.ask),
           "  fix: #{hit.fix}",
+          ("  bad example: #{hit.bad}" if hit.respond_to?(:bad) && hit.bad),
+          ("  good example: #{hit.good}" if hit.respond_to?(:good) && hit.good),
         ].compact.join("\n")
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "WhyExplainer.executable_law", severity: :cosmetic)
@@ -113,7 +115,9 @@ module Master
           "  statement: #{hit.fetch("statement")}",
           ("  resolution: #{hit["resolution"]}" if hit["resolution"]),
           ("  enforcement: #{hit["enforcement"]}" if hit["enforcement"]),
-        ].compact.join("\\n")
+        ].compact.join("\n").then do |base|
+          [base, executable_law(key)].compact.join("\n")
+        end
       end
 
       def soul_law(key)
@@ -139,7 +143,9 @@ module Master
           ("  lineage: #{hit["lineage"]}" if hit["lineage"]),
           ("  rule_of_three: #{hit["rule_of_three"]}" if hit["rule_of_three"]),
           ("  proof: #{hit["proof"]}" if hit["proof"]),
-        ].compact.join("\\n")
+        ].compact.join("\n").then do |base|
+          [base, executable_law(key)].compact.join("\n")
+        end
       end
 
       def scan_law(key)
