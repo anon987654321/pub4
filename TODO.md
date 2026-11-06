@@ -162,16 +162,6 @@ tokens, and original marks intact. The Mr. Damascy item sheet, empty-cart
 recovery, loyalty and offline screens already have clear, coherent states;
 preserve those strengths.
 
-- [ ] **Shared consent banner / viewport clearance.** In the first-consent
-  mobile captures across Brgen, Dating, Maps, Radio, Messenger and TV, the
-  fixed consent panel occupies a substantial part of the first viewport and
-  covers underlying page content. Compare fresh-consent with saved-consent
-  sessions at 360x800, 390x844, short landscape and 200% zoom. Keep reject,
-  manage and accept equally clear; verify the panel scrolls within the
-  available safe-area, does not cover the persistent tab bar or focused
-  control, and leaves the next page action reachable. Preserve consent
-  semantics and copy; tune only measured geometry in the shared owner.
-  Laws: `REACH`, `PROPORTION_eight_px_rhythm`, `OPERATOR_RENDERED_contract`.
 - [ ] **Amber editorial tile line breaks.** At the captured desktop width,
   `Bymorgen` breaks mid-word as `Bym / orge / n`; the mobile capture does
   not. Correct the desktop tile's available measure, wrapping and type

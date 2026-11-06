@@ -1,6 +1,16 @@
 // Probes shared_chrome_behaviour_test.rb runs in the page. One function per
 // question, so the Ruby side reads as the behaviour it asserts.
 window.sharedChromeProbes = {
+  // Each consent choice's width, and whether its own centre reaches it or
+  // something drawn over it.
+  consentButtons() {
+    return [ ...document.querySelectorAll("#cookie-consent-banner .cookie-banner-actions > button") ].map((button) => {
+      const box = button.getBoundingClientRect()
+      const top = document.elementFromPoint(box.left + box.width / 2, box.top + box.height / 2)
+      return { width: Math.round(box.width), reachable: button.contains(top) }
+    })
+  },
+
   // The nav counter pill's box and the box of the bar that holds it.
   badgeBox() {
     const badge = document.querySelector(".nav_link_badge")

@@ -24,6 +24,7 @@ class SharedChromeBehaviourTest < ApplicationSystemTestCase
   def stored_theme = evaluate_script(%(localStorage.getItem("brgen-theme")))
   def label(state) = I18n.t("theme.#{state}", locale: :nb)
   def patches = evaluate_script("window.autosavePatches")
+  def browser = page.driver.browser
 
   test "the theme toggle cycles system, light, dark and back to system" do
     visit_city(nil, "/")
@@ -129,5 +130,21 @@ class SharedChromeBehaviourTest < ApplicationSystemTestCase
     end
   ensure
     current_window.resize_to(1400, 1000)
+  end
+
+  # On a phone the third consent choice took a full row of its own, wider than
+  # reject, and the nearby-chat pill (same z-index, later in the DOM) sat over
+  # the banner. The three choices share one width and nothing covers them.
+  test "the consent choices are equal and uncovered on a phone" do
+    browser.execute_cdp("Emulation.setDeviceMetricsOverride",
+                        width: 390, height: 844, deviceScaleFactor: 2, mobile: true)
+    visit_city("maps", "/places")
+    buttons = probe("consentButtons()")
+
+    assert_equal 3, buttons.size
+    assert_equal 1, buttons.uniq { _1["width"] }.size, "equal widths: #{buttons.inspect}"
+    assert buttons.all? { _1["reachable"] }, "a choice is covered: #{buttons.inspect}"
+  ensure
+    browser.execute_cdp("Emulation.clearDeviceMetricsOverride")
   end
 end
