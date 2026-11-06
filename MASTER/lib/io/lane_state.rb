@@ -80,6 +80,12 @@ module Master
         LaneSilence.message(lane) if !LaneQuota.manual_probe?(id) && LaneSilence.silent?(lane)
       end
 
+      # The narrow question pacing callers ask: does the lane sit in a
+      # LaneSilence cool-off right now? Not usable?, which folds every store.
+      def silent?(model)
+        !LaneQuota.manual_probe?(model) && LaneSilence.silent?(LaneSilence.lane_of(model))
+      end
+
       def parked_reason(id) = ("parked: #{ModelSkipCache.skip_reason(id)}" if ModelSkipCache.skipped?(id))
 
       def spent_reason(id) = ("paid tier spent (QuotaCheck)" if QuotaCheck.blocked?(id))

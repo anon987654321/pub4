@@ -145,7 +145,7 @@ module Master
         def lane_failed(model)
           lane = Master::Io::LaneState.lane_of(model)
           return false if lane.empty?
-          return false if Master::Io::LaneSilence.silent?(Master::Io::LaneSilence.lane_of(model))
+          return false if Master::Io::LaneState.silent?(model)
 
           count = @mutex.synchronize { @lane_failures[lane] += 1 }
           return false if count < LANE_FAILURES_BEFORE_DROP || Master::Io::LaneState.run_drops.key?(lane)

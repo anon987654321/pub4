@@ -61,7 +61,7 @@ module Master
       end
 
       # A lane LaneSilence paused, not one whose quota is spent for hours: only a cool-off ends soon.
-      def cooling_off?(model) = Master::Io::LaneSilence.silent?(Master::Io::LaneSilence.lane_of(model))
+      def cooling_off?(model) = Master::Io::LaneState.silent?(model)
 
       def time_left?
         return false if RunBudget.stopping
