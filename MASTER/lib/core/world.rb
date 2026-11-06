@@ -2,6 +2,7 @@
 
 require "digest"
 require "fileutils"
+require "tmpdir"
 require "open3"
 require "rbconfig"
 require "securerandom"
@@ -323,24 +324,21 @@ module Master::Core
       return Observation.no("git commit refused: missing or ignored paths: #{unknown.join(", ")}") if unknown.any?
 
       verify_delivery_hashes!(safe_paths, expected)
-      begin
-        # A new file must enter the index before git can commit its path.
-        # Stage only this task's exact new files, never the whole batch.
-        git_capture("add", "--", *untracked.map { |path| ":(literal)#{path}" }) if untracked.any?
+      # A private temporary index prevents another session's staged entries
+      # from being changed even briefly. It starts at HEAD and receives only
+      # this task's exact, content-verified paths.
+      Dir.mktmpdir("master-git-index-") do |directory|
+        index_env = { "GIT_INDEX_FILE" => File.join(directory, "index") }
+        git_capture("read-tree", "HEAD", env: index_env)
+        verify_delivery_hashes!(safe_paths, expected)
+        git_capture("add", "--", *pathspecs, env: index_env)
         verify_delivery_hashes!(safe_paths, expected)
         Observation.ok(
-          git_capture("commit", "-m", message.to_s, "-m", COMMIT_TRAILER, "--", *pathspecs)
+          git_capture(
+            "commit", "-m", message.to_s, "-m", COMMIT_TRAILER, "--", *pathspecs,
+            env: index_env,
+          )
         )
-      rescue StandardError => error
-        cleanup_error = nil
-        begin
-          git_capture("reset", "--quiet", "--", *untracked.map { |path| ":(literal)#{path}" }) if untracked.any?
-        rescue StandardError => cleanup
-          cleanup_error = cleanup
-        end
-        detail = "git commit failed: #{error.class}: #{error.message}"
-        detail += "; could not unstage this task's new paths: #{cleanup_error.message}" if cleanup_error
-        Observation.no(detail)
       end
     rescue StandardError => error
       Observation.no("git commit refused: #{error.class}: #{error.message}")
@@ -484,8 +482,8 @@ module Master::Core
       end
     end
 
-    def git_capture(*args, raw: false)
-      out, status = bounded_capture2e("git", "-C", @root, *args)
+    def git_capture(*args, raw: false, env: nil)
+      out, status = bounded_capture2e("git", "-C", @root, *args, env:)
       raise out.strip unless status.success?
 
       raw ? out : out.strip
