@@ -94,4 +94,30 @@ class MapPointListTest < ApplicationSystemTestCase
     assert_selector ".place-card", text: "Kafeteket"
     assert_no_selector ".place-card", text: "Bryggen"
   end
+
+  # The shared search pill set its placeholder #aaa on a #ccc field, 1.3:1,
+  # and read as a disabled control. The hint meets AA on the field it sits on.
+  test "the places search hint meets 4.5:1 on its field" do
+    visit_city("maps", "/places")
+    hint, field, pill = evaluate_script("(input => [getComputedStyle(input, '::placeholder').color," \
+                                        " getComputedStyle(input).backgroundColor," \
+                                        " getComputedStyle(input.closest('.search')).backgroundColor])" \
+                                        "(document.querySelector('main > .search input[type=search]'))")
+    ground = field.end_with?(", 0)") ? pill : field
+
+    assert_operator contrast(hint, ground), :>=, 4.5, [ hint, ground ].inspect
+  end
+
+  private
+
+  def contrast(ink, ground)
+    light, dark = [ luminance(ink), luminance(ground) ].minmax.reverse
+    (light + 0.05) / (dark + 0.05)
+  end
+
+  def luminance(colour)
+    red, green, blue = colour.scan(/[\d.]+/).first(3).map { |channel| channel.to_f / 255 }
+    linear = [ red, green, blue ].map { |c| c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055)**2.4 }
+    (0.2126 * linear[0]) + (0.7152 * linear[1]) + (0.0722 * linear[2])
+  end
 end

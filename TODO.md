@@ -219,16 +219,6 @@ measure is already owned by the Bymorgen item above.
   levering, også på kvelden" et al., `brgen/config/locales/nb.yml:86-88`)
   at 1:1 for size and AA contrast while there.
   Laws: `TRUTHFUL_STATUS`, `OPERATOR_RENDERED`, `PROPORTION_contrast`.
-- [ ] **BSDPorts spare-dialect micro.** (a) The search field's dark grey
-  fill with grey placeholder reads as a disabled control in both viewports
-  (`bsdports-desktop.png`, `bsdports-mobile.png` at 1:1); measure the
-  placeholder contrast against AA and restyle inside the spare
-  white/Arial/square dialect — no cardifying, no re-theming. (b)
-  "oppdateringsalder ukjent" repeats on every result row
-  (`bsdports/config/locales/nb.yml`); show the update age only when known,
-  or state the unknown once, keeping the row dense. Distinct from the
-  first-pass readability item; no redesign.
-  Laws: `AFFORDANCE_CLARITY`, `DENSITY`, `TRUTHFUL_STATUS`.
 - [ ] **BPLANS template defects.** `BPLANS/__templates/bob.html` and
   `bob2.html` both open with a spreadsheet-helper `<script>` block before
   `<!DOCTYPE html>` (standards-mode risk), and bob.html's print block has a

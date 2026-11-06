@@ -28,4 +28,14 @@ class PortDatesTest < ActionDispatch::IntegrationTest
     get ports_path
     assert_select "li.port-row time[datetime='2026-10-01'][title=?]", I18n.l(Date.new(2026, 10, 1))
   end
+  # An import without dates printed the same "update age unknown" under every
+  # row. A row says its age only when it has one; the port page says unknown.
+  test "a port row with no update date says nothing about its age" do
+    @port.update!(last_updated: nil)
+    get ports_path(locale: "nb")
+
+    assert_select "li.port-row", minimum: 1
+    assert_select "li.port-row .data-state", count: 0
+    assert_select "li.port-row", text: /#{I18n.t("ports.unknown", locale: :nb)}/, count: 0
+  end
 end

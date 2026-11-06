@@ -35,8 +35,10 @@
   outline-offset: 2px;
 }
 
+/* The pen's #aaa sat at 1.3:1 on the #ccc field, so the field read as a
+   disabled control; #555 holds 4.6:1 there and 7.5:1 on the focused white. */
 .search input::placeholder {
-  color: #aaa;
+  color: #555;
 }
 
 /* The pen lifts the focused field with a shadow; the interface is flat
