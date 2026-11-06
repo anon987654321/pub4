@@ -46,7 +46,11 @@ module Master
 
       LAW_ID = "RENDERED_VISUAL_REFINEMENT"
       SOURCE_EXTENSIONS = %w[.css .scss .erb .html .htm .js .ts].freeze
-      MAX_SURFACES = Integer(ENV.fetch("MASTER_VISUAL_SURFACES_PER_PASS", "0"))
+      # Surfaces rendered per pass: every app's mobile and desktop core, then extras rotated by pass.
+      # Unbounded (0) it rendered all 212 declared surfaces every pass, each with up to
+      # MAX_COMPOSITION_STATES states: the 2026-11-05 RAILS run spent 13 minutes of each pass on the 58
+      # it could reach with brgen down, about 13.6 s a surface. MASTER_VISUAL_SURFACES_PER_PASS=0 renders all.
+      MAX_SURFACES = Integer(ENV.fetch("MASTER_VISUAL_SURFACES_PER_PASS", "24"))
       MAX_COMPOSITION_STATES = Integer(ENV.fetch("MASTER_VISUAL_COMPOSITION_STATES", "12"))
       MAX_FILES = 12
       SELECTOR_RE = /#[A-Za-z][\w-]*|\.[A-Za-z_][\w-]*(?:[-_][\w-]*)*/.freeze
@@ -258,7 +262,7 @@ module Master
         )
       end
 
-      def selected_surfaces(target:, pass:)
+      def selected_surfaces(target:, pass:, cap: MAX_SURFACES)
         rows = Deploy::GeometryProbe.surfaces(root: repo_root)
         relative = repo_relative(target)
         master = relative == "RAILS/master" || relative.start_with?("RAILS/master/")
@@ -282,12 +286,12 @@ module Master
         end.compact.uniq
 
         extras = rows.reject { |s| core.include?(s) }.sort_by { |s| [s.app, s.label, s.viewport == "mobile" ? 0 : 1, s.viewport] }
-        return core + extras if MAX_SURFACES <= 0
+        return core + extras if cap <= 0
+        return (core + extras).first(cap) if core.size >= cap
 
-        return (core + extras).first(MAX_SURFACES) if core.size >= MAX_SURFACES
-
-        offset = ((pass.to_i - 1) * MAX_SURFACES) % [extras.size, 1].max
-        (core + extras.rotate(offset)).first(MAX_SURFACES)
+        room = cap - core.size
+        offset = ((pass.to_i - 1) * room) % [extras.size, 1].max
+        core + extras.rotate(offset).first(room)
       end
 
       def candidate_sources(target:, files:, captures:, graph:)

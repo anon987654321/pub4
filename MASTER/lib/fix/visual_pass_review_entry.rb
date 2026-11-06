@@ -19,7 +19,8 @@ module Master
         self
       end
 
-      def review_surfaces(target:) = selected_surfaces(target:, pass: 1)
+      # A review is asked for the whole set, not one pass's share of it.
+      def review_surfaces(target:) = selected_surfaces(target:, pass: 1, cap: 0)
 
       def review_capture(surfaces) = capture_surfaces(surfaces, pass: 1)
 
