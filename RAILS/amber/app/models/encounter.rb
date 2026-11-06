@@ -40,7 +40,7 @@ class Encounter < ApplicationRecord
     user.encounters.waiting.update_all(status: CLOSED)
 
     transaction do
-      other = waiting.where.not(user_id: user.id).order(:created_at).limit(1).lock.first
+      other = waiting.includes(:user).where.not(user_id: user.id).order(:created_at).limit(1).lock.first
       if other
         match = create!(user: user, status: MATCHED, partner_id: other.user_id)
         other.update!(status: MATCHED, partner_id: user.id)

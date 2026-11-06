@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.2].define(version: 2026_11_02_160000) do
+ActiveRecord::Schema[8.2].define(version: 2026_11_07_010001) do
   create_table "account_merges", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "guest_user_id", null: false
@@ -275,6 +275,17 @@ ActiveRecord::Schema[8.2].define(version: 2026_11_02_160000) do
     t.index ["item_id"], name: "index_declutter_reviews_on_item_id"
     t.index ["user_id", "item_id"], name: "index_declutter_reviews_on_user_id_and_item_id", unique: true
     t.index ["user_id"], name: "index_declutter_reviews_on_user_id"
+  end
+
+  create_table "encounters", force: :cascade do |t|
+    t.integer "user_id", null: false
+    t.integer "partner_id"
+    t.string "status", default: "waiting", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["partner_id"], name: "index_encounters_on_partner_id"
+    t.index ["status", "created_at"], name: "index_encounters_on_status_and_created_at"
+    t.index ["user_id"], name: "index_encounters_on_user_id"
   end
 
   create_table "external_identities", force: :cascade do |t|
@@ -702,6 +713,8 @@ ActiveRecord::Schema[8.2].define(version: 2026_11_02_160000) do
   add_foreign_key "declutter_outcomes", "users"
   add_foreign_key "declutter_reviews", "items"
   add_foreign_key "declutter_reviews", "users"
+  add_foreign_key "encounters", "users"
+  add_foreign_key "encounters", "users", column: "partner_id"
   add_foreign_key "follows", "users", column: "followee_id"
   add_foreign_key "follows", "users", column: "follower_id"
   add_foreign_key "garment_embeddings", "items"

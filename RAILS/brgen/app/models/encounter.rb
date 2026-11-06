@@ -43,7 +43,7 @@ class Encounter < ApplicationRecord
     user.encounters.waiting.update_all(status: CLOSED)
 
     transaction do
-      candidates = waiting.where.not(user_id: user.id)
+      candidates = waiting.includes(:user).where.not(user_id: user.id)
       candidates = candidates.where.not(user_id: blocked_ids) if blocked_ids.any?
       other = candidates.order(:created_at).limit(1).lock.first
       if other

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.2].define(version: 2026_11_05_160000) do
+ActiveRecord::Schema[8.2].define(version: 2026_11_07_010000) do
   create_table "account_merges", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "guest_user_id", null: false
@@ -514,6 +514,19 @@ ActiveRecord::Schema[8.2].define(version: 2026_11_05_160000) do
     t.index ["token"], name: "index_email_subscriptions_on_token", unique: true
   end
 
+  create_table "encounters", force: :cascade do |t|
+    t.integer "user_id", null: false
+    t.integer "partner_id"
+    t.integer "conversation_id"
+    t.string "status", default: "waiting", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["conversation_id"], name: "index_encounters_on_conversation_id"
+    t.index ["partner_id"], name: "index_encounters_on_partner_id"
+    t.index ["status", "created_at"], name: "index_encounters_on_status_and_created_at"
+    t.index ["user_id"], name: "index_encounters_on_user_id"
+  end
+
   create_table "event_rsvps", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "event_id", null: false
@@ -810,8 +823,8 @@ ActiveRecord::Schema[8.2].define(version: 2026_11_05_160000) do
     t.datetime "observed_at", null: false
     t.integer "price_cents", null: false
     t.datetime "updated_at", null: false
-    t.index ["listing_id"], name: "index_marketplace_price_observations_on_listing"
     t.index ["listing_id", "observed_at"], name: "index_marketplace_price_observations_on_listing_time"
+    t.index ["listing_id"], name: "index_marketplace_price_observations_on_listing"
   end
 
   create_table "marketplace_listings", force: :cascade do |t|
@@ -2084,6 +2097,9 @@ ActiveRecord::Schema[8.2].define(version: 2026_11_05_160000) do
   add_foreign_key "dating_prompts", "dating_profiles", column: "profile_id"
   add_foreign_key "dating_verifications", "dating_profiles", column: "profile_id"
   add_foreign_key "dating_verifications", "users", column: "reviewed_by_id"
+  add_foreign_key "encounters", "conversations"
+  add_foreign_key "encounters", "users"
+  add_foreign_key "encounters", "users", column: "partner_id"
   add_foreign_key "event_rsvps", "events"
   add_foreign_key "event_rsvps", "users"
   add_foreign_key "events", "cities"

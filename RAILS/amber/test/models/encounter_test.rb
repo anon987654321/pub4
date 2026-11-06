@@ -36,6 +36,7 @@ class EncounterTest < ActiveSupport::TestCase
     second = stranger("second")
     Connection.create!(requester: second, addressee: first, status: "pending")
 
+    Encounter.pair!(first)
     Encounter.pair!(second)
     assert Connection.accepted.exists?(requester_id: second.id, addressee_id: first.id)
   end

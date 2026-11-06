@@ -12,6 +12,10 @@ class User < ApplicationRecord
   has_one :privacy_setting, dependent: :destroy
 
   has_many :posts,           dependent: :destroy
+
+  has_many :encounters, dependent: :delete_all
+  has_many :encounters_as_partner, class_name: "Encounter", foreign_key: :partner_id,
+                                     dependent: :nullify, inverse_of: :partner
   has_many :comments,        dependent: :destroy
   # votes.user_id is a foreign key: without the cascade, deleting a voter is a 500.
   has_many :votes,           dependent: :destroy

@@ -10,6 +10,9 @@ class User
                dependent: :destroy, inverse_of: :guest_user
       has_many :activity_events, foreign_key: :actor_id, dependent: :nullify, inverse_of: :actor
       has_many :comments, dependent: :destroy
+      has_many :encounters, dependent: :delete_all
+      has_many :encounters_as_partner, class_name: "Encounter", foreign_key: :partner_id,
+                                         dependent: :nullify, inverse_of: :partner
       has_many :communities
       has_many :conversation_participants, dependent: :destroy
       has_many :conversations, through: :conversation_participants
