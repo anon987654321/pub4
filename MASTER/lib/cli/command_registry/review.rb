@@ -89,7 +89,7 @@ module Master
 
       # A trace refuses bytes that changed while it read them. In a checkout other writers share,
       # one of their saves landing mid-read refused the whole run; a trace that failed only on such
-      # drift is read again, up to TRACE_ATTEMPTS times, and refuses only if the drift persists.
+      # drift is read again, up to TRACE_ATTEMPTS times; drift that persists is reported, not refused.
       TRACE_ATTEMPTS = 3
       TRACE_DRIFT = /changed during preflight|content differs during|file inventory changed during preflight/
       TRACE_PAUSE = Float(ENV.fetch("MASTER_FIX_TRACE_PAUSE", "2"))
@@ -104,6 +104,28 @@ module Master
                                                 "reading again, attempt #{attempt + 1} of #{TRACE_ATTEMPTS}")
           sleep TRACE_PAUSE
         end
+      end
+
+      # Every failure the trace reports is a file that changed while it was being read.
+      def trace_drift_only?(trace)
+        !trace.clean? && trace.failures.any? && trace.failures.all?(TRACE_DRIFT)
+      end
+
+      # The Err that ends the run, or nil. Drift alone continues: the pass re-reads every file
+      # it repairs, and its transaction refuses to overwrite a concurrent edit, so another
+      # writer's saves are no reason to end the run before it observed one finding.
+      def trace_refusal(trace)
+        Master::Trace::Dmesg.status("trace0", trace.summary)
+        return if trace.clean?
+
+        if trace_drift_only?(trace)
+          Master::Trace::Dmesg.status("trace0", "#{trace.failures.size} file(s) kept changing in preflight; continuing")
+          return
+        end
+
+        message = "fix: execution trace failed - #{trace.failures.first(12).join(" | ")}"
+        Master::Trace::Dmesg.status("trace0", message)
+        Master::Result.err(message, category: :validation)
       end
 
       def execution_trace(scope:, dependencies:)
@@ -340,13 +362,8 @@ module Master
                   scope: trace_scope, dependencies: { scanner:, fix_loop:, deliberation:, bus: }, cancellation:,
                 )
                 next cancelled_fix_result(cancellation) if cancellation&.cancelled?
-                Master::Trace::Dmesg.status("trace0", trace.summary)
-                unless trace.clean?
-                  details = trace.failures.first(12).join(" | ")
-                  message = "fix: execution trace failed - #{details}"
-                  Master::Trace::Dmesg.status("trace0", message)
-                  next Master::Result.err(message, category: :validation)
-                end
+                refusal = trace_refusal(trace)
+                next refusal if refusal
               end
 
               structural_review(
