@@ -51,6 +51,7 @@ module Master
       # became a review; deferred, it is conversation, and the chat path is
       # where a person says what they mean to do later.
       DEFERRAL = /\b(?:later|tomorrow|next week|some ?time|eventually|remind me)\b/i
+      REPOSITORY_REPAIR = /\b(?:fix|repair|complete|finish|implement|land|apply|clean up)\b.{0,48}\b(?:all|everything|remaining|backlog|todos?|tasks|issues|findings|failures|errors|repo|repository|tree|workflow)\b/i.freeze
 
       # "read CLAUDE.md" is a file request. Token-scoring "read" alone would
       # also match "I read that", so the path-with-extension form is the
@@ -95,6 +96,7 @@ module Master
         return :diagnose_behaviour if downcased.match?(DIAGNOSIS)
         return STANDING_SEMANTICS[downcased] if STANDING_SEMANTICS.key?(downcased)
         return :unknown if downcased.match?(DEFERRAL)
+        return :run_full_workflow if downcased.match?(REPOSITORY_REPAIR)
 
         # Exact token match, not substring/prefix: short keywords like "ui",
         # "go", "no", "up" are common word PREFIXES too ("norwegian" starts

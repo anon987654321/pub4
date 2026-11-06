@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "json"
+require "digest"
 require "fileutils"
 require "securerandom"
 require "socket"
@@ -383,6 +384,78 @@ module Master
         self
       end
 
+      # Durable content receipts let the next bounded attempt continue the
+      # same authorised task without treating a fresh process as a new grant.
+      # Every read re-hashes the live file; absent, replaced or symlinked paths
+      # lose their receipt rather than inherit stale authority.
+      def repository_writes(repository_root:)
+        repo = File.realpath(repository_root)
+        record = @record || self.class.current(root: @root)
+        return {} unless record && record["repository_write_root"] == repo
+
+        (record["repository_writes"] || {}).each_with_object({}) do |(path, digest), found|
+          full = repository_full_path(path, repo)
+          next unless full && Digest::SHA256.file(full).hexdigest == digest
+
+          found[path] = digest
+        end
+      rescue SystemCallError, ArgumentError
+        {}
+      end
+
+      def record_repository_write!(path:, content:, repository_root:)
+        repo = File.realpath(repository_root)
+        relative = repository_relative_path(path, repo)
+        return false unless relative
+
+        digest = Digest::SHA256.hexdigest(content.to_s)
+        full = File.join(repo, relative)
+        return false unless Digest::SHA256.file(full).hexdigest == digest
+
+        with_lock do
+          load_writable_unlocked!
+          return false unless @record
+
+          if @record["repository_write_root"] != repo
+            @record["repository_write_root"] = repo
+            @record["repository_writes"] = {}
+          end
+          @record["repository_writes"] ||= {}
+          @record["repository_writes"][relative] = digest
+          @record["last_seen_at"] = now
+          persist!
+        end
+        emit("mission:write_receipt", id: @id, path: relative, digest:)
+        true
+      rescue SystemCallError, ArgumentError => error
+        emit("mission:write_receipt_refused", id: @id, reason: error.class.name)
+        false
+      end
+
+      def record_repository_commit!(expected_hashes:, repository_root:)
+        repo = File.realpath(repository_root)
+        receipts = expected_hashes.is_a?(Hash) ? expected_hashes : {}
+        with_lock do
+          load_writable_unlocked!
+          return false unless @record && @record["repository_write_root"] == repo
+
+          writes = @record["repository_writes"] ||= {}
+          receipts.each do |path, digest|
+            relative = repository_relative_path(path, repo)
+            next unless relative && writes[relative] == digest.to_s
+
+            full = File.join(repo, relative)
+            writes.delete(relative) if Digest::SHA256.file(full).hexdigest == digest.to_s
+          end
+          @record["last_seen_at"] = now
+          persist!
+        end
+        true
+      rescue SystemCallError, ArgumentError => error
+        emit("mission:commit_receipt_refused", id: @id, reason: error.class.name)
+        false
+      end
+
       def record
         @record&.dup
       end
@@ -431,6 +504,13 @@ module Master
           "risk" => operator["risk"],
           "intent" => operator["intent"],
         }.compact
+        out["repository_write_root"] = nil unless out["repository_write_root"].is_a?(String)
+        writes = out["repository_writes"].is_a?(Hash) ? out["repository_writes"] : {}
+        out["repository_writes"] = writes.each_with_object({}) do |(path, digest), clean|
+          key = path.to_s
+          clean[key] = digest.to_s if !key.empty? && !key.split("/").include?("..") &&
+                                      digest.to_s.match?(/\A[0-9a-f]{64}\z/i)
+        end
         out
       end
 
@@ -462,6 +542,8 @@ module Master
           "finished_at" => record["finished_at"],
           "checkpoint" => record["checkpoint"],
           "artifacts" => Array(record["artifacts"]).map(&:to_s).uniq.last(32),
+          "repository_write_root" => nil,
+          "repository_writes" => {},
           "error" => record["error"],
           "attempt_count" => 1,
           "retry_count" => 0,
@@ -630,6 +712,8 @@ module Master
           "finished_at" => nil,
           "checkpoint" => nil,
           "artifacts" => [],
+          "repository_write_root" => nil,
+          "repository_writes" => {},
           "error" => nil,
           "attempt_count" => 1,
           "retry_count" => 0,
@@ -733,6 +817,28 @@ module Master
         @bus&.publish(event, payload.merge(fields))
       rescue StandardError => e
         warn("mission0: #{e.class}: #{e.message}") if ENV["MASTER_TRACE_STRICT"] == "1"
+      end
+
+      def repository_relative_path(path, repository_root)
+        value = path.to_s
+        return if value.empty? || value.include?("\0") || value.split(/[\\/]/).include?("..")
+
+        full = File.expand_path(value, repository_root)
+        return unless full.start_with?(repository_root + File::SEPARATOR)
+        return if full.split(File::SEPARATOR).include?(".git")
+        return unless File.file?(full) && !File.symlink?(full)
+
+        real = File.realpath(full)
+        return unless real.start_with?(repository_root + File::SEPARATOR)
+
+        real.delete_prefix(repository_root + File::SEPARATOR).tr(File::SEPARATOR, "/")
+      rescue ArgumentError, SystemCallError
+        nil
+      end
+
+      def repository_full_path(path, repository_root)
+        relative = repository_relative_path(path, repository_root)
+        relative && File.join(repository_root, relative)
       end
 
       def relative(path)

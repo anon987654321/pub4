@@ -21,6 +21,15 @@ class TestIntentRouter < Minitest::Test
     assert_equal :unknown, router.classify("continue the thing")
   end
 
+  def test_repository_wide_repair_requests_are_explicit_intents
+    router = Router.new
+
+    assert_equal :run_full_workflow, router.classify("please fix all")
+    assert_equal :run_full_workflow, router.classify("complete the remaining TODOs")
+    assert_equal :unknown, router.classify("remind me to fix all tomorrow")
+    assert_equal :continue_prior_plan, router.classify("go ahead")
+  end
+
   def test_specific_actions_still_win_without_pronoun_tokens
     router = Router.new
 

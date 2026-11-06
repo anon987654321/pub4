@@ -112,6 +112,16 @@ class FoldDeliberationTest < Minitest::Test
     assert_equal :high, assessment[:risk]
   end
 
+  def test_repository_repair_gets_one_bounded_delivery_grant
+    assessment = Master::CLI::FoldRisk.assess("please fix all")
+
+    assert_equal :run_full_workflow, assessment[:intent]
+    assert_equal :high, assessment[:risk]
+    assert Master::CLI::FoldRisk.repository_delivery_authorized?(assessment[:intent], mode: :repair)
+    refute Master::CLI::FoldRisk.repository_delivery_authorized?(assessment[:intent], mode: :plan)
+    refute Master::CLI::FoldRisk.repository_delivery_authorized?(:inspect_repo, mode: :repair)
+  end
+
   # Observe cannot execute, so a request to start a session must not be classified as observing.
   def test_fold_risk_treats_starting_a_terminal_session_as_executing
     goal = "create a pseudo terminal (e.g. unix screen) that i can reattach with screen -r"

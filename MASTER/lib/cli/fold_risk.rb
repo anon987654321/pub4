@@ -12,8 +12,20 @@ module Master
       # execute: classified low it ran in observe and every exec was refused by capability.
       EXEC_PATTERNS = /\b(create|start|launch|spawn|open|run|attach)\b.{0,40}\b(terminal|pty|shell|screen|tmux|session|process|server|daemon|command|script)\b/i.freeze
       MEDIUM_PATTERNS = /\b(fix|implement|add|migrate|workflow|scan|refactor|clean|polish)\b/i.freeze
+      REPOSITORY_DELIVERY_INTENTS = %i[
+        write_repo_changes run_full_workflow run_rails_through run_master_through
+        design_frontend refactor_rails_app redesign_mobile_pwa generate_rails_pwa
+        codify_policy wire_existing_module create_facade refactor_to_ruby apply_user_style_rules
+      ].freeze
 
       module_function
+
+      # One bounded task grant for repository repair only. It never grants
+      # external publication, remote deploy, spending, messaging or host mutation.
+      def repository_delivery_authorized?(intent, mode:)
+        mode.to_s.downcase.to_sym == :repair &&
+          REPOSITORY_DELIVERY_INTENTS.include?(intent.to_s.downcase.to_sym)
+      end
 
       def assess(goal, root: Dir.pwd)
         route = CLI::IntentRouter.new.route(goal)
@@ -34,7 +46,10 @@ module Master
 
       def bump_risk(risk, intent)
         return :critical if intent == :delete_redundant_config
-        return :high if %i[write_repo_changes run_full_workflow].include?(intent) && risk != :critical
+        return :high if %i[
+          write_repo_changes run_full_workflow run_rails_through run_master_through
+          design_frontend refactor_rails_app redesign_mobile_pwa generate_rails_pwa
+        ].include?(intent) && risk != :critical
 
         risk
       end
