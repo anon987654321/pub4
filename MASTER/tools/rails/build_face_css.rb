@@ -12,8 +12,8 @@ require_relative "../design_tokens"
 
 module MasterFaceStylesheet
   ROOT = File.expand_path("../../..", __dir__)
-  SOURCE_DIR = File.join(ROOT, "RAILS", "master", "styles", "face")
-  OUTPUT = File.join(ROOT, "RAILS", "master", "public", "face.css")
+  SOURCE_DIR = File.join(ROOT, "MASTER", "web", "styles", "face")
+  OUTPUT = File.join(ROOT, "MASTER", "web", "public", "face.css")
   PARTS = %w[
     00_base.css
     10_foundation.css

@@ -4759,7 +4759,7 @@ items:
   app: master
   area: accessibility
   size: M
-  path: RAILS/master/app/views/chat/index.html.erb
+  path: MASTER/web/app/views/chat/index.html.erb
   item: 'Take aria-live off #chat-log (aria-relevant additions text re-announces every
     streamed token) and announce finished replies through #tts-live.'
   status: done
@@ -4767,7 +4767,7 @@ items:
   app: master
   area: accessibility
   size: S
-  path: RAILS/master/app/views/chat/index.html.erb
+  path: MASTER/web/app/views/chat/index.html.erb
   item: 'Make #primer a <button> instead of a div with role=button and hand-written
     key handlers.'
   status: done
@@ -4775,7 +4775,7 @@ items:
   app: master
   area: accessibility
   size: S
-  path: RAILS/master/app/views/chat/index.html.erb
+  path: MASTER/web/app/views/chat/index.html.erb
   item: Remove role="main" from <main> and role="banner" from the dashboard and API
     headers; the elements already carry those roles.
   status: done
@@ -4783,7 +4783,7 @@ items:
   app: master
   area: accessibility
   size: S
-  path: RAILS/master/app/views/dashboard/index.html.erb
+  path: MASTER/web/app/views/dashboard/index.html.erb
   item: Remove aria-live from the nine <pre> panes, which the 8-second poll re-announces,
     and keep the single refresh-state status.
   status: done
@@ -4791,14 +4791,14 @@ items:
   app: master
   area: api
   size: S
-  path: RAILS/master/app/views/api/key.html.erb
+  path: MASTER/web/app/views/api/key.html.erb
   item: Add a copy button and a "store it now" warning beside the one-time API token.
   status: done
 - id: master-006
   app: master
   area: api
   size: S
-  path: RAILS/master/app/views/api/show.html.erb
+  path: MASTER/web/app/views/api/show.html.erb
   item: Build the curl examples from the API URL helpers instead of the hard-coded
     https://ai.brgen.no.
   status: done
@@ -4806,7 +4806,7 @@ items:
   app: master
   area: api
   size: S
-  path: RAILS/master/app/views/api/show.html.erb
+  path: MASTER/web/app/views/api/show.html.erb
   item: Format plan prices with amount / 100.0 in the plan's currency; integer division
     drops the cents and the unit is hard-coded to $.
   status: done
@@ -4814,7 +4814,7 @@ items:
   app: master
   area: caching
   size: S
-  path: RAILS/master/app/controllers/application_controller.rb
+  path: MASTER/web/app/controllers/application_controller.rb
   item: Exempt the static API pricing page from set_html_no_store so it can be cached
     and restored from the back-forward cache.
   status: done
@@ -4822,7 +4822,7 @@ items:
   app: master
   area: caching
   size: S
-  path: RAILS/master/app/views/dashboard/index.html.erb
+  path: MASTER/web/app/views/dashboard/index.html.erb
   item: Load face.css and dashboard_live.js through asset_path on the dashboard and
     API pages; the undigested /face.css (69 KB) misses immutable caching and deploy
     busting.
@@ -4831,7 +4831,7 @@ items:
   app: master
   area: chat
   size: S
-  path: RAILS/master/app/views/chat/index.html.erb
+  path: MASTER/web/app/views/chat/index.html.erb
   item: Remove capture="environment" from the photo input so phones offer the gallery
     as well as the camera.
   status: done
@@ -4839,7 +4839,7 @@ items:
   app: master
   area: ci
   size: S
-  path: RAILS/master/config/ci.rb
+  path: MASTER/web/config/ci.rb
   item: Run every test/*.test.mjs in bin/ci; only face_boot.test.mjs runs, the other
     two dozen node tests never do.
   status: done
@@ -4847,7 +4847,7 @@ items:
   app: master
   area: cleanup
   size: M
-  path: RAILS/master/app/views/chat/index.html.erb
+  path: MASTER/web/app/views/chat/index.html.erb
   item: Collapse the duplicate body attributes (data-layout, data-surface and data-visual-runtime
     are all "face") and drop the presentational "zen" class.
   status: done
@@ -4855,21 +4855,21 @@ items:
   app: master
   area: cleanup
   size: S
-  path: RAILS/master/styles/face/10_foundation.css
+  path: MASTER/web/styles/face/10_foundation.css
   item: Remove --font-brand, an alias of var(--font), and use --font directly.
   status: done
 - id: master-014
   app: master
   area: design
   size: S
-  path: RAILS/master/app/views/chat/index.html.erb
+  path: MASTER/web/app/views/chat/index.html.erb
   item: Use /icon.svg as the favicon instead of the inline data-URI circle.
   status: done
 - id: master-015
   app: master
   area: design
   size: S
-  path: RAILS/master/app/views/chat/index.html.erb
+  path: MASTER/web/app/views/chat/index.html.erb
   item: Read the brand mark text from the request host or config instead of the literal
     "ai.brgen.no".
   status: done
@@ -4877,7 +4877,7 @@ items:
   app: master
   area: design
   size: S
-  path: RAILS/master/app/views/chat/index.html.erb
+  path: MASTER/web/app/views/chat/index.html.erb
   item: Replace the random-step progress counter in the boot interval with real module-load
     progress or an indeterminate state.
   status: done
@@ -4885,14 +4885,14 @@ items:
   app: master
   area: design
   size: S
-  path: RAILS/master/styles/face/40_accessibility_motion.css
+  path: MASTER/web/styles/face/40_accessibility_motion.css
   item: Remove the --x-text alias; the x_ prefix was retired from the design system.
   status: done
 - id: master-018
   app: master
   area: design
   size: M
-  path: RAILS/master/styles/face/40_accessibility_motion.css
+  path: MASTER/web/styles/face/40_accessibility_motion.css
   item: Split 40_accessibility_motion.css by concern; it also holds the wscons skin,
     the stipple playground and print rules.
   status: done
@@ -4900,7 +4900,7 @@ items:
   app: master
   area: i18n
   size: S
-  path: RAILS/master/app/controllers/application_controller.rb
+  path: MASTER/web/app/controllers/application_controller.rb
   item: 'Send Vary: Accept-Language on cacheable responses whose language comes from
     that header.'
   status: done
@@ -4908,7 +4908,7 @@ items:
   app: master
   area: i18n
   size: S
-  path: RAILS/master/app/views/pwa/manifest.json.erb
+  path: MASTER/web/app/views/pwa/manifest.json.erb
   item: Move the manifest's name, description and shortcut labels into nb/en locale
     files.
   status: done
@@ -4916,7 +4916,7 @@ items:
   app: master
   area: naming
   size: L
-  path: RAILS/master/app/views/chat/index.html.erb
+  path: MASTER/web/app/views/chat/index.html.erb
   item: Rename the abbreviated ids zsh, zin, pp, spin-btn and music-btn to spelled-out
     names (prompt-form, prompt-input, prompt-sigil, pause-speech-button, music-loop-button)
     across view, CSS and JS.
@@ -4925,7 +4925,7 @@ items:
   app: master
   area: performance
   size: M
-  path: RAILS/master/app/views/chat/index.html.erb
+  path: MASTER/web/app/views/chat/index.html.erb
   item: Move the 190-line inline primer/boot script into a digested public file loaded
     with a nonce, so it is cached, linted and tested.
   status: done
@@ -4933,7 +4933,7 @@ items:
   app: master
   area: performance
   size: S
-  path: RAILS/master/app/views/chat/index.html.erb
+  path: MASTER/web/app/views/chat/index.html.erb
   item: Render the /runtime/config payload into the page rather than fetching it again
     after boot.
   status: invalid
@@ -4942,7 +4942,7 @@ items:
   app: master
   area: performance
   size: M
-  path: RAILS/master/public/dashboard_live.js
+  path: MASTER/web/public/dashboard_live.js
   item: Drive the dashboard from events/stream (SSE) instead of an 8-second poll,
     and back off when it fails.
   status: done
@@ -4950,7 +4950,7 @@ items:
   app: master
   area: performance
   size: S
-  path: RAILS/master/script/bundle_size.sh
+  path: MASTER/web/script/bundle_size.sh
   item: Make bundle_size.sh fail CI past a gzip budget for three.face.module.js (514
     KB raw), face_ascii.js and face_vision.bundle.js; it only prints sizes.
   status: done
@@ -4958,7 +4958,7 @@ items:
   app: master
   area: pwa
   size: S
-  path: RAILS/master/app/views/pwa/manifest.json.erb
+  path: MASTER/web/app/views/pwa/manifest.json.erb
   item: Ship real 192 and 512 px icons and split "any maskable" into separate purpose
     entries; one icon.png is declared at both sizes.
   status: done
@@ -4966,14 +4966,14 @@ items:
   app: master
   area: pwa
   size: S
-  path: RAILS/master/app/views/pwa/manifest.json.erb
+  path: MASTER/web/app/views/pwa/manifest.json.erb
   item: Add id and screenshots to the manifest.
   status: done
 - id: master-028
   app: master
   area: pwa
   size: S
-  path: RAILS/master/public/offline.html
+  path: MASTER/web/public/offline.html
   item: 'Make offline.html MASTER''s page: it says "brgen - frakoblet" and uses a
     #f5f0e8 ink outside the face tokens.'
   status: done
@@ -4981,7 +4981,7 @@ items:
   app: master
   area: pwa
   size: S
-  path: RAILS/master/public/sw.js
+  path: MASTER/web/public/sw.js
   item: Derive CACHE_VERSION and MASTER_CACHE_VERSION from the deploy revision instead
     of defaulting to "v2".
   status: done
@@ -4989,7 +4989,7 @@ items:
   app: master
   area: pwa
   size: S
-  path: RAILS/master/public/sw.js
+  path: MASTER/web/public/sw.js
   item: Await caches.match('/') before falling back to /offline.html; `caches.match('/')
     || caches.match(OFFLINE_URL)` returns a promise, which is always truthy, so the
     offline page is never served.
@@ -4998,7 +4998,7 @@ items:
   app: master
   area: routing
   size: S
-  path: RAILS/master/app/views/chat/index.html.erb
+  path: MASTER/web/app/views/chat/index.html.erb
   item: Use root_path and dashboard_path for the session tabs instead of literal "/"
     and "/dashboard".
   status: done
@@ -5006,7 +5006,7 @@ items:
   app: master
   area: security
   size: S
-  path: RAILS/master/app/controllers/application_controller.rb
+  path: MASTER/web/app/controllers/application_controller.rb
   item: Rate-limit chat/research like enhance and photo; it calls the model and is
     in no limit list.
   status: done
@@ -5014,7 +5014,7 @@ items:
   app: master
   area: security
   size: S
-  path: RAILS/master/config/routes.rb
+  path: MASTER/web/config/routes.rb
   item: Drop the GET chat/message route; a side-effecting, model-spending action should
     not answer GET.
   status: done
@@ -5022,7 +5022,7 @@ items:
   app: master
   area: security
   size: S
-  path: RAILS/master/public/sw.js
+  path: MASTER/web/public/sw.js
   item: Add /api/ and /pair to the service worker's pass-through prefixes so API key
     and pairing responses are never written to Cache Storage.
   status: done
@@ -5030,14 +5030,14 @@ items:
   app: master
   area: semantics
   size: S
-  path: RAILS/master/app/views/dashboard/index.html.erb
+  path: MASTER/web/app/views/dashboard/index.html.erb
   item: Replace div.grid and div.panel with a section per panel labelled by its h2.
   status: done
 - id: master-036
   app: master
   area: tests
   size: S
-  path: RAILS/master/public/sw.js
+  path: MASTER/web/public/sw.js
   item: Add a node test for sw.js covering the offline fallback and the pass-through
     prefixes.
   status: done
@@ -5045,7 +5045,7 @@ items:
   app: master
   area: tests
   size: M
-  path: RAILS/master/test/controllers
+  path: MASTER/web/test/controllers
   item: Add tests for ApiController (show, checkout, key) and Api::StripeWebhooksController;
     no test references them.
   status: done
@@ -5053,7 +5053,7 @@ items:
   app: master
   area: typography
   size: S
-  path: RAILS/master/styles/face/10_foundation.css
+  path: MASTER/web/styles/face/10_foundation.css
   item: Take --font-mono from the shared token instead of a six-family stack naming
     fonts MASTER never loads.
   status: done
@@ -5061,7 +5061,7 @@ items:
   app: master
   area: typography
   size: S
-  path: RAILS/master/styles/face/40_accessibility_motion.css
+  path: MASTER/web/styles/face/40_accessibility_motion.css
   item: Raise the 10px playground text to --text-extra-small.
   status: done
 - id: mrdamascy-001

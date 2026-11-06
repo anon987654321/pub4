@@ -22,6 +22,7 @@ module Operator
   module DesignBaseline
     MASTER_ROOT = File.expand_path("../..", __dir__)
     RAILS_ROOT = File.expand_path("../../../RAILS", __dir__)
+    WEB_ROOT = File.expand_path("../../web", __dir__)
     CEILING = File.join(MASTER_ROOT, "data", "design_baseline.yml")
 
     # The Laws that judge layout, markup shape and typography: the baseline's
@@ -94,12 +95,12 @@ module Operator
       # The MASTER face is the fourth public surface: its hand-written CSS and
       # chat views belong in the same instrument; generated bundles stay out.
       surfaces + engines +
-        Dir[File.join(RAILS_ROOT, "master/app/views/**/*.erb")] +
-        %w[face.css chat_upload.css].map { |name| File.join(RAILS_ROOT, "master/public", name) }.select { |f| File.file?(f) }
+        Dir[File.join(WEB_ROOT, "app/views/**/*.erb")] +
+        %w[face.css chat_upload.css].map { |name| File.join(WEB_ROOT, "public", name) }.select { |f| File.file?(f) }
     end
 
     def app_for(file)
-      return "face" if file.start_with?(File.join(RAILS_ROOT, "master"))
+      return "face" if file.start_with?(WEB_ROOT)
       rel = file.sub("#{RAILS_ROOT}/", "")
       rel.include?("/engines/") ? "engines" : rel.split("/").first
     end

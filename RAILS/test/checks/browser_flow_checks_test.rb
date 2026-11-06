@@ -213,7 +213,7 @@ class BrowserFlowChecksTest < Minitest::Test
     assert_includes probe, "'pseudo-outline'"
     assert_includes probe, "'pseudo-box-shadow'"
 
-    upload_css = File.read(File.join(Deploy::KeyboardFlowCheck::ROOT, "RAILS", "master", "public", "chat_upload.css"))
+    upload_css = File.read(File.join(Deploy::KeyboardFlowCheck::ROOT, "MASTER", "web", "public", "chat_upload.css"))
     assert_match(/#photo-button:focus-visible\s*\{\s*outline:\s*none;/m, upload_css)
     assert_match(/#photo-button:focus-visible::before\s*\{[^}]*outline:\s*1px solid/m, upload_css)
   end

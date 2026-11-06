@@ -83,17 +83,17 @@ class InteractionCampaignAdapterTest < Minitest::Test
   def test_master_browser_case_resolves_to_exact_node_test_and_parses_tap
     exercise_runtime_adapter(
       case_id: "RI-281",
-      source_path: "RAILS/master/test/campaign_case.test.mjs",
+      source_path: "MASTER/web/test/campaign_case.test.mjs",
       source: "import test from \"node:test\"; import assert from \"node:assert/strict\";\ntest(\"test_RI_281_face_boot_ready_fallback\", () => { assert.equal(true, true); });\n",
       adapter: {
         "runner" => "node_test",
-        "path" => "RAILS/master/test/campaign_case.test.mjs",
+        "path" => "MASTER/web/test/campaign_case.test.mjs",
         "name" => "test_RI_281_face_boot_ready_fallback"
       },
       output: "TAP version 13\n# Subtest: test_RI_281_face_boot_ready_fallback\n    ok 1 - boot fallback exists\n    1..1\nok 1 - test_RI_281_face_boot_ready_fallback\n1..1\n# tests 1\n# suites 1\n# pass 1\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n",
       expected_command: ["node", "--test", "--test-reporter=tap", "--test-name-pattern",
                          "^test_RI_281_face_boot_ready_fallback$", "test/campaign_case.test.mjs"],
-      expected_chdir_suffix: "/RAILS/master"
+      expected_chdir_suffix: "/MASTER/web"
     )
   end
 

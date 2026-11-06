@@ -227,7 +227,7 @@ module Master
           amber_surfaces(relative)
         when %r{\ARAILS/bsdports/}
           %w[bsdports]
-        when %r{\ARAILS/master/}
+        when %r{\AMASTER/web/}
           master_web_surfaces(relative)
         when %r{\ARAILS/__shared/}
           relative.match?(%r{pwa|offline|service.?worker|manifest}) ? %w[pwa] : %w[cross_cut]
@@ -500,13 +500,15 @@ module Master
 
       def test_roots(relative)
         case relative
+        when %r{\AMASTER/web/}
+          [File.join(@root, "MASTER", "web", "test")]
         when %r{\AMASTER/}
           [File.join(@root, "MASTER", "test")]
         when %r{\ARAILS/__shared/}
           %w[brgen amber bsdports].map { |app| File.join(@root, "RAILS", app, "test") }
         when %r{\ARAILS/brgen_[^/]+/}
           [File.join(@root, "RAILS", "brgen", "test")]
-        when %r{\ARAILS/(brgen|amber|bsdports|master)/}
+        when %r{\ARAILS/(brgen|amber|bsdports)/}
           [File.join(@root, "RAILS", Regexp.last_match(1), "test")]
         when %r{\ARAILS/}
           [File.join(@root, "RAILS", "test")]
@@ -545,9 +547,9 @@ module Master
           root = File.join(@root, "MASTER")
           return [root, ["bundle", "exec", "ruby", "-Itest", test_path.delete_prefix("MASTER/")], :ruby]
         end
-        if test_path.start_with?("RAILS/master/")
-          root = File.join(@root, "RAILS", "master")
-          relative = test_path.delete_prefix("RAILS/master/")
+        if test_path.start_with?("MASTER/web/")
+          root = File.join(@root, "MASTER", "web")
+          relative = test_path.delete_prefix("MASTER/web/")
           return [root, ["node", "--test", relative], :process] if relative.end_with?(".mjs")
 
           return [root, ["bin/rails", "test", relative], :rails]

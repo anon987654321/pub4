@@ -10,7 +10,7 @@
 #
 # quota, on an API plan, is the law checks a key may run in one calendar month
 # (UTC); one file checked is one check. The master app sells these as API keys
-# (RAILS/master app/models/api_key.rb) rather than to a signed-in user.
+# (MASTER/web app/models/api_key.rb) rather than to a signed-in user.
 #
 # entitlements are what an active subscription unlocks; the app asks
 # user.entitled?(:name) and never a plan key, so a plan can be repriced or

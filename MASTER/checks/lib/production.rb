@@ -352,7 +352,7 @@ module Deploy
     def run_nested_checks
       assets = MasterWebAssetsCheck.run
       @result.merge!(assets)
-      puts "RAILS/master assets check passed (#{MasterWebAssetsCheck::REQUIRED.size} required assets present)." if assets.outcome == :passed
+      puts "MASTER/web assets check passed (#{MasterWebAssetsCheck::REQUIRED.size} required assets present)." if assets.outcome == :passed
 
       tts = MasterTtsCheck.run
       @result.merge!(tts)

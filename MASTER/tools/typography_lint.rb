@@ -40,7 +40,7 @@ module Operator
       File.join("amber", "app", "assets", "stylesheets"),
       File.join("bsdports", "app", "assets", "stylesheets"),
       File.join("__shared", "app", "assets", "stylesheets"),
-      File.join("master", "public"),
+      File.join("..", "MASTER", "web", "public"),
     ].freeze
 
     # Operator directive 2026-10-11: brgen, amber and the shared layer are Swiss sans

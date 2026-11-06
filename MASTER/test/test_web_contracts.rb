@@ -11,7 +11,7 @@ class MasterNamespaceSpec < Minitest::Test
   end
 
   def test_master_namespace_exposes_canonical_facade
-    source = read("../RAILS/master/public/master_namespace.js")
+    source = read("../MASTER/web/public/master_namespace.js")
 
     %w[boot face speech speechRuntime speechPlayback events ecology chat container attention].each do |name|
       assert_includes source, %("#{name}")
@@ -27,8 +27,8 @@ end
 
 class TestSmokeChatProbe < Minitest::Test
   def test_smoke_chat_bypasses_container_warmup
-    app = File.read(File.join(Master::ROOT, "..", "RAILS", "master", "app", "controllers", "application_controller.rb"))
-    chat = File.read(File.join(Master::ROOT, "..", "RAILS", "master", "app", "controllers", "chat_controller.rb"))
+    app = File.read(File.join(Master::ROOT, "..", "MASTER", "web", "app", "controllers", "application_controller.rb"))
+    chat = File.read(File.join(Master::ROOT, "..", "MASTER", "web", "app", "controllers", "chat_controller.rb"))
     assert_includes app, "smoke_chat_probe?"
     assert_includes chat, "stream_smoke_reply"
     assert_includes chat, "ping"
@@ -37,8 +37,8 @@ end
 
 class TestPropshaftPaths < Minitest::Test
   def test_excludes_digest_output_directory
-    app_rb = File.read(File.join(Master::ROOT, "..", "RAILS", "master", "config", "application.rb"))
-    safety = File.read(File.join(Master::ROOT, "..", "RAILS", "master", "config", "initializers", "propshaft_safety.rb"))
+    app_rb = File.read(File.join(Master::ROOT, "..", "MASTER", "web", "config", "application.rb"))
+    safety = File.read(File.join(Master::ROOT, "..", "MASTER", "web", "config", "initializers", "propshaft_safety.rb"))
     assert_includes app_rb, "excluded_paths"
     assert_includes app_rb, "public", "assets"
     assert_includes safety, '"assets", "assets"'

@@ -76,7 +76,7 @@ class TestDillaFx < Minitest::Test
       assert_equal :christopher, Master::Voice::Speech.voice_for_text("I think this should work.")
     end
 
-    face = File.read(File.expand_path("../../RAILS/master/public/face_speech_runtime.js", __dir__))
+    face = File.read(File.expand_path("../../MASTER/web/public/face_speech_runtime.js", __dir__))
     refute_includes face, "|| 'en-US-JennyNeural'"
   end
 
@@ -140,7 +140,7 @@ class TestDillaFx < Minitest::Test
         assert_includes enabled, preset[:id]
         assert_equal Policy.data["character"][preset[:id]]["filter"], preset[:filter]
       end
-      runtime = File.read(File.expand_path("../../RAILS/master/public/face_speech_runtime.js", __dir__))
+      runtime = File.read(File.expand_path("../../MASTER/web/public/face_speech_runtime.js", __dir__))
       assert_includes runtime, "function buildFxRack"
       assert_includes runtime, "MASTER_VOICE_POLICY?.dilla_fx"
     end

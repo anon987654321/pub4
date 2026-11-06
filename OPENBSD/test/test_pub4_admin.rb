@@ -171,7 +171,7 @@ class Pub4AdminTest < Minitest::Test
   end
   def test_master_web_preparation_is_fixed_path_and_symlink_safe
     source = File.read(File.expand_path("../usr/local/sbin/pub4-admin", __dir__))
-    assert_includes source, 'MASTER_WEB_ROOT = "/home/dev/pub4/RAILS/master"'
+    assert_includes source, 'MASTER_WEB_ROOT = "/home/dev/pub4/MASTER/web"'
     assert_includes source, 'args == ["master-web-assets-reset"]'
     assert_includes source, 'args == ["master-web-runtime-dirs"]'
     assert_includes source, "def master_web_root!"

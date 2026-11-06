@@ -59,7 +59,7 @@ screenshot count or previous revision.
   Ruby 4.0.5. Review an actual Dilla render by ear with rights-cleared local
   source and confirm the sample level leaves voice room.
 - [ ] **Generated-output freshness.** Check design-token projection and CSS;
-  compare `RAILS/master/public/face.runtime.js` and `face.css` with their
+  compare `MASTER/web/public/face.runtime.js` and `face.css` with their
   sources; run `cd MASTER && rake docs:agent_contracts` and
   `rake lint:agent_contracts`. Run
   `ruby MASTER/lib/operator/self_findings.rb --ratchet` after source changes

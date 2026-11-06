@@ -35,21 +35,24 @@ module Master
             named = Master::Fix::RailsApp.named_apps(repo_root:)
             engine = Master::Fix::RailsApp.engine_apps(repo_root:)
             paths.each_with_object(Hash.new { |hash, key| hash[key] = [] }) do |path, apps|
-              owners(path, named:, engine:).each { |app| apps[app] << path }
+              owners(path, named:, engine:, repo_root:).each { |app| apps[app] << path }
             end
           end
 
-          def owners(path, named:, engine:)
+          def owners(path, named:, engine:, repo_root: Master::REPO_ROOT)
+            app = Master::Fix::RailsApp.app_name(path, repo_root:)
+            return [app] if app && named.include?(app)
+
             component = path[%r{\ARAILS/([^/]+)/}, 1]
             return [] unless component
             return engine if component == "__shared"
             return ["brgen"] if component.start_with?("brgen_") && named.include?("brgen")
 
-            named.include?(component) ? [component] : []
+            []
           end
 
           def prove_app(app, changed, repo_root:, before: nil)
-            root = File.join(repo_root, "RAILS", app)
+            root = Master::Fix::RailsApp.app_dir(app, repo_root:)
             booted, lines = boot(app, root)
             tests = booted ? tests_for(app, changed, repo_root:) : []
             tested, test_lines = tests.empty? ? [true, []] : run_tests(app, root:, tests:)
@@ -125,7 +128,7 @@ module Master
           # The changed test files, each changed file's own test, and the tests that name a changed
           # file's constant, relative to the app root; capped, since the closing bin/ci runs them all.
           def tests_for(app, changed, repo_root:)
-            root = File.join(repo_root, "RAILS", app)
+            root = Master::Fix::RailsApp.app_dir(app, repo_root:)
             found = candidates(app, changed, repo_root:, root:).uniq.select { |path| runnable?(path) }
             found.sort.first(LIMIT).map { |path| Pathname(path).relative_path_from(Pathname(root)).to_s }
           end
@@ -158,7 +161,7 @@ module Master
           # brgen's suite reaches its verticals and the shared engine (__shared/config/test_scope.rb).
           def test_roots(app, repo_root:)
             rails = File.join(repo_root, "RAILS")
-            own = [File.join(rails, app, "test")]
+            own = [File.join(Master::Fix::RailsApp.app_dir(app, repo_root:), "test")]
             return own unless app == "brgen"
 
             own + Dir.glob(File.join(rails, "brgen_*", "**", "test")) + [File.join(rails, "__shared", "test")]

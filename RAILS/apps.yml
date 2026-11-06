@@ -329,11 +329,11 @@ apps:
     port: 53187
     stack_now: SQLite3, Rails 8.2.0.alpha, Falcon, MASTER runtime, OpenBSD, relayd
     # master is not copied to /home/master/app. vps_deploy_master.sh pulls and
-    # restarts it in place under /home/dev/pub4/RAILS/master, so deploy_root
+    # restarts it in place under /home/dev/pub4/MASTER/web, so deploy_root
     # names the tree that runs rather than a copy source, and vps-deploy and
     # vps_install_all.sh deploy it through that script, never the brgen way.
     deploy_script: OPENBSD/bin/vps_deploy_master.sh
-    deploy_root: RAILS/master
+    deploy_root: MASTER/web
     public: true
     features:
       core:

@@ -8,8 +8,8 @@ class VisualIdentityContractTest < Minitest::Test
   include StylesheetModules
 
   ROOT = File.expand_path("..", __dir__)
-  FACE_SOURCE = File.join(ROOT, "master", "styles", "face", "10_foundation.css")
-  FACE_COMPILED = File.join(ROOT, "master", "public", "face.css")
+  FACE_SOURCE = File.join(ROOT, "..", "MASTER", "web", "styles", "face", "10_foundation.css")
+  FACE_COMPILED = File.join(ROOT, "..", "MASTER", "web", "public", "face.css")
   SHARED_CHROME = File.join(ROOT, "__shared", "app", "assets", "stylesheets", "_layout_chrome.scss")
   BRGEN_POSTS = File.join(ROOT, "brgen", "app", "views", "posts", "index.html.erb")
   AMBER_LAYOUT = File.join(ROOT, "amber", "app", "views", "layouts", "application.html.erb")
@@ -19,7 +19,7 @@ class VisualIdentityContractTest < Minitest::Test
   BSDPORTS_STYLES = File.join(ROOT, "bsdports", "app", "assets", "stylesheets", "application.scss")
   BSDPORTS_LAYOUT = File.join(ROOT, "bsdports", "app", "views", "layouts", "application.html.erb")
   # The face's motion and accessibility rules, split by concern across 40-44.
-  FACE_MOTION = Dir[File.join(ROOT, "master", "styles", "face", "4[0-4]_*.css")].sort
+  FACE_MOTION = Dir[File.join(ROOT, "..", "MASTER", "web", "styles", "face", "4[0-4]_*.css")].sort
   SHARED_MOTION = File.join(ROOT, "__shared", "app", "assets", "stylesheets", "_interaction_craft.scss")
   # laws.yml states each Law; law_runtime.yml carries the executable requirements.
   LAW_FILES = %w[laws.yml law_runtime.yml].map { |name| File.expand_path("../../MASTER/data/#{name}", __dir__) }
@@ -110,8 +110,8 @@ class VisualIdentityContractTest < Minitest::Test
   end
 
   def test_face_display_weight_tokens_live_outside_the_generated_root
-    foundation = File.read(File.join(ROOT, "master", "styles", "face", "10_foundation.css"))
-    display = File.read(File.join(ROOT, "master", "styles", "face", "43_face_chrome.css"))
+    foundation = File.read(File.join(ROOT, "..", "MASTER", "web", "styles", "face", "10_foundation.css"))
+    display = File.read(File.join(ROOT, "..", "MASTER", "web", "styles", "face", "43_face_chrome.css"))
     compiled = File.read(FACE_COMPILED)
     generated = compiled.split("/* BEGIN:generated-face-root", 2).last.split("/* END:generated-face-root */", 2).first
 

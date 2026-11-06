@@ -32,7 +32,7 @@ const NOT_BUS_TOPICS = {
 
 function publishedTopics() {
   const topics = new Set();
-  for (const tree of ["lib", "../RAILS/master/app", "../RAILS/master/lib"]) {
+  for (const tree of ["lib", "web/app", "web/lib"]) {
     const base = join(masterDir, tree);
     for (const name of readdirSync(base, { recursive: true })) {
       if (!name.endsWith(".rb")) continue;

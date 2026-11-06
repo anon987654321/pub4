@@ -45,12 +45,19 @@ module Fleet
     app_ports.keys.sort
   end
 
+  # An app's tree: apps.yml's deploy_root (master's is MASTER/web), else RAILS/<name>.
+  def app_dir(name)
+    meta = YAML.safe_load_file(APPS_YML, permitted_classes: [Symbol]).fetch("apps", {})[name.to_s]
+    root = meta.is_a?(Hash) ? meta["deploy_root"].to_s : ""
+    File.join(ROOT, root.empty? ? "RAILS/#{name}" : root)
+  end
+
   # The apps whose Gemfile mounts pub4-shared, so they carry its views, its
   # stylesheets and its app/assets layout. master does not: its pages render the
   # face's own CSS from public/.
   def engine_apps
     app_names.select do |name|
-      gemfile = File.join(ROOT, "RAILS", name, "Gemfile")
+      gemfile = File.join(app_dir(name), "Gemfile")
       File.file?(gemfile) && File.read(gemfile).include?('gem "pub4-shared"')
     end
   end

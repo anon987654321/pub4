@@ -22,11 +22,13 @@ module Master
         Pathname(dir).ascend.take_while { |path| path.to_s != root }.any? { |path| rails_dir?(path.to_s) }
       end
 
+      # An app or engine, or the RAILS tree that registers them in apps.yml. A
+      # directory that merely holds an app is not Rails: MASTER holds MASTER/web
+      # and is still MASTER.
       def self.rails_dir?(dir)
         return false unless File.directory?(dir)
 
-        app_or_engine?(dir) ||
-          Dir.children(dir).any? { |child| app_or_engine?(File.join(dir, child)) }
+        app_or_engine?(dir) || File.file?(File.join(dir, "apps.yml"))
       end
 
       def self.app_or_engine?(dir)
@@ -36,28 +38,44 @@ module Master
       private_class_method :rails_dir?, :app_or_engine?
 
       def self.named_apps(repo_root:)
+        app_paths(repo_root:).keys.sort.freeze
+      end
+
+      # Each registered app's tree relative to the repository: apps.yml's deploy_root,
+      # else RAILS/<name>. master's is MASTER/web, so no reader may assume RAILS/<name>.
+      def self.app_paths(repo_root:)
         registry = File.join(File.expand_path(repo_root), "RAILS", "apps.yml")
-        YAML.safe_load_file(registry, aliases: true).fetch("apps").keys.map(&:to_s).sort.freeze
+        YAML.safe_load_file(registry, aliases: true).fetch("apps").to_h do |name, meta|
+          root = meta.is_a?(Hash) ? meta["deploy_root"].to_s : ""
+          [name.to_s, root.empty? ? "RAILS/#{name}" : root.delete_suffix("/")]
+        end
+      end
+
+      def self.app_dir(name, repo_root:)
+        relative = app_paths(repo_root:)[name.to_s]
+        File.join(File.expand_path(repo_root), relative) if relative
       end
 
       # The registered apps that mount the shared engine (RAILS/__shared, gem "pub4-shared"). master
       # is registered and loads none of it, so a shared-engine change is not proved there.
       def self.engine_apps(repo_root:)
         named_apps(repo_root:).select do |name|
-          gemfile = File.join(File.expand_path(repo_root), "RAILS", name, "Gemfile")
+          gemfile = File.join(app_dir(name, repo_root:), "Gemfile")
           File.file?(gemfile) && File.read(gemfile).include?('gem "pub4-shared"')
         end
       end
 
       def self.app_name(target, repo_root:)
-        name = relative_path(target, repo_root:)&.match(%r{\ARAILS/([^/]+)(?:/|\z)})&.captures&.first
-        name if name && named_apps(repo_root:).include?(name)
+        relative = relative_path(target, repo_root:)
+        return unless relative
+
+        app_paths(repo_root:).find { |_name, dir| relative == dir || relative.start_with?("#{dir}/") }&.first
       end
 
       def self.app_root?(target, repo_root:)
         name = app_name(target, repo_root:)
-        !!(name && relative_path(target, repo_root:) == "RAILS/#{name}" &&
-          File.directory?(File.join(File.expand_path(repo_root), "RAILS", name)))
+        !!(name && relative_path(target, repo_root:) == app_paths(repo_root:)[name] &&
+          File.directory?(app_dir(name, repo_root:)))
       end
 
       def self.relative_path(target, repo_root:)

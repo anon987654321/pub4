@@ -207,8 +207,8 @@ def test_brgen_old_dialect_outranks_the_social_stack
       File.join(ROOT, "**/app/assets/stylesheets/**/*.{scss,css}"),
       File.join(SHARED, "frontend/**/*.css"),
       File.join(SHARED, "public/styles/**/*.css"),
-      File.join(ROOT, "master/styles/face/**/*.css"),
-      File.join(ROOT, "master/public/**/*.css"),
+      File.join(ROOT, "../MASTER/web/styles/face/**/*.css"),
+      File.join(ROOT, "../MASTER/web/public/**/*.css"),
     ]
     paths = globs.flat_map { |glob| Dir.glob(glob) }.uniq.sort.reject do |path|
       path.match?(UI_STYLESHEET_EXCLUSIONS) || !File.file?(path)

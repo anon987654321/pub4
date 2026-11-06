@@ -43,13 +43,13 @@ sleep 1
 doas /usr/local/sbin/pub4-admin service stop master 2>/dev/null
 echo "SHA=$(git -C /home/dev/pub4 rev-parse --short HEAD)"
 
-cd /home/dev/pub4/RAILS/master || exit 1
+cd /home/dev/pub4/MASTER/web || exit 1
 export RAILS_ENV=production
 # The build needs a secret to boot Rails and never uses it; the server takes its
 # real key from /etc/master.env through rc.d/master.
 export SECRET_KEY_BASE_DUMMY=1
 
-MANIFEST=/home/dev/pub4/RAILS/master/public/assets/.manifest.json
+MANIFEST=/home/dev/pub4/MASTER/web/public/assets/.manifest.json
 if [[ -f "$MANIFEST" ]] && [[ "${FORCE_PRECOMPILE:-0}" != "1" ]]; then
   echo precompile_skip manifest_exists
 else
@@ -86,5 +86,5 @@ echo
 
 doas /usr/local/sbin/pub4-admin service restart relayd
 curl -sS -m 5 -o /dev/null -w "relayd_https=%{http_code}\n" -H "Host: ai.brgen.no" "https://127.0.0.1/up" -k
-"$RUBY" /home/dev/pub4/RAILS/master/script/probe_http
+"$RUBY" /home/dev/pub4/MASTER/web/script/probe_http
 echo "DONE $(date -u)"

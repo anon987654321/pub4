@@ -14,7 +14,7 @@ class TestProofRailsApps < Minitest::Test
     assert_equal %w[brgen], owners("RAILS/brgen/app/models/bookmark.rb")
     assert_equal %w[brgen], owners("RAILS/brgen_dating/app/models/dating/daily_pick.rb")
     assert_equal %w[amber brgen bsdports], owners("RAILS/__shared/app/models/x.rb")
-    assert_equal %w[master], owners("RAILS/master/app/controllers/dashboard_controller.rb")
+    assert_equal %w[master], owners("MASTER/web/app/controllers/dashboard_controller.rb")
     assert_empty owners("RAILS/apps.yml")
   end
 
@@ -27,7 +27,7 @@ class TestProofRailsApps < Minitest::Test
 
   def test_an_app_that_never_eager_loads_is_proved_to_boot_instead
     assert_equal "boots and eager-loads", Apps.boot_check(File.join(ROOT, "RAILS", "brgen")).first
-    assert_equal "boots", Apps.boot_check(File.join(ROOT, "RAILS", "master")).first
+    assert_equal "boots", Apps.boot_check(File.join(ROOT, "MASTER", "web")).first
   end
 
   FAILED = ["  1) Failure:", "BookmarkTest#test_belongs_to_user [test/models/bookmark_test.rb:9]:",

@@ -13,7 +13,7 @@ module Deploy
     ROOT = File.expand_path("../../../..", __dir__)
     SHARED_HEADERS = "RAILS/__shared/config/initializers/security_headers.rb"
     SHARED_CSP = "RAILS/__shared/config/initializers/content_security_policy.rb"
-    MASTER_CSP = "RAILS/master/config/initializers/content_security_policy.rb"
+    MASTER_CSP = "MASTER/web/config/initializers/content_security_policy.rb"
     RELAYD = "OPENBSD/etc/relayd.conf"
 
     SHARED_HEADER_FRAGMENTS = [

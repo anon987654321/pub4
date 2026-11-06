@@ -124,7 +124,7 @@ module Operator
 
     # The trees each cached group reads (RatchetCache). MASTER is always one: it holds the laws, the
     # scanners and the recorded ceilings every row compares against.
-    AUDIT_TREES = %w[MASTER RAILS/__shared RAILS/master].freeze
+    AUDIT_TREES = %w[MASTER RAILS/__shared].freeze
     SELF_FINDINGS_TREES = %w[MASTER RAILS OPENBSD].freeze
 
     def cached(group, trees, &) = RatchetCache.fetch(group, trees:, row_class: Row, &)

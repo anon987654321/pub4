@@ -9,7 +9,7 @@ module LayoutContractSources
   ROOT = File.expand_path("../..", __dir__)
   REPO = File.expand_path("..", ROOT)
   SHARED = File.join(ROOT, "__shared")
-  FACE_CSS = File.join(ROOT, "master", "public", "face.css")
+  FACE_CSS = File.join(ROOT, "..", "MASTER", "web", "public", "face.css")
   TOKENS = File.join(SHARED, "design_tokens.yml")
   LAYOUT_CHROME = File.join(SHARED, "app", "assets", "stylesheets", "_layout_chrome.scss")
   SHELL_WIDGETS = File.join(SHARED, "app", "assets", "stylesheets", "_shell_widgets.scss")
@@ -22,8 +22,8 @@ module LayoutContractSources
     "brgen" => File.join(ROOT, "brgen", "app", "views", "layouts", "application.html.erb"),
     "amber" => File.join(ROOT, "amber", "app", "views", "layouts", "application.html.erb"),
     "bsdports" => File.join(ROOT, "bsdports", "app", "views", "layouts", "application.html.erb"),
-    "master_chat" => File.join(ROOT, "master", "app", "views", "chat", "index.html.erb"),
-    "master_dashboard" => File.join(ROOT, "master", "app", "views", "dashboard", "index.html.erb"),
+    "master_chat" => File.join(ROOT, "..", "MASTER", "web", "app", "views", "chat", "index.html.erb"),
+    "master_dashboard" => File.join(ROOT, "..", "MASTER", "web", "app", "views", "dashboard", "index.html.erb"),
   }.freeze
 
   # A heading level skipped inside one view breaks the outline screen-reader

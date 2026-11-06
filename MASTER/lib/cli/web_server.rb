@@ -41,7 +41,7 @@ module Master
       end
 
       def spawn_local(config:, host:, port:, io:)
-        web_dir = File.join(Master::RAILS_ROOT, "master")
+        web_dir = File.join(Master::ROOT, "web")
         return unless Dir.exist?(web_dir)
 
         Master.ensure_services!(root: Master::ROOT)

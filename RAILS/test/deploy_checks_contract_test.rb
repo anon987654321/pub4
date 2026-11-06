@@ -103,7 +103,7 @@ class DeployChecksContractTest < Minitest::Test
 
     assert_includes source, "herb:check"
     assert_includes source, 'File.join("RAILS", app)'
-    assert_includes source, '"RAILS/master"'
+    assert_includes source, 'Hash(meta)["deploy_root"]'
     assert_includes source, '"BUNDLE_GEMFILE" => File.join(ROOT, app, "Gemfile")'
   end
 

@@ -57,7 +57,7 @@ workstreams:
   - id: face_semantic_motion
     state: evidence
     title: Large 3D face semantic motion and real-browser/device proof
-    implementation: RAILS/master/public
+    implementation: MASTER/web/public
     proof: Rendered browser and real-device evidence
   - id: rails_product_completion
     state: evidence
@@ -241,7 +241,7 @@ workstreams:
   - id: master_face_breath
     state: partial
     title: The stipple field breathes in brightness only, frozen by reduced motion twice over
-    implementation: RAILS/master/public/face_stipple_system.js
+    implementation: MASTER/web/public/face_stipple_system.js
     proof: >-
       shaders static-checked; breath rides vAlpha with uMotionScale and uTime both zeroed by the
       reduced-motion path
@@ -250,7 +250,7 @@ workstreams:
     title: >-
       The browser builds the declared character presets - ring-mod aeval shapes, WaveShaper acrusher bits,
       the asetrate idiom as one modulated-delay shifter
-    implementation: RAILS/master/public/face_speech_runtime.js
+    implementation: MASTER/web/public/face_speech_runtime.js
     proof: >-
       both-lane buildability proven per preset by scripts/verify_face_voice_batch.py against the ported
       builder grammar
@@ -262,12 +262,12 @@ workstreams:
   - id: master_fleet_panel
     state: missing
     title: The dashboard renders the fleet - sibling health, load and the resource_guard order
-    implementation: RAILS/master/app/views/dashboard
+    implementation: MASTER/web/app/views/dashboard
     proof: dashboard fleet panel on a Ruby host
   - id: master_quota_facts
     state: missing
     title: model_quota and cache_efficiency stop being computed and dropped - the status strip renders them
-    implementation: RAILS/master/app/views/dashboard
+    implementation: MASTER/web/app/views/dashboard
     proof: dashboard status strip on a Ruby host
   - id: dilla_grammar_voicings
     state: landed

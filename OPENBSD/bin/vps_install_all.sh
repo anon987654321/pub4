@@ -57,7 +57,7 @@ log "=== MASTER CLI + web ==="
 [[ -d ${PUB4}/MASTER ]] || { log "ERR: MASTER missing"; exit 1 }
 cd "${PUB4}/MASTER"
 bundle install
-cd "${PUB4}/RAILS/master"
+cd "${PUB4}/MASTER/web"
 bundle config set --local path vendor/bundle
 bundle install
 RAILS_ENV=production SECRET_KEY_BASE_DUMMY=1 bundle exec rails assets:precompile
@@ -71,7 +71,7 @@ APPS=(${(f)"$("$RUBY" -r"${PUB4}/OPENBSD/lib/deploy_inventory" \
 (( ${#APPS} )) || { log "ERR: no apps read from ${PUB4}/RAILS/apps.yml"; exit 1 }
 
 # master is in apps.yml but was installed above: it runs in place under
-# RAILS/master, and it has no <app>.sh copy-tree script to run here.
+# MASTER/web, and it has no <app>.sh copy-tree script to run here.
 for app in $APPS; do
   [[ $app == master ]] && continue
   case "$app" in

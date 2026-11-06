@@ -81,7 +81,7 @@ class TestRatchetSponsor < Minitest::Test
   def test_design_baseline_measures_shared_engine_sources_and_face_css
     files = Operator::DesignBaseline.files
     shared = File.join(Fleet::ROOT, "RAILS", "__shared", "app/assets/stylesheets", "_tokens.scss")
-    face = File.join(Fleet::ROOT, "RAILS", "master", "public", "face.css")
+    face = File.join(Fleet::ROOT, "MASTER", "web", "public", "face.css")
 
     assert_includes files, shared
     assert_includes files, face

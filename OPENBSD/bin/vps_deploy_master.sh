@@ -22,11 +22,11 @@ set -eo pipefail
 export PATH=/usr/local/bin:/usr/local/sbin:/usr/bin:/usr/sbin:/bin:/sbin
 ROOT="${ROOT:-/home/dev/pub4}"
 if [ "$ROOT" != "/home/dev/pub4" ]; then
-  echo "vps_deploy_master: ROOT override refused; pub4-admin mutates the fixed /home/dev/pub4/RAILS/master tree" >&2
+  echo "vps_deploy_master: ROOT override refused; pub4-admin mutates the fixed /home/dev/pub4/MASTER/web tree" >&2
   exit 2
 fi
 . "$ROOT/OPENBSD/lib/ruby_select.sh"
-WEB="$ROOT/RAILS/master"
+WEB="$ROOT/MASTER/web"
 
 # vps-deploy pins one SHA and moves the checkout to it before any step runs; this
 # script then only checks that nothing moved it. A hand run (no VPS_DEPLOY_SHA, the
@@ -49,7 +49,7 @@ export RAILS_ENV=production
 # mistaken for, or leak into, the real one.
 export SECRET_KEY_BASE_DUMMY=1
 
-# Primary database. RAILS/master's migrations reach ai.brgen.no's
+# Primary database. MASTER/web's migrations reach ai.brgen.no's
 # production.sqlite3 through this step and no other, so a deploy without it
 # ships code against a schema that is behind.
 #

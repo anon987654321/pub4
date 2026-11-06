@@ -22,7 +22,7 @@ end
 
 class PropshaftSafetyContractTest < Minitest::Test
   REPO_ROOT = File.expand_path("../..", __dir__)
-  INITIALIZER = File.join(REPO_ROOT, "RAILS", "master", "config", "initializers", "propshaft_safety.rb")
+  INITIALIZER = File.join(REPO_ROOT, "MASTER", "web", "config", "initializers", "propshaft_safety.rb")
 
   def load_initializer(root)
     Rails.contract_root = Pathname.new(root)

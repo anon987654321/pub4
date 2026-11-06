@@ -57,7 +57,7 @@ module Deploy
       "CLAUDE.md" => "prose: the shed-vs-outage triage note, trap 3",
       "RAILS/CLAUDE.md" => "prose: the shed-vs-outage triage note",
       "OPENBSD/CLAUDE.md" => "prose: same triage note",
-      "TREE_CONTRACTS.md" => "checked: check_readmes reads its RAILS/master section; the rest is tree-contract prose",
+      "TREE_CONTRACTS.md" => "checked: check_readmes reads its MASTER/web section; the rest is tree-contract prose",
       "OPENBSD/RUNBOOK.md" => "prose: operator reference",
       "MASTER/checks/PAGE_SIM.md" => "generated report",
       "MASTER/test/test_ai_orientation.rb" => "fixture: a two-app apps.yml and the deploy inventory it generates",
@@ -399,7 +399,7 @@ module Deploy
       result.fail("RAILS/README.md app count must mirror apps.yml (#{count_word} Rails apps)") unless root_readme.match?(/\b#{count_word} Rails apps\b/)
 
       apps.each do |app|
-        # RAILS/master has no README: its human entry is its TREE_CONTRACTS.md section.
+        # MASTER/web has no README: its human entry is its TREE_CONTRACTS.md section.
         readme_path = File.join(ROOT, app.deploy_root, "README.md")
         readme = File.file?(readme_path) ? File.read(readme_path) : Inventory.new(root: ROOT).tree_contract(app.deploy_root)
         unless readme

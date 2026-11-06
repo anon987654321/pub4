@@ -29,8 +29,8 @@ module Deploy
     end
 
     # One tree's `## <tree>` section of the root TREE_CONTRACTS.md, or nil.
-    # RAILS/master has no README: this section is its human entry, and replaced
-    # RAILS/master/CLAUDE.md when the tree contracts were folded (2b168b77f2).
+    # MASTER/web has no README: this section is its human entry, and replaced
+    # MASTER/web/CLAUDE.md when the tree contracts were folded (2b168b77f2).
     def tree_contract(tree)
       path = File.join(root, "TREE_CONTRACTS.md")
       return unless File.file?(path)

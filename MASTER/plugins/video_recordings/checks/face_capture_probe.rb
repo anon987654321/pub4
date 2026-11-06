@@ -18,7 +18,7 @@
 # not black at all: frames 40 seconds apart were byte-identical at 1.15% lit,
 # a single drawn frame held for the length of the video.
 #
-# One guard in RAILS/master/app/views/chat/index.html.erb is the whole story:
+# One guard in MASTER/web/app/views/chat/index.html.erb is the whole story:
 #
 #     if (!window._primerFired && /webgl/i.test(String(type))) return null;
 #

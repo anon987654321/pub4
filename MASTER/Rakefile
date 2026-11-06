@@ -305,7 +305,7 @@ task "test:all_trees" do
     if javascript_tests.any?
       if node_bin
         groups = javascript_tests.group_by do |file|
-          if file.start_with?(File.join(root, "RAILS", "master") + File::SEPARATOR)
+          if file.start_with?(File.join(root, "MASTER", "web") + File::SEPARATOR)
             File.join(root, "MASTER")
           elsif file.start_with?(File.join(root, "RAILS") + File::SEPARATOR)
             File.join(root, "RAILS")
@@ -394,7 +394,7 @@ namespace :test do
   # "can't find executable rails for gem railties ... perhaps you meant to add it
   # to your Gemfile", which reads as a broken web app and is a broken invocation.
   # web/ has its own Gemfile and its own suite; run it from there and it is green.
-  desc "Rails web integration tests (RAILS/master)"
+  desc "Rails web integration tests (MASTER/web)"
   task :web do
     # Bundler.with_unbundled_env, not a hash of nils. `sh` sets a nil value to the
     # empty string rather than unsetting it, and an empty BUNDLE_GEMFILE still
@@ -406,7 +406,7 @@ namespace :test do
     Bundler.with_unbundled_env do
       # The running ruby, named: the binstubs say `env ruby`, which finds macOS's 2.6 when PATH has no rbenv.
       rails_test = [RbConfig.ruby, "-S", "bundle", "exec", RbConfig.ruby, "bin/rails", "test"]
-      Dir.chdir(File.join(__dir__, "..", "RAILS", "master")) { sh(*rails_test) }
+      Dir.chdir(File.join(__dir__, "..", "MASTER", "web")) { sh(*rails_test) }
     end
   end
 

@@ -30,7 +30,7 @@ module Operator
       MASTER/tools/Rakefile
       MASTER/bin/check
       MASTER/bin/ci
-      RAILS/master/bin/ci
+      MASTER/web/bin/ci
       OPENBSD/bin/check
       OPENBSD/bin/check-rails
       OPENBSD/bin/check-openbsd
@@ -59,11 +59,11 @@ module Operator
         "RAILS/__shared/test/**/*_test.rb",
       ],
       "RAILS/bsdports/bin/ci" => ["RAILS/bsdports/test/**/*_test.rb"],
-      "RAILS/master/bin/ci" => ["RAILS/master/test/**/*_test.rb"],
+      "MASTER/web/bin/ci" => ["MASTER/web/test/**/*_test.rb"],
       "RAILS/mrdamascy/bin/ci" => ["RAILS/mrdamascy/test/**/*_test.rb"],
       # These runners construct their Node inventory from a runtime path variable
       # or invoke npm script names; the complete target glob is therefore explicit.
-      "MASTER/bin/check" => ["RAILS/master/test/**/*.test.mjs"],
+      "MASTER/bin/check" => ["MASTER/web/test/**/*.test.mjs"],
       "MASTER/tools/rails/premerge.rb" => [
         "RAILS/test/pwa_offline_store.test.mjs",
         "RAILS/test/stimulus_components_runtime_contract.test.mjs",

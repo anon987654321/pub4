@@ -132,7 +132,7 @@ module Master
         "rails: feature_truth=RAILS/apps.yml; architecture=RAILS/CLAUDE.md; " +
         "shared=RAILS/__shared; tools=MASTER/tools/rails; design=MASTER/data/laws.yml; entry=MASTER/bin/operator triangle; " +
         "coupling=shared engine + sibling copy-tree affects every Rails app; " +
-        "deployed_copy=/home/<app>/app + /home/<app>/shared, master in place at /home/dev/pub4/RAILS/master; " +
+        "deployed_copy=/home/<app>/app + /home/<app>/shared, master in place at /home/dev/pub4/MASTER/web; " +
         "proof=MASTER/checks/checks.yml+MASTER/bin/operator triangle+<app>/bin/ci; " +
         "live=OPENBSD/bin/check-vps+OPENBSD/bin/vps-state; " +
         "rendered=Chrome/CDP via rendered_suite; " +

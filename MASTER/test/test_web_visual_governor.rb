@@ -9,7 +9,7 @@ class VisualGovernorSpec < Minitest::Test
   ROOT = File.expand_path("..", __dir__)
   # layouts/application.html.erb is dead for this purpose - ChatController#index
   # renders `layout: false` (web/CLAUDE.md); chat/index.html.erb is the real page.
-  ENTRYPOINT = File.join(ROOT, "..", "RAILS", "master", "app", "views", "chat", "index.html.erb")
+  ENTRYPOINT = File.join(ROOT, "..", "MASTER", "web", "app", "views", "chat", "index.html.erb")
 
   # The limits and the hidden-tab pause are behaviour, driven in
   # web/test/visual_limits.test.mjs. What stays here is what the page template
@@ -27,7 +27,7 @@ class VisualGovernorSpec < Minitest::Test
     # (running after the primer tap) calls import() on it.
     assert_includes source,
                     'data-face-module="<%= FaceAssets.versioned(asset_path("face.js"), "face.js") %>"'
-    primer = File.read(File.join(ROOT, "..", "RAILS", "master", "public", "face_primer.js"))
+    primer = File.read(File.join(ROOT, "..", "MASTER", "web", "public", "face_primer.js"))
     assert_includes primer, "dataset.faceModule"
     assert_match(/import\(FACE_MODULE\)/, primer)
   end

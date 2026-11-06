@@ -44,7 +44,7 @@ module Operator
     # what the nb laws in law/prose.rb judge. Without them those two load,
     # prove their fixtures, and reach no file - law that reads as enforcement
     # and enforces nothing, which is the defect this repo names most often.
-    # RAILS/master joined 2026-09-07, and it is the primary product's face: a Rails
+    # MASTER/web joined 2026-09-07, and it is the primary product's face: a Rails
     # app, the WebGL runtime's five source parts, the chat surface. 164 tracked
     # source files that no census read - self_findings' list started at MASTER's
     # Ruby directories and web was never added, while law_audit reaches "a
@@ -57,7 +57,7 @@ module Operator
     # RAILS README explicitly forbids measuring brgen without them: doing so
     # silently drops the vertical code from this census.
     TREES = %w[
-      MASTER/lib MASTER/law MASTER/tools RAILS/master RAILS/__shared/lib OPENBSD
+      MASTER/lib MASTER/law MASTER/tools MASTER/web RAILS/__shared/lib OPENBSD
       RAILS/amber RAILS/brgen RAILS/brgen_dating RAILS/brgen_maps
       RAILS/brgen_marketplace RAILS/brgen_messenger RAILS/brgen_radio RAILS/bsdports
       RAILS/__shared/app RAILS/__shared/config
@@ -96,7 +96,7 @@ module Operator
     # public/. face.runtime.js opens "do not edit by hand" and is written by
     # assets:build_face_runtime from face.part1-5.txt; the three bundles are
     # esbuild output. Twelve thousand lines of generated JavaScript arrived here
-    # the day RAILS/master joined the corpus.
+    # the day MASTER/web joined the corpus.
     #
     # Read from Scan::PathFilter rather than copied. It is the scanner's own
     # skip list, so the two agreed only for as long as somebody edited both --

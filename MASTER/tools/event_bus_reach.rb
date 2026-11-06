@@ -12,7 +12,7 @@ module Operator
     MASTER = File.join(REPO, "MASTER")
     # The web face lives in RAILS; reports keep the "web/" prefix the topic
     # contract names it by.
-    WEB = File.join(REPO, "RAILS", "master")
+    WEB = File.join(REPO, "MASTER", "web")
 
     RUBY_GLOBS = %w[
       lib/**/*.rb

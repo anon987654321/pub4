@@ -680,7 +680,7 @@ module Master
           problems << "OPENBSD/bin/vps-deploy is missing or not executable" unless File.file?(vps_script) && !File.symlink?(vps_script) && File.executable?(vps_script)
         end
 
-        if @target_label == "RAILS/master" || @target_label.start_with?("RAILS/master/")
+        if @target_label == "MASTER/web" || @target_label.start_with?("MASTER/web/")
           inventory_path = File.join(@root, "OPENBSD", "deploy_inventory.json")
           if File.file?(inventory_path) && !File.symlink?(inventory_path)
             begin
@@ -810,7 +810,9 @@ module Master
         paths = inventory["records"].filter_map { |row| row[0] if row[1] == "file" }
         label = @target_label
         commands = []
-        if label == "MASTER" || label.start_with?("MASTER/")
+        if web_target?
+          commands.concat(web_test_commands(label, paths))
+        elsif label == "MASTER" || label.start_with?("MASTER/")
           tests = paths.any? { |path| path.start_with?("MASTER/test/") || path.start_with?("MASTER/tools/test/") }
           if tests && File.file?(File.join(@root, "MASTER", "Rakefile"))
             commands << { label: "MASTER rake test", argv: [RbConfig.ruby, "-S", "rake", "test"], chdir: File.join(@root, "MASTER") }
@@ -843,8 +845,16 @@ module Master
         commands
       end
 
+      # MASTER/web is a Rails app inside MASTER: its suite is bin/rails test, not MASTER's rake.
+      def web_test_commands(label, paths)
+        argv = [RbConfig.ruby, "bin/rails", "test"]
+        rails_app_test_targets(label, paths).map do |_name, app_dir|
+          { label: "MASTER/web bin/rails test", argv:, chdir: app_dir, env: { "RAILS_ENV" => "test" } }
+        end
+      end
+
       def rails_app_test_targets(label, paths)
-        return [] unless label == "RAILS" || label.start_with?("RAILS/")
+        return [] unless rails_target?
 
         app_names = []
         if label == "RAILS"
@@ -852,16 +862,15 @@ module Master
         elsif label == "RAILS/__shared" || label.start_with?("RAILS/__shared/")
           app_names = %w[amber brgen bsdports]
         else
-          name = label.delete_prefix("RAILS/").split("/", 2).first
-          app_names = [name]
+          app_names = [target_app_name]
         end
         app_names.filter_map do |name|
-          app_dir = File.join(@root, "RAILS", name)
+          app_dir = app_dir(name)
           test_path = File.join(app_dir, "test")
           rails_bin = File.join(app_dir, "bin", "rails")
           next unless File.directory?(test_path) && File.file?(rails_bin) && !File.symlink?(rails_bin)
           next unless label == "RAILS" || label == "RAILS/__shared" || label.start_with?("RAILS/__shared/") ||
-            paths.any? { |path| path.start_with?("RAILS/#{name}/") }
+            paths.any? { |path| path.start_with?("#{relative(app_dir)}/") }
 
           [name, app_dir]
         end
@@ -909,14 +918,14 @@ module Master
         app_names = if @target_label == "RAILS" || @target_label == "RAILS/__shared" || @target_label.start_with?("RAILS/__shared/")
                       %w[amber brgen bsdports]
                     else
-                      [@target_label.delete_prefix("RAILS/").split("/", 2).first]
+                      [target_app_name]
                     end
         app_targets = []
         failures = []
         unavailable = []
         checked = []
         app_names.each do |name|
-          app_dir = File.join(@root, "RAILS", name)
+          app_dir = app_dir(name)
           runner = File.join(app_dir, "bin", "rails")
           unless File.directory?(app_dir) && File.file?(runner) && !File.symlink?(runner)
             unavailable << "#{name}: Rails app directory or bin/rails launcher is unavailable"
@@ -1123,7 +1132,14 @@ module Master
         deadline - Process.clock_gettime(Process::CLOCK_MONOTONIC)
       end
 
-      def rails_target? = @target_label == "RAILS" || @target_label.start_with?("RAILS/")
+      def rails_target? = @target_label == "RAILS" || @target_label.start_with?("RAILS/") || web_target?
+
+      # MASTER/web is master's Rails app, registered in RAILS/apps.yml like the others.
+      def web_target? = @target_label == "MASTER/web" || @target_label.start_with?("MASTER/web/")
+
+      def target_app_name = web_target? ? "master" : @target_label.delete_prefix("RAILS/").split("/", 2).first
+
+      def app_dir(name) = File.join(@root, name == "master" ? "MASTER/web" : "RAILS/#{name}")
 
       # master's row in the deploy inventory must carry apps.yml's domain and port.
       def master_inventory_findings(inventory_path)
@@ -1147,8 +1163,8 @@ module Master
           label == "RAILS/__shared" || label.start_with?("RAILS/__shared/") ||
           label.start_with?("OPENBSD/")
 
-        match = label.match(%r{\ARAILS/([^/]+)})
-        match && app_names.map(&:to_s).include?(match[1]) ? [match[1]] : []
+        name = rails_target? && label != "RAILS" ? target_app_name : nil
+        name && app_names.map(&:to_s).include?(name) ? [name] : []
       end
 
       def relative(path)

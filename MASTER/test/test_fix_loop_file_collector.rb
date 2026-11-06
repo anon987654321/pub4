@@ -63,9 +63,9 @@ class TestFixLoopFileCollector < Minitest::Test
   def test_generated_and_vendored_paths_are_not_collected_for_fixing
     Dir.mktmpdir do |dir|
       authored = write(dir, "lib/thing.rb")
-      write(dir, "RAILS/master/public/face.runtime.js", "const a = 1;\n")
-      write(dir, "RAILS/master/public/three.face.module.js", "var b = 2;\n")
-      write(dir, "RAILS/master/public/face_vision.bundle.js", "const c = 3;\n")
+      write(dir, "MASTER/web/public/face.runtime.js", "const a = 1;\n")
+      write(dir, "MASTER/web/public/three.face.module.js", "var b = 2;\n")
+      write(dir, "MASTER/web/public/face_vision.bundle.js", "const c = 3;\n")
       write(dir, "reports/run.yml", "a: 1\n")
       write(dir, "vendor/gem/lib/dep.rb")
       init_repo(dir)
@@ -81,7 +81,7 @@ class TestFixLoopFileCollector < Minitest::Test
     Dir.mktmpdir do |dir|
       bus = FakeBus.new
       write(dir, "lib/thing.rb")
-      write(dir, "RAILS/master/public/face.runtime.js", "const a = 1;\n")
+      write(dir, "MASTER/web/public/face.runtime.js", "const a = 1;\n")
       init_repo(dir)
 
       collected = collector(dir, bus:).collect(dir)
@@ -93,7 +93,7 @@ class TestFixLoopFileCollector < Minitest::Test
       refute_empty skipped, "narrowing the fix input must be announced"
       # The fixture's sacred soul.yml is the second skip beside the generated bundle.
       assert_equal 2, skipped.first.last[:count]
-      assert_includes skipped.first.last[:sample], "RAILS/master/public/face.runtime.js"
+      assert_includes skipped.first.last[:sample], "MASTER/web/public/face.runtime.js"
       assert_equal 3, counted.candidate_count
       assert_equal({ "immutable" => 1, "scanner_path_filter" => 1 }, counted.skip_reasons)
     end
@@ -102,8 +102,8 @@ class TestFixLoopFileCollector < Minitest::Test
   def test_collector_and_scanner_agree_on_what_is_off_limits
     Dir.mktmpdir do |dir|
       %w[
-        RAILS/master/public/three.face.module.js
-        RAILS/master/public/face.runtime.js
+        MASTER/web/public/three.face.module.js
+        MASTER/web/public/face.runtime.js
         reports/run.yml
         vendor/gem/lib/dep.rb
         knowledge/note.md

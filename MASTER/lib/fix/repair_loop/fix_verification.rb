@@ -201,7 +201,7 @@ module Master
         # RAILS/brgen_radio/tv) and the shared engine have no bin/rails of their own; they
         # run inside brgen, which mounts them and whose suite already holds their tests.
         # Answers [app root, test path relative to it].
-        RAILS_FILE = %r{\A(?<rails>.+/RAILS)/(?<component>.+?)/app/(?<kind>[^/]+)/(?<rest>.+)\.rb\z}
+        RAILS_FILE = %r{\A(?<rails>.+/RAILS|.+/MASTER(?=/web/))/(?<component>.+?)/app/(?<kind>[^/]+)/(?<rest>.+)\.rb\z}
         MOUNTED_BY = "brgen"
 
         def self.rails_test_for(path)

@@ -88,7 +88,7 @@ end
 
 # Rails 8.2's HTML+ERB compiler is part of the framework baseline, so every
 # active Rails Gemfile gets the same direct check. The app list comes from
-# apps.yml; RAILS/master is the additional Rails surface outside that matrix.
+# apps.yml, each app at its deploy_root: master's is MASTER/web, outside RAILS.
 if profile == "full" || %w[1 true yes on].include?(ENV["CHECK_RAILS_DEEP"].to_s.strip.downcase)
   failures << "pwa_runtime" unless runner.run(
     "pwa runtime", Deploy::RubyRunner.check_ruby, "-e",
@@ -96,9 +96,9 @@ if profile == "full" || %w[1 true yes on].include?(ENV["CHECK_RAILS_DEEP"].to_s.
   )
 end
 
-rails_apps = YAML.safe_load_file(File.join(ROOT, "RAILS", "apps.yml")).fetch("apps").keys.map do |app|
-  File.join("RAILS", app)
-end + ["RAILS/master"]
+rails_apps = YAML.safe_load_file(File.join(ROOT, "RAILS", "apps.yml")).fetch("apps").map do |app, meta|
+  Hash(meta)["deploy_root"] || File.join("RAILS", app)
+end.uniq
 
 rails_apps.each do |app|
   env = LIVE_ENV.merge(

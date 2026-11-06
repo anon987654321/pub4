@@ -10,7 +10,7 @@ module Deploy
   class FrontendProductionCheck
     ROOT = File.expand_path("../../../..", __dir__)
     RAILS_ROOT = File.join(ROOT, "RAILS")
-    WEB_ROOT = File.join(ROOT, "RAILS", "master")
+    WEB_ROOT = File.join(ROOT, "MASTER", "web")
     APPS_YML = File.join(RAILS_ROOT, "apps.yml")
 
     def self.run
@@ -36,7 +36,7 @@ module Deploy
 
       web_layout_files.each do |path|
         result.checked!
-        check_layout(path).each { |issue| result.fail("RAILS/master #{File.basename(path)}: #{issue}") }
+        check_layout(path).each { |issue| result.fail("MASTER/web #{File.basename(path)}: #{issue}") }
       end
 
       check_master_web!(result)
@@ -109,29 +109,29 @@ module Deploy
         primer = File.join(WEB_ROOT, "public/face_primer.js")
         # The boot script is public/face_primer.js; the view hands it the face.js URL.
         body = view + (File.file?(primer) ? File.read(primer) : "")
-        result.fail("RAILS/master chat index: missing face asset path map") unless body.include?("MASTER_ASSET_PATHS")
+        result.fail("MASTER/web chat index: missing face asset path map") unless body.include?("MASTER_ASSET_PATHS")
         lazy_import = view.match?(/data-face-module="<%= FaceAssets\.versioned\(asset_path\("face\.js"\)/) &&
                       body.include?("import(FACE_MODULE)")
-        result.fail("RAILS/master chat index: missing lazy face import") unless lazy_import
-        result.fail("RAILS/master chat index: missing primer dismissal") unless body.include?("dismissPrimer")
+        result.fail("MASTER/web chat index: missing lazy face import") unless lazy_import
+        result.fail("MASTER/web chat index: missing primer dismissal") unless body.include?("dismissPrimer")
 
-        result.fail("RAILS/master chat index: missing prompt reveal") unless body.include?("revealPrompt")
-        result.fail("RAILS/master chat index: missing error-live wiring") unless body.include?("error-live")
-        result.fail("RAILS/master chat index: missing face boot watchdog") unless body.include?("fallback=setTimeout")
+        result.fail("MASTER/web chat index: missing prompt reveal") unless body.include?("revealPrompt")
+        result.fail("MASTER/web chat index: missing error-live wiring") unless body.include?("error-live")
+        result.fail("MASTER/web chat index: missing face boot watchdog") unless body.include?("fallback=setTimeout")
       else
-        result.fail("RAILS/master: missing chat index")
+        result.fail("MASTER/web: missing chat index")
       end
 
       face_runtime = File.join(WEB_ROOT, "public/face.runtime.js")
       face_runtime_task = File.join(WEB_ROOT, "lib/tasks/face_runtime.rake")
-      result.fail("RAILS/master: missing face.runtime.js (run rails assets:build_face_runtime)") unless File.file?(face_runtime)
-      result.fail("RAILS/master: missing face_runtime.rake") unless File.file?(face_runtime_task)
+      result.fail("MASTER/web: missing face.runtime.js (run rails assets:build_face_runtime)") unless File.file?(face_runtime)
+      result.fail("MASTER/web: missing face_runtime.rake") unless File.file?(face_runtime_task)
 
       [
         File.join(WEB_ROOT, "script/probe_face"),
         File.join(WEB_ROOT, "script/ci_web_probe"),
       ].each do |path|
-        result.fail("RAILS/master: missing #{File.basename(path)}") unless File.file?(path)
+        result.fail("MASTER/web: missing #{File.basename(path)}") unless File.file?(path)
       end
     end
   end

@@ -243,9 +243,9 @@ module Operator
     end
 
     def audit_master_face
-      source_path = "RAILS/master/styles/face/30_conversation.css"
-      chrome_path = "RAILS/master/styles/face/60_session_chrome.css"
-      public_path = "RAILS/master/public/face.css"
+      source_path = "MASTER/web/styles/face/30_conversation.css"
+      chrome_path = "MASTER/web/styles/face/60_session_chrome.css"
+      public_path = "MASTER/web/public/face.css"
       source = read(source_path)
       chrome = read(chrome_path)
       public_css = read(public_path)
@@ -269,7 +269,7 @@ module Operator
         message = status.success? ? "public/face.css matches the ordered editable source modules." :
           "Generated face CSS differs from source modules: #{(out + err).strip}"
         add(status.success? ? "PASS" : "FAIL", "master.face.generated_parity",
-            "RAILS/master/public/face.css", message)
+            "MASTER/web/public/face.css", message)
       else
         add("FAIL", "master.face.generated_parity", "MASTER/tools/rails/build_face_css.rb",
             "The canonical face CSS builder is missing.")
@@ -288,7 +288,7 @@ module Operator
         end
       end
 
-      chat_path = "RAILS/master/app/views/chat/index.html.erb"
+      chat_path = "MASTER/web/app/views/chat/index.html.erb"
       chat = read(chat_path)
       expect("landmark.master_chat", chat_path, chat, 'href="#prompt-input"',
              "MASTER chat must offer a skip link to its prompt.")

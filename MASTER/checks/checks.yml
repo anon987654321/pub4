@@ -100,7 +100,7 @@ baymard_ux:
 frontend_production:
   require: lib/source/frontend_production
   class: Deploy::FrontendProductionCheck
-  pass: "Frontend production check passed (%{apps} apps + RAILS/master layouts)."
+  pass: "Frontend production check passed (%{apps} apps + MASTER/web layouts)."
   covered_by: release
 
 generated_asset:
@@ -122,7 +122,7 @@ master_tts:
 master_web_assets:
   require: MASTER/lib/operator/checks
   class: Deploy::MasterWebAssetsCheck
-  pass: "RAILS/master assets check passed (%{assets} required assets present)."
+  pass: "MASTER/web assets check passed (%{assets} required assets present)."
   covered_by: production
 
 phantom_foreign_keys:

@@ -10,7 +10,7 @@ import { fileURLToPath } from "node:url";
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const publicDir = join(root, "public");
 const viewsDir = join(root, "app", "views");
-const railsRoot = join(root, "..");
+const railsRoot = join(root, "..", "..", "RAILS");
 // Face assets are declared in config/face_assets.yml and rendered from it, so
 // the view no longer spells their names. Read the manifest as text - Node has
 // no YAML parser and these are presence checks, not structural ones.
@@ -1249,7 +1249,7 @@ test("face preserves browser zoom and gives each shortcut one owner", () => {
 test("thinking face keeps the single composer ready beneath an ASCII spinner", () => {
   const part1 = readFileSync(join(publicDir, "face.part1.txt"), "utf8");
   const part5 = readFileSync(join(publicDir, "face.part5.txt"), "utf8");
-  const css = readFileSync(join(railsRoot, "master", "styles", "face", "30_conversation.css"), "utf8");
+  const css = readFileSync(join(root, "styles", "face", "30_conversation.css"), "utf8");
   const cliSpinner = readFileSync(join(root, "..", "..", "MASTER", "lib", "cli", "session", "thinking_indicator.rb"), "utf8");
 
   assert.ok(part1.includes("const STAR_FRAMES = ['|', '/', '-', '\\\\'];"));

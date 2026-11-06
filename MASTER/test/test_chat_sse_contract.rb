@@ -3,7 +3,7 @@
 require_relative "test_helper"
 
 class TestChatSseContract < Minitest::Test
-  WEB_ROOT = File.join(Master::ROOT, "..", "RAILS", "master")
+  WEB_ROOT = File.join(Master::ROOT, "..", "MASTER", "web")
 
   def test_chat_service_smoke_messages
     source = File.read(File.join(WEB_ROOT, "app", "services", "chat_service.rb"))

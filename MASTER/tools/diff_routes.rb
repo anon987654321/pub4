@@ -11,7 +11,7 @@
 # PATH_OWNERSHIP and prints what those rows promise. For the whole ladder use
 # `MASTER/bin/operator check`; for the smallest proof, the printed check.
 #
-#   ruby MASTER/tools/diff_routes.rb MASTER/law/css.rb RAILS/master/public/face.css
+#   ruby MASTER/tools/diff_routes.rb MASTER/law/css.rb MASTER/web/public/face.css
 #   ruby MASTER/tools/diff_routes.rb --diff            # working tree vs HEAD
 #   ruby MASTER/tools/diff_routes.rb --diff HEAD~1     # one commit back
 #   git diff --name-only origin/main | ruby MASTER/tools/diff_routes.rb --stdin
@@ -83,7 +83,7 @@ module Deploy
 
     # A diff prints repo-root paths (MASTER/law/css.rb); ownership rows are
     # written in MASTER-relative coordinates, with ../ for sibling trees and
-    # RAILS/master/ for the one RAILS subtree MASTER owns directly. A path is
+    # MASTER/web/ for the one RAILS subtree MASTER owns directly. A path is
     # tried in every coordinate it could plausibly be claimed under, most
     # literal first.
     def coordinates(path)

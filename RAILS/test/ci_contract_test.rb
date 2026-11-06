@@ -76,8 +76,9 @@ class CiContractTest < Minitest::Test
     assert_operator shared.index("db:test:prepare"), :<, shared.index("rails test"),
                    "shared CI prepares the test database after its suite"
 
-    %w[master mrdamascy].each do |app|
-      source = read(File.join(ROOT, app, "config", "ci.rb"))
+    app_dirs = { "master" => File.join(ROOT, "..", "MASTER", "web"), "mrdamascy" => File.join(ROOT, "mrdamascy") }
+    app_dirs.each do |app, dir|
+      source = read(File.join(dir, "config", "ci.rb"))
       assert_includes source, "db:test:prepare", "#{app}/config/ci.rb never prepares the test database"
       assert_operator source.index("db:test:prepare"), :<, source.index("rails test"),
                       "#{app}/config/ci.rb prepares the test database after its suite"

@@ -4,8 +4,8 @@ require "minitest/autorun"
 
 class FaceMusicStartupTest < Minitest::Test
   RAILS_ROOT = File.expand_path("..", __dir__)
-  MUSIC_PATH = File.join(RAILS_ROOT, "master", "public", "face_loops_music.js")
-  ACTIONS_PATH = File.join(RAILS_ROOT, "master", "public", "chat_actions.js")
+  MUSIC_PATH = File.join(RAILS_ROOT, "..", "MASTER", "web", "public", "face_loops_music.js")
+  ACTIONS_PATH = File.join(RAILS_ROOT, "..", "MASTER", "web", "public", "chat_actions.js")
 
   def music_source = File.read(MUSIC_PATH)
   def actions_source = File.read(ACTIONS_PATH)

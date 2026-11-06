@@ -60,7 +60,7 @@ class TestAiOrientation < Minitest::Test
           domain: ai.brgen.no
           port: #{MASTER_PORT}
           deploy_script: OPENBSD/bin/vps_deploy_master.sh
-          deploy_root: RAILS/master
+          deploy_root: MASTER/web
           public: true
     YAML
     File.write(File.join(@root, "OPENBSD", "RUNBOOK.md"), "edge runbook\n")

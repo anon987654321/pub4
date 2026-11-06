@@ -130,7 +130,7 @@ pens:
     rule: rhythm
     value: 13px
     sites:
-      - RAILS/master/public/chat_upload.css:30
+      - MASTER/web/public/chat_upload.css:30
     reason: >-
       (44 - 18) / 2 - how an 18px drawn square centres inside a 44px tap
       target. Both numbers are themselves law (--tap-min is 44), so 13px is
@@ -187,7 +187,7 @@ exemptions:
   # decides what the scanner actually skips.
   - id: no-inline-script-chat-face
     law: NO_INLINE_SCRIPT_BLOCK
-    surface: RAILS master chat face
+    surface: MASTER web chat face
     reason: >-
       Face chat needs its live behaviour beside the markup it stipples; the
       inline block was moved or excused with the reason stated in the law
@@ -198,7 +198,7 @@ exemptions:
 
   - id: no-inline-script-offline-and-406
     law: NO_INLINE_SCRIPT_BLOCK
-    surface: RAILS master offline page and 406 surface
+    surface: MASTER web offline page and 406 surface
     reason: >-
       Both surfaces must work without any external asset by design; their
       scripts are the fallback, not a bypass. Excused with reasons stated in

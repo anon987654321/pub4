@@ -394,9 +394,9 @@ class TestDocPaths < Minitest::Test
   # Both directions, because a predicate that answered true for everything would
   # switch this check off while reading exactly like a fix.
   def test_only_an_ignored_path_counts_as_generated
-    assert generated?("storage/", "RAILS/master/README.md"),
-           "RAILS/master/.gitignore names storage, so a clean checkout cannot be asked for it"
-    refute generated?("nowhere/", "RAILS/master/README.md"),
+    assert generated?("storage/", "MASTER/web/README.md"),
+           "MASTER/web/.gitignore names storage, so a clean checkout cannot be asked for it"
+    refute generated?("nowhere/", "MASTER/web/README.md"),
            "a path nothing ignores is a citation this check must still check"
     refute generated?("priv/ssh/id_ed25519_brgen.pub", "OPENBSD/RUNBOOK.md"),
            "the root reading of that path is ignored and the document's reading is not"

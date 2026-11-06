@@ -5,7 +5,10 @@
 CI.run do
   step "Setup", "bin/setup --skip-server"
   step "Security: Gem audit", "bundle exec bundler-audit check"
-  step "Style: RuboCop", "bundle exec rubocop"
+  # MASTER/.rubocop.yml excludes web/** for MASTER's own run, and RuboCop applies
+  # that parent exclusion here too: Gemfile, Rakefile, config.ru and falcon.rb went
+  # unlinted. This app lints under its own .rubocop.yml alone.
+  step "Style: RuboCop", "bundle exec rubocop --ignore-parent-exclusion"
   step "Security: Brakeman", "bundle exec brakeman --quiet --no-pager --exit-on-warn --exit-on-error"
   step "Node tests", "node --test test/*.test.mjs"
   step "Web CI probe", "ruby script/ci_web_probe"

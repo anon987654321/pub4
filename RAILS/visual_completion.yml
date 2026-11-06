@@ -4,7 +4,7 @@ schema: 1
 enabled: true
 target: RAILS
 exclude:
-  - RAILS/master
+  - MASTER/web
 # Spelled to match the law catalogue's actual IDs (MASTER/data/laws.yml):
 # TYPE_SCALE, LEADING and PIXEL_PERFECTION_RHYTHM never corresponded to a
 # real law_id, so a finding in those categories could never pass the

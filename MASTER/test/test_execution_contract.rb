@@ -190,7 +190,7 @@ class TestExecutionContract < Minitest::Test
         unchecked: ["browser unavailable"], conclusive: false
       ),
       id: "check-partial", subject: "web-contract", verifier: "check-runner",
-      scope: "RAILS/master"
+      scope: "MASTER/web"
     )
     inconclusive = Contract::VerificationResult.from_check_result(
       FakeCheckResult.new(outcome: :inconclusive, checks_ran: 0, unchecked: ["app not listening"]),
@@ -209,7 +209,7 @@ class TestExecutionContract < Minitest::Test
     assert_equal 12, partial.checked_count
     assert_equal 1, partial.warning_count
     assert_equal 1, partial.unchecked_count
-    assert_equal Digest::SHA256.hexdigest("RAILS/master"), partial.scope_digest
+    assert_equal Digest::SHA256.hexdigest("MASTER/web"), partial.scope_digest
     refute partial.conclusive?
 
     assert_equal :inconclusive, inconclusive.status

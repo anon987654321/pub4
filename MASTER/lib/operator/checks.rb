@@ -422,8 +422,8 @@ module Deploy
   class MasterWebAssetsCheck
     # The repository root: this file is MASTER/lib/operator/checks.rb.
     ROOT = File.expand_path("../../..", __dir__)
-    FACE_CSS = File.join(ROOT, "RAILS", "master", "public", "face.css")
-    WEB_ROOT = File.join(ROOT, "RAILS", "master")
+    FACE_CSS = File.join(ROOT, "MASTER", "web", "public", "face.css")
+    WEB_ROOT = File.join(ROOT, "MASTER", "web")
     ASSETS_DIR = File.join(WEB_ROOT, "public", "assets")
     MANIFEST = File.join(ASSETS_DIR, ".manifest.json")
     REQUIRED = %w[face.css face.js face.runtime.js chat.js three.face.module.js].freeze
@@ -474,7 +474,7 @@ module Deploy
     end
     private_class_method :check_manifest
 
-    # RAILS/master/public/assets is gitignored - precompile writes it, and only
+    # MASTER/web/public/assets is gitignored - precompile writes it, and only
     # where something has run precompile. So its absence means two different
     # things, and this reported the harsher one everywhere: on the deploy host
     # a missing manifest is a real broken deploy, but in a fresh clone or a
@@ -488,10 +488,10 @@ module Deploy
     # CHECK_STRICT_INCONCLUSIVE=1 still turns it into a failure.
     def self.check_manifest_missing(result)
       if DEPLOY_HOST_MARKERS.any? { |marker| File.exist?(marker) }
-        result.fail("missing #{MANIFEST} - run: cd RAILS/master && RAILS_ENV=production bundle exec rails assets:precompile")
+        result.fail("missing #{MANIFEST} - run: cd MASTER/web && RAILS_ENV=production bundle exec rails assets:precompile")
       else
-        result.inconclusive!("RAILS/master assets not precompiled in this checkout - " \
-                             "gitignored, so nothing to read until `cd RAILS/master && " \
+        result.inconclusive!("MASTER/web assets not precompiled in this checkout - " \
+                             "gitignored, so nothing to read until `cd MASTER/web && " \
                              "RAILS_ENV=production bundle exec rails assets:precompile` has run here")
       end
     end
@@ -525,7 +525,7 @@ module Deploy
           next
         end
 
-        result.fail("#{relative_path} must precompile RAILS/master assets") unless content.include?("assets:precompile")
+        result.fail("#{relative_path} must precompile MASTER/web assets") unless content.include?("assets:precompile")
         # Matched on the check name, not on a script path: the per-check scripts at
         # the RAILS root were shims, and every caller now names the check for
         # checks/runner.rb instead.
@@ -555,7 +555,7 @@ module Deploy
       end
 
       rc_content = File.read(rc_d)
-      result.fail("#{RC_D_MASTER} must precompile RAILS/master assets") unless rc_content.include?("assets:precompile")
+      result.fail("#{RC_D_MASTER} must precompile MASTER/web assets") unless rc_content.include?("assets:precompile")
       result.fail("#{RC_D_MASTER} must run the master_web_assets check") unless rc_content.include?("master_web_assets")
     end
     private_class_method :check_via_rc_d

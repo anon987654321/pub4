@@ -1465,8 +1465,8 @@
         }
       ],
       "focused_test_paths": [
-        "RAILS/master/test/face_boot.test.mjs",
-        "RAILS/master/test/primer_single_fire.test.mjs"
+        "MASTER/web/test/face_boot.test.mjs",
+        "MASTER/web/test/primer_single_fire.test.mjs"
       ]
     },
     {
@@ -1478,7 +1478,7 @@
       "evidence_paths": [
         "MASTER/bin/smoke-web",
         "TREE_CONTRACTS.md",
-        "RAILS/master/public/master_interaction_state.js"
+        "MASTER/web/public/master_interaction_state.js"
       ],
       "actions": [
         {
@@ -1563,8 +1563,8 @@
         }
       ],
       "focused_test_paths": [
-        "RAILS/master/test/chat_degraded_send.test.mjs",
-        "RAILS/master/test/sse_contract.test.mjs"
+        "MASTER/web/test/chat_degraded_send.test.mjs",
+        "MASTER/web/test/sse_contract.test.mjs"
       ]
     },
     {
@@ -1959,7 +1959,7 @@
         "RAILS/brgen/test/integration/authorization_matrix_test.rb",
         "RAILS/amber/test/integration/authorization_matrix_test.rb",
         "RAILS/bsdports/test/integration/authorization_matrix_test.rb",
-        "RAILS/master/test/face_boot.test.mjs"
+        "MASTER/web/test/face_boot.test.mjs"
       ]
     }
   ],

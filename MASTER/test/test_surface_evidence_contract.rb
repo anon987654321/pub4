@@ -49,7 +49,7 @@ class TestSurfaceEvidenceContract < Minitest::Test
     assert_equal "RAILS/apps.yml", inventory.fetch("generated_from")
     master = inventory.fetch("apps").find { |row| row.fetch("name") == "master" }
     assert_equal rails.dig("apps", "master", "port"), master.fetch("port")
-    assert_equal "RAILS/master", rails.dig("apps", "master", "deploy_root")
+    assert_equal "MASTER/web", rails.dig("apps", "master", "deploy_root")
     assert File.executable?(File.join(root, "OPENBSD", "bin", "vps-deploy"))
   end
 

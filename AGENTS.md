@@ -159,7 +159,7 @@ Break the dead thing. Do not break the user's trust.
 
 Shell commands obey the shell Laws in `laws.yml`. The runtime compatibility
 registry may still carry older command metadata; it does not override the
-normative Law statements. The tree contracts for RAILS, RAILS/master, and
+normative Law statements. The tree contracts for RAILS, MASTER/web, and
 OPENBSD live in `TREE_CONTRACTS.md` at the repo root; for STUDIO work,
 follow the project README and source-level contracts. Scoped documents
 never replace MASTER. On conflict, follow MASTER and name the stale or

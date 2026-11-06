@@ -91,7 +91,7 @@ module Master
       end
 
       def app_roots
-        app_names.to_h { |name| [name, File.join(@root, "RAILS", name)] }.tap do |rows|
+        app_names.to_h { |name| [name, RailsApp.app_dir(name, repo_root: @root)] }.tap do |rows|
           EngineRoots::PATHS.each do |name, dir|
             path = File.join(@root, "RAILS", dir)
             rows[name] = path if File.directory?(path)

@@ -22,7 +22,7 @@ module Operator
           "constitution" => file_state(%w[MASTER/data/laws.yml MASTER/data/soul.yml]),
           "model" => model_state(model),
           "voice" => ENV["MASTER_TTS_DEGRADED"] == "1" ? "degraded" : "available",
-          "web" => file_state(%w[RAILS/master/public/face.css]),
+          "web" => file_state(%w[MASTER/web/public/face.css]),
           "audio" => executable_state(%w[afplay termux-media-player pactl]),
           "rails" => tree_state("RAILS"),
           "openbsd" => tree_state("OPENBSD"),

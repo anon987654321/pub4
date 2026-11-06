@@ -358,7 +358,7 @@ FaceState and the existing frame clock.
 ## Additive stipple layer
 
 The browser stipple layer is a bounded rendering adapter, not a second face-state
-system. `RAILS/master/public/face_stipple_system.js` reads the nine profiles from
+system. `MASTER/web/public/face_stipple_system.js` reads the nine profiles from
 `MASTER_FACE_CONTRACT.stipple.profiles`, derives its starting point samples
 deterministically, and attaches the overlay through the existing face renderer.
 It does not own a second animation loop or replace the canonical FaceState,
@@ -380,7 +380,7 @@ and the text/ASCII recovery path. Do not layer a second point engine onto the
 page merely to claim the migration is complete.
 
 The focused regression contract is
-`node --test RAILS/master/test/face_stipple.test.mjs`. Browser acceptance remains
+`node --test MASTER/web/test/face_stipple.test.mjs`. Browser acceptance remains
 open until the default face, `?stipple=0`, and `?playground=1` have been captured
 at narrow and wide viewports with console output, point/FPS evidence and reduced
 motion enabled and disabled. The source test and a mocked shader test are not a
@@ -468,7 +468,7 @@ Stipple scene discovery follows a container's point children instead of requirin
 
 The primary face loop now routes animation decisions through the same reduced-motion resolver. The OS or page-level preference overrides a manual `full`/`crt` selection with the effective `battery` profile, while the chosen profile remains saved and is restored when the preference clears. Motion checks cover the star accent, shake, awareness, breathing, phosphor decay, adaptive render scaling and the double-tap profile cycle. The extracted particle adapter suppresses audio-driven and emotional particle spawns under reduced motion; phosphor trail capture is skipped; and the micro-interaction module no longer introduces a sinusoidal eye scan or duplicate timed breathing when reduced motion is enabled.
 
-`face.modules.bundle.js` has been refreshed from the current side-effect-only modules in `face_modules_entry.js`, with a source-set SHA-256 that matches those source files. `RAILS/master/script/build_face_modules.sh` prefers pinned esbuild output but has a deterministic source-assembly fallback for offline OpenBSD hosts; that fallback reproduces the committed bundle from the entry's declared import order. The script itself was not executable from this connected session, so run `rake assets:build_face_modules_bundle` on the target checkout and verify its actual exit status before release.
+`face.modules.bundle.js` has been refreshed from the current side-effect-only modules in `face_modules_entry.js`, with a source-set SHA-256 that matches those source files. `MASTER/web/script/build_face_modules.sh` prefers pinned esbuild output but has a deterministic source-assembly fallback for offline OpenBSD hosts; that fallback reproduces the committed bundle from the entry's declared import order. The script itself was not executable from this connected session, so run `rake assets:build_face_modules_bundle` on the target checkout and verify its actual exit status before release.
 The renderer adapter now exposes a bounded diagnostic snapshot through `MASTER_FACE_STIPPLE.snapshot()`: enabled/installed/visible state, context state, semantic mode, point count and ceiling, renderer-call count, a rolling 60-sample render-call interval window (mean, median, p95 and approximate calls per second), and relevant shader uniforms. The semantic section also reports the active force vocabulary, still-mode flag, raw continuous-dial readings, the effective dial adjustments, and the deterministic residual-carrier selection count against the live sample count. Residual identity is reported as retained even when the home-tether force is inactive in still mode; active distinguishes actual force from that static identity. Null or empty dial telemetry is shown as absent and leaves that dial at its token default. These intervals describe JavaScript render-call cadence, not GPU completion time or a validated FPS measurement. The opt-in `?playground=1` console includes an accessible refresh control for inspecting that snapshot. Its state selector derives from `MASTER_FACE_CONTRACT.state.modes` (with the same nine-state fallback for older shells) and routes changes through `MASTER_FACE_STATE.setMode()` when available, so the developer panel does not introduce a second state vocabulary or mutate the renderer as its primary state authority. Visibility and WebGL context events suppress the additive overlay while unavailable; `uninstall()` restores the wrapped render method when it still owns it, detaches the overlay and disposes its geometry/material.
 
 These source changes do not stop the underlying face renderer, prove WebGL context restoration on a real device, or replace the separately specified raw-WebGL renderer migration. Browser/GPU verification remains required. Regression coverage now includes one-pixel depth response, live dial modulation, static idle, pointer wake and neutral return, the shared 700 ms settle interval, deterministic residual identity, FaceWorld stillness, and hidden-tab frame recovery. The Node and Ruby runners have not been executed in this connected session, so these changes remain source-reviewed rather than test-verified.

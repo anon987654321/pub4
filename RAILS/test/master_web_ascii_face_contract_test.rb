@@ -9,7 +9,7 @@ require "yaml"
 # generated runtime digests, manifest order and shell typography in one place.
 class MasterWebAsciiFaceContractTest < Minitest::Test
   ROOT = File.expand_path("../..", __dir__)
-  WEB = File.join(ROOT, "RAILS", "master")
+  WEB = File.join(ROOT, "MASTER", "web")
   PUBLIC = File.join(WEB, "public")
   SOURCES = %w[face.part1.txt face.part2.txt face.part3.txt face_speech_runtime.js face_speech_playback.js face.part5.txt].freeze
 

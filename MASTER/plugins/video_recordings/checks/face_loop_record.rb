@@ -72,7 +72,7 @@ end.parse!
 abort "usage: --audio WAV --out MP4" unless options[:audio] && options[:out]
 abort "no such wav: #{options[:audio]}" unless File.file?(options[:audio])
 
-FFT_SIZE = 256          # analyser.fftSize in RAILS/master/public/face_speech_runtime.js
+FFT_SIZE = 256          # analyser.fftSize in MASTER/web/public/face_speech_runtime.js
 BINS = FFT_SIZE / 2     # analyser.frequencyBinCount
 FRAME_BYTES = FFT_SIZE + BINS
 MIN_DB = -100.0         # AnalyserNode defaults, which is what the face reads
@@ -218,8 +218,8 @@ puts "slice #{from}...#{to}: #{pending.size} to capture, #{(to - from) - pending
 
 # The page fetches the table rather than being handed it: two megabytes through
 # Runtime.evaluate is a two-megabyte JavaScript string to parse.
-public_dir = File.expand_path("../../../RAILS/master/public", __dir__)
-abort "no RAILS/master/public at #{public_dir}" unless File.directory?(public_dir)
+public_dir = File.expand_path("../../../MASTER/web/public", __dir__)
+abort "no MASTER/web/public at #{public_dir}" unless File.directory?(public_dir)
 
 envelope_path = File.join(public_dir, "loop_envelope.bin")
 if File.size?(envelope_path).to_i == frames * FRAME_BYTES

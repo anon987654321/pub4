@@ -7,7 +7,7 @@
 # silently stopped seeing part of the tree: 57 views fell out of four scanners
 # when brgen's verticals became mountable engines, 10 stylesheets and 1,406
 # lines sat outside every css_constitution ceiling for the same reason, and
-# 1,513 more lines joined them when RAILS/master did. Each was found by hand,
+# 1,513 more lines joined them when MASTER/web did. Each was found by hand,
 # late, from prose. This tool makes the census computable instead.
 #
 #   ruby MASTER/tools/coverage_reconciliation.rb

@@ -24,7 +24,7 @@ class FaceStateSpec < Minitest::Test
   end
 
   def test_face_state_classifies_runtime_status
-    source = read("../RAILS/master/public/face_state.js")
+    source = read("../MASTER/web/public/face_state.js")
     assert_includes source, "dataset.masterState"
     assert_includes source, "MODE_BUSY"
     assert_includes source, "MODE_FAIL"
@@ -38,7 +38,7 @@ class FaceStateSpec < Minitest::Test
   # The governor reads its limits from the face contract's spatial budget and keeps
   # 24 fps and 200 particles only as the fallback when the contract is absent.
   def test_visual_governor_is_quiet_and_freezes_only_on_explicit_signal
-    source = read("../RAILS/master/public/visual_governor.js")
+    source = read("../MASTER/web/public/visual_governor.js")
 
     assert_includes source, "window.MASTER_FACE_CONTRACT"
     assert_includes source, "Number(BUDGET.active_fps) || 24"

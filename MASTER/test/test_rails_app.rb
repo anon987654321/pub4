@@ -17,7 +17,7 @@ class TestRailsApp < Minitest::Test
     with_repository do |root|
       assert_equal "amber", RailsApp.app_name("RAILS/amber/app/models/item.rb", repo_root: root)
       assert_equal "brgen", RailsApp.app_name(File.join(root, "RAILS/brgen/Gemfile"), repo_root: root)
-      assert_nil RailsApp.app_name("RAILS/master/public/face.css", repo_root: root)
+      assert_nil RailsApp.app_name("MASTER/web/public/face.css", repo_root: root)
       assert_nil RailsApp.app_name("MASTER/lib/fix/rails_app.rb", repo_root: root)
     end
   end
@@ -26,7 +26,7 @@ class TestRailsApp < Minitest::Test
     with_repository do |root|
       assert RailsApp.app_root?("RAILS/amber", repo_root: root)
       refute RailsApp.app_root?("RAILS/amber/app", repo_root: root)
-      refute RailsApp.app_root?("RAILS/master", repo_root: root)
+      refute RailsApp.app_root?("MASTER/web", repo_root: root)
       FileUtils.rm_rf(File.join(root, "RAILS/brgen"))
       refute RailsApp.app_root?("RAILS/brgen", repo_root: root)
     end

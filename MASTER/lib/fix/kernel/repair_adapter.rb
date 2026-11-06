@@ -595,7 +595,7 @@ module Master
 
         def visual_source?(path)
           VISUAL_EXTENSIONS.include?(File.extname(path).downcase) &&
-            path.to_s.include?("/RAILS/") && !path.to_s.include?("/RAILS/master/")
+            path.to_s.include?("/RAILS/")
         end
 
         # The gate each apply-time refusal is counted under in the pass summary.

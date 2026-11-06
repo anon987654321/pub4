@@ -10,7 +10,7 @@ class BootFsmSpec < Minitest::Test
   end
 
   def test_boot_fsm_defines_states_and_transitions
-    source = read("../RAILS/master/public/boot_fsm.js")
+    source = read("../MASTER/web/public/boot_fsm.js")
 
     %w[INIT PRIMER ASSETS FACE VOICE READY RECOVERING ERROR].each do |state|
       assert_includes source, state
@@ -21,7 +21,7 @@ class BootFsmSpec < Minitest::Test
   end
 
   def test_boot_fsm_exposes_master_namespace
-    source = read("../RAILS/master/public/boot_fsm.js")
+    source = read("../MASTER/web/public/boot_fsm.js")
 
     assert_includes source, "window.MASTER = window.MASTER || {}"
     assert_includes source, "window.MASTER.boot = api"
@@ -29,8 +29,8 @@ class BootFsmSpec < Minitest::Test
   end
 
   def test_chat_index_loads_boot_fsm_before_primer_boot
-    index = read("../RAILS/master/app/views/chat/index.html.erb")
-    primer = read("../RAILS/master/public/face_primer.js")
+    index = read("../MASTER/web/app/views/chat/index.html.erb")
+    primer = read("../MASTER/web/public/face_primer.js")
     fsm_idx = index.index('asset_path("boot_fsm.js")')
     boot_idx = index.index('asset_path("face_primer.js")')
 
@@ -43,15 +43,15 @@ class BootFsmSpec < Minitest::Test
   end
 
   def test_container_check_signals_boot_fsm
-    source = read("../RAILS/master/public/container_check.js")
+    source = read("../MASTER/web/public/container_check.js")
 
     assert_includes source, 'MASTER?.boot?.signal?.("container_ready"'
     assert_includes source, 'MASTER?.boot?.transition?.("RECOVERING"'
   end
 
   def test_face_runtime_signals_boot_fsm_on_face_and_voice
-    part1 = read("../RAILS/master/public/face.part1.txt")
-    part5 = read("../RAILS/master/public/face.part5.txt")
+    part1 = read("../MASTER/web/public/face.part1.txt")
+    part5 = read("../MASTER/web/public/face.part5.txt")
 
     assert_includes part1, "MASTER?.boot?.signal?.('face_ready'"
     assert_includes part1, "MASTER?.boot?.signal?.('renderer_failed'"

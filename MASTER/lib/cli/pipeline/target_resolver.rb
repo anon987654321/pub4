@@ -66,8 +66,8 @@ module Master
           return "all four trees" if abs == Master::REPO_ROOT
           return "master" if abs == @root
           return "rails" if abs == Master::RAILS_ROOT
-          return "face" if abs == File.join(Master::RAILS_ROOT, "master", "public")
-          return "web" if abs == File.join(Master::RAILS_ROOT, "master")
+          return "face" if abs == File.join(Master::ROOT, "web", "public")
+          return "web" if abs == File.join(Master::ROOT, "web")
           if abs.start_with?("#{Master::RAILS_ROOT}/")
             return "rails/#{abs.delete_prefix("#{Master::RAILS_ROOT}/")}"
           end
@@ -86,8 +86,8 @@ module Master
             "." => @root,
             "rails" => Master::RAILS_ROOT,
             "RAILS" => Master::RAILS_ROOT,
-            "face" => File.join(Master::RAILS_ROOT, "master", "public"),
-            "web" => File.join(Master::RAILS_ROOT, "master"),
+            "face" => File.join(Master::ROOT, "web", "public"),
+            "web" => File.join(Master::ROOT, "web"),
           }
         end
       end

@@ -110,7 +110,7 @@ class TestRepairLoopPolicy < Minitest::Test
     assert loop.send(:visual_source?, "/repo/RAILS/brgen/app/assets/stylesheets/application.scss")
     assert loop.send(:visual_source?, "/repo/RAILS/brgen/app/views/home/index.html.erb")
     refute loop.send(:visual_source?, "/repo/RAILS/brgen/app/models/post.rb")
-    refute loop.send(:visual_source?, "/repo/RAILS/master/public/face.css")
+    refute loop.send(:visual_source?, "/repo/MASTER/web/public/face.css")
   end
 
   # apply passed `encoding:` to write_atomic, which takes no such keyword, so

@@ -8,7 +8,7 @@ require_relative "../tools/diff_routes"
 
 # Every coordinate form PATH_OWNERSHIP.yml actually uses gets a row here:
 # exact file, directory prefix, shell glob, the ../ sibling form, the
-# RAILS/master/ form, MASTER/ stripping for diff output, and specificity
+# MASTER/web/ form, MASTER/ stripping for diff output, and specificity
 # (lib/cognition/ over lib/). The gap case is asserted as a gap, never a
 # guess - that is the tool's one honesty promise.
 class TestDiffRoutes < Minitest::Test
@@ -18,7 +18,7 @@ class TestDiffRoutes < Minitest::Test
     "lib/cognition/" => { "purpose" => "cognition layer", "risk" => "high", "check" => "bin/check --profile=agent" },
     "loop*.gif" => { "purpose" => "loop animation", "risk" => "low", "check" => "bin/check" },
     "../OPENBSD/lib/zshrc.shared" => { "purpose" => "prompt contract", "risk" => "low", "check" => "ruby OPENBSD/test/test_operator_prompt_contract.rb" },
-    "RAILS/master/" => { "purpose" => "master face", "risk" => "critical", "check" => "bin/check --profile=web" },
+    "MASTER/web/" => { "purpose" => "master face", "risk" => "critical", "check" => "bin/check --profile=web" },
   }.freeze
 
   def setup
@@ -70,9 +70,9 @@ class TestDiffRoutes < Minitest::Test
   end
 
   def test_rails_master_row_matches_its_subtree
-    out = routes("RAILS/master/public/face.css")
+    out = routes("MASTER/web/public/face.css")
 
-    assert_match(%r{owner RAILS/master/ \(critical\)}, out)
+    assert_match(%r{owner MASTER/web/ \(critical\)}, out)
   end
 
   def test_unowned_path_is_a_gap_and_names_the_file

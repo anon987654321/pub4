@@ -311,7 +311,7 @@ Law.define(:PROBE_BEFORE_SHIP) do
     pin one immutable SHA before release preflight. Required CI and preflight
     attestations must name that exact SHA, every deploy phase must use it, and
     the receipt must record it. A missing, stale or different attestation blocks
-    release. After an OPENBSD/ or RAILS/master/ edit, run bin/probe integrity
+    release. After an OPENBSD/ or MASTER/web/ edit, run bin/probe integrity
     before declaring done. An unrun measurement is INCONCLUSIVE, never PASS.
   TEXT
   fix "pin one SHA, prove that exact revision, deploy only it, record its receipt, and run the owning integrity probe."
@@ -333,7 +333,7 @@ end
 Law.define(:RESTART_RAILS) do
   source "MASTER constitution (soul.yml absolute.rules)"
   practice <<~TEXT
-    one file, one restart. After a RAILS/master, live lib/ or data YAML deploy,
+    one file, one restart. After a MASTER/web, live lib/ or data YAML deploy,
     restart and wait before curling. Never batch web edits behind a single
     restart at the end.
   TEXT

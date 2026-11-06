@@ -1,6 +1,6 @@
 # Tree contracts
 
-The one tree-contract file for pub4. RAILS, RAILS/master, and OPENBSD keep
+The one tree-contract file for pub4. RAILS, MASTER/web, and OPENBSD keep
 their sharp edges here; STUDIO reads its project READMEs. The harness doors
 at the repo root route here. The content moved out of the per-tree
 `CLAUDE.md` files; git history holds the originals.
@@ -171,7 +171,7 @@ rendered token values come from `MASTER/data/tokens.yml` through
 `Operator::MasterDesign`. Do not duplicate palettes, rhythm scales, or
 viewport values in app code.
 
-## RAILS/master
+## MASTER/web
 
 Written 2026-07-10 after a live debugging session that traced a "tap to
 continue does nothing" bug through the full stack to a production asset
@@ -373,7 +373,7 @@ failure as success.
 morphology, rasterises and lights it on the CPU, and draws characters on
 `#face` with a 2D context. The Ruby renderer and browser renderer share the
 fixture `MASTER/test/fixtures/face_ascii_frames.json`;
-`RAILS/master/test/face_ascii.test.mjs` holds browser frames to it character
+`MASTER/web/test/face_ascii.test.mjs` holds browser frames to it character
 for character. `face_2d_fallback.js` draws the same head at rest on its own
 canvas until the runtime takes over. The primary 3D head remains a single
 crisp point-cloud surface: one-pixel points, neutral grayscale depth and
@@ -513,7 +513,7 @@ you the truth - don't work around it, find out what's actually missing.
 - `RAILS/apps.yml` registers master beside brgen, amber and bsdports, with
   its port and domain. It is not a copy-tree app:
   `zsh OPENBSD/bin/vps-deploy master` runs `OPENBSD/bin/vps_deploy_master.sh`,
-  which pulls and restarts it in place under `/home/dev/pub4/RAILS/master`.
+  which pulls and restarts it in place under `/home/dev/pub4/MASTER/web`.
 - `rcctl restart master` runs a real `rc_pre()`: kills stale processes,
   regenerates the face bundles if missing, precompiles assets if a content
   digest changed, runs the check above, then starts Falcon and waits for `/up`
@@ -868,6 +868,6 @@ landing is reverted with a commit, not rewritten away.
 `snapshot_*.md` stay untracked by the same rule.
 
 **Vendorables trend out of git.** The ML binaries under
-`RAILS/master/public/` (~28 MB: onnxruntime WASM, smart-turn model,
+`MASTER/web/public/` (~28 MB: onnxruntime WASM, smart-turn model,
 face mask, webfonts) are the remaining weight; prefer fetching at
 deploy time with checksums before ever considering LFS.

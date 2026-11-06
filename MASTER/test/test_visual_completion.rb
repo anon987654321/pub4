@@ -23,9 +23,9 @@ class TestVisualCompletion < Minitest::Test
 
     assert completion.enabled_for_target?(root: repo, target: "RAILS")
     refute completion.enabled_for_target?(root: repo, target: "RAILS/brgen"), "multi-app campaign requires the full Rails target"
-    refute completion.enabled_for_target?(root: repo, target: "RAILS/master")
+    refute completion.enabled_for_target?(root: repo, target: "MASTER/web")
     refute completion.enabled_for_target?(root: repo, target: "OPENBSD")
-    refute completion.enabled_for_path?(root: repo, path: File.join(repo, "RAILS/master/public/face.css"))
+    refute completion.enabled_for_path?(root: repo, path: File.join(repo, "MASTER/web/public/face.css"))
     refute completion.enabled_for_path?(root: repo, path: File.join(repo, "RAILS/brgen/app/models/post.rb"))
     refute completion.enabled_for_path?(root: repo, path: File.join(repo, "RAILS/__shared/app/assets/stylesheets/_dialect_tokens.scss"))
   end
@@ -47,7 +47,7 @@ class TestVisualCompletion < Minitest::Test
     assert_equal Master::Gap::OPERATOR_DECISION,
                  blocking.gap_for("CONTRAST_TOKENS", root: repo, path:, custody: AuthorizedCustody.new)
     assert_equal Master::Gap::OPERATOR_DECISION,
-                 blocking.gap_for("TYPE_HIERARCHY", root: repo, path: File.join(repo, "RAILS/master/public/face.css"),
+                 blocking.gap_for("TYPE_HIERARCHY", root: repo, path: File.join(repo, "MASTER/web/public/face.css"),
                                   custody: AuthorizedCustody.new)
   end
 

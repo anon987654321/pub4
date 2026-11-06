@@ -100,7 +100,7 @@ metadata.each do |app, expected|
   end
 
   # master is not a copy-tree app, so none of the _deploy.sh contract below is
-  # asked of it: vps_deploy_master.sh pulls and restarts RAILS/master in place,
+  # asked of it: vps_deploy_master.sh pulls and restarts MASTER/web in place,
   # and its human entry is its TREE_CONTRACTS.md section, which must name that script.
   if app == "master"
     contract = Deploy::Inventory.new(root: ROOT).tree_contract(deploy_root).to_s

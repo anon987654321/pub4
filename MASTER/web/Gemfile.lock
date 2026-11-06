@@ -103,7 +103,7 @@ GIT
       zeitwerk (~> 2.6)
 
 PATH
-  remote: ../../MASTER
+  remote: ..
   specs:
     master (1.0.3)
       diffy (~> 3.4)

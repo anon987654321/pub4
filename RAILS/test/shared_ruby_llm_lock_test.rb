@@ -12,7 +12,7 @@ class SharedRubyLlmLockTest < Minitest::Test
     "RAILS/amber" => ["RAILS/amber/Gemfile.lock", SHARED_SPEC],
     "RAILS/brgen" => ["RAILS/brgen/Gemfile.lock", SHARED_SPEC],
     "RAILS/bsdports" => ["RAILS/bsdports/Gemfile.lock", SHARED_SPEC],
-    "RAILS/master" => ["RAILS/master/Gemfile.lock", MASTER_SPEC],
+    "MASTER/web" => ["MASTER/web/Gemfile.lock", MASTER_SPEC],
   }.freeze
 
   def test_every_runtime_lock_satisfies_its_ruby_llm_requirement

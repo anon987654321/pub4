@@ -5,8 +5,8 @@ module Master
     # Runtime exposure report. Distinct from /doctor (keys, disk, git): this
     # answers whether the public face can reach personal tools without pairing.
     module SecurityAudit
-      CHAT = "../RAILS/master/app/controllers/chat_controller.rb"
-      APP = "../RAILS/master/app/controllers/application_controller.rb"
+      CHAT = "../MASTER/web/app/controllers/chat_controller.rb"
+      APP = "../MASTER/web/app/controllers/application_controller.rb"
       REGISTRY = "lib/review/llm_dispatcher/tool_registry.rb"
       GITIGNORE = File.join(Master::ROOT, ".gitignore")
 
@@ -67,7 +67,7 @@ module Master
 
       def visitor_fiber_set
         app = source(APP)
-        svc = File.read(File.join(Master::ROOT, "../RAILS/master/app/services/chat_service.rb"))
+        svc = File.read(File.join(Master::ROOT, "../MASTER/web/app/services/chat_service.rb"))
         ok = app.include?("Fiber[:master_visitor]") && svc.include?("Fiber[:master_visitor]")
         Check.new(ok:, name: "visitor-fiber", detail: ok ? "web sets Fiber[:master_visitor]" : "visitor fiber not set")
       end
@@ -86,7 +86,7 @@ module Master
 
       def pairing_fiber_cleared
         app = source(APP)
-        svc = File.read(File.join(Master::ROOT, "../RAILS/master/app/services/chat_service.rb"))
+        svc = File.read(File.join(Master::ROOT, "../MASTER/web/app/services/chat_service.rb"))
         ok = app.include?("Fiber[:master_paired] = nil") && svc.include?("Fiber[:master_paired] = nil")
         Check.new(ok:, name: "paired-fiber-clear", detail: ok ? "paired flag cleared after turn" : "paired flag leak")
       end

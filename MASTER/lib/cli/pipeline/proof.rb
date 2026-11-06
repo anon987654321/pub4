@@ -239,7 +239,7 @@ module Master
         # The pass's root is MASTER, so git.paths_since never lists a RAILS file; the app proof
         # reads what changed from the repository root.
         def rails_repair_paths
-          @repair_before ? Array(repo_git.paths_since(@repair_before)).grep(%r{\ARAILS/}) : []
+          @repair_before ? Array(repo_git.paths_since(@repair_before)).grep(%r{\A(?:RAILS|MASTER/web)/}) : []
         end
 
         # A whole-MASTER pass proves with the tests that name what it changed when it has what was red

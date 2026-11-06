@@ -955,7 +955,7 @@ legacy_cli_reviews:
       - "8c6f9be76341"
     value: "Legacy three.js face modules: state, renderer, shaders, pixel diff, point renderer and offscreen ecology."
     disposition: "retired-by-consolidation"
-    current_mapping: "RAILS/master/public/face_world.js and MASTER/FACE_WORLD.md preserve the canonical face state, repository geometry, semantic camera and renderer contract."
+    current_mapping: "MASTER/web/public/face_world.js and MASTER/FACE_WORLD.md preserve the canonical face state, repository geometry, semantic camera and renderer contract."
     reason: "Git history explicitly records each legacy module as dead or obsolete; the current FaceWorld is the consolidated successor."
 
 master_json_v43_review:
@@ -1020,7 +1020,7 @@ legacy_capability_reviews:
         disposition: "partial; recover individual useful commands only when demanded by current MASTER workflow"
       - capability: "UniversalScraper"
         historical_behavior: "Ferrum navigation, screenshots, deep same-domain crawl, page-structure analysis and link extraction."
-        current_mapping: "MASTER/lib/io/web_fetch.rb plus MASTER/tools/rails/crawl_browser.rb and RAILS/master/script/browser_probe_support.rb provide bounded fetch/browser verification, not a general scraper service."
+        current_mapping: "MASTER/lib/io/web_fetch.rb plus MASTER/tools/rails/crawl_browser.rb and MASTER/web/script/browser_probe_support.rb provide bounded fetch/browser verification, not a general scraper service."
         disposition: "partial; no class-level restore"
     retired:
       - capability: "WeaviateIntegration"

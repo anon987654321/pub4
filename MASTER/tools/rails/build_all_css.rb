@@ -190,7 +190,7 @@ def verify_build(app, out)
 end
 
 def verify_face_css
-  path = File.join(ROOT, "RAILS", "master", "public", "face.css")
+  path = File.join(ROOT, "MASTER", "web", "public", "face.css")
   return [] unless File.file?(path)
 
   body = File.read(path, encoding: "UTF-8")
@@ -205,7 +205,7 @@ def verify_face_css
     "JetBrainsMono Nerd Font",
     DesignTokens.family_tokens_block,
   ].reject { |m| body.include?(m) }
-  missing.map { |m| "RAILS/master face.css missing #{m}" }
+  missing.map { |m| "MASTER/web face.css missing #{m}" }
 end
 
 check_only = ARGV.include?("--check")
