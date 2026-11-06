@@ -51,7 +51,7 @@ read -r confirm
 # at the top of this file: a failing chown exited the script on its own line,
 # so the message under it had never printed once and the two blocks after it
 # never ran. Every one of these handlers was unreachable. A command in an
-# if-condition is the one place set -e stands aside - which is why the failure
+# if-condition is the one place set -e stands aside — which is why the failure
 # arms below say what failed and then carry on to the next block, as the
 # original clearly intended.
 #

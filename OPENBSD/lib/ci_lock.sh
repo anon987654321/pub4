@@ -1,10 +1,10 @@
-# POSIX sh - sourced by zsh and sh callers alike.
+# POSIX sh — sourced by zsh and sh callers alike.
 #
 # The one definition of the pub4 CI mutex path, and the safe way to create it.
 #
 # It used to live at /var/tmp/pub4-ci.lock, created by
 #   doas sh -c "touch /var/tmp/pub4-ci.lock; chmod 666 /var/tmp/pub4-ci.lock"
-# - a fixed, predictable path in a world-writable directory, chmod'ed by root
+# — a fixed, predictable path in a world-writable directory, chmod'ed by root
 # with no -h/-P (the old backlog:
 # secrets_in_process_argv_and_world_readable_home). Any local account could
 # pre-plant a symlink at that name and redirect the root chmod onto a file of its
@@ -12,7 +12,7 @@
 # the path root then chmod'ed.
 #
 # The fix is the directory, not the flags. /var/db/pub4 is root-owned and 0755, so
-# an unprivileged account cannot create anything inside it - there is no symlink to
+# an unprivileged account cannot create anything inside it — there is no symlink to
 # follow. That also lets the mode drop from 666 to 644.
 #
 # Three scripts held their own copy of the path (vps_ci.sh, vps_master_scan.sh,
@@ -38,14 +38,14 @@ pub4_ci_lock_path() {
 
 # Creates the directory root-owned, then the lock file dev-owned. The lock file is
 # never removed here: a holder may have it open, and unlinking it would let a
-# second holder open a fresh inode and run concurrently - the one thing a mutex
+# second holder open a fresh inode and run concurrently — the one thing a mutex
 # exists to prevent.
 #
 # The lock itself is taken by OPENBSD/bin/with-ci-lock and Operator::CiGuard, both
 # flock(2). OpenBSD has neither lockf(1) nor flock(1), so no shell script here can
 # take the lock with a command; vps_master_scan.sh once tried and never ran.
 #
-# Note what this function does and does not do. It ENSURES the file - creates it
+# Note what this function does and does not do. It ENSURES the file — creates it
 # with the right owner and mode. It does not lock anything. vps_ci.sh calls it
 # and prints "sync + mutex + load check"; the mutex in that sentence is the one
 # bin/ci takes through CiGuard, on this same path since 2026-08-14. Before that

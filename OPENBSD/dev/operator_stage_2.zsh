@@ -116,10 +116,10 @@ bootstrap_rails_app() {
   [[ -f /etc/${app}.env ]] || print -r -- "SECRET_KEY_BASE=${secret}" > /etc/${app}.env
   # root:<app> 640, not root:wheel: the rc.d script sources /etc/<app>.env at
   # runtime *as the app user* (su -l resets the environment, so the secret cannot
-  # be interpolated into daemon_flags without landing in falcon's ps(1) argv -
+  # be interpolated into daemon_flags without landing in falcon's ps(1) argv —
   # readable by any local account; see rc.d/<app> and the old backlog
   # secrets_in_process_argv). Group-<app> lets only that app (and root) read it,
-  # so a foothold in another app user - or dev, which is in wheel - can no longer
+  # so a foothold in another app user — or dev, which is in wheel — can no longer
   # read this secret at rest.
   chown root:${app} /etc/${app}.env 2>/dev/null || true
   chmod 640 /etc/${app}.env 2>/dev/null || true
@@ -134,7 +134,7 @@ bootstrap_rails_app() {
     _rc=${_rc//brgen/${app}}
     print -r -- "${_rc//38182/${port}}" > /etc/rc.d/${svc}
   fi
-  # 555, the mode brgen, amber and bsdports already carry on vm23 - see
+  # 555, the mode brgen, amber and bsdports already carry on vm23 — see
   # install_root_configs for why this repo's rc.d scripts are read-only and
   # OpenBSD's own are not. 755 here would flatten that on the next app install.
   chmod 555 /etc/rc.d/${svc}
@@ -171,9 +171,9 @@ configure_relayd() {
   for dom in ${(k)DOMAIN_BACKEND}; do
     [[ -f /etc/ssl/${dom}.fullchain.pem ]] || continue
     ln -sf /etc/ssl/${dom}.fullchain.pem /etc/ssl/${dom}.crt
-    # Primary domain: key is the real file, not a symlink - nothing to do.
+    # Primary domain: key is the real file, not a symlink — nothing to do.
   done
-  # Subdomains share the parent cert+key - create both symlinks so relayd
+  # Subdomains share the parent cert+key — create both symlinks so relayd
   # tls keypair finds /etc/ssl/${dom}.crt AND /etc/ssl/private/${dom}.key.
   # Skip only domains that have their own fullchain.pem (handled above).
   # Use -sf so existing .crt symlinks don't prevent missing .key from being created.

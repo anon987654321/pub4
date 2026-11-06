@@ -9,8 +9,8 @@ require "open3"
 # shared checkout and the accidents CLAUDE.md calls trap one, and until now
 # nothing proved they still refuse anything. They are prose about prose: a hook
 # that stopped firing would look exactly like a tree in which nobody made the
-# mistake, and the mistakes they were written for - a cross-tree `git commit -a`,
-# a push carrying four other sessions' commits, a move that half-landed - all
+# mistake, and the mistakes they were written for — a cross-tree `git commit -a`,
+# a push carrying four other sessions' commits, a move that half-landed — all
 # happened in the week before the hooks existed, so there is no shortage of
 # evidence about what silence costs.
 #

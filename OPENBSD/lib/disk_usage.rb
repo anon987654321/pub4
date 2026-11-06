@@ -5,7 +5,7 @@ module Deploy
   #
   # Nothing on the box watched either. A full /home stops every SQLite write the
   # apps make and the deploy's copy-tree extraction with it, and inodes run out
-  # first on a tree of small files - which a Rails checkout and its asset
+  # first on a tree of small files — which a Rails checkout and its asset
   # builds are. The failure it prevents looks like a database error, not a disk.
   #
   # Reads `df -ik`, whose header names the columns on OpenBSD and macOS alike, so

@@ -1,7 +1,7 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
-# config-drift-check - relayd/acme SAN drift, NSD zone omissions, DNSSEC zonefile paths.
+# config-drift-check — relayd/acme SAN drift, NSD zone omissions, DNSSEC zonefile paths.
 # Install: cp to /usr/local/bin/config-drift-check && chmod 755
 # Cron: */15 * * * * /usr/local/bin/config-drift-check >> /var/log/config_drift.log 2>&1
 
@@ -12,7 +12,7 @@ require "open3"
 # doas.conf over /etc/doas.conf every 15 minutes) was removed: it was root code
 # execution from a dev-owned tree and reverted any hand-hardening of the live
 # file. doas policy is installed only by OPERATOR.sh now. This job stays a
-# read-only drift *detector* - it must never write privileged config. See
+# read-only drift *detector* — it must never write privileged config. See
 # the old backlog root_dot_sources_dev_owned_repo and stale_ci_cleanup.ksh.
 
 failures = []
@@ -21,7 +21,7 @@ failures = []
 # encoding defaults to US-ASCII, and the first regex over a config file with a
 # non-ASCII character in a comment raises "invalid byte sequence in US-ASCII" and
 # takes the whole check down. That surfaced the day this job started running at
-# all - it had been failing at exec for months on cron's PATH - and the trigger
+# all — it had been failing at exec for months on cron's PATH — and the trigger
 # was an em dash in a relayd.conf comment written the same afternoon. Same fault
 # as OPENBSD/bin/render_dns.rb, and RAILS/test/integrity_locale_test.rb pins the
 # shape of it for the integrity check.
@@ -31,7 +31,7 @@ rescue Errno::ENOENT
   nil
 rescue Errno::EACCES
   # An unreadable nsd.conf or relayd.conf read as empty would report "no zones"
-  # and "no hosts" - a clean bill of health from a check that saw nothing. As
+  # and "no hosts" — a clean bill of health from a check that saw nothing. As
   # dev that is every run, so say what it needs instead.
   warn "config-drift: cannot read #{path} - this check needs root (doas /usr/local/bin/config-drift-check)"
   exit 2
@@ -45,7 +45,7 @@ hosts = relayd_conf.scan(/match request header "Host" value "([^"]+)"/).flatten.
 sans  = acme_conf.scan(/"([a-z0-9.*-]+\.[a-z]{2,})"/i).flatten.uniq.sort
 
 # An explicit Host route is not how most of these reach a backend, and demanding
-# one produced 404 failures the first time this check ever ran - one per SAN
+# one produced 404 failures the first time this check ever ran — one per SAN
 # without a `match request header "Host"` line, which is nearly all of them.
 #
 # relayd.conf ends with a bare `pass`, so any host that matches no rule falls
@@ -53,7 +53,7 @@ sans  = acme_conf.scan(/"([a-z0-9.*-]+\.[a-z]{2,})"/i).flatten.uniq.sort
 # city apex serve on a `tls keypair` line alone, with no per-host rule to add. The
 # explicit routes exist only to send amber, ai and bsdports somewhere other than
 # <brgen>. So the real drift is a SAN with no route AND no fallthrough to catch
-# it - and if the fallthrough is ever removed, this check turns back on by itself.
+# it — and if the fallthrough is ever removed, this check turns back on by itself.
 fallthrough = relayd_conf.match?(/^\s*pass\s*$/)
 
 sans.each do |host|
@@ -63,7 +63,7 @@ end
 
 # The keypair is the thing a city cannot serve without, fallthrough or not. Every
 # apex we hold a certificate for must have one, or it completes the TCP
-# connection on 443 and then refuses the handshake - which a browser reports as
+# connection on 443 and then refuses the handshake — which a browser reports as
 # an attack rather than as a missing site. Five cities sat like that until
 # 2026-08-12.
 keypairs = relayd_conf.scan(/tls keypair "([^"]+)"/).flatten.uniq

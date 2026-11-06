@@ -10,7 +10,7 @@
 # four commits another session had told its user were still local. On 2026-08-12
 # a session's debt write-up was committed by a different session under a message
 # about something else, and that session's own commit body says it was "carrying
-# a four-line path correction from another session" - it carried rather more.
+# a four-line path correction from another session" — it carried rather more.
 #
 # This hook cannot tell sessions apart. Nothing in git can: everything commits as
 # the same author, and paths do not identify a session either. What it can do is
@@ -60,7 +60,7 @@ end
 # silently skips untracked files, so the commit records the delete and the
 # replacement stays behind on one machine. On 2026-08-21 exactly this shipped
 # a MASTER tree missing Ground::SqliteStore and a brgen card rendering a
-# partial that did not exist in git - every local suite green, the pushed
+# partial that did not exist in git — every local suite green, the pushed
 # tree broken. The pair is refused, not warned: the warning above printed
 # both files that day and was scrolled past.
 untracked = paths("ls-files", "--others", "--exclude-standard")

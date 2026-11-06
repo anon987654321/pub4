@@ -15,7 +15,7 @@ require_relative "../checks/config_drift_check"
 # `etc/crontab.vm23:97` has named /usr/local/bin/vps_weekly_integrity.sh for
 # weeks; the box has no such line and no such file, and the weekly integrity pass
 # has never run. Every file the check compared matched, so it said clean and meant
-# it - it was comparing the wrong thing.
+# it — it was comparing the wrong thing.
 class ConfigDriftCheckCrontabTest < Minitest::Test
   REPO = <<~CRON
     # a comment, and a blank line follow

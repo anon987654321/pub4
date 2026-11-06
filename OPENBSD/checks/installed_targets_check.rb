@@ -8,20 +8,20 @@
 # install_root_configs copies etc/, usr/ and var/ from the repo, and the script
 # lives at OPENBSD/checks/config_drift_check.rb, outside usr/local/bin/. So the guard was
 # false on every run and the check had never executed. Live had been hand-edited
-# to run it out of /home/dev/pub4 instead - root executing a file the dev user
+# to run it out of /home/dev/pub4 instead — root executing a file the dev user
 # can rewrite, every morning.
 #
 # Both halves of that were invisible for the same reason: a guard, its target,
 # and the thing that installs the target are three separate facts, and nothing
-# compared them. This compares them, from the repo, with no box required - which
+# compared them. This compares them, from the repo, with no box required — which
 # is the point. A check that only runs on vm23 cannot fail a pull request.
 #
 # It reads what the box runs: crontab, the periodic scripts, every rc.d service,
-# and every script the repo itself installs under /usr/local - resource_guard.sh
+# and every script the repo itself installs under /usr/local — resource_guard.sh
 # calls its crisis tier at /usr/local/bin/emergency_cpu.sh and dot-sources
 # /usr/local/libexec/stale_ci_cleanup.ksh, and a script is as much a referrer as
 # a crontab line. It pulls out each /usr/local/{bin,libexec} path they name and
-# asks whether the repo provides it - either as a tracked file under
+# asks whether the repo provides it — either as a tracked file under
 # OPENBSD/usr/local/ (install_root_configs copies the tree) or through an
 # explicit `install` line in OPERATOR.sh.
 #
@@ -42,8 +42,8 @@ module Deploy
 
     CONFIG_GLOBS = ["etc/crontab*", "etc/*.local", "etc/rc.d/*"].freeze
     SHIPPED_GLOB = "usr/local/{bin,libexec}/*"
-    # A name that runs on into a slash is a directory named in prose - the
-    # /usr/local/bin/lib/ that config_drift_check.rb explains away - not a target.
+    # A name that runs on into a slash is a directory named in prose — the
+    # /usr/local/bin/lib/ that config_drift_check.rb explains away — not a target.
     TARGET = %r{/usr/local/(bin|libexec)/([A-Za-z0-9_.-]+)(?![A-Za-z0-9_./-])}
     INSTALL_LINE = %r{install\s[^\n]*?/usr/local/(bin|libexec)/([A-Za-z0-9_.-]+)}
     INSTALL_SOURCE = %r{install\s[^\n]*?"\$\{SCRIPT_DIR\}/([A-Za-z0-9_./-]+)"}
@@ -70,7 +70,7 @@ module Deploy
     end
 
     # The config that names a path, and every script the repo puts under
-    # /usr/local - including the ones OPERATOR.sh installs from the tree root.
+    # /usr/local — including the ones OPERATOR.sh installs from the tree root.
     def referrers
       config = CONFIG_GLOBS.flat_map { |glob| Dir.glob(File.join(root, glob)) }
       installed = operator.scan(INSTALL_SOURCE).flatten.map { |name| File.join(root, name) }

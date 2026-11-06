@@ -3,11 +3,11 @@
 # Source for functions, or run: ksh validate_doas.ksh check|install SRC [tag]
 
 # A canary from doas.conf's setenv allowlist. The dev rule dropped `keepenv` for a
-# `setenv { ... }` list, and the old check could not see the difference: `doas id` keeps
+# `setenv { … }` list, and the old check could not see the difference: `doas id` keeps
 # working perfectly with an empty or wrong allowlist, so the rollback net covered the
 # lockout case and not the case the change actually risks. A lost variable would then
 # surface as OPERATOR.sh refusing --stage-1 with a confusing "rerun with
-# I_UNDERSTAND_DNS_WIPE=1" - half an hour after the config that broke it landed.
+# I_UNDERSTAND_DNS_WIPE=1" — half an hour after the config that broke it landed.
 
 # set -e and pipefail: a failed step inside a manual deploy used to continue
 # to the next one, and with only set -e a failed `sysctl | awk` yields an empty
@@ -80,7 +80,7 @@ install_doas_conf_from_repo() {
   backup="$bakdir/doas.conf.$(date +%s).bak"
   [[ -f /etc/doas.conf ]] && cp /etc/doas.conf "$backup"
 
-  # The staging file was /tmp/doas.conf.install.$$ - a PID-predictable name in a
+  # The staging file was /tmp/doas.conf.install.$$ — a PID-predictable name in a
   # world-writable directory, written and copied by root with no -h/-P
   # (the old backlog: root_dot_sources_dev_owned_repo_every_5min). Winning that
   # race let a local account decide what root wrote into /etc/doas.conf, which is

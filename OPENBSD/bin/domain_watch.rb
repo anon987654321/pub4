@@ -4,7 +4,7 @@
 # Which of our domains are still ours, and which have gone.
 #
 # amstrdam.nl was registered to us and served Amsterdam. It lapsed, dropped, and
-# was re-registered by someone else on 2026-05-18 - GoDaddy, Cloudflare
+# was re-registered by someone else on 2026-05-18 — GoDaddy, Cloudflare
 # nameservers, 301 to an unrelated site. Nobody noticed for 81 days, because
 # nothing was watching. lndon.uk dropped the same way. Four .uk domains sit in
 # Nominet's grace window right now.
@@ -19,14 +19,14 @@
 #   ruby OPENBSD/bin/domain_watch.rb --tls      # what the public sees at every relayd host
 #
 # Every lookup is bounded in Ruby rather than by /usr/bin/timeout, which does
-# not exist on macOS - so --update ran only on vm23, and the snapshot went
+# not exist on macOS — so --update ran only on vm23, and the snapshot went
 # three weeks stale while the expiry guard read from it. A watcher whose
 # refresh needs a different machine than the operator is sitting at is a
 # watcher that reports last month.
 #
 # whois is rate-limited and several registries refuse queries from unknown
 # clients. Anything we cannot determine is reported "unknown" and never counted
-# as healthy - a monitor that reports green on a failed lookup is worse than none.
+# as healthy — a monitor that reports green on a failed lookup is worse than none.
 
 require "date"
 require "json"
@@ -90,7 +90,7 @@ module Deploy
     #
     # Killing the group rather than the pid matters because whois(1) on some
     # systems re-execs for a referral, and a bare kill leaves the child holding
-    # the pipe open - the read never ends and the timeout never lands.
+    # the pipe open — the read never ends and the timeout never lands.
     TIMEOUT_S = 15
 
     def capture_bounded(*argv, seconds: TIMEOUT_S)
@@ -123,7 +123,7 @@ module Deploy
       argv << domain
 
       # No shell, so a zone name out of the DNS policy is an argument and not a
-      # command. The bound is capture_bounded's, in Ruby - an unqualified
+      # command. The bound is capture_bounded's, in Ruby — an unqualified
       # `timeout` was a cron PATH bug this tree has already shipped, and naming
       # /usr/bin/timeout instead traded that for a macOS the tool cannot run on.
       out = capture_bounded(*argv)
@@ -131,7 +131,7 @@ module Deploy
 
       # A referral answer describes the TLD, not the name. Without this, .us and
       # .org queries returned the registry's own record and every domain looked
-      # registered since 1985-02-15 - the date the .us TLD was created, reported
+      # registered since 1985-02-15 — the date the .us TLD was created, reported
       # as if it were the domain's. Require the response to name the domain
       # itself before believing anything it says about registration.
       unless out.downcase.include?(domain.downcase) || out.match?(AVAILABLE)
@@ -145,7 +145,7 @@ module Deploy
           "state" => "registered",
           # Ordered most-specific first. A bare "Created:" also appears in the
           # registry's own trailing record, which is how bsdports.org reported
-          # 1985-01-01 - the .org TLD's birthday, not the domain's.
+          # 1985-01-01 — the .org TLD's birthday, not the domain's.
           "created" => out[/Creation Date[.\s]*:\s*(\S+)/i, 1] ||
                        out[/Registered on[.\s]*:\s*(\S+)/i, 1] ||
                        out[/Created[.\s]*:\s*(\S+)/i, 1],
@@ -341,7 +341,7 @@ module Deploy
     # An expiry date is not a warning until something reads it.
     #
     # The snapshot has carried "expires" since it was written, and nothing ever
-    # compared it to today - compare() only noticed a domain going from
+    # compared it to today — compare() only noticed a domain going from
     # registered to available, which is the state it reaches after it is too late
     # to renew. On 2026-08-12 the committed file said cardff.uk and edinbrgh.uk
     # expired the following day, denvr.us the same day, and four .uk domains had
@@ -352,7 +352,7 @@ module Deploy
     EXPIRY_WARN_DAYS = 45
 
     # `13-Aug-2026` from Nominet, `2026-08-13T11:20:09Z` from the .us/.com
-    # registries, and nothing at all from Norid - .no whois publishes no expiry,
+    # registries, and nothing at all from Norid — .no whois publishes no expiry,
     # so brgen.no and the three other .no cities cannot be watched this way and
     # are not silently counted as fine.
     def days_until(value)

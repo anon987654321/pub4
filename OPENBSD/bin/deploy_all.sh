@@ -12,8 +12,8 @@
 #   zsh OPENBSD/bin/deploy_all.sh --per-app   # also run the canonical vps-deploy once per app
 #
 # Host, login and key come from lib/ssh_vm23.sh, the one copy of them:
-# SSH_HOST is the host alone and SSH_USER the login, so `SSH_HOST=dev@...` yields
-# dev@dev@... and every ssh fails.
+# SSH_HOST is the host alone and SSH_USER the login, so `SSH_HOST=dev@…` yields
+# dev@dev@… and every ssh fails.
 set -euo pipefail
 
 # DEPLOY_ROOT is OPENBSD/, the parent of this bin/: deploy_inventory.json lives

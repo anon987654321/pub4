@@ -9,7 +9,7 @@ require "open3"
 
 # vps-deploy is the entrypoint for every production deploy and had no test.
 #
-# Running it is not an option - it deploys - so this reads the source for the
+# Running it is not an option — it deploys — so this reads the source for the
 # three things it promises that a reader cannot otherwise check: that the fleet
 # it deploys is the fleet apps.yml declares, that the order which makes the pass
 # survive its own side effects is still that order, and that it refuses to run as

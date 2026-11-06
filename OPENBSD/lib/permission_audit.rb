@@ -18,7 +18,7 @@ module Deploy
   module PermissionAudit
     module_function
 
-    # entries: [{ path:, mode:, owner: }] - mode as File::Stat#mode, owner as a
+    # entries: [{ path:, mode:, owner: }] — mode as File::Stat#mode, owner as a
     # user name. Returns failure lines.
     def failures(secrets:, private_dirs:, daemon_logs:, daemon_user:)
       lines = []

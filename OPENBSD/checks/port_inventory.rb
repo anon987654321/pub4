@@ -34,8 +34,8 @@ module Deploy
     #
     # A file naming one port is using a number; a file naming the whole fleet is
     # a second inventory, and this repo has shipped the failure that follows
-    # from an unchecked one. The rule is not "do not restate the ports" - five
-    # of these must restate them to do their job - it is that restating them
+    # from an unchecked one. The rule is not "do not restate the ports" — five
+    # of these must restate them to do their job — it is that restating them
     # without being checked against apps.yml is what fails. So each row below is
     # either machine-checked by a method in this class, or carries the reason it
     # cannot be. A new fleet inventory that appears in neither fails the check.
@@ -74,8 +74,8 @@ module Deploy
     # Files that must not name a retired app outside a comment: the scripts and
     # tooling that run, and the config files a retired app leaves itself in. Every
     # entry is a live file; the retired thing is the name. On 2026-08-12, two months after
-    # the repo recorded baibl and blognet removed - apps, relayd, acme, nsd,
-    # litestream, rc.d, inventories - vm23 still had both users, both home
+    # the repo recorded baibl and blognet removed — apps, relayd, acme, nsd,
+    # litestream, rc.d, inventories — vm23 still had both users, both home
     # directories, both rc.d scripts, both /etc/*.env files, both login classes,
     # both certificate symlinks, both DNS zones, and blognet in litestream.yml.
     # The config half of this list is where those leftovers lived.
@@ -131,7 +131,7 @@ module Deploy
     # relayd is the only one of these mirrors that carries live traffic, and it
     # was the only one nothing checked. Changing a port in apps.yml updates the
     # deploy script, OPERATOR.sh, deploy_inventory.json, the README and the
-    # Workbox list - all five verified above - while relayd keeps forwarding to
+    # Workbox list — all five verified above — while relayd keeps forwarding to
     # the old number. The check passes, the deploy succeeds, rcctl reports the
     # app running, and the site serves 502 from the one file no check read.
     def check_relayd_ports(result, apps)
@@ -232,7 +232,7 @@ module Deploy
     # almost all of it node_modules and asset builds inside the three app trees.
     # --others is what makes the check catch a new inventory on the run before it
     # is committed rather than the run after. Falls back to the glob where there
-    # is no git - the copy-tree on vm23 is not a checkout.
+    # is no git — the copy-tree on vm23 is not a checkout.
     def fleet_scan_paths
       tracked = IO.popen(
         ["git", "-C", ROOT, "ls-files", "-z", "--cached", "--others", "--exclude-standard"],

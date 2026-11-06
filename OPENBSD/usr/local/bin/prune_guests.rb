@@ -4,7 +4,7 @@
 #
 # The first attempt at this called the job straight from daily.local and relied
 # on Rails.logger. brgen's production logger does not write to stdout, so the
-# 2026-08-14 01:30 run left not one line about brgen in /tmp/prune-guests.out -
+# 2026-08-14 01:30 run left not one line about brgen in /tmp/prune-guests.out —
 # only amber's, because amber's logger is configured differently. From the log
 # there was no way to tell whether brgen had pruned 20,000 rows, pruned none, or
 # crashed before it started. The count answered it later: none.

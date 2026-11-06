@@ -1,5 +1,5 @@
 #!/usr/bin/env zsh
-# Run all active Rails app CIs serially on vm23 - never parallel.
+# Run all active Rails app CIs serially on vm23 — never parallel.
 # Usage: zsh OPENBSD/bin/vps_ci_all.sh      (PUB4_CI_MAX_LOAD=4 waits while load is higher)
 set -euo pipefail
 
@@ -18,7 +18,7 @@ apps=(${(f)"$("$RUBY" -r"${repo}/OPENBSD/lib/deploy_inventory" \
 (( ${#apps} )) || { print -u2 "vps_ci_all: no apps read from ${repo}/RAILS/apps.yml"; exit 1 }
 max_load=${PUB4_CI_MAX_LOAD:-4}
 
-# The 5-minute average, and one ruby rather than two awks per tick - the same
+# The 5-minute average, and one ruby rather than two awks per tick — the same
 # shape vps_master_scan.sh uses, for the same two reasons: awk is banned in
 # committed scripts here, and one process both reads the figure and decides on
 # it, so there is no window where the value read is not the value compared.
@@ -40,7 +40,7 @@ wait_for_load() {
 }
 
 # master is skipped: vps_ci.sh and pub4-admin ci-sync run CI in a copy-tree under
-# /home/<app>/app, and master has none - it runs in place under MASTER/web, so
+# /home/<app>/app, and master has none — it runs in place under MASTER/web, so
 # its bin/ci runs from the checkout (MASTER/tools/rails/premerge.rb), not here.
 for app in $apps; do
   [[ $app == master ]] && continue

@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# brgen IRC bridge gateway. NOT enabled by default - see RAILS/brgen/IRC_BRIDGE.md
+# brgen IRC bridge gateway. NOT enabled by default — see RAILS/brgen/IRC_BRIDGE.md
 # for the go-live checklist (pf listener port, rc.conf.local pkg_scripts, optional
 # TLS 6697 via relayd). Binds 127.0.0.1:6667 by default; expose it deliberately
 # by putting IRC_HOST in /etc/brgen.env.

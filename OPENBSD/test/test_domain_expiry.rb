@@ -3,7 +3,7 @@
 # Domains expire silently and the site stops.
 #
 # amstrdam.nl served Amsterdam, lapsed, dropped, and was re-registered by someone
-# else on 2026-05-18 - noticed 81 days later, by accident. lndon.uk went the same
+# else on 2026-05-18 — noticed 81 days later, by accident. lndon.uk went the same
 # way. On 2026-08-07 bsdports.org, a live production site, was 24 hours from
 # expiry and nothing in this repo knew.
 #
@@ -13,7 +13,7 @@
 #   ruby OPENBSD/bin/domain_watch.rb --update
 #
 # It fails on a domain past expiry or inside the warning window, and on a domain
-# whose creation date moved - that is what "someone else registered it" looks
+# whose creation date moved — that is what "someone else registered it" looks
 # like in whois.
 
 require "minitest/autorun"
@@ -108,7 +108,7 @@ class TestDomainExpiry < Minitest::Test
 
   # A lookup must be bounded and must not go through a shell. This asserted a
   # source spelling naming /usr/bin/timeout instead, which held the tool to a
-  # binary macOS does not have - so --update ran only on vm23 and the snapshot
+  # binary macOS does not have — so --update ran only on vm23 and the snapshot
   # this suite reads went three weeks stale. The behaviour was right and the
   # check was measuring how it was written.
   #
@@ -118,7 +118,7 @@ class TestDomainExpiry < Minitest::Test
   def test_a_lookup_is_bounded_and_never_goes_through_a_shell
     source = File.read(File.expand_path("../bin/domain_watch.rb", __dir__))
     # Code only. The first draft of this matched a backtick inside the comment
-    # explaining why backticks are wrong - the instrument reading its own
+    # explaining why backticks are wrong — the instrument reading its own
     # documentation and reporting it as the defect.
     code = source.lines.reject { |line| line.strip.start_with?("#") }.join
 

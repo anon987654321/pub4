@@ -35,7 +35,7 @@ command -v deploy_status >/dev/null 2>&1 || deploy_status() { :; }
 export PUB4_CI_GUARD=1
 export PUB4_RAILS_ROOT=${PUB4_RAILS_ROOT:-$repo/RAILS}
 
-# Path and safe creation live in OPENBSD/lib/ci_lock.sh - the lock moved out of
+# Path and safe creation live in OPENBSD/lib/ci_lock.sh — the lock moved out of
 # world-writable /var/tmp, where root was chmod'ing a caller-chosen, symlinkable path.
 . "${repo}/OPENBSD/lib/ci_lock.sh"
 
@@ -58,8 +58,8 @@ unaccounted_tracked_files() {
   for rel in $tracked; do
     top=${${rel#RAILS/$app/}%%/*}
     [[ -n $top ]] || continue
-    # A synced entry may be a subpath - vendor/javascript covers vendor's only
-    # tracked content - so a top-level name counts as accounted when any synced
+    # A synced entry may be a subpath — vendor/javascript covers vendor's only
+    # tracked content — so a top-level name counts as accounted when any synced
     # path is it or descends from it. Without this the check reports `vendor`,
     # which is the accounting being wrong rather than the sync.
     (( ${synced[(Ie)$top]} )) && continue
@@ -67,7 +67,7 @@ unaccounted_tracked_files() {
     # is no match, so it is safe bare; (r) yields the matched VALUE, and a search
     # that matches nothing is an unset parameter, which nounset makes fatal. This
     # aborted every deploy's CI step with "synced[(r)$top/*]: parameter not set"
-    # - the guard erroring rather than the thing it guards.
+    # — the guard erroring rather than the thing it guards.
     [[ -n ${synced[(r)$top/*]:-} ]] && continue
     (( ${kept[(Ie)$top]} )) && continue
     [[ $top == *.sh || $top == *.md ]] && continue

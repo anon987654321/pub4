@@ -8,8 +8,8 @@ require_relative "../checks/solid_queue_proof"
 
 # The check exists so an app whose jobs never run cannot deploy green. It used to
 # assert a registered SolidQueue::Process, which vm23 deliberately does not have
-# - rc.d/<app>_jobs is disabled at boot and drain-jobs.sh runs the queue hourly
-# instead - so every Rails deploy stamped failed while the app was healthy, and
+# — rc.d/<app>_jobs is disabled at boot and drain-jobs.sh runs the queue hourly
+# instead — so every Rails deploy stamped failed while the app was healthy, and
 # `vps-deploy all` could never get past brgen.
 #
 # Both halves are pinned here. Widening a check is only safe if the failure it
@@ -85,7 +85,7 @@ class SolidQueueProofTest < Minitest::Test
   end
 
   # A line whose app column happens to contain the name must not match on a
-  # substring - "amber" is not "amberapp".
+  # substring — "amber" is not "amberapp".
   def test_the_app_column_matches_exactly
     with_log("2026-08-18T02:08:07Z amberapp nothing due (ahead=0 failed=0)\n") do |path|
       refute P.drain_recent?("amber", now: Time.parse("2026-08-18T02:30:00Z"), log_path: path)
@@ -108,7 +108,7 @@ class SolidQueueProofTest < Minitest::Test
   end
 
   # Three, not one, so "no resident worker" is distinguishable from
-  # "misconfigured" - the distinction the old script could not make.
+  # "misconfigured" — the distinction the old script could not make.
   def test_the_runner_reports_no_worker_separately_from_misconfiguration
     src = P.runner_source("amber", 15)
 

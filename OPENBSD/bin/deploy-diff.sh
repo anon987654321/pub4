@@ -1,5 +1,5 @@
 #!/usr/bin/env zsh
-# deploy-diff.sh - how vm23 differs from OPENBSD/, read-only, from a workstation.
+# deploy-diff.sh — how vm23 differs from OPENBSD/, read-only, from a workstation.
 #
 # Usage:
 #   zsh OPENBSD/bin/deploy-diff.sh
@@ -14,7 +14,7 @@
 #
 # SSH_HOST here is login@host in one string, which is how config_drift_check.rb
 # reads it too. OPENBSD/lib/ssh_vm23.sh gives the same name the opposite meaning
-# - host alone, with SSH_USER beside it - so never export one for the other.
+# — host alone, with SSH_USER beside it — so never export one for the other.
 
 set -euo pipefail
 

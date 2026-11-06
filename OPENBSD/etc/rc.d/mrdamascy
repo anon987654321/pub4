@@ -1,5 +1,5 @@
 #!/bin/ksh
-# mrdamascy - the Mr. Damascy ordering PWA, served as the mrd.brgen.no demo.
+# mrdamascy — the Mr. Damascy ordering PWA, served as the mrd.brgen.no demo.
 # One Puma process (single mode, no cluster), three threads, nothing else resident:
 # the app enqueues no jobs, so there is no mrdamascy_jobs and no Solid Queue
 # supervisor in this process. Vipps, Stripe and Wolt run in their mock modes
@@ -101,7 +101,7 @@ rc=$?
 if [[ "$1" = "start" ]] || [[ "$1" = "restart" ]]; then
   if [[ "$rc" = "0" ]]; then
     # relayd can keep routing to the old (now-dead) backend connection after a
-    # restart until it's kicked - same fix already used by MASTER's rc.d script.
+    # restart until it's kicked — same fix already used by MASTER's rc.d script.
     _i=0
     _up_ok=0
     while [[ "$_i" -lt 300 ]]; do

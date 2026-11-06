@@ -1,5 +1,5 @@
 #!/usr/bin/env zsh
-# Serial VPS deploy entrypoint - sync, CI, restart, health, deploy stamp.
+# Serial VPS deploy entrypoint — sync, CI, restart, health, deploy stamp.
 # Usage: zsh OPENBSD/bin/vps-deploy all|brgen|amber|bsdports|mrdamascy|master
 set -euo pipefail
 
@@ -35,7 +35,7 @@ esac
 # no GitHub host key by design, and a root checkout would leave root-owned files
 # in the dev tree. Service control calls the broker directly when uid 0.
 #
-# doas strips the caller environment (the dev rule has no keepenv - intentional,
+# doas strips the caller environment (the dev rule has no keepenv — intentional,
 # so RUBYOPT and friends cannot cross the privilege boundary). Re-exec through
 # /usr/bin/env with a prefix allowlist (VPS_DEPLOY_*, PUB4_DEPLOY_*, plus PUB4_ROOT,
 # SKIP_CI, I_UNDERSTAND_FAST_DEPLOY) so pin, preflight, canary and logging
@@ -72,7 +72,7 @@ DEPLOY_HOME=${VPS_DEPLOY_HOME:-/home/$DEPLOY_USER}
 # the checkout. Always su: root may change to DEPLOY_USER without a doas rule.
 run_as_deploy_user() {
   # Root may su to DEPLOY_USER without a doas rule. Avoid doas -u: the box
-  # only permits dev->root and root->root by default.
+  # only permits dev→root and root→root by default.
   local snippet=$1
   su -s /bin/sh "$DEPLOY_USER" -c "$snippet"
 }
@@ -688,7 +688,7 @@ fi
 # not see it and a typed list leaves it behind. Naming the four here makes the
 # set a definition rather than a habit.
 #
-# Order is load-bearing. Every deploy sheds amber and bsdports - they go to
+# Order is load-bearing. Every deploy sheds amber and bsdports — they go to
 # rcctl failed with their ports closed while TLS keeps answering, so the outage
 # reads as a hang rather than a 5xx and nothing reports it. Deploying those two
 # last folds the restore into the same pass instead of leaving a window where
@@ -741,7 +741,7 @@ if [[ $app == all ]]; then
     # when run alone. The load is the pass's own wake, so the pass should wait
     # for it rather than hand the bill to whichever app is next.
     #
-    # CiGuard waits on load too, so this is the cheap half - a fixed pause costs
+    # CiGuard waits on load too, so this is the cheap half — a fixed pause costs
     # a minute and avoids most of the waiting the guard would otherwise do.
     if (( ! first )); then
       print "vps-deploy: all - settling for ${PUB4_DEPLOY_COOLDOWN:-60}s before $one"
@@ -849,12 +849,12 @@ keep_deploy_flag
 # What is about to be deployed, against what is actually running.
 #
 # The check compares OPENBSD/etc byte-for-byte with live /etc and root's crontab
-# with etc/crontab.vm23. A deploy is exactly when that matters - it is the moment
+# with etc/crontab.vm23. A deploy is exactly when that matters — it is the moment
 # the repo becomes the box.
 #
 # Advisory, not blocking, and deliberately so. Measured 2026-09-10 with
 # `SSH_HOST=dev@brgen.no ruby OPENBSD/checks/config_drift_check.rb --remote`: eight files
-# differ and two more are absent from the box entirely - emergency_cpu.sh, which
+# differ and two more are absent from the box entirely — emergency_cpu.sh, which
 # is resource_guard's crisis tier, and vps_weekly_integrity.sh, which the crontab
 # has scheduled for weeks. A hard check here would refuse every deploy until an
 # OPERATOR.sh run nobody has scheduled, and one of the eight is rc.d/master, which
@@ -886,7 +886,7 @@ else
   #
   # vm23 is 1 GB. brgen_jobs holds ~380 MB resident and brgen's suite is 896
   # tests: on 2026-08-23 the runner was OOM-killed mid-suite with swap at 898 MB
-  # of 1264, and the failure is silent in the worst way - 155 dots, no summary,
+  # of 1264, and the failure is silent in the worst way — 155 dots, no summary,
   # no failure block, and vps_ci reporting "Tests: Rails failed". Dots then
   # nothing in a CI test section means the runner was killed, not that a test
   # failed. Stopped and restarted here so the knowledge lives in the deploy
@@ -921,7 +921,7 @@ else
   print "vps-deploy: $app (ci + sync)"
   # `|| ci_status=$?` rather than a bare call and `ci_status=$?` after it. This
   # script runs under `set -e`, so a bare failing CI run exits here and the
-  # restart below - the whole reason the stand-down records jobs_was_up - never
+  # restart below — the whole reason the stand-down records jobs_was_up — never
   # runs, leaving the worker stopped with nothing 5xx'ing and the queue simply not
   # draining. A command followed by `||` is exempt from errexit, which is what
   # makes the status capture reachable at all.
@@ -937,9 +937,9 @@ fi
 
 # Primary database, then the cache/queue/cable schemas.
 #
-# db_create_migrate_as_app runs db:prepare, which is idempotent - it creates the
+# db_create_migrate_as_app runs db:prepare, which is idempotent — it creates the
 # database when absent, loads the schema when empty, and otherwise runs only
-# pending migrations - and then does the secondary schemas itself. Loading the
+# pending migrations — and then does the secondary schemas itself. Loading the
 # secondaries alone leaves the primary unmigrated, so a merged migration never
 # reaches production: on 2026-07-29 brgen shipped a counter-cache column its
 # views already read, and every feed render 500'd until an operator ran the
@@ -996,7 +996,7 @@ done
 
 # /up answers before Propshaft is involved, so it says nothing about whether the
 # page a visitor gets is styled. On 2026-08-14 brgen served every page with a
-# <link> to a stylesheet that 404'd - public/assets held zero files - and /up,
+# <link> to a stylesheet that 404'd — public/assets held zero files — and /up,
 # rcctl check, the port probe and the public TLS check all passed. The site was
 # plainly broken and the only thing that noticed was a person looking at it.
 #
@@ -1045,14 +1045,14 @@ fi
 
 # Restore whatever the guard shed while we were deploying.
 #
-# resource_guard sheds its OPTIONAL list - bsdports, then amber - under
+# resource_guard sheds its OPTIONAL list — bsdports, then amber — under
 # sustained pressure, and a deploy is exactly that. relayd keeps answering TLS
 # with their ports closed, so the outage reads as a hang rather than a 5xx and
 # nothing reports it: on 2026-08-23 amber and bsdports were restarted by hand
 # three times in one session, each time discovered by a person running curl.
 #
 # `vps-deploy all` folds the restore into its ordering; this pass gives a
-# single-app deploy, the common case, the same restore. Reported, not silent - a
+# single-app deploy, the common case, the same restore. Reported, not silent — a
 # service that needed restoring is a fact about the box worth seeing.
 set_stage restore-shed
 restore_failed=0
@@ -1070,7 +1070,7 @@ restore_started || restore_failed=1
 # loopback. It runs in about forty seconds on this one core with the fleet up,
 # which is what makes it affordable on every deploy.
 #
-# The browser half - rendered_suite, layout_suite, visual_contract - is NOT here
+# The browser half — rendered_suite, layout_suite, visual_contract — is NOT here
 # and is opt-in through PUB4_DEPLOY_BROWSER_CHECKS=1. Chrome is installed, but
 # this box is 1GB with four apps resident and resource_guard sheds amber and
 # bsdports under exactly that pressure. A deploy that takes the site down to
@@ -1080,8 +1080,8 @@ restore_started || restore_failed=1
 # of all the one that is deployed.
 #
 # CHECK_REQUIRE_LIVE=1 because this is the one host where a live check has no
-# excuse. It turns "port closed, skipping" into a failure, and half this set -
-# flow_journey, page_simulation, port_inventory - measures nothing without a
+# excuse. It turns "port closed, skipping" into a failure, and half this set —
+# flow_journey, page_simulation, port_inventory — measures nothing without a
 # listening app. The fleet was just restarted and the shed apps restored a few
 # lines above, so a closed port here is a deploy that did not come up, not a
 # laptop. bin/check-rails takes the same position on the box through

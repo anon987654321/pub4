@@ -1,5 +1,5 @@
 #!/usr/bin/env zsh
-# OpenBSD vm23 deploy - executable script. Everything else in this tree is an exact config mirror.
+# OpenBSD vm23 deploy — executable script. Everything else in this tree is an exact config mirror.
 # Routine (on vm23): cd ~/pub4 && doas zsh OPENBSD/OPERATOR.sh
 # Installs OPENBSD/{etc,usr,var} onto /, validates pf/relayd, restarts services.
 # Rare: --first-install | --stage-1 (DNS wipe) | --stage-2 (full app bootstrap)
@@ -10,7 +10,7 @@
 #   (backs up /etc first), relayd/pf template installs when configs already match, rcctl enable/start.
 # - DESTRUCTIVE on re-run: stage_1 deletes /var/nsd/etc/* and /var/nsd/zones/master/* before
 #   regenerating signed zones. Never re-run stage_1 on a live authoritative server without backup.
-# - State tracking: STATE_FILE=/var/db/openbsd_setup.state - is_step_completed/mark_step_completed
+# - State tracking: STATE_FILE=/var/db/openbsd_setup.state — is_step_completed/mark_step_completed
 #   helpers exist for future --resume support; certificate-renewal cron must stay append-idempotent.
 # - Data preserved: Rails SQLite under /home/<app>/app/storage, ~/priv, acme certs in /etc/ssl when
 #   stage_1 is skipped. Re-running stage_2 does not drop databases.
@@ -115,7 +115,7 @@ install_tracked_crontab() {
   [[ -f $tracked ]] || { log ERROR "Missing tracked root crontab: $tracked"; return 1; }
 
   # /tmp/root_crontab.$$ was a PID-predictable name in a world-writable directory
-  # that root wrote and then fed straight to crontab(1) - the same shape as the
+  # that root wrote and then fed straight to crontab(1) — the same shape as the
   # doas.conf staging file in validate_doas.ksh, and with root's crontab as the
   # payload. A root-owned 0700 directory has no symlink for root to follow.
   # Public deploy receipts live directly in /var/db/pub4; keep root-crontab
@@ -135,7 +135,7 @@ install_tracked_crontab() {
   # carry it: it skips anything with fewer than six fields, and `PATH=...` is one.
   # That is how the single most load-bearing line in crontab.vm23 would have been
   # tracked in the repo and never installed. Rewritten rather than appended so a
-  # stale PATH on the box is corrected rather than shadowed - cron takes the last
+  # stale PATH on the box is corrected rather than shadowed — cron takes the last
   # assignment, but a reader takes the first.
   typeset cron_path
   cron_path=$(grep -m1 '^PATH=' $tracked) || cron_path=''
@@ -158,7 +158,7 @@ install_tracked_crontab() {
     # Refusing to schedule a command that is not on the box is right: cron would
     # mail root once per tick forever. Refusing silently is not. A tracked job
     # then exists in etc/crontab.vm23, is absent from the crontab, and reads as
-    # complete from both ends - nothing is missing from the file you are looking
+    # complete from both ends — nothing is missing from the file you are looking
     # at. uptime-check.sh sat in crontab.vm23 and in usr/local/bin/ from
     # 2026-08-12 until 2026-08-18 and had never been scheduled, because the run
     # that installs the wrapper at stage 1 had not happened and every earlier
@@ -267,7 +267,7 @@ install_root_configs() {
 
   # 755 first, then 555 for the scripts this repo owns. Written the other way
   # round, the blanket loop undid the line above it two lines later, so the mode
-  # the file asks for twice - here and where master is installed - was never the
+  # the file asks for twice — here and where master is installed — was never the
   # mode it set.
   #
   # Two conventions, on purpose, and vm23 already runs both: OpenBSD's own 82
@@ -391,7 +391,7 @@ sync_openbsd_apply() {
   # (In per-app: before bundle, check Gemfile etc.)
 
   # Not `|| true`. The crontab schedules /usr/local/bin/resource_guard.sh every
-  # five minutes and it is the load-shedding guard that keeps this 1GB box up -
+  # five minutes and it is the load-shedding guard that keeps this 1GB box up —
   # swallowing the install failure meant it could simply be absent, with no
   # error, while every log line still said the crontab was installed.
   # The privileged broker invokes this fixed, root-owned copy, never the live checkout.
@@ -444,7 +444,7 @@ sync_openbsd_apply() {
   # so the guard is exactly as load-bearing as the install. Nothing installed it:
   # config_drift_check.rb sits under checks/ rather than under usr/local/bin/,
   # so install_root_configs never carried it, and the guard was false on every
-  # run. Live had been edited by hand to run /home/dev/pub4/OPENBSD/... instead -
+  # run. Live had been edited by hand to run /home/dev/pub4/OPENBSD/... instead —
   # root executing a file the dev user can rewrite, every morning, which is the
   # escalation the guard's own comment forbids. Deploying daily.local without
   # this would swap that for a check that silently never runs.
@@ -466,7 +466,7 @@ sync_openbsd_apply() {
     /usr/sbin/rcctl restart $svc 2>/dev/null || /usr/sbin/rcctl start $svc 2>/dev/null \
       || log WARN "$svc restart/start failed"
   done
-  # App services: start only if /up already returns 200 - avoids Falcon crash-loops burning CPU.
+  # App services: start only if /up already returns 200 — avoids Falcon crash-loops burning CPU.
   typeset -A app_ports=(brgen 38182 amber 61352 bsdports 47312)
   typeset -a core_apps=(brgen)
   typeset -a optional_apps=(amber bsdports)
@@ -506,7 +506,7 @@ sync_openbsd_apply() {
   }
 
   # No fallback falcon: one started here would run as dev beside rc.d/master's
-  # daemon_user="master" - a second server on the same port, as the account that
+  # daemon_user="master" — a second server on the same port, as the account that
   # can become root. A slow master gets the longer wait and then fails the run.
   if ! wait_for_up 53187 master 12 5; then
     log WARN "master slow - waiting longer for rc.d/master"
@@ -526,7 +526,7 @@ source "${SCRIPT_DIR}/dev/operator_stage_2.zsh"
 trap 'cleanup' EXIT
 trap 'error_handler $? $LINENO' ERR INT TERM
 
-# These four restate facts data/dns.yml already declares - BRGEN_IP is its
+# These four restate facts data/dns.yml already declares — BRGEN_IP is its
 # nameserver.ip, HYP_IP the first of its xfr_peers, PUBLIC_RESOLVERS its
 # resolvers.public. They stay as literals because this block is sourced before
 # anything, and making it shell out to ruby to boot would put the deploy

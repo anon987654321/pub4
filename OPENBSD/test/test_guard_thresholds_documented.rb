@@ -5,7 +5,7 @@ require "minitest/autorun"
 # A threshold copied into prose goes stale the next time the box changes.
 #
 # OPENBSD/CLAUDE.md said "thresholds are now 8/14" for a month after
-# resource_guard.sh moved MEM_RESTORE from 14 to 10 on 2026-08-14 - a
+# resource_guard.sh moved MEM_RESTORE from 14 to 10 on 2026-08-14 — a
 # recalibration the script records in full, with the 1550-tick dataset that
 # justified it. Anyone reading the doc to decide whether the guard was tuned
 # right was reading a number the running code had abandoned.
@@ -36,7 +36,7 @@ class GuardThresholdsDocumentedTest < Minitest::Test
     assert_empty missing, "resource_guard.sh sets no value for: #{missing.join(', ')}"
   end
 
-  # `MEM_RESTORE` is 10 - a backticked variable followed by a number is the
+  # `MEM_RESTORE` is 10 — a backticked variable followed by a number is the
   # shape the stale sentence used, and the shape worth pinning.
   def test_no_documented_threshold_contradicts_the_script
     doc = File.read(DOC)

@@ -1,5 +1,5 @@
 #!/usr/bin/env zsh
-# watch_tests.sh - auto-run MASTER tests on lib/ or test/ file change.
+# watch_tests.sh — auto-run MASTER tests on lib/ or test/ file change.
 # Uses zsh-native patterns (ZSH_NATIVE_PATTERNS.md): no grep/awk/sed forks.
 #
 # Usage: zsh sh/watch_tests.sh [test_file]

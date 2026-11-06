@@ -16,7 +16,7 @@ esac
 
 # Runs from root's cron, and everything it starts (rcctl -> rc.d scripts,
 # emergency_cpu.sh) inherits this PATH. Cron's own PATH has no /usr/local/bin,
-# which is where curl, bundle34 and ruby34 live - see rc.d/master for what that
+# which is where curl, bundle34 and ruby34 live — see rc.d/master for what that
 # cost. The rc.d scripts set their own PATH now; this makes the whole chain
 # independent of who invoked it.
 export PATH=/usr/local/bin:/usr/local/sbin:/usr/bin:/usr/sbin:/bin:/sbin
@@ -25,8 +25,8 @@ ALL_APPS_FLAG=/var/db/pub4_all_apps
 SHED_STATE=/var/db/resource_guard_shed
 # Consecutive breaching ticks required before anything is shed.
 #
-# Shedding used to fire on a single sample. vm23 is fine at rest - measured
-# 2026-08-01 at 98% idle with zero paging (vmstat pi/po/fr all 0) - and only
+# Shedding used to fire on a single sample. vm23 is fine at rest — measured
+# 2026-08-01 at 98% idle with zero paging (vmstat pi/po/fr all 0) — and only
 # breaches transiently, when a deploy precompiles assets or an app cold-boots.
 # One 5-minute sample landing inside that window took amber and bsdports down
 # on essentially every deploy, and each restore then cost another tick apiece.
@@ -40,9 +40,9 @@ CORE="master brgen"
 # Ordered cheapest-to-lose first, because shedding now takes one per tick.
 # bsdports is a low-traffic ports index and leads. amber is a real app with real
 # users and goes last. Every entry here is a service someone loses, so the first
-# shed already costs a site - there is no free step to spend before amber.
+# shed already costs a site — there is no free step to spend before amber.
 OPTIONAL="bsdports amber"
-# vm23 is 1 vCPU (hw.ncpu=1) - load=1.0 just means the single core is fully
+# vm23 is 1 vCPU (hw.ncpu=1) — load=1.0 just means the single core is fully
 # busy, which is routine, not an emergency. Calm baseline ~0.5-1.4,
 # restart-storm transient ~3-7, genuine OOM crisis ~4.6 sustained.
 LOAD_WARN=2.5
@@ -67,7 +67,7 @@ LOAD_RESTORE=2.0
 # alone, which excludes the OpenBSD buffer cache (~20% of RAM, reclaimable
 # on demand). Any file I/O warming the cache dropped "free" below 12% while
 # real available memory was fine, so the guard shed amber/bsdports
-# on nearly every tick - a measurement artifact, not memory pressure. Free +
+# on nearly every tick — a measurement artifact, not memory pressure. Free +
 # Cache from top(1) is the honest availability signal. MEM_RESTORE > MEM_WARN
 # gives hysteresis so shed/restore can't oscillate around one threshold.
 #
@@ -75,7 +75,7 @@ LOAD_RESTORE=2.0
 # was correct in shape but sat outside this box's operating range: median
 # availability is 13%, one point above MEM_WARN, and MEM_RESTORE=20 was above
 # the median entirely. Memory alone caused 334 of the 436 shed events, and the
-# combined restore check opened on 19% of ticks against shedding on 48% - so the
+# combined restore check opened on 19% of ticks against shedding on 48% — so the
 # drift was one-way and amber/bsdports stayed down for days rather than
 # self-recovering, which is not what OPENBSD/CLAUDE.md claims. 8/14 keeps the
 # same 6-point hysteresis gap, straddling p50 instead of sitting above it.
@@ -84,8 +84,8 @@ LOAD_RESTORE=2.0
 # Recalibrated again 2026-08-14, MEM_RESTORE 14 -> 10, from 1550 ticks
 # (~5.4 days). The 2026-07-29 pass above was right for its dataset and the
 # dataset moved: it measured mem_avail p50=13 p75=24 and set 14 to straddle the
-# median. Today the same log reads **p50=9, p75=10, p90=16** - the box carries
-# more than it did - so 14 had drifted back above p75, which is the exact
+# median. Today the same log reads **p50=9, p75=10, p90=16** — the box carries
+# more than it did — so 14 had drifted back above p75, which is the exact
 # condition that pass was fixing. Second occurrence of one failure.
 #
 # Measured against the real check, not guessed: it opened on 7% of ticks, and
@@ -96,18 +96,18 @@ LOAD_RESTORE=2.0
 # Why not 9, which opens the check on two thirds of ticks: it leaves one point of
 # hysteresis above MEM_WARN, so a shed at 7% would restore at 9% and shed again.
 # 10 keeps a 2-point band. It is narrower than the 6 points this file has
-# defended twice, and that is the deliberate trade - a wide band on a box whose
+# defended twice, and that is the deliberate trade — a wide band on a box whose
 # whole operating range is 8-16% is a band with no room to sit in.
 #
 # To be exact about the symptom, because the first draft of this note overstated
 # it: restore is not dead, it is slow. Both apps were shed at 05:55 on 2026-08-14
-# and the shed list had cleared itself by 08:55 - three hours, spent waiting for
+# and the shed list had cleared itself by 08:55 — three hours, spent waiting for
 # availability to climb past 14 on a box that sits at 9. At 10 that wait is the
 # 23%-of-ticks case, well under an hour.
 #
 # What made it recur is that nothing watched the window at all. health_check.rb
 # now fails while anything the guard shed is still down, which is the outage
-# rather than a theory about thresholds - an earlier version of that check did
+# rather than a theory about thresholds — an earlier version of that check did
 # reason from this log about whether the check was reachable, and measured against
 # the real 1550 ticks it stayed silent through the very incident it was written
 # for.
@@ -167,7 +167,7 @@ fi
 
 # This script runs as root from cron every 5 minutes (etc/crontab.vm23).
 # It used to dot-source validate_doas.ksh and stale_ci_cleanup.ksh out of
-# ${GUARD_REPO:-/home/dev/pub4} - a dev-owned git checkout - which meant write
+# ${GUARD_REPO:-/home/dev/pub4} — a dev-owned git checkout — which meant write
 # access to either file was root code execution within 5 minutes, entirely
 # independent of doas. It also called install_doas_conf_from_repo, so the repo's
 # doas.conf was copied over /etc/doas.conf on every tick and any hand-hardening
@@ -194,8 +194,8 @@ if awk -v l="$load" -v w="$LOAD_WARN" 'BEGIN{exit !(l>=w)}'; then shed=1; fi
 if [[ $mem_avail_pct -lt $MEM_WARN ]]; then shed=1; fi
 
 # A deploy is load this box was told to make. rc.d/{master,amber,brgen,bsdports}
-# touch /home/dev/pub4/.deploying* from rc_pre() until the /up wait ends - precompile,
-# migrate, cold boot - which is exactly the transient breach SHED_STRIKES above
+# touch /home/dev/pub4/.deploying* from rc_pre() until the /up wait ends — precompile,
+# migrate, cold boot — which is exactly the transient breach SHED_STRIKES above
 # describes, and exactly when this guard used to take amber and bsdports down.
 # Restore then crawls back one service per 5-minute tick, so a deploy cost those
 # two apps ten minutes of downtime that TLS hid, on every deploy.
@@ -209,7 +209,7 @@ if [[ $mem_avail_pct -lt $MEM_WARN ]]; then shed=1; fi
 # fires the moment the deploy ends.
 #
 # Only the shed side. Restore still waits for pressure to clear on its own
-# terms - a deploy ending does not mean memory is free, and the one-per-tick
+# terms — a deploy ending does not mean memory is free, and the one-per-tick
 # stagger below exists because simultaneous cold boots re-trigger this guard.
 #
 # The flag comes off after the rc.d /up wait, so an rc.d run killed mid-wait
@@ -343,7 +343,7 @@ fi
 log_tick
 
 # Restore path: undo our own shedding once pressure has genuinely cleared.
-# One service per tick - the 5-minute cron interval staggers cold boots for
+# One service per tick — the 5-minute cron interval staggers cold boots for
 # free, avoiding the simultaneous-restart memory spike that re-triggers the
 # guard. Only services this script shed (tracked in SHED_STATE) and that are
 # still enabled in rc.d are restored, so deliberately disabled services
@@ -353,7 +353,7 @@ if [[ $shed -eq 0 && -s $SHED_STATE && $mem_avail_pct -ge $MEM_RESTORE ]]; then
     restored=""
     for svc in $(cat "$SHED_STATE"); do
       if ! rcctl get "$svc" status >/dev/null 2>&1; then
-        # No longer enabled - drop from state without starting it.
+        # No longer enabled — drop from state without starting it.
         restored=$svc
         break
       fi

@@ -20,14 +20,14 @@ if File.file?(doas_conf)
   # RUBYLIB, GEM_HOME and BUNDLE_* across the boundary, so `RUBYOPT=-r/tmp/x.rb doas
   # <anything>` runs as root with no shell involved. Removed 2026-08-02 for a measured
   # setenv allowlist; this is what stops it coming back with the next edit that finds
-  # a variable missing. The root->root rule keeps keepenv on purpose - see the file.
+  # a variable missing. The root->root rule keeps keepenv on purpose — see the file.
   if dev_rule.nil?
     failures << "etc/doas.conf has no `dev as root` rule"
   else
     failures << "etc/doas.conf: dev rule must not use keepenv (root RCE via RUBYOPT)" if dev_rule.include?("keepenv")
     # The whole measured allowlist (etc/doas.conf): each is read by a script run
     # under doas and assigned by none, so dropping one silently breaks that
-    # script - --stage-1's DNS-wipe check, the console check, production seeds, the
+    # script — --stage-1's DNS-wipe check, the console check, production seeds, the
     # deploy scan skip, the mail image format.
     allowlist = dev_rule[/setenv\s*\{([^}]*)\}/, 1].to_s.split
     %w[I_UNDERSTAND_DNS_WIPE I_UNDERSTAND_CONSOLE_RISK I_UNDERSTAND_FAST_DEPLOY RUN_PRODUCTION_SEEDS SKIP_MASTER_SCAN MAIL_IMG_FMT].each do |name|
@@ -114,7 +114,7 @@ validate_doas = File.join(TOOLING, "validate_doas.ksh")
 if File.file?(validate_doas)
   # install_doas_conf_from_repo rolls /etc/doas.conf back when validation fails, so
   # validation has to test the thing that changed. `doas id` alone passes with a wrong
-  # or empty allowlist - the rollback net covered lockout and not the actual risk.
+  # or empty allowlist — the rollback net covered lockout and not the actual risk.
   guard = File.read(validate_doas)
   unless guard.include?("validate_doas_passes_env")
     failures << "validate_doas.ksh must check that an allowlisted variable still crosses, " \

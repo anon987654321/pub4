@@ -1,7 +1,7 @@
 #!/bin/ksh
 # Drive resource_guard.sh through tick sequences with stubbed system tools, and
-# assert what it sheds. The guard is load-bearing - a wrong shed took all four
-# apps down today - so its hysteresis needs proving, not eyeballing.
+# assert what it sheds. The guard is load-bearing — a wrong shed took all four
+# apps down today — so its hysteresis needs proving, not eyeballing.
 #
 # The ladder is two services, bsdports then amber. It was three, and this file
 # asserted litestream went first long after the guard stopped shedding it, which
@@ -102,7 +102,7 @@ check() {
 
 up() { for s in "$@"; do : > "$DB/$s"; done }
 running() { ls "$DB" 2>/dev/null | grep -Ex 'amber|bsdports' | sort | tr '\n' ' ' | sed 's/ $//'; }
-reset() { rm -f "$DB"/* 2>/dev/null || true; up bsdports amber; } # scan: intentional - clears this test's own scratch $DB between cases
+reset() { rm -f "$DB"/* 2>/dev/null || true; up bsdports amber; } # scan: intentional — clears this test's own scratch $DB between cases
 
 # physmem is ~1007M, so Free=400M is ~39% (clear), Free=40M is ~3% (breach).
 CLEAR=400

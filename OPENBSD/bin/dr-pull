@@ -1,13 +1,13 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
-# dr-pull - pull-based disaster recovery, run from the operator Mac.
+# dr-pull — pull-based disaster recovery, run from the operator Mac.
 #
 # Litestream has never replicated anything (off_host_dr: the binary is not
 # installed), so until that operator decision lands, THIS is the only copy of
 # production data that leaves the box. Chosen over the alternatives priced in
-# the 2026-08-22 sitting - litestream-to-S3 (needs a bucket and a key),
-# borg/restic/tarsnap (money), scp of the raw file (torn copies under WAL) -
+# the 2026-08-22 sitting — litestream-to-S3 (needs a bucket and a key),
+# borg/restic/tarsnap (money), scp of the raw file (torn copies under WAL) —
 # because it needs nothing but the ssh access the Mac already has:
 #
 #   1. On vm23, `sqlite3 ... "VACUUM INTO ..."` writes a CONSISTENT snapshot
@@ -16,7 +16,7 @@
 #      /home/<app>/app/storage is 0750 app:app and the ssh user cannot so much
 #      as stat what is inside it.
 #   2. The snapshots stream back in one tar over ssh.
-#   3. Every pulled db must pass PRAGMA integrity_check on the Mac - a backup
+#   3. Every pulled db must pass PRAGMA integrity_check on the Mac — a backup
 #      nobody has opened is a hope, not a backup.
 #   4. The last KEEP pulls are kept; older ones rotate away.
 #   5. Uploaded files (Active Storage blobs, the two-character directories beside the
@@ -32,7 +32,7 @@
 #                    copies the newest pull to a scratch directory, checks it against
 #                    SHA256SUMS, runs integrity_check and reads the app's own tables.
 #
-# A sleeping Mac skips the window and launchd fires on next wake - last-resort
+# A sleeping Mac skips the window and launchd fires on next wake — last-resort
 # DR, honestly labeled, not a substitute for the litestream decision.
 
 require "digest"
@@ -333,7 +333,7 @@ blob_summary = APPS.filter_map do |app|
   next if data.empty? # no uploads for this app
 
   staging = File.join(DEST, "blobs", ".#{app}.new")
-  FileUtils.rm_rf(staging) # scan: intentional - retention: this script's own staging directory
+  FileUtils.rm_rf(staging) # scan: intentional — retention: this script's own staging directory
   FileUtils.mkdir_p(staging)
   IO.popen(["tar", "-C", staging, "-xf", "-"], "wb") { |io| io.write(data) }
   unless $?.success?
@@ -341,12 +341,12 @@ blob_summary = APPS.filter_map do |app|
     next
   end
   final = File.join(DEST, "blobs", app)
-  FileUtils.rm_rf(final) # scan: intentional - retention: this script's own previous blob copy, replaced whole
+  FileUtils.rm_rf(final) # scan: intentional — retention: this script's own previous blob copy, replaced whole
   FileUtils.mv(staging, final)
   "#{app} #{Dir[File.join(final, '**', '*')].count { |p| File.file?(p) }} file(s)"
 end
 
-Dir[File.join(DEST, "*")].select { |d| File.directory?(d) && File.basename(d).match?(/\A\d{8}-\d{4}\z/) }.sort[0...-KEEP].each { |d| FileUtils.rm_rf(d) } # scan: intentional - retention: this script's own pulls past KEEP
+Dir[File.join(DEST, "*")].select { |d| File.directory?(d) && File.basename(d).match?(/\A\d{8}-\d{4}\z/) }.sort[0...-KEEP].each { |d| FileUtils.rm_rf(d) } # scan: intentional — retention: this script's own pulls past KEEP
 puts "dr-pull: #{pulled.size} database(s) -> #{target}, all integrity_check ok " \
      "(#{pulled.sum { |f| File.size(f) } / 1024 / 1024}MB; keeping last #{KEEP})"
 # Tell the box a pull landed. pub4-alert watch on vm23 cannot see the Mac, so the

@@ -1,7 +1,7 @@
 #!/bin/sh
 # agent_worktree.sh <agent-name> [base-branch]
 #
-# Give a coding agent (claude, grok, codex, ...) its OWN git worktree + branch off
+# Give a coding agent (claude, grok, codex, …) its OWN git worktree + branch off
 # the shared pub4 repo, so concurrent agents never share one working tree.
 #
 # Why: with a shared tree, `git commit -a` sweeps every agent's half-finished

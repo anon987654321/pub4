@@ -2,7 +2,7 @@
 # rc_pre and the post-start block run curl (a package, /usr/local/bin/curl).
 # rcctl inherits its caller PATH and root cron has no /usr/local/bin, so from
 # a cron restart the /up wait always timed out and the relayd restart behind
-# it was skipped - the app came up with an empty relayd backend table. Same
+# it was skipped — the app came up with an empty relayd backend table. Same
 # gap that refused to start master outright (see rc.d/master).
 export PATH=/usr/local/bin:/usr/local/sbin:/usr/bin:/usr/sbin:/bin:/sbin
 PORT=47312
@@ -12,26 +12,26 @@ APP_DIR=/home/bsdports/app
 [[ -r /etc/bsdports.env ]] && . /etc/bsdports.env
 : "${SECRET_KEY_BASE:?missing SECRET_KEY_BASE in /etc/bsdports.env}"
 daemon="/bin/ksh"
-# SOLID_QUEUE_IN_PUMA is Solid Queue's env name - supervisor runs inside Falcon, not Puma.
+# SOLID_QUEUE_IN_PUMA is Solid Queue's env name — supervisor runs inside Falcon, not Puma.
 # --health-check-timeout: Falcon defaults to 30s, and on 1 vCPU with master and
-# brgen already resident this app has never booted that fast - the container
+# brgen already resident this app has never booted that fast — the container
 # declared startup failed and SIGKILLed its own worker on every restart, which
 # is a large part of why this service kept reading as "shed but never
 # restored". master and brgen have carried 300 since the same discovery.
 # SECRET_KEY_BASE is sourced from /etc/bsdports.env at runtime, by the app user,
-# inside the exec - NOT interpolated into daemon_flags. Interpolation baked the
+# inside the exec — NOT interpolated into daemon_flags. Interpolation baked the
 # 128-hex secret into the falcon process's ksh argv, readable by any local
 # account via `ps auxww` (the old backlog secrets_in_process_argv). The
 # env file is root:bsdports 640, so only bsdports (and root) can read it, which
-# also stops a foothold in another app user - or dev - reading this secret at
+# also stops a foothold in another app user — or dev — reading this secret at
 # rest. The `. /etc/bsdports.env` below is a literal path, not a secret.
 # /etc/bsdports.env holds a bare `SECRET_KEY_BASE=...` (no `export`), so sourcing
-# it sets a shell variable that `exec` does NOT inherit - the bare `SECRET_KEY_BASE`
+# it sets a shell variable that `exec` does NOT inherit — the bare `SECRET_KEY_BASE`
 # in the export list below re-exports the sourced value into falcon's environment.
 # SOLID_QUEUE_IN_PUMA=true was here and is gone. In-Puma mode is a Puma plugin;
 # this app runs under Falcon and has no config/puma.rb, so no plugin ever loaded
 # and the variable was read by nothing. It was the only thing that looked like a
-# job worker and it had never started one - 1670 jobs enqueued on brgen and 0
+# job worker and it had never started one — 1670 jobs enqueued on brgen and 0
 # finished, measured 2026-08-12. rc.d/<app>_jobs is the real worker; read its
 # header before enabling it, because vm23 has 1 GB.
 # rc.d cannot source the repo, so pick whichever bundler the package manager
@@ -109,7 +109,7 @@ rc=$?
 if [[ "$1" = "start" ]] || [[ "$1" = "restart" ]]; then
   if [[ "$rc" = "0" ]]; then
     # relayd can keep routing to the old (now-dead) backend connection after a
-    # restart until it's kicked - same fix already used by MASTER's rc.d script.
+    # restart until it's kicked — same fix already used by MASTER's rc.d script.
     _i=0
     _up_ok=0
     while [[ "$_i" -lt 300 ]]; do

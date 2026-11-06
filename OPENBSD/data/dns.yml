@@ -3,7 +3,7 @@
 # those three: they are generated, and the generator will overwrite you.
 #
 # The domain list is NOT here. It is ALL_DOMAINS in OPERATOR.sh, which is already
-# the source domain_alignment binds Brgen::DomainRegistry to - a third list would
+# the source domain_alignment binds Brgen::DomainRegistry to — a third list would
 # just be a third thing to drift. This file carries policy and the zones that are
 # not part of the city network.
 
@@ -15,7 +15,7 @@ nameserver:
     - ns.hyp.net.
   ip: 46.23.89.226
   # hostmaster@<domain> in every SOA. It only resolves for brgen.no, which is the
-  # only domain that receives mail - an unreachable SOA contact is normal and is
+  # only domain that receives mail — an unreachable SOA contact is normal and is
   # what the CAA iodef record exists to compensate for.
   hostmaster: hostmaster
 
@@ -58,7 +58,7 @@ caa:
   - '0 iodef "mailto:hostmaster@brgen.no"'
 
 # The only domain smtpd accepts mail for (/etc/mail/domains is one line long).
-# Every other zone gets a null MX - RFC 7505 `0 .` - which says "this domain
+# Every other zone gets a null MX — RFC 7505 `0 .` — which says "this domain
 # receives no mail" in the one place a sending server actually looks. It had an
 # MX pointing at a mail.<domain> A record instead, on all sixty of them, which
 # advertised sixty mail servers that do not exist and would accept nothing.

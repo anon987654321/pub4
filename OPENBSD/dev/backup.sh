@@ -59,8 +59,8 @@ for subdir in */(N); do
 
   # :- on both reads. `set -u` is on and these are associative-array lookups,
   # so an unseen folder is an unset parameter and zsh aborts on it. Every
-  # folder is unseen on a first run - the run where there is no checksum file
-  # at all - so a first run died on the first folder, every time.
+  # folder is unseen on a first run — the run where there is no checksum file
+  # at all — so a first run died on the first folder, every time.
   if [[ -z "${old_checksums[$folder]:-}" || "${old_checksums[$folder]:-}" != "$checksum" ]]; then
 
     print "Backing up: $folder -> $backup_file"

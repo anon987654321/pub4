@@ -11,7 +11,7 @@ module Deploy
   # of names and no two agreed: ALL_DOMAINS had 53 domains, /var/nsd/zones/master
   # had 61 zone files, nsd.conf declared 54, and acme-client.conf carried a fifth,
   # older subdomain list. Nothing compared them, so the drift was only visible by
-  # reading all four - and the cost of it was that oshlo.no, a live certificated
+  # reading all four — and the cost of it was that oshlo.no, a live certificated
   # city, had no www record, no SPF and no DMARC while brgen.no had all three.
   #
   # Now bin/render_dns.rb writes all of it from ALL_DOMAINS plus data/dns.yml.
@@ -20,7 +20,7 @@ module Deploy
   # the moment someone hand-edits a zone file.
   #
   # The live half is a DNS query, not a file read. /var/nsd/zones/master is 640
-  # _nsd:_nsd, so a check running as dev cannot read a zone on the box either -
+  # _nsd:_nsd, so a check running as dev cannot read a zone on the box either —
   # but anyone can ask the nameserver. Signature freshness needs the files and
   # lives in OPENBSD/checks/health_check.rb, which runs as root on vm23.
   class DnsZonesCheck
@@ -57,7 +57,7 @@ module Deploy
     # and bsdports.org is what the difference looks like: registered to us at
     # Domeneshop through 2027-08-08, relayd holding a keypair and a Host match
     # for it, a valid certificate on disk to Nov 10 2026, RUNBOOK.md naming
-    # https://bsdports.org as its URL, the app itself answering 200 on 47312 -
+    # https://bsdports.org as its URL, the app itself answering 200 on 47312 —
     # and the .org registry delegating the name to ns1/2/3.expireddomain.hyp.net,
     # Domeneshop's parking servers, which publish no A record. The app has been
     # publicly unreachable and every check we had said it was fine.
@@ -143,7 +143,7 @@ module Deploy
 
     # A city the registry calls live must actually be answered for by our
     # nameserver, apex and every vertical. Skipped rather than failed when UDP 53
-    # is unavailable - several networks, including the machine this is usually
+    # is unavailable — several networks, including the machine this is usually
     # run from, block outbound port 53.
     def nameserver_answers
       live = live_domains
@@ -193,8 +193,8 @@ module Deploy
     # arXiv 2607.07405 is the reason that matters rather than being a re-run
     # someone shrugs at: it audits a four-check suite and finds one check blocking
     # at 100% precision and another at 5%, and a check whose blocks are mostly its
-    # own noise is one people learn to skip. This check was already invisible -
-    # registered in checks.yml and invoked by nothing - so its first impression on
+    # own noise is one people learn to skip. This check was already invisible —
+    # registered in checks.yml and invoked by nothing — so its first impression on
     # anyone wiring it up would have been a block that was not true.
     #
     # Both failures are retried, because Resolv cannot tell them apart.
@@ -205,14 +205,14 @@ module Deploy
     # reading "no address for <name>" both for a real NXDOMAIN and for a query
     # that got no usable response, so a dropped packet is indistinguishable from
     # a missing record at this API. That fix held for one run and then blocked
-    # again on three names - takeaway.brgen.no, takeaway.oshlo.no,
-    # radio.trndheim.no - all three of which `dig` answered immediately.
+    # again on three names — takeaway.brgen.no, takeaway.oshlo.no,
+    # radio.trndheim.no — all three of which `dig` answered immediately.
     #
     # So retry both, and only believe the answer after RETRIES agree. A genuine
     # NXDOMAIN is still NXDOMAIN three times and still fails the check, which is
     # the check's job; a lost packet almost never repeats three times. The two
     # verdicts stay separate in the message because they mean different things to
-    # whoever reads it - one is "the record is gone", the other is "the network
+    # whoever reads it — one is "the record is gone", the other is "the network
     # ate it and this check measured nothing".
     RETRIES = 3
 

@@ -1,7 +1,7 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
-# with-ci-lock CMD [ARGS...] - run CMD while holding the pub4 CI mutex.
+# with-ci-lock CMD [ARGS...] — run CMD while holding the pub4 CI mutex.
 #
 # OpenBSD has neither lockf(1) nor flock(1). Both are FreeBSD/Linux utilities,
 # and `vps_master_scan.sh` called the first of them:
@@ -13,7 +13,7 @@
 # run the scan. `command -v lockf` on vm23 prints nothing.
 #
 # So the primitive has to come from somewhere that exists here, and the machine
-# has Ruby. This flocks the shared lock and execs the command still holding it -
+# has Ruby. This flocks the shared lock and execs the command still holding it —
 # close_on_exec off, so the descriptor and its lock survive into the child, and
 # the kernel releases it when the child exits however it exits.
 #
@@ -87,7 +87,7 @@ end
 # Best effort, and deliberately not fatal: the holder note is a diagnostic, and
 # a lock that refuses to be taken because it could not write a comment about
 # itself would be worse than one nobody can attribute. Tonight's collision was
-# read straight off this file - "root@app pid=63315" - so it earns its keep.
+# read straight off this file — "root@app pid=63315" — so it earns its keep.
 begin
   File.write("#{path}.holder", "#{ENV["USER"] || "unknown"}@#{File.basename(Dir.pwd)} pid=#{Process.pid}\n")
 rescue SystemCallError

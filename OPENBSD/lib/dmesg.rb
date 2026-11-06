@@ -11,7 +11,7 @@ module Deploy
     ANSI = /\e\[[0-9;?]*[A-Za-z]/
 
     # A line naming a file position or a verdict. Minitest's `[test/x.rb:12]`,
-    # RuboCop's `app/x.rb:3:5: C:`, the design lints' `lint: file:line ...` and
+    # RuboCop's `app/x.rb:3:5: C:`, the design lints' `lint: file:line …` and
     # every summary that counts failures or offences all carry one of the two.
     VERDICT = /\b(?:fail(?:ed|ures?)?|errors?|offen[cs]es?|violations?|exceed(?:s|ed)?|missing|expected|refused)\b/i
     FINDING = Regexp.union(/:\d+\b/, VERDICT)
@@ -23,7 +23,7 @@ module Deploy
     def line(unit, parent, detail) = "#{unit} at #{parent}: #{detail}"
 
     # Same two events MASTER/lib/trace/dmesg.rb carries; check_runner calls
-    # both. No verbosity machinery here - the copy prints straight to the io.
+    # both. No verbosity machinery here — the copy prints straight to the io.
     def attach(unit, parent, detail = nil, io: $stdout) =
       io.puts(detail.to_s.empty? ? "#{unit} at #{parent}" : line(unit, parent, detail))
 
@@ -90,7 +90,7 @@ module Deploy
     end
 
     # The lines of a failed command's output worth a person's first look: the
-    # ones naming a position or a verdict, or its last lines when none does -
+    # ones naming a position or a verdict, or its last lines when none does —
     # a test run killed mid-suite prints dots and nothing else.
     #
     # A test failure leads: the line naming the test and the line that reruns it. Rails printed 24

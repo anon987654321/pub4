@@ -146,7 +146,7 @@ if on_box
 # Daemons that answer "ok" while doing nothing, and jobs whose only evidence is
 # an empty log.
 #
-# pflogd spent 34 days in its [suspended] state - `rcctl check pflogd` said ok
+# pflogd spent 34 days in its [suspended] state — `rcctl check pflogd` said ok
 # the whole time, because the process was alive; it had refused the log file it
 # was handed (a snaplen it did not write) and, per pflogd(8), suspends logging
 # until a SIGHUP. Packet filter logging was off and every health check passed.
@@ -158,7 +158,7 @@ if suspended && ps_out.include?("pflogd: [suspended]")
 end
 
 # rcctl's own verdict on everything, not only the services this file lists.
-# brgen_jobs - the Solid Queue worker - is not in apps.yml, so the loop above
+# brgen_jobs — the Solid Queue worker — is not in apps.yml, so the loop above
 # could not see it, and it sat failed with no background job running anywhere.
 failed_ok, failed_out = run(*privileged("/usr/sbin/rcctl", "ls", "failed"))
 if failed_ok
@@ -217,7 +217,7 @@ end
   #
   # RRSIGs expire. nsd-resign re-signs anything with under 14 days left and runs
   # from /etc/daily.local, and for as long as that line read `ruby` rather than
-  # an absolute path it had never once executed - cron's PATH does not include
+  # an absolute path it had never once executed — cron's PATH does not include
   # /usr/local/bin. The zones stayed valid the whole time and every check passed,
   # because unexpired signatures on an unpublished DS look exactly like healthy
   # ones. The day a DS is published at the registrar, that stops being true and
@@ -274,7 +274,7 @@ end
 # How far behind each app's last successful deploy is.
 #
 # A deploy that fails at a CI check leaves the previous stamp saying "ok" and the
-# old build serving, so from outside nothing has happened - and nothing reports
+# old build serving, so from outside nothing has happened — and nothing reports
 # it. amber sat at 2026-08-12T08:49 for a day and a half through three failed
 # attempts, still preloading two CDNs that had been vendored three weeks earlier,
 # and the only way to find out was to read a rendered page and compare it against
@@ -282,7 +282,7 @@ end
 #
 # A count, not a clock. Time behind says nothing on a quiet week; commits behind
 # is the thing that grows while a check is red. Warned, not failed, because being
-# behind is normal between deploys - the point is that the number is visible.
+# behind is normal between deploys — the point is that the number is visible.
 DEPLOY_DRIFT_LIMIT = Integer(ENV.fetch("DEPLOY_DRIFT_LIMIT", "40"))
 
 if on_box
@@ -307,7 +307,7 @@ end
 # brgen's rc.d exported SOLID_QUEUE_IN_PUMA=true while running under Falcon,
 # which has no Puma plugin to read it, so no worker had ever started. Measured
 # 2026-08-12: 1670 jobs enqueued, 0 finished, 0 processes, 0 recurring tasks.
-# Every check on this box passed throughout - the web app was healthy and the
+# Every check on this box passed throughout — the web app was healthy and the
 # jobs piled up in a SQLite file nobody queried. Disappearing messages
 # had never disappeared and 141,753 guest rows had never been pruned.
 #
@@ -334,7 +334,7 @@ if on_box
     # Zero workers is only a fault when there is work waiting, and "waiting"
     # means due. MessageExpirationJob is enqueued with wait_until set to the
     # moment the message should vanish, so a healthy brgen always has a pile of
-    # jobs scheduled into the future - 57 of them right after a drain that left
+    # jobs scheduled into the future — 57 of them right after a drain that left
     # nothing overdue. Counting those made this fire permanently on a queue with
     # nothing wrong with it, which is how a check becomes a line people skip.
     if pending.positive? && workers.zero?

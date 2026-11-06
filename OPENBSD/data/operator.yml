@@ -1,4 +1,4 @@
-# OPENBSD operator runtime authority - served via /orient deploy and MASTER/bin/operator.
+# OPENBSD operator runtime authority — served via /orient deploy and MASTER/bin/operator.
 # The one command and recipe catalogue; OPENBSD/README.md points here.
 
 meta:

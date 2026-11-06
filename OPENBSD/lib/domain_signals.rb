@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Read-only domain skew for operator status and domain-ghosts.
-# No network. Missing files -> empty signals (never raise into status).
+# No network. Missing files → empty signals (never raise into status).
 
 require "yaml"
 

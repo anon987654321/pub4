@@ -15,8 +15,8 @@
 # snapshotted. So there are two ways to pass and both are evidence of work
 # being done:
 #
-#   1. a supervisor is registered - the resident worker
-#   2. the cron drain ran for this app recently - the hourly drain
+#   1. a supervisor is registered — the resident worker
+#   2. the cron drain ran for this app recently — the hourly drain
 #
 # The adapter check hard-fails either way. An app that is not on SolidQueue at
 # all is misconfigured no matter who runs the jobs.
@@ -27,7 +27,7 @@ require "time"
 module SolidQueueProof
   DRAIN_LOG = "/var/log/drain-jobs.log"
   # drain-jobs.sh is scheduled hourly at :05. Two hours tolerates one missed
-  # tick - the script skips its run when load stays over its ceiling - without
+  # tick — the script skips its run when load stays over its ceiling — without
   # tolerating a drain that has silently stopped for a day.
   MAX_DRAIN_AGE_S = 7200
 

@@ -6,7 +6,7 @@ module Operator
   # This exists because `File.read("/proc/loadavg")` was the load guard on
   # PruneGuestUsersJob, and OpenBSD has no /proc. The read raised ENOENT, a
   # bare `rescue StandardError` returned false, and the guard reported "not
-  # busy" on every tick - inert on the only machine it was written to protect,
+  # busy" on every tick — inert on the only machine it was written to protect,
   # and written the day after that job took the whole site down.
   #
   # So the contract here is that unknown is not zero. `.one` returns nil when
@@ -20,7 +20,7 @@ module Operator
     # 1-minute average, or nil if it cannot be determined.
     def one = at(0)
 
-    # 5-minute average - steadier, and what CiGuard has always gated on.
+    # 5-minute average — steadier, and what CiGuard has always gated on.
     def five = at(1)
 
     def at(index)
@@ -36,7 +36,7 @@ module Operator
     end
 
     # The BSDs. OpenBSD prints "1.80 2.03 2.13" and macOS prints
-    # "{ 7.94 4.61 3.67 }" - the braces are real, and splitting on whitespace
+    # "{ 7.94 4.61 3.67 }" — the braces are real, and splitting on whitespace
     # makes the first field "{", which parses as nil and takes the whole guard
     # down the unknown path on every developer machine. Pulling the numbers out
     # rather than positioning against them covers both.
@@ -44,14 +44,14 @@ module Operator
       numbers = `sysctl -n vm.loadavg 2>/dev/null`.scan(/\d+(?:\.\d+)?/)
 
       numbers.size >= 3 ? numbers.first(3) : nil
-    rescue StandardError # scan: intentional - one probe in a fallback chain; nil advances to the next source
+    rescue StandardError # scan: intentional — one probe in a fallback chain; nil advances to the next source
       nil
     end
 
     # Linux, where the first three fields are the same three numbers.
     def procfs
       File.read("/proc/loadavg").split.first(3)
-    rescue StandardError # scan: intentional - one probe in a fallback chain; nil advances to the next source
+    rescue StandardError # scan: intentional — one probe in a fallback chain; nil advances to the next source
       nil
     end
   end

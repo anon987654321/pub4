@@ -19,7 +19,7 @@
 #      was written; this script and ~/.ssh/config both used the default 22, where
 #      the host does not listen. It pings from 1ms away and refuses the port.
 #   2. The script passed the full `s4vm23@wingman1.openbsd.amsterdam`, which does
-#      not match the `Host wingman1` stanza in ~/.ssh/config - so the user, key,
+#      not match the `Host wingman1` stanza in ~/.ssh/config — so the user, key,
 #      port and host-key policy in that stanza were all bypassed.
 #   3. The destination directory did not exist. `backup/` was never created, and
 #      the account's home is empty: `total 0`.
@@ -84,7 +84,7 @@ enc_file=$(mktemp "${stage_dir}/priv_${stamp}.XXXXXXXXXX.tar.enc") || exit 1
 chmod 600 "$enc_file"
 trap 'rm -f "$enc_file"' EXIT INT TERM
 
-# -pbkdf2 uses PBKDF2 key derivation - required on LibreSSL 3.x.
+# -pbkdf2 uses PBKDF2 key derivation — required on LibreSSL 3.x.
 print -r -- "backup_priv: encrypting ~/priv"
 tar -czf - -C ~ priv | openssl enc -aes-256-cbc -pbkdf2 "${pass_arg[@]}" -out "$enc_file"
 

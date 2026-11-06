@@ -1,10 +1,10 @@
 #!/usr/bin/env zsh
-# NOT the disaster-recovery script - use OPENBSD/bin/dr-pull for that.
+# NOT the disaster-recovery script — use OPENBSD/bin/dr-pull for that.
 #
 # Restore Rails SQLite databases from on-disk Litestream replicas (vm23).
 # Stops app services, runs litestream restore, restarts services. It was called
 # restore_backups.sh, which is the name somebody reaches for in an actual
-# emergency, and vm23 has no litestream binary and no replicas - so the name
+# emergency, and vm23 has no litestream binary and no replicas — so the name
 # promised recovery the file cannot deliver. The name is the architecture.
 #
 # Usage (on vm23):
@@ -14,7 +14,7 @@
 #
 # Every precondition below is a hard failure, not a skip. On vm23 litestream is
 # absent and /var/backups/litestream/ is empty, so a skipping restore walked all
-# three apps, restored none of them and printed "done" - a disaster-recovery
+# three apps, restored none of them and printed "done" — a disaster-recovery
 # script that reports success is worse than one that is missing, because it is
 # read as evidence. The working backup is OPENBSD/bin/dr-pull, whose snapshots
 # live on the operator Mac; see RUNBOOK.md, "Backups".

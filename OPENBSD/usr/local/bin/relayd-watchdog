@@ -1,14 +1,14 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
-# relayd-watchdog - restart relayd when unhealthy or backends are stale (CY11).
+# relayd-watchdog — restart relayd when unhealthy or backends are stale (CY11).
 # Cron: */5 * * * * /usr/local/bin/relayd-watchdog
 
 require "open3"
 
 # The doas.conf "heal" that used to live here ran, as root every 5 minutes,
 #   ksh /home/dev/pub4/OPENBSD/validate_doas.ksh install /home/dev/pub4/OPENBSD/etc/doas.conf
-# - root executing a script AND installing a doas.conf from a dev-owned git
+# — root executing a script AND installing a doas.conf from a dev-owned git
 # checkout, i.e. root code execution on the next tick for anyone who can write
 # either file, plus a silent revert of any hand-hardening of /etc/doas.conf.
 # stale_ci_cleanup.ksh dropped the identical pattern for the same reason; this

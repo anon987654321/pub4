@@ -1,5 +1,5 @@
 #!/usr/bin/env sh
-# One-page post-deploy smoke - run on vm23 after vps-deploy / restarts, or from a laptop.
+# One-page post-deploy smoke — run on vm23 after vps-deploy / restarts, or from a laptop.
 # `deploy-smoke.sh --help` prints the modes and the waiver variables; usage() below
 # is the one copy of that text.
 #
@@ -119,7 +119,7 @@ mem_hint() {
   if ! have_rcctl; then
     return 0
   fi
-  # OpenBSD: free pages x page size is awkward; top -b one-liner when present
+  # OpenBSD: free pages × page size is awkward; top -b one-liner when present
   if command -v top >/dev/null 2>&1; then
     line=$(top -b 2>/dev/null | while IFS= read -r top_line; do
       case "$top_line" in

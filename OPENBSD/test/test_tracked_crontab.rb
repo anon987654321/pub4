@@ -21,8 +21,8 @@ require_relative "../checks/config_drift_check"
 # Measured 2026-08-18: uptime-check.sh was in crontab.vm23 and in
 # usr/local/bin/ since 2026-08-12, and was on neither the box's crontab nor its
 # filesystem. Nothing was missing from either file, so nothing read as wrong.
-# The merge loop had skipped the line - correctly, since the wrapper was not
-# installed and cron would otherwise mail root every five minutes - but
+# The merge loop had skipped the line — correctly, since the wrapper was not
+# installed and cron would otherwise mail root every five minutes — but
 # silently, so the skip taught nobody anything.
 class TrackedCrontabTest < Minitest::Test
   ROOT = File.expand_path("..", __dir__)
