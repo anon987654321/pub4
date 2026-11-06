@@ -124,3 +124,46 @@ tables were simulated against both new code semantics and the existing test
 contracts (`test_model_quota_forecast.rb`, `test_ecosystem_features.rb`,
 `test_io_key_rotator.rb`) - all pass. The repo's own suite (`bin/check`) has
 not been run here and remains the gate before merging.
+
+## Verification status, updated 2026-11-06: the suite ran
+
+A Ruby 3.3.6 runtime and the full bundle were set up, and the claims above
+were re-checked against the live code instead of the tree-sitter simulation.
+
+The repo's own tests, run individually so each count is honest:
+
+- `test_io_key_rotator.rb` 12 runs, `test_model_quota_forecast.rb` 9 runs,
+  `test_model_quota_shared_state.rb` 6 runs, `test_llm_dispatcher.rb` 61 runs
+  (including the hosted-endpoint socket test that exercises the per-call key
+  resolution), `test_repair_loop_per_fix_commit.rb` 23 runs,
+  `test_llm_stage_failure.rb` 4, `test_fix_model_gate.rb` 10,
+  `test_fix_run_budget.rb` 36, `test_fix_loop_oscillation.rb` 14,
+  `test_recovery_gates.rb` 9, `test_fix_watchdog.rb` 30,
+  `test_fix_interruption_restart.rb` 5, `test_fix_loop_committer.rb` 37,
+  `test_fix_crash_leaves_tree.rb` 11 - all green.
+- `test_fix_loop_file_collector.rb` 6 failures. The same 6 fail at the commit
+  before this branch (95b42b7) on this machine: pre-existing environment
+  drift (git inventory behaviour, scanner path filter), not this branch.
+- `ModelCatalogueGuard.validate` against the live `data/models.yml` returns
+  clean with the shipped `daily_quota` / `key_env` rows. The replicate
+  scoring rows present during this run were withdrawn later the same day
+  (176e152: unrowed replicate lanes are dropped from ranking, not scored at
+  zeros, so the rows made paid lanes selectable); the guard passes the
+  withdrawn catalogue too.
+
+Measured, on the live code (scripts kept beside the run, not in the repo):
+
+- Preamble bytes per candidate prompt: 56,928 (473 law lines, the old
+  whole-registry construction) -> 12,334 (109 law lines at the shipped
+  12,288-character budget). 78.3% of the prompt's law guidance is gone, about
+  130.6 KB per 3-candidate generation stage, and a truncated preamble names
+  itself ("law guidance continues in data/laws.yml").
+- Candidate generation wall time, 3 candidates whose lane call sleeps 0.8 s:
+  2.40 s sequential (`MASTER_FIX_PARALLEL_CANDIDATES=0`) vs 0.80 s parallel -
+  3.0x, candidate order preserved. At a realistic 8 s lane call that is
+  roughly 24 s -> 8 s per generation stage.
+- A real run: `bin/fix-here MASTER --model none --no-probe --no-publish` on
+  this machine booted, passed the parse sweep, scanned, and ran the ratchet
+  stage through its pass loop with zero tokens (no lane configured, which is
+  the honest degradation for an operator with no keys). The remaining gate is
+  a run with a live lane and the full `bin/check`.
