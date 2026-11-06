@@ -150,8 +150,12 @@ class TestModelOffer < Minitest::Test
     assert_includes verbs(offered(proof)), "done"
   end
 
-  def test_no_scope_offers_everything
-    assert_equal Master::Core::Model::SCHEMA, Master::Core::Model.offer(Master::Core::VERBS, nil)
+  def test_no_scope_does_not_offer_durable_commit
+    schema = Master::Core::Model.offer(Master::Core::VERBS, nil)
+
+    assert_equal Master::Core::VERBS.map(&:to_s), verbs(schema)
+    refute_includes operations(schema), "commit"
+    assert_includes operations(schema), "diff"
   end
 end
 
