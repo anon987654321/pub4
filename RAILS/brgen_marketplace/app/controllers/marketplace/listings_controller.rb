@@ -112,7 +112,7 @@ class Marketplace::ListingsController < Marketplace::BaseController
     else
       # The form reads both of these and create set neither, so a refused
       # listing answered 500 rather than showing the reader what was wrong with
-      # it. Only the kinds work made that reachable - until now every refusal
+      # it. Only the kinds work made that reachable — until now every refusal
       # here was a validation the form itself prevented.
       @kind = @listing.kind.presence || "goods"
       @categories, @stores = listing_form_options
@@ -231,7 +231,7 @@ class Marketplace::ListingsController < Marketplace::BaseController
   #
   # Same kind as the grid below it. The strip used to draw from every listing
   # there is, so the moment a kind other than goods existed, a bicycle search
-  # carried a job advert above it - the filter the grid applies has to apply
+  # carried a job advert above it — the filter the grid applies has to apply
   # here or the page contradicts itself.
   def top_offers_for_index(kind)
     return [] if live_search_query.present? || params[:category_id].present?

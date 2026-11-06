@@ -37,15 +37,15 @@ class Marketplace::Listing < ApplicationRecord
            foreign_key: :listing_id, dependent: :destroy, inverse_of: :listing
   has_many :deals, class_name: "Marketplace::Deal", dependent: :destroy
   has_many :reviews, class_name: "Marketplace::Review", dependent: :destroy
-  # Public questions and the seller's answers - see Marketplace::Question for
+  # Public questions and the seller's answers — see Marketplace::Question for
   # why they are on the listing rather than in an offer thread.
   has_many :questions, class_name: "Marketplace::Question", dependent: :destroy
   # Size and colour as rows. A listing with variants is bought by the variant,
-  # not by the listing - see Marketplace::Variant.
+  # not by the listing — see Marketplace::Variant.
   has_many :variants, class_name: "Marketplace::Variant", dependent: :destroy
   has_many :events, class_name: "Marketplace::ListingEvent",
            foreign_key: :listing_id, dependent: :delete_all, inverse_of: :listing
-  # The price trail the Omnibus anchor reads - see record_price_observation.
+  # The price trail the Omnibus anchor reads — see record_price_observation.
   has_many :price_observations, class_name: "Marketplace::ListingPriceObservation",
            foreign_key: :listing_id, dependent: :delete_all, inverse_of: :listing
   has_one :job_detail, class_name: "Marketplace::JobDetail", dependent: :destroy
@@ -63,7 +63,7 @@ class Marketplace::Listing < ApplicationRecord
 
   CONDITIONS = %w[new_with_tags new_without_tags very_good good satisfactory].freeze
   # What is being listed. goods is a thing with a price; the other three are the
-  # Craigslist half - same city scoping, search, expiry and messaging, different
+  # Craigslist half — same city scoping, search, expiry and messaging, different
   # facts about them, which live in a table each rather than in columns that are
   # null for every bicycle.
   KINDS = %w[goods job housing gig].freeze
@@ -118,7 +118,7 @@ class Marketplace::Listing < ApplicationRecord
   before_validation :normalize_buy_box_key
 
   # Immediate, not later: the queue has no worker. Only searches that already
-  # match this row, and only if they are due - a filtered index is not a
+  # match this row, and only if they are due — a filtered index is not a
   # stream we can append into.
   after_create :alert_matching_saved_searches
   after_create :file_duplicate_report
@@ -226,7 +226,7 @@ class Marketplace::Listing < ApplicationRecord
 
   # The Omnibus Art. 6a anchor: the lowest price this listing actually carried
   # in the trailing 30 days, or nil. A card may say "was X" only when X is
-  # that observed minimum and the current price is strictly below it - never
+  # that observed minimum and the current price is strictly below it — never
   # from a seller-entered field, and never from a price nobody observed.
   def omnibus_reference_price_cents
     price_observations.trailing_30_days.minimum(:price_cents)
@@ -319,7 +319,7 @@ class Marketplace::Listing < ApplicationRecord
   # title that normalises to the same string. That is the one case where a
   # second listing is almost always a mistake (double-posted) or a flood
   # (the same ad re-posted to occupy the page) rather than a legitimate
-  # second life - a seller relisting a sold lamp is not caught, because the
+  # second life — a seller relisting a sold lamp is not caught, because the
   # old row is no longer active, and two genuinely different chairs with
   # different titles are not either. Detection files a report for a person
   # to judge; it never withdraws anything itself.
@@ -336,7 +336,7 @@ class Marketplace::Listing < ApplicationRecord
 
   # Whitespace and punctuation out, case folded: "Sofa! 3-seat" and
   # "sofa 3 seat" are one listing posted twice. Kept ASCII-alphanumeric on
-  # purpose - Norwegian titles keep their digits and letters, and anything
+  # purpose — Norwegian titles keep their digits and letters, and anything
   # more clever starts splitting genuine re-postings of the same sofa.
   def self.normalize_title(title)
     title.to_s.downcase.gsub(/[^a-z0-9]+/, " ").strip
@@ -378,7 +378,7 @@ class Marketplace::Listing < ApplicationRecord
   end
 
   # Detection files a moderation report; a human decides. `user` on a report
-  # is the account the report concerns - the seller - because the queue reads
+  # is the account the report concerns — the seller — because the queue reads
   # it as "whose listing is this", not "who complained". One open report per
   # listing: a seller posting three copies gets three reports, but editing
   # and re-saving never multiplies one.

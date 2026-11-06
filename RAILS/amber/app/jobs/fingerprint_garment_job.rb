@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-# Stores a local CRC fingerprint for change-detection - not a semantic embedding.
+# Stores a local CRC fingerprint for change-detection — not a semantic embedding.
 # Real fashion embeddings (OpenRouter / pgvector) remain planned.
 class FingerprintGarmentJob < ApplicationJob
   queue_as :default
@@ -18,7 +18,7 @@ class FingerprintGarmentJob < ApplicationJob
     # One write with the attributes, not an empty create followed by an update.
     # GarmentEmbedding requires provider and model, so `create_garment_embedding!`
     # with no arguments raised RecordInvalid before the update could supply
-    # them - this job has never stored a fingerprint for an item that did not
+    # them — this job has never stored a fingerprint for an item that did not
     # already have an embedding row, which is every item the first time.
     attributes = {
       provider: "local",

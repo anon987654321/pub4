@@ -1,5 +1,5 @@
 # brgen function + layout inventory. Each row is one check the runner executes.
-# Target band: 50-200. Source rows always run; live rows run when :38182 is up.
+# Target band: 50–200. Source rows always run; live rows run when :38182 is up.
 app: brgen
 checks:
   # --- chrome / landmarks ---
@@ -18,7 +18,7 @@ checks:
      in: brgen/app/views/layouts/application.html.erb,
      has: [stylesheet_link_tag], lack: [tokens.css, minimal-ui]}
   - {id: chrome.pwa_manifest, in: brgen/app/views/layouts/application.html.erb, has: [pwa_manifest]}
-  # The partial is the engine's, not brgen's - amber's row above already points
+  # The partial is the engine's, not brgen's — amber's row above already points
   # at it through the layout. brgen/ never held a copy, so this row matched
   # nothing and asserted nothing about the three legal links it names.
   - {id: chrome.legal_footer, in: __shared/app/views/shared/_site_legal_footer.html.erb, has: [privacy, terms, cookies]}

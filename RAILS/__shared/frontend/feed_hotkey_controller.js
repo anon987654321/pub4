@@ -1,6 +1,6 @@
-// Hotkey controller - vim-style j/k navigation, Enter open, / search, ? help
+// Hotkey controller — vim-style j/k navigation, Enter open, / search, ? help
 // Triangle feeds: .feed-card (brgen), .feed-post (amber), listings, comments.
-// NN/g #6/#7: recognition over recall - first-visit coach once; ? always shows help.
+// NN/g #6/#7: recognition over recall — first-visit coach once; ? always shows help.
 import { Controller } from "@hotwired/stimulus"
 
 const ITEM_SEL = [
@@ -19,7 +19,7 @@ const COACH_KEY = "pub4:hotkey-coach:dismissed"
 export default class extends Controller {
   static targets = ["item"]
   static values = {
-    help: { type: String, default: "j/k - ↓↑ nav - Enter open - / search - n new - esc clear - ? help" },
+    help: { type: String, default: "j/k · ↓↑ nav · Enter open · / search · n new · esc clear · ? help" },
     coach: { type: String, default: "Keyboard: press ? anytime for shortcuts (j/k to move, / to search)." },
     coachDismiss: { type: String, default: "Got it" }
   }
@@ -43,7 +43,7 @@ export default class extends Controller {
       ["INPUT", "TEXTAREA", "SELECT"].includes(tag) ||
       document.activeElement?.isContentEditable
 
-    // Cmd/Ctrl-K reaches the search from inside a field too - that is the point of
+    // Cmd/Ctrl-K reaches the search from inside a field too — that is the point of
     // it, and why every app that has one binds both. It came from bsdports' local
     // search_hotkey_controller, which bound / and Cmd-K on the ports index only; the
     // rest of bsdports had no search shortcut at all because the layout never
@@ -167,7 +167,7 @@ export default class extends Controller {
     // ...and only where there is a keyboard to coach about. The copy is
     // "Keyboard: press ? anytime for shortcuts (j/k to move, / to search)", and
     // it was showing on a 390px touch viewport with no keyboard, no ? key and no
-    // j/k - verified on live brgen.no. A coarse pointer with no hover is a touch
+    // j/k — verified on live brgen.no. A coarse pointer with no hover is a touch
     // device; the shortcuts themselves stay bound either way, for a paired
     // keyboard.
     const fine = window.matchMedia("(hover: hover) and (pointer: fine)")
@@ -177,7 +177,7 @@ export default class extends Controller {
     //
     // Both coaches are position:fixed at the bottom centre. Measured on the
     // brgen front page at 390x844: .hotkey-coach (z 1100) painted over
-    // .tab-bar-coach (z 91) AND over .tab-bar-peel (z 90) - elementFromPoint at
+    // .tab-bar-coach (z 91) AND over .tab-bar-peel (z 90) — elementFromPoint at
     // the centre of each returned the hotkey box. So the keyboard hint covered
     // both the "Vis meny" button and the peel grip, which are the only two
     // controls that reveal the hidden chrome. Two hints at once is a Hick's-law

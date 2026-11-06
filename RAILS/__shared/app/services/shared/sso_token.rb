@@ -13,7 +13,7 @@ module Shared
   # cache before returning a payload. Without that, the 120-second TTL was the only
   # limit on replay (the old backlog:
   # rails_coverage_contract_is_tautological, "sso_token also has no replay/nonce
-  # protection on its 120s token") - an SSO URL in a referrer header, a proxy log,
+  # protection on its 120s token") — an SSO URL in a referrer header, a proxy log,
   # or shoulder-surfed off a screen was a working login for anyone holding it, as
   # many times as they liked.
   #
@@ -58,7 +58,7 @@ module Shared
       "#{body}.#{sig}"
     end
 
-    # consume: false inspects a token without spending it - for a health check or a
+    # consume: false inspects a token without spending it — for a health check or a
     # test, never for a login.
     def verify(token, expected_app: nil, consume: true)
       return nil unless configured?
@@ -95,7 +95,7 @@ module Shared
     end
 
     # NullStore answers true to every write, which would leave the check looking
-    # present and doing nothing - the failure shape this codebase keeps finding. So
+    # present and doing nothing — the failure shape this codebase keeps finding. So
     # an unusable store is named and replaced rather than trusted.
     def nonce_cache
       return nil unless defined?(Rails) && Rails.respond_to?(:cache)
@@ -108,7 +108,7 @@ module Shared
     end
 
     # Process-local fallback. It cannot see a replay that lands on another Falcon
-    # worker, which is why the real store is preferred - but it does catch the
+    # worker, which is why the real store is preferred — but it does catch the
     # single-process case, and it means this guard is never merely decorative.
     @seen_nonces = {}
     @nonce_mutex = Mutex.new
@@ -132,7 +132,7 @@ module Shared
       return false if a.bytesize != b.bytesize
 
       ActiveSupport::SecurityUtils.secure_compare(a, b)
-    rescue StandardError # scan: intentional - a malformed token compares unequal - fail closed
+    rescue StandardError # scan: intentional — a malformed token compares unequal — fail closed
       false
     end
   end

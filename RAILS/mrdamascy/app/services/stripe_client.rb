@@ -6,16 +6,16 @@ require "uri"
 require "securerandom"
 require "openssl"
 
-# Stripe Checkout client - the operator-mandated second payment lane, next to
+# Stripe Checkout client — the operator-mandated second payment lane, next to
 # VippsClient. Same shape, same honesty rules, Net::HTTP only (APP_SPEC §2:
 # no gems beyond Rails defaults).
 #
-#   Stripe Checkout REST API - api.stripe.com/v1
+#   Stripe Checkout REST API — api.stripe.com/v1
 #     POST /v1/checkout/sessions      create a hosted Checkout Session
 #     GET  /v1/checkout/sessions/{id} poll the session's payment_status
 #
 # MOCK BY DEFAULT (ENV["STRIPE_MOCK"] != "0"): every call succeeds locally and
-# never raises; the "payment" happens on our own /stripe/mock approval page -
+# never raises; the "payment" happens on our own /stripe/mock approval page —
 # a stand-in for Stripe's hosted Checkout, mirroring the Vipps mock. Real mode
 # (STRIPE_MOCK=0) needs STRIPE_SECRET_KEY and performs the documented calls,
 # raising StripeClient::NotAvailable on wiring gaps so the checkout can say
@@ -64,7 +64,7 @@ class StripeClient
 
     # The reconciliation seam, mirroring VippsClient#sync_payment!: idempotent,
     # converges from either the webhook or the tracking poll, swallows
-    # transport errors (the next poll/webhook retries - honest silence beats a
+    # transport errors (the next poll/webhook retries — honest silence beats a
     # 500).
     def sync_payment!(order:)
       return order if mock_mode? || order.payment_state == "captured"
@@ -82,12 +82,12 @@ class StripeClient
       order
     end
 
-    # Stripe captures on completion - "capture" is our own state transition.
+    # Stripe captures on completion — "capture" is our own state transition.
     def mark_captured(order)
       if order.payment_state != "captured"
         attrs = { payment_state: "captured" }
         # The kitchen may already have advanced the order while the customer
-        # was paying - capture confirms payment, it never rewinds the kitchen.
+        # was paying — capture confirms payment, it never rewinds the kitchen.
         attrs[:state] = "confirmed" if order.state == "placed"
         order.update!(attrs)
       end
@@ -98,8 +98,8 @@ class StripeClient
 
     # Stripe signs webhooks as HMAC-SHA256 over "{timestamp}.{raw_body}" with
     # the webhook signing secret; the Stripe-Signature header lists t= and
-    # v1=... pairs. Constant-time compare, ±5 minute tolerance (Stripe docs).
-    # Raises NotAvailable on any mismatch - callers answer 400/401.
+    # v1=… pairs. Constant-time compare, ±5 minute tolerance (Stripe docs).
+    # Raises NotAvailable on any mismatch — callers answer 400/401.
     def verify_signature!(payload:, header:, secret:)
       raise NotAvailable, "Missing Stripe-Signature header" if header.blank?
       raise NotAvailable, "Missing STRIPE_WEBHOOK_SECRET" if secret.blank?
@@ -147,7 +147,7 @@ class StripeClient
         "line_items[0][price_data][currency]": "nok",
         "line_items[0][price_data][unit_amount]": order.total_ore.to_i,
         "line_items[0][price_data][product_data][name]":
-          "Mr. Damascy - bestilling #{order.tracking_token}"
+          "Mr. Damascy — bestilling #{order.tracking_token}"
       }
 
       body = http_post(
@@ -163,7 +163,7 @@ class StripeClient
       true
     end
 
-    # GET /v1/checkout/sessions/{id} -> payment_status: paid | unpaid | expired
+    # GET /v1/checkout/sessions/{id} → payment_status: paid | unpaid | expired
     def session_status(id:)
       body = http_get(
         "/v1/checkout/sessions/#{URI.encode_www_form_component(id)}",

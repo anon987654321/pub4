@@ -13,7 +13,7 @@
     <hgroup>
       <p>
         <time datetime="<%= @event.starts_at.iso8601 %>"><%= l(@event.starts_at, format: :event) %></time>
-        <% if @event.ends_at %>-<time datetime="<%= @event.ends_at.iso8601 %>"><%= l(@event.ends_at, format: :event) %></time><% end %>
+        <% if @event.ends_at %>–<time datetime="<%= @event.ends_at.iso8601 %>"><%= l(@event.ends_at, format: :event) %></time><% end %>
       </p>
       <%= tag.h1 @event.title %>
     </hgroup>
@@ -34,7 +34,7 @@
     <% if @event.location_name.present? %>
       <p>
         <%= tag.strong @event.location_name %>
-        <% if @event.place %> - <%= link_to t("events.on_the_map"), place_path(@event.place) %><% end %>
+        <% if @event.place %>· <%= link_to t("events.on_the_map"), place_path(@event.place) %><% end %>
       </p>
     <% end %>
     <% if @event.address.present? %><p><%= @event.address %></p><% end %>
@@ -75,7 +75,7 @@
   <section role="region" aria-label="<%= t("comments.submit") %>">
     <%= tag.h2 t("comments.submit") %>
     <%# Was a hand-rolled form and a hand-rolled comment row. The form's textarea
-        had no accessible name - a screen reader announced "edit text, blank" -
+        had no accessible name — a screen reader announced "edit text, blank" —
         because the aria-label the shared fields carry was the one thing the copy
         left out. The row dropped the timestamp, the vote control and the delete
         the rest of the fleet renders. Both are the shared partials now. %>

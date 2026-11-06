@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-# A community's own reference page - the rules behind the rules, the local
+# A community's own reference page — the rules behind the rules, the local
 # glossary, what the weekly thread is for.
 class CommunityWikiPage < ApplicationRecord
   belongs_to :community
@@ -25,7 +25,7 @@ class CommunityWikiPage < ApplicationRecord
   end
 
   # Writing keeps what it replaced. Called instead of update! so no caller can
-  # save a page and forget the revision - a history with holes reads as if the
+  # save a page and forget the revision — a history with holes reads as if the
   # missing edits never happened.
   def revise!(body:, user:)
     transaction do

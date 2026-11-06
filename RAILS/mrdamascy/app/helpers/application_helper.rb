@@ -37,7 +37,7 @@ module ApplicationHelper
     DESIGN_TOKENS.fetch(name)
   end
 
-  # money(1500) -> "15 kr" - whole øre render without decimals; anything with
+  # money(1500) → "15 kr" — whole øre render without decimals; anything with
   # a remainder falls back to Norwegian comma decimals ("15,50 kr").
   def money(ore)
     kroner, rester = ore.to_i.divmod(100)
@@ -62,7 +62,7 @@ module ApplicationHelper
   end
 
   # Three dots, the lit ones in the level's colour (1 Mild, 2 Middels,
-  # 3 Sterk!), and the level in words - read as "Styrke: Mild". Nothing for
+  # 3 Sterk!), and the level in words — read as "Styrke: Mild". Nothing for
   # a dish without heat. SCSS: .heat.heat-N > .heat-dot.on, .heat-label.
   def heat_dots(item)
     heat = item.heat.to_i.clamp(0, 3)
@@ -123,12 +123,12 @@ module ApplicationHelper
     tag.span(t("orders.states.#{order.state}"), class: "state-chip state-#{order.state}")
   end
 
-  # "tel_aviv" / "Tel Aviv" -> "origins.tel_aviv" (APP_SPEC §10 keys).
+  # "tel_aviv" / "Tel Aviv" → "origins.tel_aviv" (APP_SPEC §10 keys).
   def origin_story_key(origin)
     "origins.#{origin.to_s.parameterize.underscore}"
   end
 
-  # "tel_aviv" -> "Tel Aviv" - proper nouns render as-is in either locale.
+  # "tel_aviv" → "Tel Aviv" — proper nouns render as-is in either locale.
   def origin_label(origin)
     origin.to_s.tr("_", " ").split.map(&:capitalize).join(" ")
   end

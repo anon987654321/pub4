@@ -19,6 +19,6 @@ export default class extends Controller {
     const remainingMs = new Date(this.targetTimeValue).getTime() - Date.now()
     const minutes = Math.round(remainingMs / 60_000)
     this.element.textContent =
-      minutes > 1 ? `Est. delivery - ${minutes} min` : "Arriving any moment"
+      minutes > 1 ? `Est. delivery — ${minutes} min` : "Arriving any moment"
   }
 }

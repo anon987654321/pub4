@@ -18,7 +18,7 @@ class UsersControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     # Assert the translation, not the English string. brgen.no renders in nb, so
     # a literal "Create account" started failing the moment the page was
-    # localised - through the key it follows whatever locale the host resolves to.
+    # localised — through the key it follows whatever locale the host resolves to.
     assert_includes response.body, I18n.t("auth.create_account")
   end
 
@@ -140,8 +140,8 @@ class UsersControllerTest < ActionDispatch::IntegrationTest
     get root_path
     guest = User.where(guest: true).order(created_at: :desc).first
     guest.update_columns(latitude: 60.39, longitude: 5.32, location_updated_at: Time.current)
-    # Was `post live_path`. The Live surface is gone and its one distinct step -
-    # the coarsened geo stamp - is `nearby` on the ordinary composer now, so this
+    # Was `post live_path`. The Live surface is gone and its one distinct step —
+    # the coarsened geo stamp — is `nearby` on the ordinary composer now, so this
     # still posts the same kind of row through the path that replaced it.
     post posts_path, params: { post: { content: "Guest note before signing up", nearby: "1" } }
     guest_post = Post.where(user: guest).order(created_at: :desc).first

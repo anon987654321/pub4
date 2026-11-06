@@ -2,9 +2,9 @@
 
 # Counts for the wardrobe, in SQL.
 #
-# This used to materialise the whole wardrobe twice per call - `select(&:underused?)`
+# This used to materialise the whole wardrobe twice per call — `select(&:underused?)`
 # and `filter_map(&:cost_per_wear)` both load every row into Ruby to answer a
-# question the database can answer - and then fire another dozen COUNT queries,
+# question the database can answer — and then fire another dozen COUNT queries,
 # several of them repeats issued a second time by `tips`. It runs on `items#index`
 # as well as the analytics page, so it sat on the hot path.
 #
@@ -58,14 +58,14 @@ class WardrobeAnalytics
   def overdue_challenges = @overdue_challenges ||= DeclutterChallenge.where(user: user).overdue.count
 
   # The mean of each garment's own cost-per-wear, not total spend over total
-  # wears - a garment worn once should pull the average up on its own terms.
+  # wears — a garment worn once should pull the average up on its own terms.
   def average_cost_per_wear
     items.where.not(price_cents: nil).where("times_worn > 0")
          .pick(Arel.sql("AVG(price_cents / 100.0 / times_worn)"))
          &.round(2)
   end
 
-  # Rule-based coach - not an LLM. Labelled as such in the UI, and translated:
+  # Rule-based coach — not an LLM. Labelled as such in the UI, and translated:
   # these sit under a `t()`-rendered heading on a Norwegian-default page.
   def tips
     [

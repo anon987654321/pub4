@@ -10,7 +10,7 @@ module Ports
     # This is the ONLY package metadata on the mirror (measured 2026-08-05: the
     # directory holds index.txt, SHA256 and SHA256.sig and nothing else), so it
     # is name and version only. Category, COMMENT, maintainer and dependencies
-    # live in the ports tree and need ports.tar.gz - see PortsTarball.
+    # live in the ports tree and need ports.tar.gz — see PortsTarball.
     class PackageIndexParser
       # OpenBSD package names are stem-version[-flavor]. The version begins at
       # the first hyphen followed by a digit, scanning left to right: that keeps
@@ -48,7 +48,7 @@ module Ports
       end
 
       SYNTHETIC_PREFIX = "packages"
-      # Honest label. These rows genuinely have no category - inventing a
+      # Honest label. These rows genuinely have no category — inventing a
       # plausible one would make the gap invisible on the category surface.
       SYNTHETIC_CATEGORY = "uncategorised"
     end

@@ -6,7 +6,7 @@
 # them in Solid Cache for 15 minutes, with nothing behind that. Three
 # consequences this table fixes:
 #
-#   1. Seed data could not contain affiliate products at all - there was no
+#   1. Seed data could not contain affiliate products at all — there was no
 #      table to seed. "Real affiliate products in the seeds" is impossible
 #      without somewhere to put them.
 #   2. Every cache miss was a blocking outbound HTTP call inside a page render,
@@ -22,7 +22,7 @@
 class CreateAffiliateProducts < ActiveRecord::Migration[8.1]
   def change
     create_table :affiliate_products do |t|
-      # "tradedoubler", "amazon" - one table, several networks, because the
+      # "tradedoubler", "amazon" — one table, several networks, because the
       # deals sidebar and the newsletter treat them identically.
       t.string :source, null: false, limit: 32
       # The network's own product id (TradeDoubler productId, Amazon ASIN).
@@ -31,7 +31,7 @@ class CreateAffiliateProducts < ActiveRecord::Migration[8.1]
       t.string :title, null: false, limit: 300
       t.text :description
       t.string :merchant, limit: 200
-      # TradeDoubler's program/advertiser id - needed to tie a click back to the
+      # TradeDoubler's program/advertiser id — needed to tie a click back to the
       # program that pays for it.
       t.string :program_id, limit: 64
 

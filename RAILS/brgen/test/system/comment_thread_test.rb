@@ -16,7 +16,7 @@ class CommentThreadTest < ApplicationSystemTestCase
       email_address: "thread-#{SecureRandom.hex(4)}@brgen.no", username: "traad_#{SecureRandom.hex(3)}",
       password: "password123", city: @city, guest: false, email_verified_at: Time.current,
     )
-    @post = ActsAsTenant.with_tenant(@city) { Post.create!(user: @author, title: "Tråd", content: "...", city: @city) }
+    @post = ActsAsTenant.with_tenant(@city) { Post.create!(user: @author, title: "Tråd", content: "…", city: @city) }
     @root = Comment.create!(user: @author, commentable: @post, content: "<p>Første kommentar</p>")
   end
 

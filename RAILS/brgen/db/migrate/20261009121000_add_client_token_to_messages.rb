@@ -9,7 +9,7 @@ class AddClientTokenToMessages < ActiveRecord::Migration[8.1]
     add_column :messages, :client_token, :string
 
     # Scoped to the sender: a token is only a promise from one person's composer.
-    # Rows without one (bots, the corner widget, imports) are not constrained -
+    # Rows without one (bots, the corner widget, imports) are not constrained —
     # NULLs do not collide in a unique index.
     add_index :messages, %i[sender_id client_token], unique: true
   end

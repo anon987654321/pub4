@@ -96,7 +96,7 @@ class CheckFailOpenTest < Minitest::Test
       ledger = Deploy::CheckLedger.new(path: File.join(dir, "l.jsonl"))
       4.times { |i| ledger.record(check: "flaky", outcome: :errored, run_id: "r#{i}") }
 
-      assert_empty ledger.flags, "4 runs is below min_runs - a flag here would be noise"
+      assert_empty ledger.flags, "4 runs is below min_runs — a flag here would be noise"
 
       2.times { |i| ledger.record(check: "flaky", outcome: :errored, run_id: "r#{i + 4}") }
       assert_match(/flaky: errored on 6\/6 runs/, ledger.flags.join("\n"))

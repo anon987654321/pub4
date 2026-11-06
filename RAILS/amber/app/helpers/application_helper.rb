@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module ApplicationHelper
-  # Pagy::Frontend is gone in pagy 43 and amber calls no pagy_* helper - every
+  # Pagy::Frontend is gone in pagy 43 and amber calls no pagy_* helper — every
   # paginated view in all three apps renders through shared/_pager, which reads
   # the Pagy object directly. Including a module for helpers nothing calls was
   # the one line standing between this app and the version the others are on.
@@ -153,13 +153,13 @@ end
 
   # preset: :thumb | :card | :detail uses named variants when available.
   # widths: explicit list keeps the legacy multi-size path (avoid for wardrobe
-  # grids - those sizes are not preprocessed).
+  # grids — those sizes are not preprocessed).
   def responsive_image_tag(attachment, alt:, preset: :card, widths: nil, sizes: "(max-width: 768px) 100vw, 800px", loading: "lazy", **options)
     image_options = reserved_image_options(attachment, options, loading:)
 
     return image_tag(attachment, alt: alt, **image_options) unless attachment.respond_to?(:variant)
 
-    # The named-variant path is amber's alone - brgen preprocesses no presets -
+    # The named-variant path is amber's alone — brgen preprocesses no presets —
     # so it stays in front of the shared <picture>, never inside it.
     if widths.blank? && named_variant_preset?(attachment, preset)
       return named_responsive_image_tag(attachment, alt: alt, preset: preset, sizes: sizes, **image_options)
@@ -190,7 +190,7 @@ end
   # the first: the swatch stands in for a missing photograph, so it is whatever
   # colour the garment is, and no single ink survives that. The note beside
   # .wardrobe_slide_glyph said the swatches "are chosen light enough to carry"
-  # --text, which held for six of these ten and not for the other four -
+  # --text, which held for six of these ten and not for the other four —
   # measured against #333333, charcoal ran 1.21, navy 1.36, tortoise 2.26 and
   # terracotta 3.42, all under the 4.5 floor for the 18px name they carry.
   #

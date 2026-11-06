@@ -1,4 +1,4 @@
-<%# Flash toasts - fixed under the brand bar. Controllers flash :notice for
+<%# Flash toasts — fixed under the brand bar. Controllers flash :notice for
     warm confirmations, which toast_controller dismisses after a moment, and
     :alert for failures, which are announced at once and stay until closed
     (WCAG 2.2.1: no time limit on reading what went wrong). %>
@@ -10,6 +10,6 @@
         role: notice ? "status" : "alert",
         aria: { live: (notice ? "polite" : "assertive") } do %>
     <%= tag.p message, class: "toast-body" %>
-    <button type="button" class="toast-close" data-action="toast#dismiss" aria-label="<%= t("flash.dismiss") %>">x</button>
+    <button type="button" class="toast-close" data-action="toast#dismiss" aria-label="<%= t("flash.dismiss") %>">×</button>
   <% end %>
 <% end %>

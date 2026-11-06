@@ -40,21 +40,21 @@ visibility:)
     private
 
     # The actor is nearly always a belongs_to (`actor: :user`, `:buyer`,
-    # `:sender`, ...). Reading it with a bare public_send inside an after_commit is
+    # `:sender`, …). Reading it with a bare public_send inside an after_commit is
     # a lazy association read, and strict_loading_by_default is true in every
     # environment with production raising rather than logging. So emitting an
-    # activity event for any record that was loaded from the database - which is
-    # every controller update action - raised *after* the write had committed.
+    # activity event for any record that was loaded from the database — which is
+    # every controller update action — raised *after* the write had committed.
     #
     # record_activity! already swallows its own failures ("activity skipped"),
     # but the old actor lookup happened *outside* that rescue, so it propagated
     # and turned a successful save into a 500. 38 models pass `actor:`, and every
     # one with an `updated:` event was affected (Tv::Video, Tv::Channel,
     # Marketplace::Deal, Marketplace::Store, Takeaway::MenuItem,
-    # Takeaway::Restaurant, Dating::Profile, ...).
+    # Takeaway::Restaurant, Dating::Profile, …).
     #
     # Analytics must never be the reason a write fails, so this degrades to a nil
-    # actor instead of raising - matching record_activity!'s existing contract.
+    # actor instead of raising — matching record_activity!'s existing contract.
     def resolved_activity_actor(name)
       return activity_actor if name.nil?
 

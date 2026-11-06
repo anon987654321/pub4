@@ -8,7 +8,7 @@ module Brgen
   # records. db/seeds.rb then generates hundreds to thousands more from raw
   # Faker, and those were the ones giving the site away: Faker::Lorem Latin in
   # a Norwegian city feed, Faker::Company.name ("Stokes-Bernier") on Bergen
-  # shopfronts, Faker::Movie.title on a local TV channel, and - worst - a
+  # shopfronts, Faker::Movie.title on a local TV channel, and — worst — a
   # Faker::Address.city on listings that had Bergen coordinates, so a bike for
   # sale in Bergen claimed to be in "Gailborough".
   #
@@ -17,7 +17,7 @@ module Brgen
   # landmarks) so the same pools read correctly for Oslo, Stavanger, Tromsø and
   # the other Norwegian domains in DomainRegistry.
   #
-  # Non-Norwegian cities fall back to ENGLISH_* - worse than native copy, but
+  # Non-Norwegian cities fall back to ENGLISH_* — worse than native copy, but
   # authoring eleven languages of body text is not something a seed file should
   # pretend to do, and English at least parses as language where Lorem did not.
   module PlausibleContent
@@ -48,14 +48,14 @@ module Brgen
     ].freeze
 
     TV_VIDEO_TITLES = [
-      "Bybanen til Åsane - hva skjer nå?", "Sesongstart på Brann Stadion",
+      "Bybanen til Åsane — hva skjer nå?", "Sesongstart på Brann Stadion",
       "Slik lager du fiskesuppe", "Regnrekord i februar",
       "Møt bakeren på Nordnes", "Turtips: Rundemanen på en time",
       "Studentlivet i Bergen", "Fisketorget en tidlig morgen",
       "Konsertsommer i Grieghallen", "Nye sykkelveier i sentrum",
       "Hva koster det å bo i Bergen?", "Vinter på Ulriken",
       "Fem kafeer verdt en omvei", "Havnen døgnet rundt",
-      "Kulturnatt - høydepunkter", "Slik pusser du opp gammelt trehus"
+      "Kulturnatt — høydepunkter", "Slik pusser du opp gammelt trehus"
     ].freeze
 
     # --- Communities ---------------------------------------------------------

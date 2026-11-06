@@ -21,12 +21,12 @@ class CommunitiesController < ApplicationController
   # Same preload set and pagination as PostsController#index and
   # HomeController#index, which this had drifted from. It preloaded :user and
   # :votes but not :community or the image attachment, and it paginated nothing
-  # - so it rendered every post a community has ever had, and each one cost a
+  # — so it rendered every post a community has ever had, and each one cost a
   # community lookup plus an ActiveStorage attachment and blob lookup for the
   # `post.image.attached?` in shared/_post_card.
   #
   # Measured over 2,584 logged requests on 2026-08-01: 816 queries and a 3.5s
-  # p50, with a 110s worst case - the slowest endpoint in the app by both.
+  # p50, with a 110s worst case — the slowest endpoint in the app by both.
   def show
     # Reading and posting are separate questions, and this is the reading one.
     # Restricted communities are readable by the whole city; private ones are
@@ -53,7 +53,7 @@ class CommunitiesController < ApplicationController
     @community.user = Current.user
     if @community.save
       # The creator is the owner, and owner is a membership row rather than only
-      # communities.user_id - otherwise the moderator list is empty on day one
+      # communities.user_id — otherwise the moderator list is empty on day one
       # and there is nobody to appoint from.
       @community.community_memberships.create!(user: Current.user, role: "owner")
       redirect_to @community, notice: t("flash.community_created")
@@ -83,7 +83,7 @@ class CommunitiesController < ApplicationController
   def header_posts_count = @flair.present? ? @community.posts.kept.count : @pagy.count
 
   # `user` is preloaded because the header reads @community.user, and
-  # strict_loading_by_default raises on that lazily - the page rendered for
+  # strict_loading_by_default raises on that lazily — the page rendered for
   # guests and raised for every signed-in visitor, the same shape as the tv
   # video page.
   def set_community
@@ -95,8 +95,8 @@ class CommunitiesController < ApplicationController
     # nothing preloaded, and strict_loading_by_default raises on the association
     # read before the comparison happens. See comments_controller, same bug.
     #
-    # Moderators may edit - rules and flair are the things a mod team maintains
-    # - but only an owner may delete the place.
+    # Moderators may edit — rules and flair are the things a mod team maintains
+    # — but only an owner may delete the place.
     return if @community.owner?(Current.user)
     return if action_name != "destroy" && @community.moderator?(Current.user)
 

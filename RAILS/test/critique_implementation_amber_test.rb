@@ -154,13 +154,13 @@ class CritiqueImplementationAmberTest < Minitest::Test
     # The invariant is that archiving is *reversible*, which it is: the view
     # offers "Archive to memory" and "Restore to wardrobe" as a pair. The old
     # assertion demanded the literal copy "Archive reversibly", which the UI has
-    # never used - so it failed while the behaviour it guards was correct.
+    # never used — so it failed while the behaviour it guards was correct.
     assert_match(/items\.archive|Archive to memory/, show)
     assert_match(/items\.restore|Restore to wardrobe/, show)
     # The disclosure is t("items.photo_processing_html"), so the promised phrase
     # lives in the locale value and never appears in the template. Asserting the
     # English literal against the view failed on a form that renders it
-    # correctly - the same mistake as the archive assertion above, and the
+    # correctly — the same mistake as the archive assertion above, and the
     # reason RAILS tests assert through keys rather than English.
     assert_includes form, %(t("items.photo_processing_html"))
     assert_includes en_value("amber", "items.photo_processing_html"), "Photo processing:"
@@ -173,14 +173,14 @@ class CritiqueImplementationAmberTest < Minitest::Test
     index = read("bsdports/app/views/ports/index.html.erb")
     show = read("bsdports/app/views/ports/show.html.erb")
     # The keyboard-first shortcut moved out of a bsdports-local
-    # search_hotkey_controller.js - which bound / and Cmd-K on the ports index and
-    # nowhere else - into the shared feed-hotkey controller registered on every
+    # search_hotkey_controller.js — which bound / and Cmd-K on the ports index and
+    # nowhere else — into the shared feed-hotkey controller registered on every
     # layout. The claim being pinned is "/ focuses search", not which file holds it.
     hotkey = read("__shared/frontend/feed_hotkey_controller.js")
     layout = read("bsdports/app/views/layouts/application.html.erb")
 
     # Through the locale, not the literal. bsdports is fully translated now, so
-    # every one of these sentences lives in ports.* in en.yml and nb.yml - and a
+    # every one of these sentences lives in ports.* in en.yml and nb.yml — and a
     # test that greps the view for English fails precisely when the app stops
     # shipping English to a default_locale: nb audience. The claim being pinned is
     # that the honest copy exists and says what it says, which the key assertions
@@ -206,7 +206,7 @@ class CritiqueImplementationAmberTest < Minitest::Test
   end
 
   # Through the key and the locale file, not the literal in the template. The
-  # primer is localised now, so the English spelling only appears in en.yml -
+  # primer is localised now, so the English spelling only appears in en.yml —
   # and an assertion on the spelling fails on a view that has got more correct.
   # Both halves: the template must name the key, and the key must still carry
   # what a visitor is told before they tap: what starts, and that text survives

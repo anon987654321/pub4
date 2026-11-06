@@ -3,7 +3,7 @@
 # The vertical feed: one video per screen, ranked by how much of each people
 # actually watched.
 #
-# Tv::HomeController is the other shape - a trending/live/recent grid, which is
+# Tv::HomeController is the other shape — a trending/live/recent grid, which is
 # the YouTube answer to "what is there". This is the TikTok one: no choosing,
 # the next thing. It is only possible because Tv::ViewEvent finally records
 # watch time; before that, `trending` sorted views_count, which is incremented

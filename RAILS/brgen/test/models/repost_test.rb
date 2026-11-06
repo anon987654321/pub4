@@ -3,7 +3,7 @@
 require "test_helper"
 
 # The repost button rendered on every feed card for months with no route, model,
-# controller or column behind it - and for part of that time it carried
+# controller or column behind it — and for part of that time it carried
 # data-controller="action" with no URL, so a press added the active class, sent
 # nothing, and told the user the repost had landed until the next render.
 class RepostTest < ActiveSupport::TestCase

@@ -5,7 +5,7 @@ module Shared
   #
   # Tiptap submits HTML. Before this, brgen's posts/show carried the allow-list
   # inline and every other surface rendered the same kind of field with plain
-  # escaping - correct while those fields were plain text, and a bug the moment
+  # escaping — correct while those fields were plain text, and a bug the moment
   # an editor was mounted on them, because the reader then sees a literal
   # "<p>Hello</p>" rather than a paragraph. Rendering rich text through one
   # helper is what keeps the allow-list from being restated per view and

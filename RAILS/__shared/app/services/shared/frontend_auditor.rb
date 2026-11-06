@@ -107,11 +107,11 @@ module Shared
 "Inline <script> block found; extract to tracked JavaScript") if body.match?(INLINE_SCRIPT_PATTERN)
       add(:info, path, :chartjs, "Chart.js detected; protect config/data separation") if body.match?(CHART_PATTERN)
       add(:warning, path, :bem_in_views,
-"BEM class in view - use bare tag targeting") if body.match?(BEM_IN_VIEW_PATTERN)
+"BEM class in view — use bare tag targeting") if body.match?(BEM_IN_VIEW_PATTERN)
       add(:warning, path, :utility_class_soup,
-"Utility class soup in view - move to SCSS") if body.match?(UTILITY_SOUP_PATTERN)
+"Utility class soup in view — move to SCSS") if body.match?(UTILITY_SOUP_PATTERN)
       add(:warning, path, :anti_divitis,
-"Deep div nesting - flatten or use semantic landmarks") if body.match?(DIV_NESTING_PATTERN)
+"Deep div nesting — flatten or use semantic landmarks") if body.match?(DIV_NESTING_PATTERN)
       add(:warning, path, :invalid_paragraph_block,
 "Block element nested directly inside <p>; use a field or semantic wrapper") if body.match?(INVALID_PARAGRAPH_BLOCK_PATTERN)
       add(:warning, path, :empty_landmark,
@@ -181,7 +181,7 @@ body)
 "max-width #{width}ch outside #{range[:min]}-#{range[:max]}ch prose range") if width < range[:min] || width > range[:max]
       end
       add(:info, path, :centered_prose,
-"Centered text block - left-align body copy per style.yml") if body.match?(CENTERED_PROSE_PATTERN)
+"Centered text block — left-align body copy per style.yml") if body.match?(CENTERED_PROSE_PATTERN)
     end
 
     def scan_javascript(path, body)
@@ -194,14 +194,14 @@ body)
     # blanked before the rest of that stylesheet is read.
     def without_product_pens(path, body)
       if path.match?(Shared::FrontendLawSet::PRODUCT_PEN_FILES)
-        add(:info, path, :product_pen, "Documented product pen - exact CSS preserved (constitution allow-list)")
+        add(:info, path, :product_pen, "Documented product pen — exact CSS preserved (constitution allow-list)")
         return nil
       end
 
       pens = Operator::ScssRules.covered(body, Shared::FrontendLawSet::PRODUCT_PEN_SELECTORS)
       return body if pens.empty?
 
-      add(:info, path, :product_pen, "#{pens.size} product pen rule(s) - exact CSS preserved (constitution allow-list)")
+      add(:info, path, :product_pen, "#{pens.size} product pen rule(s) — exact CSS preserved (constitution allow-list)")
       Operator::ScssRules.without(body, Shared::FrontendLawSet::PRODUCT_PEN_SELECTORS)
     end
 

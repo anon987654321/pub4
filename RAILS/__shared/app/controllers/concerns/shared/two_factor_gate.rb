@@ -5,14 +5,14 @@ module Shared
   #
   # TwoFactorSetupsController has always let a member turn TOTP on, and
   # TwoFactorAuth#require_two_factor! has always guarded the one action that
-  # asked for it (brgen_marketplace listings) - but nothing challenged the
+  # asked for it (brgen_marketplace listings) — but nothing challenged the
   # second factor when the session itself was created. A member who "enabled
   # 2FA" was protected by their password alone, which the setup page never
   # told them.
   #
   # The flag is written by Authentication#start_new_session_for for any user
-  # carrying an otp_secret, so every sign-in path - password, magic link,
-  # OAuth - goes through the same gate. start_new_session_for calls
+  # carrying an otp_secret, so every sign-in path — password, magic link,
+  # OAuth — goes through the same gate. start_new_session_for calls
   # reset_session first, so a fresh sign-in clears a stale pending flag by
   # construction. The gate admits only what the challenge needs: the sign-out
   # route and the setup/verify surface itself. Everyone else is redirected
@@ -39,7 +39,7 @@ module Shared
 
       user = Current.user
       if user.blank? || user.try(:otp_secret).blank?
-        # 2FA vanished under the flag - purged account, or disabled on another
+        # 2FA vanished under the flag — purged account, or disabled on another
         # device between sign-in and this request. Clear and continue; the
         # session itself is real, only the challenge is gone.
         session.delete(:two_factor_pending)

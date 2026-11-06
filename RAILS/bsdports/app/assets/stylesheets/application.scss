@@ -67,13 +67,13 @@ nav[data-pwa-primary-nav] {
 // only code, kbd and the install command use --font-mono, because a reader
 // copies them.
 //
-// Operator, 2026-10-28: bsdports mirrors the classic google.com frontpage -
+// Operator, 2026-10-28: bsdports mirrors the classic google.com frontpage —
 // white paper, square corners (already this dialect's own), Arial, the blue
 // serpentine of #1a0dab links, Google's #f8f9fa button grey and #f2f2f2
 // footer. Google's own greys are re-picked where they sit under the tree's
 // floors: #5f6368 secondary is 5.97:1, so the dialect takes Google's own
-// results-snippet grey #4d5156 at 8.0:1. Arial needs no download - that IS
-// the classic frontpage's face - so this app alone pins no bundled webfont.
+// results-snippet grey #4d5156 at 8.0:1. Arial needs no download — that IS
+// the classic frontpage's face — so this app alone pins no bundled webfont.
 :root {
   // White paper whatever the OS asks for. The shared minimal base is dark
   // with a prefers-color-scheme: light override, so under a dark OS this
@@ -112,7 +112,7 @@ nav[data-pwa-primary-nav] {
 }
 
 /* The frontpage's serpentine: every link is #1a0dab, visited goes the classic
-   purple #609, and the underline appears on hover only - the 2005-2017
+   purple #609, and the underline appears on hover only — the 2005–2017
    frontpage behaviour. 12.4:1 and 7.3:1 on white, both clear. */
 a {
   color: var(--accent);

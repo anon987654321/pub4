@@ -6,12 +6,12 @@ module Tv
   #
   # This is the fix for the tv.oshlo.no 500 of 2026-08-12. Tv::Channel includes
   # CityTenantable, so acts_as_tenant puts a default_scope on it. Tv::Video does
-  # not, and tv_videos has no city_id - a video's city is whatever its channel's
+  # not, and tv_videos has no city_id — a video's city is whatever its channel's
   # is. On brgen.no the two agreed and nothing showed. On oshlo.no:
   #
   #   Tv::Video.trending.includes(:channel)
   #
-  # returned Bergen's six videos, because nothing scoped the videos - and then
+  # returned Bergen's six videos, because nothing scoped the videos — and then
   # the preload of :channel ran through Channel's default_scope, matched no rows
   # for Oslo, and set every video's channel association to nil. The card partial
   # says tv_video.channel.name, so the page 500'd. belongs_to :channel is
@@ -27,7 +27,7 @@ module Tv
     # The nil-city_id decision documented here is now TenantedThrough's, shared
     # with Marketplace::Deal, which had the same defect through :listing and no
     # scope at all: acts_as_tenant :city is `optional: true`, so a parent with
-    # no city is legal and reads as global rather than orphaned - it should
+    # no city is legal and reads as global rather than orphaned — it should
     # appear in every city, not in none. No such rows exist today (all three
     # production channels are Bergen's); this decides the case before it
     # arrives rather than after.

@@ -16,7 +16,7 @@ class Tv::Broadcast < ApplicationRecord
   validates :title, presence: true
   before_create { self.stream_key = SecureRandom.hex(16) }
 
-  # Same nil-channel exposure as Tv::Video - tv/home/index renders
+  # Same nil-channel exposure as Tv::Video — tv/home/index renders
   # b.channel.name for every @live row. It has not fired only because no
   # broadcast is live; the crash was one row away, not absent.
   scope :publicly_visible, -> { joins(:user).where(users: { deleted_at: nil, deletion_scheduled_at: nil }) }
@@ -24,7 +24,7 @@ class Tv::Broadcast < ApplicationRecord
   scope :scheduled, -> { publicly_visible.where(status: "scheduled").in_current_city }
 
   # `actor: user` is a lazy belongs_to read, and a broadcast toggled from a
-  # controller is loaded by id with nothing preloaded - so under strict loading
+  # controller is loaded by id with nothing preloaded — so under strict loading
   # (on in every environment, raising outside development) this raised after
   # update! had already flipped the status. See Shared::StrictSafeAssociations.
   def go_live!

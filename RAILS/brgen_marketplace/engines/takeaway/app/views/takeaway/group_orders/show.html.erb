@@ -13,10 +13,10 @@
   <% @order.order_items.each do |line| %>
     <li role="listitem">
       <span class="group-line-who"><%= line.user&.display_name || t("takeaway.group_host") %></span>
-      <span class="group-line-what"><%= line.quantity %>x <%= line.menu_item.name %></span>
+      <span class="group-line-what"><%= line.quantity %>× <%= line.menu_item.name %></span>
       <span class="group-line-sum"><%= line.subtotal_display %></span>
       <% if line.user_id == Current.user&.id %>
-        <%# destructive: no-confirm-ok - reversible - the item goes back in the group order from the menu %>
+        <%# destructive: no-confirm-ok — reversible — the item goes back in the group order from the menu %>
         <%= button_to t("actions.remove"), group_order_path(@order.group_token, line_id: line.id), method: :delete, class: "button button-ghost button-small" %>
       <% end %>
     </li>
@@ -29,7 +29,7 @@
   <%= form_with url: group_order_path(@order.group_token), method: :patch do |f| %>
     <div class="field">
       <%= f.label :menu_item_id, t("takeaway.group_add_line") %>
-      <%= f.select :menu_item_id, @menu_items.map { |item| [ "#{item.name} - #{Shared::MoneyDisplay.format(item.price_cents)}", item.id ] } %>
+      <%= f.select :menu_item_id, @menu_items.map { |item| [ "#{item.name} — #{Shared::MoneyDisplay.format(item.price_cents)}", item.id ] } %>
     </div>
     <div class="field">
       <%= f.label :quantity, t("takeaway.group_quantity") %>

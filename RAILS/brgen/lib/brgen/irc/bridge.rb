@@ -5,7 +5,7 @@ module Brgen
     # The seam between the IRC protocol and brgen's own models. Everything the
     # session needs from the app goes through here, so Session can be unit-tested
     # against a fake bridge with no database or socket. brgen channels are
-    # anonymous by design, so a web viewer sees an IRC poster as an anon handle -
+    # anonymous by design, so a web viewer sees an IRC poster as an anon handle —
     # the nick is preserved on the IRC side, not forced onto the web side.
     class Bridge
       def default_city

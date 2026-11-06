@@ -36,7 +36,7 @@ class LinkPreviewFetchJob < ApplicationJob
     return nil unless uri.is_a?(URI::HTTPS)
 
     # No public_https? pre-check: it resolved the host, and then get() resolved
-    # it again - a rebinding window on a URL a stranger supplied. request()
+    # it again — a rebinding window on a URL a stranger supplied. request()
     # resolves once and connects to the address it checked.
     response = get(uri)
     return nil unless response.is_a?(Net::HTTPSuccess)

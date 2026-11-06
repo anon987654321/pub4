@@ -19,7 +19,7 @@ module SourceReader
         # This file is RAILS/brgen/test/source_reader.rb, so RAILS is two levels
         # up, not three. At three it resolved to the repo root, where no `shared`
         # exists, both `find` guards missed and the chain fell through to the
-        # wrong path - 39 errors in brgen's suite on every checkout that is not
+        # wrong path — 39 errors in brgen's suite on every checkout that is not
         # /home/dev/pub4, which is why the box never saw it.
         File.expand_path("../..", __dir__)
       ]
@@ -41,7 +41,7 @@ module SourceReader
   # for assets moved without a namespace dir. Migrations stayed in the host and
   # resolve directly. See brgen/README.md.
   def read_source(abs)
-    # brgen's routes now span the host plus every vertical engine - read them as one
+    # brgen's routes now span the host plus every vertical engine — read them as one
     # so "is this route wired" assertions find engine-owned routes too.
     if abs.end_with?("brgen/config/routes.rb") && File.exist?(abs)
       brgen_dir = File.dirname(File.dirname(abs)) # .../brgen (abs is .../brgen/config/routes.rb)
@@ -57,7 +57,7 @@ module SourceReader
     File.read(abs)
   end
 
-  # A model is its file plus the concerns in the directory named after it -
+  # A model is its file plus the concerns in the directory named after it —
   # app/models/conversation.rb and app/models/conversation/*.rb are one class.
   # Reading only the first file would fail a "state machine is wired" assertion
   # the day the state machine moved into Order::Lifecycle, over a spelling.

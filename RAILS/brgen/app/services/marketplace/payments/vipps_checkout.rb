@@ -9,7 +9,7 @@ module Marketplace
   module Payments
     # Vipps MobilePay ePayment create-payment.
     # Login OAuth (VIPPS_CLIENT_*) is separate; eCom needs VIPPS_EPAYMENT_* + MSN.
-    # Without keys -> NotConfigured (never fakes success).
+    # Without keys → NotConfigured (never fakes success).
     class VippsCheckout
       def self.configured?
         ENV["VIPPS_EPAYMENT_CLIENT_ID"].to_s.strip.present? &&

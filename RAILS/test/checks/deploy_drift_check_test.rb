@@ -22,7 +22,7 @@ require_relative "../../../MASTER/checks/lib/live/deploy_drift"
 # deploy host those stamps do not exist, and before CheckResult#inconclusive! the
 # shim printed "ok: no deploy drift detected" directly beneath its own warning
 # saying nothing had been checked. So the interesting assertion here is not that
-# it finds drift - it is that with no stamps it declines to claim anything, and
+# it finds drift — it is that with no stamps it declines to claim anything, and
 # names the deploy host as the missing precondition rather than leaving the reader
 # to guess why a drift check went quiet.
 class DeployDriftCheckTest < Minitest::Test
@@ -87,7 +87,7 @@ class DeployDriftCheckTest < Minitest::Test
     assert_match(/commit\(s\) since then touch MASTER\/web, MASTER\/lib, MASTER\/data/, drift.join)
   end
 
-  # A SHA this checkout has never seen is not drift and not cleanliness - the check
+  # A SHA this checkout has never seen is not drift and not cleanliness — the check
   # cannot compare, and saying so is the difference between the third state and a
   # guess in either direction.
   def test_a_deployed_sha_this_checkout_does_not_hold_is_inconclusive_not_a_failure

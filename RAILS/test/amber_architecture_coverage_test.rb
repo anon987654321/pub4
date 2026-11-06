@@ -17,7 +17,7 @@ class AmberArchitectureCoverageTest < Minitest::Test
 
   def test_architecture_document_exists
     assert_match(/^## Architecture$/, File.read(DOC),
-                 "RAILS/amber/README.md lost its Architecture section - recover it from git history, do not rewrite it")
+                 "RAILS/amber/README.md lost its Architecture section — recover it from git history, do not rewrite it")
   end
 
   def test_every_component_is_named_in_the_architecture_document
@@ -25,7 +25,7 @@ class AmberArchitectureCoverageTest < Minitest::Test
     missing = components.reject { |name| doc.include?(camelize(name)) }
 
     assert_empty missing.sort,
-                 "components absent from README.md:#{missing.sort.join(', ')} - " \
+                 "components absent from README.md:#{missing.sort.join(', ')} — " \
                  "add them to a layer or the service catalog"
   end
 

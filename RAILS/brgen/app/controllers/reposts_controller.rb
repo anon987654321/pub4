@@ -3,7 +3,7 @@
 # Toggle on POST, matching VotesController and the `action` Stimulus controller,
 # which only ever sends POST. A second press removes the repost.
 class RepostsController < ApplicationController
-  # Post includes Shared::Sluggable, whose to_param returns the slug - so
+  # Post includes Shared::Sluggable, whose to_param returns the slug — so
   # post_repost_path(post) carries "sol-pa-floyen", not an id, and a plain
   # find(params[:post_id]) raises RecordNotFound on every press.
   include Shared::FindableBySlug

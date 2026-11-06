@@ -2,7 +2,7 @@
 
 require "test_helper"
 
-# The Tv activity emitters all passed `actor: user` - a lazy belongs_to read.
+# The Tv activity emitters all passed `actor: user` — a lazy belongs_to read.
 # Every model here is strict_loading by default (shared ApplicationRecord) and
 # production raises on a violation rather than logging, so a broadcast, stream or
 # video that a controller loaded by id had nothing preloaded and the emitter

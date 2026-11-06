@@ -105,7 +105,7 @@ class NewsletterEditionBuilder
       {
         "title" => v.title.to_s,
         "url" => v.track_url.to_s,
-        "description" => [ v.short_description, voucher_code(v.code, locale) ].compact.join(" - "),
+        "description" => [ v.short_description, voucher_code(v.code, locale) ].compact.join(" — "),
         "price" => v.discount_amount.to_s,
         "currency" => v.currency.to_s,
         "merchant" => v.program_name.to_s,

@@ -5,7 +5,7 @@ require "test_helper"
 # The follow button wrote a row nothing read: Follow existed, profiles carried
 # the button, and the feed had no lane that consulted the graph. This pins the
 # lane and the ONE resolver both the controller and the infinite-scroll reflex
-# now share - twin case statements over the same param is how a lane pages
+# now share — twin case statements over the same param is how a lane pages
 # differently than it renders.
 class PostFollowingLaneTest < ActiveSupport::TestCase
   setup do
@@ -34,7 +34,7 @@ class PostFollowingLaneTest < ActiveSupport::TestCase
     noise = make_post(@stranger, "fremmed")
 
     ids = Post.followed_by(@reader).pluck(:id)
-    assert_equal [ newer.id, older.id ], ids.first(2), "chronological, newest first - ranking is the fenced horizon item"
+    assert_equal [ newer.id, older.id ], ids.first(2), "chronological, newest first — ranking is the fenced horizon item"
     assert_not_includes ids, noise.id, "a stranger's post must never reach the following lane"
   end
 

@@ -44,7 +44,7 @@ class CommunityBanTest < ActiveSupport::TestCase
   end
 
   # And the person to ban usually has no membership row, so a flag on
-  # community_memberships would have had to invent one - making them a member
+  # community_memberships would have had to invent one — making them a member
   # and bumping members_count in the act of banning them.
   test "banning someone who never joined does not make them a member" do
     assert_no_difference -> { @community.reload.members_count } do
@@ -97,7 +97,7 @@ class CommunityBanTest < ActiveSupport::TestCase
     refute CommunityBan.new(community: @community, user: @nuisance, banned_by: @mod).valid?
   end
 
-  # A ban nobody is told about reads as the site being broken - the person keeps
+  # A ban nobody is told about reads as the site being broken — the person keeps
   # writing posts that vanish.
   test "the banned person is told, with the reason" do
     assert_difference -> { @nuisance.notifications.count }, 1 do

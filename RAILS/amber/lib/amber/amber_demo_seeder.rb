@@ -3,7 +3,7 @@
 require "stringio"
 
 module Amber
-  # Credible female capsule wardrobe demo - safe to run idempotently on production.
+  # Credible female capsule wardrobe demo — safe to run idempotently on production.
   class AmberDemoSeeder
     ITEMS = [
       { title: "Ivory silk slip dress", image: "amber-ivory-silk-dress", category: "Dresses", color: "ivory", brand: "Reformation", size: "S",
@@ -91,7 +91,7 @@ module Amber
       user = User.strict_loading(false).find_or_create_by!(email_address: DemoWardrobe::DEMO_EMAIL) do |u|
         # The demo account owns the public /demo page, and its address is on
         # that page. A fixed password made it a known login on every box the
-        # seed ran on - including through the jobs dashboard before it was
+        # seed ran on — including through the jobs dashboard before it was
         # gated. The demo user never signs in, so its password exists only to
         # satisfy has_secure_password and is thrown away here.
         u.password = u.password_confirmation = password
@@ -177,7 +177,7 @@ module Amber
         outfit.assign_attributes(
           occasion: row[:occasion],
           season: row[:season],
-          description: "Demo capsule look - browse only until you sign in."
+          description: "Demo capsule look — browse only until you sign in."
         )
         outfit.save!
         if attach_media && !outfit.image.attached?

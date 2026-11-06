@@ -9,7 +9,7 @@ require_relative "engine_roots"
 # has_one_attached :image does not create an association called :image. It
 # creates image_attachment and image_blob, plus a with_attached_image scope.
 # Passing the bare name to includes/preload/eager_load raises
-# ActiveRecord::AssociationNotFoundError - but Active Record skips preloading
+# ActiveRecord::AssociationNotFoundError — but Active Record skips preloading
 # entirely when the relation comes back empty, so the call is silent against an
 # empty table and raises in production the moment there is something to load.
 #
@@ -55,14 +55,14 @@ class AttachmentPreloadTest < Minitest::Test
       offenders(File.read(path)).map { |name| "#{path.delete_prefix("#{RAILS_ROOT}/")}: includes(:#{name})" }
     end
 
-    assert_empty found, "use with_attached_<name> - a bare attachment name is not an association:\n  " \
+    assert_empty found, "use with_attached_<name> — a bare attachment name is not an association:\n  " \
                         "#{found.join("\n  ")}"
   end
 
   # A source-text checker that has stopped matching reports a clean tree and
   # reads exactly like one. This drives the detector over the defect itself.
   def test_the_detector_still_finds_the_defect_it_was_written_for
-    refute_empty attachment_names, "no attachments found - the declaration scan has stopped matching"
+    refute_empty attachment_names, "no attachments found — the declaration scan has stopped matching"
     assert_includes attachment_names, "image"
 
     assert_equal ["image"], offenders("Post.hot.includes(:user, :community, :image)")

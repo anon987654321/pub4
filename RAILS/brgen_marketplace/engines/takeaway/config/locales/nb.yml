@@ -15,7 +15,7 @@ nb:
     tip_line: "Tips: %{amount}"
     position: "Posisjon"
     use_current_location: "Bruk nåværende posisjon"
-    locating: "Henter posisjonen din..."
+    locating: "Henter posisjonen din…"
     location_denied: "Fikk ikke lest posisjonen. Du kan skrive den inn selv."
     vehicle_types:
       bicycle: "Sykkel"

@@ -2,7 +2,7 @@
 
 require "test_helper"
 
-# amber had AffiliateLink - a URL an owner pastes onto one wardrobe item - and
+# amber had AffiliateLink — a URL an owner pastes onto one wardrobe item — and
 # no network inventory, so there was nothing to place between posts. These pin
 # that the shared band actually renders here, because a partial that is moved
 # but never reached is the failure this whole move was for.

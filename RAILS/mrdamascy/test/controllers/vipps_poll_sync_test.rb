@@ -3,9 +3,9 @@
 require "test_helper"
 
 # Poll sync (APP_SPEC §5/§8): the customer lands on /track straight from the
-# Vipps app, so the tracking page itself - load and the 10 s status poll -
-# reconciles the payment. No refresh, no extra tap: Vipps says AUTHORIZED ->
-# we capture -> the timeline flips to confirmed.
+# Vipps app, so the tracking page itself — load and the 10 s status poll —
+# reconciles the payment. No refresh, no extra tap: Vipps says AUTHORIZED →
+# we capture → the timeline flips to confirmed.
 class VippsPollSyncTest < ActionDispatch::IntegrationTest
   setup do
     @kitchen = seed_kitchen!

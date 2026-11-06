@@ -35,7 +35,7 @@ class ChromeAuditFlatContractTest < Minitest::Test
   def test_vertical_promo_action_does_not_duplicate_link_affordance_with_an_arrow
     source = read("brgen/app/views/home/_vertical_promo_unit.html.erb")
     assert_includes source, '<%= t("promo.#{slug}.action") %>'
-    refute_includes source, "->"
+    refute_includes source, "→"
   end
 
   def test_brgen_uses_the_shared_canonical_reduced_motion_reset

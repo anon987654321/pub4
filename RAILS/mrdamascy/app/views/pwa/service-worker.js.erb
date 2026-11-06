@@ -1,4 +1,4 @@
-// Mr. Damascy service worker (§7) - offline shell + asset cache.
+// Mr. Damascy service worker (§7) — offline shell + asset cache.
 // Navigations are network-first with the precached /offline page as fallback;
 // the menu page keeps its last good copy, so the menu (its food photos ride
 // the asset cache) still opens offline. Hashed /assets/* and brand /icon*,
@@ -39,7 +39,7 @@ self.addEventListener("fetch", (event) => {
   if (url.origin !== self.location.origin) return;
 
   // The menu: network first, its last good copy when offline. Not served
-  // stale while online - the page carries the live cart count and form
+  // stale while online — the page carries the live cart count and form
   // tokens.
   if (request.mode === "navigate" && MENU_URLS.includes(url.pathname)) {
     event.respondWith(

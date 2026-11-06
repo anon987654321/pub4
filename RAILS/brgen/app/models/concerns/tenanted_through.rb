@@ -4,7 +4,7 @@
 # through a belongs_to: Tv::Video and Tv::Broadcast via :channel,
 # Marketplace::Deal via :listing.
 #
-# acts_as_tenant cannot help these - there is no city_id to scope - so without
+# acts_as_tenant cannot help these — there is no city_id to scope — so without
 # a scope they are unscoped, and one city's rows appear on every other
 # city's pages. That is not hypothetical: it is the tv.oshlo.no 500 of
 # 2026-08-12 (see Tv::ChannelTenanted, which this generalises) and it was still

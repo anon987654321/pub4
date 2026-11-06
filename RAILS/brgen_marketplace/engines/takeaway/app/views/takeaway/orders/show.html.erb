@@ -8,7 +8,7 @@
 </div>
 
 <%# One ticket, several people. Only the host opens it and only the host sends
-    it to the kitchen - that is what makes it one delivery rather than four. %>
+    it to the kitchen — that is what makes it one delivery rather than four. %>
 <% if @order.host?(Current.user) && @order.status == "pending" %>
   <p class="group-share">
     <% if @order.group? %>
@@ -34,7 +34,7 @@
   <%= tag.h2 t("takeaway.order_items") %>
   <% @order.order_items.each do |order_item| %>
     <article aria-label="<%= t("takeaway.order_item") %>">
-      <%= tag.strong order_item.menu_item.name %> x <%= order_item.quantity %>
+      <%= tag.strong order_item.menu_item.name %> × <%= order_item.quantity %>
       <span class="item-subtotal"><%= order_item.subtotal_display %></span>
     </article>
   <% end %>

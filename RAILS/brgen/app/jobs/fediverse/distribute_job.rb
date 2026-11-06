@@ -8,7 +8,7 @@ module Fediverse
   # beats serialising identically inside every per-inbox job.
   #
   # Split from DeliveryJob so one unreachable instance retries alone instead of
-  # holding up - or repeating - delivery to everyone else, which is what a
+  # holding up — or repeating — delivery to everyone else, which is what a
   # single job looping over followers would do.
   class DistributeJob < ApplicationJob
     queue_as :bulk

@@ -3,9 +3,9 @@
 class MenuItem < ApplicationRecord
   include LocalizedColumns
 
-  # The "best of the world's kebab" tour - every I18n origins.<origin> story
+  # The "best of the world's kebab" tour — every I18n origins.<origin> story
   # key comes from this list.
-  # Bergen, not Oslo: one kitchen, Solheimsgaten 60 (Danmarksplass) - the home city origin.
+  # Bergen, not Oslo: one kitchen, Solheimsgaten 60 (Danmarksplass) — the home city origin.
   ORIGINS = %w[damaskus beirut berlin adana bergen dubai tel_aviv bursa gaziantep familie stockholm sydney].freeze
 
   # The 14 allergens food sold at a distance must name before purchase

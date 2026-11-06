@@ -5,7 +5,7 @@
 # sitemap that forgets the city is how oshlo.no came to list Bergen's posts.
 #
 # ActsAsTenant does scope the CityTenantable models, so the scoping is real
-# without this - but a default_scope is invisible at the call site, and the two
+# without this — but a default_scope is invisible at the call site, and the two
 # models reached through an association (Tv::Video via its channel,
 # Marketplace::Deal via its store) are not covered by it at all. So the contract
 # is that the controller *names* the city in its queries, where a reader and a

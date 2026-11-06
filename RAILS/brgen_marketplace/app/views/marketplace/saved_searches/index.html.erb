@@ -30,7 +30,7 @@
           saved_search.category&.name,
           saved_search.location.presence,
           (saved_search.notify? ? t("marketplace.alerts_on") : nil)
-        ].compact.join(" - "),
+        ].compact.join(" · "),
         actions: search_actions,
         url: run_path,
         class: "listing" %>

@@ -8,7 +8,7 @@
   <% content_for :head, tag.meta(name: "robots", content: "noindex, follow") %>
 <% end %>
 <% if @listings.any? %>
-  <% content_for :json_ld, json_ld_script(item_list_schema(@listings, title: "#{@category.name} - #{city_name}")) %>
+  <% content_for :json_ld, json_ld_script(item_list_schema(@listings, title: "#{@category.name} — #{city_name}")) %>
 <% end %>
 
 <%= render "marketplace/nav_bar",

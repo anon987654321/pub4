@@ -11,7 +11,7 @@ module Shared
   #
   # That coarsening is why this never prints a decimal. Two decimals of latitude
   # is roughly a kilometre, so "1.4 km" would state a precision the stored value
-  # does not have - the number would be arithmetic on a rounded figure, presented
+  # does not have — the number would be arithmetic on a rounded figure, presented
   # as a measurement. Under a kilometre says so in words; past that it is whole
   # kilometres, and past the Live radius it says nothing at all rather than
   # inviting someone to triangulate.

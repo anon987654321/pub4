@@ -10,7 +10,7 @@ require "minitest/mock"
 # Marketplace::CheckoutsControllerTest's subject.
 class Marketplace::CartsControllerTest < ActionDispatch::IntegrationTest
   setup do
-    # A known apex (DomainRegistry) that is also a marketplace subdomain - the
+    # A known apex (DomainRegistry) that is also a marketplace subdomain — the
     # controller 404s "Unknown host" otherwise, and .brgen.no scopes the session.
     host! "markedsplass.brgen.no"
     @seller = User.create!(email_address: "ca_seller@example.com", password: "secret1234")

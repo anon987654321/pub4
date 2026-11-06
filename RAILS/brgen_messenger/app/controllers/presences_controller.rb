@@ -26,7 +26,7 @@ class PresencesController < ApplicationController
 
   # Scoped through the participant join, exactly as TypingIndicatorsController
   # does it. An unscoped Conversation.find let anyone who knew a conversation id
-  # beat into a room they are not in - and since the beat broadcasts the roster
+  # beat into a room they are not in — and since the beat broadcasts the roster
   # to every reader, that showed a stranger as present in a private thread.
   def set_conversation
     @conversation = Conversation.for_user(Current.user).find(params[:conversation_id])

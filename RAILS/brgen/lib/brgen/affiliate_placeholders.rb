@@ -10,7 +10,7 @@ module Brgen
   # reporting, and someone would eventually reconcile a payout against it.
   #
   # click_url points at the merchant's own Norwegian storefront, NOT a fabricated
-  # tracking link - an invented affiliate deep link would either 404 or, worse,
+  # tracking link — an invented affiliate deep link would either 404 or, worse,
   # look like it was attributing clicks to an account that doesn't exist.
   module AffiliatePlaceholders
     SOURCE = "tradedoubler"
@@ -33,7 +33,7 @@ module Brgen
       { external_id: "ph-xxl-jakke", title: "Bergans Microlight regnjakke",
         merchant: "XXL Sport", price_cents: 1_499_00, currency: "NOK",
         category: "clothing", url: "https://www.xxl.no/",
-        description: "Pakkbar skalljakke - laget for vestlandsvær." },
+        description: "Pakkbar skalljakke — laget for vestlandsvær." },
       { external_id: "ph-xxl-sko", title: "Salomon Speedcross 6",
         merchant: "XXL Sport", price_cents: 1_699_00, currency: "NOK",
         category: "clothing", url: "https://www.xxl.no/",
@@ -46,7 +46,7 @@ module Brgen
         merchant: "Komplett", price_cents: 4_290_00, currency: "NOK",
         category: "electronics", url: "https://www.komplett.no/",
         description: "QHD, 90 W strøm over ett USB-C-kabel." },
-      { external_id: "ph-adlibris-bok", title: "Bergen - en byhistorie",
+      { external_id: "ph-adlibris-bok", title: "Bergen — en byhistorie",
         merchant: "Adlibris", price_cents: 399_00, currency: "NOK",
         category: "books", url: "https://www.adlibris.com/no",
         description: "Innbundet, rikt illustrert." },

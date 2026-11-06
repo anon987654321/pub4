@@ -1,12 +1,12 @@
-// Typographic foundation - vertical rhythm + optical margins.
+// Typographic foundation — vertical rhythm + optical margins.
 //
 // PRESERVE_THEN_IMPROVE_NEVER_BREAK:
-//   - Every line-height here is on design_tokens.yml scale.line_height
+//   • Every line-height here is on design_tokens.yml scale.line_height
 //     and MASTER design_rules typography.line_height.allowed:
-//     [1, 1.25, 1.4, 1.5, 1.6]. Off-scale (1.45, 1.55, ...) is ScaleLint debt.
-//   - Measure is design_tokens measure_body / design_rules ideal_ch (66ch).
-//   - Absolute --line-height: 20px on dialect :root stays until a measured
-//     screenshot pass (brgen 18px root would open chrome 20->22.5px).
+//     [1, 1.25, 1.4, 1.5, 1.6]. Off-scale (1.45, 1.55, …) is ScaleLint debt.
+//   • Measure is design_tokens measure_body / design_rules ideal_ch (66ch).
+//   • Absolute --line-height: 20px on dialect :root stays until a measured
+//     screenshot pass (brgen 18px root would open chrome 20→22.5px).
 //
 // Enforced by: Operator::ScaleLint (RAILS), MASTER LINE_HEIGHT_ON_SCALE (surface_rules).
 
@@ -66,7 +66,7 @@
 
   // norwegian_guillemets: a quotation opens with « in Bokmål.
   &:lang(nb) {
-    quotes: "«" "»" "'" "'";
+    quotes: "«" "»" "‘" "’";
   }
 
   // contextual_features abbreviations: small caps sit an acronym in the line.
@@ -140,8 +140,8 @@
    has exactly one opt-out in the fleet: the marketplace hero, which matches the
    id itself to outrank it. No shared display-type slot exists to opt into.
    Lowering this rule to a class changes which override wins on every surface
-   that has one, and widening it with :not() ties rather than wins - :not() takes
-   its argument's specificity - so an opt-out here is a design decision about
+   that has one, and widening it with :not() ties rather than wins — :not() takes
+   its argument's specificity — so an opt-out here is a design decision about
    what display type means, not a refactor. */
 .page-title,
 .feed-post-show h1,
@@ -157,7 +157,7 @@ main#main-content > header h1 {
 
 /* One rule dresses a section heading, at whatever depth it sits. The pair that
    preceded it split the job: _shell_widgets' `section h2` dressed every h2 in
-   every section as a widget label - monospace, uppercase, wide tracking - and
+   every section as a widget label — monospace, uppercase, wide tracking — and
    this rule claimed only sections that were direct children of main, so it
    never reached the nested ones. Measured on amber's front page, the four
    wardrobe category headings came out 15.75px monospace uppercase at 1.26px

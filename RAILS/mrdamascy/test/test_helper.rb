@@ -4,7 +4,7 @@ ENV["RAILS_ENV"] ||= "test"
 require_relative "../config/environment"
 require "rails/test_help"
 
-# Swaps VippsClient's HTTP core for path-keyed canned answers - the one
+# Swaps VippsClient's HTTP core for path-keyed canned answers — the one
 # network seam, no gems. `vipps_real_mode!` turns VIPPS_MOCK off, grants the
 # ENV credentials and records every call; the mock-mode tests simply never
 # call it. Always paired with `vipps_restore_http!` in teardown.
@@ -145,7 +145,7 @@ end
 
 module ActiveSupport
   class TestCase
-    # No fixtures - every test seeds its own minimal world inline with create!
+    # No fixtures — every test seeds its own minimal world inline with create!
     # and rolls back per test via Rails' transactional tests.
     self.use_instantiated_fixtures = false
     self.use_transactional_tests = true
@@ -166,12 +166,12 @@ module ActiveSupport
     ROLES = { customer: 0, staff: 1, courier: 2, admin: 3 }.freeze
 
     # ------------------------------------------------------------------
-    # Auth helpers - the same contract as SessionsController#create:
+    # Auth helpers — the same contract as SessionsController#create:
     # a plain Session row + the token cookie (cookies[:session_token]).
     # ------------------------------------------------------------------
     def sign_in(user)
       # Drive the app's real phone + mock-OTP sign-in (POST /session) so the
-      # session cookie is exactly what SessionsController#create sets - a
+      # session cookie is exactly what SessionsController#create sets — a
       # SIGNED cookie. Writing a plain cookie here made every controller see a
       # guest: carts keyed on user_id vanished, the reorder card never
       # rendered, staff pages bounced.
@@ -207,19 +207,19 @@ module ActiveSupport
     end
 
     # ------------------------------------------------------------------
-    # Seed helpers - minimal inline world builders (money in øre).
+    # Seed helpers — minimal inline world builders (money in øre).
     # ------------------------------------------------------------------
     def seed_kitchen!
       # Idempotent on slug: setup blocks often call seed_kitchen! and then a
-      # helper like seed_order! that seeds the kitchen again - the second
+      # helper like seed_order! that seeds the kitchen again — the second
       # create! would violate the unique slug and fail every such test.
       Kitchen.find_or_create_by!(slug: "bergen") do |k|
-        k.name = "Mr. Damascy - Danmarksplass"
+        k.name = "Mr. Damascy — Danmarksplass"
         k.address = "Solheimsgaten 60, 5054 Bergen"
         k.postcode = "5054"
         k.phone = "955 55 600"
-        k.opening_hours = "Man-Fre 11-21 - Lør-Søn 14-21"
-        k.opening_hours_en = "Mon-Fri 11am-9pm - Sat-Sun 2pm-9pm"
+        k.opening_hours = "Man–Fre 11–21 · Lør–Søn 14–21"
+        k.opening_hours_en = "Mon–Fri 11am–9pm · Sat–Sun 2pm–9pm"
         k.rating = 4.9
       end
     end

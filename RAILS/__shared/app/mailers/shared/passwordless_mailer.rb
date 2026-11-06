@@ -13,7 +13,7 @@ module Shared
       # the environments now set alongside action_mailer's. It was unset in every
       # environment, so the previous `Rails.application.routes.url_helpers`
       # call raised "Missing host to link to!", a rescue caught it, and the mail
-      # shipped the relative path /session?magic_token=... - which no mail client
+      # shipped the relative path /session?magic_token=… — which no mail client
       # can follow, and which pointed at a route that did not exist either.
       @url = main_app.magic_session_url(token:)
       mail(to: user.email_address, subject: I18n.t("mailer.sign_in_link_subject"))

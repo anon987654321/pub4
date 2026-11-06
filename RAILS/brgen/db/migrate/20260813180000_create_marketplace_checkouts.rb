@@ -3,7 +3,7 @@
 # A real basket.
 #
 # Marketplace::Order is a per-listing offer with its own payment, which is the
-# right shape for classifieds - a bike from a stranger is negotiated, not added
+# right shape for classifieds — a bike from a stranger is negotiated, not added
 # to a cart. It is the wrong shape for a shop: buying four things from a store
 # meant four payments, four PSP round trips and four card charges, and there was
 # nowhere to put a delivery address.

@@ -7,7 +7,7 @@ class AmberScriptTest < ActiveSupport::TestCase
 
   # amber.sh's own deploy_tracked_app pipeline copies only the app's own
   # source tree into the deploy target (Rails.root is /home/amber/app there),
-  # not the sibling @deploy.sh/@bundle.sh - those are shell tooling run from
+  # not the sibling @deploy.sh/@bundle.sh — those are shell tooling run from
   # the source checkout, never part of the deployed app itself. Rails.root's
   # parent only holds them in a source-tree checkout (local dev, CI); on a
   # deployed target, fall back to the checkout root,

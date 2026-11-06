@@ -6,12 +6,12 @@ module Shared
   # A beacon rather than a redirect, for two reasons that both matter more than
   # the extra request:
   #
-  #   1. A /out?url=... redirect is an open redirect unless every target is signed
+  #   1. A /out?url=… redirect is an open redirect unless every target is signed
   #      or allowlisted, and an open redirect on a social site is a phishing
   #      primitive. This endpoint never receives a URL it will send anyone to.
   #   2. TradeDoubler's Link Converter script rewrites outbound anchors in the
   #      browser. Pointing the anchor at our own host instead would hide the
-  #      merchant URL from it and take attribution to zero - measurement that
+  #      merchant URL from it and take attribution to zero — measurement that
   #      destroys the thing it measures.
   #
   # So the anchor keeps the merchant URL, the script still rewrites it, and this

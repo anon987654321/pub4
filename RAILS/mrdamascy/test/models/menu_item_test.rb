@@ -8,14 +8,14 @@ class MenuItemTest < ActiveSupport::TestCase
     @category = seed_category!(@kitchen)
   end
 
-  test "heat accepts the 0-3 scale" do
+  test "heat accepts the 0–3 scale" do
     [ 0, 1, 2, 3 ].each do |heat|
       item = seed_item!(@category, heat: heat)
       assert item.valid?, "heat #{heat} should be valid"
     end
   end
 
-  test "heat refuses anything outside 0-3" do
+  test "heat refuses anything outside 0–3" do
     [ 4, -1 ].each do |heat|
       item = MenuItem.new(
         menu_category: @category,
@@ -28,7 +28,7 @@ class MenuItemTest < ActiveSupport::TestCase
         weight_g: 450,
         position: 1
       )
-      assert_not item.valid?, "heat #{heat} should be refused (0-3 only)"
+      assert_not item.valid?, "heat #{heat} should be refused (0–3 only)"
     end
   end
 
@@ -60,7 +60,7 @@ class MenuItemTest < ActiveSupport::TestCase
     item = seed_item!(@category, origin: "berlin")
     assert item.valid?
     assert_equal "berlin", item.origin
-    # The view layer resolves the story with t("origins.#{item.origin}") -
+    # The view layer resolves the story with t("origins.#{item.origin}") —
     # lowercase slugs keep that lookup working for all 12 cities.
     assert I18n.exists?("origins.#{item.origin}"), "origins.#{item.origin} must exist in locales"
   end

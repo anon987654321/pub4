@@ -58,8 +58,8 @@ Rails.application.configure do
   config.action_mailer.default_url_options = { host: "localhost", port: 3000 }
 
   # Routes carry the same host. action_mailer.default_url_options only reaches
-  # ActionMailer; anything generating a URL through Rails.application.routes -
-  # an isolated engine's main_app proxy, a job, a runner - reads this one, and
+  # ActionMailer; anything generating a URL through Rails.application.routes —
+  # an isolated engine's main_app proxy, a job, a runner — reads this one, and
   # it was unset in every environment.
   config.after_initialize { Rails.application.routes.default_url_options = { host: "localhost", port: 3000 } }
 
@@ -89,7 +89,7 @@ Rails.application.configure do
   config.action_dispatch.verbose_redirect_logs = true
 
   # Suppress logger output for asset requests.
-  # config.assets.quiet = true  # sprockets only - not used with propshaft
+  # config.assets.quiet = true  # sprockets only — not used with propshaft
 
   # Raises error for missing translations.
   # config.i18n.raise_on_missing_translations = true
@@ -114,7 +114,7 @@ Rails.application.configure do
   # This listed brgen.no, its seven verticals and bsdports.org by hand, so the
   # other 42 apexes in DomainRegistry::ENTRIES answered 403 Blocked Host on a
   # developer's own machine. A network whose entire argument is that each city
-  # is its own place could not show you a second one locally - the per-city
+  # is its own place could not show you a second one locally — the per-city
   # seed data was unviewable by the person who wrote it.
   #
   # Read from the registry rather than restated. The registry is already the

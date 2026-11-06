@@ -1,8 +1,8 @@
 <%#
-  Canonical Amber logo - matches the Caprasimo swoosh + radial gradient +
+  Canonical Amber logo — matches the Caprasimo swoosh + radial gradient +
   white retro hairlines design exactly (viewBox 0 0 1000 500).
   id_prefix keeps multiple instances on one page unique (defs/clipPath).
-  scan: intentional-colors - a brand mark is painted in its own fixed values;
+  scan: intentional-colors — a brand mark is painted in its own fixed values;
   a logo that followed the theme would stop being the logo.
 %>
 <%#
@@ -27,7 +27,7 @@
       <path id="<%= id_prefix %>-swoosh-path" d="M50,220 C250,180 750,180 950,220"/>
       <clipPath id="<%= id_prefix %>-text-mask">
         <text font-family="'Caprasimo', Arial, sans-serif" letter-spacing="-3" stroke="none" class="amber-logo-word">
-          <textPath href="#<%= id_prefix %>-swoosh-path" startOffset="2%">amber<%# scan: intentional - the wordmark is the brand name, not translatable copy %><tspan dx="10" dy="-40" stroke="none" class="amber-logo-mark">®</tspan></textPath>
+          <textPath href="#<%= id_prefix %>-swoosh-path" startOffset="2%">amber<%# scan: intentional — the wordmark is the brand name, not translatable copy %><tspan dx="10" dy="-40" stroke="none" class="amber-logo-mark">®</tspan></textPath>
         </text>
       </clipPath>
     </defs>

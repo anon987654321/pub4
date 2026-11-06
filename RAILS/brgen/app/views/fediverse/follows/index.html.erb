@@ -28,12 +28,12 @@
             and "asked and not answered" is what a fire-and-forget POST cannot
             tell you. %>
         <span class="fedi-follow-state"><%= t("fediverse.states.#{follow.state}") %></span>
-        <%# destructive: no-confirm-ok - reversible - the remote actor is followed again from the same page %>
+        <%# destructive: no-confirm-ok — reversible — the remote actor is followed again from the same page %>
         <%= button_to t("actions.unfollow"), fediverse_follow_path(uri: follow.fedi_actor.uri), method: :delete, class: "button button-ghost button-small" %>
       </li>
     <% end %>
   </ul>
 <% else %>
-  <%# empty_state: no-action-ok - outbound follow of a remote account is not a surface yet; the empty state is the whole feature until that vertical lands %>
+  <%# empty_state: no-action-ok — outbound follow of a remote account is not a surface yet; the empty state is the whole feature until that vertical lands %>
   <%= render "shared/empty_state", title: t("fediverse.following_empty"), body: t("fediverse.following_empty_body") %>
 <% end %>

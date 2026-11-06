@@ -4,7 +4,7 @@
 # app/assets/stylesheets holds a single application.scss. The former feature
 # partials live inside it between `// ==== module: <name>` and
 # `// ==== /module: <name>` banner comments, in the exact cascade order the
-# old @include meta.load-css calls had - the merge is compiled-byte-identical
+# old @include meta.load-css calls had — the merge is compiled-byte-identical
 # apart from comment placement (scripts/merge-scss.mjs proved it with
 # dart-sass).
 #
@@ -42,7 +42,7 @@ module StylesheetModules
     [application_scss(app), *used_partials(app).map { |name| File.read(partial_path(app, name)) }].join("\n")
   end
 
-  # The text of one former partial, exactly as it was before the merge -
+  # The text of one former partial, exactly as it was before the merge —
   # banner lines excluded, content byte-identical. A split app answers with
   # the partial file of that name.
   def stylesheet_module(app, name)
@@ -61,7 +61,7 @@ module StylesheetModules
         found << line
       end
     end
-    raise "#{app}: no module banner `#{name}` in application.scss - the consolidation moved it"
+    raise "#{app}: no module banner `#{name}` in application.scss — the consolidation moved it"
   end
 
   # Former partial names, in cascade order, for tests that asserted module

@@ -2,8 +2,8 @@
 
 require "test_helper"
 
-# The history a wiki page keeps. Its own test because the page's guarantee -
-# that an edit is recoverable - is only as good as what these rows hold.
+# The history a wiki page keeps. Its own test because the page's guarantee —
+# that an edit is recoverable — is only as good as what these rows hold.
 class CommunityWikiRevisionTest < ActiveSupport::TestCase
   setup do
     Brgen::CitySeed.sync! if City.table_exists?

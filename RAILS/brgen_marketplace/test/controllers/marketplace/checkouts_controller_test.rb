@@ -4,12 +4,12 @@ require "test_helper"
 require "minitest/mock"
 
 # POST /checkout starts a real payment. It must require a session, reject an
-# unknown provider, and - the money-safety property - fail CLOSED when the PSP is
+# unknown provider, and — the money-safety property — fail CLOSED when the PSP is
 # unconfigured: redirect back with the reason, never fake a success or 500. This
 # controller had no test; StripeCheckout.start! raises NotConfigured without a key
 # rather than pretending, and this pins that the controller honors it.
 #
-# Route helpers are marketplace.* - the mounted-engine proxy. They were written as
+# Route helpers are marketplace.* — the mounted-engine proxy. They were written as
 # marketplace_checkout_path when marketplace was a host `namespace`, and the split
 # to engines/marketplace made every one of them a NameError. Nothing caught it:
 # `bin/rails test` globs test/** from the app root, so engines/*/test never ran.
@@ -17,7 +17,7 @@ require "minitest/mock"
 # engine is still mounted where the host says it is.
 class Marketplace::CheckoutsControllerTest < ActionDispatch::IntegrationTest
   setup do
-    # A known apex (DomainRegistry) that is also a marketplace subdomain - the
+    # A known apex (DomainRegistry) that is also a marketplace subdomain — the
     # controller 404s "Unknown host" otherwise, and .brgen.no scopes the session.
     host! "markedsplass.brgen.no"
     @buyer = User.create!(email_address: "co_buyer@example.com", password: "secret1234")

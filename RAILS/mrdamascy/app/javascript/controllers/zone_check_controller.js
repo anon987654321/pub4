@@ -1,6 +1,6 @@
 import { Controller } from "@hotwired/stimulus"
 
-// Zone check (§8): as the postcode is typed, GET /checkout/zone?postcode=...
+// Zone check (§8): as the postcode is typed, GET /checkout/zone?postcode=…
 // (json: { ok, eta, name, fee_text, total_text, eta_text, minimum_text,
 // vipps_label, stripe_label }) and render the feedback, the fee, total and
 // ETA lines, the basket-minimum warning and the pay-button labels from it;
@@ -36,7 +36,7 @@ export default class extends Controller {
     }
 
     this.feedbackTarget.classList.remove("zone-ok", "zone-fail")
-    this.feedbackTarget.textContent = this.checkingValue || "..."
+    this.feedbackTarget.textContent = this.checkingValue || "…"
 
     clearTimeout(this.timer)
     this.timer = setTimeout(() => {

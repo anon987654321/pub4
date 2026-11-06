@@ -5,8 +5,8 @@ require "timeout"
 # Two layers, because the one that was here had never rejected anything.
 #
 # `approve?` called an LLM and rescued StandardError by returning true. On
-# production there is no API key - /etc/brgen.env holds SECRET_KEY_BASE and
-# nothing else - so RubyLLM raised on every call, the rescue swallowed it, and
+# production there is no API key — /etc/brgen.env holds SECRET_KEY_BASE and
+# nothing else — so RubyLLM raised on every call, the rescue swallowed it, and
 # every post was approved. 57 bot posts arrived between 2026-07-17 and 08-06 and
 # passed through this class one at a time. The only trace was a Rails.logger.warn
 # in a log nobody reads, and there was not even that: production.log has no
@@ -15,7 +15,7 @@ require "timeout"
 # Fail-open is right for the LLM and wrong as the whole policy. An LLM outage
 # must not stop a city forum from accepting posts. But "we could not check" is
 # not the same as "this is fine", and the cheap deterministic check below needs
-# no network, no key and no phrasebook - it is the signature all 57 shared.
+# no network, no key and no phrasebook — it is the signature all 57 shared.
 class PostModeration
   MODEL = ENV.fetch("MODERATION_MODEL", "groq/llama-3.1-8b-instant")
   PROVIDER = ENV.fetch("MODERATION_PROVIDER", "groq").to_sym
@@ -35,7 +35,7 @@ class PostModeration
   # worth two points rather than a rejection.
   CRLF = /\r/
 
-  # A short list, and a signal rather than a rule - the moment this becomes the
+  # A short list, and a signal rather than a rule — the moment this becomes the
   # whole test, the bot changes a word. It is here because "SEO" and "proxy" in a
   # post from an account with no verified email are not what a neighbour writes.
   PITCH = /\b(seo|backlink|proxies|proxy offer|google 1st page|rank(?:ing)? your|guest post)\b/i
@@ -71,11 +71,11 @@ class PostModeration
   # precondition, not the verdict.
   #
   # What this does NOT catch, stated because a filter whose gaps are undocumented
-  # gets trusted past its evidence: the "I wanted to know your price" family -
+  # gets trusted past its evidence: the "I wanted to know your price" family —
   # one short sentence, no link, no CRLF, posted in Hungarian or Basque or
   # Georgian. Seventeen languages of it came through in three weeks. Catching
   # those needs language detection against the city's own language, which is a
-  # bigger thing than this class, and they carry no payload - no link, no pitch,
+  # bigger thing than this class, and they carry no payload — no link, no pitch,
   # nothing to click. They are noise; the ones with a URL in them are the harm.
   def spam_score
     return 0 unless unverified?

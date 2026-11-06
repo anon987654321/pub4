@@ -1,14 +1,14 @@
 # frozen_string_literal: true
 
 # Playlist::TimestampedComment and Playlist::AudioVersion shipped as fully
-# written models - validations, scopes, a broadcast callback, a StimulusReflex
-# and player JS - but their migration was never authored. Every /playlists/:id
+# written models — validations, scopes, a broadcast callback, a StimulusReflex
+# and player JS — but their migration was never authored. Every /playlists/:id
 # render hit Track#timestamped_comments and raised "no such table", and
 # Track#replace_audio! could not record a prior version.
 #
 # Columns are derived from the models and their call sites:
-#   body / timestamp_seconds        - timestamped_comment.rb validations
-#   original_filename / byte_size   - track.rb#replace_audio!
+#   body / timestamp_seconds        — timestamped_comment.rb validations
+#   original_filename / byte_size   — track.rb#replace_audio!
 class AddPlaylistTimestampedCommentsAndAudioVersions < ActiveRecord::Migration[8.1]
   def change
     create_table :playlist_timestamped_comments do |t|
@@ -29,7 +29,7 @@ class AddPlaylistTimestampedCommentsAndAudioVersions < ActiveRecord::Migration[8
 
     create_table :playlist_audio_versions do |t|
       t.integer :track_id, null: false
-      # Nullable: belongs_to :user, optional: true - replace_audio! may run
+      # Nullable: belongs_to :user, optional: true — replace_audio! may run
       # with no actor (system/import path).
       t.integer :user_id
       t.string :original_filename, limit: 255

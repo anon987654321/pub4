@@ -3,7 +3,7 @@
 # A repost is a signal boost, not a copy: it does not create a Post. Post
 # includes Shared::Sluggable, whose slug is derived from the title and unique
 # per city, so a repost-as-Post would have collided with the thing it was
-# reposting. An optional comment is the quote-post variant - still this row,
+# reposting. An optional comment is the quote-post variant — still this row,
 # still one per user per post. Empty comment is a boost.
 class Repost < ApplicationRecord
   include Shared::Notifiable
@@ -56,8 +56,8 @@ class Repost < ApplicationRecord
   # Announce is repost. This is the dependency 2.1 had on 1.1.
   after_create_commit :federate
 
-  # Reposting your own post is allowed - it is how you resurface something you
-  # wrote, the same as on x.com - but you do not get notified about yourself.
+  # Reposting your own post is allowed — it is how you resurface something you
+  # wrote, the same as on x.com — but you do not get notified about yourself.
   def federate
     booster = strict_safe(:user)
     return unless booster&.federated?

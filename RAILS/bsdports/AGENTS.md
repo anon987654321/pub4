@@ -1,4 +1,4 @@
-# bsdports - agent notes
+# bsdports — agent notes
 
 - **Domain:** bsdports.org. **Port:** 47312. **Deploy root:** `RAILS/bsdports`.
 - **Jobs:** `PortsImportJob` in `config/recurring.yml`; requires

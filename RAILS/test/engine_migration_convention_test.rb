@@ -9,7 +9,7 @@ require "minitest/autorun"
 # three files under shared/db/migrate have per-app equivalents doing the real work.
 # On 2026-08-11 a migration for outbound_clicks was written there, created no
 # table in any app, and the beacon that writes to it would have failed silently
-# behind a rescue - the declaration read as wiring and was decoration.
+# behind a rescue — the declaration read as wiring and was decoration.
 #
 # The convention is one migration per app. This test is what makes the convention
 # enforceable rather than remembered.
@@ -28,7 +28,7 @@ class EngineMigrationConventionTest < Minitest::Test
     present = Dir.glob(File.join(ROOT, "__shared/db/migrate/*.rb")).map { |path| File.basename(path) }.sort
 
     assert_equal HISTORICAL.sort, present,
-                 "a migration here runs in no app - db:migrate:status lists only each app's own. " \
+                 "a migration here runs in no app — db:migrate:status lists only each app's own. " \
                  "Put one file per app in <app>/db/migrate instead, and if this list is genuinely " \
                  "meant to grow, wire the engine path first and prove it with db:migrate:status."
   end
@@ -52,7 +52,7 @@ class EngineMigrationConventionTest < Minitest::Test
 
       schema = File.read(File.join(ROOT, app, "db/schema.rb"))
       assert_includes schema, "outbound_clicks",
-                      "#{app}/db/schema.rb has no outbound_clicks table - the migration was " \
+                      "#{app}/db/schema.rb has no outbound_clicks table — the migration was " \
                       "written but never run, so the beacon writes to nothing"
     end
   end

@@ -52,9 +52,9 @@
 
     <section class="store-buybox" aria-label="<%= t("takeaway.restaurant_info") %>">
       <p class="store-buybox-price"><small><%= t("takeaway.delivery_label") %></small> <%= @restaurant.delivery_fee_display %></p>
-      <p><%= @restaurant.cuisine_type %> - <%= @restaurant.address %>, <%= @restaurant.city_label %></p>
+      <p><%= @restaurant.cuisine_type %> · <%= @restaurant.address %>, <%= @restaurant.city_label %></p>
       <%# t(count:) goes through the locale's own plural rules. %>
-      <p><%= t("takeaway.min_order_short", min: @restaurant.min_order_display) %> - <%= t("takeaway.saves", count: @restaurant.favorites.size) %></p>
+      <p><%= t("takeaway.min_order_short", min: @restaurant.min_order_display) %> · <%= t("takeaway.saves", count: @restaurant.favorites.size) %></p>
       <%# A stated radius is a promise worth restating where the reader decides;
           an unstated one is not a small radius, so nothing renders. %>
       <% if @restaurant.delivery_radius_km.present? %>
@@ -67,7 +67,7 @@
         <%= link_to t("takeaway.browse_menu"), "#menu", class: "button button-primary" %>
         <% if Current.user.present? && !@restaurant.owner?(Current.user) %>
           <% if @favorited %>
-            <%# destructive: no-confirm-ok - reversible - the button becomes Save again in place %>
+            <%# destructive: no-confirm-ok — reversible — the button becomes Save again in place %>
             <%= button_to t("takeaway.unsave"), restaurant_favorite_restaurant_path(@restaurant), method: :delete, class: "button" %>
           <% else %>
             <%= button_to t("takeaway.save_restaurant"), restaurant_favorite_restaurant_path(@restaurant), method: :post, class: "button" %>
@@ -120,7 +120,7 @@
     <% @reviews.each do |r| %>
       <article>
         <%= render "shared/store_stars", rating: r.rating %>
-        <p class="deal-meta"><%= r.user&.display_name || t("takeaway.anon") %> - <%= time_ago(r.created_at) %></p>
+        <p class="deal-meta"><%= r.user&.display_name || t("takeaway.anon") %> · <%= time_ago(r.created_at) %></p>
         <% if r.body.present? %><p><%= r.body %></p><% end %>
       </article>
     <% end %>

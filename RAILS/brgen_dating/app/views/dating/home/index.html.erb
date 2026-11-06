@@ -45,7 +45,7 @@
           <% end %>
         </div>
         <% if @profiles.empty? %>
-          <%# Soft guests can like/dislike (require_user_session) - do not auth-wall discover. %>
+          <%# Soft guests can like/dislike (require_user_session) — do not auth-wall discover. %>
           <%= render "shared/empty_state",
                 title: t("empty.no_nearby"),
                 body: t("dating.empty_nearby_body"),

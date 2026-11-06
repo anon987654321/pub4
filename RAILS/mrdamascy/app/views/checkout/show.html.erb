@@ -3,9 +3,9 @@
 <%# The single confirm screen (§6/§7). CheckoutController#load_checkout_vars
     provides @cart, @mode, @order, @returning_customer, @zone, @subtotal_ore,
     @discount_ore, @delivery_fee_ore, @total_ore and @eta_minutes. Live zone
-    feedback comes from zone_check_controller -> GET /checkout/zone. POSTing
+    feedback comes from zone_check_controller → GET /checkout/zone. POSTing
     checkout_path builds the order and redirects to the chosen PSP (Vipps or
-    Stripe) - each pay button submits its own payment_method value, so the
+    Stripe) — each pay button submits its own payment_method value, so the
     choice needs no script. %>
 
 <h1 class="page-title"><%= t("checkout.title") %></h1>
@@ -25,7 +25,7 @@
 <% end %>
 
 <%# The zero-typing path (§12): one tap logs in with Vipps, and Vipps hands
-    back the verified phone, name and address - the confirm screen then
+    back the verified phone, name and address — the confirm screen then
     arrives prefilled and the only remaining button is "Betal med Vipps". %>
 <% unless current_user %>
   <section class="vipps-login card">
@@ -158,7 +158,7 @@
       Vipps stays the recommended primary; the card button is the fallback
       for customers without the Vipps app. button_tag keeps the label free
       from the submitted value (f.submit would print the value instead).
-      No script, no card fields here - Stripe hosts the card entry on its
+      No script, no card fields here — Stripe hosts the card entry on its
       own PCI-scoped page. %>
 <%# The amount rides on the button once it is settled: pickup, or a
     postcode the zone lookup knows. Before that a total would leave out

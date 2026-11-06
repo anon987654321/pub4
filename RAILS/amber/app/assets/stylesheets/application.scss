@@ -18,7 +18,7 @@
 @include meta.load-css("affiliate_feed_unit");
 
 // ============================================================ module: commerce_polish
-/* Commerce polish - recommendations read as editorial product notes, not
+/* Commerce polish — recommendations read as editorial product notes, not
    shopping-app clutter. The wardrobe remains the visual subject. */
 
 .item-detail--wardrobe .item-detail-layout {
@@ -177,17 +177,17 @@
 // The New Yorker + Outnet mirror, operator 2026-10-28. amber stops borrowing
 // the family's social-light dialect and states its own editorial light: white
 // paper, near-black literary ink, hairline rules, Swiss sans display. The inks are
-// re-tuned to the tree's own floors the way the reference sites are not -
+// re-tuned to the tree's own floors the way the reference sites are not —
 // The New Yorker's #121212 is real and clears everything, the hairline and
 // the muted grey are picked at the law's boundary rather than under it.
 @mixin amber-editorial-inks {
   // Near-black masthead ink: 18.75:1 on white. The New Yorker's own value.
   --text: #121212;
-  // Hairline rules and chrome edges: 1.6:1, a rule, not a boundary - the
+  // Hairline rules and chrome edges: 1.6:1, a rule, not a boundary — the
   // editorial hairline that Outnet draws between product rows.
   --border: #d6d6d6;
   // Muted ink for meta and captions, Outnet's warm grey lightened to hold
-  // 8.45:1 - meta sizes sit under TYPOGRAPHY's 7.0 ask, not under it.
+  // 8.45:1 — meta sizes sit under TYPOGRAPHY's 7.0 ask, not under it.
   --text-secondary: #4d4d4d;
   --luxury-muted: #4d4d4d;
   --luxury-border: #d6d6d6;
@@ -269,9 +269,9 @@
   --tint-success: color-mix(in srgb, var(--color-success) 20%, var(--surface-elevated));
 }
 
-/* Amber logo - the wordmark on a swoosh, an animated radial gradient and white
+/* Amber logo — the wordmark on a swoosh, an animated radial gradient and white
    retro lines. Geometry and motion match the canonical logo HTML (viewBox
-   1000x500).
+   1000×500).
 
    Caprasimo is amber's brand mark, and the wordmark is the only thing set in
    it: body, headings, UI and the error pages read the single sans stack in
@@ -351,7 +351,7 @@ a {
   }
 }
 
-/* Unread message: the same two-signal state the notification list wears -
+/* Unread message: the same two-signal state the notification list wears —
    weight and a leading accent dot; the "unread" word in the meta line is
    the third, textual signal. */
 .message--unread {
@@ -394,7 +394,7 @@ h2 {
   margin-bottom: var(--space-3);
   // Editorial display: the Swiss sans carries headlines and UI alike (no
   // serifs since 2026-10-11); headlines differ by weight and tracking.
-  // Weights and tracking are the New Yorker's masthead proportions - tight
+  // Weights and tracking are the New Yorker's masthead proportions — tight
   // leading, near-black ink, no heavy display weight beyond 700.
   font-family: var(--font-display);
   font-weight: var(--weight-bold);
@@ -407,7 +407,7 @@ h2 {
 // ============================================================ module: amber_chrome
 // ============================================================ chrome: mark, hero, footer
 
-/* Type sizes in viewBox user units - NOT document type. _logo.html.erb draws
+/* Type sizes in viewBox user units — NOT document type. _logo.html.erb draws
    into the 1000x500 grid, so 120 means "120/500 of the logo's height", and the
    whole mark scales with the <svg> box. The document's modular scale has no say
    in it, which is why these are px and must stay px.
@@ -674,7 +674,7 @@ h2 {
   outline-offset: 2px;
 }
 /* The front page's community section: the same inset and rhythm the feed's
-   own surfaces carry. Tokens only - it is a container, not a new visual. */
+   own surfaces carry. Tokens only — it is a container, not a new visual. */
 .amber-home-posts {
   margin-block-start: var(--space-6);
   padding-inline: var(--space-4);
@@ -1028,7 +1028,7 @@ main#main-content header > nav form {
   object-fit: contain;
 }
 
-/* Dynamic color from wardrobe_color_swatch helper - keep magic color out of ERB */
+/* Dynamic color from wardrobe_color_swatch helper — keep magic color out of ERB */
 .color-swatch {
   display: inline-block;
   width: 1.25rem;
@@ -1349,7 +1349,7 @@ main#main-content header > nav form {
 // ============================================================ pages: dashboard
 
 /* Two columns on a phone, four from md up. auto-fit with a floor would compute
-   this and give the tablet a three-column step, which is the better answer - but
+   this and give the tablet a three-column step, which is the better answer — but
    the floor has to be measured against the real dashboard container, behind a
    login the probe cannot reach. Keep this conservative grid until the
    authenticated browser measurement is recorded in
@@ -1467,7 +1467,7 @@ main#main-content header > nav form {
      such as "NOK 293.33/wear", so the gap keeps them apart. */
   gap: var(--space-3);
   padding: var(--space-2) 0;
-  border-bottom: 0; /* space-not-lines - matches .plan-row */
+  border-bottom: 0; /* space-not-lines — matches .plan-row */
 }
 
 .cpw-val {
@@ -1715,7 +1715,7 @@ main#main-content header > nav form {
   color: var(--color-grey-text);
 }
 
-// Why this garment leads its zone - TasteRanker's reasons, so the rotation is
+// Why this garment leads its zone — TasteRanker's reasons, so the rotation is
 // legible as a preference model rather than a random shuffle.
 .zone-why {
   font-size: var(--text-extra-small);
@@ -1748,7 +1748,7 @@ main#main-content header > nav form {
 // pixel width and every figure reflows with its column.
 //
 // Flat by contract: solid fills, hairline rules, tabular numerals. No shadow,
-// gradient or glow. Colour is only ever data - the one accent fill, plus
+// gradient or glow. Colour is only ever data — the one accent fill, plus
 // --color-warning on the bucket the page is asking you to act on.
 
 .viz {
@@ -1887,7 +1887,7 @@ main#main-content header > nav form {
 // ============================================================ pages: organize
 
 // Closet organization page. Each tip is a rule with its principle attached,
-// so the principle gets its own line rather than being folded into the body -
+// so the principle gets its own line rather than being folded into the body —
 // you should be able to skim the principles alone and disagree with one.
 
 .organize-tip {
@@ -2103,7 +2103,7 @@ main#main-content .amber-look-title {
 // ============================================================ module: amber_editorial_feed
 // ============================================================ components: editorial feed
 
-/* Feed prose - scoped to post cards, not global chrome.
+/* Feed prose — scoped to post cards, not global chrome.
    Vertical rhythm: only scale.line_height steps (1.25 / 1.5).
    Optical margin: meta and body share the same measure edge.
    Enforced by MASTER design_rules + RAILS ScaleLint. */
@@ -2147,7 +2147,7 @@ main#main-content .amber-look-title {
   max-width: var(--measure);
 }
 
-/* The card may run to the full measure; its copy may not - this paragraph
+/* The card may run to the full measure; its copy may not — this paragraph
    holds to the 50ch the feed profile wants. */
 .newsletter-cta p,
 .subscribe-box p {
@@ -2166,7 +2166,7 @@ main#main-content .amber-look-title {
 @include meta.load-css("chat_reactions");
 
 /* Custom properties substitute at computed-value time, so --border here reads
-   --text-secondary's final value on :root - which this same block sets to
+   --text-secondary's final value on :root — which this same block sets to
    --text. The boundary and the meta text both become the body ink: 10.99:1 on
    #efefef and 18.26:1 on #000 by Deploy::DesignMetrics.contrast_ratio, against
    --border #666's 4.99 and 3.66. This is the whole contrast override: a literal
@@ -2189,7 +2189,7 @@ main#main-content .amber-look-title {
 @include meta.load-css("shared_coverage_fills");
 
 // A button that is a link, not a box. Used on five surfaces for destructive or
-// secondary actions inside a row - `button_to` renders a real <button>, so it needs
+// secondary actions inside a row — `button_to` renders a real <button>, so it needs
 // the chrome removed rather than added.
 .button-link {
   appearance: none;
@@ -2323,7 +2323,7 @@ main#main-content form .field :is(
   padding-block-end: var(--space-2);
 }
 
-// Histogram figure - .viz carries the frame, this is the column variant.
+// Histogram figure — .viz carries the frame, this is the column variant.
 .viz-columns {
   display: grid;
   gap: var(--space-2);

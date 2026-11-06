@@ -80,7 +80,7 @@
    shared/_chat_reactions.scss, which loads after these rules; comment chrome
    lives in the engine all three apps read. */
 
-/* Forms - x.com minimal */
+/* Forms — x.com minimal */
 .form-wrap { padding: var(--space-6) var(--space-4); max-width: 480px; }
 .form-wrap--compact { padding: var(--space-3) var(--space-4); max-width: none; }
 .field { flex-direction: column; margin-bottom: var(--space-4); }
@@ -90,7 +90,7 @@
 .field.field--check { display: flex; flex-direction: row; align-items: center; gap: var(--space-2); }
 
 /* Not in the list below, because a file input must keep the browser's own
-   button rather than take the field treatment - but it ships an intrinsic
+   button rather than take the field treatment — but it ships an intrinsic
    width wider than a phone, so max-width caps it. */
 input[type=file] {
   max-width: 100%;
@@ -125,7 +125,7 @@ input:focus, textarea:focus, select:focus { background: var(--hover); }
 textarea { min-height: 120px; resize: vertical; line-height: var(--leading-loose); }
 
 /* Where a crosspost came from, where it also went, and the control that sends
-   it somewhere new. Quiet lines around the post body - the post is the page. */
+   it somewhere new. Quiet lines around the post body — the post is the page. */
 .post-crosspost-source,
 .post-crosspost-list {
   margin-block: var(--space-2);
@@ -213,7 +213,7 @@ textarea { min-height: 120px; resize: vertical; line-height: var(--leading-loose
 /* The moderation log on the bans page.
    Selected by the region's accessible name, not a class. That attribute already
    has to be right for the heading to name the region, so styling and screen
-   reader output cannot drift apart - and there is no third name to keep in sync
+   reader output cannot drift apart — and there is no third name to keep in sync
    with the markup. Nested, so the selector is written once. */
 [aria-labelledby="moderation_log_heading"] {
   margin-block-start: var(--space-4);
@@ -228,7 +228,7 @@ textarea { min-height: 120px; resize: vertical; line-height: var(--leading-loose
   }
 
   /* Summary and timestamp on one line, wrapping to two on a phone rather than
-     truncating - a log entry whose date is cut off answers half the question. */
+     truncating — a log entry whose date is cut off answers half the question. */
   li {
     display: flex;
     flex-wrap: wrap;
@@ -243,7 +243,7 @@ textarea { min-height: 120px; resize: vertical; line-height: var(--leading-loose
 }
 
 /* The community's own reference pages. Reading measure for the body, the
-   history quiet under it - the page is what someone came for. */
+   history quiet under it — the page is what someone came for. */
 .wiki-page .prose {
   max-width: var(--measure);
 }
@@ -272,7 +272,7 @@ textarea { min-height: 120px; resize: vertical; line-height: var(--leading-loose
   justify-content: center;
   /* One control block with the shared .button. brgen roots at 18px, so a rem
      inset would render 22.5px here against 20px everywhere else; the control
-     tokens are absolute for that reason. What stays brgen is the fill below -
+     tokens are absolute for that reason. What stays brgen is the fill below —
      a dialect skins the button, it does not resize it. */
   gap: var(--control-gap);
   padding: 0 var(--control-pad-inline);
@@ -347,7 +347,7 @@ textarea { min-height: 120px; resize: vertical; line-height: var(--leading-loose
   color: var(--text);
 }
 
-/* x.com feed post primitives - brgen never forwards shared/_minimal.scss. */
+/* x.com feed post primitives — brgen never forwards shared/_minimal.scss. */
 
 /* Posts are separated by the space between them, not by a rule. Twenty-five
    hairlines down a feed is twenty-five horizontal marks competing with the
@@ -557,7 +557,7 @@ textarea { min-height: 120px; resize: vertical; line-height: var(--leading-loose
   resize: vertical;
 }
 
-/* PRESERVE_THEN_IMPROVE action bar - mobile optical distribution.
+/* PRESERVE_THEN_IMPROVE action bar — mobile optical distribution.
    Spaces and taps on scale (4 / 8 / 44). Line-heights on scale only. */
 .feed-action-form {
   padding: 0;
@@ -687,7 +687,7 @@ textarea { min-height: 120px; resize: vertical; line-height: var(--leading-loose
   border-top-color: var(--surface-elevated);
 }
 
-/* Brgen extensions on shared shell_widgets - cards, sort tabs, feed article chrome
+/* Brgen extensions on shared shell_widgets — cards, sort tabs, feed article chrome
    Mobile-first base, desktop overrides.
    Avoids duplicating shared x- primitives.
 */

@@ -98,7 +98,7 @@ export default class extends Controller {
         opacity: 0,
       })
 
-    // Source pen switches banner bg #fe9900 -> #000; header placement keeps transparent.
+    // Source pen switches banner bg #fe9900 → #000; header placement keeps transparent.
     const switchStroke = anime
       .timeline({
         targets: smileyPaths,

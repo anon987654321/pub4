@@ -10,7 +10,7 @@ require "test_helper"
 # that contract, and the ownership refusals pin where the line is drawn.
 class Marketplace::ListingsControllerTest < ActionDispatch::IntegrationTest
   setup do
-    # A known apex (DomainRegistry) that is also a marketplace subdomain - the
+    # A known apex (DomainRegistry) that is also a marketplace subdomain — the
     # controller 404s "Unknown host" otherwise, and .brgen.no scopes the session.
     host! "markedsplass.brgen.no"
     @seller = User.create!(email_address: "li_seller@example.com", password: "secret1234")
@@ -194,7 +194,7 @@ class Marketplace::ListingsControllerTest < ActionDispatch::IntegrationTest
     assert_nil listing.store_id
   end
 
-  # The refusal re-renders :new with @kind, @categories and @stores set - the
+  # The refusal re-renders :new with @kind, @categories and @stores set — the
   # form reads all three, and a create that skipped them 500'd instead of
   # showing the reader what was wrong.
   test "a refused listing answers with its form" do

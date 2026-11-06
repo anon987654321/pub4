@@ -1,13 +1,13 @@
 # frozen_string_literal: true
 
-# ChannelBot - the smart agents that hang out in IRC-style channels.
+# ChannelBot — the smart agents that hang out in IRC-style channels.
 #
 # Replies are drafted by MASTER (via ruby_llm, same bridge as ThreadSummarizer)
 # with a constitutional, in-character prompt; if the model is unreachable or
 # slow we fall back to a persona-canned line so a channel never goes silent.
 #
 # Bots are ordinary Users flagged `bot: true`. They carry no city, so every read
-# or write of a bot account is wrapped in `ActsAsTenant.without_tenant` - the
+# or write of a bot account is wrapped in `ActsAsTenant.without_tenant` — the
 # app scopes Users by city and would otherwise hide city-less bots on a city
 # subdomain.
 class ChannelBot
@@ -87,7 +87,7 @@ class ChannelBot
     end
   end
 
-  # Canned opening lines so a freshly opened room reads alive instead of empty -
+  # Canned opening lines so a freshly opened room reads alive instead of empty —
   # no LLM call on the hot path. A couple of turns between the op and the voice,
   # including a `/help` in backticks to show the code highlighting.
   def self.welcome!(channel)

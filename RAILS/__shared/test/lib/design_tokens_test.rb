@@ -79,7 +79,7 @@ DesignTokens.face_root_css.lines.grep(/--#{key.to_s.tr('_', '-')}/).first.to_s.s
 
   # RAILS/UI_REFINEMENTS.md carried "Token CSS auto-gen test fail-on-drift" as a
   # follow-up for generate_face_root_css.rb. Every drift predicate below already
-  # existed and every test above proved it works - on a fixture in a tmpdir. Nothing
+  # existed and every test above proved it works — on a fixture in a tmpdir. Nothing
   # asserted the committed files, so the generator could go unrun for weeks and the
   # suite stayed green while face.css and MASTER's tokens disagreed.
   #
@@ -91,19 +91,19 @@ DesignTokens.face_root_css.lines.grep(/--#{key.to_s.tr('_', '-')}/).first.to_s.s
     drift = DesignTokens.face_root_drift?(FACE_CSS)
 
     assert_nil drift, "MASTER/web/public/face.css :root has drifted from " \
-                      "generated design projection (#{drift}) - run " \
+                      "generated design projection (#{drift}) — run " \
                       "`ruby MASTER/tools/rails/generate_face_root_css.rb`"
   end
 
   def test_committed_face_css_matches_ordered_source_modules
     assert_equal MasterFaceStylesheet.render, File.read(FACE_CSS, encoding: "UTF-8"),
-                 "MASTER face CSS differs from source modules - run ruby MASTER/tools/rails/build_face_css.rb"
+                 "MASTER face CSS differs from source modules — run ruby MASTER/tools/rails/build_face_css.rb"
   end
 
   def test_committed_dialect_scss_anchors_match_design_tokens
     drift = DesignTokens.scss_anchor_drift?
 
-    assert_nil drift, "_dialect_tokens.scss has drifted from MASTER tokens (#{drift}) - " \
+    assert_nil drift, "_dialect_tokens.scss has drifted from MASTER tokens (#{drift}) — " \
                       "run `ruby MASTER/tools/rails/sync_dialect_tokens.rb` or the documented sync"
   end
 

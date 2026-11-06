@@ -36,6 +36,6 @@
         action: { label: t("actions.edit_showcase"), path: edit_my_creator_profile_path } %>
 <% else %>
   <%# edit_my_creator_profile_path is the viewer's own profile, not this one. %>
-  <%# empty_state: no-action-ok - a visitor has no step to take on someone else's showcase %>
+  <%# empty_state: no-action-ok — a visitor has no step to take on someone else's showcase %>
   <%= render "shared/empty_state", title: t("empty.no_showcase") %>
 <% end %>

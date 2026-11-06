@@ -16,7 +16,7 @@ class MenuControllerTest < ActionDispatch::IntegrationTest
     assert_match "Damaskus Kylling Shawarma", response.body
     assert_match "129 kr", response.body                       # money(12900)
     assert_match(/4[.,]9/, response.body)                      # kitchen rating ⭐
-    assert_match "11-21", response.body                        # opening hours
+    assert_match "11–21", response.body                        # opening hours
     assert_match "Wraps &amp; Ruller", response.body  # HTML-escaped in the section title               # category section
   end
 
@@ -120,7 +120,7 @@ class MenuControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "a renamed dish keeps its photo, and so do the order lines taken from it" do
-    @item.update!(name: "Damaskus Kylling Shawarma - stor")
+    @item.update!(name: "Damaskus Kylling Shawarma — stor")
 
     get root_url
     assert Nokogiri::HTML(response.body).at_css(".item-card picture img.item-photo"), "the photo follows the row"

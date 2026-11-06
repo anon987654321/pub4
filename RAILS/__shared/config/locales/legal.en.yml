@@ -20,7 +20,7 @@ en:
       intro_html: We keep cookie use to a minimum. Strictly necessary storage keeps the service working. Optional analytics and partner advertising technology stay off until you choose.
       necessary_heading: Strictly necessary
       necessary_body: A session cookie keeps you signed in and protects forms against
-        forgery (CSRF). Sign-in doesn't work without it. It needs no consent.
+        forgery (CSRF). Sign-in doesn’t work without it. It needs no consent.
       analytics_heading: Optional analytics
       analytics_body: Sampled web-vitals performance measurement is optional and only starts after you choose Statistics.
       fingerprint_heading: Device fingerprint
@@ -28,19 +28,18 @@ en:
         post from one device and slows spam. It is not a third-party cookie, it is
         not sold, and it is not used to show you ads.
       partner_heading: Partner / affiliate
-      partner_body: Partner links and TradeDoubler attribution are optional. When enabled, the partner - for example TradeDoubler or Amazon Associates - may use cookies or similar technology on its side to attribute a resulting purchase to us.
+      partner_body: Partner links and TradeDoubler attribution are optional. When enabled, the partner — for example TradeDoubler or Amazon Associates — may use cookies or similar technology on its side to attribute a resulting purchase to us.
       advertising_heading: Advertising
       advertising_body_html: The ads we show are <strong>first-party</strong> and
         sold directly by us when those slots are on. They set no tracking cookies
         and share no data with ad networks.
       control_heading: How to control them
-      control_body: Use Cookie settings to change optional choices at any time. You can also delete and block cookies in your browser. Block the necessary ones and you won't be able to sign in.%{partner}
-      control_partner_clause: " To avoid partner cookies, don't click partner links."
-
+      control_body: Use Cookie settings to change optional choices at any time. You can also delete and block cookies in your browser. Block the necessary ones and you won’t be able to sign in.%{partner}
+      control_partner_clause: " To avoid partner cookies, don’t click partner links."
     terms_page:
       heading: Terms for %{host}
-      intro: By using this site you accept these terms. If you don't read them, you
-        shouldn't use the service.
+      intro: By using this site you accept these terms. If you don’t read them, you
+        shouldn’t use the service.
       who_heading: Who can use it
       who_body: You must be at least 16 to hold an account%{dating}. You are responsible
         for activity on your account.
@@ -49,11 +48,11 @@ en:
       content_body: You keep the rights to what you post%{wardrobe}. You grant us
         a non-exclusive licence to display and distribute that content as part of
         the service. You warrant that you have the right to share what you upload
-        and that it does not infringe anyone else's rights.
+        and that it does not infringe anyone else’s rights.
       content_wardrobe_clause: ", including garment and outfit photos"
       acceptable_heading: Acceptable use
-      acceptable_body: Don't post unlawful, hateful, deceptive or infringing content,
-        don't harass others, and don't abuse the service with spam or automated attacks.
+      acceptable_body: Don’t post unlawful, hateful, deceptive or infringing content,
+        don’t harass others, and don’t abuse the service with spam or automated attacks.
         We may remove content and suspend accounts that break these rules.
       catalogue_heading: The catalogue
       catalogue_body: Port descriptions come from OpenBSD sources and are a search
@@ -66,7 +65,7 @@ en:
       partner_privacy_link: privacy
       partner_cookies_link: cookies
       liability_heading: Liability
-      liability_body: The service is provided "as is". To the extent the law allows,
+      liability_body: The service is provided “as is”. To the extent the law allows,
         we are not liable for indirect losses arising from use of the service.%{ugc}
       liability_ugc_clause: " User-generated content is the responsibility of the
         user who posted it."
@@ -93,7 +92,7 @@ en:
         fingerprint used to cap guest posts and slow spam. It is not shared with third
         parties and is not used for advertising."
       location_item_html: "<strong>Location</strong>: approximate only, and only if
-        you turn it on for \"nearby\" features. We never store precise GPS."
+        you turn it on for “nearby” features. We never store precise GPS."
       ads_heading: Advertising and partner links
       ads_body_html: We sell and serve <strong>our own advertising directly</strong> when those slots are on. Some links are <strong>partner / affiliate links</strong>; optional TradeDoubler attribution only loads after you choose Partner advertising. See %{cookies}.
       ads_cookies_link: cookies

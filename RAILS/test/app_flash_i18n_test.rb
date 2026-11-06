@@ -11,7 +11,7 @@ require "yaml"
 # This test replaced a first version that could not have caught the bug it was
 # written for. That version compared the KEY NAMES used in code against the key
 # names in the YAML, and the shared engine's block had been appended at the top
-# level while every call site said t("shared.flash...."): the names matched, the
+# level while every call site said t("shared.flash.…"): the names matched, the
 # paths did not, and all 30 messages resolved to a translation-missing span.
 #
 # So this walks the actual dotted path into the loaded YAML. A test over key names
@@ -46,10 +46,10 @@ class AppFlashI18nTest < Minitest::Test
     YAML.safe_load_file(File.join(ROOT, relative)).fetch(locale)
   end
 
-  # Every "...flash...." key a tree's controllers actually ask for, comments removed.
+  # Every "…flash.…" key a tree's controllers actually ask for, comments removed.
   #
   # Any string literal, not only one directly after `t(`: reactions_controller picks
-  # its key with a ternary INSIDE the call - t(@active ? "...added" : "...removed") - and
+  # its key with a ternary INSIDE the call — t(@active ? "…added" : "…removed") — and
   # a regex anchored on `t("` reported both of those keys as declared-but-unused.
   def keys_used_by(tree)
     CONTROLLERS.fetch(tree).flat_map { |glob| Dir.glob(File.join(ROOT, glob)) }.flat_map do |file|
@@ -60,7 +60,7 @@ class AppFlashI18nTest < Minitest::Test
     end.uniq.sort
   end
 
-  # Keys built by interpolation - t("flash.marketplace.payment_statuses.#{status}")
+  # Keys built by interpolation — t("flash.marketplace.payment_statuses.#{status}")
   # in checkouts_controller. The literal scan above cannot see the leaves, so
   # the namespace up to the interpolation counts as used and everything under
   # it is covered. Without this the five payment_statuses read as inert copy
@@ -101,7 +101,7 @@ class AppFlashI18nTest < Minitest::Test
 
   # Dotted paths to the leaves. flash_block.keys only ever returned the top
   # level, so once the verticals gained their own namespaces (flash.dating.*,
-  # flash.marketplace.* ...) the parents read as keys no controller asks for --
+  # flash.marketplace.* …) the parents read as keys no controller asks for --
   # true, and not the question -- while every leaf underneath them went
   # unchecked, which is the half that catches inert copy.
   def leaf_keys(node, prefix = [])
@@ -127,7 +127,7 @@ class AppFlashI18nTest < Minitest::Test
   end
 
   # Shared keys are asked for from every app, so they must resolve for a reader
-  # that only loaded the engine's file - which is how Rails merges them.
+  # that only loaded the engine's file — which is how Rails merges them.
   def test_the_engine_namespaces_its_own_keys
     nb = load_locale(LOCALES.fetch("shared").first, "nb")
 
@@ -149,7 +149,7 @@ class AppFlashI18nTest < Minitest::Test
   end
 
   # An %{interpolation} in one locale and not the other raises
-  # I18n::MissingInterpolationArgument for that locale only - a 500 on an error
+  # I18n::MissingInterpolationArgument for that locale only — a 500 on an error
   # path, which is where nobody looks.
   def test_interpolations_match_between_locales
     placeholders = ->(text) { text.to_s.scan(/%\{(\w+)\}/).flatten.sort }

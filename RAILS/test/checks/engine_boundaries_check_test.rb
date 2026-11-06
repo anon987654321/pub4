@@ -74,7 +74,7 @@ class EngineBoundariesCheckTest < Minitest::Test
     result = CHECK.run
 
     assert result.ok?, result.failures.join("\n")
-    assert_operator result.checks_ran, :>=, 6, "fewer engines than Brgen verticals - check the glob, not the tree"
+    assert_operator result.checks_ran, :>=, 6, "fewer engines than Brgen verticals — check the glob, not the tree"
   end
 
   def test_nested_engine_is_scanned

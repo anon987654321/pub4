@@ -10,7 +10,7 @@ require "test_helper"
 # moderation panel decides who can act on reports, and blocks decide whose
 # content a user has to see. Neither had a single test.
 #
-# The properties asserted here are the ones a refactor breaks silently - a
+# The properties asserted here are the ones a refactor breaks silently — a
 # redirect that stops happening, or a scope quietly widened from "my blocks" to
 # "any block". A feature test would not catch either.
 class AuthorizationBoundariesTest < ActionDispatch::IntegrationTest
@@ -63,13 +63,13 @@ class AuthorizationBoundariesTest < ActionDispatch::IntegrationTest
       reporter = user("reporter")
       author = user("reported")
       community = Community.create!(name: "Mod #{SecureRandom.hex(3)}", slug: "mod-#{SecureRandom.hex(4)}")
-      post = Post.create!(user: author, community:, title: "Reported", content: "...")
+      post = Post.create!(user: author, community:, title: "Reported", content: "…")
 
       %w[open open reviewing resolved].each do |status|
         ModerationReport.create!(user: reporter, reportable: post, reason: "spam", status:)
       end
 
-      # require_admin! reads BRGEN_ADMIN_EMAIL and denies when it is unset -
+      # require_admin! reads BRGEN_ADMIN_EMAIL and denies when it is unset —
       # there is deliberately no default, since a default would be an account
       # that grants itself the queue. The test has to supply what production
       # supplies, rather than assume a fallback the controller does not have.

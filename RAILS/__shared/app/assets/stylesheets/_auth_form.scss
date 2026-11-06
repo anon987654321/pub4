@@ -1,4 +1,4 @@
-/* Shared sign-in/sign-up form shell - shared/_offline_page.scss's sibling. */
+/* Shared sign-in/sign-up form shell — shared/_offline_page.scss's sibling. */
 @use "account_settings";
 
 body.auth-surface {
@@ -212,7 +212,7 @@ body.auth-surface {
 }
 
 .oauth-button::after {
-  content: "->";
+  content: "→";
   right: 1rem;
   font-size: 1rem;
   opacity: 0.55;

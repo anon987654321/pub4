@@ -37,16 +37,16 @@ en:
   skip_to_content: "Skip to main content"
   amber:
     ai:
-      search_unavailable: "AI search unavailable - using local match when possible"
+      search_unavailable: "AI search unavailable — using local match when possible"
     declutter:
-      box_elapsed: "30-day declutter box elapsed for «%{title}» - sell, donate, or restore with intention."
+      box_elapsed: "30-day declutter box elapsed for «%{title}» — sell, donate, or restore with intention."
       last_chance_outfit: "Last chance: %{title}"
     logo_aria: "Amber logo with retro lines"
     feed:
-      compose_prompt: "Share an #ootd thought..."
+      compose_prompt: "Share an #ootd thought…"
       post_action: "Post"
       guest_hint: "Posting anonymously, %{remaining} of %{limit} posts left in this browser"
-      advanced_post: "Tag outfit or item ->"
+      advanced_post: "Tag outfit or item →"
     nav:
       ai_suggest: "Outfit suggestions"
     wardrobe:
@@ -64,7 +64,7 @@ en:
     search: "Search"
     messages: "Messages"
     # shared/_inbox_link names it and amber renders no such link today, but the
-    # partial belongs to the engine and every app can reach it - a key a shared
+    # partial belongs to the engine and every app can reach it — a key a shared
     # view can name must resolve, or it ships as a translation_missing span the
     # day it does. The word is brgen's, so the three apps say one thing.
     notifications: "Notifications"
@@ -77,7 +77,7 @@ en:
     show_sidebar: "Show sidebar"
     show_widgets: "Show widgets"
     show_menu: "Show menu"
-    menu_coach: "Menu is down here - tap the bar or scroll up."
+    menu_coach: "Menu is down here — tap the bar or scroll up."
     menu_coach_dismiss: "Got it"
     mobile_nav: "Mobile navigation"
     primary_nav: "Primary navigation"
@@ -131,10 +131,10 @@ en:
     capsule_plan: "Capsule plan"
     this_week: "This week"
     worst_cpw: "Worst cost-per-wear"
-    cpw_value: "%{amount}/wear, worn %{count}x"
+    cpw_value: "%{amount}/wear, worn %{count}×"
     aging_unworn: "Aging unworn"
     recent: "Recent"
-    all_items: "All items ->"
+    all_items: "All items →"
     first_item: "Add your first item"
     browse_demo: "Browse demo wardrobe"
     demo_capsule: "Demo capsule"
@@ -145,10 +145,10 @@ en:
     no_feed_posts: "Nothing in your feed yet"
     no_feed_posts_body: "Follow people from the community and their posts land here."
     find_people: "Find people in the community"
-    guest_post: "Share an #ootd thought above - guests can post without an account."
+    guest_post: "Share an #ootd thought above — guests can post without an account."
     first_post: Write the first post
     no_items: "No wardrobe items yet"
-    no_items_body: "Add a photo, tag it, then get an outfit - three steps to a working closet."
+    no_items_body: "Add a photo, tag it, then get an outfit — three steps to a working closet."
     no_outfits: "No outfits yet"
     no_messages: "No messages yet"
     no_connections: "No connections yet"
@@ -168,13 +168,13 @@ en:
     no_phase_items_body: "Tag life phases on items to fill this column."
     no_wear_history_body: "Wear items to build your style timeline."
   search:
-    wardrobe: "Search wardrobe by title, brand, category..."
+    wardrobe: "Search wardrobe by title, brand, category…"
     wardrobe_label: "Wardrobe search"
     wardrobe_short: "Search wardrobe"
-    outfits: "Search outfits by name, occasion, season, items..."
+    outfits: "Search outfits by name, occasion, season, items…"
     outfits_label: "Outfit search"
   pages:
-    occasion_gap: "Gap - consider adding pieces"
+    occasion_gap: "Gap — consider adding pieces"
     edit_item: "Edit"
     edit_item_heading: "Edit %{name}"
     wardrobe: "Wardrobe"
@@ -190,7 +190,7 @@ en:
     analytics: "Wardrobe analytics"
     timeline: "Style evolution"
     declutter: "Declutter"
-    shopping_list: "Shopping list - gaps to fill"
+    shopping_list: "Shopping list — gaps to fill"
     capsule: "Capsule Optimizer"
     capsule_title: "Capsule Wardrobe Optimizer"
     colour_palette: "Colour Palette"
@@ -199,7 +199,7 @@ en:
     mood_board: "Mood board match"
     occasion_map: "Occasion coverage map"
     packing_list: "Packing list generator"
-    style_profile: "Style profile - 5 questions"
+    style_profile: "Style profile — 5 questions"
     suggest_outfits: "Outfit suggestions"
     search_wardrobe_title: "Search Wardrobe"
     dressing_room: "Dressing room"
@@ -223,7 +223,7 @@ en:
     wardrobe: "Wardrobe"
     edit_showcase: "Edit showcase"
   hotkeys:
-    help: "j/k - ↓↑ nav - Enter open - / search - n new - esc clear - ? help"
+    help: "j/k · ↓↑ nav · Enter open · / search · n new · esc clear · ? help"
     coach: "Keyboard: press ? anytime for shortcuts (j/k to move, / to search)."
     coach_dismiss: "Got it"
   errors:
@@ -283,17 +283,17 @@ en:
     category_mix: "Category mix"
     coach_tips: "Wardrobe coach tips"
     coach_rules: "rules, not AI"
-    coach_body: "These tips are fixed heuristics from wear and lifecycle signals - not a language model."
+    coach_body: "These tips are fixed heuristics from wear and lifecycle signals — not a language model."
     no_urgent_tips: "No urgent wardrobe tips right now."
     recommendations: "Recommendations"
-    recommendations_body: "Wear items and grow the closet - suggestions appear from those signals."
+    recommendations_body: "Wear items and grow the closet — suggestions appear from those signals."
     gaps_complete: "Your wardrobe looks complete for essentials."
     master_recs: "MASTER purchase recommendations"
     recs_grow: "Add more items or re-run gap analysis when your closet grows."
     edit_profile: "Edit profile"
     add_more_first: "Add more items to your wardrobe first."
     unsorted: "Unsorted"
-    sessions_lead: "Schedule a wardrobe hangout or styling appointment. This is a calendar and status board - not live video streaming."
+    sessions_lead: "Schedule a wardrobe hangout or styling appointment. This is a calendar and status board — not live video streaming."
     session_title: "Session title"
     sessions_empty_body: "Use the form above to book a wardrobe hangout or styling appointment."
     demo_capsule: "Demo capsule"
@@ -326,7 +326,7 @@ en:
       idle: "Sitting longest"
       idle_caption: "Worn fewer than three times, longest untouched first"
       idle_empty: "Nothing is sitting idle."
-      worn_times: "worn %{count}x"
+      worn_times: "worn %{count}×"
       days: "%{count}d"
     total_items: "%{count} wardrobe items"
     with_phase: "%{count} with life phase"
@@ -404,17 +404,17 @@ en:
     source: "Source: %{source}"
     gap_items_hint: "Use these as intentional purchases, not impulse buys."
     not_enough_items: "Not enough items to analyse."
-    dashboard_back: "<- Dashboard"
+    dashboard_back: "← Dashboard"
     declutter_dashboard: "Declutter dashboard"
     letting_go: "Items to consider letting go:"
-    no_candidates: "No declutter candidates - your wardrobe is in great shape."
+    no_candidates: "No declutter candidates — your wardrobe is in great shape."
     packing_lead: "Select trip duration and climate. MASTER suggests outfits from your wardrobe."
     packing_created: "Packing list created (demo). View in planned or wardrobe."
     style_profile_lead: "MASTER will infer your aesthetic: minimal, bold or classic."
     suggest_lead: "OpenRouter + wardrobe metadata%{vision}. Shopping links are not used for ranking."
     suggest_vision: " (vision when photos exist)"
-    suggest_local_html: "<strong>OpenRouter not configured</strong> - suggestions use local rules from your joy/active wardrobe. Set <code>OPENROUTER_API_KEY</code> for LLM + vision styling."
-    studio_photo_html: "STUDIO photograph is enabled (<code>AMBER_ENABLE_STUDIO_PHOTO=1</code>) - look photos may attach when generation succeeds."
+    suggest_local_html: "<strong>OpenRouter not configured</strong> — suggestions use local rules from your joy/active wardrobe. Set <code>OPENROUTER_API_KEY</code> for LLM + vision styling."
+    studio_photo_html: "STUDIO photograph is enabled (<code>AMBER_ENABLE_STUDIO_PHOTO=1</code>) — look photos may attach when generation succeeds."
     submit_to_compose: "Submit the form to compose from clothes you already own."
   commerce_fit:
     handoff: "Started from a BRGEN marketplace item. Saving keeps the source reference with this wardrobe record."
@@ -443,7 +443,7 @@ en:
     open_photo: "Open %{title}, photo %{position} of %{count}, full size"
     add_header_label: "Add wardrobe item"
     mood_label: "Mood: %{mood}"
-    worn_times_short: "Worn %{count}x"
+    worn_times_short: "Worn %{count}×"
     occasion_tags: "work, casual, formal"
     worn_today: "Worn today"
     no_joy: "Doesn't spark joy"
@@ -455,7 +455,7 @@ en:
     archive: "Archive to memory"
     save_link: "Save link"
     merchant_placeholder: "e.g. Finn, Vestiaire"
-    url_placeholder: "https://..."
+    url_placeholder: "https://…"
     delete_permanent: "Delete permanently"
     confirm_delete: "Permanently delete this item and its photos? This cannot be undone."
     confirm_remove_affiliate_link: "Remove this link? The address has to be typed in again."
@@ -463,7 +463,7 @@ en:
     resurface_seasonal: "Resurface this season"
     archived_notice: "Archived to memory."
     restored_notice: "Restored to your active wardrobe."
-    undo_restore: "Undo - restore"
+    undo_restore: "Undo — restore"
     affiliate_link: "Affiliate / commerce link"
     affiliate_help: "Optional resale or shop-similar URL for this piece."
     brand: "Brand"
@@ -499,7 +499,7 @@ en:
     actions_label: "Item actions"
     affiliate_label: "Affiliate link"
     header_label: "Item header"
-    openrouter_set: "OpenRouter is configured - joy analysis and mood tags use Gemini when available, with local heuristics as backup."
+    openrouter_set: "OpenRouter is configured — joy analysis and mood tags use Gemini when available, with local heuristics as backup."
     choose_or_drop: "Choose or drop photos"
     take_photo: "Take a photo"
     filter_by_category: "Filter by category"
@@ -525,8 +525,8 @@ en:
       photo_polish_skipped: "No photo polish"
       no_photos: "No photo polish"
       pending: "Pending media"
-      pending_no_worker: "Queued - awaiting the next scheduled processing window"
-      pending_unknown: "Queued - processing status could not be checked"
+      pending_no_worker: "Queued — awaiting the next scheduled processing window"
+      pending_unknown: "Queued — processing status could not be checked"
       legacy: "Legacy media status (polish pipeline)"
     photo_processing_html: "<strong>Photo processing:</strong> uploads stay attached to your private wardrobe record. Amber creates responsive image variants, estimates a dominant colour, applies one optional portrait-polish pass, and records a local image fingerprint for change detection. It does not segment garments or remove backgrounds. Deleting the item removes its attachments; archiving keeps them and is reversible."
     archiving_safer: "Archiving is safer. Permanent deletion removes the item record and its attached photos."
@@ -541,7 +541,7 @@ en:
   outfits:
     save: "Save outfit"
     item: "Item"
-    select_item: "Select item..."
+    select_item: "Select item…"
     items_in: "Items in %{name}: %{items}"
     wardrobe_value: "%{amount} wardrobe value"
     add_item: "Add a garment"
@@ -587,7 +587,7 @@ en:
       one: "%{count} combined wear"
       other: "%{count} combined wears"
     items_heading: "Garments"
-    select_blank: "Select..."
+    select_blank: "Select…"
     categories:
       Casual: "Casual"
       Formal: "Formal"
@@ -596,11 +596,11 @@ en:
       Evening: "Evening"
   planned:
     no_outfits_body: "Make an outfit first, then plan when to wear it."
-    notes: "Notes..."
+    notes: "Notes…"
     plan_it: "Plan it"
     date: "Date"
     outfit: "Outfit"
-    select_outfit: "Select outfit..."
+    select_outfit: "Select outfit…"
     browse_outfits: "Browse outfits"
   live_streams:
     scheduled_at: "Scheduled: %{at}"
@@ -626,7 +626,7 @@ en:
     showcase: "Showcase"
     showcase_items: "Showcase pieces"
   declutter:
-    due: "- due %{date}"
+    due: "— due %{date}"
     confirm_leave_wardrobe: "Take %{title} out of your active wardrobe?"
     score_keys:
       joy: "Joy"
@@ -643,7 +643,7 @@ en:
       high_joy_low_use: "loved, rarely worn"
       low_joy_high_use: "worn, not loved"
       low_joy_low_use: "neither loved nor worn"
-    back_to_dashboard: "<- Declutter dashboard"
+    back_to_dashboard: "← Declutter dashboard"
     targets:
       keep: "Keep"
       wear_this_week: "Wear this week"
@@ -656,7 +656,7 @@ en:
       declutter_box: "Declutter box"
     tools_label: "Declutter tools"
     ai_guide: "Declutter guide"
-    reason_kept: "memory, gift, rare, uncomfortable..."
+    reason_kept: "memory, gift, rare, uncomfortable…"
     save_review: "Save review"
     declutter_box: "Declutter box"
     create_challenge: "Create challenge"
@@ -688,8 +688,8 @@ en:
     review_title: "Declutter review"
     score: "Score"
     week_challenge: "Wear-it-this-week challenge"
-    kondo_lead: "Marie Kondo loop: joy, one more wear, then a clear release path - not instant trash."
-    box_heading: "30-day box - decide now"
+    kondo_lead: "Marie Kondo loop: joy, one more wear, then a clear release path — not instant trash."
+    box_heading: "30-day box — decide now"
     box_label: "30-day declutter box"
   ai_forms:
     occasion_example: "e.g. date, work, travel"
@@ -708,10 +708,10 @@ en:
     wardrobe_actions: "Demo wardrobe actions"
     all_pieces: "Every piece"
     spark_joy: "Sparks joy"
-    index_tagline: "Browse a realistic capsule before you sign in - cost-per-wear, categories, and outfit combos."
+    index_tagline: "Browse a realistic capsule before you sign in — cost-per-wear, categories, and outfit combos."
     capsule_kicker: "Capsule demo: %{name}"
     create_hint: "Create an account to track wears, declutter scores, and outfit suggestions on your own wardrobe."
-    back_to_wardrobe: "<- Demo wardrobe"
+    back_to_wardrobe: "← Demo wardrobe"
   users:
     profile_description: "%{name} on amber: outfits, wardrobe pieces and posts."
     recent_items: "Recent pieces"
@@ -723,7 +723,7 @@ en:
   messages:
     title: "Messages"
     inbox_clear: "Inbox is clear."
-    choose_recipient: "Choose a connection..."
+    choose_recipient: "Choose a connection…"
     empty_body: "Send a note to someone you are connected with."
     no_recipients: "Accept a connection before you can message anyone."
     composer: "New message"
@@ -745,16 +745,16 @@ en:
       pending: "pending"
       accepted: "accepted"
       blocked: "blocked"
-  # TasteRanker#explain - why a garment leads its carousel.
+  # TasteRanker#explain — why a garment leads its carousel.
   taste:
     joy: "sparks joy"
     worn: "worn %{count} times"
     recent: "worn recently"
-    matches: "matches \"%{name}\""
-    avoids: "matches \"avoid: %{name}\""
+    matches: "matches “%{name}”"
+    avoids: "matches “avoid: %{name}”"
     aspirational: "aspirational"
     past_self: "past self"
-  # WardrobeAnalytics#tips - the rule coach, not an LLM.
+  # WardrobeAnalytics#tips — the rule coach, not an LLM.
   coach:
     never_worn: "Wear one never-worn item this week"
     repair: "Repair or release items marked for repair"
@@ -765,7 +765,7 @@ en:
     overdue:
       one: "1 wear challenge is overdue"
       other: "%{count} wear challenges are overdue"
-  # WardrobeGap - what the wardrobe is missing.
+  # WardrobeGap — what the wardrobe is missing.
   gaps:
     category_minimum: "A resilient wardrobe usually needs at least %{count} %{category}."
     connector: "Missing %{name} for easier outfit combinations."
@@ -799,12 +799,12 @@ en:
     tips:
       clean_needed:
         title: "Wash or air %{garments}"
-        body: "Marked clean-needed. Clothes stored dirty attract moths and set stains - care comes before storage."
+        body: "Marked clean-needed. Clothes stored dirty attract moths and set stains — care comes before storage."
         principle: "Care before storage"
       repair:
         title: "Repair or release %{garments}"
         body: "A repair pile that never moves is storage spent on garments you cannot wear. Book one repair session or release them."
-        principle: "Kintsugi - mend visibly rather than discard"
+        principle: "Kintsugi — mend visibly rather than discard"
       tailor:
         title: "%{garments} waiting on tailoring"
         body: "Fit is the difference between owning a garment and wearing it. Tailoring converts dead stock into rotation."
@@ -819,7 +819,7 @@ en:
         principle: "Material dictates method"
       material_silk:
         title: "%{garments} in %{material}"
-        body: "Hand wash cool or dry clean, and keep out of direct light - silk fades faster than it wears out."
+        body: "Hand wash cool or dry clean, and keep out of direct light — silk fades faster than it wears out."
         principle: "Material dictates method"
       material_linen:
         title: "%{garments} in %{material}"
@@ -840,11 +840,11 @@ en:
       seasonal_archive:
         title: "Archive %{garments} that are out of season"
         body: "Only the current season belongs in reach. Box the rest clean and labelled; the closet you see should be the closet you can wear today."
-        principle: "Seasonal rotation - the interior changes with the year"
+        principle: "Seasonal rotation — the interior changes with the year"
       fold:
         title: "Fold %{garments} that are knitted"
         body: "Knits stretch at the shoulder if hung. Fold them into vertical stacks so each one is visible from above rather than buried."
-        principle: "Vertical filing - everything visible at once"
+        principle: "Vertical filing — everything visible at once"
       hang:
         title: "Hang %{garments} that hold a structure"
         body: "Silk, linen and tailoring keep their line on a hanger and lose it in a stack. Give them shoulder-width spacing."
@@ -860,7 +860,7 @@ en:
       prime_reach:
         title: "Put %{garments} you wear most in prime reach"
         body: "The band between hip and shoulder costs no bending or stretching. Your most-worn garments belong there and nothing else does."
-        principle: "Reach zones - anthropometric planning"
+        principle: "Reach zones — anthropometric planning"
       deep_storage:
         title: "Move %{garments} that are loved but unworn to eye level"
         body: "A garment that sparks joy and is never worn is usually a garment you cannot see. Trade its position with something you reach for on autopilot."
@@ -868,15 +868,15 @@ en:
       category_zones:
         title: "Zone the rail: %{zones}"
         body: "Group by category before anything else, largest group nearest the door. Outfit-building becomes a walk along the rail instead of a search."
-        principle: "Circulation - arrange along the path of movement"
+        principle: "Circulation — arrange along the path of movement"
       color_run:
         title: "Run each zone light to dark"
         body: "Within a category, order by value rather than hue. A gradient reads as one composed surface; scattered colour reads as clutter even when the garments are identical."
-        principle: "Value gradient - tonal composition"
+        principle: "Value gradient — tonal composition"
       density:
         title: "%{categories} %{verb} crowded"
-        body: "Above roughly %{crowded} garments a category stops being browsable - you wear the front third and forget the rest. Thin toward %{airy}-%{crowded}."
-        principle: "Ma - the interval is part of the composition"
+        body: "Above roughly %{crowded} garments a category stops being browsable — you wear the front third and forget the rest. Thin toward %{airy}–%{crowded}."
+        principle: "Ma — the interval is part of the composition"
       duplicates:
         title: "%{group_word} of near-identical garments, %{count} surplus"
         body: "Keep the best of each and release the rest. Two of the same garment is one garment and one decision you make every morning."
@@ -887,7 +887,7 @@ en:
         principle: "One in, one out"
       negative_space:
         title: "%{joy} of %{total} garments spark joy"
-        body: "The other %{count} are the ones you push past to reach these. Empty rail is not waste - it is what makes the remaining garments visible."
+        body: "The other %{count} are the ones you push past to reach these. Empty rail is not waste — it is what makes the remaining garments visible."
         principle: "Negative space is the design"
 
   privacy_settings:
@@ -908,7 +908,7 @@ en:
     legal: "Legal"
     contact: "Contact"
     language: "Language"
-    tagline: "Social fashion - outfits, wardrobe, and people you follow."
+    tagline: "Social fashion — outfits, wardrobe, and people you follow."
     links:
       items: "Your wardrobe"
       add_item: "Add a garment"
@@ -943,11 +943,11 @@ en:
     missing: "missing %{count}"
     owned: "owned %{count} / %{target}"
     score: "score %{score}"
-    already_own: "Before you buy - what you already have"
+    already_own: "Before you buy — what you already have"
     duplicate_count: "%{count} near-identical garments"
     keeper: "Keep:"
     your_links: "Your affiliate products"
-    your_links_body: "Links you have attached to your own garments - resale listings, shop-similar URLs, or your own affiliate links. Add one from any garment's page."
+    your_links_body: "Links you have attached to your own garments — resale listings, shop-similar URLs, or your own affiliate links. Add one from any garment's page."
     link_count: "%{count} links"
     open: "Open"
     no_links: "No links yet"
@@ -957,7 +957,7 @@ en:
     feed_unavailable:
       available: "A product feed client is loaded. Amber does not ship a browsing surface for it yet."
       no_token: "Amber carries no product feed from stores like Net-a-porter. Nothing is configured, and nothing is being fetched."
-      no_feed_client: "A feed token is configured, but Amber has no client to use it - the TradeDoubler integration lives in brgen and is not loaded in this app. The token does nothing here."
+      no_feed_client: "A feed token is configured, but Amber has no client to use it — the TradeDoubler integration lives in brgen and is not loaded in this app. The token does nothing here."
       no_query: "This garment has no brand or title to search on."
   assistant:
     today: "Today's look"
@@ -983,14 +983,14 @@ en:
     body: "Guidance drawn from architecture, interior design and zen minimalism, applied to what is actually in your wardrobe. Every tip names the principle behind it and the garments that triggered it."
     actions: "Closet organization actions"
     empty_title: "Nothing to reorganise"
-    empty_body: "Add garments, log wears, and record condition - the guidance follows from those signals."
+    empty_body: "Add garments, log wears, and record condition — the guidance follows from those signals."
     registers:
       care: "Care"
       storage: "Storage"
       zoning: "Zoning"
       restraint: "Restraint"
     register_leads:
-      care: "Cleaning and repair come before anything else - a garment cannot be stored or zoned until it is wearable."
+      care: "Cleaning and repair come before anything else — a garment cannot be stored or zoned until it is wearable."
       storage: "What to fold, what to hang, and what leaves the room until its season returns."
       zoning: "Where each garment sits, planned by reach and by the path you walk through the room."
       restraint: "How much the wardrobe should hold, and what the empty rail is for."
@@ -1005,7 +1005,7 @@ en:
     pause: "Pause rotation"
     resume: "Resume rotation"
     zone_empty: "none"
-    no_garment: "-"
+    no_garment: "—"
     shuffle: "Shuffle"
     save: "Save this look"
     empty_body: "Add a few garments and the carousels will start combining them for you."
@@ -1122,10 +1122,10 @@ en:
     showcase_item_removed: "Item removed from showcase."
     declutter_review_saved: "Declutter review saved."
     challenge_created: "Wear-it-this-week challenge created, due %{due_on}."
-    challenge_completed: "Challenge completed - item marked worn."
+    challenge_completed: "Challenge completed — item marked worn."
     declutter_outcome_recorded: "Declutter outcome recorded."
     no_last_chance_combination: "No last-chance combination available."
-    last_chance_outfit_created: "Last-chance outfit created - wear it before you decide."
+    last_chance_outfit_created: "Last-chance outfit created — wear it before you decide."
     demo_wardrobe_unavailable: "Demo wardrobe is not available yet."
     item_added: "Item added."
     updated: "Updated."
@@ -1133,9 +1133,9 @@ en:
     item_shared_into_draft: "Shared into your wardrobe draft."
     item_draft_failed: "Could not create item draft."
     sparks_joy: "This item sparks joy!"
-    no_spark_joy: "Marked as not sparking joy - open declutter when ready."
+    no_spark_joy: "Marked as not sparking joy — open declutter when ready."
     marked_for_declutter: "Marked for declutter."
-    worn_today: "Worn today - +1."
+    worn_today: "Worn today — +1."
     out_of_season_archived:
       zero: "No garment is out of season."
       one: "%{count} out-of-season garment moved to the archive."

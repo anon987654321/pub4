@@ -4,7 +4,7 @@ require "test_helper"
 
 # The other half of the coverage-contract gap: the merge that hands a guest's
 # whole history to a real account, and the moderation workflow that resolves a
-# report - both money-and-trust paths that had never had a method called.
+# report — both money-and-trust paths that had never had a method called.
 class AccountMergerAndModerationTest < ActiveSupport::TestCase
   setup do
     Brgen::CitySeed.sync! if City.table_exists?
@@ -128,7 +128,7 @@ class AccountMergerAndModerationTest < ActiveSupport::TestCase
     assert_not Post.where(id: post.id).where(deleted_at: nil).exists? if Post.column_names.include?("deleted_at")
   end
 
-  test "transition! survives a report loaded bare by id - the strict_loading trap" do
+  test "transition! survives a report loaded bare by id — the strict_loading trap" do
     post = Post.create!(title: "spam2", content: "enda mer spam om klokker", user: @guest)
     report = ModerationWorkflow.report!(reporter: @member, target: post, reason: "spam")
     bare = ModerationReport.find(report.id)

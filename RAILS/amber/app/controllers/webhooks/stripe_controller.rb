@@ -5,10 +5,10 @@ require "json"
 module Webhooks
   # Stripe subscription events for Amber Premium.
   #
-  # Dashboard -> Developers -> Webhooks:
+  # Dashboard → Developers → Webhooks:
   #   URL:  https://<amber host>/webhooks/stripe
   #   Events: customer.subscription.created, .updated, .deleted
-  #   Signing secret -> STRIPE_WEBHOOK_SECRET (whsec_...)
+  #   Signing secret → STRIPE_WEBHOOK_SECRET (whsec_…)
   class StripeController < ActionController::Base
     skip_forgery_protection
     include Shared::WriteThrottle

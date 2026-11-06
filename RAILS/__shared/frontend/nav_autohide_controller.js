@@ -9,7 +9,7 @@ const ARM_EVENTS = ["pointermove", "scroll", "wheel", "keydown", "touchmove"]
 //
 // It was permanent (operator decision 2026-08-08) because a drawer had been
 // dodging a collision with .compose-trigger rather than resolving it. That
-// collision is resolved - .app-shell is inset below the bar - so the bar can
+// collision is resolved — .app-shell is inset below the bar — so the bar can
 // retire without the old problem coming back. It rests visible long enough to be
 // read, slides up, and comes back on any sign the reader wants it.
 //
@@ -24,7 +24,7 @@ const ARM_EVENTS = ["pointermove", "scroll", "wheel", "keydown", "touchmove"]
 //
 // edge/zone exist because a hidden bar cannot be hovered. pointerenter fires on
 // the element, and once the element has translated off-screen there is nothing
-// under the cursor to enter - so on a mouse the bar left and never came back.
+// under the cursor to enter — so on a mouse the bar left and never came back.
 // Touch had document-level touchstart and the keyboard had focusin; the mouse
 // had nothing. `zone` watches the last N pixels against `edge` and reveals when
 // the pointer arrives there, which is how a video player's chrome behaves and
@@ -33,7 +33,7 @@ const ARM_EVENTS = ["pointermove", "scroll", "wheel", "keydown", "touchmove"]
 // The countdown starts at the reader's first sign of engagement, not at load.
 // A timer armed on connect spends itself while the page is still painting and
 // while the reader is still deciding where to look, so the bar left before it
-// had been read - it measured the browser's progress rather than the reader's.
+// had been read — it measured the browser's progress rather than the reader's.
 // Holding until a move, scroll, wheel or keypress means a reader who has not
 // arrived yet keeps the nav, and one who is already moving gets the same delay
 // they always did, counted from the moment they were actually there.
@@ -61,7 +61,7 @@ export default class extends Controller {
 
     // Revealing is deliberately cheap to trigger: a pointer anywhere on the bar,
     // a touch, a click, or a Tab into it. focusin is the one that matters for a
-    // keyboard user - the links stay in the tab order while hidden, so without it
+    // keyboard user — the links stay in the tab order while hidden, so without it
     // focus would land on something invisible.
     this.element.addEventListener("pointerenter", this.onReveal)
     this.element.addEventListener("pointerdown", this.onReveal)
@@ -140,7 +140,7 @@ export default class extends Controller {
   reveal() {
     this.clear()
     // A reveal is itself the reader arriving, so the pending arm has nothing
-    // left to wait for - without this it would fire later and quietly restart
+    // left to wait for — without this it would fire later and quietly restart
     // the countdown with the longer opening delay.
     this.disarm()
     this.element.classList.remove(this.hiddenClassName)

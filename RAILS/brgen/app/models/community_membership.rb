@@ -22,7 +22,7 @@ class CommunityMembership < ApplicationRecord
 
   # A community with no owner has nobody who can appoint a moderator, and
   # nothing else in the app can create one. Losing the last owner is therefore
-  # not a state to recover from later - it is one to refuse now.
+  # not a state to recover from later — it is one to refuse now.
   def owner_cannot_be_demoted_to_nothing
     return unless role_changed? && role_was == "owner"
     return if community.community_memberships.where(role: "owner").where.not(id: id).exists?

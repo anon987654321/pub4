@@ -9,7 +9,7 @@ require "test_helper"
 # The schema has fifty-four foreign keys. Sixteen of them point at a parent
 # whose model declares no association with a `dependent:` option, and SQLite
 # enforces the constraint, so `parent.destroy` on any of those raises
-# ActiveRecord::InvalidForeignKey - a 500 on a delete button, not a validation
+# ActiveRecord::InvalidForeignKey — a 500 on a delete button, not a validation
 # error a form can show.
 #
 # Three were reachable from ordinary use and are fixed:
@@ -36,7 +36,7 @@ class ForeignKeyDependencyTest < ActiveSupport::TestCase
     assert_nothing_raised { @outfit.destroy! }
   end
 
-  # A wear happened. Deleting the outfit deletes the grouping, not the history -
+  # A wear happened. Deleting the outfit deletes the grouping, not the history —
   # the garment's times_worn already counts it.
   test "deleting an outfit keeps the wear history and releases it" do
     log = WearLog.create!(user: @user, item: @item, outfit: @outfit, worn_on: Date.current)
@@ -94,7 +94,7 @@ class ForeignKeyDependencyTest < ActiveSupport::TestCase
     Rails.application.eager_load!
     models = ActiveRecord::Base.descendants.reject(&:abstract_class?).select do |model|
       model.table_exists?
-    rescue StandardError # scan: intentional - a model without a table is excluded; false is the filter answer
+    rescue StandardError # scan: intentional — a model without a table is excluded; false is the filter answer
       false
     end
     by_table = models.index_by(&:table_name)
@@ -117,7 +117,7 @@ class ForeignKeyDependencyTest < ActiveSupport::TestCase
 
     assert_empty new_gaps,
                  "these foreign keys have no dependent option on the parent, so destroying the " \
-                 "parent raises InvalidForeignKey - a 500, not a form error:\n  #{new_gaps.join("\n  ")}"
+                 "parent raises InvalidForeignKey — a 500, not a form error:\n  #{new_gaps.join("\n  ")}"
   end
 
   # The other direction: a gap that has been closed must leave the list, or the
@@ -125,7 +125,7 @@ class ForeignKeyDependencyTest < ActiveSupport::TestCase
   def test_the_known_gaps_are_still_gaps
     closed = KNOWN_GAPS - uncovered_foreign_keys
 
-    assert_empty closed, "these are covered now - remove them from KNOWN_GAPS:\n  #{closed.join("\n  ")}"
+    assert_empty closed, "these are covered now — remove them from KNOWN_GAPS:\n  #{closed.join("\n  ")}"
   end
 
   # The instrument: if the scan stops finding foreign keys at all, both tests

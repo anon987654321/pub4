@@ -8,7 +8,7 @@ require "test_helper"
 # wardrobe and reorder their outfits.
 # Asserted through the I18n key, not the English sentence: every app in this
 # family renders :nb by default, so a literal here passes only for as long as
-# the string is untranslated - and it was, until 2026-08-11.
+# the string is untranslated — and it was, until 2026-08-11.
 class WardrobeAuthorizationTest < ActionDispatch::IntegrationTest
   setup do
     @owner = User.create!(email_address: "wa_owner@example.com", password: "secret1234")

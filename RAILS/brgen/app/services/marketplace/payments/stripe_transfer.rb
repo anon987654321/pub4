@@ -4,7 +4,7 @@ module Marketplace
   module Payments
     # Moves held funds to a shop's connected Stripe account. Without a Connect
     # destination the transfer is refused, not faked. Separate charges and
-    # transfers (Checkout lands on the platform; this pushes onward) - reversing
+    # transfers (Checkout lands on the platform; this pushes onward) — reversing
     # is how a later refund recovers the money from the connected account.
     class StripeTransfer
       API = "https://api.stripe.com/v1/transfers"

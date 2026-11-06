@@ -5,7 +5,7 @@ module Marketplace
   # create/update hooks. Nothing reads a single row; the only reader is
   # Listing#omnibus_reference_price_cents, which takes the trailing 30-day
   # minimum. The table exists so an anchor can never be rendered from a price
-  # nobody observed - the persuasion_honesty source contract forbids the
+  # nobody observed — the persuasion_honesty source contract forbids the
   # alternative (a seller-entered or hardcoded "was" price).
   class ListingPriceObservation < ApplicationRecord
     self.table_name = "marketplace_listing_price_observations"

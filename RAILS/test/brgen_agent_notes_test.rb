@@ -6,7 +6,7 @@ require "minitest/autorun"
 # brgen is: one Rails process, a city apex, and namespaced engines on
 # subdomains. Assertions on it live here rather than in brgen's own suite
 # because brgen's suite runs against the deployed tree on vm23, where the copy
-# of this document is whatever the last sync left behind - on 2026-08-21 that
+# of this document is whatever the last sync left behind — on 2026-08-21 that
 # was a version from two weeks earlier, and the deploy halted on a document
 # nobody had edited. The repo is where the document is true or false.
 class BrgenAgentNotesTest < Minitest::Test
@@ -23,7 +23,7 @@ class BrgenAgentNotesTest < Minitest::Test
   end
 
   # Every city apex carries the same verticals, so the document has to show a
-  # pair - a reader who sees only brgen.no reads the network as Bergen plus
+  # pair — a reader who sees only brgen.no reads the network as Bergen plus
   # some extras.
   def test_it_shows_the_same_vertical_on_two_cities
     assert_includes notes, "markedsplass.brgen.no"

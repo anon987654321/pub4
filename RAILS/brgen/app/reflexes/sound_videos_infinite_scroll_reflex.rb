@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # The clips made with one sound. Ranked by watch time, like every other tv
-# surface - a sound page ordered by page opens would rank a sound by how many
+# surface — a sound page ordered by page opens would rank a sound by how many
 # people bounced off it.
 class SoundVideosInfiniteScrollReflex < Shared::InfiniteScrollReflex
   renders "tv/videos/tv_video", as: :tv_video, wrap_in: :li

@@ -101,7 +101,7 @@ items:
   area: i18n
   size: S
   path: RAILS/amber/app/javascript/controllers/wardrobe_carousel_controller.js
-  item: Translate the dressing-room 'none' count and the '-' placeholder in wardrobe_carousel_controller
+  item: Translate the dressing-room 'none' count and the '—' placeholder in wardrobe_carousel_controller
     via data values.
   status: done
 - id: amber-013
@@ -117,7 +117,7 @@ items:
   area: i18n
   size: S
   path: RAILS/amber/app/views/ai/occasion_map.html.erb
-  item: Translate the hardcoded '<- Dashboard' link on the occasion map and '<- Declutter
+  item: Translate the hardcoded '← Dashboard' link on the occasion map and '← Declutter
     dashboard' on the declutter review page.
   status: done
 - id: amber-015
@@ -133,7 +133,7 @@ items:
   area: i18n
   size: S
   path: RAILS/amber/app/views/declutter/index.html.erb
-  item: Translate '- due' and format challenge.due_on with l() in the declutter challenge
+  item: Translate '— due' and format challenge.due_on with l() in the declutter challenge
     lists.
   status: done
 - id: amber-017
@@ -207,7 +207,7 @@ items:
   area: i18n
   size: S
   path: RAILS/amber/app/views/outfits/_outfit_item_fields.html.erb
-  item: Translate the hardcoded 'Item' label and 'Select item...' blank in the outfit
+  item: Translate the hardcoded 'Item' label and 'Select item…' blank in the outfit
     item fields.
   status: done
 - id: amber-026
@@ -2936,7 +2936,7 @@ items:
   area: playlist
   size: S
   path: RAILS/brgen_radio/playlist/app/javascript/controllers/playlist_player_controller.js
-  item: Move the hard-coded player strings 'Play', 'Pause', 'Open', 'Comment at ...',
+  item: Move the hard-coded player strings 'Play', 'Pause', 'Open', 'Comment at …',
     'Comment at this time...' and the 'brgen playlist' Media Session fallback into
     Stimulus values fed from t() keys, so the Norwegian page stops switching to English
     after the first click.
@@ -3005,7 +3005,7 @@ items:
   path: RAILS/brgen_radio/playlist/app/views/playlist/listening_parties/_sync.html.erb
   item: Give the listening party page an audio element driven by the broadcast _sync
     partial (track and position_seconds), so guests hear the host's track in step
-    instead of only reading 'Now playing ... 42s'.
+    instead of only reading 'Now playing … 42s'.
   status: done
 - id: brgen-253
   app: brgen
@@ -3055,7 +3055,7 @@ items:
   area: post-card
   size: S
   path: RAILS/__shared/app/views/shared/_post_card.html.erb
-  item: Replace the bare '...' read-more link with a visible word ('Les mer') so it
+  item: Replace the bare '…' read-more link with a visible word ('Les mer') so it
     is a readable target, not a single glyph.
   status: done
 - id: brgen-259
@@ -3538,7 +3538,7 @@ items:
   area: search
   size: S
   path: RAILS/brgen/app/views/search/index.html.erb
-  item: Render an empty state ('Ingen treff for ...') when every vertical returns nothing;
+  item: Render an empty state ('Ingen treff for …') when every vertical returns nothing;
     the page currently goes blank.
   status: done
 - id: brgen-320
@@ -4313,7 +4313,7 @@ items:
   area: copy
   size: S
   path: RAILS/bsdports/config/locales/en.yml
-  item: Drop the arrow glyphs from 'Requires -> dependencies' and 'Required by <- reverse
+  item: Drop the arrow glyphs from 'Requires → dependencies' and 'Required by ← reverse
     dependencies'; screen readers read them as 'right arrow' and the headings carry
     the meaning already.
   status: done
@@ -4512,7 +4512,7 @@ items:
   size: S
   path: RAILS/bsdports/app/views/maintainers/show.html.erb
   item: Set content_for :title and :description on maintainer pages including the
-    port count ('kn@openbsd.org - 42 ports').
+    port count ('kn@openbsd.org — 42 ports').
   status: done
 - id: bsdports-038
   app: bsdports
@@ -4536,7 +4536,7 @@ items:
   size: S
   path: RAILS/bsdports/app/views/ports/show.html.erb
   item: Set content_for :description on the port page from port.comment (e.g. 'git
-    2.45 - distributed version control, OpenBSD devel/git'), so each port gets its
+    2.45 — distributed version control, OpenBSD devel/git'), so each port gets its
     own meta and social-card description instead of the site blurb.
   status: done
 - id: bsdports-041
@@ -4640,7 +4640,7 @@ items:
   area: ui
   size: M
   path: RAILS/bsdports/app/views/ports/show.html.erb
-  item: Render version history as a compact old -> new version row with the commit
+  item: Render version history as a compact old → new version row with the commit
     message beneath, instead of a fake unified-diff <pre> per update.
   status: done
 - id: bsdports-054
@@ -4974,7 +4974,7 @@ items:
   area: pwa
   size: S
   path: MASTER/web/public/offline.html
-  item: 'Make offline.html MASTER''s page: it says "brgen - frakoblet" and uses a
+  item: 'Make offline.html MASTER''s page: it says "brgen — frakoblet" and uses a
     #f5f0e8 ink outside the face tokens.'
   status: done
 - id: master-029
@@ -5465,7 +5465,7 @@ items:
   area: i18n
   size: S
   path: RAILS/mrdamascy/app/views/orders/index.html.erb
-  item: 'Format placed_at with I18n.l(..., format: :short) instead of strftime("%d.%m
+  item: 'Format placed_at with I18n.l(…, format: :short) instead of strftime("%d.%m
     %H:%M") so the English locale gets its own format.'
   status: done
 - id: mrdamascy-050
@@ -5580,7 +5580,7 @@ items:
   area: payments
   size: M
   path: RAILS/mrdamascy/app/models/order.rb
-  item: Collect tips through the payment lane (or label them as unpaid) - Order#add_tip!
+  item: Collect tips through the payment lane (or label them as unpaid) — Order#add_tip!
     raises total_ore without any charge.
   status: done
 - id: mrdamascy-064
@@ -5701,7 +5701,7 @@ items:
   size: S
   path: RAILS/mrdamascy/config/application.rb
   item: Add Cross-Origin-Opener-Policy and a Permissions-Policy (camera=(), geolocation=(),
-    payment=(self)) - mrdamascy does not load the shared security_headers initializer.
+    payment=(self)) — mrdamascy does not load the shared security_headers initializer.
   status: done
   note: "COOP and Permissions-Policy added; payment=() kept to match relayd.conf, which overwrites the header in production."
 - id: mrdamascy-079
@@ -5805,7 +5805,7 @@ items:
   area: tests
   size: M
   path: RAILS/mrdamascy/test
-  item: Add a system test for menu -> item sheet -> cart -> checkout in pickup mode.
+  item: Add a system test for menu → item sheet → cart → checkout in pickup mode.
   status: done
 - id: mrdamascy-092
   app: mrdamascy
@@ -5900,7 +5900,7 @@ items:
   area: tracking
   size: S
   path: RAILS/mrdamascy/app/javascript/controllers/track_controller.js
-  item: Pass track_status_path as a Stimulus value instead of assembling "/track/.../status"
+  item: Pass track_status_path as a Stimulus value instead of assembling "/track/…/status"
     in JavaScript.
   status: done
 - id: mrdamascy-104
@@ -5939,7 +5939,7 @@ items:
   area: accessibility
   size: M
   path: RAILS/__shared/app/assets/stylesheets/_focus_ring.scss
-  item: Convert the listed outline suppressors (.tab-item, .feed-action, .theme-toggle...)
+  item: Convert the listed outline suppressors (.tab-item, .feed-action, .theme-toggle…)
     to :focus:not(:focus-visible) resets and remove their !important overrides.
   status: done
 - id: shared-002
@@ -6024,7 +6024,7 @@ items:
   area: design
   size: S
   path: RAILS/__shared/app/views/shared/_avatar.html.erb
-  item: Replace the avatar--24...avatar--64 size classes with width/height attributes
+  item: Replace the avatar--24…avatar--64 size classes with width/height attributes
     and translate the "Avatar" alt fallback.
   status: done
 - id: shared-013
@@ -6079,7 +6079,7 @@ items:
   area: i18n
   size: S
   path: RAILS/__shared/frontend/live_search_controller.js
-  item: Remove the English defaults for the status values ("Updating results...") and
+  item: Remove the English defaults for the status values ("Updating results…") and
     require translated values from the markup.
   status: done
 - id: shared-020
@@ -6199,7 +6199,7 @@ items:
   area: pwa
   size: S
   path: RAILS/__shared/pwa/service_worker.js
-  item: Re-indent the dynamic-route matcher (const path... sits at column 0).
+  item: Re-indent the dynamic-route matcher (const path… sits at column 0).
   status: done
 - id: shared-035
   app: shared

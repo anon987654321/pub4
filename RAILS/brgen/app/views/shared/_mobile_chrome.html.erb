@@ -72,7 +72,7 @@
   <%# No compose-fab: new-post expand lives in the top compose box / Post in sidebar. %>
 </nav>
 <%# Backdrop dismissal is a pointer affordance; Escape is the keyboard's
-    equivalent - without it a keyboard user who opened the sheet had no way
+    equivalent — without it a keyboard user who opened the sheet had no way
     back except tabbing to whatever happened to close it. %>
 <div class="mobile-sheet-backdrop" data-bottom-sheet-target="backdrop" data-action="click->bottom-sheet#close keydown.esc@window->bottom-sheet#close"></div>
 <%# Pointer events only. This also bound touchstart/touchmove/touchend to the
@@ -113,7 +113,7 @@
       <%= link_to t("nav.profile"), main_app.user_path(Current.user) %>
       <%# Export, two-factor and deletion live here and nowhere else links it. %>
       <%= link_to t("pages.account"), main_app.account_path %>
-      <%# destructive: no-confirm-ok - reversible - signing out, and signing in again is the same click %>
+      <%# destructive: no-confirm-ok — reversible — signing out, and signing in again is the same click %>
       <%= link_to t("nav.sign_out"), main_app.session_path, data: { turbo_method: :delete, turbo_prefetch: false } %>
     <% else %>
       <%= link_to t("nav.sign_in"), main_app.new_session_path %>

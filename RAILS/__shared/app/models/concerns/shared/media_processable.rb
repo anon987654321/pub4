@@ -48,7 +48,7 @@ module Shared
 
         # Called on the instance, not perform_later / perform_now: nothing on
         # vm23 runs the queue, and perform_now still inherits ApplicationJob's
-        # three polynomial retries - a vips failure would hold the upload ~20s.
+        # three polynomial retries — a vips failure would hold the upload ~20s.
         Shared::MediaProcessingJob.new.perform(
           self.class.name,
           id,

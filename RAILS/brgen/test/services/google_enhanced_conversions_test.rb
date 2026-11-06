@@ -3,7 +3,7 @@
 require "test_helper"
 
 # The upload carries a customer's hashed email and phone. Whether it may is a
-# consent question, and no order carries a consent flag yet - so the case that
+# consent question, and no order carries a consent flag yet — so the case that
 # matters most is the one where consent is unknown.
 class GoogleEnhancedConversionsTest < ActiveSupport::TestCase
   Order = Struct.new(:id, :gclid, :email, :phone, :ad_user_data_consent, :total_cents, :currency, :paid_at,

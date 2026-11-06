@@ -16,7 +16,7 @@ class UsersProfileTest < ActionDispatch::IntegrationTest
 
     get user_path(@owner)
     assert_response :success
-    assert_select "title", text: "#{@owner.display_name} - Amber"
+    assert_select "title", text: "#{@owner.display_name} — Amber"
     assert_select "h2", text: I18n.t("users.outfits")
     assert_select ".item-grid article##{ActionView::RecordIdentifier.dom_id(@outfit)}"
   end

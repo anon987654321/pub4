@@ -3,7 +3,7 @@
 # Geo-scoped channels: each city gets its own room per slug, so #takeaway on
 # brgen.no (Bergen) and on oshlo.no (Oslo) are distinct rooms with their own
 # locals + bots. The slug uniqueness moves from global to per-city; DMs/groups
-# (slug NULL, city_id NULL) stay unaffected - SQLite treats NULLs as distinct.
+# (slug NULL, city_id NULL) stay unaffected — SQLite treats NULLs as distinct.
 class ScopeChannelsToCity < ActiveRecord::Migration[8.1]
   def change
     add_column :conversations, :city_id, :integer

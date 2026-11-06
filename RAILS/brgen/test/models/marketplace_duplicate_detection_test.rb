@@ -4,7 +4,7 @@ require "test_helper"
 
 # Duplicate-listing detection: the same seller posting the same normalised
 # title while the first is still active files exactly one open moderation
-# report on the new listing - and nothing else counts. A sold sibling is a
+# report on the new listing — and nothing else counts. A sold sibling is a
 # relisting, a different title is a different thing, and detection never
 # withdraws anything itself.
 class MarketplaceDuplicateDetectionTest < ActiveSupport::TestCase

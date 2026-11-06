@@ -11,7 +11,7 @@
   <% if @kitchen %>
     <p class="hero-meta">
       <%= tag.span render("shared/icons/khatam", size: 13), class: "hero-rating", aria: { hidden: true } %>
-      <%= number_with_precision(@kitchen.rating, precision: 1) %> - <%= @kitchen.localized_opening_hours %>
+      <%= number_with_precision(@kitchen.rating, precision: 1) %> · <%= @kitchen.localized_opening_hours %>
     </p>
   <% end %>
   <%# The zones' own cheapest fee and slowest promise, once any exist. %>
@@ -29,7 +29,7 @@
       <%= tag.p t("menu.last_order") %>
       <ul class="fact-list">
         <% @last_order.order_items.each do |line| %>
-          <li><%= line.quantity %>x <%= line.name %></li>
+          <li><%= line.quantity %>× <%= line.name %></li>
         <% end %>
       </ul>
     </div>

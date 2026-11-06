@@ -36,9 +36,9 @@ class AdminReportsQueueTest < ActionDispatch::IntegrationTest
       reporter = user("reporter")
       community = Community.create!(name: "Queue #{SecureRandom.hex(3)}", slug: "queue-#{SecureRandom.hex(4)}")
       open_post = Post.create!(user: user("a"), community:, title: "Åpen sak om sykkeltyveri",
-                               content: "...")
+                               content: "…")
       done_post = Post.create!(user: user("b"), community:, title: "Ferdig sak om parkering",
-                               content: "...")
+                               content: "…")
       ModerationReport.create!(user: reporter, reportable: open_post, reason: "unsafe", status: "open")
       ModerationReport.create!(user: reporter, reportable: done_post, reason: "spam", status: "resolved")
 
@@ -50,13 +50,13 @@ class AdminReportsQueueTest < ActionDispatch::IntegrationTest
       assert_not_includes response.body, "Ferdig sak om parkering"
       assert_select "a[href=?]", post_path(open_post), text: /Åpen sak om sykkeltyveri/
       assert_not_includes response.body, "Post##{open_post.id}"
-      heading = "#{I18n.t('moderation_queue.reasons.unsafe')} - #{I18n.t('moderation_queue.statuses.open')}"
+      heading = "#{I18n.t('moderation_queue.reasons.unsafe')} · #{I18n.t('moderation_queue.statuses.open')}"
       assert_select "strong", text: heading
       assert_select "nav a[aria-current=page]", text: I18n.t("moderation_queue.filters.open")
 
       get admin_reports_path(status: "all")
       assert_includes response.body, "Ferdig sak om parkering"
-      heading = "#{I18n.t('moderation_queue.reasons.spam')} - #{I18n.t('moderation_queue.statuses.resolved')}"
+      heading = "#{I18n.t('moderation_queue.reasons.spam')} · #{I18n.t('moderation_queue.statuses.resolved')}"
       assert_select "strong", text: heading
     end
   end
@@ -64,7 +64,7 @@ class AdminReportsQueueTest < ActionDispatch::IntegrationTest
   test "a reported comment links to its post at the comment, with an excerpt" do
     ActsAsTenant.with_tenant(@city) do
       community = Community.create!(name: "Queue #{SecureRandom.hex(3)}", slug: "queue-#{SecureRandom.hex(4)}")
-      post_record = Post.create!(user: user("a"), community:, title: "Tråd", content: "...")
+      post_record = Post.create!(user: user("a"), community:, title: "Tråd", content: "…")
       comment = Comment.create!(user: user("c"), commentable: post_record,
                                 content: "Dette er en stygg kommentar om naboen")
       ModerationReport.create!(user: user("r"), reportable: comment, reason: "abuse", status: "open")

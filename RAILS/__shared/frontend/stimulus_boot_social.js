@@ -1,4 +1,4 @@
-// Controllers mounted only by brgen and amber's views - not bsdports.
+// Controllers mounted only by brgen and amber's views — not bsdports.
 // Split out of stimulus_boot.js so bsdports never imports these modules.
 // See stimulus_boot.js for controllers every app registers.
 import MediaExclusive from "pub4/media_exclusive"

@@ -1,4 +1,4 @@
-// Mr. Damascy - entry point: Turbo Drive + Streams, then Stimulus controllers.
+// Mr. Damascy — entry point: Turbo Drive + Streams, then Stimulus controllers.
 import "@hotwired/turbo-rails"
 import "controllers"
 

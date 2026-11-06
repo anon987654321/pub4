@@ -4,7 +4,7 @@
 #
 # `find_or_create_by` is a read followed by a write. Under Falcon two requests
 # interleave between the two halves and both write, and the only thing that can
-# stop them is a constraint in the database - a model validation reads the same
+# stop them is a constraint in the database — a model validation reads the same
 # stale row the finder did.
 #
 #   conversation_participants  Conversation#join!    the worst of the three:

@@ -60,7 +60,7 @@ class Playlist::TracksController < Playlist::BaseController
 
   # user_id, not user: @set and @playlist both come from finders with nothing
   # preloaded, and strict_loading_by_default raises on the association read
-  # before the comparison - so the owner's own edit failed here too. The
+  # before the comparison — so the owner's own edit failed here too. The
   # collaboration lookup below is a query rather than a lazy read, so it was
   # never the part that broke.
   def authorize_editor!

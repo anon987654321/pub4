@@ -3,7 +3,7 @@
 require "test_helper"
 
 # The vertical-as-engine cutover 500'd four subdomains in production while the whole
-# unit/contract suite stayed green - because nothing actually RENDERED a vertical page
+# unit/contract suite stayed green — because nothing actually RENDERED a vertical page
 # with a real ActiveStorage attachment under the engine's routing context. Two whole
 # classes of bug hid there:
 #

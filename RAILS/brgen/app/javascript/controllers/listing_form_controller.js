@@ -83,7 +83,7 @@ export default class extends Controller {
     if (this.hasPhotoHintTarget) {
       const goods = this.element.querySelector("[name=\"listing[kind]\"]")?.value === "goods"
       this.photoHintTarget.hidden = !goods || imageCount >= 3
-      if (goods && imageCount < 3) this.photoHintTarget.textContent = this.text("photoPrompt", "Most successful listings have 4-6 photos.")
+      if (goods && imageCount < 3) this.photoHintTarget.textContent = this.text("photoPrompt", "Most successful listings have 4–6 photos.")
     }
   }
 
@@ -117,7 +117,7 @@ export default class extends Controller {
       return
     }
 
-    this.locationStatusTarget.textContent = this.text("locating", "Getting your current location...")
+    this.locationStatusTarget.textContent = this.text("locating", "Getting your current location…")
     navigator.geolocation.getCurrentPosition(
       ({ coords }) => {
         const lat = this.element.querySelector("[name=\"listing[latitude]\"]")

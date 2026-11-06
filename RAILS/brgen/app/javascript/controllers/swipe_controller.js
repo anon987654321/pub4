@@ -120,7 +120,7 @@ export default class extends Controller {
       const userId = this.currentCard.dataset.userId
       const card = this.currentCard
 
-      // A short buzz on commit - a like feels different from a pass.
+      // A short buzz on commit — a like feels different from a pass.
       Haptics.pulse(isLike ? [12, 30, 12] : 8)
 
       // Commit animation offscreen

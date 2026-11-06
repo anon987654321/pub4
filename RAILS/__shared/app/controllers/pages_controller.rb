@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-# Privacy / terms / cookies for every host app. Public by design - a privacy
+# Privacy / terms / cookies for every host app. Public by design — a privacy
 # policy behind a login helps no one. Content lives in the views.
 class PagesController < ApplicationController
   # The public pages every app serves without an account; config/routes/legal.rb

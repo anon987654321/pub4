@@ -5,7 +5,7 @@
 # The original Amber specification asked for "tips for cleaning, organizing, and
 # storing your wardrobe using architecture, interior design and zen minimalism
 # combined with smart algorithms". `WardrobeAnalytics#tips` covered none of that
-# - it is five wear-and-declutter nudges - so this service owns the other three
+# — it is five wear-and-declutter nudges — so this service owns the other three
 # registers and reads the wardrobe to decide which apply.
 #
 # Four registers, each named for the discipline it borrows from:
@@ -13,9 +13,9 @@
 #   :care      cleaning and repair, driven by lifecycle state, WardrobeItem
 #              condition, and material care rules
 #   :storage   what to fold, what to hang, what to archive out of season
-#   :zoning    architecture's reach zones - prime reach for what is worn daily,
+#   :zoning    architecture's reach zones — prime reach for what is worn daily,
 #              high and deep storage for what is not
-#   :restraint zen minimalism - rod density, duplicates, one-in-one-out
+#   :restraint zen minimalism — rod density, duplicates, one-in-one-out
 #
 # Every tip is a rule with a stated principle and the wardrobe evidence that
 # triggered it. No LLM is involved; `source` says `rules` so the UI can say so
@@ -53,7 +53,7 @@ class ClosetOrganization
   AIRY_PER_CATEGORY = 8
   CROWDED_PER_CATEGORY = 20
 
-  # A garment worn at least this often earns prime reach - the band between
+  # A garment worn at least this often earns prime reach — the band between
   # hip and shoulder that costs no bending or reaching.
   PRIME_REACH_WEARS = 6
 
@@ -65,7 +65,7 @@ class ClosetOrganization
     @user = user
   end
 
-  # All applicable tips, care first - a garment that needs washing cannot be
+  # All applicable tips, care first — a garment that needs washing cannot be
   # stored, and one that needs repair cannot be zoned.
   def tips
     REGISTERS.flat_map { |register| public_send(:"#{register}_tips") }
@@ -128,8 +128,8 @@ class ClosetOrganization
   attr_reader :user
 
   # `count` is both the evidence and the guard: a tip with nothing behind it is
-  # never emitted. The callers whose trigger is a shape rather than a tally -
-  # three categories present, four distinct colours - do their own guarding and
+  # never emitted. The callers whose trigger is a shape rather than a tally —
+  # three categories present, four distinct colours — do their own guarding and
   # always pass a positive count.
   def tip(id, register, count, **interpolations)
     count = count.to_i
@@ -193,7 +193,7 @@ class ClosetOrganization
     return nil if spread.size < 3
 
     order = spread.sort_by { |_category, group| -group.size }.map(&:first)
-    tip(:category_zones, :zoning, spread.size, zones: order.first(4).join(" -> "))
+    tip(:category_zones, :zoning, spread.size, zones: order.first(4).join(" → "))
   end
 
   def color_run_tip

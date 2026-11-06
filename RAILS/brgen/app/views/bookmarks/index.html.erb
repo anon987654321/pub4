@@ -24,7 +24,7 @@
 
 <%# The pager stays as the no-JS path. The sentinel needs a reflex round trip
     over ActionCable, so without JavaScript a truncated list would say nothing
-    about the rest of itself - and this surface is also the only integration
+    about the rest of itself — and this surface is also the only integration
     coverage shared/_pager has across three apps and two pagy majors
     (brgen/test/controllers/paginated_index_test.rb). noscript, so a reader
     with JavaScript sees one mechanism rather than two. %>

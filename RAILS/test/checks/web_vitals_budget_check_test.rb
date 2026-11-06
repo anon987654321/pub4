@@ -11,8 +11,8 @@ require_relative "../../../MASTER/checks/lib/rendered/web_vitals_budget"
 #
 # The check has two halves. The source half reads hotwire.js and asserts the field
 # sampler still observes LCP, CLS and INP; the live half loads a page in Chrome and
-# judges the two paint metrics against a budget. The budget is the check - the pass
-# line is "LCP and CLS within budget" - and the source half is its blindness alarm.
+# judges the two paint metrics against a budget. The budget is the check — the pass
+# line is "LCP and CLS within budget" — and the source half is its blindness alarm.
 #
 # Counting the source half as measurement meant that on any machine without Chrome
 # the check read three strings out of a JavaScript file, measured neither metric, and

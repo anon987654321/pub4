@@ -41,7 +41,7 @@ class PruneGuestUsersJobTest < ActiveSupport::TestCase
     Shared::PruneGuestUsersJob.perform_now
 
     assert_equal 0, User.where(id: ids).count,
-                 "left #{User.where(id: ids).count} of #{over_one_batch} behind - batching stopped early again"
+                 "left #{User.where(id: ids).count} of #{over_one_batch} behind — batching stopped early again"
   end
 
   # A guest who has read a channel owns message_receipts, which carry an FK to

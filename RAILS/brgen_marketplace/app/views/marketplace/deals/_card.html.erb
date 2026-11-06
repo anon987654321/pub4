@@ -12,14 +12,14 @@
       <% if (was = listing.omnibus_anchor_display) %>
         <%# Omnibus Art. 6a: the observed trailing-30-day minimum, rendered
             only when the current price is strictly below it. The number
-            comes from ListingPriceObservation, never from a seller field -
+            comes from ListingPriceObservation, never from a seller field —
             the persuasion_honesty contract forbids the literal. %>
         <p class="deal-meta deal-meta--was"><%= t("marketplace.persuasion.was_price", price: was) %></p>
       <% end %>
     <% end %>
     <h2 class="deal-card-title"><%= deal.headline %></h2>
     <%# The rungs in StorefrontCardLadderTest's order: what the deal sells, its
-        stars, then when it ends - the listing tile's order, so a deal and a
+        stars, then when it ends — the listing tile's order, so a deal and a
         listing read field for field. %>
     <% if listing %>
       <p class="deal-card-subtitle"><%= listing.title %></p>

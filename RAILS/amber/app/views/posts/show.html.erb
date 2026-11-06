@@ -12,7 +12,7 @@
     <span class="author"><%= @post.author_name %></span>
     <%# time_ago, not time_ago_in_words: Norwegian marks a past span on both
         sides ("for 2 måneder siden"), so the suffix cannot be appended. The
-        timeago Stimulus controller that used to hang off this tag is gone -
+        timeago Stimulus controller that used to hang off this tag is gone —
         it read data-timeago-datetime-value, which no view ever set. %>
     <%= tag.time time_ago(@post.created_at),
                  datetime: @post.created_at.iso8601,

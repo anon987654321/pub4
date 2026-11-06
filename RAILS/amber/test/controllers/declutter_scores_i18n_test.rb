@@ -5,7 +5,7 @@ require "test_helper"
 # The declutter review printed score keys with String#humanize ("Total
 # release score") and raw floats ("0.437"), the dashboard printed the
 # joy/use matrix keys humanized ("High joy low use") and challenge dates as
-# "- due 2026-11-11", English and ISO in every locale.
+# "— due 2026-11-11", English and ISO in every locale.
 class DeclutterScoresI18nTest < ActionDispatch::IntegrationTest
   setup do
     email = "ds-#{SecureRandom.hex(4)}@example.test"
@@ -31,7 +31,7 @@ class DeclutterScoresI18nTest < ActionDispatch::IntegrationTest
     get declutter_index_path(locale: "nb")
     assert_response :success
     assert_includes response.body, I18n.t("declutter.due", date: I18n.l(due, locale: :nb), locale: :nb)
-    assert_not_includes response.body, "- due"
+    assert_not_includes response.body, "— due"
     assert_no_match(/High joy|Low joy/, response.body)
   end
 end

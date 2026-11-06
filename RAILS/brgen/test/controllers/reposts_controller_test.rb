@@ -43,7 +43,7 @@ class RepostsControllerTest < ActionDispatch::IntegrationTest
   end
 
   # brgen mints a real User row for every cookieless visitor, and
-  # require_user_session only asks for Current.user - so a guest can repost for
+  # require_user_session only asks for Current.user — so a guest can repost for
   # the same reason they can post and vote. Pinned because it is a deliberate
   # product position ("no signup required"), not an oversight, and the rate
   # limit rather than the session is what bounds it.
@@ -94,7 +94,7 @@ class RepostsControllerTest < ActionDispatch::IntegrationTest
   end
 
   # post_vote_path(post) carries the slug for the same reason, and find_votable
-  # called Post.find on it - a 404 the action Stimulus controller rolls back
+  # called Post.find on it — a 404 the action Stimulus controller rolls back
   # silently, so every vote cast from a feed card was discarded.
   test "voting on a post reaches it by slug" do
     sign_in_as(@booster)

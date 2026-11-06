@@ -2,8 +2,8 @@
 
 require "test_helper"
 
-# The non-goods half of a classifieds site. They are listings - same city
-# scoping, same search, same expiry, same messaging - and they are not goods.
+# The non-goods half of a classifieds site. They are listings — same city
+# scoping, same search, same expiry, same messaging — and they are not goods.
 class MarketplaceKindsTest < ActionDispatch::IntegrationTest
   setup do
     # Once, not per test: sync! rewrites every city row, and under parallel
@@ -38,7 +38,7 @@ class MarketplaceKindsTest < ActionDispatch::IntegrationTest
     post marketplace.listings_path, params: params
     # id, not created_at: two listings created inside one second tie on the
     # timestamp, and .last under a tied sort handed back whichever row the
-    # database felt like - the goods variable was sometimes the job record.
+    # database felt like — the goods variable was sometimes the job record.
     Marketplace::Listing.order(:id).last
   end
 
@@ -54,12 +54,12 @@ class MarketplaceKindsTest < ActionDispatch::IntegrationTest
     assert_equal "Bergen Kommune", listing.job_detail.employer
     # Built from the same formatter rather than typed: MoneyDisplay joins with a
     # non-breaking space, and a literal here would assert the glyph.
-    expected = "#{Shared::MoneyDisplay.format(45_000_00)}-#{Shared::MoneyDisplay.format(55_000_00)}"
+    expected = "#{Shared::MoneyDisplay.format(45_000_00)}–#{Shared::MoneyDisplay.format(55_000_00)}"
     assert_equal expected, listing.headline_amount
   end
 
   # Rent is what people search on, so a housing advert without it is a phone
-  # call - which is the thing a listing exists to replace.
+  # call — which is the thing a listing exists to replace.
   test "housing must state its rent" do
     sign_in_as(@lister)
 
@@ -151,7 +151,7 @@ class MarketplaceKindsTest < ActionDispatch::IntegrationTest
   end
 
 # two_factor_required? turns on the moment an account has an active listing, so
-# the second listing is the first request the guard ever refuses - and from
+# the second listing is the first request the guard ever refuses — and from
 # inside the engine the bare helper resolved against the engine's routes and
 # raised UrlGenerationError. Every seller's second listing was a 500.
 test "a seller listing again is sent to the host two-factor page, not a 500" do

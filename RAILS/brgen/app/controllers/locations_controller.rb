@@ -5,7 +5,7 @@ class LocationsController < ApplicationController
              by: -> { Current.user&.id ? "u#{Current.user.id}" : request.remote_ip }
   ALERT_RADIUS_KM = NearbyController::DEFAULT_RADIUS_KM
   # Coarsen the stored/matched position to a ~1 km grid so an exact location
-  # can't be triangulated from proximity pings - ample precision for a
+  # can't be triangulated from proximity pings — ample precision for a
   # "within N km" stranger feature, and much safer than storing raw GPS.
   LOCATION_PRECISION = 2
   # How long a stationary user may go without re-announcing. Long enough that a
@@ -28,7 +28,7 @@ class LocationsController < ApplicationController
 
     # Re-announcing costs one rendered partial and one push lookup per nearby
     # user. Measured on production 2026-08-07: ~600 queries and 7-9s per call,
-    # repeatedly, which is what took brgen.no off the air - clients ping on a
+    # repeatedly, which is what took brgen.no off the air — clients ping on a
     # timer whether or not anyone has moved, and the position is already
     # coarsened to a ~1 km grid, so a stationary user re-broadcast the same
     # arrival every single ping.

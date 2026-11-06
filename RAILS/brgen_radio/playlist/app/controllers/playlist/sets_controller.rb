@@ -17,7 +17,7 @@ class Playlist::SetsController < ApplicationController
     scope = Playlist::Set.publicly_listed
     if live_search_query.present?
       set_ids = apply_live_search(scope, columns: %w[name description], vertical: "playlist").pluck(:id)
-      # playlist_tracks has `title`, not `name`, and carries no playlist_set_id -
+      # playlist_tracks has `title`, not `name`, and carries no playlist_set_id —
       # sets reach tracks through playlist_set_tracks. The previous raw query
       # named both missing columns, so any non-blank search raised
       # "no such column: playlist_set_id".
@@ -29,7 +29,7 @@ class Playlist::SetsController < ApplicationController
     end
     @pagy, @sets = pagy(scope)
     # One grouped count for the page, through the join table sets reach tracks
-    # by. The card asked each set for tracks.count - a COUNT per card, and
+    # by. The card asked each set for tracks.count — a COUNT per card, and
     # .count would query even if the association had been preloaded.
     @track_counts = Playlist::SetTrack.where(playlist_set_id: @sets.map(&:id))
                                       .group(:playlist_set_id).count
@@ -108,7 +108,7 @@ class Playlist::SetsController < ApplicationController
 
   def authorize_owner_or_editor
     user = Current.user || (respond_to?(:current_user) ? current_user : nil)
-    # user_id, not user - @set is found by id with nothing preloaded and
+    # user_id, not user — @set is found by id with nothing preloaded and
     # strict_loading_by_default raises on the association read.
     return if user && user.id == @set.user_id
     collab = @set.collaborations.find_by(user: user)

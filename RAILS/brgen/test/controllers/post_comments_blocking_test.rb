@@ -13,7 +13,7 @@ class PostCommentsBlockingTest < ActionDispatch::IntegrationTest
     @blocked = member("blocked")
     @other = member("other")
 
-    @post = Post.create!(user: @other, title: "Tråd", content: "...", city: @city)
+    @post = Post.create!(user: @other, title: "Tråd", content: "…", city: @city)
     root = Comment.create!(user: @other, commentable: @post, content: "en vanlig kommentar")
     Comment.create!(user: @blocked, commentable: @post, content: "blokkert rotkommentar")
     Comment.create!(user: @blocked, commentable: @post, parent: root, content: "blokkert svar")

@@ -1,7 +1,7 @@
 // The single confirm screen + Vipps mock stand-in.
 
 // The zero-typing path: "Logg inn med Vipps" card for guests (§12). Flat,
-// mint-tinted, with the orange Vipps CTA - the fastest way through checkout.
+// mint-tinted, with the orange Vipps CTA — the fastest way through checkout.
 .vipps-login {
   margin: var(--space-16) 0;
   text-align: center;
@@ -139,7 +139,7 @@
   margin-top: var(--space-8);
 }
 
-// Vipps mock - mint header, orange wordmark, amount, approve/cancel.
+// Vipps mock — mint header, orange wordmark, amount, approve/cancel.
 .vipps-mock {
   max-width: 360px;
   margin: var(--space-32) auto;
@@ -167,14 +167,14 @@
   margin: var(--space-4) 0;
 }
 
-// Mock login header - a verify line in place of the amount.
+// Mock login header — a verify line in place of the amount.
 .vipps-verify {
   font-size: var(--text-title);
   font-weight: 700;
   margin: var(--space-4) 0;
 }
 
-// "Beløp - #id" under the amount.
+// "Beløp · #id" under the amount.
 .vipps-reference {
   margin: 0;
 }
@@ -197,7 +197,7 @@
   margin-top: var(--space-12);
 }
 
-// Stripe wordmark chips - the payment-option variant mirrors .vipps-wordmark; the
+// Stripe wordmark chips — the payment-option variant mirrors .vipps-wordmark; the
 // mock page reuses the .vipps-mock chrome with a Stripe tone.
 .stripe-wordmark {
   flex: none;

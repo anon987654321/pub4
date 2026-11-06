@@ -5,7 +5,7 @@ require "test_helper"
 # passwords_mailer/reset.* and layouts/mailer.* live in the engine rather than
 # copied into every app, reachable only because Shared::Engine
 # appends its view path to ActionMailer as well as ActionController. Nothing
-# rendered a mailer in any suite, so that path was unproven - this proves it.
+# rendered a mailer in any suite, so that path was unproven — this proves it.
 class PasswordsMailerTest < ActionMailer::TestCase
   def user
     @user ||= User.strict_loading(false).create!(
@@ -28,7 +28,7 @@ class PasswordsMailerTest < ActionMailer::TestCase
   end
 
   # The app-local layout was Rails' generated stub, which shadowed the engine's
-  # designed one - so amber and bsdports were sending bare emails while brgen
+  # designed one — so amber and bsdports were sending bare emails while brgen
   # was not. Deleting the stubs is only correct if the engine layout is what
   # actually renders.
   def test_reset_uses_the_engine_mailer_layout

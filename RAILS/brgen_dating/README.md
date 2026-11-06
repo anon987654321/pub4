@@ -27,7 +27,7 @@ The Vipps check fails closed. With `VIPPS_CLIENT_ID` and its secret in `/etc/brg
 Vipps-verified account can put a profile in the deck. Without the keys the writing surfaces lock:
 the old behaviour treated a missing variable as an open door, which is the wrong default for a
 dating product. A server that deliberately runs without Vipps keys (a demo, a fixture city) opens
-the gate only when the operator sets `DATING_IDENTITY_BYPASS=demo` in the same env file - a named
+the gate only when the operator sets `DATING_IDENTITY_BYPASS=demo` in the same env file — a named
 decision, visible next to the variables it stands in for.
 
 The models are `Profile`, `Prompt`, `Like`, `Dislike`, `Match`, `DailyPick` and `Verification`.
@@ -35,7 +35,7 @@ The models are `Profile`, `Prompt`, `Like`, `Dislike`, `Match`, `DailyPick` and 
 brgen's database and carries no migrations of its own; they are in `RAILS/brgen/db/migrate`.
 Routes are drawn on `Dating::Engine`, and brgen mounts the engine at the root under
 `constraints(subdomain: DATING_SUBDOMAINS)`. From the host, reach its helpers namespaced, as
-in `dating.matches_url(..., subdomain: "dating")`.
+in `dating.matches_url(…, subdomain: "dating")`.
 
 ## Original product promise and present boundary
 

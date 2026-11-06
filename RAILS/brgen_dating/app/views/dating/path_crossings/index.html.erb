@@ -43,7 +43,7 @@
             <% if profile.photos.attached? %>
               <%= lazy_image_tag profile.photos.first, alt: t("dating.profile_photo"), class: "photo-thumb" %>
             <% end %>
-            <div> <%# scan: intentional - the crossing card has a photo column and one text/action column %>
+            <div> <%# scan: intentional — the crossing card has a photo column and one text/action column %>
               <h2><%= profile.name %></h2>
               <% area = neighborhood_names[crossing.neighborhood_id] || t("dating.path_crossings_approximate_area") %>
               <% ago = t("dating.crossed_ago", time: time_ago_in_words(crossing.crossed_at)) %>

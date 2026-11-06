@@ -107,7 +107,7 @@ class StoriesControllerTest < ActionDispatch::IntegrationTest
   end
 
   # An expired story is gone as far as every surface is concerned, whether or
-  # not the sweep has run yet - otherwise the link keeps working while the job
+  # not the sweep has run yet — otherwise the link keeps working while the job
   # is behind.
   test "an expired story is already unreachable" do
     sign_in_as(@viewer)

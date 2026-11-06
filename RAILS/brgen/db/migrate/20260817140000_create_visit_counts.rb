@@ -3,7 +3,7 @@
 # Shared::OutboundClick counts the clicks that leave; nothing counted the visits
 # they came from. brgen serves seven live city domains and there was no way to
 # say which of them anyone reaches, so every decision about where to spend
-# effort was a guess between seven options - and a click rate has no meaning
+# effort was a guess between seven options — and a click rate has no meaning
 # without a denominator.
 #
 # Counters, not rows. The unique index is what makes that work: one row per
@@ -12,12 +12,12 @@
 # analytics product would store, and it would put unbounded write volume on
 # SQLite on a 1 vCPU host to answer a question that only needs the total.
 #
-# No IP, no user agent, no user id, no session, no path parameters - `route` is
+# No IP, no user agent, no user id, no session, no path parameters — `route` is
 # controller#action, the shape of the page rather than the identity of the thing
 # viewed. So this is not personal data and needs no consent banner, the same
 # reasoning that made outbound_clicks store a host instead of a URL.
 #
-# One migration per app, which is this repo's convention - the engine declares
+# One migration per app, which is this repo's convention — the engine declares
 # config.paths["db/migrate"] but the apps do not read it. Guarded, so re-running
 # is free.
 class CreateVisitCounts < ActiveRecord::Migration[8.1]

@@ -9,7 +9,7 @@ class Hashtag < ApplicationRecord
 
   validates :name, presence: true, uniqueness: { case_sensitive: false }
 
-  # Trending means "used a lot lately", not "used a lot ever" - rank by taggings in
+  # Trending means "used a lot lately", not "used a lot ever" — rank by taggings in
   # the last week so a burst of activity surfaces and stale all-time leaders fade.
   # taggable_type is unfiltered on purpose: a tag hot across posts and videos alike
   # is exactly what "trending" should reward.

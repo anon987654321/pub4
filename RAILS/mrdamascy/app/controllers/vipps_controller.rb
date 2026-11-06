@@ -5,15 +5,15 @@ require "active_support/security_utils"
 
 # Vipps endpoints (APP_SPEC §5/§6):
 #
-#   mock    - dev/test stand-in for the Vipps app (mock mode only)
-#   approve - mock payment approval -> capture -> confirm -> tracking
-#   callback - the REAL webhook receiver. Vipps POSTs payment events here
-#             (AUTHORIZED, ABORTED, EXPIRED, ...) and carries the webhook
+#   mock    — dev/test stand-in for the Vipps app (mock mode only)
+#   approve — mock payment approval → capture → confirm → tracking
+#   callback— the REAL webhook receiver. Vipps POSTs payment events here
+#             (AUTHORIZED, ABORTED, EXPIRED, …) and carries the webhook
 #             secret in the Authorization header. We verify that secret with
 #             a constant-time compare, then hand the event to
-#             VippsClient.sync_payment! - the same seam the tracking page's
+#             VippsClient.sync_payment! — the same seam the tracking page's
 #             poll uses, so both paths converge idempotently on capture.
-#   login_mock - dev/test stand-in for "Logg inn med Vipps" (mock mode only)
+#   login_mock — dev/test stand-in for "Logg inn med Vipps" (mock mode only)
 #
 # The webhook is CSRF-exempt (it is a server-to-server call with no session
 # cookie) and authenticated by the webhook secret instead. Replays are fine:
@@ -33,7 +33,7 @@ class VippsController < ApplicationController
   end
 
   # Idempotent: re-approving an already captured order just re-lands on track.
-  # The kitchen may already have advanced a pending order - capture confirms
+  # The kitchen may already have advanced a pending order — capture confirms
   # payment, it never rewinds the kitchen's state.
   def approve
     order = Order.find_by!(tracking_token: params[:token].to_s)
@@ -48,9 +48,9 @@ class VippsController < ApplicationController
   end
 
   # Vipps webhook: POST /vipps/callback. Body is a JSON array of payment
-  # events: [{ "reference": "mrdamascy-<token>", "state": "AUTHORIZED", ... }].
+  # events: [{ "reference": "mrdamascy-<token>", "state": "AUTHORIZED", … }].
   # Always 200 once verified (Vipps retries non-2xx), 401 on a bad secret,
-  # 400 on garbage - and never leaks which part failed beyond the status.
+  # 400 on garbage — and never leaks which part failed beyond the status.
   def callback
     unless webhook_secret_valid?
       head :unauthorized
@@ -72,9 +72,9 @@ class VippsController < ApplicationController
     head :bad_request
   end
 
-  # Mock "Logg inn med Vipps" - the dev stand-in for Vipps' own consent
+  # Mock "Logg inn med Vipps" — the dev stand-in for Vipps' own consent
   # screen. Posts phone + name to the session callback as a fake code, so the
-  # whole login -> prefilled checkout loop runs with zero credentials.
+  # whole login → prefilled checkout loop runs with zero credentials.
   def login_mock
     @state = params[:state].to_s
     @redirect_to = params[:to].to_s
@@ -84,7 +84,7 @@ class VippsController < ApplicationController
 
   # The mock pages ARE the payment/login in mock mode; in real mode they must
   # not answer. Otherwise POST /vipps/mock/approve captures an order no PSP
-  # ever reserved. head :not_found halts the action chain - a raised
+  # ever reserved. head :not_found halts the action chain — a raised
   # RecordNotFound would be caught by the application-wide rescue and
   # redirect instead of 404-ing.
   def refuse_in_real_mode

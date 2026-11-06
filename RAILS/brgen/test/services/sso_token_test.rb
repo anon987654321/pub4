@@ -4,7 +4,7 @@ require "test_helper"
 
 # the old backlog, rails_coverage_contract_is_tautological: "shared/sso_token
 # ... has zero tests; sso_token also has no replay/nonce protection on its 120s
-# token." Both are addressed here - the tests came first and the replay test is the
+# token." Both are addressed here — the tests came first and the replay test is the
 # one that failed before the jti landed.
 #
 # Note while reading this: nothing in the tree mints these tokens. The consume half
@@ -120,7 +120,7 @@ class Shared::SsoTokenTest < ActiveSupport::TestCase
     end
   end
 
-  # A token signed with a different secret must not verify - the whole point of the
+  # A token signed with a different secret must not verify — the whole point of the
   # HMAC, and the case a constant-time compare has to get right.
   test "a token signed with another secret is refused" do
     token = with_secret("y" * 32) { mint }

@@ -107,7 +107,7 @@ class EventsControllerTest < ActionDispatch::IntegrationTest
     assert_response :unprocessable_entity
   end
 
-  # A full event still takes "interested" - the waiting list is the point.
+  # A full event still takes "interested" — the waiting list is the point.
   test "a full event refuses going but still takes interested" do
     @event.update!(capacity: 1)
     EventRsvp.create!(event: @event, user: @organiser, status: "going")

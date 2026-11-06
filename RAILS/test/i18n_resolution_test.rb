@@ -43,12 +43,12 @@ class I18nResolutionTest < Minitest::Test
   # locale, plus the engine's social.<locale>.yml. Globbed rather than named,
   # because Rails loads the whole directory: a file dropped in beside en.yml
   # resolves keys for the app whether this test names it or not. locale_contract
-  # holds the other half - that a key lives in exactly one of those files.
+  # holds the other half — that a key lives in exactly one of those files.
   #
   # The mountable engines are here for the same reason they are in keys_used_by,
   # and it is the same blind spot in the other direction: this side globbed only
-  # the host, so the first engine to carry its own config/locales - every one of
-  # them does now - reported its keys as unresolved. Rails::Engine appends
+  # the host, so the first engine to carry its own config/locales — every one of
+  # them does now — reported its keys as unresolved. Rails::Engine appends
   # config/locales/*.yml to I18n.load_path with no wiring, so a key defined
   # there resolves in the mounting app exactly like a host key.
   def app_keys(app, locale)
@@ -57,8 +57,8 @@ class I18nResolutionTest < Minitest::Test
     paths.each_with_object({}) { |path, out| out.merge!(flat_keys(path.sub("#{ROOT}/", ""))) }
   end
 
-  # Views and helpers the app can render: its own, the engine's, and - the part
-  # this missed - the mountable engines brgen's verticals live in. 102 view and
+  # Views and helpers the app can render: its own, the engine's, and — the part
+  # this missed — the mountable engines brgen's verticals live in. 102 view and
   # helper files under {brgen_*,brgen_radio/*,brgen_marketplace/engines/*}/app were outside the glob, which is the
   # same blind spot that cost four other scanners 57 views when the verticals
   # moved and read as an improving finding count rather than as blindness.
@@ -114,7 +114,7 @@ class I18nResolutionTest < Minitest::Test
       next unless key
 
       # default: "English" still requires the primary key. default: t("other")
-      # is a fallback key - do not fail the suite on the inner name.
+      # is a fallback key — do not fail the suite on the inner name.
       prefix = source[[match.begin(0) - 16, 0].max...match.begin(0)]
       next if prefix.match?(/default:\s*\z/)
 
@@ -156,7 +156,7 @@ class I18nResolutionTest < Minitest::Test
   #
   # as missing translations. They are not missing: affiliate.cta.buy, .happy and
   # .good are present in both locales, and the partial deliberately fetches the
-  # branch - `t("affiliate.cta").values[...]` rotates through the calls to
+  # branch — `t("affiliate.cta").values[...]` rotates through the calls to
   # action. flat_keys records leaves only, so the branch itself never appears in
   # `known` and any caller that wants a Hash reads as broken.
   #

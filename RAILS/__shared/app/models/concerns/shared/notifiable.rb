@@ -53,8 +53,8 @@ module Shared
           source_id: source&.id,
         }.merge(extra).compact
 
-        # kind was dropped on this branch, so every title/body notification - an
-        # order advancing, a saved search matching, a listing about to lapse -
+        # kind was dropped on this branch, so every title/body notification — an
+        # order advancing, a saved search matching, a listing about to lapse —
         # was written with the column default "custom". brgen pushes on kind, and
         # "custom" is not in PUSHABLE_KINDS, so none of them ever reached a lock
         # screen however urgent they were.

@@ -12,7 +12,7 @@ require_relative "../../../MASTER/checks/support/geometry_type"
 require_relative "../../../OPENBSD/lib/check_result"
 
 # Unit coverage for the pure logic behind the browser-backed checks. Nothing
-# here launches Chrome or needs a booted app - the CDP-dependent paths are
+# here launches Chrome or needs a booted app — the CDP-dependent paths are
 # exercised by running the checks themselves.
 class RenderedChecksTest < Minitest::Test
   M = Deploy::DesignMetrics

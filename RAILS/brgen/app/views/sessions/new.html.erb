@@ -10,7 +10,7 @@
     <%# input then label, and a one-space placeholder, because that is what
         .field--float needs: :placeholder-shown has to have a placeholder to be
         true about, and the label has to follow the input to be its sibling. The
-        label is never hidden - it rises and shrinks, so it is still there while
+        label is never hidden — it rises and shrinks, so it is still there while
         you type and still there when you check the form before sending it. %>
     <div class="field field--float">
       <%= f.email_field :email_address, required: true, autofocus: true,
@@ -34,7 +34,7 @@
     </div>
     <p class="auth-form-footer">
       <%= link_to t("auth.create_account"), new_user_path %>
-      <span class="auth-form-footer-sep" aria-hidden="true">-</span>
+      <span class="auth-form-footer-sep" aria-hidden="true">·</span>
       <%= link_to t("auth.forgot_password"), new_password_path %>
     </p>
   <% end %>

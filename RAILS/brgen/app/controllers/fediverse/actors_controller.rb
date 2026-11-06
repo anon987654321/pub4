@@ -2,7 +2,7 @@
 
 # The read side: actor documents, outbox, followers.
 #
-# Resolved against the requested host, because each city is a separate origin -
+# Resolved against the requested host, because each city is a separate origin —
 # answering brgen.no's @kari on oshlo.no would hand a stranger's posts to
 # whoever asked the wrong city.
 class Fediverse::ActorsController < ApplicationController

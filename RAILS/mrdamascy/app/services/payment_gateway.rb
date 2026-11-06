@@ -3,7 +3,7 @@
 # One dispatch seam for the two payment lanes (Vipps by default, Stripe
 # Checkout as the operator-mandated second option). CheckoutController and the
 # tracking syncs ask this module instead of case-mapping on payment_method in
-# every caller - one place to know which client owns an order's payment.
+# every caller — one place to know which client owns an order's payment.
 class PaymentGateway
   # Unknown values fall back to the default lane: orders created before
   # Stripe existed carry payment_method "vipps", and a tampered param must

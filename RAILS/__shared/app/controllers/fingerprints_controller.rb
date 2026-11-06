@@ -6,7 +6,7 @@
 #
 # Top-level rather than Shared::FingerprintsController because the host route
 # is `post "fingerprint" => "fingerprints#create"`, which resolves a bare
-# constant - the shape AccountSettingsController and OmniauthCallbacksController
+# constant — the shape AccountSettingsController and OmniauthCallbacksController
 # already use. Only the apps that mount the Stimulus controller draw the route.
 class FingerprintsController < ::ApplicationController
   include Shared::FingerprintsActions

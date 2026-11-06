@@ -19,13 +19,13 @@ class HomeControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     # The resting composer is `.compose-launcher` (a pill that opens a <dialog>)
     # since it stopped growing the feed downward; `.compose-box` is now only the
-    # inline live-feed form. A guest still gets it - brgen creates a guest user
+    # inline live-feed form. A guest still gets it — brgen creates a guest user
     # per browser and PostsController#create allows anonymous posts.
     assert_includes response.body, "compose-launcher"
     assert_includes response.body, "brgen-top-chrome"
     assert_match(/name="theme-color"[^>]+#143d5b/, response.body)
     assert_includes response.body, "feed-panel"
-    # The "Bergen, akkurat nå" intro banner was removed - the page opens straight
+    # The "Bergen, akkurat nå" intro banner was removed — the page opens straight
     # into the feed. Wayfinding to the verticals now lives in the top nav.
     assert_not_includes response.body, "city-home-intro"
     assert_includes response.body, "nav_swiper"
@@ -72,7 +72,7 @@ class HomeControllerTest < ActionDispatch::IntegrationTest
     get root_url
 
     assert_response :success
-    # Third arg is equality, not a message - see comment_ownership_test.
+    # Third arg is equality, not a message — see comment_ownership_test.
     assert_select "turbo-frame##{ActionView::RecordIdentifier.dom_id(post)}[target=_top]"
   end
 
@@ -80,7 +80,7 @@ class HomeControllerTest < ActionDispatch::IntegrationTest
     source = File.read(Rails.root.join("app/javascript/controllers/form_submit_controller.js"))
     code = source.gsub(%r{^\s*//.*\n}, "")
     refute_match(/\.requestSubmit\s*\(/, code,
-                 "requestSubmit from a cancelled submit is a no-op inside <dialog> - Publiser posted nothing")
+                 "requestSubmit from a cancelled submit is a no-op inside <dialog> — Publiser posted nothing")
   end
 
   # The verticals stay reachable from root, and reachable exactly once.
@@ -118,8 +118,8 @@ class HomeControllerTest < ActionDispatch::IntegrationTest
                  "root must not carry a second nav scroller duplicating the swiper"
   end
 
-  # BRGEN-100. Two chromes, one rule each: the swiper is how you leave brgen -
-  # eight verticals, each its own host - and the bottom tab bar is how you move
+  # BRGEN-100. Two chromes, one rule each: the swiper is how you leave brgen —
+  # eight verticals, each its own host — and the bottom tab bar is how you move
   # within it. A feed ordering is neither, and while it sat on the swiper the
   # front page had two controls that both meant "go to root".
   #
@@ -133,8 +133,8 @@ class HomeControllerTest < ActionDispatch::IntegrationTest
 
     bar = response.body[/<nav id="nav_sections".*?<\/nav>/m]
     refute_nil bar, "the nav swiper should render on root"
-    refute_match(/sort=hot/, bar, "the swiper orders no feed - that lives with the feed")
-    refute_match(/feed=following/, bar, "the swiper orders no feed - that lives with the feed")
+    refute_match(/sort=hot/, bar, "the swiper orders no feed — that lives with the feed")
+    refute_match(/feed=following/, bar, "the swiper orders no feed — that lives with the feed")
   end
 
   # Nor does the feed: the ordering chips left the front page by operator
@@ -176,7 +176,7 @@ class HomeControllerTest < ActionDispatch::IntegrationTest
   # BRGEN-105. The front page is live, and the point is where the new post
   # lands: #feed-pending is hidden, so nothing moves under a reader until they
   # tap the chip. broadcast_refresh_to, which the model already had for
-  # posts#index, does the opposite - it replaces the list in place.
+  # posts#index, does the opposite — it replaces the list in place.
   def test_root_subscribes_to_its_city_feed_and_stages_arrivals
   host! "brgen.no"
   city = brgen_city
@@ -188,12 +188,12 @@ class HomeControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
 
     # turbo_stream_from signs the stream name into the tag, so the name itself
-    # is never in the body - what is assertable here is that root subscribes
+    # is never in the body — what is assertable here is that root subscribes
     # at all. The per-city naming is a unit test below.
     assert_match(/<turbo-cable-stream-source[^>]+signed-stream-name/, response.body,
                  "root must subscribe to its city feed stream")
     assert_match(/id="feed-pending"[^>]*hidden/, response.body,
-                 "arrivals stage hidden - a visible append is the yank this replaces")
+                 "arrivals stage hidden — a visible append is the yank this replaces")
     assert_includes response.body, %(data-feed-updates-target="feed"),
                     "the chip needs the list it prepends into"
   end

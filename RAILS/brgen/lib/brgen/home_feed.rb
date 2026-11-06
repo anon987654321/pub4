@@ -18,7 +18,7 @@ module Brgen
       ai
     ].freeze
 
-    # A track from Radio Brgen sits at the odd positions 5, 15, 25..., where no
+    # A track from Radio Brgen sits at the odd positions 5, 15, 25…, where no
     # sponsored unit or vertical promotion goes, and the choice turns with the
     # day so the front page plays something new.
     RADIO_EVERY = 10
@@ -43,8 +43,8 @@ module Brgen
     # could be hours old before it surfaced. Ranking is a thing a reader asks
     # for; freshness is what a feed is.
     #
-    # latest is still accepted and still means fresh - it is what every
-    # existing link says - so no URL anyone has bookmarked changes meaning.
+    # latest is still accepted and still means fresh — it is what every
+    # existing link says — so no URL anyone has bookmarked changes meaning.
     def scope(feed: nil, authenticated: false, user: Current.user, sort: nil)
       ranked = ranked?(sort:)
       base =

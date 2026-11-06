@@ -32,7 +32,7 @@ module Marketplace
 
     class Scope < Scope
       # `live`, not `active`: a listing whose window has lapsed is still active
-      # - that is what lets its owner see and renew it - but it does not belong
+      # — that is what lets its owner see and renew it — but it does not belong
       # on a public index. Expiry is a scope rather than a state change for
       # exactly that reason.
       def resolve

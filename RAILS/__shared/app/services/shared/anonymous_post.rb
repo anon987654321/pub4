@@ -2,7 +2,7 @@
 
 module Shared
   class AnonymousPost
-    # Soft guest quota - enough for real use, low enough to slow spray spam.
+    # Soft guest quota — enough for real use, low enough to slow spray spam.
     # Sign-up removes the cap entirely (allowed? returns true for non-guests).
     LIMIT = 15
 

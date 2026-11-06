@@ -197,7 +197,7 @@ class ApplicationHelperTest < ActionView::TestCase
     assert_equal :messenger, helper.inferred_vertical_from_controller
   end
 
-  # The bar is eight entries in one order - operator, 2026-08-29. Named here
+  # The bar is eight entries in one order — operator, 2026-08-29. Named here
   # rather than counted, because the failure this catches is a vertical quietly
   # falling off the only chrome that reaches it, which a count cannot see.
   #
@@ -332,7 +332,7 @@ class ApplicationHelperTest < ActionView::TestCase
     end
   end
 
-  # Every city is a peer - the mark leaves for whichever city the request
+  # Every city is a peer — the mark leaves for whichever city the request
   # resolved to, never a hardcoded brgen.no. dating renders no primary nav, so
   # on that vertical this link is the only way off the page.
   test "brand mark on a vertical leaves for its own city apex" do

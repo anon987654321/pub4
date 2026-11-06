@@ -11,7 +11,7 @@ class CreateDatingVerificationsAndPicks < ActiveRecord::Migration[8.1]
       t.string :status, null: false, default: "pending"
       # The gesture the app asked for, drawn when the request is made. Stored,
       # because a reviewer comparing a selfie to a pose has to know which pose
-      # was asked for - and because asking the same one every time makes a
+      # was asked for — and because asking the same one every time makes a
       # stolen photo enough.
       t.string :pose, null: false
       t.text :review_note

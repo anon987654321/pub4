@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-# Seeds - the "World tour of kebab" catalog (APP_SPEC §11).
+# Seeds — the "World tour of kebab" catalog (APP_SPEC §11).
 #
 # Idempotent: everything is destroyed in FK-safe order, then recreated, so
 # `bin/rails db:seed` is always safe to run again.
@@ -20,7 +20,7 @@ PromoCode.destroy_all
 User.destroy_all
 Kitchen.destroy_all
 
-# Local helper: kr -> øre. Money is integer øre everywhere (APP_SPEC §2).
+# Local helper: kr → øre. Money is integer øre everywhere (APP_SPEC §2).
 def ore(kr)
   (kr * 100).to_i
 end
@@ -28,13 +28,13 @@ end
 # --- Kitchen (single row) ---------------------------------------------------
 
 kitchen = Kitchen.create!(
-  name: "Mr. Damascy - Danmarksplass",
+  name: "Mr. Damascy — Danmarksplass",
   slug: "bergen",
   address: "Solheimsgaten 60, 5054 Bergen",
   postcode: "5054",
   phone: "955 55 600",
-  opening_hours: "Man-Fre 11-21 - Lør-Søn 14-21",
-  opening_hours_en: "Mon-Fri 11am-9pm - Sat-Sun 2pm-9pm",
+  opening_hours: "Man–Fre 11–21 · Lør–Søn 14–21",
+  opening_hours_en: "Mon–Fri 11am–9pm · Sat–Sun 2pm–9pm",
   weekly_hours: %w[mon tue wed thu fri].index_with { %w[11:00 21:00] }
                                        .merge("sat" => %w[14:00 21:00], "sun" => %w[14:00 21:00]),
   rating: 4.9
@@ -91,31 +91,31 @@ end
 item_rows = {
   "wraps" => [
     [ "Damaskus Kylling Shawarma",   "Damascus Chicken Shawarma",     "damaskus",  1, 129, "🌯", "signature",     450,
-      "Kylling fra spettet, toum og sylteagurk - Damaskus' egen favoritt." ],
+      "Kylling fra spettet, toum og sylteagurk — Damaskus' egen favoritt." ],
     [ "Beirut Lam Shawarma",         "Beirut Lamb Shawarma",          "beirut",    1, 139, "🥙", nil,             nil,
-      "Mager lam med granateple-løk og tarator - Beirut-disiplin." ],
+      "Mager lam med granateple-løk og tarator — Beirut-disiplin." ],
     [ "Berlin Gemüse Kebap",         "Berlin Gemüse Kebap",           "berlin",    1, 139, "🥬", "veg",           nil,
-      "Grillet grønnsak og rikelig salat - køens favoritt fra Berlin." ],
+      "Grillet grønnsak og rikelig salat — køens favoritt fra Berlin." ],
     [ "Adana Sterk Dürum",           "Adana Hot Dürum",               "adana",     3, 149, "🔥", nil,             nil,
       "Krydret kjøttfars etter Adana-oppskriften. Sterk!" ],
     [ "Bergen Kebab-i-Dürum",        "Bergen Kebab-i-Dürum",          "bergen",    2, 139, "🧔", "salatbar",      nil,
       "Kvartover-ærlig kebab med salatbar akkurat som hjemme i Bergen." ],
     [ "Dubai Gatens Shawarma",       "Dubai Street Shawarma",         "dubai",     1, 135, "🍟", nil,             nil,
-      "Pommes i rullen - gatens beste triks fra Dubai." ],
+      "Pommes i rullen — gatens beste triks fra Dubai." ],
     [ "Blomkål-Pita Miznon-stil",    "Cauliflower Pita Miznon-style", "tel_aviv",  0, 129, "🥦", "veg,signature", nil,
-      "Helstekt blomkål i pita - Miznon-spøken, Tel Aviv." ]
+      "Helstekt blomkål i pita — Miznon-spøken, Tel Aviv." ]
   ],
   "tallerker" => [
     [ "Bursa İskender",              "Bursa İskender",                "bursa",     1, 189, "🧈", "signature",     550,
-      "Smør, tomatsaus og yoghurt - 1867-ritualen fra Bursa." ],
+      "Smør, tomatsaus og yoghurt — 1867-ritualen fra Bursa." ],
     [ "Gaziantep Ali Nazik",         "Gaziantep Ali Nazik",           "gaziantep", 2, 179, "🍆", nil,             nil,
       "Røkt aubergine og yoghurt under kebab, fra UNESCO-byen Gaziantep." ],
     [ "Familie Fest-Mezze",          "Family Feast Mezze",            "damaskus",  1, 449, "🫓", "sharing",       1200,
       "Hele bordets fest: wraps, dips og pommes nok til alle." ],
-    [ "Stockholm Kebabpizza - helg", "Stockholm Kebabpizza - weekend", "stockholm", 2, 169, "🍕", nil,            nil,
-      "Kebab på pizza - Stockholms oppfinnelse. Kun i helgene." ],
+    [ "Stockholm Kebabpizza — helg", "Stockholm Kebabpizza — weekend", "stockholm", 2, 169, "🍕", nil,            nil,
+      "Kebab på pizza — Stockholms oppfinnelse. Kun i helgene." ],
     [ "Sydney Snackpack HSP",        "Sydney Snackpack HSP",          "sydney",    2, 149, "🍟", "secret",        nil,
-      "Chips, kjøtt, ost og gravy - nattens ritual fra Sydney." ]
+      "Chips, kjøtt, ost og gravy — nattens ritual fra Sydney." ]
   ],
   "tilbehor" => [
     [ "Hvitløks-Pommes",  "Garlic Fries",     "bergen",    0, 59, "🍟", nil,  nil, "Pommes badet i toum." ],
@@ -124,7 +124,7 @@ item_rows = {
     [ "Syltebolle",       "Pickle",           "damaskus",  0, 29, "🥒", nil,  nil, "Én syrisk sylteagurk, kjøkkenets kompliment." ]
   ],
   "drikke" => [
-    [ "Ayran",              "Ayran",              "bursa",     0, 35, "🥛", nil, nil, "Saltet yoghurtdrikk - kebabens beste venn." ],
+    [ "Ayran",              "Ayran",              "bursa",     0, 35, "🥛", nil, nil, "Saltet yoghurtdrikk — kebabens beste venn." ],
     [ "Şalgam",             "Şalgam",             "adana",     0, 35, "🍅", nil, nil, "Gjæret turnipsdrikk, Adana-stil." ],
     [ "Tamarind-drikk",     "Tamarind Drink",     "damaskus",  0, 39, "🍹", nil, nil, "Søt-sur tamarind, servert kjølig." ],
     [ "Jallab",             "Jallab",             "beirut",    0, 39, "🍇", nil, nil, "Druemelasse, rose og pinjekjerner." ],
@@ -132,12 +132,12 @@ item_rows = {
   ],
   "desserter" => [
     [ "Baklava fra Gaziantep", "Baklava from Gaziantep", "gaziantep", 0, 69, "🍯", nil, nil, "Pistasj, honning og mange lag." ],
-    [ "Knefeh fra Damaskus",   "Knefeh from Damascus",   "damaskus",  0, 79, "🧀", "signature", nil, "Varm ost, semulegrot og sirup - Damaskus' morgen." ],
+    [ "Knefeh fra Damaskus",   "Knefeh from Damascus",   "damaskus",  0, 79, "🧀", "signature", nil, "Varm ost, semulegrot og sirup — Damaskus' morgen." ],
     [ "Ma'moul",               "Ma'moul",                "damaskus",  0, 59, "🌰", nil, nil, "Semuliekaker med dadler og valnøtt." ]
   ],
   "bokser" => [
     [ "Damascy Boss-boks", "Damascy Boss Box", "damaskus", 0, 199, "🎁", "deal", nil,
-      "Wrap + pommes + drikke + baklava-bite - hele måltidet i én boks." ]
+      "Wrap + pommes + drikke + baklava-bite — hele måltidet i én boks." ]
   ]
 }
 
@@ -245,7 +245,7 @@ add_options!(items["Damascy Boss-boks"], [
 end
 
 # --- Users ----------------------------------------------------------------------
-# OTP mock is fixed at 1234 (SessionsController, APP_SPEC §6) - nothing to seed.
+# OTP mock is fixed at 1234 (SessionsController, APP_SPEC §6) — nothing to seed.
 
 hassan = User.create!(phone: "90000001", name: "Hassan",     role: :admin)
 User.create!(phone: "90000002", name: "Umm Yusuf", role: :staff)
@@ -255,7 +255,7 @@ ola = User.create!(
   default_address: "Nygårdsgaten 12", default_postcode: "5015"
 )
 # Hassan owns the kitchen story (About page); Umm Yusuf runs the board and
-# Kader the courier runs - all three are reachable via role: on users.
+# Kader the courier runs — all three are reachable via role: on users.
 
 # --- Demo realism: Ola has 2 delivered orders + 6 stamps ----------------------
 

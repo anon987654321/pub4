@@ -2,7 +2,7 @@
 
 module Shared
   # Include in a SitemapsController and implement #sitemap_entries to return
-  # an array of Shared::SitemapBuilder::Entry - the XML rendering is shared.
+  # an array of Shared::SitemapBuilder::Entry — the XML rendering is shared.
   module Sitemapable
     extend ActiveSupport::Concern
 

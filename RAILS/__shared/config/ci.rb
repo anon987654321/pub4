@@ -9,7 +9,7 @@ require_relative "test_scope"
 ENV["GIT_CEILING_DIRECTORIES"] ||= "/"
 # Refresh by default. This was "0", and the step below only passes --update
 # when it is "1", so a clean bundler-audit meant "clean against whatever
-# ruby-advisory-db shipped inside the installed gem" - a sentence about the
+# ruby-advisory-db shipped inside the installed gem" — a sentence about the
 # gem release date, not about this tree. Set it to 0 to opt out where there is
 # no network.
 ENV["BUNDLER_AUDIT_UPDATE"] ||= "1"
@@ -89,7 +89,7 @@ Operator::CiGuard.run! do
     # `engines` and `test`: brgen's five mountable verticals live at
     # engines/*/app, outside every root this listed, and no app's test/ was
     # linted either. Those are the directories the misindented methods were
-    # found in - valid Ruby at the wrong nesting level, exactly where RuboCop
+    # found in — valid Ruby at the wrong nesting level, exactly where RuboCop
     # was not pointed.
     #
     # No `unless vps_host`: vm23 is where the deploy check actually runs, so
@@ -100,14 +100,14 @@ Operator::CiGuard.run! do
     # Autocorrect first, then check. A correctable offence must never be why an
     # app does not ship: bsdports sat on a commit from 2026-08-22 until
     # 2026-09-10, 156 commits behind, because two Style/TrailingCommaInArrayLiteral
-    # offences in one test file failed this step at 2m43s - after 102 tests and
+    # offences in one test file failed this step at 2m43s — after 102 tests and
     # the seeds had passed. The deploy exited before the sync, so nothing shipped
     # and nothing said why in a place anyone looked.
     #
     # `-a`, never `-A`. Safe autocorrect only touches offences RuboCop can fix
     # without changing behaviour; unsafe autocorrect rewrites semantics, which is
-    # not something a deploy may decide on its own. Anything left after it - a
-    # real offence, an uncorrectable one - still fails the step, so the guard is
+    # not something a deploy may decide on its own. Anything left after it — a
+    # real offence, an uncorrectable one — still fails the step, so the guard is
     # intact and only the mechanical half stops blocking.
     #
     # On the VPS the correction lands in the synced live directory and not in
@@ -129,7 +129,7 @@ Operator::CiGuard.run! do
     # --config, because bundler-audit reads .bundler-audit.yml from the
     # directory it runs in and no app has one: the shared ignore list sat in
     # this directory with no reader, so an entry in it changed nothing and
-    # looked like it had. __dir__ resolves in both tree shapes - RAILS/shared
+    # looked like it had. __dir__ resolves in both tree shapes — RAILS/shared
     # in the monorepo, /home/<app>/shared on the box.
     audit = "bundle exec bundler-audit check --config #{File.join(__dir__, 'bundler-audit.yml')}"
     audit += " --update" if ENV["BUNDLER_AUDIT_UPDATE"] == "1"
@@ -149,14 +149,14 @@ Operator::CiGuard.run! do
     # two commands disagreed about what the suite is and the local one was the
     # weaker. That bit a second time on 2026-08-10: a validation-i18n change
     # broke two takeaway engine tests, three sessions reported brgen green from
-    # the narrow command - 349 runs against this step's 381 - and the VPS check
+    # the narrow command — 349 runs against this step's 381 — and the VPS check
     # was the only thing that caught it, at the cost of a blocked deploy.
     #
     # brgen sets the same two values in config/application.rb now (9506d1db6),
     # so the local command matches this one, and RAILS/test/test_scope_parity_test.rb
     # fails if they drift apart. Change the globs here and that test will tell
     # you which app to update. This comment is a pointer, not a warning to keep
-    # in mind - the keeping-in-mind is what failed twice.
+    # in mind — the keeping-in-mind is what failed twice.
     # brgen only: from amber or bsdports the same relative glob finds brgen's
     # sibling verticals too, and would run them under the wrong application.
     if app == "brgen" && Dir.glob("../brgen_*/**/test/**/*_test.rb").any?

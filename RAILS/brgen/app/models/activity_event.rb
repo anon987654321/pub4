@@ -60,7 +60,7 @@ class ActivityEvent < ApplicationRecord
   # One query per subject_type instead of one per event. in_city? loads the
   # subject whenever an event carries no matching locality, and this strip reads
   # limit * 4 events, so the city home page paid up to that many single-row
-  # lookups - 12 against takeaway_restaurants alone, which is what
+  # lookups — 12 against takeaway_restaurants alone, which is what
   # query_budget_test measured. :channel and :listing are preloaded because
   # in_city? walks them for the two models with no city_id of their own.
   def self.subjects_for(events)

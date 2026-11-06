@@ -4,7 +4,7 @@ require "application_system_test_case"
 
 # The infinite-scroll sentinel set data-loading="true" before its reflex and
 # only the reflex's reply set it back, so a page that never arrived stopped the
-# feed for good, with "Laster mer..." in the status line.
+# feed for good, with "Laster mer…" in the status line.
 class InfiniteScrollRecoveryTest < ApplicationSystemTestCase
   setup do
     Brgen::CitySeed.sync! if City.table_exists? && !City.exists?(domain: "brgen.no")

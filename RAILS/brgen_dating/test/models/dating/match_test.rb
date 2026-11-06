@@ -35,7 +35,7 @@ class Dating::MatchTest < ActiveSupport::TestCase
 
   # The test above builds the match with both users already in memory. A match
   # reached from a controller or a view is found by id with nothing preloaded,
-  # and ApplicationRecord is strict_loading by default - the same shape that
+  # and ApplicationRecord is strict_loading by default — the same shape that
   # broke Marketplace::Order#mark_paid! and Takeaway::Order#transition_to!.
   test "other_user on a freshly-found match does not violate strict loading" do
     ActsAsTenant.with_tenant(@city) do

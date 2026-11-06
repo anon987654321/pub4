@@ -17,14 +17,14 @@ module Shared
   #
   # And every destroy raised FOREIGN KEY constraint failed, from SQLite rather
   # than from Rails, because `User` declared no association for message_receipts
-  # or typing_indicators - both of which carry an FK to users. Guests owned
+  # or typing_indicators — both of which carry an FK to users. Guests owned
   # 194,295 receipts. That is fixed in User::CoreAssociations; it is named here
   # because this job is where it surfaced, and the same gap made account deletion
   # impossible for any real user with chat history.
   #
   # The pacing is not tidiness either. vm23 is one vCPU, a guest destroy cascades
   # into message_receipts, and resource_guard sheds amber and bsdports under load.
-  # Running this unpaced against production took relayd down with it - the whole
+  # Running this unpaced against production took relayd down with it — the whole
   # site, not one app. So it yields between batches and stops entirely when the
   # box is already busy, on the assumption that a hygiene job is never worth an
   # outage and can always finish tomorrow night.
@@ -71,7 +71,7 @@ module Shared
     #
     # A thread someone opened with you is the other case. Collecting that guest
     # cascades through conversation_participants and leaves the other side
-    # holding a room that has lost half its history - and it outranks the
+    # holding a room that has lost half its history — and it outranks the
     # retention arithmetic besides: a message invite is signed for thirty days
     # and a session-less guest goes after seven, so an anonymous host could hand
     # out a link, be collected, and leave it resolving to nothing for three more
@@ -113,8 +113,8 @@ module Shared
     # The FIVE-minute average, not the one-minute, and that is the whole
     # difference between this guard working and not. Measured on vm23
     # 2026-08-14: the wrapper waited until the 1-minute load was 1.85, started
-    # the runner, and booting Rails drove the 1-minute average to 3.31 - over
-    # the 3.0 ceiling - so the job's first check saw the spike it had itself
+    # the runner, and booting Rails drove the 1-minute average to 3.31 — over
+    # the 3.0 ceiling — so the job's first check saw the spike it had itself
     # just caused and quit having removed nothing. On one vCPU a Rails boot
     # alone clears 3, so a guard reading the 1-minute average can never let this
     # job start.

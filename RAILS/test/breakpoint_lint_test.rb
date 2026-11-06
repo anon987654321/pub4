@@ -51,7 +51,7 @@ class BreakpointLintTest < Minitest::Test
 
     L::BASELINES.each do |kind, baseline|
       assert_equal baseline, counts.fetch(kind),
-                   "#{kind} is at #{counts.fetch(kind)} against a baseline of #{baseline} - " \
+                   "#{kind} is at #{counts.fetch(kind)} against a baseline of #{baseline} — " \
                    "lower the baseline in breakpoint_lint.rb"
     end
   end
@@ -120,7 +120,7 @@ class BreakpointLintTest < Minitest::Test
   end
 
   # rem in a media query resolves against the browser root (16px), not brgen's
-  # 18px html size - this is the one place rem is not app-relative.
+  # 18px html size — this is the one place rem is not app-relative.
   def test_rem_bounds_are_converted_against_the_browser_root
     assert_equal 768.0, L.to_px("48", "rem")
     assert_equal 768.0, L.to_px("768", "px")

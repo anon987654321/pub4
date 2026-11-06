@@ -4,7 +4,7 @@
 #
 # brgen is already a *publisher* on someone else's network: Affiliate reads
 # Tradedoubler and Amazon feeds and shows their deals. These tables make brgen
-# the *network* - a city's businesses run partner programs, and the people who
+# the *network* — a city's businesses run partner programs, and the people who
 # already post in that city promote them and earn on what they sell.
 #
 # The economics are the ones that make partner marketing work at all: the
@@ -23,7 +23,7 @@ class CreatePartnerMarketing < ActiveRecord::Migration[8.1]
       # money or rate is ever held as a float.
       t.integer :commission_rate, null: false, default: 0
       t.integer :attribution_hours, null: false, default: 720
-      # How long a conversion stays pending before it can be approved - the
+      # How long a conversion stays pending before it can be approved — the
       # merchant's return window. Paying before it closes means clawing back.
       t.integer :hold_days, null: false, default: 30
       t.boolean :auto_approve_partners, null: false, default: false

@@ -10,13 +10,13 @@
 #
 # Two properties make it a *daily* suggestion rather than a shuffle:
 #
-#   * It is deterministic for a given user and date. No RNG - a small
+#   * It is deterministic for a given user and date. No RNG — a small
 #     set of near-best combinations is ranked by taste and outfit compatibility,
 #     then the day's Julian number rotates through that set.
 #   * It rests what you wore. A garment worn inside REST_DAYS is held
 #     back unless its zone would otherwise be empty.
 #
-# Weather arrives as a parameter, never fetched here - the dashboard already
+# Weather arrives as a parameter, never fetched here — the dashboard already
 # has it, and a service that reached for the network on every render would
 # put an HTTP round trip in front of the front page.
 class StyleAssistant
@@ -197,7 +197,7 @@ class StyleAssistant
     zone == :shoes && wet? && item.material.to_s.match?(DELICATE_SHOES)
   end
 
-  # A dress leads when the wardrobe's best dress out-ranks its best top -
+  # A dress leads when the wardrobe's best dress out-ranks its best top —
   # a deterministic comparison, not a coin toss.
   def dress_leads?
     best_dress = shortlist_for(:dress).first
@@ -228,7 +228,7 @@ class StyleAssistant
     ].compact.first(3)
   end
 
-  # Why today looks like this. The weather line itself is not repeated here -
+  # Why today looks like this. The weather line itself is not repeated here —
   # the dashboard already prints it above the card.
   def notes
     [

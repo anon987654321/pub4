@@ -1,7 +1,7 @@
 // Menu: hero, sticky category chips, item cards. The item sheet lives in
 // _item_sheet.scss.
 // Landing hero follows MASTER reading_patterns: z-pattern, primary area
-// top-left - left-aligned, not centered.
+// top-left — left-aligned, not centered.
 .hero {
   border: 0;
   border-radius: var(--radius);
@@ -91,7 +91,7 @@
   gap: var(--space-12);
 }
 
-// Item card - emoji tile, facts, price, quick-add.
+// Item card — emoji tile, facts, price, quick-add.
 .item-card {
   display: flex;
   align-items: center;
@@ -157,7 +157,7 @@
   white-space: nowrap;
 }
 
-// Heat dots - 1 mint (Mild), 2 gold (Middels), 3 pom (Sterk!).
+// Heat dots — 1 mint (Mild), 2 gold (Middels), 3 pom (Sterk!).
 .heat {
   display: inline-flex;
   align-items: center;
@@ -190,7 +190,7 @@
   color: var(--ink-soft);
 }
 
-// Food photos - same footprint as the emoji tile. Flat rules only (no
+// Food photos — same footprint as the emoji tile. Flat rules only (no
 // shadow/blur/glow).
 .item-photo {
   flex: none;

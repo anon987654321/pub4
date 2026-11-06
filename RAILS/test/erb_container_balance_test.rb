@@ -43,7 +43,7 @@ class ErbContainerBalanceTest < Minitest::Test
 
     offenders = files.filter_map do |file|
       found = imbalances(File.read(file, encoding: "UTF-8"))
-      "#{file.delete_prefix("#{RAILS}/")} - #{found.join(', ')}" unless found.empty?
+      "#{file.delete_prefix("#{RAILS}/")} — #{found.join(', ')}" unless found.empty?
     end
 
     assert_empty offenders, "templates with unbalanced container tags:\n  #{offenders.join("\n  ")}"

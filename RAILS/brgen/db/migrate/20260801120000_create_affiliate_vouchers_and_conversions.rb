@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-# TradeDoubler phases 3-4: voucher inventory + conversion postbacks.
+# TradeDoubler phases 3–4: voucher inventory + conversion postbacks.
 #
 # Products already live in affiliate_products. Vouchers are time-bounded offers
 # (codes, free shipping, exclusives). Conversions close the money loop when

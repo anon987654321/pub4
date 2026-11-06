@@ -2,17 +2,17 @@
 
 require "test_helper"
 
-# StripeClient contract - the second payment lane (operator-mandated), same
+# StripeClient contract — the second payment lane (operator-mandated), same
 # honesty rules as VippsClient:
 #
 #   Mock mode (default): init never raises, points at /stripe/mock, marks the
-#   payment authorised. sync_payment! is a no-op there - the mock approve
+#   payment authorised. sync_payment! is a no-op there — the mock approve
 #   action owns capture.
 #
 #   Real mode (STRIPE_MOCK=0): documented Checkout Sessions calls, form-encoded.
 #   The HTTP core (perform_request) is stubbed with path-keyed canned responses
-#   (StripeHttpStubbing); everything above it - auth header, payload shape,
-#   state mapping, capture semantics - runs for real. Missing ENV raises
+#   (StripeHttpStubbing); everything above it — auth header, payload shape,
+#   state mapping, capture semantics — runs for real. Missing ENV raises
 #   NotAvailable before any HTTP happens.
 class StripeClientTest < ActiveSupport::TestCase
   setup do
@@ -37,7 +37,7 @@ class StripeClientTest < ActiveSupport::TestCase
     assert_equal "authorised", @order.payment_state
   end
 
-  test "mock sync_payment! is a no-op - the mock approve action owns capture" do
+  test "mock sync_payment! is a no-op — the mock approve action owns capture" do
     @order.update!(payment_state: "authorised", vipps_order_id: "mock-stripe-tok-stripe-1")
 
     StripeClient.sync_payment!(order: @order)
@@ -70,7 +70,7 @@ class StripeClientTest < ActiveSupport::TestCase
     assert_equal "tok-stripe-1", params["metadata[tracking_token]"]
     assert_equal "nok", params["line_items[0][price_data][currency]"]
     assert_equal "15800", params["line_items[0][price_data][unit_amount]"],
-                 "checkout must post the exact øre total - no rounding anywhere"
+                 "checkout must post the exact øre total — no rounding anywhere"
     assert_equal "1", params["line_items[0][quantity]"]
     assert_match %r{/track/tok-stripe-1\z}, params["success_url"]
     assert_equal "Bearer sk_test_stripe", init[:headers]["Authorization"]
@@ -114,7 +114,7 @@ class StripeClientTest < ActiveSupport::TestCase
     assert_equal "failed", @order.reload.payment_state
   end
 
-  test "sync swallows transport errors - the poll must never 500 the page" do
+  test "sync swallows transport errors — the poll must never 500 the page" do
     @order.update!(payment_state: "authorised", vipps_order_id: "cs_test_123")
 
     ENV["STRIPE_MOCK"] = "0"

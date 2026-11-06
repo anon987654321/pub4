@@ -1,9 +1,9 @@
 #!/usr/bin/env zsh
 set -euo pipefail
-# _database.sh - app secrets, migrate/prepare, seeding for copy-tree deploy.
+# _database.sh — app secrets, migrate/prepare, seeding for copy-tree deploy.
 # Source this file; do not execute directly. Requires _core.sh sourced first.
 
-# app_secret_for APP_NAME - read or create SECRET_KEY_BASE in /etc/<app>.env
+# app_secret_for APP_NAME — read or create SECRET_KEY_BASE in /etc/<app>.env
 app_secret_for() {
   local app_name=${1:-} secret
   case "$app_name" in
@@ -38,7 +38,7 @@ db_create_migrate_as_app() {
   log_ok "Database ready"
 }
 
-# rails_prepare_secondary_dbs_as_app APP_NAME APP_DIR - initialise cache/queue/cable
+# rails_prepare_secondary_dbs_as_app APP_NAME APP_DIR — initialise cache/queue/cable
 # databases on copy-tree deploy, once.
 #
 # A schema loads only when the database does not already carry its tables. Rails
@@ -69,7 +69,7 @@ rails_prepare_secondary_dbs_as_app() {
   done
 }
 
-# secondary_db_initialized APP_NAME APP_DIR DB - true when the database file
+# secondary_db_initialized APP_NAME APP_DIR DB — true when the database file
 # exists and holds the first table its schema declares.
 #
 # Deliberately fails to "not initialised" whenever it cannot tell: a missing
@@ -83,7 +83,7 @@ secondary_db_initialized() {
   run_rails_as_app "$app_name" "$app_dir" "secondary-db-check" "$db" >/dev/null 2>&1
 }
 
-# migrate_sqlite_db_to_storage_if_needed APP_NAME APP_DIR - one-time brgen db/ -> storage/ move (R7).
+# migrate_sqlite_db_to_storage_if_needed APP_NAME APP_DIR — one-time brgen db/ → storage/ move (R7).
 migrate_sqlite_db_to_storage_if_needed() {
   local app_name=$1 app_dir=$2
   case "$app_name" in
@@ -108,7 +108,7 @@ db_seed_as_app() {
     || log_warn "db:seed skipped for ${app_name}"
 }
 
-# seed_demo_as_app APP_NAME APP_DIR - the guest-facing demo content each app
+# seed_demo_as_app APP_NAME APP_DIR — the guest-facing demo content each app
 # publishes: brgen's credible city feed (no Faker flood), amber's public capsule
 # wardrobe. Both are idempotent rake tasks named <app>:demo_seed, and the app
 # name is also the unix user and the /etc/<app>.env owner, so one argument fixes

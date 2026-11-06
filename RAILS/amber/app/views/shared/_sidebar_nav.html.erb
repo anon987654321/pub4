@@ -1,6 +1,6 @@
 <%# The shared icon set, not thirteen hand-written glyphs. Each of these was an
     inline SVG element with a path copied into it and a solid fill, while
-    shared/views/shared/icons is Lucide at 2px outline - so amber chrome was
+    shared/views/shared/icons is Lucide at 2px outline — so amber chrome was
     drawn in a different icon language from the rest of the family, and every
     glyph existed only here. shirt, layers, log_out and user_plus joined the
     shared set for this; the rest were already in it. %>
@@ -70,7 +70,7 @@
     <%= icon :profile, size: 26 %>
     <%= t("nav.connections") %>
   <% end %>
-  <%# destructive: no-confirm-ok - reversible - signing out, and signing in again is the same click %>
+  <%# destructive: no-confirm-ok — reversible — signing out, and signing in again is the same click %>
   <%= link_to session_path, class: "nav-item", data: { turbo_method: :delete, turbo_prefetch: false } do %>
     <%= icon :log_out, size: 26 %>
     <%= t("nav.sign_out") %>

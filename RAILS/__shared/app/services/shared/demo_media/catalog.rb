@@ -4,7 +4,7 @@ require "yaml"
 
 module Shared
   module DemoMedia
-    # YAML catalog of seed-key -> URL/file mappings (city demo photography).
+    # YAML catalog of seed-key → URL/file mappings (city demo photography).
     module Catalog
       extend self
 

@@ -1,7 +1,7 @@
 en:
   radio:
     name: Radio
-    page_title: Radio - brgen
+    page_title: Radio · brgen
     kicker: Discover and share
     intro: Listen to local sounds, rough mixes, sets and new releases.
     navigation: Radio navigation
@@ -13,7 +13,7 @@ en:
   errors:
     messages:
       attachment_type: must be a voice note or a photo
-      last_owner: cannot be removed - the community would have no owner
+      last_owner: cannot be removed — the community would have no owner
       before_start: cannot be before the start
     not_found_title: Page not found
     not_found_body: That address does not match a page. Try home, Live, or the marketplace.
@@ -47,7 +47,7 @@ en:
   app:
     name: Brgen
   demo_mode:
-    notice: "DEMO SITE - accounts, posts, comments, profiles, listings and activity are simulated examples, not real community activity."
+    notice: "DEMO SITE — accounts, posts, comments, profiles, listings and activity are simulated examples, not real community activity."
   demo_media:
     photo_by: "Photo by"
     on_source: "on"
@@ -56,7 +56,7 @@ en:
     post_nearby_hint: "Your name is not shown. The post shows only the area around you, about a kilometre, and holds %{count} characters."
     compose_prompt: What are you up to today?
     compose_discard: Discard this post? Attached files are not kept.
-    compose_live_limit: "characters - a Live post holds %{count}"
+    compose_live_limit: "characters · a Live post holds %{count}"
     compose_blank: Write something first.
     compose_title: Create post
     posting_as_guest: Anon
@@ -94,7 +94,7 @@ en:
     clear_recent_searches: Clear recent searches
     confirm_clear_recent_searches: Delete all recent searches?
     show_menu: Show menu
-    menu_coach: Menu is down here - tap the bar or scroll up.
+    menu_coach: Menu is down here — tap the bar or scroll up.
     menu_coach_dismiss: Got it
     mobile_nav: Mobile navigation
     primary_nav: Primary navigation
@@ -151,33 +151,33 @@ en:
     random: random
     roster: In this channel
     nearby_tab: nearby
-    loading: Loading the room...
+    loading: Loading the room…
     lobby_title: City lobby
     lobby_body: Anonymous chat without GPS. Share location anytime for the hyperlocal
       room.
-    nearby_title: You're in the nearby room
-    nearby_body: No messages yet within ~10 km. Say hi - no signup.
+    nearby_title: You’re in the nearby room
+    nearby_body: No messages yet within ~10 km. Say hi — no signup.
     use_location: Use location
     refresh_location: Refresh location
     city_lobby: city lobby
-    sign_in_inbox: Sign in for this app's inbox, or chat anonymously on Brgen.
-    recovery_body: Could not open the corner room. Use the city lobby instead - no
+    sign_in_inbox: Sign in for this app’s inbox, or chat anonymously on Brgen.
+    recovery_body: Could not open the corner room. Use the city lobby instead — no
       signup.
-    placeholder: Message as %{handle}...
-    channel_placeholder: Message %{name} as %{handle}...
+    placeholder: Message as %{handle}…
+    channel_placeholder: Message %{name} as %{handle}…
     log_label: Messages
     posting_as: Posting as
     no_signup: no signup
-    anyone_join: Anyone can join - no signup.
+    anyone_join: Anyone can join — no signup.
     join_room: Join room
-    status_asking: Asking for location...
-    status_denied: 'Location blocked - staying in #brgen. Enable location in the browser
+    status_asking: Asking for location…
+    status_denied: 'Location blocked — staying in #brgen. Enable location in the browser
       for #nearby.'
-    status_timeout: 'Location timed out - staying in #brgen.'
-    status_unavailable: 'Location unavailable - staying in #brgen.'
-    status_blocked: 'This page cannot read location - #brgen still works.'
-    status_server: Could not save location - try again.
-    status_network: Network error saving location - try again.
+    status_timeout: 'Location timed out — staying in #brgen.'
+    status_unavailable: 'Location unavailable — staying in #brgen.'
+    status_blocked: 'This page cannot read location — #brgen still works.'
+    status_server: Could not save location — try again.
+    status_network: Network error saving location — try again.
   notifications:
     title: Notifications
     views_label: View
@@ -215,7 +215,7 @@ en:
       match: "It's a match with %{name}"
       generic: New notification
   verify:
-    needed: Confirm your email before posting - check your inbox.
+    needed: Confirm your email before posting — check your inbox.
     resend: Send the email again
   tv:
     feed:
@@ -236,9 +236,9 @@ en:
         other: "%{count} viewers"
     create_channel: Create channel
     upload: Upload
-    note_placeholder: Timestamped note...
+    note_placeholder: Timestamped note…
     save_note: Save note
-    comment_placeholder: Write something...
+    comment_placeholder: Write something…
     post_comment: Post comment
     subscribe: Subscribe
     unsubscribe: Unsubscribe
@@ -261,12 +261,12 @@ en:
     videos_shown:
       one: "%{count} video shown"
       other: "%{count} videos shown"
-    home_blurb: Local channels, shows, and live stages - watch without an account.
+    home_blurb: Local channels, shows, and live stages — watch without an account.
     browse: Browse TV
     home_title: TV
     channels_title: Channels
     shows_title: Shows
-    thumbnail_hint: postpro.rb grades thumbnails - blockbuster for Odyssey-style cinematic.
+    thumbnail_hint: postpro.rb grades thumbnails — blockbuster for Odyssey-style cinematic.
     episode_count:
       one: "%{count} episode"
       other: "%{count} episodes"
@@ -281,7 +281,7 @@ en:
     sounds_empty_body: Every clip posted makes one.
     sound_no_clips: Nothing on this sound
     sound_no_clips_body: The clip it came from is gone; the sound outlives it.
-    original_sound: "Original sound - %{name}"
+    original_sound: "Original sound — %{name}"
     duet_of: Answering
     make_a_duet: Make a duet
     duet_count:
@@ -343,7 +343,7 @@ en:
     cancelled_body: The organiser has cancelled this event.
     changed_notification: "%{title} has changed"
     changed_body: "Now %{when}, %{where}."
-    full_body: Full - you can still mark yourself interested.
+    full_body: Full — you can still mark yourself interested.
     organiser_actions: Organiser actions
     rsvp: Answer
     rsvp_going: Going
@@ -390,29 +390,29 @@ en:
       cover: Cover image
       submit: Save event
   search:
-    no_results: "No results for \"%{query}\""
+    no_results: "No results for “%{query}”"
     no_results_body: "Try another word, or a shorter one."
     section_heading: "%{vertical} (%{count})"
     title: Search Brgen
-    placeholder: Search posts, listings, TV, playlists...
+    placeholder: Search posts, listings, TV, playlists…
     label: Search all verticals
-    posts: Search posts...
+    posts: Search posts…
     posts_label: Post search
-    communities: Search communities...
+    communities: Search communities…
     communities_label: Community search
-    places: Search places...
+    places: Search places…
     places_label: Place search
-    restaurants: Search restaurants...
+    restaurants: Search restaurants…
     restaurants_label: Restaurant search
-    events: Search events...
+    events: Search events…
     events_label: Event search
     marketplace: Search the marketplace
     marketplace_label: Search marketplace
     deals_label: Deals search
     stores_label: Store search
-    playlist: Search sets, tracks, artists...
+    playlist: Search sets, tracks, artists…
     playlist_label: Playlist search
-    tv: Search channels and videos...
+    tv: Search channels and videos…
     tv_label: TV search
   messages:
     anonymous: "anon"
@@ -433,8 +433,8 @@ en:
     empty_body: Send a message to get started.
     push_body_disappearing: New message
     edited: "edited"
-    back_all: "<- all"
-    back_channels: "<- channels"
+    back_all: "← all"
+    back_channels: "← channels"
     disappearing: Disappearing messages
     nav_label: Conversation nav
     composer_label: "Message composer"
@@ -515,7 +515,7 @@ en:
       "24h": 24 hours
       after_read: Once read
     disappearing_note: A screenshot cannot be prevented. The person you write to can still photograph the screen or copy the text.
-    disappearing_changed: "Changed disappearing messages to \"%{setting}\"."
+    disappearing_changed: "Changed disappearing messages to “%{setting}”."
     view_once_chip: disappears once read
     here_now:
       one: "%{count} here now"
@@ -764,13 +764,13 @@ en:
             status:
               bad_transition: cannot go from %{from} to %{to}
             base:
-              below_minimum: Minimum order at %{restaurant} is %{minimum} - your subtotal
+              below_minimum: Minimum order at %{restaurant} is %{minimum} — your subtotal
                 is %{subtotal}.
               empty_order: Choose at least one item.
             delivery_address:
               outside_delivery_area: "%{restaurant} delivers within %{radius} km of the kitchen
                 and your saved position is %{distance} km away. They may still accept the
-                order - the kitchen confirms every ticket itself."
+                order — the kitchen confirms every ticket itself."
         takeaway/order_item:
           attributes:
             menu_item:
@@ -782,7 +782,7 @@ en:
     repost: Repost
     repost_notification: "%{user} reposted your post"
     quote: Quote
-    quote_placeholder: Add a comment...
+    quote_placeholder: Add a comment…
     quotes: Quotes
     crosspost: Crosspost
     crosspost_to: Crosspost to
@@ -807,13 +807,13 @@ en:
     no_posts_yet: No posts yet
     no_neighborhood_posts: No posts from your neighbourhood yet
     no_neighborhood_posts_body: Nobody has posted from here yet. See what the rest of the city is sharing.
-    be_first: Be the first - guests can post without an account.
+    be_first: Be the first — guests can post without an account.
     post_to_city: Post to %{city}
     clear_search: Clear search
     create_one: Create one
     start_city: Start the conversation for your city.
     nothing_yet: Nothing here yet.
-    start_community: Start the conversation in %{name} - guests can post without an
+    start_community: Start the conversation in %{name} — guests can post without an
       account.
     profile_empty: Nothing published on this profile.
     city_feed: City feed
@@ -864,14 +864,14 @@ en:
     order_then_rate: Order, then leave a rating for neighbours.
     episodes_when_published: Episodes will show up when published.
     no_activity_body: "Events from your network show up here."
-    no_category_body: "Be the first to list something here - no signup needed."
+    no_category_body: "Be the first to list something here — no signup needed."
     no_hosted_tracks_body: "Upload or link a track to host it."
     no_sets_body: "Create or import a set to get started."
     no_sketches_body: "Save a beat from the lab or paste JSON state below."
     no_videos_body: "This channel has no published videos."
     no_shows_body: "Published shows will appear here."
     no_live_streams_body: "Nothing live right now."
-    no_comments_body: "Start the conversation - guests can comment without an account."
+    no_comments_body: "Start the conversation — guests can comment without an account."
     video_coming_soon: "Video coming soon"
     video_coming_soon_body: "This episode is not ready to play."
   actions:
@@ -910,7 +910,7 @@ en:
     home_title: "%{city}"
     default_description: Posts, shops, food and people in %{city}.
   hotkeys:
-    help: j/k - ↓↑ nav - Enter open - / search - n new - esc clear - ? help
+    help: j/k · ↓↑ nav · Enter open · / search · n new · esc clear · ? help
     coach: 'Keyboard: press ? anytime for shortcuts (j/k to move, / to search).'
     coach_dismiss: Got it
   sort:
@@ -938,9 +938,9 @@ en:
     share_post: Share post
     view_community: View community
     about: About
-    community_platform: brgen - %{city} community platform
+    community_platform: brgen — %{city} community platform
     community_optional: Community (optional)
-    no_community: "- no community -"
+    no_community: "— no community —"
     body_optional: Body (optional)
     photo_camera: Photo / Camera
     post_anonymously: Post anonymously
@@ -955,20 +955,20 @@ en:
       other: "%{count} messages"
     topic: 'Topic: %{topic}'
     blurb:
-      brgen: The city-wide lobby - anything goes.
+      brgen: The city-wide lobby — anything goes.
       marketplace: Buying, selling, haggling, and finds.
       dating: Flirt, vent, and swap first-date ideas.
-      playlist: Now playing - share tracks and listening parties.
+      playlist: Now playing — share tracks and listening parties.
       tv: Live threads for shows and streams.
       takeaway: What's good to order right now?
       maps: Local spots, tips, and directions.
     welcome:
-      host: "%{blurb} you're anonymous here - say hi."
+      host: "%{blurb} you're anonymous here — say hi."
       echo: type `/help` any time, and keep it local.
-      prompt: so - what's happening in your city right now?
+      prompt: so — what's happening in your city right now?
     title: Channels
     aria: Public channels
-    intro: Public rooms%{city} - you're anonymous here. Jump in, a few local agents
+    intro: Public rooms%{city} — you're anonymous here. Jump in, a few local agents
       are already around.
     intro_city: " in %{name}"
     new_room: new room
@@ -993,7 +993,7 @@ en:
     like_back: Like back
     pass: Pass
     no_likes_title: Nobody has liked you yet
-    no_likes_body: Answer a couple of prompts on your profile - it gives people something
+    no_likes_body: Answer a couple of prompts on your profile — it gives people something
       to reply to.
     prompts:
       q_sunday: A perfect Sunday is
@@ -1019,7 +1019,7 @@ en:
     no_photos_body: Add photos on your profile edit screen.
     matches: Matches
     no_matches: No matches yet
-    no_matches_body: Keep swiping - mutual likes show up here.
+    no_matches_body: Keep swiping — mutual likes show up here.
     discover: Discover
     local: Local
     ready_to_chat: is ready to chat.
@@ -1035,8 +1035,8 @@ en:
       title: "dating"
       protected_by: "Protected by"
     age: Age
-    edit_profile_blurb: Photos and about you matter most - other details stay optional.
-    create_profile_blurb: Three steps to start - photos, about you, who you are looking
+    edit_profile_blurb: Photos and about you matter most — other details stay optional.
+    create_profile_blurb: Three steps to start — photos, about you, who you are looking
       for. Details can wait.
     photo_hint: Add at least one clear photo when you can.
     essentials: Essentials
@@ -1047,7 +1047,7 @@ en:
     rewind: Rewind
     stamp_like: LIKE
     stamp_pass: NOPE
-    swipe_guest: Refresh to start swiping - no signup needed.
+    swipe_guest: Refresh to start swiping — no signup needed.
     more: More
     read_bio: Read bio
     show_less: Show less
@@ -1060,7 +1060,7 @@ en:
     empty_nearby_body: Widen the radius, come back later, or finish your profile so
       others can find you.
     verify_title: Get verified
-    verify_body: "Take a selfie in the pose below. A person checks it against your photos - no face matching, because that fails on exactly the people it should not."
+    verify_body: "Take a selfie in the pose below. A person checks it against your photos — no face matching, because that fails on exactly the people it should not."
     verify_selfie: Your selfie
     verify_send: Send for review
     verify_queue: Verification queue
@@ -1109,7 +1109,7 @@ en:
     title: Title
     artist: Artist
     url_optional: URL (optional)
-    say_something: Say something...
+    say_something: Say something…
     create: Create
     add: Add
     import: Import
@@ -1127,16 +1127,16 @@ en:
     end_party: End party
     render: Render
     listening_party: Listening party
-    listening_party_title: Listening party - %{name}
+    listening_party_title: Listening party — %{name}
     queue: Queue
-    queue_stats: "%{tracks} tracks - %{plays} plays"
+    queue_stats: "%{tracks} tracks · %{plays} plays"
     waveform: Waveform
     seek: Seek
     select_track: Select a track
     unknown_artist: Unknown artist
     party_chat: Party chat
     back_to_set: Back to set
-    back_to_radio: "<- radio"
+    back_to_radio: "← radio"
     management: Playlist management
     actions: Playlist actions
     collaborators_sketches: Collaborators & dilla sketches
@@ -1150,7 +1150,7 @@ en:
     source: Source
     expires_at: Expires at
     embed_code: Embed code
-    comment_at_time: Comment at this time...
+    comment_at_time: Comment at this time…
     role: Role
     style: Style
     bars: Bars
@@ -1163,12 +1163,12 @@ en:
     set_kicker: Playlist set
     upload_blurb: Direct upload here. High quality 320kbps MP3 / FLAC supported. Replace
       keeps share links (no URL change).
-    current_file: 'Current: %{name} - replace keeps your share/embed links'
-    track_stats: "%{plays} plays - %{comments} timestamped comments - %{versions}
+    current_file: 'Current: %{name} — replace keeps your share/embed links'
+    track_stats: "%{plays} plays · %{comments} timestamped comments · %{versions}
       prior versions"
-    set_stats: "%{plays} plays across %{tracks} tracks - %{comments} comments total."
+    set_stats: "%{plays} plays across %{tracks} tracks · %{comments} comments total."
     now_playing: 'Now playing:'
-    waiting_for_host: Waiting for the host to pick a track...
+    waiting_for_host: Waiting for the host to pick a track…
     comments_seek: Comments (click to seek)
     embed_customize: 'Embed (customize: ?color=ff0000&amp;show_artwork=0&amp;compact=1)'
     party_blurb: Start or join a real-time synced listening session with embedded
@@ -1177,7 +1177,7 @@ en:
     analytics: Analytics
     privacy_line: 'Privacy: %{value}'
     privacy_private: private
-    expires_on: "- expires %{date}"
+    expires_on: "· expires %{date}"
     public_access: Public
     public: Public
     privacy:
@@ -1231,7 +1231,7 @@ en:
       declined: Declined
       completed: Completed
     hero_title: "Marketplace %{city}"
-    hero_lede: "Things from people who live nearby. No nationwide shipping, no middlemen - just what is a few streets away."
+    hero_lede: "Things from people who live nearby. No nationwide shipping, no middlemen — just what is a few streets away."
     hero_no_photo: "No photo added"
     hero_no_listing: "No featured listing yet"
     expiry_notice:
@@ -1255,16 +1255,16 @@ en:
       city: Town
       country: Country (two letters)
       phone: Phone (optional)
-    home_title: Market - %{city}
+    home_title: Market · %{city}
     saved_search_alert:
-      title: "%{count} new matches for \"%{search}\""
-      price_drop_title: "%{count} price drops for \"%{search}\""
+      title: "%{count} new matches for “%{search}”"
+      price_drop_title: "%{count} price drops for “%{search}”"
     browse_listings: Browse listings
     listing_kind: Who is selling
     from_anyone: Anyone
     from_a_person: Person
     from_a_shop: Shop
-    casual_hint: No shop needed - a listing without a store is you selling one thing.
+    casual_hint: No shop needed — a listing without a store is you selling one thing.
     sold: Sold
     nearby_listings: Nearby
     share: Share
@@ -1288,7 +1288,7 @@ en:
     deals:
       featured: Featured deals
       title: Deals
-      show_title: "%{headline} - %{city}"
+      show_title: "%{headline} · %{city}"
     max_price: Max price
     min_price: Min price
     orders:
@@ -1341,7 +1341,7 @@ en:
     send_all_offers: Send all offers
     send_offers_confirm: Notify all sellers about your pending offers?
     cart_empty_title: Your cart is empty
-    cart_empty_body: Browse listings and send offers - guests can shop without signup.
+    cart_empty_body: Browse listings and send offers — guests can shop without signup.
     browse_marketplace: Browse marketplace
     cart_total: 'Total: %{amount}'
     cart_pay_hint: Pay with Dintero, Vipps, or card checkout, or send classic offers sellers
@@ -1407,7 +1407,7 @@ en:
     filters: Filters
     active_filters: Applied filters
     clear_filters: Clear filters
-    filter_near_me_within: "Near me - within %{radius} km"
+    filter_near_me_within: "Near me · within %{radius} km"
     filter_distance: Distance
     filter_price: Price
     under_price: "Under %{price}"
@@ -1528,12 +1528,12 @@ en:
     delivery_driver: Delivery driver
     delivery_address: Delivery address
     special_instructions: Special instructions (optional)
-    special_instructions_placeholder: Door code, allergies, delivery notes...
+    special_instructions_placeholder: Door code, allergies, delivery notes…
     payment: Payment
     payment_label: Payment info
     payment_body: Payment is arranged directly with the restaurant for now.
     place_order: Place order
-    rating: Rating (1-5)
+    rating: Rating (1–5)
     comments_optional: Comments (optional)
     add: Add
     save: Save
@@ -1571,14 +1571,14 @@ en:
     order_from: Order from %{restaurant}
     operations: Takeaway operations
     min_order_short: "Minimum order %{min}"
-    reload_to_order: Reload to place an order - guests can order without signup.
+    reload_to_order: Reload to place an order — guests can order without signup.
     saves:
       one: "%{count} save"
       other: "%{count} saves"
     anon: anon
     driver_details: Driver details
     restaurant_info: Restaurant info
-    min_order_delivery: 'Min order: %{min} - Delivery: %{fee}'
+    min_order_delivery: 'Min order: %{min} · Delivery: %{fee}'
     delivery_fee_lead: "Delivery %{fee}"
     open_now: "Open now"
     closed_now: "Closed now"
@@ -1595,20 +1595,20 @@ en:
     delivery_label: Delivery
     delivery_radius: Delivery radius (km, blank = no limit stated)
     delivers_within: "Delivers within %{radius} km of the kitchen"
-    cart_expiring: This basket expires soon - the kitchen has not confirmed it yet.
+    cart_expiring: This basket expires soon — the kitchen has not confirmed it yet.
     restaurant_results: Restaurant results
     top_rated_heading: "Top rated in %{city}"
     restaurant_actions: Restaurant actions
     qty_for: Quantity for %{name}
     browse_menu: Browse menu
-    group_title: "Group order - %{restaurant}"
+    group_title: "Group order — %{restaurant}"
     group_eyebrow: "One ticket, one delivery"
     group_host: The host
     group_total: "Ticket so far: %{total}"
     group_add_line: Add something
     group_quantity: How many
     group_add: Add to the ticket
-    group_host_note: "You opened this ticket - send it to the kitchen from your order page when everyone has added theirs."
+    group_host_note: "You opened this ticket — send it to the kitchen from your order page when everyone has added theirs."
     group_guest_note: The person who opened this sends it to the kitchen.
     open_group: Share this order
     group_link: The link to share
@@ -1627,7 +1627,7 @@ en:
       delivered: Delivered
       cancelled: Cancelled
     delivered: Delivered
-    eta_calculating: Est. delivery - calculating...
+    eta_calculating: Est. delivery — calculating…
     delivery_to: "Delivery to: %{address}"
     instructions: "Instructions:"
     subtotal: "Subtotal: %{amount}"
@@ -1710,36 +1710,36 @@ en:
     is_nearby_html: "%{handle} is nearby"
     page_title: Nearby
     prefer_room: Prefer a room?
-    channels_link: Join a public channel ->
+    channels_link: Join a public channel →
     share_location_title: Share your location
     share_location_body: Find strangers within %{km} km and chat anonymously. Your
       exact position is never shown.
     lobby_hint_before: Or open the corner chat for
-    lobby_hint_after: "- no GPS needed."
+    lobby_hint_after: "— no GPS needed."
     room_title: Nearby chat room
     room_body: Everyone within %{km} km, one shared room, anonymous.
     join: Join
     chat: Chat
     distance_band:
-      under_1: Under 1 km away - anonymous
-      1_to_2: 1-2 km away - anonymous
-      2_to_5: 2-5 km away - anonymous
-      over_5: Over 5 km away - anonymous
+      under_1: Under 1 km away · anonymous
+      1_to_2: 1–2 km away · anonymous
+      2_to_5: 2–5 km away · anonymous
+      over_5: Over 5 km away · anonymous
     push_title: Someone nearby
-    push_body: "%{handle} is within %{km} km - tap to chat"
-    empty_located_body: Check back later - or drop a Live note while you wait.
+    push_body: "%{handle} is within %{km} km — tap to chat"
+    empty_located_body: Check back later — or drop a Live note while you wait.
   mailer:
     confirm_subscription: Confirm your subscription
-    confirm_lede: Thanks for trusting us with your inbox. We send one curated city letter - not noise.
+    confirm_lede: Thanks for trusting us with your inbox. We send one curated city letter — not noise.
     queue_failure_digest_subject: Brgen queue dead letter digest
     permission_marketing: Permission marketing
     confirm_button: Confirm subscription
     verify_welcome: Welcome to Brgen.
     verify_body: 'Confirm this email address to start posting under your account:'
     verify_cta: Confirm my email
-    verify_ignore: If you didn't create a Brgen account, ignore this message - nothing
+    verify_ignore: If you didn’t create a Brgen account, ignore this message — nothing
       happens until you confirm.
-    signoff: "- The Brgen editors"
+    signoff: "— The Brgen editors"
     not_you: If you did not sign up, ignore this email.
   pagination:
     label: Pagination
@@ -1958,7 +1958,7 @@ en:
     confirm_your_inbox: Check your inbox to confirm.
     already_subscribed: Already subscribed.
     already_confirmed: Already confirmed.
-    subscribed: Subscribed - you'll receive city updates.
+    subscribed: Subscribed — you'll receive city updates.
     unsubscribed: Unsubscribed.
     anonymous_post_limit: Sign up to post more (%{limit} anonymous posts per browser).
     post_blocked_by_moderation: Post blocked by moderation.
@@ -1966,12 +1966,12 @@ en:
       links or offers.
     checked_in_at: Checked in at %{place}.
     check_in_failed: Could not check in.
-    messages_rate_limited: Slow down - too many messages. Try again shortly.
-    chats_rate_limited: Slow down - too many chats started. Try again shortly.
+    messages_rate_limited: Slow down — too many messages. Try again shortly.
+    chats_rate_limited: Slow down — too many chats started. Try again shortly.
     encounters_rate_limited: Slow down - too many random encounters started. Try again shortly.
     encounter_left: Random encounter left.
-    listings_rate_limited: Slow down - too many listings. Try again shortly.
-    videos_rate_limited: Slow down - too many uploads. Try again shortly.
+    listings_rate_limited: Slow down — too many listings. Try again shortly.
+    videos_rate_limited: Slow down — too many uploads. Try again shortly.
     location_required_for_nearby: Enable location to join the nearby chat room.
     thats_you: That's you.
     no_longer_nearby: That person isn't nearby anymore.

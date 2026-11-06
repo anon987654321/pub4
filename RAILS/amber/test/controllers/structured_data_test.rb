@@ -2,7 +2,7 @@
 
 require "test_helper"
 
-# Structured data used to stop at items#show - a page behind authentication,
+# Structured data used to stop at items#show — a page behind authentication,
 # so no crawler ever saw it. These cover the pages that are actually public.
 class StructuredDataTest < ActionDispatch::IntegrationTest
   def schemas
@@ -14,7 +14,7 @@ class StructuredDataTest < ActionDispatch::IntegrationTest
   end
 
   # The demo wardrobe is the only public catalogue, so it is what the ItemList
-  # describes. Seeded here rather than skipped - a skipped test proves nothing.
+  # describes. Seeded here rather than skipped — a skipped test proves nothing.
   def seed_demo_wardrobe
     demo = User.strict_loading(false).find_or_create_by!(email_address: Amber::DemoWardrobe::DEMO_EMAIL) do |user|
       user.password = "password"
@@ -43,7 +43,7 @@ class StructuredDataTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     entry = schema_of("ItemList")["itemListElement"].first["item"]
-    # Not /items/:id - that is behind authentication, so a crawler following it
+    # Not /items/:id — that is behind authentication, so a crawler following it
     # would land on the sign-in page.
     assert_equal demo_wardrobe_item_url(demo.items.first), entry["url"]
     assert_equal "Product", entry["@type"]

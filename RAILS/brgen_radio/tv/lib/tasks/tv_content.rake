@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
-# The tv content pipeline. The vertical has been fully built - channels,
-# uploads, the watch-time feed, sounds, shows - and completely EMPTY, because
+# The tv content pipeline. The vertical has been fully built — channels,
+# uploads, the watch-time feed, sounds, shows — and completely EMPTY, because
 # "tv content comes from replicate" was a sentence, not a path. These two tasks
 # are the path.
 #
@@ -9,8 +9,8 @@
 #   bin/rails "tv:ingest[manifest.yml]"    # manifest -> channel + published videos
 #
 # starter_pack generates with Replicate when REPLICATE_API_TOKEN is present
-# and REFUSES with a clear sentence when it is not - never a fake success,
-# the vipps doctrine - then falls back, if TV_TEST_CARDS=1 says so out loud,
+# and REFUSES with a clear sentence when it is not — never a fake success,
+# the vipps doctrine — then falls back, if TV_TEST_CARDS=1 says so out loud,
 # to ffmpeg-drawn broadcast test cards: honest placeholder television that
 # exercises the whole player/feed/watch-time loop and says what it is on
 # every frame.
@@ -80,7 +80,7 @@ namespace :tv do
   end
 
   def generate_test_cards(out)
-    # One lavfi source per card, visually distinct - drawtext needs a
+    # One lavfi source per card, visually distinct — drawtext needs a
     # libfreetype ffmpeg and the Homebrew build ships without it, so the
     # frame is the pattern and the LABEL is the product's own title overlay.
     cards = [
@@ -98,7 +98,7 @@ namespace :tv do
              "-f", "lavfi", "-t", secs.to_s, "-i", source,
              "-f", "lavfi", "-t", secs.to_s, "-i", "sine=frequency=440",
              "-shortest", "-pix_fmt", "yuv420p", mp4, exception: true)
-      # PNG here; the app's own MediaProcessable variants render the webp -
+      # PNG here; the app's own MediaProcessable variants render the webp —
       # this ffmpeg ships without a webp encoder, and the pipeline conversion
       # is the production path anyway.
       system("ffmpeg", "-y", "-loglevel", "error", "-i", mp4, "-vframes", "1", "-vf", "scale=1280:720", png, exception: true)

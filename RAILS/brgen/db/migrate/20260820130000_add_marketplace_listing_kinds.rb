@@ -2,8 +2,8 @@
 
 # The non-goods half of a classifieds site: jobs, housing, gigs.
 #
-# They are listings - same city scoping, same search, same expiry, same
-# messaging - and they are not goods: a job has no condition and often no price,
+# They are listings — same city scoping, same search, same expiry, same
+# messaging — and they are not goods: a job has no condition and often no price,
 # a room has rent and a date it is free from, a gig has a fee and an evening. So
 # the shared half stays on marketplace_listings and each kind gets a table of
 # its own, rather than a widening listings table where most columns are null for

@@ -12,7 +12,7 @@ class WeeklyDealsJobTest < ActiveSupport::TestCase
       kind: "weekly_deals",
       city: "bergen",
       edition_date: Date.current,
-      subject: "Bergen - picks worth your attention",
+      subject: "Bergen — picks worth your attention",
       lede: "A handful of offers we would actually click ourselves.",
       stories: [],
       deals: [ { "title" => "Deal", "url" => "https://example.com", "description" => "Good", "price" => "10", "currency" => "NOK", "merchant" => "Shop", "image_url" => "" } ]
@@ -43,7 +43,7 @@ class WeeklyDealsJobTest < ActiveSupport::TestCase
       kind: "weekly_deals",
       city: "bergen",
       edition_date: Date.current,
-      subject: "Bergen - picks worth your attention",
+      subject: "Bergen — picks worth your attention",
       lede: "A few offers.",
       stories: [],
       deals: []

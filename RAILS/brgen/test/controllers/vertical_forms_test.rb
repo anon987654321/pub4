@@ -29,7 +29,7 @@ class VerticalFormsTest < ActionDispatch::IntegrationTest
 
     # Posted under the key the rendered form actually uses. This test used to
     # name the key itself (playlist_set), which passed while the form posted
-    # set[name] and the controller answered 400 - a test that agrees with the
+    # set[name] and the controller answered 400 — a test that agrees with the
     # controller about a key the form never sends is not a test of the form.
     scope = response.body[/name="([a-z_]+)\[name\]"/, 1]
     assert_equal "set", scope, "the form's own scope"

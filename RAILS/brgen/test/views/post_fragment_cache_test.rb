@@ -4,7 +4,7 @@ require "test_helper"
 
 # The post partial is fragment-cached. Its key used to include Current.user&.id,
 # and brgen creates a fresh guest user for every request without a session
-# cookie - so each anonymous visitor got their own copy of every card. For
+# cookie — so each anonymous visitor got their own copy of every card. For
 # crawler traffic the cache never hit once, and every visit wrote one entry per
 # post into the store.
 #
@@ -46,10 +46,10 @@ class PostFragmentCacheTest < ActionDispatch::IntegrationTest
       email_address: "frag-#{SecureRandom.hex(4)}@brgen.no", password: "password123", city: @city,
     )
     community = Community.create!(name: "Frag #{SecureRandom.hex(3)}", slug: "frag-#{SecureRandom.hex(4)}")
-    count.times { |i| Post.create!(user: author, community:, title: "Frag #{i}", content: "...") }
+    count.times { |i| Post.create!(user: author, community:, title: "Frag #{i}", content: "…") }
   end
 
-  # Each `get` here arrives without a cookie, so each one is a different guest -
+  # Each `get` here arrives without a cookie, so each one is a different guest —
   # exactly the crawler pattern. With the old key every visit re-wrote the whole
   # page's worth of fragments; with the vote-based key the second visit writes
   # nothing, because a guest who has not voted sees the same markup as the last
@@ -60,7 +60,7 @@ class PostFragmentCacheTest < ActionDispatch::IntegrationTest
 
       first = cache_writes { get root_path }
       assert_response :success
-      assert_operator first, :>, 0, "nothing was cached at all - the test proves nothing"
+      assert_operator first, :>, 0, "nothing was cached at all — the test proves nothing"
 
       reset!
       host! "brgen.no"

@@ -2,7 +2,7 @@
 
 # Ephemeral media that expires on its own.
 #
-# brgen already had ephemerality, but only inside DMs - Conversation's
+# brgen already had ephemerality, but only inside DMs — Conversation's
 # disappearing_duration and Message#expires_at with its sweep job. There was no
 # 24-hour story, no camera-first capture, and nothing on a profile or the feed
 # that goes away by itself.

@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Drawn on the isolated engine (helpers unprefixed here, marketplace.* from the
-# host). Host mounts under constraints(subdomain: MARKETPLACE_SUBDOMAINS) - see
+# host). Host mounts under constraints(subdomain: MARKETPLACE_SUBDOMAINS) — see
 # brgen config/routes.rb. The Amazon-style multi-seller storefront.
 Marketplace::Engine.routes.draw do
   root "listings#index"
@@ -30,7 +30,7 @@ resources :orders, only: %i[index show update] do
     post :deliver
     post :confirm_receipt
   end
-  # Sending it back. Offered only against a shop - see Marketplace::Return.
+  # Sending it back. Offered only against a shop — see Marketplace::Return.
   resources :returns, only: %i[create update]
 end
 
@@ -44,13 +44,13 @@ end
   # a second purchase does not mean typing it again and a later edit does not
   # rewrite the address printed on last month's label.
   resources :addresses, only: %i[index create update destroy]
-  # Not `namespace :webhooks` - inside the marketplace scope that resolved to
+  # Not `namespace :webhooks` — inside the marketplace scope that resolved to
   # Marketplace::Webhooks::WebhooksController, which does not exist, so PSP
   # callbacks never reached mark_paid! and orders stayed unpaid. Explicit paths
   # keep the URLs and helper names unchanged.
   #
-  # Stripe goes to the host's Webhooks::StripeController - the leading slash
-  # leaves the engine namespace - so this URL and brgen's own /webhooks/stripe
+  # Stripe goes to the host's Webhooks::StripeController — the leading slash
+  # leaves the engine namespace — so this URL and brgen's own /webhooks/stripe
   # are one handler, and a dashboard pointed at either still pays orders.
   post "webhooks/stripe", to: "/webhooks/stripe#create", as: :webhooks_stripe
   get "webhooks/dintero/callback", to: "webhooks#dintero_callback", as: :webhooks_dintero_callback

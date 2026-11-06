@@ -2,9 +2,9 @@
 
 # `object_id` is a method every Ruby object already has, and an AR attribute of
 # that name silently replaces it on every ActivityEvent instance. Rails permits
-# it - dangerous_attribute_method? compares the method's owner on Base and on
+# it — dangerous_attribute_method? compares the method's owner on Base and on
 # its superclass, and for object_id both are Object, so the check returns false
-# - which is why this shipped and worked. It still means the one method whose
+# — which is why this shipped and worked. It still means the one method whose
 # contract is "a number unique to this object for its lifetime" returns a
 # foreign key instead.
 #

@@ -1,8 +1,8 @@
-// Remove a transient element on demand - nearby alerts, inline notices.
+// Remove a transient element on demand — nearby alerts, inline notices.
 //
 // Exists because the one place that needed it used an inline
 // onclick="this.closest('.nearby-alert').remove()". The CSP this family sends
-// is `script-src 'self' https: 'nonce-...'`, which does not admit inline handlers,
+// is `script-src 'self' https: 'nonce-…'`, which does not admit inline handlers,
 // so that button worked only because the policy is still Report-Only. Enforcing
 // it would have silently stopped the close button from closing.
 //

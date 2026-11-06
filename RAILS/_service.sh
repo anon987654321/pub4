@@ -1,9 +1,9 @@
 #!/usr/bin/env zsh
-# _service.sh - rc.d service installation and relayd routing for copy-tree deploy.
+# _service.sh — rc.d service installation and relayd routing for copy-tree deploy.
 # Source this file; do not execute directly. Requires _core.sh sourced first.
 set -euo pipefail
 
-# retire_legacy_rails_rcd APP_NAME - stop duplicate *_rails services from older bootstrap.
+# retire_legacy_rails_rcd APP_NAME — stop duplicate *_rails services from older bootstrap.
 retire_legacy_rails_rcd() {
   local app_name=$1 legacy="${app_name}_rails"
   [[ -f /etc/rc.d/$legacy ]] || return 0
@@ -16,7 +16,7 @@ retire_legacy_rails_rcd() {
   log_ok "disabled legacy rc.d ${legacy} (no stop - shared port with ${app_name})"
 }
 
-# assert_rcd_identity - CY15: rc.d daemon_user and APP_DIR must match deploy target.
+# assert_rcd_identity — CY15: rc.d daemon_user and APP_DIR must match deploy target.
 assert_rcd_identity() {
   local svc=$1 expected_user=$2 expected_dir=$3
   local rcd="/etc/rc.d/${svc}"
@@ -71,7 +71,7 @@ install_rcd() {
 # happened, because they need different actions:
 #
 #   relayd died   443 refuses in ~30ms while the app still answers on its own
-#                 port from the box. Every site is down. Not port 80 - relayd
+#                 port from the box. Every site is down. Not port 80 — relayd
 #                 declares one relay, `listen on 0.0.0.0 port 443 tls`, so 80
 #                 refuses on a healthy box and tests nothing.
 #   app shed      443 still answers TLS and only the app port is closed. TLS
@@ -134,7 +134,7 @@ relayd_add_relay() {
   return 0
 }
 
-# warm_brgen_after_restart - Falcon cold boot can exceed relayd/client timeouts
+# warm_brgen_after_restart — Falcon cold boot can exceed relayd/client timeouts
 warm_brgen_after_restart() {
   local port=${1:-38182}
   sleep 8

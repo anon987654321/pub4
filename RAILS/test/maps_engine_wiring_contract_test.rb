@@ -17,7 +17,7 @@ class MapsEngineWiringContractTest < Minitest::Test
 
   def read(relative)
     path = File.join(ROOT, relative)
-    assert File.file?(path), "#{relative} is gone - the engine moved again"
+    assert File.file?(path), "#{relative} is gone — the engine moved again"
     File.read(path)
   end
 

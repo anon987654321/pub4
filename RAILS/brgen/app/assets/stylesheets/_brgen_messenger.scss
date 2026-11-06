@@ -107,7 +107,7 @@ body.vertical-messenger .layout > main#main-content > section.messenger-window {
 // this is mostly used on.
 //
 // :has(.conversation-log) is the test for "a room is open", because that class is
-// already the thing Message#broadcast_to_logs appends to - it exists in both show
+// already the thing Message#broadcast_to_logs appends to — it exists in both show
 // views and in neither empty state, so nothing new has to be marked. Mobile-first
 // and min-width only, per MOBILE_FIRST: this is the default and the wide layout
 // below overrides it.
@@ -153,9 +153,9 @@ body.vertical-messenger .layout > main#main-content > section.messenger-window {
   text-decoration: none;
 }
 
-// One hover state for the whole window, listed once. Six controls - the inbox
+// One hover state for the whole window, listed once. Six controls — the inbox
 // search, a room row, the invite copy button, the two header controls and a
-// composer tool - all lift to --hover with full-strength ink. Stated at the
+// composer tool — all lift to --hover with full-strength ink. Stated at the
 // earliest of the six so none of them moves later in the cascade: the only
 // messenger rule that ties with it on specificity is
 // .messenger-rail-room[aria-current="page"] below, which comes after this and
@@ -200,7 +200,7 @@ body.vertical-messenger .layout > main#main-content > section.messenger-window {
 }
 
 // The room you are reading. Discord marks this with a lighter ground and full-
-// strength text, which is the whole of it - no rule, no marker, no accent bar.
+// strength text, which is the whole of it — no rule, no marker, no accent bar.
 .messenger-rail-room[aria-current="page"],
 .messenger-inbox-room[aria-current="page"] {
   background: var(--hover);
@@ -221,7 +221,7 @@ body.vertical-messenger .layout > main#main-content > section.messenger-window {
 }
 
 // The name cell of a list row, wherever the window draws one: a room in the
-// inbox and a person in the member list. min-inline-size: 0 is the half that matters - a
+// inbox and a person in the member list. min-inline-size: 0 is the half that matters — a
 // flex item defaults to min-inline-size: auto and will not shrink below its text, so
 // without it the ellipsis never happens and the row overflows instead.
 .messenger-inbox-name,
@@ -236,7 +236,7 @@ body.vertical-messenger .layout > main#main-content > section.messenger-window {
 // The avatar is a wash of the ink rather than a surface token: inside a rail
 // already on --surface-elevated, an elevated circle is invisible. The opacity
 // ladder is what composes a tint that tracks the theme (scale.opacity), and
-// --hover is built from the same expression one step up - this is the resting
+// --hover is built from the same expression one step up — this is the resting
 // version of that, so it does not borrow a state token to paint a resting fill.
 .messenger-room-avatar,
 .messenger-inbox-avatar,
@@ -259,7 +259,7 @@ body.vertical-messenger .layout > main#main-content > section.messenger-window {
 }
 
 // Name over preview. The row is a grid rather than a stack of two flex children
-// so the middle column can be the one that shrinks - min-inline-size: 0 on a flex item
+// so the middle column can be the one that shrinks — min-inline-size: 0 on a flex item
 // is what lets an ellipsis happen at all.
 .messenger-room-copy {
   display: grid;
@@ -276,7 +276,7 @@ body.vertical-messenger .layout > main#main-content > section.messenger-window {
   line-height: var(--leading-tight);
 }
 
-// The meta cell of a list row - the timestamp on a rail room and on an inbox
+// The meta cell of a list row — the timestamp on a rail room and on an inbox
 // row. flex: none against the name cell's flex: 1, so the name is what gives way
 // when the row is narrow and the time never wraps or truncates.
 .messenger-room-meta,
@@ -350,7 +350,7 @@ body.vertical-messenger .layout > main#main-content > section.messenger-window {
 }
 
 // The pane is a column: header, log, composer. The log is the only part that
-// scrolls, which is the whole point - a composer that scrolls off the bottom of
+// scrolls, which is the whole point — a composer that scrolls off the bottom of
 // a conversation is the defect this pane exists to prevent.
 .messenger-pane {
   display: flex;
@@ -431,7 +431,7 @@ body.vertical-messenger .layout > main#main-content > section.messenger-window {
 
 // Floating chrome: 1px border on an elevated surface, per design_rules
 // ui_polish.flat_ui. This is the one place the window draws a line, and it earns
-// it - a panel over content with no edge has no boundary at all, and the
+// it — a panel over content with no edge has no boundary at all, and the
 // alternative the rule forbids is a shadow.
 .messenger-details-panel {
   position: absolute;
@@ -622,7 +622,7 @@ body.vertical-messenger .layout > main#main-content > section.messenger-window {
   min-inline-size: 0;
 }
 
-// The field has no edge of its own - the box carries it - and grows with what is
+// The field has no edge of its own — the box carries it — and grows with what is
 // typed rather than reserving three rows for one line.
 .messenger-composer-field textarea {
   display: block;
@@ -642,7 +642,7 @@ body.vertical-messenger .layout > main#main-content > section.messenger-window {
 .messenger-composer-field textarea:focus:not(:focus-visible) { outline: 0; }
 
 // The counter stays. character_counter_controller counts DOWN from maxlength,
-// so it reads 500 on an empty box and 0 at the limit - and the field carries a
+// so it reads 500 on an empty box and 0 at the limit — and the field carries a
 // hard maxlength: 500, which means without it the box simply stops accepting
 // keystrokes with nothing to say why. That is the dead end FEEDBACK_LOOPS names.
 // Hiding it until it matters needs a number CSS cannot read, and reserving its
@@ -713,7 +713,7 @@ body.vertical-messenger .layout > main#main-content > section.messenger-window {
 }
 
 /* The empty state is a message, not a room. Hold it to a measure and put it
-   near the top of the pane, where the first line of a conversation would be -
+   near the top of the pane, where the first line of a conversation would be —
    dead centre of a tall column is where nothing lives. */
 .messenger-pane .empty-state {
   max-inline-size: 34rem;
@@ -723,7 +723,7 @@ body.vertical-messenger .layout > main#main-content > section.messenger-window {
 
 @media (min-width: 1280px) {
   .messenger-window {
-    // 240px is Discord's rail, kept. The middle takes the rest - a conversation
+    // 240px is Discord's rail, kept. The middle takes the rest — a conversation
     // has no ideal measure the way prose does, because a line of chat is short.
     grid-template-columns: 56px 300px minmax(0, 1fr) 360px;
     // No block-size here either, for the same reason as above: the window is
@@ -751,7 +751,7 @@ body.vertical-messenger .layout > main#main-content > section.messenger-window {
   }
 
   /* Each pane scrolls to the bottom of the viewport rather than to a viewport's
-     worth of height, and keeps its scroll to itself - overscroll-behavior stops
+     worth of height, and keeps its scroll to itself — overscroll-behavior stops
      a flick at the end of the log from scrolling the page behind it, which on a
      chat is the difference between reading history and losing your place. */
   .messenger-rail,
@@ -767,14 +767,14 @@ body.vertical-messenger .layout > main#main-content > section.messenger-window {
   .messenger-pane .conversation-log { padding-inline: var(--space-3); }
 }
 
-// The inbox row - one conversation in a list, not a room in the window.
+// The inbox row — one conversation in a list, not a room in the window.
 //
 // The window is the four-pane frame at conversations#index and #show; this is
 // the flat list conversations/_conversation_row renders, inside <noscript> and
 // the infinite-scroll reflex. Nothing here paints inside .messenger-window.
 //
-// Same anatomy as the rail's DM row - avatar, name, preview, then unread or
-// time - at a larger size, so the shared halves are declared once with the
+// Same anatomy as the rail's DM row — avatar, name, preview, then unread or
+// time — at a larger size, so the shared halves are declared once with the
 // window (.messenger-inbox-avatar in the avatar group, .messenger-inbox-meta in
 // the meta group) and specialised here, which is why these rules follow the
 // window's.

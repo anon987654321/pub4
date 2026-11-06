@@ -2,7 +2,7 @@
 
 <header class="page-header">
   <hgroup>
-    <p><%= @restaurant.cuisine_type %> - <%= @restaurant.city_label %></p>
+    <p><%= @restaurant.cuisine_type %> · <%= @restaurant.city_label %></p>
     <%= tag.h1 t("takeaway.order_from", restaurant: @restaurant.name) %>
     <%= tag.p @restaurant.address %>
   </hgroup>
@@ -40,8 +40,8 @@
             <% end %>
             <p>
               <%= item.price_display %>
-              <% if item.vegetarian? %> - <%= t("takeaway.vegetarian") %><% end %>
-              <% if item.vegan? %> - <%= t("takeaway.vegan") %><% end %>
+              <% if item.vegetarian? %> · <%= t("takeaway.vegetarian") %><% end %>
+              <% if item.vegan? %> · <%= t("takeaway.vegan") %><% end %>
             </p>
             <%= render "takeaway/menu_items/allergens", item: item %>
           </hgroup>

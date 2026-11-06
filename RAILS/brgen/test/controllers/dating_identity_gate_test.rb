@@ -6,7 +6,7 @@ require "test_helper"
 # a signed-in account and the right to appear in front of strangers. These
 # tests pin its two axioms: a configured verifier (Vipps or BankID) admits only
 # accounts with a verified identity, and an unconfigured Vipps closes the gate unless the operator has
-# named the demo bypass - never an open door by accident of missing env.
+# named the demo bypass — never an open door by accident of missing env.
 class DatingIdentityGateTest < ActionDispatch::IntegrationTest
   setup do
     Brgen::CitySeed.sync! if City.table_exists?

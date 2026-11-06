@@ -3,7 +3,7 @@
 # Watch-time reports from the player.
 #
 # tv_view_events has carried watch_time_seconds and completed since the table
-# was created, and videos#show wrote a row with neither - so the table recorded
+# was created, and videos#show wrote a row with neither — so the table recorded
 # that a signed-in user opened the page, never how much of it they watched.
 # This is the endpoint that fills those two columns in.
 class Tv::ViewEventsController < Tv::BaseController

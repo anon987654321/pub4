@@ -71,7 +71,7 @@ module SchemaHelper
 
   # Absolute, not the path url_for returns by default in a view. A relative
   # "url" in JSON-LD is resolved against the page it appears on, which makes
-  # the same resource carry a different identity on every page that lists it -
+  # the same resource carry a different identity on every page that lists it —
   # the one field consumers use to deduplicate.
   # Prefer record_public_href so brgen verticals keep their subdomain host
   # (markedsplass.brgen.no, tv.brgen.no). polymorphic_url is the amber/bsdports
@@ -81,7 +81,7 @@ module SchemaHelper
 
     href ||= begin
       polymorphic_url(resource)
-    rescue StandardError # scan: intentional - the schema omits what it cannot resolve
+    rescue StandardError # scan: intentional — the schema omits what it cannot resolve
       nil
     end
     return if href.blank?
@@ -100,7 +100,7 @@ module SchemaHelper
     return if blob.blank?
 
     (respond_to?(:main_app) ? main_app : self).rails_blob_url(blob, only_path: false)
-  rescue StandardError # scan: intentional - the schema omits what it cannot resolve
+  rescue StandardError # scan: intentional — the schema omits what it cannot resolve
     nil
   end
 
@@ -363,8 +363,8 @@ module SchemaHelper
     { "@type" => "Person", "name" => name }
   end
 
-  # An anonymous, guest or Live post names no author on the page - it reads
-  # "anon" - so its markup names nobody either. The reader is never the author.
+  # An anonymous, guest or Live post names no author on the page — it reads
+  # "anon" — so its markup names nobody either. The reader is never the author.
   def article_author(post)
     return if post.respond_to?(:attributed?) && !post.attributed?
 

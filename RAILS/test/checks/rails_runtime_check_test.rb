@@ -10,14 +10,14 @@ require "yaml"
 #
 # Its row in checks.yml is `script: rails_runtime.rb` with no arguments, and the
 # runtime half is behind `--runtime`. So every invocation through the runner runs
-# `static_check!` - the in-process production check, already a check of its own - and
+# `static_check!` — the in-process production check, already a check of its own — and
 # exits 0. Nothing boots, no bundle is checked, no route is proved against a real
 # controller, and the pass reads as all four. That is what the first two tests
 # hold: the check now says which half it ran, so the pass cannot be misread.
 #
 # The half that only exists here is DEAD_ROUTE_PROBE. `resources :x` declares seven
 # routes whether or not the controller has seven actions, and Rails answers 404 for
-# the ones it does not - which no source read finds, because routes.rb is correct.
+# the ones it does not — which no source read finds, because routes.rb is correct.
 # The probe is plain Ruby run inside the booted app, so it is testable here against
 # a planted route table, which is the only part of this check that can be proved
 # without booting three Rails apps.
@@ -43,7 +43,7 @@ class RailsRuntimeCheckTest < Minitest::Test
     out, status = run_script
 
     assert_equal 0, status.exitstatus, out
-    assert_match(/static half only - pass --runtime to boot each app/, out)
+    assert_match(/static half only — pass --runtime to boot each app/, out)
     refute_match(/Rails runtime check passed/, out, "no app was booted, so nothing may claim one was")
   end
 

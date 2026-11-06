@@ -6,8 +6,8 @@ class Tv::VideosController < Tv::BaseController
   # create takes a video file, which is the most expensive thing a signed-in
   # account can hand this box: a 1 GB VPS transcodes nothing in the background
   # and stores what it is given. Ten in five minutes is generous for a person
-  # and useless to a script. Every other create in the tree throttles - votes
-  # at 60 a minute, messages at 30, nearby at 15 in five - and this one did not.
+  # and useless to a script. Every other create in the tree throttles — votes
+  # at 60 a minute, messages at 30, nearby at 15 in five — and this one did not.
   rate_limit to: 10, within: 5.minutes, only: :create,
              by: -> { Current.user&.id ? "u#{Current.user.id}" : request.remote_ip },
              with: -> { redirect_back fallback_location: root_path, alert: t("flash.videos_rate_limited") }
@@ -90,7 +90,7 @@ class Tv::VideosController < Tv::BaseController
   end
 
   # A duet answers a published video that allows being answered, and inherits
-  # its sound - which is what makes it a duet rather than a second clip that
+  # its sound — which is what makes it a duet rather than a second clip that
   # happens to mention the first. A sound can also be reused on its own.
   def apply_sound_and_duet(video)
     original = Tv::Video.publicly_visible.find_by(id: params.dig(:video, :duet_of_id))

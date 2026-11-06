@@ -1,5 +1,5 @@
 // Cards, chips, badges, and the order-state palette (§7).
-// space_not_lines: cards separate by surface + gap - border 0, no shadow.
+// space_not_lines: cards separate by surface + gap — border 0, no shadow.
 .card {
   background: var(--surface-elevated);
   border: 0;
@@ -74,7 +74,7 @@
   color: var(--gold-ink);
 }
 
-// State chips - placed mint, confirmed gold, preparing gold-deep, ready
+// State chips — placed mint, confirmed gold, preparing gold-deep, ready
 // mint-700, picked_up soft, delivered ink-soft, cancelled pom.
 .state-chip {
   display: inline-flex;
@@ -121,7 +121,7 @@
   color: var(--danger);
 }
 
-// Empty states - one truth sentence and one verb, plus a way out.
+// Empty states — one truth sentence and one verb, plus a way out.
 .empty {
   text-align: center;
   padding: var(--space-32) var(--space-20);

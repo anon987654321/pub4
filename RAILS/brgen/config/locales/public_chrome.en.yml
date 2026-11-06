@@ -8,9 +8,9 @@ en:
     feed_view: Feed
   post:
     new_steps: Create post
-    new_step_media: 1 - Media
-    new_step_text: 2 - Post
-    new_publishing: Publishing...
+    new_step_media: 1 · Media
+    new_step_text: 2 · Post
+    new_publishing: Publishing…
     new_media_heading: Start with media
     new_media_hint: Add a photo first, or continue with text only.
     new_media_camera_hint: Camera or photo library

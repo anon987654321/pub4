@@ -10,7 +10,7 @@ module Marketplace
     include Shared::Notifiable
     belongs_to :listing, class_name: "Marketplace::Listing"
 
-    # marketplace_deals has no city_id - a deal's city is its listing's - so
+    # marketplace_deals has no city_id — a deal's city is its listing's — so
     # nothing scoped deals to the request's city and every city's sitemap
     # listed every city's deals.
     include TenantedThrough
@@ -54,7 +54,7 @@ module Marketplace
     end
 
     # Used as the tracks_activity actor, so it runs in an after_commit on a deal
-    # that a controller loaded by id - `listing&.user` was a lazy read that
+    # that a controller loaded by id — `listing&.user` was a lazy read that
     # raised under strict loading. See Shared::StrictSafeAssociations.
     def listing_owner = strict_safe(:listing)&.user
 

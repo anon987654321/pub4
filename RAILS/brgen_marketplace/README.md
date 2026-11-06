@@ -56,7 +56,7 @@ and the Dintero client are in brgen's `app/services/marketplace/payments`, not i
 
 Routes are drawn on `Marketplace::Engine`, and brgen mounts the engine at the root under
 `constraints(subdomain: MARKETPLACE_SUBDOMAINS)`. From the host, reach the helpers as
-`marketplace.listing_url(..., subdomain: "markedsplass")`. The saved list is at `/wishlist`,
+`marketplace.listing_url(…, subdomain: "markedsplass")`. The saved list is at `/wishlist`,
 because the host declares `/saved` for bookmarks before it mounts this engine, and a `/saved`
 here would never run.
 

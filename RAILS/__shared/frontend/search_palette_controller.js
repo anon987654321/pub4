@@ -2,8 +2,8 @@ import { Controller } from "@hotwired/stimulus"
 
 // Search, opened over the page instead of parked in a rail.
 //
-// brgen carried search twice - a link in the left nav and a field in the right
-// widgets rail - and both rails were removed. A palette is what replaces them:
+// brgen carried search twice — a link in the left nav and a field in the right
+// widgets rail — and both rails were removed. A palette is what replaces them:
 // it costs no permanent chrome, it is reachable from the keyboard without
 // travelling to a corner, and it keeps the feed behind it so a search is
 // something you do to the page rather than somewhere you go.

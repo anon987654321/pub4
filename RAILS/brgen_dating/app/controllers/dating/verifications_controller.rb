@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-# Asking to be verified, and - for whoever reviews - answering.
+# Asking to be verified, and — for whoever reviews — answering.
 class Dating::VerificationsController < Dating::BaseController
   before_action :require_user_session
   before_action :set_profile, only: %i[new create]

@@ -6,7 +6,7 @@ require_relative "engine_roots"
 # An ownership guard must compare a column, not an association.
 #
 # brgen's ownership_guard_contract_test already asserts that every mutating
-# controller *has* a guard. It accepts `Current.user ==` as proof of one - and
+# controller *has* a guard. It accepts `Current.user ==` as proof of one — and
 # that is the shape which does not work:
 #
 #   @track = Playlist::Track.find(params[:id])   # nothing preloaded
@@ -15,7 +15,7 @@ require_relative "engine_roots"
 # ApplicationRecord sets strict_loading_by_default in every environment, so the
 # association read raises StrictLoadingViolationError before the comparison
 # happens. The guard does not deny access. It never runs, and every path behind
-# it fails - for the owner as much as for anyone else.
+# it fails — for the owner as much as for anyone else.
 #
 # The two tests are complements, and neither replaces the other: one asks
 # whether a guard is present, this one asks whether it can execute. Seven
@@ -31,7 +31,7 @@ class OwnershipGuardReadsAColumnTest < Minitest::Test
 
   GUARD_METHOD = /^\s*def\s+\w*(?:authorize|authoriz|owner|permit|can_)\w*[!?]?/
 
-  # The risky side is the *record's* association - the object that came back
+  # The risky side is the *record's* association — the object that came back
   # from a finder with nothing preloaded. `Current.user` is never risky: it is
   # already materialised by the time any guard runs, and `Current.user.id` is a
   # column read on it. Matching it was this check's own first bug, and it flagged
@@ -74,7 +74,7 @@ class OwnershipGuardReadsAColumnTest < Minitest::Test
     stale = PRELOADED.keys.reject { |path| File.file?(File.join(ROOT, path)) }
 
     assert_empty stale,
-                 "PRELOADED names files that no longer exist - an exemption whose subject is gone " \
+                 "PRELOADED names files that no longer exist — an exemption whose subject is gone " \
                  "is a hole in this check that nobody can see"
   end
 

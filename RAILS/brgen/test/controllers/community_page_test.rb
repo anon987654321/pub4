@@ -67,8 +67,8 @@ class CommunityPageTest < ActionDispatch::IntegrationTest
   end
 
   test "the post count leaves out removed posts and the chosen flair is current" do
-    Post.create!(user: @owner, title: "kept", content: "...", community: @community, flair: "Nyhet")
-    Post.create!(user: @owner, title: "gone", content: "...", community: @community, removed_at: Time.current)
+    Post.create!(user: @owner, title: "kept", content: "…", community: @community, flair: "Nyhet")
+    Post.create!(user: @owner, title: "gone", content: "…", community: @community, removed_at: Time.current)
 
     get community_path(@community, flair: "Nyhet")
 
@@ -87,7 +87,7 @@ class CommunityPageTest < ActionDispatch::IntegrationTest
   end
 
   test "the header's post count is the pager's own count, not a second query" do
-    Post.create!(user: @owner, title: "kept", content: "...", community: @community)
+    Post.create!(user: @owner, title: "kept", content: "…", community: @community)
     counts = 0
     counter = ->(*, payload) { counts += 1 if payload[:sql].match?(/SELECT COUNT\(\*\) FROM "posts"/) }
     ActiveSupport::Notifications.subscribed(counter, "sql.active_record") { get community_path(@community) }

@@ -29,7 +29,7 @@ module Shared
 
     def self.call(url, schema:, hint: nil)
       raise ArgumentError, "scrape requires a public HTTP(S) URL" unless public_http_url?(url)
-      raise LoadError, "gem install ferrum - required for Scrape.call" unless defined?(Ferrum::Browser)
+      raise LoadError, "gem install ferrum — required for Scrape.call" unless defined?(Ferrum::Browser)
 
       # Keep Chromium's renderer sandbox enabled when processing untrusted pages.
       # Run the scraper as an unprivileged account; do not trade isolation for

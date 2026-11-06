@@ -7,7 +7,7 @@ require "shared/contracts"
 Shared::Contracts.require_contract("studio")
 
 module Brgen
-  # Shared Radio Bergen manifest loader - pub2 index.html archaeology split into data + Rails.
+  # Shared Radio Bergen manifest loader — pub2 index.html archaeology split into data + Rails.
   class RadioBergenManifest
     class << self
       def manifest_path
@@ -19,7 +19,7 @@ module Brgen
       end
 
       # One candidate now, not four. The three fallbacks pointed into
-      # MASTER/tools/radio-bergen, which no longer exists - brgen serves this playlist,
+      # MASTER/tools/radio-bergen, which no longer exists — brgen serves this playlist,
       # so the manifest lives in brgen's own config where the first candidate
       # always looked. In development that path resolves directly; in production
       # it is the same path, so there is nothing left to fall back to.
@@ -142,7 +142,7 @@ module Brgen
         match = Shared::LinkEmbed.match_url(url)
         return unless match
 
-        Shared::LinkEmbed::Record.new(match:, status: "ok", title: "#{track[:artist]} - #{track[:title]}",
+        Shared::LinkEmbed::Record.new(match:, status: "ok", title: "#{track[:artist]} – #{track[:title]}",
                                       author_name: "Radio Brgen", thumbnail_url: thumbnail)
       end
 
@@ -154,17 +154,17 @@ module Brgen
 
         [
           "$ git dig --follow pub4/index.html",
-          "object: pub2 monolithic index.html -> radio.brgen.no warp tunnel",
+          "object: pub2 monolithic index.html → radio.brgen.no warp tunnel",
           "archive: #{meta['source_archive'] || 'anon987654321/pub2'} @ #{pub2_head}",
           # These two are rendered to the visitor on the playlist surface, so
           # they name paths that exist. MASTER/tools/radio-bergen/ was removed in
           # 41b20306d; the manifest moved into this app and the learnings into
           # the dilla engine.
           "manifest: RAILS/brgen/config/radio_bergen/tracks.yml",
-          "lesson: do_not_restore monolithic index.html - manifest + Rails vertical instead",
-          "catalogue: #{youtube_count} external references - no local source files",
+          "lesson: do_not_restore monolithic index.html — manifest + Rails vertical instead",
+          "catalogue: #{youtube_count} external references · no local source files",
           "policy: #{manifest.dig('external_reference', 'policy') || 'reference_only_until_rights_review'}",
-          "surface: radio.brgen.no - tap to boot tunnel (pub4 matrix index.html lineage)"
+          "surface: radio.brgen.no — tap to boot tunnel (pub4 matrix index.html lineage)"
         ]
       end
 

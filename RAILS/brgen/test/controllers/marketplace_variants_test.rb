@@ -92,7 +92,7 @@ class MarketplaceVariantsTest < ActionDispatch::IntegrationTest
       }
     end
     added = Marketplace::Variant.order(:created_at).last
-    assert_equal "Blå - S", added.label
+    assert_equal "Blå · S", added.label
 
     delete marketplace.listing_variant_path(@listing, added)
     assert_not Marketplace::Variant.exists?(added.id)
@@ -142,6 +142,6 @@ class MarketplaceVariantsTest < ActionDispatch::IntegrationTest
     get marketplace.listing_path(@listing)
     assert_response :success
     assert_includes response.body, "order[variant_id]"
-    assert_includes response.body, "M -"
+    assert_includes response.body, "M —"
   end
 end

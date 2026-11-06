@@ -202,7 +202,7 @@
 .composer-body .tiptap_button[aria-pressed="true"] { background: var(--hover); }
 
 /* The "attach my area" opt-in, selected by what it is rather than by a class
-   the markup has to carry. :has() is the reason this is possible at all - a
+   the markup has to carry. :has() is the reason this is possible at all — a
    label wrapping a checkbox is a structural fact, so the ERB stays a plain
    <label> and this rule cannot fall out of sync with a renamed class.
    > in the :has() so a label containing a nested fieldset never matches. */

@@ -11,7 +11,7 @@ module Shared
   # still holds a bio. This strips tags first, so the number in the model means
   # what a reader would say it means.
   #
-  # Entities decode too - "&amp;" is one character to a reader, and five to
+  # Entities decode too — "&amp;" is one character to a reader, and five to
   # String#length.
   module RichTextLength
     extend ActiveSupport::Concern

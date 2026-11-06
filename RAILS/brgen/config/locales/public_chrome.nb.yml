@@ -8,9 +8,9 @@ nb:
     feed_view: Feed
   post:
     new_steps: Lag innlegg
-    new_step_media: 1 - Media
-    new_step_text: 2 - Innlegg
-    new_publishing: Publiserer...
+    new_step_media: 1 · Media
+    new_step_text: 2 · Innlegg
+    new_publishing: Publiserer…
     new_media_heading: Start med media
     new_media_hint: Legg til et bilde først, eller fortsett med bare tekst.
     new_media_camera_hint: Kamera eller bildebibliotek

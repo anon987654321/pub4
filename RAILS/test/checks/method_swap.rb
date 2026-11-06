@@ -2,8 +2,8 @@
 
 # Swap a singleton method for the duration of a block.
 #
-# The check tests need to decide what the machine looks like - no Chrome, no
-# listening port, this HTML from that surface - because the point of a
+# The check tests need to decide what the machine looks like — no Chrome, no
+# listening port, this HTML from that surface — because the point of a
 # third-state assertion is that it holds when the precondition is absent, and a
 # test that can only run on a machine without Chrome runs nowhere.
 #

@@ -28,10 +28,10 @@ export default class extends Controller {
     pauseLabel: { type: String, default: "Pause" },
     openLabel: { type: String, default: "Open" },
     commentAtLabel: { type: String, default: "Comment at %{time}" },
-    commentPromptLabel: { type: String, default: "Comment at this time..." },
+    commentPromptLabel: { type: String, default: "Comment at this time…" },
     positionLabel: { type: String, default: "%{current} of %{total}" },
     fallbackTitleLabel: { type: String, default: "brgen playlist" },
-    bufferingLabel: { type: String, default: "Buffering..." },
+    bufferingLabel: { type: String, default: "Buffering…" },
     loadErrorLabel: { type: String, default: "Could not load this track." },
     playRefusedLabel: { type: String, default: "Press play to start." }
   }
@@ -173,7 +173,7 @@ export default class extends Controller {
   // reach or move it from a keyboard: a control that announces itself to a screen
   // reader as a slider and then does not behave like one is worse than an
   // unlabelled div, because the label is a promise. role="slider" obliges arrow
-  // keys, Home and End - this is that half.
+  // keys, Home and End — this is that half.
   //
   // Written against currentTime rather than the aria value, so the audio element
   // stays the single source of position and #tick keeps aria-valuenow honest.
@@ -327,7 +327,7 @@ export default class extends Controller {
   }
 
   // Media Session: lock-screen / headphone / car controls + now-playing metadata.
-  // Table stakes for audio on a phone - the player was fully custom but never
+  // Table stakes for audio on a phone — the player was fully custom but never
   // registered with the OS. Skip buttons walk the same queue as the transport bar.
   #setupMediaSession() {
     if (!("mediaSession" in navigator) || !this.hasAudioTarget) return

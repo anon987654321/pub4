@@ -2,7 +2,7 @@
 
 module Fediverse
   # HTTP Signatures (draft-cavage-http-signatures), which is what the fediverse
-  # actually speaks - not RFC 9421.
+  # actually speaks — not RFC 9421.
   #
   # This is the security boundary of the whole feature: an unsigned or
   # badly-verified inbox accepts a Delete for anyone's post and a Follow from
@@ -51,7 +51,7 @@ module Fediverse
     # Verify an incoming request. Returns true only if everything holds.
     #
     # `public_key_for` is a callable taking the keyId and answering an
-    # OpenSSL::PKey::RSA - passed in rather than reached for, so verification
+    # OpenSSL::PKey::RSA — passed in rather than reached for, so verification
     # has no opinion about where keys are cached and can be tested without one.
     def verify(request:, body:, public_key_for:)
       parsed = parse(request.headers["Signature"])

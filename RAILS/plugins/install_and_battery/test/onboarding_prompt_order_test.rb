@@ -11,7 +11,7 @@ require "minitest/autorun"
 # first. The rule now lives in shared/frontend/onboarding_queue.js and this
 # holds the three callers to it.
 #
-# Read as text, like the rest of RAILS/test - no Rails boot.
+# Read as text, like the rest of RAILS/test — no Rails boot.
 class OnboardingPromptOrderTest < Minitest::Test
   # Overridable so this test can be run against a mutated copy of the five files
   # it reads, and shown to fail. Checking it in place would mean writing to
@@ -45,7 +45,7 @@ class OnboardingPromptOrderTest < Minitest::Test
 
   def test_welcome_is_first_and_later_prompts_wait
     thresholds = queue.scan(/^\s{2}(\w+):\s*(\d+),/).to_h { |name, n| [name, n.to_i] }
-    refute_empty thresholds, "MIN_SESSIONS did not parse - this test is measuring nothing"
+    refute_empty thresholds, "MIN_SESSIONS did not parse — this test is measuring nothing"
 
     assert_equal thresholds.fetch("welcome"), thresholds.fetch("install")
     install = thresholds.fetch("install")
@@ -64,8 +64,8 @@ class OnboardingPromptOrderTest < Minitest::Test
     end
   end
 
-  # Install can appear at any moment - the visitor posts, plays a track, sends a
-  # message - so a threshold alone would still let a lower prompt sit on top of
+  # Install can appear at any moment — the visitor posts, plays a track, sends a
+  # message — so a threshold alone would still let a lower prompt sit on top of
   # one that arrived after it.
   def test_welcome_blocks_install_and_later_prompts
     welcome = File.read(File.join(ROOT, WELCOME))

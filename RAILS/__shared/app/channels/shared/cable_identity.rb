@@ -5,7 +5,7 @@ module Shared
   #
   # Every app had the same connect/set_current_user pair. brgen additionally
   # accepts soft guests, so set_current_user is written to be overridden with a
-  # `super` call - it returns true/false rather than the assignment's value so
+  # `super` call — it returns true/false rather than the assignment's value so
   # an override can tell "found" from "keep looking".
   module CableIdentity
     extend ActiveSupport::Concern

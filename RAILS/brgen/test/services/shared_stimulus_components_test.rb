@@ -86,12 +86,12 @@ class SharedStimulusComponentsTest < Minitest::Test
   def test_every_controller_the_snippet_library_offers_is_registered
     registered = registry_source.scan(/(?:register\(|\[ ?)"([a-z-]+)",/).flatten.to_set
 
-    refute_empty registered, "no registrations parsed - the scan broke, not the tree"
+    refute_empty registered, "no registrations parsed — the scan broke, not the tree"
 
     snippets = read_source(File.join(ROOT, "__shared/frontend/examples.html.erb"))
     offered = snippets.scan(/data-controller="([^"]+)"/).flatten.flat_map(&:split).to_set
 
-    refute_empty offered, "no snippets parsed - the scan broke, not the tree"
+    refute_empty offered, "no snippets parsed — the scan broke, not the tree"
     assert_empty(offered - registered,
                  "examples.html.erb offers a controller stimulus_boot.js does not register")
   end

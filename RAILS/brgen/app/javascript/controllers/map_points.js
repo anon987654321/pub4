@@ -9,7 +9,7 @@ export function renderPointList(list, count, points, { href, untitled }) {
     const url = href(point.url)
     const entry = document.createElement(url ? "a" : "span")
     if (url) entry.href = url
-    const subtitle = point.subtitle ? ` - ${point.subtitle}` : ""
+    const subtitle = point.subtitle ? ` · ${point.subtitle}` : ""
     entry.textContent = `${point.title || untitled}${subtitle}`
     item.append(entry)
     return item

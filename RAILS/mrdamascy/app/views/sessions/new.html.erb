@@ -16,7 +16,7 @@
     <%= button_to t("auth.logout"), session_path, method: :delete %>
   <% else %>
     <%# Fastest path first (§12): Vipps verifies the phone and hands back
-        name + address - no OTP, no forms. The SMS fallback stays below. %>
+        name + address — no OTP, no forms. The SMS fallback stays below. %>
     <%= link_to t("auth.vipps_login"), session_vipps_path, class: "button button-vipps" %>
     <%= tag.p t("auth.or_sms"), class: "login-or" %>
 
@@ -57,7 +57,7 @@
     <% end %>
 
     <%# In development SessionsController#request_code flashes the mock code
-        as a notice - it renders through shared/_toast. No standing mock-code
+        as a notice — it renders through shared/_toast. No standing mock-code
         paragraph here: it would leak the OTP in every other environment. %>
   <% end %>
 </section>

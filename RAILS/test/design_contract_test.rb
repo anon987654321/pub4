@@ -140,7 +140,7 @@ end
 
     refute_empty luxury, "amber's stylesheet must include luxury-light-tokens"
     assert(luxury.any? { |selector| selector.match?(/\A:root:not\(\[data-theme=["']dark["']\]\)\z/) },
-           "luxury must be restated at :root:not([data-theme=dark]) - that is the selector " \
+           "luxury must be restated at :root:not([data-theme=dark]) — that is the selector " \
            "stack uses for OS-light, and it outranks plain :root")
     assert(luxury.any? { |selector| selector.match?(/\A\[data-theme=["']light["']\]\z/) },
            "luxury must be restated at [data-theme=light] or the theme toggle restores social indigo")

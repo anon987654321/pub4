@@ -3,7 +3,7 @@
 module Marketplace
   module Payments
     # Stripe Checkout Session for cart/order totals.
-    # Without STRIPE_SECRET_KEY -> NotConfigured (never fakes success).
+    # Without STRIPE_SECRET_KEY → NotConfigured (never fakes success).
     class StripeCheckout
       API = "https://api.stripe.com/v1/checkout/sessions"
 

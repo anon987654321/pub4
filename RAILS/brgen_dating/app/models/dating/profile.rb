@@ -59,16 +59,16 @@ class Dating::Profile < ApplicationRecord
 
   # The deck was ORDER BY RANDOM(). Orientation, neighbourhood and a 20 km
   # radius filtered the pool and nothing ranked it, so someone who last opened
-  # this in March sat beside someone who is online now - and every reload
+  # this in March sat beside someone who is online now — and every reload
   # reshuffled, so a profile you had just seen could not be found again.
   #
   # Three ingredients, in this order:
   #
-  #   recency  - who is actually around. A dating app whose deck is full of
+  #   recency  — who is actually around. A dating app whose deck is full of
   #              dormant accounts is a dating app nobody matches on.
-  #   effort   - a profile with prompts answered gives the viewer something to
+  #   effort   — a profile with prompts answered gives the viewer something to
   #              reply to, which is the whole interaction this vertical is for.
-  #   shuffle  - a per-viewer, per-day deterministic jitter. Without it the same
+  #   shuffle  — a per-viewer, per-day deterministic jitter. Without it the same
   #              profile is top of everyone's deck forever, and with plain
   #              RANDOM() the order changes on every reload.
   #
@@ -93,7 +93,7 @@ class Dating::Profile < ApplicationRecord
   def self.ranked_for(viewer, seed: Date.current.to_s)
     multiplier = (Digest::MD5.hexdigest("#{seed}:#{viewer&.id}")[0, 6].to_i(16) % (SHUFFLE_MODULUS - 1)) + 1
     # Integer() rather than the bare local: both values are integers by
-    # construction - to_i(16) % 996 + 1, and a literal constant - but Brakeman
+    # construction — to_i(16) % 996 + 1, and a literal constant — but Brakeman
     # cannot follow that through the digest and reported the interpolation as
     # possible SQL injection, which failed brgen's CI. Integer() is the
     # narrowest way to make it provable: it raises rather than coerces, so it

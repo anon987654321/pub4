@@ -43,9 +43,9 @@ class FormControlNamesTest < Minitest::Test
   # where a regex over ERB source is the wrong tool rather than the view being
   # wrong. Kept explicit so the list cannot quietly grow.
   #
-  #   playlist/playlists/show.html.erb:42 - the input's value= holds an escaped
-  #     <iframe ...> whose `>` ends the tag match early, before its aria-label.
-  #   takeaway/orders/new.html.erb:41 - label_tag and the field's id: are both
+  #   playlist/playlists/show.html.erb:42 — the input's value= holds an escaped
+  #     <iframe …> whose `>` ends the tag match early, before its aria-label.
+  #   takeaway/orders/new.html.erb:41 — label_tag and the field's id: are both
   #     "takeaway_order_items_#{item.id}", and the interpolation only resolves
   #     at render time.
   KNOWN_UNREADABLE = [
@@ -159,7 +159,7 @@ class FormControlNamesTest < Minitest::Test
   end
 
   def test_the_scan_reaches_engine_views
-    refute_empty views, "no views found - the glob is wrong, not the tree"
+    refute_empty views, "no views found — the glob is wrong, not the tree"
     assert (views & engine_views).any?,
            "engine views are missing, which is the blind spot that hid 57 views " \
            "when the brgen verticals moved"

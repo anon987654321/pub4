@@ -30,7 +30,7 @@ class CommunityCopyTest < ActiveSupport::TestCase
   def test_the_task_rewrites_seeder_copy_once_and_leaves_hand_copy_alone
     seeded = create_community("kultur", "Kultur", "Kultur community for Hoppeton")
     english = create_community("food", "Food", "Food community for Pfefferton")
-    demo = create_community("mat", "Mat", "Bergen - mat")
+    demo = create_community("mat", "Mat", "Bergen — mat")
     hand = create_community("film", "Filmklubben", "Vi ser film på Bergen Kino hver fredag.")
 
     name, description = BrgenCommunityCopy.rewrite_for(seeded)

@@ -20,7 +20,7 @@ class Marketplace::JobDetail < ApplicationRecord
     return Shared::MoneyDisplay.format(salary_min_cents) if salary_max_cents.blank?
     return Shared::MoneyDisplay.format(salary_max_cents) if salary_min_cents.blank?
 
-    "#{Shared::MoneyDisplay.format(salary_min_cents)}-#{Shared::MoneyDisplay.format(salary_max_cents)}"
+    "#{Shared::MoneyDisplay.format(salary_min_cents)}–#{Shared::MoneyDisplay.format(salary_max_cents)}"
   end
 
   private

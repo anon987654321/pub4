@@ -5,7 +5,7 @@ require "tmpdir"
 require_relative "../../MASTER/tools/asset_url_lint"
 
 # The gap css_coverage_lint left. It measures class names in both directions and
-# never looks inside a declaration, so no committed tool read `url()` - and the
+# never looks inside a declaration, so no committed tool read `url()` — and the
 # audit that produced it checked `image_tag` and `asset_path`, the reference forms
 # that fail loudly, and skipped the one that fails silently.
 #
@@ -25,7 +25,7 @@ class AssetUrlLintTest < Minitest::Test
 
     L::BASELINES.each do |kind, baseline|
       assert_equal baseline, counts.fetch(kind),
-                   "#{kind} is at #{counts.fetch(kind)} against #{baseline} - lower it in asset_url_lint.rb"
+                   "#{kind} is at #{counts.fetch(kind)} against #{baseline} — lower it in asset_url_lint.rb"
     end
   end
 

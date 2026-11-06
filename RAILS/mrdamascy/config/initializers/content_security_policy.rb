@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # App-owned, nonce-bearing CSP (the fleet's split contract: the edge owns the
-# transport headers, Rails owns the nonce policy - an edge-level CSP would
+# transport headers, Rails owns the nonce policy — an edge-level CSP would
 # overwrite this one). Report-only until MRDAMASCY_CSP_ENFORCE=1 so the fresh
 # app can prove its own markup clean before enforcement flips on.
 Rails.application.configure do

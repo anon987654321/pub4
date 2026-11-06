@@ -34,7 +34,7 @@
 
 <% else %>
   <%# The tag name is an i18n argument, not Ruby interpolation into the default.
-      Built into the default string, it reached no translation - the nb entry
+      Built into the default string, it reached no translation — the nb entry
       added with this change takes %{name}, and had no way to be given one. %>
   <%= render "shared/empty_state", title: t("hashtag.empty_title"),
         body: t("hashtag.empty_body", name: @hashtag.name),

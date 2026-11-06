@@ -5,7 +5,7 @@ require "test_helper"
 # One row per (route, actor), each declaring ONE outcome.
 #
 # The flow checks cover this app with GETs carrying an `expect_status` list, and
-# twelve of those steps accept 200 AND a redirect - so "serves a stranger" and
+# twelve of those steps accept 200 AND a redirect — so "serves a stranger" and
 # "sends a stranger to sign in" are the same result to the check. amber grew this
 # matrix after `GET /items/new` served an anonymous 200 with every check green
 # (RAILS/amber/test/integration/authorization_matrix_test.rb); this is the same
@@ -17,7 +17,7 @@ require "test_helper"
 #
 # `port_mutations_test.rb` beside this file covers the signed-in half of those
 # same routes. It does not assert a single guest refusal, which is the half that
-# the bug lived in - reading it green tells you a watch works, not that a
+# the bug lived in — reading it green tells you a watch works, not that a
 # stranger cannot cast one.
 #
 # Two rules make this catch that class:
@@ -39,7 +39,7 @@ class AuthorizationMatrixTest < ActionDispatch::IntegrationTest
 
   # route builder, verb, guest outcome, signed-in outcome, params.
   #
-  # :any for the signed-in write half - the row exists to prove the door opens
+  # :any for the signed-in write half — the row exists to prove the door opens
   # for an account, and a create that fails validation still proves that. The
   # refusal side is the one that must be exact.
   #
@@ -90,7 +90,7 @@ class AuthorizationMatrixTest < ActionDispatch::IntegrationTest
     when :ok
       assert_response :success, "#{verb.upcase} #{route} as #{actor} should render"
     when :redirect
-      assert_response :redirect, "#{verb.upcase} #{route} as #{actor} must NOT be served - " \
+      assert_response :redirect, "#{verb.upcase} #{route} as #{actor} must NOT be served — " \
                                  "got #{response.status}. An identity check is missing, or it is " \
                                  "inside the action body where its redirect does not halt."
     when :any

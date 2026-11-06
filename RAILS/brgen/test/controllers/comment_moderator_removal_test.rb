@@ -19,7 +19,7 @@ class CommentModeratorRemovalTest < ActionDispatch::IntegrationTest
     @community = Community.create!(name: "Fjell #{SecureRandom.hex(3)}", user: @owner, city: @city)
     CommunityMembership.create!(community: @community, user: @moderator, role: "moderator")
 
-    @post = Post.create!(user: @owner, city: @city, community: @community, title: "Tur", content: "...")
+    @post = Post.create!(user: @owner, city: @city, community: @community, title: "Tur", content: "…")
     @comment = Comment.create!(user: @writer, commentable: @post, content: "<p>stygt</p>")
   end
 
@@ -70,7 +70,7 @@ class CommentModeratorRemovalTest < ActionDispatch::IntegrationTest
   end
 
   test "a comment on a post outside any community offers no Remove" do
-    loose = Post.create!(user: @owner, city: @city, title: "Løs", content: "...")
+    loose = Post.create!(user: @owner, city: @city, title: "Løs", content: "…")
     comment = Comment.create!(user: @writer, commentable: loose, content: "<p>hei</p>")
     sign_in_as(@moderator)
 

@@ -17,7 +17,7 @@ class TakeawayDeliveryDriverShowTest < ActionDispatch::IntegrationTest
   teardown { ActsAsTenant.current_tenant = nil }
 
   # show names the courier and compares Current.user to the driver's user, both
-  # association reads off a record found by id - which strict loading refuses.
+  # association reads off a record found by id — which strict loading refuses.
   test "the driver page renders for its owner" do
     host! "brgen.no"
     post session_path, params: { email_address: @courier.email_address, password: "password123" }

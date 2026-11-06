@@ -36,7 +36,7 @@ module Brgen
 
       # Email uniqueness is global, but User is tenant-scoped (CityTenantable),
       # and seed! runs inside with_tenant. So a find_or_create_by! here cannot
-      # see an admin row that has no city_id - and db/seeds.rb creates exactly
+      # see an admin row that has no city_id — and db/seeds.rb creates exactly
       # one of those ("admin@brgen.no", before it assigns a tenant). The find
       # missed it, the create hit the global uniqueness validation, and the
       # whole db:seed run died with "Email address er allerede i bruk" on every
@@ -74,7 +74,7 @@ module Brgen
         name, description = Brgen::PlausibleContent.community(slug, @city.name) if Brgen::PlausibleContent.norwegian_country?(country)
         Community.find_or_create_by!(slug: slug, city: @city) do |community|
           community.name = name || slug.capitalize
-          community.description = description || "#{@city.name} - #{slug}"
+          community.description = description || "#{@city.name} — #{slug}"
           community.user = admin
         end
       end
@@ -95,7 +95,7 @@ module Brgen
           email_address: "seed_#{@city.slug}_#{index}@#{@city.domain}"
         ) do |user|
           # The city slug keeps names unique across cities, but two of the 5 random
-          # Faker names can collide WITHIN a city (no index in the visible name) -
+          # Faker names can collide WITHIN a city (no index in the visible name) —
           # a flaky "Username er allerede i bruk" on replant. The index (before the
           # city slug) guarantees within-city uniqueness while the username still
           # ends in _<city.slug> for the global-uniqueness namespacing.
@@ -160,7 +160,7 @@ module Brgen
 
     # A post with no comments is a page with an empty section under it, which is
     # what these cities had: only Bergen's own seeder wrote any. The replies are
-    # in the city's dialect too - a Bergen answer under a Trondheim question is
+    # in the city's dialect too — a Bergen answer under a Trondheim question is
     # the same defect as a Bergen post there.
     #
     # Never the author: a thread where the only voice is the person who started

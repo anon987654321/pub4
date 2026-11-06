@@ -8,7 +8,7 @@ export default class extends Controller {
     key: String,
     url: String,
     interval: { type: Number, default: 5000 },
-    saving: { type: String, default: "Saving..." },
+    saving: { type: String, default: "Saving…" },
     saved: { type: String, default: "Saved" },
     savedLocally: { type: String, default: "Saved locally" },
     restored: { type: String, default: "Restored" }

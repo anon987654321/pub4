@@ -7,7 +7,7 @@ require "test_helper"
 # `_nearby_chat_widget`'s `respond_to?(:nearby_widget_path)` was false inside
 # marketplace, dating, tv, playlist and takeaway. On those five the shared
 # widget silently fell through to its "no chat on this app" branch and offered a
-# link to another domain - on the same application, with the same Conversation
+# link to another domain — on the same application, with the same Conversation
 # model, pointing at the room that already worked on the front page.
 #
 # It survived because the fallback looks deliberate. Nothing 500s, nothing logs,
@@ -44,7 +44,7 @@ class AmbientChatParityTest < ActionDispatch::IntegrationTest
                     { count: 1 },
                     "#{host} must load the shared chat room, not a handoff"
       assert_no_match %r{https://brgen\.no/channels/brgen}, @response.body,
-                      "#{host} is brgen - it must not link out to itself for chat"
+                      "#{host} is brgen — it must not link out to itself for chat"
     end
   end
 

@@ -27,11 +27,11 @@ module Shared
         if ::User.column_names.include?("guest")
           # It reads like a control and does nothing here: guests already get a soft
           # Current.user, so skipping resume_session would only deny them one. Say so
-          # where the author is - dev and test - so it is not a silent no-op; stay
+          # where the author is — dev and test — so it is not a silent no-op; stay
           # quiet in production, where it would be boot noise on every controller.
           if defined?(Rails) && (Rails.env.development? || Rails.env.test?)
             Rails.logger&.warn("[auth] allow_unauthenticated_access is a no-op in #{name}: " \
-                               "guests get a soft Current.user by design - check identity-bound " \
+                               "guests get a soft Current.user by design — check identity-bound " \
                                "actions with require_real_user instead.")
           end
 
@@ -53,8 +53,8 @@ module Shared
     private
 
     # In an app without guests, allow_unauthenticated_access skips
-    # resume_session, so a public page resumes it here on first ask - the
-    # generator's own shape - so a signed-in reader of a public page sees their
+    # resume_session, so a public page resumes it here on first ask — the
+    # generator's own shape — so a signed-in reader of a public page sees their
     # own nav and controls rather than the sign-in link. A broadcast renders
     # through ApplicationController.renderer with no key generator to read a
     # signed cookie, and a partial sent to everyone renders signed-out.
@@ -101,7 +101,7 @@ module Shared
       # domain: :all for the same reason as the session cookie (see
       # shared/config/initializers/session_store.rb): the verticals are
       # subdomains, and a host-only cookie signed you out on the way to them.
-      # secure: mirrors that initializer - production only, because relayd
+      # secure: mirrors that initializer — production only, because relayd
       # terminates TLS and force_ssl is deliberately off, so nothing else
       # would ever set the flag on this cookie.
       cookies.signed.permanent[:session_id] = {
@@ -137,7 +137,7 @@ module Shared
 
     # Sessions live in the main application's router. `new_session_path` on its
     # own resolves against whichever route set is in scope, which inside a
-    # mounted engine is the engine's - and no engine has a sessions route. So a
+    # mounted engine is the engine's — and no engine has a sessions route. So a
     # guest reaching any guarded action on a vertical got
     #
     #   ActionController::UrlGenerationError (No route matches
@@ -161,7 +161,7 @@ module Shared
     end
 
     # Any usable identity including soft guests. Core product actions
-    # (post, message, list, swipe, cart) use this - no signup required.
+    # (post, message, list, swipe, cart) use this — no signup required.
     def require_user_session
       return if Current.user.present?
 
@@ -247,8 +247,8 @@ module Shared
     # real users, and 146,885 of them are old enough to prune.
     #
     # This is the other half of the finding recorded at GUEST_BCRYPT_COST below.
-    # That pass measured what each row COST - 1,025 ms of BCrypt on every
-    # uncookied request - fixed the cost, and noted in passing that it "had also
+    # That pass measured what each row COST — 1,025 ms of BCrypt on every
+    # uncookied request — fixed the cost, and noted in passing that it "had also
     # written 102,778 throwaway guest rows". The rows kept being written and the
     # count has doubled since.
     #
@@ -257,7 +257,7 @@ module Shared
     # fix: nothing is written until something is on the other end.
     #
     # The first uncookied request gets an UNSAVED ::User. It answers every read a
-    # view or a policy makes - display_name, guest?, empty associations - and its
+    # view or a policy makes — display_name, guest?, empty associations — and its
     # nil id makes the rate limiters fall back to their IP bucket, which is the
     # right bucket for a visitor with no identity yet. A marker goes in the
     # session at the same time; a browser that keeps cookies returns it on the
@@ -270,7 +270,7 @@ module Shared
     # first response set.
     #
     # What needed care is the handful of places that need an id rather than a
-    # user - Conversation#join!, mark_read_for!, anything building a row with a
+    # user — Conversation#join!, mark_read_for!, anything building a row with a
     # foreign key. ensure_guest_user! covers them, wired as a before_action for
     # every non-GET and called explicitly by the three GET actions that write.
     #
@@ -320,7 +320,7 @@ module Shared
     # An unsaved guest that a write persisted on its own has to be remembered, or
     # the next request builds a fresh one and the author loses what they     # wrote. `user: Current.user` is how every create site here attaches the
     # actor, and ActiveRecord saves an unsaved belongs_to target before saving
-    # the owner - so this fires even where ensure_guest_user! was never called.
+    # the owner — so this fires even where ensure_guest_user! was never called.
     def remember_persisted_guest
       return unless supports_guests?
 
@@ -333,19 +333,19 @@ module Shared
     end
 
     # A guest's password exists only to satisfy has_secure_password. It is random,
-    # never shown to anyone, and can never be used to sign in - `authenticated?`
+    # never shown to anyone, and can never be used to sign in — `authenticated?`
     # is false for guests by definition, and the address is guest_*@guest.local.
     #
     # Assigning it through `password=` hashed it at BCrypt::Engine.cost, which is
     # 12 in production and measures 1,025 ms on vm23's single core. Every request
     # without a session cookie paid that: crawlers, uptime probes, robots.txt,
     # manifest.json, every asset fetched without credentials. Measured 2026-08-01
-    # on 275,334 logged brgen requests - 38.9% of them landed in one 900-1100 ms
+    # on 275,334 logged brgen requests — 38.9% of them landed in one 900-1100 ms
     # bucket, and the same endpoint answered in 18-24 ms once a cookie existed.
     # It had also written 102,778 throwaway guest rows, 99.3% of the users table.
     #
     # Cost 4 (BCrypt's minimum) takes 5 ms and is exactly as unusable. Real
-    # passwords are untouched - this bypasses the setter for guests only, and any
+    # passwords are untouched — this bypasses the setter for guests only, and any
     # guest that later becomes a real account gets a full-cost digest then.
     GUEST_BCRYPT_COST = BCrypt::Engine::MIN_COST
 

@@ -12,17 +12,17 @@ class ConversationsController < ApplicationController
              with: -> { redirect_to conversations_path, alert: t("flash.messages_rate_limited") }
   # The rail is part of the window, not part of the inbox, so it loads for the
   # room you are reading as well as for the list. Arriving straight at a
-  # conversation URL used to give you that conversation and nothing else - no
+  # conversation URL used to give you that conversation and nothing else — no
   # way to reach another room without going back first. #show loads it itself,
   # after view-once messages are expired, so the rail's preview never shows a
   # line the thread has just removed.
   before_action :load_rail, only: :index
 
   def index
-    # DMs only - public channels live under /channels, not the messenger list.
+    # DMs only — public channels live under /channels, not the messenger list.
     # Ordered by Conversation::INBOX_ORDER: pins first, then newest message via
     # a correlated subquery rather than a raw "messages.created_at" order on an
-    # unjoined table - the latter needs .references(:messages) and then
+    # unjoined table — the latter needs .references(:messages) and then
     # LEFT-JOIN-duplicates each conversation once per message.
     # ?arkiv=1 is the archive: the same list, the other half of the viewer's own
     # archive flag.
@@ -35,7 +35,7 @@ class ConversationsController < ApplicationController
 
     @last_messages = Conversation.last_messages_for(@conversations.map(&:id))
     # One grouped COUNT for the whole list. The view used to call
-    # unread_count_for per row, which includes(:messages) does not help with -
+    # unread_count_for per row, which includes(:messages) does not help with —
     # it is a find_by plus its own COUNT, so the preload was paid and ignored.
     @unread_counts = Conversation.unread_counts_for(Current.user)
     # One pluck for the pin state of the page, for the same reason.
@@ -113,7 +113,7 @@ class ConversationsController < ApplicationController
     @conversation = Conversation.for_user(Current.user).find(params[:id])
     # Channel/geo rooms inherit CHANNEL_TTL. Any member can hit this PATCH
     # (join! on GET /channels/:slug puts them in for_user), and a missing
-    # disappearing param maps to nil - which turns the TTL off.
+    # disappearing param maps to nil — which turns the TTL off.
     if (refusal = disappearing_refusal)
       redirect_to @conversation, alert: t(refusal)
       return
@@ -170,10 +170,10 @@ class ConversationsController < ApplicationController
   end
 
   def load_window
-    # parent: :sender for the reply line, message_receipts for the read chip -
+    # parent: :sender for the reply line, message_receipts for the read chip —
     # both are read once per message, so both are preloaded once per page.
     # The thread window and a history page are the same size, and one row more
-    # than the window answers "is there more behind this?" - so show learns the
+    # than the window answers "is there more behind this?" — so show learns the
     # answer without paying a COUNT, and the log gets its first history cursor.
     thread = @conversation.messages
     @messages = thread.visible.unexpired
@@ -198,7 +198,7 @@ class ConversationsController < ApplicationController
   end
 
   # The rooms rail: the reader's DMs, newest first, plus the public channels.
-  # Deliberately not paginated - the rail is chrome, and an inbox long enough to
+  # Deliberately not paginated — the rail is chrome, and an inbox long enough to
   # need a second page is long enough that the search box is the right tool. The
   # index still paginates its own list for the no-JS path.
   # The rail is a roster, not a feed: 30 rooms, no pager and no sentinel. Past

@@ -47,7 +47,7 @@ class Marketplace::JobDetailTest < ActiveSupport::TestCase
 
     range = Marketplace::JobDetail.new(salary_min_cents: 40_000_00, salary_max_cents: 50_000_00)
 
-    assert_equal "#{min}-#{max}", range.salary_display
+    assert_equal "#{min}–#{max}", range.salary_display
     assert_equal min, Marketplace::JobDetail.new(salary_min_cents: 40_000_00).salary_display
     assert_equal max, Marketplace::JobDetail.new(salary_max_cents: 50_000_00).salary_display
   end

@@ -12,7 +12,7 @@
   <%# The saved vehicle: a rejected update must not print the value it refused. %>
   <% vehicle = @delivery_driver.vehicle_type_in_database %>
   <% vehicle_label = vehicle.present? ? t("takeaway.vehicle_types.#{vehicle}") : t("takeaway.vehicle_unset") %>
-  <p><%= vehicle_label %> - <%= @delivery_driver.available? ? t("takeaway.available") : t("takeaway.unavailable") %></p>
+  <p><%= vehicle_label %> · <%= @delivery_driver.available? ? t("takeaway.available") : t("takeaway.unavailable") %></p>
   <% if @delivery_driver.location? && Current.user && Current.user.id == @delivery_driver.user_id %>
     <p><%= @delivery_driver.current_lat %>, <%= @delivery_driver.current_lng %></p>
   <% end %>

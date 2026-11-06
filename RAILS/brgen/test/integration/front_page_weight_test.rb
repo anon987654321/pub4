@@ -7,7 +7,7 @@ require "test_helper"
 # The front page is brgen's primary surface and it is read on a 390px phone. The
 # backlog recorded 271 Stimulus controller instances and 229,773 bytes of HTML,
 # re-measured by hand twice, and both numbers moved between measurements without
-# anything noticing - which is the same failure the method and file ratchets
+# anything noticing — which is the same failure the method and file ratchets
 # exist to stop. Per-post cost is what scales: chrome is paid once, everything in
 # _post.html.erb is paid 25 times.
 #
@@ -18,7 +18,7 @@ require "test_helper"
 #   viewport this page is designed for, so all 100 were unreachable there.
 #
 #   action on the repost button, 1 per post (25 instances). There is no repost
-#   feature anywhere in the tree - no route, model, controller or column - and
+#   feature anywhere in the tree — no route, model, controller or column — and
 #   action_controller#toggle guards its fetch on `if (this.urlValue)`, which that
 #   button did not set. Clicking it added the active class, sent nothing, and
 #   told the reader their repost had landed.
@@ -72,7 +72,7 @@ class FrontPageWeightTest < ActionDispatch::IntegrationTest
 
   # ERB comments removed before any source check. The first run of this file
   # counted three `action` controllers in a partial that renders two, and passed
-  # the popover check only because it failed - both times it was reading the
+  # the popover check only because it failed — both times it was reading the
   # comment that explains why those things are gone. A source scan that matches
   # its own rationale measures the documentation, not the code.
   def post_partial
@@ -101,7 +101,7 @@ class FrontPageWeightTest < ActionDispatch::IntegrationTest
 
   # This test used to assert the opposite: that no repost backend existed and
   # the button stayed inert, because for months a press toggled a class and
-  # discarded the click. The backend exists now, so the contract inverts -
+  # discarded the click. The backend exists now, so the contract inverts —
   # the button must reach it, and must not go back to being decorative.
   test "the comment action navigates to the comment section instead of posting empty content" do
     refute_match(/post_comments_path.*data-controller="[^"]*action/, post_partial)
@@ -128,7 +128,7 @@ class FrontPageWeightTest < ActionDispatch::IntegrationTest
 
   test "hover-only popovers stay out of the feed" do
     refute_match(/popover/, post_partial,
-                 "popover duplicated each button's aria-label and cannot fire on touch - " \
+                 "popover duplicated each button's aria-label and cannot fire on touch — " \
                  "it cost 100 of the page's 271 instances")
   end
 end

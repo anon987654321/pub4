@@ -3,7 +3,7 @@
 class SitemapsController < ApplicationController
   include Shared::Sitemapable
 
-  # The full ports tree is ~11-12k entries - comfortably under the 50,000
+  # The full ports tree is ~11-12k entries — comfortably under the 50,000
   # sitemaps.org per-file limit, so a single file needs no sitemap index.
   MAX_PORTS = 20_000
 

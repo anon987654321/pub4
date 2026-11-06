@@ -3,7 +3,7 @@
 # A photo or clip that deletes itself.
 #
 # The lifetime is stored rather than computed from created_at, so a story's own
-# row says when it goes - the sweep, the "expires in" label and the alive scope
+# row says when it goes — the sweep, the "expires in" label and the alive scope
 # all read the same column instead of each re-deriving 24 hours from somewhere
 # else and eventually disagreeing.
 class Story < ApplicationRecord
@@ -37,7 +37,7 @@ class Story < ApplicationRecord
   validate  :media_is_a_photo_or_clip, if: -> { attachment_changes.key?("media") }
 
   # Opt-in tagging of roughly where the author is. The position is the one
-  # locations#update already stored - coarsened there to a ~1 km grid - rather
+  # locations#update already stored — coarsened there to a ~1 km grid — rather
   # than a fresh GPS read from the compose form.
   attribute :attach_area, :boolean, default: false
 

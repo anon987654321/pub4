@@ -1,5 +1,5 @@
 // Cart lines, summary, and the fixed pay-bar above the tab bar.
-// Lines are cards inside .cart-lines - the view's grid gap separates them.
+// Lines are cards inside .cart-lines — the view's grid gap separates them.
 .cart-line {
   display: grid;
   grid-template-columns: 44px 1fr auto;
@@ -122,7 +122,7 @@
   margin-top: var(--space-8);
 }
 
-// Pay-bar - dark ink pill with a gold "Betal" chip. Flat: 1px border, no
+// Pay-bar — dark ink pill with a gold "Betal" chip. Flat: 1px border, no
 // shadow (pixel_perfection).
 .cart-bar {
   position: fixed;
@@ -191,7 +191,7 @@
   }
 }
 
-// The cart and checkout pages carry their own CTAs - no pay-bar there.
+// The cart and checkout pages carry their own CTAs — no pay-bar there.
 .page-carts .cart-bar,
 .page-checkout .cart-bar {
   display: none;

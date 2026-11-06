@@ -3,7 +3,7 @@
 require "faker"
 
 module Amber
-  # Realistic female fashion copy for dev/test seeds - not generic Commerce.product_name.
+  # Realistic female fashion copy for dev/test seeds — not generic Commerce.product_name.
   class FashionFaker
     BRANDS = %w[
       &\ Other\ Stories Reformation Sézane Ganni COS Arket Totême Staud Nanushka
@@ -96,11 +96,11 @@ module Amber
         }
       end
 
-      def outfit_name = "#{OUTFIT_VIBES.sample} - #{SEASONS.sample}"
+      def outfit_name = "#{OUTFIT_VIBES.sample} — #{SEASONS.sample}"
 
       def outfit_description
         [
-          "Built around texture and proportion - #{MATERIALS.sample} with #{COLORS.sample} accents.",
+          "Built around texture and proportion — #{MATERIALS.sample} with #{COLORS.sample} accents.",
           "A #{OCCASIONS.sample} look that repeats well in a capsule wardrobe.",
           "Layering play: #{PIECES.values.flatten.sample} over #{PIECES.values.flatten.sample}.",
         ].sample
@@ -111,7 +111,7 @@ module Amber
           "Wore this #{OCCASIONS.sample} look today",
           "Finally styled my #{COLORS.sample} #{PIECES.values.flatten.sample}",
           "Capsule check-in",
-          "Outfit repeat - still sparking joy",
+          "Outfit repeat — still sparking joy",
           "Decluttered three pieces, kept this hero item",
         ].sample
 
@@ -132,7 +132,7 @@ module Amber
       def item_note
         [
           "Pairs with #{COLORS.sample} accessories.",
-          "Dry clean only - bought on sale at #{BRANDS.sample}.",
+          "Dry clean only — bought on sale at #{BRANDS.sample}.",
           "Needs hemming; otherwise perfect #{OCCASIONS.sample} piece.",
           "Cost-per-wear finally under £2.",
         ].sample

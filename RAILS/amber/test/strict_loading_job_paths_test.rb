@@ -6,7 +6,7 @@ require "test_helper"
 # by running them rather than by reading the model.
 #
 # ApplicationRecord sets strict_loading_by_default = true, but
-# Shared::CascadingAssociationsLoad - declared three lines below it - sets
+# Shared::CascadingAssociationsLoad — declared three lines below it — sets
 # strict_loading: false on every has_many/has_one carrying a :destroy,
 # :destroy_async, :delete_all or :nullify cascade. So on Item, the four
 # associations that look most dangerous (declutter_review, declutter_challenges,

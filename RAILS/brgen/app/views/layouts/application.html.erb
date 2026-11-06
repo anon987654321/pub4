@@ -17,7 +17,7 @@
   <meta name="view-transition" content="same-origin">
   <%= tag.meta name: "viewport", content: "width=device-width, initial-scale=1, viewport-fit=cover" %>
   <%= tag.meta name: "mobile-web-app-capable", content: "yes" %>
-  <%# iOS ignores the manifest for standalone behaviour - these give an installed
+  <%# iOS ignores the manifest for standalone behaviour — these give an installed
       iPhone a real full-screen app, a translucent status bar, and a branded name. %>
   <%= tag.meta name: "apple-mobile-web-app-capable", content: "yes" %>
   <%= tag.meta name: "apple-mobile-web-app-status-bar-style", content: "black-translucent" %>
@@ -28,12 +28,12 @@
   <%= tag.meta name: "theme-color", content: "#143d5b", data: { light_color: "#143d5b", dark_color: "#143d5b" } %>
     <%= render "shared/theme_bootstrap", storage_key: "brgen-theme" %>
   <%# content_for(:x) with no block is the read form: it already returns nil when unset,
-      so content_for?(:x) ? yield(:x) : ... was two lookups and the key named twice. %>
+      so content_for?(:x) ? yield(:x) : … was two lookups and the key named twice. %>
   <% page_title = content_for(:title).presence %>
   <% page_description = content_for(:description).presence || t("pages.default_description", city: city_name) %>
-  <%# A page titled with the city's own name - the home page - takes no suffix,
-      or the tab reads "Bergen - Bergen". %>
-  <title><%= page_title && page_title != city_name ? "#{page_title} - #{city_name}" : city_name %></title>
+  <%# A page titled with the city's own name — the home page — takes no suffix,
+      or the tab reads "Bergen — Bergen". %>
+  <title><%= page_title && page_title != city_name ? "#{page_title} — #{city_name}" : city_name %></title>
   <meta name="description" content="<%= page_description %>">
   <link rel="canonical" href="<%= seo_canonical_url %>">
   <%= render "shared/social_card_meta", site_name: city_name, page_title: page_title,
@@ -65,7 +65,7 @@
   <%# Every surface, playlist included. The skip link must be the first focusable
       element on the page or it cannot do its job. The playlist tunnel used to
       opt out because the pill painted as a light rectangle in the brand corner;
-      _shell.scss now clips it to 1x1 with clip-path + opacity:0 (see the comment
+      _shell.scss now clips it to 1×1 with clip-path + opacity:0 (see the comment
       at the top of that file, which names this tunnel), so there is nothing left
       to paint. %>
   <a class="skip-link" href="#main-content"><%= t("skip_to_content") %></a>
@@ -81,11 +81,11 @@
     </aside>
   <% end %>
   <div class="brgen-top-chrome" aria-hidden="true"></div>
-  <%# After the skip link, not before it - the sprite is inert (aria-hidden,
+  <%# After the skip link, not before it — the sprite is inert (aria-hidden,
       focusable="false", 0x0) so it cannot take focus either way, but the rule
       above is that nothing precedes the skip link. %>
   <%= render "shared/icon_sprite" if icon_sprite? %>
-  <%# <header> only to give the wordmark a banner landmark - axe's region rule
+  <%# <header> only to give the wordmark a banner landmark — axe's region rule
       flagged it as the one piece of page content outside any landmark. It adds
       no box: .brgen-logo-mark is position:fixed, so the header has no in-flow
       child and computes to zero height, and every rule that styles the mark
@@ -107,7 +107,7 @@
         returns the pair to the trailing corner from md up. %>
     <div class="chrome-corner" role="region" aria-label="<%= t("theme.region") %>">
       <%# brgen mints a guest for every cookieless request, so Current.user is
-          always set - the question is whether it is a real account. %>
+          always set — the question is whether it is a real account. %>
       <% if Current.user.nil? || Current.user.guest? %>
         <%= link_to new_session_path, class: "chrome-auth", title: t("nav.sign_in"),
                     "aria-label": t("nav.sign_in") do %><span class="chrome-auth-label"><%= t("nav.sign_in") %></span><%= icon("sign_in", size: 20) %><% end %>
@@ -138,7 +138,7 @@
         by InboxBroadcastJob. Signed, and one per person, so it carries only
         what that person may see. %>
     <%= turbo_stream_from Current.user, :inbox unless Current.user.guest? %>
-    <%# DMs only - public channels are ambient and must not light the badge.
+    <%# DMs only — public channels are ambient and must not light the badge.
         One COUNT, not a Ruby sum over 2 queries per thread on every render of
         every page. The filter lives in unread_total_for. %>
     <% unread = messenger_unread_total %>

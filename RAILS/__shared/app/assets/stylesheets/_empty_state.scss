@@ -1,4 +1,4 @@
-/* Shared empty state - shared/_empty_state.html.erb + legacy .empty-state markup */
+/* Shared empty state — shared/_empty_state.html.erb + legacy .empty-state markup */
 
 /* Separation is space, not a box border (operator 2026-07-28). */
 .empty,
@@ -137,7 +137,7 @@ body[data-theme="wscons"] .empty-state,
 
 /* .visually-hidden is _components.scss's, alongside the other resets, and every
    app reaches that sheet through its stack. It was declared here identically
-   too - an accessibility utility with two definitions is one that can be
+   too — an accessibility utility with two definitions is one that can be
    half-fixed. */
 
 /* Shared skeleton if app did not define one */

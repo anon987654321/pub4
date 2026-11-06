@@ -22,7 +22,7 @@ class ZoneCheckControllerTest < ActiveSupport::TestCase
     const line = () => ({ textContent: "", hidden: false, classList: { add() {}, remove() {} } })
     const zone = new Subject({ querySelector: () => null })
     Object.assign(zone, {
-      urlValue: "/checkout/zone", okValue: "ok %{fee}", failValue: "fail %{postcode}", checkingValue: "...",
+      urlValue: "/checkout/zone", okValue: "ok %{fee}", failValue: "fail %{postcode}", checkingValue: "…",
       hasPostcodeTarget: true, postcodeTarget: { value: "5004" }, hasFeedbackTarget: true, feedbackTarget: line(),
       hasFeeTarget: true, feeTarget: line(), hasTotalTarget: true, totalTarget: line(),
       hasEtaTarget: true, etaTarget: line(), hasMinimumTarget: true, minimumTarget: line(),

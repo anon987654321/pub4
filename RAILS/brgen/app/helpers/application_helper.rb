@@ -72,11 +72,11 @@ module ApplicationHelper
     Rails.application.config.x.master_web_url
   end
 
-# Primary vertical navigation for the swiper. front -> home feed; AI -> the
+# Primary vertical navigation for the swiper. front → home feed; AI → the
 # shared MASTER face; the rest are per-city verticals on subdomains.
 #
 # Operator order, 2026-08-29: front AI Radio Marketplace Takeaway Messenger
-# Maps TV. Eight entries, and the bar is now exactly those eight - dating,
+# Maps TV. Eight entries, and the bar is now exactly those eight — dating,
 # channels and sign up came off it. Channels stays in _mobile_chrome and sign
 # up on the sign-in page; dating is reachable from a user's own profile and by
 # its own host, and losing its bar entry was the operator's call knowing that.
@@ -86,7 +86,7 @@ module ApplicationHelper
 # varies by locale, so comparing it to Current.subapp would have made the
 # active underline appear only for readers whose language happened to match
 # the token. Radio is the host and the label; the slug stays `playlist` because
-# that is what Current.subapp reports - the engine, its directory and its
+# that is what Current.subapp reports — the engine, its directory and its
 # playlist_* tables all still carry that name. The public name moved on
 # 2026-09-12 and the engine did not.
 def brgen_nav_items
@@ -94,7 +94,7 @@ def brgen_nav_items
   [
     [ "front",       nav_label("front"),       main_app.root_path ],
     # live (the hyperlocal anonymous layer) is off this bar per operator, 2026-08-17.
-    # The surface stays - its route, controller and rate limit are untouched, and
+    # The surface stays — its route, controller and rate limit are untouched, and
     # _mobile_chrome and nearby still link to it.
     [ "ai",          nav_label("ai"),          brgen_ai_url ],
     [ "playlist",    nav_label("radio"),       "//radio.#{domain}/" ],
@@ -151,7 +151,7 @@ end
     Current.subapp || inferred_vertical_from_controller
   end
 
-# Light, on every surface - operator, 2026-08-29, because that is what a social
+# Light, on every surface — operator, 2026-08-29, because that is what a social
 # network looks like.
 #
 # This retires the per-vertical split of 2026-08-24, and the reasoning there is
@@ -159,13 +159,13 @@ end
 # decision said the theme is a property of the surface, not of the visitor:
 # markedsplass and takeaway are storefronts and read light, the media and
 # social surfaces read dark, so prefers-color-scheme got no vote. It was
-# answering a real bug - the layout hardcoded dark for everything and pinned
+# answering a real bug — the layout hardcoded dark for everything and pinned
 # three light verticals to a palette their accents were never tuned against.
 #
 # What changed is the answer, not the mechanism: one light default across all
-# eight, so a reader moving front -> Radio -> Marketplace does not cross three
+# eight, so a reader moving front → Radio → Marketplace does not cross three
 # palettes. And the mechanism that decision argued for is exactly what makes
-# the new answer cheap - the layout still writes an explicit data-theme, so the
+# the new answer cheap — the layout still writes an explicit data-theme, so the
 # OS still gets no vote and nothing flashes dark before going light.
 #
 # A reader who wants dark still has it. The toggle writes localStorage and
@@ -197,14 +197,14 @@ def surface_theme = DEFAULT_SURFACE_THEME
   # Where the mark goes when you click it.
   #
   # main_app.root_path is "/" on every host, and on a vertical "/" is that
-  # vertical - so the mark reading "dating.brgen.no" reloaded dating. On
+  # vertical — so the mark reading "dating.brgen.no" reloaded dating. On
   # markedsplass that was merely redundant, because its nav swiper carries
   # eleven other destinations. On dating it was a dead end: dating renders no
   # primary nav at all (operator, 2026-08-25), so the wordmark is the only
   # chrome on the page and it did not lead anywhere.
   #
-  # The city apex is the honest target. It is the word the mark emphasises -
-  # "brgen" keeps the weight, the subdomain and TLD recede around it - so
+  # The city apex is the honest target. It is the word the mark emphasises —
+  # "brgen" keeps the weight, the subdomain and TLD recede around it — so
   # sending the click to the city is what the mark already looks like it does.
   def brand_mark_href
     return main_app.root_path unless vertical_surface?
@@ -230,7 +230,7 @@ def surface_theme = DEFAULT_SURFACE_THEME
     parts.join(" ")
   end
 
-  # Sign-in / sign-up / password reset - chrome-light body (no tab bar, nearby, edge grips).
+  # Sign-in / sign-up / password reset — chrome-light body (no tab bar, nearby, edge grips).
   def auth_surface?
     controller_path.in?(%w[sessions passwords users two_factor_setups])
   end
@@ -252,7 +252,7 @@ def surface_theme = DEFAULT_SURFACE_THEME
   # Public href for a domain record. Vertical models use absolute subdomain URLs
   # so apex surfaces (activity, notifications) can open the right host.
   # Distinguishes "no branch claimed this class" from "the branch claimed it and
-  # there is no link" - a Message with no conversation, a Dating::Profile that is
+  # there is no link" — a Message with no conversation, a Dating::Profile that is
   # not yours. Both are nil, and only the first may fall through to
   # polymorphic_path.
   UNROUTED = Object.new.freeze
@@ -266,7 +266,7 @@ def surface_theme = DEFAULT_SURFACE_THEME
     return href unless href == UNROUTED
 
     polymorphic_path(record) if respond_to?(:polymorphic_path)
-  rescue StandardError # scan: intentional - an unroutable record renders unlinked, which is the correct degradation
+  rescue StandardError # scan: intentional — an unroutable record renders unlinked, which is the correct degradation
     nil
   end
 
@@ -372,7 +372,7 @@ def surface_theme = DEFAULT_SURFACE_THEME
     I18n.t("activity.verticals.#{key}", default: key)
   end
 
-  # Deep link for a Notification - prefers notifiable, then source_*, then kind.
+  # Deep link for a Notification — prefers notifiable, then source_*, then kind.
   def notification_href(notification)
     return if notification.blank?
 
@@ -402,7 +402,7 @@ def surface_theme = DEFAULT_SURFACE_THEME
     end
 
     main_app.user_path(notification.actor) if notification.actor
-  rescue StandardError # scan: intentional - an actor without a route renders unlinked
+  rescue StandardError # scan: intentional — an actor without a route renders unlinked
     nil
   end
 

@@ -88,7 +88,7 @@
       <ul>
         <% @last_chance.each_with_index do |suggestion, index| %>
           <li>
-            <%= tag.strong Array(suggestion[:titles] || suggestion["titles"]).join(" - ") %>
+            <%= tag.strong Array(suggestion[:titles] || suggestion["titles"]).join(" · ") %>
             <p><%= suggestion[:reason] || suggestion["reason"] %></p>
             <%= button_to t("declutter.create_outfit"), create_last_chance_outfit_declutter_path(@item, index: index), method: :post, class: "button-small" %>
           </li>

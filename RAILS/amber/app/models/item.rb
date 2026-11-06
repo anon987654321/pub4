@@ -24,7 +24,7 @@ class Item < ApplicationRecord
   # naming a garment that no longer exists is a row that renders as a blank line.
   has_many :packing_list_items, dependent: :destroy, strict_loading: false
 
-  # Named variants match WardrobeMediaJob - keep dimensions in lockstep so
+  # Named variants match WardrobeMediaJob — keep dimensions in lockstep so
   # list/show helpers hit preprocessed digests instead of inventing new sizes.
   PHOTO_VARIANTS = {
     thumb: { resize_to_limit: [ 240, 240 ] },
@@ -58,7 +58,7 @@ class Item < ApplicationRecord
   scope :recent,       -> { order(created_at: :desc) }
   scope :worn_most,    -> { order(times_worn: :desc) }
   scope :never_worn,   -> { where("times_worn = 0 OR times_worn IS NULL") }
-  # The SQL twin of #underused? - kept adjacent so the threshold cannot drift
+  # The SQL twin of #underused? — kept adjacent so the threshold cannot drift
   # between the two. WardrobeAnalytics used to answer this by loading every
   # row and calling the Ruby predicate.
   scope :underused,    -> { where("COALESCE(times_worn, 0) < 3") }
@@ -68,7 +68,7 @@ class Item < ApplicationRecord
   # What is still in rotation: active_wardrobe minus the declutter box.
   #
   # The distinction matters for anything that *recommends* a garment. A boxed
-  # item is one you have already decided about, and active_wardrobe keeps it -
+  # item is one you have already decided about, and active_wardrobe keeps it —
   # so the dressing room offered it, the Style Assistant put it on you, and the
   # idle figure nagged you to wear it. Inventory figures still count it, because
   # you do still own it.

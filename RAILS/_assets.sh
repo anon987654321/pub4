@@ -1,9 +1,9 @@
 #!/usr/bin/env zsh
 set -euo pipefail
-# _assets.sh - Propshaft/dartsass asset precompile for copy-tree deploy.
+# _assets.sh — Propshaft/dartsass asset precompile for copy-tree deploy.
 # Source this file; do not execute directly. Requires _core.sh sourced first.
 
-# master_web_assets_precompile - Propshaft digest manifest + digested files for production face UI.
+# master_web_assets_precompile — Propshaft digest manifest + digested files for production face UI.
 master_web_assets_precompile() {
   local web_root=${1:-${PUB4:-/home/dev/pub4}/MASTER/web}
   [[ -d $web_root ]] || { log_warn "master_web_assets_precompile: missing ${web_root}"; return 0; }
@@ -17,7 +17,7 @@ master_web_assets_precompile() {
   log_ok "MASTER web assets ready"
 }
 
-# rails_assets_precompile_as_app APP_NAME APP_DIR - Propshaft digest manifest for production JS/CSS.
+# rails_assets_precompile_as_app APP_NAME APP_DIR — Propshaft digest manifest for production JS/CSS.
 rails_assets_precompile_as_app() {
   local app_name=$1
   local app_dir=$2

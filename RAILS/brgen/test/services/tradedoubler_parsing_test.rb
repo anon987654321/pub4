@@ -14,7 +14,7 @@ require "test_helper"
 # against.
 #
 # It lives in brgen's suite rather than RAILS/test because the parsing depends
-# on ActiveSupport (`presence`, `truncate`) - the first draft of this file ran
+# on ActiveSupport (`presence`, `truncate`) — the first draft of this file ran
 # under bare ruby on the assumption that it did not, and that assumption is what
 # the errors corrected.
 class TradedoublerParsingTest < ActiveSupport::TestCase
@@ -84,14 +84,14 @@ class TradedoublerParsingTest < ActiveSupport::TestCase
 # A scalar availability is read; a nested one is not, and this pins the
 # difference rather than the wish.
 #
-# `dig` takes alternative KEYS, not a path - dig.call("availability",
+# `dig` takes alternative KEYS, not a path — dig.call("availability",
 # "inStock") means "availability, or failing that inStock", so a feed sending
 # availability: { inStock: false } hands in_stock? a Hash. `.to_s.downcase` on
 # it matches none of the out-of-stock strings and the fallback then finds no
 # top-level inStock either, so the row reads as stocked.
 #
-# Whether TradeDoubler ever sends that shape is unmeasured - the nested
-# payload above is constructed, not captured - so this records the behaviour
+# Whether TradeDoubler ever sends that shape is unmeasured — the nested
+# payload above is constructed, not captured — so this records the behaviour
 # instead of changing it. If a real feed turns up with a nested availability,
 # this test is where the evidence goes and in_stock? is what changes.
 test "a scalar out-of-stock string is respected" do

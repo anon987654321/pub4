@@ -5,7 +5,7 @@ if [[ $(id -u) -eq 0 ]]; then
   print -u2 "amber.sh: refusing to run checkout code as root; use zsh OPENBSD/bin/vps-deploy amber"
   exit 2
 fi
-# amber.sh - deploys the tracked Amber Rails tree at app/.
+# amber.sh — deploys the tracked Amber Rails tree at app/.
 set -euo pipefail
 
 APP_NAME=amber

@@ -71,7 +71,7 @@ module Maps
       end
     end
 
-    # Events already carry coordinates - inherited from their Place or entered
+    # Events already carry coordinates — inherited from their Place or entered
     # by the organiser.
     def events_layer
       scope = Event.upcoming.includes(:neighborhood)
@@ -87,7 +87,7 @@ module Maps
     end
 
     # The Snap-Map half. Story coordinates are coarsened to ~1 km when written,
-    # so a pin says "around here" rather than "at this address" - which is the
+    # so a pin says "around here" rather than "at this address" — which is the
     # only reason putting them on a public map is acceptable at all.
     def stories_layer
       scope = Story.alive.in_current_city.includes(:user)
@@ -104,7 +104,7 @@ module Maps
     # actually out for delivery. A live position is the courier's, not the
     # city's: publishing every rider's location on a public map would be
     # tracking people who never agreed to be tracked, and it is not what makes
-    # the feature useful - the person waiting for the food is the only one who
+    # the feature useful — the person waiting for the food is the only one who
     # needs it.
     def courier_layer
       return [] if Current.user.blank?
@@ -127,7 +127,7 @@ module Maps
 
     def public_href(record)
       view_context.record_public_href(record)
-    rescue StandardError # scan: intentional - an unroutable record renders unlinked
+    rescue StandardError # scan: intentional — an unroutable record renders unlinked
       nil
     end
 

@@ -29,8 +29,8 @@ class Takeaway::Order
       refund_cancelled_payment! if status == "cancelled"
       # `user`, `restaurant.name` and `restaurant.user` are all lazy reads, and an
       # order loaded by id (controller, driver request, job) has none of them
-      # preloaded. Under strict loading - on in every environment, raising outside
-      # development - this raised immediately after update! had committed the new
+      # preloaded. Under strict loading — on in every environment, raising outside
+      # development — this raised immediately after update! had committed the new
       # status: the order advanced, the customer was never told, and the caller saw
       # a 500. See Shared::StrictSafeAssociations.
       label = I18n.t("takeaway.statuses.#{status}", default: status.to_s)

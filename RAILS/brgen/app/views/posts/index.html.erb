@@ -2,7 +2,7 @@
 <% posts_city = ActsAsTenant.current_tenant %>
 <%= turbo_stream_from Post.city_posts_stream(posts_city.id) if posts_city.respond_to?(:id) %>
 <% content_for :title, t("pages.all_posts") %>
-<%# empty_state: coverage-ok - the feed and its empty state render in posts/_live_search_results %>
+<%# empty_state: coverage-ok — the feed and its empty state render in posts/_live_search_results %>
 
 <div class="page-header">
   <%= tag.h1 t("pages.all_posts"), class: "primary-title" %>
@@ -19,7 +19,7 @@
   <%= link_to t("sort.top"), posts_path(sort: "top"), class: "sort-tab#{" active" if current_sort == "top"}",
         aria: { current: ("true" if current_sort == "top") } %>
   <%# The lane that makes following mean something: without it the follow
-      button wrote a row nothing read. Members only - a guest has no graph. %>
+      button wrote a row nothing read. Members only — a guest has no graph. %>
   <% if Current.user && !Current.user.guest? %>
     <%= link_to t("sort.following"), posts_path(sort: "following"),
           class: "sort-tab#{" active" if current_sort == "following"}",

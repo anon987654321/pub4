@@ -7,7 +7,7 @@ class OutfitsController < ApplicationController
   before_action :require_real_user
   before_action :set_outfit, only: %i[show edit update destroy like reorder share wear]
   # reorder mutates outfit_items via update_all and was set_ but never
-  # authorized - any signed-in user could reorder another user's outfit.
+  # authorized — any signed-in user could reorder another user's outfit.
   before_action :authorize!, only: %i[edit update destroy share wear reorder]
   # show and like were likewise unauthorized. Check them on viewability rather
   # than ownership: liking someone else's outfit is legitimate, reading a
@@ -29,7 +29,7 @@ class OutfitsController < ApplicationController
 
   # Mix & Match Magic. Each zone is ordered by TasteRanker rather than by
   # insertion, so the first garment a carousel shows is the one this wardrobe's
-  # behaviour says the owner reaches for - that is the "ever-evolving knowledge
+  # behaviour says the owner reaches for — that is the "ever-evolving knowledge
   # of your taste" the feature is named for.
   def dressing_room
     # in_rotation: the carousels offer garments to wear, and active_wardrobe

@@ -3,7 +3,7 @@
 require "test_helper"
 
 # The vertical feed only became possible once Tv::ViewEvent recorded watch time.
-# Before that, `trending` sorted views_count - incremented on page load - so a
+# Before that, `trending` sorted views_count — incremented on page load — so a
 # bounce ranked exactly like a full view, and a feed built on it would have
 # served whatever got the most accidental clicks.
 class TvFeedTest < ActionDispatch::IntegrationTest
@@ -101,7 +101,7 @@ class TvFeedTest < ActionDispatch::IntegrationTest
   end
 
   # brgen mints a real User row for every cookieless visitor, so a logged-out
-  # viewer does record watch time - the same reason they can post and vote. For
+  # viewer does record watch time — the same reason they can post and vote. For
   # a video feed that is the point: most viewers are never signed in, and a
   # ranking that only counted accounts would be built on a small minority.
   # Shared::PruneGuestUsersJob destroy_alls those users, and Tv::ViewEvent is

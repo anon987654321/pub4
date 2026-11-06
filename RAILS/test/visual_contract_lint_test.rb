@@ -53,7 +53,7 @@ class VisualContractLintTest < Minitest::Test
   # _minimal.scss is the file that proves the resolver is following the bundle
   # rather than collecting every shared partial. _stack_brgen does not forward
   # it, so its `.price { color: var(--accent) }` reaches amber and bsdports and
-  # never brgen - and accent_on_prose is a claim about brgen's grayscale
+  # never brgen — and accent_on_prose is a claim about brgen's grayscale
   # identity, not about the luxury or wscons dialects.
   def test_a_shared_partial_brgen_does_not_forward_is_not_in_its_bundle
     minimal = File.expand_path(File.join(L::RAILS_ROOT, "__shared/app/assets/stylesheets/_minimal.scss"))

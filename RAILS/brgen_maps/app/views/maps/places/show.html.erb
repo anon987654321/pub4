@@ -63,10 +63,10 @@
       <%= tag.h2 t("maps.at_this_place") %>
       <ul>
         <% @place.restaurants.active.limit(8).each do |restaurant| %>
-          <li><%= link_to restaurant.name, record_public_href(restaurant) %> - <%= t("nav.takeaway") %></li>
+          <li><%= link_to restaurant.name, record_public_href(restaurant) %> · <%= t("nav.takeaway") %></li>
         <% end %>
         <% @place.stores.active.limit(8).each do |store| %>
-          <li><%= link_to store.name, record_public_href(store) %> - <%= t("nav.marketplace") %></li>
+          <li><%= link_to store.name, record_public_href(store) %> · <%= t("nav.marketplace") %></li>
         <% end %>
       </ul>
     </section>
@@ -84,8 +84,8 @@
         <% @recent_check_ins.each do |check_in| %>
           <li>
             <%= check_in.user.display_name %>
-            <% if check_in.note.present? %> - <%= check_in.note %><% end %>
-            - <time datetime="<%= check_in.checked_in_at.iso8601 %>"><%= time_ago(check_in.checked_in_at) %></time>
+            <% if check_in.note.present? %> — <%= check_in.note %><% end %>
+            · <time datetime="<%= check_in.checked_in_at.iso8601 %>"><%= time_ago(check_in.checked_in_at) %></time>
           </li>
         <% end %>
       </ul>

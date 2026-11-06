@@ -5,7 +5,7 @@ require "securerandom"
 class Order < ApplicationRecord
   class InvalidTransition < StandardError; end
 
-  # placed -> confirmed -> preparing -> ready -> picked_up -> delivered, plus cancelled.
+  # placed → confirmed → preparing → ready → picked_up → delivered, plus cancelled.
   FLOW = %w[placed confirmed preparing ready picked_up delivered].freeze
   STATES = (FLOW + %w[cancelled]).freeze
   PAYMENT_STATES = %w[pending authorised captured failed].freeze
@@ -73,10 +73,10 @@ class Order < ApplicationRecord
     where(state: BOARD_STATES).includes(:order_items).order(:placed_at, :id).group_by(&:state)
   end
 
-  # --- State machine (plain string state + guard methods - APP_SPEC §4) ---
+  # --- State machine (plain string state + guard methods — APP_SPEC §4) ---
 
-  # Kitchen move: placed -> confirmed -> preparing -> ready. From ready the
-  # board shows "-" and the courier takes over.
+  # Kitchen move: placed → confirmed → preparing → ready. From ready the
+  # board shows "—" and the courier takes over.
   def advance!
     next_state = { "placed" => "confirmed", "confirmed" => "preparing", "preparing" => "ready" }[state]
     raise InvalidTransition, "cannot advance an order from #{state.inspect}" unless next_state
@@ -126,7 +126,7 @@ class Order < ApplicationRecord
 
   # The address with the customer's note (door code, floor) for a courier.
   def courier_comment
-    [ address, delivery_note ].compact_blank.join(" - ")
+    [ address, delivery_note ].compact_blank.join(" — ")
   end
 
   # Who to ask for at the door: the name given, else the number.
@@ -144,7 +144,7 @@ class Order < ApplicationRecord
 
   # --- Money (integer øre everywhere) --------------------------------------
 
-  # PromoApplier's result - { promo:, discount_ore:, delivery_fee_ore: } -
+  # PromoApplier's result — { promo:, discount_ore:, delivery_fee_ore: } —
   # lands here; nothing else writes the discount columns.
   def apply_promo_result!(result)
     result ||= {}
@@ -194,7 +194,7 @@ class Order < ApplicationRecord
   # Denormalised snapshot: order_items are frozen copies of cart_items, prices
   # and option lists included, so a later menu edit never rewrites an order.
   # Builds unsaved lines on a new order (CheckoutController) and creates rows
-  # on a persisted one - one snapshot implementation, both paths.
+  # on a persisted one — one snapshot implementation, both paths.
   def snapshot_from_cart!(cart)
     self.cart = cart
     cart.cart_items.includes(:menu_item).find_each do |line|
@@ -222,7 +222,7 @@ class Order < ApplicationRecord
     end
   end
 
-  # One stamp per delivered order - the Sahtein card's whole economy. The
+  # One stamp per delivered order — the Sahtein card's whole economy. The
   # order a free wrap paid for earns the tenth stamp, which is the reward
   # itself, so it is spent with the nine before it and the card starts over.
   def award_stamp!

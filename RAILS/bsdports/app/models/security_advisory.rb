@@ -18,7 +18,7 @@ class SecurityAdvisory < ApplicationRecord
   # Two broadcasts to "bsdports:security_advisories" were here, both with no
   # partial (implicit to_partial_path resolved to
   # security_advisories/_security_advisory, and bsdports has no
-  # app/views/security_advisories at all), no target, and no subscriber - nothing in
+  # app/views/security_advisories at all), no target, and no subscriber — nothing in
   # the app calls turbo_stream_from for that stream. Advisories render inside
   # ports/show.html.erb and arrive from the nightly NVD cross-reference, not from a
   # user action someone is watching for, so there is nothing a live prepend would

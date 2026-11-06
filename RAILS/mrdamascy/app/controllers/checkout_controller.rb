@@ -2,11 +2,11 @@
 
 class CheckoutController < ApplicationController
   # The min-basket flash formats øre through the same money() rule as the
-  # views - one formatter, no controller-side copy.
+  # views — one formatter, no controller-side copy.
   include ApplicationHelper
   # Real mode without credentials raises VippsClient::NotAvailable or
   # StripeClient::NotAvailable; the checkout says so honestly instead of
-  # 500-ing (payment honesty: no fake success, no half-captured orders - the
+  # 500-ing (payment honesty: no fake success, no half-captured orders — the
   # cart is untouched and the customer can retry).
   rescue_from VippsClient::NotAvailable, StripeClient::NotAvailable,
               with: :payment_unavailable
@@ -18,7 +18,7 @@ class CheckoutController < ApplicationController
   around_action :hold_checkout_claim, only: :create
 
   # The one confirm screen (APP_SPEC §6/§12): prefilled address, mode toggle,
-  # Vipps payment row, auto-applied promo line, totals - one "Betal med
+  # Vipps payment row, auto-applied promo line, totals — one "Betal med
   # Vipps" CTA. No promo field, no card fields, no tip step.
   def show
     remember_mode
@@ -45,7 +45,7 @@ class CheckoutController < ApplicationController
     return redirect_to(cart_path, alert: t("checkout.closed")) if kitchen.nil?
     return redirect_to(cart_path, alert: closed_text(kitchen)) unless kitchen.open_at?(Time.current)
 
-    # Payment lane: Vipps (default) or Stripe Checkout - the two buttons on
+    # Payment lane: Vipps (default) or Stripe Checkout — the two buttons on
     # the confirm screen each submit their own payment_method value. Unknown
     # values fall back to Vipps (PaymentGateway.normalize!).
     order = build_order(inputs, kitchen:, payment_method: PaymentGateway.normalize!(checkout_params[:payment_method]))
@@ -102,7 +102,7 @@ class CheckoutController < ApplicationController
   end
 
   # Denormalised snapshot: order_items are frozen copies of the cart lines
-  # (name, emoji, unit price incl. options, human option list) - one shared
+  # (name, emoji, unit price incl. options, human option list) — one shared
   # implementation on the model, used for both new and persisted orders.
   def build_order(inputs, kitchen:, payment_method:)
     delivery = inputs[:mode] == "delivery"
@@ -127,15 +127,15 @@ class CheckoutController < ApplicationController
     false
   end
 
-  # init_payment owns the payment state: mock -> "authorised" (the mock page
-  # approves it next), real -> "pending" until the PSP reports paid
+  # init_payment owns the payment state: mock → "authorised" (the mock page
+  # approves it next), real → "pending" until the PSP reports paid
   # (the webhook or tracking-poll sync then captures). One seam, no double
   # truth.
   def pay!(order)
     PaymentGateway.init!(order, method: order.payment_method)
     order.save!
   rescue VippsClient::NotAvailable, StripeClient::NotAvailable
-    # No payment was reserved - never leave a zombie on the kitchen board.
+    # No payment was reserved — never leave a zombie on the kitchen board.
     # The cart is untouched, so the customer retries (payment honesty).
     order.cancel! if order.persisted?
     raise
@@ -206,7 +206,7 @@ class CheckoutController < ApplicationController
     t("checkout.min_basket_fail", amount: money(short_ore), name: zone.name) if short_ore.positive?
   end
 
-  # Subtotal, promo, delivery fee and total for a cart in a mode and zone -
+  # Subtotal, promo, delivery fee and total for a cart in a mode and zone —
   # one sum for the confirm screen and the live zone answer.
   def checkout_quote(cart:, mode:, zone:)
     subtotal_ore = cart.subtotal_ore
@@ -244,7 +244,7 @@ class CheckoutController < ApplicationController
     render :show, status: :service_unavailable
   end
 
-  # Accepts both the form_with model shape (params[:order][...]) and plain
+  # Accepts both the form_with model shape (params[:order][…]) and plain
   # field names, so the confirm form stays free to pick either. The payment
   # method rides plain params (each pay button submits its own value).
   def checkout_params

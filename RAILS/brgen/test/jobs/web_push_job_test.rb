@@ -94,7 +94,7 @@ class WebPushJobTest < ActiveSupport::TestCase
                  enqueued_jobs.last["arguments"]
   end
 
-  # Unauthorized is 401/403 - our VAPID keys, not this reader's browser. It
+  # Unauthorized is 401/403 — our VAPID keys, not this reader's browser. It
   # fails the same way for every row, so destroying on it unsubscribes the whole
   # city on one bad rotation, and nothing on our side can put those rows back.
   test "keeps the subscription when the push service rejects our credentials" do

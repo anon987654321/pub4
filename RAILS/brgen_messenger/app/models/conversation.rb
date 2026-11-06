@@ -79,7 +79,7 @@ class Conversation < ApplicationRecord
 
   # Two subqueries, not two calls to for_user. `for_user(a).for_user(b)` reads
   # as an intersection and is not one: both scopes join the SAME association, so
-  # Rails collapses them into one join and ANDs the predicates on it -
+  # Rails collapses them into one join and ANDs the predicates on it —
   # `user_id = a AND user_id = b` on a single row, which no row satisfies. This
   # method therefore always answered nil, find_or_create_direct always created,
   # and every pair of people got a fresh thread each time they opened a DM from
@@ -173,7 +173,7 @@ class Conversation < ApplicationRecord
 
   # A group without an op can never be renamed or moderated again, so the last
   # one leaving hands the room to whoever has been in it longest rather than
-  # being refused - refusing would trap someone in a chat they want to leave.
+  # being refused — refusing would trap someone in a chat they want to leave.
   def promote_longest_standing!
     return if conversation_participants.exists?(role: "op")
 
@@ -220,8 +220,8 @@ class Conversation < ApplicationRecord
 
   # reject when the association is already loaded, where.not when it is not.
   #
-  # Every caller of display_name_for renders a list - the inbox, the rooms rail,
-  # the forward-target picker - and every one of those controllers preloads
+  # Every caller of display_name_for renders a list — the inbox, the rooms rail,
+  # the forward-target picker — and every one of those controllers preloads
   # :participants. A `where` on an association ignores that and issues its own
   # SELECT, so the preload was bought and then bypassed once per row. Adding the
   # rail made it two lists per page and the query budget caught it; the defect was

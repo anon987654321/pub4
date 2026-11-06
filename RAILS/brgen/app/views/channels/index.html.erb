@@ -1,9 +1,9 @@
 <% content_for :title, t("channels.title") %>
-<%# empty_state: coverage-ok - Conversation::CHANNELS is a static roster; this list cannot be empty %>
+<%# empty_state: coverage-ok — Conversation::CHANNELS is a static roster; this list cannot be empty %>
 
 <section class="channels-index" aria-label="<%= t("channels.aria") %>">
   <header class="page-header">
-    <h1><%= t("channels.title") %><%= " - #{@city.name}" if @city %></h1>
+    <h1><%= t("channels.title") %><%= " · #{@city.name}" if @city %></h1>
     <p><%= t("channels.intro", city: (@city ? t("channels.intro_city", name: @city.name) : "")) %></p>
   </header>
 

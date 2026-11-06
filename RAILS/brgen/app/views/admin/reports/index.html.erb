@@ -26,8 +26,8 @@
         </p>
         <p>
           <%= report_subject(report) %>
-          - <%= t("admin.reported_by", name: report.user.display_name) %>
-          - <time datetime="<%= report.created_at.iso8601 %>" data-controller="timeago" data-timeago-datetime-value="<%= report.created_at.iso8601 %>" data-timeago-refresh-interval-value="60000" data-timeago-add-suffix-value="true"><%= time_ago(report.created_at) %></time>
+          · <%= t("admin.reported_by", name: report.user.display_name) %>
+          · <time datetime="<%= report.created_at.iso8601 %>" data-controller="timeago" data-timeago-datetime-value="<%= report.created_at.iso8601 %>" data-timeago-refresh-interval-value="60000" data-timeago-add-suffix-value="true"><%= time_ago(report.created_at) %></time>
         </p>
         <% if report.details.present? %><%= tag.p report.details %><% end %>
         <nav class="cluster">
@@ -39,7 +39,7 @@
     <% end %>
   </div>
 <% else %>
-  <%# empty_state: no-action-ok - clear queue is the desired end state for moderators %>
+  <%# empty_state: no-action-ok — clear queue is the desired end state for moderators %>
   <%= render "shared/empty_state", title: t("empty.no_reports"), body: t("empty.reports_clear") %>
 <% end %>
 

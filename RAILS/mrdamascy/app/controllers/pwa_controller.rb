@@ -31,7 +31,7 @@ class PwaController < ApplicationController
   private
 
   # Changes whenever a digested stylesheet or script, or a precached public
-  # file, changes - no hand-bumped version to forget.
+  # file, changes — no hand-bumped version to forget.
   def cache_version
     marks = PRECACHE_URLS.filter_map { |url| Rails.public_path.join(url.delete_prefix("/")) }.select(&:file?)
     Digest::SHA256.hexdigest(

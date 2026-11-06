@@ -4,9 +4,9 @@ require "test_helper"
 
 # The real Stripe webhook (POST /stripe/callback): Stripe signs the body with
 # HMAC-SHA256 and carries t=/v1= pairs in the Stripe-Signature header.
-# Contract here: unsigned/wrongly-signed/stale -> 400, verified
+# Contract here: unsigned/wrongly-signed/stale → 400, verified
 # checkout.session.completed drives sync_payment! (captured + confirmed),
-# replays converge, garbage JSON -> 400, unknown sessions answer politely.
+# replays converge, garbage JSON → 400, unknown sessions answer politely.
 class StripeCallbackTest < ActionDispatch::IntegrationTest
   setup do
     @kitchen = seed_kitchen!

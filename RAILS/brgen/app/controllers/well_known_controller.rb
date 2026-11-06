@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-# WebFinger and NodeInfo - how the rest of the fediverse discovers that
+# WebFinger and NodeInfo — how the rest of the fediverse discovers that
 # @kari@brgen.no is a thing and what speaks for it.
 #
 # The account is resolved against the *requested host*, because each city is a

@@ -1,12 +1,12 @@
 #!/usr/bin/env zsh
 set -euo pipefail
-# _sync.sh - copy-tree sync and fixed app-user shared-file overlays.
+# _sync.sh — copy-tree sync and fixed app-user shared-file overlays.
 # Source this file; do not execute directly. Requires _core.sh sourced first.
 
 # Production tree replacement is performed only by the fixed-mode, app-owned
 # pub4-admin rails-sync helper below. No caller-supplied source/destination
 # paths cross into a privileged copy, delete, or rename operation.
-# rails_sync_app_tree APP_NAME MODE - fixed app-user tree synchronization.
+# rails_sync_app_tree APP_NAME MODE — fixed app-user tree synchronization.
 # Source and destination paths are owned by the installed broker helper, not caller input.
 rails_sync_app_tree() {
   local app_name=$1 mode=$2
@@ -27,7 +27,7 @@ rails_sync_app_tree() {
   }
   "${_PRIV}" /usr/local/sbin/pub4-admin rails-sync "$app_name" "$mode"
 }
-# overlay_shared_initializers APP_DIR - shared config wins over stale per-app copies
+# overlay_shared_initializers APP_DIR — shared config wins over stale per-app copies
 overlay_shared_initializers() {
   local app_dir=$1
   local shared_init=${PUB4_RAILS_ROOT:-/home/dev/pub4/RAILS}/__shared/config/initializers
@@ -41,7 +41,7 @@ overlay_shared_initializers() {
   log_ok "shared initializers overlaid (merge, app-specific files preserved)"
 }
 
-# overlay_shared_public APP_DIR - merge shared/public (tokens, error pages, fonts).
+# overlay_shared_public APP_DIR — merge shared/public (tokens, error pages, fonts).
 # Never clobber per-app brand icons/manifests (amber palette, etc.).
 overlay_shared_public() {
   local app_dir=$1

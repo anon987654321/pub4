@@ -9,7 +9,7 @@ class TypingIndicatorsController < ApplicationController
     by: -> { Current.user&.id ? "u#{Current.user.id}" : request.remote_ip },
     with: -> { head :too_many_requests }
 
-  # "Typing..." is a signal into someone's thread, so it obeys the same rules as
+  # "Typing…" is a signal into someone's thread, so it obeys the same rules as
   # a message: nothing across a block, and nothing from someone whose request
   # has not been accepted.
   def create

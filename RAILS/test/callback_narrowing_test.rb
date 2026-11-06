@@ -45,7 +45,7 @@ class CallbackNarrowingTest < Minitest::Test
 
       repeated.map do |name, rows|
         "#{file.sub(ROOT + "/", "")}: :#{name} declared #{rows.size}x " \
-          "(lines #{rows.map { |r| r[1] }.join(", ")}) - Rails keeps ONE; " \
+          "(lines #{rows.map { |r| r[1] }.join(", ")}) — Rails keeps ONE; " \
           "the last `only:`/`except:` becomes the entire scope"
       end
     end.flatten

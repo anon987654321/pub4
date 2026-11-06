@@ -95,7 +95,7 @@ class CartsController < ApplicationController
   end
 
   # The shared stream contract with the layout (APP_SPEC §7):
-  # - shared/_cart_bar renders its own root with dom id "cart_bar" - replaced
+  # - shared/_cart_bar renders its own root with dom id "cart_bar" — replaced
   #   when present, appended to <body> when the first item just made it exist;
   # - the tab badge is the layout's span#cart_count;
   # - shared/_toast renders flash messages into the layout's div#toasts,

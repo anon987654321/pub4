@@ -7,7 +7,7 @@ class Maintainer < ApplicationRecord
   has_many :ports, dependent: :nullify
 
   # The unique index on maintainers.name existed without this, so a duplicate
-  # reached the database and came back as ActiveRecord::RecordNotUnique - a 500,
+  # reached the database and came back as ActiveRecord::RecordNotUnique — a 500,
   # not a form error. The importer resolves a maintainer per port from a free-text
   # field in the ports tree, so a repeat is the ordinary case rather than an
   # adversarial one.

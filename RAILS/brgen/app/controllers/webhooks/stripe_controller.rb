@@ -5,12 +5,12 @@ require "json"
 module Webhooks
   # Stripe Checkout webhooks.
   #
-  # Dashboard -> Developers -> Webhooks:
+  # Dashboard → Developers → Webhooks:
   #   URL:  https://<host>/webhooks/stripe
   #   Events: checkout.session.completed,
   #           checkout.session.async_payment_succeeded,
   #           customer.subscription.created, .updated, .deleted
-  #   Signing secret -> STRIPE_WEBHOOK_SECRET (whsec_...)
+  #   Signing secret → STRIPE_WEBHOOK_SECRET (whsec_…)
   #
   # Important: verify against the raw request body bytes, not a re-serialized JSON object.
   #

@@ -4,7 +4,7 @@ module Fediverse
   # One signed POST to one inbox.
   #
   # Per inbox rather than per activity, so one unreachable instance retries on
-  # its own instead of holding up delivery to everyone else - which is what a
+  # its own instead of holding up delivery to everyone else — which is what a
   # single job looping over every follower would do.
   class DeliveryJob < ApplicationJob
     queue_as :bulk

@@ -1,5 +1,5 @@
 <%# size, not count: Outfit.with_images_for_display preloads :items, and .count
-    ignores a loaded association and issues its own SELECT - one per outfit on
+    ignores a loaded association and issues its own SELECT — one per outfit on
     every page of the wardrobe. .size reads what is already there. %>
 <article class="item-card item-card--wardrobe" id="<%= dom_id(outfit) %>">
   <div class="item-photo-wrap">

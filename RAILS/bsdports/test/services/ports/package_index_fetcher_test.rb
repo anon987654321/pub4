@@ -10,7 +10,7 @@ require "test_helper"
 #
 # Real Net::HTTPResponse subclasses, not stubs that answer is_a?. `case response
 # when Net::HTTPRedirection` goes through Module#===, which asks the VM and not
-# a Ruby-defined is_a? - so a struct pretending to be a redirect falls through
+# a Ruby-defined is_a? — so a struct pretending to be a redirect falls through
 # to the else branch and returns nil. Three of these four then passed while
 # measuring nothing, which is the shape they exist to catch in the code.
 class PackageIndexFetcherRedirectTest < ActiveSupport::TestCase

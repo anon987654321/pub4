@@ -45,7 +45,7 @@ class ViewportSpillCheckTest < Minitest::Test
 
   # The instrument, checked against a case whose answer is known: an element
   # explicitly wider than the viewport must be reported, and the same element
-  # inside a sideways scroller must not - a chip rail is meant to run past the
+  # inside a sideways scroller must not — a chip rail is meant to run past the
   # edge, and a check that cannot tell the two apart would fail every surface.
   def test_the_probe_sees_a_spill_and_forgives_a_scroller
     skip "no Chrome" unless Deploy::CdpSession.available?

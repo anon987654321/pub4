@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Sending it back. Its own table rather than a column on the order, because a
-# return has its own lifecycle - asked for, answered, received - and its own
+# return has its own lifecycle — asked for, answered, received — and its own
 # reason, which is the part the seller reads.
 class CreateMarketplaceReturns < ActiveRecord::Migration[8.1]
   def change

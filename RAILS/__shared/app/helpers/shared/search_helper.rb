@@ -2,7 +2,7 @@
 
 module Shared
   module SearchHelper
-    def live_search_index(url:, results_partial:, placeholder: "Search...", label: "Search", frame_id: nil, query: nil,
+    def live_search_index(url:, results_partial:, placeholder: "Search…", label: "Search", frame_id: nil, query: nil,
 **locals, &block)
       render(
         partial: "shared/live_search_index",
@@ -37,7 +37,7 @@ module Shared
     end
 
     # The results half of live_search_index on its own, so a page can put the
-    # field in one place and the results in another - the storefront header
+    # field in one place and the results in another — the storefront header
     # holds the field, and the grid sits under a teaser row the form knows
     # nothing about.
     #

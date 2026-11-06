@@ -55,7 +55,7 @@ class TakeawayHoursTest < ActiveSupport::TestCase
   # says a place open until 02:00 is shut at 00:30.
   test "a kitchen open past midnight is open just after midnight" do
     saturday = Time.zone.local(2026, 8, 8, 23, 0)
-    hours(weekday: saturday.wday, opens: 17 * 60, closes: 26 * 60) # 17:00-02:00
+    hours(weekday: saturday.wday, opens: 17 * 60, closes: 26 * 60) # 17:00–02:00
 
     assert @restaurant.open_now?(saturday)
     assert @restaurant.open_now?(saturday + 90.minutes), "00:30 is still Saturday night to a kitchen"

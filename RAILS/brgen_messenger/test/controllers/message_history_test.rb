@@ -4,7 +4,7 @@ require "test_helper"
 
 # A thread used to end fifty messages in: the window rendered the newest page
 # and nothing reached past it. These tests pin the history contract the other
-# way around - every page links to the one above it through X-History-Next,
+# way around — every page links to the one above it through X-History-Next,
 # the walk reaches the thread's first line, the pages render only what the
 # reader may see, and only a participant gets a cursor at all.
 class MessageHistoryTest < ActionDispatch::IntegrationTest

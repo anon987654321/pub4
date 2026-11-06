@@ -4,7 +4,7 @@
 require "builder"
 
 module Shared
-  # Renders a sitemaps.org urlset from plain entries - one XML builder shared
+  # Renders a sitemaps.org urlset from plain entries — one XML builder shared
   # by every app instead of each hand-rolling its own escaping/formatting.
   class SitemapBuilder
     Entry = Data.define(:loc, :lastmod, :changefreq, :priority) do

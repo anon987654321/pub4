@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-# Pin the Hotwire stack and the application's own modules. Local files win -
+# Pin the Hotwire stack and the application's own modules. Local files win —
 # the app has no CDN-hosted third-party JavaScript.
 
 pin "application"

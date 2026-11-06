@@ -10,11 +10,11 @@ $palette: true !default;
 // The token foundation lives in the lowest cascade layer. Un-layered styles
 // beat layered ones regardless of source order, so an app palette written
 // at plain :root (brgen-old, amber luxury, bsdports wscons) now wins BY
-// CONSTRUCTION - reordering @use in an application.scss can no longer
+// CONSTRUCTION — reordering @use in an application.scss can no longer
 // silently restore this file's indigo, which shared/README.md carried as a
 // live hazard from 2026-08-10 until today.
 @layer tokens {
-  // Shared light-theme override set - used identically by [data-theme="light"]
+  // Shared light-theme override set — used identically by [data-theme="light"]
   // and the @media(prefers-color-scheme:light) fallback below, so it's defined once.
   @mixin semantic-light-overrides {
     @include x.light-tokens;
@@ -69,7 +69,7 @@ $palette: true !default;
     --text-small: 0.875rem;
     --text-base: 1rem;
     --text-large: 1.125rem;
-    /* Page / section titles - design_tokens shared_chrome.font_size_title */
+    /* Page / section titles — design_tokens shared_chrome.font_size_title */
     --text-title: 1.25rem;
     --text-extra-large: 1.5rem;
     /* design_tokens ui_polish.type_tokens.text_display */
@@ -83,7 +83,7 @@ $palette: true !default;
        phone, opening to 160px on a wide screen. */
     --section-rhythm: clamp(64px, 10vw, 160px);
     /* Every step here sits on design_laws.yml's 8px rhythm
-       ([0,4,8,12,16,20,24,32,40,44,48,64,96]px) - steps 7/9/11/13/14/15 used to
+       ([0,4,8,12,16,20,24,32,40,44,48,64,96]px) — steps 7/9/11/13/14/15 used to
        fill the scale out to a smooth 0.25rem stride (28/36/44/52/56/60px),
        none of which are on the rhythm. Removed rather than snapped to the
        nearest step, since nothing should be reaching for a step number that
@@ -113,7 +113,7 @@ $palette: true !default;
     /* Page content width for browse-style surfaces. Added 2026-08-10 because the
        brgen verticals each picked their own: marketplace and takeaway 1280px, tv
        1100px, and nothing named the number, so the same grid changed width as you
-       moved between subapps of one site. --feed-max (600px) stays separate - that
+       moved between subapps of one site. --feed-max (600px) stays separate — that
        is the single-column reading measure, a different job. */
     --container-max: 1280px;
     /* The alpha ladder, from design_tokens system.opacity. Composed into colour
@@ -176,7 +176,7 @@ $palette: true !default;
        every transition. Three of these four spelled out a browser default and
        called it a curve: --ease-out held cubic-bezier(0.25, 0.1, 0.25, 1), which
        is the definition of the `ease` keyword, and carried 68 of the family's
-       call sites - so the whole surface animated on the browser default behind a
+       call sites — so the whole surface animated on the browser default behind a
        token that looked designed. --ease-linear was `linear` written long, and
        neither it nor --ease-spring had a single consumer.
        --ease-out now decelerates hard and settles, which is what a panel, sheet
@@ -201,7 +201,7 @@ $palette: true !default;
        --z-overlay that this list did not know about, and a reader sizing a new
        layer against it would have been reading a subset. Two disagreeing
        sources are what made the brgen wordmark invisible once already. Values
-       are unchanged - this moves where they are declared, not what they are. */
+       are unchanged — this moves where they are declared, not what they are. */
     --z-canvas: 1;
     --z-chrome: 10;
     --z-ui: 90;
@@ -242,7 +242,7 @@ $palette: true !default;
    sweep of the marketplace engine on 2026-09-08 found four columns outside this
    list: the cart's per-row totals, the order summary's total, the store's
    payout list and the variant table's prices. The first three carry data-money
-   now - the generic hook, rather than three new class names - and .variant-price
+   now — the generic hook, rather than three new class names — and .variant-price
    already had a name, so it joins the list.
 
    Four other money renderings were left alone deliberately, because tabular

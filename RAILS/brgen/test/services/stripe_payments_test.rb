@@ -17,7 +17,7 @@ class StripePaymentsTest < ActiveSupport::TestCase
     Rails.instance_variable_set(:@_env, original)
   end
 
-  test "unconfigured is unconfigured - no key fakes readiness" do
+  test "unconfigured is unconfigured — no key fakes readiness" do
     assert_not Marketplace::Payments::StripeCheckout.configured?
     assert_raises(Marketplace::Payments::NotConfigured) { Marketplace::Payments::StripeCheckout.ensure! }
     assert_raises(Marketplace::Payments::NotConfigured) do

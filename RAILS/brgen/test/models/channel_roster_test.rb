@@ -44,7 +44,7 @@ class ChannelRosterTest < ActiveSupport::TestCase
 
   # The failure this pins is invisible from the outside: chrome, roster and topic
   # all render correctly on a room with nothing in it. Observed on production
-  # #brgen - @master and +echo in the roster, topic line set, zero messages.
+  # #brgen — @master and +echo in the roster, topic line set, zero messages.
   #
   # welcome! runs once inside create_channel!, and its posts carry the room's own
   # CHANNEL_TTL like every other channel message, so six hours after creation the

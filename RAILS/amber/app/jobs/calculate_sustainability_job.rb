@@ -9,7 +9,7 @@ class CalculateSustainabilityJob < ApplicationJob
   def perform(item_id)
     # Preloaded, not bare: ApplicationRecord sets strict_loading_by_default in
     # every environment, so reading the association off a plain find raised
-    # StrictLoadingViolationError on every run of this job - and a job has no
+    # StrictLoadingViolationError on every run of this job — and a job has no
     # request spec to notice.
     item = Item.includes(:sustainability_metric).find(item_id)
     metric = item.sustainability_metric || item.build_sustainability_metric

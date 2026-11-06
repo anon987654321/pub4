@@ -81,7 +81,7 @@ module Shared
       log("dilla stderr: #{err.lines.last.to_s.strip}") if !status.success? && err.strip != ""
       status.success?
     rescue Shared::Subprocess::TimeoutError => e
-      log("dilla render timed out after #{seconds}s - #{e.message}")
+      log("dilla render timed out after #{seconds}s — #{e.message}")
       false
     end
     def log(message)

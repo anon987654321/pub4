@@ -4,7 +4,7 @@ en:
   skip_to_content: "Skip to main content"
   nav:
     # Referenced by the engine chat widget. bsdports has no messages route, so the
-    # branch that shows it never renders here - but a key the view can name must
+    # branch that shows it never renders here — but a key the view can name must
     # resolve, or it ships as a translation_missing span the day it does.
     messages: "Messages"
     # Same shape as messages above: shared/_inbox_link names it, and that partial
@@ -52,7 +52,7 @@ en:
     copy_pkg_add: "pkg_add command"
     required_by_count: "Required by %{count}"
     rdeps_show_all: "Show all %{count}"
-    version_change: "%{old} -> %{new}"
+    version_change: "%{old} → %{new}"
     filtered_by: "Ports in %{name}"
     clear_filter: "All ports"
     severity:
@@ -78,11 +78,11 @@ en:
     write_comment: "Write a comment"
     comment_on: "Comment on %{name}"
     search_hint: "Search names, exact pkgpaths, maintainers, dependencies and security notes. Press / or ⌘K to focus search."
-    search_placeholder: "Search name or category/pkgpath..."
+    search_placeholder: "Search name or category/pkgpath…"
     search_label: "Search ports"
-    categories_placeholder: "Search categories..."
+    categories_placeholder: "Search categories…"
     categories_label: "Category search"
-    maintainers_placeholder: "Search maintainers..."
+    maintainers_placeholder: "Search maintainers…"
     maintainers_label: "Maintainer search"
     actions_label: "Port actions"
     advisories: "CVEs / security advisories"
@@ -127,7 +127,7 @@ en:
     browse_all: "Browse all ports"
     categories: "Categories"
     categories_section_label: "Port categories"
-    empty_body: "Try another query - e.g. git, python, or a category."
+    empty_body: "Try another query — e.g. git, python, or a category."
     empty_unimported: "The catalogue is empty because the OpenBSD index has not been imported on this server yet. This is not a failed search."
     last_import: "Last import: %{status}, %{count} ports, %{when}"
     never_imported: "No import has been run."
@@ -142,7 +142,7 @@ en:
     watch: "Watch"
     confirm_delete_comment: "Delete this comment?"
     explore_assistant:
-      identity: "%{name} (%{version}) in %{category} - %{comment}."
+      identity: "%{name} (%{version}) in %{category} — %{comment}."
       no_comment: "no comment recorded"
       uncategorized: "uncategorized"
       maintainer: "Maintainer: %{name}."
@@ -166,7 +166,7 @@ en:
   # feed-hotkey is on the layout body now, so / and Cmd/Ctrl-K reach the search from
   # every page instead of only the ports index.
   hotkeys:
-    help: "j/k - ↓↑ nav - Enter open - / or ⌘K search - esc clear - ? help"
+    help: "j/k · ↓↑ nav · Enter open · / or ⌘K search · esc clear · ? help"
     coach: "Keyboard: press ? anytime for shortcuts (j/k to move, / to search)."
     coach_dismiss: "Got it"
   pages:

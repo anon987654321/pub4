@@ -43,7 +43,7 @@ class Marketplace::ListingAndStoreOutlineTest < ActionDispatch::IntegrationTest
     assert_includes headings, I18n.t("marketplace.offers")
     text = Nokogiri::HTML(response.body).text
     assert_includes text, I18n.t("marketplace.listing_statuses.active")
-    assert_includes text, "- #{I18n.t('marketplace.order_statuses.pending')}"
+    assert_includes text, "— #{I18n.t('marketplace.order_statuses.pending')}"
   end
 
   test "a shop with nothing live says so" do

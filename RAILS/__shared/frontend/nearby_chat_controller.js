@@ -11,13 +11,13 @@ export default class extends Controller {
     storageKey: { type: String, default: "pub4:ambient-chat:open" },
     labelChat: { type: String, default: "chat" },
     labelNearby: { type: String, default: "nearby" },
-    statusAsking: { type: String, default: "Asking for location..." },
-    statusDenied: { type: String, default: "Location blocked - staying in #brgen. Enable location in the browser for #nearby." },
-    statusTimeout: { type: String, default: "Location timed out - staying in #brgen." },
-    statusUnavailable: { type: String, default: "Location unavailable - staying in #brgen." },
-    statusBlocked: { type: String, default: "This page cannot read location - #brgen still works." },
-    statusServer: { type: String, default: "Could not save location - try again." },
-    statusNetwork: { type: String, default: "Network error saving location - try again." }
+    statusAsking: { type: String, default: "Asking for location…" },
+    statusDenied: { type: String, default: "Location blocked — staying in #brgen. Enable location in the browser for #nearby." },
+    statusTimeout: { type: String, default: "Location timed out — staying in #brgen." },
+    statusUnavailable: { type: String, default: "Location unavailable — staying in #brgen." },
+    statusBlocked: { type: String, default: "This page cannot read location — #brgen still works." },
+    statusServer: { type: String, default: "Could not save location — try again." },
+    statusNetwork: { type: String, default: "Network error saving location — try again." }
   }
 
   connect() {

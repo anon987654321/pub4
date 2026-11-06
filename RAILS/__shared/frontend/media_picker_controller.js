@@ -163,7 +163,7 @@ export default class extends Controller {
       const move = document.createElement("button")
       move.type = "button"
       move.className = "media-thumb-move"
-      move.textContent = index === 0 ? "->" : "<-"
+      move.textContent = index === 0 ? "→" : "←"
       move.setAttribute("aria-label", `${this.moveLabelValue}: ${file.name}`)
       move.addEventListener("click", () => this.#moveFile(index, index === 0 ? Math.min(index + 1, files.length - 1) : index - 1))
 

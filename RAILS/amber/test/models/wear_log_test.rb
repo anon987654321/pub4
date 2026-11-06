@@ -42,7 +42,7 @@ class WearLogTest < ActiveSupport::TestCase
     assert_not WearLog.new(user: @user, item: @item, worn_on: Date.current, context: "a" * 301).valid?
   end
 
-  # Two logs on one day is a real thing - changed after work - and a uniqueness
+  # Two logs on one day is a real thing — changed after work — and a uniqueness
   # rule here would silently drop the second wear from the count.
   test "a garment may be worn twice in one day" do
     WearLog.create!(user: @user, item: @item, worn_on: Date.current)

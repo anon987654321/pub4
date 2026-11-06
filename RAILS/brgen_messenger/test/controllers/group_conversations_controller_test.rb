@@ -90,7 +90,7 @@ class GroupConversationsControllerTest < ActionDispatch::IntegrationTest
   end
 
   # Leaving is always yours to do, and a group without an op could never be
-  # renamed or moderated again - so the room passes to whoever has been in it
+  # renamed or moderated again — so the room passes to whoever has been in it
   # longest rather than trapping the last op in it.
   test "the last op leaving hands the group to the longest-standing member" do
     group = make_group

@@ -10,12 +10,12 @@ class Message
     included do
       # The declarative `broadcasts_to` re-renders _message inside Turbo's
       # broadcast job (no request), where the reloaded message's belongs_to
-      # reads - conversation.channel?, sender.channel_handle - hit the default
+      # reads — conversation.channel?, sender.channel_handle — hit the default
       # :all strict-loading mode: development LOGS the violation, test and
       # production RAISE it, so the message saved (200) but never appeared for
       # anyone. Reload with those associations and strict loading off first.
       # `targets:` (a CSS selector), not `target:` (one dom id): the corner chat
-      # widget lives in the layout, so a channel page has two logs - a selector
+      # widget lives in the layout, so a channel page has two logs — a selector
       # appends to every open .conversation-log rather than whichever came first.
       after_create_commit :broadcast_to_logs
       # An edit replaces the line in every open thread; unsend! does the same by

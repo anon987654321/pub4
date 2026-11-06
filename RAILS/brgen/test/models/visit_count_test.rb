@@ -3,7 +3,7 @@
 require "test_helper"
 
 # The table exists to say which of seven city domains anyone reaches. Every test
-# here is about it staying a counter - one row per host per day - because the
+# here is about it staying a counter — one row per host per day — because the
 # moment it becomes a row per request it is both a write-volume problem on
 # SQLite and a record of what each visitor looked at.
 class VisitCountTest < ActiveSupport::TestCase

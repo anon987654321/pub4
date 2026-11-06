@@ -1,18 +1,18 @@
 # frozen_string_literal: true
 
 # ActivityPub. brgen is already partitioned by city subdomain, so a city is
-# already shaped like an instance - oshlo.no and brgen.no are separate origins
+# already shaped like an instance — oshlo.no and brgen.no are separate origins
 # with separate populations. Federating them to each other, and outward, is the
 # one item on the parity list that is not a clone of something.
 #
 # Scope of this first pass: a brgen account can be followed from anywhere in the
 # fediverse and its public posts deliver outward. Pulling remote timelines *in*
 # is a much larger surface (remote media proxying, remote content moderation)
-# and is deliberately not here - see the old backlog 2.1.
+# and is deliberately not here — see the old backlog 2.1.
 class CreateFediverse < ActiveRecord::Migration[8.1]
   def change
     # Signing keys are per local user. Generated lazily on first use rather than
-    # for every guest row brgen mints on cookieless visits - RSA keygen is not
+    # for every guest row brgen mints on cookieless visits — RSA keygen is not
     # free and the overwhelming majority of those users never federate anything.
     change_table :users, bulk: true do |t|
       t.text :public_key
@@ -52,7 +52,7 @@ class CreateFediverse < ActiveRecord::Migration[8.1]
     add_index :fedi_follows, %i[user_id state]
 
     # Delivery receipts, so a redelivery does not duplicate and an inbox POST
-    # that arrives twice - which happens routinely - is processed once.
+    # that arrives twice — which happens routinely — is processed once.
     create_table :fedi_activities do |t|
       t.string :uri, null: false
       t.string :activity_type

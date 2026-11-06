@@ -10,7 +10,7 @@ module Webhooks
   #
   # Register (once) via Vipps API:
   #   POST /webhooks/v1/webhooks
-  #   events: epayments.payment.authorized.v1, epayments.payment.captured.v1, ...
+  #   events: epayments.payment.authorized.v1, epayments.payment.captured.v1, …
   #   Store the returned `secret` as VIPPS_WEBHOOK_SECRET.
   #
   # Auth: HMAC-SHA256 over method + pathAndQuery + "date;host;contentSha256"
@@ -27,7 +27,7 @@ module Webhooks
     include Shared::WriteThrottle
     self.write_throttle_limit = 300
 
-    # Events that mean money is reserved / taken - treat as paid for marketplace.
+    # Events that mean money is reserved / taken — treat as paid for marketplace.
     PAID_NAMES = %w[AUTHORIZED CAPTURED].freeze
     # The buyer backed out, or the payment lapsed or was stopped. Ignoring these
     # left the order or basket pending_payment for good, with no way to retry.
@@ -65,7 +65,7 @@ module Webhooks
       raise SignatureError, "missing auth headers" if date.blank? || content_hash_hdr.blank? || auth.blank?
 
       # x-ms-date is inside the signed string, so it cannot be edited without
-      # breaking the signature - but a signature stays valid forever unless its
+      # breaking the signature — but a signature stays valid forever unless its
       # age is checked. Without this, one captured request replays indefinitely.
       # Stripe bounds the same window at TOLERANCE_SECONDS.
       begin
@@ -75,7 +75,7 @@ module Webhooks
       end
       raise SignatureError, "timestamp outside tolerance (#{age.round}s)" if age > TOLERANCE_SECONDS
 
-      # 1) Content hash: SHA-256 of raw body -> base64
+      # 1) Content hash: SHA-256 of raw body → base64
       computed_hash = Base64.strict_encode64(Digest::SHA256.digest(payload))
       unless ActiveSupport::SecurityUtils.secure_compare(computed_hash, content_hash_hdr)
         raise SignatureError, "content hash mismatch"

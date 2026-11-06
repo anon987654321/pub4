@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # RSVP is a three-way answer, so this sets a status rather than toggling a
-# boolean - except that pressing the status you already hold withdraws it, which
+# boolean — except that pressing the status you already hold withdraws it, which
 # is the only way to take back "going" without a fourth button.
 class EventRsvpsController < ApplicationController
   include Shared::FindableBySlug
@@ -12,7 +12,7 @@ class EventRsvpsController < ApplicationController
     with: -> { redirect_back fallback_location: root_path, alert: t("shared.flash.rate_limited") }
 
   def create
-    # A member route on resources :events, so the segment is :id - not
+    # A member route on resources :events, so the segment is :id — not
     # :event_id, which is what a nested resource would have given.
     event = find_by_slug_or_id(Event.published, params[:id])
     status = params[:status].to_s
@@ -36,7 +36,7 @@ class EventRsvpsController < ApplicationController
   private
 
   # Pressing the status you already hold withdraws it. A full event still takes
-  # "interested" (the waiting list is the point), and "interested" -> "going" is
+  # "interested" (the waiting list is the point), and "interested" → "going" is
   # checked too, since full? once ran only on insert.
   def answer(event, status)
     rsvp = event.rsvps.find_by(user_id: Current.user.id)

@@ -18,7 +18,7 @@ export class RadioBrgen {
     this.isMobile = window.innerWidth < 768 || "ontouchstart" in window
     this._boundHandlers = []
     // The tunnel owns the queue and its start: the legacy opener when it is in
-    // the list, otherwise the first ordered item - never a random pick, so a
+    // the list, otherwise the first ordered item — never a random pick, so a
     // single-track queue and a curated set both open the same way every load.
     this.tracks = options.tracks ?? []
     this.currentTrack = initialTrackIndex(this.tracks, OPENING_TRACK_ID)
@@ -112,7 +112,7 @@ export class RadioBrgen {
     const onKeyDown = (e) => {
       if (!this.isStarted) return
       if (e.code === "Space") { e.preventDefault(); this.audioEngine.nextTrack() }
-      // The pen's <- and ->: step through the ring modes and say which one.
+      // The pen's ← and →: step through the ring modes and say which one.
       if (e.code === "ArrowRight" || e.code === "ArrowLeft") {
         e.preventDefault()
         const mode = this.visualEngine.shiftMode(e.code === "ArrowRight" ? 1 : -1)

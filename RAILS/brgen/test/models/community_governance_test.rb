@@ -4,7 +4,7 @@ require "test_helper"
 
 # Community was eight columns with no moderators, rules, privacy or flair, and
 # ModerationReport/ModerationFlag/TrustScore are global behind a single
-# BRGEN_ADMIN_EMAIL - so there was no mod team per community and no queue per
+# BRGEN_ADMIN_EMAIL — so there was no mod team per community and no queue per
 # community. A community that cannot be moderated by its own members is a
 # category page, not a subreddit.
 class CommunityGovernanceTest < ActiveSupport::TestCase
@@ -50,7 +50,7 @@ class CommunityGovernanceTest < ActiveSupport::TestCase
   end
 
   # Nothing else in the app creates an owner, so losing the last one is not a
-  # state to recover from later - it is one to refuse now.
+  # state to recover from later — it is one to refuse now.
   test "the last owner cannot be demoted" do
     c = community
     membership = c.community_memberships.find_by(user_id: @owner.id)

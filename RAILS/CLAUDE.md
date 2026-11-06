@@ -1,4 +1,4 @@
-# RAILS - tree contract
+# RAILS — tree contract
 
 This tree's contract lives in the RAILS section of the root
 `TREE_CONTRACTS.md`. MASTER governs pub4: `MASTER/data/soul.yml` owns global

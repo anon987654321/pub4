@@ -145,8 +145,8 @@ class TakeawayRefinementsTest < ActionDispatch::IntegrationTest
     days = css_select("section.store-opening-hours dt").map(&:text)
     assert_equal I18n.t("date.day_names").rotate(1), days
     hours = css_select("section.store-opening-hours dd").map(&:text)
-    assert_equal "11:00-22:00", hours.first
-    assert_equal "18:00-02:00", hours[4]
+    assert_equal "11:00–22:00", hours.first
+    assert_equal "18:00–02:00", hours[4]
     assert_equal I18n.t("takeaway.closed_all_day"), hours.last
   end
 

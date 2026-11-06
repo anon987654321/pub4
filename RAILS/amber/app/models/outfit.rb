@@ -11,7 +11,7 @@ class Outfit < ApplicationRecord
 
   # Three tables carry a foreign key to outfits and this model declared none of
   # them, so `OutfitsController#destroy` raised ActiveRecord::InvalidForeignKey
-  # - a 500 on the delete button - for any outfit that had ever been worn or
+  # — a 500 on the delete button — for any outfit that had ever been worn or
   # planned. The schema has the constraint; only the model did not know.
   #
   # The two dependent options are different on purpose:

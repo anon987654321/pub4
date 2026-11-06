@@ -172,7 +172,7 @@ class CiGuardTest < Minitest::Test
 
   # check_load! used to exit(1) the moment load was over the limit. It runs from
   # inside bin/ci, which vps_ci starts *after* syncing the tracked tree into
-  # /home/<app>/app - so an exit there abandoned a half-applied deploy rather
+  # /home/<app>/app — so an exit there abandoned a half-applied deploy rather
   # than declining to start one. The spike it fires on is the deploy's own wake:
   # brgen measured 3.32/4.04/3.43 during a four-app pass and 0.32 alone.
   def test_load_under_the_limit_returns_without_waiting

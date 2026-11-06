@@ -100,7 +100,7 @@ module Shared
     # Never add revenue across unlike systems. The report exposes the units so
     # the operator can compare each channel with the source that owns its truth.
     def render
-      lines = [ "growth report - #{@window.inspect} to #{@now.utc.iso8601}" ]
+      lines = [ "growth report — #{@window.inspect} to #{@now.utc.iso8601}" ]
       lines << ""
       lines << "  traffic"
       lines << format("    visits                     %d", visits)

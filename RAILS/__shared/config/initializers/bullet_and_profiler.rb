@@ -3,7 +3,7 @@
 # Enable Bullet and Rack::MiniProfiler in development/test to catch N+1s.
 #
 # Both gems are declared `require: false`, so Bundler.require never loads them
-# and `defined?(Bullet)` was nil in every environment - the guard was always
+# and `defined?(Bullet)` was nil in every environment — the guard was always
 # false and neither tool could switch on. Requiring them here is what makes the
 # rest of this file reachable; `require: false` stays, so production never loads
 # either gem at all.

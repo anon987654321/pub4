@@ -4,7 +4,7 @@ module Takeaway
   # When a kitchen is open.
   #
   # A row per weekday rather than a JSON blob, because "is this open now" is a
-  # query - a blob turns the restaurant list into a Ruby loop over every row on
+  # query — a blob turns the restaurant list into a Ruby loop over every row on
   # the page.
   #
   # Minutes past midnight rather than a time, because a Time carries a date and
@@ -28,7 +28,7 @@ module Takeaway
     def self.open_at?(restaurant_id, moment = Time.current)
       minute = moment.hour * 60 + moment.min
 
-      # Today's window, plus yesterday's window if it runs past midnight - a
+      # Today's window, plus yesterday's window if it runs past midnight — a
       # place open until 02:00 is open at 00:30, and reading only today's row
       # says it is shut.
       today = where(restaurant_id: restaurant_id, weekday: moment.wday)
@@ -62,7 +62,7 @@ module Takeaway
     end
 
     def to_s
-      "#{format_minute(opens_minute)}-#{format_minute(closes_minute % DAY_MINUTES)}"
+      "#{format_minute(opens_minute)}–#{format_minute(closes_minute % DAY_MINUTES)}"
     end
 
     private

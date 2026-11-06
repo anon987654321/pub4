@@ -34,7 +34,7 @@ module CritiqueSources
   end
 
   # These pages render through I18n, so a literal English string stopped being
-  # in the template the moment the page was localised - the assertion failed on
+  # in the template the moment the page was localised — the assertion failed on
   # a view that had got better. Pin the key in the template and the copy in that
   # app's en.yml: the control still has to say this word, and the check survives
   # the next locale. Two assertions in this file were already rewritten for the

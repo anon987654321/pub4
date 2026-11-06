@@ -6,7 +6,7 @@
 # #{Faker::Address.city}", so brgen.no/communities listed "Kultur community for
 # Hoppeton" and "Film community for Traceeland": English on a Norwegian page,
 # about towns that do not exist. The demo and per-city seeders wrote
-# "Bergen - kultur". A source fix cannot reach rows already written; this can.
+# "Bergen — kultur". A source fix cannot reach rows already written; this can.
 #
 # Only rows still wearing a seeder's own words are touched: a description in
 # one of those two shapes, and a name that is still the capitalised slug. A

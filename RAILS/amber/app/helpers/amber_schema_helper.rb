@@ -4,7 +4,7 @@
 #
 # The shared `SchemaHelper` covers most of this, but its URLs do not hold here:
 # `item_list_schema` and `product_schema` build them with `url_for(item)`,
-# which for an amber Item resolves to `/items/:id` - behind authentication. A
+# which for an amber Item resolves to `/items/:id` — behind authentication. A
 # crawler following that reaches the sign-in page, so the public demo wardrobe
 # needs its own public URLs.
 #
@@ -12,7 +12,7 @@
 # the shared `product_schema` gives an Offer only to a record that answers
 # `buyable?`, and Item does not.
 #
-# Everything else - Article on posts, Organization in the layout - goes through
+# Everything else — Article on posts, Organization in the layout — goes through
 # the shared helper unchanged.
 module AmberSchemaHelper
   DEMO_LIST_LIMIT = 30
@@ -92,7 +92,7 @@ module AmberSchemaHelper
     return nil unless item.photos.attached?
 
     url_for(item.photos.first)
-  rescue StandardError # scan: intentional - the schema omits what it cannot resolve; absence is valid JSON-LD
+  rescue StandardError # scan: intentional — the schema omits what it cannot resolve; absence is valid JSON-LD
     nil
   end
 end

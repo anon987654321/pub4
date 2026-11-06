@@ -13,7 +13,7 @@ require_relative "../../MASTER/checks/lib/live/first_screen"
 # the check's own comment records, one level up.
 #
 # Every defect below is planted into a tree built for the purpose. The live half
-# of both checks is held off with a closed port, deliberately - see the last two
+# of both checks is held off with a closed port, deliberately — see the last two
 # tests, which are about what the checks claim when nothing is listening.
 class WalkthroughChecksTest < Minitest::Test
   include MethodSwap
@@ -200,9 +200,9 @@ class WalkthroughChecksTest < Minitest::Test
   # The third state, for the two checks that have a live half and no browser.
   #
   # Neither goes inconclusive with nothing listening, and that is correct in the
-  # letter: both measured their source half. But the pass line each prints -
+  # letter: both measured their source half. But the pass line each prints —
   # "Human walkthrough check passed for 3 Rails apps", "ok: first-screen markers
-  # present" - describes the half that did not run. So what is pinned here is
+  # present" — describes the half that did not run. So what is pinned here is
   # the only thing standing between that line and a silent false green: every
   # skipped surface is named, and the count of skips is not zero.
   def test_human_walkthrough_names_every_app_it_could_not_walk

@@ -5,7 +5,7 @@ require "minitest/mock"
 
 # The bots never replied, for two reasons stacked on top of each other.
 #
-# No Solid Queue worker runs on vm23, so ChannelBotReplyJob had never executed -
+# No Solid Queue worker runs on vm23, so ChannelBotReplyJob had never executed —
 # `perform_later` means never here. The first time anything drained the queue,
 # on 2026-08-14, the job raised on its first line and gave up after three tries:
 #
@@ -16,12 +16,12 @@ require "minitest/mock"
 # ApplicationRecord sets strict_loading_by_default = true in every environment,
 # and ChannelBot.reply_to opens with `message.conversation`. So even a working
 # queue would have produced silence. The same shape is recorded in
-# brgen_anonymous_chat_breakages - rooms 500'd for weeks on strict_loading.
+# brgen_anonymous_chat_breakages — rooms 500'd for weeks on strict_loading.
 #
 # These tests run the job for real rather than asserting on its source, because
 # the whole failure was that nothing had ever run it. Loading `conversation`
-# alone is not obviously sufficient - reply_to goes on to read
-# channel.participants - so the assertion is that perform does not raise, which
+# alone is not obviously sufficient — reply_to goes on to read
+# channel.participants — so the assertion is that perform does not raise, which
 # is the only claim that covers whatever it touches next.
 class ChannelBotReplyJobTest < ActiveSupport::TestCase
   setup do

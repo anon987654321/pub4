@@ -4,7 +4,7 @@
   <%= form.search_field :q, value: params[:q], placeholder: t("search.wardrobe_short"), aria: { label: t("search.wardrobe_short") } %>
 <%# tabindex -1: this submit exists only so the form posts on Enter, which
     implicit submission already does. Being focusable AND visually hidden made it
-    a keyboard trap - keyboard_flow counted it both as a stop with no visible
+    a keyboard trap — keyboard_flow counted it both as a stop with no visible
     ring (a ring cannot be seen on a hidden element) and among 7 off-screen tab
     stops on /wardrobe. Out of the tab order, Enter still submits. %>
   <%= form.submit t("search.submit"), class: "visually-hidden", tabindex: -1 %>

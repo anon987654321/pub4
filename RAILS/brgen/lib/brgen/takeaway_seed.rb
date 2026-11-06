@@ -60,7 +60,7 @@ module Brgen
     # min_order_cents rejected its own seed order:
     #
     #   ActiveRecord::RecordInvalid: Minimum order for Døner Ekspress Åsane is
-    #   122.76 NOK - your subtotal is 0.00 NOK.
+    #   122.76 NOK — your subtotal is 0.00 NOK.
     #
     # That took down `db:seed:replant`, which is a stage of vps_ci.sh, which is a
     # stage of vps-deploy -- so brgen could not be deployed at all, while the

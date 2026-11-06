@@ -2,7 +2,7 @@
 
 module Shared
   module StimulusFormHelper
-    # @stimulus-components/character-counter - countdown mode with maxlength.
+    # @stimulus-components/character-counter — countdown mode with maxlength.
     def character_counter_field(form, method, max:, **options)
       rows = options.delete(:rows)
 
@@ -73,7 +73,7 @@ module Shared
       ) do
         safe_join([
 # simple_format ran with sanitize: false and its output went straight to
-# the page, so anything a user typed into a bio was rendered as markup -
+# the page, so anything a user typed into a bio was rendered as markup —
 # a stored XSS on every surface that reads a profile. simple_format still
 # does the newline-to-paragraph work, and the result then goes through the
 # same allow-list every other user rich text uses, which also makes this

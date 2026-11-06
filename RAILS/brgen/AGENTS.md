@@ -1,15 +1,15 @@
-# brgen - agent notes
+# brgen — agent notes
 
 One Rails process, one `rc.d/brgen`, one SQLite. **Not one website.**
 
 A **city** is an apex host. **Every** city in `Brgen::DomainRegistry::ENTRIES`
 gets the same shape: main feed at the apex, namespaced subapps on subdomains.
 Bergen and Los Angeles below are two worked examples, not the whole network.
-`oshlo.no`, `lndon.uk`, `chcago.us`, `kbenhvn.dk` - same process, same engines,
+`oshlo.no`, `lndon.uk`, `chcago.us`, `kbenhvn.dk` — same process, same engines,
 same `<subapp>.<apex>` rule.
 
-Apex names are the city with a vowel dropped (or similar): Bergen -> `brgen.no`,
-Oslo -> `oshlo.no`, Los Angeles -> `lsangeles.com`, London -> `lndon.uk`. Do not
+Apex names are the city with a vowel dropped (or similar): Bergen → `brgen.no`,
+Oslo → `oshlo.no`, Los Angeles → `lsangeles.com`, London → `lndon.uk`. Do not
 invent a host; the list is only `ENTRIES`. `CITY_NETWORK_DOMAINS` is product
 membership and `LIVE_DOMAINS` is the operator-verified TLS/deployment set.
 The footer, search palette and mobile switcher use
@@ -39,7 +39,7 @@ markedsplass.brgen.no    marketplace.lsangeles.com     markedsplass.oshlo.no
 | Messenger | host-drawn routes; Stimulus asset engine in `../brgen_messenger` | `messenger.brgen.no` | `messenger.lsangeles.com` |
 
 Marketplace is the only vertical whose **subdomain word** is localized
-(`markedsplass` / `marketplace` / `marktplatz` / ...). Food ordering is a Marketplace
+(`markedsplass` / `marketplace` / `marktplatz` / …). Food ordering is a Marketplace
 surface at `/food`; the old takeaway host remains only for compatibility. Dating,
 tv, maps, messenger and playlist are the same English token on every city.
 
@@ -56,8 +56,8 @@ Full Rails 8 app in this directory. `brgen.sh` copy-tree deploys to
 `/home/brgen/app` on vm23. Port **38182**. Shared engine: `RAILS/__shared`.
 
 - Golden checks: `OPENBSD/bin/check-rails --profile=contributor`; scan via `cd
-  MASTER && bundle exec ruby bin/master` -> `/scan RAILS/brgen`.
-- VPS: `MASTER/bin/operator vps deploy brgen --remote` (serial - never parallel with
+  MASTER && bundle exec ruby bin/master` → `/scan RAILS/brgen`.
+- VPS: `MASTER/bin/operator vps deploy brgen --remote` (serial — never parallel with
   other apps).
 - Do not: enable `force_ssl` behind relayd; edit `OPENBSD/deploy_inventory.json`
   without updating `apps.yml`; add a fourth public Rails app

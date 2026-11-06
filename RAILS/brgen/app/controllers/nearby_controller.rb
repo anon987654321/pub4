@@ -4,7 +4,7 @@ class NearbyController < ApplicationController
   DEFAULT_RADIUS_KM = 10.0
   MAX_RADIUS_KM = 25.0
 
-  # Anonymous stranger chat is abuse-prone - cap how fast conversations start.
+  # Anonymous stranger chat is abuse-prone — cap how fast conversations start.
   rate_limit to: 15, within: 5.minutes, only: %i[create],
     with: -> { redirect_to nearby_path, alert: t("flash.chats_rate_limited") }
 
@@ -40,7 +40,7 @@ class NearbyController < ApplicationController
   # Same join as #room, but renders in place instead of redirecting to the full
   # channel page -- the widget IS the frame, there's nowhere to navigate to.
   #
-  # Ambient chat: with GPS -> geo room; without -> #brgen city lobby inline so
+  # Ambient chat: with GPS → geo room; without → #brgen city lobby inline so
   # anonymous chat works without a second navigation. Soft guests are
   # the identity path (Craigslist-style); never require signup here.
   def widget
@@ -63,7 +63,7 @@ class NearbyController < ApplicationController
     return render_widget_shell unless @conversation
 
     # A GET that writes. `me` above may be a soft guest that has not been saved
-    # yet - the first uncookied request builds one without persisting it, so a
+    # yet — the first uncookied request builds one without persisting it, so a
     # crawl of this page costs no rows. Joining needs an id, so this is where it
     # becomes real; a no-op for a returning visitor or a signed-in user.
     me = ensure_guest_user!

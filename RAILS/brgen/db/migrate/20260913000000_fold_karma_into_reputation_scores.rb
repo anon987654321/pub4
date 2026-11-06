@@ -2,14 +2,14 @@
 
 # Two reputation stores become one.
 #
-# `users.karma` was recomputed on every vote and rendered by nothing - the name
+# `users.karma` was recomputed on every vote and rendered by nothing — the name
 # appeared in no view, helper or partial in any app or engine. `posts.karma` was
 # read by nothing at all; `posts.score` is the live column. Meanwhile
 # `reputation_scores` is wired and tested: unique per (user, scope), written by
 # TrustScore as scope "global".
 #
 # So the value moves rather than dies. Every non-zero karma is written as a
-# `content` row first, and only then are the columns dropped - a person's score
+# `content` row first, and only then are the columns dropped — a person's score
 # survives the collapse, in the store that is actually read.
 #
 # down restores the columns and the users half from the rows, because that is

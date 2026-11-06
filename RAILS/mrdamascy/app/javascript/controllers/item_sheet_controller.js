@@ -2,7 +2,7 @@ import { Controller } from "@hotwired/stimulus"
 import { formatOre } from "money"
 
 // Item sheet (§8): qty stepper, option chip logic (max two sauces at once),
-// and live recalculation of the sticky "Legg i kurv - pris" total. Extras are
+// and live recalculation of the sticky "Legg i kurv · pris" total. Extras are
 // priced via data-price-ore on each option; sauces/toppings are free.
 export default class extends Controller {
   static targets = ["quantity", "price", "submit", "option", "sauceNotice"]
@@ -47,7 +47,7 @@ export default class extends Controller {
     this.recalc()
   }
 
-  // Toum plus tarator plus chili is a trio too far - cap free sauces at two.
+  // Toum plus tarator plus chili is a trio too far — cap free sauces at two.
   // Reaching the cap is said in the polite notice, once, so a screen-reader
   // user hears why the other chips went quiet.
   enforceSauceLimit() {

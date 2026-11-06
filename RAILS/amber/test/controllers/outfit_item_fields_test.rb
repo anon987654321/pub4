@@ -2,7 +2,7 @@
 
 require "test_helper"
 
-# Each outfit item row labelled itself "Item" with a "Select item..." blank in
+# Each outfit item row labelled itself "Item" with a "Select item…" blank in
 # English, and the template plus every existing row ran its own query for
 # the user's items.
 class OutfitItemFieldsTest < ActionDispatch::IntegrationTest

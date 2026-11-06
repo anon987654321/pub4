@@ -23,9 +23,9 @@ class DatingDiscoveryTest < ActiveSupport::TestCase
 
   test "a man looking for women sees women who want men, not other men" do
     viewer = profile("man", "woman")
-    she = profile("woman", "man")      # mutual -> shown
-    other = profile("man", "woman")      # wrong gender -> hidden
-    picky = profile("woman", "woman")    # doesn't want men -> hidden
+    she = profile("woman", "man")      # mutual → shown
+    other = profile("man", "woman")      # wrong gender → hidden
+    picky = profile("woman", "woman")    # doesn't want men → hidden
     ids = Dating::Profile.oriented_for(viewer).pluck(:id)
     assert_includes ids, she.id
     assert_not_includes ids, other.id

@@ -7,7 +7,7 @@
 # and a dead end cost a round trip. A facet count is the difference between
 # browsing and querying.
 class Marketplace::ListingFacets
-  # Kroner, not øre - the bands are read by people, and the listing form asks
+  # Kroner, not øre — the bands are read by people, and the listing form asks
   # for kroner too.
   PRICE_BANDS = [
     [ nil, 500 ], [ 500, 2_000 ], [ 2_000, 10_000 ], [ 10_000, nil ]

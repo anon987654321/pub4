@@ -3,7 +3,7 @@
 # usage_count carries the number of records using a tag, and Taggable moves it
 # with increment! and decrement!. Both raise on nil, so every hashtag created
 # before this migration was one edit away from breaking the save that touched
-# it - and a tag is created by the same after_save that then increments it.
+# it — and a tag is created by the same after_save that then increments it.
 #
 # The backfill counts taggings rather than writing zero, because the column has
 # been nullable for long enough that some of those tags are in use.

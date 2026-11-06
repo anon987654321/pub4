@@ -13,7 +13,7 @@ require "time"
 # Two modes:
 #
 #   1. Tag-only (works now with approved marketplace tags)
-#      Set AMAZON_ASSOCIATE_TAG_SE, AMAZON_ASSOCIATE_TAG_NL, AMAZON_ASSOCIATE_TAG_FR, ...
+#      Set AMAZON_ASSOCIATE_TAG_SE, AMAZON_ASSOCIATE_TAG_NL, AMAZON_ASSOCIATE_TAG_FR, …
 #      Use seed_asins! / rake affiliate:amazon_seed to write AffiliateProduct rows
 #      with correctly tagged DetailPage-style URLs. No Creators API needed.
 #      This is how you generate the 10 qualifying sales that unlock the API.
@@ -23,17 +23,17 @@ require "time"
 #      AMAZON_CREATORS_VERSION (e.g. 3.2 for EU), plus at least one marketplace tag.
 #      Then deals/import! call SearchItems / GetItems against creatorsapi.amazon.
 #
-# Marketplace routing and tags live in Shared::AmazonMarketplace - never use a
+# Marketplace routing and tags live in Shared::AmazonMarketplace — never use a
 # single global tag across storefronts; a DE tag on a SE link pays nothing.
 #
-# Norway has no storefront; Shared::AmazonMarketplace routes NO -> DE by default.
+# Norway has no storefront; Shared::AmazonMarketplace routes NO → DE by default.
 # With SE approved, prefer amazon.se for Nordic readers when a SE tag is set.
 module Shared
   module AmazonAssociates
     API_BASE = "https://creatorsapi.amazon"
     TOKEN_ENDPOINTS = {
       "3.1" => "https://api.amazon.com/auth/o2/token",      # NA
-      "3.2" => "https://api.amazon.co.uk/auth/o2/token",    # EU (SE, NL, FR, DE, ...)
+      "3.2" => "https://api.amazon.co.uk/auth/o2/token",    # EU (SE, NL, FR, DE, …)
       "3.3" => "https://api.amazon.co.jp/auth/o2/token",    # FE
       "2.1" => "https://creatorsapi.auth.us-east-1.amazoncognito.com/oauth2/token",
       "2.2" => "https://creatorsapi.auth.eu-south-2.amazoncognito.com/oauth2/token",
@@ -101,7 +101,7 @@ module Shared
                         .limit(limit)
                         .map { |p| Affiliate.to_deal(p) }
       # The table check is on the way in, so this is a schema fault rather than an
-      # absent table - and `deals` two methods up already logs exactly this way.
+      # absent table — and `deals` two methods up already logs exactly this way.
       rescue ActiveRecord::StatementInvalid => e
         Rails.logger.warn("amazon_associates stored_deals: #{e.class}: #{e.message}")
         []

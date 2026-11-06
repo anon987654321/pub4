@@ -7,7 +7,7 @@ require "test_helper"
 # 2026-08-07: the front page answered in 4.1s TTFB while /posts, rendering the
 # same feed without this call, answered in 0.83s at the same payload size.
 #
-# popular_cached must therefore actually cache - a wrapper that re-queries every
+# popular_cached must therefore actually cache — a wrapper that re-queries every
 # time would keep the cost and add a layer.
 class CommunityPopularCacheTest < ActiveSupport::TestCase
   setup do
@@ -32,7 +32,7 @@ class CommunityPopularCacheTest < ActiveSupport::TestCase
 
     assert_operator first, :>, 0, "the first call must actually query"
     assert_equal 0, second,
-                 "popular_cached issued #{second} queries on the second call - it is not caching, " \
+                 "popular_cached issued #{second} queries on the second call — it is not caching, " \
                  "and the front page pays the join-and-group on every request"
   end
 

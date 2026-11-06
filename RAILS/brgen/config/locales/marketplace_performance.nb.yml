@@ -1,6 +1,6 @@
 nb:
   marketplace:
-    seller_performance_window: Selgeraktivitet - siste 60 dager
+    seller_performance_window: Selgeraktivitet — siste 60 dager
     seller_purchases:
       one: "%{count} kjøp"
       other: "%{count} kjøp"

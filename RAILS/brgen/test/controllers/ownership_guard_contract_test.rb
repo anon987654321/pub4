@@ -6,7 +6,7 @@ require "test_helper"
 # ownership check, independently, before this session's audit caught them
 # (posts, delivery_drivers, tv/{channels,live_streams,videos},
 # listening_parties). That's the same bug five times, not five unrelated
-# bugs - this test turns "add an ownership check" from a convention someone
+# bugs — this test turns "add an ownership check" from a convention someone
 # has to remember into something CI actually verifies for every controller
 # with a mutating action, present and future.
 #
@@ -16,7 +16,7 @@ require "test_helper"
 # `.owner?(Current.user)` check, or a finder that's already scoped to
 # Current.user (e.g. `Current.user.posts.find(...)`) so no separate check
 # is needed. Controllers with no ownership concept at all (session-only,
-# token-authorized) are named explicitly below with a one-line reason -
+# token-authorized) are named explicitly below with a one-line reason —
 # silence is not an allowlist entry.
 class OwnershipGuardContractTest < Minitest::Test
   ROOT = File.expand_path("../..", __dir__)
@@ -36,13 +36,13 @@ class OwnershipGuardContractTest < Minitest::Test
 
   # Controller => one-line reason no per-record ownership check applies.
   NO_OWNERSHIP_CONCEPT = {
-    "drafts_controller.rb" => "writes to session[:drafts] only - no AR record, nothing another user could touch",
+    "drafts_controller.rb" => "writes to session[:drafts] only — no AR record, nothing another user could touch",
     "email_subscriptions_controller.rb" => "token in the unsubscribe link is itself the authorization, not user login",
     "locations_controller.rb" => "only ever writes to Current.user's own row (me.update_columns); broadcasts are reads",
-    "users_controller.rb" => "edit/update act on @user = Current.user only - never a param-supplied id",
-    "account_languages_controller.rb" => "update writes Current.user's own locale - no record id is read from params",
+    "users_controller.rb" => "edit/update act on @user = Current.user only — never a param-supplied id",
+    "account_languages_controller.rb" => "update writes Current.user's own locale — no record id is read from params",
     "account_notification_preferences_controller.rb" =>
-      "update writes Current.user's own preferences - no record id is read from params"
+      "update writes Current.user's own preferences — no record id is read from params"
   }.freeze
 
   def test_every_mutating_controller_has_an_ownership_guard

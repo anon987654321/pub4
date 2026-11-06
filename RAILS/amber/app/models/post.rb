@@ -13,8 +13,8 @@ class Post < ApplicationRecord
   include Shared::LinkEmbeddable
   embeds_links_from :body
 
-  # body holds Tiptap's HTML. presence still works - the editor writes "" when
-  # it is empty rather than "<p></p>" - but the limit has to measure the text,
+  # body holds Tiptap's HTML. presence still works — the editor writes "" when
+  # it is empty rather than "<p></p>" — but the limit has to measure the text,
   # or "<p>" and "</p>" spend seven of the writer's 500 characters.
   validates :body, presence: true
   validates_rich_text_length :body, maximum: 500

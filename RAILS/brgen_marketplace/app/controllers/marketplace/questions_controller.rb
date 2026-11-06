@@ -14,7 +14,7 @@ class Marketplace::QuestionsController < Marketplace::BaseController
     end
   end
 
-  # Answering is the seller's, and answerable_by? is the check - not "is this my
+  # Answering is the seller's, and answerable_by? is the check — not "is this my
   # listing" written out again at the call site.
   def update
     question = @listing.questions.find(params[:id])

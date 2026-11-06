@@ -18,7 +18,7 @@ module ModerationReportsHelper
 
   # Reason and status in the reader's language, not the stored token humanized.
   def report_heading(report)
-    "#{t("moderation_queue.reasons.#{report.reason}")} - #{t("moderation_queue.statuses.#{report.status}")}"
+    "#{t("moderation_queue.reasons.#{report.reason}")} · #{t("moderation_queue.statuses.#{report.status}")}"
   end
 
   # One link per status filter; the one shown is marked as the current page.

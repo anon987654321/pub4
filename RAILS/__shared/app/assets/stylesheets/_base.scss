@@ -1,4 +1,4 @@
-/* Ultra-minimal shared UI for all apps - synced from MASTER web */
+/* Ultra-minimal shared UI for all apps — synced from MASTER web */
 // The head of _components.scss: the cascade layer order, the reset, the input font
 // floor, the focus ring and the utility classes. _components.scss @uses it
 // before its own first rule, so it compiles exactly where it stood.
@@ -56,7 +56,7 @@ textarea {
    naming it. iOS Safari zooms the viewport when a text field under 16px takes
    focus and does not zoom back, so the floor is enforced here rather than
    chased per component: max() keeps any larger size the design asks for.
-   Buttons, radios and checkboxes are excluded - they take no caret. */
+   Buttons, radios and checkboxes are excluded — they take no caret. */
 input:not([type="radio"], [type="checkbox"], [type="range"], [type="color"],
           [type="file"], [type="submit"], [type="button"], [type="image"]),
 textarea,

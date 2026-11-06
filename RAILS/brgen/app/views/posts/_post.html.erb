@@ -1,5 +1,5 @@
 <%# target: _top so a tap on the title leaves the page. Without it, Turbo
-    loads posts#show into this frame - the show template has no matching
+    loads posts#show into this frame — the show template has no matching
     id, and the card becomes "Content missing". Vote still replaces the
     frame via turbo_stream; only <a> navigation is affected. %>
 <%# Press and hold the card to open its "more" menu (long_press_controller).
@@ -46,7 +46,7 @@
         <%= tag.span post.comment_count.positive? ? post.comment_count : "",
               class: "feed-action-count", data: { post_comment_count: dom_id(post) } %>
       <% end %>
-      <%# This button spent a long time with nothing behind it - first carrying
+      <%# This button spent a long time with nothing behind it — first carrying
           data-controller="action" with no URL, so a press added the active
           class, sent nothing, and claimed the repost had landed until the next
           render took it back; then with no controller at all, which was at
@@ -55,7 +55,7 @@
           button_to, not the `action` controller the vote button uses: that
           would be a third Stimulus instance on every card, and
           FrontPageWeightTest caps a post at five. A form costs none, works
-          without JS, and Turbo swaps the card from the turbo_stream response -
+          without JS, and Turbo swaps the card from the turbo_stream response —
           so the count comes back from the server rather than from an optimistic
           guess that has to be rolled back when the request fails. %>
       <%= button_to post_repost_path(post),

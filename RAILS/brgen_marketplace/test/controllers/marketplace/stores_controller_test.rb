@@ -9,7 +9,7 @@ require "test_helper"
 # non-owner with the shop page and a reason instead of a 404.
 class Marketplace::StoresControllerTest < ActionDispatch::IntegrationTest
   setup do
-    # A known apex (DomainRegistry) that is also a marketplace subdomain - the
+    # A known apex (DomainRegistry) that is also a marketplace subdomain — the
     # controller 404s "Unknown host" otherwise, and .brgen.no scopes the session.
     host! "markedsplass.brgen.no"
     @owner = User.create!(email_address: "st_owner@example.com", password: "secret1234")

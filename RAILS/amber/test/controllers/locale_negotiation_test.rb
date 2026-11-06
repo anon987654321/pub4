@@ -61,7 +61,7 @@ class LocaleNegotiationTest < ActionDispatch::IntegrationTest
 
   test "switching keeps you on the page you were reading" do
     get items_url(lifecycle: "repair"), headers: { "HTTP_ACCEPT_LANGUAGE" => "nb" }
-    # Signed out, items redirects - follow to wherever it lands and check the
+    # Signed out, items redirects — follow to wherever it lands and check the
     # switcher points back at that same path.
     follow_redirect! while response.redirect?
 

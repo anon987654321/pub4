@@ -12,7 +12,7 @@
 
   <p>
     <%# capture="environment" opens the rear camera directly on a phone rather
-        than the file picker - camera-first is the whole point of the format.
+        than the file picker — camera-first is the whole point of the format.
         On a desktop it degrades to an ordinary file input. %>
     <%= f.label :media, t("stories.media") %>
     <%= f.file_field :media, accept: "image/*,video/*", capture: "environment",
@@ -27,8 +27,8 @@
     </div>
   </div>
 
-  <%# The position comes from the one the app already has - locations#update
-      stores it coarsened to a ~1 km grid - rather than asking the browser again
+  <%# The position comes from the one the app already has — locations#update
+      stores it coarsened to a ~1 km grid — rather than asking the browser again
       from this form. The geolocation Stimulus controller POSTs to that endpoint
       and has no form-field targets, so wiring hidden inputs to it would have
       been a control that does nothing. Opt-in, and only if a position is

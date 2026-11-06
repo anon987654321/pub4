@@ -10,7 +10,7 @@ class NewsletterEditionBuilderTest < ActiveSupport::TestCase
   setup do
     # Domain unique per run as well as slug: City validates domain for
     # uniqueness, and a fixed one collides with any row a `rails runner` left
-    # behind - the test DB is not reset between those and a test run.
+    # behind — the test DB is not reset between those and a test run.
     stamp = SecureRandom.hex(3)
     @city = City.create!(name: "Testby", slug: "testby-#{stamp}", domain: "testby-#{stamp}.example",
                         country_code: "NO", locale: "nb", currency: "NOK", time_zone: "Europe/Oslo")
@@ -85,6 +85,6 @@ class NewsletterEditionBuilderTest < ActiveSupport::TestCase
 
     NewsletterEditionBuilder.new(city: @city.slug).send(:merge_vouchers!, record, [ voucher ], locale: "nb")
 
-    assert_equal "20 % av - Kode: BYSKO20", record.reload.deals.last["description"]
+    assert_equal "20 % av — Kode: BYSKO20", record.reload.deals.last["description"]
   end
 end

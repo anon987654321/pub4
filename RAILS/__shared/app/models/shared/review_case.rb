@@ -20,7 +20,7 @@ module Shared
     # No broadcast: nothing subscribes to shared:review_cases and no
     # shared/review_cases/_review_case partial exists. amber creates these rows
     # (ReportsController), so an implicit broadcast here WOULD enqueue a job that
-    # raises MissingTemplate - the one live crash path of the three. Restore as an
+    # raises MissingTemplate — the one live crash path of the three. Restore as an
     # explicit broadcast with a partial: when a moderation stream is built. Pinned
     # by turbo_broadcast_contract_test.rb.
 

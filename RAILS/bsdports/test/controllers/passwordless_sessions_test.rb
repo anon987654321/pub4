@@ -6,7 +6,7 @@ require "test_helper"
 # unique index, the token generator, the validity check and the mailer all
 # existed, and there was no route, no view template and no caller. The mailer
 # aimed at `session_url(magic_token:)`, which is not a route in any of the three
-# apps, via `Rails.application.routes.url_helpers`, which carries no host - so
+# apps, via `Rails.application.routes.url_helpers`, which carries no host — so
 # it raised, a rescue swallowed it, and the address it fell back to was a
 # relative path.
 #

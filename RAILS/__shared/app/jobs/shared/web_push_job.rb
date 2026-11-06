@@ -6,7 +6,7 @@ module Shared
   # push_to sent inline: one blocking HTTP POST per subscription per recipient,
   # inside the controller action. Sending a message to a room with twenty people
   # on two devices each meant forty round trips to Google and Mozilla before the
-  # sender saw their own message - on one vCPU, behind Falcon, where that request
+  # sender saw their own message — on one vCPU, behind Falcon, where that request
   # is holding a thread the whole time. A push service being slow made *sending*
   # slow, which is the wrong thing to couple.
   #

@@ -19,7 +19,7 @@
       pressed with JavaScript; this server copy is the ?reply_to= path. %>
   <% if reply_to %>
     <%# The referent travels in the form, so a reply is still a reply after a
-        reload - and the line says what is being answered, because a reply with
+        reload — and the line says what is being answered, because a reply with
         no visible referent is one nobody can follow.
 
         Above the box rather than below it: it qualifies what you are about
@@ -34,13 +34,13 @@
 
   <%# One box: attach, record, type, send. The four were a stacked field, a
       visually-hidden label, a paragraph holding the recorder and a second
-      paragraph holding the submit - four blocks down the page for one act.
+      paragraph holding the submit — four blocks down the page for one act.
 
       The box carries the outline rather than the textarea inside it. Form
       fields are the single surviving exemption to the no-lines decision of
       2026-08-04 ("an input with no outline gives no target; you must see
       where to type"), and this box IS the field as far as a reader is
-      concerned - the controls are inside its edge. %>
+      concerned — the controls are inside its edge. %>
   <%# The photo picked behind the camera icon, with a control to take it off. %>
   <div class="messenger-composer-preview" data-attachment-preview-target="preview" aria-live="polite" hidden></div>
   <div class="messenger-composer-box">
@@ -88,7 +88,7 @@
     </div>
 
     <%# A word, not a glyph. The registry has no send arrow, and the house
-        rule is that a control says what happens when it is used - "Send"
+        rule is that a control says what happens when it is used — "Send"
         does, and it costs no new file. %>
     <%= f.submit t("actions.send"), class: "button button-primary messenger-composer-send" %>
   </div>

@@ -41,7 +41,7 @@ end
 puts 'Seeding Brgen (core + subapps) with rich fictive data...'
 
 if Rails.env.development? || Rails.env.test?
-  # Cleanup for dev replant only - never wipe production data.
+  # Cleanup for dev replant only — never wipe production data.
   Faker::UniqueGenerator.clear
   keep = %w[schema_migrations ar_internal_metadata cities]
   conn = ActiveRecord::Base.connection
@@ -184,7 +184,7 @@ categories_by_slug = Marketplace::Category.where.not(parent_id: nil).index_by(&:
 leaf_slugs = categories_by_slug.keys
 listings = stores.flat_map do |store|
   listings_per.times.map do
-    # Product first, then the category it actually belongs in - the reverse
+    # Product first, then the category it actually belongs in — the reverse
     # (category first, then any title from that root) shelved a 55" TV under
     # electronics-audio and winter boots under clothing-outerwear.
     title, leaf_slug = Brgen::PlausibleContent.listing_for(leaf_slugs)
@@ -219,7 +219,7 @@ unless seed_city&.domain == 'brgen.no'
     user = users.sample
     body = [
       "Noen i nærheten av #{Faker::Address.community}?",
-      "Ledig plass på buss - #{Faker::Lorem.word}",
+      "Ledig plass på buss — #{Faker::Lorem.word}",
       "Gratis #{Faker::Food.dish} utenfor #{Faker::Address.street_name}",
       Faker::Lorem.sentence(word_count: 8)
     ].sample
@@ -242,16 +242,16 @@ end
 puts "Live: #{Post.live.count} geo-stamped notes"
 
 # Some orders
-# Buyer notes the seller actually reads in the order thread - Latin was glaring
+# Buyer notes the seller actually reads in the order thread — Latin was glaring
 # there for the same reason the DM openers went Norwegian.
 ORDER_MESSAGES = [
   'Hei! Er denne fortsatt tilgjengelig?',
   'Kan jeg hente i dag, eller passer det bedre i morgen?',
-  'Bor på Nordnes - kan jeg hente hos deg?',
+  'Bor på Nordnes — kan jeg hente hos deg?',
   'Betaler nå via Vipps. Takk for handelen!',
   'Er prisen forhandlingsbar hvis jeg tar begge to?',
   'Fine saker! Kan du legge inn i en pose før henting?',
-  'Beklager sent svar - er den fortsatt til salgs?',
+  'Beklager sent svar — er den fortsatt til salgs?',
   'Passer det på lørdag formiddag?'
 ].freeze
 
@@ -275,11 +275,11 @@ num_dating = (35 * SEED_SCALE).clamp(10, 1000)
 DATING_POOL = { "woman" => 8, "man" => 8, "nonbinary" => 2, "other" => 2 }.freeze
 # Visible is derived from the photo, not asserted alongside it, the same way
 # Brgen::BergenDemoSeeder derives it. A profile may not be visible without one
-# - a visible profile with no photo sits in the deck as a blank card - and
+# — a visible profile with no photo sits in the deck as a blank card — and
 # Shared::DemoMedia.skip_attach? is true in the test environment, which is the
 # environment CI seeds in. Asking for visible: true there produced a profile
 # the validation had to refuse, and one refusal aborts the whole seed run.
-# Deck bios are read aloud on a first date - Latin lorem read as a scam sign.
+# Deck bios are read aloud on a first date — Latin lorem read as a scam sign.
 # Short, specific, bokmål; the deck shows one paragraph per card.
 DATING_BIOS = [
   'Bergenseren med kaffekopp i den ene hånden og sykkelhjelm i den andre. Fjellet på søndager, byliv på tirsdager.',
@@ -291,7 +291,7 @@ DATING_BIOS = [
   'Jobber med musikk, bor på Nygårdshøyden. Har sterke meninger om kaffe og svake om vin.',
   'Forelsket i denne byen i regnvær. Tar med deg til favorittkafeen min hvis du gjetter hvilken den er.',
   'Trener på Danmarksplass, leser på Litteraturhuset, og danser for dårlig til å gjøre det offentlig.',
-  'Jeg sa ja til en blind date en gang - det endte med en katt og en ny bydel. Åpen for kapittel to.'
+  'Jeg sa ja til en blind date en gang — det endte med en katt og en ny bydel. Åpen for kapittel to.'
 ].freeze
 
 dating_profiles = users.sample(num_dating).map do |user|
@@ -334,7 +334,7 @@ PLAYLIST_DESCRIPTIONS = [
   'Det som spilles fra kjøkkenet på Nordnes en tirsdag.',
   'Til buss 12 gjennom Møllendal, tidlig og kald.',
   'Byfjells-takeaways og en gitar som holder raden.',
-  'Nattbuss hjem fra Garage - høyt og uønsket for naboene.'
+  'Nattbuss hjem fra Garage — høyt og uønsket for naboene.'
 ].freeze
 
 num_play = (15 * SEED_SCALE).clamp(5, 200)
@@ -385,7 +385,7 @@ channel_names = Brgen::PlausibleContent::TV_CHANNEL_NAMES.shuffle
 channels = num_ch.times.map do |i|
   Tv::Channel.create!(
     user: users.sample,
-    # Was "#{Faker::Company.name} TV" - a US company name with TV bolted on.
+    # Was "#{Faker::Company.name} TV" — a US company name with TV bolted on.
     name: channel_names[i % channel_names.size] + (i >= channel_names.size ? " #{i}" : ''),
     slug: "seed-tv-#{i}-#{Faker::Internet.slug}",
     description: Brgen::PlausibleContent.post_body
@@ -449,12 +449,12 @@ users.sample(12).each do |u1|
   next if u1 == u2
 
   conv = Conversation.find_or_create_direct(u1, u2)
-  # Short Norwegian DM openers instead of Faker::Lorem Latin - these are read
+  # Short Norwegian DM openers instead of Faker::Lorem Latin — these are read
   # in the inbox and the corner chat widget, where Latin is glaring.
   openers = [
     'Hei! Er den fortsatt til salgs?', 'Går det bra å hente i morgen?',
     'Takk for sist!', 'Kan du sende et bilde av den?',
-    'Jeg er interessert - når passer det?', 'Er prisen forhandlingsbar?',
+    'Jeg er interessert — når passer det?', 'Er prisen forhandlingsbar?',
     'Sees vi på lørdag?', 'Har du prøvd stedet i Marken?',
     'Beklager sent svar, hektisk uke.', 'Det passer fint for meg.'
   ]
@@ -506,7 +506,7 @@ end
 
 puts "\nBrgen + subapps fully seeded with fictive Faker data (scale=#{SEED_SCALE})."
 # User is tenant-scoped and a tenant is current by this point, so a bare
-# User.count reported 0 right after "Created 101 users" - the bulk users carry
+# User.count reported 0 right after "Created 101 users" — the bulk users carry
 # no city_id. Count without the tenant scope so the summary matches reality.
 total_users = ActsAsTenant.without_tenant { User.count }
 puts "Users: #{total_users}, Posts: #{Post.count} (Live: #{Post.live.count}), Marketplace listings: #{Marketplace::Listing.count}"

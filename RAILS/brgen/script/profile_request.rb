@@ -8,7 +8,7 @@
 # Written after profiling on the box itself took production down: reading
 # /var/log/messages to count queries pulled 504 MB into a 1 GB VM, memory hit
 # 0%, emergency_cpu killed both Falcon workers and all four apps went with them.
-# Query counts and N+1 shapes reproduce at any data size - only absolute latency
+# Query counts and N+1 shapes reproduce at any data size — only absolute latency
 # needs production volume, and --seed builds that here instead.
 
 require "benchmark"
@@ -23,7 +23,7 @@ if seed.positive?
   author = User.strict_loading(false).first ||
            User.create!(email_address: "prof@brgen.no", password: "password123")
   community = Community.create!(name: "Profile #{SecureRandom.hex(3)}", slug: "prof-#{SecureRandom.hex(4)}")
-  seed.times { |i| Post.create!(user: author, community:, title: "Profile #{i}", content: "...") }
+  seed.times { |i| Post.create!(user: author, community:, title: "Profile #{i}", content: "…") }
   puts "seeded community #{community.id} (#{community.slug}) with #{seed} posts"
   path = "/communities/#{community.id}"
 end

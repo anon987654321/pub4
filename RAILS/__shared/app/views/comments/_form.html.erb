@@ -1,18 +1,18 @@
 <%#
-  Fleet comment form - one partial for brgen, amber, and future hosts.
+  Fleet comment form — one partial for brgen, amber, and future hosts.
 
   locals:
-    comment     - Comment instance (required; use Comment.new for empty form)
-    commentable - polymorphic parent (a Post, an Item); preferred
-    post        - alias for commentable (amber call sites)
-    url         - optional explicit path (overrides nested model URL)
-    form_id     - DOM id for turbo replace (default "comment_form")
-    rows        - textarea rows (default 3)
-    required    - HTML5 required on content (default true)
-    parent_id   - optional reply parent
-    placeholder - override default t("comments.placeholder")
-    submit      - override default t("comments.submit")
-    maxlength   - default 10_000
+    comment     — Comment instance (required; use Comment.new for empty form)
+    commentable — polymorphic parent (a Post, an Item); preferred
+    post        — alias for commentable (amber call sites)
+    url         — optional explicit path (overrides nested model URL)
+    form_id     — DOM id for turbo replace (default "comment_form")
+    rows        — textarea rows (default 3)
+    required    — HTML5 required on content (default true)
+    parent_id   — optional reply parent
+    placeholder — override default t("comments.placeholder")
+    submit      — override default t("comments.submit")
+    maxlength   — default 10_000
 %>
 <% comment = local_assigns.fetch(:comment) %>
 <% commentable = local_assigns[:commentable] || local_assigns[:post] %>

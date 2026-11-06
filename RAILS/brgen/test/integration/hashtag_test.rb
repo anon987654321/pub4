@@ -17,9 +17,9 @@ class HashtagTest < ActionDispatch::IntegrationTest
       post = Post.create!(user: @user, title: "hi", content: "loving #bergentest today")
       tag = Hashtag.find_by(name: "bergentest")
       assert_equal 1, tag.usage_count
-      post.update!(content: "still #bergentest")   # edit, same tag -> no re-increment
+      post.update!(content: "still #bergentest")   # edit, same tag → no re-increment
       assert_equal 1, tag.reload.usage_count
-      post.update!(content: "no tags now")          # untag -> decrement
+      post.update!(content: "no tags now")          # untag → decrement
       assert_equal 0, tag.reload.usage_count
     end
   end

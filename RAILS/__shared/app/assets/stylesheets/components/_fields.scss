@@ -2,7 +2,7 @@
 
    The transform below has existed for a while and reached nothing: it needs the
    input before the label in the DOM, and all 69 same-line label/field pairs in
-   this tree put the label first - so the rule matched no element in any app.
+   this tree put the label first — so the rule matched no element in any app.
    It also needed somewhere to travel from, and no label anywhere was positioned,
    so even in the right order it would have moved a flex-column label further up
    into empty space.
@@ -43,7 +43,7 @@
 
    :has() rather than only the adjacent sibling, because password_visibility_field
    wraps its input in a .password-field div to sit the show/hide button beside it
-   - so for a password the label is the wrapper's sibling, not the input's, and
+   — so for a password the label is the wrapper's sibling, not the input's, and
    `input + label` cannot reach it. Asking the field whether it contains a filled
    or focused control works for both shapes and needs no markup change. */
 .field--float:has(> input:not(:placeholder-shown)) > label,
@@ -78,7 +78,7 @@
    checkbox, so the bare `input:not(:placeholder-shown) + label` matched the
    THEME TOGGLE (a checkbox + its icon label) and float-labelled the brand
    chrome: translateY(-1.5em) scale(0.85) on the top-right corner of every
-   brgen page - found by rendered_invariants reading a 64px band misalignment
+   brgen page — found by rendered_invariants reading a 64px band misalignment
    on 2026-08-22. A form pattern must never be able to reach chrome. */
 input:where([type="text"], [type="email"], [type="password"], [type="tel"],
             [type="url"], [type="search"], [type="number"], [type="date"],

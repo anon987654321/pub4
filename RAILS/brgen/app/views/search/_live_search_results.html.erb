@@ -9,7 +9,7 @@
       SearchSections takes the eight. %>
   <% sections = SearchSections.from(@results) %>
   <% if sections.empty? %>
-    <%# empty_state: no-action-ok - the search field above is the next step %>
+    <%# empty_state: no-action-ok — the search field above is the next step %>
     <%= render "shared/empty_state", title: t("search.no_results", query: @query), body: t("search.no_results_body") %>
   <% end %>
   <%= render partial: "search/result_section", collection: sections, as: :section %>

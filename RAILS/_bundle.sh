@@ -1,6 +1,6 @@
 #!/usr/bin/env zsh
 set -euo pipefail
-# _bundle.sh - bundler and npm-cache helpers.
+# _bundle.sh — bundler and npm-cache helpers.
 # Source this file; do not execute directly. Requires _core.sh sourced first.
 
 bundle_exec() {
@@ -33,13 +33,13 @@ add_gem_group() {
   fi
 }
 
-# ensure_npm_cache APP_NAME - sass-embedded native build must not write /root/.npm via doas.
+# ensure_npm_cache APP_NAME — sass-embedded native build must not write /root/.npm via doas.
 ensure_npm_cache() {
   local app_name=$1
   run_rails_as_app "$app_name" "/home/${app_name}/app" "npm-cache"
 }
 
-# bundle_cas_* - immutable SHA-256 store for gem artifacts shared by pub4 applications.
+# bundle_cas_* — immutable SHA-256 store for gem artifacts shared by pub4 applications.
 # The broker owns only the fixed /var/cache/pub4/bundle/<ruby-key> namespace; the
 # selected app owns extraction into its own cache. No arbitrary paths cross doas.
 bundle_cas_root() {
@@ -78,7 +78,7 @@ bundle_cas_capture() {
   "${_PRIV}" /usr/local/sbin/pub4-admin bundle-cache "$app_name" capture "$RUBY_CACHE_KEY"
 }
 
-# bundle_install_as_app APP_NAME APP_DIR - production bundle as the app user.
+# bundle_install_as_app APP_NAME APP_DIR — production bundle as the app user.
 bundle_install_as_app() {
   local app_name=$1
   local app_dir=$2

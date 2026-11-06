@@ -26,7 +26,7 @@ module Takeaway
     # The nearest available courier who is not already carrying an order.
     #
     # `nearby` above is a bounding box, so its "nearest" is really "somewhere in
-    # the square" - a driver at the corner is 1.41x further than one on the edge.
+    # the square" — a driver at the corner is 1.41x further than one on the edge.
     # Order the survivors by real haversine distance rather than trusting the
     # box. The candidate set is small (available drivers within km), so this
     # costs one short array sort, not a table scan.

@@ -8,7 +8,7 @@ exclude:
 # Spelled to match the law catalogue's actual IDs (MASTER/data/laws.yml):
 # TYPE_SCALE, LEADING and PIXEL_PERFECTION_RHYTHM never corresponded to a
 # real law_id, so a finding in those categories could never pass the
-# Fix::VisualCompletion.authorized_visual_rule? check this list feeds -
+# Fix::VisualCompletion.authorized_visual_rule? check this list feeds —
 # the campaign's own type-scale, leading and rhythm authorization was inert.
 allowed_visual_rules:
   - AESTHETIC_FLAT_SEMANTIC

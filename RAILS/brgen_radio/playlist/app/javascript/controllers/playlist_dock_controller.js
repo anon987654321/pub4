@@ -24,7 +24,7 @@ export default class extends Controller {
     audio.addEventListener("pause", this.sync)
     audio.addEventListener("ended", this.sync)
 
-    if (this.hasTitleTarget) this.titleTarget.textContent = [title, artist].filter(Boolean).join(" - ")
+    if (this.hasTitleTarget) this.titleTarget.textContent = [title, artist].filter(Boolean).join(" — ")
     this.element.hidden = false
     this.#syncToggle()
   }

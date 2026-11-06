@@ -17,7 +17,7 @@
     <%# The media block caches on the listing alone: badge, photo variant and
         blurhash are model state, and update_rating! touches updated_at, so a
         new review re-renders it. What each viewer owns stays outside the
-        fragment - the heart in its slot above, the distance line and the
+        fragment — the heart in its slot above, the distance line and the
         search-rank reasons in the body below, the buy box after the link.
         The ranking sweep writes only rows whose score moved, so a recalc pass
         stops flushing every card on the shelf. %>
@@ -48,7 +48,7 @@
       <div class="deal-meta">
         <%= [ listing.location,
               (distance_km ? t("marketplace.distance_km", km: number_with_precision(distance_km, precision: 1)) : nil),
-              listing.category&.name ].compact.join(" - ") %>
+              listing.category&.name ].compact.join(" · ") %>
       </div>
       <div class="listing-source-badges">
         <%= tag.span listing.store_id.present? ? t("marketplace.from_a_shop") : t("marketplace.from_a_person"), class: "store-badge listing-source-badge#{listing.store_id.present? ? " listing-source-badge--shop" : ""}" %>

@@ -12,7 +12,7 @@ require "test_helper"
 #   unless @wardrobe_item.user == Current.user        # authorize!
 #
 # raises StrictLoadingViolationError before the comparison. The guard does not
-# deny access - it never runs, and every path behind it fails, including the
+# deny access — it never runs, and every path behind it fails, including the
 # owner's own.
 #
 # Seven controllers across brgen and amber had this shape, all found on

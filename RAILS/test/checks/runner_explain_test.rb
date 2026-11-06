@@ -7,7 +7,7 @@ require "yaml"
 
 # --explain is the answer to "what does --all do and what changes its verdict",
 # asked without spending the run. It is only worth having if it names every
-# registered check and every switch that decides a verdict out of sight - the
+# registered check and every switch that decides a verdict out of sight — the
 # auditor's warning half is advisory unless CHECK_AUDITOR_STRICT is set, and
 # before --explain that was written only inside frontend_auditor.rb.
 class RunnerExplainTest < Minitest::Test

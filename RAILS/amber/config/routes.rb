@@ -12,8 +12,8 @@ Rails.application.routes.draw do
 
   # The Solid Queue dashboard is infrastructure administration, not a member
   # feature: it can retry, discard and pause jobs, and job payloads carry user
-  # data. A session merely proves the visitor has an account - every registered
-  # user has one - so the constraint now also demands an operator identity from
+  # data. A session merely proves the visitor has an account — every registered
+  # user has one — so the constraint now also demands an operator identity from
   # /etc/amber.env (AMBER_ADMIN_EMAIL). Production fails closed when the
   # variable is unset; development and test stay open to any signed-in session
   # so local debugging does not need a second env file.

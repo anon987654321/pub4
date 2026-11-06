@@ -6,14 +6,14 @@
 # by its ever-evolving knowledge of your taste and preference". Two things make
 # that knowledge evolve, and this service reads both:
 #
-#   Declared taste  - `StylePreference` rows the owner (or the style profile
+#   Declared taste  — `StylePreference` rows the owner (or the style profile
 #                     form) wrote. `kind: :avoid` counts against a garment no
 #                     matter which sign its weight carries.
-#   Revealed taste  - joy flag, wear count, wear recency, life phase. What
+#   Revealed taste  — joy flag, wear count, wear recency, life phase. What
 #                     someone reaches for is a stronger signal than what they
 #                     say, so behaviour carries more of the score than words.
 #
-# Scores are 0.0-1.0 and explainable: `explain` returns the reasons that moved
+# Scores are 0.0–1.0 and explainable: `explain` returns the reasons that moved
 # a garment, which is what the dressing room shows under each zone.
 class TasteRanker
   # Weights sum to 1.0. Behaviour (joy + wear + recency) is 0.62 of the score;
@@ -35,7 +35,7 @@ class TasteRanker
   RECENCY_WINDOW_DAYS = 120
 
   # Inside this window `explain` calls a garment recently worn. It is a
-  # reporting threshold only - the score itself decays continuously across
+  # reporting threshold only — the score itself decays continuously across
   # RECENCY_WINDOW_DAYS.
   RECENT_WEAR_DAYS = 21
 
@@ -68,7 +68,7 @@ class TasteRanker
   end
 
   # Sorted best-first. Ties break on id so the order is stable between requests
-  # - a carousel that reshuffles on every page load is not a preference model.
+  # — a carousel that reshuffles on every page load is not a preference model.
   def rank(items, scorer: nil)
     score = scorer || method(:score_for)
     items.to_a.sort_by { |item| [ -score.call(item), item.id ] }
@@ -84,7 +84,7 @@ class TasteRanker
     ).clamp(0.0, 1.0).round(4)
   end
 
-  # Why this garment ranks where it does, in the reader's language - these
+  # Why this garment ranks where it does, in the reader's language — these
   # strings land beside translated chrome in the dressing room and on the
   # dashboard, where anything untranslated is the only English on the page.
   def explain(item)
@@ -151,7 +151,7 @@ class TasteRanker
 
   def t(key, **interpolations) = I18n.t("taste.#{key}", **interpolations)
 
-  # `avoid` is a negative preference regardless of how its weight was stored -
+  # `avoid` is a negative preference regardless of how its weight was stored —
   # the style profile form writes positive weights for every kind.
   def signed_weight(preference)
     magnitude = preference.weight.to_f.abs

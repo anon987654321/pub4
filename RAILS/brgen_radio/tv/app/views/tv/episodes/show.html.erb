@@ -1,8 +1,8 @@
 <% episode_line = t("tv.episode_line", number: @episode.number, title: @episode.title) %>
-<% content_for :title, "#{@show.title} - #{episode_line}" %>
+<% content_for :title, "#{@show.title} — #{episode_line}" %>
 
 <div class="page-header">
-  <%= tag.h1 "#{@show.title} - #{episode_line}" %>
+  <%= tag.h1 "#{@show.title} — #{episode_line}" %>
 </div>
 
 <%# The episode page is where the episode is watched: the video itself, with

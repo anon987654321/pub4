@@ -11,8 +11,8 @@ export default class extends Controller {
     edge: { type: String, default: "top" },
     // First-visit reveal (operator, 2026-08-22): a drawer nobody has ever
     // seen is a feature nobody knows exists. With intro set, the panel
-    // starts REVEALED until the visitor dismisses it once - swipe, tap
-    // away, Escape, or the grip - and that dismissal is remembered per
+    // starts REVEALED until the visitor dismisses it once — swipe, tap
+    // away, Escape, or the grip — and that dismissal is remembered per
     // panel. The swipe stays the recall gesture forever after.
     intro: { type: String, default: "" },
   }
@@ -105,8 +105,8 @@ export default class extends Controller {
 
   // A revealed drawer is an opaque, full-height panel. Anything fixed beneath it
   // is invisible AND unclickable, while still being a tab stop and still counting
-  // as a target. The drawer cannot be a CSS sibling of that chrome - .tab-bar-peel
-  // hangs off .app-shell while the drawer sits inside .layout - so the state goes
+  // as a target. The drawer cannot be a CSS sibling of that chrome — .tab-bar-peel
+  // hangs off .app-shell while the drawer sits inside .layout — so the state goes
   // on the root, where any of it can reach the fact.
   //
   // Recomputed from the DOM rather than counted, because two panels share this
@@ -119,7 +119,7 @@ export default class extends Controller {
   show() {
     this.revealed = true
     // The wrapper, not the root target: the CSS keys .sidebar-swiper.revealed
-    // .sidebar, and classing the aside itself matched nothing - the reveal
+    // .sidebar, and classing the aside itself matched nothing — the reveal
     // toggled state and painted NOTHING, on every panel, since the split.
     // Found 2026-08-22 proving the first-visit intro; the 'deliberately
     // hidden' nav was hiding a dead reveal.

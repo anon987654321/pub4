@@ -5,6 +5,6 @@
   <%= tag.h1 @category.name %>
   <%= tag.p @category.description %>
 </header>
-<%# ports/index is a full template, not a partial - rendering it raised
+<%# ports/index is a full template, not a partial — rendering it raised
     MissingTemplate on every category page. The list body lives in ports/_list. %>
 <%= render "ports/list" %>

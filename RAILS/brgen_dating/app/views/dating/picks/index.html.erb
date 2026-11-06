@@ -22,7 +22,7 @@
           <%= profile.user&.display_name %>
           <% if profile.verified_at %><span class="chip"><%= t("dating.verified") %></span><% end %>
         </p>
-        <p class="pick-meta"><%= [ profile.age, profile.bydel.presence || profile.location ].compact.join(" - ") %></p>
+        <p class="pick-meta"><%= [ profile.age, profile.bydel.presence || profile.location ].compact.join(" · ") %></p>
         <%= button_to t("dating.like"), likes_path(user_id: profile.user_id), method: :post,
               class: "button button-small" %>
       </li>

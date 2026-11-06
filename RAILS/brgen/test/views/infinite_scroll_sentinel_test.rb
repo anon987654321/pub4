@@ -3,7 +3,7 @@
 require "test_helper"
 
 # shared/_infinite_scroll_sentinel pages every feed. It paged only for a reader
-# who scrolled to the bottom edge, announced "Laster mer..." on every page load
+# who scrolled to the bottom edge, announced "Laster mer…" on every page load
 # (its loading text sat inside an aria-live region from the start), and when
 # the list ran out it ended without a word.
 class InfiniteScrollSentinelTest < ActionView::TestCase

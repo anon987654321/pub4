@@ -20,7 +20,7 @@ class OrdersController < ApplicationController
   # ETA, courier blurb, poll feed, tip chips + review form after delivery.
   # Payment sync on load: the customer lands here straight from the PSP
   # (Vipps app or Stripe hosted Checkout), so this is where "paid" becomes
-  # true - no refresh, no extra tap. The gateway dispatch picks the right
+  # true — no refresh, no extra tap. The gateway dispatch picks the right
   # client for the order's payment lane.
   def track
     @order = Order.find_by!(tracking_token: params[:token].to_s)
@@ -30,7 +30,7 @@ class OrdersController < ApplicationController
 
   # Polled by the track Stimulus controller every 10 s (APP_SPEC §8); also
   # the reconciliation heartbeat when the webhook was missed. Reports the
-  # payment state so the page can flip "betaling" -> "betalt" live.
+  # payment state so the page can flip "betaling" → "betalt" live.
   def status
     order = Order.find_by!(tracking_token: params[:token].to_s)
     PaymentGateway.sync!(order)
@@ -64,7 +64,7 @@ class OrdersController < ApplicationController
     @order = current_user.orders.find(params[:id])
   end
 
-  # Accepts øre (tip_ore) or kroner (tip) - the view picks one; sane cap.
+  # Accepts øre (tip_ore) or kroner (tip) — the view picks one; sane cap.
   def tip_ore_param
     ore = params[:tip_ore].present? ? params[:tip_ore].to_i : params[:tip].to_i * 100
     ore.clamp(0, 100_000)

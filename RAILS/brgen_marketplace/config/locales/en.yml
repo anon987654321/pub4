@@ -46,7 +46,7 @@ en:
     optional_video: "Optional short video"
     add_short_video: "Add short video"
     photo_guidance_label: "Photo guidance"
-    photo_guidance: "Show the whole item - Natural light - Include any flaws - First photo = cover"
+    photo_guidance: "Show the whole item · Natural light · Include any flaws · First photo = cover"
     dismiss_guidance: "Dismiss photo guidance"
     more_details: "More details"
     delivery_estimate: "Delivery estimate"
@@ -60,10 +60,10 @@ en:
     price_not_set: "Price not set"
     location_not_set: "Location not set"
     location_unavailable: "Location is not available on this device."
-    locating: "Getting your current location..."
+    locating: "Getting your current location…"
     location_pinned: "Current coordinates added. Add the place name above."
     location_denied: "Could not read your location. You can enter it manually."
-    most_successful_photos: "Most successful listings have 4-6 photos."
+    most_successful_photos: "Most successful listings have 4–6 photos."
     fulfilment_methods:
       self_ship: "Seller ships"
       local_hub: "Local hub"
@@ -125,17 +125,16 @@ en:
       same_day_bergen: "Today in Bergen"
       next_day_bergen: "Tomorrow in Bergen"
       next_day_west: "Tomorrow in Western Norway"
-      one_to_two_days: "1-2 days"
-      three_to_five_days: "3-5 days"
+      one_to_two_days: "1–2 days"
+      three_to_five_days: "3–5 days"
       pickup_only: "Pickup only"
     stripe_connect_id: "Stripe Connect account"
-    stripe_connect_hint: >-
-      acct_... from Stripe Connect. Payouts stay pending until this is set and Stripe is configured.
+    stripe_connect_hint: "acct_… from Stripe Connect. Payouts stay pending until this is set and Stripe is configured."
     payouts: Payouts
     payout_release: Send payout
     payout_release_confirm: Send this payout to the connected Stripe account?
     payout_sent: Payout sent
-    payout_not_configured: Stripe Connect is not configured - the payout stays pending.
+    payout_not_configured: Stripe Connect is not configured — the payout stays pending.
     payout_not_pending: That payout is not waiting to be sent.
     payout_held: Held until fourteen days after delivery, with no open return.
     payout_statuses:
@@ -176,7 +175,7 @@ en:
       dintero: Dintero
     checkout_errors:
       not_configured: Payment with %{provider} is not set up here yet.
-      provider_failed: "%{provider} did not answer as expected. Nothing was charged - try again shortly."
+      provider_failed: "%{provider} did not answer as expected. Nothing was charged — try again shortly."
   activerecord:
     attributes:
       marketplace/question:

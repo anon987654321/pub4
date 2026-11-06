@@ -13,7 +13,7 @@
       <% label = driver.user&.display_name || t("takeaway.anon") %>
       <%= render "shared/feed_card",
         name: label,
-        meta: "#{driver.vehicle_type.presence || t("takeaway.vehicle_unset")} - #{driver.available? ? t("takeaway.available") : t("takeaway.unavailable")}",
+        meta: "#{driver.vehicle_type.presence || t("takeaway.vehicle_unset")} · #{driver.available? ? t("takeaway.available") : t("takeaway.unavailable")}",
         url: delivery_driver_path(driver),
         class: "takeaway" %>
     <% end %>

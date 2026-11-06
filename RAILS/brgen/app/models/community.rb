@@ -37,7 +37,7 @@ class Community < ApplicationRecord
 
   scope :visible_to, lambda { |user|
     # A private community is not listed to non-members. Its posts are separately
-    # gated in the controller - this only keeps it out of directories.
+    # gated in the controller — this only keeps it out of directories.
     next where.not(privacy: "private") if user.blank?
 
     where.not(privacy: "private")
@@ -117,7 +117,7 @@ class Community < ApplicationRecord
 
   # By id, and memoised: the mod queue asks this once per row, and reading
   # `report.reportable.user` to ask it is a lazy association read on a
-  # strict-loading record - which raised the whole page rather than showing a
+  # strict-loading record — which raised the whole page rather than showing a
   # ban button.
   def banned_user_ids
     @banned_user_ids ||= community_bans.active.pluck(:user_id).to_set
@@ -138,7 +138,7 @@ class Community < ApplicationRecord
   end
 
   # Reports against anything posted here. ModerationReport is polymorphic and
-  # global, and its own table has no community_id - so the queue is derived from
+  # global, and its own table has no community_id — so the queue is derived from
   # the posts and comments that belong to this community rather than duplicated
   # onto the report.
   def moderation_queue

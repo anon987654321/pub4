@@ -1,4 +1,4 @@
-// Lazy image controller - IntersectionObserver based, with blurhash placeholder support (AN506).
+// Lazy image controller — IntersectionObserver based, with blurhash placeholder support (AN506).
 // Micro cosmetic: smooth fade-in, respects reduced-motion, low impact.
 import { Controller } from "@hotwired/stimulus"
 

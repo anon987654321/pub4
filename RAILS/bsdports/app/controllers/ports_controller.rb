@@ -11,7 +11,7 @@ class PortsController < ApplicationController
   allow_unauthenticated_access only: %i[index show explore]
   before_action :set_port, only: %i[show explore watch unwatch crossref_cves review]
   # watch/unwatch called require_authentication inside the action body,
-  # where its redirect does not halt the action - so the next line ran
+  # where its redirect does not halt the action — so the next line ran
   # find_or_create_by!(user: Current.user) for an unauthenticated visitor.
   before_action :require_authentication, only: %i[crossref_cves review watch unwatch]
   before_action :require_nvd_operator, only: :crossref_cves

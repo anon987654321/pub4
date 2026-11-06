@@ -18,7 +18,7 @@ class Marketplace::OrderTest < ActiveSupport::TestCase
   # Providers redeliver. Stripe retries an endpoint that times out or 500s, and
   # Vipps does the same, so a second delivery of one payment is ordinary traffic
   # rather than an attack. It used to be guarded by asking `payable?` in the
-  # controller - outside the transaction - so both deliveries read unpaid and
+  # controller — outside the transaction — so both deliveries read unpaid and
   # both went through: stock consumed twice, buyer and seller notified twice,
   # partner attribution run twice.
   #
@@ -87,7 +87,7 @@ class Marketplace::OrderTest < ActiveSupport::TestCase
 
   # The two tests above passed only because the order was built with the listing
   # already in memory. A PSP webhook finds the order by id, so nothing is
-  # preloaded - and every model here is strict_loading by default (shared
+  # preloaded — and every model here is strict_loading by default (shared
   # ApplicationRecord), with production raising on a violation. mark_paid! then
   # raised on listing.user *after* update! had committed payment_status=paid:
   # payment recorded, seller and buyer never notified, 500 returned to Stripe,

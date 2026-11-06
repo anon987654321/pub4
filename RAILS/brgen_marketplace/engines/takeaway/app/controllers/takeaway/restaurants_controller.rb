@@ -11,7 +11,7 @@ class Takeaway::RestaurantsController < Takeaway::BaseController
   before_action :load_city_places, only: %i[new create edit update]
 
   def index
-    # :city as well as :user - the card renders restaurant.city, which was one
+    # :city as well as :user — the card renders restaurant.city, which was one
     # query per restaurant (14 on a full page).
     scope = Takeaway::Restaurant.indexable.with_attached_cover.includes(:user, :city)
     scope = scope.where(cuisine_type: params[:cuisine]) if params[:cuisine].present?

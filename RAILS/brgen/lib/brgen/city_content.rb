@@ -57,7 +57,7 @@ module Brgen
     # which are mostly region-tagged: Norwegian data lives in nb-NO.yml, not
     # nb.yml. An earlier version of this table listed bare tags ("nb", "de")
     # to stay inside config.i18n.available_locales, on the theory that a
-    # region tag would raise I18n::InvalidLocale. It does raise - but a bare
+    # region tag would raise I18n::InvalidLocale. It does raise — but a bare
     # "nb" doesn't fail loudly, it silently resolves to no Norwegian data at
     # all and hands back English: Faker::Config.locale = "nb" then
     # Faker::Name.first_name returned "Jerrell", and Faker::Address.city
@@ -98,14 +98,14 @@ module Brgen
     # Each bank is written in the city's own dialect, checked against the
     # features the sources actually record rather than an impression of them:
     #
-    #   bergensk    `eg`, `ka`, and no feminine gender at all - `boken`,
+    #   bergensk    `eg`, `ka`, and no feminine gender at all — `boken`,
     #               `jenten`, never `boka`. An e-language: `å hente`, not
     #               `å henta`. Local words: boss (søppel), smau (alley),
     #               kjuagutt (a real Bergenser), hallaien, "den e brun".
     #   trøndersk   `æ`, `itj`, `ka`, `dokker`, `koss`; apokope drops the final
     #               vowel (`å kast`, `mått`); palatalisation writes `mannj`,
     #               `kvellj`; `sjø` closes a sentence for emphasis.
-    #   stavangersk `eg` and an a-language - `å kasta`, `ei visa` - with the
+    #   stavangersk `eg` and an a-language — `å kasta`, `ei visa` — with the
     #               plural -ar the city shares with north Rogaland.
     #   oslo        east-Norwegian bokmål with the colloquial feminine kept:
     #               `boka`, `jenta`, `sjæl`. It is the one of the four with no
@@ -120,19 +120,19 @@ module Brgen
     # dialect rather than as somebody asking about the bins.
     #
     # Stavanger is the exception and deliberately so. snl.no's Stavanger bymål
-    # records `eg`, `ikkje` and the -a infinitive as the city's own folkemål -
-    # "eg såg ikkje någen store båd" - and says the speech is clearly West
+    # records `eg`, `ikkje` and the -a infinitive as the city's own folkemål —
+    # "eg såg ikkje någen store båd" — and says the speech is clearly West
     # Norwegian and nynorsk-leaning in writing. So that bank stays nynorsk-
     # shaped; flattening it toward bokmål would be correcting the city.
     #
     # Sources, so the next editor argues with them rather than with taste:
-    # bergensk - no feminine gender at all, an e-language, `eg`/`ka`
+    # bergensk — no feminine gender at all, an e-language, `eg`/`ka`
     # (no.wikipedia Bergensk dialekt; utdanningibergen's vocabulary list for
     # boss, smau, bekkalokk, kjuagutt, tebrød, "den e brun").
-    # trøndersk - `æ`, `itj`, `ka`, `dokker`, `koss`, apokope, palatalisation,
+    # trøndersk — `æ`, `itj`, `ka`, `dokker`, `koss`, apokope, palatalisation,
     # sentence-final `sjø` (snl.no trøndersk; NTNU's ordliste).
-    # stavangersk - snl.no Stavanger bymål, above.
-    # oslo - east Norwegian has no dialect word to reach for, so the markers
+    # stavangersk — snl.no Stavanger bymål, above.
+    # oslo — east Norwegian has no dialect word to reach for, so the markers
     # are the colloquial feminine it actually speaks: boka, klokka, sola, sjæl.
     #
     # Places are real and specific. A post about Bybanen or Bakklandet belongs
@@ -142,8 +142,8 @@ module Brgen
       # Bergen types bokmål and speaks bergensk. The operator's own correction,
       # 2026-09-12, and it is the half no source states: a bergenser writes
       # "Hva gjør dere" on a forum and says "Ka gjør dokker" out loud. What crosses
-      # into writing is the vocabulary with no bokmål equivalent - boss, smau,
-      # bekkalokk, kjuagutt, tebrød - plus the occasional `eg` that slips through
+      # into writing is the vocabulary with no bokmål equivalent — boss, smau,
+      # bekkalokk, kjuagutt, tebrød — plus the occasional `eg` that slips through
       # when somebody is annoyed. A thread written entirely in spoken bergensk is
       # cosplay; a thread with none of it is any Norwegian city.
       "brgen.no" => [
@@ -153,9 +153,9 @@ module Brgen
           [ "Samme på Møhlenpris. Tror det er noe med ruten.", "Meld det inn på nett, da får du saksnummer. Telefon gir ingenting." ] ],
         [ "Fløyen før klokken sju er en annen by", "Gikk opp i grålysningen i dag. Møtte tre stykker totalt. Byen lå under skodden og bare Ulriken stakk opp.",
           [ "Det er den eneste tiden Fløyen er vår.", "Prøv Stoltzekleiven på samme tid. Brutalt, men du har den for deg selv." ] ],
-        [ "Beste tebrød i Bergen - tar imot forslag", "Har testet meg gjennom sentrum. Fortsatt ikke funnet noe som slår det jeg fikk på Møhlenpris i fjor.",
+        [ "Beste tebrød i Bergen — tar imot forslag", "Har testet meg gjennom sentrum. Fortsatt ikke funnet noe som slår det jeg fikk på Møhlenpris i fjor.",
           [ "Baker Brun på Bryggen, men bare før ti.", "Den er brun. Bokstavelig talt." ] ],
-        [ "Bybanen til Åsane - tror dere på 2030?", "Har hørt den datoen så mange ganger nå at jeg begynner å lure. Noen som følger med på reguleringen?",
+        [ "Bybanen til Åsane — tror dere på 2030?", "Har hørt den datoen så mange ganger nå at jeg begynner å lure. Noen som følger med på reguleringen?",
           [ "Eg har hørt den siden jeg var student. Nå har jeg barn på skolen.", "Følg bystyremøtene, det er der det faktisk avgjøres." ] ],
         [ "Fisketorget lørdag: turist eller bergenser?", "Kjøper fortsatt fisken der, men aldri på lørdag. Da er det kø av folk som skal ha reker i beger.",
           [ "Tirsdag morgen. Da er det oss.", "Prøv fiskebutikken i Sandviken i stedet, halve prisen." ] ],
@@ -171,7 +171,7 @@ module Brgen
           [ "Det samme skjedde med Torshov, bare ti år seinere.", "Tøyen holder fortsatt. Foreløpig." ] ],
         [ "Beste kebab øst for Akerselva?", "Har spist meg gjennom Grønland og Tøyen i to år. Kommer stadig tilbake til det samme stedet, men vil gjerne bli overbevist.",
           [ "Si hvilket sted, a. Ellers blir dette bare krangel.", "Alt over Grønland T er turistmat nå. Sola steker og prisen dobles." ] ],
-        [ "T-banen til Ekeberg - noen som vet noe?", "Står fast igjen på Jernbanetorget. Tredje gang denne uka. Skjønner ikke hva som skjer med signalanlegget.",
+        [ "T-banen til Ekeberg — noen som vet noe?", "Står fast igjen på Jernbanetorget. Tredje gang denne uka. Skjønner ikke hva som skjer med signalanlegget.",
           [ "Fellestunnelen. Det er alltid fellestunnelen.", "Ta 34-bussen når det står. Klokka sju går den fortere enn banen." ] ],
         [ "Nordmarka i september slår Nordmarka i juli", "Ingen mygg, ingen folk, og sopp overalt. Gikk fra Sognsvann til Ullevålseter og møtte fire personer.",
           [ "Og lyset. September-lyset der inne er noe for seg selv.", "Husk hodelykt, det blir mørkt fortere enn du tror." ] ],
@@ -189,7 +189,7 @@ module Brgen
           [ "Sant. Og då er det ingen som står i vegen for biletet.", "Same med Gamle Stavanger. Regn kler kvitmåling." ] ],
         [ "Nokon som handlar fisk i Vågen framleis?", "Eg gjer det kvar fredag. Byrjar å bli få av oss, verkar det som.",
           [ "Eg gjer det, men tidleg. Etter elleve er det berre turistar.", "Fiskebutikken på Storhaug er betre og billegare." ] ],
-        [ "Oljemuseet med ungar - verdt det?", "Har to på seks og ni. Er det noko å sjå på for dei, eller blir det for mykje tekst på veggane?",
+        [ "Oljemuseet med ungar — verdt det?", "Har to på seks og ni. Er det noko å sjå på for dei, eller blir det for mykje tekst på veggane?",
           [ "Ungane mine brukte to timar i klatreriggen ute. Museet såg dei knapt.", "Ta med niåringen, seksåringen blir lei." ] ],
         [ "Tou Scene har blitt bra igjen", "Var der på konsert i helga. Lokalet fungerer betre no enn for fem år sidan.",
           [ "Lyden er endeleg fiksa. Det var problemet heile tida.", "Bryggeriet ved sida av er verdt turen åleine." ] ],
@@ -209,7 +209,7 @@ module Brgen
           [ "Høyre fot på plata, strak arm, len dæ bakover. Itj se ned.", "Alle ser dumme ut første gangen. Det e en del av det." ] ],
         [ "Nidelva om morran e det beste med byen", "Går langs elva til jobb hver dag. Tar ti minutt lenger, verdt det hver gang.",
           [ "Fra Gamle Bybro og nedover e det finest.", "Om vinteren når det ryk av elva. Da e det noe helt anna." ] ],
-        [ "Gløshaugen-kantina - kor et dokker egentlig?", "Æ e lei av det samme. Noen som har funnet noe bedre i gåavstand?",
+        [ "Gløshaugen-kantina — kor et dokker egentlig?", "Æ e lei av det samme. Noen som har funnet noe bedre i gåavstand?",
           [ "Realfagbygget har bedre utvalg enn hovedbygget.", "Ta med matpakke og sett dæ i parken. Billigere og bedre." ] ],
         [ "Munkholmen siste båt i september", "Rakk den så vidt i fjor. Noen som vet om de kjører ut oktober i år?",
           [ "De pleie å stopp rundt månedsskiftet. Sjekk rutetabellen.", "Siste turen e den beste. Ingen folk, og lyset e lavt." ] ],
@@ -219,7 +219,7 @@ module Brgen
           [ "Restauranten snurre, tårnet står stille. Det e derfor du itj ser det.", "En runde tar en time. Du må stå der lenge for å merke det." ] ]
       ],
       # Plain American English. The one Southern California marker worth
-      # keeping is the article on freeways - "the 405", "the 10" - which
+      # keeping is the article on freeways — "the 405", "the 10" — which
       # nobody outside the region writes.
       "lsangeles.com" => [
         [ "Best taco truck east of the river?", "Been working my way through Boyle Heights for a year. I keep going back to the same al pastor spot on Cesar Chavez but I'm open to being proven wrong.",
@@ -268,7 +268,7 @@ module Brgen
     # Run a block with Faker speaking the city's language.
     #
     # Faker resolves its data through the host app's I18n backend, so a locale
-    # the app doesn't declare raises I18n::InvalidLocale - and the app only
+    # the app doesn't declare raises I18n::InvalidLocale — and the app only
     # declares the five it ships UI copy for. Both the allowlist and
     # Faker::Config.locale are process-global, so both are restored on the way
     # out; a seed_all! run over many cities would otherwise leak the last

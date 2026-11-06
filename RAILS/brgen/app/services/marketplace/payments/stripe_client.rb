@@ -8,7 +8,7 @@ module Marketplace
   module Payments
     # One HTTP client for every Stripe call. Checkout, refund and transfer used
     # to each open their own Net::HTTP session, so a timeout or error-parse
-    # change in one would not reach the others - and none sent Idempotency-Key,
+    # change in one would not reach the others — and none sent Idempotency-Key,
     # which is how a retried refund or transfer doubles the money movement.
     class StripeClient
       def self.get(url)

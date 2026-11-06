@@ -14,6 +14,6 @@
   </ul>
   <%= render "shared/pager", pagy: @pagy %>
 <% else %>
-  <%# empty_state: no-action-ok - the link back to the profile above is the next step %>
+  <%# empty_state: no-action-ok — the link back to the profile above is the next step %>
   <%= render "shared/empty_state", title: t("follow_lists.#{@direction}_empty", name: @user.display_name) %>
 <% end %>

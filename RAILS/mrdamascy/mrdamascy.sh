@@ -5,7 +5,7 @@ if [[ $(id -u) -eq 0 ]]; then
   print -u2 "mrdamascy.sh: refusing to run checkout code as root; use zsh OPENBSD/bin/vps-deploy mrdamascy"
   exit 2
 fi
-# mrdamascy.sh - deploys the tracked mrdamascy Rails tree (the mrd.brgen.no demo).
+# mrdamascy.sh — deploys the tracked mrdamascy Rails tree (the mrd.brgen.no demo).
 set -euo pipefail
 
 APP_NAME=mrdamascy

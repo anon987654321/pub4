@@ -1,10 +1,10 @@
 #!/usr/bin/env zsh
 set -euo pipefail
-# _runtime_check.sh - MASTER rules scan and the full CI check (bundle + db:prepare
+# _runtime_check.sh — MASTER rules scan and the full CI check (bundle + db:prepare
 # + bin/ci) that must pass before a deploy is allowed to restart the service.
 # Source this file; do not execute directly. Requires _core.sh sourced first.
 
-# master_scan_dep APP_NAME - laws.yml check via MASTER CLI (requires bundle exec in MASTER/).
+# master_scan_dep APP_NAME — laws.yml check via MASTER CLI (requires bundle exec in MASTER/).
 master_scan_dep() {
   local app_name=$1
   local master=${MASTER_ROOT:-/home/dev/pub4/MASTER}
@@ -36,7 +36,7 @@ master_scan_dep() {
   log_ok "MASTER scan clean"
 }
 
-# run_rails_as_app APP_NAME APP_DIR CMD - app-owned bundle/rails (avoids Gemfile.lock permission errors).
+# run_rails_as_app APP_NAME APP_DIR CMD — app-owned bundle/rails (avoids Gemfile.lock permission errors).
 run_rails_as_app() {
   local app_name=$1 app_dir=$2 task=${3:-} database=${4:-}
   case "$app_name" in
@@ -64,7 +64,7 @@ run_rails_as_app() {
   fi
 }
 
-# rails_runtime_check APP_NAME APP_DIR - bundle check + db:prepare + bin/ci + master scan before rcctl restart.
+# rails_runtime_check APP_NAME APP_DIR — bundle check + db:prepare + bin/ci + master scan before rcctl restart.
 rails_runtime_check() {
   local app_name=${1:-}
   local app_dir=${2:-$1}
@@ -109,7 +109,7 @@ rails_runtime_check() {
     }
     local rails_tree=${PUB4_RAILS_ROOT:-/home/dev/pub4/RAILS}
     if [[ -d $rails_tree ]]; then
-      # traversal is group-based (710 dev:_pub4ci) - vps_ci.sh converges it;
+      # traversal is group-based (710 dev:_pub4ci) — vps_ci.sh converges it;
       # this check must not widen /home/dev to the world.
       chmod -R u+rX,g+rX "$rails_tree" 2>/dev/null || true
     fi

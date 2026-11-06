@@ -15,14 +15,14 @@ class Tv::Video < ApplicationRecord
                            inverse_of: :video
   has_many :video_notes,   class_name: "Tv::VideoNote", foreign_key: :video_id, dependent: :destroy, inverse_of: :video
   has_many :comments,      class_name: "Tv::Comment", dependent: :destroy
-  # The audio this clip is built on, and - when it answers another clip - the
+  # The audio this clip is built on, and — when it answers another clip — the
   # one it answers. Both nullable: most videos carry their own sound and answer
   # nothing.
   belongs_to :sound, class_name: "Tv::Sound", optional: true, counter_cache: :videos_count
   belongs_to :duet_of, class_name: "Tv::Video", optional: true
   has_many :duets, class_name: "Tv::Video", foreign_key: :duet_of_id, dependent: :nullify, inverse_of: :duet_of
   # The sound this clip introduced, if it introduced one. :nullify, because the
-  # sound outlives the clip - the clips built on it are the reason it is still a
+  # sound outlives the clip — the clips built on it are the reason it is still a
   # thing, and the schema's foreign key would otherwise refuse the delete.
   has_one :originated_sound, class_name: "Tv::Sound", foreign_key: :source_video_id,
           dependent: :nullify, inverse_of: :source_video
@@ -40,7 +40,7 @@ class Tv::Video < ApplicationRecord
   validates :title, presence: true
   validates :status, inclusion: { in: STATUSES }, allow_nil: true
 
-  # in_current_city on the two scopes the public pages read, not on :published -
+  # in_current_city on the two scopes the public pages read, not on :published —
   # :published is also used by admin and by the channel's own show page, where
   # the channel is already the tenant-scoped record doing the asking.
   scope :published, -> { where(status: "published").order(published_at: :desc) }
@@ -53,7 +53,7 @@ class Tv::Video < ApplicationRecord
 
   # Trending ranks by watch time, not by page opens. views_count is incremented
   # in videos#show, so a viewer who bounced after four seconds moved a video up
-  # exactly as far as one who watched it through - which is the difference
+  # exactly as far as one who watched it through — which is the difference
   # between a most-clicked list and a most-watched one.
   #
   # A correlated subquery rather than left_joins + group: the home page passes
@@ -79,7 +79,7 @@ class Tv::Video < ApplicationRecord
   def comments_oldest_first = comments.sort_by(&:created_at)
 
   def duration_formatted
-    return "-" unless duration_seconds
+    return "—" unless duration_seconds
     h, rem = duration_seconds.divmod(3600)
     m, s = rem.divmod(60)
     h > 0 ? "%d:%02d:%02d" % [ h, m, s ] : "%d:%02d" % [ m, s ]

@@ -4,7 +4,7 @@
 # what partner marketing earns was arithmetic over an unmeasured number: in a
 # network dashboard, "nobody clicks" and "attribution is broken" are the same zero.
 #
-# One migration per app, which is this repo's convention - the engine declares
+# One migration per app, which is this repo's convention — the engine declares
 # config.paths["db/migrate"] but the apps do not read it (db:migrate:status lists
 # only their own), so a migration left in shared/db/migrate would never run.
 #

@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-# Save a post to read later. A private per-user list - no counts exposed, no
+# Save a post to read later. A private per-user list — no counts exposed, no
 # notification to the author.
 class CreateBookmarks < ActiveRecord::Migration[8.1]
   def change

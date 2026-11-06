@@ -62,7 +62,7 @@
           <li class="plan-row">
             <span class="plan-date"><%= l(plan.planned_date, format: :day) %></span>
             <%= link_to plan.outfit.name, plan.outfit %>
-            <%# destructive: no-confirm-ok - reversible - this drops the outfit from today's plan, not the outfit %>
+            <%# destructive: no-confirm-ok — reversible — this drops the outfit from today's plan, not the outfit %>
             <%= button_to t("actions.remove"), planned_outfit_path(plan), method: :delete, class: "button-link" %>
           </li>
         <% end %>
@@ -78,7 +78,7 @@
           <li class="cpw-row">
             <%= link_to item.title, item %>
             <%# Was a hardcoded £ next to eight number_to_currency calls that
-                rendered $ - three currencies in one app, for a wardrobe priced
+                rendered $ — three currencies in one app, for a wardrobe priced
                 in øre. %>
             <span class="cpw-val"><%= t("home.cpw_value", amount: number_to_currency(item.cost_per_wear), count: item.times_worn.to_i) %></span>
           </li>

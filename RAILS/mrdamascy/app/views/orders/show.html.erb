@@ -1,4 +1,4 @@
-<% content_for :title, "#{t("orders.title")} - ##{@order&.id}" %>
+<% content_for :title, "#{t("orders.title")} · ##{@order&.id}" %>
 
 <%# OrdersController#show provides @order with order_items. %>
 <% order = @order %>
@@ -24,7 +24,7 @@
   <% end %>
   <% if order.placed_at.present? %>
     <p>
-      #<%= order.id %> -
+      #<%= order.id %> ·
       <%= tag.time t("orders.placed_at", when: l(order.placed_at, format: :placed)),
             datetime: order.placed_at.iso8601 %>
     </p>
@@ -43,7 +43,7 @@
         <%= tag.span line.emoji, aria: { hidden: true } %>
       <% end %>
       <span>
-        <%= tag.strong "#{line.quantity}x #{line.name}" %>
+        <%= tag.strong "#{line.quantity}× #{line.name}" %>
         <%= tag.span line.options_text, class: "line-options" if line.options_text.present? %>
       </span>
       <%= tag.strong money(line.line_total_ore) %>

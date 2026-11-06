@@ -33,10 +33,10 @@ class SurfaceMicroRefinementContractTest < Minitest::Test
   def test_archived_matrix_records_the_historical_surface_groups
     source = File.read(MATRIX, encoding: "UTF-8")
     assert_includes source, "Archived surface micro-refinement matrix"
-    assert_includes source, "radio - track card"
-    assert_includes source, "market - hero"
-    assert_includes source, "market - hero copy"
-    assert_includes source, "market - storefront frame"
+    assert_includes source, "radio · track card"
+    assert_includes source, "market · hero"
+    assert_includes source, "market · hero copy"
+    assert_includes source, "market · storefront frame"
     assert_equal 288, source.lines.count { |line| line.match?(/^\d{3}\. /) }
   end
 end

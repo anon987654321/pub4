@@ -8,15 +8,15 @@ require_relative "../../../OPENBSD/checks/port_inventory"
 
 # port_inventory moved to OPENBSD/checks on 2026-09-11 and kept its row in
 # MASTER/checks/checks.yml, so its ROOT is now two levels up rather than three. Three
-# checks broke on exactly that arithmetic during the move - one went looking for
-# /Users/mac/Documents/GitHub/RAILS/apps.yml - and the fail-open runner called it
+# checks broke on exactly that arithmetic during the move — one went looking for
+# /Users/mac/Documents/GitHub/RAILS/apps.yml — and the fail-open runner called it
 # errored rather than failed, which is the quietest way for a check to stop
 # guarding. The first test is that arithmetic.
 #
 # The rest plant the drift the check exists to catch. Its checks all take the app
 # list as an argument, so a disagreeing list is the defect: one app whose relayd
 # port, crawl manifest or smoke probe no longer matches apps.yml. That is the real
-# failure it was written for - a port changed everywhere except relayd.conf, where
+# failure it was written for — a port changed everywhere except relayd.conf, where
 # the deploy succeeds, rcctl reports the app running, and the site serves 502.
 class PortInventoryCheckTest < Minitest::Test
   include CheckProbe
@@ -43,7 +43,7 @@ class PortInventoryCheckTest < Minitest::Test
   end
 
   # The third state. Every check reads the app list, so an empty list is not a
-  # clean fleet - it is a check with nothing to compare, and fourteen checks that
+  # clean fleet — it is a check with nothing to compare, and fourteen checks that
   # all vacuously pass. The check says so instead.
   def test_an_inventory_that_lists_no_apps_is_inconclusive_rather_than_fourteen_vacuous_passes
     Dir.mktmpdir("port-inventory") do |root|

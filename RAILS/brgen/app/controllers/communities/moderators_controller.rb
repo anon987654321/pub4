@@ -52,7 +52,7 @@ class Communities::ModeratorsController < ApplicationController
       redirect_back fallback_location: community_moderators_path(@community),
                     notice: t("flash.community.moderator_removed")
     else
-      # The last owner cannot be demoted - there would be nobody left who can
+      # The last owner cannot be demoted — there would be nobody left who can
       # appoint anyone.
       redirect_back fallback_location: community_moderators_path(@community),
                     alert: membership.errors.full_messages.to_sentence

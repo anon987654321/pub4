@@ -139,7 +139,7 @@ class PartnerAttributionReport
 
   # Plain text, because it goes to a log the operator greps and to a terminal.
   def render
-    lines = [ "partner attribution - #{@window.inspect} to #{@now.utc.iso8601}" ]
+    lines = [ "partner attribution — #{@window.inspect} to #{@now.utc.iso8601}" ]
     lines << format("  clicks              %d (%d with no epi)", clicks_total, clicks_without_epi)
     lines << format("  conversions         %d", conversions.count)
     lines << format("  approved            %d", approved_conversions.count)
@@ -148,7 +148,7 @@ class PartnerAttributionReport
     lines << ""
     lines << "  clicks by merchant:"
     if clicks_by_merchant.empty?
-      lines << "    none - either nobody clicked, or the beacon is not firing. Check that a link " \
+      lines << "    none — either nobody clicked, or the beacon is not firing. Check that a link " \
                "carries data-controller=\"outbound-click\"."
     else
       clicks_by_merchant.first(15).each do |merchant, count|
@@ -165,7 +165,7 @@ class PartnerAttributionReport
       end
     end
     lines << ""
-    lines << "  route funnel (page views -> outbound click events):"
+    lines << "  route funnel (page views → outbound click events):"
     route_funnel = clicks_per_view_by_route
     if route_funnel.empty?
       lines << "    none"

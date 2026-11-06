@@ -47,7 +47,7 @@ module Shared
         app_name: @app_name,
         city_name:,
         locale: @locale,
-        subject: polish("#{city_name} - #{lede_subject(lede)}"),
+        subject: polish("#{city_name} — #{lede_subject(lede)}"),
         preheader: polish(preheader_for(curated, city_name)),
         lede: polish(lede),
         sign_off: sign_off_for(city_name),
@@ -79,7 +79,7 @@ module Shared
         app_name: @app_name,
         city_name:,
         locale: @locale,
-        subject: polish("#{city_name} - picks worth your attention"),
+        subject: polish("#{city_name} — picks worth your attention"),
         preheader: polish("Six curated offers for people who live in #{city_name}."),
         lede: polish(lede),
         sign_off: sign_off_for(city_name),
@@ -137,7 +137,7 @@ module Shared
         title: read_attr(story, :title).to_s,
         url: story_url(story),
         teaser: StrunkWhitePass.call(truncate_text(read_attr(story, :content).to_s, 140)),
-        meta: [ read_attr(read_attr(story, :community), :name), read_attr(story, :author_name) ].compact.join(" - "),
+        meta: [ read_attr(read_attr(story, :community), :name), read_attr(story, :author_name) ].compact.join(" · "),
         image_url: story_image_url(story),
       )
     end
@@ -212,11 +212,11 @@ module Shared
     end
 
     def preheader_for(stories, city_name)
-      titles = stories.filter_map { |story| read_attr(story, :title) }.first(2).join(" - ")
+      titles = stories.filter_map { |story| read_attr(story, :title) }.first(2).join(" · ")
       titles.empty? ? "What's moving in #{city_name} today" : titles
     end
 
-    def sign_off_for(city_name) = "- The #{@app_name} editors, #{city_name}"
+    def sign_off_for(city_name) = "— The #{@app_name} editors, #{city_name}"
 
     def permission_line(city_name)
       "You subscribed because #{city_name} matters to you. We send only what we would read ourselves."
@@ -227,7 +227,7 @@ module Shared
     def truncate_text(text, length)
       string = text.to_s
       return string if string.length <= length
-      "#{string[0, length - 1]}..."
+      "#{string[0, length - 1]}…"
     end
   end
 end

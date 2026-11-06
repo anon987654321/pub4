@@ -3,7 +3,7 @@
 # The one search on markedsplass and takeaway: the field in the storefront
 # header, the results in the page under it. Amazon, the functional model, has a
 # single field in its bar, and these pages carried a second copy in the body
-# with the same placeholder - the header's did a full page load and the body's
+# with the same placeholder — the header's did a full page load and the body's
 # streamed results, below the fold.
 #
 # The ids are declared here because three sides meet on them: the header form

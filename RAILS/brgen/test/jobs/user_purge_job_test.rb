@@ -297,8 +297,8 @@ class UserPurgeJobTest < ActiveJob::TestCase
     end
   end
 
-  # The order stays - it is a financial record the restaurant may be required
-  # to keep - but where it was delivered is not part of that obligation.
+  # The order stays — it is a financial record the restaurant may be required
+  # to keep — but where it was delivered is not part of that obligation.
   test "a takeaway order keeps its money and loses its address" do
     ActsAsTenant.with_tenant(@city) do
       restaurant = Takeaway::Restaurant.create!(name: "Pizzabakeren", city: @city, address: "Torget 2",
@@ -359,7 +359,7 @@ class UserPurgeJobTest < ActiveJob::TestCase
   # first draft of the coverage test guessed instead, produced
   # "marketplace_addresss", matched nothing, and passed.
   # RAILS/test/ is not inside this app, and on the box it is not beside it either.
-  # Rails.root is /home/brgen/app there, so Rails.root/.. is /home/brgen - a real
+  # Rails.root is /home/brgen/app there, so Rails.root/.. is /home/brgen — a real
   # directory with no test/ in it, which is why `require Rails.root.join("../test/
   # erasure_coverage_test")` resolved in a source checkout and raised LoadError on
   # "/home/brgen/test/erasure_coverage_test" on every VPS deploy. It failed the
@@ -389,7 +389,7 @@ class UserPurgeJobTest < ActiveJob::TestCase
     { destroy: UserPurgeJob::DESTROY, nullify: UserPurgeJob::NULLIFY }.each do |disposition, rows|
       rows.each do |row|
         model = row[:model].safe_constantize
-        assert model, "#{row[:model]} does not resolve - the job must fail closed and retry later"
+        assert model, "#{row[:model]} does not resolve — the job must fail closed and retry later"
 
         recorded = classified[model.table_name]
         assert recorded, "#{model.table_name} is touched by the job and classified nowhere"
@@ -398,7 +398,7 @@ class UserPurgeJobTest < ActiveJob::TestCase
 
         Array(row[:columns]).each do |column|
           assert_includes model.column_names, column.to_s,
-                          "#{model.table_name}.#{column} does not exist - the job nullifies nothing"
+                          "#{model.table_name}.#{column} does not exist — the job nullifies nothing"
         end
       end
     end

@@ -30,8 +30,8 @@
               data: { controller: "countdown", countdown_target_time_value: order.estimated_ready_at.iso8601 } %>
   <% end %>
 
-  <%# Named courier once one is dispatched. Absence is a real state - nobody
-      free within the dispatch radius - so it says so rather than rendering an
+  <%# Named courier once one is dispatched. Absence is a real state — nobody
+      free within the dispatch radius — so it says so rather than rendering an
       empty row. %>
   <% if order.status == "out_for_delivery" %>
     <% if (courier = order.courier_display_name) %>

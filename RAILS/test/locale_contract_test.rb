@@ -9,7 +9,7 @@ require "psych"
 #
 # i18n_resolution_test asks whether a key a view uses resolves. This asks the
 # questions that come before that, found by throwaway scripts during the
-# 2026-08-12 i18n sweep - scripts that caught real bugs and were then thrown
+# 2026-08-12 i18n sweep — scripts that caught real bugs and were then thrown
 # away, which is why the bugs stayed findable and this file exists.
 #
 #   Duplicate keys. Psych keeps the last value for a repeated key and says nothing.
@@ -21,8 +21,8 @@ require "psych"
 #   One home per key. The same silence one directory up: Rails merges every file
 #   in a locale directory in sorted order, so a key defined in two of them renders
 #   from whichever file sorts last and the other definition is read by nobody.
-#   amber kept eleven English strings in copy.en.yml that en.yml overrode -
-#   "Analysis unavailable" against "No analysis for this garment yet." - and the
+#   amber kept eleven English strings in copy.en.yml that en.yml overrode —
+#   "Analysis unavailable" against "No analysis for this garment yet." — and the
 #   symptom was prose a person had written and no reader could reach.
 #
 #   nb/en parity. Rails falls back to :en for a key nb does not carry, so a missing
@@ -37,7 +37,7 @@ require "psych"
 #   a fetched subtree each spare what they could reach, so a hit is a key no
 #   spelling in the tree can produce.
 #
-# They all pass. That is the point - they are here so the next one fails a test
+# They all pass. That is the point — they are here so the next one fails a test
 # instead of shipping.
 class LocaleContractTest < Minitest::Test
   ROOT = File.expand_path("..", __dir__)
@@ -59,11 +59,11 @@ class LocaleContractTest < Minitest::Test
   end
 
   def test_the_glob_finds_the_locale_files
-    refute_empty locale_files, "no locale files found - the glob is wrong, not the tree"
+    refute_empty locale_files, "no locale files found — the glob is wrong, not the tree"
     assert_operator locale_files.size, :>=, 10,
                     "expected at least 10 locale files, found #{locale_files.size}"
     assert_operator locale_units.count { |unit| unit.start_with?("brgen_") }, :>=, 6,
-                    "fewer than six engine locale directories - the glob is wrong, not the tree"
+                    "fewer than six engine locale directories — the glob is wrong, not the tree"
   end
 
   def test_the_glob_finds_the_shared_engine_locale_files
@@ -91,7 +91,7 @@ class LocaleContractTest < Minitest::Test
   # Within one directory, because across directories the shadowing is the override
   # mechanism rather than a bug: an app's config/locales loads after the engines it
   # mounts, which is how amber words six of its shared strings differently. A key
-  # with two homes in one directory has no such reason - one of them renders and
+  # with two homes in one directory has no such reason — one of them renders and
   # the other is dead copy.
   def test_no_key_has_two_homes_in_one_locale_directory
     collisions = locale_groups.flat_map do |(app, locale), paths|
@@ -133,7 +133,7 @@ class LocaleContractTest < Minitest::Test
   end
 
   # Per app, because amber words four auth strings differently from brgen and
-  # that is intent, not duplication - the contract is that each app says the same
+  # that is intent, not duplication — the contract is that each app says the same
   # things in both languages, not that all apps say the same things.
   def test_nb_and_en_declare_the_same_keys
     problems = locale_units.filter_map do |app|
@@ -181,7 +181,7 @@ class LocaleContractTest < Minitest::Test
       unread_keys(keys_for(unit, "en"), sources_for(unit)).map { |key| "#{unit} #{key}" }
     end
 
-    assert_empty unread, "#{unread.size} key(s) no source reads - delete them from en and nb:\n  #{unread.join("\n  ")}"
+    assert_empty unread, "#{unread.size} key(s) no source reads — delete them from en and nb:\n  #{unread.join("\n  ")}"
   end
 
   def test_the_reader_search_flags_an_unread_key_and_spares_every_way_a_key_is_built

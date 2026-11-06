@@ -24,7 +24,7 @@ module Amber
     NEUTRAL = "#b9b2a6"
 
     # Shape per garment, chosen by what the title says it is. Category alone is
-    # too coarse - "Bottoms" is trousers, jeans, a skirt and shorts, and they do
+    # too coarse — "Bottoms" is trousers, jeans, a skirt and shorts, and they do
     # not share an outline.
     SHAPE_BY_KEYWORD = {
       "slip dress" => :dress, "shirtdress" => :shirtdress, "dress" => :dress,
@@ -54,7 +54,7 @@ module Amber
     end
 
     # PNG bytes with an alpha channel, or nil if this box has no vips that can
-    # read SVG - the caller then keeps whatever it did before rather than
+    # read SVG — the caller then keeps whatever it did before rather than
     # attaching nothing.
     def png(title:, color:, category: nil, width: 720)
       svg = svg_for(shape_for(title: title, category: category), hex_for(color))
@@ -67,7 +67,7 @@ module Amber
     end
 
     # Active Storage calls Vips.block_untrusted(true) as it loads, and libvips
-    # marks its SVG loader untrusted - rsvg parses a whole document language, so
+    # marks its SVG loader untrusted — rsvg parses a whole document language, so
     # for a file that arrived from a stranger that default is right. The string
     # here is one this class just built from its own PATHS table, so the block
     # comes off for exactly that one call and goes back on along every path out.
@@ -109,7 +109,7 @@ module Amber
     end
 
     # One entry per outline. Flat fills and a single seam line, matching the flat
-    # rule the rest of the family is held to - no gradients, no shadow. The seam
+    # rule the rest of the family is held to — no gradients, no shadow. The seam
     # is a shade of the garment's own colour: drawn at the same hue it was
     # invisible, which left a coat and a tee the same silhouette.
     def self.shade(hex, factor = 0.72)

@@ -9,7 +9,7 @@ require_relative "../../../MASTER/checks/lib/source/css_minify_integrity"
 # Compile each app's entrypoint twice and compare.
 #
 # check_app joins its app name onto RAILS_ROOT, so a fixture reaches it as the
-# relative path from there - no constant rewriting, and the check resolves the
+# relative path from there — no constant rewriting, and the check resolves the
 # stylesheet exactly the way it does for a real app.
 #
 # Two failures are planted. An entrypoint that does not compile ships no
@@ -35,7 +35,7 @@ class CssMinifyIntegrityCheckTest < Minitest::Test
   end
 
   def setup
-    skip "sass-embedded unavailable - the check reports itself inconclusive here" unless SASS
+    skip "sass-embedded unavailable — the check reports itself inconclusive here" unless SASS
   end
 
   def check(scss)

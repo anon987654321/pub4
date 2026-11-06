@@ -98,7 +98,7 @@ class VerticalMutationsTest < ActionDispatch::IntegrationTest
     post marketplace.send_offers_cart_path
     assert_redirected_to marketplace.cart_path
     # Through the key. This asserted /Sent 1/ and passed only while the flash was
-    # a hardcoded English string in a controller rendering an nb UI - the test was
+    # a hardcoded English string in a controller rendering an nb UI — the test was
     # pinning the bug in place. Second one of these today; the other was
     # maps.checked_in_recently in vertical_forms_test.
     assert_equal I18n.t("flash.marketplace.offers_sent", count: 1), flash[:notice].to_s

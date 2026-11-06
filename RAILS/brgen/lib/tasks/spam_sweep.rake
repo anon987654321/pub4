@@ -12,7 +12,7 @@
 #                       discuss AI SEO!" / "Greetings from DreamProxies"
 #   price templates     the same "I wanted to know your price" sentence in
 #                       Latvian, Vietnamese, Welsh, Armenian, Georgian, Albanian
-#                       and Latin - one bot, one phrasebook
+#                       and Latin — one bot, one phrasebook
 #
 # The subdomains in those titles are the tell. dating.cardff.uk, maps.cardff.uk,
 # marketplace.cardff.uk and radio.cardff.uk were never linked anywhere: the
@@ -21,18 +21,18 @@
 # knowledge within minutes, whether or not it is announced.
 #
 # Soft delete, not destroy. `removed_at` is what ModerationWorkflow sets, and
-# Post.kept - which hot, fresh and top all chain from, and the sitemap with them
-# - filters on it. So one column takes a post out of the feed, the post page,
+# Post.kept — which hot, fresh and top all chain from, and the sitemap with them
+# — filters on it. So one column takes a post out of the feed, the post page,
 # search, hashtags and the sitemap at once, and leaves it readable for anyone
 # checking whether the sweep was right.
 #
 #   rake brgen:spam:report          what would be removed, by city
 #   rake brgen:spam:sweep           dry run
 #   rake brgen:spam:sweep APPLY=1   set removed_at
-#   rake brgen:spam:restore IDS=...   put specific posts back
+#   rake brgen:spam:restore IDS=…   put specific posts back
 module BrgenSpamSweep
   # Deliberately narrow. Every pattern here was checked against all 1447 posts on
-  # production and matched 41, with no false positives - the seeded Norwegian
+  # production and matched 41, with no false positives — the seeded Norwegian
   # content contains no URLs, no CRLF and no "Hello <something>," titles.
   #
   # CRLF earns its place: a person typing in the compose box sends \n, while
@@ -65,9 +65,9 @@ module BrgenSpamSweep
   #
   # Authorship is the signal that does not need a phrasebook. Every one of the 57
   # spam posts on this site was written by a guest_*@guest.local account, and
-  # every legitimate post - including the ten short Live posts where title and
+  # every legitimate post — including the ten short Live posts where title and
   # body are identical by design, which is what broke the obvious content-shaped
-  # rule - was written by a named account. 57 of 57 and 0 false positives.
+  # rule — was written by a named account. 57 of 57 and 0 false positives.
   #
   # That is a fact about today, not a policy. Anonymous posting is a feature
   # here, and the moment a real person uses it this rule starts throwing away
@@ -118,7 +118,7 @@ namespace :brgen do
       if apply
         # update_columns, matching ModerationWorkflow#remove_content: a legacy
         # row with a since-tightened validation must not be able to block its own
-        # takedown. updated_at moves too, so the [post, ...] fragment caches
+        # takedown. updated_at moves too, so the [post, …] fragment caches
         # re-render without it.
         now = Time.current
         rows.each { |post| post.update_columns(removed_at: now, updated_at: now) }

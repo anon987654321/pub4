@@ -11,7 +11,7 @@ require_relative "../__shared/app/services/shared/link_converter"
 
 # Why this exists: amber showed affiliate links and earned nothing from them, for
 # two independent reasons. The feed client it asked for lived in brgen's process,
-# and its saved links were emitted verbatim - no website id, so a converting click
+# and its saved links were emitted verbatim — no website id, so a converting click
 # paid nobody. This module is the second half, in the engine so every app can use
 # one implementation of the attribution rule.
 class LinkConverterTest < Minitest::Test
@@ -60,7 +60,7 @@ class LinkConverterTest < Minitest::Test
 
   # The bug this pins, found by running the code rather than reading it: epi was
   # appended with URI.encode_www_form, which re-encoded the parentheses of
-  # a(...)url(...) into `a%2812345%29=` - a link that tracks nothing and goes nowhere.
+  # a(…)url(…) into `a%2812345%29=` — a link that tracks nothing and goes nowhere.
   def test_epi_is_a_segment_not_a_query_parameter
     configured!
     wrapped = LC.wrap(TARGET, epi: LC.epi_for(surface: "amber", post_id: 7))
@@ -114,7 +114,7 @@ class LinkConverterTest < Minitest::Test
   end
 
   # Ad blockers target tradedoubler.com by hostname, so a first-party copy is the
-  # one that survives - but an app with no sync job of its own must still get a
+  # one that survives — but an app with no sync job of its own must still get a
   # script, because remote-and-sometimes-blocked beats absent.
   def test_script_source_prefers_a_local_copy_and_falls_back_to_remote
     configured!(wrap: false)

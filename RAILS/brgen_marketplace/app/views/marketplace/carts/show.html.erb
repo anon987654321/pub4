@@ -23,7 +23,7 @@
       <article class="cart-item">
         <% photo = item.listing.photos.attached? ? item.listing.photos.first : nil %>
         <%= render "marketplace/card_media", photo:, fallback_char: item.listing.title.to_s.first&.upcase || "?", badge: nil %>
-        <div> <%# scan: intentional - the item's text block; the cart row is the layout %>
+        <div> <%# scan: intentional — the item's text block; the cart row is the layout %>
           <h2 class="deal-card-title"><%= link_to item.listing.title, listing_path(item.listing) %></h2>
           <% if (seller = item.listing.user&.display_name).present? %>
             <%= tag.span t("marketplace.seller_badge", name: seller), class: "store-badge" %>
@@ -31,10 +31,10 @@
           <%# A one-of-a-kind listing has one to buy, so only stocked lines get a
               quantity to change. %>
           <% if item.listing.one_of_a_kind? %>
-            <div><%= item.listing.price_display %> x <%= item.quantity || 1 %></div> <%# scan: intentional - a line of text inside the item block %>
+            <div><%= item.listing.price_display %> × <%= item.quantity || 1 %></div> <%# scan: intentional — a line of text inside the item block %>
           <% else %>
             <%= form_with url: cart_item_path(item), method: :patch, class: "cart-quantity" do |f| %>
-              <span><%= item.listing.price_display %> x</span>
+              <span><%= item.listing.price_display %> ×</span>
               <%= f.number_field :quantity, value: item.quantity || 1, min: 1, max: item.listing.available_quantity,
                     inputmode: "numeric", aria: { label: t("marketplace.order_quantity") } %>
               <%= f.submit t("marketplace.update_quantity"), class: "button button-ghost" %>
@@ -43,7 +43,7 @@
         </div>
         <div class="cart-item-sum">
           <%= tag.strong item.total_display, class: "deal-price", data: { money: true } %>
-          <%# destructive: no-confirm-ok - a cart line comes back by adding the listing again %>
+          <%# destructive: no-confirm-ok — a cart line comes back by adding the listing again %>
           <%= button_to t("actions.remove"), cart_item_path(item), method: :delete, class: "button button-ghost" %>
         </div>
       </article>

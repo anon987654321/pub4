@@ -19,7 +19,7 @@
   data-playlist-player-artist-value="<%= active&.artist %>"
   data-playlist-player-artwork-value="<%= active_art %>"
   data-playlist-player-track-id-value="<%= active&.id %>"
-  data-playlist-player-color-value="<%= local_assigns[:color] || "#00d4ff" %>" <%# scan: intentional - canvas visualizer default, read by JS not the cascade %>
+  data-playlist-player-color-value="<%= local_assigns[:color] || "#00d4ff" %>" <%# scan: intentional — canvas visualizer default, read by JS not the cascade %>
   data-playlist-player-comments-value="<%= (local_assigns[:comments] || []).to_json %>"
   data-playlist-player-track-comments-value="<%= (local_assigns[:track_comments] || {}).to_json %>"
   data-playlist-player-show-artwork-value="<%= (local_assigns[:show_artwork].nil? ? true : local_assigns[:show_artwork]) %>"
@@ -79,7 +79,7 @@
       <p class="playlist-now-playing-artist" data-playlist-player-target="artist"><%= active&.artist.presence || t("playlist.unknown_artist") %></p>
       <p class="playlist-now-playing-meta">
         <%= t("playlist.queue_stats", tracks: total_tracks, plays: total_plays) %>
-        <% if active&.duration_formatted.present? %> - <%= active.duration_formatted %><% end %>
+        <% if active&.duration_formatted.present? %> · <%= active.duration_formatted %><% end %>
       </p>
     </div>
   </section>
@@ -98,7 +98,7 @@
 
     <%# tabindex is not decoration: role="slider" without it announces a control
         a keyboard cannot reach. Arrow/Home/End handling is scrubKey in the
-        controller. Kept outside the tag - an ERB comment between attributes
+        controller. Kept outside the tag — an ERB comment between attributes
         defeats every HTML attribute parser, including the one in
         RAILS/test/keyboard_reachable_controls_test.rb. %>
     <div
@@ -165,7 +165,7 @@
         <span class="playlist-queue-meta">
           <strong itemprop="name"><%= track.title %></strong>
           <%# Only a named artist is marked up as byArtist; "unknown artist" is copy for the reader, not a fact about the track. %>
-          <span><%= tag.span track.artist.presence || t("playlist.unknown_artist"), itemprop: ("byArtist" if track.artist.present?) %> - <%= track.duration_formatted %></span>
+          <span><%= tag.span track.artist.presence || t("playlist.unknown_artist"), itemprop: ("byArtist" if track.artist.present?) %> · <%= track.duration_formatted %></span>
         </span>
       </button>
     <% end %>

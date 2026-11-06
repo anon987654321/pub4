@@ -1,6 +1,6 @@
 // Classes the engine's own markup asked for and no stylesheet defined.
 //
-// Operator::CssCoverageLint measured 96 of these across the family on 2026-08-11 - the
+// Operator::CssCoverageLint measured 96 of these across the family on 2026-08-11 — the
 // direction of CSS drift nothing had ever measured, while the register tracked only
 // the reverse (selectors with no markup). Each was a hook the author expected to do
 // something, on a live surface: shared/_pager renders from 19 call sites.
@@ -22,7 +22,7 @@
   row-gap: var(--space-1);
 }
 
-// Pagination - shared/_pager, 19 render sites, previously unstyled entirely.
+// Pagination — shared/_pager, 19 render sites, previously unstyled entirely.
 .pager {
   display: flex;
   align-items: center;
@@ -66,7 +66,7 @@
 }
 
 // Vipps sign-in. The brand colour is Vipps's own and belongs to them, so this only
-// gives the button its shape and lets the accent token colour it - picking a hex here
+// gives the button its shape and lets the accent token colour it — picking a hex here
 // would be inventing a brand.
 .oauth-vipps {
   display: inline-flex;
@@ -107,7 +107,7 @@
   border: 0;
 }
 
-// Changelog - shared/changelog.html.erb. The page shell, its intro line and
+// Changelog — shared/changelog.html.erb. The page shell, its intro line and
 // the entry rhythm: measure-bounded column, dated entries separated by the
 // same border language the legal pages use. What an entry says is prose; the
 // fill only gives it a place to be prose in.

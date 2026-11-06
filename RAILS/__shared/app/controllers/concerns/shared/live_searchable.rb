@@ -49,7 +49,7 @@ module Shared
     # markup without one and every search after the first had nowhere to go.
     #
     # target and suggestions name those ids for a page that cannot use the
-    # defaults - see Shared::SearchHelper#live_search_results.
+    # defaults — see Shared::SearchHelper#live_search_results.
     def finish_live_search(partial:, locals: {}, target: "live_search_results", suggestions: "search_suggestions")
       respond_to do |format|
         format.html

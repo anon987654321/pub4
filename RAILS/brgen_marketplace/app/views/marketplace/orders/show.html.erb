@@ -66,7 +66,7 @@
           <p class="order-return-note"><%= sent_back.resolution_note %></p>
         <% end %>
         <%# The money is a separate fact from the decision, and nothing in the
-            tree moves it yet - saying "refunded" here would be a claim the app
+            tree moves it yet — saying "refunded" here would be a claim the app
             cannot back. %>
         <% if sent_back.status == "received" && !sent_back.refunded? %>
           <p class="order-return-note"><%= t("marketplace.return_refund_pending") %></p>

@@ -14,9 +14,9 @@ class CritiqueImplementationTest < Minitest::Test
     compose = read("brgen/app/views/shared/_feed_compose.html.erb")
     feed_actions = Operator::ScssRules.matching(brgen_css_source, /\A\.feed-action\z/)
 
-    # The single ranking control lives in posts/index, not the layout - the
+    # The single ranking control lives in posts/index, not the layout — the
     # layout's feed tabs are subapp navigation (subapp_nav_items), a different
-    # thing. This used to assert "For you - Hot" / "Following - Latest" against
+    # thing. This used to assert "For you · Hot" / "Following · Latest" against
     # the layout; that copy no longer exists anywhere, so the assertion was
     # failing while the feature it guards was present and correct. Assert the
     # control where it actually is, and keep the real invariant: exactly one

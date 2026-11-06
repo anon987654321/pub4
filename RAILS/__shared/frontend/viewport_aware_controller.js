@@ -4,7 +4,7 @@ import { Controller } from "@hotwired/stimulus"
 //
 // env(keyboard-inset-height) is the VirtualKeyboard API. That API is Chromium
 // only, and even there the env stays 0px until overlaysContent is opted in.
-// Safari - the phone this fleet is actually used on - never ships it. The
+// Safari — the phone this fleet is actually used on — never ships it. The
 // compose box and the messenger dock were padding against a value that is
 // always 0 on iOS, so the keyboard covered the field.
 //

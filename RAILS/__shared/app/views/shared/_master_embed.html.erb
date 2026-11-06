@@ -2,15 +2,15 @@
     an unlabelled black rectangle. Shared so brgen and amber cannot drift.
 
     Locals:
-      heading - section heading; defaults to the app's master_embed_title
-      eager   - true to load immediately (above the fold). Defaults to false:
+      heading — section heading; defaults to the app's master_embed_title
+      eager   — true to load immediately (above the fold). Defaults to false:
                 the face boots a WebGL/THREE scene, so keeping it off the
                 critical path matters on a 1 vCPU host. %>
 <% heading = local_assigns.fetch(:heading, master_embed_title) %>
 <% eager = local_assigns.fetch(:eager, false) %>
 <%# bare: the face is the hero rather than a labelled widget, so the chrome bar
     is dropped and the heading goes to screen readers only. The face still has
-    to be announced - an unlabelled iframe is not navigable. %>
+    to be announced — an unlabelled iframe is not navigable. %>
 <% bare = local_assigns.fetch(:bare, false) %>
 <section class="ai-embed<%= " ai-embed--bare" if bare %>"
          aria-labelledby="ai-embed-heading"

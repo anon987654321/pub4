@@ -5,7 +5,7 @@ if [[ $(id -u) -eq 0 ]]; then
   print -u2 "bsdports.sh: refusing to run checkout code as root; use zsh OPENBSD/bin/vps-deploy bsdports"
   exit 2
 fi
-# bsdports.sh - deploys the tracked bsdports Rails tree.
+# bsdports.sh — deploys the tracked bsdports Rails tree.
 set -euo pipefail
 
 APP_NAME=bsdports

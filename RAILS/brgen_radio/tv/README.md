@@ -27,7 +27,7 @@ videos, live streams and shows. A live stream carries `go_live` and `end_live` a
 chats. Stream chat and video notes broadcast over Turbo Streams, on `tv:live_stream:<id>:entries`
 and `tv:video:<id>:notes`, with explicit partials rather than inferred ones. Inside the engine
 the helpers carry no prefix, so a link reads `channel_url`. From the host, reach them as
-`tv.channel_url(..., subdomain: "tv")`.
+`tv.channel_url(…, subdomain: "tv")`.
 
 A new city starts with no television, so the engine ships a content pipeline. The rake task
 `tv:starter_pack` writes clips, posters and a manifest. It generates with Replicate when

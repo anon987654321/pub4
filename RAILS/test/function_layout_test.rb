@@ -119,7 +119,7 @@ PORTS = Fleet.app_ports
     # one of them turns the other into a defect report. amber's /demo is the
     # case: require_demo! renders when the demo wardrobe is seeded and redirects
     # home when it is not, both deliberate, so a row demanding 200 called an
-    # unseeded checkout a broken app. What stays falsifiable is the set - a 404
+    # unseeded checkout a broken app. What stays falsifiable is the set — a 404
     # or a 500 still fails, and a redirect must land where the row says.
     want = Array(spec.fetch("status", 200)).map { |s| Integer(s) }
     unless want.include?(response.code.to_i)

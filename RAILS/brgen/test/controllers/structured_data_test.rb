@@ -130,7 +130,7 @@ class StructuredDataTest < ActionDispatch::IntegrationTest
     assert_response :success
     title = css_select("title").first.text
     assert_equal I18n.t("pages.home_title", city: @city.name), title
-    refute_match(/\A(.+) \u2014 \1\z/, title)
+    refute_match(/\A(.+) — \1\z/, title)
     target = schema_of("WebSite").dig("potentialAction", "target")
     assert_equal "#{root_url}search?q={search_term_string}", target
   end

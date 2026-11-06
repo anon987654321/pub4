@@ -16,8 +16,8 @@ class Takeaway::OrderTest < ActiveSupport::TestCase
 
   # Same defect class as Marketplace::Order#seller: the lifecycle tests below
   # pass only because the order is built with its restaurant and user already in
-  # memory. Anything that loads an order from the database first - a controller
-  # action, a driver app request, a job - gets none of that preloaded, and every
+  # memory. Anything that loads an order from the database first — a controller
+  # action, a driver app request, a job — gets none of that preloaded, and every
   # model here is strict_loading by default (shared ApplicationRecord) with
   # production raising on a violation. transition_to! reads `user`,
   # `restaurant.name` and `restaurant.user`, so it would raise *after* update!
@@ -234,7 +234,7 @@ class Takeaway::OrderTest < ActiveSupport::TestCase
     ActsAsTenant.with_tenant(@city) do
       restaurant = kitchen(name: "Dispatch Kitchen", address: "Marken 20")
       # `nearby` is a bounding box, so the far courier is inside it. Only real
-      # haversine ordering picks the near one - a bbox alone would take either.
+      # haversine ordering picks the near one — a bbox alone would take either.
       far = courier(email: "far@brgen.no",  lat: 60.4180, lng: 5.3700)
       near = courier(email: "near@brgen.no", lat: 60.3920, lng: 5.3230)
 

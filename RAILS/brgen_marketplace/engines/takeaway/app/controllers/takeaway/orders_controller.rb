@@ -6,7 +6,7 @@ class Takeaway::OrdersController < Takeaway::BaseController
     Marketplace::Payments::ProviderError, Net::OpenTimeout, Net::ReadTimeout, SocketError, JSON::ParserError, KeyError
   ].freeze
 
-  # Guest checkout - no signup to place a takeaway order.
+  # Guest checkout — no signup to place a takeaway order.
   before_action :require_user_session
   before_action :set_restaurant, only: %i[new create]
 
@@ -27,7 +27,7 @@ class Takeaway::OrdersController < Takeaway::BaseController
   end
 
   def create
-    # A kitchen that is shut cannot cook now, but can take an order for later -
+    # A kitchen that is shut cannot cook now, but can take an order for later —
     # that is most of what scheduling is for. Checked here rather than only in
     # the view, because a hidden button is not a closing time.
     unless @restaurant.accepting_orders?(scheduled_for: order_params[:scheduled_for])

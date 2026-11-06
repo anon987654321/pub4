@@ -2,7 +2,7 @@
 
 # The honest anchor's evidence. Omnibus Art. 6a lets a deal say "was X" only
 # when X was the lowest applicable price in the 30 days before the reduction,
-# and marketplace_listings.price_cents is mutable state with no history - any
+# and marketplace_listings.price_cents is mutable state with no history — any
 # "was" price rendered from it would be seller folklore. This table records
 # every price a listing actually carried, written by Listing's create/update
 # hooks, and Marketplace::Listing#omnibus_reference_price_cents reads the

@@ -15,7 +15,7 @@ class StrunkWhitePassTest < Minitest::Test
   end
 
   def test_removes_reddit_markers
-    input = "[r/bergen] Great café - scraped & fictivized from Reddit (score: 42, comments: 7)"
+    input = "[r/bergen] Great café — scraped & fictivized from Reddit (score: 42, comments: 7)"
     output = Shared::StrunkWhitePass.call(input)
 
     refute_match(/\[r\//i, output)

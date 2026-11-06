@@ -7,11 +7,11 @@
 // two things they were for are real, so this does them rather than dropping the
 // attributes.
 //
-//   [data-pwa-display="standalone"] - a CSS hook (see _shell_widgets.scss: the
+//   [data-pwa-display="standalone"] — a CSS hook (see _shell_widgets.scss: the
 //   install prompt is pointless once installed, and the home indicator needs
 //   safe-area padding the browser chrome used to supply).
 //
-//   data-pwa-key - namespaces the install-prompt dismissal so a host serving
+//   data-pwa-key — namespaces the install-prompt dismissal so a host serving
 //   more than one app surface cannot have one app's dismissal silence another's.
 //   install_prompt_controller.js reads the same key via dismissalKey().
 import { Controller } from "@hotwired/stimulus"
@@ -50,7 +50,7 @@ export default class extends Controller {
     document.documentElement.dataset.pwaDisplay = installed ? "standalone" : "browser"
     this.element.classList.toggle("pwa-standalone", installed)
 
-    // Already installed - never ask again on this origin.
+    // Already installed — never ask again on this origin.
     if (installed) {
       try { localStorage.setItem(installDismissedKey(), "1") } catch (_) { /* private mode */ }
     }

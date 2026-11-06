@@ -74,7 +74,7 @@ class ScaleRatchetCheckTest < Minitest::Test
   end
 
   # A surface with no baselines compares nothing, and a lint that read no files
-  # reports zero for every kind - which is indistinguishable from clean.
+  # reports zero for every kind — which is indistinguishable from clean.
   def test_no_baselines_at_all_is_inconclusive
     result = check_over(OFF_SCALE, { "apps" => {}, "face" => {} })
 

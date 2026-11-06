@@ -6,7 +6,7 @@ require "application_system_test_case"
 # them: the composer pill, which opens a <dialog>, and the chat tab, which is the
 # only visible door to the ambient room.
 #
-# Both were covered only at request level before this file - the compose launcher
+# Both were covered only at request level before this file — the compose launcher
 # by one assertion that the string "compose-launcher" appeared in the HTML, which
 # is true of a pill that does nothing when clicked. Neither expand path had ever
 # been driven in a browser, and this is the class of surface where that gap hides
@@ -15,7 +15,7 @@ require "application_system_test_case"
 class ExpandingTabsTest < ApplicationSystemTestCase
   # A closed <dialog> is in the DOM at rest so the browser owns focus trapping and
   # Escape. That is exactly why presence in the markup proves nothing about it
-  # opening - visible: false at rest is the point of the design.
+  # opening — visible: false at rest is the point of the design.
   test "the composer pill opens the dialog and closes again" do
     visit root_path
 
@@ -63,8 +63,8 @@ class ExpandingTabsTest < ApplicationSystemTestCase
     assert_selector "dialog.composer", visible: true, wait: 5
 
     # The resting page is already audited by public_navigation_test. An open
-    # modal is a different accessibility problem - focus trap, labelling, and the
-    # rest of the page going inert - and it was never audited in that state.
+    # modal is a different accessibility problem — focus trap, labelling, and the
+    # rest of the page going inert — and it was never audited in that state.
     assert_accessible
   end
 end

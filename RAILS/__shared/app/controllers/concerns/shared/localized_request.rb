@@ -4,7 +4,7 @@
 #
 # `config.i18n.available_locales = %i[nb en]` and `default_locale = :nb` have
 # been set since the app was built, but nothing ever read Accept-Language and
-# there was no switcher anywhere - so every visitor got Norwegian and the whole
+# there was no switcher anywhere — so every visitor got Norwegian and the whole
 # English half of the locale files was unreachable. Four hundred keys that CI
 # kept at parity and no user could ever see. bsdports had the same two locales
 # and the same silence until it took this concern too.
@@ -72,7 +72,7 @@ module Shared
       I18n.available_locales.include?(symbol) ? symbol : nil
     end
 
-    # "nb-NO,nb;q=0.9,en;q=0.8" - highest quality the app can actually serve.
+    # "nb-NO,nb;q=0.9,en;q=0.8" — highest quality the app can actually serve.
     # Region subtags are dropped on the second pass so en-GB counts as en.
     def browser_locale
       ranked_languages.filter_map { |tag| supported(tag) || supported(tag.split("-").first) }.first

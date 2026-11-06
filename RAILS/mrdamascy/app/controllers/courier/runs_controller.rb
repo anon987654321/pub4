@@ -10,7 +10,7 @@ class Courier::RunsController < ApplicationController
     @on_the_way_orders = Order.where(state: "picked_up").includes(:order_items).order(:placed_at, :id)
   end
 
-  # ready -> picked_up: the bag goes in the courier bag (APP_SPEC §4).
+  # ready → picked_up: the bag goes in the courier bag (APP_SPEC §4).
   def pickup
     order = Order.find(params[:id])
 
@@ -22,7 +22,7 @@ class Courier::RunsController < ApplicationController
     end
   end
 
-  # picked_up -> delivered - this also awards the Sahtein stamp (Order#deliver!).
+  # picked_up → delivered — this also awards the Sahtein stamp (Order#deliver!).
   def deliver
     order = Order.find(params[:id])
 

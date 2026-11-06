@@ -23,7 +23,7 @@ class ImportmapEnginePinsTest < ActiveSupport::TestCase
   end
 
   test "the importmap resolves and declares brgen's own controllers" do
-    refute_empty imports, "importmap resolved to nothing - the check, not the tree"
+    refute_empty imports, "importmap resolved to nothing — the check, not the tree"
     assert_operator controller_specifiers.size, :>=, 15,
                     "expected brgen's own controllers/* pins; got #{controller_specifiers.size}"
   end
@@ -37,7 +37,7 @@ class ImportmapEnginePinsTest < ActiveSupport::TestCase
       end
     end
 
-    refute_empty expected, "no engine controllers were found - the scan roots are wrong, not the tree"
+    refute_empty expected, "no engine controllers were found — the scan roots are wrong, not the tree"
 
     missing = expected.reject { |_vertical, specifier| controller_specifiers.include?(specifier) }
     assert_empty missing.map { |vertical, specifier| "#{vertical}: #{specifier}" }, <<~MSG.strip

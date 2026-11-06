@@ -10,7 +10,7 @@
       <% questions.each do |question| %>
         <li role="listitem">
           <p class="listing-question"><%= question.body %></p>
-          <p class="listing-question-meta"><%= question.user&.display_name || t("chat.anon") %> - <%= time_ago(question.created_at) %></p>
+          <p class="listing-question-meta"><%= question.user&.display_name || t("chat.anon") %> · <%= time_ago(question.created_at) %></p>
           <% if authenticated? && question.user_id != Current.user.id %>
             <%= render "shared/report_button", target: question, reason: nil %>
           <% end %>

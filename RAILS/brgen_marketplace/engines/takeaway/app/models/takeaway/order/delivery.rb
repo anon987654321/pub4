@@ -35,7 +35,7 @@ class Takeaway::Order
     end
 
     # Fraction of the delivery journey complete, for a real (non-decorative)
-    # progress fill under the status timeline. nil once terminal - there's
+    # progress fill under the status timeline. nil once terminal — there's
     # nothing left to fill toward.
     def progress_fraction
       return nil if TERMINAL_STATUSES.include?(status)
@@ -56,7 +56,7 @@ class Takeaway::Order
     end
 
     # Kitchen to customer, as the courier actually has to travel it. nil unless
-    # both ends have coordinates - the order page falls back to the status ETA.
+    # both ends have coordinates — the order page falls back to the status ETA.
     def courier_distance_km
       driver = strict_safe(:delivery_driver)
       return nil unless driver&.location?

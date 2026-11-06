@@ -2,7 +2,7 @@
 
 module Shared
   # Beautiful, stable URL slugs from a title/name, following the inline pattern
-  # tv/channel and tv/show already use - extracted so posts, listings, videos,
+  # tv/channel and tv/show already use — extracted so posts, listings, videos,
   # restaurants and tracks share one implementation instead of five copies.
   #
   #   class Post < ApplicationRecord

@@ -3,7 +3,7 @@
 require "test_helper"
 
 # LocationsController#update announced arrival to every nearby user on every
-# ping - one rendered partial and one push lookup each. Measured on production
+# ping — one rendered partial and one push lookup each. Measured on production
 # 2026-08-07: ~600 queries and 7-9 seconds per call, arriving continuously, which
 # is what took brgen.no off the air.
 #
@@ -56,7 +56,7 @@ end
     assert_response :success
     assert_operator repeat, :<, first,
                     "a stationary repeat ping cost #{repeat} queries against #{first} for the " \
-                    "announcing ping - the broadcast loop is still running on every ping"
+                    "announcing ping — the broadcast loop is still running on every ping"
   end
 
   # Sub-grid jitter is the common case: GPS wobbles by metres while the phone
@@ -68,7 +68,7 @@ end
 
     assert_operator jitter, :<, moved,
                     "GPS jitter inside one grid square cost #{jitter} queries against #{moved} " \
-                    "for a real move - rounding to LOCATION_PRECISION is not throttling"
+                    "for a real move — rounding to LOCATION_PRECISION is not throttling"
   end
 
   test "the position is still recorded on every ping" do

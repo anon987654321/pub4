@@ -3,7 +3,7 @@
 # A remote fediverse account.
 #
 # Cached rather than fetched per request, because verifying an HTTP signature
-# needs the sender's public key on every inbox POST - and re-fetching the actor
+# needs the sender's public key on every inbox POST — and re-fetching the actor
 # document each time would turn our inbox into a denial-of-service amplifier
 # pointed at whoever is being impersonated.
 class FediActor < ApplicationRecord

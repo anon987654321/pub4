@@ -2,7 +2,7 @@
 
 # One basket, one payment, one delivery address, many orders.
 #
-# The per-listing Marketplace::Order stays exactly what it was - an offer,
+# The per-listing Marketplace::Order stays exactly what it was — an offer,
 # which is the right shape for a bike from a stranger. This sits above them so
 # that buying four things from a shop is one card charge and one address rather
 # than four of each.
@@ -31,7 +31,7 @@ class Marketplace::Checkout < ApplicationRecord
   end
 
   # ApplicationRecord is strict_loading by default and a checkout is usually
-  # found by id - from a controller, a PSP webhook, a job - with nothing
+  # found by id — from a controller, a PSP webhook, a job — with nothing
   # preloaded, so every read of `orders` here raised. Same shape as
   # Shared::StrictSafeAssociations, which only covers belongs_to.
   def order_lines
@@ -76,7 +76,7 @@ class Marketplace::Checkout < ApplicationRecord
   end
 
   # One payment clears every order in the basket. Done in a transaction because
-  # a half-paid basket - some orders paid, some not, one card charged - is the
+  # a half-paid basket — some orders paid, some not, one card charged — is the
   # state nobody has a way to resolve.
   def authorize_payment!(transaction_id:)
     return self if status == "paid"

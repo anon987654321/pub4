@@ -7,17 +7,17 @@ require "tmpdir"
 # `rb_long_method` has been on the backlog since it was first measured, and the
 # reason it never converged is that nothing held the line while it was being
 # worked. The count was 81, then 29 after a re-measure, and 55 when picked up
-# again on 2026-08-10 - and one of the 55 was a method written earlier the same
+# again on 2026-08-10 — and one of the 55 was a method written earlier the same
 # day, by the agent closing the backlog. A finding list is a snapshot; it cannot
 # stop the number rising while you shorten the entries on it.
 #
 # So this is a ratchet, on the same contract as coverage_ratchet_test.rb and
 # MASTER's rake lint:spine: the ceilings below may fall and may never rise. It
 # does not make anyone split a method. It makes the number visible, and it fails
-# when someone adds a long one - including when that someone is an agent midway
+# when someone adds a long one — including when that someone is an agent midway
 # through fixing long methods.
 #
-# Counted in *code* lines - non-blank, non-comment, inside the body - not the raw
+# Counted in *code* lines — non-blank, non-comment, inside the body — not the raw
 # span. MASTER's SMALL_FUNCTIONS rule made the same choice for the same reason:
 # this tree's convention is a paragraph of rationale above the tricky line, and a
 # span-based limit charges you for writing it. `stale?` in checks/lib/
@@ -47,7 +47,7 @@ class MethodLengthRatchetTest < Minitest::Test
   #
   # checks is by far the worst and that is the honest shape of it: these are
   # audit routines that walk a tree and accumulate findings, and several want
-  # the same treatment production.rb's check_app got - split at the
+  # the same treatment production.rb's check_app got — split at the
   # responsibility bound, then mutation-test each half.
   CEILINGS = {
     # 39 -> 38: one of the over-limit methods was split and this number was not
@@ -99,7 +99,7 @@ class MethodLengthRatchetTest < Minitest::Test
   end
 
   # [code_lines, name] for every method in the file, using Prism rather than a
-  # `def`/`end` regex - nested defs, one-line defs and heredocs all break the
+  # `def`/`end` regex — nested defs, one-line defs and heredocs all break the
   # regex version, and this file's whole job is to be trusted about a number.
   def methods_in(path)
     src = File.read(path)
@@ -147,7 +147,7 @@ class MethodLengthRatchetTest < Minitest::Test
   end
 
   def test_the_scan_reaches_the_tree_it_claims_to
-    refute_empty ruby_files, "no ruby files found - the glob is wrong, not the tree"
+    refute_empty ruby_files, "no ruby files found — the glob is wrong, not the tree"
     assert ruby_files.any? { |f| f.include?("/brgen_") },
            "engine code is missing, the blind spot that hid 57 views when the verticals moved"
   end
@@ -173,7 +173,7 @@ class MethodLengthRatchetTest < Minitest::Test
       end
       next unless worst[area] > max_lines
 
-      risen << "#{area}: longest is now #{worst[area]} lines, ceiling is #{max_lines} - #{longest[area]}"
+      risen << "#{area}: longest is now #{worst[area]} lines, ceiling is #{max_lines} — #{longest[area]}"
     end
 
     unknown = counts.keys - CEILINGS.keys
@@ -185,7 +185,7 @@ class MethodLengthRatchetTest < Minitest::Test
         #{risen.join("\n  ")}
 
       Split the method rather than raising the ceiling. If a split is genuinely
-      wrong here, say why in CEILINGS and move the number - but the number only
+      wrong here, say why in CEILINGS and move the number — but the number only
       moves down without an argument.
     MSG
   end
@@ -202,7 +202,7 @@ class MethodLengthRatchetTest < Minitest::Test
     end
 
     assert_empty slack, <<~MSG.strip
-      the tree is better than the ratchet records - lower these:
+      the tree is better than the ratchet records — lower these:
 
         #{slack.join("\n  ")}
 

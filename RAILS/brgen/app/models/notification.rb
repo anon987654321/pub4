@@ -1,15 +1,15 @@
 # frozen_string_literal: true
 
 class Notification < ApplicationRecord
-  # order - something the user is waiting on moved: an order confirmed,
+  # order — something the user is waiting on moved: an order confirmed,
   #         dispatched, shipped, delivered, paid.
-  # alert - something they asked to be told about happened: a saved search
+  # alert — something they asked to be told about happened: a saved search
   #         matched, a listing is about to lapse, an event they said they were
   #         coming to was cancelled.
   #
   # Both are new, and both are pushable. Everything on those paths was written
-  # as "custom" - the column default, because Shared::Notifiable dropped the
-  # kind on the title/body branch - so none of it could ever reach a lock
+  # as "custom" — the column default, because Shared::Notifiable dropped the
+  # kind on the title/body branch — so none of it could ever reach a lock
   # screen no matter how time-critical it was.
   KINDS = %w[like reaction follow mention reply message match order alert custom].freeze
 
@@ -62,8 +62,8 @@ class Notification < ApplicationRecord
 
   # High-signal kinds also fire a browser push; likes/reactions stay in-app only
   # so the lock screen doesn't become noise. `order` and `alert` are here
-  # because both are things the reader is actively waiting on - a parcel moving,
-  # a saved search finally matching - which is the case a push is for.
+  # because both are things the reader is actively waiting on — a parcel moving,
+  # a saved search finally matching — which is the case a push is for.
   PUSHABLE_KINDS = %w[message match reply mention follow order alert].freeze
 
   # Live, by refresh rather than by row. The prepend that stood here rendered
@@ -122,9 +122,9 @@ class Notification < ApplicationRecord
   end
 
   # These two shadow real columns. notifications.title and notifications.body
-  # are written by every title/body caller - Shared::Notifiable's custom branch,
+  # are written by every title/body caller — Shared::Notifiable's custom branch,
   # which is how an order update, a saved-search match and a listing expiry all
-  # arrive - and the methods below ignored them completely: the case fell to
+  # arrive — and the methods below ignored them completely: the case fell to
   # "New notification" with an empty body, in the list, in the row partial, and
   # in the web-push payload.
   #

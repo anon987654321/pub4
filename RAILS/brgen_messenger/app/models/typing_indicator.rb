@@ -5,7 +5,7 @@ class TypingIndicator < ApplicationRecord
   belongs_to :user
 
   # Backs the unique index in 20260825120000. This is the highest-frequency
-  # write in the app - every keystroke burst in every open thread - so it is
+  # write in the app — every keystroke burst in every open thread — so it is
   # the one most likely to actually interleave.
   validates :user_id, uniqueness: { scope: :conversation_id }
 

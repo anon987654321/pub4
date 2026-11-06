@@ -68,7 +68,7 @@ class CiContractTest < Minitest::Test
   # Every RAILS suite runs on a prepared test database, wherever its steps
   # live: brgen, amber and bsdports through the shared contract above, master
   # and mrdamascy through their own config/ci.rb. The step must also sit
-  # before the suite's step - preparing after the run would only document the
+  # before the suite's step — preparing after the run would only document the
   # failures a missing schema produced.
   test "every app's ci prepares the test database before its rails suite" do
     shared = read(SHARED_CI)

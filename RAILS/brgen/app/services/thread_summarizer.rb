@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-# ThreadSummarizer - AI summary of long comment threads via ruby_llm (MASTER-style constitutional prompt).
+# ThreadSummarizer — AI summary of long comment threads via ruby_llm (MASTER-style constitutional prompt).
 # Used for CB07: summaries on threads > LONG_THREAD_THRESHOLD replies.
 # Streaming friendly: can be called with block for chunks if desired.
 class ThreadSummarizer

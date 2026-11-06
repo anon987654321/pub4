@@ -6,8 +6,8 @@ module Shared
   # Twenty-four attachments across the three apps took any file of any size: a
   # listing photo could be a 2 GB archive or an HTML page, stored on a 1 GB box.
   # A controller concern with the right numbers existed and nothing included
-  # it, so the limit now lives where every write path passes - the record's
-  # validation - rather than in each controller that might remember to call it.
+  # it, so the limit now lives where every write path passes — the record's
+  # validation — rather than in each controller that might remember to call it.
   #
   # The kind is read from the attachment's name, because the name is the only
   # thing every model already declares. A slot named for audio or video takes

@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Answering a story. The reply is a direct message carrying the story it
-# answers, so it is still readable after the 24 hours are up - which is the
+# answers, so it is still readable after the 24 hours are up — which is the
 # point, because the story will not be.
 class StoryRepliesController < ApplicationController
   before_action :require_user_session

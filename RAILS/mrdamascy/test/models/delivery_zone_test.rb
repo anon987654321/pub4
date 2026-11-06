@@ -21,7 +21,7 @@ class DeliveryZoneTest < ActiveSupport::TestCase
     assert_nil DeliveryZone.for_postcode("")
   end
 
-  test "postcodes are unique - one rule per postcode" do
+  test "postcodes are unique — one rule per postcode" do
     seed_zone!(postcode: "5004", name: "Strandgaten")
     duplicate = DeliveryZone.new(postcode: "5004", name: "Annet sted",
                                  fee_ore: 3900, min_basket_ore: 20000, eta_minutes: 30)
@@ -32,8 +32,8 @@ class DeliveryZoneTest < ActiveSupport::TestCase
     zone = seed_zone!(postcode: "0155", name: "Oslo sentrum",
                       fee_ore: 3900, min_basket_ore: 20000, eta_minutes: 25)
 
-    assert_equal 3900, zone.fee_ore          # øre - 39 kr
-    assert_equal 20000, zone.min_basket_ore  # øre - 200 kr
+    assert_equal 3900, zone.fee_ore          # øre — 39 kr
+    assert_equal 20000, zone.min_basket_ore  # øre — 200 kr
     assert_equal 25, zone.eta_minutes        # minutter
   end
 end

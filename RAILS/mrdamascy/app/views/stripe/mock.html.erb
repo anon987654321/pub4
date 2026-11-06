@@ -1,6 +1,6 @@
 <%# Stripe Checkout stand-in for dev/test: StripeClient redirects here with
-    ?token=... in mock mode. Approving marks the payment captured, confirms the
-    order and lands on the tracking page - the same semantics as the real
+    ?token=… in mock mode. Approving marks the payment captured, confirms the
+    order and lands on the tracking page — the same semantics as the real
     hosted Checkout returning to the success_url. Layout reuses the shared
     .vipps-mock chrome; only the wordmark and button tone are Stripe's. %>
 <% order = @order %>
@@ -10,7 +10,7 @@
     <span class="stripe-wordmark" aria-hidden="true">stripe</span>
     <p class="vipps-merchant"><%= t("stripe.merchant") %></p>
     <p class="vipps-amount"><%= money(order.total_ore) %></p>
-    <%= tag.p "#{t("stripe.amount")} - ##{order.id}", class: "vipps-reference" %>
+    <%= tag.p "#{t("stripe.amount")} · ##{order.id}", class: "vipps-reference" %>
   </header>
 
   <%= form_with url: "/stripe/mock/approve", method: :patch,

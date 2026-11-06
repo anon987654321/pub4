@@ -13,7 +13,7 @@ import { fetchMissed, newestId, watchForCatchUp } from "controllers/catch_up"
 // is in it and offers it. Nothing moves until the reader taps.
 //
 // The observer watches the staging list and writes only to the feed and the
-// chip - never to what it observes. That separation is deliberate: writing to
+// chip — never to what it observes. That separation is deliberate: writing to
 // the observed node from inside its own MutationObserver is what produced the
 // 100%-CPU spin in 951dcd00d, and optimistic_send_controller carries the same
 // warning for the same reason.
@@ -71,7 +71,7 @@ export default class extends Controller {
   // An edited card, or one whose link embed has resolved, arrives whole from
   // the city stream, rendered for nobody (Post#broadcast_card_replacement marks
   // it data-viewer-neutral). The reader's own vote rail, repost button and quote
-  // form - the elements marked data-viewer-state - are carried over from the
+  // form — the elements marked data-viewer-state — are carried over from the
   // card it replaces, so an edit never takes anyone's vote or buttons away. A
   // replace from the reader's own request (a vote) is theirs already and is left
   // alone.
@@ -136,7 +136,7 @@ export default class extends Controller {
   }
 
   // Oldest first, so the batch keeps the order it arrived in once it is at the
-  // top of the feed. Each card is wrapped in the <li> the list is built from -
+  // top of the feed. Each card is wrapped in the <li> the list is built from —
   // the same wrapper home/_live_search_results puts around the same partial.
   //
   // An empty feed renders an empty state and no list to prepend into, so the

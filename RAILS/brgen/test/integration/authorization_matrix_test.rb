@@ -5,7 +5,7 @@ require "test_helper"
 # One row per (route, actor), each declaring ONE outcome.
 #
 # The flow checks cover this app with GETs carrying an `expect_status` list, and
-# twelve of those steps accept 200 AND a redirect - so "serves a stranger" and
+# twelve of those steps accept 200 AND a redirect — so "serves a stranger" and
 # "sends a stranger to sign in" are the same result to the check. amber grew this
 # matrix after `GET /items/new` served an anonymous 200 with every check green;
 # this is the same discipline for brgen, and brgen carries the sharper version
@@ -16,8 +16,8 @@ require "test_helper"
 #
 # The distinction this file exists to hold is brgen's own: an anonymous visitor
 # here is not a visitor with no user. brgen mints `guest_*@guest.local` accounts
-# for people who have not signed up - 5,886 of them in production as of
-# 2026-09-01 - so `Current.user` is present for a stranger and "is there a user"
+# for people who have not signed up — 5,886 of them in production as of
+# 2026-09-01 — so `Current.user` is present for a stranger and "is there a user"
 # answers nothing. `require_real_user` is the check that separates a soft guest
 # from an account, which makes every row below a test of that word "real".
 #
@@ -49,7 +49,7 @@ class AuthorizationMatrixTest < ActionDispatch::IntegrationTest
 
   # path, verb, guest outcome, signed-in outcome, params.
   #
-  # :any for the signed-in write half - the row proves the door opens for an
+  # :any for the signed-in write half — the row proves the door opens for an
   # account, and a create that fails validation still proves that. The refusal
   # side is the one that must be exact.
   #
@@ -106,7 +106,7 @@ class AuthorizationMatrixTest < ActionDispatch::IntegrationTest
     when :ok
       assert_response :success, "#{verb.upcase} #{route} as #{actor} should render"
     when :redirect
-      assert_response :redirect, "#{verb.upcase} #{route} as #{actor} must NOT be served - " \
+      assert_response :redirect, "#{verb.upcase} #{route} as #{actor} must NOT be served — " \
                                  "got #{response.status}. An identity check is missing, or a " \
                                  "second require_real_user replaced the first instead of adding to it."
     when :any

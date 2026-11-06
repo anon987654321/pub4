@@ -93,7 +93,7 @@ class CssBudgetRulesTest < Minitest::Test
   # The magic-hex instrument counts colours in value position. A selector's
   # #name spells hex letters (#feed-panel, canvas#face), `#face {` opens a
   # rule, a token declaration is the palette's own definition, and a var()
-  # fallback is the token's declared value - none of the four is a colour
+  # fallback is the token's declared value — none of the four is a colour
   # painted at the call site. A real value still counts.
   def test_magic_hex_counts_values_and_not_selectors_or_declarations
     check = rhythm_check
@@ -111,7 +111,7 @@ class CssBudgetRulesTest < Minitest::Test
 
   # A declaration the merge folded into an app's application.scss keeps the
   # exemption the old token files held, whether it stands alone or shares its
-  # line with a selector - but a use-site on the same line is still counted.
+  # line with a selector — but a use-site on the same line is still counted.
   def test_a_token_declaration_is_exempt_wherever_the_merge_put_it
     check = rhythm_check
     check.send(:count_budget_rules, "fixture.scss", "fixture.scss", <<~CSS)
@@ -149,7 +149,7 @@ class CssBudgetRulesTest < Minitest::Test
   # The ceilings existing in the YAML and the check reaching them are two facts,
   # and only the first was asserted. Every budget reader here rescues and runs
   # unbudgeted, so a path that stops resolving costs the ceiling and leaves the
-  # check green - which is what a file move did to design_metrics twice, the
+  # check green — which is what a file move did to design_metrics twice, the
   # second time on 2026-09-08 despite a comment in the file warning about the
   # first. A reader that returns nothing is the failure; assert what it returns.
   def test_every_budget_reader_reaches_its_file

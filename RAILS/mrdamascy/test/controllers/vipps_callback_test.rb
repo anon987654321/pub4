@@ -4,9 +4,9 @@ require "test_helper"
 
 # The real Vipps webhook (POST /vipps/callback): Vipps carries the shared
 # webhook secret in the Authorization header and posts payment events
-# [{reference:, state:, ...}]. Contract here: unauthenticated -> 401, verified
+# [{reference:, state:, …}]. Contract here: unauthenticated → 401, verified
 # events drive sync_payment! (capture on AUTHORIZED), replays converge,
-# garbage JSON -> 400, unknown references are ignored politely.
+# garbage JSON → 400, unknown references are ignored politely.
 class VippsCallbackTest < ActionDispatch::IntegrationTest
   setup do
     @kitchen = seed_kitchen!
