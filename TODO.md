@@ -251,14 +251,6 @@ measure is already owned by the Bymorgen item above.
   levering, også på kvelden" et al., `brgen/config/locales/nb.yml:86-88`)
   at 1:1 for size and AA contrast while there.
   Laws: `TRUTHFUL_STATUS`, `OPERATOR_RENDERED`, `PROPORTION_contrast`.
-- [ ] **Nav "nytt!" badge clearance.** The `<sup class="nav_link_badge">`
-  ("nytt!", `brgen/app/views/shared/_nav_swiper.html.erb:69`,
-  `brgen/app/assets/stylesheets/_brgen_navigation.scss:346`,
-  `translate: 0 -35%`) rides the bar's top edge at y≈0 in both chrome
-  dialects at 1440 and 390. Verify the badge keeps clear of the viewport top
-  and the safe-area inset, and that no future `overflow` rule clips it;
-  keep the sup semantics and the opens-in-new-tab aria-label.
-  Laws: `PROPORTION_eight_px_rhythm`, `POLA`, `REACH`.
 - [ ] **BSDPorts spare-dialect micro.** (a) The search field's dark grey
   fill with grey placeholder reads as a disabled control in both viewports
   (`bsdports-desktop.png`, `bsdports-mobile.png` at 1:1); measure the

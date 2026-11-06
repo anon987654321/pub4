@@ -1,6 +1,14 @@
 // Probes shared_chrome_behaviour_test.rb runs in the page. One function per
 // question, so the Ruby side reads as the behaviour it asserts.
 window.sharedChromeProbes = {
+  // The nav counter pill's box and the box of the bar that holds it.
+  badgeBox() {
+    const badge = document.querySelector(".nav_link_badge")
+    const box = badge.getBoundingClientRect()
+    const bar = badge.closest(".nav_swiper_bar").getBoundingClientRect()
+    return { top: box.top, bottom: box.bottom, barTop: bar.top, barBottom: bar.bottom }
+  },
+
   // The transition timing a fresh .button computes to.
   buttonTiming() {
     const probe = document.createElement("button")

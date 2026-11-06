@@ -113,4 +113,20 @@ class SharedChromeBehaviourTest < ApplicationSystemTestCase
     actions = centre.call(".page-header > div")
     assert_in_delta title, actions, 2, "the actions share the title's centre"
   end
+
+  # The nav counter pill once rode the bar's top edge at y=0 and could be cut
+  # by the bar's own overflow: it keeps a rhythm step from the top and stays
+  # inside the bar, on a desktop and on a phone.
+  test "the nav counter pill keeps clear of the top and inside its bar" do
+    [ [ 1400, 1000 ], [ 390, 844 ] ].each do |width, height|
+      current_window.resize_to(width, height)
+      visit_city("maps", "/places")
+      box = probe("badgeBox()")
+      assert_operator box["top"], :>=, 8, "clear of the viewport top at #{width}px"
+      assert_operator box["top"], :>=, box["barTop"], "inside the bar at #{width}px"
+      assert_operator box["bottom"], :<=, box["barBottom"], "inside the bar at #{width}px"
+    end
+  ensure
+    current_window.resize_to(1400, 1000)
+  end
 end
