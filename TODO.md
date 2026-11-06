@@ -675,7 +675,7 @@ laws.yml already cites Rams, Strunk & White and NN/g. The uncited,
 machine-checkable simplicity canon yields a deterministic first batch; the
 rendered or task-evidence canon waits for the screenshot workflow.
 
-- [ ] MAEDA_THE_ONE: one primary action per surface — the check counts primary CTAs on a card or form and fails a second.
+- [x] MAEDA_THE_ONE: one primary action per surface — the check counts primary CTAs on a card or form and fails a second. (verified built 2026-11-06, f4d325bae6: the design-laws walker names each element's nearest card-or-form ancestor and the evaluator fails a second `primary`/`submit` on the same surface, proved in headless Chrome — one card two primaries flags, two cards one each stay quiet; hostless primaries stay with the view-level ONE_PRIMARY_ACTION law, whose page-wide filled-action warning also stays)
 - [ ] TUFTE_DATA_INK_RATIO: erase non-data ink — decoration-to-content ink measured in CSS decoration rules and chart ink versus data ink.
 - [ ] GESTALT_PROXIMITY: grouping distance must be smaller than separation distance on a rendered surface (screenshot geometry pairs with the layout-refinement workflow).
 ## pub5 — a ported fresh start (planned 2026-11-04)
