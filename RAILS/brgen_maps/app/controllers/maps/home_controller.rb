@@ -8,6 +8,9 @@ module Maps
     # rather than an answer to "what is on near me".
     EVENT_HORIZON = 7.days
 
+    # How long one pan answer serves every reader of the same city view.
+    MAP_POINTS_TTL = 30.seconds
+
     # JSON for the map's own refetch: as the reader pans, map_controller asks
     # for the points inside the new view through the bbox parameters.
     def index
@@ -25,12 +28,31 @@ module Maps
 
     # One array, four layers. The Stimulus controller styles a marker from
     # point.type and reads title/subtitle/url.
+    #
+    # The three city layers are the same answer for every reader who pans the
+    # same view of the same city, and a pan fires one refetch per debounce -
+    # so they are cached for a short window (Solid Cache in production), keyed
+    # by city, host and bbox. The courier layer is the viewer's own live
+    # delivery and stays out of the cache.
     def map_points
       # Domain resolution can succeed while a City row is missing. Do not fall
       # back to a global map when that happens.
       return [] unless Current.city_record
 
-      places_layer + events_layer + stories_layer + courier_layer
+      city_layers = Rails.cache.fetch(map_cache_key, expires_in: MAP_POINTS_TTL) do
+        places_layer + events_layer + stories_layer
+      end
+      city_layers + courier_layer
+    end
+
+    def map_cache_key
+      "maps/points/#{Current.city_record.id}/#{request.host}/#{bbox_key}"
+    end
+
+    def bbox_key
+      return "all" unless bbox
+
+      %i[sw_lat sw_lng ne_lat ne_lng].join("/")
     end
 
     # The city's own coordinates, else the middle of what is on the map. A city

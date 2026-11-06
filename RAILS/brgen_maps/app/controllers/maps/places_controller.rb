@@ -76,15 +76,18 @@ module Maps
       @unnamed_check_in_count = check_ins.checked_in_since(named_before).count
     end
 
-    # The one place the list and its JSON twin decide which places match: city,
-    # kind filter, then the live search.
     # The kinds this city actually has, for the filter: across every city it
-    # offered kinds with no results here.
+    # offered kinds with no results here. Distinct over the city's places ran
+    # on every index render and every live-search render; an hour of staleness
+    # on a filter list is the right trade on a 1-vCPU box.
     def place_kinds
-      kinds = places_in_current_city.distinct.order(:kind)
-      kinds.pluck(:kind).compact
+      Rails.cache.fetch("maps/place_kinds/#{Current.city_record&.id}", expires_in: 1.hour) do
+        places_in_current_city.distinct.order(:kind).pluck(:kind).compact
+      end
     end
 
+    # The one place the list and its JSON twin decide which places match: city,
+    # kind filter, then the live search.
     def places_scope
       # with_attached_photo: the card partial reads place.photo.attached? per
       # line (25 cards a page) and the live-search results do too.
