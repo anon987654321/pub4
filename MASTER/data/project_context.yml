@@ -1,7 +1,7 @@
 ---
 meta:
   source: runtime authority - edit this file or use MemoryRecord; do not add data/claude/*.md
-  count: 27
+  count: 33
 entries:
 - key: personality_rb_comment_audit
   name: personality rb comment audit
@@ -410,3 +410,66 @@ entries:
     buttons are compact (brgen's profile, post, front page and cart use it). Still
     open: button-small, cluster, mt-8 and the layout wrappers in the remaining
     views (marketplace listing, messenger thread, posts/new and most verticals).
+- key: operator_master_resembles_openbsd
+  name: MASTER resembles OpenBSD
+  description: Operator directive 2026-11-06 - MASTER's laws, logic, behaviour and style follow OpenBSD as closely as possible
+  type: feedback
+  body: |-
+    Correctness by default through restriction, continuous auditing, small
+    trusted cores, least privilege, one canonical implementation per operation,
+    and never reporting an unmeasured result as a pass (INCONCLUSIVE or
+    BLOCKED instead). Prefer fewer, stricter Laws with real fixtures over more
+    guidance; delete contradictory or dead machinery; terse dmesg-style output.
+    The operator's earlier decisions stand where they differ: renders stay
+    replaceable, work lands straight on main.
+- key: operator_every_pixel_earns_its_place
+  name: every pixel earns its place
+  description: Operator directive 2026-11-06 - bare-minimum UI; navigation and chrome hidden by default and slid in on movement
+  type: project
+  body: |-
+    No unnecessary elements. Header, tab rail, mobile bottom bar and secondary
+    controls hide while the reader reads and slide in on scroll-up or an edge
+    swipe on touch, and on pointer movement toward an edge on desktop. They are
+    always shown at the page top, while a control inside has keyboard focus,
+    when the page cannot scroll, and to assistive tech (hidden by transform,
+    never display:none on the reveal path); under prefers-reduced-motion they
+    appear without sliding. Each page keeps its one primary action visible.
+    Supersedes the always-visible bottom bar from the 2026-11-06 x.com review.
+- key: operator_design_decisions_2026_11_06
+  name: RAILS design decisions 2026-11-06
+  description: Operator answers to the screenshot review's open questions
+  type: project
+  body: |-
+    Contrast at least 4.5:1, 7:1 for body text. Page h1 uses the shared_chrome
+    scale in tokens.yml. Small labels or kickers above headings are banned
+    (NO_EYEBROW_LABEL). amber's pastels become amber's own colour scheme as
+    tokens. The header band is light everywhere except in dark mode. The TV
+    accent moves away from the danger red. brgen's AI entry shows "1" in the
+    nav counter pill, as if a message were waiting, instead of "new!".
+    Reference products for principles only, never their look: x.com and
+    reddit for the feed, bol.com for the marketplace, whyp.it for radio.
+- key: operator_fix_mobile_first_and_simplify
+  name: /fix captures mobile first and simplifies by subtraction
+  description: Operator directives 2026-11-06 for /fix's visual lane
+  type: project
+  body: |-
+    When /fix takes screenshots it captures and judges 390, 360 and 320 wide
+    first; desktop widths come only after every mobile capture of the pass, and
+    a capped pass drops desktop captures first. /fix has a simplify stage
+    modelled on Claude Code's /simplify (reuse, simplification, efficiency,
+    altitude): it only removes or merges, a count must fall (selectors,
+    distinct values per property, DOM depth, variants, SCSS lines), and the
+    pixel diff plus the computed-value audit must show no visible change or a
+    change toward the Laws; each count becomes a ratchet. Visual work is held
+    to measured values, state matrices, boundary widths, per-component specs,
+    an independent reviewer and a guard for every fixed defect.
+- key: operator_agents_token_efficient
+  name: agents work token-efficiently
+  description: Operator directive 2026-11-05 - terse reports, batched checks, no narration of routine events
+  type: feedback
+  body: |-
+    Report results and blockers only; batch checks into one command; do not
+    narrate routine monitor heartbeats; filter watchers to commits, failures
+    and exits; do not re-read what is already in context. Judge another model's
+    work by what its commits change, not by its report: patches from GLM and
+    Fable on 2026-11-06 ran no tests and most did not hold against the code.
