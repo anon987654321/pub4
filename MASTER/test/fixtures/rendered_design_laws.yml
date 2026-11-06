@@ -255,3 +255,17 @@ pages:
       <svg class="chart" width="200" height="100"><line class="grid" x1="0" x2="200" y1="50" y2="50"
       stroke="#ccc" stroke-width="0.5"></line><rect class="bar" width="20" height="80" stroke="#000"
       stroke-width="1"></rect></svg>
+  MAEDA_THE_ONE:
+    phases: []
+    bad: |
+      <div class="card" style="border:1px solid #ddd;padding:12px">
+        <button class="button-primary" style="background:#0050c8;color:#fff;border:0">Kjøp</button>
+        <button class="button-primary" style="background:#0050c8;color:#fff;border:0">Selg</button>
+      </div>
+    good: |
+      <div class="card" style="border:1px solid #ddd;padding:12px">
+        <button class="button-primary" style="background:#0050c8;color:#fff;border:0">Kjøp</button>
+      </div>
+      <div class="card" style="border:1px solid #ddd;padding:12px">
+        <button class="button-primary" style="background:#0050c8;color:#fff;border:0">Selg</button>
+      </div>

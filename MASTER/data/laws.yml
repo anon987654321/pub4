@@ -3022,6 +3022,10 @@ law_catalogue:
     MATCH_REAL_WORLD:
       definition_sources: [MASTER/law/universal.rb]
       severity: info
+    MAEDA_THE_ONE:
+      definition_sources: [MASTER/law/rendered.rb]
+      severity: error
+      languages: [json]
     MEANINGFUL_NAMES:
       definition_sources: [MASTER/law/universal.rb]
       severity: info

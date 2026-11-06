@@ -138,6 +138,23 @@ module Deploy
          "(#{filled.first(3).map { |element| element["key"] }.join(", ")}); one is primary"]
       end
 
+      # One primary action per card or form (MAEDA_THE_ONE): the surface answers
+      # through its primary action and a second dilutes both, while cards each
+      # carrying their own stay right. The walker names every element's nearest
+      # card-or-form ancestor in host; a primary with no host belongs to the
+      # page shell, which ONE_PRIMARY_ACTION judges.
+      def maeda(view)
+        elements = RenderedDesign.elements(view)
+        primaries = elements.select { |element| element["primary"] || element["submit"] }
+        primaries.group_by { |element| element["host"].to_s }.filter_map do |host, rows|
+          surface = elements.find { |element| element["index"].to_s == host }
+          next unless surface && rows.size > 1
+
+          "error: #{rows.size} primary actions on one #{surface["tag"] == "form" ? "form" : "card"} " \
+            "(#{rows.first(3).map { |row| row["key"] }.join(", ")}); one is primary"
+        end
+      end
+
       def nav_link?(element) = element["in_nav"] && element["tag"] == "a" && !element["path"].to_s.empty?
 
       def leads_here?(path, here) = path == here || (path != "/" && here.start_with?("#{path.chomp("/")}/"))
@@ -209,6 +226,7 @@ module Deploy
     register(:PRIMARY_ACTION_IN_THUMB_REACH) { |snap| each_view(snap, [390, 360]) { |view| LayoutLaws.thumb(view) } }
 
     register(:ONE_PRIMARY_ACTION) { |snap| each_view(snap) { |view| LayoutLaws.primary_count(view) } }
+    register(:MAEDA_THE_ONE) { |snap| each_view(snap) { |view| LayoutLaws.maeda(view) } }
     register(:CURRENT_LOCATION_MARKED) { |snap| each_view(snap) { |view| LayoutLaws.current(view) } }
     register(:SMALLEST_EFFECTIVE_DIFFERENCE) { |snap| each_view(snap) { |view| LayoutLaws.quiet_frame(view) } }
     register(:MUTED_INK_FROM_GROUND) { |snap| each_view(snap) { |view| LayoutLaws.muted_ink(view) } }

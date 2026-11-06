@@ -116,6 +116,13 @@
 
   const amidText = (el) => el.tagName === 'A' && textNodes(el.parentElement || el).length > 0;
 
+  // The surface an action answers for: the nearest card or form ancestor, named
+  // by its own data-design-law index. Ancestors walk before descendants in
+  // document order, so every described card already carries its number.
+  const SURFACE = '[class*=card], [data-card], form';
+  const hostOf = (el) =>
+    (el.parentElement && el.parentElement.closest(SURFACE))?.getAttribute('data-design-law') ?? null;
+
   const roleOf = (el) => ({
     parent: (el.parentElement?.tagName || '').toLowerCase(),
     prev_tag: (el.previousElementSibling?.tagName || '').toLowerCase(),
@@ -124,6 +131,7 @@
     interactive: el.matches(INTERACTIVE), in_text: amidText(el), icon: !!el.querySelector('svg, img, i'),
     primary: el.matches('.button-primary, [data-primary]'), canvas: el.tagName === 'CANVAS',
     submit: el.matches('main form [type=submit], main form button:not([type])'),
+    host: hostOf(el),
   });
 
   const describe = (el, index) => {
