@@ -11,6 +11,7 @@ require "yaml"
 require_relative "../../../lib/gap"
 require_relative "../../support/check_result"
 require_relative "../../support/pixel_match"
+require_relative "../../support/capture_engine"
 require_relative "../../support/geometry_probe"
 require_relative "../../support/sweep_replay"
 
@@ -373,12 +374,8 @@ module Deploy
     def pixel_evidence(surface:, screenshot:, screenshot_dir:, screenshot_error:)
       baseline = self.class.visual_baseline_path(surface)
       return { "status" => "NOT_TRACKED" } unless baseline
-      return { "status" => "UNMEASURED", "baseline" => baseline } if screenshot_error || !File.file?(screenshot)
-
-      unless File.file?(baseline)
-        return { "status" => "MISSING", "baseline" => baseline,
-                 "reason" => "pixel baseline missing for #{surface.id}; review a capture, then promote it with MASTER/tools/approve_visual_baselines.rb" }
-      end
+      unready = unready(surface, baseline, screenshot:, screenshot_error:)
+      return unready if unready
 
       diff_path = File.join(screenshot_dir, "#{File.basename(screenshot, ".png")}-pixel-diff.png")
       # Perceptual, as pixelmatch: a font hinted a shade differently or an anti-aliased edge is not
@@ -389,6 +386,23 @@ module Deploy
     rescue PngDiff::InvalidPng => e
       { "status" => "UNSUPPORTED", "baseline" => baseline,
         "reason" => "pixel baseline could not be compared for #{surface.id}: #{e.class}: #{e.message}" }
+    end
+
+    # Why there is nothing to compare yet, or nil when there is.
+    def unready(surface, baseline, screenshot:, screenshot_error:)
+      return { "status" => "UNMEASURED", "baseline" => baseline } if screenshot_error || !File.file?(screenshot)
+      return unsteady(surface, baseline) if @still && !@still[:stable]
+      return if File.file?(baseline)
+
+      { "status" => "MISSING", "baseline" => baseline,
+        "reason" => "pixel baseline missing for #{surface.id}; review a capture, then promote it with " \
+                    "MASTER/tools/approve_visual_baselines.rb" }
+    end
+
+    # A page that never held still for two shots has no pixels to compare: not measured, not passed.
+    def unsteady(surface, baseline)
+      { "status" => "UNSTABLE", "baseline" => baseline,
+        "reason" => "#{surface.id} changed between every one of #{@still[:attempts]} screenshots" }
     end
 
     def pixel_verdict(surface, compared, max_ratio:)
@@ -413,8 +427,10 @@ module Deploy
         "diff=#{compared[:pixel_diff_image]}"
     end
 
+    # Held still before it is compared: animation off, caret hidden, volatile_selectors masked,
+    # fonts settled, retaken until two shots agree (CaptureEngine.still_screenshot).
     def capture_screenshot(cdp, path)
-      cdp.screenshot(path)
+      @still = CaptureEngine.still_screenshot(cdp, path, mask: GeometryProbe.config["volatile_selectors"])
       nil
     rescue CdpSession::Error, SystemCallError => e
       "#{e.class}: #{e.message}"

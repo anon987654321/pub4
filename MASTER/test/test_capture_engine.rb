@@ -114,4 +114,47 @@ class TestCaptureEngine < Minitest::Test
     error = assert_raises(CE::Unavailable) { engine.open }
     assert_match(/not found/, error.message)
   end
+
+  # A session whose screenshots are the given byte strings in turn.
+  class StillCdp
+    attr_reader :scripts
+
+    def initialize(frames)
+      @frames = frames
+      @scripts = []
+    end
+
+    def evaluate(script, await_promise: false)
+      @scripts << [script, await_promise]
+      2
+    end
+
+    def screenshot(path)
+      File.binwrite(path, @frames.shift || "last")
+      path
+    end
+  end
+
+  def test_a_still_screenshot_freezes_masks_waits_for_fonts_and_retakes_until_two_agree
+    Dir.mktmpdir do |dir|
+      cdp = StillCdp.new(%w[a b b])
+      shot = CE.still_screenshot(cdp, File.join(dir, "s.png"), mask: ["time", ".post-meta"])
+      freeze, fonts = cdp.scripts
+
+      assert_equal({ path: File.join(dir, "s.png"), attempts: 3, stable: true, masked: 2 }, shot)
+      assert_includes freeze.first, '["time",".post-meta"]'
+      %w[animation-duration:0s caret-color:transparent getAnimations data-capture-mask].each do |part|
+        assert_includes freeze.first, part
+      end
+      assert_equal [Deploy::CdpSession::WEBFONT_PROBE, true], fonts
+    end
+  end
+
+  def test_a_page_that_never_holds_still_is_reported_unstable
+    Dir.mktmpdir do |dir|
+      shot = CE.still_screenshot(StillCdp.new(%w[a b c d e]), File.join(dir, "s.png"))
+
+      assert_equal [4, false], shot.values_at(:attempts, :stable)
+    end
+  end
 end

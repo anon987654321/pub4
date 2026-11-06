@@ -43,9 +43,55 @@ module Deploy
       })(__SELECTOR__, __PROPS__)
     JS
 
+    # Playwright's toHaveScreenshot recipe, over the session the pass already holds: animations
+    # and transitions stopped (finite ones finished, infinite ones cancelled), the caret hidden,
+    # the declared dynamic regions covered by a solid box, the webfonts settled, then shots
+    # retaken until two in a row are byte-identical.
+    STILL_JS = <<~'JS'.freeze
+      ((selectors) => {
+        const style = document.createElement("style");
+        style.setAttribute("data-capture-still", "");
+        style.textContent = "*,*::before,*::after{animation-duration:0s!important;animation-delay:0s!important;" +
+          "transition-duration:0s!important;transition-delay:0s!important;caret-color:transparent!important}";
+        document.head.appendChild(style);
+        for (const run of document.getAnimations()) {
+          const timing = run.effect && run.effect.getComputedTiming();
+          if (timing && timing.endTime === Infinity) run.cancel(); else run.finish();
+        }
+        let masked = 0;
+        for (const el of document.querySelectorAll(selectors.join(",") || ":not(*)")) {
+          const r = el.getBoundingClientRect();
+          if (r.width < 1 || r.height < 1) continue;
+          const box = document.createElement("div");
+          box.setAttribute("data-capture-mask", "");
+          box.style.cssText = `position:absolute;left:${r.left + scrollX}px;top:${r.top + scrollY}px;` +
+            `width:${r.width}px;height:${r.height}px;background:#ff00ff;z-index:2147483647;pointer-events:none`;
+          document.body.appendChild(box);
+          masked += 1;
+        }
+        return masked;
+      })(__SELECTORS__)
+    JS
+    STILL_ATTEMPTS = 4
+
     @unavailable = {}
 
     class << self
+      # A screenshot that holds still: { path:, attempts:, stable:, masked: }. stable is false when
+      # STILL_ATTEMPTS shots never agreed twice in a row, which the caller reports, not hides.
+      def still_screenshot(cdp, path, mask: [], attempts: STILL_ATTEMPTS)
+        masked = cdp.evaluate(STILL_JS.sub("__SELECTORS__") { Array(mask).to_json })
+        cdp.evaluate(CdpSession::WEBFONT_PROBE, await_promise: true)
+        previous = nil
+        (1..attempts).each do |attempt|
+          bytes = File.binread(cdp.screenshot(path))
+          return { path:, attempts: attempt, stable: true, masked: } if bytes == previous
+
+          previous = bytes
+        end
+        { path:, attempts:, stable: false, masked: }
+      end
+
       attr_reader :unavailable
 
       def registry = (@registry ||= { "chrome" => :chrome, "webkit" => :webkit, "firefox" => :firefox })

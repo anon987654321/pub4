@@ -26,7 +26,7 @@ class BrowserDiagnosticsFakeCdp
   def clear_events; end
   def navigate(url, settle:); @visited_url = url; end
   def status = @status
-  def evaluate(script)
+  def evaluate(script, await_promise: false)
     return "Fixture page" if script == "document.title"
     return false if script == "location.protocol === 'chrome-error:'"
 
@@ -352,7 +352,7 @@ class BrowserDiagnosticsCheckTest < Minitest::Test
   def test_browser_artifacts_are_external_to_the_repository
     source = File.read(File.join(ROOT, "MASTER", "checks", "lib", "rendered", "browser_diagnostics.rb"))
     assert_includes source, "File.join(Dir.tmpdir, \"pub4-browser-diagnostics\")"
-    assert_includes source, "cdp.screenshot(path)"
+    assert_includes source, "CaptureEngine.still_screenshot(cdp, path"
     assert_includes source, "manifest.json"
     refute_match(/Playwright|playwright/i, source)
   end

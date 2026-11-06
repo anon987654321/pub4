@@ -98,4 +98,22 @@ class TestPixelMatch < Minitest::Test
       assert_equal [], evidence.fetch("pixel_diff_regions")
     end
   end
+
+  # A capture that never held still for two shots is not compared, and not passed.
+  def test_an_unsteady_capture_is_not_compared
+    Dir.mktmpdir do |dir|
+      base = block(File.join(dir, "approved.png"), soft: false)
+      surface = Deploy::GeometryProbe::Surface.new(app: "brgen", label: "core", viewport: "mobile",
+                                                   pixel_snapshot: true)
+      check = Deploy::BrowserDiagnosticsCheck.new
+      check.instance_variable_set(:@still, { attempts: 4, stable: false })
+
+      evidence = Deploy::BrowserDiagnosticsCheck.stub(:visual_baseline_path, base) do
+        check.send(:pixel_evidence, surface:, screenshot: base, screenshot_dir: dir, screenshot_error: nil)
+      end
+
+      assert_equal "UNSTABLE", evidence.fetch("status")
+      assert_match(/changed between every one of 4 screenshots/, evidence.fetch("reason"))
+    end
+  end
 end
