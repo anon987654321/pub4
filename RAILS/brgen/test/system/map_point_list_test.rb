@@ -49,4 +49,19 @@ class MapPointListTest < ApplicationSystemTestCase
     assert_no_selector ".map-point-list li", text: "Bryggen"
     assert_selector ".map-point-list li a", text: "Fløyen"
   end
+  # No MapLibre bundle loads, so the canvas is the list fallback. Fixed and
+  # full-height, it squeezed each card below its own text and ran under the
+  # search; in the page flow every card holds its text and starts below the HUD.
+  test "the list fallback sits below the HUD and every card holds its text" do
+    visit_city("maps", "/")
+    decline_optional_cookies if has_css?("#cookie-consent-banner", wait: 3)
+    assert_selector ".map-fallback a", text: "Bryggen"
+
+    hud_bottom = evaluate_script("document.querySelector('.map-hud').getBoundingClientRect().bottom")
+    first_top = evaluate_script("document.querySelector('.map-fallback a').getBoundingClientRect().top")
+    spilled = evaluate_script("[...document.querySelectorAll('.map-fallback a')]" \
+                              ".filter((card) => card.scrollHeight > card.clientHeight + 1).length")
+    assert_operator first_top, :>=, hud_bottom, "the first card starts below the HUD"
+    assert_equal 0, spilled, "no card is squeezed below its own text"
+  end
 end

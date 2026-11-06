@@ -2055,6 +2055,31 @@ body.vertical-maps .map-hud > * {
   pointer-events: auto;
 }
 
+/* No MapLibre bundle loads (marketplace_cart_contract_test pins that), so the
+   canvas is always map_controller's list fallback. As a fixed, full-height
+   flex column it squeezed every card to its 44px floor, spilled the names over
+   the next card and ran under the fixed search. The list joins the page flow
+   below the HUD instead, and the page scrolls. */
+body.vertical-maps main:has(.map-fallback) {
+  overflow: visible;
+}
+
+body.vertical-maps section:has(> .map-fallback) {
+  display: flex;
+  flex-direction: column;
+}
+
+body.vertical-maps section:has(> .map-fallback) .map-hud {
+  position: static;
+  order: -1;
+  max-width: none;
+  padding: var(--space-4) var(--space-4) 0;
+}
+
+body.vertical-maps .map-canvas.map-fallback {
+  position: static;
+}
+
 body.vertical-maps .map-place-popup {
   padding: var(--space-3) var(--space-4);
   border-radius: var(--radius-card);

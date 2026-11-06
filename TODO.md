@@ -258,15 +258,6 @@ measure is already owned by the Bymorgen item above.
   levering, også på kvelden" et al., `brgen/config/locales/nb.yml:86-88`)
   at 1:1 for size and AA contrast while there.
   Laws: `TRUTHFUL_STATUS`, `OPERATOR_RENDERED`, `PROPORTION_contrast`.
-- [ ] **Maps fixed chrome scrim.** At 1:1 the maps desktop capture shows list
-  content ("Kafé Åsane", the search row) sharing a baseline with the fixed
-  white chrome and the fixed type-only brand mark
-  (`__shared/app/views/shared/_brand_mark.html.erb` documents
-  `position:fixed`, no box, no background). Measure the top inset on the
-  translucent-chrome dialects and add a scrim or reserved headroom so
-  scrolled text never collides with the brand and nav; keep the type-only
-  mark and the accessibility contract documented in that partial.
-  Laws: `PROPORTION_contrast`, `REACH`, `OPERATOR_RENDERED_contract`.
 - [ ] **Nav "nytt!" badge clearance.** The `<sup class="nav_link_badge">`
   ("nytt!", `brgen/app/views/shared/_nav_swiper.html.erb:69`,
   `brgen/app/assets/stylesheets/_brgen_navigation.scss:346`,
