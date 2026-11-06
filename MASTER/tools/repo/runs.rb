@@ -71,13 +71,12 @@ module Operator
       # STUDIO's Rakefile builds this path from separate File.join arguments,
       # so the source-glob reader cannot recover the directory on its own.
       "STUDIO/Rakefile" => ["STUDIO/test/*_test.rb"],
-      # package.json scripts pass the test path inside a node --test command
-      # string, so no quoted path literal survives extraction.
-      "RAILS/package.json" => [
-        "RAILS/test/image_compression.test.mjs",
-        "RAILS/test/radio_brgen_tunnel.test.mjs",
-      ],
     }.freeze
+
+    # npm scripts name their test files inside `node --test ...` strings, so no
+    # literal survives the source-glob reader. These runners are parsed as JSON
+    # and every script value that names a test file counts as its runner.
+    JSON_RUNNERS = %w[RAILS/package.json].freeze
 
     # Support files named like tests. A runner loads these; nothing runs them.
     HELPERS = %w[test_helper.rb test_defaults.rb test_support.rb].freeze
@@ -109,6 +108,13 @@ module Operator
         end
 
         CONVENTIONS.each { |runner, list| found[runner].concat(list) }
+        JSON_RUNNERS.each do |runner|
+          base = runner.split("/").first
+          package = JSON.parse(File.read(File.join(ROOT, runner)))
+          (package["scripts"] || []).each_value.flat_map { |line| line.scan(/[\w.\/-]+\.test\.mjs/) }.uniq.each do |path|
+            found[runner] << File.join(base, path)
+          end
+        end
         found
       end
     end
