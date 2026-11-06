@@ -54,7 +54,7 @@ module Master
         id = model.to_s
         return :paid_tail if Io::PaidTail.member?(id)
         return :free if id.end_with?(":free", ":cloud", "-cloud") ||
-                        id.start_with?("web-chat:")
+                        id.start_with?("llm7:", "web-chat:")
         return :local if id.start_with?("ollama:", "ollama/", "local:")
 
         :remote

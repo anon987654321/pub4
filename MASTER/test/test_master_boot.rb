@@ -140,4 +140,27 @@ class MasterBootTest < Minitest::Test
       assert_equal false, Master.load_yaml(path, default: "fallback")
     end
   end
+  def test_termux_native_tts_is_ready_without_the_edge_worker
+    keys = %w[MASTER_SKIP_TTS MASTER_TTS_DEGRADED MASTER_TTS_REASON]
+    saved = keys.to_h { |key| [key, ENV[key]] }
+    keys.each { |key| ENV.delete(key) }
+    ENV["MASTER_TTS_DEGRADED"] = "1"
+    ENV["MASTER_TTS_REASON"] = "edge worker unavailable"
+
+    Master::Device.stub(:android?, true) do
+      Master::Device::Audio.stub(:tts_available?, true) do
+        Master::Voice::Speech.stub(:available?, false) do
+          Master.stub(:supervise_tts, ->(**) { flunk("native Termux TTS must not start Edge") }) do
+            assert Master.ensure_services!(root: Master::ROOT)
+          end
+        end
+      end
+    end
+
+    refute ENV.key?("MASTER_TTS_DEGRADED")
+    refute ENV.key?("MASTER_TTS_REASON")
+  ensure
+    saved&.each { |key, value| value.nil? ? ENV.delete(key) : ENV[key] = value }
+  end
+
 end

@@ -73,6 +73,14 @@ module Master
     def ensure_services!(root: ROOT)
       return true if ENV["MASTER_SKIP_TTS"] == "1"
 
+      # Termux:API speaks directly on Android; it needs neither Edge nor a
+      # desktop audio player. Treat that native command as a complete path and
+      # do not start an unrelated Edge worker on a phone.
+      if Device.android? && Device::Audio.tts_available?
+        clear_tts_degraded!
+        return true
+      end
+
       # TTS is a capability, not synonymous with the Edge daemon. On a local
       # terminal, macOS say plus afplay (or espeak plus a player) is already
       # a complete voice path; do not mark the session degraded or spend 15s

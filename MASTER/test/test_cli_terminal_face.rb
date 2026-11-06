@@ -571,12 +571,15 @@ class TestCliTerminalFace < Minitest::Test
     )
 
     Master::Voice::Playback.stub(:enabled?, true) do
-      Master::Voice::Speech.stub(:available?, true) do
+      Master::Voice::Speech.stub(:available?, false) do
         Master::Voice::Speech.stub(:chunks, ["hello"]) do
-          Master::Device::Audio.stub(:available?, true) do
-            Master::Device::Audio.stub(:speak, ->(text) { spoken << text; true }) do
-              refute mouth.send(:direct_speech?)
-              assert mouth.say("hello", on_level: ->(_level) {})
+          Master::Device::Audio.stub(:tts_available?, true) do
+            Master::Device::Audio.stub(:available?, false) do
+              Master::Device::Audio.stub(:speak, ->(text) { spoken << text; true }) do
+                refute mouth.send(:direct_speech?)
+                assert_nil mouth.missing
+                assert mouth.say("hello", on_level: ->(_level) {})
+              end
             end
           end
         end

@@ -20,6 +20,7 @@ class TestLaneSelection < Minitest::Test
   LOCAL = "ollama:gemma3:4b"
   NEMOTRON = "nvidia/nemotron-3-super-120b-a12b:free"
   NANO = "nvidia/nemotron-3.5-lightning:free"
+  LLM7 = "llm7:DeepSeek-V4-Flash-0731"
   DEEPSEEK = "deepseek-chat"
   AGY_REPLY = "agy: error: Individual quota reached. Please upgrade your subscription to increase your limits. Resets in 165h22m49s."
   CLAUDE_REPLY = "You've hit your session limit - resets 5pm (Europe/Oslo)"
@@ -110,6 +111,11 @@ class TestLaneSelection < Minitest::Test
     mixed = [NEMOTRON, NANO, LOCAL, DEEPSEEK, GROK]
     assert_equal [GROK, DEEPSEEK, LOCAL, NEMOTRON, NANO], Selection.order(mixed), "a subscription CLI precedes a metered API key"
     assert_equal [NEMOTRON, NANO, LOCAL, DEEPSEEK, GROK], Selection.order(mixed, free_last: false), "a free route keeps its order"
+  end
+
+  def test_llm7_hosted_turbo_models_are_ranked_in_the_free_class
+    assert_equal :free, Selection.kind(LLM7)
+    assert_equal [DEEPSEEK, LLM7], Selection.order([LLM7, DEEPSEEK])
   end
 
   def test_subscription_lanes_lead_in_claude_grok_agy_order_ahead_of_api_keys

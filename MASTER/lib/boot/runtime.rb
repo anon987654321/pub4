@@ -157,7 +157,7 @@ module Master
     # Lanes that answer with no provider key: a local model, a local server, a
     # signed-in subscription CLI, the browser. Refusing those for want of a key
     # sent a keyless laptop with Ollama running to "no key".
-    KEYLESS_LANE_PREFIXES = %w[ollama: ollama/ local: claude-cli: codex-cli: grok-cli: agy: web-chat:].freeze
+    KEYLESS_LANE_PREFIXES = %w[ollama: ollama/ local: claude-cli: codex-cli: grok-cli: agy: llm7: web-chat:].freeze
 
     def llm_reachable?(model = nil)
       [model, ENV["MASTER_MODEL"]].any? { |id| id.to_s.start_with?(*KEYLESS_LANE_PREFIXES) } || any_api_key_present?
