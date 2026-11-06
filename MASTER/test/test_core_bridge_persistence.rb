@@ -3,6 +3,7 @@
 require "test_helper"
 require "cli/core_bridge"
 require "tmpdir"
+require "digest"
 
 class CoreBridgePersistenceTest < Minitest::Test
   class ScriptedModel
@@ -12,9 +13,10 @@ class CoreBridgePersistenceTest < Minitest::Test
 
   def test_incomplete_authorised_repair_resumes_one_mission_and_keeps_its_delivery_grant
     Dir.mktmpdir do |root|
-      File.write(File.join(root, "source.rb"), "SOURCE = 1\n")
+      File.write(File.join(root, "source.rb"), "SOURCE = 0\n")
       first_memory = Master::Core::Memory.new
-      first = ScriptedModel.new(Master::Core::Effect.read("source.rb"))
+      first_memory.proof.mark_ideation_complete!(approaches: Master::Core::Proof::ALTERNATIVES_REQUIRED)
+      first = ScriptedModel.new(Master::Core::Effect.write("source.rb", "SOURCE = 1\n"))
       result = Master::CLI::CoreBridge.run("please fix all", root:, model: first, memory: first_memory, max_turns: 1)
 
       assert_equal :max_turns, result[:reason]
@@ -23,9 +25,7 @@ class CoreBridgePersistenceTest < Minitest::Test
       assert_equal "run_full_workflow", saved.dig("operator", "intent")
       assert_equal "high", saved.dig("operator", "risk")
 
-      assert Master::Fix::Mission.new(root:).record_repository_write!(
-        path: "source.rb", content: "SOURCE = 1\n", repository_root: root
-      )
+      assert_equal Digest::SHA256.hexdigest("SOURCE = 1\n"), saved.dig("repository_writes", "source.rb")
 
       resumed_memory = Master::Core::Memory.new(risk: :low)
       resumed = Master::CLI::CoreBridge.run(

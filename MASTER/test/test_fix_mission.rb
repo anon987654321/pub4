@@ -290,7 +290,7 @@ end
       reloaded = Master::Fix::Mission.new(root:)
       assert_equal({ "owned.rb" => digest }, reloaded.repository_writes(repository_root: repository))
 
-      assert reloaded.record_repository_commit!(
+      assert mission.record_repository_commit!(
         expected_hashes: { "owned.rb" => digest }, repository_root: repository,
       )
       assert_empty Master::Fix::Mission.new(root:).repository_writes(repository_root: repository)
