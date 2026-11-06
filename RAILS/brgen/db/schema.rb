@@ -472,6 +472,7 @@ ActiveRecord::Schema[8.2].define(version: 2026_11_07_010000) do
     t.index ["neighborhood_id"], name: "index_dating_profiles_on_neighborhood_id"
     t.index ["user_id"], name: "index_dating_profiles_on_user_id"
     t.index ["visible", "last_active_at"], name: "index_dating_profiles_on_visible_and_last_active_at"
+    t.index ["city_id", "latitude", "longitude"], name: "index_dating_profiles_on_city_id_and_latitude_and_longitude"
   end
 
   create_table "dating_prompts", force: :cascade do |t|
@@ -1095,6 +1096,7 @@ ActiveRecord::Schema[8.2].define(version: 2026_11_07_010000) do
     t.index ["sender_id", "client_token"], name: "index_messages_on_sender_id_and_client_token", unique: true
     t.index ["sender_id"], name: "index_messages_on_sender_id"
     t.index ["story_id"], name: "index_messages_on_story_id"
+    t.index ["conversation_id", "created_at"], name: "index_messages_on_conversation_id_and_created_at"
   end
 
   create_table "moderation_flags", force: :cascade do |t|
