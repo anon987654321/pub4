@@ -122,6 +122,7 @@ class SharedChromeBehaviourTest < ApplicationSystemTestCase
       current_window.resize_to(width, height)
       visit_city("maps", "/places")
       box = probe("badgeBox()")
+
       assert_operator box["top"], :>=, 8, "clear of the viewport top at #{width}px"
       assert_operator box["top"], :>=, box["barTop"], "inside the bar at #{width}px"
       assert_operator box["bottom"], :<=, box["barBottom"], "inside the bar at #{width}px"
