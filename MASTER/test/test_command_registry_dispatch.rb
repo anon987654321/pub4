@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "test_helper"
+require_relative "../lib/fix/kernel"
 require "tmpdir"
 require "open3"
 require "digest"
@@ -51,9 +52,9 @@ class TestCommandRegistryDispatch < Minitest::Test
 
   def with_backlog_repo
     Dir.mktmpdir("fix-weekly-backlog") do |root|
-      todo = "# Remaining work\\n- [ ] **Review the runner** Inspect runner changes and execute focused tests.\\n"
+      todo = "# Remaining work\n- [ ] **Review the runner** Inspect runner changes and execute focused tests.\n"
       File.write(File.join(root, "TODO.md"), todo)
-      File.write(File.join(root, "runner.rb"), "RUNNER_VERSION = 1\\n")
+      File.write(File.join(root, "runner.rb"), "RUNNER_VERSION = 1\n")
       [
         ["git", "init", "-q"],
         ["git", "config", "user.name", "Backlog Review Test"],
@@ -136,6 +137,41 @@ class TestCommandRegistryDispatch < Minitest::Test
 
     assert_equal :inconclusive, result
     assert_equal [attempt], kernel.events
+  end
+
+  def test_read_only_weekly_review_does_not_write_a_kernel_receipt
+    with_backlog_repo do |root, todo|
+      head, status = Open3.capture2e("git", "rev-parse", "HEAD", chdir: root)
+      assert status.success?
+      kernel = BacklogReviewKernel.new
+      answer = JSON.generate("summary" => "No item can be closed without execution proof.",
+                             "completion_candidates" => [], "stale_candidates" => [])
+      result = Registry.weekly_backlog_review(
+        deliberation: Struct.new(:agent).new(BacklogReviewAgent.new(answer)),
+        bus: nil, repo_root: root, kernel:, now: Time.now, record: false
+      )
+
+      assert_equal :reviewed, result
+      assert_empty kernel.events
+      assert_equal todo, File.read(File.join(root, "TODO.md"))
+    end
+  end
+
+  def test_success_receipt_survives_a_new_kernel_instance
+    Dir.mktmpdir("fix-backlog-restart") do |root|
+      Dir.mkdir(File.join(root, ".git"))
+      first = Master::Fix::Kernel.new(root:, actor: "backlog-review-test")
+      first.append_event("backlog_review_completed", { schema: 1, status: "reviewed" })
+      now = Time.now.utc
+      restarted = Master::Fix::Kernel.new(root:, actor: "backlog-review-restart")
+
+      result = Registry.weekly_backlog_review(
+        deliberation: nil, bus: nil, repo_root: root, kernel: restarted, now:
+      )
+
+      assert_equal :not_due, result
+      assert_equal "backlog_review_completed", restarted.verify_log!.last.fetch("kind")
+    end
   end
 
   def built

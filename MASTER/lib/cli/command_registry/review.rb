@@ -140,7 +140,7 @@ module Master
       # Weekly review is advisory. The existing Kernel log is its only receipt;
       # no candidate edits or closes the one cross-tree backlog.
       def weekly_backlog_review(deliberation:, bus:, cancellation: nil, repo_root: Master.repo_root,
-                               kernel: nil, now: Time.now)
+                               kernel: nil, now: Time.now, record: true)
         return :cancelled if cancellation&.cancelled?
 
         kernel ||= Master::Fix::Kernel.new(root: repo_root, actor: "fix-backlog-review", bus:)
@@ -161,22 +161,24 @@ module Master
         return :cancelled if cancellation&.cancelled?
         review = parse_backlog_review(agent.ask(backlog_review_prompt(snapshot), operation: :structural_review), snapshot)
         return :cancelled if cancellation&.cancelled?
-        kernel.append_event("backlog_review_completed", {
-          schema: 1, status: "reviewed", head_sha: snapshot[:head_sha], todo_sha256: snapshot[:todo_sha256],
-          open_item_count: snapshot[:items].size, completion_candidates: review[:completion_candidates],
-          stale_candidates: review[:stale_candidates], summary: review[:summary],
-        })
+        if record
+          kernel.append_event("backlog_review_completed", {
+            schema: 1, status: "reviewed", head_sha: snapshot[:head_sha], todo_sha256: snapshot[:todo_sha256],
+            open_item_count: snapshot[:items].size, completion_candidates: review[:completion_candidates],
+            stale_candidates: review[:stale_candidates], summary: review[:summary],
+          })
+        end
         Master::Trace::Dmesg.status(
           "backlog0", "reviewed #{snapshot[:items].size} item(s); " \
                       "#{review[:completion_candidates].size} possible completion(s), " \
-                      "#{review[:stale_candidates].size} possibly stale; no backlog edits"
+                      "#{review[:stale_candidates].size} possibly stale; no backlog edits; receipt=#{record ? "recorded" : "not written (read-only)"}"
         )
         :reviewed
       rescue StandardError => error
         begin
           kernel&.append_event("backlog_review_inconclusive", {
             schema: 1, status: "INCONCLUSIVE", reason: error.class.name.to_s[0, 80],
-          })
+          }) if record
         rescue StandardError
           nil
         end
@@ -329,7 +331,7 @@ module Master
               )
               next cancelled_fix_result(cancellation) if cancellation&.cancelled?
               weekly_backlog_review(
-                deliberation:, bus:, cancellation:, repo_root: Master.repo_root,
+                deliberation:, bus:, cancellation:, repo_root: Master.repo_root, record: writes_requested,
               )
               next cancelled_fix_result(cancellation) if cancellation&.cancelled?
 
