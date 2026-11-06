@@ -1,7 +1,7 @@
 ---
 meta:
   source: runtime authority - edit this file or use MemoryRecord; do not add data/claude/*.md
-  count: 34
+  count: 35
 entries:
 - key: personality_rb_comment_audit
   name: personality rb comment audit
@@ -491,3 +491,17 @@ entries:
     and printing lines; PARENTHETICAL_DASH and QUOTES_BY_LOCALE
     (law/typesetting.rb) hold the aside and the quotes. The face glyph ramp
     stays as it is. Text written before 2026-11-05 keeps its original marks.
+- key: operator_read_the_manual_before_editing
+  name: read the governing manual before editing RAILS or OPENBSD
+  description: Operator directive 2026-11-06 - agents read the current Rails guides, and OpenBSD's man pages, before they edit
+  type: feedback
+  body: |-
+    Before editing anything under RAILS/ (or MASTER/web), an agent has read the
+    latest Rails style guide (rubocop's rails-style-guide) and the current Rails
+    edge guides (edgeguides.rubyonrails.org) for every API the change touches,
+    because the apps run on Rails edge. Before editing anything under OPENBSD/,
+    an agent has read man(1) for every tool, daemon or configuration file the
+    change touches (for example relayd.conf(5), rcctl(8), pf.conf(5), doas.conf(5),
+    newsyslog(8)), on the box or at man.openbsd.org for the running release. A
+    change whose commit cannot name the guide section or man page it followed
+    is not ready.
