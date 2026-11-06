@@ -90,6 +90,10 @@ Rails.application.routes.draw do
   post "messages/invite_master" => "messages#invite_master", as: :invite_master_messages
   get "messages/widget" => "messages#widget", as: :messages_widget
 
+  # Chatroulette-style random pairing: one ask, one stranger, one thread.
+  resources :encounters, only: %i[create destroy]
+  get "encounters/waiting" => "encounters#waiting", as: :waiting_encounters
+
   resources :posts, only: %i[index show new create destroy] do
     resources :comments, only: %i[create destroy]
     member { post :like }

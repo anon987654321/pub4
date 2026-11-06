@@ -133,7 +133,11 @@
 
   <%= render "shared/footer" %>
   <%= render "shared/flash_toasts" %>
-  <%= render "shared/nearby_chat_widget", title: t("nav.messages") if authenticated? %>
+  <%# Anonymous parity with brgen: the ambient chat renders for everyone.
+      A guest carries a soft identity, the widget frame loads the messages
+      widget, and messaging works without an account - exactly the Craigslist
+      shape Shared::Authentication documents. %>
+  <%= render "shared/nearby_chat_widget", title: t("nav.messages") %>
 
   <div class="tab-bar-coach"
        data-scroll-chrome-target="coach"

@@ -1090,6 +1090,13 @@ en:
     donated: "donated"
     recycled: "recycled"
     released: "released"
+  encounters:
+    title: Random
+    lead: Tap to be paired with a stranger who also wants to talk. No signup.
+    start: Get a stranger
+    looking: Looking for a stranger to talk to …
+    looking_note: This page refreshes itself. The thread opens as soon as someone else asks.
+    leave: Leave
   flash:
     master_invited: "MASTER joined the chat."
     no_outfit_suggestion: "No outfit suggestion generated."
@@ -1105,6 +1112,8 @@ en:
     affiliate_link_removed: "Affiliate link removed."
     style_profile_set: "Style profile set to %{aesthetic}."
     connection_requested: "Connection requested."
+    encounters_rate_limited: Easy now - too many random encounters started. Try again shortly.
+    encounter_left: Random encounter left.
     creator_profile_private: "Creator profile is private."
     creator_profile_published: "Creator profile published."
     creator_profile_updated: "Creator profile updated."

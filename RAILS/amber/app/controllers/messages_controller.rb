@@ -78,12 +78,33 @@ class MessagesController < ApplicationController
   def resolve_recipient(id)
     return master if master && master.id == id.to_i && master_invited?
 
-    Current.user.messageable_users.find_by(id:)
+    Current.user.messageable_users.find_by(id:) || connected_recipient(id)
+  end
+
+  # A random pairing (EncountersController) accepts a connection between two
+  # strangers, guests included. The public directory stays messageable_users -
+  # the inbox list never grows by accident - but an accepted connection is
+  # itself the permission to write, whoever the two people are.
+  def connected_recipient(id)
+    id = id.to_i
+    linked = Connection.accepted.where(requester_id: Current.user.id, addressee_id: id)
+                       .or(Connection.accepted.where(addressee_id: Current.user.id, requester_id: id))
+    User.find_by(id: id) if linked.exists?
   end
 
   # Someone the viewer has a message with; nobody else opens as a conversation.
+  # A fresh random pairing has no messages yet, so the accepted connection
+  # carries the thread until the first line is written.
   def conversation_partner(id)
-    User.includes(:profile).where(id: Message.partner_ids(Current.user)).find_by(id:)
+    User.includes(:profile).where(id: Message.partner_ids(Current.user)).find_by(id:) ||
+      User.includes(:profile).find_by(id: connected_partner_id(id))
+  end
+
+  def connected_partner_id(id)
+    id = id.to_i
+    linked = Connection.accepted.where(requester_id: Current.user.id, addressee_id: id)
+                       .or(Connection.accepted.where(addressee_id: Current.user.id, requester_id: id))
+    id if linked.exists?
   end
 
   def load_conversations

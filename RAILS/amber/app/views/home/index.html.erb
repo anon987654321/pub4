@@ -19,6 +19,14 @@
 <%= render "looks", looks: @looks %>
 <%= render "frontpage_posts", posts: @frontpage_posts %>
 
+<%# Chatroulette-style: pair with a stranger now. Guests play; the ask is the
+    consent, and no account is needed to talk. %>
+<section class="encounter-cta" aria-label="<%= t("encounters.title") %>">
+  <%= tag.h2 t("encounters.title") %>
+  <p><%= t("encounters.lead") %></p>
+  <%= button_to t("encounters.start"), encounters_path, method: :post, class: "button button-primary" %>
+</section>
+
 <% if authenticated? %>
   <% if @weather %>
     <div class="weather-bar">

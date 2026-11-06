@@ -1094,6 +1094,13 @@ nb:
     donated: "donert"
     recycled: "gjenvunnet"
     released: "sluppet"
+  encounters:
+    title: Tilfeldig
+    lead: Trykk og bli paret med en fremmed som også vil prate. Ingen registrering.
+    start: Få en fremmed
+    looking: Leter etter en fremmed å prate med …
+    looking_note: Siden oppdaterer seg selv. Så snart noen andre spør, åpnes samtalen.
+    leave: Avbryt
   flash:
     master_invited: "MASTER ble med i chatten."
     no_outfit_suggestion: "Fant ikke noe antrekk å foreslå."
@@ -1109,6 +1116,8 @@ nb:
     affiliate_link_removed: "Affiliatelenken er fjernet."
     style_profile_set: "Stilprofilen er satt til %{aesthetic}."
     connection_requested: "Forespørsel om kontakt er sendt."
+    encounters_rate_limited: Rolig nå - for mange tilfeldige møter startet. Prøv igjen om litt.
+    encounter_left: Tilfeldig møte avbrutt.
     creator_profile_private: "Skaperprofilen er privat."
     creator_profile_published: "Skaperprofilen er publisert."
     creator_profile_updated: "Skaperprofilen er oppdatert."
