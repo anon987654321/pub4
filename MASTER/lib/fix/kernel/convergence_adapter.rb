@@ -550,7 +550,7 @@ module Master
 
       def visual_world
         tools = { reachability: @reachability, committer: @committer,
-                  repair_loop: ->(brief) { visual_repair_loop(brief) } }
+                  repair_loop: ->(brief) { visual_repair_loop(brief) }, reviewer: method(:visual_review) }
         VisualLaneWorld.new(repo_root: Master::REPO_ROOT, tools:, bus: @bus).world
       end
 
@@ -564,6 +564,13 @@ module Master
         return terminal(:done, "visual lane: the sweep reported no rendered finding") if outcome.findings.zero?
 
         terminal(:plateau, "visual lane: #{detail}")
+      end
+
+      # One fresh call, outside the repair loop's conversation, so the proposer never approves.
+      def visual_review(brief, crops)
+        @agent.ask_once("#{brief}\nCrops (PNG, 400%): #{crops.join(", ")}", law: false).to_s
+      rescue StandardError => e
+        "REJECT: reviewer unavailable - #{e.message.to_s[0, 120]}"
       end
 
       def visual_repair_loop(brief)

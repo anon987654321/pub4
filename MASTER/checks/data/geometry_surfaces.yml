@@ -209,3 +209,9 @@ state_matrix:
     - { id: brgen/core/first_action, surface: brgen/core, selector: "main :is(button, a[href])" }
     - { id: amber/home/first_action, surface: amber/home, selector: "main :is(button, a[href])" }
     - { id: bsdports/home/search, surface: bsdports/home, selector: "input[type=search], input[name=q]" }
+
+# Written by /fix's visual lane when a rendered group is cleared and approved
+# (Deploy::RegressionGuards): a later soft finding of the same kind, on the same
+# selector or stylesheet, on one of these surfaces reports hard as [guarded].
+# Keep this key last; rows are appended.
+regression_guards:

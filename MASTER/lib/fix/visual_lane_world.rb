@@ -9,6 +9,9 @@ require_relative "layout_score_render"
 require_relative "rails_visual_graph"
 require_relative "pass_law"
 require_relative "commit_message"
+require_relative "visual_reviewer"
+require_relative "visual_simplify"
+require_relative "../../checks/support/regression_guards"
 
 module Master
   module Fix
@@ -32,7 +35,8 @@ module Master
       # repair_loop, ->(brief) { a RepairLoop briefed for one group }.
       def initialize(repo_root:, tools:, bus: nil)
         @repo_root = repo_root
-        @reachability, @committer, @repair_loop = tools.values_at(:reachability, :committer, :repair_loop)
+        @reachability, @committer, @repair_loop, @reviewer =
+          tools.values_at(:reachability, :committer, :repair_loop, :reviewer)
         @bus = bus
 
         @evidence = SweepEvidence.new(bus:)
@@ -44,7 +48,8 @@ module Master
         VisualLane::World.new(
           sweep: -> { @evidence.read(@reachability.layout_sweep || @reachability.observe_layout_suite!) },
           resweep: -> { @evidence.read(@reachability.observe_layout_suite!) },
-          snap: method(:snap), pad: method(:pad), repair: method(:repair)
+          snap: method(:snap), pad: method(:pad), repair: method(:repair),
+          review: method(:review), guard: method(:guard), simplify: method(:simplify)
         )
       end
 
@@ -75,6 +80,34 @@ module Master
 
         result = @repair_loop.call(BRIEF).run_once([sources.first], external_violations: [violation(group, sources)])
         result[:fixed].to_i.positive? ? :applied : result.fetch(:status, :not_kept)
+      end
+
+      # tools[:reviewer] is a separate agent from the repair loop's; without one nothing visible clears.
+      def review(group, regions) = VisualReviewer.judge(group, regions, reviewer: @reviewer)
+
+      # The row that keeps a cleared group's defect from returning, committed with the lane's fixes.
+      def guard(group)
+        law, selector, file, surfaces = group.to_h.values_at(:law, :selector, :file, :surfaces)
+        place = selector ? { selector: } : { file: }
+        return if place.values.first.to_s.empty? || surfaces.empty?
+
+        Deploy::RegressionGuards.record(kind: law.to_s.split("/").last, place:, surfaces:)
+        @committer.commit_if_dirty("Guard the rendered #{law} cause against its return",
+                                   owned_paths: [Deploy::RegressionGuards::DATA])
+      end
+
+      def simplify
+        commit = ->(path) { @committer.commit_if_dirty(simplified(path), owned_paths: [path]) }
+        stage = VisualSimplify::Stage.new(repo_root: @repo_root, shots: @rerender.method(:shots),
+                                          review: method(:review), commit:)
+        stage.run(ScaleSnap.stylesheets(@repo_root))
+      end
+
+      def simplified(path)
+        where = path.delete_prefix("#{@repo_root}/")
+        CommitMessage.compose("Simplify #{File.basename(path)} without a visible change",
+                              what: "/fix merged duplicate rules and named declared tokens in #{where}",
+                              why: "Counts fell and the re-render changed no pixel, or the reviewer approved it")
       end
 
       private
@@ -146,6 +179,31 @@ module Master
           apps = app == "__shared" ? surfaces.map(&:app).uniq : [app]
           before = LayoutScoreRender.rescore_hook(surfaces, root: @repo_root)
           ->(changed) { apps.all? { |name| build_css(name) } && before.call(changed) }
+        end
+
+        # [[before, after], ...] screenshots of the surfaces a stylesheet reaches, around the edit the
+        # block makes; nil when no declared surface shows it.
+        def shots(path)
+          app = path.to_s.delete_prefix("#{@repo_root}/")[%r{\ARAILS/([^/]+)/}, 1].to_s
+          surfaces = measured([], app)
+          return yield.then { nil } if surfaces.empty?
+
+          before = capture(surfaces, "before")
+          yield
+          build_css(app) or return
+          before.zip(capture(surfaces, "after"))
+        end
+
+        def capture(surfaces, phase)
+          require_relative "../../checks/support/capture_engine"
+          dir = Dir.mktmpdir("visual-simplify-#{phase}")
+          probe.with_browser(root: @repo_root, warm: surfaces) do |cdp|
+            surfaces.map do |surface|
+              cdp.viewport(surface.width, surface.height, mobile: probe.mobile?(surface))
+              cdp.navigate(surface.url)
+              Deploy::CaptureEngine.still_screenshot(cdp, File.join(dir, "#{surface.id.tr("/", "-")}.png"))[:path]
+            end
+          end
         end
 
         def declared(surface_ids)

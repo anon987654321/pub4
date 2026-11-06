@@ -5,6 +5,7 @@ require "tmpdir"
 require "fix/visual_groups"
 require "fix/visual_lane"
 require "fix/tap_target_pad"
+require "fileutils"
 
 # Fixture sweeps: eight routes on two viewports, each reporting the same header warning,
 # the same off-scale rhythm and the same crowded selector, plus one broken route.
@@ -126,16 +127,35 @@ class TestVisualLane < Minitest::Test
   Fixture = VisualSweepFixture
   Lane = Master::Fix::VisualLane
 
-  def world(asked: [], resweeps: [], mechanical: true)
+  SHOT = File.join(Dir.tmpdir, "visual-lane-shot-#{Process.pid}.png")
+  MOVED = File.join(Dir.tmpdir, "visual-lane-moved-#{Process.pid}.png")
+
+  def setup
+    write_png(SHOT, 255)
+    write_png(MOVED, 0)
+  end
+
+  def teardown = [SHOT, MOVED].each { |path| FileUtils.rm_f(path) }
+
+  def write_png(path, grey)
+    File.binwrite(path, Deploy::PngDiff.encode_rgba(32, 32, ([grey, grey, grey, 255] * 1024).pack("C*")))
+  end
+
+  # after: the screenshot the resweep reports for brgen/core/mobile, the same pixels by default.
+  def world(asked: [], resweeps: [], mechanical: true, **extra)
     after = Fixture.lines.grep_v(/feed-action|_feed\.scss/)
-    shots = { "brgen/core/mobile" => "/tmp/c.png" }
+    after_shot = extra.delete(:after_shot) || SHOT
 
     Lane::World.new(
-      sweep: -> { { findings: Fixture.lines, urls: Fixture.urls, screenshots: shots } },
-      resweep: -> { (resweeps << :resweep) && { findings: after, urls: Fixture.urls } },
+      sweep: -> { { findings: Fixture.lines, urls: Fixture.urls, screenshots: { "brgen/core/mobile" => SHOT } } },
+      resweep: lambda {
+        shots = { "brgen/core/mobile" => after_shot }
+        (resweeps << :resweep) && { findings: after, urls: Fixture.urls, screenshots: shots }
+      },
       snap: ->(group) { group.file && mechanical ? :applied : nil },
       pad: ->(group) { Master::Fix::TapTargetPad.applicable?(group) && mechanical ? :applied : nil },
       repair: ->(group) { (asked << group.id) && :not_kept },
+      **extra,
     )
   end
 
@@ -151,14 +171,15 @@ class TestVisualLane < Minitest::Test
     run_lane(world(asked:)) do |outcome, rows|
       assert_equal 3, asked.size
       assert_equal 2, rows.count { |row| row.fetch("fix") == "mechanical" }
-      assert_equal 2, outcome.cleared
+      # The stylesheet group has no screenshot to show it changed nothing, so it waits for review.
+      assert_equal 1, outcome.cleared
     end
   end
 
   def test_the_report_lands_in_master_state_with_before_screenshots
     run_lane(world) do |outcome, rows|
       assert outcome.report.end_with?(File.join("MASTER", ".master", "visual_groups.json"))
-      assert_equal ["/tmp/c.png"], rows.find { |row| row.fetch("before").any? }.fetch("before")
+      assert_equal [SHOT], rows.find { |row| row.fetch("before").any? }.fetch("before")
     end
   end
 
@@ -168,6 +189,49 @@ class TestVisualLane < Minitest::Test
       assert_empty resweeps
       assert_equal [0, 5], [outcome.cleared, outcome.remaining]
       assert_equal 3, rows.count { |row| row.fetch("fix_detail").include?("model budget") }
+    end
+  end
+
+  # A mechanical fix that moved pixels is not cleared on the resweep alone: it goes to a reviewer
+  # that is not the repairer, with the changed boxes, and a guard is written only once cleared.
+  def test_a_visible_mechanical_change_needs_an_independent_review_before_it_clears
+    reviewed = []
+    guarded = []
+    review = ->(group, regions) { (reviewed << [group.id, regions]) && :approved }
+    run_lane(world(after_shot: MOVED, review:, guard: ->(group) { guarded << group.id })) do |outcome, _rows|
+      assert_equal 2, reviewed.size
+      assert_includes reviewed.map(&:last), [{ x: 0, y: 0, w: 32, h: 32 }]
+      assert_equal 2, outcome.cleared
+      assert_equal 2, guarded.size
+    end
+  end
+
+  def test_without_an_independent_reviewer_a_visible_change_stays_uncleared
+    run_lane(world(after_shot: MOVED)) do |outcome, rows|
+      assert_equal 0, outcome.cleared
+      assert(rows.any? { |row| row.fetch("fix_detail").to_s.include?("not cleared: no independent reviewer") })
+    end
+  end
+
+  def test_the_repairer_cannot_be_its_own_reviewer
+    lane_world = world(after_shot: MOVED)
+    same = Lane::World.new(**lane_world.to_h, review: lane_world.repair)
+    run_lane(same) do |_outcome, rows|
+      assert(rows.any? { |row| row.fetch("fix_detail").to_s.include?("cannot approve its own repair") })
+    end
+  end
+
+  def test_a_rejected_review_keeps_the_group_open
+    run_lane(world(after_shot: MOVED, review: ->(_group, _regions) { "R1 moves the header 4px" })) do |outcome, rows|
+      assert_equal 0, outcome.cleared
+      assert(rows.any? { |row| row.fetch("fix_detail").to_s.include?("reviewer - R1 moves the header 4px") })
+    end
+  end
+
+  def test_the_simplify_stage_runs_once_and_an_applied_simplification_is_resweeped
+    resweeps = []
+    run_lane(world(resweeps:, mechanical: false, simplify: -> { %i[applied] }), model_groups: 0) do |outcome, _rows|
+      assert_equal [1, [:resweep]], [outcome.simplified, resweeps]
     end
   end
 end

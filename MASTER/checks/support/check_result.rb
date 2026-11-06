@@ -10,6 +10,8 @@
 # and a shared kernel is the thing everything ends up requiring. Revisit when a
 # fifth consumer appears.
 
+require_relative "regression_guards"
+
 module Deploy
   # Four outcomes, not two.
   #
@@ -97,7 +99,9 @@ module Deploy
       when :soft
         @soft_failures << message
 
-        if self.class.strict_soft?
+        if RegressionGuards.guarded?(message)
+          @failures << "[guarded] #{message}"
+        elsif self.class.strict_soft?
           @failures << "[soft->hard] #{message}"
         else
           @warnings << "[soft] #{message}"

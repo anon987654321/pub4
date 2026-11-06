@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "visual_groups"
+require_relative "../../checks/support/pixel_match"
 
 module Master
   module Fix
@@ -8,12 +9,18 @@ module Master
     # fixers (ScaleSnap, TapTargetPad) before the model, the model once per group left, and a
     # resweep as the proof. Outside effects are injected (World); VisualLaneWorld wires them.
     class VisualLane
-      Outcome = Data.define(:groups, :findings, :report, :cleared, :remaining, :resweep)
+      Outcome = Data.define(:groups, :findings, :report, :cleared, :remaining, :resweep, :simplified)
 
       # sweep/resweep -> { findings: [text], urls: {surface id => url}, screenshots: {surface id => png} }
       # snap/pad ->(group) { nil when the fixer does not apply, else :applied or the reason it did not }
       # repair ->(group) { :applied or the reason the model's edit was not kept }
-      World = Data.define(:sweep, :resweep, :snap, :pad, :repair)
+      # review ->(group, regions) { :approved or the reason }: never the repairer; it judges a
+      #   repaired group's changed boxes (4x crops) and computed values against the Laws only
+      # simplify -> { [:applied or the reason, ...] }: the subtractive stage (VisualSimplify)
+      # guard ->(group) { the guard row written }: what keeps a cleared defect from returning
+      World = Data.define(:sweep, :resweep, :snap, :pad, :repair, :review, :simplify, :guard) do
+        def initialize(review: nil, simplify: nil, guard: nil, **rest) = super(review:, simplify:, guard:, **rest)
+      end
 
       REPORT = File.join("MASTER", ".master", "visual_groups.json").freeze
       MODEL_GROUPS = Integer(ENV.fetch("MASTER_FIX_VISUAL_MODEL_GROUPS", "12"))
@@ -36,19 +43,30 @@ module Master
         before = @world.sweep.call
         groups = grouped(before)
         @say.call("#{before.fetch(:findings).size} rendered finding(s) in #{groups.size} group(s)")
+        settle_all(groups, before)
+        simplified = simplify
+        after = @world.resweep.call if groups.any?(&:repaired?) || simplified.include?(:applied)
+        prove(groups, after) if after
+        finish(groups, { before:, after: }, simplified:)
+      end
+
+      private
+
+      def settle_all(groups, before)
         groups.each { |group| group.before = shots(group, before) }
         groups.each do |group|
           break if @stop.call
 
           settle(group)
         end
-
-        after = groups.any?(&:repaired?) ? @world.resweep.call : nil
-        prove(groups, after) if after
-        finish(groups, { before:, after: })
       end
 
-      private
+      # The subtractive stage, once a lane run, after the groups: what it kept is resweeped too.
+      def simplify
+        return [] if @stop.call
+
+        Array(@world.simplify&.call).tap { |outcomes| @say.call("simplify: #{outcomes.tally}") unless outcomes.empty? }
+      end
 
       def grouped(sweep) = VisualGroups.build(sweep.fetch(:findings), urls: sweep.fetch(:urls, {}))
 
@@ -92,9 +110,30 @@ module Master
           group.after = shots(group, after)
           next unless group.repaired?
 
-          verdict = still.include?(group.key) ? "still reported after the resweep" : CLEARED
+          verdict = still.include?(group.key) ? "still reported after the resweep" : reviewed(group)
+          @world.guard&.call(group) if verdict == CLEARED
           group.fix_detail = "#{group.fix_detail}; #{verdict}"
         end
+      end
+
+      # Cleared only past an independent review, unless a mechanical fix changed no pixel.
+      def reviewed(group)
+        regions = changed_regions(group)
+        return CLEARED if group.fix == :mechanical && regions&.empty?
+        return "not cleared: no independent reviewer" unless @world.review
+        return "not cleared: a repairer cannot approve its own repair" if @world.review.equal?(@world.repair)
+
+        outcome = @world.review.call(group, regions || [])
+        outcome == :approved ? CLEARED : "not cleared: reviewer - #{outcome}"
+      end
+
+      # The boxes that changed between the group's first before and after shots; nil when unmeasured.
+      def changed_regions(group)
+        before, after = group.before.first, group.after.first
+        return unless before && after && File.file?(before) && File.file?(after)
+
+        compared = Deploy::PixelMatch.compare(baseline_path: before, current_path: after)
+        compared[:status] == :compared ? compared[:regions] : nil
       end
 
       def shots(group, sweep)
@@ -110,14 +149,14 @@ module Master
         VisualGroups.write(File.join(@repo_root, REPORT), report)
       end
 
-      def finish(groups, sweeps)
+      def finish(groups, sweeps, simplified: [])
         before, after = sweeps.values_at(:before, :after)
         path = write_report(groups, sweeps)
 
         cleared = groups.count { |group| group.fix_detail.to_s.end_with?(CLEARED) }
         remaining = after ? grouped(after).size : groups.size
         Outcome.new(groups: groups.size, findings: before.fetch(:findings).size, report: path, cleared:, remaining:,
-                    resweep: !after.nil?)
+                    resweep: !after.nil?, simplified: simplified.count(:applied))
       end
     end
   end
