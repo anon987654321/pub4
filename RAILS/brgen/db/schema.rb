@@ -464,6 +464,7 @@ ActiveRecord::Schema[8.2].define(version: 2026_11_07_010000) do
     t.decimal "longitude"
     t.string "looking_for"
     t.integer "neighborhood_id"
+    t.integer "prompts_count", default: 0, null: false
     t.datetime "updated_at", null: false
     t.integer "user_id", null: false
     t.datetime "verified_at"

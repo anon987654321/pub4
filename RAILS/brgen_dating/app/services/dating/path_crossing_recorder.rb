@@ -102,7 +102,11 @@ class Dating::PathCrossingRecorder
       @profile.neighborhood_id if @profile.neighborhood_id.present? &&
                                   @profile.neighborhood_id == peer_profile.neighborhood_id
 
-    Dating::PathCrossing.find_or_create_by!(
+    # create_or_find_by! is one statement on the happy path where the old
+    # find_or_create_by! + rescue pair was two or three per peer per ping
+    # flush, with the same race semantics: insert, and on a unique collision
+    # read the winner.
+    Dating::PathCrossing.create_or_find_by!(
       city_id: city_id,
       user_a_id: user_a_id,
       user_b_id: user_b_id,
@@ -113,12 +117,5 @@ class Dating::PathCrossingRecorder
       crossing.approx_latitude = ((@latitude + peer.latitude.to_f) / 2).round(2)
       crossing.approx_longitude = ((@longitude + peer.longitude.to_f) / 2).round(2)
     end
-  rescue ActiveRecord::RecordNotUnique
-    Dating::PathCrossing.find_by!(
-      city_id: city_id,
-      user_a_id: user_a_id,
-      user_b_id: user_b_id,
-      crossing_on: @now.to_date
-    )
   end
 end

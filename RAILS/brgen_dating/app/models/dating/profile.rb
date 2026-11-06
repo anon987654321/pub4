@@ -49,7 +49,8 @@ class Dating::Profile < ApplicationRecord
   validates :looking_for, inclusion: { in: LOOKING_FOR }, allow_nil: true
   validate :photos_present_when_visible
 
-  has_many :prompts, class_name: "Dating::Prompt", dependent: :destroy
+  has_many :prompts, class_name: "Dating::Prompt", dependent: :destroy,
+           counter_cache: true
 
   scope :visible, -> { joins(:user).where(visible: true).where("age >= 18").where(users: { deleted_at: nil, deletion_scheduled_at: nil }) }
   # Visible-without-photos used to be creatable (the validation ran on :update
@@ -103,14 +104,23 @@ class Dating::Profile < ApplicationRecord
     modulus = Integer(SHUFFLE_MODULUS)
     order(Arel.sql(<<~SQL.squish))
       #{RECENCY_SQL} ASC,
-      (SELECT COUNT(*) FROM dating_prompts WHERE dating_prompts.profile_id = dating_profiles.id) DESC,
+      dating_profiles.prompts_count DESC,
       ((dating_profiles.id * #{multiplier}) % #{modulus}) ASC
     SQL
   end
 
   # Distinct from updated_at, which changes when a photo variant is processed in
   # the background and would otherwise read as someone being around.
+  #
+  # The deck touches this on every render, which made the hottest page in the
+  # vertical write twice per open; the recency bucket it feeds moves on
+  # two-hour boundaries, so a five-minute throttle is invisible on the reader's
+  # side and saves almost every write.
+  ACTIVE_TOUCH_WINDOW = 5.minutes
+
   def touch_activity!
+    return if last_active_at.present? && last_active_at > ACTIVE_TOUCH_WINDOW.ago
+
     update_columns(last_active_at: Time.current, updated_at: Time.current)
   end
 
