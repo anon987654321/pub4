@@ -1,0 +1,257 @@
+# One bad and one good HTML page per rendered design-book Law (MASTER/law/rendered.rb and the
+# render adapters beside their source detectors). test/test_rendered_design_laws.rb writes
+# each page into a temporary directory, renders it in headless Chrome at 390x844 through
+# Deploy::RenderedDesign::Capture, and asserts the Law's evaluator flags the bad page and
+# passes the good one. {{self}} is the page's own file name. Pages are bodies: the test wraps
+# them in the document below (a viewport meta, body { margin: 0; font: 16px/1.5 Arial }).
+# phases: the capture phases the Law reads (the rest are skipped to keep the run short).
+document: |
+  <!doctype html>
+  <html lang="nb">
+  <head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width">
+  <style>body { margin: 0; font: 16px/1.5 Arial; color: #111; background: #fff }</style>
+  </head>
+  <body>{{page}}</body>
+  </html>
+pages:
+  NUMBER_UNIT_UNBROKEN:
+    phases: []
+    bad: |
+      <p style="width:60px">Pris 1 299 kr</p>
+    good: |
+      <p style="width:60px"><span style="white-space:nowrap">1&nbsp;299&nbsp;kr</span></p>
+  TYPE_SIZE_ECONOMY:
+    phases: []
+    bad: |
+      <p style="font-size:11px">a</p><p style="font-size:12px">b</p><p style="font-size:13px">c</p>
+      <p style="font-size:15px">d</p><p style="font-size:16px">e</p><p style="font-size:18px">f</p>
+    good: |
+      <p style="font-size:13px">Meta</p><p>Tekst</p><p style="font-size:20px;font-weight:700">Tittel</p>
+      <p style="font-size:28px;font-weight:700">Visning</p>
+  SIZE_COMPENSATED_SPACING:
+    phases: []
+    bad: |
+      <h1 style="font-size:40px;line-height:1.6">Tittel</h1>
+    good: |
+      <h1 style="font-size:40px;line-height:1.1;letter-spacing:-0.02em">Tittel</h1>
+  NO_FAUX_TYPE:
+    phases: [fonts]
+    bad: |
+      <p style="font-family:Arial;font-weight:600">Pris</p>
+    good: |
+      <p style="font-family:Arial;font-weight:700">Pris</p>
+  CAPS_RUN_SHORT:
+    phases: []
+    bad: |
+      <p style="text-transform:uppercase">Leveringen er forsinket i dag fordi bilen venter ved kaien</p>
+    good: |
+      <p><span style="text-transform:uppercase">ny</span> Sykkel</p>
+  EMPHASIS_ONE_DEVICE:
+    phases: []
+    bad: |
+      <p><span style="text-decoration:underline">Gratis levering</span></p>
+    good: |
+      <p><strong>Gratis levering</strong></p>
+  PARAGRAPH_SEPARATION_ONE_DEVICE:
+    phases: []
+    bad: |
+      <style>p { margin-block: 1.5em; text-indent: 1em }</style><article><p>En</p><p>To</p></article>
+    good: |
+      <style>p { margin: 0 } p + p { margin-block-start: 1.5em }</style><article><p>En</p><p>To</p></article>
+  ALIGNMENT_NEAR_MISS:
+    phases: []
+    bad: |
+      <main style="padding:0 16px"><h2>Tittel</h2><p style="padding-left:2px">Meta</p></main>
+    good: |
+      <main style="padding:0 16px"><h2>Tittel</h2><p>Meta</p></main>
+  CHROME_AREA_BUDGET:
+    phases: [chrome]
+    bad: |
+      <header style="position:fixed;top:0;left:0;right:0;height:56px;background:#eee">Topp</header>
+      <nav class="tab-bar"
+      style="position:fixed;bottom:0;left:0;right:0;height:64px;background:#eee">Faner</nav>
+      <aside class="cookie-notice"
+      style="position:fixed;bottom:64px;left:0;right:0;height:120px;background:#ddd">Informasjonskapsler</aside>
+      <main style="height:3000px">Innhold</main>
+    good: &autohide |
+      <header style="position:sticky;top:0;height:44px;background:#eee">Topp</header>
+      <main style="height:3000px">Innhold</main>
+      <script>
+        let last = 0
+        addEventListener("scroll", () => {
+          const y = scrollY
+          document.querySelector("header").style.transform = y > last && y > 50 ? "translateY(-100%)" : "none"
+          last = y
+        })
+      </script>
+  CHROME_YIELDS_ON_READ:
+    phases: [chrome]
+    bad: |
+      <header style="position:sticky;top:0;height:44px;background:#eee">Topp</header>
+      <main style="height:3000px">Innhold</main>
+      <script>
+        addEventListener("scroll", () => {
+          document.querySelector("header").style.display = scrollY > 50 ? "none" : "block"
+        })
+      </script>
+    good: *autohide
+  FOCUS_NOT_OBSCURED:
+    phases: [focus]
+    bad: |
+      <main><ul style="list-style:none;margin:0;padding:0">{{links}}</ul></main>
+      <div class="bar" style="position:fixed;bottom:0;left:0;right:0;height:80px;background:#eee">Bunn</div>
+    good: |
+      <style>html { scroll-padding-block-end: 96px }</style>
+      <main style="padding-block-end:96px"><ul style="list-style:none;margin:0;padding:0">{{links}}</ul>
+      </main>
+      <div class="bar" style="position:fixed;bottom:0;left:0;right:0;height:80px;background:#eee">Bunn</div>
+  PRIMARY_ACTION_IN_THUMB_REACH:
+    phases: []
+    bad: |
+      <main><button class="button-primary" style="position:absolute;top:8px;right:8px">Bestill</button></main>
+    good: |
+      <main style="padding-top:400px"><button class="button-primary" style="width:100%">Bestill</button>
+      </main>
+  ONE_PRIMARY_ACTION:
+    phases: []
+    bad: |
+      <button style="background:#0050c8;color:#fff;border:0">Publiser</button>
+      <button style="background:#0050c8;color:#fff;border:0">Del</button>
+    good: |
+      <button style="background:#0050c8;color:#fff;border:0">Publiser</button>
+      <button style="background:transparent;border:1px solid #666">Del</button>
+  CURRENT_LOCATION_MARKED:
+    phases: []
+    bad: |
+      <nav><a href="{{self}}" style="color:#0050c8">Her</a> <a href="other.html">Annet</a></nav>
+    good: |
+      <nav><a href="{{self}}" aria-current="page"
+      style="font-weight:700">Her</a> <a href="other.html">Annet</a></nav>
+  COLOR_NOT_SOLE_SIGNAL:
+    phases: []
+    bad: |
+      <p><span data-state="online" style="display:inline-block;width:8px;height:8px;background:green"></span>
+      <span style="display:inline-block;width:8px;height:8px;background:gray"></span></p>
+    good: |
+      <p><span data-state="online" style="color:green">Online</span> <span style="color:gray">Borte</span></p>
+  LINK_DISTINGUISHABLE:
+    phases: [forced]
+    bad: |
+      <p style="color:#333">Les <a href="#vilkar"
+      style="color:#3b6cc4;text-decoration:none">vilkarene</a> her.</p>
+    good: |
+      <p style="color:#333">Les <a href="#vilkar"
+      style="color:#333;text-decoration:underline">vilkarene</a> her.</p>
+  NON_TEXT_CONTRAST:
+    phases: [forced]
+    bad: |
+      <main style="background:#000;padding:16px"><input type="text"
+      style="border:1px solid #222;background:#111;color:#eee"></main>
+    good: |
+      <style>input:focus-visible { outline: 2px solid #fff }</style>
+      <main style="background:#000;padding:16px"><input type="text"
+      style="border:1px solid #767676;background:#111;color:#eee"></main>
+  SMALLEST_EFFECTIVE_DIFFERENCE:
+    phases: []
+    bad: |
+      <main style="background:#000;padding:16px">
+      <article style="border:2px solid #efefef;color:#efefef">Tekst</article></main>
+    good: |
+      <main style="background:#000;padding:16px">
+      <article style="border:1px solid #333;color:#efefef">Tekst</article></main>
+  MUTED_INK_FROM_GROUND:
+    phases: []
+    bad: |
+      <section style="background:#1e3ca0;padding:16px"><p style="color:#999">Meta</p></section>
+    good: |
+      <section style="background:#1e3ca0;padding:16px"><p style="color:rgb(255 255 255 / 0.8)">Meta</p>
+      </section>
+  TEXT_SPACING_RESILIENCE:
+    phases: [spacing]
+    bad: |
+      <p>
+      <span style="display:inline-block;width:150px;height:28px;overflow:hidden;white-space:nowrap">
+        Ettersendingsbestillinger</span>
+      </p>
+    good: |
+      <p><span style="display:inline-block;min-height:28px">Ettersendingsbestillinger</span></p>
+  LABEL_IN_NAME:
+    phases: []
+    bad: |
+      <button aria-label="Send inn">Lagre</button>
+    good: |
+      <button aria-label="Lagre annonse">Lagre</button>
+  GESTURE_HAS_TAP_EQUIVALENT:
+    phases: []
+    bad: |
+      <div data-action="touchend->stack#like" style="height:100px">Kort</div>
+    good: |
+      <div data-action="touchend->stack#like" style="height:100px">Kort</div>
+      <button data-action="click->stack#like">Ja</button>
+  ICON_CARRIES_WORD:
+    phases: []
+    bad: |
+      <button aria-label="Fremhev"><svg width="16" height="16"><rect width="16" height="16"></rect></svg>
+      </button>
+    good: |
+      <button><svg width="16" height="16"><rect width="16" height="16"></rect></svg> Fremhev</button>
+  AUTO_MOTION_PAUSABLE:
+    phases: []
+    motion_ms: 6000
+    bad: |
+      <div class="track" style="height:100px">Bilde</div>
+      <script>
+        let x = 0
+        setInterval(() => {
+          x += 10
+          document.querySelector(".track").style.transform = `translateX(${x % 100}px)`
+        }, 500)
+      </script>
+    good: |
+      <div class="track" style="height:100px">Bilde</div><button aria-pressed="false">Pause</button>
+      <script>
+        let x = 0
+        setInterval(() => {
+          x += 10
+          document.querySelector(".track").style.transform = `translateX(${x % 100}px)`
+        }, 500)
+      </script>
+  FLASH_THRESHOLD:
+    phases: []
+    motion_ms: 2000
+    bad: |
+      <div class="strobe" style="width:300px;height:300px;background:#000"></div>
+      <script>
+        let on = false
+        setInterval(() => {
+          on = !on
+          document.querySelector(".strobe").style.background = on ? "#fff" : "#000"
+        }, 100)
+      </script>
+    good: |
+      <div class="strobe" style="width:300px;height:300px;background:#000"></div>
+      <script>
+        let on = false
+        setInterval(() => {
+          on = !on
+          document.querySelector(".strobe").style.background = on ? "#fff" : "#000"
+        }, 600)
+      </script>
+  PAGE_WEIGHT_RATCHET:
+    phases: [weight]
+    budget: { document: 4000 }
+    bad: |
+      <p>{{padding}}</p>
+    good: |
+      <p>Lett</p>
+  CHART_DATA_INK:
+    phases: []
+    bad: |
+      <svg class="chart" width="200" height="100" style="transform:perspective(400px) rotateX(20deg)">
+      <rect class="bar" width="20" height="80"></rect></svg>
+    good: |
+      <svg class="chart" width="200" height="100"><line class="grid" x1="0" x2="200" y1="50" y2="50"
+      stroke="#ccc" stroke-width="0.5"></line><rect class="bar" width="20" height="80" stroke="#000"
+      stroke-width="1"></rect></svg>

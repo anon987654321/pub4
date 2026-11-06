@@ -11,6 +11,7 @@ require_relative "rendered/reflow"
 require_relative "rendered/keyboard_flow"
 require_relative "rendered/accessibility_tree"
 require_relative "rendered/state_matrix"
+require_relative "rendered/design_laws"
 require_relative "rendered/axe"
 require_relative "rendered/mobile_flow"
 require_relative "rendered/cross_app"
@@ -35,6 +36,7 @@ module Deploy
       KeyboardFlowCheck,
       AccessibilityTreeCheck,
       StateMatrixCheck,
+      DesignLawsCheck,
       AxeCheck,
       MobileFlowCheck,
       JourneyInvariantCheck,

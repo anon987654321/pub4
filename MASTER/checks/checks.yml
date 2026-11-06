@@ -403,6 +403,14 @@ state_matrix:
   pass: "ok: declared component states render distinctly and inside their boxes"
   covered_by: rendered_suite
 
+# The design-book Laws rendered (law/rendered.rb and the render adapters), phones first.
+design_laws:
+  needs: [browser]
+  require: lib/rendered/design_laws
+  class: Deploy::DesignLawsCheck
+  pass: "ok: declared surfaces meet the rendered design-book Laws"
+  covered_by: rendered_suite
+
 # Phone viewport journey floor (Fitts 44px, overflow, landmarks, verticals).
 mobile_flow:
   needs: [browser]

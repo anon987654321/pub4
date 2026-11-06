@@ -293,6 +293,12 @@ LINEARITY_navigation_dead_end:
   statement: "A flow that returns the reader to no clear next state."
   resolution: review
 
+CURRENT_LOCATION_MARKED:
+  parent: LINEARITY
+  statement: "Navigation marks where the reader is, in markup and in more than colour."
+  severity: error
+  resolution: review
+
 # ---
 
 PROXIMITY:
@@ -476,6 +482,35 @@ SELF_EVIDENT_DATA_UNLABELLED:
     Data whose form says what it is (an email, a phone number, a price, a
     date) appears without a visible label.
   severity: info
+  resolution: review
+
+CHROME_AREA_BUDGET:
+  parent: DENSITY
+  statement: >
+    At the top of a page, chrome covers at most a sixth of a phone screen;
+    while the reader reads, it covers nothing but the primary action.
+  severity: warning
+  resolution: review
+
+CHROME_YIELDS_ON_READ:
+  parent: DENSITY
+  statement: >
+    Navigation chrome slides away while the reader reads and returns on
+    scroll-up, edge swipe, focus, page top or a page that cannot scroll, and
+    stays in the accessibility tree throughout.
+  severity: warning
+  resolution: review
+
+SMALLEST_EFFECTIVE_DIFFERENCE:
+  parent: DENSITY
+  statement: "Structure is drawn with the quietest mark that still reads, quieter than the content it frames."
+  severity: warning
+  resolution: review
+
+PAGE_WEIGHT_RATCHET:
+  parent: DENSITY
+  statement: "Each core route's first load stays within a measured byte budget that only ratchets down."
+  severity: error
   resolution: review
 
 # ---
@@ -1081,6 +1116,34 @@ EMPHASIS_ONE_DEVICE:
   severity: warning
   resolution: review
 
+TYPE_SIZE_ECONOMY:
+  parent: BRINGHURST
+  statement: >
+    A rendered screen sets its text in at most four sizes and two weights,
+    all taken from the shared type tokens.
+  severity: warning
+  resolution: review
+
+SIZE_COMPENSATED_SPACING:
+  parent: BRINGHURST
+  statement: "Leading and tracking tighten as type grows and open as it shrinks."
+  severity: warning
+  resolution: review
+
+NO_FAUX_TYPE:
+  parent: BRINGHURST
+  statement: >
+    Every weight, style and caps variant a page asks for exists in the face
+    that paints it; the browser never synthesizes or stretches letters.
+  severity: warning
+  resolution: review
+
+CAPS_RUN_SHORT:
+  parent: BRINGHURST
+  statement: "All-caps text is shorter than one line and, at display size, is tracked."
+  severity: warning
+  resolution: review
+
 # ---
 
 RAILS_DOCTRINE:
@@ -1214,6 +1277,12 @@ DIALECT_CONTRAST_PARITY:
   severity: warning
   resolution: review
 
+MUTED_INK_FROM_GROUND:
+  parent: PROPORTION_contrast
+  statement: "Secondary text on a coloured ground is a tint of that ground or of the ink, never a neutral grey."
+  severity: warning
+  resolution: review
+
 PROPORTION_hardcoded_absolute_path:
   parent: PROPORTION
   statement: "A machine-specific path in code."
@@ -1223,6 +1292,12 @@ ONE_PRIMARY_ACTION:
   parent: PROPORTION
   statement: "A view has exactly one primary action, and the eye finds it first."
   severity: warning
+  resolution: review
+
+ALIGNMENT_NEAR_MISS:
+  parent: PROPORTION
+  statement: "Elements that look aligned are aligned to the pixel, and a narrow screen uses at most three left edges."
+  severity: error
   resolution: review
 
 # ---
@@ -1346,6 +1421,54 @@ ICON_CARRIES_WORD:
   parent: REACH
   statement: "An icon-only control is limited to the few icons everyone reads; every other icon carries a word."
   severity: warning
+  resolution: review
+
+FOCUS_NOT_OBSCURED:
+  parent: REACH
+  statement: "A focused control is never hidden behind sticky or fixed chrome."
+  severity: error
+  resolution: review
+
+PRIMARY_ACTION_IN_THUMB_REACH:
+  parent: REACH
+  statement: "On a phone, a page's primary action sits where one thumb reaches it."
+  severity: warning
+  resolution: review
+
+COLOR_NOT_SOLE_SIGNAL:
+  parent: REACH
+  statement: "State is never carried by colour alone."
+  severity: error
+  resolution: review
+
+LINK_DISTINGUISHABLE:
+  parent: REACH
+  statement: >
+    A link inside running text is underlined, or differs from the text around
+    it by 3:1 and gains a non-colour cue on hover and focus.
+  severity: error
+  resolution: review
+
+NON_TEXT_CONTRAST:
+  parent: REACH
+  statement: >
+    The boundary of a control, an icon that acts, and a focus indicator each
+    reach 3:1 against what is around them.
+  severity: error
+  resolution: review
+
+TEXT_SPACING_RESILIENCE:
+  parent: REACH
+  statement: >
+    Text survives the reader's own spacing: nothing clips or overlaps when
+    line, paragraph, letter and word spacing are raised.
+  severity: error
+  resolution: review
+
+FLASH_THRESHOLD:
+  parent: REACH
+  statement: "Nothing on screen flashes more than three times in any second."
+  severity: error
   resolution: review
 
 PERSUASION_truth_bearing:
@@ -1994,6 +2117,10 @@ law_catalogue:
     # Retired 2026-10-31 by the operator: tracking is for logos and big display
     # type, not for every uppercase rule in a stylesheet. It also fought
     # NO_EYEBROW_LABEL, which flags the small tracked caps this one demanded.
+    ALIGNMENT_NEAR_MISS:
+      definition_sources: [MASTER/law/rendered.rb]
+      severity: error
+      languages: [json]
     ALL_CAPS_NO_TRACKING:
       definition_sources: [MASTER/law/cosmetic.rb]
       severity: info
@@ -2123,6 +2250,10 @@ law_catalogue:
       # before the server answered, or a progress bar at 100% before the work ended, is the
       # same false ready. The detector still reads only the services.rb shape it was built on.
       languages: [ruby, javascript, html]
+    CAPS_RUN_SHORT:
+      definition_sources: [MASTER/law/rendered.rb]
+      severity: warning
+      languages: [json]
     CHART_DATA_INK:
       definition_sources: [MASTER/law/javascript.rb]
       severity: warning
@@ -2134,10 +2265,18 @@ law_catalogue:
       definition_sources: [MASTER/law/surface.rb]
       severity: info
       languages: [html]
+    CHROME_AREA_BUDGET:
+      definition_sources: [MASTER/law/rendered.rb]
+      severity: warning
+      languages: [json]
     CHROME_COPY_CALM:
       definition_sources: [MASTER/law/typesetting.rb]
       severity: warning
       languages: [yaml]
+    CHROME_YIELDS_ON_READ:
+      definition_sources: [MASTER/law/rendered.rb]
+      severity: warning
+      languages: [json]
     CINEMA_PALETTE:
       definition_sources: [MASTER/law/practice.rb]
       severity: warn
@@ -2181,6 +2320,10 @@ law_catalogue:
     COLLAPSE_BEFORE_ADDING:
       definition_sources: [MASTER/law/practice.rb]
       severity: warn
+    COLOR_NOT_SOLE_SIGNAL:
+      definition_sources: [MASTER/law/rendered.rb]
+      severity: error
+      languages: [json]
     comment_drift:
       definition_sources: [MASTER/law/semantic.rb]
       severity: warning
@@ -2275,6 +2418,10 @@ law_catalogue:
     CQS:
       definition_sources: [MASTER/law/structural.rb]
       severity: warning
+    CURRENT_LOCATION_MARKED:
+      definition_sources: [MASTER/law/rendered.rb]
+      severity: error
+      languages: [json]
     CURSOR_NONE_REQUIRES_CURSOR:
       definition_sources: [MASTER/law/brand.rb]
       severity: warn
@@ -2518,6 +2665,10 @@ law_catalogue:
       definition_sources: [MASTER/law/css.rb]
       severity: info
       languages: [css, scss]
+    FLASH_THRESHOLD:
+      definition_sources: [MASTER/law/rendered.rb]
+      severity: error
+      languages: [json]
     FLAT_HIERARCHY:
       definition_sources: [MASTER/law/practice.rb]
       severity: warn
@@ -2531,6 +2682,10 @@ law_catalogue:
     FLEXIBILITY_EFFICIENCY:
       definition_sources: [MASTER/law/universal.rb]
       severity: info
+    FOCUS_NOT_OBSCURED:
+      definition_sources: [MASTER/law/rendered.rb]
+      severity: error
+      languages: [json]
     FOCUS_VISIBLE:
       definition_sources: [MASTER/law/web.rb]
       severity: info
@@ -2787,6 +2942,10 @@ law_catalogue:
       severity: error
       lifecycle: trusted
       autofix: never
+    LINK_DISTINGUISHABLE:
+      definition_sources: [MASTER/law/rendered.rb]
+      severity: error
+      languages: [json]
     LINT_BEAUTIFY:
       definition_sources: [MASTER/law/practice.rb]
       severity: warn
@@ -2913,6 +3072,10 @@ law_catalogue:
     MOTION_COLOR_GRADING:
       definition_sources: [MASTER/law/practice.rb]
       severity: warn
+    MUTED_INK_FROM_GROUND:
+      definition_sources: [MASTER/law/rendered.rb]
+      severity: warning
+      languages: [json]
     N_PLUS_ONE:
       definition_sources: [MASTER/law/universal.rb]
       severity: warning
@@ -2999,6 +3162,10 @@ law_catalogue:
       definition_sources: [MASTER/law/css.rb]
       severity: info
       languages: [css, scss, html]
+    NO_FAUX_TYPE:
+      definition_sources: [MASTER/law/rendered.rb]
+      severity: warning
+      languages: [json]
     NO_FILLER:
       definition_sources: [MASTER/law/practice.rb]
       severity: warn
@@ -3083,6 +3250,10 @@ law_catalogue:
       definition_sources: [MASTER/law/html.rb]
       severity: warn
       languages: [javascript, html]
+    NON_TEXT_CONTRAST:
+      definition_sources: [MASTER/law/rendered.rb]
+      severity: error
+      languages: [json]
     NUMBER_UNIT_UNBROKEN:
       definition_sources: [MASTER/law/typesetting.rb]
       severity: warning
@@ -3095,6 +3266,10 @@ law_catalogue:
       definition_sources: [MASTER/law/javascript.rb]
       severity: warning
       languages: [json, html, javascript]
+    PAGE_WEIGHT_RATCHET:
+      definition_sources: [MASTER/law/rendered.rb]
+      severity: error
+      languages: [json]
     PARAGRAPH_SEPARATION_ONE_DEVICE:
       definition_sources: [MASTER/law/css.rb]
       severity: warning
@@ -3103,6 +3278,10 @@ law_catalogue:
       definition_sources: [MASTER/law/typesetting.rb]
       severity: warning
       languages: [yaml, html, markdown]
+    PRIMARY_ACTION_IN_THUMB_REACH:
+      definition_sources: [MASTER/law/rendered.rb]
+      severity: warning
+      languages: [json]
     PRINT_PAGE_CANON:
       definition_sources: [MASTER/law/css.rb]
       severity: warning
@@ -3119,6 +3298,14 @@ law_catalogue:
       definition_sources: [MASTER/law/typesetting.rb]
       severity: info
       languages: [yaml, markdown]
+    SIZE_COMPENSATED_SPACING:
+      definition_sources: [MASTER/law/rendered.rb]
+      severity: warning
+      languages: [json]
+    SMALLEST_EFFECTIVE_DIFFERENCE:
+      definition_sources: [MASTER/law/rendered.rb]
+      severity: warning
+      languages: [json]
     SPONSORED_LINK_REL:
       definition_sources: [MASTER/law/html.rb]
       severity: warning
@@ -3782,6 +3969,10 @@ law_catalogue:
     TEMPORAL_COUPLING:
       definition_sources: [MASTER/law/universal.rb]
       severity: warning
+    TEXT_SPACING_RESILIENCE:
+      definition_sources: [MASTER/law/rendered.rb]
+      severity: error
+      languages: [json]
     THIN_CONTROLLER:
       definition_sources: [MASTER/law/surface.rb]
       severity: warning
@@ -3834,6 +4025,10 @@ law_catalogue:
     TYPE_IN_NAME:
       definition_sources: [MASTER/law/naming.rb]
       severity: info
+    TYPE_SIZE_ECONOMY:
+      definition_sources: [MASTER/law/rendered.rb]
+      severity: warning
+      languages: [json]
     TYPE_TITLE_TOKEN:
       definition_sources: [MASTER/law/surface.rb]
       severity: info

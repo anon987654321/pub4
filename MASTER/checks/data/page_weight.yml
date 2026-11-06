@@ -1,0 +1,17 @@
+# First-load transfer bytes per route at 390x844 on a cold cache, by type, for
+# PAGE_WEIGHT_RATCHET (MASTER/law/rendered.rb). The rendered suite's design_laws
+# check sums Network.loadingFinished bytes per type and compares them with the
+# row for the route; a type over its row is an error, a route with no row a
+# warning. Rows may only fall: lower one when a route gets lighter.
+#
+# Empty on purpose: no row is written until it has been measured on a running
+# app (2026-11-06, none was booted on this host). A guessed budget is a comment.
+#
+#   routes:
+#     /:
+#       document: 0
+#       stylesheet: 0
+#       script: 0
+#       font: 0
+#       image: 0
+routes: {}
