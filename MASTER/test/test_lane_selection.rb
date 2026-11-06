@@ -3,6 +3,7 @@
 require "test_helper"
 require_relative "../lib/review/agent"
 require "tmpdir"
+require "tempfile"
 require_relative "support_council_answer"
 
 # One rule picks the model for every /fix and council call: the tier's models in
@@ -18,6 +19,7 @@ class TestLaneSelection < Minitest::Test
   GROK = "grok-cli:auto"
   AGY = "agy:auto"
   LOCAL = "ollama:gemma3:4b"
+  LLAMA_LOCAL = "llama-cli:gguf"
   NEMOTRON = "nvidia/nemotron-3-super-120b-a12b:free"
   NANO = "nvidia/nemotron-3.5-lightning:free"
   LLM7 = "llm7:DeepSeek-V4-Flash-0731"
@@ -116,6 +118,25 @@ class TestLaneSelection < Minitest::Test
   def test_llm7_hosted_turbo_models_are_ranked_in_the_free_class
     assert_equal :free, Selection.kind(LLM7)
     assert_equal [DEEPSEEK, LLM7], Selection.order([LLM7, DEEPSEEK])
+  end
+
+  def test_llama_cpp_cli_is_local_and_stays_after_remote_lanes
+    assert_equal :local, Selection.kind(LLAMA_LOCAL)
+    assert_equal [OPUS, DEEPSEEK, LLAMA_LOCAL, NEMOTRON],
+                 Selection.order([NEMOTRON, LLAMA_LOCAL, DEEPSEEK, OPUS])
+  end
+
+  def test_llama_cpp_cli_requires_a_readable_explicit_model_file
+    old_path = ENV["MASTER_LLAMA_MODEL"]
+    ENV.delete("MASTER_LLAMA_MODEL")
+    refute Selection.local_cli_model_available?(LLAMA_LOCAL)
+
+    Tempfile.create(["master-local-model", ".gguf"]) do |model|
+      ENV["MASTER_LLAMA_MODEL"] = model.path
+      assert Selection.local_cli_model_available?(LLAMA_LOCAL)
+    end
+  ensure
+    old_path.nil? ? ENV.delete("MASTER_LLAMA_MODEL") : ENV["MASTER_LLAMA_MODEL"] = old_path
   end
 
   def test_subscription_lanes_lead_in_claude_grok_agy_order_ahead_of_api_keys

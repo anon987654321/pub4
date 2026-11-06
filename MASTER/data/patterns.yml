@@ -845,8 +845,10 @@ auth_profiles:
       auth: subscription
       kind: cli
       command: codex
-      login_args: [--login]
-      status_args: []
+      login_args: [login]
+      device_login_args: [login, --device-auth]
+      status_args: [login, status]
+      status_match: "Logged in"
       priority: 2
       models: []
     - id: grok_subscription
@@ -855,7 +857,9 @@ auth_profiles:
       kind: cli
       command: grok
       login_args: [login]
-      status_args: []
+      device_login_args: [login, --device-auth]
+      status_args: [models]
+      status_refuse: "not authenticated"
       priority: 3
       models: []
     - id: copilot_oauth

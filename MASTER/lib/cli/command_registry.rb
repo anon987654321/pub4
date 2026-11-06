@@ -228,14 +228,25 @@ module Master
       end
 
       def dispatch_auth(ctx: nil)
-        arg = arg_for(ctx)
+        arg = arg_for(ctx).to_s.strip
         return auth_status_lines if arg.empty? || arg == "status"
 
-        name = arg.delete_prefix("login").strip if arg.start_with?("login")
-        return Ground::SubscriptionAuth.login(name) if name && !name.empty?
+        args = Shellwords.split(arg)
+        device_flag = args.delete("--device-auth")
+        browser_flag = args.delete("--browser")
+        return auth_usage if device_flag && browser_flag
 
-        return Ground::SubscriptionAuth.login(arg) unless arg.include?(" ")
-        "model auth  model auth status  model auth login <claude|chatgpt|grok>"
+        device_auth = device_flag ? true : (browser_flag ? false : nil)
+        args.shift if args.first == "login"
+        return auth_usage unless args.size == 1
+
+        Ground::SubscriptionAuth.login(args.first, device_auth:)
+      rescue ArgumentError => e
+        "auth: invalid arguments - #{e.message}"
+      end
+
+      def auth_usage
+        "model auth  model auth status  model auth login <claude|chatgpt|grok> [--device-auth|--browser]"
       end
 
       def auth_status_lines

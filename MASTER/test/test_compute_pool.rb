@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require "tempfile"
 require_relative "test_helper"
 
 class TestComputePool < Minitest::Test
@@ -60,21 +61,46 @@ class TestComputePool < Minitest::Test
     local_ids = policy.fetch("models").fetch("local").map { |row| row.fetch("id") }
 
     assert_includes local_ids, "ollama:gemma3:4b"
+    assert_includes local_ids, "llama-cli:gguf"
     assert_equal false, policy.fetch("ollama").fetch("enabled")
     refute Master::Io::LaneSelection.ollama_enabled?(cfg: policy)
-    assert_empty Master::Io::LaneSelection.order_or_all(local_ids, cfg: policy)
+    refute_includes Master::Io::LaneSelection.order_or_all(local_ids, cfg: policy), "ollama:gemma3:4b"
 
     ENV["MASTER_OLLAMA_ENABLED"] = "1"
     assert Master::Io::LaneSelection.ollama_enabled?(cfg: policy)
-    assert_equal local_ids, Master::Io::LaneSelection.order_or_all(local_ids, cfg: policy)
+    assert_equal "ollama:gemma3:4b", Master::Io::LaneSelection.order_or_all(local_ids, cfg: policy).first
 
     %w[default primary strong].each do |tier|
       ids = policy.fetch("models").fetch(tier).map { |row| row.fetch("id") }
       refute_includes ids, "ollama:gemma3:4b", "#{tier} must not promote the constrained Ollama lane"
     end
+    assert_includes policy.fetch("cli_lanes"), "llama-cli"
   ensure
     old_enabled.nil? ? ENV.delete("MASTER_OLLAMA_ENABLED") : ENV["MASTER_OLLAMA_ENABLED"] = old_enabled
     old_no_ollama.nil? ? ENV.delete("MASTER_NO_OLLAMA") : ENV["MASTER_NO_OLLAMA"] = old_no_ollama
+  end
+
+  def test_llama_cli_pool_lane_requires_an_explicit_readable_gguf_path
+    lane = {
+      "binary" => "llama-cli", "kind" => "local",
+      "model_path_env" => "MASTER_LLAMA_MODEL",
+      "signed_in" => { "args" => ["--version"], "match" => "version" },
+      "login" => "set MASTER_LLAMA_MODEL to a local GGUF file",
+    }
+    router = Master::CLI::Routing::ModelRouter.allocate
+    router.instance_variable_set(:@rules, { "cli_lanes" => { "llama-cli" => lane } })
+    router.define_singleton_method(:executable_on_path?) { |_binary| true }
+    router.define_singleton_method(:probe_value) { |_name, wait:| true }
+    old_path = ENV["MASTER_LLAMA_MODEL"]
+    ENV.delete("MASTER_LLAMA_MODEL")
+
+    assert_match(/MASTER_LLAMA_MODEL/, router.send(:cli_lane_problem, "llama-cli:gguf", wait: true))
+    Tempfile.create(["master-local-model", ".gguf"]) do |model|
+      ENV["MASTER_LLAMA_MODEL"] = model.path
+      assert_nil router.send(:cli_lane_problem, "llama-cli:gguf", wait: true)
+    end
+  ensure
+    old_path.nil? ? ENV.delete("MASTER_LLAMA_MODEL") : ENV["MASTER_LLAMA_MODEL"] = old_path
   end
 
   def test_task_strengths_change_the_actual_rank_with_equal_base_scores

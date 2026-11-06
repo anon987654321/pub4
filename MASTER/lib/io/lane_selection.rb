@@ -27,7 +27,7 @@ module Master
       extend self
 
       MODELS = File.expand_path("../../data/models.yml", __dir__)
-      CLI_BINARIES = { "claude-cli" => "claude", "grok-cli" => "grok" }.freeze
+      CLI_BINARIES = { "claude-cli" => "claude", "grok-cli" => "grok", "llama-cli" => "llama-cli" }.freeze
       KIND_RANK = { remote: 0, paid_tail: 1, local: 2, free: 3 }.freeze
       FREE_CLASS_KINDS = %i[free local].freeze
       NOT_SUBSCRIPTION = 10_000
@@ -55,7 +55,7 @@ module Master
         return :paid_tail if Io::PaidTail.member?(id)
         return :free if id.end_with?(":free", ":cloud", "-cloud") ||
                         id.start_with?("llm7:", "web-chat:")
-        return :local if id.start_with?("ollama:", "ollama/", "local:")
+        return :local if id.start_with?("ollama:", "ollama/", "local:", "llama-cli:")
 
         :remote
       end
@@ -67,6 +67,17 @@ module Master
       # `latency` answers seconds for a model or nil when it was never measured.
       # `vision: true` puts the lanes that read images ahead of those that do not.
       def ollama_model?(model) = model.to_s.start_with?("ollama:", "ollama/")
+
+      # The local CLI is usable only when its explicitly configured GGUF file is
+      # present. A binary alone is not a model, and discovery never downloads one.
+      def local_cli_model_available?(model)
+        lane = config.dig("cli_lanes", provider(model))
+        env_name = lane && lane["model_path_env"].to_s
+        return true if env_name.to_s.empty?
+
+        path = ENV[env_name].to_s
+        !path.empty? && File.file?(path) && File.readable?(path)
+      end
 
       # One policy for routing, inventory and boot selection. The file is the
       # default; an environment opt-in is deliberately explicit and reversible.
@@ -251,7 +262,11 @@ module Master
         return false if Master::Io::ModelQuota.over_quota?(id)
 
         binary = CLI_BINARIES[LaneQuota.lane_of(id)]
-        return on_path?(binary) && ENV["MASTER_NO_#{binary.upcase}_CLI"] != "1" if binary
+        if binary
+          return false if ENV["MASTER_NO_#{binary.upcase}_CLI"] == "1"
+
+          return on_path?(binary) && local_cli_model_available?(id)
+        end
         return Master.agy_cli_available? if provider(id) == "agy"
         return ollama_alive?(id) if id.start_with?("ollama:")
 

@@ -216,6 +216,11 @@ model_defs:
     <<: *model_defaults
     context_window: 128000
     score: { quality: 0.90, speed: 0.76, cost: 1.0 }
+  llama_cli_gguf: &llama_cli_gguf
+    id: llama-cli:gguf
+    <<: *model_defaults
+    context_window: 4096
+    score: { quality: 0.62, speed: 0.25, cost: 1.0 }
 # Ollama's local tier is retained for an explicitly enabled future recovery
 # path, but is disabled by default while the operator's local account/quota
 # constraint is active. Do not enable it implicitly through discovery.
@@ -234,10 +239,10 @@ models:
     - *agy_auto
     - *nemotron_super
     - *gemini_flash_openrouter
-    # Every failover tier ends in the local lane: when every remote lane is
-    # spent the run degrades to the local model instead of going dark. The
-    # dormant-lane policy keeps it skipped unless MASTER_OLLAMA_ENABLED=1.
+    # Local recovery stays behind remote lanes. Ollama requires its explicit opt-in;
+    # llama.cpp requires llama-cli plus a readable file in MASTER_LLAMA_MODEL.
     - *ollama_gemma
+    - *llama_cli_gguf
   primary:
     - *claude_cli_opus
     - *claude_cli_sonnet
@@ -245,6 +250,7 @@ models:
     - *claude_opus_api
     - *nemotron_super
     - *ollama_gemma
+    - *llama_cli_gguf
   strong:
     - *claude_cli_opus
     - *claude_cli_sonnet
@@ -258,6 +264,7 @@ models:
     - *command_r_plus
     - *grok_cli_auto
     - *ollama_gemma
+    - *llama_cli_gguf
   vision:
     - *gemini_flash
     - *claude_sonnet
@@ -288,6 +295,7 @@ models:
     - *claude_cli_sonnet
   local:
     - *ollama_gemma
+    - *llama_cli_gguf
 
 routes:
   detect_lexical: free
@@ -498,6 +506,15 @@ cli_lanes:
     model_flag: --model
     models: [auto]
     login: grok login
+  llama-cli:
+    binary: llama-cli
+    kind: local
+    signed_in: { args: [--version], match: version }
+    ask: [-m, "%{model_path}", -p, "%{prompt}", -n, "1024", -c, "4096", -t, "2", --simple-io, --no-display-prompt, --single-turn]
+    model_path_env: MASTER_LLAMA_MODEL
+    max_concurrency: 1
+    models: [gguf]
+    login: set MASTER_LLAMA_MODEL to a readable local GGUF file
 
 # OpenAI-compatible servers on this machine. A server that answers /models
 # puts each model it lists in the pool as local:<id>. mistral.rs

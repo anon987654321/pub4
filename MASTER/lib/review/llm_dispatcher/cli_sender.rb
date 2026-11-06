@@ -38,7 +38,13 @@ module Master
 
         def ask_cli_lane(name, model, prompt, reply_path)
           lane = cli_lanes.fetch(name)
-          out, err, status = with_cli_slot do
+          if (path_env = lane["model_path_env"])
+            path = ENV[path_env].to_s
+            return Result.err("#{name}: set #{path_env} to a readable local GGUF file", category: :no_api_key) if
+              path.empty? || !File.file?(path) || !File.readable?(path)
+          end
+
+          out, err, status = with_cli_slot(name) do
             capture3_with_timeout(CLI_LANE_TIMEOUT_S, cli_binary(lane["binary"]),
                                   *cli_lane_args(lane, model, prompt, reply_path),
                                   stdin_data: cli_lane_stdin(lane, prompt))
@@ -54,7 +60,10 @@ module Master
         end
 
         def cli_lane_args(lane, model, prompt, reply_path)
-          args = Array(lane["ask"]).map { |arg| arg.to_s.gsub("%{prompt}", prompt).gsub("%{reply_file}", reply_path) }
+          model_path = ENV[lane["model_path_env"].to_s].to_s
+          args = Array(lane["ask"]).map do |arg|
+            arg.to_s.gsub("%{prompt}", prompt).gsub("%{reply_file}", reply_path).gsub("%{model_path}", model_path)
+          end
           lane["model_flag"] && model.to_s != "auto" ? args + [lane["model_flag"], model] : args
         end
 
@@ -78,11 +87,13 @@ module Master
           said&.lines&.last(2)&.join&.strip
         end
 
-        def with_cli_slot
-          CLI_SLOTS.pop
+        def with_cli_slot(name = nil)
+          lane = name && cli_lanes[name]
+          slots = lane && lane["kind"] == "local" ? LOCAL_CLI_SLOTS : CLI_SLOTS
+          slots.pop
           yield
         ensure
-          CLI_SLOTS << true
+          slots << true if slots
         end
 
         def cli_binary(binary)
@@ -143,6 +154,7 @@ module Master
         # four-way contention, opening the circuit. Callers block for a slot;
         # waiting beats thrashing.
         CLI_SLOTS = Integer(ENV.fetch("MASTER_CLI_SLOTS", 2)).then { |n| SizedQueue.new(n).tap { |queue| n.times { queue << true } } }
+        LOCAL_CLI_SLOTS = SizedQueue.new(1).tap { |queue| queue << true }
 
         # With a block the reply streams: its text reaches the block as the model writes it (see ClaudeStream), and
         # the result is still the whole reply.

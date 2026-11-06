@@ -73,6 +73,7 @@ module Master
           def lane_label(model_id)
             id = model_id.to_s
             return "free" if id.end_with?(":free", ":cloud", "-cloud") || id.start_with?("web-chat:")
+            return "local" if lane_of(id) == :cli_lane && cli_lane(id)["kind"] == "local"
 
             { claude_cli: "subscription", agy: "subscription", cli_lane: "subscription", ollama: "local",
               local_server: "local", hosted: "free", replicate: "paid", api: "paid" }.fetch(lane_of(id))
@@ -286,8 +287,14 @@ module Master
             lane = cli_lanes.fetch(name)
             return "install #{lane['binary']}" unless executable_on_path?(lane["binary"])
 
+            path_env = lane["model_path_env"].to_s
+            unless path_env.empty?
+              model_path = ENV[path_env].to_s
+              return "set #{path_env} to a readable local GGUF file" if model_path.empty? || !File.file?(model_path) || !File.readable?(model_path)
+            end
+
             signed_in = probe_value(name, wait:)
-            return "checking whether #{lane['binary']} is signed in" if signed_in.nil?
+            return "checking whether #{lane['binary']} is available" if signed_in.nil?
 
             ("run #{lane['login']}" unless signed_in)
           end
