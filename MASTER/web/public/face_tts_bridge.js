@@ -1,4 +1,4 @@
-// TTS lifecycle bridge - viseme + style surface helpers (web_001).
+// TTS lifecycle bridge — viseme + style surface helpers (web_001).
 (() => {
   "use strict";
 

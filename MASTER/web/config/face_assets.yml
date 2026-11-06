@@ -1,10 +1,10 @@
 ---
 # The one list of every JavaScript asset the chat shell loads for the face.
 #
-# Before this file, chat/index.html.erb named them four different ways - a
+# Before this file, chat/index.html.erb named them four different ways — a
 # MASTER_ASSET_PATHS object literal, individual <script src> tags, a
 # javascript_include_tag list of *bare names* (no .js), and the face.runtime.js
-# blob - and no single place enumerated the set. Two consequences:
+# blob — and no single place enumerated the set. Two consequences:
 #
 #   * /etc/rc.d/master's precompile-skip digest covers ~10 named files and
 #     silently misses the other ~30, so editing one and restarting keeps a stale
@@ -55,7 +55,7 @@ face_runtime_deferred:
   # (WASM runtime + ONNX model) is not fetched until it is switched on.
   - smart_turn.js
 
-# Loaded by public/face_deferred_loader.js once it sees primer:ready - a second,
+# Loaded by public/face_deferred_loader.js once it sees primer:ready — a second,
 # independent layer from the core face runtime.
 face_vision_deferred:
   - face_vision.bundle.js
@@ -78,7 +78,7 @@ singletons:
 shell_blocking:
   - particle_kernel.js
 
-# Synchronous, and loaded *after* #primer - which is why this is its own group
+# Synchronous, and loaded *after* #primer — which is why this is its own group
 # rather than another shell_blocking entry, whose contract is before the primer.
 # It sits immediately above the inline boot script so window.MASTER.boot exists
 # for the whole tap path, and it installs listeners for master:face-ready and
@@ -102,7 +102,7 @@ shell_boot:
 # window.MASTER_FACE_ASCII, which the fallback below and the face runtime both draw
 # with, and a deferred script runs in document order. These stay written out literally in
 # index.html.erb rather than rendered from here: their positions differ and
-# are load-bearing - face_2d_fallback sits after the inline boot script so it
+# are load-bearing — face_2d_fallback sits after the inline boot script so it
 # cannot delay tap wiring, and a test pins that ordering. Listed here so the set
 # is still enumerable; a contract test asserts the view and this file agree.
 shell_early:
@@ -117,7 +117,7 @@ shell_early:
 # felt_state leads: it installs the master:visual/master:emotion listeners that
 # make it the presence store, and visual_bridge below starts emitting both on
 # load. It was undeclared and therefore never loaded at all, which left
-# window.MASTERFeltState undefined - so chat_actions own send path dropped the
+# window.MASTERFeltState undefined — so chat_actions own send path dropped the
 # felt state from every message and logged invalid felt state payload instead,
 # and face_vision felt_state rule read an empty string forever.
 shell_manifest:

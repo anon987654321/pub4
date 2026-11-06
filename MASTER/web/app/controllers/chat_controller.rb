@@ -12,14 +12,14 @@ class ChatController < ApplicationController
   skip_before_action :verify_authenticity_token, only: :command
   before_action :require_same_origin!, only: :command
   # Face shell renders immediately; container finishes booting in the background (~90s on VPS).
-  # Metrics returns 401/503 JSON - must not hit the HTML warming check first.
+  # Metrics returns 401/503 JSON — must not hit the HTML warming check first.
   skip_before_action :require_container!, only: %i[index metrics metrics_prometheus sensory]
 
   def index
     c = container
     # Mint the conversation cookie here rather than on the first chat POST.
     # That POST is an SSE stream, and a Set-Cookie added after the response has
-    # begun committing is a cookie the browser never sees - the visitor would
+    # begun committing is a cookie the browser never sees — the visitor would
     # get a fresh transcript on every turn. A plain HTML render has no such
     # problem, and every chat begins with this page.
     conversation_id
@@ -105,11 +105,11 @@ class ChatController < ApplicationController
         render(json: { output: "unlock denied" }, status: :unauthorized) and return
       end
       set_unlock_cookie
-      render(json: { output: "unlocked - full tool access enabled." }) and return
+      render(json: { output: "unlocked — full tool access enabled." }) and return
     end
     if (code = pair_redeem_arg(cmd))
       if pair_redeem_limited?
-        render(json: { output: "pair: too many tries - wait a minute" }, status: :too_many_requests)
+        render(json: { output: "pair: too many tries — wait a minute" }, status: :too_many_requests)
         return
       end
       result = Master::Ground::Pairing.redeem(code)
@@ -225,7 +225,7 @@ class ChatController < ApplicationController
 
   def redeem_pair_from_chat(input)
     if pair_redeem_limited?
-      stream_plain("pair: too many tries - wait a minute")
+      stream_plain("pair: too many tries — wait a minute")
       return
     end
 

@@ -125,7 +125,7 @@ let recentReplyCursor = -1;
 let _streamEl = null;
 let _typingEl = null;
 
-// ARIA live region for streamed text (FA137) - announce new tokens to SR
+// ARIA live region for streamed text (FA137) — announce new tokens to SR
 const streamLive = (() => {
   let el = document.getElementById('stream-live');
   if (!el) {
@@ -180,7 +180,7 @@ const providerChip = (() => {
 function syncProviderChip(provider) {
   if (!providerChip || !provider) return;
   const label = String(provider).slice(0, 12);
-  // Idempotency guard - load-bearing, not an optimization: this function
+  // Idempotency guard — load-bearing, not an optimization: this function
   // emits MASTERVisual.event(), whose bridge re-dispatches a master:visual
   // DOM event carrying the same provider, which the listener below feeds
   // straight back into syncProviderChip. Without exiting on a repeat
@@ -271,10 +271,10 @@ window._chatOnChunk = (raw) => {
   _chunkCount++;
   if (/booting/i.test(raw) && /retry/i.test(raw)) {
     const ui = document.getElementById('ui-status');
-    if (ui) ui.textContent = chatT('warming_retry', 'master warming up - retry shortly');
+    if (ui) ui.textContent = chatT('warming_retry', 'master warming up — retry shortly');
     const errLive = document.getElementById('error-live');
     if (errLive) errLive.textContent = chatT('warming_up', 'master warming up');
-    _streamEl.textContent = chatT('still_starting_reply', 'master is still starting - try again in a moment.');
+    _streamEl.textContent = chatT('still_starting_reply', 'master is still starting — try again in a moment.');
     return;
   }
   if (raw.startsWith('ERROR:')) {
@@ -530,7 +530,7 @@ window._chatOnStage = (payload) => {
   if (!payload?.stage) return;
   const label = payload.stage.toLowerCase();
   document.body.dataset.pipelineStage = label;
-  const phase = payload.phase === 'done' ? ` ${payload.ms || 0}ms` : '...';
+  const phase = payload.phase === 'done' ? ` ${payload.ms || 0}ms` : '…';
   const text = `${payload.stage}${phase}`;
   let bar = document.getElementById('pipeline-stage');
   if (!bar) {
@@ -643,8 +643,8 @@ document.querySelectorAll('.tool').forEach(btn => {
   COMMANDS.push(
     { cmd: 'ping', hint: 'smoke test connection', category: 'health' },
     { action: 'dashboard', label: 'mission control', hint: 'open /dashboard', category: 'health' },
-    { action: 'history', label: 'toggle history', hint: 'sidebar - Ctrl+Shift+H', category: 'session' },
-    { action: 'export', label: 'export session', hint: 'markdown download - Ctrl+Shift+E', category: 'session' },
+    { action: 'history', label: 'toggle history', hint: 'sidebar · Ctrl+Shift+H', category: 'session' },
+    { action: 'export', label: 'export session', hint: 'markdown download · Ctrl+Shift+E', category: 'session' },
     { action: 'export_jsonl', label: 'export jsonl', hint: 'machine-readable session', category: 'session' },
     { action: 'export_png', label: 'export face png', hint: 'snapshot canvas', category: 'interface' },
     { action: 'log_search', label: 'filter chat log', hint: 'search visible messages', category: 'session' },
@@ -696,7 +696,7 @@ document.querySelectorAll('.tool').forEach(btn => {
     if (entry.action === 'mute') { window.MASTERVoice?.toggleMute?.(); return; }
     if (entry.action === 'preview') { window.MASTERVoice?.previewVoice?.(); return; }
     if (entry.action === 'shortcuts') { window.MASTERShortcuts?.open?.(); return; }
-    // Voice Mode is where continuous listening lives - recognition.continuous
+    // Voice Mode is where continuous listening lives — recognition.continuous
     // with a quiet timer and barge-in. This entry used to set a window.MASTER_STT
     // flag that nothing read, and print "stt: continuous" into the status line,
     // so the one visible sign of hands-free was the only part of it that worked.
@@ -716,7 +716,7 @@ document.querySelectorAll('.tool').forEach(btn => {
       li.dataset.active = index === activeIndex ? '1' : '0';
       const label = entry.cmd || entry.label || '';
       const category = entry.category || 'other';
-      li.innerHTML = `${label}<span class="cmd-hint">${category} - ${entry.hint || ''}</span>`;
+      li.innerHTML = `${label}<span class="cmd-hint">${category} · ${entry.hint || ''}</span>`;
       li.addEventListener('mousedown', (ev) => { ev.preventDefault(); runEntry(entry); });
       list.appendChild(li);
     });
@@ -815,7 +815,7 @@ document.querySelectorAll('.tool').forEach(btn => {
     panel.innerHTML =
       '<header class="history-head">' +
       '<span class="history-title">' + escapeHtml(chatT('history', 'history')) + '</span>' +
-      '<button type="button" id="history-close" aria-label="' + escapeHtml(chatT('close_history', 'Close history')) + '">x</button>' +
+      '<button type="button" id="history-close" aria-label="' + escapeHtml(chatT('close_history', 'Close history')) + '">×</button>' +
       '</header>' +
       '<input id="history-search" type="search" autocomplete="off" spellcheck="false" placeholder="' + escapeHtml(chatT('search_turns', 'search turns')) + '" aria-label="' + escapeHtml(chatT('search_history', 'Search history')) + '">' +
       '<ul id="history-list" role="list"></ul>';
@@ -1035,7 +1035,7 @@ document.querySelectorAll('.tool').forEach(btn => {
       });
       document.getElementById('prompt-form')?.appendChild(chip);
     }
-    announceError(reason.includes('rate') ? chatT('rate_limited', 'slow down - rate limit') : chatT('stream_failed', 'stream failed - retry?'));
+    announceError(reason.includes('rate') ? chatT('rate_limited', 'slow down — rate limit') : chatT('stream_failed', 'stream failed — retry?'));
     window.MASTERVisual?.event?.('chat:retry', { topology: 'serpent', entropy: 0.5, confidence: 0.4, mode: 'retry' });
   };
 

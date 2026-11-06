@@ -1,4 +1,4 @@
-// Canonical window.MASTER facade - legacy globals remain as shims during migration.
+// Canonical window.MASTER facade — legacy globals remain as shims during migration.
 // This file builds the namespace; four others assign `window.MASTER || {}`, so load order
 // cannot erase it.
 (() => {
@@ -39,10 +39,10 @@
       configurable: true,
       enumerable: true,
       // Prefer the resolved canonical global; fall back to a value assigned by a
-      // legacy `window.MASTER.<name> = ...` shim. Without the setter, those legacy
+      // legacy `window.MASTER.<name> = …` shim. Without the setter, those legacy
       // assignments (attention_model.js, face.runtime.js, face_speech_runtime.js)
-      // threw "Cannot set property ... which has only a getter" in strict mode when
-      // they loaded AFTER this facade - which killed the entire face boot
+      // threw "Cannot set property … which has only a getter" in strict mode when
+      // they loaded AFTER this facade — which killed the entire face boot
       // (attention_model is the first FACE_MODULE loadFace imports). This was the
       // real black-face root cause.
       get: () => {

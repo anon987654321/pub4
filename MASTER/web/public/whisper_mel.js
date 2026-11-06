@@ -1,7 +1,7 @@
 // Whisper log-Mel features, in the browser.
 //
 // Smart Turn v3 is a Whisper Tiny encoder with a linear head, so its ONNX input
-// is `input_features` - an (1, 80, 800) log-Mel spectrogram, not the waveform.
+// is `input_features` — an (1, 80, 800) log-Mel spectrogram, not the waveform.
 // The reference implementation gets these from
 // `WhisperFeatureExtractor(chunk_length=8)`; this is that pipeline, and it has
 // to match it closely, because a mel spectrogram that is merely plausible
@@ -9,7 +9,7 @@
 //
 // The steps, in the order the extractor applies them:
 //
-//   1. keep the last 8s and zero-pad at the BEGINNING (audio_utils.py - the end
+//   1. keep the last 8s and zero-pad at the BEGINNING (audio_utils.py — the end
 //      of the utterance is the part the decision is about, so it is the part
 //      that must survive)
 //   2. zero-mean unit-variance the waveform (do_normalize=True)
@@ -90,7 +90,7 @@ export function melFilterBank(nMels = N_MELS, nFreqs = N_FREQS, sampleRate = SAM
 // n_fft is 400, which is not a power of two. Zero-padding the frame to 512 and
 // reading back 201 bins does NOT give a 400-point DFT: it gives a 512-point one,
 // whose bin k is k*sr/512 rather than k*sr/400, so every frequency lands 28%
-// high - 512/400. A 1kHz tone came out in the mel filter centred on 1280Hz.
+// high — 512/400. A 1kHz tone came out in the mel filter centred on 1280Hz.
 //
 // Bluestein turns a DFT of any length into convolutions that a power-of-two FFT
 // can do, using nk = (n² + k² − (k−n)²)/2. The chirp b[] and its transform are
@@ -251,7 +251,7 @@ function reflectPad(samples, pad) {
 
 const FILTERS = melFilterBank();
 
-// Returns Float32Array of N_MELS * N_FRAMES, row-major (mel, frame) - the
+// Returns Float32Array of N_MELS * N_FRAMES, row-major (mel, frame) — the
 // layout the ONNX input wants once a batch dimension is added.
 export function logMelSpectrogram(samples) {
   const fitted = fitToChunk(samples);

@@ -1,4 +1,4 @@
-// Particle pool stepping - extracted from face.part3 for modular face runtime (web_001).
+// Particle pool stepping — extracted from face.part3 for modular face runtime (web_001).
 (() => {
   "use strict";
 

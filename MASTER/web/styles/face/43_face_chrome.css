@@ -1,7 +1,7 @@
-/* UI_REFINEMENTS pass - face chrome only; does not touch WebGL boot path.
+/* UI_REFINEMENTS pass — face chrome only; does not touch WebGL boot path.
    The pass's #primer stub is not reproduced here: it carried only
    display: grid, which #primer already declares at its main rule above,
-   and it shipped unbalanced - its unclosed #primer nested every rule
+   and it shipped unbalanced — its unclosed #primer nested every rule
    below it until #chat-log's 66ch centering went dead (2026-10-03). */
 
 /* MASTER presentation contract: browser chat is terminal scrollback, not a bubble UI.

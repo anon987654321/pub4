@@ -1,4 +1,4 @@
-/* wscons aesthetic - flat 80-column scrollback log (MASTER_AESTHETIC=wscons) */
+/* wscons aesthetic — flat 80-column scrollback log (MASTER_AESTHETIC=wscons) */
 html[data-aesthetic="wscons"],
 body.wscons-mode {
   --c-text: #63c363;

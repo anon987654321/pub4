@@ -147,7 +147,7 @@
         "lo " + s.bass.toFixed(3), "mid " + s.mid.toFixed(3), "hi " + s.high.toFixed(3),
         "cent " + Math.round(s.centroid), "speech " + s.speechActivity.toFixed(2),
         "sr " + s.sampleRate, "ch " + s.channels, "xruns " + s.underruns
-      ].join(" - ");
+      ].join(" · ");
       requestAnimationFrame(render);
     };
     requestAnimationFrame(render);

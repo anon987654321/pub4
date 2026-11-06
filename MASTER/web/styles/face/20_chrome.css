@@ -1,7 +1,7 @@
 /* Pristine chrome: only the logo, face, and shell prompt stay visible --
    drop every top-right and bottom-right badge/status element. #mic-dot is
    exempt: it is the only feedback about whether the microphone is open.
-   It used to be free when idle because it was invisible then - and that was
+   It used to be free when idle because it was invisible then — and that was
    the bug, since "off" and "no indicator" looked the same. It is now always
    drawn, grey when idle. One 18px glyph is the price of not having to guess. */
 .model-badge,
@@ -15,15 +15,15 @@ body[data-council-persona]::after {
    status text in the bottom-right corner.
 
    It is sr-only rather than display: none, and that distinction is the whole of
-   what the 2026-08-13 exemption was defending. showStage writes "routing...",
-   "scanning..." and "speaking..." here through an aria-live region, and display:
+   what the 2026-08-13 exemption was defending. showStage writes "routing…",
+   "scanning…" and "speaking…" here through an aria-live region, and display:
    none takes an element out of the accessibility tree entirely, so the
-   announcements reached nobody - not the screen, not a screen reader. .sr-only
+   announcements reached nobody — not the screen, not a screen reader. .sr-only
    clips instead, so the element still exists to assistive tech while rendering
    nothing. Sighted users lost a label they had for one day; screen reader users
    keep what that commit restored. Do not "simplify" this to display: none. */
 
-/* Top-left logo - brgen wordmark (shared x tokens) */
+/* Top-left logo — brgen wordmark (shared x tokens) */
 .top-left-logo {
   position: fixed;
   top: calc(14px + var(--safe-top));
@@ -39,7 +39,7 @@ body[data-council-persona]::after {
   text-rendering: optimizeLegibility;
   transition: opacity 1.2s var(--ease-out);
 }
-/* Mic indicator - top-right, always present, two states.
+/* Mic indicator — top-right, always present, two states.
  *
  * Was a 10px dot at opacity 0 that appeared only while listening. That made
  * "microphone off" and "no indicator exists" the same picture, so the only way
@@ -47,7 +47,7 @@ body[data-council-persona]::after {
  * 2026-08-10: "no mic icon to indicate when its on and when its off (dark
  * grey), so user has to guess".
  *
- * Idle is dark grey and legible rather than hidden - a control you can see is
+ * Idle is dark grey and legible rather than hidden — a control you can see is
  * off is not clutter, it is the answer to the question. Listening keeps the
  * live colour and the pulse it always had. */
 #mic-dot {
@@ -194,7 +194,7 @@ body[data-mode="speaking"] #mic-dot {
   accent-color: var(--face-fg);
 }
 
-/* SR-only for a11y live announcements (mood changes etc) - screen readers only, no visual */
+/* SR-only for a11y live announcements (mood changes etc) — screen readers only, no visual */
 .sr-only {
   position: absolute;
   width: 44px;
@@ -207,7 +207,7 @@ body[data-mode="speaking"] #mic-dot {
   border: 0;
 }
 
-/* Primer overlay - Radio Bergen dialog style */
+/* Primer overlay — Radio Bergen dialog style */
 #primer {
   position: fixed;
   inset: 0;

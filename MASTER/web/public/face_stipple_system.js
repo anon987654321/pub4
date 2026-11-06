@@ -247,8 +247,8 @@
           // already folds zone weight, bias and luminosity), not in point size.
           // The face breathes: luminosity sways about five percent over ~11 s,
           // the pace of a resting breath, so the field is never perfectly
-          // still while it waits. The breath rides brightness only - the same
-          // seam the one-pixel law owns - and freezes twice over under reduced
+          // still while it waits. The breath rides brightness only — the same
+          // seam the one-pixel law owns — and freezes twice over under reduced
           // motion: uTime stops and uMotionScale goes to 0.
           float breath = 1.0 + uMotionScale * 0.05 * sin(uTime * 0.5712);
           float depthScale = clamp(uDepthReferenceDistance / max(1.0, -mv.z),

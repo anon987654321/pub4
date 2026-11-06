@@ -1,4 +1,4 @@
-// Viseme playback - mouth animation driven by TTS audio and server viseme plans.
+// Viseme playback — mouth animation driven by TTS audio and server viseme plans.
 // Concatenated into face.runtime.js by assets:build_face_runtime (after face_speech_runtime.js).
 
 const VISEME_STEP_MS = 45;
@@ -36,7 +36,7 @@ function planFrames() {
 // A viseme plan is a timeline in utterance milliseconds, so it has to be read
 // against the clock of the thing actually speaking. It was scheduled as one
 // setTimeout per frame instead, from whenever startVisemeAnim happened to be
-// called, and stopVisemeAnim cleared only tts.visemeTimer - so nothing could
+// called, and stopVisemeAnim cleared only tts.visemeTimer — so nothing could
 // cancel a plan once armed. forwardEarlyVisemePlan arms one the moment the plan
 // header arrives, before the audio element exists; audio.onplay arms a second
 // for the same utterance when playback really starts. Both ran, offset by
@@ -56,7 +56,7 @@ function fallbackVisemeShape(text, index) {
   if ('aeiouy'.includes(ch)) return VOWEL_VISEME[ch === 'y' ? 'e' : ch];
   if ('mbpfvw'.includes(ch)) return 'M';
   if ('oouu'.includes(pair)) return 'O';
-  if (' .,!?;:\u2014-'.includes(ch)) return 'neutral';
+  if (' .,!?;:—-'.includes(ch)) return 'neutral';
   return 'E';
 }
 
@@ -67,7 +67,7 @@ function fallbackVisemePlan(text, durationMs) {
   let total = 0;
   for (let i = 0; i < source.length; i++) {
     const ch = source[i];
-    const weight = /[.,!?;:\u2014-]/.test(ch) ? 1.8 : (/\s/.test(ch) ? 0.24 : (/[aeiouy]/i.test(ch) ? 1.25 : 0.72));
+    const weight = /[.,!?;:—-]/.test(ch) ? 1.8 : (/\s/.test(ch) ? 0.24 : (/[aeiouy]/i.test(ch) ? 1.25 : 0.72));
     weights.push(weight);
     total += weight;
   }
@@ -76,7 +76,7 @@ function fallbackVisemePlan(text, durationMs) {
     const at = total > 0 ? (cursor / total) * durationMs : 0;
     cursor += weight;
     const shape = fallbackVisemeShape(source, i);
-    const pause = /[.,!?;:\u2014-]/.test(source[i]);
+    const pause = /[.,!?;:—-]/.test(source[i]);
     return { at, shape, amp: pause ? 0.12 : (shape === 'neutral' ? 0.0 : 0.55 + (/[aeiouy]/i.test(source[i]) ? 0.3 : 0.12)) };
   });
 }

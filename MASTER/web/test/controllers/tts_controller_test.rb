@@ -7,7 +7,7 @@ class TtsControllerTest < ActionDispatch::IntegrationTest
   # TtsJob::CACHE_DIR is one directory shared by the whole process group, and
   # Rails parallelises across 8 forked workers once the suite passes 50 tests.
   # This setup used to `rm_f` every file in it, so one worker wiped the fixtures
-  # another had written - the two status/destroy tests failed only in a full
+  # another had written — the two status/destroy tests failed only in a full
   # parallel run and passed in isolation at every seed.
   #
   # No wipe is needed: job ids are SHA256(voice|style|rate|pitch|text)[0,32], so
@@ -124,8 +124,8 @@ class TtsControllerTest < ActionDispatch::IntegrationTest
     assert response.headers["X-TTS-Visemes"].present?
   end
 
-  # relayd silently drops any response with more than 8 KB of headers - no body,
-  # no status line, nothing in its log - and the client reads that as a dead TTS
+  # relayd silently drops any response with more than 8 KB of headers — no body,
+  # no status line, nothing in its log — and the client reads that as a dead TTS
   # server for the rest of the session. On 2026-08-01 that took speech out on
   # ai.brgen.no for every reply longer than about nine words, while the short
   # cached phrases kept playing and made it look like TTS "half worked".

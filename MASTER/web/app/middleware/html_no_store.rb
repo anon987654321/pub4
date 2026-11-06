@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-# HtmlNoStore - force no-store on HTML responses (overrides session ETag / no-cache).
+# HtmlNoStore — force no-store on HTML responses (overrides session ETag / no-cache).
 class HtmlNoStore
   ASSET_PREFIX = "/assets/"
   STATIC_EXT = /\.(?:css|js|mjs|json|png|jpe?g|gif|webp|svg|ico|woff2?|map|txt)\z/i

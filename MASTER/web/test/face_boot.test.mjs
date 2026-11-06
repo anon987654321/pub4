@@ -12,7 +12,7 @@ const publicDir = join(root, "public");
 const viewsDir = join(root, "app", "views");
 const railsRoot = join(root, "..", "..", "RAILS");
 // Face assets are declared in config/face_assets.yml and rendered from it, so
-// the view no longer spells their names. Read the manifest as text - Node has
+// the view no longer spells their names. Read the manifest as text — Node has
 // no YAML parser and these are presence checks, not structural ones.
 const faceManifest = readFileSync(join(root, "config", "face_assets.yml"), "utf8");
 // The boot path: the view, and public/face_primer.js which it loads right after
@@ -70,7 +70,7 @@ test("web face queues follow-up turns and exposes stop/resume state", () => {
   const onErrorBlock = runtime.slice(onErrorAt, runtime.indexOf("// chat_actions.js owns", onErrorAt));
   assert.match(onErrorBlock, /finishTurn\(false\);[\s\S]*closeChatStream/);
   // The stop control aborts the live stream, resets the face state, and latches
-  // a pause only for a queue that holds messages - a stop on an empty queue
+  // a pause only for a queue that holds messages — a stop on an empty queue
   // must leave the next send free to flow.
   const stopAt = runtime.indexOf("document.getElementById('turn-control')?.addEventListener('click'");
   assert.ok(stopAt > 0, "the face wires the stop control");
@@ -269,7 +269,7 @@ test("concatenated face parts form a syntactically valid module (guards tap-to-s
   // speech modules, and part5). A
   // duplicate top-level const (or any syntax error) spanning two parts throws at import
   // time, so window.MASTER_FACE never loads and the primer tap silently does nothing.
-  // The per-file assertions above cannot see cross-part collisions - only the join can.
+  // The per-file assertions above cannot see cross-part collisions — only the join can.
   const blob = partSources().join("\n");
   const tmp = join(tmpdir(), `master-face-blob-${process.pid}.mjs`);
   writeFileSync(tmp, blob);
@@ -419,7 +419,7 @@ test("face.runtime.js matches the rake loader contract", () => {
   const task = readFileSync(join(root, "lib", "tasks", "face_runtime.rake"), "utf8");
   const sources = ["face.part1.txt", "face.part2.txt", "face.part3.txt", "face_speech_runtime.js", "face_speech_playback.js", "face.part5.txt"];
 
-  // The generator deliberately builds part 1-3 names from a range. Do not
+  // The generator deliberately builds part 1–3 names from a range. Do not
   // require those three strings to be duplicated literally in the task.
   for (const name of sources) {
     assert.match(runtime, new RegExp(name.replaceAll(".", "\\.") + "\\b"), name + " missing from runtime");
@@ -429,7 +429,7 @@ test("face.runtime.js matches the rake loader contract", () => {
       .slice(0, 10);
     assert.ok(runtime.includes(name + "?v=" + digest), name + " URL digest is stale");
   }
-  assert.match(task, /segments = \(1\.\.3\)\.map \{ \|part\| "face\.part#\{part\}\.txt" \}/, "build task must generate face parts 1-3");
+  assert.match(task, /segments = \(1\.\.3\)\.map \{ \|part\| "face\.part#\{part\}\.txt" \}/, "build task must generate face parts 1–3");
   for (const name of ["face_speech_runtime.js", "face_speech_playback.js", "face.part5.txt"]) {
     assert.match(task, new RegExp(name.replace(".", "\\.") + "\\b"), name + " missing from build task");
   }
@@ -442,7 +442,7 @@ test("TTS playback gain is one published number, and fits under 0 dBFS", () => {
   const bridge = readFileSync(join(publicDir, "face_audio_bridge.js"), "utf8");
   const runtime = readFileSync(join(publicDir, "face.runtime.js"), "utf8");
   // One constant feeding both assignments, rather than the literal written
-  // twice - this test is named for that and was pinning the duplication. The
+  // twice — this test is named for that and was pinning the duplication. The
   // level itself moved into data/voice.yml's chain, so what is pinned here is
   // that the graph and the duck read the same published value: unity while the
   // chain carries the level, 1.9 on the bare fallback path, never a second copy.
@@ -525,7 +525,7 @@ test("probe_webgl_guard covers before-tap canvas lock and after-tap unlock", () 
   const ciProbe = readFileSync(join(root, "script", "ci_web_probe"), "utf8");
 // Not /HTMLCanvasElement/. The probe used to name the class because it
 // patched the prototype; it now asks a canvas it did not have before the
-// tap - document.createElement("canvas") inside the after block - which is
+// tap — document.createElement("canvas") inside the after block — which is
 // the stronger proof, since a guard that only covers the one element on the
 // page is not a guard. The assertion was measuring the old spelling of a
 // check that had got better.
@@ -578,7 +578,7 @@ test("chat index wires digested assets around lazy face boot", () => {
   assert.doesNotMatch(primerScript, /getElementById\('prompt-form'\),ui=document\.getElementById\('ui-status'\)/);
   assert.match(index, /asset_path\("particle_kernel\.js"\)/);
   // Deferred modules come from config/face_assets.yml#shell_manifest, rendered
-  // by the view - not a literal list in the ERB.
+  // by the view — not a literal list in the ERB.
   assert.match(index, /javascript_include_tag\(\*FaceAssets\.group\("shell_manifest"\)/);
   assert.match(faceManifest, /- chat_actions/);
   assert.match(faceManifest, /- visual_bridge/);
@@ -595,12 +595,12 @@ test("chat index wires digested assets around lazy face boot", () => {
   assert.ok(particleIdx > 0 && bootIdx > 0, "particle_kernel and inline boot must be present");
 });
 
-test("default application layout removed - chat/index owns boot shell", () => {
+test("default application layout removed — chat/index owns boot shell", () => {
   const layoutPath = join(viewsDir, "layouts", "application.html.erb");
   assert.equal(existsSync(layoutPath), false, "dead application layout should stay deleted");
 });
 
-// The face3d overlay - a second, competing face painter - was removed on
+// The face3d overlay — a second, competing face painter — was removed on
 // 2026-07-24 (commit 6f1867972). It took a 2D context on the shared #face
 // canvas, and a canvas can only ever hold one context type, so booting it
 // permanently blocked the real WebGL face from initializing. These two tests
@@ -623,7 +623,7 @@ test("there is exactly one face renderer", () => {
 // The reason the overlay was a footgun in the first place: #face is bound to
 // WebGL by the primary renderer, and a second getContext("2d") on it returns
 // null forever after. The 2D placeholder shown while THREE loads is careful to
-// use its own canvas - keep it that way.
+// use its own canvas — keep it that way.
 test("nothing takes a 2D context on the shared #face canvas", () => {
   const fallback = readFileSync(join(publicDir, "face_2d_fallback.js"), "utf8");
 
@@ -665,7 +665,7 @@ test("face.css carries no knob for a glow that no longer exists", () => {
   assert.doesNotMatch(css, /body::after/);
   // This used to assert --face-glow-scale: 1.22, pinning the additive halo pass
   // in place. The pass is gone and particle size is fixed at one pixel by
-  // FACE_POINT_IS_ONE_PIXEL, so both vars are asserted absent instead - a knob
+  // FACE_POINT_IS_ONE_PIXEL, so both vars are asserted absent instead — a knob
   // whose only legal value is its default is not a knob.
   assert.doesNotMatch(css, /--face-glow-scale/);
   assert.doesNotMatch(css, /--face-particle-size/);
@@ -959,7 +959,7 @@ test("tts defaults to server style inference and recovers after fallback cooldow
 });
 
 // There is no welcome greeting: MASTER speaks when spoken to. It was removed
-// deliberately, and face.part5.txt records why - it fired on every page load
+// deliberately, and face.part5.txt records why — it fired on every page load
 // rather than after a human tap, the web session is process-global so the
 // instruction landed in whatever conversation was already running, and because
 // it was a real chat turn the model kept seeing "introduce yourself" in recent
@@ -985,7 +985,7 @@ test("voice mode arms from a real gesture and reports microphone startup truthfu
   assert.match(part5, /listenOnFirstGesture\(\);/);
   assert.match(runtime, /recognition\.onstart = \(\) => \{/);
   assert.match(runtime, /stt_start_timeout/);
-  assert.match(runtime, /waiting for microphone - check browser permission/);
+  assert.match(runtime, /waiting for microphone — check browser permission/);
 });
 
 test("TTS does not dequeue speech while the server cooldown is active", () => {
@@ -1004,7 +1004,7 @@ test("voice mode: re-arm loop, exit phrase, wake word, and single-speaker TTS ro
   ].map((file) => readFileSync(join(publicDir, file), "utf8")).join("\n");
   const part5 = readFileSync(join(publicDir, "face.part5.txt"), "utf8");
   const index = readFileSync(join(viewsDir, "chat", "index.html.erb"), "utf8");
-  // Continuous re-arm loop keyed off recognition.onend, not a fixed interval -
+  // Continuous re-arm loop keyed off recognition.onend, not a fixed interval —
   // must re-check State.voiceMode each cycle rather than assuming it stays on.
   assert.match(runtime, /if \(State\.voiceMode\) \{[\s\S]{0,400}startSTT\(\);/);
   // Exit phrase is checked client-side before sendMessage, no server round-trip.

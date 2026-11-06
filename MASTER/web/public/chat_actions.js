@@ -270,13 +270,13 @@ async function sendMessageTurn(text) {
   window._imageToken = null;
   let assistantBuffer = "";
   let ttsBuffer = "";
-  const sentenceBreak = /([.!?\u2026]+["'\u201D]?\s+|[\n]{2,})/;
+  const sentenceBreak = /([.!?…]+["'\u201D]?\s+|[\n]{2,})/;
   // Clause boundaries, used only for the very first thing said in a reply, and
   // split into two because they break in opposite directions. Punctuation ends a
   // clause, so the cut goes AFTER it. A conjunction begins one, so the cut goes
-  // BEFORE it - cutting after left the opener trailing a dangling "and", which
+  // BEFORE it — cutting after left the opener trailing a dangling "and", which
   // is not where anyone pauses.
-  const clausePunct = /[,;:\u2014\u2013]\s+/;
+  const clausePunct = /[,;:—–]\s+/;
   const clauseJoin = /\s+(?:and|but|so|because|which|that|when|if)\s+/i;
   let spokeFirst = false;
 
@@ -305,7 +305,7 @@ async function sendMessageTurn(text) {
     }
     if (join) return MIN_FIRST_CHARS + join.index;
     if (ttsBuffer.length >= MAX_FIRST_CHARS) {
-      // No boundary in range - break at a word edge, never mid-word.
+      // No boundary in range — break at a word edge, never mid-word.
       const space = ttsBuffer.lastIndexOf(' ', MAX_FIRST_CHARS);
       return space > MIN_FIRST_CHARS ? space + 1 : -1;
     }
@@ -398,7 +398,7 @@ function updateFallbackSendQueueUi(message = "") {
   }
   if (status) {
     status.textContent = message || (fallbackSendQueuePaused
-      ? `${fallbackSendQueue.length} queued - paused`
+      ? `${fallbackSendQueue.length} queued · paused`
       : fallbackSendQueue.length
         ? `queued ${fallbackSendQueue.length}`
         : fallbackSendQueueRunning ? "working" : "");

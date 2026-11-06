@@ -1,5 +1,5 @@
 // The face while the real one loads, and the only face when it cannot: the same ASCII head
-// (face_ascii.js) at rest, drawn on a canvas of its own. It never touches #face - the runtime
+// (face_ascii.js) at rest, drawn on a canvas of its own. It never touches #face — the runtime
 // takes a 2D context there for the ASCII face, or a WebGL one for ?face_mode=3d, and a canvas
 // keeps whichever it was given first (a 2d context on a WebGL canvas is a dead tap and a black face).
 "use strict";

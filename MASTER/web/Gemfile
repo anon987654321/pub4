@@ -42,7 +42,7 @@ group :tts do
   gem "rb-edge-tts", "= 1.0.1"
 end
 
-# Must mirror MASTER/Gemfile - web controllers load lib/ code at runtime.
+# Must mirror MASTER/Gemfile — web controllers load lib/ code at runtime.
 gem "fiddle"
 gem "reline", "~> 0.6"
 gem "wisper", "~> 2.0"

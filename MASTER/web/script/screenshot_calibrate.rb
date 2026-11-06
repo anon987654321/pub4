@@ -130,7 +130,7 @@ begin
   checks << [ "chat-log", "11.5px", "12px",
 "Chat log microtype below readable HUD floor" ] if browser.at_css("#chat-log")
   checks << [ "provider-chip", "9px", "10px",
-"Provider chip at HUD micro scale - acceptable if non-interactive" ] if browser.at_css(".provider-chip")
+"Provider chip at HUD micro scale — acceptable if non-interactive" ] if browser.at_css(".provider-chip")
 
   manifest[:stylecoach] = checks.map { |element, current, suggested, reason|
  { element:, current:, suggested:, reason: } }

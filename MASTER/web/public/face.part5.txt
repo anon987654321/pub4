@@ -1,4 +1,4 @@
-// Viseme playback moved to face_speech_playback.js - concatenated by assets:build_face_runtime.
+// Viseme playback moved to face_speech_playback.js — concatenated by assets:build_face_runtime.
 
 function fadeTtsAudio(ms = 80) {
   return new Promise((resolve) => {
@@ -33,7 +33,7 @@ function ttsSkipHard() {
   // The lanes are the queue that dequeueTtsLane() actually reads; tts.queue is
   // the flat mirror. Clearing only the mirror left every pending utterance
   // sitting in tts.lanes.*, so the next tick pulled it straight back out and
-  // Escape/mute/cancel did not cancel anything - it paused the current chunk
+  // Escape/mute/cancel did not cancel anything — it paused the current chunk
   // and then carried on through the backlog.
   tts.lanes.error.length = 0; tts.lanes.nudge.length = 0; tts.lanes.response.length = 0;
   tts.queue.length = 0; tts.prefetch.clear(); tts.attempts.clear(); tts.playing = false; tts.current = null;
@@ -104,7 +104,7 @@ function cancelStream() {
 }
 
 // Voice Mode: continuous hands-free conversation loop (one tap in, spoken
-// phrase or tap out). Wake-word is a foreground-only, opt-in convenience -
+// phrase or tap out). Wake-word is a foreground-only, opt-in convenience —
 // no backgrounded/locked-screen detection is possible from a browser tab.
 const WAKE_PHRASE_RE = /\bhey,?\s*master\b/i;
 const EXIT_PHRASE_RE = /^\s*(stop listening|exit voice mode|voice mode off|stop voice mode)\.?\s*$/i;
@@ -127,8 +127,8 @@ function syncMicIndicator(reason = "idle") {
   if (dot) {
     dot.dataset.mic = starting ? "starting" : open ? "open" : "closed";
     dot.setAttribute("aria-label", open ? "Turn microphone off" : "Turn microphone on");
-    dot.setAttribute("title", starting ? "Microphone starting - tap to turn off" :
-      open ? "Microphone listening - tap to turn off" : "Microphone off - tap to turn on");
+    dot.setAttribute("title", starting ? "Microphone starting — tap to turn off" :
+      open ? "Microphone listening — tap to turn off" : "Microphone off — tap to turn on");
     dot.setAttribute("aria-pressed", open ? "true" : "false");
     const label = dot.querySelector("[data-mic-state-text]");
     if (label) label.textContent = starting ? "microphone starting" : open ? "microphone listening" : "microphone off";
@@ -196,7 +196,7 @@ if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
   // banked and only committed after this much real quiet.
   const STT_QUIET_MS = 1600;
   // But silence alone cannot tell thinking from finishing, so one fixed window
-  // has to be long enough for the slowest hesitation mid-sentence - which makes
+  // has to be long enough for the slowest hesitation mid-sentence — which makes
   // every finished sentence wait that long too. The words already say which is
   // happening: someone who has just said "og" or "fordi" still holds the floor,
   // and someone who ended on a question mark has handed it over.
@@ -204,7 +204,7 @@ if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
   // The two directions carry different costs, so they get different evidence.
   // Waiting too long is a pause; cutting someone off loses what they said and
   // makes them repeat it. So the floor-holding cues only ever LENGTHEN the
-  // wait, and shortening needs a strong signal - real terminal punctuation, or
+  // wait, and shortening needs a strong signal — real terminal punctuation, or
   // an utterance short enough to be a whole answer.
   const STT_QUIET_MS_MIN = 700;
   const STT_QUIET_MS_MAX = 2600;
@@ -213,7 +213,7 @@ if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
   // and the hesitation sounds recognisers do transcribe.
   const HOLDING_FLOOR_RE =
     /(?:^|\s)(og|eller|men|så|fordi|som|at|hvis|når|enn|er|var|har|hadde|skal|vil|kan|må|på|til|av|med|for|om|fra|den|det|en|et|eh+|øh+|hmm+|altså|liksom|bare|litt|and|or|but|so|because|that|which|if|when|than|is|was|has|had|will|would|can|could|should|might|must|do|does|did|are|were|been|being|to|of|with|for|from|at|in|on|by|about|into|the|a|an|um+|uh+|er+|like|well)\s*$/i;
-  const HANDED_OVER_RE = /[?!.]["'\u201D»)]?\s*$/;
+  const HANDED_OVER_RE = /[?!.]["'”»)]?\s*$/;
   function quietMsFor(text) {
     const t = String(text || '').trim();
     if (!t) return STT_QUIET_MS;
@@ -221,7 +221,7 @@ if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
     // and the question mark is the one the speaker chose to put there.
     if (HANDED_OVER_RE.test(t)) return STT_QUIET_MS_MIN;
     if (HOLDING_FLOOR_RE.test(t)) return STT_QUIET_MS_MAX;
-    // "ja", "nei takk", "det stemmer" - a whole turn, and holding it open
+    // "ja", "nei takk", "det stemmer" — a whole turn, and holding it open
     // after two words is the wait people notice most.
     if (t.split(/\s+/).length <= 3) return STT_QUIET_MS_MIN;
     return STT_QUIET_MS;
@@ -234,7 +234,7 @@ if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
   // human stops.
   //
   // The guard is the whole difficulty. The mic hears MASTER's own voice, so an
-  // unguarded barge-in cancels itself on every utterance - the echo this
+  // unguarded barge-in cancels itself on every utterance — the echo this
   // file's TTS/STT duck was written for. Two conditions before yielding: enough
   // heard to be a real attempt rather than a syllable of bleed, and the text
   // not already contained in what is being spoken right now.
@@ -279,13 +279,13 @@ if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
     return said.length >= BARGE_IN_MIN_CHARS ? 'turn' : 'none';
   }
   // A backchannel is the "mm" a listener gives while the other person is still
-  // talking: it signals attention without taking the turn. MASTER gave none -
+  // talking: it signals attention without taking the turn. MASTER gave none —
   // the face held still until the whole utterance was committed, so the
   // difference between listening and not being there was nothing at all.
   //
   // Visual only, and deliberately so. A spoken backchannel would arrive over a
   // person mid-sentence, and the mic would then hear MASTER talking during
-  // their turn - the same echo the duck and speechIsEchoOfSelf above exist to
+  // their turn — the same echo the duck and speechIsEchoOfSelf above exist to
   // handle. A pulse costs no audio, no turn and no latency.
   //
   // Rate-limited because an acknowledgement on every clause of a long sentence
@@ -365,7 +365,7 @@ if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
     if (final.trim()) sttFinalSoFar = sttFinalSoFar ? `${sttFinalSoFar} ${final.trim()}` : final.trim();
     sttPartial = `${sttFinalSoFar} ${interim.trim()}`.trim();
     window.dispatchEvent(new CustomEvent('stt:partial', { detail: { transcript: sttPartial, text: sttPartial, final: Boolean(final.trim()) } }));
-    // A completed segment is a clause boundary - the place a listener says
+    // A completed segment is a clause boundary — the place a listener says
     // "mm". Acknowledge it.
     if (final.trim()) backchannel();
     // Bumped on every result, so a decision that awaited Smart Turn can tell
@@ -406,7 +406,7 @@ if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
 
   // Smart Turn refines the wait rather than replacing it. The words and the
   // sound answer different halves of the same question, and the words are the
-  // half that always works - this one needs a second microphone stream, an
+  // half that always works — this one needs a second microphone stream, an
   // AudioWorklet and 21MB of model, any of which can be missing.
   //
   // It runs when the linguistic timer has already elapsed, so it costs ~15ms on
@@ -470,7 +470,7 @@ if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
       if (State.voiceMode) exitVoiceMode({ reason: 'denied' });
       micPermissionDenied().then((denied) => {
         if (denied) {
-          if (uiStatus) uiStatus.textContent = 'mic blocked - allow it in the browser, then reload';
+          if (uiStatus) uiStatus.textContent = 'mic blocked — allow it in the browser, then reload';
           return;
         }
         setVoiceAuto(true);
@@ -520,7 +520,7 @@ function enterVoiceMode(opts = {}) {
   // entry only reads it.
   if (!opts.fromAuto) setVoiceAuto(true);
   rootBody.dataset.voiceMode = '1';
-  if (uiStatus) uiStatus.textContent = 'listening - say "stop listening" to exit';
+  if (uiStatus) uiStatus.textContent = 'listening — say "stop listening" to exit';
   if (!opts.fromWake) beep(1100, 0.05);
   // Fetch the model and open the second mic stream now rather than on the
   // first pause, so the download is not paid inside a decision.
@@ -606,7 +606,7 @@ function armSTTStartTimeout() {
     // A slow permission prompt is still a live request. Keep it cancellable;
     // the operator can tap the mic again, and a later onstart remains valid.
     syncMicIndicator("start-waiting");
-    if (uiStatus) uiStatus.textContent = 'waiting for microphone - check browser permission';
+    if (uiStatus) uiStatus.textContent = 'waiting for microphone — check browser permission';
     window.MASTER_LOG?.warn?.('face_runtime:stt_start_timeout', 'recognition.start() has not fired onstart yet');
   }, 2600);
 }
@@ -644,7 +644,7 @@ function startSTT() {
     State.mode = 'idle';
     syncMicIndicator("start-error");
     window.MASTER_LOG?.warn?.('face_runtime:stt_start', err);
-    if (uiStatus) uiStatus.textContent = 'mic unavailable - tap again';
+    if (uiStatus) uiStatus.textContent = 'mic unavailable — tap again';
     return false;
   }
 }
@@ -692,7 +692,7 @@ function resumeSttAfterSpeech() {
 // -> ttsTick -> the queue drains -> resumeSttAfterSpeech. Every link has broken
 // at least once, and each break was fixed where it broke: the duck with no undo
 // on the element path, the hard-skip that bypassed ttsTick, and the auto-voice
-// timeout above. Four fixes, one symptom - a mic that goes grey and stays grey.
+// timeout above. Four fixes, one symptom — a mic that goes grey and stays grey.
 //
 // So this does not add a fifth link. It states the invariant and repairs it:
 // voice mode on, nothing playing, recogniser idle is a state that should not
@@ -720,7 +720,7 @@ setInterval(() => {
     _micIdleTicks = 0;
     // Named at warn, not repaired silently. A self-healing loop that says nothing
     // hides the break it is healing, and the break is the thing worth fixing.
-    window.MASTER_LOG?.warn?.("face_runtime:mic_rearm", "voice mode on with an idle recogniser - reopening");
+    window.MASTER_LOG?.warn?.("face_runtime:mic_rearm", "voice mode on with an idle recogniser — reopening");
     _voiceModeRearmFails = 0;
     startSTT();
     return;
@@ -731,7 +731,7 @@ setInterval(() => {
   if (_autoVoiceIdleTicks >= 2) {
     _autoVoiceIdleTicks = 0;
     State.autoVoicePending = false;
-    window.MASTER_LOG?.warn?.("face_runtime:auto_voice_late", "speech drained without resuming - entering voice mode");
+    window.MASTER_LOG?.warn?.("face_runtime:auto_voice_late", "speech drained without resuming — entering voice mode");
     enterVoiceMode({ fromAuto: true });
   }
 }, 3000);
@@ -740,7 +740,7 @@ let stageTimer = null;
 let stageSlowTimer = null;
 let thinkingAloudTimer = null;
 // ms = 0 holds the label until something clears it, which is what a stage that
-// means "waiting for the model" needs: "routing..." expired after a second while
+// means "waiting for the model" needs: "routing…" expired after a second while
 // the request was still in flight, so anyone listening to this region heard the
 // question acknowledged and then nothing for as long as the model took. The
 // reply path already calls showStage("") when the first token lands, so the
@@ -748,8 +748,8 @@ let thinkingAloudTimer = null;
 //
 // Two bounds on the hold. At STAGE_SLOW_MS the label says so, because silence
 // and slowness are indistinguishable otherwise. At STAGE_MAX_MS it clears
-// regardless - a request that dies without reaching any clear path should not
-// leave a stale "routing..." sitting in a live region forever.
+// regardless — a request that dies without reaching any clear path should not
+// leave a stale "routing…" sitting in a live region forever.
 const STAGE_SLOW_MS = 4000;
 const STAGE_MAX_MS = 90000;
 function showStage(label, ms = 1200) {
@@ -1327,7 +1327,7 @@ function meanPoolField(pool, field) {
 // The mouth pool is the only real arousal/valence in the page and State is the
 // authoritative mood/mode/entropy/confidence, so this publishes them and lets
 // felt_state.js format the string. It used to build a second one itself and
-// reassign window.collectFeltState on top of felt_state's - so the string this
+// reassign window.collectFeltState on top of felt_state's — so the string this
 // runtime sent and the string chat_actions and face_vision read through
 // MASTERFeltState could describe the same instant differently, and the server
 // splits whichever arrived into felt_sense.
@@ -1355,7 +1355,7 @@ function startEverything() {
   // starts the render loop (renderer.render(scene, camera), then it reschedules
   // itself). Nothing called it: the face's scene/mesh/particle state all built
   // and updated correctly on every tts/canvas event, but frame() was never
-  // invoked even once, so nothing was ever painted to the canvas - the face
+  // invoked even once, so nothing was ever painted to the canvas — the face
   // was fully "alive" internally and invisible on screen. This is the actual
   // fix for the long-standing "no 3D face visible" report.
   window.MASTER?.boot?.transition?.('FACE', { source: 'startEverything' });
@@ -1391,7 +1391,7 @@ function startEverything() {
     navigator.serviceWorker.register('/sw.js?v=' + encodeURIComponent(window.MASTER_CACHE_VERSION || 'v2')).catch(() => {});
     navigator.serviceWorker.addEventListener('message', (ev) => {
       if (ev.data?.type !== 'sw:updated') return;
-      if (uiStatus) uiStatus.textContent = 'new version - reload';
+      if (uiStatus) uiStatus.textContent = 'new version — reload';
       window._chatOnDmesg?.('sw updated');
     });
   }
@@ -1642,7 +1642,7 @@ window.MASTER_FACE = {
   get head() { return head; },
   // The face's material, so a recorder can pin a uniform. Every uniform is
   // rewritten each frame from State, so anything reading this to change the look
-  // has to hold its value against that - see tools/face_record.rb, which defines
+  // has to hold its value against that — see tools/face_record.rb, which defines
   // uExposure's `value` as a getter the per-frame write cannot move.
   get faceMat() { return faceMat; },
   get cv() { return cv; },
@@ -1695,11 +1695,11 @@ window.mouthPool = mouthPool;
 window.eyePool = eyePool;
 function _deferFaceMod(name) {
   // Absolutize: this runs inside a blob: module where a root-relative specifier
-  // ("/assets/...") can't resolve - same class of bug that blocked the THREE import.
+  // ("/assets/…") can't resolve — same class of bug that blocked the THREE import.
   return new URL(window.MASTER_ASSET_PATHS?.faceModules?.[name] || `/${name}`, document.baseURI).href;
 }
 // Smart Turn is opt-in and its assets are 21MB, so the module is imported
-// for its enable check only - nothing is fetched until warmUp() or a
+// for its enable check only — nothing is fetched until warmUp() or a
 // prediction actually asks for it.
 import(_deferFaceMod('smart_turn.js'))
   .then((m) => { window.MASTER_SMART_TURN = m; })

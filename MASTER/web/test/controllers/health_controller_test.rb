@@ -56,7 +56,7 @@ class HealthControllerTest < ActionDispatch::IntegrationTest
 
   # ai.brgen.no answered every /health with a hard 503 for as long as the daemon
   # could not read the repository, and the browser polls that endpoint on an
-  # interval from two separate places - so the face wired itself against a
+  # interval from two separate places — so the face wired itself against a
   # service insisting it was unavailable while every other request it made
   # succeeded. Measured live 2026-08-26: tts true, git false, status
   # "unavailable", HTTP 503.

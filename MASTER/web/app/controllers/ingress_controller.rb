@@ -11,7 +11,7 @@ class IngressController < ApplicationController
   before_action :enforce_ingress_rate_limit, except: :health
 
   # data/security.yml carried ingress.rate_limit_per_minute: 30 with no
-  # reader while these two constants carried the same numbers - a policy file and
+  # reader while these two constants carried the same numbers — a policy file and
   # its subject able to disagree without anything noticing. The file is the source
   # now; the literals stay as the fallback for a checkout without it.
   DEFAULT_RATE_LIMIT = 30
@@ -20,7 +20,7 @@ class IngressController < ApplicationController
   def self.security_defaults
     Master.load_yaml(Master.data_path("security.yml")) || {}
   rescue StandardError => e
-    # An unreadable security.yml silently becoming {} is fail-open - the one
+    # An unreadable security.yml silently becoming {} is fail-open — the one
     # place a swallow must at least be on the record.
     Master::Ground::Swallow.log(e, context: "Ingress.security_defaults", severity: :load_bearing)
     {}

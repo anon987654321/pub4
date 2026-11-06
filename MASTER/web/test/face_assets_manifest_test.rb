@@ -36,7 +36,7 @@ class FaceAssetsManifestTest < ActiveSupport::TestCase
 
   # felt_state.js was in public/ and in nothing else: not the view, not this
   # manifest, not face.modules.bundle.js. So window.MASTERFeltState was never
-  # defined, and its three consumers degraded silently - chat_actions' own send
+  # defined, and its three consumers degraded silently — chat_actions' own send
   # path dropped the felt state from every message and logged "invalid felt
   # state payload" for it, and face_vision's felt_state rule read "" forever.
   # chat_service.rb splits that string into felt_sense, so it reaches the reply.
@@ -55,7 +55,7 @@ class FaceAssetsManifestTest < ActiveSupport::TestCase
     # face.js is imported lazily on the primer tap, not loaded by the shell.
     # Nothing else belongs here: boot_fsm.js sat in this allowlist and was
     # therefore absent from the rc.d precompile digest too, which reads the
-    # manifest - the exact stale-fingerprint path the manifest closes. It is
+    # manifest — the exact stale-fingerprint path the manifest closes. It is
     # declared as shell_boot now.
     unmanaged = referenced - FaceAssets.all_filenames - %w[face.js]
 

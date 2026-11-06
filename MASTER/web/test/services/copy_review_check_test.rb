@@ -4,7 +4,7 @@ require "test_helper"
 class CopyReviewCheckTest < ActiveSupport::TestCase
   def creative
     {
-      headline: "Wool coat - NOK 149.90",
+      headline: "Wool coat — NOK 149.90",
       body: "Wool coat from Fjord Studio. In stock.",
       cta: "View item",
       locale: "en",

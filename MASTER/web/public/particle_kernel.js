@@ -1,7 +1,7 @@
 // Pixel Field kernel. Typed-array cell pool, fixed-timestep update, bitmap
 // rendering primitives. Replaces ad-hoc particle loops in face/codebase/ecology
 // as they migrate one at a time. Renders semantic cells, not decorative
-// particles - each cell carries kind, zone, confidence, pressure, valence,
+// particles — each cell carries kind, zone, confidence, pressure, valence,
 // arousal, attention, age, decay.
 
 (() => {

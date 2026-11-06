@@ -3,10 +3,10 @@
 module Api
   # Stripe subscription events for the law API's keys.
   #
-  # Dashboard -> Developers -> Webhooks:
+  # Dashboard → Developers → Webhooks:
   #   URL:  https://ai.brgen.no/api/webhooks/stripe
   #   Events: customer.subscription.created, .updated, .deleted
-  #   Signing secret -> STRIPE_WEBHOOK_SECRET in this app's env file
+  #   Signing secret → STRIPE_WEBHOOK_SECRET in this app's env file
   class StripeWebhooksController < ActionController::API
     def create
       event = Shared::StripeSignature.verify!(request.raw_post, request.headers["Stripe-Signature"].to_s)

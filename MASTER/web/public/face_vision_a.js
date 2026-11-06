@@ -1,4 +1,4 @@
-// MASTER particle face 2026 - vision features 1-40 (semantic, TTS, fusion).
+// MASTER particle face 2026 — vision features 1–40 (semantic, TTS, fusion).
 (() => {
   "use strict";
 
@@ -22,7 +22,7 @@
     return palette?.accent || "#f5f0e8";
   }
 
-  // 1-20 semantic
+  // 1–20 semantic
   V.register(1, "pipeline stage kinds", (ctx) => {
     const label = String(ctx.detail.stage || ctx.detail.mode || ctx.type || "idle").toLowerCase();
     const kind = STAGE_KINDS[label.split(/[:\s]/)[0]] ?? 0;
@@ -199,7 +199,7 @@
     V.spawn(0, { kind: 20, confidence: 0.4, decay: 0.025 });
   });
 
-  // 21-35 TTS
+  // 21–35 TTS
   V.register(21, "viseme lip corners", (ctx) => {
     const shape = ctx.detail.shape || ctx.st.viseme || "neutral";
     const amp = Number(ctx.detail.amp ?? ctx.st.visemeAmp ?? 0.5);
@@ -315,7 +315,7 @@
     window.dispatchEvent(new CustomEvent("face:tts-error", { detail: ctx.detail }));
   });
 
-  // 36-40 fusion
+  // 36–40 fusion
   V.register(36, "compositor hint", (ctx) => {
     // FaceWorld is the one compositor; this stage only records the semantic hint.
     const hint = "particle2d";

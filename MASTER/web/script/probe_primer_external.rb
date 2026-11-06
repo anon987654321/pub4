@@ -71,7 +71,7 @@ begin
 
     browser.on(:console) do |msg|
       console_msgs << "[#{msg.type}] #{msg.args.map(&:value).join(' ')}"
-    # scan: intentional - a raising console hook would kill the probe loop; lost lines are acceptable
+    # scan: intentional — a raising console hook would kill the probe loop; lost lines are acceptable
     rescue StandardError
       nil
     end

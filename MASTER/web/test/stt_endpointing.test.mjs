@@ -6,7 +6,7 @@ import { fileURLToPath } from "node:url";
 import { runInNewContext } from "node:vm";
 
 // quietMsFor lives inside the `if (SpeechRecognition in window)` block in
-// face.part5.txt, so it cannot be imported - it only exists in a browser that
+// face.part5.txt, so it cannot be imported — it only exists in a browser that
 // has speech recognition. Lift the declarations out by source and evaluate
 // those, which keeps the test reading the shipped regex rather than a copy of
 // it that drifts the first time someone adds a word.
@@ -34,7 +34,7 @@ const sandbox = runInNewContext(
 const { quietMsFor, STT_QUIET_MS, STT_QUIET_MS_MIN, STT_QUIET_MS_MAX } = sandbox;
 
 test("a sentence left hanging on a function word waits longer", () => {
-  // Norwegian first - nb is the default locale.
+  // Norwegian first — nb is the default locale.
   for (const held of [
     "jeg tenkte at vi kunne dra til",
     "fordi",

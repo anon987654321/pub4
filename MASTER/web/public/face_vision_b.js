@@ -1,4 +1,4 @@
-// MASTER particle face 2026 - vision features 41-80 (fusion, SSE cinema, perf).
+// MASTER particle face 2026 — vision features 41–80 (fusion, SSE cinema, perf).
 (() => {
   "use strict";
 
@@ -13,7 +13,7 @@
     window.MASTERVisual?.event?.(type, detail);
   }
 
-  /* 41-50 fusion */
+  /* 41–50 fusion */
   V.register(41, "morph easing", (ctx) => {
     const ease = (t) => 1 - Math.pow(1 - Math.min(1, Math.max(0, t)), 3);
     const tgt = ctx.st.morphTarget ?? 1;
@@ -110,7 +110,7 @@
     }
   });
 
-  /* 51-65 SSE cinema */
+  /* 51–65 SSE cinema */
   V.register(51, "visual grammar flag", () => {
     root.dataset.visualGrammar = "sse-v2";
     root.dataset.visualGrammarReady = "1";
@@ -163,8 +163,8 @@
       strip.setAttribute("aria-hidden", "true");
       body.appendChild(strip);
     }
-    const FRAMES = ["(◉_◉)", "(◔_◔)", "(◕‿◕)", "(⌐■_■)", "(- ̀ᴗ - ́)"];
-    const stage = String(ctx.detail.stage || ctx.type || "...");
+    const FRAMES = ["(◉_◉)", "(◔_◔)", "(◕‿◕)", "(⌐■_■)", "(•̀ᴗ•́)"];
+    const stage = String(ctx.detail.stage || ctx.type || "…");
     strip.textContent = `${FRAMES[Math.floor(Math.random() * FRAMES.length)]} ${stage}`;
   });
 
@@ -236,8 +236,8 @@
   V.register(65, "metrics HUD", (ctx) => {
 // Opt-in. This read `qs("hud") === "0"`, so fps, mode and entropy rendered
 // full-width at the top of the surface for every visitor unless they knew
-// to ask for silence. It is diagnostics - the element carries
-// aria-hidden="true", which is the code already saying it is not content -
+// to ask for silence. It is diagnostics — the element carries
+// aria-hidden="true", which is the code already saying it is not content —
 // and a console surface earns its calm by not showing its own frame rate.
 // ?hud=1 brings it back.
 if (qs("hud") !== "1") return;
@@ -249,13 +249,13 @@ if (qs("hud") !== "1") return;
       hud.setAttribute("aria-hidden", "true");
       body.appendChild(hud);
     }
-    const fps = ctx.st.fps ? ctx.st.fps.toFixed(0) : "-";
+    const fps = ctx.st.fps ? ctx.st.fps.toFixed(0) : "—";
     const mode = ctx.st.mode || "idle";
     const ent = (ctx.st.entropy ?? 0.2).toFixed(2);
-    hud.textContent = `fps ${fps} - ${mode} - H ${ent}`;
+    hud.textContent = `fps ${fps} · ${mode} · H ${ent}`;
   });
 
-  /* 66-80 perf */
+  /* 66–80 perf */
   V.register(66, "worker owns step flag", () => {
     const owns = !!(window.MASTER_RUNTIME?.enhancements?.includes?.("particle_worker") && window.Worker);
     root.dataset.workerOwnsStep = owns ? "1" : "";
@@ -383,7 +383,7 @@ if (qs("hud") !== "1") return;
     root.dataset.masterCacheVersion = String(ver);
   });
 
-  /* wiring - init listeners + one-shot probes */
+  /* wiring — init listeners + one-shot probes */
   (function wireVisionB() {
     V.run(80, { type: "init", detail: {} });
     V.run(51, { type: "init", detail: {} });

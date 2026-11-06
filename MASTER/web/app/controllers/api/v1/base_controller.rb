@@ -2,7 +2,7 @@
 
 module Api
   module V1
-    # JSON, authenticated by an API key in Authorization: Bearer mk_live_... .
+    # JSON, authenticated by an API key in Authorization: Bearer mk_live_… .
     # Not ApplicationController: the API needs no container, locale or face.
     class BaseController < ActionController::API
       before_action :authenticate_key!

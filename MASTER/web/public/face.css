@@ -1,4 +1,4 @@
-/* scan: intentional-colors - the face is one-theme black by design
+/* scan: intentional-colors — the face is one-theme black by design
    (SURFACES.md): its #000 grounds and print inversion follow no palette. */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -207,7 +207,7 @@ body[data-face-flash="1"] canvas {
   filter: saturate(1.08) contrast(1.04);
 }
 /* Calm damps the flash-class canvas responses (operator request 2026-10-27: a
-   soothing face). The state still lands in the field - the stipples carry it -
+   soothing face). The state still lands in the field — the stipples carry it —
    but calm drops the whole-canvas contrast kicks. The profile may sit on html
    or body depending on which setter wrote it, so both are matched, each
    outranking the flash rule above it. */
@@ -415,7 +415,7 @@ body[data-face-pip="1"][data-face-pip-corner="bottom-right"] canvas {
 #zsh-wave span {
   width: 3px;
   height: 14px;
-  border-radius: 2px; /* clamps to 1.5px on this 3x4px span - the pill idiom, on scale */
+  border-radius: 2px; /* clamps to 1.5px on this 3x4px span — the pill idiom, on scale */
   background: var(--c-accent);
   transform-origin: center bottom;
   transition: height 90ms var(--ease-linear), opacity 90ms var(--ease-linear), transform 90ms var(--ease-linear);
@@ -434,7 +434,7 @@ body[data-face-pip="1"][data-face-pip-corner="bottom-right"] canvas {
 /* Pristine chrome: only the logo, face, and shell prompt stay visible --
    drop every top-right and bottom-right badge/status element. #mic-dot is
    exempt: it is the only feedback about whether the microphone is open.
-   It used to be free when idle because it was invisible then - and that was
+   It used to be free when idle because it was invisible then — and that was
    the bug, since "off" and "no indicator" looked the same. It is now always
    drawn, grey when idle. One 18px glyph is the price of not having to guess. */
 .model-badge,
@@ -448,15 +448,15 @@ body[data-council-persona]::after {
    status text in the bottom-right corner.
 
    It is sr-only rather than display: none, and that distinction is the whole of
-   what the 2026-08-13 exemption was defending. showStage writes "routing...",
-   "scanning..." and "speaking..." here through an aria-live region, and display:
+   what the 2026-08-13 exemption was defending. showStage writes "routing…",
+   "scanning…" and "speaking…" here through an aria-live region, and display:
    none takes an element out of the accessibility tree entirely, so the
-   announcements reached nobody - not the screen, not a screen reader. .sr-only
+   announcements reached nobody — not the screen, not a screen reader. .sr-only
    clips instead, so the element still exists to assistive tech while rendering
    nothing. Sighted users lost a label they had for one day; screen reader users
    keep what that commit restored. Do not "simplify" this to display: none. */
 
-/* Top-left logo - brgen wordmark (shared x tokens) */
+/* Top-left logo — brgen wordmark (shared x tokens) */
 .top-left-logo {
   position: fixed;
   top: calc(14px + var(--safe-top));
@@ -472,7 +472,7 @@ body[data-council-persona]::after {
   text-rendering: optimizeLegibility;
   transition: opacity 1.2s var(--ease-out);
 }
-/* Mic indicator - top-right, always present, two states.
+/* Mic indicator — top-right, always present, two states.
  *
  * Was a 10px dot at opacity 0 that appeared only while listening. That made
  * "microphone off" and "no indicator exists" the same picture, so the only way
@@ -480,7 +480,7 @@ body[data-council-persona]::after {
  * 2026-08-10: "no mic icon to indicate when its on and when its off (dark
  * grey), so user has to guess".
  *
- * Idle is dark grey and legible rather than hidden - a control you can see is
+ * Idle is dark grey and legible rather than hidden — a control you can see is
  * off is not clutter, it is the answer to the question. Listening keeps the
  * live colour and the pulse it always had. */
 #mic-dot {
@@ -627,7 +627,7 @@ body[data-mode="speaking"] #mic-dot {
   accent-color: var(--face-fg);
 }
 
-/* SR-only for a11y live announcements (mood changes etc) - screen readers only, no visual */
+/* SR-only for a11y live announcements (mood changes etc) — screen readers only, no visual */
 .sr-only {
   position: absolute;
   width: 44px;
@@ -640,7 +640,7 @@ body[data-mode="speaking"] #mic-dot {
   border: 0;
 }
 
-/* Primer overlay - Radio Bergen dialog style */
+/* Primer overlay — Radio Bergen dialog style */
 #primer {
   position: fixed;
   inset: 0;
@@ -722,7 +722,7 @@ body[data-mode="speaking"] #mic-dot {
 #chat-log::-webkit-scrollbar-thumb { background: color-mix(in srgb, var(--face-fg) 22%, transparent); border-radius: 4px; }
 
 #chat-log:not(:empty) { pointer-events: auto; }
-/* TYPOGRAPHY.line_length: a reply is prose, 45-75ch, whatever the viewport. */
+/* TYPOGRAPHY.line_length: a reply is prose, 45–75ch, whatever the viewport. */
 .message { position:relative; max-inline-size: 66ch; margin-bottom: 8px; padding: 0; white-space: pre-wrap; overflow-wrap: anywhere; scroll-snap-align: start; animation: msgIn 220ms var(--ease-spring) both; font: 1rem/1.5 var(--font-mono); }
 .message.user,
 .message.assistant { border: 0; border-radius: 0; background: transparent; }
@@ -780,7 +780,7 @@ body[data-mode="speaking"] #mic-dot {
 html[data-model-provider] .provider-chip { opacity: .92; }
 
 body.brutalist-mode * { border-radius: 0 !important; }
-body.brutalist-mode .message { animation-timing-function: steps(3,end) !important; } /* scan: intentional - the mode must beat every message's own easing */
+body.brutalist-mode .message { animation-timing-function: steps(3,end) !important; } /* scan: intentional — the mode must beat every message's own easing */
 body[data-primer-flash="1"] canvas#face { filter: contrast(1.12) brightness(1.08); transition: filter 0ms steps(2,end); }
 
 /* Mission control uses document layout chrome (not immersive face overflow). */
@@ -949,7 +949,7 @@ body[data-tts-loading="true"] #tts-live {
   opacity: 1;
 }
 
-/* Inline status text - shows thinking/speaking inside the prompt bar */
+/* Inline status text — shows thinking/speaking inside the prompt bar */
 #zsh-status {
   font: inherit;
   text-transform: uppercase;
@@ -969,7 +969,7 @@ body[data-tts-error="true"] #zsh-status { opacity: 1; color: var(--c-danger); }
    change, so the line is printed from the attribute instead. */
 body[data-tts-blocked="1"] #zsh-status::after { content: attr(data-blocked-label); opacity: 1; }
 
-/* Cancel button - appears during thinking/speaking */
+/* Cancel button — appears during thinking/speaking */
 #pause-speech-button {
   display: none;
   background: none;
@@ -987,7 +987,7 @@ body[data-tts-blocked="1"] #zsh-status::after { content: attr(data-blocked-label
 body[data-mode="thinking"] #pause-speech-button,
 body[data-mode="speaking"] #pause-speech-button { display: block; }
 
-/* Music toggle - always present, drawn square like #photo-button. The
+/* Music toggle — always present, drawn square like #photo-button. The
    square is ::before (inset 13px in the tap floor), so the optics do not
    move; a playing state paints the square solid. */
 #music-loop-button {
@@ -1014,7 +1014,7 @@ body[data-mode="speaking"] #pause-speech-button { display: block; }
 #music-loop-button[aria-pressed="true"]::before {
   /* The playing state is the one signal moment on this surface: the drawn
      square turns signal as its state marker. The marker is the border, with
-     the fill left open - the signal marks meaning here, it does not paint
+     the fill left open — the signal marks meaning here, it does not paint
      the control. */
   background: transparent;
   border-color: var(--pub4-signal);
@@ -1099,7 +1099,7 @@ body[data-mode="thinking"] #pause-speech-button {
 /* A long silence dims the ecology; the face goes quiet rather than asking. */
 body[data-long-silence="1"] #cognition-ecology { opacity: .38; }
 
-/* #51 Disabled state during boot - hide ghost prompt until primer tap */
+/* #51 Disabled state during boot — hide ghost prompt until primer tap */
 body.face-loading #prompt-form:not(.live):not(.revealed) { opacity: 0; visibility: hidden; pointer-events: none; }
 body:not(.face-ready) #prompt-form:not(.live):not(.revealed) { opacity: .22; pointer-events: none; }
 
@@ -1448,7 +1448,7 @@ body[data-runtime-profile="crt"] #cognition-ecology {
   opacity: 0.88;
 }
 
-/* canvas-fx overlay tier: sits above raw canvas(0/1/2), below persistent chrome(--z-chrome/10) - loading-dither(2) < council-multi-face(3) < council-persona-badge(4) */
+/* canvas-fx overlay tier: sits above raw canvas(0/1/2), below persistent chrome(--z-chrome/10) — loading-dither(2) < council-multi-face(3) < council-persona-badge(4) */
 .council-persona-badge {
   position: fixed;
   top: 12%;
@@ -1582,7 +1582,7 @@ body[data-runtime-profile="crt"] #cognition-ecology {
   .message { break-inside: avoid; color: #000; }
 }
 
-/* wscons aesthetic - flat 80-column scrollback log (MASTER_AESTHETIC=wscons) */
+/* wscons aesthetic — flat 80-column scrollback log (MASTER_AESTHETIC=wscons) */
 html[data-aesthetic="wscons"],
 body.wscons-mode {
   --c-text: #63c363;
@@ -1615,10 +1615,10 @@ body.wscons-mode #face-phosphor-trail {
   display: none !important;
 }
 
-/* UI_REFINEMENTS pass - face chrome only; does not touch WebGL boot path.
+/* UI_REFINEMENTS pass — face chrome only; does not touch WebGL boot path.
    The pass's #primer stub is not reproduced here: it carried only
    display: grid, which #primer already declares at its main rule above,
-   and it shipped unbalanced - its unclosed #primer nested every rule
+   and it shipped unbalanced — its unclosed #primer nested every rule
    below it until #chat-log's 66ch centering went dead (2026-10-03). */
 
 /* MASTER presentation contract: browser chat is terminal scrollback, not a bubble UI.

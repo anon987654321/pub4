@@ -1,10 +1,10 @@
-// Web Worker - offloads ParticleKernel.step from the main thread.
+// Web Worker — offloads ParticleKernel.step from the main thread.
 (() => {
   "use strict";
 
   // The same layout particle_kernel.js declares, restated because a Worker
   // cannot see that scope. It is the stride for a pool transferred in from the
-  // main thread, so a narrower copy here does not merely skip the depth axis -
+  // main thread, so a narrower copy here does not merely skip the depth axis —
   // it reads every field of every cell from the wrong offset.
   const FIELDS_PER_CELL = 14;
   const FIELD = {

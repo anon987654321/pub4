@@ -2,7 +2,7 @@
   gap: 8px;
 }
 
-/* The drawn control stays the 18px bordered square it always was - but the
+/* The drawn control stays the 18px bordered square it always was — but the
    square is ::before now (inset 13px in a 44px button), so the BUTTON meets
    --tap-min while the optics do not move. The tap probe measured 18x18 on
    a compose control; state paint moves to the pseudo with the border. */

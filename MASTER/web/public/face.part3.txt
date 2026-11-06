@@ -45,7 +45,7 @@ function ensureFrameLoop() {
   if (State.hidden || document.hidden) return;
   // Always schedule a frame. face_semantics.js used to call this during module
   // init before startEverything(); the frameLoopActive guard then made
-  // startEverything()'s call a no-op while the first rAF never ran - scene alive,
+  // startEverything()'s call a no-op while the first rAF never ran — scene alive,
   // dbgFrames stuck at 0, canvas black ("face not showing").
   frameLoopActive = true;
   requestAnimationFrame(frame);
@@ -53,13 +53,13 @@ function ensureFrameLoop() {
 }
 
 // Self-healing for the render loop. frame() only continues if its own last
-// requestAnimationFrame ran - any single missed tick (visibilitychange races,
+// requestAnimationFrame ran — any single missed tick (visibilitychange races,
 // iOS app-switch rAF suspension, GPU driver churn) kills the loop forever
 // with zero errors. Instead of finding every trigger, check every 2s whether
 // frames actually advanced while the tab is visible, and re-arm if not.
 // If re-arming doesn't help either (some webviews and battery-saver modes
 // suspend rAF wholesale while the page stays visible), fall back to a
-// setTimeout pump at ~25fps - a slightly cheaper face beats a black one -
+// setTimeout pump at ~25fps — a slightly cheaper face beats a black one —
 // and hand back to rAF the moment natural ticks resume.
 let _watchdogTimer = null;
 let _watchdogLastFrames = -1;
@@ -97,7 +97,7 @@ function armFrameLoopWatchdog() {
 
 // WebGL context loss is the silent permanent-black-canvas case: the browser
 // (usually a phone under GPU memory pressure) revokes the context, every
-// renderer.render() after that is a no-op, and NOTHING throws - the loop keeps
+// renderer.render() after that is a no-op, and NOTHING throws — the loop keeps
 // ticking, dbgFrames keeps counting, the face is just gone. contextlost fires
 // on the CANVAS (the old vision-layer listeners sat on window and never ran).
 // preventDefault() is what tells the browser we want a restore; on restore,
@@ -105,7 +105,7 @@ function armFrameLoopWatchdog() {
 if (typeof cv !== 'undefined' && cv?.addEventListener) {
   cv.addEventListener('webglcontextlost', (e) => {
     e.preventDefault();
-    if (uiStatus) uiStatus.textContent = 'gpu context lost - recovering...';
+    if (uiStatus) uiStatus.textContent = 'gpu context lost — recovering…';
   }, false);
   cv.addEventListener('webglcontextrestored', () => {
     if (uiStatus && uiStatus.textContent.startsWith('gpu context lost')) uiStatus.textContent = '';
@@ -136,7 +136,7 @@ let fpsLastSample = performance.now();
 let fpsSampleFrames = 0;
 let fpsEma = 24;
 // Keep the animation clock cheap when the face is still. rAF may arrive at
-// 60-120 Hz on a MacBook display; the face does not need to repaint that often.
+// 60–120 Hz on a MacBook display; the face does not need to repaint that often.
 let faceLastPaintAt = 0;
 const FACE_ACTIVE_FPS = 30;
 const FACE_IDLE_FPS = 8;
@@ -326,7 +326,7 @@ function frame(t) {
         `particles ${count}`,
         `conf ${(State.confidence ?? 0).toFixed(2)}`,
         pressureLine
-      ].filter(Boolean).join(' - ');
+      ].filter(Boolean).join(' · ');
     }
     // frame() declares its reducedMotion further down; read here, before that line, it threw
     // "Cannot access 'reducedMotion' before initialization" once a second and stopped the face.
@@ -567,7 +567,7 @@ function frame(t) {
     // pixel, so they modulate brightness instead: a whisper dims the face, a
     // shout lifts it, and the breath cycle became a slow rise and fall in
     // exposure rather than in scale. Same trade the shader makes for curvature
-    // and silhouette - in a 1px field, brightness is the only dimension left.
+    // and silhouette — in a 1px field, brightness is the only dimension left.
     const _voiceGain = (0.55 + State.confidence * 0.45 + (motionFrozen ? 0 : State.pulse * 0.12))
       * whisperScale * shoutBoost * phonemeBoost * (motionFrozen ? 1 : 0.94 + 0.12 * _breath);
     // Energy conservation: the less assembled the face, the more its points
@@ -637,7 +637,7 @@ function frame(t) {
     const eyeCloseTarget = _attnEyeClose || 0;
     faceMat.uniforms.uEyeClose.value = motionFrozen ? 0 : faceMat.uniforms.uEyeClose.value + (eyeCloseTarget - faceMat.uniforms.uEyeClose.value) * 0.04;
     // The one writer for uExposure. It was assigned twice in the same frame,
-    // sixty lines apart, and this assignment overwrote the other - so energy
+    // sixty lines apart, and this assignment overwrote the other — so energy
     // conservation, the voice gain, the whisper dip and the shout lift were all
     // computed every frame and thrown away. They multiply here instead.
     //
@@ -647,7 +647,7 @@ function frame(t) {
     // a fifth of the light it needs and read as a shadow on any screen that was
     // not in a dark room; it now measures 7.73, with its peak at white rather
     // than at 174. Alpha saturates at 1, so the points that were already lit
-    // stay where they are and the dim ones come up - which is the compression
+    // stay where they are and the dim ones come up — which is the compression
     // this wants, and why the depth gradient survives it.
     //
     // Both numbers are luminance ABOVE BLACK. The take's own frame reads YAVG
@@ -687,7 +687,7 @@ function frame(t) {
   const renderMode = rootBody.dataset.faceRenderMode || 'auto';
   // No wireframe branch. `wireframe` is a triangle-rasterisation flag and this
   // material is on a THREE.Points, so setting it did nothing in either
-  // direction - an inert switch named after the exact thing the face must
+  // direction — an inert switch named after the exact thing the face must
   // never be. Mode 'wireframe' now falls through to 'auto', which is what it
   // already rendered as.
   const rasterOnly = renderMode === 'raster' || (!renderer && renderMode !== '3d');
@@ -887,7 +887,7 @@ cv.addEventListener('touchmove', (e) => {
 }, { passive: true });
 cv.addEventListener('touchend', () => { pinchDist0 = null; }, { passive: true });
 
-// FA26 double-tap profile cycle - reuses RUNTIME_PROFILES declared in face.part1
+// FA26 double-tap profile cycle — reuses RUNTIME_PROFILES declared in face.part1
 let lastTapT = 0;
 cv.addEventListener('pointerup', () => {
   const now = performance.now();
@@ -934,7 +934,7 @@ cv.addEventListener('pointercancel', () => { if (demoTimer) { clearTimeout(demoT
 if ('getBattery' in navigator) {
   navigator.getBattery().then(b => {
     // Battery saver drops the render buffer, not the pixel size. Shrinking a
-    // 1px point is not available and never saved anything anyway - the cost is
+    // 1px point is not available and never saved anything anyway — the cost is
     // fill rate, so fewer pixels to fill is the only lever that pays.
     const check = () => { FACE_RENDER_SCALE = (!b.charging && b.level < 0.15) ? 0.48 : 0.72; resize(); };
     check();

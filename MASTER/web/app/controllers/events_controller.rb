@@ -2,7 +2,7 @@
 
 require Rails.root.join("../../MASTER/lib/device/wake_signal").to_s
 
-# EventsController - bounded SSE stream of EventBus events to the orb visualizer, at
+# EventsController — bounded SSE stream of EventBus events to the orb visualizer, at
 # GET /events/stream. It subscribes only to the face's declared signal families and writes each event
 # as an anonymous `data:` line; the orb reads them with
 # `new EventSource("/events/stream")` and `onmessage`.
@@ -15,8 +15,8 @@ class EventsController < ApplicationController
   include ActionController::Live
 
   QUEUE_CAP = 256
-  KEEPALIVE_EVERY_S = 15.0  # SSE comment cadence - long enough to be silent, short enough to keep proxies happy
-  MAX_STREAM_S = 600   # hard cap - 10 minute stream ceiling
+  KEEPALIVE_EVERY_S = 15.0  # SSE comment cadence — long enough to be silent, short enough to keep proxies happy
+  MAX_STREAM_S = 600   # hard cap — 10 minute stream ceiling
   # The face needs a bounded set of signals, not the whole bus. Keeping this
   # list surface-specific avoids sending unrelated/background events to every
   # open browser.
@@ -99,7 +99,7 @@ class EventsController < ApplicationController
       end unless visitor_tier
     end
   rescue IOError, ActionController::Live::ClientDisconnected
-    # Client went away - normal. Stop streaming.
+    # Client went away — normal. Stop streaming.
   ensure
     subs&.each { |sub| sub.call rescue nil }
     response.stream.close rescue nil

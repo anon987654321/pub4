@@ -56,7 +56,7 @@ test("mel filterbank is well formed and ascending", () => {
 // The bug this exists for: n_fft is 400, and zero-padding the frame to a 512
 // point FFT silently rescales every bin by 512/400, so a 1kHz tone landed in
 // the filter centred on 1280Hz. The spectrogram still looked entirely
-// reasonable - right shape, right range, no NaN - which is why the check has to
+// reasonable — right shape, right range, no NaN — which is why the check has to
 // be a frequency one.
 test("a tone lands in the mel filter centred on it", () => {
   const filters = melFilterBank();
@@ -121,7 +121,7 @@ test("the vendored model and runtime are present and are not error pages", () =>
   const model = join(publicDir, "models", "smart-turn-v3.2-cpu.onnx");
   const wasm = join(publicDir, "vendor", "onnxruntime", "ort-wasm-simd-threaded.wasm");
   for (const path of [model, wasm]) {
-    assert.ok(existsSync(path), `${path} missing - run script/build_smart_turn.sh`);
+    assert.ok(existsSync(path), `${path} missing — run script/build_smart_turn.sh`);
   }
   // A 404 saved under a .onnx name is small and starts with '<'.
   const head = readFileSync(model).subarray(0, 8);

@@ -3,7 +3,7 @@
 require "digest"
 require "yaml"
 
-# Reader for config/face_assets.yml - the one manifest of face JavaScript.
+# Reader for config/face_assets.yml — the one manifest of face JavaScript.
 #
 # Deliberately a plain module with no Rails dependency beyond the path, so the
 # rc.d precompile digest and the boot contract tests can enumerate the same set

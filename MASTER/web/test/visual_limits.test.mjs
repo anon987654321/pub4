@@ -57,7 +57,7 @@ test("the governor publishes the shared contract budget", () => {
 });
 
 // data/ops/visual.yml said freeze_on_fail: true while this said false, and the
-// false is the fix - a backend fail must not black out the face.
+// false is the fix — a backend fail must not black out the face.
 test("a backend failure does not freeze the visuals", () => {
   assert.equal(loadGovernor().freezeOnFail, false);
 });

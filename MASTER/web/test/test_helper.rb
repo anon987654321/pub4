@@ -12,9 +12,9 @@ module ActiveSupport
     #
     # Three things here are process-global or on disk, shared by every worker:
     # the pairing store at .master/pairing (PairControllerTest#teardown rm_rf's
-    # it, so one worker deletes the code another just issued), Fiber storage -
+    # it, so one worker deletes the code another just issued), Fiber storage —
     # Fiber[:master_visitor] is set process-wide when a Master::CLI is built and
-    # outlives the test that built it - and the stubbed container hung off
+    # outlives the test that built it — and the stubbed container hung off
     # Rails.application.config.
     #
     # The cost is nothing: 76 tests finish in under a second either way.
@@ -24,7 +24,7 @@ module ActiveSupport
       # Rate limits are Rails.cache counters keyed by remote IP, and every
       # integration test requests from 127.0.0.1 inside one process. Without this
       # the pairing budget (8 redeems a minute) is spent by whichever tests ran
-      # first and the rest 429 - so PairControllerTest failed on its position in
+      # first and the rest 429 — so PairControllerTest failed on its position in
       # the run rather than on anything it asserts, differently on every seed.
       Rails.cache.clear
       Rails.application.config.x.master_bootstrap_started = true
@@ -50,7 +50,7 @@ def stub_master_container
   end.new
   # messages and token_est mirror Trace::Session, which takes an optional
   # conversation key on both. A plain Struct reader takes no arguments, so
-  # /chat/history - the one caller that passes the browser's conversation id -
+  # /chat/history — the one caller that passes the browser's conversation id —
   # raised ArgumentError against this double while the real Session handled it.
   # A double that has drifted from the API it stands in for measures nothing.
   session = Struct.new(:token_est_value, :cost, :messages_value) do

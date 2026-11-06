@@ -35,7 +35,7 @@ if skip_browser || chrome.nil?
   reason = if ENV["PROBE_SKIP_BROWSER"] == "1"
              "PROBE_SKIP_BROWSER=1"
   elsif RUBY_PLATFORM.include?("darwin") && ENV["PROBE_FORCE_BROWSER"] != "1"
-             "macOS - set PROBE_FORCE_BROWSER=1 for Ferrum"
+             "macOS — set PROBE_FORCE_BROWSER=1 for Ferrum"
   else
              "no Chrome executable"
   end
@@ -57,7 +57,7 @@ else
     reason = if ENV["PROBE_SKIP_BROWSER"] == "1"
                "PROBE_SKIP_BROWSER=1"
     elsif RUBY_PLATFORM.include?("darwin") && ENV["PROBE_FORCE_BROWSER"] != "1"
-               "macOS - set PROBE_FORCE_BROWSER=1 for Ferrum"
+               "macOS — set PROBE_FORCE_BROWSER=1 for Ferrum"
     else
                "no Chrome executable"
     end

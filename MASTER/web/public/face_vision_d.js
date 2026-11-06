@@ -1,4 +1,4 @@
-// MASTER particle face 2026 - vision features 119-150 (reliability, frontier).
+// MASTER particle face 2026 — vision features 119–150 (reliability, frontier).
 (() => {
   "use strict";
 
@@ -29,11 +29,11 @@
     try { localStorage.setItem(key, val); return true; } catch (_) { return false; }
   }
 
-  /* 119-130 reliability */
+  /* 119–130 reliability */
 V.register(119, "build version on the root, not on the screen", () => {
   const ver = window.MASTER_CACHE_VERSION || "dev";
   // The dataset, not a span. This appended a visible <span id="build-badge">
-  // to every page - ungated, aria-hidden, showing a cache version in the
+  // to every page — ungated, aria-hidden, showing a cache version in the
   // corner of a surface whose whole subject is the face. The information is
   // worth keeping and was never worth a pixel: it stays queryable here, and
   // /health already reports git_sha for anyone asking which build is live.
@@ -171,7 +171,7 @@ V.register(119, "build version on the root, not on the screen", () => {
     root.dataset.dogfood = dogfood ? "1" : "0";
   });
 
-  /* 131-150 frontier */
+  /* 131–150 frontier */
   V.register(131, "WebNN viseme stub", (ctx) => {
     const has = !!(navigator.ml || window.MLContext);
     root.dataset.webnnViseme = has ? "available" : "stub";
@@ -357,12 +357,12 @@ V.register(119, "build version on the root, not on the screen", () => {
 
   V.register(150, "public API MASTERVisual.event documented on MASTER_FACE_VISION", () => {
     /**
-     * Proxy to window.MASTERVisual.event - canonical visual bus for face + chat.
+     * Proxy to window.MASTERVisual.event — canonical visual bus for face + chat.
      * @param {string} type - Event name (e.g. face:describe, council:pulse)
      * @param {Object} [detail] - { topology, entropy, confidence, mode, ... }
      */
     if (!V.event.doc) {
-      V.event.doc = "Proxy to MASTERVisual.event(type, detail) - canonical visual bus.";
+      V.event.doc = "Proxy to MASTERVisual.event(type, detail) — canonical visual bus.";
     }
     root.dataset.publicApi = "MASTERVisual.event";
   });
