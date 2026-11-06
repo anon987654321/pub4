@@ -511,8 +511,9 @@ module Master::Core
     end
 
     # Reversibility is derived from the actual Effect, not accepted as a model
-    # assertion. Durable Git mutations require an explicit yes; an operation
-    # without a World handler is blocked rather than "approved" into a dead end.
+    # assertion. Shared-index staging needs a person; a commit is separately
+    # gated by proof and same-fold path ownership. An operation without a World
+    # handler is blocked rather than "approved" into a dead end.
     # A compensating command is separately re-admitted and approved after failure.
     def self.effect_reversibility_rule
       Law.new(id: :effect_reversibility, verbs: VERBS, judge: lambda { |effect, _memory|
