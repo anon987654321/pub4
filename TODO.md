@@ -564,7 +564,7 @@ Gemini free tier hides its numbers; Hugging Face free monthly credits are gone.
 - [ ] Spread free-load selection across every live `:free` model slug from `/api/v1/models`, ranked by `free_latency`, with per-model quota buckets, instead of the single default slug.
 - [ ] Split lane deadlines into a connect/handshake budget (dead handshake trips the circuit breaker) and a read-idle budget (a stream that keeps delivering is never cut).
 - [ ] Flip Ollama Tier-D to probe-on warm: periodic one-token probe on `gemma3:4b` recorded into quota state, 2-4K context cap and `OLLAMA_KV_CACHE_TYPE=q8_0` for this 8 GB Mac, rehearsed as the final fallback-chain link.
-- [ ] Keep a verified free-provider ledger row per provider (limit, models, keyless?, verified-on) so every free-tier fact carries its own staleness signal.
+- [x] Keep a verified free-provider ledger row per provider (limit, models, keyless?, verified-on) so every free-tier fact carries its own staleness signal. (bb188de11c + models.yml annotations: llm7 re-verified 2026-11-06, key-gated providers marked recorded-2026-09 not re-verified)
 
 ## simplicity-book laws (candidate batch, researched 2026-11-06)
 
