@@ -152,4 +152,32 @@ class TestVisualRuntime < Minitest::Test
       assert_equal 42_000, File.read(manager.pid_file(manager.apps.first)).to_i
     end
   end
+
+  # A run stopped by TERM or INT ends in bin/master's exit!, which skips every ensure; the lease file
+  # beside the pid file names the owner, so whoever outlives the run can stop what it booted.
+  def test_an_owned_server_carries_a_lease_naming_its_owner_until_released
+    with_root do |root|
+      manager = FakeTriangle.new(root:, pid: 41_500)
+      visual, = runtime(root, manager)
+      assert visual.ensure_running!(["brgen"]).ok?
+      lease = "#{manager.pid_file(manager.apps.first)}.owner"
+
+      assert_equal [Process.pid, 41_500], File.read(lease).split.map(&:to_i)
+      assert_includes Master::Fix::ServerLeases.held, visual
+    end
+  end
+
+  def test_the_signal_path_stops_every_server_a_lease_owns
+    with_root do |root|
+      manager = FakeTriangle.new(root:, pid: 41_600)
+      visual, killed = runtime(root, manager)
+      assert visual.ensure_running!(["brgen"]).ok?
+
+      Master::Fix::ServerLeases.stop_all_from_trap!
+
+      assert_equal [41_600], killed
+      Master::Fix::ServerLeases.stop_all!
+      assert_equal [41_600], killed, "a released lease stops nothing twice"
+    end
+  end
 end

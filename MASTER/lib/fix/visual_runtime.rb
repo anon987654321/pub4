@@ -3,6 +3,7 @@
 require "fileutils"
 require "rbconfig"
 require "socket"
+require_relative "server_leases"
 
 module Master
   module Fix
@@ -68,6 +69,7 @@ module Master
           # Register ownership even when /up never turns healthy; otherwise the
           # failed boot can leak a server process that no later fix pass owns.
           @owned[name] = { app:, pid: current_pid, pid_path: }
+          ServerLeases.hold(self, pid_path:, pid: current_pid)
           @started << name unless @started.include?(name)
         end
 

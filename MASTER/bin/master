@@ -382,8 +382,25 @@ rescue StandardError => e
   Master::Trace::Dmesg.status("control0", "stop failed, #{e.class}: #{e.message}", io: $stderr)
 end
 
-trap("INT") { Master::Trace::Dmesg.status("cli0", "interrupt, exiting", io: $stderr); exit!(130) }
-trap("TERM") { exit!(143) }
+# exit! runs no ensure and no at_exit, so the app servers a /fix run booted are stopped first; a run
+# stopped mid-pass left them serving for hours.
+def stop_booted_servers
+  Master::Fix::ServerLeases.stop_all_from_trap! if defined?(Master::Fix::ServerLeases)
+rescue StandardError => e
+  warn "cli0: booted servers not stopped, #{e.class}: #{e.message}"
+end
+
+trap("INT") do
+  Master::Trace::Dmesg.status("cli0", "interrupt, exiting", io: $stderr)
+
+  stop_booted_servers
+  exit!(130)
+end
+
+trap("TERM") do
+  stop_booted_servers
+  exit!(143)
+end
 trap("TSTP") do
   Master::Trace::Dmesg.status("cli0", "suspended, fg then /exit; Ctrl-Z leaves ~200MB ruby on 1GB hosts", io: $stderr)
   trap("TSTP", "DEFAULT")

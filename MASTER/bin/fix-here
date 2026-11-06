@@ -207,6 +207,15 @@ if stalled
 end
 ensure
   system(operator, "triangle", "down", chdir: ROOT, out: File::NULL, err: File::NULL) if live
+  # The run's own checks boot apps too (VisualRuntime), on any lane. A run that died past its traps
+  # left them serving for hours; their lease files name the dead owner, so they are stopped here.
+  begin
+    require_relative "../lib/fix/server_leases"
+    reaped = Master::Fix::ServerLeases.reap_orphans!(File.join(ROOT, "RAILS", "tmp", "triangle"))
+    puts "fix0 at fix-here: stopped #{reaped.join(", ")}, left serving by the run" if reaped.any?
+  rescue StandardError, LoadError => e
+    warn "fix-here: orphan server reap failed, #{e.class}: #{e.message}"
+  end
 end
 
 # The child can exit 0 having done nothing: an option error is printed and the message
