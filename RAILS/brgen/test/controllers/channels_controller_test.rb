@@ -46,6 +46,21 @@ class ChannelsControllerTest < ActionDispatch::IntegrationTest
     assert_equal id, Conversation.find_by!(slug: "maps").id
   end
 
+  # Channel names are IRC-style ("#brgen"): the rail once printed "#" on every
+  # chip. Each chip shows the letter after the hash and names the room in full.
+  test "the messenger rail shows each room's letter and names it in full" do
+    host! "messenger.brgen.no"
+    get "/"
+
+    assert_response :success
+    rooms = css_select(".messenger-rail-room")
+    assert_equal Conversation::CHANNELS.size, rooms.size
+    rooms.each do |room|
+      assert_match(/\A[[:upper:]]\z/, room.at_css(".messenger-rail-hash").text.strip, room["aria-label"])
+      assert room["aria-label"].start_with?("#"), room["aria-label"]
+    end
+  end
+
   # Every other test in this file runs tenant-less, so the channel is created
   # with city_id = nil and `belongs_to :city` answers nil without a query --
   # which is exactly the one case strict_loading cannot fire on. In production

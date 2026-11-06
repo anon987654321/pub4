@@ -177,13 +177,6 @@ preserve those strengths.
   whether an empty/loading treatment is still missing.
   Laws: `TRUTHFUL_STATUS`, `WAITING_STATE_MEANING`,
   `DENSITY_aesthetic_integrity`.
-- [ ] **Messenger rail recapture.** Current source strips the leading `#` and
-  renders the channel's first letter, with the full channel name available
-  to assistive technology. The November 5 screenshot predates or contradicts
-  that source. Re-run the focused view test and recapture before changing the
-  implementation again; preserve the populated split-pane layout.
-  Laws: `BOUNDED_LOAD_choice_overload`, `REACH`,
-  `OPERATOR_RENDERED_contract`.
 - [ ] **BSDPorts result readability, without redesign.** The desktop/mobile
   captures preserve the intentionally spare Google-like search surface, but
   result names, versions, repository identifiers and update metadata read
