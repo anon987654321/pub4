@@ -333,6 +333,8 @@ class TestMobileDoctor < Minitest::Test
     end
   end
 
+end
+
 class TestMobileAmbientPermissions < Minitest::Test
   Permissions = Master::Ground::PersonalPermissions
 
@@ -403,6 +405,4 @@ class TestMobileAmbientPermissions < Minitest::Test
       assert_equal ["termux-speech-to-text"], calls
     end
   end
-end
-
 end
