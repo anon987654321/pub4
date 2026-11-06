@@ -665,7 +665,7 @@ Gemini free tier hides its numbers; Hugging Face free monthly credits are gone.
 - [ ] Read OpenRouter's remaining free quota from `GET /api/v1/key` (`free_model_daily_requests`) into `Io::ModelQuota` instead of forecasting the burn rate.
 - [ ] Adopt openclaw's cooldown contract in `Io::LaneQuota`: parse `Retry-After` headers as exact cooldown, ladder everything else 30s-1m-5m with reset, disable auth-failed profiles about ten minutes, and cap stated waits at 60s before falling through.
 - [x] Spread free-load selection across every live `:free` model slug from `/api/v1/models`, ranked by `free_latency`, with per-model quota buckets, instead of the single default slug. (verified built 2026-11-06: use_live_catalog merges up to 40 live slugs — 12 free rows in the snapshot, plus kilo's own slugs since bb188de11c — with per-model daily buckets in Io::ModelQuota; residual: no latency field exists in the catalog, so ranking stays pool order)
-- [ ] Split lane deadlines into a connect/handshake budget (dead handshake trips the circuit breaker) and a read-idle budget (a stream that keeps delivering is never cut).
+- [x] Split lane deadlines into a connect/handshake budget (dead handshake trips the circuit breaker) and a read-idle budget (a stream that keeps delivering is never cut). (verified 2026-11-06: hosted and local-server lanes send `stream: true` and assemble SSE deltas; the 5s open timeout bounds the handshake and its failure propagates as an exception so the circuit breaker's accounting penalizes the lane; the read timeout is a 60s per-read idle budget that resets on every delivered chunk — three dispatcher tests cover assembly, silence and a dead handshake; residual: the run's own call deadline (PassClock, the /fix stall-window cap) still bounds the whole call, by law)
 - [ ] Flip Ollama Tier-D to probe-on warm: periodic one-token probe on `gemma3:4b` recorded into quota state, 2-4K context cap and `OLLAMA_KV_CACHE_TYPE=q8_0` for this 8 GB Mac, rehearsed as the final fallback-chain link.
 - [x] Keep a verified free-provider ledger row per provider (limit, models, keyless?, verified-on) so every free-tier fact carries its own staleness signal. (bb188de11c + models.yml annotations: llm7 re-verified 2026-11-06, key-gated providers marked recorded-2026-09 not re-verified)
 
@@ -678,3 +678,45 @@ rendered or task-evidence canon waits for the screenshot workflow.
 - [ ] MAEDA_THE_ONE: one primary action per surface — the check counts primary CTAs on a card or form and fails a second.
 - [ ] TUFTE_DATA_INK_RATIO: erase non-data ink — decoration-to-content ink measured in CSS decoration rules and chart ink versus data ink.
 - [ ] GESTALT_PROXIMITY: grouping distance must be smaller than separation distance on a rendered surface (screenshot geometry pairs with the layout-refinement workflow).
+## pub5 — a ported fresh start (planned 2026-11-04)
+
+pub5 is a new repository built by porting pub4, not rewriting it: every
+behaviour is locked as an executable contract in pub4 first, then rebuilt
+smaller against that contract. Target about 2,700–3,300 files from about
+6,000 (MASTER 700–900, RAILS 1,800–2,200, OPENBSD 100–150, STUDIO 40–50).
+Rule for the whole port: same behaviour, less code; new features wait.
+
+### Phase 0 — lock behaviour in pub4
+
+- [ ] * Route contracts: per app and route, the anonymous GET status, redirect target, title, landmarks and form actions, recorded from a running app and checkable against any base URL.
+- [ ] Signed-in route contracts with a seeded demo user.
+- [ ] Golden screenshots for every manifest route and dialog state at 390, 768 and 1280 px.
+- [ ] One proof fixture per Law generated from `laws.yml`, runnable against either repo.
+- [ ] Data export/import round-trip test per app schema.
+- [ ] MASTER CLI command contract: command, exit code, output shape.
+- [ ] One acceptance command that runs all of the above against a target repo or URL.
+
+### Phase 1 — skeleton
+
+- [ ] Root README and `AGENTS.md` only; one Ruby version reconciled with vm23; one lint config; one test command; commit-format hook from the first commit; generated output outside git.
+
+### Phase 2 — OPENBSD
+
+- [ ] Port with configs generated from `data/` and one Ruby deploy tool that ships a Mac-built artifact.
+
+### Phase 3 — RAILS
+
+- [ ] Shared base (tokens, SCSS foundation, Stimulus, auth, embeds, PWA), then bsdports, mrdamascy, amber, brgen core, and each brgen engine under `brgen/engines/`. Each app goes live only when its contracts and screenshots pass.
+
+### Phase 4 — STUDIO
+
+- [ ] dilla and postpro behind one CLI.
+
+### Phase 5 — MASTER
+
+- [ ] Port last; pub4 MASTER governs until pub5 MASTER passes every Law fixture. `soul.yml` and `laws.yml` move byte for byte.
+
+### Conditions
+
+- [ ] Freeze pub4 for other writers, or route them to pub5, before Phase 1.
+- [ ] pub4 stays as a read-only archive; pub5's first commit names the pub4 commit it ported from.
