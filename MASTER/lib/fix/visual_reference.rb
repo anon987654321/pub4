@@ -74,6 +74,49 @@ module Master
         PROFILES
       end
 
+      # Design2Code's comparison, with the DOM instead of OCR: elements of a pub4 page and of a
+      # reference capture paired by role (or tag) and text, and the position, size, type size and
+      # colour deltas of each pair. A report input for tuning toward a reference, never a gate.
+      # Reference captures are walk payloads kept outside the repository (tools/visual_reference.rb).
+      Pair = Data.define(:key, :ours, :theirs) do
+        def deltas
+          boxes = [ours, theirs].map { |element| element["frect"] || {} }
+          moved = %w[x y w h].to_h { |axis| [axis, gap(*boxes.map { |box| box[axis] })] }
+          moved.merge("font_size" => gap(ours["font_size"], theirs["font_size"]), "color" => recoloured)
+        end
+
+        def recoloured
+          colours = [ours["color"], theirs["color"]]
+          colours.uniq.size > 1 ? colours : nil
+        end
+
+        def gap(one, two) = (one.to_f - two.to_f).round(1)
+
+        def distance = deltas.slice("x", "y", "w", "h", "font_size").values.sum(&:abs)
+      end
+
+      def pair_key(element)
+        text = element["text"].to_s.downcase.gsub(/\s+/, " ").strip[0, 40]
+        [element["role"] || element["tag"], text] unless text.empty?
+      end
+
+      def compare(ours, theirs)
+        pool = Array(theirs).group_by { |element| pair_key(element) }
+        Array(ours).filter_map do |element|
+          key = pair_key(element) or next
+          match = pool[key]&.shift or next
+          Pair.new(key:, ours: element, theirs: match)
+        end
+      end
+
+      def report(pairs, limit: 12)
+        rows = pairs.sort_by { |pair| -pair.distance }.first(limit).map do |pair|
+          moved = pair.deltas.reject { |_axis, delta| delta.nil? || delta == 0.0 }
+          "#{pair.key.join(" ")}: #{moved.map { |axis, delta| "#{axis} #{delta}" }.join(", ")}"
+        end
+        ["REFERENCE DELTAS (pub4 minus reference, CSS px; matched #{pairs.size})", *rows].join("\n")
+      end
+
       def context
         <<~TEXT
           REFERENCE LENSES

@@ -25,4 +25,24 @@ class TestVisualReference < Minitest::Test
     assert_includes context, "bol:"
     assert_includes context, "pangram:"
   end
+
+  def element(tag, text, rect:, **extra)
+    { "tag" => tag, "text" => text, "frect" => %w[x y w h].zip(rect).to_h, "font_size" => 16.0,
+      "color" => "#111111" }.merge(extra.transform_keys(&:to_s))
+  end
+
+  # Elements pair by role or tag and text, whatever their order; the report leads with the largest
+  # difference and names every axis that moved.
+  def test_elements_pair_by_role_and_text_and_report_their_deltas
+    ours = [element("h1", "Markedsplass", rect: [16, 24, 358, 40], font_size: 28.0),
+            element("button", "Selg", rect: [16, 600, 120, 44], color: "#ff0000"),
+            element("p", "Bare hos oss", rect: [0, 0, 1, 1])]
+    theirs = [element("button", "selg", rect: [16, 596, 120, 48]),
+              element("h1", "Markedsplass", rect: [16, 16, 358, 40])]
+    pairs = Master::Fix::VisualReference.compare(ours, theirs)
+    report = Master::Fix::VisualReference.report(pairs)
+
+    assert_equal [%w[h1 markedsplass], %w[button selg]], pairs.map(&:key)
+    assert_match(/matched 2\)\nh1 markedsplass: y 8.0, font_size 12.0\nbutton selg: y 4.0, h -4.0, color/, report)
+  end
 end
