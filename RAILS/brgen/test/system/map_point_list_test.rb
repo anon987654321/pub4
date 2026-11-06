@@ -49,6 +49,7 @@ class MapPointListTest < ApplicationSystemTestCase
     assert_no_selector ".map-point-list li", text: "Bryggen"
     assert_selector ".map-point-list li a", text: "Fløyen"
   end
+
   # No MapLibre bundle loads, so the canvas is the list fallback. Fixed and
   # full-height, it squeezed each card below its own text and ran under the
   # search; in the page flow every card holds its text and starts below the HUD.

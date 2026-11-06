@@ -149,6 +149,7 @@ class StorefrontSearchTest < ActionDispatch::IntegrationTest
     assert_equal 1, page_search_fields.size
     assert_nil header_form["data-controller"]
   end
+
   # The storefront header said "logg inn" while every other chrome says
   # "Logg inn": one action, one label, so it reads the nav key.
   test "a guest's storefront account link says sign in as the rest of the chrome does" do
