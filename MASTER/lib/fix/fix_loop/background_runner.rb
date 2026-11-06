@@ -74,10 +74,10 @@ module Master
 
         def halted? = @halted
 
-        # Kept as the compatibility entry point for callers/tests that exercised
-        # the old loop directly. max_cycles/startup_delay/idle_sleep are obsolete:
-        # the durable mission, its next_wake_at and the supervisor now own lifetime.
-        def run_forever(target = @root, **_legacy)
+        def run_forever(target = @root)
+          # The durable mission, its next_wake_at and the supervisor own
+          # lifetime; the old max_cycles/startup_delay/idle_sleep knobs are
+          # gone and no caller passes them.
           @bg_target = target
           @bg_mutex ||= Mutex.new
           @bg_condition ||= ConditionVariable.new

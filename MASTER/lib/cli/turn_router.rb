@@ -165,11 +165,13 @@ module Master
       READING_WORDS = %w[council review critique].freeze
       PIPELINE_WORDS = (PIPELINE_COMMANDS + MODEL_ALIASES).freeze
       FOLD_SLASH = %w[fold run].freeze
-      READ_SLASH = %w[explain why laws axioms principles].freeze
-      # What a typed slash is allowed to be. Wider than the one word the surface
-      # offers: /scan and /sweep were spellings people had learned, and they
-      # rewrite to /fix, the one command advertised.
-      PIPELINE_SLASH = %w[fix scan self workflow triad sweep through].freeze
+      READ_SLASH = %w[explain why laws].freeze
+      # What a typed slash is allowed to be. Wider than the three words the surface
+      # offers, and deliberately: /scan, /sweep and /council were spellings people
+      # had learned, and a retired word that falls silently to chat is a worse
+      # answer than one that still works. They rewrite to /fix, the one command
+      # advertised.
+      PIPELINE_SLASH = %w[fix review critique council scan self workflow triad sweep through].freeze
 
       INFER_MIN_CONFIDENCE = 0.62
 

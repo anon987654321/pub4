@@ -42,7 +42,7 @@ module Master
       #
       # Command-line overrides are temporary: a setting on one turn must
       # not change how the next command repairs the repository.
-      def dispatch_fix(scanner:, fix_loop:, deliberation:, root:, bus:, ctx: nil, swarm: nil, **_legacy)
+      def dispatch_fix(scanner:, fix_loop:, deliberation:, root:, bus:, ctx: nil, swarm: nil)
         raw = lane_flag_joined(arg_for(ctx).to_s.strip)
         apply, critique, aesthetic, only, target = parse_pass_flags(raw)
         overrides = execution_overrides(raw)
