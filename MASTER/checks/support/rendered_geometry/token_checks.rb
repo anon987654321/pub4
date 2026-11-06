@@ -34,6 +34,7 @@ module Deploy
       }.freeze
 
       def check_computed_values(surface, elements)
+        check_space(surface, elements)
         shown = Array(elements).select { |el| el["visible"] }
         computed_offenders(shown).each do |kind, rows|
           next if rows.empty?

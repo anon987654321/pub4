@@ -324,6 +324,7 @@
       position: cs.position,
       display: cs.display,
       text_align: cs.textAlign,
+      text_wrap: cs.textWrapStyle || cs.textWrap || null,
       text_lines: ownText ? textLines(el, parseFloat(cs.fontSize)) : 0,
       // Browser text selection bounds are a perceptual proxy for the painted
       // text, rather than the containing element box. They let rendered checks

@@ -6,6 +6,7 @@ require_relative "../../../lib/gap"
 require_relative "../../support/rendered_geometry/token_checks"
 require_relative "../../support/rendered_geometry/placement_checks"
 require_relative "../../support/rendered_geometry/composition_checks"
+require_relative "../../support/rendered_geometry/space_checks"
 require_relative "../../support/check_result"
 
 require_relative "../../support/geometry_probe"
@@ -33,6 +34,7 @@ module Deploy
     include TokenChecks
     include PlacementChecks
     include CompositionChecks
+    include SpaceChecks
 
     ROOT = File.expand_path("../../../..", __dir__)
     RAILS_ROOT = File.join(ROOT, "RAILS")

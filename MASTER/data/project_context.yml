@@ -448,6 +448,7 @@ entries:
     nav counter pill, as if a message were waiting, instead of "new!".
     Reference products for principles only, never their look: x.com and
     reddit for the feed, bol.com for the marketplace, whyp.it for radio.
+    BPLANS/ may use classic serif typography such as Garamond.
 - key: operator_fix_mobile_first_and_simplify
   name: /fix captures mobile first and simplifies by subtraction
   description: Operator directives 2026-11-06 for /fix's visual lane
