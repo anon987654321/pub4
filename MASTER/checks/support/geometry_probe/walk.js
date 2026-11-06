@@ -312,6 +312,12 @@
       letter_spacing: cs.letterSpacing,
       text_transform: cs.textTransform,
       border_radius: cs.borderRadius,
+      // Computed spacing for the token audit: padding on four sides, the block
+      // margins (inline margins are the used value of auto and say nothing about
+      // a step), and the two gaps; null where the value is not a length.
+      spacing: [cs.paddingTop, cs.paddingRight, cs.paddingBottom, cs.paddingLeft,
+                cs.marginTop, cs.marginBottom, cs.rowGap, cs.columnGap]
+        .map((v) => { const n = parseFloat(v); return Number.isFinite(n) ? Math.round(n * 100) / 100 : null; }),
       box_shadow: cs.boxShadow !== "none",
       background_gradient: cs.backgroundImage && cs.backgroundImage !== "none" && /gradient\(/i.test(cs.backgroundImage),
       visual_filter: cs.filter !== "none" || cs.backdropFilter !== "none",
