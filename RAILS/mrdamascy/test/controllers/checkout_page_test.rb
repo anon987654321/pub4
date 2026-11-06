@@ -127,6 +127,7 @@ class CheckoutPageTest < ActionDispatch::IntegrationTest
     get checkout_url
 
     assert_redirected_to cart_url
+    assert_nil flash[:alert], "the cart page says it is empty; no alert repeats it"
     follow_redirect!
     assert_response :success
     assert_includes response.body, I18n.t("cart.empty_title")

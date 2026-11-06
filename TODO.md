@@ -218,13 +218,6 @@ preserve those strengths.
   do not cardify or re-theme the product.
   Laws: `BRINGHURST_measure`, `BRINGHURST_scale`,
   `PROPORTION_contrast`, `REACH`.
-- [ ] **Mr. Damascy empty checkout verification.** The GET action now redirects an
-  empty cart to the cart's existing empty state (or resumes its just-placed
-  unpaid order), and a regression asserts no zero-value payment buttons are
-  rendered. Run the focused checkout test and recapture the empty-cart flow;
-  the normal one-screen Vipps path remains unchanged.
-  Laws: `TRUTHFUL_STATUS`, `AFFORDANCE_CLARITY`, `COST_TRANSPARENCY`,
-  `OPERATOR_RENDERED_contract`.
 
 ### Screenshot-led micro-refinements — second pass (2026-11-06, clone@69a0fcb)
 

@@ -27,7 +27,9 @@ class CheckoutController < ApplicationController
       placed = cart.unpaid_order_just_placed
       return redirect_to_payment(placed) if placed
 
-      return redirect_to(cart_path, alert: t("cart.empty"))
+      # The cart page renders its own empty state; an alert on top repeated it
+      # in the error colour and covered the page heading on a phone.
+      return redirect_to(cart_path)
     end
 
     load_checkout_vars
