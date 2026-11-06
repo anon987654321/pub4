@@ -73,6 +73,10 @@ en:
     # fallbacks in the view, so amber and bsdports rendered the whole recovery
     # path in English over an nb page — and a `default:` also suppresses
     # raise_on_missing_translations, so nothing could report it.
+    # The widget's stranger-pairing button, shown wherever the host app routes
+    # encounters (brgen, amber); it lived in brgen's locale only, so amber
+    # raised on every page once it offered pairing.
+    random: "random"
     nearby_tab: "nearby"
     status_asking: "Asking for location…"
     status_denied: "Location blocked — staying in #brgen. Enable location in the browser for #nearby."

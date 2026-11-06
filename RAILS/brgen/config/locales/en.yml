@@ -148,7 +148,6 @@ en:
     leave: Leave
   chat:
     anon_handle: "Stranger #%{code}"
-    random: random
     roster: In this channel
     nearby_tab: nearby
     loading: Loading the room…

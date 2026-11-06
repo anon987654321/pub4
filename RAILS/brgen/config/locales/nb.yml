@@ -152,7 +152,6 @@ nb:
     leave: Avbryt
   chat:
     anon_handle: "Fremmed #%{code}"
-    random: tilfeldig
     roster: I denne kanalen
     nearby_tab: nærheten
     loading: Laster rommet…
