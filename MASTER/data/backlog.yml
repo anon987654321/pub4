@@ -7,7 +7,7 @@ schema: 1
 name: pub4_backlog
 generated_by: MASTER/tools/backlog.rb
 source: TODO.md (repository root)
-entry_count: 469
+entry_count: 468
 entries:
 - id: move-generated-snapshot-md-out-of-the-root
   text: >-
@@ -5961,18 +5961,6 @@ entries:
   tree: cross
   kind: mechanical
   size: m
-  scope_paths: []
-  done_when:
-  done_when_note: no runnable command named in the item text
-- id: spread-free-load-selection-across-every-live-free
-  text: >-
-    Spread free-load selection across every live `:free` model slug from
-    `/api/v1/models`, ranked by `free_latency`, with per-model quota buckets,
-    instead of the single default slug.
-  section: model pool — free compute and never-modelless (researched 2026-11-06)
-  tree: cross
-  kind: mechanical
-  size: s
   scope_paths: []
   done_when:
   done_when_note: no runnable command named in the item text
