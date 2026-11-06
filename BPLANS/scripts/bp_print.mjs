@@ -38,7 +38,12 @@ for (const name of ORDER) {
     `--print-to-pdf=${pdf}`, src,
   ], { encoding: 'utf8' });
   if (r.status !== 0) throw new Error(`${name}: chromium exited ${r.status}\n${r.stderr}`);
-  const info = spawnSync('pdfinfo', [pdf], { encoding: 'utf8' }).stdout;
+  const pdfinfo = process.env.PDFINFO_BIN || 'pdfinfo';
+  const infoResult = spawnSync(pdfinfo, [pdf], { encoding: 'utf8' });
+  if (infoResult.error || infoResult.status !== 0) {
+    throw new Error(`pdfinfo failed for ${pdf}: ${infoResult.error?.message || infoResult.stderr}`);
+  }
+  const info = infoResult.stdout || '';
   const size = (info.match(/Page size:\s*([\d.]+ x [\d.]+) pts/) || [])[1];
   const pages = (info.match(/Pages:\s*(\d+)/) || [])[1];
   const bytes = statSync(pdf).size;
