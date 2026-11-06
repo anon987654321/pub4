@@ -53,6 +53,11 @@ picked with the losers' reasons kept) -> `convergence.yml` workstreams. It
 fails on a pick whose critique did not keep it, a gap with fewer candidates
 than a real choice needs, a "picked" ledger row with no workstream, and any
 workstream name that exists nowhere.
+`backlog.rb` turns the root `TODO.md` into `data/backlog.yml`, one row per
+unchecked checkbox item with an id, tree, kind, scope paths and a done-when
+command where the item's prose names one. `--check` fails when the generated
+file no longer matches the source, and a row whose checkbox is checked off
+leaves the backlog in the same regenerate.
 
 Media implementations belong to `STUDIO/`. The two compatibility links
 that remain here are `dilla` and `replicate`; their targets and contracts are
