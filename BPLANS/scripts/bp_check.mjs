@@ -10,8 +10,7 @@
 //   inline style and inline fonts because no asset pipeline exists here.
 // Usage: node scripts/bp_check.mjs
 import { readFileSync } from 'node:fs';
-
-const OUT = '/home/z/my-project/download/pub4.good/BPLANS';
+import { OUTPUT_DIR as OUT } from './paths.mjs';
 const ORDER = ['syre', 'speis', 'ragnhild', 'nato', 'norwegianhedge', 'pubhealthcare', 'govt_bergen'];
 
 const LEECHES = ['veldig', 'svært', 'ganske', 'nokså', 'temmelig', 'virkelig', 'simpelthen'];
