@@ -7,17 +7,16 @@
 //    and used ONLY for the wordmark, never for semantic headings
 //  - aria-hidden on the decorative SYRE fractal mark
 // Usage: node scripts/bp_build.mjs
-import { readFileSync, writeFileSync } from 'node:fs';
+import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { OUTPUT_DIR as OUT, SOURCE_DIR as SRC } from './paths.mjs';
 import { PLANS_A } from './plans_a.mjs';
 import { PLANS_B } from './plans_b.mjs';
 import { ADDITIONS } from './content_add.mjs';
 
 const PLANS = { ...PLANS_A, ...PLANS_B };
 
-const SRC = '/home/z/my-project/repos/pub4/BPLANS';
-const PUB_SYRE = '/home/z/my-project/repos/pub/bplans/syre/syre.html';
-const NOSIFER = '/home/z/my-project/scripts/assets/Nosifer-2.woff2';
-const OUT = '/home/z/my-project/download/pub4.good/BPLANS';
+const PUB_SYRE = `${SRC}/syre.html`;
+mkdirSync(OUT, { recursive: true });
 const ORDER = ['syre', 'speis', 'ragnhild', 'nato', 'norwegianhedge', 'pubhealthcare', 'govt_bergen'];
 const TITLES = {
   syre: 'SYRE™ — forretningsplan', speis: 'SPEIS — forretningsplan',
@@ -54,7 +53,8 @@ mergeAdditions();
 // ---- logos -----------------------------------------------------------------
 function staticFractal() {
   const src = readFileSync(PUB_SYRE, 'utf8');
-  const m = src.match(/<svg id="fractalText".*?<\/svg>/s);
+  const m = src.match(/<svg id="(?:fractalText|syreMark)"[\\s\\S]*?<\\/svg>/);
+  if (!m) throw new Error('SYRE source has no recoverable fractal SVG');
   let svg = m[0]
     .replace(/<animate[^>]*?\/>/g, '')
     .replace(/<animateTransform[^>]*?\/>/g, '')
@@ -94,7 +94,10 @@ function logoHtml(plan) {
 }
 
 function fontCss() {
-  const b64 = readFileSync(NOSIFER).toString('base64');
+  const ragnhild = readFileSync(`${SRC}/ragnhild.html`, 'utf8');
+  const match = ragnhild.match(/@font-face\\{[^}]*font-family:'Nosifer'[^}]*src:url\\(data:font\\/woff2;base64,([A-Za-z0-9+/=]+)\\)/s);
+  if (!match) throw new Error('Nosifer font is not embedded in BPLANS/ragnhild.html');
+  const b64 = match[1];
   return ("@font-face{font-family:'Nosifer';font-style:normal;font-weight:400;"
     + "src:url(data:font/woff2;base64," + b64 + ") format('woff2');}"
     + "\n.mark-brand{font-family:'Nosifer','EB Garamond',Georgia,serif;font-weight:400;"
