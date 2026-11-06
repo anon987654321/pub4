@@ -152,21 +152,30 @@ the pub2 archive.
 
 ## Build pipeline (law-compliant)
 
-MASTER/data/laws.yml governs this tree. REACH_non_native_tool bans python,
-bash, sed, awk and friends ("Use Ruby") — so the pipeline is plain Node.js
-(Ruby and zsh do not exist on this host and cannot be installed; Node is not
-on the banned list, and the banned commands are not invoked anywhere):
+MASTER/data/laws.yml governs this tree. The committed build and check
+pipeline is plain Node.js: it reads and writes files directly and does not
+invoke Python, Bash, sed, awk or shell text processing.
 
-    node scripts/convert_content.mjs   # port the retired .py content (text parse, no python)
+The content port is already committed in `scripts/plans_a.mjs` and
+`scripts/plans_b.mjs`. `convert_content.mjs` is an optional one-time
+re-importer for the archived text sources; run it only when those two original
+files are available, setting `BPLANS_LEGACY_SOURCE_DIR` to their directory.
+Ordinary rebuilds start here:
+
     node scripts/bp_build.mjs          # insert completion content, logos, colophon
     node scripts/bp_check.mjs          # independent verification of the outputs
-    node scripts/bp_print.mjs          # print PDFs via chromium headless shell
     node scripts/bp_index.mjs          # regenerate index.html
+    node scripts/bp_print.mjs          # print PDFs via Chromium
+
+Source defaults to this BPLANS directory. Set `BPLANS_SOURCE_DIR` when using a
+separate clean source tree. Generated files go to the system temporary directory
+(`pub4-good-BPLANS`); set `BPLANS_OUT_DIR` to choose another destination.
+The PDF step discovers Chrome/Chromium on the host; set `BPLANS_CHROME_BIN`
+when it is not on PATH. `pdfinfo` (Poppler) is also required and can be
+selected with `PDFINFO_BIN`.
 
 bp_check.mjs executes the HTML/typography/prose laws (lang, charset, single
 h1, heading hierarchy, final newline, tabs, trailing whitespace, blank-line
 runs, TODO/placeholder scan, ASCII line art, trailing arrows, Norwegian
 leech words, character audit, and the full budget arithmetic re-read from the
 output files — inconclusive checks fail loudly, never pass silently).
-The retired Python scripts are kept untouched in scripts/legacy/ for
-provenance.
