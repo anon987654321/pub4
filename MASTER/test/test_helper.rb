@@ -130,7 +130,12 @@ Minitest::Test.class_eval do
     end
     watchdog = overrun_watchdog(Thread.current)
     Timeout.timeout(test_timeout) { run_without_timeout(*args) }
-  rescue Timeout::Error
+  # The watcher delivers the raw ExitException token; where it lands depends on whatever
+  # frame was executing at expiry, so a caller's `rescue Timeout::Error` can miss it and the
+  # test reports a crash mid-run instead of its deadline. Translate both spellings here.
+  rescue Timeout::Error => e
+    failed_with(e.class.new("timed out after #{test_timeout}s"))
+  rescue Timeout::ExitException
     failed_with(Timeout::Error.new("timed out after #{test_timeout}s"))
   # Minitest passes SystemExit through, so a test that reached exit or abort would end the whole
   # run with no report and name no failure.

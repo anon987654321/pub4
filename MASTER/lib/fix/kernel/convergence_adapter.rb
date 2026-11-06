@@ -175,6 +175,10 @@ module Master
             self, target:, max_passes:, budget_seconds:, incremental:, requested:, cancellation:
           )
         end
+      rescue Timeout::ExitException
+        # A nested timer whose token escaped its own boundary must end the run truthfully
+        # as a timeout, not as a crash in whatever frame the watcher interrupted.
+        Master::Result.err("run interrupted by an elapsed timeout", category: :timeout)
       end
 
       # Installing the token is where this adapter starts honouring it, so it activates the token

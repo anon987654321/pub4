@@ -3,6 +3,11 @@
 require_relative "test_helper"
 
 class TestFixLoopOscillation < Minitest::Test
+  # A requested run walks the whole convergence loop, journal included, and 30 s
+  # expires it under load — its raw Timeout token then escapes the harness rescue
+  # as a crash. These runs declare their own deadline.
+  def test_timeout = 120
+
   class FakeBus
     attr_reader :events
 

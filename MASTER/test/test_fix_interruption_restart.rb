@@ -15,6 +15,10 @@ require_relative "../lib/fix/fix_loop"
 # transaction state record a partial mutation; restart executes FixLoop's
 # startup recovery and reconciles the abandoned Kernel run receipt.
 class TestFixInterruptionRestart < Minitest::Test
+  # Crash/resume tests run whole convergence loops; the 30 s suite default
+  # expires them under load, so they declare their own deadline.
+  def test_timeout = 120
+
   def test_losing_run_journal_does_not_lose_mission_checkpoint_or_transaction_recovery
     Dir.mktmpdir("fix-journal-loss-restart") do |root|
       FileUtils.mkdir_p(File.join(root, "MASTER"))
