@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>radio.brgen.no — Wireframe Tunnel</title>
+  <meta name="theme-color" content="#000000" />
+  <meta name="description" content="Minimal wireframe audio tunnel. Space next track. M mute/unmute." />
+  <style>
+    /* MASTER laws: AESTHETIC_FLAT_SEMANTIC, FLAT_UI, EIGHT_PX_RHYTHM,
+       PIXEL_EXACT, DENSITY, VISUAL_HIERARCHY, still-by-default.
+       Chrome sits on 8px steps. No shadow, blur, or glow. */
+    html, body {
+      margin: 0;
+      height: 100%;
+      background: #000;
+      color: #9aa;
+      font: 14px/1.4 system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+    canvas {
+      position: fixed;
+      inset: 0;
+      width: 100vw;
+      height: 100vh;
+      display: block;
+      background: #000;
+      touch-action: none;
+    }
+    h1.site {
+      position: fixed;
+      top: 16px;
+      left: 16px;
+      margin: 0;
+      color: #bbb;
+      letter-spacing: 0.02em;
+      pointer-events: none;
+      user-select: none;
+      font-weight: 700;
+      font-size: clamp(16px, 2.2vw, 24px);
+      line-height: 1.2;
+    }
+    .ui {
+      position: fixed;
+      right: 16px;
+      bottom: 16px;
+      color: #7a90a0;
+      font-size: 12px;
+      line-height: 1.4;
+      opacity: 0.95;
+      white-space: nowrap;
+      pointer-events: none;
+      user-select: none;
+      text-align: right;
+      max-width: min(72vw, 800px);
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .overlay {
+      position: fixed;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      background: rgba(0, 0, 0, 0.92);
+      color: #9aa;
+      cursor: pointer;
+      user-select: none;
+      padding: 24px;
+      text-align: center;
+    }
+    .overlay[hidden] { display: none; }
+    .overlay p {
+      max-width: 36rem;
+      margin: 0;
+      line-height: 1.5;
+      font-size: 14px;
+    }
+    #player {
+      position: fixed;
+      top: -1000px;
+      left: -1000px;
+      width: 1px;
+      height: 1px;
+      opacity: 0;
+      pointer-events: none;
+    }
+    @media (prefers-reduced-motion: reduce) {
+      canvas { opacity: 0.85; }
+    }
+  </style>
+</head>
+<body>
+  <h1 class="site" aria-hidden="true">radio.brgen.no</h1>
+  <canvas id="canvas" aria-label="Minimal three-color gradient wireframe tunnel"></canvas>
+  <div id="overlay" class="overlay" role="dialog" aria-labelledby="start-title" tabindex="0">
+    <h2 id="start-title" style="position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;">Start</h2>
+    <p>Click / tap to start · Space next track · M mute/unmute · Mobile: tilt for parallax</p>
+  </div>
+  <div class="ui" id="ui">Ready</div>
+  <iframe id="player" src="about:blank" title="Audio player" frameborder="0" allow="autoplay; encrypted-media; accelerometer; gyroscope"></iframe>
+  <script>
+    "use strict";
+    // Single mode: Classic Tunnel. MASTER: AESTHETIC_FLAT_SEMANTIC, still-by-default.
+    const COLOR_A = { h: 210, s: 40, l: 16 };
+    const COLOR_B = { h: 190, s: 50, l: 38 };
+    const COLOR_C = { h: 180, s: 30, l: 28 };
+    const GRAD = {
+      phase: 0, speedBase: 0.08, mouseDelta: 0,
+      update(dt, audioAvg, mouseDx, mouseDy) {
+        this.mouseDelta = Math.hypot(mouseDx || 0, mouseDy || 0) * 0.01;
+        this.phase += dt * (this.speedBase + audioAvg * 0.12 + this.mouseDelta * 0.2);
+      },
+      factor(depth, audioAvg) {
+        let f = 1 - depth;
+        f += 0.06 * Math.sin(this.phase + depth * 1.2);
+        f += 0.05 * (audioAvg || 0);
+        f += 0.03 * this.mouseDelta;
+        return Math.max(0, Math.min(1, f));
+      }
+    };
+    function hslToRgb(h, s, l) {
+      h = ((h % 360) + 360) % 360;
+      s = Math.max(0, Math.min(100, s)) / 100;
+      l = Math.max(0, Math.min(100, l)) / 100;
+      const c = (1 - Math.abs(2 * l - 1)) * s;
+      const hp = h / 60;
+      const x = c * (1 - Math.abs((hp % 2) - 1));
+      let r1 = 0, g1 = 0, b1 = 0;
+      if (0 <= hp && hp < 1) { r1 = c; g1 = x; }
+      else if (1 <= hp && hp < 2) { r1 = x; g1 = c; }
+      else if (2 <= hp && hp < 3) { g1 = c; b1 = x; }
+      else if (3 <= hp && hp < 4) { g1 = x; b1 = c; }
+      else if (4 <= hp && hp < 5) { r1 = x; b1 = c; }
+      else if (5 <= hp && hp < 6) { r1 = c; b1 = x; }
+      const m = l - c / 2;
+      return [Math.round((r1 + m) * 255) | 0, Math.round((g1 + m) * 255) | 0, Math.round((b1 + m) * 255) | 0];
+    }
+    function colorFor(depth, audioAvg) {
+      const f = GRAD.factor(depth, audioAvg);
+      let h, s, lBase;
+      if (f < 0.5) {
+        const t = f * 2;
+        h = COLOR_A.h + (COLOR_B.h - COLOR_A.h) * t;
+        s = COLOR_A.s + (COLOR_B.s - COLOR_A.s) * t;
+        lBase = COLOR_A.l + (COLOR_B.l - COLOR_A.l) * t;
+      } else {
+        const t = (f - 0.5) * 2;
+        h = COLOR_B.h + (COLOR_C.h - COLOR_B.h) * t;
+        s = COLOR_B.s + (COLOR_C.s - COLOR_B.s) * t;
+        lBase = COLOR_B.l + (COLOR_C.l - COLOR_B.l) * t;
+      }
+      return hslToRgb(h, s, lBase + (audioAvg || 0) * 3);
+    }
+    const WIRE_ALPHA = 200, FOV = 250, SPEED = 0.75, BASE_RADIUS = 75, SEGMENTS = 64, Z_STEP = 4, TAU = Math.PI * 2;
+    const TRACKS = [
+      { artist: "J Dilla", title: "Microphone Master", id: "9EGHwkDix78" },
+      { artist: "AFTA-1", title: "Due Time", id: "WC09qDzU9y4" },
+      { artist: "Flying Lotus", title: "Message Situation", id: "9fzGGbiJags" },
+      { artist: "Röyksopp", title: "Only This Moment (Forsiktige massage)", id: "vLE5XCc0XO8" },
+      { artist: "Jneiro Jarel", title: "Chinubian", id: "9OPypHXlJUQ" },
+      { artist: "Pete Rock", title: "A Little Soul", id: "4tY89H5TWPY" },
+      { artist: "Slum Village", title: "La La (Instrumental)", id: "EYJxxHQ7sX0" },
+      { artist: "Slum Village", title: "Forth & Back (Rock Music) Instrumental", id: "1XY8EHOzLbY" },
+      { artist: "Flying Lotus", title: "me Yesterday//Corded", id: "8DgAhgmpXNA" },
+      { artist: "Flying Lotus", title: "Camel", id: "t6SXXx1Fu_4" },
+      { artist: "Slum Village", title: "Worlds Full of Sadness", id: "MU3nfxsz2XA" },
+      { artist: "Black Loops", title: "Under the Sea", id: "U81xh9gJeYM" },
+      { artist: "how", title: "J Dilla - Players (Second Version) (Unreleased)", id: "292777", token: "zaB8x" },
+      { artist: "how", title: "Black Loops - Under the Sea", id: "292774", token: "UTbNQ" },
+      { artist: "how", title: "amiga", id: "292741", token: "2Jh5p" },
+      { artist: "how", title: "RADIO BERGEN #1", id: "292718", token: "1cr3I" },
+      { artist: "how", title: "RAUINGAR", id: "230366", token: "zPfQp" },
+      { artist: "how", title: "Haisam & Johann - PB1", id: "195489", token: "3XYFb" },
+      { artist: "how", title: "Mike T & Johann - Alt Kan Skje", id: "183204", token: "20RKB" },
+      { artist: "how", title: "Jan Hakim & Johann - Stailings (a)", id: "183195", token: "ALudQ" },
+      { artist: "how", title: "Angelo Reira & Johann - Sandviken Hotell (b)", id: "183193", token: "CTq5y" },
+      { artist: "how", title: "Jan Hakim & Johann - Stailings (a)", id: "183179", token: "LWVOl" },
+      { artist: "how", title: "Jan Hakim & Johann - Stailings (b)", id: "183178", token: "eiAIW" },
+      { artist: "how", title: "Lofi", id: "183173", token: "D9TSI" },
+      { artist: "how", title: "Angelo Reira & Johann - Sandviken Hotell (a)", id: "182727", token: "QAuRq" }
+    ];
+    const UI = (() => {
+      const el = document.getElementById("ui");
+      return { text(t) { if (el) el.textContent = t; } };
+    })();
+    const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    class AudioEngine {
+      constructor() {
+        this.player = document.getElementById("player");
+        this.started = false; this.muted = false; this.track = 0;
+        this.startMs = 0; this.durationMs = 180000; this._advanceTimer = null;
+      }
+      start() { this.started = true; this.loadAndPlay(TRACKS[this.track]); }
+      loadAndPlay(track) {
+        if (!this.player) return;
+        const token = track.token ? "&token=" + encodeURIComponent(track.token) : "";
+        this.player.src = "https://whyp.it/tracks/embed?id=" + encodeURIComponent(track.id) + token;
+        this.afterStart();
+      }
+      afterStart() {
+        this.startMs = performance.now();
+        clearTimeout(this._advanceTimer);
+        this._advanceTimer = setTimeout(() => this.next(), this.durationMs);
+        UI.text(this.trackLabel());
+      }
+      next() { this.track = (this.track + 1) % TRACKS.length; this.loadAndPlay(TRACKS[this.track]); }
+      toggleMute() {
+        this.muted = !this.muted;
+        UI.text(this.trackLabel() + (this.muted ? " · muted" : ""));
+      }
+      trackLabel() { const t = TRACKS[this.track]; return t.artist + " — " + t.title; }
+      data() {
+        if (prefersReducedMotion) return { bass: 0.35, mid: 0.35, high: 0.3, average: 0.33 };
+        const t = (performance.now() - this.startMs) * 0.001;
+        const swing = Math.sin(t * 0.7) * 0.1, pocket = Math.cos(t * 0.5) * 0.08;
+        const bass = Math.min(1, Math.max(0, 0.45 + 0.45 * Math.sin(2.2 * t + pocket)));
+        const mid = Math.min(1, Math.max(0, 0.40 + 0.35 * Math.sin(3.3 * t + swing)));
+        const high = Math.min(1, Math.max(0, 0.30 + 0.35 * Math.sin(5.1 * t + pocket * 0.7)));
+        return { bass, mid, high, average: (bass + mid + high) / 3 };
+      }
+    }
+    const canvas = document.getElementById("canvas");
+    const ctx = canvas.getContext("2d", { alpha: false });
+    let w = 0, h = 0, imageData = null, data = null;
+    function resize() {
+      w = window.innerWidth | 0; h = window.innerHeight | 0;
+      canvas.width = w; canvas.height = h;
+      ctx.fillStyle = "#000"; ctx.fillRect(0, 0, w, h);
+      imageData = ctx.getImageData(0, 0, w, h); data = imageData.data;
+    }
+    addEventListener("resize", resize);
+    function fadeImageData(fade) {
+      for (let i = 0, n = data.length; i < n; i += 4) {
+        data[i] *= fade; data[i+1] *= fade; data[i+2] *= fade; data[i+3] = 255;
+      }
+    }
+    function drawLine(x1, y1, x2, y2, r, g, b, a) {
+      x1 = Math.max(0, Math.min(w-1, x1|0)); y1 = Math.max(0, Math.min(h-1, y1|0));
+      x2 = Math.max(0, Math.min(w-1, x2|0)); y2 = Math.max(0, Math.min(h-1, y2|0));
+      let dx = Math.abs(x2-x1), dy = Math.abs(y2-y1);
+      let sx = x1<x2?1:-1, sy = y1<y2?1:-1, err = dx-dy, x = x1, y = y1;
+      for (;;) {
+        if (x>=0 && x<w && y>=0 && y<h) {
+          const i = (x + y * w) * 4;
+          data[i]=r; data[i+1]=g; data[i+2]=b; data[i+3]=a;
+        }
+        if (x===x2 && y===y2) break;
+        const e2 = err << 1;
+        if (e2 > -dy) { err -= dy; x += sx; }
+        if (e2 < dx) { err += dx; y += sy; }
+      }
+    }
+    let time = 0, mouseActive = false, mouseDown = false;
+    let mouseX = 0, mouseY = 0, lastMouseX = 0, lastMouseY = 0;
+    let rows = [], centers = [];
+    function initField() {
+      rows = []; centers = [];
+      let c = 0;
+      const w1 = Math.random() * w, h1 = Math.random() * h;
+      for (let z = -FOV; z < FOV; z += Z_STEP) {
+        const row = [];
+        for (let i = 0; i < SEGMENTS; i++) {
+          row.push({ x:0, y:0, z, x2d:0, y2d:0, idx:i, segs:SEGMENTS, radius:BASE_RADIUS, radiusAudio:BASE_RADIUS });
+        }
+        rows.push(row);
+        centers.push({ x: ((w/2)-w1)*(c/15)+w/2, y: ((h/2)-h1)*(c/15)+h/2 });
+        c++;
+      }
+    }
+    function classicRing() { return 0; }
+    function projectAndAdvance(audio, dt, mouseDx, mouseDy) {
+      const R = rows.length;
+      let sortNeeded = false;
+      GRAD.update(dt, audio.average || 0, mouseDx, mouseDy);
+      for (let i = 0; i < R; i++) {
+        const row = rows[i], prevRow = i > 0 ? rows[i-1] : null, center = centers[i];
+        if (mouseActive) {
+          center.x = ((w/2)-mouseX)*((row[0].z-FOV)/500)+w/2;
+          center.y = ((h/2)-mouseY)*((row[0].z-FOV)/500)+h/2;
+        } else {
+          center.x += ((w/2)-center.x)*0.015;
+          center.y += ((h/2)-center.y)*0.015;
+        }
+        const depth = i / R;
+        const [cr, cg, cb] = colorFor(depth, audio.average || 0);
+        for (let j = 0, k = row.length; j < k; j++) {
+          const p = row[j];
+          const theta = p.idx * (TAU / p.segs) + time;
+          p.radius = BASE_RADIUS + classicRing();
+          p.radiusAudio = p.radius + (audio ? audio.average * 6 : 0);
+          const rx = Math.cos(theta) * p.radiusAudio, ry = Math.sin(theta) * p.radiusAudio;
+          const scale = Math.max(0.001, Math.min(10, FOV / (FOV + p.z)));
+          p.x2d = rx * scale + center.x; p.y2d = ry * scale + center.y;
+          if (mouseDown) { p.z += SPEED; if (p.z > FOV) { p.z -= FOV * 2; sortNeeded = true; } }
+          else { p.z -= SPEED; if (p.z < -FOV) { p.z += FOV * 2; sortNeeded = true; } }
+          const prevIdx = (j - 1 + k) % k, prev = row[prevIdx];
+          drawLine(p.x2d, p.y2d, prev.x2d, prev.y2d, cr, cg, cb, WIRE_ALPHA);
+          if (prevRow) {
+            const prevInPrev = prevRow[prevIdx];
+            drawLine(p.x2d, p.y2d, prevInPrev.x2d, prevInPrev.y2d, cr, cg, cb, WIRE_ALPHA);
+          }
+        }
+      }
+      if (sortNeeded) {
+        const pairs = rows.map((row, idx) => ({ row, center: centers[idx] }));
+        pairs.sort((a, b) => b.row[0].z - a.row[0].z);
+        rows = pairs.map(p => p.row); centers = pairs.map(p => p.center);
+      }
+      if (!prefersReducedMotion) time += mouseDown ? -0.005 : 0.005;
+    }
+    const overlay = document.getElementById("overlay");
+    const audio = new AudioEngine();
+    overlay.addEventListener("mousedown", (e) => { e.stopPropagation(); e.preventDefault(); }, { capture: true });
+    overlay.addEventListener("click", (e) => { e.stopPropagation(); e.preventDefault(); startApp(); });
+    overlay.addEventListener("keydown", (e) => {
+      if (e.code === "Enter" || e.code === "Space") { e.preventDefault(); startApp(); }
+    });
+    canvas.addEventListener("mousedown", () => { mouseDown = true; });
+    canvas.addEventListener("mouseup", () => { mouseDown = false; });
+    canvas.addEventListener("mouseenter", () => { mouseActive = true; });
+    canvas.addEventListener("mouseleave", () => { mouseActive = false; mouseDown = false; mouseX = w/2; mouseY = h/2; });
+    canvas.addEventListener("mousemove", (e) => {
+      const rect = canvas.getBoundingClientRect();
+      lastMouseX = mouseX; lastMouseY = mouseY;
+      mouseX = e.clientX - rect.left; mouseY = e.clientY - rect.top;
+    }, { passive: true });
+    let orientationActive = false, beta = 0, gamma = 0;
+    if (window.DeviceOrientationEvent) {
+      window.addEventListener("deviceorientation", (e) => {
+        beta = e.beta || 0; gamma = e.gamma || 0; orientationActive = true;
+      }, { passive: true });
+    }
+    addEventListener("keydown", (e) => {
+      if (e.code === "Space") { e.preventDefault(); if (audio.started) audio.next(); return; }
+      if (e.key && e.key.toLowerCase() === "m") { e.preventDefault(); if (audio.started) audio.toggleMute(); }
+    });
+    function startApp() {
+      if (!audio.started) { audio.start(); UI.text(audio.trackLabel()); overlay.hidden = true; }
+    }
+    let lastTs = performance.now();
+    function animate(ts) {
+      const dt = Math.min(0.05, (ts - lastTs) / 1000); lastTs = ts;
+      fadeImageData(prefersReducedMotion ? 0.92 : 0.85);
+      const a = audio.data();
+      const mouseDx = mouseX - lastMouseX, mouseDy = mouseY - lastMouseY;
+      if (orientationActive && !prefersReducedMotion) {
+        mouseX = w/2 + gamma * (w/90); mouseY = h/2 + beta * (h/90); mouseActive = true;
+      }
+      projectAndAdvance(a, dt, mouseDx, mouseDy);
+      ctx.putImageData(imageData, 0, 0);
+      requestAnimationFrame(animate);
+    }
+    function boot() {
+      resize(); initField(); UI.text("Ready · click to start"); requestAnimationFrame(animate);
+    }
+    if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot);
+    else boot();
+  </script>
+</body>
+</html>
