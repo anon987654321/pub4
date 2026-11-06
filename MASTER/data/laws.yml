@@ -2772,8 +2772,8 @@ law_catalogue:
       languages: [ruby, javascript, html, yaml, markdown, zsh, css]
       path_exclude:
         - 'MASTER/lib/cli/face'
-        - 'RAILS/master/public/(?:face_ascii|face_2d_fallback)\.js'
-        - 'RAILS/master/test/face_ascii\.test\.mjs'
+        - 'MASTER/web/public/(?:face_ascii|face_2d_fallback)\.js'
+        - 'MASTER/web/test/face_ascii\.test\.mjs'
         - 'MASTER/test/test_cli_ascii_face\.rb'
         - 'MASTER/test/fixtures/face_ascii_frames\.json'
         - 'MASTER/tools/face_ascii_fixtures\.rb'
