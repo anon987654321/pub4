@@ -110,7 +110,7 @@ module Master
 
       # The execution overrides a single dispatch sets, and what the next
       # command inherits: set the run's mode, lane and pin, yield the run,
-      # then restore — the same one-command lifetime the simplify pin has.
+      # then restore — the same one-command lifetime the critique pin has.
       def with_fix_overrides(overrides, previous:)
         Master::Fix::AutofixGuard.mode = overrides[:autofix_mode] if overrides[:autofix_mode]
         Master::Fix::RunLedger.max_files = overrides[:max_files] if overrides[:max_files]
@@ -118,10 +118,10 @@ module Master
         Master::Fix::CheckFocus.plan! if overrides[:plan]
         Master::Fix::CheckFocus.until_checks! if overrides[:until_checks]
         Master::Fix::WorkLane.set!(overrides.fetch(:lane))
-        Master::Fix::SimplifyPass.set! if overrides[:simplify]
+        Master::Fix::CritiquePin.set!(critique_pin_focus(overrides))
         yield
       ensure
-        Master::Fix::SimplifyPass.clear
+        Master::Fix::CritiquePin.clear
         restore_fix_state(previous)
       end
 
@@ -401,10 +401,10 @@ module Master
           boundary = writes_requested ? "current-checkout" : "no-write-or-publish"
           with_dmesg_verbosity(raw, default: "trace") do
             Master::Trace::Dmesg.status("fix0", "mode=#{mode} target=#{display_target} boundary=#{boundary}")
-            next unless Master::Fix::SimplifyPass.requested?
+            next unless Master::Fix::CritiquePin.focus
 
             Master::Trace::Dmesg.status(
-              "fix0", "simplify pin: council argues quality only, instruments keep their findings"
+              "fix0", "#{Master::Fix::CritiquePin.focus} pin: council argues its focus only, instruments keep their findings"
             )
           end
           targets = fix_targets(target, root:)
@@ -725,8 +725,18 @@ module Master
         {
           autofix_mode: nil, max_files: nil, blockers: false, lane:,
           plan: tokens.include?("--plan"), until_checks: tokens.include?("--until-checks"),
-          simplify: tokens.include?("--simplify"), task_intent: nil,
+          simplify: tokens.include?("--simplify"), security: tokens.include?("--security"),
+          task_intent: nil,
         }.merge(flag_overrides(raw.to_s))
+      end
+
+      # One pin at a time: two focus flags in one run is the first flag's
+      # command line losing, so the pin resolves to whichever focus was
+      # spelled, simplify winning on a tie.
+      def critique_pin_focus(overrides)
+        return :simplify if overrides[:simplify]
+
+        :security if overrides[:security]
       end
 
       # The flags whose value lives in the token: autofix mode, file budget,

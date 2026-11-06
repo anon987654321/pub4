@@ -2,20 +2,28 @@
 
 module Master
   module Fix
-    # The simplify pin, set by `/fix --simplify`. While requested, the council
-    # inside the loop argues quality only — reuse, simplification, efficiency,
-    # altitude — and hunts no bugs: the deterministic instruments keep their
-    # findings, and the law gates keep their ceilings. Set per dispatch and
-    # cleared by the dispatch that set it, the same one-command lifetime the
-    # other execution overrides have.
-    module SimplifyPass
+    # The critique pin, set by /fix flags (`--simplify`, `--security`). While a
+    # focus is set, the council inside the loop argues that focus only instead
+    # of the full hard review: `--simplify` argues quality (reuse,
+    # simplification, efficiency, altitude), `--security` argues the properties
+    # that fail silently. The deterministic instruments keep their findings,
+    # and the law gates keep their ceilings. Set per dispatch and cleared by
+    # the dispatch that set it, the same one-command lifetime the other
+    # execution overrides have.
+    module CritiquePin
+      FOCI = %i[simplify security].freeze
+
       module_function
 
-      def set! = @requested = true
+      def set!(focus) = @focus = FOCI.include?(focus) ? focus : nil
 
-      def clear = @requested = false
+      def clear = @focus = nil
 
-      def requested? = @requested == true
+      def focus = @focus
+
+      def simplify? = @focus == :simplify
+
+      def security? = @focus == :security
     end
 
     class FixLoop
@@ -158,6 +166,33 @@ module Master
           Findings that add machinery, redesign a working system, or argue from taste alone are refused.
         TEXT
 
+        # The security pin (`/fix --security`, the security-review panel folded
+        # into the loop): the panel argues the properties that fail silently
+        # only. The deterministic instruments still list what actually fails.
+        SECURITY_REVIEW = <<~TEXT.strip
+          This is the security critique, not a general code review. The
+          deterministic instruments own what fails; this panel hunts no taste
+          or style concerns.
+
+          Review the target for the properties that fail silently:
+          - injection: command, path, SQL, script or template interpolation
+            reached from an untrusted caller or untrusted content
+          - authority: authorization checks that are assumed rather than proven,
+            privilege inherited from ambient state, ownership never re-verified
+          - custody: secrets, tokens and personal material that can leak through
+            logs, caches, error messages or generated copies
+          - bypasses: environment flags, fallbacks, rescue branches and rollback
+            paths that silently weaken a safety property
+          - delivery: the path a change takes to real execution — packaging,
+            restart, TLS, browser, cron — and what an attacker controls on it
+
+          Every finding names the boundary crossed and the untrusted input or
+          ambient state it starts from.
+          For every actionable finding, anchor it to a repository-relative file plus a stable line or symbol.
+          The smallest deterministic check that would falsify the finding is named.
+          Findings that harden no boundary, or argue taste, are refused.
+        TEXT
+
         def council_enabled? = Master::Review::LLMDispatcher::PassClock.council_enabled?
 
         # The council ahead of the fixes is advisory: the fix stream starts within
@@ -284,9 +319,13 @@ module Master
         end
 
         # The critique contract the panel reads: the full hard review by
-        # default, the quality-only simplify contract while the pin is set.
+        # default, the pinned contract while a pin's focus is set.
         def review_contract
-          Master::Fix::SimplifyPass.requested? ? SIMPLIFY_REVIEW : HARD_REVIEW
+          pin = Master::Fix::CritiquePin
+          return SIMPLIFY_REVIEW if pin.simplify?
+          return SECURITY_REVIEW if pin.security?
+
+          HARD_REVIEW
         end
 
         def load_runners(files)

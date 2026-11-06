@@ -170,8 +170,10 @@ module Master
       CONVERGENCE_SLASH = { "prove" => "--prove", "explain" => "--explain" }.freeze
       # The words that pin the write run's critique: /simplify is /fix whose
       # council argues quality only — reuse, simplification, efficiency,
-      # altitude — and hunts no bugs; the instruments keep their findings.
-      FIX_PIN_SLASH = { "simplify" => "--simplify" }.freeze
+      # altitude — and hunts no bugs; /security is /fix whose council argues
+      # the silently-failing properties — injection, authority, custody,
+      # bypasses, delivery. Either way the instruments keep their findings.
+      FIX_PIN_SLASH = { "simplify" => "--simplify", "security" => "--security" }.freeze
       # fix, review and critique are the advertised verbs; the rest of the surface
       # is wider than the three words on purpose — /scan, /sweep and /council were
       # spellings people had learned, and a retired word that falls silently to
@@ -179,7 +181,7 @@ module Master
       # the one command advertised.
       PIPELINE_SLASH = (
         %w[fix review critique council scan self workflow triad sweep through] +
-        CONVERGENCE_SLASH.keys + %w[simplify]
+        CONVERGENCE_SLASH.keys + FIX_PIN_SLASH.keys
       ).uniq.freeze
 
       INFER_MIN_CONFIDENCE = 0.62
