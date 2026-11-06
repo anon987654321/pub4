@@ -511,12 +511,17 @@ local_servers:
 # HostedEndpoints). Each lists its models at <base>/models, and they join the
 # free lane of every chain as <name>:<model>. key_env is where a key may be set;
 # with none set, only the models whose listing matches `keyless` are offered.
-# LLM7 serves its turbo tier without a key except the usage-based models,
-# measured 2026-09-24: GLM-5.3-Flash, codestral-latest, minimax-m2.7 and
-# mistral-Nemo-Instruct-2407 answered; every other chat model returned 401.
-# Groq, Cerebras and NVIDIA NIM carry larger free quotas behind a free signup
-# key (limits as awesome-freellm-apis lists them, 2026-09); with no keyless
-# rule they are not asked until their key is set in ~/.config/master/env.
+# LLM7 serves its turbo tier without a key except the usage-based models.
+# Verified 2026-11-06 from this Mac: GET /models answered keyless (70 rows,
+# 7 keyless turbo: GLM-5.3-Flash, DeepSeek-V4-Flash-0731, codestral-latest,
+# gpt-oss:20b, minimax-m2.7, mistral-Nemo-Instruct-2407, nemotron-3-nano:30b);
+# chat burst-limited (429) during verification, so keyless chat completion is
+# not re-confirmed today — the tier names above are listing facts, not
+# measured completions.
+  # Groq, Cerebras and NVIDIA NIM carry larger free quotas behind a free signup
+  # key (limits as awesome-freellm-apis lists them, 2026-09; key-gated, so they
+  # cannot be probed keyless and have not been re-verified since); with no keyless
+  # rule they are not asked until their key is set in ~/.config/master/env.
 openai_compatible:
   llm7:
     base: https://api.llm7.io/v1
