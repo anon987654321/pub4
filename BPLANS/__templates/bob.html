@@ -1,0 +1,239 @@
+<script type="text/javascript">
+        var gk_isXlsx = false;
+        var gk_xlsxFileLookup = {};
+        var gk_fileData = {};
+        function filledCell(cell) {
+          return cell !== '' && cell != null;
+        }
+        function loadFileData(filename) {
+        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
+            try {
+                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
+                var firstSheetName = workbook.SheetNames[0];
+                var worksheet = workbook.Sheets[firstSheetName];
+
+                // Convert sheet to JSON to filter blank rows
+                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
+                // Filter out blank rows (rows where all cells are empty, null, or undefined)
+                var filteredData = jsonData.filter(row => row.some(filledCell));
+
+                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
+                var headerRowIndex = filteredData.findIndex((row, index) =>
+                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
+                );
+                // Fallback
+                if (headerRowIndex === -1 || headerRowIndex > 25) {
+                  headerRowIndex = 0;
+                }
+
+                // Convert filtered JSON back to CSV
+                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
+                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
+                return csv;
+            } catch (e) {
+                console.error(e);
+                return "";
+            }
+        }
+        return gk_fileData[filename] || "";
+        }
+        </script><!DOCTYPE html>
+<html lang="nb">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Formelt svar på oppsigelse og oppussingsforslag">
+    <title>Ragnhild Laupsa Mæhle - Innsigelse og Oppussingsforslag</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400..800;1,400..800&family=Source+Serif+4:ital,opsz,wght@0,8..60,200..900;1,8..60,200..900&display=swap">
+    <style>
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+      :root {
+        --color-text: #000; --color-muted: #777; --color-link: #005f73; --color-link-bold: #003087;
+        --color-print-muted: #aaa; --color-border: #ddd; --color-icon: #000; --color-background: #fff;
+        --color-footer-text: #888; --font-size-base: 1rem; --font-size-small: 0.9rem;
+        --font-size-xsmall: 0.75rem; --font-size-h1: 3.6rem; --font-size-h2: 1.8rem;
+        --font-size-signature: 1.05rem; --line-height-normal: 1.5; --line-height-heading: 1.2;
+        --line-height-subheading: 1.4; --space-xs: 0.5rem; --space-s: 0.75rem; --space-m: 1rem;
+        --space-l: 1.5rem; --space-xl: 2rem; --space-xxl: 3rem; --space-list-item: 0.25rem;
+        --width-content: 48rem; --width-indent: 16.2px; --layout-margin: auto;
+        --font-text: "Source Serif 4", serif; --font-heading: "EB Garamond", serif;
+        --underline-thickness: 1.5px; --underline-offset: 2px;
+      }
+      html { font-size: 16px; }
+      body {
+        font: 400 var(--font-size-base)/var(--line-height-normal) var(--font-text);
+        color: var(--color-text); background: var(--color-background);
+        width: 90%; max-width: var(--width-content); margin: var(--layout-margin);
+        text-rendering: optimizeLegibility; letter-spacing: -0.01em;
+      }
+      main { padding-inline: var(--space-m); }
+      article { margin-bottom: var(--space-xxl); }
+      header { margin: 0 auto; }
+      header h1 {
+        font: 600 var(--font-size-h1)/var(--line-height-heading) var(--font-heading);
+        color: var(--color-text); margin: var(--space-l) auto; text-align: center;
+        letter-spacing: -0.015em;
+      }
+      h2 {
+        font: 500 var(--font-size-h2)/var(--line-height-subheading) var(--font-heading);
+        margin: var(--space-xl) 0; letter-spacing: -0.01em;
+      }
+      p { margin-bottom: var(--space-l); }
+      strong { font-weight: 700; }
+      address { margin-bottom: var(--space-l); }
+      address p { margin: 0; }
+      address time.date {
+        display: block; margin-top: var(--space-s); font-style: italic;
+        font-feature-settings: "onum" 1; text-align: right;
+      }
+      .address_line, .address_indent { font-style: italic; }
+      .case_number {
+        margin-bottom: var(--space-l); font-style: italic;
+        font-feature-settings: "onum" 1; text-align: right;
+      }
+      .address_line::before {
+        content: '—'; display: inline-block; font-size: 1.2em; width: var(--width-indent);
+      }
+      .address_indent::before { content: ''; display: inline-block; width: var(--width-indent); }
+      ul {
+        margin-bottom: var(--space-l); padding-left: 1.5em; list-style: none;
+      }
+      li { margin-bottom: var(--space-list-item); position: relative; }
+      ul li::before { content: '•'; position: absolute; left: -1em; }
+      a {
+        color: var(--color-link); text-decoration: underline;
+        text-decoration-thickness: var(--underline-thickness); text-underline-offset: var(--underline-offset);
+      }
+      a:focus { outline: 2px solid var(--color-link); outline-offset: 2px; }
+      .external-icon {
+        width: 10px; height: 10px; vertical-align: super; margin-left: 0.2rem;
+      }
+      .signature {
+        font-size: var(--font-size-signature); font-style: italic;
+        margin-top: var(--space-l); text-align: end;
+      }
+      footer {
+        font-size: var(--font-size-xsmall); color: var(--color-footer-text);
+        margin-top: var(--space-xl); padding: var(--space-m) 0;
+        border-top: 1px solid var(--color-border);
+      }
+      footer p { margin: 0; }
+      footer a strong { color: var(--color-link-bold); font-weight: 700; }
+      figure { margin: var(--space-l) 0; text-align: center; }
+      img { max-width: 75%; height: auto; }
+      .renovation-proposal img { max-width: 50%; }
+      figcaption { font-size: var(--font-size-small); padding: var(--space-m); }
+      .toggle-details {
+        cursor: pointer; color: var(--color-link); text-decoration: underline;
+        display: inline-block; padding: var(--space-s);
+      }
+      .toggle-details:focus { outline: 2px solid var(--color-link); outline-offset: 2px; }
+      .hidden { display: none; }
+      @media (max-width: 768px) {
+        :root { --font-size-h1: 2.1rem; --font-size-h2: 1.35rem; --space-m: 0.5rem; }
+        body { margin: var(--space-s) auto; }
+      }
+      @media print {
+        @page { margin: 1in; }
+        :root {
+          --font-size-base: 12.6pt; --font-size-small: 10.8pt; --font-size-xsmall: 9.6pt;
+          --font-size-h1: 33.6pt; --font-size-h2: 16.8pt; --font-size-signature: 13.2pt;
+          --space-xs: 6pt; --space-s: 9pt; --space-m: 12pt; --space-l: 18pt;
+          --space-xl: 24pt; --space-xxl: 36pt; --color-link-bold: black;
+        }
+        body { margin: 0; max-width: 450pt; width: 90%; }
+        p { widows: 2; orphans: 2; }
+        footer { border-top: none; }
+        a[target="_blank"]::after, a[href^="mailto:"]::after { content: none; }
+        h1, h2, address, .signature { page-break-inside: avoid; }
+        main section:last-of-type { break-before: page; }
+        a:focus, .toggle-details:focus { outline: none; }
+      }
+    </style>
+    <script>
+      document.addEventListener("DOMContentLoaded", () => {
+        const toggle = document.querySelector(".toggle-details");
+        const details = document.querySelector("#proposal-details");
+        if (toggle && details) {
+          toggle.addEventListener("click", (e) => {
+            e.preventDefault();
+            const isHidden = details.classList.toggle("hidden");
+            toggle.textContent = isHidden ? "Vis detaljer" : "Skjul detaljer";
+            toggle.setAttribute("aria-expanded", !isHidden);
+          });
+          toggle.addEventListener("keydown", (e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              toggle.click();
+            }
+          });
+        }
+      });
+    </script>
+  </head>
+  <body>
+    <!-- Iterative Development: Refined (clarified phrasing per Strunk and White, polished legal tone, enhanced accessibility), Streamlined (removed redundant address block, consolidated CSS, shortened content). Setup: Adopted bob2.html structure, CSS, and footer. Design: Pixel-perfect equal spacing above/below h2, right-aligned date and case number. Compliance: WCAG 2.1, SEO, i18n, Norwegian sovereignty. -->
+    <main>
+      <section>
+        <article>
+          <header>
+            <h1>Innsigelse mot oppsigelse</h1>
+            <address>
+              <p class="address_line address-common">Ragnhild Laupsa Mæhle, Nygårdsgaten 58, NO-5008 Bergen, <a href="mailto:trymmika@gmail.com" aria-label="E-post til Ragnhild">trymmika@gmail.com</a></p>
+              <p class="address_line address_indent address-common">BOB Boligutleie AS, Postboks 1054, NO-5808 Bergen, <a href="mailto:juridisk@bob.no" aria-label="E-post til BOB">juridisk@bob.no</a></p>
+              <time class="date" datetime="2025-04-26">26. april 2025</time>
+              <p class="case_number"><strong>Saksnummer:</strong> 6110-4/2025</p>
+            </address>
+          </header>
+          <h2>Til BOB Boligutleie AS</h2>
+          <p lang="nb" data-i18n="objection_intro">Jeg protesterer mot oppsigelsen av leieforholdet for leilighet 6110-4, varslet 28. mars 2025. Påstandene om husordensbrudd og mangelfullt renhold er udokumenterte. Politiet og brannvesenet fant ingen grunn til tiltak, og ingen naboer har klaget direkte. Jeg opprettholder ro, vedlikeholder leiligheten og tilbyr inspeksjon.</p>
+          <p lang="nb" data-i18n="objection_legal">Oppsigelse krever saklig grunn per <a href="https://lovdata.no/lov/1999-03-26-17/§9-7" target="_blank" aria-label="Husleieloven paragraf 9-7">husleieloven §9-7</a>, og mislighold må medføre «alvorlig skade eller sjenanse» per <a href="https://lovdata.no/lov/1999-03-26-17/§9-9" target="_blank" aria-label="Husleieloven paragraf 9-9">§9-9</a>. BOBs vedlikeholdsplikt følger <a href="https://lovdata.no/lov/1999-03-26-17/§5-3" target="_blank" aria-label="Husleieloven paragraf 5-3">§5-3</a> og <a href="https://lovdata.no/lov/1999-03-26-17/§2-2" target="_blank" aria-label="Husleieloven paragraf 2-2">§2-2</a>. Uten bevis er oppsigelsen ugyldig. Dokumentasjon kreves innen 28. april 2025.</p>
+          <p lang="nb" data-i18n="objection_personal">Som alenemor trenger jeg og mitt barn boligstabilitet. Jeg ber om at oppsigelsen trekkes og foreslår et møte.</p>
+          <p lang="nb" data-i18n="closing">Med vennlig hilsen,</p>
+          <p class="signature">Ragnhild Laupsa Mæhle, <time datetime="2025-04-26">26. april 2025</time></p>
+          <footer>
+            <p><a href="https://www.pub.attorney" target="_blank" aria-label="Besøk PubAttorney"><strong>www.pub.attorney</strong><svg class="external-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg></a> — Rettferdighet for Ola & Kari, med Norges beste AI.</p>
+            <p>Opphavsrett © 2025 PubAttorney, Kanalveien 10, NO-5068 Bergen.</p>
+          </footer>
+        </article>
+        <article class="renovation-proposal">
+          <header>
+            <h1>Oppussingsforslag</h1>
+          </header>
+          <h2>Til BOB Boligutleie AS</h2>
+          <p lang="nb" data-i18n="proposal_intro">Jeg, Ragnhild Laupsa Mæhle, og interiørarkitekt <a href="https://imgur.com/a/la-2-0-vqrTlaR" target="_blank" aria-label="Johann Tepstad portfolio">Johann Tepstad</a> foreslår oppussing av leilighet 6110-4 for økt bokvalitet og verdi, med parametrisk design og smarthusteknologi.</p>
+          <p lang="nb" data-i18n="proposal_toggle">
+            <a class="toggle-details" href="#proposal-details" aria-controls="proposal-details" aria-expanded="false">Vis detaljer</a>
+          </p>
+          <ul id="proposal-details" lang="nb" data-i18n="proposal_list" class="hidden">
+            <li><strong>Ventilasjon:</strong> Balansert anlegg med diffusorer (<a href="https://lovdata.no/lov/1999-03-26-17/§5-3" target="_blank" aria-label="Husleieloven paragraf 5-3">§5-3</a>).</li>
+            <li><strong>Overflater:</strong> Miljøvennlig maling og komposittgulv.</li>
+            <li><strong>Design:</strong> Skreddersydde skap med ladestasjoner.</li>
+            <li><strong>Belysning:</strong> LED-lister og sensorer.</li>
+          </ul>
+          <figure>
+            <img src="render1.png" alt="Parametrisk møbeldesign i stue, leilighet 6110-4" loading="lazy" fetchpriority="high">
+            <figcaption data-i18n="figure_stue">Figur 1: Stue</figcaption>
+          </figure>
+          <figure>
+            <img src="render2.png" alt="Ventilasjon og belysning i kjøkken, leilighet 6110-4" loading="lazy">
+            <figcaption data-i18n="figure_kjøkken">Figur 2: Kjøkken</figcaption>
+          </figure>
+          <figure>
+            <img src="render3.png" alt="Overflater i soverom, leilighet 6110-4" loading="lazy">
+            <figcaption data=i18n="figure_soverom">Figur 3: Soverom</figcaption>
+          </figure>
+          <p lang="nb" data-i18n="proposal_approval">Jeg søker godkjenning innen 29. april 2025 per <a href="https://lovdata.no/lov/1999-03-26-17/§2-12" target="_blank" aria-label="Husleieloven paragraf 2-12">§2-12</a> for oppussing innen tre måneder. Befaring og kostnader tilbys.</p>
+          <p lang="nb" data-i18n="closing">Med vennlig hilsen,</p>
+          <p class="signature">Ragnhild Laupsa Mæhle, <time datetime="2025-04-26">26. april 2025</time></p>
+          <footer>
+            <p><a href="https://www.pub.attorney" target="_blank" aria-label="Besøk PubAttorney"><strong>www.pub.attorney</strong><svg class="external-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg></a> — Rettferdighet for Ola & Kari, med Norges beste AI.</p>
+            <p>Opphavsrett © 2025 PubAttorney, Kanalveien 10, NO-5068 Bergen.</p>
+          </footer>
+        </article>
+      </section>
+    </main>
+  </body>
+</html>
