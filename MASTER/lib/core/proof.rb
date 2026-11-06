@@ -221,7 +221,7 @@ module Master::Core
 
     def repository_path(value)
       text = value.to_s
-      return if text.empty? || text.include?("\0") || text.split(/[\\/]/).include?("..")
+      return if text.empty? || text.include?("\0") || text.split(%r{[\\/]}).include?("..")
       return text.delete_prefix("./") unless @repository_root
 
       full = File.expand_path(text, @repository_root)
