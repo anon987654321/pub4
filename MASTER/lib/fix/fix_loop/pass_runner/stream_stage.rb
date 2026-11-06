@@ -2,6 +2,7 @@
 
 require "set"
 require_relative "../../check_focus"
+require_relative "../../proposal_scope"
 
 module Master
   module Fix
@@ -358,6 +359,8 @@ module Master
             repair_memory.sync_detectors(runnable)
             findings = repair_memory.fresh(path, findings_of(rows, ids, path))
             return 0 if findings.empty?
+
+            findings, = ProposalScope.narrow(findings, file: rel)
 
             context = repair_context(path)
             unless context[:complete]
