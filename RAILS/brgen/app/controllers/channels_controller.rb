@@ -40,11 +40,14 @@ rooms = Conversation.channels.where(city_id: @city&.id).to_a
     ActsAsTenant.without_tenant do
 # The same preloads conversations#show uses, because the same partial
 # renders here. This included only :sender, while messages/_message also
-# reads message_receipts for the read chip, link_preview for the card and
-# parent.sender for the reply line — three queries per message that the
-# DM view had already paid once for the page.
+# reads message_receipts for the read chip, link_preview for the card,
+# parent.sender for the reply line, message.conversation (channel?,
+# view_once?) and the attachment - five reads per message that the DM
+# view had already paid once for the page, and the attachment pays on
+# every line even for text-only threads.
 @messages = @conversation.messages.visible.unexpired
-                         .includes(:sender, :message_receipts, :link_preview, :reactions, parent: :sender)
+                         .includes(:sender, :message_receipts, :link_preview, :reactions, :conversation,
+                                   parent: :sender).with_attached_attachment
                          .order(:created_at).last(100).to_a
     end
     @message = Message.new

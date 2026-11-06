@@ -175,7 +175,8 @@ class MessagesController < ApplicationController
   def history_scope
     messages = @conversation.messages
     messages.visible.unexpired
-            .includes(:sender, :message_receipts, :link_preview, :reactions, parent: :sender)
+            .includes(:sender, :message_receipts, :link_preview, :reactions, :conversation,
+                      parent: :sender).with_attached_attachment
   end
 
   # Where a forward can go: the reader's other direct threads.
@@ -202,7 +203,8 @@ class MessagesController < ApplicationController
   def render_created
     # The sender's own copy, reloaded with what the line reads so the partial
     # renders it here as it does in the broadcast job.
-    @rendered = Message.strict_loading(false).includes(:sender, :conversation, :link_preview, :reactions)
+    @rendered = Message.strict_loading(false).includes(:sender, :conversation, :link_preview, :reactions,
+                                                       :message_receipts).with_attached_attachment
                        .find(@message.id)
     respond_to do |format|
       # The corner chat widget and the full channel page post to the same

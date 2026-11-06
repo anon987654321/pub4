@@ -6,6 +6,10 @@ class Conversation
   module Unread
     extend ActiveSupport::Concern
 
+    # How far back a single open marks receipts. The delivery chip shows the
+    # newest twenty lines, so anything older is write-only history.
+    RECEIPT_WINDOW = 200
+
     class_methods do
       # unread_count_for is two queries (find_by participant, then COUNT) and is the
       # right shape for one record. It is the wrong shape for a list, and both callers
@@ -75,9 +79,20 @@ class Conversation
     def mark_read_for!(user)
       conversation_participants.find_by(user:)&.update!(last_read_at: Time.current)
 
+      # A channel shows no per-line state and its unread badge runs off
+      # last_read_at alone, so receipt rows on a channel are write-only weight
+      # on the busiest open in the app - skip them. View-once is the exception:
+      # its expiry reads receipts to decide what everyone has seen.
+      return if slug.present? && !view_once?
+
       # Other people's messages only: a receipt is what the sender reads to learn
       # it was seen, so the reader has no use for one on their own line.
-      ids = messages.unexpired.where.not(sender_id: user.id).pluck(:id)
+      # The chip renders the newest twenty lines, so receipts beyond the newest
+      # few hundred are write-only history on a years-old thread - bound the
+      # window, and leave view-once unbounded because it expires on read.
+      window = messages.unexpired.where.not(sender_id: user.id)
+      window = window.order(id: :desc).limit(RECEIPT_WINDOW) unless view_once?
+      ids = window.pluck(:id)
       return if ids.empty?
 
       now = Time.current
@@ -107,7 +122,8 @@ class Conversation
     def broadcast_read_states(message_ids)
       return if message_ids.empty? || slug.present?
 
-      messages.where(id: message_ids).order(id: :desc).limit(20).each do |message|
+      messages.where(id: message_ids).order(id: :desc).limit(20)
+              .includes(:message_receipts).each do |message|
         Turbo::StreamsChannel.broadcast_update_later_to(
           self, target: "delivery_#{ActionView::RecordIdentifier.dom_id(message)}",
           partial: "messages/delivery", locals: { message: message }

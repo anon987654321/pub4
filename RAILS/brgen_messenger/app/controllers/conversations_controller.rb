@@ -177,7 +177,8 @@ class ConversationsController < ApplicationController
     # answer without paying a COUNT, and the log gets its first history cursor.
     thread = @conversation.messages
     @messages = thread.visible.unexpired
-                      .includes(:sender, :message_receipts, :link_preview, :reactions, parent: :sender)
+                      .includes(:sender, :message_receipts, :link_preview, :reactions, :conversation,
+                                parent: :sender).with_attached_attachment
                       .recent.limit(MessagesController::HISTORY_PAGE + 1)
     @older_available = @messages.size > MessagesController::HISTORY_PAGE
     @messages = @messages.first(MessagesController::HISTORY_PAGE).reverse

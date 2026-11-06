@@ -71,10 +71,12 @@ class NearbyController < ApplicationController
     @conversation.mark_read_for!(me)
     ActsAsTenant.without_tenant do
 # messages/_message renders here as well as in a channel and a DM, and it
-# reads message_receipts, link_preview and parent.sender. :sender alone left
-# three queries per message on a fifty-message widget.
+# reads message_receipts, link_preview, parent.sender, message.conversation
+# and the attachment. :sender alone left three queries per message on a
+# fifty-message widget; the last two would have left two more.
 @messages = @conversation.messages.visible.unexpired
-                         .includes(:sender, :message_receipts, :link_preview, :reactions, parent: :sender)
+                         .includes(:sender, :message_receipts, :link_preview, :reactions, :conversation,
+                                   parent: :sender).with_attached_attachment
                          .order(:created_at).last(50).to_a
     end
     @message = Message.new

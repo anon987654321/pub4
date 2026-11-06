@@ -53,7 +53,8 @@ class Message
     end
 
     def reloaded_for_render
-      Message.strict_loading(false).includes(:sender, :conversation, :link_preview, :reactions).find(id)
+      Message.strict_loading(false).includes(:sender, :conversation, :link_preview, :reactions,
+                                              :message_receipts).with_attached_attachment.find(id)
     end
   end
 end
