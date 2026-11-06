@@ -1,9 +1,9 @@
 # frozen_string_literal: true
 
-# law/css.rb - every css law, one Law.define per law.
+# law/css.rb — every css law, one Law.define per law.
 # REDUCED_MOTION and NO_IMPORTANT live once, in the registry (web_laws.rb).
-# Both judge a FILE's posture - whether the reset block exists, whether an
-# !important erases or paints, whether it sits inside an override media -
+# Both judge a FILE's posture — whether the reset block exists, whether an
+# !important erases or paints, whether it sits inside an override media —
 # and the per-line twins here fired on face.css's own reduced-motion reset,
 # twenty-six findings against a file already doing the right thing.
 
@@ -23,8 +23,8 @@ Law.define(:LOGICAL_PROPERTIES) do
   good "margin-inline-start: 8px;"
 end
 
-# MAGIC_COLOR lives once, in the registry (js_laws.rb): its narrowing -
-# token definitions, intentional markers, the mailer and manifest carve-outs -
+# MAGIC_COLOR lives once, in the registry (js_laws.rb): its narrowing —
+# token definitions, intentional markers, the mailer and manifest carve-outs —
 # is behavioural, measured across 596 retired findings, and a bare hex detector
 # beside it double-counted every one it got wrong.
 
@@ -64,20 +64,20 @@ end
 # One language per layer: a query language inside Ruby, markup inside
 # JavaScript, a heredoc smuggling a third grammar past the reader.
 #
-# Templates are exempt, and have to be. A template is two languages on purpose -
-# that is the entire definition - so matching the ERB opening tag flagged the
+# Templates are exempt, and have to be. A template is two languages on purpose —
+# that is the entire definition — so matching the ERB opening tag flagged the
 # thing that makes the file work. Across RAILS' 428 views this rule produced
 # 6,826 findings, 75% of everything MASTER reported about those files, and every
 # one of them said "this template contains a template". The law/ header calls
 # that the decorator-massacre failure mode: a rule whose false-positive rate
 # makes the report unreadable stops being enforcement and becomes noise.
 #
-# The genuine html case - an inline script or style block, five files in the
-# whole tree - is NO_INLINE_SCRIPT_BLOCK, where the detector can be honest about
+# The genuine html case — an inline script or style block, five files in the
+# whole tree — is NO_INLINE_SCRIPT_BLOCK, where the detector can be honest about
 # what it wants instead of catching a language marker by accident.
 # The registry twin retired 2026-08-21: its non-erb branch duplicated this
 # detector and its erb branch duplicated NO_INLINE_SCRIPT_BLOCK. The bare
-# `SQL|HEREDOC` word-match retired with it - it fired on every heredoc
+# `SQL|HEREDOC` word-match retired with it — it fired on every heredoc
 # closing delimiter and on prose that mentioned SQL; only an opening heredoc
 # tag smuggles a grammar in.
 Law.define(:NO_MULTIPLE_LANGUAGES) do
@@ -85,7 +85,7 @@ Law.define(:NO_MULTIPLE_LANGUAGES) do
   ask "Does this file embed multiple languages or notations, or does the artifact mix incompatible frameworks or media layers?"
   # A regex that matches `<%` is not ERB, and a string naming a heredoc tag is
   # not a heredoc. Unmasked this flagged the scanner's own ERB detectors, the
-  # source-masking constants and css_coverage_lint's comment stripper - 35 of 72
+  # source-masking constants and css_coverage_lint's comment stripper — 35 of 72
   # findings were code ABOUT an embedded language rather than an instance of one,
   # which is the shape law.rb's `conduct` already neutralises for law/ itself.
   #
@@ -96,13 +96,13 @@ Law.define(:NO_MULTIPLE_LANGUAGES) do
   # Strings are not masked, and must not be: `template = "<%= x %>"` is a Ruby
   # file carrying an ERB template, which is the defect exactly, and blanking
   # string literals made the rule blind to its own primary case. What
-  # distinguishes it from a scanner naming the delimiter is completeness - an
+  # distinguishes it from a scanner naming the delimiter is completeness — an
   # ERB tag opens and closes. `ERB_OPEN = "<%"` is a pattern; `"<%= x %>"` is a
   # template. Regexes stay masked, since `/<%|<script\b/` is a detector.
   detect do |line|
     next false if line.match?(/\A\s*[A-Z][A-Z0-9_]*\s*=\s*<<[~-]/)
     # A needle is not a template. The source checks search a file for the exact
-    # text they require -`body.include?('import("<%= asset_path(...) %>")')`-
+    # text they require — `body.include?('import("<%= asset_path(...) %>")')` —
     # and the ERB tag there is the thing being looked for, not a second language
     # this file speaks.
     next false if line.match?(/\.(?:include\?|match\?|scan|index|start_with\?|end_with\?)\(/)
@@ -117,19 +117,19 @@ Law.define(:NO_MULTIPLE_LANGUAGES) do
 end
 
 # Every Layout (Bell & Pickering): let the content size the box. A fixed pixel
-# height on a container is a promise about content the container cannot keep -
+# height on a container is a promise about content the container cannot keep —
 # text wraps, translations run long (Norwegian does), and the box clips or
 # spills. min-height states the same floor without the ceiling. Below 100px
 # the element is a control or a media frame sizing itself, not a text
 # container, so the law starts where flowing content starts.
 #
-# The book's other axiom - space between siblings belongs to the parent (gap),
-# not the children (margin-bottom chains) - is not per-line decidable: whether
+# The book's other axiom — space between siblings belongs to the parent (gap),
+# not the children (margin-bottom chains) — is not per-line decidable: whether
 # a margin is a chain depends on the siblings, which only the rendered tree
 # knows. It stays a review judgment, not a detector.
 Law.define(:FIXED_HEIGHT) do
   source "Every Layout (Bell & Pickering) - the content sizes the box"
-  # A drawn stage - an art frame, a product-photo crop window - sizes itself
+  # A drawn stage — an art frame, a product-photo crop window — sizes itself
   # by contract, not by its content. Those lines carry scan: intentional with
   # the reason; the marker keeps the law on flowing-content boxes.
   detect { |line| line.match?(/(?<![a-z-])height:\s*[1-9]\d{2,}px/) && !line.match?(/scan:\s*intentional\b/) }
@@ -265,7 +265,7 @@ module DesignMarks
   end
   DOT_GLYPH = "(?:\u00B7|&middot;|&#183;|&#xb7;)" unless const_defined?(:DOT_GLYPH)
 
-  # The innermost { ... } blocks of a stylesheet, with their selector.
+  # The innermost { … } blocks of a stylesheet, with their selector.
   def blocks(text)
     text.scan(/([^{};]*)\{([^{}]*)\}/m).map { |selector, body| [selector.strip, body] }
   end
@@ -311,7 +311,7 @@ module DesignMarks
     line.match?(/\b(?:link_to|button_to|submit|link_to_if)\b\s*\(?\s*(["'])[^"']*?\S\s*#{ARROW_GLYPH}\s*\1/)
   end
 
-  # `A - B - C`: two or more dot separators between words, or a join("-").
+  # `A · B · C`: two or more dot separators between words, or a join(" · ").
   def dotted_meta?(line)
     return false if line.match?(/<title\b|<meta\b/i)
     return true if line.match?(/\.join\(\s*["'] ?#{DOT_GLYPH} ?["']\s*\)/)

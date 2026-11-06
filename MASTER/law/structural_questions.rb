@@ -53,7 +53,7 @@ module Master
           # indentation also grows inside a list of records, where flows.yml's
           # `steps:` puts `get:` eight spaces in and three keys deep, and a
           # block scalar's prose lines look like keys to a line regex. A
-          # one-line `{ name: ..., status: ... }` is a mapping too. One finding per
+          # one-line `{ name: …, status: … }` is a mapping too. One finding per
           # key at the limit that has keys below it, at the first of those, so
           # a list of sixty records at depth five is one shape to fix, not sixty.
           def depth_findings(code)
@@ -292,7 +292,7 @@ module Master
         # the dependency graph.
         #
         # Two exclusions, both measured against this tree rather than guessed.
-        # Identical signatures are one interface implemented many times -
+        # Identical signatures are one interface implemented many times —
         # check_ast(ast, code, path:) is a contract, and reporting its nine
         # implementers reports the interface working. Overlapping windows over
         # the same set of signatures are one clump seen through three frames, so
@@ -376,7 +376,7 @@ module Master
 
         # Split from CouplerLaw 2026-07-12: laws.yml's rule_deps SRP entry already
         # referenced FEATURE_ENVY as its own id (SRP: after: [FEATURE_ENVY,
-        # god_class]) - a dangling reference, since the check previously lived
+        # god_class]) — a dangling reference, since the check previously lived
         # under COUPLER_SMELLS. This gives it a real matching id and a single
         # responsibility of its own.
         class FeatureEnvyLaw < Detector

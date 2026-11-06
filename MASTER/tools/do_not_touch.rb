@@ -3,24 +3,24 @@
 require "open3"
 
 # A "Do Not Touch" entry must name the check that fails when its claim stops
-# being true - or say plainly that no check can hold it, and why.
+# being true — or say plainly that no check can hold it, and why.
 #
 # The list's item 2 once said the rule shards stayed split because they sat near
 # their consumers. That was false, and had been false for as long as the shards
 # existed: the four of them had one consumer between them, `load_laws`, which
 # concatenated them back into a single hash before any scanner saw them. Nobody
 # was careless. The entry stated a conclusion, and conclusions do not rot loudly
-# - it took an operator override in 2026-08 to find out the reason had never
+# — it took an operator override in 2026-08 to find out the reason had never
 # been true.
 #
-# Had the entry named the test its reason implied - each shard has a distinct
-# reader - that test would have been red from the first day and the entry would
+# Had the entry named the test its reason implied — each shard has a distinct
+# reader — that test would have been red from the first day and the entry would
 # have re-argued itself years before anyone had to override it by hand.
 #
 # So every entry carries one of:
 #
-#   - check: `rake lint:spine`, `test/test_core_no_lib_backedges.rb`
-#   - no check: <why the claim cannot be mechanically held>
+#   — check: `rake lint:spine`, `test/test_core_no_lib_backedges.rb`
+#   — no check: <why the claim cannot be mechanically held>
 #
 # and this checks that the named rake tasks and files actually exist. A check
 # reference that stops resolving is the same failure one level up.
@@ -43,8 +43,9 @@ module Operator
     ENTRY = /^(\d+)\.\s+(.*)$/
     RAKE = /`rake ([a-z_]+(?::[a-z_]+)*)`/
     FILE = /`([A-Za-z0-9_.\-\/]+\.(?:rb|sh|yml))`/
-    # The list writes its marker as " - no check:", ASCII like the rest of the tree.
-    NO_CHECK = /(?:\A|\s)-\s*no check:\s*(.+)/
+    # The list writes its marker as " — no check:"; a hyphen, as written while
+    # docs were ASCII (2026-11-05/06), reads the same.
+    NO_CHECK = /(?:\A|\s)[-—]\s*no check:\s*(.+)/
 
     # Reasons shorter than this are a shrug, not an argument. Same threshold
     # doc_baselines.yml#doc_paths entries are held to.
@@ -75,7 +76,7 @@ module Operator
     end
 
     # Described rake tasks, from rake itself rather than a regex over the
-    # Rakefile - a task can be defined in any file the Rakefile loads.
+    # Rakefile — a task can be defined in any file the Rakefile loads.
     def self.rake_tasks
       @rake_tasks ||= begin
         out, _status = Open3.capture2("bundle", "exec", "rake", "-T", chdir: MASTER, err: File::NULL)

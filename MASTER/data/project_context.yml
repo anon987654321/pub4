@@ -1,7 +1,7 @@
 ---
 meta:
   source: runtime authority - edit this file or use MemoryRecord; do not add data/claude/*.md
-  count: 33
+  count: 34
 entries:
 - key: personality_rb_comment_audit
   name: personality rb comment audit
@@ -474,3 +474,20 @@ entries:
     and exits; do not re-read what is already in context. Judge another model's
     work by what its commits change, not by its report: patches from GLM and
     Fable on 2026-11-06 ran no tests and most did not hold against the code.
+- key: operator_typography_web_ascii_terminal
+  name: proper typography in copy and docs, ASCII in the terminal
+  description: Operator decision 2026-11-06 - ASCII_PUNCTUATION is withdrawn; ASCII only in terminal output
+  type: feedback
+  body: |-
+    ASCII marks (a hyphen, three dots, straight quotes, ->) belong to the CLI,
+    the shell and REPL prompt, the terminal face and dmesg or log lines; that
+    was the ban's only purpose. Web copy, locale files, views, Markdown and TeX
+    documents, root documents and BPLANS use proper typography: the ellipsis
+    (U+2026), an en dash (U+2013) in a numeric range (EN_DASH_RANGE), curly
+    quotes, and for an aside a spaced en dash, "word - aside - word" set with
+    U+2013. Norwegian copy quotes with guillemets (U+00AB, U+00BB) and single
+    curly quotes inside; English keeps curly double quotes. EN_DASH_RANGE and
+    TYPOGRAPHIC_EXCELLENCE skip Law::TERMINAL_OUTPUT_PATH (law/definition.rb)
+    and printing lines; PARENTHETICAL_DASH and QUOTES_BY_LOCALE
+    (law/typesetting.rb) hold the aside and the quotes. The face glyph ramp
+    stays as it is. Text written before 2026-11-05 keeps its original marks.

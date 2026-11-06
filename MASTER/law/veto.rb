@@ -7,7 +7,7 @@ module Master
         # Executes veto-pattern declarations owned by data/laws.yml; this is an enforcement adapter, not another Law catalogue.
         #
         # A veto is the severity above error, and this was the one rule in the
-        # population with no exemption of any kind - so it read the scanner's own
+        # population with no exemption of any kind — so it read the scanner's own
         # rule sources as conduct where every registered twin of these patterns
         # skips that directory by name. All four of its findings under lib/ and
         # law/ were worked examples: the work marker TODO_FIXME and

@@ -56,8 +56,8 @@ module Master
             @source_dirs = [File.join(root, "test"), File.join(root, "spec")]
           end
 
-          # Asks the question the description asks - has this Law subclass a
-          # test - rather than whether a file is named after it.
+          # Asks the question the description asks — has this Law subclass a
+          # test — rather than whether a file is named after it.
           #
           # It used to require the path end `_law.rb` and look for
           # `<base>_test.rb`. One file in sixteen ends `_rule.rb`; the rest are
@@ -69,14 +69,14 @@ module Master
           #
           # Coverage is a mention anywhere in test/ or spec/, of the class or of
           # its id, because the tests that exercise these rules mostly do it in
-          # bulk - test_smell_detectors.rb and test_scan_law_false_positives.rb
+          # bulk — test_smell_detectors.rb and test_scan_law_false_positives.rb
           # reach rules by id through the scanner. Requiring a file per class
           # would report those as uncovered, which is the false-positive machine
           # the old shape already was, pointed the other way.
           #
           # spec/ is read because LearnedSmellsLaw's only test is
           # spec/learned_smells_law_spec.rb, and a class covered from the wrong
-          # directory read as uncovered - this rule reporting a gap it had made
+          # directory read as uncovered — this rule reporting a gap it had made
           # itself.
           def check(code, path:)
             return [] unless path.match?(%r{/law/[^/]+\.rb\z})
@@ -98,8 +98,8 @@ module Master
             end
           end
 
-          # The id counts only where it is written as a value - quoted, or as a
-          # symbol - because that is how the bulk tests reach a rule through the
+          # The id counts only where it is written as a value — quoted, or as a
+          # symbol — because that is how the bulk tests reach a rule through the
           # scanner. A bare-word match would let the prose in any comment stand in
           # for a test, and ids like `explicit` and `reek` are ordinary English.
           def covered?(name, id)
@@ -125,7 +125,7 @@ module Master
           proved_by "test/test_law_coverage_law.rb"
         end
 
-        # Runtime authority lives in YAML - not markdown under data/.
+        # Runtime authority lives in YAML — not markdown under data/.
         ::Law.define(:RUNTIME_DOCS_YAML) do
           tags %i[CONSTITUTION DOCS]
           fix "runtime-read docs must be YAML - forbid stray .md under data/"
@@ -140,7 +140,7 @@ module Master
             # Ground::Constitution globs exactly that pattern and parses each file
             # into an operator-declared principle. This rule told the operator to
             # delete it, at error severity, and to move it to
-            # laws.yml#operator_principles - a section that no longer exists, its
+            # laws.yml#operator_principles — a section that no longer exists, its
             # 47 entries having gone to law/practice.rb. A rule forbidding what a
             # live loader requires is armed and invisible for as long as the
             # directory stays empty, which it is.
@@ -229,14 +229,14 @@ module Master
           # comment is only one of the places a line carries text that is not.
           # magic_number read 4,679 findings over the four trees with comment
           # lines blanked, and 1,309 of them were digits inside a quoted literal
-          # - an ffmpeg filter graph, an SVG path, an ENV.fetch default the
+          # — an ffmpeg filter graph, an SVG path, an ENV.fetch default the
           # variable's name already explains. 94 more were a regex quantifier or
           # a trailing comment, and 183 a slice bound: `message[0, 200]` and
           # `lines.last(120)` say how much to keep, and a constant named for the
           # 200 says it again. Length-preserving, so line numbers still land.
           #
-          # A regex literal counts only in operand position - after an opening
-          # bracket, a comma, an operator or the line start - because `ms / 60 /
+          # A regex literal counts only in operand position — after an opening
+          # bracket, a comma, an operator or the line start — because `ms / 60 /
           # 60` has two slashes and no regex.
           QUOTED = /"(?:[^"\\\n]|\\.)*"|'(?:[^'\\\n]|\\.)*'|`(?:[^`\\\n]|\\.)*`/
 
@@ -321,13 +321,13 @@ module Master
           proved_by "test/test_learned_smells_law.rb"
         end
 
-        # FILE_SPRAWL - the tree's shape is conduct too. A directory holding
+        # FILE_SPRAWL — the tree's shape is conduct too. A directory holding
         # one file is a namespace bought for nothing, and a file under
         # TINY_CODE_LINES code lines is usually a concept that belongs inside
-        # its owner (soul: COLLAPSE_BEFORE_ADDING - flatten, merge). The
+        # its owner (soul: COLLAPSE_BEFORE_ADDING — flatten, merge). The
         # 2026-08-19 census found 25 one-or-two-file directories and 34 tiny
         # files in lib/ alone; the operator's standing instruction is a clean,
-        # minimal tree. Findings only - the merge itself changes requires,
+        # minimal tree. Findings only — the merge itself changes requires,
         # Zeitwerk names and tests, which is the LLM fix lane's job under its
         # normal accept checks, never a mechanical rewrite.
         #
@@ -350,8 +350,8 @@ module Master
         # filename is its schema_migrations key, and each database keeps its own
         # schema file beside seeds.rb; and an engine's gemspec requires
         # lib/<name>/version.rb while Rails requires lib/<name>/engine.rb. The
-        # root is found by what makes it Rails - config/application.rb, or a
-        # lib/*/engine.rb - rather than by a directory named app, so a plain
+        # root is found by what makes it Rails — config/application.rb, or a
+        # lib/*/engine.rb — rather than by a directory named app, so a plain
         # Ruby tree with its own app/ is still judged.
         class FileSprawlLaw < Detector
           def self.reads_beyond_file? = true
@@ -458,7 +458,7 @@ module Master
           proved_by "test/test_scan_law_contracts.rb"
         end
 
-        # PATH_PURPOSE - PATH_OWNERSHIP.yml states what every path in this tree
+        # PATH_PURPOSE — PATH_OWNERSHIP.yml states what every path in this tree
         # is for, its risk, and the check that governs it. Nothing read it, so a
         # new directory cost nothing and declared nothing: the 2026-08-31 session
         # created renders/sweep/, frames_final2/ and frames_final3/ without one

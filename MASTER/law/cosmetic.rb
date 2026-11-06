@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require_relative "../lib/content/ascii_punctuation"
-
 module Master
   module Review
     module Scan
@@ -23,7 +21,7 @@ module Master
           end
         end
 
-        # Retired registry twins - each lives once, in law/:
+        # Retired registry twins — each lives once, in law/:
         #   MEASURE_OPTIMUM
         # (test_scan_rule_contracts proves each reaches findings through the bridge).
 
@@ -31,7 +29,7 @@ module Master
         # comment, a void media tag, or a wrapped media element with a real closing tag.
         #
         # Three branches because the previous single one demanded a closing `>` after
-        # every tag, and `<img ...>` has none - so `.*?` ran off looking for one, the
+        # every tag, and `<img …>` has none — so `.*?` ran off looking for one, the
         # alternation failed, and the branch matched nothing. MASTER/README.md, the file
         # CLAUDE.md names as the reference for this rule, therefore failed it: the bold
         # check ran against `<img src="loop.gif">`. A rule that cannot see the thing it
@@ -45,6 +43,33 @@ module Master
         }mx.freeze
 
         ABBREV_IDENT_RE = /\b(?:def|class|module|\|)\s+.*\b(tmp|idx|cfg|ctx|num|val|obj|str|arr|buf|temp|ret)\b/.freeze
+        EN_DASH_RANGE_RE = /\b\d+\s?-\s?\d+\b/.freeze
+
+        # Three things wear the shape of a range without being one, and this tree is
+        # full of all three: an ISO date is a single day, a model or version id is a
+        # name, and a hyphen inside a regex character class or a code span is syntax.
+        # Blank them before looking, or the rule reports the repo's own decision log
+        # as a typography defect — 200 of 207 findings over the tracked markdown were
+        # dates, and one was `claude-opus-4-8`.
+        # A fourth wears it too: three or more hyphenated numbers is a tuple, not
+        # a range. CSS specificity is written 0-1-0 and reads as two ranges to a
+        # two-number pattern.
+        EN_DASH_CODE_SPAN = /`[^`]*`/.freeze
+        EN_DASH_NUMBER_TUPLE = /\b\d+(?:-\d+){2,}\b/.freeze
+        EN_DASH_ISO_DATE = /\b\d{4}-\d{2}(?:-\d{2})?\b/.freeze
+        EN_DASH_CHARACTER_CLASS = /\[[^\]]*\]/.freeze
+        EN_DASH_VERSIONED_NAME = /[A-Za-z][\w.]*-\d[\w.]*(?:-[\w.]+)*/.freeze
+        EN_DASH_NOT_A_RANGE = Regexp.union(EN_DASH_CODE_SPAN, EN_DASH_NUMBER_TUPLE, EN_DASH_ISO_DATE,
+                                           EN_DASH_CHARACTER_CLASS, EN_DASH_VERSIONED_NAME).freeze
+
+        # In YAML a mapping line's value is data, and a hyphen in data is a
+        # character some reader parses. Measured over the tracked markdown and
+        # YAML: 39 findings, of which 32 were mapping values — 28 of those
+        # `bpm_range: 84-90` in the old dilla engine's reference_sonic.yml (tag dilla-engine-final), which dilla
+        # parses to render audio. YAML also carries real prose, in comments and
+        # in block scalars, and those lines are not mappings, so the seven that
+        # survive are all paragraphs.
+        YAML_MAPPING_LINE = /\A[\w.-]+:\s/.freeze
 
         module_function
 
@@ -77,19 +102,19 @@ module Master
           branches.any? { |expr| expr.is_a?(Prism::IfNode) && expr.if_keyword.nil? }
         end
 
-        # RUBY_SNAKE_METHODS lives once, in law/ruby.rb - fixtures attached, any narrowing
+        # RUBY_SNAKE_METHODS lives once, in law/ruby.rb — fixtures attached, any narrowing
         # this version had learned ported there (2026-08-21 twin retirement).
 
-        # RUBY_CAMEL_CLASS lives once, in law/ruby.rb - fixtures attached, any narrowing
+        # RUBY_CAMEL_CLASS lives once, in law/ruby.rb — fixtures attached, any narrowing
         # this version had learned ported there (2026-08-21 twin retirement).
 
-        # RUBY_NUMERIC_UNDERSCORE lives once, in law/ruby.rb - fixtures attached, any narrowing
+        # RUBY_NUMERIC_UNDERSCORE lives once, in law/ruby.rb — fixtures attached, any narrowing
         # this version had learned ported there (2026-08-21 twin retirement).
 
-        # RUBY_SYMBOL_TO_PROC lives once, in law/ruby.rb - fixtures attached, any narrowing
+        # RUBY_SYMBOL_TO_PROC lives once, in law/ruby.rb — fixtures attached, any narrowing
         # this version had learned ported there (2026-08-21 twin retirement).
 
-        # RUBY_BLOCK_DELIMITER lives once, in law/ruby.rb - fixtures attached, any narrowing
+        # RUBY_BLOCK_DELIMITER lives once, in law/ruby.rb — fixtures attached, any narrowing
         # this version had learned ported there (2026-08-21 twin retirement).
 
         ::Law.define(:RUBY_TERNARY_NOT_NESTED) do
@@ -173,24 +198,25 @@ module Master
           end
         end
 
-        # soul.yml is the operator's own: no writer, session or tool, rewrites it
-        # on a Law's say, so its punctuation is the operator's to change.
-        ASCII_PUNCTUATION_EXEMPT = %r{(?:\A|/)MASTER/data/soul\.yml\z}
-
-        ::Law.define(:ASCII_PUNCTUATION) do
+        ::Law.define(:EN_DASH_RANGE) do
           tags %i[TYPOGRAPHY]
-          fix "ASCII punctuation: - for dashes, dots and bullets; ... for an ellipsis; straight quotes; -> for arrows"
+          fix "numeric ranges use en dash not hyphen"
           example_path "/repo/docs/example.md"
-          bad "The band is 45\u201375 wide \u2014 roughly.\n"
-          good "The band is 45-75 wide - roughly.\n"
+          bad "The band is 45-75 wide.\n"
+          good "The band is 45–75 wide.\n"
           check do |src, path|
-            next [] if path.to_s.match?(ASCII_PUNCTUATION_EXEMPT)
-
+            next [] if path.end_with?(".rb", ".js", ".css", ".scss") || Law.terminal_output?(path)
+            data_file = path.end_with?(".yml", ".yaml")
             src.each_line.with_index(1).filter_map do |line, number|
-              char, ascii = Master::Content::AsciiPunctuation.first(line)
-              next unless char
+              stripped = line.strip
 
-              finding(line: number, message: "non-ASCII punctuation U+#{format("%04X", char.ord)} - write #{ascii.inspect}")
+              next if stripped.start_with?("#", "//", "detect_lexical:", "- id:")
+              next unless stripped.gsub(EN_DASH_NOT_A_RANGE, " ").match?(EN_DASH_RANGE_RE)
+              next if stripped.match?(/^\s*-\s+\w/) # YAML list item
+              # A locale's values are the copy a reader sees, so there a mapping
+              # line is prose and its value is read.
+              next if data_file && stripped.match?(YAML_MAPPING_LINE) && !path.include?("/config/locales/")
+              finding(line: number, message: "numeric range - set an en dash (U+2013), not a hyphen")
             end
           end
         end
@@ -241,12 +267,12 @@ module Master
         # (`r = parse(src)` then `parse(r)`) and so never fired on the pipeline
         # shape it was written for; the law fixture pins the real one.
 
-        # RESCUE_ON_DEF lives once, in law/ruby.rb - fixtures attached, any narrowing
+        # RESCUE_ON_DEF lives once, in law/ruby.rb — fixtures attached, any narrowing
         # this version had learned ported there (2026-08-21 twin retirement).
 
         # COMMENTS_AS_DEODORANT declared only a detect_semantic prompt, so it
         # cost an LLM call and reached a file only when the cheap passes had
-        # already flagged it - the comment on a file that reads clean was never
+        # already flagged it — the comment on a file that reads clean was never
         # examined. Restatement is the mechanical half of the rule and needs no
         # model: a comment whose content words are mostly the identifiers on the
         # next line is saying it twice.
@@ -340,7 +366,7 @@ module Master
             end
 
             # A dense block that reaches end of file without a trailing blank
-            # line misses the check above - every file that reaches EOF mid-block
+            # line misses the check above — every file that reaches EOF mid-block
             # (the common case) went unreported.
             if dense_count >= 10
               findings << finding(line: start_line, message: "suffocated block - add a blank line for breath")
@@ -408,7 +434,7 @@ module Master
             findings = []
 
             lines = src.lines
-            # A demonstration - a terminal transcript, one prized source excerpt -
+            # A demonstration — a terminal transcript, one prized source excerpt —
             # earns its place once the argument is made, under the closing heading.
             # A fence before that chops the flowing prose the rest of this rule
             # exists to protect; a table chops it anywhere.
@@ -426,7 +452,7 @@ module Master
             end
             lead = src.sub(/\A#\s+[^\n]+\n+/, "").lstrip
             # A hero image or video (and its HTML comment) may sit between the
-            # title and the opening line - skip it before checking the opening is
+            # title and the opening line — skip it before checking the opening is
             # bold, so the face can lead the page and the prose still has to.
             lead = lead.sub(HERO, "").lstrip
 

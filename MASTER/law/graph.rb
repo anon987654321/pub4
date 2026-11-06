@@ -7,8 +7,8 @@ module Master
   module Review
     module Scan
       module Laws
-        # Detects phantom reads - Ruby code digs keys that don't exist in the corresponding data/*.yml.
-        # Also detects orphan keys - top-level YAML keys with zero references in lib/.
+        # Detects phantom reads — Ruby code digs keys that don't exist in the corresponding data/*.yml.
+        # Also detects orphan keys — top-level YAML keys with zero references in lib/.
         # Only meaningful when scanning lib/ with root: access.
         class InterconnectLaw < Detector
           def self.reads_beyond_file? = true
@@ -118,7 +118,7 @@ module Master
 
         # Files that change together in many commits are coupled regardless of imports.
         # Reads the co-change graph from RepoEcology (built once at boot) instead of
-        # mining git per-scan. Flags cross-module pairs - likely DECOUPLE candidates
+        # mining git per-scan. Flags cross-module pairs — likely DECOUPLE candidates
         # the lexical rules can't see.
         class CoChangeCouplingLaw < Detector
           def self.reads_beyond_file? = true

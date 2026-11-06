@@ -1,4 +1,4 @@
-# law_runtime.yml - runtime configuration for scanner, veto, plugin, /fix and
+# law_runtime.yml — runtime configuration for scanner, veto, plugin, /fix and
 # operator-owned execution policies. Every Law identity and its execution
 # metadata lives in laws.yml; this file contains no Law declarations.
 
@@ -106,7 +106,7 @@ prose:
     # carries the same split, but in this tree the restrictive sense is the only
     # one present: all 11 hits were "du kan bare slette dine egne kommentarer",
     # "bare medlemmer poster", "Dating er bare for voksne". Bokmål has no other
-    # word for that "only", so deleting it inverts the sentence - the copy stops
+    # word for that "only", so deleting it inverts the sentence — the copy stops
     # saying what a reader may not do. English `just` keeps its place because
     # the merely sense does appear there; here it does not.
     leeches: [veldig, svært, ganske, nokså, temmelig, virkelig, simpelthen]
@@ -642,35 +642,35 @@ law_deps:
   DECOUPLE:
     after: [FLATTEN, LINEARITY]
 
-  # Hoist constants before merge - merged code references the hoisted constant.
+  # Hoist constants before merge — merged code references the hoisted constant.
   MERGE:
     after: [HOIST_CONSTANTS, HOIST]
 
-  # Kill dead code before defrag - defragging dead code wastes effort.
+  # Kill dead code before defrag — defragging dead code wastes effort.
   DEFRAG:
     after: [DEAD_CODE, SPECULATIVE_GENERALITY]
 
-  # Fix small-files violations before feature_envy - moving a method to
+  # Fix small-files violations before feature_envy — moving a method to
   # its right class only makes sense when both files are well-sized.
   FEATURE_ENVY:
     after: [SMALL_FILES, SMALL_FUNCTIONS]
 
-  # Remove data clumps before primitive obsession - bundling into objects
+  # Remove data clumps before primitive obsession — bundling into objects
   # subsumes the primitive check.
   PRIMITIVE_OBSESSION:
     after: [DATA_CLUMPS]
 
-  # Fix switch statements (type dispatch) after removing middle men -
+  # Fix switch statements (type dispatch) after removing middle men —
   # middle men often hide the type dispatch.
   SWITCH_STATEMENTS:
     after: [MIDDLE_MAN]
 
-  # Comment drift after all structural changes - restructured code needs
+  # Comment drift after all structural changes — restructured code needs
   # comment review, not before.
   COMMENTS_AS_DEODORANT:
     after: [DEFRAG, MERGE, FLATTEN, EXTRACT]
 
-  # Strunk Laws after all structural operations - prose quality is a
+  # Strunk Laws after all structural operations — prose quality is a
   # final-pass concern.
   OMIT_NEEDLESS:
     after: [DEFRAG, REFLOW]
@@ -683,12 +683,12 @@ law_deps:
   REFLOW:
     after: [MERGE, FLATTEN, DEFRAG]
 
-  # Bayesian/RL priors updated last - they need the post-fix violation
+  # Bayesian/RL priors updated last — they need the post-fix violation
   # counts from all other Laws.
   PATTERN_EXTRACTION:
     after: [DEFRAG, MERGE, DECOUPLE, FLATTEN]
 
-  # Scanner Law ordering - structural before style, security before polish.
+  # Scanner Law ordering — structural before style, security before polish.
   bare_rescue:
     after: [fail_visibly]
   silent_rescue:
@@ -850,7 +850,7 @@ law_map:
   # it. Their law_ids stay empty. Filling them by matching names against
   # Law.define points a row at a neighbour that shares a word, which is false
   # coverage; a gap closes when a real detector for that law exists.
-  law_trace_ceiling: 78
+  law_trace_ceiling: 77
   version: v110.0-restored
   source: merged master.yml fossil -> MASTER runtime law_map
   clusters:
@@ -1941,6 +1941,10 @@ law_map:
     type_title_token: {"meaning": "Page titles use --text-title modular token not raw 20px",
       "detects": "one_off_title_px", "severity": "low", "confidence": 0.75, "operation": "prefer_title_type_token",
       "law_ids": ["TYPE_TITLE_TOKEN", "TYPE_HIERARCHY"], "status": "covered", "tags": ["typography", "ui"]}
+    typographic_marks: {"meaning": "Proper marks in copy and documents, ASCII where output reaches a terminal",
+      "detects": "ascii_typography_in_copy", "severity": "low", "confidence": 0.9, "operation": "improve",
+      "law_ids": ["EN_DASH_RANGE", "TYPOGRAPHIC_EXCELLENCE"], "status": "covered", "root": "proportion",
+      "tags": ["visual_design"]}
     typography_hierarchy: {"meaning": "Size, weight, style differentiation  ", "detects": "flat_typography",
       "severity": "low", "confidence": 0.9, "operation": "improve", "law_ids": ["TYPE_HIERARCHY", "TYPE_TITLE_TOKEN"],
       "status": "covered", "root": "proportion", "tags": ["visual_design"], "source": "master.yml@30dad7ead"}
@@ -2012,7 +2016,7 @@ law_map:
       "confidence": 0.65, "operation": "deepen", "law_ids": [], "status": "gap", "root": "bounded_load",
       "tags": ["japanese_aesthetics"], "source": "master.yml@30dad7ead"}
   
-  # The eleven root definitions the entries' root: fields reference - folded
+  # The eleven root definitions the entries' root: fields reference — folded
   # from data/principle_roots.yml (no reader of its own; the map is the reader).
   signature_moment:
     meaning: 'One distinctive, useful interaction carries the product character'

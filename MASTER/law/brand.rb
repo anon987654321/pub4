@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-# law/brand.rb - the Bergen brand-system laws, one Law.define per law.
+# law/brand.rb — the Bergen brand-system laws, one Law.define per law.
 #
 # Source of every law here is a MEASURED failure or a MEASURED decision from
 # building the Sommerseth Eiendom and Alfa Bergen sites (RAILS/__other),
@@ -9,7 +9,7 @@
 # /fix walks when it repairs that tree.
 #
 # 2026-10-28: both source sites were retired and RAILS/__other deleted. The
-# laws stay - they are design decisions, and decisions outlive their first
+# laws stay — they are design decisions, and decisions outlive their first
 # tree. SIGNAL_COLOR_NAMING, PAPER_NOT_PURE_WHITE and PARAMETRIC_MARK_ONLY are
 # scoped (their `path`) to brand-export trees, because the four
 # RAILS apps declare --accent, #ffffff and long icon paths as their own
@@ -47,7 +47,7 @@ end
 Law.define(:WORDMASK_OBSERVES_UNCLIPPED) do
   source "Framer Motion + IntersectionObserver - a fully clipped element never intersects"
   # Measured: whileInView on the masked word span (y: 112% inside its own
-  # overflow:hidden mask) reports intersection area 0 forever - the headline
+  # overflow:hidden mask) reports intersection area 0 forever — the headline
   # stayed invisible. Observe the outer, unclipped wrapper; drive the inner
   # spans with animate.
   detect { |line| line.include?("whileInView") && line.match?(/y:\s*'\d+%'/) }

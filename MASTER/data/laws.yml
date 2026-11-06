@@ -252,7 +252,7 @@ SINGULARITY_one_true_mark:
   parent: SINGULARITY
   statement: "Two marks for one meaning."
   resolution: automatic
-  proof: MASTER/test/test_cosmetic_laws.rb#test_ascii_punctuation_flags_each_banned_mark
+  proof: MASTER/test/test_cosmetic_laws.rb#test_en_dash_range_flags_hyphen_range_in_prose
 
 SINGULARITY_configuration_shape:
   parent: SINGULARITY
@@ -2184,10 +2184,6 @@ law_catalogue:
     ast_omission:
       definition_sources: [MASTER/law/meta.rb]
       severity: warning
-    ASCII_PUNCTUATION:
-      definition_sources: [MASTER/law/cosmetic.rb]
-      severity: warning
-      autofix: review
     ASYNC_AWAIT:
       definition_sources: [MASTER/law/javascript.rb]
       severity: warn
@@ -2585,6 +2581,11 @@ law_catalogue:
       definition_sources: [MASTER/law/html.rb]
       severity: warning
       languages: [html]
+    EN_DASH_RANGE:
+      definition_sources: [MASTER/law/cosmetic.rb]
+      severity: info
+      autofix: automatic
+      languages: [markdown, yaml, html]
     ENGINEERING_FIT:
       definition_sources: [MASTER/law/practice.rb]
       severity: warn
@@ -4076,6 +4077,10 @@ law_catalogue:
       definition_sources: [MASTER/law/surface.rb]
       severity: info
       languages: [css, scss]
+    TYPOGRAPHIC_EXCELLENCE:
+      definition_sources: [MASTER/law/universal.rb]
+      severity: info
+      autofix: automatic
     # Retired 2026-10-30: it measured source lines (100 chars) in Markdown and HTML,
     # where a paragraph is one line by convention and source width is not what a
     # reader sees; measure lives in CSS, which MEASURE_OPTIMUM judges. 2,600+

@@ -6,7 +6,7 @@ module Master
   module Review
     module Scan
       module Laws
-        # B05 FILE_LAYOUT - Ruby file order: frozen -> require -> module -> class -> public -> private.
+        # B05 FILE_LAYOUT — Ruby file order: frozen → require → module → class → public → private.
         class FileLayoutLaw < Detector
           # The three scopes Ruby resets method visibility in, plus the file itself.
           SCOPE_NODES = [
@@ -28,7 +28,7 @@ module Master
 
           private
 
-          # A shebang has to be the first line, so the header sits under it -
+          # A shebang has to be the first line, so the header sits under it —
           # five executable tools in tools/ were reported for writing the only
           # order the kernel accepts.
           def header_finding(code)
@@ -43,8 +43,8 @@ module Master
 
           # Visibility is a property of the enclosing scope, so this reads scopes
           # rather than lines. The line-based reading called the first `def` under
-          # every `private` a violation - 261 findings across MASTER, every one of
-          # them a correctly private method - because a private section is what
+          # every `private` a violation — 261 findings across MASTER, every one of
+          # them a correctly private method — because a private section is what
           # `private` is for. What the law actually forbids is a method that is
           # still *public* below the marker, and there are two ways to write one:
           # re-open the scope with a bare `public`, or define a singleton method,
@@ -113,7 +113,7 @@ module Master
           proved_by "test/test_structural_shape_laws.rb"
         end
 
-        # B06 EXPLICIT - implicit requires, magic coupling, method_missing without respond_to_missing?.
+        # B06 EXPLICIT — implicit requires, magic coupling, method_missing without respond_to_missing?.
         class ExplicitLaw < Detector
 
           def check(code, path:)
@@ -152,7 +152,7 @@ module Master
           good %(require_relative "thing"\n)
         end
 
-        # B08 CYCLOMATIC_COMPLEXITY - methods with cyclomatic complexity > 10.
+        # B08 CYCLOMATIC_COMPLEXITY — methods with cyclomatic complexity > 10.
         class CyclomaticComplexityLaw < Detector
           MAX_CC = 10
           CC_NODES = [
@@ -192,7 +192,7 @@ module Master
           proved_by "test/test_operator_lint.rb"
         end
 
-        # B09 PATTERN_EXTRACTION - code close to a named design pattern.
+        # B09 PATTERN_EXTRACTION — code close to a named design pattern.
         class PatternExtractionLaw < Detector
           BRANCH_THRESHOLD = 3
           PIPELINE_STEP_THRESHOLD = 4
@@ -262,7 +262,7 @@ module Master
           proved_by "test/test_pattern_extraction_law.rb"
         end
 
-        # B10 DATA_CLASS - class with only attr_accessor and no real methods.
+        # B10 DATA_CLASS — class with only attr_accessor and no real methods.
         class DataClassLaw < Detector
 
           def check_ast(ast, _code, path:)
@@ -324,7 +324,7 @@ module Master
           # md, pdf, phoenix and proof, each the single file of its constant.
           # soul.rb is the boot-floor authority reader, and the catalogue
           # retirement landed flat_law_catalogue, law_catalogue_preflight and
-          # the four *_guard files beside it - the same one file, one
+          # the four *_guard files beside it — the same one file, one
           # top-level constant shape.
           ALLOWED_ROOT_FILES = %w[
             builder.rb config_sections_guard.rb configuration_guard.rb content.rb
@@ -370,7 +370,7 @@ module Master
       # Each implements check_ast(ast, code, path:) for scanner integration.
       # All also implement check(code, path:) as fallback for non-Ruby files.
 
-      # B01 SMALL_FILES - files over 300 lines (detect_structural: file_silhouette).
+      # B01 SMALL_FILES — files over 300 lines (detect_structural: file_silhouette).
       #
       # The fix it names is a split at module boundaries, so it reads files that
       # have modules. A locale, a layout snapshot, a lockfile, a notebook or a
@@ -402,7 +402,7 @@ module Master
           proved_by "test/test_scan_law_contracts.rb"
         end
 
-      # B02 SMALL_FUNCTIONS - methods over 20 lines via Prism (detect_structural: long_method).
+      # B02 SMALL_FUNCTIONS — methods over 20 lines via Prism (detect_structural: long_method).
         class SmallFunctionsLaw < Detector
           IDEAL = 10
           MAX = 20
@@ -412,7 +412,7 @@ module Master
           #
           # The span version counted comments and blank lines toward method
           # length, which contradicts this law's own description ("methods under
-          # 10 lines ideal") - that is about how much logic a method holds, not
+          # 10 lines ideal") — that is about how much logic a method holds, not
           # how well it is explained. In a codebase whose convention is a
           # paragraph of rationale above the tricky line, the effect was backwards:
           # Cli::TurnRouter.call was reported at 22 lines while containing 10 lines
@@ -459,7 +459,7 @@ module Master
           proved_by "test/test_scan_law_contracts.rb"
         end
 
-      # B03 NO_GOD_CLASS - class with >10 public methods (detect_structural: god_class).
+      # B03 NO_GOD_CLASS — class with >10 public methods (detect_structural: god_class).
         class GodClassLaw < Detector
           METHOD_LIMIT = 10
           LINE_LIMIT = 300
@@ -467,7 +467,7 @@ module Master
 
           def check_ast(ast, code, path:)
             return [] unless ast
-            # A Minitest class's public methods ARE its tests - counting them
+            # A Minitest class's public methods ARE its tests — counting them
             # counts coverage as sin. SolidQueueProofTest carried 12 tests and
             # an error-severity god-class finding for it.
             return [] if path.to_s.match?(%r{/test/|/spec/|_test\.rb\z|_spec\.rb\z})
@@ -484,8 +484,8 @@ module Master
           # Every `class X` block in the file, grouped by the class it opens.
           #
           # The walk judged one AST node at a time, so a class written as a
-          # scaffold and reopened - `class Propose; end` at the top, the methods
-          # in a second block below - was measured twice at half its size, and
+          # scaffold and reopened — `class Propose; end` at the top, the methods
+          # in a second block below — was measured twice at half its size, and
           # merging those blocks made the same class breach without one method
           # being added. The rule was reading source layout rather than the
           # class, and it read it backwards: the more scattered the file, the
@@ -505,10 +505,10 @@ module Master
 
           # The message for a class that is too big, or nil for one that is not.
           # Split out of check_ast because that method was 21 code lines against
-          # DENSITY's max of 20 - the same law this file's neighbours declare.
+          # DENSITY's max of 20 — the same law this file's neighbours declare.
           #
           # Code lines, not span. The raw span charged for rationale comments, so
-          # a well-explained class breached while a stripped one passed - the
+          # a well-explained class breached while a stripped one passed — the
           # counter DENSITY and lint:spine already retired, surviving here.
           # Core::Constitution read 348 under it while holding 250 lines of code,
           # and the self_violation halted every /fix repair stage; the only
@@ -542,9 +542,9 @@ module Master
           proved_by "test/test_scan_law_contracts.rb"
         end
 
-      # B07 NESTING_DEPTH - control-flow nesting deeper than 4 levels (detect_structural: nesting_depth).
+      # B07 NESTING_DEPTH — control-flow nesting deeper than 4 levels (detect_structural: nesting_depth).
       # Counts control flow only; module/class/def are namespacing and method scope, not the
-      # LINEARITY concern - otherwise deep namespaces (Master::Review::Scan::Laws) flag every method.
+      # LINEARITY concern — otherwise deep namespaces (Master::Review::Scan::Laws) flag every method.
         class NestingDepthLaw < Detector
           MAX_DEPTH = 4
 
@@ -582,7 +582,7 @@ module Master
           proved_by "test/test_structural_shape_laws.rb"
         end
 
-      # B04 CQS - method that both mutates state and returns a meaningful value.
+      # B04 CQS — method that both mutates state and returns a meaningful value.
         class CqsLaw < Detector
 
           def check_ast(ast, _code, path:)
@@ -658,7 +658,7 @@ module Master
           proved_by "test/test_scan_law_contracts.rb"
         end
 
-      # SOLID literal proxies - data/laws.yml unit OPEN_CLOSED/LISKOV/
+      # SOLID literal proxies — data/laws.yml unit OPEN_CLOSED/LISKOV/
       # INTERFACE_SEGREGATION/DEPENDENCY_INVERSION previously had detect_semantic
       # only. These give each a same-file AST proxy; the semantic prompt still
       # carries the cases these heuristics miss.
@@ -668,7 +668,7 @@ module Master
           TYPE_PREDICATE = /\.(class|type|kind)\b/
 
           # No trailing \b. A word boundary needs a word character on one side,
-          # and `?` is not one - so `\bis_a\?\b` required a word character right
+          # and `?` is not one — so `\bis_a\?\b` required a word character right
           # after the question mark, which no call has: `is_a?(Header)` and
           # `is_a? Header` both continue with a non-word character. The clause
           # could not match any spelling of the method it names, so half of what
@@ -915,7 +915,7 @@ module Master
         # whose every method only forwards to one other object carries a name and
         # a file and nothing else. Callers could hold that object directly. :info,
         # because a facade that adds a boundary on purpose is the exception the
-        # reviewer decides - the law surfaces the shape, not the verdict.
+        # reviewer decides — the law surfaces the shape, not the verdict.
         class MiddleManLaw < Detector
           MIN_METHODS = 3
 

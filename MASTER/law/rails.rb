@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-# law/rails.rb - semantic laws whose subject is the Rails application boundary.
+# law/rails.rb — semantic laws whose subject is the Rails application boundary.
 #
 # Rails is a domain here rather than a universal principle. Keeping these four
 # questions together lets /fix load one Rails-specific semantic home without

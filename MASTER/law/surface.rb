@@ -7,7 +7,7 @@ module Master
     module Scan
       module Laws
         # Surface law: pixel/UI aesthetic + Rails HTML/JS/ERB conventions.
-        # One file - views, CSS, Stimulus, touch targets, flat design.
+        # One file — views, CSS, Stimulus, touch targets, flat design.
 
         # Pixel-perfect UI/UX rules restored from master.yml aesthetics + design_laws.yml.
         # Applies to MASTER/web face, ERB views, and pub4/RAILS SCSS/HTML.
@@ -35,7 +35,7 @@ module Master
         # STIMULUS_CONTROLLER_SIZE's numbers are declared, not invented here:
         # data/laws.yml carries `detect_structural: {max_lines: 200,
         # path_pattern: "_controller\.js$"}` and this rule held both as literals,
-        # which is a declaration with no reader - the defect this repo hunts most
+        # which is a declaration with no reader — the defect this repo hunts most
         # often, sitting inside the file that declares the hunt. Read once per
         # process: laws.yml is four thousand lines and load_laws memoizes
         # nothing.
@@ -66,7 +66,7 @@ module Master
             without_block_comments(src).each_line.with_index(1) do |line, num|
               next if line.strip.start_with?("//", "/*", "*")
 
-              # Allow a suppressed shadow - `none`, or an all-zero value. The old
+              # Allow a suppressed shadow — `none`, or an all-zero value. The old
               # pattern matched `0\s`, which is the first token of every real
               # shadow too: `box-shadow: 0 2px 8px rgba(0,0,0,.3)` was skipped as
               # if it were a suppression. Found by this rule's own fixture,
@@ -116,7 +116,7 @@ module Master
                 # `particle` is out of this list. bloom, scanline, vaporwave and crt
                 # name decorative effects a flat surface does not want; a particle
                 # is a rendering primitive, and this product's face is built from
-                # them - face_vision_b.js opens "MASTER particle face 2026" and
+                # them — face_vision_b.js opens "MASTER particle face 2026" and
                 # face.part1.txt says it eight times. The rule was telling MASTER's
                 # own particle face to stop calling itself one, and objecting to the
                 # physics of a named feature (radio_brgen_tunnel's particle tunnel)
@@ -133,7 +133,7 @@ module Master
         end
 
         # The doctrine is Müller-Brockmann's (Grid Systems in Graphic Design,
-        # 1981): a single spatial module, every dimension a multiple of it -
+        # 1981): a single spatial module, every dimension a multiple of it —
         # named here so the rule carries its book, not just its number.
         # Grid structure is a composition law, not a requirement that every page use CSS Grid.
         # The static pass catches only a high-signal anti-pattern; it leaves unusual
@@ -206,7 +206,7 @@ module Master
                 end
               end
         
-              # Token *definitions* (e.g. --space-7: 1.75rem), not just call sites - a
+              # Token *definitions* (e.g. --space-7: 1.75rem), not just call sites — a
               # usage-only scan is structurally blind to a bad value baked into the
               # token itself. Reported, never snapped: a token's value is the operator's.
               line.scan(/--[\w-]*(?:space|gap)[\w-]*\s*:\s*(-?[\d.]+)(px|rem)\b/i) do |value, unit|
@@ -315,7 +315,7 @@ module Master
             # A bare <ul> is not a choice surface. Hick's law is about how long it
             # takes to decide between alternatives, and a tag cloud, a search-results
             # list and "what is on in the city today" are content being browsed, not
-            # options being chosen between - advising "group or progressive
+            # options being chosen between — advising "group or progressive
             # disclosure" on search results says to hide the results. <nav> and
             # <select> are choice surfaces by definition and still count; a <ul> only
             # counts when it says it is one.
@@ -344,12 +344,12 @@ module Master
               end
 
               # A Rails `.each` loop renders exactly one static <a>/<li> in the
-              # source text regardless of runtime item count - the literal
+              # source text regardless of runtime item count — the literal
               # count above is structurally blind to the normal way Rails
               # renders a nav (found 2026-07-21: brgen's 10-item nav_swiper
               # was exactly this shape and this rule never saw it). Can't know
               # the real count statically, so this is advisory, not a hard
-              # count - skip if the block already shows a grouping signal.
+              # count — skip if the block already shows a grouping signal.
               next unless count <= 1 && chunk.match?(/<%[-=]?\s*[\w."'\[\]]+\.each(?:_with_index)?\s+do\s*\|/)
 
               next if chunk.match?(/role=["']group["']|data-controller=["'][^"']*(?:group|collapse|disclosure)/i)
@@ -374,8 +374,8 @@ module Master
             next [] unless path.to_s.include?("/app/views/") || path.to_s.include?("web/")
 
             # "Dumping all options at once" needs options to dump. This fired on any
-            # view containing the word settings/options/advanced anywhere - a link
-            # label, a translation key, a URL - so a community's edit page and a
+            # view containing the word settings/options/advanced anywhere — a link
+            # label, a translation key, a URL — so a community's edit page and a
             # playlist embed page were reported as settings UI without a disclosure
             # pattern. The structural signal is a form with enough controls to be
             # worth collapsing; below that there is nothing to progressively reveal.
@@ -442,10 +442,10 @@ module Master
               # crude: light gray text
               next unless hex.match?(/\A([ef]{3}|[ef]{6}|ccc|ddd|eee)\z/i)
 
-              # ...but light text is only low-contrast against a light background, and
+              # …but light text is only low-contrast against a light background, and
               # this read the foreground alone. #navBar declares `background-color:
-              # #131921` and `color: #fff` on adjacent lines - white on near-black,
-              # about 17:1 - and was reported as low-contrast. Every finding here was
+              # #131921` and `color: #fff` on adjacent lines — white on near-black,
+              # about 17:1 — and was reported as low-contrast. Every finding here was
               # light-on-dark. If the enclosing block sets a dark background, the pair
               # is the high-contrast case and saying otherwise is backwards.
               next if dark_background_near?(src, num)
@@ -469,7 +469,7 @@ module Master
           end
         end
 
-        # Family polish (design_rules ui_polish) - ERB chrome must be i18n; titles use tokens.
+        # Family polish (design_rules ui_polish) — ERB chrome must be i18n; titles use tokens.
         ::Law.define(:ERB_HARDCODED_CHROME) do
           tags %i[DESIGN I18N RAILS VIEWS]
           fix "empty/search chrome uses t() not hardcoded English (default_locale nb)"
@@ -565,7 +565,7 @@ module Master
 
             # An element is interactive when something activates it, not when a
             # Stimulus controller is attached to it. `data-controller` was in this
-            # list and produced 79 of the 87 findings - `<div
+            # list and produced 79 of the 87 findings — `<div
             # data-controller="character-counter">` is a wrapper that watches a
             # textarea and prints a number, with no handler and nothing to press.
             # Advising a <button> there is advice nobody can take, and eleven
@@ -628,7 +628,7 @@ module Master
               next [] unless ::Master::Review::Scan::Laws.ui_path?(path)
               next [] unless path.to_s.include?("/app/views/") || path.to_s.include?("web/")
 
-              # Soft detectors - high-signal anti-patterns only
+              # Soft detectors — high-signal anti-patterns only
               case trait
               when "HONEST"
                 scan_lines(src, /loading.*?100%|progress.*?100%|fake[-_ ]progress/i,
@@ -639,9 +639,9 @@ module Master
                 [finding(line: 1, message: "form without visible error/empty handling - Rams thorough")]
               when "UNOBTRUSIVE"
                 # ERB blanked, and aria-modal exempt. This word-matched raw lines,
-                # so it fired on `aria-modal="true"` - the attribute that makes a
+                # so it fired on `aria-modal="true"` — the attribute that makes a
                 # dialog announce itself correctly, i.e. the compliant spelling of
-                # the thing it is checking - and on ERB comments that merely say
+                # the thing it is checking — and on ERB comments that merely say
                 # "showModal()". Neither is attention-capturing chrome. What is left
                 # is markup that actually builds an overlay, which is the soft
                 # signal this was written to give.
@@ -677,7 +677,7 @@ module Master
 
         # Rails app surface.
 
-        # Rails app law restored from master.yml rails_conventions - lexical/structural.
+        # Rails app law restored from master.yml rails_conventions — lexical/structural.
         # Applies under RAILS/, MASTER/web app views, and any app/ tree.
 
         RAILSISH = %r{(?:/RAILS/|/app/(?:controllers|models|helpers|views|javascript|assets)/)}i.freeze
@@ -776,7 +776,7 @@ module Master
             max = limits.fetch("max_lines", 200).to_i
             # The declared pattern is Stimulus's own naming convention, so it is
             # narrower than the guess it replaces and finds the same four files in
-            # the fleet - measured before the change.
+            # the fleet — measured before the change.
             next [] unless path.to_s.match?(Regexp.new(limits.fetch("path_pattern", '_controller\.js$')))
             next [] unless src.match?(/Controller\s+extends|export default class/)
 

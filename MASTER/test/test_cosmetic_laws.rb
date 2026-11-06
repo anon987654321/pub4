@@ -18,36 +18,73 @@ class TestCosmeticRules < Minitest::Test
     refute_empty rule("TAB_CHARACTER").check("f() {\n\tprint hi\n}\n", path: "OPENBSD/usr/local/bin/uptime-check.sh")
   end
 
-  # The operator's rule: punctuation is ASCII in every file, copy included.
-  # The banned marks are escapes so this test file obeys the Law it proves.
-  def test_ascii_punctuation_flags_each_banned_mark
-    Master::Content::AsciiPunctuation::REPLACEMENTS.each_key do |mark|
-      refute_empty rule("ASCII_PUNCTUATION").check("Open 10#{mark}16\n", path: "README.md"), mark.inspect
+  def test_en_dash_range_flags_hyphen_range_in_prose
+    findings = rule("EN_DASH_RANGE").check("Ideal line length is 45-75 characters.\n", path: "README.md")
+    refute_empty findings
+  end
+
+  # A date, a model id and a regex character class each carry a hyphen between
+  # digits, and none of them is a range. Unheld, this rule read the repo's own
+  # decision log as a typography defect: 200 of 207 findings were dates.
+  def test_en_dash_range_ignores_dates_ids_and_char_classes
+    [
+      "The push landed on 2026-08-10 and reverted on 2026-08-12.\n",
+      "model0: claude-opus-4-8\n",
+      "MAGIC_NUMBER is /(?:[2-9]|[1-9])/\n",
+      "It ran flux-1.1-pro-ultra instead.\n",
+    ].each do |line|
+      assert_empty rule("EN_DASH_RANGE").check(line, path: "README.md"), line
     end
   end
 
-  def test_ascii_punctuation_allows_letters_and_ascii
-    copy = "Åpent 10-16 - blåbær... \"ja\" -> ok\n"
-    assert_empty rule("ASCII_PUNCTUATION").check(copy, path: "config/locales/nb.yml")
+  # A YAML mapping's value is data, and the commonest subject in this repo is
+  # `bpm_range: 84-90` in a file dilla parses to render audio. The prose YAML
+  # also carries -- a comment, a block scalar continuation -- is not a mapping
+  # line, so both directions are asserted against the same file kind.
+  def test_en_dash_range_ignores_a_yaml_mapping_value
+    assert_empty rule("EN_DASH_RANGE").check("bpm_range: 84-90\n", path: "data/reference_sonic.yml")
   end
 
-  def test_ascii_punctuation_leaves_soul_to_the_operator
-    assert_empty rule("ASCII_PUNCTUATION").check("A \u2014 B\n", path: "MASTER/data/soul.yml")
+  def test_en_dash_range_still_reads_prose_inside_yaml
+    refute_empty rule("EN_DASH_RANGE").check("    4-9 lines total. No preamble.\n", path: "data/council.yml")
   end
 
-  def test_ascii_punctuation_rewrites_separators_by_position
-    rewrite = ->(text) { Master::Content::AsciiPunctuation.rewrite(text) }
-
-    assert_equal "a - b", rewrite.call("a\u2014b")
-    assert_equal "a - b", rewrite.call("a \u00B7 b")
-    assert_equal "  - item\n", rewrite.call("  \u2022 item\n")
-    assert_equal "end -\n", rewrite.call("end \u2014\n")
-    marks = "10\u201316 \u2026 \u201Cx\u201D it\u2019s \u2192 2\u00D7 \u2265"
-    assert_equal "10-16 ... \"x\" it's -> 2x >=", rewrite.call(marks)
+  # A locale value is the copy a reader sees, not data a program parses.
+  def test_en_dash_range_reads_a_locale_value_as_prose
+    refute_empty rule("EN_DASH_RANGE").check("    open: Åpent 10-16\n", path: "RAILS/brgen/config/locales/nb.yml")
+    assert_empty rule("EN_DASH_RANGE").check("    open: Åpent 10–16\n", path: "RAILS/brgen/config/locales/nb.yml")
   end
 
-  # Under ASCII_PUNCTUATION a locale's ellipsis is three dots, and copy that
-  # trails off is not a placeholder; the same dots ending Ruby still are.
+  # CSS specificity is a tuple written 0-1-0, and a two-number pattern reads two
+  # ranges in it.
+  def test_en_dash_range_ignores_a_hyphenated_triple
+    assert_empty rule("EN_DASH_RANGE").check("the block is 0-1-0 against the base's 0-1-0.\n", path: "README.md")
+  end
+
+  # Terminal output is ASCII (operator, 2026-11-06): the CLI, the REPL prompt,
+  # the terminal face and dmesg lines are out of the typographic Laws' reach.
+  def test_typographic_laws_leave_terminal_output_ascii
+    range = rule("EN_DASH_RANGE")
+    line = "Ideal line length is 45-75 characters.\n"
+    assert_empty range.check(line, path: "MASTER/data/council.yml")
+    assert_empty range.check(line, path: "OPENBSD/bin/check")
+    refute_empty range.check(line, path: "OPENBSD/README.md")
+
+    excellence = rule("TYPOGRAPHIC_EXCELLENCE")
+    assert_empty excellence.check(%(label = "..."\n), path: "MASTER/lib/cli/session.rb")
+    assert_empty excellence.check(%(  puts "..."\n), path: "RAILS/brgen/lib/tasks/seed.rake")
+    refute_empty excellence.check(%(placeholder = "..."\n), path: "RAILS/brgen/app/helpers/a.rb")
+  end
+
+  # A literal "--" in copy is ASCII standing in for the spaced en dash an aside takes.
+  def test_typographic_excellence_reads_a_double_hyphen_literal_as_an_aside
+    excellence = rule("TYPOGRAPHIC_EXCELLENCE")
+    refute_empty excellence.check(%(separator = "--"\n), path: "RAILS/brgen/app/helpers/a.rb")
+    assert_empty excellence.check(%(separator = " – "\n), path: "RAILS/brgen/app/helpers/a.rb")
+  end
+
+  # A locale's copy may close on three dots as well as on the ellipsis, and
+  # copy that trails off is not a placeholder; the same dots ending Ruby still are.
   def test_completion_theater_reads_a_locale_ellipsis_as_copy
     locale = "en:\n  loading: Loading the room...\n"
     assert_empty rule("COMPLETION_THEATER").check(locale, path: "RAILS/brgen/config/locales/en.yml")

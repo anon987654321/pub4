@@ -53,7 +53,7 @@ module Master
         return false unless discard_token?(body)
 
         # In a predicate, false IS the handling: tts_healthy? rescuing to
-        # false has absorbed the error into its answer - the health-check
+        # false has absorbed the error into its answer — the health-check
         # idiom, not a swallow. The fleet's health endpoints carried seven
         # error-severity findings for degrading gracefully. Only nil/false
         # qualify; a predicate rescuing to [] is still discarding.
@@ -83,7 +83,7 @@ module Master
     # exemption above makes. A rescue whose whole body is `next` sits in a loop
     # over members, and skipping the member IS the handling: the method's answer
     # is that this one contributed nothing. All 17 in the four trees are that
-    # shape - a census walking files, a check walking hosts - and 16 of them
+    # shape — a census walking files, a check walking hosts — and 16 of them
     # would land at error severity, so adding the token asks the fleet to
     # annotate its own idiom.
     def discard_token?(body)
@@ -130,9 +130,9 @@ module Master
       next [] if path.to_s.match?(%r{/exe/|/spec/|/bin/|/cli/session})
 
       # A program's output is its interface, and the rule is about library code.
-      # Measured over the four trees: 750 of 941 findings sat in a program - a
+      # Measured over the four trees: 750 of 941 findings sat in a program — a
       # script with a shebang, a file that runs itself under a $PROGRAM_NAME
-      # guard, a rake task, a seed file or a test - where `puts "ok: synced"` is
+      # guard, a rake task, a seed file or a test — where `puts "ok: synced"` is
       # the line the operator reads and a logger would hide it.
       next [] if src.start_with?("#!") || src.match?(PROGRAM_GUARD) || path.to_s.match?(PROGRAM_PATH)
 
@@ -204,10 +204,10 @@ module Master
     good "  # the reasoning is in TODO.md\n  MARKERS = /TODO|FIXME|XXX/\n"
     check do |src, path|
       # The lookahead keeps TODO.md, the repo-wide backlog, from reading as a
-      # marker - see data/laws.yml `unfinished`, which learned this at :veto.
+      # marker — see data/laws.yml `unfinished`, which learned this at :veto.
       #
       # A marker inside a regex literal is a detector, which is the reason this
-      # rule already skips the directory it lives in - and detectors live outside
+      # rule already skips the directory it lives in — and detectors live outside
       # it too. Both of the tree's cases are that: personal_workspace greps a
       # MEMORY.md for the marker lines an operator left, history_valuables lists
       # the markers among the patterns worth recovering from git.
@@ -331,7 +331,7 @@ module Master
       # No path exemption for the scanner's own rules: a rule that returns [] on
       # error calls the file it failed on clean, so a swallow costs more in this
       # directory than anywhere else. The one exception is the rule's own test,
-      # which must spell every shape it proves - the law-conduct argument.
+      # which must spell every shape it proves — the law-conduct argument.
       next [] if path.to_s.match?(/test_silent_rescue_rule\.rb\z|test_self_test\.rb\z/)
 
       SilentRescue.scan(src, narrow: false).map { |hit| finding(line: hit[:line], message: hit[:message]) }
@@ -372,7 +372,7 @@ module Master
   # all 37.
   #
   # It also made severity depend on comma count. Its naked-class branch matched
-  # `rescue\s+\S+` - one token - so `rescue Errno::ESRCH` was an ERROR while the
+  # `rescue\s+\S+` — one token — so `rescue Errno::ESRCH` was an ERROR while the
   # identical `rescue Errno::ESRCH, Errno::EPERM` was only NARROW_SILENT_RESCUE's
   # warning. 8 sites carried both severities at once.
   #
@@ -412,13 +412,13 @@ module Master
 
       # `p` is a legal variable name, so a line starting `p <<` is an append to a
       # local, not a Kernel#p call. The old pattern read both the same way and
-      # flagged attention_context.rb's `p << "zoom: ..."` twice - an error-severity,
+      # flagged attention_context.rb's `p << "zoom: …"` twice — an error-severity,
       # auto_fix=true rule pointed at correct code. Anything whose next token is an
       # assignment, append or comparison operator is the variable, not the call.
       #
       # `==` and `!=` were named and `<` and `>` were not, so dilla's
-      # `p < 0.5 ? (p * 4.0) - 1.0 : 3.0 - (p * 4.0)` - the phase local of a
-      # triangle oscillator - was an error-severity finding. `p <expr>` parses as
+      # `p < 0.5 ? (p * 4.0) - 1.0 : 3.0 - (p * 4.0)` — the phase local of a
+      # triangle oscillator — was an error-severity finding. `p <expr>` parses as
       # a comparison in every case; a Kernel#p whose argument opens with `<` is
       # `p <<~HEREDOC`, which the `<<` branch already spares.
       findings = scan_lines(src, /^\s*pp?\s+(?!self\b)(?!<<|[<>]|==|!=|\|\|=|&&=|[+\-*\/%|&^]?=)/,
@@ -483,8 +483,8 @@ module Master
 
       # Time.now.utc and Time.now.to_i do not read Time.zone: one converts to UTC
       # explicitly, the other is epoch seconds. Every RAILS finding this rule
-      # produced was one of those two forms - JWT exp/iat, a tmpfile suffix, and
-      # generated_at timestamps already pinned to .utc - so the rule was reporting
+      # produced was one of those two forms — JWT exp/iat, a tmpfile suffix, and
+      # generated_at timestamps already pinned to .utc — so the rule was reporting
       # 13 rewrites that would have changed no behaviour at all.
       findings = scan_lines(src, /(?<![A-Za-z_.])Time\.now\b(?!\s*\.\s*(?:utc|to_i|to_f|to_r))/,
                              message: "Time.now ignores Time.zone - use Time.current")
@@ -498,7 +498,7 @@ module Master
   end
 
   # `a === b` is JavaScript's identity operator and Ruby's case-equality, and it
-  # is exactly three `=` with a space each side - which is what the divider
+  # is exactly three `=` with a space each side — which is what the divider
   # pattern below matches. 486 of this rule's 636 findings across the four trees
   # were `mode === "speaking"` and its like, three quarters of everything it
   # reported. An operand on both sides is what separates the operator from a
@@ -512,8 +512,8 @@ module Master
     bad "# --- section\n"
     good "# -- section\n"
     check do |src, path|
-      # A test carries dividers as data - a YAML fixture's `---`, an expected
-      # banner - so in a test only a comment line is read, and a section divider
+      # A test carries dividers as data — a YAML fixture's `---`, an expected
+      # banner — so in a test only a comment line is read, and a section divider
       # there is the same decoration it is in lib/.
       in_test = path.to_s.match?(%r{(^|/)(test|spec)/})
 

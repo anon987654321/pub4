@@ -5,7 +5,7 @@ module Master
     module Scan
       module Laws
 
-        # Retired registry twins - each lives once, in law/:
+        # Retired registry twins — each lives once, in law/:
         #   ARIA_INTERACTIVE, BUTTON_OVER_ANCHOR, CLAMP_TYPOGRAPHY, I18N_COVERAGE
         #   MOBILE_FIRST, NO_IMPORT_SCSS
         #   NO_INLINE_STYLES
@@ -22,11 +22,11 @@ module Master
           end
         end
 
-        # SEMANTIC_ELEMENTS lives once, in law/html.rb - fixtures attached, any narrowing
+        # SEMANTIC_ELEMENTS lives once, in law/html.rb — fixtures attached, any narrowing
         # this version had learned ported there (2026-08-21 twin retirement).
 
         # IMG_ALT and LAZY_IMAGES returned from the twin batch: both judge a
-        # TAG, and law/ scans lines - the attribute-per-line spelling made
+        # TAG, and law/ scans lines — the attribute-per-line spelling made
         # every multi-line <img> a finding. tag_source flattens first.
         ::Law.define(:IMG_ALT) do
           tags %i[ACCESSIBILITY]
@@ -58,7 +58,7 @@ module Master
             #
             # `@media (prefers-reduced-motion: reduce) { * { animation: none
             # !important } }` is the recommended spelling, and it needs !important
-            # precisely because it must beat whatever the author set - dropping it
+            # precisely because it must beat whatever the author set — dropping it
             # would leave motion running for someone who asked the OS to stop it.
             # 73 of the 139 findings in this repo were that block, plus three in
             # prefers-contrast/forced-colors/print, which override for the same
@@ -74,9 +74,9 @@ module Master
             #
             # An !important that ERASES chrome is a guarantee; one that PAINTS is
             # an argument. The flat system armours its wordmark, grips and
-            # toggles with border/background/outline erased from anywhere -
+            # toggles with border/background/outline erased from anywhere —
             # converging styling to nothing cannot start the specificity war
-            # this rule exists to prevent - so erase-shaped importants
+            # this rule exists to prevent — so erase-shaped importants
             # (none/transparent/0) pass and painting ones still fire.
             erase = /(?:border|outline|background|padding|animation|transition|box-shadow|display)[\w-]*\s*:\s*(?:none|transparent|0)[^;!]*!\s*important/
             source_text = without_block_comments(without_override_media(src))
@@ -92,10 +92,10 @@ module Master
           end
         end
 
-        # LOGICAL_PROPERTIES lives once, in law/css.rb - fixtures attached, any narrowing
+        # LOGICAL_PROPERTIES lives once, in law/css.rb — fixtures attached, any narrowing
         # this version had learned ported there (2026-08-21 twin retirement).
 
-        # META_CHARSET lives once, in law/html.rb - fixtures attached, any narrowing
+        # META_CHARSET lives once, in law/html.rb — fixtures attached, any narrowing
         # this version had learned ported there (2026-08-21 twin retirement).
 
         ::Law.define(:ARIA_LABELS) do
@@ -157,10 +157,10 @@ module Master
           end
         end
 
-        # BEM_IN_VIEWS lives once, in law/html.rb - fixtures attached, any narrowing
+        # BEM_IN_VIEWS lives once, in law/html.rb — fixtures attached, any narrowing
         # this version had learned ported there (2026-08-21 twin retirement).
 
-        # UTILITY_CLASS_SOUP lives once, in law/html.rb - fixtures attached, any narrowing
+        # UTILITY_CLASS_SOUP lives once, in law/html.rb — fixtures attached, any narrowing
         # this version had learned ported there (2026-08-21 twin retirement).
 
         ::Law.define(:ERB_HTML_SAFE) do
@@ -242,7 +242,7 @@ module Master
           end
         end
 
-        # SKIP_TO_MAIN lives once, in law/html.rb - fixtures attached, any narrowing
+        # SKIP_TO_MAIN lives once, in law/html.rb — fixtures attached, any narrowing
         # this version had learned ported there (2026-08-21 twin retirement).
 
         ::Law.define(:ASYNC_STATUS) do
@@ -261,7 +261,7 @@ module Master
           end
         end
 
-        # NO_LONG_TRANSITION lives once, in law/css.rb - fixtures attached, any narrowing
+        # NO_LONG_TRANSITION lives once, in law/css.rb — fixtures attached, any narrowing
         # this version had learned ported there (2026-08-21 twin retirement).
 
         ::Law.define(:REDUCED_MOTION) do
@@ -274,7 +274,7 @@ module Master
             next [] unless src.match?(/@keyframes|animation\s*:/i)
             # Either direction of the query satisfies this. `reduce` turns motion off
             # for people who asked; `no-preference` never turns it on for them in the
-            # first place, which is the stronger form - motion is opt-in rather than
+            # first place, which is the stronger form — motion is opt-in rather than
             # opt-out, so a browser that reports nothing gets the still version.
             # visualizer.css wraps every animation in `no-preference` and was the last
             # REDUCED_MOTION finding in the tree: the rule was flagging the better

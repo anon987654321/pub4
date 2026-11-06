@@ -229,7 +229,7 @@ module Master
           private
 
           # Each axiom is { prompt:, severity:, mode: }. info-tier violations stay
-          # out of the prompt - they're noise that doubles cost. info-tier
+          # out of the prompt — they're noise that doubles cost. info-tier
           # opportunities stay in: that's their whole point.
           def reload_semantic_laws!
             @laws = load_semantic_laws
@@ -249,7 +249,7 @@ module Master
           # Law#applies_to?. Law refuses a language FILE_LANGUAGE_MAP never
           # produces (Law#prove!); test_semantic_rule_scope asks the same of
           # this population, because a declared language nothing emits aims a rule
-          # at no file at all - which is how `rails`, `prose` and `erb` sat here.
+          # at no file at all — which is how `rails`, `prose` and `erb` sat here.
           # Every Law is assessed against every artifact, regardless of the file's
           # implementation language. Languages are detector implementation details,
           # not exemptions from semantic or visual review.

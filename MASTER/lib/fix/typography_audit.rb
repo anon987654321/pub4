@@ -1,21 +1,21 @@
 # frozen_string_literal: true
 
-require_relative "../content/ascii_punctuation"
-
 module Master
   module Fix
-    # The style stage of the /fix pass - the typographic law's audit half.
+    # The style stage of the /fix pass — the typographic law's audit half.
     #
     # laws.yml#typography sets the marks; Renderer#beautify sets them on the
     # way out; this audit reads the operator-facing strings that produce the
     # rest. It scans the trees that speak to a person (cli, voice, trace) for
-    # the mechanical lapses: a non-ASCII mark (Law ASCII_PUNCTUATION: a dash is
-    # "-", an ellipsis "..."), and the double-hyphen dash that stands in for a
-    # single hyphen in prose. Flags
+    # the mechanical lapses: a typographic mark in terminal output, which is
+    # ASCII (operator, 2026-11-06: a dash is "-", an ellipsis "..."), and the
+    # double-hyphen dash that stands in for a single hyphen in prose. Flags
     # ("--dry-run"), globs and paths are exempt by shape, so a finding is a
     # sentence that reached a person wearing the wrong mark.
     class TypographyAudit
       SCOPE = %w[lib/cli lib/voice lib/trace].freeze
+      # The marks proper typography sets in copy and a terminal does not print.
+      TERMINAL_MARK = /[\u2014\u2013\u00B7\u2022\u2026\u201C\u201D\u2018\u2019\u2192\u2190\u00D7\u2265\u2264]/.freeze
       PROSE_DOUBLE_DASH = /(?<=\s)--(?=\s)/.freeze
       STRING_LITERAL = /"([^"\n]{6,300})"/.freeze
       # Where a machine reads the line, the marks stay literal: fixtures that
@@ -66,7 +66,7 @@ module Master
       end
 
       def violation_kind(text)
-        return "non_ascii_punctuation" if Master::Content::AsciiPunctuation.banned?(text)
+        return "non_ascii_punctuation" if text.match?(TERMINAL_MARK)
         return "prose_double_dash" if text.match?(PROSE_DOUBLE_DASH)
 
         nil

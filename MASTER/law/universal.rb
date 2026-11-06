@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-# law/universal.rb - every universal law, one Law.define per law.
+# law/universal.rb — every universal law, one Law.define per law.
 # DEAD_CODE lives once, in the scanner registry (MASTER/law/ruby.rb): it anchors the
 # terminator to the line start, walks indentation to tell a dedent (block
 # over, next line reachable) from a continuation, and knows else/elsif/when/
@@ -134,8 +134,8 @@ Law.define(:GUARD_EXPENSIVE_OPS) do
   # `rm -rf` left for NEVER_BATCH_DELETE, which already owned file deletion and
   # already knew a scoped path from an unbounded one. Both laws claiming it was
   # one question with two instruments, and every one of the twelve hits here was
-  # a bounded removal in the deploy pipeline - `doas rm -rf "${app_dir}/public"`
-  # - or prose in a runbook. This law is the database sweep.
+  # a bounded removal in the deploy pipeline — `doas rm -rf "${app_dir}/public"`
+  # — or prose in a runbook. This law is the database sweep.
   #
   # A symbol list names the operations; it does not perform them.
   # `%i[drop_table force_push]` is a list of what needs confirming, and reading
@@ -162,7 +162,7 @@ Law.define(:MEANINGFUL_NAMES) do
   # fixtures below describe: `tmp = load` wastes the name `load` that is right
   # there. Any generic name on the left was 484 findings, and a sample of them
   # was `data = YAML.safe_load(path)`, `result = ideation.ideate(goal)` and
-  # `result = img_f * (1.0 - intensity)` - expressions whose value genuinely is
+  # `result = img_f * (1.0 - intensity)` — expressions whose value genuinely is
   # the parsed data or the result, with no domain word going spare. Renaming
   # those makes the code worse, and 457 of the 484 were that shape.
   #
@@ -194,12 +194,12 @@ Law.define(:NO_COLUMN_ALIGN) do
   source "Ruby Style Guide / RuboCop Layout - no token alignment"
   # The character class before `=` is optional. Required, it could only match by
   # backtracking into the run of spaces, so `name    = 1` was caught on three
-  # spaces and `result  = x` slipped through on exactly two - the commonest
+  # spaces and `result  = x` slipped through on exactly two — the commonest
   # spacing of all. 121 findings under MASTER/lib became 154, and none of the 33
   # is in law/, so the rule was blind to a third of its own subject.
   # A run of spaces inside a quoted string is the string. OPENBSD/dev/perms.sh
   # writes `print "File perms  = $file_perms"`, lining up two labels in the
-  # OUTPUT - the one place column alignment is the point rather than the defect.
+  # OUTPUT — the one place column alignment is the point rather than the defect.
   detect do |line|
     s = line.strip
     next false if s.start_with?("*") || s.match?(/\A[-=]+\z/)
@@ -219,7 +219,7 @@ end
 Law.define(:NULL_BLINDNESS) do
   source "SQL/Ruby - explicit NULL/nil handling"
   # `= NULL` with no word boundary matched `<= NULL_FLOOR_DB` and
-  # `>= NULL_FLOOR_DB` - a float comparison against a dB floor, flagged at
+  # `>= NULL_FLOOR_DB` — a float comparison against a dB floor, flagged at
   # error severity, which then gated those files out of the semantic pass
   # entirely. `!= NULL` was also a strict substring of `= NULL`, so that half
   # of the alternation had never done anything.
@@ -243,7 +243,7 @@ Law.define(:SECRET_PROXIMITY) do
   source "OWASP - no hardcoded secrets/credentials"
   # The value must be a CLOSED quoted literal, and the identifier must not
   # itself sit inside a string. `[^'"]{8,}` had no reason to stay inside a
-  # quote, so it matched the source BETWEEN two literals - the "secret" it
+  # quote, so it matched the source BETWEEN two literals — the "secret" it
   # reported in auth_tier.rb was the code `token=") || p == `. At :error
   # severity, which also gated that file out of the semantic pass.
   #
@@ -269,7 +269,7 @@ Law.define(:SQUINT_TEST) do
   scope :file
   # Comment lines are content for this law, not noise. considered_text replaces
   # each one with a bare newline, so any four consecutive comment lines became
-  # `\n\n\n\n` and read as a gap - which made every heavily-commented file in
+  # `\n\n\n\n` and read as a gap — which made every heavily-commented file in
   # this tree, including every file under law/, a finding about blank lines it
   # does not have.
   reads_comments true
@@ -289,6 +289,10 @@ Law.define(:SQUINT_TEST) do
   X
 end
 
+# TYPOGRAPHIC_EXCELLENCE lives once, in the registry (universal_rules.rb):
+# it knows shell arg separators and Open3 calls are not prose; this bare
+# twin flagged doc-comment placeholders and double-counted every hit.
+
 # TYPOGRAPHY_DISCIPLINE lives once, in the registry (universal_rules.rb): it
 # skips comment-leading lines and yaml frontmatter and wants a 4+ run, where
 # this per-line twin flagged every section comment, diff header and
@@ -299,7 +303,7 @@ Law.define(:UNBOUNDED_RETRY) do
   # Every finding this produced was a false positive, all five of them. Three
   # narrowings, each against one of those shapes:
   #
-  # A retry whose modifier bounds it IS the fix - `retry if attempts < RETRIES`
+  # A retry whose modifier bounds it IS the fix — `retry if attempts < RETRIES`
   # is what "add a max_attempts cap" looks like once someone has added it, and
   # flagging it asks for the change that is already there.
   #
@@ -310,7 +314,7 @@ Law.define(:UNBOUNDED_RETRY) do
   # which is file scope and a different rule.
   #
   # The keyword has to be a statement. String blanking cannot survive a nested
-  # interpolation - `"CSS#{a ? " (retry)" : ""}"` left the word bare - and a
+  # interpolation — `"CSS#{a ? " (retry)" : ""}"` left the word bare — and a
   # `retry` that is not at the head of a statement is prose in every case.
   #
   # One line on purpose: Law.conduct neutralizes `detect` lines when a law
@@ -352,14 +356,14 @@ Law.define(:WHY_NOT_WHAT) do
   # closed and small" is about the verb SET, "# create is not a failure to
   # lock" is about the create call. All six hits read that way.
   #
-  # A comment restating the line below it is terse - that is what makes it
+  # A comment restating the line below it is terse — that is what makes it
   # worthless, and the fixture is two words. Prose that explains why runs on.
   # Four words is the cut, so `# increment counter` stays caught and a sentence
   # that merely opens with one of these words does not.
   detect do |line|
     body = line[/\A\s*#\s*(.*)/, 1].to_s
     # A restating comment names its object: "increment counter". A function word
-    # after the verb means the line is mid-sentence - "get for free" is the tail
+    # after the verb means the line is mid-sentence — "get for free" is the tail
     # of "what changed is which one you / get for free", wrapped.
     next false unless body.match?(/\A(increment|set|get|update|return|initialize|create|add)\s+\w+/)
     next false if body.match?(/\A\w+\s+(?:a|an|the|for|of|to|in|on|at|with|from|by|is|are|was|were|it|this|that)\b/)
@@ -1861,16 +1865,16 @@ module Master
     module Scan
       module Laws
 
-      # SQL strings embedded in Ruby DB adapter files are expected - only flag
+      # SQL strings embedded in Ruby DB adapter files are expected — only flag
       # actual mixed-medium template files.
-        # Retired registry twins - each lives once, in law/:
+        # Retired registry twins — each lives once, in law/:
         #   MEANINGFUL_NAMES, WHY_NOT_WHAT
         # (test_scan_rule_contracts proves each reaches findings through the bridge).
 
-        # NO_MULTIPLE_LANGUAGES lives once, in law/css.rb - fixtures attached, any narrowing
+        # NO_MULTIPLE_LANGUAGES lives once, in law/css.rb — fixtures attached, any narrowing
         # this version had learned ported there (2026-08-21 twin retirement).
 
-        # SAFE_NAVIGATION lives once, in law/ruby.rb - fixtures attached, any narrowing
+        # SAFE_NAVIGATION lives once, in law/ruby.rb — fixtures attached, any narrowing
         # this version had learned ported there (2026-08-21 twin retirement).
 
         ::Law.define(:FEW_ARGUMENTS) do
@@ -1909,7 +1913,7 @@ module Master
         end
 
       # Only positional boolean defaults are flag arguments. Keyword defaults
-      # (stream: false, enabled: true) are not - they're fine API design.
+      # (stream: false, enabled: true) are not — they're fine API design.
         ::Law.define(:NO_FLAG_ARGUMENTS) do
           source "Clean Code - no flag arguments"
           ask "Does a boolean argument make one function perform two different jobs or select unrelated behavior?"
@@ -1993,6 +1997,39 @@ module Master
       # Generic names: only short or clearly placeholder names. `data` and
       # `result` are contextually meaningful in most Ruby code.
 
+        # Copy a visitor reads carries the ellipsis, and an aside a spaced en
+        # dash (operator, 2026-11-06), so a literal "..." or "--" in copy is
+        # ASCII standing in for them. The dash and quotes in running copy are
+        # PARENTHETICAL_DASH's and QUOTES_BY_LOCALE's (law/typesetting.rb).
+        # Terminal output stays ASCII (Law::TERMINAL_OUTPUT_PATH, and a line
+        # that prints: puts, warn, a logger), so the CLI, the REPL prompt and
+        # dmesg lines are out of this Law's reach.
+        TERMINAL_PRINT =
+          /\b(?:puts|warn|print|printf|logger|abort|\$stderr|\$stdout|console\.(?:log|warn|error))\b/.freeze
+
+        ::Law.define(:TYPOGRAPHIC_EXCELLENCE) do
+          tags %i[TYPOGRAPHY]
+          fix "typographic excellence in user-facing text: the ellipsis, and a spaced en dash for an aside"
+          example_path "/repo/RAILS/brgen/app/helpers/search_helper.rb"
+          bad %(placeholder = "..."\n)
+          good %(placeholder = "…"\n)
+          check do |src, path|
+            next [] if Law.terminal_output?(path)
+
+            src.each_line.with_index(1).filter_map do |line, n|
+              next if line.match?(/Open3|capture2|capture3|gsub\(|Shellwords/)
+              next if line.match?(TERMINAL_PRINT)
+
+              next if line.match?(/,\s*"--"\s*,|,\s*"--"\s*\)|<<\s*["']--/)
+              # A leading-# line in an .erb file is a doc comment inside an ERB
+              # block — its "..." is an example placeholder, not UI copy.
+              next if path.to_s.end_with?(".erb") && line.lstrip.start_with?("#")
+              next unless line.match?(/["']\.\.\.[\"']|["']--["']/)
+              finding(line: n, message: "ASCII typography - the ellipsis (U+2026), or a spaced en dash for an aside")
+            end
+          end
+        end
+
       # Box-drawing glyphs, and only those. A run of dashes or equals signs is
       # NO_ASCII_LINE_ART's question, and reading it here reported one divider
       # under two ids while also calling a Markdown table's delimiter row
@@ -2046,24 +2083,24 @@ module Master
           end
         end
 
-      # NULL_BLINDNESS lives once, in law/ (domain files) - the second
+      # NULL_BLINDNESS lives once, in law/ (domain files) — the second
       # retired twin (see the old backlog). This block's regex matched IS NULL, the
       # correct form its own message prescribed, and needed a path exemption
       # to stop reporting the fixer that emits that string as a repair. The
       # law version detects `= NULL`, proves itself on fixtures the inverted
       # detector would have failed, and needs no exemption.
 
-      # SECRET_PROXIMITY lives once, in law/ - the third retired twin. The two
+      # SECRET_PROXIMITY lives once, in law/ — the third retired twin. The two
       # regexes were byte-identical; the registry block was a pure duplicate.
 
-# MAGIC_COLOR lives once, in js_laws.rb (applies_to css/scss/html/js - where colors
+# MAGIC_COLOR lives once, in js_laws.rb (applies_to css/scss/html/js — where colors
 # live). A second copy here with no applies_to double-counted every css/scss color
 # under the same id (a SINGULARITY violation) and added no coverage worth keeping.
 
-      # UNBOUNDED_RETRY lives once, in law/ (domain files) - the first of the
+      # UNBOUNDED_RETRY lives once, in law/ (domain files) — the first of the
       # 72 law/registry twins retired (see the old backlog). The narrowing this block
-      # learned - keyword not symbol, not predicate, not identifier, not regex
-      # alternation, not a line continuation - moved into the law's detector
+      # learned — keyword not symbol, not predicate, not identifier, not regex
+      # alternation, not a line continuation — moved into the law's detector
       # with each shape pinned as a good fixture, which is what the registry
       # version never had. Its law/ self-exemption dies with it:
       # canonical law/ sources arrive conducted, and rule sources that
@@ -2091,8 +2128,8 @@ module Master
         end
 
       # Bias: SIMULATION. soul.yml's anti_simulation forbids will, would, could
-      # and might beside its demand for evidence - a diff for a change, output
-      # for a completion - so the words are forbidden where the program reports
+      # and might beside its demand for evidence — a diff for a change, output
+      # for a completion — so the words are forbidden where the program reports
       # on work: a promise in any file ("I will", "let's"), and a future or
       # conditional inside a message it prints. A conditional anywhere else
       # names a hypothetical. "This test would pass having measured nothing"
@@ -2121,19 +2158,19 @@ module Master
           end
         end
 
-      # Bias: COMPLETION_THEATER - ellipsis/etc as placeholder outputs.
+      # Bias: COMPLETION_THEATER — ellipsis/etc as placeholder outputs.
       #
       # A placeholder "etc" is lowercase, bare, and not part of a path. Being loose
       # about that (/\betc\.?\b/i) matched `require "etc"`, `Etc.nprocessors` and
-      # every /etc/... deploy path - 12 of selfcheck's 71 findings, none real. See
+      # every /etc/… deploy path — 12 of selfcheck's 71 findings, none real. See
       # the old backlog, Scanner noise.
       #
       # `|`, `:` and `[` join the path characters because a word that sits inside
       # a regex alternation is a token in a pattern, not prose. Two lines in the
       # tree were reported for years on that shape and both are lists of real
-      # names: ast_fixer's `%r{/OPENBSD/(?:etc|usr|var)/}` - the OPENBSD mirror
+      # names: ast_fixer's `%r{/OPENBSD/(?:etc|usr|var)/}` — the OPENBSD mirror
       # guard, at error severity, so `rake selfcheck` was red on the rule that
-      # protects /etc - and a stdlib allowlist naming `etc` among a dozen others.
+      # protects /etc — and a stdlib allowlist naming `etc` among a dozen others.
       # Measured over all four trees: exactly those two go, 57 findings stay.
       # `(` and `)` are deliberately NOT in the sets: "(etc.)" in prose is the
       # placeholder this rule exists to find.
@@ -2146,7 +2183,7 @@ module Master
         # /etc is a directory, and the exclusions above only knew it when a
         # slash was adjacent. Every other way this tree spells that path counted
         # as theater: File.join(ROOT, "etc", "rc.d"), `OPENBSD/{etc,usr,var}`,
-        # the %w list of directory names in tools/doc_paths.rb - 25 of this
+        # the %w list of directory names in tools/doc_paths.rb — 25 of this
         # rule's 40 findings on 2026-09-06, none of them a placeholder.
         # `require "etc"` is the same lesson, learned once for one line.
         PATH_ETC = /["']etc["']|\{[\w,]*\betc\b[\w,]*\}|\betc(?=\s+(?:usr|var)\b)/
@@ -2157,15 +2194,15 @@ module Master
         # screener, etc.` was a finding and the same sentence on its own line was
         # not. Ruby's `#{` and a shell `$#` are not comment openers.
         #
-        # `//` and `/* ... */` for the same reason, found when MASTER/web joined
+        # `//` and `/* … */` for the same reason, found when MASTER/web joined
         # the corpus: a CSS comment reading "(mood changes etc)" and a JS one
         # listing "style bleed, mood arc, vertical timbre, etc." were the only
         # two findings in 164 files, and both were prose.
         #
         # Per language, because a comment opener in one is data in another. The
         # first version applied all three everywhere and `CONFIG_GLOBS =
-        # ["etc/crontab*", "etc/*.local", ...]` in OPENBSD lost everything from
-        # its `/*` onward - leaving `"etc` at the end of the line, which then
+        # ["etc/crontab*", "etc/*.local", …]` in OPENBSD lost everything from
+        # its `/*` onward — leaving `"etc` at the end of the line, which then
         # read as the abbreviation. The ratchet caught it at 0 -> 1.
         HASH_COMMENT = /(?<![$\\])\#(?!\{).*\z/
 
@@ -2183,8 +2220,9 @@ module Master
             # an unfinished implementation is how a rule teaches its readers to
             # ignore it. An ellipsis still counts in both.
             prose = path.to_s.end_with?(".md", ".markdown")
-            # A locale value is copy, and under ASCII_PUNCTUATION its ellipsis is "...":
-            # "Loading..." is a sentence trailing off, not unfinished code.
+            # A locale value is copy, and copy may close on three dots as well as
+            # on the ellipsis: "Loading..." is a sentence trailing off, not
+            # unfinished code.
             copy = path.to_s.match?(%r{/config/locales/[^/]+\.ya?ml\z})
             comment = SLASH_COMMENT_EXTENSIONS.include?(File.extname(path.to_s).downcase) ? SLASH_COMMENT : HASH_COMMENT
             src.each_line.with_index(1).filter_map do |line, n|
@@ -2209,7 +2247,7 @@ module Master
         # Interpolation is not injection when the adapter did the quoting. A
         # bind parameter cannot be an identifier, so
         # `conn.execute("DELETE FROM #{conn.quote_table_name(table)}")` is the
-        # documented way to name a table - and flagging it tells the reader the
+        # documented way to name a table — and flagging it tells the reader the
         # rule does not know the fix it demands. Only an interpolation that is
         # nothing but one quoting call is spared; a second term inside the
         # braces still fires.
@@ -2235,8 +2273,8 @@ module Master
               next if stripped.start_with?("#")
 
               # The concatenation branch wanted a closed string before the `+` and
-              # never asked for one, so it read `execute("SELECT a + b FROM t")` -
-              # SQL arithmetic - as concatenation, and missed
+              # never asked for one, so it read `execute("SELECT a + b FROM t")` —
+              # SQL arithmetic — as concatenation, and missed
               # `execute("SELECT * FROM " + name)`, which is the shape it is for.
               match = stripped.match(/\.(?:execute|query)\s*\(.*#\{/) ||
                       stripped.match(/\.(?:execute|query)\s*\(\s*["'][^"']*["']\s*\+/)
@@ -2244,7 +2282,7 @@ module Master
 
               interpolated = stripped.scan(INTERPOLATION).flatten
               next if interpolated.any? && interpolated.all? { |expr| expr.strip.match?(QUOTED_INTERPOLATION) }
-              # A real `.execute(`/`.query(` call is never itself quoted string content -
+              # A real `.execute(`/`.query(` call is never itself quoted string content —
               # skip when it sits inside a string literal (e.g. a human-readable label
               # like "Foo.execute(#{bar})" passed to a logger), which reads as an odd
               # number of open quote characters before the match on this line.
@@ -2256,10 +2294,10 @@ module Master
           end
         end
 
-        # NO_COLUMN_ALIGN lives once, in law/universal.rb - fixtures attached, any narrowing
+        # NO_COLUMN_ALIGN lives once, in law/universal.rb — fixtures attached, any narrowing
         # this version had learned ported there (2026-08-21 twin retirement).
 
-        # STRICT_MODE_ZSH lives once, in law/shell.rb - fixtures attached, any narrowing
+        # STRICT_MODE_ZSH lives once, in law/shell.rb — fixtures attached, any narrowing
         # this version had learned ported there (2026-08-21 twin retirement).
 
         ::Law.define(:CONTROL_CHARS) do
@@ -2270,7 +2308,7 @@ module Master
           check do |src, path|
             # Only tab (9), newline (10), and carriage return (13) are legal in
             # source. A stray SOH/NUL reads fine in most viewers but breaks parsing
-            # or a byte-compare silently - corruption from a concurrent write or a
+            # or a byte-compare silently — corruption from a concurrent write or a
             # tool that left a sentinel byte behind. Checked by ordinal so this rule
             # carries no control character of its own.
             src.each_line.with_index(1).filter_map do |line, number|
@@ -2295,7 +2333,7 @@ module Master
         #
         # A bare `pledge(` is deliberately unmatched. pledge(2) in prose and the
         # Fiddle extern both read that way, so the namespace is what separates a
-        # call from a mention - and an `include Pledge` caller writing bare
+        # call from a mention — and an `include Pledge` caller writing bare
         # `pledge("stdio")` is outside this rule's reach.
         ::Law.define(:PLEDGE_STAGED) do
           tags %i[SECURITY]
@@ -2329,8 +2367,8 @@ module Master
         #
         # Scoped to the sinks: a file that subscribes to tool:before is an audit
         # sink, and this asks how it writes. It does not ask whether every action
-        # publishes tool:before - a subscription that never happens leaves no line
-        # to read - so a tool that mutates without publishing is outside its reach
+        # publishes tool:before — a subscription that never happens leaves no line
+        # to read — so a tool that mutates without publishing is outside its reach
         # and stays the gap data/laws.yml#law_map audit_logging records.
         ::Law.define(:AUDIT_APPEND_ONLY) do
           tags %i[SECURITY]

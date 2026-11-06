@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-# law/practice.rb - rules about how to work, not about what source text says.
+# law/practice.rb — rules about how to work, not about what source text says.
 #
 # These lived in data/soul.yml because Law::Builder demanded a detector and no
 # detector can exist for "sweep to convergence rather than pausing" or "one SSH
