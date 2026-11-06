@@ -4,12 +4,30 @@
 // Usage: node scripts/bp_print.mjs
 import { spawnSync } from 'node:child_process';
 import { existsSync, statSync } from 'node:fs';
+import { OUTPUT_DIR as OUT } from './paths.mjs';
 
-const OUT = '/home/z/my-project/download/pub4.good/BPLANS';
 const ORDER = ['syre', 'speis', 'ragnhild', 'nato', 'norwegianhedge', 'pubhealthcare', 'govt_bergen'];
-const CHROME = '/home/z/.cache/ms-playwright/chromium_headless_shell-1200/chrome-headless-shell-linux64/chrome-headless-shell';
+const CHROME_CANDIDATES = [
+  process.env.BPLANS_CHROME_BIN,
+  process.env.CHROME_BIN,
+  '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
+  '/Applications/Chromium.app/Contents/MacOS/Chromium',
+  'chrome-headless-shell',
+  'chromium',
+  'chromium-browser',
+  'google-chrome',
+  'google-chrome-stable',
+].filter(Boolean);
 
-if (!existsSync(CHROME)) throw new Error('chromium headless shell not found at ' + CHROME);
+function available(command) {
+  if (command.includes('/') || command.includes('\\')) return existsSync(command);
+  return spawnSync('which', [command], { stdio: 'ignore' }).status === 0;
+}
+
+const CHROME = CHROME_CANDIDATES.find(available);
+if (!CHROME) {
+  throw new Error('Chromium/Chrome not found; set BPLANS_CHROME_BIN to its executable path.');
+}
 
 for (const name of ORDER) {
   const src = `file://${OUT}/${name}.html`;
