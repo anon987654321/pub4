@@ -273,6 +273,48 @@ end
     end
   end
 
+  def test_repository_write_receipt_survives_reload_and_is_consumed_after_commit
+    Dir.mktmpdir do |root|
+      repository = File.join(root, "repo")
+      FileUtils.mkdir_p(repository)
+      content = "OWNED = true\n"
+      File.write(File.join(repository, "owned.rb"), content)
+      mission = Master::Fix::Mission.new(root:).start!(
+        goal: "repair repository", scope: repository, origin: "fold", auto_continue: true,
+      )
+      digest = Digest::SHA256.hexdigest(content)
+
+      assert mission.record_repository_write!(
+        path: "owned.rb", content:, repository_root: repository,
+      )
+      reloaded = Master::Fix::Mission.new(root:)
+      assert_equal({ "owned.rb" => digest }, reloaded.repository_writes(repository_root: repository))
+
+      assert reloaded.record_repository_commit!(
+        expected_hashes: { "owned.rb" => digest }, repository_root: repository,
+      )
+      assert_empty Master::Fix::Mission.new(root:).repository_writes(repository_root: repository)
+    end
+  end
+
+  def test_repository_write_receipt_refuses_a_path_outside_its_root
+    Dir.mktmpdir do |root|
+      repository = File.join(root, "repo")
+      FileUtils.mkdir_p(repository)
+      outside = File.join(root, "outside.rb")
+      content = "OUTSIDE = true\n"
+      File.write(outside, content)
+      mission = Master::Fix::Mission.new(root:).start!(
+        goal: "repair repository", scope: repository, origin: "fold", auto_continue: true,
+      )
+
+      refute mission.record_repository_write!(
+        path: "../outside.rb", content:, repository_root: repository,
+      )
+      assert_empty mission.repository_writes(repository_root: repository)
+    end
+  end
+
   def test_v1_mission_migrates_and_resumes_without_losing_identity
     Dir.mktmpdir do |root|
       FileUtils.mkdir_p(File.join(root, ".master"))

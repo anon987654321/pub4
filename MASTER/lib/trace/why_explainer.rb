@@ -125,7 +125,8 @@ module Master
         # law/ holds every Law now, so /why answers for conduct Laws too -
         # it dug soul and returned nothing for NO_COLUMN_ALIGN and FLAT_UI.
         hit = Master::Ground::Laws.new.laws[slug] or return
-        ["constitutional law: #{slug}", "  #{hit}"].join("\n")
+        base = ["constitutional law: #{slug}", "  #{hit}"].join("\n")
+        [base, executable_law(key)].compact.join("\n")
       end
 
       def law(key)
