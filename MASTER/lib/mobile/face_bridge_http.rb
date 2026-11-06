@@ -36,7 +36,8 @@ module Master
         return asset(*ASSETS.fetch(path)) if method == "GET" && ASSETS.key?(path)
         return json(200, health) if [method, path] == ["GET", "/health"]
         return utterance(env) if [method, path] == ["POST", "/utterance"]
-        return json(200, @host.listen_and_answer) if [method, path] == ["POST", "/listen"]
+        return listen if [method, path] == ["POST", "/listen"]
+        return speak(env) if [method, path] == ["POST", "/speak"]
 
         json(404, "ok" => false, "error" => "not found")
       end
@@ -48,10 +49,40 @@ module Master
       def health = { "status" => "ok", "session" => @host.session.id, "socket" => @host.face.socket_path }
 
       def utterance(env)
-        body = JSON.parse(env["rack.input"].read.to_s.then { |raw| raw.empty? ? "{}" : raw })
+        body = request_body(env)
         json(200, "ok" => true, "reply" => @host.handle_utterance(body["text"].to_s, "http"))
       rescue JSON::ParserError
         json(400, "ok" => false, "error" => "body is not JSON")
+      end
+
+      def listen
+        heard = @host.ambient.listen_once
+        return json(503, "ok" => false, "error" => heard.error || "speech input unavailable") unless heard.ok?
+
+        text = heard.text.to_s.strip
+        return json(422, "ok" => false, "error" => "heard nothing") if text.empty?
+
+        json(200, "ok" => true, "heard" => text)
+      rescue StandardError => e
+        json(503, "ok" => false, "error" => "speech input failed: #{e.class}: #{e.message}")
+      end
+
+      def speak(env)
+        body = request_body(env)
+        result = @host.ambient.speak!(body["text"].to_s)
+        json(200, "ok" => true, "spoken" => result.ok?, "error" => result.error)
+      rescue JSON::ParserError
+        json(400, "ok" => false, "error" => "body is not JSON")
+      rescue StandardError => e
+        json(200, "ok" => true, "spoken" => false, "error" => "speech output failed: #{e.class}: #{e.message}")
+      end
+
+      def request_body(env)
+        raw = env["rack.input"].read.to_s
+        parsed = JSON.parse(raw.empty? ? "{}" : raw)
+        raise JSON::ParserError, "body must be an object" unless parsed.is_a?(Hash)
+
+        parsed
       end
 
       def asset(name, type)

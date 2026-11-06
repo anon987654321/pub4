@@ -63,6 +63,57 @@ body {
   background-size: 12px 12px, 18px 18px, 8px 8px;
 }
 #face[data-mode="listening"] { outline: 1px solid var(--chrome-focus); }
+#visage {
+  position: absolute;
+  inset: 27% 18% 35%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8% 0;
+  transform-origin: center;
+}
+#eyes { display: flex; justify-content: space-between; width: 62%; }
+.eye {
+  position: relative;
+  display: block;
+  width: 20px;
+  height: 20px;
+  border: 1px solid #bdbdbd;
+  border-radius: 50%;
+}
+.eye::after {
+  content: "";
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  left: 6px;
+  top: 6px;
+  border-radius: 50%;
+  background: #e8e8e8;
+}
+#mouth {
+  width: 34px;
+  height: 4px;
+  border-top: 2px solid #bdbdbd;
+  border-radius: 50%;
+  transform-origin: center;
+}
+#face[data-mode="thinking"] #visage { animation: attend 520ms ease-out 1 both; }
+#face[data-mode="listening"] #eyes { animation: listen 460ms ease-out 1 both; }
+#face[data-mode="speaking"] #mouth { animation: speak 280ms ease-out 1 both; }
+@keyframes attend {
+  from { opacity: 0.65; transform: translateY(5px) scale(0.96); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes listen {
+  from { transform: scaleY(0.65); }
+  to { transform: scaleY(1.15); }
+}
+@keyframes speak {
+  from { height: 4px; border-radius: 50%; }
+  to { height: 18px; border-radius: 40%; }
+}
 #face[data-mode="speaking"] { outline: 1px solid var(--signal); }
 #face[data-mode="error"] { outline: 1px solid #c44; }
 #face[data-mode="thinking"] { outline: 1px solid var(--chrome-muted); }
@@ -146,6 +197,10 @@ body {
 <body>
   <main id="stage" aria-label="MASTER face">
     <div id="face" data-mode="idle" role="img" aria-label="MASTER face, idle">
+      <div id="visage" aria-hidden="true">
+        <div id="eyes"><span class="eye"></span><span class="eye"></span></div>
+        <div id="mouth"></div>
+      </div>
       <div id="status"><span class="signal-dot" aria-hidden="true"></span><span id="status-text">idle</span></div>
     </div>
   </main>

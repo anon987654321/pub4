@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 require_relative "repl_io"
+require_relative "../face/transcriber"
+require_relative "../face/ear"
 
 module Master
   module CLI
@@ -200,6 +202,7 @@ module Master
         when %r{\A/(?:help|\?)(?:\s+(.+))?\z} then run_help(Regexp.last_match(1))
         when "/exit", "/quit" then exit_cli
         when "/undo", "/clear" then dispatch_registered_slash_command(stripped)
+        when "/listen" then run_listen
         when %r{\A/face(?:\s+.*)?\z} then run_face
         else dispatch_registered_slash_command(stripped)
         end
@@ -248,6 +251,25 @@ module Master
 
       def run_face(_arguments = nil)
         print_face_overlay
+        nil
+      end
+
+      # One deliberate microphone capture. Ear enforces both local grants and
+      # leaves Android OS permission to the Termux:API app; no background mic.
+      def run_listen
+        ear = Face::Ear.new(root: @refs.respond_to?(:root) ? @refs.root : Master::REPO_ROOT)
+        if (missing = ear.missing)
+          terminal_puts(missing)
+          return
+        end
+
+        terminal_puts("mic0: listening")
+        transcript = ear.listen(stop: -> { false }, on_partial: nil).to_s.strip
+        return terminal_puts("mic0: heard nothing") if transcript.empty?
+
+        run_agent_turn(transcript)
+      rescue StandardError => e
+        terminal_puts("mic0: capture failed - #{e.class}: #{e.message}")
         nil
       end
 

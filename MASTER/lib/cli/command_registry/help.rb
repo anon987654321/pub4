@@ -220,7 +220,7 @@ module Master
             "/privacy grant calendar_read or /privacy revoke calendar_read - enable or immediately disable access to the paired subject's imported local calendar.",
             "/privacy memory show or /privacy memory export - inspect the paired subject's complete USER.md profile and MEMORY.md, within a bounded export size.",
             "/privacy memory forget --confirm - clear durable memory while preserving USER.md. The exact confirmation command is required.",
-            "The command is local-only. Microphone, camera, location, messages, purchases, deployment and financial scopes cannot be granted here until their execution adapters enforce the same policy and native OS permissions.",
+            "Voice input is default-deny: grant microphone with /privacy grant microphone --confirm \"GRANT microphone\" and recognition with /privacy grant speech_recognition --confirm \"GRANT speech_recognition\". Grants expire after one hour; Android OS microphone permission is also required.",
           ],
         },
         "wake" => {
@@ -324,7 +324,8 @@ module Master
           summary: "a compact visual layer above the canonical working prompt",
           detail: [
             "/face - confirm the already visible terminal face; it never stacks another image.",
-            "Bare bin/master enters the normal working prompt directly with a short ready-state motion reveal above it.",
+            "Bare bin/master enters the normal working prompt directly with a short ready-state motion reveal above it; on Android, bin/master-mobile bridge serves the animated phone face.",
+            "/listen - explicitly capture one Termux:API utterance after granting microphone and speech_recognition.",
             "The face is visual output only; Reline owns keyboard input, history, slash commands and exit.",
             "No alternate screen, raw-key reader, second prompt or /exit handoff is involved.",
             "Ctrl-C interrupts active work or clears the current draft; Ctrl-D exits the one interactive session.",

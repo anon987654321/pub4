@@ -189,9 +189,19 @@ class TestMobileHost < Minitest::Test
   end
 
   class Ears
-    def initialize(text) = @text = text
+    attr_reader :spoken
+
+    def initialize(text)
+      @text = text
+      @spoken = []
+    end
+
     def listen_once = Master::Mobile::Ambient::Result.new(ok: true, text: @text, error: nil)
-    def speak!(text) = Master::Mobile::Ambient::Result.new(ok: true, text:, error: nil)
+
+    def speak!(text)
+      @spoken << text
+      Master::Mobile::Ambient::Result.new(ok: true, text:, error: nil)
+    end
   end
 
   # The host reads MASTER_MEMORY_PATH while it is built; the caller's value is put back after.
@@ -263,6 +273,47 @@ class TestMobileBridgeHttp < Minitest::Test
       assert_equal 200, status
       assert_equal "fine", JSON.parse(body.join)["reply"]
     end
+  end
+
+  def test_listen_returns_one_transcript_for_the_client_to_submit
+    Dir.mktmpdir do |dir|
+      ambient = TestMobileHost::Ears.new("hello from the phone")
+      host = TestMobileHost.with_memory_path(dir) do
+        Master::Mobile::Host.new(root: dir, bridge: TestMobileHost::Bridge.new, ambient:)
+      end
+      app = Master::Mobile::FaceBridgeHttp.new(root: dir, host:)
+      status, _headers, body = app.call("REQUEST_METHOD" => "POST", "PATH_INFO" => "/listen")
+
+      assert_equal 200, status
+      assert_equal({ "ok" => true, "heard" => "hello from the phone" }, JSON.parse(body.join))
+      assert_empty ambient.spoken
+    end
+  end
+
+  def test_speak_endpoint_uses_the_native_ambient_output
+    Dir.mktmpdir do |dir|
+      ambient = TestMobileHost::Ears.new("")
+      host = TestMobileHost.with_memory_path(dir) do
+        Master::Mobile::Host.new(root: dir, bridge: TestMobileHost::Bridge.new, ambient:)
+      end
+      app = Master::Mobile::FaceBridgeHttp.new(root: dir, host:)
+      input = StringIO.new(JSON.generate("text" => "MASTER reply"))
+      status, _headers, body = app.call("REQUEST_METHOD" => "POST", "PATH_INFO" => "/speak", "rack.input" => input)
+
+      assert_equal 200, status
+      assert_equal({ "ok" => true, "spoken" => true, "error" => nil }, JSON.parse(body.join))
+      assert_equal ["MASTER reply"], ambient.spoken
+    end
+  end
+
+  def test_mobile_face_has_state_motion_and_a_reduced_motion_fallback
+    html = File.read(File.join(Master::Mobile::FaceBridgeHttp::WEB, "face.html"))
+
+    assert_includes html, 'id="visage"'
+    assert_includes html, "@keyframes attend"
+    assert_includes html, "@keyframes listen"
+    assert_includes html, "@keyframes speak"
+    assert_includes html, "prefers-reduced-motion: reduce"
   end
 
   def test_the_bind_is_loopback

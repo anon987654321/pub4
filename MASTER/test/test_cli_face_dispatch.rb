@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 require_relative "test_helper"
+require_relative "../lib/cli/face/transcriber"
+require_relative "../lib/cli/face/ear"
 
 class TestCliFaceDispatch < Minitest::Test
   def test_master_boot_loads_the_master_operator_mode
@@ -256,6 +258,45 @@ class TestCliFaceDispatch < Minitest::Test
     refute result.ok?
     assert_equal :infrastructure, result.category
     assert_match(/command output unavailable/, result.message)
+  end
+
+  def test_listen_command_sends_one_consented_transcript_through_the_existing_session
+    ear = Object.new
+    ear.define_singleton_method(:missing) { nil }
+    ear.define_singleton_method(:listen) do |stop:, on_partial:|
+      raise "unexpected stop" if stop.call
+      raise "unexpected interim callback" unless on_partial.nil?
+
+      "voice transcript"
+    end
+    session = Master::CLI::Session.allocate
+    session.instance_variable_set(:@refs, Struct.new(:root).new(Master::REPO_ROOT))
+    output = []
+    submitted = []
+    session.define_singleton_method(:terminal_puts) { |line| output << line }
+    session.define_singleton_method(:run_agent_turn) { |text| submitted << text; :submitted }
+
+    result = Master::CLI::Face::Ear.stub(:new, ear) do
+      session.send(:dispatch_core_slash_command, "/listen")
+    end
+
+    assert_equal :submitted, result
+    assert_equal ["voice transcript"], submitted
+    assert_equal ["mic0: listening"], output
+  end
+
+  def test_listen_does_not_open_the_microphone_without_both_local_grants
+    ear = Object.new
+    ear.define_singleton_method(:missing) { "mic0: voice input is off by default" }
+    ear.define_singleton_method(:listen) { |**| flunk("permission-denied microphone was opened") }
+    session = Master::CLI::Session.allocate
+    session.instance_variable_set(:@refs, Struct.new(:root).new(Master::REPO_ROOT))
+    output = []
+    session.define_singleton_method(:terminal_puts) { |line| output << line }
+
+    Master::CLI::Face::Ear.stub(:new, ear) { session.send(:dispatch_core_slash_command, "/listen") }
+
+    assert_equal ["mic0: voice input is off by default"], output
   end
 
 end

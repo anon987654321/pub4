@@ -25,7 +25,7 @@
 
   function setMode(mode) {
     face.dataset.mode = mode;
-    face.setAttribute("aria-label", `MASTER face, ${mode}`);
+    face.setAttribute("aria-label", "MASTER face, " + mode);
     statusText.textContent = mode;
   }
 
@@ -43,27 +43,35 @@
     addLine("sys", error.message);
   }
 
+  function answer(text) {
+    setMode("thinking");
+    return request("POST", "/utterance", { text: text }).then(function (json) {
+      const reply = json.reply || "(no reply)";
+      addLine("master", reply);
+      setMode("speaking");
+      return request("POST", "/speak", { text: reply });
+    }).then(function (json) {
+      if (!json.spoken) addLine("sys", "voice unavailable: " + (json.error || "Termux TTS did not speak"));
+      setMode("idle");
+    });
+  }
+
   form.addEventListener("submit", function (event) {
     event.preventDefault();
     const text = input.value.trim();
     if (!text) return;
     addLine("user", text);
     input.value = "";
-    setMode("thinking");
-    request("POST", "/utterance", { text: text }).then(function (json) {
-      addLine("master", json.reply || "(no reply)");
-      setMode("idle");
-    }).catch(failed);
+    answer(text).catch(failed);
   });
 
-  // One press, one utterance: the phone listens until speech-to-text returns, then answers aloud.
+  // One press, one capture. The face shows listening, then thinking, then speaking.
   listenButton.addEventListener("click", function () {
     listenButton.disabled = true;
     setMode("listening");
     request("POST", "/listen").then(function (json) {
       addLine("user", json.heard);
-      addLine("master", json.reply);
-      setMode("idle");
+      return answer(json.heard);
     }).catch(failed).finally(function () {
       listenButton.disabled = false;
     });

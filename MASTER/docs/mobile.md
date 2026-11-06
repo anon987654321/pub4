@@ -14,7 +14,14 @@ Termux from F-Droid is the build that still receives updates. Install Termux:API
 
 ## Use
 
-`bin/master-mobile doctor` measures the phone and exits 0 only when required readiness and integrity checks pass. `bin/master-mobile bridge` serves the face at http://127.0.0.1:8765/face. `bin/master-mobile host` runs the face socket alone. The bridge binds loopback because it has no authentication; do not forward port 8765 off the phone.
+`bin/master-mobile doctor` measures the phone and exits 0 only when required readiness and integrity checks pass. `bin/master-mobile bridge` serves the animated face at http://127.0.0.1:8765/face; open that URL in the phone browser while the bridge runs. The page uses one explicit listen press, then shows listening, thinking and speaking states. `bin/master-mobile host` runs the face socket alone. The bridge binds loopback because it has no authentication; do not forward port 8765 off the phone.
+
+The normal Reline prompt also supports one deliberate microphone capture with `/listen`. It asks for both local grants before opening the microphone:
+
+    /privacy grant microphone --confirm "GRANT microphone"
+    /privacy grant speech_recognition --confirm "GRANT speech_recognition"
+
+The grants expire after one hour. Android still requires microphone permission for the Termux app, the Termux:API companion app, and `pkg install termux-api`. `/voice on` enables spoken replies in the terminal; the mobile browser bridge speaks each reply through Termux:API. Use the normal Termux app user, not a root/proot shell, so its API commands remain connected to the Android app.
 
 ## Security boundaries
 
