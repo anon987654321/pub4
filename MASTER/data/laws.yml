@@ -2081,6 +2081,13 @@ face_ascii:
     web_file_access: forbidden
     no_random_geometry: true
 
+VISUAL_LAYOUT_REFINEMENT_EVIDENCE:
+  parent: OPERATOR_RENDERED
+  statement: "A rendered-layout refinement proceeds from a before/after screenshot pair compared against the owning Laws, cites the Law each edit repairs, edits shared tokens before page CSS, and ships only with that measured pair."
+  severity: error
+  resolution: review
+  detector: "Master::Visual::LayoutRefinement.evidence"
+
 # Per-Law execution policy. Individual Law identity and requirement statements
 # remain in the rows above; this reserved block supplies DSL defaults and reach.
 law_catalogue:
@@ -4135,6 +4142,9 @@ law_catalogue:
       definition_sources: [MASTER/law/universal.rb]
       severity: warning
       mode: opportunity
+    VISUAL_LAYOUT_REFINEMENT_EVIDENCE:
+      definition_sources: [MASTER/law/practice.rb]
+      severity: error
     VISUAL_IDENTITY_SOURCE_OF_TRUTH:
       definition_sources: [MASTER/law/recovered_design_semantics.rb]
       severity: warning
