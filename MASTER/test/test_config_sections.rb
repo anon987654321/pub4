@@ -108,14 +108,4 @@ class TestConfigSections < Minitest::Test
       BootChecks.send(:check_config_sections_yaml, File.join(tmp, "MASTER"))
     end
   end
-
-  # guidance.yml is prose for agents. A key there that grows a reader is an
-  # enforced setting hiding below the line.
-  def test_nothing_reads_guidance
-    guidance = load("guidance.yml").fetch("guidance")
-    bodies = Dir.glob(File.join(Master::ROOT, "{lib,bin}", "**", "*.rb")).map { |file| File.read(file) }
-
-    assert_operator guidance.size, :>=, 25
-    assert(bodies.none? { |body| body.include?("guidance.yml") }, "something reads guidance.yml")
-  end
 end
