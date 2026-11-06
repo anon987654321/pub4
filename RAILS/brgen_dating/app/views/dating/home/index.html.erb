@@ -7,22 +7,36 @@
       <h1><%= t("dating.discover") %></h1>
       <p><%= t("dating.home_blurb") %></p>
     </hgroup>
+    <%# One action shows: making the profile while there is none, the matches
+        after. Up to six more pills wrapped into a ragged second row beside the
+        heading at 1440, so the rest sit behind one «Mer». %>
+    <% needs_profile = Current.user.present? && Current.user.dating_profile.blank? %>
     <nav aria-label="<%= t("dating.home_title") %>">
-      <%= button_to t("dating.rewind"), rewind_path, method: :post, class: "button button-ghost" %>
-      <%= link_to t("dating.matches"), matches_path, class: "button button-ghost" %>
-      <% if Current.user.present? %>
-        <%= link_to t("dating.who_liked_you"), likes_path, class: "button button-ghost" %>
-        <%= link_to t("dating.picks_title"), picks_path, class: "button button-ghost" %>
-        <%= link_to t("dating.path_crossings_title"), path_crossings_path, class: "button button-ghost" %>
-      <% end %>
-      <% if Current.user&.dating_profile.present? && Current.user.dating_profile.verified_at.nil? %>
-        <%= link_to t("dating.verify_title"), new_verification_path, class: "button button-ghost" %>
-      <% end %>
-      <% if Current.user&.dating_profile.present? %>
-        <%= link_to t("dating.edit_profile"), edit_profile_path, class: "button button-ghost" %>
-      <% elsif Current.user.present? %>
+      <% if needs_profile %>
         <%= link_to t("dating.create_profile"), new_profile_path, class: "button button-primary" %>
+      <% else %>
+        <%= link_to t("dating.matches"), matches_path, class: "button" %>
       <% end %>
+      <details>
+        <summary class="button button-ghost"><%= t("dating.more") %></summary>
+        <div class="swipe-overflow-menu">
+          <%= button_to t("dating.rewind"), rewind_path, method: :post, class: "button button-ghost" %>
+          <% if needs_profile %>
+            <%= link_to t("dating.matches"), matches_path, class: "button button-ghost" %>
+          <% end %>
+          <% if Current.user.present? %>
+            <%= link_to t("dating.who_liked_you"), likes_path, class: "button button-ghost" %>
+            <%= link_to t("dating.picks_title"), picks_path, class: "button button-ghost" %>
+            <%= link_to t("dating.path_crossings_title"), path_crossings_path, class: "button button-ghost" %>
+          <% end %>
+          <% if Current.user&.dating_profile.present? && Current.user.dating_profile.verified_at.nil? %>
+            <%= link_to t("dating.verify_title"), new_verification_path, class: "button button-ghost" %>
+          <% end %>
+          <% if Current.user&.dating_profile.present? %>
+            <%= link_to t("dating.edit_profile"), edit_profile_path, class: "button button-ghost" %>
+          <% end %>
+        </div>
+      </details>
     </nav>
   </header>
 

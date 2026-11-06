@@ -58,4 +58,18 @@ class DatingRewindTest < ActionDispatch::IntegrationTest
     end
     assert_redirected_to dating.root_path
   end
+  # Up to seven equal pills beside the heading wrapped into a ragged block at
+  # 1440 and broke "Oppdag" mid-word. One action shows; rewind and the rest sit
+  # behind «Mer», rewind still a POST.
+  test "the discover header shows one action and keeps rewind behind more" do
+    host! "dating.brgen.no"
+    get dating.root_path(start: 1)
+    follow_redirect!
+
+    assert_response :success
+    assert_select ".dating-page-intro nav > .button", count: 1
+    assert_select ".dating-page-intro nav > details > summary", text: I18n.t("dating.more")
+    assert_select ".dating-page-intro nav > details form[action=?][method=post] button", dating.rewind_path,
+                  text: I18n.t("dating.rewind")
+  end
 end

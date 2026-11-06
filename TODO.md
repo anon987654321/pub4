@@ -259,15 +259,6 @@ measure is already owned by the Bymorgen item above.
   and the safe-area inset, and that no future `overflow` rule clips it;
   keep the sup semantics and the opens-in-new-tab aria-label.
   Laws: `PROPORTION_eight_px_rhythm`, `POLA`, `REACH`.
-- [ ] **Dating hero action cluster.** The dating home header renders up to
-  six equal-weight actions beside the hgroup
-  (`brgen_dating/app/views/dating/home/index.html.erb:13-31`); the capture
-  shows the cluster wrapping into a ragged two-row pill mass colliding with
-  the heading block at 1440. Measure the wrap at 1280, 1440 and 390, then
-  group to one primary action plus a bounded overflow, preserving the
-  dialect's pill language and the `button_to` POST semantics for rewind.
-  Laws: `BOUNDED_LOAD_choice_overload`, `POLA_intuitive_navigation`,
-  `PROPORTION_eight_px_rhythm`.
 - [ ] **BSDPorts spare-dialect micro.** (a) The search field's dark grey
   fill with grey placeholder reads as a disabled control in both viewports
   (`bsdports-desktop.png`, `bsdports-mobile.png` at 1:1); measure the
