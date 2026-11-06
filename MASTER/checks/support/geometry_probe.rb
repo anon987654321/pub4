@@ -78,14 +78,31 @@ module Deploy
         filter(rows)
       end
 
+      # The operator's order (2026-11-06): 390x844 first, then 360 and 320, and every
+      # wider viewport after them, so a sweep cut short has judged the phone first.
+      MOBILE_WIDTHS = [390, 360, 320].freeze
+      MOBILE_MAX_WIDTH = 767
+
+      def mobile?(surface) = surface.width.to_i <= MOBILE_MAX_WIDTH
+
+      def mobile_first(rows)
+        ranked = rows.each_with_index.sort_by { |surface, index| [*width_rank(surface), index] }
+        ranked.map(&:first)
+      end
+
+      def width_rank(surface)
+        width = surface.width.to_i
+        [mobile?(surface) ? 0 : 1, MOBILE_WIDTHS.index(width) || MOBILE_WIDTHS.size, width]
+      end
+
       # CHECK_SURFACES=brgen/core,amber narrows a run to matching app/label
       # prefixes - for iterating on one surface without a 39-cell sweep.
       def filter(rows)
         raw = ENV["CHECK_SURFACES"].to_s.strip
-        return rows if raw.empty?
+        return mobile_first(rows) if raw.empty?
 
         wanted = raw.split(",").map(&:strip).reject(&:empty?)
-        rows.select { |s| wanted.any? { |w| "#{s.app}/#{s.label}".start_with?(w) || s.app == w } }
+        mobile_first(rows.select { |s| wanted.any? { |w| "#{s.app}/#{s.label}".start_with?(w) || s.app == w } })
       end
 
       # host -> "127.0.0.1:port" for Chrome's --host-resolver-rules, so the

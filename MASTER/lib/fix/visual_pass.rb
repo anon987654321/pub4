@@ -46,7 +46,7 @@ module Master
 
       LAW_ID = "RENDERED_VISUAL_REFINEMENT"
       SOURCE_EXTENSIONS = %w[.css .scss .erb .html .htm .js .ts].freeze
-      # Surfaces rendered per pass: every app's mobile and desktop core, then extras rotated by pass.
+      # Surfaces rendered per pass: mobile captures first, rotated by pass, wider viewports with the room left.
       # Unbounded (0) it rendered all 212 declared surfaces every pass, each with up to
       # MAX_COMPOSITION_STATES states: the 2026-11-05 RAILS run spent 13 minutes of each pass on the 58
       # it could reach with brgen down, about 13.6 s a surface. MASTER_VISUAL_SURFACES_PER_PASS=0 renders all.
@@ -276,22 +276,21 @@ module Master
         else
           rows.reject { |surface| surface.app == "master" }
         end
-        grouped = rows.group_by(&:app)
+        mobile, wide = Deploy::GeometryProbe.mobile_first(rows).partition { |s| Deploy::GeometryProbe.mobile?(s) }
+        return mobile + wide if cap <= 0
 
-        core = grouped.keys.sort.flat_map do |app|
-          group = grouped.fetch(app)
-          mobile = group.find { |s| s.viewport == "mobile" }
-          desktop = group.find { |s| s.viewport == "desktop" }
-          [mobile || group.first, desktop || group.find { |s| s != mobile }]
-        end.compact.uniq
+        # Mobile is the last to be dropped: a pass takes mobile captures, rotated so passes reach
+        # every one, and a wider viewport only with room left after every mobile capture.
+        shown = rotated(mobile, room: cap, pass:)
+        shown + rotated(wide, room: cap - shown.size, pass:)
+      end
 
-        extras = rows.reject { |s| core.include?(s) }.sort_by { |s| [s.app, s.label, s.viewport == "mobile" ? 0 : 1, s.viewport] }
-        return core + extras if cap <= 0
-        return (core + extras).first(cap) if core.size >= cap
+      def rotated(rows, room:, pass:)
+        return [] if room <= 0
+        return rows if rows.size <= room
 
-        room = cap - core.size
-        offset = ((pass.to_i - 1) * room) % [extras.size, 1].max
-        core + extras.rotate(offset).first(room)
+        start = ((pass.to_i - 1) * room) % rows.size
+        Deploy::GeometryProbe.mobile_first(rows.rotate(start).first(room))
       end
 
       def candidate_sources(target:, files:, captures:, graph:)

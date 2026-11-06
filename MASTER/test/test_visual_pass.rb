@@ -48,7 +48,8 @@ class VisualPassContractTest < Minitest::Test
   end
 
   def surface(app: "master", label: "chat", viewport: "mobile")
-    Probe::Surface.new(app:, label:, path: "/", viewport:, port: 4000, width: 390, height: 844)
+    width, height = viewport == "mobile" ? [390, 844] : [1440, 900]
+    Probe::Surface.new(app:, label:, path: "/", viewport:, port: 4000, width:, height:)
   end
 
   def with_tmp
