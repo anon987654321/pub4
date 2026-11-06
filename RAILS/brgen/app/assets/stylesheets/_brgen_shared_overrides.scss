@@ -976,6 +976,15 @@ body.vertical-marketplace .store-buybox .price {
     min-height: min(78vw, 420px);
   }
 
+  /* With no photo there is nothing to lead with: the note follows the copy
+     at its own height, instead of a 300px empty well pushing the heading
+     below the fold. This block comes after the shorter --empty rule above,
+     so it has to say so here. */
+  body.vertical-marketplace .bol-market-hero-media--empty {
+    order: 0;
+    min-height: 0;
+  }
+
   body.vertical-marketplace .bol-catalog-layout {
     grid-template-columns: minmax(0, 1fr);
     gap: 16px;

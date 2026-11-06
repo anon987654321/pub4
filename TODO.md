@@ -172,13 +172,6 @@ preserve those strengths.
   control, and leaves the next page action reachable. Preserve consent
   semantics and copy; tune only measured geometry in the shared owner.
   Laws: `REACH`, `PROPORTION_eight_px_rhythm`, `OPERATOR_RENDERED_contract`.
-- [ ] **Marketplace no-photo state verification.** The generic monogram is
-  replaced by a compact, localized no-photo/no-featured-listing message, with
-  a shorter media well and a controller regression. Run the marketplace
-  test and recapture both viewports; keep the row open until the rendered
-  hierarchy and media proportions are confirmed.
-  Laws: `DENSITY_form_follows_function`, `DENSITY_aesthetic_integrity`,
-  `OPERATOR_RENDERED_contract`, `VISUAL_HIERARCHY`.
 - [ ] **Amber editorial tile line breaks.** At the captured desktop width,
   `Bymorgen` breaks mid-word as `Bym / orge / n`; the mobile capture does
   not. Correct the desktop tile's available measure, wrapping and type

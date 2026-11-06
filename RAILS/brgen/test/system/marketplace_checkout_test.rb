@@ -36,6 +36,21 @@ class MarketplaceCheckoutTest < ApplicationSystemTestCase
     @stripe_key_was ? ENV["STRIPE_SECRET_KEY"] = @stripe_key_was : ENV.delete("STRIPE_SECRET_KEY")
   end
 
+  # A promoted listing without a photo led the phone layout with a 300px
+  # empty well, so the heading and its action sat below the fold.
+  test "a hero with no photo leads with its copy on a phone" do
+    current_window.resize_to(390, 844)
+    visit_city("markedsplass", "/")
+    heading = evaluate_script("document.querySelector('.bol-market-hero h2').getBoundingClientRect().top")
+    well = evaluate_script("(r => [r.top, r.height])" \
+                           "(document.querySelector('.bol-market-hero-media--empty').getBoundingClientRect())")
+
+    assert_operator heading, :<, well[0], "the copy comes before the empty well"
+    assert_operator well[1], :<=, 160, "the empty well keeps to its note"
+  ensure
+    current_window.resize_to(1400, 1000)
+  end
+
   test "a buyer adds a listing to the cart and pays the basket with Stripe" do
     sign_in_on_city(@buyer)
     visit_city("markedsplass", "/listings/#{@listing.to_param}")
