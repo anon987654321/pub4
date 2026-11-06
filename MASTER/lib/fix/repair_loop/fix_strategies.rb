@@ -4,11 +4,14 @@ require "tempfile"
 require_relative "../../io/exec"
 require_relative "../best_of_n"
 require_relative "../unified_diff"
+require_relative "candidate_threads"
 
 module Master
   module Fix
     class RepairLoop
       module FixStrategies
+        include CandidateThreads
+
         ARCHITECTURE_PLAN_GUIDANCE = <<~TEXT.strip
           Before answering, perform a depth check:
           - enumerate the module hierarchy, data flow, side effects, implicit invariants, and edge cases
@@ -423,32 +426,6 @@ module Master
             candidate
           end
           rows.compact.uniq
-        end
-
-        # Candidates are independent calls against the same unchanged source, so
-        # they are asked concurrently and collected in candidate order: the same
-        # prompts, the same events, the same uniq - a third of the wall time on
-        # the generation stage. The count is UserSimulation.candidate_count (<=5),
-        # and MASTER_FIX_PARALLEL_CANDIDATES=0 restores the sequential walk for a
-        # lane that punishes concurrent requests (ROBUSTNESS: the escape is
-        # declared and the default stays bounded either way).
-        def candidate_threads(count, violation:, event:, &block)
-          return Array.new(count) { |index| one_candidate(index, violation:, event:, &block) } if
-            ENV["MASTER_FIX_PARALLEL_CANDIDATES"] == "0"
-
-          Array.new(count) do |index|
-            Thread.new { one_candidate(index, violation:, event:, &block) }
-          end.map(&:value)
-        end
-
-        # One candidate's whole lifecycle, sequential or threaded: the per-candidate
-        # rescue the filter_map carried before, kept verbatim.
-        def one_candidate(index, violation:, event:, &block)
-          block.call(index)
-        rescue StandardError => e
-          Master::Ground::Swallow.log(e, context: "RepairLoop.propose_candidates", rule: @law.id)
-          handle_fix_exception(e, violation, event:)
-          nil
         end
 
         def candidate_fix(violation:, src:, path:, style:, suffix: nil, event: "repair_loop:fix_error", model: nil)
