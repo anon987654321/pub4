@@ -65,4 +65,16 @@ class MapPointListTest < ApplicationSystemTestCase
     assert_operator first_top, :>=, hud_bottom, "the first card starts below the HUD"
     assert_equal 0, spilled, "no card is squeezed below its own text"
   end
+
+  # The places search ran full bleed at desktop width beside a 720px list.
+  test "the places search shares the list's column" do
+    visit_city("maps", "/places")
+    assert_selector ".place-card", text: "Bryggen"
+
+    edges = lambda do |selector|
+      evaluate_script("(r => [r.left, r.right])(document.querySelector(arguments[0]).getBoundingClientRect())",
+                      selector)
+    end
+    assert_equal edges.call(".place-card").map(&:round), edges.call("main > .search").map(&:round)
+  end
 end

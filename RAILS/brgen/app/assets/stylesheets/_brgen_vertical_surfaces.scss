@@ -2156,6 +2156,12 @@ body.vertical-maps .place-list {
   padding: 0 16px max(24px, env(safe-area-inset-bottom));
 }
 
+/* The places search sits over the list, so it takes the list's column instead
+   of running full bleed beside it on a wide screen. */
+body.vertical-maps .layout > main > .search {
+  margin-inline: max(16px, (100% - 720px) / 2 + 16px);
+}
+
 body.vertical-maps .place-card {
   padding: var(--space-3) 1rem;
   border-radius: var(--radius-small);

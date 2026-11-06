@@ -5,11 +5,12 @@
     <% end %>
   <% end %>
   <h2><%= link_to place.name, place_path(place) %></h2>
+  <%# No city: the list answers on one city’s host and holds only its places,
+      so the name repeated the page’s own city under every card. %>
   <p class="meta-facts">
     <% unless place.kind.to_s == "place" %>
       <%= tag.span t("maps.kinds.#{place.kind}", default: place.kind.to_s.humanize) %>
     <% end %>
-    <%= tag.span place.city.name if place.city %>
     <%= tag.span place.neighborhood.name if place.neighborhood %>
   </p>
   <% if place.address.present? %>

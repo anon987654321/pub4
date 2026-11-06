@@ -172,13 +172,6 @@ preserve those strengths.
   control, and leaves the next page action reachable. Preserve consent
   semantics and copy; tune only measured geometry in the shared owner.
   Laws: `REACH`, `PROPORTION_eight_px_rhythm`, `OPERATOR_RENDERED_contract`.
-- [ ] **Maps list hierarchy and stale-capture verification.** The current card
-  source now omits the generic `place` kind instead of printing it as a raw
-  label; a controller regression covers that case. Run the maps test and
-  recapture desktop/mobile before closing this item. Review place name, kind,
-  city and address order, and keep the list as an operable keyboard and
-  screen-reader alternative to the full-bleed map.
-  Laws: `DENSITY_aesthetic_integrity`, `BRINGHURST`, `REACH`.
 - [ ] **Marketplace no-photo state verification.** The generic monogram is
   replaced by a compact, localized no-photo/no-featured-listing message, with
   a shorter media well and a controller regression. Run the marketplace

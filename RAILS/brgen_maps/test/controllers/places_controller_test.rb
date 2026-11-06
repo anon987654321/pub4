@@ -47,6 +47,16 @@ class MapsPlacesControllerTest < ActionDispatch::IntegrationTest
     assert_select "article.place-card[aria-label=?] .meta-facts span", place.name, text: "Place", count: 0
   end
 
+  test "a card names the kind and the neighbourhood but not the city every card shares" do
+    place = Place.create!(city: @city, name: "Bryggen", kind: "attraction", latitude: 60.3974, longitude: 5.3244)
+
+    get "/places"
+
+    assert_response :success
+    assert_select "article.place-card[aria-label=?] .meta-facts span", place.name, text: I18n.t("maps.kinds.attraction")
+    assert_select "article.place-card[aria-label=?] .meta-facts span", place.name, text: @city.name, count: 0
+  end
+
   test "an unmatched search answers with the empty state and a way to clear it" do
     get "/places", params: { q: "no-such-place-anywhere" }
 
