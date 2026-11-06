@@ -53,7 +53,7 @@ mergeAdditions();
 // ---- logos -----------------------------------------------------------------
 function staticFractal() {
   const src = readFileSync(PUB_SYRE, 'utf8');
-  const m = src.match(/<svg id="(?:fractalText|syreMark)"[\\s\\S]*?<\\/svg>/);
+  const m = src.match(/<svg id="(?:fractalText|syreMark)"[\s\S]*?<\/svg>/);
   if (!m) throw new Error('SYRE source has no recoverable fractal SVG');
   let svg = m[0]
     .replace(/<animate[^>]*?\/>/g, '')
@@ -95,7 +95,7 @@ function logoHtml(plan) {
 
 function fontCss() {
   const ragnhild = readFileSync(`${SRC}/ragnhild.html`, 'utf8');
-  const match = ragnhild.match(/@font-face\\{[^}]*font-family:'Nosifer'[^}]*src:url\\(data:font\\/woff2;base64,([A-Za-z0-9+/=]+)\\)/s);
+  const match = ragnhild.match(/@font-face\{[^}]*font-family:'Nosifer'[^}]*src:url\(data:font\/woff2;base64,([A-Za-z0-9+/=]+)\)/s);
   if (!match) throw new Error('Nosifer font is not embedded in BPLANS/ragnhild.html');
   const b64 = match[1];
   return ("@font-face{font-family:'Nosifer';font-style:normal;font-weight:400;"
