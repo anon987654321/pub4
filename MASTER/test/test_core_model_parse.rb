@@ -120,13 +120,16 @@ class TestModelOffer < Minitest::Test
 
   def test_evidence_opens_done_and_commit
     proof = Master::Core::Proof.new
+    proof.authorize_repository_delivery!(root: Master::REPO_ROOT)
     proof.record_evidence(Effect.write("a.rb", "A = 1\n"), Observation.ok)
     refute_includes verbs(offered(proof)), "done", "a write with no proof since is a claim nobody checked"
     { test_pass: %w[rake test], scan_clean: %w[rubocop], code_review: %w[rake review] }.each do |kind, argv|
       proof.record_evidence(Effect.exec(argv, evidence: kind), Observation.ok("ok"))
     end
     assert_includes verbs(offered(proof)), "done"
-    assert_includes operations(offered(proof)), "commit"
+    refute_includes operations(offered(proof)), "commit",
+                    "evidence in an unauthorised fold cannot grant repository delivery"
+    refute_includes operations(offered(proof)), "stage"
   end
 
   def test_evidence_without_a_fold_owned_write_does_not_offer_commit

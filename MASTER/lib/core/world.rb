@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require "digest"
 require "fileutils"
 require "open3"
 require "rbconfig"
@@ -65,7 +66,7 @@ module Master::Core
     def git_operations
       operations = []
       operations << "diff" if @capabilities.allow?(:read)
-      operations.concat(%w[stage commit]) if @capabilities.allow?(:write)
+      operations << "commit" if @capabilities.allow?(:write)
       operations.freeze
     end
 
@@ -265,11 +266,11 @@ module Master::Core
     # Empty paths is refused rather than defaulted. Defaulting to "everything I
     # touched" would be a guess about intent made by the layer with the least
     # information, and the failure it guesses wrong about is unrecoverable.
-    def do_git(operation:, paths: [], message: nil, **)
+    def do_git(operation:, paths: [], message: nil, expected_hashes: nil, **)
       case operation.to_s.to_sym
       when :diff then Observation.ok(git_capture("diff"))
-      when :stage then Observation.ok(git_capture("add", "--", *Array(paths)))
-      when :commit then do_git_commit(Array(paths), message)
+      when :stage then Observation.no("git stage is not a separate action; use a path-scoped commit after proof")
+      when :commit then do_git_commit(Array(paths), message, expected_hashes:)
       else Observation.no("unknown git operation: #{operation}")
       end
     end
@@ -280,16 +281,79 @@ module Master::Core
     # runtime commit from a human one by.
     COMMIT_TRAILER = "Co-authored-by: MASTER"
 
-    def do_git_commit(paths, message)
-      scoped = paths.map(&:to_s).reject(&:empty?)
-      return Observation.no("git commit needs paths: an unscoped commit takes the shared index") if scoped.empty?
+    def do_git_commit(paths, message, expected_hashes: nil)
+      scoped = Array(paths).map(&:to_s).reject(&:empty?).uniq
+      return Observation.no("git commit needs explicit paths") if scoped.empty?
 
-      # The Constitution's immutable_paths rule blocks this effect before it gets here; the
-      # same refusal GitOperations#git! makes holds for a World driven without one.
-      refusal = scoped.lazy.filter_map { |path| Constitution::Paths.write_refusal(path, root: @root) }.first
-      return Observation.no("git commit refused: #{refusal}") if refusal
+      expected = expected_hashes.is_a?(Hash) ? expected_hashes.to_h { |path, digest| [path.to_s, digest.to_s] } : {}
+      return Observation.no("git commit needs the task's exact content receipts") unless expected.keys.sort == scoped.sort
+      return Observation.no("git commit refused: malformed content receipt") unless expected.values.all? { |digest| digest.match?(/\A[0-9a-f]{64}\z/i) }
 
-      Observation.ok(git_capture("commit", "-m", message.to_s, "-m", COMMIT_TRAILER, "--", *scoped))
+      safe_paths = scoped.map do |path|
+        full = within(path)
+        raise ArgumentError, "git commit path must be a file: #{path}" unless File.file?(full) && !File.symlink?(full)
+
+        relative = full.delete_prefix(@root + File::SEPARATOR).tr(File::SEPARATOR, "/")
+        raise ArgumentError, "git commit path escapes workspace: #{path}" if relative == full || relative.split("/").include?(".git")
+
+        refusal = Constitution::Paths.write_refusal(relative, root: @root)
+        raise ArgumentError, "git commit refused: #{refusal}" if refusal
+
+        relative
+      end
+      return Observation.no("git commit refused: duplicate or aliased paths") unless safe_paths.uniq.sort == scoped.sort
+
+      pathspecs = safe_paths.map { |path| ":(literal)#{path}" }
+      # Porcelain v1 -z preserves status columns and paths containing whitespace.
+      # A staged target belongs to its current writer, even if this fold also wrote it.
+      status = git_capture("status", "--porcelain=v1", "-z", "--", *pathspecs, raw: true)
+      entries = status.split("\0").reject(&:empty?)
+      staged = entries.select do |entry|
+        index_status = entry[0].to_s
+        index_status != " " && index_status != "?"
+      end
+      return Observation.no("git commit refused: a requested path already has staged changes: #{staged.map { |entry| entry[3..].to_s }.join(", ")}") if staged.any?
+
+      deleted = entries.select { |entry| entry[1] == "D" }
+      return Observation.no("git commit refused: deletions need a separate reviewed operation") if deleted.any?
+
+      untracked = entries.filter_map { |entry| entry[3..] if entry.start_with?("?? ") }
+      known = git_capture("ls-files", "-z", "--", *pathspecs, raw: true).split("\0")
+      unknown = safe_paths - known - untracked
+      return Observation.no("git commit refused: missing or ignored paths: #{unknown.join(", ")}") if unknown.any?
+
+      verify_delivery_hashes!(safe_paths, expected)
+      begin
+        # A new file must enter the index before git can commit its path.
+        # Stage only this task's exact new files, never the whole batch.
+        git_capture("add", "--", *untracked.map { |path| ":(literal)#{path}" }) if untracked.any?
+        verify_delivery_hashes!(safe_paths, expected)
+        Observation.ok(
+          git_capture("commit", "-m", message.to_s, "-m", COMMIT_TRAILER, "--", *pathspecs)
+        )
+      rescue StandardError => error
+        cleanup_error = nil
+        begin
+          git_capture("reset", "--quiet", "--", *untracked.map { |path| ":(literal)#{path}" }) if untracked.any?
+        rescue StandardError => cleanup
+          cleanup_error = cleanup
+        end
+        detail = "git commit failed: #{error.class}: #{error.message}"
+        detail += "; could not unstage this task's new paths: #{cleanup_error.message}" if cleanup_error
+        Observation.no(detail)
+      end
+    rescue StandardError => error
+      Observation.no("git commit refused: #{error.class}: #{error.message}")
+    end
+
+    def verify_delivery_hashes!(paths, expected)
+      mismatched = paths.reject do |path|
+        full = within(path)
+        File.file?(full) && !File.symlink?(full) && Digest::SHA256.file(full).hexdigest == expected.fetch(path)
+      end
+      return if mismatched.empty?
+
+      raise "task-owned file content changed since its proof: #{mismatched.join(", ")}"
     end
 
     def do_ask(prompt:, options: nil, **)

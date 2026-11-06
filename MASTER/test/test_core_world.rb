@@ -33,7 +33,7 @@ class WorldTest < Minitest::Test
     repair = Master::Core::World.new(root: Dir.pwd, capabilities: Master::Core::Capabilities.for(:repair))
     assert_includes repair.verbs, :exec
     assert_includes repair.verbs, :write
-    assert_equal %w[diff stage commit], repair.git_operations
+    assert_equal %w[diff commit], repair.git_operations
   end
 
   def test_read_only_probe_runs_an_allowlisted_syntax_check_without_shell_access
@@ -433,17 +433,20 @@ class WorldTest < Minitest::Test
       File.write(File.join(root, "theirs.rb"), "THEIRS = 1\n")
       # Somebody else's work, already staged, sitting in the shared index.
       system("git", "-C", root, "add", "theirs.rb", out: File::NULL, err: File::NULL)
-      # The fold stages its own file the way it actually does - a new path has to
-      # be tracked before a scoped commit can name it. Both files are now staged,
-      # which is precisely the situation the bare commit used to sweep up.
-      world.perform(E.git(:stage, paths: ["mine.rb"]))
-
-      obs = world.perform(E.git(:commit, paths: ["mine.rb"], message: "mine only"))
+      # One scoped commit stages only its new file and leaves another writer's
+      # staged entry untouched.
+      obs = world.perform(
+        E.git(:commit, paths: ["mine.rb"], message: "mine only",
+              expected_hashes: { "mine.rb" => Digest::SHA256.hexdigest("MINE = 1\n") })
+      )
       assert obs.ok?, obs.message
 
       assert_equal ["mine.rb"], committed_paths(root)
       refute_includes committed_paths(root), "theirs.rb", "the fold committed another session's staged file"
-      assert_includes `git -C #{root} log -1 --format=%B`, Master::Core::World::COMMIT_TRAILER
+      status = IO.popen(["git", "-C", root, "status", "--short"], &:read)
+      assert_includes status, "A  theirs.rb", "another writer's staged file must remain staged"
+      log_message = IO.popen(["git", "-C", root, "log", "-1", "--format=%B"], &:read)
+      assert_includes log_message, Master::Core::World::COMMIT_TRAILER
     end
   end
 
@@ -461,15 +464,43 @@ class WorldTest < Minitest::Test
     end
   end
 
+  def test_stage_is_not_a_direct_world_operation
+    with_git_world do |world, _root|
+      result = world.perform(E.git(:stage, paths: ["mine.rb"]))
+
+      refute result.ok?
+      assert_match(/not a separate action/, result.message)
+    end
+  end
+
+  def test_commit_refuses_a_requested_path_already_staged_by_another_writer
+    with_git_world do |world, root|
+      File.write(File.join(root, "mine.rb"), "MINE = 1\n")
+      system("git", "-C", root, "add", "mine.rb", out: File::NULL, err: File::NULL)
+
+      result = world.perform(
+        E.git(:commit, paths: ["mine.rb"], message: "mine",
+              expected_hashes: { "mine.rb" => Digest::SHA256.hexdigest("MINE = 1\n") })
+      )
+
+      refute result.ok?
+      assert_match(/already has staged changes/, result.message)
+      status = IO.popen(["git", "-C", root, "status", "--short"], &:read)
+      assert_includes status, "A  mine.rb"
+      assert_equal ["seed.txt"], committed_paths(root)
+    end
+  end
+
   # A World driven without a Constitution still refuses a sacred path, as GitOperations#git! does.
   def test_commit_of_a_sacred_path_is_refused
     with_git_world do |world, root|
       FileUtils.mkdir_p(File.join(root, "data"))
       File.write(File.join(root, "data", "soul.yml"), "absolute:\n  sacred_paths:\n    - data/laws.yml\n")
       File.write(File.join(root, "data", "laws.yml"), "a: 1\n")
-      world.perform(E.git(:stage, paths: ["data/laws.yml"]))
-
-      obs = world.perform(E.git(:commit, paths: ["data/laws.yml"], message: "laws"))
+      obs = world.perform(
+        E.git(:commit, paths: ["data/laws.yml"], message: "laws",
+              expected_hashes: { "data/laws.yml" => Digest::SHA256.hexdigest("a: 1\n") })
+      )
       refute obs.ok?
       assert_match(/data\/laws\.yml is sacred: no automated writer may change it/, obs.message)
       assert_equal ["seed.txt"], committed_paths(root)

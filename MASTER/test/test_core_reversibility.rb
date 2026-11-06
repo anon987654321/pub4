@@ -218,14 +218,13 @@ class TestCoreReversibility < Minitest::Test
     assert_equal %w[undo partial], effect.reversibility.compensation.argv
   end
 
-  def test_irreversible_git_mutation_returns_an_approval_request
+  def test_staging_is_blocked_as_a_separate_effect
     constitution = C.load(data_dir: DATA_DIR)
     verdict = constitution.admit(E.git(:stage, paths: ["new.rb"]), Master::Core::Memory.new)
 
-    assert_instance_of Master::Core::Verdict::Request, verdict
-    assert_equal :effect_reversibility, verdict.by
-    assert_match(/shared index/, verdict.reason)
-    assert_match(/Approve git stage on new.rb/, verdict.prompt)
+    assert_instance_of Master::Core::Verdict::Block, verdict
+    assert_equal :git_stage_disabled, verdict.by
+    assert_match(/not a separate action/, verdict.reason)
   end
 
   def test_git_operation_without_a_world_handler_is_blocked
@@ -242,13 +241,16 @@ class TestCoreReversibility < Minitest::Test
 
     assert_equal :unknown, effect.reversibility.kind
     assert_instance_of Master::Core::Verdict::Block, verdict
-    assert_equal :effect_reversibility, verdict.by
-    assert_match(/requires explicit paths/, verdict.reason)
+    assert_equal :git_stage_disabled, verdict.by
+    assert_match(/not a separate action/, verdict.reason)
   end
 
   def test_verified_commit_is_allowed_for_paths_written_by_the_current_fold
-    memory = Master::Core::Memory.new
-    memory.record(E.write("a.rb", "A = 1"), Master::Core::Observation.ok("wrote a.rb"))
+    Dir.mktmpdir do |root|
+      File.write(File.join(root, "a.rb"), "A = 1")
+      memory = Master::Core::Memory.new
+      memory.proof.authorize_repository_delivery!(root:)
+      memory.record(E.write("a.rb", "A = 1"), Master::Core::Observation.ok("wrote a.rb"))
     [
       E.exec(%w[rake test], evidence: :test_pass),
       E.exec(%w[bin/check], evidence: :scan_clean),
@@ -263,11 +265,15 @@ class TestCoreReversibility < Minitest::Test
     )
 
     assert_instance_of Master::Core::Verdict::Allow, verdict
+    end
   end
 
   def test_verified_commit_cannot_include_paths_not_written_by_the_current_fold
-    memory = Master::Core::Memory.new
-    memory.record(E.write("a.rb", "A = 1"), Master::Core::Observation.ok("wrote a.rb"))
+    Dir.mktmpdir do |root|
+      File.write(File.join(root, "a.rb"), "A = 1")
+      memory = Master::Core::Memory.new
+      memory.proof.authorize_repository_delivery!(root:)
+      memory.record(E.write("a.rb", "A = 1"), Master::Core::Observation.ok("wrote a.rb"))
     [
       E.exec(%w[rake test], evidence: :test_pass),
       E.exec(%w[bin/check], evidence: :scan_clean),
@@ -282,6 +288,29 @@ class TestCoreReversibility < Minitest::Test
     assert_instance_of Master::Core::Verdict::Block, verdict
     assert_equal :git_commit_scope, verdict.by
     assert_match(/written by this fold/, verdict.reason)
+    end
+  end
+
+  def test_commit_is_refused_when_task_written_content_has_changed
+    Dir.mktmpdir do |root|
+      File.write(File.join(root, "a.rb"), "different bytes")
+      memory = Master::Core::Memory.new
+      memory.proof.authorize_repository_delivery!(root:)
+      memory.proof.record_evidence(E.write("a.rb", "approved bytes"), Master::Core::Observation.ok)
+      [
+        E.exec(%w[rake test], evidence: :test_pass),
+        E.exec(%w[bin/check], evidence: :scan_clean),
+        E.exec(%w[bin/review], evidence: :code_review),
+      ].each { |effect| memory.record(effect, Master::Core::Observation.ok("verified")) }
+
+      verdict = C.load(data_dir: DATA_DIR).admit(
+        E.git(:commit, message: "stale", paths: ["a.rb"]), memory
+      )
+
+      assert_instance_of Master::Core::Verdict::Block, verdict
+      assert_equal :git_commit_scope, verdict.by
+      assert_match(/contents changed/, verdict.reason)
+    end
   end
 
   def test_irreversible_git_mutation_does_not_reach_world_without_operator
@@ -309,9 +338,9 @@ class TestCoreReversibility < Minitest::Test
 
       result = fold.run("stage a new file")
 
-      assert_equal :needs_user, result.reason
+      assert_equal :blocked, result.reason
       refute world.performed.any? { |effect| effect.verb == :git },
-             "the Git mutation ran without an operator answer"
+             "the disabled staging effect must never reach World"
     end
   end
 

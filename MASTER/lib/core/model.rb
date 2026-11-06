@@ -36,7 +36,7 @@ module Master::Core
     # spends the turn on a move that can land. The Constitution still judges
     # every effect: a lane that ignores the schema meets the same refusal it
     # always did.
-    GIT_OPERATIONS = %w[diff stage commit].freeze
+    GIT_OPERATIONS = %w[diff commit].freeze
 
     def self.schema(verbs: VERBS, operations: GIT_OPERATIONS)
       {
@@ -81,7 +81,8 @@ module Master::Core
       answered = (scope[:proved] || scope[:answerable]) && scope[:cleared]
       closed = [(:done unless answered), (:write unless scope[:writable])].compact
       operations = Array(scope.fetch(:git_operations, GIT_OPERATIONS)).map(&:to_s)
-      operations -= ["commit"] unless scope[:proved] && Array(scope[:write_paths]).any?
+      operations -= ["commit"] unless scope[:proved] && scope[:repository_delivery] &&
+                                      Array(scope[:delivery_paths]).any?
       schema(verbs: verbs - closed, operations:)
     end
 
@@ -105,7 +106,7 @@ module Master::Core
         exec   {"argv":["prog","arg"...],"evidence":"#{EVIDENCE_KINDS}",
                 "compensation":{"argv":["inverse","arg"...],"reason":"why this inverse is safe"}}
                 (optional; only when a real inverse is known)
-        git    {"operation":"diff|stage|commit","paths":[...],"message":"..."}
+        git    {"operation":"diff|commit","paths":[...],"message":"..."}
         ask      {"prompt","options":[...]}      ask the operator for approval or a decision;
                                                      never answer your own question
         note     {"kind","text"}                 record a thought when no action fits
@@ -133,12 +134,13 @@ module Master::Core
         - exec has no generic rollback. Add compensation only when a concrete argv inverse is
           known and its safety can be explained; after failure the Constitution re-checks it
           and asks the operator for approval.
-        - git stage needs explicit operator approval because it mutates the shared index;
-          avoid staging existing files and use a path-scoped commit after proof instead.
-        - git commit is admitted without another prompt only when every named path was
-          successfully written by this fold and the current evidence threshold is met.
-          Never include another session's or the operator's paths. A new file still needs
-          its one explicit stage approval before it can be committed.
+        - staging is not a separate effect. A path-scoped commit stages only its exact
+          new files, refuses a target path already staged by another writer, and leaves
+          every unrelated shared-index entry untouched.
+        - a commit is admitted without another prompt only when every named path was
+          successfully written by this authorised repair task, its on-disk SHA-256 still
+          matches the write receipt, and the current evidence threshold is met.
+          Never include another session's or the operator's paths.
         - unknown effect contracts are refused; policy_gated does not mean reversible
       Constraints the runtime enforces (violate them and the effect is refused):
         - never write a secret into a file or note

@@ -170,6 +170,7 @@ module Master::Core
         evidence_for_done_rule,
         git_commit_evidence_rule,
         git_commit_scope_rule,
+        git_stage_rule,
         two_hats_rule,
         council_for_done_rule,
         ideation_before_write_rule,
@@ -468,11 +469,35 @@ module Master::Core
 
         written = Array(memory.proof.scope[:write_paths])
         outside = paths - written
-        next nil if outside.empty?
+        unless outside.empty?
+          next Verdict::Block.new(
+            reason: "commit may include only paths written by this fold; not owned here: #{outside.first(5).join(", ")}",
+            by: :git_commit_scope,
+          )
+        end
+
+        expected_hashes = memory.proof.repository_commit_hashes(paths)
+        unless expected_hashes
+          next Verdict::Block.new(
+            reason: "commit refused: task-owned file contents changed or have no verified delivery receipt",
+            by: :git_commit_scope,
+          )
+        end
+
+        revised = Effect.new(verb: :git, args: effect.args.merge(expected_hashes:))
+        Verdict::Revise.new(effect: revised, by: :git_commit_scope)
+      })
+    end
+
+    # Staging is part of one path-scoped commit, never a separate fold action.
+    # The World stages only exact new files and preserves the shared index.
+    def self.git_stage_rule
+      Law.new(id: :git_stage_disabled, verbs: %i[git], judge: lambda { |effect, _memory|
+        next nil unless effect.args[:operation].to_s.to_sym == :stage
 
         Verdict::Block.new(
-          reason: "commit may include only paths written by this fold; not owned here: #{outside.first(5).join(", ")}",
-          by: :git_commit_scope,
+          reason: "git stage is not a separate action; use one evidence-backed path-scoped commit",
+          by: :git_stage_disabled,
         )
       })
     end
@@ -516,10 +541,15 @@ module Master::Core
     # handler is blocked rather than "approved" into a dead end.
     # A compensating command is separately re-admitted and approved after failure.
     def self.effect_reversibility_rule
-      Law.new(id: :effect_reversibility, verbs: VERBS, judge: lambda { |effect, _memory|
+      Law.new(id: :effect_reversibility, verbs: VERBS, judge: lambda { |effect, memory|
         contract = effect.reversibility
         case contract.kind
         when :approval_required
+          if effect.verb == :git && effect.args[:operation].to_s.to_sym == :commit &&
+             effect.args[:expected_hashes].is_a?(Hash) && memory.proof.proved?
+            next nil
+          end
+
           operation = effect.verb == :git ? " git #{effect.args[:operation]}" : " #{effect.verb}"
           scope = contract.scope.to_s.empty? ? "" : " on #{contract.scope}"
           Verdict::Request.new(

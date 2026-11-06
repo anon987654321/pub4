@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "digest"
+
 module Master::Core
   # Proof - what has been shown, and what must be shown before `done`.
   #
@@ -51,6 +53,8 @@ module Master::Core
       @council_pass = false
       @write_trees = []
       @write_paths = []
+      @write_hashes = {}
+      @repository_root = nil
       @write_lines = 0
       @read_paths = []
       @asked = false
@@ -63,6 +67,44 @@ module Master::Core
     def council_cleared? = @council_pass || !council_required?
     def ideation_satisfied? = !ideation_required? || @ideation_complete
     def proved? = evidence_score >= PASS_THRESHOLD
+
+    # Only a trusted host attaches a repository boundary. Resumed writes are
+    # rehydrated only while their persisted digest still matches the live file.
+    def authorize_repository_delivery!(root:, written_paths: {})
+      @repository_root = File.realpath(root).freeze
+      written_paths.each do |path, digest|
+        relative = repository_path(path)
+        next unless relative && digest.to_s.match?(/\A[0-9a-f]{64}\z/i)
+
+        full = File.join(@repository_root, relative)
+        next unless File.file?(full) && !File.symlink?(full)
+        next unless Digest::SHA256.file(full).hexdigest == digest.to_s
+
+        @write_hashes[relative] = digest.to_s
+        @write_paths << relative unless @write_paths.include?(relative)
+      end
+      self
+    end
+
+    # The Constitution attaches these trusted digests to the exact commit
+    # effect. A changed, missing or unowned path has no commit receipt.
+    def repository_commit_hashes(paths)
+      return unless @repository_root && proved?
+
+      requested = Array(paths).map { |path| repository_path(path) }
+      return if requested.empty? || requested.any?(&:nil?) || requested.uniq.size != requested.size
+
+      requested.each_with_object({}) do |path, result|
+        digest = @write_hashes[path]
+        full = File.join(@repository_root, path)
+        return unless digest && File.file?(full) && !File.symlink?(full)
+        return unless Digest::SHA256.file(full).hexdigest == digest
+
+        result[path] = digest
+      end
+    rescue SystemCallError, ArgumentError
+      nil
+    end
 
     # A fold that wrote nothing and ran no mutating command changed nothing, so
     # its `done` claims no state of the tree; it can answer from what it read or
@@ -79,7 +121,8 @@ module Master::Core
     def scope
       { trees: @write_trees.dup, elapsed_s: Time.now - @started_at, write_lines: @write_lines,
         read_paths: @read_paths.dup, write_paths: @write_paths.uniq, asked: @asked, evidence: evidence_score, proved: proved?,
-        answerable: answered_from_reads?, writable: ideation_satisfied?, cleared: council_cleared? }
+        answerable: answered_from_reads?, writable: ideation_satisfied?, cleared: council_cleared?,
+        repository_delivery: !@repository_root.nil?, delivery_paths: @write_hashes.keys.sort }
     end
 
     def mark_council_pass!(detail: "council pass")
@@ -94,6 +137,7 @@ module Master::Core
     # fold whose only write was the one it was stopped from making.
     def record_evidence(effect, observation)
       remember_write(effect) if effect.verb == :write && observation.ok?
+      remember_commit(effect) if effect.verb == :git && effect.args[:operation].to_s.to_sym == :commit && observation.ok?
       remember_read(effect) if effect.verb == :read && observation.ok?
       remember_probe(effect) if effect.verb == :probe && observation.message.to_s.start_with?("probe result:")
       invalidate_after_unlabelled_exec(effect) if effect.verb == :exec && observation.ok?
@@ -150,8 +194,34 @@ module Master::Core
       @generation += 1
       tree = effect.args[:path].to_s.split("/").find { |part| Constitution::REPO_TREES.include?(part) }
       @write_trees << tree if tree
-      @write_paths << effect.args[:path].to_s
+      path = repository_path(effect.args[:path])
+      @write_paths << (path || effect.args[:path].to_s)
+      @write_hashes[path] = Digest::SHA256.hexdigest(effect.args[:content].to_s) if @repository_root && path
       @write_lines += effect.args[:content].to_s.lines.size
+    end
+
+    def remember_commit(effect)
+      expected = effect.args[:expected_hashes].is_a?(Hash) ? effect.args[:expected_hashes] : {}
+      expected.each do |path, digest|
+        key = repository_path(path)
+        @write_hashes.delete(key) if key && @write_hashes[key] == digest.to_s
+      end
+    end
+
+    def repository_path(value)
+      text = value.to_s
+      return if text.empty? || text.include?("\0") || text.split(/[\\/]/).include?("..")
+      return text.delete_prefix("./") unless @repository_root
+
+      full = File.expand_path(text, @repository_root)
+      return unless full.start_with?(@repository_root + File::SEPARATOR)
+
+      relative = full.delete_prefix(@repository_root + File::SEPARATOR).tr(File::SEPARATOR, "/")
+      return if relative.split("/").include?(".git")
+
+      relative
+    rescue ArgumentError
+      nil
     end
 
     def remember_read(effect)
