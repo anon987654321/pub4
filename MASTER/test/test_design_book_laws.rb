@@ -38,4 +38,15 @@ class TestDesignBookLaws < Minitest::Test
       assert_includes Law.definitions.fetch(id.to_sym).ask.to_s, ask if ask
     end
   end
+
+  # The guarantee Operator::TypographyLint's serif rule gave before it folded into TYPEFACE_PER_ROLE:
+  # no serif family anywhere in the Swiss trees (brgen*, __shared, amber), vendored sheets aside.
+  def test_typeface_per_role_finds_no_serif_in_the_swiss_trees
+    trees = Dir[File.join(ROOT, "RAILS/{brgen*,__shared,amber}/**/*.{css,scss,erb,html}")]
+    found = trees.reject { |file| file.include?("/builds/") || file.include?("/node_modules/") }.flat_map do |file|
+      hits = law_findings("TYPEFACE_PER_ROLE", File.read(file), path: file)
+      hits.map { |hit| "#{file.delete_prefix(ROOT)}:#{hit[:line]}" }
+    end
+    assert_empty found
+  end
 end

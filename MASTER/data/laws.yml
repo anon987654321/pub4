@@ -327,6 +327,12 @@ PROXIMITY_anti_divitis:
   resolution: automatic
   proof: MASTER/test/test_web_laws.rb#test_anti_divitis
 
+NEGATIVE_SPACE_GROUPING:
+  parent: PROXIMITY
+  statement: "Space between groups exceeds space within them, and no accidental void opens between content."
+  severity: warning
+  resolution: review
+
 # ---
 
 ABSTRACTION:
@@ -1141,6 +1147,24 @@ NO_FAUX_TYPE:
 CAPS_RUN_SHORT:
   parent: BRINGHURST
   statement: "All-caps text is shorter than one line and, at display size, is tracked."
+  severity: warning
+  resolution: review
+
+TYPEFACE_PER_ROLE:
+  parent: BRINGHURST
+  statement: "One sans family sets UI and text; monospace is only for chat, terminal and code; BPLANS may use serifs."
+  severity: warning
+  resolution: review
+
+TABULAR_NUMERALS:
+  parent: BRINGHURST
+  statement: "Counts, prices, times and table columns use tabular figures."
+  severity: warning
+  resolution: review
+
+HEADING_WRAP_BALANCE:
+  parent: BRINGHURST
+  statement: "A heading never ends on one stray word; it wraps balanced."
   severity: warning
   resolution: review
 
@@ -2774,6 +2798,10 @@ law_catalogue:
       severity: info
       autofix: automatic
       languages: [ruby]
+    HEADING_WRAP_BALANCE:
+      definition_sources: [MASTER/law/geometry.rb]
+      severity: warning
+      languages: [json]
     HELP_AND_DOCUMENTATION:
       definition_sources: [MASTER/law/universal.rb]
       severity: info
@@ -3092,6 +3120,10 @@ law_catalogue:
     NAVIGATION_CONTINUITY:
       definition_sources: [MASTER/law/css.rb]
       severity: info
+    NEGATIVE_SPACE_GROUPING:
+      definition_sources: [MASTER/law/geometry.rb]
+      severity: warning
+      languages: [json]
     NESTING_DEPTH:
       definition_sources: [MASTER/law/structural.rb]
       severity: warning
@@ -3956,6 +3988,10 @@ law_catalogue:
       severity: warning
       autofix: automatic
       languages: [html]
+    TABULAR_NUMERALS:
+      definition_sources: [MASTER/law/geometry.rb]
+      severity: warning
+      languages: [json]
     TACTILE_FEEDBACK:
       definition_sources: [MASTER/law/javascript.rb]
       severity: info
@@ -4037,6 +4073,10 @@ law_catalogue:
     # where a paragraph is one line by convention and source width is not what a
     # reader sees; measure lives in CSS, which MEASURE_OPTIMUM judges. 2,600+
     # findings, and its automatic fix would have hard-wrapped prose.
+    TYPEFACE_PER_ROLE:
+      definition_sources: [MASTER/law/geometry.rb]
+      severity: warning
+      languages: [json]
     TYPOGRAPHIC_GRID:
       definition_sources: [MASTER/law/cosmetic.rb]
       severity: info

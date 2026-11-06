@@ -1115,6 +1115,10 @@ law_map:
       - TEXT_SPACING_RESILIENCE
       - FLASH_THRESHOLD
       - PAGE_WEIGHT_RATCHET
+      - TYPEFACE_PER_ROLE
+      - TABULAR_NUMERALS
+      - HEADING_WRAP_BALANCE
+      - NEGATIVE_SPACE_GROUPING
       status: covered
       root: reach
       tags:

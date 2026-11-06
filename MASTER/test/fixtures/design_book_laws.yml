@@ -420,3 +420,60 @@
   path: RAILS/brgen/app/views/listings/show.html.erb
   flags: false
   code: "<button aria-label=\"S\u00F8k\"><svg viewBox=\"0 0 9 9\"></svg></button>\n"
+- law: TYPEFACE_PER_ROLE
+  path: RAILS/brgen/app/assets/stylesheets/_type.scss
+  flags: true
+  match: Georgia
+  code: |
+    h1 { font-family: "Iowan Old Style", Georgia, serif; }
+- law: TYPEFACE_PER_ROLE
+  path: RAILS/amber/app/assets/stylesheets/_type.scss
+  flags: false
+  code: |
+    body { font-family: var(--font), sans-serif; }
+- law: TYPEFACE_PER_ROLE
+  path: BPLANS/print.css
+  flags: false
+  code: |
+    body { font-family: Garamond, serif; }
+- law: TYPEFACE_PER_ROLE
+  path: MASTER/var/rendered/home.geometry.json
+  flags: true
+  code: >-
+    {"probe":"geometry","width":390,"height":844,"elements":[
+    {"key":"h1","tag":"h1","visible":true,"text":"Tittel","font_family":"Georgia, serif",
+    "frect":{"x":16,"y":16,"w":358,"h":40}}]}
+- law: TABULAR_NUMERALS
+  path: MASTER/var/rendered/home.geometry.json
+  flags: true
+  code: '{"probe":"geometry","tabular":[{"sel":"td.price","numeric":"normal"}]}'
+- law: TABULAR_NUMERALS
+  path: MASTER/var/rendered/home.geometry.json
+  flags: false
+  code: '{"probe":"geometry","tabular":[{"sel":"td.price","numeric":"tabular-nums"}]}'
+- law: HEADING_WRAP_BALANCE
+  path: MASTER/var/rendered/home.geometry.json
+  flags: true
+  code: >-
+    {"probe":"geometry","width":390,"height":844,"elements":[{"key":"h1","tag":"h1","visible":true,
+    "text":"Tittel","text_lines":2,"text_wrap":"wrap","frect":{"x":16,"y":16,"w":358,"h":80}}]}
+- law: HEADING_WRAP_BALANCE
+  path: MASTER/var/rendered/home.geometry.json
+  flags: false
+  code: >-
+    {"probe":"geometry","width":390,"height":844,"elements":[{"key":"h1","tag":"h1","visible":true,
+    "text":"Tittel","text_lines":2,"text_wrap":"balance","frect":{"x":16,"y":16,"w":358,"h":80}}]}
+- law: NEGATIVE_SPACE_GROUPING
+  path: MASTER/var/rendered/home.geometry.json
+  flags: true
+  code: >-
+    {"probe":"geometry","width":390,"height":844,"elements":[
+    {"key":"p.far","tag":"p","visible":true,"text":"En","frect":{"x":16,"y":16,"w":358,"h":24}},
+    {"key":"p.end","tag":"p","visible":true,"text":"To","frect":{"x":16,"y":500,"w":358,"h":24}}]}
+- law: NEGATIVE_SPACE_GROUPING
+  path: MASTER/var/rendered/home.geometry.json
+  flags: false
+  code: >-
+    {"probe":"geometry","width":390,"height":844,"elements":[
+    {"key":"p.near","tag":"p","visible":true,"text":"En","frect":{"x":16,"y":16,"w":358,"h":24}},
+    {"key":"p.next","tag":"p","visible":true,"text":"To","frect":{"x":16,"y":56,"w":358,"h":24}}]}

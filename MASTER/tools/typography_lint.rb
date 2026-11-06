@@ -43,11 +43,8 @@ module Operator
       File.join("..", "MASTER", "web", "public"),
     ].freeze
 
-    # Operator directive 2026-10-11: brgen, amber and the shared layer are Swiss sans
-    # only. The vendored lightgallery sheet is third-party and not ours to edit.
-    SERIF_FAMILY = /\A(?:serif|ui-serif|georgia|times(?: new roman)?|garamond|palatino(?: linotype)?|iowan old style|baskerville|playfair display|merriweather|didot|bodoni(?: 72)?|book antiqua)\z/i
-    SERIF_SCOPES = %w[brgen* __shared amber].freeze
-    SERIF_VENDORED = %w[lightgallery.css].freeze
+    # The serif rule (operator directive 2026-10-11) is the TYPEFACE_PER_ROLE Law now, in
+    # MASTER/law/geometry.rb, which reads the same trees on every scan.
 
     def initialize(root:)
       @root = root
@@ -57,14 +54,8 @@ module Operator
       SOURCES.flat_map { |dir| Dir.glob(File.join(@root, "RAILS", dir, "**", "*.{css,scss}")) }.uniq.sort
     end
 
-    def serif_files
-      SERIF_SCOPES.flat_map { |scope| Dir.glob(File.join(@root, "RAILS", scope, "**", "*.{css,scss,erb,html}")) }
-                  .reject { |path| path.include?("/builds/") || path.include?("/node_modules/") || SERIF_VENDORED.include?(File.basename(path)) }
-                  .uniq.sort
-    end
-
     def findings
-      @findings ||= stylesheets.flat_map { |path| inspect_file(path) } + serif_files.flat_map { |path| serif_contract(path) }
+      @findings ||= stylesheets.flat_map { |path| inspect_file(path) }
     end
 
     def counts
@@ -137,17 +128,6 @@ module Operator
         "justification_without_hyphenation",
         "justified prose needs hyphenation to prevent excessive word spacing",
       )]
-    end
-
-    def serif_contract(path)
-      File.readlines(path, encoding: "UTF-8").each_with_index.flat_map do |line, index|
-        line.scan(FAMILY_DECLARATIONS).flat_map { |(value)| value.split(",") }.filter_map do |item|
-          name = item.strip.delete("\"'")
-          next unless name.match?(SERIF_FAMILY)
-
-          Finding.new(relative(path), index + 1, "serif_family", "serif family `#{name}`; brgen type is Swiss sans (var(--font)) plus the monospace token for terminal chats")
-        end
-      end
     end
 
     def font_family_budget(path, lines)

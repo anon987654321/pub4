@@ -5,11 +5,12 @@ module Deploy
     # Negative space, grouping and the type details the operator asked the visual lane to hold
     # (2026-11-06), read from the probe's element list on the first screen, mobile first:
     #
-    #   heading proximity  a heading nearer the block above than the text it introduces  PROXIMITY
-    #   heading wrap       a heading on 2+ lines that text-wrap does not balance          BRINGHURST_line_breaks
+    #   heading proximity  a heading nearer the block above than the text it introduces  NEGATIVE_SPACE_GROUPING
+    #   heading wrap       a heading on 2+ lines that text-wrap does not balance          HEADING_WRAP_BALANCE
     #   body sizes         more than five distinct sizes outside the headings             TYPE_HIERARCHY
     #   edge crowding      text set closer than 8px to a phone's edge                     WHITESPACE_RHYTHM
-    #   void               an empty band past a third of the screen between content       WHITESPACE_RHYTHM
+    #   void               an empty band past a third of the screen between content       NEGATIVE_SPACE_GROUPING
+    #   typeface           more than one text family, or monospace outside chat and code  TYPEFACE_PER_ROLE
     #
     # and one line of counts that may only fall: visible elements, distinct colours, painted
     # shadows, distinct left edges, and the empty share of the first screen.
@@ -35,11 +36,12 @@ module Deploy
 
       def space_findings(surface, leaves)
         {
-          "heading_proximity" => [heading_proximity(leaves), "PROXIMITY"],
-          "heading_wrap" => [heading_wrap(leaves), "BRINGHURST_line_breaks"],
+          "heading_proximity" => [heading_proximity(leaves), "NEGATIVE_SPACE_GROUPING"],
+          "heading_wrap" => [heading_wrap(leaves), "HEADING_WRAP_BALANCE"],
           "body_sizes" => [body_sizes(leaves), "TYPE_HIERARCHY"],
           "edge_crowding" => [edge_crowding(surface, leaves), "WHITESPACE_RHYTHM"],
-          "void" => [voids(surface, leaves), "WHITESPACE_RHYTHM"],
+          "void" => [voids(surface, leaves), "NEGATIVE_SPACE_GROUPING"],
+          "typeface" => [RenderedDesign::GeometryLaws.typeface_rows(leaves), "TYPEFACE_PER_ROLE"],
         }
       end
 
@@ -136,3 +138,5 @@ module Deploy
     end
   end
 end
+
+require_relative "../rendered_design/geometry_laws"

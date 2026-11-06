@@ -93,22 +93,4 @@ class TypographyLintTest < Minitest::Test
       assert lint.findings.any? { |finding| finding.kind == "numeric_features" }
     end
   end
-  
-  def test_serif_families_are_refused_in_brgen_and_shared
-    Dir.mktmpdir do |dir|
-      scope = File.join(dir, "RAILS", "brgen", "app", "assets", "stylesheets")
-      FileUtils.mkdir_p(scope)
-      File.write(File.join(scope, "a.scss"), "h1 { font-family: \"Iowan Old Style\", Georgia, serif; }\nbody { font-family: var(--font), sans-serif; }\n")
-
-      kinds = Operator::TypographyLint.new(root: dir).findings.select { |finding| finding.kind == "serif_family" }
-      assert_equal [1, 1, 1], kinds.map(&:line)
-      assert_equal 3, kinds.size
-    end
-  end
-  
-  def test_repository_has_no_serif_family
-    root = File.expand_path("../..", __dir__)
-    found = Operator::TypographyLint.new(root:).findings.select { |finding| finding.kind == "serif_family" }
-    assert_empty found.map { |finding| "#{finding.file}:#{finding.line}" }
-  end
 end

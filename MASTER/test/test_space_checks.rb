@@ -43,12 +43,13 @@ class TestSpaceChecks < Minitest::Test
     page = [text("p.intro", [16, 16, 358, 96]), text("h2.section", [16, 120, 358, 28], tag: "h2"),
             text("p.body", [16, 180, 358, 96])]
 
-    assert_match(/heading_proximity.*h2\.section sits 8px under the block above and 32px over its text law=PROXIMITY/,
+    assert_match(/heading_proximity.*h2\.section\ sits\ 8px\ under\ the\ block\ above\ and\ 32px\ over\ its\ text
+                  \ law=NEGATIVE_SPACE_GROUPING/x,
                  found(*page))
   end
 
   def test_a_two_line_heading_without_balance_is_a_line_break_finding
-    assert_match(/heading_wrap.*law=BRINGHURST_line_breaks/,
+    assert_match(/heading_wrap.*law=HEADING_WRAP_BALANCE/,
                  found(text("h1.title", [16, 16, 358, 80], tag: "h1", text_lines: 2, text_wrap: "wrap")))
     assert_empty found(text("h1.title", [16, 16, 358, 80], tag: "h1", text_lines: 2, text_wrap: "balance"))
   end
@@ -66,6 +67,6 @@ class TestSpaceChecks < Minitest::Test
     report = found(*page)
 
     assert_match(/edge_crowding.*p\.tight 2px from the edge law=WHITESPACE_RHYTHM/, report)
-    assert_match(/void.*460px empty band above y=500 law=WHITESPACE_RHYTHM/, report)
+    assert_match(/void.*460px empty band above y=500 law=NEGATIVE_SPACE_GROUPING/, report)
   end
 end

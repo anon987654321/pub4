@@ -225,7 +225,7 @@ module Deploy
       sample = missing.first(3).map { |r| r["sel"] }.join("; ")
       result.fail(
         "geometry tabular: #{surface.id} #{missing.size} quantity run(s) without tabular-nums - " \
-        "#{sample} (principle=catalog_figures)",
+        "#{sample} (principle=catalog_figures) law=TABULAR_NUMERALS",
         severity: :soft,
       )
     end
