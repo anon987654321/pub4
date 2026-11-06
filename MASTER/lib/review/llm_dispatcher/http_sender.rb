@@ -12,9 +12,22 @@ module Master
       # Two lanes RubyLLM has no provider for, each one POST away: an
       # OpenAI-compatible server on this machine (mistral.rs, LM Studio,
       # llama-server) and Replicate's hosted language models.
+      #
+      # The lane's own deadlines are split: a short handshake budget (a lane
+      # whose connect or TLS phase is dead never gets past it, and the failure
+      # falls through to the circuit breaker as a provider failure) and a
+      # read-idle budget (each silent socket read must die on its own; a body
+      # that keeps delivering never trips it, so a token arriving every few
+      # seconds reads for as long as the provider writes).
       module HttpSender
         LOCAL_SERVER_TIMEOUT_S = 300
         OPEN_TIMEOUT_S = 5
+        READ_IDLE_TIMEOUT_S = 60
+
+        private
+
+        # Tests substitute their own idle budget; no operator surface.
+        def read_idle_timeout_s = READ_IDLE_TIMEOUT_S
         REPLICATE_API = "https://api.replicate.com/v1"
         REPLICATE_WAIT_S = 60
         REPLICATE_MAX_POLLS = 240
@@ -24,6 +37,9 @@ module Master
         REPLICATE_POLL_INTERVAL_S = 1
         REPLICATE_API_HOST = "api.replicate.com"
         REPLICATE_MAX_TOKENS = 4096
+
+        # Tests substitute their own idle budget; no operator surface.
+        def read_idle_timeout_s = READ_IDLE_TIMEOUT_S
 
         private
 
@@ -66,14 +82,62 @@ module Master
         end
 
         def openai_chat(base, model, messages, sys:, temperature:, lane:, headers: {})
-          body = { model:, messages: ollama_messages(messages, sys), stream: false }
+          body = { model:, messages: ollama_messages(messages, sys), stream: true }
           body[:temperature] = temperature if temperature
-          response = post_json("#{base.chomp('/')}/chat/completions", body, headers:, timeout: LOCAL_SERVER_TIMEOUT_S)
-          return http_lane_error(lane, response) unless response.is_a?(Net::HTTPSuccess)
+          request = Net::HTTP::Post.new(URI("#{base.chomp('/')}/chat/completions").request_uri,
+                                        headers.merge("Content-Type" => "application/json"))
+          request.body = JSON.generate(body)
+          reply = read_streaming_lane(base, request, lane)
+          return reply if reply.is_a?(Result)
 
-          Result.ok(JSON.parse(response.body).dig("choices", 0, "message", "content").to_s)
+          Result.ok(reply)
         rescue Errno::ECONNREFUSED, Errno::EHOSTUNREACH, SocketError => e
           Result.err("#{lane} unreachable at #{base}: #{e.message}", category: :provider_error)
+        end
+
+        # One lane call with its deadlines split: a short handshake budget
+        # (connect plus TLS) and a read-idle budget that every silent socket
+        # read must meet. The socket stays open while the body assembles, so
+        # an answer that keeps delivering reads to the end however long that
+        # takes; one that goes silent dies at the idle budget, not sooner.
+        # A dead handshake raises and falls through to the circuit breaker's
+        # failure accounting.
+        def read_streaming_lane(base, request, lane)
+          uri = URI("#{base.chomp('/')}/chat/completions")
+          Net::HTTP.start(uri.host, uri.port, use_ssl: uri.scheme == "https",
+                          open_timeout: OPEN_TIMEOUT_S, read_timeout: read_idle_timeout_s) do |http|
+            response = http.request(request)
+            return http_lane_error(lane, response) unless response.is_a?(Net::HTTPSuccess)
+
+            if response["Content-Type"].to_s.include?("event-stream")
+              assemble_stream(response, lane)
+            else
+              JSON.parse(response.body).dig("choices", 0, "message", "content").to_s
+            end
+          end
+        rescue Net::ReadTimeout => e
+          Result.err("#{lane} went silent longer than #{READ_IDLE_TIMEOUT_S}s: #{e.message}", category: :timeout)
+        end
+
+        # SSE deltas as they arrive; empty lines frame separate events.
+        def assemble_stream(response, lane)
+          content = +""
+          tail = +""
+          response.read_body do |chunk|
+            tail << chunk
+            while (index = tail.index("\n"))
+              (line, tail = tail[0...index], tail[(index + 1)..].to_s)
+              payload = line.strip.delete_prefix("data:").strip
+              next unless line.strip.start_with?("data:")
+              next if payload.empty? || payload == "[DONE]"
+
+              delta = JSON.parse(payload).dig("choices", 0, "delta", "content")
+              content << delta if delta.is_a?(String)
+            end
+          end
+          content
+        rescue JSON::ParserError => e
+          Result.err("#{lane} sent a malformed stream: #{e.message}", category: :provider_error)
         end
 
         # Replicate answers inside the wait window or hands back a prediction to

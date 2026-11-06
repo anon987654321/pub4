@@ -1062,4 +1062,81 @@ class TestLLMDispatcher < Minitest::Test
     dispatcher.instance_variable_set(:@availability, Master::CLI::Routing::AvailabilityPolicy.new(config: {}))
     [dispatcher, session, bus]
   end
+
+  # A hosted lane answers as a stream: deltas arrive as SSE events and the
+  # reader assembles them into one answer, skipping role-only and framing
+  # events on the way.
+  def test_the_lane_assembles_an_event_stream_into_one_answer
+    server = TCPServer.new("127.0.0.1", 0)
+    thread = Thread.new do
+      socket = server.accept
+      while (line = socket.gets.to_s.strip) != "" do end
+      events = [
+        'data: {"choices":[{"delta":{"content":"hello "}}]}', "",
+        'data: {"choices":[{"delta":{"role":"assistant"}}]}', "",
+        'data: {"choices":[{"delta":{"content":"world"}}]}', "",
+        "data: [DONE]", "", "event: ping", 'data: {"choices":[{"delta":{"content":" ignored"}}]}', "",
+      ]
+      socket.print("HTTP/1.1 200 OK\r\nContent-Type: text/event-stream\r\nConnection: close\r\n\r\n")
+      socket.print(events.join("\n") + "\n")
+      socket.close
+    end
+    dispatcher, = build_dispatcher
+    base = "http://127.0.0.1:#{server.addr[1]}/v1"
+    router = Object.new
+    router.define_singleton_method(:local_server_for) { |_id| base }
+    dispatcher.instance_variable_set(:@model_router, router)
+
+    result = dispatcher.send(:send_local_server, "local:Qwen/Qwen3-4B", [{ role: "user", content: "hi" }], sys: nil)
+
+    assert_equal "hello world", result.value!
+  ensure
+    thread&.kill
+    server&.close
+  end
+
+  # A lane whose socket goes silent dies at the read-idle budget, not the
+  # old total read budget: the failure names the silence, so the chain
+  # parks that lane and moves on.
+  def test_a_lane_that_goes_silent_dies_at_the_idle_budget
+    server = TCPServer.new("127.0.0.1", 0)
+    thread = Thread.new do
+      socket = server.accept
+      socket.print("HTTP/1.1 200 OK\r\nContent-Type: text/event-stream\r\n")
+      socket.flush
+      sleep 10 # never the rest: no terminator, no body, no close
+    end
+    dispatcher, = build_dispatcher
+    dispatcher.define_singleton_method(:read_idle_timeout_s) { 0.2 }
+    base = "http://127.0.0.1:#{server.addr[1]}/v1"
+    router = Object.new
+    router.define_singleton_method(:local_server_for) { |_id| base }
+    dispatcher.instance_variable_set(:@model_router, router)
+
+    result = dispatcher.send(:send_local_server, "local:Qwen/Qwen3-4B", [{ role: "user", content: "hi" }], sys: nil)
+
+    assert_equal :timeout, result.category
+    assert_match(/went silent longer than/, result.message)
+  ensure
+    thread&.kill
+    server&.close
+  end
+
+  # A dead handshake is the one lane failure that stays an exception: it
+  # reaches the circuit breaker's accounting instead of coming back as an
+  # answer-shaped error the breaker never penalizes.
+  def test_a_dead_handshake_rises_to_the_circuit_breaker_not_the_lane
+    dispatcher, = build_dispatcher
+    original = Net::HTTP.method(:start)
+    Net::HTTP.define_singleton_method(:start) { |*| raise Net::OpenTimeout, "execution expired" }
+    router = Object.new
+    router.define_singleton_method(:local_server_for) { |_id| "http://127.0.0.1:9/v1" }
+    dispatcher.instance_variable_set(:@model_router, router)
+
+    assert_raises(Net::OpenTimeout) do
+      dispatcher.send(:send_local_server, "local:m", [{ role: "user", content: "hi" }], sys: nil)
+    end
+  ensure
+    Net::HTTP.define_singleton_method(:start, original) if original
+  end
 end

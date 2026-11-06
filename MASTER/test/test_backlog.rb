@@ -1,9 +1,11 @@
 # frozen_string_literal: true
 
 require "stringio"
-require "yaml"
 require "tmpdir"
+# test_helper first: bundler/setup must pin the bundle's date before yaml's
+# psych can activate the default-gem date, later in, and split the bundle.
 require_relative "test_helper"
+require "yaml"
 require_relative "../tools/backlog"
 
 # The backlog is the one machine-readable view of TODO.md's checkbox items:
@@ -79,19 +81,12 @@ class TestBacklog < Minitest::Test
     end
   end
 
-  def test_operator_action_rows_are_operator_only
-    action = entries.find { |row| row[:text].include?("operator action") }
+  def test_the_operator_seam_rows_are_operator_only
+    seams = entries.select { |row| row[:section].include?("8.5 Operator-only") }
 
-    refute_nil action, "the source marks one row as an operator action"
-    assert_equal "operator-only", action[:kind]
-    assert_equal "operator", action[:tree]
-  end
-
-  def test_the_operator_decision_section_is_operator_only
-    decisions = entries.select { |row| row[:section].include?("Product decisions (operator)") }
-
-    refute_empty decisions
-    assert(decisions.all? { |row| row[:kind] == "operator-only" })
+    refute_empty seams, "the consolidated register carries one operator-seam section"
+    assert(seams.all? { |row| row[:kind] == "operator-only" })
+    assert(seams.all? { |row| row[:tree] == "operator" })
   end
 
   def test_no_other_row_claims_the_operator_tree
@@ -107,28 +102,26 @@ class TestBacklog < Minitest::Test
     end
   end
 
-  def test_done_when_is_verbatim_from_the_baymard_item
-    baymard = entries.find { |row| row[:text].include?("test_baymard_law.rb") }
+  def test_done_when_is_verbatim_from_the_baymard_gates_row
+    gates = entries.find { |row| row[:text].include?("ux:baymard") }
 
-    refute_nil baymard
-    assert_includes baymard[:done_when], "bundle exec ruby -Ilib:test test/test_baymard_law.rb"
+    refute_nil gates
+    assert_equal "rake lint:law_parity", gates[:done_when]
   end
 
-  def test_the_gate_item_carries_its_fenced_command
-    gate = entries.find { |row| row[:text].include?("MASTER pinned-Ruby verification gate") }
+  def test_the_pinned_ruby_verification_row_names_its_command
+    pinned = entries.find { |row| row[:text].include?("MASTER on pinned Ruby 4.0.5") }
 
-    refute_nil gate
-    refute_nil gate[:done_when], "the gate item's fenced commands give it a done_when"
-    assert_equal "rake test", gate[:done_when].split(" ").last(2).join(" ")
+    refute_nil pinned
+    assert_equal "rake test", pinned[:done_when].split(" ").last(2).join(" ")
   end
 
-  def test_the_2026_11_04_intake_items_are_rows
+  def test_the_2026_11_04_intake_items_left_the_register
     generated = entries.find { |row| row[:text].include?("generated from this file") }
     done_when = entries.find { |row| row[:text].include?("machine-checkable \"done when\"") }
 
-    refute_nil generated, "TODO.md's backlog.yml intake item must be a row"
-    assert_equal "mechanical", generated[:kind]
-    refute_nil done_when, "TODO.md's done-when intake item must be a row"
+    assert_nil generated, "the backlog generator landed; its intake rows are not work anymore"
+    assert_nil done_when, "the done-when intake landed with the generator"
   end
 
   def test_pub5_is_one_plan_entry_gated_on_the_freeze_condition
@@ -141,10 +134,10 @@ class TestBacklog < Minitest::Test
   end
 
   def test_scope_paths_follow_the_paths_the_text_names
-    seam = entries.find { |row| row[:scope_paths].include?("MASTER/data/operator_seams.yml") }
+    gates = entries.find { |row| row[:text].include?("ux:baymard") }
 
-    refute_nil seam, "the row that names operator_seams.yml must claim it as scope"
-    assert(entries.any? { |row| row[:scope_paths].include?("test/test_baymard_law.rb") })
+    refute_nil gates, "the row that names MASTER/Rakefile must claim it as scope"
+    assert(gates[:scope_paths].include?("MASTER/Rakefile"))
     refute(entries.any? { |row| row[:scope_paths].any? { |path| path.end_with?("/") } })
   end
 
@@ -216,12 +209,12 @@ class TestBacklog < Minitest::Test
 
   private
 
-  # The explicit marks the classification is allowed to honor, restated here
-  # so a widened OPERATOR_ONLY rule shows up as a tree-count mismatch.
+  # The consolidated register marks one section (8.5) as operator seams by
+  # heading; the classification honors that mark, restated here so a widened
+  # OPERATOR_ONLY rule shows up as a tree-count mismatch.
   def claimed_by_rule
-    action = entries.find { |row| row[:text].include?("operator action") }
-    decisions = entries.select { |row| row[:section].include?("Product decisions (operator)") }
-    (decisions.map { |row| row[:id] } + [action[:id]]).uniq.sort
+    entries.select { |row| row[:section].include?("8.5 Operator-only") }
+           .map { |row| row[:id] }.uniq.sort
   end
 
   def claimed_by_tree

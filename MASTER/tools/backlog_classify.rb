@@ -13,6 +13,9 @@ module Backlog
       %r{\boperator action\b}i,
       %r{\(operator\)}i,
       %r{\bthe operator decides\b}i,
+      # The consolidated register marks its operator seams by heading, not
+      # per-row notes: "8.5 Operator-only and external evidence seams".
+      %r{\boperator[-_]only\b}i,
     ].freeze
 
     # Rows that open a choice rather than name work.
