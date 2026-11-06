@@ -21,7 +21,7 @@ The normal Reline prompt also supports one deliberate microphone capture with `/
     /privacy grant microphone --confirm "GRANT microphone"
     /privacy grant speech_recognition --confirm "GRANT speech_recognition"
 
-The grants expire after one hour. Android still requires microphone permission for the Termux app, the Termux:API companion app, and `pkg install termux-api`. `/voice on` enables spoken replies in the terminal; the mobile browser bridge speaks each reply through Termux:API. Use the normal Termux app user, not a root/proot shell, so its API commands remain connected to the Android app.
+The same grants protect microphone capture in both the terminal and browser face, and expire after one hour. Grant them from the normal `bin/master` session before using the browser's listen button. Android still requires microphone permission for the Termux app, the Termux:API companion app, and `pkg install termux-api`. `/voice on` enables spoken replies in the terminal; the mobile browser bridge speaks each reply through Termux:API. Use the normal Termux app user, not a root/proot shell, so its API commands remain connected to the Android app.
 
 ## Security boundaries
 

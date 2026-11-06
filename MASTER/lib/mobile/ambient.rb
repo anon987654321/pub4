@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "../io/exec"
+require_relative "../ground/personal_permissions"
 require "timeout"
 require_relative "env"
 
@@ -15,14 +16,19 @@ module Master
       end
 
       def initialize(config: Mobile.config, capture: Master::Io::Exec.method(:capture3),
-                     speaker: ->(cmd, text) { system(cmd, text) })
+                     speaker: ->(cmd, text) { system(cmd, text) }, permissions: nil, root: Master::REPO_ROOT)
         @ambient = config.fetch("ambient", {})
         @capture = capture
         @speaker = speaker
+        @permissions = permissions || Master::Ground::PersonalPermissions.new(root:)
         @speaking = Mutex.new
       end
 
       def listen_once
+        if (missing = voice_input_permission_missing)
+          return failed(missing)
+        end
+
         command = @ambient["stt"] || "termux-speech-to-text"
         return failed("speech-to-text unavailable: #{command}") unless Env.on_path?(command)
 
@@ -47,6 +53,27 @@ module Master
       end
 
       private
+
+      # A browser button is still microphone access. Keep it under the same
+      # two default-deny grants as the terminal Face::Ear adapter.
+      def voice_input_permission_missing
+        unless @permissions.allowed?(
+          scope: "microphone",
+          purpose: Master::Ground::PersonalPermissions::MICROPHONE_PURPOSE
+        )
+          return 'microphone consent required: /privacy grant microphone --confirm "GRANT microphone"'
+        end
+        unless @permissions.allowed?(
+          scope: "speech_recognition",
+          purpose: Master::Ground::PersonalPermissions::SPEECH_RECOGNITION_PURPOSE
+        )
+          return 'speech-recognition consent required: /privacy grant speech_recognition --confirm "GRANT speech_recognition"'
+        end
+
+        nil
+      rescue StandardError => e
+        "voice input permission check failed: #{e.class}: #{e.message}"
+      end
 
       def failed(error) = Result.new(ok: false, text: nil, error:)
     end

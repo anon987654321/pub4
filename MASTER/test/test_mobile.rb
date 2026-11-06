@@ -9,6 +9,8 @@ require "mobile/doctor"
 require "mobile/face_bridge_http"
 require "mobile/host"
 require "trace/effect_observer"
+require "ground/personal_permissions"
+require "mobile/ambient"
 
 class TestMobileProfile < Minitest::Test
   def test_a_forced_profile_sets_the_defaults_the_operator_left_unset
@@ -330,4 +332,77 @@ class TestMobileDoctor < Minitest::Test
       assert_equal report["blocked_by"].empty?, report["status"] == "ready"
     end
   end
+
+class TestMobileAmbientPermissions < Minitest::Test
+  Permissions = Master::Ground::PersonalPermissions
+
+  def test_microphone_is_default_deny_and_does_not_invoke_termux
+    Dir.mktmpdir do |dir|
+      called = false
+      permissions = Permissions.new(root: dir)
+      ambient = Master::Mobile::Ambient.new(
+        root: dir,
+        permissions:,
+        capture: ->(*) { called = true; raise "microphone opened without consent" }
+      )
+
+      result = Master::Mobile::Env.stub(:on_path?, true) { ambient.listen_once }
+
+      refute result.ok?
+      assert_includes result.error, '/privacy grant microphone --confirm "GRANT microphone"'
+      refute called
+    end
+  end
+
+  def test_both_grants_are_required_before_speech_recognition
+    Dir.mktmpdir do |dir|
+      permissions = Permissions.new(root: dir)
+      permissions.grant(
+        scope: "microphone", confirmed_by: "test",
+        purpose: Permissions::MICROPHONE_PURPOSE
+      )
+      called = false
+      ambient = Master::Mobile::Ambient.new(
+        root: dir,
+        permissions:,
+        capture: ->(*) { called = true; raise "recognizer ran without speech consent" }
+      )
+
+      result = Master::Mobile::Env.stub(:on_path?, true) { ambient.listen_once }
+
+      refute result.ok?
+      assert_includes result.error, '/privacy grant speech_recognition --confirm "GRANT speech_recognition"'
+      refute called
+    end
+  end
+
+  def test_both_explicit_grants_allow_one_termux_transcription
+    Dir.mktmpdir do |dir|
+      permissions = Permissions.new(root: dir)
+      permissions.grant(
+        scope: "microphone", confirmed_by: "test",
+        purpose: Permissions::MICROPHONE_PURPOSE
+      )
+      permissions.grant(
+        scope: "speech_recognition", confirmed_by: "test",
+        purpose: Permissions::SPEECH_RECOGNITION_PURPOSE
+      )
+      calls = []
+      status = Object.new
+      status.define_singleton_method(:success?) { true }
+      ambient = Master::Mobile::Ambient.new(
+        root: dir,
+        permissions:,
+        capture: ->(command) { calls << command; ["hello from Termux", "", status] }
+      )
+
+      result = Master::Mobile::Env.stub(:on_path?, true) { ambient.listen_once }
+
+      assert result.ok?
+      assert_equal "hello from Termux", result.text
+      assert_equal ["termux-speech-to-text"], calls
+    end
+  end
+end
+
 end

@@ -21,7 +21,9 @@ module Master
         @session = Session.new(root: @root)
         @personality = Personality.new(root: @root)
         @bridge = bridge || Bridge.new(root: @root, timeout_s: config.dig("bridge", "utterance_timeout_s") || 120)
-        @ambient = ambient || Ambient.new(config:)
+        # The permission ledger is shared with bin/master's /privacy command
+        # and Face::Ear, so it lives at the repository root, not MASTER/.
+        @ambient = ambient || Ambient.new(config:, root: Master::REPO_ROOT)
         @face = FaceServer.new(root: @root, run_id: @session.id, config:, on_utterance: method(:handle_utterance))
       end
 
