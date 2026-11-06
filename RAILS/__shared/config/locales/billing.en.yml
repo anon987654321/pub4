@@ -20,7 +20,7 @@ en:
         summary: "Your marketplace listings shown first in Top offers, for buyers in your city."
       amber_premium_monthly:
         name: "Amber Premium, monthly"
-        summary: "AI outfit suggestions, the declutter guide and packing lists."
+        summary: "Outfit suggestions, decluttering guidance and packing lists. AI-assisted analysis is available when configured; otherwise, suggestions are rule-based."
       amber_premium_yearly:
         name: "Amber Premium, yearly"
         summary: "Everything in Premium, paid once a year."

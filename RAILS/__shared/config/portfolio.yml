@@ -37,5 +37,6 @@ bets:
     plans: [master_api_team, master_api_business]
     started_on:
     metric: mrr
-    below: 29900
-    hypothesis: "Teams pay for MASTER's laws as a CI check: USD 299 a month in total, one Business or six Team keys."
+    # Six Team keys are USD 294/month; one Business key is USD 299/month.
+    below: 29400
+    hypothesis: "Teams pay for MASTER's laws as a CI check: one Business or six Team keys meet the monthly revenue threshold."

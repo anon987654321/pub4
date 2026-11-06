@@ -118,6 +118,7 @@ module Master
 
       def domain_for(target)
         value = target.to_s.tr("\\", "/")
+        return "bplans" if value.match?(%r{(?:\A|/)BPLANS(?:/|\z)}i)
         return "music" if value.match?(%r{(?:\A|/)STUDIO/dilla(?:/|\z)}i)
         return "visual" if value.match?(%r{(?:\A|/)STUDIO/postpro(?:/|\z)}i)
         return "studio" if value.match?(%r{(?:\A|/)STUDIO(?:/|\z)}i)

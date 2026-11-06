@@ -63,7 +63,7 @@ class TestTransformationPlan < Minitest::Test
     protocol = @plan.research_protocol
     assert_equal true, protocol.fetch("enabled")
     assert_operator protocol.fetch("minimum_source_pages"), :>=, 2
-    %w[engineering rails openbsd studio music visual].each do |domain|
+    %w[engineering rails openbsd studio music visual bplans].each do |domain|
       refute_empty protocol.fetch("domains").fetch(domain).fetch("sources")
       assert_operator protocol.fetch("domains").fetch(domain).fetch("queries").size, :>=, 1
     end

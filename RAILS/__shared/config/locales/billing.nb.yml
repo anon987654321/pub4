@@ -22,7 +22,7 @@ nb:
         summary: "Annonsene dine vises først under Topptilbud, for kjøpere i din by."
       amber_premium_monthly:
         name: "Amber Premium, månedlig"
-        summary: "AI-forslag til antrekk, ryddeguide og pakkelister."
+        summary: "Antrekksforslag, ryddehjelp og pakkelister. AI-støttet analyse er tilgjengelig når funksjonen er konfigurert; ellers er forslagene regelbaserte."
       amber_premium_yearly:
         name: "Amber Premium, årlig"
         summary: "Alt i Premium, betalt én gang i året."

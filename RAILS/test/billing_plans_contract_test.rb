@@ -40,6 +40,18 @@ class BillingPlansContractTest < Minitest::Test
     end
   end
 
+  def test_amber_premium_copy_discloses_its_rule_based_fallback
+    en = YAML.safe_load_file(File.join(ROOT, "__shared/config/locales/billing.en.yml"))
+             .dig("en", "billing", "plans", "amber_premium_monthly", "summary")
+    nb = YAML.safe_load_file(File.join(ROOT, "__shared/config/locales/billing.nb.yml"))
+             .dig("nb", "billing", "plans", "amber_premium_monthly", "summary")
+
+    assert_includes en, "AI-assisted analysis is available when configured"
+    assert_includes en, "rule-based"
+    assert_includes nb, "AI-støttet analyse er tilgjengelig når den er konfigurert"
+    assert_includes nb, "regelbaserte"
+  end
+
   def test_every_selling_app_has_the_table_the_user_the_routes_and_the_controller
     USER_APPS.each do |app|
       assert(Dir.glob(File.join(ROOT, app, "db/migrate/*_create_billing_subscriptions.rb")).any?, "#{app} migration")

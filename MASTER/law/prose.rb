@@ -58,9 +58,9 @@ module Law
 
     def self.words(list) = /\b(?:#{list.map { |word| Regexp.escape(word) }.join('|')})\b/
 
-    # The files a language's prose is written in. English reads every file its
-    # catalogue languages name; Bokmål prose lives only in nb locale files.
-    SCOPES = { "nb" => %r{(?:\A|[/.])nb\.yml\z} }.freeze
+    # The files a language's prose is written in. Bokmål lives in translation values
+    # and in the Norwegian business plans, whose HTML is the canonical source.
+    SCOPES = { "nb" => %r{(?:\A|[/.])nb\.yml\z|(?:\A|/)BPLANS/[^/]+\.html\z} }.freeze
   end
 end
 

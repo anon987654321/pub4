@@ -31,6 +31,7 @@ class TestLawPathReach < Minitest::Test
   MODEL = "RAILS/brgen/app/models/thing.rb"
   AMBER_ORDER = "RAILS/amber/app/models/order.rb"
   MARKETPLACE_ORDER = "RAILS/brgen_marketplace/app/models/order.rb"
+  BPLANS_HTML = "BPLANS/ai3.html"
 
   # Law => [a file inside its scope, a file outside it].
   REACH = {
@@ -106,6 +107,34 @@ class TestLawPathReach < Minitest::Test
 
         refute_empty findings(law, file: File.join(root, inside), text:), "#{id} must flag its bad fixture at #{inside}"
         assert_empty findings(law, file: File.join(root, outside), text:), "#{id} must stay silent at #{outside}"
+      end
+    end
+  end
+
+  def test_bokmal_prose_laws_reach_bplans_html_and_not_other_html
+    cases = {
+      PROSE_ACTIVE_VOICE_NB: [
+        "<p>Feilen ble rettet av vedlikeholderen.</p>",
+        "<p>Vedlikeholderen rettet feilen.</p>",
+      ],
+      PROSE_OMIT_QUALIFIERS_NB: [
+        "<p>Dette er veldig raskt.</p>",
+        "<p>Dette er raskt.</p>",
+      ],
+    }
+
+    cases.each do |id, (bad, good)|
+      law = ::Law.definitions.fetch(id)
+
+      assert law.applies?("/repo/#{BPLANS_HTML}", "html"), "#{id} must reach BPLANS HTML"
+      refute law.applies?("/repo/RAILS/brgen/public/offline.html", "html"),
+             "#{id} must not reach unrelated HTML"
+
+      Dir.mktmpdir("bplans-prose") do |root|
+        refute_empty findings(law, file: File.join(root, BPLANS_HTML), text: bad), "#{id} must flag its bad HTML fixture"
+        assert_empty findings(law, file: File.join(root, BPLANS_HTML), text: good), "#{id} must pass its good HTML fixture"
+        assert_empty findings(law, file: File.join(root, "RAILS/brgen/public/offline.html"), text: bad),
+                     "#{id} must stay silent outside BPLANS"
       end
     end
   end

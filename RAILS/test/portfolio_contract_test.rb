@@ -58,6 +58,16 @@ class PortfolioContractTest < Minitest::Test
     end
   end
 
+  def test_master_api_threshold_matches_six_team_keys_or_one_business_key
+    bet = Shared::PortfolioBet.for_app("master").find { |candidate| candidate.key == "master_law_api" }
+    team = Shared::BillingPlan.find("master_api_team")
+    business = Shared::BillingPlan.find("master_api_business")
+
+    assert_equal 6 * team.amount, bet.below
+    assert_operator business.amount, :>=, bet.below
+    assert_includes bet.hypothesis, "six Team keys"
+  end
+
   def test_every_plan_belongs_to_a_bet
     planned = Shared::PortfolioBet.all.flat_map(&:plans)
     Shared::BillingPlan.all.each { |plan| assert_includes planned, plan.key, "#{plan.key} is in no bet" }

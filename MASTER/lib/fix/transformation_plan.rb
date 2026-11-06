@@ -275,7 +275,7 @@ module Master
         raise ArgumentError, "invalid fetched-source budget" unless (2..6).cover?(max_sources)
 
         domains = protocol.fetch("domains")
-        required = %w[engineering rails openbsd studio music visual]
+        required = %w[engineering rails openbsd studio music visual bplans]
         missing = required - domains.keys.map(&:to_s)
         raise ArgumentError, "research domains missing: #{missing.join(", ")}" unless missing.empty?
         domains.each do |name, row|

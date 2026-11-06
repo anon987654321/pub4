@@ -139,7 +139,7 @@ class TestResearchPass < Minitest::Test
     result = pass.run(target: ".", files: %w[MASTER RAILS OPENBSD STUDIO])
 
     assert_equal "PASS", result.fetch(:status)
-    %w[engineering rails openbsd studio music visual].each do |domain|
+    %w[engineering rails openbsd studio music visual bplans].each do |domain|
       assert_includes result.fetch(:brief), "Coverage #{domain}:"
       assert_includes result.fetch(:brief), "SOURCE [#{domain}]:"
     end
@@ -150,17 +150,19 @@ class TestResearchPass < Minitest::Test
   def test_full_repository_target_researches_every_domain
     pass = Master::Fix::ResearchPass.new(agent: Object.new, bus: nil, plan: @plan, root: Master::REPO_ROOT)
 
-    assert_equal %w[engineering rails openbsd studio music visual].sort,
+    assert_equal %w[engineering rails openbsd studio music visual bplans].sort,
       pass.send(:domains_for, ".", @plan.research_protocol).sort
-    assert_equal %w[engineering rails openbsd studio music visual].sort,
+    assert_equal %w[engineering rails openbsd studio music visual bplans].sort,
       pass.send(:domains_for, "MASTER RAILS OPENBSD STUDIO", @plan.research_protocol).sort
     assert_equal ["music"], pass.send(:domains_for, "STUDIO/dilla", @plan.research_protocol)
+    assert_equal ["bplans"], pass.send(:domains_for, "BPLANS", @plan.research_protocol)
   end
 
   def test_domain_routing_does_not_confuse_full_repo_with_one_subtree
     pass = Master::Fix::ResearchPass.new(agent: Object.new, bus: nil, plan: @plan, root: Master::REPO_ROOT)
 
     assert_equal "music", pass.send(:domain_for, "/checkout/STUDIO/dilla")
+    assert_equal "bplans", pass.send(:domain_for, "/checkout/BPLANS/ai3.html")
     assert_equal "visual", pass.send(:domain_for, "STUDIO/postpro")
     assert_equal "rails", pass.send(:domain_for, "/checkout/RAILS")
     assert_equal "openbsd", pass.send(:domain_for, "OPENBSD")

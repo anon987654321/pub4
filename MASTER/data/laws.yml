@@ -3193,7 +3193,7 @@ law_catalogue:
     PROSE_ACTIVE_VOICE_NB:
       definition_sources: [MASTER/law/prose.rb]
       severity: info
-      languages: [yaml]
+      languages: [yaml, html]
     PROSE_OMIT_QUALIFIERS:
       definition_sources: [MASTER/law/prose.rb]
       severity: warn
@@ -3201,9 +3201,8 @@ law_catalogue:
     PROSE_OMIT_QUALIFIERS_NB:
       definition_sources: [MASTER/law/prose.rb]
       severity: warn
-      languages: [yaml]
-      # Bokmål reaches the tree through the Rails locale files and nowhere else;
-      # every comment in the repo is English. Scoped there, `bare` is Norwegian.
+      languages: [yaml, html]
+      # Bokmål reaches translation values and BPLANS HTML only. Scoped there, `bare` is Norwegian.
     PROSE_ONE_TOPIC_PARAGRAPH:
       definition_sources: [MASTER/law/universal.rb]
       severity: info
