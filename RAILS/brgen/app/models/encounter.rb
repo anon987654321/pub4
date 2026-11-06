@@ -29,6 +29,9 @@ class Encounter < ApplicationRecord
 
   def close! = update!(status: CLOSED)
   def fresh? = updated_at > MATCH_REMEMBERED_FOR.ago
+  def waiting? = status == WAITING
+  def matched? = status == MATCHED
+  def closed? = status == CLOSED
 
   # Post an ask: pair with the oldest live wait from someone else, or wait.
   # One live wait per person - a second ask abandons the first. The lock
