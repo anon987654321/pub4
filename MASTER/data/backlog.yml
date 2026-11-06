@@ -7,7 +7,7 @@ schema: 1
 name: pub4_backlog
 generated_by: MASTER/tools/backlog.rb
 source: TODO.md (repository root)
-entry_count: 170
+entry_count: 169
 entries:
 - id: master-on-pinned-ruby-4-0-5-run
   text: >-
@@ -2317,19 +2317,6 @@ entries:
   tree: cross
   kind: mechanical
   size: s
-  scope_paths: []
-  done_when:
-  done_when_note: no runnable command named in the item text
-- id: adopt-openclaw-s-cooldown-contract-in-io-lanequota
-  text: >-
-    Adopt openclaw's cooldown contract in `Io::LaneQuota`: parse `Retry-After`
-    headers as exact cooldown, ladder everything else 30s-1m-5m with reset,
-    disable auth-failed profiles about ten minutes, and cap stated waits
-    at 60s before falling through.
-  section: model pool — free compute and never-modelless (researched 2026-11-06)
-  tree: cross
-  kind: mechanical
-  size: m
   scope_paths: []
   done_when:
   done_when_note: no runnable command named in the item text
