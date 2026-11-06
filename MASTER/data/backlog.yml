@@ -7,7 +7,7 @@ schema: 1
 name: pub4_backlog
 generated_by: MASTER/tools/backlog.rb
 source: TODO.md (repository root)
-entry_count: 471
+entry_count: 470
 entries:
 - id: move-generated-snapshot-md-out-of-the-root
   text: >-
@@ -5938,20 +5938,6 @@ entries:
   kind: mechanical
   size: s
   scope_paths: []
-  done_when:
-  done_when_note: no runnable command named in the item text
-- id: register-kilo-and-ovhcloud-as-keyless-lanes-beside
-  text: >-
-    Register Kilo and OVHcloud as keyless lanes beside llm7 in `data/models.yml`,
-    with llm7's keyless_max_concurrency pattern and a per-row verified-on
-    date.
-  section: model pool — free compute and never-modelless (researched 2026-11-06)
-  tree: MASTER
-  kind: mechanical
-  size: s
-  scope_paths:
-  - data/models.yml
-  - models.yml
   done_when:
   done_when_note: no runnable command named in the item text
 - id: read-openrouter-s-remaining-free-quota-from-get
