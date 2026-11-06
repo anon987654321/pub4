@@ -3,8 +3,7 @@
 // bp_index.py, with the ragnhild logo row updated (Nosifer wordmark).
 // Usage: node scripts/bp_index.mjs
 import { readFileSync, writeFileSync } from 'node:fs';
-
-const OUT = '/home/z/my-project/download/pub4.good/BPLANS';
+import { OUTPUT_DIR as OUT } from './paths.mjs';
 const syre = readFileSync(`${OUT}/syre.html`, 'utf8');
 const fonts = [...syre.matchAll(/@font-face\{[\s\S]*?\}/g)].map(m => m[0]);
 if (fonts.length !== 2) throw new Error(`expected 2 font-face in syre.html, got ${fonts.length}`);
