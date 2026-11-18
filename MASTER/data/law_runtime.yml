@@ -296,6 +296,17 @@ transformation_policy:
       - id: cross_tree
         inspect: "The dependency and operational seams among MASTER, RAILS, OPENBSD, STUDIO and BPLANS, including who owns each command, setting, artifact and proof."
         accept: "Keep tree ownership explicit; share only stable contracts with compatible lifecycles, and never move a responsibility merely to reduce a duplicate-file count."
+    tree_adapters:
+      master: >-
+        Preserve the single Soul and Law authorities; improve the existing scanner, opportunity, restructuring and repair paths rather than creating a second coordinator or policy registry.
+      rails: >-
+        Reuse RAILS/__shared for behavior with a shared reason to change; retain thin app-owned Rails adapters, independent app identity, routes, migrations and deploy boundaries.
+      openbsd: >-
+        Keep privilege behind the fixed-path broker; prefer native pledge(2), unveil(2), doas, rcctl, PF and relayd contracts where applicable, with explicit platform-specific proof.
+      studio: >-
+        Keep media tools independently owned; preserve source takes, deterministic seeds, manifests, bounded subprocess behavior and reproducible outputs.
+      bplans: >-
+        Edit the authoritative content or generator, preserve historical source artifacts, substantiate claims and compare rendered documents after generation.
     evidence:
       required: [named_paths_and_callers, ownership_and_authority, measured_duplication_or_complexity, behavior_baseline, focused_contract_tests, post_change_comparison, residual_risk]
       no_substitute: "A basename match, repeated line, file count, intuition or model narrative is not proof that two units should be merged."

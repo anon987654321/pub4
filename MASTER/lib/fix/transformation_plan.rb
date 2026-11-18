@@ -75,6 +75,8 @@ module Master
           *engineering_review.fetch("sequence").map { |step| "    - #{step}" },
           "  dimensions:",
           *engineering_review.fetch("dimensions").map { |row| "    #{row.fetch("id")}: inspect #{row.fetch("inspect")} Accept when #{row.fetch("accept")}" },
+          "  tree adapters:",
+          *engineering_review.fetch("tree_adapters").map { |tree, rule| "    #{tree}: #{rule}" },
           "  evidence: #{engineering_review.fetch("evidence").fetch("required").join(", ")}",
           "  evidence rule: #{engineering_review.fetch("evidence").fetch("no_substitute")}",
           "  stop: #{engineering_review.fetch("stop")}",
@@ -349,6 +351,10 @@ module Master
         required_review_evidence = %w[named_paths_and_callers ownership_and_authority measured_duplication_or_complexity behavior_baseline focused_contract_tests post_change_comparison residual_risk]
         missing_review_evidence = required_review_evidence - Array(review.fetch("evidence").fetch("required")).map(&:to_s)
         raise ArgumentError, "engineering review evidence missing: #{missing_review_evidence.join(", ")}" unless missing_review_evidence.empty?
+        required_tree_adapters = %w[master rails openbsd studio bplans]
+        missing_tree_adapters = required_tree_adapters - review.fetch("tree_adapters").keys
+        raise ArgumentError, "engineering review tree adapters missing: #{missing_tree_adapters.join(", ")}" unless missing_tree_adapters.empty?
+        raise ArgumentError, "engineering review tree adapter is empty" if review.fetch("tree_adapters").values.any? { |rule| rule.to_s.empty? }
         raise ArgumentError, "engineering review stop rule missing" if review.fetch("stop").to_s.empty?
 
         scorecard = scorecard_policy

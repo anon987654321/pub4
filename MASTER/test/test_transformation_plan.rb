@@ -102,6 +102,11 @@ class TestTransformationPlan < Minitest::Test
     assert_includes review.fetch("sequence").join(" "), "existing canonical implementation"
     assert_includes review.fetch("evidence").fetch("no_substitute"), "basename match"
     assert_includes review.fetch("stop"), "INCONCLUSIVE"
+    %w[master rails openbsd studio bplans].each do |tree|
+      assert_includes review.fetch("tree_adapters").keys, tree
+    end
+    assert_includes review.fetch("tree_adapters").fetch("openbsd"), "pledge(2)"
+    assert_includes review.fetch("tree_adapters").fetch("rails"), "thin app-owned Rails adapters"
 
     prompt = @plan.prompt
     %w[
