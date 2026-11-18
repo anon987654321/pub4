@@ -269,6 +269,37 @@ transformation_policy:
       choose: "DRY; consolidate the decision at its owner."
     - condition: "Three or more lookalike sites serve divergent clients or change for different reasons."
       choose: "KISS; keep distinct implementations."
+  engineering_review:
+    objective: "Make the repository simpler and more reliable by removing needless duplication, indirection, boundary leaks and repeated operational plumbing without weakening product or security contracts."
+    sequence:
+      - "Inventory the target tree, its owning contracts, configuration authorities, entrypoints and generated outputs."
+      - "Trace callers, imports, routes, task entrypoints, process boundaries and deployment consumers before proposing a move."
+      - "Measure repeated decisions and implementations; use exact call sites and Git co-change evidence where available."
+      - "Apply DRY only when at least three independent sites share the same decision and reason to change; otherwise prefer KISS."
+      - "Choose the smallest coherent refactor or rewire at the existing owner; delete or flatten needless layers before adding abstractions."
+      - "Consolidate subprocess, test, configuration, logging, deployment and evidence plumbing only within a boundary that can safely own it."
+      - "Make one bounded change, verify the same contracts and behavior, then remeasure before choosing another."
+      - "Report landed improvements, intentional duplication, rejected candidates and genuine blockers in the existing run evidence."
+    dimensions:
+      - id: dry
+        inspect: "Repeated decisions, copied implementations, duplicated configuration and repeated view or workflow logic; compare their actual call sites, consumers and reasons to change."
+        accept: "Consolidate at the existing authoritative owner only when semantics, lifecycle and change cadence genuinely match; preserve thin framework adapters and deployment copies when they carry real boundaries."
+      - id: kiss
+        inspect: "Unnecessary layers, wrappers, options, state machines, one-use helpers, registries, indirection and abstractions that make a common task harder to follow."
+        accept: "Prefer the smallest understandable implementation that preserves a real invariant, useful name, security boundary and failure mode; fewer lines alone are not a win."
+      - id: refactor_rewire
+        inspect: "Large or multi-purpose units, tangled dependencies, shotgun changes, dead paths, misplaced ownership, load-order coupling and public path assumptions."
+        accept: "Reshape toward clear ownership and dependency direction, one coherent change at a time, with references and public imports preserved or explicitly shimmed."
+      - id: plumbing
+        inspect: "Repeated process spawning, timeout and cancellation logic, test discovery and result parsing, configuration loading, generated assets, deployment orchestration, logs and evidence transport."
+        accept: "Reuse the existing canonical implementation within each tree; do not create a cross-tree abstraction that imports optional dependencies or erases platform-specific security and lifecycle rules."
+      - id: cross_tree
+        inspect: "The dependency and operational seams among MASTER, RAILS, OPENBSD, STUDIO and BPLANS, including who owns each command, setting, artifact and proof."
+        accept: "Keep tree ownership explicit; share only stable contracts with compatible lifecycles, and never move a responsibility merely to reduce a duplicate-file count."
+    evidence:
+      required: [named_paths_and_callers, ownership_and_authority, measured_duplication_or_complexity, behavior_baseline, focused_contract_tests, post_change_comparison, residual_risk]
+      no_substitute: "A basename match, repeated line, file count, intuition or model narrative is not proof that two units should be merged."
+    stop: "Keep the current design when evidence is weak, consumers diverge, a meaningful boundary would be lost, or measured quality does not improve. Mark unmeasured dimensions INCONCLUSIVE; never manufacture a 10/10 score."
   scorecard:
     history_window_commits: 200
     metrics: [cohesion, coupling, domain_depth, decision_duplication, traceability, concepts, loc]

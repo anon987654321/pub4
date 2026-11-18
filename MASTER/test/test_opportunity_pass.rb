@@ -66,6 +66,25 @@ class OpportunityPassTest < Minitest::Test
     File.write(File.join(lib, "a", "notes.rb"), Array.new(30) { |i| "# see MASTER/lib/gone_#{i}.rb\n" }.join)
   end
 
+  def test_visual_transport_detector_uses_the_master_owned_geometry_probe
+    Dir.mktmpdir do |root|
+      rails = File.join(root, "RAILS")
+      master_checks = File.join(root, "MASTER", "checks")
+      support = File.join(master_checks, "support")
+      FileUtils.mkdir_p([rails, support])
+      visual_contract = File.join(master_checks, "visual_contract.rb")
+      geometry_probe = File.join(support, "geometry_probe.rb")
+      File.write(visual_contract, 'require "selenium-webdriver"' + "\n")
+      File.write(geometry_probe, "# canonical CDP geometry probe\n")
+
+      result = Master::Fix::OpportunityPass.new(root:).run(target: rails, files: [])
+      findings = result.value.fetch(:findings)
+
+      assert findings.any? { |finding| finding[:message].include?("duplicate browser substrate") },
+        "a second browser transport must be reported when the canonical MASTER probe exists"
+    end
+  end
+
   def test_design_findings_reach_the_pass_even_when_stale_paths_fill_the_list
     Dir.mktmpdir do |root|
       scratch_master_with_repeated_names_and_stale_paths(root)

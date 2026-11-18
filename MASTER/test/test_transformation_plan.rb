@@ -91,6 +91,32 @@ class TestTransformationPlan < Minitest::Test
     assert_includes prompt, "at its owner"
   end
 
+  def test_repository_wide_engineering_review_is_part_of_the_structural_fix_prompt
+    review = @plan.engineering_review
+    ids = review.fetch("dimensions").map { |row| row.fetch("id") }
+
+    %w[dry kiss refactor_rewire plumbing cross_tree].each do |dimension|
+      assert_includes ids, dimension
+    end
+
+    assert_includes review.fetch("sequence").join(" "), "existing canonical implementation"
+    assert_includes review.fetch("evidence").fetch("no_substitute"), "basename match"
+    assert_includes review.fetch("stop"), "INCONCLUSIVE"
+
+    prompt = @plan.prompt
+    %w[
+      Repository-wide engineering review
+      DRY
+      KISS
+      plumbing
+      cross_tree
+      named_paths_and_callers
+      post_change_comparison
+    ].each do |term|
+      assert_includes prompt, term
+    end
+  end
+
   def test_rename_policy_covers_code_and_structure
     assert_equal %w[files constants methods variables laws sections], @plan.rename_policy.fetch("scopes")
     assert_equal true, @plan.rename_policy.fetch("require_reference_rewrite")

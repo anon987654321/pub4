@@ -69,6 +69,16 @@ module Master
           "DRY versus KISS, in order:",
           *decision_table.map { |row| "  #{row.fetch("condition")} => #{row.fetch("choose")}" },
           "",
+          "Repository-wide engineering review (mandatory during structural /fix sweeps):",
+          "  objective: #{engineering_review.fetch("objective")}",
+          "  sequence:",
+          *engineering_review.fetch("sequence").map { |step| "    - #{step}" },
+          "  dimensions:",
+          *engineering_review.fetch("dimensions").map { |row| "    #{row.fetch("id")}: inspect #{row.fetch("inspect")} Accept when #{row.fetch("accept")}" },
+          "  evidence: #{engineering_review.fetch("evidence").fetch("required").join(", ")}",
+          "  evidence rule: #{engineering_review.fetch("evidence").fetch("no_substitute")}",
+          "  stop: #{engineering_review.fetch("stop")}",
+          "",
           "Operation trigger and veto:",
           *operation_rules.map { |name, row| "  #{name}: when #{row.fetch("when")} Not when #{row.fetch("not_when")}" },
           "",
@@ -143,6 +153,7 @@ module Master
       def loop_policy = policy_section("loop")
       def operation_rules = policy_section("operation_rules")
       def decision_table = policy_section("decision_table")
+      def engineering_review = policy_section("engineering_review")
       def scorecard_policy = policy_section("scorecard")
       def proof_of_equivalence = policy_section("proof_of_equivalence")
       def structural_checks = policy_section("structural_checks")
@@ -328,6 +339,17 @@ module Master
         end
         choices = decision_table.map { |row| row.fetch("choose") }
         raise ArgumentError, "DRY/KISS decision table incomplete" unless choices.any? { |choice| choice.include?("KISS") } && choices.any? { |choice| choice.include?("DRY") }
+
+        review = engineering_review
+        required_dimensions = %w[dry kiss refactor_rewire plumbing cross_tree]
+        dimension_ids = Array(review.fetch("dimensions")).map { |row| row.fetch("id").to_s }
+        missing_dimensions = required_dimensions - dimension_ids
+        raise ArgumentError, "engineering review dimensions missing: #{missing_dimensions.join(", ")}" unless missing_dimensions.empty?
+        raise ArgumentError, "engineering review sequence missing" if Array(review.fetch("sequence")).size < 6
+        required_review_evidence = %w[named_paths_and_callers ownership_and_authority measured_duplication_or_complexity behavior_baseline focused_contract_tests post_change_comparison residual_risk]
+        missing_review_evidence = required_review_evidence - Array(review.fetch("evidence").fetch("required")).map(&:to_s)
+        raise ArgumentError, "engineering review evidence missing: #{missing_review_evidence.join(", ")}" unless missing_review_evidence.empty?
+        raise ArgumentError, "engineering review stop rule missing" if review.fetch("stop").to_s.empty?
 
         scorecard = scorecard_policy
         required_metrics = %w[cohesion coupling domain_depth decision_duplication traceability concepts loc]

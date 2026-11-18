@@ -150,7 +150,7 @@ module Master
         elsif relative == "RAILS"
           paths.concat([
             File.join(repo_root, "MASTER", "checks", "visual_contract.rb"),
-            File.join(repo_root, "RAILS", "checks", "support", "geometry_probe.rb"),
+            File.join(repo_root, "MASTER", "checks", "support", "geometry_probe.rb"),
           ])
         end
         if Array(scope_paths).empty?
@@ -345,7 +345,7 @@ module Master
         return unless File.file?(path)
         return unless File.read(path, encoding: "UTF-8").include?("selenium-webdriver")
 
-        probe = File.join(repo_root, "RAILS", "checks", "support", "geometry_probe.rb")
+        probe = File.join(repo_root, "MASTER", "checks", "support", "geometry_probe.rb")
         return unless File.file?(probe)
 
         findings << Finding.new(
